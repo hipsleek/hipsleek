@@ -5638,6 +5638,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
   in (* End of function collect_data_view *)
 
   (** [Internal] Generate the action based on the list of node and its tail **)
+  (* this is intended to unfold duplicated ptr for completeness *)
   let rec generate_action_x nodes eset =
     match nodes with
     | [] 
@@ -8347,7 +8348,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         | SuccCtx cl ->
           if !Globals.old_infer_hp_collect then 
             begin
-              x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hprel_ass pos;
+              x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hprel_ass pos;
               let () = Infer.rel_ass_stk # push_list hprel_ass in
               let () = Log.current_hprel_ass_stk # push_list hprel_ass in
               ()
@@ -10168,7 +10169,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     | ViewNode {h_formula_view_node = l}, ViewNode {h_formula_view_node = r} 
       -> (l,r)
     | HRel (hp1,_,_), HRel(hp2,_,_)
-      -> let () = y_winfo_pp ("HRel matching :"^m_str) in
+      -> let () = y_tinfo_pp ("HRel matching :"^m_str) in
       (hp1,hp2)
     | _, _ -> failwith ("do match failure: "^m_str)
   in
@@ -12230,7 +12231,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   : (Cformula.list_context * Prooftracer.proof) =
   Debug.ninfo_hprint (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b pos;
   Debug.ninfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
-  if not(Context.is_complex_action a) then
+  if (Context.is_steps_action a) then
     begin
       if !Debug.devel_debug_on || !Debug.devel_debug_steps then
         begin

@@ -7,6 +7,7 @@ data char_star {
 
   infer[U,@classic] U(self,q)*q::char_star<0,p> 
     |- (exists q1: U(self,q1)*q1::char_star<0,p>).
+  print residue.
 
 /*
 # ex14b3.slk -dd-steps

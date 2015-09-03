@@ -149,7 +149,7 @@ let process_coercion_check coerc iante iconseq (inf_vars: CP.spec_var list) iexa
       let () = x_binfo_hp (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in ()
     else () in
   let inf_obj = coerc.Cast.coercion_infer_obj in
-  let () = y_binfo_hp (add_str "coerc:infer_obj" (fun e -> e # string_of)) inf_obj in
+  let () = y_tinfo_hp (add_str "coerc:infer_obj" (fun e -> e # string_of)) inf_obj in
   let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let empty_es = { empty_es with CF.es_infer_obj = inf_obj } in
   let empty_ctx = CF.Ctx empty_es in

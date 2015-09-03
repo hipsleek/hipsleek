@@ -167,7 +167,17 @@ res:  2[
     emp&v_140!=0 & v_143=v_140 & q_144=q_141&{FLOW,(20,21)=__norm#E}[]
    ]
 ===========================================================================
-# ex14b2.slk --dlpi (WN to fix)
+# ex14b2.slk --dlpi (FIXED)
+
+  lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+  infer[U,@classic] U(self,q)*q::char_star<0,p> |- self::WFG<p>.
+  print residue.
+ 
+ =====================================
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
 
  lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
 
@@ -234,7 +244,7 @@ compute_actions@1 EXIT: COND =>[
   UnmatchedRHSData =>  self::WFG<p_143>@M
   ]
 ===========================================================================
-# ex14b2.slk
+# ex14b2.slk (FIXED)
 
 !!! **context.ml#1000:common:[self]
 !!! **context.ml#1001:f: U(self,q)
@@ -253,7 +263,7 @@ spatial_ctx_extract@2 EXIT:list of match_res:
  lhs_rest: U(self,q) * q::char_star<flted_27_130,p>@M
  rhs_rest: emp]
 ===========================================================================
-# ex14b2 --dd-steps
+# ex14b2 --dd-steps (FIXED)
 
 # Can we schedule a matching of UNKNOWN predicates?
 
@@ -262,7 +272,9 @@ spatial_ctx_extract@2 EXIT:list of match_res:
  ### RHS : U(self,q_149)
  ### matches :[]
 ===========================================================================
-# ex14b2 --dd-steps
+# ex14b2 --dd-steps (FIXED)
+
+# removed from printing as they are trivial
 
 # Why are there so many NothingToDo? They did not come
   from compute_actions?
@@ -276,7 +288,11 @@ spatial_ctx_extract@2 EXIT:list of match_res:
 q_145: U(self,q_145) * q_145::char_star<flted_25_144,p_143>@M&flted_25_144=0&
 {FLOW,(20,21)=__norm#E}[])
 ===========================================================================
-# ex14b3.slk -dd-steps (Loc to fix)
+# ex14b3.slk -dd-steps (FIXED)
+
+
+ <1>emp&u=0&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
 
 # schedule do_match to work with UNK predicates..
 
@@ -330,6 +346,7 @@ I would expect to have:
 to be generated as a hprel_ass, and
 then self=q added as a fold_def prior to do_fold
 ===========================================================
+# ex14b4b.slk (OK)
 
  infer [U,@classic,@pure_field] self::char_star<0,p> 
    |- U(self,p) .
@@ -376,6 +393,18 @@ inferred hprel: [q_131::char_star<flted_16_130,p>@M&
                   flted_16_130=0 |#|3  --> U(q_131,p)&true]
 [[ Fold ==>  SEARCH ==>  Match(self_lem_12,self_lem_12) ==>  SEARCH ==>  (Lemma ==> lem_12(q_141,q_144)) ==> (left: lem_12) ==>  COND ==>  Match(q_141,q_144) ==>  Match(UNK) ==> ||OR|| ==>  Fold ==>  COND ==>  InferHeap]]
 ===========================================================================
+# ex14b5.slk --dlpi
+
+  lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
+
+# How come no relational assumption inferred?
+  Was there any unfolding?
+
+ Temp Lemma(s) inferred is valid in current context.
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q_132,q_132)]]
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

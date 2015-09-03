@@ -116,6 +116,13 @@ let is_complex_action a = match a with
   | Seq_action _ -> true
   | _ -> false
 
+let is_steps_action a = match a with
+  | Search_action _ 
+  | Cond_action _ 
+  | M_Nothing_to_do _ 
+  | Seq_action _ -> false
+  | _ -> false
+
 (* let is_search_action_wt (_,a) = is_complex_action a *)
 
 let pr_mater_source ms = match ms with
@@ -839,7 +846,7 @@ and coerc_mater_match_with_unk_hp_left prog (l_vname: ident) (r_vname: ident) (l
   let cmm = if exists_left then 
       let reachable_pred = check_pred_reachability prog r_aset l_f view_sv in 
       if (reachable_pred) then
-        let () = y_winfo_pp "Loc : l_vargs MUST have all parameters (incl SELF)" in 
+        let () = y_tinfo_pp "Loc : l_vargs MUST have all parameters (incl SELF)" in 
         let () = y_tinfo_hp (add_str "l_vargs" pr_svl) l_vargs in
         x_add coerc_mater_match coerc_left l_vname l_vargs r_vname  r_aset lhs_node
       else []
@@ -1000,8 +1007,8 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         | HRel (h,args,_) -> 
           let n,vs = CF.name_of_h_formula rhs_node in
           let pr = !CF.print_h_formula in
-          let () = y_binfo_hp (add_str "SCE-lhs" pr) f in
-          let () = y_binfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
+          let () = y_tinfo_hp (add_str "SCE-lhs" pr) f in
+          let () = y_tinfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
           if CP.is_exists_svl p1 vs then 
             [(HEmp,f,[],Root)]
             (* failwith "TBI" *)
@@ -2166,7 +2173,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in res
        (* TODO:old_infer_heap *)
        | HRel (hn1, args1, _), HRel (hn2, args2, _) -> 
-         let () = x_binfo_pp "HRel vs HREL\n" no_pos in
+         let () = x_tinfo_pp "HRel vs HREL\n" no_pos in
          let pr_sv = Cprinter.string_of_spec_var in
          if CP.eq_spec_var hn1 hn2 then (1,M_match m_res)
          else (-1,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
