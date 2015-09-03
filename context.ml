@@ -2180,7 +2180,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          ;
        | HRel (h_name, args, _), rhs -> 
          (* TODO : check if h_name in the infer_vars *)
-         (2,M_infer_heap (rhs,HEmp))
+             let act1 = M_base_case_unfold m_res in
+             let act2 = M_infer_heap (rhs,HEmp) in
+             let wt = 2 in
+             (* old method do not use base_case_unfold *)
+             if !Globals.old_base_case_unfold_hprel then (wt,act2)
+               (* (2,M_infer_heap (rhs,HEmp)) *)
+             else
+                (wt,Search_action [(wt,act1);(wt,act2)])
        | DataNode _,  HRel _  -> 
          (* failwith "TBI"  *)
          let act1 = M_base_case_fold m_res in

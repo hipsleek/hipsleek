@@ -15409,3 +15409,14 @@ let exp_to_sv e = match (conv_exp_to_var e) with
     let () = y_winfo_pp " UNKNOWN spec_var used " in
     let () = y_binfo_hp (add_str "exp is var?" !print_exp) e in
     unknown_spec_var
+
+
+let rec gen_cl_eqs pos svl p_res=
+  match svl with
+    | [] -> p_res
+    | sv::rest ->
+          let new_p_res = List.fold_left (fun acc_p sv1 ->
+              let p = mkEqVar sv sv1 pos in
+              mkAnd acc_p p pos
+          ) p_res rest in
+          gen_cl_eqs pos rest new_p_res

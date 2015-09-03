@@ -1287,6 +1287,7 @@ let old_keep_triv_relass = ref false
 let old_mater_coercion = ref false
 let old_infer_heap = ref false
 let old_base_case_fold_hprel = ref false
+let old_base_case_unfold_hprel = ref false
 let warn_do_match_infer_heap = ref false
 let warn_nonempty_perm_vars = ref false
 let warn_trans_context = ref false

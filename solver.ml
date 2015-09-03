@@ -9454,15 +9454,33 @@ and do_base_case_unfold_only prog ante conseq estate lhs_node rhs_node  is_foldi
     (fun _ _ _ _ -> do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b) 
     ante conseq lhs_node rhs_node 
 
+and do_base_unfold_hp_rel_x prog estate pos hp vs=
+  let () = y_winfo_pp "do_base_unfold_hp_rel (TBI)" in 
+  None
+
+and do_base_unfold_hp_rel prog estate pos hp vs=
+  let pr1 = pr_none in
+  Debug.no_3 "do_base_unfold_hp_rel"
+    Cprinter.string_of_entail_state !CP.print_sv !CP.print_svl pr1
+    (fun _ _ _ -> do_base_unfold_hp_rel_x prog estate pos hp vs) estate hp vs
+
 and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b =
   if (is_data lhs_node) then None
   else begin
     (x_dinfo_zp (lazy ("do_base_case_unfold attempt for : " ^
                        (Cprinter.string_of_h_formula lhs_node))) pos);
+    match lhs_node with
+      | HRel (hp,args,_) ->
+            if CF.is_exists_hp_rel hp estate then
+              let vs = List.map CP.exp_to_sv args in
+              do_base_unfold_hp_rel prog estate pos hp vs
+            else
+              None
+      | _ ->
     (* c1,v1,p1 *)
-    let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
-    let () = Gen.Profiling.push_time "empty_predicate_testing" in
-    let lhs_vd = (look_up_view_def_raw 7 prog.prog_view_decls lhs_name) in
+            let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
+            let () = Gen.Profiling.push_time "empty_predicate_testing" in
+            let lhs_vd = (look_up_view_def_raw 7 prog.prog_view_decls lhs_name) in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
                         es_formula = ante;
                         es_heap = estate.es_heap;
@@ -11432,21 +11450,11 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
     let msg = "do_base_fold_hp_rel"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
     (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
   else
-    let rec gen_cl_eqs svl p_res=
-      match svl with
-        | [] -> p_res
-        | sv::rest ->
-              let new_p_res = List.fold_left (fun acc_p sv1 ->
-                  let p = CP.mkEqVar sv sv1 pos in
-                  CP.mkAnd acc_p p pos
-              ) p_res rest in
-              gen_cl_eqs rest new_p_res
-    in
     let knd = CP.RelAssume [hp] in
     let es_cond_path = CF.get_es_cond_path estate in
     let matched_svl = [] in
     let grd = None in
-    let lhs_p = gen_cl_eqs (CP.remove_dups_svl vs) (CP.mkTrue pos) in
+    let lhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl vs) (CP.mkTrue pos) in
     let lhs = CF.formula_of_pure_formula lhs_p pos in
     let rhs = CF.formula_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
     let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
