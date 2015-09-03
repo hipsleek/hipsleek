@@ -428,7 +428,6 @@ Residue:
 
   lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
 
-
 Entailing lemma lem_12: Fail. (cex)(may) cause: UnionR[ emp&flted_25_148=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.,M_unmatched_rhs (infer_collect_hp_rel 3b)]
 ===========================================================================
 # ex14b5a.slk --dlpi
@@ -508,7 +507,90 @@ Updated lemma store with unsafe repo::[lem_12]
  ### matches :[]
 
 ===========================================================================
+# ex14b5a.slk --dlpi
+
+  infer [U,@classic,@pure_field] U(self,q)*q::char_star<0,p> |- self::char_star<0,p>.
+
+ <1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(self,q)&true |#|3  --> emp&self=q]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q,self)]]
+
+# Not sure if we need guard of the form:
+
+ [U(self,q)&true |#| q::char_star<0,p>  --> emp&self=q]
+
+Another alternative is:
+
+ U(self,q)&true |#| q::char_star<0,p>  --> 
+     self::node<_,qq>*qq::H<q,self@NI> 
+
+But this will subsequently cause a residue problem.
+
+-----------------------------------
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<v,qq>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: qq::WFG<p_147>@M]
+
+!!! **context.ml#2472:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : qq::WFG<p_147>@M
+ ### matches :[]
+
+# incorrect compute action!
+
+!!! **context.ml#2840:compute_action (steps) :
+ ### RHS Cand :[ self::char_star<v,qq>@M, qq::WFG<p_147>@M]
+ ### action :
+
+
+process_matches@1
+process_matches inp1 :lhs_h: U(self,q) * q::char_star<flted_28_130,p>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<v,qq>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: qq::WFG<p_147>@M]
+process_matches inp3 :rhs_node: self::char_star<v,qq>@M
+process_matches inp4 :rhs_rest: qq::WFG<p_147>@M
+process_matches@1 EXIT: Prio:2
+ SEARCH =>[
+  Prio:2
+  Unfold 1 =>;
+  Prio:2
+  InferHeap => ( self::char_star<v,qq>@M, emp)
+   
+  ]
+
+
+process_matches@2
+process_matches inp1 :lhs_h: U(self,q) * q::char_star<flted_28_130,p>@M
+process_matches inp2 :matches:[]
+process_matches inp3 :rhs_node: qq::WFG<p_147>@M
+process_matches inp4 :rhs_rest: self::char_star<v,qq>@M
+process_matches@2 EXIT: Prio:-1
+ COND =>[
+  Prio:2
+  InferHeap => ( qq::WFG<p_147>@M, self::char_star<v,qq>@M)
+   ;
+  Prio:2
+  BaseCaseFold =>;
+  Prio:4
+  UnmatchedRHSData =>  qq::WFG<p_147>@M
+  ]
+
 ===========================================================================
+Unexpected result with : sleek.slk (failed check(s): {E1#Valid},{E2#Valid}) 
+Checking cll-d.slk
+Unexpected result with : cll-d.slk (failed check(s): {E1#Valid}) 
+Checking label-basic.slk (runs with extra options: --dis-eps)
+Checking label-dll.slk (runs with extra options: --dis-eps)
+Checking sleek1.slk
+Checking sleek10.slk
+Checking sleek2.slk
+Unexpected result with : sleek2.slk (failed check(s): {E2#Valid}) 
 ===========================================================================
 ===========================================================================
 ===========================================================================
