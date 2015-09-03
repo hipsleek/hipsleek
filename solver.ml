@@ -13424,7 +13424,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       end
     | Context.Search_action l ->
       (* let cur_rhs_rest_emp = !rhs_rest_emp in *)
-      let old_estate = estate in
+      (* let old_estate = estate in *)
       let r = List.map (fun (_,a1) ->
           (* let () = rhs_rest_emp := cur_rhs_rest_emp in *)
           let dupl_estate = {estate with CF.es_infer_hp_rel = estate.es_infer_hp_rel # clone;  es_infer_rel = estate.es_infer_rel # clone   } in

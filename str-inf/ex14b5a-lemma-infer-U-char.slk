@@ -37,6 +37,33 @@ pred WFG<p> ==
 
 Entail (1) : Fail.(may) cause: emp&flted_28_130=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
 
+!!! **context.ml#2840:compute_action (steps) :
+ ### RHS Cand :[ self::char_star<flted_28_149,p_148>@M]
+ ### action :
+ SEARCH =>[
+  Prio:2
+  BaseCaseUnfold =>
+    LHS: U(self,q)
+    RHS: self::char_star<flted_28_149,p_148>@M;
+  Prio:2
+  InferHeap => ( self::char_star<flted_28_149,p_148>@M, emp)
+   
+  ]
+
+# I think we may need to schedule two possibilities
+
+  (i)  BaseCaseFold with U(self,q) --> self=q
+
+  (ii) Unfold for Unknown, where:
+           U(self,q) --> self::char_star<_,q1>*H(q1,q,self@NI)
+
+I think the notion of InferHeap is too general, and would
+need to be dissipated into our more structured commands that
+we have already introduced to support verification.
+
+=============================================================
+
+
 # Need to schedule a base_case_unfold ..
 
 !!! **context.ml#2465:process_matches (steps) :
