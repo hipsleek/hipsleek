@@ -11425,10 +11425,66 @@ and do_right_lemma_w_fold coer prog estate conseq rhs_node rhs_rest rhs_b is_fol
       do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos 
   in  ((* Infer.restore_infer_vars iv  *)cl,prf)
 
-and  do_base_fold_hp_rel estate pos hp vs =
-  let msg = "do_base_fold_hp_rel (TBI)"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
-      (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
-  (* failwith "TBI" *)
+and do_base_fold_hp_rel_x prog estate pos hp vs=
+  let ivs = estate.es_infer_vars_hp_rel in
+  if not (CP.mem_svl hp ivs) || vs=[] then
+    let msg = "do_base_fold_hp_rel"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
+    (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+  else
+    let rec gen_cl_eqs svl p_res=
+      match svl with
+        | [] -> p_res
+        | sv::rest ->
+              let new_p_res = List.fold_left (fun acc_p sv1 ->
+                  let p = CP.mkEqVar sv sv1 pos in
+                  CP.mkAnd acc_p p pos
+              ) p_res rest in
+              gen_cl_eqs rest new_p_res
+    in
+    let knd = CP.RelAssume [hp] in
+    let es_cond_path = CF.get_es_cond_path estate in
+    let matched_svl = [] in
+    let grd = None in
+    let lhs_p = gen_cl_eqs (CP.remove_dups_svl vs) (CP.mkTrue pos) in
+    let lhs = CF.formula_of_pure_formula lhs_p pos in
+    let rhs = CF.formula_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
+    let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
+    if !Globals.old_infer_hp_collect then 
+      begin
+        x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
+        let () = Infer.rel_ass_stk # push_list ([hp_rel]) in
+        let () = Log.current_hprel_ass_stk # push_list ([hp_rel]) in
+        ()
+      end;
+    let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
+    (* let vd = Some ([],[],lhs) in *)
+    (* let rhs_p = MCP.pure_of_mix (rhs_b.CF.formula_base_pure) in *)
+    (* let fold_ctx = Ctx { estate with *)
+    (*     (\* without unsat_flag reset: *)
+    (*        error at: imm/kara-tight.ss karatsuba_mult *)
+    (*     *\) *)
+    (*     es_unsat_flag  = false; *)
+    (*     es_ivars  = []; *)
+    (*     es_pp_subst = []; *)
+    (*     es_arith_subst = []; *)
+    (*     es_cont = []; *)
+    (*     es_crt_holes = []; *)
+    (*     es_hole_stk = []; *)
+    (*     es_aux_xpure_1 = MCP.mkMTrue pos; *)
+    (*     es_subst = ([], []); *)
+    (*     es_aux_conseq = rhs_p; *)
+    (*     es_must_error = None; *)
+    (* } in *)
+    (* do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos *)
+    let msg = "do_base_fold_hp_rel (TBI)"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
+    (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+        (* failwith "TBI" *)
+
+and do_base_fold_hp_rel prog estate pos hp vs =
+  let pr1 x = Cprinter.string_of_list_context_short (fst x) in
+  Debug.no_3 "do_base_fold_hp_rel"
+    Cprinter.string_of_entail_state !CP.print_sv !CP.print_svl pr1
+    (fun _ _ _ -> do_base_fold_hp_rel_x prog estate pos hp vs) estate hp vs
 
 (* incr/ex17i5.slk failed if ivr removed from estate *)
 and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
@@ -11440,7 +11496,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
     (* let () = y_binfo_hp (add_str "i_hp_vs" !CP.print_svl) i_hp_vs in *)
     if CF.is_exists_hp_rel hp estate then
       let vs = List.map CP.exp_to_sv args in
-      do_base_fold_hp_rel estate pos hp vs
+      do_base_fold_hp_rel prog estate pos hp vs
     else
       let msg = "BaseCaseFold on Unknown Pred (not on inferred list)" in
       (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)

@@ -26,8 +26,13 @@ pred WFG<p> ==
   lemma_infer [U,@classic,@pure_field] 
      self::WFG<p> -> U(self,q)*q::char_star<0,p>.
 */
+/*
+ infer [@classic,@pure_field] self::char_star<0,p> |- U(self,q)*q::char_star<0,p> .
+ print residue.
+*/
 
- infer [U,@classic,@pure_field] self::char_star<0,p> |- U(self,q)*q::char_star<0,p> .
+infer [U,@classic,@pure_field] self::char_star<0,p> |- U(self,q)*q::char_star<0,p> .
+
 //infer [U,@classic,@pure_field] self::char_star<0,p> |- U(self,p) .
 
   print residue.
