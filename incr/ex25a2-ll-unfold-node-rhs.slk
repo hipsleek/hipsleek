@@ -1,0 +1,48 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+//infer [U1,@classic] U1(x) |- x=null.
+print residue.
+
+/*
+# ex15a2.slk 
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+# Could we just schedule an unfold..
+
+!!! **context.ml#2472:process_matches (steps) :
+ ### LHS : U1(x)
+ ### RHS : x::node<Anon_13,q>@M
+ ### matches :
+[ Type: Root
+ LHS: U1(x)
+ RHS: x::node<Anon_13,q>@M
+ lhs_rest: emp
+ rhs_rest: q::ll<>@M]
+
+!!! **context.ml#2843:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_13,q>@M, q::ll<>@M]
+ ### action :
+ SEARCH =>[
+  Prio:2
+  Unfold 1 =>
+    LHS: U1(x)
+    RHS: x::node<Anon_13,q>@M;
+  Prio:2
+  InferHeap => ( x::node<Anon_13,q>@M, emp)
+   
+
+
+
+*/

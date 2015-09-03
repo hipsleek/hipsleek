@@ -2775,7 +2775,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
   (* Todo:Long *)
   let new_r = List.filter (fun (a,b) -> not(a==[]) ) r in
-  let new_r = if new_r==[] then r else new_r in
+  let new_r = if new_r==[] && r!=[] then r else new_r in
   let r = if !Globals.old_keep_all_matchres then r else new_r in
   let () = x_tinfo_hp (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (x_add process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in

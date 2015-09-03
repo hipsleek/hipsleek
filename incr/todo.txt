@@ -1706,7 +1706,60 @@ print residue.
 // unsound
 expect Fail.
 =====================================================================
+# ex25a2.slk 
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+# Could we just schedule an unfold, as the main
+  purpose is to schedule a match instruction ..
+
+  Furthermore, the unfold should be:
+
+   U1(x) --> x::node<_,q>*U2(q,x@NI)
+
+  Where was such inferrable generated? inside infer_collect?
+
+(==context.ml#2781==)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: U1(x)
+ RHS: x::node<Anon_13,q>@M
+ lhs_rest: emp
+ rhs_rest: q::ll<>@M
+process_one_match inp2 :lhs_h: U1(x)
+process_one_match inp3 :lhs_p: true
+process_one_match inp4 :rhs_node: x::node<Anon_13,q>@M
+process_one_match inp5 :rhs_rest: q::ll<>@M
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@1 EXIT: Prio:2
+ SEARCH =>[
+  Prio:2
+  Unfold 1 =>;
+  Prio:2
+  InferHeap => ( x::node<Anon_13,q>@M, emp)
+   
+  ]
+  
 =====================================================================
+# ex25a1.slk -dd-steps
+
+infer [U1,@classic] U1(x) |- x=null.
+
+# How come no compute_match scheduled?
+  I would expect infer_heap to be scheduled..
+
+I guess this goes directly to empty_rhs entail step.
+Perhaps, we can check for
+  (i) classic mode
+  (ii) if inferrable heap predicates are present in LHS
+       and then use process_matches to schedule an infer_heap command?
+
+!!! **infer.ml#3949:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3950:  lhs : U1(x)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3951:  classic :true
+Entail (1) : Fail.(may) cause: emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
 =====================================================================
 =====================================================================
 =====================================================================
