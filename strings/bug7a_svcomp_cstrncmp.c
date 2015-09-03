@@ -33,23 +33,18 @@ int (cstrncmp)(const char *s1, const char *s2, int n)
  {
      unsigned char uc1, uc2;
      /* Nothing to compare?  Return zero.  */
-     if (n == 0)
-         return 0;
      /* Loop, comparing bytes.  */
-     while (*s1 == *s2) 
+     while (n!=0) 
        /*@
-          requires s1::WFS<> * s2::BADS<>
-          ensures s1::WFSeg<s1'>*s1'::char_star<0,q1>*q1::BADS<> * s2'::BADS<> & flow __norm
-               or s1::WFSeg<s1'>*s1'::char_star<c1,q>*q::WFS<>*s2::WFSeg<s2'>*s2'::char_star<c2,qq>*qq::BADS<> & flow __norm
-               or eres::ret_int<0>*s1::WFSeg<q>*q::char_star<0,q1>*q1::BADS<>*s2::WFSeg<qq>*qq::char_star<0,qq1>*qq1::BADS<> & flow ret_int;
+          case {
+            n=0 -> ensures n'=0;
+            n!=0 -> ensures n'=n+1;
+          }
+          //requires true
+          //ensures n'=n-2;
        */
-     {
-         if (*s1 == '\0')
-         {
-             return 0;
-         }
-         s1++;
-         s2++;
+     {   
+         n--;
      }
      //uc1 = (*(unsigned char *) s1);
      //uc2 = (*(unsigned char *) s2);
