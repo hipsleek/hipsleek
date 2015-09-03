@@ -1594,6 +1594,40 @@ let process_shape_infer pre_hps post_hps=
   (* in *)
   ()
 
+(******************************************************************************)
+let eq_id s1 s2 = String.compare s1 s2 == 0
+
+let mem_id = Gen.BList.mem_eq eq_id
+
+let select_hprel_assume hprel_list hprel_id_list = 
+  List.partition (fun hpr -> 
+    mem_id (CP.name_of_spec_var (Syn.name_of_hprel hpr)) hprel_id_list) hprel_list
+
+let update_sleek_hprel_assumes upd_hprel_list = 
+  sleek_hprel_assumes := upd_hprel_list
+
+let print_sleek_hprel_assumes () = 
+  if (not !Globals.smt_compete_mode) then
+    x_binfo_hp (add_str "Current list of heap relational assumptions" Cprinter.string_of_hprel_list_short) 
+      !sleek_hprel_assumes no_pos
+  else ()
+
+let process_sleek_hprel_assumes hps f_proc = 
+  let sel_hprel_assume_list, others = select_hprel_assume !sleek_hprel_assumes hps in
+  let res = f_proc sel_hprel_assume_list in
+  update_sleek_hprel_assumes (res @ others)
+
+let process_shape_add_dangling hps =
+  process_sleek_hprel_assumes hps Syn.add_dangling_hprel_list
+
+let process_shape_unfold hps =
+  process_sleek_hprel_assumes hps (Syn.unfolding !cprog)
+
+let process_shape_param_dangling hps =
+  process_sleek_hprel_assumes hps Syn.dangling_parameterizing
+  
+(******************************************************************************)
+
 let relation_pre_process constrs pre_hps post_hps=
   (*** BEGIN PRE/POST ***)
   let orig_vars = List.fold_left (fun ls cs-> ls@(CF.fv cs.CF.hprel_lhs)@(CF.fv cs.CF.hprel_rhs)) [] constrs in
@@ -2791,6 +2825,8 @@ let process_print_command pcmd0 =
     else if pcmd = "residue" then
       let _ = Debug.ninfo_pprint "inside residue" no_pos in
       print_residue !CF.residues
+    else if String.compare pcmd "relAssumes" == 0 then
+      print_sleek_hprel_assumes ()
       (* match !CF.residues with *)
       (*   | None -> print_string ": no residue \n" *)
       (*         (\* | Some s -> print_string ((Cprinter.string_of_list_formula  *\) *)

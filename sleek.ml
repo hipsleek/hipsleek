@@ -90,7 +90,7 @@ module M = Lexer.Make(Token.Token)
 
   let proc_one_cmd c = 
     match c with
-  | UiDef uidef -> process_ui_def uidef
+    | UiDef uidef -> process_ui_def uidef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
     (* let pr_op () = process_entail_check_common iante iconseq in  *)
     (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
@@ -116,6 +116,9 @@ module M = Lexer.Make(Token.Token)
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
+    | ShapeAddDangling hps -> process_shape_add_dangling hps
+    | ShapeUnfold hps -> process_shape_unfold hps
+    | ShapeParamDangling hps -> process_shape_param_dangling hps
     | PredSplit ids -> process_pred_split ids
     | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids

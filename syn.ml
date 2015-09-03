@@ -14,6 +14,10 @@ module CEQ = Checkeq
 let mem = Gen.BList.mem_eq CP.eq_spec_var
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 
+let eq_id s1 s2 = String.compare s1 s2 == 0
+
+let mem_id = Gen.BList.mem_eq eq_id
+
 let rec partition_by_key key_of key_eq ls = 
   match ls with
   | [] -> []
@@ -64,6 +68,9 @@ let add_dangling_hprel (hpr: CF.hprel) =
 let add_dangling_hprel (hpr: CF.hprel) = 
   let pr = Cprinter.string_of_hprel_short in
   Debug.no_1 "add_dangling_hprel" pr (pr_pair pr string_of_bool) add_dangling_hprel hpr
+
+let add_dangling_hprel_list (hpr_list: CF.hprel list) =
+  fst (List.split (List.map add_dangling_hprel hpr_list))
 
 (*********************)
 (***** UNFOLDING *****)
@@ -320,7 +327,7 @@ let remove_dangling_heap_formula (f: CF.formula) =
     | CF.ViewNode ({ 
         h_formula_view_node = view_node;
         h_formula_view_name = view_name; } as v) ->
-      if String.compare view_name dangling_view_name == 0 then
+      if eq_id view_name dangling_view_name then
         Some (CF.HEmp, [view_node])
       else Some (hf, [])
     | _ -> None
@@ -419,7 +426,7 @@ let syn_preds prog (is: CF.infer_state) =
       if has_dangling_vars then
         x_binfo_hp (add_str "Detected dangling vars" 
             Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
-      else x_binfo_pp "No dangling vars is detected" no_pos
+      else x_binfo_pp "No dangling var is detected" no_pos
     in
   
     let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
