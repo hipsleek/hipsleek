@@ -1,0 +1,60 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+
+  lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+  infer [U,@classic,@pure_field] U(self,q)*q::char_star<0,p> |- self::char_star<v,qq> * qq::WFG<p> & v!=0.
+
+  //infer[U,@classic] U(self,q)*q::char_star<0,p> |- self::WFG<p>.
+  print residue.
+
+/*
+# ex14b5b.slk 
+
+  infer [U,@classic,@pure_field] U(self,q)*q::char_star<0,p> |- self::char_star<v,qq> * qq::WFG<p> & v!=0.
+
+Entail (1) : Fail.(may) cause:M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+# Need to schedule an unfold for hprel..
+
+!!! **lemma.ml#259:
+Updated lemma store with unsafe repo::[lem_12]
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : self::char_star<v,qq>@M
+ ### matches :
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<v,qq>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: qq::WFG<p_147>@M]
+
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : qq::WFG<p_147>@M
+ ### matches :[]
+
+
+*/

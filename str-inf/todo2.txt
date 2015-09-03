@@ -406,8 +406,73 @@ Residue:
 [[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q_132,q_132)]]
 
 ===========================================================================
+# ex14b5.slk --dlpi (FIXED - force RHS to be unfolded)
+
+  lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
+
+# How come no relational assumption inferred?
+  Was unable to  unfold U(..) on LHS ..
+
+ Temp Lemma(s) inferred is valid in current context.
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q_132,q_132)]]
 ===========================================================================
+# ex14b5.slk 
+
+  lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
+
+
+Entailing lemma lem_12: Fail. (cex)(may) cause: UnionR[ emp&flted_25_148=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.,M_unmatched_rhs (infer_collect_hp_rel 3b)]
 ===========================================================================
+# ex14b5a.slk --dlpi
+
+  infer [U,@classic,@pure_field] U(self,q)*q::char_star<0,p> |- self::char_star<0,p>.
+
+Entail (1) : Fail.(may) cause: emp&flted_28_130=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+# Need to schedule a base_case_unfold ..
+
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : self::char_star<flted_28_149,p_148>@M
+ ### matches :
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<flted_28_149,p_148>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: emp]
+
+!!! **context.ml#2833:compute_action (steps) :
+ ### RHS Cand :[ self::char_star<flted_28_149,p_148>@M]
+ ### action :
+ InferHeap => ( self::char_star<flted_28_149,p_148>@M, emp)
+===========================================================================
+# ex14b5b.slk --dlpi
+
+  infer [U,@classic,@pure_field] U(self,q)*q::char_star<0,p> |- self::char_star<v,qq> * qq::WFG<p> & v!=0.
+
+Entail (1) : Fail.(may) cause:M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+# Need to schedule an unfold for hprel..
+
+!!! **lemma.ml#259:
+Updated lemma store with unsafe repo::[lem_12]
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : self::char_star<v,qq>@M
+ ### matches :
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<v,qq>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: qq::WFG<p_147>@M]
+
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : qq::WFG<p_147>@M
+ ### matches :[]
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

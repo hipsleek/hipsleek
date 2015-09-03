@@ -28,19 +28,33 @@ pred WFG<p> ==
   print residue.
 
 /*
-# ex14b5.slk --dlpi
+# ex14b5.slk --dlpi (FIXED - force RHS to be unfolded)
 
   lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
 
 # How come no relational assumption inferred?
-  Was there any unfolding?
+  Was unable to  unfold U(..) on LHS ..
 
  Temp Lemma(s) inferred is valid in current context.
 Residue:
  <1>emp&{FLOW,(20,21)=__norm#E}[]
 [[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q_132,q_132)]]
 
+=================================================
+# ex14b5.slk --dlpi
+!!! **lemproving.ml#146:process_coercion_check
+!!! **lemproving.ml#147:======================
+!!! **lemproving.ml#148:i-ante:
+ (exists flted_25_127,
+q_128: U(self_lem_12,q_128) * q_128::char_star<flted_25_127,p>@M&
+flted_25_127=0&{FLOW,(20,21)=__norm#E}[])
+!!! **lemproving.ml#149:i-conseq:
+ EBase 
+   (exists p_121: self_lem_12::WFG<p_121>@M&p_121=p&
+   {FLOW,(20,21)=__norm#E}[])
+!!! **WARNING****solver.ml#13034:do_match after infer_heap
 
+=================================================
 # body_view?? // unknown pred U
 
  head match:WFG

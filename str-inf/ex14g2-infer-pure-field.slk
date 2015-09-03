@@ -26,6 +26,7 @@ pred WFG<p> ==
   //lemma_infer [U,@classic] self::WFG<p> <- self::WFSeg<q>*U(q,p).
   // Failed to inferred for lem_12:<== (invalid lemma encountered)
   //lemma_infer_pred [U,@classic] self::WFG<p> -> self::WFSeg<q>*U(q,p).
+
   lemma_infer [U,@classic,@pure_field] 
        self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
   print residue.

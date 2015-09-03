@@ -13983,14 +13983,14 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       else None in
     (* left coercions *)
     let left_r = if (List.length coers1)>0 then
-        let tmp1 = List.map  (fun coer -> apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos) coers1 in
+        let tmp1 = List.map  (fun coer -> x_add apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos) coers1 in
         let left_res, left_prf = List.split tmp1 in
         let left_prf = List.concat left_prf in
         Some (left_res,left_prf)
       else None in
     (* right coercions *)
     let right_r = if (List.length coers2)>0 then
-        let tmp2 = List.map (fun coer -> apply_right_coercion estate coer prog conseq resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b c2 is_folding pos) coers2 in
+        let tmp2 = List.map (fun coer -> x_add apply_right_coercion estate coer prog conseq resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b c2 is_folding pos) coers2 in
         let right_res, right_prf = List.split tmp2 in
         let right_prf = List.concat right_prf in
         Some (right_res,right_prf)
