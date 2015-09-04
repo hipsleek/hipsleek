@@ -1458,7 +1458,7 @@ let keep_data_view_hrel_nodes_two_fbs prog en_pure_field f1 f2 hd_nodes hv_nodes
   let () = Debug.ninfo_zprint (lazy (("keep_vars 1: " ^ (!CP.print_svl keep_closed_rootvars)))) no_pos in
   let keep_vars = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes (CP.remove_dups_svl (keep_closed_rootvars)) in
   let c_lhs_hpargs = CP.remove_dups_svl (List.fold_left close_def lhs_hpargs eqs) in
-  let () = Debug.info_zprint (lazy (("c_lhs_hpargs: " ^ (!CP.print_svl c_lhs_hpargs)))) no_pos in
+  let () = Debug.ninfo_zprint (lazy (("c_lhs_hpargs: " ^ (!CP.print_svl c_lhs_hpargs)))) no_pos in
   (* let lkeep_vars = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes lhs_keep_closed_rootvars in *)
   (*may be alisas between lhs and rhs*)
   let () = Debug.ninfo_zprint (lazy (("keep_vars: " ^ (!CP.print_svl keep_vars)))) no_pos in
