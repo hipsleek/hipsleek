@@ -12,7 +12,8 @@ HeapPred U2(node x,int v).
 
 
 //infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
-infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+infer [U1,@classic,@pure_field] x::ll<>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
 //infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
 //infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
 print residue.
@@ -20,7 +21,15 @@ expect Valid.
 
 
 /*
-# ex25b8.slk 
+# ex25b8.slk  (OK)
+
+infer [U1,@classic,@pure_field] x::ll<>  |- U1(x).
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [x::ll<>@M&true |#|3  --> U1(x)&true]
+[[ InferFold ]]
+
+--------------------------
 
  infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
 

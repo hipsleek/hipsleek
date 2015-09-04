@@ -1977,7 +1977,7 @@ infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
                    true]
 [[ InferHeap]]
 =====================================================================
-# ex25b2.slk 
+# ex25b2.slk (OK after using Infer_Unfold)
 
 infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
 
@@ -1989,7 +1989,7 @@ infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
                   U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
                    true]
 =====================================================================
-# ex25b8.slk 
+# ex25b8.slk (OK use U1 not U2)
 
  infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
 
@@ -2009,6 +2009,8 @@ Residue:
 Validate 1: Expecting(3)Valid BUT got : Fail_May
 =====================================================================
 # ex25a7.slk
+
+ infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> |- x::node<0,p>.
 
 # First solution should have guarded form:
             [U2(x,q)&true |#| q::node<0,_> --> emp&x=q]
@@ -2035,7 +2037,7 @@ inferred hprel: [HP_57(flted_17_56@NI,q@NI)&true |#|3  --> emp&flted_17_56=0;
                   true]
 [[ SEARCH ==>  InferUnfold ]]
 =====================================================================
-# ex25b7.slk 
+# ex25b7.slk (OK change to infer U1)
 
 infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
 
@@ -2066,7 +2068,7 @@ infer_collect_hp_rel#1@1 EXIT:(false,2: es_formula:
  U1(x)&{FLOW,(20,21)=__norm#E}[]
  es_infer_vars_hp_rel: [U2],3: x::ll<>@M,4:None,5:None)
 =====================================================================
-# ex25b6.slk 
+# ex25b6.slk (OK change to infer U1)
 
 infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
 
@@ -2127,6 +2129,21 @@ ctx length:0
                    flted_14_29=null & flted_14_30=5 |#|3  --> U1(x)&true]
 
 =====================================================================
+# ex25c2b.slk 
+
+infer [U3,@classic] U3(x,r,q)*q::node<0,p> |- x::node<0,p>.
+
+Residue:
+ <1>emp&r=x & q=x&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U3(x,r,q)&true |#|3  --> emp&x=r & x=q & r=q]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q,x)]]
+
+# The pre is too strong. We only need below.
+  If guard was also inferred, it could help us determine
+  which equality to add for this base_case_unfold attempt
+
+ inferred hprel: [U3(x,r,q) |#| q::node<0,_>  --> x=q
+
 =====================================================================
 =====================================================================
 =====================================================================
