@@ -1933,7 +1933,7 @@ GOT below
                    true]
 [[ SEARCH ==>  InferHeap]]
 =====================================================================
-# ex25b8.slk 
+# ex25b8.slk; FIXED
 
 infer [U2,@classic,@pure_field] U2(x,v) 
     |- v!=0 .

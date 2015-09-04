@@ -10,12 +10,23 @@ HeapPred U1(node x).
 HeapPred R1(node x).
 HeapPred U2(node x,node y).
 
+HeapPred U3(node x,node y,node z).
+
 //infer [U1,@classic,@pure_field] U1(x) |- x::node<_,q>*q::ll<>.
 
 infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> |- x::node<0,p>.
 print residue.
 expect Valid.
 
+/*
+//guard examples
+infer [U3,@classic,@pure_field] U3(x,q,p)*q::node<0,p> |- x::node<0,p>.
+print residue.
+
+infer [U2,@pure_field] U2(x,q)* t::node<0,q> * q::node<0,p> |- x::node<0,p>.
+print residue.
+expect Valid.
+*/
 /*
 # ex15a6.slk -dd-steps
 

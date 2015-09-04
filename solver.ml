@@ -9482,10 +9482,18 @@ and do_unfold_hp_rel_x prog estate conseq is_folding pos hp vs=
   let knd = CP.RelAssume [hp] in
   let es_cond_path = CF.get_es_cond_path estate in
   let matched_svl = [] in
-  let grd = None in
+  let (lhf,mlf,_,_,_,_) = CF.split_components estate.CF.es_formula in
+  let lhds, _, _ = CF.get_hp_rel_h_formula lhf in
+  let leqs = (MCP.ptr_equations_without_null mlf) in
+  let leqNulls = MCP.get_null_ptrs mlf in
+  let ass_guard = x_add Infer.find_guard prog lhds leqs leqNulls [(hp,CP.diff_svl vs leqNulls)] [] in
   let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl vs) (CP.mkTrue pos) in
-  let rhs = CF.formula_of_pure_formula rhs_p pos in
-  let lhs = CF.formula_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
+  let rhs_b = CF.formula_base_of_pure (MCP.mix_of_pure rhs_p) pos in
+  (* let rhs = CF.formula_of_pure_formula rhs_p pos in *)
+  let rhs = CF.Base rhs_b in
+  let lhs_b = CF.formula_base_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
+  let lhs = CF.Base lhs_b in
+  let grd = x_add Infer.check_guard estate ass_guard lhs_b lhs_b rhs_b pos in
   let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
   if !Globals.old_infer_hp_collect then 
     begin
