@@ -24,7 +24,7 @@ expect Valid.
 
  infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
 
-Entail (1) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3a
+Entail (1) : Fail.(may) cause:**solver.ml#13179:infer_collect_hp_rel
 
 Residue:
 
@@ -39,7 +39,16 @@ Residue:
  CEX:false
 Validate 1: Expecting(3)Valid BUT got : Fail_May
 
-# scheduled but process_action failed..
+# InferHeap scheduled but infer_collect_hp_rel failed ..
+
+(==solver.ml#13174==)
+infer_collect_hp_rel#1@4
+infer_collect_hp_rel#1 inp1 :lhs: x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: x::ll<>@M
+infer_collect_hp_rel#1@4 EXIT:(false,2: es_formula: 
+ x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],3: U1(x),4:None,5:None)
 
 (==solver.ml#11120==)
 compute_actions@1
