@@ -10,16 +10,41 @@ HeapPred U1(node x).
 HeapPred R1(node x).
 HeapPred U2(node x,int v).
 
-infer [U2,@classic,@pure_field] U2(x,v) 
-    |- v!=0 .
+
+infer [U2,@classic,@pure_field] U2(x,v)  |- v!=0 .
 print residue.
 expect Valid.
+
 
 /*
 # ex25b8.slk 
 
-infer [U2,@classic,@pure_field] U2(x,v) 
-    |- v!=0 .
+infer [U2,@classic,@pure_field] U2(x,v)  |- v!=0 .
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  v=0. LOCS:[0;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+============================
+
+infer [U2,@classic,@pure_field] U2(x,v) |- x!=null .
+print residue.
+
+infer [U2,@classic,@pure_field] U2(x,v) |- x=null .
+print residue.
+
+# why is v@NI?
+ inferred hprel: [U2(x,v@NI)&true |#|3  --> emp&x=null]
+
+
+infer [U2,@classic,@pure_field] U2(x,v) |- v!=0 .
 
 Entail (1) : Fail.(may) cause: true |-  v!=0. LOCS:[0;14] (may-bug)
 
