@@ -15,7 +15,7 @@ infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
 print residue.
 
 /*
-# ex15a2.slk 
+# ex25a2.slk 
 
 infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
 

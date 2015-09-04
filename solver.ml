@@ -11495,7 +11495,7 @@ and do_right_lemma_w_fold coer prog estate conseq rhs_node rhs_rest rhs_b is_fol
 and do_base_fold_hp_rel_x prog estate pos hp vs
                                 conseq rhs_node rhs_rest rhs_b is_folding iv ivr=
   let ivs = estate.es_infer_vars_hp_rel in
-  if not (CP.mem_svl hp ivs) || vs=[] then
+  if not (CP.mem_svl hp ivs) || List.length vs <= 1 then
     let msg = "do_base_fold_hp_rel"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in
     (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
   else
@@ -12653,11 +12653,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       x_tinfo_hp (add_str "M_unfold" (fun _ -> "")) () pos;
       match lhs_node with
         | HRel (hp,args,_) ->
-              if CF.is_exists_hp_rel hp estate && args !=[] then
+              if CF.is_exists_hp_rel hp estate && List.length args > 1 then
               let vs = List.map CP.exp_to_sv args in
               do_unfold_hp_rel prog estate conseq is_folding pos hp vs
               else
-                 let msg = "BaseCaseFold on Unknown Pred (not on inferred list)" in
+                 let msg = "UnFold on Unknown Pred (not on inferred list or number of args <= 1)" in
                  (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
         | _ ->
       let lhs_var = get_node_var lhs_node in

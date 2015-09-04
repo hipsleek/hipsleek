@@ -2187,7 +2187,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              if !Globals.old_base_case_unfold_hprel then (wt,act2)
                (* (2,M_infer_heap (rhs,HEmp)) *)
              else
-                (wt,Search_action [(wt,act1);(wt,act2)])
+               (wt,act1)
+                (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | DataNode _,  HRel _  -> 
          (* failwith "TBI"  *)
          let act1 = M_base_case_fold m_res in
