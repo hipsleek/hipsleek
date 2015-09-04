@@ -1710,6 +1710,28 @@ expect Fail.
 
 infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
 
+!!! **solver.ml#12359:process_action (steps) :
+ ### action :
+ Unfold 1 =>
+   Type: Root
+   LHS: U1(x)
+   RHS: x::node<Anon_13,q>@M
+   lhs_rest: emp
+   rhs_rest: q::ll<>@M
+ ### estate :
+ ex_formula : U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : x::node<Anon_13,q>@M * q::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+
+
+# need to schedule this unfold as:
+     U1(x) --> x::node<_,q> * H2(q,x@NI)
+
+Followed by:
+     x::node<_,q> * H2(q,x@NI) |- x::node<_,q>*q::ll<>.
+
+
+------------------------------------------
 # Could we just schedule an unfold, as the main
   purpose is to schedule a match instruction ..
 
@@ -1744,7 +1766,7 @@ process_one_match@1 EXIT: Prio:2
   
 =====================================================================
 # ex25a1.slk -dd-steps
-
+hg bran
 infer [U1,@classic] U1(x) |- x=null.
 
 # How come no compute_match scheduled?
@@ -1761,6 +1783,59 @@ Perhaps, we can check for
 !!! **infer.ml#3951:  classic :true
 Entail (1) : Fail.(may) cause: emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
 =====================================================================
+# ex25a2.slk 
+
+infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+
+
+# scheduled an infer_heap which is like a FOLD.
+
+Obtained:
+  U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)
+Two possible solutions:
+(a) Since HP_31(x,q2) is non-instantiating, why
+    did we not have:
+     U2(q2,x) |#|  --> q2::ll<>@M 
+(b) We should alter have
+     HP_31(x,q2) --> emp
+   but this seems to be different from 
+   es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)],
+   Inferred Relations:[ HP_31(x,q2) |#|    --> emp])
+What is Inferred Relations? 
+
+
+Starting Omega.../usr/local/bin/oc
+
+(==solver.ml#13148==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs: U2(q2,x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: q2::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U2(q2,x)
+infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula: 
+ HP_31(x,q2)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2; HP_31]
+ es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)],3: q2::ll<>@M,4:None,5:None)
+
+!!! **WARNING****solver.ml#13164:do_match after infer_heap
+!!! **solver.ml#13165:rhs_h_matched set:[]
+!!! **solver.ml#13166:lhs_h: q2::ll<>@M
+!!! **solver.ml#13167:rhs_h: q2::ll<>@M
+!!! **infer.ml#3949:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3950:  lhs : HP_31(x,q2)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3951:  classic :true
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@2
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ HP_31(x,q2)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2; HP_31]
+ es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@2 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2; HP_31]
+ es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)],Inferred Relations:[ HP_31(x,q2) |#|  --> emp])
+
 =====================================================================
 =====================================================================
 =====================================================================
