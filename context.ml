@@ -2192,12 +2192,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            | _      -> (-1, norm_search_action l)
          in res
        (* TODO:old_infer_heap *)
-       | HRel (hn1, args1, _), HRel (hn2, args2, _) -> 
+       | HRel (hn1, args1, _), (HRel (hn2, args2, _) as rhs) -> 
          let () = x_tinfo_pp "HRel vs HREL\n" no_pos in
          let pr_sv = Cprinter.string_of_spec_var in
          if CP.eq_spec_var hn1 hn2 then (1,M_match m_res)
-         else (-1,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
-         ;
+         else if CF.is_exists_hp_rel hn2 estate  then (2,M_infer_fold m_res)
+         else if CF.is_exists_hp_rel hn1 estate  then (2,M_infer_unfold (m_res,rhs,HEmp))
+         else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
        | HRel (h_name, args, _), (DataNode _ as rhs) -> 
          (* TODO : check if h_name in the infer_vars *)
          let act1 = M_unfold (m_res, 1) in (* base-case unfold implemented *)
