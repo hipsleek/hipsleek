@@ -20,16 +20,37 @@ expect Valid.
 /*
 # ex25b7.slk 
 
-infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
 
-(==context.ml#2790==)
-choose_context@1
-choose_context inp1 :LHS node: x::ll<>@M
-choose_context inp2 :RHS node: U1(x)
-choose_context inp3 :LHS pure: true
-choose_context inp4 :RHS pure: true
-choose_context inp5 :right aliase:[]
-choose_context@1 EXIT:[]
+Entail (1) : Fail.(may) cause:**solver.ml#13187:infer_collect_hp_rel
+
+# Fails at infer_collect. Would m_res below be helpful to
+  infer_collect_hp_rel ?
+
+!!! **solver.ml#12376:process_action (steps) :
+ ### action :
+ InferUnfold =>
+   Type: Root
+   LHS: U1(x)
+   RHS: x::ll<>@M
+   lhs_rest: emp
+   rhs_rest: emp
+ ### estate :
+ ex_formula : U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#13182==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U1(x)
+infer_collect_hp_rel#1@1 EXIT:(false,2: es_formula: 
+ U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],3: x::ll<>@M,4:None,5:None)
+
+Entail (1) : Fail.(may) cause:**solver.ml#13187:infer_collect_hp_rel
+
 
 -----------------------------------------
 
