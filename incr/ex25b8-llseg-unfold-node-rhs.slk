@@ -1,0 +1,51 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,int v).
+
+infer [U2,@classic,@pure_field] U2(x,v) 
+    |- v!=0 .
+print residue.
+expect Valid.
+
+/*
+# ex25b8.slk 
+
+infer [U2,@classic,@pure_field] U2(x,v) 
+    |- v!=0 .
+
+Entail (1) : Fail.(may) cause: true |-  v!=0. LOCS:[0;14] (may-bug)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  v!=0. LOCS:[0;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ U2(x,v)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2]
+infer_collect_hp_rel_empty_rhs#1 inp2 : v!=0
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],Inferred Relations:[ U2(x,v) |#|  --> emp])
+
+
+*/

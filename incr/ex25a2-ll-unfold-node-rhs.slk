@@ -19,7 +19,22 @@ print residue.
 
 infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
 
-# Could we just schedule an unfold..
+# This example is supposed to schedule an M_unfold
+  However, I have now scheduled an InferHeap since it also
+  captures the effect of unfolding and folding.
+
+  Can we split M_infer_heap to capture folding and
+  unfolding separately?
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_35(q_34)&true |#|3  --> emp&true; 
+                  U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
+                   true]
+[[ InferHeap]]
+
+-------------------------------
 
 !!! **context.ml#2472:process_matches (steps) :
  ### LHS : U1(x)

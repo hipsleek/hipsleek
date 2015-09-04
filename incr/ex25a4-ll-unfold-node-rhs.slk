@@ -18,7 +18,7 @@ infer [U2,@classic] U2(q2,x) |- q2::ll<>.
 print residue.
 
 /*
-# ex25a2.slk 
+# ex25a4.slk 
 
 infer [U2,@classic] U2(q2,x) |- q2::ll<>.
 

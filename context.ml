@@ -2182,11 +2182,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* TODO : check if h_name in the infer_vars *)
          let act1 = M_unfold (m_res, 1) in
          let act2 = M_infer_heap (rhs,HEmp) in
-         let wt = 2 in
+         let wt = 1 in
          (* old method do not use base_case_unfold *)
          if !Globals.old_base_case_unfold_hprel then (wt,act2)
          (* (2,M_infer_heap (rhs,HEmp)) *)
-         else (wt,act1)
+         else if List.length args<2 then (wt,act2)
+         else (wt,Search_action [(wt,act1);(wt,act2)])
        (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
          (* TODO : check if h_esname in the infer_vars *)

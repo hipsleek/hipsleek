@@ -12,12 +12,12 @@ HeapPred U2(node x,node y).
 
 //infer [U1,@classic,@pure_field] U1(x) |- x::node<_,q>*q::ll<>.
 
-infer [U1,@classic] U1(x) |- x=null.
+infer [U1,@classic,@pure_field] U1(x) |- x=null.
 print residue.
 expect Valid.
 
 /*
-# ex25a1.slk -dd-steps
+# ex15a6.slk -dd-steps
 
 infer [U1,@classic] U1(x) |- x=null.
 

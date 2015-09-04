@@ -1782,11 +1782,9 @@ Perhaps, we can check for
 !!! **infer.ml#3950:  lhs : U1(x)&{FLOW,(20,21)=__norm#E}[]
 !!! **infer.ml#3951:  classic :true
 Entail (1) : Fail.(may) cause: emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
-=====================================================================
-# ex25a2.slk 
 
-infer [U2,@classic] U2(q2,x) |- q2::ll<>.
-
+--------------------------------------------------------\
+# ex25a4.slk
 
 # scheduled an infer_heap which is like a FOLD.
 
@@ -1837,11 +1835,134 @@ infer_collect_hp_rel_empty_rhs#1@2 EXIT:(Res:true,Sel HP:
  es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)],Inferred Relations:[ HP_31(x,q2) |#|  --> emp])
 
 =====================================================================
+# ex25a3.slk (OK)
+
+infer [U1,@classic] x::node<_,q2>*U2(q2,x) |- x::node<_,q>*q::ll<>.
+
+Residue:
+
+ <1>emp&Anon_14=Anon_13 & q=q2&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_36(x,q2@NI)&true |#|3  --> emp&true; 
+                  U2(q,x)&true |#|3  --> q::ll<>@M * HP_36(x,q@NI)&true]
+[[ SEARCH ==>  SEARCH ==>  Match(x,x) ==>  InferHeap]]
+
 =====================================================================
+# ex25a2.slk 
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+# This example is supposed to schedule an M_unfold
+  However, I have now scheduled an InferHeap since it also
+  captures the effect of unfolding and folding.
+
+  Can we split M_infer_heap to capture folding and
+  unfolding separately?
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_35(q_34)&true |#|3  --> emp&true; 
+                  U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
+                   true]
+
 =====================================================================
+# ex15a6.slk -dre "infer_co" (Loc to fix)
+
+infer [U1,@classic] U1(x) |- x=null.
+
+GOT below
+=========
+  U1(x) |#|  --> emp]
+
+# Why did we not get:
+
+  U1(x) |#|  --> x=null
+
+# This should be regardless of @pure_field since we
+  are dealing with pointers.
+
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1]
+infer_collect_hp_rel_empty_rhs#1 inp2 : x=null
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1],Inferred Relations:[ U1(x) |#|  --> emp])
 =====================================================================
+# ex25a7.slk 
+
+infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> |- x::node<0,p>.
+
+GOT below
+=========
+<1>emp&x=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(x,q)&true |#|3  --> emp&x=q]
+[[ Unfold 1 ==>  SEARCH ==>  Match(q,x)]]
+
+# EXPECTS:
+ inferred hprel: [U2(x,q)&true |#| q::node<0,p>  --> emp&x=q]
+
+# This picking of guard is already in Infer_Heap. I think you
+  need to make components of Infer_Heap accessible.
 =====================================================================
+# ex25a8.slk 
+
+infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> 
+    |- x::node<v,q2>*U2(q2,q3)*q3::node<0,p>.
+
+# InferHeap below seems complicated as it has
+  a complex LHS. I think we really need to perform
+  unfolding gradually one unfold at a time, followed
+  by matches subsequently.
+
+  Complex LHS will be hard to transform..
+
+GOT below
+=========
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_57(v_54@NI,q@NI)&true |#|3  --> emp&true; 
+                  HP_58(q2_55,q@NI)&true |#|3  --> emp&true; 
+                  HP_59(q,x@NI)&true |#|3  --> emp&true; 
+                  U2(x,q) * q::node<flted_17_28,p>@M&
+                   true |#|3  --> x::node<v_54,q2_55>@M * 
+                                  HP_57(v_54@NI,q@NI) * HP_58(q2_55,q@NI) * 
+                                  HP_59(q,x@NI)&
+                   true]
+[[ SEARCH ==>  InferHeap]]
 =====================================================================
+# ex25b8.slk 
+
+infer [U2,@classic,@pure_field] U2(x,v) 
+    |- v!=0 .
+
+Entail (1) : Fail.(may) cause: true |-  v!=0. LOCS:[0;14] (may-bug)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  v!=0. LOCS:[0;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ U2(x,v)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2]
+infer_collect_hp_rel_empty_rhs#1 inp2 : v!=0
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],Inferred Relations:[ U2(x,v) |#|  --> emp])
 =====================================================================
 =====================================================================
 =====================================================================

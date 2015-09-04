@@ -12,14 +12,36 @@ HeapPred U2(node x,node y).
 
 //infer [U1,@classic,@pure_field] U1(x) |- x::node<_,q>*q::ll<>.
 
-infer [U1,@classic] U1(x) |- x=null.
+infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> |- x::node<0,p>.
 print residue.
 expect Valid.
 
 /*
-# ex25a1.slk -dd-steps
+# ex15a6.slk -dd-steps
 
 infer [U1,@classic] U1(x) |- x=null.
+
+GOT below
+=========
+  U1(x) |#|  --> emp]
+
+# Why did we not get:
+
+  U1(x) |#|  --> x=null
+
+This should be for @pure_field and otherwise.
+
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1]
+infer_collect_hp_rel_empty_rhs#1 inp2 : x=null
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1],Inferred Relations:[ U1(x) |#|  --> emp])
+
 
 # How come no compute_match scheduled?
   I would expect infer_heap to be scheduled..
