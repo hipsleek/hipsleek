@@ -34,17 +34,12 @@ int (cstrncmp)(const char *s1, const char *s2, int n)
      unsigned char uc1, uc2;
      /* Nothing to compare?  Return zero.  */
      /* Loop, comparing bytes.  */
-     while (n!=0) 
+      while (n-->0) 
        /*@
-          case {
-            n=0 -> ensures n'=0;
-            n!=0 -> ensures n'=n+1;
-          }
-          //requires true
-          //ensures n'=n-2;
+          requires true
+          ensures n'<0;
        */
      {   
-         n--;
      }
      //uc1 = (*(unsigned char *) s1);
      //uc2 = (*(unsigned char *) s2);
