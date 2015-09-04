@@ -2215,15 +2215,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* let act1 = M_unfold (m_res, 1) in *)
          let act2 = M_infer_unfold (m_res,rhs,HEmp) in
          let wt = 2 in (wt,act2)
-       | DataNode _,  HRel _  -> 
+       | DataNode _,  HRel (hp,args,_)  -> 
          (* failwith "TBI"  *)
+         (* useful for base-case fold x::node<_,_> |- U(x,y) *)
          let act1 = M_base_case_fold m_res in
-         let act2 = M_infer_heap (rhs_node,rhs_rest) in
+         let act2 = M_infer_fold m_res (* (rhs_node,rhs_rest) *) in
          let wt = 1 in
          (* old method do not use base_case_fold *)
          if !Globals.old_base_case_fold_hprel then (wt,act2)
          else (* (wt,act1) *)
-           (wt,Search_action [(wt,act1);(wt,act2)])
+           if List.length args >=2 then (wt,Search_action [(wt,act1);(wt,act2)])
+           else (wt,act2)
        (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
        | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
       )
