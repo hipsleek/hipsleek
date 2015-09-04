@@ -62,6 +62,7 @@ and action =
   | Undefined_action of match_res
   | M_Nothing_to_do of string
   | M_infer_unfold of (match_res * h_formula * h_formula) (* rhs * rhs_rest *)
+  | M_infer_fold of match_res (* ... |- Hp_rel(x,..) *)
   | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula * CVP.vperm_sets)
   (* perform a list of actions until there is one succeed*)
@@ -91,6 +92,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
   | M_split_match m
   | M_fold m
   | M_unfold  (m,_)
+  | M_infer_fold  (m)
   | M_infer_unfold  (m,_,_)
   | M_base_case_unfold m
   | M_base_case_fold m
@@ -185,6 +187,7 @@ let rec pr_action_name a = match a with
   | M_fold e -> fmt_string "Fold"
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
   | M_infer_unfold (e,_,_) -> fmt_string ("InferUnfold ")
+  | M_infer_fold (e) -> fmt_string ("InferFold ")
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
   | M_seg_fold e -> fmt_string "SegFold"
@@ -213,6 +216,7 @@ let rec pr_action_res pr_mr a =
   | M_fold e -> pr_add_str "Fold =>" pr_mr e
   | M_unfold (e,i) -> pr_add_str ("Unfold "^(string_of_int i)^" =>") pr_mr e
   | M_infer_unfold (e,_,_) -> pr_add_str ("InferUnfold =>") pr_mr e
+  | M_infer_fold (e) -> pr_add_str ("InferFold =>") pr_mr e
   | M_base_case_unfold e -> pr_add_str "BaseCaseUnfold =>" pr_mr e
   | M_base_case_fold e -> pr_add_str "BaseCaseFold =>" pr_mr e
   | M_seg_fold (e,_) -> pr_add_str "SegFold =>" pr_mr e
@@ -272,6 +276,7 @@ let action_get_holes a = match a with
   | M_fold e
   | M_unfold (e,_)
   | M_infer_unfold (e,_,_)
+  | M_infer_fold (e)
   | M_seg_fold (e,_)
   | M_acc_fold (e,_)
   | M_rd_lemma e
@@ -1039,12 +1044,20 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
                  h_formula_view_name = c}) as v -> (
         let anns = get_node_annot_args f in
         match rhs_node with
-        | HRel (hp,_,_) ->
+        | HRel (hp,args,_) ->
+          let () = y_binfo_hp (add_str "rhs_node(..|-HRel(x,..))" !CF.print_h_formula) rhs_node in
+          let () = y_binfo_hp (add_str "lhs_node" !CF.print_h_formula) f in
+          let vs_rhs = List.concat (List.map CP.afv args) in
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
-          let p1_eq = p1::p1_eq in
+          let p1_eq = p1::p1_eq (* LHS root aliases *) in
+          let common = CP.intersect_svl vs_rhs p1_eq in
+          let () = y_binfo_hp (add_str "p1_eq" !CP.print_svl) p1_eq in
+          let () = y_binfo_hp (add_str "aset" !CP.print_svl) aset in
           let cmm = coerc_mater_match_with_unk_hp prog c
               (CP.name_of_spec_var hp) (p1::vs1) [] aset f f0 p1_eq in
-          cmm
+          let () = y_binfo_hp (add_str "List.length cmm" string_of_int) (List.length cmm) in
+          if common==[] then cmm
+          else (HEmp (* lhs_rest? *),f (* lhs? *),[],Root)::cmm
         | _ -> 
           (* if (subtype_ann imm1 imm) then *)
           if (CP.mem p1 aset) then
@@ -1087,10 +1100,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         (* let vv = CF.mk_HRel_as_view hp e l in *)
         let vs = List.concat (List.map CP.afv e) in
         let common = CP.intersect_svl vs aset in
-        let () = y_tinfo_hp (add_str "common" pr_svl) common in
-        let () = y_tinfo_hp (add_str "f" !CF.print_h_formula) f in
-        let () = y_tinfo_hp (add_str "f0" !CF.print_h_formula) f0 in
-        let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+        let () = y_binfo_hp (add_str "common" pr_svl) common in
+        let () = y_binfo_hp (add_str "f" !CF.print_h_formula) f in
+        let () = y_binfo_hp (add_str "f0" !CF.print_h_formula) f0 in
+        let () = y_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
         let c = CP.name_of_spec_var hp in
         let cmm = x_add coerc_mater_match_gen c vs right_name r_vargs aset f in
         let () = x_tinfo_hp (add_str "coerc_mater_match (HREL)" (pr_list pr_helper_res)) cmm no_pos in
@@ -2170,6 +2183,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in
          let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in
          let l = left_act@right_act in
+         let f_act = (2,M_infer_fold m_res) in
+         let l = f_act::l in
          let res = 
            match l with
            | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
@@ -2198,7 +2213,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
          (* TODO : check if h_esname in the infer_vars *)
          (* let act1 = M_unfold (m_res, 1) in *)
-         let act2 = M_infer_heap (rhs,HEmp) in
+         let act2 = M_infer_unfold (m_res,rhs,HEmp) in
          let wt = 2 in (wt,act2)
        | DataNode _,  HRel _  -> 
          (* failwith "TBI"  *)
@@ -2578,6 +2593,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec uncertain (_,a) = match a with 
     | M_infer_heap _
     | M_infer_unfold _
+    | M_infer_fold _
     | M_base_case_fold _
     | M_rd_lemma _
     | M_lemma  _

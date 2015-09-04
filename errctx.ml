@@ -2,6 +2,7 @@ open Cformula
 open Prooftracer
 open Globals
 
+
 let mkFailCtx_may ?(conseq=None) ln s estate pos =
   let conseq = match conseq with
     | None -> (formula_of_heap HFalse pos)

@@ -11,8 +11,8 @@ HeapPred R1(node x).
 HeapPred U2(node x,int v).
 
 
-//infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
-infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
 //infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
 //infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
 print residue.
@@ -20,39 +20,33 @@ expect Valid.
 
 
 /*
-# ex25b8.slk 
+# ex25b6.slk 
 
- infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
 
-Entail (1) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3a
+# schedule a infer_fold??
+
+Entail (1) : Fail.(may) cause:UnionR[**solver.ml#11576:,Cannot infer: infer_collect_hp_rel 3a]
 
 Residue:
 
  MaybeErr Context: 
-   fe_kind: MAY
-   fe_name: separation entailment
-   fe_locs: {
-     fc_message: infer_heap_node
-     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-   }
- [[ InferFold ]]
- CEX:false
-Validate 1: Expecting(3)Valid BUT got : Fail_May
-
-# scheduled but process_action failed..
-
-(==solver.ml#11120==)
-compute_actions@1
-compute_actions inp1 :EQ ptr:[]
-compute_actions inp2 :LHS heap: x::ll<>@M
-compute_actions inp3 :LHS pure: true
-compute_actions inp4 :RHS cand:[ U1(x)]
-compute_actions inp5 :RHS pure: true
-compute_actions inp6 :right alias:[]
-compute_actions@1 EXIT: InferFold =>
-   LHS: x::ll<>@M
-   RHS: U1(x)
-
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: BaseCaseFold on Unknown Pred (not on inferred list)
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  BaseCaseFold]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  InferHeap]]
+   
 --------------------------------------------
 infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
 

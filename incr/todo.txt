@@ -1989,6 +1989,24 @@ infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
                   U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
                    true]
 =====================================================================
+# ex25b8.slk 
+
+ infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+
+Entail (1) : Fail.(may) cause:**solver.ml#13179:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferFold ]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
 =====================================================================
 =====================================================================
 =====================================================================

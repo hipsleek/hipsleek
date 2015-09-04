@@ -12665,6 +12665,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         pm_aux(Context.M_infer_heap (rhs_node,rhs_rest))
         (* failwith "TBI" *)
       end
+    | Context.M_infer_fold (r) ->
+      begin
+        let rhs_node = r.match_res_rhs_node  in
+        let rhs_rest = r.match_res_rhs_rest  in
+        pm_aux(Context.M_infer_heap (rhs_node,rhs_rest))
+        (* failwith "TBI" *)
+      end
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> begin
         x_tinfo_hp (add_str "M_unfold" (fun _ -> "")) () pos;
         match lhs_node with
@@ -13168,8 +13175,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
             if (not res) then (* r *)
               let err_msg = "infer_heap_node" in
-              (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "infer_heap_node" *) err_msg estate (Base rhs_b) None pos,
-                                              CF.mk_failure_may ("Cannot infer: infer_collect_hp_rel 3a") sl_error, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) (mk_cex false), NoAlias)
+              let conseq = Some (Base rhs_b) in
+              (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"infer_collect_hp_rel") err_msg estate pos,NoAlias)
+              (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext (\* "infer_heap_node" *\) err_msg estate (Base rhs_b) None pos, *)
+              (*                                 CF.mk_failure_may ("Cannot infer: infer_collect_hp_rel 3a") sl_error, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) (mk_cex false), NoAlias) *)
             else
               let n_rhs_b =  (Base {rhs_b with formula_base_heap = rhs_rest}) in
               (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
