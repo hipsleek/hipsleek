@@ -7,8 +7,8 @@ int test(int n)
      while (n!=0) 
        /*@ 
           case {
-            n=0 -> ensures n'=0;
-            n!=0 -> ensures n'=n-1;
+            n>=0 -> ensures n'=0;
+            n<0 -> ensures false;
           }
        */
      {   
