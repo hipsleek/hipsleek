@@ -3832,14 +3832,14 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 (*   MCP.mix_formula -> *)
 (*   VarGen.loc -> bool * CF.entail_state * Sautil.CF.hprel list *)
 (* this method must not be called under is_folding since H(..) --> emp will be collected *)
-let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_rf pos =
+let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_rf pos =
   (*********INTERNAL**********)
   let get_eqset puref =
     let (subs,_) = CP.get_all_vv_eqs puref in
     let eqset = CP.EMapSV.build_eset subs in
     eqset
   in
-  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, []) else
+  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, [], lhs_b) else
     let es_cond_path = CF.get_es_cond_path es0 in
     (* type: CF.formula_base -> *)
     (*   CF.formula_base -> *)
@@ -3864,7 +3864,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
       let pr6 = pr_option (pr_pair pr_hr !CF.print_formula) in
       let () = x_tinfo_hp (add_str "extr_ans(list)" pr6) extr_ans no_pos in
       (* let () = x_tinfo_hp (add_str "extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in *)
-      let rhs_f = (CF.Base rhs_b) in
+      let rhs_f = (CF.Base new_rhs_b) in
       let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
       let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
@@ -3886,10 +3886,10 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
               let lhs = CF.repl_pure_formula p lhs in
               let grd = x_add check_guard es0 ass_guard lhs_b new_lhs_b new_rhs_b pos in
               let hprel_ass = CF.mkHprel knd [] [] args2 lhs grd rhs_f es_cond_path in
-              ((hp,args2),hprel_ass)
+              ((hp,args2,new_rhs_b.CF.formula_base_pure),hprel_ass)
             ) lst 
       in
-      let () = x_tinfo_hp (add_str "hprel_lst"  (pr_list (pr_pair pr_none Cprinter.string_of_hprel_short))) hprel_lst no_pos in
+      let () = x_binfo_hp (add_str "hprel_lst"  (pr_list (pr_pair pr_none Cprinter.string_of_hprel_short))) hprel_lst no_pos in
       if  extr_ans (* extr_hd *) != None then
         (* let knd = CP.RelAssume [hp] in *)
         (* let hprel_ass = CF.mkHprel knd [] [] args lhs None rhs_f es_cond_path in *)
@@ -3921,7 +3921,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
       with _ ->
         PK_Unknown in
     if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not (check_is_classic ())) then
-      (false, es0,[])
+      (false, es0, [], lhs_b)
     else
       let ivs = es0.es_infer_vars_hp_rel in
       (*check whether LHS/RHS contains hp_rel*)
@@ -3931,7 +3931,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
         begin
           (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
           let () = x_tinfo_pp " no hp_rel found" pos in
-          (false,es0,[])
+          (false,es0,[], lhs_b)
         end
       else
         begin
@@ -3946,20 +3946,27 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
           let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
           (* let () = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
           let _ =
-            x_binfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
-            x_binfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
+            x_tinfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
+            x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
             x_binfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
           in
           (*TOFIX: detect HEmp or HTrue *)
-          let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
+          let rhs_b0a = formula_base_of_heap (CF.HEmp) pos in
+          let rhs_b0 = {rhs_b0a with formula_base_pure = mix_rf} in
           (* let rhs_htrue_b0 = formula_base_of_heap (CF.HTrue) pos in *)
           (********** BASIC INFO LHS, RHS **********)
           let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
           let l_non_infer_hps = CP.diff_svl lhrs ivs in
           (**smart subst**)
           let leqs0 = (MCP.ptr_equations_without_null mix_lf) in
-          let lhs_b1 = Sautil.smart_subst_lhs lhs0 l_hpargs leqs0 es0.es_infer_vars in
-          let rhs_b1 = rhs_b0 in
+          let post_hps,prog_vars =
+            get_prog_vars es0.CF.es_infer_vars_sel_hp_rel rhs_b0.CF.formula_base_heap pk in
+          let r_eqsetmap = CP.EMapSV.build_eset es0.CF.es_rhs_eqset in
+          let lhs_b1, rhs_b1, subst_prog_vars = Cfutil.smart_subst_new lhs_b0 rhs_b0 (l_hpargs)
+              l_emap0 r_emap0 r_eqsetmap [] (prog_vars@es0.es_infer_vars)
+          in
+          (* let lhs_b1 = Sautil.smart_subst_lhs lhs0 l_hpargs leqs0 es0.es_infer_vars in *)
+          (* let rhs_b1 = rhs_b0 in *)
           let lhs_h = lhs_b1.CF.formula_base_heap in
           let ( _,mix_lf1,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
           let ( _,mix_rf1,_,_,_,_) = CF.split_components (CF.Base rhs_b1) in
@@ -3972,11 +3979,11 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
           let () = x_tinfo_hp (add_str "ivs" !CP.print_svl) ivs no_pos in
           let sel_hprels = List.filter (fun (hp,_) -> CP.mem_svl hp ivs) tmp  in
           if sel_hprels = [] then
-            (false, es0,[])
+            (false, es0, [], lhs_b)
           else
             let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
             let leqNulls = MCP.get_null_ptrs mix_lf1 in
-            let sel_hpargs, hprel_ass0 = List.fold_left (fun (ls1,ls2) (hp,args) ->
+            let sel_hpargs, hprel_ass0, abd_mixs = List.fold_left (fun (ls1,ls2,ls3) (hp,args) ->
                 let rhs_b2 =
                   (* if (rhs0 = CF.HTrue && List.exists (fun sv -> not (CP.mem_svl sv leqNulls)) args) then *)
                   (* (\* hp /\ p ==> htrue *\) rhs_htrue_b0 *)
@@ -3985,34 +3992,47 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
                 let r_opt = x_add generate_constrs lhs_b1 rhs_b2 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
                 match r_opt with
                 | Some lst ->
-                  let (hp_arg_lst,ass_lst) = List.split lst in
-                  (ls1@hp_arg_lst (* [(hp,args)] *),ls2@ass_lst(* [ass] *))
-                | None -> (ls1,ls2)
-              ) ([],[]) sel_hprels in
+                  let (hp_arg_lst_pure,ass_lst) = List.split lst in
+                  let hp_arg_lst, abd_mps = List.fold_left (fun (ls1,ls2) (hp,args,mf) -> ls1@[(hp,args)],ls2@[mf]) ([],[]) hp_arg_lst_pure in
+                  (ls1@hp_arg_lst (* [(hp,args)] *),ls2@ass_lst(* [ass] *), ls3@abd_mps)
+                | None -> (ls1,ls2,ls3)
+              ) ([],[],[]) sel_hprels in
             let ex_ass = (rel_ass_stk # get_stk) in
             let hprel_ass = Gen.BList.difference_eq Sautil.constr_cmp hprel_ass0 ex_ass in
             let () = x_tinfo_hp (add_str "sel_hpargs" pr_hp_lst) sel_hpargs no_pos in
-            if sel_hpargs = [] || hprel_ass = [] then (false,es0,[]) else
+            if sel_hpargs = [] || hprel_ass = [] then (false,es0,[], lhs_b) else
               (*update residue*)
               let reqs0 = (MCP.ptr_equations_without_null mix_rf) in
               let empty_eqset = CP.EMapSV.mkEmpty in
               let all_aset = CP.add_equiv_list_eqs empty_eqset (leqs0@reqs0@es0.CF.es_rhs_eqset) in
               let sel_hpargs2 = List.map (fun (hp,args) -> (hp, CP.find_eq_closure all_aset args)) sel_hpargs in
               let nhf = CF.drop_data_view_hpargs_nodes_hf lhs_b0.CF.formula_base_heap CF.select_dnode CF.select_vnode Sautil.select_subsumehpargs [] [] sel_hpargs2 in
-              let new_es_formula = CF.Base {lhs_b0 with CF.formula_base_heap = nhf} in
+              let abd_ps = List.fold_left (fun acc mx ->
+                  let ps = CP.list_of_conjs (MCP.pure_of_mix mx) in
+                  acc@ps
+              ) [] abd_mixs in
+              let abd_ps1 = CP.remove_redundant_helper abd_ps [] in
+              let abd_mf = MCP.mix_of_pure (CP.conj_of_list abd_ps1 no_pos) in
+              let () = x_tinfo_hp (add_str "abd_mf" Cprinter.string_of_mix_formula) abd_mf no_pos in
+              let new_es_formula = CF.Base {lhs_b0 with
+                  CF.formula_base_pure = MCP.merge_mems lhs_b0.CF.formula_base_pure abd_mf true;
+                  CF.formula_base_heap = nhf} in
               let es1 = {es0 with CF.es_formula = new_es_formula} in
-              (true, es1, hprel_ass)
+              let n_lhs_b = {lhs_b with CF.formula_base_pure = MCP.merge_mems lhs_b.CF.formula_base_pure abd_mf true;} in
+              (true, es1, hprel_ass, n_lhs_b)
         end
 
 
-let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) (* lhs_b rhs0 *) rhs_p pos =
+let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) lhs_b (* rhs0 *) rhs_p pos =
   let pr1 =  Cprinter.string_of_estate_infer_hp (* Cprinter.string_of_formula *) in
   let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 =  (pr_triple (add_str "Res" string_of_bool) (add_str "Sel HP" Cprinter.string_of_estate_infer_hp)
-      (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))) in
+  let pr3 =  (pr_quad (add_str "Res" string_of_bool) (add_str "Sel HP" Cprinter.string_of_estate_infer_hp)
+      (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))
+      (add_str "lhs base" Cprinter.string_of_formula_base)
+  ) in
   let pr4 = Cprinter.string_of_h_formula in
   Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 (* pr4 *) pr2 pr3
-    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es (* lhs_b rhs0 *) rhs_p pos) es(* .CF.es_formula *) (* rhs0 *) rhs_p
+    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es lhs_b (* rhs0 *) rhs_p pos) es(* .CF.es_formula *) (* rhs0 *) rhs_p
 
 (*******************************************************)
 (*******************************************************)

@@ -8285,15 +8285,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     (* L2: why not classic enven post proving? incr/ex10a-ll-size, skip2,skip3 *)
     let () = x_tinfo_hp (add_str "(check_is_classic ())" string_of_bool) (check_is_classic ()) no_pos in
     let h2, p2, _, _, _, _ = split_components conseq in
-    let estate_orig1, hprel_ass=
+    let estate_orig1, hprel_ass, lhs=
       if (h2 = HEmp || h2 = HTrue) && not(is_folding) &&
          (!Globals.old_collect_hprel || (check_is_classic ()))
       then 
         (*L2: should we need classic for emp inference?*)
         (* WN: I would think so. Any counter-example? *)
-        let (res,new_estate, rels) = x_add Infer.infer_collect_hp_rel_empty_rhs 1 prog estate_orig (* lhs h2 *) p2 pos in
-        if res then new_estate,rels else estate_orig,[]
-      else estate_orig,[]
+        let (res,new_estate, rels, new_lhs) = x_add Infer.infer_collect_hp_rel_empty_rhs 1 prog estate_orig lhs (* h2 *) p2 pos in
+        if res then new_estate,rels,new_lhs else estate_orig,[], lhs
+      else estate_orig,[], lhs
     in
     let ante = estate_orig1.CF.es_formula in
     let h1, _, _, _, _, _ = split_components ante in

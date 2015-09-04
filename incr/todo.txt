@@ -1866,7 +1866,7 @@ Residue:
                    true]
 
 =====================================================================
-# ex15a6.slk -dre "infer_co" (Loc to fix)
+# ex15a6.slk -dre "infer_co" (Loc to fix): FIXED
 
 infer [U1,@classic] U1(x) |- x=null.
 

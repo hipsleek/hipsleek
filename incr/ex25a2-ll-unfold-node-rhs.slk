@@ -10,7 +10,10 @@ HeapPred U1(node x).
 HeapPred R1(node x).
 HeapPred U2(node x,node y).
 
-infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+//infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+
 //infer [U1,@classic] U1(x) |- x=null.
 print residue.
 
