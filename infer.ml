@@ -3795,13 +3795,25 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
               in
               (true, new_es, new_lhs, n_es_heap, oerror_es)
         end
-
+(*
+  output:
+   - res = true: succ
+   - new_estate: new entailment state
+   - n_lhs: if rhs_node is a data/heape ie. x::node<_> (and lhs_node is a unknown pred i.e. H(x)),
+       this abduction method (infer_collect_hp_rel) genrates an abduction relation
+         - H(x) ==> x::node<_>
+       and implicitly unfold H(x) into the entailment state by
+        (i) returning (n_lhs = x::node<_>,  n_es_heap_opt = None)
+        (ii) matching n_lhs and rhs_node
+   - n_es_heap_opt: to do
+   - oerror_es: for error inference
+*)
 let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
   let pr4 = Cprinter.string_of_estate_infer_hp in
-  let pr5 =  pr_penta string_of_bool pr4 Cprinter.string_of_h_formula
+  let pr5 =  pr_penta string_of_bool pr4 (add_str "abd heap" Cprinter.string_of_h_formula)
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2) in
   Debug.no_3_num i "infer_collect_hp_rel" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
     ( fun _ _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b es
