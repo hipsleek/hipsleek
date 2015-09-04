@@ -61,6 +61,7 @@ and action =
   | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
   | M_Nothing_to_do of string
+  | M_infer_unfold of (match_res * h_formula * h_formula) (* rhs * rhs_rest *)
   | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula * CVP.vperm_sets)
   (* perform a list of actions until there is one succeed*)
@@ -90,6 +91,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
   | M_split_match m
   | M_fold m
   | M_unfold  (m,_)
+  | M_infer_unfold  (m,_,_)
   | M_base_case_unfold m
   | M_base_case_fold m
   | M_seg_fold (m,_)
@@ -182,6 +184,7 @@ let rec pr_action_name a = match a with
   | M_split_match e -> fmt_string "Split&Match "
   | M_fold e -> fmt_string "Fold"
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
+  | M_infer_unfold (e,_,_) -> fmt_string ("InferUnfold ")
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
   | M_seg_fold e -> fmt_string "SegFold"
@@ -209,6 +212,7 @@ let rec pr_action_res pr_mr a =
   | M_split_match e -> pr_add_str "SplitMatch =>" pr_mr e
   | M_fold e -> pr_add_str "Fold =>" pr_mr e
   | M_unfold (e,i) -> pr_add_str ("Unfold "^(string_of_int i)^" =>") pr_mr e
+  | M_infer_unfold (e,_,_) -> pr_add_str ("InferUnfold =>") pr_mr e
   | M_base_case_unfold e -> pr_add_str "BaseCaseUnfold =>" pr_mr e
   | M_base_case_fold e -> pr_add_str "BaseCaseFold =>" pr_mr e
   | M_seg_fold (e,_) -> pr_add_str "SegFold =>" pr_mr e
@@ -267,6 +271,7 @@ let action_get_holes a = match a with
   | M_lhs_case e
   | M_fold e
   | M_unfold (e,_)
+  | M_infer_unfold (e,_,_)
   | M_seg_fold (e,_)
   | M_acc_fold (e,_)
   | M_rd_lemma e
@@ -2180,14 +2185,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          ;
        | HRel (h_name, args, _), (DataNode _ as rhs) -> 
          (* TODO : check if h_name in the infer_vars *)
-         let act1 = M_unfold (m_res, 1) in
+         let act1 = M_unfold (m_res, 1) in (* base-case unfold implemented *)
          let act2 = M_infer_heap (rhs,HEmp) in
+         let act3 = M_infer_unfold (m_res,rhs,HEmp) in
          let wt = 1 in
          (* old method do not use base_case_unfold *)
          if !Globals.old_base_case_unfold_hprel then (wt,act2)
          (* (2,M_infer_heap (rhs,HEmp)) *)
-         else if List.length args<2 then (wt,act2)
-         else (wt,Search_action [(wt,act1);(wt,act2)])
+         else if List.length args<2 then (wt,act3)
+         else (wt,Search_action [(wt,act1);(wt,act3)])
        (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
          (* TODO : check if h_esname in the infer_vars *)
@@ -2571,6 +2577,7 @@ and sort_wt (ys: action_wt list) : action_wt list =
 and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec uncertain (_,a) = match a with 
     | M_infer_heap _
+    | M_infer_unfold _
     | M_base_case_fold _
     | M_rd_lemma _
     | M_lemma  _
@@ -2749,6 +2756,7 @@ and sort_wt_new_x (ys: action_wt list) : action_wt list =
 
 and pick_unfold_only ((w,a):action_wt) : action_wt list =
   match a with
+  | M_infer_unfold _ 
   | M_unfold _ -> [(w,a)]
   | Seq_action l  | Cond_action l -> 
     if l==[] then [] 

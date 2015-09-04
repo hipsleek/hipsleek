@@ -1964,7 +1964,30 @@ infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
  emp&{FLOW,(20,21)=__norm#E}[]
  es_infer_vars_hp_rel: [U2],Inferred Relations:[ U2(x,v) |#|  --> emp])
 =====================================================================
+# ex25b2.slk 
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+# this seems unsound. In particulare, q::ll<> on RHS is lost.
+  Why? Also, there is no unfold scheduled?
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_35(q_34)&q=q_34 |#|3  --> emp&true; 
+                  U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
+                   true]
+[[ InferHeap]]
 =====================================================================
+# ex25b2.slk 
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+# this seems unsound. In particulare, q::ll<> on RHS 
+  is lost. Why? Also, there is no unfold scheduled?
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_35(q_34)&q=q_34 |#|3  --> emp&true; 
+                  U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
+                   true]
 =====================================================================
 =====================================================================
 =====================================================================

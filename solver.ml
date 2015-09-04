@@ -12658,6 +12658,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       in
       do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
+    | Context.M_infer_unfold (r,_,_) ->
+      begin
+        let rhs_node = r.match_res_rhs_node  in
+        let rhs_rest = r.match_res_rhs_rest  in
+        pm_aux(Context.M_infer_heap (rhs_node,rhs_rest))
+        (* failwith "TBI" *)
+      end
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> begin
         x_tinfo_hp (add_str "M_unfold" (fun _ -> "")) () pos;
         match lhs_node with
