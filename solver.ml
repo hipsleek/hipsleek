@@ -10613,6 +10613,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         (* ivar belongs to ivars                                        *)
         (* (ivar, impl_var) belongs to ivar_subs_to_conseq              *)
         let () =  x_tinfo_hp  (add_str   (" impl_vars: ")  !CP.print_svl )impl_vars no_pos in
+        (* WN: what are impl_tvars ? *)
         let ((impl_tvars, tmp_ivars, ivar_subs_to_conseq), other_subs) = 
           x_add subs_to_inst_vars rho ivars impl_vars pos 
         in
@@ -10675,7 +10676,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* let () =  Debug.info_zprint  (lazy  ("new_exist_vars: " ^ (!CP.print_svl new_exist_vars))) no_pos in *)
           (* let () =  Debug.info_zprint  (lazy  ("impl_tvars: " ^ (!CP.print_svl impl_tvars))) no_pos in *)
           (* let () =  Debug.info_zprint  (lazy  ("estate.es_gen_expl_vars: " ^ (!CP.print_svl estate.es_gen_expl_vars))) no_pos in *)
-          let to_lhs, to_rhs, ext_subst = get_eqns_free other_subs new_exist_vars impl_tvars fvars_rhs estate.es_gen_expl_vars pos in
+          let to_lhs, to_rhs, ext_subst = x_add get_eqns_free other_subs new_exist_vars new_impl_vars (* impl_tvars *) fvars_rhs estate.es_gen_expl_vars pos in
           let ext_subst = ext_subst @ subst in
           (* let is_ann a = CP.is_ann_type (CP.type_of_spec_var a) in *)
           let () =  Debug.ninfo_zprint  (lazy  ("to_lhs: " ^ (!CP.print_formula to_lhs))) no_pos in

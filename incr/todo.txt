@@ -2286,32 +2286,32 @@ Residue:
 =====================================================================
 # ex25b3a.slk 
 
-infer [@classic,@pure_field] U2(x,_) |- U2(x,x).
+infer [@classic,@pure_field] U2(xx,a) |- U2(xx,x).
 
-# UNSOUND matching of HRel
+# x is implicit..
+
 
 Residue:
- <1>emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
-[[ Match(UNK)]]
+ <1>emp&x=a&{FLOW,(20,21)=__norm#E}[]
 
-(==solver.ml#12345==)
+==solver.ml#12370==)
 do_match@1
-do_match inp1 : U2(x,Anon_13)
-do_match inp2 : U2(x,x)
+do_match inp1 : U2(xx,a)
+do_match inp2 : U2(xx,x)
 do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
- es_gen_impl_vars(E): []
+ es_gen_impl_vars(E): [x]
  es_infer_obj: [@pure_field,@leak]
+ es_gen_impl_vars: [x]
  es_trace:  Match(UNK)
 do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
 do_match inp5 :[]
-do_match@1 EXIT: [ emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
+do_match@1 EXIT: [ emp&x=a&{FLOW,(20,21)=__norm#E}[]
   es_gen_impl_vars(E): []
-  es_heap: U2(x,Anon_13)
+  es_heap: U2(xx,a)
   es_infer_obj: [@pure_field,@leak]
   es_trace:  Match(UNK)]
 
 -=====================================================================
-
 infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
 
 # if y is global, this should fail.
@@ -2332,6 +2332,25 @@ lemmas/lseg_complex.slk({E1#Valid},{E2#Valid})
  veribsync/barrier-static.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid}) 
  veribsync/barrier-dynamic2.slk({E10#Valid},{E11#Valid},{E14#Valid},{E15#Valid},{E18#Valid},{E19#Valid},{E20#Valid},{E22#Valid},{E23#Valid},{E24#Valid},{E25#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
 =====================================================================
+# ex25b3d.slk (WN to fix)
+
+INPUT 0: [@leak,@pure_field][] 
+ ### ante =  U3(xx,a,b)&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Impl)[x]U3(xx,x,x)&{FLOW,(20,21)=__norm#E}[]
+
+run_infer:
+ U3(xx,a,b)&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Impl)[x]U3(xx,x,x)&{FLOW,(20,21)=__norm#E}[]
+
+
+# How can two occurrences of x be both implicit?
+
+ <1>emp&x=a & x=b&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+# This can lead to unsoundness.
+
 =====================================================================
 =====================================================================
 =====================================================================
