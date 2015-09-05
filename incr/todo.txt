@@ -2109,7 +2109,12 @@ ctx length:0
  [[ InferFold ]]
  CEX:true
 =====================================================================
-# ex25b6a.slk 
+# ex25b6a.slk FIXED
+
+the problems of pure field likely come from CF.get_ptrs_w_args
+ - default this method returns node-based specvars
+ - remember set ~en_pure_field:true if we want to get pure fields also
+=================
 
 # How come not picking pure field but ex25b6.slk does.
   If we stage the folding process, maybe we may be able to infer

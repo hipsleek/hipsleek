@@ -5985,7 +5985,7 @@ let rec look_up_subst_group hp args nrec_grps=
     | [] -> fs
     | (_, args2,_, f,_)::pss->
       (*should refresh f*)
-      let ptrs = CF.get_ptrs_w_args_f f in
+      let ptrs = CF.get_ptrs_w_args_f ~en_pure_field:true f in
       let ss1 = refresh_ptrs args2 (CP.remove_dups_svl ptrs) [] in
       let ss = List.combine args2 args in
       let nf1 = x_add CF.subst (ss) f in
@@ -7577,7 +7577,7 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
   let all_hps0, all_data_used0, all_view_used0 = List.fold_left (fun (r1,r2,r3) cs ->
       let ldns, lvns, lhps = CF.get_hp_rel_formula cs.CF.hprel_lhs in
       let rdns, rvns, rhps = CF.get_hp_rel_formula cs.CF.hprel_rhs in
-      let ptrs = CP.remove_dups_svl ((CF.get_ptrs_w_args_f cs.CF.hprel_lhs)@(CF.get_ptrs_w_args_f cs.CF.hprel_rhs)) in
+      let ptrs = CP.remove_dups_svl ((CF.get_ptrs_w_args_f ~en_pure_field:false cs.CF.hprel_lhs)@(CF.get_ptrs_w_args_f ~en_pure_field:false cs.CF.hprel_rhs)) in
       let ptrs_node_used = List.fold_left (fun r t ->
           match t with
           | Named ot -> if ((String.compare ot "") ==0) then r else r@[ot]

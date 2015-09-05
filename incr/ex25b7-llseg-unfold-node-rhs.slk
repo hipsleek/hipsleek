@@ -12,7 +12,7 @@ HeapPred U2(node x,int v).
 
 
 //infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
-infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+infer [U1,@classic,@pure_field] U1(x) |- x::ll<> .
 print residue.
 expect Valid.
 

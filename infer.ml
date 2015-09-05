@@ -2441,7 +2441,7 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
   3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
 *)
 
-let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
   let get_rhs_unfold_fwd_svl is_view h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
@@ -2466,8 +2466,10 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
-      let () = DD.ninfo_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
-      let args11 = if Globals.infer_const_obj # is_pure_field 
+      let () = DD.info_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
+       let () = DD.ninfo_hprint (add_str  " es.CF.es_infer_obj # is_pure_field_all" string_of_bool)  es.CF.es_infer_obj # is_pure_field_all pos in
+      let args11 = if (* Globals.infer_const_obj # is_pure_field *)
+        es.CF.es_infer_obj # is_pure_field_all
       (* !Globals.sa_pure_field *) then
           let args11 = List.map (fun sv ->
               if CP.is_node_typ sv then (sv, I)
@@ -2811,7 +2813,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
 (*   list * CP.spec_var list * CP.formula * 'c list * *)
 (*   (Cast.F.h_formula * (Sautil.CP.spec_var * CF.CP.spec_var list)) list * *)
 (*   'd list * CF.CP.spec_var list * CF.h_formula option *)
-let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.prtt_string_of_h_formula in
@@ -2833,7 +2835,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
     (* (add_str "rhs_h_matched_set" !print_svl) *)
     (add_str "lfb" pr1)
     pr5
-    ( fun _ _ -> find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest
+    ( fun _ _ -> find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest
         (* rhs_h_matched_set *) leqs reqs pos (* total_unk_map *) post_hps prog_vars) unmatched (* rhs_h_matched_set *) lfb
 
 
@@ -3748,7 +3750,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
             (********** END BASIC INFO LHS, RHS **********)
             let is_found_mis, ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,
                 lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
-              find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
+              find_undefined_selective_pointers prog es lhs_b1 mix_lf1 rhs rhs_rest
                 (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
             if not is_found_mis ||
               List.exists (fun (hp,_) -> not (CP.mem_svl hp ivs)) rselected_hpargs (*incr/ex15c(1)*)
@@ -3802,7 +3804,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
    - n_lhs: if rhs_node is a data/heape ie. x::node<_> (and lhs_node is a unknown pred i.e. H(x)),
        this abduction method (infer_collect_hp_rel) genrates an abduction relation
          - H(x) ==> x::node<_>
-       and implicitly unfold H(x) into the entailment state by
+       and implicitly unfolds H(x) into the entailment state by
         (i) returning (n_lhs = x::node<_>,  n_es_heap_opt = None)
         (ii) matching n_lhs and rhs_node
    - n_es_heap_opt: to do

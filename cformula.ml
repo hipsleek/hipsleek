@@ -5815,12 +5815,12 @@ and get_ptrs (f: h_formula): CP.spec_var list = match f with
     -> (get_ptrs h1)@(get_ptrs h2)
   | _ -> []
 
-and get_ptrs_w_args_f (f: formula)=
+and get_ptrs_w_args_f ?(en_pure_field=false) (f: formula)=
   match f with
   | Base fb ->
-    CP.remove_dups_svl (get_ptrs_w_args fb.formula_base_heap)
+    CP.remove_dups_svl (get_ptrs_w_args ~en_pure_field:en_pure_field fb.formula_base_heap)
   | Exists fe ->
-    CP.remove_dups_svl (get_ptrs_w_args fe.formula_exists_heap)
+    CP.remove_dups_svl (get_ptrs_w_args ~en_pure_field:en_pure_field fe.formula_exists_heap)
   | _ -> report_error no_pos "CF.get_ptrs_w_args_f: not handle yet"
 
 and get_ptrs_w_args ?(en_pure_field=false) (f: h_formula): CP.spec_var list = match f with
@@ -5835,7 +5835,7 @@ and get_ptrs_w_args ?(en_pure_field=false) (f: h_formula): CP.spec_var list = ma
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
-    -> (get_ptrs_w_args h1)@(get_ptrs_w_args h2)
+    -> (get_ptrs_w_args ~en_pure_field:en_pure_field h1)@(get_ptrs_w_args ~en_pure_field:en_pure_field h2)
   | HRel (_,eargs,_) -> (List.fold_left List.append [] (List.map CP.afv eargs))
   | _ -> []
 
@@ -8594,9 +8594,10 @@ and drop_data_view_hpargs_nodes_fb fb fn_data_select fn_view_select fn_hrel_sele
   (*assume keep vars = dnodes*)
   let () = DD.ninfo_zprint (lazy  ("  keep" ^ (!CP.print_svl keep_pure_vars))) no_pos in
   let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
+  let () = DD.ninfo_hprint (add_str  " new_p" !CP.print_formula) new_p no_pos in
   let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
   (* DD.info_zprint (lazy  ("  keep" ^ (!CP.print_svl keep_pure_vars))) no_pos; *)
-  (* DD.info_zprint (lazy  ("  new_p" ^ (!CP.print_formula new_p))) no_pos; *)
+  let () = DD.ninfo_zprint (lazy  ("  new_p1 (after neqNull)" ^ (!CP.print_formula new_p1))) no_pos in
   {fb with formula_base_heap = new_hf;
            formula_base_pure = MCP.mix_of_pure new_p1;}
 
