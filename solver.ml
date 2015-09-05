@@ -9482,7 +9482,7 @@ and do_base_case_unfold_only prog ante conseq estate lhs_node rhs_node  is_foldi
     (fun _ _ _ _ -> do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b) 
     ante conseq lhs_node rhs_node 
 
-and do_unfold_hp_rel_x prog estate conseq is_folding pos hp vs=
+and do_unfold_hp_rel_x prog estate conseq rhs_node is_folding pos hp vs=
   let rec subst_hprel_2_view hp args vn hf=
     match hf with
     | HRel (hp1, eargs1, _) ->
@@ -9505,8 +9505,15 @@ and do_unfold_hp_rel_x prog estate conseq is_folding pos hp vs=
   let lhds, _, _ = CF.get_hp_rel_h_formula lhf in
   let leqs = (MCP.ptr_equations_without_null mlf) in
   let leqNulls = MCP.get_null_ptrs mlf in
-  let ass_guard = x_add Infer.find_guard prog lhds leqs leqNulls [(hp,CP.diff_svl vs leqNulls)] [] in
-  let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl vs) (CP.mkTrue pos) in
+  let norm_rhs_view_node_args = (CP.diff_svl (CF.get_ptrs_w_args ~en_pure_field:estate.CF.es_infer_obj # is_pure_field_all rhs_node) vs) in
+  let rhs_view_node_args = CP.subst_var_list estate.CF.es_rhs_eqset norm_rhs_view_node_args in
+  let ass_guard = x_add Infer.find_guard prog lhds leqs leqNulls
+    [(hp,CP.diff_svl (CP.remove_dups_svl (vs@rhs_view_node_args)) leqNulls)] (* rhs_arg *)[] in
+  let sel_eqns_svl = match ass_guard with
+    | None -> vs
+    | Some f -> CP.intersect_svl vs ((CF.get_ptrs f)@ (CF.get_ptrs rhs_node)) in
+  let () = DD.ninfo_hprint (add_str "sel_eqns_svl" !CP.print_svl) sel_eqns_svl no_pos in 
+  let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl sel_eqns_svl) (CP.mkTrue pos) in
   let rhs_b = CF.formula_base_of_pure (MCP.mix_of_pure rhs_p) pos in
   (* let rhs = CF.formula_of_pure_formula rhs_p pos in *)
   let rhs = CF.Base rhs_b in
@@ -9543,11 +9550,12 @@ and do_unfold_hp_rel_x prog estate conseq is_folding pos hp vs=
   let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
   (res_rs, prf)
 
-and do_unfold_hp_rel prog estate conseq is_folding pos hp vs=
+and do_unfold_hp_rel prog estate conseq rhs_node is_folding pos hp vs=
   let pr1 = pr_none in
-  Debug.no_3 "do_unfold_hp_rel"
-    Cprinter.string_of_entail_state !CP.print_sv !CP.print_svl pr1
-    (fun _ _ _ -> do_unfold_hp_rel_x prog estate conseq is_folding pos hp vs) estate hp vs
+  let pr2 = !CF.print_h_formula in
+  Debug.no_4 "do_unfold_hp_rel"
+    Cprinter.string_of_entail_state !CP.print_sv !CP.print_svl pr2 pr1
+    (fun _ _ _ _ -> do_unfold_hp_rel_x prog estate conseq rhs_node is_folding pos hp vs) estate hp vs rhs_node
 
 and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_folding pos rhs_b =
   if (is_data lhs_node) then None
@@ -12705,7 +12713,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         pm_aux(Context.M_infer_heap (rhs_node,rhs_rest))
         (* failwith "TBI" *)
       end
-    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> begin
+    | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
+      Context.match_res_rhs_node=rhs_node;
+      },unfold_num) -> begin
         x_tinfo_hp (add_str "M_unfold" (fun _ -> "")) () pos;
         match lhs_node with
         | HRel (hp,args,_) ->
@@ -12714,7 +12724,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               failwith "TBI"
             else
               let vs = List.map CP.exp_to_sv args in
-              do_unfold_hp_rel prog estate conseq is_folding pos hp vs
+              do_unfold_hp_rel prog estate conseq rhs_node is_folding pos hp vs
           else
             let msg = "UnFold on Unknown Pred (not on inferred list)" in
             (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)

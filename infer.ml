@@ -2371,7 +2371,7 @@ let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
   let l_args1 = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
   let l_args2 = CF.find_close l_args1 leqs in
   let cl_null_ptrs = CF.find_close null_ptrs leqs in
-  let l_args3 = CP.diff_svl l_args2 cl_null_ptrs in
+  let l_args3 = CP.diff_svl l_args2(* (CP.remove_dups_svl (l_args2@rhs_args)) *) cl_null_ptrs in
   let () = Debug.ninfo_hprint (add_str "l_args2"  !CP.print_svl) l_args2 no_pos in
   let () = Debug.ninfo_hprint (add_str "l_args3"  !CP.print_svl) l_args3 no_pos in
   let () = Debug.ninfo_hprint (add_str "rhs_args"  !CP.print_svl) rhs_args no_pos in
@@ -2466,7 +2466,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
-      let () = DD.info_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
+      let () = DD.ninfo_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
        let () = DD.ninfo_hprint (add_str  " es.CF.es_infer_obj # is_pure_field_all" string_of_bool)  es.CF.es_infer_obj # is_pure_field_all pos in
       let args11 = if (* Globals.infer_const_obj # is_pure_field *)
         es.CF.es_infer_obj # is_pure_field_all

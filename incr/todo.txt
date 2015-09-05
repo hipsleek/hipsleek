@@ -2138,7 +2138,7 @@ the problems of pure field likely come from CF.get_ptrs_w_args
                    flted_14_29=null & flted_14_30=5 |#|3  --> U1(x)&true]
 
 =====================================================================
-# ex25c2b.slk 
+# ex25c2b.slk FIXED (should be tested carefully)
 
 infer [U3,@classic] U3(x,r,q)*q::node<0,p> |- x::node<0,p>.
 
