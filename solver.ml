@@ -8301,7 +8301,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     (* TODO:WN : need to be careful with fix below *)
     let flag = h2 = HEmp && (check_is_classic ())  && not(is_folding) in
     let hprel_in_h1 = CF.get_hprel_h_formula h1 in
-    let () = x_binfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
+    let () = x_tinfo_hp (add_str "XXXX(hp_rel)" (pr_list pr_none)) hprel_in_h1 no_pos in
     let is_not_lhs_emp =
       if flag && (not(!Globals.old_classic_rhs_emp)) then
         begin
@@ -8309,15 +8309,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
           let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) no_pos in
           let () = x_tinfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
           let flag = is_classic_lhs_emp prog h1 ante pos in
-          let () = y_binfo_hp (add_str "is_classic_lhs_emp prog h1 ante pos" string_of_bool) flag in
-          let () = y_binfo_hp (add_str "h1" !CF.print_h_formula) h1 in
-          let () = y_binfo_hp (add_str "ante" !CF.print_formula) ante in
+          let () = y_tinfo_hp (add_str "is_classic_lhs_emp prog h1 ante pos" string_of_bool) flag in
+          let () = y_tinfo_hp (add_str "h1" !CF.print_h_formula) h1 in
+          let () = y_tinfo_hp (add_str "ante" !CF.print_formula) ante in
           not(flag)
         end
       else false 
     in
-    let () = y_binfo_hp (add_str "is_not_lhs_emp" string_of_bool) is_not_lhs_emp in
-    let () = y_binfo_hp (add_str "h2 = HEmp && (check_is_classic ())  && not(is_folding)" string_of_bool) flag in
+    let () = y_tinfo_hp (add_str "is_not_lhs_emp" string_of_bool) is_not_lhs_emp in
+    let () = y_tinfo_hp (add_str "h2 = HEmp && (check_is_classic ())  && not(is_folding)" string_of_bool) flag in
     if flag &&  (is_not_lhs_emp ||  (hprel_in_h1!= [] && !Globals.old_classic_rhs_emp))  then
       let fail_ctx = mkFailContext mem_leak estate_orig1 conseq None pos in
       let es_string = Cprinter.string_of_formula estate_orig1.es_formula in
@@ -10253,7 +10253,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     | ViewNode {h_formula_view_node = l}, ViewNode {h_formula_view_node = r} 
       -> (l,r)
     | HRel (hp1,_,_), HRel(hp2,_,_)
-      -> let () = y_tinfo_pp ("HRel matching :"^m_str) in
+      -> let () = y_binfo_pp ("HRel matching :"^m_str) in
       (hp1,hp2)
     | _, _ -> failwith ("do match failure: "^m_str)
   in
@@ -10266,61 +10266,63 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   let () = x_tinfo_hp (add_str "es_aux_xpure_1" !MCP.print_mix_formula) estate.es_aux_xpure_1 no_pos in
   (* x_tinfo_hp (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
   (* x_tinfo_hp (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
-  let l_ho_args, l_args, l_node_name, node_kind, l_perm, l_ann, l_param_ann = 
-    match l_node with
-    | ThreadNode {
-        h_formula_thread_name = l_node_name;
-        h_formula_thread_perm = perm; } -> 
-      ([], [], l_node_name, "thread", perm, CP.ConstAnn(Mutable), [])
-    | DataNode {
-        h_formula_data_name = l_node_name;
-        h_formula_data_perm = perm;
-        h_formula_data_imm = ann;
-        h_formula_data_param_imm = param_ann;
-        h_formula_data_arguments = l_args } -> 
-      ([], l_args, l_node_name, "data", perm, ann, param_ann)
-    | ViewNode {
-        h_formula_view_name = l_node_name;
-        h_formula_view_perm = perm;
-        h_formula_view_imm = ann;
-        h_formula_view_arguments = l_args;
-        h_formula_view_ho_arguments = l_ho_args;
-        h_formula_view_annot_arg = l_annot } -> 
-      (l_ho_args, l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
-    (* TODO:WN:HVar -*)
-    | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, "ho_var", None, CP.ConstAnn Mutable, [])
-    | HRel (_, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel", None, CP.ConstAnn Mutable, [])
-    | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n" 
-  in
-  let r_ho_args, r_args, r_node_name, r_var, r_perm, r_ann, r_param_ann = 
-    match r_node with
-    | ThreadNode {
-        h_formula_thread_name = r_node_name;
-        h_formula_thread_node = r_var;
-        h_formula_thread_perm = perm; } -> 
-      ([], [], r_node_name, r_var, perm, CP.ConstAnn(Mutable), [])
-    | DataNode {
-        h_formula_data_name = r_node_name;
-        h_formula_data_perm = perm;
-        h_formula_data_imm = ann;
-        h_formula_data_param_imm = param_ann;
-        h_formula_data_arguments = r_args;
-        h_formula_data_node = r_var } -> 
-      ([], r_args, r_node_name, r_var, perm, ann, param_ann)
-    | ViewNode {
-        h_formula_view_name = r_node_name;
-        h_formula_view_perm = perm;
-        h_formula_view_imm = ann;
-        h_formula_view_arguments = r_args;
-        h_formula_view_ho_arguments = r_ho_args;
-        h_formula_view_annot_arg = r_annot;
-        h_formula_view_node = r_var } -> 
-      (r_ho_args, r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot)))
-    (* TODO:WN:HVar -*)
-    | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, v, None, CP.ConstAnn Mutable, [])
-    | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable, [])
-    | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n" 
-  in
+  let l_ho_args, l_args, l_node_name, node_kind,_, l_perm, l_ann, l_param_ann = 
+    CF.get_args_of_node l_node in
+  let r_ho_args, r_args, r_node_name, _, r_var, r_perm, r_ann, r_param_ann 
+    = CF.get_args_of_node r_node in
+  (*   match l_node with *)
+  (*   | ThreadNode { *)
+  (*       h_formula_thread_name = l_node_name; *)
+  (*       h_formula_thread_perm = perm; } ->  *)
+  (*     ([], [], l_node_name, "thread", perm, CP.ConstAnn(Mutable), []) *)
+  (*   | DataNode { *)
+  (*       h_formula_data_name = l_node_name; *)
+  (*       h_formula_data_perm = perm; *)
+  (*       h_formula_data_imm = ann; *)
+  (*       h_formula_data_param_imm = param_ann; *)
+  (*       h_formula_data_arguments = l_args } ->  *)
+  (*     ([], l_args, l_node_name, "data", perm, ann, param_ann) *)
+  (*   | ViewNode { *)
+  (*       h_formula_view_name = l_node_name; *)
+  (*       h_formula_view_perm = perm; *)
+  (*       h_formula_view_imm = ann; *)
+  (*       h_formula_view_arguments = l_args; *)
+  (*       h_formula_view_ho_arguments = l_ho_args; *)
+  (*       h_formula_view_annot_arg = l_annot } ->  *)
+  (*     (l_ho_args, l_args, l_node_name, "view", perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot))) *)
+  (*   (\* TODO:WN:HVar -*\) *)
+  (*   | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, "ho_var", None, CP.ConstAnn Mutable, []) *)
+  (*   | HRel (_, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel", None, CP.ConstAnn Mutable, []) *)
+  (*   | _ -> report_error no_pos "[solver.ml]: do_match non view input lhs\n"  *)
+  (* in *)
+  (*   match r_node with *)
+  (*   | ThreadNode { *)
+  (*       h_formula_thread_name = r_node_name; *)
+  (*       h_formula_thread_node = r_var; *)
+  (*       h_formula_thread_perm = perm; } ->  *)
+  (*     ([], [], r_node_name, r_var, perm, CP.ConstAnn(Mutable), []) *)
+  (*   | DataNode { *)
+  (*       h_formula_data_name = r_node_name; *)
+  (*       h_formula_data_perm = perm; *)
+  (*       h_formula_data_imm = ann; *)
+  (*       h_formula_data_param_imm = param_ann; *)
+  (*       h_formula_data_arguments = r_args; *)
+  (*       h_formula_data_node = r_var } ->  *)
+  (*     ([], r_args, r_node_name, r_var, perm, ann, param_ann) *)
+  (*   | ViewNode { *)
+  (*       h_formula_view_name = r_node_name; *)
+  (*       h_formula_view_perm = perm; *)
+  (*       h_formula_view_imm = ann; *)
+  (*       h_formula_view_arguments = r_args; *)
+  (*       h_formula_view_ho_arguments = r_ho_args; *)
+  (*       h_formula_view_annot_arg = r_annot; *)
+  (*       h_formula_view_node = r_var } ->  *)
+  (*     (r_ho_args, r_args, r_node_name, r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst r_annot))) *)
+  (*   (\* TODO:WN:HVar -*\) *)
+  (*   | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, v, None, CP.ConstAnn Mutable, []) *)
+  (*   | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", rhp, None, CP.ConstAnn Mutable, []) *)
+  (*   | _ -> report_error no_pos "[solver.ml]: do_match non view input rhs\n"  *)
+  (* in *)
 
   (* An Hoa : found out that the current design of do_match 
      will eventually remove both nodes. Here, I detected that 

@@ -1,0 +1,80 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node v).
+
+
+
+//infer [@classic,@pure_field] U2(xx,_) |- (exists xx: U2(xx,xx)).
+infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
+//infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
+print residue.
+expect Valid.
+
+
+/*
+# ex25b3a.slk 
+
+infer [@classic,@pure_field] U2(x,_) |- U2(x,x).
+
+# UNSOUND matching of HRel below
+
+Residue:
+ <1>emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+(==solver.ml#12345==)
+do_match@1
+do_match inp1 : U2(x,Anon_13)
+do_match inp2 : U2(x,x)
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@pure_field,@leak]
+ es_trace:  Match(UNK)
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@1 EXIT: [ emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  es_heap: U2(x,Anon_13)
+  es_infer_obj: [@pure_field,@leak]
+  es_trace:  Match(UNK)]
+
+(==solver.ml#11157==)
+process_action#1@1
+process_action#1 inp1 : Match =>
+   LHS: U2(x,Anon_13)
+   RHS: U2(x,x)
+process_action#1 inp2 :estate:
+  U2(x,Anon_13)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_obj: [@pure_field,@leak]
+ 
+process_action#1 inp3 :conseq: U2(x,x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: U2(x,Anon_13)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: U2(x,x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1@1 EXIT:
+ctx length:1 
+ Context: [ emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
+  es_heap: U2(x,Anon_13)
+  es_infer_obj: [@pure_field,@leak]
+  es_trace:  Match(UNK)]
+
+----------------------------------
+
+infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
+
+# if y is global, this should fail.
+
+Residue:
+ <1>emp&y=Anon_13&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+Validate 1: OK
+
+*/

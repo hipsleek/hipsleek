@@ -2202,9 +2202,111 @@ infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
  <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [U2(x,y@NI)&true |#|3  --> U1(x)&true]
  [[ InferFold ]]
+--------------------------------
+# ex25b4.slk
+
+infer [U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+
+# expects:
+      U2(x,y) --> U1(x)
+
+Entail (1) : Fail.(may) cause:**solver.ml#13187:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+
+(==solver.ml#13182==)
+infer_collect_hp_rel#1@2@1
+infer_collect_hp_rel#1 inp1 :lhs: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U2(x,y)
+infer_collect_hp_rel#1@2 EXIT:(false,2: es_formula: 
+ U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],3:abd heap: U1(x),4:None,5:None)
+
+(==solver.ml#11157==)
+process_action#1@1
+process_action#1 inp1 : InferUnfold =>
+   LHS: U2(x,y)
+   RHS: U1(x)
+process_action#1 inp2 :estate:
+  U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_obj: [@pure_field,@leak]
+ 
+ es_infer_vars_hp_rel: [U2]
+process_action#1 inp3 :conseq: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1@1 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+ CEX:true
 =====================================================================
+# ex25b3.slk 
+
+infer [U1,U2,@classic,@pure_field] U1(x) |- U2(x,y).
+
+# However, below is not sound since it is really:
+            U1(x) --> U2(x,_)
+  Then U2(x,_) |- U2(x,y)
+  This should fail if y is global.
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U1(x)&true |#|3  --> U2(x,y@NI)&true]
+[[ InferFold ]]
 =====================================================================
+# ex25b3.slk 
+
+infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+
+# currently infer_heap shedules an UNFOLD
+
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(x,y@NI)&true |#|3  --> U1(x)&true]
+[[ InferFold ]]
+
 =====================================================================
+# ex25b3a.slk 
+
+infer [@classic,@pure_field] U2(x,_) |- U2(x,x).
+
+# UNSOUND matching of HRel
+
+Residue:
+ <1>emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+
+----------------------------------
+
+infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
+
+# if y is global, this should fail.
+
+Residue:
+ <1>emp&y=Anon_13&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+
+Validate 1: OK
 =====================================================================
 =====================================================================
 =====================================================================

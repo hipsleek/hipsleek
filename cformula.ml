@@ -19403,3 +19403,35 @@ let name_of_formula x =
 let is_exists_hp_rel v es =
   let vs = es.es_infer_vars_hp_rel in
   CP.is_exists_svl v vs
+
+let get_args_of_node l_node =
+  let l_ho_args, l_args, l_node_name, node_kind, r_var, l_perm, l_ann, l_param_ann = 
+    match l_node with
+    | ThreadNode {
+        h_formula_thread_name = l_node_name;
+        h_formula_thread_node = r_var;
+        h_formula_thread_perm = perm; } -> 
+      ([], [], l_node_name, "thread", r_var, perm, CP.ConstAnn(Mutable), [])
+    | DataNode {
+        h_formula_data_name = l_node_name;
+        h_formula_data_perm = perm;
+        h_formula_data_node = r_var;
+        h_formula_data_imm = ann;
+        h_formula_data_param_imm = param_ann;
+        h_formula_data_arguments = l_args } -> 
+      ([], l_args, l_node_name, "data",r_var, perm, ann, param_ann)
+    | ViewNode {
+        h_formula_view_name = l_node_name;
+        h_formula_view_perm = perm;
+        h_formula_view_imm = ann;
+        h_formula_view_node = r_var;
+        h_formula_view_arguments = l_args;
+        h_formula_view_ho_arguments = l_ho_args;
+        h_formula_view_annot_arg = l_annot } -> 
+      (l_ho_args, l_args, l_node_name, "view",r_var, perm, ann, (CP.annot_arg_to_imm_ann_list (List.map fst l_annot)))
+    (* TODO:WN:HVar -*)
+    | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, "ho_var",v, None, CP.ConstAnn Mutable, [])
+    | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",rhp, None, CP.ConstAnn Mutable, [])
+    | _ -> let h_f = !print_h_formula l_node in
+      report_error no_pos ("[solver.ml]: do_match cannot handle "^h_f^"\n")
+  in l_ho_args, l_args, l_node_name, node_kind, r_var, l_perm, l_ann, l_param_ann

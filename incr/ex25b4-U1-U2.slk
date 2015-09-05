@@ -11,7 +11,8 @@ HeapPred R1(node x).
 HeapPred U2(node x,int v).
 
 
-infer [U1,@classic,@pure_field] U2(x,y)  |- U1(x).
+infer [U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+//infer [U1,@classic,@pure_field] U2(x,y)  |- U1(x).
 //infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
 //infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
 //infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
@@ -76,6 +77,57 @@ infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
  inferred hprel: [U2(x,y@NI)&true |#|3  --> U1(x)&true]
  [[ InferFold ]]
 
+--------------------------------
+infer [U2,@classic,@pure_field] U2(x,y)  |- U1(x).
 
+# expects:
+      U2(x,y) --> U1(x)
+
+Entail (1) : Fail.(may) cause:**solver.ml#13187:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+
+(==solver.ml#13182==)
+infer_collect_hp_rel#1@2@1
+infer_collect_hp_rel#1 inp1 :lhs: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U2(x,y)
+infer_collect_hp_rel#1@2 EXIT:(false,2: es_formula: 
+ U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],3:abd heap: U1(x),4:None,5:None)
+
+(==solver.ml#11157==)
+process_action#1@1
+process_action#1 inp1 : InferUnfold =>
+   LHS: U2(x,y)
+   RHS: U1(x)
+process_action#1 inp2 :estate:
+  U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_obj: [@pure_field,@leak]
+ 
+ es_infer_vars_hp_rel: [U2]
+process_action#1 inp3 :conseq: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1@1 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+ CEX:true
 
 */

@@ -1100,10 +1100,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         (* let vv = CF.mk_HRel_as_view hp e l in *)
         let vs = List.concat (List.map CP.afv e) in
         let common = CP.intersect_svl vs aset in
-        let () = y_binfo_hp (add_str "common" pr_svl) common in
-        let () = y_binfo_hp (add_str "f" !CF.print_h_formula) f in
-        let () = y_binfo_hp (add_str "f0" !CF.print_h_formula) f0 in
-        let () = y_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+        let () = y_tinfo_hp (add_str "common" pr_svl) common in
+        let () = y_tinfo_hp (add_str "f" !CF.print_h_formula) f in
+        let () = y_tinfo_hp (add_str "f0" !CF.print_h_formula) f0 in
+        let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
         let c = CP.name_of_spec_var hp in
         let cmm = x_add coerc_mater_match_gen c vs right_name r_vargs aset f in
         let () = x_tinfo_hp (add_str "coerc_mater_match (HREL)" (pr_list pr_helper_res)) cmm no_pos in
