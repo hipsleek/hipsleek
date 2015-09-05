@@ -13,23 +13,18 @@ HeapPred U3(node x,node v,node w).
 
 
 
-infer [@classic,@pure_field] U3(xx,a,b) |- U3(xx,x,x).
+infer [@classic,@pure_field] U3(xx,a,b) |- U3(xx,ppp,ppp).
 
-//infer [@classic,@pure_field] U2(xx,a) & a=x |- U2(xx,x).
-//# valid
-
-//infer [@classic,@pure_field] U2(xx,_) |- (exists x: U2(xx,x)).
-//# valid
-
-//infer [] x::node<a,b>  |- x::node<i,j>.
-//infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
-//infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
 print residue.
-expect Valid.
+expect Fail.
 
 
 /*
 # ex25b3d.slk (WN to fix)
+
+infer [@classic,@pure_field] U3(xx,a,b) |- U3(xx,x,x).
+
+
 
 INPUT 0: [@leak,@pure_field][] 
  ### ante =  U3(xx,a,b)&{FLOW,(20,21)=__norm#E}[]
@@ -39,7 +34,6 @@ INPUT 0: [@leak,@pure_field][]
 run_infer:
  U3(xx,a,b)&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
    exists (Impl)[x]U3(xx,x,x)&{FLOW,(20,21)=__norm#E}[]
-
 
 # How can two occurrences of x be both implicit?
 
