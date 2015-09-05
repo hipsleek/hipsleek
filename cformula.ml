@@ -19435,3 +19435,10 @@ let get_args_of_node l_node =
     | _ -> let h_f = !print_h_formula l_node in
       report_error no_pos ("[solver.ml]: do_match cannot handle "^h_f^"\n")
   in l_ho_args, l_args, l_node_name, node_kind, r_var, l_perm, l_ann, l_param_ann
+
+
+let get_args_of_hrel l_node =
+  match l_node with
+  | HRel (rhp, eargs, _) -> (List.fold_left List.append [] (List.map CP.afv eargs))
+  | _ -> []
+           

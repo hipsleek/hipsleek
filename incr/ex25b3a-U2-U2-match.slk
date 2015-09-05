@@ -13,7 +13,8 @@ HeapPred U2(node x,node v).
 
 
 //infer [@classic,@pure_field] U2(xx,_) |- (exists xx: U2(xx,xx)).
-infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
+infer [] x::node<a,b>  |- x::node<i,j>.
+//infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
 //infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
 print residue.
 expect Valid.

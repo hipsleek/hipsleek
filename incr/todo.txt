@@ -2294,8 +2294,23 @@ Residue:
  <1>emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
 [[ Match(UNK)]]
 
+(==solver.ml#12345==)
+do_match@1
+do_match inp1 : U2(x,Anon_13)
+do_match inp2 : U2(x,x)
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@pure_field,@leak]
+ es_trace:  Match(UNK)
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@1 EXIT: [ emp&x=Anon_13&{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  es_heap: U2(x,Anon_13)
+  es_infer_obj: [@pure_field,@leak]
+  es_trace:  Match(UNK)]
 
-----------------------------------
+-=====================================================================
 
 infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
 
@@ -2308,6 +2323,14 @@ Residue:
 
 Validate 1: OK
 =====================================================================
+lemmas/rlseg.slk({L1#Valid},{L2#Valid},{L3#Valid}) 
+lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+ fracperm/split_simple.slk({E6#Valid},{E7#Valid}) 
+ fracperm/split-combine.slk({E14#Valid},{E3#Valid},{E4#Valid}) 
+ veribsync/bperm-split-combine.slk({E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid}) 
+ veribsync/barrier-static.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid}) 
+ veribsync/barrier-dynamic2.slk({E10#Valid},{E11#Valid},{E14#Valid},{E15#Valid},{E18#Valid},{E19#Valid},{E20#Valid},{E22#Valid},{E23#Valid},{E24#Valid},{E25#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
 =====================================================================
 =====================================================================
 =====================================================================
