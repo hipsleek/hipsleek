@@ -12,6 +12,19 @@ HeapPred U2(node x,node v).
 
 
 infer [@classic,@pure_field] U2(xx,a) |- U2(xx,x).
+expect Fail.
+
+infer [@classic,@pure_field] U2(xx,a) |- (exists x: U2(xx,x)).
+expect Valid.
+
+infer [@classic,@pure_field] U2(xx,a) |- U2(xx,a).
+expect Valid.
+
+infer [@classic,@pure_field] U2(xx,a) |- U2(a,xx).
+expect Fail.
+
+infer [U2,@classic,@pure_field] U2(xx,a) |- U2(a,xx).
+expect Valid.
 
 //infer [@classic,@pure_field] U2(xx,a) & a=x |- U2(xx,x).
 //# valid
@@ -23,7 +36,6 @@ infer [@classic,@pure_field] U2(xx,a) |- U2(xx,x).
 //infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
 //infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
 print residue.
-expect Valid.
 
 
 /*

@@ -2357,6 +2357,26 @@ run_infer:
 # This can lead to unsoundness.
 
 =====================================================================
+# ex25b3e.slk 
+
+infer [U2,@classic,@pure_field] U2(xx,a) |- U2(a,xx).
+
+# I guess below is due to our use of do_match as 
+  opposed to infer_heap. The question is where did
+  do_match failed? Why did it inferred wrongly at
+  heap_entail_empty
+
+Entail (1) : Valid. 
+Validate 1: OK
+
+Residue:
+ <1>emp&a=xx&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(xx,a)&true |#|3  --> emp&xx=a]
+[[ Match(UNK)]]
+
+I guess above came from infer_pure.
+Maybe can also schedule infer_heap?
+
 =====================================================================
 =====================================================================
 =====================================================================
