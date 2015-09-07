@@ -1,0 +1,16 @@
+
+checkentail src+1=q_1643 & dst'+1=q_1672 &
+ n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_1643 & 
+ ch'=v & Anon_21=v_1669 & q=q_1670 & q_1670=dst+1 & dst!=0 & v_1671=ch' & 
+ q_1672=q |- false.
+
+/*
+xpure_heap#1@229
+xpure_heap#1 inp1 : q_1670::BADS<>@M * src::char_star<v_1642,q_1643>@M * q_1643::WFS<>@M * 
+ dst'::char_star<v_1671,q_1672>@M
+xpure_heap#1 inp2 : n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_1643 & 
+ ch'=v & Anon_21=v_1669 & q=q_1670 & q_1670=dst+1 & dst!=null & v_1671=ch' & 
+ q_1672=q
+xpure_heap#1 inp3 :1
+xpure_heap#1@229 EXIT:( false,[], [])#true
+*/
