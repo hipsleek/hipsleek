@@ -608,8 +608,9 @@ and choose_full_mater_coercion_x l_vname l_vargs r_vname r_aset (c:coercion_decl
     match l_vargs with
     | [] -> None
     | _  -> 
+      let () = y_binfo_hp (add_str "XXX body_view" pr_id) body_view in
+      let () = y_binfo_hp (add_str "XXX r_vname" pr_id) r_vname in
       if body_view = r_vname then 
-        let () = y_tinfo_hp (add_str "XXX Matching rhs" pr_id) r_vname in
         let m_p = {mater_var = List.hd args; mater_full_flag = true; mater_target_view =[r_vname]} in
         let ms = Coerc_mater c in
         Some (ms,m_p)

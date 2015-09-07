@@ -610,6 +610,8 @@ process_matches@2 EXIT: Prio:-1
 
 infer [U,U2,@classic,@pure_field] U(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
 
+
+
 # This schedules an InferUnfold:
 
 !!! **context.ml#2876:compute_action (steps) :
@@ -637,6 +639,31 @@ infer [U,U2,@classic,@pure_field] U(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
     LHS: U(q3,q)
     RHS: q3::WFG<p_145>@M
   ]
+
+!!! **context.ml#611:XXX body_view:U
+!!! **context.ml#612:XXX Matching rhs:U2
+(==context.ml#944==)
+coerc_mater_match@5@3@2@1
+coerc_mater_match inp1 :coercs:[Lemma "lem_12":  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]<==]
+coerc_mater_match inp2 :WFG
+coerc_mater_match inp3 :[q3,p_145]
+coerc_mater_match inp4 :[q3]
+coerc_mater_match inp5 : U2(q3,q)
+coerc_mater_match@5 EXIT:[]
+
+====> if U2 is inferrable..
+
+coerc_mater_match@5 EXIT:[( emp, U3(q3,q), MaterializedArg (self,full,[U]) coerc_defn_mater: <== lem_12)]
+
+
+(==context.ml#943==)
+coerc_mater_match@5@3
+coerc_mater_match inp1 :coercs:[Lemma "lem_12":  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]<==]
+coerc_mater_match inp2 :WFG
+coerc_mater_match inp3 :[q3,p_145]
+coerc_mater_match inp4 :[q3]
+coerc_mater_match inp5 : U(q3,q)
+coerc_mater_match@5 EXIT:[( emp, U(q3,q), MaterializedArg (self,full,[U]) coerc_defn_mater: <== lem_12)]
 
 ===========================================================================
 ===========================================================================
