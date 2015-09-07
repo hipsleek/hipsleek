@@ -25,6 +25,8 @@ let sp_add_prime v p = match v with
 
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 
+let unknown_spec_var = mk_spec_var "__UNKNOWN"
+
 let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)
 
 let mk_zero = mk_typed_spec_var Globals.null_type Globals.null_name 
@@ -4305,7 +4307,9 @@ and remove_dups_spec_var_list vl = Gen.BList.remove_dups_eq eq_spec_var vl
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
 
-and is_anon_var (SpecVar (_,n,_):spec_var) : bool = ((String.length n) > 5) && ((String.compare (String.sub n 0 5) "Anon_") == 0)
+and is_anon_var (SpecVar (_,n,p):spec_var) : bool = 
+  Ipure.is_anon_ident (n,p)
+(* ((String.length n) > 5) && ((String.compare (String.sub n 0 5) "Anon_") == 0) *)
 
 (* substitution *)
 
@@ -7524,6 +7528,7 @@ let conv_exp_to_var (e:exp) : (spec_var * loc) option =
   match e with
   | IConst(i,loc) -> Some (mk_sp_const i,loc)
   | Null loc -> Some (null_var,loc)
+  | Var (sv,p) -> Some (sv,p)
   | _ -> None
 
 let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option = 
@@ -10348,6 +10353,21 @@ let get_relargs_opt (f:formula)
      | (RelForm(id,eargs,_),_) -> Some (id, (List.fold_left List.append [] (List.map afv eargs)))
      | _ -> None)
   | _ -> None
+
+
+let is_trivial_rel (rel_c, lhs, rhs)=
+  let l_ohp = get_relargs_opt lhs in
+  let r_ohp = get_relargs_opt rhs in
+  match l_ohp,r_ohp with
+    | Some (hp1,largs), Some (hp2, rargs) -> if eq_spec_var hp1 hp2 then
+        eq_spec_var_order_list largs rargs
+      else false
+    | _ -> false
+
+let is_trivial_rel rel_f=
+  let pr = print_lhs_rhs in
+  Debug.no_1 "is_trivial_rel" pr string_of_bool
+      (fun _ -> is_trivial_rel rel_f) rel_f
 
 
 let get_list_rel_args_x (f0:formula) =

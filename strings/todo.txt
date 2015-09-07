@@ -524,7 +524,7 @@ heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context:
 ==================================================================
 # strings/ex8d6.slk --pcp
 
-printing problem ..
+printing problem .. (FIXED)
 
   base case: 
   v=0->v=0 & self!=nullview_complex_inv: None
@@ -903,6 +903,67 @@ h_formula_2_mem inp2 : n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 
  q_1672=q
 h_formula_2_mem inp3 :[]
 h_formula_2_mem@181 EXIT: [[q_1670,q_1670,src,q_1643,dst']]
+
+-debug dd.log
+
+# Why baga with two nodes?
+
+@125! **cast.ml#1430:baga (filtered)= :[]
+@125! **cast.ml#1432:baga (hulled)= :[]
+@125! **cvutil.ml#916:baga(view_node):[q_1670,q_1670]
+
+@125! **cvutil.ml#567:pure f: n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_1643 & 
+ ch'=v & Anon_21=v_1669 & q=q_1670 & q_1670=dst+1 & dst!=null & v_1671=ch' & 
+ q_1672=q
+@125! **cvutil.ml#568:evars:[]
+@125! **cpure.ml#14908:annot: 2
+@125! **cpure.ml#14909:annot: :[0,0]
+@125! **cpure.ml#14910:hargs: :[]
+@125! **cpure.ml#14918:view_args_pos: 0
+@125! **cpure.ml#14922:to_be_updated: :0
+@125! **cpure.ml#14927:new_com:[]
+@125! **cvutil.ml#854:f:#VN2# q_1670::BADS<>@M
+@125! **cast.ml#1411:look_up_view_baga: baga= :Some([([self], true)])
+@125! **cast.ml#1414:from_svs:[self]
+@125! **cast.ml#1415:to_svs:[q_1670]
+@125! **cast.ml#1423:baga (subst)= :[([q_1670], true)]
+@125! **excore.ml#606:Omega mk_star_disj:start 43 invocations
+@125! **excore.ml#610:Omega mk_star_disj:end 43 invocations
+@125!:0: 0: [entail:23][post:19]**tpdispatcher.ml#2117:SAT #451
+
+# Why q_1670=1 ?
+
+# Why is baga_sp=[] as this denotes false?
+
+      let add_epure pf lst =
+        let ep = Excore.EPureI.mk_epure pf in
+        let lst = Excore.EPureI.mk_star_disj ep lst in
+        Excore.EPureI.elim_unsat_disj false lst
+      in
+
+!!! **cvutil.ml#876:ba:[q_1643]
+!!! **cvutil.ml#877:view(c):WFS
+!!! **cvutil.ml#878:pure_f: q=q_1670 & Anon_21=v_1669 & ch'=v & Anon_20=q_1643 & v=v_1642 & v_1642!=0 & 
+ 0<=n & src'=src & dst'=dst & n'=n
+!!! **cvutil.ml#920:baga(view_node):[q_1643]
+!!! **cast.ml#1411:look_up_view_baga: baga= :Some([([self], true)])
+!!! **cast.ml#1414:from_svs:[self]
+!!! **cast.ml#1415:to_svs:[q_1670]
+!!! **cast.ml#1423:baga (subst)= :[([q_1670], true)]
+!!! **cast.ml#1424:epure = : n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_1643 & 
+ ch'=v & Anon_21=v_1669 & q=q_1670 & q_1670=dst+1 & dst!=null & v_1671=ch' & 
+ q_1672=q
+!!! **cast.ml#1431:baga (filtered)= :[]
+!!! **cast.ml#1433:baga (hulled)= :[]
+(==cvutil.ml#1356==)
+get_spec_baga@136
+get_spec_baga inp1 : n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_1643 & 
+ ch'=v & Anon_21=v_1669 & q=q_1670 & q_1670=dst+1 & dst!=null & v_1671=ch' & 
+ q_1672=q
+get_spec_baga inp2 :[q_1670]
+get_spec_baga inp3 :[]
+get_spec_baga@136 EXIT:[q_1670,q_1670]
+
 ==================================================================
 ==================================================================
 ==================================================================

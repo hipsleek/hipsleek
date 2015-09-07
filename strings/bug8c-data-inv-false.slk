@@ -8,6 +8,9 @@ pred BADS<> ==
   self::char_star<v,q>*q::BADS<> 
   inv true.
 
+checksat n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_1643 & 
+ ch'=v & Anon_21=v_1669 & q=q_1670 & q_1670=dst+1 & dst!=null & v_1671=ch'.
+
 checkentail x::char_star<_,q> & q=x+1 |- q=x+1.
 print residue.
 

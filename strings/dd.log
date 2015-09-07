@@ -16,4 +16,6 @@
 #meta_to_struc_formula
 #struc_formula_trans_heap_node,Trace
 #transform_bexpr
-h_formula_2_mem,Trace
+h_formula_2_mem
+get_spec_baga
+#,Trace

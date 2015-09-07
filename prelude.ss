@@ -547,7 +547,7 @@ data char_star {
   int val;
   char_star next;
 } inv //true;
-next = self + 1;
+ next = self + 1;
 
 char_star __plus_plus_char(char_star x)
 requires x::char_star<_,q>@L & Term[] 

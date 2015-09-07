@@ -24,7 +24,7 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-  infer [P,@classic]
+  infer [P,@classic,@pure_field]
   requires P(s)
   ensures true;
 /*
@@ -111,7 +111,7 @@ void while1(ref char_star s)
   P(x,d) -> U(x,q) * q::chr<0,d>
 
 ==> segmented-pred
-  P(x,d) -> U(x,q) * q::chr<v,d>
+  P(x,d) -> U(x,q) * q::chr<0,d>
   U(x,q) -> x=q
   U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
 

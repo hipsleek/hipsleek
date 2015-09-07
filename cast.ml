@@ -285,6 +285,7 @@ and coercion_decl = {
   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
 
   coercion_infer_vars :  P.spec_var list;
+  coercion_infer_obj : Globals.inf_obj_sub;
   (* coercion_proof : exp; *)
   (* coercion_head_exist : F.formula;   *)
 
@@ -1214,14 +1215,14 @@ let look_up_templ_def_raw (defs: templ_decl list) (name : ident) =
 let look_up_ut_def_raw (defs: ut_decl list) (name : ident) = 
   List.find (fun d -> d.ut_name = name) defs
 
-let rec look_up_hp_def_raw_x (defs : hp_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw_x rest name
+let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
-let look_up_hp_def_raw defs name=
-  let pr1 = !print_hp_decl in
-  Debug.no_1 "look_up_hp_def_raw" pr_id pr1
-    (fun _ -> look_up_hp_def_raw_x defs name) name
+(* let look_up_hp_def_raw defs name= *)
+(*   let pr1 = !print_hp_decl in *)
+(*   Debug.no_1 "look_up_hp_def_raw" pr_id pr1 *)
+(*     (fun _ -> look_up_hp_def_raw defs name) name *)
 
 let look_up_hp_parts decls hp=
   let hp_dc = look_up_hp_def_raw decls hp in
@@ -1407,11 +1408,11 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   | None -> []
   | Some bl ->
     begin
-      let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
+      let () = x_binfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
       let from_svs = (self_param vdef) :: vdef.view_vars in
       let to_svs = root :: args in
-      let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
-      let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+      let () = x_binfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+      let () = x_binfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
       let baga_lst = (* match ba_oinv with *)
         (* | None -> [] *)
         (* | Some bl -> *)
@@ -1419,16 +1420,17 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         (* else *)
         let sst = List.combine from_svs to_svs in
         List.map (Excore.EPureI.subst_epure sst) bl in
-      let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+      let () = x_binfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+      let () = x_binfo_hp (add_str "epure = " ( !CP.print_formula)) epure no_pos in
       let add_epure pf lst =
         let ep = Excore.EPureI.mk_epure pf in
         let lst = Excore.EPureI.mk_star_disj ep lst in
         Excore.EPureI.elim_unsat_disj false lst
       in
       let baga_sp = (add_epure epure baga_lst) in
-      let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+      let () = x_binfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
       let r = Excore.EPureI.hull_memset baga_sp in
-      let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
+      let () = x_binfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
       if baga_sp==[] then [root;root]
       else r
     end

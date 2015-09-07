@@ -907,6 +907,9 @@ let allow_lemma_fold = ref true
 let allow_lemma_norm = ref false
 let old_norm_w_coerc = ref false
 
+let old_do_match_infer_heap = ref true
+let old_incr_infer = ref false
+
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true
 
@@ -1272,8 +1275,21 @@ let assert_nonlinear = ref false
 let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
+let new_rm_htrue = ref true
+
 let old_collect_false = ref false
+let old_collect_hprel = ref false
+let old_infer_hprel_classic = ref false
+let old_classic_rhs_emp = ref false
+let old_post_conv_impl = ref true (* affected by incr/ex14d.ss *)
+let old_post_impl_to_ex = ref true
+let old_keep_triv_relass = ref false
+let old_mater_coercion = ref false
+let old_infer_heap = ref false
+let warn_do_match_infer_heap = ref false
 let warn_nonempty_perm_vars = ref false
+let warn_trans_context = ref false
+let warn_post_free_vars = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
 let old_base_case_unfold = ref false
@@ -1777,6 +1793,7 @@ class inf_obj  =
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
     (*   let l = self # get_lst in *)
@@ -1876,6 +1893,7 @@ class inf_obj_sub  =
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
+    method empty = arr <- []
   end;;
 
 let clone_sub_infer_const_obj_all () =
@@ -1923,8 +1941,10 @@ let do_infer_inv = ref false
 let do_test_inv = ref true (* false *)
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref false                (* option --classic is turned on or not? *)
-let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+(* let opt_classic = ref false                (\* option --classic is turned on or not? *\) *)
+(* replaced by check_is_classic () & infer_const_obj *)
+(* let do_classic_frame_rule = ref false      (\* use classic frame rule or not? *\) *)
+
 let dis_impl_var = ref false (* Disable implicit vars *)
 
 let show_unexpected_ents = ref true
@@ -2477,5 +2497,7 @@ let prim_method_names = [ nondet_int_proc_name ]
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
 
+let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
 
+let check_is_classic () = check_is_classic_local infer_const_obj
 

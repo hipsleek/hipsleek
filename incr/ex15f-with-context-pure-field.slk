@@ -1,0 +1,54 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+
+infer [H,P,@classic] H(p) * x::node<1,p> & p=null 
+  |- P(p) * htrue.
+print residue.
+/*
+Entail (2) : Valid. 
+Residue:
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_15_28,p>@M&true --> P(p)&true]
+[[ COND ==>  COND ==>  InferHeap]]
+*/
+
+infer [H,P,@classic] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p) * htrue.
+print residue.
+
+infer [H,P] H(p) * x::node<1,p> * htrue & p=null 
+  |- P(p) * htrue.
+print residue.
+
+infer [H,P] H(p) * x::node<1,p> * htrue & p=null 
+  |- P(p) * emp.
+print residue.
+
+/*
+# ex15f.slk 
+
+infer [H,P,@classic] H(p) * x::node<1,p> & p=null 
+  |- P(p) * htrue.
+print residue.
+
+Entail (2) : Valid. 
+Residue:
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_15_28,p>@M&true --> P(p)&true]
+[[ COND ==>  COND ==>  InferHeap]]
+
+
+*/

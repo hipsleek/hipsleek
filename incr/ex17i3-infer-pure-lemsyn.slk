@@ -1,0 +1,66 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+relation R(node a).
+
+/*
+infer [R] R(self) |- self=null.
+print residue.
+expect Valid.
+
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & q=null .
+print residue.
+
+lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
+print residue.
+*/
+
+infer [R] R(self) |- self::sll<>.
+print residue.
+expect Valid.
+
+lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
+print residue.
+
+
+
+/*
+# ex17i3.slk 
+
+# Printing is wrong if lemma is placed after entailments..
+
+lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+
+infer [R] R(self) |- self::sll<>.
+print residue.
+expect Valid.
+
+lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
+print residue.
+
+---------------------------------------
+
+# Why did this fail?
+
+Entailing lemma lem_14: Fail. (no cex)(may) cause: M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+Failed to inferred for lem_14:<== (invalid lemma encountered).
+Residue:
+
+ { }
+
+*/
+

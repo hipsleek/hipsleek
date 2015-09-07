@@ -8,12 +8,14 @@ data arr_int {
 }  inv 1 = next + (-self) //& next!=null // inv to be automatically generated
 .
 
+//(1)
 checkentail x::arr_int<_,_> |- x!=null.
 expect Valid.
 
 checkentail x::arr_int<_,_> |- x=null.
 expect Fail_Must.
 
+//(3)
 checkentail x::arr_int<_,p> |- x!=p.
 expect Valid.
 //Entail 3: Fail.(may) cause: x=1 |-  x!=p. LOCS:[17] (may-bug)
@@ -22,6 +24,7 @@ expect Valid.
 checkentail x::arr_int<_,p> |- x=p+1.
 expect Fail_Must.
 
+//(6)
 checkentail x::arr_int<_,p> |- x+1=p.
 expect Valid.
 

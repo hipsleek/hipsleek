@@ -1,0 +1,38 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+relation R(node a).
+
+lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
+print residue.
+
+/*
+# ex17i2.slk (Loc to fix..)
+
+lemma_infer [R] self::sll<> -> self::lseg<q> & R(q) .
+
+# Please remove trivial pure relation too, 
+#  namely  R(q_62)) -->  R(q_62)
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_80)&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred rel: [RELDEFN R: ( q_57=null) -->  R(q_57); 
+                RELDEFN R: ( R(q_62)) -->  R(q_62)]
+[[ Fold ==>  SEARCH ==>  Match(self_lem_14,self_lem_14) ==>  SEARCH ==>  (Lemma ==> lem_14(q_61,q_64)) ==> (left: lem_14) ==>  COND ==>  Match(q_61,q_64) ==> ||OR|| ==>  COND ==>  BaseCaseFold]]
+
+*/
+
+
