@@ -427,7 +427,7 @@ let convert_starminus ls =
  *   - In acc-fold: choose_context must allow rhs_node is a general heap formula
  *     (or a chain of heap nodes and views )
  *)
-let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
+let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   match rhs_node with
   | HRel _  
@@ -484,7 +484,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
-      let mt_res = x_add spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in
+      let mt_res = x_add spatial_ctx_extract prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
       (* WN: why is there a need to filter out root parameters? *)
       (*  affects str-inf/ex14b[23].slk *)
       (* let mt_res = x_add filter_match_res_list mt_res rhs_node in *)
@@ -506,7 +506,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
   (* | HRel _ -> [] *) (* spatial_ctx_extract prog lhs_h paset CF.ConstAnn(Mutable) [] rhs_node rhs_rest *)
   | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
 
-and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos
+and choose_context prog estate es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos
   :  match_res list =
   let psv =  Cprinter.string_of_spec_var in
   let pr0 = pr_list (pr_pair psv psv) in
@@ -522,7 +522,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
     (add_str "RHS pure" pr3)
     (add_str "right aliase" pr0)
     pr2 
-    (fun _ _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) 
+    (fun _ _ _ _ _ -> choose_context_x prog estate es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) 
     lhs_h rhs_node lhs_p rhs_p es
 
 (* type: Cast.prog_decl ->
@@ -580,7 +580,7 @@ and view_mater_match_x prog c vs1 aset imm f anns =
 
 (* (mater_source * Cast.mater_property) option *)
 (* NOTE : l_vargs must have ALL parameters, including SELF *)
-and choose_full_mater_coercion_x l_vname l_vargs r_vname r_aset (c:coercion_decl) =
+and choose_full_mater_coercion_x estate l_vname l_vargs r_vname r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
   let head_view = c.coercion_head_view in
   let body_view = c.coercion_body_view in
@@ -610,12 +610,20 @@ and choose_full_mater_coercion_x l_vname l_vargs r_vname r_aset (c:coercion_decl
     | _  -> 
       let () = y_binfo_hp (add_str "XXX body_view" pr_id) body_view in
       let () = y_binfo_hp (add_str "XXX r_vname" pr_id) r_vname in
+      let () = y_tinfo_hp (add_str " estate.CF.es_infer_vars_hp_rel" !CP.print_svl)  estate.CF.es_infer_vars_hp_rel in
       if body_view = r_vname then 
         let m_p = {mater_var = List.hd args; mater_full_flag = true; mater_target_view =[r_vname]} in
         let ms = Coerc_mater c in
         Some (ms,m_p)
         (* failwith "TBI" *)
       else
+        let unk_preds = CF.get_HRels_f c.coercion_body in
+        if List.exists (fun (hp, _) ->  string_compare (CP.name_of_spec_var hp) body_view) unk_preds && 
+          (List.exists (fun hp -> string_compare (CP.name_of_spec_var hp) r_vname) estate.CF.es_infer_vars_hp_rel) then
+           let m_p = {mater_var = List.hd args; mater_full_flag = true; mater_target_view =[body_view]} in
+           let ms = Coerc_mater c in
+           Some (ms,m_p)
+        else
         let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
         let () = x_tinfo_hp (add_str "lmv" Cprinter.string_of_mater_prop_list) lmv no_pos in
         try
@@ -630,21 +638,21 @@ and choose_full_mater_coercion_x l_vname l_vargs r_vname r_aset (c:coercion_decl
             | _  -> Some (Coerc_mater c, List.hd lmv) 
           else None
 
-and choose_full_mater_coercion l_vname l_vargs r_vname r_aset (c:coercion_decl) =
+and choose_full_mater_coercion estate l_vname l_vargs r_vname r_aset (c:coercion_decl) =
   let pr = Cprinter.string_of_h_formula in
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   (* let pr (c,_) = string_of_coercion c in *)
-  Debug.no_3 "choose_full_mater_coercion" pr_id pr_svl pr_svl (* (pr_option pr) *) (pr_option pr_none) (fun _ _ _  -> choose_full_mater_coercion_x l_vname l_vargs  r_vname r_aset c) l_vname l_vargs  r_aset 
+  Debug.no_3 "choose_full_mater_coercion" pr_id pr_svl pr_svl (* (pr_option pr) *) (pr_option pr_none) (fun _ _ _  -> choose_full_mater_coercion_x estate l_vname l_vargs  r_vname r_aset c) l_vname l_vargs  r_aset 
 
-and coerc_mater_match_x coercs vname (vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) =
+and coerc_mater_match_x estate coercs vname (vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) =
   (* TODO : how about right coercion, Cristina? *)
   (* WN_all_lemma - is this overriding of lemmas? *)
   (* let coercs = (Lem_store.all_lemma # get_left_coercion)(\*prog.prog_left_coercions*\) in *)
   (* let () = x_tinfo_hp (add_str "coercs" (pr_list Cprinter.string_of_coercion)) coercs no_pos in *)
   let pos_coercs = List.fold_right (fun c a ->
-      match (choose_full_mater_coercion vname vargs r_vname r_aset c) with 
+      match (choose_full_mater_coercion estate vname vargs r_vname r_aset c) with 
       | None ->  a 
       | Some t -> t::a
     ) coercs [] in
@@ -659,14 +667,14 @@ and coerc_mater_match_x coercs vname (vargs:P.spec_var list) r_vname r_aset (lhs
   (*       with  _ ->  a) [] pos_coercs in *)
   (* if produces_hole imm then [] else *) res
 
-and coerc_mater_match coercs l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) =
+and coerc_mater_match estate coercs l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in
   let pr4 (h1,h2,l,mt) = pr_triple pr pr (string_of_match_type) (h1,h2,mt) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr_coer = Cprinter.string_of_coerc_short in
   Debug.no_5 "coerc_mater_match" (add_str "coercs" (pr_list pr_coer)) pr_id pr_svl pr_svl  pr pr2
-    (fun _ _ _ _ _ -> coerc_mater_match_x coercs l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula)) coercs l_vname l_vargs r_aset lhs_f
+    (fun _ _ _ _ _ -> coerc_mater_match_x estate coercs l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula)) coercs l_vname l_vargs r_aset lhs_f
 
 (*
   spatial context
@@ -680,7 +688,7 @@ and coerc_mater_match coercs l_vname (l_vargs:P.spec_var list) r_vname r_aset (l
   rr - right rest
 *)
 (* Trung, delete later: extract node in LHS (f) to match with node in RHS *)
-and spatial_ctx_extract p f a i pi rn rr emap = 
+and spatial_ctx_extract p estate f a i pi rn rr emap = 
   let pr = pr_list string_of_match_res in
   let pr_svl = Cprinter.string_of_spec_var_list in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
@@ -688,7 +696,7 @@ and spatial_ctx_extract p f a i pi rn rr emap =
   Debug.no_4 "spatial_ctx_extract" (add_str "h_formula" string_of_h_formula) 
     (add_str "imm" Cprinter.string_of_imm) (add_str "aset" pr_svl) 
     (add_str "rhs_node" string_of_h_formula) (add_str "list of match_res" pr) 
-    (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr emap) f i a rn 
+    (fun _ _ _ _-> spatial_ctx_extract_x p estate f a i pi rn rr emap) f i a rn 
 
 and update_field_imm (f : h_formula) (pimm1 : CP.ann list) (consumed_ann: CP.ann list) (residue: bool): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -851,7 +859,7 @@ and check_pred_reachability prog (must_contain: P.spec_var list) (target_f: Cfor
     else true
   else true
 
-and coerc_mater_match_with_unk_hp_left prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+and coerc_mater_match_with_unk_hp_left prog estate (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let coerc_left = Lem_store.all_lemma # get_left_coercion in
   let exists_left = exists_candidate_lemma coerc_left l_vname in
   let cmm = if exists_left then 
@@ -859,12 +867,12 @@ and coerc_mater_match_with_unk_hp_left prog (l_vname: ident) (r_vname: ident) (l
       if (reachable_pred) then
         let () = y_tinfo_pp "Loc : l_vargs MUST have all parameters (incl SELF)" in 
         let () = y_tinfo_hp (add_str "l_vargs" pr_svl) l_vargs in
-        x_add coerc_mater_match coerc_left l_vname l_vargs r_vname  r_aset lhs_node
+        x_add coerc_mater_match estate coerc_left l_vname l_vargs r_vname  r_aset lhs_node
       else []
     else [] in
   cmm
 
-and coerc_mater_match_with_unk_hp_right prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+and coerc_mater_match_with_unk_hp_right prog estate (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let coerc_right = Lem_store.all_lemma # get_right_coercion in
   let exists_right = exists_candidate_lemma coerc_right r_vname in
   let cmm = if exists_right then 
@@ -872,21 +880,21 @@ and coerc_mater_match_with_unk_hp_right prog (l_vname: ident) (r_vname: ident) (
       if (reachable_pred) then 
         let () = y_winfo_pp "Loc : r_vargs MUST have all parameters (incl SELF)" in 
         let () = y_tinfo_hp (add_str "r_vargs" pr_svl) r_vargs in
-        x_add coerc_mater_match coerc_right r_vname r_vargs l_vname view_sv lhs_node
+        x_add coerc_mater_match estate coerc_right r_vname r_vargs l_vname view_sv lhs_node
       else [] 
     else [] in
   cmm
 
-and coerc_mater_match_with_unk_hp_x prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
-  let cmml = coerc_mater_match_with_unk_hp_left prog l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in
-  let cmmr = coerc_mater_match_with_unk_hp_right prog l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in 
+and coerc_mater_match_with_unk_hp_x prog estate (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list) (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+  let cmml = coerc_mater_match_with_unk_hp_left prog estate l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in
+  let cmmr = coerc_mater_match_with_unk_hp_right prog estate l_vname r_vname l_vargs r_vargs r_aset lhs_node l_f view_sv in 
   cmml@cmmr
 
-and coerc_mater_match_with_unk_hp prog (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list)  (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
+and coerc_mater_match_with_unk_hp prog estate (l_vname: ident) (r_vname: ident) (l_vargs: P.spec_var list) (r_vargs: P.spec_var list)  (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv =
   let pr_svl = Cprinter.string_of_spec_var_list in
-  Debug.no_4 "coerc_mater_match_with_unk_hp" pr_id pr_svl pr_svl pr_svl pr_none (fun _ _ _ _-> coerc_mater_match_with_unk_hp_x prog (l_vname: ident) r_vname (l_vargs: P.spec_var list) r_vargs (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv) l_vname l_vargs r_aset view_sv
+  Debug.no_4 "coerc_mater_match_with_unk_hp" pr_id pr_svl pr_svl pr_svl pr_none (fun _ _ _ _-> coerc_mater_match_with_unk_hp_x prog estate (l_vname: ident) r_vname (l_vargs: P.spec_var list) r_vargs (r_aset: P.spec_var list) (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) view_sv) l_vname l_vargs r_aset view_sv
 
-and form_match_on_two_hrel args c vs1 prog hp e rhs_node aset (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) emap =
+and form_match_on_two_hrel args c vs1 prog estate hp e rhs_node aset (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) emap =
   (* match rhs_node with *)
   (* | ViewNode ({h_formula_view_node = p1; *)
   (*              h_formula_view_imm = imm1; *)
@@ -901,10 +909,10 @@ and form_match_on_two_hrel args c vs1 prog hp e rhs_node aset (lhs_node: Cformul
   let root_aset = root::root_aset in
   (* let c = "" in *)
   (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
-  let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
+  let cmm = coerc_mater_match_with_unk_hp prog estate (CP.name_of_spec_var hp) c args vs1 aset lhs_node l_f root_aset in 
   cmm
 
-and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) emap =
+and spatial_ctx_extract_hrel_on_lhs prog estate hp e rhs_node aset (lhs_node: Cformula.h_formula) (l_f: Cformula.h_formula) emap =
   match rhs_node with
   | ViewNode ({h_formula_view_node = p1;
                h_formula_view_imm = imm1;
@@ -922,13 +930,13 @@ and spatial_ctx_extract_hrel_on_lhs prog hp e rhs_node aset (lhs_node: Cformula.
       let root_aset = CP.EMapSV.find_equiv_all root emap in
       let root_aset = root::root_aset in
       (* let e = List.fold_left (fun a v-> CP.is_var v then  a@[CP.exp_to_spec_var v] else a) []  e in *)
-      let cmm = coerc_mater_match_with_unk_hp prog (CP.name_of_spec_var hp) c args (p1::vs1) aset lhs_node l_f root_aset in 
+      let cmm = coerc_mater_match_with_unk_hp prog estate (CP.name_of_spec_var hp) c args (p1::vs1) aset lhs_node l_f root_aset in 
       cmm
   | _ -> []
 
 (* WN : to check if this optimization misses anything *)
 (* Materialized match for lemma requires an overlap with parameters of views *)
-and coerc_mater_match_gen_x l_vname (l_vargs:P.spec_var list) r_vname (r_vargs:P.spec_var list)  (*l_asset*) r_aset (lhs_f:Cformula.h_formula) =
+and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_vargs:P.spec_var list)  (*l_asset*) r_aset (lhs_f:Cformula.h_formula) =
   let overlap_flag = CP.overlap_svl r_aset l_vargs in 
   let () = x_tinfo_hp (add_str "l_vname" pr_id) l_vname no_pos in
   let () = x_tinfo_hp (add_str "r_vname" pr_id) r_vname no_pos in
@@ -936,25 +944,25 @@ and coerc_mater_match_gen_x l_vname (l_vargs:P.spec_var list) r_vname (r_vargs:P
   let () = x_tinfo_hp (add_str "r_aset" !CP.print_svl) r_aset no_pos in
   if overlap_flag || !Globals.adhoc_flag_1 then
     let coerc_left = Lem_store.all_lemma # get_left_coercion in
-    let cmml = x_add coerc_mater_match coerc_left l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in
+    let cmml = x_add coerc_mater_match estate coerc_left l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in
     let coerc_right = Lem_store.all_lemma # get_right_coercion in
     (* let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in *)
     (* let cmmr = coerc_mater_match coerc_right r_vname (r_vargs:P.spec_var list) l_vname r_aset (lhs_f:Cformula.h_formula) in *)
-    let cmmr = if !Globals.old_mater_coercion then x_add coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) 
-      else x_add coerc_mater_match coerc_right r_vname (r_vargs:P.spec_var list) l_vname r_aset (lhs_f:Cformula.h_formula)
+    let cmmr = if !Globals.old_mater_coercion then x_add coerc_mater_match estate coerc_right l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) 
+      else x_add coerc_mater_match estate coerc_right r_vname (r_vargs:P.spec_var list) l_vname r_aset (lhs_f:Cformula.h_formula)
     in
     cmml@cmmr
   else []
 
-and coerc_mater_match_gen l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula) =
+and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in
   let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
   let pr2 ls = pr_list pr4 ls in
   let pr_svl = Cprinter.string_of_spec_var_list in
   Debug.no_4 "coerc_mater_match_gen" pr_id pr_svl pr_svl (add_str "lhs" !CF.print_h_formula) pr2
-    (fun _ _ _ _ -> coerc_mater_match_gen_x l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset lhs_f
+    (fun _ _ _ _ -> coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset lhs_f
 
-and spatial_ctx_extract_x prog (f0 : h_formula)
+and spatial_ctx_extract_x prog estate (f0 : h_formula)
     (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list)
     rhs_node rhs_rest emap
   : match_res list  =
@@ -1054,7 +1062,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
           let common = CP.intersect_svl vs_rhs p1_eq in
           let () = y_binfo_hp (add_str "p1_eq" !CP.print_svl) p1_eq in
           let () = y_binfo_hp (add_str "aset" !CP.print_svl) aset in
-          let cmm = coerc_mater_match_with_unk_hp prog c
+          let cmm = coerc_mater_match_with_unk_hp prog estate c
               (CP.name_of_spec_var hp) (p1::vs1) [] aset f f0 p1_eq in
           let () = y_binfo_hp (add_str "List.length cmm" string_of_int) (List.length cmm) in
           if common==[] then cmm
@@ -1090,7 +1098,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
             let args = p1::vs1 in
             let vmm = view_mater_match prog c args (* (p1::vs1) *) aset imm f anns in
             let () = x_tinfo_hp (add_str "view_mater_match" (pr_list pr_helper_res)) vmm no_pos in
-            let cmm = x_add coerc_mater_match_gen c args (* vs1 *) right_name r_vargs aset f in
+            let cmm = x_add coerc_mater_match_gen estate c args (* vs1 *) right_name r_vargs aset f in
             let () = x_tinfo_hp (add_str "coerc_mater_match" (pr_list pr_helper_res)) cmm no_pos in
             (*LDK: currently, assume that frac perm does not effect
               the choice of lemmas (coercions)*)
@@ -1106,7 +1114,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula)
         let () = y_tinfo_hp (add_str "f0" !CF.print_h_formula) f0 in
         let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
         let c = CP.name_of_spec_var hp in
-        let cmm = x_add coerc_mater_match_gen c vs right_name r_vargs aset f in
+        let cmm = x_add coerc_mater_match_gen estate c vs right_name r_vargs aset f in
         let () = x_tinfo_hp (add_str "coerc_mater_match (HREL)" (pr_list pr_helper_res)) cmm no_pos in
         if common==[] || !Globals.old_infer_heap then []
         else [(HEmp, f, [], Root)]@cmm
@@ -1456,10 +1464,16 @@ and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,
     left_act@right_act
   else  []
 
-and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f = 
+and process_one_match_mater_unk_w_view left_preds right_preds lhs_name rhs_name c ms f = 
   let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) rhs_name lhs_name) in
   let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) lhs_name rhs_name) in
-  let coerc_lst = left_ls@right_ls in
+  let extra_left_ls = List.fold_left (fun acc extra_rhs_name ->
+      acc@(filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) lhs_name extra_rhs_name))
+  ) [] right_preds in
+  let extra_right_ls = List.fold_left (fun acc extra_lhs_name ->
+      acc@(filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) rhs_name extra_lhs_name))
+  ) [] left_preds in
+  let coerc_lst = left_ls@right_ls@extra_left_ls@extra_right_ls in
   let prio, coerc = match ms with
     | Coerc_mater s -> (* (1,s) *) (3,s) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
     | _ -> failwith("[context.ml]: only lemma cand be fired at this point for UNK pred on lhs\n")
@@ -2196,7 +2210,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | HRel (hn1, args1, _), (HRel (hn2, args2, _) as rhs) -> 
          let () = x_tinfo_pp "HRel vs HREL\n" no_pos in
          let pr_sv = Cprinter.string_of_spec_var in
-         if CP.eq_spec_var hn1 hn2 then (1,M_match m_res)
+         let eq_fst_ptr ls1 ls2= match ls1,ls2 with
+           | sv1::_,sv2::_ -> CP.eq_spec_var sv1 sv2
+           | _ -> false
+         in
+         let () = y_winfo_pp "the second condition is heur" in 
+         if CP.eq_spec_var hn1 hn2
+           (* L2: huer here *)
+           || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2))
+         then (1,M_match m_res)
          else if CF.is_exists_hp_rel hn2 estate  then (2,M_infer_fold m_res)
          else if CF.is_exists_hp_rel hn1 estate  then (2,M_infer_unfold (m_res,rhs,HEmp))
          else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
@@ -2268,16 +2290,27 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  M_lemma (m_res,Some s)) in
            let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
            (-1, (Search_action ((1,a1)::l1)))
-       | HRel (h_name, _, _), ViewNode vl ->
+       | HRel (h_name, _, _), ViewNode vl -> begin
          let h_name = Cpure.name_of_spec_var h_name in
          let vl_name = vl.h_formula_view_name in
          let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
-         process_one_match_mater_unk_w_view h_name vl_name m_res ms alternative 
-       | ViewNode vl, HRel (h_name, _, _) ->
+         let left_preds = match ms with
+           | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
+           | _ -> []
+         in
+         let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
+         process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
+         end
+       | ViewNode vl, HRel (h_name, _, _) -> begin
          let h_name = Cpure.name_of_spec_var h_name in
          let vl_name = vl.h_formula_view_name in
          let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
-         process_one_match_mater_unk_w_view vl_name h_name m_res ms alternative 
+         let right_preds =  match ms with
+           | Coerc_mater _ -> List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
+           | _ -> []
+         in
+         process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+         end
        | ViewNode vl, DataNode dr ->
          let () = pr_hdebug (add_str "cyclic " pr_id) " 5" in
          let () = pr_debug "try LHS case analysis here!\n" in
@@ -2799,7 +2832,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   in
   (* let () = print_string ("\n(andreeac) context.ml l_h:"  ^ (Cprinter.string_of_h_formula lhs_h)) in *)
   let r = List.map (fun (c1,c2,c3)->
-      (x_add choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos , (c1,c2,c3))
+      (x_add choose_context prog estate es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos , (c1,c2,c3))
     ) rhs_lst in
   (* match r with  *)
   (*   | [] -> M_Nothing_to_do "no nodes to match" *)
@@ -3025,16 +3058,16 @@ let rec pr_node_res (e:deprecated_find_node_result) =
   | Deprecated_Match l -> pr_seq "Match" pr_match_res l
 let string_of_node_res e = poly_string_of_pr pr_node_res e
 
-let deprecated_find_node_one prog node lhs_h lhs_p rhs_v pos : deprecated_find_node_result =
+let deprecated_find_node_one prog estate node lhs_h lhs_p rhs_v pos : deprecated_find_node_result =
   let node = match node with 
     | ViewNode v -> ViewNode{v with h_formula_view_node = rhs_v}
     | _ -> report_error pos "deprecated_find_node_one error" in
-  let matches = x_add choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HEmp pos in
+  let matches = x_add choose_context prog estate [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HEmp pos in
   if Gen.is_empty matches then Deprecated_NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Deprecated_Match matches
 
 (* find a node from the left hand side *)
-let deprecated_find_node prog node lhs_h (lhs_p : MCP.mix_formula) (ps : CP.spec_var list) pos : deprecated_find_node_result =
+let deprecated_find_node prog estate node lhs_h (lhs_p : MCP.mix_formula) (ps : CP.spec_var list) pos : deprecated_find_node_result =
   let rec merge_results rs1 rs2 = match rs1 with
     | Deprecated_Failed -> rs2
     | Deprecated_NoMatch -> begin
@@ -3048,7 +3081,7 @@ let deprecated_find_node prog node lhs_h (lhs_p : MCP.mix_formula) (ps : CP.spec
         | Deprecated_NoMatch -> rs1
         | Deprecated_Match  l2 -> rs1 (*TODO: fix it Match (l1 @ l2) *)
       end in
-  let tmp1 = List.map (fun p -> deprecated_find_node_one prog node lhs_h lhs_p p pos) ps in
+  let tmp1 = List.map (fun p -> deprecated_find_node_one prog estate node lhs_h lhs_p p pos) ps in
   let tmp2 = List.fold_left merge_results Deprecated_Failed tmp1 in
   tmp2
 

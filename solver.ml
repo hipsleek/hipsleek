@@ -6206,7 +6206,7 @@ and check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_form
   let l = Gen.BList.intersect_eq CP.eq_spec_var lhs_targetasets n_l_v in
   (l!=[])     
 
-and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
+and check_one_target_old prog estate node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
   : bool =
   (*let () = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
   let lhs_eqns = MCP.ptr_equations_with_null lhs_pure in
@@ -6215,7 +6215,7 @@ and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_fo
   let lhs_targetasets =
     if CP.mem target lhs_targetasets1 then lhs_targetasets1
     else target :: lhs_targetasets1 in
-  let fnode_results = (Context.deprecated_find_node prog node target_rhs_h target_rhs_p lhs_targetasets no_pos) in
+  let fnode_results = (Context.deprecated_find_node prog estate node target_rhs_h target_rhs_p lhs_targetasets no_pos) in
   begin
     match fnode_results with
     | Context.Deprecated_Failed -> (*let () = print_string("[check_one_target]: failed\n") in*) false
