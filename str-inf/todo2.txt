@@ -666,7 +666,52 @@ coerc_mater_match inp5 : U(q3,q)
 coerc_mater_match@5 EXIT:[( emp, U(q3,q), MaterializedArg (self,full,[U]) coerc_defn_mater: <== lem_12)]
 
 ===========================================================================
+/*
+# ex16c4.slk (FIXED by removing heuristic for matching)
+
+        (* let () = y_winfo_pp "the second condition is heur" in *)
+         (* WN : this heuristic caused problem for str-inf/ex16c4.slk *)
+         if CP.eq_spec_var hn1 hn2
+           (* L2: huer here *)
+           (* || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2)) *)
+
+
+infer [U2,U,@classic,@pure_field] U2(q3,p)  |- U(q3,p).
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+# How did U2 and U get proven without below?
+
+U2(q3,p) --> U(q3,p)
 ===========================================================================
+# ex16c3b.slk
+
+infer [U2,@classic,@pure_field] U2(q3,q) & D(p)  |- U(q3,qq) & D(qq).
+print residue.
+// fail
+// can we support InferUnfold with instantiation?
+//     U2(q3,q) --> U(q3,qq) & qq=q
+//  D(p) & qq=q |- D(qq)
+
+# Why did an InferUnfold fail?
+
+!!! **astsimp.ml#8930:impl_var:[]
+Entail (2) : Fail.(may) cause:**solver.ml#13222:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+ CEX:true
 ===========================================================================
 ===========================================================================
 ===========================================================================

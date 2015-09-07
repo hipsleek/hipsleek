@@ -1475,7 +1475,7 @@ and process_one_match_mater_unk_w_view left_preds right_preds lhs_name rhs_name 
   ) [] left_preds in
   let coerc_lst = left_ls@right_ls@extra_left_ls@extra_right_ls in
   let prio, coerc = match ms with
-    | Coerc_mater s -> (* (1,s) *) (3,s) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
+    | Coerc_mater s -> (* (1,s) *) (1,s) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
     | _ -> failwith("[context.ml]: only lemma cand be fired at this point for UNK pred on lhs\n")
   in
   if List.exists (fun coerc0 -> coerc0.coercion_name = coerc.coercion_name) coerc_lst then  
@@ -2214,14 +2214,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            | sv1::_,sv2::_ -> CP.eq_spec_var sv1 sv2
            | _ -> false
          in
-         let () = y_winfo_pp "the second condition is heur" in 
+         (* let () = y_winfo_pp "the second condition is heur" in *)
+         (* WN : this heuristic caused problem for str-inf/ex16c4.slk *)
          if CP.eq_spec_var hn1 hn2
            (* L2: huer here *)
-           || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2))
+           (* || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2)) *)
          then (1,M_match m_res)
-         else if CF.is_exists_hp_rel hn2 estate  then (2,M_infer_fold m_res)
-         else if CF.is_exists_hp_rel hn1 estate  then (2,M_infer_unfold (m_res,rhs,HEmp))
-         else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
+         else 
+           let flag = CF.is_exists_hp_rel hn1 estate in
+           if flag  then (2,M_infer_unfold (m_res,rhs,HEmp))
+           else if CF.is_exists_hp_rel hn2 estate  then (2,M_infer_fold m_res)
+           else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
        | HRel (h_name, args, _), (DataNode _ as rhs) -> 
          (* TODO : check if h_name in the infer_vars *)
          let act1 = M_unfold (m_res, 1) in (* base-case unfold implemented *)
@@ -2574,9 +2577,9 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
   (*   (-1, (Cond_action (rs@[r;r0]))) *)
   (* else (-1, Cond_action (rs@[r0])) *)
   (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
-  | x::[] -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p) reqset
+  | x::[] -> x_add process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p) reqset
   | _ ->  
-    let rs = List.map (fun l -> process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p) reqset) l in
+    let rs = List.map (fun l -> x_add process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p) reqset) l in
     let () = x_tinfo_pp "process many matches" no_pos in
     (* WN : TODO use cond_action if of different priorities *)
     let rs = sort_wt rs in
