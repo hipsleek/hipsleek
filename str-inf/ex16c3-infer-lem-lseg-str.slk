@@ -50,7 +50,13 @@ infer [U,U2,@classic,@pure_field] x::char_star<w,q3>*U2(q3,q)*q::char_star<0,p> 
 
 //infer [U2,@classic,@pure_field] U2(q3,q)*q::char_star<0,p>  |- U(q3,q)*q::char_star<0,p> .
 
-infer [U2,@classic,@pure_field] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+infer [U2,U,@classic,@pure_field] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+print residue.
+
+infer [U2,U,@classic,@pure_field] U2(q3,q)*q::char_star<0,p>  
+      |- U(q3,q4)*q4::char_star<0,p>.
 print residue.
 
 /*
