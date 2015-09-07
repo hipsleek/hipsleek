@@ -1,8 +1,15 @@
+data char_star {
+  int val;
+  char_star next;
+} inv //true;
+next = self + 1.
 
-checkentail src+1=q_1643 & dst'+1=q_1672 &
- n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_1643 & 
- ch'=v & Anon_21=v_1669 & q=q_1670 & q_1670=dst+1 & dst!=0 & v_1671=ch' & 
- q_1672=q |- false.
+pred BADS<> ==
+  self::char_star<v,q>*q::BADS<> 
+  inv true.
+
+checkentail x::char_star<_,q> & q=x+1 |- q=x+1.
+print residue.
 
 /*
 xpure_heap#1@229

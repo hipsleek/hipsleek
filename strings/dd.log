@@ -13,7 +13,7 @@
 #run_infer_one_pass
 #,Trace
 #run_entail_state
-meta_to_struc_formula
-struc_formula_trans_heap_node,Trace
-transform_bexpr
-
+#meta_to_struc_formula
+#struc_formula_trans_heap_node,Trace
+#transform_bexpr
+h_formula_2_mem,Trace
