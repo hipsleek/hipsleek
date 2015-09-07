@@ -546,7 +546,8 @@ ensures res or !res;
 data char_star {
   int val;
   char_star next;
-} inv next = self + 1;
+} inv //true;
+next = self + 1;
 
 char_star __plus_plus_char(char_star x)
 requires x::char_star<_,q>@L & Term[] 
