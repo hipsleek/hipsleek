@@ -11,7 +11,7 @@ HeapPred R1(node x).
 HeapPred U2(node x,int v).
 
 
-infer [U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
 //infer [U1,@classic,@pure_field] U2(x,y)  |- U1(x).
 //infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
 //infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
