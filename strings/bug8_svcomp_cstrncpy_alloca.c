@@ -38,8 +38,70 @@ char *(cstrncpy)(char *s1, const char *s2, int n)
      {
          n--;
          if ((*dst++ = *src++) == '\0')
+         {
+             //@dprint;
              break;
+         }
      }
      return s1;
  }
+/*============================================================================== wrong
+Checking procedure while_32_5$char_star~int~char_star~char_star~char_star~int... 
+!!! **typechecker.ml#2190:Dprint:[src,tmp___0,dst,tmp,tmp___1,n]
+dprint(simpl): bug8_svcomp_cstrncpy_alloca.c:42: ctx:  List of Failesc Context: [FEC(0, 1, 1  [(,0 ); (,1 ); (,0 ); (,1 ); (,1 )])]
+ Escaped States:
+ [
+  
+  Try-Block:125::
+  [
+   Path: [(,1 ); (,2 ); (,1 )]
+   State:  dst::BADS<>@M * src::WFS<>@M&
+!(v_bool_32_1782') & n'<=0 & src'=src & tmp___0'=tmp___0 & dst'=dst & 
+tmp'=tmp & tmp___1'=tmp___1 & n'=n & v_bool_32_1872'&
+{FLOW,(16,17)=brk_default#E}[]
+   ];
+  ;
+  
+  ]Successful States:
+ [
+  Label: [(,0 ); (,1 ); (,0 ); (,1 ); (,1 )]
+  State:
+     hfalse&false&{FLOW,(4,5)=__norm#E}[]
+    es_orig_ante: Some(hfalse&false&{FLOW,(4,5)=__norm#E}[])
+    es_cond_path: [1]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+================================================================================= correct
+Checking procedure while_32_5$char_star~int~char_star~char_star~char_star~int... 
+!!! **typechecker.ml#2199:Dprint:[src,tmp___0,dst,tmp,tmp___1,n]
+dprint(simpl): bug8_svcomp_cstrncpy_alloca.c:42: ctx:  List of Failesc Context: [FEC(0, 1, 1  [(,0 ); (,1 ); (,0 ); (,1 ); (,1 )])]
+ Escaped States:
+ [
+  
+  Try-Block:120::
+  [
+   Path: [(,1 ); (,2 ); (,1 )]
+   State:  dst::BADS<>@M * src::WFS<>@M&
+!(v_bool_32_1695') & n'<=0 & src'=src & tmp___0'=tmp___0 & dst'=dst & 
+tmp'=tmp & tmp___1'=tmp___1 & n'=n & v_bool_32_1785'&
+{FLOW,(16,17)=brk_default#E}[]
+   ];
+  ;
+  
+  ]Successful States:
+ [
+  Label: [(,0 ); (,1 ); (,0 ); (,1 ); (,1 )]
+  State:
+     dst'::BADS<>@M * src::char_star<tmp___0',src'>@M * src'::BADS<>@M * 
+ tmp'::char_star<tmp___0',dst'>@M&
+tmp___1'=src & tmp___0'=0 & n'=n-1 & tmp'=dst & 1<=n & dst!=null&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 1; 1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+
 
