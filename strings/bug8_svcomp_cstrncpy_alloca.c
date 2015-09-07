@@ -31,9 +31,9 @@ char *(cstrncpy)(char *s1, const char *s2, int n)
      /* Copy bytes, one at a time.  */
      while (n > 0)
        /*@
-          requires dst::BADS<> * src::WFS<> & n>0
-          ensures src::WFSeg<qq>*qq::char_star<0,src'>*src'::BADS<> * dst::WFSeg<pp>*pp::char_star<0,dst'>*dst'::BADS<> & n' > 0
-               or n' = 0;
+          requires dst::BADS<> * src::WFS<>
+          ensures src::WFSeg<qq>*qq::char_star<0,src'>*src'::BADS<> * dst::WFSeg<pp>*pp::char_star<0,dst'>*dst'::BADS<>
+               or src::WFSeg<src'>*src'::WFS<> * dst::WFSeg<dst'>*dst'::BADS<>;
        */
      {
          n--;
