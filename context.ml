@@ -1460,7 +1460,7 @@ and process_one_match_mater_unk_w_view lhs_name rhs_name c ms f =
   let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) lhs_name rhs_name) in
   let coerc_lst = left_ls@right_ls in
   let prio, coerc = match ms with
-    | Coerc_mater s -> (1,s)
+    | Coerc_mater s -> (* (1,s) *) (3,s) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
     | _ -> failwith("[context.ml]: only lemma cand be fired at this point for UNK pred on lhs\n")
   in
   if List.exists (fun coerc0 -> coerc0.coercion_name = coerc.coercion_name) coerc_lst then  
