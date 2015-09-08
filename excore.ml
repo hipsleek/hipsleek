@@ -640,9 +640,8 @@ module EPURE =
       (* use ef_conv_enum *)
       if shape then Ssat.SS.is_s_unsat (Elt.conv_var b) p else
       let cf = if !Globals.ptr_arith_flag then 
-          (* unscalable for strings/bug8.c *) 
-          (* ef_conv_disj [f] *)
-            p
+          ef_conv_disj [f]
+            (* p *)
         else ef_conv_enum f in
       (* if !Globals.delay_eelim_baga_inv then *)
       (*   (\* if unsat(cf) return true *\) *)
@@ -660,7 +659,7 @@ module EPURE =
       Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
           (fun _ ->  ef_unsat_0 ~shape:shape f) f
 
-    let unsat is_shape (b,f) = ef_unsat_0 ~shape:is_shape (b, f)
+    let unsat is_shape (b,f) = x_add_1 (ef_unsat_0 ~shape:is_shape) (b, f)
 
     let norm is_shape (efp) =
       if unsat is_shape efp then mk_false

@@ -1399,6 +1399,7 @@ let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed)
 
 (* get specialized baga form *)
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+  (* pre: epure is SAT? *)
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   (* let ba = vdef.view_baga in *)
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
@@ -1420,23 +1421,28 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         (* else *)
         let sst = List.combine from_svs to_svs in
         List.map (Excore.EPureI.subst_epure sst) bl in
-      let () = x_ninfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
-      let () = x_ninfo_hp (add_str "epure = " ( !CP.print_formula)) epure no_pos in
       let add_epure pf lst =
         let ep = Excore.EPureI.mk_epure pf in
         let lst = Excore.EPureI.mk_star_disj ep lst in
         Excore.EPureI.elim_unsat_disj false lst
       in
       let baga_sp = (add_epure epure baga_lst) in
-      let () = x_ninfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
       let r = Excore.EPureI.hull_memset baga_sp in
-      let () = x_ninfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
       if baga_sp==[] then 
-        let () = y_ninfo_hp (add_str "FALSE baga detected for:" pr_id) c in
-        [root;root]
+        (if !Globals.warn_is_false_baga then
+          begin
+            let nothing = add_epure epure Excore.EPureI.mk_true in
+            if not(nothing==[]) then
+              let () = y_winfo_hp (add_str "FALSE baga detected for:" pr_id) c in
+              let () = x_binfo_hp (add_str "epure = " ( !CP.print_formula)) epure no_pos in
+              let () = x_binfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+              let () = x_binfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+              let () = x_binfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
+              ()
+            else ()
+          end; [root;root])
       else r
     end
-
 
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   Debug.no_3 "get_spec_baga" !P.print_formula (fun v -> !print_svl [v]) !print_svl !print_svl 

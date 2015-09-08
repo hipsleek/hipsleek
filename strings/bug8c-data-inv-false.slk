@@ -14,6 +14,10 @@ checksat n'=n & dst'=dst & src'=src & 0<=n & v_1642!=0 & v=v_1642 & Anon_20=q_16
 checkentail x::char_star<_,q> & q=x+1 |- q=x+1.
 print residue.
 
+checksat q_1843!=null & s'=s & n=k & flted_26_1842=0 
+ & v=flted_26_1842 & q=q_1843 & 
+ x'=v & v_int_71_1769'=0 & x'!=v_int_71_1769'.
+
 /*
 xpure_heap#1@229
 xpure_heap#1 inp1 : q_1670::BADS<>@M * src::char_star<v_1642,q_1643>@M * q_1643::WFS<>@M * 
