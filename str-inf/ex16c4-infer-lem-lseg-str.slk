@@ -1,4 +1,4 @@
-data char_star {
+nbadata char_star {
   int val;
   char_star next;
 }.
