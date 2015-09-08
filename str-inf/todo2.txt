@@ -726,7 +726,7 @@ can therefore be instanitated.
 -------------------
 
 infer [U2,@pure_field] U2(q3,q) * q::char_star<0,p> & q!=qq  |- U(q3,qq) *qq::char_star<n,p>.
-
+ 
 infer [U2,@pure_field] U2(q3,q) & q!=qq  |- U(q3,qq) .
 
 # sound instantiation may lead to unsoundness.
@@ -737,7 +737,17 @@ infer [U2,@pure_field] U2(q3,q) & q!=qq  |- U(q3,qq) .
 # can we check that qq is not free in LHS before instantiating??
 # Also, each such var is instantiated only once.
 ===========================================================================
-===========================================================================
+# ex16c3c.slk
+
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<n,p> .
+
+ <1>emp&qq=q & n=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#|3  --> U(q3,q)&true]
+
+# Please add the heap guard:
+
+    U2(q3,q)&true |#| q::char<0,_>  --> U(q3,q)&true]
+==========================================================================
 ===========================================================================
 ===========================================================================
 ===========================================================================
