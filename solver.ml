@@ -12710,14 +12710,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   match leargs, reargs with
                     | _::rest1,_::rest2 -> begin
                         try
-                          let largs = (List.map CP.exp_to_sv rest1) in
+                          let rargs = (List.map CP.exp_to_sv rest2) in
                           (* let check_fml = MCP.merge_mems lhs_b.CF.formula_base_pure mf true in *)
                           (* if TP.is_sat_raw check_fml then *)
                           let fvp = CP.fv (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
                           let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
-                          let () = Debug.ninfo_hprint (add_str  "largs" !CP.print_svl) largs no_pos in
-                          if largs != [] && CP.intersect_svl largs fvp == [] then
-                            let rargs = (List.map CP.exp_to_sv rest2) in
+                          let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
+                          if rargs != [] && CP.intersect_svl rargs fvp == [] then
+                            let largs = (List.map CP.exp_to_sv rest1) in
                             let sst = List.combine largs rargs in
                             let p = List.fold_left (fun acc_p (sv1,sv2) ->
                                 let p = CP.mkEqVar sv1 sv2 no_pos in
