@@ -12706,7 +12706,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         let rhs_rest = r.match_res_rhs_rest in
         let n_estate, n_lhs_b = match lhs_node,rhs_node with
           | HRel (lhp,largs,_),HRel (rhp,rargs,_) ->
-                if CP.mem_svl lhp estate.es_infer_vars_hp_rel && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) then
+                if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
                   match largs, rargs with
                     | _::rest1,_::rest2 -> begin
                         try

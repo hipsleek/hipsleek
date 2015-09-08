@@ -1475,7 +1475,7 @@ and process_one_match_mater_unk_w_view left_preds right_preds lhs_name rhs_name 
   ) [] left_preds in
   let coerc_lst = left_ls@right_ls@extra_left_ls@extra_right_ls in
   let prio, coerc = match ms with
-    | Coerc_mater s -> (* (1,s) *) (1,s) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
+    | Coerc_mater s -> (* (1,s) *) (3,s) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
     | _ -> failwith("[context.ml]: only lemma cand be fired at this point for UNK pred on lhs\n")
   in
   if List.exists (fun coerc0 -> coerc0.coercion_name = coerc.coercion_name) coerc_lst then  
