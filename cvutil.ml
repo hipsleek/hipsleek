@@ -873,10 +873,10 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
         (*   ) *)
         (* get specialized baga based on pure_f *)
         let ba = get_spec_baga pure_f prog c p vs in
-        let () = y_binfo_hp (add_str "ba" !CP.print_svl) ba in 
-        let () = y_binfo_hp (add_str "view(c)" pr_id) c in 
-        let () = y_binfo_hp (add_str "pure_f" !CP.print_formula) pure_f in 
-        (* let () = y_binfo_hp (add_str "view(c)" pr_id) c in  *)
+        let () = y_tinfo_hp (add_str "ba" !CP.print_svl) ba in 
+        let () = y_tinfo_hp (add_str "view(c)" pr_id) c in 
+        let () = y_tinfo_hp (add_str "pure_f" !CP.print_formula) pure_f in 
+        (* let () = y_tinfo_hp (add_str "view(c)" pr_id) c in  *)
         let vdef = look_up_view_def pos prog.prog_view_decls c in
         let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
         let to_svs = p :: vs in
@@ -917,7 +917,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                 | Some ls -> 
                   lookup_view_baga_with_subs ls vdef from_svs to_svs))
         in
-        let () = x_binfo_hp (add_str "baga(view_node)" (fun e -> CP.BagaSV.string_of e)) new_mset no_pos in
+        let () = x_tinfo_hp (add_str "baga(view_node)" (fun e -> CP.BagaSV.string_of e)) new_mset no_pos in
         {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;}  
       | Star _  -> report_error no_pos "solver: h_mem should not get star at this point" in
     let r = List.fold_left (fun a c-> CP.DisjSetSV.star_disj_set a (mapper c).mem_formula_mset) CP.DisjSetSV.mkEmpty node_lst in

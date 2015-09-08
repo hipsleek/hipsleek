@@ -639,7 +639,11 @@ module EPURE =
     let ef_unsat_0 ?(shape=false) ((b,p) as f : epure) : bool =
       (* use ef_conv_enum *)
       if shape then Ssat.SS.is_s_unsat (Elt.conv_var b) p else
-      let cf = ef_conv_enum f in
+      let cf = if !Globals.ptr_arith_flag then 
+          (* unscalable for strings/bug8.c *) 
+          (* ef_conv_disj [f] *)
+            p
+        else ef_conv_enum f in
       (* if !Globals.delay_eelim_baga_inv then *)
       (*   (\* if unsat(cf) return true *\) *)
       (*   let ps = list_of_conjs p in *)
@@ -1521,7 +1525,7 @@ module EPUREN =
     (*     List.map (fun efp1 -> List.map (fun efp2 -> mk_star efp1 efp2) efpd2) efpd1 in *)
     (*   List.concat res *)
 
-    let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
+    let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj)  =
       let res =
         List.map (fun efp1 -> add_star efp1 efpd2) efpd1 in
       List.fold_left merge_disj [] res
@@ -1529,7 +1533,7 @@ module EPUREN =
 
     let mk_star_disj (efpd1:epure_disj) (efpd2:epure_disj) =
       Debug.no_2 "I.mk_star_disj" string_of_disj string_of_disj string_of_disj
-        mk_star_disj_x efpd1 efpd2
+        mk_star_disj efpd1 efpd2
 
 
     (* reducing duplicate? *)

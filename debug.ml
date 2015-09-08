@@ -114,6 +114,12 @@ let winfo_pprint (msg:string) (pos:loc) =
   let flag = !trace_on || !devel_debug_on in
   ho_print flag (fun m -> s^m) ("**WARNING**"^msg)
 
+let winfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
+  winfo_pprint (pr m) pos 
+
+let winfo_zprint msg (pos:loc) =
+  winfo_pprint (Lazy.force msg) pos 
+
 let binfo_hprint (pr:'a->string) (m:'a) (pos:loc) = 
   let s = if !devel_debug_on then (prior_msg pos) else " " in
   let flag = !trace_on || !devel_debug_on in
@@ -262,6 +268,8 @@ let y_tinfo_zprint msg = tinfo_zprint msg no_pos
 let y_tinfo_hprint pr msg = tinfo_hprint pr msg no_pos
 
 let y_winfo_pprint msg = winfo_pprint msg no_pos
+let y_winfo_hprint pr msg = winfo_hprint pr msg no_pos
+let y_winfo_zprint msg = winfo_zprint msg no_pos
 
 let print_info prefix str (pos:loc) = 
   let tmp = "\n" ^ prefix ^ ":" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^": " ^ str ^ "\n" in
