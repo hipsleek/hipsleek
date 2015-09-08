@@ -38,7 +38,7 @@ char *(cstrpbrk)(const char *s1, const char *s2)
      for (sc1 = s1; *sc1 != '\0'; sc1++) 
        /*@
           requires sc1::WFS<>
-          ensures sc1::WFSeg<sc1'>*sc1'::char_star<0,q>*q::BADS<>; & flow __norm
+          ensures sc1::WFSeg<sc1'>*sc1'::char_star<0,q>*q::BADS<> & flow __norm
                or eres::ret_char_star<p>*sc1::WFSeg<p>*p::char_star<x,q>*q::WFS<> & flow ret_char_star;
        */
      {
@@ -53,8 +53,8 @@ char *(cstrpbrk)(const char *s1, const char *s2)
          {    
            s++;
          }
-         /*if (*s != c)
-             return (char *)sc1;*/
+         if (*s != c)
+             return (char *)sc1;
      }
      return 0;                /* terminating nulls match */
  }
@@ -95,5 +95,5 @@ Procedure while_38_5$int~char_star~char_star~char_star FAIL.(2)
 
 
 Exception Failure("Proving precond failed") Occurred!
-
+*/
 
