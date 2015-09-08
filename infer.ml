@@ -2986,14 +2986,14 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   let () = Debug.ninfo_hprint (add_str  "    classic_nodes" !CP.print_svl) classic_nodes no_pos in
   let () = DD.ninfo_hprint (add_str  "es.es_infer_obj # is_pure_field_all " string_of_bool) es.es_infer_obj # is_pure_field_all no_pos in
   let () = Debug.ninfo_hprint (add_str  "is_match" string_of_bool) is_match no_pos in
-  (* let lhs_b, new_hds, new_hvs = if is_match then *)
-  (*   let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (svl@keep_root_hrels@classic_nodes);} in *)
-  (*   n_lhs_b,[],[] (\*matching unkown pred lhs vs. rhs*\) *)
-  (* else *)
-  (*   lhs_b,(hds@filter_his), hvs *)
-  (* in *)
+  let lhs_b, new_hds, new_hvs = if is_match then
+    let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (svl@keep_root_hrels@classic_nodes);} in
+    n_lhs_b,[],[] (*matching unkown pred lhs vs. rhs*)
+  else
+    lhs_b,(hds@filter_his), hvs
+  in
   let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all lhs_b rhs_b
-      (hds@filter_his) hvs (* new_hds new_hvs *) (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
+      (* (hds@filter_his) hvs *) new_hds new_hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
       (lhs_keep_rootvars@keep_root_hrels) lhp_args lhs_args_ni
       rhs_selected_hps rhs_keep_rootvars rhs_args_ni
       unk_svl (CP.remove_dups_svl prog_vars) in

@@ -12417,7 +12417,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   let action_name:string = Context.string_of_action_name a in
   let () = rhs_rest_emp := Context.get_rhs_rest_emp_flag a !rhs_rest_emp in
   let estate = {estate with es_trace = action_name::estate.es_trace} in
-  let rec pm_aux a = match a with  (* r1: list_context, r2: proof *)
+  let rec pm_aux estate lhs_b a = match a with  (* r1: list_context, r2: proof *)
     | Context.M_match ({
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_lhs_rest = lhs_rest;
@@ -12701,16 +12701,41 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 
     | Context.M_infer_unfold (r,_,_) ->
       begin
-        let rhs_node = r.match_res_rhs_node  in
-        let rhs_rest = r.match_res_rhs_rest  in
-        pm_aux(Context.M_infer_heap (rhs_node,rhs_rest))
+        let lhs_node = r.match_res_lhs_node in
+        let rhs_node = r.match_res_rhs_node in
+        let rhs_rest = r.match_res_rhs_rest in
+        let n_estate, n_lhs_b = match lhs_node,rhs_node with
+          | HRel (lhp,largs,_),HRel (rhp,rargs,_) ->
+                if CP.mem_svl lhp estate.es_infer_vars_hp_rel && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) then
+                  match largs, rargs with
+                    | _::rest1,_::rest2 -> begin
+                        try
+                          let sst = List.combine (List.map CP.exp_to_sv rest1)  (List.map CP.exp_to_sv rest2) in
+                          let p = List.fold_left (fun acc_p (sv1,sv2) ->
+                              let p = CP.mkEqVar sv1 sv2 no_pos in
+                              CP.mkAnd acc_p p no_pos
+                          ) (CP.mkTrue no_pos) sst in
+                          let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
+                          let mf = (MCP.mix_of_pure p) in
+                          {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
+                              CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
+                          }, CF.mkAnd_base_pure lhs_b mf no_pos
+                        with _ -> estate,lhs_b
+                      end
+                    | _ -> estate,lhs_b
+                else
+                  estate,lhs_b
+          | _ -> estate,lhs_b
+        in
+        let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
+        pm_aux n_estate n_lhs_b (Context.M_infer_heap (rhs_node,rhs_rest))
         (* failwith "TBI" *)
       end
     | Context.M_infer_fold (r) ->
       begin
         let rhs_node = r.match_res_rhs_node  in
         let rhs_rest = r.match_res_rhs_rest  in
-        pm_aux(Context.M_infer_heap (rhs_node,rhs_rest))
+        pm_aux estate lhs_b (Context.M_infer_heap (rhs_node,rhs_rest))
         (* failwith "TBI" *)
       end
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
@@ -13572,7 +13597,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
         Debug.ninfo_hprint (add_str "Search action combined context" (Cprinter.string_of_list_context)) ctx_lst no_pos;
         (ctx_lst, pf) in
-  let r1a,r2a = pm_aux a in
+  let r1a,r2a = pm_aux estate lhs_b a in
   if (Context.is_complex_action a) 
   then (Debug.ninfo_pprint ("Detected Iscomplex") no_pos;  (r1a,r2a))
   else begin
