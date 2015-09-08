@@ -12717,9 +12717,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           ) (CP.mkTrue no_pos) sst in
                           let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
                           let mf = (MCP.mix_of_pure p) in
-                          {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
-                              CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
-                          }, CF.mkAnd_base_pure lhs_b mf no_pos
+                          let check_fml = MCP.merge_mems lhs_b.CF.formula_base_pure mf true in
+                          if TP.is_sat_raw check_fml then
+                            {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
+                                CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
+                            }, CF.mkAnd_base_pure lhs_b mf no_pos
+                          else
+                            estate,lhs_b
                         with _ -> estate,lhs_b
                       end
                     | _ -> estate,lhs_b
