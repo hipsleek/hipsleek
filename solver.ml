@@ -12705,20 +12705,27 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         let rhs_node = r.match_res_rhs_node in
         let rhs_rest = r.match_res_rhs_rest in
         let n_estate, n_lhs_b = match lhs_node,rhs_node with
-          | HRel (lhp,largs,_),HRel (rhp,rargs,_) ->
+          | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
                 if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
-                  match largs, rargs with
+                  match leargs, reargs with
                     | _::rest1,_::rest2 -> begin
                         try
-                          let sst = List.combine (List.map CP.exp_to_sv rest1)  (List.map CP.exp_to_sv rest2) in
-                          let p = List.fold_left (fun acc_p (sv1,sv2) ->
-                              let p = CP.mkEqVar sv1 sv2 no_pos in
-                              CP.mkAnd acc_p p no_pos
-                          ) (CP.mkTrue no_pos) sst in
-                          let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
-                          let mf = (MCP.mix_of_pure p) in
-                          let check_fml = MCP.merge_mems lhs_b.CF.formula_base_pure mf true in
-                          if TP.is_sat_raw check_fml then
+                          let largs = (List.map CP.exp_to_sv rest1) in
+                          (* let check_fml = MCP.merge_mems lhs_b.CF.formula_base_pure mf true in *)
+                          (* if TP.is_sat_raw check_fml then *)
+                          let fvp = CP.fv (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
+                          let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
+                          let () = Debug.ninfo_hprint (add_str  "largs" !CP.print_svl) largs no_pos in
+                          if largs != [] && CP.intersect_svl largs fvp == [] then
+                            let rargs = (List.map CP.exp_to_sv rest2) in
+                            let sst = List.combine largs rargs in
+                            let p = List.fold_left (fun acc_p (sv1,sv2) ->
+                                let p = CP.mkEqVar sv1 sv2 no_pos in
+                                CP.mkAnd acc_p p no_pos
+                            ) (CP.mkTrue no_pos) sst in
+                            let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
+                            let mf = (MCP.mix_of_pure p) in
+                            let () = Debug.ninfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in
                             {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
                                 CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
                             }, CF.mkAnd_base_pure lhs_b mf no_pos
