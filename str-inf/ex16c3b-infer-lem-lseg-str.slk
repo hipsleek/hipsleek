@@ -27,7 +27,9 @@ pred WFG<p> ==
 //print residue.
 // inferred hprel: [U2(q3,q)&true |#|3  --> U(q3,q)&true]
 
-infer [U2,@classic,@pure_field] U2(q3,q) & D(p)  |- U(q3,qq) & D(qq).
+//infer [U2,@classic,@pure_field] U2(q3,q) & D(p)  |- U(q3,qq) & D(qq).
+infer [U2,@classic,@pure_field] U2(q3,q)   |- U(q3,qq) .
+//infer [U2] U2(q3,q)*q::char_star<_,p>   |- U(q3,qq)*qq::char_star<_,p> .
 print residue.
 // fail
 // can we support InferUnfold with instantiation?
