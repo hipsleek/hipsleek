@@ -23,7 +23,7 @@ extern int __VERIFIER_nondet_int(void);
 char *(cstrncpy)(char *s1, const char *s2, int n)
 /*@
     requires s1::BADS<> * s2::WFS<> & n > 0
-    ensures s1::WFSeg<pp>*pp::char_star<0,_> & res=s1;
+    ensures res=s1;
 */
  {
      char *dst = s1;
@@ -33,8 +33,8 @@ char *(cstrncpy)(char *s1, const char *s2, int n)
      /* Copy bytes, one at a time.  */
      while (n > 0)
        /*@
-          requires dst::BADS<> * src::WFS<> & n>0
-          ensures src::WFSeg<qq>*qq::char_star<0,src'>*src'::BADS<> * dst::WFSeg<pp>*pp::char_star<0,dst'>*dst'::BADS<> & n' > 0
+          requires dst::BADS<> * src::WFS<> & n>=0
+          ensures src::WFSeg<qq>*qq::char_star<0,src'>*src'::BADS<> * dst::WFSeg<pp>*pp::char_star<0,dst'>
                or n' = 0;
        */
      {
@@ -43,19 +43,19 @@ char *(cstrncpy)(char *s1, const char *s2, int n)
              /* If we get here, we found a null character at the end
                 of s2, so use memset to put null bytes at the end of
                 s1.  */
-             /*us = dst;
+             us = dst;
              n2 = n;
              while (n2-- != 0)
-               /*
+               /*@
                   requires us::BADS<> & n2>=0
                   ensures us'::BADS<> & n2' = -1;
-               /
+               */
                 {
                  *us++ = '\0';
-                }*/
+                }
+             //@dprint;
              break;
          }
-        //@dprint;
      }
      return s1;
  }
