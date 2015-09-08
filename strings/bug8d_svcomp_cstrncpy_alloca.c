@@ -11,6 +11,11 @@ WFSeg<p> ==
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
   inv true;
 
+WFSem<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSem<p> & v=0
+  inv true;
+
 BADS<> ==
   self::char_star<v,q>*q::BADS<> 
   inv true;
@@ -36,12 +41,12 @@ void while1(char *s, int n)
     /*@
         requires s::BADS<>
         case {
-          n >= 0 -> ensures s::WFSeg<s'>*s'::BADS<> & n'=-1;
+          n >= 0 -> ensures s::WFSem<s'>*s'::BADS<> & n'=-1;
           n < 0 -> ensures false;
         }
      */
   {
-     *s++ = 'a';
+     *s++ = '\0';
   }
  }
 
