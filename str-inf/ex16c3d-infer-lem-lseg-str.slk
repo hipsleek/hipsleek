@@ -1,0 +1,83 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+// lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+//infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+//print residue.
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Valid.
+/*
+# too complex
+
+<1>HP_138(q,q3)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q) * q::char_star<flted_31_124,p>@M&
+                   true |#|3  --> q3::WFG<q>@M * HP_138(q,q3@NI)&true]
+
+# expects 
+   U2(q3,q) --> q3::WFG<q>
+
+*/
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> .
+print residue.
+expect Valid.
+//   EXPECTS: U2(q3,q) --> q3::WFG<qq> & qq=q
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+print residue.
+expect Valid.
+//   EXPECTS: infer_unfold (on U2) or fold (on WFG)
+
+/*
+# ex16c3d.slk
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Valid.
+
+# too complex
+
+<1>HP_138(q,q3)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q) * q::char_star<flted_31_124,p>@M&
+                   true |#|3  --> q3::WFG<q>@M * HP_138(q,q3@NI)&true]
+
+# expects 
+   U2(q3,q) --> q3::WFG<q>
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> .
+print residue.
+expect Valid.
+//   EXPECTS: U2(q3,q) --> q3::WFG<qq> & qq=q
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+print residue.
+expect Valid.
+//   EXPECTS: infer_unfold (on U2) or fold (on WFG)
+
+
+*/
