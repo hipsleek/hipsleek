@@ -46,12 +46,12 @@ expect Valid.
 
 */
 
-/*
+
 infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> .
 print residue.
 expect Valid.
 //   EXPECTS: U2(q3,q) --> q3::WFG<qq> & qq=q
-*/
+
 
 
 
