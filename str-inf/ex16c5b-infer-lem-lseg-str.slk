@@ -30,85 +30,195 @@ pred WFG<p> ==
  //[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
 
  
-
+ //(1)
  infer [U] U(x,p)  |- x::char_star<v,qq> * qq::char_star<b,p>.
  print residue.
  expect Valid.
+/*
+ inferred hprel: [HP_150(qq)&
+                   true |#|3  --> qq::char_star<b_151,p>@M * HP_152(p)&true; 
+                  U(x,p)&
+                   true |#|3  --> x::char_star<v_148,qq_149>@M * 
+                                  HP_150(qq_149)&
+                   true]
 
+# I think need to use @NI parameters. Expects:
 
-/* infer [U2,U3] U2(qq,p)  |- qq=p.
- print residue.
+  U(x,p)  --> x::char_star<v_148,qq_149>@M * HP_150(qq_149,x@NI)&
+  HP_150(qq,x@NI)  --> qq::char_star<b_151,p>@M * HP_152(p,x@NI,qq@NI)&true; 
 */
 
 
+ //(2)
  infer [U2,U3] U2(qq,p) * U3(p,x)  |- qq::char_star<b,p>.
  print residue.
  expect Valid.
 
 
+
+ //(3)
 infer [U2,U3,@classic] U2(qq,p) * U3(p,x)  |- qq::char_star<b,ss>.
  print residue.
  expect Valid.
 
+/*
+# Why do we have base-case unfold?
 
+ <1>emp&qq=p&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_191(ss_190,x@NI)&ss=ss_190 |#|3  --> emp&true; 
+                  U3(p,x@NI)&
+                   true |#|3  --> p::char_star<b_189,ss_190>@M * 
+                                  HP_191(ss_190,x@NI)&
+                   true; 
+                  U2(qq,p@NI)&true |#|3  --> emp&qq=p]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  InferUnfold ]]
+*/
 
+ //(4)
  infer [U2,U3] U2(qq,p)  |- qq::char_star<b,ss>.
  print residue.
 
+/*
+ <1>HP_206(ss,p)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(qq,p@NI)&
+                   true |#|3  --> qq::char_star<b_204,ss_205>@M * 
+                                  HP_206(ss_205,p@NI)&
+*/
 
+
+ //(5)
+ infer [U2,U3] U2(qq,p)  |- qq::char_star<b,p>.
+ print residue.
+
+/*
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(qq,p@NI)&true |#|3  --> qq::char_star<b_220,p>@M&true]
+*/
+
+ //(6)
+ infer [U2,U3] U2(qq,p) & qq=p  |- qq::char_star<b,qq>.
+ print residue.
+expect Valid.
+/*
+
+# Why is there an UNFOLD scheduled?
+
+# infer_unfold should work like (5)
+
+ MaybeErr Context: 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  Unfold 1 ==>  COND ==>  UnmatchedRHSData]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  InferUnfold ]]
+   
+ CEX:true
+Validate 6: Expecting(3)Valid BUT got : Fail_May
+*/
+
+ //(7)
+ infer [U2,U3] U2(qq,p)  |- qq::char_star<b,q3> * q3::char_star<_,_>.
+ print residue.
+expect Valid.
+
+
+//(8)
+ infer [U] U(x,p)  |- x::char_star<v,qq>.
+ print residue.
+
+/*
+ <1>HP_271(qq)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(x,p)&
+                   true |#|3  --> x::char_star<v_269,qq_270>@M * 
+                                  HP_271(qq_270)&
+                   true]
+
+# p is lost, I would expect:
+
+ residue: HP_271(qq,p@NI,x@NI)
+ U(x,p)& --> x::char_star<v_269,qq_270>@M * HP_271(qq_270,p@NI,x@NI)&
+                  
+
+*/
+
+ //(9)
+infer [U2,U3] U2(qq,p) * U3(p,x)  |- qq::char_star<b,ss>.
+ print residue.
+ expect Valid.
+/*
+# base_case_fold : is it needed?
+
+ <1>HP_288(ss,x)&qq=p&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U3(p,x@NI)&
+                   true |#|3  --> p::char_star<b_286,ss_287>@M * 
+                                  HP_288(ss_287,x@NI)&
+                   true; 
+                  U2(qq,p@NI)&true |#|3  --> emp&qq=p]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  InferUnfold ]]
+
+<2>U3(p,x) * HP_291(ss,p)&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [U2(qq,p@NI)&
+                  true |#|3  --> qq::char_star<b_289,ss_290>@M * 
+                                 HP_291(ss_290,p@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold ]]
+*/
 
 /*
 # ex16c5b.slk
 
- infer [U2,U3] U2(qq,p) * U3(p,x)  |- qq::char_star<b,p>.
-
-# complex LHS:
-
- inferred hprel: [U2(qq,p@NI) * U3(p,x@NI)&
-                   true |#|3  --> qq::char_star<b_180,p>@M&true]
-
-# expects:
-
-  U2(qq,p@NI) |#|3  --> qq::char_star<b_180,s> * HP(s,p@NI)
-  HP(s,p) --> s=p
-  U3(p,x) --> emp
-
---------------------
-
- infer [U2,U3] U2(qq,p)  |- qq::char_star<b,p>.
-
-# GOT
-
- <1>emp&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [U2(qq,p@NI)&true |#|3  --> qq::char_star<b_167,p>@M&true]
-[[ SEARCH ==>  InferUnfold ]]
-
-# BETTER in smaller steps..
-
-  U2(qq,p@NI) |#|3  --> qq::char_star<b_180,s> * HP(s,p@NI)
-  HP(s,p) --> s=p
-
-=====================================
-
- infer [U2,U3] U2(qq,p)  |- qq=p.
+//(8)
+ infer [U] U(x,p)  |- x::char_star<v,qq>.
  print residue.
 
- <1>U2(qq,p)&qq=p&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [U2(qq,p@NI)&true |#|3  --> emp&p=qq]
+ <1>HP_271(qq)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(x,p)&
+                   true |#|3  --> x::char_star<v_269,qq_270>@M * 
+                                  HP_271(qq_270)&
+                   true]
 
+# p is lost, I would expect @NI parameters to be added:
 
-infer [U] U(x,p)  |- x::char_star<v,qq> * qq::char_star<b,p>.
+ residue: HP_271(qq,p@NI,x@NI)
+ U(x,p)& --> x::char_star<v_269,qq_270>@M * HP_271(qq_270,p@NI,x@NI)&
 
-# avoid complex LHS
+ //(6)
+ infer [U2,U3] U2(qq,p) & qq=p  |- qq::char_star<b,qq>.
+ print residue.
+expect Valid.
 
-<<1>emp&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [HP_150(qq,p@NI) * HP_151(p,x@NI)&
-                   true |#|3  --> qq::char_star<b_159,p>@M&true; 
-                  U(x,p)&
-                   true |#|3  --> x::char_star<v_148,qq_149>@M * 
-                                  HP_150(qq_149,p@NI) * HP_151(p,x@NI)&
------
+# Why is there an UNFOLD scheduled?
 
+# infer_unfold should work like (5)
 
+ MaybeErr Context: 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  Unfold 1 ==>  COND ==>  UnmatchedRHSData]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  InferUnfold ]]
+   
+ CEX:true
+Validate 6: Expecting(3)Valid BUT got : Fail_May
 
 */
