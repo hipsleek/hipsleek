@@ -1,0 +1,47 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U2a(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star z).
+
+infer [U3] U3(self,q,_) |- U2(self,r).
+print residue.
+expect Valid.
+
+/*
+# ex16c6a3.slk
+
+BAD
+====
+@1! **cformula.ml#3072:HRel(vs):[U3,self,q,Anon_12]
+@1! **cformula.ml#3072:HRel(vs):[U2,self,r]
+@1! **cformula.ml#3072:HRel(vs):[U3,self,q,Anon_12]
+@1! **cformula.ml#3072:HRel(vs):[U2,self,r]
+@1! **cformula.ml#3072:HRel(vs):[U3,self,q,Anon_12]
+@1! **cformula.ml#3072:HRel(vs):[U2,self,r]
+@1! **infer.ml#3756:fv_lhs:[U3,self,q,Anon_12]
+@1! **infer.ml#3757:fv_rhs:[U2,self,r]
+@1! **infer.ml#3826:mis-matched:(true,false,false)
+
+GOOD
+====
+@1!**infer.ml#3704:  es.CF.es_evars: []
+@1! **infer.ml#3705:   es.CF.es_rhs_eqset: :[]
+@1! **infer.ml#3716:>>>>>> infer_hp_rel <<<<<<
+@1! **infer.ml#3723:  classic :false
+@1! **cformula.ml#3072:HRel(vs):[U2a,self,q]
+@1! **cformula.ml#3072:HRel(vs):[U2,self,r]
+@1! **cformula.ml#3072:HRel(vs):[U2a,self,q]
+@1! **cformula.ml#3072:HRel(vs):[U2,self,r]
+@1! **cformula.ml#3072:HRel(vs):[U2a,self,q]
+@1! **cformula.ml#3072:HRel(vs):[U2,self,q]
+@1! **infer.ml#3756:fv_lhs:[U2a,self,q]
+@1! **infer.ml#3757:fv_rhs:[U2,self,q]
+@1! **infer.ml#3826:mis-matched:(false,false,false)
+
+*/

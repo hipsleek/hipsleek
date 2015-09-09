@@ -3815,7 +3815,7 @@ let infer_collect_hp_rel prog (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_m
               find_undefined_selective_pointers prog es lhs_b1 mix_lf1 lhs_node rhs rhs_rest
                 (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
             let flag1 = (List.exists (fun (hp,args1) -> if not (CP.mem_svl hp ivs) then
-                                         not (List.exists (fun (_,args2) -> CP.eq_spec_var_order_list args1 args2) lselected_hpargs)
+                                         not (List.exists (fun (_,args2) -> x_add CP.sub_spec_var_list (* eq_spec_var_order_list *) args1 args2) lselected_hpargs)
                                        else false
                                      ) rselected_hpargs (*incr/ex15c(1)*) ) in
             let flag2 = exist_uncheck_rhs_null_ptrs l_emap0 (CP.EMapSV.merge_eset r_emap r_eqsetmap) 
