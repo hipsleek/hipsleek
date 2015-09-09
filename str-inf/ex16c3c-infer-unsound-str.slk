@@ -51,9 +51,11 @@ infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<0,
 print residue.
 expect Fail.
 
+
 infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<0,qqq> .
 print residue.
 expect Valid.
+
 
 infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<0,p> .
 print residue.

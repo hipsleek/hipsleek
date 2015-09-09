@@ -2382,7 +2382,8 @@ let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
   let l_arg_cl = CF.look_up_rev_reachable_ptr_args prog lhds [] l_args3 in
   let () = DD.ninfo_hprint (add_str "l_arg_cl " !CP.print_svl) l_arg_cl no_pos in
     let guard_hds = List.filter (fun hd ->
-        let svl = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
+         (*str-inf/ex16c3c requires root nodes in guard *)
+        let svl =  hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
         CP.intersect_svl svl l_arg_cl <> []
       ) lhds
     in
