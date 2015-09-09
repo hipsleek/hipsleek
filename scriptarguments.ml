@@ -335,6 +335,8 @@ linput.rl");
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
   ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
+  ("--new-infer-complex-lhs", Arg.Clear Globals.old_infer_complex_lhs,"Disallow inference of complex LHS");
+  ("--old-infer-complex-lhs", Arg.Set Globals.old_infer_complex_lhs,"Allow inference of complex LHS");
   ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
   ("--old-base-case-fold-hprel", Arg.Set Globals.old_base_case_fold_hprel,"Use old method of base_case_fold for inferring hprel");
   ("--new-base-case-fold-hprel", Arg.Clear Globals.old_base_case_fold_hprel,"Use new  method of base_case_fold for inferring hprel");

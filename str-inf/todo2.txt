@@ -822,6 +822,29 @@ flted_10_1615=0 & v_bool_37_1602' & q_1651=p_1630 & p_1614=p_1648
 # (2) Where did spurious relational assumption in ex13e.ss came from?
    (1;0)emp&s=s' & s=p & s'=p |#|  --> Q(s,s',p)]
 ===========================================================================
+# ex16c3d.slk
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+
+# We should avoid complex LHS. I suggest FAILING since p is
+  free, and we cannot prove q=p.
+# complex LHS should only be enabled old_infer_complex_lhs which
+  I just added
+
+Entail (8) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q) * q::char_star<flted_83_216,p>@M&
+                   true |#|3  --> q3::WFG<p>@M&true]
+[[ InferUnfold ]]
+
+WRONG : why is there a q=p in the relational assumption?
+
+ <1>q::char_star<flted_83_218,p>@M * HP_232(p,q3)&flted_83_218=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,p)&q=p |#| q::char_star<flted_83_218,p>@M&
+                   true --> q3::WFG<p>@M * HP_232(p,q3@NI)&true]
+[[ InferUnfold ]]
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
