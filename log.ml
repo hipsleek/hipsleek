@@ -446,10 +446,10 @@ let current_infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr "c
   CP.string_of_infer_rel (==)
 
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
-  = new Gen.stack_pr "current-hprel-ass-stk" Cprinter.string_of_hprel_short (==) 
+  = new Gen.stack_pr "current_hprel_ass_stk" Cprinter.string_of_hprel_short (==) 
 
 let current_tntrel_ass_stk : Tid.tntrel Gen.stack_pr = 
-  new Gen.stack_pr "current-tntrel-ass-stk" string_of_tntrel (==) 
+  new Gen.stack_pr "current_tntrel_ass_stk" string_of_tntrel (==) 
 
 (* let get_sleek_proving_id () = *)
 (*   let r = !sleek_proving_id in *)

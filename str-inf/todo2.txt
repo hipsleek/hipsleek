@@ -924,6 +924,33 @@ Validate 6: Expecting(3)Valid BUT got : Fail_May
  print residue.
  // Why fail? Similar to (3).
 ===========================================================================
+# ex16c6b.slk -show-push-list "es_infer_hp_rel"
+
+# Please avoid complex LHS (@ 2nd InferUnfold):
+
+!!! **infer.ml#3837:mis-matched:(false,false,false)
+push_list(es_infer_hp_rel):[ U(self,qqq) * qqq::char_star<flted_32_137,p>@M&
+  flted_32_137=0 |#|  --> self::char_star<v_155,q2_156>@M * 
+                          HP_157(v_155,self) * HP_158(q2_156,self)]
+
+(==solver.ml#13282==)
+infer_collect_hp_rel#1@4@3@2
+infer_collect_hp_rel#1 inp1 :lhs_node: U(self,qqq)
+infer_collect_hp_rel#1 inp2 :rhs_node: self::char_star<v,q2>@M
+infer_collect_hp_rel#1 inp3 :lhs: U(self,qqq) * qqq::char_star<flted_32_137,p>@M&flted_32_137=0&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs:
+ self::char_star<v,q2>@M * q2::WFG<p_154>@M&v!=0 & p_154=p&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es: U(self,qqq) * qqq::char_star<flted_32_137,p>@M&flted_32_137=0
+infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
+ HP_157(v_155,self) * HP_158(q2_156,self)&flted_32_137=0&
+ {FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U; HP_157; HP_158]
+ es_infer_hp_rel: [U(self,qqq) * qqq::char_star<flted_32_137,p>@M&
+                    flted_32_137=0 |#|  --> self::char_star<v_155,q2_156>@M * 
+                                            HP_157(v_155,self) * 
+                                            HP_158(q2_156,self)],3:abd heap: self::char_star<v_155,q2_156>@M,4:None,5:None)
 ===========================================================================
 ===========================================================================
 ===========================================================================

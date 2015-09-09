@@ -905,6 +905,8 @@ let allow_lemma_fold = ref true
 (* unsound if false for lemma/bugs/app-t2c1.slk *)
 
 let allow_lemma_norm = ref false
+let show_push_list = ref (None:string option)
+
 let old_norm_w_coerc = ref false
 let old_keep_all_matchres = ref false
 

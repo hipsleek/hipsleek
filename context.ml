@@ -1483,7 +1483,7 @@ and process_one_match_mater_unk_w_view left_preds right_preds lhs_name rhs_name 
   ) [] left_preds in
   let coerc_lst = left_ls@right_ls@extra_left_ls@extra_right_ls in
   let prio, coerc = match ms with
-    | Coerc_mater s -> (* (1,s) *) (3,s) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
+    | Coerc_mater s -> (1,s) (* (3,s) *) (* M_infer_unfold has prior 2, so if applying lemma can solve, prior of lemma should be 3 *)
     | _ -> failwith("[context.ml]: only lemma cand be fired at this point for UNK pred on lhs\n")
   in
   if List.exists (fun coerc0 -> coerc0.coercion_name = coerc.coercion_name) coerc_lst then  
@@ -2312,7 +2312,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
            | _ -> []
          in
-         let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
+         let () = y_binfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
          process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
          end
        | ViewNode vl, HRel (h_name, _, _) -> begin
