@@ -339,11 +339,12 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
   let orig_view = x_add Cast.look_up_view_def_raw 52 cviews orig_view_name in
   if List.for_all (fun (l_extn_view,_,_) ->
       String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
-    let r = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
-    let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
-    (true,r)
+    let new_vdef = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
+    let () =  x_binfo_hp (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
+    let () = x_binfo_hp (add_str "(raw) new view (donot have base case, addr, material)" Cprinter.string_of_view_decl(* _short *)) new_vdef no_pos in
+    (true,new_vdef)
   else
-    let () =  Debug.info_hprint (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
+    let () =  x_dinfo_hp (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
     (false,orig_view)
 
 let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views

@@ -1,0 +1,42 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+relation R(node a).
+
+
+lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
+print residue.
+
+/*
+# ex17i7.slk (OK)
+
+lemma_infer [R] self::sll<> <-> self::lseg<q> & R(q) .
+
+# Need to remove redundant rel_ass.
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_82)&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(self_lem_14_left_right)&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(q_125)&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred rel: [RELDEFN R: ( q_59=null) -->  R(q_59); 
+                RELDEFN R: ( R(q_64)) -->  R(q_64); 
+                RELASS [R]: ( R(self_lem_14_left_right)) -->  self_lem_14_left_right=null; 
+                RELDEFN R: ( R(q_125)) -->  R(q_125)]
+[[ Fold ==>  SEARCH ==>  Match(self_lem_14_left_right,self_lem_14_left_right) ==>  SEARCH ==>  (Lemma <== lem_14_left_right(q_124,q_127)) ==>  COND ==>  Match(q_124,q_127) ==> ||OR|| ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Fold ==>  SEARCH ==>  Match(self_lem_14_left,self_lem_14_left) ==>  SEARCH ==>  (Lemma ==> lem_14_left(q_63,q_66)) ==> (left: lem_14_left) ==>  COND ==>  Match(q_63,q_66) ==> ||OR|| ==>  COND ==>  BaseCaseFold]]
+
+
+*/
+

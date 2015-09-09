@@ -1,0 +1,52 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+
+// infer [U2,@classic,@pure_field] U2(x,q)   |- x::node<v,q2>*U2(q2,q3) & v!=0.
+infer [U2,@classic,@pure_field] U2(x,q) 
+    |- x::node<v,q> & v!=0.
+print residue.
+expect Valid.
+
+/*
+# ex25b9.slk 
+
+infer [U2,@classic,@pure_field] U2(x,q) 
+    |- x::node<v,q2>*U2(q2,q3) & v!=0.
+
+You generated:
+   [U2(x,q) |#|  --> x::node<v_39,q2_40>@M * HP_41(v_39,q) * 
+                                    HP_42(q2_40,q) * HP_43(q,x)]
+
+# However, why wasn't HP(v_39,q) --> v_39!=0 inferred?
+
+GOT below
+=========
+ MaybeErr Context: 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  Unfold 1 ==>  COND ==>  COND ==>  UnmatchedRHSData ==>  COND ==>  UnmatchedRHSData]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: logical bug
+    fe_locs: {
+        fc_message:  true |-  v!=0. LOCS:[0;14] (may-bug)
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  InferHeap]]
+ 
+
+
+*/

@@ -1,0 +1,32 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+
+infer [U2,@classic] U2(x,q)*q::node<0,p> |- x::node<1,p>.
+
+//infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+//infer [U1,@classic] U1(x) |- x=null.
+print residue.
+
+/*
+# ex25c2a.slk 
+
+infer [U2,@classic] U2(x,q)*q::node<0,p> |- x::node<0,p>.
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&x=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(x,q)&true |#|3  --> emp&x=q]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q,x)]]
+
+
+
+*/

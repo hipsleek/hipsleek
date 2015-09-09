@@ -47,7 +47,7 @@ let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
-let ptr_arith_flag = ref false
+let ptr_arith_flag = ref true (* false *)
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
@@ -906,7 +906,9 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 let old_norm_w_coerc = ref false
+let old_keep_all_matchres = ref false
 
+let old_do_match_infer_heap = ref true
 let old_incr_infer = ref false
 
 (* Enable exhaustive normalization using lemmas *)
@@ -1275,6 +1277,8 @@ let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
 let new_rm_htrue = ref true
+let new_infer_large_step = ref true
+let old_infer_complex_lhs = ref false
 
 let old_collect_false = ref false
 let old_collect_hprel = ref false
@@ -1282,11 +1286,20 @@ let old_infer_hprel_classic = ref false
 let old_classic_rhs_emp = ref false
 let old_post_conv_impl = ref true (* affected by incr/ex14d.ss *)
 let old_post_impl_to_ex = ref true
+let old_keep_triv_relass = ref false
+let old_mater_coercion = ref false
+let old_infer_heap = ref false
+let old_fvars_as_impl_match = ref true
+let old_base_case_fold_hprel = ref false
+let old_base_case_unfold_hprel = ref false
+let warn_do_match_infer_heap = ref false
 let warn_nonempty_perm_vars = ref false
 let warn_trans_context = ref false
 let warn_post_free_vars = ref false
+let warn_fvars_rhs_match = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
+let old_infer_hp_collect = ref true
 let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false

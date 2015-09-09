@@ -25,7 +25,9 @@ PostPred G(node x, node y).
 void create (ref node x)
   requires true ensures x'::lseg_one<x>;//'
 
-//lemma_safe self::sll_two<> <-> self::lseg_one<one> & one=null.
+//lemma_safe self::sll_two<> <- self::lseg_one<one> & one=null.
+
+lemma_safe self::sll_two<> <- self::lseg_one<q> * q::sll_two<>.
 
 void check (ref node x)
   requires x::sll_two<> ensures x::sll_two<> & x'=x;//'
@@ -35,12 +37,16 @@ void main()
   node a = null;
 
   create(a);
-
+  dprint;
   check(a);
 }
 
 
 /*
+# ex17z.ss
+
+  Scheduled BaseCaseFold inside lemma application
+
 # ex17.ss (FIXED)
 
 To strip anonymous variables.

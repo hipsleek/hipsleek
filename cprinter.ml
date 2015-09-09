@@ -3700,6 +3700,9 @@ let pr_estate ?(nshort=true) (es : entail_state) =
   let es_str = string_of_formula es.es_formula in
   fmt_open_vbox 0;
   fmt_string es_str;
+  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) (es.es_infer_hp_rel # get_stk_recent);
+  pr_wrap_test "es_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
+  pr_wrap_test "es_gen_impl_vars(E): "  (fun _ -> false) (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
   (* added temporarily to see consumed heap *)
   if !Globals.print_extra then
     begin
@@ -3709,13 +3712,12 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       (* (match es.es_orig_ante with *)
       (*   | Some f -> pr_add_str "es_orig_ante: " (pr_formula) f *)
       (*   | None -> ()); *)
-      pr_wrap_test "es_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
       pr_wrap_test "es_ante_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_ante_evars;
       pr_wrap_test "es_gen_expl_vars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_gen_expl_vars;
-      pr_wrap_test "es_gen_impl_vars(E): "  (fun _ -> false) (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
+      (* pr_wrap_test "es_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars; *)
+      (* pr_wrap_test "es_gen_impl_vars(E): "  (fun _ -> false) (pr_seq "" pr_spec_var)  es.es_gen_impl_vars; *)
       pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
       pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
-      pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
       pr_wrap_test "es_infer_templ: " Gen.is_empty  (pr_seq "" pr_formula_exp) es.es_infer_templ;
       pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
     end;
@@ -3785,7 +3787,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
       pr_wrap_test ~below:true "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel;
       pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
-      pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
+      pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel # get_stk_recent;
       pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel # get_stk_recent;
       (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
       (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
@@ -3810,7 +3812,7 @@ let pr_estate_infer_hp (es : entail_state) =
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap;
   pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
-  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel;
+  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel # get_stk_recent;
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel# get_stk_recent;
   fmt_close ()
 
@@ -4079,7 +4081,7 @@ let pr_list_context (ctx:list_context) =
     (* if (get_must_error_from_ctx sc)==None then "Good Context: " *)
     (* else "Error Context: " in *)
     (* fmt_cut (); fmt_string str; fmt_string "length= ";fmt_int (List.length sc);fmt_string " ";  *)
-    pr_context_list_short sc
+    pr_context_list(* _short *) sc
     (* fmt_string (string_of_numbered_list_formula_trace (list_formula_trace_of_list_context ctx)); *)
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
@@ -4407,7 +4409,7 @@ let pr_view_decl_short v =
                                              ))
       v.view_params_orig no_pos;
 
-    wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_view_arg_lbl
+    wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_view_arg_lbl
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
   with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_short, List.combine v.view_labels... ";
@@ -4826,12 +4828,17 @@ let string_of_coerc_opt op c =
          ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
          ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
          ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
+         ^"\n head: "^(string_of_formula c.coercion_head)
+         ^"\n body: "^(string_of_formula c.coercion_body)
          ^"\n head_norm: "^(string_of_formula c.coercion_head_norm)
          ^"\n body_norm: "^(string_of_struc_formula c.coercion_body_norm)
          ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
          ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
          ^"\n coercion_origin: "^(string_of_coercion_origin c.Cast.coercion_origin)
+         ^"\n coercion_infer_vars: "^(string_of_spec_var_list c.Cast.coercion_infer_vars)
+         ^"\n coercion_infer_obj: "^(c.Cast.coercion_infer_obj # string_of)
          ^"\n coercion_kind: " ^ (string_of_lemma_kind c.Cast.coercion_kind)
+         ^"\n coercion_fold: " ^ ((pr_option string_of_view_decl) c.Cast.coercion_fold_def # get)
          ^"\n";;
 
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;

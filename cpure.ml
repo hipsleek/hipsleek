@@ -25,6 +25,8 @@ let sp_add_prime v p = match v with
 
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 
+let unknown_spec_var = mk_spec_var "__UNKNOWN"
+
 let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)
 
 let mk_zero = mk_typed_spec_var Globals.null_type Globals.null_name 
@@ -3584,7 +3586,6 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
 let fold_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg (f_comb: 'b list -> 'b) : 'b =
   let trans_func func = (fun a e -> push_opt_val_rev (func a e) e) in
   let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
-
   (* let () = print_string ("[cpure.ml] fold_formula_arg: \n") in *)
 
   snd (trans_formula e arg new_f f_arg f_comb)
@@ -7530,6 +7531,7 @@ let conv_exp_to_var (e:exp) : (spec_var * loc) option =
   match e with
   | IConst(i,loc) -> Some (mk_sp_const i,loc)
   | Null loc -> Some (null_var,loc)
+  | Var (sv,p) -> Some (sv,p)
   | _ -> None
 
 let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option = 
@@ -9092,6 +9094,9 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
   match r with 
   | None -> None
   | Some bf -> Some (norm_bform_aux bf)
+
+
+
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
   if (!Globals.enable_constraint_based_filtering) then 
     let conseq_disjs = list_of_disjs conseq in 
@@ -9137,6 +9142,9 @@ let filter_constraint_type (ante: formula) (conseq: formula) : (formula) =
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
   let pr = !print_formula in
   Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
+
+
+
 
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
   let fvar = fv conseq in
@@ -10350,6 +10358,21 @@ let get_relargs_opt (f:formula)
   | _ -> None
 
 
+let is_trivial_rel (rel_c, lhs, rhs)=
+  let l_ohp = get_relargs_opt lhs in
+  let r_ohp = get_relargs_opt rhs in
+  match l_ohp,r_ohp with
+    | Some (hp1,largs), Some (hp2, rargs) -> if eq_spec_var hp1 hp2 then
+        eq_spec_var_order_list largs rargs
+      else false
+    | _ -> false
+
+let is_trivial_rel rel_f=
+  let pr = print_lhs_rhs in
+  Debug.no_1 "is_trivial_rel" pr string_of_bool
+      (fun _ -> is_trivial_rel rel_f) rel_f
+
+
 let get_list_rel_args_x (f0:formula) =
   let rec helper f=
     match f with
@@ -10557,12 +10580,24 @@ let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (f
   if !filtering_flag (*&& (not !allow_pred_spec)*) then
     let ante_ls = List.filter is_sat (split_disjunctions ante) in
     if ante_ls==[] then (mkFalse no_pos,conseq)
-    else 
+    else
       let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
       let ante = join_disjunctions ante_ls in
       (ante, conseq)
   else (ante, conseq)
 
+let filter_bag_constrain ante conseq =
+  let conseq_ls = List.filter is_bag_constraint (split_disjunctions conseq) in
+  if conseq_ls = [] then (mkFalse no_pos, mkTrue no_pos)
+  else
+    let ante = List.fold_left (fun an co -> filter_ante an co) ante conseq_ls in
+    (ante,join_disjunctions conseq_ls)
+;;
+
+let filter_bag_constrain ante conseq =
+  let pr = !print_formula in
+  Debug.no_2 "filter_bag_constrain" pr pr (pr_pair pr pr) filter_bag_constrain ante conseq
+;;
 
 let assumption_filter_aggressive_incomplete (ante : formula) (conseq : formula) : (formula * formula) =
   assumption_filter_aggressive (fun x -> true) ante conseq 
@@ -15381,3 +15416,24 @@ let contains_undef (f:formula) =
   List.fold_left (fun acc sv -> acc || (is_undef_typ (type_of_spec_var sv)) ) false afv 
 
 let syn_checkeq = ref(fun (ls:ident list) (a:formula) (c:formula) (m: ((spec_var * spec_var) list) list) -> (true,([]: ((spec_var * spec_var) list) list)))
+
+let is_exists_svl v vs =
+  List.exists (eq_spec_var v) vs 
+
+let exp_to_sv e = match (conv_exp_to_var e) with
+  | Some (sv,_) -> sv
+  | None -> 
+    let () = y_winfo_pp " UNKNOWN spec_var used " in
+    let () = y_binfo_hp (add_str "exp is var?" !print_exp) e in
+    unknown_spec_var
+
+
+let rec gen_cl_eqs pos svl p_res=
+  match svl with
+    | [] -> p_res
+    | sv::rest ->
+          let new_p_res = List.fold_left (fun acc_p sv1 ->
+              let p = mkEqVar sv sv1 pos in
+              mkAnd acc_p p pos
+          ) p_res rest in
+          gen_cl_eqs pos rest new_p_res

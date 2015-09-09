@@ -200,8 +200,20 @@ let common_arguments = [
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
-  ("-dd", Arg.Set Debug.devel_debug_on,
+  ("-dd", Arg.Unit (fun _ ->
+      Debug.devel_debug_on :=true;
+      Debug.devel_debug_steps :=true
+     ),
    "Turn on devel_debug on short and normal output");
+  ("-dd-steps", Arg.Set Debug.devel_debug_steps,
+   "Turn on tracing of entailment proving steps ");
+  ("-dd-esl", Arg.Int (fun n -> 
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Debug.devel_debug_on:=false;
+       Debug.devel_debug_sleek_proof := n;
+     ),
+   "Turn on devel_debug for a particular sleek proof");
   ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
    "Turn on devel_debug only short output");
   ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),
@@ -314,12 +326,28 @@ linput.rl");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
   ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--warn-fvars-rhs-match", Arg.Set Globals.warn_fvars_rhs_match,"Enable Warning of Free Vars in RHS of Match");
   ("--warn-post-free-vars", Arg.Set Globals.warn_post_free_vars,"Enable Warning of Free Vars in Post-Conditions");
   ("--warn-trans-context", Arg.Set Globals.warn_trans_context,"Enable Warning of Non-empty Perm Vars");
   ("--warn-nonempty-perm-vars", Arg.Set Globals.warn_nonempty_perm_vars,"Enable Warning of Non-empty Perm Vars");
+  ("--warn-do-match-infer-heap", Arg.Set Globals.warn_do_match_infer_heap,"Enable Warning of do_match during infer_heap");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
+  ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
+  ("--new-infer-complex-lhs", Arg.Clear Globals.old_infer_complex_lhs,"Disallow inference of complex LHS");
+  ("--old-infer-complex-lhs", Arg.Set Globals.old_infer_complex_lhs,"Allow inference of complex LHS");
   ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
+  ("--old-base-case-fold-hprel", Arg.Set Globals.old_base_case_fold_hprel,"Use old method of base_case_fold for inferring hprel");
+  ("--new-base-case-fold-hprel", Arg.Clear Globals.old_base_case_fold_hprel,"Use new  method of base_case_fold for inferring hprel");
+  ("--old-fvars-as-impl-match", Arg.Set Globals.old_fvars_as_impl_match,"Use old method where free var is treated as implicit vars");
+  ("--new-fvars-as-impl-match", Arg.Clear Globals.old_fvars_as_impl_match,"New method where free var are not treated as implicit vars");
+  ("--old-infer-heap", Arg.Set Globals.old_infer_heap,"Use old method of scheduling Infer_Heap");
+  ("--new-infer-heap", Arg.Clear Globals.old_infer_heap,"Use new method of scheduling Infer_Heap");
+  ("--old-mater-coercion", Arg.Set Globals.old_mater_coercion,"Use Old Mater Coercion Selection");
+  ("--new-mater-coercion", Arg.Clear Globals.old_mater_coercion,"Use New Mater Coercion Selection");
+  ("--old-keep-triv-relass", Arg.Set Globals.old_keep_triv_relass,"Keep trivial relation assume (hp_rel and pure relation) during inference");
+  ("--new-keep-triv-relass", Arg.Clear Globals.old_keep_triv_relass,"Remove trivial relation assume during inference");
   ("--old-post-impl-to-ex", Arg.Set Globals.old_post_impl_to_ex,"Convert impl to exist vars in post-condition");
   ("--old-post-conv-impl", Arg.Set Globals.old_post_conv_impl,"Convert exist vars in post-condition to implicit");
   ("--new-post-conv-impl", Arg.Clear Globals.old_post_conv_impl,"Convert exist vars in post-condition to implicit");
@@ -327,11 +355,16 @@ linput.rl");
   ("--new-classic-rhs-emp", Arg.Clear Globals.old_classic_rhs_emp,"Use new handling of classic rhs emp");
   ("--old-incr-infer", Arg.Set Globals.old_incr_infer,"Use old inference system");
   ("--old-rm-htrue", Arg.Clear Globals.new_rm_htrue,"Disable removal of htrue from ante");
+  ("--old-keep-all-matchres", Arg.Set Globals.old_keep_all_matchres,"Keep all matchres including empty ones");
+  ("--new-keep-all-matchres", Arg.Clear Globals.old_keep_all_matchres,"Filter out matchres that are empty first");
+  ("--old-do-match-infer-heap", Arg.Set Globals.old_do_match_infer_heap,"Enable do match during infer_heap (seems wrong)");
+  ("--new-do-match-infer-heap", Arg.Clear Globals.old_do_match_infer_heap,"Disable do match during infer_heap (cleaner)");
   ("--old-infer-hprel-classic", Arg.Set Globals.old_infer_hprel_classic,"Enable infer hp_rel handling of classic (seems redundant)");
   ("--old-collect-hprel", Arg.Set Globals.old_collect_hprel,"Enable Old False which invokes infer_hp_rel without classic");
   ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
   ("--old-base-case-unfold", Arg.Set Globals.old_base_case_unfold,"Enable Old BaseCaseUnfold Method");
   ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
+  ("--old-infer-hp-collect", Arg.Set Globals.old_infer_hp_collect,"Enable Old Infer Collect Method for Shape");
   ("--old-impl-gather", Arg.Set Globals.old_impl_gather,"Enable Extra Impl Gather at CF.struc_formula_trans_heap_node");
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
   ("--en-hrel-as-view", Arg.Set Globals.hrel_as_view_flag,"Enable HRel as view");

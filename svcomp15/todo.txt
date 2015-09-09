@@ -81,7 +81,7 @@ list-ext-properties/*_true-valid-memsafety*.i
 note: shape + pure field + size
 
 array:
-960521-1_1_false-*.c
+960521-1_1_-*.c
 
  /* Build a list of the form 1->...->1->2->....->2->3 */
 list-ext*.c
@@ -96,6 +96,8 @@ simple-ext*.c
 
 field values of 1 node (bag of val/addr)
 test-0019*.c
+
+OK:  test-0019_1_true-valid-memsafety.c
 
 field + array
 test-0158

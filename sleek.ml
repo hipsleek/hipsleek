@@ -265,7 +265,7 @@ let parse_file (parse) (source_file : string) =
   *)
   let proc_one_lemma c =
     match c with
-    | LemmaDef ldef -> process_list_lemma ldef
+    | LemmaDef ldef -> x_add_1 process_list_lemma ldef
     | _             -> () in
   (* | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (\* An Hoa *\) *)
   (* | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ *)

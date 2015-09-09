@@ -16,3 +16,8 @@ pred sll_two<> == self = null
 
 checkentail (exists a_1655: a'::lseg_one<a_1655>@M&a_1655=null)
  |-  a'::sll_two<>.
+
+
+HeapPred H(node a).
+lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
+print residue.

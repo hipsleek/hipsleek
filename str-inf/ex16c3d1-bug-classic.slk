@@ -1,0 +1,46 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+// lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+
+//(3)
+infer [U2,@classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Fail.
+// EXPECT fail due to classic
+
+
+/*
+# ex16c3d1.slk
+
+//(3)
+infer [U2,classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Fail.
+// EXPECT fail due to classic
+
+*/
