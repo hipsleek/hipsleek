@@ -2445,6 +2445,7 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
 let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
   let get_rhs_unfold_fwd_svl lhds lhvs is_view h_node h_args def_svl leqNulls lhs_hpargs=
+    let () = DD.ninfo_hprint (add_str  "h_node" !CP.print_sv) h_node pos in
     let rec parition_helper node_name hpargs=
       match hpargs with
       | [] -> (false, false, [],[], [])
@@ -2452,14 +2453,18 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         let i_args, ni_args = Sautil.partition_hp_args prog hp args in
         let inter,rem = List.partition
             (fun (sv,_) ->
+                let () = DD.ninfo_hprint (add_str  "sv" !CP.print_sv) sv pos in
                 let cl = CF.find_close [sv] leqs in
+                let () = DD.ninfo_hprint (add_str  "cl" !CP.print_svl) cl pos in
                 CP.mem_svl node_name cl) i_args
         in
-        let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs args in
+        let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs
+          (CP.diff_svl args h_args) in
         let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in
-        if inter = [] ||
+        if inter = []  ||
           (*str-inf/ex16c3d(8). exists free vars -> fail*)
-          (not !Globals.old_infer_complex_lhs && CP.intersect_svl (CP.diff_svl reachable_args args) h_args !=[]) then
+           (not !Globals.old_infer_complex_lhs &&
+           CP.intersect_svl reachable_args h_args !=[]) then
             parition_helper node_name tl
         else
           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in

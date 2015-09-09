@@ -12700,8 +12700,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
     | Context.M_infer_unfold (r,_,_) ->
-      begin
-        let return_out_of_inst () = (estate,lhs_b) in
+        begin
+        (* if lhs in to-infer preds, add rhs preds to infer list*)
+        let return_out_of_inst extended_hps =
+          let n_estate = {estate with
+              CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps;
+          } in
+          (n_estate,lhs_b) in
         let do_inst estate lhs_b largs rargs extended_hps=
           try
             let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
@@ -12730,8 +12735,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps;
               }, CF.mkAnd_base_pure lhs_b mf no_pos
             else
-              return_out_of_inst ()
-          with _ -> return_out_of_inst ()
+              return_out_of_inst extended_hps
+          with _ -> return_out_of_inst extended_hps
         in
         let lhs_node = r.match_res_lhs_node in
         let rhs_node = r.match_res_rhs_node in
@@ -12744,33 +12749,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         let largs = (List.map CP.exp_to_sv rest1) in
                         let rargs = (List.map CP.exp_to_sv rest2) in
                         do_inst estate lhs_b largs rargs [rhp]
-                        (* try *)
-                        (*   let largs = (List.map CP.exp_to_sv rest1) in *)
-                        (*   let rargs = (List.map CP.exp_to_sv rest2) in *)
-                        (*   (\* let check_fml = MCP.merge_mems lhs_b.CF.formula_base_pure mf true in *\) *)
-                        (*   (\* if TP.is_sat_raw check_fml then *\) *)
-                        (*   let fvp = CP.fv (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in *)
-                        (*   let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in *)
-                        (*   let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in *)
-                        (*   if rargs != [] && CP.intersect_svl rargs fvp == [] then *)
-                        (*     let sst = List.combine largs rargs in *)
-                        (*     let p = List.fold_left (fun acc_p (sv1,sv2) -> *)
-                        (*         let p = CP.mkEqVar sv1 sv2 no_pos in *)
-                        (*         CP.mkAnd acc_p p no_pos *)
-                        (*     ) (CP.mkTrue no_pos) sst in *)
-                        (*     let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in *)
-                        (*     let mf = (MCP.mix_of_pure p) in *)
-                        (*     let () = Debug.ninfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in *)
-                        (*     {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos; *)
-                        (*         CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp]; *)
-                        (*     }, CF.mkAnd_base_pure lhs_b mf no_pos *)
-                        (*   else *)
-                        (*     return_out_of_inst () *)
-                        (* with _ -> return_out_of_inst () *)
                       end
-                    | _ -> return_out_of_inst ()
+                    | _ -> return_out_of_inst [rhp]
                 else
-                  return_out_of_inst ()
+                  return_out_of_inst []
           | HRel (lhp,leargs,_),ViewNode vn -> begin
               if CP.mem_svl lhp estate.es_infer_vars_hp_rel then
                 match leargs with
@@ -12778,11 +12760,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         let largs = (List.map CP.exp_to_sv rest1) in
                         let rargs = vn.CF.h_formula_view_arguments in
                         do_inst estate lhs_b largs rargs []
-                  | _ -> return_out_of_inst ()
+                  | _ -> return_out_of_inst []
               else
-                return_out_of_inst ()
+                return_out_of_inst []
             end
-          | _ -> return_out_of_inst ()
+          | _ -> return_out_of_inst []
         in
         let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
         pm_aux n_estate n_lhs_b (Context.M_infer_heap (lhs_node, rhs_node,rhs_rest))
