@@ -1025,10 +1025,16 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
         match rhs_node with
         | HRel (h,args,_) -> 
           let n,vs = CF.name_of_h_formula rhs_node in
+          let vs = Cast.rm_NI_from_hp_rel prog h vs in
           let pr = !CF.print_h_formula in
-          let () = y_tinfo_hp (add_str "SCE-lhs" pr) f in
-          let () = y_tinfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
-          if CP.is_exists_svl p1 vs then 
+          let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
+          let () = y_binfo_hp (add_str "SCE-lhs" pr) f in
+          let () = y_binfo_hp (add_str "SCE-p1_eq" !CP.print_svl) p1_eq in
+          let () = y_binfo_hp (add_str "SCE-va" !CP.print_svl) vs in
+          let () = y_binfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
+          let common = CP.intersect_svl p1_eq vs in
+          let () = y_binfo_hp (add_str "SCE-flag" string_of_bool) (common!=[]) in
+          if common!=[] then 
             [(HEmp,f,[],Root)]
             (* failwith "TBI" *)
           else []
@@ -1056,6 +1062,7 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
         | HRel (hp,args,_) ->
           let () = y_binfo_hp (add_str "rhs_node(..|-HRel(x,..))" !CF.print_h_formula) rhs_node in
           let () = y_binfo_hp (add_str "lhs_node" !CF.print_h_formula) f in
+          let args = Cast.rm_NI_from_hp_rel prog hp args in
           let vs_rhs = List.concat (List.map CP.afv args) in
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
           let p1_eq = p1::p1_eq (* LHS root aliases *) in
@@ -1107,10 +1114,11 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
     | HRel (hp,e,l) ->
       begin
         (* let vv = CF.mk_HRel_as_view hp e l in *)
-        let vs = List.concat (List.map CP.afv e) in
+        let new_e = Cast.rm_NI_from_hp_rel prog hp e in
+        let vs = List.concat (List.map CP.afv new_e) in
         let common = CP.intersect_svl vs aset in
         let () = y_tinfo_hp (add_str "common" pr_svl) common in
-        let () = y_tinfo_hp (add_str "f" !CF.print_h_formula) f in
+        let () = y_tinfo_hp (add_str "f(LHS)" !CF.print_h_formula) f in
         let () = y_tinfo_hp (add_str "f0" !CF.print_h_formula) f0 in
         let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
         let c = CP.name_of_spec_var hp in
@@ -2230,12 +2238,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let act1 = M_unfold (m_res, 1) in (* base-case unfold implemented *)
          let act2 = M_infer_heap (lhs_node, rhs,HEmp) in
          let act3 = M_infer_unfold (m_res,rhs,HEmp) in
-         let wt = 1 in
+         let wt = 2 in
          (* old method do not use base_case_unfold *)
          if !Globals.old_base_case_unfold_hprel then (wt,act2)
          (* (2,M_infer_heap (rhs,HEmp)) *)
          else if List.length args<2 then (wt,act3)
-         else (wt,Search_action [(wt,act1);(wt,act3)])
+         else (wt,Search_action [(wt,act3);(wt,act1)])
        (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
          (* TODO : check if h_esname in the infer_vars *)
@@ -2426,7 +2434,8 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         | Some h -> h
         | None -> HEmp
       in
-      [(2,M_infer_heap (lhs_node, rhs_node,rhs_rest))]
+      if !Globals.old_infer_collect then [(2,M_infer_heap (lhs_node, rhs_node,rhs_rest))]
+      else []
   in
   (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
   (* does removing original cause loop? should we use counting? *)

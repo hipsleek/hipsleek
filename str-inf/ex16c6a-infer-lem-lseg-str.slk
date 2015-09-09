@@ -31,6 +31,7 @@ pred WFG<p> ==
 //(1)
  infer [U2a] U2a(self,qq) |- U2(self,q).
  print residue.
+ expect Valid.
 /*
  <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [U2a(self,q)&true |#|3  --> U2(self,q)&true]
@@ -42,11 +43,13 @@ pred WFG<p> ==
  infer [U3] U3(self,_,qq) |- U2(self,q).
  print residue.
  // Why fail? Similar to (1).
+ expect Valid.
 
 
 //(3).
  infer [U2] U2(self,q)*q::char_star<0,p> |- self::WFG<p>.
  print residue.
+ expect Valid.
 /*
  <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [U2(self,q)&true |#| q::char_star<flted_41_150,p>@M&
@@ -57,6 +60,7 @@ pred WFG<p> ==
 //(4)
  infer [U3] U3(self,_,q)*q::char_star<0,p> |- self::WFG<p>.
  print residue.
+ expect Valid.
  // Why fail? Similar to (3).
 
 

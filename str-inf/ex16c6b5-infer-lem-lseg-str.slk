@@ -1,0 +1,98 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U1(char_star x).
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U2a(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star z).
+ HeapPred U3a(char_star x,char_star y,char_star@NI z).
+ HeapPred U3b(int x,char_star y,char_star@NI z).
+ HeapPred U3c(int x,char_star y,char_star z).
+ HeapPred U1b(int x).
+
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+
+infer [U,U3b,U2,@pure_field,@classic]  x::WFG<p> & x=self |- U3b(vv,p,self) .
+
+print residue.
+expect Fail.
+print residue.
+
+infer [U,U3c,U2,@pure_field,@classic]  x::WFG<p> & x=self |- U3c(vv,p,self) .
+
+print residue.
+expect Valid.
+print residue.
+
+infer [U,U3b,U2,@pure_field,@classic]  x::char_star<v,p> & x=self |- U3b(vv,p,self) .
+expect Fail.
+print residue.
+
+infer [U,U3c,U2,@pure_field,@classic]  x::char_star<v,p> & x=self |- U3c(vv,p,self) .
+expect Valid.
+print residue.
+
+infer [U,U3b,U2,@pure_field] U3b(vv,p,self) |- self::WFG<p>.
+expect Fail.
+print residue.
+
+
+infer [U,U3c,U2,@pure_field] U3c(vv,p,self) |- self::WFG<p>.
+expect Valid.
+print residue.
+
+infer [U,U3b,U2,@pure_field] U3b(vv,p,self) |- self::char_star<v,q2> .
+expect Fail.
+print residue.
+
+
+infer [U,U3c,U2,@pure_field] U3c(vv,p,self) |- self::char_star<v,q2> .
+expect Valid.
+print residue.
+
+/*
+# ex16c6b5.slk (FIXED)
+
+# Why is there still an InferFold?
+
+process_matches@4@2@1
+process_matches inp1 :lhs_h: x::WFG<p>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: x::WFG<p>@M
+ RHS: U3b(vv,p,self)
+ lhs_rest: emp
+ rhs_rest: emp]
+
+-----------------------------------
+
+# Why is there still an InferHeap? Need to remove.
+
+Entail (1) : Valid. 
+Residue:
+ <1>x::char_star<v,p>@M&x=self&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> U3b(vv@NI,p,self@NI)&true]
+[[ COND ==>  InferHeap]]
+*/
