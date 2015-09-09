@@ -2463,6 +2463,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in
         if inter = []  ||
           (*str-inf/ex16c3d(8). exists free vars -> fail*)
+           (* I suppose below is for complex_rhs? *)
            (not !Globals.old_infer_complex_lhs &&
            CP.intersect_svl reachable_args h_args !=[]) then
             parition_helper node_name tl
