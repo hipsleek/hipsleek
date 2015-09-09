@@ -12704,9 +12704,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         let return_out_of_inst () = (estate,lhs_b) in
         let do_inst estate lhs_b largs rargs extended_hps=
           try
-            let fvp = CP.fv (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
+            let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
+            (* let inter_eqs = List.filter (fun p -> (CP.is_eq_exp_ptrs rargs p)) (CP.list_of_conjs p) in *)
+            (* let subst_p = CP.subst inter_eqs in *)
+            (* let () = Debug.info_hprint (add_str  "subst_p" !CP.print_formula) subst_p no_pos in *)
+            let fvp = CP.fv p in
             let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
-            let () = Debug.info_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
+            let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
             if rargs != [] && CP.intersect_svl rargs fvp == [] then
               let sst = List.combine largs rargs in
               let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
