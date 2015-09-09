@@ -2241,7 +2241,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* TODO : check if h_esname in the infer_vars *)
          (* let act1 = M_unfold (m_res, 1) in *)
          let act2 = M_infer_unfold (m_res,rhs,HEmp) in
-         let wt = 2 in (wt,act2)
+         let act3 = M_fold (m_res) in
+         let wt = 2 in 
+         (* (wt,Search_action [(wt,act3);(wt,act2)]) *)
+         (wt,act2)
        | DataNode _,  HRel (hp,args,_)  -> 
          (* failwith "TBI"  *)
          (* useful for base-case fold x::node<_,_> |- U(x,y) *)

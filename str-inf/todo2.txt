@@ -773,6 +773,35 @@ expect Valid.
 //   EXPECTS: infer_unfold (on U2) or fold (on WFG)
 
 ===========================================================================
+# ex16c5b.slk
+
+ infer [U2,U3] U2(qq,p) * U3(p,x)  |- qq::char_star<b,p>.
+
+# complex LHS:
+
+ inferred hprel: [U2(qq,p@NI) * U3(p,x@NI)&
+                   true |#|3  --> qq::char_star<b_180,p>@M&true]
+
+# expects:
+
+  U2(qq,p@NI) |#|3  --> qq::char_star<b_180,s> * HP(s,p@NI)
+  HP(s,p) --> s=p
+  U3(p,x) --> emp
+
+--------------------
+
+ infer [U2,U3] U2(qq,p)  |- qq::char_star<b,p>.
+
+# GOT
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(qq,p@NI)&true |#|3  --> qq::char_star<b_167,p>@M&true]
+[[ SEARCH ==>  InferUnfold ]]
+
+# BETTER in smaller steps..
+
+  U2(qq,p@NI) |#|3  --> qq::char_star<b_180,s> * HP(s,p@NI)
+  HP(s,p) --> s=p
 ===========================================================================
 ===========================================================================
 ===========================================================================

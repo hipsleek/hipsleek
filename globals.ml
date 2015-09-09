@@ -1277,6 +1277,7 @@ let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
 let new_rm_htrue = ref true
+let new_infer_large_step = ref true
 
 let old_collect_false = ref false
 let old_collect_hprel = ref false
