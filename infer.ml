@@ -2447,22 +2447,24 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
   let get_rhs_unfold_fwd_svl is_view h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
       match hpargs with
-      | [] -> (false, false, [],[])
+      | [] -> (false, false, [],[], [])
       | (hp,args)::tl ->
         let i_args, ni_args = Sautil.partition_hp_args prog hp args in
         let inter,rem = List.partition
             (fun (sv,_) -> CP.eq_spec_var node_name sv) i_args
         in
-        if inter = [] then parition_helper node_name tl
+        if inter = [] then
+          parition_helper node_name tl
         else
           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-          (true, is_pre, List.filter (fun (sv,_) -> not (CP.mem_svl sv leqNulls)) rem, (ni_args))
+          (true, is_pre, List.filter (fun (sv,_) -> not (CP.mem_svl sv leqNulls || CP.mem_svl sv h_args)) rem,
+          (ni_args), CP.diff_svl h_args args)
     in
-    let res,is_pre, niu_svl_i, niu_svl_ni = parition_helper h_node lhs_hpargs in
+    let res,is_pre, niu_svl_i, niu_svl_ni,h_args_rem = parition_helper h_node lhs_hpargs in
     if res then
       (*find arg pointers are going to be init in next stmts*)
-      let args1 = CP.remove_dups_svl (CP.diff_svl h_args (def_svl)) in
-      let () = Debug.ninfo_zprint (lazy  ("     h_args:" ^(!CP.print_svl args1))) no_pos in
+      let args1 = CP.remove_dups_svl (CP.diff_svl h_args_rem (def_svl)) in
+      let () = Debug.ninfo_zprint (lazy  ("     h_args_rem:" ^(!CP.print_svl args1))) no_pos in
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_i:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_i))) no_pos in
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
@@ -2716,15 +2718,18 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
       (* let h_args1 = if List.filter CP.is_node_typ h_args in *)
       let hrel_args1 = List.concat hrel_args in
       (*should include their closed ptrs*)
-      (* let hrel_args2 = CP.remove_dups_svl (List.fold_left Sautil.close_def hrel_args1 (eqs)) in *)
       let hrel_args2 = CP.remove_dups_svl (CF.find_close hrel_args1 eqs) in
-      let def_vs1 = if CF.is_view n_unmatched then CP.diff_svl (def_vs@hrel_args2) h_args
-        else (def_vs@hrel_args2)
+      let def_vs_w_unk_preds = CP.remove_dups_svl (def_vs@hrel_args2) in
+      let () = DD.ninfo_zprint (lazy  ("def_vs@hrel_args2 " ^ (!CP.print_svl def_vs_w_unk_preds))) pos in
+      let is_view = CF.is_view n_unmatched in
+      (* match n_unmatched with *)
+      (*   | CF.ViewNode vn -> true *)
+      (*   | _ -> false *)
+      (* in *)
+      let def_vs1 = if is_view (* CF.is_view n_unmatched *) then CP.diff_svl def_vs_w_unk_preds h_args
+        else def_vs_w_unk_preds (*(def_vs@hrel_args2)*)
       in
-      let is_view = match n_unmatched with
-        | CF.ViewNode vn -> true
-        | _ -> false
-      in
+      let () = Debug.ninfo_hprint (add_str "def_vs1"  !CP.print_svl) def_vs1 no_pos in
       let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl is_view h_node h_args (def_vs1) leqNulls ls_lhp_args in
       let ass_guard1 = match n_unmatched with
         | CF.ViewNode vn ->
@@ -2823,8 +2828,6 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
   let pr3 = pr_list (pr_pair !CP.print_sv !print_svl) in
   let pr4 = pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv print_arg_kind))) in
   let pr6 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl pr1 Cprinter.prtt_string_of_formula) in
-  (* let pr7 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
-  (* let pr7 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in *)
   let pr8 ohf = match ohf with
     | None -> "None"
     | Some hf -> pr2 hf
@@ -2922,9 +2925,24 @@ let get_h_formula_data_fr_hnode hn=
   | _ -> report_error no_pos
            "infer.get_h_formula_data_fr_hnode: input must be a list of hnodes"
 
-let is_match lhs_selected_hpargs rhs_selected_hpargs =
+let is_match_pred lhs_selected_hpargs rhs_selected_hpargs =
   match lhs_selected_hpargs, rhs_selected_hpargs with
     | [(lhp,largs)], [(rhp,rargs)] -> CP.eq_spec_var_order_list largs rargs
+    | _ -> false
+
+let is_match_node lhs_selected_hpargs rhs_b =
+  match lhs_selected_hpargs with
+    | [(_,largs)] ->
+          let rhds, rhvs, _ = CF.get_hp_rel_bformula rhs_b in
+          let d_match = List.exists (fun dn ->
+              let rargs = dn.CF.h_formula_data_node:: dn.CF.h_formula_data_arguments in
+              CP.eq_spec_var_order_list largs rargs
+          ) rhds in
+          if d_match then true else
+            List.exists (fun dn ->
+              let rargs = dn.CF.h_formula_view_node:: dn.CF.h_formula_view_arguments in
+              CP.eq_spec_var_order_list largs rargs
+          ) rhvs
     | _ -> false
 
 (*history from func calls*)
@@ -2939,7 +2957,8 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   in
   let filter_non_selected_hp selected_hpargs (hp,args)= Gen.BList.mem_eq Sautil.check_hp_arg_eq (hp,args) selected_hpargs in
   let filter_non_selected_hp_rhs selected_hps (hp,_)= CP.mem_svl hp selected_hps in
-  let is_match = is_match lhs_selected_hpargs rhs_selected_hpargs in
+  let is_match_pred = is_match_pred lhs_selected_hpargs rhs_selected_hpargs in
+  let is_match = is_match_pred || is_match_node lhs_selected_hpargs rhs_b in
      (****************************************)
   (*****************INTERNAL********************)
   (*lhs*)
