@@ -2,7 +2,6 @@
 infer [U2] U2(x,..) * D |- x::node<_,q>
    U2(x,..) # guard --> x::node<_,q>*HP(q,...,x@NI)
 
-
 // infer_unfold (segmented pred)
 infer [U2] U2(x,..) * D |- x::lseg<q>
    U2(x,..) # guard --> x::lseg<q>*HP(q,...,x@NI)
@@ -11,10 +10,6 @@ infer [U2] U2(x,..) * D |- x::lseg<q>
 // infer_unfold (large step)
 infer [U2] U2(x,p) * D |- x::lseg<q>*q::lseg<p>
    U2(x,..) # guard --> x::lseg<q>*q::lseg<p>
-
-// infer_unfold
-infer [U2] U2(x,..) * D |- x::lseg<q>
-   U2(x,..) # guard --> x::lseg<q>*HP(q,...,x@NI)
 
 ---------
 # ex16c3d.slk

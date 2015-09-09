@@ -736,7 +736,7 @@ infer [U2,@pure_field] U2(q3,q) & q!=qq  |- U(q3,qq) .
 # can we check that qq is not free in LHS before instantiating??
 # Also, each such var is instantiated only once.
 ===========================================================================
-# ex16c3c.slk
+# ex16c3c.slk (OK)
 
 infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<n,p> .
 
