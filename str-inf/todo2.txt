@@ -754,13 +754,19 @@ print residue.
 expect Valid.
 
 # too complex
-
 <1>HP_138(q,q3)&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [U2(q3,q) * q::char_star<flted_31_124,p>@M&
                    true |#|3  --> q3::WFG<q>@M * HP_138(q,q3@NI)&true]
 
 # expects 
    U2(q3,q) --> q3::WFG<q>
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<r> .
+   U2(q3,q) --> q3::WFG<q4> * HP3(q4,q,q3@NI)
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::node<_,r>
+   U2(q3,q) --> q3::node<_,q4> * HP3(q4,q,q3@NI)
+
 
 infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> .
 print residue.
