@@ -2451,7 +2451,9 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       | (hp,args)::tl ->
         let i_args, ni_args = Sautil.partition_hp_args prog hp args in
         let inter,rem = List.partition
-            (fun (sv,_) -> CP.eq_spec_var node_name sv) i_args
+            (fun (sv,_) ->
+                let cl = CF.find_close [sv] leqs in
+                CP.mem_svl node_name cl) i_args
         in
         let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs args in
         let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in
@@ -2465,7 +2467,8 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
           List.filter (fun (sv,_) -> if CP.mem_svl sv leqNulls then false
           else
             let reachable_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv] in
-            CP.diff_svl reachable_vs h_args = []
+            let reachable_vs_excl = CP.diff_svl reachable_vs [sv] in
+            CP.diff_svl reachable_vs_excl h_args = []
           ) rem,
           (ni_args), CP.diff_svl h_args reachable_args)
     in
@@ -2494,7 +2497,8 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
           args11
       in
       let niu_svl_i_ni = List.map (fun (sv,_) -> (sv, NI)) niu_svl_i in
-      let niu_svl_ni_total = niu_svl_i_ni@niu_svl_ni in
+      (* str-inf/ex16c5b(8) niu_svl_i_ni ==> niu_svl_i_i  *)
+      let niu_svl_ni_total = (* niu_svl_i_ni *)niu_svl_i@niu_svl_ni in
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
       let _ = Debug.ninfo_hprint (add_str "args12"  (pr_list (pr_pair !CP.print_sv print_arg_kind) )) args12 no_pos in
@@ -2505,12 +2509,14 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         (*   else [] *)
         (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total@[(h_node, NI)])) args12)
       in
+      (* str-inf/ex16c5b(8) do not need extra_clls *)
       (*generate extra hp for cll*)
-      let extra_clls = if niu_svl_i = [] then
-        [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
-        else
-          [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
-      in
+      let extra_clls = [] in
+      (* let extra_clls = if niu_svl_i = [] then *)
+      (*   [] (\* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *\) *)
+      (*   else *)
+      (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
+      (* in *)
       (true,ls_fwd_svl@extra_clls)
     else (false, [])
   in

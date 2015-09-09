@@ -47,7 +47,8 @@ pred WFG<p> ==
 # I think need to use @NI parameters. Expects:
 
   U(x,p)  --> x::char_star<v_148,qq_149>@M * HP_150(qq_149,x@NI)&
-  HP_150(qq,x@NI)  --> qq::char_star<b_151,p>@M * HP_152(p,x@NI,qq@NI)&true; 
+  HP_150(qq,x@NI)  --> qq::char_star<b_151,p>@M * HP_152(p,x@NI,qq@NI)&true;
+
 */
 
 
