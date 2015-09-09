@@ -13,7 +13,7 @@ WFSeg<p> ==
 
 WFSem<p> ==
   self=p 
-  or self::char_star<v,q>*q::WFSem<p> & v=0
+  or self::char_star<v,q>*q::WFSem<p>
   inv true;
 
 BADS<> ==
