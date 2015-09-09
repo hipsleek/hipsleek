@@ -2453,12 +2453,14 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         let inter,rem = List.partition
             (fun (sv,_) -> CP.eq_spec_var node_name sv) i_args
         in
-        if inter = [] then
-          parition_helper node_name tl
+        let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs args in
+        let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in
+        if inter = [] ||
+          (*str-inf/ex16c3d(8). exists free vars -> fail*)
+          (not !Globals.old_infer_complex_lhs && CP.intersect_svl (CP.diff_svl reachable_args args) h_args !=[]) then
+            parition_helper node_name tl
         else
           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-          let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs args in
-          let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in
           (true, is_pre,
           List.filter (fun (sv,_) -> if CP.mem_svl sv leqNulls then false
           else
