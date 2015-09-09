@@ -22,14 +22,46 @@ let build_eset_of_imm_formula f =
            (match conv_ann_exp_to_var ex with
             | Some (v2,_) -> EMapSV.add_equiv acc v1 v2
             | None -> acc)
-         | (SubAnn (Var (v1,_), (AConst(Mutable,_) as exp), _),_) -> (* bot *)
+         | (SubAnn (Var (v1,_), AConst(Mutable,_), _),_) -> (* bot *)
            let v2 = mkAnnSVar Mutable in EMapSV.add_equiv acc v1 v2
-         | (SubAnn(AConst(Accs,_) as exp, Var (v1,_), _),_) -> (* top *)
+         | (SubAnn(AConst(Accs,_), Var (v1,_), _),_) -> (* top *)
            let v2 = mkAnnSVar Accs in EMapSV.add_equiv acc v1 v2
          | _ -> acc)
       | _ -> acc
     ) EMapSV.mkEmpty lst in 
   emap
+
+module Poset =
+  struct
+    type t = spec_var
+    let top = imm_top_sv
+    let is_top a = eq_spec_var a top
+    let bot = imm_bot_sv
+    let is_bot a = eq_spec_var a bot 
+  end;;
+
+module GenImmSV = Gen.GenRel (SV) (PtrSV) (Poset);;
+
+(* assumption: f is in CNF *)
+let build_imm_genrel_of_formula f =
+  let is_imm = is_exp_ann in
+  let imm2sv = conv_ann_exp_to_var_exc in
+  let f_bf irel bf =
+    let pf, _ = bf in
+    match pf with
+    | Eq (e1, e2, _),_ -> 
+      if (is_imm e1) && (is_imm e2) then Some (GenImmSV.add_eq irel (imm2sv e1) (imm2sv e2))
+      else None
+    | Neq (e1, e2, _),_ -> 
+      if (is_imm e1) && (is_imm e2) then Some (GenImmSV.add_disj irel (imm2sv e1) (imm2sv e2))
+      else None
+    | SubAnn (e1, e2, _), _ -> 
+      if (is_imm e1) && (is_imm e2) then Some (GenImmSV.add_sub irel (imm2sv e1) (imm2sv e2))
+      else None
+    | _ -> None
+  in
+  let irel = GenImmSV.mkEmpty in
+  fold_formula_arg f irel (nonef2,nonef2,nonef2) (idf2, idf2, idf2) GenImmSV.merge_list
 
 let build_eset_of_imm_formula f =
   let pr = !print_formula in
@@ -459,102 +491,34 @@ let simplify_imm_min_max (f:formula) =
   let pr = !print_formula in
   Debug.no_1 "simplify_imm_min_max" pr pr simplify_imm_min_max f
 
-(**
-Syntactically replace minmax between immutability ann with it results
-that can be syntactically deduced from emap.
-1. Collect all subtyping relations
-2. Build a DAG of equivalence sets based on emaps
-3. Use the DAG to deduce minmax.
- **)
-module SubAnn : Gen.EQ_TYPE with type t = exp =
-  struct
-    type t = exp
-    let zero = AConst(Mutable, no_pos)
-    let is_zero e1 = e1 = AConst(Mutable, no_pos)
-    let eq = eq_exp_no_aset
-    let compare e1 e2 =
-      String.compare (ArithNormalizer.string_of_exp e1)
-                     (ArithNormalizer.string_of_exp e2)
-    let string_of = ArithNormalizer.string_of_exp
-  end
-
-(* module SubAnn : Gen.EQ_TYPE with type t = spec_var = *)
-(*   struct *)
-(*     type t = spec_var *)
-(*     let zero = mkAnnSVar Mutable *)
-(*     let eq = eq_spec_var *)
-(*     let is_zero e1 = eq e1 zero  *)
-(*     let compare ~emap:em e1 e2 =  *)
-(*       if EMapSV.is_equiv em e1 e2 then 0 *)
-(*       else if simple_subtype em e1 e2 then 1 else -1 *)
-(*     let string_of = !print_sv *)
-(*   end *)
-
-(* module SubAnnPoset = Gen.Make_DAG(SubAnn) *)
-
-module SubAnnPoset = Gen.Make_POSET(SubAnn)
-
-module SVEq : (Gen.EQ_TYPE with type t = spec_var) = SV
-(* module SVPoset = Gen.Make_DAG(SVEq) *)
-module SubAnnPoset0 = Gen.Make_POSET(SV)
+(* module SubAnnPoset0 = Gen.Make_POSET(SV) *)
+module SubAnnPoset0 = Gen.Make_POSET(SV) (* Poset *)
 
 let prune_imm_min_max_conjunct poset f =
-  let f_b b_formula lbl = match b_formula with
+  let f_b b_formula lbl = 
+    let def = BForm (b_formula, lbl) in
+    match b_formula with
     | (EqMin (id, lhs, rhs, loc), p) ->
-       begin match SubAnnPoset.is_lt_opt poset lhs rhs with
-       | Some true -> mkEqExp id lhs loc
-       | Some false -> mkEqExp id rhs loc
-       | None -> BForm (b_formula, lbl)
-       end
+      if (is_exp_ann lhs) && (is_exp_ann rhs) then 
+        begin match SubAnnPoset0.is_lt_opt poset (conv_ann_exp_to_var_exc lhs) (conv_ann_exp_to_var_exc rhs) with
+          | Some true -> mkEqExp id lhs loc
+          | Some false -> mkEqExp id rhs loc
+          | None -> def 
+        end
+      else def
     | (EqMax (id, lhs, rhs, loc), _) ->
-       begin match SubAnnPoset.is_lt_opt poset lhs rhs with
-       | Some true -> mkEqExp id rhs loc
-       | Some false -> mkEqExp id lhs loc
-       | None -> BForm (b_formula, lbl)
-       end
-    | b_formula -> BForm (b_formula, lbl) in
+      if (is_exp_ann lhs) && (is_exp_ann rhs) then 
+        begin match SubAnnPoset0.is_lt_opt poset (conv_ann_exp_to_var_exc lhs) (conv_ann_exp_to_var_exc rhs) with
+          | Some true -> mkEqExp id rhs loc
+          | Some false -> mkEqExp id lhs loc
+          | None -> def 
+        end
+      else def
+    | b_formula -> def in
   let f_f f = match f with
     | BForm (b_formula, lbl) -> Some (f_b b_formula lbl)
     | _ -> None in
   transform_formula (nonef, nonef, f_f, somef, somef) f
-
-(* Pruned Case
-  1. a=min(b,c), given some ann subtyping relations, deduce a=b or a=c if possible
-  2. a=top & a <: b & a != b
-  3. a=bot & b <: a & a != b
-*)
-(* let prune_eq_top_bot_imm_disjunct f = *)
-(*   let emap = build_eset_of_imm_formula f in  *)
-(*   let collect_subann p_f = *)
-(*     match p_f with *)
-(*     | SubAnn (Var(sv1,_), Var(sv2,_),_) -> [(sv1, sv2)] *)
-(*     | _ -> [] in *)
-(*   let collect_eq_imm imm p_f = match p_f with *)
-(*     | Eq (Var(sv,_), AConst(imm, _), _) -> [sv] *)
-(*     | Eq (AConst(imm,_), Var(sv,_), _) -> [sv] *)
-(*     | _ -> [] in *)
-(*   let collect_eq_bot = collect_eq_imm imm_bot in *)
-(*   let collect_eq_top = collect_eq_imm imm_top in *)
-(*   let collect_neq_sv p_f = match p_f with *)
-(*     | Neq (Var(sv1,_), Var(sv2, _), _) -> [(sv1, sv2)] *)
-(*     | _ -> [] in *)
-(*   let get4 p_f = (collect_subann p_f, collect_eq_bot p_f, *)
-(*                   collect_eq_top p_f, collect_neq_sv p_f) in *)
-(*   let concat4 xs = List.fold_right (fun (a,b,c,d) (e,f,g,h) -> (a@e, b@f, c@g, d@h)) xs *)
-(*                                    ([],[],[],[]) in *)
-(*   let (subanns, eq_bot, eq_top, neq_sv) = *)
-(*     (fun (a,b,c,d) -> (a, SetSV.of_list b, SetSV.of_list c, d)) *)
-(*     (fold_formula f (nonef, (fun (p_f,_) -> Some (get4 p_f)), nonef) concat4) in *)
-(*   let poset = *)
-(*     let p = SVPoset.mkEmpty in *)
-(*     (List.iter (SVPoset.add p) subanns; p) in *)
-(*   let ( <: ) a b = SVPoset.is_lt poset a b in *)
-(*   let ( := ) a b =                     eq_const_ann b emap a in(\*TODOIMM: should use emap *\) *)
-(*     (\* SetSV.mem a (if b = imm_top then eq_top else eq_bot) in *\) *)
-(*   let prune_if_top a b = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a)) in *)
-(*   let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in *)
-(*   let prune_if_match (sv1, sv2) = prune_if_top sv1 sv2 || prune_if_bot sv1 sv2 in *)
-(*   List.fold_right (fun b acc -> acc || prune_if_match b) neq_sv false *)
 
 (* Pruned Case
   1. a=min(b,c), given some ann subtyping relations, deduce a=b or a=c if possible
@@ -592,11 +556,13 @@ let prune_eq_top_bot_imm_disjunct f =
   let ( <: ) a b = 
       (* let res = SVPoset.is_lt poset a b in *)
       let res = SubAnnPoset0.is_lt poset a b in
+      (* let () = y_binfo_pp ((!print_sv a) ^ "<:" ^ (!print_sv b) ^ " " ^ (string_of_bool res)) in *)
       res in
   let ( := ) a b = eq_const_ann b emap a in(*TODOIMM: should use emap *)
     (* SetSV.mem a (if b = imm_top then eq_top else eq_bot) in *)
   let prune_if_top a b = 
     let res = ((a := imm_top) && (a <: b)) || ((b := imm_top) && (b <: a)) in
+    (* let () = y_binfo_pp ("prune? "^(!print_sv a) ^ "," ^ (!print_sv b) ^ " " ^ (string_of_bool res)) in *)
     res in
   let prune_if_bot a b = ((a := imm_bot) && (b <: a)) || ((b := imm_bot) && (a <: b)) in
   let prune_if_match (sv1, sv2) =  prune_if_top sv1 sv2 || prune_if_bot sv1 sv2 in
@@ -630,34 +596,6 @@ let prune_eq_top_bot_imm_helper f = wrapper_strip_exists f prune_eq_top_bot_imm
 
 let prune_eq_top_bot_imm f = prune_eq_top_bot_imm_helper f
 
-(* let rec prune_eq_top_bot_imm f = *)
-(*   let f_f form = *)
-(*     match form with *)
-(*     | BForm _    *)
-(*     | And   _    *)
-(*     | AndList _  *)
-(*     | Or _       *)
-(*     | Forall _ *)
-(*     | Exists _ -> Some (prune_eq_top_bot_imm_helper form) *)
-(*     | Not (not_f,lbl,pos) -> Some (mkNot (prune_eq_top_bot_imm_helper not_f) lbl pos ) *)
-(*   in *)
-(*   transform_formula (nonef, nonef, f_f, somef, somef) f *)
-
-(* let rec prune_eq_top_bot_imm f = *)
-(*   let f_f (poset,emap) form = *)
-(*     match form with *)
-(*     | BForm _ -> Some form *)
-(*     | And   _ *)
-(*     | AndList _ *)
-(*     | Or _ *)
-(*     | Forall _ *)
-(*     | Exists _ -> Some (prune_eq_top_bot_imm_helper form) *)
-(*     | Not (not_f,lbl,pos) -> Some (mkNot (prune_eq_top_bot_imm_helper not_f) lbl pos ) *)
-(*   in *)
-(*   let p = SVPoset.create () in *)
-(*   let emap = CP.EMapSV.mkEmpty in *)
-(*   map_formula_arg f (p,emap) (f_f, somef, somef) (f_f_arg, idf2, idf2)  *)
-
 let prune_eq_top_bot_imm f =
   let pr = !print_formula in
   Debug.no_1 "prune_eq_top_bot_imm" pr pr prune_eq_top_bot_imm f
@@ -666,23 +604,23 @@ let prune_eq_min_max_imm f =
   let collect_subann f =
     let is_subann p_f = match p_f with SubAnn _ -> true | _ -> false in
     let to_pair p_f = match p_f with
-      | SubAnn (e1,e2,_) -> (e1,e2)
+      | SubAnn (e1,e2,_) -> (conv_ann_exp_to_var_exc e1, conv_ann_exp_to_var_exc e2)
       | _ -> failwith "Not possible" in
     fold_formula f (nonef, (fun (p_f,_) ->
                             if is_subann p_f then Some [to_pair p_f]
                             else None), nonef) List.concat in
   let f_f f = match f with
     | BForm _ ->
-       let poset = SubAnnPoset.mkEmpty in
+       let poset = SubAnnPoset0.mkEmpty in
        (* let () = List.iter (SubAnnPoset.add poset) (collect_subann f) in *)
-       let poset = SubAnnPoset.add_list poset (collect_subann f) in
+       let poset = SubAnnPoset0.add_list poset (collect_subann f) in
        Some (prune_imm_min_max_conjunct poset f)
     | And (f1, f2, pos) ->
-       let poset = SubAnnPoset.mkEmpty in
+       let poset = SubAnnPoset0.mkEmpty in
        (* let () = List.iter (SubAnnPoset.add poset) (collect_subann f1) in *)
        (* let () = List.iter (SubAnnPoset.add poset) (collect_subann f2) in *)
-       let poset = SubAnnPoset.add_list poset (collect_subann f1) in
-       let poset = SubAnnPoset.add_list poset (collect_subann f2) in
+       let poset = SubAnnPoset0.add_list poset (collect_subann f1) in
+       let poset = SubAnnPoset0.add_list poset (collect_subann f2) in
        (* -------- test 4 poset ------------  *)
        (* let afv1 = all_vars f1 in *)
        (* let afv2 = all_vars f2 in *)
@@ -694,6 +632,7 @@ let prune_eq_min_max_imm f =
                    (prune_imm_min_max_conjunct poset f2) pos)
     | other -> None in
   transform_formula (nonef, nonef, f_f, somef, somef) f
+
 
 let prune_eq_min_max_imm f =
   let pr = !print_formula in
@@ -710,6 +649,9 @@ let simp_imm_min_max f =
     let f_2 = prune_eq_top_bot_imm f_1 in
     f_2
   else f
+
+let simp_imm_min_max f = 
+  Debug.no_1 "simp_imm_min_max" !print_formula !print_formula simp_imm_min_max f
 
 (* let build_imm_utils f =  *)
 (*   let emap = in *)

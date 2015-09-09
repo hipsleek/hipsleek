@@ -7606,6 +7606,12 @@ let conv_ann_exp_to_var (e:exp) : (spec_var * loc) option =
   | Var(v,loc)    -> Some (v, loc)
   | _ -> None
 
+let conv_ann_exp_to_var_exc (e:exp) : spec_var = 
+  match e with
+  | AConst(a,loc) -> mkAnnSVar a
+  | Var(v,loc)    -> v
+  | _ -> failwith "expectig imm operand (imm const or imm var) "
+
 (* convert exp to var representation where possible *)
 let conv_exp_with_const e = match conv_exp_to_var e with
   | Some (v,loc) -> Var(v,loc)
@@ -7948,6 +7954,10 @@ let const_ann_bot = AConst (imm_bot, no_pos)
 (*annotations *)
 let imm_ann_top = ConstAnn imm_top
 let imm_ann_bot = ConstAnn imm_bot
+(* spec_vars *)
+let imm_top_sv = mkAnnSVar imm_top
+let imm_bot_sv = mkAnnSVar imm_bot
+
 
 let is_diff e1 e2 =
   match e1,e2 with
