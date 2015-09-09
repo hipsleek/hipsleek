@@ -2787,7 +2787,9 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
     else []
   in
   (*********END CLASSIC************)
-  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs1,rhs_sel_hpargs, total_defined_hps,
+  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,
+  (* hds,hvs,lhrs,rhrs, *)leqNulls@reqNulls,
+  lhs_selected_hpargs1,rhs_sel_hpargs, total_defined_hps,
    CP.remove_dups_svl (unk_svl),unk_xpure,unk_map1,new_lhs_hps,vioated_ni_svl,classic_ptrs, ass_guard)
 
 (* type: Sautil.C.prog_decl -> *)
@@ -2827,7 +2829,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
     | None -> "None"
     | Some hf -> pr2 hf
   in
-  let pr5 = fun (is_found, undefs,_,_,_,_,_,selected_hpargs, rhs_sel_hpargs,defined_hps,_,_,_,_,_,_,ass_guard) ->
+  let pr5 = fun (is_found, undefs,_,selected_hpargs, rhs_sel_hpargs,defined_hps,_,_,_,_,_,_,ass_guard) ->
     let pr = pr_hexa string_of_bool pr4 pr3 pr3 pr6 pr8 in
     pr (is_found, undefs,selected_hpargs,rhs_sel_hpargs,defined_hps,ass_guard)
   in
@@ -3238,7 +3240,7 @@ let check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos=
 
 let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
     ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs
-    hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
+    (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
   let lhds, lhvs, lhras = CF.get_hp_rel_bformula lhs_b in
   let rhds, rhvs, rhras = CF.get_hp_rel_bformula rhs_b1 in
   let hds = lhds@rhds in
@@ -3766,7 +3768,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
             let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
             let reqs1 = [] in
             (********** END BASIC INFO LHS, RHS **********)
-            let is_found_mis, ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,
+            let is_found_mis, ls_unknown_ptrs,(* hds,hvs,lhras,rhras, *)eqNull,
                 lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
               find_undefined_selective_pointers prog es lhs_b1 mix_lf1 rhs rhs_rest
                 (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
@@ -3795,7 +3797,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
                 generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
                     lselected_hpargs2 rselected_hpargs
-                  hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
+                  (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
               (* generate assumption for memory error *)
               let oerror_es = generate_error_constraints prog es ass_lhs rhs
                   (List.map fst lselected_hpargs2) es_cond_path pos in
@@ -3810,6 +3812,10 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
               (* let l_aset = CP.EMapSV.mkEmpty in *)
               (* let all_aset = CP.add_equiv_list_eqs l_aset (leqs@reqs_orig@n_rhs_eqset) in *)
               let all_aset = CP.EMapSV.merge_eset (CP.EMapSV.merge_eset l_emap0 r_emap0) r_eqsetmap0 in
+              let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b1 in
+              let rhds, rhvs, _ = CF.get_hp_rel_h_formula rhs in
+              let hds = lhds@rhds in
+              let hvs = lhvs@rhvs in
               let new_es, new_lhs = update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
                   rvhp_rels (leqs) all_aset m new_post_hps unk_map hp_rel_list pos in
               let n_es_heap = match rhs with
