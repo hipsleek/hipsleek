@@ -2444,7 +2444,7 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
 
 let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
-  let get_rhs_unfold_fwd_svl is_view h_node h_args def_svl leqNulls lhs_hpargs=
+  let get_rhs_unfold_fwd_svl lhds lhvs is_view h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
       match hpargs with
       | [] -> (false, false, [],[], [])
@@ -2457,8 +2457,15 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
           parition_helper node_name tl
         else
           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-          (true, is_pre, List.filter (fun (sv,_) -> not (CP.mem_svl sv leqNulls || CP.mem_svl sv h_args)) rem,
-          (ni_args), CP.diff_svl h_args args)
+          let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs args in
+          let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in
+          (true, is_pre,
+          List.filter (fun (sv,_) -> if CP.mem_svl sv leqNulls then false
+          else
+            let reachable_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv] in
+            CP.diff_svl reachable_vs h_args = []
+          ) rem,
+          (ni_args), CP.diff_svl h_args reachable_args)
     in
     let res,is_pre, niu_svl_i, niu_svl_ni,h_args_rem = parition_helper h_node lhs_hpargs in
     if res then
@@ -2730,7 +2737,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
         else def_vs_w_unk_preds (*(def_vs@hrel_args2)*)
       in
       let () = Debug.ninfo_hprint (add_str "def_vs1"  !CP.print_svl) def_vs1 no_pos in
-      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl is_view h_node h_args (def_vs1) leqNulls ls_lhp_args in
+      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl lhds lhvs is_view h_node h_args (def_vs1) leqNulls ls_lhp_args in
       let ass_guard1 = match n_unmatched with
         | CF.ViewNode vn ->
           x_add find_guard prog lhds (* lhvs *) leqs leqNulls selected_hpargs (vn.CF.h_formula_view_node::h_args)

@@ -28,11 +28,11 @@ pred WFG<p> ==
 //infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
 //print residue.
 
-/*
+
 infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
 print residue.
 expect Valid.
-*/
+
 
 /*
 # too complex
@@ -59,6 +59,8 @@ infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
 print residue.
 expect Valid.
 //   EXPECTS: infer_unfold (on U2) or fold (on WFG)
+
+
 
 /*
 # ex16c3d.slk
