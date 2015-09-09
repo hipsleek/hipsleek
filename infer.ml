@@ -2503,10 +2503,11 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
-        (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12)
+        (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total@[(h_node, NI)])) args12)
       in
       (*generate extra hp for cll*)
-      let extra_clls = if niu_svl_i = [] then  [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
+      let extra_clls = if niu_svl_i = [] then
+        [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         else
           [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
       in
