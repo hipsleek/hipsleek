@@ -21,6 +21,10 @@ BADS<> ==
 
 lemma_safe self::WFS<> -> self::BADS<>.
 
+lemma_safe self::WFS<> <-> self::WFSeg<q>*q::char_star<0,q2>*q2::BADS<>.
+
+lemma_safe self::WFS<> <- self::WFSeg<q>*q::char_star<c,q2>*q2::WFS<> & c!=0.
+
 */
 
 extern int __VERIFIER_nondet_int(void);
@@ -37,9 +41,10 @@ char *(cstrpbrk)(const char *s1, const char *s2)
      int c;
      for (sc1 = s1; *sc1 != '\0'; sc1++) 
        /*@
-          requires sc1::WFS<>
-          ensures sc1::WFSeg<sc1'>*sc1'::char_star<0,q>*q::BADS<> & flow __norm
-               or eres::ret_char_star<p>*sc1::WFSeg<p>*p::char_star<x,q>*q::WFS<> & flow ret_char_star;
+          requires sc1::WFS<> * s2::WFS<>
+          ensures sc1::WFSeg<sc1'>*sc1'::char_star<0,q>*q::BADS<>*s2'::WFSeg<qq>*qq::char_star<0,qqq>*qqq::BADS<> & flow __norm
+               or sc1::WFSeg<sc1'>*sc1'::char_star<0,q>*q::BADS<>*s2'::WFSeg<qq>*qq::char_star<cc,qqq>*qqq::WFS<> & cc!=0 & flow __norm
+               or eres::ret_char_star<p>*sc1::WFSeg<p>*p::char_star<cc,q>*q::WFS<> & flow ret_char_star;
        */
      {
          s = s2;
@@ -59,7 +64,7 @@ char *(cstrpbrk)(const char *s1, const char *s2)
      return 0;                /* terminating nulls match */
  }
 
-/*int main() {
+int main() {
     int length1 = __VERIFIER_nondet_int();
     int length2 = __VERIFIER_nondet_int();
     if (length1 < 1) {
@@ -76,11 +81,11 @@ char *(cstrpbrk)(const char *s1, const char *s2)
     return 0;
 }
 
-*/
+
 
 
 /*=========================================================
-#svcomp_cstrpbrk.c
+#svcomp_cstrpbrk.c (fixed)
 Why s = s2 but failed to prove s::WFS<> in the precondition?
 
 Checking procedure while_38_5$int~char_star~char_star~char_star... 
