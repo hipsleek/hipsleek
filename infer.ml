@@ -3814,14 +3814,17 @@ let infer_collect_hp_rel prog (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_m
                 lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
               find_undefined_selective_pointers prog es lhs_b1 mix_lf1 lhs_node rhs rhs_rest
                 (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
-            if not is_found_mis ||
-              (List.exists (fun (hp,args1) -> if not (CP.mem_svl hp ivs) then
-                not (List.exists (fun (_,args2) -> CP.eq_spec_var_order_list args1 args2) lselected_hpargs)
-              else false
-              ) rselected_hpargs (*incr/ex15c(1)*) ) ||
-              exist_uncheck_rhs_null_ptrs l_emap0 (CP.EMapSV.merge_eset r_emap r_eqsetmap) (MCP.get_null_ptrs mix_lf1) (MCP.get_null_ptrs mix_rf)
-              (List.fold_left (fun acc (_, args) -> acc@args) [] rselected_hpargs)
-            then
+            let flag1 = (List.exists (fun (hp,args1) -> if not (CP.mem_svl hp ivs) then
+                                         not (List.exists (fun (_,args2) -> CP.eq_spec_var_order_list args1 args2) lselected_hpargs)
+                                       else false
+                                     ) rselected_hpargs (*incr/ex15c(1)*) ) in
+            let flag2 = exist_uncheck_rhs_null_ptrs l_emap0 (CP.EMapSV.merge_eset r_emap r_eqsetmap) 
+                (MCP.get_null_ptrs mix_lf1) (MCP.get_null_ptrs mix_rf)
+                (List.fold_left (fun acc (_, args) -> acc@args) [] rselected_hpargs) in
+            let flag3 = not is_found_mis in
+            let prb = string_of_bool in
+            let () = y_binfo_hp (add_str "mis-matched" (pr_triple prb prb prb)) (flag1,flag2,flag3) in
+            if flag3 || flag1 || flag2 then
               let () = x_tinfo_hp (add_str ">>>>>> mismatch ptr" pr_id) ((Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<") pos in
               (false, es, rhs, None, None)
             else
