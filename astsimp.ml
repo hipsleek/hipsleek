@@ -8927,7 +8927,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
         let () = y_tinfo_hp (add_str "impl_var" pr_pil) implvar in
         let () = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
             Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else () in
-        let () = y_binfo_hp (add_str "impl_var" pr_pil) implvar in
+        let () = y_tinfo_hp (add_str "impl_var" pr_pil) implvar in
         let implvar = hack_filter_global_rel prog implvar in
         let () = y_tinfo_hp (add_str "impl_var(after filter_global_rel)" pr_pil) implvar in
         (IF.EBase {

@@ -846,6 +846,51 @@ WRONG : why is there a q=p in the relational assumption?
 [[ InferUnfold ]]
 
 ===========================================================================
+# ex16c5b.slk
+
+//(8)
+ infer [U] U(x,p)  |- x::char_star<v,qq>.
+ print residue.
+
+ <1>HP_271(qq)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(x,p)&
+                   true |#|3  --> x::char_star<v_269,qq_270>@M * 
+                                  HP_271(qq_270)&
+                   true]
+
+# p is lost, I would expect @NI parameters to be added:
+
+ residue: HP_271(qq,p@NI,x@NI)
+ U(x,p)& --> x::char_star<v_269,qq_270>@M * HP_271(qq_270,p@NI,x@NI)&
+
+ //(6)
+ infer [U2,U3] U2(qq,p) & qq=p  |- qq::char_star<b,qq>.
+ print residue.
+expect Valid.
+
+# Why is there an UNFOLD scheduled?
+
+# infer_unfold should work like (5)
+
+ MaybeErr Context: 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  Unfold 1 ==>  COND ==>  UnmatchedRHSData]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  InferUnfold ]]
+   
+ CEX:true
+Validate 6: Expecting(3)Valid BUT got : Fail_May
 ===========================================================================
 ===========================================================================
 ===========================================================================
