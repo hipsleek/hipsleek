@@ -47,8 +47,8 @@ expect Valid.
                    true --> q3::WFG<q>@M&true]
 */
 
-//(3)
-infer [U2,classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+//(3) classic --> @classic
+infer [U2,@classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
 print residue.
 expect Fail.
 // EXPECT fail due to classic

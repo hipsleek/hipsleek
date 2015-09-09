@@ -28,7 +28,7 @@ pred WFG<p> ==
 
 
 //(3)
-infer [U2,classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+infer [U2,@classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
 print residue.
 expect Fail.
 // EXPECT fail due to classic
