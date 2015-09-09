@@ -22,12 +22,12 @@ BADS<> ==
 */
 
 HeapPred P(char_star x).
-HeapPred Q(char_star x,char_star y,char_star z).
+HeapPred QQ(char_star x,char_star y,char_star z).
 
 void while1(ref char_star s)
-  infer [Q,@classic,@pure_field]
+  infer [QQ,@classic,@pure_field]
   requires s::WSS<p>
-  ensures Q(s,s',p);
+  ensures QQ(s,s',p);
 /*
   requires s::WSS<p> 
   ensures s::WFSeg<s'>*s'::char_star<0,p> ;
