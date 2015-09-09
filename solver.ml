@@ -12706,12 +12706,18 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           try
             let fvp = CP.fv (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
             let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
-            let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
+            let () = Debug.info_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
             if rargs != [] && CP.intersect_svl rargs fvp == [] then
               let sst = List.combine largs rargs in
+              let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
               let p = List.fold_left (fun acc_p (sv1,sv2) ->
-                  let p = CP.mkEqVar sv1 sv2 no_pos in
-                  CP.mkAnd acc_p p no_pos
+                  let reach_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv1] in
+                  let sv2_orig = CP.subs_one estate.CF.es_rhs_eqset sv2 in
+                  if CP.mem_svl sv2_orig reach_vs then
+                    acc_p
+                  else
+                    let p = CP.mkEqVar sv1 sv2 no_pos in
+                    CP.mkAnd acc_p p no_pos
               ) (CP.mkTrue no_pos) sst in
               let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
               let mf = (MCP.mix_of_pure p) in
@@ -12775,14 +12781,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           | _ -> return_out_of_inst ()
         in
         let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
-        pm_aux n_estate n_lhs_b (Context.M_infer_heap (rhs_node,rhs_rest))
+        pm_aux n_estate n_lhs_b (Context.M_infer_heap (lhs_node, rhs_node,rhs_rest))
         (* failwith "TBI" *)
       end
     | Context.M_infer_fold (r) ->
-      begin
-        let rhs_node = r.match_res_rhs_node  in
-        let rhs_rest = r.match_res_rhs_rest  in
-        pm_aux estate lhs_b (Context.M_infer_heap (rhs_node,rhs_rest))
+        begin
+          let lhs_node = r.match_res_lhs_node  in
+          let rhs_node = r.match_res_rhs_node  in
+          let rhs_rest = r.match_res_rhs_rest  in
+          pm_aux estate lhs_b (Context.M_infer_heap (lhs_node, rhs_node,rhs_rest))
         (* failwith "TBI" *)
       end
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
@@ -13189,7 +13196,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     (* to Thai : please move inference code from M_unmatched_rhs here
        and then restore M_unmatched_rhs to previous code without
        any inference *)
-    | Context.M_infer_heap (rhs,rhs_rest) ->
+    | Context.M_infer_heap (lhs_node,rhs,rhs_rest) ->
       (* let () =  Debug.info_zprint  (lazy  ("conseq 1: " ^ (Cprinter.string_of_formula conseq))) pos in *)
       (* let () =  Debug.info_zprint  (lazy  ("rhs: " ^ (Cprinter.string_of_h_formula rhs))) pos in *)
       (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
@@ -13286,7 +13293,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           else
             (* let () =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx1" pos in *)
 
-            let (res,new_estate, n_lhs, n_es_heap_opt, oerror_es) = x_add Infer.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+            let (res,new_estate, n_lhs, n_es_heap_opt, oerror_es) = x_add Infer.infer_collect_hp_rel 1 prog estate lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
             (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
             if (not res) then (* r *)
               let err_msg = "infer_heap_node" in
@@ -13524,7 +13531,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                       if not(CF.isFailCtx lc) then first_r
                       else
                         let () =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx 2" pos in
-                        let (res,new_estate,n_lhs, n_es_heap_opt, oerror_es) = x_add Infer.infer_collect_hp_rel 2 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+                        let (res,new_estate,n_lhs, n_es_heap_opt, oerror_es) = x_add Infer.infer_collect_hp_rel 2 prog estate HEmp rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
                         if (not res) then
                           (* r *)
                           let msg = "infer_heap_node" in

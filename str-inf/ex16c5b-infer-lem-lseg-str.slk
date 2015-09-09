@@ -30,21 +30,29 @@ pred WFG<p> ==
  //[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
 
  
-/*
+
  infer [U] U(x,p)  |- x::char_star<v,qq> * qq::char_star<b,p>.
  print residue.
  expect Valid.
-*/
+
 
 /* infer [U2,U3] U2(qq,p)  |- qq=p.
  print residue.
 */
 
+
  infer [U2,U3] U2(qq,p) * U3(p,x)  |- qq::char_star<b,p>.
  print residue.
  expect Valid.
 
- infer [U2,U3] U2(qq,p)  |- qq::char_star<b,p>.
+
+infer [U2,U3,@classic] U2(qq,p) * U3(p,x)  |- qq::char_star<b,ss>.
+ print residue.
+ expect Valid.
+
+
+
+ infer [U2,U3] U2(qq,p)  |- qq::char_star<b,ss>.
  print residue.
 
 

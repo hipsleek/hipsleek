@@ -2442,7 +2442,7 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
   3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
 *)
 
-let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
   let get_rhs_unfold_fwd_svl lhds lhvs is_view h_node h_args def_svl leqNulls lhs_hpargs=
     let rec parition_helper node_name hpargs=
@@ -2626,13 +2626,26 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
   (* let unmatched_hp_args = CF.get_HRels n_unmatched in *)
   let () = Debug.ninfo_hprint (add_str "rem_lhpargs"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) rem_lhpargs no_pos in
   (* example incr/ex15c(3): we do not split base case here. unify the design *)
-  let selected_hp_args = List.filter (fun (hp, args) ->
+  let selected_hp_args0 = List.filter (fun (hp, args) ->
       let args_inst = Sautil.get_hp_args_inst prog hp args in
       (*SHOULD NOT traverse NULL ptr. this may cause some base-case split to be automatically
         done, but --classic will pick them up. sa/paper/last-obl3.slk
       *)
       let args_inst1 = (* CP.diff_svl args_inst leqNulls *) args_inst in
       (CP.intersect_svl args_inst1 closed_unmatched_svl) != []) rem_lhpargs in
+  (* if lhs_node is an unknown preds. do simple step *)
+  let selected_hp_args = match lhs_node with
+    | CF.HRel (hp, eargs,_) -> begin
+        try
+          let args = (List.map CP.exp_to_sv eargs) in
+          let hpargs = List.find (fun (hp1, args1) -> CP.eq_spec_var hp hp1 &&
+              CP.eq_spec_var_order_list args args1
+          ) selected_hp_args0 in
+          [hpargs]
+        with _ -> selected_hp_args0
+          end
+    | _ -> selected_hp_args0
+  in
   let selected_hps0, hrel_args = List.split selected_hp_args in
   (*tricky here: do matching between two unk hps and we keep sth in rhs which not matched*)
   (* example incr/ex15c(3): still keep both unk preds in lhs and rhs *)
@@ -2828,7 +2841,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
 (*   list * CP.spec_var list * CP.formula * 'c list * *)
 (*   (Cast.F.h_formula * (Sautil.CP.spec_var * CF.CP.spec_var list)) list * *)
 (*   'd list * CF.CP.spec_var list * CF.h_formula option *)
-let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.prtt_string_of_h_formula in
@@ -2848,7 +2861,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest (* r
     (* (add_str "rhs_h_matched_set" !print_svl) *)
     (add_str "lfb" pr1)
     pr5
-    ( fun _ _ -> find_undefined_selective_pointers prog es lfb lmix_f unmatched rhs_rest
+    ( fun _ _ -> find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_rest
         (* rhs_h_matched_set *) leqs reqs pos (* total_unk_map *) post_hps prog_vars) unmatched (* rhs_h_matched_set *) lfb
 
 
@@ -3596,7 +3609,7 @@ let get_eqset puref =
   CP.spec_var list ->
   CF.formula_base -> CF.formula_base -> VarGen.loc -> bool * CF.entail_st
 *)
-let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
+let infer_collect_hp_rel prog (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
   let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
     let cl_lnull_ptrs = CP.find_eq_closure l_emap l_null_ptrs in
@@ -3796,7 +3809,7 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
             (********** END BASIC INFO LHS, RHS **********)
             let is_found_mis, ls_unknown_ptrs,(* hds,hvs,lhras,rhras, *)eqNull,
                 lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
-              find_undefined_selective_pointers prog es lhs_b1 mix_lf1 rhs rhs_rest
+              find_undefined_selective_pointers prog es lhs_b1 mix_lf1 lhs_node rhs rhs_rest
                 (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
             if not is_found_mis ||
               (List.exists (fun (hp,args1) -> if not (CP.mem_svl hp ivs) then
@@ -3863,15 +3876,18 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
    - n_es_heap_opt: to do
    - oerror_es: for error inference
 *)
-let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
+let infer_collect_hp_rel i prog (es:entail_state) lhs_node rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_penta string_of_bool pr4 (add_str "abd heap" Cprinter.string_of_h_formula)
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2) in
-  Debug.no_3_num i "infer_collect_hp_rel" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
-    ( fun _ _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b es
+  Debug.no_5_num i "infer_collect_hp_rel" (* pr2 *)
+      (add_str "lhs_node" !CF.print_h_formula) (add_str "rhs_node" !CF.print_h_formula)
+      (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
+    ( fun _ _ _ _ _ -> infer_collect_hp_rel prog es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
+      (* es *) lhs_node rhs lhs_b rhs_b es
 
 
 (*******************************************************)

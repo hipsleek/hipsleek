@@ -63,7 +63,7 @@ and action =
   | M_Nothing_to_do of string
   | M_infer_unfold of (match_res * h_formula * h_formula) (* rhs * rhs_rest *)
   | M_infer_fold of match_res (* ... |- Hp_rel(x,..) *)
-  | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
+  | M_infer_heap of (h_formula * h_formula * h_formula) (* lhs_node * rhs_node * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula * CVP.vperm_sets)
   (* perform a list of actions until there is one succeed*)
   | Cond_action of action_wt list
@@ -230,7 +230,7 @@ let rec pr_action_res pr_mr a =
   | M_Nothing_to_do s -> pr_add_str "NothingToDo => " fmt_string s
   | M_infer_heap p ->
     let pr = string_of_h_formula in
-    fmt_string_cut ("InferHeap => "^(pr_pair pr pr p))
+    fmt_string_cut ("InferHeap => "^(pr_triple pr pr pr p))
   | M_unmatched_rhs_data_node (h,_,_) -> pr_add_str "UnmatchedRHSData => " fmt_string (string_of_h_formula h)
   | Cond_action l -> pr_seq_vbox "COND =>" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "SEQ =>" (pr_action_wt_res pr_mr) l
@@ -2225,10 +2225,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if flag  then (2,M_infer_unfold (m_res,rhs,HEmp))
            else if CF.is_exists_hp_rel hn2 estate  then (2,M_infer_fold m_res)
            else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
-       | HRel (h_name, args, _), (DataNode _ as rhs) -> 
+       | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) -> 
          (* TODO : check if h_name in the infer_vars *)
          let act1 = M_unfold (m_res, 1) in (* base-case unfold implemented *)
-         let act2 = M_infer_heap (rhs,HEmp) in
+         let act2 = M_infer_heap (lhs_node, rhs,HEmp) in
          let act3 = M_infer_unfold (m_res,rhs,HEmp) in
          let wt = 1 in
          (* old method do not use base_case_unfold *)
@@ -2299,7 +2299,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | HRel (h_name, _, _), ViewNode vl -> begin
          let h_name = Cpure.name_of_spec_var h_name in
          let vl_name = vl.h_formula_view_name in
-         let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
+         let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
          let left_preds = match ms with
            | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
            | _ -> []
@@ -2310,7 +2310,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | ViewNode vl, HRel (h_name, _, _) -> begin
          let h_name = Cpure.name_of_spec_var h_name in
          let vl_name = vl.h_formula_view_name in
-         let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) in
+         let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
          let right_preds =  match ms with
            | Coerc_mater _ -> List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
            | _ -> []
@@ -2412,7 +2412,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   else r
 
 
-and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
+and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (lhs_node_opt, rhs_node,rhs_rest) =
   let r0 = (4,M_unmatched_rhs_data_node (rhs_node,rhs_rest,vperm_set)) in
   let ptr_vs = estate.es_infer_vars in
   let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
@@ -2421,7 +2421,12 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
     if estate.es_infer_vars_hp_rel==[] && ptr_vs==[] then
       (*to support lemma with unknown preds*)
       []
-    else [(2,M_infer_heap (rhs_node,rhs_rest))]
+    else
+      let lhs_node = match lhs_node_opt with
+        | Some h -> h
+        | None -> HEmp
+      in
+      [(2,M_infer_heap (lhs_node, rhs_node,rhs_rest))]
   in
   (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
   (* does removing original cause loop? should we use counting? *)
@@ -2507,7 +2512,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
   else (-1, Cond_action (rs@[r0]))
 (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
 
-and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest) =
+and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (lhs_node_opt,rhs_node,rhs_rest) =
   let pr = Cprinter.string_of_h_formula in
   let pr_p = !Mcpure.print_mix_formula   in
   let pr_out = string_of_action_wt_res0 in
@@ -2517,7 +2522,7 @@ and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h
     (add_str "rhs_node" pr) 
     (add_str "rhs_rest" pr)
     pr_out
-    (fun _ _ _ _ -> process_infer_heap_match_x ~vperm_set:vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (rhs_node,rhs_rest)) lhs_h lhs_p rhs_node rhs_rest 
+    (fun _ _ _ _ -> process_infer_heap_match_x ~vperm_set:vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (lhs_node_opt, rhs_node,rhs_rest)) lhs_h lhs_p rhs_node rhs_rest 
 
 
 and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
@@ -2551,7 +2556,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
   let () = x_tinfo_hp (add_str "sel_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_hp_rel no_pos in
   let () = x_tinfo_hp (add_str "sel_post_hp_rel" Cprinter.string_of_spec_var_list) estate.es_infer_vars_sel_post_hp_rel no_pos in
   match l with
-  | [] ->  x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing conseq reqset (rhs_node,rhs_rest)
+  | [] ->  x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing conseq reqset (None,rhs_node,rhs_rest)
   (* let r0 = (2,M_unmatched_rhs_data_node (rhs_node,rhs_rest)) in *)
   (* let ptr_vs = estate.es_infer_vars in *)
   (* let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in *)
