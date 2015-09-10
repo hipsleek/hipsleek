@@ -10298,8 +10298,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   let r_ho_args, r_args, r_node_name, _, r_var, r_perm, r_ann, r_param_ann 
     = CF.get_args_of_node r_node in
   let fvars_rhs = CF.get_args_of_hrel r_node in
-  let () = y_binfo_hp (add_str "l_args(do match)" !CP.print_svl) l_args in
-  let () = y_binfo_hp (add_str "r_args(do match)" !CP.print_svl) r_args in
+  let () = y_tinfo_hp (add_str "l_args(do match)" !CP.print_svl) l_args in
+  let () = y_tinfo_hp (add_str "r_args(do match)" !CP.print_svl) r_args in
   (*   match l_node with *)
   (*   | ThreadNode { *)
   (*       h_formula_thread_name = l_node_name; *)
@@ -13298,9 +13298,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   (* needed since we may generate H(..) --> x::node<..>*H2(..) *)
                   if !Globals.old_do_match_infer_heap || !Globals.warn_do_match_infer_heap then
                     let () = y_winfo_pp "do_match after infer_heap" in
-                    let () = y_binfo_hp (add_str "rhs_h_matched set" !CP.print_svl) rhs_h_matched_set  in
-                    let () = y_binfo_hp (add_str "lhs_h" !CF.print_h_formula) n_lhs  in
-                    let () = y_binfo_hp (add_str "rhs_h" !CF.print_h_formula) rhs  in
+                    let () = y_tinfo_hp (add_str "rhs_h_matched set" !CP.print_svl) rhs_h_matched_set  in
+                    let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) n_lhs  in
+                    let () = y_tinfo_hp (add_str "rhs_h" !CF.print_h_formula) rhs  in
                     if !Globals.warn_do_match_infer_heap then 
                       failwith "do_match during infer_heap"
                     else 

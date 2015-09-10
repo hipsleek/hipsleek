@@ -601,15 +601,15 @@ and choose_full_mater_coercion_x estate l_vname l_vargs r_vname r_aset (c:coerci
     if (List.length args != List.length l_vargs) then
       begin
         y_winfo_pp "XXXX mis-matched arguments for mater coercion";
-        let () = x_binfo_hp (add_str "args" (pr_list Cprinter.string_of_spec_var)) args no_pos in
-        let () = x_binfo_hp (add_str "l_vargs" (pr_list Cprinter.string_of_spec_var)) l_vargs no_pos in
+        let () = x_tinfo_hp (add_str "args" (pr_list Cprinter.string_of_spec_var)) args no_pos in
+        let () = x_tinfo_hp (add_str "l_vargs" (pr_list Cprinter.string_of_spec_var)) l_vargs no_pos in
         ()
       end;
     match l_vargs with
     | [] -> None
     | _  -> 
-      let () = y_binfo_hp (add_str "XXX body_view" pr_id) body_view in
-      let () = y_binfo_hp (add_str "XXX r_vname" pr_id) r_vname in
+      let () = y_tinfo_hp (add_str "XXX body_view" pr_id) body_view in
+      let () = y_tinfo_hp (add_str "XXX r_vname" pr_id) r_vname in
       let () = y_tinfo_hp (add_str " estate.CF.es_infer_vars_hp_rel" !CP.print_svl)  estate.CF.es_infer_vars_hp_rel in
       if body_view = r_vname then 
         let m_p = {mater_var = List.hd args; mater_full_flag = true; mater_target_view =[r_vname]} in
@@ -2312,7 +2312,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
            | _ -> []
          in
-         let () = y_binfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
+         let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
          process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
          end
        | ViewNode vl, HRel (h_name, _, _) -> begin

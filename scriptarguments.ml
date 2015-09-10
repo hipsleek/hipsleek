@@ -333,8 +333,8 @@ linput.rl");
   ("--warn-do-match-infer-heap", Arg.Set Globals.warn_do_match_infer_heap,"Enable Warning of do_match during infer_heap");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
-  ("--new-infer-complex-rhs", Arg.Set Globals.new_infer_complex_rhs,"Enable new large step inference with simple LHS");
-  ("--old-infer-complex-rhs", Arg.Clear Globals.new_infer_complex_rhs,"Disble new large step inference with simple LHS");
+  ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
   ("--new-infer-complex-lhs", Arg.Clear Globals.old_infer_complex_lhs,"Disallow inference of complex LHS");
   ("--old-infer-complex-lhs", Arg.Set Globals.old_infer_complex_lhs,"Allow inference of complex LHS");
   ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");

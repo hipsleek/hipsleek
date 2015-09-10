@@ -2461,12 +2461,15 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs
           (CP.diff_svl args h_args) in
         let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in
-        if inter = []  ||
+        let flag = not !Globals.old_infer_complex_lhs in
+        (* let flag = !Globals.new_infer_large_step in *)
+        let flag = flag && (CP.intersect_svl reachable_args h_args !=[]) in
+        let () = y_binfo_hp (add_str "intersect_svl reachable_args h_args !=[]" string_of_bool) flag in
+        let () = y_binfo_hp (add_str "inter" !CP.print_svl) (List.map fst inter) in
+        if inter = []  || flag
           (*str-inf/ex16c3d(8). exists free vars -> fail*)
-           (* I suppose below is for complex_rhs? *)
-           (not !Globals.old_infer_complex_lhs &&
-           CP.intersect_svl reachable_args h_args !=[]) then
-            parition_helper node_name tl
+           (* I suppose below is for new_infer_large_step ? *)
+            then parition_helper node_name tl
         else
           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
           (true, is_pre,
@@ -3835,7 +3838,7 @@ let infer_collect_hp_rel prog (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_m
                 (List.fold_left (fun acc (_, args) -> acc@args) [] rselected_hpargs) in
             let flag3 = not is_found_mis in
             let prb = string_of_bool in
-            let () = y_binfo_hp (add_str "mis-matched" (pr_triple prb prb prb)) (flag1,flag2,flag3) in
+            let () = y_tinfo_hp (add_str "mis-matched" (pr_triple prb prb prb)) (flag1,flag2,flag3) in
             if flag3 || flag1 || flag2 then
               let () = x_tinfo_hp (add_str ">>>>>> mismatch ptr" pr_id) ((Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<") pos in
               (false, es, rhs, None, None)
@@ -3990,7 +3993,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
               ((hp,args2,new_rhs_b.CF.formula_base_pure),hprel_ass)
             ) lst 
       in
-      let () = x_binfo_hp (add_str "hprel_lst"  (pr_list (pr_pair pr_none Cprinter.string_of_hprel_short))) hprel_lst no_pos in
+      let () = x_tinfo_hp (add_str "hprel_lst"  (pr_list (pr_pair pr_none Cprinter.string_of_hprel_short))) hprel_lst no_pos in
       if  extr_ans (* extr_hd *) != None then
         (* let knd = CP.RelAssume [hp] in *)
         (* let hprel_ass = CF.mkHprel knd [] [] args lhs None rhs_f es_cond_path in *)
@@ -4049,7 +4052,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
           let _ =
             x_tinfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
             x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
-            x_binfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
+            x_tinfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
           in
           (*TOFIX: detect HEmp or HTrue *)
           let rhs_b0a = formula_base_of_heap (CF.HEmp) pos in
