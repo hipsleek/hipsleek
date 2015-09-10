@@ -906,6 +906,7 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 let show_push_list = ref (None:string option)
+let show_push_list_rgx = ref (None:Str.regexp option)
 
 let old_norm_w_coerc = ref false
 let old_keep_all_matchres = ref false

@@ -629,7 +629,9 @@ linput.rl");
    "Shorthand for -debug-regexp");
   ("-show-push-list", Arg.String (fun s ->
        let _ = print_endline ("!!!-show-push-list "^s) in
-       Globals.show_push_list:=Some s
+       let () = Globals.show_push_list:=Some s in
+       let () = if not(s="") then Globals.show_push_list_rgx := Some (Str.regexp s) in
+       ()
      ),
    "Show all push-list with that name (reg-ex)");
   ("-drea", Arg.String (fun s ->

@@ -708,7 +708,11 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       let () = 
         match !Globals.show_push_list with
         | None -> ()
-        | Some s -> if s=name || s="" then
+        | Some s -> 
+          let flag = match !Globals.show_push_list_rgx with
+            | None -> true
+            | Some rgx -> Str.string_match rgx name 0 in
+          if flag (* s=name || s="" *) then
             print_endline ("\npush_list("^name^"):"^((Basic.pr_list epr) ls)) 
           else () in
       super # push_list ls 

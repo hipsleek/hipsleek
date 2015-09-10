@@ -29,6 +29,13 @@ pred WFG<p> ==
 /*
 # ex16d.slk
 
+Entailing lemma lem_12: Fail. (no cex)(may) cause: OrL[
+M_unmatched_rhs (infer_collect_hp_rel 3b),
+12
+]
+
+--------------------------------
+
  <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [U(self_lem_12,q_151)&
                    true |#| q_151::char_star<flted_26_150,p>@M&true --> emp&
