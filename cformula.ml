@@ -6277,13 +6277,14 @@ and get_node_args hf0 =
     | ViewNode hv -> hv.h_formula_view_arguments
     | ThreadNode ht -> []
     | HRel (hrel, el, _) -> 
-      (try 
+      (* (try *)
         List.map (fun e ->
           match e with
           | CP.Var (sv, _) -> sv
           | _ -> failwith ("Unexpected exp (not CP.Var) in HRel " ^ 
-                (CP.name_of_spec_var hrel) ^ "'s arguments.")) (List.tl el)
-      with _ -> failwith ("Empty arguments in HRel " ^ (CP.name_of_spec_var hrel)))
+                (CP.name_of_spec_var hrel) ^ "'s arguments.")) 
+          (* (List.tl el) *) el
+      (* with _ -> failwith ("Empty arguments in HRel " ^ (CP.name_of_spec_var hrel))) *)
     | Hole _ | FrmHole _
     | HTrue
     | HFalse
