@@ -9,7 +9,7 @@ data char_star {
 
 
  infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
-    |- U2(self,qq) * qq::char_star<n,p>.
+    |- U2(self,qq) * qq::char_star<0,p>.
  print residue.
  expect Valid.
 

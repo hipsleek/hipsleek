@@ -90,8 +90,8 @@ and checkeq_formulas ivars f1 f2 =
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 = string_of_map_table_list in
-  Debug.no_2 "checkeq_formulas" pr1 pr1 (pr_pair pr2 pr3)
-    (fun _ _ ->  checkeq_formulas_x ivars f1 f2) f1 f2
+  Debug.no_3 "checkeq_formulas" (pr_list pr_id) pr1 pr1 (pr_pair pr2 pr3)
+    (fun _ _ _ ->  checkeq_formulas_x ivars f1 f2) ivars f1 f2
 
 and checkeq_formulas_a ivars rvars f1 f2 mtl =
   let (res1, mtl1) = (checkeq_formulas_one ivars rvars f1 f2 mtl) in

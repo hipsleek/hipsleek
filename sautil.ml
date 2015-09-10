@@ -1006,7 +1006,8 @@ let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hparg
   U3(self,q,x)*q::char_star<0,p>
     |- U2(self,qq) * qq::char_star<0,p>
 *)
-let rec exam_homo_arguments_x prog lhs_b rhs_b lhp rhp root rsvl lsvl=
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl =
+  let lst = CF.check_compatible prog lsvl rsvl lhs_b lhp rhs_b rhp in
   let find_reach_f fb sv drop_hp=
     let lhds, lhvs, lhrels = CF.get_hp_rel_bformula fb in
     let lhrels1 = List.fold_left (fun acc (hp, eargs,_) ->
@@ -1016,7 +1017,7 @@ let rec exam_homo_arguments_x prog lhs_b rhs_b lhp rhp root rsvl lsvl=
           acc@[(hp, List.map  CP.exp_to_sv eargs)]
     ) [] lhrels in
     let reach_lf = keep_data_view_hpargs_nodes prog (CF.Base fb) lhds lhvs [sv] lhrels1 in
-    let () = Debug.ninfo_hprint (add_str  "reach_f" !CF.print_formula) reach_lf no_pos in
+    let () = Debug.binfo_hprint (add_str  "reach_f" !CF.print_formula) reach_lf no_pos in
     reach_lf
   in
   let rec check_one_right reach_rf rsv rest_lsvl done_svl= match rest_lsvl with
@@ -1035,8 +1036,12 @@ let rec exam_homo_arguments_x prog lhs_b rhs_b lhp rhp root rsvl lsvl=
       let sst0, rest = check_one_right reach_rf rsv rest_lsvl [] in
       (acc@sst0,rest)
   ) ([], lsvl) (CP.diff_svl rsvl lsvl) in
-  let () = Debug.ninfo_hprint (add_str  "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst no_pos in
+  let () = Debug.binfo_hprint (add_str  "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst no_pos in
   sst
+
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl =
+  let lst = CF.check_compatible prog lsvl rsvl lhs_b lhp rhs_b rhp in
+  lst
 
 let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl=
   let pr1 = !CP.print_sv in
@@ -1046,7 +1051,7 @@ let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl=
   Debug.no_7 "exam_homo_arguments" (add_str "lhs" pr3) (add_str "rhs" pr3)
       (add_str "left pred" pr1) (add_str "right pred" pr1)
       (add_str "root" pr1) (add_str "left args" pr2) (add_str "right args" pr2) pr_out
-      (fun _ _ _ _ _ _ _ -> exam_homo_arguments_x prog lhs_b rhs_b lhp rhp root rsvl lsvl)
+      (fun _ _ _ _ _ _ _ -> exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl)
       lhs_b rhs_b lhp rhp root rsvl lsvl
 
 let filter_eqs keep_svl prog_vars eqs0=

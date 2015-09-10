@@ -19442,4 +19442,47 @@ let get_args_of_hrel l_node =
   match l_node with
   | HRel (rhp, eargs, _) -> (List.fold_left List.append [] (List.map CP.afv eargs))
   | _ -> []
-           
+
+let find_node emap hf sv =
+  let f_h_f _ hf =
+    match hf with
+    | DataNode ({ h_formula_data_node = pt; h_formula_data_name = n; h_formula_data_arguments = args;})
+    | ViewNode ({ h_formula_view_node = pt; h_formula_view_name = n; h_formula_view_arguments = args;}) ->
+      (* TODO : use emap *)
+      if CP.eq_spec_var sv pt then Some (hf,[(n,sv,args)])
+      else Some (hf,[])
+    | _ -> None
+  in
+  snd (trans_h_formula hf () f_h_f voidf2 (List.concat))
+
+(* let find_node emap rhs_h sv = [] *)
+
+let is_comp (l_n,_,l_arg) (r_n,_,r_arg) pure =
+  (* TODO : check for satisfiability *)
+  if l_n=r_n then true
+  else false
+
+let cross_prod xs ys = List.concat (List.map (fun y -> List.map (fun x -> (x,y)) xs) ys)
+
+let check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
+  (* let (lhs_h,lhs_p,_,_,_,_) = split_components lhs in *)
+  (* let (rhs_h,rhs_p,_,_,_,_) = split_components rhs in *)
+  let rhs_lst = List.concat (List.map (find_node emap rhs_h) r_vs) in
+  let lhs_lst = List.concat (List.map (find_node emap lhs_h) l_vs) in
+  let cross_lst = cross_prod lhs_lst rhs_lst in
+  let sel_lst = List.filter (fun (l,r) -> is_comp l r lhs_p) cross_lst in 
+  List.map (fun ((a,p1,_),(b,p2,_)) -> (p1,p2)) sel_lst 
+  (* failwith "TBI" *)
+
+let check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
+  let pr1 = !CP.print_svl in
+  let pr2 = !print_h_formula in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_4 "check_compatible" (add_str "l_vs" pr1) (add_str "r_vs" pr1)
+    (add_str "lhs" pr2) (add_str "rhs" pr2) pr3
+    (fun _ _ _ _ -> check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p) l_vs r_vs lhs_h rhs_h
+
+let check_compatible emap l_vs r_vs lhs_b lhs_p rhs_b rhs_p =
+  let lhs_h = lhs_b.formula_base_heap in
+  let rhs_h = rhs_b.formula_base_heap in
+  check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p
