@@ -309,8 +309,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs, CP.diff_svl rhs_unfold_ptrs lhs_unfold_ptrs)
       end
   in
-  let () = y_binfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
-  let () = y_binfo_hp (add_str "rhs_unfold_ptrs10" !CP.print_svl) rhs_unfold_ptrs0 in
+  let () = y_tinfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
+  let () = y_tinfo_hp (add_str "rhs_unfold_ptrs10" !CP.print_svl) rhs_unfold_ptrs0 in
   let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
       if !Globals.allow_lemma_deep_unfold then
         CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true

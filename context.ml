@@ -1030,12 +1030,12 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
           let vs = Cast.rm_NI_from_hp_rel prog h vs in
           let pr = !CF.print_h_formula in
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
-          let () = y_binfo_hp (add_str "SCE-lhs" pr) f in
-          let () = y_binfo_hp (add_str "SCE-p1_eq" !CP.print_svl) p1_eq in
-          let () = y_binfo_hp (add_str "SCE-va" !CP.print_svl) vs in
-          let () = y_binfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
+          let () = y_tinfo_hp (add_str "SCE-lhs" pr) f in
+          let () = y_tinfo_hp (add_str "SCE-p1_eq" !CP.print_svl) p1_eq in
+          let () = y_tinfo_hp (add_str "SCE-va" !CP.print_svl) vs in
+          let () = y_tinfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
           let common = CP.intersect_svl p1_eq vs in
-          let () = y_binfo_hp (add_str "SCE-flag" string_of_bool) (common!=[]) in
+          let () = y_tinfo_hp (add_str "SCE-flag" string_of_bool) (common!=[]) in
           if common!=[] then 
             [(HEmp,f,[],Root)]
             (* failwith "TBI" *)
@@ -1062,18 +1062,18 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
         let anns = get_node_annot_args f in
         match rhs_node with
         | HRel (hp,args,_) ->
-          let () = y_binfo_hp (add_str "rhs_node(..|-HRel(x,..))" !CF.print_h_formula) rhs_node in
-          let () = y_binfo_hp (add_str "lhs_node" !CF.print_h_formula) f in
+          let () = y_tinfo_hp (add_str "rhs_node(..|-HRel(x,..))" !CF.print_h_formula) rhs_node in
+          let () = y_tinfo_hp (add_str "lhs_node" !CF.print_h_formula) f in
           let args = Cast.rm_NI_from_hp_rel prog hp args in
           let vs_rhs = List.concat (List.map CP.afv args) in
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
           let p1_eq = p1::p1_eq (* LHS root aliases *) in
           let common = CP.intersect_svl vs_rhs p1_eq in
-          let () = y_binfo_hp (add_str "p1_eq" !CP.print_svl) p1_eq in
-          let () = y_binfo_hp (add_str "aset" !CP.print_svl) aset in
+          let () = y_tinfo_hp (add_str "p1_eq" !CP.print_svl) p1_eq in
+          let () = y_tinfo_hp (add_str "aset" !CP.print_svl) aset in
           let cmm = coerc_mater_match_with_unk_hp prog estate c
               (CP.name_of_spec_var hp) (p1::vs1) [] aset f f0 p1_eq in
-          let () = y_binfo_hp (add_str "List.length cmm" string_of_int) (List.length cmm) in
+          let () = y_tinfo_hp (add_str "List.length cmm" string_of_int) (List.length cmm) in
           if common==[] then cmm
           else (HEmp (* lhs_rest? *),f (* lhs? *),[],Root)::cmm
         | _ -> 

@@ -13334,7 +13334,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   (* this match not scheduled by compute *)
                   (* needed since we may generate H(..) --> x::node<..>*H2(..) *)
                   if !Globals.old_do_match_infer_heap || !Globals.warn_do_match_infer_heap then
-                    let () = y_winfo_pp "do_match after infer_heap" in
+                    let () = y_tinfo_pp "do_match after infer_heap" in
                     let () = y_tinfo_hp (add_str "rhs_h_matched set" !CP.print_svl) rhs_h_matched_set  in
                     let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) n_lhs  in
                     let () = y_tinfo_hp (add_str "rhs_h" !CF.print_h_formula) rhs  in
