@@ -546,12 +546,15 @@ ensures res or !res;
 data char_star {
   int val;
   char_star next;
-} inv //true;
- next = self + 1;
+} inv next = self + 1;
 
 char_star __plus_plus_char(char_star x)
-requires x::char_star<_,q>@L & Term[] 
-ensures  res=q ;
+  requires x::char_star<_,q>@L & Term[] 
+  ensures  res=q ;
+
+char_star __minus_minus_char(char_star x)
+  requires true
+  ensures res=x-1;
 
 int __get_char(char_star x)
   requires x::char_star<v,_>@L & Term[]
