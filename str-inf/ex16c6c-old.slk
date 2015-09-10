@@ -20,6 +20,7 @@ pred WFG<p> ==
   //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
   //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
 
+//  HeapPred U(char_star x,char_star@NI y).
   HeapPred U(char_star x,char_star y).
   HeapPred U2(char_star x,char_star y).
   HeapPred U2a(char_star x,char_star y).
