@@ -137,6 +137,7 @@ and struc_base_formula =
         *)
     formula_struc_exists : Cpure.spec_var list;
     formula_struc_base : formula;
+    (* formula_struc_is_strict_seq: bool; *)
     formula_struc_is_requires: bool;
     formula_struc_continuation : struc_formula option;
     formula_struc_pos : loc
@@ -150,7 +151,13 @@ and formula =
 
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
-  rflow_base: formula;
+  rflow_base: (* struc_ *)formula;
+  (* rflow_global_vars: CP.spec_var list; *)
+}
+
+and rflow_struc_formula = {
+  (* rflow_kind: ho_flow_kind; *)
+  rflow_struc_base: struc_formula;
   (* rflow_global_vars: CP.spec_var list; *)
 }
 
@@ -296,6 +303,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_ho_arguments : rflow_formula list;
+                        (* h_formula_view_ho_arguments : rflow_struc_formula list; *)
                         h_formula_view_annot_arg : (CP.annot_arg * int) list;
                         h_formula_view_args_orig : (CP.view_arg  * int) list; (* serves as a map for view_arguments and view_annot_arg (their initial position) *)
                         h_formula_view_modes : mode list;
@@ -13145,6 +13153,21 @@ let rec struc_to_precond_formula (f : struc_formula) : formula = match f with
   | EInfer b -> struc_to_precond_formula b.formula_inf_continuation
   | EList b -> formula_of_disjuncts (fold_l_snd (fun c-> [struc_to_precond_formula c]) b)
 (* An Hoa : end of pre-condition construction *)
+
+and s_formula_to_struc (f:formula):struc_formula =
+    EBase {
+        formula_struc_explicit_inst =[];
+        formula_struc_implicit_inst = [];
+        formula_struc_exists = [];
+        formula_struc_base = f;
+        formula_struc_is_requires = false;
+        formula_struc_continuation = None;
+        formula_struc_pos = pos_of_formula f}
+
+and s_formula_of_struc (f:struc_formula):formula =
+  match f with
+  |  EBase { formula_struc_base = f} -> f
+  | _ -> failwith "struc formula insnot simple"
 
 and formula_to_struc_formula (f:formula):struc_formula =
   let rec helper (f:formula):struc_formula = match f with
