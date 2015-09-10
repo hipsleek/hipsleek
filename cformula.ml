@@ -2151,6 +2151,11 @@ and get_node_var_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_node = c})
   | DataNode ({h_formula_data_node = c}) -> c
   | HVar (v,hvar_vs) -> v
+  | HRel (hrel, el, _) ->
+    (match el with
+    | (CP.Var (sv, _))::_ -> sv
+    | _ -> failwith ("Cannot find suitable root node of the HRel " ^ (CP.name_of_spec_var hrel)) 
+    )
   | _ -> failwith ("get_node_var: invalid argument"^(!print_h_formula h))
 
 and get_node_var (h : h_formula) =
@@ -6271,11 +6276,14 @@ and get_node_args hf0 =
     | DataNode hd -> hd.h_formula_data_arguments
     | ViewNode hv -> hv.h_formula_view_arguments
     | ThreadNode ht -> []
-    | HRel (hrel, el, _) -> List.map (fun e ->
-        match e with
-        | CP.Var (sv, _) -> sv
-        | _ -> report_error no_pos ("Unexpected exp (not CP.Var) in HRel " ^ 
-              (CP.name_of_spec_var hrel) ^ "'s arguments.")) el
+    | HRel (hrel, el, _) -> 
+      (try 
+        List.map (fun e ->
+          match e with
+          | CP.Var (sv, _) -> sv
+          | _ -> failwith ("Unexpected exp (not CP.Var) in HRel " ^ 
+                (CP.name_of_spec_var hrel) ^ "'s arguments.")) (List.tl el)
+      with _ -> failwith ("Empty arguments in HRel " ^ (CP.name_of_spec_var hrel)))
     | Hole _ | FrmHole _
     | HTrue
     | HFalse
@@ -17750,6 +17758,7 @@ let collect_node_var_formula (f:formula) =
           | HTrue -> false
           | DataNode _
           | ViewNode _
+          | HRel _
           | ThreadNode _ -> true
           | _ -> report_error no_pos "collect_node_var_formula: expected"
         ) heaps

@@ -54,11 +54,12 @@ let add_dangling_hprel (hpr: CF.hprel) =
     with _ -> []
   in
   let lhs_args = CF.collect_feasible_heap_args_formula null_aliases hpr.hprel_lhs in
+  let lhs_nodes = CF.collect_node_var_formula hpr.hprel_lhs in
   let rhs_args = CF.collect_feasible_heap_args_formula null_aliases hpr.hprel_rhs in
   let rhs_args_w_aliases = List.concat (List.map (fun arg ->
     try List.find (fun svl -> mem arg svl) aliases
     with _ -> [arg]) rhs_args) in 
-  let dangling_args = List.filter CP.is_node_typ (diff lhs_args rhs_args_w_aliases) in
+  let dangling_args = List.filter CP.is_node_typ (diff (diff lhs_args lhs_nodes) rhs_args_w_aliases) in
   let () = x_binfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
   let hpr_rhs = List.fold_left (fun hrp_rhs dangling_arg ->
       CF.mkStar_combine_heap hrp_rhs (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
