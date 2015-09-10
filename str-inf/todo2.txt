@@ -959,6 +959,28 @@ print residue.
 expect Fail.
 
 ===========================================================================
+# ex16c6c2.slk
+
+ infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
+    |- U2(self,qq) * qq::char_star<0,p>.
+
+# need to instantiate q to qq for above to succeed.
+  Need to look into the context of calls to decide that qq can
+  be so instantiated,
+
+!!! **solver.ml#12409:process_action (steps) :
+ ### action :
+ InferUnfold =>
+   Type: Root
+   LHS: U3(self,q,x)
+   RHS: U2(self,qq)
+   lhs_rest: q::char_star<flted_10_19,p>@M
+   rhs_rest: qq::char_star<flted_11_41,p_40>@M
+ ### estate : ex_formula : U3(self,q,x) * q::char_star<flted_10_19,p>@M&flted_10_19=0&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : U2(self,qq) * qq::char_star<flted_11_41,p_40>@M&flted_11_41=0 & p_40=p&
+{FLOW,(20,21)=__norm#E}[]
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
