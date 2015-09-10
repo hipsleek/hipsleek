@@ -1285,6 +1285,7 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
 (*   Debug.no_1 "look_up_hp_def_raw" pr_id pr1 *)
 (*     (fun _ -> look_up_hp_def_raw defs name) name *)
 
+ 
 let look_up_hp_parts decls hp=
   let hp_dc = look_up_hp_def_raw decls hp in
   hp_dc.hp_part_vars
@@ -3810,3 +3811,9 @@ let get_output_vars_proc prog mn =
     (get_ret_vars_proc proc)
   with _ -> [] 
   
+let rm_NI_from_hp_rel prog hp args =
+  let n = CP.name_of_spec_var hp in
+  let hpdef = look_up_hp_def_raw prog.prog_hp_decls n in
+  let lst = List.combine args hpdef.hp_vars_inst in
+  let rm_lst = List.filter (fun (_,(_,k)) -> k==I) lst in
+  List.map fst rm_lst

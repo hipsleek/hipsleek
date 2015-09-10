@@ -1,0 +1,101 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U2a(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star z).
+
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+//(1)
+ infer [U2a] U2a(self,qq) |- U2(self,q).
+ print residue.
+ expect Valid.
+/*
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2a(self,q)&true |#|3  --> U2(self,q)&true]
+[[ InferUnfold ]]
+*/
+
+
+//(2)
+ infer [U3] U3(self,_,qq) |- U2(self,q).
+ print residue.
+ // Why fail? Similar to (1).
+ expect Valid.
+
+
+//(3).
+ infer [U2] U2(self,q)*q::char_star<0,p> |- self::WFG<p>.
+ print residue.
+ expect Valid.
+/*
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(self,q)&true |#| q::char_star<flted_41_150,p>@M&
+                   true --> U(self,q)&true]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  InferUnfold  ==>  SEARCH ==>  Match(q,q_169)]]
+*/
+
+//(4)
+ infer [U3] U3(self,_,q)*q::char_star<0,p> |- self::WFG<p>.
+ print residue.
+ expect Valid.
+ // Why fail? Similar to (3).
+
+
+
+/*
+# ex16c6a.slk
+
+//(1)
+ infer [U2a] U2a(self,q) |- U2(self,q).
+ print residue.
+/*
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2a(self,q)&true |#|3  --> U2(self,q)&true]
+[[ InferUnfold ]]
+*/
+
+//(2)
+ infer [U3] U3(self,_,q) |- U2(self,q).
+ print residue.
+ // Why fail? Similar to (1).
+
+//(3)
+ infer [U2] U2(self,q)*q::char_star<0,p> |- self::WFG<p>.
+ print residue.
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(self,q)&true |#| q::char_star<flted_41_150,p>@M&
+                   true --> U(self,q)&true]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  InferUnfold  ==>  SEARCH ==>  Match(q,q_169)]]
+
+//(4)
+ infer [U3] U3(self,_,q)*q::char_star<0,p> |- self::WFG<p>.
+ print residue.
+ // Why fail? Similar to (3).
+
+
+
+*/

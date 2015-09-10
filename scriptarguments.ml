@@ -627,6 +627,11 @@ linput.rl");
        Debug.read_main ()
      ),
    "Shorthand for -debug-regexp");
+  ("-show-push-list", Arg.String (fun s ->
+       let _ = print_endline ("!!!-show-push-list "^s) in
+       Globals.show_push_list:=Some s
+     ),
+   "Show all push-list with that name (reg-ex)");
   ("-drea", Arg.String (fun s ->
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),

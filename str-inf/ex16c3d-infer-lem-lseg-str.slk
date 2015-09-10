@@ -82,7 +82,7 @@ expect Valid.
 //(8)
 infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
 print residue.
-expect Valid.
+expect Fail.
 /*
 WRONG : why is there a q=p in the relational assumption?
 
