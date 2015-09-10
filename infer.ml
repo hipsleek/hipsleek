@@ -3041,7 +3041,7 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
   (* let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in *)
 
   let () = Debug.ninfo_hprint (add_str "    lhs_args_ni" !CP.print_svl) lhs_args_ni no_pos in
-  let () = Debug.info_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
+  let () = Debug.ninfo_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
   let () = Debug.ninfo_hprint (add_str  "    rhs_svl" !CP.print_svl) rhs_svl no_pos in
   (* let () = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in *)
   let () = DD.ninfo_hprint (add_str  "es.es_infer_obj # is_pure_field_all " string_of_bool) es.es_infer_obj # is_pure_field_all no_pos in

@@ -12741,15 +12741,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               else
                 let sst = List.combine largs rargs in
                 let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-                (* let p = List.fold_left (fun (acc_p) (sv1,sv2) -> *)
-                (*     let sv2_orig = CP.subs_one estate.CF.es_rhs_eqset sv2 in *)
-                (*     let reach_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv1] in *)
-                (*     if CP.mem_svl sv2_orig reach_vs then *)
-                (*       acc_p *)
-                (*     else *)
-                (*       let p = CP.mkEqVar sv1 sv2 no_pos in *)
-                (*       CP.mkAnd acc_p p no_pos *)
-                (* ) (CP.mkTrue no_pos) sst in *)
                 let is_succ, p = gen_inst lhds lhvs sst (CP.mkTrue no_pos) in
                 if not is_succ then
                   is_succ, estate, lhs_b
@@ -12771,10 +12762,25 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
                 if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
                   match leargs, reargs with
-                    | _::rest1,_::rest2 -> begin
+                    | er::rest1,_::rest2 -> begin
                         let largs = (List.map CP.exp_to_sv rest1) in
                         let rargs = (List.map CP.exp_to_sv rest2) in
-                        do_inst estate lhs_b largs rargs [rhp]
+                        if List.length rargs < List.length largs then
+                          let r = (CP.exp_to_sv er) in
+                          let sst = Sautil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in
+                          let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
+                          let is_succ, p = gen_inst lhds lhvs sst (CP.mkTrue no_pos) in
+                          if not is_succ then
+                            true, estate, lhs_b
+                          else
+                            let mf = (MCP.mix_of_pure p) in
+                            (true,
+                            {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
+                                CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
+                            },
+                            CF.mkAnd_base_pure lhs_b mf no_pos)
+                        else
+                          do_inst estate lhs_b largs rargs [rhp]
                       end
                     | _ -> return_out_of_inst [rhp]
                 else
