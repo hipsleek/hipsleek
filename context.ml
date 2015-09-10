@@ -1030,9 +1030,10 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
           let vs = Cast.rm_NI_from_hp_rel prog h vs in
           let pr = !CF.print_h_formula in
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
+          let p1_eq = p1::p1_eq (* RHS root aliases *) in
           let () = y_tinfo_hp (add_str "SCE-lhs" pr) f in
           let () = y_tinfo_hp (add_str "SCE-p1_eq" !CP.print_svl) p1_eq in
-          let () = y_tinfo_hp (add_str "SCE-va" !CP.print_svl) vs in
+          let () = y_tinfo_hp (add_str "SCE-vs" !CP.print_svl) vs in
           let () = y_tinfo_hp (add_str "SCE-rhs_node" pr) rhs_node in
           let common = CP.intersect_svl p1_eq vs in
           let () = y_tinfo_hp (add_str "SCE-flag" string_of_bool) (common!=[]) in
@@ -2260,11 +2261,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* useful for base-case fold x::node<_,_> |- U(x,y) *)
          let act1 = M_base_case_fold m_res in
          let act2 = M_infer_fold m_res (* (rhs_node,rhs_rest) *) in
-         let wt = 1 in
+         let wt = 2 in
          (* old method do not use base_case_fold *)
          if !Globals.old_base_case_fold_hprel then (wt,act2)
          else (* (wt,act1) *)
-           if List.length args >=2 then (wt,Search_action [(wt,act1);(wt,act2)])
+           if List.length args >=2 then (wt,Search_action [(wt,act2);(wt,act1)])
            else (wt,act2)
        (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
        | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
