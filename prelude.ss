@@ -550,11 +550,11 @@ data char_star {
 
 char_star __plus_plus_char(char_star x)
   requires x::char_star<_,q>@L & Term[] 
-  ensures  res=q ;
+  ensures  res=q & res = x+1 ;
 
 char_star __minus_minus_char(char_star x)
-  requires true
-  ensures res=x-1;
+  requires x::char_star<_,_>@L & Term[]
+  ensures res::char_star<_,x> & x = res + 1;
 
 int __get_char(char_star x)
   requires x::char_star<v,_>@L & Term[]

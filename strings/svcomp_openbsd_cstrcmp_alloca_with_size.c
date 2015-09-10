@@ -5,23 +5,21 @@
 #include <stdlib.h>
 
 /*@
-WFS<> ==
-  self::char_star<0,q>*q::BADS<> 
-  or self::char_star<v,q>*q::WFS<> & v!=0 
-  inv true;
+WFS<n> ==
+  self::char_star<0,q>*q::BADS<> & n=0
+  or self::char_star<v,q>*q::WFS<n-1> & v!=0 
+  inv n>=0;
 
-WFSeg<p> ==
-  self=p 
-  or self::char_star<v,q>*q::WFSeg<p> & v!=0
-  inv true;
+WFSeg<p, n> ==
+  self=p & n=0
+  or self::char_star<v,q>*q::WFSeg<p, n-1> & v!=0
+  inv n>=0;
 
 BADS<> ==
   self::char_star<v,q>*q::BADS<> 
   inv true;
 
-lemma_safe self::WFS<> -> self::BADS<>.
-
-lemma_safe self::WFS<> <-> self::WFSeg<q>*q::char_star<0,qq>*qq::BADS<>.
+lemma_safe self::WFS<n> -> self::BADS<>.
 
 */
 
@@ -33,15 +31,15 @@ extern int __VERIFIER_nondet_int(void);
 
 int cstrcmp(const char *s1, const char *s2)
   /*@
-     requires s1::WFS<> * s2::WFS<>
+     requires s1::WFS<n1> * s2::WFS<n2>
      ensures true;
   */
 {
   while (*s1 == *s2++)
     /*@
-       requires s1::WFS<> * s2::BADS<>
-       ensures eres::ret_int<0>*s1::WFSeg<q>*q::char_star<0,s1'>*s1'::BADS<> * s2'::BADS<> & flow ret_int
-            or s1::WFSeg<s1'>*s1'::char_star<c1,q>*q::WFS<>*s2::WFSeg<s2'>*s2'::char_star<c2,qq>*qq::BADS<> & flow __norm
+       requires s1::WFS<n1> * s2::BADS<>
+       ensures eres::ret_int<0>*s1::WFSeg<q,n1>*q::char_star<0,s1'>*s1'::BADS<> * s2'::BADS<> & flow ret_int
+            or s1::WFSeg<s1',m>*s1'::char_star<c1,q>*q::WFS<n1-m-1>*s2::WFSeg<s2',n2>*s2'::char_star<c2,qq>*qq::BADS<> & flow __norm
             or s1'::char_star<c1,q>*s2'::char_star<c2,qq>*qq::BADS<> & flow __norm;
     */
     if (*s1++ == 0)
