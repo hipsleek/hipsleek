@@ -12706,42 +12706,68 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let n_estate = {estate with
               CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps;
           } in
-          (n_estate,lhs_b) in
+          (true, n_estate,lhs_b) in
+        let rec gen_inst lhds lhvs sst acc_p=
+          match sst with
+            | [] -> true,acc_p
+            | (sv1,sv2)::rest ->
+                  let sv2_orig = CP.subs_one estate.CF.es_rhs_eqset sv2 in
+                  if CP.eq_spec_var sv1 sv2_orig then
+                    gen_inst lhds lhvs rest acc_p
+                  else
+                    (*str-inf/ex16c3d(8). exists free vars -> fail*)
+                    let reach_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv1] in
+                    if CP.mem_svl sv2_orig reach_vs then
+                      if !Globals.old_infer_complex_lhs then
+                        gen_inst lhds lhvs rest acc_p
+                      else false, acc_p
+                    else
+                      let p = CP.mkEqVar sv1 sv2 no_pos in
+                      let new_acc = CP.mkAnd acc_p p no_pos in
+                      gen_inst lhds lhvs rest new_acc
+        in
         let do_inst estate lhs_b largs rargs extended_hps=
           try
-            let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
-            (* let inter_eqs = List.filter (fun p -> (CP.is_eq_exp_ptrs rargs p)) (CP.list_of_conjs p) in *)
-            (* let subst_p = CP.subst inter_eqs in *)
-            (* let () = Debug.info_hprint (add_str  "subst_p" !CP.print_formula) subst_p no_pos in *)
-            let fvp = CP.fv p in
-            let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
-            let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
-            if rargs != [] && CP.intersect_svl rargs fvp == [] then
-              let sst = List.combine largs rargs in
-              let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-              let p = List.fold_left (fun acc_p (sv1,sv2) ->
-                  let reach_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv1] in
-                  let sv2_orig = CP.subs_one estate.CF.es_rhs_eqset sv2 in
-                  if CP.mem_svl sv2_orig reach_vs then
-                    acc_p
-                  else
-                    let p = CP.mkEqVar sv1 sv2 no_pos in
-                    CP.mkAnd acc_p p no_pos
-              ) (CP.mkTrue no_pos) sst in
-              let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
-              let mf = (MCP.mix_of_pure p) in
-              let () = Debug.ninfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in
-              {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
-                  CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps;
-              }, CF.mkAnd_base_pure lhs_b mf no_pos
+            if rargs = [] then return_out_of_inst extended_hps
             else
-              return_out_of_inst extended_hps
+              let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
+              (* let inter_eqs = List.filter (fun p -> (CP.is_eq_exp_ptrs rargs p)) (CP.list_of_conjs p) in *)
+              (* let subst_p = CP.subst inter_eqs in *)
+              (* let () = Debug.info_hprint (add_str  "subst_p" !CP.print_formula) subst_p no_pos in *)
+              let fvp = CP.fv p in
+              let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
+              let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
+              if CP.intersect_svl rargs fvp != [] then false,estate, lhs_b
+              else
+                let sst = List.combine largs rargs in
+                let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
+                (* let p = List.fold_left (fun (acc_p) (sv1,sv2) -> *)
+                (*     let sv2_orig = CP.subs_one estate.CF.es_rhs_eqset sv2 in *)
+                (*     let reach_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv1] in *)
+                (*     if CP.mem_svl sv2_orig reach_vs then *)
+                (*       acc_p *)
+                (*     else *)
+                (*       let p = CP.mkEqVar sv1 sv2 no_pos in *)
+                (*       CP.mkAnd acc_p p no_pos *)
+                (* ) (CP.mkTrue no_pos) sst in *)
+                let is_succ, p = gen_inst lhds lhvs sst (CP.mkTrue no_pos) in
+                if not is_succ then
+                  is_succ, estate, lhs_b
+                else
+                  let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
+                  let mf = (MCP.mix_of_pure p) in
+                  let () = Debug.ninfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in
+                  (true,
+                  {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
+                      CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps;
+                  },
+                  CF.mkAnd_base_pure lhs_b mf no_pos)
           with _ -> return_out_of_inst extended_hps
         in
         let lhs_node = r.match_res_lhs_node in
         let rhs_node = r.match_res_rhs_node in
         let rhs_rest = r.match_res_rhs_rest in
-        let n_estate, n_lhs_b = match lhs_node,rhs_node with
+        let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with
           | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
                 if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
                   match leargs, reargs with
@@ -12766,10 +12792,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             end
           | _ -> return_out_of_inst []
         in
-        let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
-        pm_aux n_estate n_lhs_b (Context.M_infer_heap (lhs_node, rhs_node,rhs_rest))
-        (* failwith "TBI" *)
-      end
+        if not is_succ_inst then
+          let err_msg = "infer_unfold" in
+          let conseq = Some (Base rhs_b) in
+          (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"Can not inst") err_msg estate pos,NoAlias)
+        else
+          let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
+          pm_aux n_estate n_lhs_b (Context.M_infer_heap (lhs_node, rhs_node,rhs_rest))
+              (* failwith "TBI" *)
+        end
     | Context.M_infer_fold (r) ->
         begin
           let lhs_node = r.match_res_lhs_node  in

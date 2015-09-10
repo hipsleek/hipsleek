@@ -27,10 +27,15 @@ pred WFG<p> ==
 
 
 //(8)
-//infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
-infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qqq> .
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
 print residue.
 expect Fail.
+
+/*
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qqq> .
+expect Valid.
+*/
+
 /*
 WRONG : why is there a q=p in the relational assumption?
 
