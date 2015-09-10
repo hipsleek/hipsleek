@@ -260,7 +260,7 @@ let collect_hp_rel_fail_type ft0=
   let rec helper ft=
     match ft with
     | CF.Basic_Reason (fc,_,_)
-    | CF.ContinuationErr (fc,_) -> fc.CF.fc_current_lhs.CF.es_infer_hp_rel
+    | CF.ContinuationErr (fc,_) -> fc.CF.fc_current_lhs.CF.es_infer_hp_rel # get_stk_recent
     | CF.Or_Reason (ft1, ft2)
     | CF.And_Reason (ft1, ft2)
     | CF.Union_Reason (ft1, ft2)
@@ -1210,9 +1210,14 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     let hp_rel = mkHprel_1 knd lhs None rhs es_cond_path in
                     let () = DD.ninfo_hprint (add_str "hp_rel" Cprinter.string_of_hprel_short) hp_rel no_pos in
                     (* postpone until heap_entail_after_sat *)
-                    let () = rel_ass_stk # push_list ([hp_rel]) in
-                    let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ [hp_rel];} in
-                    (Some (new_es, CP.mkTrue pos),None,[])
+                    if !Globals.old_infer_hp_collect then 
+                      begin
+                        x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] pos;
+                        rel_ass_stk # push_list ([hp_rel])
+                      end;
+                    (* let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel # push_list [hp_rel];} in *)
+                    let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
+                    (Some (estate, CP.mkTrue pos),None,[])
                 end
             | Some f ->
               x_dinfo_pp ">>>>>> infer_pure_m <<<<<<" pos;
@@ -1427,12 +1432,17 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                         let () = x_tinfo_hp (add_str "heap_ass" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass no_pos in
                         let () = Log.current_hprel_ass_stk # push_list heap_ass in
                         (* postpone until heap_entail_after_sat *)
-                        let () = rel_ass_stk # push_list heap_ass in
+                         if !Globals.old_infer_hp_collect then 
+                           begin
+                             x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass pos;
+                             rel_ass_stk # push_list heap_ass
+                           end;
                         (*drop inferred hpred*)
                         let n_es_formula,_ = CF.drop_hrel_f new_estate.CF.es_formula i_hps in
-                        let new_es = {new_estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel @ heap_ass;
+                        let new_es = {new_estate with (* CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel # push_list heap_ass; *)
                                                       CF.es_formula = n_es_formula;
                                      } in
+                        let () = new_es.CF.es_infer_hp_rel # push_list heap_ass in
                         (rel_ass1, heap_ass,new_es)
                       else
                         (rel_ass, [],new_estate)
@@ -2361,7 +2371,7 @@ let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
   let l_args1 = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
   let l_args2 = CF.find_close l_args1 leqs in
   let cl_null_ptrs = CF.find_close null_ptrs leqs in
-  let l_args3 = CP.diff_svl l_args2 cl_null_ptrs in
+  let l_args3 = CP.diff_svl l_args2(* (CP.remove_dups_svl (l_args2@rhs_args)) *) cl_null_ptrs in
   let () = Debug.ninfo_hprint (add_str "l_args2"  !CP.print_svl) l_args2 no_pos in
   let () = Debug.ninfo_hprint (add_str "l_args3"  !CP.print_svl) l_args3 no_pos in
   let () = Debug.ninfo_hprint (add_str "rhs_args"  !CP.print_svl) rhs_args no_pos in
@@ -2372,7 +2382,8 @@ let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
   let l_arg_cl = CF.look_up_rev_reachable_ptr_args prog lhds [] l_args3 in
   let () = DD.ninfo_hprint (add_str "l_arg_cl " !CP.print_svl) l_arg_cl no_pos in
     let guard_hds = List.filter (fun hd ->
-        let svl = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
+         (*str-inf/ex16c3c requires root nodes in guard *)
+        let svl =  hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
         CP.intersect_svl svl l_arg_cl <> []
       ) lhds
     in
@@ -2431,33 +2442,59 @@ let find_guard_new prog lhds lhvs leqs l_selhpargs rhs_args=
   3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
 *)
 
-let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
-  let get_rhs_unfold_fwd_svl is_view h_node h_args def_svl leqNulls lhs_hpargs=
+  let get_rhs_unfold_fwd_svl lhds lhvs is_view h_node h_args def_svl leqNulls lhs_hpargs=
+    let () = DD.ninfo_hprint (add_str  "h_node" !CP.print_sv) h_node pos in
     let rec parition_helper node_name hpargs=
       match hpargs with
-      | [] -> (false, false, [],[])
+      | [] -> (false, false, [],[], [])
       | (hp,args)::tl ->
         let i_args, ni_args = Sautil.partition_hp_args prog hp args in
         let inter,rem = List.partition
-            (fun (sv,_) -> CP.eq_spec_var node_name sv) i_args
+            (fun (sv,_) ->
+                let () = DD.ninfo_hprint (add_str  "sv" !CP.print_sv) sv pos in
+                let cl = CF.find_close [sv] leqs in
+                let () = DD.ninfo_hprint (add_str  "cl" !CP.print_svl) cl pos in
+                CP.mem_svl node_name cl) i_args
         in
-        if inter = [] then parition_helper node_name tl
+        let reachable_args = CF.look_up_reachable_ptr_args prog lhds lhvs
+          (CP.diff_svl args h_args) in
+        (* let () = DD.ninfo_hprint (add_str  "reachable_args" !CP.print_svl) reachable_args pos in *)
+        (* let flag = not !Globals.old_infer_complex_lhs in *)
+        (* let flag = !Globals.new_infer_large_step in *)
+        (* let flag = flag && (CP.intersect_svl reachable_args h_args !=[]) in *)
+        (* let () = y_tinfo_hp (add_str "intersect_svl reachable_args h_args !=[]" string_of_bool) flag in *)
+        let () = y_tinfo_hp (add_str "inter" !CP.print_svl) (List.map fst inter) in
+        if inter = []  (* || flag *)
+          (*str-inf/ex16c3d(8). exists free vars -> fail*)
+           (* I suppose below is for new_infer_large_step ? *)
+            then parition_helper node_name tl
         else
           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
-          (true, is_pre, List.filter (fun (sv,_) -> not (CP.mem_svl sv leqNulls)) rem, (ni_args))
+          (true, is_pre,
+          List.filter (fun (sv,_) -> if CP.mem_svl sv leqNulls || CP.mem_svl sv h_args then false
+          else
+            let reachable_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv] in
+            let reachable_vs_excl = CP.diff_svl reachable_vs [sv] in
+            let () = y_tinfo_hp (add_str "reachable_vs_excl" !CP.print_svl) reachable_vs_excl in
+            CP.intersect_svl reachable_vs_excl h_args = []
+          ) rem,
+          (ni_args), CP.diff_svl h_args reachable_args)
     in
-    let res,is_pre, niu_svl_i, niu_svl_ni = parition_helper h_node lhs_hpargs in
+    let res,is_pre, niu_svl_i, niu_svl_ni,h_args_rem = parition_helper h_node lhs_hpargs in
     if res then
       (*find arg pointers are going to be init in next stmts*)
-      let args1 = CP.remove_dups_svl (CP.diff_svl h_args (def_svl)) in
-      let () = Debug.ninfo_zprint (lazy  ("     h_args:" ^(!CP.print_svl args1))) no_pos in
+      let args1 = CP.remove_dups_svl (CP.diff_svl h_args_rem (def_svl)) in
+      let () = Debug.ninfo_zprint (lazy  ("     h_args_rem:" ^(!CP.print_svl args1))) no_pos in
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_i:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_i))) no_pos in
       let () = Debug.ninfo_zprint (lazy  ("     niu_svl_ni:" ^((pr_list (pr_pair !CP.print_sv print_arg_kind) ) niu_svl_ni))) no_pos in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
       let () = DD.ninfo_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
-      let args11 = if Globals.infer_const_obj # is_pure_field 
+       let () = DD.ninfo_hprint (add_str  " es.CF.es_infer_obj # is_pure_field_all" string_of_bool)  es.CF.es_infer_obj # is_pure_field_all pos in
+      let args11 = if (* Globals.infer_const_obj # is_pure_field *)
+        es.CF.es_infer_obj # is_pure_field_all
       (* !Globals.sa_pure_field *) then
           let args11 = List.map (fun sv ->
               if CP.is_node_typ sv then (sv, I)
@@ -2469,8 +2506,12 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
           let args11 = List.map (fun sv -> (sv, I)) args10 in
           args11
       in
-      let niu_svl_i_ni = List.map (fun (sv,_) -> (sv, NI)) niu_svl_i in
-      let niu_svl_ni_total = niu_svl_i_ni@niu_svl_ni in
+      let niu_svl_i2 = List.map (fun (sv,n) ->
+          if List.exists (fun dn -> CP.eq_spec_var dn.CF.h_formula_data_node sv) lhds then
+            (sv, NI)
+          else (sv, n)
+      ) niu_svl_i in
+      let niu_svl_ni_total = niu_svl_i2@niu_svl_ni in
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
       let _ = Debug.ninfo_hprint (add_str "args12"  (pr_list (pr_pair !CP.print_sv print_arg_kind) )) args12 no_pos in
@@ -2479,13 +2520,16 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
         (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
-        (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total)) args12)
+        (* else *) (List.map (fun sv -> (is_pre, sv::niu_svl_ni_total@[(h_node, NI)])) args12)
       in
+      (* str-inf/ex16c5b(8) do not need extra_clls *)
       (*generate extra hp for cll*)
-      let extra_clls = if niu_svl_i = [] then  [] (* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
-        else
-          [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)]
-      in
+      let extra_clls = [] in
+      (* let extra_clls = if niu_svl_i = [] then *)
+      (*   [] (\* [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *\) *)
+      (*   else *)
+      (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
+      (* in *)
       (true,ls_fwd_svl@extra_clls)
     else (false, [])
   in
@@ -2604,13 +2648,26 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
   (* let unmatched_hp_args = CF.get_HRels n_unmatched in *)
   let () = Debug.ninfo_hprint (add_str "rem_lhpargs"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) rem_lhpargs no_pos in
   (* example incr/ex15c(3): we do not split base case here. unify the design *)
-  let selected_hp_args = List.filter (fun (hp, args) ->
+  let selected_hp_args0 = List.filter (fun (hp, args) ->
       let args_inst = Sautil.get_hp_args_inst prog hp args in
       (*SHOULD NOT traverse NULL ptr. this may cause some base-case split to be automatically
         done, but --classic will pick them up. sa/paper/last-obl3.slk
       *)
       let args_inst1 = (* CP.diff_svl args_inst leqNulls *) args_inst in
       (CP.intersect_svl args_inst1 closed_unmatched_svl) != []) rem_lhpargs in
+  (* if lhs_node is an unknown preds. do simple step *)
+  let selected_hp_args = match lhs_node with
+    | CF.HRel (hp, eargs,_) -> begin
+        try
+          let args = (List.map CP.exp_to_sv eargs) in
+          let hpargs = List.find (fun (hp1, args1) -> CP.eq_spec_var hp hp1 &&
+              CP.eq_spec_var_order_list args args1
+          ) selected_hp_args0 in
+          [hpargs]
+        with _ -> selected_hp_args0
+          end
+    | _ -> selected_hp_args0
+  in
   let selected_hps0, hrel_args = List.split selected_hp_args in
   (*tricky here: do matching between two unk hps and we keep sth in rhs which not matched*)
   (* example incr/ex15c(3): still keep both unk preds in lhs and rhs *)
@@ -2649,7 +2706,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
   (*       (ls1,ls2) *)
   (* ) ([],[]) ls_lhp_args *)
   (* in *)
-  let vioated_ni_hps, vioated_ni_svl = [],[] in
+  let vioated_ni_hps(* , vioated_ni_svl *) = [] in
   (******************************************)
   let () = Debug.ninfo_hprint (add_str "selected_hp_args"  (pr_list (pr_pair !CP.print_sv !CP.print_svl))) selected_hp_args no_pos in
   let selected_hpargs =
@@ -2703,19 +2760,24 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
       (* let h_args1 = if List.filter CP.is_node_typ h_args in *)
       let hrel_args1 = List.concat hrel_args in
       (*should include their closed ptrs*)
-      (* let hrel_args2 = CP.remove_dups_svl (List.fold_left Sautil.close_def hrel_args1 (eqs)) in *)
       let hrel_args2 = CP.remove_dups_svl (CF.find_close hrel_args1 eqs) in
-      let def_vs1 = if CF.is_view n_unmatched then CP.diff_svl (def_vs@hrel_args2) h_args
-        else (def_vs@hrel_args2)
+      let def_vs_w_unk_preds = CP.remove_dups_svl (def_vs@hrel_args2) in
+      let () = DD.ninfo_zprint (lazy  ("def_vs@hrel_args2 " ^ (!CP.print_svl def_vs_w_unk_preds))) pos in
+      let is_view = CF.is_view n_unmatched in
+      (* match n_unmatched with *)
+      (*   | CF.ViewNode vn -> true *)
+      (*   | _ -> false *)
+      (* in *)
+      let def_vs1 = if is_view (* CF.is_view n_unmatched *) then CP.diff_svl def_vs_w_unk_preds h_args
+        else def_vs_w_unk_preds (*(def_vs@hrel_args2)*)
       in
-      let is_view = match n_unmatched with
-        | CF.ViewNode vn -> true
-        | _ -> false
-      in
-      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl is_view h_node h_args (def_vs1) leqNulls ls_lhp_args in
+      let () = Debug.ninfo_hprint (add_str "def_vs1"  !CP.print_svl) def_vs1 no_pos in
+      let mis_match_found, ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl lhds lhvs is_view h_node h_args (def_vs1) leqNulls ls_lhp_args in
       let ass_guard1 = match n_unmatched with
         | CF.ViewNode vn ->
           x_add find_guard prog lhds (* lhvs *) leqs leqNulls selected_hpargs (vn.CF.h_formula_view_node::h_args)
+        | CF.DataNode dn ->
+          x_add find_guard prog lhds (* lhvs *) leqs leqNulls selected_hpargs (dn.CF.h_formula_data_node::h_args)
         | _ -> None
       in
       (mis_match_found, ls_unfold_fwd_svl(* @lundefs_args *),[],selected_hpargs, ass_guard1)
@@ -2765,17 +2827,21 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
   (*/norm/sp-7b1*)
   in
   (*********CLASSIC**sa/demo/xisa-remove2; bugs/bug-classic-4a**********)
-  let classic_ptrs = if false (* (check_is_classic ()) *) && (CF.is_empty_heap rhs_rest) then
-      let acc_ptrs = List.fold_left (fun ls (_, args) -> ls@args) [] (lhs_selected_hpargs1@rhs_sel_hpargs@(List.map (fun (a,b,_,_) -> (a,b)) total_defined_hps)) in
-      let cl_acc_ptrs= CF.look_up_reachable_ptr_args prog hds hvs acc_ptrs in
-      List.fold_left (fun ls hd -> let sv = hd.CF.h_formula_data_node in
-                       if not (CP.mem_svl sv cl_acc_ptrs) then (ls@[sv]) else ls
-                     ) [] hds
-    else []
-  in
+  (* let classic_ptrs = if false (\* (check_is_classic ()) *\) && (CF.is_empty_heap rhs_rest) then *)
+  (*     let acc_ptrs = List.fold_left (fun ls (_, args) -> ls@args) [] (lhs_selected_hpargs1@rhs_sel_hpargs@(List.map (fun (a,b,_,_) -> (a,b)) total_defined_hps)) in *)
+  (*     let cl_acc_ptrs= CF.look_up_reachable_ptr_args prog hds hvs acc_ptrs in *)
+  (*     List.fold_left (fun ls hd -> let sv = hd.CF.h_formula_data_node in *)
+  (*                      if not (CP.mem_svl sv cl_acc_ptrs) then (ls@[sv]) else ls *)
+  (*                    ) [] hds *)
+  (*   else [] *)
+  (* in *)
   (*********END CLASSIC************)
-  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls, lhs_selected_hpargs1,rhs_sel_hpargs, total_defined_hps,
-   CP.remove_dups_svl (unk_svl),unk_xpure,unk_map1,new_lhs_hps,vioated_ni_svl,classic_ptrs, ass_guard)
+  (mis_match_found, (* undefs1@lundefs_args *) ls_undef,
+  (* hds,hvs,lhrs,rhrs, *)leqNulls@reqNulls,
+  lhs_selected_hpargs1,rhs_sel_hpargs, total_defined_hps,
+   CP.remove_dups_svl (unk_svl),unk_xpure,unk_map1,new_lhs_hps,
+  (* vioated_ni_svl, *)
+  (* classic_ptrs, *) ass_guard)
 
 (* type: Sautil.C.prog_decl -> *)
 (*   CF.formula_base -> *)
@@ -2801,20 +2867,18 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
 (*   list * CP.spec_var list * CP.formula * 'c list * *)
 (*   (Cast.F.h_formula * (Sautil.CP.spec_var * CF.CP.spec_var list)) list * *)
 (*   'd list * CF.CP.spec_var list * CF.h_formula option *)
-let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
+let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_rest (* rhs_h_matched_set *) leqs reqs pos
     (* total_unk_map *) post_hps prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.prtt_string_of_h_formula in
   let pr3 = pr_list (pr_pair !CP.print_sv !print_svl) in
   let pr4 = pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv print_arg_kind))) in
   let pr6 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl pr1 Cprinter.prtt_string_of_formula) in
-  (* let pr7 = pr_list (pr_pair (pr_list (pr_pair !CP.print_sv string_of_int)) CP.string_of_xpure_view) in *)
-  (* let pr7 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in *)
   let pr8 ohf = match ohf with
     | None -> "None"
     | Some hf -> pr2 hf
   in
-  let pr5 = fun (is_found, undefs,_,_,_,_,_,selected_hpargs, rhs_sel_hpargs,defined_hps,_,_,_,_,_,_,ass_guard) ->
+  let pr5 = fun (is_found, undefs,_,selected_hpargs, rhs_sel_hpargs,defined_hps,_,_,_,_,ass_guard) ->
     let pr = pr_hexa string_of_bool pr4 pr3 pr3 pr6 pr8 in
     pr (is_found, undefs,selected_hpargs,rhs_sel_hpargs,defined_hps,ass_guard)
   in
@@ -2823,7 +2887,7 @@ let find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest (* rhs_
     (* (add_str "rhs_h_matched_set" !print_svl) *)
     (add_str "lfb" pr1)
     pr5
-    ( fun _ _ -> find_undefined_selective_pointers prog lfb lmix_f unmatched rhs_rest
+    ( fun _ _ -> find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_rest
         (* rhs_h_matched_set *) leqs reqs pos (* total_unk_map *) post_hps prog_vars) unmatched (* rhs_h_matched_set *) lfb
 
 
@@ -2845,59 +2909,59 @@ let get_prog_vars prog_hps rhs_unmatch proving_kind =
   Debug.no_3 "get_prog_vars" pr1 pr2 pr3 (pr_pair pr1 pr1)
     (fun _ _ _ -> get_prog_vars_x prog_hps rhs_unmatch proving_kind) prog_hps rhs_unmatch proving_kind
 
-let get_history_nodes_x root_svl hds history lfb done_args eqs lhs_hpargs=
-  let hd_names = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
-  let hd_closed_names = (List.fold_left Sautil.close_def hd_names eqs) in
-  let undefined_ptrs = Gen.BList.difference_eq CP.eq_spec_var root_svl hd_closed_names in
-  (* let () = Debug.info_zprint (lazy  ("      undefined_ptrs: " ^ (!CP.print_svl  undefined_ptrs))) no_pos in *)
-  let pos = CF.pos_of_formula (CF.Base lfb) in
-  let rec look_up cur_hds dn0=
-    match cur_hds with
-    | [] -> []
-    | dn1::hdss -> if CP.eq_spec_var dn1.CF.h_formula_data_node dn0.CF.h_formula_data_node then
-        List.combine dn0.CF.h_formula_data_arguments dn1.CF.h_formula_data_arguments
-      else look_up hdss dn0
-  in
-  let rec lookup_hrel ls_hpargs (hp0,args0)=
-    match ls_hpargs with
-    | [] -> false
-    | (hp,args)::tl ->
-      if CP.eq_spec_var hp0 hp then
-        let args1 = List.map ((CP.subs_one eqs)) args in
-        let args01 = List.map ((CP.subs_one eqs)) args0 in
-        if Sautil.eq_spec_var_order_list args1 args01 then true else
-          lookup_hrel tl (hp0,args0)
-      else lookup_hrel tl (hp0,args0)
-  in
-  let helper (fb,hps,keep_svl,r_ss) hf=
-    match hf with
-    | CF.DataNode dn ->
-      if CP.mem_svl dn.CF.h_formula_data_node undefined_ptrs then
-        (mkAnd_fb_hf fb hf pos,hps,keep_svl,r_ss)
-      else
-        let ss = look_up hds dn in
-        (fb,hps,keep_svl,r_ss@ss)
-    | CF.HRel (hp,eargs,p) ->
-      let args = List.concat (List.map CP.afv eargs) in
-      if (Gen.BList.intersect_eq CP.eq_spec_var args undefined_ptrs) = [] ||
-         (Gen.BList.difference_eq CP.eq_spec_var args done_args) = [] ||
-         lookup_hrel lhs_hpargs (hp,args)
-      then
-        (fb,hps,keep_svl,r_ss)
-      else
-        (mkAnd_fb_hf fb hf p,hps@[hp], keep_svl@(Gen.BList.difference_eq CP.eq_spec_var args undefined_ptrs),r_ss)
-    | HEmp -> (fb,hps,keep_svl,r_ss)
-    | _ -> report_error pos "infer.get_history_nodes"
-  in
-  List.fold_left helper (lfb,[],[],[]) history
+(* let get_history_nodes_x root_svl hds history lfb done_args eqs lhs_hpargs= *)
+(*   let hd_names = List.map (fun hd -> hd.CF.h_formula_data_node) hds in *)
+(*   let hd_closed_names = (List.fold_left Sautil.close_def hd_names eqs) in *)
+(*   let undefined_ptrs = Gen.BList.difference_eq CP.eq_spec_var root_svl hd_closed_names in *)
+(*   (\* let () = Debug.info_zprint (lazy  ("      undefined_ptrs: " ^ (!CP.print_svl  undefined_ptrs))) no_pos in *\) *)
+(*   let pos = CF.pos_of_formula (CF.Base lfb) in *)
+(*   let rec look_up cur_hds dn0= *)
+(*     match cur_hds with *)
+(*     | [] -> [] *)
+(*     | dn1::hdss -> if CP.eq_spec_var dn1.CF.h_formula_data_node dn0.CF.h_formula_data_node then *)
+(*         List.combine dn0.CF.h_formula_data_arguments dn1.CF.h_formula_data_arguments *)
+(*       else look_up hdss dn0 *)
+(*   in *)
+(*   let rec lookup_hrel ls_hpargs (hp0,args0)= *)
+(*     match ls_hpargs with *)
+(*     | [] -> false *)
+(*     | (hp,args)::tl -> *)
+(*       if CP.eq_spec_var hp0 hp then *)
+(*         let args1 = List.map ((CP.subs_one eqs)) args in *)
+(*         let args01 = List.map ((CP.subs_one eqs)) args0 in *)
+(*         if Sautil.eq_spec_var_order_list args1 args01 then true else *)
+(*           lookup_hrel tl (hp0,args0) *)
+(*       else lookup_hrel tl (hp0,args0) *)
+(*   in *)
+(*   let helper (fb,hps,keep_svl,r_ss) hf= *)
+(*     match hf with *)
+(*     | CF.DataNode dn -> *)
+(*       if CP.mem_svl dn.CF.h_formula_data_node undefined_ptrs then *)
+(*         (mkAnd_fb_hf fb hf pos,hps,keep_svl,r_ss) *)
+(*       else *)
+(*         let ss = look_up hds dn in *)
+(*         (fb,hps,keep_svl,r_ss@ss) *)
+(*     | CF.HRel (hp,eargs,p) -> *)
+(*       let args = List.concat (List.map CP.afv eargs) in *)
+(*       if (Gen.BList.intersect_eq CP.eq_spec_var args undefined_ptrs) = [] || *)
+(*          (Gen.BList.difference_eq CP.eq_spec_var args done_args) = [] || *)
+(*          lookup_hrel lhs_hpargs (hp,args) *)
+(*       then *)
+(*         (fb,hps,keep_svl,r_ss) *)
+(*       else *)
+(*         (mkAnd_fb_hf fb hf p,hps@[hp], keep_svl@(Gen.BList.difference_eq CP.eq_spec_var args undefined_ptrs),r_ss) *)
+(*     | HEmp -> (fb,hps,keep_svl,r_ss) *)
+(*     | _ -> report_error pos "infer.get_history_nodes" *)
+(*   in *)
+(*   List.fold_left helper (lfb,[],[],[]) history *)
 
-let get_history_nodes root_svl hds history lfb done_args eqs lhs_hpargs=
-  let pr1 = pr_list_ln Cprinter.string_of_h_formula in
-  let pr2 = Cprinter.string_of_formula_base in
-  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_4 "get_history_nodes" !CP.print_svl pr1 pr2 pr4 (fun (f,_,_,ss) ->(pr2 f) ^ " ;ss: " ^ (pr3 ss))
-    (fun _ _ _ _ -> get_history_nodes_x root_svl hds history lfb done_args eqs lhs_hpargs) root_svl history lfb lhs_hpargs
+(* let get_history_nodes root_svl hds history lfb done_args eqs lhs_hpargs= *)
+(*   let pr1 = pr_list_ln Cprinter.string_of_h_formula in *)
+(*   let pr2 = Cprinter.string_of_formula_base in *)
+(*   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+(*   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
+(*   Debug.no_4 "get_history_nodes" !CP.print_svl pr1 pr2 pr4 (fun (f,_,_,ss) ->(pr2 f) ^ " ;ss: " ^ (pr3 ss)) *)
+(*     (fun _ _ _ _ -> get_history_nodes_x root_svl hds history lfb done_args eqs lhs_hpargs) root_svl history lfb lhs_hpargs *)
 
 let get_h_formula_data_fr_hnode hn=
   match hn with
@@ -2907,10 +2971,31 @@ let get_h_formula_data_fr_hnode hn=
   | _ -> report_error no_pos
            "infer.get_h_formula_data_fr_hnode: input must be a list of hnodes"
 
+let is_match_pred lhs_selected_hpargs rhs_selected_hpargs =
+  match lhs_selected_hpargs, rhs_selected_hpargs with
+    | [(lhp,largs)], [(rhp,rargs)] -> CP.eq_spec_var_order_list largs rargs
+    | _ -> false
+
+let is_match_node lhs_selected_hpargs rhs_b =
+  match lhs_selected_hpargs with
+    | [(_,largs)] ->
+          let rhds, rhvs, _ = CF.get_hp_rel_bformula rhs_b in
+          let d_match = List.exists (fun dn ->
+              let rargs = dn.CF.h_formula_data_node:: dn.CF.h_formula_data_arguments in
+              CP.eq_spec_var_order_list largs rargs
+          ) rhds in
+          if d_match then true else
+            List.exists (fun dn ->
+              let rargs = dn.CF.h_formula_view_node:: dn.CF.h_formula_view_arguments in
+              CP.eq_spec_var_order_list largs rargs
+          ) rhvs
+    | _ -> false
 
 (*history from func calls*)
-let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs
-    crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes=
+let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs
+    (* crt_holes  *)(* history *) unk_svl prog_vars (* lvi_ni_svl *) (* classic_nodes *)=
+  (********************INTERNAL**************************)
+  let  crt_holes = es.CF.es_crt_holes in
   let partition_i_ni_svl (hp,args)=
     (* let () = Debug.info_zprint (lazy  ("    args:" ^ (!CP.print_svl hd) ^ ": "^(!CP.print_svl args))) no_pos in *)
     let i_args_w_inst, i_args_w_ni = Sautil.partition_hp_args prog hp args in
@@ -2918,6 +3003,10 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   in
   let filter_non_selected_hp selected_hpargs (hp,args)= Gen.BList.mem_eq Sautil.check_hp_arg_eq (hp,args) selected_hpargs in
   let filter_non_selected_hp_rhs selected_hps (hp,_)= CP.mem_svl hp selected_hps in
+  let is_match_pred = is_match_pred lhs_selected_hpargs rhs_selected_hpargs in
+  let is_match = is_match_pred || is_match_node lhs_selected_hpargs rhs_b in
+     (****************************************)
+  (*****************INTERNAL********************)
   (*lhs*)
   let l_hpargs = List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs)) ) lhrs in
   let _,l_rem_hp_args = (List.partition (filter_non_selected_hp lhs_selected_hpargs) l_hpargs) in
@@ -2934,45 +3023,52 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   let rhp_args,r_rem_hp_args = (List.partition (filter_non_selected_hp_rhs rhs_selected_hps) r_hpargs) in
   (*root of hprel is the inst args; ni should be kept to preserve rele pure
   *)
-  let rkeep_hrels, rhs_keep_rootvars0, rhs_args_ni = List.fold_left (fun (hps,r_args, r_ni_svl) (hp,args) ->
+  let rkeep_hrels, rhs_keep_rootvars, rhs_args_ni = List.fold_left (fun (hps,r_args, r_ni_svl) (hp,args) ->
       let args_i, args_ni = partition_i_ni_svl (hp,args) in
       (hps@[hp], r_args@(args_i), r_ni_svl@args_ni)
     ) ([],[], []) rhp_args in
   (*elim ptrs that violate NI rule in lhs*)
-  let rhs_keep_rootvars = CP.diff_svl rhs_keep_rootvars0 (lvi_ni_svl) in
+  (* let rhs_keep_rootvars =  CP.diff_svl rhs_keep_rootvars0 (lvi_ni_svl) in *)
   let () = Debug.ninfo_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
   (***************************)
   (*w history*)
-  let svl0a = (CP.remove_dups_svl (lhs_keep_i_rootvars@rhs_keep_rootvars)) in
-  let svl0 = (List.fold_left Sautil.close_def svl0a (leqs@reqs)) in
+  let rhs_svl0a = (CP.remove_dups_svl (lhs_keep_i_rootvars@rhs_keep_rootvars)) in
+  let rhs_svl = (List.fold_left Sautil.close_def rhs_svl0a (leqs@reqs)) in
+  let () = Debug.ninfo_hprint (add_str  " rhs_svl" !CP.print_svl) rhs_svl no_pos in
   (*elim ptrs that violate NI rule in lhs*)
-  let svl = CP.diff_svl svl0 (lvi_ni_svl) in
+  (* let svl = CP.diff_svl svl0 (lvi_ni_svl) in *)
   (*get args which already captures by other hprel*)
-  let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in
-  let lhs_b,history_hrel,keep_root_hrels,his_ss = get_history_nodes svl hds history lhs_b done_args (leqs@reqs) lhp_args in
-  (*END*)
-  let rec elim_redun_his his res=
-    match his with
-    | [] -> res
-    | hd:: tl ->
-      let svl0 = CF.find_close [hd.CF.h_formula_data_node] leqs in
-      if List.exists
-          (fun hd1 -> CP.mem_svl hd1.CF.h_formula_data_node svl0) hds then
-        elim_redun_his tl res
-      else elim_redun_his tl (res@[hd])
-  in
-  let filter_his = elim_redun_his (List.concat (List.map get_h_formula_data_fr_hnode history)) [] in
+  (* let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in *)
+
   let () = Debug.ninfo_hprint (add_str "    lhs_args_ni" !CP.print_svl) lhs_args_ni no_pos in
   let () = Debug.ninfo_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
-  let () = Debug.ninfo_hprint (add_str  "    svl" !CP.print_svl) svl no_pos in
-  let () = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in
-  let () = Debug.ninfo_hprint (add_str  "    classic_nodes" !CP.print_svl) classic_nodes no_pos in
+  let () = Debug.ninfo_hprint (add_str  "    rhs_svl" !CP.print_svl) rhs_svl no_pos in
+  (* let () = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in *)
   let () = DD.ninfo_hprint (add_str  "es.es_infer_obj # is_pure_field_all " string_of_bool) es.es_infer_obj # is_pure_field_all no_pos in
-  let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all lhs_b rhs_b
-      (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs [] (svl@keep_root_hrels@classic_nodes)
-      (lhs_keep_rootvars@keep_root_hrels) lhp_args lhs_args_ni
-      rhs_selected_hps rhs_keep_rootvars rhs_args_ni
-      unk_svl (CP.remove_dups_svl prog_vars) in
+  let () = Debug.ninfo_hprint (add_str  "is_match" string_of_bool) is_match no_pos in
+
+  let lhs_b, new_hds, new_hvs = if is_match then
+    let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (rhs_svl(* @keep_root_hrels@classic_nodes*));} in
+    n_lhs_b,[],[] (*matching unkown pred lhs vs. rhs*)
+  else
+    lhs_b,(hds(* @filter_his *)), hvs
+  in
+
+  (*******DROP*******)
+  (*TOFIX*)
+  let lhs_keep_root_svl = rhs_svl in
+  let rhs_keep_root_svl = (rhs_svl(* @keep_root_hrels@classic_nodes*)) in
+  let lhs_b1 = if !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) then lhs_b
+  else
+    {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CP.remove_dups_svl (lhs_keep_rootvars@rhs_args_ni));}
+  in
+  let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all
+    !Globals.old_infer_complex_lhs
+    lhs_b1 rhs_b
+      (* (hds@filter_his) hvs *) new_hds new_hvs (* (lhp_args@rhp_args) *) leqs reqs lhs_keep_root_svl rhs_keep_root_svl
+      (lhs_keep_rootvars(* @keep_root_hrels *)) lhp_args lhs_args_ni
+      rhs_selected_hps (* rhs_keep_rootvars *) rhs_args_ni
+      (* unk_svl *) (* (CP.remove_dups_svl prog_vars) *) in
   (***************************)
   let () = Debug.ninfo_hprint (add_str  "lhs_b1a" Cprinter.string_of_formula_base) lhs_b1a no_pos in
   let () = Debug.ninfo_hprint (add_str  "rhs_b1a" Cprinter.string_of_formula_base) rhs_b1a no_pos in
@@ -3010,14 +3106,19 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   (* let lhs_b4,rhs_b4 = Sautil.rename_hp_args lhs_b3 rhs_b3 in *)
   (CF.prune_irr_neq_formula ~en_pure_field:es.CF.es_infer_obj # is_pure_field_all prog_vars lhs_b3 rhs_b3,rhs_b3)
 
-let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
-    lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes=
+let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
+    lhs_selected_hpargs rhs_selected_hpargs (* crt_holes *) (* history *) unk_svl prog_vars
+    (* lvi_ni_svl *) (* classic_nodes *)=
   let pr = Cprinter.string_of_formula_base in
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  DD.no_3 "simplify_lhs_rhs" pr1 pr pr (pr_pair pr pr)
-    (fun _ _ _ -> simplify_lhs_rhs prog es lhs_b rhs_b
-        leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs crt_holes history unk_svl prog_vars lvi_ni_svl classic_nodes )
-    lhs_selected_hpargs lhs_b rhs_b
+  DD.no_4 "simplify_lhs_rhs" (add_str "lhs preds" pr1)
+      (add_str "rhs preds" pr1) pr pr (pr_pair pr pr)
+    (fun _ _ _ _ -> simplify_lhs_rhs prog iact es lhs_b rhs_b
+        leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs (* crt_holes *) (* history *)
+        unk_svl prog_vars
+        (* lvi_ni_svl *) (* classic_nodes *)
+    )
+      lhs_selected_hpargs rhs_selected_hpargs lhs_b rhs_b
 
 
 let lookup_eq_hprel_ass_x hps hprel_ass lhs rhs=
@@ -3083,13 +3184,19 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
         (* let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in *)
         let hp_rel_list = [ehp_rel] in
         (* postpone until heap_entail_after_sat *)
-        let () = rel_ass_stk # push_list hp_rel_list in
-        let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+        if !Globals.old_infer_hp_collect then 
+          begin
+            x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hp_rel_list pos;
+            let () = rel_ass_stk # push_list hp_rel_list in
+            let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+            ()
+          end;
         (* update es.formula *)
         let n_es_form = mkAnd_pure es.es_formula neg_prhs pos in
         let n_es_form_e = CF.substitute_flow_into_f !error_flow_int n_es_form in
-        let new_es = {es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
+        let new_es = {es with (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list hp_rel_list; *)
                               CF.es_formula = n_es_form_e} in
+        let () =  new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
         Some new_es
 
 let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
@@ -3199,8 +3306,14 @@ let check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos=
       (fun _ -> check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos) guard_opt
 
 
-let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
-    ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs  hds hvs lhras lhrs rhras rhrs leqs reqs eqNull prog_vars lvi_ni_svl classic_nodes pos =
+let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
+    ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs
+    (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs reqs eqNull prog_vars (* lvi_ni_svl *) (* classic_nodes *)
+    pos =
+  let lhds, lhvs, lhras = CF.get_hp_rel_bformula lhs_b in
+  let rhds, rhvs, rhras = CF.get_hp_rel_bformula rhs_b1 in
+  let hds = lhds@rhds in
+  let hvs = lhvs@rhvs in
   (*****************INTERNAL********************)
   let update_fb (fb,r_hprels,post_hps, hps,hfs) (is_pre, unknown_ptrs) =
     match unknown_ptrs with
@@ -3328,7 +3441,6 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
     | _ -> hn
   in
   (*****************END INTERNAL********************)
-  (* let new_lhs = rhs_b1 in *)
   let new_rhs_b,rvhp_rels,new_post_hps, new_hrels,r_new_hfs =
     List.fold_left update_fb (rhs_b1,[],[],[],[]) ls_unknown_ptrs in
   (*add roots from history*)
@@ -3338,17 +3450,18 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
   (*     | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf] *)
   (*     | _ -> [hf] *)
   (*   ) no_es_history) in *)
-  let sel_his = [] in
+  (* let sel_his = [] in *)
   DD.ninfo_hprint (add_str  "  new_rhs_b" Cprinter.string_of_formula_base) new_rhs_b pos;
   let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
   let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
   let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
+  let new_rselected_hpargs = (rselected_hpargs@(List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs)))
+                                              new_hrels)) in
   let new_rhs_b0 = {new_rhs_b with 
                     CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
-  let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog es lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
-      (lselected_hpargs) (rselected_hpargs@(List.map (fun (hp,eargs,_) -> (hp, List.concat (List.map CP.afv eargs)))
-                                              new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*no_es_history*) sel_his)
-      total_unk_svl prog_vars lvi_ni_svl classic_nodes in
+  let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog iact es lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
+      (lselected_hpargs) new_rselected_hpargs
+      total_unk_svl prog_vars (* lvi_ni_svl *) (* classic_nodes *) in
   (*simply add constraints: *)
   let hprel_def = List.concat (List.map CF.get_ptrs ((* no_es_history@ *)(CF.get_hnodes lhs_b.CF.formula_base_heap
   (* es.CF.es_heap *))))
@@ -3491,11 +3604,12 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
     (* let n_ivr = if CF.is_empty_heap rhs_rest then CP.diff_svl es.CF.es_infer_vars_rel (CF.h_fv rhs) else es.CF.es_infer_vars_rel in *)
     let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
                           (* CF.es_infer_vars_rel =  n_ivr; *)
-                          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
+                          (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list hp_rel_list; *)
                           CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
                           CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
                           CF.es_crt_holes = es.CF.es_crt_holes@new_holes;
                           CF.es_formula = new_es_formula1} in
+    let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
     x_tinfo_hp (add_str "  residue before matching: " Cprinter.string_of_formula) new_es.CF.es_formula pos;
     x_tinfo_hp (add_str "  new_es_formula: "  Cprinter.string_of_formula) new_es_formula pos;
     x_tinfo_hp (add_str "  new_lhs: "  Cprinter.string_of_h_formula) new_lhs pos;
@@ -3525,7 +3639,7 @@ let get_eqset puref =
   CP.spec_var list ->
   CF.formula_base -> CF.formula_base -> VarGen.loc -> bool * CF.entail_st
 *)
-let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
+let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
   let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
     let cl_lnull_ptrs = CP.find_eq_closure l_emap l_null_ptrs in
@@ -3668,7 +3782,6 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
           let fv_rhs = CF.h_fv rhs in
           let () = x_tinfo_hp (add_str "fv_lhs" !print_svl) fv_lhs pos in
           let () = x_tinfo_hp (add_str "fv_rhs" !print_svl) fv_rhs pos in
-          (* if (CP.intersect mis_nodes (List.fold_left Sautil.close_def v_lhs (leqs@reqs))) = [] then *)
           let es_cond_path = CF.get_es_cond_path es in
           if (CP.intersect fv_lhs fv_rhs) == [] then
             begin
@@ -3705,33 +3818,42 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
                 let rhs = CF.Base rhs_b1 in
                 let hprel_ass = [CF.mkHprel_1 knd lhs None rhs es_cond_path] in
                 (* postpone until heap_entail_after_sat? *)
-                let () = rel_ass_stk # push_list hprel_ass in
-                let () = Log.current_hprel_ass_stk # push_list hprel_ass in
-                let new_es1 = {new_es with CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @  hprel_ass;
-                                           CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);} in
+                if !Globals.old_infer_hp_collect then 
+                  begin
+                    x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short))  hprel_ass pos;
+                    let () = rel_ass_stk # push_list hprel_ass in
+                    let () = Log.current_hprel_ass_stk # push_list hprel_ass in
+                    ()
+                  end;
+                let new_es1 = {new_es with (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list  hprel_ass; *)
+                    CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);} in
+                let () = new_es1.CF.es_infer_hp_rel # push_list  hprel_ass in
                 (true, new_es1, rhs0, None, None)
               else
                 constant_checking prog rhs lhs_b0 rhs_b es
             end
           else
-            (*********TODO: REMOVE HIS*****************)
-            (* let no_es_history =  [] *) (* replacing es.CF.es_history *) (* in *)
-            (* let no_es_history = es.CF.es_history in *)
-            (* let his_ptrs = List.concat (List.map Sautil.get_ptrs no_es_history) in *)
-            (************** END HIS **************)
             let ( _,mix_lf1,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
             let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
             let reqs1 = [] in
             (********** END BASIC INFO LHS, RHS **********)
-            let is_found_mis, ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,
-                lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,lvi_ni_svl, classic_nodes, ass_guard =
-              find_undefined_selective_pointers prog lhs_b1 mix_lf1 rhs rhs_rest
+            let is_found_mis, ls_unknown_ptrs,(* hds,hvs,lhras,rhras, *)eqNull,
+                lselected_hpargs,rselected_hpargs,defined_hps, unk_svl,unk_pure,unk_map,new_lhs_hps,
+              (* lvi_ni_svl, *) (* classic_nodes, *)
+              ass_guard =
+              find_undefined_selective_pointers prog es lhs_b1 mix_lf1 lhs_node rhs rhs_rest
                 (* (rhs_h_matched_set) *) leqs1 reqs1 pos (* es.CF.es_infer_hp_unk_map *) post_hps subst_prog_vars in
-            if not is_found_mis ||
-              List.exists (fun (hp,_) -> not (CP.mem_svl hp ivs)) rselected_hpargs (*incr/ex15c(1)*)
-              || exist_uncheck_rhs_null_ptrs l_emap0 (CP.EMapSV.merge_eset r_emap r_eqsetmap) (MCP.get_null_ptrs mix_lf1) (MCP.get_null_ptrs mix_rf)
-              (List.fold_left (fun acc (_, args) -> acc@args) [] rselected_hpargs)
-            then
+            let flag1 = (List.exists (fun (hp,args1) -> if not (CP.mem_svl hp ivs) then
+                                         not (List.exists (fun (_,args2) -> x_add CP.sub_spec_var_list (* eq_spec_var_order_list *) args1 args2) lselected_hpargs)
+                                       else false
+                                     ) rselected_hpargs (*incr/ex15c(1)*) ) in
+            let flag2 = exist_uncheck_rhs_null_ptrs l_emap0 (CP.EMapSV.merge_eset r_emap r_eqsetmap) 
+                (MCP.get_null_ptrs mix_lf1) (MCP.get_null_ptrs mix_rf)
+                (List.fold_left (fun acc (_, args) -> acc@args) [] rselected_hpargs) in
+            let flag3 = not is_found_mis in
+            let prb = string_of_bool in
+            let () = y_tinfo_hp (add_str "mis-matched" (pr_triple prb prb prb)) (flag1,flag2,flag3) in
+            if flag3 || flag1 || flag2 then
               let () = x_tinfo_hp (add_str ">>>>>> mismatch ptr" pr_id) ((Cprinter.prtt_string_of_h_formula rhs) ^" is not found (or inst) in the lhs <<<<<<") pos in
               (false, es, rhs, None, None)
             else
@@ -3746,10 +3868,11 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
                 | hf::rest -> CF.mkAnd_fb_hf lhs_b1 (List.fold_left(fun a c-> mkStarH a c pos ) hf rest) pos
               in
               let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt, ass_lhs =
-                generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
+                generate_constraints prog iact es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
-                (* no_es_history *) lselected_hpargs2 ((* List.filter (fun (hp,_) -> CP.mem_svl hp ivs) *) rselected_hpargs)
-                  hds hvs lhras lhrs rhras rhrs leqs1 reqs1 eqNull subst_prog_vars lvi_ni_svl classic_nodes pos in
+                    lselected_hpargs2 rselected_hpargs
+                  (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs1 reqs1 eqNull subst_prog_vars
+                    (* lvi_ni_svl *) (* classic_nodes *) pos in
               (* generate assumption for memory error *)
               let oerror_es = generate_error_constraints prog es ass_lhs rhs
                   (List.map fst lselected_hpargs2) es_cond_path pos in
@@ -3764,6 +3887,10 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
               (* let l_aset = CP.EMapSV.mkEmpty in *)
               (* let all_aset = CP.add_equiv_list_eqs l_aset (leqs@reqs_orig@n_rhs_eqset) in *)
               let all_aset = CP.EMapSV.merge_eset (CP.EMapSV.merge_eset l_emap0 r_emap0) r_eqsetmap0 in
+              let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b1 in
+              let rhds, rhvs, _ = CF.get_hp_rel_h_formula rhs in
+              let hds = lhds@rhds in
+              let hvs = lhvs@rhvs in
               let new_es, new_lhs = update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
                   rvhp_rels (leqs) all_aset m new_post_hps unk_map hp_rel_list pos in
               let n_es_heap = match rhs with
@@ -3772,16 +3899,31 @@ let infer_collect_hp_rel prog (es0:entail_state) rhs0 rhs_rest (rhs_h_matched_se
               in
               (true, new_es, new_lhs, n_es_heap, oerror_es)
         end
-
-let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
+(*
+  output:
+   - res = true: succ
+   - new_estate: new entailment state
+   - n_lhs: if rhs_node is a data/heape ie. x::node<_> (and lhs_node is a unknown pred i.e. H(x)),
+       this abduction method (infer_collect_hp_rel) genrates an abduction relation
+         - H(x) ==> x::node<_>
+       and implicitly unfolds H(x) into the entailment state by
+        (i) returning (n_lhs = x::node<_>,  n_es_heap_opt = None)
+        (ii) matching n_lhs and rhs_node
+   - n_es_heap_opt: to do
+   - oerror_es: for error inference
+*)
+let infer_collect_hp_rel i prog iact (es:entail_state) lhs_node rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
   let pr4 = Cprinter.string_of_estate_infer_hp in
-  let pr5 =  pr_penta string_of_bool pr4 Cprinter.string_of_h_formula
+  let pr5 =  pr_penta string_of_bool pr4 (add_str "abd heap" Cprinter.string_of_h_formula)
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2) in
-  Debug.no_3_num i "infer_collect_hp_rel" (* pr2 *) (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
-    ( fun _ _ _ -> infer_collect_hp_rel prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) (* es *) lhs_b rhs_b es
+  Debug.no_5_num i "infer_collect_hp_rel" (* pr2 *)
+      (add_str "lhs_node" !CF.print_h_formula) (add_str "rhs_node" !CF.print_h_formula)
+      (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
+    ( fun _ _ _ _ _ -> infer_collect_hp_rel prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
+      (* es *) lhs_node rhs lhs_b rhs_b es
 
 
 (*******************************************************)
@@ -3809,14 +3951,14 @@ let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 (*   MCP.mix_formula -> *)
 (*   VarGen.loc -> bool * CF.entail_state * Sautil.CF.hprel list *)
 (* this method must not be called under is_folding since H(..) --> emp will be collected *)
-let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_rf pos =
+let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_rf pos =
   (*********INTERNAL**********)
   let get_eqset puref =
     let (subs,_) = CP.get_all_vv_eqs puref in
     let eqset = CP.EMapSV.build_eset subs in
     eqset
   in
-  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, []) else
+  if CF.isStrictConstTrue_wo_flow es0.CF.es_formula then (false, es0, [], lhs_b) else
     let es_cond_path = CF.get_es_cond_path es0 in
     (* type: CF.formula_base -> *)
     (*   CF.formula_base -> *)
@@ -3828,8 +3970,8 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
     (*   CP.spec_var * CF.CP.spec_var list -> CF.hprel option *)
     let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras (hp,args)=
       (* WN : Why did this simplify_lhs_rhs has so many parameters? *)
-      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog es0 lhs_b rhs_b leqs reqs hds hvs lhras []
-          [(hp,args)] [] [] [] [] [] [] [] in
+      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog 0 es0 lhs_b rhs_b leqs reqs hds hvs lhras []
+          [(hp,args)] [] [] [] in
       let lhs0 = (CF.Base new_lhs_b) in
       (* WN : Why do we remove !=null? *)
       let lhs = (* CF.remove_neqNull_svl args *) lhs0  in
@@ -3841,7 +3983,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
       let pr6 = pr_option (pr_pair pr_hr !CF.print_formula) in
       let () = x_tinfo_hp (add_str "extr_ans(list)" pr6) extr_ans no_pos in
       (* let () = x_tinfo_hp (add_str "extr_hd" (pr_option !CP.print_sv)) extr_hd no_pos in *)
-      let rhs_f = (CF.Base rhs_b) in
+      let rhs_f = (CF.Base new_rhs_b) in
       let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
       let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
@@ -3863,7 +4005,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
               let lhs = CF.repl_pure_formula p lhs in
               let grd = x_add check_guard es0 ass_guard lhs_b new_lhs_b new_rhs_b pos in
               let hprel_ass = CF.mkHprel knd [] [] args2 lhs grd rhs_f es_cond_path in
-              ((hp,args2),hprel_ass)
+              ((hp,args2,new_rhs_b.CF.formula_base_pure),hprel_ass)
             ) lst 
       in
       let () = x_tinfo_hp (add_str "hprel_lst"  (pr_list (pr_pair pr_none Cprinter.string_of_hprel_short))) hprel_lst no_pos in
@@ -3898,7 +4040,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
       with _ ->
         PK_Unknown in
     if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not (check_is_classic ())) then
-      (false, es0,[])
+      (false, es0, [], lhs_b)
     else
       let ivs = es0.es_infer_vars_hp_rel in
       (*check whether LHS/RHS contains hp_rel*)
@@ -3908,7 +4050,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
         begin
           (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
           let () = x_tinfo_pp " no hp_rel found" pos in
-          (false,es0,[])
+          (false,es0,[], lhs_b)
         end
       else
         begin
@@ -3923,20 +4065,27 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
           let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
           (* let () = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
           let _ =
-            x_binfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
-            x_binfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
-            x_binfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
+            x_tinfo_pp ">>>>>> infer_hp_rel <<<<<<" pos;
+            x_tinfo_hp (add_str  "  lhs " Cprinter.string_of_formula) lhs0 pos;
+            x_tinfo_hp (add_str  "  classic " string_of_bool) (check_is_classic ()) pos
           in
           (*TOFIX: detect HEmp or HTrue *)
-          let rhs_b0 = formula_base_of_heap (CF.HEmp) pos in
+          let rhs_b0a = formula_base_of_heap (CF.HEmp) pos in
+          let rhs_b0 = {rhs_b0a with formula_base_pure = mix_rf} in
           (* let rhs_htrue_b0 = formula_base_of_heap (CF.HTrue) pos in *)
           (********** BASIC INFO LHS, RHS **********)
           let l_hpargs = CF.get_HRels lhs_b0.CF.formula_base_heap in
           let l_non_infer_hps = CP.diff_svl lhrs ivs in
           (**smart subst**)
           let leqs0 = (MCP.ptr_equations_without_null mix_lf) in
-          let lhs_b1 = Sautil.smart_subst_lhs lhs0 l_hpargs leqs0 es0.es_infer_vars in
-          let rhs_b1 = rhs_b0 in
+          let post_hps,prog_vars =
+            get_prog_vars es0.CF.es_infer_vars_sel_hp_rel rhs_b0.CF.formula_base_heap pk in
+          let r_eqsetmap = CP.EMapSV.build_eset es0.CF.es_rhs_eqset in
+          let lhs_b1, rhs_b1, subst_prog_vars = Cfutil.smart_subst_new lhs_b0 rhs_b0 (l_hpargs)
+              l_emap0 r_emap0 r_eqsetmap [] (prog_vars@es0.es_infer_vars)
+          in
+          (* let lhs_b1 = Sautil.smart_subst_lhs lhs0 l_hpargs leqs0 es0.es_infer_vars in *)
+          (* let rhs_b1 = rhs_b0 in *)
           let lhs_h = lhs_b1.CF.formula_base_heap in
           let ( _,mix_lf1,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
           let ( _,mix_rf1,_,_,_,_) = CF.split_components (CF.Base rhs_b1) in
@@ -3949,11 +4098,11 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
           let () = x_tinfo_hp (add_str "ivs" !CP.print_svl) ivs no_pos in
           let sel_hprels = List.filter (fun (hp,_) -> CP.mem_svl hp ivs) tmp  in
           if sel_hprels = [] then
-            (false, es0,[])
+            (false, es0, [], lhs_b)
           else
             let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lhs_b1 in
             let leqNulls = MCP.get_null_ptrs mix_lf1 in
-            let sel_hpargs, hprel_ass0 = List.fold_left (fun (ls1,ls2) (hp,args) ->
+            let sel_hpargs, hprel_ass0, abd_mixs = List.fold_left (fun (ls1,ls2,ls3) (hp,args) ->
                 let rhs_b2 =
                   (* if (rhs0 = CF.HTrue && List.exists (fun sv -> not (CP.mem_svl sv leqNulls)) args) then *)
                   (* (\* hp /\ p ==> htrue *\) rhs_htrue_b0 *)
@@ -3962,34 +4111,47 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) (* lhs_b rhs0 *) mix_
                 let r_opt = x_add generate_constrs lhs_b1 rhs_b2 leqs1 reqs1 lhds lhvs lhrs (hp,args) in
                 match r_opt with
                 | Some lst ->
-                  let (hp_arg_lst,ass_lst) = List.split lst in
-                  (ls1@hp_arg_lst (* [(hp,args)] *),ls2@ass_lst(* [ass] *))
-                | None -> (ls1,ls2)
-              ) ([],[]) sel_hprels in
+                  let (hp_arg_lst_pure,ass_lst) = List.split lst in
+                  let hp_arg_lst, abd_mps = List.fold_left (fun (ls1,ls2) (hp,args,mf) -> ls1@[(hp,args)],ls2@[mf]) ([],[]) hp_arg_lst_pure in
+                  (ls1@hp_arg_lst (* [(hp,args)] *),ls2@ass_lst(* [ass] *), ls3@abd_mps)
+                | None -> (ls1,ls2,ls3)
+              ) ([],[],[]) sel_hprels in
             let ex_ass = (rel_ass_stk # get_stk) in
             let hprel_ass = Gen.BList.difference_eq Sautil.constr_cmp hprel_ass0 ex_ass in
             let () = x_tinfo_hp (add_str "sel_hpargs" pr_hp_lst) sel_hpargs no_pos in
-            if sel_hpargs = [] || hprel_ass = [] then (false,es0,[]) else
+            if sel_hpargs = [] || hprel_ass = [] then (false,es0,[], lhs_b) else
               (*update residue*)
               let reqs0 = (MCP.ptr_equations_without_null mix_rf) in
               let empty_eqset = CP.EMapSV.mkEmpty in
               let all_aset = CP.add_equiv_list_eqs empty_eqset (leqs0@reqs0@es0.CF.es_rhs_eqset) in
               let sel_hpargs2 = List.map (fun (hp,args) -> (hp, CP.find_eq_closure all_aset args)) sel_hpargs in
               let nhf = CF.drop_data_view_hpargs_nodes_hf lhs_b0.CF.formula_base_heap CF.select_dnode CF.select_vnode Sautil.select_subsumehpargs [] [] sel_hpargs2 in
-              let new_es_formula = CF.Base {lhs_b0 with CF.formula_base_heap = nhf} in
+              let abd_ps = List.fold_left (fun acc mx ->
+                  let ps = CP.list_of_conjs (MCP.pure_of_mix mx) in
+                  acc@ps
+              ) [] abd_mixs in
+              let abd_ps1 = CP.remove_redundant_helper abd_ps [] in
+              let abd_mf = MCP.mix_of_pure (CP.conj_of_list abd_ps1 no_pos) in
+              let () = x_tinfo_hp (add_str "abd_mf" Cprinter.string_of_mix_formula) abd_mf no_pos in
+              let new_es_formula = CF.Base {lhs_b0 with
+                  CF.formula_base_pure = MCP.merge_mems lhs_b0.CF.formula_base_pure abd_mf true;
+                  CF.formula_base_heap = nhf} in
               let es1 = {es0 with CF.es_formula = new_es_formula} in
-              (true, es1, hprel_ass)
+              let n_lhs_b = {lhs_b with CF.formula_base_pure = MCP.merge_mems lhs_b.CF.formula_base_pure abd_mf true;} in
+              (true, es1, hprel_ass, n_lhs_b)
         end
 
 
-let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) (* lhs_b rhs0 *) rhs_p pos =
+let infer_collect_hp_rel_empty_rhs i prog (es:entail_state) lhs_b (* rhs0 *) rhs_p pos =
   let pr1 =  Cprinter.string_of_estate_infer_hp (* Cprinter.string_of_formula *) in
   let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 =  (pr_triple (add_str "Res" string_of_bool) (add_str "Sel HP" Cprinter.string_of_estate_infer_hp)
-      (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))) in
+  let pr3 =  (pr_quad (add_str "Res" string_of_bool) (add_str "Sel HP" Cprinter.string_of_estate_infer_hp)
+      (add_str "Inferred Relations" (pr_list_ln Cprinter.string_of_hprel_short))
+      (add_str "lhs base" Cprinter.string_of_formula_base)
+  ) in
   let pr4 = Cprinter.string_of_h_formula in
   Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" pr1 (* pr4 *) pr2 pr3
-    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es (* lhs_b rhs0 *) rhs_p pos) es(* .CF.es_formula *) (* rhs0 *) rhs_p
+    ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es lhs_b (* rhs0 *) rhs_p pos) es(* .CF.es_formula *) (* rhs0 *) rhs_p
 
 (*******************************************************)
 (*******************************************************)
@@ -4074,11 +4236,12 @@ let infer_collect_hp_rel_classsic_x prog (es:entail_state) rhs pos =
         (**************REFINE RES*******************)
         let n_es_formula, _ = CF.drop_hrel_f es.es_formula defined_hps in
         let new_es = {es with (* CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels; *)
-                      CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ ls_ass;
+                      (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # pust_list ls_ass; *)
                       (* CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map); *)
                       (* CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps); *)
                       CF.es_formula = n_es_formula}
         in
+        let () = new_es.CF.es_infer_hp_rel # push_list ls_ass in
         x_tinfo_hp (add_str  "  new residue " Cprinter.string_of_formula) new_es.CF.es_formula pos;
         (true, new_es)
     end
@@ -4427,9 +4590,18 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
                 (res_rels@[new_rel])
       ) [] new_cps in
     let new_rels1 = Gen.BList.difference_eq Sautil.constr_cmp new_rels (rel_ass_stk # get_stk) in
-    let () = rel_ass_stk # push_list (new_rels1) in
-    let () = Log.current_hprel_ass_stk # push_list (new_rels1) in
-    let scc_f es = Ctx {es with es_infer_hp_rel = es.es_infer_hp_rel@new_rels1;} in
+    if !Globals.old_infer_hp_collect then 
+      begin
+        x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) new_rels1 no_pos;
+        let () = rel_ass_stk # push_list (new_rels1) in
+        let () = Log.current_hprel_ass_stk # push_list (new_rels1) in
+        ()
+      end;
+    let scc_f es =
+      let es = {es with es_infer_hp_rel = es.CF.es_infer_hp_rel # clone;} in
+      let () = es.CF.es_infer_hp_rel # push_list new_rels1 in
+      Ctx es
+    in
     Some (transform_list_context (scc_f, (fun a -> a)) l)
   with Not_found -> None
 

@@ -149,7 +149,7 @@ let process_coercion_check coerc iante iconseq (inf_vars: CP.spec_var list) iexa
       let () = x_binfo_hp (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in ()
     else () in
   let inf_obj = coerc.Cast.coercion_infer_obj in
-  let () = y_binfo_hp (add_str "coerc:infer_obj" (fun e -> e # string_of)) inf_obj in
+  let () = y_tinfo_hp (add_str "coerc:infer_obj" (fun e -> e # string_of)) inf_obj in
   let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let empty_es = { empty_es with CF.es_infer_obj = inf_obj } in
   let empty_ctx = CF.Ctx empty_es in
@@ -271,8 +271,17 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let (new_rhs,fv_rhs2) = add_exist_heap_of_struc fv_lhs rhs in
   let sv_self = (CP.SpecVar (Globals.null_type, self, Unprimed)) in
   (* let () = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
-  let lhs_unfold_ptrs0,rhs_unfold_ptrs0= if !Globals.enable_lemma_lhs_unfold ||
-                                            !Globals.enable_lemma_rhs_unfold then ([],[]) else (* must re-check this -if- {**} *)
+  let lhs_unfold_ptrs0,rhs_unfold_ptrs0 =
+    (* let lhs_pt = if !Globals.enable_lemma_lhs_unfold then  *)
+    (*     if !Globals.allow_lemma_deep_unfold then *)
+    (*       CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true *)
+    (*     else [sv_self] else [] in *)
+    (* let rhs_pt = if !Globals.enable_lemma_rhs_unfold then  *)
+    (*     if !Globals.allow_lemma_deep_unfold then *)
+    (*       CF.look_up_reachable_ptrs_f cprog rhs [sv_self] true true *)
+    (*     else [sv_self] else [] in *)
+    if !Globals.enable_lemma_lhs_unfold || !Globals.enable_lemma_rhs_unfold then ([],[]) 
+    else (* must re-check this -if- {**} *)
       (* rhs_unfold_ptrs below really needed? isn't lhs unfold enough? *)
       let lhs_unfold_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true in
       let rhs_unfold_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true in
@@ -300,14 +309,16 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs, CP.diff_svl rhs_unfold_ptrs lhs_unfold_ptrs)
       end
   in
-  let lhs,_ = (
-    let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
-        if !Globals.allow_lemma_deep_unfold then
-          CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true
-        else [sv_self]
-      else
-        lhs_unfold_ptrs0
-    in
+  let () = y_tinfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
+  let () = y_tinfo_hp (add_str "rhs_unfold_ptrs10" !CP.print_svl) rhs_unfold_ptrs0 in
+  let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
+      if !Globals.allow_lemma_deep_unfold then
+        CF.look_up_reachable_ptrs_f cprog lhs [sv_self] true true
+      else [sv_self]
+    else
+      lhs_unfold_ptrs0
+  in
+  let (lhs,_) = (
     List.fold_left (fun (f,ss) sv0 ->
         let sv = CP.subst_var_par ss sv0 in
         (* let () = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
@@ -326,7 +337,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   (* let vs_rhs = CF.fv_s rhs in *)
   (* let () = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let rhs =
-    let rhs_unfold_ptrs = if !Globals.enable_lemma_rhs_unfold then
+    (* make sure RHS is unfolded if LHS is not unfolded *)
+    let rhs_unfold_ptrs = if lhs_unfold_ptrs==[] || !Globals.enable_lemma_rhs_unfold then
         if !Globals.allow_lemma_deep_unfold then
           CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]

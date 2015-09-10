@@ -984,6 +984,28 @@ let rec eq_spec_var_order_list l1 l2=
     else false
   | _ -> false
 
+let rm_lst l2 v1 =
+  let rec aux l2 =
+    match l2 with
+    | [] -> failwith "rm_lst : not found"
+    | v2::l2 -> 
+      if eq_spec_var v1 v2 then l2
+      else v2::(aux l2)
+  in aux l2
+
+let sub_spec_var_list l1 l2 =
+  let rec aux l1 l2 =
+    match l1 with
+    | [] -> true
+    | v1::l1 -> 
+      try 
+        aux l1 (rm_lst l2 v1)
+      with _ -> false
+  in aux l1 l2
+
+let sub_spec_var_list l1 l2 =
+  Debug.no_2 "sub_spec_var_list" !print_svl !print_svl string_of_bool sub_spec_var_list l1 l2
+
 let eq_spec_var_nop (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
     (* translation has ensured well-typedness.
@@ -15399,3 +15421,24 @@ let contains_undef (f:formula) =
   List.fold_left (fun acc sv -> acc || (is_undef_typ (type_of_spec_var sv)) ) false afv 
 
 let syn_checkeq = ref(fun (ls:ident list) (a:formula) (c:formula) (m: ((spec_var * spec_var) list) list) -> (true,([]: ((spec_var * spec_var) list) list)))
+
+let is_exists_svl v vs =
+  List.exists (eq_spec_var v) vs 
+
+let exp_to_sv e = match (conv_exp_to_var e) with
+  | Some (sv,_) -> sv
+  | None -> 
+    let () = y_winfo_pp " UNKNOWN spec_var used " in
+    let () = y_binfo_hp (add_str "exp is var?" !print_exp) e in
+    unknown_spec_var
+
+
+let rec gen_cl_eqs pos svl p_res=
+  match svl with
+    | [] -> p_res
+    | sv::rest ->
+          let new_p_res = List.fold_left (fun acc_p sv1 ->
+              let p = mkEqVar sv sv1 pos in
+              mkAnd acc_p p pos
+          ) p_res rest in
+          gen_cl_eqs pos rest new_p_res

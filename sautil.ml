@@ -1000,6 +1000,60 @@ let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hparg
   let nf2 = CF.drop_data_view_hrel_nodes rhs CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs rhs_keep_hrels in
   (nf1,nf2)
 
+(*
+  to check whether qq can be inst by q
+
+  U3(self,q,x)*q::char_star<0,p>
+    |- U2(self,qq) * qq::char_star<0,p>
+*)
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl =
+  let lst = CF.check_compatible prog lsvl rsvl lhs_b lhp rhs_b rhp in
+  let find_reach_f fb sv drop_hp=
+    let lhds, lhvs, lhrels = CF.get_hp_rel_bformula fb in
+    let lhrels1 = List.fold_left (fun acc (hp, eargs,_) ->
+        if CP.eq_spec_var hp drop_hp then
+          acc
+        else
+          acc@[(hp, List.map  CP.exp_to_sv eargs)]
+    ) [] lhrels in
+    let reach_lf = keep_data_view_hpargs_nodes prog (CF.Base fb) lhds lhvs [sv] lhrels1 in
+    let () = Debug.binfo_hprint (add_str  "reach_f" !CF.print_formula) reach_lf no_pos in
+    reach_lf
+  in
+  let rec check_one_right reach_rf rsv rest_lsvl done_svl= match rest_lsvl with
+    | [] -> [], done_svl
+    | lsv::rest ->
+          let sst = [(lsv,rsv)] in
+          let lhs_b = CF.subst_b sst lhs_b in
+          let reach_lf = find_reach_f lhs_b rsv lhp in
+          let is_homo,_ = Checkeq.checkeq_formulas (List.map CP.name_of_spec_var [root;rsv]) reach_lf reach_rf in
+          if is_homo then (sst, done_svl@rest)
+          else
+            check_one_right reach_rf rsv rest (done_svl@[lsv])
+  in
+  let sst,_ = List.fold_left (fun (acc,rest_lsvl) rsv ->
+      let reach_rf = find_reach_f rhs_b rsv rhp in
+      let sst0, rest = check_one_right reach_rf rsv rest_lsvl [] in
+      (acc@sst0,rest)
+  ) ([], lsvl) (CP.diff_svl rsvl lsvl) in
+  let () = Debug.binfo_hprint (add_str  "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst no_pos in
+  sst
+
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl =
+  let lst = CF.check_compatible prog lsvl rsvl lhs_b lhp rhs_b rhp in
+  lst
+
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = !CF.print_formula_base in
+  let pr_out = (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
+  Debug.no_7 "exam_homo_arguments" (add_str "lhs" pr3) (add_str "rhs" pr3)
+      (add_str "left pred" pr1) (add_str "right pred" pr1)
+      (add_str "root" pr1) (add_str "left args" pr2) (add_str "right args" pr2) pr_out
+      (fun _ _ _ _ _ _ _ -> exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl)
+      lhs_b rhs_b lhp rhp root rsvl lsvl
+
 let filter_eqs keep_svl prog_vars eqs0=
   let all_keel_svl = keep_svl@prog_vars in
   let rec helper eqs res=
@@ -1448,37 +1502,40 @@ let smart_subst_lhs f lhpargs leqs infer_vars=
     nfb
   | _ -> report_error no_pos "SAU.smart_subst_lhs"
 
-let keep_data_view_hrel_nodes_two_fbs prog en_pure_field f1 f2 hd_nodes hv_nodes hpargs
-    leqs reqs his_ss keep_rootvars
-    lhs_hpargs lkeep_hpargs lhs_args_ni rkeep_hps rhs_svl rhs_args_ni unk_svl prog_vars =
-  let eqs = (leqs@reqs@his_ss) in
-  let () = Debug.ninfo_zprint (lazy (("keep_vars root: " ^ (!CP.print_svl keep_rootvars)))) no_pos in
-  let () = Debug.ninfo_zprint (lazy (("lhs_hpargs: " ^ (!CP.print_svl lhs_hpargs)))) no_pos in
-  let keep_closed_rootvars =  (List.fold_left close_def keep_rootvars eqs) in
-  let () = Debug.ninfo_zprint (lazy (("keep_vars 1: " ^ (!CP.print_svl keep_closed_rootvars)))) no_pos in
-  let keep_vars = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes (CP.remove_dups_svl (keep_closed_rootvars)) in
-  let c_lhs_hpargs = CP.remove_dups_svl (List.fold_left close_def lhs_hpargs eqs) in
-  let () = Debug.ninfo_zprint (lazy (("c_lhs_hpargs: " ^ (!CP.print_svl c_lhs_hpargs)))) no_pos in
-  (* let lkeep_vars = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes lhs_keep_closed_rootvars in *)
-  (*may be alisas between lhs and rhs*)
-  let () = Debug.ninfo_zprint (lazy (("keep_vars: " ^ (!CP.print_svl keep_vars)))) no_pos in
-  (* let () = Debug.info_zprint (lazy (("lkeep_vars: " ^ (!CP.print_svl lkeep_vars)))) no_pos in *)
-  (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
-  let () = Debug.ninfo_zprint (lazy (("lkeep_hpargs: " ^ ((pr_list (pr_pair !CP.print_sv !CP.print_svl)) lkeep_hpargs)))) no_pos in
-  (*remove dups*)
-  (* let lkeep_nodes = look_up_dups_node prog hd_nodes hv_nodes c_lhs_hpargs keep_vars  *)
-  (*  (List.fold_left close_def rhs_svl eqs ) in *)
+let keep_data_view_hrel_nodes_two_fbs prog en_pure_field en_lhs_complex
+      f1 f2 hd_nodes hv_nodes (* hpargs *)
+      leqs reqs lhs_keep_rootvars
+      rhs_keep_rootvars
+      lhs_hpargs lkeep_hpargs lhs_args_ni rkeep_hps (* rhs_svl *) rhs_args_ni (* unk_svl *) (* prog_vars *) =
+  let eqs = (leqs@reqs) in
+  let pure_vars = (if en_pure_field then ( List.filter (fun sv -> not (CP.is_node_typ sv)) lhs_args_ni@rhs_args_ni) else lhs_args_ni@rhs_args_ni) in
+
+  (* lhs *)
   let () = Debug.ninfo_zprint (lazy (("f1: " ^ (Cprinter.string_of_formula_base f1)))) no_pos in
-  let () = Debug.ninfo_zprint (lazy (("f2: " ^ (Cprinter.string_of_formula_base f2)))) no_pos in
-  let lhs_pure_vars = (if en_pure_field then ( List.filter (fun sv -> not (CP.is_node_typ sv)) lhs_args_ni) else lhs_args_ni)@rhs_args_ni in
   (*demo/cyc-lseg-3.ss*)
+  let lhs_keep_closed_rootvars =  CP.remove_dups_svl (List.fold_left close_def lhs_keep_rootvars eqs) in
+  let () = Debug.ninfo_zprint (lazy (("lhs keep_vars 1: " ^ (!CP.print_svl lhs_keep_closed_rootvars)))) no_pos in
+  let lhs_keep_vars = if en_lhs_complex then
+    CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes lhs_keep_closed_rootvars
+  else lhs_keep_closed_rootvars in
+  let c_lhs_hpargs = CP.remove_dups_svl (List.fold_left close_def lhs_hpargs eqs) in
   let nf1 = CF.drop_data_view_hpargs_nodes_fb f1 CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hpargs
-    (* lkeep_nodes *) keep_vars (* lkeep_nodes *) keep_vars lkeep_hpargs (keep_vars@c_lhs_hpargs@(lhs_pure_vars)) in
-  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hrelnode
-      keep_vars keep_vars rkeep_hps (keep_vars@rhs_args_ni) in
+    lhs_keep_vars lhs_keep_vars lkeep_hpargs (lhs_keep_vars@c_lhs_hpargs@(pure_vars)) in
   let () = Debug.ninfo_zprint (lazy (("nf1: " ^ (Cprinter.string_of_formula_base nf1)))) no_pos in
+
+  (* rhs *)
+  let () = Debug.ninfo_zprint (lazy (("f2: " ^ (Cprinter.string_of_formula_base f2)))) no_pos in
+  let () = Debug.ninfo_zprint (lazy (("rhs_keep_vars root: " ^ (!CP.print_svl rhs_keep_rootvars)))) no_pos in
+  let () = Debug.ninfo_zprint (lazy (("lhs_hpargs: " ^ (!CP.print_svl lhs_hpargs)))) no_pos in
+  let rhs_keep_closed_rootvars =  (List.fold_left close_def rhs_keep_rootvars eqs) in
+  let () = Debug.ninfo_zprint (lazy (("keep_vars 1: " ^ (!CP.print_svl rhs_keep_closed_rootvars)))) no_pos in
+  let rhs_keep_vars = CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes (CP.remove_dups_svl (rhs_keep_closed_rootvars)) in
+  let nf2 = CF.drop_data_view_hrel_nodes_fb f2 CF.check_nbelongsto_dnode CF.check_nbelongsto_vnode check_neq_hrelnode
+      rhs_keep_vars rhs_keep_vars rkeep_hps (rhs_keep_vars@pure_vars  (*rhs_args_ni*)) in
   let () = Debug.ninfo_zprint (lazy (("nf2: " ^ (Cprinter.string_of_formula_base nf2)))) no_pos in
-  let lhs_b2,rhs_b2 =  ( nf1, nf2)(* smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars *) in
+
+
+  let lhs_b2,rhs_b2 = ( nf1, nf2) in
   (lhs_b2,rhs_b2)
 
 let rec drop_data_view_hrel_nodes_from_root prog f0 hd_nodes hv_nodes eqs drop_rootvars well_defined_svl rhs_svl defined_hps=
@@ -5985,7 +6042,7 @@ let rec look_up_subst_group hp args nrec_grps=
     | [] -> fs
     | (_, args2,_, f,_)::pss->
       (*should refresh f*)
-      let ptrs = CF.get_ptrs_w_args_f f in
+      let ptrs = CF.get_ptrs_w_args_f ~en_pure_field:true f in
       let ss1 = refresh_ptrs args2 (CP.remove_dups_svl ptrs) [] in
       let ss = List.combine args2 args in
       let nf1 = x_add CF.subst (ss) f in
@@ -7577,7 +7634,7 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
   let all_hps0, all_data_used0, all_view_used0 = List.fold_left (fun (r1,r2,r3) cs ->
       let ldns, lvns, lhps = CF.get_hp_rel_formula cs.CF.hprel_lhs in
       let rdns, rvns, rhps = CF.get_hp_rel_formula cs.CF.hprel_rhs in
-      let ptrs = CP.remove_dups_svl ((CF.get_ptrs_w_args_f cs.CF.hprel_lhs)@(CF.get_ptrs_w_args_f cs.CF.hprel_rhs)) in
+      let ptrs = CP.remove_dups_svl ((CF.get_ptrs_w_args_f ~en_pure_field:false cs.CF.hprel_lhs)@(CF.get_ptrs_w_args_f ~en_pure_field:false cs.CF.hprel_rhs)) in
       let ptrs_node_used = List.fold_left (fun r t ->
           match t with
           | Named ot -> if ((String.compare ot "") ==0) then r else r@[ot]

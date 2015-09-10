@@ -2121,6 +2121,30 @@ lemma_safe "2" self::rlseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
 Entailing lemma 2: Valid.
 Valid Lemmas : [2:<==] added to lemma store.
 ===================================================================
+--old-kepp-all-matchres
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 82.87 second
+	Time spent in main process: 49.09 second
+	Time spent in child processes: 33.77 second
+	Number of false contexts: 93
+
+Total verification time: 136.55 second
+	Time spent in main process: 86.62 second
+	Time spent in child processes: 49.93 second
+	Number of false contexts: 414
+
+
+--new-kepp-all-matchres
+Total verification time: 87.70 second
+	Time spent in main process: 47.10 second
+	Time spent in child processes: 40.59 second
+	Number of false contexts: 93
+
+Total verification time: 137.75 second
+	Time spent in main process: 87.44 second
+	Time spent in child processes: 50.31 second
+	Number of false contexts: 414
+
 ===================================================================
 ===================================================================
 ===================================================================

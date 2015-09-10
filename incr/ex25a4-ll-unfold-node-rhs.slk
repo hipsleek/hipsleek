@@ -1,0 +1,76 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+HeapPred U2(node x,node@NI y).
+
+//infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+//infer [U1,@classic] U1(x) |- x=null.
+
+infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+print residue.
+
+/*
+# ex25a4.slk 
+
+infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+
+
+# scheduled an infer_heap which is like a FOLD.
+
+Obtained:
+  U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)
+Two possible solutions:
+(a) Since HP_31(x,q2) is non-instantiating, why
+    did we not have:
+     U2(q2,x) |#|  --> q2::ll<>@M 
+(b) We should alter have
+     HP_31(x,q2) --> emp
+   but this seems to be different from 
+   es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)],
+   Inferred Relations:[ HP_31(x,q2) |#|    --> emp])
+What is Inferred Relations? 
+
+
+Starting Omega.../usr/local/bin/oc
+
+(==solver.ml#13148==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs: U2(q2,x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: q2::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U2(q2,x)
+infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula: 
+ HP_31(x,q2)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2; HP_31]
+ es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)],3: q2::ll<>@M,4:None,5:None)
+
+!!! **WARNING****solver.ml#13164:do_match after infer_heap
+!!! **solver.ml#13165:rhs_h_matched set:[]
+!!! **solver.ml#13166:lhs_h: q2::ll<>@M
+!!! **solver.ml#13167:rhs_h: q2::ll<>@M
+!!! **infer.ml#3949:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3950:  lhs : HP_31(x,q2)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3951:  classic :true
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@2
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ HP_31(x,q2)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2; HP_31]
+ es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@2 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2; HP_31]
+ es_infer_hp_rel: [U2(q2,x) |#|  --> q2::ll<>@M * HP_31(x,q2)],Inferred Relations:[ HP_31(x,q2) |#|  --> emp])
+
+   
+
+*/

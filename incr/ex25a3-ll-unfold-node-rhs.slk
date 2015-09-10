@@ -1,0 +1,57 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+HeapPred U2(node x,node@NI y).
+
+//infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+//infer [U1,@classic] U1(x) |- x=null.
+
+infer [U2,@classic] x::node<_,q2>*U2(q2,x) |- x::node<_,q>*q::ll<>.
+print residue.
+
+/*
+# ex25a3.slk 
+
+infer [U1,@classic] x::node<_,q2>*U2(q2,x) |- x::node<_,q>*q::ll<>.
+
+Residue:
+
+ <1>emp&Anon_14=Anon_13 & q=q2&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_36(x,q2@NI)&true |#|3  --> emp&true; 
+                  U2(q,x)&true |#|3  --> q::ll<>@M * HP_36(x,q@NI)&true]
+[[ SEARCH ==>  SEARCH ==>  Match(x,x) ==>  InferHeap]]
+
+
+# Could we just schedule an unfold..
+
+!!! **context.ml#2472:process_matches (steps) :
+ ### LHS : U1(x)
+ ### RHS : x::node<Anon_13,q>@M
+ ### matches :
+[ Type: Root
+ LHS: U1(x)
+ RHS: x::node<Anon_13,q>@M
+ lhs_rest: emp
+ rhs_rest: q::ll<>@M]
+
+!!! **context.ml#2843:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_13,q>@M, q::ll<>@M]
+ ### action :
+ SEARCH =>[
+  Prio:2
+  Unfold 1 =>
+    LHS: U1(x)
+    RHS: x::node<Anon_13,q>@M;
+  Prio:2
+  InferHeap => ( x::node<Anon_13,q>@M, emp)
+   
+
+*/

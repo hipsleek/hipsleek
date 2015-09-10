@@ -1,0 +1,69 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred Ua(char_star x,char_star@NI y).
+//  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U2a(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star z).
+
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+//(3).
+//infer [U,Ua,@pure_field] U(self,q)*q::char_star<0,p>  |- self::char_star<v,q2> & v!=0.
+ infer [U,Ua,@pure_field] Ua(self,q)*q::char_star<0,p>  |- self::char_star<v,q2> & v!=0.
+ print residue.
+ expect Valid.
+/*
+# ex16c6c1.slk
+
+ infer [U,Ua,@pure_field] U(self,q)*q::char_star<0,p>  |- self::char_star<v,q2> & v!=0.
+
+# without @NI --> complex LHS
+
+ <1>HP_152(v,self) * HP_153(q2,self)&self!=null & v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_152(v_150@NI,self@NI)&true |#|3  --> emp&v_150!=0; 
+                  U(self,q) * q::char_star<flted_33_137,p>@M&
+                   flted_33_137=0 |#|3  --> self::char_star<v_150,q2_151>@M * 
+                                            HP_152(v_150@NI,self@NI) * 
+                                            HP_153(q2_151,self@NI)&
+                   true]
+
+# with @NI via Ua --> simpler LHS (but no heap guards?)
+  messy pure formula
+
+[[ SEARCH ==>  InferUnfold ]]
+ <1>q::char_star<flted_35_139,p>@M * HP_154(v,q,self) * HP_155(q2,q,self)&flted_35_139=0 & v!=0 & (((self!=null & 
+self<q) | (q!=null & q<self)))&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_154(v_152@NI,q@NI,self@NI)&true |#|3  --> emp&
+                   ((self!=null & self<q & v_152!=0) | 
+                    (v_152!=0 & q!=null & q<self)); 
+                  Ua(self,q@NI)&
+                   true |#|3  --> self::char_star<v_152,q2_153>@M * 
+                                  HP_154(v_152@NI,q@NI,self@NI) * 
+                                  HP_155(q2_153,q@NI,self@NI)&
+                   true]
+
+*/
+

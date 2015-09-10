@@ -700,13 +700,20 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       (* remove dupl *)
       let s = super # get_stk in
       BList.remove_dups_eq eq s
-    method push_list_pr (ls:'a list) =  
+    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
       (* WN : below is to be removed later *)
       let n = List.length ls in
       if n=0 then ()
       else 
-        (* let () = print_endline ("\nXXXX push_list("^name^":"^(string_of_int n)^")"^(Basic.pr_list epr ls)) in *)
-        super # push_list ls 
+      let () = 
+        match !Globals.show_push_list with
+        | None -> ()
+        | Some s -> if s=name || s="" then
+            print_endline ("\npush_list("^name^"):"^((Basic.pr_list epr) ls)) 
+          else () in
+      super # push_list ls 
+    method push_list_pr (ls:'a list) =  
+      self # push_list (* ~pr_flag:true *) ls
     method reset_pr  =  
         (* let () = print_endline ("\nXXXX reset("^name) in *)
         super # reset 

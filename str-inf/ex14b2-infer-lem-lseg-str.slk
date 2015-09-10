@@ -25,6 +25,7 @@ pred WFG<p> ==
   lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
 
   infer[U,@classic] U(self,q)*q::char_star<0,p> |- self::WFG<p>.
+  print residue.
 
 /*
 # ex14b.slk --dlpi

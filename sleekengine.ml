@@ -621,7 +621,8 @@ let print_residue residue =
             else
               print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
-          in ()
+          in
+          ()
         else
           (* let () = Debug.info_pprint "b" no_pos in *)
         if print then

@@ -1,0 +1,27 @@
+// infer_fold (data)
+infer [U2] x::node<_,q> |-U2(x,..) 
+   U2(x,..) <-- x::node<_,q>*HP(q,...,x@NI)
+
+// infer_fold (segmented pred)
+infer [U2] x::lseg<q> |- U2(x,..)
+   U2(x,..) <--  x::lseg<q>*HP(q,...,x@NI)
+
+// control by a flag --new-infer-large-step
+// infer_fold (large step)
+infer [U2] x::lseg<q>*q::lseg<p> |- U2(x,p)
+   U2(x,..) <-- x::lseg<q>*q::lseg<p>
+
+---------------------------------------------
+
+// infer_fold with inst (q not in LHS)
+infer [U3] U2(x,p) |- U3(x,q)
+   U3(x,q) <- U2(x,p) & q=p
+# need to add q=p on the LHS as an instantiation
+
+// infer_fold with match
+infer [U3] U2(x,p) |- U3(x,p)
+   U3(x,p) <- U3(x,p) 
+
+// infer_fold (FAIL?)
+infer [U3] U2(x,p) & q!=null |- U3(x,q)
+   FAIL (cannot instantiate q)

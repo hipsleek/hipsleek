@@ -779,8 +779,9 @@ and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list =
       (*This is h_fv, hence, dl is not included*)
       Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@([extract_var_from_id name]))
     | HRel (_, args, _)-> 
-      let args_fv = List.concat (List.map Ipure.afv args) in
-      Gen.BList.remove_dups_eq (=) args_fv
+      if vartype # is_heap_only then []
+      else let args_fv = List.concat (List.map Ipure.afv args) 
+        in Gen.BList.remove_dups_eq (=) args_fv
     (* TODO:WN:HVar -*)
     | HVar (v,ls) -> [(v,Unprimed)]@(List.map (fun v -> (v,Unprimed)) ls) (* TODO:HO -prime? *)
     | HTrue -> []
@@ -856,6 +857,7 @@ and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
   | EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_case_fv b)
 
 (*TO CHECK: how about formula_and*)
+(* excludes HRel arguments *)
 and unbound_heap_fv (f:formula):(ident*primed) list = heap_fv ~vartype:Global_var.var_with_heap_only f
   (* match f with *)
   (* | Base b->  *)

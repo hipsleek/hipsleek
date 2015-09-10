@@ -9008,7 +9008,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
         let extra_exists = IF.push_exists (diff nb_fv new_v_no_inst) nb in
         IF.EBase {
           IF.formula_struc_base = extra_exists;
-          IF.formula_struc_implicit_inst =hack_filter_global_rel prog impl_var;		
+          IF.formula_struc_implicit_inst = hack_filter_global_rel prog impl_var;		
           IF.formula_struc_explicit_inst = all_expl;
           IF.formula_struc_exists = [];
           IF.formula_struc_is_requires = ir;
