@@ -2473,11 +2473,12 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         else
           let is_pre = Cast.check_pre_post_hp prog.Cast.prog_hp_decls (CP.name_of_spec_var hp) in
           (true, is_pre,
-          List.filter (fun (sv,_) -> if CP.mem_svl sv leqNulls then false
+          List.filter (fun (sv,_) -> if CP.mem_svl sv leqNulls || CP.mem_svl sv h_args then false
           else
             let reachable_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv] in
             let reachable_vs_excl = CP.diff_svl reachable_vs [sv] in
-            CP.diff_svl reachable_vs_excl h_args = []
+            let () = y_tinfo_hp (add_str "reachable_vs_excl" !CP.print_svl) reachable_vs_excl in
+            CP.intersect_svl reachable_vs_excl h_args = []
           ) rem,
           (ni_args), CP.diff_svl h_args reachable_args)
     in
@@ -2991,7 +2992,7 @@ let is_match_node lhs_selected_hpargs rhs_b =
     | _ -> false
 
 (*history from func calls*)
-let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs
+let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs
     (* crt_holes  *)(* history *) unk_svl prog_vars (* lvi_ni_svl *) (* classic_nodes *)=
   (********************INTERNAL**************************)
   let  crt_holes = es.CF.es_crt_holes in
@@ -3031,35 +3032,43 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   let () = Debug.ninfo_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
   (***************************)
   (*w history*)
-  let svl0a = (CP.remove_dups_svl (lhs_keep_i_rootvars@rhs_keep_rootvars)) in
-  let svl = (List.fold_left Sautil.close_def svl0a (leqs@reqs)) in
-  let () = Debug.ninfo_hprint (add_str  "    svl0a" !CP.print_svl) svl0a no_pos in
+  let rhs_svl0a = (CP.remove_dups_svl (lhs_keep_i_rootvars@rhs_keep_rootvars)) in
+  let rhs_svl = (List.fold_left Sautil.close_def rhs_svl0a (leqs@reqs)) in
+  let () = Debug.ninfo_hprint (add_str  " rhs_svl" !CP.print_svl) rhs_svl no_pos in
   (*elim ptrs that violate NI rule in lhs*)
   (* let svl = CP.diff_svl svl0 (lvi_ni_svl) in *)
   (*get args which already captures by other hprel*)
-  let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in
+  (* let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in *)
 
   let () = Debug.ninfo_hprint (add_str "    lhs_args_ni" !CP.print_svl) lhs_args_ni no_pos in
-  let () = Debug.ninfo_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
-  let () = Debug.ninfo_hprint (add_str  "    svl" !CP.print_svl) svl no_pos in
+  let () = Debug.info_hprint (add_str  "    rhs_args_ni" !CP.print_svl) rhs_args_ni no_pos in
+  let () = Debug.ninfo_hprint (add_str  "    rhs_svl" !CP.print_svl) rhs_svl no_pos in
   (* let () = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in *)
   let () = DD.ninfo_hprint (add_str  "es.es_infer_obj # is_pure_field_all " string_of_bool) es.es_infer_obj # is_pure_field_all no_pos in
   let () = Debug.ninfo_hprint (add_str  "is_match" string_of_bool) is_match no_pos in
 
   let lhs_b, new_hds, new_hvs = if is_match then
-    let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (svl(* @keep_root_hrels@classic_nodes*));} in
+    let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (rhs_svl(* @keep_root_hrels@classic_nodes*));} in
     n_lhs_b,[],[] (*matching unkown pred lhs vs. rhs*)
   else
     lhs_b,(hds(* @filter_his *)), hvs
   in
 
   (*******DROP*******)
-  let keep_root_svl = (svl(* @keep_root_hrels@classic_nodes*)) in
-  let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all lhs_b rhs_b
-      (* (hds@filter_his) hvs *) new_hds new_hvs (lhp_args@rhp_args) leqs reqs [] keep_root_svl
+  (*TOFIX*)
+  let lhs_keep_root_svl = rhs_svl in
+  let rhs_keep_root_svl = (rhs_svl(* @keep_root_hrels@classic_nodes*)) in
+  let lhs_b1 = if !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) then lhs_b
+  else
+    {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CP.remove_dups_svl (lhs_keep_rootvars@rhs_args_ni));}
+  in
+  let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all
+    !Globals.old_infer_complex_lhs
+    lhs_b1 rhs_b
+      (* (hds@filter_his) hvs *) new_hds new_hvs (* (lhp_args@rhp_args) *) leqs reqs lhs_keep_root_svl rhs_keep_root_svl
       (lhs_keep_rootvars(* @keep_root_hrels *)) lhp_args lhs_args_ni
-      rhs_selected_hps rhs_keep_rootvars rhs_args_ni
-      unk_svl (CP.remove_dups_svl prog_vars) in
+      rhs_selected_hps (* rhs_keep_rootvars *) rhs_args_ni
+      (* unk_svl *) (* (CP.remove_dups_svl prog_vars) *) in
   (***************************)
   let () = Debug.ninfo_hprint (add_str  "lhs_b1a" Cprinter.string_of_formula_base) lhs_b1a no_pos in
   let () = Debug.ninfo_hprint (add_str  "rhs_b1a" Cprinter.string_of_formula_base) rhs_b1a no_pos in
@@ -3097,14 +3106,14 @@ let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selecte
   (* let lhs_b4,rhs_b4 = Sautil.rename_hp_args lhs_b3 rhs_b3 in *)
   (CF.prune_irr_neq_formula ~en_pure_field:es.CF.es_infer_obj # is_pure_field_all prog_vars lhs_b3 rhs_b3,rhs_b3)
 
-let simplify_lhs_rhs prog es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
+let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs
     lhs_selected_hpargs rhs_selected_hpargs (* crt_holes *) (* history *) unk_svl prog_vars
     (* lvi_ni_svl *) (* classic_nodes *)=
   let pr = Cprinter.string_of_formula_base in
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   DD.no_4 "simplify_lhs_rhs" (add_str "lhs preds" pr1)
       (add_str "rhs preds" pr1) pr pr (pr_pair pr pr)
-    (fun _ _ _ _ -> simplify_lhs_rhs prog es lhs_b rhs_b
+    (fun _ _ _ _ -> simplify_lhs_rhs prog iact es lhs_b rhs_b
         leqs reqs hds hvs lhrs rhrs lhs_selected_hpargs rhs_selected_hpargs (* crt_holes *) (* history *)
         unk_svl prog_vars
         (* lvi_ni_svl *) (* classic_nodes *)
@@ -3297,7 +3306,7 @@ let check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos=
       (fun _ -> check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos) guard_opt
 
 
-let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
+let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
     ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs
     (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs reqs eqNull prog_vars (* lvi_ni_svl *) (* classic_nodes *)
     pos =
@@ -3450,7 +3459,7 @@ let generate_constraints prog es rhs lhs_b ass_guard rhs_b1 defined_hps
                                               new_hrels)) in
   let new_rhs_b0 = {new_rhs_b with 
                     CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
-  let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog es lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
+  let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog iact es lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
       (lselected_hpargs) new_rselected_hpargs
       total_unk_svl prog_vars (* lvi_ni_svl *) (* classic_nodes *) in
   (*simply add constraints: *)
@@ -3630,7 +3639,7 @@ let get_eqset puref =
   CP.spec_var list ->
   CF.formula_base -> CF.formula_base -> VarGen.loc -> bool * CF.entail_st
 *)
-let infer_collect_hp_rel prog (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
+let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
   let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
     let cl_lnull_ptrs = CP.find_eq_closure l_emap l_null_ptrs in
@@ -3859,7 +3868,7 @@ let infer_collect_hp_rel prog (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_m
                 | hf::rest -> CF.mkAnd_fb_hf lhs_b1 (List.fold_left(fun a c-> mkStarH a c pos ) hf rest) pos
               in
               let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt, ass_lhs =
-                generate_constraints prog es rhs n_lhs_b1 ass_guard rhs_b1
+                generate_constraints prog iact es rhs n_lhs_b1 ass_guard rhs_b1
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
                     lselected_hpargs2 rselected_hpargs
                   (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs1 reqs1 eqNull subst_prog_vars
@@ -3903,7 +3912,7 @@ let infer_collect_hp_rel prog (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_m
    - n_es_heap_opt: to do
    - oerror_es: for error inference
 *)
-let infer_collect_hp_rel i prog (es:entail_state) lhs_node rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
+let infer_collect_hp_rel i prog iact (es:entail_state) lhs_node rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
@@ -3913,7 +3922,7 @@ let infer_collect_hp_rel i prog (es:entail_state) lhs_node rhs rhs_rest (rhs_h_m
   Debug.no_5_num i "infer_collect_hp_rel" (* pr2 *)
       (add_str "lhs_node" !CF.print_h_formula) (add_str "rhs_node" !CF.print_h_formula)
       (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
-    ( fun _ _ _ _ _ -> infer_collect_hp_rel prog es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
+    ( fun _ _ _ _ _ -> infer_collect_hp_rel prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
       (* es *) lhs_node rhs lhs_b rhs_b es
 
 
@@ -3961,7 +3970,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
     (*   CP.spec_var * CF.CP.spec_var list -> CF.hprel option *)
     let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras (hp,args)=
       (* WN : Why did this simplify_lhs_rhs has so many parameters? *)
-      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog es0 lhs_b rhs_b leqs reqs hds hvs lhras []
+      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog 0 es0 lhs_b rhs_b leqs reqs hds hvs lhras []
           [(hp,args)] [] [] [] in
       let lhs0 = (CF.Base new_lhs_b) in
       (* WN : Why do we remove !=null? *)

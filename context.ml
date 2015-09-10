@@ -63,7 +63,9 @@ and action =
   | M_Nothing_to_do of string
   | M_infer_unfold of (match_res * h_formula * h_formula) (* rhs * rhs_rest *)
   | M_infer_fold of match_res (* ... |- Hp_rel(x,..) *)
-  | M_infer_heap of (h_formula * h_formula * h_formula) (* lhs_node * rhs_node * rhs_rest *)
+  | M_infer_heap of (int * h_formula * h_formula * h_formula)
+        (*iact: 0 = general; 1= unfold; 2=fold*)
+        (* iact * lhs_node * rhs_node * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula * CVP.vperm_sets)
   (* perform a list of actions until there is one succeed*)
   | Cond_action of action_wt list
@@ -230,7 +232,7 @@ let rec pr_action_res pr_mr a =
   | M_Nothing_to_do s -> pr_add_str "NothingToDo => " fmt_string s
   | M_infer_heap p ->
     let pr = string_of_h_formula in
-    fmt_string_cut ("InferHeap => "^(pr_triple pr pr pr p))
+    fmt_string_cut ("InferHeap => "^(pr_quad string_of_int pr pr pr p))
   | M_unmatched_rhs_data_node (h,_,_) -> pr_add_str "UnmatchedRHSData => " fmt_string (string_of_h_formula h)
   | Cond_action l -> pr_seq_vbox "COND =>" (pr_action_wt_res pr_mr) l
   | Seq_action l -> pr_seq_vbox "SEQ =>" (pr_action_wt_res pr_mr) l
@@ -2236,7 +2238,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) -> 
          (* TODO : check if h_name in the infer_vars *)
          let act1 = M_unfold (m_res, 1) in (* base-case unfold implemented *)
-         let act2 = M_infer_heap (lhs_node, rhs,HEmp) in
+         let act2 = M_infer_heap (0, lhs_node, rhs,HEmp) in
          let act3 = M_infer_unfold (m_res,rhs,HEmp) in
          let wt = 2 in
          (* old method do not use base_case_unfold *)
@@ -2434,7 +2436,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         | Some h -> h
         | None -> HEmp
       in
-      if !Globals.old_infer_collect then [(2,M_infer_heap (lhs_node, rhs_node,rhs_rest))]
+      if !Globals.old_infer_collect then [(2,M_infer_heap (0,lhs_node, rhs_node,rhs_rest))]
       else []
   in
   (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
