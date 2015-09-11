@@ -19521,8 +19521,16 @@ let check_compatible ?(inst_rhs=false) emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
     (fun _ _ _ _ -> check_compatible ~inst_rhs:inst_rhs emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p) l_vs r_vs lhs_h rhs_h
 
 let check_compatible_eb ?(inst_rhs=false) emap l_vs r_vs lhs_b lhs_p rhs_b rhs_p =
+  (* let eqns' = MCP.ptr_equations_without_null lhs_p in *)
+  (* let emap = CP.EMapSV.build_eset eqns' in *)
   let lhs_h = lhs_b.formula_base_heap in
   let rhs_h = rhs_b.formula_base_heap in
   let lhs_pure = (MCP.pure_of_mix lhs_b.formula_base_pure) in
   let rhs_pure = (MCP.pure_of_mix rhs_b.formula_base_pure) in
   check_compatible ~inst_rhs:inst_rhs emap l_vs r_vs lhs_h lhs_pure rhs_h rhs_pure
+
+let check_exists_node emap hf sv =
+  let r = find_node emap hf sv in
+  r!=[]
+  
+  

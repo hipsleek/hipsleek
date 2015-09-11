@@ -2334,17 +2334,31 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let wt = 2 in 
          (* (wt,Search_action [(wt,act3);(wt,act2)]) *)
          (wt,act2)
-       | DataNode _,  HRel (hp,args,_)  -> 
+       | DataNode dn,  HRel (hp,args,_)  -> 
          (* failwith "TBI"  *)
          (* useful for base-case fold x::node<_,_> |- U(x,y) *)
-         let act1 = M_base_case_fold m_res in
-         let act2 = M_infer_fold m_res (* (rhs_node,rhs_rest) *) in
+         let pr_hf = !CF.print_h_formula in
+         let () = y_binfo_hp (add_str "(LHS,RHS)" (pr_pair pr_hf pr_hf)) (lhs_node,rhs_node) in
+         let () = y_binfo_hp (add_str "rhs_rest" (pr_hf)) rhs_rest in
+         let pt = dn.h_formula_data_node in
+         let r_vs = List.concat (List.map CP.afv args) in
+         let r = CF.check_exists_node emap rhs_rest pt in
+         let pr_sv = !CP.print_sv in
+         let lhs_p1 = MCP.pure_of_mix lhs_p in
+         let rhs_p1 = MCP.pure_of_mix rhs_p in
+         let r_lst = CF.check_compatible emap [pt] r_vs lhs_node lhs_p1 rhs_rest rhs_p1 in
+         let () = y_binfo_hp (add_str "exists" (pr_pair pr_sv string_of_bool)) (pt,r) in
+         let () = y_binfo_hp (add_str "compatible" (pr_list (pr_pair pr_sv pr_sv))) r_lst in
          let wt = 2 in
+         let act1 = if (r_lst == []) || (List.length args <=1) then [] else
+             let m_res_bf = { m_res with match_res_compatible = r_lst} in 
+             [(wt,M_base_case_fold m_res_bf)] 
+         in
+         let act2 = [(wt,M_infer_fold m_res)] (* (rhs_node,rhs_rest) *) in
          (* old method do not use base_case_fold *)
-         if !Globals.old_base_case_fold_hprel then (wt,act2)
-         else (* (wt,act1) *)
-           if List.length args >=2 then (wt,Search_action [(wt,act2);(wt,act1)])
-           else (wt,act2)
+         let lst = if !Globals.old_base_case_fold_hprel then act2 else act1@act2
+         in (wt,mk_search_action lst)
+
        (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
        | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
       )
