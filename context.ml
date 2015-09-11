@@ -2410,15 +2410,29 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
          process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
          end
-       | ViewNode vl, HRel (h_name, _, _) -> begin
-         let h_name = Cpure.name_of_spec_var h_name in
-         let vl_name = vl.h_formula_view_name in
-         let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
-         let right_preds =  match ms with
-           | Coerc_mater _ -> List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
-           | _ -> []
-         in
-         process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+       | ViewNode vl, HRel (h_name, args, _) -> begin
+           let h_name = Cpure.name_of_spec_var h_name in
+           let vl_name = vl.h_formula_view_name in
+           let pt = vl.h_formula_view_node in
+           let lhs_args = pt::vl.h_formula_view_arguments in
+           (* TODO find all aliases *)
+           let alias_set = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap) lhs_args) in
+           let () = y_binfo_hp (add_str "alias_set" !CP.print_svl) alias_set in
+           let args = List.concat (List.map CP.afv args) in
+           let common = CP.intersect_svl (alias_set@lhs_args) args in
+           if common==[] then 
+             let pr = !CF.print_h_formula in
+             let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
+             (4,M_Nothing_to_do ("No common parameters : "^msg))
+           else
+             let () = y_binfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
+             let () = y_binfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
+             let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
+             let right_preds =  match ms with
+               | Coerc_mater _ -> List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
+               | _ -> []
+             in
+             process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
          end
        | ViewNode vl, DataNode dr ->
          let () = pr_hdebug (add_str "cyclic " pr_id) " 5" in
