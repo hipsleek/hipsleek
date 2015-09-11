@@ -19,6 +19,8 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  (* this indicates compatible variables from LHS/RHS that can be used *)
+  (* for base-case-fold/unfold and instantiation *)
   match_res_compatible: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
 }
 
@@ -89,6 +91,64 @@ and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (l
 
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
+
+let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
+  {
+    match_res_lhs_node = lhs_node;
+    match_res_lhs_rest = lhs_rest;
+    match_res_holes = holes;
+    match_res_type = mt;
+    match_res_compatible = [];
+    match_res_rhs_node = rhs_node;
+    match_res_rhs_rest = rhs_rest;
+  }
+
+(*
+(* return a list of nodes from heap f that appears in *)
+(* alias set aset. The flag associated with each node *)
+(* lets us know if the match is at the root pointer,  *)
+(* or at materialized args,...                        *)
+*)
+
+let rec norm_action (wt,a) = match a with
+  | Search_action xs ->
+    let rs = List.map norm_action xs in
+    List.concat rs
+  | _ -> [(wt,a)] 
+
+let norm_rm_nothing lst =
+  let lst2 = List.filter (fun (_,a) -> match a with 
+      | M_Nothing_to_do _ -> false 
+      | _ -> true ) lst in
+  let lst = if lst2==[] then lst else lst2 in
+  lst
+
+let norm_search_action lst =
+  begin
+    let lst = List.concat (List.map norm_action lst) in
+    let lst = norm_rm_nothing lst in
+    match lst with
+    | [] -> M_Nothing_to_do ("search action is empty")
+    | [(_,a)] -> a
+    | lst -> Search_action lst
+  end
+
+let mk_search_action lst = norm_search_action lst
+
+let norm_single_action ((wt,a) as act) = 
+  (* let lst = norm_action act in *)
+  (wt,norm_search_action [act])
+
+(* and norm_action (a,lst) = *)
+(*   (a,norm_search_action_x lst) *)
+
+(* and norm_search_action ls =  *)
+(*   Debug.no_1 "norm_search_action" (pr_list string_of_action_wt_res) string_of_action_res norm_search_action_x ls *)
+
+and norm_cond_action ls = match ls with
+  | [] -> M_Nothing_to_do ("cond action is empty")
+  | [(_,a)] -> a
+  | lst -> Cond_action lst
 
 let get_rhs_rest_emp_flag act old_is_rhs_emp =
   match act with
@@ -416,14 +476,13 @@ let convert_starminus ls =
       in 
       let h = helper lhs_rest in
       let () = print_string ("new_lhs_res:"^(Cprinter.string_of_h_formula h)^"\n") 
-      in { match_res_lhs_node = m.match_res_lhs_node;
-           match_res_lhs_rest = h;
-           match_res_holes = m.match_res_holes;
-           match_res_type = m.match_res_type;
-           match_res_rhs_node = m.match_res_rhs_node;
-           match_res_rhs_rest = m.match_res_rhs_rest;
-           match_res_compatible = [];
-      }
+      in { m with match_res_lhs_rest = h ; match_res_compatible = [] }
+           (* match_res_lhs_node = m.match_res_lhs_node; *)
+           (* match_res_holes = m.match_res_holes; *)
+           (* match_res_compatible = []; *)
+           (* match_res_type = m.match_res_type; *)
+           (* match_res_rhs_node = m.match_res_rhs_node; *)
+           (* match_res_rhs_rest = m.match_res_rhs_rest} *)
     ) ls
 
 (*  (resth1, anode, r_flag, phase, ctx) *)
@@ -500,14 +559,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   | HTrue -> (
       if (rhs_rest = HEmp) then (
         (* if entire RHS is HTrue then it matches with the entire LHS*)
-        let mres = { match_res_lhs_node = lhs_h;
-                     match_res_lhs_rest = HEmp;
-                     match_res_holes = [];
-                     match_res_type = Root;
-                     match_res_rhs_node = HTrue;
-                     match_res_rhs_rest = HEmp;
-                     match_res_compatible = [];
-        } in
+        let mres = mk_match_res Root lhs_h HEmp HTrue HEmp in
+            (* { match_res_lhs_node = lhs_h; *)
+            (*          match_res_lhs_rest = HEmp; *)
+            (*          match_res_holes = []; *)
+            (*          match_res_compatible = []; *)
+            (*          match_res_type = Root; *)
+            (*          match_res_rhs_node = HTrue; *)
+            (*          match_res_rhs_rest = HEmp; } in *)
         [mres]
       )
       else []
@@ -1271,13 +1330,14 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l no_pos in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let () = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
-      { match_res_lhs_node = lhs_node;
-        match_res_lhs_rest = lhs_rest;
-        match_res_holes = holes;
-        match_res_type = mt;
-        match_res_rhs_node = rhs_node;
-        match_res_rhs_rest = rhs_rest;
-        match_res_compatible = []; }
+       mk_match_res ~holes:holes mt lhs_node lhs_rest rhs_node rhs_rest
+       (* { match_res_lhs_node = lhs_node; *)
+       (*  match_res_lhs_rest = lhs_rest; *)
+       (*  match_res_holes = holes; *)
+       (*  match_res_type = mt; *)
+       (*  match_res_rhs_node = rhs_node; *)
+       (*  match_res_compatible = []; *)
+       (*  match_res_rhs_rest = rhs_rest; } *)
     ) l
 
 
@@ -1508,15 +1568,15 @@ and process_one_match_mater_unk_w_view left_preds right_preds lhs_name rhs_name 
 (* lets us know if the match is at the root pointer,  *)
 (* or at materialized args,...                        *)
 *)
-and norm_search_action ls = match ls with
-  | [] -> M_Nothing_to_do ("search action is empty")
-  | [(_,a)] -> a
-  | lst -> Search_action lst
+(* and norm_search_action ls = match ls with *)
+(*   | [] -> M_Nothing_to_do ("search action is empty") *)
+(*   | [(_,a)] -> a *)
+(*   | lst -> Search_action lst *)
 
-and norm_cond_action ls = match ls with
-  | [] -> M_Nothing_to_do ("cond action is empty")
-  | [(_,a)] -> a
-  | lst -> Cond_action lst
+(* and norm_cond_action ls = match ls with *)
+(*   | [] -> M_Nothing_to_do ("cond action is empty") *)
+(*   | [(_,a)] -> a *)
+(*   | lst -> Cond_action lst *)
 
 and check_lemma_not_exist vl vr=
   if not !Globals.lemma_syn then false else
@@ -1612,6 +1672,8 @@ and process_one_match prog estate lhs_h lhs_p conseq is_normalizing
 
 and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_res) (rhs_node,rhs_rest,rhs_p) reqset
   : action_wt =
+  let eqns' = MCP.ptr_equations_without_null lhs_p in
+  let emap = CP.EMapSV.build_eset eqns' in
   let pr_debug s = x_tinfo_pp s no_pos in
   let pr_hdebug h a = x_tinfo_hp h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
@@ -1672,6 +1734,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            else
              dl_orig,dr_orig
          in
+         let wt = 1 in
          let l2 =
            if ((String.compare dl_name dr_name)==0 && 
                ((dl_flag==false && (dl_origins!=[])) 
@@ -1680,8 +1743,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if (String.compare dl_name dr_name)==0 
            then 
              (* temp change to 0 to give fold higher priority *)
-             [(1,M_match m_res)]
-           else [(1,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
+             [(wt,M_match m_res)]
+           else [(wt,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
          in
          let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in
          (*apply lemmas on data nodes*)
@@ -1704,13 +1767,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  else left_ls
                in
                let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) dr_name dl_name) in
-               let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in
-               let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in
+               let left_act = List.map (fun l -> (wt,M_lemma (m_res,Some l))) left_ls in
+               let right_act = List.map (fun l -> (wt,M_lemma (m_res,Some l))) right_ls in
                if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
                else left_act@right_act
              end
            else [] in
-         let src = (-1,Search_action (l2@l3)) in
+         let src = (wt,mk_search_action (l2@l3)) in
          src
        | HVar _, HVar _ -> (1, M_match m_res)
        | ViewNode vl, ViewNode vr -> 
@@ -2458,13 +2521,15 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
   (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
   (* does removing original cause loop? should we use counting? *)
   if (is_view rhs_node) (* && (get_view_original rhs_node) *) then
-    let r = (2, M_base_case_fold { match_res_lhs_node = HEmp;
-                                   match_res_lhs_rest = lhs_h;
-                                   match_res_holes = [];
-                                   match_res_type = Root;
-                                   match_res_rhs_node = rhs_node;
-                                   match_res_rhs_rest = rhs_rest;
-    match_res_compatible = []; }) in 
+    let mr = mk_match_res Root HEmp lhs_h rhs_node rhs_rest in
+    let r = (2, M_base_case_fold mr) in
+    (* { match_res_lhs_node = HEmp; *)
+    (*   match_res_lhs_rest = lhs_h; *)
+    (*   match_res_holes = []; *)
+    (*   match_res_compatible = []; *)
+    (*   match_res_type = Root; *)
+    (*   match_res_rhs_node = rhs_node; *)
+    (*   match_res_rhs_rest = rhs_rest; }) in  *)
     (* WN : why do we need to have a fold following a base-case fold?*)
     (* changing to no_match found *)
     (*(-1, Search_action [r])*)
@@ -2496,13 +2561,14 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         let vl_view_derv =  vl.h_formula_view_derv in
         let vr_view_derv = vr.h_formula_view_derv in
         let vr_view_split = vr.h_formula_view_split in
-        let m_res = { match_res_lhs_node = ViewNode vl;
-                      match_res_lhs_rest = lhs_rest;
-                      match_res_holes = [];
-                      match_res_type = Root;
-                      match_res_rhs_node = rhs_node;
-                      match_res_rhs_rest = rhs_rest;
-                      match_res_compatible = []; } in
+        let m_res = mk_match_res Root (ViewNode vl) lhs_rest rhs_node rhs_rest in
+        (* let m_res = { match_res_lhs_node = ViewNode vl; *)
+        (*               match_res_lhs_rest = lhs_rest; *)
+        (*               match_res_holes = []; *)
+        (*               match_res_type = Root; *)
+        (*               match_res_compatible = []; *)
+        (*               match_res_rhs_node = rhs_node; *)
+        (*               match_res_rhs_rest = rhs_rest; } in *)
         if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
           let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
           let uf_i = if new_orig then 0 else 1 in
@@ -2566,7 +2632,9 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:ma
     (fun _ _ _ _ -> process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
     lhs_h l rhs_node rhs_rest
 
-and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))= 
+and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))=
+  let eqns' = MCP.ptr_equations_without_null lhs_p in
+  let emap = CP.EMapSV.build_eset eqns' in
   if !Debug.devel_debug_steps then
     begin
       let pr = Cprinter.string_of_h_formula   in

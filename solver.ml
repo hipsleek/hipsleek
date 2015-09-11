@@ -5669,13 +5669,14 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             && (is_view_user x || is_view_user e)) t in
         x_tinfo_hp (add_str "y" Cprinter.string_of_h_formula) y no_pos;
         let xy = if (is_view_user x) then x else y in
-        let mr = { Context.match_res_lhs_node = xy;
-                   Context.match_res_lhs_rest = x; (* ??? why*)
-                   Context.match_res_holes = [] ;
-                   Context.match_res_type = Context.Root;
-                   Context.match_res_rhs_node = x;
-                   Context.match_res_rhs_rest = x;
-                   Context.match_res_compatible = []; } in
+        let mr = Context.mk_match_res Context.Root xy x x x in
+        (* let mr = { Context.match_res_lhs_node = xy; *)
+        (*            Context.match_res_lhs_rest = x; (\* ??? why*\) *)
+        (*            Context.match_res_holes = [] ; *)
+        (*            Context.match_res_compatible = []; *)
+        (*            Context.match_res_type = Context.Root; *)
+        (*            Context.match_res_rhs_node = x; *)
+        (*            Context.match_res_rhs_rest = x; } in *)
         Context.M_unfold (mr,1)
       with
       (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
