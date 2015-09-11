@@ -19481,8 +19481,13 @@ let find_node emap hf sv =
 (* let find_node emap rhs_h sv = [] *)
 
 let is_comp (l_n,_,l_arg) (r_n,_,r_arg) pure =
-  (* TODO : check for satisfiability *)
-  if l_n=r_n then true
+  (* DONE : check for satisfiability *)
+  if l_n=r_n then 
+    let lst = List.combine l_arg r_arg in
+    let new_pure = List.fold_left (fun z (v1,v2) -> CP.mkAnd z (CP.mkEqn v1 v2 no_pos) no_pos) pure lst in
+    let res = !MCP.is_sat_raw (MCP.mix_of_pure new_pure) in
+    let () = y_ninfo_hp (add_str "is_comp" string_of_bool) res in
+    res (* true *)
   else false
 
 let cross_prod xs ys = List.concat (List.map (fun y -> List.map (fun x -> (x,y)) xs) ys)
@@ -19501,7 +19506,8 @@ let check_compatible ?(inst_rhs=false) emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
   let rhs_lst = List.concat (List.map (find_node emap rhs_h) r_vs) in
   let lhs_lst = List.concat (List.map (find_node emap lhs_h) l_vs) in
   let cross_lst = cross_prod lhs_lst rhs_lst in
-  let sel_lst = List.filter (fun (l,r) -> is_comp l r lhs_p) cross_lst in 
+  let pure_both = CP.mkAnd lhs_p rhs_p no_pos in
+  let sel_lst = List.filter (fun (l,r) -> is_comp l r pure_both) cross_lst in 
   let sel_lst = List.map (fun ((a,p1,_),(b,p2,_)) -> (p1,p2)) sel_lst in
   collect_unique sel_lst []
   (* failwith "TBI" *)

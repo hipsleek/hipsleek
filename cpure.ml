@@ -2490,6 +2490,11 @@ and mkPtrEqn v1 v2 pos =
   let v2 = mkVarNull v2 pos in
   mkEqExp v1 v2 pos
 
+and mkEqn v1 v2 pos = 
+  let v1 = mkVar v1 pos in
+  let v2 = mkVar v2 pos in
+  mkEqExp v1 v2 pos
+
 and mkPtrNeqEqn v1 v2 pos =
   let v1 = mkVarNull v1 pos in
   let v2 = mkVarNull v2 pos in
