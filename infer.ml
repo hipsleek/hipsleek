@@ -524,7 +524,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
             match_res_holes = [];
             match_res_type = Root;
             match_res_rhs_node = rhs;
-            match_res_rhs_rest = rhs_rest; } in
+            match_res_rhs_rest = rhs_rest;
+            match_res_rhs_inst = []; } in
           let act = M_match r in
           (
             (* WARNING : any dropping of match action must be followed by pop *)

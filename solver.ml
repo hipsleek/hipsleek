@@ -5674,7 +5674,8 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                    Context.match_res_holes = [] ;
                    Context.match_res_type = Context.Root;
                    Context.match_res_rhs_node = x;
-                   Context.match_res_rhs_rest = x; } in
+                   Context.match_res_rhs_rest = x;
+                   Context.match_res_rhs_inst = []; } in
         Context.M_unfold (mr,1)
       with
       (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
@@ -12423,7 +12424,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-        Context.match_res_holes = holes;} as m_res)->
+        Context.match_res_holes = holes;
+      } as m_res)->
       x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
@@ -12572,7 +12574,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-        Context.match_res_holes = holes;} as m_res, unfold_num, unfold_or_fold, lem_type, unfold_opt)->
+        Context.match_res_holes = holes;
+      } as m_res, unfold_num, unfold_or_fold, lem_type, unfold_opt)->
       x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
@@ -12646,7 +12649,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
-        Context.match_res_rhs_rest = rhs_rest;} ->
+        Context.match_res_rhs_rest = rhs_rest;
+      } ->
       let l_perm = get_node_perm lhs_node in
       let r_perm = get_node_perm rhs_node in
       let v_rest, v_consumed = 
@@ -12731,9 +12735,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             if rargs = [] then return_out_of_inst extended_hps
             else
               let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
-              (* let inter_eqs = List.filter (fun p -> (CP.is_eq_exp_ptrs rargs p)) (CP.list_of_conjs p) in *)
-              (* let subst_p = CP.subst inter_eqs in *)
-              (* let () = Debug.info_hprint (add_str  "subst_p" !CP.print_formula) subst_p no_pos in *)
               let fvp = CP.fv p in
               let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
               let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
@@ -12755,9 +12756,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   CF.mkAnd_base_pure lhs_b mf no_pos)
           with _ -> return_out_of_inst extended_hps
         in
-        let lhs_node = r.match_res_lhs_node in
-        let rhs_node = r.match_res_rhs_node in
-        let rhs_rest = r.match_res_rhs_rest in
+        let lhs_node = r.Context.match_res_lhs_node in
+        let rhs_node = r.Context.match_res_rhs_node in
+        let rhs_rest = r.Context.match_res_rhs_rest in
+        let rhs_inst = r.Context.match_res_rhs_inst in
         let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with
           | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
                 if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
@@ -12765,11 +12767,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     | er::rest1,_::rest2 -> begin
                         let largs = (List.map CP.exp_to_sv rest1) in
                         let rargs = (List.map CP.exp_to_sv rest2) in
-                        if List.length rargs < List.length largs then
-                          let r = (CP.exp_to_sv er) in
-                          let sst = Sautil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in
+                         let () = Debug.ninfo_hprint (add_str  "rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
+                        if (* List.length rargs < List.length largs &&  *)rhs_inst != [] then
+                          (* let r = (CP.exp_to_sv er) in *)
+                          (* let sst = Cfutil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
                           let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-                          let is_succ, p = gen_inst lhds lhvs sst (CP.mkTrue no_pos) in
+                          let is_succ, p = gen_inst lhds lhvs rhs_inst (CP.mkTrue no_pos) in
                           if not is_succ then
                             true, estate, lhs_b
                           else

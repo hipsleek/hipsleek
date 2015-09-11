@@ -10,6 +10,7 @@ open Immutable
 
 module CF = Cformula
 module CFU = Cfutil
+module CP = Cpure
 
 type match_res = {
   match_res_lhs_node : h_formula; (* node from the extracted formula *)
@@ -18,6 +19,7 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  match_res_rhs_inst: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
 }
 
 (*
@@ -158,7 +160,8 @@ let pr_match_res (c:match_res):unit =
   pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
   pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node; fmt_cut ();
   fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
-  fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
+  fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest; fmt_cut ();
+  fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_rhs_inst) ;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
@@ -418,7 +421,9 @@ let convert_starminus ls =
            match_res_holes = m.match_res_holes;
            match_res_type = m.match_res_type;
            match_res_rhs_node = m.match_res_rhs_node;
-           match_res_rhs_rest = m.match_res_rhs_rest}
+           match_res_rhs_rest = m.match_res_rhs_rest;
+           match_res_rhs_inst = [];
+      }
     ) ls
 
 (*  (resth1, anode, r_flag, phase, ctx) *)
@@ -500,7 +505,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                      match_res_holes = [];
                      match_res_type = Root;
                      match_res_rhs_node = HTrue;
-                     match_res_rhs_rest = HEmp; } in
+                     match_res_rhs_rest = HEmp;
+                     match_res_rhs_inst = [];
+        } in
         [mres]
       )
       else []
@@ -1269,7 +1276,8 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
         match_res_holes = holes;
         match_res_type = mt;
         match_res_rhs_node = rhs_node;
-        match_res_rhs_rest = rhs_rest; }
+        match_res_rhs_rest = rhs_rest;
+        match_res_rhs_inst = []; }
     ) l
 
 
@@ -2233,7 +2241,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          then (1,M_match m_res)
          else 
            let flag = CF.is_exists_hp_rel hn1 estate in
-           if flag  then (2,M_infer_unfold (m_res,rhs,HEmp))
+           if flag then
+             let lhs_b_wo_pure = CF.formula_base_of_heap lhs_h no_pos in
+             let lhs_b = {lhs_b_wo_pure with CF.formula_base_pure = lhs_p } in
+             let rhs_b_wo_pure = CF.formula_base_of_heap (CF.mkStarH rhs_node rhs_rest no_pos) no_pos in
+             let rhs_b = {rhs_b_wo_pure with CF.formula_base_pure = rhs_p } in
+             let rhs_inst = Cfutil.compute_eager_inst prog lhs_b rhs_b hn1 hn2 args1 args2 in
+             let m_res_w_inst = {m_res with match_res_rhs_inst = m_res.match_res_rhs_inst@rhs_inst;} in
+             (2,M_infer_unfold (m_res_w_inst,rhs,HEmp))
            else if CF.is_exists_hp_rel hn2 estate  then (2,M_infer_fold m_res)
            else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
        | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) -> 
@@ -2448,7 +2463,8 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
                                    match_res_holes = [];
                                    match_res_type = Root;
                                    match_res_rhs_node = rhs_node;
-                                   match_res_rhs_rest = rhs_rest; }) in 
+                                   match_res_rhs_rest = rhs_rest;
+    match_res_rhs_inst = []; }) in 
     (* WN : why do we need to have a fold following a base-case fold?*)
     (* changing to no_match found *)
     (*(-1, Search_action [r])*)
@@ -2485,7 +2501,8 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
                       match_res_holes = [];
                       match_res_type = Root;
                       match_res_rhs_node = rhs_node;
-                      match_res_rhs_rest = rhs_rest; } in
+                      match_res_rhs_rest = rhs_rest;
+                      match_res_rhs_inst = []; } in
         if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
           let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
           let uf_i = if new_orig then 0 else 1 in
