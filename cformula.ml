@@ -19487,25 +19487,36 @@ let is_comp (l_n,_,l_arg) (r_n,_,r_arg) pure =
 
 let cross_prod xs ys = List.concat (List.map (fun y -> List.map (fun x -> (x,y)) xs) ys)
 
-let check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
+let check_compatible ?(inst_rhs=false) emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
+  let rec collect_unique xs ans =
+    match xs with
+    | [] -> List.rev ans
+    | ((l,r) as p)::xs -> 
+      if List.exists (fun (v1,v2) -> (CP.eq_spec_var v1 l) || (CP.eq_spec_var v2 r)) ans then collect_unique xs ans
+      else collect_unique xs (p::ans) in
   (* let (lhs_h,lhs_p,_,_,_,_) = split_components lhs in *)
   (* let (rhs_h,rhs_p,_,_,_,_) = split_components rhs in *)
+  let free_vars = if inst_rhs then (h_fv lhs_h)@(CP.fv lhs_p)@l_vs else [] in
+  let r_vs = CP.diff_svl r_vs free_vars in
   let rhs_lst = List.concat (List.map (find_node emap rhs_h) r_vs) in
   let lhs_lst = List.concat (List.map (find_node emap lhs_h) l_vs) in
   let cross_lst = cross_prod lhs_lst rhs_lst in
   let sel_lst = List.filter (fun (l,r) -> is_comp l r lhs_p) cross_lst in 
-  List.map (fun ((a,p1,_),(b,p2,_)) -> (p1,p2)) sel_lst 
+  let sel_lst = List.map (fun ((a,p1,_),(b,p2,_)) -> (p1,p2)) sel_lst in
+  collect_unique sel_lst []
   (* failwith "TBI" *)
 
-let check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
+let check_compatible ?(inst_rhs=false) emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
   let pr1 = !CP.print_svl in
   let pr2 = !print_h_formula in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   Debug.no_4 "check_compatible" (add_str "l_vs" pr1) (add_str "r_vs" pr1)
     (add_str "lhs" pr2) (add_str "rhs" pr2) pr3
-    (fun _ _ _ _ -> check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p) l_vs r_vs lhs_h rhs_h
+    (fun _ _ _ _ -> check_compatible ~inst_rhs:inst_rhs emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p) l_vs r_vs lhs_h rhs_h
 
-let check_compatible emap l_vs r_vs lhs_b lhs_p rhs_b rhs_p =
+let check_compatible_eb ?(inst_rhs=false) emap l_vs r_vs lhs_b lhs_p rhs_b rhs_p =
   let lhs_h = lhs_b.formula_base_heap in
   let rhs_h = rhs_b.formula_base_heap in
-  check_compatible emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p
+  let lhs_pure = (MCP.pure_of_mix lhs_b.formula_base_pure) in
+  let rhs_pure = (MCP.pure_of_mix rhs_b.formula_base_pure) in
+  check_compatible ~inst_rhs:inst_rhs emap l_vs r_vs lhs_h lhs_pure rhs_h rhs_pure

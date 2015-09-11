@@ -8,17 +8,15 @@ data char_star {
   HeapPred U3(char_star x,char_star y,char_star@NI z).
  HeapPred U4(char_star x,char_star y,char_star@NI z,char_star@NI t).
 
-//1
- infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
-    |- U2(self,qq) * qq::char_star<n,p>.
+//3
+infer [U3,U4,@pure_field,@classic] U4(self,q1,x,q2)*q1::char_star<0,p> *q2::char_star<1,p> //& qq1!=null
+    |- U3(self,qq1,qq2)  * qq2::char_star<0,p> * qq1::char_star<1,p>.
  print residue.
  expect Valid.
 
-//2
-infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
-    |- U2(self,qq) * qq::char_star<1,p>.
- print residue.
- expect Fail.
+
+/*
+# ex16c6c2.slk
 
 //3
 infer [U3,U4,@pure_field,@classic] U4(self,q1,x,q2)*q1::char_star<0,p> *q2::char_star<1,p>
@@ -26,9 +24,24 @@ infer [U3,U4,@pure_field,@classic] U4(self,q1,x,q2)*q1::char_star<0,p> *q2::char
  print residue.
  expect Valid.
 
+# instantiating q1=q2 leads to unsoundness. Each RHS can only
+  be instantiated once.
 
-/*
-# ex16c6c2.slk
+-----
+
+Entail (3) : Valid. 
+Residue:
+
+ <1>emp&p_72=p & qq2=q2 & q1=q2 & qq1=q2&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U4(self,q1,x@NI,q2@NI)&
+                   q2=q1 & qq2=qq1 & qq1=q1 |#| q1::char_star<flted_24_71,p>@M * 
+                                                q1::char_star<flted_24_70,p>@M&
+                   (flted_24_71=0 | flted_24_70=1) --> U3(self,qq1,qq2@NI)&
+                   true]
+[[ InferUnfold  ==>  COND ==>  SEARCH ==>  COND ==>  SEARCH ==>  Match(q2,qq1) ==>  SEARCH ==>  Match(q1,qq2)]]
+
+=========================================
+
 
  infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
     |- U2(self,qq) * qq::char_star<0,p>.
