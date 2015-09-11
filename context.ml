@@ -1429,7 +1429,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
            left_act@right_act@simple_act
          in
          if l=[] then (1,M_Nothing_to_do ("7:"^(string_of_match_res c)))
-         else (-1,Search_action l)
+         else (-1,mk_search_action l)
        | ViewNode vl, ViewNode vr ->
          let vl_name = vl.h_formula_view_name in
          let vr_name = vr.h_formula_view_name in
@@ -1490,7 +1490,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
          if l=[] then
            (* if not (!Globals.cyc_proof_syn) then *) (1,M_Nothing_to_do ("6:"^(string_of_match_res c)))
          (* else (1, M_cyclic (c, -1,-1,-1,None)) *)
-         else (-1,Search_action l)
+         else (-1,mk_search_action l)
        | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do ("5:"^(string_of_match_res c)))
        | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do ("4:"^(string_of_match_res c)))
        | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
@@ -2266,12 +2266,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* if (left_ls == [] && (vl_view_orig ) then ua *)
          (* else (1,M_lemma (m_res,Some (List.hd left_ls))) *)
          let a = a1@a2 in
-         if a!=[] then (-1,Search_action a)
+         if a!=[] then (-1,mk_search_action a)
          (* if (vl_view_orig || vl_self_pts==[]) then ua *)
          (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
          else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
        | ViewNode vl, HRel (h_name, args, _) -> (* cant it reach this branch? *)
-         pr_debug "VIEW vs HREL\n";
+         y_tinfo_pp "VIEW vs HREL\n";
          let h_name = Cpure.name_of_spec_var h_name in
          let vl_name = vl.h_formula_view_name in
 
@@ -2324,7 +2324,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          if !Globals.old_base_case_unfold_hprel then (wt,act2)
          (* (2,M_infer_heap (rhs,HEmp)) *)
          else if List.length args<2 then (wt,act3)
-         else (wt,Search_action [(wt,act3);(wt,act1)])
+         else (wt,mk_search_action [(wt,act3);(wt,act1)])
        (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
          (* TODO : check if h_esname in the infer_vars *)
@@ -2435,7 +2435,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              if !Globals.lhs_case_search_flag 
              then 
                let () = pr_debug "Sel (search) 1" in
-               (-1, (Search_action (a2::l1)))
+               (-1, (mk_search_action (a2::l1)))
              else 
                let () = pr_debug "Sel (cond) 2" in
                (-1, (Cond_action (a2::l1)))
@@ -2620,6 +2620,10 @@ and process_infer_heap_match ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h
     (fun _ _ _ _ -> process_infer_heap_match_x ~vperm_set:vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (lhs_node_opt, rhs_node,rhs_rest)) lhs_h lhs_p rhs_node rhs_rest 
 
 
+and process_matches_norm prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
+  let r = process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p)) in
+  norm_single_action r 
+
 and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:match_res list),(rhs_node,rhs_rest,rhs_p)) as ks) =
   let pr = Cprinter.string_of_h_formula   in
   let pr1 = pr_list string_of_match_res in
@@ -2629,7 +2633,7 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:ma
     (add_str "matches" pr1)
     (add_str "rhs_node" pr) 
     (add_str "rhs_rest" pr) pr3 
-    (fun _ _ _ _ -> process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
+    (fun _ _ _ _ -> process_matches_norm prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
     lhs_h l rhs_node rhs_rest
 
 and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))=
@@ -2689,7 +2693,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
     (* WN : TODO use cond_action if of different priorities *)
     let rs = sort_wt rs in
     let () = x_tinfo_hp (pr_list string_of_action_wt_res_simpl) rs no_pos in
-    (-1, Search_action rs)
+    (-1, mk_search_action rs)
 
 and choose_closest a ys =
   let similar m o =
@@ -2771,7 +2775,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
       (* WHY did we pick only ONE when rw==0?*)
       (*Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
       if (rw==0) then h 
-      else (rw,Search_action sl)
+      else (rw,mk_search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
       ->
       (*drop ummatched actions if possible*)
