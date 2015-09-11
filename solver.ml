@@ -5675,7 +5675,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
                    Context.match_res_type = Context.Root;
                    Context.match_res_rhs_node = x;
                    Context.match_res_rhs_rest = x;
-                   Context.match_res_rhs_inst = []; } in
+                   Context.match_res_compatible = []; } in
         Context.M_unfold (mr,1)
       with
       (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
@@ -12759,7 +12759,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
         let lhs_node = r.Context.match_res_lhs_node in
         let rhs_node = r.Context.match_res_rhs_node in
         let rhs_rest = r.Context.match_res_rhs_rest in
-        let rhs_inst = r.Context.match_res_rhs_inst in
+        let rhs_inst = r.Context.match_res_compatible in
         let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with
           | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
                 if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
