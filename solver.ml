@@ -6106,15 +6106,25 @@ and obtain_subst l =
 
 and coer_target prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : CF.formula) (lhs : CF.formula) rhs_eqset: bool =
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv ) in
+  let pr_h = Cprinter.string_of_h_formula in
+  let pr_f = Cprinter.string_of_formula in
+
   Debug.no_4 "coer_target" (* Cprinter.string_of_coercion  *)
-    Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula pr1 string_of_bool 
+    (add_str "node" pr_h) (add_str "target_rhs" pr_f) (add_str "lhs" pr_f)
+    (add_str "rhs_eqset" pr1) string_of_bool 
     (fun _ _ _ _ -> coer_target_a prog coer node target_rhs lhs rhs_eqset) node lhs target_rhs rhs_eqset
+
+(* WN : I think coer_target is unnecessary since this is done at process_one_match *)
+(* it also failed for ex16d2a.slk *)
+and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : CF.formula) (lhs : CF.formula) rhs_eqset: bool =
+  if !Globals.old_coer_target then coer_target_b prog coer node target_rhs lhs rhs_eqset
+  else true
 
 (* check whether the target of a coercion is in the RHS of the entailment *)
 (* coer: the coercion lemma to be applied *)
 (* node: the node to which the coercion applies *)
 (* lhs and rhs - the antecedent and consequent, respectively *)
-and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : CF.formula) (lhs : CF.formula) rhs_eqset: bool =
+and coer_target_b prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : CF.formula) (lhs : CF.formula) rhs_eqset: bool =
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
   let coer_lhs_heap, coer_lhs_guard, coer_lhs_vperm, coer_lhs_flow, _, _ = split_components coer_lhs in
@@ -6154,8 +6164,12 @@ and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : 
       let coer_lhs_new = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_lhs in
       (* find the targets from the RHS of the coercion *)
       let top_level_vars = (CF.f_top_level_vars coer_rhs_new) in
+      let () = y_binfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
+      let () = y_binfo_hp (add_str "top_level_vars" !CP.print_svl) top_level_vars in
       let target = (List.filter (fun x -> List.mem x top_level_vars) (CF.fv coer_rhs_new)) in
+      let () = y_binfo_hp (add_str "target0" !CP.print_svl) target in
       let target = (List.filter (fun x -> (List.mem x (CF.fv coer_lhs_new))) target) in
+      let () = y_binfo_hp (add_str "target" !CP.print_svl) target in
       let coer_rhs_h, _, _, _, _,_ = split_components coer_rhs_new in
       (* check for each target if it appears in the consequent *)
       let all_targets = (List.map (fun x -> (check_one_target prog node x lhs_pure rhs_pure rhs_heap coer_rhs_h rhs_eqset)) target) in
@@ -13829,7 +13843,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
          - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
          - if the flag is false, we only use coerce&distribute&match
       *)
-      let apply_coer = (coer_target prog coer anode (CF.formula_of_base rhs_b)
+      let apply_coer = (x_add coer_target prog coer anode (CF.formula_of_base rhs_b)
                           (CF.formula_of_base lhs_b) estate.es_rhs_eqset) in
       if (not(apply_coer) || (is_cycle_coer coer origs))
       then
@@ -14059,14 +14073,16 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
         (*************************************************************)
         (* replace with the coerce&match mechanism *)
         (*************************************************************)
-        let apply_coer = (coer_target prog coer node (CF.formula_of_base target_b)
+        let apply_coer = (x_add coer_target prog coer node (CF.formula_of_base target_b)
                             (CF.formula_of_base lhs_b) estate.es_rhs_eqset) in
         (* when disabled --imm failed and vice-versa! *)
         (*Loc: why we set flag to false, always do coer with imm. why not do a check??*)
         let flag = if !allow_imm then false else not (apply_coer) in
+        let () = y_binfo_hp (add_str "flag" string_of_bool) flag in
+        let () = y_binfo_hp (add_str "apply_coer" string_of_bool) apply_coer in
         if (flag || (is_cycle_coer coer origs))
         then
-          let () = if not !Globals.web_compile_flag then print_string("xxxx Rewrite cannot be applied : "^("0")^"\n") in
+          let () = if not !Globals.web_compile_flag then y_winfo_pp ("Rewrite cannot be applied : "^("0")^"\n") in
           (x_dinfo_zp (lazy("[rewrite_coercion]: Rewrite cannot be applied!"(* ^s *)))
              pos; (0, mkTrue (mkTrueFlow ()) no_pos))
         else
@@ -14360,7 +14376,7 @@ and apply_left_coercion_a estate coer prog conseq resth1 anode lhs_b rhs_b c1 is
     let f = mkBase resth1 lhs_p lhs_vp lhs_t lhs_fl lhs_a pos in
     let () = x_dinfo_zp (lazy ("apply_left_coercion: left_coercion:\ n### c1 = " ^ c1
                                ^ "\n ### anode = "^ (Cprinter.string_of_h_formula anode) ^ "\n")) pos in
-    let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
+    let ok, new_lhs = x_add rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
     let () = x_dinfo_zp (lazy ( "apply_left_coercion: after rewrite_coercion"
                                 ^ "\n ### ok = "^ (string_of_int ok)
                                 ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs)
@@ -14475,7 +14491,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
                 h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
     (*temporarily skip this step. What is it for???*)
-    (* let apply_coer = (coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
+    (* let apply_coer = (x_add coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
     let ho_ps1  = CF.get_node_ho_args anode in
     let ho_ps2  = CF.get_node_ho_args head_node in
     if (is_cycle_coer coer origs)
@@ -15580,7 +15596,7 @@ and apply_right_coercion_b estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
   let f = mkBase resth2 rhs_p rhs_vp rhs_t rhs_fl rhs_a pos in
   let () = x_tinfo_zp (lazy ("do_right_coercion : c2 = "  ^ c2 ^ "\n")) pos in
   (* if is_coercible ln2 then *)
-  let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
+  let ok, new_rhs = x_add rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
   if (is_coercible ln2)&& (ok>0)  then begin
     (* lhs_b <- rhs_b *)
     (*  _ |- ln2 *)

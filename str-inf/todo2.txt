@@ -1142,7 +1142,56 @@ process_one_match@2 EXIT: Prio:1
  (Lemma ==> lem_12) =>
 
 ===========================================================================
+# ex16d2b.slk -dre "process_one_m" (FIXED)
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U2(q3,q)*q::char_star<0,p>.
+   
+(==context.ml#2727==)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::WFG<p>@M
+ RHS: U2(q3,q)
+ lhs_rest: emp
+ rhs_rest: q::char_star<flted_33_149,p_148>@M
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::WFG<p>@M
+process_one_match inp3 :lhs_p: q2=q3 & v!=0
+process_one_match inp4 :rhs_node: U2(q3,q)
+process_one_match inp5 :rhs_rest: q::char_star<flted_33_149,p_148>@M
+process_one_match inp6 :rhs_p: flted_33_149=0 & p_148=p
+process_one_match inp7 :([(p_148,p)],None)
+process_one_match@1 EXIT: Prio:2
+ InferFold =>
 ===========================================================================
+# str-inf/ex16d2a.slk -dre "rewrite_coercion\|coer_target"
+  (FIXED by removing it via old-coer-target *)
+
+# run-fast-test not affected by removal or coer-target
+
+Total number of errors: 26 in files:
+Total verification time: 140.69 second
+	Time spent in main process: 89.88 second
+	Time spent in child processes: 50.81 second
+	Number of false contexts: 414
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U(q3,q)*q::char_star<0,p>.
+
+# Why is coer_target needed?
+  Need to fix this to work with HRel?
+
+(==solver.ml#14066==)
+coer_target@1
+coer_target inp1 :node: q2::WFG<p>@M
+coer_target inp2 :target_rhs: q2::WFG<p>@M&q2=q3 & v!=0&{FLOW,(20,21)=__norm#E}[]
+coer_target inp3 :lhs: U(q3,q) * q::char_star<flted_34_149,p_148>@M&flted_34_149=0 & p_148=p&
+{FLOW,(20,21)=__norm#E}[]
+coer_target inp4 :rhs_eqset:[(p_148,p)]
+coer_target@1 EXIT:false
+
+# Why Rewrite cannot be applied?
 ===========================================================================
 ===========================================================================
 ===========================================================================

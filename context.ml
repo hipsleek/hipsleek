@@ -2237,7 +2237,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let sub_ann  = if (!Globals.allow_field_ann) then 
              let r,_,_,_ = x_add Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
              r
-           else true in
+          else true in
          let a1 = 
            if is_l_lock then [] else
            if ((new_orig_l || vl_self_pts==[]) && sub_ann) then 
@@ -2270,17 +2270,22 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* if (vl_view_orig || vl_self_pts==[]) then ua *)
          (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
          else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
-       | ViewNode vl, HRel (h_name, args, _) -> (* cant it reach this branch? *)
-         y_tinfo_pp "VIEW vs HREL\n";
-         let h_name = Cpure.name_of_spec_var h_name in
+       | ViewNode vl, HRel (h_name_sv, args, _) -> (* can  it reach this branch? *)
+         y_binfo_pp "VIEW vs HREL\n";
+         let h_name = Cpure.name_of_spec_var h_name_sv in
          let vl_name = vl.h_formula_view_name in
 
          let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name h_name) in
-         let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) h_name vl_name) in
+         (* let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) h_name vl_name) in *)
          let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in
-         let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in
+         (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in *)
+         (* already handled by MaterializedArg (see ex16d2a.slk) *)
+         let right_act = [] in 
+         let left_act = [] in
          let l = left_act@right_act in
-         let f_act = (2,M_infer_fold m_res) in
+         let f_act = 
+           if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold m_res)
+           else (5,M_Nothing_to_do ("Mis-matched View of "^(pr_id vl_name)^" and HRel of "^(pr_sv h_name_sv))) in
          let l = f_act::l in
          let res = 
            match l with
@@ -2398,26 +2403,36 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  let () = pr_debug "selected lemma XX\n" in  
                  M_lemma (m_res,Some s)) in
            let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
-           (-1, (Search_action ((1,a1)::l1)))
-       | HRel (h_name, _, _), ViewNode vl -> begin
-         let h_name = Cpure.name_of_spec_var h_name in
-         let vl_name = vl.h_formula_view_name in
-         let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
-         let left_preds = match ms with
-           | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
-           | _ -> []
-         in
-         let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
-         process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
+           (-1, (mk_search_action ((1,a1)::l1)))
+       | HRel (h_name, args, _), ViewNode vl -> begin
+           let h_name = Cpure.name_of_spec_var h_name in
+           let vl_name = vl.h_formula_view_name in
+           let pt = vl.h_formula_view_node in
+           let lhs_args = pt::vl.h_formula_view_arguments in
+           let args = List.concat (List.map CP.afv args) in
+           let alias_set = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap) lhs_args) in
+           let () = y_tinfo_hp (add_str "alias_set" !CP.print_svl) alias_set in
+           let common = CP.intersect_svl (alias_set@lhs_args) args in
+           if common==[] then 
+             let pr = !CF.print_h_formula in
+             let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
+             (4,M_Nothing_to_do ("No common parameters : "^msg))
+           else
+             let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
+             let left_preds = match ms with
+               | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
+               | _ -> []
+             in
+             let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
+             process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
          end
        | ViewNode vl, HRel (h_name, args, _) -> begin
            let h_name = Cpure.name_of_spec_var h_name in
            let vl_name = vl.h_formula_view_name in
            let pt = vl.h_formula_view_node in
            let lhs_args = pt::vl.h_formula_view_arguments in
-           (* TODO find all aliases *)
            let alias_set = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap) lhs_args) in
-           let () = y_binfo_hp (add_str "alias_set" !CP.print_svl) alias_set in
+           let () = y_tinfo_hp (add_str "alias_set" !CP.print_svl) alias_set in
            let args = List.concat (List.map CP.afv args) in
            let common = CP.intersect_svl (alias_set@lhs_args) args in
            if common==[] then 
