@@ -1193,6 +1193,43 @@ coer_target@1 EXIT:false
 
 # Why Rewrite cannot be applied?
 ===========================================================================
+# ex16d2c1.slk -dre "process_one_m"
+
+ infer [U2,@classic] U(q2,q_155) & q2=q3  |-  U2(q3,q).
+
+# Why infer_fold fail?
+
+  EXPECTS:  U2(q2,q) <-- U(q2,q)
+
+  Do we represent FOLD as U(..) <-- RHS
+
+!!! **solver.ml#12425:process_action (steps) :
+ ### action :
+ InferFold =>
+   Type: Root
+   LHS: U(q2,q_155)
+   RHS: U2(q3,q)
+   lhs_rest: emp
+   rhs_rest: emp
+   rhs_inst: []
+ ### estate :
+ ex_formula : U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : U2(q3,q)&{FLOW,(20,21)=__norm#E}[]
+
+!!! **lemma.ml#259:
+Updated lemma store with unsafe repo::[lem_12]
+(==solver.ml#13337==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs_node: U(q2,q_155)
+infer_collect_hp_rel#1 inp2 :rhs_node: U2(q3,q)
+infer_collect_hp_rel#1 inp3 :lhs: U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: U2(q3,q)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es: U(q2,q_155)&q2=q3
+infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula: 
+ U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2]
+ es_infer_hp_rel: [emp |#|  --> U2(q2,q)],3:abd heap: U2(q2,q),4:Some( emp),5:None)
 ===========================================================================
 ===========================================================================
 ===========================================================================

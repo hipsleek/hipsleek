@@ -6164,12 +6164,12 @@ and coer_target_b prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : 
       let coer_lhs_new = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_lhs in
       (* find the targets from the RHS of the coercion *)
       let top_level_vars = (CF.f_top_level_vars coer_rhs_new) in
-      let () = y_binfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
-      let () = y_binfo_hp (add_str "top_level_vars" !CP.print_svl) top_level_vars in
+      let () = y_tinfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
+      let () = y_tinfo_hp (add_str "top_level_vars" !CP.print_svl) top_level_vars in
       let target = (List.filter (fun x -> List.mem x top_level_vars) (CF.fv coer_rhs_new)) in
-      let () = y_binfo_hp (add_str "target0" !CP.print_svl) target in
+      let () = y_tinfo_hp (add_str "target0" !CP.print_svl) target in
       let target = (List.filter (fun x -> (List.mem x (CF.fv coer_lhs_new))) target) in
-      let () = y_binfo_hp (add_str "target" !CP.print_svl) target in
+      let () = y_tinfo_hp (add_str "target" !CP.print_svl) target in
       let coer_rhs_h, _, _, _, _,_ = split_components coer_rhs_new in
       (* check for each target if it appears in the consequent *)
       let all_targets = (List.map (fun x -> (check_one_target prog node x lhs_pure rhs_pure rhs_heap coer_rhs_h rhs_eqset)) target) in
@@ -11624,7 +11624,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
   | HRel (hp,args,_) ->
     (* hp in ivr *)
     (* let i_hp_vs = estate.CF.es_infer_vars_hp_rel in *)
-    (* let () = y_binfo_hp (add_str "i_hp_vs" !CP.print_svl) i_hp_vs in *)
+    (* let () = y_tinfo_hp (add_str "i_hp_vs" !CP.print_svl) i_hp_vs in *)
     if CF.is_exists_hp_rel hp estate then
       let vs = List.map CP.exp_to_sv args in
       do_base_fold_hp_rel prog estate pos hp vs conseq rhs_node rhs_rest rhs_b is_folding iv ivr
@@ -14078,8 +14078,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
         (* when disabled --imm failed and vice-versa! *)
         (*Loc: why we set flag to false, always do coer with imm. why not do a check??*)
         let flag = if !allow_imm then false else not (apply_coer) in
-        let () = y_binfo_hp (add_str "flag" string_of_bool) flag in
-        let () = y_binfo_hp (add_str "apply_coer" string_of_bool) apply_coer in
+        let () = y_tinfo_hp (add_str "flag" string_of_bool) flag in
+        let () = y_tinfo_hp (add_str "apply_coer" string_of_bool) apply_coer in
         if (flag || (is_cycle_coer coer origs))
         then
           let () = if not !Globals.web_compile_flag then y_winfo_pp ("Rewrite cannot be applied : "^("0")^"\n") in
