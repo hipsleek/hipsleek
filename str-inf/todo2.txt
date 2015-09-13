@@ -1014,54 +1014,12 @@ infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula:
  es_infer_vars_hp_rel: [U]
  es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
 
-===========================================================================
-# ex16d1c.slk dre "process_one_m" 
-
-# is there a smarter base-case-fold scheduling?
-
-(==context.ml#2600==)
-process_one_match@1
-process_one_match inp1 :match_res:
- Type: Root
- LHS: self::char_star<v,q2>@M
- RHS: U(self,p)
- lhs_rest: q2::char_star<flted_29_106,p>@M
- rhs_rest: emp
-process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M
-process_one_match inp3 :lhs_p: v!=0 & flted_29_106=0
-process_one_match inp4 :rhs_node: U(self,p)
-process_one_match inp5 :rhs_rest: emp
-process_one_match inp6 :rhs_p: true
-process_one_match inp7 :([],None)
-process_one_match@1 EXIT: Prio:1
- SEARCH =>[
-  Prio:1
-  BaseCaseFold =>;
-  Prio:1
-  InferFold =>
-  ]
-===========================================================================
-# ex16d1b.slk -dre "process_one_m"
-
-# should not schedule lemma if there are no common materialization ..
-
-(==context.ml#2602==)
-process_one_match@2
-process_one_match inp1 :match_res: Type: MaterializedArg (self,full,[U]) coerc_defn_mater: ==> lem_12
- LHS: q2::WFG<p>@M
- RHS: U(self,q)
- lhs_rest: self::char_star<v,q2>@M
- rhs_rest: q::char_star<flted_29_146,p_145>@M
-process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::WFG<p>@M
-process_one_match inp3 :lhs_p: v!=0
-process_one_match inp4 :rhs_node: U(self,q)
-process_one_match inp5 :rhs_rest: q::char_star<flted_29_146,p_145>@M
-process_one_match inp6 :rhs_p: flted_29_146=0 & p_145=p
-process_one_match inp7 :([(p_145,p)],None)
-process_one_match@2 EXIT: Prio:1
- (Lemma ==> lem_12) =>
 ==========================================================================
-# ex16d1c.slk dre "process_one_m" (WN to fix)
+# ex16d1c.slk dre "process_one_m" (WN to fix) (FIXED)
+
+ infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
 
 # is there a smarter base-case-fold scheduling?
 
@@ -1087,7 +1045,11 @@ process_one_match@1 EXIT: Prio:1
   InferFold =>
   ]
 ===========================================================================
-# ex16d1b.slk -dre "process_one_m"  (WN to fix)
+# ex16d1b.slk -dre "process_one_m"  (WN to fix) (OK)
+
+(FIXED)
+process_one_match@2 EXIT: Prio:4
+ NothingToDo => No common parameters :  q2::WFG<p>@M vs  U(self,q)
 
 # should not schedule lemma if there are no common materialization ..
 

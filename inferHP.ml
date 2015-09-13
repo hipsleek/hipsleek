@@ -44,7 +44,11 @@ let return_out_of_inst estate lhs_b extended_hps =
   } in
   (true, n_estate,lhs_b)
 
-
+(* type: 'a -> *)
+(*   CF.entail_state -> *)
+(*   CF.h_formula_data list -> *)
+(*   CF.h_formula_view list -> *)
+(*   (CP.spec_var * CP.spec_var) list -> CP.formula -> bool * CP.formula *)
 let gen_inst prog estate lhds lhvs sst acc_p =
   let rec aux sst acc_p =
     match sst with
@@ -66,6 +70,12 @@ let gen_inst prog estate lhds lhvs sst acc_p =
           aux (* gen_inst *) (* prog estate lhds lhvs *) rest new_acc
   in aux sst acc_p
 
+(* type: 'a -> *)
+(*   CF.entail_state -> *)
+(*   CF.formula_base -> *)
+(*   CP.spec_var list -> *)
+(*   CP.spec_var list -> *)
+(*   CF.CP.spec_var list -> bool * CF.entail_state * CF.formula_base *)
 let do_inst prog estate lhs_b largs rargs extended_hps=
   try
     if rargs = [] then return_out_of_inst estate lhs_b extended_hps
@@ -178,32 +188,32 @@ let infer_fold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (
   let rhs_inst = r.Context.match_res_compatible in
   let () = Debug.ninfo_hprint (add_str  "rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
   let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with
-      | HRel (lhp,leargs,_),HRel (rhp,reargs,_) -> begin
-          if CP.mem_svl rhp estate.es_infer_vars_hp_rel then
-            match leargs, reargs with
-              | er::rest1,_::rest2 -> begin
-                  let largs = (List.map CP.exp_to_sv rest1) in
-                  let rargs = (List.map CP.exp_to_sv rest2) in
-                  if rhs_inst != [] then
-                    let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-                    let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst (CP.mkTrue no_pos) in
-                    if not is_succ then
-                      true, estate, lhs_b
-                    else
-                      let mf = (MCP.mix_of_pure p) in
-                      (true,
-                      {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
-                          CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
-                      },
-                      CF.mkAnd_base_pure lhs_b mf no_pos)
-                  else
-                    do_inst prog estate lhs_b largs rargs [lhp]
-                end
-              | _ -> return_out_of_inst estate lhs_b []
-          else
-            return_out_of_inst estate lhs_b []
-        end
-      | _ -> return_out_of_inst estate lhs_b []
+    | HRel (lhp,leargs,_),HRel (rhp,reargs,_) -> begin
+        if CP.mem_svl rhp estate.es_infer_vars_hp_rel then
+          match leargs, reargs with
+          | er::rest1,_::rest2 -> begin
+              let largs = (List.map CP.exp_to_sv rest1) in
+              let rargs = (List.map CP.exp_to_sv rest2) in
+              if rhs_inst != [] then
+                let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
+                let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst (CP.mkTrue no_pos) in
+                if not is_succ then
+                  true, estate, lhs_b
+                else
+                  let mf = (MCP.mix_of_pure p) in
+                  (true,
+                   {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
+                                CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
+                   },
+                   CF.mkAnd_base_pure lhs_b mf no_pos)
+              else
+                do_inst prog estate lhs_b largs rargs [lhp]
+            end
+          | _ -> return_out_of_inst estate lhs_b []
+        else
+          return_out_of_inst estate lhs_b []
+      end
+    | _ -> return_out_of_inst estate lhs_b []
   in
   if not is_succ_inst then
     let err_msg = "infer_unfold" in
