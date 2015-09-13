@@ -1,3 +1,5 @@
+let dummy = ()
+
 type print_level =
   (* | P_Quiet *)
   (* | P_VShort *)
