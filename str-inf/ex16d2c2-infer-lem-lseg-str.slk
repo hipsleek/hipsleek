@@ -8,24 +8,33 @@ data char_star {
   HeapPred U3(char_star x,char_star y,char_star@NI z).
 
 //(5)
-infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  
+ |-  U2(q3,q).
  expect Valid.
 // expects U(q2,q_155) --> U2(q2,q_155)
+
+infer [U2,@classic] U(q2,q_155)  & q2=q3 //& q_155=q  
+ |-  U2(q3,q).
+ expect Valid.
 
 /*
 # ex16d2c2.slk 
 
-# No need to instantiate q is already known on LHS..
+# No need to instantiate q if it is already known on LHS..
 
-//(5)
-infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
- expect Valid.
-// expects U(q2,q_155) --> U2(q2,q_155)
+Entail (1) : Fail.(may) cause:**inferHP.ml#237:Can not inst
 
-
-Entail (1) : Fail.(may) cause:**inferHP.ml#265:Can not inst
 Validate 1: Expecting(3)Valid BUT got : Fail_May
 
+
+# Why exception below?
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000331
+Entail (2) : Failure("sau.add_raw_hp_rel: args should be not empty")
 
 
 */

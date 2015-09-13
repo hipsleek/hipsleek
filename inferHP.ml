@@ -44,12 +44,8 @@ let return_out_of_inst estate lhs_b extended_hps =
   } in
   (true, n_estate,lhs_b)
 
-(* type: 'a -> *)
-(*   CF.entail_state -> *)
-(*   CF.h_formula_data list -> *)
-(*   CF.h_formula_view list -> *)
-(*   (CP.spec_var * CP.spec_var) list -> CP.formula -> bool * CP.formula *)
-let gen_inst prog estate lhds lhvs sst acc_p =
+(* the inst is currently guided by RHS eqset *)
+let gen_inst prog estate lhds lhvs sst =
   let rec aux sst acc_p =
     match sst with
     | [] -> true,acc_p
@@ -68,15 +64,24 @@ let gen_inst prog estate lhds lhvs sst acc_p =
           let p = CP.mkEqVar sv1 sv2 no_pos in
           let new_acc = CP.mkAnd acc_p p no_pos in
           aux (* gen_inst *) (* prog estate lhds lhvs *) rest new_acc
-  in aux sst acc_p
+  in aux sst (CP.mkTrue no_pos)
 
 (* type: 'a -> *)
 (*   CF.entail_state -> *)
-(*   CF.formula_base -> *)
-(*   CP.spec_var list -> *)
-(*   CP.spec_var list -> *)
-(*   CF.CP.spec_var list -> bool * CF.entail_state * CF.formula_base *)
+(*   CF.h_formula_data list -> *)
+(*   CF.h_formula_view list -> *)
+(*   (CP.spec_var * CP.spec_var) list -> CP.formula -> bool * CP.formula *)
+let gen_inst prog estate lhds lhvs sst =
+  let pr2 =(pr_list (pr_pair pr_sv pr_sv)) in
+  let pr_sv = !CP.print_sv in
+  let pr3 = pr_pair string_of_bool !CP.print_formula in
+  Debug.no_2 "gen_inst" (add_str "es_rhs_eqset" pr2)  (add_str "sst" pr2) pr3 (fun _ _ -> gen_inst prog estate lhds lhvs sst) estate.es_rhs_eqset sst
+
+
 let do_inst prog estate lhs_b largs rargs extended_hps=
+  (* let lhs_vs = CF.fv (Base lhs_b) in *)
+  (* (\* only vars not already in LHS can be instantiated *\) *)
+  (* let rargs = List.filter (fun v -> not(CP.mem_svl v lhs_vs)) rargs in *)
   try
     if rargs = [] then return_out_of_inst estate lhs_b extended_hps
     else
@@ -88,7 +93,7 @@ let do_inst prog estate lhs_b largs rargs extended_hps=
       else
         let sst = List.combine largs rargs in
         let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-        let is_succ, p = gen_inst prog estate lhds lhvs sst (CP.mkTrue no_pos) in
+        let is_succ, p = gen_inst prog estate lhds lhvs sst  in
         if not is_succ then
           is_succ, estate, lhs_b
         else
@@ -102,6 +107,17 @@ let do_inst prog estate lhs_b largs rargs extended_hps=
            CF.mkAnd_base_pure lhs_b mf no_pos)
   with _ -> return_out_of_inst estate lhs_b extended_hps
 
+(* type: 'a -> *)
+(*   CF.entail_state -> *)
+(*   CF.formula_base -> *)
+(*   CP.spec_var list -> *)
+(*   CP.spec_var list -> *)
+(*   CF.CP.spec_var list -> bool * CF.entail_state * CF.formula_base *)
+let do_inst prog estate lhs_b largs rargs extended_hps =
+  let pr_svl = !CP.print_svl in
+  let pr_bf bf = !print_formula (Base bf) in
+  let pr_r (b,_,eb) = (pr_pair string_of_bool pr_bf) (b,eb) in
+  Debug.no_4 "do_inst" (add_str "lhs_b" pr_bf) (add_str "largs" pr_svl) (add_str "rargs" pr_svl) (add_str "hps" pr_svl) pr_r (fun _ _ _ _ -> do_inst prog estate lhs_b largs rargs extended_hps) lhs_b largs rargs extended_hps 
 
 (*
 type: (CF.entail_state ->
@@ -138,7 +154,7 @@ let infer_unfold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b
               (* let r = (CP.exp_to_sv er) in *)
               (* let sst = Cfutil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
               let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-              let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst (CP.mkTrue no_pos) in
+              let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst  in
               if not is_succ then
                 true, estate, lhs_b
               else
@@ -170,7 +186,7 @@ let infer_unfold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b
   if not is_succ_inst then
     let err_msg = "infer_unfold" in
     let conseq = Some (Base rhs_b) in
-    (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"Can not inst") err_msg estate pos,NoAlias)
+    (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"Can not instantiate") err_msg estate pos,NoAlias)
   else
     let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
     pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest))
@@ -196,7 +212,7 @@ let infer_fold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (
               let rargs = (List.map CP.exp_to_sv rest2) in
               if rhs_inst != [] then
                 let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-                let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst (CP.mkTrue no_pos) in
+                let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst in
                 if not is_succ then
                   true, estate, lhs_b
                 else

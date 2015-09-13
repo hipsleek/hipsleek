@@ -1172,6 +1172,30 @@ infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
 Entail (1) : Fail.(may) cause:**inferHP.ml#265:Can not inst
 Validate 1: Expecting(3)Valid BUT got : Fail_May
 
+(==solver.ml#11206==)
+do_inst@1
+do_inst inp1 :lhs_b: U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[q_155]
+do_inst inp3 :rargs:[q]
+do_inst inp4 :hps:[U]
+do_inst@1 EXIT:(false, U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[])
+
+(==solver.ml#11206==)
+do_inst@1
+do_inst inp1 :lhs_b: U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[q_155]
+do_inst inp3 :rargs:[q]
+do_inst inp4 :hps:[U]
+do_inst@1 EXIT:(true, U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[])
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000548
+Entail (1) : Failure("sau.add_raw_hp_rel: args should be not empty")
+Validate 1: Expecting ValidBUT got no residue
+
 ===========================================================================
 # ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
 
@@ -1247,6 +1271,24 @@ push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M * GP_30(q2,self,p,v)&v!=0
 
 
 ===========================================================================
+# ex16d2c2.slk 
+
+# No need to instantiate q if it is already known on LHS..
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#237:Can not inst
+
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+
+# Why exception below?
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000331
+Entail (2) : Failure("sau.add_raw_hp_rel: args should be not empty")
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
