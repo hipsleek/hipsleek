@@ -1060,41 +1060,7 @@ process_one_match inp6 :rhs_p: flted_29_146=0 & p_145=p
 process_one_match inp7 :([(p_145,p)],None)
 process_one_match@2 EXIT: Prio:1
  (Lemma ==> lem_12) =>
-===========================================================================
-# ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
-
-# to fix infer_collect for folding:
-
-  push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
-
-# since p is global and q2 does not match it, we need to schedule:
-  where v!=null is picked due to the use of @pure_field
-
- self::char_star<v,q2>@M * HP(q2,p) & v!=null  
-         --> U(self,p)
-
-# Let us use a flag --en-infer-back-ptr to obtain:
-
- self::char_star<v,q2>@M * HP(q2,p,self@NI) & v!=null  
-         --> U(self,p)
-
-(==solver.ml#13319==)
-infer_collect_hp_rel#1@4@3@2
-infer_collect_hp_rel#1 inp1 :lhs_node: self::char_star<v,q2>@M
-infer_collect_hp_rel#1 inp2 :rhs_node: U(self,p)
-infer_collect_hp_rel#1 inp3 :lhs:
- self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
-v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
-infer_collect_hp_rel#1 inp4 :rhs: U(self,p)&{FLOW,(20,21)=__norm#E}[]
-infer_collect_hp_rel#1 inp5 :es:
- self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
-v!=0 & flted_29_106=0
-infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
- emp&v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
- es_infer_vars_hp_rel: [U]
- es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
-
-===========================================================================
+==========================================================================
 # ex16d1c.slk dre "process_one_m" (WN to fix)
 
 # is there a smarter base-case-fold scheduling?
@@ -1244,9 +1210,80 @@ infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
 Entail (1) : Fail.(may) cause:**inferHP.ml#265:Can not inst
 Validate 1: Expecting(3)Valid BUT got : Fail_May
 
+===========================================================================
+# ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
+
+# to fix infer_collect for folding:
+
+  push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
+
+# since p is global and q2 does not match it, we need to schedule:
+  where v!=null is picked due to the use of @pure_field
+
+ self::char_star<v,q2>@M * HP(q2,p) & v!=null  
+         --> U(self,p)
+
+# Let us use a flag --en-infer-back-ptr to obtain:
+
+ self::char_star<v,q2>@M * HP(q2,p,self@NI) & v!=null  
+         --> U(self,p)
+
+(==solver.ml#13319==)
+infer_collect_hp_rel#1@4@3@2
+infer_collect_hp_rel#1 inp1 :lhs_node: self::char_star<v,q2>@M
+infer_collect_hp_rel#1 inp2 :rhs_node: U(self,p)
+infer_collect_hp_rel#1 inp3 :lhs:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0
+infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
+ emp&v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
 
 ===========================================================================
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_"
+
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# Can omit v!=0 if @pure_field absent..
+
+push_list(es_infer_hp_rel):[ 
+self::char_star<v,q2>@M * GP_118(q2,self,p)&v!=0 |#|  --> U(self,p)]
+
 ===========================================================================
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" --dis-infer-back-ptr
+
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# GOT:
+push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
+
+# EXPECT:
+  self::char_star<v,q2>@M * GP_118(q2,p) |#|  --> U(self,p)
+
+===========================================================================
+# ex16d1d2.slk dre "infer_c" -show-push-list ".*hp_"
+
+//(1)
+
+infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# I think can use just GP_30(q2,self,p), otherwise we may
+  have too many parameters.
+
+push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M * GP_30(q2,self,p,v)&v!=0 
+
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
