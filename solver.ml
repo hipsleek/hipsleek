@@ -13341,7 +13341,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           else
             (* let () =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx1" pos in *)
 
-            let (res,new_estate, n_lhs, n_es_heap_opt, oerror_es) = x_add Infer.infer_collect_hp_rel 1 prog iact estate lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+            let (res,new_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt) = x_add Infer.infer_collect_hp_rel 1 prog iact estate lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
             (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
             if (not res) then (* r *)
               let err_msg = "infer_heap_node" in
@@ -13350,7 +13350,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext (\* "infer_heap_node" *\) err_msg estate (Base rhs_b) None pos, *)
               (*                                 CF.mk_failure_may ("Cannot infer: infer_collect_hp_rel 3a") sl_error, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) (mk_cex false), NoAlias) *)
             else
-              let n_rhs_b =  (Base {rhs_b with formula_base_heap = rhs_rest}) in
+              let n_rhs_rest = match rhs_rest_opt with
+                | None -> rhs_rest
+                | Some hf -> CF.mkStarH rhs_rest hf no_pos in
+              let n_rhs_b =  (Base {rhs_b with formula_base_heap = n_rhs_rest}) in
               (* Debug.info_hprint (add_str "DD: new_estate 1" (Cprinter.string_of_entail_state)) new_estate pos; *)
               let res_es0, prf0 = match n_es_heap_opt with
                 | None -> 
@@ -13579,7 +13582,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                       if not(CF.isFailCtx lc) then first_r
                       else
                         let () =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx 2" pos in
-                        let (res,new_estate,n_lhs, n_es_heap_opt, oerror_es) = x_add Infer.infer_collect_hp_rel 2 prog 0 estate HEmp rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+                        let (res,new_estate,n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt) = x_add Infer.infer_collect_hp_rel 2 prog 0 estate HEmp rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
                         if (not res) then
                           (* r *)
                           let msg = "infer_heap_node" in
@@ -13597,7 +13600,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           (* (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf) *)
                         else
                           (*subt the fresh evars for rhs*)
-                          let n_rhs_b = (Base {rhs_b with formula_base_heap = rhs_rest}) in
+                          let n_rhs_rest = match rhs_rest_opt with
+                            | None -> rhs_rest
+                            | Some hf -> CF.mkStarH rhs_rest hf no_pos in
+                          let n_rhs_b = (Base {rhs_b with formula_base_heap = n_rhs_rest}) in
                           let () = x_tinfo_hp (add_str "new_estate(M_unmatched_rhs_data_node)" (Cprinter.string_of_entail_state)) new_estate pos in
                           let res_es0, prf0 = match n_es_heap_opt with
                             | None ->

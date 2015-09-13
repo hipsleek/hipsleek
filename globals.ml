@@ -1281,7 +1281,7 @@ let assert_no_glob_vars = ref false
 
 let new_rm_htrue = ref true
 let new_infer_large_step = ref true
-let infer_back_ptr = ref false
+let infer_back_ptr = ref true
 let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 

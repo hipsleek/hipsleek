@@ -25,9 +25,16 @@ pred WFG<p> ==
 
  //lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
 
+
  infer [U,@pure_field,@classic] 
    self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
  print residue.
+
+/*
+infer [U] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+*/
 
 /*
 # ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
