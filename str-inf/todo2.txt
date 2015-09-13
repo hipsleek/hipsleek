@@ -1193,7 +1193,7 @@ coer_target@1 EXIT:false
 
 # Why Rewrite cannot be applied?
 ===========================================================================
-# ex16d2c1.slk -dre "process_one_m"
+# ex16d2c1.slk -dre "process_one_m" (OK)
 
  infer [U2,@classic] U(q2,q_155) & q2=q3  |-  U2(q3,q).
 
@@ -1231,7 +1231,20 @@ infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula:
  es_infer_vars_hp_rel: [U2]
  es_infer_hp_rel: [emp |#|  --> U2(q2,q)],3:abd heap: U2(q2,q),4:Some( emp),5:None)
 ===========================================================================
-===========================================================================
+# ex16d2c2.slk 
+
+# No need to instantiate q is already known on LHS..
+
+//(5)
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
+ expect Valid.
+// expects U(q2,q_155) --> U2(q2,q_155)
+
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#265:Can not inst
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

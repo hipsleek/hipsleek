@@ -4897,6 +4897,8 @@ let flatten_struc_formula sf =
 type formula_guard = formula * (formula option)
 type formula_guard_list = formula_guard list
 
+type hprel_infer_type = INFER_UNKNOWN | INFER_UNFOLD | INFER_FOLD 
+                (* | I_FOLD_LARGE | I_UNFOLD_LARGE  *)
 type hprel= {
   hprel_kind: CP.rel_cat;
   unk_svl: CP.spec_var list; (* unknown and dangling *)
@@ -4908,6 +4910,7 @@ type hprel= {
     of more than one field. ususally it is heap nodes
     guard is used in unfolding pre-preds
   *)
+  hprel_type: hprel_infer_type;
   hprel_rhs: formula;
   hprel_path: cond_path_type;
   hprel_proving_kind: Others.proving_kind;
@@ -5187,8 +5190,9 @@ let mk_hp_rel_def1 c lhs rhs ofl=
     def_flow = ofl;
   }
 
-let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
+let mkHprel ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
   {  hprel_kind = knd;
+     hprel_type = infer_type;
      unk_svl = u_svl;
      unk_hps = u_hps ;
      predef_svl = pd_svl;
@@ -5200,8 +5204,9 @@ let mkHprel knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hpr
      hprel_flow = [!norm_flow_int];
   }
 
-let mkHprel_w_flow knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p nflow=
+let mkHprel_w_flow ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p nflow=
   {  hprel_kind = knd;
+     hprel_type = infer_type;
      unk_svl = u_svl;
      unk_hps = u_hps ;
      predef_svl = pd_svl;

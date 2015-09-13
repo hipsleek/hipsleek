@@ -31,10 +31,75 @@ pred WFG<p> ==
  //infer [U2,@pure_field,@classic] q2::WFG<p> & v!=0 & q2=q3  |-  U2(q3,q)*q::char_star<0,p>.
 
  infer [U2,@classic] U(q2,q_155) & q2=q3  |-  U2(q3,q).
+ expect Valid.
+
+//(2)
+ infer [U2,@classic] U(q2,q_155)  |-  U2(q3,q).
+ expect Fail.
+
+ infer [U2,@classic] U(q2,q_155)  & q2=q3  |-  U2(q3,q_155).
+ expect Valid.
+
+//(4)
+ infer [U2,@classic] U(q2,q_155)  & q2=q3 & q!=null  |-  U2(q3,q).
+ expect Fail.
+
+//(5)
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
+ expect Valid.
+// expects U(q2,q_155) --> U2(q2,q_155)
+
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155!=null  |-  U2(q3,q).
+ expect Valid.
+//  inferred hprel: [U(q2,q)&q!=null |#|3  --> U2(q2,q)&true]
+
+//(7)
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=null  |-  U2(q3,q).
+ expect Valid.
+//  inferred hprel: [U(q2,q)&q=null |#|3  --> U2(q2,q)&true]
+
+//(8)
+infer [U2,@classic] U3(q2,q_155,q)  & q2=q3 & q_155=null  |-  U2(q3,q).
+ expect Valid.
+
+//(9)
+infer [U2,@classic] U3(q2,q_155,q1)  & q2=q3 & q_155=null  |-  U2(q3,q).
+ expect Valid.
+print residue.
+// inferred hprel: [U3(q2,q_155,q1@NI)&q_155=null |#|3  --> U2(q2,q)&true]
+
+//(10 | less)
+infer [U2,@classic] U(q2,q1)  & q2=q3 & q_155=null  |-  U2(q3,q).
+ expect Valid.
+// inferred hprel: [U(q2,q)&true |#|3  --> U2(q2,q)&true]
 
 print residue.
 /*
-# ex16d2c1.slk -dre "process_one_m"
+# ex16d2c1.slk 
+
+# why cannot prove below?
+
+//(5)
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
+ expect Valid.
+// expects U(q2,q_155) --> U2(q2,q_155)
+
+
+# why instantiate (10) but not (9)
+  Do we need to instantiate?
+
+//(9)
+infer [U2,@classic] U3(q2,q_155,q1)  & q2=q3 & q_155=null  |-  U2(q3,q).
+ expect Valid.
+print residue.
+// inferred hprel: [U3(q2,q_155,q1@NI)&q_155=null |#|3  --> U2(q2,q)&true]
+
+//(10 | less)
+infer [U2,@classic] U(q2,q1)  & q2=q3 & q_155=null  |-  U2(q3,q).
+ expect Valid.
+// inferred hprel: [U(q2,q)&true |#|3  --> U2(q2,q)&true]
+
+------------------------
 
  infer [U2,@classic] U(q2,q_155) & q2=q3  |-  U2(q3,q).
 
