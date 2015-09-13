@@ -2359,7 +2359,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let m_res_bf = { m_res with match_res_compatible = r_lst} in 
              [(wt,M_base_case_fold m_res_bf)] 
          in
-         let act2 = [(wt,M_infer_fold m_res)] (* (rhs_node,rhs_rest) *) in
+         let m_res_bf = { m_res with match_res_compatible = r_lst} in 
+         let act2 = [(wt,M_infer_fold m_res_bf)] (* (rhs_node,rhs_rest) *) in
          (* old method do not use base_case_fold *)
          let lst = if !Globals.old_base_case_fold_hprel then act2 else act1@act2
          in (wt,mk_search_action lst)

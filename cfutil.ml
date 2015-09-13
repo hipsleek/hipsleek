@@ -797,9 +797,9 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
   let lsvl = fv (Base lhs_b) in
   let rsvl = (fv (Base rhs_b))@(CP.EMapSV.get_elems r_emap)@(CP.EMapSV.get_elems r_qemap) in
   let comm_svl = CP.intersect_svl lsvl rsvl in
-  let lhs_b1, rhs_b1, prog_vars =
+  let lhs_b1, rhs_b1, prog_vars,sst1 =
     if comm_svl = [] then
-      (lhs_b, rhs_b, prog_vars)
+      (lhs_b, rhs_b, prog_vars,[])
     else
       let l_emap1, null_ps, null_sst = expose_expl_closure_eq_null lhs_b all_args l_emap in
       let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
@@ -829,16 +829,17 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
                                     (CP.remove_redundant (MCP.pure_of_mix rhs_b1.formula_base_pure));
                                 formula_base_heap = trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) rhs_b1.formula_base_heap;
                    } in
-      (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars)
+      (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars, (ss@null_sst@eq_sst))
   in
-  (lhs_b1, rhs_b1, prog_vars)
+  (lhs_b1, rhs_b1, prog_vars, sst1)
 
 let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
   let pr3 = CP.EMapSV.string_of in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
+  let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_quad pr1 pr1 pr2 pr5)
     (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
     lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
 
@@ -2672,7 +2673,7 @@ let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
           (* let sst_old = exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
           (* let () = y_binfo_pp ("rhs_inst old" ^ ((pr_list (pr_pair !CP.print_sv !CP.print_sv)) sst_old) ) in *)
           let sst_new = check_compatible_eb ~inst_rhs:true prog largs rargs lhs_b lhp rhs_b rhp in
-          let () = y_tinfo_pp ("rhs_inst new" ^ ((pr_list (pr_pair !CP.print_sv !CP.print_sv)) sst_new )) in
+          let () = y_binfo_pp ("rhs_inst new" ^ ((pr_list (pr_pair !CP.print_sv !CP.print_sv)) sst_new )) in
           sst_new
         else if List.length rargs < List.length largs then
           List.filter (fun (sv1,sv2) -> not (CP.eq_spec_var sv1 sv2)) (List.combine largs rargs)

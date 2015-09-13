@@ -11187,7 +11187,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
       let l_emap = Infer.get_eqset (MCP.pure_of_mix lhs_p) in
       let r_emap = CP.EMapSV.mkEmpty in
       let r_eqsetmap = CP.EMapSV.build_eset estate.CF.es_rhs_eqset in
-      let lhs_b1, rhs_b1, _ = x_add Cfutil.smart_subst_new lhs_b rhs_b [] l_emap r_emap r_eqsetmap [] [] in
+      let lhs_b1, rhs_b1, _,_ = x_add Cfutil.smart_subst_new lhs_b rhs_b [] l_emap r_emap r_eqsetmap [] [] in
       let ante1 = CF.Base lhs_b1 in
       let conseq1 = CF.Base rhs_b1 in
       (* let () = DD.info_hprint (add_str " ante1" Cprinter.prtt_string_of_formula) ante1 no_pos in *)
@@ -12829,11 +12829,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (*     (\* failwith "TBI" *\) *)
       (* end *)
     | Context.M_infer_fold (r) ->
-      begin
-        let lhs_node = r.match_res_lhs_node  in
-        let rhs_node = r.match_res_rhs_node  in
-        let rhs_rest = r.match_res_rhs_rest  in
-        pm_aux estate lhs_b (Context.M_infer_heap (2, lhs_node, rhs_node,rhs_rest))
+        begin
+             let result = InferHP.infer_fold pm_aux r (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos in
+      result
+        (* let lhs_node = r.match_res_lhs_node  in *)
+        (* let rhs_node = r.match_res_rhs_node  in *)
+        (* let rhs_rest = r.match_res_rhs_rest  in *)
+        (* let rhs_inst = r.Context.match_res_compatible in *)
+        (* let () = Debug.ninfo_hprint (add_str  "rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in *)
+        (* pm_aux estate lhs_b (Context.M_infer_heap (2, lhs_node, rhs_node,rhs_rest)) *)
         (* failwith "TBI" *)
       end
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
