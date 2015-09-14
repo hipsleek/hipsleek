@@ -1159,7 +1159,7 @@ infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula:
  es_infer_vars_hp_rel: [U2]
  es_infer_hp_rel: [emp |#|  --> U2(q2,q)],3:abd heap: U2(q2,q),4:Some( emp),5:None)
 ===========================================================================
-# ex16d2c2.slk 
+# ex16d2c2.slk FIXED
 
 # No need to instantiate q is already known on LHS..
 
@@ -1231,7 +1231,7 @@ infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula:
  es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
 
 ===========================================================================
-# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_"
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" FIXED
 
 infer [U,@classic] 
    self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
@@ -1243,7 +1243,7 @@ push_list(es_infer_hp_rel):[
 self::char_star<v,q2>@M * GP_118(q2,self,p)&v!=0 |#|  --> U(self,p)]
 
 ===========================================================================
-# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" --dis-infer-back-ptr
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" --dis-infer-back-ptr FIXED
 
 infer [U,@classic] 
    self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
@@ -1256,7 +1256,7 @@ push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
   self::char_star<v,q2>@M * GP_118(q2,p) |#|  --> U(self,p)
 
 ===========================================================================
-# ex16d1d2.slk dre "infer_c" -show-push-list ".*hp_"
+# ex16d1d2.slk dre "infer_c" -show-push-list ".*hp_" FIXED
 
 //(1)
 
@@ -1271,7 +1271,7 @@ push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M * GP_30(q2,self,p,v)&v!=0
 
 
 ===========================================================================
-# ex16d2c2.slk 
+# ex16d2c2.slk FIXED
 
 # No need to instantiate q if it is already known on LHS..
 
