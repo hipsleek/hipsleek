@@ -1312,6 +1312,21 @@ infer [U,@pure_field,@classic]
                    v!=0 |#|3  --> U(self,p)&true]
 [[ InferFold  ==>  Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
 ===========================================================================
+# ex16d1b5.slk -dre "process_one_m"
+
+
+ infer [U2,@pure_field,@classic] 
+   U(q2,q3)*q3::char_star<0,p>    |-  U2(q2,q)*q::char_star<0,p>.
+
+# where did we obtain HP_153? Why did we infer for U when it is not in
+  the infer set?
+
+
+push_list(es_infer_hp_rel):[ U(q2,q) |#|  --> U2(q2,q)]
+push_list(es_infer_hp_rel):[ emp |#|  --> HP_153(flted_39_152,q2,q)]
+push_list(es_infer_hp_rel):[ q::char_star<flted_39_128,p>@M * GP_156(p,q2,q)&
+  flted_39_128=0 |#|  --> U(q2,q)]
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
