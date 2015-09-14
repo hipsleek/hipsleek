@@ -3629,7 +3629,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
   (*********************END*********************)
     (******************************************)
   let undef_lhs_ptrs_w_pure = get_undefined_back_ptrs lhs_node rhs_node in
-  let () = y_binfo_hp (add_str "undef_lhs_ptrs_w_pure" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs_w_pure in
+  let () = y_tinfo_hp (add_str "undef_lhs_ptrs_w_pure" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs_w_pure in
   let undef_lhs_ptrs = List.filter (fun (sv,_) -> CP.is_node_typ sv) undef_lhs_ptrs_w_pure in
   (*generate constraint*)
   let new_es, heap_of_rel_lhs = generate_rel es0 undef_lhs_ptrs in
