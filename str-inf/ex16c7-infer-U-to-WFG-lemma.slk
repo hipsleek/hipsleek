@@ -1,0 +1,58 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+ print residue.
+
+/*
+ infer [U,@classic]  U(self,q)*q::char_star<0,p> 
+    |- self::char_star<0,p>.
+ print residue.
+*/
+
+ infer [U,@pure_field,@classic]  U(self,q)*q::char_star<0,p> 
+    |- self::char_star<0,p>.
+ print residue.
+
+
+/*
+# ex16c7.slk
+
+ infer [U,@pure_field,@classic]  U(self,q)*q::char_star<0,p> 
+    |- self::char_star<0,p>.
+ print residue.
+
+# GOT
+
+ inferred hprel: [U(self,q)&true |#| q::char_star<flted_33_161,p>@M&
+                   true --> emp&self=q]
+
+# Since we had @pure_field, it should be:
+
+ inferred hprel: [U(self,q)&true |#| q::char_star<flted_33_161,p>@M&
+                   flted_33_161=0 --> emp&self=q]
+
+
+*/

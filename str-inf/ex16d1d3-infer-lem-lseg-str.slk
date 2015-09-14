@@ -9,7 +9,8 @@ data char_star {
 
 //(2)
 infer [U,@pure_field,@classic] 
-   self::char_star<v,p> & v!=0  |-  U(self,p).
+//infer [U,@classic] self::char_star<v,p> & v!=0  |-  U(s,p).
+//infer [U] self::char_star<v,p> & v!=0  |-  U(s,p).
  print residue.
 
 
