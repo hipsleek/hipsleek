@@ -1449,7 +1449,7 @@ let smart_subst_lhs f lhpargs leqs infer_vars=
     nfb
   | _ -> report_error no_pos "SAU.smart_subst_lhs"
 
-let keep_data_view_hrel_nodes_two_fbs prog en_pure_field en_lhs_complex
+let keep_data_view_hrel_nodes_two_fbs prog en_pure_field en_unfold_lhs_complex
       f1 f2 hd_nodes hv_nodes (* hpargs *)
       leqs reqs lhs_keep_rootvars
       rhs_keep_rootvars
@@ -1462,7 +1462,7 @@ let keep_data_view_hrel_nodes_two_fbs prog en_pure_field en_lhs_complex
   (*demo/cyc-lseg-3.ss*)
   let lhs_keep_closed_rootvars =  CP.remove_dups_svl (List.fold_left close_def lhs_keep_rootvars eqs) in
   let () = Debug.ninfo_zprint (lazy (("lhs keep_vars 1: " ^ (!CP.print_svl lhs_keep_closed_rootvars)))) no_pos in
-  let lhs_keep_vars = if en_lhs_complex then
+  let lhs_keep_vars = if en_unfold_lhs_complex then
     CF.look_up_reachable_ptr_args prog hd_nodes hv_nodes lhs_keep_closed_rootvars
   else lhs_keep_closed_rootvars in
   let c_lhs_hpargs = CP.remove_dups_svl (List.fold_left close_def lhs_hpargs eqs) in

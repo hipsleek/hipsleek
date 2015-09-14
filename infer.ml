@@ -3046,7 +3046,7 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
   let () = Debug.ninfo_hprint (add_str  "    rhs_svl" !CP.print_svl) rhs_svl no_pos in
   (* let () = Debug.ninfo_hprint (add_str  "    keep_root_hrels" !CP.print_svl) keep_root_hrels no_pos in *)
   let () = DD.ninfo_hprint (add_str  "es.es_infer_obj # is_pure_field_all " string_of_bool) es.es_infer_obj # is_pure_field_all no_pos in
-  let () = Debug.ninfo_hprint (add_str  "is_match" string_of_bool) is_match no_pos in
+  let () = Debug.info_hprint (add_str  "is_match" string_of_bool) is_match no_pos in
 
   let lhs_b, new_hds, new_hvs = if is_match then
     let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (rhs_svl(* @keep_root_hrels@classic_nodes*));} in
@@ -3064,7 +3064,7 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
     {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CP.remove_dups_svl (lhs_keep_rootvars@rhs_args_ni));}
   in
   let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all
-    !Globals.old_infer_complex_lhs
+    (!Globals.old_infer_complex_lhs || iact != 1)
     lhs_b1 rhs_b
       (* (hds@filter_his) hvs *) new_hds new_hvs (* (lhp_args@rhp_args) *) leqs reqs lhs_keep_root_svl rhs_keep_root_svl
       (lhs_keep_rootvars(* @keep_root_hrels *)) lhp_args lhs_args_ni
@@ -3577,8 +3577,10 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     let rhps, r_args = List.fold_left (fun (acc1,acc2) (hp,args) -> acc1@[hp], acc2@args ) ([],[]) rhpargs in
     let knd = CP.RelAssume (CP.remove_dups_svl (rhps@new_hp_decls)) in
     let rel_lhs_hf = List.fold_left (fun acc pred_hf -> CF.mkStarH acc pred_hf pos) lhs_node pred_hfs in
+    let rel_lhs_svl = (CP.remove_dups_svl (CF.h_fv rel_lhs_hf)) in
+    let rel_lhs_pure = (CP.filter_var_new (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) (if es.CF.es_infer_obj # is_pure_field_all then rel_lhs_svl else List.filter CP.is_node_typ rel_lhs_svl) ) in
     let rel_lhs_base = {lhs_b1 with formula_base_heap = rel_lhs_hf;
-        formula_base_pure = MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) (CP.remove_dups_svl (CF.h_fv rel_lhs_hf)))} in
+        formula_base_pure = MCP.mix_of_pure rel_lhs_pure} in
     let before_lhs = CF.Base rel_lhs_base in
     let before_rhs = CF.Base rhs_b1 in
     let rel_lhs,rel_rhs = if !Globals.allow_field_ann then
@@ -3609,8 +3611,9 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     (******************************************)
   (*********************END*********************)
     (******************************************)
-  let undef_lhs_ptrs = get_undefined_back_ptrs lhs_node rhs_node in
-  let () = y_binfo_hp (add_str "undef_lhs_ptrs" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs in
+  let undef_lhs_ptrs_w_pure = get_undefined_back_ptrs lhs_node rhs_node in
+  let () = y_binfo_hp (add_str "undef_lhs_ptrs_w_pure" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs_w_pure in
+  let undef_lhs_ptrs = List.filter (fun (sv,_) -> CP.is_node_typ sv) undef_lhs_ptrs_w_pure in
   (*generate constraint*)
   let new_es, heap_of_rel_lhs = generate_rel es0 undef_lhs_ptrs in
   let heap_of_es = match (CF.heap_of new_es.CF.es_formula) with
