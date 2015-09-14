@@ -1817,6 +1817,7 @@ let match_one_hp_views_x iprog prog cur_m (vdcls: CA.view_decl list) def:(CP.spe
     if (List.length args) = ((List.length vdcl.Cast.view_vars) + 1) &&
        self_t = (Named vdcl.Cast.view_data_name)
     then
+      let () = DD.ninfo_hprint (add_str "        vdcl.Cast.view_name:" pr_id) vdcl.Cast.view_name no_pos in
       let f1 = Cformula.formula_of_heap def.Cformula.def_lhs no_pos in
       let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
       let sst = List.combine (r::paras) (self_sv::vdcl.Cast.view_vars) in
@@ -1864,6 +1865,8 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: Cformula.hp_rel_def list) (vd
   (CP.spec_var* Cformula.h_formula list) list=
   let match_one_fnc = if (!Globals.syntatic_mode) then Sautil.match_one_hp_views else
       (match_one_hp_views) in
+  let hrel_vdcls, others  = List.partition (fun vdcl -> vdcl.Cast.view_kind =View_HREL) prog.Cast.prog_view_decls in
+  let () = prog.Cast.prog_view_decls <- others in
   let hp_defs1 = List.filter (fun def -> match def.Cformula.def_cat with
       | CP.HPRelDefn (hp,r,paras) -> (CP.mem_svl hp sel_hps &&
                                       not (List.for_all (fun sv -> not (CP.is_node_typ sv)) (r::paras))
@@ -1898,6 +1901,7 @@ let match_hps_views_x iprog prog sel_hps (hp_defs: Cformula.hp_rel_def list) (vd
     ) [] m in
   let () = x_tinfo_hp (add_str "view_equivs: " (pr_list (pr_pair pr_id pr_id))) view_equivs no_pos in
   let () = prog.CA.prog_view_equiv <- prog.CA.prog_view_equiv@view_equivs in
+  let () = prog.Cast.prog_view_decls <- prog.Cast.prog_view_decls@hrel_vdcls in
   m
 (* (List.filter (fun (_,l) -> l<>[]) m) *)
 

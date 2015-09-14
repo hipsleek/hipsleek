@@ -3,12 +3,15 @@ data char_star {
   char_star next;
 }.
 
-pred WSS<p> ==
-  self::WFSeg<q>*q::char_star<0,p> 
-  inv self!=null.
+/*
+pred WFSeg1<p> ==
+  emp & self=p 
+  or self::char_star<v,q>*q::WFSeg1<p> & v!=0
+  inv true.
+*/
 
 pred WFSeg<p> ==
-  self=p 
+  emp & self=p 
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
   inv true.
 
@@ -24,5 +27,6 @@ pred WFG<p> ==
   HeapPred U2(char_star x,char_star y).
 
  lemma_infer_pred [U,@pure_field,@classic] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+//lemma_test self::WFSeg<p> <-> self::WFSeg1<p>.
  print residue.
 

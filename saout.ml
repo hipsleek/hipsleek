@@ -235,10 +235,19 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
     let iviews0, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
     let n_iproc,iviews = plugin_inferred_iviews pair_iviews iprog cprog in
     (* let () = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
+    let old_view_scc = !Astsimp.view_scc in
+    let () = Astsimp.view_scc := [] in
+    let old_flag = !Globals.do_infer_inv in
+    let () = Globals.do_infer_inv := true in
     let () = List.iter (Astsimp.process_pred_def_4_iast iprog false) iviews in
+    let () = Astsimp.view_scc := old_view_scc in
     (* let () = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
     (*convert to cview. new_views: view with annotated types*)
     let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog false) in
+    let todo_unk =  (List.map (fun vdef -> Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews) in
+    let todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cprog.Cast.prog_view_decls) in
+    let cprog = Astsimp.fill_base_case cprog in
+    let () = Globals.do_infer_inv := old_flag in
     let () = cprog.C.prog_hp_decls <- crem_hprels in
     (*put back*)
     (* let () = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)

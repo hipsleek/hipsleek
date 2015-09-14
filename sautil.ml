@@ -2850,8 +2850,8 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
         if CP.intersect_svl args match_svl = [] then ls
         else ls@args
       ) [] (hp_args@v_args) in
-    let hd_args = ptr_node::ptr_args in
-    let inter = CP.intersect_svl hd_args (sel_args@pure_svl) in
+    let hd_args = (* ptr_node:: *)ptr_args in
+    let inter = CP.intersect_svl (hd_args) (sel_args@pure_svl) in
     let locs_pattern = get_all_locs hd_args inter in
     (inter, locs_pattern)
   in
@@ -2859,7 +2859,7 @@ let pattern_matching_with_guard_x rhs1 rhs2 guard match_svl check_pure=
     let hds = get_hdnodes f in
     let sel_pats = List.fold_left (fun ls hd ->
         if String.compare hd_name hd.CF.h_formula_data_name = 0 then
-          let hd_args = hd.CF.h_formula_data_node::hd.CF.h_formula_data_arguments in
+          let hd_args = (* hd.CF.h_formula_data_node:: *)hd.CF.h_formula_data_arguments in
           let () = x_tinfo_hp (add_str " hd_args:"  !CP.print_svl) hd_args no_pos in
           let () = x_tinfo_hp (add_str " match_svl:"  !CP.print_svl) match_svl no_pos in
           if CP.intersect_svl hd_args match_svl != [] then
@@ -3116,8 +3116,9 @@ let rec find_imply prog lunk_hps runk_hps lhs1 rhs1 lhs2 rhs2 (lguard1: CF.formu
               let r_res1 = (* x_add CF.subst ss2 *) (CF.Base r_res) in
               (* let () = Debug.info_zprint (lazy (("    r_res1: " ^ (Cprinter.prtt_string_of_formula r_res1)))) no_pos in *)
               (* let () = Debug.info_zprint (lazy (("    n_rhs1a: " ^ (Cprinter.string_of_formula n_rhs1a)))) no_pos in *)
-              let _, n_rhs1, n_lguard1 = pattern_matching_with_guard n_rhs1a r_res1 lguard1
-                  m_args2 true in
+              let _, n_rhs1, n_lguard1 = x_add pattern_matching_with_guard n_rhs1a r_res1 lguard1
+                  m_args2 true
+              in
               let () = Debug.ninfo_zprint (lazy (("    n_rhs1: " ^ (Cprinter.string_of_formula n_rhs1)))) no_pos in
               (*elim duplicate hprel in r_res1 and n_rhs1*)
               let nr_hprel = CF.get_HRels_f n_rhs1 in
@@ -6471,7 +6472,7 @@ let succ_subst_hpdef_x prog link_hps (nrec_hpdefs: CF.hp_rel_def list) all_succ_
               else false in
             if is_consis_guard then
               let nf1 = compose_subs f1 f2 pos in
-              let b, nf2, nog2 = pattern_matching_with_guard nf1 f og2 args true in
+              let b, nf2, nog2 = x_add pattern_matching_with_guard nf1 f og2 args true in
               if b then
                 let nog2 = drop_dups_guards nf2 og2 in
                 r@[(nf2, nog2)]
