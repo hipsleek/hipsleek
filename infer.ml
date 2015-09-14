@@ -3633,10 +3633,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
   let undef_lhs_ptrs = List.filter (fun (sv,_) -> CP.is_node_typ sv) undef_lhs_ptrs_w_pure in
   (*generate constraint*)
   let new_es, heap_of_rel_lhs = generate_rel es0 undef_lhs_ptrs in
-  let heap_of_es = match (CF.heap_of new_es.CF.es_formula) with
-    | [hf] -> hf
-    | _ -> failwith "infer_collect_hp_rel_fold 1" in
-  (true, new_es, lhs_node, Some heap_of_es, None, Some heap_of_rel_lhs)
+  (true, new_es, lhs_node, Some new_es.CF.es_heap, None, Some heap_of_rel_lhs)
 
 let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b1 rhs_b1 pos =
   let pr1 = Cprinter.string_of_formula_base in

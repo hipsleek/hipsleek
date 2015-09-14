@@ -35,9 +35,9 @@ infer [U2,@pure_field,@classic]
 
 */
 
+
  infer [U2,@pure_field,@classic] 
    U(q2,q3)*q3::char_star<0,p>    |-  U2(q2,q)*q::char_star<0,p>.
-
 
  print residue.
 

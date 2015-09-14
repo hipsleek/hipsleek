@@ -13372,7 +13372,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                       x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
                   else let new_ctx = Ctx new_estate in
                     x_add heap_entail_conjunct 29 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
-                | Some hf -> 
+                | Some hf ->
                   let new_es = {new_estate with CF.es_heap = hf} in
                   let new_ctx = Ctx (CF.add_to_estate new_es "infer: rhs: unkown pred") in
                   x_add heap_entail_conjunct 28 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
