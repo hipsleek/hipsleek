@@ -89,7 +89,12 @@ let do_inst prog estate lhs_b largs rargs extended_hps=
       let fvp = CP.fv p in
       let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
       let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
-      if CP.intersect_svl rargs fvp != [] then false,estate, lhs_b
+      if CP.intersect_svl rargs fvp != [] then
+        let is_succ=
+          let ps_eqs = List.filter (fun p -> (CP.is_eq_exp_ptrs rargs p)) (CP.list_of_conjs p) in
+          if ps_eqs = [] then false else true
+        in
+        is_succ,estate, lhs_b
       else
         let sst = List.combine largs rargs in
         let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
@@ -194,11 +199,10 @@ let infer_unfold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b
     pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest))
 
 
-let infer_fold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
+let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
   : (Cformula.list_context * Prooftracer.proof) =
-  let prog = () in
   let r = action in
-  let prog = () in
+  (* let prog = () in *)
   let r = action in
   let lhs_node = r.Context.match_res_lhs_node  in
   let rhs_node = r.Context.match_res_rhs_node  in
@@ -234,7 +238,7 @@ let infer_fold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (
     | _ -> return_out_of_inst estate lhs_b []
   in
   if not is_succ_inst then
-    let err_msg = "infer_unfold" in
+    let err_msg = "infer_fold" in
     let conseq = Some (Base rhs_b) in
     (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"Can not inst") err_msg estate pos,NoAlias)
   else

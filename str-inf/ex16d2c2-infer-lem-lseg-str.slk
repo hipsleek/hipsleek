@@ -8,13 +8,19 @@ data char_star {
   HeapPred U3(char_star x,char_star y,char_star@NI z).
 
 //(5)
-//infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
-//expect Valid.
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  
+ |-  U2(q3,q).
+print residue.
+ expect Valid.
 // expects U(q2,q_155) --> U2(q2,q_155)
+
+
 
 infer [U2,@classic] U(q2,q_155)  & q2=q3 //& q_155=q  
  |-  U2(q3,q).
+print residue.
  expect Valid.
+
 
 /*
 # ex16d2c2.slk 
