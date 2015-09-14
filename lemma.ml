@@ -616,8 +616,8 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
         Lem_store.all_lemma # pop_coercion;
         match invalid_lem with
         | None ->
-          (* let hprels = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_hp_rel_list_context lc)) [] lcs in *)
-              let hprels = Infer.rel_ass_stk # get_stk in
+          let hprels = List.fold_left (fun r_ass lc -> r_ass@(Infer.collect_hp_rel_list_context lc)) [] lcs in
+              (* let hprels = Infer.rel_ass_stk # get_stk in *)
               let () =  print_relational_ass_shape hprels in
               let () = Infer.rel_ass_stk # reset in
           let (_,hp_rest) = List.partition (fun hp ->
@@ -637,48 +637,6 @@ let manage_infer_pred_lemmas repo iprog cprog xpure_fnc =
           let l_coers, rl, lshapes =
             if left = [] then left,[],[] else
                infer iprog cprog left hp_lst_assume oblgs
-              (*shape*)
-              (* let is_left, post_hps, post_rel_ids, sel_hps, rel_ids = match left  with *)
-              (*   | [] -> false,[],[],[],[] *)
-              (*   | [coer] -> (true,CP.remove_dups_svl (CF.get_hp_rel_name_formula coer.C.coercion_body), *)
-              (*                CP.remove_dups_svl (List.map fst (CP.get_list_rel_args (CF.get_pure coer.C.coercion_body))), *)
-              (*                List.filter (fun sv -> CP.is_hprel_typ sv) coer.C.coercion_infer_vars, *)
-              (*                List.filter (fun sv -> CP.is_rel_typ sv) coer.C.coercion_infer_vars *)
-              (*               ) *)
-              (*   | _ -> report_error no_pos "LEMMA: manage_infer_pred_lemmas" *)
-              (* in *)
-              (* let new_coers, rl, lshape = if is_left then *)
-              (*   let l_coer = List.hd left in *)
-              (*   let lshape = if sel_hps = [] || hp_lst_assume = [] then [] else *)
-              (*     let _, hp_defs, _ = !infer_shapes iprog cprog "temp" hp_lst_assume sel_hps post_hps *)
-              (*       [] [] [] true true (!norm_flow_int) in *)
-              (*     hp_defs *)
-              (*   in *)
-              (*   let defs0 = CF.rel_def_stk# get_stk in *)
-              (*   let () = print_relational_def_shape defs0 in *)
-              (*   (\* to incorp inferred result into lemma *\) *)
-              (*   let inferred_coer = if defs0 = [] then l_coer *)
-              (*   else *)
-              (*     let new_coer = plug_inffers l_coer lshape in *)
-              (*     new_coer *)
-              (*   in *)
-              (*   let () = CF.rel_def_stk# reset in *)
-              (*   (\*pure fixpoint*\) *)
-              (*   let new_coer2, rl = if rel_ids = [] || oblgs = [] then (inferred_coer,[]) else *)
-              (*     let pre_invs, pre_rel_oblgs, post_rel_oblgs = partition_pure_oblgs oblgs post_rel_ids in *)
-              (*     let proc_spec = CF.mkETrue_nf no_pos in *)
-              (*     let pre_rel_ids = CP.diff_svl rel_ids post_rel_ids in *)
-              (*     let r = Fixpoint.rel_fixpoint_wrapper pre_invs [] pre_rel_oblgs post_rel_oblgs pre_rel_ids post_rel_ids proc_spec 1 in *)
-              (*     (\* let () = Debug.info_hprint (add_str "fixpoint" *\) *)
-              (*     (\*                               (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *\) *)
-              (*     (\* let () = print_endline_quiet "" in *\) *)
-              (*     (\* let () = print_res r in *\) *)
-              (*     inferred_coer, r *)
-              (*   in *)
-              (*   [new_coer2], rl, lshape *)
-              (* else left,[],[] *)
-              (* in *)
-              (* (new_coers, rl, lshape) *)
           in
           (*right*)
           (*shape*)
