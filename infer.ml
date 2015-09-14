@@ -3533,23 +3533,40 @@ let get_eqset puref =
 let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b1 rhs_b1 pos =
   (*********************INTERNAL*********************)
       (******************************************)
-  let get_ptrs_ni hf=
-    match hf with
-      | CF.ViewNode {CF.h_formula_view_arguments = args}
-      | CF.DataNode {CF.h_formula_data_arguments = args} ->
-            List.fold_left (fun acc sv -> if CP.is_node_typ sv then acc@[(sv,I)] else
-              if es0.CF.es_infer_obj # is_pure_field_all then
-                acc@[(sv,NI)] else acc
-            ) [] args
-      | CF.HRel (hp,eargs,_) ->
-            let args = List.map CP.exp_to_sv eargs in
-            let i_args, ni_args = Sautil.partition_hp_args prog hp args in
-            (* let ni_args1 = List.fold_left (fun acc (sv,_) -> *)
-            (*     if not (CP.is_node_typ sv) && not es0.CF.es_infer_obj # is_pure_field_all then acc else *)
-            (*       acc@[(sv,NI)] *)
-            (* ) [] ni_args in *)
-            i_args@ni_args
-      | _ -> []
+  let get_ptrs_ni hf = match hf with
+    | CF.ViewNode {CF.h_formula_view_arguments = args}
+    | CF.DataNode {CF.h_formula_data_arguments = args} ->
+          List.fold_left (fun acc sv -> if CP.is_node_typ sv then acc@[(sv,I)] else
+            if es0.CF.es_infer_obj # is_pure_field_all then
+              acc@[(sv,NI)] else acc
+          ) [] args
+    | CF.HRel (hp,eargs_w_r,_) -> begin
+        match eargs_w_r with
+          | er::_ ->
+                let args = List.map CP.exp_to_sv eargs_w_r in
+                let r = List.hd args in
+                let i_args, ni_args = Sautil.partition_hp_args prog hp args in
+                let i_args_wo_r = List.filter (fun (sv,_) -> not(CP.eq_spec_var sv r)) i_args in
+                let ni_args_wo_r = List.filter (fun (sv,_) -> not(CP.eq_spec_var sv r)) ni_args in
+                (* let ni_args1 = List.fold_left (fun acc (sv,_) -> *)
+                (*     if not (CP.is_node_typ sv) && not es0.CF.es_infer_obj # is_pure_field_all then acc else *)
+                (*       acc@[(sv,NI)] *)
+                (* ) [] ni_args in *)
+                i_args_wo_r@ni_args_wo_r
+          | _ -> []
+      end
+    | _ -> []
+  in
+  let get_root hf= match hf with
+    | CF.ViewNode {CF.h_formula_view_node = sv}
+    | CF.DataNode {CF.h_formula_data_node = sv} -> [(sv,NI)]
+    | CF.HRel (hp,eargs_w_r,_) -> begin
+        match eargs_w_r with
+          | r::_ ->
+                  [((CP.exp_to_sv r),NI)]
+          | _ -> []
+      end
+    | _ -> []
   in
   let get_undefined_back_ptrs lhs_node rhs_node=
     let lhs_ptrs = get_ptrs_ni lhs_node in
@@ -3557,11 +3574,11 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     let res_lhs = Gen.BList.difference_eq (fun (sv1,_) (sv2,_) -> CP.eq_spec_var sv1 sv2) lhs_ptrs rhs_ptrs in
     let res_rhs = Gen.BList.difference_eq (fun (sv1,_) (sv2,_) -> CP.eq_spec_var sv1 sv2) rhs_ptrs lhs_ptrs in
     let i_svl, ni_svl = List.partition (fun (_,n) -> n=I) (res_lhs@res_rhs) in
-    i_svl@ni_svl
+    i_svl@(get_root rhs_node)@ni_svl
   in
   let generate_rel es undef_lhs_ptrs =
     let (pred_hfs,new_hp_decls)=
-      if undef_lhs_ptrs = [] then
+      if undef_lhs_ptrs = [] || (List.filter (fun (_,n) -> n=I) undef_lhs_ptrs) = [] then
         [],[]
       else
         let (pred_hf,new_hp_rel) = Sautil.add_raw_hp_rel prog false false undef_lhs_ptrs pos in
