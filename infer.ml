@@ -3559,52 +3559,60 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     let i_svl, ni_svl = List.partition (fun (_,n) -> n=I) (res_lhs@res_rhs) in
     i_svl@ni_svl
   in
+  let generate_rel es undef_lhs_ptrs =
+    if undef_lhs_ptrs = [] then
+      es, lhs_node
+    else
+      let (pred_hf,new_hp_rel) = Sautil.add_raw_hp_rel prog false false undef_lhs_ptrs pos in
+      let (lhf,lmf,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
+      let lhds, lhvs, lhrs = CF.get_hp_rel_h_formula lhf in
+      let leqs = (MCP.ptr_equations_without_null lmf) in
+      let leqNulls = MCP.get_null_ptrs lmf in
+
+      let es_cond_path = CF.get_es_cond_path es in
+      let rhpargs = CF.get_HRels rhs_node in
+      let rhps, r_args = List.fold_left (fun (acc1,acc2) (hp,args) -> acc1@[hp], acc2@args ) ([],[]) rhpargs in
+      let knd = CP.RelAssume (CP.remove_dups_svl (rhps@[new_hp_rel])) in
+      let rel_lhs_hf = CF.mkStarH lhs_node pred_hf pos in
+      let rel_lhs_base = {lhs_b1 with formula_base_heap = rel_lhs_hf;
+          formula_base_pure = MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) (CP.remove_dups_svl (CF.h_fv rel_lhs_hf)))} in
+      let before_lhs = CF.Base rel_lhs_base in
+      let before_rhs = CF.Base rhs_b1 in
+      let rel_lhs,rel_rhs = if !Globals.allow_field_ann then
+        (CF.formula_trans_heap_node hn_trans_field_mut before_lhs,
+        CF.formula_trans_heap_node hn_trans_field_mut before_rhs)
+      else
+        (before_lhs,before_rhs)
+      in
+      let ass_guard = None in
+      let hp_rel = CF.mkHprel knd [] [] (CF.get_ptrs lhs_node) rel_lhs ass_guard rel_rhs es_cond_path in
+
+      let hp_rel_list0 =
+        if !Globals.old_keep_triv_relass then [hp_rel]
+        else List.filter (fun cs -> not (Sautil.is_trivial_constr ~en_arg:true cs)) [hp_rel] in
+      let ex_ass = (rel_ass_stk # get_stk) in
+      let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
+      (* postpone until heap_entail_after_sat *)
+      let () = rel_ass_stk # push_list (hp_rel_list) in
+      let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+      let n_ihvr = (es.CF.es_infer_vars_hp_rel@[new_hp_rel]) in
+      let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;} in
+      let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
+      let heap_of_rel_lhs = match (CF.heap_of rel_lhs) with
+        | [hf] -> hf
+        | _ -> failwith "infer_collect_hp_rel_fold 2" in
+      new_es, heap_of_rel_lhs
+  in
     (******************************************)
   (*********************END*********************)
     (******************************************)
   let undef_lhs_ptrs = get_undefined_back_ptrs lhs_node rhs_node in
   let () = y_binfo_hp (add_str "undef_lhs_ptrs" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs in
-  let (pred_hf,new_hp_rel) = Sautil.add_raw_hp_rel prog false false undef_lhs_ptrs pos in
-  let (lhf,lmf,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
-  let lhds, lhvs, lhrs = CF.get_hp_rel_h_formula lhf in
-  let leqs = (MCP.ptr_equations_without_null lmf) in
-  let leqNulls = MCP.get_null_ptrs lmf in
-
   (*generate constraint*)
-  let es_cond_path = CF.get_es_cond_path es0 in
-  let rhpargs = CF.get_HRels rhs_node in
-  let rhps, r_args = List.fold_left (fun (acc1,acc2) (hp,args) -> acc1@[hp], acc2@args ) ([],[]) rhpargs in
-  let knd = CP.RelAssume (CP.remove_dups_svl (rhps@[new_hp_rel])) in
-  let rel_lhs_hf = CF.mkStarH lhs_node pred_hf pos in
-  let rel_lhs_base = {lhs_b1 with formula_base_heap = rel_lhs_hf;
-  formula_base_pure = MCP.mix_of_pure (CP.filter_var_new (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) (CP.remove_dups_svl (CF.h_fv rel_lhs_hf)))} in
-  let before_lhs = CF.Base rel_lhs_base in
-  let before_rhs = CF.Base rhs_b1 in
-  let rel_lhs,rel_rhs = if !Globals.allow_field_ann then
-    (CF.formula_trans_heap_node hn_trans_field_mut before_lhs,
-    CF.formula_trans_heap_node hn_trans_field_mut before_rhs)
-  else
-    (before_lhs,before_rhs)
-  in
-  let ass_guard = None in
-  let hp_rel = CF.mkHprel knd [] [] (CF.get_ptrs lhs_node) rel_lhs ass_guard rel_rhs es_cond_path in
-  let hp_rel_list0 =
-    if !Globals.old_keep_triv_relass then [hp_rel]
-    else List.filter (fun cs -> not (Sautil.is_trivial_constr ~en_arg:true cs)) [hp_rel] in
-  let ex_ass = (rel_ass_stk # get_stk) in
-  let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
-  (* postpone until heap_entail_after_sat *)
-  let () = rel_ass_stk # push_list (hp_rel_list) in
-  let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
-  let n_ihvr = (es0.CF.es_infer_vars_hp_rel@[new_hp_rel]) in
-  let new_es = {es0 with CF.es_infer_vars_hp_rel = n_ihvr;} in
-  let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
+  let new_es, heap_of_rel_lhs = generate_rel es0 undef_lhs_ptrs in
   let heap_of_es = match (CF.heap_of new_es.CF.es_formula) with
     | [hf] -> hf
     | _ -> failwith "infer_collect_hp_rel_fold 1" in
-  let heap_of_rel_lhs = match (CF.heap_of rel_lhs) with
-    | [hf] -> hf
-    | _ -> failwith "infer_collect_hp_rel_fold 2" in
   (true, new_es, lhs_node, Some heap_of_es, None, Some heap_of_rel_lhs)
 
 let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b1 rhs_b1 pos =

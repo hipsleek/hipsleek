@@ -13,9 +13,12 @@ infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q
  expect Valid.
 // expects U(q2,q_155) --> U2(q2,q_155)
 
+/*
+
 infer [U2,@classic] U(q2,q_155)  & q2=q3 //& q_155=q  
  |-  U2(q3,q).
  expect Valid.
+*/
 
 /*
 # ex16d2c2.slk 

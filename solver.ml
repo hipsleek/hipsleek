@@ -12830,7 +12830,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (* end *)
     | Context.M_infer_fold (r) ->
         begin
-             let result = InferHP.infer_fold pm_aux r (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos in
+             let result = InferHP.infer_fold prog pm_aux r (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos in
       result
         (* let lhs_node = r.match_res_lhs_node  in *)
         (* let rhs_node = r.match_res_rhs_node  in *)
