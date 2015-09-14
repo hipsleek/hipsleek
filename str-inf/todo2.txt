@@ -1290,7 +1290,7 @@ Message: sau.add_raw_hp_rel: args should be not empty
 Entail (2) : Failure("sau.add_raw_hp_rel: args should be not empty")
 
 ===========================================================================
-# ex16d1d3.slk dre "infer_c" -show-push-list ".*hp_"
+# ex16d1d3.slk dre "infer_c" -show-push-list ".*hp_": FIXED
 
 //(1)
 
@@ -1312,7 +1312,7 @@ infer [U,@pure_field,@classic]
                    v!=0 |#|3  --> U(self,p)&true]
 [[ InferFold  ==>  Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
 ===========================================================================
-# ex16d1b5.slk -dre "process_one_m"
+# ex16d1b5.slk -dre "process_one_m": FIXED
 
 
  infer [U2,@pure_field,@classic] 

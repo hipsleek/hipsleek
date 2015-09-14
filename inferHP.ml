@@ -225,11 +225,11 @@ let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rh
                   let mf = (MCP.mix_of_pure p) in
                   (true,
                    {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
-                                CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp];
+                                CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel;
                    },
                    CF.mkAnd_base_pure lhs_b mf no_pos)
               else
-                do_inst prog estate lhs_b largs rargs [lhp]
+                do_inst prog estate lhs_b largs rargs []
             end
           | _ -> return_out_of_inst estate lhs_b []
         else
