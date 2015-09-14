@@ -244,3 +244,5 @@ let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rh
   else
     let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
     pm_aux n_estate n_lhs_b (Context.M_infer_heap (2, lhs_node, rhs_node,rhs_rest))
+
+

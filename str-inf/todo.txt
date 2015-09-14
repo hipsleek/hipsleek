@@ -105,6 +105,31 @@ void while1(ref char_star s)
   U(x,q) -> x=q
   U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
 ===========================================================================
+--------------------------------------------------
+predicate normalization from ex16c.slk
+-----simplify <1>
+ U(self_lem_12,q_151)&
+   true |#| q_151::char_star<flted_26_150,p>@M&true 
+   --> emp & self_lem_12=q_151]
+
+-----simplify <2>
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M&flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    HP_171(q_169,q_165@NI,self_lem_12@NI)& v_168!=0true]
+
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    U(q_169,q_165) & v_168!=0true]
+
+== drop guard ==
+ U(self_lem_12,q_151)&
+   --> emp & self_lem_12=q_151]
+
+ U(self_lem_12,q_165)&
+  --> self_lem_12::char_star<v_168,q_169>@M * 
+     U(q_169,q_165) & v_168!=0true]
 ===========================================================================
 ===========================================================================
 ===========================================================================

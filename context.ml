@@ -1694,7 +1694,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
         else
           let b = 
             if (!Globals.perm = Frac) || (!Globals.perm = Bperm)
-            then not b else b 
+           then not b else b 
           in
           if b || !use_split_match then false else true 
       | _ -> true) l
@@ -2325,7 +2325,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
        | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) -> 
          (* TODO : check if h_name in the infer_vars *)
-         let act1 = M_unfold (m_res, 1) in (* base-case unfold implemented *)
+         (* TODO: can we have smarter base-case-unfold? *)
+         let act1 = M_base_case_unfold (m_res) in (* base-case unfold implemented *)
          let act2 = M_infer_heap (0, lhs_node, rhs,HEmp) in
          let act3 = M_infer_unfold (m_res,rhs,HEmp) in
          let wt = 2 in
@@ -2333,9 +2334,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          if !Globals.old_base_case_unfold_hprel then (wt,act2)
          (* (2,M_infer_heap (rhs,HEmp)) *)
          else if List.length args<2 then (wt,act3)
-         else (wt,mk_search_action [(wt,act3);(wt,act1)])
+         else (wt,mk_search_action [(wt,act1);(wt,act3)])
        (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
+         (* TODO:WN : how about base-case unfold for views? *)
          (* TODO : check if h_esname in the infer_vars *)
          (* let act1 = M_unfold (m_res, 1) in *)
          let act2 = M_infer_unfold (m_res,rhs,HEmp) in

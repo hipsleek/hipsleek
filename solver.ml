@@ -9567,7 +9567,8 @@ and do_unfold_hp_rel_x prog estate conseq rhs_node is_folding pos hp vs=
   (res_rs, prf)
 
 and do_unfold_hp_rel prog estate conseq rhs_node is_folding pos hp vs=
-  let pr1 = pr_none in
+  (* let pr1 = pr_none in *)
+  let pr1 (e,_) = Cprinter.string_of_list_context_short e in
   let pr2 = !CF.print_h_formula in
   Debug.no_4 "do_unfold_hp_rel"
     Cprinter.string_of_entail_state !CP.print_sv !CP.print_svl pr2 pr1
@@ -12721,117 +12722,117 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | (Context.M_infer_unfold (r,_,_))->
       let result = InferHP.infer_unfold pm_aux r (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos in
       result
-      (* moved to inferHP.ml *)
-      (* begin *)
-      (*   (\* if lhs in to-infer preds, add rhs preds to infer list*\) *)
-      (*   let return_out_of_inst extended_hps = *)
-      (*     let n_estate = {estate with *)
-      (*                     CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps; *)
-      (*                    } in *)
-      (*     (true, n_estate,lhs_b) in *)
-      (*   let rec gen_inst lhds lhvs sst acc_p= *)
-      (*     match sst with *)
-      (*     | [] -> true,acc_p *)
-      (*     | (sv1,sv2)::rest -> *)
-      (*       let sv2_orig = CP.subs_one estate.CF.es_rhs_eqset sv2 in *)
-      (*       if CP.eq_spec_var sv1 sv2_orig then *)
-      (*         gen_inst lhds lhvs rest acc_p *)
-      (*       else *)
-      (*         (\*str-inf/ex16c3d(8). exists free vars -> fail*\) *)
-      (*         let reach_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv1] in *)
-      (*         if CP.mem_svl sv2_orig reach_vs then *)
-      (*           if !Globals.old_infer_complex_lhs then *)
-      (*             gen_inst lhds lhvs rest acc_p *)
-      (*           else false, acc_p *)
-      (*         else *)
-      (*           let p = CP.mkEqVar sv1 sv2 no_pos in *)
-      (*           let new_acc = CP.mkAnd acc_p p no_pos in *)
-      (*           gen_inst lhds lhvs rest new_acc *)
-      (*   in *)
-      (*   let do_inst estate lhs_b largs rargs extended_hps= *)
-      (*     try *)
-      (*       if rargs = [] then return_out_of_inst extended_hps *)
-      (*       else *)
-      (*         let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in *)
-      (*         let fvp = CP.fv p in *)
-      (*         let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in *)
-      (*         let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in *)
-      (*         if CP.intersect_svl rargs fvp != [] then false,estate, lhs_b *)
-      (*         else *)
-      (*           let sst = List.combine largs rargs in *)
-      (*           let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in *)
-      (*           let is_succ, p = gen_inst lhds lhvs sst (CP.mkTrue no_pos) in *)
-      (*           if not is_succ then *)
-      (*             is_succ, estate, lhs_b *)
-      (*           else *)
-      (*             let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in *)
-      (*             let mf = (MCP.mix_of_pure p) in *)
-      (*             let () = Debug.ninfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in *)
-      (*             (true, *)
-      (*              {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos; *)
-      (*                           CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps; *)
-      (*              }, *)
-      (*              CF.mkAnd_base_pure lhs_b mf no_pos) *)
-      (*     with _ -> return_out_of_inst extended_hps *)
-      (*   in *)
-      (*   let lhs_node = r.Context.match_res_lhs_node in *)
-      (*   let rhs_node = r.Context.match_res_rhs_node in *)
-      (*   let rhs_rest = r.Context.match_res_rhs_rest in *)
-      (*   let rhs_inst = r.Context.match_res_compatible in *)
-      (*   let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with *)
-      (*     | HRel (lhp,leargs,_),HRel (rhp,reargs,_) -> *)
-      (*       if CP.mem_svl lhp estate.es_infer_vars_hp_rel (\* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *\) then *)
-      (*         match leargs, reargs with *)
-      (*         | er::rest1,_::rest2 -> begin *)
-      (*             let largs = (List.map CP.exp_to_sv rest1) in *)
-      (*             let rargs = (List.map CP.exp_to_sv rest2) in *)
-      (*             let () = Debug.ninfo_hprint (add_str  "rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in *)
-      (*             if (\* List.length rargs < List.length largs &&  *\)rhs_inst != [] then *)
-      (*               (\* let r = (CP.exp_to_sv er) in *\) *)
-      (*               (\* let sst = Cfutil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *\) *)
-      (*               let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in *)
-      (*               let is_succ, p = gen_inst lhds lhvs rhs_inst (CP.mkTrue no_pos) in *)
-      (*               if not is_succ then *)
-      (*                 true, estate, lhs_b *)
-      (*               else *)
-      (*                 let mf = (MCP.mix_of_pure p) in *)
-      (*                 (true, *)
-      (*                  {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos; *)
-      (*                               CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp]; *)
-      (*                  }, *)
-      (*                  CF.mkAnd_base_pure lhs_b mf no_pos) *)
-      (*             else *)
-      (*               do_inst estate lhs_b largs rargs [rhp] *)
-      (*           end *)
-      (*         | _ -> return_out_of_inst [rhp] *)
-      (*       else *)
-      (*         return_out_of_inst [] *)
-      (*     | HRel (lhp,leargs,_),ViewNode vn -> begin *)
-      (*         if CP.mem_svl lhp estate.es_infer_vars_hp_rel then *)
-      (*           match leargs with *)
-      (*           | _::rest1 -> *)
-      (*             let largs = (List.map CP.exp_to_sv rest1) in *)
-      (*             let rargs = vn.CF.h_formula_view_arguments in *)
-      (*             do_inst estate lhs_b largs rargs [] *)
-      (*           | _ -> return_out_of_inst [] *)
-      (*         else *)
-      (*           return_out_of_inst [] *)
-      (*       end *)
-      (*     | _ -> return_out_of_inst [] *)
-      (*   in *)
-      (*   if not is_succ_inst then *)
-      (*     let err_msg = "infer_unfold" in *)
-      (*     let conseq = Some (Base rhs_b) in *)
-      (*     (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"Can not inst") err_msg estate pos,NoAlias) *)
-      (*   else *)
-      (*     let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in *)
-      (*     pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest)) *)
-      (*     (\* failwith "TBI" *\) *)
-      (* end *)
+    (* moved to inferHP.ml *)
+    (* begin *)
+    (*   (\* if lhs in to-infer preds, add rhs preds to infer list*\) *)
+    (*   let return_out_of_inst extended_hps = *)
+    (*     let n_estate = {estate with *)
+    (*                     CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps; *)
+    (*                    } in *)
+    (*     (true, n_estate,lhs_b) in *)
+    (*   let rec gen_inst lhds lhvs sst acc_p= *)
+    (*     match sst with *)
+    (*     | [] -> true,acc_p *)
+    (*     | (sv1,sv2)::rest -> *)
+    (*       let sv2_orig = CP.subs_one estate.CF.es_rhs_eqset sv2 in *)
+    (*       if CP.eq_spec_var sv1 sv2_orig then *)
+    (*         gen_inst lhds lhvs rest acc_p *)
+    (*       else *)
+    (*         (\*str-inf/ex16c3d(8). exists free vars -> fail*\) *)
+    (*         let reach_vs = CF.look_up_reachable_ptr_args prog lhds lhvs [sv1] in *)
+    (*         if CP.mem_svl sv2_orig reach_vs then *)
+    (*           if !Globals.old_infer_complex_lhs then *)
+    (*             gen_inst lhds lhvs rest acc_p *)
+    (*           else false, acc_p *)
+    (*         else *)
+    (*           let p = CP.mkEqVar sv1 sv2 no_pos in *)
+    (*           let new_acc = CP.mkAnd acc_p p no_pos in *)
+    (*           gen_inst lhds lhvs rest new_acc *)
+    (*   in *)
+    (*   let do_inst estate lhs_b largs rargs extended_hps= *)
+    (*     try *)
+    (*       if rargs = [] then return_out_of_inst extended_hps *)
+    (*       else *)
+    (*         let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in *)
+    (*         let fvp = CP.fv p in *)
+    (*         let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in *)
+    (*         let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in *)
+    (*         if CP.intersect_svl rargs fvp != [] then false,estate, lhs_b *)
+    (*         else *)
+    (*           let sst = List.combine largs rargs in *)
+    (*           let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in *)
+    (*           let is_succ, p = gen_inst lhds lhvs sst (CP.mkTrue no_pos) in *)
+    (*           if not is_succ then *)
+    (*             is_succ, estate, lhs_b *)
+    (*           else *)
+    (*             let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in *)
+    (*             let mf = (MCP.mix_of_pure p) in *)
+    (*             let () = Debug.ninfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in *)
+    (*             (true, *)
+    (*              {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos; *)
+    (*                           CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps; *)
+    (*              }, *)
+    (*              CF.mkAnd_base_pure lhs_b mf no_pos) *)
+    (*     with _ -> return_out_of_inst extended_hps *)
+    (*   in *)
+    (*   let lhs_node = r.Context.match_res_lhs_node in *)
+    (*   let rhs_node = r.Context.match_res_rhs_node in *)
+    (*   let rhs_rest = r.Context.match_res_rhs_rest in *)
+    (*   let rhs_inst = r.Context.match_res_compatible in *)
+    (*   let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with *)
+    (*     | HRel (lhp,leargs,_),HRel (rhp,reargs,_) -> *)
+    (*       if CP.mem_svl lhp estate.es_infer_vars_hp_rel (\* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *\) then *)
+    (*         match leargs, reargs with *)
+    (*         | er::rest1,_::rest2 -> begin *)
+    (*             let largs = (List.map CP.exp_to_sv rest1) in *)
+    (*             let rargs = (List.map CP.exp_to_sv rest2) in *)
+    (*             let () = Debug.ninfo_hprint (add_str  "rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in *)
+    (*             if (\* List.length rargs < List.length largs &&  *\)rhs_inst != [] then *)
+    (*               (\* let r = (CP.exp_to_sv er) in *\) *)
+    (*               (\* let sst = Cfutil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *\) *)
+    (*               let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in *)
+    (*               let is_succ, p = gen_inst lhds lhvs rhs_inst (CP.mkTrue no_pos) in *)
+    (*               if not is_succ then *)
+    (*                 true, estate, lhs_b *)
+    (*               else *)
+    (*                 let mf = (MCP.mix_of_pure p) in *)
+    (*                 (true, *)
+    (*                  {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos; *)
+    (*                               CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@[rhp]; *)
+    (*                  }, *)
+    (*                  CF.mkAnd_base_pure lhs_b mf no_pos) *)
+    (*             else *)
+    (*               do_inst estate lhs_b largs rargs [rhp] *)
+    (*           end *)
+    (*         | _ -> return_out_of_inst [rhp] *)
+    (*       else *)
+    (*         return_out_of_inst [] *)
+    (*     | HRel (lhp,leargs,_),ViewNode vn -> begin *)
+    (*         if CP.mem_svl lhp estate.es_infer_vars_hp_rel then *)
+    (*           match leargs with *)
+    (*           | _::rest1 -> *)
+    (*             let largs = (List.map CP.exp_to_sv rest1) in *)
+    (*             let rargs = vn.CF.h_formula_view_arguments in *)
+    (*             do_inst estate lhs_b largs rargs [] *)
+    (*           | _ -> return_out_of_inst [] *)
+    (*         else *)
+    (*           return_out_of_inst [] *)
+    (*       end *)
+    (*     | _ -> return_out_of_inst [] *)
+    (*   in *)
+    (*   if not is_succ_inst then *)
+    (*     let err_msg = "infer_unfold" in *)
+    (*     let conseq = Some (Base rhs_b) in *)
+    (*     (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"Can not inst") err_msg estate pos,NoAlias) *)
+    (*   else *)
+    (*     let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in *)
+    (*     pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest)) *)
+    (*     (\* failwith "TBI" *\) *)
+    (* end *)
     | Context.M_infer_fold (r) ->
-        begin
-             let result = InferHP.infer_fold prog pm_aux r (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos in
-      result
+      begin
+        let result = InferHP.infer_fold prog pm_aux r (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos in
+        result
         (* let lhs_node = r.match_res_lhs_node  in *)
         (* let rhs_node = r.match_res_rhs_node  in *)
         (* let rhs_rest = r.match_res_rhs_rest  in *)
@@ -12843,18 +12844,18 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
                          Context.match_res_rhs_node=rhs_node;
                         },unfold_num) -> begin
-        x_tinfo_hp (add_str "M_unfold" (fun _ -> "")) () pos;
+        x_tinfo_hp (add_str "M_unfold" string_of_int) unfold_num pos;
         match lhs_node with
         | HRel (hp,args,_) ->
-          if CF.is_exists_hp_rel hp estate  then
-            if List.length args <=1 then 
-              failwith "TBI"
-            else
-              let vs = List.map CP.exp_to_sv args in
-              do_unfold_hp_rel prog estate conseq rhs_node is_folding pos hp vs
-          else
-            let msg = "UnFold on Unknown Pred (not on inferred list)" in
-            (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+          (* if CF.is_exists_hp_rel hp estate  then *)
+          (*   if List.length args <=1 then  *)
+          (*     failwith "TBI" *)
+          (*   else *)
+          (*     let vs = List.map CP.exp_to_sv args in *)
+          (*     do_unfold_hp_rel prog estate conseq rhs_node is_folding pos hp vs *)
+          (* else *)
+          let msg = "UnFold on Unknown Pred " in
+          (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
         | _ ->
           let lhs_var = get_node_var lhs_node in
           (* WN : why is there a need for es_infer_invs *)
@@ -12881,29 +12882,46 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       end
     | Context.M_base_case_unfold {
         Context.match_res_lhs_node = lhs_node;
+        Context.match_res_compatible = inst_vs;
         Context.match_res_rhs_node = rhs_node;}->
-      x_tinfo_hp (add_str "M_base_case_unfold" (fun _ -> "")) () pos;
-      let estate =
-        if Infer.no_infer_rel estate then estate
-        else 
-          let lhs_h,lhs_p,_,_, _, lhs_a = CF.split_components estate.es_formula in
-          let lhs_alias = MCP.ptr_equations_without_null lhs_p in
-          let lhs_aset = CP.EMapSV.build_eset lhs_alias in
-          (* Assumed lhs_h to be star or view_node or data_node *)
-          let lhs_h_list = split_star_conjunctions lhs_h in
-          let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
-          let init_pure = CP.conj_of_list init_pures pos in
-          (* let new_es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in *)
-          {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
-      in
-      let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
-      (match ans with
-       | None ->
-         let err_msg = "base_case_unfold failed" in
-         (CF.mkFailCtx_in(Basic_Reason(mkFailContext (* "base_case_unfold failed" *) err_msg estate conseq (get_node_label rhs_node) pos
-                                      , CF.mk_failure_may "base case unfold failed" Globals.sl_error, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) (mk_cex false),NoAlias)
-       (*use UNION, so return MUST, final res = latter case*)
-       | Some x -> x)
+      x_tinfo_pp "M_base_case_unfold" pos;
+      begin
+        match lhs_node with
+        | HRel (hp,args,_) ->
+          if CF.is_exists_hp_rel hp estate  then
+            if List.length args <=1 then 
+              failwith "TBI"
+            else
+              let vs = List.map CP.exp_to_sv args in
+              let () = y_binfo_hp (add_str "inst_vs" 
+                                     (pr_list (pr_pair !CP.print_sv !CP.print_sv))) inst_vs in
+              x_add do_unfold_hp_rel prog estate conseq rhs_node is_folding pos hp vs
+          else
+            let msg = "Base_Case_UnFold on Unknown Pred (not on inferred list)" in
+            (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
+        | _ ->
+          let estate =
+            if Infer.no_infer_rel estate then estate
+            else 
+              let lhs_h,lhs_p,_,_, _, lhs_a = CF.split_components estate.es_formula in
+              let lhs_alias = MCP.ptr_equations_without_null lhs_p in
+              let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+              (* Assumed lhs_h to be star or view_node or data_node *)
+              let lhs_h_list = split_star_conjunctions lhs_h in
+              let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+              let init_pure = CP.conj_of_list init_pures pos in
+              (* let new_es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in *)
+              {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
+          in
+          let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
+          (match ans with
+           | None ->
+             let err_msg = "base_case_unfold failed" in
+             (CF.mkFailCtx_in(Basic_Reason(mkFailContext (* "base_case_unfold failed" *) err_msg estate conseq (get_node_label rhs_node) pos
+                                          , CF.mk_failure_may "base case unfold failed" Globals.sl_error, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) (mk_cex false),NoAlias)
+           (*use UNION, so return MUST, final res = latter case*)
+           | Some x -> x)
+      end
     | Context.M_base_case_fold {
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;} ->
