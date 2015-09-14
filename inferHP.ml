@@ -139,9 +139,9 @@ type: (CF.entail_state ->
   CP.spec_var list ->
   'e -> VarGen.loc -> Cformula.list_context * Prooftracer.proof
 *)
-let infer_unfold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
+let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
   : (Cformula.list_context * Prooftracer.proof) =
-  let prog = () in
+  (* let prog = () in *)
   let r = action in
   let lhs_node = r.Context.match_res_lhs_node in
   let rhs_node = r.Context.match_res_rhs_node in

@@ -202,7 +202,10 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
           try
             let () =  Debug.ninfo_pprint (" hp: " ^ (!CP.print_sv hp)) no_pos in
             let view = x_add C.look_up_view_def_raw 33 cprog.C.prog_view_decls hp_name in
-            (ls1,ls2, ls3@[view])
+            if view.Cast.view_kind == View_HREL then
+              (ls1@[hp], ls2@[def], ls3)
+            else
+              (ls1,ls2, ls3@[view])
           with _ -> (ls1@[hp], ls2@[def], ls3)
         end
       | _ -> (ls1,ls2, ls3)
