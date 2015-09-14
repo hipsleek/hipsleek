@@ -19509,11 +19509,16 @@ let check_compatible ?(inst_rhs=false) emap l_vs r_vs lhs_h lhs_p rhs_h rhs_p =
   let free_vars = if inst_rhs then (h_fv lhs_h)@(CP.fv lhs_p)@l_vs else [] in
   let r_vs = CP.diff_svl r_vs free_vars in
   let rhs_lst = List.concat (List.map (find_node emap rhs_h) r_vs) in
+  (* aliased nodes of r_vs;rhs_eqset? *)
   let lhs_lst = List.concat (List.map (find_node emap lhs_h) l_vs) in
+  (* aliased nodes of l_vs;rhs_eqset? *)
   let cross_lst = cross_prod lhs_lst rhs_lst in
   let pure_both = CP.mkAnd lhs_p rhs_p no_pos in
+  (* keep only compatible ones *)
   let sel_lst = List.filter (fun (l,r) -> is_comp l r pure_both) cross_lst in 
   let sel_lst = List.map (fun ((a,p1,_),(b,p2,_)) -> (p1,p2)) sel_lst in
+  (* collect unique instantiation *)
+  (* how about instantiation from RHS eq and LHS eq *)
   collect_unique sel_lst []
   (* failwith "TBI" *)
 
