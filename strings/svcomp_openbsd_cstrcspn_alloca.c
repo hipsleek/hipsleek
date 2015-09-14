@@ -46,7 +46,7 @@ int main() {
     return cstrcspn(nondetString1,nondetString2);
 }
 
-/*========================
+/*=========================
 #svcomp_openbsd_cstrcspn.c
 Can't handle return (p - 1 - s1);
-==========================*/
+===========================*/
