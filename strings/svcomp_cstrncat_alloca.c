@@ -17,9 +17,9 @@ BADS<> ==
 
 lemma_safe self::WFS<> -> self::BADS<>.
 
-lemma_safe self::WFSeg<p> <- self::WFSeg<q>*q::WFSeg<p> .
+//lemma_safe self::WFSeg<p> <- self::WFSeg<q>*q::WFSeg<p> .
 
-lemma_safe self::WFS<> <-> self::WFSeg<q>*q::char_star<0,q2>*q2::BADS<> .
+//lemma_safe self::WFS<> <-> self::WFSeg<q>*q::char_star<0,q2>*q2::BADS<> .
 
 */
 
@@ -28,8 +28,7 @@ extern int __VERIFIER_nondet_int(void);
 char *(cstrncat)(char *s1, const char *s2, int n)
   /*@
      requires s1::WFS<> * s2::WFS<> & n!= 0
-     ensures s1::WFS<> * s2::WFS<> & res = s1
-          or s1::WFS<> * s2::WFSeg<qq>*qq::BADS<> & res = s1;
+     ensures res = s1;
   */
  {
      char *s = s1;
@@ -45,11 +44,11 @@ char *(cstrncat)(char *s1, const char *s2, int n)
         is encountered in s2.
         It is not safe to use strncpy here since it copies EXACTLY n
         characters, NULL padding if necessary.  */
-     while (n != 0 && (*s = *s2++) != '\0')
+     while (n!=0 && (*s = *s2++) != '\0')
        /*@
-          requires s::char_star<0,q> * q::BADS<> * s2::WFS<> & n!=0
-          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<> * s::char_star<0,s'>*s'::char_star<_,q2>*q2::BADS<>
-                  or s::char_star<0,s'> * s'::char_star<_,q2>*q2::BADS<>*s2::WFSeg<s2'>*s2'::BADS<> & n = 0;
+          requires s::char_star<_,q> * q::BADS<> * s2::WFS<>
+          ensures s2::WFSeg<qq>*qq::char_star<0,s2'>*s2'::BADS<> * s::WFSeg<s'>*s'::char_star<0,q2>*q2::BADS<>
+               or s::WFSeg<s'>*s'::BADS<> & n' = 0;
        */
      {
          n--;
