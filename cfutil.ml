@@ -2672,7 +2672,7 @@ let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
           (* let r = (CP.exp_to_sv er) in *)
           (* let sst_old = exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
           (* let () = y_binfo_pp ("rhs_inst old" ^ ((pr_list (pr_pair !CP.print_sv !CP.print_sv)) sst_old) ) in *)
-          let sst_new = check_compatible_eb ~inst_rhs:true prog largs rargs lhs_b lhp rhs_b rhp in
+          let sst_new = check_compatible_eb ~inst_rhs:true prog largs rargs lhs_b (* lhp *) rhs_b (* rhp *) in
           let () = y_binfo_pp ("rhs_inst new" ^ ((pr_list (pr_pair !CP.print_sv !CP.print_sv)) sst_new )) in
           sst_new
         else if List.length rargs < List.length largs then

@@ -2315,6 +2315,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let rhs_b_wo_pure = CF.formula_base_of_heap (CF.mkStarH rhs_node rhs_rest no_pos) no_pos in
              let rhs_b = {rhs_b_wo_pure with CF.formula_base_pure = rhs_p } in
              let rhs_inst = Cfutil.compute_eager_inst prog lhs_b rhs_b hn1 hn2 args1 args2 in
+             let l_vs = List.concat (List.map CP.afv args1) in
+             let r_vs = List.concat (List.map CP.afv args2) in
+             let new_rhs_inst = check_compatible_eb ~inst_rhs:true emap l_vs r_vs lhs_b (* () *) rhs_b (* () *) in
              let m_res_w_inst = {m_res with match_res_compatible = m_res.match_res_compatible@rhs_inst;} in
              (2,M_infer_unfold (m_res_w_inst,rhs,HEmp))
            else if CF.is_exists_hp_rel hn2 estate  then (2,M_infer_fold m_res)

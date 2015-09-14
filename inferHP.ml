@@ -149,7 +149,7 @@ let infer_unfold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b
         | er::rest1,_::rest2 -> begin
             let largs = (List.map CP.exp_to_sv rest1) in
             let rargs = (List.map CP.exp_to_sv rest2) in
-            let () = Debug.ninfo_hprint (add_str  "rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
+            let () = Debug.binfo_hprint (add_str  "unfold:rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
             if (* List.length rargs < List.length largs &&  *)rhs_inst != [] then
               (* let r = (CP.exp_to_sv er) in *)
               (* let sst = Cfutil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
@@ -158,6 +158,8 @@ let infer_unfold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b
               if not is_succ then
                 true, estate, lhs_b
               else
+                (* WN : why do we add rhp to es_infer_hp_rel? *)
+                (* WN : this may make the behaviour less predictable.. *)
                 let mf = (MCP.mix_of_pure p) in
                 (true,
                  {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
@@ -202,7 +204,7 @@ let infer_fold pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (
   let rhs_node = r.Context.match_res_rhs_node  in
   let rhs_rest = r.Context.match_res_rhs_rest  in
   let rhs_inst = r.Context.match_res_compatible in
-  let () = Debug.ninfo_hprint (add_str  "rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
+  let () = Debug.binfo_hprint (add_str  "fold:rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
   let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with
     | HRel (lhp,leargs,_),HRel (rhp,reargs,_) -> begin
         if CP.mem_svl rhp estate.es_infer_vars_hp_rel then
