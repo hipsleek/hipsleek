@@ -54,9 +54,41 @@ true,
 flted_10_1615=0 & s'=s |#|3  --> Q(s,s',p)&
 true]
 
-hprel_ass: [ (2;0)s::char_star<flted_10_1615,p>@M&
-  flted_10_1615=0 & s'=s |#|  --> Q(s,s',p)]
+=======================================================
 
+[ // POST
+(1;0)s::char_star<v_1631,q>@M * GP_1661(q,s',p,s@NI)&
+v_1631!=0 |#|3  --> QQ(s,s',p)&
+true,
+ // POST
+(1;0)QQ(q,s',p)&true |#|3  --> GP_1661(q,s',p,s@NI)&
+true,
+ // POST
+(2;0)s::char_star<flted_10_1615,p>@M * GP_1662(s',s@NI)&
+s'=s & flted_10_1615=0 |#|3  --> QQ(s,s',p)&
+true,
+ // POST
+(2;0)emp&s'=s |#|3  --> GP_1662(s',s@NI)&
+true]
+
+--------------
+(1;0)s::char_star<v_1631,q>@M * GP_1661(q,s',p,s@NI)&
+v_1631!=0 |#|3  --> QQ(s,s',p)&
+
+(1;0)s::char_star<v_1631,q>@M * QQ(q,s',p)& v_1631!=0 
+      --> QQ(s,s',p)
+
+--------------
+(2;0)s::char_star<flted_10_1615,p>@M * GP_1662(s',s@NI)&
+s'=s & flted_10_1615=0 |#|3  --> QQ(s,s',p)&
+
+(2;0)s::char_star<flted_10_1615,p>@M & s'=s & flted_10_1615=0 
+      --> QQ(s,s',p)&
+
+------------------
+
+ QQ(s,s',p) <-- s::char_star<0,p>@M & s'=s 
+            or s::char_star<v_1631,q>@M * QQ(q,s',p)& v_1631!=0
 
 *********************************************************
 [ P(s_1633) |#| emp&v_1621!=0

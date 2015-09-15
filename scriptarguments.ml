@@ -334,7 +334,10 @@ linput.rl");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--old-coer-target", Arg.Set Globals.old_coer_target,"Allow coer_target check before applying lemma");
   ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
+  ("--en-infer-back-ptr", Arg.Set Globals.infer_back_ptr,"Enable infer back pointer for infer_fold");
+("--dis-infer-back-ptr", Arg.Clear Globals.infer_back_ptr,"Disble infer back pointer for infer_fold");
   ("--new-infer-complex-lhs", Arg.Clear Globals.old_infer_complex_lhs,"Disallow inference of complex LHS");
   ("--old-infer-complex-lhs", Arg.Set Globals.old_infer_complex_lhs,"Allow inference of complex LHS");
   ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
@@ -629,7 +632,9 @@ linput.rl");
    "Shorthand for -debug-regexp");
   ("-show-push-list", Arg.String (fun s ->
        let _ = print_endline ("!!!-show-push-list "^s) in
-       Globals.show_push_list:=Some s
+       let () = Globals.show_push_list:=Some s in
+       let () = if not(s="") then Globals.show_push_list_rgx := Some (Str.regexp s) in
+       ()
      ),
    "Show all push-list with that name (reg-ex)");
   ("-drea", Arg.String (fun s ->

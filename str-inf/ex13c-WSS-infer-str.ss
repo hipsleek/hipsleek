@@ -32,7 +32,8 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-  infer [P,@classic,@pure_field]
+  infer [P,@classic,@pure_field
+  ]
   requires P(s)
   ensures true;
 /*
@@ -90,6 +91,35 @@ add_dangling@3 EXIT:
  // POST
 (2;0)HP_1603(Anon_1602)&true |#| 
     s::char_star<v_1601,Anon_1602>@M & v_1601=0 --> emp&true]
+true]
+
+---------------------------------
+# without @pure_field
+
+# missing base-case post?
+*************************************
+[ // PRE
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1603(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+true --> P(Anon_1602)&
+true]
+------------------------------------------------------
+# with @pure_field
+
+# missing base-case post? + fixcalc error
+*************************************
+[ // PRE
+:fixcalc: Parse error on line 1 rest of line: ) && 1=1)
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(v_1601@NI,s@NI) * 
+               HP_1604(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1604(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
 
 *********************************************************
 [ P(s_1633) |#| emp&v_1621!=0

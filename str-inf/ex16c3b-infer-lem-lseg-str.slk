@@ -24,8 +24,8 @@ pred WFG<p> ==
 
 //lemma_unsafe self::WFG<p> <- U(self,q2)*q2::char_star<0,p>.
 
-//infer [U2,@classic,@pure_field] U2(q3,q)  |- U(q3,q).
-//print residue.
+infer [U2,@classic,@pure_field] U2(q3,q)  |- U(q3,q).
+print residue.
 // inferred hprel: [U2(q3,q)&true |#|3  --> U(q3,q)&true]
 
 infer [U2,@classic,@pure_field] U2(q3,q) * D(q)  |- U(q3,qq) * D(qq).

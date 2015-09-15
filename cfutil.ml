@@ -797,9 +797,9 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
   let lsvl = fv (Base lhs_b) in
   let rsvl = (fv (Base rhs_b))@(CP.EMapSV.get_elems r_emap)@(CP.EMapSV.get_elems r_qemap) in
   let comm_svl = CP.intersect_svl lsvl rsvl in
-  let lhs_b1, rhs_b1, prog_vars =
+  let lhs_b1, rhs_b1, prog_vars,sst1 =
     if comm_svl = [] then
-      (lhs_b, rhs_b, prog_vars)
+      (lhs_b, rhs_b, prog_vars,[])
     else
       let l_emap1, null_ps, null_sst = expose_expl_closure_eq_null lhs_b all_args l_emap in
       let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
@@ -829,16 +829,17 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
                                     (CP.remove_redundant (MCP.pure_of_mix rhs_b1.formula_base_pure));
                                 formula_base_heap = trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) rhs_b1.formula_base_heap;
                    } in
-      (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars)
+      (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars, (ss@null_sst@eq_sst))
   in
-  (lhs_b1, rhs_b1, prog_vars)
+  (lhs_b1, rhs_b1, prog_vars, sst1)
 
 let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
   let pr3 = CP.EMapSV.string_of in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
+  let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_quad pr1 pr1 pr2 pr5)
     (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
     lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
 
@@ -2610,3 +2611,84 @@ let fresh_exists f0=
           formula_or_f2 = (recf orf.formula_or_f2)}
   in
   recf f0
+
+
+
+(*
+  to check whether qq can be inst by q
+
+  U3(self,q,x)*q::char_star<0,p>
+    |- U2(self,qq) * qq::char_star<0,p>
+*)
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl =
+  let find_reach_f fb sv drop_hp=
+    let lhds, lhvs, lhrels = get_hp_rel_bformula fb in
+    let lhrels1 = List.fold_left (fun acc (hp, eargs,_) ->
+        if CP.eq_spec_var hp drop_hp then
+          acc
+        else
+          acc@[(hp, List.map  CP.exp_to_sv eargs)]
+    ) [] lhrels in
+    let reach_lf = keep_data_view_hpargs_nodes prog (Base fb) lhds lhvs [sv] lhrels1 in
+    let () = Debug.tinfo_hprint (add_str  "reach_f" !print_formula) reach_lf no_pos in
+    reach_lf
+  in
+  let rec check_one_right reach_rf rsv rest_lsvl done_svl= match rest_lsvl with
+    | [] -> [], done_svl
+    | lsv::rest ->
+          let sst = [(lsv,rsv)] in
+          let lhs_b = subst_b sst lhs_b in
+          let reach_lf = find_reach_f lhs_b rsv lhp in
+          let is_homo,_ = Checkeq.checkeq_formulas (List.map CP.name_of_spec_var [root;rsv]) reach_lf reach_rf in
+          if is_homo then (sst, done_svl@rest)
+          else
+            check_one_right reach_rf rsv rest (done_svl@[lsv])
+  in
+  let sst,_ = List.fold_left (fun (acc,rest_lsvl) rsv ->
+      let reach_rf = find_reach_f rhs_b rsv rhp in
+      let sst0, rest = check_one_right reach_rf rsv rest_lsvl [] in
+      (acc@sst0,rest)
+  ) ([], lsvl) (CP.diff_svl rsvl lsvl) in
+  let () = Debug.tinfo_hprint (add_str  "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst no_pos in
+  sst
+
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = !print_formula_base in
+  let pr_out = (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
+  Debug.no_7 "exam_homo_arguments" (add_str "lhs" pr3) (add_str "rhs" pr3)
+      (add_str "left pred" pr1) (add_str "right pred" pr1)
+      (add_str "root" pr1) (add_str "left args" pr2) (add_str "right args" pr2) pr_out
+      (fun _ _ _ _ _ _ _ -> exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl)
+      lhs_b rhs_b lhp rhp root rsvl lsvl
+
+let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
+  match leargs, reargs with
+    | er::rest1,_::rest2 -> begin
+        let largs = (List.map CP.exp_to_sv rest1) in
+        let rargs = (List.map CP.exp_to_sv rest2) in
+        if List.length rargs != List.length largs then
+          (* let r = (CP.exp_to_sv er) in *)
+          (* let sst_old = exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
+          (* let () = y_binfo_hp (add_str "rhs_inst old" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst_old in *)
+          let sst_new = check_compatible_eb ~inst_rhs:true prog largs rargs lhs_b (* lhp *) rhs_b (* rhp *) in
+          let () = y_tinfo_hp (add_str "rhs_inst new" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst_new  in
+          sst_new
+        else (* List.length rargs = List.length largs *)
+          (* delay for checking exist infor in lhs *)
+          (* List.filter (fun (sv1,sv2) -> not (CP.eq_spec_var sv1 sv2)) (List.combine largs rargs) *)
+          []
+      end
+    | _ -> []
+
+let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = !print_formula_base in
+  let pr_out = (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
+  Debug.no_4 "compute_eager_inst" (add_str "lhs" pr3) (add_str "rhs" pr3)
+      (add_str "left pred" pr1) (add_str "right pred" pr1)
+       pr_out
+      (fun _ _ _ _ -> compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs)
+      lhs_b rhs_b lhp rhp

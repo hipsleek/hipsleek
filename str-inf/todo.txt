@@ -105,38 +105,31 @@ void while1(ref char_star s)
   U(x,q) -> x=q
   U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
 ===========================================================================
-# infer-str
-# ex13c.ss -dre "iprocess_a\|add_dang" 
+--------------------------------------------------
+predicate normalization from ex16c.slk
+-----simplify <1>
+ U(self_lem_12,q_151)&
+   true |#| q_151::char_star<flted_26_150,p>@M&true 
+   --> emp & self_lem_12=q_151]
 
-# GOT
+-----simplify <2>
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M&flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    HP_171(q_169,q_165@NI,self_lem_12@NI)& v_168!=0true]
 
-!!! **syn.ml#15:TODO : this proc is to add dangling references
-(==sa3.ml#2771==)
-add_dangling@3@2@1
-add_dangling inp1 : 
-  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
-                            HP_1620(Anon_1619); 
-           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
-            v_1618!=0 --> P(Anon_1619); 
-           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
-            v_1618=0 --> emp]
-add_dangling@3 EXIT: 
-  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
-                            HP_1620(Anon_1619); 
-           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
-            v_1618!=0 --> P(Anon_1619); 
-           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
-            v_1618=0 --> emp]
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    U(q_169,q_165) & v_168!=0true]
 
-# EXPECTS emp to be converted to Dangling<Anon_1619>
-  where
+== drop guard ==
+ U(self_lem_12,q_151)&
+   --> emp & self_lem_12=q_151]
 
-  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
-                            HP_1620(Anon_1619); 
-           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
-            v_1618!=0 --> P(Anon_1619); 
-           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
-            v_1618=0 --> Dangling<Anon_1619>]
+ U(self_lem_12,q_165)&
+  --> self_lem_12::char_star<v_168,q_169>@M * 
+     U(q_169,q_165) & v_168!=0true]
 ===========================================================================
 ===========================================================================
 ===========================================================================
