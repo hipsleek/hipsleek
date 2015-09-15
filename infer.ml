@@ -254,7 +254,7 @@ let collect_rel_list_partial_context (ctx:list_partial_context) =
 
 let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c,_) -> collect_hp_rel c) cl))  ctx in
-  List.concat r
+  Gen.Basic.remove_dups (List.concat r)
 
 let collect_hp_rel_fail_type ft0=
   let rec helper ft=
@@ -1431,11 +1431,11 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                         in
                         let i_hps = [] in
                         let () = x_tinfo_hp (add_str "heap_ass" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass no_pos in
-                        let () = Log.current_hprel_ass_stk # push_list heap_ass in
                         (* postpone until heap_entail_after_sat *)
                          if !Globals.old_infer_hp_collect then 
                            begin
                              x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass pos;
+                             let () = Log.current_hprel_ass_stk # push_list heap_ass in
                              rel_ass_stk # push_list heap_ass
                            end;
                         (*drop inferred hpred*)
@@ -3415,8 +3415,12 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
   let ex_ass = (rel_ass_stk # get_stk) in
   let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
   (* postpone until heap_entail_after_sat *)
-  let () = rel_ass_stk # push_list (hp_rel_list) in
-  let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+  if (!Globals.old_infer_hp_collect) then
+    begin
+      let () = rel_ass_stk # push_list (hp_rel_list) in
+      let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+      ()
+    end;
   (* let () = DD.info_hprint (add_str  "  rvhp_rels" !CP.print_svl rvhp_rels) pos in *)
   (* let () = DD.info_hprint (add_str  "  new_post_hps" !CP.print_svl) new_post_hps pos in *)
   let () = x_tinfo_hp (add_str  "  hp_rels" (pr_list_ln Cprinter.string_of_hprel))  hp_rels pos in

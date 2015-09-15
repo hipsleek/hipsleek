@@ -65,7 +65,39 @@ true]
 v_1601=0 --> emp&
 true]
 
+id: 11; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604,P]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * s::char_star<v_1601,Anon_1602>@M * (htrue)&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (1;0)HP_1603(v_1601,s)&
+  Anon_18=v_1601 & v=v_1601 & s_1617=s & v!=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  (q=Anon_1602 | Anon_19=Anon_1602) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598'&{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
 
+id: 12; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * HP_1604(Anon_1602,s) * s::char_star<v_1601,Anon_1602>@M&
+!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (2;0)HP_1603(v_1601,s)&
+  s'=s & v=v_1601 & v=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  Anon_19=Anon_1602 --> emp,
+ (2;0)HP_1604(Anon_1602,s)&
+  s'=s & Anon_19=Anon_1602 |#| s::char_star<v_1601,Anon_1602>@M&
+  (v=0 | v=v_1601) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0&
+{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
 
 
 

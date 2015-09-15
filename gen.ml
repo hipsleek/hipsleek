@@ -608,7 +608,7 @@ class change_flag =
     method no_change = (cnt==0)
   end;;
 
-class ['a] stack  =
+class ['a] stack =
   object (self)
     val mutable recent = 0
     val mutable stk = []
@@ -621,6 +621,12 @@ class ['a] stack  =
     method get_stk_recent  = 
       if recent<=0 then []
       else BList.take recent stk 
+    method get_stk_recent_reset  = 
+      if recent<=0 then []
+      else 
+        (* let () = print_endline ("XXXX get_stk_recent_reset "^(string_of_int recent)) in *)
+        let s=BList.take recent stk in
+        (self # reset_recent;s)
     (* return recent content of stack *)
     method get_stk_and_reset  = 
       let s=stk in 
@@ -677,11 +683,11 @@ class ['a] stack  =
       end
     method reset = 
       begin
-        stk <- []; 
-        recent <- 0
+        self # reset_recent;
+        stk <- []
       end
     method reset_recent = 
-      recent <- 0
+      recent <- 0;
     method clone =
       Oo.copy self
       (* let n = new Gen.stack in *)
@@ -725,6 +731,9 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
       super # push ls 
     method string_of = Basic.pr_list_ln elem_pr stk
+    method string_of_recent = 
+      let stk = self # get_stk_recent in
+      Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 
       let s = super#reverse_of in
@@ -744,6 +753,13 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     method overlap (ls:'a list) = 
       if (ls == []) then false
       else List.exists (fun x -> List.exists (elem_eq x) ls) stk
+    method reset_recent = 
+      (* if nn="es_infer_hp_rel" then  *)
+      (*   begin *)
+      (*     print_endline ("XXXX reset recent "^(string_of_int recent)); *)
+      (*     print_endline ("XXXX "^(self # string_of_recent)) *)
+      (*   end; *)
+      super # reset_recent
   end;;
 
 
