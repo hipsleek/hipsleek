@@ -4,65 +4,13 @@ open Globals
 open Gen
 open Others
 open Label_only
+open SynUtils
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
-module CFU = Cfutil
+(* module CFU = Cfutil *)
 module MCP = Mcpure
-module CEQ = Checkeq
-
-let mem = Gen.BList.mem_eq CP.eq_spec_var
-let diff = Gen.BList.difference_eq CP.eq_spec_var
-
-let eq_id s1 s2 = String.compare s1 s2 == 0
-
-let mem_id = Gen.BList.mem_eq eq_id
-
-let rec partition_by_key key_of key_eq ls = 
-  match ls with
-  | [] -> []
-  | e::es ->
-    let ke = key_of e in 
-    let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
-    (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
-
-(*****************)
-(***** UTILS *****)
-(*****************)
-let is_pre_hprel (hpr: CF.hprel) = 
-  match hpr.hprel_proving_kind with
-  | PK_PRE 
-  | PK_PRE_REC -> true
-  | _ -> false
-
-let is_post_hprel (hpr: CF.hprel) = 
-  match hpr.hprel_proving_kind with
-  | PK_POST -> true
-  | _ -> false
-
-let sig_of_hrel (h: CF.h_formula) =
-  match h with
-  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args h)
-  | _ -> failwith ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
-
-let name_of_hrel (h: CF.h_formula) = 
-  fst (sig_of_hrel h) 
-
-let args_of_hrel (h: CF.h_formula) = 
-  snd (sig_of_hrel h)
-
-let sig_of_hprel (hpr: CF.hprel) =
-  let hpr_f = if is_pre_hprel hpr then hpr.hprel_lhs else hpr.hprel_rhs in
-  let f_h, _, _, _, _, _ = CF.split_components hpr_f in
-  match f_h with
-  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args f_h)
-  | _ -> failwith ("Unexpected formula in the LHS/RHS of a hprel " ^ (Cprinter.string_of_hprel_short hpr))
-
-let name_of_hprel (hpr: CF.hprel) = 
-  fst (sig_of_hprel hpr) 
-
-let args_of_hprel (hpr: CF.hprel) = 
-  snd (sig_of_hprel hpr)
+(* module CEQ = Checkeq *)
 
 (***************************)
 (***** ADDING DANGLING *****)
@@ -76,7 +24,7 @@ let mk_dangling_view_prim =
 let mk_dangling_view_node dangling_var = 
   CF.mkViewNode dangling_var dangling_view_name [] no_pos
 
-let add_dangling_hprel (hpr: CF.hprel) =
+let add_dangling_hprel prog (hpr: CF.hprel) =
   let _, lhs_p, _, _, _, _ = CF.split_components hpr.hprel_lhs in
   let lhs_aliases = MCP.ptr_equations_with_null lhs_p in
   let guard_aliases =
@@ -91,31 +39,32 @@ let add_dangling_hprel (hpr: CF.hprel) =
     try List.find (fun svl -> List.exists CP.is_null_const svl) aliases
     with _ -> []
   in
-  let lhs_args = CF.collect_feasible_heap_args_formula null_aliases hpr.hprel_lhs in
+  let lhs_args = collect_feasible_heap_args_formula prog null_aliases hpr.hprel_lhs in
   let lhs_nodes = CF.collect_node_var_formula hpr.hprel_lhs in
-  let rhs_args = CF.collect_feasible_heap_args_formula null_aliases hpr.hprel_rhs in
+  let rhs_args = collect_feasible_heap_args_formula prog null_aliases hpr.hprel_rhs in
   let rhs_args_w_aliases = List.concat (List.map (fun arg ->
     try List.find (fun svl -> mem arg svl) aliases
     with _ -> [arg]) rhs_args) in 
-  let dangling_args = List.filter CP.is_node_typ (diff (diff lhs_args lhs_nodes) rhs_args_w_aliases) in
+  let dangling_args = List.filter CP.is_node_typ (diff (* (diff lhs_args lhs_nodes) *) lhs_args rhs_args_w_aliases) in
   let () = x_binfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
   let combine_dangling_args f = List.fold_left (fun acc_f dangling_arg ->
       CF.mkStar_combine_heap acc_f (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
     ) f dangling_args in
   if is_empty dangling_args then hpr, false
   else
-    let n_hpr =
-      if is_pre_hprel hpr then { hpr with hprel_rhs = combine_dangling_args hpr.hprel_rhs }
-      else { hpr with hprel_lhs = combine_dangling_args hpr.hprel_lhs }
-    in 
-    n_hpr, true
+    (* let n_hpr =                                                                             *)
+    (*   if is_pre_hprel hpr then { hpr with hprel_rhs = combine_dangling_args hpr.hprel_rhs } *)
+    (*   else { hpr with hprel_lhs = combine_dangling_args hpr.hprel_lhs }                     *)
+    (* in                                                                                      *)
+    (* n_hpr, true                                                                             *)
+    { hpr with hprel_rhs = combine_dangling_args hpr.hprel_rhs }, true
 
-let add_dangling_hprel (hpr: CF.hprel) = 
+let add_dangling_hprel prog (hpr: CF.hprel) = 
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "add_dangling_hprel" pr (pr_pair pr string_of_bool) add_dangling_hprel hpr
+  Debug.no_1 "add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
 
-let add_dangling_hprel_list (hpr_list: CF.hprel list) =
-  fst (List.split (List.map add_dangling_hprel hpr_list))
+let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
+  fst (List.split (List.map (add_dangling_hprel prog) hpr_list))
 
 (*********************)
 (***** UNFOLDING *****)
@@ -474,7 +423,7 @@ let dangling_parameterizing hprels =
 let syn_preds prog (is: CF.infer_state) = 
   if !Globals.inf_string then
     let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
-    let is_all_constrs, has_dangling_vars = List.split (List.map add_dangling_hprel is.CF.is_all_constrs) in
+    let is_all_constrs, has_dangling_vars = List.split (List.map (add_dangling_hprel prog) is.CF.is_all_constrs) in
     let has_dangling_vars = or_list has_dangling_vars in
     let prog =
       if has_dangling_vars then

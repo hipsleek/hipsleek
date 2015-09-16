@@ -1603,7 +1603,7 @@ let mem_id = Gen.BList.mem_eq eq_id
 
 let select_hprel_assume hprel_list hprel_id_list = 
   List.partition (fun hpr -> 
-    mem_id (CP.name_of_spec_var (Syn.name_of_hprel hpr)) hprel_id_list) hprel_list
+    mem_id (CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_id_list) hprel_list
 
 let update_sleek_hprel_assumes upd_hprel_list = 
   sleek_hprel_assumes := upd_hprel_list
@@ -1620,7 +1620,7 @@ let process_sleek_hprel_assumes hps f_proc =
   update_sleek_hprel_assumes (res @ others)
 
 let process_shape_add_dangling hps =
-  process_sleek_hprel_assumes hps Syn.add_dangling_hprel_list
+  process_sleek_hprel_assumes hps (Syn.add_dangling_hprel_list !cprog)
 
 let process_shape_unfold hps =
   let sel_hprel_assume_list, others = select_hprel_assume !sleek_hprel_assumes hps in
