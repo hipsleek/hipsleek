@@ -921,6 +921,7 @@ let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
+let sa_part = ref false
 
 let prelude_is_mult = ref false
 

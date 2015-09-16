@@ -4366,8 +4366,9 @@ let rec check_prog iprog (prog : prog_decl) =
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
 
-    let scc, ini_hpdefs =
-      Da.find_rel_args_groups_scc prog scc (* scc,[] *)
+    let scc, ini_hpdefs = if !Globals.sa_part then
+      Da.find_rel_args_groups_scc prog scc
+    else (scc,[])
     in
     let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
     let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
