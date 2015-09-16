@@ -921,7 +921,7 @@ let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
         if !Globals.old_infer_hp_collect then 
           begin
             x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hp_rel_list pos;
-            let () = rel_ass_stk # push_list hp_rel_list in
+            let () = Infer.rel_ass_stk # push_list hp_rel_list in
             let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
             ()
           end;
@@ -1145,12 +1145,12 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
   let hp_rel_list0 = 
     if !Globals.old_keep_triv_relass then hp_rel_list0a
     else List.filter (fun cs -> not (Sautil.is_trivial_constr ~en_arg:true cs)) hp_rel_list0a in
-  let ex_ass = (rel_ass_stk # get_stk) in
+  let ex_ass = (Infer.rel_ass_stk # get_stk) in
   let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
   (* postpone until heap_entail_after_sat *)
   if (!Globals.old_infer_hp_collect) then
     begin
-      let () = rel_ass_stk # push_list (hp_rel_list) in
+      let () = Infer.rel_ass_stk # push_list (hp_rel_list) in
       let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
       ()
     end;
@@ -1564,7 +1564,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
         | x::_ -> x
       with _ ->
         PK_Unknown in
-    if no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not (check_is_classic ())) then
+    if Infer.no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not (check_is_classic ())) then
       (false, es0, [], lhs_b)
     else
       let ivs = es0.es_infer_vars_hp_rel in
@@ -1641,7 +1641,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
                   (ls1@hp_arg_lst (* [(hp,args)] *),ls2@ass_lst(* [ass] *), ls3@abd_mps)
                 | None -> (ls1,ls2,ls3)
               ) ([],[],[]) sel_hprels in
-            let ex_ass = (rel_ass_stk # get_stk) in
+            let ex_ass = (Infer.rel_ass_stk # get_stk) in
             let hprel_ass = Gen.BList.difference_eq Sautil.constr_cmp hprel_ass0 ex_ass in
             let () = x_tinfo_hp (add_str "sel_hpargs" pr_hp_lst) sel_hpargs no_pos in
             if sel_hpargs = [] || hprel_ass = [] then (false,es0,[], lhs_b) else
@@ -1761,10 +1761,10 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     let hp_rel_list0 =
       if !Globals.old_keep_triv_relass then [hp_rel]
       else List.filter (fun cs -> not (Sautil.is_trivial_constr ~en_arg:true cs)) [hp_rel] in
-    let ex_ass = (rel_ass_stk # get_stk) in
+    let ex_ass = (Infer.rel_ass_stk # get_stk) in
     let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in
       (* postpone until heap_entail_after_sat *)
-      let () = rel_ass_stk # push_list (hp_rel_list) in
+      let () = Infer.rel_ass_stk # push_list (hp_rel_list) in
       let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
       let n_ihvr = (es.CF.es_infer_vars_hp_rel@new_hp_decls) in
       let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;} in
@@ -1834,7 +1834,7 @@ let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rh
     let () = Debug.ninfo_hprint (add_str  "es_infer_vars " !CP.print_svl) es0.es_infer_vars no_pos in
     let () = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel " !CP.print_svl) es0.es_infer_vars_sel_hp_rel no_pos in
     (*end for debugging*)
-    if no_infer_hp_rel es0 then
+    if Infer.no_infer_hp_rel es0 then
       constant_checking prog rhs0 lhs_b0 rhs_b0 es0
     else
       let ivs = es0.es_infer_vars_hp_rel in
@@ -1988,7 +1988,7 @@ let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rh
                 if !Globals.old_infer_hp_collect then 
                   begin
                     x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short))  hprel_ass pos;
-                    let () = rel_ass_stk # push_list hprel_ass in
+                    let () = Infer.rel_ass_stk # push_list hprel_ass in
                     let () = Log.current_hprel_ass_stk # push_list hprel_ass in
                     ()
                   end;
@@ -2102,7 +2102,7 @@ let infer_collect_hp_rel_classsic prog (es:entail_state) rhs pos =
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars_hp_rel"  !CP.print_svl) es.es_infer_vars_hp_rel no_pos in
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars" !CP.print_svl)  es.es_infer_vars no_pos in
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel" !CP.print_svl)  es.es_infer_vars_sel_hp_rel no_pos in
-  if rhs<>HEmp || no_infer_hp_rel es then
+  if rhs<>HEmp || Infer.no_infer_hp_rel es then
     let () = Debug.ninfo_pprint ("no_infer_hp: " ) no_pos in
     (false, es)
   else
