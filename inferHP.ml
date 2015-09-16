@@ -102,7 +102,10 @@ let match_unk_preds prog lhs_hpargs rhs_hp rhs_args=
 (*   (CF.CP.spec_var * CF.CP.spec_var) list -> *)
 (*   ('c * CF.CP.spec_var list) list -> CP.spec_var list -> CF.h_formula option *)
 let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
-  let l_args1 = List.fold_left (fun ls (_,args) -> ls@args) [] l_selhpargs in
+  let l_args1 = List.fold_left (fun ls (hp,args) ->
+      let i_args, ni_args = Sautil.partition_hp_args prog hp args in
+      let sel_args = List.map fst i_args in
+      ls@sel_args) [] l_selhpargs in
   let l_args2 = CF.find_close l_args1 leqs in
   let cl_null_ptrs = CF.find_close null_ptrs leqs in
   let l_args3 = CP.diff_svl l_args2(* (CP.remove_dups_svl (l_args2@rhs_args)) *) cl_null_ptrs in
@@ -1025,7 +1028,7 @@ let check_guard es guard_opt lhs_b_orig lhs_b rhs_b pos=
         let g_pure_rem = Gen.BList.difference_eq (CP.equalFormula) (CP.split_conjunctions g_pure_orig)
             (CP.split_conjunctions g_pure) in
         Some (CF.Base {lhs_b with CF.formula_base_heap= hf;
-                                  CF.formula_base_pure = (MCP.mix_of_pure (CP.join_disjunctions g_pure_rem));} )
+                                  CF.formula_base_pure = (MCP.mix_of_pure (CP.conj_of_list g_pure_rem no_pos));} )
     in
     (***************END****************)
     match guard_opt with
