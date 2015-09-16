@@ -3529,16 +3529,18 @@ let is_trivial f (hp,args)=
   b1||(is_empty_f f)
 
 let is_trivial_constr ?(en_arg=false) cs=
-  let l_ohp = CF.extract_hrel_head cs.CF.hprel_lhs in
-  let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
-  match l_ohp,r_ohp with
-  | Some (hp1), Some (hp2) -> if CP.eq_spec_var hp1 hp2 then
-      if not en_arg then true else
-        let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in
-        let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in
-        eq_spec_var_order_list largs rargs
-    else false
-  | _ -> false
+  if is_empty_f cs.CF.hprel_lhs && is_empty_f cs.CF.hprel_rhs then true
+  else
+    let l_ohp = CF.extract_hrel_head cs.CF.hprel_lhs in
+    let r_ohp = CF.extract_hrel_head cs.CF.hprel_rhs in
+    match l_ohp,r_ohp with
+      | Some (hp1), Some (hp2) -> if CP.eq_spec_var hp1 hp2 then
+          if not en_arg then true else
+            let _,largs = CF.extract_HRel_f cs.CF.hprel_lhs in
+            let _,rargs = CF.extract_HRel_f cs.CF.hprel_rhs in
+            eq_spec_var_order_list largs rargs
+        else false
+      | _ -> false
 
 let is_trivial_constr ?(en_arg=false) cs=
   let pr =Cprinter.string_of_hprel_short in

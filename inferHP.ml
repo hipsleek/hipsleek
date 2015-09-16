@@ -1777,7 +1777,8 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
         ()
       end;
     let n_ihvr = (es.CF.es_infer_vars_hp_rel@new_hp_decls) in
-    let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;} in
+    let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
+    } in
     let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
     let heap_of_rel_lhs = match (CF.heap_of rel_lhs) with
       | [hf] -> hf
