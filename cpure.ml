@@ -166,8 +166,8 @@ type rel_cat =
   | HPRelDefn of (spec_var * spec_var * spec_var list) (*hp name * root * arguments*)
   | HPRelLDefn of spec_var list
   | RelAssume of spec_var list
-  | RankDecr of spec_var list
-  | RankBnd of spec_var
+  (* | RankDecr of spec_var list *)
+  (* | RankBnd of spec_var       *)
 
 
 type xpure_view = {
@@ -539,10 +539,13 @@ let print_rel_cat rel_cat = match rel_cat with
   | HPRelDefn (v,r,args) -> "HP_RELDEFN " ^ (!print_sv v)
   | HPRelLDefn vs -> "HP_REL_L_DEFN " ^ (!print_svl vs)
   | RelAssume v -> "RELASS " ^ (!print_svl v)
-  | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
-  | RankBnd v -> "RANKBND " ^ (!print_sv v)
+  (* | RankDecr vs -> "RANKDEC " ^ (!print_svl vs) *)
+  (* | RankBnd v -> "RANKBND " ^ (!print_sv v)     *)
+
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
+
 let print_only_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
+
 let string_of_infer_rel = print_lhs_rhs
 
 
@@ -14079,6 +14082,20 @@ and find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list =
     (pr_list (pr_pair !print_sv !print_sv))
     !print_svl
     find_closure_x v vv
+
+and find_all_closures_x (vv: (spec_var * spec_var) list) : (spec_var list) list = 
+  match vv with
+  | [] -> []
+  | (v1, v2)::vs ->
+    let v1_closure = find_closure v1 vv in
+    let rem_vs = List.filter (fun (v3, v4) ->
+      not (Gen.BList.mem_eq eq_spec_var v3 v1_closure) &&
+      not (Gen.BList.mem_eq eq_spec_var v4 v1_closure)) vs in
+    v1_closure::(find_all_closures_x rem_vs)
+
+and find_all_closures (vv: (spec_var * spec_var) list) : (spec_var list) list = 
+  Debug.no_1 "find_all_closures" (pr_list (pr_pair !print_sv !print_sv)) (pr_list !print_svl)
+    find_all_closures_x vv
 
 and find_closure_pure_formula_x (v:spec_var) (f:formula) : spec_var list = 
   find_closure v (pure_ptr_equations f)

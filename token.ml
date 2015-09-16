@@ -29,6 +29,7 @@ type sleek_token =
   | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
   | SHAPE_SPLIT_BASE | SHAPE_ELIM_USELESS | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
   | SHAPE_STRENGTHEN_CONSEQ | SHAPE_WEAKEN_ANTE
+  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING
   | PRED_SPLIT | PRED_NORM_DISJ | PRED_SPEC | PRED_NORM_SEG
   | REL_INFER
   | DTIME
@@ -126,11 +127,14 @@ module Token = struct
     | CHECK_NONDET -> "check_nondet"
     | CHECKSAT -> "checksat"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
-    |  SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
+    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
     | SHAPE_SPLIT_BASE -> "shape_split_base" | SHAPE_ELIM_USELESS -> "shape_elim_useless" | SHAPE_EXTRACT -> "shape_extract"
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
     | SHAPE_STRENGTHEN_CONSEQ -> "shape_strengthen_conseq"
     | SHAPE_WEAKEN_ANTE -> "shape_weaken_ante"
+    | SHAPE_ADD_DANGLING -> "shape_add_dangling"
+    | SHAPE_UNFOLD -> "shape_unfold"
+    | SHAPE_PARAM_DANGLING -> "shape_param_dangling"
     | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"

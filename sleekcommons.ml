@@ -69,6 +69,9 @@ type command =
   | ShapeDeclDang of (ident list)
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
+  | ShapeAddDangling of (ident list)
+  | ShapeUnfold of (ident list)
+  | ShapeParamDangling of (ident list)
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -163,6 +166,9 @@ let string_of_command c = match c with
   | ShapeExtract _ -> "ShapeExtract"
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
+  | ShapeAddDangling _ -> "ShapeAddDangling"
+  | ShapeUnfold _ -> "ShapeUnfold"
+  | ShapeParamDangling _ -> "ShapeParamDangling"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"

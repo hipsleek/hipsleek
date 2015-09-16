@@ -3716,9 +3716,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                 begin
                   if (* !VarGen.sap *) true then begin
                     print_endline_quiet "";
-                    print_endline_quiet "*************************************";
-                    print_endline_quiet "*******shape relational assumptions ********";
-                    print_endline_quiet "*************************************";
+                    print_endline_quiet "********************************************";
+                    print_endline_quiet "******* shape relational assumptions *******";
+                    print_endline_quiet "********************************************";
                   end;
                   let ras = Infer.rel_ass_stk # get_stk in
                   let () = Infer.scc_rel_ass_stk # push_list ras in

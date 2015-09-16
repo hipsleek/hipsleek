@@ -2014,7 +2014,7 @@ let partition_constrs constrs post_hps dang_hps=
 
 let infer_analize_dang prog is=
   let () = DD.ninfo_hprint (add_str ">>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<" pr_id) "" no_pos in
-  let constrs1, unk_hpargs1, unk_map1, link_hpargs1, _ = Sacore.analize_unk prog is.CF.is_post_hps is.CF.is_constrs
+  let constrs1, unk_hpargs1, unk_map1, link_hpargs1, _ = x_add Sacore.analize_unk prog is.CF.is_post_hps is.CF.is_constrs
       is.Cformula.is_unk_map is.Cformula.is_dang_hpargs is.Cformula.is_link_hpargs in
   { is with
     Cformula.is_constrs = constrs1;
@@ -2771,7 +2771,9 @@ and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess det
   let rec_fct l_is l_act = iprocess_action iprog prog proc_name callee_hps l_is l_act need_preprocess detect_dang in
   match act with
   | IC.I_pre_add_dangling -> failwith "to be implemented"
-  | IC.I_infer_dang -> infer_analize_dang prog is
+  | IC.I_infer_dang -> 
+    let is = x_add_1 Syn.syn_preds prog is in
+    infer_analize_dang prog is
   (* | IC.I_pre_trans_closure -> infer_pre_trans_closure prog is *)
   | IC.I_split_base -> infer_split_base prog is
   | IC.I_partition -> infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detect_dang

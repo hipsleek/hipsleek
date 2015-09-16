@@ -2375,7 +2375,7 @@ let simple_unk_info_check_x prog dang_hps constrs=
   let process_one_cs rem cs=
     if cs.CF.unk_svl = [] then (rem,cs,[]) else
       let cur_cs_unk_hps = List.map fst cs.CF.unk_hps in
-      let unk_hp_locs,unk_hp_args_locs = analize_unk_one prog [] cs in
+      let unk_hp_locs,unk_hp_args_locs = x_add analize_unk_one prog [] cs in
       let non_unk_hps,ls_non_unk_hp_locs,non_unk_svl =
         if unk_hp_locs = [] then
           let non_unk_hp_locs = List.map (fun (hp,args) -> (hp, helper1 args [] 0)) cs.CF.unk_hps in
@@ -3736,7 +3736,7 @@ let infer_hps_x iprog prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel
     else (hp_constrs,[])
   in
   DD.ninfo_pprint ">>>>>> step 1c: find unknown ptrs<<<<<<" no_pos;
-  let constrs1c,unk_hps,hp_defs_split = analize_unk prog hp_rel_unkmap constrs1b in
+  let constrs1c,unk_hps,hp_defs_split = x_add analize_unk prog hp_rel_unkmap constrs1b in
   (*rhs should be <= 1 hp*)
   (*for temporal*)
   let constrs1d = List.concat (List.map (Sautil.split_rhs prog) constrs1c)  in

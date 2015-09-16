@@ -1922,6 +1922,9 @@ let clone_sub_infer_const_obj_sel () =
 let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
+(* String Inference *)
+let inf_string = ref true
+
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
 let gen_templ_slk = ref false

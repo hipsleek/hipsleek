@@ -2804,7 +2804,7 @@ let pr_hprel hpa=
 
 let skip_cond_path_trace l = Gen.is_empty l || not(!Globals.cond_path_trace)
 
-let pr_hprel_short hpa=
+let pr_hprel_short hpa =
   fmt_open_box 1;
   (* fmt_string "hprel(1)"; *)
   pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
@@ -2821,6 +2821,11 @@ let pr_hprel_short hpa=
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
   fmt_string (if !Globals.sae then (String.concat "," (List.map string_of_flow hpa.hprel_flow)) else "" );
+  fmt_close()
+
+let pr_hprel_list_short hprl = 
+  fmt_open_box 1;
+  pr_wrap_test "" Gen.is_empty (pr_seq "" pr_hprel_short) hprl;
   fmt_close()
 
 let pr_hprel_short_inst cprog post_hps hpa=
@@ -2840,7 +2845,7 @@ let pr_hprel_short_inst cprog post_hps hpa=
     (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* prtt_pr_formula_inst cprog *)print_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
-    | None -> fmt_string " |#|3 " (* () *)
+    | None -> (* fmt_string " |#|3 " *) ()
     (* fmt_string " NONE " *)
     | Some hf ->
       begin
@@ -3073,6 +3078,8 @@ let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
 
+let string_of_hprel_list_short hpl = poly_string_of_pr pr_hprel_list_short hpl
+
 let string_of_hprel_short_inst prog post_hps hp =
   poly_string_of_pr (pr_hprel_short_inst prog post_hps) hp
 
@@ -3160,12 +3167,12 @@ let pr_infer_state_short is =
   pr_wrap_test "Link_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_link_hpargs);
   pr_wrap_test "Dang_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_dang_hpargs);
   pr_wrap_test "cond_path: " Gen.is_empty (pr_list_int) is.is_cond_path;
-  pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs;
+  (* pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs; *)
   pr_wrap_test "All_RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_all_constrs;
   pr_wrap_test "hp_defs: " Gen.is_empty (pr_seq "" pr_hp_ref_def) is.is_hp_defs;
   fmt_close()
 
-let string_of_infer_state_short is: string =  poly_string_of_pr  pr_infer_state_short is
+let string_of_infer_state_short is: string = poly_string_of_pr pr_infer_state_short is
 
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with

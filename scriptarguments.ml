@@ -766,6 +766,10 @@ linput.rl");
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* String Inference *)
+  ("--dis-str-infer", Arg.Clear Globals.inf_string, "Disable string inference");
+  ("--en-str-infer", Arg.Set Globals.inf_string, "Enable string inference");
+
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
   ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 

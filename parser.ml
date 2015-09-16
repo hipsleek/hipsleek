@@ -1031,6 +1031,9 @@ non_empty_command:
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
+      | t = shape_add_dangling_cmd -> ShapeAddDangling t
+      | t = shape_unfold_cmd -> ShapeUnfold t
+      | t = shape_param_dangling_cmd -> ShapeParamDangling t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2587,6 +2590,21 @@ shapeExtract_cmd:
    let il1 = un_option il1 [] in
    (il1)
    ]];
+
+shape_add_dangling_cmd:
+  [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_unfold_cmd:
+  [[ `SHAPE_UNFOLD; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_param_dangling_cmd:
+  [[ `SHAPE_PARAM_DANGLING; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
 
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM

@@ -2560,7 +2560,8 @@ let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isC
 (*   in *)
 (*   helper [v] vv *)
 
-let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = find_closure v (ptr_equations_with_null f)
+let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = 
+  find_closure v (ptr_equations_with_null f)
 
 let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list = 
   Debug.no_2 "find_closure_mix_formula" 
@@ -2568,6 +2569,13 @@ let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list =
     !print_mix_f
     !print_sv_l_f
     find_closure_mix_formula_x v f
+
+let find_all_closures_mix_formula (f: mix_formula) : (spec_var list) list = 
+  find_all_closures (ptr_equations_with_null f)
+
+let find_all_closures_mix_formula (f: mix_formula) : (spec_var list) list = 
+  Debug.no_1 "find_all_closures_mix_formula" !print_mix_f (pr_list !print_sv_l_f)
+    find_all_closures_mix_formula f
 
 (*let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = *)
 (*  let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in*)

@@ -2017,6 +2017,11 @@ and is_hole (h : h_formula) = match h with
   | Hole _ -> true
   | _ -> false
 
+and is_hrel (h: h_formula) =
+  match h with
+  | HRel _ -> true
+  | _ -> false
+
 and is_hformula_contain_htrue (h: h_formula) : bool =
   match h with
   | Star { h_formula_star_h1 = h1;
@@ -2107,11 +2112,12 @@ and set_node_perm (h : h_formula) p= match h with
   | DataNode b -> DataNode {b with h_formula_data_perm = p}
   | _ -> failwith ("set_node_perm: invalid argument")
 
-and get_node_args (h : h_formula) = match h with
-  | ViewNode ({h_formula_view_arguments = c})
-  | DataNode ({h_formula_data_arguments = c}) -> c
-  | ThreadNode _ -> failwith ("get_node_args: invalid argument. Unexpected ThreadNode")
-  | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode")
+(* (* To distinguish with later get_node_args *)                                           *)
+(* and get_node_args_inner (h : h_formula) = match h with                                  *)
+(*   | ViewNode ({h_formula_view_arguments = c})                                           *)
+(*   | DataNode ({h_formula_data_arguments = c}) -> c                                      *)
+(*   | ThreadNode _ -> failwith ("get_node_args: invalid argument. Unexpected ThreadNode") *)
+(*   | _ -> failwith ("get_node_args: invalid argument. Expected ViewNode/DataNode")       *)
 
 and get_node_ho_args (h : h_formula) = match h with
   | ViewNode ({h_formula_view_ho_arguments = c}) -> c
@@ -2154,6 +2160,11 @@ and get_node_var_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_node = c})
   | DataNode ({h_formula_data_node = c}) -> c
   | HVar (v,hvar_vs) -> v
+  | HRel (hrel, el, _) ->
+    (match el with
+    | (CP.Var (sv, _))::_ -> sv
+    | _ -> failwith ("Cannot find suitable root node of the HRel " ^ (CP.name_of_spec_var hrel)) 
+    )
   | _ -> failwith ("get_node_var: invalid argument"^(!print_h_formula h))
 
 and get_node_var (h : h_formula) =
@@ -4906,10 +4917,9 @@ type hprel= {
   predef_svl: CP.spec_var list; (* not needed *)
   hprel_lhs: formula;
   hprel_guard: formula option;
-  (*capture the ctx when we want to capture relations
-    of more than one field. ususally it is heap nodes
-    guard is used in unfolding pre-preds
-  *)
+  (* capture the ctx when we want to capture relations *)
+  (* of more than one field. ususally it is heap nodes *)
+  (* guard is used in unfolding pre-preds              *)
   hprel_type: hprel_infer_type;
   hprel_rhs: formula;
   hprel_path: cond_path_type;
@@ -5156,6 +5166,38 @@ let subst_hpdef ss hpdef=
     hprel_def_guard = n_guard;
     hprel_def_body = n_body;
   }
+
+let subst_hprel_constr sst hprel =
+  let sst = List.filter (fun (fr, t) -> not (CP.eq_spec_var fr t)) sst in
+  if is_empty sst then hprel
+  else
+    let fr, t = List.split sst in
+    let all_fv = (fv hprel.hprel_lhs) @ (fv hprel.hprel_rhs) @
+      (match hprel.hprel_guard with None -> [] | Some g -> fv g) 
+    in
+    let subst_f f =
+      (* Name clashing *)
+      let clashed_svl = Gen.BList.intersect_eq CP.eq_spec_var t all_fv in
+      if is_empty clashed_svl then subst sst f 
+      else
+        let fresh_svl = CP.fresh_spec_vars clashed_svl in
+        let avoid_clash_sst = List.combine clashed_svl fresh_svl in
+        subst sst (subst avoid_clash_sst f)
+    in
+    let n_guard = map_opt subst_f hprel.hprel_guard in
+    let n_lhs = subst_f hprel.hprel_lhs in
+    let n_rhs = subst_f hprel.hprel_rhs in
+    { hprel with
+      hprel_lhs = n_lhs;
+      hprel_rhs = n_rhs;
+      hprel_guard = n_guard; }
+
+let subst_hprel_constr sst hprel =
+  let pr1 = !print_hprel_short in
+  let pr2 = !CP.print_sv in
+  let pr3 = pr_list (pr_pair pr2 pr2) in
+  Debug.no_2 "subst_hprel_constr" pr1 pr3 pr1
+    (fun _ _ -> subst_hprel_constr sst hprel) hprel sst
 
 let hp_def_cmp (d1:hp_rel_def) (d2:hp_rel_def) =
   try
@@ -6229,7 +6271,7 @@ let rec get_ptrs_group_hf hf0=
     | HEmp | HVar _ ->[]
   in helper hf0
 
-and get_node_args hf0=
+and get_node_args hf0 =
   let rec helper hf=
     match hf with
     | Star {h_formula_star_h1 = hf1;
@@ -6248,7 +6290,15 @@ and get_node_args hf0=
     | DataNode hd -> hd.h_formula_data_arguments
     | ViewNode hv -> hv.h_formula_view_arguments
     | ThreadNode ht -> []
-    | HRel _
+    | HRel (hrel, el, _) -> 
+      (* (try *)
+        List.map (fun e ->
+          match e with
+          | CP.Var (sv, _) -> sv
+          | _ -> failwith ("Unexpected exp (not CP.Var) in HRel " ^ 
+                (CP.name_of_spec_var hrel) ^ "'s arguments.")) 
+          (* (List.tl el) *) el
+      (* with _ -> failwith ("Empty arguments in HRel " ^ (CP.name_of_spec_var hrel))) *)
     | Hole _ | FrmHole _
     | HTrue
     | HFalse
@@ -12986,7 +13036,7 @@ let join_conjunct_opt l = match l with
   | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
 
 let join_star_conjunctions (hs : h_formula list) : h_formula  = 
-  List.fold_left(fun a c-> mkStarH a c no_pos ) HEmp hs
+  List.fold_left (fun a c-> mkStarH a c no_pos ) HEmp hs
 
 let join_star_conjunctions_opt_x (hs : h_formula list) : (h_formula option)  = 
   match hs with
@@ -17714,6 +17764,7 @@ let collect_node_var_formula (f:formula) =
           | HTrue -> false
           | DataNode _
           | ViewNode _
+          | HRel _
           | ThreadNode _ -> true
           | _ -> report_error no_pos "collect_node_var_formula: expected"
         ) heaps
@@ -19404,7 +19455,6 @@ let collect_evars_context c =
 let remove_inf_cmd_spec new_spec = match new_spec with
   | EInfer s -> s.formula_inf_continuation
   | _ -> new_spec
-  
 (* let un_opt e = match (CP.conv_exp_to_var e) with *)
 (*   | Some (sv,_) -> sv *)
 (*   | None ->  *)
