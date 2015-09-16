@@ -4185,47 +4185,47 @@ let get_eqset puref =
 (*******************************************************)
 (*******************************************************)
 
-let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
-  let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
-  let (_ ,mix_lf,_,_,_,_) = CF.split_components (CF.Base lfb) in
-  let leqNulls = MCP.get_null_ptrs mix_lf in
-  let leqs = (MCP.ptr_equations_without_null mix_lf) in
-  let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
-                 @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
-  let l_def_vs = CP.remove_dups_svl (CF.find_close l_def_vs (leqs)) in
-  let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in
-  let ls_lhp_args = (List.map helper lhrs) in
-  let _, defined_preds,rems_hpargs,link_hps =
-    List.fold_left (fun (lfb1, r_defined_preds, r_rems, r_link_hps) hpargs ->
-        let n_lfb,def_hps, rem_hps, ls_link_hps=
-          Sautil.find_well_defined_hp prog lhds lhvs []
-            infer_vars [] hpargs (l_def_vs) lfb1 true pos
-        in
-        (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))
-      ) (lfb, [], [], []) ls_lhp_args
-  in
-  (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
-  (* let () = Debug.info_hprint (add_str  " rems_hpargs" pr1) rems_hpargs no_pos in *)
-  let truef = CF.mkTrue (CF.mkTrueFlow()) pos in
-  let rem_defined= List.fold_left (fun ls (hp,args) ->
-      if CP.mem_svl hp sel_hps then
-        let hf = (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos)) in
-        let p = CP.filter_var (MCP.pure_of_mix lfb.CF.formula_base_pure) args in
-        let lhs_ass = CF.mkAnd_base_pure (CF.formula_base_of_heap hf pos)
-            (MCP.mix_of_pure p) pos in
-        let new_defined = (hp, args, lhs_ass, truef) in
-        (ls@[new_defined])
-      else ls
-    ) [] rems_hpargs in
-  let defined_preds0 = defined_preds@rem_defined in
-  let new_constrs =
-    match defined_preds0 with
-    | [] -> []
-    | _ -> let es_cond_path = CF.get_es_cond_path es in
-      let defined_hprels = List.map (x_add Sautil.generate_hp_ass 1 [] es_cond_path) defined_preds0 in
-      defined_hprels
-  in
-  (new_constrs, (List.map (fun (a, _, _,_) -> a) defined_preds0))
+(* let collect_classic_assumption prog es lfb sel_hps infer_vars pos= *)
+(*   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in *)
+(*   let (_ ,mix_lf,_,_,_,_) = CF.split_components (CF.Base lfb) in *)
+(*   let leqNulls = MCP.get_null_ptrs mix_lf in *)
+(*   let leqs = (MCP.ptr_equations_without_null mix_lf) in *)
+(*   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds) *)
+(*                  @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in *)
+(*   let l_def_vs = CP.remove_dups_svl (CF.find_close l_def_vs (leqs)) in *)
+(*   let helper (hp,eargs,_)=(hp,List.concat (List.map CP.afv eargs)) in *)
+(*   let ls_lhp_args = (List.map helper lhrs) in *)
+(*   let _, defined_preds,rems_hpargs,link_hps = *)
+(*     List.fold_left (fun (lfb1, r_defined_preds, r_rems, r_link_hps) hpargs -> *)
+(*         let n_lfb,def_hps, rem_hps, ls_link_hps= *)
+(*           Sautil.find_well_defined_hp prog lhds lhvs [] *)
+(*             infer_vars [] hpargs (l_def_vs) lfb1 true pos *)
+(*         in *)
+(*         (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps))) *)
+(*       ) (lfb, [], [], []) ls_lhp_args *)
+(*   in *)
+(*   (\* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *\) *)
+(*   (\* let () = Debug.info_hprint (add_str  " rems_hpargs" pr1) rems_hpargs no_pos in *\) *)
+(*   let truef = CF.mkTrue (CF.mkTrueFlow()) pos in *)
+(*   let rem_defined= List.fold_left (fun ls (hp,args) -> *)
+(*       if CP.mem_svl hp sel_hps then *)
+(*         let hf = (CF.HRel (hp, List.map (fun x -> CP.mkVar x pos) args, pos)) in *)
+(*         let p = CP.filter_var (MCP.pure_of_mix lfb.CF.formula_base_pure) args in *)
+(*         let lhs_ass = CF.mkAnd_base_pure (CF.formula_base_of_heap hf pos) *)
+(*             (MCP.mix_of_pure p) pos in *)
+(*         let new_defined = (hp, args, lhs_ass, truef) in *)
+(*         (ls@[new_defined]) *)
+(*       else ls *)
+(*     ) [] rems_hpargs in *)
+(*   let defined_preds0 = defined_preds@rem_defined in *)
+(*   let new_constrs = *)
+(*     match defined_preds0 with *)
+(*     | [] -> [] *)
+(*     | _ -> let es_cond_path = CF.get_es_cond_path es in *)
+(*       let defined_hprels = List.map (x_add Sautil.generate_hp_ass 1 [] es_cond_path) defined_preds0 in *)
+(*       defined_hprels *)
+(*   in *)
+(*   (new_constrs, (List.map (fun (a, _, _,_) -> a) defined_preds0)) *)
 
 (* let infer_collect_hp_rel_classsic prog (es:entail_state) rhs pos = *)
 (*   let () = Debug.ninfo_hprint (add_str  "es_infer_vars_hp_rel"  !CP.print_svl) es.es_infer_vars_hp_rel no_pos in *)
