@@ -1401,7 +1401,7 @@ do_unfold_hp_rel@4 EXIT: failctxfe_kind: MAY
 [[ SEARCH ==>  BaseCaseUnfold ==>  Match(q,self)]]false
 
 ===========================================================================
-# ex13c5a.ss
+# ex13c5a.ss (FIXED)
 
 ---------------------------------
 # without @pure_field
@@ -1418,11 +1418,45 @@ true --> P(Anon_1602)&
 true]
 
 ===========================================================================
-# ex13c5b.ss
+# ex13c5b.ss 
 
 # with @pure_field
 
-# missing base-case post? + fixcalc error
+[ // PRE
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(v_1601@NI,s@NI) * 
+               HP_1604(Anon_1602,s@NI)&true,
+
+ // PRE_REC
+(1;0)HP_1604(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
+true,
+
+# why did we have (v=0 | v=v_1601) ?
+  what happen to just v=0 ??
+
+ // POST
+(2;0)HP_1604(Anon_1602,s@NI)&
+s'=s & Anon_19=Anon_1602 |#| s::char_star<v_1601,Anon_1602>@M&
+(v=0 | v=v_1601) --> emp&
+true,
+
+ // POST
+(2;0)HP_1603(v_1601@NI,s@NI)&
+s'=s & v=v_1601 & v=0 |#| s::char_star<v_1601,Anon_1602>@M&
+Anon_19=Anon_1602 --> emp&
+true,
+
+ // POST
+(1;0)HP_1603(v_1601@NI,s@NI)&
+Anon_18=v_1601 & v=v_1601 & s_1617=s & v!=0 |#| s::char_star<v_1601,Anon_1602>@M&
+(q=Anon_1602 | Anon_19=Anon_1602) --> emp&
+true]
+
+
+(fixcalc error disappeared)
+
+# + fixcalc error
 *************************************
 [ // PRE
 :fixcalc: Parse error on line 1 rest of line: ) && 1=1)
@@ -1443,8 +1477,88 @@ v_1601=0 --> emp&
 true]
 
 ===========================================================================
+# ex13c5b1.slk
+
+infer [HP,@classic,@pure_field] 
+HP(v_1601,s) * s::char_star<v_1601,Anon_1602>@M 
+& q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598' 
+ |-  htrue.
+
+<1>emp&v_bool_37_1598' & s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+        Anon_18=v_1601 & q=Anon_1602&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP(v_1601@NI,s)&
+                   s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+                   Anon_18=v_1601 & q=Anon_1602 |#|3  --> emp&true]
+
+# can we use simplifier? Why is guard outcome different1
+  from ex13c5b.ss --esl. Where is the heap guard? WHere is trace?
+
+id: 11; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604,P]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * s::char_star<v_1601,Anon_1602>@M * (htrue)&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (1;0)HP_1603(v_1601,s)&
+  Anon_18=v_1601 & v=v_1601 & s_1617=s & v!=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  (q=Anon_1602 | Anon_19=Anon_1602) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598'&{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
+
+(==solver.ml#8329==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ HP(v_1601,s) * s::char_star<v_1601,Anon_1602>@M&
+ v_bool_37_1598' & s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+ Anon_18=v_1601 & q=Anon_1602&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [HP]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ s::char_star<v_1601,Anon_1602>@M&
+ v
 ===========================================================================
-===========================================================================
+# ex13c5b2.slk
+
+infer [HP3,HP4,@classic,@pure_field] 
+ HP3(v_1601,s) * HP4(Anon_1602,s) * s::char_star<v_1601,Anon_1602>@M&
+!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0 
+ |-  htrue.
+
+<1>emp&v=0 & Anon_19=Anon_1602 & v=v_1601 & s'=s & !(v_bool_37_1598')&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP3(v_1601@NI,s)&
+                   Anon_19=Anon_1602 & v=v_1601 & s'=s & v=0 |#|3  --> emp&
+                   true; 
+                  HP4(Anon_1602,s)&
+                   Anon_19=Anon_1602 & v=v_1601 & s'=s & v=0 |#|3  --> emp&
+                   true]
+
+#  Why is guard outcome diff from --esl from ex13c5b.ss --esl
+   Did we remove the node before unknown predicate?
+   Why is there no trace?
+
+id: 12; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * HP_1604(Anon_1602,s) * s::char_star<v_1601,Anon_1602>@M&
+!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (2;0)HP_1603(v_1601,s)&
+  s'=s & v=v_1601 & v=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  Anon_19=Anon_1602 --> emp,
+ (2;0)HP_1604(Anon_1602,s)&
+  s'=s & Anon_19=Anon_1602 |#| s::char_star<v_1601,Anon_1602>@M&
+  (v=0 | v=v_1601) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0&
+{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
 ===========================================================================
 ===========================================================================
 ===========================================================================

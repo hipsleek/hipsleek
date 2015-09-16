@@ -11369,7 +11369,7 @@ let rec collect_hole ctx =
 
 let rec collect_hp_rel ctx = 
   match ctx with
-  | Ctx estate -> estate.es_infer_hp_rel # get_stk_recent
+  | Ctx estate -> estate.es_infer_hp_rel # get_stk(* _recent *)
   | OCtx (ctx1, ctx2) -> (collect_hp_rel ctx1) @ (collect_hp_rel ctx2)
 
 let rec collect_hp_unk_map ctx =

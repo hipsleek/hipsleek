@@ -939,6 +939,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let new_false_cnt = tmp_false_cnt # get in
                 let () = x_tinfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
                 let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
+                let () = 
+                  if not(!Globals.old_infer_hp_collect) then
+                    begin
+                      let hp_rel_list = Infer.collect_hp_rel_list_partial_context tmp_ctx in
+                      let () = Infer.rel_ass_stk # push_list (hp_rel_list) in
+                      let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+                      ()
+                    end
+                in
                 let cnt_before = CF.count_sat_pc_list res_ctx in
                 let cnt_after = CF.count_sat_pc_list tmp_ctx + new_false_cnt in
                 (*                      x_dinfo_pp ">>>>> Performing check_post ENDS" no_pos;*)
