@@ -237,8 +237,8 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
     (* let () = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
     let old_view_scc = !Astsimp.view_scc in
     let () = Astsimp.view_scc := [] in
-    let old_flag = !Globals.do_infer_inv in
-    let () = Globals.do_infer_inv := true in
+    (* let old_flag = !Globals.do_infer_inv in *)
+    (* let () = Globals.do_infer_inv := true in *)
     let () = List.iter (Astsimp.process_pred_def_4_iast iprog false) iviews in
     let () = Astsimp.view_scc := old_view_scc in
     (* let () = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
@@ -247,7 +247,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
     let todo_unk =  (List.map (fun vdef -> Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews) in
     let todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cprog.Cast.prog_view_decls) in
     let cprog = Astsimp.fill_base_case cprog in
-    let () = Globals.do_infer_inv := old_flag in
+    (* let () = Globals.do_infer_inv := old_flag in *)
     let () = cprog.C.prog_hp_decls <- crem_hprels in
     (*put back*)
     (* let () = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
@@ -350,7 +350,10 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
           with _ -> view_name0
         in
         let args0 = (List.fold_left List.append [] (List.map CP.afv eargs)) in
-        let args =get_args_w_useless hp args0 in
+        let args = (* get_args_w_useless hp args0 *) args0 in
+        x_tinfo_hp (add_str "args" !CP.print_svl) args no_pos;
+        x_tinfo_hp (add_str "args0" !CP.print_svl) args0 no_pos;
+        x_tinfo_hp (add_str "hp" !CP.print_sv) hp no_pos;
         match look_up_root hpdefs hp args with
         | Some (r,tl) ->
           (* let r,tl = C.get_root_args_hprel chprels_decl view_name args in *)

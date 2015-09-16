@@ -1399,7 +1399,8 @@ let is_lock_inv prog (name : ident) : bool =
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
 (* get specialized baga form *)
-let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
+  let () = x_tinfo_hp (add_str "c= " (pr_id)) c no_pos in
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   (* let ba = vdef.view_baga in *)
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
