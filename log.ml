@@ -224,7 +224,7 @@ let pr_sleek_log_entry e =
      fmt_string ("tntrel_ass: " ^ (pr e.sleek_proving_tntrel_ass)^"\n")
   );
   (match e.sleek_proving_hprel_ass with
-   (* | [] -> () *)
+   | [] -> ()
    | _  -> let pr = pr_list_ln Cprinter.string_of_hprel_short in
      fmt_string ("hprel_ass: " ^ (pr e.sleek_proving_hprel_ass)^"\n")
   );

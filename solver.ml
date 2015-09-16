@@ -7710,7 +7710,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             if !Globals.old_infer_hprel_classic then
                               let () = x_tinfo_hp (add_str "h1 " !CF.print_h_formula) h1 no_pos in
                               let () = x_winfo_pp "WN : Why a diffrent way to infer_collect_hp_rel_classsic" no_pos in
-                              let r, new_es = x_add Infer.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
+                              let r, new_es = x_add InferHP.infer_collect_hp_rel_classsic 0 prog estate h2 pos in
                               let l_h, l_p, l_vp, l_fl, l_t, l_a = CF.split_components new_es.es_formula in
                               let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
                               (* TODO:WN:HVAr *)
@@ -7749,7 +7749,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                             (*infer hprel. L2: moved the following code to heap_entail_empty_rhs*)
                             (* let estate, hprel_ass= *)
                             (*   if (h2 = HEmp || h2 = HTrue) then *)
-                            (*     let (res,new_estate, rels) = x_add Infer.infer_collect_hp_rel_empty_rhs 1 prog estate p2 pos in *)
+                            (*     let (res,new_estate, rels) = x_add InferHP.infer_collect_hp_rel_empty_rhs 1 prog estate p2 pos in *)
                             (*     if res then new_estate,rels else estate,[] *)
                             (*   else estate,[] *)
                             (* in *)
@@ -8289,6 +8289,15 @@ and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (**** INTERNAL****)
   let ante = CF.Base lhs in
+  (* let estate = estate_orig in *)
+  (* let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in *)
+  (* let lhs_h,lhs_p,_,_,_,_ = CF.extr_formula_base lhs_b in *)
+  (* let rhs_h,rhs_p,_,_,_,_ = CF.extr_formula_base rhs_b in *)
+  (* let rhs_eqset = (\* if !Globals.allow_imm then *\)Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) -> *)
+  (*     CP.eq_spec_var sv11 sv21 && CP.eq_spec_var sv12 sv22 *)
+  (*   ) estate.es_rhs_eqset in *)
+  (* let actions = x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p *)
+  (*     posib_r_alias rhs_lst estate.es_is_normalizing conseq pos in *)
   let neg_mcp_x mf=
     let p = MCP.pure_of_mix mf in
     match p with
@@ -8326,7 +8335,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       then 
         (*L2: should we need classic for emp inference?*)
         (* WN: I would think so. Any counter-example? *)
-        let (res,new_estate, rels, new_lhs) = x_add Infer.infer_collect_hp_rel_empty_rhs 1 prog estate_orig lhs (* h2 *) p2 pos in
+        let (res,new_estate, rels, new_lhs) = x_add InferHP.infer_collect_hp_rel_empty_rhs 1 prog estate_orig lhs (* h2 *) p2 pos in
         if res then new_estate,rels,new_lhs else estate_orig,[], lhs
       else estate_orig,[], lhs
     in
@@ -9523,7 +9532,7 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let leqNulls = MCP.get_null_ptrs mlf in
   let norm_rhs_view_node_args = (CP.diff_svl (CF.get_ptrs_w_args ~en_pure_field:estate.CF.es_infer_obj # is_pure_field_all rhs_node) vs) in
   let rhs_view_node_args = CP.subst_var_list estate.CF.es_rhs_eqset norm_rhs_view_node_args in
-  let ass_guard = x_add Infer.find_guard prog lhds leqs leqNulls
+  let ass_guard = x_add InferHP.find_guard prog lhds leqs leqNulls
       [(hp,CP.diff_svl (CP.remove_dups_svl (vs@rhs_view_node_args)) leqNulls)] (* rhs_arg *)[] in
   let sel_eqns_svl = match ass_guard with
     | None -> vs
@@ -9535,7 +9544,7 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let rhs = CF.Base rhs_b in
   let lhs_b = CF.formula_base_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
   let lhs = CF.Base lhs_b in
-  let grd = x_add Infer.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
+  let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
   let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
   if !Globals.old_infer_hp_collect then
     begin
@@ -13359,7 +13368,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           else
             (* let () =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx1" pos in *)
 
-            let (res,new_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt) = x_add Infer.infer_collect_hp_rel 1 prog iact estate lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+            let (res,new_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt) = x_add InferHP.infer_collect_hp_rel 1 prog iact estate lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
             (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
             if (not res) then (* r *)
               let err_msg = "infer_heap_node" in
@@ -13600,7 +13609,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                       if not(CF.isFailCtx lc) then first_r
                       else
                         let () =  Debug.ninfo_hprint (add_str "Infer.infer_collect_hp_rel" pr_id) "xxxxx 2" pos in
-                        let (res,new_estate,n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt) = x_add Infer.infer_collect_hp_rel 2 prog 0 estate HEmp rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+                        let (res,new_estate,n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt) = x_add InferHP.infer_collect_hp_rel 2 prog 0 estate HEmp rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
                         if (not res) then
                           (* r *)
                           let msg = "infer_heap_node" in
