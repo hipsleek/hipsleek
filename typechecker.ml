@@ -3313,7 +3313,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (*   let () = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (proc.proc_name)  no_pos in *)
     (*   r_hps@proc.Cast.proc_sel_hps) [] scc_procs *)
     in
-    let scc_sel_post_hps = !scc_proc_sel_post_hps
+    let scc_sel_post_hps = CP.remove_dups_svl (!scc_proc_sel_post_hps@Iincr.get_post_preds_scc scc_procs)
     (* List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs *) in
     let () = Debug.ninfo_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_hprel_ass"  string_of_int) (List.length scc_hprel_ass)  no_pos in
     (* let () = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_sel_hps"  string_of_int) (List.length scc_sel_hps)  no_pos in *)

@@ -2839,7 +2839,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
     | _ -> hp_def
   in
   let process_one_path (cond_path, link_hpargs, constrs1)=
-    (* let () = DD.info_hprint (add_str "all_post_hps" !CP.print_svl) all_post_hps no_pos in *)
+    let () = DD.ninfo_hprint (add_str "all_post_hps" !CP.print_svl) all_post_hps no_pos in
     (* let () = DD.info_hprint (add_str "sel_hps" !CP.print_svl) sel_hps no_pos in *)
     let is0 = infer_init iprog prog proc_name cond_path constrs1
         callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs0
