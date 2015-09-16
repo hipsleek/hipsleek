@@ -28,15 +28,17 @@ let rec partition_by_key key_of key_eq ls =
 (***** UTILS *****)
 (*****************)
 let is_pre_hprel (hpr: CF.hprel) = 
-  match hpr.hprel_proving_kind with
-  | PK_PRE 
-  | PK_PRE_REC -> true
-  | _ -> false
+  (* match hpr.hprel_proving_kind with *)
+  (* | PK_PRE                          *)
+  (* | PK_PRE_REC -> true              *)
+  (* | _ -> false                      *)
+  true
 
 let is_post_hprel (hpr: CF.hprel) = 
-  match hpr.hprel_proving_kind with
-  | PK_POST -> true
-  | _ -> false
+  (* match hpr.hprel_proving_kind with *)
+  (* | PK_POST -> true                 *)
+  (* | _ -> false                      *)
+  false
 
 let sig_of_hrel (h: CF.h_formula) =
   match h with

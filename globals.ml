@@ -1924,7 +1924,7 @@ let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
 (* String Inference *)
-let inf_string = ref true
+let new_pred_syn = ref true
 
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false

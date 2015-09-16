@@ -421,7 +421,7 @@ let dangling_parameterizing hprels =
 (***** MAIN *****)
 (****************)
 let syn_preds prog (is: CF.infer_state) = 
-  if !Globals.inf_string then
+  if !Globals.new_pred_syn then
     let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
     let is_all_constrs, has_dangling_vars = List.split (List.map (add_dangling_hprel prog) is.CF.is_all_constrs) in
     let has_dangling_vars = or_list has_dangling_vars in
