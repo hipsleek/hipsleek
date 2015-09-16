@@ -719,7 +719,7 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
             | None -> true
             | Some rgx -> Str.string_match rgx name 0 in
           if flag (* s=name || s="" *) then
-            print_endline ("\npush_list("^name^"):"^((Basic.pr_list epr) ls)) 
+            print_endline ("\npush_list("^name^"):"^(string_of_int n)^((Basic.pr_list epr) ls)) 
           else () in
       super # push_list ls 
     method push_list_pr (ls:'a list) =  
