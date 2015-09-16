@@ -316,9 +316,7 @@ let common_arguments = [
   ("--log-mona", Arg.Set Mona.log_all_flag,
    "Log all formulae sent to Mona in file allinput.mona");
   ("--log-redlog", Arg.Set Redlog.is_log_all,
-   "Log all formulae sent to Reduce/Redlog in file al
-
-linput.rl");
+   "Log all formulae sent to Reduce/Redlog in file allinput.rl");
   ("--log-math", Arg.Set Mathematica.is_log_all,
    "Log all formulae sent to Mathematica in file allinput.math");
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
@@ -771,8 +769,8 @@ linput.rl");
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
   (* String Inference *)
-  ("--dis-str-infer", Arg.Clear Globals.inf_string, "Disable string inference");
-  ("--en-str-infer", Arg.Set Globals.inf_string, "Enable string inference");
+  ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
+  ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
 
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
@@ -970,6 +968,8 @@ linput.rl");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--sa-en-part", Arg.Set Globals.sa_part, "enable partition parameters into rele groups");
+  ("--sa-dis-part", Arg.Clear Globals.sa_part, "disable partition parameters into rele groups");
   ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--sa-prefix-pred", Arg.Clear Globals.sa_prefix_emp, "disable pre-condition fixpoint as empty during shape analysis");
   ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");

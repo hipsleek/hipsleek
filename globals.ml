@@ -921,6 +921,7 @@ let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
+let sa_part = ref false
 
 let prelude_is_mult = ref false
 
@@ -1926,7 +1927,7 @@ let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
 (* String Inference *)
-let inf_string = ref true
+let new_pred_syn = ref true
 
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false

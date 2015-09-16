@@ -21,6 +21,10 @@ HeapPred P(node x).
 
 int length(node x)
   infer [@shape_pre,@shape_post,@classic]
+//  infer [@shape_pre]
+//  infer [@shape_pre,@shape_post]
+//infer [@shape_pre,@classic]
+//infer [@shape_post]
   requires true
   ensures true;
 {    
