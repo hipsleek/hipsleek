@@ -334,6 +334,10 @@ linput.rl");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--old-search-always", Arg.Set Globals.old_search_always,"Allow search_action always..");
+  ("--new-search-always", Arg.Clear Globals.old_search_always,"Use smart search_action always..");
+  ("--en-cond-always", Arg.Set Globals.cond_action_always,"Allow cond_action always..");
+  ("--en-rev-priority", Arg.Set Globals.rev_priority,"Allow reverser priority for action ");
   ("--old-coer-target", Arg.Set Globals.old_coer_target,"Allow coer_target check before applying lemma");
   ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
   ("--en-infer-back-ptr", Arg.Set Globals.infer_back_ptr,"Enable infer back pointer for infer_fold");

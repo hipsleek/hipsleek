@@ -110,34 +110,112 @@ let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
 (* or at materialized args,...                        *)
 *)
 
-let rec norm_action (wt,a) = match a with
-  | Search_action xs ->
-    let rs = List.map norm_action xs in
-    List.concat rs
-  | _ -> [(wt,a)] 
+let flatten_action f_extr wa =
+  let rec aux ((wt,a) as wa) =
+    match f_extr a with
+    | Some lst -> 
+      let rs = List.concat (List.map aux lst) in
+      let rs2 = List.filter (fun (_,a) -> match a with 
+          | M_Nothing_to_do _ -> false
+          | _ -> true) rs in
+      if rs2==[] then [List.hd rs] else rs2
+    | None -> [wa]
+  in aux wa
 
-let norm_rm_nothing lst =
-  let lst2 = List.filter (fun (_,a) -> match a with 
-      | M_Nothing_to_do _ -> false 
-      | _ -> true ) lst in
-  let lst = if lst2==[] then lst else lst2 in
-  lst
-
-let norm_search_action lst =
-  begin
-    let lst = List.concat (List.map norm_action lst) in
-    let lst = norm_rm_nothing lst in
+let flatten_search ((wt,_) as wa) =
+  let f_extr a = match a with
+    | Search_action lst -> Some lst
+    | _ -> None in
+  let lst = flatten_action f_extr wa in
     match lst with
-    | [] -> M_Nothing_to_do ("search action is empty")
-    | [(_,a)] -> a
-    | lst -> Search_action lst
-  end
+    | [] -> (wt,M_Nothing_to_do ("search action is empty"))
+    | [a] -> a
+    | lst -> (wt,Search_action lst)
+
+
+(* let rec norm_action (wt,a) =  *)
+(*   match a with *)
+(*   | Search_action xs -> *)
+(*     let rs = List.map norm_action xs in *)
+(*     List.concat rs *)
+(*   | _ -> [(wt,a)]  *)
+
+(* let norm_rm_nothing lst = *)
+(*   let lst2 = List.filter (fun (_,a) -> match a with  *)
+(*       | M_Nothing_to_do _ -> false  *)
+(*       | _ -> true ) lst in *)
+(*   let lst = if lst2==[] then lst else lst2 in *)
+(*   lst *)
+
+(* let norm_search_action lst = *)
+(*   begin *)
+(*     let lst = List.concat (List.map norm_action lst) in *)
+(*     let lst = norm_rm_nothing lst in *)
+(*     match lst with *)
+(*     | [] -> M_Nothing_to_do ("search action is empty") *)
+(*     | [(_,a)] -> a *)
+(*     | lst -> Search_action lst *)
+(*   end *)
+
+let norm_search_action ls =
+  let (_,a) = flatten_search (-1,Search_action ls) in
+  a
+
 
 let mk_search_action lst = norm_search_action lst
 
-let norm_single_action ((wt,a) as act) = 
-  (* let lst = norm_action act in *)
-  (wt,norm_search_action [act])
+
+let flatten_cond ((wt,_) as wa) =
+  let f_extr a = match a with
+    | Cond_action lst -> Some lst
+    | _ -> None in
+  let lst = flatten_action f_extr wa in
+    match lst with
+    | [] -> (wt,M_Nothing_to_do ("cond action is empty"))
+    | [a] -> a
+    | lst -> (wt,Cond_action lst)
+
+let norm_cond_action ls =
+  let () = y_binfo_pp "norm_cond_action" in
+  let (_,a) = flatten_cond (-1,Cond_action ls) in
+  a
+
+let norm_cond_action ls =
+  let (_,a) = flatten_cond (-1,Cond_action ls) in
+  a
+
+let mk_cond_action lst = norm_cond_action lst
+
+let check_same lst = 
+  let rec aux lst p = 
+    match lst with
+    | (a,_)::xs -> 
+      if a==p then aux xs p
+      else false
+    | [] -> true in 
+  match lst with
+  | [] -> true
+  | (w,_)::xs -> aux xs w
+
+let norm_smart_action ls =
+  if check_same ls then norm_search_action ls
+  else norm_cond_action ls
+
+let mk_smart_action lst = norm_smart_action lst
+
+let mk_smart_rev_action lst = norm_smart_action (List.rev lst)
+
+let norm_single_action ((wt,a) as act) =
+  match a with
+  | Search_action _ -> flatten_search act
+  | Cond_action _ -> flatten_cond act
+  | _ -> act
+
+ (* let norm_cond_action ls = *)
+ (* match ls with *)
+  (* | [] -> M_Nothing_to_do ("cond action is empty") *)
+  (* | [(_,a)] -> a *)
+  (* | lst -> Cond_action lst *)
 
 (* and norm_action (a,lst) = *)
 (*   (a,norm_search_action_x lst) *)
@@ -145,10 +223,6 @@ let norm_single_action ((wt,a) as act) =
 (* and norm_search_action ls =  *)
 (*   Debug.no_1 "norm_search_action" (pr_list string_of_action_wt_res) string_of_action_res norm_search_action_x ls *)
 
-and norm_cond_action ls = match ls with
-  | [] -> M_Nothing_to_do ("cond action is empty")
-  | [(_,a)] -> a
-  | lst -> Cond_action lst
 
 let get_rhs_rest_emp_flag act old_is_rhs_emp =
   match act with
@@ -2287,11 +2361,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold m_res)
            else (5,M_Nothing_to_do ("Mis-matched View of "^(pr_id vl_name)^" and HRel of "^(pr_sv h_name_sv))) in
          let l = f_act::l in
+         let () = y_binfo_hp (add_str "lst" (pr_list pr_none)) l in
          let res = 
            match l with
            | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
            | l1::[] -> l1
-           | _      -> (-1, norm_search_action l)
+           | _      -> (-1, norm_cond_action l)
          in res
        (* TODO:old_infer_heap *)
        | HRel (hn1, args1, _), (HRel (hn2, args2, _) as rhs) -> 
@@ -2742,8 +2817,13 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
     let () = x_tinfo_pp "process many matches" no_pos in
     (* WN : TODO use cond_action if of different priorities *)
     let rs = sort_wt rs in
-    let () = x_tinfo_hp (pr_list string_of_action_wt_res_simpl) rs no_pos in
-    (-1, mk_search_action rs)
+    let res = 
+      if !Globals.old_search_always then mk_search_action rs 
+      else if !Globals.cond_action_always then  mk_cond_action rs 
+      (* else if !Globals.rev_priority then mk_smart_rev_action rs  *)
+      else mk_smart_action rs in
+    let () = x_binfo_hp (string_of_action_res_simpl) res no_pos in
+    (-1, res)
 
 and choose_closest a ys =
   let similar m o =
@@ -2845,7 +2925,9 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
         (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
-  let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
+  let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
+  let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
+   let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
   (* WN : is below critical? why do we need them? *)
   (* let ucert, cert = List.partition uncertain sl in (\*delay uncertain*\) *)
   (* let sl = cert@ucert in *)
@@ -2854,7 +2936,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
      the head of the list has unique weight *)
   let head_w,head_a = List.hd sl in
   let eq_ls, neq_ls = List.partition (fun (w,_) -> w==head_w) (List.tl sl) in
-  let res =
+  let sl =
     if (eq_ls == []) then
       sl
     else
@@ -2862,7 +2944,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
       let new_head = (head_w,Cond_action ((head_w,head_a)::eq_ls)) in
       (new_head::neq_ls)
   in
-  res
+  sl
 (* (snd (List.split res)) *)
 
 and drop_unmatched_action l=
@@ -3015,7 +3097,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
     let () = x_tinfo_hp (add_str "weighted action"
                            (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
     let ys = sort_wt_match opt r in
-    let () = x_tinfo_hp (add_str "sorted action"
+    let () = x_binfo_hp (add_str "sorted action"
                            (pr_list_num_vert string_of_action_wt_res_simpl)) ys no_pos in
     let ys2 = drop_low ys in
     (* let ys2 = snd (List.split ys) in *)

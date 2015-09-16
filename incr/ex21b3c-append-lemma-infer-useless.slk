@@ -1,0 +1,102 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+  /*
+pred app4<y> == self::node<_,q>
+  case { 
+         q=null -> [] emp;
+         q!=null -> [] q::app4<y>;
+  }
+  inv self!=null.
+  */
+
+pred app3<y> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app3<y> & q!=null 
+  inv true.
+
+HeapPred U(node x).
+HeapPred U1(node x).
+HeapPred U2(node x, node y).
+
+lemma_unsafe
+  self::app2<y> -> U(self).
+
+infer[U1,classic]
+  self::app2<y> |- U1(self).
+print residue.
+
+
+/*
+
+# ex21b3c.slk --old-search-action
+
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:1
+  (Lemma ==> lem_16) =>
+    LHS: self::app2<y>@M
+    RHS: U1(self);
+  Prio:2
+  InferFold =>
+    LHS: self::app2<y>@M
+    RHS: U1(self)
+  ]
+
+# How come no searching? There is but seems Only one answer
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [self::app2<y>@M&true --> U1(self)&true]
+[[ SEARCH ==>  InferFold  ==>  COND ==>  Match(self,self)]]
+
+
+----------------------
+# ex21b3c.slk
+
+
+(* smart_action *)
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(self)&true --> U1(self)&true]
+[[ COND ==>  (Lemma ==> lem_16(self,self)) ==> (left: lem_16) ==>  InferFold  ==>  Match(self,self)]]
+
+---------
+
+# why --en-rev-priority not working ..
+
+(==context.ml#2967==)
+sort_wt@3@1
+sort_wt inp1 :[ Prio:-1
+ COND =>[
+  Prio:2
+  InferFold =>
+    LHS: self::app2<y>@M
+    RHS: U1(self);
+  Prio:1
+  (Lemma ==> lem_16) =>
+    LHS: self::app2<y>@M
+    RHS: U1(self)
+  ]]
+sort_wt@3 EXIT:[ Prio:1
+ COND =>[
+  Prio:1
+  (Lemma ==> lem_16) =>
+    LHS: self::app2<y>@M
+    RHS: U1(self);
+  Prio:2
+  InferFold =>
+    LHS: self::app2<y>@M
+    RHS: U1(self)
+  ]]
+
+*/

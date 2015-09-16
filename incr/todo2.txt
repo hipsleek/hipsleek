@@ -33,9 +33,37 @@ SLEEK FAILURE (END)
 Exception processed: Failure("non-empty global vars to_conseq(glob):[(b_113,b_87),(p_114,p_88)]")
 error at: 
 SLEEK FAILURE (END)
+=========================================================================
+# ex21b1a.slk
 
+infer [U,@classic] self::node<_,null> |- self::node<_,q>*U(q,y).
+print residue.
+
+# can we use a diff message than UnmatchedRHSData?
+
+Residue:
+ <1>emp&Anon_17=Anon_16 & q=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&q=null --> U(q,y)&true]
+[[ Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
 =========================================================================
-=========================================================================
+# ex21b3c.slk --old-search-action
+
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:1
+  (Lemma ==> lem_16) =>
+    LHS: self::app2<y>@M
+    RHS: U1(self);
+  Prio:2
+  InferFold =>
+    LHS: self::app2<y>@M
+    RHS: U1(self)
+  ]
+
+# How come no searching? There is but seems Only one answer
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [self::app2<y>@M&true --> U1(self)&true]
+[[ SEARCH ==>  InferFold  ==>  COND ==>  Match(self,self)]]
 =========================================================================
 =========================================================================
 =========================================================================
