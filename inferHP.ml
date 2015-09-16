@@ -103,9 +103,12 @@ let match_unk_preds prog lhs_hpargs rhs_hp rhs_args=
 (*   ('c * CF.CP.spec_var list) list -> CP.spec_var list -> CF.h_formula option *)
 let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
   let l_args1 = List.fold_left (fun ls (hp,args) ->
-      let i_args, ni_args = Sautil.partition_hp_args prog hp args in
-      let sel_args = List.map fst i_args in
-      ls@sel_args) [] l_selhpargs in
+      try
+        let i_args, ni_args = Sautil.partition_hp_args prog hp args in
+        let sel_args = List.map fst i_args in
+      ls@sel_args
+      with _ -> ls@args
+  ) [] l_selhpargs in
   let l_args2 = CF.find_close l_args1 leqs in
   let cl_null_ptrs = CF.find_close null_ptrs leqs in
   let l_args3 = CP.diff_svl l_args2(* (CP.remove_dups_svl (l_args2@rhs_args)) *) cl_null_ptrs in
