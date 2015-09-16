@@ -15,12 +15,6 @@ WFSeg<p> ==
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
   inv true;
 
-/*
-BADS<> ==
-  self::char_star<v,q>*q::BADS<> 
-  inv true;
-*/
-
 HeapPred P(char_star x).
 HeapPred QQ(char_star x,char_star y,char_star z).
 
@@ -57,43 +51,69 @@ true,
  // POST
 (1;0)QQ(q,s',p)&true |#|3  --> GP_1661(q,s',p,s@NI)&
 true]
-
-
-=======================================================
-
-// POST
- (1;0)s::char_star<v_1631,q>@M * GP_1661(q,s',p,s@NI)&
-  v_1631!=0 |#|3  --> QQ(s,s',p)&true,
-
-// POST
- (1;0)QQ(q,s',p)&true |#|3  --> GP_1661(q,s',p,s@NI)&true,
-
-// POST
-(2;0)s::char_star<flted_10_1615,p>@M * GP_1662(s',s@NI)&
-s'=s & flted_10_1615=0 |#|3  --> QQ(s,s',p)&true,
-
-// POST
+--------------
+For GP_1662
+===========
 (2;0)emp&s'=s |#|3  --> GP_1662(s',s@NI)&
-true]
+//convert to predicate
+GP_1662(s',s@NI) = s'=s
 
---------------
-(1;0)s::char_star<v_1631,q>@M * GP_1661(q,s',p,s@NI)&
-v_1631!=0 |#|3  --> QQ(s,s',p)&
+For GP_1662
+===========
+(1;0)QQ(q,s',p)&true |#|3  --> GP_1661(q,s',p,s@NI)&
+//convert to predicate
+GP_1661(q,s;,p,s) == QQ(q,s',p)
 
-(1;0)s::char_star<v_1631,q>@M * QQ(q,s',p)& v_1631!=0 
-      --> QQ(s,s',p)
 
---------------
-(2;0)s::char_star<flted_10_1615,p>@M * GP_1662(s',s@NI)&
-s'=s & flted_10_1615=0 |#|3  --> QQ(s,s',p)&
+For QQ
+=======
+s::char_star<flted_10_1615,p>@M * GP_1662(s',s@NI)&
+  s'=s & flted_10_1615=0 |#|3  --> QQ(s,s',p)&
+// fold GP_1662
+s::char_star<flted_10_1615,p>@M & s'=s &
+  s'=s & flted_10_1615=0 |#|3  --> QQ(s,s',p)&
 
-(2;0)s::char_star<flted_10_1615,p>@M & s'=s & flted_10_1615=0 
-      --> QQ(s,s',p)&
+
+(1;0)s::char_star<v_1631,q>@M * GP_1661(q,s',p,s@NI)& v_1631!=0 |#|3  
+  --> QQ(s,s',p)
+// fold GP_1661
+(1;0)s::char_star<v_1631,q>@M * QQ(q,s',p) & v_1631!=0 |#|3  
+  --> QQ(s,s',p)
+
+Combine Implications
+--------------------
+s::char_star<flted_10_1615,p>@M & s'=s &
+  s'=s & flted_10_1615=0 |#|3  --> QQ(s,s',p)&
+/\ s::char_star<v_1631,q>@M * QQ(q,s',p) & v_1631!=0 |#|3  
+  --> QQ(s,s',p)
+
+s::char_star<flted_10_1615,p>@M & s'=s & s'=s & flted_10_1615=0 |#|3  
+\/ (s::char_star<v_1631,q>@M * QQ(q,s',p) & v_1631!=0 |#|3  
+  --> QQ(s,s',p)
+
+  A \/ C -> B
 ------------------
+ A -> B /\ C -> B
 
- QQ(s,s',p) <-- s::char_star<0,p>@M & s'=s 
-            or s::char_star<v_1631,q>@M * QQ(q,s',p)& v_1631!=0
+  A -> B /\ C
+-------------------
+ A -> B /\ A -> C
 
+  A -> B \/ C
+-------------------
+ A -> B \/ A -> C
+
+Convert to Predicate
+--------------------
+
+QQ(s,s',p) ::= s::char_star<flted_10_1615,p>@M & s'=s & s'=s & flted_10_1615=0  
+   \/  s::char_star<v_1631,q>@M * QQ(q,s',p) & v_1631!=0 |#|3  
+
+(USING LEMMA_infer for ex13e4a.slk)
+
+   self::QQ<sp,p> <- self::WFSeg<sp>*sp::char_star<0,p>.
+
+================
 
 void while2(ref char_star s1,ref char_star s2)
   requires s1::char_star<_,q>*q::BADS<> * s2::WSS<p>@L 
