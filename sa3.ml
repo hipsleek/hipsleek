@@ -2535,7 +2535,7 @@ and infer_process_pre_preds iprog prog proc_name callee_hps b_is_pre is (pre_fix
   let rec helper_x is frozen_hps frozen_constrs pre_oblg_constrs0 =
     let constrs = is.Cformula.is_constrs in
     begin
-      let equal_cands, complex_hps,rem_constrs = IC.icompute_action_pre constrs post_hps frozen_hps pre_fix_hps in
+      let equal_cands, complex_hps,rem_constrs = x_add IC.icompute_action_pre constrs post_hps frozen_hps pre_fix_hps in
       let equal_hps, new_frozen_constrs = List.fold_left (fun (ls1,ls2) (hp, constrs) -> ls1@[hp], ls2@constrs)
           ([],[]) equal_cands
       in
@@ -2671,7 +2671,7 @@ and infer_shapes_proper_x iprog prog proc_name callee_hps is need_preprocess det
   let pre_fix_constrs = pre_fix_constrs@new_pre_fix_constrs in
   let is_pre2 = if pre_fix_constrs = [] then is_pre1 else
       let is_pre_fix =  {is_pre1 with Cformula.is_constrs = pre_fix_constrs} in
-      let pre_fix_act = IC.icompute_action_pre_fix pre_fix_hps in
+      let pre_fix_act = x_add_1 IC.icompute_action_pre_fix pre_fix_hps in
       iprocess_action iprog prog proc_name callee_hps is_pre_fix pre_fix_act need_preprocess detect_dang
   in
   (*pre-oblg*)
