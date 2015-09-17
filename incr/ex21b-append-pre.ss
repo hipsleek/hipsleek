@@ -16,8 +16,6 @@ ll<> == self = null
 
 	
 HeapPred P(node x, node@NI y).
-
-
 void append(node x, node y)
   infer [P,@classic]
   requires P(x,y)
