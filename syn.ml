@@ -463,5 +463,5 @@ let syn_pre_preds prog (is: CF.infer_state) =
 
 let syn_pre_preds prog is = 
   let pr2 = Cprinter.string_of_infer_state_short in
-  Debug.no_1 "Syn:Syn.syn_preds" pr2 pr2
+  Debug.no_1 "Syn:syn_pre_preds" pr2 pr2
     (fun _ -> syn_pre_preds prog is) is
