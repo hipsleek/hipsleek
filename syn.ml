@@ -122,28 +122,32 @@ let add_back_hrel ctx hrel =
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
+  let hrd_lhs = hrel_def.hprel_lhs in
+  let hrel_name, hrel_args = sig_of_hrel hrel in
+  let _, lhs_p, _, _, _, _ = CF.split_components hrd_lhs in
+  let lhs_p = MCP.pure_of_mix lhs_p in
+  let ex_lhs_p = MCP.mix_of_pure (simplify lhs_p hrel_args) in
   let hrd_guard = hrel_def.hprel_guard in
-  match hrd_guard with
-  | None -> 
-    (* Some (combine_Star ctx hrel_def.hprel_rhs) *)
-    Some (add_back_hrel ctx hrel)
-  | Some g ->
-    let guard_h, guard_p, _, _, _, _ = CF.split_components g in
-    let guard_h_f = CF.mkBase_simp guard_h (MCP.mkMTrue pos) in
-    let rs, residue = heap_entail_formula prog ctx guard_h_f in
-    if rs then
-      let _, ctx_p, _, _, _, _ = CF.split_components ctx in
-      if is_sat (MCP.merge_mems ctx_p guard_p true) then
-        (* Prevent self-recursive pred to avoid infinite unfolding *)
-        let hrel_name = name_of_hrel hrel in
-        let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
-        if mem hrel_name hprel_rhs_fv then
-          failwith "Unfolding self-recursive predicate is not allowed to avoid possibly infinite unfolding!"
-        else
-          let comb_f = combine_Star g residue in
-          Some (combine_Star comb_f hrel_def.hprel_rhs)
-      else None
+  let guard_f = 
+    match hrd_guard with
+    | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
+    | Some g -> g
+  in
+  let guard_h, guard_p, _, _, _, _ = CF.split_components guard_f in
+  let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in
+  let rs, residue = heap_entail_formula prog ctx guard_h_f in
+  if rs then
+    let _, ctx_p, _, _, _, _ = CF.split_components ctx in
+    if is_sat (MCP.merge_mems ctx_p guard_p true) then
+      (* Prevent self-recursive pred to avoid infinite unfolding *)
+      let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
+      if mem hrel_name hprel_rhs_fv then
+        failwith "Unfolding self-recursive predicate is not allowed to avoid possibly infinite unfolding!"
+      else
+        let comb_f = combine_Star guard_f residue in
+        Some (combine_Star comb_f hrel_def.hprel_rhs)
     else None
+  else None
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
@@ -172,11 +176,13 @@ let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
       in
       let guarded_hrel_defs, unguarded_hrel_defs = List.partition (fun hrel_def ->
           match hrel_def.CF.hprel_guard with Some _ -> true | None -> false) subst_hrel_defs in
+      let non_inst_unguarded_hrel_defs, unguarded_hrel_defs = List.partition (is_non_inst_hprel prog) unguarded_hrel_defs in
+      (* Only unfolding guarded hrel or non-inst hrel *)
       let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
           let unfolding_ctx = unfolding_one_hrel_def prog ctx hrel hrel_def in
           match unfolding_ctx with
           | None -> acc
-          | Some ctx -> acc @ [ctx]) [] guarded_hrel_defs 
+          | Some ctx -> acc @ [ctx]) [] (guarded_hrel_defs @ non_inst_unguarded_hrel_defs)
       in
       let unfolding_ctx_list = 
         if is_empty unguarded_hrel_defs 
@@ -202,7 +208,8 @@ let unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
       let ctx_list = unfolding_one_hrel prog ctx hprel_name hr hprel_groups in
       List.concat (List.map (fun ctx -> helper ctx hrl) ctx_list)
   in
-  helper ctx hrel_list
+  let non_inst_hrel_list, norm_hrel_list = List.partition (is_non_inst_hrel prog) hrel_list in
+  helper ctx (norm_hrel_list @ non_inst_hrel_list)
 
 let unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
   let pr1 = !CF.print_formula in
