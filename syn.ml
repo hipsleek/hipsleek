@@ -61,7 +61,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
 
 let add_dangling_hprel prog (hpr: CF.hprel) = 
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
+  Debug.no_1 "Syn:add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
 
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   fst (List.split (List.map (add_dangling_hprel prog) hpr_list))
@@ -108,7 +108,7 @@ let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
 let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let pr1 = !CF.print_formula in
   let pr2 = pr_pair string_of_bool pr1 in
-  Debug.no_2 "Syn.heap_entail_formula" pr1 pr1 pr2 
+  Debug.no_2 "Syn:heap_entail_formula" pr1 pr1 pr2 
     (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq 
 
 let is_sat f = Tpdispatcher.is_sat_raw f
@@ -152,7 +152,7 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
   let pr2 = Cprinter.string_of_hprel_short in
-  Debug.no_2 "unfolding_one_hrel_def" pr1 pr2 (pr_option pr1)
+  Debug.no_2 "Syn:unfolding_one_hrel_def" pr1 pr2 (pr_option pr1)
     (fun _ _ -> unfolding_one_hrel_def prog ctx hrel hrel_def) ctx hrel_def
 
 let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
@@ -196,7 +196,7 @@ let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
 let unfolding_one_hrel prog ctx hprel_name hrel hprel_groups =
   let pr1 = !CF.print_formula in
   let pr2 = !CF.print_h_formula in
-  Debug.no_2 "unfolding_one_hrel" pr1 pr2 (pr_list pr1)
+  Debug.no_2 "Syn:unfolding_one_hrel" pr1 pr2 (pr_list pr1)
     (fun _ _ -> unfolding_one_hrel prog ctx hprel_name hrel hprel_groups) 
     ctx hrel
 
@@ -214,7 +214,7 @@ let unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
 let unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups =
   let pr1 = !CF.print_formula in
   let pr2 = pr_list !CF.print_h_formula in
-  Debug.no_2 "unfolding_hrel_list" pr1 pr2 (pr_list pr1)
+  Debug.no_2 "Syn:unfolding_hrel_list" pr1 pr2 (pr_list pr1)
     (fun _ _ -> unfolding_hrel_list prog ctx hprel_name hrel_list hprel_groups) 
     ctx hrel_list
 
@@ -231,7 +231,7 @@ let rec unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
 
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "unfolding_hprel" pr (pr_list pr)
+  Debug.no_1 "Syn:unfolding_hprel" pr (pr_list pr)
     (fun _ -> unfolding_hprel prog hprel_groups hpr) hpr
 
 let dependent_graph_of_hprel dg hprel = 
@@ -286,7 +286,7 @@ and helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
   let pr1 = Cprinter.string_of_hprel_list_short in
   let pr2 hpril = pr1 (List.map (fun hpri -> hpri.hprel_constr) hpril) in
   let pr3 = pr_list (pr_pair !CP.print_sv pr2) in
-  Debug.no_2 "helper_unfolding_hprel_list" pr2 pr3 pr1
+  Debug.no_2 "Syn:helper_unfolding_hprel_list" pr2 pr3 pr1
     (fun _ _ -> helper_unfolding_hprel_list_x prog hprel_id_groups hprel_id_list)
     hprel_id_list hprel_id_groups
 
@@ -306,7 +306,7 @@ let selective_unfolding prog other_hprels hprels =
 
 let selective_unfolding prog other_hprels hprels = 
   let pr = Cprinter.string_of_hprel_list_short in
-  Debug.no_2 "selective_unfolding" pr pr pr 
+  Debug.no_2 "Syn:selective_unfolding" pr pr pr 
     (fun _ _ -> selective_unfolding prog other_hprels hprels) other_hprels hprels
 
 let unfolding prog hprels = 
@@ -315,7 +315,7 @@ let unfolding prog hprels =
 
 let unfolding prog hprels = 
   let pr = Cprinter.string_of_hprel_list_short in
-  Debug.no_1 "unfolding" pr pr (fun _ -> unfolding prog hprels) hprels
+  Debug.no_1 "Syn:unfolding" pr pr (fun _ -> unfolding prog hprels) hprels
 
 (**************************)
 (***** PARAMETERIZING *****)
@@ -345,7 +345,7 @@ let remove_dangling_heap_formula (f: CF.formula) =
 let remove_dangling_heap_formula (f: CF.formula) = 
   let pr1 = !CF.print_formula in
   let pr2 = !CP.print_svl in
-  Debug.no_1 "remove_dangling_heap_formula" pr1 (pr_pair pr1 pr2)
+  Debug.no_1 "Syn:remove_dangling_heap_formula" pr1 (pr_pair pr1 pr2)
     remove_dangling_heap_formula f
   
 let add_dangling_params hrel_name dangling_params (f: CF.formula) = 
@@ -364,7 +364,7 @@ let add_dangling_params hrel_name dangling_params (f: CF.formula) =
   let pr1 = !CF.print_formula in
   let pr2 = !CP.print_sv in
   let pr3 = pr_list !CP.print_exp in
-  Debug.no_3 "add_dangling_params" pr1 pr2 pr3 pr1
+  Debug.no_3 "Syn:add_dangling_params" pr1 pr2 pr3 pr1
     (fun _ _ _ -> add_dangling_params hrel_name dangling_params f)
     f hrel_name dangling_params
 
@@ -398,7 +398,7 @@ let dangling_parameterizing_hprel (hpr: CF.hprel) =
 let dangling_parameterizing_hprel (hpr: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = fun (hpr, _) -> pr1 hpr in
-  Debug.no_1 "dangling_parameterizing_hprel" pr1 pr2 dangling_parameterizing_hprel hpr
+  Debug.no_1 "Syn:dangling_parameterizing_hprel" pr1 pr2 dangling_parameterizing_hprel hpr
 
 let rec dangling_parameterizing hprels =
   let rec helper_x acc hprels = 
@@ -421,7 +421,7 @@ let rec dangling_parameterizing hprels =
 
 let dangling_parameterizing hprels = 
   let pr = Cprinter.string_of_hprel_list_short in
-  Debug.no_1 "parameterizing" pr pr 
+  Debug.no_1 "Syn:parameterizing" pr pr 
     (fun _ -> dangling_parameterizing hprels) hprels
 
 (****************)
@@ -463,5 +463,5 @@ let syn_pre_preds prog (is: CF.infer_state) =
 
 let syn_pre_preds prog is = 
   let pr2 = Cprinter.string_of_infer_state_short in
-  Debug.no_1 "syn_pre_preds" pr2 pr2
+  Debug.no_1 "Syn:Syn.syn_preds" pr2 pr2
     (fun _ -> syn_pre_preds prog is) is

@@ -66,7 +66,9 @@ and action =
   | Undefined_action of match_res
   | M_Nothing_to_do of string
   | M_infer_unfold of (match_res * h_formula * h_formula) (* rhs * rhs_rest *)
-  | M_infer_fold of match_res (* ... |- Hp_rel(x,..) *)
+  | M_infer_fold of int * match_res (* ... |- Hp_rel(x,..) *)
+                    (* 0 - normal infer_fold *)
+                    (* 1 - infer_fold_data + lemma *)
   | M_infer_heap of (int * h_formula * h_formula * h_formula)
         (*iact: 0 = general; 1= unfold; 2=fold*)
         (* iact * lhs_node * rhs_node * rhs_rest *)
@@ -110,34 +112,112 @@ let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
 (* or at materialized args,...                        *)
 *)
 
-let rec norm_action (wt,a) = match a with
-  | Search_action xs ->
-    let rs = List.map norm_action xs in
-    List.concat rs
-  | _ -> [(wt,a)] 
+let flatten_action f_extr wa =
+  let rec aux ((wt,a) as wa) =
+    match f_extr a with
+    | Some lst -> 
+      let rs = List.concat (List.map aux lst) in
+      let rs2 = List.filter (fun (_,a) -> match a with 
+          | M_Nothing_to_do _ -> false
+          | _ -> true) rs in
+      if rs2==[] then [List.hd rs] else rs2
+    | None -> [wa]
+  in aux wa
 
-let norm_rm_nothing lst =
-  let lst2 = List.filter (fun (_,a) -> match a with 
-      | M_Nothing_to_do _ -> false 
-      | _ -> true ) lst in
-  let lst = if lst2==[] then lst else lst2 in
-  lst
-
-let norm_search_action lst =
-  begin
-    let lst = List.concat (List.map norm_action lst) in
-    let lst = norm_rm_nothing lst in
+let flatten_search ((wt,_) as wa) =
+  let f_extr a = match a with
+    | Search_action lst -> Some lst
+    | _ -> None in
+  let lst = flatten_action f_extr wa in
     match lst with
-    | [] -> M_Nothing_to_do ("search action is empty")
-    | [(_,a)] -> a
-    | lst -> Search_action lst
-  end
+    | [] -> (wt,M_Nothing_to_do ("search action is empty"))
+    | [a] -> a
+    | lst -> (wt,Search_action lst)
+
+
+(* let rec norm_action (wt,a) =  *)
+(*   match a with *)
+(*   | Search_action xs -> *)
+(*     let rs = List.map norm_action xs in *)
+(*     List.concat rs *)
+(*   | _ -> [(wt,a)]  *)
+
+(* let norm_rm_nothing lst = *)
+(*   let lst2 = List.filter (fun (_,a) -> match a with  *)
+(*       | M_Nothing_to_do _ -> false  *)
+(*       | _ -> true ) lst in *)
+(*   let lst = if lst2==[] then lst else lst2 in *)
+(*   lst *)
+
+(* let norm_search_action lst = *)
+(*   begin *)
+(*     let lst = List.concat (List.map norm_action lst) in *)
+(*     let lst = norm_rm_nothing lst in *)
+(*     match lst with *)
+(*     | [] -> M_Nothing_to_do ("search action is empty") *)
+(*     | [(_,a)] -> a *)
+(*     | lst -> Search_action lst *)
+(*   end *)
+
+let norm_search_action ls =
+  let (_,a) = flatten_search (-1,Search_action ls) in
+  a
+
 
 let mk_search_action lst = norm_search_action lst
 
-let norm_single_action ((wt,a) as act) = 
-  (* let lst = norm_action act in *)
-  (wt,norm_search_action [act])
+
+let flatten_cond ((wt,_) as wa) =
+  let f_extr a = match a with
+    | Cond_action lst -> Some lst
+    | _ -> None in
+  let lst = flatten_action f_extr wa in
+    match lst with
+    | [] -> (wt,M_Nothing_to_do ("cond action is empty"))
+    | [a] -> a
+    | lst -> (wt,Cond_action lst)
+
+let norm_cond_action ls =
+  let () = y_binfo_pp "norm_cond_action" in
+  let (_,a) = flatten_cond (-1,Cond_action ls) in
+  a
+
+let norm_cond_action ls =
+  let (_,a) = flatten_cond (-1,Cond_action ls) in
+  a
+
+let mk_cond_action lst = norm_cond_action lst
+
+let check_same lst = 
+  let rec aux lst p = 
+    match lst with
+    | (a,_)::xs -> 
+      if a==p then aux xs p
+      else false
+    | [] -> true in 
+  match lst with
+  | [] -> true
+  | (w,_)::xs -> aux xs w
+
+let norm_smart_action ls =
+  if check_same ls then norm_search_action ls
+  else norm_cond_action ls
+
+let mk_smart_action lst = norm_smart_action lst
+
+let mk_smart_rev_action lst = norm_smart_action (List.rev lst)
+
+let norm_single_action ((wt,a) as act) =
+  match a with
+  | Search_action _ -> flatten_search act
+  | Cond_action _ -> flatten_cond act
+  | _ -> act
+
+ (* let norm_cond_action ls = *)
+ (* match ls with *)
+  (* | [] -> M_Nothing_to_do ("cond action is empty") *)
+  (* | [(_,a)] -> a *)
+  (* | lst -> Cond_action lst *)
 
 (* and norm_action (a,lst) = *)
 (*   (a,norm_search_action_x lst) *)
@@ -145,10 +225,6 @@ let norm_single_action ((wt,a) as act) =
 (* and norm_search_action ls =  *)
 (*   Debug.no_1 "norm_search_action" (pr_list string_of_action_wt_res) string_of_action_res norm_search_action_x ls *)
 
-and norm_cond_action ls = match ls with
-  | [] -> M_Nothing_to_do ("cond action is empty")
-  | [(_,a)] -> a
-  | lst -> Cond_action lst
 
 let get_rhs_rest_emp_flag act old_is_rhs_emp =
   match act with
@@ -156,7 +232,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
   | M_split_match m
   | M_fold m
   | M_unfold  (m,_)
-  | M_infer_fold  (m)
+  | M_infer_fold  (_,m)
   | M_infer_unfold  (m,_,_)
   | M_base_case_unfold m
   | M_base_case_fold m
@@ -252,7 +328,7 @@ let rec pr_action_name a = match a with
   | M_fold e -> fmt_string "Fold"
   | M_unfold (e,i) -> fmt_string ("Unfold "^(string_of_int i))
   | M_infer_unfold (e,_,_) -> fmt_string ("InferUnfold ")
-  | M_infer_fold (e) -> fmt_string ("InferFold ")
+  | M_infer_fold (i,e) -> fmt_string ("InferFold "^(string_of_int i))
   | M_base_case_unfold e -> fmt_string "BaseCaseUnfold"
   | M_base_case_fold e -> fmt_string "BaseCaseFold"
   | M_seg_fold e -> fmt_string "SegFold"
@@ -281,7 +357,7 @@ let rec pr_action_res pr_mr a =
   | M_fold e -> pr_add_str "Fold =>" pr_mr e
   | M_unfold (e,i) -> pr_add_str ("Unfold "^(string_of_int i)^" =>") pr_mr e
   | M_infer_unfold (e,_,_) -> pr_add_str ("InferUnfold =>") pr_mr e
-  | M_infer_fold (e) -> pr_add_str ("InferFold =>") pr_mr e
+  | M_infer_fold (i,e) -> pr_add_str ("InferFold "^(string_of_int i)^"=>") pr_mr e
   | M_base_case_unfold e -> pr_add_str "BaseCaseUnfold =>" pr_mr e
   | M_base_case_fold e -> pr_add_str "BaseCaseFold =>" pr_mr e
   | M_seg_fold (e,_) -> pr_add_str "SegFold =>" pr_mr e
@@ -341,7 +417,7 @@ let action_get_holes a = match a with
   | M_fold e
   | M_unfold (e,_)
   | M_infer_unfold (e,_,_)
-  | M_infer_fold (e)
+  | M_infer_fold (_,e)
   | M_seg_fold (e,_)
   | M_acc_fold (e,_)
   | M_rd_lemma e
@@ -2284,14 +2360,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let left_act = [] in
          let l = left_act@right_act in
          let f_act = 
-           if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold m_res)
+           if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold (0,m_res))
            else (5,M_Nothing_to_do ("Mis-matched View of "^(pr_id vl_name)^" and HRel of "^(pr_sv h_name_sv))) in
          let l = f_act::l in
+         let () = y_binfo_hp (add_str "lst" (pr_list pr_none)) l in
          let res = 
            match l with
            | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
            | l1::[] -> l1
-           | _      -> (-1, norm_search_action l)
+           | _      -> (-1, norm_cond_action l)
          in res
        (* TODO:old_infer_heap *)
        | HRel (hn1, args1, _), (HRel (hn2, args2, _) as rhs) -> 
@@ -2321,7 +2398,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let m_res_w_inst = {m_res with match_res_compatible = m_res.match_res_compatible@rhs_inst;} in
              (2,M_infer_unfold (m_res_w_inst,rhs,HEmp))
            else if CF.is_exists_hp_rel hn2 estate  then 
-             (2,M_infer_fold m_res)
+             (2,M_infer_fold (0,m_res))
            else (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
        | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) -> 
          (* TODO : check if h_name in the infer_vars *)
@@ -2366,7 +2443,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              [(wt,M_base_case_fold m_res_bf)] 
          in
          let m_res_bf = { m_res with match_res_compatible = r_lst} in 
-         let act2 = [(wt,M_infer_fold m_res_bf)] (* (rhs_node,rhs_rest) *) in
+         let act2 = [(wt,M_infer_fold (0,m_res_bf))] (* (rhs_node,rhs_rest) *) in
          (* old method do not use base_case_fold *)
          let lst = if !Globals.old_base_case_fold_hprel then act2 else act1@act2
          in (wt,mk_search_action lst)
@@ -2439,9 +2516,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            let pt = vl.h_formula_view_node in
            let lhs_args = pt::vl.h_formula_view_arguments in
            let alias_set = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap) lhs_args) in
-           let () = y_tinfo_hp (add_str "alias_set" !CP.print_svl) alias_set in
+           let lhs_vs = alias_set@lhs_args in
            let args = List.concat (List.map CP.afv args) in
-           let common = CP.intersect_svl (alias_set@lhs_args) args in
+           let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in
+           let () = y_binfo_hp (add_str "rhs_vs" !CP.print_svl) args in
+           let common = CP.intersect_svl (lhs_vs) args in
            if common==[] then 
              let pr = !CF.print_h_formula in
              let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
@@ -2451,9 +2530,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let () = y_binfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
              let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
              let right_preds =  match ms with
-               | Coerc_mater _ -> List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
+               | Coerc_mater d -> 
+                 let r_v = d.coercion_body_view in
+                 let () = y_binfo_hp (add_str "right_view" (pr_id)) r_v in
+                 r_v::(List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view)
                | _ -> []
              in
+             (* TODO : if data_node for view, schedule Seq_action [infer_fold 1; lemma] *)
+             let () = y_binfo_hp (add_str "right_preds" (pr_list pr_id)) right_preds in
+             let () = y_binfo_hp (add_str "mater_target_view" (pr_list pr_id)) mv.mater_target_view in
              process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
          end
        | ViewNode vl, DataNode dr ->
@@ -2552,7 +2637,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
 
 
 and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs_h lhs_p is_normalizing rhs reqset (lhs_node_opt, rhs_node,rhs_rest) =
-  let r0 = (4,M_unmatched_rhs_data_node (rhs_node,rhs_rest,vperm_set)) in
+  let r0 = (5,M_unmatched_rhs_data_node (rhs_node,rhs_rest,vperm_set)) in
   let ptr_vs = estate.es_infer_vars in
   let ptr_vs = List.filter (fun v -> CP.is_otype(CP.type_of_spec_var v)) ptr_vs in
   (* let () = DD.info_zprint  (lazy  ("  estate.es_infer_vars_hp_rel: " ^ (!CP.print_svl estate.es_infer_vars_hp_rel))) no_pos in *)
@@ -2742,8 +2827,13 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
     let () = x_tinfo_pp "process many matches" no_pos in
     (* WN : TODO use cond_action if of different priorities *)
     let rs = sort_wt rs in
-    let () = x_tinfo_hp (pr_list string_of_action_wt_res_simpl) rs no_pos in
-    (-1, mk_search_action rs)
+    let res = 
+      if !Globals.old_search_always then mk_search_action rs 
+      else if !Globals.cond_action_always then  mk_cond_action rs 
+      (* else if !Globals.rev_priority then mk_smart_rev_action rs  *)
+      else mk_smart_action rs in
+    let () = x_tinfo_hp (string_of_action_res_simpl) res no_pos in
+    (-1, res)
 
 and choose_closest a ys =
   let similar m o =
@@ -2845,7 +2935,9 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
         (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
-  let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
+  let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
+  let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
+   let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
   (* WN : is below critical? why do we need them? *)
   (* let ucert, cert = List.partition uncertain sl in (\*delay uncertain*\) *)
   (* let sl = cert@ucert in *)
@@ -2854,7 +2946,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
      the head of the list has unique weight *)
   let head_w,head_a = List.hd sl in
   let eq_ls, neq_ls = List.partition (fun (w,_) -> w==head_w) (List.tl sl) in
-  let res =
+  let sl =
     if (eq_ls == []) then
       sl
     else
@@ -2862,7 +2954,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
       let new_head = (head_w,Cond_action ((head_w,head_a)::eq_ls)) in
       (new_head::neq_ls)
   in
-  res
+  sl
 (* (snd (List.split res)) *)
 
 and drop_unmatched_action l=

@@ -3313,7 +3313,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (*   let () = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (proc.proc_name)  no_pos in *)
     (*   r_hps@proc.Cast.proc_sel_hps) [] scc_procs *)
     in
-    let scc_sel_post_hps = !scc_proc_sel_post_hps
+    let scc_sel_post_hps = CP.remove_dups_svl (!scc_proc_sel_post_hps@Iincr.get_post_preds_scc scc_procs)
     (* List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs *) in
     let () = Debug.ninfo_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_hprel_ass"  string_of_int) (List.length scc_hprel_ass)  no_pos in
     (* let () = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_sel_hps"  string_of_int) (List.length scc_sel_hps)  no_pos in *)
@@ -3349,6 +3349,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     in
     (* final form *)
     let print_hpdefs_one_flow flow_int=
+      if not !Globals.new_pred_syn then
       begin
         let hpdefs = List.filter (fun hpdef ->
             match hpdef.CF.hprel_def_flow with
@@ -4366,8 +4367,9 @@ let rec check_prog iprog (prog : prog_decl) =
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
 
-    let scc, ini_hpdefs =
-      Da.find_rel_args_groups_scc prog scc (* scc,[] *)
+    let scc, ini_hpdefs = if !Globals.sa_part then
+      Da.find_rel_args_groups_scc prog scc
+    else (scc,[])
     in
     let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
     let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in

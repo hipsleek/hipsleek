@@ -16,6 +16,7 @@ WFSeg<p> ==
   inv true;
 
 HeapPred P(char_star x).
+//PostPred QQ(char_star x,char_star y,char_star z).
 HeapPred QQ(char_star x,char_star y,char_star z).
 
 void while1(ref char_star s)

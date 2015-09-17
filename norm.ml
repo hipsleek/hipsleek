@@ -697,6 +697,7 @@ let eq_context (ctx1: CF.context) (ctx2: CF.context): bool =
     Gen.BList.list_setequal_eq  eq_estate es_l1 es_l2
   | _, _ -> false
 
+(* WN : such equality need to take into account inference result too, not just final states *)
 let merge_contexts_x (ctx: CF.list_context): CF.list_context =
   match ctx with
   | FailCtx _        -> ctx

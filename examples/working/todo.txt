@@ -1802,7 +1802,46 @@ Total number of errors: 3 in files:
   lemmas/nlseg4e.slk({L2#Valid}) 
   lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
 ====================================================================
+16Sept15
+
+# why do many false context?
+
+All test results were as expected.
+Total verification time: 82.08 second
+	Time spent in main process: 48.32 second
+	Time spent in child processes: 33.76 second
+	Number of false contexts: 99
+
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 81.18 second
+	Time spent in main process: 50.25 second
+	Time spent in child processes: 30.93 second
+	Number of false contexts: 99
 ====================================================================
+# commented out sort_wt end --old-search-always
+
+Total number of errors: 1 in files:
+  lemmas/nlseg4e1.slk({E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 76.15 second
+	Time spent in main process: 42.90 second
+	Time spent in child processes: 33.25 second
+	Number of false contexts: 99
+
+--smart-search
+Looping?
+Checking fracperm/split_simple.slk (runs with extra options: --en-para -perm fperm -tp redlog --old-norm-w-coerc)
+
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 86.06 second
+	Time spent in main process: 49.57 second
+	Time spent in child processes: 36.49 second
+	Number of false contexts: 99
+
+
 ====================================================================
 ====================================================================
 ====================================================================

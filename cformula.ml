@@ -11372,6 +11372,10 @@ let rec collect_hp_rel ctx =
   | Ctx estate -> estate.es_infer_hp_rel # get_stk(* _recent *)
   | OCtx (ctx1, ctx2) -> (collect_hp_rel ctx1) @ (collect_hp_rel ctx2)
 
+let collect_hp_rel ctx = 
+  let rs = collect_hp_rel ctx in
+  Gen.Basic.remove_dups rs
+
 let rec collect_hp_unk_map ctx =
   match ctx with
   | Ctx estate -> estate.es_infer_hp_unk_map

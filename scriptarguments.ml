@@ -332,6 +332,10 @@ let common_arguments = [
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--old-search-always", Arg.Set Globals.old_search_always,"Allow search_action always..");
+  ("--new-search-always", Arg.Clear Globals.old_search_always,"Use smart search_action always..");
+  ("--en-cond-always", Arg.Set Globals.cond_action_always,"Allow cond_action always..");
+  ("--en-rev-priority", Arg.Set Globals.rev_priority,"Allow reverser priority for action ");
   ("--old-coer-target", Arg.Set Globals.old_coer_target,"Allow coer_target check before applying lemma");
   ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
   ("--en-infer-back-ptr", Arg.Set Globals.infer_back_ptr,"Enable infer back pointer for infer_fold");
@@ -933,6 +937,10 @@ let common_arguments = [
    (* Arg.Clear Globals.opt_classic,  *)
    "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--old-lemma-settings", Arg.Unit (fun _ ->
+       Globals.old_norm_w_coerc := true;
+       Globals.old_search_always := true;
+     ), "Allow old lemma settings");
   ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
@@ -964,6 +972,8 @@ let common_arguments = [
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--sa-en-part", Arg.Set Globals.sa_part, "enable partition parameters into rele groups");
+  ("--sa-dis-part", Arg.Clear Globals.sa_part, "disable partition parameters into rele groups");
   ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--sa-prefix-pred", Arg.Clear Globals.sa_prefix_emp, "disable pre-condition fixpoint as empty during shape analysis");
   ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");

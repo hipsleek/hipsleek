@@ -708,6 +708,7 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       BList.remove_dups_eq eq s
     method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
       (* WN : below is to be removed later *)
+      (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
       let n = List.length ls in
       if n=0 then ()
       else 
