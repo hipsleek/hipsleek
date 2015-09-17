@@ -427,7 +427,7 @@ let dangling_parameterizing hprels =
 (****************)
 (***** MAIN *****)
 (****************)
-let syn_preds prog (is: CF.infer_state) = 
+let syn_pre_preds prog (is: CF.infer_state) = 
   if !Globals.new_pred_syn then
     let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
     let is_all_constrs, has_dangling_vars = List.split (List.map (add_dangling_hprel prog) is.CF.is_all_constrs) in
@@ -455,10 +455,13 @@ let syn_preds prog (is: CF.infer_state) =
     let () = x_binfo_hp (add_str "Parameterizing result" 
         Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
     in
+
+    let () = x_binfo_pp ">>>>> Step 4: Inferring Segment Predicates <<<<<" no_pos in
+    
     { is with CF.is_all_constrs = is_all_constrs }
   else is
 
-let syn_preds prog is = 
+let syn_pre_preds prog is = 
   let pr2 = Cprinter.string_of_infer_state_short in
-  Debug.no_1 "syn_preds" pr2 pr2
-    (fun _ -> syn_preds prog is) is
+  Debug.no_1 "syn_pre_preds" pr2 pr2
+    (fun _ -> syn_pre_preds prog is) is
