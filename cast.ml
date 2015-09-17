@@ -1551,6 +1551,15 @@ let rec look_up_data_def_raw (ddefs : data_decl list) (name : string) =
     else look_up_data_def_raw rest name
   | [] -> raise Not_found
 
+let look_up_data_def_prog prog (name : string) =
+  let ddefs = prog.prog_data_decls in
+  look_up_data_def_raw ddefs name
+
+let look_up_data_def_imp  (name : string) =
+  match !global_prog with
+    Some prog -> look_up_data_def_prog prog name
+  | None -> failwith "global_prog not initialized"
+
 let look_up_extn_info_rec_field_x ddefs dname=
   let rec look_up_helper fields=
     match fields with

@@ -141,6 +141,24 @@ Need to schedule this inside:
      (* TODO : if data_node for view, schedule Seq_action [infer_fold 1; lemma] *)
 
 --=========================================================================
+# ex21f.ss
+
+ requires x::ll<> & x!=null
+  ensures x::node<_,q>*q::lseg<y>;
+  requires x::node<_,q>*q::ll<> 
+  ensures  x::node<_,q2>*q2::lseg<y>;
+
+# What is this warning for?
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( v_node_31_1657'::node<Anon_1782,q>@M, q::lseg<y_1781>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( v_node_31_1657'::node<Anon_1782,q>@M, q::lseg<y_1781>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( v_node_31_1657'::node<Anon_1782,q>@M, q::lseg<y_1781>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( q::node<Anon_1782,q>@M, q::lseg<y'>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( q::node<Anon_1782,q>@M, q::lseg<y'>@M)
 =========================================================================
 =========================================================================
 =========================================================================

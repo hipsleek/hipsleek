@@ -12424,6 +12424,12 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     (fun _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) 
     a estate conseq (Base lhs_b) (Base rhs_b) 
 
+(* this will perform a simple action and return a (estate,conseq) *)
+(*  it won't run to completion *)
+and process_small_action prog estate act conseq is_folding pos
+  : (Cformula.list_context * Prooftracer.proof) =
+  failwith "TBI process_small_action"
+
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set: CP.spec_var list) is_folding pos
   : (Cformula.list_context * Prooftracer.proof) =
   Debug.ninfo_hprint (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b pos;
@@ -13654,11 +13660,27 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               end
           end
       end
-    | Context.Seq_action l -> let msg = "Sequential action - not handled" in
-      report_warning no_pos "Sequential action - not handled";
-      (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "Sequential action - not handled" *) msg estate (Base rhs_b) None pos
-                                     , CF.mk_failure_may "sequential action - not handled" Globals.sl_error, estate.es_trace))
-         ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex false), NoAlias)
+    | Context.Seq_action l -> 
+      let rec helper l res =
+        match l with
+        | [] -> res
+        | (_,a)::xs ->
+          let _ = process_small_action prog estate a conseq is_folding pos in
+          failwith "TBI"
+      in 
+      begin
+        match l with
+        | [] ->
+          let msg = "Sequential action - is empty" in
+          report_warning no_pos msg;
+          (Errctx.mkFailCtx_may x_loc msg estate pos, Unknown)
+        (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext (\* "Sequential action - not handled" *\) msg estate (Base rhs_b) None pos *)
+        (*                                , CF.mk_failure_may "sequential action - not handled" Globals.sl_error, estate.es_trace)) *)
+        (*    ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex false), NoAlias) *)
+        | (_,act)::xs -> 
+          let res = process_action 2 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
+          helper l res
+      end
     | Context.Cond_action l -> begin
         Debug.ninfo_hprint (add_str "Total cond action length: " (fun x -> string_of_int (List.length x))) l no_pos;
         let rec helper(* _one *) l (* fst_failure *) =

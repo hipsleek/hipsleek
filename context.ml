@@ -2510,7 +2510,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
              process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
          end
-       | ViewNode vl, HRel (h_name, args, _) -> begin
+       | ViewNode vl, HRel (h_name, args, _) -> 
+         begin
            let h_name = Cpure.name_of_spec_var h_name in
            let vl_name = vl.h_formula_view_name in
            let pt = vl.h_formula_view_node in
@@ -2529,17 +2530,29 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let () = y_binfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
              let () = y_binfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
              let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
+             let ptr = ref None in
              let right_preds =  match ms with
                | Coerc_mater d -> 
                  let r_v = d.coercion_body_view in
                  let () = y_binfo_hp (add_str "right_view" (pr_id)) r_v in
-                 r_v::(List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view)
+                 let lst = (List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view) in
+                 let () = if lst == [] then
+                     try
+                       let _ = look_up_data_def_prog prog r_v in
+                       let () = y_binfo_hp (add_str "coercing data " pr_id) r_v in
+                       ptr := Some (r_v,M_lemma (m_res,Some d))
+                     with _ -> ()
+                 in
+                 r_v::lst
                | _ -> []
              in
              (* TODO : if data_node for view, schedule Seq_action [infer_fold 1; lemma] *)
              let () = y_binfo_hp (add_str "right_preds" (pr_list pr_id)) right_preds in
              let () = y_binfo_hp (add_str "mater_target_view" (pr_list pr_id)) mv.mater_target_view in
-             process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+             match !ptr with
+             | None -> process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+             | Some (r_v,lem_act) ->  
+               (1,Seq_action [(1,M_infer_fold (1,m_res)); (1,lem_act)])
          end
        | ViewNode vl, DataNode dr ->
          let () = pr_hdebug (add_str "cyclic " pr_id) " 5" in
