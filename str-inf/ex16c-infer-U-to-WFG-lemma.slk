@@ -34,8 +34,8 @@ pred WFG<p> ==
 
  <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [U(self_lem_12,q_151)&
-                   true |#| q_151::char_star<flted_26_150,p>@M&true --> emp&
-                   self_lem_12=q_151]
+                   true |#| q_151::char_star<flted_29_150,p>@M&
+                   flted_29_150=0 --> emp&self_lem_12=q_151]
 [[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q_151,self_lem_12)]]
 
 <2>emp&{FLOW,(20,21)=__norm#E}[]
@@ -53,6 +53,55 @@ true]
 
 --------------------------------------------------
 predicate normalization from ex16c.slk
+
+ HP_170(v_168@NI,q_165@NI,self_lem_12@NI)&true |#|3  --> emp& v_168!=0; 
+ HP_170(v_168@NI,q_165@NI,self_lem_12@NI)  == emp& v_168!=0; 
+
+ HP_171(q_135,q_165@NI,self_lem_12@NI) 
+   |#| q_165::char_star<flted_26_164,p>@M flted_26_164=0 
+ --> U(q_135,q_165)&true; 
+ HP_171(q_135,q_165@NI,self_lem_12@NI) 
+   |#| q_165::char_star<flted_26_164,p>@M flted_26_164=0 
+ == U(q_135,q_165)&true; 
+
+
+ U(self_lem_12,q_165)& true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        HP_170(v_168@NI,q_165@NI,self_lem_12@NI) * 
+        HP_171(q_169,q_165@NI,self_lem_12@NI)&
+  // unfold HP170
+  U(self_lem_12,q_165)& true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        HP_171(q_169,q_165@NI,self_lem_12@NI)& v_168!=0
+  // unfold HP_171
+  U(self_lem_12,q_165)& true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0
+  // drop guard
+  U(self_lem_12,q_165)
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0
+
+
+Base-case:
+=========
+ U(self_lem_12,q_151)& true |#| q_151::char_star<flted_29_150,p>@M&
+         flted_29_150=0 --> emp&self_lem_12=q_151]
+ // drop guard
+ U(self_lem_12,q_151) --> emp&self_lem_12=q_151]
+
+Combine Unfolds
+===============
+  U(self_lem_12,q_165)
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0 \/ emp&self_lem_12=q_151]
+  // make_defn
+  U(self_lem_12,q_165)
+    == self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0 \/ emp&self_lem_12=q_151]
+
+=============================================================
+
 -----simplify <1>
  U(self_lem_12,q_151)&
    true |#| q_151::char_star<flted_26_150,p>@M&true 

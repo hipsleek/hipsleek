@@ -1558,6 +1558,16 @@ res:  1[
 {FLOW,(4,5)=__norm#E}[]
    es_gen_impl_vars(E): []
    ]
+
+prel_ass: [ (2;0)
+
+parameters : v_1601,s
+guard      : v_1601,Anon_1602
+
+  HP_1603(v_1601,s)&
+  (exists s',v: s'=s & v=v_1601 & v=0) |#| s::char_star<v_1601,Anon_1602>@M&
+  (exists Anon_19: Anon_19=Anon_1602) --> emp,
+
 ===========================================================================
 # ex13e.ss
 

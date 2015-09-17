@@ -12838,7 +12838,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     (*     pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest)) *)
     (*     (\* failwith "TBI" *\) *)
     (* end *)
-    | Context.M_infer_fold (r) ->
+    | Context.M_infer_fold (_,r) ->
       begin
         let result = InferHP.infer_fold prog pm_aux r (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos in
         result

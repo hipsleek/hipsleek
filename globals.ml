@@ -1073,7 +1073,7 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
-let en_norm_ctx = ref true
+let en_norm_ctx = ref false (* true - not suitable for inference *)
 
 let en_trec_lin = ref false
 
@@ -1285,7 +1285,7 @@ let new_infer_large_step = ref true
 let infer_back_ptr = ref true
 let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
-let old_search_always = ref true (* false *)
+let old_search_always = ref false (* false *)
 let cond_action_always = ref false
 let rev_priority = ref false
 

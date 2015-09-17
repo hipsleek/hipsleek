@@ -23,6 +23,14 @@ lemma_infer [U,@classic]
 print residue.
 
 
+lemma_infer [U,@classic] 
+  self::app2<y> <- U(self,q)*q::node<_,null>.
+print residue.
+
+lemma_infer [U,@classic] 
+  self::app2<y> -> U(self,q)*q::node<_,null>.
+print residue.
+
 
 /*
 # ex21b1.ss

@@ -65,8 +65,82 @@ compute_actions@1 EXIT: SEARCH =>[
  inferred hprel: [self::app2<y>@M&true --> U1(self)&true]
 [[ SEARCH ==>  InferFold  ==>  COND ==>  Match(self,self)]]
 =========================================================================
+# ex21d4.slk
+
+# should print without --old-pred-synthesis
+
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U3(self_lem_19,q_156)&
+                   true |#| q_156::node<Anon_157,flted_32_155>@M&
+                   flted_32_155=null --> emp&self_lem_19=q_156]
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(q_156,self_lem_19)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_181(q_148,q_171@NI,self_lem_19@NI)&true --> emp& q_148!=null; 
+                 HP_181(q_148,q_171@NI,self_lem_19@NI)& true --> U3(q_148,q_171)&true; 
+                 U3(self_lem_19,q_171)&
+                  true |#| q_171::node<Anon_172,flted_32_170>@M&
+                  flted_32_170=null --> self_lem_19::node<Anon_179,q_180>@M * 
+                                        HP_181(q_180,q_171@NI,self_lem_19@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold  ==>  COND ==>  (Lemma <== lem_19(q_180,q_148)) ==>  InferUnfold  ==>  Match(q_171,q_187)]]
+==========================================
+
+  HP_181(q_148,q_171@NI,self_lem_19@NI)&true --> emp& q_148!=null; 
+  HP_181(q_148,q_171@NI,self_lem_19@NI)& true --> U3(q_148,q_171)&true; 
+
+  HP_181(q_148,q_171@NI,self_lem_19@NI) --> U3(q_148,q_171)&true &q_148!=null
+
+  HP_181(q_148,q_171@NI,self_lem_19@NI) == U3(q_148,q_171)&true &q_148!=null
+
+========================
+
+ U3(self_lem_19,q_156)& true |#| q_156::node<Anon_157,flted_32_155>@M& flted_32_155=null 
+          --> emp&self_lem_19=q_156]
+ // drop guard
+ U3(self_lem_19,q_156) --> emp&self_lem_19=q_156]
+
+ U3(self_lem_19,q_171)& true |#| q_171::node<Anon_172,flted_32_170>@M& flted_32_170=null 
+     --> self_lem_19::node<Anon_179,q_180>@M *  HP_181(q_180,q_171@NI,self_lem_19@NI)&
+ // unfold HP
+ U3(self_lem_19,q_171)& true |#| q_171::node<Anon_172,flted_32_170>@M& flted_32_170=null 
+     --> self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+ // drop guard
+ U3(self_lem_19,q_171)& true 
+     --> self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+
+ Combine
+ =======
+ U3(self_lem_19,q_156) --> emp&self_lem_19=q_156]
+ \/  U3(self_lem_19,q_171)& true 
+     --> self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+ // combine
+ U3(self_lem_19,q_156) --> emp&self_lem_19=q_156]
+   or self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+ // form defn
+ U3(self_lem_19,q_156) == emp&self_lem_19=q_156]
+   or self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+
 =========================================================================
-=========================================================================
+# ex21d1a.slk (Loc to fix)
+
+lemma_unsafe
+  self::app3<> -> self::node<_,q>*U(q).
+
+infer [U1,classic]
+  self::app3<> & q2!=null 
+   |- U1(self).
+
+# infer_fold 1
+# lemma ==>
+
+Need to schedule this inside:
+     process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+     (* TODO : if data_node for view, schedule Seq_action [infer_fold 1; lemma] *)
+
+--=========================================================================
 =========================================================================
 =========================================================================
 =========================================================================
