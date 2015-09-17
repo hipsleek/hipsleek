@@ -1834,6 +1834,13 @@ Total verification time: 76.15 second
 Looping?
 Checking fracperm/split_simple.slk (runs with extra options: --en-para -perm fperm -tp redlog --old-norm-w-coerc)
 
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 86.06 second
+	Time spent in main process: 49.57 second
+	Time spent in child processes: 36.49 second
+	Number of false contexts: 99
+
 
 ====================================================================
 ====================================================================
