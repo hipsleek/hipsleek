@@ -13263,8 +13263,13 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       (* let () = match ln with *)
       (*   | None -> () *)
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
+      let (estate,conseq,rhs_rest,rhs_node) = 
+        if do_infer==0 then (estate,conseq,rhs_rest,rhs_node) 
+        else failwith "need to perform infer_fold first" 
+      in
       let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
+    
     | Context.Undefined_action mr ->
       let err_msg = "undefined action" in
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "undefined action" *) err_msg estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
