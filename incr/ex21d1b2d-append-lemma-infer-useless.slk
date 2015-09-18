@@ -1,0 +1,37 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+
+HeapPred U(node x).
+HeapPred U1(node x).
+HeapPred U2(node x,node@NI y).
+HeapPred U3(node x,node y).
+
+
+infer [U3] U3(x,r) & y!=null |- U2(x,y).
+print residue.
+
+infer [U3] U3(x,r) |- U2(x,y).
+print residue.
+
+infer [U] U(x) & y!=null |- U2(x,y).
+print residue.
+
+infer [U3] U3(x,r) & y!=null & r=null |- U2(x,y).
+print residue.
+// I think we should avoid an instantiation here
+
+/*
+infer [U] U(x) |- U2(x,y).
+print residue.
+
+infer [U] U(x) |- (exists y: U2(x,y)).
+print residue.
+*/

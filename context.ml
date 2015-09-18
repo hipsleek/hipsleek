@@ -62,7 +62,7 @@ and action =
   | M_base_case_fold of match_res
   | M_seg_fold of (match_res * int)
   | M_rd_lemma of match_res
-  | M_lemma  of (match_res * (coercion_decl option))
+  | M_lemma  of (match_res * (coercion_decl option) * int)  (* 0 -normal; 1 infer_fold first *)
   | Undefined_action of match_res
   | M_Nothing_to_do of string
   | M_infer_unfold of (match_res * h_formula * h_formula) (* rhs * rhs_rest *)
@@ -178,7 +178,7 @@ let flatten_cond ((wt,_) as wa) =
     | lst -> (wt,Cond_action lst)
 
 let norm_cond_action ls =
-  let () = y_binfo_pp "norm_cond_action" in
+  let () = y_tinfo_pp "norm_cond_action" in
   let (_,a) = flatten_cond (-1,Cond_action ls) in
   a
 
@@ -239,7 +239,7 @@ let get_rhs_rest_emp_flag act old_is_rhs_emp =
   | M_seg_fold (m,_)
   | M_acc_fold (m,_)
   | M_rd_lemma m
-  | M_lemma  (m, _)
+  | M_lemma  (m, _,_)
   | M_ramify_lemma m
   | Undefined_action m
   | M_lhs_case m
@@ -335,8 +335,9 @@ let rec pr_action_name a = match a with
   | M_acc_fold _ -> fmt_string "AccFold"
   | M_rd_lemma e -> fmt_string "RD_Lemma"
   | M_ramify_lemma e -> fmt_string "Ramify Lemma"
-  | M_lemma (e,s) ->
+  | M_lemma (e,s,i) ->
     let str = string_of_match_res_pair e in
+    let str = if i!=0 then (string_of_int i)^" :"^str else str in
     fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
                                                                  ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ str ^ ")"))
   | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
@@ -366,8 +367,9 @@ let rec pr_action_res pr_mr a =
     pr_add_str "AccFold =>" pr_mr e; pr_steps steps
   | M_rd_lemma e -> pr_add_str "RD_Lemma =>" pr_mr e
   | M_ramify_lemma e -> pr_add_str "Ramify_Lemma =>" pr_mr e
-  | M_lemma (e,s) -> pr_add_str ((match s with | None -> "AnyLemma" | Some c-> "(Lemma "
-                                                                               ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>") pr_mr e
+  | M_lemma (e,s,i) -> let str = string_of_int i in
+    pr_add_str ((match s with | None -> "AnyLemma"^str | Some c-> "(Lemma "^str
+                                                                  ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)^") =>") pr_mr e
   | M_Nothing_to_do s -> pr_add_str "NothingToDo => " fmt_string s
   | M_infer_heap p ->
     let pr = string_of_h_formula in
@@ -422,7 +424,7 @@ let action_get_holes a = match a with
   | M_acc_fold (e,_)
   | M_rd_lemma e
   | M_ramify_lemma e
-  | M_lemma (e,_)
+  | M_lemma (e,_,_)
   | M_base_case_unfold e
   | M_cyclic (e,_,_,_,_)
   | M_base_case_fold e -> Some e.match_res_holes
@@ -1499,9 +1501,9 @@ and lookup_lemma_action_x prog (c:match_res) :action =
            let left_ls = look_up_coercion_with_target left_lemmas dl_name dr_name in
            let right_ls = look_up_coercion_with_target right_lemmas dr_name dl_name in
            let simple_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Simple) (*prog.prog_right_coercions*) ((Lem_store.all_lemma # get_left_coercion) @ (Lem_store.all_lemma # get_right_coercion))) dr_name dl_name in
-           let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
-           let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
-           let simple_act = List.map (fun l -> (1,M_lemma (c,Some l))) simple_ls in
+           let left_act = List.map (fun l -> (1,M_lemma (c,Some l,0))) left_ls in
+           let right_act = List.map (fun l -> (1,M_lemma (c,Some l,0))) right_ls in
+           let simple_act = List.map (fun l -> (1,M_lemma (c,Some l,0))) simple_ls in
            left_act@right_act@simple_act
          in
          if l=[] then (1,M_Nothing_to_do ("7:"^(string_of_match_res c)))
@@ -1557,8 +1559,8 @@ and lookup_lemma_action_x prog (c:match_res) :action =
              let right_lemmas = (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*)) in
              let left_ls = look_up_coercion_with_target left_lemmas vl_name vr_name in
              let right_ls = look_up_coercion_with_target right_lemmas vr_name vl_name in
-             let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
-             let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
+             let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l,0))) left_ls else [] in
+             let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l,0))) right_ls else [] in
              left_act@right_act
            end
            else  [] in
@@ -1606,14 +1608,14 @@ and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,
     in
     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) vr_name vl_name) in
     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> 
-        if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l))
-        else (1,M_lemma (m_res,Some l))) left_ls else [] in
+        if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l,0))
+        else (1,M_lemma (m_res,Some l,0))) left_ls else [] in
     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in
     let right_act =
       List.fold_left (fun acc l ->
           if  (vr_new_orig || (non_loop_candidate l)) then
             let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in
-            acc@[(prio,M_lemma (m_res,Some l))]
+            acc@[(prio,M_lemma (m_res,Some l,0))]
           else acc) [] right_ls
     in
     left_act@right_act
@@ -1634,7 +1636,7 @@ and process_one_match_mater_unk_w_view left_preds right_preds lhs_name rhs_name 
     | _ -> failwith("[context.ml]: only lemma cand be fired at this point for UNK pred on lhs\n")
   in
   if List.exists (fun coerc0 -> coerc0.coercion_name = coerc.coercion_name) coerc_lst then  
-    (prio, M_lemma (c,Some coerc))
+    (prio, M_lemma (c,Some coerc,0))
   else
     f 
 
@@ -1750,6 +1752,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   : action_wt =
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let emap = CP.EMapSV.build_eset eqns' in
+  let eqns2 = MCP.ptr_equations_without_null rhs_p in
+  let emap_rhs = CP.EMapSV.build_eset eqns2 in
   let pr_debug s = x_tinfo_pp s no_pos in
   let pr_hdebug h a = x_tinfo_hp h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
@@ -1843,8 +1847,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  else left_ls
                in
                let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) dr_name dl_name) in
-               let left_act = List.map (fun l -> (wt,M_lemma (m_res,Some l))) left_ls in
-               let right_act = List.map (fun l -> (wt,M_lemma (m_res,Some l))) right_ls in
+               let left_act = List.map (fun l -> (wt,M_lemma (m_res,Some l,0))) left_ls in
+               let right_act = List.map (fun l -> (wt,M_lemma (m_res,Some l,0))) right_ls in
                if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
                else left_act@right_act
              end
@@ -2110,7 +2114,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (*     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (\*prog.prog_left_coercions*\) vl_name vr_name) in *)
          (*     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (\*prog.prog_right_coercions*\) vr_name vl_name) in *)
          (*     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l ->  *)
-         (*         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l)) *)
+         (*         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l,0)) *)
          (*         else (1,M_lemma (m_res,Some l))) left_ls else [] in *)
          (*     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in *)
          (*     let right_act =   *)
@@ -2252,8 +2256,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            (* for left lemmas, only a complex one might trigger a match data --> view *)
            let left_ls = filter_lemmas_by_kind left_ls Complex in 
            (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
-           let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
-           let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls else [] in
+           let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls else [] in
+           let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) right_ls else [] in
            left_act@right_act 
          ) in
          (* ==================== *)
@@ -2336,7 +2340,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let a2 =
            let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
                                                vl_name dr.h_formula_data_name) in
-           let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls else [] in
+           let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls else [] in
            left_act in
          (* ==================== *)
          (* if (left_ls == [] && (vl_view_orig ) then ua *)
@@ -2353,8 +2357,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
 
          let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name h_name) in
          (* let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) h_name vl_name) in *)
-         let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) left_ls in
-         (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l))) right_ls in *)
+         let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls in
+         (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) right_ls in *)
          (* already handled by MaterializedArg (see ex16d2a.slk) *)
          let right_act = [] in 
          let left_act = [] in
@@ -2363,7 +2367,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold (0,m_res))
            else (5,M_Nothing_to_do ("Mis-matched View of "^(pr_id vl_name)^" and HRel of "^(pr_sv h_name_sv))) in
          let l = f_act::l in
-         let () = y_binfo_hp (add_str "lst" (pr_list pr_none)) l in
+         let () = y_tinfo_hp (add_str "lst" (pr_list pr_none)) l in
          let res = 
            match l with
            | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
@@ -2426,8 +2430,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* failwith "TBI"  *)
          (* useful for base-case fold x::node<_,_> |- U(x,y) *)
          let pr_hf = !CF.print_h_formula in
-         let () = y_binfo_hp (add_str "(LHS,RHS)" (pr_pair pr_hf pr_hf)) (lhs_node,rhs_node) in
-         let () = y_binfo_hp (add_str "rhs_rest" (pr_hf)) rhs_rest in
+         let () = y_tinfo_hp (add_str "(LHS,RHS)" (pr_pair pr_hf pr_hf)) (lhs_node,rhs_node) in
+         let () = y_tinfo_hp (add_str "rhs_rest" (pr_hf)) rhs_rest in
          let pt = dn.h_formula_data_node in
          let r_vs = List.concat (List.map CP.afv args) in
          let r = CF.check_exists_node emap rhs_rest pt in
@@ -2435,8 +2439,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let lhs_p1 = MCP.pure_of_mix lhs_p in
          let rhs_p1 = MCP.pure_of_mix rhs_p in
          let r_lst = CF.check_compatible emap [pt] r_vs lhs_node lhs_p1 rhs_rest rhs_p1 in
-         let () = y_binfo_hp (add_str "exists" (pr_pair pr_sv string_of_bool)) (pt,r) in
-         let () = y_binfo_hp (add_str "compatible" (pr_list (pr_pair pr_sv pr_sv))) r_lst in
+         let () = y_tinfo_hp (add_str "exists" (pr_pair pr_sv string_of_bool)) (pt,r) in
+         let () = y_tinfo_hp (add_str "compatible" (pr_list (pr_pair pr_sv pr_sv))) r_lst in
          let wt = 2 in
          let act1 = if (r_lst == []) || (List.length args <=1) then [] else
              let m_res_bf = { m_res with match_res_compatible = r_lst} in 
@@ -2485,7 +2489,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  M_unfold (m_res,uf_i) (* uf_i to prevent infinite unfolding *)
                | Coerc_mater s -> 
                  let () = pr_debug "selected lemma XX\n" in  
-                 M_lemma (m_res,Some s)) in
+                 M_lemma (m_res,Some s,0)) in
            let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
            (-1, (mk_search_action ((1,a1)::l1)))
        | HRel (h_name, args, _), ViewNode vl -> begin
@@ -2510,7 +2514,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
              process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
          end
-       | ViewNode vl, HRel (h_name, args, _) -> begin
+       | ViewNode vl, HRel (h_name, args, _) -> 
+         begin
            let h_name = Cpure.name_of_spec_var h_name in
            let vl_name = vl.h_formula_view_name in
            let pt = vl.h_formula_view_node in
@@ -2518,28 +2523,42 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            let alias_set = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap) lhs_args) in
            let lhs_vs = alias_set@lhs_args in
            let args = List.concat (List.map CP.afv args) in
-           let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in
-           let () = y_binfo_hp (add_str "rhs_vs" !CP.print_svl) args in
-           let common = CP.intersect_svl (lhs_vs) args in
+           let alias_set_rhs = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap_rhs) args) in
+           let rhs_vs = alias_set_rhs@args in
+           let () = y_tinfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in
+           let () = y_tinfo_hp (add_str "rhs_vs" !CP.print_svl) rhs_vs in
+           let common = CP.intersect_svl (lhs_vs) rhs_vs in
            if common==[] then 
              let pr = !CF.print_h_formula in
              let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
-             (4,M_Nothing_to_do ("No common parameters : "^msg))
+             (4,M_Nothing_to_do ("2 No common parameters : "^msg))
            else
-             let () = y_binfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
-             let () = y_binfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
+             let () = y_tinfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
+             let () = y_tinfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
              let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
+             let ptr = ref None in
              let right_preds =  match ms with
                | Coerc_mater d -> 
                  let r_v = d.coercion_body_view in
-                 let () = y_binfo_hp (add_str "right_view" (pr_id)) r_v in
-                 r_v::(List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view)
+                 let () = y_tinfo_hp (add_str "right_view" (pr_id)) r_v in
+                 let lst = (List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view) in
+                 let () = if lst == [] then
+                     try
+                       let _ = look_up_data_def_prog prog r_v in
+                       let () = y_tinfo_hp (add_str "coercing data " pr_id) r_v in
+                       ptr := Some (r_v,M_lemma (m_res,Some d,1))
+                     with _ -> ()
+                 in
+                 r_v::lst
                | _ -> []
              in
              (* TODO : if data_node for view, schedule Seq_action [infer_fold 1; lemma] *)
-             let () = y_binfo_hp (add_str "right_preds" (pr_list pr_id)) right_preds in
-             let () = y_binfo_hp (add_str "mater_target_view" (pr_list pr_id)) mv.mater_target_view in
-             process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+             let () = y_tinfo_hp (add_str "right_preds" (pr_list pr_id)) right_preds in
+             let () = y_tinfo_hp (add_str "mater_target_view" (pr_list pr_id)) mv.mater_target_view in
+             match !ptr with
+             | None -> process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+             | Some (r_v,lem_act) ->  
+               (1,(* Seq_action (1,M_infer_fold (1,m_res)); *) lem_act)
          end
        | ViewNode vl, DataNode dr ->
          let () = pr_hdebug (add_str "cyclic " pr_id) " 5" in
@@ -2556,7 +2575,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            (match ms with
             | View_mater -> (uf_i,M_unfold (m_res,uf_i))
             | Coerc_mater s -> (* (uf_i,M_lemma (m_res,Some s))) in *)
-              (1,M_lemma (m_res,Some s))) in
+              (1,M_lemma (m_res,Some s,0))) in
          (* WHY do we need LHS_CASE_ANALYSIS? *)
          let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
          let lem_infer_opt = CFU.check_seg_split_pred prog estate.CF.es_formula vdef vl dr in

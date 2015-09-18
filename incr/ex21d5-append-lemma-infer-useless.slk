@@ -27,13 +27,40 @@ HeapPred U(node x).
 HeapPred U2(node x,node y).
 HeapPred U3(node x,node y).
 
-lemma_infer [U,classic]
+lemma_infer_pred [U,classic]
   self::app3<> -> self::node<_,q>*U(q).
 print residue.
 
 
 /*
-# ex21d1.slk
+# ex21d5.slk
+
+lemma_infer_pred [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+# error from new-pred-synthesis
+
+  [U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147); 
+   q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+    q_147!=null |#|  --> U(q_147) * q_153::Dangling<>@M; 
+   emp&flted_22_139=null |#|  --> U(flted_22_139)]
+!!! **syn.ml#440:>>>>> Step 2: Unfolding <<<<<
+ --error:  at:
+
+*********************************************************
+*******relational definition********
+*********************************************************
+[ U(q_163) ::= q_163::ll<>@M(20,21)]
+*************************************
+
+# printed only with --old-pred-synthesi
+
+*********************************************************
+*******relational definition********
+*********************************************************
+[ U(q_163) ::= q_163::ll<>@M(20,21)]
+*************************************
 
 
  <1>emp&{FLOW,(20,21)=__norm#E}[]

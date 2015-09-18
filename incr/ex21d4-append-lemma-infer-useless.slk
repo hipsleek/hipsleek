@@ -15,10 +15,6 @@ pred lseg<p> == self = null
 	or self::node<_, q> * q::lseg<p> 
   inv true.
 
-pred app2<y> == self::node<_,null> 
-	or self::node<_, q> * q::app2<y> & q!=null 
-  inv self!=null.
-
 pred app3<> == self::node<_,null> 
 	or self::node<_, q> * q::app3<> & q!=null 
   inv self!=null.
@@ -28,16 +24,16 @@ HeapPred U2(node x,node y).
 HeapPred U3(node x,node y).
 
 
-lemma_infer_pred [U3,classic]
+lemma_infer [U3,classic]
   self::app3<> <- U3(self,q) * q::node<_,null>.
 
 print residue.
 
 
 /*
-# ex21d4.slk
+# ex21d4.slk (Chanh..)
 
-# should print without --old-pred-synthesis
+# Chanh to work on pred-sythesis
 
 Residue:
 
