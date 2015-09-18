@@ -2130,7 +2130,7 @@ let infer_collect_hp_rel_fold_lemma_guided_x prog estate lhs_node rhs_node rhs_r
                 | [self_body_dn] -> begin
                     let n_lhs_node = CF.DataNode self_body_dn in
                     let iact = 2 in
-                    let () = x_binfo_hp (add_str  "n_lhs_node" Cprinter.string_of_h_formula) n_lhs_node  pos in
+                    let () = x_tinfo_hp (add_str  "n_lhs_node" Cprinter.string_of_h_formula) n_lhs_node  pos in
                     let (res,n_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt)=
                       infer_collect_hp_rel 3 prog iact estate n_lhs_node rhs_node rhs_rest rhs_h_matched_set
                           lhs_b rhs_b pos in

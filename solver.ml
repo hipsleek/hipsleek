@@ -13267,7 +13267,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)
         else
-          let () = x_binfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
+          let () = x_tinfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
           let () = x_tinfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
           let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
           let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog estate lhs_node rhs_node rhs_rest rhs_h_matched_set
@@ -13275,11 +13275,11 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
           (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
           (* failwith "need to perform infer_fold first"  *)
       in
-       let () = x_binfo_hp (add_str  "rhs_node" Cprinter.string_of_h_formula) rhs_node pos in
-       let () = x_binfo_hp (add_str  "rhs_rest" Cprinter.string_of_h_formula) rhs_rest pos in
-       let () = x_binfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
-       let () = x_binfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
-       let () = x_binfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
+       let () = x_tinfo_hp (add_str  "rhs_node" Cprinter.string_of_h_formula) rhs_node pos in
+       let () = x_tinfo_hp (add_str  "rhs_rest" Cprinter.string_of_h_formula) rhs_rest pos in
+       let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
+       let () = x_tinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
+       let () = x_tinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
       let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
     | Context.Undefined_action mr ->
