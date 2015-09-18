@@ -3019,8 +3019,8 @@ and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
   if vartype # is_heap_only then
     begin
       (* if other_vs!=[] then x_winfo_pp ((add_str "other free vars?" !CP.print_svl) other_vs) no_pos; *)
-      (* let () = x_binfo_hp (add_str "vs" !CP.print_svl) vs no_pos in *)
-      (* let () = x_binfo_hp (add_str "v" !CP.print_sv) vv no_pos in *)
+      (* let () = x_tinfo_hp (add_str "vs" !CP.print_svl) vs no_pos in *)
+      (* let () = x_tinfo_hp (add_str "v" !CP.print_sv) vv no_pos in *)
       vs
     end
   else (if CP.mem_svl vv vs then vs else vv :: vs)@other_vs
@@ -13503,7 +13503,7 @@ let trans_h_formula (e2:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) o
     (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
     let pr = !print_h_formula in
-    (* let () = x_binfo_hp (add_str "helper" pr) e no_pos in *)
+    (* let () = x_tinfo_hp (add_str "helper" pr) e no_pos in *)
     let r =  f arg e in 
     match r with
     | Some (e1,v) -> (e1,v)
@@ -13512,8 +13512,8 @@ let trans_h_formula (e2:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) o
       | Star s ->
         let (e1,r1)=helper s.h_formula_star_h1 new_arg in
         let (e2,r2)=helper s.h_formula_star_h2 new_arg in
-        (* let () = x_binfo_hp (add_str "star(h1)" pr) e1 no_pos in *)
-        (* let () = x_binfo_hp (add_str "star(h2)" pr) e2 no_pos in *)
+        (* let () = x_tinfo_hp (add_str "star(h1)" pr) e1 no_pos in *)
+        (* let () = x_tinfo_hp (add_str "star(h2)" pr) e2 no_pos in *)
         let newhf = (match e1,e2 with
             (* | (HEmp,HEmp) -> HEmp *)
             | (HEmp,_) -> e2
@@ -15596,7 +15596,7 @@ and merge_two_nodes dn1 dn2 =
         let args, not_clashes = List.split (List.map2 combine_vars args1 args2) in
         let not_clashed = List.for_all (fun x -> x) not_clashes in
         let combine_param_ann ann_p1 ann_p2 =  (*(andreeac) TOTDO: check how to combine args annotations*)
-          let () = x_binfo_pp "inside combine_param_ann" no_pos in
+          let () = x_tinfo_pp "inside combine_param_ann" no_pos in
           match (ann_p1, ann_p2) with
           | ([], [])     -> []
           | ([], ann2)   -> ann2
@@ -19438,13 +19438,13 @@ let rm_htrue_formula f =
   in aux f
 
 let rm_htrue_estate es =
-  (* let () = x_binfo_pp "TODO : to be implemented .." no_pos in *)
+  (* let () = x_tinfo_pp "TODO : to be implemented .." no_pos in *)
   let f = es.es_formula in
   let f = rm_htrue_formula f in
   {es with es_formula = f}
 
 (* let rm_htrue_context c = *)
-(*   let () = x_binfo_pp "TODO : to be implemented .." no_pos in *)
+(*   let () = x_tinfo_pp "TODO : to be implemented .." no_pos in *)
 (*   c *)
 
 let collect_impl_expl_context c =
@@ -19463,7 +19463,7 @@ let remove_inf_cmd_spec new_spec = match new_spec with
 (*   | Some (sv,_) -> sv *)
 (*   | None ->  *)
 (*     let () = y_winfo_pp " UNKNOWN spec_var used " in *)
-(*     let () = y_binfo_hp (add_str "exp is var?" !CP.print_exp) e in *)
+(*     let () = y_tinfo_hp (add_str "exp is var?" !CP.print_exp) e in *)
 (*     CP.unknown_spec_var *)
 
 
@@ -19599,6 +19599,6 @@ let check_exists_node emap hf sv =
 
 let fresh_data_arg body_dn =
   let args = body_dn.h_formula_data_arguments in
-  let () = y_binfo_hp (add_str "data args" !CP.print_svl) args in
+  let () = y_tinfo_hp (add_str "data args" !CP.print_svl) args in
   { body_dn with  h_formula_data_arguments = List.map CP.fresh_spec_var args }
 

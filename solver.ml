@@ -7320,7 +7320,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let slk_no = (* if avoid then 0 else *) (Log.last_cmd # start_sleek 3) in
     (* let () = Log.last_sleek_command # set (Some (ante,conseq)) in *)
     let () = hec_stack # push slk_no in
-    (* let () = y_binfo_hp (add_str "slk no" string_of_int) slk_no in *)
+    (* let () = y_tinfo_hp (add_str "slk no" string_of_int) slk_no in *)
     let logger fr tt timeout =
       let () =
         x_add Log.add_sleek_logging es_opt timeout tt infer_type infer_vars (check_is_classic ()) 
@@ -7393,10 +7393,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
   | Ctx estate -> 
     x_tinfo_hp (add_str "ctx0.es_heap bef" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
     let ante0 = estate.es_formula in
-    (* let () = y_binfo_pp "==================================================" in *)
-    (* let () = y_binfo_hp (add_str "LHS " Cprinter.string_of_formula) ante0 in *)
-    (* let () = y_binfo_hp (add_str "RHS " Cprinter.string_of_formula) conseq in *)
-    (* let () = y_binfo_pp "==================================================" in *)
+    (* let () = y_tinfo_pp "==================================================" in *)
+    (* let () = y_tinfo_hp (add_str "LHS " Cprinter.string_of_formula) ante0 in *)
+    (* let () = y_tinfo_hp (add_str "RHS " Cprinter.string_of_formula) conseq in *)
+    (* let () = y_tinfo_pp "==================================================" in *)
     (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
     let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
     (*let ante = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula ante else ante in *)
@@ -10306,7 +10306,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     | ViewNode {h_formula_view_node = l}, ViewNode {h_formula_view_node = r} 
       -> (l,r)
     | HRel (hp1,_,_), HRel(hp2,_,_)
-      -> let () = y_binfo_pp ("HRel matching :"^m_str) in
+      -> let () = y_tinfo_pp ("HRel matching :"^m_str) in
       (hp1,hp2)
     | _, _ -> failwith ("do match failure: "^m_str)
   in
@@ -12911,7 +12911,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
               failwith "TBI"
             else
               let vs = List.map CP.exp_to_sv args in
-              let () = y_binfo_hp (add_str "inst_vs" 
+              let () = y_tinfo_hp (add_str "inst_vs" 
                                      (pr_list (pr_pair !CP.print_sv !CP.print_sv))) inst_vs in
               x_add do_unfold_hp_rel prog estate lhs_b conseq rhs_node is_folding pos hp vs
           else
@@ -13267,19 +13267,19 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)
         else
-          let () = x_binfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
-          let () = x_binfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
-          let () = x_binfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
+          let () = x_tinfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
+          let () = x_tinfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
+          let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
           let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog estate lhs_node rhs_node rhs_rest rhs_h_matched_set
               lhs_b rhs_b conseq ln pos in
           (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
           (* failwith "need to perform infer_fold first"  *)
       in
-       let () = x_binfo_hp (add_str  "rhs_node" Cprinter.string_of_h_formula) rhs_node pos in
-       let () = x_binfo_hp (add_str  "rhs_rest" Cprinter.string_of_h_formula) rhs_rest pos in
-       let () = x_binfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
-       let () = x_binfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
-       let () = x_binfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
+       let () = x_tinfo_hp (add_str  "rhs_node" Cprinter.string_of_h_formula) rhs_node pos in
+       let () = x_tinfo_hp (add_str  "rhs_rest" Cprinter.string_of_h_formula) rhs_rest pos in
+       let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
+       let () = x_tinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
+       let () = x_tinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
       let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
     | Context.Undefined_action mr ->

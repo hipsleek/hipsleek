@@ -1574,6 +1574,35 @@ guard      : v_1601,Anon_1602
 chin@loris-7:~/hg/sl_incr/str-inf$ ../hip ex13e-WSS-infer-post.ss -show-push-list "" > 1
 fixcalc: Parse error on line 1 rest of line:  1=1)
 ===========================================================================
+# ex21d1.slk
+
+lemma_infer_pred [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+# Chanh: these are based on post-predicate
+
+************************************
+*******shape relational assumptions ********
+*************************************
+[ emp&flted_22_139=null --> U(flted_22_139)&true,
+ q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147@NI)&
+  q_147!=null --> U(q_147)&true,
+ U(q_153)&q_147!=null --> GP_154(q_153,q_147@NI)&true]
+
+!!! **syn.ml#458:>>>>> Step 1: Adding dangling references <<<<<
+!!! **syn.ml#49:Dangling args:[]
+!!! **syn.ml#49:Dangling args:[q_153]
+!!! **syn.ml#49:Dangling args:[]
+!!! **syn.ml#468:Detected dangling vars:
+ 
+  [U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147); 
+   q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+    q_147!=null |#|  --> U(q_147) * q_153::Dangling<>@M; 
+   emp&flted_22_139=null |#|  --> U(flted_22_139)]
+!!! **syn.ml#473:>>>>> Step 2: Unfolding <<<<<
+ --error:  at:
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

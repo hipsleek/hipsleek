@@ -178,7 +178,7 @@ let flatten_cond ((wt,_) as wa) =
     | lst -> (wt,Cond_action lst)
 
 let norm_cond_action ls =
-  let () = y_binfo_pp "norm_cond_action" in
+  let () = y_tinfo_pp "norm_cond_action" in
   let (_,a) = flatten_cond (-1,Cond_action ls) in
   a
 
@@ -2367,7 +2367,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold (0,m_res))
            else (5,M_Nothing_to_do ("Mis-matched View of "^(pr_id vl_name)^" and HRel of "^(pr_sv h_name_sv))) in
          let l = f_act::l in
-         let () = y_binfo_hp (add_str "lst" (pr_list pr_none)) l in
+         let () = y_tinfo_hp (add_str "lst" (pr_list pr_none)) l in
          let res = 
            match l with
            | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
@@ -2430,8 +2430,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* failwith "TBI"  *)
          (* useful for base-case fold x::node<_,_> |- U(x,y) *)
          let pr_hf = !CF.print_h_formula in
-         let () = y_binfo_hp (add_str "(LHS,RHS)" (pr_pair pr_hf pr_hf)) (lhs_node,rhs_node) in
-         let () = y_binfo_hp (add_str "rhs_rest" (pr_hf)) rhs_rest in
+         let () = y_tinfo_hp (add_str "(LHS,RHS)" (pr_pair pr_hf pr_hf)) (lhs_node,rhs_node) in
+         let () = y_tinfo_hp (add_str "rhs_rest" (pr_hf)) rhs_rest in
          let pt = dn.h_formula_data_node in
          let r_vs = List.concat (List.map CP.afv args) in
          let r = CF.check_exists_node emap rhs_rest pt in
@@ -2439,8 +2439,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          let lhs_p1 = MCP.pure_of_mix lhs_p in
          let rhs_p1 = MCP.pure_of_mix rhs_p in
          let r_lst = CF.check_compatible emap [pt] r_vs lhs_node lhs_p1 rhs_rest rhs_p1 in
-         let () = y_binfo_hp (add_str "exists" (pr_pair pr_sv string_of_bool)) (pt,r) in
-         let () = y_binfo_hp (add_str "compatible" (pr_list (pr_pair pr_sv pr_sv))) r_lst in
+         let () = y_tinfo_hp (add_str "exists" (pr_pair pr_sv string_of_bool)) (pt,r) in
+         let () = y_tinfo_hp (add_str "compatible" (pr_list (pr_pair pr_sv pr_sv))) r_lst in
          let wt = 2 in
          let act1 = if (r_lst == []) || (List.length args <=1) then [] else
              let m_res_bf = { m_res with match_res_compatible = r_lst} in 
@@ -2525,27 +2525,27 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            let args = List.concat (List.map CP.afv args) in
            let alias_set_rhs = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap_rhs) args) in
            let rhs_vs = alias_set_rhs@args in
-           let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in
-           let () = y_binfo_hp (add_str "rhs_vs" !CP.print_svl) rhs_vs in
+           let () = y_tinfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in
+           let () = y_tinfo_hp (add_str "rhs_vs" !CP.print_svl) rhs_vs in
            let common = CP.intersect_svl (lhs_vs) rhs_vs in
            if common==[] then 
              let pr = !CF.print_h_formula in
              let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
              (4,M_Nothing_to_do ("2 No common parameters : "^msg))
            else
-             let () = y_binfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
-             let () = y_binfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
+             let () = y_tinfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
+             let () = y_tinfo_hp (add_str "HRel:args" (!CP.print_svl)) args in
              let alternative = x_add (process_infer_heap_match ~vperm_set:rhs_vperm_set) prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
              let ptr = ref None in
              let right_preds =  match ms with
                | Coerc_mater d -> 
                  let r_v = d.coercion_body_view in
-                 let () = y_binfo_hp (add_str "right_view" (pr_id)) r_v in
+                 let () = y_tinfo_hp (add_str "right_view" (pr_id)) r_v in
                  let lst = (List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view) in
                  let () = if lst == [] then
                      try
                        let _ = look_up_data_def_prog prog r_v in
-                       let () = y_binfo_hp (add_str "coercing data " pr_id) r_v in
+                       let () = y_tinfo_hp (add_str "coercing data " pr_id) r_v in
                        ptr := Some (r_v,M_lemma (m_res,Some d,1))
                      with _ -> ()
                  in
@@ -2553,8 +2553,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                | _ -> []
              in
              (* TODO : if data_node for view, schedule Seq_action [infer_fold 1; lemma] *)
-             let () = y_binfo_hp (add_str "right_preds" (pr_list pr_id)) right_preds in
-             let () = y_binfo_hp (add_str "mater_target_view" (pr_list pr_id)) mv.mater_target_view in
+             let () = y_tinfo_hp (add_str "right_preds" (pr_list pr_id)) right_preds in
+             let () = y_tinfo_hp (add_str "mater_target_view" (pr_list pr_id)) mv.mater_target_view in
              match !ptr with
              | None -> process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
              | Some (r_v,lem_act) ->  
