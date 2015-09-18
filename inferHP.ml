@@ -1817,7 +1817,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
   CP.spec_var list ->
   CF.formula_base -> CF.formula_base -> VarGen.loc -> bool * CF.entail_st
 *)
-let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
+let infer_collect_hp_rel_x prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
   let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
     let cl_lnull_ptrs = CP.find_eq_closure l_emap l_null_ptrs in
@@ -2106,8 +2106,72 @@ let infer_collect_hp_rel i prog iact (es:entail_state) lhs_node rhs rhs_rest (rh
   Debug.no_5_num i "infer_collect_hp_rel" (* pr2 *)
       (add_str "lhs_node" !CF.print_h_formula) (add_str "rhs_node" !CF.print_h_formula)
       (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
-    ( fun _ _ _ _ _ -> infer_collect_hp_rel prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
+    ( fun _ _ _ _ _ -> infer_collect_hp_rel_x prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
       (* es *) lhs_node rhs lhs_b rhs_b es
+
+(*
+  assume
+  - lhs node matching with lhs of coersion
+  - rhs_node is a unknown pred
+*)
+let infer_collect_hp_rel_fold_lemma_guided_x prog estate lhs_node rhs_node rhs_rest rhs_h_matched_set
+      lhs_b rhs_b conseq (lemma:Cast.coercion_decl option) pos =
+  match lemma with
+    | Some coer -> begin
+        let coer_head_views = CF.get_views coer.Cast.coercion_head in
+        let sel_head_views = List.filter (fun vn -> string_compare coer.Cast.coercion_head_view vn.CF.h_formula_view_name) coer_head_views in
+        match lhs_node,sel_head_views with
+          | CF.ViewNode lvn, [head_vn] -> begin
+              let sst = List.combine (head_vn.CF.h_formula_view_node::head_vn.CF.h_formula_view_arguments)
+                (lvn.CF.h_formula_view_node::lvn.CF.h_formula_view_arguments) in
+              let coer_body_dns = CF.get_datas (CF.subst sst coer.Cast.coercion_body) in
+              let self_body_dns = List.filter (fun dn -> CP.eq_spec_var lvn.CF.h_formula_view_node dn.CF.h_formula_data_node) coer_body_dns in
+              match self_body_dns with
+                | [self_body_dn] -> begin
+                    let n_lhs_node = CF.DataNode self_body_dn in
+                    let iact = 2 in
+                    let () = x_binfo_hp (add_str  "n_lhs_node" Cprinter.string_of_h_formula) n_lhs_node  pos in
+                    let (res,n_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt)=
+                      infer_collect_hp_rel 3 prog iact estate n_lhs_node rhs_node rhs_rest rhs_h_matched_set
+                          lhs_b rhs_b pos in
+                    if res then
+                       let n_rhs_rest, n_rhs_node, n_conseq = match rhs_rest_opt with
+                         | None -> rhs_rest,rhs_node, conseq
+                         | Some hf ->
+                               let rest_lhs_fold = CF.drop_hnodes_hf hf [self_body_dn.CF.h_formula_data_node] in
+                               let n_conseq =  (Base {rhs_b with formula_base_heap = hf}) in
+                               (CF.mkStarH rhs_rest rest_lhs_fold no_pos,n_lhs_node, n_conseq)
+                       in
+                       let n_rhs_b = {rhs_b with CF.formula_base_heap = n_lhs_node} in
+                       let n_estate1 = match n_es_heap_opt with
+                         | Some hf -> {n_estate with CF.es_heap = hf}
+                         | None -> n_estate
+                       in
+                       (n_estate1,n_conseq,n_rhs_rest,n_rhs_node, n_rhs_b)
+                    else
+                      (estate,conseq,rhs_rest,rhs_node,rhs_b)
+                  end
+                | _ -> (estate,conseq,rhs_rest,rhs_node,rhs_b)
+            end
+          | _ ->  (estate,conseq,rhs_rest,rhs_node,rhs_b)
+      end
+    | None -> (estate,conseq,rhs_rest,rhs_node,rhs_b)
+
+let infer_collect_hp_rel_fold_lemma_guided prog es lhs_node rhs rhs_rest rhs_h_matched_set
+      lhs_b rhs_b conseq lemma pos =
+  let pr1 = Cprinter.string_of_formula_base in
+  let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
+  let pr4 = Cprinter.string_of_estate_infer_hp in
+  let pr5 =  pr_penta pr2 (add_str "conseq" Cprinter.string_of_formula)
+    (add_str "rhs_rest" Cprinter.string_of_h_formula) (add_str "rhs_node" Cprinter.string_of_h_formula)
+    pr1
+  in
+  Debug.no_6 "infer_collect_hp_rel_fold_lemma_guided"
+      (add_str "lhs_node" !CF.print_h_formula) (add_str "rhs_node" !CF.print_h_formula)
+      (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) (pr_option Cprinter.string_of_coercion) pr5
+    ( fun _ _ _ _ _ _ -> infer_collect_hp_rel_fold_lemma_guided_x prog es lhs_node rhs rhs_rest rhs_h_matched_set
+        lhs_b rhs_b conseq lemma pos)
+      lhs_node rhs lhs_b rhs_b es lemma
 
 let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in

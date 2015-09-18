@@ -13263,13 +13263,25 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       (* let () = match ln with *)
       (*   | None -> () *)
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
-      let (estate,conseq,rhs_rest,rhs_node) = 
-        if do_infer==0 then (estate,conseq,rhs_rest,rhs_node) 
-        else failwith (x_loc^"need to perform infer_fold first") 
+      let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
+        if do_infer==0 then
+          (estate,conseq,rhs_rest,rhs_node, rhs_b)
+        else
+          let () = x_binfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
+          let () = x_tinfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
+          let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
+          let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog estate lhs_node rhs_node rhs_rest rhs_h_matched_set
+              lhs_b rhs_b conseq ln pos in
+          (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
+          (* failwith "need to perform infer_fold first"  *)
       in
+       let () = x_binfo_hp (add_str  "rhs_node" Cprinter.string_of_h_formula) rhs_node pos in
+       let () = x_binfo_hp (add_str  "rhs_rest" Cprinter.string_of_h_formula) rhs_rest pos in
+       let () = x_binfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
+       let () = x_binfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
+       let () = x_binfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
       let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
-    
     | Context.Undefined_action mr ->
       let err_msg = "undefined action" in
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "undefined action" *) err_msg estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
