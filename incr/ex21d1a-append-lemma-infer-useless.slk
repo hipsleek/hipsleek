@@ -33,21 +33,85 @@ lemma_unsafe
 
 
 infer [U1,classic]
-  x::app3<> & q2!=null 
+  x::app3<> 
    |- U1(x).
 
 print residue.
 
 
+infer [U2,classic]
+  x::app3<> 
+   |- x::node<_,q>*U2(q,x).
+print residue.
+
+
+infer [U2,classic]
+  x::node<_, q2> * q2::app3<> & q2!=null 
+   |- x::node<_,q>*U2(q,x).
+print residue.
+
+infer [U2,classic]
+  x::node<_, q2> & q2=null 
+   |- x::node<_,q>*U2(q,x).
+print residue.
+
 /*
+# ex21d1a.slk
+
+
+Entail (4) : Valid. 
+
+Residue:
+
+ <1>emp&q2=null & Anon_24=Anon_23 & q=q2&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&q=null --> U2(q,x@NI)&true]
+[[ Match(x,x) ==>  UnmatchedRHSData]]
+
+
+========================================================
+infer [U2,classic]
+  x::node<_, q2> * q2::app3<> & q2!=null 
+   |- x::node<_,q>*U2(q,x).
+print residue.
+
+ <1>emp&Anon_22=Anon_21 & q2=q & q!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(q)&q!=null --> GP_184(q,q@NI,x@NI)&true; 
+                  q::node<Anon_18,q>@M * GP_184(q,q@NI,x@NI)&
+                   q!=null --> U2(q,x@NI)&true]
+[[ Match(x,x) ==>  COND ==>  (Lemma ==> lem_191 :(q2,q)) ==> (left: lem_19) ==>  Match(q2,q) ==>  InferFold 0 ==>  Match(q_189,q)]]
+
+=======================================================
+infer [U1,classic]
+  x::app3<> 
+   |- U1(x).
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(q)&true --> GP_134(q,x@NI)&true; 
+                  x::node<Anon_18,q>@M * GP_134(q,x@NI)&true --> U1(x)&true]
+[[ COND ==>  (Lemma ==> lem_191 :(x,x)) ==> (left: lem_19) ==>  Match(x,x) ==>  InferFold 0 ==>  Match(q_139,q)]]
+
+=====================================================
+
 infer [U2,classic]
   x::app3<> & q2!=null 
    |- x::node<_,q>*U2(q,x).
 print residue.
-*/
 
-/*
-# ex21d1a.slk
+
+ <1>emp&q=null&{FLOW,(20,21)=__norm#E}[]
+    or emp&q!=null&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [U(q)&q!=null --> GP_160(q,q@NI,x@NI)&true; 
+                  q::node<Anon_18,q>@M * GP_160(q,q@NI,x@NI)&
+                   q!=null --> U2(q,x@NI)&true; 
+                  emp&q=null --> U2(q,x@NI)&true]
+[[ SEARCH ==>  Unfold 0 ==>  Match(x,x) ==>  COND ==>  (Lemma ==> lem_191 :(q_159,q)) ==> (left: lem_19) ==>  Match(q_159,q) ==>  InferFold 0 ==>  Match(q_165,q) ==> ||OR|| ==>  SEARCH ==>  Unfold 0 ==>  Match(x,x) ==>  UnmatchedRHSData]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [U(q)&true --> U2(q,x@NI)&true]
+[[ SEARCH ==>  (Lemma ==> lem_19(x,x)) ==> (left: lem_19) ==>  Match(x,x) ==>  InferFold 0 ==>  Match(q_171,q)]]
+
+=====================================================
 
 lemma_unsafe
   self::app3<> -> self::node<_,q>*U(q).
