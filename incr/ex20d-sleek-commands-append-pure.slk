@@ -30,6 +30,16 @@ print relAssumes.
 
 shape_add_dangling [P,HP_1645].
 
+/*
+  [P(x,y)&
+    x!=null |#|  --> x::node<val_33_1643,next_33_1644>@M * 
+                     HP_1645(next_33_1644,y,x); 
+   HP_1645(next_33_1644,y,x) |#| x::node<val_33_1643,next_33_1644>@M&
+    next_33_1644=next_33_1644 --> P(next_33_1644,y); 
+   P(x,y)&y'=y & x'=x & res=y' & x'=null |#|  --> x::Dangling<>@M]
+!!! **sleekengine.ml#1613:Current list of heap relational assumptions:
+*/
+
 print relAssumes.
 
 shape_unfold [P].

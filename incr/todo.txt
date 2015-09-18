@@ -2378,7 +2378,7 @@ I guess above came from infer_pure.
 Maybe can also schedule infer_heap?
 
 =====================================================================
-# ex20c3.ss
+# ex20c3.ss: FIXED
 
   infer [@shape_pre,@shape_post,@classic]
   requires true
@@ -2399,7 +2399,7 @@ Maybe can also schedule infer_heap?
                   htrue&{FLOW,(4,5)=__norm#E}[]Stop z3... 108 invocations 
 
 =====================================================================
-# ex21a.ss
+# ex21a.ss: FIXED
 
   infer [P,@classic]
   requires P(x,y)

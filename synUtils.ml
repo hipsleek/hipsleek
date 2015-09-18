@@ -24,6 +24,11 @@ let rec partition_by_key key_of key_eq ls =
     let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
     (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
 
+let simplify f args = 
+  let bnd_vars = diff (CP.fv f) args in
+  if bnd_vars == [] then f else
+    CP.mkExists_with_simpl Tpdispatcher.simplify_raw bnd_vars f None (CP.pos_of_formula f)
+
 (*****************)
 (***** UTILS *****)
 (*****************)
@@ -67,14 +72,25 @@ let args_of_hprel (hpr: CF.hprel) =
 (**********************)
 (* UTILS OVER FORMULA *)
 (**********************)
+let is_non_inst_hprel prog (hprel: CF.hprel) =
+  let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
+  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hprel_name in
+  let hprel_inst = hprel_def.Cast.hp_vars_inst in
+  List.for_all (fun (_, i) -> i = Globals.NI) hprel_inst
+
+let is_non_inst_hrel prog (hrel: CF.h_formula) =
+  let hrel_name = CP.name_of_spec_var (name_of_hrel hrel) in
+  let hrel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
+  let hrel_inst = hrel_def.Cast.hp_vars_inst in
+  List.for_all (fun (_, i) -> i = Globals.NI) hrel_inst
 
 let get_feasible_node_args prog (hf: CF.h_formula) =
   match hf with
   | HRel (hrel, el, _) ->
     let hrel_name = CP.name_of_spec_var hrel in
-    let hprel = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
+    let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
     let el_inst = 
-      try List.combine el (List.map snd hprel.Cast.hp_vars_inst)
+      try List.combine el (List.map snd hprel_def.Cast.hp_vars_inst)
       with Invalid_argument _ -> failwith ("SynUtils: Number of arguments of HRel " ^ hrel_name ^ " mismatched.")
     in
     List.fold_left (fun acc (e, i) ->

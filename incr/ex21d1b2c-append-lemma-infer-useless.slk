@@ -1,0 +1,49 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+
+HeapPred U(node x).
+HeapPred U1(node x).
+HeapPred U2(node x,node@NI y).
+HeapPred U3(node x,node y).
+
+lemma_unsafe 
+  self::app3<> -> self::node<_,q>*U(q).
+
+
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18: self_lem_19::node<Anon_18,q>@M * U(q)).
+print residue.
+
+/*
+# ex21d1b2b.slk
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+Did smart fold fail here due to presence of q_137::app3<>@M
+ here?
+
+ <1>emp&q_137!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q_137::app3<>@M&q_137!=null --> U(q_137)&true; 
+                  q_137::node<Anon_76,q_77>@M * GP_78(q_77,q_137@NI)&
+                   q_137!=null --> U(q_137)&true]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  InferFold 0 ==>  COND ==>  Match(q_137,q_137)]]
+
+
+
+*/

@@ -1,0 +1,45 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+
+HeapPred U(node x).
+HeapPred U1(node x).
+HeapPred U2(node x,node@NI y).
+HeapPred U3(node x,node y).
+
+infer [U3] U3(x,r) & y!=null //& r=null 
+   |- U2(x,y).
+print residue.
+// I think we should avoid an instantiation here
+
+/*
+# ex21d1b2e.slk
+
+# inferHP.ml
+
+  let rhs_inst = r.Context.match_res_compatible in
+  (* WN:TODO: need to improve res_compatible so that it really indicate comparable ptrs *)
+  (* it seems mostly empty for now *)
+  (* see ex21d1b2e *)
+
+# compatibility seems to give no info..
+
+!!! infer_unfold:rhs_inst:[]
+!!! fvp:[r,y]
+!!! rargs:[y]
+(==inferHP.ml#1411==)
+do_inst@1
+do_inst inp1 :lhs_b: U3(x,r)&r=null & y!=null&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[r]
+do_inst inp3 :rargs:[y]
+do_inst inp4 :hps:[U2]
+do_inst@1 EXIT:(false, U3(x,r)&r=null & y!=null&{FLOW,(20,21)=__norm#E}[])
+
+*/

@@ -1355,3 +1355,59 @@ let norm_model (m: (string * z3m_val) list): (string * int) list =
   let pr2 = pr_list (pr_pair idf string_of_int) in
   Debug.no_1 "z3_norm_model" pr1 pr2
     norm_model m
+
+let assert_label_prefix = "z3_l_"
+
+let get_unsat_core vars assertions =
+  (* Variable declarations *)
+  let smt_var_decls = List.map (fun v ->
+      let typ = (CP.type_of_spec_var v)in
+      let t = smt_of_typ typ in
+      "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+    ) vars in
+  let smt_var_decls = String.concat "" smt_var_decls in
+
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let assertions_w_label = fst (List.fold_left (fun (acc, i) a ->
+      acc @ [(i + 1, a)], i + 1) ([], 0) assertions) in
+  let smt_asserts = List.map (fun (i, a) ->
+      let label = assert_label_prefix ^ (string_of_int i) in
+      "(assert (! (" ^ (smt_of_formula pr_w pr_s a) ^ ") :named " ^ label ^ "))\n") assertions_w_label in
+  let smt_asserts = String.concat "" smt_asserts in
+  let smt_inp = 
+    "(set-option :produce-unsat-cores true)\n" ^
+    ";Variables Declarations\n" ^ smt_var_decls ^
+    ";Assertion Declations\n" ^ smt_asserts ^
+    "(check-sat)\n" ^
+    "(get-unsat-core)\n"
+  in
+
+  (* let () = print_endline ("smt_inp: \n" ^ smt_inp) in *)
+
+  let fail_with_timeout _ = (
+    restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
+  ) in
+  let () = push_smt_input smt_inp !smt_timeout fail_with_timeout in
+
+  let eq_str s1 s2 = String.compare s1 s2 == 0 in
+
+  let unsat_core =
+    try
+      let lexbuf = Lexing.from_channel !prover_process.inchannel in
+      let r = Z3mparser.output_unsat_core Z3mlexer.tokenizer lexbuf in
+      match r with
+      | Sat_or_Unk _ -> []
+      | Unsat unsat_core_ids ->
+        List.fold_left (fun acc id -> 
+          let a = snd (List.find (fun (i, a) ->
+            let label = assert_label_prefix ^ (string_of_int i) in
+            eq_str id label) assertions_w_label) 
+          in
+          acc @ [a]) [] unsat_core_ids
+    with _ -> []
+  in unsat_core
+
+let get_unsat_core vars assertions =
+  let pr = pr_list !CP.print_formula in
+  Debug.no_1 "z3_get_unsat_core" pr pr
+    (fun _ -> get_unsat_core vars assertions) assertions
