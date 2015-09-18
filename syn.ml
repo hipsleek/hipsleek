@@ -66,6 +66,32 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   fst (List.split (List.map (x_add add_dangling_hprel prog) hpr_list))
 
+(*******************)
+(***** MERGING *****)
+(*******************)
+let partition_hprel_list hprels = 
+  partition_by_key (fun hpr -> name_of_hprel hpr) CP.eq_spec_var hprels
+
+let rename_hprel_args n_args hprel =
+  let hprel_name, hprel_args = sig_of_hprel hprel in
+  try
+    let sst = List.combine hprel_args n_args in
+    CF.subst_hprel_constr sst hprel 
+  with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hprel_name))
+
+let rename_hprel_list hprels = 
+  match hprels with
+  | [] -> []
+  | hpr::hprs -> 
+    let n_args = args_of_hprel hpr in
+    hpr::(List.map (rename_hprel_args n_args) hprs)
+
+(* (* hprels have the same name *)            *)
+(* let merge_hprel_list hprels =              *)
+(*   let hprels = rename_hprel_list hprels in *)
+  
+  
+
 (*********************)
 (***** UNFOLDING *****)
 (*********************)
@@ -93,7 +119,7 @@ type hprel_id = {
 let mk_hprel_id hpr = 
   { hprel_constr = hpr; hprel_id = fresh_hprel_num (); }
 
-let partition_hprel_list hprel_ids = 
+let partition_hprel_id_list hprel_ids = 
   partition_by_key (fun hpri -> name_of_hprel hpri.hprel_constr) CP.eq_spec_var hprel_ids
 
 let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
@@ -293,7 +319,7 @@ let helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
 let unfolding_hprel_list prog hprel_list =
   let sorted_hprel_list = sort_hprel_list hprel_list in
   let hprel_id_list = List.map mk_hprel_id sorted_hprel_list in
-  let hprel_id_groups = partition_hprel_list hprel_id_list in
+  let hprel_id_groups = partition_hprel_id_list hprel_id_list in
   x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
 
 let selective_unfolding prog other_hprels hprels = 
@@ -301,7 +327,7 @@ let selective_unfolding prog other_hprels hprels =
   let sorted_hprel_list = sort_hprel_list pre_hprels in
   let hprel_id_list = List.map mk_hprel_id sorted_hprel_list in
   let other_hprel_id_list = List.map mk_hprel_id other_hprels in
-  let hprel_id_groups = partition_hprel_list (hprel_id_list @ other_hprel_id_list) in 
+  let hprel_id_groups = partition_hprel_id_list (hprel_id_list @ other_hprel_id_list) in 
   (x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list) @ post_hprels
 
 let selective_unfolding prog other_hprels hprels = 
