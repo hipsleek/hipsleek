@@ -1,0 +1,61 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = null 
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred U2(node x,node y).
+
+/*
+lemma_infer [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+*/
+
+lemma_unsafe 
+  self::app3<> <- U2(self,q) * q::node<_,null>.
+
+
+//infer [U2,@classic] U2(self,q) * q::node<_,null> |- self::app3<>.
+//print residue.
+
+infer [U2,@classic] U2(self,q) * q::node<_,null> 
+      |- self::node<_, q2> * q2::app3<> & q2!=null.
+
+print residue.
+
+/*
+# ex21c5.slk
+
+# but with List.combine here.
+
+<1>emp&q2!=null & q!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_166(q2,q@NI,self@NI)&true --> emp&q2!=null; 
+                  HP_166(q2,q@NI,self@NI)&true --> U2(q2,q)&true; 
+                  U2(self,q)&true |#| q::node<Anon_20,flted_42_146>@M&
+                   flted_42_146=null --> self::node<Anon_164,q2_165>@M * 
+                                         HP_166(q2_165,q@NI,self@NI)&
+                   true]
+[[ SEARCH ==>  InferUnfold  ==>  COND ==>  (Lemma <== lem_19(q2_165,q2)) ==>  InferUnfold  ==>  Match(q,q_172)]]
+
+*/

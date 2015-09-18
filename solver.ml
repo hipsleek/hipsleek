@@ -13265,7 +13265,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
       let (estate,conseq,rhs_rest,rhs_node) = 
         if do_infer==0 then (estate,conseq,rhs_rest,rhs_node) 
-        else failwith "need to perform infer_fold first" 
+        else failwith (x_loc^"need to perform infer_fold first") 
       in
       let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
