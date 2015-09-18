@@ -36,57 +36,12 @@ self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
 
 infer [U,@classic]
 self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
- |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+ |-  (exists Anon_18: self_lem_19::node<Anon_18,q>@M * U(q)).
 
 print residue.
 
 /*
 # ex21d1b1.slk
-
-(==context.ml#2841==)
-process_one_match@3
-process_one_match inp1 :match_res: Type: MaterializedArg (q_137,full,[]) coerc_defn_mater: ==> lem_15
- LHS: q_137::app3<>@M
- RHS: U(q_137)
- lhs_rest: emp
- rhs_rest: emp
- rhs_inst: []
-process_one_match inp2 :lhs_h: q_137::app3<>@M
-process_one_match inp3 :lhs_p: q_137!=null
-process_one_match inp4 :rhs_node: U(q_137)
-process_one_match inp5 :rhs_rest: emp
-process_one_match inp6 :rhs_p: true
-process_one_match inp7 :([],None)
-process_one_match@3 EXIT: Prio:1
- (Lemma 1==> lem_15) =>
-
-=====================================
-
- q_137::app3<>@M ->  q_137::node<Anon_80,q_81>@M * U(q_81)
- U(q_137) <- q_137::node<Anon_14,q>@M * GP_76(q,q_137)
-
-================================
-
-(==context.ml#2839==)
-process_one_match@4
-process_one_match inp1 :match_res:
- Type: Root
- LHS: q_137::node<Anon_80,q_81>@M
- RHS: q_137::node<Anon_14,q>@M
- lhs_rest: U(q_81)
- rhs_rest: GP_76(q,q_137)
- rhs_inst: []
-process_one_match inp2 :lhs_h: q_137::node<Anon_80,q_81>@M * U(q_81)
-process_one_match inp3 :lhs_p: q_137!=null
-process_one_match inp4 :rhs_node: q_137::node<Anon_14,q>@M
-process_one_match inp5 :rhs_rest: GP_76(q,q_137)
-process_one_match inp6 :rhs_p: true
-process_one_match inp7 :([],None)
-process_one_match@4 EXIT: Prio:1
- Match =>
-
-
-===================
 
 infer [U,@classic]
 self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
@@ -99,6 +54,44 @@ self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
                    q_137!=null --> U(q_137)&true]
 [[ Match(self_lem_19,self_lem_19) ==>  COND ==>  InferFold 0 ==>  COND ==>  Match(q_137,q_137)]]
 
+(==context.ml#2841==)
+process_one_match@3
+process_one_match inp1 :match_res: Type: MaterializedArg (q_137,full,[]) coerc_defn_mater: ==> lem_15
+ LHS: q_137::app3<>@M
+ RHS: U(q)
+ lhs_rest: emp
+ rhs_rest: emp
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q_137::app3<>@M
+process_one_match inp3 :lhs_p: q_137!=null & q=q_137 & q=q_137
+process_one_match inp4 :rhs_node: U(q)
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@3 EXIT: Prio:1
+ (Lemma 1==> lem_15) =>
+
+========================
+q_137::app3<> --> q_137::node<Anon_77,q_78>@M * U(q_78)
+q::node<Anon_14,q#>@M * GP_73(q,q) -> U(q)
+===================
+
+process_one_match@4
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q_137::node<Anon_77,q_78>@M
+ RHS: q::node<Anon_14,q>@M
+ lhs_rest: U(q_78)
+ rhs_rest: GP_73(q,q)
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q_137::node<Anon_77,q_78>@M * U(q_78)
+process_one_match inp3 :lhs_p: q=q_137 & q_137!=null
+process_one_match inp4 :rhs_node: q::node<Anon_14,q>@M
+process_one_match inp5 :rhs_rest: GP_73(q,q)
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@4 EXIT: Prio:1
+ Match =>
 
 
 # Why is there a (exists q: ..)?

@@ -1752,6 +1752,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   : action_wt =
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let emap = CP.EMapSV.build_eset eqns' in
+  let eqns2 = MCP.ptr_equations_without_null rhs_p in
+  let emap_rhs = CP.EMapSV.build_eset eqns2 in
   let pr_debug s = x_tinfo_pp s no_pos in
   let pr_hdebug h a = x_tinfo_hp h a no_pos in
   let rhs_node = m_res.match_res_rhs_node in
@@ -2521,13 +2523,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            let alias_set = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap) lhs_args) in
            let lhs_vs = alias_set@lhs_args in
            let args = List.concat (List.map CP.afv args) in
+           let alias_set_rhs = List.concat (List.map (fun p -> CP.EMapSV.find_equiv_all p emap_rhs) args) in
+           let rhs_vs = alias_set_rhs@args in
            let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in
-           let () = y_binfo_hp (add_str "rhs_vs" !CP.print_svl) args in
-           let common = CP.intersect_svl (lhs_vs) args in
+           let () = y_binfo_hp (add_str "rhs_vs" !CP.print_svl) rhs_vs in
+           let common = CP.intersect_svl (lhs_vs) rhs_vs in
            if common==[] then 
              let pr = !CF.print_h_formula in
              let msg = (pr lhs_node)^" vs "^(pr rhs_node) in
-             (4,M_Nothing_to_do ("No common parameters : "^msg))
+             (4,M_Nothing_to_do ("2 No common parameters : "^msg))
            else
              let () = y_binfo_hp (add_str "view:args" !CP.print_svl) lhs_args in
              let () = y_binfo_hp (add_str "HRel:args" (!CP.print_svl)) args in

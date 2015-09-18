@@ -19596,5 +19596,9 @@ let check_compatible_eb ?(inst_rhs=false) emap l_vs r_vs lhs_b (* lhs_p *) rhs_b
 let check_exists_node emap hf sv =
   let r = find_node emap hf sv in
   r!=[]
-  
-  
+
+let fresh_data_arg body_dn =
+  let args = body_dn.h_formula_data_arguments in
+  let () = y_binfo_hp (add_str "data args" !CP.print_svl) args in
+  { body_dn with  h_formula_data_arguments = List.map CP.fresh_spec_var args }
+

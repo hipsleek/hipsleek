@@ -160,7 +160,42 @@ WARNING: _0:0_0:0:* between overlapping heaps: ( q::node<Anon_1782,q>@M, q::lseg
 
 WARNING: _0:0_0:0:* between overlapping heaps: ( q::node<Anon_1782,q>@M, q::lseg<y'>@M)
 =========================================================================
+# ex21d1b2.slk
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+# Why is existential not working properly?
+
+Entail (1) : Fail.(may) cause:Nothing_to_do?No common parameters :  q_137::app3<>@M vs  U(q_150)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: No common parameters :  q_137::app3<>@M vs  U(q_150)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Match(self_lem_19,self_lem_19) ==>  NothingToDoNo common parameters :  q_137::app3<>@M vs  U(q_150)]]
+ CEX:false
 =========================================================================
+# ex21d1b2b.slk
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+Did smart fold fail here due to presence of 
+ here?
+
+ <1>emp&q_137!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q_137::app3<>@M&q_137!=null --> U(q_137)&true; 
+                  q_137::node<Anon_76,q_77>@M * GP_78(q_77,q_137@NI)&
+                   q_137!=null --> U(q_137)&true]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  InferFold 0 ==>  COND ==>  Match(q_137,q_137)]]
 =========================================================================
 =========================================================================
 =========================================================================

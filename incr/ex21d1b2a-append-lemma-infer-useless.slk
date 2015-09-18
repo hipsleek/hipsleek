@@ -8,19 +8,6 @@ data node {
 }.
 
 
-pred ll<> == self = null 
-	or self::node<_, q> * q::ll<> 
-  inv true.
-
-pred lseg<p> == self = null 
-	or self::node<_, q> * q::lseg<p> 
-  inv true.
-
-pred app2<y> == self::node<_,null> 
-	or self::node<_, q> * q::app2<y> & q!=null 
-  inv self!=null.
-
-
 pred app3<> == self::node<_,null> 
 	or self::node<_, q> * q::app3<> & q!=null 
   inv self!=null.
@@ -51,7 +38,7 @@ self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
 infer [U,@classic]
 self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
  |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
-
+print residue.
 /*
 infer [U,@classic]
 self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
