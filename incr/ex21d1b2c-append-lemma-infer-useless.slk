@@ -25,7 +25,7 @@ lemma_unsafe
 
 infer [U,@classic]
 self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
- |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+ |-  (exists Anon_18: self_lem_19::node<Anon_18,q>@M * U(q)).
 print residue.
 
 /*

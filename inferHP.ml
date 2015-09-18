@@ -1323,8 +1323,9 @@ let do_inst prog estate lhs_b largs rargs extended_hps=
     else
       let p = (MCP.pure_of_mix lhs_b.CF.formula_base_pure) in
       let fvp = CP.fv p in
-      let () = Debug.ninfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
-      let () = Debug.ninfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
+      let () = Debug.binfo_hprint (add_str  "fvp" !CP.print_svl) fvp no_pos in
+      let () = Debug.binfo_hprint (add_str  "rargs" !CP.print_svl) rargs no_pos in
+      let sst = List.combine largs rargs in (* inst only for same number of parameters *)
       if CP.intersect_svl rargs fvp != [] then
         let is_succ=
           let ps_eqs = List.filter (fun p -> (CP.is_eq_exp_ptrs rargs p)) (CP.list_of_conjs p) in
@@ -1332,15 +1333,14 @@ let do_inst prog estate lhs_b largs rargs extended_hps=
         in
         is_succ,estate, lhs_b
       else
-        let sst = List.combine largs rargs in
         let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-        let is_succ, p = gen_inst prog estate lhds lhvs sst  in
+        let is_succ, p = x_add gen_inst prog estate lhds lhvs sst  in
         if not is_succ then
           is_succ, estate, lhs_b
         else
-          let () = Debug.ninfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
+          let () = Debug.binfo_hprint (add_str  "p" !CP.print_formula) p no_pos in
           let mf = (MCP.mix_of_pure p) in
-          let () = Debug.ninfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in
+          let () = Debug.binfo_hprint (add_str  "lhs_b" !CF.print_formula_base) lhs_b no_pos in
           (true,
            {estate with CF.es_formula = CF.mkAnd_pure estate.CF.es_formula mf no_pos;
                         CF.es_infer_vars_hp_rel = estate.CF.es_infer_vars_hp_rel@extended_hps;
@@ -1390,12 +1390,12 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
         | er::rest1,_::rest2 -> begin
             let largs = (List.map CP.exp_to_sv rest1) in
             let rargs = (List.map CP.exp_to_sv rest2) in
-            let () = Debug.binfo_hprint (add_str  "unfold:rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
+            let () = Debug.binfo_hprint (add_str  "infer_unfold:rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
             if (* List.length rargs < List.length largs &&  *)rhs_inst != [] then
               (* let r = (CP.exp_to_sv er) in *)
               (* let sst = Cfutil.exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
               let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-              let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst  in
+              let is_succ, p = x_add gen_inst prog estate lhds lhvs rhs_inst  in
               if not is_succ then
                 true, estate, lhs_b
               else
@@ -1408,7 +1408,7 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
                  },
                  CF.mkAnd_base_pure lhs_b mf no_pos)
             else
-              do_inst prog estate lhs_b largs rargs [rhp]
+              x_add do_inst prog estate lhs_b largs rargs [rhp]
           end
         | _ -> return_out_of_inst estate lhs_b [rhp]
       else
@@ -1419,7 +1419,7 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
           | _::rest1 ->
             let largs = (List.map CP.exp_to_sv rest1) in
             let rargs = vn.CF.h_formula_view_arguments in
-            do_inst prog estate lhs_b largs rargs []
+            x_add do_inst prog estate lhs_b largs rargs []
           | _ -> return_out_of_inst estate lhs_b []
         else
           return_out_of_inst estate lhs_b []
@@ -1427,12 +1427,13 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
     | _ -> return_out_of_inst estate lhs_b []
   in
   if not is_succ_inst then
-    let err_msg = "infer_unfold" in
+    let err_msg = "infer_unfold (cannot inst)" in
     let conseq = Some (Base rhs_b) in
-    (Errctx.mkFailCtx_may ~conseq:conseq (x_loc^"Can not instantiate") err_msg estate pos,NoAlias)
+    (Errctx.mkFailCtx_may ~conseq:conseq x_loc err_msg estate pos,NoAlias)
   else
     let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
     pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest))
+
 
 
 let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
@@ -1444,6 +1445,9 @@ let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rh
   let rhs_node = r.Context.match_res_rhs_node  in
   let rhs_rest = r.Context.match_res_rhs_rest  in
   let rhs_inst = r.Context.match_res_compatible in
+  (* WN:TODO: need to improve res_compatible so that it really indicate comparable ptrs *)
+  (* it seems mostly empty for now *)
+  (* see ex21d1b2e *)
   let () = Debug.binfo_hprint (add_str  "fold:rhs_inst"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst no_pos in
   let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with
     | HRel (lhp,leargs,_),HRel (rhp,reargs,_) -> begin
@@ -1454,7 +1458,7 @@ let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rh
               let rargs = (List.map CP.exp_to_sv rest2) in
               if rhs_inst != [] then
                 let lhds, lhvs, _ = CF.get_hp_rel_bformula lhs_b in
-                let is_succ, p = gen_inst prog estate lhds lhvs rhs_inst in
+                let is_succ, p = x_add gen_inst prog estate lhds lhvs rhs_inst in
                 if not is_succ then
                   true, estate, lhs_b
                 else
@@ -1465,7 +1469,7 @@ let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rh
                    },
                    CF.mkAnd_base_pure lhs_b mf no_pos)
               else
-                do_inst prog estate lhs_b largs rargs []
+                x_add do_inst prog estate lhs_b largs rargs []
             end
           | _ -> return_out_of_inst estate lhs_b []
         else

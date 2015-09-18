@@ -15,9 +15,6 @@ pred lseg<p> == self = null
 	or self::node<_, q> * q::lseg<p> 
   inv true.
 
-pred app2<y> == self::node<_,null> 
-	or self::node<_, q> * q::app2<y> & q!=null 
-  inv self!=null.
 
 pred app3<> == self::node<_,null> 
 	or self::node<_, q> * q::app3<> & q!=null 
@@ -28,30 +25,32 @@ HeapPred U2(node x,node y).
 HeapPred U3(node x,node y).
 
 
-
-lemma_infer_pred [U2,classic]
+lemma_infer [U2,classic]
   self::app3<> -> U2(self,q) * q::node<_,null>.
 
 print residue.
 
-
-
 /*
-# ex21d3.slk
+# ex21d3.slk (Muoi : Can check if this is correct?)
 
-# should print without --old-pred-synthesis
-
-lemma_infer_pred [U2,classic]
+lemma_infer [U2,classic]
   self::app3<> -> U2(self,q) * q::node<_,null>.
 
-*********************************************************
-*******relational definition********
-*********************************************************
-[ U2(self_lem_215,q_216) ::= self_lem_215::node<Anon_217,q_199>@M * U2(q_199,q_216)&q_199!=null
- or emp&self_lem_215=q_216 (20,21)]
-*************************************
+Temp Lemma(s) inferred is valid in current context.
+Residue:
 
-# can this be related to self::lseg<p> ?
-      U2(self,p) ==> self::lseg<p>
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [emp&self_lem_17=q_112 --> U2(self_lem_17,q_112)&true; 
+                  U2(q_128,q_131)&
+                   q_128!=null |#| q_131::node<Anon_140,flted_29_138>@M&
+                   flted_29_138=null --> GP_133(q_128,q_131,self_lem_17@NI)&
+                   true; 
+                  self_lem_17::node<Anon_127,q_128>@M * 
+                  GP_133(q_128,q_131,self_lem_17@NI)&
+                   q_128!=null --> U2(self_lem_17,q_131)&true]
+[[ InferFold 0 ==>  COND ==>  Match(self_lem_17,self_lem_17) ==>  COND ==>  (Lemma ==> lem_17(q_128,q_128)) ==> (left: lem_17) ==>  InferUnfold  ==>  Match(q_139,q_131) ==> ||OR|| ==>  SEARCH ==>  BaseCaseFold ==>  Match(self_lem_17,q_112)]]
+
 
 */
