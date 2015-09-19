@@ -1,16 +1,27 @@
 # ex21a.ss
-
 void append(node x, node y)
   infer [P,@classic]
   requires P(x,y)
   ensures true ;
+[ P(x_1656,y_1657) ::= HP_1666(x_1656)(4,5),
+ HP_1666(x_1656) ::= x_1656::node<val_26_1658,next_26_1626>@M * HP_1666(next_26_1626)&
+ next_26_1626!=null
+ or x_1656::node<val_26_1658,next_26_1626>@M&next_26_1626=null
+ (4,5)]
+
 
 # ex21b.ss
 HeapPred P(node x, node@NI y).
 void append(node x, node y)
   infer [P,@classic]
   requires P(x,y)
-  ensures true ;
+  ensures true 
+[ P(x_1656,y_1657) ::= HP_1666(x_1656)(4,5),
+ HP_1666(x_1656) ::= x_1656::node<val_24_1658,next_24_1626>@M * HP_1666(next_24_1626)&
+ next_24_1626!=null
+ or x_1656::node<val_24_1658,next_24_1626>@M&next_24_1626=null
+ (4,5)]
+
 
 # ex21f.ss
 void append(node x, node y)
@@ -30,6 +41,8 @@ void append(node x, node y)
  (4,5)]
 # can we get x::lseg<y> & (x!=null | x!=y) ??
 
+# ex21e5
+lemma_test self::PP<y> <-> self::node<_,q>*q::lseg<y>.
 
 # ex21p.ss
  node append(node x, node y)

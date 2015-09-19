@@ -1,0 +1,92 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred PP<y> == self::node<_,null>
+	or self::node<_, q> * q::PP<y> & q!=null 
+inv true.
+
+pred PP0<> == self::node<_,null>
+	or self::node<_, q> * q::PP0<> & q!=null 
+inv true.
+
+
+HeapPred P(node x, node y).
+HeapPred U(node x, node y).
+
+
+lemma_test "L1" self::PP<y> <-> self::ll<> & self!=null.
+
+lemma_test "L2" self::PP<y> <-> self::node<_,q>*q::ll<> & self!=null.
+
+lemma_test "L3" self::PP<y> <-> self::PP0<>.
+
+lemma_test "L4" self::PP0<> <-> self::PP<y>.
+
+lemma_test "L5" self::PP0<> <-> (exists y: self::PP<y>).
+
+lemma_test "L6" self::PP0<> <-> self::ll<> & self!=null.
+
+/*
+Entailing lemma lem_16: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (cex)(may) cause: UnionR[ (q_149!=null | q_149=null) |-  q_149=null. LOCS:[1;0;17] (may-bug),base case unfold failed]
+*/
+
+//lemma_test self::PP<y> <-> self::ll<> & self!=null.
+
+//lemma_test self::PP<y> -> self::lseg<y> & self!=null.
+
+//lemma_test self::PP<y> <-> self::node<_,q>*q::lseg<y>.
+
+
+/*
+# ex21e1.ss
+
+lemma_infer [U,classic] self::PP<y> <- U(self,q)*q::node<_,y>.
+
+
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [
+ U(self_lem_17,q_125)&true |#| q_125::node<Anon_126,y>@M&
+         true --> emp&self_lem_17=q_125]
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(q_125,self_lem_17)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [
+  HP_152(q_113,q_138@NI,self_lem_17@NI)&true --> emp&
+                  q_113!=null; 
+
+  HP_152(q_113,q_138@NI,self_lem_17@NI)&
+                  true --> U(q_113,q_138)&true; 
+
+  U(self_lem_17,q_138)&true |#| q_138::node<Anon_139,y>@M&
+       true --> self_lem_17::node<Anon_150,q_151>@M * 
+               HP_152(q_151,q_138@NI,self_lem_17@NI) &  true]
+
+============================================================
+
+// merge
+P(x,y) <-- x::node<Anon_1630,q_1631>@M * P(q_1631,y) & q_1631!=null 
+        \/ x::node<Anon_1630,y>@M
+
+P(x,y) <-- x::node<_,q>@M * U(q,y)
+
+P(x,y) <-- U<_,q>*q::node<_,y>
+
+P(x,y) --> x::lseg<q> & x!=null
+
+*/

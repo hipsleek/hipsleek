@@ -299,9 +299,9 @@ inferred hprel: [HP_181(q_148,q_171@NI,self_lem_19@NI)&true --> emp& q_148!=null
                   true]
 [[ SEARCH ==>  InferUnfold  ==>  COND ==>  (Lemma <== lem_19(q_180,q_148)) ==>  InferUnfold  ==>  Match(q_171,q_187)]]
 =========================================================================
-# ex21p2a1.ss
+# ex21p2a1.slk
 
-lemma_test self::P<p,x> n<-> self::lseg<p> 
+lemma_test self::P<p,x> <-> self::lseg<p> 
    & (self=p & x=null | self!=null & self=x)
 .
 
@@ -319,7 +319,7 @@ do_unmatched_rhs : self_lem_16_left_right::P<p_237,x_238>@M(must),
    (self_lem_16_left_right!=null & self_lem_16_left_right=x))) |-  self_lem_16_left_right=x. LOCS:[1;0;18;34;33] (may-bug)
 
 =========================================================================
-# ex21e5b.ss
+# ex21e5b.slk (FIXED)
 
 lemma_test self::PP<y> <- self::node<_,q>*q::lseg<y>.
 
@@ -332,7 +332,7 @@ Entailing lemma lem_17: Fail. (cex)(must) cause: exception in lemma proving
 
 Failed to proved for lem_17:==> (invalid lemma encountered).
 =========================================================================
-# ex21e5a1.ss
+# ex21e5a1.ss (FIXED with coercion_body_pred_list)
 
 lemma_test self::PP<y> -> self::node<_,q>*q::lseg<y>.
 
@@ -358,6 +358,58 @@ process_one_match@2 EXIT: Prio:1
 
 Entail (1) : Fail.(may) cause:Nothing_to_do?cond action is empty
 =========================================================================
+# ex21a2.ss
+
+lemma_test "L6" self::PP0<> <- self::ll<> & self!=null.
+
+# extra unfolds needed when false detected on branches..
+
+Entailing lemma lem_16: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (cex)(may) cause: UnionR[ (q_149!=null | q_149=null) |-  q_149=null. LOCS:[1;0;17] (may-bug),base case unfold failed]
+
+(==solver.ml#14401==)
+apply_right_coercion@1
+apply_right_coercion inp1 :  q_134::ll<>@M&
+self_L6!=null & Anon_137=Anon_133 & q_138=q_134 & Anon_137=Anon_133 & 
+q_138=q_134&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_heap: self_L6::node<Anon_133,q_134>@M
+ es_ante_evars: [Anon_133; q_134]
+ es_trace:  Fold ==>  Match(self_L6,self_L6) ==>  SEARCH ==>  (Lemma <== L6(q_134,q_138))
+ es_proof_traces: 
+   [self_L6::node<Anon_133,q_134>@M * q_134::ll<>@M&
+    self_L6!=null:self_L6::PP0<>@M&{FLOW,(20,21)=__norm#E}[]]
+apply_right_coercion inp2 : q_138::PP0<>@M
+apply_right_coercion inp3 : emp
+apply_right_coercion inp4 :Lemma "L6":  self::PP0<>@M&{FLOW,(20,21)=__norm#E}[]<== self::ll<>@M&self!=null&{FLOW,(20,21)=__norm#E}[]
+ head match:PP0
+ body view:ll
+ body pred_list:[ll]
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ll])]
+ coercion_case: Simple
+ head:  self::PP0<>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  self::ll<>@M&self!=null&{FLOW,(20,21)=__norm#E}[]
+ head_norm:  self::PP0<>@M&{FLOW,(20,21)=__norm#E}[]
+ body_norm:  EBase 
+   self::ll<>@M&self!=null&{FLOW,(20,21)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_TEST
+ coercion_fold: None
+
+apply_right_coercion inp5 : q_138::PP0<>@M&q_138!=null&{FLOW,(1,26)=__flow#E}[]
+apply_right_coercion@1 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+
 =========================================================================
 =========================================================================
 =========================================================================

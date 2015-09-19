@@ -4828,6 +4828,7 @@ let string_of_coerc_opt op c =
     else s2
          ^"\n head match:"^c.coercion_head_view
          ^"\n body view:"^c.coercion_body_view
+         ^"\n body pred_list:"^((pr_list pr_id) c.coercion_body_pred_list)
          ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
          ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
          ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)

@@ -296,6 +296,7 @@ and coercion_decl = {
   coercion_head_view : ident; 
   (* the name of the predicate where this coercion can be applied *)
   coercion_body_view : ident;  (* used for cycles checking *)
+  coercion_body_pred_list : ident list;  (* used for lemma triggering *)
   coercion_mater_vars : mater_property list;
   (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
   coercion_case : coercion_case; (*Simple or Complex*)
@@ -1851,7 +1852,8 @@ let case_of_coercion lhs rhs =
   Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
-  List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
+  List.filter (fun p ->  p.coercion_head_view = c 
+                         && (p.coercion_body_view = t || List.exists (fun x -> x=t) p.coercion_body_pred_list)  ) coers
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
   let pr1 = pr_list !print_coercion in

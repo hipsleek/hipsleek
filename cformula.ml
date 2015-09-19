@@ -19537,6 +19537,16 @@ let find_node emap hf sv =
   in
   snd (trans_h_formula hf () f_h_f voidf2 (List.concat))
 
+let extr_pred_list f =
+  let (hf,_,_,_,_,_) = split_components f in
+  let f_h_f _ hf =
+    match hf with
+    | ViewNode ({ h_formula_view_name = n}) ->
+      Some (hf,[n])
+    | _ -> None
+  in
+  snd (trans_h_formula hf () f_h_f voidf2 (List.concat))
+
 (* let find_node emap rhs_h sv = [] *)
 
 let is_comp (l_n,_,l_arg) (r_n,_,r_arg) pure =
