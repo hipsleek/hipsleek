@@ -4052,8 +4052,8 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
 and split_components (f: formula) =
-  (* Debug.no_1 "split_components" !print_formula (fun _ -> "") *)
-  split_components_x f
+  Debug.no_1 "CF.split_components" !print_formula (fun _ -> "") 
+    split_components_x f
 
 and split_components_all (f : formula) =
   let rec helper f =
@@ -19627,7 +19627,7 @@ let extr_exists_hprel ra =
   let () = y_binfo_hp (add_str "guard" (pr_option !print_formula)) guard in
   let (lhs_vs,lhs_h_vs) = (fv lhs,fv_heap_of lhs) in
   let (guard_vs,guard_h_vs) = match guard with
-    None -> ([],[])
+    | None -> ([],[])
     | Some f -> (fv f,fv_heap_of f) in
   (* let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in *)
   (* let () = y_binfo_hp (add_str "guard_vs" !CP.print_svl) guard_vs in *)
@@ -19637,7 +19637,6 @@ let extr_exists_hprel ra =
   let () = if ex_lhs_vars!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vars in
   (* let () = y_binfo_hp (add_str "guard" (string_of_rel_cat)) kind in *)
   (ex_lhs_vars,ex_guard_vars)
-
 
 let add_unfold_flag lst = 
   List.map (fun w -> {w with hprel_fold = false}) lst

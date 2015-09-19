@@ -66,7 +66,7 @@ let args_of_hrel (h: CF.h_formula) =
 
 let sig_of_hprel (hpr: CF.hprel) =
   let hpr_f = if is_pre_hprel hpr then hpr.hprel_lhs else hpr.hprel_rhs in
-  let f_h, _, _, _, _, _ = CF.split_components hpr_f in
+  let f_h, _, _, _, _, _ = x_add_1 CF.split_components hpr_f in
   match f_h with
   | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args f_h)
   | _ -> failwith ("Unexpected formula in the LHS/RHS of a hprel " ^ (Cprinter.string_of_hprel_short hpr))
@@ -81,7 +81,36 @@ let args_of_hprel (hpr: CF.hprel) =
 (* UTILS OVER FORMULA *)
 (**********************)
 let combine_Star f1 f2 = 
-  CF.mkStar f1 f2 CF.Flow_combine no_pos
+  let comb_base f1 f2 = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+  let rec comb_base_f1 f1 f2 =
+    match f2 with
+    | CF.Base _
+    | CF.Exists _ -> comb_base f1 f2
+    | CF.Or { 
+        formula_or_f1 = f2_1;
+        formula_or_f2 = f2_2;
+        formula_or_pos = pos; } ->
+      let comb_f1 = comb_base_f1 f1 f2_1 in
+      let comb_f2 = comb_base_f1 f1 f2_2 in
+      CF.mkOr comb_f1 comb_f2 pos
+  in
+  let rec comb_formula f1 f2 =
+    match f1 with
+    | CF.Base _
+    | CF.Exists _ -> comb_base_f1 f1 f2
+    | CF.Or { 
+        formula_or_f1 = f1_1;
+        formula_or_f2 = f1_2;
+        formula_or_pos = pos; } ->
+      let comb_f1 = comb_formula f1_1 f2 in
+      let comb_f2 = comb_formula f1_2 f2 in
+      CF.mkOr comb_f1 comb_f2 pos
+  in
+  comb_formula f1 f2
+
+let combine_Star f1 f2 = 
+  let pr = !CF.print_formula in
+  Debug.no_2 "combine_Star" pr pr pr combine_Star f1 f2
 
 let trans_heap_formula f_h_f (f: CF.formula) = 
   let somef2 _ f = Some (f, []) in
@@ -106,14 +135,17 @@ let rec trans_pure_formula f_m_f (f: CF.formula) =
     CF.Exists { e with formula_exists_pure = n_pure; }
 
 let simplify_hprel (hprel: CF.hprel) =
-  let args = args_of_hprel hprel in
-  let f_m_f m_f =
+  (* let args = args_of_hprel hprel in *)
+  let h_fv_lhs = CF.fv_heap_of hprel.hprel_lhs in
+  let h_fv_guard = match hprel.hprel_guard with None -> [] | Some g -> CF.fv_heap_of g in
+  let f_m_f args m_f =
     let p_f = MCP.pure_of_mix m_f in
     let simpl_p_f = simplify p_f args in
     MCP.mix_of_pure simpl_p_f 
   in
   { hprel with
-    hprel_lhs = trans_pure_formula f_m_f hprel.hprel_lhs; }
+    hprel_lhs = trans_pure_formula (f_m_f h_fv_lhs) hprel.hprel_lhs;
+    hprel_guard = map_opt (trans_pure_formula (f_m_f h_fv_guard)) hprel.hprel_guard; }
 
 let is_non_inst_hprel prog (hprel: CF.hprel) =
   let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
@@ -167,9 +199,13 @@ let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.sp
   Debug.no_2 "collect_feasible_heap_args_formula" !CP.print_svl !CF.print_formula !CP.print_svl
     (collect_feasible_heap_args_formula prog) null_aliases f
 
-let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
+let rec ctx_of_formula (f: CF.formula) = 
   let empty_es = CF.empty_es (CF.mkNormalFlow ()) Label_only.Lab2_List.unlabelled no_pos in
-  let ctx = CF.Ctx { empty_es with CF.es_formula = ante } in
+  let empty_ctx = CF.Ctx empty_es in
+  CF.build_context empty_ctx f no_pos
+
+let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
+  let ctx = ctx_of_formula ante in
   let rs, _ = x_add Solver.heap_entail_one_context 21 prog false ctx conseq None None None no_pos in
   let residue_f = CF.formula_of_list_context rs in
   match rs with
