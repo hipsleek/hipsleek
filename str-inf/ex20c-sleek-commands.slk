@@ -31,18 +31,16 @@ shape_unfold [U].
 //shape_unfold [U,GP_164].
 
 
-//shape_merge [U,GP_164].
+shape_merge [U,GP_164].
 
 print relAssumes.
 
 /*
 # ex20c.slk
 
-# emp&flted_22_139=null --> U(flted_22_139).
+Please add a shape_merge command ..
 
-Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
-error at: 
-SLEEK FAILURE (END)
+shape_merge [U,GP_164].
 
 
 */

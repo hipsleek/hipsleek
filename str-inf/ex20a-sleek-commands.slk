@@ -26,7 +26,7 @@ shape_unfold [P].
 //shape_unfold [P,HP_1620].
 
 
-shape_merge [P,HP_1620].
+//shape_merge [P,HP_1620].
 
 print relAssumes.
 
