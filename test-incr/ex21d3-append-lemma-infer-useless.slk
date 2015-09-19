@@ -31,7 +31,7 @@ lemma_infer [U2,classic]
 print residue.
 
 /*
-# ex21d3.slk (Muoi : seems OK)
+# ex21d3.slk (Muoi : Can check if this is correct?)
 
 lemma_infer [U2,classic]
   self::app3<> -> U2(self,q) * q::node<_,null>.

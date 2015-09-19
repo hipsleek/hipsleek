@@ -1,0 +1,50 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred U2<p> == self = p
+	or self::node<_, q> * q::U2<p> & p!=null
+  inv true.
+
+lemma_test self::lseg<p> <-> self::U2<p>.
+
+
+/*
+# ex21d3a.slk 
+
+# should we allow weakening. can we check for similarity?
+
+lemma_infer [U2,classic]
+  self::app3<> -> U2(self,q) * q::node<_,null>.
+
+U2(self_lem_17,q_112).x
+ <-- emp&self_lem_17=q_112
+  or self_lem_17::node<Anon_127,q_128>@M * 
+     U2(q_128,q_131) &q_128!=null 
+
+lemma_test self::lseg<p> <-> self::U2<p>.
+
+# test show that U2 can be weakened to lseg..
+
+Entailing lemma lem_15: Fail. Details below:
+	 "==>" implication: : Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]	 "<==" implication: : Valid.
+
+
+
+*/
