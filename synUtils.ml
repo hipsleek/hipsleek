@@ -103,7 +103,17 @@ let rec trans_pure_formula f_m_f (f: CF.formula) =
     CF.Or { o with formula_or_f1 = n_f1; formula_or_f2 = n_f2; }
   | CF.Exists e ->
     let n_pure = f_m_f e.formula_exists_pure in
-    CF.Exists { e with formula_exists_pure = n_pure;}
+    CF.Exists { e with formula_exists_pure = n_pure; }
+
+let simplify_hprel (hprel: CF.hprel) =
+  let args = args_of_hprel hprel in
+  let f_m_f m_f =
+    let p_f = MCP.pure_of_mix m_f in
+    let simpl_p_f = simplify p_f args in
+    MCP.mix_of_pure simpl_p_f 
+  in
+  { hprel with
+    hprel_lhs = trans_pure_formula f_m_f hprel.hprel_lhs; }
 
 let is_non_inst_hprel prog (hprel: CF.hprel) =
   let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in

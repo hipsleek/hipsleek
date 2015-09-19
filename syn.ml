@@ -512,8 +512,14 @@ let dangling_parameterizing hprels =
 (****************)
 let syn_pre_preds prog (is: CF.infer_state) = 
   if !Globals.new_pred_syn then
+    let () = x_binfo_pp ">>>>> Step 0: Simplification <<<<<" no_pos in
+    let is_all_constrs = List.map (x_add_1 simplify_hprel) is.CF.is_all_constrs in
+    let () = x_binfo_hp (add_str "Simplified hprels" 
+        Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+    in
+  
     let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
-    let is_all_constrs, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) is.CF.is_all_constrs) in
+    let is_all_constrs, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) is_all_constrs) in
     let has_dangling_vars = or_list has_dangling_vars in
     let prog =
       if has_dangling_vars then
