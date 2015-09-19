@@ -1413,7 +1413,7 @@ let get_unsat_core assertions =
   let unsat_core =
     try
       let r = Z3mparser.output_unsat_core Z3mlexer.tokenizer lexbuf in
-      let () = x_binfo_hp (add_str "Unsat Core" string_of_z3m_res) r no_pos in
+      let () = x_tinfo_hp (add_str "Unsat Core" string_of_z3m_res) r no_pos in
       match r with
       | Sat_or_Unk _ -> []
       | Unsat unsat_core_ids ->
@@ -1425,7 +1425,7 @@ let get_unsat_core assertions =
           acc @ [a]) [] unsat_core_ids
     with e -> 
       let tok = Lexing.lexeme lexbuf in
-      let () = x_binfo_pp ((Printexc.to_string e) ^ ": Unexpected token " ^ tok) no_pos in
+      let () = x_tinfo_pp ((Printexc.to_string e) ^ ": Unexpected token " ^ tok) no_pos in
       []
   in unsat_core
 

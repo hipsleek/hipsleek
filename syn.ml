@@ -93,20 +93,90 @@ let cond_of_hprel (hprel: CF.hprel) =
   | Some g -> 
     let _, g_p, _, _, _, _ = CF.split_components g in
     CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix g_p) no_pos
+
+let cond_guard_of_hprel cond_list hprel_cond =
+  let all_cond_guard = List.find_all (fun c -> imply hprel_cond c) cond_list in
+  let cond_guard = CP.join_conjunctions all_cond_guard in
+  cond_guard
+
+let transform_hprel_w_cond_guard cond_guard (hprel: CF.hprel) =
+  let f_m_f m_f =
+    let p_f = MCP.pure_of_mix m_f in
+    let gist_p_f = Tpdispatcher.om_gist p_f cond_guard in
+    MCP.mix_of_pure gist_p_f
+  in
+  { hprel with
+    hprel_lhs = trans_pure_formula f_m_f hprel.hprel_lhs;
+    hprel_guard = map_opt (trans_pure_formula f_m_f) hprel.hprel_guard; }
+
+let transform_hprel_w_cond_guard cond_guard (hprel: CF.hprel) =
+  let pr1 = !CP.print_formula in
+  let pr2 = Cprinter.string_of_hprel_short in
+  Debug.no_2 "transform_hprel_w_cond_guard" pr1 pr2 pr2 
+    transform_hprel_w_cond_guard cond_guard hprel
+
+let should_merge_hprels prog hprels = 
+  match hprels with
+  | []
+  | _ ::[] -> false
+  | hpr::hprs ->
+    let args = args_of_hprel hpr in
+    let ex_hpr_lhs = push_exists_for_args hpr.CF.hprel_lhs args in
+    List.for_all (fun hp ->
+      let ex_hp_lhs = push_exists_for_args hp.CF.hprel_lhs args in
+      let equiv_lhs () = 
+        (heap_entail_exact_formula prog ex_hpr_lhs ex_hp_lhs) &&
+        (heap_entail_exact_formula prog ex_hp_lhs ex_hpr_lhs)
+      in
+      let equiv_guard () = 
+        match hpr.CF.hprel_guard, hp.CF.hprel_guard with
+        | None, None -> true
+        | Some gr, Some g ->
+          (heap_entail_exact_formula prog g gr) &&
+          (heap_entail_exact_formula prog gr g)
+        | _ -> false
+      in (equiv_lhs ()) && (equiv_guard ())) hprs
+
+let should_merge_hprels prog hprels = 
+  let pr = Cprinter.string_of_hprel_list_short in
+  Debug.no_1 "should_merge_hprels" pr string_of_bool
+    (should_merge_hprels prog) hprels
   
 (* hprels have the same name *)
-let merge_hprel_list hprels =
-  let hprels = rename_hprel_list hprels in
-  let conds = List.map cond_of_hprel hprels in
-  let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
-  let unsat_core = Smtsolver.get_unsat_core sub_conds in
-  if is_empty unsat_core then hprels
-  else []
+let merge_hprel_list prog hprels =
+  match hprels with
+  | []
+  | _::[] -> hprels
+  | _ ->
+    if List.exists (fun hpr -> is_None hpr.CF.hprel_guard) hprels then hprels
+    else
+      let hprels = rename_hprel_list hprels in
+      let conds = List.map cond_of_hprel hprels in
+      let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
+      let unsat_core = Smtsolver.get_unsat_core sub_conds in
+      if is_empty unsat_core then hprels
+      else
+        let cond_guards = List.map (fun c -> cond_guard_of_hprel unsat_core c) conds in
+        let cond_guard_hprels = List.combine cond_guards hprels in
+        let trans_hprels = List.map (fun (c, hpr) -> transform_hprel_w_cond_guard c hpr) cond_guard_hprels in
+        (* if not (should_merge_hprels prog trans_hprels) then hprels *)
+        (* else                                                       *)
+          let disj_rhs_list = List.fold_left (fun acc (c, hprel) ->
+            let rhs_w_cond = CF.add_pure_formula_to_formula c hprel.CF.hprel_rhs in
+            acc @ [rhs_w_cond]) [] cond_guard_hprels in
+          let disj_rhs = List.fold_left (fun acc f ->
+            CF.mkOr acc f no_pos) (List.hd disj_rhs_list) (List.tl disj_rhs_list) in
+          let comb_hpr = List.hd trans_hprels in
+          let comb_hpr = { comb_hpr with hprel_rhs = disj_rhs } in
+          [comb_hpr]
 
-let merging hprels = 
+let merge_hprel_list prog hprels =
+  let pr = Cprinter.string_of_hprel_list_short in
+  Debug.no_1 "Syn:merging" pr pr (merge_hprel_list prog) hprels
+
+let merging prog hprels = 
   let hprel_lists = List.map snd (partition_hprel_list hprels) in
-  List.concat (List.map merge_hprel_list hprel_lists)
-  
+  List.concat (List.map (merge_hprel_list prog) hprel_lists)
 
 (*********************)
 (***** UNFOLDING *****)
@@ -137,26 +207,6 @@ let mk_hprel_id hpr =
 
 let partition_hprel_id_list hprel_ids = 
   partition_by_key (fun hpri -> name_of_hprel hpri.hprel_constr) CP.eq_spec_var hprel_ids
-
-let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
-  let empty_es = CF.empty_es (CF.mkNormalFlow ()) Label_only.Lab2_List.unlabelled no_pos in
-  let ctx = CF.Ctx { empty_es with CF.es_formula = ante } in
-  let rs, _ = x_add Solver.heap_entail_one_context 21 prog false ctx conseq None None None no_pos in
-  let residue_f = CF.formula_of_list_context rs in
-  match rs with
-  | CF.FailCtx _ -> (false, residue_f)
-  | CF.SuccCtx lst -> (true, residue_f) 
-
-let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
-  let pr1 = !CF.print_formula in
-  let pr2 = pr_pair string_of_bool pr1 in
-  Debug.no_2 "Syn:heap_entail_formula" pr1 pr1 pr2 
-    (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq 
-
-let is_sat f = Tpdispatcher.is_sat_raw f
-
-let combine_Star f1 f2 = 
-  CF.mkStar f1 f2 CF.Flow_combine no_pos
 
 let add_back_hrel ctx hrel = 
   let hrel_f = CF.mkBase_simp hrel (MCP.mkMTrue no_pos) in
@@ -362,15 +412,6 @@ let unfolding prog hprels =
 (**************************)
 (***** PARAMETERIZING *****)
 (**************************)
-let trans_heap_formula f_h_f (f: CF.formula) = 
-  let somef2 _ f = Some (f, []) in
-  let id2 f _ = (f, []) in
-  let ida _ f = (f, []) in
-  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
-  CF.trans_formula f () 
-    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
-    f_arg List.concat
-
 let remove_dangling_heap_formula (f: CF.formula) = 
   let f_h_f _ hf = 
     match hf with
@@ -487,7 +528,7 @@ let syn_pre_preds prog (is: CF.infer_state) =
     in
 
     let () = x_binfo_pp ">>>>> Step 2A: Merging <<<<<" no_pos in
-    let is_all_constrs = x_add_1 merging is_all_constrs in
+    let is_all_constrs = x_add merging prog is_all_constrs in
     let () = x_binfo_hp (add_str "Merging result" 
         Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
     in

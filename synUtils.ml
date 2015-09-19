@@ -29,6 +29,14 @@ let simplify f args =
   if bnd_vars == [] then f else
     CP.mkExists_with_simpl Tpdispatcher.simplify_raw bnd_vars f None (CP.pos_of_formula f)
 
+let imply a c = Tpdispatcher.imply_raw a c
+
+let is_sat f = Tpdispatcher.is_sat_raw f
+
+let push_exists_for_args f args =
+  let bnd_vars = diff (CF.fv f) args in
+  CF.push_exists bnd_vars f
+
 (*****************)
 (***** UTILS *****)
 (*****************)
@@ -72,6 +80,31 @@ let args_of_hprel (hpr: CF.hprel) =
 (**********************)
 (* UTILS OVER FORMULA *)
 (**********************)
+let combine_Star f1 f2 = 
+  CF.mkStar f1 f2 CF.Flow_combine no_pos
+
+let trans_heap_formula f_h_f (f: CF.formula) = 
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  CF.trans_formula f () 
+    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
+    f_arg List.concat
+
+let rec trans_pure_formula f_m_f (f: CF.formula) = 
+  match f with
+  | CF.Base b ->
+    let n_pure = f_m_f b.formula_base_pure in
+    CF.Base { b with formula_base_pure = n_pure; }
+  | CF.Or o ->
+    let n_f1 = trans_pure_formula f_m_f o.formula_or_f1 in
+    let n_f2 = trans_pure_formula f_m_f o.formula_or_f2 in
+    CF.Or { o with formula_or_f1 = n_f1; formula_or_f2 = n_f2; }
+  | CF.Exists e ->
+    let n_pure = f_m_f e.formula_exists_pure in
+    CF.Exists { e with formula_exists_pure = n_pure;}
+
 let is_non_inst_hprel prog (hprel: CF.hprel) =
   let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
   let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hprel_name in
@@ -123,3 +156,21 @@ let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.sp
 let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.spec_var list = 
   Debug.no_2 "collect_feasible_heap_args_formula" !CP.print_svl !CF.print_formula !CP.print_svl
     (collect_feasible_heap_args_formula prog) null_aliases f
+
+let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
+  let empty_es = CF.empty_es (CF.mkNormalFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let ctx = CF.Ctx { empty_es with CF.es_formula = ante } in
+  let rs, _ = x_add Solver.heap_entail_one_context 21 prog false ctx conseq None None None no_pos in
+  let residue_f = CF.formula_of_list_context rs in
+  match rs with
+  | CF.FailCtx _ -> (false, residue_f)
+  | CF.SuccCtx lst -> (true, residue_f) 
+
+let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
+  let pr1 = !CF.print_formula in
+  let pr2 = pr_pair string_of_bool pr1 in
+  Debug.no_2 "Syn:heap_entail_formula" pr1 pr1 pr2 
+    (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq
+
+let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
+  fst (Wrapper.wrap_classic (Some true) (heap_entail_formula prog ante) conseq)
