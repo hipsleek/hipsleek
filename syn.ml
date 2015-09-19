@@ -86,10 +86,26 @@ let rename_hprel_list hprels =
     let n_args = args_of_hprel hpr in
     hpr::(List.map (rename_hprel_args n_args) hprs)
 
-(* (* hprels have the same name *)            *)
-(* let merge_hprel_list hprels =              *)
-(*   let hprels = rename_hprel_list hprels in *)
+let cond_of_hprel (hprel: CF.hprel) = 
+  let _, lhs_p, _, _, _, _ = CF.split_components hprel.hprel_lhs in
+  match hprel.hprel_guard with
+  | None -> MCP.pure_of_mix lhs_p
+  | Some g -> 
+    let _, g_p, _, _, _, _ = CF.split_components g in
+    CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix g_p) no_pos
   
+(* hprels have the same name *)
+let merge_hprel_list hprels =
+  let hprels = rename_hprel_list hprels in
+  let conds = List.map cond_of_hprel hprels in
+  let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
+  let unsat_core = Smtsolver.get_unsat_core sub_conds in
+  if is_empty unsat_core then hprels
+  else []
+
+let merging hprels = 
+  let hprel_lists = List.map snd (partition_hprel_list hprels) in
+  List.concat (List.map merge_hprel_list hprel_lists)
   
 
 (*********************)
@@ -469,8 +485,14 @@ let syn_pre_preds prog (is: CF.infer_state) =
             Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
       else x_binfo_pp "No dangling var is detected" no_pos
     in
+
+    let () = x_binfo_pp ">>>>> Step 2A: Merging <<<<<" no_pos in
+    let is_all_constrs = x_add_1 merging is_all_constrs in
+    let () = x_binfo_hp (add_str "Merging result" 
+        Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+    in
   
-    let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
+    let () = x_binfo_pp ">>>>> Step 2B: Unfolding <<<<<" no_pos in
     let is_all_constrs = x_add unfolding prog is_all_constrs in
     let () = x_binfo_hp (add_str "Unfolding result" 
         Cprinter.string_of_hprel_list_short) is_all_constrs no_pos

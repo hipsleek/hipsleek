@@ -690,11 +690,11 @@ and start() =
         if !smtsolver_name = "z3-2.19" then
           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
         else if !smtsolver_name = "z3-4.2" then
-          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2"; "-in"|]) set_process prelude
         else if !smtsolver_name = "z3-4.3.1" then
-          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2"; "-in"|]) set_process prelude
         else
-          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"; "unsat_core=true"|]) set_process prelude
       ) in
       is_z3_running := true;
     )
@@ -1282,7 +1282,7 @@ open Z3m
 
 let smt_timeout = ref 5.0
 
-let push_smt_input inp timeout f_timeout = 
+let push_smt_input is_opt inp timeout f_timeout = 
   let tstartlog = Gen.Profiling.get_time () in 
   if not !is_z3_running then start ()
   else if (!z3_call_count = !z3_restart_interval) then (
@@ -1291,7 +1291,8 @@ let push_smt_input inp timeout f_timeout =
   );
   let fnc f = (
     let () = incr z3_call_count in
-    let new_f = "(push)\n" ^ f ^ "(pop)\n" in
+    let new_f = if not is_opt then "(push)\n" ^ f ^ "(pop)\n" else f in
+    let () = x_binfo_hp (add_str "SMT input" idf) new_f no_pos in
     let () = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel)) in
@@ -1326,7 +1327,7 @@ let get_model is_linear vars assertions =
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
   ) in
-  let () = push_smt_input smt_inp !smt_timeout fail_with_timeout in
+  let () = push_smt_input false smt_inp !smt_timeout fail_with_timeout in
 
   let r =
     try
@@ -1358,7 +1359,20 @@ let norm_model (m: (string * z3m_val) list): (string * int) list =
 
 let assert_label_prefix = "z3_l_"
 
-let get_unsat_core vars assertions =
+let init_unsat_cores_option = ref false
+
+let set_unsat_cores_option () =
+  if not !init_unsat_cores_option then
+    let smt_inp = "(set-option :produce-unsat-cores true)\n" in
+    let fail_with_timeout _ = (
+      restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
+    ) in
+    init_unsat_cores_option := true;
+    push_smt_input true smt_inp !smt_timeout fail_with_timeout
+  else ()
+
+let get_unsat_core assertions =
+  let vars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.concat (List.map CP.fv assertions)) in
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
       let typ = (CP.type_of_spec_var v)in
@@ -1372,10 +1386,10 @@ let get_unsat_core vars assertions =
       acc @ [(i + 1, a)], i + 1) ([], 0) assertions) in
   let smt_asserts = List.map (fun (i, a) ->
       let label = assert_label_prefix ^ (string_of_int i) in
-      "(assert (! (" ^ (smt_of_formula pr_w pr_s a) ^ ") :named " ^ label ^ "))\n") assertions_w_label in
+      "(assert (! " ^ (smt_of_formula pr_w pr_s a) ^ " :named " ^ label ^ "))\n") assertions_w_label in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp = 
-    "(set-option :produce-unsat-cores true)\n" ^
+    (* "(set-option :produce-unsat-cores true)\n" ^ *)
     ";Variables Declarations\n" ^ smt_var_decls ^
     ";Assertion Declations\n" ^ smt_asserts ^
     "(check-sat)\n" ^
@@ -1387,14 +1401,19 @@ let get_unsat_core vars assertions =
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
   ) in
-  let () = push_smt_input smt_inp !smt_timeout fail_with_timeout in
+  (* let () = set_unsat_cores_option () in *)
+  let () = push_smt_input false smt_inp !smt_timeout fail_with_timeout in
 
   let eq_str s1 s2 = String.compare s1 s2 == 0 in
 
   let unsat_core =
     try
+      (* let out_str = String.concat "\n" (icollect_output !prover_process.inchannel []) in *)
+      (* let lexbuf = Lexing.from_string out_str in                                         *)
+      (* let () = x_binfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
       let lexbuf = Lexing.from_channel !prover_process.inchannel in
       let r = Z3mparser.output_unsat_core Z3mlexer.tokenizer lexbuf in
+      let () = x_binfo_hp (add_str "Unsat Core" string_of_z3m_res) r no_pos in
       match r with
       | Sat_or_Unk _ -> []
       | Unsat unsat_core_ids ->
@@ -1404,10 +1423,11 @@ let get_unsat_core vars assertions =
             eq_str id label) assertions_w_label) 
           in
           acc @ [a]) [] unsat_core_ids
-    with _ -> []
+    with e -> 
+      let () = x_binfo_pp (Printexc.to_string e) no_pos in
+      []
   in unsat_core
 
-let get_unsat_core vars assertions =
+let get_unsat_core assertions =
   let pr = pr_list !CP.print_formula in
-  Debug.no_1 "z3_get_unsat_core" pr pr
-    (fun _ -> get_unsat_core vars assertions) assertions
+  Debug.no_1 "z3_get_unsat_core" pr pr get_unsat_core assertions
