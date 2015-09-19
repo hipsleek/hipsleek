@@ -21,12 +21,16 @@
 
 output:
     sat_unk model { Z3m.Sat_or_Unk $2 }
-  | UNSAT OPAREN discardable_tokens CPAREN { Z3m.Unsat [] }
+  | UNSAT z3_message { Z3m.Unsat [] }
   ;
 
 output_unsat_core:
-    sat_unk OPAREN discardable_tokens CPAREN { Z3m.Sat_or_Unk [] }
+    sat_unk z3_message { Z3m.Sat_or_Unk [] }
   | UNSAT unsat_core { Z3m.Unsat $2 }
+
+z3_message:
+    {}
+  | OPAREN discardable_tokens CPAREN {}
 
 discardable_tokens:
     discardable_tokens discardable_token {}
@@ -39,6 +43,9 @@ discardable_token:
   | INT_LIT {}
   | COLON {}
   | QUOTATION {}
+  | SAT {}
+  | UNSAT {}
+  | UNK {}
   ;
 
 sat_unk:

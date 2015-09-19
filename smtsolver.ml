@@ -1292,7 +1292,7 @@ let push_smt_input is_opt inp timeout f_timeout =
   let fnc f = (
     let () = incr z3_call_count in
     let new_f = if not is_opt then "(push)\n" ^ f ^ "(pop)\n" else f in
-    let () = x_binfo_hp (add_str "SMT input" idf) new_f no_pos in
+    let () = x_tinfo_hp (add_str "SMT input" idf) new_f no_pos in
     let () = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel)) in
@@ -1406,12 +1406,12 @@ let get_unsat_core assertions =
 
   let eq_str s1 s2 = String.compare s1 s2 == 0 in
 
+  (* let out_str = String.concat "\n" (icollect_output !prover_process.inchannel []) in *)
+  (* let lexbuf = Lexing.from_string out_str in                                         *)
+  (* let () = x_binfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
+  let lexbuf = Lexing.from_channel !prover_process.inchannel in
   let unsat_core =
     try
-      (* let out_str = String.concat "\n" (icollect_output !prover_process.inchannel []) in *)
-      (* let lexbuf = Lexing.from_string out_str in                                         *)
-      (* let () = x_binfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
-      let lexbuf = Lexing.from_channel !prover_process.inchannel in
       let r = Z3mparser.output_unsat_core Z3mlexer.tokenizer lexbuf in
       let () = x_binfo_hp (add_str "Unsat Core" string_of_z3m_res) r no_pos in
       match r with
@@ -1424,7 +1424,8 @@ let get_unsat_core assertions =
           in
           acc @ [a]) [] unsat_core_ids
     with e -> 
-      let () = x_binfo_pp (Printexc.to_string e) no_pos in
+      let tok = Lexing.lexeme lexbuf in
+      let () = x_binfo_pp ((Printexc.to_string e) ^ ": Unexpected token " ^ tok) no_pos in
       []
   in unsat_core
 
