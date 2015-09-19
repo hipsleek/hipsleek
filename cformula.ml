@@ -4925,6 +4925,7 @@ type hprel= {
   hprel_path: cond_path_type;
   hprel_proving_kind: Others.proving_kind;
   hprel_flow: nflow list;
+  hprel_fold: bool;
 }
 
 
@@ -5232,7 +5233,7 @@ let mk_hp_rel_def1 c lhs rhs ofl=
     def_flow = ofl;
   }
 
-let mkHprel ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
+let mkHprel ?(fold_type=false) ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
   {  hprel_kind = knd;
      hprel_type = infer_type;
      unk_svl = u_svl;
@@ -5243,10 +5244,11 @@ let mkHprel ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g:
      hprel_rhs = hprel_r;
      hprel_path = hprel_p;
      hprel_proving_kind = Others.find_impt_proving_kind ();
+     hprel_fold = fold_type;
      hprel_flow = [!norm_flow_int];
   }
 
-let mkHprel_w_flow ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p nflow=
+let mkHprel_w_flow ?(fold_type=false) ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p nflow=
   {  hprel_kind = knd;
      hprel_type = infer_type;
      unk_svl = u_svl;
@@ -5257,6 +5259,7 @@ let mkHprel_w_flow ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (h
      hprel_rhs = hprel_r;
      hprel_path = hprel_p;
      hprel_proving_kind = Others.find_impt_proving_kind ();
+     hprel_fold = fold_type;
      hprel_flow = [nflow];
   }
 
@@ -5276,7 +5279,11 @@ let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib optflow_
     hprel_def_body =  body;
     hprel_def_body_lib = libs;
     hprel_def_flow = optflow_int;
+    (* hprel_fold = fold_type; *)
   }
+
+(* let mk_hprel_fold kind hprel (guard_opt: formula option) path_opf opflib optflow_int = *)
+(*   mk_hprel_def ~fold_type:true kind hprel (guard_opt: formula option) path_opf opflib optflow_int  *)
 
 let pr_h_formula_opt og=
   match og with
@@ -19611,4 +19618,27 @@ let fresh_data_arg body_dn =
   let args = body_dn.h_formula_data_arguments in
   let () = y_tinfo_hp (add_str "data args" !CP.print_svl) args in
   { body_dn with  h_formula_data_arguments = List.map CP.fresh_spec_var args }
+
+let extr_exists_hprel ra = 
+  let lhs = ra.hprel_lhs in
+  let guard = ra.hprel_guard in
+  let kind = ra.hprel_kind in
+  let () = y_binfo_hp (add_str "lhs" !print_formula) lhs in
+  let () = y_binfo_hp (add_str "guard" (pr_option !print_formula)) guard in
+  let (lhs_vs,lhs_h_vs) = (fv lhs,fv_heap_of lhs) in
+  let (guard_vs,guard_h_vs) = match guard with
+    None -> ([],[])
+    | Some f -> (fv f,fv_heap_of f) in
+  (* let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in *)
+  (* let () = y_binfo_hp (add_str "guard_vs" !CP.print_svl) guard_vs in *)
+  let ex_lhs_vars = CP.diff_svl lhs_vs lhs_h_vs in
+  let ex_guard_vars = CP.diff_svl guard_vs (lhs_h_vs@guard_h_vs) in
+  let () = if ex_lhs_vars!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vars in
+  let () = if ex_lhs_vars!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vars in
+  (* let () = y_binfo_hp (add_str "guard" (string_of_rel_cat)) kind in *)
+  (ex_lhs_vars,ex_guard_vars)
+
+let simplify_hprel ra = 
+  let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
+  ra
 

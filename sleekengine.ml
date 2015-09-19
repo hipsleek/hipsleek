@@ -1438,6 +1438,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       (*     hprel_proving_kind = Others.proving_kind # top_no_exc; *)
       (* } in *)
       (*hp_assumes*)
+      let _ = CF.extr_exists_hprel new_rel_ass in
       let _ = x_binfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
       let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
       ()
@@ -1608,10 +1609,12 @@ let select_hprel_assume hprel_list hprel_id_list =
 let update_sleek_hprel_assumes upd_hprel_list = 
   sleek_hprel_assumes := upd_hprel_list
 
-let print_sleek_hprel_assumes () = 
+let print_sleek_hprel_assumes () =
+  let curr_hprel = !sleek_hprel_assumes in
+  let curr_hprel = List.map CF.simplify_hprel curr_hprel in
   if (not !Globals.smt_compete_mode) then
     x_binfo_hp (add_str "Current list of heap relational assumptions" Cprinter.string_of_hprel_list_short) 
-      !sleek_hprel_assumes no_pos
+      curr_hprel (* !sleek_hprel_assumes *) no_pos
   else ()
 
 let process_sleek_hprel_assumes hps f_proc = 

@@ -375,9 +375,20 @@ lemma_test "L7" self::PP2<> <-> self::ll<> & self!=null.
 Entailing lemma L7: Valid.
 
  Temp Lemma(s) proved is valid in current context.
-
-
 =========================================================================
+# ex20c.slk 
+
+let extr_exists_hprel ra = 
+
+ Temp Lemma(s) proved is valid in c
+# existential vars in hprel to be eliminated
+
+!!! **cformula.ml#19630:XXX ex_guard_vars to eliminate:[]
+!!! **cformula.ml#19629:XXX ex_lhs_vars to eliminate:[res,y',x']
+!!! **cformula.ml#19630:XXX ex_guard_vars to eliminate:[]
+!!! **cformula.ml#19629:XXX ex_lhs_vars to eliminate:[]
+!!! **cformula.ml#19630:XXX ex_guard_vars to eliminate:[]
+!!! **cformula.ml#19629:XXX ex_lhs_vars to eliminate:[res,y',x']
 =========================================================================
 =========================================================================
 =========================================================================
