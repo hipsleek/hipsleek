@@ -1412,12 +1412,12 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let guard1 = CF.elim_exists guard0 in
       let _ = x_tinfo_hp (add_str "guard1" Cprinter.string_of_formula) guard1 no_pos in
       let _, guard = CF.split_quantifiers guard1 in
-      let _ = x_tinfo_hp (add_str "guard" Cprinter.string_of_formula) guard no_pos in
-      let p = CF.get_pure guard in
-      let () = y_tinfo_hp (add_str "pure guard" !CP.print_formula) p in
-      let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
-      let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair pr_sv pr_sv))) eq in
-      let guard1 = x_add CF.subst eq guard in
+      (* let _ = x_tinfo_hp (add_str "guard" Cprinter.string_of_formula) guard no_pos in *)
+      (* let p = CF.get_pure guard in *)
+      (* let () = y_tinfo_hp (add_str "pure guard" !CP.print_formula) p in *)
+      (* let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in *)
+      (* let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair pr_sv pr_sv))) eq in *)
+      let guard1 = (* x_add CF.subst eq *) guard in
       (* if CP.isConstTrue p then *)
       (* let hfs = CF.heap_of guard1 in *)
       (* CF.join_star_conjunctions_opt hfs *)
