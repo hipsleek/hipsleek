@@ -1,0 +1,50 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+HeapPred U(node x).
+HeapPred  GP_154(node x,node@NI b).
+
+
+relAssume //(1)
+emp&flted_22_139=null --> U(flted_22_139).
+
+
+relAssume //(1)
+q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+  q_147!=null --> U(q_147).
+
+relAssume //(1)
+U(q_153)&q_147!=null --> GP_154(q_153,q_147).
+
+
+print relAssumes.
+
+shape_add_dangling [U,GP_164].
+
+print relAssumes.
+
+shape_unfold [U].
+//shape_unfold [GP_164].
+//shape_unfold [U,GP_164].
+
+
+//shape_merge [U,GP_164].
+
+print relAssumes.
+
+/*
+# ex20c.slk
+
+# emp&flted_22_139=null --> U(flted_22_139).
+
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+error at: 
+SLEEK FAILURE (END)
+
+
+
+*/
+

@@ -1,0 +1,91 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = null 
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred U2(node x,node y).
+HeapPred U3(node x,node y).
+
+
+lemma_infer [U2,classic]
+  self::app3<> -> U2(self,q) * q::node<_,null>.
+
+print residue.
+
+/*
+# ex21d3.slk (OK)
+
+lemma_infer [U2,classic]
+  self::app3<> -> U2(self,q) * q::node<_,null>.
+
+Temp Lemma(s) inferred is valid in current context.
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [
+  emp&self_lem_17=q_112 --> U2(self_lem_17,q_112)&true; 
+                  U2(q_128,q_131)&
+                   q_128!=null |#| q_131::node<Anon_140,flted_29_138>@M&
+                   flted_29_138=null --> GP_133(q_128,q_131,self_lem_17@NI)&
+                   true; 
+                  self_lem_17::node<Anon_127,q_128>@M * 
+                  GP_133(q_128,q_131,self_lem_17@NI)&
+                   q_128!=null --> U2(self_lem_17,q_131)&true]
+[[ InferFold 0 ==>  COND ==>  Match(self_lem_17,self_lem_17) ==>  COND ==>  (Lemma ==> lem_17(q_128,q_128)) ==> (left: lem_17) ==>  InferUnfold  ==>  Match(q_139,q_131) ==> ||OR|| ==>  SEARCH ==>  BaseCaseFold ==>  Match(self_lem_17,q_112)]]
+
+ emp&self_lem_17=q_112 --> U2(self_lem_17,q_112).
+
+ U2(q_128,q_131)& q_128!=null |#| 
+   q_131::node<Anon_140,flted_29_138>@M&flted_29_138=null 
+   --> GP_133(q_128,q_131,self_lem_17@NI).
+
+ self_lem_17::node<Anon_127,q_128>@M * 
+   GP_133(q_128,q_131,self_lem_17@NI)&q_128!=null 
+   --> U2(self_lem_17,q_131).
+
+===============
+
+GP_133(q_128,q_131,self_lem_17@NI) <--
+ U2(q_128,q_131)& q_128!=null |#| 
+   q_131::node<Anon_140,flted_29_138>@M&flted_29_138=null 
+ // drop guard
+ U2(q_128,q_131)& q_128!=null 
+
+-----
+U2(self_lem_17,q_112).
+ <-- emp&self_lem_17=q_112 
+
+U2(self_lem_17,q_131)
+ <-- self_lem_17::node<Anon_127,q_128>@M * 
+     GP_133(q_128,q_131,self_lem_17@NI)&q_128!=null 
+ // unfold GP_133(..)
+ <-- self_lem_17::node<Anon_127,q_128>@M * 
+     U2(q_128,q_131) &q_128!=null 
+--------
+//merge U2
+U2(self_lem_17,q_112).
+ <-- emp&self_lem_17=q_112
+  or self_lem_17::node<Anon_127,q_128>@M * 
+     U2(q_128,q_131) &q_128!=null 
+
+*/
