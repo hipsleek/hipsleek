@@ -5263,8 +5263,8 @@ let mkHprel_w_flow ?(fold_type=false) ?(infer_type=INFER_UNKNOWN) knd u_svl u_hp
      hprel_flow = [nflow];
   }
 
-let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
-  mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p
+let mkHprel_1 ?(fold_type=false) knd hprel_l hprel_g hprel_r hprel_p =
+  mkHprel ~fold_type:fold_type knd [] [] [] hprel_l hprel_g hprel_r hprel_p
 
 let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib optflow_int=
   let libs = match opflib with
@@ -19638,7 +19638,35 @@ let extr_exists_hprel ra =
   (* let () = y_binfo_hp (add_str "guard" (string_of_rel_cat)) kind in *)
   (ex_lhs_vars,ex_guard_vars)
 
-let simplify_hprel ra = 
-  let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
-  ra
 
+let add_unfold_flag lst = 
+  List.map (fun w -> {w with hprel_fold = false}) lst
+
+let add_fold_flag lst = 
+  List.map (fun w -> {w with hprel_fold = true}) lst
+
+(*
+   U(..) # .. --> ..   // unfold
+   ....  --> U(..)     // fold
+*)
+
+let check_unfold ra =
+  let lhs = ra.hprel_lhs in
+  let rhs = ra.hprel_rhs in
+  let h_l = heap_of lhs in
+  let h_r = heap_of rhs in
+  match h_l with
+  | [HRel (hp,_,_)] -> (Some true,[hp])
+  | _ -> 
+    begin
+      match h_r with
+      | [HRel (hp,_,_)] -> (Some false,[hp])
+      | _ -> (None,[])
+
+    end
+
+let check_hprel ra = 
+  let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
+  let opt= check_unfold ra in
+  let () = y_binfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in
+  ra

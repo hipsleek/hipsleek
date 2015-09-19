@@ -895,7 +895,7 @@ let constant_checking prog rhs lhs_b rhs_b es=
   else
     (false, es, rhs, None, None, None)
 
-let generate_error_constraints_x prog es lhs rhs_hf lhs_hps es_cond_path pos=
+let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
   if not !Globals.sae then
     None
   else
@@ -943,7 +943,7 @@ let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
   let pr1 = Cprinter.string_of_formula in
   let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   Debug.no_3 " generate_error_constraints" pr2 pr1 Cprinter.string_of_h_formula (pr_option pr2)
-    (fun  _ _ _ ->  generate_error_constraints_x prog (es:entail_state) lhs rhs_hf lhs_hps es_cond_path pos)
+    (fun  _ _ _ ->  generate_error_constraints prog (es:entail_state) lhs rhs_hf lhs_hps es_cond_path pos)
     es lhs rhs_hf
 
 
@@ -1783,6 +1783,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     let n_ihvr = (es.CF.es_infer_vars_hp_rel@new_hp_decls) in
     let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
     } in
+    let hp_rel_list = CF.add_fold_flag hp_rel_list in
     let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
     let heap_of_rel_lhs = match (CF.heap_of rel_lhs) with
       | [hf] -> hf
@@ -2265,6 +2266,7 @@ let infer_collect_hp_rel_classsic prog (es:entail_state) rhs pos =
                       (* CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps); *)
                       CF.es_formula = n_es_formula}
         in
+        let ls_ass = CF.add_unfold_flag ls_ass in
         let () = new_es.CF.es_infer_hp_rel # push_list ls_ass in
         x_tinfo_hp (add_str  "  new residue " Cprinter.string_of_formula) new_es.CF.es_formula pos;
         (true, new_es)

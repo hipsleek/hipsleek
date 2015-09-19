@@ -1611,7 +1611,7 @@ let update_sleek_hprel_assumes upd_hprel_list =
 
 let print_sleek_hprel_assumes () =
   let curr_hprel = !sleek_hprel_assumes in
-  let curr_hprel = List.map CF.simplify_hprel curr_hprel in
+  let curr_hprel = List.map CF.check_hprel curr_hprel in
   if (not !Globals.smt_compete_mode) then
     x_binfo_hp (add_str "Current list of heap relational assumptions" Cprinter.string_of_hprel_list_short) 
       curr_hprel (* !sleek_hprel_assumes *) no_pos
