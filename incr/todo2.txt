@@ -299,9 +299,64 @@ inferred hprel: [HP_181(q_148,q_171@NI,self_lem_19@NI)&true --> emp& q_148!=null
                   true]
 [[ SEARCH ==>  InferUnfold  ==>  COND ==>  (Lemma <== lem_19(q_180,q_148)) ==>  InferUnfold  ==>  Match(q_171,q_187)]]
 =========================================================================
+# ex21p2a1.ss
+
+lemma_test self::P<p,x> n<-> self::lseg<p> 
+   & (self=p & x=null | self!=null & self=x)
+.
+
+# is INV precise? fail to prove in other direction.
+  incomplete prehaps?
+
+Entailing lemma lem_16: Fail. Details below:
+         "==>" implication: : Valid.
+         "<==" implication: : Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_lem_16_left_right::P<p_237,x_238>@M(must),
+ ((q_243!=null | p=q_243)) & 
+ (((q_243=p & Anon_248=null) | (q_243!=null & q_243=Anon_248))) & 
+ ((q_243=p | q_243!=null)) & self_lem_16_left_right!=null & 
+ (((self_lem_16_left_right=p & x=null) | 
+   (self_lem_16_left_right!=null & self_lem_16_left_right=x))) |-  self_lem_16_left_right=x. LOCS:[1;0;18;34;33] (may-bug)
+
 =========================================================================
+# ex21e5b.ss
+
+lemma_test self::PP<y> <- self::node<_,q>*q::lseg<y>.
+
+# Why is there an exception below?
+
+!!! WARNING logtime exception:8.3e-05
+!!! WARNING logtime exception:0.000541exception in lemma "lem_17" check
+
+Entailing lemma lem_17: Fail. (cex)(must) cause: exception in lemma proving
+
+Failed to proved for lem_17:==> (invalid lemma encountered).
 =========================================================================
-=========================================================================
+# ex21e5a1.ss
+
+lemma_test self::PP<y> -> self::node<_,q>*q::lseg<y>.
+
+# need to schedule guided lemma .. beyond data..
+
+(==context.ml#2851==)
+process_one_match@2
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::PP<p>@M
+ RHS: q::lseg<p_123>@M
+ lhs_rest: emp
+ rhs_rest: emp
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::PP<p>@M
+process_one_match inp3 :lhs_p: q2!=null & Anon_19=Anon_18 & q=q2 & Anon_19=Anon_18 & q=q2
+process_one_match inp4 :rhs_node: q::lseg<p_123>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: p_123=p
+process_one_match inp7 :([(p_123,p)],None)
+process_one_match@2 EXIT: Prio:1
+ NothingToDo => cond action is empty
+
+Entail (1) : Fail.(may) cause:Nothing_to_do?cond action is empty
 =========================================================================
 =========================================================================
 =========================================================================

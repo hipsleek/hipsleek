@@ -35,11 +35,16 @@ node append(node x, node y)
 
 
 /*
-# ex21p1.ss
-
+# ex21p1.ss --old-pred-synthesis
+node append(node x, node y)
   infer [P,@classic]
   requires P(x,y)
-  ensures true ;
+  ensures true;
+*******relational definition********
+*********************************************************
+[ P(x_1664,y_1665) ::= x_1664::ll<>@M(4,5)]
+*************************************
+
 
 
 P(x,y)& x!=null --> x::node<val_33_1643,next_33_1644>@M * 
