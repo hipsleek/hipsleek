@@ -4052,8 +4052,8 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
 and split_components (f: formula) =
-  Debug.no_1 "CF.split_components" !print_formula (fun _ -> "") 
-    split_components_x f
+  (* Debug.no_1 "split_components" !print_formula (fun _ -> "") *)
+  split_components_x f
 
 and split_components_all (f : formula) =
   let rec helper f =
@@ -19623,18 +19623,16 @@ let extr_exists_hprel ra =
   let lhs = ra.hprel_lhs in
   let guard = ra.hprel_guard in
   let kind = ra.hprel_kind in
-  let () = y_binfo_hp (add_str "lhs" !print_formula) lhs in
-  let () = y_binfo_hp (add_str "guard" (pr_option !print_formula)) guard in
+  (* let () = y_binfo_hp (add_str "lhs" !print_formula) lhs in *)
+  (* let () = y_binfo_hp (add_str "guard" (pr_option !print_formula)) guard in *)
   let (lhs_vs,lhs_h_vs) = (fv lhs,fv_heap_of lhs) in
   let (guard_vs,guard_h_vs) = match guard with
-    | None -> ([],[])
+    None -> ([],[])
     | Some f -> (fv f,fv_heap_of f) in
   (* let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in *)
   (* let () = y_binfo_hp (add_str "guard_vs" !CP.print_svl) guard_vs in *)
   let ex_lhs_vars = CP.diff_svl lhs_vs lhs_h_vs in
   let ex_guard_vars = CP.diff_svl guard_vs (lhs_h_vs@guard_h_vs) in
-  let () = if ex_lhs_vars!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vars in
-  let () = if ex_lhs_vars!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vars in
   (* let () = y_binfo_hp (add_str "guard" (string_of_rel_cat)) kind in *)
   (ex_lhs_vars,ex_guard_vars)
 
@@ -19655,11 +19653,11 @@ let check_unfold ra =
   let h_l = heap_of lhs in
   let h_r = heap_of rhs in
   match h_l with
-  | [HRel (hp,_,_)] -> (Some true,[hp])
+  | [HRel (hp,_,_)] -> (Some true,[hp]) (* unfold rule *)
   | _ -> 
     begin
       match h_r with
-      | [HRel (hp,_,_)] -> (Some false,[hp])
+      | [HRel (hp,_,_)] -> (Some false,[hp]) (* fold rule *)
       | _ -> (None,[])
 
     end
@@ -19667,5 +19665,7 @@ let check_unfold ra =
 let check_hprel ra = 
   let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
   let opt= check_unfold ra in
-  let () = y_binfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in
+  (* let () = y_binfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in *)
+  (* let () = if ex_lhs_vs!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vs in *)
+  (* let () = if ex_guard_vs!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vs in *)
   ra

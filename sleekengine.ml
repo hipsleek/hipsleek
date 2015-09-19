@@ -1401,18 +1401,27 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   let fv_idents = (List.map CP.name_of_spec_var all_vs) in
   let (stab,lhs) = x_add meta_to_formula ilhs false fv_idents stab in
   let lhs = CF.elim_exists lhs in
+  let pr_sv = !CP.print_sv in
   let guard = match igurad_opt with
     | None -> None
-    | Some iguard -> let (_,guard0) = x_add meta_to_formula iguard false fv_idents stab in
+    | Some iguard -> 
+      let () = x_tinfo_hp (add_str "fv_idents" (pr_list pr_id)) fv_idents no_pos in
+      let fv_idents = [] in
+      let (_,guard0) = x_add meta_to_formula iguard false fv_idents stab in
+      let _ = x_tinfo_hp (add_str "guard0" Cprinter.string_of_formula) guard0 no_pos in
       let guard1 = CF.elim_exists guard0 in
+      let _ = x_tinfo_hp (add_str "guard1" Cprinter.string_of_formula) guard1 no_pos in
       let _, guard = CF.split_quantifiers guard1 in
-      (* let _ = Debug.info_pprint (Cprinter.string_of_formula guard) no_pos in *)
+      let _ = x_tinfo_hp (add_str "guard" Cprinter.string_of_formula) guard no_pos in
       let p = CF.get_pure guard in
+      let () = y_tinfo_hp (add_str "pure guard" !CP.print_formula) p in
       let eq = (Mcpure.ptr_equations_without_null (Mcpure.mix_of_pure p)) in
+      let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair pr_sv pr_sv))) eq in
       let guard1 = x_add CF.subst eq guard in
       (* if CP.isConstTrue p then *)
       (* let hfs = CF.heap_of guard1 in *)
       (* CF.join_star_conjunctions_opt hfs *)
+      let () = y_tinfo_hp (add_str "guard" !CF.print_formula) guard1 in
       Some guard1
       (* else report_error no_pos "Sleekengine.process_rel_assume: guard should be heaps only" *)
   in
@@ -1424,7 +1433,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   (*TODO: LOC: hp_id should be cond_path*)
   (* why not using mkHprel? *)
   let total_heap_rel_ids = lhps@rhps in
-  let _ = if total_heap_rel_ids != [] then
+  let res = if total_heap_rel_ids != [] then
       let knd = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)) in
       let new_rel_ass = CF.mkHprel_1 knd lhs guard rhs cond_path in
       (*     CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhps@rhps)); *)
@@ -1456,8 +1465,10 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
   in
   ()
 
-let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
-  Debug.no_2 "process_rel_assume"  pr_none pr_none pr_none (fun _ _ -> process_rel_assume  cond_path ilhs  igurad_opt irhs) ilhs irhs
+let process_rel_assume cond_path (ilhs : meta_formula) (iguard : meta_formula option) (irhs: meta_formula) =
+  let pr1 = string_of_meta_formula in
+  let pr2 = pr_option string_of_meta_formula in
+  Debug.no_3 "process_rel_assume"  pr1 pr2 pr1 pr_unit (fun _ _ _ -> process_rel_assume  cond_path ilhs  iguard irhs) ilhs iguard irhs
 
 let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_info=
   (* let _ = Debug.info_pprint "process_rel_assume" no_pos in *)

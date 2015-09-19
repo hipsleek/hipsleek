@@ -1613,6 +1613,24 @@ error at:
 SLEEK FAILURE (END)
 
 ===========================================================================
+# ex20.slk (FIXED by avoiding linearization of guard)
+
+# where was Anon_1619=Anon_1619 introduced and why?
+
+ [P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * HP_1620(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618!=0 & Anon_1619=Anon_1619 --> P(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618=0 & Anon_1619=Anon_1619 --> emp]
+
+!!!:0: 0: **sleekengine.ml#1442: HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+  v_1618!=0 & Anon_1619=Anon_1619 --> P(Anon_1619)
+(==astsimp.ml#7386==)
+process_rel_assume@2
+process_rel_assume inp1 :IFORM:(emp ; (emp ; (HRel HP_1620(Anon_1619)))) * ([] & true)( FLOW __norm)
+process_rel_assume inp2 :Some(IFORM:(emp ; (emp ; (s::char_star{}<v_1618,Anon_1619>@M[HeapNode1]))) * ([] & v_1618 != 0)( FLOW __norm))
+process_rel_assume inp3 :IFORM:(emp ; (emp ; (HRel P(Anon_1619)))) * ([] & true)( FLOW __norm)
+process_rel_assume@2 EXIT:?
 ===========================================================================
 ===========================================================================
 ===========================================================================

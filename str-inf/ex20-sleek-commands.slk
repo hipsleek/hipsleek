@@ -32,3 +32,15 @@ print relAssumes.
 shape_param_dangling [P,HP_1620].
 
 print relAssumes.
+
+/*
+# ex20.slk
+
+# where was Anon_1619=Anon_1619 introduced and why?
+
+ [P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * HP_1620(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618!=0 & Anon_1619=Anon_1619 --> P(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618=0 & Anon_1619=Anon_1619 --> emp]
+*/
