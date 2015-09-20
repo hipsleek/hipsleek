@@ -1034,6 +1034,8 @@ non_empty_command:
       | t = shape_add_dangling_cmd -> ShapeAddDangling t
       | t = shape_unfold_cmd -> ShapeUnfold t
       | t = shape_param_dangling_cmd -> ShapeParamDangling t
+      | t = shape_simplify_cmd -> ShapeSimplify t
+      | t = shape_merge_cmd -> ShapeMerge t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2603,6 +2605,16 @@ shape_unfold_cmd:
 
 shape_param_dangling_cmd:
   [[ `SHAPE_PARAM_DANGLING; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_simplify_cmd:
+  [[ `SHAPE_SIMPLIFY; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_merge_cmd:
+  [[ `SHAPE_MERGE; `OSQUARE; il=OPT id_list; `CSQUARE
      ->  un_option il []
   ]];
 

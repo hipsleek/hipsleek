@@ -1644,6 +1644,12 @@ let process_shape_unfold hps =
 
 let process_shape_param_dangling hps =
   process_sleek_hprel_assumes hps Syn.dangling_parameterizing
+
+let process_shape_simplify hps =
+  process_sleek_hprel_assumes hps Syn.simplify_hprel_list
+
+let process_shape_merge hps = 
+  process_sleek_hprel_assumes hps (Syn.merging !cprog)
   
 (******************************************************************************)
 

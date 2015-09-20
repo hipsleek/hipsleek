@@ -12,6 +12,13 @@ module CF = Cformula
 module MCP = Mcpure
 (* module CEQ = Checkeq *)
 
+(**************************)
+(***** SIMPLIFICATION *****)
+(**************************)
+
+let simplify_hprel_list hprels = 
+  List.map (x_add_1 simplify_hprel) hprels
+
 (***************************)
 (***** ADDING DANGLING *****)
 (***************************)
@@ -550,7 +557,7 @@ let dangling_parameterizing hprels =
 let syn_pre_preds prog (is: CF.infer_state) = 
   if !Globals.new_pred_syn then
     let () = x_binfo_pp ">>>>> Step 0: Simplification <<<<<" no_pos in
-    let is_all_constrs = List.map (x_add_1 simplify_hprel) is.CF.is_all_constrs in
+    let is_all_constrs = simplify_hprel_list is.CF.is_all_constrs in
     let () = x_binfo_hp (add_str "Simplified hprels" 
         Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
     in
