@@ -220,6 +220,10 @@ let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let should_infer_tnt = ref true
 
+let classify_sleek_hprel_assumes () =
+  let () = y_tinfo_pp "classify_sleek_hprel_assumes" in
+  sleek_hprel_assumes := CF.add_infer_type_to_hprel !sleek_hprel_assumes
+
 let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def;ithrd_def];
   iprog.I.prog_view_decls <- [];
@@ -1448,7 +1452,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       (* } in *)
       (*hp_assumes*)
       let _ = CF.extr_exists_hprel new_rel_ass in
-      let _ = x_binfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
+      let _ = x_tinfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
       let _ = sleek_hprel_assumes := !sleek_hprel_assumes @ [new_rel_ass] in
       ()
     else
@@ -1621,7 +1625,8 @@ let update_sleek_hprel_assumes upd_hprel_list =
   sleek_hprel_assumes := upd_hprel_list
 
 let print_sleek_hprel_assumes () =
-  let () = sleek_hprel_assumes := CF.add_infer_type_to_hprel !sleek_hprel_assumes in
+  (* can we have this at a better place? *)
+  (* let () = sleek_hprel_assumes := CF.add_infer_type_to_hprel !sleek_hprel_assumes in *)
   let curr_hprel = !sleek_hprel_assumes in
   (* let curr_hprel = List.map CF.check_hprel curr_hprel in *)
   if (not !Globals.smt_compete_mode) then
@@ -1630,6 +1635,7 @@ let print_sleek_hprel_assumes () =
   else ()
 
 let process_sleek_hprel_assumes hps f_proc = 
+  let () = classify_sleek_hprel_assumes () in
   let sel_hprel_assume_list, others = select_hprel_assume !sleek_hprel_assumes hps in
   let res = f_proc sel_hprel_assume_list in
   update_sleek_hprel_assumes (res @ others)

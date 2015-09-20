@@ -19710,36 +19710,38 @@ let string_of_infer_type a = match a with
   | INFER_FOLD -> "fold"
 
 let add_infer_type_to_hprel ras =
-  let pr = pr_list (fun (r,_,_) -> pr_none r) in
-  let pr2 = pr_list (fun (r,_,n) -> string_of_int n) in
-  let pr_p = pr_pair string_of_infer_type !CP.print_svl in
-  let pr3 = pr_list (fun r -> pr_p (r.hprel_type,r.hprel_unknown)) in
-  let lst = List.map (fun r -> let a = check_unfold_aux r in (r,a,List.length a)) ras in
-  let () = y_binfo_hp (add_str "add_infer_type" pr2) lst in
-  let (emp,lst) = List.partition (fun (_,_,n) -> n==0) lst in
-  let (ones,lst) = List.partition (fun (_,_,n) -> n==1) lst in
-  let ones_ans = List.map (fun (r,a,_) -> (r,List.hd a)) ones in
-  if emp!=[] then y_winfo_hp (add_str "UNCLASSIFIED REL_ASS" pr) emp;
-  (* choose a case which occurred before in ones *)
-  (* let rec choose ans r = match ans with *)
-  (*                        | [] -> r *)
-  (*                        | x::xs ->  *)
-  (*                          if List.exists (fun (_,t2) -> r=t2) ones_ans then r *)
-  (*                          else choose xs x in *)
-  let compatible (b1,hp1) = not(List.exists (fun (_,(b2,hp2)) -> hp1=hp2 && not(b1=b2)) ones_ans) in
-  (* choose a compatible case *)
-  let choose xs = 
-    let rs = List.filter compatible xs in
-    match rs with
-    | [] -> List.hd xs (* choose an incompatible *)
-    | x::xs -> x in
-  let rs2 = List.map (fun (r,a,_) -> modify_hprel (r,(choose a))) lst in
-  let emp = List.map (fun (r,_,_) -> r) emp in
-  let ones_ans = List.map modify_hprel ones_ans in
-  let res = emp@ones_ans@rs2 in
-  let () = y_binfo_hp (add_str "add_infer_type(input)" pr3) ras in
-  let () = y_binfo_hp (add_str "add_infer_type(output)" pr3) res in
-  res
+  if not(List.exists (fun r -> r.hprel_type ==INFER_UNKNOWN) ras) then ras
+  else 
+    let pr = pr_list (fun (r,_,_) -> pr_none r) in
+    let pr2 = pr_list (fun (r,_,n) -> string_of_int n) in
+    let pr_p = pr_pair string_of_infer_type !CP.print_svl in
+    let pr3 = pr_list (fun r -> pr_p (r.hprel_type,r.hprel_unknown)) in
+    let lst = List.map (fun r -> let a = check_unfold_aux r in (r,a,List.length a)) ras in
+    let () = y_tinfo_hp (add_str "add_infer_type" pr2) lst in
+    let (emp,lst) = List.partition (fun (_,_,n) -> n==0) lst in
+    let (ones,lst) = List.partition (fun (_,_,n) -> n==1) lst in
+    let ones_ans = List.map (fun (r,a,_) -> (r,List.hd a)) ones in
+    if emp!=[] then y_winfo_hp (add_str "UNCLASSIFIED REL_ASS" pr) emp;
+    (* choose a case which occurred before in ones *)
+    (* let rec choose ans r = match ans with *)
+    (*                        | [] -> r *)
+    (*                        | x::xs ->  *)
+    (*                          if List.exists (fun (_,t2) -> r=t2) ones_ans then r *)
+    (*                          else choose xs x in *)
+    let compatible (b1,hp1) = not(List.exists (fun (_,(b2,hp2)) -> hp1=hp2 && not(b1=b2)) ones_ans) in
+    (* choose a compatible case *)
+    let choose xs = 
+      let rs = List.filter compatible xs in
+      match rs with
+      | [] -> List.hd xs (* choose an incompatible *)
+      | x::xs -> x in
+    let rs2 = List.map (fun (r,a,_) -> modify_hprel (r,(choose a))) lst in
+    let emp = List.map (fun (r,_,_) -> r) emp in
+    let ones_ans = List.map modify_hprel ones_ans in
+    let res = emp@ones_ans@rs2 in
+    let () = y_tinfo_hp (add_str "add_infer_type(input)" pr3) ras in
+    let () = y_tinfo_hp (add_str "add_infer_type(output)" pr3) res in
+    res
 
 let add_infer_type_to_hprel ras =
   let pr = !print_hprel_list_short in
@@ -19748,7 +19750,7 @@ let add_infer_type_to_hprel ras =
 let check_hprel ra = 
   let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
   let opt = check_unfold ra in
-  (* let () = y_binfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in *)
+  (* let () = y_tinfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in *)
   (* let () = if ex_lhs_vs!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vs in *)
   (* let () = if ex_guard_vs!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vs in *)
   ra
