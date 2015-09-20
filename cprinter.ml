@@ -2809,6 +2809,8 @@ let pr_hprel_short hpa =
   (* fmt_string "hprel(1)"; *)
   pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
+  fmt_string (string_of_infer_type hpa.hprel_type);
+  fmt_string " ";
   prtt_pr_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
     | None -> fmt_string " |#| "(* () *)
@@ -5548,6 +5550,7 @@ Cformula.print_failure_kind_full := string_of_failure_kind_full;;
 Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_hprel_def_short := string_of_hprel_def_short;;
 Cformula.print_hprel_short := string_of_hprel_short;;
+Cformula.print_hprel_list_short := string_of_hprel_list_short;;
 (* Cformula.print_nflow := string_of_nflow;; *)
 Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;

@@ -41,17 +41,15 @@ let push_exists_for_args f args =
 (***** UTILS *****)
 (*****************)
 let is_pre_hprel (hpr: CF.hprel) = 
-  (* match hpr.hprel_proving_kind with *)
-  (* | PK_PRE                          *)
-  (* | PK_PRE_REC -> true              *)
-  (* | _ -> false                      *)
-  true
-
-let is_post_hprel (hpr: CF.hprel) = 
-  (* match hpr.hprel_proving_kind with *)
-  (* | PK_POST -> true                 *)
-  (* | _ -> false                      *)
-  false
+  match hpr.hprel_type with
+  | INFER_UNFOLD -> true
+  | _ -> false
+  
+  
+let is_post_hprel (hpr: CF.hprel) =
+  match hpr.hprel_type with
+  | INFER_FOLD -> true
+  | _ -> false
 
 let sig_of_hrel (h: CF.h_formula) =
   match h with
@@ -65,11 +63,15 @@ let args_of_hrel (h: CF.h_formula) =
   snd (sig_of_hrel h)
 
 let sig_of_hprel (hpr: CF.hprel) =
-  let hpr_f = if is_pre_hprel hpr then hpr.hprel_lhs else hpr.hprel_rhs in
+  let is_pre = is_pre_hprel hpr in
+  let hpr_f = if is_pre then hpr.hprel_lhs else hpr.hprel_rhs in
   let f_h, _, _, _, _, _ = x_add_1 CF.split_components hpr_f in
   match f_h with
   | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args f_h)
-  | _ -> failwith ("Unexpected formula in the LHS/RHS of a hprel " ^ (Cprinter.string_of_hprel_short hpr))
+  | _ -> failwith ("Unexpected formula in the " ^ 
+                   (if is_pre then "LHS" else "RHS") ^ " of a " ^
+                   (if is_pre then "pre-" else "post-") ^ "hprel " ^ 
+                   (Cprinter.string_of_hprel_short hpr))
 
 let name_of_hprel (hpr: CF.hprel) = 
   fst (sig_of_hprel hpr) 
@@ -136,7 +138,10 @@ let rec trans_pure_formula f_m_f (f: CF.formula) =
 
 let simplify_hprel (hprel: CF.hprel) =
   (* let args = args_of_hprel hprel in *)
-  let h_fv_lhs = CF.fv_heap_of hprel.hprel_lhs in
+  let h_fv_lhs = 
+    (CF.fv_heap_of hprel.hprel_lhs) @
+    (if is_post_hprel hprel then args_of_hprel hprel else []) 
+  in
   let h_fv_guard = match hprel.hprel_guard with None -> [] | Some g -> CF.fv_heap_of g in
   let f_m_f args m_f =
     let p_f = MCP.pure_of_mix m_f in

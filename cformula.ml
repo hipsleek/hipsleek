@@ -4980,9 +4980,11 @@ and infer_state = {
   is_hp_defs: hp_rel_def list;
 }
 
-let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been initialized")
+let print_hprel_def_short = ref (fun (c: hprel_def) -> "printer has not been initialized")
 
-let print_hprel_short = ref (fun (c:hprel) -> "printer has not been initialized")
+let print_hprel_short = ref (fun (c: hprel) -> "printer has not been initialized")
+
+let print_hprel_list_short = ref (fun (c: hprel list) -> "printer has not been initialized")
 
 (* outcome from shape_infer *)
 let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr "rel_def (shape-infer)"
@@ -19653,17 +19655,28 @@ let extr_exists_hprel ra =
 let check_unfold_aux ra =
   let lhs = ra.hprel_lhs in
   let rhs = ra.hprel_rhs in
-  let (h_l,p_l,_,_,_,_) = split_components lhs in
-  let (h_r,p_r,_,_,_,_) = split_components rhs in
-  let ans_r = match h_r with
-  | HRel (hp,_,_) -> 
-    if CP.is_True (MCP.pure_of_mix p_r) then [(false,hp)] (* fold rule *)
-    else []
-  | _ -> [] in
-  let ans_l = match h_l with
-  | HRel (hp,_,_) -> [(true,hp)]
-  | _ -> [] in
-  ans_r@ans_l
+  (* let (h_l,p_l,_,_,_,_) = split_components lhs in *)
+  (* let (h_r,p_r,_,_,_,_) = split_components rhs in *)
+  let ans_r =
+    match rhs with
+    | Or _ -> []
+    | _ ->
+      let (h_r, p_r, _, _, _, _) = split_components rhs in
+      (match h_r with
+      | HRel (hp, _, _) -> 
+        if CP.is_True (MCP.pure_of_mix p_r) then [(false, hp)] (* fold rule *)
+        else []
+      | _ -> [])
+  in
+  let ans_l =
+    match lhs with
+    | Or _ -> []
+    | _ ->
+      let (h_l, _, _, _, _, _) = split_components lhs in
+      (match h_l with
+      | HRel (hp, _, _) -> [(true, hp)]
+      | _ -> [])
+  in ans_r@ans_l
 
 let check_unfold ra =
   match check_unfold_aux ra with
@@ -19672,7 +19685,7 @@ let check_unfold ra =
 
 let modify_hprel (r,(b,hp)) =
   let ut = if b then INFER_UNFOLD else INFER_FOLD in
-  {r with  hprel_type = ut; hprel_unknown =[hp]}
+  { r with hprel_type = ut; hprel_unknown = [hp] }
 
 (* let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp *)
 
@@ -19689,7 +19702,7 @@ let add_infer_type_to_hprel ras =
   let lst = List.map (fun r -> let a = check_unfold_aux r in (r,a,List.length a)) ras in
   let () = y_binfo_hp (add_str "add_infer_type" pr2) lst in
   let (emp,lst) = List.partition (fun (_,_,n) -> n==0) lst in
-  let (ones,lst) = List.partition (fun (_,_,n) -> n=1) lst in
+  let (ones,lst) = List.partition (fun (_,_,n) -> n==1) lst in
   let ones_ans = List.map (fun (r,a,_) -> (r,List.hd a)) ones in
   if emp!=[] then y_winfo_hp (add_str "UNCLASSIFIED REL_ASS" pr) emp;
   (* choose a case which occurred before in ones *)
@@ -19713,9 +19726,13 @@ let add_infer_type_to_hprel ras =
   let () = y_binfo_hp (add_str "add_infer_type(output)" pr3) res in
   res
 
+let add_infer_type_to_hprel ras =
+  let pr = !print_hprel_list_short in
+  Debug.no_1 "add_infer_type_to_hprel" pr pr add_infer_type_to_hprel ras
+
 let check_hprel ra = 
   let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
-  let opt= check_unfold ra in
+  let opt = check_unfold ra in
   (* let () = y_binfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in *)
   (* let () = if ex_lhs_vs!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vs in *)
   (* let () = if ex_guard_vs!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vs in *)

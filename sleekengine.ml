@@ -1449,7 +1449,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       (*hp_assumes*)
       let _ = CF.extr_exists_hprel new_rel_ass in
       let _ = x_binfo_zp  (lazy  (Cprinter.string_of_hprel_short new_rel_ass)) no_pos in
-      let _ = sleek_hprel_assumes := !sleek_hprel_assumes@[new_rel_ass] in
+      let _ = sleek_hprel_assumes := !sleek_hprel_assumes @ (x_add_1 CF.add_infer_type_to_hprel [new_rel_ass]) in
       ()
     else
       let lhs_p = CF.get_pure lhs in
@@ -1623,7 +1623,7 @@ let update_sleek_hprel_assumes upd_hprel_list =
 let print_sleek_hprel_assumes () =
   let curr_hprel = !sleek_hprel_assumes in
   (* let curr_hprel = List.map CF.check_hprel curr_hprel in *)
-  let curr_hprel = CF.add_infer_type_to_hprel curr_hprel  in
+  (* let curr_hprel = CF.add_infer_type_to_hprel curr_hprel in *)
   if (not !Globals.smt_compete_mode) then
     x_binfo_hp (add_str "Current list of heap relational assumptions" Cprinter.string_of_hprel_list_short) 
       curr_hprel (* !sleek_hprel_assumes *) no_pos
