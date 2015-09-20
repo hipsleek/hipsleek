@@ -19,7 +19,7 @@ q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
 relAssume //(1)
 U(q_153)&q_147!=null --> GP_154(q_153,q_147).
 
-//print relAssumes.
+print relAssumes. // To add hprel type
 
 //shape_add_dangling [U,GP_154].
 
@@ -36,6 +36,10 @@ shape_unfold [U,GP_154].
 print relAssumes.
 
 shape_merge [U,GP_154].
+
+print relAssumes.
+
+shape_simplify [U,GP_154].
 
 print relAssumes.
 

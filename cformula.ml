@@ -19678,6 +19678,21 @@ let check_unfold_aux ra =
       | _ -> [])
   in ans_r@ans_l
 
+(* let check_unfold_aux ra =                                                 *)
+(*   let lhs = ra.hprel_lhs in                                               *)
+(*   let rhs = ra.hprel_rhs in                                               *)
+(*   let (h_l,p_l,_,_,_,_) = split_components lhs in                         *)
+(*   let (h_r,p_r,_,_,_,_) = split_components rhs in                         *)
+(*   let ans_r = match h_r with                                              *)
+(*   | HRel (hp,_,_) ->                                                      *)
+(*     if CP.is_True (MCP.pure_of_mix p_r) then [(false,hp)] (* fold rule *) *)
+(*     else []                                                               *)
+(*   | _ -> [] in                                                            *)
+(*   let ans_l = match h_l with                                              *)
+(*   | HRel (hp,_,_) -> [(true,hp)]                                          *)
+(*   | _ -> [] in                                                            *)
+(*   ans_r@ans_l                                                             *)
+
 let check_unfold ra =
   match check_unfold_aux ra with
   | [] -> (None,[])

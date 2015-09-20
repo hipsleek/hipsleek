@@ -514,13 +514,14 @@ let unfolding_hprel_list prog hprel_list =
   x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
 
 let selective_unfolding prog other_hprels hprels = 
-  let pre_hprels, post_hprels = List.partition is_pre_hprel hprels in
-  let sorted_hprel_list = sort_hprel_list pre_hprels in
-  let hprel_id_list = List.map mk_hprel_id sorted_hprel_list in
+  let sorted_hprel_list = sort_hprel_list (hprels @ other_hprels) in
+  let hprel_names = List.map name_of_hprel hprels in
+  let sorted_selective_hprel_list = List.filter (fun s_hpr ->
+      mem (name_of_hprel s_hpr) hprel_names) sorted_hprel_list in
+  let hprel_id_list = List.map mk_hprel_id sorted_selective_hprel_list in
   let other_hprel_id_list = List.map mk_hprel_id other_hprels in
   let hprel_id_groups = partition_hprel_id_list (hprel_id_list @ other_hprel_id_list) in 
-  (x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list) @ 
-  post_hprels
+  x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
 
 let selective_unfolding prog other_hprels hprels = 
   let pr = Cprinter.string_of_hprel_list_short in
@@ -528,8 +529,7 @@ let selective_unfolding prog other_hprels hprels =
     (fun _ _ -> selective_unfolding prog other_hprels hprels) other_hprels hprels
 
 let unfolding prog hprels = 
-  let pre_hprels, post_hprels = List.partition is_pre_hprel hprels in
-  (unfolding_hprel_list prog pre_hprels) @ post_hprels
+  unfolding_hprel_list prog hprels
 
 let unfolding prog hprels = 
   let pr = Cprinter.string_of_hprel_list_short in

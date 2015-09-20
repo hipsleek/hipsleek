@@ -11,6 +11,7 @@ module MCP = Mcpure
 
 let mem = Gen.BList.mem_eq CP.eq_spec_var
 let diff = Gen.BList.difference_eq CP.eq_spec_var
+let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var
 
 let eq_id s1 s2 = String.compare s1 s2 == 0
 
@@ -28,6 +29,11 @@ let simplify f args =
   let bnd_vars = diff (CP.fv f) args in
   if bnd_vars == [] then f else
     CP.mkExists_with_simpl Tpdispatcher.simplify_raw bnd_vars f None (CP.pos_of_formula f)
+
+let simplify f args = 
+  let pr1 = !CP.print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "Syn.simplify" pr1 pr2 pr1 simplify f args
 
 let imply a c = Tpdispatcher.imply_raw a c
 
@@ -142,6 +148,7 @@ let simplify_hprel (hprel: CF.hprel) =
     (CF.fv_heap_of hprel.hprel_lhs) @
     (if is_post_hprel hprel then args_of_hprel hprel else []) 
   in
+  let h_fv_lhs = remove_dups h_fv_lhs in
   let h_fv_guard = match hprel.hprel_guard with None -> [] | Some g -> CF.fv_heap_of g in
   let f_m_f args m_f =
     let p_f = MCP.pure_of_mix m_f in
@@ -151,6 +158,10 @@ let simplify_hprel (hprel: CF.hprel) =
   { hprel with
     hprel_lhs = trans_pure_formula (f_m_f h_fv_lhs) hprel.hprel_lhs;
     hprel_guard = map_opt (trans_pure_formula (f_m_f h_fv_guard)) hprel.hprel_guard; }
+
+let simplify_hprel (hprel: CF.hprel) =
+  let pr = Cprinter.string_of_hprel_short in
+  Debug.no_1 "simplify_hprel" pr pr simplify_hprel hprel
 
 let is_non_inst_hprel prog (hprel: CF.hprel) =
   let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
