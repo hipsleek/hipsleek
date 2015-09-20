@@ -1639,6 +1639,16 @@ Please add a shape_merge sleek command ..
 shape_merge [U,GP_164].
 
 ===========================================================================
+# ex20c.slk
+
+Please add a shape_merge command ..
+
+shape_merge [U,GP_164].
+
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+error at: 
+SLEEK FAILURE (END)
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

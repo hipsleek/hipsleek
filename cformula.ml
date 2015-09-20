@@ -19650,16 +19650,28 @@ let add_fold_flag lst =
 let check_unfold ra =
   let lhs = ra.hprel_lhs in
   let rhs = ra.hprel_rhs in
-  let h_l = heap_of lhs in
-  let h_r = heap_of rhs in
-  match h_l with
-  | [HRel (hp,_,_)] -> (Some true,[hp]) (* unfold rule *)
-  | _ -> 
+  let (h_l,p_l,_,_,_,_) = split_components lhs in
+  let (h_r,p_r,_,_,_,_) = split_components rhs in
+  let ans_r = match h_r with
+  | HRel (hp,_,_) -> (Some hp) 
+  | _ -> None in
+  let ans_l = match h_l with
+  | HRel (hp,_,_) -> (Some hp) 
+  | _ -> None in
+  match ans_r with
+  | Some hp ->
     begin
-      match h_r with
-      | [HRel (hp,_,_)] -> (Some false,[hp]) (* fold rule *)
-      | _ -> (None,[])
-
+      match ans_l with
+      | None -> (Some false,[hp]) (* fold rule *)
+      | Some hp2 -> 
+        if CP.is_True (MCP.pure_of_mix p_r) then (Some false,[hp]) (* fold rule *)
+        else (Some true,[hp2])  (* unfold rule *)
+    end
+  | None ->
+    begin
+      match ans_l with
+      | None -> (None,[]) 
+      | Some hp2 -> (Some true,[hp2]) (* unfold rule *)
     end
 
 let check_hprel ra = 
