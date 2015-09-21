@@ -20,26 +20,42 @@ print relAssumes.
 
 shape_add_dangling [P,HP_1620].
 
+shape_add_dangling [P,HP_1620].
+
 print relAssumes.
 
 shape_merge [P,HP_1620].
 print relAssumes.
 
 
-shape_unfold [P].
+//shape_unfold [P].
+//shape_unfold [P].
 //shape_unfold [HP_1620].
-//shape_unfold [P,HP_1620].
+shape_unfold [P,HP_1620].
+shape_unfold [P,HP_1620].
 
 //shape_merge [P,HP_1620].
 
 print relAssumes.
 
 shape_param_dangling [P,HP_1620].
+shape_param_dangling [P,HP_1620].
 
 print relAssumes.
 
 
 shape_trans_to_view [P,HP_1620].
+/*
+# ex20.slk --pcp 
+
+# why isn't views printed in detail?
+  Is it in view_decls field?
+
+# Can we make sure that trans_to_view is done
+  only once and would be idempotent?
+
+  shape_trans_to_view [P,HP_1620].
+*/
 print relAssumes.
 
 /*

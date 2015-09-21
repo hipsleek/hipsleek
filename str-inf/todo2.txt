@@ -1681,6 +1681,15 @@ let process_shape_trans_to_view hps =
     self::P<Anon_33>NOANN&v_1618!=0&{FLOW,(20,21)=__norm#E}[]
     or emp&v_1618=0&{FLOW,(20,21)=__norm#E}[]
 ===========================================================================
+# ex20.slk --pcp 
+
+# why isn't views printed in detail?
+  Is it in view_decls field?
+
+# Can we make sure that trans_to_view is done
+  only once and would be idempotent?
+
+  shape_trans_to_view [P,HP_1620].
 ===========================================================================
 ===========================================================================
 ===========================================================================
