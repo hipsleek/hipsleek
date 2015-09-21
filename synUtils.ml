@@ -34,10 +34,11 @@ let bnd_vars_of_formula fv f args =
   bnd_vars
 
 let simplify f args = 
+  let simplify_f = Tpdispatcher.simplify_raw in
   let bnd_vars = bnd_vars_of_formula (CP.fv) f args in
-  if bnd_vars == [] then f 
+  if bnd_vars == [] then simplify_f f 
   else
-    CP.mkExists_with_simpl Tpdispatcher.simplify_raw bnd_vars f None (CP.pos_of_formula f)
+    CP.mkExists_with_simpl simplify_f bnd_vars f None (CP.pos_of_formula f)
 
 let simplify f args = 
   let pr1 = !CP.print_formula in
@@ -240,7 +241,7 @@ let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
 let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let pr1 = !CF.print_formula in
   let pr2 = pr_pair string_of_bool pr1 in
-  Debug.no_2 "Syn:heap_entail_formula" pr1 pr1 pr2 
+  Debug.no_2 "Syn.heap_entail_formula" pr1 pr1 pr2 
     (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq
 
 let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
@@ -249,7 +250,7 @@ let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
 let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let pr1 = !CF.print_formula in
   let pr2 = string_of_bool in
-  Debug.no_2 "Syn:heap_entail_exact_formula" pr1 pr1 pr2 
+  Debug.no_2 "Syn.heap_entail_exact_formula" pr1 pr1 pr2 
     (fun _ _ -> heap_entail_exact_formula prog ante conseq) ante conseq
 
 let trans_hrel_to_view_formula (f: CF.formula) = 
@@ -282,4 +283,4 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
 let view_decl_of_hprel prog (hprel: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = Cprinter.string_of_view_decl in
-  Debug.no_1 "Syn:view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
+  Debug.no_1 "Syn.view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
