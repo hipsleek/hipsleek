@@ -26,10 +26,12 @@ print relAssumes.
 
 shape_simplify [Q,GP_1655,GP_1656].
 
-shape_unfold [Q].
+print relAssumes.
+
+shape_unfold [Q,GP_1655,GP_1656].
 
 print relAssumes.
 
-shape_merge [Q].
+shape_merge [Q,GP_1655,GP_1656].
 
 print relAssumes.

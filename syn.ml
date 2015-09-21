@@ -268,7 +268,11 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
       (* Prevent self-recursive pred to avoid infinite unfolding *)
       let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
       if mem hrel_name hprel_rhs_fv then
-        failwith "Unfolding self-recursive predicate is not allowed to avoid possibly infinite unfolding!"
+        let () = y_binfo_pp (
+          "WARNING: Unfolding self-recursive predicate " ^ 
+          (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
+        in
+        None
       else
         let comb_f = x_add combine_Star guard_f residue in
         Some (x_add combine_Star comb_f hrel_def.hprel_rhs)
@@ -330,7 +334,11 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
     (* Prevent self-recursive pred to avoid infinite folding *)
     let hprel_lhs_fv = CF.fv hrd_lhs in
     if mem hrel_name hprel_lhs_fv then
-      failwith "Unfolding self-recursive predicate is not allowed to avoid possibly infinite folding!"
+      let () = y_binfo_pp (
+        "WARNING: Folding self-recursive predicate " ^ 
+        (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite folding!")
+      in
+      None
     else
       let comb_f = x_add combine_Star guard_f residue in
       Some (x_add combine_Star comb_f hrel_def.hprel_lhs)
