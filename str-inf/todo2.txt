@@ -1604,7 +1604,7 @@ print residue.
  --error:  at:
 
 ===========================================================================
-# ex20c.slk
+# ex20c.slk (FIXED)
 
 # emp&flted_22_139=null --> U(flted_22_139).
 
@@ -1632,7 +1632,7 @@ process_rel_assume inp2 :Some(IFORM:(emp ; (emp ; (s::char_star{}<v_1618,Anon_16
 process_rel_assume inp3 :IFORM:(emp ; (emp ; (HRel P(Anon_1619)))) * ([] & true)( FLOW __norm)
 process_rel_assume@2 EXIT:?
 ===========================================================================
-# ex20c.slk
+# ex20c.slk (FIXED)
 
 Please add a shape_merge sleek command ..
 
@@ -1733,7 +1733,7 @@ shape_derive_pre [P,HP_1620].
 ========================
 To be Implemented
 ===========================================================================
-# ex20c.slk
+# ex20c.slk (FIXED by Chanh)
 
 ========================
  Performing Simplifying
@@ -1759,6 +1759,37 @@ To be Implemented
 
 
 ===========================================================================
+# ex21d1.slk
+
+lemma_infer  [U,classic] "L21d1"
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+print relAssumes.
+shape_derive_view [U].
+print relAssumes.
+
+# can we add a command
+
+ shape_norm (which stop short of deriving predicate)
+
+
+ [unknown U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146); 
+   unknown q_146::node<Anon_151,q_152>@M * GP_153(q_152,q_146)&
+    q_146!=null |#|  --> U(q_146); 
+   unknown emp&flted_22_138=null |#|  --> U(flted_22_138)]
+
+# why do we get unfolded twice below? and can we simplify?
+ 
+  [fold q_146::node<Anon_151,q_152>@M * U(q_152)&
+        q_146!=null & q_146!=null & q_146!=null
+        or emp&q_146=null
+        or q_146::node<Anon_151,q_152>@M * U(q_152)&
+           q_146!=null & q_146!=null & q_146!=null
+        or emp&q_146=null
+         |#|  --> U(q_146); 
+   fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

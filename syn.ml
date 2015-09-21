@@ -16,6 +16,8 @@ module MCP = Mcpure
 (***** SIMPLIFICATION *****)
 (**************************)
 
+let pr_hprel_list = Cprinter.string_of_hprel_list_short
+
 let simplify_hprel_list hprels = 
   List.map (x_add_1 simplify_hprel) hprels
 
@@ -144,7 +146,7 @@ let should_merge_pre_hprels prog hprels =
       in (equiv_lhs ()) && (equiv_guard ())) hprs
 
 let should_pre_merge_hprels prog hprels = 
-  let pr = Cprinter.string_of_hprel_list_short in
+  let pr = pr_hprel_list in
   Debug.no_1 "should_pre_merge_hprels" pr string_of_bool
     (should_merge_pre_hprels prog) hprels
   
@@ -182,7 +184,7 @@ let merge_pre_hprel_list prog hprels =
           [comb_hpr]
 
 let merge_pre_hprel_list prog hprels =
-  let pr = Cprinter.string_of_hprel_list_short in
+  let pr = pr_hprel_list in
   Debug.no_1 "merge_pre_hprel_list" pr pr (merge_pre_hprel_list prog) hprels
 
 (* (A -> C) /\ (B -> C) --> (A \/ B) -> C *)
@@ -200,7 +202,7 @@ let merge_post_hprel_list prog hprels =
     [comb_hpr]
 
 let merge_post_hprel_list prog hprels =
-  let pr = Cprinter.string_of_hprel_list_short in
+  let pr = pr_hprel_list in
   Debug.no_1 "merge_post_hprel_list" pr pr (merge_post_hprel_list prog) hprels
 
 let merge_hprel_list prog hprels = 
@@ -209,7 +211,7 @@ let merge_hprel_list prog hprels =
   (merge_post_hprel_list prog post_hprels)
 
 let merge_hprel_list prog hprels =
-  let pr = Cprinter.string_of_hprel_list_short in
+  let pr = pr_hprel_list in
   Debug.no_1 "Syn:merging" pr pr (merge_hprel_list prog) hprels
 
 let merging prog hprels = 
@@ -511,7 +513,7 @@ let rec helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
     unfolding_hpr @ (helper_unfolding_hprel_list prog updated_hprel_id_groups hpril)
 
 let helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
-  let pr1 = Cprinter.string_of_hprel_list_short in
+  let pr1 = pr_hprel_list in
   let pr2 hpril = pr1 (List.map (fun hpri -> hpri.hprel_constr) hpril) in
   let pr3 = pr_list (pr_pair !CP.print_sv pr2) in
   Debug.no_2 "Syn:helper_unfolding_hprel_list" pr2 pr3 pr1
@@ -535,7 +537,7 @@ let selective_unfolding prog other_hprels hprels =
   x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
 
 let selective_unfolding prog other_hprels hprels = 
-  let pr = Cprinter.string_of_hprel_list_short in
+  let pr = pr_hprel_list in
   Debug.no_2 "Syn:selective_unfolding" pr pr pr 
     (fun _ _ -> selective_unfolding prog other_hprels hprels) other_hprels hprels
 
@@ -543,7 +545,7 @@ let unfolding prog hprels =
   unfolding_hprel_list prog hprels
 
 let unfolding prog hprels = 
-  let pr = Cprinter.string_of_hprel_list_short in
+  let pr = pr_hprel_list in
   Debug.no_1 "Syn:unfolding" pr pr (fun _ -> unfolding prog hprels) hprels
 
 (**************************)
@@ -644,15 +646,16 @@ let rec dangling_parameterizing hprels =
       helper (n_acc @ [n_hpr]) n_hprl
 
   and helper acc hprels =
-    let pr = Cprinter.string_of_hprel_list_short in
+    let pr = pr_hprel_list in
     Debug.no_2 "dangling_parameterizing_helper" pr pr pr
       helper_x acc hprels
   in
   
   helper [] hprels
 
+
 let dangling_parameterizing hprels = 
-  let pr = Cprinter.string_of_hprel_list_short in
+  let pr = pr_hprel_list in
   Debug.no_1 "Syn:parameterizing" pr pr 
     (fun _ -> dangling_parameterizing hprels) hprels
 
@@ -680,6 +683,12 @@ let derive_view prog other_hprels hprels =
   (* PRE-PROCESSING *)
   let pre_hprels, post_hprels = List.partition is_pre_hprel hprels in
   let all_hprels = hprels @ other_hprels in
+  (* WN : will other_hprels cause a problem later if it is neither unfold or fold? *)
+  let () =
+    if other_hprels!=[] then
+      let () = y_binfo_hp (add_str "other_hprels is non-empty" pr_hprel_list) other_hprels in
+      () 
+  in
   (* SIMPLIFY *)
   let simplified_all_hprels = simplify_hprel_list all_hprels in
   (* ADD DANGLING *)
@@ -698,7 +707,7 @@ let derive_view prog other_hprels hprels =
   let selective_merged_hprels = dangling_parameterizing (unfolding_pre_hprels @ merged_folding_post_hprels) in
   (* DERIVING VIEW *)
   let derived_views = trans_hprel_to_view prog selective_merged_hprels in
-  derived_views
+  (derived_views,selective_merged_hprels)
 
 (****************)
 (***** MAIN *****)
@@ -709,7 +718,7 @@ let syn_pre_preds prog (is: CF.infer_state) =
     let is_all_constrs = CF.add_infer_type_to_hprel is.CF.is_all_constrs in
     let is_all_constrs = simplify_hprel_list is_all_constrs in
     let () = x_binfo_hp (add_str "Simplified hprels" 
-        Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+        pr_hprel_list) is_all_constrs no_pos
     in
   
     let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
@@ -723,26 +732,26 @@ let syn_pre_preds prog (is: CF.infer_state) =
     let () =
       if has_dangling_vars then
         x_binfo_hp (add_str "Detected dangling vars" 
-            Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+            pr_hprel_list) is_all_constrs no_pos
       else x_binfo_pp "No dangling var is detected" no_pos
     in
 
     (* let () = x_binfo_pp ">>>>> Step 2A: Merging <<<<<" no_pos in   *)
     (* let is_all_constrs = x_add merging prog is_all_constrs in      *)
     (* let () = x_binfo_hp (add_str "Merging result"                  *)
-    (*     Cprinter.string_of_hprel_list_short) is_all_constrs no_pos *)
+    (*     pr_hprel_list) is_all_constrs no_pos *)
     (* in                                                             *)
   
     let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
     let is_all_constrs = x_add unfolding prog is_all_constrs in
     let () = x_binfo_hp (add_str "Unfolding result" 
-        Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+        pr_hprel_list) is_all_constrs no_pos
     in
   
     let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
     let is_all_constrs = x_add_1 dangling_parameterizing is_all_constrs in
     let () = x_binfo_hp (add_str "Parameterizing result" 
-        Cprinter.string_of_hprel_list_short) is_all_constrs no_pos
+        pr_hprel_list) is_all_constrs no_pos
     in
 
     let () = x_binfo_pp ">>>>> Step 4: Inferring Segment Predicates <<<<<" no_pos in

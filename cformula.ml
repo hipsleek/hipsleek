@@ -11388,6 +11388,10 @@ let collect_hp_rel ctx =
   let rs = collect_hp_rel ctx in
   Gen.Basic.remove_dups rs
 
+let collect_hp_rel_all ctx = match ctx with
+  | SuccCtx lst -> List.map collect_hp_rel lst
+  | _ -> []
+
 let rec collect_hp_unk_map ctx =
   match ctx with
   | Ctx estate -> estate.es_infer_hp_unk_map
@@ -19754,3 +19758,13 @@ let check_hprel ra =
   (* let () = if ex_lhs_vs!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vs in *)
   (* let () = if ex_guard_vs!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vs in *)
   ra
+
+let sleek_hprel_assumes =
+  object (self)
+    val mutable lst = []
+    method get = lst
+    method set nlst = lst <- nlst
+    method add (e:hprel) = lst <- e::lst
+  end
+
+(* let sleek_hprel_assumes = ref ([]: CF.hprel list) *)

@@ -362,16 +362,23 @@ let manage_infer_lemmas_x ?(pop_all=true) str repo iprog cprog =
   match invalid_lem with
   | Some name -> 
     let () = Log.last_cmd # dumping (name) in
-    let () = if !Globals.lemma_ep then
-        print_endline_quiet ("\nFailed to "^str^" for "^ (name) ^ " (invalid lemma encountered).")
+    let () = 
+      if true (* !Globals.lemma_ep *) then
+        print_endline_quiet ("\nFailed to infer "^str^" for "^ (name) ^ " (invalid lemma encountered).")
       else ()
     in
     false,Some([List.hd(nctx)])
   | None ->
-    let () = if !Globals.lemma_ep then
-        print_endline_quiet ("\n Temp Lemma(s) "^str^" is valid in current context.")
+    let () = 
+      if true (* !Globals.lemma_ep *) then
+        print_endline_quiet ("\n Lemma infer "^str^" succeeded in current context.")
       else ()
     in
+    let hprels = List.map (fun x -> List.concat (CF.collect_hp_rel_all x)) nctx in
+    let () = y_binfo_hp (add_str "hprels" (pr_list (pr_list pr_none))) hprels in
+    let () = match hprels with
+      | lst::_ -> CF.sleek_hprel_assumes # set lst 
+      | _ -> () in
     true,Some nctx
 
 (* for lemma_test, we do not return outcome of lemma proving *)
