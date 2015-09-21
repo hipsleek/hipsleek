@@ -1721,7 +1721,7 @@ let process_shape_trans_to_view hps =
     self::P<Anon_37>NOANN&v_1618!=0&{FLOW,(20,21)=__norm#E}[]
     or emp&v_1618=0&{FLOW,(20,21)=__norm#E}[]
 ===========================================================================
-# ex20e.slk
+# ex20e.slk (DONE)
 
 shape_derive_pre [P,HP_1620].
 
@@ -1733,6 +1733,31 @@ shape_derive_pre [P,HP_1620].
 ========================
 To be Implemented
 ===========================================================================
+# ex20c.slk
+
+========================
+ Performing Simplifying
+========================
+
+# How simplification does not reduce redundant 
+  and duplicated expressions?
+ 
+  [fold emp&flted_22_139=null
+        or flted_22_139::node<Anon_31,q_32>@M * U(q_153)&
+           flted_22_139!=null & flted_22_139!=null & q_32=q_153 & 
+           flted_22_139!=null
+         |#|  --> U(flted_22_139); 
+   fold U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147)]
+
+
+# Expects:
+
+  [fold emp&flted_22_139=null
+        or flted_22_139::node<Anon_31,q_32>@M * U(q_153)&
+      & q_32=q_153 & flted_22_139!=null --> U(flted_22_139); 
+   fold U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147)]
+
+
 ===========================================================================
 ===========================================================================
 ===========================================================================
