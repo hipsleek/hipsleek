@@ -45,6 +45,9 @@ print relAssumes.
 
 
 shape_trans_to_view [P,HP_1620].
+
+shape_trans_to_view [P,HP_1620].
+
 /*
 # ex20.slk --pcp 
 

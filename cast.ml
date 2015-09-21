@@ -3829,3 +3829,11 @@ let rm_NI_from_hp_rel prog hp args =
   let lst = List.combine args hpdef.hp_vars_inst in
   let rm_lst = List.filter (fun (_,(_,k)) -> k==I) lst in
   List.map fst rm_lst
+
+let add_view_decl prog vdecl = 
+  let prog_vdecl_ids = List.map (fun v -> v.view_name) prog.prog_view_decls in
+  let vdecl_id = vdecl.view_name in
+  if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
+    y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
+  else
+    prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
