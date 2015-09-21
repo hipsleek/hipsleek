@@ -656,7 +656,9 @@ let dangling_parameterizing hprels =
   Debug.no_1 "Syn:parameterizing" pr pr 
     (fun _ -> dangling_parameterizing hprels) hprels
 
+(***********************************)
 (***** TRANSFORM HPREL TO VIEW *****)
+(***********************************)
 let trans_hprel_to_view prog hprels = 
   let hprel_lists = partition_hprel_list hprels in
   let single_hprel_lists, others = List.partition (fun (_, l) -> List.length l == 1) hprel_lists in
@@ -670,6 +672,33 @@ let trans_hprel_to_view prog hprels =
     let vdecl = view_decl_of_hprel prog hpr in
     let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in
     vdecl) single_hprel_list
+
+(*************************)
+(***** DERIVING VIEW *****)
+(*************************)
+let derive_view prog other_hprels hprels = 
+  (* PRE-PROCESSING *)
+  let pre_hprels, post_hprels = List.partition is_pre_hprel hprels in
+  let all_hprels = hprels @ other_hprels in
+  (* SIMPLIFY *)
+  let simplified_all_hprels = simplify_hprel_list all_hprels in
+  (* ADD DANGLING *)
+  let all_hprels_w_dangling = add_dangling_hprel_list prog simplified_all_hprels in
+  let all_pre_hprels, all_post_hprels = List.partition is_pre_hprel all_hprels_w_dangling in
+  (* DERIVING PRE: MERGE -> UNFOLD *)
+  let all_merged_pre_hprels = merging prog all_pre_hprels in
+  let selective_pre_hprel_ids = List.map (fun hpr -> name_of_hprel hpr) pre_hprels in
+  let selective_merged_pre_hprels, other_merged_pre_hprels = List.partition 
+    (fun hpr -> mem (name_of_hprel hpr) selective_pre_hprel_ids) all_merged_pre_hprels in
+  let unfolding_pre_hprels = selective_unfolding prog other_merged_pre_hprels selective_merged_pre_hprels in
+  (* DERIVING POST: FOLD -> MERGE *)
+  let folding_post_hprels = selective_unfolding prog all_post_hprels post_hprels in
+  let merged_folding_post_hprels = merging prog folding_post_hprels in
+  (* PARAM DANGLING *)
+  let selective_merged_hprels = dangling_parameterizing (unfolding_pre_hprels @ merged_folding_post_hprels) in
+  (* DERIVING VIEW *)
+  let derived_views = trans_hprel_to_view prog selective_merged_hprels in
+  derived_views
 
 (****************)
 (***** MAIN *****)
