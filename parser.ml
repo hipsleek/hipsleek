@@ -1036,6 +1036,7 @@ non_empty_command:
       | t = shape_param_dangling_cmd -> ShapeParamDangling t
       | t = shape_simplify_cmd -> ShapeSimplify t
       | t = shape_merge_cmd -> ShapeMerge t
+      | t = shape_trans_to_view_cmd -> ShapeTransToView t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2615,6 +2616,11 @@ shape_simplify_cmd:
 
 shape_merge_cmd:
   [[ `SHAPE_MERGE; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_trans_to_view_cmd:
+  [[ `SHAPE_TRANS_TO_VIEW; `OSQUARE; il=OPT id_list; `CSQUARE
      ->  un_option il []
   ]];
 

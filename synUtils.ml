@@ -251,3 +251,35 @@ let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let pr2 = string_of_bool in
   Debug.no_2 "Syn:heap_entail_exact_formula" pr1 pr1 pr2 
     (fun _ _ -> heap_entail_exact_formula prog ante conseq) ante conseq
+
+let trans_hrel_to_view_formula (f: CF.formula) = 
+  let f_h_f _ hf = 
+    match hf with
+    | CF.HRel _ ->
+      let hrel_name, hrel_args = sig_of_hrel hf in
+      Some (CF.mk_HRel_as_view hrel_name hrel_args no_pos, [])
+    | _ -> None
+  in
+  fst (trans_heap_formula f_h_f f)
+
+let view_decl_of_hprel prog (hprel: CF.hprel) =
+  let hprel_name, hprel_args = sig_of_hprel hprel in
+  let pos = no_pos in
+  let hprel_self = CP.to_unprimed (List.hd hprel_args) in
+  let vself = match hprel_self with CP.SpecVar (t, _, p) -> CP.SpecVar (t, Globals.self, p) in
+  let vargs = List.map (fun sv -> (sv, NI)) (List.tl hprel_args) in
+  let vbody = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
+  let vbody = CF.elim_prm vbody in
+  let vbody = trans_hrel_to_view_formula vbody in
+  let vbody = CF.subst [(hprel_self, vself)] vbody in
+  let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hprel_name) vargs false pos in
+  let vdecl_w_def = { vdecl with 
+      Cast.view_formula = CF.struc_formula_of_formula vbody pos;
+      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))]; } in
+  let () = prog.Cast.prog_view_decls <- prog.Cast.prog_view_decls @ [vdecl_w_def] in
+  vdecl_w_def
+
+let view_decl_of_hprel prog (hprel: CF.hprel) =
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = Cprinter.string_of_view_decl in
+  Debug.no_1 "Syn:view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel

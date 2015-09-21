@@ -1648,7 +1648,7 @@ let process_sleek_hprel_assumes s hps f_proc =
   process_sleek_hprel_assumes_others s hps f
 
 let process_shape_add_dangling hps =
-  process_sleek_hprel_assumes "Add Dangling" hps (Syn.add_dangling_hprel_list !cprog)
+  process_sleek_hprel_assumes "Adding Dangling" hps (Syn.add_dangling_hprel_list !cprog)
 
 let process_shape_unfold hps =
   process_sleek_hprel_assumes_others "Unfolding" hps (Syn.selective_unfolding !cprog)
@@ -1666,6 +1666,13 @@ let process_shape_simplify hps =
 
 let process_shape_merge hps = 
   process_sleek_hprel_assumes "Merging" hps (Syn.merging !cprog)
+
+let process_shape_trans_to_view hps = 
+  let f hps =
+    let trans_views = Syn.trans_hprel_to_view !cprog hps in
+    hps 
+  in
+  process_sleek_hprel_assumes "Transforming to View" hps f
   
 (******************************************************************************)
 

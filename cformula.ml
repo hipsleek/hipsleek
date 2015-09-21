@@ -346,7 +346,7 @@ let mk_HRel_as_view n args loc =
   let () = x_tinfo_hp (add_str "HPRel(n)" !CP.print_sv) n no_pos in
   let vn = name_of_spec_var n in
   let hd,tails = match args with
-      n::ns -> (n,args)
+      n::ns -> (n,ns)
     | _ -> x_report_error loc "HREL -> View : need at least one parameter"
   in
   ViewNode {
@@ -13049,7 +13049,7 @@ let list_of_disjuncts f = split_conjuncts f
 
 let join_conjunct_opt l = match l with
   | [] -> None
-  | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
+  | h::t -> Some (List.fold_left (fun a c -> mkOr c a no_pos) h t)
 
 let join_star_conjunctions (hs : h_formula list) : h_formula  = 
   List.fold_left (fun a c-> mkStarH a c no_pos ) HEmp hs

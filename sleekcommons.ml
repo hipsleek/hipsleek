@@ -74,6 +74,7 @@ type command =
   | ShapeParamDangling of (ident list)
   | ShapeSimplify of (ident list)
   | ShapeMerge of (ident list)
+  | ShapeTransToView of (ident list)
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -173,6 +174,7 @@ let string_of_command c = match c with
   | ShapeParamDangling _ -> "ShapeParamDangling"
   | ShapeSimplify _ -> "ShapeSimplify"
   | ShapeMerge _ -> "ShapeMerge"
+  | ShapeTransToView _ -> "ShapeTransToView"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"

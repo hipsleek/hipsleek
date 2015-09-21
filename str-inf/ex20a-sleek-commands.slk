@@ -33,6 +33,12 @@ shape_unfold [P].
 
 print relAssumes.
 
+shape_param_dangling [P].
+
+print relAssumes.
+
+shape_trans_to_view [P].
+
 /*
 
 !!! **sleekengine.ml#1613:Current list of heap relational assumptions:

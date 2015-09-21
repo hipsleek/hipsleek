@@ -590,30 +590,42 @@ let add_dangling_params hrel_name dangling_params (f: CF.formula) =
 
 let dangling_parameterizing_hprel (hpr: CF.hprel) =
   let is_pre = is_pre_hprel hpr in
-  let param_f = if is_pre then hpr.hprel_rhs else hpr.hprel_lhs in 
-  
-  let n_param_f, dangling_vars = x_add_1 remove_dangling_heap_formula param_f in
-  if is_empty dangling_vars then hpr, idf
+  let f = if is_pre then hpr.hprel_rhs else hpr.hprel_lhs in 
+  let f_disjs = CF.list_of_disjuncts f in
+  let n_f_disjs_w_dangling_vars = List.fold_left (fun acc disj ->
+    let n_disj, dangling_vars = x_add_1 remove_dangling_heap_formula disj in
+    acc @ [(n_disj, dangling_vars)]) [] f_disjs
+  in
+  let all_dangling_vars = List.concat (List.map snd n_f_disjs_w_dangling_vars) in
+  if is_empty all_dangling_vars then hpr, idf
   else
-    let fresh_dangling_vars = CP.fresh_spec_vars dangling_vars in
-    let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) fresh_dangling_vars in
-    let n_param_f = CF.subst (List.combine dangling_vars fresh_dangling_vars) n_param_f in
-    let hpr_name = name_of_hprel hpr in
-    let f_update_params_hprel hpr =
-      { hpr with
-        CF.hprel_lhs = x_add add_dangling_params hpr_name dangling_params hpr.CF.hprel_lhs;
-        CF.hprel_rhs = x_add add_dangling_params hpr_name dangling_params hpr.CF.hprel_rhs;
-      }
+    let n_f_disjs, dangling_params_lists = List.split (List.map (fun (disj, dangling_vars) ->
+      let fresh_dangling_vars = CP.fresh_spec_vars dangling_vars in
+      let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) fresh_dangling_vars in
+      let n_disj = CF.subst (List.combine dangling_vars fresh_dangling_vars) disj in
+      (n_disj, dangling_params)) n_f_disjs_w_dangling_vars)
     in
-    let f_update_params_hprel hpr =
-      let pr = Cprinter.string_of_hprel_short in
-      Debug.no_1 "f_update_params_hprel" pr pr f_update_params_hprel hpr
-    in
-    let n_hpr = 
-      if is_pre then { hpr with hprel_rhs = n_param_f }
-      else { hpr with hprel_lhs = n_param_f }
-    in 
-    n_hpr, f_update_params_hprel
+    let n_f_opt = CF.join_conjunct_opt n_f_disjs in
+    match n_f_opt with
+    | None -> hpr, idf
+    | Some n_f ->
+      let dangling_params = List.concat dangling_params_lists in
+      let hpr_name = name_of_hprel hpr in
+      let f_update_params_hprel hpr =
+        { hpr with
+          CF.hprel_lhs = x_add add_dangling_params hpr_name dangling_params hpr.CF.hprel_lhs;
+          CF.hprel_rhs = x_add add_dangling_params hpr_name dangling_params hpr.CF.hprel_rhs;
+        }
+      in
+      let f_update_params_hprel hpr =
+        let pr = Cprinter.string_of_hprel_short in
+        Debug.no_1 "f_update_params_hprel" pr pr f_update_params_hprel hpr
+      in
+      let n_hpr = 
+        if is_pre then { hpr with hprel_rhs = n_f }
+        else { hpr with hprel_lhs = n_f }
+      in 
+      n_hpr, f_update_params_hprel
 
 let dangling_parameterizing_hprel (hpr: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
@@ -643,6 +655,21 @@ let dangling_parameterizing hprels =
   let pr = Cprinter.string_of_hprel_list_short in
   Debug.no_1 "Syn:parameterizing" pr pr 
     (fun _ -> dangling_parameterizing hprels) hprels
+
+(***** TRANSFORM HPREL TO VIEW *****)
+let trans_hprel_to_view prog hprels = 
+  let hprel_lists = partition_hprel_list hprels in
+  let single_hprel_lists, others = List.partition (fun (_, l) -> List.length l == 1) hprel_lists in
+  let single_hprel_list = List.map (fun (sv, l) -> (sv, List.hd l)) single_hprel_lists in
+  let () =
+    if not (is_empty others) then
+      let svl = List.map fst others in
+      y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
+  in
+  List.map (fun (sv, hpr) ->
+    let vdecl = view_decl_of_hprel prog hpr in
+    let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in
+    vdecl) single_hprel_list
 
 (****************)
 (***** MAIN *****)

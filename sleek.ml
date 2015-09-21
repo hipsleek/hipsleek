@@ -121,6 +121,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeParamDangling hps -> process_shape_param_dangling hps
     | ShapeSimplify hps -> process_shape_simplify hps
     | ShapeMerge hps -> process_shape_merge hps
+    | ShapeTransToView hps -> process_shape_trans_to_view hps
     | PredSplit ids -> process_pred_split ids
     | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
