@@ -25,9 +25,18 @@ let rec partition_by_key key_of key_eq ls =
     let same_es, other_es = List.partition (fun e -> key_eq ke (key_of e)) es in
     (ke, e::same_es)::(partition_by_key key_of key_eq other_es)
 
+let bnd_vars_of_formula fv f args = 
+  let bnd_vars = diff (fv f) args in
+  let bnd_vars = List.filter (fun v ->
+    match CP.type_of_spec_var v with
+    | HpT -> false | _ -> true 
+  ) bnd_vars in
+  bnd_vars
+
 let simplify f args = 
-  let bnd_vars = diff (CP.fv f) args in
-  if bnd_vars == [] then f else
+  let bnd_vars = bnd_vars_of_formula (CP.fv) f args in
+  if bnd_vars == [] then f 
+  else
     CP.mkExists_with_simpl Tpdispatcher.simplify_raw bnd_vars f None (CP.pos_of_formula f)
 
 let simplify f args = 
@@ -40,7 +49,7 @@ let imply a c = Tpdispatcher.imply_raw a c
 let is_sat f = Tpdispatcher.is_sat_raw f
 
 let push_exists_for_args f args =
-  let bnd_vars = diff (CF.fv f) args in
+  let bnd_vars = bnd_vars_of_formula (CF.fv) f args in
   CF.push_exists bnd_vars f
 
 (*****************)
@@ -236,3 +245,9 @@ let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
 
 let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
   fst (Wrapper.wrap_classic (Some true) (heap_entail_formula prog ante) conseq)
+
+let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
+  let pr1 = !CF.print_formula in
+  let pr2 = string_of_bool in
+  Debug.no_2 "Syn:heap_entail_exact_formula" pr1 pr1 pr2 
+    (fun _ _ -> heap_entail_exact_formula prog ante conseq) ante conseq

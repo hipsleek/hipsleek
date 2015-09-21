@@ -155,19 +155,23 @@ let merge_pre_hprel_list prog hprels =
   | []
   | _::[] -> hprels
   | _ ->
-    if List.exists (fun hpr -> is_None hpr.CF.hprel_guard) hprels then hprels
-    else
+    (* if List.exists (fun hpr -> is_None hpr.CF.hprel_guard) hprels then hprels *)
+    (* else                                                                      *)
       let hprels = rename_hprel_list hprels in
       let conds = List.map cond_of_pre_hprel hprels in
       let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
       let unsat_core = Smtsolver.get_unsat_core sub_conds in
-      if is_empty unsat_core then hprels
+      if is_empty unsat_core then
+        let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
+        hprels
       else
         let cond_guards = List.map (fun c -> cond_guard_of_pre_hprel unsat_core c) conds in
         let cond_guard_hprels = List.combine cond_guards hprels in
         let trans_hprels = List.map (fun (c, hpr) -> transform_pre_hprel_w_cond_guard c hpr) cond_guard_hprels in
-        (* if not (should_merge_hprels prog trans_hprels) then hprels *)
-        (* else                                                       *)
+        if not (should_merge_pre_hprels prog trans_hprels) then
+          let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in 
+          hprels
+        else
           let disj_rhs_list = List.fold_left (fun acc (c, hprel) ->
             let rhs_w_cond = CF.add_pure_formula_to_formula c hprel.CF.hprel_rhs in
             acc @ [rhs_w_cond]) [] cond_guard_hprels in
@@ -376,8 +380,7 @@ let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =
     if is_empty hrel_defs then [add_back_hrel ctx hrel]
     else if is_unfolding then (* UNFOLDING FOR PRE-HPREL *)
       unfolding_one_hrel prog ctx hrel hrel_defs
-    (* FOLDING FOR POST-HPREL *)
-    else
+    else (* FOLDING FOR POST-HPREL *)
       folding_one_hrel prog ctx hrel hrel_defs
 
 let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =

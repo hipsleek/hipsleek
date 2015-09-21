@@ -6,6 +6,8 @@ data char_star {
 HeapPred P(char_star x).
 HeapPred HP_1620(char_star x).
 
+checkentail P(x) |- P(x).
+
 relAssume //(1)
 P(s) --> s::char_star<v_1618,Anon_1619>@M * HP_1620(Anon_1619).
 
