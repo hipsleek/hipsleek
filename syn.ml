@@ -210,7 +210,7 @@ let merge_hprel_list prog hprels =
 
 let merging prog hprels = 
   let hprel_lists = List.map snd (partition_hprel_list hprels) in
-  List.concat (List.map (merge_hprel_list prog) hprel_lists)
+  List.concat (List.map (x_add merge_hprel_list prog) hprel_lists)
 
 (*********************)
 (***** UNFOLDING *****)
@@ -283,7 +283,7 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
 
 let unfolding_one_hrel prog ctx hrel hrel_defs = 
   let hrel_name, hrel_args = sig_of_hrel hrel in
-  let merged_hrel_defs = merge_hprel_list prog hrel_defs in
+  let merged_hrel_defs = (* x_add merge_hprel_list prog *) hrel_defs in
   let subst_hrel_defs = List.map (
     fun hprel ->
       try

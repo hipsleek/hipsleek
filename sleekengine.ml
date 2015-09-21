@@ -1634,29 +1634,38 @@ let print_sleek_hprel_assumes () =
       curr_hprel (* !sleek_hprel_assumes *) no_pos
   else ()
 
-let process_sleek_hprel_assumes hps f_proc = 
+let process_sleek_hprel_assumes_others s hps f_proc = 
   let () = classify_sleek_hprel_assumes () in
+  let () = print_endline_quiet "\n========================" in
+  let () = print_endline_quiet (" Performing "^s) in
+  let () = print_endline_quiet "========================" in
   let sel_hprel_assume_list, others = select_hprel_assume !sleek_hprel_assumes hps in
-  let res = f_proc sel_hprel_assume_list in
+  let res = f_proc others sel_hprel_assume_list in
   update_sleek_hprel_assumes (res @ others)
+
+let process_sleek_hprel_assumes s hps f_proc = 
+  let f others x = f_proc x in
+  process_sleek_hprel_assumes_others s hps f
 
 let process_shape_add_dangling hps =
-  process_sleek_hprel_assumes hps (Syn.add_dangling_hprel_list !cprog)
+  process_sleek_hprel_assumes "Add Dangling" hps (Syn.add_dangling_hprel_list !cprog)
 
 let process_shape_unfold hps =
-  let sel_hprel_assume_list, others = select_hprel_assume !sleek_hprel_assumes hps in
-  let res = x_add Syn.selective_unfolding !cprog others sel_hprel_assume_list in
-  (* let res = Syn.unfolding !cprog sel_hprel_assume_list in *)
-  update_sleek_hprel_assumes (res @ others)
+  process_sleek_hprel_assumes_others "Unfolding" hps (Syn.selective_unfolding !cprog)
+
+  (* let sel_hprel_assume_list, others = select_hprel_assume !sleek_hprel_assumes hps in *)
+  (* let res = x_add Syn.selective_unfolding !cprog others sel_hprel_assume_list in *)
+  (* (\* let res = Syn.unfolding !cprog sel_hprel_assume_list in *\) *)
+  (* update_sleek_hprel_assumes (res @ others) *)
 
 let process_shape_param_dangling hps =
-  process_sleek_hprel_assumes hps Syn.dangling_parameterizing
+  process_sleek_hprel_assumes "Parameterize Dangling" hps Syn.dangling_parameterizing
 
 let process_shape_simplify hps =
-  process_sleek_hprel_assumes hps Syn.simplify_hprel_list
+  process_sleek_hprel_assumes "Simplifying" hps Syn.simplify_hprel_list
 
 let process_shape_merge hps = 
-  process_sleek_hprel_assumes hps (Syn.merging !cprog)
+  process_sleek_hprel_assumes "Merging" hps (Syn.merging !cprog)
   
 (******************************************************************************)
 

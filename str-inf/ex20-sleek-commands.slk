@@ -17,15 +17,20 @@ HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&v_1618=0 --> emp.
 
 print relAssumes.
 
-print relAssumes.
 
 shape_add_dangling [P,HP_1620].
 
 print relAssumes.
 
+//shape_merge [P,HP_1620].
+print relAssumes.
+
+
 shape_unfold [P].
 //shape_unfold [HP_1620].
 //shape_unfold [P,HP_1620].
+
+shape_merge [P,HP_1620].
 
 print relAssumes.
 
