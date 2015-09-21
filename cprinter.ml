@@ -4978,6 +4978,26 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
+let string_of_derived_program p = 
+  "\n*****************************" ^ 
+  "\n     DERIVED PREDICATES " ^ 
+  "\n*****************************\n" ^ 
+  (* (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ *)
+  (string_of_view_decl_list (List.filter 
+                               (fun v -> v.Cast.view_kind==View_HREL) p.prog_view_decls)) ^ "\n\n" 
+  (* (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ *)
+  (* (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^ *)
+  (* (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^ *)
+  (* (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ *)
+  (* (\* WN_all_lemma - override usage? *\) *)
+  (* (string_of_coerc_decl_list (\*p.prog_left_coercions*\) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^ *)
+  (* (string_of_coerc_decl_list (\*p.prog_right_coercions*\) (Lem_store.all_lemma # get_right_coercion))^"\n\n"^ *)
+  (* (\* TODO: PD *\) *)
+  (* (\*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*\) *)
+  (* (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n" *)
+;;
+
+
 (* pretty printing for program written in core language separating prelude.ss program *)
 let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
   let remove_prim_procs procs=
