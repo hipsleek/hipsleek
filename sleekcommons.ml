@@ -75,6 +75,8 @@ type command =
   | ShapeSimplify of (ident list)
   | ShapeMerge of (ident list)
   | ShapeTransToView of (ident list)
+  | ShapeDerivePre of (ident list)
+  | ShapeDerivePost of (ident list)
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -175,6 +177,8 @@ let string_of_command c = match c with
   | ShapeSimplify _ -> "ShapeSimplify"
   | ShapeMerge _ -> "ShapeMerge"
   | ShapeTransToView _ -> "ShapeTransToView"
+  | ShapeDerivePre _ -> "ShapeDerivePre"
+  | ShapeDerivePost _ -> "ShapeDerivePost"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"

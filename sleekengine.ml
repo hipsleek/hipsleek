@@ -1674,6 +1674,22 @@ let process_shape_trans_to_view hps =
   in
   process_sleek_hprel_assumes "Transforming to View" hps f
   
+let process_shape_derive_pre hps = 
+  let f hps =
+    print_endline "To be Implemented";
+    (* let trans_views = Syn.trans_hprel_to_view !cprog hps in *)
+    hps 
+  in
+  process_sleek_hprel_assumes "Deriving Pre-Predicates" hps f
+
+let process_shape_derive_post hps = 
+  let f hps =
+    print_endline "To be Implemented";
+    (* let trans_views = Syn.trans_hprel_to_view !cprog hps in *)
+    hps 
+  in
+  process_sleek_hprel_assumes "Deriving Post-Predicates" hps f
+
 (******************************************************************************)
 
 let relation_pre_process constrs pre_hps post_hps=

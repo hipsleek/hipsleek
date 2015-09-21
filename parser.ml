@@ -1037,6 +1037,8 @@ non_empty_command:
       | t = shape_simplify_cmd -> ShapeSimplify t
       | t = shape_merge_cmd -> ShapeMerge t
       | t = shape_trans_to_view_cmd -> ShapeTransToView t
+      | t = shape_derive_pre_cmd -> ShapeDerivePre t
+      | t = shape_derive_post_cmd -> ShapeDerivePost t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2621,6 +2623,16 @@ shape_merge_cmd:
 
 shape_trans_to_view_cmd:
   [[ `SHAPE_TRANS_TO_VIEW; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_derive_pre_cmd:
+  [[ `SHAPE_DERIVE_PRE; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_derive_post_cmd:
+  [[ `SHAPE_DERIVE_POST; `OSQUARE; il=OPT id_list; `CSQUARE
      ->  un_option il []
   ]];
 
