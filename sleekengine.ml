@@ -1675,12 +1675,17 @@ let process_shape_trans_to_view hps =
   process_sleek_hprel_assumes "Transforming to View" hps f
   
 let process_shape_derive_pre hps = 
-  let f hps =
-    print_endline "To be Implemented";
-    (* let trans_views = Syn.trans_hprel_to_view !cprog hps in *)
-    hps 
-  in
-  process_sleek_hprel_assumes "Deriving Pre-Predicates" hps f
+  (* add-dangling; merge ; unfold; param_dangling; trans_to_view *)
+  let () = classify_sleek_hprel_assumes () in
+  let () = print_endline_quiet "\n=========================" in
+  let () = print_endline_quiet (" Deriving Pre-Predicates ") in
+  let () = print_endline_quiet "==========================" in
+  let () = process_shape_add_dangling hps in
+  let () = process_shape_merge hps in
+  let () = process_shape_unfold hps in
+  let () = process_shape_param_dangling hps in
+  let () = process_shape_trans_to_view hps in
+  ()
 
 let process_shape_derive_post hps = 
   let f hps =
