@@ -1791,6 +1791,42 @@ print relAssumes.
    fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
 
 ===========================================================================
+# ex20d1.slk
+
+# GOT
+
+  [fold emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
+           flted_22_138!=null & flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
+           flted_22_138!=null & flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
+           flted_22_138!=null & flted_22_138!=null
+        or emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
+           flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
+           flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
+           flted_22_138!=null
+         |#| htrue --> U(flted_22_138); 
+   fold U(q_152)&q_146!=null
+        or U(q_152)&q_146!=null
+         |#| htrue --> GP_153(q_152,q_146)]
+
+# why so much repeated unfoldings above?
+
+ [fold emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           q_34=q_152 & flted_22_138!=null
+         |#| htrue --> U(flted_22_138); 
+   fold U(q_152)&q_146!=null |#| htrue --> GP_153(q_152,q_146)]
 ===========================================================================
 ===========================================================================
 ===========================================================================
