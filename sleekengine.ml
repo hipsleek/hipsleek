@@ -1686,6 +1686,7 @@ let process_shape_derive_pre hps =
   let () = process_shape_add_dangling hps in
   let () = process_shape_merge hps in
   let () = process_shape_unfold hps in
+  let () = process_shape_simplify hps in
   let () = process_shape_param_dangling hps in
   let () = process_shape_trans_to_view hps in
   ()
@@ -1696,10 +1697,13 @@ let process_shape_derive_post hps =
     let () = print_endline_quiet "\n=========================" in
     let () = print_endline_quiet (" Deriving Post-Predicates ") in
     let () = print_endline_quiet "==========================" in
-    let () = process_shape_simplify hps in
     (* let () = process_shape_add_dangling hps in *)
     let () = process_shape_unfold hps in
+    let () = print_sleek_hprel_assumes () in
+    let () = process_shape_simplify hps in
+    let () = print_sleek_hprel_assumes () in
     let () = process_shape_merge hps in
+    let () = print_sleek_hprel_assumes () in
     (* let () = process_shape_param_dangling hps in *)
     let () = process_shape_trans_to_view hps in
     (* let trans_views = Syn.trans_hprel_to_view !cprog hps in *)
