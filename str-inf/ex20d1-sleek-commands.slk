@@ -23,6 +23,7 @@ emp&flted_22_138=null |#| true --> U(flted_22_138).
 print relAssumes. // To add hprel type
 
 shape_derive_view [U,GP_153].
+//shape_derive_pre [U,GP_153].
 
 print relAssumes.
 
