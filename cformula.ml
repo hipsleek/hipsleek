@@ -346,7 +346,7 @@ let mk_HRel_as_view n args loc =
   let () = x_tinfo_hp (add_str "HPRel(n)" !CP.print_sv) n no_pos in
   let vn = name_of_spec_var n in
   let hd,tails = match args with
-      n::ns -> (n,args)
+      n::ns -> (n,ns)
     | _ -> x_report_error loc "HREL -> View : need at least one parameter"
   in
   ViewNode {
@@ -4910,7 +4910,7 @@ type formula_guard_list = formula_guard list
 
 type hprel_infer_type = INFER_UNKNOWN | INFER_UNFOLD | INFER_FOLD 
                 (* | I_FOLD_LARGE | I_UNFOLD_LARGE  *)
-type hprel= {
+type hprel = {
   hprel_kind: CP.rel_cat;
   unk_svl: CP.spec_var list; (* unknown and dangling *)
   unk_hps:(CP.spec_var*CP.spec_var list) list; (* not needed *)
@@ -4921,10 +4921,12 @@ type hprel= {
   (* of more than one field. ususally it is heap nodes *)
   (* guard is used in unfolding pre-preds              *)
   hprel_type: hprel_infer_type;
+  hprel_unknown: CP.spec_var list; (* the unknown vars inferred *)
   hprel_rhs: formula;
   hprel_path: cond_path_type;
   hprel_proving_kind: Others.proving_kind;
   hprel_flow: nflow list;
+  (* hprel_fold: bool; *)
 }
 
 
@@ -4978,9 +4980,11 @@ and infer_state = {
   is_hp_defs: hp_rel_def list;
 }
 
-let print_hprel_def_short = ref (fun (c:hprel_def) -> "printer has not been initialized")
+let print_hprel_def_short = ref (fun (c: hprel_def) -> "printer has not been initialized")
 
-let print_hprel_short = ref (fun (c:hprel) -> "printer has not been initialized")
+let print_hprel_short = ref (fun (c: hprel) -> "printer has not been initialized")
+
+let print_hprel_list_short = ref (fun (c: hprel list) -> "printer has not been initialized")
 
 (* outcome from shape_infer *)
 let rel_def_stk : hprel_def Gen.stack_pr = new Gen.stack_pr "rel_def (shape-infer)"
@@ -5232,9 +5236,10 @@ let mk_hp_rel_def1 c lhs rhs ofl=
     def_flow = ofl;
   }
 
-let mkHprel ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
+let mkHprel ?(fold_type=false) ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p=
   {  hprel_kind = knd;
      hprel_type = infer_type;
+     hprel_unknown = [];
      unk_svl = u_svl;
      unk_hps = u_hps ;
      predef_svl = pd_svl;
@@ -5243,12 +5248,14 @@ let mkHprel ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g:
      hprel_rhs = hprel_r;
      hprel_path = hprel_p;
      hprel_proving_kind = Others.find_impt_proving_kind ();
+     (* hprel_fold = fold_type; *)
      hprel_flow = [!norm_flow_int];
   }
 
-let mkHprel_w_flow ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p nflow=
+let mkHprel_w_flow ?(fold_type=false) ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (hprel_g: formula option) hprel_r hprel_p nflow=
   {  hprel_kind = knd;
      hprel_type = infer_type;
+     hprel_unknown = [];
      unk_svl = u_svl;
      unk_hps = u_hps ;
      predef_svl = pd_svl;
@@ -5257,11 +5264,12 @@ let mkHprel_w_flow ?(infer_type=INFER_UNKNOWN) knd u_svl u_hps pd_svl hprel_l (h
      hprel_rhs = hprel_r;
      hprel_path = hprel_p;
      hprel_proving_kind = Others.find_impt_proving_kind ();
+     (* hprel_fold = fold_type; *)
      hprel_flow = [nflow];
   }
 
-let mkHprel_1 knd hprel_l hprel_g hprel_r hprel_p =
-  mkHprel knd [] [] [] hprel_l hprel_g hprel_r hprel_p
+let mkHprel_1 ?(fold_type=false) knd hprel_l hprel_g hprel_r hprel_p =
+  mkHprel ~fold_type:fold_type knd [] [] [] hprel_l hprel_g hprel_r hprel_p
 
 let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib optflow_int=
   let libs = match opflib with
@@ -5276,7 +5284,11 @@ let mk_hprel_def kind hprel (guard_opt: formula option) path_opf opflib optflow_
     hprel_def_body =  body;
     hprel_def_body_lib = libs;
     hprel_def_flow = optflow_int;
+    (* hprel_fold = fold_type; *)
   }
+
+(* let mk_hprel_fold kind hprel (guard_opt: formula option) path_opf opflib optflow_int = *)
+(*   mk_hprel_def ~fold_type:true kind hprel (guard_opt: formula option) path_opf opflib optflow_int  *)
 
 let pr_h_formula_opt og=
   match og with
@@ -11376,6 +11388,10 @@ let collect_hp_rel ctx =
   let rs = collect_hp_rel ctx in
   Gen.Basic.remove_dups rs
 
+let collect_hp_rel_all ctx = match ctx with
+  | SuccCtx lst -> List.map collect_hp_rel lst
+  | _ -> []
+
 let rec collect_hp_unk_map ctx =
   match ctx with
   | Ctx estate -> estate.es_infer_hp_unk_map
@@ -13037,7 +13053,7 @@ let list_of_disjuncts f = split_conjuncts f
 
 let join_conjunct_opt l = match l with
   | [] -> None
-  | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
+  | h::t -> Some (List.fold_left (fun a c -> mkOr c a no_pos) h t)
 
 let join_star_conjunctions (hs : h_formula list) : h_formula  = 
   List.fold_left (fun a c-> mkStarH a c no_pos ) HEmp hs
@@ -19537,6 +19553,16 @@ let find_node emap hf sv =
   in
   snd (trans_h_formula hf () f_h_f voidf2 (List.concat))
 
+let extr_pred_list f =
+  let (hf,_,_,_,_,_) = split_components f in
+  let f_h_f _ hf =
+    match hf with
+    | ViewNode ({ h_formula_view_name = n}) ->
+      Some (hf,[n])
+    | _ -> None
+  in
+  snd (trans_h_formula hf () f_h_f voidf2 (List.concat))
+
 (* let find_node emap rhs_h sv = [] *)
 
 let is_comp (l_n,_,l_arg) (r_n,_,r_arg) pure =
@@ -19602,3 +19628,143 @@ let fresh_data_arg body_dn =
   let () = y_tinfo_hp (add_str "data args" !CP.print_svl) args in
   { body_dn with  h_formula_data_arguments = List.map CP.fresh_spec_var args }
 
+let extr_exists_hprel ra = 
+  let lhs = ra.hprel_lhs in
+  let guard = ra.hprel_guard in
+  let kind = ra.hprel_kind in
+  (* let () = y_binfo_hp (add_str "lhs" !print_formula) lhs in *)
+  (* let () = y_binfo_hp (add_str "guard" (pr_option !print_formula)) guard in *)
+  let (lhs_vs,lhs_h_vs) = (fv lhs,fv_heap_of lhs) in
+  let (guard_vs,guard_h_vs) = match guard with
+    None -> ([],[])
+    | Some f -> (fv f,fv_heap_of f) in
+  (* let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in *)
+  (* let () = y_binfo_hp (add_str "guard_vs" !CP.print_svl) guard_vs in *)
+  let ex_lhs_vars = CP.diff_svl lhs_vs lhs_h_vs in
+  let ex_guard_vars = CP.diff_svl guard_vs (lhs_h_vs@guard_h_vs) in
+  (* let () = y_binfo_hp (add_str "guard" (string_of_rel_cat)) kind in *)
+  (ex_lhs_vars,ex_guard_vars)
+
+(* let add_unfold_flag lst =  *)
+(*   List.map (fun w -> {w with hprel_fold = false}) lst *)
+
+(* let add_fold_flag lst =  *)
+(*   List.map (fun w -> {w with hprel_fold = true}) lst *)
+
+(*
+   U(..) # .. --> ..   // unfold
+   ....  --> U(..)     // fold
+*)
+
+let check_unfold_aux ra =
+  let lhs = ra.hprel_lhs in
+  let rhs = ra.hprel_rhs in
+  (* let (h_l,p_l,_,_,_,_) = split_components lhs in *)
+  (* let (h_r,p_r,_,_,_,_) = split_components rhs in *)
+  let ans_r =
+    match rhs with
+    | Or _ -> []
+    | _ ->
+      let (h_r, p_r, _, _, _, _) = split_components rhs in
+      (match h_r with
+      | HRel (hp, _, _) -> 
+        if CP.is_True (MCP.pure_of_mix p_r) then [(false, hp)] (* fold rule *)
+        else []
+      | _ -> [])
+  in
+  let ans_l =
+    match lhs with
+    | Or _ -> []
+    | _ ->
+      let (h_l, _, _, _, _, _) = split_components lhs in
+      (match h_l with
+      | HRel (hp, _, _) -> [(true, hp)]
+      | _ -> [])
+  in ans_r@ans_l
+
+(* let check_unfold_aux ra =                                                 *)
+(*   let lhs = ra.hprel_lhs in                                               *)
+(*   let rhs = ra.hprel_rhs in                                               *)
+(*   let (h_l,p_l,_,_,_,_) = split_components lhs in                         *)
+(*   let (h_r,p_r,_,_,_,_) = split_components rhs in                         *)
+(*   let ans_r = match h_r with                                              *)
+(*   | HRel (hp,_,_) ->                                                      *)
+(*     if CP.is_True (MCP.pure_of_mix p_r) then [(false,hp)] (* fold rule *) *)
+(*     else []                                                               *)
+(*   | _ -> [] in                                                            *)
+(*   let ans_l = match h_l with                                              *)
+(*   | HRel (hp,_,_) -> [(true,hp)]                                          *)
+(*   | _ -> [] in                                                            *)
+(*   ans_r@ans_l                                                             *)
+
+let check_unfold ra =
+  match check_unfold_aux ra with
+  | [] -> (None,[])
+  | (b,hp)::_ -> (Some b,[hp])
+
+let modify_hprel (r,(b,hp)) =
+  let ut = if b then INFER_UNFOLD else INFER_FOLD in
+  { r with hprel_type = ut; hprel_unknown = [hp] }
+
+(* let string_of_hprel_def_short hp = poly_string_of_pr pr_hprel_def_short hp *)
+
+let string_of_infer_type a = match a with
+  | INFER_UNKNOWN -> "unknown"
+  | INFER_UNFOLD -> "unfold"
+  | INFER_FOLD -> "fold"
+
+let add_infer_type_to_hprel ras =
+  if not(List.exists (fun r -> r.hprel_type ==INFER_UNKNOWN) ras) then ras
+  else 
+    let pr = pr_list (fun (r,_,_) -> pr_none r) in
+    let pr2 = pr_list (fun (r,_,n) -> string_of_int n) in
+    let pr_p = pr_pair string_of_infer_type !CP.print_svl in
+    let pr3 = pr_list (fun r -> pr_p (r.hprel_type,r.hprel_unknown)) in
+    let lst = List.map (fun r -> let a = check_unfold_aux r in (r,a,List.length a)) ras in
+    let () = y_tinfo_hp (add_str "add_infer_type" pr2) lst in
+    let (emp,lst) = List.partition (fun (_,_,n) -> n==0) lst in
+    let (ones,lst) = List.partition (fun (_,_,n) -> n==1) lst in
+    let ones_ans = List.map (fun (r,a,_) -> (r,List.hd a)) ones in
+    if emp!=[] then y_winfo_hp (add_str "UNCLASSIFIED REL_ASS" pr) emp;
+    (* choose a case which occurred before in ones *)
+    (* let rec choose ans r = match ans with *)
+    (*                        | [] -> r *)
+    (*                        | x::xs ->  *)
+    (*                          if List.exists (fun (_,t2) -> r=t2) ones_ans then r *)
+    (*                          else choose xs x in *)
+    let compatible (b1,hp1) = not(List.exists (fun (_,(b2,hp2)) -> hp1=hp2 && not(b1=b2)) ones_ans) in
+    (* choose a compatible case *)
+    let choose xs = 
+      let rs = List.filter compatible xs in
+      match rs with
+      | [] -> List.hd xs (* choose an incompatible *)
+      | x::xs -> x in
+    let rs2 = List.map (fun (r,a,_) -> modify_hprel (r,(choose a))) lst in
+    let emp = List.map (fun (r,_,_) -> r) emp in
+    let ones_ans = List.map modify_hprel ones_ans in
+    let res = emp@ones_ans@rs2 in
+    let () = y_tinfo_hp (add_str "add_infer_type(input)" pr3) ras in
+    let () = y_tinfo_hp (add_str "add_infer_type(output)" pr3) res in
+    res
+
+let add_infer_type_to_hprel ras =
+  let pr = !print_hprel_list_short in
+  Debug.no_1 "add_infer_type_to_hprel" pr pr add_infer_type_to_hprel ras
+
+let check_hprel ra = 
+  let (ex_lhs_vs,ex_guard_vs)= extr_exists_hprel ra in
+  let opt = check_unfold ra in
+  (* let () = y_tinfo_hp (add_str "XXX:unfold?" (pr_pair (pr_option string_of_bool) !CP.print_svl)) opt in *)
+  (* let () = if ex_lhs_vs!=[] then y_winfo_hp (add_str "XXX ex_lhs_vars to eliminate" !CP.print_svl) ex_lhs_vs in *)
+  (* let () = if ex_guard_vs!=[] then y_winfo_hp (add_str "XXX ex_guard_vars to eliminate" !CP.print_svl) ex_guard_vs in *)
+  ra
+
+let sleek_hprel_assumes =
+  object (self)
+    val mutable lst = []
+    method get = lst
+    method set nlst = lst <- nlst
+    method add (e:hprel) = lst <- e::lst
+  end
+
+(* let sleek_hprel_assumes = ref ([]: CF.hprel list) *)

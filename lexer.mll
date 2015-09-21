@@ -154,6 +154,12 @@ module Make (Token : SleekTokenS)
    ("shape_add_dangling", SHAPE_ADD_DANGLING);
    ("shape_unfold", SHAPE_UNFOLD);
    ("shape_param_dangling", SHAPE_PARAM_DANGLING);
+   ("shape_simplify", SHAPE_SIMPLIFY);
+   ("shape_merge", SHAPE_MERGE);
+   ("shape_trans_to_view", SHAPE_TRANS_TO_VIEW);
+   (* ("shape_derive_pre", SHAPE_DERIVE_PRE);   *)
+   (* ("shape_derive_post", SHAPE_DERIVE_POST); *)
+   ("shape_derive_view", SHAPE_DERIVE_VIEW);
    ("Declare_Dangling", SHAPE_DECL_DANG);
    ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
    ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );

@@ -36,6 +36,13 @@ void append(node x, node y)
   requires x::ll<> & x!=null
   ensures P(x,y) ;
 
+--old-pred-synthesis
+
+[ P(x_1660,y_1661) ::= x_1660::node<Anon_1662,y_1661>@M
+ or x_1660::node<Anon_1662,q_1631>@M * P(q_1631,y_1661)&
+    x_1660!=null & q_1631!=null
+ (4,5)]
+
 // POST
 
 x::node<Anon_1630,q_1631>@M * GP_1659(q_1631,y,x@NI)&

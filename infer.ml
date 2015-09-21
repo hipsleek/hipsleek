@@ -1208,7 +1208,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     let lhs = CF.formula_of_heap (List.fold_left (fun h1 h2 -> CF.mkStarH h1 h2 pos) (List.hd choose_unk_h) (List.tl choose_unk_h)) pos in
                     let rhs = CF.formula_of_pure_formula rhs_xpure pos in
 
-                    let hp_rel = mkHprel_1 knd lhs None rhs es_cond_path in
+                    let hp_rel = mkHprel_1 ~fold_type:false knd lhs None rhs es_cond_path in
                     let () = DD.ninfo_hprint (add_str "hp_rel" Cprinter.string_of_hprel_short) hp_rel no_pos in
                     (* postpone until heap_entail_after_sat *)
                     if !Globals.old_infer_hp_collect then 

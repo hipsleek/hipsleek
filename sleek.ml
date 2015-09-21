@@ -96,7 +96,7 @@ module M = Lexer.Make(Token.Token)
     (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
     | SatCheck f -> (process_sat_check f; ())
     | NonDetCheck (v, f) -> (process_nondet_check v f)
-    | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
+    | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
@@ -119,6 +119,12 @@ module M = Lexer.Make(Token.Token)
     | ShapeAddDangling hps -> process_shape_add_dangling hps
     | ShapeUnfold hps -> process_shape_unfold hps
     | ShapeParamDangling hps -> process_shape_param_dangling hps
+    | ShapeSimplify hps -> process_shape_simplify hps
+    | ShapeMerge hps -> process_shape_merge hps
+    | ShapeTransToView hps -> process_shape_trans_to_view hps
+    (* | ShapeDerivePre hps -> process_shape_derive_pre hps   *)
+    (* | ShapeDerivePost hps -> process_shape_derive_post hps *)
+    | ShapeDeriveView hps -> process_shape_derive_view hps
     | PredSplit ids -> process_pred_split ids
     | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
@@ -485,6 +491,8 @@ let sleek_prologue () =
   Globals.infer_const_obj # init
 
 let sleek_epilogue () =
+  let cp = !cprog in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_derived_program cp) else () in
   if !Debug.dump_calls then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then

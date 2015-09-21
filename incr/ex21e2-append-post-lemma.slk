@@ -25,7 +25,7 @@ HeapPred U(node x, node y).
 //lemma_infer [U,classic] self::PP<y> <- U(self,q)*q::node<_,y>.
 //print residue.
 
-lemma_infer [U,classic] self::PP<y> -> U(self,q)*q::node<_,y>.
+lemma_infer_pred [U,classic] self::PP<y> -> U(self,q)*q::node<_,y>.
 print residue.
 
 

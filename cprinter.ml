@@ -2809,6 +2809,8 @@ let pr_hprel_short hpa =
   (* fmt_string "hprel(1)"; *)
   pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
+  fmt_string (string_of_infer_type hpa.hprel_type);
+  fmt_string " ";
   prtt_pr_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
     | None -> fmt_string " |#| "(* () *)
@@ -4828,6 +4830,7 @@ let string_of_coerc_opt op c =
     else s2
          ^"\n head match:"^c.coercion_head_view
          ^"\n body view:"^c.coercion_body_view
+         ^"\n body pred_list:"^((pr_list pr_id) c.coercion_body_pred_list)
          ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
          ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
          ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
@@ -4974,6 +4977,26 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*)
                           (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
+
+let string_of_derived_program p = 
+  "\n*****************************" ^ 
+  "\n     DERIVED PREDICATES " ^ 
+  "\n*****************************\n" ^ 
+  (* (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ *)
+  (string_of_view_decl_list (List.filter 
+                               (fun v -> v.Cast.view_kind==View_HREL) p.prog_view_decls)) ^ "\n\n" 
+  (* (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ *)
+  (* (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^ *)
+  (* (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^ *)
+  (* (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ *)
+  (* (\* WN_all_lemma - override usage? *\) *)
+  (* (string_of_coerc_decl_list (\*p.prog_left_coercions*\) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^ *)
+  (* (string_of_coerc_decl_list (\*p.prog_right_coercions*\) (Lem_store.all_lemma # get_right_coercion))^"\n\n"^ *)
+  (* (\* TODO: PD *\) *)
+  (* (\*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*\) *)
+  (* (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n" *)
+;;
+
 
 (* pretty printing for program written in core language separating prelude.ss program *)
 let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
@@ -5547,6 +5570,7 @@ Cformula.print_failure_kind_full := string_of_failure_kind_full;;
 Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_hprel_def_short := string_of_hprel_def_short;;
 Cformula.print_hprel_short := string_of_hprel_short;;
+Cformula.print_hprel_list_short := string_of_hprel_list_short;;
 (* Cformula.print_nflow := string_of_nflow;; *)
 Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;

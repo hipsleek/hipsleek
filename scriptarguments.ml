@@ -770,6 +770,7 @@ let common_arguments = [
 
   (* String Inference *)
   ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
+  ("--ops", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
 
   (* Template *)

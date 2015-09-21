@@ -19,14 +19,14 @@ lseg<p> == self=p
   inv true;
 
 
-	
 HeapPred P(node x, node y).
 
 
 node append(node x, node y)
-//infer [P,@classic]
   requires x::ll<>
-  ensures res::lseg<y> ;
+  ensures res::lseg<y> 
+    & (res=y & x=null | res=x & x!=null)
+  ;
 {    
   if (x==null) return y;
   else {
@@ -37,11 +37,13 @@ node append(node x, node y)
 
 
 /*
-# ex21a.ss
+# ex21p.ss
+ node append(node x, node y)
+  requires x::ll<>
+  ensures res::lseg<y> 
+    & (res=y & x=null | res=x & x!=null)
+  ;
 
-  infer [P,@classic]
-  requires P(x,y)
-  ensures true ;
 
 ******************************
    ******* SPECIFICATION1 ********

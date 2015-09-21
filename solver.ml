@@ -8329,6 +8329,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     (* L2: why not classic enven post proving? incr/ex10a-ll-size, skip2,skip3 *)
     let () = x_tinfo_hp (add_str "(check_is_classic ())" string_of_bool) (check_is_classic ()) no_pos in
     let h2, p2, _, _, _, _ = split_components conseq in
+    (* I guess this should be unfolding hp_rel *)
     let estate_orig1, hprel_ass, lhs=
       if (h2 = HEmp || h2 = HTrue) && not(is_folding) &&
          (!Globals.old_collect_hprel || (check_is_classic ()))
@@ -9545,7 +9546,8 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let lhs_b = CF.formula_base_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
   let lhs = CF.Base lhs_b in
   let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
-  let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
+  (* from unfolding *)
+  let hp_rel = CF.mkHprel ~fold_type:false knd [] [] matched_svl lhs grd rhs es_cond_path in
   if !Globals.old_infer_hp_collect then
     begin
       x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
@@ -11585,7 +11587,7 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
     let lhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl vs) (CP.mkTrue pos) in
     let lhs = CF.formula_of_pure_formula lhs_p pos in
     let rhs = CF.formula_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
-    let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
+    let hp_rel = CF.mkHprel ~fold_type:true knd [] [] matched_svl lhs grd rhs es_cond_path in
     if !Globals.old_infer_hp_collect then 
       begin
         x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;

@@ -120,7 +120,7 @@ let flatten_action f_extr wa =
       let rs2 = List.filter (fun (_,a) -> match a with 
           | M_Nothing_to_do _ -> false
           | _ -> true) rs in
-      if rs2==[] then [List.hd rs] else rs2
+      if rs2==[] then rs else rs2
     | None -> [wa]
   in aux wa
 
@@ -158,60 +158,6 @@ let flatten_search ((wt,_) as wa) =
 (*     | [(_,a)] -> a *)
 (*     | lst -> Search_action lst *)
 (*   end *)
-
-let norm_search_action ls =
-  let (_,a) = flatten_search (-1,Search_action ls) in
-  a
-
-
-let mk_search_action lst = norm_search_action lst
-
-
-let flatten_cond ((wt,_) as wa) =
-  let f_extr a = match a with
-    | Cond_action lst -> Some lst
-    | _ -> None in
-  let lst = flatten_action f_extr wa in
-    match lst with
-    | [] -> (wt,M_Nothing_to_do ("cond action is empty"))
-    | [a] -> a
-    | lst -> (wt,Cond_action lst)
-
-let norm_cond_action ls =
-  let () = y_tinfo_pp "norm_cond_action" in
-  let (_,a) = flatten_cond (-1,Cond_action ls) in
-  a
-
-let norm_cond_action ls =
-  let (_,a) = flatten_cond (-1,Cond_action ls) in
-  a
-
-let mk_cond_action lst = norm_cond_action lst
-
-let check_same lst = 
-  let rec aux lst p = 
-    match lst with
-    | (a,_)::xs -> 
-      if a==p then aux xs p
-      else false
-    | [] -> true in 
-  match lst with
-  | [] -> true
-  | (w,_)::xs -> aux xs w
-
-let norm_smart_action ls =
-  if check_same ls then norm_search_action ls
-  else norm_cond_action ls
-
-let mk_smart_action lst = norm_smart_action lst
-
-let mk_smart_rev_action lst = norm_smart_action (List.rev lst)
-
-let norm_single_action ((wt,a) as act) =
-  match a with
-  | Search_action _ -> flatten_search act
-  | Cond_action _ -> flatten_cond act
-  | _ -> act
 
  (* let norm_cond_action ls = *)
  (* match ls with *)
@@ -410,6 +356,68 @@ let string_of_match_type e = poly_string_of_pr pr_match_type e
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
 
 let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl (=) *)
+
+let pr_l_act_wt = pr_list string_of_action_wt_res_simpl
+let pr_act  = string_of_action_res_simpl
+
+let norm_search_action ls =
+  let (_,a) = flatten_search (-1,Search_action ls) in
+  a
+
+let norm_search_action ls =
+  Debug.no_1 "norm_search_action" (pr_l_act_wt) pr_act  norm_search_action ls
+
+let mk_search_action lst = norm_search_action lst
+
+let flatten_cond ((wt,_) as wa) =
+  let f_extr a = match a with
+    | Cond_action lst -> Some lst
+    | _ -> None in
+  let lst = flatten_action f_extr wa in
+    match lst with
+    | [] -> (wt,M_Nothing_to_do ("cond action is empty"))
+    | [a] -> a
+    | lst -> (wt,Cond_action lst)
+
+(* let norm_cond_action ls = *)
+(*   let () = y_tinfo_pp "norm_cond_action" in *)
+(*   let (_,a) = flatten_cond (-1,Cond_action ls) in *)
+(*   a *)
+
+let norm_cond_action ls =
+  let (_,a) = flatten_cond (-1,Cond_action ls) in
+  a
+
+let norm_cond_action ls =
+  Debug.no_1 "norm_cond_action" pr_l_act_wt pr_act  norm_cond_action ls
+
+
+let mk_cond_action lst = norm_cond_action lst
+
+let check_same lst = 
+  let rec aux lst p = 
+    match lst with
+    | (a,_)::xs -> 
+      if a==p then aux xs p
+      else false
+    | [] -> true in 
+  match lst with
+  | [] -> true
+  | (w,_)::xs -> aux xs w
+
+let norm_smart_action ls =
+  if check_same ls then norm_search_action ls
+  else norm_cond_action ls
+
+let mk_smart_action lst = norm_smart_action lst
+
+let mk_smart_rev_action lst = norm_smart_action (List.rev lst)
+
+let norm_single_action ((wt,a) as act) =
+  match a with
+  | Search_action _ -> flatten_search act
+  | Cond_action _ -> flatten_cond act
+  | _ -> act
 
 let action_get_holes a = match a with
   | Undefined_action e
@@ -2148,11 +2156,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* ) a in                                              *)
          (* try accelerated folding *)
          let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-         Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
-         Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
+         x_tinfo_hp (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+         x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-         (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
+         (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | DataNode dl, ViewNode vr -> 
          pr_debug "DATA vs VIEW\n";
          let vr_name = vr.h_formula_view_name in
@@ -2290,7 +2298,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-         (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
+         (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | ViewNode vl, DataNode dr -> 
          pr_debug "VIEW vs DATA\n";
          let vl_name = vl.h_formula_view_name in
@@ -2372,7 +2380,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            match l with
            | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
            | l1::[] -> l1
-           | _      -> (-1, norm_cond_action l)
+           | _      -> (-1, x_add_1 norm_cond_action l)
          in res
        (* TODO:old_infer_heap *)
        | HRel (hn1, args1, _), (HRel (hn2, args2, _) as rhs) -> 

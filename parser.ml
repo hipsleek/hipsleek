@@ -1034,6 +1034,12 @@ non_empty_command:
       | t = shape_add_dangling_cmd -> ShapeAddDangling t
       | t = shape_unfold_cmd -> ShapeUnfold t
       | t = shape_param_dangling_cmd -> ShapeParamDangling t
+      | t = shape_simplify_cmd -> ShapeSimplify t
+      | t = shape_merge_cmd -> ShapeMerge t
+      | t = shape_trans_to_view_cmd -> ShapeTransToView t
+      (* | t = shape_derive_pre_cmd -> ShapeDerivePre t   *)
+      (* | t = shape_derive_post_cmd -> ShapeDerivePost t *)
+      | t = shape_derive_view_cmd -> ShapeDeriveView t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -1212,7 +1218,7 @@ prim_view_decl:
           view_inv_lock = li} ]];
 
 view_decl_ext:
-  [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
+  [[ vh= view_header_ext; `EQEQ; vb= view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       -> let (oi, oboi) = oi in
           { vh with view_formula = (fst vb);
           view_invariant = oi;
@@ -2603,6 +2609,36 @@ shape_unfold_cmd:
 
 shape_param_dangling_cmd:
   [[ `SHAPE_PARAM_DANGLING; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_simplify_cmd:
+  [[ `SHAPE_SIMPLIFY; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_merge_cmd:
+  [[ `SHAPE_MERGE; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_trans_to_view_cmd:
+  [[ `SHAPE_TRANS_TO_VIEW; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+(* shape_derive_pre_cmd:                                       *)
+(*   [[ `SHAPE_DERIVE_PRE; `OSQUARE; il=OPT id_list; `CSQUARE  *)
+(*      ->  un_option il []                                    *)
+(*   ]];                                                       *)
+
+(* shape_derive_post_cmd:                                      *)
+(*   [[ `SHAPE_DERIVE_POST; `OSQUARE; il=OPT id_list; `CSQUARE *)
+(*      ->  un_option il []                                    *)
+(*   ]];                                                       *)
+
+shape_derive_view_cmd:
+  [[ `SHAPE_DERIVE_VIEW; `OSQUARE; il=OPT id_list; `CSQUARE
      ->  un_option il []
   ]];
 

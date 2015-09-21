@@ -4486,6 +4486,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*       (\* find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body) *\) *)
   (*     with | _ -> "" in *)
   let rhs_name = find_view_name c_rhs self  (IF.pos_of_formula i_rhs) in (* andreeac: temporarily replace above body name with this simpler version *)
+  let pred_list = CF.extr_pred_list c_rhs in
   if lhs_name = "" && (coer.I.coercion_kind != LEM_PROP) then raise (Failure "root pointer of node on LHS must be self")
   else
     (  
@@ -4520,7 +4521,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
                     C.coercion_head_view = lhs_name;
                     C.coercion_fold_def = new Gen.mut_option;
                     (* C.vdef_lemma_fold prog c_lhs cs_body_norm; *)
-                    C.coercion_body_view = rhs_name;
+                    C.coercion_body_view = rhs_name;                    
+                    C.coercion_body_pred_list = pred_list;
                     C.coercion_mater_vars = m_vars;
                     C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs);
                     C.coercion_kind = coer.I.coercion_kind;

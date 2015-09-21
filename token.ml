@@ -29,7 +29,11 @@ type sleek_token =
   | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
   | SHAPE_SPLIT_BASE | SHAPE_ELIM_USELESS | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
   | SHAPE_STRENGTHEN_CONSEQ | SHAPE_WEAKEN_ANTE
-  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING
+  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING 
+  | SHAPE_SIMPLIFY | SHAPE_MERGE | SHAPE_TRANS_TO_VIEW
+  (* | SHAPE_DERIVE_PRE (* to derive pre-predicate into view *)   *)
+  (* | SHAPE_DERIVE_POST (* to derive post-predicate into view *) *)
+  | SHAPE_DERIVE_VIEW
   | PRED_SPLIT | PRED_NORM_DISJ | PRED_SPEC | PRED_NORM_SEG
   | REL_INFER
   | DTIME
@@ -135,6 +139,12 @@ module Token = struct
     | SHAPE_ADD_DANGLING -> "shape_add_dangling"
     | SHAPE_UNFOLD -> "shape_unfold"
     | SHAPE_PARAM_DANGLING -> "shape_param_dangling"
+    | SHAPE_SIMPLIFY -> "shape_simplify"
+    | SHAPE_MERGE -> "shape_merge"
+    | SHAPE_TRANS_TO_VIEW -> "shape_trans_to_view"
+    (* | SHAPE_DERIVE_PRE -> "shape_derive_pre"   *)
+    (* | SHAPE_DERIVE_POST -> "shape_derive_post" *)
+    | SHAPE_DERIVE_VIEW -> "shape_derive_view"
     | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"

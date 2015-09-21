@@ -36,10 +36,17 @@ node append(node x, node y)
 
 /*
 # ex21p2.ss
-
-  infer [P,@classic]
+  node append(node x, node y)
   requires x::ll<>
   ensures P(x,y,res);
+*******relational definition********
+*********************************************************
+[ P(x_1661,y_1662,res_1663) ::= emp&x_1661=null & y_1662=res_1663
+ or x_1661::node<Anon_1664,v_node_31_1659>@M * 
+    P(q_1647,y_1662,v_node_31_1659)&
+    x_1661!=null & res_1663!=null & x_1661=res_1663
+ (4,5)]
+*************************************
 
 =========================
 [ // POST
