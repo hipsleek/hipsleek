@@ -3,6 +3,10 @@ data char_star {
   char_star next;
 }.
 
+pred PP<p:char_star> ==
+   self::char_star<v,q> * q::PP<p> & v!=0
+   or self::char_star<v,p> & v=0.
+
 HeapPred P(char_star x).
 HeapPred HP_1620(char_star x).
 
@@ -63,6 +67,36 @@ print relAssumes.
 
 /*
 # ex20.slk
+
+  [unfold P(s,Anon_37) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                                P(Anon_1619,Anon_37)&v_1618!=0
+                                or s::char_star<v_1618,Anon_37>@M&v_1618=0
+                                ; 
+
+# transform to view lacks the dangling parameter derived for P.
+  similarly for HP_1620 
+
+  [unfold P(s,Anon_37) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                                P(Anon_1619,Anon_37)&v_1618!=0
+                                or s::char_star<v_1618,Anon_37>@M&v_1618=0
+                                ; 
+   unfold HP_1620(Anon_1619,Anon_38) |#| s::char_star<v_1618,Anon_1619>@M --> 
+    P(Anon_1619,Anon_37)&v_1618!=0
+    or emp&v_1618=0
+    ]
+
+ view P<>= 
+  EBase 
+    self::char_star<v_1618,Anon_1619>@M * Anon_1619::P<Anon_37>NOANN&
+    v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or self::char_star<v_1618,Anon_37>@M&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+
+ view HP_1620<>= 
+  EBase 
+    self::P<Anon_37>NOANN&v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or emp&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+
+========================
 
 shape_trans_to_view [P,HP_1620].
 

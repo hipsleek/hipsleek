@@ -488,6 +488,8 @@ let sleek_prologue () =
   Globals.infer_const_obj # init
 
 let sleek_epilogue () =
+  let cp = !cprog in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_derived_program cp) else () in
   if !Debug.dump_calls then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
