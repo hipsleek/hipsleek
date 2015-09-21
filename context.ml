@@ -2507,12 +2507,28 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              (4,M_Nothing_to_do ("No common parameters : "^msg))
            else
              let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
+             let ptr = ref None in
              let left_preds = match ms with
-               | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
+               | Coerc_mater d ->
+                     let l_v = d.coercion_body_view in
+                     let () = y_tinfo_hp (add_str "left_view" (pr_id)) l_v in
+                     let lst = List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view in
+                     let () = if lst == [] then
+                       try
+                         let _ = look_up_data_def_prog prog l_v in
+                         let () = y_tinfo_hp (add_str "coercing data " pr_id) l_v in
+                         let () = ptr := Some (l_v,M_lemma (m_res,Some d,1)) in
+                         ()
+                       with _ -> ()
+                     in
+                     l_v::lst
                | _ -> []
              in
              let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
-             process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
+             match !ptr with
+             | None -> process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
+             | Some (l_v,lem_act) ->  
+               (1, lem_act)
          end
        | ViewNode vl, HRel (h_name, args, _) -> 
          begin
@@ -2546,7 +2562,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                      try
                        let _ = look_up_data_def_prog prog r_v in
                        let () = y_tinfo_hp (add_str "coercing data " pr_id) r_v in
-                       ptr := Some (r_v,M_lemma (m_res,Some d,1))
+                       ptr := Some (r_v,M_lemma (m_res,Some d,2))
                      with _ -> ()
                  in
                  r_v::lst
