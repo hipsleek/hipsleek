@@ -22,7 +22,7 @@ HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&v_1618=0 --> emp.
 print relAssumes.
 
 
-shape_derive_view [P,HP_1620].
+shape_derive_pre [P,HP_1620].
 
 
 print relAssumes.

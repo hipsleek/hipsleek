@@ -1226,7 +1226,7 @@ let send_cmd_with_answer str =
 let send_cmd_no_answer str =
   (* let () = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
   let (todo_unk:string) = send_cmd_with_answer str in
-  let () = x_binfo_hp (add_str "no_answer" pr_id) todo_unk no_pos  in
+  let () = x_tinfo_hp (add_str "no_answer" pr_id) todo_unk no_pos  in
   ()
 
 let write_to_mona_predicates_file mona_filename =
@@ -1540,7 +1540,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
       let () = maybe_restart_mona () in
       (* let _  = print_endline "sending to mona prover.." in *)
       let answer = send_cmd_with_answer !cmd_to_send in
-      let () = x_binfo_hp (add_str "answer" pr_id) answer no_pos  in
+      let () = x_tinfo_hp (add_str "answer" pr_id) answer no_pos  in
       check_answer content answer is_sat_b
     end
   with

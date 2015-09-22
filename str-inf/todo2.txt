@@ -1791,6 +1791,26 @@ print relAssumes.
    fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
 
 ===========================================================================
+# ex22a.slk
+
+# came from sa/bugs/use1/slk
+
+  shape_elim_useless [G1,G2].
+
+# can we print shorter forms?
+
+!!!  ELIMINATE parameters:[p] of view G2
+
+!!!views after ELIM: 
+[ view G2{}[]<p:node,y:node>= 
+  view_domains: 
+   view G2<p:node,y:node>= 
+    EBase 
+      self::G2_66<y>@M&{FLOW,(1,26)=__flow#E}[]
+  view vars: p,y
+  ann vars (0 - not a posn): (@M,0),(@M,0),(@M,0)
+  cont vars: y
+  inv: true
 ===========================================================================
 ===========================================================================
 ===========================================================================
