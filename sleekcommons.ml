@@ -69,16 +69,16 @@ type command =
   | ShapeDeclDang of (ident list)
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
-  | ShapeAddDangling of (ident list)
-  | ShapeUnfold of (ident list)
-  | ShapeParamDangling of (ident list)
-  | ShapeSimplify of (ident list)
-  | ShapeMerge of (ident list)
-  | ShapeTransToView of (ident list)
-  | ShapeDerivePre of (ident list)
-  | ShapeDerivePost of (ident list)
-  | ShapeDeriveView of (ident list)
-  | ShapeNormalize of (ident list)
+  | ShapeAddDangling of regex_id_list
+  | ShapeUnfold of regex_id_list
+  | ShapeParamDangling of regex_id_list
+  | ShapeSimplify of regex_id_list
+  | ShapeMerge of regex_id_list
+  | ShapeTransToView of regex_id_list
+  | ShapeDerivePre of regex_id_list
+  | ShapeDerivePost of regex_id_list
+  | ShapeDeriveView of regex_id_list
+  | ShapeNormalize of regex_id_list
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)

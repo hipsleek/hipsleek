@@ -2521,3 +2521,9 @@ let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
 
 let check_is_classic () = check_is_classic_local infer_const_obj
 
+type 'a regex_list = 
+  | REGEX_STAR
+  | REGEX_LIST of 'a list
+
+type regex_id_list = ident regex_list
+
