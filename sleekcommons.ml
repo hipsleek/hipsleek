@@ -78,6 +78,7 @@ type command =
   | ShapeDerivePre of (ident list)
   | ShapeDerivePost of (ident list)
   | ShapeDeriveView of (ident list)
+  | ShapeNormalize of (ident list)
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -181,6 +182,7 @@ let string_of_command c = match c with
   | ShapeDerivePre _ -> "ShapeDerivePre"
   | ShapeDerivePost _ -> "ShapeDerivePost"
   | ShapeDeriveView _ -> "ShapeDeriveView"
+  | ShapeNormalize _ -> "ShapeNormalize"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"

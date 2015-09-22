@@ -34,6 +34,7 @@ type sleek_token =
   | SHAPE_DERIVE_PRE (* to derive pre-predicate into view *)
   | SHAPE_DERIVE_POST (* to derive post-predicate into view *)
   | SHAPE_DERIVE_VIEW
+  | SHAPE_NORMALIZE
   | PRED_SPLIT | PRED_NORM_DISJ | PRED_SPEC | PRED_NORM_SEG
   | REL_INFER
   | DTIME
@@ -145,6 +146,7 @@ module Token = struct
     | SHAPE_DERIVE_PRE -> "shape_derive_pre"
     | SHAPE_DERIVE_POST -> "shape_derive_post"
     | SHAPE_DERIVE_VIEW -> "shape_derive_view"
+    | SHAPE_NORMALIZE -> "shape_normalize"
     | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"

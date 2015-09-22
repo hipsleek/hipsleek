@@ -1718,6 +1718,16 @@ let process_shape_derive_view hps =
   in
   process_sleek_hprel_assumes_others "Deriving Views" hps f
 
+
+let process_shape_normalize hps =
+  let f others hps =
+    let (derived_views,new_hprels) = Syn.derive_view !cprog others hps in
+    (* print_endline "updating hprel_assumes"; *)
+    (* let () = update_sleek_hprel_assumes new_hprels in *)
+    new_hprels
+  in
+  process_sleek_hprel_assumes_others "Normalizing hprels" hps f
+
 (******************************************************************************)
 
 let relation_pre_process constrs pre_hps post_hps=

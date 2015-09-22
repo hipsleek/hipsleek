@@ -4402,7 +4402,7 @@ let pr_view_decl_short v =
   (*   match bc with *)
   (*         | None -> () *)
   (*     | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) () *)
-  (* in *)
+   (* in *)
   fmt_open_vbox 1;
   (* (\* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl  *\) *)
   (* (\*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *\) *)

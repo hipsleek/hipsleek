@@ -25,9 +25,9 @@ print relAssumes. // To add hprel type
 //shape_derive_view [U,GP_153].
 //shape_derive_post [U,GP_153].
 
-//shape_derive_view [U].
+shape_derive_view [U].
 
-shape_derive_view [GP_153].
+//shape_derive_view [GP_153].
 
 
 /*

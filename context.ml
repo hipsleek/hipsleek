@@ -2359,7 +2359,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
          else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
        | ViewNode vl, HRel (h_name_sv, args, _) -> (* can  it reach this branch? *)
-         y_binfo_pp "VIEW vs HREL\n";
+         y_tinfo_pp "VIEW vs HREL\n";
          let h_name = Cpure.name_of_spec_var h_name_sv in
          let vl_name = vl.h_formula_view_name in
 

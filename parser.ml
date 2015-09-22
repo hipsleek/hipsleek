@@ -1040,6 +1040,7 @@ non_empty_command:
       | t = shape_derive_pre_cmd -> ShapeDerivePre t
       | t = shape_derive_post_cmd -> ShapeDerivePost t
       | t = shape_derive_view_cmd -> ShapeDeriveView t
+      | t = shape_normalize_cmd -> ShapeNormalize t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2639,6 +2640,11 @@ shape_derive_post_cmd:
 
 shape_derive_view_cmd:
   [[ `SHAPE_DERIVE_VIEW; `OSQUARE; il=OPT id_list; `CSQUARE
+     ->  un_option il []
+  ]];
+
+shape_normalize_cmd:
+  [[ `SHAPE_NORMALIZE; `OSQUARE; il=OPT id_list; `CSQUARE
      ->  un_option il []
   ]];
 

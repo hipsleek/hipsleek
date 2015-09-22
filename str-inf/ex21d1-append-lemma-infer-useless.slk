@@ -32,7 +32,8 @@ lemma_infer  [U,classic] "L21d1"
 print residue.
 
 print relAssumes.
-shape_derive_view [U].
+shape_normalize [U].
+//shape_derive_view [U].
 print relAssumes.
 
 /*

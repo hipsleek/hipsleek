@@ -35,7 +35,7 @@ let mk_dangling_view_node dangling_var =
 
 let add_dangling_hprel prog (hpr: CF.hprel) =
   if is_post_hprel hpr then
-    let () = y_binfo_pp ("Do not add dangling into the post-hprel " ^ (Cprinter.string_of_hprel_short hpr)) in
+    let () = y_tinfo_pp ("Do not add dangling into the post-hprel " ^ (Cprinter.string_of_hprel_short hpr)) in
     hpr, false
   else
     let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_lhs in
@@ -59,7 +59,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
       try List.find (fun svl -> mem arg svl) aliases
       with _ -> [arg]) rhs_args) in 
     let dangling_args = List.filter CP.is_node_typ (diff (* (diff lhs_args lhs_nodes) *) lhs_args rhs_args_w_aliases) in
-    let () = x_binfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
+    let () = x_tinfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
     let combine_dangling_args f = List.fold_left (fun acc_f dangling_arg ->
         CF.mkStar_combine_heap acc_f (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
       ) f dangling_args in
@@ -686,7 +686,7 @@ let derive_view prog other_hprels hprels =
   (* WN : will other_hprels cause a problem later if it is neither unfold or fold? *)
   let () =
     if other_hprels != [] then
-      let () = y_binfo_hp (add_str "other_hprels is non-empty" pr_hprel_list) other_hprels in
+      let () = y_tinfo_hp (add_str "other_hprels is non-empty" pr_hprel_list) other_hprels in
       () 
   in
   (* SIMPLIFY *)
@@ -728,7 +728,7 @@ let syn_pre_preds prog (is: CF.infer_state) =
     let () = x_binfo_pp ">>>>> Step 0: Simplification <<<<<" no_pos in
     let is_all_constrs = CF.add_infer_type_to_hprel is.CF.is_all_constrs in
     let is_all_constrs = simplify_hprel_list is_all_constrs in
-    let () = x_binfo_hp (add_str "Simplified hprels" 
+    let () = x_tinfo_hp (add_str "Simplified hprels" 
         pr_hprel_list) is_all_constrs no_pos
     in
   
@@ -742,9 +742,9 @@ let syn_pre_preds prog (is: CF.infer_state) =
     in
     let () =
       if has_dangling_vars then
-        x_binfo_hp (add_str "Detected dangling vars" 
+        x_tinfo_hp (add_str "Detected dangling vars" 
             pr_hprel_list) is_all_constrs no_pos
-      else x_binfo_pp "No dangling var is detected" no_pos
+      else x_tinfo_pp "No dangling var is detected" no_pos
     in
 
     (* let () = x_binfo_pp ">>>>> Step 2A: Merging <<<<<" no_pos in   *)
@@ -755,13 +755,13 @@ let syn_pre_preds prog (is: CF.infer_state) =
   
     let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
     let is_all_constrs = x_add unfolding prog is_all_constrs in
-    let () = x_binfo_hp (add_str "Unfolding result" 
+    let () = x_tinfo_hp (add_str "Unfolding result" 
         pr_hprel_list) is_all_constrs no_pos
     in
   
     let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
     let is_all_constrs = x_add_1 dangling_parameterizing is_all_constrs in
-    let () = x_binfo_hp (add_str "Parameterizing result" 
+    let () = x_tinfo_hp (add_str "Parameterizing result" 
         pr_hprel_list) is_all_constrs no_pos
     in
 
