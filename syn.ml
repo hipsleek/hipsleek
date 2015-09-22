@@ -8,7 +8,7 @@ open SynUtils
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
-(* module CFU = Cfutil *)
+module CVU = Cvutil
 module MCP = Mcpure
 (* module CEQ = Checkeq *)
 
@@ -254,36 +254,37 @@ let add_back_hrel ctx hrel =
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
-  let hrd_lhs = hrel_def.hprel_lhs in
   let hrel_name, hrel_args = sig_of_hrel hrel in
-  let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in
-  let lhs_p = MCP.pure_of_mix lhs_p in
-  let ex_lhs_p = MCP.mix_of_pure (simplify lhs_p hrel_args) in
-  let hrd_guard = hrel_def.hprel_guard in
-  let guard_f = 
-    match hrd_guard with
-    | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
-    | Some g -> g
-  in
-  let guard_h, guard_p, _, _, _, _ = x_add_1 CF.split_components guard_f in
-  let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in
-  let rs, residue = x_add heap_entail_formula prog ctx guard_h_f in
-  if rs then
-    let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in
-    if is_sat (MCP.merge_mems ctx_p guard_p true) then
-      (* Prevent self-recursive pred to avoid infinite unfolding *)
-      let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
-      if mem hrel_name hprel_rhs_fv then
-        let () = y_binfo_pp (
-          "WARNING: Unfolding self-recursive predicate " ^ 
-          (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
-        in
-        None
-      else
+  let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
+  (* Prevent self-recursive pred to avoid infinite unfolding *)
+  if mem hrel_name hprel_rhs_fv then
+    let () = y_binfo_pp (
+      "WARNING: Unfolding self-recursive predicate " ^ 
+      (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
+    in
+    None
+  else
+    let hrd_lhs = hrel_def.hprel_lhs in
+    (* let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in *)
+    let lhs_p, _, _ = CVU.xpure_sym prog hrd_lhs in
+    let lhs_p = MCP.pure_of_mix lhs_p in
+    let ex_lhs_p = MCP.mix_of_pure (simplify lhs_p hrel_args) in
+    let hrd_guard = hrel_def.hprel_guard in
+    let guard_f = 
+      match hrd_guard with
+      | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
+      | Some g -> g
+    in
+    let guard_h, guard_p, _, _, _, _ = x_add_1 CF.split_components guard_f in
+    let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in
+    let rs, residue = x_add heap_entail_formula prog ctx guard_h_f in
+    if rs then
+      let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in
+      if is_sat (MCP.merge_mems ctx_p guard_p true) then
         let comb_f = x_add combine_Star guard_f residue in
         Some (x_add combine_Star comb_f hrel_def.hprel_rhs)
+      else None
     else None
-  else None
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
@@ -325,30 +326,31 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
   let hrd_lhs = hrel_def.hprel_lhs in
   let hrel_name, hrel_args = sig_of_hrel hrel in
-  let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in
-  let lhs_p = MCP.pure_of_mix lhs_p in
-  let ex_lhs_p = simplify lhs_p hrel_args in
-  let hrd_guard = hrel_def.hprel_guard in
-  let guard_f = 
-    match hrd_guard with
-    | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
-    | Some g -> g
-  in
-  let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
-  let rs, residue = x_add heap_entail_formula prog ctx guard_f in
-  if rs then
-    (* Prevent self-recursive pred to avoid infinite folding *)
-    let hprel_lhs_fv = CF.fv hrd_lhs in
-    if mem hrel_name hprel_lhs_fv then
-      let () = y_binfo_pp (
-        "WARNING: Folding self-recursive predicate " ^ 
-        (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite folding!")
-      in
-      None
-    else
-      let comb_f = x_add combine_Star guard_f residue in
-      Some (x_add combine_Star comb_f hrel_def.hprel_lhs)
-  else None
+  (* Prevent self-recursive pred to avoid infinite folding *)
+  let hprel_lhs_fv = CF.fv hrd_lhs in
+  if mem hrel_name hprel_lhs_fv then
+    let () = y_binfo_pp (
+      "WARNING: Folding self-recursive predicate " ^
+      (!CF.print_h_formula hrel) ^ " is prohibited to avoid possibly infinite folding!")
+    in
+    None
+  else
+    (* let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in *)
+    let lhs_p, _, _ = x_add CVU.xpure_sym prog hrd_lhs in
+    let lhs_p = MCP.pure_of_mix lhs_p in
+    let ex_lhs_p = simplify lhs_p hrel_args in
+    let hrd_guard = hrel_def.hprel_guard in
+    let guard_f = 
+      match hrd_guard with
+      | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
+      | Some g -> g
+    in
+    let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
+    let rs, residue = x_add heap_entail_formula prog ctx guard_f in
+    if rs then
+        let comb_f = x_add combine_Star guard_f residue in
+        Some (x_add combine_Star comb_f hrel_def.hprel_lhs)
+    else None
 
 let folding_one_hrel prog ctx hrel hrel_defs = 
   let hrel_name, hrel_args = sig_of_hrel hrel in
@@ -712,7 +714,7 @@ let derive_view prog other_hprels hprels =
   let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
   (* DERIVING VIEW *)
   let derived_views = trans_hprel_to_view prog simplified_selective_hprels in
-  (derived_views, simplified_selective_hprels @ other_hprels)
+  (derived_views, simplified_selective_hprels)
 
 let derive_view prog other_hprels hprels = 
   let pr1 = Cprinter.string_of_hprel_list_short in

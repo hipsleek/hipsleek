@@ -1711,7 +1711,7 @@ let process_shape_derive_post hps =
 
 let process_shape_derive_view hps =
   let f others hps =
-    let (derived_views,new_hprels) = Syn.derive_view !cprog others hps in
+    let (derived_views, new_hprels) = Syn.derive_view !cprog others hps in
     (* print_endline "updating hprel_assumes"; *)
     (* let () = update_sleek_hprel_assumes new_hprels in *)
     new_hprels
