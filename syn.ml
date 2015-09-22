@@ -8,7 +8,7 @@ open SynUtils
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
-(* module CFU = Cfutil *)
+module CVU = Cvutil
 module MCP = Mcpure
 (* module CEQ = Checkeq *)
 
@@ -35,7 +35,7 @@ let mk_dangling_view_node dangling_var =
 
 let add_dangling_hprel prog (hpr: CF.hprel) =
   if is_post_hprel hpr then
-    let () = y_binfo_pp ("Do not add dangling into the post-hprel " ^ (Cprinter.string_of_hprel_short hpr)) in
+    let () = y_tinfo_pp ("Do not add dangling into the post-hprel " ^ (Cprinter.string_of_hprel_short hpr)) in
     hpr, false
   else
     let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_lhs in
@@ -59,7 +59,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
       try List.find (fun svl -> mem arg svl) aliases
       with _ -> [arg]) rhs_args) in 
     let dangling_args = List.filter CP.is_node_typ (diff (* (diff lhs_args lhs_nodes) *) lhs_args rhs_args_w_aliases) in
-    let () = x_binfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
+    let () = x_tinfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
     let combine_dangling_args f = List.fold_left (fun acc_f dangling_arg ->
         CF.mkStar_combine_heap acc_f (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
       ) f dangling_args in
@@ -254,36 +254,37 @@ let add_back_hrel ctx hrel =
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
-  let hrd_lhs = hrel_def.hprel_lhs in
   let hrel_name, hrel_args = sig_of_hrel hrel in
-  let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in
-  let lhs_p = MCP.pure_of_mix lhs_p in
-  let ex_lhs_p = MCP.mix_of_pure (simplify lhs_p hrel_args) in
-  let hrd_guard = hrel_def.hprel_guard in
-  let guard_f = 
-    match hrd_guard with
-    | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
-    | Some g -> g
-  in
-  let guard_h, guard_p, _, _, _, _ = x_add_1 CF.split_components guard_f in
-  let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in
-  let rs, residue = x_add heap_entail_formula prog ctx guard_h_f in
-  if rs then
-    let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in
-    if is_sat (MCP.merge_mems ctx_p guard_p true) then
-      (* Prevent self-recursive pred to avoid infinite unfolding *)
-      let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
-      if mem hrel_name hprel_rhs_fv then
-        let () = y_binfo_pp (
-          "WARNING: Unfolding self-recursive predicate " ^ 
-          (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
-        in
-        None
-      else
+  let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
+  (* Prevent self-recursive pred to avoid infinite unfolding *)
+  if mem hrel_name hprel_rhs_fv then
+    let () = y_binfo_pp (
+      "WARNING: Unfolding self-recursive predicate " ^ 
+      (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
+    in
+    None
+  else
+    let hrd_lhs = hrel_def.hprel_lhs in
+    (* let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in *)
+    let lhs_p, _, _ = CVU.xpure_sym prog hrd_lhs in
+    let lhs_p = MCP.pure_of_mix lhs_p in
+    let ex_lhs_p = MCP.mix_of_pure (simplify lhs_p hrel_args) in
+    let hrd_guard = hrel_def.hprel_guard in
+    let guard_f = 
+      match hrd_guard with
+      | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
+      | Some g -> g
+    in
+    let guard_h, guard_p, _, _, _, _ = x_add_1 CF.split_components guard_f in
+    let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in
+    let rs, residue = x_add heap_entail_formula prog ctx guard_h_f in
+    if rs then
+      let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in
+      if is_sat (MCP.merge_mems ctx_p guard_p true) then
         let comb_f = x_add combine_Star guard_f residue in
         Some (x_add combine_Star comb_f hrel_def.hprel_rhs)
+      else None
     else None
-  else None
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
@@ -325,30 +326,31 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
   let hrd_lhs = hrel_def.hprel_lhs in
   let hrel_name, hrel_args = sig_of_hrel hrel in
-  let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in
-  let lhs_p = MCP.pure_of_mix lhs_p in
-  let ex_lhs_p = simplify lhs_p hrel_args in
-  let hrd_guard = hrel_def.hprel_guard in
-  let guard_f = 
-    match hrd_guard with
-    | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
-    | Some g -> g
-  in
-  let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
-  let rs, residue = x_add heap_entail_formula prog ctx guard_f in
-  if rs then
-    (* Prevent self-recursive pred to avoid infinite folding *)
-    let hprel_lhs_fv = CF.fv hrd_lhs in
-    if mem hrel_name hprel_lhs_fv then
-      let () = y_binfo_pp (
-        "WARNING: Folding self-recursive predicate " ^ 
-        (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite folding!")
-      in
-      None
-    else
-      let comb_f = x_add combine_Star guard_f residue in
-      Some (x_add combine_Star comb_f hrel_def.hprel_lhs)
-  else None
+  (* Prevent self-recursive pred to avoid infinite folding *)
+  let hprel_lhs_fv = CF.fv hrd_lhs in
+  if mem hrel_name hprel_lhs_fv then
+    let () = y_binfo_pp (
+      "WARNING: Folding self-recursive predicate " ^
+      (!CF.print_h_formula hrel) ^ " is prohibited to avoid possibly infinite folding!")
+    in
+    None
+  else
+    (* let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in *)
+    let lhs_p, _, _ = x_add CVU.xpure_sym prog hrd_lhs in
+    let lhs_p = MCP.pure_of_mix lhs_p in
+    let ex_lhs_p = simplify lhs_p hrel_args in
+    let hrd_guard = hrel_def.hprel_guard in
+    let guard_f = 
+      match hrd_guard with
+      | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
+      | Some g -> g
+    in
+    let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
+    let rs, residue = x_add heap_entail_formula prog ctx guard_f in
+    if rs then
+        let comb_f = x_add combine_Star guard_f residue in
+        Some (x_add combine_Star comb_f hrel_def.hprel_lhs)
+    else None
 
 let folding_one_hrel prog ctx hrel hrel_defs = 
   let hrel_name, hrel_args = sig_of_hrel hrel in
@@ -688,8 +690,8 @@ let derive_view prog other_hprels hprels =
   let all_hprels = hprels @ other_hprels in
   (* WN : will other_hprels cause a problem later if it is neither unfold or fold? *)
   let () =
-    if other_hprels!=[] then
-      let () = y_binfo_hp (add_str "other_hprels is non-empty" pr_hprel_list) other_hprels in
+    if other_hprels != [] then
+      let () = y_tinfo_hp (add_str "other_hprels is non-empty" pr_hprel_list) other_hprels in
       () 
   in
   (* SIMPLIFY *)
@@ -704,13 +706,24 @@ let derive_view prog other_hprels hprels =
     (fun hpr -> mem (name_of_hprel hpr) selective_pre_hprel_ids) all_merged_pre_hprels in
   let unfolding_pre_hprels = selective_unfolding prog other_merged_pre_hprels selective_merged_pre_hprels in
   (* DERIVING POST: FOLD -> MERGE *)
-  let folding_post_hprels = selective_unfolding prog all_post_hprels post_hprels in
+  let selective_post_hprel_ids = List.map (fun hpr -> name_of_hprel hpr) post_hprels in
+  let selective_merged_post_hprels, other_merged_post_hprels = List.partition 
+    (fun hpr -> mem (name_of_hprel hpr) selective_post_hprel_ids) all_post_hprels in
+  let folding_post_hprels = selective_unfolding prog other_merged_post_hprels selective_merged_post_hprels in
   let merged_folding_post_hprels = merging prog folding_post_hprels in
   (* PARAM DANGLING *)
   let selective_merged_hprels = dangling_parameterizing (unfolding_pre_hprels @ merged_folding_post_hprels) in
+  (* SIMPLIFY *)
+  let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
   (* DERIVING VIEW *)
-  let derived_views = trans_hprel_to_view prog selective_merged_hprels in
-  (derived_views,selective_merged_hprels)
+  let derived_views = trans_hprel_to_view prog simplified_selective_hprels in
+  (derived_views, simplified_selective_hprels)
+
+let derive_view prog other_hprels hprels = 
+  let pr1 = Cprinter.string_of_hprel_list_short in
+  let pr2 = pr_list Cprinter.string_of_view_decl_short in
+  Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
+    (derive_view prog) other_hprels hprels
 
 (****************)
 (***** MAIN *****)
@@ -720,7 +733,7 @@ let syn_pre_preds prog (is: CF.infer_state) =
     let () = x_binfo_pp ">>>>> Step 0: Simplification <<<<<" no_pos in
     let is_all_constrs = CF.add_infer_type_to_hprel is.CF.is_all_constrs in
     let is_all_constrs = simplify_hprel_list is_all_constrs in
-    let () = x_binfo_hp (add_str "Simplified hprels" 
+    let () = x_tinfo_hp (add_str "Simplified hprels" 
         pr_hprel_list) is_all_constrs no_pos
     in
   
@@ -734,9 +747,9 @@ let syn_pre_preds prog (is: CF.infer_state) =
     in
     let () =
       if has_dangling_vars then
-        x_binfo_hp (add_str "Detected dangling vars" 
+        x_tinfo_hp (add_str "Detected dangling vars" 
             pr_hprel_list) is_all_constrs no_pos
-      else x_binfo_pp "No dangling var is detected" no_pos
+      else x_tinfo_pp "No dangling var is detected" no_pos
     in
 
     (* let () = x_binfo_pp ">>>>> Step 2A: Merging <<<<<" no_pos in   *)
@@ -747,13 +760,13 @@ let syn_pre_preds prog (is: CF.infer_state) =
   
     let () = x_binfo_pp ">>>>> Step 2: Unfolding <<<<<" no_pos in
     let is_all_constrs = x_add unfolding prog is_all_constrs in
-    let () = x_binfo_hp (add_str "Unfolding result" 
+    let () = x_tinfo_hp (add_str "Unfolding result" 
         pr_hprel_list) is_all_constrs no_pos
     in
   
     let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
     let is_all_constrs = x_add_1 dangling_parameterizing is_all_constrs in
-    let () = x_binfo_hp (add_str "Parameterizing result" 
+    let () = x_tinfo_hp (add_str "Parameterizing result" 
         pr_hprel_list) is_all_constrs no_pos
     in
 

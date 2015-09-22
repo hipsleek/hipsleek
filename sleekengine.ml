@@ -1636,75 +1636,101 @@ let print_sleek_hprel_assumes () =
       curr_hprel (* (sleek_hprel_assumes # get) *) no_pos
   else ()
 
-let process_sleek_hprel_assumes_others s hps f_proc = 
+let process_sleek_hprel_assumes_others s (ids: regex_id_list) f_proc = 
   let () = classify_sleek_hprel_assumes () in
   let () = print_endline_quiet "\n========================" in
   let () = print_endline_quiet (" Performing "^s) in
   let () = print_endline_quiet "========================" in
-  let sel_hprel_assume_list, others = select_hprel_assume (sleek_hprel_assumes # get) hps in
+  let sel_hprel_assume_list, others =
+    match ids with
+    | REGEX_STAR -> sleek_hprel_assumes # get, []
+    | REGEX_LIST hps -> select_hprel_assume (sleek_hprel_assumes # get) hps
+  in
   let res = f_proc others sel_hprel_assume_list in
   update_sleek_hprel_assumes (res @ others)
 
-let process_sleek_hprel_assumes s hps f_proc = 
+let process_sleek_hprel_assumes s (ids: regex_id_list) f_proc = 
   let f others x = f_proc x in
-  process_sleek_hprel_assumes_others s hps f
+  process_sleek_hprel_assumes_others s ids f
 
-let process_shape_add_dangling hps =
-  process_sleek_hprel_assumes "Adding Dangling" hps (Syn.add_dangling_hprel_list !cprog)
+let process_shape_add_dangling (ids: regex_id_list) =
+  process_sleek_hprel_assumes "Adding Dangling" ids (Syn.add_dangling_hprel_list !cprog)
 
-let process_shape_unfold hps =
-  process_sleek_hprel_assumes_others "Unfolding" hps (Syn.selective_unfolding !cprog)
+let process_shape_unfold (ids: regex_id_list) =
+  process_sleek_hprel_assumes_others "Unfolding" ids (Syn.selective_unfolding !cprog)
 
   (* let sel_hprel_assume_list, others = select_hprel_assume (sleek_hprel_assumes # get) hps in *)
   (* let res = x_add Syn.selective_unfolding !cprog others sel_hprel_assume_list in *)
   (* (\* let res = Syn.unfolding !cprog sel_hprel_assume_list in *\) *)
   (* update_sleek_hprel_assumes (res @ others) *)
 
-let process_shape_param_dangling hps =
-  process_sleek_hprel_assumes "Parameterize Dangling" hps Syn.dangling_parameterizing
+let process_shape_param_dangling (ids: regex_id_list) =
+  process_sleek_hprel_assumes "Parameterize Dangling" ids Syn.dangling_parameterizing
 
-let process_shape_simplify hps =
-  process_sleek_hprel_assumes "Simplifying" hps Syn.simplify_hprel_list
+let process_shape_simplify (ids: regex_id_list) =
+  process_sleek_hprel_assumes "Simplifying" ids Syn.simplify_hprel_list
 
-let process_shape_merge hps = 
-  process_sleek_hprel_assumes "Merging" hps (Syn.merging !cprog)
+let process_shape_merge (ids: regex_id_list) = 
+  process_sleek_hprel_assumes "Merging" ids (Syn.merging !cprog)
 
-let process_shape_trans_to_view hps = 
+let process_shape_trans_to_view (ids: regex_id_list) = 
   let f hps =
     let trans_views = Syn.trans_hprel_to_view !cprog hps in
     hps 
   in
-  process_sleek_hprel_assumes "Transforming to View" hps f
+  process_sleek_hprel_assumes "Transforming to View" ids f
   
-(* let process_shape_derive_pre hps =                                  *)
-(*   (* add-dangling; merge ; unfold; param_dangling; trans_to_view *) *)
-(*   let () = classify_sleek_hprel_assumes () in                       *)
-(*   let () = print_endline_quiet "\n=========================" in     *)
-(*   let () = print_endline_quiet (" Deriving Pre-Predicates ") in     *)
-(*   let () = print_endline_quiet "==========================" in      *)
-(*   let () = process_shape_add_dangling hps in                        *)
-(*   let () = process_shape_merge hps in                               *)
-(*   let () = process_shape_unfold hps in                              *)
-(*   let () = process_shape_param_dangling hps in                      *)
-(*   let () = process_shape_trans_to_view hps in                       *)
-(*   ()                                                                *)
+let process_shape_derive_pre (ids: regex_id_list) =
+  (* simplify; add-dangling; merge; unfold; param_dangling; trans_to_view *)
+  let () = classify_sleek_hprel_assumes () in
+  let () = print_endline_quiet "\n=========================" in
+  let () = print_endline_quiet (" Deriving Pre-Predicates ") in
+  let () = print_endline_quiet "==========================" in
+  let () = process_shape_simplify ids in
+  let () = process_shape_add_dangling ids in
+  let () = process_shape_merge ids in
+  let () = process_shape_unfold ids in
+  let () = process_shape_simplify ids in
+  let () = process_shape_param_dangling ids in
+  let () = process_shape_trans_to_view ids in
+  ()
 
-(* let process_shape_derive_post hps =                               *)
-(*   let f hps =                                                     *)
-(*     print_endline "To be Implemented";                            *)
-(*     (* let trans_views = Syn.trans_hprel_to_view !cprog hps in *) *)
-(*     hps                                                           *)
-(*   in                                                              *)
-(*   process_sleek_hprel_assumes "Deriving Post-Predicates" hps f    *)
+let process_shape_derive_post (ids: regex_id_list) =
+    (* simplify; unfold; merge; simplify; trans_to_view *)
+    let () = classify_sleek_hprel_assumes () in
+    let () = print_endline_quiet "\n=========================" in
+    let () = print_endline_quiet (" Deriving Post-Predicates ") in
+    let () = print_endline_quiet "==========================" in
+    (* let () = process_shape_add_dangling hps in *)
+    let () = process_shape_unfold ids in
+    let () = print_sleek_hprel_assumes () in
+    let () = process_shape_simplify ids in
+    let () = print_sleek_hprel_assumes () in
+    let () = process_shape_merge ids in
+    let () = print_sleek_hprel_assumes () in
+    (* let () = process_shape_param_dangling hps in *)
+    let () = process_shape_trans_to_view ids in
+    (* let trans_views = Syn.trans_hprel_to_view !cprog hps in *)
+    ()
 
-let process_shape_derive_view hps =
+let process_shape_derive_view (ids: regex_id_list) =
+  let f others hps =
+    let (derived_views, new_hprels) = Syn.derive_view !cprog others hps in
+    (* print_endline "updating hprel_assumes"; *)
+    (* let () = update_sleek_hprel_assumes new_hprels in *)
+    new_hprels
+  in
+  process_sleek_hprel_assumes_others "Deriving Views" ids f
+
+
+let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
     let (derived_views,new_hprels) = Syn.derive_view !cprog others hps in
     (* print_endline "updating hprel_assumes"; *)
     (* let () = update_sleek_hprel_assumes new_hprels in *)
     new_hprels
   in
-  process_sleek_hprel_assumes_others "Deriving Views" hps f
+  process_sleek_hprel_assumes_others "Normalizing hprels" ids f
 
 (******************************************************************************)
 

@@ -157,9 +157,10 @@ module Make (Token : SleekTokenS)
    ("shape_simplify", SHAPE_SIMPLIFY);
    ("shape_merge", SHAPE_MERGE);
    ("shape_trans_to_view", SHAPE_TRANS_TO_VIEW);
-   (* ("shape_derive_pre", SHAPE_DERIVE_PRE);   *)
-   (* ("shape_derive_post", SHAPE_DERIVE_POST); *)
+   ("shape_derive_pre", SHAPE_DERIVE_PRE);
+   ("shape_derive_post", SHAPE_DERIVE_POST);
    ("shape_derive_view", SHAPE_DERIVE_VIEW);
+   ("shape_normalize", SHAPE_NORMALIZE);
    ("Declare_Dangling", SHAPE_DECL_DANG);
    ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
    ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );

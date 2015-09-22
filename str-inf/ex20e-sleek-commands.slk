@@ -23,6 +23,7 @@ print relAssumes.
 
 
 shape_derive_pre [P,HP_1620].
+//shape_derive_view [P,HP_1620].
 
 
 print relAssumes.

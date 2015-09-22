@@ -1792,8 +1792,10 @@ print relAssumes.
 
 ===========================================================================
 # ex22a.slk
+# ex20d1.slk
 
 # came from sa/bugs/use1/slk
+# GOT
 
   shape_elim_useless [G1,G2].
 
@@ -1811,6 +1813,38 @@ print relAssumes.
   ann vars (0 - not a posn): (@M,0),(@M,0),(@M,0)
   cont vars: y
   inv: true
+  [fold emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
+           flted_22_138!=null & flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
+           flted_22_138!=null & flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
+           flted_22_138!=null & flted_22_138!=null
+        or emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
+           flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
+           flted_22_138!=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
+           flted_22_138!=null
+         |#| htrue --> U(flted_22_138); 
+   fold U(q_152)&q_146!=null
+        or U(q_152)&q_146!=null
+         |#| htrue --> GP_153(q_152,q_146)]
+
+# why so much repeated unfoldings above?
+
+ [fold emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           q_34=q_152 & flted_22_138!=null
+         |#| htrue --> U(flted_22_138); 
+   fold U(q_152)&q_146!=null |#| htrue --> GP_153(q_152,q_146)]
 ===========================================================================
 ===========================================================================
 ===========================================================================

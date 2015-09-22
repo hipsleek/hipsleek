@@ -1037,9 +1037,10 @@ non_empty_command:
       | t = shape_simplify_cmd -> ShapeSimplify t
       | t = shape_merge_cmd -> ShapeMerge t
       | t = shape_trans_to_view_cmd -> ShapeTransToView t
-      (* | t = shape_derive_pre_cmd -> ShapeDerivePre t   *)
-      (* | t = shape_derive_post_cmd -> ShapeDerivePost t *)
+      | t = shape_derive_pre_cmd -> ShapeDerivePre t
+      | t = shape_derive_post_cmd -> ShapeDerivePost t
       | t = shape_derive_view_cmd -> ShapeDeriveView t
+      | t = shape_normalize_cmd -> ShapeNormalize t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2597,49 +2598,59 @@ shapeExtract_cmd:
    (il1)
    ]];
 
+shape_selective_id_list:
+  [[ il = OPT id_list -> REGEX_LIST (un_option il [])
+   | `STAR -> REGEX_STAR
+  ]];
+
 shape_add_dangling_cmd:
-  [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=OPT id_list; `CSQUARE
-     ->  un_option il []
+  [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
   ]];
 
 shape_unfold_cmd:
-  [[ `SHAPE_UNFOLD; `OSQUARE; il=OPT id_list; `CSQUARE
-     ->  un_option il []
+  [[ `SHAPE_UNFOLD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
   ]];
 
 shape_param_dangling_cmd:
-  [[ `SHAPE_PARAM_DANGLING; `OSQUARE; il=OPT id_list; `CSQUARE
-     ->  un_option il []
+  [[ `SHAPE_PARAM_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
   ]];
 
 shape_simplify_cmd:
-  [[ `SHAPE_SIMPLIFY; `OSQUARE; il=OPT id_list; `CSQUARE
-     ->  un_option il []
+  [[ `SHAPE_SIMPLIFY; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
   ]];
 
 shape_merge_cmd:
-  [[ `SHAPE_MERGE; `OSQUARE; il=OPT id_list; `CSQUARE
-     ->  un_option il []
+  [[ `SHAPE_MERGE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
   ]];
 
 shape_trans_to_view_cmd:
-  [[ `SHAPE_TRANS_TO_VIEW; `OSQUARE; il=OPT id_list; `CSQUARE
-     ->  un_option il []
+  [[ `SHAPE_TRANS_TO_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
   ]];
 
-(* shape_derive_pre_cmd:                                       *)
-(*   [[ `SHAPE_DERIVE_PRE; `OSQUARE; il=OPT id_list; `CSQUARE  *)
-(*      ->  un_option il []                                    *)
-(*   ]];                                                       *)
+shape_derive_pre_cmd:
+  [[ `SHAPE_DERIVE_PRE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
 
-(* shape_derive_post_cmd:                                      *)
-(*   [[ `SHAPE_DERIVE_POST; `OSQUARE; il=OPT id_list; `CSQUARE *)
-(*      ->  un_option il []                                    *)
-(*   ]];                                                       *)
+shape_derive_post_cmd:
+  [[ `SHAPE_DERIVE_POST; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
 
 shape_derive_view_cmd:
-  [[ `SHAPE_DERIVE_VIEW; `OSQUARE; il=OPT id_list; `CSQUARE
-     ->  un_option il []
+  [[ `SHAPE_DERIVE_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_normalize_cmd:
+  [[ `SHAPE_NORMALIZE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
   ]];
 
 infer_type:
