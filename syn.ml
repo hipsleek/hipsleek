@@ -672,7 +672,10 @@ let trans_hprel_to_view prog hprels =
       y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
   in
   List.map (fun (sv, hpr) ->
-    let vdecl = view_decl_of_hprel prog hpr in
+    let vdecl = if !Globals.new_pred_syn then view_decl_of_hprel prog hpr else
+      let () = y_winfo_pp "to add Saout.view_decl_of_hprel prog hpr" in
+      view_decl_of_hprel prog hpr
+    in
     let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in
     vdecl) single_hprel_list
 
