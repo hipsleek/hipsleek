@@ -32,33 +32,20 @@ HeapPred U3(node x,node y).
 
 lemma_infer [U,classic]
   self::app3<> <- self::node<_,q>*U(q).
+//  self::PP2<> <- self::node<_,q>*U(q).
 print residue.
 
 
 /*
-# ex21d2.slk (Loc to fix)
+# ex21d2.slk 
 
 lemma_infer [U,classic]
   self::app3<> <- self::node<_,q>*U(q).
 print residue.
 
-# Result is too weak. Failure due to lack of case or
-  insufficient guided unfold lemma?
+# Result a bit complex 
+# Why is <1> [[ Match(self_lem_17,self_lem_17)]] trace is so short?
 
- Temp Lemma(s) inferred is valid in current context.
-Residue:
-
- <1>emp&{FLOW,(20,21)=__norm#E}[]
- inferred hprel: [U(q_135)&true --> q_135::app3<>@M&true; 
-                  U(q_143)&true --> emp&q_143=null]
-[[ Match(self_lem_19,self_lem_19)]]
-
-<2>emp&{FLOW,(20,21)=__norm#E}[]
-inferred hprel: [U(q_135)&true --> q_135::app3<>@M&true; 
-                 U(q_143)&true --> emp&q_143=null]
-[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  InferUnfold ]]
-
-==================================
  <1>emp&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [HP_110(q_109,q_105@NI)&true --> U(q_109)&true; 
                   U(q_105)&
