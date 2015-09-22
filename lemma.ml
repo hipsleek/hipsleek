@@ -1676,7 +1676,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
 
 let generate_view_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
   : (I.coercion_decl list) =
-  let pr_v = !C.print_view_decl in
+  let pr_v = !C.print_view_decl_short in
   let pr_out = pr_list Iprinter.string_of_coerc_decl in
   Debug.no_1 "generate_view_lemmas" pr_v pr_out
     (fun _ -> generate_view_lemmas_x vd iprog cprog) vd
@@ -1848,7 +1848,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
 
 let generate_view_rev_rec_lemmas (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog_decl)
   : (I.coercion_decl list) =
-  let pr_v = !C.print_view_decl in
+  let pr_v = !C.print_view_decl_short in
   let pr_out = pr_list Iprinter.string_of_coerc_decl in
   Debug.no_1 "generate_view_rev_rec_lemmas" pr_v pr_out
     (fun _ -> generate_view_rev_rec_lemmas_x vd iprog cprog) vd
@@ -1857,10 +1857,10 @@ let generate_all_lemmas (iprog: I.prog_decl) (cprog: C.prog_decl)
   : unit =
   let lemmas = List.concat (List.map (fun vd ->
       (* generate_lemma vd iprog cprog *)
-      generate_view_lemmas vd iprog cprog
+      x_add generate_view_lemmas vd iprog cprog
     ) cprog.C.prog_view_decls) in
   let rev_rec_lemmas = List.concat (List.map (fun vd ->
-      generate_view_rev_rec_lemmas vd iprog cprog
+      x_add generate_view_rev_rec_lemmas vd iprog cprog
     ) cprog.C.prog_view_decls) in
   let gen_lemmas = lemmas@rev_rec_lemmas in
   if (!Globals.lemma_gen_unsafe) || (!Globals.lemma_gen_unsafe_fold) then
