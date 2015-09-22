@@ -685,7 +685,7 @@ let derive_view prog other_hprels hprels =
   let all_hprels = hprels @ other_hprels in
   (* WN : will other_hprels cause a problem later if it is neither unfold or fold? *)
   let () =
-    if other_hprels!=[] then
+    if other_hprels != [] then
       let () = y_binfo_hp (add_str "other_hprels is non-empty" pr_hprel_list) other_hprels in
       () 
   in
@@ -701,13 +701,24 @@ let derive_view prog other_hprels hprels =
     (fun hpr -> mem (name_of_hprel hpr) selective_pre_hprel_ids) all_merged_pre_hprels in
   let unfolding_pre_hprels = selective_unfolding prog other_merged_pre_hprels selective_merged_pre_hprels in
   (* DERIVING POST: FOLD -> MERGE *)
-  let folding_post_hprels = selective_unfolding prog all_post_hprels post_hprels in
+  let selective_post_hprel_ids = List.map (fun hpr -> name_of_hprel hpr) post_hprels in
+  let selective_merged_post_hprels, other_merged_post_hprels = List.partition 
+    (fun hpr -> mem (name_of_hprel hpr) selective_post_hprel_ids) all_post_hprels in
+  let folding_post_hprels = selective_unfolding prog other_merged_post_hprels selective_merged_post_hprels in
   let merged_folding_post_hprels = merging prog folding_post_hprels in
   (* PARAM DANGLING *)
   let selective_merged_hprels = dangling_parameterizing (unfolding_pre_hprels @ merged_folding_post_hprels) in
+  (* SIMPLIFY *)
+  let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
   (* DERIVING VIEW *)
-  let derived_views = trans_hprel_to_view prog selective_merged_hprels in
-  (derived_views,selective_merged_hprels)
+  let derived_views = trans_hprel_to_view prog simplified_selective_hprels in
+  (derived_views, simplified_selective_hprels @ other_hprels)
+
+let derive_view prog other_hprels hprels = 
+  let pr1 = Cprinter.string_of_hprel_list_short in
+  let pr2 = pr_list Cprinter.string_of_view_decl_short in
+  Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
+    (derive_view prog) other_hprels hprels
 
 (****************)
 (***** MAIN *****)

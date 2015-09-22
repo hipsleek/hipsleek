@@ -22,11 +22,40 @@ emp&flted_22_138=null |#| true --> U(flted_22_138).
 
 print relAssumes. // To add hprel type
 
-shape_derive_view [U,GP_153].
-//shape_derive_pre [U,GP_153].
+//shape_derive_view [U,GP_153].
+//shape_derive_post [U,GP_153].
+
+//shape_derive_view [U].
+
+shape_derive_view [GP_153].
+
+
+/*
+shape_simplify [U,GP_153].
 
 print relAssumes.
 
+shape_add_dangling [U,GP_153].
+
+print relAssumes.
+
+shape_unfold [U,GP_153].
+
+print relAssumes.
+
+shape_merge [U,GP_153].
+
+print relAssumes.
+
+shape_simplify [U,GP_153].
+
+print relAssumes.
+
+shape_param_dangling [U,GP_153].
+
+print relAssumes.
+
+*/
 
 /*
 # ex20d1.slk

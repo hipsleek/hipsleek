@@ -1677,7 +1677,7 @@ let process_shape_trans_to_view hps =
   process_sleek_hprel_assumes "Transforming to View" hps f
   
 let process_shape_derive_pre hps =
-  (* simplify; add-dangling; merge ; unfold; param_dangling; trans_to_view *)
+  (* simplify; add-dangling; merge; unfold; param_dangling; trans_to_view *)
   let () = classify_sleek_hprel_assumes () in
   let () = print_endline_quiet "\n=========================" in
   let () = print_endline_quiet (" Deriving Pre-Predicates ") in
@@ -1692,7 +1692,7 @@ let process_shape_derive_pre hps =
   ()
 
 let process_shape_derive_post hps =
-    (* simplify;  unfold; merge ; simplify; trans_to_view *)
+    (* simplify; unfold; merge; simplify; trans_to_view *)
     let () = classify_sleek_hprel_assumes () in
     let () = print_endline_quiet "\n=========================" in
     let () = print_endline_quiet (" Deriving Post-Predicates ") in
