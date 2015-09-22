@@ -50,7 +50,7 @@ pred_elim_useless [app4].
 pred_elim_useless [app5].
 // elim y,z
 
-pred_elim_useless [*].
+//pred_elim_useless [*].
 
 /*
 ex21u

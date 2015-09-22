@@ -149,7 +149,7 @@ module Make (Token : SleekTokenS)
    ("shape_lfp" , SHAPE_LFP);
    ("shape_rec" , SHAPE_REC);
    ("shape_split_base", SHAPE_SPLIT_BASE);
-   ("shape_elim_useless", SHAPE_ELIM_USELESS );
+   ("pred_elim_useless", PRED_ELIM_USELESS );
    ("shape_extract", SHAPE_EXTRACT );
    ("shape_add_dangling", SHAPE_ADD_DANGLING);
    ("shape_unfold", SHAPE_UNFOLD);

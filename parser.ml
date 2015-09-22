@@ -2587,7 +2587,7 @@ shapesplit_base_cmd:
    ]];
 
 shapeElim_cmd:
-   [[ `SHAPE_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   [[ `PRED_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    (il1)
    ]];
