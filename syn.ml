@@ -674,14 +674,17 @@ let trans_hprel_to_view prog hprels =
       y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
   in
   List.map (fun (sv, hpr) ->
-    let vdecl = view_decl_of_hprel prog hpr in
+    let vdecl = if !Globals.new_pred_syn then view_decl_of_hprel prog hpr else
+      let () = y_winfo_pp "to add Saout.view_decl_of_hprel prog hpr" in
+      view_decl_of_hprel prog hpr
+    in
     let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in
     vdecl) single_hprel_list
 
 (*************************)
 (***** DERIVING VIEW *****)
 (*************************)
-let derive_view prog other_hprels hprels = 
+let derive_view_norm prog other_hprels hprels = 
   (* PRE-PROCESSING *)
   let pre_hprels, post_hprels = List.partition is_pre_hprel hprels in
   let all_hprels = hprels @ other_hprels in
@@ -712,6 +715,10 @@ let derive_view prog other_hprels hprels =
   let selective_merged_hprels = dangling_parameterizing (unfolding_pre_hprels @ merged_folding_post_hprels) in
   (* SIMPLIFY *)
   let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
+  simplified_selective_hprels
+
+let derive_view prog other_hprels hprels = 
+  let simplified_selective_hprels = derive_view_norm prog other_hprels hprels in
   (* DERIVING VIEW *)
   let derived_views = trans_hprel_to_view prog simplified_selective_hprels in
   (derived_views, simplified_selective_hprels)

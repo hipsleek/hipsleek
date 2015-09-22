@@ -234,7 +234,7 @@ print residue.
 !!! **syn.ml#440:>>>>> Step 2: Unfolding <<<<<
  --error:  at:
 =========================================================================
-# ex21d2.slk (Loc to fix)
+# ex21d2.slk (FIXED by Loc)
 
 lemma_infer [U,classic]
   self::app3<> <- self::node<_,q>*U(q).
@@ -390,7 +390,56 @@ let extr_exists_hprel ra =
 !!! **cformula.ml#19630:XXX ex_guard_vars to eliminate:[]
 !!! **cformula.ml#19629:XXX ex_lhs_vars to eliminate:[res,y',x']
 =========================================================================
+# ex21d2a.slk (FIXED by Loc)
+
+lemma_infer [U,classic]
+  self::PP2<> <- self::node<_,q>*U(q).
+print residue.
+
+pred PP2<> == 
+       [] self::node<_,q> 
+          case {q=null -> [] emp;
+              q!=null -> [] q::PP2<>;
+           } 
+inv self!=null.
+
+# Used case-spec for better completeness but met with a runtime
+  bug:
+
+ERROR: at _0:0_0:0
+Message: combine_struc_base unexpected continuations
+
+Exception processed: Failure("combine_struc_base unexpected continuations")
+error at: 
+SLEEK FAILURE (END)
 =========================================================================
+# ex21d2.slk 
+
+lemma_infer [U,classic]
+  self::app3<> <- self::node<_,q>*U(q).
+print residue.
+
+# Result a bit complex 
+# Why is <1> [[ Match(self_lem_17,self_lem_17)]] trace is so short?
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_110(q_109,q_105@NI)&true --> U(q_109)&true; 
+                  U(q_105)&
+                   true --> q_105::node<Anon_108,q_109>@M * 
+                            HP_110(q_109,q_105@NI)&
+                   true; 
+                  U(q_101)&true --> emp&q_101=null]
+[[ Match(self_lem_17,self_lem_17)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_110(q_109,q_105@NI)&true --> emp&q_105!=null; 
+                 HP_110(q_109,q_105@NI)&true --> U(q_109)&true; 
+                 U(q_105)&
+                  true --> q_105::node<Anon_108,q_109>@M * 
+                           HP_110(q_109,q_105@NI)&
+                  true; 
+                 U(q_101)&true --> emp&q_101=null]
+[[ Match(self_lem_17,self_lem_17) ==>  COND ==>  (Lemma <== lem_171 :(q_105,q_93)) ==>  Match(q_105,q_93) ==>  InferUnfold ]]
 =========================================================================
 =========================================================================
 =========================================================================

@@ -19,9 +19,19 @@ pred app2<y> == self::node<_,null>
 	or self::node<_, q> * q::app2<y> & q!=null 
   inv self!=null.
 
+
 pred app3<> == self::node<_,null> 
 	or self::node<_, q> * q::app3<> & q!=null 
   inv self!=null.
+
+
+# weakening, term
+  x::app3<> --> x::node<_,q>*U<q>
+
+# weakening, segmented
+  x::app3<> --> U(x,q)*q::node<>
+
+
 
 HeapPred U(node x).
 HeapPred U2(node x,node y).

@@ -13268,11 +13268,15 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)
+        else if do_infer==1 then
+          let n_estate = InferHP.infer_collect_hp_rel_unfold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
+              lhs_b rhs_b conseq ln pos in
+          (n_estate,conseq,rhs_rest,rhs_node, rhs_b)
         else
           let () = x_tinfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
           let () = x_tinfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
           let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
-          let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog estate lhs_node rhs_node rhs_rest rhs_h_matched_set
+          let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
               lhs_b rhs_b conseq ln pos in
           (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
           (* failwith "need to perform infer_fold first"  *)
@@ -15817,13 +15821,18 @@ and combine_struc_base b1 b2 =
 and combine_struc_x (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   match f2 with
   | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc_x f1) b.formula_case_branches}
-  | EBase b -> 
-    (match f1 with
-     | EBase b1 -> EBase (combine_struc_base b1 b)
-     | _ -> 
-       (match b.formula_struc_continuation with
-        | None -> EBase {b with formula_struc_continuation = Some f1}
-        | Some l -> EBase {b with formula_struc_continuation = Some (combine_struc_x f1 l)}))			  
+  | EBase b -> begin
+      match b.formula_struc_continuation with
+        | Some sf ->
+              let comb_sf = combine_struc_x f1 sf in
+              EBase {b with formula_struc_continuation = Some comb_sf}
+        | None ->
+              (match f1 with
+                | EBase b1 -> EBase (combine_struc_base b1 b)
+                | _ -> 
+                      (match b.formula_struc_continuation with
+                        | None -> EBase {b with formula_struc_continuation = Some f1}
+                        | Some l -> EBase {b with formula_struc_continuation = Some (combine_struc_x f1 l)}))			  end
   | EAssume {
       formula_assume_vars= x1;
       formula_assume_simpl = b;

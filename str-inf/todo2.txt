@@ -1791,43 +1791,31 @@ print relAssumes.
    fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
 
 ===========================================================================
-# ex20d1.slk
+# ex21u1.slk
 
-# GOT
+shape_elim_useless [G1,G2].
 
-  [fold emp&flted_22_138=null
-        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
-           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
-           flted_22_138!=null & flted_22_138!=null
-        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
-           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
-           flted_22_138!=null & flted_22_138!=null
-        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
-           flted_22_138!=null & q_34=q_152 & Anon_33=Anon_151 & 
-           flted_22_138!=null & flted_22_138!=null
-        or emp&flted_22_138=null
-        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
-           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
-           flted_22_138!=null
-        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
-           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
-           flted_22_138!=null
-        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
-           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
-           flted_22_138!=null
-         |#| htrue --> U(flted_22_138); 
-   fold U(q_152)&q_146!=null
-        or U(q_152)&q_146!=null
-         |#| htrue --> GP_153(q_152,q_146)]
+# Minor problems with view below:
+  Elim need to eliminate orig parameters too.
 
-# why so much repeated unfoldings above?
+!!! **sleekengine.ml#2471:views after ELIM: 
+[ view G2<p:node,y:node>= 
+  EBase 
+    self::G2_66<y>@M&{FLOW,(1,26)=__flow#E}[],
+ view G2_66<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; 
+          pp]self::node<Anon_14,pp,tt>@M * tt::G2_66<y>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1<y:node>= 
+  EBase 
+    exists (Impl)[Anon_13; t; p]self::node<Anon_13,p,t>@M * t::G2_66<y>@M&
+    {FLOW,(1,26)=__flow#E}[]]
 
- [fold emp&flted_22_138=null
-        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
-           q_34=q_152 & flted_22_138!=null
-         |#| htrue --> U(flted_22_138); 
-   fold U(q_152)&q_146!=null |#| htrue --> GP_153(q_152,q_146)]
-===========================================================================
 ===========================================================================
 ===========================================================================
 ===========================================================================

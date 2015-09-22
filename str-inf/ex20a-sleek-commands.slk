@@ -33,11 +33,11 @@ shape_unfold [P].
 
 print relAssumes.
 
-shape_param_dangling [P].
+shape_param_dangling [P,HP_1620].
 
 print relAssumes.
 
-shape_trans_to_view [P].
+shape_trans_to_view [P,HP_1620].
 
 /*
 

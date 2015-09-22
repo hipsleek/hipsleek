@@ -42,7 +42,7 @@ let norm_elim_useless_para_x view_name sf args=
       (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
       (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
-      let () = Debug.info_zprint  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
+      let () = x_binfo_zp  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
       (new_vname, new_args, ss)
     else
       (view_name, args, [])

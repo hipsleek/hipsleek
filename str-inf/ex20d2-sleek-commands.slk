@@ -22,7 +22,9 @@ emp&flted_22_138=null |#| true --> U(flted_22_138).
 
 print relAssumes. // To add hprel type
 
-shape_derive_post [U,GP_153].
+shape_derive_post [U].
+//shape_derive_post [U,GP_153].
+//shape_derive_post [*].
 
 print relAssumes.
 

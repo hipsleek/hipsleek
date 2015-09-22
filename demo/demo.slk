@@ -3,11 +3,23 @@ data node {
 	node next;	
 }.
 
-pred ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1> 
+pred ll<n> == self = null & n = 0
+    or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
 checkentail x::ll<n> |- n>=-1.
+print residue.
+
+checkentail x=null |- x::ll<n>.
+print residue.
+
+checkentail x::node<_,q>*q::node<_,null> 
+    |- x::ll<n>.
+print residue.
+
+
+checkentail x::ll<2> 
+    |- x::node<_,q>*q::node<_,r>.
 print residue.
 
 checkentail x::ll<n> |- n>=0.
