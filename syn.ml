@@ -171,7 +171,7 @@ let merge_pre_hprel_list prog hprels =
         let cond_guard_hprels = List.combine cond_guards hprels in
         let trans_hprels = List.map (fun (c, hpr) -> transform_pre_hprel_w_cond_guard c hpr) cond_guard_hprels in
         if not (should_merge_pre_hprels prog trans_hprels) then
-          let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in 
+          let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in
           hprels
         else
           let disj_rhs_list = List.fold_left (fun acc (c, hprel) ->
