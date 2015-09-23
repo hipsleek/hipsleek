@@ -1843,6 +1843,16 @@ Total verification time: 86.06 second
 
 
 ====================================================================
+22Sept15
+------
+Starting hip-sleek tests:
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 132.92 second
+	Time spent in main process: 45.39 second
+	Time spent in child processes: 87.53 second
+	Number of false contexts: 99
 ====================================================================
 ====================================================================
 ====================================================================

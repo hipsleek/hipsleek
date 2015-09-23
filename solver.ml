@@ -8329,6 +8329,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     (* L2: why not classic enven post proving? incr/ex10a-ll-size, skip2,skip3 *)
     let () = x_tinfo_hp (add_str "(check_is_classic ())" string_of_bool) (check_is_classic ()) no_pos in
     let h2, p2, _, _, _, _ = split_components conseq in
+    (* I guess this should be unfolding hp_rel *)
     let estate_orig1, hprel_ass, lhs=
       if (h2 = HEmp || h2 = HTrue) && not(is_folding) &&
          (!Globals.old_collect_hprel || (check_is_classic ()))
@@ -9545,7 +9546,8 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let lhs_b = CF.formula_base_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
   let lhs = CF.Base lhs_b in
   let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
-  let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
+  (* from unfolding *)
+  let hp_rel = CF.mkHprel ~fold_type:false knd [] [] matched_svl lhs grd rhs es_cond_path in
   if !Globals.old_infer_hp_collect then
     begin
       x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
@@ -11585,7 +11587,7 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
     let lhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl vs) (CP.mkTrue pos) in
     let lhs = CF.formula_of_pure_formula lhs_p pos in
     let rhs = CF.formula_of_heap (CF.HRel (hp,List.map (fun sv -> CP.Var (sv, pos)) vs,pos)) pos in
-    let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
+    let hp_rel = CF.mkHprel ~fold_type:true knd [] [] matched_svl lhs grd rhs es_cond_path in
     if !Globals.old_infer_hp_collect then 
       begin
         x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
@@ -13266,11 +13268,15 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)
+        else if do_infer==1 then
+          let n_estate = InferHP.infer_collect_hp_rel_unfold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
+              lhs_b rhs_b conseq ln pos in
+          (n_estate,conseq,rhs_rest,rhs_node, rhs_b)
         else
           let () = x_tinfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
           let () = x_tinfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
           let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
-          let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog estate lhs_node rhs_node rhs_rest rhs_h_matched_set
+          let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
               lhs_b rhs_b conseq ln pos in
           (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
           (* failwith "need to perform infer_fold first"  *)
@@ -15815,13 +15821,18 @@ and combine_struc_base b1 b2 =
 and combine_struc_x (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   match f2 with
   | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc_x f1) b.formula_case_branches}
-  | EBase b -> 
-    (match f1 with
-     | EBase b1 -> EBase (combine_struc_base b1 b)
-     | _ -> 
-       (match b.formula_struc_continuation with
-        | None -> EBase {b with formula_struc_continuation = Some f1}
-        | Some l -> EBase {b with formula_struc_continuation = Some (combine_struc_x f1 l)}))			  
+  | EBase b -> begin
+      match b.formula_struc_continuation with
+        | Some sf ->
+              let comb_sf = combine_struc_x f1 sf in
+              EBase {b with formula_struc_continuation = Some comb_sf}
+        | None ->
+              (match f1 with
+                | EBase b1 -> EBase (combine_struc_base b1 b)
+                | _ -> 
+                      (match b.formula_struc_continuation with
+                        | None -> EBase {b with formula_struc_continuation = Some f1}
+                        | Some l -> EBase {b with formula_struc_continuation = Some (combine_struc_x f1 l)}))			  end
   | EAssume {
       formula_assume_vars= x1;
       formula_assume_simpl = b;

@@ -120,7 +120,7 @@ let flatten_action f_extr wa =
       let rs2 = List.filter (fun (_,a) -> match a with 
           | M_Nothing_to_do _ -> false
           | _ -> true) rs in
-      if rs2==[] then [List.hd rs] else rs2
+      if rs2==[] then rs else rs2
     | None -> [wa]
   in aux wa
 
@@ -158,60 +158,6 @@ let flatten_search ((wt,_) as wa) =
 (*     | [(_,a)] -> a *)
 (*     | lst -> Search_action lst *)
 (*   end *)
-
-let norm_search_action ls =
-  let (_,a) = flatten_search (-1,Search_action ls) in
-  a
-
-
-let mk_search_action lst = norm_search_action lst
-
-
-let flatten_cond ((wt,_) as wa) =
-  let f_extr a = match a with
-    | Cond_action lst -> Some lst
-    | _ -> None in
-  let lst = flatten_action f_extr wa in
-    match lst with
-    | [] -> (wt,M_Nothing_to_do ("cond action is empty"))
-    | [a] -> a
-    | lst -> (wt,Cond_action lst)
-
-let norm_cond_action ls =
-  let () = y_tinfo_pp "norm_cond_action" in
-  let (_,a) = flatten_cond (-1,Cond_action ls) in
-  a
-
-let norm_cond_action ls =
-  let (_,a) = flatten_cond (-1,Cond_action ls) in
-  a
-
-let mk_cond_action lst = norm_cond_action lst
-
-let check_same lst = 
-  let rec aux lst p = 
-    match lst with
-    | (a,_)::xs -> 
-      if a==p then aux xs p
-      else false
-    | [] -> true in 
-  match lst with
-  | [] -> true
-  | (w,_)::xs -> aux xs w
-
-let norm_smart_action ls =
-  if check_same ls then norm_search_action ls
-  else norm_cond_action ls
-
-let mk_smart_action lst = norm_smart_action lst
-
-let mk_smart_rev_action lst = norm_smart_action (List.rev lst)
-
-let norm_single_action ((wt,a) as act) =
-  match a with
-  | Search_action _ -> flatten_search act
-  | Cond_action _ -> flatten_cond act
-  | _ -> act
 
  (* let norm_cond_action ls = *)
  (* match ls with *)
@@ -410,6 +356,68 @@ let string_of_match_type e = poly_string_of_pr pr_match_type e
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
 
 let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action_stk") string_of_action_res_simpl (=) *)
+
+let pr_l_act_wt = pr_list string_of_action_wt_res_simpl
+let pr_act  = string_of_action_res_simpl
+
+let norm_search_action ls =
+  let (_,a) = flatten_search (-1,Search_action ls) in
+  a
+
+let norm_search_action ls =
+  Debug.no_1 "norm_search_action" (pr_l_act_wt) pr_act  norm_search_action ls
+
+let mk_search_action lst = norm_search_action lst
+
+let flatten_cond ((wt,_) as wa) =
+  let f_extr a = match a with
+    | Cond_action lst -> Some lst
+    | _ -> None in
+  let lst = flatten_action f_extr wa in
+    match lst with
+    | [] -> (wt,M_Nothing_to_do ("cond action is empty"))
+    | [a] -> a
+    | lst -> (wt,Cond_action lst)
+
+(* let norm_cond_action ls = *)
+(*   let () = y_tinfo_pp "norm_cond_action" in *)
+(*   let (_,a) = flatten_cond (-1,Cond_action ls) in *)
+(*   a *)
+
+let norm_cond_action ls =
+  let (_,a) = flatten_cond (-1,Cond_action ls) in
+  a
+
+let norm_cond_action ls =
+  Debug.no_1 "norm_cond_action" pr_l_act_wt pr_act  norm_cond_action ls
+
+
+let mk_cond_action lst = norm_cond_action lst
+
+let check_same lst = 
+  let rec aux lst p = 
+    match lst with
+    | (a,_)::xs -> 
+      if a==p then aux xs p
+      else false
+    | [] -> true in 
+  match lst with
+  | [] -> true
+  | (w,_)::xs -> aux xs w
+
+let norm_smart_action ls =
+  if check_same ls then norm_search_action ls
+  else norm_cond_action ls
+
+let mk_smart_action lst = norm_smart_action lst
+
+let mk_smart_rev_action lst = norm_smart_action (List.rev lst)
+
+let norm_single_action ((wt,a) as act) =
+  match a with
+  | Search_action _ -> flatten_search act
+  | Cond_action _ -> flatten_cond act
+  | _ -> act
 
 let action_get_holes a = match a with
   | Undefined_action e
@@ -1261,8 +1269,12 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
     | HRel (hp,e,l) ->
       begin
         (* let vv = CF.mk_HRel_as_view hp e l in *)
-        let new_e = Cast.rm_NI_from_hp_rel prog hp e in
+        (* TODO:WN: rm_NI causes some simple ex to fail. is it really needed at 16826? *)
+        let new_e = (* Cast.rm_NI_from_hp_rel prog hp *) e in
         let vs = List.concat (List.map CP.afv new_e) in
+        let () = y_tinfo_hp (add_str "e" (pr_list !CP.print_exp)) e in
+        let () = y_tinfo_hp (add_str "new_e" (pr_list !CP.print_exp)) new_e in
+        let () = y_tinfo_hp (add_str "vs" pr_svl) vs in
         let common = CP.intersect_svl vs aset in
         let () = y_tinfo_hp (add_str "common" pr_svl) common in
         let () = y_tinfo_hp (add_str "f(LHS)" !CF.print_h_formula) f in
@@ -2148,11 +2160,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* ) a in                                              *)
          (* try accelerated folding *)
          let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-         Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
-         Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
+         x_tinfo_hp (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+         x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-         (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
+         (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | DataNode dl, ViewNode vr -> 
          pr_debug "DATA vs VIEW\n";
          let vr_name = vr.h_formula_view_name in
@@ -2290,7 +2302,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-         (1, norm_cond_action (a_accfold@ [(1,norm_search_action a)]))
+         (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | ViewNode vl, DataNode dr -> 
          pr_debug "VIEW vs DATA\n";
          let vl_name = vl.h_formula_view_name in
@@ -2351,7 +2363,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
          else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
        | ViewNode vl, HRel (h_name_sv, args, _) -> (* can  it reach this branch? *)
-         y_binfo_pp "VIEW vs HREL\n";
+         y_tinfo_pp "VIEW vs HREL\n";
          let h_name = Cpure.name_of_spec_var h_name_sv in
          let vl_name = vl.h_formula_view_name in
 
@@ -2372,7 +2384,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            match l with
            | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
            | l1::[] -> l1
-           | _      -> (-1, norm_cond_action l)
+           | _      -> (-1, x_add_1 norm_cond_action l)
          in res
        (* TODO:old_infer_heap *)
        | HRel (hn1, args1, _), (HRel (hn2, args2, _) as rhs) -> 
@@ -2507,12 +2519,28 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              (4,M_Nothing_to_do ("No common parameters : "^msg))
            else
              let alternative = process_infer_heap_match ~vperm_set:rhs_vperm_set prog estate lhs_h lhs_p is_normalizing rhs reqset (Some lhs_node,rhs_node,rhs_rest) in
+             let ptr = ref None in
              let left_preds = match ms with
-               | Coerc_mater _ ->  List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view
+               | Coerc_mater d ->
+                     let l_v = d.coercion_body_view in
+                     let () = y_tinfo_hp (add_str "left_view" (pr_id)) l_v in
+                     let lst = List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view in
+                     let () = if lst == [] then
+                       try
+                         let _ = look_up_data_def_prog prog l_v in
+                         let () = y_tinfo_hp (add_str "coercing data " pr_id) l_v in
+                         let () = ptr := Some (l_v,M_lemma (m_res,Some d,1)) in
+                         ()
+                       with _ -> ()
+                     in
+                     l_v::lst
                | _ -> []
              in
              let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
-             process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
+             match !ptr with
+             | None -> process_one_match_mater_unk_w_view left_preds [] h_name vl_name m_res ms alternative
+             | Some (l_v,lem_act) ->  
+               (1, lem_act)
          end
        | ViewNode vl, HRel (h_name, args, _) -> 
          begin
@@ -2546,7 +2574,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                      try
                        let _ = look_up_data_def_prog prog r_v in
                        let () = y_tinfo_hp (add_str "coercing data " pr_id) r_v in
-                       ptr := Some (r_v,M_lemma (m_res,Some d,1))
+                       ptr := Some (r_v,M_lemma (m_res,Some d,2))
                      with _ -> ()
                  in
                  r_v::lst

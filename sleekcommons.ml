@@ -65,13 +65,21 @@ type command =
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)
   | ShapeElim of (ident list)
+  | ShapeReuse of (ident list * ident list)
   | ShapeExtract of (ident list)
   | ShapeDeclDang of (ident list)
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
-  | ShapeAddDangling of (ident list)
-  | ShapeUnfold of (ident list)
-  | ShapeParamDangling of (ident list)
+  | ShapeAddDangling of regex_id_list
+  | ShapeUnfold of regex_id_list
+  | ShapeParamDangling of regex_id_list
+  | ShapeSimplify of regex_id_list
+  | ShapeMerge of regex_id_list
+  | ShapeTransToView of regex_id_list
+  | ShapeDerivePre of regex_id_list
+  | ShapeDerivePost of regex_id_list
+  | ShapeDeriveView of regex_id_list
+  | ShapeNormalize of regex_id_list
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -163,12 +171,20 @@ let string_of_command c = match c with
   | ShapeDeclDang _ -> "ShapeDeclDang"
   | ShapeDeclUnknown _ -> "ShapeDeclUnknown"
   | ShapeElim _ -> "ShapeElim"
+  | ShapeReuse _ -> "ShapeReuse"
   | ShapeExtract _ -> "ShapeExtract"
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
   | ShapeAddDangling _ -> "ShapeAddDangling"
   | ShapeUnfold _ -> "ShapeUnfold"
   | ShapeParamDangling _ -> "ShapeParamDangling"
+  | ShapeSimplify _ -> "ShapeSimplify"
+  | ShapeMerge _ -> "ShapeMerge"
+  | ShapeTransToView _ -> "ShapeTransToView"
+  | ShapeDerivePre _ -> "ShapeDerivePre"
+  | ShapeDerivePost _ -> "ShapeDerivePost"
+  | ShapeDeriveView _ -> "ShapeDeriveView"
+  | ShapeNormalize _ -> "ShapeNormalize"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"

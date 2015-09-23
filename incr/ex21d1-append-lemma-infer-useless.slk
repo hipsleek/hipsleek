@@ -27,7 +27,7 @@ HeapPred U(node x).
 HeapPred U2(node x,node y).
 HeapPred U3(node x,node y).
 
-lemma_infer [U,classic]
+lemma_infer [U,classic] "L21d1"
   self::app3<> -> self::node<_,q>*U(q).
 print residue.
 

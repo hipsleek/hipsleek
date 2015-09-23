@@ -96,7 +96,7 @@ module M = Lexer.Make(Token.Token)
     (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
     | SatCheck f -> (process_sat_check f; ())
     | NonDetCheck (v, f) -> (process_nondet_check v f)
-    | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
+    | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
@@ -113,12 +113,20 @@ module M = Lexer.Make(Token.Token)
     | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names
     | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
+    | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
     | ShapeAddDangling hps -> process_shape_add_dangling hps
     | ShapeUnfold hps -> process_shape_unfold hps
     | ShapeParamDangling hps -> process_shape_param_dangling hps
+    | ShapeSimplify hps -> process_shape_simplify hps
+    | ShapeMerge hps -> process_shape_merge hps
+    | ShapeTransToView hps -> process_shape_trans_to_view hps
+    | ShapeDerivePre hps -> process_shape_derive_pre hps
+    | ShapeDerivePost hps -> process_shape_derive_post hps
+    | ShapeDeriveView hps -> process_shape_derive_view hps
+    | ShapeNormalize hps -> process_shape_normalize hps
     | PredSplit ids -> process_pred_split ids
     | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
@@ -249,7 +257,7 @@ let parse_file (parse) (source_file : string) =
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
     | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
     | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
-    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeReuse _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
     | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormSeg _ | PredNormDisj _ | RelInfer _
     | TemplSolv _ | TermInfer
     | Time _ | EmptyCmd | _ -> () 
@@ -485,6 +493,8 @@ let sleek_prologue () =
   Globals.infer_const_obj # init
 
 let sleek_epilogue () =
+  let cp = !cprog in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_derived_program cp) else () in
   if !Debug.dump_calls then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then

@@ -5,37 +5,69 @@
 data node {
 	int val; 
 	node next;	
-}
+}.
 
 
 /* view for a singly linked list */
 
-ll<> == self = null
+pred ll<> == self = null
 	or self::node<_, q> * q::ll<> 
-  inv true;
+  inv true.
 
-lseg<p> == self=p
+pred lseg<p> == self=p
   or self::node<_, q> * q::lseg<p>
-  inv true;
+  inv true.
 
+/*
+[ P(x_1661,y_1662,res_1663) ::= emp&x_1661=null & y_1662=res_1663
+ or x_1661::node<Anon_1664,v_node_31_1659>@M * 
+    P(q_1647,y_1662,v_node_31_1659)&
+    x_1661!=null & res_1663!=null & x_1661=res_1663
+ (4,5)]
+*/
 
-HeapPred P(node x, node y,node z).
+pred P<p,x> == self=p & x=null 
+  or self::node<_, q> * q::P<p,_> & x!=null & x=self
+  inv true.
 
-node append(node x, node y)
-  infer [P,@classic]
-  requires x::ll<>
-  ensures P(x,y,res);
-{    
-  if (x==null) return y;
-  else {
-      x.next = append(x.next, y);
-      return x;
-  }
-}
+lemma_test self::P<p,x> -> self::lseg<p>.
+
+relation R(node x,node y, node z).
+
+lemma_infer[R,@classic] self::P<p,x> -> self::lseg<p> & R(self,p,x).
+print residue.
 
 
 /*
-# ex21p2.ss
+# ex21p2a.ss
+
+lemma_infer[R,@classic] self::P<p,x> -> self::lseg<p> & R(self,p,x).
+
+# need fix-point here.
+
+  self_lem_17=p & x=null
+       -->  R(self_lem_17,p,x); 
+
+  R(p,p,Anon_225) & x=self_lem_17 & self_lem_17!=null) 
+       -->  R(self_lem_17,p,x); 
+
+  q_224!=null & R(q_224,p,Anon_225) & x=self_lem_17 & self_lem_17!=null) -->  R(self_lem_17,p,x)
+
+
+
+[[ Fold ==>  Match(self_lem_17,self_lem_17) ==>  SEARCH ==>  (Lemma ==> lem_17(q_224,q_228)) ==> (left: lem_17) ==>  COND ==>  Match(q_224,q_228) ==> ||OR|| ==>  COND ==>  BaseCaseFold]]
+
+
+pred P<p,x> == self=p & x=null & self=p
+  or self::node<_, q> * q::P<p,x> & x!=null & x=self & res!=null
+  inv true.
+
+ERROR: at ex21p2a-append-pure-post.slk_29:15_29:39
+Message: res is not allowed in precondition
+
+Exception processed: Failure("res is not allowed in precondition")
+error at: 
+SLEEK FAILURE (END)
 
   infer [P,@classic]
   requires x::ll<>

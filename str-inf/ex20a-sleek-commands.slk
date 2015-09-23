@@ -6,6 +6,8 @@ data char_star {
 HeapPred P(char_star x).
 HeapPred HP_1620(char_star x).
 
+//checkentail P(x) |- P(x).
+
 relAssume //(1)
 P(s) --> s::char_star<v_1618,Anon_1619>@M * HP_1620(Anon_1619).
 
@@ -21,14 +23,21 @@ shape_add_dangling [P,HP_1620].
 
 print relAssumes.
 
+shape_merge [P,HP_1620].
+
+print relAssumes.
+
 shape_unfold [P].
 //shape_unfold [HP_1620].
 //shape_unfold [P,HP_1620].
 
+print relAssumes.
 
-shape_merge [P,HP_1620].
+shape_param_dangling [P,HP_1620].
 
 print relAssumes.
+
+shape_trans_to_view [P,HP_1620].
 
 /*
 

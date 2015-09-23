@@ -296,6 +296,7 @@ and coercion_decl = {
   coercion_head_view : ident; 
   (* the name of the predicate where this coercion can be applied *)
   coercion_body_view : ident;  (* used for cycles checking *)
+  coercion_body_pred_list : ident list;  (* used for lemma triggering *)
   coercion_mater_vars : mater_property list;
   (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
   coercion_case : coercion_case; (*Simple or Complex*)
@@ -615,6 +616,9 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let mix_true = MP.mkMTrue pos in
   let vs = List.map fst vars in (* where to store annotation? *)
   (* let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in *)
+  let view_sv_vars = vs in
+  (* let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in *)
+  (* let _  = Immutable.split_sv in *)
   {
     view_name = hp_n; (* CP.name_of_spec_var hp_n; *)
     view_vars = vs;
@@ -646,7 +650,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_domains= [];
     view_contains_L_ann = false;
     view_ann_params = [];
-    view_params_orig= [];
+    view_params_orig = [];
     view_partially_bound_vars = [];
     view_materialized_vars = [];
     view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
@@ -1851,7 +1855,8 @@ let case_of_coercion lhs rhs =
   Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
-  List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
+  List.filter (fun p ->  p.coercion_head_view = c 
+                         && (p.coercion_body_view = t || List.exists (fun x -> x=t) p.coercion_body_pred_list)  ) coers
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
   let pr1 = pr_list !print_coercion in
@@ -3827,3 +3832,11 @@ let rm_NI_from_hp_rel prog hp args =
   let lst = List.combine args hpdef.hp_vars_inst in
   let rm_lst = List.filter (fun (_,(_,k)) -> k==I) lst in
   List.map fst rm_lst
+
+let add_view_decl prog vdecl = 
+  let prog_vdecl_ids = List.map (fun v -> v.view_name) prog.prog_view_decls in
+  let vdecl_id = vdecl.view_name in
+  if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
+    y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
+  else
+    prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]

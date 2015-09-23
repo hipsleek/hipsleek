@@ -5031,6 +5031,7 @@ let mk_link_hprel_def prog iflow cond_path (hp,_)=
     CF.hprel_def_guard = None;
     CF.hprel_def_body = [(cond_path, None, Some iflow)];
     CF.hprel_def_body_lib = [];
+    (* CF.hprel_fold = false; *)
     CF.hprel_def_flow = (Some iflow);
   } in
   def

@@ -26,11 +26,21 @@ type sleek_token =
   | CHECKENTAIL |  CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT
   | DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | RELDEFN 
-  | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
-  | SHAPE_SPLIT_BASE | SHAPE_ELIM_USELESS | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
+  | SHAPE_INFER | SHAPE_INFER_PROP 
+  | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
+  | SHAPE_SPLIT_BASE 
+  | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
   | SHAPE_STRENGTHEN_CONSEQ | SHAPE_WEAKEN_ANTE
-  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING
-  | PRED_SPLIT | PRED_NORM_DISJ | PRED_SPEC | PRED_NORM_SEG
+  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING 
+  | SHAPE_SIMPLIFY | SHAPE_MERGE | SHAPE_TRANS_TO_VIEW
+  | SHAPE_DERIVE_PRE (* to derive pre-predicate into view *)
+  | SHAPE_DERIVE_POST (* to derive post-predicate into view *)
+  | SHAPE_DERIVE_VIEW
+  | SHAPE_NORMALIZE
+  | PRED_SPEC 
+  | PRED_SPLIT  
+  | PRED_NORM_SEG | PRED_NORM_DISJ
+  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *) | PRED_REUSE
   | REL_INFER
   | DTIME
   | ELSE_TT
@@ -128,14 +138,24 @@ module Token = struct
     | CHECKSAT -> "checksat"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
     | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
-    | SHAPE_SPLIT_BASE -> "shape_split_base" | SHAPE_ELIM_USELESS -> "shape_elim_useless" | SHAPE_EXTRACT -> "shape_extract"
+    | SHAPE_SPLIT_BASE -> "shape_split_base" 
+    | SHAPE_EXTRACT -> "shape_extract"
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
     | SHAPE_STRENGTHEN_CONSEQ -> "shape_strengthen_conseq"
     | SHAPE_WEAKEN_ANTE -> "shape_weaken_ante"
     | SHAPE_ADD_DANGLING -> "shape_add_dangling"
     | SHAPE_UNFOLD -> "shape_unfold"
     | SHAPE_PARAM_DANGLING -> "shape_param_dangling"
-    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
+    | SHAPE_SIMPLIFY -> "shape_simplify"
+    | SHAPE_MERGE -> "shape_merge"
+    | SHAPE_TRANS_TO_VIEW -> "shape_trans_to_view"
+    | SHAPE_DERIVE_PRE -> "shape_derive_pre"
+    | SHAPE_DERIVE_POST -> "shape_derive_post"
+    | SHAPE_DERIVE_VIEW -> "shape_derive_view"
+    | SHAPE_NORMALIZE -> "shape_normalize"
+    | PRED_ELIM_USELESS -> "pred_elim_useless" | PRED_REUSE -> "pred_reuse" 
+    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" 
+    | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
