@@ -1269,8 +1269,12 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
     | HRel (hp,e,l) ->
       begin
         (* let vv = CF.mk_HRel_as_view hp e l in *)
-        let new_e = Cast.rm_NI_from_hp_rel prog hp e in
+        (* TODO:WN: rm_NI causes some simple ex to fail. is it really needed at 16826? *)
+        let new_e = (* Cast.rm_NI_from_hp_rel prog hp *) e in
         let vs = List.concat (List.map CP.afv new_e) in
+        let () = y_tinfo_hp (add_str "e" (pr_list !CP.print_exp)) e in
+        let () = y_tinfo_hp (add_str "new_e" (pr_list !CP.print_exp)) new_e in
+        let () = y_tinfo_hp (add_str "vs" pr_svl) vs in
         let common = CP.intersect_svl vs aset in
         let () = y_tinfo_hp (add_str "common" pr_svl) common in
         let () = y_tinfo_hp (add_str "f(LHS)" !CF.print_h_formula) f in

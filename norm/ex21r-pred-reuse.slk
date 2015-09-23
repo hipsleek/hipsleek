@@ -38,7 +38,7 @@ pred ll4a<> ==
 
 
 
-pred_reuse [ll5][ll].
+//pred_reuse [ll5][ll].
 // fail
 
 
@@ -46,7 +46,7 @@ pred_reuse [ll2][ll,ll5].
 // yes ll2
 
 
-pred_reuse [ll3,ll4,ll4a][ll,ll5].
+//pred_reuse [ll3,ll4,ll4a][ll,ll5].
 // yes for ll3,ll4
 
 /*
