@@ -37,7 +37,7 @@ relAssume
 HP_1642(v_1640,s)&
 Anon_18=v_1640 & v=v_1640 & s_1656=s & v!=0 --> emp&true.
 
-/*-------------------------------while2-------------------------------
+/*-------------------------------while2------------------------------- */
 
 relAssume
 U(s1)&true --> s1::char_star<Anon_1928,q_1929>@M * HP_1930(Anon_1928,s1) * 
@@ -83,7 +83,5 @@ true.
 relAssume HP_1930(Anon_1928,s1)&
 s1!=null & Anon_20=Anon_1928 & Anon_18=Anon_1928 & s1_1933=s1 --> emp&
 true.
-
-*/
 
 shape_derive_view [*].
