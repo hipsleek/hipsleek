@@ -32,7 +32,13 @@ HP_1627(v_1625,s1)&s1'=s1 & v=v_1625 & v=0 --> emp&
 true.
 
 relAssume 
-emp&true --> HP_1644(v_1642,s2) * HP_1645(Anon_1643,s2)&
+Q(s2)&s2'=s2 --> emp&
+true.
+
+relAssume 
+Q(s2)&
+true --> s2::char_star<v_1642,Anon_1643>@M * HP_1644(v_1642,s2) * 
+         HP_1645(Anon_1643,s2)&
 true.
 
 relAssume 
@@ -77,31 +83,5 @@ Anon_18=v_1625 & v=v_1625 & s1_1657=s1 & v_1638=v & v_1638=v_1642 & v!=0 &
 Anon_1658=v_1642 --> emp&
 true.
 
-relAssume 
-Q(s2)&
-q_1659=Anon_1643 & Anon_1658=v_1642 & Anon_1639=Anon_1643 & v_1638=v_1642 & 
-s2_1663=s2 & v_1638=v & v!=0 & v=v_1625 & Anon_18=v_1625 --> emp&
-true.
-
 shape_derive_view [*].
 
-
-
-/*-------------------------
-#svcomp_cstrcmp.slk
-!!! **cformula.ml#19728:UNCLASSIFIED REL_ASS:[?]
-========================
- Performing Deriving Views
-========================
-
-Starting Omega.../usr/local/bin/oc
-
-!!! **syn.ml#174:WARNING: Merging is not performed due to the set of pre-hprels does not have disjoint conditions
-!!! **syn.ml#174:WARNING: Merging is not performed due to the set of pre-hprels does not have disjoint conditions
-Exception processed: Not_found
-error at: 
-SLEEK FAILURE (END)
-
-
-Exception processed: Failure("Unexpected formula in the RHS of a post-hprel  unknown emp |#|  --> HP_1644(v_1642,s2) * HP_1645(Anon_1643,s2)")
-*/

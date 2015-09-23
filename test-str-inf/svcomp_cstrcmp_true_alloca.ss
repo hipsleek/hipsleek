@@ -19,7 +19,7 @@ HeapPred P(char_star x).
 HeapPred Q(char_star x).
 
 void while1(ref char_star s1, ref char_star s2)
-infer [P,@classic,@pure_field]
+infer [P,Q,@classic,@pure_field]
   requires P(s1)*Q(s2)
   ensures true;
 {
