@@ -2471,6 +2471,15 @@ let process_shape_elim_useless sel_vnames=
   let _ = x_binfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
+let process_shape_reuse frm_vnames to_vnames=
+  let _ = x_binfo_zp  (lazy  ("shape reuse  \n")) no_pos in
+  let () = x_tinfo_hp (add_str "frm vnamse"  (pr_list pr_id)) frm_vnames no_pos in
+  let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
+  let eq_pairs = Norm.norm_reuse iprog !cprog !cprog.Cast.prog_view_decls frm_vnames to_vnames in
+  let pr = pr_list (pr_pair pr_id pr_id) in
+  let _ = x_binfo_zp  (lazy  ("views equiv: \n" ^ (pr eq_pairs))) no_pos in
+  ()
+
 let process_shape_extract sel_vnames=
   let view_defs = Norm.norm_extract_common iprog !cprog !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in

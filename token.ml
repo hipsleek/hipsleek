@@ -40,7 +40,7 @@ type sleek_token =
   | PRED_SPEC 
   | PRED_SPLIT  
   | PRED_NORM_SEG | PRED_NORM_DISJ
-  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *)
+  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *) | PRED_REUSE
   | REL_INFER
   | DTIME
   | ELSE_TT
@@ -153,7 +153,7 @@ module Token = struct
     | SHAPE_DERIVE_POST -> "shape_derive_post"
     | SHAPE_DERIVE_VIEW -> "shape_derive_view"
     | SHAPE_NORMALIZE -> "shape_normalize"
-    | PRED_ELIM_USELESS -> "pred_elim_useless" 
+    | PRED_ELIM_USELESS -> "pred_elim_useless" | PRED_REUSE -> "pred_reuse" 
     | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" 
     | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
