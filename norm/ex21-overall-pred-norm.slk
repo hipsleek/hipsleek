@@ -19,9 +19,19 @@ pred app2<y> == self::node<_,null>
 	or self::node<_, q> * q::app2<y> & q!=null 
   inv self!=null.
 
+
 pred app3<> == self::node<_,null> 
 	or self::node<_, q> * q::app3<> & q!=null 
   inv self!=null.
+
+
+# weakening, term
+  x::app3<> --> x::node<_,q>*U<q>
+
+# weakening, segmented
+  x::app3<> --> U(x,q)*q::node<>
+
+
 
 HeapPred U(node x).
 HeapPred U2(node x,node y).
@@ -33,7 +43,7 @@ print residue.
 
 print relAssumes.
 //shape_normalize [U].
-shape_derive_view [U].
+//shape_derive_view [U].
 print relAssumes.
 
 /*
@@ -44,28 +54,20 @@ lemma_infer  [U,classic] "L21d1"
 print residue.
 
 print relAssumes.
-shape_derive_view [U].
+//shape_derive_view [U].
+//shape_normalize [U].
 print relAssumes.
 
 # can we add a command
 
  shape_norm (which stop short of deriving predicate)
 
-
- [unknown U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146); 
-   unknown q_146::node<Anon_151,q_152>@M * GP_153(q_152,q_146)&
-    q_146!=null |#|  --> U(q_146); 
-   unknown emp&flted_22_138=null |#|  --> U(flted_22_138)]
-
-# why do we get unfolded twice below? and can we simplify?
+# OK 
  
-  [fold q_146::node<Anon_151,q_152>@M * U(q_152)&
-        q_146!=null & q_146!=null & q_146!=null
-        or emp&q_146=null
-        or q_146::node<Anon_151,q_152>@M * U(q_152)&
-           q_146!=null & q_146!=null & q_146!=null
+  [fold q_146::node<Anon_151,q_152>@M * U(q_152)&q_146!=null
         or emp&q_146=null
          |#|  --> U(q_146); 
    fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
+
 
 */

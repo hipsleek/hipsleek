@@ -113,6 +113,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names
     | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
+    | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
@@ -256,7 +257,7 @@ let parse_file (parse) (source_file : string) =
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
     | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
     | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
-    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeReuse _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
     | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormSeg _ | PredNormDisj _ | RelInfer _
     | TemplSolv _ | TermInfer
     | Time _ | EmptyCmd | _ -> () 

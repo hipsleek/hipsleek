@@ -1,0 +1,33 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred zipN<n> ==
+  self=null & n=0 
+ or self::node<_,p>*p::zipN<n1> & n=n1+1 
+ inv n>=0.
+
+pred zipM<n> ==
+  self=null & n=0 
+ or self::node<_,p>*p::zipM<n1> & n=n1+1 
+ inv n>=0.
+
+pred zip<y,z> ==
+  self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+
+relation P3(int a, int b, int c).
+
+pred ll<> ==
+  self=null  
+ or self::node<_,p>*p::ll<>  
+ inv true.
+
+
+
+lemma_infer_pred [P3] "one3" self::zip<y,z>  <-  self::zipN<n> * y::zipM<m>  * z::zipM<k> & P3(n,m,k) .
+print residue.
+
+

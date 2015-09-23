@@ -4407,9 +4407,9 @@ let pr_view_decl_short v =
   (* (\* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl  *\) *)
   (* (\*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *\) *)
   try
-    x_binfo_hp (add_str "view_labels" (pr_list (fun l ->     if LO.is_common l then ""
+    x_tinfo_hp (add_str "view_labels" (pr_list (fun l ->     if LO.is_common l then ""
                                                  else (LO.string_of l)^":"))) v.view_labels  no_pos;
-    x_binfo_hp (add_str "v.view_params_orig" (pr_list 
+    x_tinfo_hp (add_str "v.view_params_orig" (pr_list 
                                                 (pr_pair string_of_typed_view_arg string_of_int)
                                              ))
       v.view_params_orig no_pos;

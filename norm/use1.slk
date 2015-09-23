@@ -1,0 +1,40 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+pred G1<y> == self::node<_,p,t> * t::G2<p,y>.
+
+pred G2<p:node,y> == self=y
+  or self::node<_,pp,tt> * tt::G2<pp,y>.
+
+
+pred_elim_useless [G1,G2].
+
+/*
+# use1.slk
+
+# extra formal parameter
+
+[ view G2<p:node,y:node>= 
+  EBase 
+    self::G2_66<y>@M&{FLOW,(1,26)=__flow#E}[],
+ view G2_66<p:node,y:node>= 
+           ^^^^^^^
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; 
+          pp]self::node<Anon_14,pp,tt>@M * tt::G2_66<y>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1<y:node>= 
+  EBase 
+    exists (Impl)[Anon_13; t; p]self::node<Anon_13,p,t>@M * t::G2_66<y>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+
+*/
+

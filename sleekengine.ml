@@ -1716,7 +1716,6 @@ let process_shape_derive_post (ids: regex_id_list) =
 let process_shape_derive_view (ids: regex_id_list) =
   let f others hps =
     let (derived_views, new_hprels) = Syn.derive_view !cprog others hps in
-    (* print_endline "updating hprel_assumes"; *)
     (* let () = update_sleek_hprel_assumes new_hprels in *)
     new_hprels
   in
@@ -1725,9 +1724,7 @@ let process_shape_derive_view (ids: regex_id_list) =
 
 let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
-    let (derived_views,new_hprels) = Syn.derive_view !cprog others hps in
-    (* print_endline "updating hprel_assumes"; *)
-    (* let () = update_sleek_hprel_assumes new_hprels in *)
+    let new_hprels = Syn.derive_view_norm !cprog others hps in
     new_hprels
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
@@ -2470,8 +2467,15 @@ let process_shape_split pre_hps post_hps=
 let process_shape_elim_useless sel_vnames=
   let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
-  let pr = pr_list_ln Cprinter.string_of_view_decl in
-  let _ = Debug.info_zprint  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
+  let pr = pr_list_ln Cprinter.string_of_view_decl_short in
+  let _ = x_binfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
+  ()
+
+let process_shape_reuse frm_vnames to_vnames=
+
+  let _ = x_binfo_zp  (lazy  ("shape reuse  \n")) no_pos in
+  let () = x_tinfo_hp (add_str "frm vnamse"  (pr_list pr_id)) frm_vnames no_pos in
+  let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
   ()
 
 let process_shape_extract sel_vnames=

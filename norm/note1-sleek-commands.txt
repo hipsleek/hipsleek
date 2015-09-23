@@ -1,0 +1,55 @@
+bugs/use1.slk:shape_elim_useless [G1,G2].
+bugs/use2.slk:shape_elim_useless [H1,H2].
+bugs/use3.slk://shape_elim_useless [G1,G2].
+
+norm/split-2.slk:pred_split [HP].
+norm/split-seg.slk:pred_split [HP1].
+norm/zip-1a.slk:pred_split [zipNM].
+norm/zip-1b.slk:pred_split [zip].
+norm/zip-1c.slk:pred_split [zipNM].
+norm/zip-1.slk:pred_split [zip].
+norm/zip-2a.slk:pred_split [zip].
+norm/zip-2.slk:pred_split [zip].
+norm/zip-3.slk:pred_split [zip].
+
+norm/udisj-1.slk:pred_disj_unify [ll_last].
+norm/udisj-1.slk://pred_disj_unify [ll_nth].
+
+bugs/norm-1.slk:shape_extract [l2].
+
+demo/cll-1c.slk:shape_strengthen_conseq [H,HP_6,HP_7][].
+hip2/sante-1.slk://shape_strengthen_ante [H,G][].
+hip2/s_conseq-1.slk:shape_strengthen_post [H,HP_2][].
+hip2/sconseq-1.slk:shape_strengthen_conseq [H,HP_2][].
+
+demo/div-swl-i3.slk:shape_divide [H,H_1,H_2][].
+demo/tll-if-divide-all.slk:shape_divide [H,H_2,H_3][G].
+demo/tll-if-divide-pre-1.slk: shape_divide [H,H_2,H_3][].
+demo/tll-if-divide-pre-1.slk://shape_divide [H][].
+demo/tll-if-divide-pre.slk: shape_divide [H,H_2,H_3][].
+demo/tll-if-divide-pre.slk://shape_divide [H][].
+demo/tll-if-divide.slk:shape_divide [H,H_2,H_3][].
+demo/tll-if.slk:shape_divide [H,H_2,H_3][].
+demo/zip-dnc.slk: shape_divide [H,H1,H2][G1].
+
+demo/tll-if-conquer-pre.slk:shape_conquer [H][1;0,1;2].
+demo/tll-if-conquer.slk:shape_conquer [H][1;1,1;2].
+
+demo/single-a.slk:shape_post_obligation [][GP_4,GP_5].
+demo/single-b1.slk:shape_post_obligation [][GP_3]. // loop
+demo/single-b.slk:shape_post_obligation [][GP_3,GP_4].
+
+demo/two-2a.slk:shape_weaken_ante  [HP_5,HP_6,HP_9][G2].
+hip2/sante-1.slk:shape_weaken_ante [H,G][].
+
+hip2/cll-d3a2.slk:shape_split_base [H][G].
+hip2/cll-d3a2.slk:shape_split_base [H,x][G].
+hip2/ll-del1b2.slk:shape_split_base [][G].
+hip2/ll-getnext2a1.slk:shape_split_base [H][G].
+hip2/loc-4a3.slk:shape_split_base [HP_2][G].
+hip2/sb-1.slk:shape_split_base [HP_2][G].
+hip2/sb-2.slk:shape_split_base [H,HP_2][G].
+hip2/sb-3.slk:shape_split_base [H,HP_1][G].
+hip2/sb-4a.slk:shape_split_base [H,HP_1][G].
+hip2/sb-4.slk:shape_split_base [H,HP_1][G].
+

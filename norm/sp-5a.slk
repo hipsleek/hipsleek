@@ -1,0 +1,54 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+
+//(3)
+infer_exact [P1] 
+   self=null
+|- P1(p) & self=p.
+print residue.
+// expect self=null --> P1(self)
+/*
+ <1>emp&self=null & p=null&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(1)
+emp --> P1(p_18); 
+// Sleek_Entail(1)
+P1(p) --> emp&
+p=null]
+*/
+
+
+//(3)
+infer [P1] 
+   self=null
+|- P1(p) & self=p.
+print residue.
+// expect self=null --> P1(self)
+/*
+// Sleek_Entail(2)
+P1(p) --> emp&
+p=null]
+*/
+
+Entail (3) : Valid. 
+
+
+
+//(3)
+infer [P1] 
+   self=null
+|- P1(self) & self=p.
+print residue.
+// expect self=null --> P1(self)
+
+/*
+ <1>emp&self=null & p=self&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(3)
+emp --> P1(p)]
+*/

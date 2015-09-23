@@ -1026,6 +1026,7 @@ non_empty_command:
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
+      | t=shapeReuse_cmd     -> ShapeReuse t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
@@ -2587,10 +2588,18 @@ shapesplit_base_cmd:
    ]];
 
 shapeElim_cmd:
-   [[ `SHAPE_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   [[ `PRED_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    (il1)
    ]];
+
+shapeReuse_cmd:
+   [[ `PRED_REUSE; `OSQUARE;il1=OPT id_list;`CSQUARE ; `OSQUARE;il2=OPT id_list;`CSQUARE->
+   let il1 = un_option il1 [] in
+   let il2 = un_option il2 [] in
+   (il1,il2)
+   ]];
+
 
 shapeExtract_cmd:
    [[ `SHAPE_EXTRACT; `OSQUARE;il1=OPT id_list;`CSQUARE ->

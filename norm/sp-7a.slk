@@ -1,0 +1,17 @@
+data node{
+	int val;
+	node next;
+}.
+
+//useless parameters
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+infer [] P1(x) & y=x |- P1(y).
+print residue.
+
+infer [P1] P1(x) & y=x |- P1(y).
+print residue.
+
+infer [P1] P1(x)  |- P1(y) & y=x.
+print residue.
