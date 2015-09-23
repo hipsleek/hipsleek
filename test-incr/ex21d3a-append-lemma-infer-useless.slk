@@ -21,6 +21,7 @@ pred U2<p> == self = p
 
 lemma_test self::lseg<p> <-> self::U2<p>.
 
+print sleek_cmd.
 
 /*
 # ex21d3a.slk 

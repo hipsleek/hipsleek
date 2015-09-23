@@ -611,6 +611,7 @@ let print_residue residue =
             else ls_ctx 
           in
           let () = if print then
+              (*print_endline (Cprinter.string_of_list_context ls_ctx)*)
               print_string_quiet ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
             else if dis_lerr_exc then
