@@ -2447,7 +2447,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         with Not_found ->
           List.exists ( fun (f,_) ->
               let dep_vns = CF.get_views f in
-              List.exists (fun vn -> string_compare vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
+              List.exists (fun vn -> string_eq vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
             ) n_un_str
       in
       let sf = find_pred_by_self vdef data_name in
@@ -2753,7 +2753,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               try
                 let body = CF.project_body_num vd.Cast.view_un_struc_formula fixc vd.Cast.view_vars in
                 (* let root = CP.mk_spec_var "self" in *)
-                let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
+                let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_eq id "idx") || (is_node_typ t)) vd.Cast.view_vars in
                 let body = CP.wrap_exists_svl body (* [root] *) ptrs_vars in
                 let () = x_tinfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
                 let () = x_tinfo_hp (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in

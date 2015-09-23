@@ -733,7 +733,7 @@ let process_list_lemma ldef_lst =
 let process_data_def ddef =
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
     (* let tmp = iprog.I.prog_data_decls in *)
-    let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_compare dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
+    let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_eq dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
     let _ = if (!Globals.perm = Globals.Dperm || !Globals.perm = Globals.Bperm) then () else
         let _ = Iast.build_exc_hierarchy true iprog in
         let _ = exlist # compute_hierarchy  in
@@ -2108,7 +2108,7 @@ let process_validate exp_res opt_fl ils_es=
                         Str.global_replace reg "" fl_w_sharp
                       ) fls in
                     let _ = Debug.ninfo_hprint (add_str "res_fl_ids" (pr_list pr_id)) res_fl_ids no_pos in
-                    if List.exists (fun id1 -> string_compare id1 id) res_fl_ids then
+                    if List.exists (fun id1 -> string_eq id1 id) res_fl_ids then
                       res_str := "OK"
                     else
                       let _ = unexpected_cmd # push (string_of_int nn) in

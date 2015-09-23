@@ -35,7 +35,7 @@ pred lseg3a<n,p> ==
 //pred_reuse [lseg2,lseg3,lseg4,lseg3a][lseg].
 // fail
 
-pred_reuse [lseg4,lseg3a][lseg,lseg3a].
+pred_reuse [lseg4,lseg3a][lseg,lseg3].
 
 /*
 # ex21r1.slk

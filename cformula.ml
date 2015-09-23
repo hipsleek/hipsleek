@@ -7076,7 +7076,7 @@ let rec struc_formula_trans_heap_node pre_quans formula_fct f=
   let process_post_disj f0=
     let cur_quans, f1_bare = split_quantifiers f0 in
     let quans0 = CP.diff_svl (cur_quans@ (snd (fresh_data_v false f0))) pre_quans in
-    let quans = List.filter (fun (CP.SpecVar (_,id,_)) -> not(string_compare id res_name)) quans0 in
+    let quans = List.filter (fun (CP.SpecVar (_,id,_)) -> not(string_eq id res_name)) quans0 in
     add_quantifiers quans f1_bare
   in
   match f with
@@ -10906,7 +10906,7 @@ and get_failure_branch bfl=
   let helper (pt, ft)=
     (* let spt = !print_path_trace pt in *)
     let et = match ft with
-      | Basic_Reason (fc,_,_) -> if string_compare fc.fc_message mem_leak then (Mem 1) else (Heap)
+      | Basic_Reason (fc,_,_) -> if string_eq fc.fc_message mem_leak then (Mem 1) else (Heap)
       | _ -> Heap
     in
     match  (get_failure_ft ft) with

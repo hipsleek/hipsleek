@@ -120,26 +120,29 @@ let norm_elim_useless vdefs sel_vns=
   Debug.no_2 "norm_elim_useless" pr2 pr1 pr2
     (fun _ _ -> norm_elim_useless_x vdefs sel_vns) vdefs sel_vns
 
-let norm_reuse_one_frm_view_x iprog prog ?(all=true)
-      cur_equivs frm_vdcl (to_vdcls: C.view_decl list)=
+let norm_reuse_one_frm_view iprog prog ?(all=true)
+    cur_equivs frm_vdcl (to_vdcls: C.view_decl list)=
   let check_equiv frm_vdcl to_vdcl =
     let () = y_tinfo_hp (add_str "frm_vdcl" pr_id) frm_vdcl.Cast.view_name in
     let () = y_tinfo_hp (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name in
-    if not (string_compare frm_vdcl.Cast.view_name to_vdcl.Cast.view_name) &&
-      string_compare frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name &&
-      not (List.exists (fun (vn1,vn2) ->
-          (string_compare frm_vdcl.Cast.view_name vn1 &&
-              string_compare to_vdcl.Cast.view_name vn2) || (string_compare frm_vdcl.Cast.view_name vn2 &&
-          string_compare to_vdcl.Cast.view_name vn1)
-      ) cur_equivs)
+    let frm_view_name =  frm_vdcl.Cast.view_name in
+    let to_view_name =  to_vdcl.Cast.view_name in
+    let () = y_tinfo_hp (add_str "frm_to_name" pr_id) (frm_view_name^to_view_name) in
+    if string_eq frm_view_name to_view_name then [to_view_name]
+    else if string_eq frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name &&
+            not (List.exists (fun (vn1,vn2) ->
+                (string_eq frm_vdcl.Cast.view_name vn1 &&
+                 string_eq to_vdcl.Cast.view_name vn2) || (string_eq frm_vdcl.Cast.view_name vn2 &&
+                                                           string_eq to_vdcl.Cast.view_name vn1)
+              ) cur_equivs)
     then
-      let () = DD.ninfo_hprint (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
+      let () = x_tinfo_hp (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
       let self_t = (Named frm_vdcl.Cast.view_data_name) in
       let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
       let sst = List.combine (frm_vdcl.Cast.view_vars) (to_vdcl.Cast.view_vars) in
       let () = DD.ninfo_hprint (add_str "sst" (pr_list (pr_pair
-          !CP.print_sv !CP.print_sv))) sst no_pos in
-      (*type comparitive*)
+                                                          !CP.print_sv !CP.print_sv))) sst no_pos in
+      (*type comparison*)
       if List.exists (fun (sv1, sv2) -> not (cmp_typ (CP.type_of_spec_var sv1) (CP.type_of_spec_var sv2))) sst then []
       else
         let frm_vnode = Cformula.mkViewNode (self_sv ) frm_vdcl.Cast.view_name
@@ -163,7 +166,7 @@ let norm_reuse_one_frm_view_x iprog prog ?(all=true)
         else []
     else []
   in
-  let rec to_vdcls_iter vdcls acc=
+  let rec to_vdcls_iter vdcls acc =
     match vdcls with
     | [] -> acc
     | v::rest -> 
@@ -182,22 +185,24 @@ let norm_reuse_one_frm_view iprog prog ?(all=true) cur_equivs frm_vdecl (to_vdec
   let pr2 = pr_list pr1 in
   let pr_out = pr_list (pr_pair pr_id pr_id) in
   Debug.no_2 "norm_reuse_one_frm_view" pr1 pr2 pr_out
-    (fun _ _-> norm_reuse_one_frm_view_x iprog prog ~all:all cur_equivs frm_vdecl to_vdecls)
+    (fun _ _-> norm_reuse_one_frm_view iprog prog ~all:all cur_equivs frm_vdecl to_vdecls)
     frm_vdecl to_vdecls
 
 (*
  assume frm_vns and to_vns are topo sorted
 *)
-let norm_reuse_x iprog cprog vdefs frm_vns to_vns=
+let norm_reuse iprog cprog vdefs frm_vns to_vns=
   (*filter vdefs to keep order*)
+  let () = y_binfo_hp (add_str "norm_reuse (from_vns)" (pr_list pr_id)) frm_vns in
+  let () = y_binfo_hp (add_str "norm_reuse (to_vns)" (pr_list pr_id)) to_vns in
   let frm_vdcls = List.filter (fun vdcl ->
-      List.exists (fun vn -> string_compare vn vdcl.C.view_name) frm_vns
+      List.exists (fun vn -> string_eq vn vdcl.C.view_name) frm_vns
   ) vdefs in
   let to_vdcls = List.filter (fun vdcl ->
-      List.exists (fun vn -> string_compare vn vdcl.C.view_name) to_vns
+      List.exists (fun vn -> string_eq vn vdcl.C.view_name) to_vns
   ) vdefs in
   List.fold_left (fun acc frm_vdcl ->
-      let new_eqs = norm_reuse_one_frm_view iprog cprog ~all:true acc
+      let new_eqs = norm_reuse_one_frm_view iprog cprog ~all:false acc
         frm_vdcl to_vdcls in
       acc@new_eqs
   ) [] frm_vdcls
@@ -207,7 +212,7 @@ let norm_reuse iprog cprog vdefs frm_vns to_vns=
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let pr3 = pr_list (pr_pair pr_id pr_id) in
   Debug.no_3 "norm_reuse" pr2 pr1 pr1 pr3
-    (fun _ _ _ -> norm_reuse_x iprog cprog vdefs frm_vns to_vns) vdefs frm_vns to_vns
+    (fun _ _ _ -> norm_reuse iprog cprog vdefs frm_vns to_vns) vdefs frm_vns to_vns
 
 (***********************************************)
 (********EXTRACT common pattern **********)

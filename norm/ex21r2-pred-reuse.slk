@@ -16,8 +16,8 @@ pred lseg2<n,p> ==
         or self = p & n=0
   inv true.
 
-pred lseg4<n,p:node> == 
-	self::node<_, q> * q::lseg4<n-1,p> 
+pred l4<n,p:node> == 
+	self::node<_, q> * q::lseg<n-1,p> 
         or self = null & n=0
   inv true.
 
@@ -45,12 +45,19 @@ pred_reuse [*][*].
 /*
 # ex21r2.slk
 
+[lseg,lseg3a,lseg2,lseg4,lseg3,lseg4a]
+[lseg,lseg3a,lseg2,lseg4,lseg3,lseg4a]
+
 pred_reuse [*][*].
 
-# should we use topological sorting?
+# should we use topological sorting? where shorter names 
+  come first too..
   and transitive closures to min equiv checking?
 
 ========================
+
+PRED REUSE FOUND:
+  [(lseg3a,lseg2),(lseg2,lseg4a),(lseg4a,lseg3a),(lseg,lseg3a)]
 
 pred_reuse [lseg4,lseg3a][lseg,lseg3a].
 

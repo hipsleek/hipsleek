@@ -2854,7 +2854,7 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
     (*   then *)
     (*     List.map (fun ((a,ls) as lbl,f) -> *)
     (*         let new_lbl = *)
-    (*           if string_compare a "" then *)
+    (*           if string_eq a "" then *)
     (*             match ls with *)
     (*             | [(x,ann)] -> if ann = Label_only.LA_Both then (x,[]) else lbl *)
     (*             | _ -> lbl *)
