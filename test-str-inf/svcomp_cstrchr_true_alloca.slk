@@ -1,0 +1,59 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred_prim Dangling<>.
+
+HeapPred P(char_star x).
+HeapPred HP_1618(int x, char_star@NI y).
+HeapPred HP_1619(char_star@NI x, char_star@NI y).
+
+/*-------------------------------while1-------------------------------*/
+relAssume
+P(s)&
+true --> s::char_star<v_1616,Anon_1617>@M * HP_1618(v_1616,s) * 
+         HP_1619(Anon_1617,s)&
+true.
+
+relAssume
+HP_1619(Anon_1617,s)&
+Anon_19=Anon_1617 & s'=s |#| s::char_star<v_1616,Anon_1617>@M&
+c'=c & v=c' & v!=0 & v=v_1616 --> emp&
+true.
+
+relAssume
+HP_1618(v_1616,s)&v=v_1616 & s'=s & v=c' & v!=0 & c'=c --> emp&
+true.
+
+relAssume
+HP_1619(Anon_1617,s)&
+Anon_19=Anon_1617 & s'=s |#| s::char_star<v_1616,Anon_1617>@M&
+c'=c & v!=c' & v=0 & v=v_1616 --> emp&
+true.
+
+relAssume
+HP_1618(v_1616,s)&v=v_1616 & s'=s & v=0 --> emp&
+true.
+
+relAssume
+HP_1619(Anon_1617,s)&
+Anon_19=Anon_1617 & s'=s |#| s::char_star<v_1616,Anon_1617>@M&
+c'=c & v=c' & v=0 & v=v_1616 --> emp&
+true.
+
+relAssume
+HP_1618(v_1616,s)&v=v_1616 & s'=s & v=c' & v=0 & c'=c --> emp&
+true.
+
+relAssume
+HP_1619(Anon_1617,s)&true |#| s::char_star<v_1616,Anon_1617>@M&
+v_1616!=c & v_1616!=0 --> P(Anon_1617)&
+true.
+
+relAssume
+HP_1618(v_1616,s)&
+Anon_18=v_1616 & s_1650=s & v=v_1616 & v!=0 --> emp&
+true.
+
+shape_derive_view [*].
