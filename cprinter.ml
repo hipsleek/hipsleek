@@ -4983,8 +4983,8 @@ let string_of_derived_program p =
   "\n     DERIVED PREDICATES " ^ 
   "\n*****************************\n" ^ 
   (* (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ *)
-  (string_of_view_decl_list (List.filter 
-                               (fun v -> v.Cast.view_kind==View_HREL) p.prog_view_decls)) ^ "\n\n" 
+  ((pr_list string_of_view_decl_short) (List.filter 
+                               (fun v -> true (* v.Cast.view_kind==View_HREL *)) p.prog_view_decls)) ^ "\n\n" 
   (* (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ *)
   (* (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^ *)
   (* (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^ *)

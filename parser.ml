@@ -2594,10 +2594,8 @@ shapeElim_cmd:
    ]];
 
 shapeReuse_cmd:
-   [[ `PRED_REUSE; `OSQUARE;il1=OPT id_list;`CSQUARE ; `OSQUARE;il2=OPT id_list;`CSQUARE->
-   let il1 = un_option il1 [] in
-   let il2 = un_option il2 [] in
-   (il1,il2)
+   [[ `PRED_REUSE; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ; `OSQUARE;il2=shape_selective_id_list;`CSQUARE->
+       (il1,il2)
    ]];
 
 
