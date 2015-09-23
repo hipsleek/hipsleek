@@ -279,7 +279,8 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
     let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in
     let rs, residue = x_add heap_entail_formula prog ctx guard_h_f in
     if rs then
-      let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in
+      (* let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in *)
+      let ctx_p, _, _ = CVU.xpure_sym prog ctx in
       if is_sat (MCP.merge_mems ctx_p guard_p true) then
         let comb_f = x_add combine_Star guard_f residue in
         Some (x_add combine_Star comb_f hrel_def.hprel_rhs)
