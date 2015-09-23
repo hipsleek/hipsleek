@@ -2483,9 +2483,9 @@ let process_shape_reuse reg_frm_vname reg_to_vname=
   let to_vnames = regex_search reg_to_vname ids in
   let () = x_tinfo_hp (add_str "frm vnamse"  (pr_list pr_id)) frm_vnames no_pos in
   let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
-  let eq_pairs = Norm.norm_reuse iprog !cprog !cprog.Cast.prog_view_decls frm_vnames to_vnames in
+  let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog !cprog.Cast.prog_view_decls frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in
-  let _ = x_binfo_zp  (lazy  ("\nVIEW EQUIV:" ^ (pr eq_pairs) ^ "\n" )) no_pos in
+  let _ = x_binfo_zp  (lazy  ("\nPRED REUSE FOUND:" ^ (pr eq_pairs) ^ "\n" )) no_pos in
   ()
 
 let process_shape_extract sel_vnames=

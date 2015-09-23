@@ -123,7 +123,8 @@ let norm_elim_useless vdefs sel_vns=
 let norm_reuse_one_frm_view_x iprog prog ?(all=true)
       cur_equivs frm_vdcl (to_vdcls: C.view_decl list)=
   let check_equiv frm_vdcl to_vdcl =
-    let () = DD.ninfo_hprint (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name no_pos in
+    let () = y_tinfo_hp (add_str "frm_vdcl" pr_id) frm_vdcl.Cast.view_name in
+    let () = y_tinfo_hp (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name in
     if not (string_compare frm_vdcl.Cast.view_name to_vdcl.Cast.view_name) &&
       string_compare frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name &&
       not (List.exists (fun (vn1,vn2) ->
@@ -148,8 +149,15 @@ let norm_reuse_one_frm_view_x iprog prog ?(all=true)
         let f1_0 = Cformula.formula_of_heap frm_vnode no_pos in
         let f1 = x_add Cformula.subst sst f1_0 in
         let f2 = Cformula.formula_of_heap to_vnode no_pos in
-        let () = print_endline ("\n\nCheck Pred Reuse :" ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
-        if !check_lemeq_sem iprog prog f1 f2 [] [] [] then
+        let flag = try
+            !check_lemeq_sem iprog prog f1 f2 [] [] [] 
+          with _ -> 
+            y_binfo_pp "Exception with check_lemeq_sem";
+            false
+        in
+        let msg = if flag then "\n Proven :" else "\n Failed :" in
+        let () = y_binfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
+        if flag (* !check_lemeq_sem iprog prog f1 f2 [] [] [] *) then
           (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
           [to_vdcl.Cast.view_name]
         else []
@@ -165,7 +173,7 @@ let norm_reuse_one_frm_view_x iprog prog ?(all=true)
       else
         eq_views
   in
-  let () = x_binfo_hp (add_str "frm vdecl" pr_id) frm_vdcl.Cast.view_name no_pos in
+  let () = x_tinfo_hp (add_str "frm vdecl" pr_id) frm_vdcl.Cast.view_name no_pos in
   let eq_views = to_vdcls_iter to_vdcls [] in
   List.map (fun vn -> (frm_vdcl.Cast.view_name, vn)) eq_views
 

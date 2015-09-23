@@ -288,7 +288,7 @@ let update_store_with_repo repo iprog cprog =
 (* pop only if repo is invalid *)
 (* return None if all succeed, and result of first failure otherwise *)
 let manage_safe_lemmas ?(force_pr=false) repo iprog cprog = 
-  let force_pr = !Globals.lemma_ep && force_pr in
+  let force_pr = !Globals.lemma_ep && !Globals.lemma_ep_verbose && force_pr in
   let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
   match invalid_lem with
   | Some name -> 
@@ -355,6 +355,7 @@ let manage_lemmas ?(force_pr=false) repo iprog cprog =
 (* return None if all succeed, return first failed ctx otherwise *)
 let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog = 
   let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
+  let res_print = !Globals.lemma_ep_verbose && res_print in
   let () = if pop_all then
     Lem_store.all_lemma # pop_coercion
   else ()

@@ -332,6 +332,9 @@ let print_header s =
   print_endline_quiet ("   "^s);
   print_endline_quiet "====================================="
 
+let wrap_lemma_quiet f a =
+  wrap_one_bool Globals.lemma_ep_verbose false f a
+
 let wrap_dd s f a =
   let s1 = "START -dd "^s in
   let s2 = "END   -dd "^s in
