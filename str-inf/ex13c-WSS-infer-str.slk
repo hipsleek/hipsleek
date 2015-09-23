@@ -3,6 +3,8 @@ data char_star {
   char_star next;
 }.
 
+pred_prim Dangling<>.
+
 HeapPred P(char_star x).
 HeapPred HP_1622(int x, char_star@NI y).
 HeapPred HP_1623(char_star@NI x, char_star@NI y).

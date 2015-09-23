@@ -72,8 +72,15 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
   Debug.no_1 "Syn:add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
 
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
-  fst (List.split (List.map (x_add add_dangling_hprel prog) hpr_list))
-
+  let n_hpr_list, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) hpr_list) in
+  let has_dangling_vars = or_list has_dangling_vars in
+  let prog =
+    if has_dangling_vars then
+      { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }
+    else prog
+  in
+  n_hpr_list
+  
 (*******************)
 (***** MERGING *****)
 (*******************)
@@ -248,9 +255,9 @@ let mk_hprel_id hpr =
 let partition_hprel_id_list hprel_ids = 
   partition_by_key (fun hpri -> name_of_hprel hpri.hprel_constr) CP.eq_spec_var hprel_ids
 
-let add_back_hrel ctx hrel = 
+let add_back_hrel prog ctx hrel = 
   let hrel_f = CF.mkBase_simp hrel (MCP.mkMTrue no_pos) in
-  combine_Star ctx hrel_f
+  combine_Star prog ctx hrel_f
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
@@ -282,8 +289,8 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
       (* let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in *)
       let ctx_p, _, _ = CVU.xpure_sym prog ctx in
       if is_sat (MCP.merge_mems ctx_p guard_p true) then
-        let comb_f = x_add combine_Star guard_f residue in
-        Some (x_add combine_Star comb_f hrel_def.hprel_rhs)
+        let comb_f = x_add combine_Star prog guard_f residue in
+        Some (x_add combine_Star prog comb_f hrel_def.hprel_rhs)
       else None
     else None
 
@@ -317,10 +324,10 @@ let unfolding_one_hrel prog ctx hrel hrel_defs =
   let unfolding_ctx_list = 
     if is_empty unguarded_hrel_defs 
     then unfolding_ctx_list
-    else unfolding_ctx_list @ [add_back_hrel ctx hrel]
+    else unfolding_ctx_list @ [add_back_hrel prog ctx hrel]
   in
   if is_empty unfolding_ctx_list then
-    [add_back_hrel ctx hrel]
+    [add_back_hrel prog ctx hrel]
   else unfolding_ctx_list
 
 let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
@@ -349,8 +356,8 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
     let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
     let rs, residue = x_add heap_entail_formula prog ctx guard_f in
     if rs then
-        let comb_f = x_add combine_Star guard_f residue in
-        Some (x_add combine_Star comb_f hrel_def.hprel_lhs)
+        let comb_f = x_add combine_Star prog guard_f residue in
+        Some (x_add combine_Star prog comb_f hrel_def.hprel_lhs)
     else None
 
 let folding_one_hrel prog ctx hrel hrel_defs = 
@@ -370,19 +377,19 @@ let folding_one_hrel prog ctx hrel hrel_defs =
       | Some ctx -> acc @ [ctx]) [] subst_hrel_defs
   in
   if is_empty folding_ctx_list then
-    [add_back_hrel ctx hrel]
+    [add_back_hrel prog ctx hrel]
   else folding_ctx_list
 
 let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =
   let pos = no_pos in
   let hrel_name, hrel_args = sig_of_hrel hrel in
   if CP.eq_spec_var hprel_name hrel_name then
-    [add_back_hrel ctx hrel]
+    [add_back_hrel prog ctx hrel]
   else
     let hrel_defs = List.filter (fun (hpr_sv, _) -> 
         CP.eq_spec_var hpr_sv hrel_name) hprel_groups in
     let hrel_defs = List.concat (List.map snd hrel_defs) in
-    if is_empty hrel_defs then [add_back_hrel ctx hrel]
+    if is_empty hrel_defs then [add_back_hrel prog ctx hrel]
     else if is_unfolding then (* UNFOLDING FOR PRE-HPREL *)
       unfolding_one_hrel prog ctx hrel hrel_defs
     else (* FOLDING FOR POST-HPREL *)
@@ -743,19 +750,20 @@ let syn_pre_preds prog (is: CF.infer_state) =
     in
   
     let () = x_binfo_pp ">>>>> Step 1: Adding dangling references <<<<<" no_pos in
-    let is_all_constrs, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) is_all_constrs) in
-    let has_dangling_vars = or_list has_dangling_vars in
-    let prog =
-      if has_dangling_vars then
-        { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }
-      else prog
-    in
-    let () =
-      if has_dangling_vars then
-        x_tinfo_hp (add_str "Detected dangling vars" 
-            pr_hprel_list) is_all_constrs no_pos
-      else x_tinfo_pp "No dangling var is detected" no_pos
-    in
+    let is_all_constrs = x_add add_dangling_hprel_list prog is_all_constrs in
+    (* let is_all_constrs, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) is_all_constrs) in *)
+    (* let has_dangling_vars = or_list has_dangling_vars in                                                            *)
+    (* let prog =                                                                                                      *)
+    (*   if has_dangling_vars then                                                                                     *)
+    (*     { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }                   *)
+    (*   else prog                                                                                                     *)
+    (* in                                                                                                              *)
+    (* let () =                                                                                                        *)
+    (*   if has_dangling_vars then                                                                                     *)
+    (*     x_tinfo_hp (add_str "Detected dangling vars"                                                                *)
+    (*         pr_hprel_list) is_all_constrs no_pos                                                                    *)
+    (*   else x_tinfo_pp "No dangling var is detected" no_pos                                                          *)
+    (* in                                                                                                              *)
 
     (* let () = x_binfo_pp ">>>>> Step 2A: Merging <<<<<" no_pos in   *)
     (* let is_all_constrs = x_add merging prog is_all_constrs in      *)

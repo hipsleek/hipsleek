@@ -1721,7 +1721,6 @@ let process_shape_derive_view (ids: regex_id_list) =
   in
   process_sleek_hprel_assumes_others "Deriving Views" ids f
 
-
 let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
     let new_hprels = Syn.derive_view_norm !cprog others hps in

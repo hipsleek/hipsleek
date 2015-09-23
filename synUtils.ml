@@ -98,8 +98,10 @@ let args_of_hprel (hpr: CF.hprel) =
 (**********************)
 (* UTILS OVER FORMULA *)
 (**********************)
-let combine_Star f1 f2 = 
-  let comb_base f1 f2 = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+let combine_Star prog f1 f2 = 
+  let comb_base f1 f2 =
+    let comb_f = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+    Solver.elim_unsat_all prog comb_f in
   let rec comb_base_f1 f1 f2 =
     match f2 with
     | CF.Base _
@@ -126,9 +128,9 @@ let combine_Star f1 f2 =
   in
   comb_formula f1 f2
 
-let combine_Star f1 f2 = 
+let combine_Star prog f1 f2 = 
   let pr = !CF.print_formula in
-  Debug.no_2 "combine_Star" pr pr pr combine_Star f1 f2
+  Debug.no_2 "combine_Star" pr pr pr (combine_Star prog) f1 f2
 
 let trans_heap_formula f_h_f (f: CF.formula) = 
   let somef2 _ f = Some (f, []) in
@@ -160,6 +162,9 @@ let simplify_hprel (hprel: CF.hprel) =
   in
   let h_fv_lhs = remove_dups h_fv_lhs in
   let h_fv_guard = match hprel.hprel_guard with None -> [] | Some g -> CF.fv_heap_of g in
+  let h_fv_guard = remove_dups h_fv_guard in
+  let h_fv_rhs = (CF.fv_heap_of hprel.hprel_rhs) @ (CF.fv hprel.hprel_lhs) in
+  let h_fv_rhs = remove_dups h_fv_rhs in
   let f_m_f args m_f =
     let p_f = MCP.pure_of_mix m_f in
     let simpl_p_f = simplify p_f args in
@@ -167,7 +172,8 @@ let simplify_hprel (hprel: CF.hprel) =
   in
   { hprel with
     hprel_lhs = trans_pure_formula (f_m_f h_fv_lhs) hprel.hprel_lhs;
-    hprel_guard = map_opt (trans_pure_formula (f_m_f h_fv_guard)) hprel.hprel_guard; }
+    hprel_guard = map_opt (trans_pure_formula (f_m_f h_fv_guard)) hprel.hprel_guard; 
+    hprel_rhs = trans_pure_formula (f_m_f h_fv_rhs) hprel.hprel_rhs; }
 
 let simplify_hprel (hprel: CF.hprel) =
   let pr = Cprinter.string_of_hprel_short in
