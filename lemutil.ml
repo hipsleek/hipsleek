@@ -145,3 +145,4 @@ let norm_checkeq_views iprog cprog cviews=
   Debug.no_2 "norm_checkeq_views" pr2 pr1 pr2
     (fun _ _ -> norm_checkeq_views_x iprog cprog cviews) cprog cviews
 
+let () = Norm.check_lemeq_sem := checkeq_sem

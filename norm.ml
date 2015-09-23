@@ -12,6 +12,10 @@ module C = Cast
 module TP = Tpdispatcher
 (* module SAU = Sautility *)
 
+let check_lemeq_sem = ref (fun (iprog:Iast.prog_decl)
+  (prog:C.prog_decl) (f1:CF.formula) (f2:CF.formula)
+  (hpdefs:CF.hp_rel_def list) (ls1:ident list) (ls2:ident list) -> false)
+
 
 (***********************************************)
 (*****ELIM unused parameters of view **********)
@@ -115,6 +119,79 @@ let norm_elim_useless vdefs sel_vns=
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   Debug.no_2 "norm_elim_useless" pr2 pr1 pr2
     (fun _ _ -> norm_elim_useless_x vdefs sel_vns) vdefs sel_vns
+
+let norm_reuse_one_frm_view_x iprog prog ?(all=true) frm_vdcl (to_vdcls: C.view_decl list)=
+  let check_equiv frm_vdcl to_vdcl=
+    let () = DD.ninfo_hprint (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name no_pos in
+    let self_t = (Named frm_vdcl.Cast.view_data_name) in
+    if string_compare frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name
+    then
+      let () = DD.ninfo_hprint (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
+      let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
+      let sst = List.combine (frm_vdcl.Cast.view_vars) (to_vdcl.Cast.view_vars) in
+      let () = DD.ninfo_hprint (add_str "sst" (pr_list (pr_pair
+          !CP.print_sv !CP.print_sv))) sst no_pos in
+      (*type comparitive*)
+      if List.exists (fun (sv1, sv2) -> not (cmp_typ (CP.type_of_spec_var sv1) (CP.type_of_spec_var sv2))) sst then []
+      else
+        let frm_vnode = Cformula.mkViewNode (self_sv ) frm_vdcl.Cast.view_name
+            (frm_vdcl.Cast.view_vars) no_pos in
+        let to_vnode = Cformula.mkViewNode (self_sv ) to_vdcl.Cast.view_name
+            (to_vdcl.Cast.view_vars) no_pos in
+        let f1_0 = Cformula.formula_of_heap frm_vnode no_pos in
+        let f1 = x_add Cformula.subst sst f1_0 in
+        let f2 = Cformula.formula_of_heap to_vnode no_pos in
+        if !check_lemeq_sem iprog prog f1 f2 [] [] [] then
+          (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
+          [to_vdcl.Cast.view_name]
+        else []
+    else []
+  in
+  let rec to_vdcls_iter vdcls acc=
+    match vdcls with
+    | [] -> acc
+    | v::rest -> let eq_views = check_equiv frm_vdcl v in
+      if eq_views = [] || all then
+        to_vdcls_iter rest (acc@eq_views)
+      else
+        eq_views
+  in
+  let () = DD.ninfo_hprint (add_str "frm vdecl" pr_id) frm_vdcl.Cast.view_name no_pos in
+  let eq_views = to_vdcls_iter to_vdcls [] in
+  List.map (fun vn -> (frm_vdcl.Cast.view_name, vn)) eq_views
+
+let norm_reuse_one_frm_view iprog prog ?(all=true) frm_vdecl (to_vdecls: C.view_decl list)=
+  let pr1 = Cprinter.string_of_view_decl_short in
+  let pr2 = pr_list pr1 in
+  let pr_out = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_2 "norm_reuse_one_frm_view" pr1 pr2 pr_out
+    (fun _ _-> norm_reuse_one_frm_view_x iprog prog ~all:all frm_vdecl to_vdecls)
+    frm_vdecl to_vdecls
+
+(*
+ assume frm_vns and to_vns are topo sorted
+*)
+let norm_reuse_x iprog cprog vdefs frm_vns to_vns=
+  (*filter vdefs to keep order*)
+  let frm_vdcls = List.filter (fun vdcl ->
+      List.exists (fun vn -> string_compare vn vdcl.C.view_name) frm_vns
+  ) vdefs in
+  let to_vdcls = List.filter (fun vdcl ->
+      List.exists (fun vn -> string_compare vn vdcl.C.view_name) to_vns
+  ) vdefs in
+  List.fold_left (fun acc frm_vdcl ->
+      let new_eqs = norm_reuse_one_frm_view iprog cprog ~all:true
+        frm_vdcl to_vdcls in
+      acc@new_eqs
+  ) [] frm_vdcls
+
+let norm_reuse iprog cprog vdefs frm_vns to_vns=
+  let pr1 = pr_list pr_id in
+  let pr2 = pr_list_ln Cprinter.string_of_view_decl in
+  let pr3 = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_3 "norm_reuse" pr2 pr1 pr1 pr3
+    (fun _ _ _ -> norm_reuse_x iprog cprog vdefs frm_vns to_vns) vdefs frm_vns to_vns
+
 (***********************************************)
 (********EXTRACT common pattern **********)
 (***********************************************)
