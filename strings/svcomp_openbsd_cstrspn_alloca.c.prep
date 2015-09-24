@@ -1,0 +1,142 @@
+# 1 "svcomp_openbsd_cstrspn_alloca.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3 4
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+
+
+
+/* This header is separate from features.h so that the compiler can
+   include it implicitly at the start of every compilation.  It must
+   not itself include <features.h> or any other header that includes
+   <features.h> because the implicit include comes before any feature
+   test macros that may be defined in a source file before it first
+   explicitly includes a system header.  GCC knows the name of this
+   header in order to preinclude it.  */
+
+/* glibc's intent is to support the IEC 559 math functionality, real
+   and complex.  If the GCC (4.9 and later) predefined macros
+   specifying compiler intent are available, use them to determine
+   whether the overall intent is to support these features; otherwise,
+   presume an older compiler has intent to support these features and
+   define these macros by default.  */
+# 52 "/usr/include/stdc-predef.h" 3 4
+/* wchar_t uses ISO/IEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.  */
+
+
+/* We do not support C11 <threads.h>.  */
+# 1 "<command-line>" 2
+# 1 "svcomp_openbsd_cstrspn_alloca.c"
+/*
+
+ * Date: 17.12.2013
+
+ * Author: Thomas Ströder
+
+ */
+# 5 "svcomp_openbsd_cstrspn_alloca.c"
+# 1 "../stdlib.h" 1
+/*
+ * HIP/SLEEK standard library for C program
+ * 
+ * Created: Oct. 31, 2013.
+ */
+
+typedef unsigned int size_t;
+
+void* malloc(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
+  }
+*/;
+
+void* alloca(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
+  }
+*/;
+
+/**************************/
+/*** Pointer Arithmetic ***/
+/**************************/
+int lt___(int* p, int* q)
+/*
+  requires p::int*<vp, op> * q::int*<vq, oq>
+  case {
+    op <  oq -> ensures p::int*<vp, op> * q::int*<vq, oq> & res > 0;
+    op >= oq -> ensures p::int*<vp, op> * q::int*<vq, oq> & res <= 0; }
+*/;
+# 6 "svcomp_openbsd_cstrspn_alloca.c" 2
+
+extern int __VERIFIER_nondet_int(void);
+
+/*
+
+ * Span the string s2 (skip characters that are in s2).
+
+ */
+# 12 "svcomp_openbsd_cstrspn_alloca.c"
+size_t
+cstrspn(const char *s1, const char *s2)
+{
+ const char *p = s1, *spanp;
+ char c, sc;
+
+ /*
+
+	 * Skip any characters in s2, excluding the terminating \0.
+
+	 */
+# 21 "svcomp_openbsd_cstrspn_alloca.c"
+cont:
+ c = *p++;
+ for (spanp = s2; (sc = *spanp++) != 0;)
+  if (sc == c)
+   goto cont;
+ return (p - 1 - s1);
+}
+
+int main() {
+    int length1 = __VERIFIER_nondet_int();
+    int length2 = __VERIFIER_nondet_int();
+    if (length1 < 1) {
+        length1 = 1;
+    }
+    if (length2 < 1) {
+        length2 = 1;
+    }
+    char* nondetString1 = (char*) alloca(length1 * sizeof(char));
+    char* nondetString2 = (char*) alloca(length2 * sizeof(char));
+    nondetString1[length1-1] = '\0';
+    nondetString2[length2-1] = '\0';
+    return cstrspn(nondetString1,nondetString2);
+}
+
+/*===============================
+
+#svcomp_openbsd_cstrlen.c
+
+Can't handle return (p - 1 - s1);
+
+=================================*/
