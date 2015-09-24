@@ -1,4 +1,4 @@
-# norm/ex21u2.slk
+# norm/ex21u2.slk (OK)
 
 pred_elim_useless [ll].
 //no change
@@ -22,7 +22,7 @@ The command should be idempotent in that the
 
 # was lemma proving invoked?
   It seems that lemmas were generated
-  but never proven?
+  but never proven? compare with ex21r4.slk
 
 (==lemma.ml#1863==)
 generate_view_rev_rec_lemmas@3
@@ -51,9 +51,81 @@ generate_view_rev_rec_lemmas inp1 : view G1<y:node>=
 generate_view_rev_rec_lemmas@4 EXIT:[]
 
 ===================================================================
+# ex21r3.slk
+
+pred lseg2a<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg3<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred_reuse [*][*].
+
+!!! **norm.ml#193:norm_reuse (from_vns):[lseg111,lseg2a,lseg3]
+!!! **norm.ml#194:norm_reuse (to_vns):[lseg111,lseg2a,lseg3]
+
+# should we use topological sorting? where shorter names 
+  come first..
+
+Since lseg3 is shorter than lseg2a, we would expect
+it to come first.
 ===================================================================
+# ex21r3c.slk
+
+ pred lseg<n,p> == self::lseg111<n,p>.
+
+# raw base case need to include non-heap and non-recursive item
+ raw_base_case : self::lseg111<n,p>
+
+  not sure if guarded base-case is useful?
+
+-----
+
+lseg111<..>
+  materialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){1}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}
+  []base case: n=0->self=p & 
+                                                                    n=0
+lseg111<..>
+  materialized vars: [(self,full,[lseg111])]
 ===================================================================
+# ex21s1.slk (test file in ex21s1b.slk)
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+../
+pred_split [zip].
+
+# Instead of relDefn, can we use pred:
+  What is @RO? root?
+
+pred zip<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+
+# After that, call lemma_infer, followed by shape_derive_view[P1,P2,p3];
+  as shown in ex21s1a.slk
+
 ===================================================================
+# ex21r4c.slk
+
+pred lseg<n,p> == self::lseg111<n,p>.
+
+# can we handle explicit pred equivalence by
+  adding to view_equiv_set.
+
+!!! **astsimp.ml#2455:view_pt_by_self:[lseg111]
 ===================================================================
 ===================================================================
 ===================================================================

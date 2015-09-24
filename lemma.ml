@@ -288,7 +288,7 @@ let update_store_with_repo repo iprog cprog =
 (* pop only if repo is invalid *)
 (* return None if all succeed, and result of first failure otherwise *)
 let manage_safe_lemmas ?(force_pr=false) repo iprog cprog = 
-  let force_pr = !Globals.lemma_ep && force_pr in
+  let force_pr = !Globals.lemma_ep && !Globals.lemma_ep_verbose && force_pr in
   let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
   match invalid_lem with
   | Some name -> 
@@ -353,8 +353,9 @@ let manage_lemmas ?(force_pr=false) repo iprog cprog =
 
 (* update store with given repo, but pop it out in the end regardless of the result of lemma verification *)
 (* return None if all succeed, return first failed ctx otherwise *)
-let manage_infer_lemmas_x ?(pop_all=true) str repo iprog cprog = 
+let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog = 
   let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
+  let res_print = !Globals.lemma_ep_verbose && res_print in
   let () = if pop_all then
     Lem_store.all_lemma # pop_coercion
   else ()
@@ -363,19 +364,19 @@ let manage_infer_lemmas_x ?(pop_all=true) str repo iprog cprog =
   | Some name -> 
     let () = Log.last_cmd # dumping (name) in
     let () = 
-      if true (* !Globals.lemma_ep *) then
+      if res_print (* !Globals.lemma_ep *) then
         print_endline_quiet ("\nFailed to infer "^str^" for "^ (name) ^ " (invalid lemma encountered).")
       else ()
     in
     false,Some([List.hd(nctx)])
   | None ->
     let () = 
-      if true (* !Globals.lemma_ep *) then
+      if res_print (* !Globals.lemma_ep *) then
         print_endline_quiet ("\n Lemma infer "^str^" succeeded in current context.")
       else ()
     in
     let hprels = List.map (fun x -> List.concat (CF.collect_hp_rel_all x)) nctx in
-    let () = y_binfo_hp (add_str "hprels" (pr_list (pr_list pr_none))) hprels in
+    let () = y_tinfo_hp (add_str "hprels" (pr_list (pr_list pr_none))) hprels in
     let () = match hprels with
       | lst::_ -> CF.sleek_hprel_assumes # set lst 
       | _ -> () in
@@ -385,8 +386,8 @@ let manage_infer_lemmas_x ?(pop_all=true) str repo iprog cprog =
 let manage_test_lemmas repo iprog cprog = 
   manage_infer_lemmas_x "proved" repo iprog cprog; None (*Loc: while return None? instead full result*)
 
-let manage_test_lemmas1 repo iprog cprog = 
-  manage_infer_lemmas_x "proved" repo iprog cprog
+let manage_test_lemmas1 ?(res_print=true) repo iprog cprog = 
+  manage_infer_lemmas_x ~res_print:res_print "proved" repo iprog cprog
 
 let manage_infer_lemmas ?(pop_all=true) repo iprog cprog = 
   (manage_infer_lemmas_x ~pop_all:pop_all "inferred" repo iprog cprog)

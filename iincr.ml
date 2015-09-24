@@ -395,7 +395,7 @@ let proc_extract_inf_props prog proc_name=
 *)
 let extend_views iprog prog rev_formula_fnc trans_view_fnc ext_pred_names proc=
   let vns = get_views_struc proc.Cast.proc_stk_of_static_specs # top in
-  let vns1 = Gen.BList.remove_dups_eq string_compare (List.map (fun vn -> vn.h_formula_view_name) vns) in
+  let vns1 = Gen.BList.remove_dups_eq string_eq (List.map (fun vn -> vn.h_formula_view_name) vns) in
   let () =  Debug.ninfo_hprint (add_str "vns1" (pr_list pr_id)) vns1 no_pos in
   let cl_vns1 = Cfutil.get_closed_view prog vns1 in
   let rev_cl_vns1 = List.rev cl_vns1 in

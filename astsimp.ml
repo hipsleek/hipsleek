@@ -2441,16 +2441,18 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               | Some f1  -> Some (CF.mkOr f1 fc no_pos)
               | None -> Some fc) None n_un_str 
       in
+      let () = y_binfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = try
           not(is_prim_v) && is_view_recursive vdef.I.view_name
         with Not_found ->
           List.exists ( fun (f,_) ->
               let dep_vns = CF.get_views f in
-              List.exists (fun vn -> string_compare vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
+              List.exists (fun vn -> string_eq vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
             ) n_un_str
       in
       let sf = find_pred_by_self vdef data_name in
+      let () = if sf!=[] then y_binfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf in
       let () = Debug.ninfo_hprint (add_str "cf 1" Cprinter.string_of_struc_formula) cf no_pos in
       let cf = CF.struc_formula_set_lhs_case false cf in
       let () = Debug.ninfo_hprint (add_str "cf 2" Cprinter.string_of_struc_formula) cf no_pos in
@@ -2529,6 +2531,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_pos = vdef.I.view_pos;
         C.view_is_prim = is_prim_v;
         C.view_is_hrel = is_hrel_v;
+        C.view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id);
         C.view_is_touching = false;           (* temporarily assigned *)
         C.view_is_segmented = false;          (* temporarily assigned *)
         C.view_is_tail_recursive = false;     (* temporarily assigned *)
@@ -2753,7 +2756,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               try
                 let body = CF.project_body_num vd.Cast.view_un_struc_formula fixc vd.Cast.view_vars in
                 (* let root = CP.mk_spec_var "self" in *)
-                let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_compare id "idx") || (is_node_typ t)) vd.Cast.view_vars in
+                let ptrs_vars = List.filter (fun (CP.SpecVar(t,id,_)) -> (string_eq id "idx") || (is_node_typ t)) vd.Cast.view_vars in
                 let body = CP.wrap_exists_svl body (* [root] *) ptrs_vars in
                 let () = x_tinfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
                 let () = x_tinfo_hp (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in

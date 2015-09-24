@@ -568,11 +568,11 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
     let d_dclr = Iast.look_up_data_def 67 no_pos iprog.Iast.prog_data_decls d_name in
     let extn_fields = List.fold_left (fun acc ((t,_),_,_,props) -> begin
         match t with
-          | Named id -> if string_compare id d_name then acc@props else acc
+          | Named id -> if string_eq id d_name then acc@props else acc
           | _ -> acc
         end
     ) [] d_dclr.Iast.data_fields in
-    Gen.BList.remove_dups_eq string_compare extn_fields
+    Gen.BList.remove_dups_eq string_eq extn_fields
   in
   let iview_dclr = Iast.look_up_view_def_raw 66 iprog.Iast.prog_view_decls view.Cast.view_name in
   let orig_view_name = view.Cast.view_name in

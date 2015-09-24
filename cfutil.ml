@@ -2439,7 +2439,7 @@ let look_up_first_field prog lsctx0 dname=
   let rec look_up_ctx ctx=
     match ctx with
     | Ctx es ->
-      List.find (fun dn -> string_compare dname dn.h_formula_data_name)
+      List.find (fun dn -> string_eq dname dn.h_formula_data_name)
         (get_datas es.es_formula)
     | OCtx (c1,c2) -> begin
         try
@@ -2495,7 +2495,7 @@ let subst_views_form_x map_views is_pre f=
     match map with
       | [] -> raise Not_found
       | ((orig_vn,orig_v_args),(der_vn,der_v_args))::rest ->
-            if string_compare vn orig_vn then
+            if string_eq vn orig_vn then
               let sst = List.combine orig_v_args v_args in
               let pure_svl, svl = (refresh_der_args der_v_args orig_v_args ([],[])) in
               (der_vn, pure_svl, CP.subst_var_list sst svl)
@@ -2591,13 +2591,13 @@ let get_closed_view prog (init_vns: string list)=
   let rec dfs_find_closure working_vns done_vns=
     match working_vns with
       | [] -> done_vns
-      | vn::rest -> if List.exists (fun vn1 -> string_compare vn vn1) done_vns then
+      | vn::rest -> if List.exists (fun vn1 -> string_eq vn vn1) done_vns then
           dfs_find_closure rest done_vns
         else
           let vdclr = Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls vn in
           let dep_hviews = get_views_struc vdclr.Cast.view_formula in
-          let vns1 = Gen.BList.remove_dups_eq string_compare (List.map (fun vn -> vn.h_formula_view_name) dep_hviews) in
-          dfs_find_closure (Gen.BList.remove_dups_eq string_compare (rest@vns1)) (done_vns@[vn])
+          let vns1 = Gen.BList.remove_dups_eq string_eq (List.map (fun vn -> vn.h_formula_view_name) dep_hviews) in
+          dfs_find_closure (Gen.BList.remove_dups_eq string_eq (rest@vns1)) (done_vns@[vn])
   in
   dfs_find_closure init_vns []
 

@@ -434,8 +434,9 @@ let check_right_coercion coer (cprog: C.prog_decl) =
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) =
+  let force_print = !Globals.lemma_ep && !Globals.lemma_ep_verbose in
   match valid with
-  | true -> if !Globals.lemma_ep then print_string_quiet (num_id ^ ": Valid.\n") else ()
+  | true -> if force_print then print_string_quiet (num_id ^ ": Valid.\n") else ()
   | false ->
     let s = 
       if !Globals.disable_failure_explaining then ""
@@ -456,7 +457,7 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
             | Some (s,cex) -> let _, ns =  Cformula.cmb_fail_msg ("(may) cause: " ^ s) cex in ns
             | None -> "INCONSISTENCY : expected failure but success instead"
           )
-    in if !Globals.lemma_ep then print_string_quiet (num_id ^ ": Fail. " ^ s ^ "\n")
+    in if force_print then print_string_quiet (num_id ^ ": Fail. " ^ s ^ "\n")
     else ()
 
 (* check the validity of the lemma where:

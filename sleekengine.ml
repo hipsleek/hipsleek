@@ -733,7 +733,7 @@ let process_list_lemma ldef_lst =
 let process_data_def ddef =
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
     (* let tmp = iprog.I.prog_data_decls in *)
-    let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_compare dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
+    let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_eq dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
     let _ = if (!Globals.perm = Globals.Dperm || !Globals.perm = Globals.Bperm) then () else
         let _ = Iast.build_exc_hierarchy true iprog in
         let _ = exlist # compute_hierarchy  in
@@ -2122,7 +2122,7 @@ let process_validate exp_res opt_fl ils_es=
                         Str.global_replace reg "" fl_w_sharp
                       ) fls in
                     let _ = Debug.ninfo_hprint (add_str "res_fl_ids" (pr_list pr_id)) res_fl_ids no_pos in
-                    if List.exists (fun id1 -> string_compare id1 id) res_fl_ids then
+                    if List.exists (fun id1 -> string_eq id1 id) res_fl_ids then
                       res_str := "OK"
                     else
                       let _ = unexpected_cmd # push (string_of_int nn) in
@@ -2485,13 +2485,21 @@ let process_shape_elim_useless sel_vnames=
   let _ = x_binfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
-let process_shape_reuse frm_vnames to_vnames=
-  let _ = x_binfo_zp  (lazy  ("shape reuse  \n")) no_pos in
+let regex_search reg_id all_ids=
+  match reg_id with
+    | REGEX_LIST ids -> ids
+    | REGEX_STAR -> all_ids
+
+let process_shape_reuse reg_frm_vname reg_to_vname=
+  let _ = x_tinfo_zp  (lazy  ("shape reuse  \n")) no_pos in
+  let ids = List.map (fun vdcl -> vdcl.Cast.view_name) !cprog.Cast.prog_view_decls in
+  let frm_vnames = regex_search reg_frm_vname ids in
+  let to_vnames = regex_search reg_to_vname ids in
   let () = x_tinfo_hp (add_str "frm vnamse"  (pr_list pr_id)) frm_vnames no_pos in
   let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
-  let eq_pairs = Norm.norm_reuse iprog !cprog !cprog.Cast.prog_view_decls frm_vnames to_vnames in
+  let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog !cprog.Cast.prog_view_decls frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in
-  let _ = x_binfo_zp  (lazy  ("views equiv: \n" ^ (pr eq_pairs))) no_pos in
+  let _ = x_binfo_zp  (lazy  ("\nPRED REUSE FOUND:" ^ (pr eq_pairs) ^ "\n" )) no_pos in
   ()
 
 let process_shape_extract sel_vnames=

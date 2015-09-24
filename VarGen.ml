@@ -107,6 +107,7 @@ class ['a] store (x_init:'a) (epr:'a->string) =
     method is_avail : bool = match lc with
       | None -> false
       | Some _ -> true
+    method is_empty : bool = lc ==None
     method set (nl:'a) = lc <- Some nl
     method get :'a = match lc with
       | None -> emp_val

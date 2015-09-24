@@ -1082,6 +1082,7 @@ let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)
 
 let lemma_ep = ref true
+let lemma_ep_verbose = ref true
 
 let dis_sem = ref false
 
@@ -1286,6 +1287,7 @@ let infer_back_ptr = ref true
 let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
+let old_view_equiv = ref false (* false *)
 let cond_action_always = ref false
 let rev_priority = ref false
 
@@ -2194,7 +2196,7 @@ let fresh_int () =
 (*   seq_number := !seq_number + 1; *)
 (*   !seq_number *)
 
-let string_compare s1 s2 =  String.compare s1 s2=0
+let string_eq s1 s2 =  String.compare s1 s2=0
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in

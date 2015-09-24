@@ -120,67 +120,117 @@ let norm_elim_useless vdefs sel_vns=
   Debug.no_2 "norm_elim_useless" pr2 pr1 pr2
     (fun _ _ -> norm_elim_useless_x vdefs sel_vns) vdefs sel_vns
 
-let norm_reuse_one_frm_view_x iprog prog ?(all=true) frm_vdcl (to_vdcls: C.view_decl list)=
-  let check_equiv frm_vdcl to_vdcl=
-    let () = DD.ninfo_hprint (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name no_pos in
-    let self_t = (Named frm_vdcl.Cast.view_data_name) in
-    if string_compare frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name
+let norm_reuse_one_frm_view iprog prog ?(all=true)
+    cur_equivs frm_vdcl (to_vdcls: C.view_decl list)=
+  let check_equiv frm_vdcl to_vdcl =
+    let () = y_tinfo_hp (add_str "frm_vdcl" pr_id) frm_vdcl.Cast.view_name in
+    let () = y_tinfo_hp (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name in
+    let frm_view_name =  frm_vdcl.Cast.view_name in
+    let to_view_name =  to_vdcl.Cast.view_name in
+    let () = y_tinfo_hp (add_str "frm_to_name" pr_id) (frm_view_name^to_view_name) in
+    if string_eq frm_view_name to_view_name then [to_view_name]
+    else if string_eq frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name 
+    (* && *)
+    (* does not handle transitivity *)
+    (* not (List.exists (fun (vn1,vn2) -> *)
+    (*     (string_eq frm_vdcl.Cast.view_name vn1 && *)
+    (*      string_eq to_vdcl.Cast.view_name vn2) || (string_eq frm_vdcl.Cast.view_name vn2 && *)
+    (*                                                string_eq to_vdcl.Cast.view_name vn1) *)
+    (*   ) cur_equivs) *)
     then
-      let () = DD.ninfo_hprint (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
+      let () = x_tinfo_hp (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
+      let self_t = (Named frm_vdcl.Cast.view_data_name) in
       let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
-      let sst = List.combine (frm_vdcl.Cast.view_vars) (to_vdcl.Cast.view_vars) in
-      let () = DD.ninfo_hprint (add_str "sst" (pr_list (pr_pair
-          !CP.print_sv !CP.print_sv))) sst no_pos in
-      (*type comparitive*)
-      if List.exists (fun (sv1, sv2) -> not (cmp_typ (CP.type_of_spec_var sv1) (CP.type_of_spec_var sv2))) sst then []
+      let frm_args = frm_vdcl.Cast.view_vars in
+      let to_args = to_vdcl.Cast.view_vars in
+      let get_name_typ v = (string_of_typ (CP.type_of_spec_var v),v) in
+      let name_to_args = List.map get_name_typ to_args in
+      let name_frm_args = List.map get_name_typ frm_args in
+      let ntyp_to_args = add_num name_to_args in
+      let ntyp_frm_args = add_num name_frm_args in
+      let cmp ((s1,_),_) ((s2,_),_) = String.compare s1 s2 in
+      let sort_to_args = List.sort cmp ntyp_to_args in
+      let sort_frm_args = List.sort cmp ntyp_frm_args in
+      let pr = pr_list (pr_pair (pr_pair pr_id !CP.print_sv) string_of_int) in
+      let sst_ntyp = List.combine sort_frm_args sort_to_args in
+      (* let sst_typ = List.combine typ_frm_args typ_to_args in *)
+      let (f_eq,eq_str) = List.fold_left (fun (f_eq,f_eq_str) (((t1,_),n1),((t2,_),n2)) ->
+          let flag = f_eq && string_eq t1 t2 in
+        (flag, f_eq_str && flag && n1==n2)) (true,true) sst_ntyp in
+      let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (s1,s2)) sst_ntyp in
+      let keep_sst = if eq_str then [] else 
+          let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (n1,n2)) sst_ntyp in
+          let sst_from = List.sort (fun (n1,_) (n2,_) -> n1-n2) sst in
+          List.map snd sst_from 
+      in
+      (* let str_diff = List.exists (fun (sv1, sv2) -> not (cmp_typ (get_typ sv1) (get_typ sv2))) sst in *)
+      let () = y_tinfo_hp (add_str "sort_to_args" pr) sort_to_args in
+      let () = y_tinfo_hp (add_str "sort_frm_args" pr) sort_frm_args in
+      let () = y_tinfo_hp (add_str "(f_eq,eq_str)" (pr_pair string_of_bool string_of_bool)) 
+          (f_eq,eq_str) in
+      (*type comparison*)
+      if not(f_eq)  (* str_diff *) then []
       else
+        let () = x_tinfo_hp (add_str "sst" (pr_list (pr_pair
+                                                          !CP.print_sv !CP.print_sv))) sst no_pos in
         let frm_vnode = Cformula.mkViewNode (self_sv ) frm_vdcl.Cast.view_name
             (frm_vdcl.Cast.view_vars) no_pos in
+
         let to_vnode = Cformula.mkViewNode (self_sv ) to_vdcl.Cast.view_name
             (to_vdcl.Cast.view_vars) no_pos in
-        let f1_0 = Cformula.formula_of_heap frm_vnode no_pos in
-        let f1 = x_add Cformula.subst sst f1_0 in
+        let f1_frm = Cformula.formula_of_heap frm_vnode no_pos in
+        let f1 = x_add Cformula.subst sst f1_frm in
         let f2 = Cformula.formula_of_heap to_vnode no_pos in
-        if !check_lemeq_sem iprog prog f1 f2 [] [] [] then
+        let flag = Wrapper.wrap_exc_as_false ~msg:"check_lemeq_sem" (!check_lemeq_sem iprog prog f1 f2 [] []) [] in
+        let msg = if flag then "\n Proven :" else "\n Failed :" in
+        let () = y_binfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
+        if flag (* !check_lemeq_sem iprog prog f1 f2 [] [] [] *) then
           (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
-          [to_vdcl.Cast.view_name]
+          (* let frm_view_name = frm_vdcl.Cast.view_name in *)
+          (* let () = to_vdcl.Cast.view_equiv_set # push from_view_name in *)
+          let to_view_name = to_vdcl.Cast.view_name in
+          let () = Cast.add_equiv_to_view_decl frm_vdcl keep_sst to_view_name in
+          [to_view_name]
         else []
     else []
   in
-  let rec to_vdcls_iter vdcls acc=
+  let rec to_vdcls_iter vdcls acc =
     match vdcls with
     | [] -> acc
-    | v::rest -> let eq_views = check_equiv frm_vdcl v in
+    | v::rest -> 
+      let eq_views = check_equiv frm_vdcl v in
       if eq_views = [] || all then
         to_vdcls_iter rest (acc@eq_views)
       else
         eq_views
   in
-  let () = DD.ninfo_hprint (add_str "frm vdecl" pr_id) frm_vdcl.Cast.view_name no_pos in
+  let () = x_tinfo_hp (add_str "frm vdecl" pr_id) frm_vdcl.Cast.view_name no_pos in
   let eq_views = to_vdcls_iter to_vdcls [] in
   List.map (fun vn -> (frm_vdcl.Cast.view_name, vn)) eq_views
 
-let norm_reuse_one_frm_view iprog prog ?(all=true) frm_vdecl (to_vdecls: C.view_decl list)=
+let norm_reuse_one_frm_view iprog prog ?(all=true) cur_equivs frm_vdecl (to_vdecls: C.view_decl list)=
   let pr1 = Cprinter.string_of_view_decl_short in
   let pr2 = pr_list pr1 in
   let pr_out = pr_list (pr_pair pr_id pr_id) in
   Debug.no_2 "norm_reuse_one_frm_view" pr1 pr2 pr_out
-    (fun _ _-> norm_reuse_one_frm_view_x iprog prog ~all:all frm_vdecl to_vdecls)
+    (fun _ _-> norm_reuse_one_frm_view iprog prog ~all:all cur_equivs frm_vdecl to_vdecls)
     frm_vdecl to_vdecls
 
 (*
  assume frm_vns and to_vns are topo sorted
 *)
-let norm_reuse_x iprog cprog vdefs frm_vns to_vns=
+let norm_reuse iprog cprog vdefs frm_vns to_vns=
   (*filter vdefs to keep order*)
+  let () = y_tinfo_hp (add_str "norm_reuse (from_vns)" (pr_list pr_id)) frm_vns in
+  let () = y_tinfo_hp (add_str "norm_reuse (to_vns)" (pr_list pr_id)) to_vns in
   let frm_vdcls = List.filter (fun vdcl ->
-      List.exists (fun vn -> string_compare vn vdcl.C.view_name) frm_vns
+      List.exists (fun vn -> string_eq vn vdcl.C.view_name) frm_vns
   ) vdefs in
   let to_vdcls = List.filter (fun vdcl ->
-      List.exists (fun vn -> string_compare vn vdcl.C.view_name) to_vns
+      List.exists (fun vn -> string_eq vn vdcl.C.view_name) to_vns
   ) vdefs in
   List.fold_left (fun acc frm_vdcl ->
-      let new_eqs = norm_reuse_one_frm_view iprog cprog ~all:true
+      let new_eqs = norm_reuse_one_frm_view iprog cprog ~all:false acc
         frm_vdcl to_vdcls in
       acc@new_eqs
   ) [] frm_vdcls
@@ -190,7 +240,7 @@ let norm_reuse iprog cprog vdefs frm_vns to_vns=
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   let pr3 = pr_list (pr_pair pr_id pr_id) in
   Debug.no_3 "norm_reuse" pr2 pr1 pr1 pr3
-    (fun _ _ _ -> norm_reuse_x iprog cprog vdefs frm_vns to_vns) vdefs frm_vns to_vns
+    (fun _ _ _ -> norm_reuse iprog cprog vdefs frm_vns to_vns) vdefs frm_vns to_vns
 
 (***********************************************)
 (********EXTRACT common pattern **********)

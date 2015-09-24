@@ -104,6 +104,9 @@ and view_decl = {
   view_is_prim : bool;
   view_is_hrel : bool option; (* bool is PreHeap *)
 
+  view_equiv_set : ((int list) * ident) VarGen.store;
+  (* [] - no change in parameter posn; [..] target position; target view *)
+
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
 
@@ -134,7 +137,13 @@ and view_decl = {
   view_params_orig: (P.view_arg * int) list;
   mutable view_partially_bound_vars : bool list;
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
-  view_formula : F.struc_formula; (* case-structured formula *)
+  (* main body of a predicate *)
+  mutable view_formula : F.struc_formula; (* case-structured formula *)
+  mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
+    (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+  mutable view_raw_base_case: Cformula.formula option;
+  mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
+  (* end of main body of a predicate *)
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
   view_inv_lock : F.formula option;
@@ -152,16 +161,13 @@ and view_decl = {
   mutable view_addr_vars : P.spec_var list;
   (* if view has only a single eqn, then place complex subpart into complex_inv *)
   view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
-  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-  view_linear_formula : (Cformula.formula * formula_label) list ;
-  view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
+   view_linear_formula : (Cformula.formula * formula_label) list ;
   view_prune_branches: formula_label list; (* all the branches of a view *)
   view_is_rec : bool;
   view_pt_by_self : ident list;
   view_prune_conditions: (P.b_formula * (formula_label list)) list;
   view_prune_conditions_baga: ba_prun_cond list;
   view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-  view_raw_base_case: Cformula.formula option;
   view_ef_pure_disj : Excore.ef_pure_disj option
 }
 
@@ -624,7 +630,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_vars = vs;
     view_pos = pos;
     view_is_hrel = Some (is_pre);
-
+    view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id) ;
     view_is_prim = false;
     view_data_name = "";
     view_ho_vars = [];
@@ -691,6 +697,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_pos = pos;
     view_is_hrel = None;
     view_is_prim = true;
+    view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id);
     view_data_name = "";
     view_ho_vars = [];
     view_cont_vars = [];
@@ -3840,3 +3847,29 @@ let add_view_decl prog vdecl =
     y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
   else
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
+
+let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
+  frm_vdecl.view_equiv_set # set (keep_sst,to_view)
+
+let get_view_name_equiv view_decls vl =
+  let vname = vl.h_formula_view_name in
+  let vdef = look_up_view_def_raw 25 view_decls vname in
+  (* (vname,vdef) *)
+  if vdef.view_equiv_set # is_empty || !Globals.old_view_equiv then (vname,vdef,vl,false)
+  else 
+    let (sst,new_name) =  (vdef.view_equiv_set # get) in
+    let msg = "Using equiv "^vname^" <-> "^(vdef.view_equiv_set # string_of) in
+    let () = y_winfo_pp msg in
+    let args = vl.h_formula_view_arguments in (* need to change other parameters *)
+    let new_args = 
+      if sst==[] then args 
+      else 
+        let new_args = List.combine args sst in
+        let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in
+        List.map fst new_args
+    in
+    let new_vl = {vl with h_formula_view_name = new_name;
+                          h_formula_view_arguments = new_args;
+                 } in
+    (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
+  

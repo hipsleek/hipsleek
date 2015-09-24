@@ -772,8 +772,8 @@ and choose_full_mater_coercion_x estate l_vname l_vargs r_vname r_aset (c:coerci
         (* failwith "TBI" *)
       else
         let unk_preds = CF.get_HRels_f c.coercion_body in
-        if List.exists (fun (hp, _) ->  string_compare (CP.name_of_spec_var hp) body_view) unk_preds && 
-           (List.exists (fun hp -> string_compare (CP.name_of_spec_var hp) r_vname) estate.CF.es_infer_vars_hp_rel) then
+        if List.exists (fun (hp, _) ->  string_eq (CP.name_of_spec_var hp) body_view) unk_preds && 
+           (List.exists (fun hp -> string_eq (CP.name_of_spec_var hp) r_vname) estate.CF.es_infer_vars_hp_rel) then
           let m_p = {mater_var = List.hd args; mater_full_flag = true; mater_target_view =[body_view]} in
           let ms = Coerc_mater c in
           Some (ms,m_p)
@@ -1871,10 +1871,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | ViewNode vl, ViewNode vr -> 
          pr_debug "VIEW vs VIEW\n";
          (* let l1 = [(1,M_base_case_unfold m_res)] in *)
-         let vl_name = vl.h_formula_view_name in
-         let vr_name = vr.h_formula_view_name in
-         let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in
-         let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in
+         let (vl_name,vl_vdef,vl,flag1) = Cast.get_view_name_equiv view_decls vl in
+         let (vr_name,vr_vdef,vr,flag2) = Cast.get_view_name_equiv view_decls vr in
+         (* WN : changing m_res to use view_equiv_set *)
+         let m_res = if flag1 || flag2 then 
+             {m_res with match_res_lhs_node = ViewNode vl;
+                     match_res_rhs_node = ViewNode vr} 
+           else m_res 
+         in
+         (* let vr_name = vr.h_formula_view_name in *)
+         (* let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in *)
+         (* let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in *)
          let vl_is_rec = vl_vdef.view_is_rec in
          let vl_is_prim = vl_vdef.view_is_prim in
          let vr_is_prim = vr_vdef.view_is_prim in
@@ -2524,7 +2531,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                | Coerc_mater d ->
                      let l_v = d.coercion_body_view in
                      let () = y_tinfo_hp (add_str "left_view" (pr_id)) l_v in
-                     let lst = List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view in
+                     let lst = List.filter (fun vn -> not (string_eq vn h_name) ) mv.mater_target_view in
                      let () = if lst == [] then
                        try
                          let _ = look_up_data_def_prog prog l_v in
@@ -2569,7 +2576,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                | Coerc_mater d -> 
                  let r_v = d.coercion_body_view in
                  let () = y_tinfo_hp (add_str "right_view" (pr_id)) r_v in
-                 let lst = (List.filter (fun vn -> not (string_compare vn h_name) ) mv.mater_target_view) in
+                 let lst = (List.filter (fun vn -> not (string_eq vn h_name) ) mv.mater_target_view) in
                  let () = if lst == [] then
                      try
                        let _ = look_up_data_def_prog prog r_v in

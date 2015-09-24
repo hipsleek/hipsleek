@@ -2125,7 +2125,7 @@ let infer_collect_hp_rel_unfold_lemma_guided prog iact estate lhs_node rhs_node 
   match lemma with
     | Some coer -> begin
         let coer_head_views = CF.get_views coer.Cast.coercion_head in
-        let sel_head_views = List.filter (fun vn -> string_compare coer.Cast.coercion_head_view vn.CF.h_formula_view_name) coer_head_views in
+        let sel_head_views = List.filter (fun vn -> string_eq coer.Cast.coercion_head_view vn.CF.h_formula_view_name) coer_head_views in
         match rhs_node,sel_head_views with
           | CF.ViewNode rvn, [head_vn] -> begin
               let sst = List.combine (head_vn.CF.h_formula_view_node::head_vn.CF.h_formula_view_arguments)
@@ -2182,7 +2182,7 @@ let infer_collect_hp_rel_fold_lemma_guided prog iact estate lhs_node rhs_node rh
   match lemma with
     | Some coer -> begin
         let coer_head_views = CF.get_views coer.Cast.coercion_head in
-        let sel_head_views = List.filter (fun vn -> string_compare coer.Cast.coercion_head_view vn.CF.h_formula_view_name) coer_head_views in
+        let sel_head_views = List.filter (fun vn -> string_eq coer.Cast.coercion_head_view vn.CF.h_formula_view_name) coer_head_views in
         match lhs_node,sel_head_views with
           | CF.ViewNode lvn, [head_vn] -> begin
               let sst = List.combine (head_vn.CF.h_formula_view_node::head_vn.CF.h_formula_view_arguments)
