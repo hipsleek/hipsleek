@@ -80,6 +80,7 @@ type command =
   | ShapeDerivePost of regex_id_list
   | ShapeDeriveView of regex_id_list
   | ShapeNormalize of regex_id_list
+  | PredElimHead of regex_id_list
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -185,6 +186,7 @@ let string_of_command c = match c with
   | ShapeDerivePost _ -> "ShapeDerivePost"
   | ShapeDeriveView _ -> "ShapeDeriveView"
   | ShapeNormalize _ -> "ShapeNormalize"
+  | PredElimHead _ -> "PredElimHead"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"

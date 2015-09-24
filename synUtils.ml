@@ -4,6 +4,7 @@ open Globals
 open Gen
 open Others
 open Label_only
+module C = Cast
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
@@ -95,11 +96,13 @@ let name_of_hprel (hpr: CF.hprel) =
 let args_of_hprel (hpr: CF.hprel) = 
   snd (sig_of_hprel hpr)
 
-(**********************)
-(* UTILS OVER FORMULA *)
-(**********************)
-let combine_Star f1 f2 = 
-  let comb_base f1 f2 = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+(*********************)
+(* UTILS FOR FORMULA *)
+(*********************)
+let combine_Star prog f1 f2 = 
+  let comb_base f1 f2 =
+    let comb_f = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+    Solver.elim_unsat_all prog comb_f in
   let rec comb_base_f1 f1 f2 =
     match f2 with
     | CF.Base _
@@ -126,9 +129,9 @@ let combine_Star f1 f2 =
   in
   comb_formula f1 f2
 
-let combine_Star f1 f2 = 
+let combine_Star prog f1 f2 = 
   let pr = !CF.print_formula in
-  Debug.no_2 "combine_Star" pr pr pr combine_Star f1 f2
+  Debug.no_2 "combine_Star" pr pr pr (combine_Star prog) f1 f2
 
 let trans_heap_formula f_h_f (f: CF.formula) = 
   let somef2 _ f = Some (f, []) in
@@ -160,6 +163,9 @@ let simplify_hprel (hprel: CF.hprel) =
   in
   let h_fv_lhs = remove_dups h_fv_lhs in
   let h_fv_guard = match hprel.hprel_guard with None -> [] | Some g -> CF.fv_heap_of g in
+  let h_fv_guard = remove_dups h_fv_guard in
+  let h_fv_rhs = (CF.fv_heap_of hprel.hprel_rhs) @ (CF.fv hprel.hprel_lhs) in
+  let h_fv_rhs = remove_dups h_fv_rhs in
   let f_m_f args m_f =
     let p_f = MCP.pure_of_mix m_f in
     let simpl_p_f = simplify p_f args in
@@ -167,7 +173,8 @@ let simplify_hprel (hprel: CF.hprel) =
   in
   { hprel with
     hprel_lhs = trans_pure_formula (f_m_f h_fv_lhs) hprel.hprel_lhs;
-    hprel_guard = map_opt (trans_pure_formula (f_m_f h_fv_guard)) hprel.hprel_guard; }
+    hprel_guard = map_opt (trans_pure_formula (f_m_f h_fv_guard)) hprel.hprel_guard; 
+    hprel_rhs = trans_pure_formula (f_m_f h_fv_rhs) hprel.hprel_rhs; }
 
 let simplify_hprel (hprel: CF.hprel) =
   let pr = Cprinter.string_of_hprel_short in
@@ -284,3 +291,123 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = Cprinter.string_of_view_decl in
   Debug.no_1 "Syn.view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
+
+let find_heap_node root (f: CF.formula) =
+  let _, f_p, _, _, _, _ = CF.split_components f in
+  let aliases = MCP.ptr_equations_without_null f_p in
+  let aset = CP.EMapSV.build_eset aliases in
+  let root_aliases = CP.EMapSV.find_equiv_all_new root aset in
+  let f_h_f _ h_f =
+    match h_f with
+    | CF.DataNode ({ h_formula_data_node = pt; } as h_data) ->
+      if mem pt root_aliases then Some (CF.HEmp, [h_data])
+      else None
+    | _ -> None
+  in
+  let n_f, root_node = trans_heap_formula f_h_f f in
+  n_f, root_node
+
+let is_consistent_node_list nodes = 
+  match nodes with
+  | [] -> true
+  | n::ns -> List.for_all (fun d -> 
+      (eq_str d.CF.h_formula_data_name n.CF.h_formula_data_name) &&
+      (List.length n.CF.h_formula_data_arguments == List.length d.CF.h_formula_data_arguments)) ns
+
+let norm_node_list nodes =
+  match nodes with
+  | [] -> failwith "Unexpected empty node list."
+  | n::_ ->
+    let n_args = CP.fresh_spec_vars n.CF.h_formula_data_arguments in
+    let sst_list = List.map (fun n -> List.combine n.CF.h_formula_data_arguments n_args) nodes in
+    let norm_root = { n with CF.h_formula_data_arguments = n_args; } in
+    norm_root, sst_list
+  
+let rec find_common_node_chain root (fs: CF.formula list) =
+  let residue_fs, root_node_list = List.split (List.map (find_heap_node root) fs) in
+  if List.exists is_empty root_node_list then (fs, [])
+  else if List.exists (fun ns -> List.length ns > 1) root_node_list then
+    failwith "There is a formula which has more than one root nodes."
+  else 
+    let root_node_list = List.map List.hd root_node_list in
+    if not (is_consistent_node_list root_node_list) then
+      failwith "The list of root nodes is not consistent."
+    else
+      let root_node, sst_list = norm_node_list root_node_list in
+      let root_node = { root_node with CF.h_formula_data_node = root } in
+      let norm_fs = List.map (fun (f, sst) -> CF.subst_all sst f) (List.combine residue_fs sst_list) in
+      List.fold_left (fun (fs, node_chain) arg -> 
+          let n_fs, arg_node_chain = find_common_node_chain arg fs in
+          n_fs, (node_chain @ arg_node_chain)) 
+        (norm_fs, [CF.DataNode root_node]) (List.filter CP.is_node_typ root_node.CF.h_formula_data_arguments)
+
+let find_common_node_chain root (fs: CF.formula list) =
+  let pr1 = !CP.print_sv in
+  let pr2 = pr_list !CF.print_formula in
+  let pr3 = pr_list !CF.print_h_formula in
+  let pr4 = fun (_, h_l) -> pr3 h_l in
+  Debug.no_2 "find_common_node_chain" pr1 pr2 (* (pr_pair pr2 pr3) *) pr4
+    find_common_node_chain root fs
+
+(*******************)
+(* UTILS FOR LEMMA *)
+(*******************)
+let is_not_global_hp_def prog i =
+  try
+    let todo_unk = C.look_up_hp_def_raw prog.C.prog_hp_decls i 
+    in false
+  with _ -> true
+
+let is_not_global_rel prog i =
+  try
+    let todo_unk = C.look_up_rel_def_raw (prog.C.prog_rel_decls # get_stk) i 
+    in false
+  with _ -> true
+
+let univ_vars_of_lemma l_head = 
+  let h, p, vp, _, _,_ = CF.split_components l_head in
+  let pvars = MCP.mfv p in
+  let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> 
+    not (id = Globals.cyclic_name || 
+         id = Globals.acyclic_name || 
+         id = Globals.concrete_name || 
+         id = Globals.set_comp_name)) pvars in (* ignore cyclic & acyclic rels *)
+  let hvars = CF.h_fv h in
+  let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
+  Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
+
+let mater_vars_of_lemma prog l_head l_body = 
+  let args = CF.fv_simple_formula l_head in 
+  let m_vars = Astsimp.find_materialized_prop args [] l_body in
+  let m_vars = List.map (fun m -> 
+    let vs = m.C.mater_target_view in
+    let vs2 = List.filter (fun v -> (is_not_global_rel prog v) && (is_not_global_hp_def prog v)) vs in
+    (m, vs, vs2)) m_vars in
+  let m_vars = List.filter (fun (m, vs, vs2) -> vs == [] || vs2 != []) m_vars in
+  let m_vars = List.map (fun (m, vs, vs2) -> { m with C.mater_target_view = vs2 }) m_vars in
+  m_vars
+
+(* Adapted from Astsimp.trans_one_coercion_x *)
+let mk_lemma prog l_name l_is_classic l_ivars l_itypes l_kind l_type l_head l_body pos =
+  let iobj = new Globals.inf_obj_sub in
+  let () = iobj # set_list l_itypes in
+  { C.coercion_type = l_type;
+    C.coercion_exact = l_is_classic;
+    C.coercion_name = l_name;
+    C.coercion_head = l_head;
+    C.coercion_head_norm = l_head (* CF.mkTrue (CF.mkNormalFlow ()) pos *);
+    C.coercion_body = l_body; 
+    C.coercion_body_norm = CF.struc_formula_of_formula l_body (* (CF.mkTrue (CF.mkNormalFlow ()) pos) *) pos;
+    C.coercion_impl_vars = [];
+    C.coercion_univ_vars = univ_vars_of_lemma l_head;
+    C.coercion_infer_vars = l_ivars;
+    C.coercion_infer_obj = iobj;
+    C.coercion_fold_def = new Gen.mut_option;
+    C.coercion_head_view = Astsimp.find_view_name l_head Globals.self pos;
+    C.coercion_body_view = Astsimp.find_view_name l_body Globals.self pos;
+    C.coercion_body_pred_list = CF.extr_pred_list l_body;
+    C.coercion_mater_vars = mater_vars_of_lemma prog l_head l_body;
+    C.coercion_case = C.case_of_coercion l_head l_body;
+    C.coercion_type_orig = None;
+    C.coercion_kind = l_kind;
+    C.coercion_origin = LEM_GEN; }

@@ -3373,8 +3373,12 @@ and subst_x sst (f : formula) =
           formula_exists_pos = pos })
   in helper f
 
+and subst_all sst (f : formula) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula in
+  Debug.no_2 "subst_all" pr1 pr2 pr2 subst_all_x sst f 
 
-and subst_all sst (f : formula) =
+and subst_all_x sst (f : formula) =
   let rec helper f = match f with
     | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) -> 
       Or ({ formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos })
