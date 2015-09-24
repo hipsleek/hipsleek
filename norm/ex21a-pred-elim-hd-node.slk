@@ -35,7 +35,7 @@ pred app4<> == self=null
 //pred_elim_hd_node [lseg].
 //no change
 
-pred_elim_hd_node [app2].
+//pred_elim_hd_node [app2].
 //one node
 
 pred_elim_hd_node [app3].

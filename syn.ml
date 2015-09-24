@@ -5,6 +5,7 @@ open Gen
 open Others
 open Label_only
 open SynUtils
+open Exc.GTable
 module C = Cast
 module CP = Cpure
 module IF = Iformula
@@ -762,11 +763,19 @@ let elim_head_pred prog pred =
         (fun v -> C.add_raw_hp_rel prog true true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
     let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
     let pred_h = CF.mkViewNode root_node pred.C.view_name fresh_pred_args no_pos in
-    let pred_f = CF.formula_of_heap pred_h no_pos in
-    let lemma = mk_lemma prog "" true unknown_vars [] LEM_INFER Left pred_f unknown_f no_pos in
+    (* let norm_flow = { CF.formula_flow_interval = exlist # get_hash n_flow; CF.formula_flow_link = None } in *)
+    let norm_flow = CF.flow_formula_of_formula unknown_f in
+    let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
+    let ex_vars = remove_dups (diff (diff (CF.fv unknown_f) unknown_vars) (CF.fv pred_f)) in
+    let unknown_f = CF.push_exists ex_vars unknown_f in
+    let classic = CP.SpecVar (UNK, "classic", Unprimed) in
+    let l_name = "lem_inf_" ^ pred.C.view_name in
+    let lemma = mk_lemma prog l_name true (unknown_vars @ [classic]) [] LEM_INFER Left pred_f unknown_f no_pos in
     let () = y_binfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in
     let () = y_binfo_hp (add_str "Lemma RHS" !CF.print_formula) unknown_f in
     let () = y_binfo_hp (add_str "Lemma" !C.print_coercion) lemma in
+    let inf_ctx = x_add Lemproving.verify_lemma 10 [lemma] [] prog l_name Left in
+    let () = y_binfo_hp (add_str "Inferred Ctx" !CF.print_list_context) inf_ctx in
     pred
 
 let elim_head_pred_list prog preds = 

@@ -395,9 +395,9 @@ let mk_lemma prog l_name l_is_classic l_ivars l_itypes l_kind l_type l_head l_bo
     C.coercion_exact = l_is_classic;
     C.coercion_name = l_name;
     C.coercion_head = l_head;
-    C.coercion_head_norm = CF.mkTrue (CF.mkTrueFlow ()) pos; (* TODO *)
+    C.coercion_head_norm = l_head (* CF.mkTrue (CF.mkNormalFlow ()) pos *);
     C.coercion_body = l_body; 
-    C.coercion_body_norm = CF.struc_formula_of_formula (CF.mkTrue (CF.mkTrueFlow ()) pos) pos; (* TODO *)
+    C.coercion_body_norm = CF.struc_formula_of_formula l_body (* (CF.mkTrue (CF.mkNormalFlow ()) pos) *) pos;
     C.coercion_impl_vars = [];
     C.coercion_univ_vars = univ_vars_of_lemma l_head;
     C.coercion_infer_vars = l_ivars;
