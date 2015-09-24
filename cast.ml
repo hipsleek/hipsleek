@@ -134,7 +134,13 @@ and view_decl = {
   view_params_orig: (P.view_arg * int) list;
   mutable view_partially_bound_vars : bool list;
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
-  view_formula : F.struc_formula; (* case-structured formula *)
+  (* main body of a predicate *)
+  mutable view_formula : F.struc_formula; (* case-structured formula *)
+  mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
+  (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+  mutable view_raw_base_case: Cformula.formula option;
+  mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
+  (* end of main body of a predicate *)
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
   view_inv_lock : F.formula option;
@@ -152,16 +158,13 @@ and view_decl = {
   mutable view_addr_vars : P.spec_var list;
   (* if view has only a single eqn, then place complex subpart into complex_inv *)
   view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
-  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-  view_linear_formula : (Cformula.formula * formula_label) list ;
-  view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
+   view_linear_formula : (Cformula.formula * formula_label) list ;
   view_prune_branches: formula_label list; (* all the branches of a view *)
   view_is_rec : bool;
   view_pt_by_self : ident list;
   view_prune_conditions: (P.b_formula * (formula_label list)) list;
   view_prune_conditions_baga: ba_prun_cond list;
   view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-  view_raw_base_case: Cformula.formula option;
   view_ef_pure_disj : Excore.ef_pure_disj option
 }
 
