@@ -8,7 +8,6 @@ data node {
 }.
 
 
-
 pred lseg2a<n,p> == self = p & n=0
 	or self::node<_, q> * q::lseg2a<n-1,p> 
   inv true.
@@ -16,7 +15,7 @@ pred lseg2a<n,p> == self = p & n=0
 //pred lseg<n,p> == self::lseg111<n,p>.
 
 pred lseg3<p,n> == self = p & n=0
-	or self::node<_, q> * q::lseg111<n-1,p> 
+	or self::node<_, q> * q::lseg3<p,n-1> 
   inv true.
 
 pred lseg111<n,p> == self = p & n=0
@@ -27,15 +26,12 @@ pred lseg111<n,p> == self = p & n=0
 pred_reuse [*][*].
 
 /*
-# ex21r3.slk
+# ex21r4.slk
 
-pred lseg2a<n,p> == self = p & n=0
-	or self::node<_, q> * q::lseg111<n-1,p> 
+pred lseg3<p,n> == self = p & n=0
+	or self::node<_, q> * q::lseg3<p,n-1> 
   inv true.
 
-pred lseg3<n,p> == self = p & n=0
-	or self::node<_, q> * q::lseg111<n-1,p> 
-  inv true.
 
 pred lseg111<n,p> == self = p & n=0
 	or self::node<_, q> * q::lseg111<n-1,p> 
@@ -43,14 +39,12 @@ pred lseg111<n,p> == self = p & n=0
 
 pred_reuse [*][*].
 
-!!! **norm.ml#193:norm_reuse (from_vns):[lseg111,lseg2a,lseg3]
-!!! **norm.ml#194:norm_reuse (to_vns):[lseg111,lseg2a,lseg3]
+# can handle limited parameter permutation; as long
+  as they are type consistent
 
-# should we use topological sorting? where shorter names 
-  come first..
-
-Since lseg3 is shorter than lseg2a, we would expect
-it to come first.
+ Proven : self::lseg3<p,n>@M&{FLOW,(1,26)=__flow#E}[] <->  self::lseg111<n,p>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#2488:
+PRED REUSE FOUND:[(lseg111,lseg111),(lseg2a,lseg111),(lseg3,lseg111)]
 
 
 */

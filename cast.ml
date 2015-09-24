@@ -104,6 +104,8 @@ and view_decl = {
   view_is_prim : bool;
   view_is_hrel : bool option; (* bool is PreHeap *)
 
+  view_equiv_set : ident Gen.stack_pr; (* views that are equiv *)
+
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
 
@@ -137,7 +139,7 @@ and view_decl = {
   (* main body of a predicate *)
   mutable view_formula : F.struc_formula; (* case-structured formula *)
   mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
-  (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+    (*used by the unfold, pre transformed in order to avoid multiple transformations*)
   mutable view_raw_base_case: Cformula.formula option;
   mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
   (* end of main body of a predicate *)
@@ -627,6 +629,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_vars = vs;
     view_pos = pos;
     view_is_hrel = Some (is_pre);
+    view_equiv_set = new Gen.stack_pr "view_equiv_set" pr_id string_eq ;
 
     view_is_prim = false;
     view_data_name = "";
@@ -694,6 +697,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_pos = pos;
     view_is_hrel = None;
     view_is_prim = true;
+    view_equiv_set = new Gen.stack_pr "view_equiv_set" pr_id string_eq ;
     view_data_name = "";
     view_ho_vars = [];
     view_cont_vars = [];

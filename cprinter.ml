@@ -4342,6 +4342,8 @@ let pr_view_decl v =
        (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
+  pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
+    (fun stk -> fmt_string ((pr_list pr_id) stk # get_stk)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
   pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
   pr_add_str_cut  ~emp_test:(Gen.is_empty) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
@@ -4416,7 +4418,9 @@ let pr_view_decl_short v =
 
     wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_view_arg_lbl
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
-  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
+    fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
+    pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
+      (fun stk -> fmt_string ((pr_list pr_id) stk # get_stk)) v.view_equiv_set;
   with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_short, List.combine v.view_labels... ";
     (* fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;  *)
     (* pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars; *)
@@ -4984,7 +4988,7 @@ let string_of_derived_program p =
   "\n*****************************\n" ^ 
   (* (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ *)
   ((pr_list string_of_view_decl_short) (List.filter 
-                               (fun v -> true (* v.Cast.view_kind==View_HREL *)) p.prog_view_decls)) ^ "\n\n" 
+                               (fun v -> v.Cast.view_kind==View_HREL || not(v.Cast.view_equiv_set # is_empty)) p.prog_view_decls)) ^ "\n\n" 
   (* (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ *)
   (* (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^ *)
   (* (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^ *)

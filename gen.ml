@@ -52,6 +52,12 @@ struct
   exception Bad_string
   exception Bail
 
+  let add_num ls =
+    let rec aux ls n = match ls with
+      | [] -> []
+      | x::xs -> (x,n)::(aux xs (n+1)) in
+    aux ls 0
+
   let hash_to_list ht =
     Hashtbl.fold (fun a b c -> (a,b)::c) ht []
 

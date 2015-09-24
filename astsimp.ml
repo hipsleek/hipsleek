@@ -2530,6 +2530,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_pos = vdef.I.view_pos;
         C.view_is_prim = is_prim_v;
         C.view_is_hrel = is_hrel_v;
+        C.view_equiv_set = new Gen.stack_pr "view_equiv_set" pr_id string_eq ;
         C.view_is_touching = false;           (* temporarily assigned *)
         C.view_is_segmented = false;          (* temporarily assigned *)
         C.view_is_tail_recursive = false;     (* temporarily assigned *)
