@@ -27,12 +27,12 @@ pred app3<> == self::node<_,null>
 pred app4<> == self=null
         or self::node<_,null> 
 	or self::node<_, q> * q::app4<> & q!=null 
-  inv self!=null.
+  inv true.
 
-pred_elim_hd_node [ll].
+//pred_elim_hd_node [ll].
 //no change
 
-pred_elim_hd_node [lseg].
+//pred_elim_hd_node [lseg].
 //no change
 
 pred_elim_hd_node [app2].
@@ -41,10 +41,10 @@ pred_elim_hd_node [app2].
 pred_elim_hd_node [app3].
 //one node
 
-pred_elim_hd_node [app4].
+//pred_elim_hd_node [app4].
 //one node
 
-pred_elim_hd_node [*].
+//pred_elim_hd_node [*].
 
 /*
 # ex21a

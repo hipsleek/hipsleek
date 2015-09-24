@@ -117,16 +117,17 @@ module M = Lexer.Make(Token.Token)
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
-    | ShapeAddDangling hps -> process_shape_add_dangling hps
-    | ShapeUnfold hps -> process_shape_unfold hps
-    | ShapeParamDangling hps -> process_shape_param_dangling hps
-    | ShapeSimplify hps -> process_shape_simplify hps
-    | ShapeMerge hps -> process_shape_merge hps
-    | ShapeTransToView hps -> process_shape_trans_to_view hps
-    | ShapeDerivePre hps -> process_shape_derive_pre hps
-    | ShapeDerivePost hps -> process_shape_derive_post hps
-    | ShapeDeriveView hps -> process_shape_derive_view hps
-    | ShapeNormalize hps -> process_shape_normalize hps
+    | ShapeAddDangling ids -> process_shape_add_dangling ids
+    | ShapeUnfold ids -> process_shape_unfold ids
+    | ShapeParamDangling ids -> process_shape_param_dangling ids
+    | ShapeSimplify ids -> process_shape_simplify ids
+    | ShapeMerge ids -> process_shape_merge ids
+    | ShapeTransToView ids -> process_shape_trans_to_view ids
+    | ShapeDerivePre ids -> process_shape_derive_pre ids
+    | ShapeDerivePost ids -> process_shape_derive_post ids
+    | ShapeDeriveView ids -> process_shape_derive_view ids
+    | ShapeNormalize ids -> process_shape_normalize ids
+    | PredElimHead ids -> process_pred_elim_head ids
     | PredSplit ids -> process_pred_split ids
     | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids

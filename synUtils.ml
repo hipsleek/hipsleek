@@ -95,9 +95,9 @@ let name_of_hprel (hpr: CF.hprel) =
 let args_of_hprel (hpr: CF.hprel) = 
   snd (sig_of_hprel hpr)
 
-(**********************)
-(* UTILS OVER FORMULA *)
-(**********************)
+(*********************)
+(* UTILS FOR FORMULA *)
+(*********************)
 let combine_Star prog f1 f2 = 
   let comb_base f1 f2 =
     let comb_f = CF.mkStar f1 f2 CF.Flow_combine no_pos in
@@ -290,3 +290,60 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = Cprinter.string_of_view_decl in
   Debug.no_1 "Syn.view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
+
+let find_heap_node root (f: CF.formula) =
+  let _, f_p, _, _, _, _ = CF.split_components f in
+  let aliases = MCP.ptr_equations_without_null f_p in
+  let aset = CP.EMapSV.build_eset aliases in
+  let root_aliases = CP.EMapSV.find_equiv_all_new root aset in
+  let f_h_f _ h_f =
+    match h_f with
+    | CF.DataNode ({ h_formula_data_node = pt; } as h_data) ->
+      if mem pt root_aliases then Some (CF.HEmp, [h_data])
+      else None
+    | _ -> None
+  in
+  let n_f, root_node = trans_heap_formula f_h_f f in
+  n_f, root_node
+
+let is_consistent_node_list nodes = 
+  match nodes with
+  | [] -> true
+  | n::ns -> List.for_all (fun d -> 
+      (eq_str d.CF.h_formula_data_name n.CF.h_formula_data_name) &&
+      (List.length n.CF.h_formula_data_arguments == List.length d.CF.h_formula_data_arguments)) ns
+
+let norm_node_list nodes =
+  match nodes with
+  | [] -> failwith "Unexpected empty node list."
+  | n::_ ->
+    let n_args = CP.fresh_spec_vars n.CF.h_formula_data_arguments in
+    let sst_list = List.map (fun n -> List.combine n.CF.h_formula_data_arguments n_args) nodes in
+    let norm_root = { n with CF.h_formula_data_arguments = n_args; } in
+    norm_root, sst_list
+  
+let rec find_common_node_chain root (fs: CF.formula list) =
+  let residue_fs, root_node_list = List.split (List.map (find_heap_node root) fs) in
+  if List.exists is_empty root_node_list then (fs, [])
+  else if List.exists (fun ns -> List.length ns > 1) root_node_list then
+    failwith "There is a formula which has more than one root nodes."
+  else 
+    let root_node_list = List.map List.hd root_node_list in
+    if not (is_consistent_node_list root_node_list) then
+      failwith "The list of root nodes is not consistent."
+    else
+      let root_node, sst_list = norm_node_list root_node_list in
+      let root_node = { root_node with CF.h_formula_data_node = root } in
+      let norm_fs = List.map (fun (f, sst) -> CF.subst_all sst f) (List.combine residue_fs sst_list) in
+      List.fold_left (fun (fs, node_chain) arg -> 
+          let n_fs, arg_node_chain = find_common_node_chain arg fs in
+          n_fs, (node_chain @ arg_node_chain)) 
+        (norm_fs, [CF.DataNode root_node]) (List.filter CP.is_node_typ root_node.CF.h_formula_data_arguments)
+
+let find_common_node_chain root (fs: CF.formula list) =
+  let pr1 = !CP.print_sv in
+  let pr2 = pr_list !CF.print_formula in
+  let pr3 = pr_list !CF.print_h_formula in
+  Debug.no_2 "find_common_node_chain" pr1 pr2 (pr_pair pr2 pr3)
+    find_common_node_chain root fs
+  

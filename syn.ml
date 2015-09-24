@@ -5,6 +5,7 @@ open Gen
 open Others
 open Label_only
 open SynUtils
+module C = Cast
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
@@ -736,6 +737,18 @@ let derive_view prog other_hprels hprels =
   let pr2 = pr_list Cprinter.string_of_view_decl_short in
   Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
     (derive_view prog) other_hprels hprels
+
+(*****************************)
+(***** ELIM HEAD OF PRED *****)
+(*****************************)
+let elim_head_pred prog pred = 
+  let pred_f = C.formula_of_unstruc_view_f pred in
+  let root_node = CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed) in
+  let common_node_chain, _ = find_common_node_chain root_node (CF.list_of_disjuncts pred_f) in
+  pred
+
+let elim_head_pred_list prog preds = 
+  List.map (elim_head_pred prog) preds
 
 (****************)
 (***** MAIN *****)

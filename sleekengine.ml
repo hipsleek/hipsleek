@@ -1620,9 +1620,14 @@ let eq_id s1 s2 = String.compare s1 s2 == 0
 
 let mem_id = Gen.BList.mem_eq eq_id
 
+let select_obj name_of obj_list obj_id_list = 
+  List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list
+
 let select_hprel_assume hprel_list hprel_id_list = 
-  List.partition (fun hpr -> 
-    mem_id (CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_id_list) hprel_list
+  select_obj (fun hpr -> CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_list hprel_id_list
+  
+  (* List.partition (fun hpr ->                                                            *)
+  (*   mem_id (CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_id_list) hprel_list *)
 
 let update_sleek_hprel_assumes upd_hprel_list = 
   sleek_hprel_assumes # set upd_hprel_list
@@ -1728,6 +1733,16 @@ let process_shape_normalize (ids: regex_id_list) =
     new_hprels
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
+
+let process_pred_elim_head (ids: regex_id_list) = 
+  let sel_pred_list, others =
+    match ids with
+    | REGEX_STAR -> !cprog.prog_view_decls, []
+    | REGEX_LIST pids -> 
+      select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
+  in
+  let n_pred_list = Syn.elim_head_pred_list !cprog sel_pred_list in
+  ()
 
 (******************************************************************************)
 
