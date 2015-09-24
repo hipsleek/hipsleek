@@ -1,4 +1,4 @@
-# norm/ex21u2.slk
+# norm/ex21u2.slk (OK)
 
 pred_elim_useless [ll].
 //no change
@@ -22,7 +22,7 @@ The command should be idempotent in that the
 
 # was lemma proving invoked?
   It seems that lemmas were generated
-  but never proven?
+  but never proven? compare with ex21r4.slk
 
 (==lemma.ml#1863==)
 generate_view_rev_rec_lemmas@3
@@ -98,6 +98,25 @@ lseg111<..>
 lseg111<..>
   materialized vars: [(self,full,[lseg111])]
 ===================================================================
+# ex21s1.slk (test file in ex21s1b.slk)
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+
+pred_split [zip].
+
+# Instead of relDefn, can we use pred:
+  What is @RO? root?
+
+pred zip<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+
+# After that, call lemma_infer, followed by shape_derive_view[P1,P2,p3];
+  as shown in ex21s1a.slk
+
 ===================================================================
 ===================================================================
 ===================================================================
