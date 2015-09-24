@@ -8,9 +8,12 @@ data node {
 }.
 
 
+
 pred lseg2a<n,p> == self = p & n=0
-	or self::node<_, q> * q::lseg111<n-1,p> 
+	or self::node<_, q> * q::lseg<n-1,p> 
   inv true.
+
+pred lseg<n,p> == self::lseg111<n,p>.
 
 pred lseg3<n,p> == self = p & n=0
 	or self::node<_, q> * q::lseg111<n-1,p> 
@@ -40,18 +43,14 @@ pred lseg111<n,p> == self = p & n=0
 
 pred_reuse [*][*].
 
-# should we use topological sorting? where shorter names 
-  come first..
-
-In below since lseg3 is shorter than lseg2a, we would expect
-it to come first.
-
 !!! **norm.ml#193:norm_reuse (from_vns):[lseg111,lseg2a,lseg3]
 !!! **norm.ml#194:norm_reuse (to_vns):[lseg111,lseg2a,lseg3]
 
-PRED REUSE FOUND:[(lseg111,lseg2a),(lseg2a,lseg3),(lseg3,lseg111)]
+# should we use topological sorting? where shorter names 
+  come first..
 
-# EXPECT (lseg111,lseg111),(lseg2a,lseg111),(lseg3,lseg111)
+Since lseg3 is shorter than lseg2a, we would expect
+it to come first.
 
 
 */

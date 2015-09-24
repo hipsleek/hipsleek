@@ -2441,6 +2441,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               | Some f1  -> Some (CF.mkOr f1 fc no_pos)
               | None -> Some fc) None n_un_str 
       in
+      let () = y_binfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = try
           not(is_prim_v) && is_view_recursive vdef.I.view_name
