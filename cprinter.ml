@@ -4343,7 +4343,7 @@ let pr_view_decl v =
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
   pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
-    (fun stk -> fmt_string ((pr_list pr_id) stk # get_stk)) v.view_equiv_set;
+    (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
   pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
   pr_add_str_cut  ~emp_test:(Gen.is_empty) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
@@ -4420,7 +4420,7 @@ let pr_view_decl_short v =
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
     fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
     pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
-      (fun stk -> fmt_string ((pr_list pr_id) stk # get_stk)) v.view_equiv_set;
+    (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_short, List.combine v.view_labels... ";
     (* fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;  *)
     (* pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars; *)

@@ -104,7 +104,8 @@ and view_decl = {
   view_is_prim : bool;
   view_is_hrel : bool option; (* bool is PreHeap *)
 
-  view_equiv_set : ident Gen.stack_pr; (* views that are equiv *)
+  view_equiv_set : ((int list) * ident) VarGen.store;
+  (* [] - no change in parameter posn; [..] target position; target view *)
 
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
@@ -629,8 +630,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_vars = vs;
     view_pos = pos;
     view_is_hrel = Some (is_pre);
-    view_equiv_set = new Gen.stack_pr "view_equiv_set" pr_id string_eq ;
-
+    view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id) ;
     view_is_prim = false;
     view_data_name = "";
     view_ho_vars = [];
@@ -697,7 +697,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_pos = pos;
     view_is_hrel = None;
     view_is_prim = true;
-    view_equiv_set = new Gen.stack_pr "view_equiv_set" pr_id string_eq ;
+    view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id);
     view_data_name = "";
     view_ho_vars = [];
     view_cont_vars = [];
@@ -3847,3 +3847,26 @@ let add_view_decl prog vdecl =
     y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
   else
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
+
+let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
+  frm_vdecl.view_equiv_set # set (keep_sst,to_view)
+
+let get_view_name_equiv view_decls vl =
+  let vname = vl.h_formula_view_name in
+  let vdef = look_up_view_def_raw 25 view_decls vname in
+  (* (vname,vdef) *)
+  if vdef.view_equiv_set # is_empty then (vname,vdef,vl)
+  else let (sst,new_name) =  (vdef.view_equiv_set # get) in
+    let args = vl.h_formula_view_arguments in (* need to change other parameters *)
+    let new_args = 
+      if sst==[] then args 
+      else 
+        let new_args = List.combine args sst in
+        let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in
+        List.map fst new_args
+    in
+    let new_vl = {vl with h_formula_view_name = new_name;
+                          h_formula_view_arguments = new_args;
+                 } in
+    (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl)
+  

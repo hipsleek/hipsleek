@@ -25,6 +25,9 @@ pred lseg111<n,p> == self = p & n=0
 
 pred_reuse [*][*].
 
+checkentail x::lseg3<p,1> |- x::lseg2a<n,p>.
+print residue.
+
 /*
 # ex21r4.slk
 
