@@ -744,8 +744,30 @@ let derive_view prog other_hprels hprels =
 let elim_head_pred prog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
   let root_node = CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed) in
-  let common_node_chain, _ = find_common_node_chain root_node (CF.list_of_disjuncts pred_f) in
-  pred
+  let _, common_node_chain = find_common_node_chain root_node (CF.list_of_disjuncts pred_f) in
+  let () = y_binfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
+  match common_node_chain with
+  | [] -> pred
+  | n::ns ->
+    let common_heap = List.fold_left (fun acc f -> CF.mkStarH acc f no_pos) n ns in
+    let common_f = CF.mkBase_simp common_heap (MCP.mkMTrue no_pos) in
+    let args = collect_feasible_heap_args_formula prog [] common_f in
+    let nodes = CF.collect_node_var_formula common_f in
+    let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
+    let dangling_vars = remove_dups dangling_vars in
+    let () = y_binfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
+    let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
+    let fresh_pred_I_args = List.map (fun v -> (v, I)) fresh_pred_args in
+    let hrel_list, unknown_vars = List.split (List.map 
+        (fun v -> C.add_raw_hp_rel prog true true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
+    let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
+    let pred_h = CF.mkViewNode root_node pred.C.view_name fresh_pred_args no_pos in
+    let pred_f = CF.formula_of_heap pred_h no_pos in
+    let lemma = mk_lemma prog "" true unknown_vars [] LEM_INFER Left pred_f unknown_f no_pos in
+    let () = y_binfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in
+    let () = y_binfo_hp (add_str "Lemma RHS" !CF.print_formula) unknown_f in
+    let () = y_binfo_hp (add_str "Lemma" !C.print_coercion) lemma in
+    pred
 
 let elim_head_pred_list prog preds = 
   List.map (elim_head_pred prog) preds

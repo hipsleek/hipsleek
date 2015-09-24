@@ -4,6 +4,7 @@ open Globals
 open Gen
 open Others
 open Label_only
+module C = Cast
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
@@ -344,6 +345,69 @@ let find_common_node_chain root (fs: CF.formula list) =
   let pr1 = !CP.print_sv in
   let pr2 = pr_list !CF.print_formula in
   let pr3 = pr_list !CF.print_h_formula in
-  Debug.no_2 "find_common_node_chain" pr1 pr2 (pr_pair pr2 pr3)
+  let pr4 = fun (_, h_l) -> pr3 h_l in
+  Debug.no_2 "find_common_node_chain" pr1 pr2 (* (pr_pair pr2 pr3) *) pr4
     find_common_node_chain root fs
-  
+
+(*******************)
+(* UTILS FOR LEMMA *)
+(*******************)
+let is_not_global_hp_def prog i =
+  try
+    let todo_unk = C.look_up_hp_def_raw prog.C.prog_hp_decls i 
+    in false
+  with _ -> true
+
+let is_not_global_rel prog i =
+  try
+    let todo_unk = C.look_up_rel_def_raw (prog.C.prog_rel_decls # get_stk) i 
+    in false
+  with _ -> true
+
+let univ_vars_of_lemma l_head = 
+  let h, p, vp, _, _,_ = CF.split_components l_head in
+  let pvars = MCP.mfv p in
+  let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> 
+    not (id = Globals.cyclic_name || 
+         id = Globals.acyclic_name || 
+         id = Globals.concrete_name || 
+         id = Globals.set_comp_name)) pvars in (* ignore cyclic & acyclic rels *)
+  let hvars = CF.h_fv h in
+  let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
+  Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
+
+let mater_vars_of_lemma prog l_head l_body = 
+  let args = CF.fv_simple_formula l_head in 
+  let m_vars = Astsimp.find_materialized_prop args [] l_body in
+  let m_vars = List.map (fun m -> 
+    let vs = m.C.mater_target_view in
+    let vs2 = List.filter (fun v -> (is_not_global_rel prog v) && (is_not_global_hp_def prog v)) vs in
+    (m, vs, vs2)) m_vars in
+  let m_vars = List.filter (fun (m, vs, vs2) -> vs == [] || vs2 != []) m_vars in
+  let m_vars = List.map (fun (m, vs, vs2) -> { m with C.mater_target_view = vs2 }) m_vars in
+  m_vars
+
+(* Adapted from Astsimp.trans_one_coercion_x *)
+let mk_lemma prog l_name l_is_classic l_ivars l_itypes l_kind l_type l_head l_body pos =
+  let iobj = new Globals.inf_obj_sub in
+  let () = iobj # set_list l_itypes in
+  { C.coercion_type = l_type;
+    C.coercion_exact = l_is_classic;
+    C.coercion_name = l_name;
+    C.coercion_head = l_head;
+    C.coercion_head_norm = CF.mkTrue (CF.mkTrueFlow ()) pos; (* TODO *)
+    C.coercion_body = l_body; 
+    C.coercion_body_norm = CF.struc_formula_of_formula (CF.mkTrue (CF.mkTrueFlow ()) pos) pos; (* TODO *)
+    C.coercion_impl_vars = [];
+    C.coercion_univ_vars = univ_vars_of_lemma l_head;
+    C.coercion_infer_vars = l_ivars;
+    C.coercion_infer_obj = iobj;
+    C.coercion_fold_def = new Gen.mut_option;
+    C.coercion_head_view = Astsimp.find_view_name l_head Globals.self pos;
+    C.coercion_body_view = Astsimp.find_view_name l_body Globals.self pos;
+    C.coercion_body_pred_list = CF.extr_pred_list l_body;
+    C.coercion_mater_vars = mater_vars_of_lemma prog l_head l_body;
+    C.coercion_case = C.case_of_coercion l_head l_body;
+    C.coercion_type_orig = None;
+    C.coercion_kind = l_kind;
+    C.coercion_origin = LEM_GEN; }
