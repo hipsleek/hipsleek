@@ -299,7 +299,13 @@ let trans_hrel_to_view_formula (f: CF.formula) =
     match hf with
     | CF.HRel _ ->
       let hrel_name, hrel_args = sig_of_hrel hf in
-      Some (CF.mk_HRel_as_view hrel_name hrel_args no_pos, [])
+      let n_hf = CF.mk_HRel_as_view hrel_name hrel_args no_pos in
+      (match n_hf with
+      | CF.ViewNode v ->
+        (* Setting imm is important for lemma proving *)
+        let n_hf = CF.ViewNode { v with CF.h_formula_view_imm = CP.ConstAnn(Mutable); } in
+        Some (n_hf, [])
+      | _ -> None)
     | _ -> None
   in
   fst (trans_heap_formula f_h_f f)

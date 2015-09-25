@@ -805,10 +805,10 @@ let elim_head_pred iprog cprog pred =
       let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
       let norm_cviews = (* SleekUtils.norm_cview_decls iprog cprog *) cviews in
       let () = cprog.C.prog_view_decls <- (cprog.C.prog_view_decls @ norm_cviews) in
-      let () = y_binfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
-      let () = y_binfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
-      let () = y_binfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
-      let () = y_binfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
+      let () = y_tinfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
+      let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
+      let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
+      let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
       let rres, _ = Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
       if not rres then pred
       else pred
