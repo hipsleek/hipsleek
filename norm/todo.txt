@@ -118,14 +118,24 @@ or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
   as shown in ex21s1a.slk
 
 ===================================================================
-# ex21r4c.slk
+# ex21r4d.slk
 
-pred lseg<n,p> == self::lseg111<n,p>.
+!!! **norm.ml#186:
+ Failed : self::lseg3<p,n>@M&{FLOW,(1,26)=__flow#E}[] <->  self::lseg2a<n,p>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#2502:
 
-# can we handle explicit pred equivalence by
-  adding to view_equiv_set.
+# GOT
+PRED REUSE FOUND:[(lseg2a,lseg2a),(lseg3,lseg3)]
 
-!!! **astsimp.ml#2455:view_pt_by_self:[lseg111]
+# EXPECTS:
+PRED REUSE FOUND:[(lseg2a,lseg2a),(lseg3,lseg2a)]
+
+
+# equiv proving fails. the reason is that we prove
+  using two separate <-- and -->
+  instead of a single <->
+
+  Can we do this?
 ===================================================================
 ===================================================================
 ===================================================================
