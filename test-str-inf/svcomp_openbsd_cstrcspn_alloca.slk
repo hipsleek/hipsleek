@@ -7,62 +7,81 @@ pred_prim Dangling<>.
 
 HeapPred P(char_star@NI x).
 HeapPred Q(char_star@NI x).
-HeapPred HP_1618(int x, char_star@NI y).
-HeapPred HP_1619(char_star@NI x, char_star@NI y).
-HeapPred HP_1628(int x, char_star@NI y).
-HeapPred HP_1629(char_star@NI x, char_star@NI y).
+HeapPred U(char_star@NI x).
+HeapPred HP_1658(int x, char_star@NI y).
+HeapPred HP_1659(char_star@NI x, char_star@NI y).
+HeapPred HP_1678(int x, char_star@NI y, char_star@NI z).
+HeapPred HP_1679(char_star@NI x, char_star@NI y, char_star@NI z).
+
 
 
 /*-------------------------------while1-------------------------------*/
 
 relAssume 
-Q(from)&
-true --> from::char_star<v_1616,Anon_1617>@M * HP_1618(v_1616,from) * 
-         HP_1619(Anon_1617,from)&
+U(s)&
+true --> s::char_star<Anon_1656,q_1657>@M * HP_1658(Anon_1656,s) * 
+         HP_1659(q_1657,s)&
 true.
 
 relAssume 
-P(t)&
-true --> t::char_star<Anon_1626,q_1627>@M * HP_1628(Anon_1626,t) * 
-         HP_1629(q_1627,t)&
+HP_1659(q_1657,s)&true |#| s::char_star<Anon_1656,q_1657>@M&
+true --> q_1657::char_star<Anon_1676,q_1677>@M * 
+         HP_1678(Anon_1676,s,q_1657) * 
+         HP_1679(q_1677,s,q_1657)&
 true.
 
 relAssume 
-HP_1629(q_1627,t)&t'=t & q=q_1627 & t!=null |#| t'::char_star<v,q>@M&
-v=v_1616 & v=0 --> emp&
+HP_1679(q_1666,s,q_1657)&
+true |#| s::char_star<Anon_1656,q_1657>@M * 
+         q_1657::char_star<Anon_1656,q_1666>@M&
+Anon_1656!=0 & Anon_1656!=c --> U(q_1657)&
 true.
 
 relAssume 
-HP_1628(Anon_1626,t)&t'=t & Anon_20=Anon_1626 & t!=null --> emp&
+HP_1678(Anon_1676,s,q_1657)&
+q_1657!=null & Anon_20=Anon_1676 & Anon_19=q_1657 & q=q_1657 & s_1661=s --> emp&
 true.
 
 relAssume 
-HP_1619(Anon_1617,from)&
-from'=from & Anon_19=Anon_1617 |#| from::char_star<v_1616,Anon_1617>@M&
-v=0 & v=v_1616 --> emp&
+HP_1658(Anon_1656,s)&
+v=Anon_1656 & Anon_18=Anon_1656 & s_1661=s & v!=0 --> emp&
 true.
 
 relAssume 
-HP_1618(v_1616,from)&from'=from & v=v_1616 & v=0 --> emp&
+HP_1679(q_1677,s,q_1657)&
+s_1661=s & q=q_1657 & s'=q & Anon_19=q_1657 & q_1666=q_1677 & q_1657!=null & 
+tmp'=s_1661 |#| s'::char_star<x',q_1666>@M&
+Anon_18=Anon_1656 & v=Anon_1656 & c'=c & x'=v & x'!=c' & x'=0 --> emp&
 true.
 
 relAssume 
-HP_1629(q,t)&true |#| t::char_star<v_1616,q>@M&v_1616!=0 --> P(q)&
+HP_1678(Anon_1676,s,q_1657)&
+s_1661=s & q=q_1657 & s'=q & Anon_19=q_1657 & Anon_20=Anon_1676 & 
+q_1657!=null & tmp'=s_1661 --> emp&
 true.
 
 relAssume 
-HP_1619(Anon_1617,from)&true |#| from::char_star<v_1616,Anon_1617>@M&
-v_1616!=0 --> Q(Anon_1617)&
+HP_1658(Anon_1656,s)&
+s_1661=s & Anon_18=Anon_1656 & v=Anon_1656 & x'=v & x'=0 & tmp'=s_1661 --> emp&
 true.
 
 relAssume 
-HP_1628(Anon_1626,t)&
-t!=null & Anon_20=Anon_1626 & t_1649=t --> emp&
+HP_1679(q_1677,s,q_1657)&
+s_1661=s & q=q_1657 & s'=q & Anon_19=q_1657 & q_1666=q_1677 & q_1657!=null & 
+tmp'=s_1661 |#| s'::char_star<x',q_1666>@M&
+Anon_18=Anon_1656 & v=Anon_1656 & c'=c & x'=v & x'=c' --> emp&
 true.
 
 relAssume 
-HP_1618(v_1616,from)&
-Anon_18=v_1616 & v=v_1616 & from_1643=from & Anon_1644=v & v!=0 --> emp&
+HP_1678(Anon_1676,s,q_1657)&
+s_1661=s & q=q_1657 & s'=q & Anon_19=q_1657 & Anon_20=Anon_1676 & 
+q_1657!=null & tmp'=s_1661 --> emp&
 true.
+
+relAssume 
+HP_1658(Anon_1656,s)&
+s_1661=s & Anon_18=Anon_1656 & v=Anon_1656 & x'=v & x'=c' & tmp'=s_1661 & 
+c'=c --> emp&
+true. 
 
 shape_derive_view [*].

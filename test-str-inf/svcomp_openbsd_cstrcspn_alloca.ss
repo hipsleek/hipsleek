@@ -29,19 +29,22 @@ infer [P,Q,@classic,@pure_field]
   p = plus_plus_char(p);
   int c = get_char(tmp);
   char_star s = s2; 
-  while(true)
-  infer [U,@classic,@pure_field]
-    requires U(s)
-    ensures true;
-  {
-     char_star tmp = s;
-     s = plus_plus_char(s);
-     int x = get_char(tmp);
-     write_char(s, x); 
-     if (x == c){
-        return;
-      }
+  if (while2(s,c) == 1)
+     return;
+}
+
+int while2(ref char_star s, int c)
+infer [U,@classic,@pure_field]
+  requires U(s)
+  ensures true;
+{
+  char_star tmp = s;
+  s = plus_plus_char(s);
+  int x = get_char(tmp);
+  write_char(s, x); 
+  if (x == c)
+     return 1;
   if (x == 0)
-     break;
-  }
+     return 0;
+  return while2(s,c);
 }
