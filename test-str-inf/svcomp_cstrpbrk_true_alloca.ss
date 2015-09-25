@@ -30,9 +30,10 @@ infer [P,Q,@classic,@pure_field]
      char_star s = s2; 
      while2(s,c);
      if (get_char(s) != c){
-        sc1 = plus_plus_char(sc1);
-        while1(sc1,s);
+     	return;   
      }
+     sc1 = plus_plus_char(sc1);
+     while1(s1,s2);
   }
 }
 
