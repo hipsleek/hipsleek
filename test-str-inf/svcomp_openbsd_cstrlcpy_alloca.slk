@@ -1,0 +1,80 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred_prim Dangling<>.
+
+HeapPred P(char_star@NI x).
+HeapPred Q(char_star@NI x).
+HeapPred HP_1668(int x, char_star@NI y).
+HeapPred HP_1669(char_star@NI x, char_star@NI y).
+HeapPred HP_1678(int x, char_star@NI y).
+HeapPred HP_1679(char_star@NI x, char_star@NI y).
+
+
+/*-------------------------------while1-------------------------------*/
+
+relAssume 
+Q(s2)&s2'=s2 --> emp&
+true.
+
+relAssume 
+P(s1)&s1'=s1 --> emp&
+true.
+
+relAssume 
+P(s1)&
+true --> s1::char_star<Anon_1666,q_1667>@M * HP_1668(Anon_1666,s1) * 
+         HP_1669(q_1667,s1)&
+true.
+
+relAssume 
+Q(s2)&
+true --> s2::char_star<Anon_1676,q_1677>@M * HP_1678(Anon_1676,s2) * 
+         HP_1679(q_1677,s2)&
+true.
+
+relAssume 
+HP_1679(q_1677,s2)&
+s2_1681=s2 & q_1673=q_1677 & s2'=q_1673 & Anon_19=q_1677 |#| s2::char_star<Anon_1676,q_1677>@M&
+v=0 & Anon_1672=Anon_1676 & v=Anon_1676 --> emp&
+true.
+
+relAssume 
+HP_1678(Anon_1676,s2)&
+s2_1681=s2 & Anon_1672=Anon_1676 & v=Anon_1676 & v=0 --> emp&
+true.
+
+relAssume 
+HP_1669(q_1667,s1)&
+s1_1671=s1 & q=q_1667 & s1'=q & q_1686=q_1667 & s1!=null |#| s1_1671::char_star<v,q_1686>@M&
+Anon_1672=Anon_1676 & v=Anon_1676 & v=0 --> emp&
+true.
+
+relAssume 
+HP_1668(Anon_1666,s1)&
+s1_1671=s1 & Anon_18=Anon_1666 & Anon_20=Anon_1666 & s1!=null --> emp&
+true.
+
+relAssume 
+HP_1669(q_1667,s1)&true |#| s1::char_star<Anon_1676,q_1667>@M&
+Anon_1676!=0 --> P(q_1667)&
+true.
+
+relAssume 
+HP_1679(q_1677,s2)&true |#| s2::char_star<Anon_1676,q_1677>@M&
+Anon_1676!=0 --> Q(q_1677)&
+true.
+
+relAssume 
+HP_1678(Anon_1676,s2)&
+v=Anon_1676 & Anon_1672=Anon_1676 & s2_1681=s2 & v!=0 --> emp&
+true.
+
+relAssume 
+HP_1668(Anon_1666,s1)&
+s1!=null & Anon_20=Anon_1666 & Anon_18=Anon_1666 & s1_1671=s1 --> emp&
+true.
+
+shape_derive_view [*].
