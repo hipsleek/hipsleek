@@ -7,6 +7,7 @@ open Label_only
 open SynUtils
 open Exc.GTable
 module C = Cast
+module I = Iast
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
@@ -742,7 +743,7 @@ let derive_view prog other_hprels hprels =
 (*****************************)
 (***** ELIM HEAD OF PRED *****)
 (*****************************)
-let elim_head_pred prog pred = 
+let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
   let root_node = CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed) in
   let _, common_node_chain = find_common_node_chain root_node (CF.list_of_disjuncts pred_f) in
@@ -752,7 +753,7 @@ let elim_head_pred prog pred =
   | n::ns ->
     let common_heap = List.fold_left (fun acc f -> CF.mkStarH acc f no_pos) n ns in
     let common_f = CF.mkBase_simp common_heap (MCP.mkMTrue no_pos) in
-    let args = collect_feasible_heap_args_formula prog [] common_f in
+    let args = collect_feasible_heap_args_formula cprog [] common_f in
     let nodes = CF.collect_node_var_formula common_f in
     let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
     let dangling_vars = remove_dups dangling_vars in
@@ -760,7 +761,7 @@ let elim_head_pred prog pred =
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
     let fresh_pred_I_args = List.map (fun v -> (v, I)) fresh_pred_args in
     let hrel_list, unknown_vars = List.split (List.map 
-        (fun v -> C.add_raw_hp_rel prog true true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
+        (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
     let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
     let pred_h = CF.mkViewNode root_node pred.C.view_name fresh_pred_args no_pos in
     (* let norm_flow = { CF.formula_flow_interval = exlist # get_hash n_flow; CF.formula_flow_link = None } in *)
@@ -770,16 +771,27 @@ let elim_head_pred prog pred =
     let unknown_f = CF.push_exists ex_vars unknown_f in
     let classic = CP.SpecVar (UNK, "classic", Unprimed) in
     let l_name = "lem_inf_" ^ pred.C.view_name in
-    let lemma = mk_lemma prog l_name true (unknown_vars @ [classic]) [] LEM_INFER Left pred_f unknown_f no_pos in
-    let () = y_binfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in
-    let () = y_binfo_hp (add_str "Lemma RHS" !CF.print_formula) unknown_f in
-    let () = y_binfo_hp (add_str "Lemma" !C.print_coercion) lemma in
-    let inf_ctx = x_add Lemproving.verify_lemma 10 [lemma] [] prog l_name Left in
+    (* let lemma = mk_lemma cprog l_name true (unknown_vars @ [classic]) [] LEM_INFER Left pred_f unknown_f no_pos in *)
+    (* let () = y_binfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in                                          *)
+    (* let () = y_binfo_hp (add_str "Lemma RHS" !CF.print_formula) unknown_f in                                       *)
+    (* let () = y_binfo_hp (add_str "Lemma" !C.print_coercion) lemma in                                               *)
+    (* let inf_ctx = x_add Lemproving.verify_lemma 10 [lemma] [] cprog l_name Left in                                 *)
+    
+    let ihead = Rev_ast.rev_trans_formula pred_f in
+    let ibody = Rev_ast.rev_trans_formula unknown_f in
+    let ivars = List.map CP.name_of_spec_var (unknown_vars @ [classic]) in
+    let ilemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left ivars ihead ibody in
+    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
+    let llemma, rlemma = Astsimp.trans_one_coercion iprog ilemma in
+    let () = y_binfo_hp (add_str "llemma" (pr_list !C.print_coercion)) llemma in
+    let () = y_binfo_hp (add_str "rlemma" (pr_list !C.print_coercion)) rlemma in
+    let inf_ctx = x_add Lemproving.verify_lemma 10 llemma rlemma cprog l_name Left in
+    
     let () = y_binfo_hp (add_str "Inferred Ctx" !CF.print_list_context) inf_ctx in
     pred
 
-let elim_head_pred_list prog preds = 
-  List.map (elim_head_pred prog) preds
+let elim_head_pred_list iprog cprog preds = 
+  List.map (elim_head_pred iprog cprog) preds
 
 (****************)
 (***** MAIN *****)

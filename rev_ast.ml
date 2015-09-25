@@ -256,5 +256,13 @@ let transform_hp_rels_to_iviews hp_rels =
   let pr2 = pr_list (pr_triple pr_id pr_id Iprinter.string_of_view_decl) in
   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
 
+let rev_trans_hp_decl (hp_decl: C.hp_decl): I.hp_decl = 
+  { I.hp_name = hp_decl.C.hp_name;
+    I.hp_typed_inst_vars = List.map (fun (sv, k) -> 
+        (CP.type_of_spec_var sv, CP.name_of_spec_var sv, k)) hp_decl.C.hp_vars_inst;
+    I.hp_part_vars = hp_decl.C.hp_part_vars;
+    I.hp_root_pos = hp_decl.C.hp_root_pos;
+    I.hp_is_pre = hp_decl.C.hp_is_pre;
+    I.hp_formula = rev_trans_formula hp_decl.C.hp_formula; }
 
 let () = Solver.rev_trans_formula := rev_trans_formula
