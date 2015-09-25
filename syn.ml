@@ -825,6 +825,11 @@ let elim_head_pred iprog cprog pred =
         let () = y_binfo_hp (add_str "Elim head view" Cprinter.string_of_view_decl_short) norm_pred in
         norm_pred
 
+let elim_head_pred iprog cprog pred = 
+  let pr = Cprinter.string_of_view_decl_short in
+  Debug.no_1 "elim_head_pred" pr pr 
+    (fun _ -> elim_head_pred iprog cprog) pred
+
 let elim_head_pred_list iprog cprog preds = 
   List.map (elim_head_pred iprog cprog) preds
 

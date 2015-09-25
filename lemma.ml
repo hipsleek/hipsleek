@@ -386,7 +386,7 @@ let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog
   let pr1 = pr_list Iprinter.string_of_coerc_decl in
   let pr2 = pr_list !CF.print_list_context in
   Debug.no_1 "manage_infer_lemmas_x" pr1 (pr_pair string_of_bool (pr_opt pr2))
-    (fun _ -> manage_infer_lemmas_x str repo iprog cprog) repo
+    (fun _ -> manage_infer_lemmas_x ~res_print ~pop_all str repo iprog cprog) repo
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
