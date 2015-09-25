@@ -1619,17 +1619,17 @@ let eq_id s1 s2 = String.compare s1 s2 == 0
 
 let mem_id = Gen.BList.mem_eq eq_id
 
-let select_obj name_of obj_list obj_id_list = 
-  List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list
+(* let select_obj name_of obj_list obj_id_list =                                                       *)
+(*   List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list                             *)
 
-let select_hprel_assume hprel_list hprel_id_list = 
-  select_obj (fun hpr -> CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_list hprel_id_list
+(* let select_hprel_assume hprel_list hprel_id_list =                                                  *)
+(*   select_obj (fun hpr -> CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_list hprel_id_list *)
   
   (* List.partition (fun hpr ->                                                            *)
   (*   mem_id (CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_id_list) hprel_list *)
 
-let update_sleek_hprel_assumes upd_hprel_list = 
-  sleek_hprel_assumes # set upd_hprel_list
+(* let update_sleek_hprel_assumes upd_hprel_list =  *)
+(*   sleek_hprel_assumes # set upd_hprel_list       *)
 
 let print_sleek_hprel_assumes () =
   (* can we have this at a better place? *)
@@ -1642,17 +1642,18 @@ let print_sleek_hprel_assumes () =
   else ()
 
 let process_sleek_hprel_assumes_others s (ids: regex_id_list) f_proc = 
-  let () = classify_sleek_hprel_assumes () in
-  let () = print_endline_quiet "\n========================" in
-  let () = print_endline_quiet (" Performing "^s) in
-  let () = print_endline_quiet "========================" in
-  let sel_hprel_assume_list, others =
-    match ids with
-    | REGEX_STAR -> sleek_hprel_assumes # get, []
-    | REGEX_LIST hps -> select_hprel_assume (sleek_hprel_assumes # get) hps
-  in
-  let res = f_proc others sel_hprel_assume_list in
-  update_sleek_hprel_assumes (res @ others)
+  (* let () = classify_sleek_hprel_assumes () in                               *)
+  (* let () = print_endline_quiet "\n========================" in              *)
+  (* let () = print_endline_quiet (" Performing "^s) in                        *)
+  (* let () = print_endline_quiet "========================" in                *)
+  (* let sel_hprel_assume_list, others =                                       *)
+  (*   match ids with                                                          *)
+  (*   | REGEX_STAR -> sleek_hprel_assumes # get, []                           *)
+  (*   | REGEX_LIST hps -> select_hprel_assume (sleek_hprel_assumes # get) hps *)
+  (* in                                                                        *)
+  (* let res = f_proc others sel_hprel_assume_list in                          *)
+  (* update_sleek_hprel_assumes (res @ others)                                 *)
+  SynUtils.process_hprel_assumes_others s sleek_hprel_assumes ids f_proc
 
 let process_sleek_hprel_assumes s (ids: regex_id_list) f_proc = 
   let f others x = f_proc x in
@@ -1738,7 +1739,7 @@ let process_pred_elim_head (ids: regex_id_list) =
     match ids with
     | REGEX_STAR -> !cprog.prog_view_decls, []
     | REGEX_LIST pids -> 
-      select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
+      SynUtils.select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
   in
   let n_pred_list = Syn.elim_head_pred_list iprog !cprog sel_pred_list in
   ()

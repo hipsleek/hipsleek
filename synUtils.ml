@@ -96,6 +96,25 @@ let name_of_hprel (hpr: CF.hprel) =
 let args_of_hprel (hpr: CF.hprel) = 
   snd (sig_of_hprel hpr)
 
+let select_obj name_of obj_list obj_id_list = 
+  List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list
+
+let select_hprel_assume hprel_list hprel_id_list = 
+  select_obj (fun hpr -> CP.name_of_spec_var (name_of_hprel hpr)) hprel_list hprel_id_list
+
+let process_hprel_assumes_others s hprel_assume_stk (ids: regex_id_list) f_proc = 
+  let () = print_endline_quiet "\n========================" in
+  let () = print_endline_quiet (" Performing "^s) in
+  let () = print_endline_quiet "========================" in
+  let () = hprel_assume_stk # set (CF.add_infer_type_to_hprel (hprel_assume_stk # get)) in
+  let sel_hprel_assume_list, others =
+    match ids with
+    | REGEX_STAR -> hprel_assume_stk # get, []
+    | REGEX_LIST hps -> select_hprel_assume (hprel_assume_stk # get) hps
+  in
+  let res = f_proc others sel_hprel_assume_list in
+  hprel_assume_stk # set (res @ others)
+
 (*********************)
 (* UTILS FOR FORMULA *)
 (*********************)
