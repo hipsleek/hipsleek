@@ -1,0 +1,126 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred_prim Dangling<>.
+
+HeapPred P(char_star x).
+HeapPred HP_1658(int x, char_star@NI y).
+HeapPred HP_1659(char_star@NI x, char_star@NI y).
+
+HeapPred U(char_star@NI x).
+HeapPred Q(char_star@NI x).
+HeapPred HP_1946(int x, char_star@NI y).
+HeapPred HP_1961(int x, char_star@NI y).
+HeapPred HP_1947(char_star@NI x, char_star@NI y).
+HeapPred HP_1962(char_star@NI x, char_star@NI y).
+
+/*-------------------------------while1-------------------------------*/
+relAssume
+P(s)&
+true --> s::char_star<v_1656,Anon_1657>@M * HP_1658(v_1656,s) * 
+         HP_1659(Anon_1657,s)&
+true.
+
+relAssume
+HP_1659(Anon_1657,s)&
+s'=s & Anon_19=Anon_1657 |#| s::char_star<v_1656,Anon_1657>@M&
+v=0 & v=v_1656 --> emp&
+true.
+
+relAssume
+HP_1658(v_1656,s)&s'=s & v=v_1656 & v=0 --> emp&
+true.
+
+relAssume
+HP_1659(Anon_1657,s)&true |#| s::char_star<v_1656,Anon_1657>@M&
+v_1656!=0 --> P(Anon_1657)&
+true.
+
+relAssume
+HP_1658(v_1656,s)&
+Anon_18=v_1656 & v=v_1656 & s_1672=s & v!=0 --> emp&
+true.
+
+/*-------------------------------while2-------------------------------*/
+
+relAssume
+Q(s2)&
+true --> s2::char_star<Anon_1944,q_1945>@M * HP_1946(Anon_1944,s2) * 
+         HP_1947(q_1945,s2)&
+true.
+
+relAssume 
+U(s1)&
+true --> s1::char_star<Anon_1959,q_1960>@M * HP_1961(Anon_1959,s1) * 
+         HP_1962(q_1960,s1)&
+true.
+
+relAssume 
+HP_1962(q_1954,s1)&true |#| s1::char_star<Anon_1944,q_1954>@M&
+Anon_1944!=0 --> U(q_1954)&
+true.
+
+relAssume 
+HP_1947(q_1945,s2)&true |#| s2::char_star<Anon_1944,q_1945>@M&
+Anon_1944!=0 --> Q(q_1945)&
+true.
+
+relAssume 
+HP_1961(Anon_1959,s1)&
+s1!=null & Anon_20=Anon_1959 & s1_1977=s1 --> emp&
+true.
+
+relAssume 
+HP_1946(Anon_1944,s2)&
+v=Anon_1944 & Anon_18=Anon_1944 & s2_1949=s2 & Anon_1972=v & v!=0 --> emp&
+true.
+
+relAssume 
+HP_1962(q_1960,s1)&
+s1_1977=s1 & q_1954=q_1960 & s1!=null & q_1973=q_1954 & s1'=q_1973 |#| 
+s1_1977::char_star<x',q_1954>@M&
+Anon_18=Anon_1944 & v=Anon_1944 & x'=v & x'!=0 & Anon_1972=x' --> emp&
+true.
+
+relAssume 
+HP_1961(Anon_1959,s1)&
+s1_1977=s1 & Anon_20=Anon_1959 & s1!=null --> emp&
+true.
+
+relAssume 
+HP_1947(q_1945,s2)&
+s2_1949=s2 & q=q_1945 & s2'=q & Anon_19=q_1945 & tmp'=s2_1949 |#| s2::char_star<Anon_1944,q_1945>@M&
+Anon_1972=x' & x'!=0 & x'=v & Anon_18=Anon_1944 & v=Anon_1944 --> emp&
+true.
+
+relAssume 
+HP_1946(Anon_1944,s2)&
+s2_1949=s2 & Anon_18=Anon_1944 & v=Anon_1944 & x'=v & x'!=0 & Anon_1972=x' & 
+tmp'=s2_1949 --> emp&
+true.
+
+relAssume 
+HP_1962(q_1960,s1)&
+s1'=s1 & q_1954=q_1960 & s1!=null |#| s1'::char_star<x',q_1954>@M&
+Anon_18=Anon_1944 & v=Anon_1944 & x'=v & x'=0 --> emp&
+true.
+
+relAssume 
+HP_1961(Anon_1959,s1)&
+s1'=s1 & Anon_20=Anon_1959 & s1!=null --> emp&
+true.
+
+relAssume
+HP_1947(q_1945,s2)&
+s2_1949=s2 & q=q_1945 & s2'=q & Anon_19=q_1945 & tmp'=s2_1949 |#| s2::char_star<Anon_1944,q_1945>@M&
+x'=0 & x'=v & Anon_18=Anon_1944 & v=Anon_1944 --> emp&
+true.
+
+relAssume
+HP_1946(Anon_1944,s2)&
+s2_1949=s2 & Anon_18=Anon_1944 & v=Anon_1944 & x'=v & x'=0 & tmp'=s2_1949 --> emp&
+true.
+
+shape_derive_view [*].
