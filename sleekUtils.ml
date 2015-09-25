@@ -40,7 +40,9 @@ let process_selective_iview_decls is_all iprog iviews =
   let () = x_tinfo_pp "after check_fixpt" no_pos in
   let () = 
     if is_all then iprog.I.prog_view_decls <- tmp_views
-    else iprog.I.prog_view_decls <- (iprog.I.prog_view_decls @ iviews)
+    else 
+      (* iprog.I.prog_view_decls <- (iprog.I.prog_view_decls @ iviews) *)
+      List.iter (I.update_view_decl iprog) iviews
   in
   (* collect immutable info for splitting view params *)
   let _ = List.map (fun v -> 

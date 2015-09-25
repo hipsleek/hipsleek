@@ -3803,3 +3803,12 @@ let prim_sanity_check iprog=
   let pr_procs prog= (pr_list pr_proc) prog.prog_proc_decls in
   Debug.no_1 "prim_sanity_check" pr_procs pr_none
       (fun _ -> prim_sanity_check_x iprog) iprog
+
+let update_view_decl prog vdecl = 
+  let vdecl_id = vdecl.view_name in
+  let same_vdecls, others = List.partition (fun v -> 
+      eq_str v.view_name vdecl_id) prog.prog_view_decls in
+  let () = if not (is_empty same_vdecls) then 
+      report_warning no_pos ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog") 
+  in
+  prog.prog_view_decls <- others @ [vdecl]

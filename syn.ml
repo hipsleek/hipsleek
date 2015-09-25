@@ -666,7 +666,6 @@ let rec dangling_parameterizing hprels =
   
   helper [] hprels
 
-
 let dangling_parameterizing hprels = 
   let pr = pr_hprel_list in
   Debug.no_1 "Syn:parameterizing" pr pr 
@@ -675,7 +674,7 @@ let dangling_parameterizing hprels =
 (***********************************)
 (***** TRANSFORM HPREL TO VIEW *****)
 (***********************************)
-let trans_hprel_to_view prog hprels = 
+let trans_hprel_to_view iprog cprog hprels = 
   let hprel_lists = partition_hprel_list hprels in
   let single_hprel_lists, others = List.partition (fun (_, l) -> List.length l == 1) hprel_lists in
   let single_hprel_list = List.map (fun (sv, l) -> (sv, List.hd l)) single_hprel_lists in
@@ -684,14 +683,21 @@ let trans_hprel_to_view prog hprels =
       let svl = List.map fst others in
       y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
   in
-  List.map (fun (sv, hpr) ->
-    let vdecl = if !Globals.new_pred_syn then view_decl_of_hprel prog hpr else
-      let () = y_winfo_pp "to add Saout.view_decl_of_hprel prog hpr" in
-      view_decl_of_hprel prog hpr
+  let derived_views = List.map (fun (sv, hpr) ->
+    let vdecl = 
+      if !Globals.new_pred_syn then view_decl_of_hprel cprog hpr 
+      else
+        let () = y_winfo_pp "to add Saout.view_decl_of_hprel prog hpr" in
+        view_decl_of_hprel cprog hpr
     in
-    let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in
+    (* let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in *)
     vdecl) single_hprel_list
-
+  in
+  (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
+  let norm_derived_views = norm_derived_views iprog cprog derived_views in
+  let () = y_binfo_hp (add_str "Derived Views" (pr_list Cprinter.string_of_view_decl_short)) norm_derived_views in
+  norm_derived_views
+  
 (*************************)
 (***** DERIVING VIEW *****)
 (*************************)
@@ -728,17 +734,17 @@ let derive_view_norm prog other_hprels hprels =
   let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
   simplified_selective_hprels
 
-let derive_view prog other_hprels hprels = 
-  let simplified_selective_hprels = derive_view_norm prog other_hprels hprels in
+let derive_view iprog cprog other_hprels hprels = 
+  let simplified_selective_hprels = derive_view_norm cprog other_hprels hprels in
   (* DERIVING VIEW *)
-  let derived_views = trans_hprel_to_view prog simplified_selective_hprels in
+  let derived_views = trans_hprel_to_view iprog cprog simplified_selective_hprels in
   (derived_views, simplified_selective_hprels)
 
-let derive_view prog other_hprels hprels = 
+let derive_view iprog cprog other_hprels hprels = 
   let pr1 = Cprinter.string_of_hprel_list_short in
   let pr2 = pr_list Cprinter.string_of_view_decl_short in
   Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
-    (derive_view prog) other_hprels hprels
+    (derive_view iprog cprog) other_hprels hprels
 
 (*****************************)
 (***** ELIM HEAD OF PRED *****)
@@ -793,25 +799,31 @@ let elim_head_pred iprog cprog pred =
     let ires, _ = Lemma.manage_infer_lemmas [ilemma] iprog cprog in
     if not ires then pred
     else
+      (* derived_views have been added into prog_view_decls of iprog and cprog *)
       let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
           CF.sleek_hprel_assumes snd (REGEX_LIST (List.map CP.name_of_spec_var unknown_vars))
-          (derive_view cprog) 
+          (derive_view iprog cprog) 
       in
       (* Equiv test to form new pred *)
-      let rbody = Rev_ast.rev_trans_formula (trans_hrel_to_view_formula unknown_f) in
+      let cbody = trans_hrel_to_view_formula unknown_f in
+      let rbody = Rev_ast.rev_trans_formula cbody in
       let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] ihead rbody in
-      (* The selective I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
-      let iviews = List.map Rev_ast.rev_trans_view_decl derived_views in
-      let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
-      let norm_cviews = (* SleekUtils.norm_cview_decls iprog cprog *) cviews in
-      let () = List.iter (Cast.update_view_decl cprog) norm_cviews in
-      let () = y_tinfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
-      let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
-      let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
-      let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
       let rres, _ = Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
       if not rres then pred
-      else pred
+      else
+        let vbody = CF.set_flow_in_formula_override 
+            { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+            cbody 
+        in
+        let () = 
+          pred.C.view_formula <- CF.formula_to_struc_formula vbody;
+          pred.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];
+          pred.C.view_raw_base_case <- None;
+          pred.C.view_base_case <- None
+        in
+        let norm_pred = norm_single_view iprog cprog pred in
+        let () = y_binfo_hp (add_str "Elim head view" Cprinter.string_of_view_decl_short) norm_pred in
+        norm_pred
 
 let elim_head_pred_list iprog cprog preds = 
   List.map (elim_head_pred iprog cprog) preds

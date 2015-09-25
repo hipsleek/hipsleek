@@ -3853,7 +3853,7 @@ let update_view_decl prog vdecl =
   let same_vdecls, others = List.partition (fun v -> 
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
   let () = if not (is_empty same_vdecls) then 
-      report_warning no_pos ("Updated an available view decl (" ^ vdecl_id ^ ")") 
+      report_warning no_pos ("Updating an available view decl (" ^ vdecl_id ^ ") in cprog") 
   in
   prog.prog_view_decls <- others @ [vdecl]
 

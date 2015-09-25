@@ -329,13 +329,31 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
       Cast.view_formula = CF.formula_to_struc_formula vbody;
       Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
       Cast.view_kind = View_NORM; } in
-  let () = Cast.update_view_decl prog vdecl_w_def in
+  (* let () = Cast.update_view_decl prog vdecl_w_def in *)
   vdecl_w_def
 
 let view_decl_of_hprel prog (hprel: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = Cprinter.string_of_view_decl in
   Debug.no_1 "Syn.view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
+
+let norm_derived_views iprog cprog derived_views = 
+  (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
+  let iviews = List.map Rev_ast.rev_trans_view_decl derived_views in
+  let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
+  let norm_cviews = (* SleekUtils.norm_cview_decls iprog cprog *) cviews in
+  let () = List.iter (Cast.update_view_decl cprog) norm_cviews in
+  let () = y_tinfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
+  let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
+  let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
+  let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
+  norm_cviews
+
+let norm_single_view iprog cprog view = 
+  let norm_view = norm_derived_views iprog cprog [view] in
+  match norm_view with
+  | v::[] -> v
+  | _ -> view
 
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
