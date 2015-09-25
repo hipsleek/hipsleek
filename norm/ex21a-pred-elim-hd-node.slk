@@ -7,6 +7,7 @@ data node {
 	node next;	
 }.
 
+/*
 pred ll<> == self = null 
 	or self::node<_, q> * q::ll<> 
   inv true.
@@ -18,16 +19,18 @@ pred lseg<p> == self = null
 pred app2<y> == self::node<_,null> 
 	or self::node<_, q> * q::app2<y> & q!=null 
   inv self!=null.
-
+*/
 
 pred app3<> == self::node<_,null> 
 	or self::node<_, q> * q::app3<> & q!=null 
   inv self!=null.
 
+/*
 pred app4<> == self=null
         or self::node<_,null> 
 	or self::node<_, q> * q::app4<> & q!=null 
   inv true.
+*/
 
 //pred_elim_hd_node [ll].
 //no change

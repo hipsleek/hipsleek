@@ -789,16 +789,26 @@ let elim_head_pred iprog cprog pred =
 
     (* let () = y_tinfo_hp (add_str "Inferred Ctx" !CF.print_list_context) inf_ctx in *)
 
-    let res, _ = Lemma.manage_infer_lemmas [ilemma] iprog cprog in
-    if not res then pred
+    (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
+    let ires, _ = Lemma.manage_infer_lemmas [ilemma] iprog cprog in
+    if not ires then pred
     else
-      let f others hps =
-        let (derived_views, new_hprels) = derive_view cprog others hps in
-        new_hprels
+      let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
+          CF.sleek_hprel_assumes snd (REGEX_LIST (List.map CP.name_of_spec_var unknown_vars))
+          (derive_view cprog) 
       in
-      let () = process_hprel_assumes_others "Deriving Segmented Views" 
-          CF.sleek_hprel_assumes (REGEX_LIST (List.map CP.name_of_spec_var unknown_vars)) f in
-      pred
+      (* Equiv test to form new pred *)
+      let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] ihead ibody in
+      (* The selective I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
+      let iviews = List.map Rev_ast.rev_trans_view_decl derived_views in
+      let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
+      let norm_cviews = SleekUtils.norm_cview_decls iprog cprog cviews in
+      let () = y_binfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
+      let () = y_binfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
+      let () = y_binfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
+      let rres, _ = Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
+      if not rres then pred
+      else pred
 
 let elim_head_pred_list iprog cprog preds = 
   List.map (elim_head_pred iprog cprog) preds

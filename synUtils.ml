@@ -115,6 +115,20 @@ let process_hprel_assumes_others s hprel_assume_stk (ids: regex_id_list) f_proc 
   let res = f_proc others sel_hprel_assume_list in
   hprel_assume_stk # set (res @ others)
 
+let process_hprel_assumes_res s hprel_assume_stk hprel_assume_of_res (ids: regex_id_list) f_proc = 
+  let () = print_endline_quiet "\n========================" in
+  let () = print_endline_quiet (" Performing "^s) in
+  let () = print_endline_quiet "========================" in
+  let () = hprel_assume_stk # set (CF.add_infer_type_to_hprel (hprel_assume_stk # get)) in
+  let sel_hprel_assume_list, others =
+    match ids with
+    | REGEX_STAR -> hprel_assume_stk # get, []
+    | REGEX_LIST hps -> select_hprel_assume (hprel_assume_stk # get) hps
+  in
+  let res = f_proc others sel_hprel_assume_list in
+  let () = hprel_assume_stk # set ((hprel_assume_of_res res) @ others) in
+  res
+
 (*********************)
 (* UTILS FOR FORMULA *)
 (*********************)
@@ -301,8 +315,9 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let vbody = CF.subst [(hprel_self, vself)] vbody in
   let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hprel_name) vargs false pos in
   let vdecl_w_def = { vdecl with 
-      Cast.view_formula = CF.struc_formula_of_formula vbody pos;
-      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))]; } in
+      Cast.view_formula = CF.formula_to_struc_formula vbody;
+      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
+      Cast.view_kind = View_DERV; } in
   let () = Cast.add_view_decl prog vdecl_w_def in
   vdecl_w_def
 
