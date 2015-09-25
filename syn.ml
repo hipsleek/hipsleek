@@ -693,10 +693,17 @@ let trans_hprel_to_view iprog cprog hprels =
     (* let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in *)
     vdecl) single_hprel_list
   in
+  let () = y_binfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
   (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
   let norm_derived_views = norm_derived_views iprog cprog derived_views in
   let () = y_binfo_hp (add_str "Derived Views" (pr_list Cprinter.string_of_view_decl_short)) norm_derived_views in
   norm_derived_views
+
+let trans_hprel_to_view iprog cprog hprels = 
+  let pr1 = Cprinter.string_of_hprel_list_short in
+  let pr2 = pr_list Cprinter.string_of_view_decl_short in
+  Debug.no_1 "Syn:trans_hprel_to_view" pr1 pr2 
+    (fun _ -> trans_hprel_to_view iprog cprog hprels) hprels
   
 (*************************)
 (***** DERIVING VIEW *****)
@@ -733,6 +740,11 @@ let derive_view_norm prog other_hprels hprels =
   (* SIMPLIFY *)
   let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
   simplified_selective_hprels
+
+let derive_view_norm prog other_hprels hprels = 
+  let pr = Cprinter.string_of_hprel_list_short in
+  Debug.no_1 "Syn:derive_view_norm" pr pr
+    (derive_view_norm prog other_hprels) hprels
 
 let derive_view iprog cprog other_hprels hprels = 
   let simplified_selective_hprels = derive_view_norm cprog other_hprels hprels in
@@ -828,7 +840,7 @@ let elim_head_pred iprog cprog pred =
 let elim_head_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
   Debug.no_1 "elim_head_pred" pr pr 
-    (fun _ -> elim_head_pred iprog cprog) pred
+    (fun _ -> elim_head_pred iprog cprog pred) pred
 
 let elim_head_pred_list iprog cprog preds = 
   List.map (elim_head_pred iprog cprog) preds

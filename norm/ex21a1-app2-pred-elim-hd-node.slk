@@ -1,0 +1,43 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+  
+HeapPred DP_58(node x, node y).
+
+//pred_elim_hd_node [app2].
+//one node
+
+lemma_infer [DP_58,classic] "ex21a1" self::app2<y_57> -> self::node<Anon_55,flted_19_56> * DP_58(flted_19_56, y_57).
+
+print relAssumes.
+//shape_normalize [DP_58].
+
+shape_derive_view [DP_58].
+print relAssumes.
+
+/*
+# ex21a
+
+Elim hd node ...
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred app4<> == self=null
+      or self::node<_,q> * q::app4a<>
+
+pred app4a
+
+   app4<> ==
+*/

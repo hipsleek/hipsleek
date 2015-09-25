@@ -349,6 +349,11 @@ let norm_derived_views iprog cprog derived_views =
   let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
   norm_cviews
 
+let norm_derived_views iprog cprog derived_views =
+  let pr = pr_list Cprinter.string_of_view_decl in
+  Debug.no_1 "norm_derived_views" pr pr 
+    (norm_derived_views iprog cprog) derived_views
+
 let norm_single_view iprog cprog view = 
   let norm_view = norm_derived_views iprog cprog [view] in
   match norm_view with
