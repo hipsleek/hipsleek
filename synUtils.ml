@@ -329,7 +329,7 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
       Cast.view_formula = CF.formula_to_struc_formula vbody;
       Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
       Cast.view_kind = View_NORM; } in
-  let () = Cast.add_view_decl prog vdecl_w_def in
+  let () = Cast.update_view_decl prog vdecl_w_def in
   vdecl_w_def
 
 let view_decl_of_hprel prog (hprel: CF.hprel) =

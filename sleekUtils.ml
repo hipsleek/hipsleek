@@ -43,9 +43,16 @@ let process_selective_iview_decls is_all iprog iviews =
     else iprog.I.prog_view_decls <- (iprog.I.prog_view_decls @ iviews)
   in
   (* collect immutable info for splitting view params *)
-  let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
-  let _ = x_tinfo_hp (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
-  let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
+  let _ = List.map (fun v -> 
+      v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula 
+                                                 v.I.view_vars 
+                                                 v.I.view_data_name 
+                                                 iprog.I.prog_data_decls) 
+      iprog.I.prog_view_decls in
+  let _ = x_tinfo_hp (add_str "view_decls:" 
+      (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int)))) 
+      (List.map (fun v -> v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
+  let tmp_views_derv, tmp_views = List.partition (fun v -> v.I.view_derv) tmp_views in
   (* let all_mutrec_vnames = (List.concat ls_mut_rec_views) in *)
   (*   let cviews0,_ = List.fold_left (fun (transed_views view -> *)
   (*       let nview = Astsimp.trans_view iprog mutrec_vnames *)
@@ -82,9 +89,9 @@ let process_selective_iview_decls is_all iprog iviews =
   (* (*turn off generate lemma during trans views*) *)
   (* let _ = Globals.lemma_syn := false in          *)
   let tmp_views = List.filter (fun v -> v.Iast.view_kind != View_HREL) tmp_views in
-  let cviews0 = x_add Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
+  let cviews0 = x_add Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[])) tmp_views) in
   (* x_tinfo_pp "after trans_view" no_pos; *)
-  (*derv and spec views*)
+  (* derv and spec views *)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
   let cviews_derv = List.fold_left (fun norm_views v ->
       let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in

@@ -1853,6 +1853,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let forms = match brs with 
           | None -> formula_of_unstruc_view_f vdef
           | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+        let () = y_binfo_hp (add_str "forms 1" !CF.print_formula) forms in
         let from_ann = List.map fst vdef.view_ann_params in
         let anns = List.map fst anns in
         let to_ann = anns in 

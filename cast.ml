@@ -3848,6 +3848,15 @@ let add_view_decl prog vdecl =
   else
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
 
+let update_view_decl prog vdecl = 
+  let vdecl_id = vdecl.view_name in
+  let same_vdecls, others = List.partition (fun v -> 
+      eq_str v.view_name vdecl_id) prog.prog_view_decls in
+  let () = if not (is_empty same_vdecls) then 
+      report_warning no_pos ("Updated an available view decl (" ^ vdecl_id ^ ")") 
+  in
+  prog.prog_view_decls <- others @ [vdecl]
+
 let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
   frm_vdecl.view_equiv_set # set (keep_sst,to_view)
 
