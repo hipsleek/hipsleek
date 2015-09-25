@@ -1,0 +1,24 @@
+data node{
+     int val;
+     node next;
+}.
+
+
+HeapPred ll_last(node@RO a).
+HeapPred ll_nth(node@RO a).
+HeapPred HP(node@RO a).
+
+Declare_Unknown [HP].
+
+relDefn ll_last(x) <->
+  x::node<_,null>
+or x::node<_,p>*ll_last(p) & p!=null.
+
+relDefn ll_nth(x) <->
+  x=null
+or x::node<_,p>*HP(x)
+or x::node<_,p>*ll_nth(p).
+
+pred_disj_unify [ll_last].
+
+//pred_disj_unify [ll_nth].

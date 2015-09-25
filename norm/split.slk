@@ -1,0 +1,28 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<y>
+inv true.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<>
+inv true.
+
+lemma self::zip<y> -> self::ll<>*y::ll<>.
+
+checkentail x::zip<y> |- x::ll<> * y::ll<>.
+print residue.
+
+/*
+checkentail x::zip<y> |- x::ll<> .
+print residue.
+*/
+
+/*
+
+
+*/
