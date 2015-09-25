@@ -2490,7 +2490,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             | _ -> ()
           end
       in
-q      let conv_baga_inv baga_inv =
+      let conv_baga_inv baga_inv =
         match baga_inv with
         | None -> None
         | Some lst ->
