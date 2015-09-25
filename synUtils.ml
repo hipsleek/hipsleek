@@ -4,6 +4,7 @@ open Globals
 open Gen
 open Others
 open Label_only
+open Exc.GTable
 module C = Cast
 module CP = Cpure
 module IF = Iformula
@@ -313,11 +314,15 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let vbody = CF.elim_prm vbody in
   let vbody = trans_hrel_to_view_formula vbody in
   let vbody = CF.subst [(hprel_self, vself)] vbody in
+  (* Set flow for view *)
+  let vbody = CF.set_flow_in_formula_override 
+      { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+      vbody in
   let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hprel_name) vargs false pos in
   let vdecl_w_def = { vdecl with 
       Cast.view_formula = CF.formula_to_struc_formula vbody;
       Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
-      Cast.view_kind = View_DERV; } in
+      Cast.view_kind = View_NORM; } in
   let () = Cast.add_view_decl prog vdecl_w_def in
   vdecl_w_def
 

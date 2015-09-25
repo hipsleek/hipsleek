@@ -351,4 +351,9 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.try_case_inference = false; (* TODO *)
     I.view_materialized_vars = List.map (fun mv -> CP.name_of_spec_var mv.C.mater_var) v.C.view_materialized_vars; }
 
+let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
+  let pr1 = Cprinter.string_of_view_decl in
+  let pr2 = Iprinter.string_of_view_decl in
+  Debug.no_1 "rev_trans_view_decl" pr1 pr2 rev_trans_view_decl v
+
 let () = Solver.rev_trans_formula := rev_trans_formula

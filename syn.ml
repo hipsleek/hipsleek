@@ -798,11 +798,14 @@ let elim_head_pred iprog cprog pred =
           (derive_view cprog) 
       in
       (* Equiv test to form new pred *)
-      let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] ihead ibody in
+      let rbody = Rev_ast.rev_trans_formula (trans_hrel_to_view_formula unknown_f) in
+      let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] ihead rbody in
       (* The selective I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
       let iviews = List.map Rev_ast.rev_trans_view_decl derived_views in
       let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
-      let norm_cviews = SleekUtils.norm_cview_decls iprog cprog cviews in
+      let norm_cviews = (* SleekUtils.norm_cview_decls iprog cprog *) cviews in
+      let () = cprog.C.prog_view_decls <- (cprog.C.prog_view_decls @ norm_cviews) in
+      let () = y_binfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
       let () = y_binfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
       let () = y_binfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
       let () = y_binfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
