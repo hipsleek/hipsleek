@@ -152,6 +152,7 @@ module Make (Token : SleekTokenS)
    ("pred_elim_hd_node", PRED_ELIM_HEAD);
    ("pred_elim_useless", PRED_ELIM_USELESS );
    ("pred_reuse", PRED_REUSE );
+   ("pred_reuse_subs", PRED_REUSE_SUBS );
    ("shape_extract", SHAPE_EXTRACT );
    ("shape_add_dangling", SHAPE_ADD_DANGLING);
    ("shape_unfold", SHAPE_UNFOLD);

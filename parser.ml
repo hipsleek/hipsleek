@@ -1026,6 +1026,7 @@ non_empty_command:
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
+      | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
       | t=shapeReuse_cmd     -> ShapeReuse t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
@@ -2594,6 +2595,12 @@ shapeElim_cmd:
    (il1)
    ]];
 
+shapeReuseSubs_cmd:
+   [[ `PRED_REUSE_SUBS; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
 shapeReuse_cmd:
    [[ `PRED_REUSE; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ; `OSQUARE;il2=shape_selective_id_list;`CSQUARE->
        (il1,il2)
@@ -2745,6 +2752,8 @@ print_cmd:
   [[ `PRINT; `IDENTIFIER id           -> PCmd id
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
    | `PRINT_LEMMAS  -> PCmd "lemmas"
+   (* | `PRINT_VIEW  -> PCmd "view" *)
+   (* | `PRINT_VIEW_LONG  -> PCmd "view_long" *)
   ]];
 
 cmp_cmd:

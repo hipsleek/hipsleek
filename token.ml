@@ -42,6 +42,7 @@ type sleek_token =
   | PRED_SPLIT  
   | PRED_NORM_SEG | PRED_NORM_DISJ
   | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *) | PRED_REUSE
+  | PRED_REUSE_SUBS
   | REL_INFER
   | DTIME
   | ELSE_TT
@@ -58,7 +59,10 @@ type sleek_token =
   | MAX | MIN 
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
-  | PRED | PRED_PRIM | DPRINT | PRED_EXT | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
+  | PRED | PRED_PRIM | DPRINT | PRED_EXT 
+  | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
+  (* | PRINT_VIEW *)
+  (* | PRINT_VIEW_LONG *)
   | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
@@ -155,7 +159,9 @@ module Token = struct
     | SHAPE_DERIVE_VIEW -> "shape_derive_view"
     | SHAPE_NORMALIZE -> "shape_normalize"
     | PRED_ELIM_HEAD -> "pred_elim_hd_node"
-    | PRED_ELIM_USELESS -> "pred_elim_useless" | PRED_REUSE -> "pred_reuse" 
+    | PRED_ELIM_USELESS -> "pred_elim_useless" 
+    | PRED_REUSE -> "pred_reuse" 
+    | PRED_REUSE_SUBS -> "pred_reuse_subs" 
     | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" 
     | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
@@ -176,6 +182,8 @@ module Token = struct
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
     | PRINT -> "print" 
     | PRINT_LEMMAS -> "print_lemmas" 
+    (* | PRINT_VIEW -> "print_view"  *)
+    (* | PRINT_VIEW_LONG -> "print_view_long"  *)
     |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"

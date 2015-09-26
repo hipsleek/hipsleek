@@ -177,10 +177,23 @@ Residue:
  <1>q::DP_62<>@M&{FLOW,(20,21)=__norm#E}[]
 [[ Unfold 0 ==>  Match(x,x)]]
 
+
 # can we tidy with re-using pred in body by:
   pred_reuse_subs [*]
   print_view [*]
   print_view_long [*]
+
+--------------------------------------
+
+!!! **sleekengine.ml#3003:[ view ll<>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; 
+          q](* lbl: *){4}->self::node<Anon_12,q>@M * q::ll<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    , view DP_65<>= 
 
 ===================================================================
 ===================================================================

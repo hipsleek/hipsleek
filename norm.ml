@@ -216,6 +216,26 @@ let norm_reuse_one_frm_view iprog prog ?(all=true) cur_equivs frm_vdecl (to_vdec
     (fun _ _-> norm_reuse_one_frm_view iprog prog ~all:all cur_equivs frm_vdecl to_vdecls)
     frm_vdecl to_vdecls
 
+let norm_reuse_subs vdefs to_vns =
+  let equiv_set = C.get_all_view_equiv_set vdefs in
+  let eq_lst = List.map (fun (m,_) -> m) equiv_set in
+  let in_equiv_set n = List.exists (string_eq n) eq_lst in 
+  let uses_eq_view f = (* f uses views from eq_lst? *) 
+    if eq_lst ==[] then false
+    else 
+      let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in
+      (BList.intersect_eq string_eq eq_lst p_lst) != []
+  in
+  let to_decls = List.filter (fun vdcl ->
+      List.exists (fun vn ->let n = vdcl.C.view_name in
+                    string_eq vn n && not(in_equiv_set n) &&
+                    (uses_eq_view vdcl.C.view_un_struc_formula)
+                  ) to_vns
+  ) vdefs in
+  List.iter (fun v -> (* transform body of views *)
+      ()
+    ) to_decls
+
 (*
  assume frm_vns and to_vns are topo sorted
 *)

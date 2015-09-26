@@ -3870,16 +3870,20 @@ let get_view_name_equiv view_decls vl =
     let (sst,new_name) =  (vdef.view_equiv_set # get) in
     let msg = "Using equiv "^vname^" <-> "^(vdef.view_equiv_set # string_of) in
     let () = y_winfo_pp msg in
-    let args = vl.h_formula_view_arguments in (* need to change other parameters *)
-    let new_args = 
-      if sst==[] then args 
-      else 
-        let new_args = List.combine args sst in
-        let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in
-        List.map fst new_args
-    in
-    let new_vl = {vl with h_formula_view_name = new_name;
-                          h_formula_view_arguments = new_args;
-                 } in
+    let new_vl = get_view_equiv vl sst new_name in
+    (* let args = vl.h_formula_view_arguments in (\* need to change other parameters *\) *)
+    (* let new_args =  *)
+    (*   if sst==[] then args  *)
+    (*   else  *)
+    (*     let new_args = List.combine args sst in *)
+    (*     let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in *)
+    (*     List.map fst new_args *)
+    (* in *)
+    (* let new_vl = {vl with h_formula_view_name = new_name; *)
+    (*                       h_formula_view_arguments = new_args; *)
+    (*              } in *)
     (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
-  
+
+let get_all_view_equiv_set vdefs =  
+  let equiv_set = List.fold_left (fun acc v -> if v.view_equiv_set # is_empty then acc else (v.view_name,v.view_equiv_set # get)::acc) [] vdefs in
+  equiv_set

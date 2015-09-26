@@ -19435,33 +19435,81 @@ let extract_hrel_head_list (f0:formula) =
   let pr = pr_option (pr_pair pr_hr !print_formula) in
   Debug.no_1 "extract_hrel_head_list" !print_formula pr extract_hrel_head_list  f0
 
-let rec rm_htrue_heap hf =
+(* TODO:WN need to change other parameters too *)
+let get_view_equiv vl sst new_name =
+    let args = vl.h_formula_view_arguments in 
+    let new_args = 
+      if sst==[] then args 
+      else 
+        let new_args = List.combine args sst in
+        let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in
+        List.map fst new_args
+    in
+    {vl with h_formula_view_name = new_name;
+             h_formula_view_arguments = new_args;}
+
+let map_formula_heap_only map_h f =
+  let rec aux f = match f with
+    | Base bf -> Base {bf with formula_base_heap = map_h bf.formula_base_heap}
+    | Exists bf -> Exists {bf with formula_exists_heap = map_h bf.formula_exists_heap}
+    | Or bf -> Or {bf with formula_or_f1 = aux (bf.formula_or_f1); formula_or_f2 = aux (bf.formula_or_f2)}
+  in aux f
+
+let map_estate_heap_only h_f es =
+  let f = es.es_formula in
+  let f = map_formula_heap_only h_f f in
+  {es with es_formula = f}
+
+let repl_equiv_heap find_f hf =
+  let f hf = match hf with
+    | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf
+    | ViewNode vl -> 
+      let name = vl.h_formula_view_name in
+      begin
+      match find_f name with
+      | Some (sst,new_name) -> 
+        let vl = get_view_equiv vl sst new_name in
+        Some (ViewNode vl)
+      | _ -> Some hf 
+      end
+    | _ -> None
+  in map_h_formula hf f
+
+let repl_equiv_formula find_f f =
+  map_formula_heap_only (repl_equiv_heap find_f) f
+
+let repl_equiv_estate find_f es =
+  map_estate_heap_only (repl_equiv_heap find_f) es
+
+let rm_htrue_heap hf =
   let f hf = match hf with
     | HTrue -> 
       Some(HEmp)
     | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _
       -> Some hf
-    | _ -> 
-      None
+    | _ -> None
   in map_h_formula hf f
 
 let rm_htrue_heap hf =
   let pr = !print_h_formula in
   Debug.no_1 "rm_htrue_heap" pr pr rm_htrue_heap hf
 
+
 (* TODO: implement and use a map_formula *)
 let rm_htrue_formula f =
-  let rec aux f = match f with
-    | Base bf -> Base {bf with formula_base_heap = rm_htrue_heap bf.formula_base_heap}
-    | Exists bf -> Exists {bf with formula_exists_heap = rm_htrue_heap bf.formula_exists_heap}
-    | Or bf -> Or {bf with formula_or_f1 = aux (bf.formula_or_f1); formula_or_f2 = aux (bf.formula_or_f2)}
-  in aux f
+  map_formula_heap_only rm_htrue_heap f
+  (* let rec aux f = match f with *)
+  (*   | Base bf -> Base {bf with formula_base_heap = rm_htrue_heap bf.formula_base_heap} *)
+  (*   | Exists bf -> Exists {bf with formula_exists_heap = rm_htrue_heap bf.formula_exists_heap} *)
+  (*   | Or bf -> Or {bf with formula_or_f1 = aux (bf.formula_or_f1); formula_or_f2 = aux (bf.formula_or_f2)} *)
+  (* in aux f *)
+
 
 let rm_htrue_estate es =
-  (* let () = x_tinfo_pp "TODO : to be implemented .." no_pos in *)
-  let f = es.es_formula in
-  let f = rm_htrue_formula f in
-  {es with es_formula = f}
+  map_estate_heap_only rm_htrue_heap es
+  (* let f = es.es_formula in *)
+  (* let f = rm_htrue_formula f in *)
+  (* {es with es_formula = f} *)
 
 (* let rm_htrue_context c = *)
 (*   let () = x_tinfo_pp "TODO : to be implemented .." no_pos in *)

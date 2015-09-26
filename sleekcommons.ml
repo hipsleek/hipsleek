@@ -66,6 +66,7 @@ type command =
   | ShapeSplitBase of (ident list * ident list)
   | ShapeElim of (ident list)
   | ShapeReuse of (regex_id_list * regex_id_list)
+  | ShapeReuseSubs of (regex_id_list)
   | ShapeExtract of (ident list)
   | ShapeDeclDang of (ident list)
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
@@ -173,6 +174,7 @@ let string_of_command c = match c with
   | ShapeDeclUnknown _ -> "ShapeDeclUnknown"
   | ShapeElim _ -> "ShapeElim"
   | ShapeReuse _ -> "ShapeReuse"
+  | ShapeReuseSubs _ -> "ShapeReuseSubs"
   | ShapeExtract _ -> "ShapeExtract"
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
