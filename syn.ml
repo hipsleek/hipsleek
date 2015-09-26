@@ -809,7 +809,7 @@ let elim_head_pred iprog cprog pred =
     (* let () = y_tinfo_hp (add_str "Inferred Ctx" !CF.print_list_context) inf_ctx in *)
 
     (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
-    let ires, _ = Lemma.manage_infer_lemmas [ilemma] iprog cprog in
+    let ires, _ = x_add Lemma.manage_infer_lemmas [ilemma] iprog cprog in
     if not ires then pred
     else
       (* derived_views have been added into prog_view_decls of iprog and cprog *)
@@ -821,7 +821,7 @@ let elim_head_pred iprog cprog pred =
       let cbody = trans_hrel_to_view_formula unknown_f in
       let rbody = Rev_ast.rev_trans_formula cbody in
       let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] ihead rbody in
-      let rres, _ = Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
+      let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
       if not rres then pred
       else
         let vbody = CF.set_flow_in_formula_override 

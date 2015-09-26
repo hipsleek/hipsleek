@@ -118,7 +118,7 @@ or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
   as shown in ex21s1a.slk
 
 ===================================================================
-# ex21r4d.slk
+# ex21r4d.slk (FIXED)
 
 !!! **norm.ml#186:
  Failed : self::lseg3<p,n>@M&{FLOW,(1,26)=__flow#E}[] <->  self::lseg2a<n,p>@M&{FLOW,(1,26)=__flow#E}[]
@@ -137,7 +137,7 @@ PRED REUSE FOUND:[(lseg2a,lseg2a),(lseg3,lseg2a)]
 
   Can we do this?
 ===================================================================
-# ex21a3.slk
+# ex21a3.slk (FIXED by marking unknown type parameter useless)
 
  pred_elim_hd_node [app2].
 
