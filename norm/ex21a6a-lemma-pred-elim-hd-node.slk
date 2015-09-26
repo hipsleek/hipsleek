@@ -13,6 +13,10 @@ pred app5<> == self=null
   inv true.
 
 pred app5a<> == self=null 
+	or self::node<_, q> * q::app5b<> 
+  inv true.
+
+pred app5b<> == self=null 
 	or self::node<_, q> * q::app5<> 
   inv true.
 
@@ -23,7 +27,19 @@ pred_reuse [*][*].
 /*
 # ex21a6a.slk
 
-# why isn't app5/app5a made equiv?
+pred app5<> == self=null
+        or self::node<_,q> * q::app5a<>
+  inv true.
 
+pred app5a<> == self=null 
+	or self::node<_, q> * q::app5b<> 
+  inv true.
+
+pred app5b<> == self=null 
+	or self::node<_, q> * q::app5<> 
+  inv true.
+
+# deeper mutual recursion requires simultaneous lemma
+  proving considerations.
 
 */
