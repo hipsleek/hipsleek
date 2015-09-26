@@ -7,16 +7,19 @@ data node {
 	node next;	
 }.
 
-
+/*
 pred lseg2a<n,p> == self = p & n=0
 	or self::node<_, q> * q::lseg<n-1,p> 
   inv true.
+*/
 
 pred lseg<n,p> == self::lseg111<n,p>.
 
+/*
 pred lseg3<p,n> == self = p & n=0
 	or self::node<_, q> * q::lseg3<p,n-1> 
   inv true.
+*/
 
 pred lseg111<n,p> == self = p & n=0
 	or self::node<_, q> * q::lseg111<n-1,p> 

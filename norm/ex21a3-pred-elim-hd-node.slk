@@ -23,7 +23,9 @@ pred app2<y> == self::node<_,null>
 
 pred_elim_hd_node [app2].
 
-//pred_reuse [*][ll].
+pred_reuse [*][ll].
+
+print views.
 
 /*
 # ex21a3.slk
