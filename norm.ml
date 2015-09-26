@@ -3,6 +3,7 @@ open VarGen
 open Globals
 open Gen
 open Cformula
+open Exc.GTable
 
 module DD = Debug
 module CF=Cformula
@@ -233,9 +234,15 @@ let norm_reuse_mk_eq edefs =
         let () = y_winfo_hp (add_str "TBI: view" Cprinter.string_of_view_decl_short) e in
         let () = y_winfo_hp (add_str "TBI: from" (pr_pair pr_id !CP.print_svl)) (name,args) in
         let () = y_winfo_hp (add_str "TBI: to" (pr_pair pr_id !CP.print_svl)) (to_n,new_args) in
-        (* let () = C.update_un_struc_formula (foo ) v in *)
-        (* let () = C.update_view_formula (x_add CF.repl_equiv_struc_formula find_f) v in *)
-        (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
+        let self_node = CP.SpecVar (Named name, Globals.self, Unprimed) in
+        let view_node = CF.mkViewNode self_node to_n new_args no_pos in
+        let view_body = CF.set_flow_in_formula_override 
+            { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+            (CF.formula_of_heap view_node no_pos) 
+        in
+        let () = C.update_un_struc_formula (fun _ -> view_body) e in
+        let () = C.update_view_formula (fun _ -> CF.formula_to_struc_formula view_body) e in
+        let () = C.update_view_raw_base_case (fun _ -> view_body) e in
         ()
     ) edefs
 
