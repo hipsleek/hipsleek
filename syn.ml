@@ -843,8 +843,18 @@ let elim_head_pred iprog cprog pred =
   Debug.no_1 "elim_head_pred" pr pr 
     (fun _ -> elim_head_pred iprog cprog pred) pred
 
-let elim_head_pred_list iprog cprog preds = 
-  List.map (elim_head_pred iprog cprog) preds
+let rec elim_head_pred_list iprog cprog preds = 
+  (* List.map (elim_head_pred iprog cprog) preds *)
+  match preds with
+  | [] -> []
+  | p::ps ->
+    let lazy_ps = lazy (elim_head_pred_list iprog cprog ps) in
+    try
+      let n_p = elim_head_pred iprog cprog p in
+      n_p::(Lazy.force lazy_ps)
+    with _ ->
+      let () = report_warning no_pos ("Cannot eliminate head of " ^ p.C.view_name) in
+      Lazy.force lazy_ps
 
 (****************)
 (***** MAIN *****)
