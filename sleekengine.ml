@@ -3009,7 +3009,7 @@ let process_print_command pcmd0 =
     else if pcmd = "views" then
       let view_list = !cprog.prog_view_decls in
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
-      y_binfo_hp (pr_list Cprinter.string_of_view_decl_short) lst
+      y_binfo_hp (add_str "Printing Views\n" (pr_list Cprinter.string_of_view_decl_short)) lst
     else
       print_string (x_loc^"unsupported print command: " ^ pcmd)
 

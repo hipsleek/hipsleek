@@ -41,9 +41,11 @@ checkentail x::node<_,q>*q::node<_,null> |- x::app2<>.
 print residue.
 
 //print lemmas.
-//print views.
+print views.
 
 pred_reuse_subs [*].
+
+print views.
 
 /*
 # ex21a4.slk

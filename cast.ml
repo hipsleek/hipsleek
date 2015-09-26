@@ -3887,3 +3887,20 @@ let get_view_name_equiv view_decls vl =
 let get_all_view_equiv_set vdefs =  
   let equiv_set = List.fold_left (fun acc v -> if v.view_equiv_set # is_empty then acc else (v.view_name,v.view_equiv_set # get)::acc) [] vdefs in
   equiv_set
+
+let update_un_struc_formula fn vdef =
+  let uf = vdef.view_un_struc_formula in
+  let uf = List.map (fun (f,l) -> (fn f,l)) uf in
+  vdef.view_un_struc_formula <- uf
+
+let update_view_formula fn vdef =
+  let uf = vdef.view_formula in
+  let uf = fn uf in
+  vdef.view_formula <- uf
+
+let update_view_raw_base_case fn vdef =
+  let uf = vdef.view_raw_base_case in
+  let uf = map_opt fn uf in
+  vdef.view_raw_base_case <- uf
+
+

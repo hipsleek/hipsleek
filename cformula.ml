@@ -19435,24 +19435,55 @@ let extract_hrel_head_list (f0:formula) =
   let pr = pr_option (pr_pair pr_hr !print_formula) in
   Debug.no_1 "extract_hrel_head_list" !print_formula pr extract_hrel_head_list  f0
 
+let trans_args sst args =
+  if sst==[] then args 
+  else 
+    let new_args = List.combine args sst in
+    let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in
+    List.map fst new_args
+
 (* TODO:WN need to change other parameters too *)
 let get_view_equiv vl sst new_name =
     let args = vl.h_formula_view_arguments in 
-    let new_args = 
-      if sst==[] then args 
-      else 
-        let new_args = List.combine args sst in
-        let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in
-        List.map fst new_args
-    in
+    let new_args = trans_args sst args in
     {vl with h_formula_view_name = new_name;
              h_formula_view_arguments = new_args;}
+
 
 let map_formula_heap_only map_h f =
   let rec aux f = match f with
     | Base bf -> Base {bf with formula_base_heap = map_h bf.formula_base_heap}
     | Exists bf -> Exists {bf with formula_exists_heap = map_h bf.formula_exists_heap}
     | Or bf -> Or {bf with formula_or_f1 = aux (bf.formula_or_f1); formula_or_f2 = aux (bf.formula_or_f2)}
+  in aux f
+
+let map_struc_formula_heap_only map_h f =
+  let rec aux f = match f with
+    | EList lst -> EList (List.map (fun (d,s) -> (d,aux s)) lst)
+    | ECase cf -> 
+      let lst = cf.formula_case_branches in
+      ECase { cf with 
+              formula_case_branches = List.map (fun (d,s) -> (d,aux s)) lst;
+      }
+    | EBase bf -> 
+      let f1 = map_formula_heap_only map_h bf.formula_struc_base in
+      let f2 = map_opt aux bf.formula_struc_continuation in
+      EBase { bf with 
+              formula_struc_base = f1;
+              formula_struc_continuation = f2;
+            }
+    | EInfer bf -> 
+      let f1 = aux bf.formula_inf_continuation in
+      EInfer {bf with
+              formula_inf_continuation=f1
+             }
+    | EAssume bf -> 
+      let f1 = aux bf.formula_assume_struc in
+      let f2 = map_formula_heap_only map_h bf.formula_assume_simpl in
+      EAssume {bf with
+              formula_assume_struc = f1;
+              formula_assume_simpl = f2;
+             }
   in aux f
 
 let map_estate_heap_only h_f es =
@@ -19478,6 +19509,17 @@ let repl_equiv_heap find_f hf =
 let repl_equiv_formula find_f f =
   map_formula_heap_only (repl_equiv_heap find_f) f
 
+let repl_equiv_formula find_f f =
+  let pr = !print_formula in
+  Debug.no_1 "repl_equiv_formula" pr pr (repl_equiv_formula find_f) f
+
+let repl_equiv_struc_formula find_f f =
+  map_struc_formula_heap_only (repl_equiv_heap find_f) f
+
+let repl_equiv_struc_formula find_f f =
+  let pr = !print_struc_formula in
+  Debug.no_1 "repl_equiv_struc_formula" pr pr (repl_equiv_struc_formula find_f) f
+
 let repl_equiv_estate find_f es =
   map_estate_heap_only (repl_equiv_heap find_f) es
 
@@ -19494,6 +19536,8 @@ let rm_htrue_heap hf =
   let pr = !print_h_formula in
   Debug.no_1 "rm_htrue_heap" pr pr rm_htrue_heap hf
 
+let rm_htrue_struc_formula f =
+  map_struc_formula_heap_only (rm_htrue_heap) f
 
 (* TODO: implement and use a map_formula *)
 let rm_htrue_formula f =

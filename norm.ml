@@ -216,6 +216,23 @@ let norm_reuse_one_frm_view iprog prog ?(all=true) cur_equivs frm_vdecl (to_vdec
     (fun _ _-> norm_reuse_one_frm_view iprog prog ~all:all cur_equivs frm_vdecl to_vdecls)
     frm_vdecl to_vdecls
 
+(* change body of view to equiv *)
+let norm_reuse_mk_eq edefs =
+  List.iter (fun e -> 
+      if e.C.view_equiv_set # is_empty then ()
+      else 
+        let name = e.C.view_name in
+        let (sst,to_n) = e.C.view_equiv_set # get in
+        let args = e.C.view_vars in
+        let new_args = CF.trans_args sst args in
+        let () = y_winfo_hp (add_str "TBI: from" (pr_pair pr_id !CP.print_svl)) (name,args) in
+        let () = y_winfo_hp (add_str "TBI: to" (pr_pair pr_id !CP.print_svl)) (to_n,new_args) in
+        (* let () = C.update_un_struc_formula (foo ) v in *)
+        (* let () = C.update_view_formula (x_add CF.repl_equiv_struc_formula find_f) v in *)
+        (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
+        ()
+    ) edefs
+
 let norm_reuse_subs vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in
   let eq_lst = List.map (fun (m,_) -> m) equiv_set in
@@ -226,13 +243,27 @@ let norm_reuse_subs vdefs to_vns =
       let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in
       (BList.intersect_eq string_eq eq_lst p_lst) != []
   in
+  let vdefs = List.filter (fun vd -> 
+      let n = vd.C.view_name in
+      List.exists (fun vn -> string_eq vn n) to_vns
+    ) vdefs in
+  let (edefs,vdefs) = List.partition 
+      (fun vd -> vd.C.view_equiv_set # is_avail) vdefs in
   let to_decls = List.filter (fun vdcl ->
-      List.exists (fun vn ->let n = vdcl.C.view_name in
-                    string_eq vn n && not(in_equiv_set n) &&
-                    (uses_eq_view vdcl.C.view_un_struc_formula)
-                  ) to_vns
-  ) vdefs in
+      uses_eq_view vdcl.C.view_un_struc_formula) vdefs in
+  let find_f name = 
+    try
+      let (m,ans) = List.find (fun (m,_) -> string_eq m name) equiv_set in
+      Some ans
+    with _ -> None
+  in
+  let () = y_tinfo_hp (add_str "equiv_set" (pr_list (pr_pair pr_id (pr_pair pr_none pr_id)))) equiv_set in
+  let () = y_tinfo_hp (add_str "to_decls" (pr_list Cprinter.string_of_view_decl_short)) to_decls in
+  let () = norm_reuse_mk_eq edefs in
   List.iter (fun v -> (* transform body of views *)
+      let () = C.update_un_struc_formula (x_add CF.repl_equiv_formula find_f) v in
+      let () = C.update_view_formula (x_add CF.repl_equiv_struc_formula find_f) v in
+      let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in
       ()
     ) to_decls
 
