@@ -247,7 +247,7 @@ let string_of_view_kind k = match k with
 
 let is_undef_typ t =
   match t with
-  |UNK |RelT _ |HpT |UtT _ -> true
+  | UNK | RelT _ | HpT | UtT _ -> true
   | _ -> false 
 
 let is_node_typ t =

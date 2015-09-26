@@ -3246,3 +3246,19 @@ let transform_bexp_hf prog hf0=
   let pr1 = !print_h_formula in
   Debug.no_1 "transform_bexp_hf" pr1 (pr_pair pr1 (pr_list !Ipure.print_formula))
     (fun _ -> transform_bexp_hf_x prog hf0) hf0
+
+let clear_type_info_formula (f: formula): formula = 
+  let rec clear_type_info_exp (e: P.exp) =
+    let f_e e = 
+      match e with
+      | P.Ann_Exp (ae, _, _) -> Some (clear_type_info_exp ae)
+      | _ -> None
+    in
+    P.transform_exp f_e e
+  in
+  let f_p_e e = Some (clear_type_info_exp e) in
+  transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, nonef, f_p_e)) f
+
+let clear_type_info_formula (f: formula): formula = 
+  let pr = !print_formula in
+  Debug.no_1 "clear_type_info_formula" pr pr clear_type_info_formula f

@@ -27,9 +27,12 @@ let sv_n = CP.name_of_spec_var
 let rec rev_trans_exp e = match e with
   | CP.Null p -> IP.Null p 
   (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
-  | CP.Var (v,p) -> let t =  CP.type_of_spec_var v in
+  | CP.Var (v,p) -> 
+    let t =  CP.type_of_spec_var v in
     (* let () = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
-    IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
+    if is_type_var t then IP.Var (rev_trans_spec_var v, p)
+    else
+      IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
   | CP.Bptriple ((c,t,a),p) ->
     let nc = IP.Var (rev_trans_spec_var c, p) in
     let nt = IP.Var (rev_trans_spec_var t, p) in
