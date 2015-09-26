@@ -131,6 +131,11 @@ let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
   | _ -> false
 
+let is_var_typ sv =
+  match sv with
+  | SpecVar (t, _, _) -> is_type_var t
+  
+
 let is_bool_typ sv = match sv with
   | SpecVar (Bool,_,_) -> true
   | _ -> false

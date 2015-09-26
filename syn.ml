@@ -763,8 +763,8 @@ let derive_view iprog cprog other_hprels hprels =
 (*****************************)
 let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
-  let root_node = CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed) in
-  let _, common_node_chain = find_common_node_chain root_node (CF.list_of_disjuncts pred_f) in
+  let self_node = CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed) in
+  let _, common_node_chain = find_common_node_chain self_node (CF.list_of_disjuncts pred_f) in
   let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
   match common_node_chain with
   | [] -> pred
@@ -775,13 +775,13 @@ let elim_head_pred iprog cprog pred =
     let nodes = CF.collect_node_var_formula common_f in
     let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
     let dangling_vars = remove_dups dangling_vars in
-    let () = y_tinfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
+    let () = y_binfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
-    let fresh_pred_I_args = List.map (fun v -> (v, I)) fresh_pred_args in
+    let fresh_pred_I_args = List.map (fun v -> (v, I)) (List.filter (fun v -> not (CP.is_var_typ v)) fresh_pred_args) in
     let hrel_list, unknown_vars = List.split (List.map 
         (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
     let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
-    let pred_h = CF.mkViewNode root_node pred.C.view_name fresh_pred_args no_pos in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
     (* let norm_flow = { CF.formula_flow_interval = exlist # get_hash n_flow; CF.formula_flow_link = None } in *)
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
