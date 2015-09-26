@@ -1754,7 +1754,7 @@ let process_pred_elim_head (ids: regex_id_list) =
     | REGEX_LIST pids -> 
       SynUtils.select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
   in
-  let n_pred_list = Syn.elim_head_pred_list iprog !cprog sel_pred_list in
+  let n_pred_list = Wrapper.wrap_lemma_quiet (Syn.elim_head_pred_list iprog !cprog) sel_pred_list in
   ()
 
 (******************************************************************************)

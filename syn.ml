@@ -690,13 +690,13 @@ let trans_hprel_to_view iprog cprog hprels =
         let () = y_winfo_pp "to add Saout.view_decl_of_hprel prog hpr" in
         view_decl_of_hprel cprog hpr
     in
-    (* let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in *)
+    (* let () = y_tinfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in *)
     vdecl) single_hprel_list
   in
-  let () = y_binfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
+  let () = y_tinfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
   (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
   let norm_derived_views = norm_derived_views iprog cprog derived_views in
-  let () = y_binfo_hp (add_str "Derived Views" (pr_list Cprinter.string_of_view_decl_short)) norm_derived_views in
+  let () = y_tinfo_hp (add_str "Derived Views" (pr_list Cprinter.string_of_view_decl_short)) norm_derived_views in
   norm_derived_views
 
 let trans_hprel_to_view iprog cprog hprels = 
@@ -775,7 +775,7 @@ let elim_head_pred iprog cprog pred =
     let nodes = CF.collect_node_var_formula common_f in
     let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
     let dangling_vars = remove_dups dangling_vars in
-    let () = y_binfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
+    let () = y_tinfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
     let fresh_pred_I_args = List.map (fun v -> (v, I)) (List.filter (fun v -> not (CP.is_var_typ v)) fresh_pred_args) in
     let hrel_list, unknown_vars = List.split (List.map 
@@ -799,7 +799,7 @@ let elim_head_pred iprog cprog pred =
     let ibody = (* IF.clear_type_info_formula *) (Rev_ast.rev_trans_formula unknown_f) in
     let ivars = List.map CP.name_of_spec_var (unknown_vars @ [classic]) in
     let ilemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left ivars ihead ibody in
-    let () = y_binfo_hp (add_str ("ilemma " ^ l_name) Iprinter.string_of_coercion) ilemma in 
+    let () = y_tinfo_hp (add_str ("ilemma " ^ l_name) Iprinter.string_of_coercion) ilemma in 
     let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
     (* let llemma, rlemma = Astsimp.trans_one_coercion iprog ilemma in                   *)
     (* let () = y_tinfo_hp (add_str "llemma" (pr_list !C.print_coercion)) llemma in      *)
