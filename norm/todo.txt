@@ -333,6 +333,51 @@ print residue.
                    flted_25_72=null & flted_25_73=0 --> UA(flted_25_72,flted_25_73@NI)&
 
 ===================================================================
+# ex21a5b.slk
+
+(==astsimp.ml#7104==)
+trans_formula@4@2@1
+trans_formula inp1 :[(p:31:node)(TVar__46:46:node)(p_17:41:node)(TVar__45:45:node)(n:32:int)(TVar__43:43:int)(flted_15_16:40:int)(TVar__42:42:int)(q:39:node)(Anon_13:38:int)(self:33:node)(TVar__37:37:int)(TVar__36:36:int)(TVar__35:35:node)(TVar__34:34:node)]
+trans_formula inp2 :quantify:true
+trans_formula inp3 :cleanres:false
+trans_formula inp4 :[self,p,n]
+trans_formula inp5 :(EX p_17 flted_15_16 . ((self::node{}<Anon_13,q>[HeapNode1]) * (q::lseg{}<flted_15_16,p_17>[HeapNode1]))*([] & (flted_15_16 = n-1) & (p_17 = p))( FLOW __flow))
+trans_formula@4 EXIT: (exists p_17,
+flted_15_16: self::node<Anon_13,q>@M * q::lseg<flted_15_16,p_17>@M&
+flted_15_16+1=n & p_17=p&{FLOW,(1,26)=__flow#E}[])
+
+(==sleekUtils.ml#94==)
+trans_views@1
+trans_views inp1 :[[lseg2,lseg]]
+trans_views inp2 :[(lseg2,[]),(lseg,[])]
+trans_views@1 EXIT:[lseg2,lseg]
+
+pred lseg2<p:node,n:int> == self = p & n=0 
+
+# why is ann_typs always empty?
+
+rans_view inp2 :mutrec:[lseg2]
+trans_view inp3 :trans_views:[]
+trans_view inp4 :ann_typs:[]
+trans_view@2 EXIT: view lseg2<p:node,n:int>= 
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of lseg
+Exception(get_hash2):Failure("Can not find flow of lseg")
+Last Proving Location: ex21a5b-pred-elim-hd-node.slk_11:4_11:38
+ERROR: at _0:0_0:0
+Message: Can not find flow of node
+Exception(get_hash2):Failure("Can not find flow of node")
+
+(==cformula.ml#12156==)
+norm:case_norm@1
+norm:case_norm inp1 :[n,p]
+norm:case_norm inp2 : self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+norm:case_norm@1 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")Occurred!
+
+Exception processed: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")
+error at: 
+SLEEK FAILURE (END)
 ===================================================================
 ===================================================================
 ===================================================================

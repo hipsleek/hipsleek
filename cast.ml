@@ -3893,6 +3893,11 @@ let update_un_struc_formula fn vdef =
   let uf = List.map (fun (f,l) -> (fn f,l)) uf in
   vdef.view_un_struc_formula <- uf
 
+let update_un_struc_formula_one f vdef =
+  (* let uf = vdef.view_un_struc_formula in *)
+  (* let uf = List.map (fun (f,l) -> (fn f,l)) uf in *)
+  vdef.view_un_struc_formula <- [(f,(0,""))]
+
 let update_view_formula fn vdef =
   let uf = vdef.view_formula in
   let uf = fn uf in

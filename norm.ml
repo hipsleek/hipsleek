@@ -242,10 +242,16 @@ let norm_reuse_mk_eq iprog prog edefs =
         in
         let () = y_tinfo_hp (add_str "view_body" !CF.print_formula) view_body in
         let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+        let view_struc = CF.formula_to_struc_formula new_view_body in
         let () = y_tinfo_hp (add_str "view_body(new)" !CF.print_formula) new_view_body in
-         let () = C.update_un_struc_formula (fun _ -> view_body) e in
-        let () = C.update_view_formula (fun _ -> CF.formula_to_struc_formula new_view_body) e in
+        let () = y_tinfo_hp (add_str "view_struc(new)" !CF.print_struc_formula) view_struc in
+        (* let new_view = Typeinfer.create_view iprog name args view_body in *)
+        (* let () = y_tinfo_hp (add_str "new view" Cprinter.string_of_view_decl) new_view in *)
+        let () = y_tinfo_hp (add_str "old view" Cprinter.string_of_view_decl) e in
+        let () = C.update_un_struc_formula_one view_body e in
+        let () = C.update_view_formula (fun _ -> view_struc) e in
         let () = C.update_view_raw_base_case (fun _ -> view_body) e in
+        let () = y_tinfo_hp (add_str "updated view" Cprinter.string_of_view_decl) e in
         ()
     ) edefs
 
