@@ -799,6 +799,7 @@ let elim_head_pred iprog cprog pred =
     let ibody = (* IF.clear_type_info_formula *) (Rev_ast.rev_trans_formula unknown_f) in
     let ivars = List.map CP.name_of_spec_var (unknown_vars @ [classic]) in
     let ilemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left ivars ihead ibody in
+    let () = ilemma.I.coercion_infer_obj # set INF_PURE_FIELD in
     let () = y_tinfo_hp (add_str ("ilemma " ^ l_name) Iprinter.string_of_coercion) ilemma in 
     let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
     (* let llemma, rlemma = Astsimp.trans_one_coercion iprog ilemma in                   *)
