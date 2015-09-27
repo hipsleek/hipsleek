@@ -352,9 +352,10 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
     let ex_lhs_p = simplify lhs_p hrel_args in
     let hrd_guard = hrel_def.hprel_guard in
     let guard_f = 
+      let b = CF.mkBase_simp HEmp (MCP.mkMTrue pos) in
       match hrd_guard with
-      | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
-      | Some g -> g
+      | None -> b
+      | Some g -> b (* g *) (* Ignore guard in a post-hprel *)
     in
     let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
     let rs, residue = x_add heap_entail_formula prog ctx guard_f in

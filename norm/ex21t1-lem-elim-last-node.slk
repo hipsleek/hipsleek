@@ -29,6 +29,7 @@ pred app3a<> == self::node<0,null>
 HeapPred U(node x).
 HeapPred UA(node x, int y).
 HeapPred UB(node x).
+HeapPred UC(node x, node y).
 relation R(int v).
 
 /*
@@ -40,9 +41,20 @@ lemma_infer [UA,@classic] "L21t1a"
   self::app3a<> -> self::node<v,q>*UA(q,v).
 */
 
+/*
 lemma_infer [U,R,@classic,@pure_field] "L21t1a"
   self::app3a<> -> self::node<v,q>*U(q) & R(v).
 print residue.
+*/
+
+lemma_infer [UC,R,@classic,@pure_field] "L21t1c"
+  self::app3a<> -> UC(self, q) * q::node<v, null> & R(v).
+print residue.
+
+shape_derive_view [UC].
+
+print views.
+
 /*
 lemma_infer [UB] "L21t1b"
   self::app3a<> -> self::node<v,q>*UB(q).
