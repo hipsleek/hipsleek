@@ -1630,9 +1630,11 @@ let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var l
   (* cformula --> iformula *)
   (* iformula --> normalize *)
   (* iformula --> cformula *)
+  let free_vs = CF.fv f in
+  let () = y_tinfo_hp (add_str "free_vs" !CP.print_svl) free_vs in
   let f = !CF.rev_trans_formula f in
   let fvars = List.map CP.name_of_spec_var avail_vars in
-  let tlist = List.map sv_to_typ avail_vars  in
+  let tlist = List.map sv_to_typ free_vs  in
   let avail_vars = List.map CP.primed_ident_of_spec_var avail_vars in
   let expl_vars = List.map CP.primed_ident_of_spec_var expl_vars in
   (* let (f,r_avail,r_expl) = !Iast.case_normalize_formula iprog avail_vars expl_vars f in *)
@@ -1642,3 +1644,6 @@ let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var l
   let sep_collect = true in
   let (sv,f) = !trans_formula iprog quantify (fvars : ident list) sep_collect f tlist clean_res in
   f
+
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+  Debug.no_2 "Norm:case_norm" !CP.print_svl !CF.print_formula !CF.print_formula (fun _ _ -> case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula)) avail_vars f  

@@ -2317,12 +2317,21 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   let pr =  Cprinter.string_of_struc_formula in
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
+(* type: I.prog_decl -> *)
+(*   String.t list -> *)
+(*   C.view_decl list -> *)
+(*   (Globals.ident * Typeinfer.spec_var_info) list -> *)
+(*   I.view_decl -> C.view_decl *)
+
 and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl_short in
+  let pr2 = add_str "mutrec" (pr_list pr_id) in
+  let pr2a lst = (add_str "trans_views" (pr_list (fun v -> v.C.view_name))) lst in
+  let pr3 = add_str "ann_typs" (pr_list (pr_pair pr_id pr_none)) in
   (* let pr_r = pr_none in  *)
-  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog  mutrec_vnames
-                                       transed_views ann_typs vdef) vdef
+  Debug.no_4 "trans_view" pr pr2 pr2a pr3 pr_r  (fun _ _ _ _ -> trans_view_x prog  mutrec_vnames
+                                       transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in

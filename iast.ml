@@ -627,12 +627,11 @@ let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
-let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
-  let mix_true = Mcpure.mkMTrue pos in
+let mk_iview_decl name dname vars f pos =
   let vs = List.map fst vars in (* where to store annotation? *)
-        { view_name = hp_n;
+        { view_name =name;
           view_pos = pos;
-          view_data_name = hp_n;
+          view_data_name = dname;
           view_type_of_self = None;
           view_imm_map = [];
           view_vars = (* List.map fst *) vs;
@@ -643,7 +642,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
           view_modes = [];
           view_typed_vars = [];
           view_pt_by_self  = [];
-          view_formula = F.mkETrue top_flow pos;
+          view_formula = f;
           view_inv_lock = None;
           view_is_prim = false;
           view_is_hrel = None;
@@ -658,6 +657,40 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
 	  view_materialized_vars = [];
           try_case_inference = false;
 			}
+
+let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
+  (* let mix_true = Mcpure.mkMTrue pos in *)
+  let f = F.mkETrue top_flow pos; in
+  mk_iview_decl hp_n hp_n vars f pos
+  (* let vs = List.map fst vars in (\* where to store annotation? *\) *)
+  (*       { view_name = hp_n; *)
+  (*         view_pos = pos; *)
+  (*         view_data_name = hp_n; *)
+  (*         view_type_of_self = None; *)
+  (*         view_imm_map = []; *)
+  (*         view_vars = (\* List.map fst *\) vs; *)
+  (*         view_ho_vars = []; *)
+  (*         view_derv = false; *)
+  (*         view_parent_name = None; *)
+  (*         view_labels = [],false; *)
+  (*         view_modes = []; *)
+  (*         view_typed_vars = []; *)
+  (*         view_pt_by_self  = []; *)
+  (*         view_formula = F.mkETrue top_flow pos; *)
+  (*         view_inv_lock = None; *)
+  (*         view_is_prim = false; *)
+  (*         view_is_hrel = None; *)
+  (*         view_kind = View_HREL; *)
+  (*         view_prop_extns = []; *)
+  (*         view_derv_info = []; *)
+  (*         view_invariant = P.mkTrue pos; *)
+  (*         view_baga_inv = None; *)
+  (*         view_baga_over_inv = None; *)
+  (*         view_baga_under_inv = None; *)
+  (*         view_mem = None; *)
+  (*         view_materialized_vars = []; *)
+  (*         try_case_inference = false; *)
+  (*       		} *)
 
 
 let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
