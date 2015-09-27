@@ -38,6 +38,7 @@ type sleek_token =
   | SHAPE_DERIVE_VIEW
   | SHAPE_NORMALIZE
   | PRED_ELIM_HEAD
+  | PRED_ELIM_TAIL
   | PRED_SPEC 
   | PRED_SPLIT  
   | PRED_NORM_SEG | PRED_NORM_DISJ
@@ -159,6 +160,7 @@ module Token = struct
     | SHAPE_DERIVE_VIEW -> "shape_derive_view"
     | SHAPE_NORMALIZE -> "shape_normalize"
     | PRED_ELIM_HEAD -> "pred_elim_hd_node"
+    | PRED_ELIM_TAIL -> "pred_elim_tl_node"
     | PRED_ELIM_USELESS -> "pred_elim_useless" 
     | PRED_REUSE -> "pred_reuse" 
     | PRED_REUSE_SUBS -> "pred_reuse_subs" 

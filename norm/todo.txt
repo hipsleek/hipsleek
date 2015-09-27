@@ -251,8 +251,70 @@ SLEEK FAILURE (END)
 Stop z3... 0 invocations 
 0 false contexts at: ()
 ===================================================================
+# ex21t2 --trace-exc
+
+lemma_infer [U,@pure_field] 
+ self::app3<> -> U(self,p)*p::node<0,null>.
+print residue.
+
+shape_derive_view[U].
+
+Exception(try_unify_data_type_args):Not_found
+
+Last Proving Location: ex21t2-pred-elim-last-node.slk_23:4_23:49
+
+ERROR: at _0:0_0:0
+Message: GP_105 is neither 2 a data nor view name
+Exception(gather_type_info_heap):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_struc_f):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_I2C_struc_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_view):Failure("GP_105 is neither 2 a data nor view name")
 ===================================================================
+# ex21t1
+
+pred_elim_tl_node [*].
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+# (1) need to use @pure_field for lemma_inference
+  (2) need to check <-> holds
+# Why app3<> dropped v!=0 pure field?
+
+[ view DP_54<>= 
+  EList
+    :EBase 
+       exists (Impl)[flted_20_83; 
+       flted_20_84](* lbl: *){14}->self::node<flted_20_83,flted_20_84>@M * 
+                                   flted_20_84::DP_54<>@M&
+       self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){15}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    , view app3<>= 
+  EBase 
+    exists (Impl)[flted_20_52; 
+    flted_20_53](* lbl: *){28}->self::node<flted_20_52,flted_20_53>@M * 
+                                flted_20_53::DP_54<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
 ===================================================================
+# ex21t3.slk
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+pred_elim_tl_node [*].
+
+# expect to form:
+
+  lemma_infer   app3<> -> U(self,p)*p::node<0,null>
+
+Starting Omega.../usr/local/bin/oc
+Exception processed: Failure("**sleekengine.ml#1751: TBI")
+error at: 
+SLEEK FAILURE (END)
+
 ===================================================================
 ===================================================================
 ===================================================================

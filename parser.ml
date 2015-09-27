@@ -1044,6 +1044,7 @@ non_empty_command:
       | t = shape_derive_view_cmd -> ShapeDeriveView t
       | t = shape_normalize_cmd -> ShapeNormalize t
       | t = pred_elim_head_cmd -> PredElimHead t
+      | t = pred_elim_tail_cmd -> PredElimTail t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2672,6 +2673,12 @@ pred_elim_head_cmd:
   [[ `PRED_ELIM_HEAD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
   ]];
+
+pred_elim_tail_cmd:
+  [[ `PRED_ELIM_TAIL; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
 
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM

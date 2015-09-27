@@ -1747,6 +1747,9 @@ let process_shape_normalize (ids: regex_id_list) =
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
 
+let process_pred_elim_tail (ids: regex_id_list) = 
+  failwith (x_loc^" TBI")
+
 let process_pred_elim_head (ids: regex_id_list) = 
   let sel_pred_list, others =
     match ids with

@@ -1,0 +1,61 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+/*
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p 
+	or self::node<v, q> * q::lseg<p> & v!=0
+  inv true.
+*/
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+//pred_elim_hd_node [ll].
+//no change
+
+//pred_elim_hd_node [lseg].
+//no change
+
+//pred_elim_hd_node [app2].
+//one node
+
+//pred_elim_hd_node [app3].
+///one node
+
+//pred_elim_hd_node [app4].
+//one node
+
+//pred_elim_hd_node [app5].
+
+pred_elim_hd_node [*].
+
+print views.
+
+/*
+# ex21a
+
+Elim hd node ...
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred app4<> == self=null
+      or self::node<_,q> * q::app4a<>
+
+pred app4a
+
+   app4<> ==
+*/
