@@ -17,7 +17,7 @@ pred lseg2<p,n> == self = p & n=0
 
 pred_reuse [*][*].
 
-print views.
+//print views.
 
 pred_reuse_subs [*].
 

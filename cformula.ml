@@ -19864,3 +19864,11 @@ let sleek_hprel_assumes =
   end
 
 (* let sleek_hprel_assumes = ref ([]: CF.hprel list) *)
+
+
+(* let rev_trans : (Iformula.formula -> formula) ref = ref (fun x -> failwith "TBI") *)
+
+let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
+
+let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
+

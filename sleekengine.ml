@@ -2516,7 +2516,7 @@ let process_shape_reuse_subs reg_to_vname =
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
   let to_vns = regex_search reg_to_vname vdefs in
-  Norm.norm_reuse_subs vdefs to_vns
+  Norm.norm_reuse_subs iprog !cprog vdefs to_vns
 
 let process_shape_reuse reg_frm_vname reg_to_vname=
   let _ = x_tinfo_zp  (lazy  ("shape reuse  \n")) no_pos in

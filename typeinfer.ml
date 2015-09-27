@@ -1613,3 +1613,32 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
   | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
   (* TODO:WN:HVar *)
   | IF.HVar (v,hvar_vs) -> (v,{sv_info_kind = FORM;id=0})::tlist
+
+(* and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) = *)
+
+let trans_formula : (I.prog_decl -> bool -> ident list -> bool ->  Iformula.formula -> spec_var_type_list -> bool -> (spec_var_type_list * CF.formula)) ref =
+  ref (fun _ _ _ _ _ _ -> failwith "TBI")
+
+(* and spec_var_type_list = (( ident*spec_var_info)  list) *)
+
+let mk_spec_var_info t = { sv_info_kind =t; id = 0}
+  
+let sv_to_typ sv = match sv with
+  | CP.SpecVar(t,i,p) ->(i, mk_spec_var_info t)
+
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+  (* cformula --> iformula *)
+  (* iformula --> normalize *)
+  (* iformula --> cformula *)
+  let f = !CF.rev_trans_formula f in
+  let fvars = List.map CP.name_of_spec_var avail_vars in
+  let tlist = List.map sv_to_typ avail_vars  in
+  let avail_vars = List.map CP.primed_ident_of_spec_var avail_vars in
+  let expl_vars = List.map CP.primed_ident_of_spec_var expl_vars in
+  (* let (f,r_avail,r_expl) = !Iast.case_normalize_formula iprog avail_vars expl_vars f in *)
+  let f = !Iast.case_normalize_formula iprog avail_vars f in
+  let quantify = true in
+  let clean_res = false in
+  let sep_collect = true in
+  let (sv,f) = !trans_formula iprog quantify (fvars : ident list) sep_collect f tlist clean_res in
+  f

@@ -223,7 +223,7 @@ let norm_reuse_one_frm_view iprog prog ?(all=true) cur_equivs frm_vdecl (to_vdec
     frm_vdecl to_vdecls
 
 (* change body of view to equiv *)
-let norm_reuse_mk_eq edefs =
+let norm_reuse_mk_eq iprog prog edefs =
   List.iter (fun e -> 
       if e.C.view_equiv_set # is_empty then ()
       else 
@@ -231,22 +231,25 @@ let norm_reuse_mk_eq edefs =
         let (sst,to_n) = e.C.view_equiv_set # get in
         let args = e.C.view_vars in
         let new_args = CF.trans_args sst args in
-        let () = y_winfo_hp (add_str "TBI: view" Cprinter.string_of_view_decl_short) e in
-        let () = y_winfo_hp (add_str "TBI: from" (pr_pair pr_id !CP.print_svl)) (name,args) in
-        let () = y_winfo_hp (add_str "TBI: to" (pr_pair pr_id !CP.print_svl)) (to_n,new_args) in
+        let () = y_ninfo_hp (add_str "TBI: view" Cprinter.string_of_view_decl_short) e in
+        let () = y_ninfo_hp (add_str "TBI: from" (pr_pair pr_id !CP.print_svl)) (name,args) in
+        let () = y_ninfo_hp (add_str "TBI: to" (pr_pair pr_id !CP.print_svl)) (to_n,new_args) in
         let self_node = CP.SpecVar (Named name, Globals.self, Unprimed) in
         let view_node = CF.mkViewNode self_node to_n new_args no_pos in
         let view_body = CF.set_flow_in_formula_override 
             { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
             (CF.formula_of_heap view_node no_pos) 
         in
-        let () = C.update_un_struc_formula (fun _ -> view_body) e in
-        let () = C.update_view_formula (fun _ -> CF.formula_to_struc_formula view_body) e in
+        let () = y_tinfo_hp (add_str "view_body" !CF.print_formula) view_body in
+        let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+        let () = y_tinfo_hp (add_str "view_body(new)" !CF.print_formula) new_view_body in
+         let () = C.update_un_struc_formula (fun _ -> view_body) e in
+        let () = C.update_view_formula (fun _ -> CF.formula_to_struc_formula new_view_body) e in
         let () = C.update_view_raw_base_case (fun _ -> view_body) e in
         ()
     ) edefs
 
-let norm_reuse_subs vdefs to_vns =
+let norm_reuse_subs iprog cprog vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in
   let eq_lst = List.map (fun (m,_) -> m) equiv_set in
   let in_equiv_set n = List.exists (string_eq n) eq_lst in 
@@ -272,7 +275,7 @@ let norm_reuse_subs vdefs to_vns =
   in
   let () = y_tinfo_hp (add_str "equiv_set" (pr_list (pr_pair pr_id (pr_pair pr_none pr_id)))) equiv_set in
   let () = y_tinfo_hp (add_str "to_decls" (pr_list Cprinter.string_of_view_decl_short)) to_decls in
-  let () = norm_reuse_mk_eq edefs in
+  let () = norm_reuse_mk_eq iprog cprog edefs in
   List.iter (fun v -> (* transform body of views *)
       let () = C.update_un_struc_formula (x_add CF.repl_equiv_formula find_f) v in
       let () = C.update_view_formula (x_add CF.repl_equiv_struc_formula find_f) v in

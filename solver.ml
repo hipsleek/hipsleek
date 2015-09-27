@@ -48,7 +48,7 @@ let rhs_rest_emp = ref true
 let rhs_pure_stk = new Gen.stack            (* used for detecting pure contra inside folding *)
 
 (*cyclic: should improve the design. why AS call solver??*)
-let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos )
+(* let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos ) *)
 let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) ->
     let () = print_endline_quiet ("Solver.manage_unsafe_lemmas: not int " ) in
     (None: CF.list_context list option))

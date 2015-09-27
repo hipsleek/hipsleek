@@ -359,4 +359,4 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
   let pr2 = Iprinter.string_of_view_decl in
   Debug.no_1 "rev_trans_view_decl" pr1 pr2 rev_trans_view_decl v
 
-let () = Solver.rev_trans_formula := rev_trans_formula
+let () = CF.rev_trans_formula := rev_trans_formula
