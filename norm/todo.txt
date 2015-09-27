@@ -316,6 +316,22 @@ error at:
 SLEEK FAILURE (END)
 
 ===================================================================
+# ex21t1a.slk
+
+lemma_infer [UA,@classic] "L21t1a"
+  self::app3a<> -> self::node<v,q>*UA(q,v).
+print residue.
+
+# deemed a failure due to presence of app3a in inference outcome.
+  can detect and/or prevent?
+
+
+ inferred hprel: [q_79::app3a<>@M&q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  q_79::node<v_84,q_85>@M * GP_86(q_85,q_79@NI)&
+                   q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  emp&
+                   flted_25_72=null & flted_25_73=0 --> UA(flted_25_72,flted_25_73@NI)&
+
 ===================================================================
 ===================================================================
 ===================================================================
