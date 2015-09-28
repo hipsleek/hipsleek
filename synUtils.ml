@@ -417,6 +417,26 @@ let find_common_node_chain root (fs: CF.formula list) =
   Debug.no_2 "find_common_node_chain" pr1 pr2 (* (pr_pair pr2 pr3) *) pr4
     find_common_node_chain root fs
 
+let get_all_node_name (h_f: CF.h_formula): ident list =
+  let f_h_f _ h_f =
+    try
+      let name = CF.get_node_name 20 h_f in
+      Some (h_f, [name])
+    with _ -> None
+  in
+  snd( CF.trans_h_formula h_f () f_h_f voidf2 List.concat)
+
+let is_pred_base_case mut_pred_list (f: CF.formula) =
+  let f_h, _, _, _, _, _ = CF.split_components f in
+  let f_node_names = get_all_node_name f_h in
+  not (Gen.BList.overlap_eq eq_str f_node_names mut_pred_list)
+
+let find_pred_base_case (pred: C.view_decl): CF.formula list =
+  let pred_f = C.formula_of_unstruc_view_f pred in
+  let pred_cases = CF.list_of_disjuncts pred_f in
+  let mut_pred_list = [pred.C.view_name] in (* TODO: Find the list of mutual preds *)
+  List.find_all (fun f -> is_pred_base_case mut_pred_list f) pred_cases
+
 (*******************)
 (* UTILS FOR LEMMA *)
 (*******************)

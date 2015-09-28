@@ -33,6 +33,8 @@ print residue.
 
 shape_derive_view [U].
 
+print views.
+
 
 /*
 # ex21u3.slk

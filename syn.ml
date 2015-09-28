@@ -484,6 +484,7 @@ let rec dependent_graph_of_formula dg hprel_name hprel_f =
 let dependent_graph_of_hprel dg hprel = 
   let hpr_name = CP.name_of_spec_var (name_of_hprel hprel) in 
   let hpr_f = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
+  let dg = CG.add_vertex dg hpr_name in
   dependent_graph_of_formula dg hpr_name hpr_f
 
 let dependent_graph_of_hprel_list hprel_list =
