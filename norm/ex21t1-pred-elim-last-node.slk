@@ -22,7 +22,7 @@ pred app3<> == self::node<0,null>
   inv self!=null.
 
 
-pred_elim_hd_node [*].
+pred_elim_tl_node [*].
 
 print views.
 

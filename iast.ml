@@ -627,6 +627,7 @@ let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
+(* let mk_iview_decl name dname vars f pos = *)
 (* type: Globals.ident -> *)
 (*   Globals.ident -> *)
 (*   (Globals.ident * 'a) list -> *)
@@ -663,7 +664,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
 
 let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   (* let mix_true = Mcpure.mkMTrue pos in *)
-  let f = F.mkETrue top_flow pos; in
+  let f = F.mkETrue top_flow pos in
   let vs = List.map fst vars in (* where to store annotation? *)
   mk_iview_decl hp_n hp_n vs f pos
   (* let vs = List.map fst vars in (\* where to store annotation? *\) *)

@@ -417,6 +417,49 @@ let find_common_node_chain root (fs: CF.formula list) =
   Debug.no_2 "find_common_node_chain" pr1 pr2 (* (pr_pair pr2 pr3) *) pr4
     find_common_node_chain root fs
 
+let find_common_node_branches root (fs: CF.formula list) =
+  let common_node_list = List.map (fun f -> snd (find_heap_node root f)) fs in
+  if List.exists (fun ns -> List.length ns > 1) common_node_list then
+    failwith "There is a formula which has more than one root nodes."
+  else
+    let fs_w_heap_node, others = List.partition 
+        (fun (_, ns) -> not (is_empty ns)) 
+        (List.combine fs common_node_list) in
+    let other_fs = List.map fst others in
+    (* The below list shares at least one common node *)
+    let fs_w_heap_node = List.map (fun (f, ns) -> (f, List.hd ns)) fs_w_heap_node in
+    let root_node_list = List.map snd fs_w_heap_node in
+    if not (is_consistent_node_list root_node_list) then
+      failwith "The list of root nodes is not consistent."
+    else
+      let root_node, _ = norm_node_list root_node_list in
+      let root_node = { root_node with CF.h_formula_data_node = root } in
+      CF.DataNode root_node, other_fs
+
+let get_all_node_name (h_f: CF.h_formula): ident list =
+  let f_h_f _ h_f =
+    try
+      let name = CF.get_node_name 20 h_f in
+      Some (h_f, [name])
+    with _ -> None
+  in
+  snd( CF.trans_h_formula h_f () f_h_f voidf2 List.concat)
+
+let is_pred_base_case mut_pred_list (f: CF.formula) =
+  let f_h, _, _, _, _, _ = CF.split_components f in
+  let f_node_names = get_all_node_name f_h in
+  not (Gen.BList.overlap_eq eq_str f_node_names mut_pred_list)
+
+let find_pred_base_case (pred: C.view_decl): CF.formula list =
+  let pred_f = C.formula_of_unstruc_view_f pred in
+  let pred_cases = CF.list_of_disjuncts pred_f in
+  let mut_pred_list =
+    try
+      List.find (fun scc -> Gen.BList.mem_eq eq_str pred.C.view_name scc) !Astsimp.view_scc
+    with _ -> [pred.C.view_name]
+  in
+  List.find_all (fun f -> is_pred_base_case mut_pred_list f) pred_cases
+
 (*******************)
 (* UTILS FOR LEMMA *)
 (*******************)
