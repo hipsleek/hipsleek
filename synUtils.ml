@@ -434,7 +434,11 @@ let is_pred_base_case mut_pred_list (f: CF.formula) =
 let find_pred_base_case (pred: C.view_decl): CF.formula list =
   let pred_f = C.formula_of_unstruc_view_f pred in
   let pred_cases = CF.list_of_disjuncts pred_f in
-  let mut_pred_list = [pred.C.view_name] in (* TODO: Find the list of mutual preds *)
+  let mut_pred_list =
+    try
+      List.find (fun scc -> Gen.BList.mem_eq eq_str pred.C.view_name scc) !Astsimp.view_scc
+    with _ -> [pred.C.view_name]
+  in
   List.find_all (fun f -> is_pred_base_case mut_pred_list f) pred_cases
 
 (*******************)
