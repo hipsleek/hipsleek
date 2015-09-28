@@ -1,0 +1,57 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+HeapPred U(node y).
+
+pred app5<> == self=null
+        or self::node<_,q> * U(q)
+  inv true.
+
+lemma_infer [U,@classic] self::app4<> -> self::app5<>.
+
+print residue.
+
+shape_derive_view [U].
+
+
+/*
+# ex21u3.slk
+
+ inferred hprel: [q_113::app5<>@M&q_113!=null --> U(q_113)&true; 
+                  emp&q_110=null --> U(q_110)&true]
+[[ Fold ==>  Match(self_lem_18,self_lem_18) ==>  COND ==>  (Lemma ==> lem_18(q_113,q_115)) ==> (left: lem_18) ==>  InferFold 0 ==>  COND ==>  Match(q_113,q_113) ==> ||OR|| ==>  Fold ==>  Match(self_lem_18,self_lem_18) ==>  UnmatchedRHSData ==> ||OR|| ==>  COND ==>  BaseCaseFold]]
+
+
+# why shape_derive_view failed?
+
+========================
+ Performing Deriving Views
+========================
+
+Exception processed: Not_found
+error at: 
+SLEEK FAILURE (END)
+
+
+
+*/

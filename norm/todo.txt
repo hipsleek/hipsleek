@@ -353,6 +353,22 @@ Exception processed: Failure("gather_type_info_var : unexpected exception Failur
 error at: 
 SLEEK FAILURE (END)
 ===================================================================
+# ex21t3.slk
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+pred_elim_tl_node [*].
+
+# expect to form:
+
+  lemma_infer   app3<> -> U(self,p)*p::node<0,null>
+
+Starting Omega.../usr/local/bin/oc
+Exception processed: Failure("**sleekengine.ml#1751: TBI")
+error at: 
+SLEEK FAILURE (END)
 ===================================================================
 ===================================================================
 ===================================================================
