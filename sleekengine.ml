@@ -1766,6 +1766,9 @@ let process_pred_elim_tail (ids: regex_id_list) =
 let process_pred_elim_head (ids: regex_id_list) = 
   process_sleek_norm_preds "Elim Head" ids (Syn.elim_head_pred_list iprog !cprog)
 
+let process_pred_unify_disj (ids: regex_id_list) = 
+  process_sleek_norm_preds "Unify Disj" ids (Syn.unify_disj_pred_list iprog !cprog)
+
 (******************************************************************************)
 
 let relation_pre_process constrs pre_hps post_hps=

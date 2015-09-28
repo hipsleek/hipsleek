@@ -3847,14 +3847,17 @@ let add_view_decl prog vdecl =
   if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
     y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
   else
+    let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
 
 let update_view_decl prog vdecl = 
   let vdecl_id = vdecl.view_name in
   let same_vdecls, others = List.partition (fun v -> 
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
-  let () = if not (is_empty same_vdecls) then 
-      y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in cprog") 
+  let () = 
+    if not (is_empty same_vdecls) then 
+      y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in cprog.")
+    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") 
   in
   prog.prog_view_decls <- others @ [vdecl]
 

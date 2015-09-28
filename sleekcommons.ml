@@ -83,6 +83,7 @@ type command =
   | ShapeNormalize of regex_id_list
   | PredElimHead of regex_id_list
   | PredElimTail of regex_id_list
+  | PredUnifyDisj of regex_id_list
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -191,6 +192,7 @@ let string_of_command c = match c with
   | ShapeNormalize _ -> "ShapeNormalize"
   | PredElimHead _ -> "PredElimHead"
   | PredElimTail _ -> "PredElimTail"
+  | PredUnifyDisj _ -> "PredUnifyDisj"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"

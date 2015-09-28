@@ -3842,12 +3842,23 @@ let prim_sanity_check iprog=
   Debug.no_1 "prim_sanity_check" pr_procs pr_none
       (fun _ -> prim_sanity_check_x iprog) iprog
 
+let add_view_decl prog vdecl = 
+  let prog_vdecl_ids = List.map (fun v -> v.view_name) prog.prog_view_decls in
+  let vdecl_id = vdecl.view_name in
+  if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
+    y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into iprog before.")
+  else
+    let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.") in
+    prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
+
 let update_view_decl prog vdecl = 
   let vdecl_id = vdecl.view_name in
   let same_vdecls, others = List.partition (fun v -> 
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
-  let () = if not (is_empty same_vdecls) then 
-      y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog") 
+  let () = 
+    if not (is_empty same_vdecls) then 
+      y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog")
+    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.")  
   in
   prog.prog_view_decls <- others @ [vdecl]
 

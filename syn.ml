@@ -779,8 +779,7 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
   let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
   let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (* @pure_field *)
   let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
-  let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
-
+  
   (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
   let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog cprog in
   if not lres then view
@@ -810,7 +809,7 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
         view.C.view_base_case <- None
       in
       let norm_view = norm_single_view iprog cprog view in
-      let () = y_binfo_hp (add_str "Elim head / tail view" Cprinter.string_of_view_decl_short) norm_view in
+      let () = y_binfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
       norm_view
 
 let elim_head_pred iprog cprog pred = 
@@ -832,6 +831,7 @@ let elim_head_pred iprog cprog pred =
     let fresh_pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars fresh_pred_args) in
     let hrel_list, unknown_vars = List.split (List.map 
         (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
+    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
     let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
     let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
     (* let norm_flow = { CF.formula_flow_interval = exlist # get_hash n_flow; CF.formula_flow_link = None } in *)
@@ -916,6 +916,7 @@ let elim_tail_pred iprog cprog pred =
     let fresh_self_node = CP.fresh_spec_var self_node in
     let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
     let unknown_h, unknown_hpred = C.add_raw_hp_rel cprog false true [(self_node, I); (fresh_self_node, I)] no_pos in
+    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
     let unknown_f = CF.mkStar_combine_heap 
         (CF.subst [(self_node, fresh_self_node)] node_base_case) 
         unknown_h CF.Flow_combine no_pos in
@@ -929,25 +930,80 @@ let elim_tail_pred iprog cprog pred =
   Debug.no_1 "elim_tail_pred" pr pr 
     (fun _ -> elim_tail_pred iprog cprog pred) pred
 
-let rec elim_node_pred_list f_elim preds = 
+let rec norm_pred_list f_norm preds = 
   (* List.map (elim_head_pred iprog cprog) preds *)
   match preds with
   | [] -> []
   | p::ps ->
-    let lazy_ps = lazy (elim_node_pred_list f_elim ps) in
+    let lazy_ps = lazy (norm_pred_list f_norm ps) in
     try
-      let n_p = f_elim p in
+      let n_p = f_norm p in
       n_p::(Lazy.force lazy_ps)
     with e ->
-      let () = y_tinfo_pp (Printexc.to_string e) in
-      let () = report_warning no_pos ("Cannot eliminate head of " ^ p.C.view_name) in
+      let () = y_binfo_pp (Printexc.to_string e) in
+      let () = report_warning no_pos ("Cannot normalize the view " ^ p.C.view_name) in
       Lazy.force lazy_ps
 
 let elim_head_pred_list iprog cprog preds =
-  elim_node_pred_list (elim_head_pred iprog cprog) preds
+  norm_pred_list (elim_head_pred iprog cprog) preds
 
 let elim_tail_pred_list iprog cprog preds =
-  elim_node_pred_list (elim_tail_pred iprog cprog) preds
+  norm_pred_list (elim_tail_pred iprog cprog) preds
+
+(*********************************)
+(***** COMBINE DISJ BRANCHES *****)
+(*********************************)
+let unify_disj_pred iprog cprog pred = 
+  let pred_f = C.formula_of_unstruc_view_f pred in
+  let self_node = mk_self_node pred.C.view_name pred_f in
+  let common_node_chain, other_branches = find_common_node_chain_branches self_node (CF.list_of_disjuncts pred_f) in
+  let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
+  match common_node_chain with
+  | [] -> pred
+  | n::ns ->
+    let common_heap = List.fold_left (fun acc f -> CF.mkStarH acc f no_pos) n ns in
+    let common_f = CF.mkBase_simp common_heap (MCP.mkMTrue no_pos) in
+    let args = collect_feasible_heap_args_formula cprog [] common_f in
+    let nodes = CF.collect_node_var_formula common_f in
+    let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
+    let dangling_vars = remove_dups dangling_vars in
+    let () = y_tinfo_hp (add_str "Dangling nodes" !CP.print_svl) dangling_vars in
+    let pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars pred.C.view_vars) in
+    let hrel_list, unknown_vars = List.split (List.map 
+        (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::pred_I_args) no_pos) dangling_vars) in
+    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
+    let unknown_branches = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
+    let vbody = CF.formula_of_disjuncts (other_branches @ [unknown_branches]) in
+    let vbody = CF.set_flow_in_formula_override 
+        { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+        vbody 
+    in
+    let vbody = Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars pred.C.view_vars)) [] vbody in
+    
+    (* Construct a new view with unknown HeapPred *)
+    let tmp_name = "tmp_" ^ pred.C.view_name in
+    let tmp_cpred = { pred with
+      C.view_name = tmp_name;
+      C.view_formula = CF.formula_to_struc_formula vbody;
+      C.view_un_struc_formula = [(vbody, (fresh_int (), ""))]; } 
+    in
+    (* let tmp_ipred = Rev_ast.rev_trans_view_decl tmp_cpred in *)
+    (* let () = C.update_view_decl cprog tmp_cpred in           *)
+    (* let () = I.update_view_decl iprog tmp_ipred in           *)
+    let norm_tmp_cpred = norm_single_view iprog cprog tmp_cpred in 
+    let () = y_binfo_hp (add_str "view_decls" (pr_list Cprinter.string_of_view_decl)) cprog.C.prog_view_decls in
+
+    let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
+    let norm_flow = CF.flow_formula_of_formula unknown_branches in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
+    let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
+    let tmp_pred_h = CF.mkViewNode self_node tmp_name fresh_pred_args no_pos in
+    let tmp_pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap tmp_pred_h no_pos) in
+    let ivars = List.map CP.name_of_spec_var unknown_vars in
+    derive_equiv_view_by_lem iprog cprog pred ivars pred_f tmp_pred_f
+
+let unify_disj_pred_list iprog cprog preds =
+  norm_pred_list (unify_disj_pred iprog cprog) preds
 
 (****************)
 (***** MAIN *****)

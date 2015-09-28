@@ -7,7 +7,7 @@ data node {
 	node next;	
 }.
 
-
+/*
 pred ll<> == self = null 
 	or self::node<_, q> * q::ll<> 
   inv true.
@@ -15,12 +15,14 @@ pred ll<> == self = null
 pred app3<> == self::node<_,null> 
 	or self::node<_, q> * q::app3<> & q!=null 
   inv self!=null.
+*/
 
 pred app4<> == self=null
-        or self::node<_,null> 
+  or self::node<_,null> 
 	or self::node<_, q> * q::app4<> & q!=null 
   inv true.
 
+/*
 HeapPred U(node y).
 
 pred app5<> == self=null
@@ -34,6 +36,21 @@ print residue.
 shape_derive_view [U].
 
 print views.
+*/
+
+pred app5<> == self=null
+  or self::node<_,q> * q::U<>
+  inv true.
+  
+pred U<> == self=null 
+  or self::app5<> & self!=null
+  inv true.
+  
+pred_reuse [*][*].
+
+pred_reuse_subs [*].
+
+checkentail self::app5<> |- self::app4<>.
 
 
 /*
