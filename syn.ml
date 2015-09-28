@@ -760,19 +760,62 @@ let derive_view iprog cprog other_hprels hprels =
   Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
     (derive_view iprog cprog) other_hprels hprels
 
-(*****************************)
-(***** ELIM HEAD OF PRED *****)
-(*****************************)
+(************************************)
+(***** ELIM HEAD / TAIL OF PRED *****)
+(************************************)
 let elim_useless_vars svl = 
   List.filter (fun v -> not (CP.is_var_typ v)) svl
 
+let mk_self_node typ_name f =
+  try
+    List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv f)
+  with _ -> CP.SpecVar (Named typ_name, Globals.self, Unprimed)
+
+let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
+  let l_name = "lem_inf_" ^ view.C.view_name in
+  let l_ihead = Rev_ast.rev_trans_formula l_head in
+  let l_ibody = Rev_ast.rev_trans_formula l_body in
+  let llemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left l_ivars l_ihead l_ibody in
+  let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
+  let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (* @pure_field *)
+  let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
+  let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
+
+  (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
+  let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog cprog in
+  if not lres then view
+  else
+    (* derived_views have been added into prog_view_decls of iprog and cprog *)
+    let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
+        CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
+        (derive_view iprog cprog) 
+    in
+    (* Equiv test to form new pred *)
+    let r_cbody = trans_hrel_to_view_formula l_body in
+    let r_ibody = Rev_ast.rev_trans_formula r_cbody in
+    let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
+    let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
+    if not rres then view
+    else
+      let vbody = CF.set_flow_in_formula_override 
+          { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+          r_cbody 
+      in
+      let self_node = mk_self_node view.C.view_name vbody in
+      let () = 
+        view.C.view_formula <- CF.formula_to_struc_formula 
+            (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] vbody);
+        view.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];
+        view.C.view_raw_base_case <- None;
+        view.C.view_base_case <- None
+      in
+      let norm_view = norm_single_view iprog cprog view in
+      let () = y_binfo_hp (add_str "Elim head / tail view" Cprinter.string_of_view_decl_short) norm_view in
+      norm_view
+
 let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
-  let self_node =
-    try
-      List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv pred_f)
-    with _ -> CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed)
-  in
+  let self_node = mk_self_node pred.C.view_name pred_f in
   let _, common_node_chain = find_common_node_chain self_node (CF.list_of_disjuncts pred_f) in
   let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
   match common_node_chain with
@@ -794,60 +837,63 @@ let elim_head_pred iprog cprog pred =
     (* let norm_flow = { CF.formula_flow_interval = exlist # get_hash n_flow; CF.formula_flow_link = None } in *)
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
-    let ex_vars = remove_dups (diff (diff (CF.fv unknown_f) unknown_vars) (CF.fv pred_f)) in
-    (* let unknown_f = CF.push_exists ex_vars unknown_f in *)
-    let classic = CP.SpecVar (UNK, "classic", Unprimed) in
-    let l_name = "lem_inf_" ^ pred.C.view_name in
-    (* let lemma = mk_lemma cprog l_name true (unknown_vars @ [classic]) [] LEM_INFER Left pred_f unknown_f no_pos in *)
-    (* let () = y_tinfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in                                          *)
-    (* let () = y_tinfo_hp (add_str "Lemma RHS" !CF.print_formula) unknown_f in                                       *)
-    (* let () = y_tinfo_hp (add_str "Lemma" !C.print_coercion) lemma in                                               *)
-    (* let inf_ctx = x_add Lemproving.verify_lemma 10 [lemma] [] cprog l_name Left in                                 *)
+    (* let ex_vars = remove_dups (diff (diff (CF.fv unknown_f) unknown_vars) (CF.fv pred_f)) in *)
+    (* let unknown_f = CF.push_exists ex_vars unknown_f in                                      *)
+
+    let ivars = List.map CP.name_of_spec_var unknown_vars in
+    derive_equiv_view_by_lem iprog cprog pred ivars pred_f unknown_f
+    (* let l_name = "lem_inf_" ^ pred.C.view_name in                                                                          *)
+    (* (* let lemma = mk_lemma cprog l_name true (unknown_vars @ [classic]) [] LEM_INFER Left pred_f unknown_f no_pos in *)   *)
+    (* (* let () = y_tinfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in                                          *)   *)
+    (* (* let () = y_tinfo_hp (add_str "Lemma RHS" !CF.print_formula) unknown_f in                                       *)   *)
+    (* (* let () = y_tinfo_hp (add_str "Lemma" !C.print_coercion) lemma in                                               *)   *)
+    (* (* let inf_ctx = x_add Lemproving.verify_lemma 10 [lemma] [] cprog l_name Left in                                 *)   *)
     
-    let ihead = (* IF.clear_type_info_formula *) (Rev_ast.rev_trans_formula pred_f) in
-    let ibody = (* IF.clear_type_info_formula *) (Rev_ast.rev_trans_formula unknown_f) in
-    let ivars = List.map CP.name_of_spec_var (unknown_vars @ [classic]) in
-    let ilemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left ivars ihead ibody in
-    let () = ilemma.I.coercion_infer_obj # set INF_PURE_FIELD in
-    let () = y_tinfo_hp (add_str ("ilemma " ^ l_name) Iprinter.string_of_coercion) ilemma in 
-    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
-    (* let llemma, rlemma = Astsimp.trans_one_coercion iprog ilemma in                   *)
-    (* let () = y_tinfo_hp (add_str "llemma" (pr_list !C.print_coercion)) llemma in      *)
-    (* let () = y_tinfo_hp (add_str "rlemma" (pr_list !C.print_coercion)) rlemma in      *)
-    (* let inf_ctx = x_add Lemproving.verify_lemma 10 llemma rlemma cprog l_name Left in *)
+    (* let ihead = (* IF.clear_type_info_formula *) (Rev_ast.rev_trans_formula pred_f) in                                     *)
+    (* let ibody = (* IF.clear_type_info_formula *) (Rev_ast.rev_trans_formula unknown_f) in                                  *)
+    (* let ivars = List.map CP.name_of_spec_var unknown_vars in                                                               *)
+    (* let ilemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left ivars ihead ibody in                                             *)
+    (* let () = ilemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)                                               *)
+    (* let () = ilemma.I.coercion_infer_obj # set INF_PURE_FIELD in (* @pure_field *)                                         *)
+    (* let () = y_tinfo_hp (add_str ("ilemma " ^ l_name) Iprinter.string_of_coercion) ilemma in                               *)
+    (* let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in                       *)
+    (* (* let llemma, rlemma = Astsimp.trans_one_coercion iprog ilemma in                   *)                                *)
+    (* (* let () = y_tinfo_hp (add_str "llemma" (pr_list !C.print_coercion)) llemma in      *)                                *)
+    (* (* let () = y_tinfo_hp (add_str "rlemma" (pr_list !C.print_coercion)) rlemma in      *)                                *)
+    (* (* let inf_ctx = x_add Lemproving.verify_lemma 10 llemma rlemma cprog l_name Left in *)                                *)
 
-    (* let () = y_tinfo_hp (add_str "Inferred Ctx" !CF.print_list_context) inf_ctx in *)
+    (* (* let () = y_tinfo_hp (add_str "Inferred Ctx" !CF.print_list_context) inf_ctx in *)                                   *)
 
-    (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
-    let ires, _ = x_add Lemma.manage_infer_lemmas [ilemma] iprog cprog in
-    if not ires then pred
-    else
-      (* derived_views have been added into prog_view_decls of iprog and cprog *)
-      let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
-          CF.sleek_hprel_assumes snd (REGEX_LIST (List.map CP.name_of_spec_var unknown_vars))
-          (derive_view iprog cprog) 
-      in
-      (* Equiv test to form new pred *)
-      let cbody = trans_hrel_to_view_formula unknown_f in
-      let rbody = Rev_ast.rev_trans_formula cbody in
-      let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] ihead rbody in
-      let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
-      if not rres then pred
-      else
-        let vbody = CF.set_flow_in_formula_override 
-            { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
-            cbody 
-        in
-        let () = 
-          pred.C.view_formula <- CF.formula_to_struc_formula 
-              (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars pred.C.view_vars)) [] vbody);
-          pred.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];
-          pred.C.view_raw_base_case <- None;
-          pred.C.view_base_case <- None
-        in
-        let norm_pred = norm_single_view iprog cprog pred in
-        let () = y_binfo_hp (add_str "Elim head view" Cprinter.string_of_view_decl_short) norm_pred in
-        norm_pred
+    (* (* The below method updates CF.sleek_hprel_assumes via lemma proving *)                                                *)
+    (* let ires, _ = x_add Lemma.manage_infer_lemmas [ilemma] iprog cprog in                                                  *)
+    (* if not ires then pred                                                                                                  *)
+    (* else                                                                                                                   *)
+    (*   (* derived_views have been added into prog_view_decls of iprog and cprog *)                                          *)
+    (*   let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views"                                 *)
+    (*       CF.sleek_hprel_assumes snd (REGEX_LIST (List.map CP.name_of_spec_var unknown_vars))                              *)
+    (*       (derive_view iprog cprog)                                                                                        *)
+    (*   in                                                                                                                   *)
+    (*   (* Equiv test to form new pred *)                                                                                    *)
+    (*   let cbody = trans_hrel_to_view_formula unknown_f in                                                                  *)
+    (*   let rbody = Rev_ast.rev_trans_formula cbody in                                                                       *)
+    (*   let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] ihead rbody in                                   *)
+    (*   let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in                                       *)
+    (*   if not rres then pred                                                                                                *)
+    (*   else                                                                                                                 *)
+    (*     let vbody = CF.set_flow_in_formula_override                                                                        *)
+    (*         { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None }                                      *)
+    (*         cbody                                                                                                          *)
+    (*     in                                                                                                                 *)
+    (*     let () =                                                                                                           *)
+    (*       pred.C.view_formula <- CF.formula_to_struc_formula                                                               *)
+    (*           (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars pred.C.view_vars)) [] vbody); *)
+    (*       pred.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];                                                   *)
+    (*       pred.C.view_raw_base_case <- None;                                                                               *)
+    (*       pred.C.view_base_case <- None                                                                                    *)
+    (*     in                                                                                                                 *)
+    (*     let norm_pred = norm_single_view iprog cprog pred in                                                               *)
+    (*     let () = y_binfo_hp (add_str "Elim head view" Cprinter.string_of_view_decl_short) norm_pred in                     *)
+    (*     norm_pred                                                                                                          *)
 
 let elim_head_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
@@ -855,7 +901,28 @@ let elim_head_pred iprog cprog pred =
     (fun _ -> elim_head_pred iprog cprog pred) pred
 
 let elim_tail_pred iprog cprog pred = 
-  pred
+  let pred_f = C.formula_of_unstruc_view_f pred in
+  let self_node =
+    try
+      List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv pred_f)
+    with _ -> CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed)
+  in
+  let base_cases = find_pred_base_case pred in
+  try
+    let node_base_case = List.find (fun f -> 
+        not (is_empty (snd (find_heap_node self_node f))) 
+      ) base_cases in
+    let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
+    let fresh_self_node = CP.fresh_spec_var self_node in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
+    let unknown_h, unknown_hpred = C.add_raw_hp_rel cprog false true [(self_node, I); (fresh_self_node, I)] no_pos in
+    let unknown_f = CF.mkStar_combine_heap 
+        (CF.subst [(self_node, fresh_self_node)] node_base_case) 
+        unknown_h CF.Flow_combine no_pos in
+    let norm_flow = CF.flow_formula_of_formula unknown_f in
+    let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
+    derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
+  with _ -> pred
 
 let elim_tail_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
