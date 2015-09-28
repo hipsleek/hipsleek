@@ -13,6 +13,7 @@ pred app4<> == self=null
 	or self::node<_, q> * q::app4<> & q!=null 
   inv true.
 
+
 pred app4a<> == 
    case {
     self=null -> [] self=null;

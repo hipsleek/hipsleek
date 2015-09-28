@@ -1,0 +1,41 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app4<> == self=null
+  or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+print views.
+
+/*
+# ex21c1.slk --eci
+
+[ view ll<>= 
+  ECase
+   case {
+    self=null ->
+     EList
+       :EBase 
+          (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+       ;
+    self!=null ->
+     EList
+       :EBase 
+          exists (Impl)[Anon_12; 
+          q](* lbl: *){2}->self::node<Anon_12,q>@M * q::ll<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+       ;
+    }
+   ]
+
+
+
+*/
