@@ -417,6 +417,25 @@ let find_common_node_chain root (fs: CF.formula list) =
   Debug.no_2 "find_common_node_chain" pr1 pr2 (* (pr_pair pr2 pr3) *) pr4
     find_common_node_chain root fs
 
+let find_common_node_branches root (fs: CF.formula list) =
+  let common_node_list = List.map (fun f -> snd (find_heap_node root f)) fs in
+  if List.exists (fun ns -> List.length ns > 1) common_node_list then
+    failwith "There is a formula which has more than one root nodes."
+  else
+    let fs_w_heap_node, others = List.partition 
+        (fun (_, ns) -> not (is_empty ns)) 
+        (List.combine fs common_node_list) in
+    let other_fs = List.map fst others in
+    (* The below list shares at least one common node *)
+    let fs_w_heap_node = List.map (fun (f, ns) -> (f, List.hd ns)) fs_w_heap_node in
+    let root_node_list = List.map snd fs_w_heap_node in
+    if not (is_consistent_node_list root_node_list) then
+      failwith "The list of root nodes is not consistent."
+    else
+      let root_node, _ = norm_node_list root_node_list in
+      let root_node = { root_node with CF.h_formula_data_node = root } in
+      CF.DataNode root_node, other_fs
+
 let get_all_node_name (h_f: CF.h_formula): ident list =
   let f_h_f _ h_f =
     try
