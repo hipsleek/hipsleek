@@ -6,6 +6,7 @@ open Others
 open Label_only
 open Exc.GTable
 module C = Cast
+module I = Iast
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
@@ -359,6 +360,12 @@ let norm_single_view iprog cprog view =
   match norm_view with
   | v::[] -> v
   | _ -> view
+
+let restore_view iprog cprog view = 
+  let iview = Rev_ast.rev_trans_view_decl view in
+  let () = C.update_view_decl cprog view in
+  let () = I.update_view_decl iprog iview in
+  ()
 
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in

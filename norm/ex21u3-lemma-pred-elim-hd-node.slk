@@ -23,6 +23,7 @@ pred app4<> == self=null
   inv true.
 
 /*
+
 HeapPred U(node y).
 
 pred app5<> == self=null
@@ -36,6 +37,10 @@ print residue.
 shape_derive_view [U].
 
 print views.
+
+lemma_infer [U,@classic] self::app4<> <- self::app5<>.
+
+print residue.
 */
 
 pred app5<> == self=null
@@ -49,6 +54,8 @@ pred U<> == self=null
 pred_reuse [*][*].
 
 pred_reuse_subs [*].
+
+checkentail self::app4<> |- self::app5<>.
 
 checkentail self::app5<> |- self::app4<>.
 

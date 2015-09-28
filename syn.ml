@@ -782,7 +782,9 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
   
   (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
   let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog cprog in
-  if not lres then view
+  if not lres then
+    let () = restore_view iprog cprog view in
+    view
   else
     (* derived_views have been added into prog_view_decls of iprog and cprog *)
     let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
@@ -794,7 +796,9 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
     let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
     let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
-    if not rres then view
+    if not rres then 
+      let () = restore_view iprog cprog view in
+      view
     else
       let vbody = CF.set_flow_in_formula_override 
           { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
