@@ -762,9 +762,16 @@ let derive_view iprog cprog other_hprels hprels =
 (*****************************)
 (***** ELIM HEAD OF PRED *****)
 (*****************************)
+let elim_useless_vars svl = 
+  List.filter (fun v -> not (CP.is_var_typ v)) svl
+
 let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
-  let self_node = CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed) in
+  let self_node =
+    try
+      List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv pred_f)
+    with _ -> CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed)
+  in
   let _, common_node_chain = find_common_node_chain self_node (CF.list_of_disjuncts pred_f) in
   let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
   match common_node_chain with
@@ -778,7 +785,7 @@ let elim_head_pred iprog cprog pred =
     let dangling_vars = remove_dups dangling_vars in
     let () = y_tinfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
-    let fresh_pred_I_args = List.map (fun v -> (v, I)) (List.filter (fun v -> not (CP.is_var_typ v)) fresh_pred_args) in
+    let fresh_pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars fresh_pred_args) in
     let hrel_list, unknown_vars = List.split (List.map 
         (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
     let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
@@ -831,7 +838,8 @@ let elim_head_pred iprog cprog pred =
             cbody 
         in
         let () = 
-          pred.C.view_formula <- CF.formula_to_struc_formula vbody;
+          pred.C.view_formula <- CF.formula_to_struc_formula 
+              (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars pred.C.view_vars)) [] vbody);
           pred.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];
           pred.C.view_raw_base_case <- None;
           pred.C.view_base_case <- None
@@ -854,9 +862,10 @@ let rec elim_head_pred_list iprog cprog preds =
     try
       let n_p = elim_head_pred iprog cprog p in
       n_p::(Lazy.force lazy_ps)
-    with _ ->
+    with e ->
+      let () = y_binfo_pp (Printexc.to_string e) in
       let () = report_warning no_pos ("Cannot eliminate head of " ^ p.C.view_name) in
-      Lazy.force lazy_ps
+      (* Lazy.force lazy_ps *) raise e
 
 (****************)
 (***** MAIN *****)
