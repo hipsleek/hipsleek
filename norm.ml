@@ -315,6 +315,18 @@ let norm_reuse iprog cprog vdefs frm_vns to_vns=
   Debug.no_3 "norm_reuse" pr2 pr1 pr1 pr3
     (fun _ _ _ -> norm_reuse iprog cprog vdefs frm_vns to_vns) vdefs frm_vns to_vns
 
+let regex_search reg_id vdefs =
+  match reg_id with
+    | REGEX_LIST ids -> ids
+    | REGEX_STAR -> 
+      let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
+      all_ids
+
+let norm_reuse_rgx iprog cprog vdefs reg_frm_vns reg_to_vns =
+  let frm_vns = regex_search reg_frm_vns vdefs in
+  let to_vns = regex_search reg_to_vns vdefs in
+  norm_reuse iprog cprog vdefs frm_vns to_vns
+
 (***********************************************)
 (********EXTRACT common pattern **********)
 (***********************************************)

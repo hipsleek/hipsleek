@@ -776,7 +776,7 @@ let mk_self_node typ_name f =
 (*   C.view_decl -> *)
 (*   Globals.ident list -> *)
 (*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
-let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
+let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_body =
   let l_name = "lem_inf_" ^ view.C.view_name in
   let l_ihead = Rev_ast.rev_trans_formula l_head in
   let l_ibody = Rev_ast.rev_trans_formula l_body in
@@ -799,6 +799,17 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
         CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
         (derive_view iprog cprog) 
     in
+    let () = y_binfo_pp "XXX Scheduling pred_reuse_subs" in
+    let all_d_views = tmp_views@derived_views in
+    let ids = List.map (fun x -> x.Cast.view_name) all_d_views in
+    let vdefs = cprog.Cast.prog_view_decls in
+    let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
+    let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
+    let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in
+    let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in
+    let () = y_binfo_hp (add_str "XXX reuse found .." (pr_list (pr_pair pr_id pr_id))) lst in
+    let () = y_binfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
+        all_d_views in
     (* Equiv test to form new pred *)
     let r_cbody = trans_hrel_to_view_formula l_body in
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
@@ -832,12 +843,12 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
 (*   C.view_decl -> *)
 (*   Globals.ident list -> *)
 (*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
-let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
+let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_body =
   let pr1 = pr_list pr_id in
   let pr2 = !CF.print_formula in
   let pr3 = Cprinter.string_of_view_decl_short in
   Debug.no_3 "Syn:derive_equiv_view_by_lem" pr1 pr2 pr2 pr3
-    (fun _ _ _ -> derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body) l_ivars l_head l_body
+    (fun _ _ _ -> derive_equiv_view_by_lem ~tmp_views:tmp_views iprog cprog view l_ivars l_head l_body) l_ivars l_head l_body
 
 let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
@@ -1018,8 +1029,9 @@ let unify_disj_pred iprog cprog pred =
     (* let () = C.update_view_decl cprog tmp_cpred in           *)
     (* let () = I.update_view_decl iprog tmp_ipred in           *)
     let norm_tmp_cpred = norm_single_view iprog cprog tmp_cpred in 
-    let () = y_binfo_hp (add_str "view_decls" (pr_list Cprinter.string_of_view_decl)) cprog.C.prog_view_decls in
-
+    let tmp_v = [tmp_cpred] in
+    let () = y_binfo_hp (add_str "new view_decls" (pr_list Cprinter.string_of_view_decl_short)) tmp_v in
+        (* cprog.C.prog_view_decls *) 
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
     let norm_flow = CF.flow_formula_of_formula unknown_branches in
     let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
@@ -1027,7 +1039,7 @@ let unify_disj_pred iprog cprog pred =
     let tmp_pred_h = CF.mkViewNode self_node tmp_name fresh_pred_args no_pos in
     let tmp_pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap tmp_pred_h no_pos) in
     let ivars = List.map CP.name_of_spec_var unknown_vars in
-    x_add derive_equiv_view_by_lem iprog cprog pred ivars pred_f tmp_pred_f
+    x_add (derive_equiv_view_by_lem ~tmp_views:tmp_v) iprog cprog pred ivars pred_f tmp_pred_f
 
 let unify_disj_pred_list iprog cprog preds =
   norm_pred_list (unify_disj_pred iprog cprog) preds
