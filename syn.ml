@@ -771,6 +771,11 @@ let mk_self_node typ_name f =
     List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv f)
   with _ -> CP.SpecVar (Named typ_name, Globals.self, Unprimed)
 
+(* type: Astsimp.I.prog_decl -> *)
+(*   Astsimp.C.prog_decl -> *)
+(*   C.view_decl -> *)
+(*   Globals.ident list -> *)
+(*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
 let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
   let l_name = "lem_inf_" ^ view.C.view_name in
   let l_ihead = Rev_ast.rev_trans_formula l_head in
@@ -783,9 +788,12 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
   (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
   let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog cprog in
   if not lres then
+    let () = y_binfo_pp "XXX fail infer ---> " in
     let () = restore_view iprog cprog view in
     view
   else
+    let () = y_binfo_pp "XXX proven infer ---> " in
+    let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
     (* derived_views have been added into prog_view_decls of iprog and cprog *)
     let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
         CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
@@ -797,9 +805,12 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
     let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
     let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
     if not rres then 
-      let () = restore_view iprog cprog view in
+      let () = y_binfo_pp "XXX fail <--- " in
+      let () = y_binfo_hp (Iprinter.string_of_coercion) rlemma in
+       let () = restore_view iprog cprog view in
       view
     else
+      let () = y_binfo_pp "XXX proven equiv .." in
       let vbody = CF.set_flow_in_formula_override 
           { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
           r_cbody 
@@ -815,6 +826,18 @@ let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
       let norm_view = norm_single_view iprog cprog view in
       let () = y_binfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
       norm_view
+
+(* type: Astsimp.I.prog_decl -> *)
+(*   Astsimp.C.prog_decl -> *)
+(*   C.view_decl -> *)
+(*   Globals.ident list -> *)
+(*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
+let derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body =
+  let pr1 = pr_list pr_id in
+  let pr2 = !CF.print_formula in
+  let pr3 = Cprinter.string_of_view_decl_short in
+  Debug.no_3 "Syn:derive_equiv_view_by_lem" pr1 pr2 pr2 pr3
+    (fun _ _ _ -> derive_equiv_view_by_lem iprog cprog view l_ivars l_head l_body) l_ivars l_head l_body
 
 let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
@@ -845,7 +868,7 @@ let elim_head_pred iprog cprog pred =
     (* let unknown_f = CF.push_exists ex_vars unknown_f in                                      *)
 
     let ivars = List.map CP.name_of_spec_var unknown_vars in
-    derive_equiv_view_by_lem iprog cprog pred ivars pred_f unknown_f
+    x_add derive_equiv_view_by_lem iprog cprog pred ivars pred_f unknown_f
     (* let l_name = "lem_inf_" ^ pred.C.view_name in                                                                          *)
     (* (* let lemma = mk_lemma cprog l_name true (unknown_vars @ [classic]) [] LEM_INFER Left pred_f unknown_f no_pos in *)   *)
     (* (* let () = y_tinfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in                                          *)   *)
@@ -926,7 +949,7 @@ let elim_tail_pred iprog cprog pred =
         unknown_h CF.Flow_combine no_pos in
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
-    derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
+    x_add derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
   with _ -> pred
 
 let elim_tail_pred iprog cprog pred = 
@@ -1004,7 +1027,7 @@ let unify_disj_pred iprog cprog pred =
     let tmp_pred_h = CF.mkViewNode self_node tmp_name fresh_pred_args no_pos in
     let tmp_pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap tmp_pred_h no_pos) in
     let ivars = List.map CP.name_of_spec_var unknown_vars in
-    derive_equiv_view_by_lem iprog cprog pred ivars pred_f tmp_pred_f
+    x_add derive_equiv_view_by_lem iprog cprog pred ivars pred_f tmp_pred_f
 
 let unify_disj_pred_list iprog cprog preds =
   norm_pred_list (unify_disj_pred iprog cprog) preds

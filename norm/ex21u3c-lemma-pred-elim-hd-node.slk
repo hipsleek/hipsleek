@@ -1,0 +1,72 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app4<> == self=null
+  or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5<>
+  inv true.
+
+pred U<> == self::app5<>
+  inv true.
+
+lemma_test self::app4a<> <-> self::app5<>.
+
+Entailing lemma lem_16: Valid.
+
+ Lemma infer proved succeeded in current context.
+
+
+pred_reuse [*][*].
+//print views.
+
+/*
+# ex21u3c.slk
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5<>
+  inv true.
+pred U<> == self::app5<>
+  inv true.
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+
+lemma_test self::app4a<> <-> self::app5<>.
+
+# can prove with case-spec
+
+Entailing lemma lem_16: Valid.
+ Lemma infer proved succeeded in current context.
+
+
+
+*/

@@ -335,23 +335,16 @@ print residue.
 ===================================================================
 # ex21a5b.slk
 
-ERROR: at _0:0_0:0
-Message: Can not find flow of lseg
-Exception(get_hash2):Failure("Can not find flow of lseg")
-Last Proving Location: ex21a5b-pred-elim-hd-node.slk_11:4_11:38
-ERROR: at _0:0_0:0
-Message: Can not find flow of node
-Exception(get_hash2):Failure("Can not find flow of node")
+ # why duplicated? (FIXED)
+  unstructured formula: 
+    self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+    || self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
 
-(==cformula.ml#12156==)
-norm:case_norm@1
-norm:case_norm inp1 :[n,p]
-norm:case_norm inp2 : self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
-norm:case_norm@1 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")Occurred!
+ # is this for base-case fold?
 
-Exception processed: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")
-error at: 
-SLEEK FAILURE (END)
+  self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]base case: n=0->self=p & n=0
+  
+
 (==astsimp.ml#7104==)
 trans_formula@4@2@1
 trans_formula inp1 :[(p:31:node)(TVar__46:46:node)(p_17:41:node)(TVar__45:45:node)(n:32:int)(TVar__43:43:int)(flted_15_16:40:int)(TVar__42:42:int)(q:39:node)(Anon_13:38:int)(self:33:node)(TVar__37:37:int)(TVar__36:36:int)(TVar__35:35:node)(TVar__34:34:node)]
@@ -396,125 +389,10 @@ Exception processed: Failure("gather_type_info_var : unexpected exception Failur
 error at: 
 SLEEK FAILURE (END)
 ===================================================================
-# ex21t3.slk
-
-pred app3<> == self::node<0,null> 
-	or self::node<v, q> * q::app3<> & q!=null & v!=0 
-  inv self!=null.
-
-pred_elim_tl_node [*].
-
-# expect to form:
-
-  lemma_infer   app3<> -> U(self,p)*p::node<0,null>
-
-Starting Omega.../usr/local/bin/oc
-Exception processed: Failure("**sleekengine.ml#1751: TBI")
-error at: 
-SLEEK FAILURE (END)
 ===================================================================
-# ex21u3c1.slk
-
-pred app4a<> == 
-   case {
-    self=null -> [] self=null;
-    self!=true -> [] self::node<_,q> * q::app4a<>;
-    }
-inv true.
-
-Why isn't this a parser or case-spec error?
-
-ERROR: at _0:-1_0:-1
-Message: with 2 convert bexpr  1
-File "ex21u3c1-lemma-pred-elim-hd-node.slk", line 19, characters 10-14
- error: Failure("with 2 convert bexpr  1")
- at:
-Exception processed: Failure("with 2 convert bexpr  1")
-error at: 
-SLEEK FAILURE (END)
-
 ===================================================================
-# ex21u3c2.slk
-
-pred app5<> == self=null
-        or self::node<_,q> * q::app5<>
-  inv true.
-pred U<> == self::app5<>
-  inv true.
-lemma_test self::app5<> <-> self::U<>.
-
-# Why can't we prove trivial equality?
-
-!!! 
-Entailing lemma lem_13: Fail. Details below:
-	 "==>" implication: : Fail. (cex)(may) cause: OrL[
-do_unmatched_rhs : self_lem_13_left::U<>@M(must),
-valid
-]
-	 "<==" implication: : Valid.
 ===================================================================
-# ex21u3b.slk
-
-# It seems app4 is unchanged. What we should do is assert
-       self::app4<> == self::tmp_app4<> 
-  after the predicate unification..
-
-!!! **WARNING****cast.ml#3859:Updating an available view decl (app4) in cprog.
-!!! **WARNING****iast.ml#3860:Updating an available view decl (app4) in iprog
-!!! **sleekengine.ml#3024:Printing Views
-:
-[ view tmp_app4<>= 
-  EList
-    :EBase 
-       (* lbl: *){8}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
-    || :EBase 
-          exists (Impl)[flted_12_37](* lbl: *){9}->(exists Anon_36: (* lbl: *){9}->
-          self::node<Anon_36,flted_12_37>@M * DP_38(flted_12_37)&
-          {FLOW,(1,26)=__flow#E}[])
-    , view DP_38<>= 
-  EList
-    :EBase 
-       (* lbl: *){18}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
-    || :EBase 
-          (* lbl: *){19}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
-    , view app4<>= 
-  EList
-    :EList
-       :EBase 
-          (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
-       || :EBase 
-             exists (Impl)[Anon_12](* lbl: *){2}->(exists flted_12_16: (* lbl: *){2}->
-             self::node<Anon_12,flted_12_16>@M&flted_12_16=null&
-             {FLOW,(1,26)=__flow#E}[])
-       
-    || :EBase 
-          exists (Impl)[Anon_13; 
-          q](* lbl: *){3}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
-          {FLOW,(1,26)=__flow#E}[]
-    ]
 ===================================================================
-# ex21u3b.slk
-
-pred app4a<> == 
-   case {
-    self=null -> [] self=null;
-    self!=null -> [] self::node<_,q> 
-         case {
-           q=null -> [] q=null;
-           q!=null -> [] q::app4a<>;
-         };
-    }
-inv true.
-pred_unify_disj[app4a].
-
-# This fails sinc  we need to apply pred_reuse_subs first.
-
-!!! **syn.ml#808:XXX fail <--- 
-!!! **syn.ml#809:<=coerc lem_inf_app4a_rev
-	 kind: LEM_TEST
-	 origin: generated
-	 head: (self::app4a{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
-	 body:(self::tmp_app4a{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
 ===================================================================
 ===================================================================
 ===================================================================

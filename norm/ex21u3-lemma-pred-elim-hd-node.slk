@@ -22,7 +22,29 @@ pred app4<> == self=null
 	or self::node<_, q> * q::app4<> & q!=null 
   inv true.
 
+
+pred app5<> == self=null
+  or self::node<_,q> * q::U<>
+  inv true.
+  
+pred U<> == self=null 
+  or self::app5<> & self!=null
+  inv true.
+  
+pred_reuse [*][*].
+
+pred_reuse_subs [*].
+
+checkentail self::app4<> |- self::app5<>.
+
+checkentail self::app5<> |- self::app4<>.
+
+checkentail self::app5<> |- self::U<>.
+checkentail self::U<> |- self::app5<>.
+print views.
+
 /*
+# ex21u3.slk
 
 HeapPred U(node y).
 
@@ -43,41 +65,3 @@ lemma_infer [U,@classic] self::app4<> <- self::app5<>.
 print residue.
 */
 
-pred app5<> == self=null
-  or self::node<_,q> * q::U<>
-  inv true.
-  
-pred U<> == self=null 
-  or self::app5<> & self!=null
-  inv true.
-  
-pred_reuse [*][*].
-
-pred_reuse_subs [*].
-
-checkentail self::app4<> |- self::app5<>.
-
-checkentail self::app5<> |- self::app4<>.
-
-
-/*
-# ex21u3.slk
-
- inferred hprel: [q_113::app5<>@M&q_113!=null --> U(q_113)&true; 
-                  emp&q_110=null --> U(q_110)&true]
-[[ Fold ==>  Match(self_lem_18,self_lem_18) ==>  COND ==>  (Lemma ==> lem_18(q_113,q_115)) ==> (left: lem_18) ==>  InferFold 0 ==>  COND ==>  Match(q_113,q_113) ==> ||OR|| ==>  Fold ==>  Match(self_lem_18,self_lem_18) ==>  UnmatchedRHSData ==> ||OR|| ==>  COND ==>  BaseCaseFold]]
-
-
-# why shape_derive_view failed?
-
-========================
- Performing Deriving Views
-========================
-
-Exception processed: Not_found
-error at: 
-SLEEK FAILURE (END)
-
-
-
-*/
