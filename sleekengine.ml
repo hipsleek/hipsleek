@@ -1747,18 +1747,24 @@ let process_shape_normalize (ids: regex_id_list) =
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
 
-let process_pred_elim_tail (ids: regex_id_list) = 
-  failwith (x_loc^" TBI")
-
-let process_pred_elim_head (ids: regex_id_list) = 
+let process_sleek_norm_preds s (ids: regex_id_list) f_norm = 
+  let () = print_endline_quiet "\n========================" in
+  let () = print_endline_quiet (" Performing "^s) in
+  let () = print_endline_quiet "========================" in
   let sel_pred_list, others =
     match ids with
     | REGEX_STAR -> !cprog.prog_view_decls, []
     | REGEX_LIST pids -> 
       SynUtils.select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
   in
-  let n_pred_list = Wrapper.wrap_lemma_quiet (Syn.elim_head_pred_list iprog !cprog) sel_pred_list in
+  let n_pred_list = Wrapper.wrap_lemma_quiet f_norm sel_pred_list in
   ()
+
+let process_pred_elim_tail (ids: regex_id_list) = 
+  process_sleek_norm_preds "Elim Tail" ids (Syn.elim_tail_pred_list iprog !cprog)
+
+let process_pred_elim_head (ids: regex_id_list) = 
+  process_sleek_norm_preds "Elim Head" ids (Syn.elim_head_pred_list iprog !cprog)
 
 (******************************************************************************)
 

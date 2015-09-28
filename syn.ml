@@ -853,19 +853,33 @@ let elim_head_pred iprog cprog pred =
   Debug.no_1 "elim_head_pred" pr pr 
     (fun _ -> elim_head_pred iprog cprog pred) pred
 
-let rec elim_head_pred_list iprog cprog preds = 
+let elim_tail_pred iprog cprog pred = 
+  pred
+
+let elim_tail_pred iprog cprog pred = 
+  let pr = Cprinter.string_of_view_decl_short in
+  Debug.no_1 "elim_tail_pred" pr pr 
+    (fun _ -> elim_tail_pred iprog cprog pred) pred
+
+let rec elim_node_pred_list f_elim preds = 
   (* List.map (elim_head_pred iprog cprog) preds *)
   match preds with
   | [] -> []
   | p::ps ->
-    let lazy_ps = lazy (elim_head_pred_list iprog cprog ps) in
+    let lazy_ps = lazy (elim_node_pred_list f_elim ps) in
     try
-      let n_p = elim_head_pred iprog cprog p in
+      let n_p = f_elim p in
       n_p::(Lazy.force lazy_ps)
     with e ->
-      let () = y_binfo_pp (Printexc.to_string e) in
+      let () = y_tinfo_pp (Printexc.to_string e) in
       let () = report_warning no_pos ("Cannot eliminate head of " ^ p.C.view_name) in
-      (* Lazy.force lazy_ps *) raise e
+      Lazy.force lazy_ps
+
+let elim_head_pred_list iprog cprog preds =
+  elim_node_pred_list (elim_head_pred iprog cprog) preds
+
+let elim_tail_pred_list iprog cprog preds =
+  elim_node_pred_list (elim_tail_pred iprog cprog) preds
 
 (****************)
 (***** MAIN *****)
