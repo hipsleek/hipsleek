@@ -752,6 +752,7 @@ let derive_view iprog cprog other_hprels hprels =
   let simplified_selective_hprels = derive_view_norm cprog other_hprels hprels in
   (* DERIVING VIEW *)
   let derived_views = trans_hprel_to_view iprog cprog simplified_selective_hprels in
+  let derived_views = List.map (fun view -> unfolding_view iprog cprog view) derived_views in
   (derived_views, simplified_selective_hprels)
 
 let derive_view iprog cprog other_hprels hprels = 
@@ -763,18 +764,11 @@ let derive_view iprog cprog other_hprels hprels =
 (************************************)
 (***** ELIM HEAD / TAIL OF PRED *****)
 (************************************)
-let elim_useless_vars svl = 
-  List.filter (fun v -> not (CP.is_var_typ v)) svl
-
-let mk_self_node typ_name f =
-  try
-    List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv f)
-  with _ -> CP.SpecVar (Named typ_name, Globals.self, Unprimed)
-
-(* type: Astsimp.I.prog_decl -> *)
-(*   Astsimp.C.prog_decl -> *)
-(*   C.view_decl -> *)
-(*   Globals.ident list -> *)
+(* type:                                                     *)
+(*   Astsimp.I.prog_decl ->                                  *)
+(*   Astsimp.C.prog_decl ->                                  *)
+(*   C.view_decl ->                                          *)
+(*   Globals.ident list ->                                   *)
 (*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
 let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_body =
   let l_name = "lem_inf_" ^ view.C.view_name in
@@ -838,10 +832,11 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       let () = y_binfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
       norm_view
 
-(* type: Astsimp.I.prog_decl -> *)
-(*   Astsimp.C.prog_decl -> *)
-(*   C.view_decl -> *)
-(*   Globals.ident list -> *)
+(* type:                                                     *)
+(*   Astsimp.I.prog_decl ->                                  *)
+(*   Astsimp.C.prog_decl ->                                  *)
+(*   C.view_decl ->                                          *)
+(*   Globals.ident list ->                                   *)
 (*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
 let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_body =
   let pr1 = pr_list pr_id in

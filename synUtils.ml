@@ -311,62 +311,6 @@ let trans_hrel_to_view_formula (f: CF.formula) =
   in
   fst (trans_heap_formula f_h_f f)
 
-let view_decl_of_hprel prog (hprel: CF.hprel) =
-  let hprel_name, hprel_args = sig_of_hprel hprel in
-  let pos = no_pos in
-  let hprel_self = CP.to_unprimed (List.hd hprel_args) in
-  let vself = match hprel_self with CP.SpecVar (t, _, p) -> CP.SpecVar (t, Globals.self, p) in
-  let vargs = List.map (fun sv -> (sv, NI)) (List.tl hprel_args) in
-  let vbody = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
-  let vbody = CF.elim_prm vbody in
-  let vbody = trans_hrel_to_view_formula vbody in
-  let vbody = CF.subst [(hprel_self, vself)] vbody in
-  (* Set flow for view *)
-  let vbody = CF.set_flow_in_formula_override 
-      { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
-      vbody in
-  let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hprel_name) vargs false pos in
-  let vdecl_w_def = { vdecl with 
-      Cast.view_formula = CF.formula_to_struc_formula vbody;
-      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
-      Cast.view_kind = View_NORM; } in
-  (* let () = Cast.update_view_decl prog vdecl_w_def in *)
-  vdecl_w_def
-
-let view_decl_of_hprel prog (hprel: CF.hprel) =
-  let pr1 = Cprinter.string_of_hprel_short in
-  let pr2 = Cprinter.string_of_view_decl in
-  Debug.no_1 "Syn.view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
-
-let norm_derived_views iprog cprog derived_views = 
-  (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
-  let iviews = List.map Rev_ast.rev_trans_view_decl derived_views in
-  let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
-  let norm_cviews = (* SleekUtils.norm_cview_decls iprog cprog *) cviews in
-  let () = List.iter (Cast.update_view_decl cprog) norm_cviews in
-  let () = y_tinfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
-  let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
-  let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
-  let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
-  norm_cviews
-
-let norm_derived_views iprog cprog derived_views =
-  let pr = pr_list Cprinter.string_of_view_decl in
-  Debug.no_1 "norm_derived_views" pr pr 
-    (norm_derived_views iprog cprog) derived_views
-
-let norm_single_view iprog cprog view = 
-  let norm_view = norm_derived_views iprog cprog [view] in
-  match norm_view with
-  | v::[] -> v
-  | _ -> view
-
-let restore_view iprog cprog view = 
-  let iview = Rev_ast.rev_trans_view_decl view in
-  let () = C.update_view_decl cprog view in
-  let () = I.update_view_decl iprog iview in
-  ()
-
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
   let aliases = MCP.ptr_equations_without_null f_p in
@@ -443,7 +387,16 @@ let get_all_node_name (h_f: CF.h_formula): ident list =
       Some (h_f, [name])
     with _ -> None
   in
-  snd( CF.trans_h_formula h_f () f_h_f voidf2 List.concat)
+  snd (CF.trans_h_formula h_f () f_h_f voidf2 List.concat)
+
+let rec get_all_node_name_formula (f: CF.formula): ident list = 
+  match f with
+  | CF.Base _
+  | CF.Exists _ ->
+    let f_h, _, _, _, _, _ = CF.split_components f in
+    get_all_node_name f_h
+  | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->
+    (get_all_node_name_formula f1) @ (get_all_node_name_formula f2)
 
 let is_pred_base_case mut_pred_list (f: CF.formula) =
   let f_h, _, _, _, _, _ = CF.split_components f in
@@ -459,6 +412,109 @@ let find_pred_base_case (pred: C.view_decl): CF.formula list =
     with _ -> [pred.C.view_name]
   in
   List.find_all (fun f -> is_pred_base_case mut_pred_list f) pred_cases
+
+(******************)
+(* UTILS FOR VIEW *)
+(******************)
+let view_decl_of_hprel prog (hprel: CF.hprel) =
+  let hprel_name, hprel_args = sig_of_hprel hprel in
+  let pos = no_pos in
+  let hprel_self = CP.to_unprimed (List.hd hprel_args) in
+  let vself = match hprel_self with CP.SpecVar (t, _, p) -> CP.SpecVar (t, Globals.self, p) in
+  let vargs = List.map (fun sv -> (sv, NI)) (List.tl hprel_args) in
+  let vbody = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
+  let vbody = CF.elim_prm vbody in
+  let vbody = trans_hrel_to_view_formula vbody in
+  let vbody = CF.subst [(hprel_self, vself)] vbody in
+  (* Set flow for view *)
+  let vbody = CF.set_flow_in_formula_override 
+      { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+      vbody in
+  let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hprel_name) vargs false pos in
+  let vdecl_w_def = { vdecl with 
+      Cast.view_formula = CF.formula_to_struc_formula vbody;
+      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
+      Cast.view_kind = View_NORM; } in
+  (* let () = Cast.update_view_decl prog vdecl_w_def in *)
+  vdecl_w_def
+
+let view_decl_of_hprel prog (hprel: CF.hprel) =
+  let pr1 = Cprinter.string_of_hprel_short in
+  let pr2 = Cprinter.string_of_view_decl in
+  Debug.no_1 "Syn.view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
+
+let norm_derived_views iprog cprog derived_views = 
+  (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
+  let iviews = List.map Rev_ast.rev_trans_view_decl derived_views in
+  let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
+  let norm_cviews = (* SleekUtils.norm_cview_decls iprog cprog *) cviews in
+  let () = List.iter (Cast.update_view_decl cprog) norm_cviews in
+  let () = y_tinfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
+  let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
+  let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
+  let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
+  norm_cviews
+
+let norm_derived_views iprog cprog derived_views =
+  let pr = pr_list Cprinter.string_of_view_decl in
+  Debug.no_1 "norm_derived_views" pr pr 
+    (norm_derived_views iprog cprog) derived_views
+
+let norm_single_view iprog cprog view = 
+  let norm_view = norm_derived_views iprog cprog [view] in
+  match norm_view with
+  | v::[] -> v
+  | _ -> view
+
+let restore_view iprog cprog view = 
+  let iview = Rev_ast.rev_trans_view_decl view in
+  let () = C.update_view_decl cprog view in
+  let () = I.update_view_decl iprog iview in
+  ()
+
+let elim_useless_vars svl = 
+  List.filter (fun v -> not (CP.is_var_typ v)) svl
+
+let mk_self_node typ_name f =
+  try
+    List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv f)
+  with _ -> CP.SpecVar (Named typ_name, Globals.self, Unprimed)
+  
+let unfolding_formula cprog f_unfold f =
+  let f_views = CF.get_views f in
+  if is_empty f_views then f
+  else
+    let unfold_f, _ = List.fold_left (fun (f, sst) vv ->
+        let vv = CP.subst_var_par sst vv in
+        let n_f, n_sst = f_unfold f vv in
+        (n_f, sst @ n_sst)) 
+      (f, []) (List.map (fun vn -> vn.CF.h_formula_view_node) f_views)
+    in unfold_f
+
+let unfolding_formula cprog f_unfold f =
+  let pr = !CF.print_formula in
+  Debug.no_1 "Syn.unfolding_formula" pr pr 
+    (unfolding_formula cprog f_unfold) f
+
+let unfolding_view iprog cprog view =
+  let f_unfold f sv = Solver.unfold_nth 50 (cprog, None) f sv true 0 no_pos in
+  let view_f = C.formula_of_unstruc_view_f view in
+  let view_branches = CF.list_of_disjuncts view_f in
+  let view_branches = List.map (fun f -> unfolding_formula cprog f_unfold f) view_branches in
+  let unfold_view_f = CF.formula_of_disjuncts view_branches in
+  let self_node = mk_self_node view.C.view_name unfold_view_f in
+  let () = 
+    view.C.view_formula <- CF.formula_to_struc_formula 
+        (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f);
+    view.C.view_un_struc_formula <- [(unfold_view_f, (fresh_int (), ""))];
+  in
+  let norm_view = norm_single_view iprog cprog view in
+  norm_view
+
+let unfolding_view iprog cprog view =
+  let pr = Cprinter.string_of_view_decl in
+  Debug.no_1 "Syn.unfolding_view" pr pr 
+    (unfolding_view iprog cprog) view
 
 (*******************)
 (* UTILS FOR LEMMA *)
