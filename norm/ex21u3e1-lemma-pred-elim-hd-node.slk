@@ -14,20 +14,28 @@ pred ll<> == self=null
 
 pred app4<> == self::node<_,null>
  	or self::node<_, q> * q::app4<> & q!=null 
-  inv true.
+  inv self!=null.
 
 pred app4a<> == self::node<_,q> * q::DP<>
   inv true.
+
+pred app4b<> == self::node<_,q> * q::ll<>
+  inv self!=null.
 
 pred DP<> == self=null
  	or self::app4a<> & self!=null
   inv true.
 
 pred DP1<> == self=null
- 	or self::node<_,q> * q::DP1<>
+ 	or self::node<_,q1> * q1::DP1<>
   inv true.
 
-lemma_test self::DP1<> <-> self::ll<>.
+//lemma_test self::DP1<> <-> self::ll<>.
+
+//lemma_test self::app4<> <-> self::app4a<>.
+//lemma_test self::app4<> <-> self::node<_,q> * q::ll<>.
+lemma_test self::app4<> <-> self::node<_,q> * q::DP<>.
+//self::app4b<>.
 
 //pred_unify_disj[app4].
 //pred_unify_disj[app4a].

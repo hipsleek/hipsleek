@@ -547,6 +547,37 @@ pred app4<> == self=null
     }
    ]
 ===================================================================
+# ex21u3e2.slk
+
+pred app4<> == self::node<_,null>
+ 	or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred_unify_disj[app4].
+
+# The derived DP_60<> need to unfold tmp_app4<>
+
+!!! **syn.ml#796:=>coerc lem_inf_app4
+	 kind: LEM_INFER
+	 origin: generated
+	 head: (self::app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+
+========================
+ Performing Deriving Segmented Views
+========================
+
+[ view tmp_app4<>= 
+  EBase 
+    self::node<Anon_58,flted_14_59>@M * DP_60(flted_14_59)&
+    {FLOW,(1,26)=__flow#E}[], 
+ view DP_60<>= 
+  EList
+    :EBase 
+       (* lbl: *){21}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
 ===================================================================
 ===================================================================
 ===================================================================
