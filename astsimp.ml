@@ -528,7 +528,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
         (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
         vdefs 
     in
-    let () = view_scc_obj # reset in
+    (* let () = view_scc_obj # reset in *)
     let () = List.iter (fun vd ->
         let n = vd.I.view_name in
         let lst = gen_name_pairs_struc n vd.I.view_formula in
@@ -552,6 +552,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     let scclist = view_scc_obj # get_scc in
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
+    let () = y_binfo_hp (add_str "\n" pr_id) (view_scc_obj # string_of) in
     (* if not(mr==[]) *)
     (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
     (* g *)

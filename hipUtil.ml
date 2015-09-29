@@ -23,37 +23,37 @@ module DfsNG = Graph.Traverse.Dfs(NG)
 class graph =
   object (self)
     val mutable nlst = Hashtbl.create 20
-    val mutable gr = None
+    val mutable grp = None
     val mutable scc = []
     val mutable self_rec = [] (* those with self-recursive *)
     val mutable self_rec_only = [] (* those with self-recursive *)
     val mutable mut_rec = [] (* those in mutual-recursion *)
 
     method reset =
-      gr <- None;
+      grp <- None;
       Hashtbl.clear nlst
 
     method replace n lst  =
-      gr <- None;
+      grp <- None;
       Hashtbl.replace nlst n lst
 
     method remove n  =
-      gr <- None;
+      grp <- None;
       Hashtbl.remove nlst n
 
     method exists n  =
       Hashtbl.mem nlst n
       
     method is_self_rec n  =
-      if gr==None then self # build_scc;
+      if grp==None then self # build_scc;
       List.exists (fun v -> n=v) self_rec
       
     method is_self_rec_only n  =
-      if gr==None then self # build_scc;
+      if grp==None then self # build_scc;
       List.exists (fun v -> n=v) self_rec_only
       
     method is_rec n  =
-      if gr==None then self # build_scc;
+      if grp==None then self # build_scc;
       (self # is_self_rec_only n) || (List.exists (fun v -> n=v) mut_rec)
       
     method rebuild_scc  =
@@ -69,7 +69,7 @@ class graph =
       let mutlist = List.filter (fun lst -> (List.length lst)>1) scclist in
       mut_rec <- List.concat mutlist;
       self_rec_only <- BList.difference_eq (=) self_rec mut_rec;
-      gr <- Some g;
+      grp <- Some g;
       scc <- scclist;
       scclist
       
@@ -78,25 +78,30 @@ class graph =
       ()
       
     method get_scc  =
-      match gr with
+      match grp with
       | Some _ -> scc
       | None -> self # rebuild_scc
       
     method get_rec  =
-      match gr with
+      match grp with
       | Some _ -> (self_rec_only, mut_rec)
       | None -> let () = self # build_scc in
         (self_rec_only, mut_rec)
         
     method get_graph  =
-      match gr with
+      match grp with
       | Some g -> g
       | None -> 
         let () = self # build_scc in
         self # get_graph
         
     method string_of  =
-      "hello"
+      if grp==None then self # build_scc;
+      let str = "SCC:"^((pr_list ((pr_list pr_id))) scc) in
+      let lst = (Hashtbl.fold (fun n xs acc-> (n,xs)::acc) nlst []) in
+      let str2 = pr_list (pr_pair pr_id (pr_list pr_id)) lst in
+      let str = str^"\nGraph:"^str2 in 
+      (* print_endline_quiet *) str
    end;;
 
 let view_scc_obj = new graph;;

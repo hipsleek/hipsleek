@@ -39,6 +39,32 @@ print views.
 /*
 # ex21u3e2.slk
 
+# Why is target of tmp_app4 and DP_60 empty?
+
+SCC:[[ll];[app4]]
+Graph:[(DP_60,[]);(tmp_app4,[]);(ll,[ll]);(app4,[app4])]
+(==astsimp.ml#8756==)
+order_views@3
+order_views inp1 :[DP_60]
+order_views@3 EXIT:([DP_60],[])
+
+
+[ view tmp_app4<>= 
+  EBase 
+    exists (Impl)[flted_31_59](* lbl: *){13}->(exists Anon_58: (* lbl: *){13}->
+    self::node<Anon_58,flted_31_59>@M * DP_60(flted_31_59)&
+    {FLOW,(1,26)=__flow#E}[])]
+
+view DP_60<>= 
+  EList
+    :EBase 
+       (* lbl: *){21}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+------------------------------------------
+
 pred app4<> == self::node<_,null>
  	or self::node<_, q> * q::app4<> & q!=null 
   inv self!=null.
