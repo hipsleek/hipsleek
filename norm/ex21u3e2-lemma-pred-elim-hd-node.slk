@@ -66,6 +66,7 @@ pred_unify_disj[app4].
     :EBase 
        (* lbl: *){21}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
     || :EBase 
+
           (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
     ]
 

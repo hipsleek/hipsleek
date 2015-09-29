@@ -525,6 +525,12 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
       List.map
         (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
         vdefs in
+    let () = view_scc_obj # reset in
+    let () = List.iter (fun vd ->
+        let n = vd.I.view_name in
+        let lst = gen_name_pairs_struc n vd.I.view_formula in
+        view_scc_obj # replace n (List.map snd lst)
+      ) vdefs in
     let selfrec = List.filter (fun l -> List.exists (fun (x,y) -> x=y) l) tmp in
     let selfrec = List.map (fun l -> fst (List.hd l)) selfrec in
 
@@ -539,11 +545,14 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     let mutrec = List.concat mr in
     let selfrec = (Gen.BList.difference_eq (=) selfrec mutrec) in
     (* let () = print_endline ("Self Rec :"^selfstr) in *)
+    let (self_rec,mutrec) = view_scc_obj # get_rec in
+    let scclist = view_scc_obj # get_scc in
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
     (* if not(mr==[]) *)
     (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
     g
+    (* view_scc_obj # get_graph *)
     (* if DfsNG.has_cycle g *)
     (* then failwith "View definitions are mutually recursive" *)
     (* else g *)
