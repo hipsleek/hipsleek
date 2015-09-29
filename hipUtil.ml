@@ -47,6 +47,33 @@ class graph =
       let () = y_tinfo_hp (add_str "remove" pr_id) n in
       Hashtbl.remove nlst n
 
+    method fail_exc e m =
+      let () = y_winfo_pp ("Unexpected exception "^m) in
+      let () = print_endline_quiet (self # string_of) in
+      raise e
+
+    method fail_with m =
+      let () = y_winfo_pp ("Unexpected exception "^m) in
+      let () = print_endline_quiet (self # string_of) in
+      failwith m
+
+    method unfold_in m n = (* unfold m in n *)
+      let unchanged lst =
+        match lst with
+        | [x] -> x=m
+        | _ -> false in
+      try
+        let edges = Hashtbl.find nlst n in
+        if (List.exists (fun a -> a=m) edges) then
+          let edges_m = Hashtbl.find nlst m in
+          let old_e = List.filter (fun e -> not(e=m)) edges in
+          let add_e = BList.difference_eq (=) edges_m old_e in
+          if unchanged add_e then ()
+          else self # replace n (add_e@old_e)
+        else
+          self # fail_with ("unfold cannot find "^m^" in "^n)
+      with e -> self # fail_exc e ("unfold "^m^" in "^n)
+
     method exists n  =
       Hashtbl.mem nlst n
 
@@ -59,6 +86,7 @@ class graph =
     (*   List.exists (fun v -> n=v) self_rec_only *)
 
     method find_rec n  =
+      (* if pto==[] then self # build_scc_void 1; *)
       if grp==None then self # build_scc_void 1;
       try
         snd(List.find (fun (a,_) -> a=n) pto)
