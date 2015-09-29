@@ -788,6 +788,11 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
   else
     let () = y_binfo_pp "XXX proven infer ---> " in
     let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
+    let () = List.iter (fun v ->
+      let () = C.update_un_struc_formula trans_hrel_to_view_formula v in
+      let () = C.update_view_formula trans_hrel_to_view_struc_formula v in
+      let () = C.update_view_decl cprog v in
+      ()) tmp_views in
     (* derived_views have been added into prog_view_decls of iprog and cprog *)
     let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
         CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
@@ -1024,7 +1029,7 @@ let unify_disj_pred iprog cprog pred =
     (* let () = C.update_view_decl cprog tmp_cpred in           *)
     (* let () = I.update_view_decl iprog tmp_ipred in           *)
     let norm_tmp_cpred = norm_single_view iprog cprog tmp_cpred in 
-    let tmp_v = [tmp_cpred] in
+    let tmp_v = [norm_tmp_cpred] in
     let () = y_binfo_hp (add_str "new view_decls" (pr_list Cprinter.string_of_view_decl_short)) tmp_v in
         (* cprog.C.prog_view_decls *) 
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in

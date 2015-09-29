@@ -261,21 +261,22 @@ let bin_op_of_assign_op (aop : I.assign_op) =
 (************************************************************
    AST translation
  ************************************************************)
-module Name =
-struct
-  type t = ident
-  let compare = compare
-  let hash = Hashtbl.hash
-  let equal = ( = )
-end
+(* The below modules are moved to hipUtil.ml *)
+(* module Name =                                       *)
+(* struct                                              *)
+(*   type t = ident                                    *)
+(*   let compare = compare                             *)
+(*   let hash = Hashtbl.hash                           *)
+(*   let equal = ( = )                                 *)
+(* end                                                 *)
 
-module NG = Graph.Imperative.Digraph.Concrete(Name)
+(* module NG = Graph.Imperative.Digraph.Concrete(Name) *)
 
-module TopoNG = Graph.Topological.Make(NG)
+(* module TopoNG = Graph.Topological.Make(NG)          *)
 
-module DfsNG = Graph.Traverse.Dfs(NG)
+(* module DfsNG = Graph.Traverse.Dfs(NG)               *)
 
-module NGComponents = Graph.Components.Make(NG)
+(* module NGComponents = Graph.Components.Make(NG)     *)
 
 
 (***********************************************)
@@ -498,6 +499,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
       (try let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
        with | Not_found -> [])
     | _ -> [] in
+    
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
     match f with
     | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
@@ -524,7 +526,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     let tmp =
       List.map
         (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
-        vdefs in
+        vdefs 
+    in
     let () = view_scc_obj # reset in
     let () = List.iter (fun vd ->
         let n = vd.I.view_name in
@@ -545,14 +548,14 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     let mutrec = List.concat mr in
     let selfrec = (Gen.BList.difference_eq (=) selfrec mutrec) in
     (* let () = print_endline ("Self Rec :"^selfstr) in *)
-    let (self_rec,mutrec) = view_scc_obj # get_rec in
+    let (self_rec, mutrec) = view_scc_obj # get_rec in
     let scclist = view_scc_obj # get_scc in
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
     (* if not(mr==[]) *)
     (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
-    g
-    (* view_scc_obj # get_graph *)
+    (* g *)
+    view_scc_obj # get_graph
     (* if DfsNG.has_cycle g *)
     (* then failwith "View definitions are mutually recursive" *)
     (* else g *)

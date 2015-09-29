@@ -311,6 +311,25 @@ let trans_hrel_to_view_formula (f: CF.formula) =
   in
   fst (trans_heap_formula f_h_f f)
 
+let rec trans_hrel_to_view_struc_formula (sf: CF.struc_formula) =
+  match sf with
+  | CF.EList el -> CF.EList (List.map (fun (sld, sf) -> (sld, trans_hrel_to_view_struc_formula sf)) el)
+  | CF.ECase ec -> 
+    CF.ECase { ec with
+      CF.formula_case_branches = List.map (fun (c, sf) -> 
+          (c, trans_hrel_to_view_struc_formula sf)) ec.CF.formula_case_branches; }
+  | CF.EBase eb -> 
+    CF.EBase { eb with
+      CF.formula_struc_base = trans_hrel_to_view_formula eb.CF.formula_struc_base;
+      CF.formula_struc_continuation = map_opt trans_hrel_to_view_struc_formula eb.CF.formula_struc_continuation; }
+  | CF.EAssume ea ->
+    CF.EAssume { ea with 
+      CF.formula_assume_simpl = trans_hrel_to_view_formula ea.CF.formula_assume_simpl;
+      CF.formula_assume_struc = trans_hrel_to_view_struc_formula ea.CF.formula_assume_struc; }
+  | EInfer ei -> 
+    CF.EInfer { ei with 
+      CF.formula_inf_continuation = trans_hrel_to_view_struc_formula ei.CF.formula_inf_continuation; }
+
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
   let aliases = MCP.ptr_equations_without_null f_p in

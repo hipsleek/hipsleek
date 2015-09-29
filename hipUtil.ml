@@ -17,8 +17,10 @@ end
 
 module NG = Graph.Imperative.Digraph.Concrete(Name)
 module NGComponents = Graph.Components.Make(NG)
+module TopoNG = Graph.Topological.Make(NG)
+module DfsNG = Graph.Traverse.Dfs(NG)
 
-class graph  =
+class graph =
   object (self)
     val mutable nlst = Hashtbl.create 20
     val mutable gr = None
@@ -26,26 +28,34 @@ class graph  =
     val mutable self_rec = [] (* those with self-recursive *)
     val mutable self_rec_only = [] (* those with self-recursive *)
     val mutable mut_rec = [] (* those in mutual-recursion *)
+
     method reset =
       gr <- None;
       Hashtbl.clear nlst
+
     method replace n lst  =
       gr <- None;
       Hashtbl.replace nlst n lst
+
     method remove n  =
       gr <- None;
       Hashtbl.remove nlst n
+
     method exists n  =
       Hashtbl.mem nlst n
+      
     method is_self_rec n  =
       if gr==None then self # build_scc;
       List.exists (fun v -> n=v) self_rec
+      
     method is_self_rec_only n  =
       if gr==None then self # build_scc;
       List.exists (fun v -> n=v) self_rec_only
+      
     method is_rec n  =
       if gr==None then self # build_scc;
       (self # is_self_rec_only n) || (List.exists (fun v -> n=v) mut_rec)
+      
     method rebuild_scc  =
       let g = NG.create () in
       self_rec <- [];
@@ -62,24 +72,29 @@ class graph  =
       gr <- Some g;
       scc <- scclist;
       scclist
+      
     method build_scc  =
       let scclist = self # rebuild_scc in
       ()
+      
     method get_scc  =
       match gr with
       | Some _ -> scc
       | None -> self # rebuild_scc
+      
     method get_rec  =
       match gr with
-      | Some _ -> (self_rec_only,mut_rec)
+      | Some _ -> (self_rec_only, mut_rec)
       | None -> let () = self # build_scc in
-        (self_rec_only,mut_rec)
+        (self_rec_only, mut_rec)
+        
     method get_graph  =
       match gr with
       | Some g -> g
       | None -> 
         let () = self # build_scc in
         self # get_graph
+        
     method string_of  =
       "hello"
    end;;
