@@ -481,7 +481,7 @@ and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2_x prog b.IF.formula_inf_continuation}
   | IF.EList b -> IF.EList (map_l_snd (convert_struc2_x prog) b)
 
-let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list list) =
+let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident list list) =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
   (* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
@@ -496,10 +496,15 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
       (* if c = vname *)
       (* then [] *)
       (* else *)
-      (try let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
-       with | Not_found -> [])
+      (try 
+         let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
+       with | Not_found -> 
+         if view_scc_obj # in_dom c then [(vname,c)]
+         else []
+      )
+    | IF.HRel (c,_,_) -> [(vname,c)]
     | _ -> [] in
-    
+
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
     match f with
     | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
