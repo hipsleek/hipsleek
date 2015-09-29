@@ -26,10 +26,12 @@ class graph =
     val mutable grp = None
     val mutable scc = []
     val mutable pto = [] (* pt_to rec & non-rec e.g. p->([q],[r])*)
-    val mutable self_rec = [] (* those with self-recursive *)
-    val mutable self_rec_only = [] (* those with self-recursive call only *)
-    val mutable mut_rec = [] (* those in mutual-recursion *)
+    (* val mutable self_rec = [] (\* those with self-recursive *\) *)
+    (* val mutable self_rec_only = [] (\* those with self-recursive call only *\) *)
+    (* val mutable mut_rec = [] (\* those in mutual-recursion *\) *)
     val mutable dom = [] (* those in mutual-recursion *)
+
+    (* let pr = pr_list (pr_pair pr_id (pr_list pr_id)) *)
 
     method reset =
       grp <- None;
@@ -37,10 +39,12 @@ class graph =
 
     method replace n lst  =
       grp <- None;
+      let () = y_tinfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
       Hashtbl.replace nlst n lst
 
     method remove n  =
       grp <- None;
+      let () = y_tinfo_hp (add_str "remove" pr_id) n in
       Hashtbl.remove nlst n
 
     method exists n  =
@@ -55,13 +59,13 @@ class graph =
     (*   List.exists (fun v -> n=v) self_rec_only *)
 
     method find_rec n  =
-      if grp==None then self # build_scc_void;
+      if grp==None then self # build_scc_void 1;
       try
         snd(List.find (fun (a,_) -> a=n) pto)
       with _ -> []
 
-    method split n  =
-      if grp==None then self # build_scc_void;
+    method split  =
+      if grp==None then self # build_scc_void 2;
       let (nrec_n,rec_n) = List.partition (fun (a,r) -> r==[]) pto in
       let (self_r,mut_r) = List.partition (fun (a,r) -> List.exists (fun m -> a=m) r) rec_n in
       (List.map fst nrec_n,List.map fst self_r,List.map fst mut_r)
@@ -73,17 +77,19 @@ class graph =
     method is_rec n  =
       (self # find_rec n) != []
 
+    (* called in astsimp.ml *)
     method in_dom n  =
-      if grp==None then self # build_scc_void;
+      (* if grp==None then self # build_scc_void 3; *)
       (List.exists (fun v -> n=v) dom)
 
-    method build_scc  =
+    method build_scc n  =
+      let () = y_tinfo_pp ("calling build_scc "^(string_of_int n))  in
       let g = NG.create () in
-      self_rec <- [];
+      (* self_rec <- []; *)
       pto <- [];
       dom <- Hashtbl.fold (fun n xs acc-> n::acc) nlst [];
       let () = Hashtbl.iter (fun n edges ->
-          if List.exists (fun v -> n=v) edges then self_rec <- n::self_rec;
+          (* if List.exists (fun v -> n=v) edges then self_rec <- n::self_rec; *)
           List.iter (fun t ->
               NG.add_edge g (NG.V.create n) (NG.V.create t)
             ) edges
@@ -99,10 +105,13 @@ class graph =
                      let rec_callee = BList.intersect_eq (=) sc edges in
                      (m,rec_callee)
                    with _ ->
-                     begin
-                       y_winfo_pp "Unexpected exception";
-                       failwith "HipUtil.Graph"
-                     end
+                     (m,[])
+                     (* begin *)
+                     (*   y_winfo_pp "Unexpected exception"; *)
+                     (*   print_endline_quiet ("Cannot find :"^m); *)
+                     (*   print_endline_quiet (self # string_of); *)
+                     (*   failwith "HipUtil.Graph" *)
+                     (* end *)
                  ) sc
              ) scclist);
       (* let mutlist = List.filter (fun lst -> (List.length lst)>1) scclist in *)
@@ -110,24 +119,24 @@ class graph =
       (* self_rec_only <- BList.difference_eq (=) self_rec mut_rec; *)
       scclist
 
-    method build_scc_void  =
-      let scclist = self # build_scc in
+    method build_scc_void n  =
+      let scclist = self # build_scc n in
       ()
 
     method get_scc  =
       match grp with
       | Some _ -> scc
-      | None -> self # build_scc
+      | None -> self # build_scc 4
 
     method get_graph  =
       match grp with
       | Some g -> g
       | None -> 
-        let _ = self # build_scc in
+        let _ = self # build_scc 5 in
         self # get_graph
 
     method string_of  =
-      if grp==None then self # build_scc_void;
+      (* if grp==None then self # build_scc_void 6; *)
       let str = "SCC:"^((pr_list ((pr_list pr_id))) scc) in
       let lst = (Hashtbl.fold (fun n xs acc-> (n,xs)::acc) nlst []) in
       let str2 = pr_list (pr_pair pr_id (pr_list pr_id)) lst in
