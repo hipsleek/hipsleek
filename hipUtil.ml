@@ -29,7 +29,7 @@ class graph =
     (* val mutable self_rec = [] (\* those with self-recursive *\) *)
     (* val mutable self_rec_only = [] (\* those with self-recursive call only *\) *)
     (* val mutable mut_rec = [] (\* those in mutual-recursion *\) *)
-    val mutable dom = [] (* those in mutual-recursion *)
+    val mutable dom = [] 
 
     (* let pr = pr_list (pr_pair pr_id (pr_list pr_id)) *)
 
@@ -39,7 +39,7 @@ class graph =
 
     method replace n lst  =
       grp <- None;
-      let () = y_tinfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
+      let () = y_binfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
       Hashtbl.replace nlst n lst
 
     method remove n  =

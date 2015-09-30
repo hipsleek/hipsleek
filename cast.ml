@@ -3887,6 +3887,28 @@ let get_view_name_equiv view_decls vl =
     (*              } in *)
     (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
 
+let get_simple_unfold lst = 
+  match lst with
+  | [] -> failwith "empty defn?"
+  | [(f,_)] ->
+    let () = y_binfo_hp (add_str "simple formula?" 
+                           !Cformula.print_formula) f in
+    Some f
+  | _ -> None
+
+let get_unfold_set vdefs =  
+  let equiv_set = List.fold_left (fun acc v -> 
+      let name = v.view_name in
+      let f = v.view_un_struc_formula in
+      if HipUtil.view_scc_obj # is_self_rec name then acc 
+      else 
+        begin
+          match (get_simple_unfold f) with
+          | Some f -> (name,f)::acc
+          | None -> acc
+        end) [] vdefs in
+  equiv_set
+
 let get_all_view_equiv_set vdefs =  
   let equiv_set = List.fold_left (fun acc v -> if v.view_equiv_set # is_empty then acc else (v.view_name,v.view_equiv_set # get)::acc) [] vdefs in
   equiv_set

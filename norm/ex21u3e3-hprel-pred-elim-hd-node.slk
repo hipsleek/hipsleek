@@ -43,6 +43,7 @@ lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
 // fails cos tmp_app3 not unfolded
 
 lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
+// valid
 
 /*
 //pred_reuse [*][*].

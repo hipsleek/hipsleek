@@ -1028,6 +1028,7 @@ non_empty_command:
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
       | t=shapeReuse_cmd     -> ShapeReuse t
+      | t=predUnfold_cmd     -> PredUnfold t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
@@ -2599,6 +2600,12 @@ shapeElim_cmd:
 
 shapeReuseSubs_cmd:
    [[ `PRED_REUSE_SUBS; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
+predUnfold_cmd:
+   [[ `PRED_UNFOLD; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
    (* let il1 = un_option il1 [] in *)
    (il1)
    ]];

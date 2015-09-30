@@ -33,7 +33,9 @@ pred U<> == self=null
   
 pred_reuse [*][*].
 
+print views.
 pred_reuse_subs [*].
+print views.
 
 checkentail self::app4<> |- self::app5<>.
 

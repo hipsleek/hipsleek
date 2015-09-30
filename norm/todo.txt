@@ -579,6 +579,19 @@ pred_unify_disj[app4].
           (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
     ]
 ===================================================================
+# ex21u3e4.slk
+
+!!! **cast.ml#3894:simple formula?:
+ (* lbl: *){5}->(exists Anon_15,
+p: (* lbl: *){5}->self::node<Anon_15,p>@M * p::dp1<>@M&
+{FLOW,(1,26)=__flow#E}[])
+!!! **cast.ml#3894:simple formula?:
+ (* lbl: *){6}->(exists Anon_14,
+p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
+{FLOW,(1,26)=__flow#E}[])
+!!! **norm.ml#284:selected for unfolding:[(dp,[tmp_app4])]
+Exception processed: Failure("TBI")
+
 ===================================================================
 ===================================================================
 ===================================================================

@@ -255,15 +255,43 @@ let norm_reuse_mk_eq iprog prog edefs =
         ()
     ) edefs
 
+let uses_views_set eq_lst f = (* does f uses views from eq_lst? *) 
+  if eq_lst ==[] then []
+  else 
+    let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in
+    (BList.intersect_eq string_eq eq_lst p_lst) 
+
+let uses_views eq_lst f = (* does f uses views from eq_lst? *) 
+  (uses_views_set eq_lst f)!=[]
+
+let norm_unfold iprog cprog 
+    vdefs  (* all views *)
+    (to_vns:ident list) (* pred to transform *) =
+  let unfold_set0 = C.get_unfold_set vdefs (* set of unfoldable views *) in
+  let unfold_set = List.map (fun (m,vd) -> m) unfold_set0 in
+  let uses_unfold_set f = uses_views_set unfold_set f in
+  let vdefs = List.filter (fun vd -> 
+      let n = vd.C.view_name in
+      List.exists (fun vn -> string_eq vn n) to_vns
+    ) vdefs in
+  let ans = List.map (fun vd -> (vd,uses_unfold_set vd.C.view_un_struc_formula)) vdefs in
+  let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
+  let pr_vn v = v.C.view_name in
+  let () = y_binfo_hp (add_str "selected for unfolding" 
+                         (pr_list (pr_pair pr_vn (pr_list pr_id)))) ans in
+  failwith "TBI"
+
+
 let norm_reuse_subs iprog cprog vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in
   let eq_lst = List.map (fun (m,_) -> m) equiv_set in
   let in_equiv_set n = List.exists (string_eq n) eq_lst in 
-  let uses_eq_view f = (* f uses views from eq_lst? *) 
-    if eq_lst ==[] then false
-    else 
-      let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in
-      (BList.intersect_eq string_eq eq_lst p_lst) != []
+  let uses_eq_view f = uses_views eq_lst f
+      (* f uses views from eq_lst? *) 
+    (* if eq_lst ==[] then false *)
+    (* else  *)
+    (*   let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in *)
+    (*   (BList.intersect_eq string_eq eq_lst p_lst) != [] *)
   in
   let vdefs = List.filter (fun vd -> 
       let n = vd.C.view_name in

@@ -43,8 +43,10 @@ type sleek_token =
   | PRED_SPEC 
   | PRED_SPLIT  
   | PRED_NORM_SEG | PRED_NORM_DISJ
-  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *) | PRED_REUSE
+  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *) 
+  | PRED_REUSE
   | PRED_REUSE_SUBS
+  | PRED_UNFOLD
   | REL_INFER
   | DTIME
   | ELSE_TT
@@ -166,6 +168,7 @@ module Token = struct
     | PRED_ELIM_USELESS -> "pred_elim_useless" 
     | PRED_REUSE -> "pred_reuse" 
     | PRED_REUSE_SUBS -> "pred_reuse_subs" 
+    | PRED_UNFOLD -> "pred_unfold" 
     | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" 
     | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"

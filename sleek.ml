@@ -115,6 +115,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
     | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
     | ShapeReuseSubs to_view_names -> process_shape_reuse_subs to_view_names
+    | PredUnfold to_view_names -> process_pred_unfold to_view_names
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps

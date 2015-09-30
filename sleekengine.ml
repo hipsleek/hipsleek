@@ -2518,9 +2518,15 @@ let regex_search reg_id vdefs =
       let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
       all_ids
 
+let process_pred_unfold reg_to_vname =
+  let vdefs = !cprog.Cast.prog_view_decls in
+  (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
+  (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
+  let to_vns = regex_search reg_to_vname vdefs in
+  Norm.norm_unfold iprog !cprog vdefs to_vns
+
 let process_shape_reuse_subs reg_to_vname =
-  (* failwith (x_loc^"TBI" *)
-  (*          ) *)
+  (* failwith (x_loc^"TBI") *)
   let vdefs = !cprog.Cast.prog_view_decls in
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
