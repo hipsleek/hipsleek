@@ -3897,14 +3897,14 @@ let get_simple_unfold lst =
   | _ -> None
 
 let get_unfold_set vdefs =  
-  let equiv_set = List.fold_left (fun acc v -> 
-      let name = v.view_name in
-      let f = v.view_un_struc_formula in
+  let equiv_set = List.fold_left (fun acc vd -> 
+      let name = vd.view_name in
+      let f = vd.view_un_struc_formula in
       if HipUtil.view_scc_obj # is_self_rec name then acc 
       else 
         begin
           match (get_simple_unfold f) with
-          | Some f -> (name,f)::acc
+          | Some f -> (name,vd.view_vars,f)::acc
           | None -> acc
         end) [] vdefs in
   equiv_set

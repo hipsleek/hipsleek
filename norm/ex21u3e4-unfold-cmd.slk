@@ -38,14 +38,36 @@ pred dp1<> ==
   inv true.
 
 print views.
-
 pred_unfold [*].
+
+print views.
 
 /*
 # ex21u3e4.slk
 
 To support single non-recursive unfoldng
 where possible.
+
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true)
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){8}->self::tmp_app4<>@M&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          self::node<Anon_84,p_85>@M * p_85::dp<>@M&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+# can keep labels?
+
 
 lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
 // fails cos tmp_app4 not unfolded

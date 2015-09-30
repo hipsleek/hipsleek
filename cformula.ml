@@ -4055,11 +4055,11 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
-and split_components (f: formula) =
+and split_components ?(rename_flag=false) (f: formula) =
   (* Debug.no_1 "split_components" !print_formula (fun _ -> "") *)
-  split_components_x f
+  snd (split_components_exist ~rename_flag:rename_flag f)
 
-and split_components_all (f : formula) =
+and split_components_all_exist ?(rename_flag=false) (f : formula) =
   let rec helper f =
     if (isAnyConstFalse f) then []
     (* (HFalse, (MCP.mkMFalse no_pos), CVP.empty_vperm_sets,  *)
@@ -4072,24 +4072,32 @@ and split_components_all (f : formula) =
           formula_base_pure = p;
           formula_base_flow = fl;
           formula_base_and = a; (* TO CHECK: omit at the moment *)
-          formula_base_type = t }) -> [(h, p, vp, fl, t, a)]
+          formula_base_type = t }) -> [([],(h, p, vp, fl, t, a))]
       | Exists ({
+          (* need to do renaming here *)
           formula_exists_heap = h;
+          formula_exists_qvars = qv;
           formula_exists_vperm = vp;
           formula_exists_pure = p;
           formula_exists_flow = fl;
           formula_exists_and = a; (* TO CHECK: omit at the moment *)
-          formula_exists_type = t }) -> [(h, p, vp, fl, t, a)]
+          formula_exists_type = t }) ->  [(qv,(h, p, vp, fl, t, a))]
       | Or ({ formula_or_f1 = f1;
               formula_or_f2 = f2}) ->
-        (helper f1) @ (helper f2)
+        (helper f1) @ (helper f2) in 
+  let f = 
+    if rename_flag then rename_bound_vars f 
+    else f 
   in helper f
 
-and split_components_x (f : formula) =
-  let lst = split_components_all f in
+and split_components_all ?(rename_flag=false) (f : formula) =
+  List.map snd (split_components_all_exist ~rename_flag:rename_flag f)
+
+and split_components_exist ?(rename_flag=false) (f : formula) =
+  let lst = split_components_all_exist ~rename_flag:rename_flag f in
   match lst with
-  | [] -> (HFalse, (MCP.mkMFalse no_pos), CVP.empty_vperm_sets, 
-           (flow_formula_of_formula f), TypeFalse, [])
+  | [] -> ([],(HFalse, (MCP.mkMFalse no_pos), CVP.empty_vperm_sets, 
+           (flow_formula_of_formula f), TypeFalse, []))
   | [r] -> r
   | _ -> let () = x_tinfo_hp (add_str "f" !print_formula) f no_pos in
     Err.report_error {
@@ -19872,3 +19880,57 @@ let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 
 let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 
+let get_view_unfold stk vl to_args f =
+    let args = vl.h_formula_view_arguments in 
+    (* let new_args = trans_args sst args in *)
+    let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
+    let new_f = subst_all sst f in
+    let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
+    let (qv,(hf,pure_f,_,_,_,_)) = split_components_exist ~rename_flag:true new_f in
+    let pure_f = MCP.pure_of_mix pure_f in
+    let () = y_binfo_hp (add_str "f" !print_formula) f in
+    let () = y_binfo_hp (add_str "new_f" !print_formula) new_f in
+    let () = y_binfo_hp (add_str "hf" !print_h_formula) hf in
+    let () = y_binfo_hp (add_str "pure" !CP.print_formula) pure_f in
+    let () = stk # push (qv,pure_f) in
+    hf
+
+let repl_unfold_heap stk u_lst hf =
+  let find n =
+    try
+      Some (List.find (fun (m,_,_) -> string_eq n m) u_lst)
+    with _ -> None in
+  let f hf = match hf with
+    | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf
+    | ViewNode vl -> 
+      let name = vl.h_formula_view_name in
+      begin
+      match find name with
+      | Some (m,to_args,f) -> 
+        (* WN : take care of pure by mutable *)
+        let () = y_binfo_hp (add_str "unfolding " (pr_pair pr_id !print_formula)) (name,f) in
+        let n_hf = get_view_unfold stk vl to_args f in
+        Some (n_hf)
+        (* failwith (x_loc^"TBI") *)
+      | _ -> Some hf 
+      end
+    | _ -> None
+  in map_h_formula hf f
+
+let repl_unfold_formula u_lst f =
+  let pr = pr_pair !CP.print_svl !CP.print_formula in
+  let stk = new stack_pr "" pr (==) in
+  let res=map_formula_heap_only (repl_unfold_heap stk u_lst) f in
+  let lst = stk # get_stk in
+  (* let () = if not(stk # is_empty)  *)
+  (*   then y_winfo_hp (add_str "TODO:add pure & qvars" pr_id) (stk # string_of) in *)
+  let res = if lst==[] then res
+    else let (qv,pure) = List.fold_left (fun (qv1,p1) (qv2,p2) -> (qv1@qv2,CP.mkAnd p1 p2 no_pos)) ([],CP.mkTrue no_pos) lst in
+      let () = y_winfo_hp (add_str "TODO:add pure & qvars" pr) (qv,pure) in
+      res
+  in res
+
+let convert_un_struc_to_formula body =
+  match body with
+  | [] -> failwith (x_loc^"should not be empty")
+  | (f,_)::lst -> List.fold_left (fun f (nf,_) -> mkOr f nf no_pos) f lst

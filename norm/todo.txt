@@ -581,16 +581,29 @@ pred_unify_disj[app4].
 ===================================================================
 # ex21u3e4.slk
 
-!!! **cast.ml#3894:simple formula?:
- (* lbl: *){5}->(exists Anon_15,
-p: (* lbl: *){5}->self::node<Anon_15,p>@M * p::dp1<>@M&
-{FLOW,(1,26)=__flow#E}[])
-!!! **cast.ml#3894:simple formula?:
- (* lbl: *){6}->(exists Anon_14,
-p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
-{FLOW,(1,26)=__flow#E}[])
-!!! **norm.ml#284:selected for unfolding:[(dp,[tmp_app4])]
-Exception processed: Failure("TBI")
+To support single non-recursive unfoldng
+where possible.
+
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true)
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){8}->self::tmp_app4<>@M&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          self::node<Anon_84,p_85>@M * p_85::dp<>@M&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+# can keep labels?
+
 
 ===================================================================
 ===================================================================

@@ -255,11 +255,13 @@ let norm_reuse_mk_eq iprog prog edefs =
         ()
     ) edefs
 
-let uses_views_set eq_lst f = (* does f uses views from eq_lst? *) 
+let uses_views_fn fn eq_lst f = (* does f uses views from eq_lst? *) 
   if eq_lst ==[] then []
   else 
     let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in
-    (BList.intersect_eq string_eq eq_lst p_lst) 
+    (BList.intersect_eq fn eq_lst p_lst) 
+
+let uses_views_set eq_lst f = uses_views_fn string_eq eq_lst f
 
 let uses_views eq_lst f = (* does f uses views from eq_lst? *) 
   (uses_views_set eq_lst f)!=[]
@@ -268,8 +270,9 @@ let norm_unfold iprog cprog
     vdefs  (* all views *)
     (to_vns:ident list) (* pred to transform *) =
   let unfold_set0 = C.get_unfold_set vdefs (* set of unfoldable views *) in
-  let unfold_set = List.map (fun (m,vd) -> m) unfold_set0 in
-  let uses_unfold_set f = uses_views_set unfold_set f in
+  (* let unfold_set = List.map (fun (m,vd) -> m) unfold_set0 in *)
+  let uses_unfold_set f = uses_views_fn 
+      (fun (m,_,_) m2 -> string_eq m m2) unfold_set0 f in
   let vdefs = List.filter (fun vd -> 
       let n = vd.C.view_name in
       List.exists (fun vn -> string_eq vn n) to_vns
@@ -277,9 +280,22 @@ let norm_unfold iprog cprog
   let ans = List.map (fun vd -> (vd,uses_unfold_set vd.C.view_un_struc_formula)) vdefs in
   let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
   let pr_vn v = v.C.view_name in
-  let () = y_binfo_hp (add_str "selected for unfolding" 
-                         (pr_list (pr_pair pr_vn (pr_list pr_id)))) ans in
-  failwith "TBI"
+  let pr2 (v,_,f) = (pr_pair pr_id !CF.print_formula) (v,f) in
+  let () = y_binfo_hp (add_str "views selected for unfolding"
+                         (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
+  List.iter (fun (v,unf_lst) -> (* transform body of views *)
+      let () = C.update_un_struc_formula (x_add CF.repl_unfold_formula unf_lst) v in
+      let view_body = v.C.view_un_struc_formula in
+      let view_body = CF.convert_un_struc_to_formula view_body in
+      let args = v.C.view_vars in
+      (* struc --> better to re-transform it *)
+      let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+      let view_struc = CF.formula_to_struc_formula new_view_body in
+      let () = C.update_view_formula (fun _ -> view_struc) v in
+      (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
+      ()
+    ) ans
+
 
 
 let norm_reuse_subs iprog cprog vdefs to_vns =
