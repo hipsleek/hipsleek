@@ -2503,9 +2503,14 @@ let process_shape_split pre_hps post_hps=
     print_endline_quiet "*************************************";
   end;
   ()
+let get_sorted_view_decls () =
+  let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in
+  !cprog.Cast.prog_view_decls <- vdefs;
+  vdefs
 
 let process_shape_elim_useless sel_vnames=
-  let view_defs = Norm.norm_elim_useless !cprog.Cast.prog_view_decls sel_vnames in
+  let vdefs = get_sorted_view_decls () in
+  let view_defs = Norm.norm_elim_useless vdefs sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl_short in
   let _ = x_binfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
@@ -2519,15 +2524,18 @@ let regex_search reg_id vdefs =
       all_ids
 
 let process_pred_unfold reg_to_vname =
-  let vdefs = !cprog.Cast.prog_view_decls in
+  let vdefs = get_sorted_view_decls () in
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
   let to_vns = regex_search reg_to_vname vdefs in
   Norm.norm_unfold iprog !cprog vdefs to_vns
 
+
 let process_shape_reuse_subs reg_to_vname =
   (* failwith (x_loc^"TBI") *)
-  let vdefs = !cprog.Cast.prog_view_decls in
+  let vdefs = get_sorted_view_decls () in
+  (* Cast.sort_view_list !cprog.Cast.prog_view_decls  *)
+  (* !cprog.Cast.prog_view_decls <- vdefs; *)
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
   let to_vns = regex_search reg_to_vname vdefs in
@@ -2535,7 +2543,10 @@ let process_shape_reuse_subs reg_to_vname =
 
 let process_shape_reuse reg_frm_vname reg_to_vname=
   let _ = x_tinfo_zp  (lazy  ("shape reuse  \n")) no_pos in
-  let vdefs = !cprog.Cast.prog_view_decls in
+  let vdefs = get_sorted_view_decls () in
+  (* let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
+  (* !cprog.Cast.prog_view_decls <- vdefs; *)
+  (* let vdefs = !cprog.Cast.prog_view_decls in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) !cprog.Cast.prog_view_decls in *)
   let frm_vnames = regex_search reg_frm_vname vdefs in
   let to_vnames = regex_search reg_to_vname vdefs in
@@ -2547,7 +2558,8 @@ let process_shape_reuse reg_frm_vname reg_to_vname=
   ()
 
 let process_shape_extract sel_vnames=
-  let view_defs = Norm.norm_extract_common iprog !cprog !cprog.Cast.prog_view_decls sel_vnames in
+  let view_defs = get_sorted_view_decls () in
+  let view_defs = Norm.norm_extract_common iprog !cprog  view_defs (* !cprog.Cast.prog_view_decls *) sel_vnames in
   let _ = !cprog.Cast.prog_view_decls <- view_defs in
   let pr = pr_list_ln Cprinter.string_of_view_decl in
   let _ = x_tinfo_zp  (lazy  ("views after EXTRACTION: \n" ^ (pr view_defs))) no_pos in
@@ -3025,9 +3037,9 @@ let process_print_command pcmd0 =
       (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
       (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
     else if pcmd = "views" then
-      let view_list = !cprog.prog_view_decls in
-      let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
       let () = HipUtil.view_scc_obj # build_scc_void 15 in
+      let view_list =  get_sorted_view_decls () (* !cprog.prog_view_decls *) in
+      let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
       let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
       y_binfo_hp (add_str "Printing Views\n" (pr_list Cprinter.string_of_view_decl_short)) lst
     else
