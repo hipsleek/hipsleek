@@ -3933,4 +3933,23 @@ let update_view_raw_base_case fn vdef =
   let uf = map_opt fn uf in
   vdef.view_raw_base_case <- uf
 
+let sort_gen_list score vlist =
+  let compare v1 v2 =
+    let n1 = score v1 in
+    let n2 = score v2 in
+    if n1<n2 then -1
+    else if n1=n2 then 0
+    else 1 in
+  List.sort compare vlist
+
+let sort_view_list vlist =
+  let score v = 
+    let name = v.view_name in
+    HipUtil.view_scc_obj # posn name in
+  if HipUtil.view_scc_obj # is_sorted then vlist
+  else 
+    begin 
+      HipUtil.view_scc_obj # set_sorted;
+      sort_gen_list score vlist
+    end
 

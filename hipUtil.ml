@@ -24,7 +24,9 @@ class graph =
   object (self)
     val mutable nlst = Hashtbl.create 20
     val mutable grp = None
+    val mutable sorted_flag = false
     val mutable scc = []
+    val mutable posn_lst = []
     val mutable pto = [] (* pt_to rec & non-rec e.g. p->([q],[r])*)
     (* val mutable self_rec = [] (\* those with self-recursive *\) *)
     (* val mutable self_rec_only = [] (\* those with self-recursive call only *\) *)
@@ -32,6 +34,14 @@ class graph =
     val mutable dom = [] 
 
     (* let pr = pr_list (pr_pair pr_id (pr_list pr_id)) *)
+
+    method posn name =
+      if grp==None then self # build_scc_void 13;
+      let rec find xs n =
+        match xs with
+        | [] -> (-1)
+        | x::xs -> if x=name then n else find xs (n+1)
+      in find posn_lst 0
 
     method reset =
       grp <- None;
@@ -41,6 +51,12 @@ class graph =
       grp <- None;
       let () = y_tinfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
       Hashtbl.replace nlst n lst
+
+    method set_sorted =
+      sorted_flag <- true
+
+    method is_sorted =
+      sorted_flag
 
     method remove n  =
       grp <- None;
@@ -124,6 +140,8 @@ class graph =
         ) nlst in
       let scclist = NGComponents.scc_list g in
       scc <- scclist;
+      posn_lst <- List.concat scclist;
+      sorted_flag <- false;
       grp <- Some g;
       pto <- List.concat
           (List.map (fun sc ->
