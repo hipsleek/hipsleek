@@ -609,6 +609,11 @@ where possible.
 
 # can keep labels? (FIXED)
 
+# order of reuse wrong. need to use:
+
+SCC:[[dp];[dp1];[tmp_app4a];[app4];[tmp_app4]]
+
+PRED REUSE FOUND:[(dp1,dp1),(app4,app4),(tmp_app4a,tmp_app4a),(tmp_app4,tmp_app4),(dp,dp1)]
 
 ===================================================================
 ===================================================================
