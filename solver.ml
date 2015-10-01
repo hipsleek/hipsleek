@@ -48,7 +48,7 @@ let rhs_rest_emp = ref true
 let rhs_pure_stk = new Gen.stack            (* used for detecting pure contra inside folding *)
 
 (*cyclic: should improve the design. why AS call solver??*)
-let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos )
+(* let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos ) *)
 let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.prog_decl) (cprog:Cast.prog_decl) ->
     let () = print_endline_quiet ("Solver.manage_unsafe_lemmas: not int " ) in
     (None: CF.list_context list option))
@@ -1853,6 +1853,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let forms = match brs with 
           | None -> formula_of_unstruc_view_f vdef
           | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+        let () = y_tinfo_hp (add_str "forms 1" !CF.print_formula) forms in
         let from_ann = List.map fst vdef.view_ann_params in
         let anns = List.map fst anns in
         let to_ann = anns in 

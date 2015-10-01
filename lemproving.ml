@@ -163,8 +163,11 @@ let process_coercion_check coerc iante iconseq (inf_vars: CP.spec_var list) iexa
     (*   let () = Debug.info_pprint "writing to residue " no_pos in *)
     (*   CF.residues := Some (lc,b)); *)
     res
-  with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
-    let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error, []),
+  with e ->
+    let exc_str = Printexc.to_string e in
+    let err_msg = "exception " ^ exc_str ^ " in lemma proving" in
+    print_exc ("lemma \""^ lemma_name ^"\""); 
+    let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must err_msg lemma_error, []),
                           empty_ctx,
                           (* (CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos), *) 
                           CF.mk_cex true )) in

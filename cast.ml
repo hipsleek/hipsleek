@@ -621,6 +621,7 @@ let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let mix_true = MP.mkMTrue pos in
   let vs = List.map fst vars in (* where to store annotation? *)
+  let vparams = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list vs) in
   (* let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in *)
   let view_sv_vars = vs in
   (* let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in *)
@@ -639,7 +640,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_seg_opz = None;
     view_case_vars = [];
     view_uni_vars = [];
-    view_labels = [];
+    view_labels = List.map (fun _ -> LO.unlabelled) vs;
     view_modes = [];
     view_type_of_self = None;
     view_is_touching = false;
@@ -656,7 +657,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_domains= [];
     view_contains_L_ann = false;
     view_ann_params = [];
-    view_params_orig = [];
+    view_params_orig = vparams;
     view_partially_bound_vars = [];
     view_materialized_vars = [];
     view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
@@ -3846,7 +3847,19 @@ let add_view_decl prog vdecl =
   if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
     y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
   else
+    let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
+
+let update_view_decl prog vdecl = 
+  let vdecl_id = vdecl.view_name in
+  let same_vdecls, others = List.partition (fun v -> 
+      eq_str v.view_name vdecl_id) prog.prog_view_decls in
+  let () = 
+    if not (is_empty same_vdecls) then 
+      y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in cprog.")
+    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") 
+  in
+  prog.prog_view_decls <- others @ [vdecl]
 
 let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
   frm_vdecl.view_equiv_set # set (keep_sst,to_view)
@@ -3855,18 +3868,69 @@ let get_view_name_equiv view_decls vl =
   let vname = vl.h_formula_view_name in
   let vdef = look_up_view_def_raw 25 view_decls vname in
   (* (vname,vdef) *)
-  if vdef.view_equiv_set # is_empty then (vname,vdef,vl)
-  else let (sst,new_name) =  (vdef.view_equiv_set # get) in
-    let args = vl.h_formula_view_arguments in (* need to change other parameters *)
-    let new_args = 
-      if sst==[] then args 
+  if vdef.view_equiv_set # is_empty || !Globals.old_view_equiv then (vname,vdef,vl,false)
+  else 
+    let (sst,new_name) =  (vdef.view_equiv_set # get) in
+    let msg = "Using equiv "^vname^" <-> "^(vdef.view_equiv_set # string_of) in
+    let () = y_winfo_pp msg in
+    let new_vl = get_view_equiv vl sst new_name in
+    (* let args = vl.h_formula_view_arguments in (\* need to change other parameters *\) *)
+    (* let new_args =  *)
+    (*   if sst==[] then args  *)
+    (*   else  *)
+    (*     let new_args = List.combine args sst in *)
+    (*     let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in *)
+    (*     List.map fst new_args *)
+    (* in *)
+    (* let new_vl = {vl with h_formula_view_name = new_name; *)
+    (*                       h_formula_view_arguments = new_args; *)
+    (*              } in *)
+    (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
+
+let get_simple_unfold lst = 
+  match lst with
+  | [] -> failwith "empty defn?"
+  | [(f,_)] ->
+    let () = y_binfo_hp (add_str "simple formula?" 
+                           !Cformula.print_formula) f in
+    Some f
+  | _ -> None
+
+let get_unfold_set vdefs =  
+  let equiv_set = List.fold_left (fun acc vd -> 
+      let name = vd.view_name in
+      let f = vd.view_un_struc_formula in
+      if HipUtil.view_scc_obj # is_self_rec name then acc 
       else 
-        let new_args = List.combine args sst in
-        let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in
-        List.map fst new_args
-    in
-    let new_vl = {vl with h_formula_view_name = new_name;
-                          h_formula_view_arguments = new_args;
-                 } in
-    (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl)
-  
+        begin
+          match (get_simple_unfold f) with
+          | Some f -> (name,vd.view_vars,f)::acc
+          | None -> acc
+        end) [] vdefs in
+  equiv_set
+
+let get_all_view_equiv_set vdefs =  
+  let equiv_set = List.fold_left (fun acc v -> if v.view_equiv_set # is_empty then acc else (v.view_name,v.view_equiv_set # get)::acc) [] vdefs in
+  equiv_set
+
+let update_un_struc_formula fn vdef =
+  let uf = vdef.view_un_struc_formula in
+  let uf = List.map (fun (f,l) -> (fn f,l)) uf in
+  vdef.view_un_struc_formula <- uf
+
+let update_un_struc_formula_one f vdef =
+  (* let uf = vdef.view_un_struc_formula in *)
+  (* let uf = List.map (fun (f,l) -> (fn f,l)) uf in *)
+  vdef.view_un_struc_formula <- [(f,(0,""))]
+
+let update_view_formula fn vdef =
+  let uf = vdef.view_formula in
+  let uf = fn uf in
+  vdef.view_formula <- uf
+
+let update_view_raw_base_case fn vdef =
+  let uf = vdef.view_raw_base_case in
+  let uf = map_opt fn uf in
+  vdef.view_raw_base_case <- uf
+
+

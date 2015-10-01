@@ -33,7 +33,8 @@ print residue.
 
 print relAssumes.
 //shape_normalize [U].
-//shape_derive_view [U].
+
+shape_derive_view [U].
 print relAssumes.
 
 /*

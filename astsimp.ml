@@ -261,21 +261,22 @@ let bin_op_of_assign_op (aop : I.assign_op) =
 (************************************************************
    AST translation
  ************************************************************)
-module Name =
-struct
-  type t = ident
-  let compare = compare
-  let hash = Hashtbl.hash
-  let equal = ( = )
-end
+(* The below modules are moved to hipUtil.ml *)
+(* module Name =                                       *)
+(* struct                                              *)
+(*   type t = ident                                    *)
+(*   let compare = compare                             *)
+(*   let hash = Hashtbl.hash                           *)
+(*   let equal = ( = )                                 *)
+(* end                                                 *)
 
-module NG = Graph.Imperative.Digraph.Concrete(Name)
+(* module NG = Graph.Imperative.Digraph.Concrete(Name) *)
 
-module TopoNG = Graph.Topological.Make(NG)
+(* module TopoNG = Graph.Topological.Make(NG)          *)
 
-module DfsNG = Graph.Traverse.Dfs(NG)
+(* module DfsNG = Graph.Traverse.Dfs(NG)               *)
 
-module NGComponents = Graph.Components.Make(NG)
+(* module NGComponents = Graph.Components.Make(NG)     *)
 
 
 (***********************************************)
@@ -480,7 +481,7 @@ and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2_x prog b.IF.formula_inf_continuation}
   | IF.EList b -> IF.EList (map_l_snd (convert_struc2_x prog) b)
 
-let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list list) =
+let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident list list) =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
   (* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
@@ -495,9 +496,15 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
       (* if c = vname *)
       (* then [] *)
       (* else *)
-      (try let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
-       with | Not_found -> [])
+      (try 
+         let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
+       with | Not_found -> 
+         if view_scc_obj # in_dom c then [(vname,c)]
+         else []
+      )
+    | IF.HRel (c,_,_) -> [(vname,c)]
     | _ -> [] in
+
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
     match f with
     | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
@@ -524,7 +531,14 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     let tmp =
       List.map
         (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
-        vdefs in
+        vdefs 
+    in
+    (* let () = view_scc_obj # reset in *)
+    let () = List.iter (fun vd ->
+        let n = vd.I.view_name in
+        let lst = gen_name_pairs_struc n vd.I.view_formula in
+        view_scc_obj # replace n (List.map snd lst)
+      ) vdefs in
     let selfrec = List.filter (fun l -> List.exists (fun (x,y) -> x=y) l) tmp in
     let selfrec = List.map (fun l -> fst (List.hd l)) selfrec in
 
@@ -539,11 +553,15 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list* (ident list
     let mutrec = List.concat mr in
     let selfrec = (Gen.BList.difference_eq (=) selfrec mutrec) in
     (* let () = print_endline ("Self Rec :"^selfstr) in *)
+    let (self_rec, mutrec) = view_scc_obj # get_rec in
+    let scclist = view_scc_obj # get_scc in
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
+    let () = y_binfo_hp (add_str "\n" pr_id) (view_scc_obj # string_of) in
     (* if not(mr==[]) *)
     (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
-    g
+    (* g *)
+    view_scc_obj # get_graph
     (* if DfsNG.has_cycle g *)
     (* then failwith "View definitions are mutually recursive" *)
     (* else g *)
@@ -2317,12 +2335,21 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   let pr =  Cprinter.string_of_struc_formula in
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
+(* type: I.prog_decl -> *)
+(*   String.t list -> *)
+(*   C.view_decl list -> *)
+(*   (Globals.ident * Typeinfer.spec_var_info) list -> *)
+(*   I.view_decl -> C.view_decl *)
+
 and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl_short in
+  let pr2 = add_str "mutrec" (pr_list pr_id) in
+  let pr2a lst = (add_str "trans_views" (pr_list (fun v -> v.C.view_name))) lst in
+  let pr3 = add_str "ann_typs" (pr_list (pr_pair pr_id pr_none)) in
   (* let pr_r = pr_none in  *)
-  Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog  mutrec_vnames
-                                       transed_views ann_typs vdef) vdef
+  Debug.no_4 "trans_view" pr pr2 pr2a pr3 pr_r  (fun _ _ _ _ -> trans_view_x prog  mutrec_vnames
+                                       transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
@@ -2441,7 +2468,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               | Some f1  -> Some (CF.mkOr f1 fc no_pos)
               | None -> Some fc) None n_un_str 
       in
-      let () = y_binfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
+      let () = y_tinfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = try
           not(is_prim_v) && is_view_recursive vdef.I.view_name
@@ -2474,6 +2501,25 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name prog.I.prog_data_decls in *)
       let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in
       let view_ho_sv = List.map (fun (fk,i,sk) -> (fk, CP.SpecVar (FORM,i,Unprimed), sk)) vdef.I.view_ho_vars in (* TODO;HO *)
+      (* TODO:WN : checking for implicit equiv_view *)
+      let () = if sf!=[] then 
+          begin
+            match n_un_str with
+            | [(f,_)] ->
+              begin
+                let (h,p,_,_,_,_) = CF.split_components f in
+                let p = MCP.pure_of_mix p in
+                let emap = Infer.get_eqset p in
+                let (_,l_args,l_node_name,_,_,_,_,_) = CF.get_args_of_node h in
+                y_binfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
+                y_binfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
+                y_binfo_hp (add_str "body" (!CF.print_h_formula)) h;
+                y_binfo_hp (add_str "pure" (!CP.print_formula)) p;
+                y_binfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
+              end
+            | _ -> ()
+          end
+      in
       let conv_baga_inv baga_inv =
         match baga_inv with
         | None -> None
@@ -2588,6 +2634,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     )
   )
 
+(* type: I.prog_decl -> *)
+(*   Globals.ident list list -> *)
+(*   (I.view_decl * (Globals.ident * Typeinfer.spec_var_info) list) list -> *)
+(*   C.view_decl list *)
 and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
   let pr = pr_list (fun v -> v.Cast.view_name) in
   let pr2 = pr_list (fun (v,p) -> (pr_pair pr_id (pr_list (pr_pair pr_id pr_none))) (v.Iast.view_name,p)) in
@@ -11277,74 +11327,77 @@ let plugin_inferred_iviews views iprog cprog=
   Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog cprog) views
 
 
-(*
-and normalize_barr_decl cprog p = 
-        let nfs = Solver.normalize_frac_struc cprog in
-    let l  = List.map (fun (f,t,fl) -> (f,t,List.map nfs fl)) p.C.barrier_tr_list in
-        let bd = List.concat (List.map (fun (_,_,l)->List.concat l) l) in
-        { p with C.barrier_tr_list = l; C.barrier_def = bd;}
 
-and normalize_fracs cprog  = 
-    let nff = Solver.normalize_frac_formula cprog in
-    let nfs = Solver.normalize_frac_struc cprog in
-    let nfof f = match f with None -> None | Some f-> Some (nff f) in
-    let nfos f = match f with None -> None | Some f-> Some (nfs f) in
-    let normalize_fracs_pred p = 
-        {p with 
-            C.view_formula = nfs p.C.view_formula;
-            C.view_un_struc_formula = List.map (fun (c1,c2)-> (nff c1,c2)) p.C.view_un_struc_formula;
-            C.view_raw_base_case = nfof p.C.view_raw_base_case}in
+(* and normalize_barr_decl cprog p =  *)
+(*         let nfs = Solver.normalize_frac_struc cprog in *)
+(*     let l  = List.map (fun (f,t,fl) -> (f,t,List.map nfs fl)) p.C.barrier_tr_list in *)
+(*         let bd = List.concat (List.map (fun (_,_,l)->List.concat l) l) in *)
+(*         { p with C.barrier_tr_list = l; C.barrier_def = bd;} *)
 
-    let rec normalize_fracs_exp e = match e with
-          | C.CheckRef _ | C.Java _ | C.Debug _ | C.Dprint _ | C.FConst _ | C.ICall _ | C.Sharp _
-          | C.IConst _ | C.New _ | C.Null _ | C.EmptyArray _ | C.Print _ | C.VarDecl _ | C.Unfold _ 
-          | C.Barrier_cmd _ | C.BConst _  | C.SCall _ | C.This _ | C.Time _ | C.Var _ | C.Unit _ -> e
+(* and normalize_fracs cprog  =  *)
+(*     let nff = Solver.normalize_frac_formula cprog in *)
+(*     let nfs = Solver.normalize_frac_struc cprog in *)
+(*     let nfof f = match f with None -> None | Some f-> Some (nff f) in *)
+(*     let nfos f = match f with None -> None | Some f-> Some (nfs f) in *)
+(*     let normalize_fracs_pred p =  *)
+(*         {p with  *)
+(*             C.view_formula = nfs p.C.view_formula; *)
+(*             C.view_un_struc_formula = List.map (fun (c1,c2)-> (nff c1,c2)) p.C.view_un_struc_formula; *)
+(*             C.view_raw_base_case = nfof p.C.view_raw_base_case}in *)
 
-          | C.Label e -> C.Label {e with C.exp_label_exp = normalize_fracs_exp e.C.exp_label_exp}
-          | C.Assert e -> C.Assert {e with  
-                C.exp_assert_asserted_formula = nfos e.C.exp_assert_asserted_formula;
-                C.exp_assert_assumed_formula = nfof e.C.exp_assert_assumed_formula}
-          | C.Assign e -> C.Assign {e with C.exp_assign_rhs = normalize_fracs_exp e.C.exp_assign_rhs}
-          | C.Bind e -> C.Bind {e with C.exp_bind_body = normalize_fracs_exp e.C.exp_bind_body}
-          | C.Block e -> C.Block {e with C.exp_block_body = normalize_fracs_exp e.C.exp_block_body}
-          | C.Cond e -> C.Cond {e with 
-                C.exp_cond_then_arm = normalize_fracs_exp e.C.exp_cond_then_arm;
-                C.exp_cond_else_arm = normalize_fracs_exp e.C.exp_cond_else_arm}
-          | C.Cast e -> C.Cast {e with C.exp_cast_body = normalize_fracs_exp e.C.exp_cast_body}
-          | C.Catch e -> C.Catch {e with C.exp_catch_body = normalize_fracs_exp e.C.exp_catch_body}
-          | C.Seq e -> C.Seq {e with
-                C.exp_seq_exp1 = normalize_fracs_exp e.C.exp_seq_exp1;
-                C.exp_seq_exp2 = normalize_fracs_exp e.C.exp_seq_exp2}
-          | C.While e -> C.While {e with 
-                C.exp_while_body = normalize_fracs_exp e.C.exp_while_body;
-                C.exp_while_spec = nfs e.C.exp_while_spec;}
-          | C.Try e -> C.Try {e with
-                C.exp_try_body = normalize_fracs_exp e.C.exp_try_body;
-                C.exp_catch_clause = normalize_fracs_exp e.C.exp_catch_clause} in
+(*     let rec normalize_fracs_exp e = match e with *)
+(*           | C.CheckRef _ | C.Java _ | C.Debug _ | C.Dprint _ | C.FConst _ | C.ICall _ | C.Sharp _ *)
+(*           | C.IConst _ | C.New _ | C.Null _ | C.EmptyArray _ | C.Print _ | C.VarDecl _ | C.Unfold _  *)
+(*           | C.Barrier_cmd _ | C.BConst _  | C.SCall _ | C.This _ | C.Time _ | C.Var _ | C.Unit _ -> e *)
 
-    let normalize_fracs_proc p = 
-    {p with 
-        C.proc_static_specs = nfs p.C.proc_static_specs ;
-        C.proc_static_specs_with_pre = nfs p.C.proc_static_specs_with_pre;
-        C.proc_dynamic_specs = nfs p.C.proc_dynamic_specs ;
-        C.proc_body = match p.C.proc_body with | None -> None | Some e -> Some (normalize_fracs_exp e);} in
+(*           | C.Label e -> C.Label {e with C.exp_label_exp = normalize_fracs_exp e.C.exp_label_exp} *)
+(*           | C.Assert e -> C.Assert {e with   *)
+(*                 C.exp_assert_asserted_formula = nfos e.C.exp_assert_asserted_formula; *)
+(*                 C.exp_assert_assumed_formula = nfof e.C.exp_assert_assumed_formula} *)
+(*           | C.Assign e -> C.Assign {e with C.exp_assign_rhs = normalize_fracs_exp e.C.exp_assign_rhs} *)
+(*           | C.Bind e -> C.Bind {e with C.exp_bind_body = normalize_fracs_exp e.C.exp_bind_body} *)
+(*           | C.Block e -> C.Block {e with C.exp_block_body = normalize_fracs_exp e.C.exp_block_body} *)
+(*           | C.Cond e -> C.Cond {e with  *)
+(*                 C.exp_cond_then_arm = normalize_fracs_exp e.C.exp_cond_then_arm; *)
+(*                 C.exp_cond_else_arm = normalize_fracs_exp e.C.exp_cond_else_arm} *)
+(*           | C.Cast e -> C.Cast {e with C.exp_cast_body = normalize_fracs_exp e.C.exp_cast_body} *)
+(*           | C.Catch e -> C.Catch {e with C.exp_catch_body = normalize_fracs_exp e.C.exp_catch_body} *)
+(*           | C.Seq e -> C.Seq {e with *)
+(*                 C.exp_seq_exp1 = normalize_fracs_exp e.C.exp_seq_exp1; *)
+(*                 C.exp_seq_exp2 = normalize_fracs_exp e.C.exp_seq_exp2} *)
+(*           | C.While e -> C.While {e with  *)
+(*                 C.exp_while_body = normalize_fracs_exp e.C.exp_while_body; *)
+(*                 C.exp_while_spec = nfs e.C.exp_while_spec;} *)
+(*           | C.Try e -> C.Try {e with *)
+(*                 C.exp_try_body = normalize_fracs_exp e.C.exp_try_body; *)
+(*                 C.exp_catch_clause = normalize_fracs_exp e.C.exp_catch_clause} in *)
 
-    let normalize_fracs_data p = 
-        {p with
-            C.data_invs = List.map nff p.C.data_invs;
-            C.data_methods = List.map normalize_fracs_proc p.C.data_methods;} in
+(*     let normalize_fracs_proc p =  *)
+(*     {p with  *)
+(*         C.proc_static_specs = nfs p.C.proc_static_specs ; *)
+(*         C.proc_static_specs_with_pre = nfs p.C.proc_static_specs_with_pre; *)
+(*         C.proc_dynamic_specs = nfs p.C.proc_dynamic_specs ; *)
+(*         C.proc_body = match p.C.proc_body with | None -> None | Some e -> Some (normalize_fracs_exp e);} in *)
 
-    let normalize_coerc_decl p = 
-        {p with
-            C.coercion_head = nff p.C.coercion_head;
-            C.coercion_body = nff p.C.coercion_body;} in
+(*     let normalize_fracs_data p =  *)
+(*         {p with *)
+(*             C.data_invs = List.map nff p.C.data_invs; *)
+(*             C.data_methods = List.map normalize_fracs_proc p.C.data_methods;} in *)
 
-    { cprog with 
-        C.prog_data_decls = List.map normalize_fracs_data cprog.C.prog_data_decls;
-        C.prog_view_decls = List.map normalize_fracs_pred cprog.C.prog_view_decls;
-        C.prog_proc_decls = List.map normalize_fracs_proc cprog.C.prog_proc_decls;
-        C.prog_left_coercions = List.map normalize_coerc_decl cprog.C.prog_left_coercions;
-        C.prog_right_coercions = List.map normalize_coerc_decl cprog.C.prog_right_coercions;
-        C.prog_barrier_decls = List.map (normalize_barr_decl cprog) cprog.C.prog_barrier_decls;
-    }
-*)
+(*     let normalize_coerc_decl p =  *)
+(*         {p with *)
+(*             C.coercion_head = nff p.C.coercion_head; *)
+(*             C.coercion_body = nff p.C.coercion_body;} in *)
+
+(*     { cprog with  *)
+(*         C.prog_data_decls = List.map normalize_fracs_data cprog.C.prog_data_decls; *)
+(*         C.prog_view_decls = List.map normalize_fracs_pred cprog.C.prog_view_decls; *)
+(*         C.prog_proc_decls = List.map normalize_fracs_proc cprog.C.prog_proc_decls; *)
+(*         C.prog_left_coercions = List.map normalize_coerc_decl cprog.C.prog_left_coercions; *)
+(*         C.prog_right_coercions = List.map normalize_coerc_decl cprog.C.prog_right_coercions; *)
+(*         C.prog_barrier_decls = List.map (normalize_barr_decl cprog) cprog.C.prog_barrier_decls; *)
+(*     } *)
+
+let () = Iast.case_normalize_formula := case_normalize_formula;;
+let () = Typeinfer.trans_formula := trans_formula;;
+let () = Typeinfer.trans_view := trans_view;;

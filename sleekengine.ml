@@ -763,76 +763,84 @@ let convert_data_and_pred_to_cast_x () =
       ) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
     ) iprog.I.prog_data_decls;
 
-  (* convert pred *)
-  let tmp_views = List.map (fun pdef ->
-      let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-      let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-      let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
-      let inv_lock = pdef.I.view_inv_lock in
-      let inv_lock = (
-        match inv_lock with
-        | None -> None
-        | Some f ->
-          let new_f = Astsimp.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
-          Some new_f
-      ) in
-      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
-      new_pdef
-    ) iprog.I.prog_view_decls in
-  let tmp_views,ls_mut_rec_views = (Astsimp.order_views tmp_views) in
-  x_tinfo_pp "after order_views" no_pos;
-  let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
-  x_tinfo_pp "after check_fixpt" no_pos;
-  iprog.I.prog_view_decls <- tmp_views;
-  (* collect immutable info for splitting view params *)
-  let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in
-  let _ = x_tinfo_hp (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in
-  let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
-  (* let all_mutrec_vnames = (List.concat ls_mut_rec_views) in *)
-  (*   let cviews0,_ = List.fold_left (fun (transed_views view -> *)
-  (*       let nview = Astsimp.trans_view iprog mutrec_vnames *)
-  (*         transed_views [] view in *)
-  (*       transed_views@[nview] *)
-  (* ) ([]) tmp_views in *)
-  (*   let cviews0 = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0a in *)
-  let _ = if !Globals.smt_compete_mode then
-      let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in
-      let num_vdecls = List.length tmp_views  in
-      (* let _ = if num_vdecls <= gen_baga_inv_threshold then *)
-      (*     (\* let _ = Globals.gen_baga_inv := false in *\) *)
-      (*   (\* let _ = Globals.dis_pred_sat () in *\) *)
-      (*     () *)
-      (* else *)
-      (*   let _ = Globals.lemma_gen_unsafe := false in *)
-      (*   (\* let _ = Globals.lemma_syn := false in *\) *)
-      (*   () *)
-      (* in *)
-      let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then
-          let _ = Globals.graph_norm := false in
-          ()
-        else ()
-      in
-      (* let _ = if ls_mut_rec_views != [] (\* || num_vdecls > 2 *\) then *)
-      (*   (\* lemma_syn does not work well with mut_rec views. Loc: to improve*\) *)
-      (*   let _ = Globals.lemma_syn := false in *)
-      (*   () *)
-      (* else () in *)
-      ()
-    else ()
-  in
+  (* convert pred *) 
+  (* The below code is moved to SleekUtils.process_iview_decls *)
   let cur_lem_syn = !Globals.lemma_syn in
   (*turn off generate lemma during trans views*)
   let _ = Globals.lemma_syn := false in
-  let tmp_views = List.filter (fun v -> v.Iast.view_kind != View_HREL) tmp_views in
-  let cviews0 = x_add Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in
-  (* x_tinfo_pp "after trans_view" no_pos; *)
-  (*derv and spec views*)
-  let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
-  let cviews_derv = List.fold_left (fun norm_views v ->
-      let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in
-      (norm_views@[der_view])
-    ) cviews0 tmp_views_derv1 in
-  let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
+  (* let tmp_views = List.map (fun pdef ->                                                                                                                                                     *)
+  (*     let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in                                                                               *)
+  (*     let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in                                                                                     *)
+  (*     let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in                                                                        *)
+  (*     let inv_lock = pdef.I.view_inv_lock in                                                                                                                                                *)
+  (*     let inv_lock = (                                                                                                                                                                      *)
+  (*       match inv_lock with                                                                                                                                                                 *)
+  (*       | None -> None                                                                                                                                                                      *)
+  (*       | Some f ->                                                                                                                                                                         *)
+  (*         let new_f = Astsimp.case_normalize_formula iprog h f in (*TO CHECK: h or p*)                                                                                                      *)
+  (*         Some new_f                                                                                                                                                                        *)
+  (*     ) in                                                                                                                                                                                  *)
+  (*     let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in                                                                                                    *)
+  (*     new_pdef                                                                                                                                                                              *)
+  (*   ) iprog.I.prog_view_decls in                                                                                                                                                            *)
+  (* let () = y_tinfo_hp (add_str "view_decls" (pr_list Iprinter.string_of_view_decl)) iprog.I.prog_view_decls in                                                                              *)
+  (* let () = y_tinfo_hp (add_str "tmp_views" (pr_list Iprinter.string_of_view_decl)) tmp_views in                                                                                             *)
+  (* let tmp_views,ls_mut_rec_views = (Astsimp.order_views tmp_views) in                                                                                                                       *)
+  (* x_tinfo_pp "after order_views" no_pos;                                                                                                                                                    *)
+  (* let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in                                                                                                                   *)
+  (* x_tinfo_pp "after check_fixpt" no_pos;                                                                                                                                                    *)
+  (* iprog.I.prog_view_decls <- tmp_views;                                                                                                                                                     *)
+  (* (* collect immutable info for splitting view params *)                                                                                                                                    *)
+  (* let _ = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name iprog.I.prog_data_decls )  iprog.I.prog_view_decls  in           *)
+  (* let _ = x_tinfo_hp (add_str "view_decls:"  (pr_list (pr_list (pr_pair Iprinter.string_of_imm string_of_int))))  (List.map (fun v ->  v.I.view_imm_map) iprog.I.prog_view_decls) no_pos in *)
+  (* let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in                                                                                                        *)
+  (* (* let all_mutrec_vnames = (List.concat ls_mut_rec_views) in *)                                                                                                                           *)
+  (* (*   let cviews0,_ = List.fold_left (fun (transed_views view -> *)                                                                                                                        *)
+  (* (*       let nview = Astsimp.trans_view iprog mutrec_vnames *)                                                                                                                            *)
+  (* (*         transed_views [] view in *)                                                                                                                                                    *)
+  (* (*       transed_views@[nview] *)                                                                                                                                                         *)
+  (* (* ) ([]) tmp_views in *)                                                                                                                                                                 *)
+  (* (*   let cviews0 = Fixcalc.compute_inv_mutrec ls_mut_rec_views cviews0a in *)                                                                                                             *)
+  (* let _ = if !Globals.smt_compete_mode then                                                                                                                                                 *)
+  (*     let _ = Debug.ninfo_hprint (add_str "tmp_views" (pr_list (fun vdcl -> vdcl.Iast.view_name))) tmp_views no_pos in                                                                      *)
+  (*     let num_vdecls = List.length tmp_views  in                                                                                                                                            *)
+  (*     (* let _ = if num_vdecls <= gen_baga_inv_threshold then *)                                                                                                                            *)
+  (*     (*     (\* let _ = Globals.gen_baga_inv := false in *\) *)                                                                                                                            *)
+  (*     (*   (\* let _ = Globals.dis_pred_sat () in *\) *)                                                                                                                                    *)
+  (*     (*     () *)                                                                                                                                                                          *)
+  (*     (* else *)                                                                                                                                                                            *)
+  (*     (*   let _ = Globals.lemma_gen_unsafe := false in *)                                                                                                                                  *)
+  (*     (*   (\* let _ = Globals.lemma_syn := false in *\) *)                                                                                                                                 *)
+  (*     (*   () *)                                                                                                                                                                            *)
+  (*     (* in *)                                                                                                                                                                              *)
+  (*     let _ =  if !Globals.graph_norm &&  num_vdecls > !graph_norm_decl_threshold then                                                                                                      *)
+  (*         let _ = Globals.graph_norm := false in                                                                                                                                            *)
+  (*         ()                                                                                                                                                                                *)
+  (*       else ()                                                                                                                                                                             *)
+  (*     in                                                                                                                                                                                    *)
+  (*     (* let _ = if ls_mut_rec_views != [] (\* || num_vdecls > 2 *\) then *)                                                                                                                *)
+  (*     (*   (\* lemma_syn does not work well with mut_rec views. Loc: to improve*\) *)                                                                                                       *)
+  (*     (*   let _ = Globals.lemma_syn := false in *)                                                                                                                                         *)
+  (*     (*   () *)                                                                                                                                                                            *)
+  (*     (* else () in *)                                                                                                                                                                      *)
+  (*     ()                                                                                                                                                                                    *)
+  (*   else ()                                                                                                                                                                                 *)
+  (* in                                                                                                                                                                                        *)
+  (* let cur_lem_syn = !Globals.lemma_syn in                                                                                                                                                   *)
+  (* (*turn off generate lemma during trans views*)                                                                                                                                            *)
+  (* let _ = Globals.lemma_syn := false in                                                                                                                                                     *)
+  (* let tmp_views = List.filter (fun v -> v.Iast.view_kind != View_HREL) tmp_views in                                                                                                         *)
+  (* let cviews0 = x_add Astsimp.trans_views iprog ls_mut_rec_views (List.map (fun v -> (v,[]))  tmp_views) in                                                                                 *)
+  (* (* x_tinfo_pp "after trans_view" no_pos; *)                                                                                                                                               *)
+  (* (*derv and spec views*)                                                                                                                                                                   *)
+  (* let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in                                                                                                                    *)
+  (* let cviews_derv = List.fold_left (fun norm_views v ->                                                                                                                                     *)
+  (*     let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in                                                                          *)
+  (*     (norm_views@[der_view])                                                                                                                                                               *)
+  (*   ) cviews0 tmp_views_derv1 in                                                                                                                                                            *)
+  (* let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in                                                                           *)
+  (* END: The below code is moved to SleekUtils.process_iview_decls *)
+  let cviews_derv = SleekUtils.process_all_iview_decls iprog in
   let cviews = (* cviews0a@ *)cviews_derv in
   let cviews =
     if !Globals.norm_elim_useless  (* !Globals.pred_elim_useless *) then
@@ -841,27 +849,32 @@ let convert_data_and_pred_to_cast_x () =
   in
   let () = x_tinfo_hp (add_str "view_decls (pre)" (pr_list (fun v -> v.Cast.view_name))) (!cprog.Cast.prog_view_decls) no_pos in
   let () = x_tinfo_hp (add_str "view_decls (cviews)" (pr_list (fun v -> v.Cast.view_name))) (cviews) no_pos in
-  let old_view_decls = !cprog.Cast.prog_view_decls in
-  let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews in
-  let cviews1 =
-    if !Globals.norm_extract then
-      Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
-    else cviews
-  in
-  let cviews2 =
-    if !Globals.norm_cont_analysis then
-      let cviews2a = Norm.cont_para_analysis !cprog cviews1 in
-      cviews2a
-    else
-      cviews1
-  in
-  let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews2 in
-  let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in
-  x_tinfo_pp "after compute_view" no_pos;
-  let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
-  let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in
-  let _ = !cprog.Cast.prog_view_decls <-  old_view_decls@cviews2 in
-  x_tinfo_pp "after materialzed_prop" no_pos;
+  (* (* The below code is moved to SleekUtils.norm_cview_decls *)                                             *)
+  (* let old_view_decls = !cprog.Cast.prog_view_decls in                                                      *)
+  (* let () = y_binfo_hp (add_str "old_view_decls" (pr_list Cprinter.string_of_view_decl)) old_view_decls in  *)
+  (* let () = y_binfo_hp (add_str "cviews" (pr_list Cprinter.string_of_view_decl)) cviews in                  *)
+  (* let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews in                                          *)
+  (* let cviews1 =                                                                                            *)
+  (*   if !Globals.norm_extract then                                                                          *)
+  (*     Norm.norm_extract_common iprog !cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)     *)
+  (*   else cviews                                                                                            *)
+  (* in                                                                                                       *)
+  (* let cviews2 =                                                                                            *)
+  (*   if !Globals.norm_cont_analysis then                                                                    *)
+  (*     let cviews2a = Norm.cont_para_analysis !cprog cviews1 in                                             *)
+  (*     cviews2a                                                                                             *)
+  (*   else                                                                                                   *)
+  (*     cviews1                                                                                              *)
+  (* in                                                                                                       *)
+  (* let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews2 in                                         *)
+  (* let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews2) in *)
+  (* x_tinfo_pp "after compute_view" no_pos;                                                                  *)
+  (* let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in                           *)
+  (* let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold !cprog vdef) cviews2) in               *)
+  (* let _ = !cprog.Cast.prog_view_decls <-  old_view_decls@cviews2 in                                        *)
+  (* x_tinfo_pp "after materialzed_prop" no_pos;                                                              *)
+  (* (* END: The below code is moved to SleekUtils.norm_cview_decls *)                                        *)
+  let cviews2 = SleekUtils.norm_cview_decls iprog !cprog cviews in
   let cprog1 = Astsimp.fill_base_case !cprog in
   let cprog2 = Astsimp.sat_warnings cprog1 in
   let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
@@ -1619,17 +1632,17 @@ let eq_id s1 s2 = String.compare s1 s2 == 0
 
 let mem_id = Gen.BList.mem_eq eq_id
 
-let select_obj name_of obj_list obj_id_list = 
-  List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list
+(* let select_obj name_of obj_list obj_id_list =                                                       *)
+(*   List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list                             *)
 
-let select_hprel_assume hprel_list hprel_id_list = 
-  select_obj (fun hpr -> CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_list hprel_id_list
+(* let select_hprel_assume hprel_list hprel_id_list =                                                  *)
+(*   select_obj (fun hpr -> CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_list hprel_id_list *)
   
   (* List.partition (fun hpr ->                                                            *)
   (*   mem_id (CP.name_of_spec_var (SynUtils.name_of_hprel hpr)) hprel_id_list) hprel_list *)
 
-let update_sleek_hprel_assumes upd_hprel_list = 
-  sleek_hprel_assumes # set upd_hprel_list
+(* let update_sleek_hprel_assumes upd_hprel_list =  *)
+(*   sleek_hprel_assumes # set upd_hprel_list       *)
 
 let print_sleek_hprel_assumes () =
   (* can we have this at a better place? *)
@@ -1642,17 +1655,18 @@ let print_sleek_hprel_assumes () =
   else ()
 
 let process_sleek_hprel_assumes_others s (ids: regex_id_list) f_proc = 
-  let () = classify_sleek_hprel_assumes () in
-  let () = print_endline_quiet "\n========================" in
-  let () = print_endline_quiet (" Performing "^s) in
-  let () = print_endline_quiet "========================" in
-  let sel_hprel_assume_list, others =
-    match ids with
-    | REGEX_STAR -> sleek_hprel_assumes # get, []
-    | REGEX_LIST hps -> select_hprel_assume (sleek_hprel_assumes # get) hps
-  in
-  let res = f_proc others sel_hprel_assume_list in
-  update_sleek_hprel_assumes (res @ others)
+  (* let () = classify_sleek_hprel_assumes () in                               *)
+  (* let () = print_endline_quiet "\n========================" in              *)
+  (* let () = print_endline_quiet (" Performing "^s) in                        *)
+  (* let () = print_endline_quiet "========================" in                *)
+  (* let sel_hprel_assume_list, others =                                       *)
+  (*   match ids with                                                          *)
+  (*   | REGEX_STAR -> sleek_hprel_assumes # get, []                           *)
+  (*   | REGEX_LIST hps -> select_hprel_assume (sleek_hprel_assumes # get) hps *)
+  (* in                                                                        *)
+  (* let res = f_proc others sel_hprel_assume_list in                          *)
+  (* update_sleek_hprel_assumes (res @ others)                                 *)
+  SynUtils.process_hprel_assumes_others s sleek_hprel_assumes ids f_proc
 
 let process_sleek_hprel_assumes s (ids: regex_id_list) f_proc = 
   let f others x = f_proc x in
@@ -1733,15 +1747,27 @@ let process_shape_normalize (ids: regex_id_list) =
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
 
-let process_pred_elim_head (ids: regex_id_list) = 
+let process_sleek_norm_preds s (ids: regex_id_list) f_norm = 
+  let () = print_endline_quiet "\n========================" in
+  let () = print_endline_quiet (" Performing "^s) in
+  let () = print_endline_quiet "========================" in
   let sel_pred_list, others =
     match ids with
     | REGEX_STAR -> !cprog.prog_view_decls, []
     | REGEX_LIST pids -> 
-      select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
+      SynUtils.select_obj (fun v -> v.Cast.view_name) !cprog.prog_view_decls pids
   in
-  let n_pred_list = Syn.elim_head_pred_list !cprog sel_pred_list in
+  let n_pred_list = Wrapper.wrap_lemma_quiet f_norm sel_pred_list in
   ()
+
+let process_pred_elim_tail (ids: regex_id_list) = 
+  process_sleek_norm_preds "Elim Tail" ids (Syn.elim_tail_pred_list iprog !cprog)
+
+let process_pred_elim_head (ids: regex_id_list) = 
+  process_sleek_norm_preds "Elim Head" ids (Syn.elim_head_pred_list iprog !cprog)
+
+let process_pred_unify_disj (ids: regex_id_list) = 
+  process_sleek_norm_preds "Unify Disj" ids (Syn.unify_disj_pred_list iprog !cprog)
 
 (******************************************************************************)
 
@@ -2485,19 +2511,37 @@ let process_shape_elim_useless sel_vnames=
   let _ = x_binfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
-let regex_search reg_id all_ids=
+let regex_search reg_id vdefs =
   match reg_id with
     | REGEX_LIST ids -> ids
-    | REGEX_STAR -> all_ids
+    | REGEX_STAR -> 
+      let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
+      all_ids
+
+let process_pred_unfold reg_to_vname =
+  let vdefs = !cprog.Cast.prog_view_decls in
+  (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
+  (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
+  let to_vns = regex_search reg_to_vname vdefs in
+  Norm.norm_unfold iprog !cprog vdefs to_vns
+
+let process_shape_reuse_subs reg_to_vname =
+  (* failwith (x_loc^"TBI") *)
+  let vdefs = !cprog.Cast.prog_view_decls in
+  (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
+  (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
+  let to_vns = regex_search reg_to_vname vdefs in
+  Norm.norm_reuse_subs iprog !cprog vdefs to_vns
 
 let process_shape_reuse reg_frm_vname reg_to_vname=
   let _ = x_tinfo_zp  (lazy  ("shape reuse  \n")) no_pos in
-  let ids = List.map (fun vdcl -> vdcl.Cast.view_name) !cprog.Cast.prog_view_decls in
-  let frm_vnames = regex_search reg_frm_vname ids in
-  let to_vnames = regex_search reg_to_vname ids in
+  let vdefs = !cprog.Cast.prog_view_decls in
+  (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) !cprog.Cast.prog_view_decls in *)
+  let frm_vnames = regex_search reg_frm_vname vdefs in
+  let to_vnames = regex_search reg_to_vname vdefs in
   let () = x_tinfo_hp (add_str "frm vnamse"  (pr_list pr_id)) frm_vnames no_pos in
   let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
-  let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog !cprog.Cast.prog_view_decls frm_vnames) to_vnames in
+  let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog vdefs (* !cprog.Cast.prog_view_decls *) frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in
   let _ = x_binfo_zp  (lazy  ("\nPRED REUSE FOUND:" ^ (pr eq_pairs) ^ "\n" )) no_pos in
   ()
@@ -2980,8 +3024,14 @@ let process_print_command pcmd0 =
       (*           (\* let _ = print_endline (Cprinter.string_of_list_context ls_ctx) in *\) *)
       (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
       (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
+    else if pcmd = "views" then
+      let view_list = !cprog.prog_view_decls in
+      let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
+      let () = HipUtil.view_scc_obj # build_scc_void 15 in
+      let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
+      y_binfo_hp (add_str "Printing Views\n" (pr_list Cprinter.string_of_view_decl_short)) lst
     else
-      print_string ("unsupported print command: " ^ pcmd)
+      print_string (x_loc^"unsupported print command: " ^ pcmd)
 
 let process_cmp_command (input: ident list * ident * meta_formula list) =
   let iv,var,fl = input in

@@ -716,7 +716,7 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       (* WN : below is to be removed later *)
       (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
       let n = List.length ls in
-      if n=0 then ()
+      if n=0 || name=""  then ()
       else 
       let () = 
         match !Globals.show_push_list with
@@ -2439,3 +2439,4 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
+

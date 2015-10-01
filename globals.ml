@@ -247,7 +247,7 @@ let string_of_view_kind k = match k with
 
 let is_undef_typ t =
   match t with
-  |UNK |RelT _ |HpT |UtT _ -> true
+  | UNK | RelT _ | HpT | UtT _ -> true
   | _ -> false 
 
 let is_node_typ t =
@@ -1287,6 +1287,7 @@ let infer_back_ptr = ref true
 let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
+let old_view_equiv = ref false (* false *)
 let cond_action_always = ref false
 let rev_priority = ref false
 
@@ -2527,4 +2528,5 @@ type 'a regex_list =
   | REGEX_LIST of 'a list
 
 type regex_id_list = ident regex_list
+
 

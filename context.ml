@@ -1871,11 +1871,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | ViewNode vl, ViewNode vr -> 
          pr_debug "VIEW vs VIEW\n";
          (* let l1 = [(1,M_base_case_unfold m_res)] in *)
-         let (vl_name,vl_vdef,vl) = Cast.get_view_name_equiv view_decls vl in
-         let (vr_name,vr_vdef,vr) = Cast.get_view_name_equiv view_decls vr in
+         let (vl_name,vl_vdef,vl,flag1) = Cast.get_view_name_equiv view_decls vl in
+         let (vr_name,vr_vdef,vr,flag2) = Cast.get_view_name_equiv view_decls vr in
          (* WN : changing m_res to use view_equiv_set *)
-         let m_res = {m_res with match_res_lhs_node = ViewNode vl;
-                     match_res_rhs_node = ViewNode vr} in
+         let m_res = if flag1 || flag2 then 
+             {m_res with match_res_lhs_node = ViewNode vl;
+                     match_res_rhs_node = ViewNode vr} 
+           else m_res 
+         in
          (* let vr_name = vr.h_formula_view_name in *)
          (* let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in *)
          (* let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in *)

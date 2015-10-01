@@ -1,0 +1,59 @@
+This technique is meant to eliminate the tail node of
+a recursive predicate. As an example:
+
+ pred app3<> == self::node<v,null> & v=0 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0
+  inv self!=null.
+
+# ex21a.slk
+
+We are suppose to transform this to:
+
+ self::app3<> --> U(self,q)*q::node<v,q> & v=0
+
+and then derive:
+
+ pred U<p> == self=p & self!=null
+	or self::node<v, q> * q::U<p> & p!=null 
+  inv self!=null.
+
+The elim derivation comprises:
+  (1) determine applicability
+  (2) form lemma -->
+  (3) lemma_infer
+  (4) derive pred
+  (5) confirm equivalence <--
+  (4) update predicate
+
+The general recursion scheme is:
+
+ pred app3<p*> == self::node<v,p> & pure1(v,p) 
+	or self::node<v, q> * q::app3<p*> & q!=null & pure2(v)
+  inv self!=null.
+
+We form following lemma_infer :
+
+  self::app3<p*> --> U(self,q)*q::node<v,p> & pure1(v,p)
+
+An Example
+----------
+
+# ex21t3.slk
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+pred_elim_tl_node [*].
+
+# expect to form:
+
+  lemma_infer   app3<> -> U(self,p)*p::node<0,null>
+
+Starting Omega.../usr/local/bin/oc
+Exception processed: Failure("**sleekengine.ml#1751: TBI")
+error at: 
+SLEEK FAILURE (END)
+
+
+==================================================

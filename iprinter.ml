@@ -683,9 +683,9 @@ and  string_of_struc_formula c = match c with
     let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
     let string_of_continuation = string_of_struc_formula continuation in
     "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
-  | F.EList b ->   List.fold_left  (fun a (l,c)-> 
+  | F.EList b -> "EList" ^ (List.fold_left  (fun a (l,c)-> 
       let l_s = (string_of_spec_label_def l) ^": " in
-      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b
+      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
   (*let sl = if b then "("^(string_of_int (fst l))^",\""^(snd l)^"\"): " else "" in*)
 
 

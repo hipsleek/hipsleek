@@ -1026,7 +1026,9 @@ non_empty_command:
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
+      | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
       | t=shapeReuse_cmd     -> ShapeReuse t
+      | t=predUnfold_cmd     -> PredUnfold t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
@@ -1043,6 +1045,8 @@ non_empty_command:
       | t = shape_derive_view_cmd -> ShapeDeriveView t
       | t = shape_normalize_cmd -> ShapeNormalize t
       | t = pred_elim_head_cmd -> PredElimHead t
+      | t = pred_elim_tail_cmd -> PredElimTail t
+      | t = pred_unify_disj_cmd -> PredUnifyDisj t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -2594,6 +2598,18 @@ shapeElim_cmd:
    (il1)
    ]];
 
+shapeReuseSubs_cmd:
+   [[ `PRED_REUSE_SUBS; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
+predUnfold_cmd:
+   [[ `PRED_UNFOLD; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
 shapeReuse_cmd:
    [[ `PRED_REUSE; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ; `OSQUARE;il2=shape_selective_id_list;`CSQUARE->
        (il1,il2)
@@ -2665,6 +2681,17 @@ pred_elim_head_cmd:
   [[ `PRED_ELIM_HEAD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
   ]];
+
+pred_elim_tail_cmd:
+  [[ `PRED_ELIM_TAIL; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+pred_unify_disj_cmd:
+  [[ `PRED_UNIFY_DISJ; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
 
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM
@@ -2745,6 +2772,8 @@ print_cmd:
   [[ `PRINT; `IDENTIFIER id           -> PCmd id
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
    | `PRINT_LEMMAS  -> PCmd "lemmas"
+   (* | `PRINT_VIEW  -> PCmd "view" *)
+   (* | `PRINT_VIEW_LONG  -> PCmd "view_long" *)
   ]];
 
 cmp_cmd:

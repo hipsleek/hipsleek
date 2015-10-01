@@ -7,6 +7,7 @@ open Label_only
 open SynUtils
 open Exc.GTable
 module C = Cast
+module I = Iast
 module CP = Cpure
 module IF = Iformula
 module CF = Cformula
@@ -351,9 +352,10 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
     let ex_lhs_p = simplify lhs_p hrel_args in
     let hrd_guard = hrel_def.hprel_guard in
     let guard_f = 
+      let b = CF.mkBase_simp HEmp (MCP.mkMTrue pos) in
       match hrd_guard with
-      | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
-      | Some g -> g
+      | None -> b
+      | Some g -> b (* g *) (* Ignore guard in a post-hprel *)
     in
     let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
     let rs, residue = x_add heap_entail_formula prog ctx guard_f in
@@ -482,6 +484,7 @@ let rec dependent_graph_of_formula dg hprel_name hprel_f =
 let dependent_graph_of_hprel dg hprel = 
   let hpr_name = CP.name_of_spec_var (name_of_hprel hprel) in 
   let hpr_f = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
+  let dg = CG.add_vertex dg hpr_name in
   dependent_graph_of_formula dg hpr_name hpr_f
 
 let dependent_graph_of_hprel_list hprel_list =
@@ -665,7 +668,6 @@ let rec dangling_parameterizing hprels =
   
   helper [] hprels
 
-
 let dangling_parameterizing hprels = 
   let pr = pr_hprel_list in
   Debug.no_1 "Syn:parameterizing" pr pr 
@@ -683,18 +685,29 @@ let trans_hprel_to_view iprog prog hprels =
       let svl = List.map fst others in
       y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
   in
-  List.fold_left (fun acc (sv, hpr) ->
-    let vdecls = if !Globals.new_pred_syn then
-      let vdecl = view_decl_of_hprel prog hpr in
-      [vdecl]
-    else
-      Saout.view_decl_of_hprel iprog prog hpr
-      (* view_decl_of_hprel prog hpr *)
-    in
-    let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) (pr_list_ln Cprinter.string_of_view_decl_short)) vdecls in
-    acc@vdecls
-  ) [] single_hprel_list
+  let derived_views = List.fold_left (fun acc (sv, hpr) ->
+      let vdecls = if !Globals.new_pred_syn then
+        let vdecl = view_decl_of_hprel prog hpr in
+        [vdecl]
+      else
+        Saout.view_decl_of_hprel iprog prog hpr
+            (* view_decl_of_hprel prog hpr *)
+      in
+      (* let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) (pr_list_ln Cprinter.string_of_view_decl_short)) vdecls in *)
+      acc@vdecls
+  ) [] single_hprel_list in
+  let () = y_tinfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
+  (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
+  let norm_derived_views = norm_derived_views iprog prog derived_views in
+  let () = y_tinfo_hp (add_str "Derived Views" (pr_list Cprinter.string_of_view_decl_short)) norm_derived_views in
+  norm_derived_views
 
+let trans_hprel_to_view iprog cprog hprels = 
+  let pr1 = Cprinter.string_of_hprel_list_short in
+  let pr2 = pr_list Cprinter.string_of_view_decl_short in
+  Debug.no_1 "Syn:trans_hprel_to_view" pr1 pr2 
+    (fun _ -> trans_hprel_to_view iprog cprog hprels) hprels
+  
 (*************************)
 (***** DERIVING VIEW *****)
 (*************************)
@@ -731,10 +744,16 @@ let derive_view_norm prog other_hprels hprels =
   let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
   simplified_selective_hprels
 
-let derive_view iprog prog other_hprels hprels = 
-  let simplified_selective_hprels = derive_view_norm prog other_hprels hprels in
+let derive_view_norm prog other_hprels hprels = 
+  let pr = Cprinter.string_of_hprel_list_short in
+  Debug.no_1 "Syn:derive_view_norm" pr pr
+    (derive_view_norm prog other_hprels) hprels
+
+let derive_view iprog cprog other_hprels hprels = 
+  let simplified_selective_hprels = derive_view_norm cprog other_hprels hprels in
   (* DERIVING VIEW *)
-  let derived_views = trans_hprel_to_view iprog prog simplified_selective_hprels in
+  let derived_views = trans_hprel_to_view iprog cprog simplified_selective_hprels in
+  (* let derived_views = List.map (fun view -> unfolding_view iprog cprog view) derived_views in *)
   (derived_views, simplified_selective_hprels)
 
 let derive_view iprog prog other_hprels hprels = 
@@ -743,47 +762,237 @@ let derive_view iprog prog other_hprels hprels =
   Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
     (derive_view iprog prog) other_hprels hprels
 
-(*****************************)
-(***** ELIM HEAD OF PRED *****)
-(*****************************)
-let elim_head_pred prog pred = 
+(*******************************************)
+(***** ELIM HEAD / TAIL / DISJ OF PRED *****)
+(*******************************************)
+(* type:                                                     *)
+(*   Astsimp.I.prog_decl ->                                  *)
+(*   Astsimp.C.prog_decl ->                                  *)
+(*   C.view_decl ->                                          *)
+(*   Globals.ident list ->                                   *)
+(*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
+let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_body =
+  let l_name = "lem_inf_" ^ view.C.view_name in
+  let l_ihead = Rev_ast.rev_trans_formula l_head in
+  let l_ibody = Rev_ast.rev_trans_formula l_body in
+  let llemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left l_ivars l_ihead l_ibody in
+  let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
+  let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (* @pure_field *)
+  let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
+  
+  (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
+  let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog cprog in
+  if not lres then
+    let () = y_binfo_pp "XXX fail infer ---> " in
+    let () = restore_view iprog cprog view in
+    view
+  else
+    let () = y_binfo_pp "XXX proven infer ---> " in
+    let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
+    (* let () = List.iter (fun v ->                                           *)
+    (*   let () = C.update_un_struc_formula trans_hrel_to_view_formula v in   *)
+    (*   let () = C.update_view_formula trans_hrel_to_view_struc_formula v in *)
+    (*   let () = C.update_view_decl cprog v in                               *)
+    (*   let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in *)
+    (*   ()) tmp_views in                                                     *)
+    (* derived_views have been added into prog_view_decls of iprog and cprog *)
+    let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
+        CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
+        (derive_view iprog cprog) 
+    in
+    let () = y_binfo_pp "XXX Scheduling pred_reuse_subs" in
+    let all_d_views = tmp_views@derived_views in
+    let ids = List.map (fun x -> x.Cast.view_name) all_d_views in
+    let vdefs = cprog.Cast.prog_view_decls in
+    let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
+    let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
+    let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in
+    let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in
+    let () = y_binfo_hp (add_str "XXX reuse found .." (pr_list (pr_pair pr_id pr_id))) lst in
+    let () = y_binfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
+        all_d_views in
+    (* Equiv test to form new pred *)
+    let r_cbody = trans_hrel_to_view_formula l_body in
+    let r_ibody = Rev_ast.rev_trans_formula r_cbody in
+    let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
+    let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
+    if not rres then 
+      let () = y_binfo_pp "XXX fail <--- " in
+      let () = y_binfo_hp (Iprinter.string_of_coercion) rlemma in
+       let () = restore_view iprog cprog view in
+      view
+    else
+      let () = y_binfo_pp "XXX proven equiv ..." in
+      let vbody = CF.set_flow_in_formula_override 
+          { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+          r_cbody 
+      in
+      let self_node = mk_self_node view.C.view_name vbody in
+      let () = 
+        view.C.view_formula <- CF.formula_to_struc_formula 
+            (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] vbody);
+        view.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];
+        view.C.view_raw_base_case <- None;
+        view.C.view_base_case <- None
+      in
+      let norm_view = norm_single_view iprog cprog view in
+      let () = y_binfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
+      norm_view
+
+(* type:                                                     *)
+(*   Astsimp.I.prog_decl ->                                  *)
+(*   Astsimp.C.prog_decl ->                                  *)
+(*   C.view_decl ->                                          *)
+(*   Globals.ident list ->                                   *)
+(*   Rev_ast.CF.formula -> Rev_ast.CF.formula -> C.view_decl *)
+let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_body =
+  let pr1 = pr_list pr_id in
+  let pr2 = !CF.print_formula in
+  let pr3 = Cprinter.string_of_view_decl_short in
+  Debug.no_3 "Syn:derive_equiv_view_by_lem" pr1 pr2 pr2 pr3
+    (fun _ _ _ -> derive_equiv_view_by_lem ~tmp_views:tmp_views iprog cprog view l_ivars l_head l_body) l_ivars l_head l_body
+
+let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
-  let root_node = CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed) in
-  let _, common_node_chain = find_common_node_chain root_node (CF.list_of_disjuncts pred_f) in
-  let () = y_binfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
+  let self_node = mk_self_node pred.C.view_name pred_f in
+  let _, common_node_chain = find_common_node_chain self_node (CF.list_of_disjuncts pred_f) in
+  let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
   match common_node_chain with
   | [] -> pred
   | n::ns ->
     let common_heap = List.fold_left (fun acc f -> CF.mkStarH acc f no_pos) n ns in
     let common_f = CF.mkBase_simp common_heap (MCP.mkMTrue no_pos) in
-    let args = collect_feasible_heap_args_formula prog [] common_f in
+    let args = collect_feasible_heap_args_formula cprog [] common_f in
     let nodes = CF.collect_node_var_formula common_f in
     let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
     let dangling_vars = remove_dups dangling_vars in
-    let () = y_binfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
+    let () = y_tinfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
-    let fresh_pred_I_args = List.map (fun v -> (v, I)) fresh_pred_args in
+    let fresh_pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars fresh_pred_args) in
     let hrel_list, unknown_vars = List.split (List.map 
-        (fun v -> C.add_raw_hp_rel prog true true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
+        (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
+    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
     let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
-    let pred_h = CF.mkViewNode root_node pred.C.view_name fresh_pred_args no_pos in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
     (* let norm_flow = { CF.formula_flow_interval = exlist # get_hash n_flow; CF.formula_flow_link = None } in *)
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
-    let ex_vars = remove_dups (diff (diff (CF.fv unknown_f) unknown_vars) (CF.fv pred_f)) in
-    let unknown_f = CF.push_exists ex_vars unknown_f in
-    let classic = CP.SpecVar (UNK, "classic", Unprimed) in
-    let l_name = "lem_inf_" ^ pred.C.view_name in
-    let lemma = mk_lemma prog l_name true (unknown_vars @ [classic]) [] LEM_INFER Left pred_f unknown_f no_pos in
-    let () = y_binfo_hp (add_str "Lemma LHS" !CF.print_formula) pred_f in
-    let () = y_binfo_hp (add_str "Lemma RHS" !CF.print_formula) unknown_f in
-    let () = y_binfo_hp (add_str "Lemma" !C.print_coercion) lemma in
-    let inf_ctx = x_add Lemproving.verify_lemma 10 [lemma] [] prog l_name Left in
-    let () = y_binfo_hp (add_str "Inferred Ctx" !CF.print_list_context) inf_ctx in
-    pred
+    (* let ex_vars = remove_dups (diff (diff (CF.fv unknown_f) unknown_vars) (CF.fv pred_f)) in *)
+    (* let unknown_f = CF.push_exists ex_vars unknown_f in                                      *)
 
-let elim_head_pred_list prog preds = 
-  List.map (elim_head_pred prog) preds
+    let ivars = List.map CP.name_of_spec_var unknown_vars in
+    x_add derive_equiv_view_by_lem iprog cprog pred ivars pred_f unknown_f
+
+let elim_head_pred iprog cprog pred = 
+  let pr = Cprinter.string_of_view_decl_short in
+  Debug.no_1 "elim_head_pred" pr pr 
+    (fun _ -> elim_head_pred iprog cprog pred) pred
+
+let elim_tail_pred iprog cprog pred = 
+  let pred_f = C.formula_of_unstruc_view_f pred in
+  let self_node =
+    try
+      List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (CF.fv pred_f)
+    with _ -> CP.SpecVar (Named pred.C.view_name, Globals.self, Unprimed)
+  in
+  let base_cases = find_pred_base_case pred in
+  try
+    let node_base_case = List.find (fun f -> 
+        not (is_empty (snd (find_heap_node self_node f))) 
+      ) base_cases in
+    let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
+    let fresh_self_node = CP.fresh_spec_var self_node in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
+    let unknown_h, unknown_hpred = C.add_raw_hp_rel cprog false true [(self_node, I); (fresh_self_node, I)] no_pos in
+    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
+    let unknown_f = CF.mkStar_combine_heap 
+        (CF.subst [(self_node, fresh_self_node)] node_base_case) 
+        unknown_h CF.Flow_combine no_pos in
+    let norm_flow = CF.flow_formula_of_formula unknown_f in
+    let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
+    x_add derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
+  with _ -> pred
+
+let elim_tail_pred iprog cprog pred = 
+  let pr = Cprinter.string_of_view_decl_short in
+  Debug.no_1 "elim_tail_pred" pr pr 
+    (fun _ -> elim_tail_pred iprog cprog pred) pred
+
+let rec norm_pred_list f_norm preds = 
+  (* List.map (elim_head_pred iprog cprog) preds *)
+  match preds with
+  | [] -> []
+  | p::ps ->
+    let lazy_ps = lazy (norm_pred_list f_norm ps) in
+    try
+      let n_p = f_norm p in
+      n_p::(Lazy.force lazy_ps)
+    with e ->
+      let () = y_binfo_pp (Printexc.to_string e) in
+      let () = report_warning no_pos ("Cannot normalize the view " ^ p.C.view_name) in
+      Lazy.force lazy_ps
+
+let elim_head_pred_list iprog cprog preds =
+  norm_pred_list (elim_head_pred iprog cprog) preds
+
+let elim_tail_pred_list iprog cprog preds =
+  norm_pred_list (elim_tail_pred iprog cprog) preds
+
+(*********************************)
+(***** COMBINE DISJ BRANCHES *****)
+(*********************************)
+let unify_disj_pred iprog cprog pred = 
+  let pred_f = C.formula_of_unstruc_view_f pred in
+  let self_node = mk_self_node pred.C.view_name pred_f in
+  let common_node_chain, other_branches = find_common_node_chain_branches self_node (CF.list_of_disjuncts pred_f) in
+  let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
+  match common_node_chain with
+  | [] -> pred
+  | n::ns ->
+    let common_heap = List.fold_left (fun acc f -> CF.mkStarH acc f no_pos) n ns in
+    let common_f = CF.mkBase_simp common_heap (MCP.mkMTrue no_pos) in
+    let args = collect_feasible_heap_args_formula cprog [] common_f in
+    let nodes = CF.collect_node_var_formula common_f in
+    let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
+    let dangling_vars = remove_dups dangling_vars in
+    let () = y_tinfo_hp (add_str "Dangling nodes" !CP.print_svl) dangling_vars in
+    let pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars pred.C.view_vars) in
+    let hrel_list, unknown_vars = List.split (List.map 
+        (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::pred_I_args) no_pos) dangling_vars) in
+    let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
+    let unknown_branches = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
+    let vbody = CF.formula_of_disjuncts (other_branches @ [unknown_branches]) in
+    let vbody = CF.set_flow_in_formula_override 
+        { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+        vbody 
+    in
+    let vbody = Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars pred.C.view_vars)) [] vbody in
+    
+    (* Construct a new view with unknown HeapPred *)
+    let tmp_name = "tmp_" ^ pred.C.view_name in
+    let tmp_cpred = { pred with
+      C.view_name = tmp_name;
+      C.view_formula = CF.formula_to_struc_formula vbody;
+      C.view_un_struc_formula = [(vbody, (fresh_int (), ""))]; } 
+    in
+    (* let tmp_ipred = Rev_ast.rev_trans_view_decl tmp_cpred in *)
+    (* let () = C.update_view_decl cprog tmp_cpred in           *)
+    (* let () = I.update_view_decl iprog tmp_ipred in           *)
+    let norm_tmp_cpred = norm_single_view iprog cprog tmp_cpred in 
+    let tmp_v = [norm_tmp_cpred] in
+    let () = y_binfo_hp (add_str "new view_decls" (pr_list Cprinter.string_of_view_decl_short)) tmp_v in
+        (* cprog.C.prog_view_decls *) 
+    let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
+    let norm_flow = CF.flow_formula_of_formula unknown_branches in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
+    let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
+    let tmp_pred_h = CF.mkViewNode self_node tmp_name fresh_pred_args no_pos in
+    let tmp_pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap tmp_pred_h no_pos) in
+    let ivars = List.map CP.name_of_spec_var unknown_vars in
+    x_add (derive_equiv_view_by_lem ~tmp_views:tmp_v) iprog cprog pred ivars pred_f tmp_pred_f
+
+let unify_disj_pred_list iprog cprog preds =
+  norm_pred_list (unify_disj_pred iprog cprog) preds
 
 (****************)
 (***** MAIN *****)
