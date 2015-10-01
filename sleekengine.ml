@@ -1680,7 +1680,7 @@ let process_shape_merge (ids: regex_id_list) =
 
 let process_shape_trans_to_view (ids: regex_id_list) = 
   let f hps =
-    let trans_views = Syn.trans_hprel_to_view !cprog hps in
+    let trans_views = Syn.trans_hprel_to_view iprog !cprog hps in
     hps 
   in
   process_sleek_hprel_assumes "Transforming to View" ids f
@@ -1720,7 +1720,7 @@ let process_shape_derive_post (ids: regex_id_list) =
 
 let process_shape_derive_view (ids: regex_id_list) =
   let f others hps =
-    let (derived_views, new_hprels) = Syn.derive_view !cprog others hps in
+    let (derived_views, new_hprels) = Syn.derive_view iprog !cprog others hps in
     (* let () = update_sleek_hprel_assumes new_hprels in *)
     new_hprels
   in

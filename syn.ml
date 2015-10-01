@@ -674,7 +674,7 @@ let dangling_parameterizing hprels =
 (***********************************)
 (***** TRANSFORM HPREL TO VIEW *****)
 (***********************************)
-let trans_hprel_to_view prog hprels = 
+let trans_hprel_to_view iprog prog hprels = 
   let hprel_lists = partition_hprel_list hprels in
   let single_hprel_lists, others = List.partition (fun (_, l) -> List.length l == 1) hprel_lists in
   let single_hprel_list = List.map (fun (sv, l) -> (sv, List.hd l)) single_hprel_lists in
@@ -683,13 +683,17 @@ let trans_hprel_to_view prog hprels =
       let svl = List.map fst others in
       y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
   in
-  List.map (fun (sv, hpr) ->
-    let vdecl = if !Globals.new_pred_syn then view_decl_of_hprel prog hpr else
-      let () = y_winfo_pp "to add Saout.view_decl_of_hprel prog hpr" in
-      view_decl_of_hprel prog hpr
+  List.fold_left (fun acc (sv, hpr) ->
+    let vdecls = if !Globals.new_pred_syn then
+      let vdecl = view_decl_of_hprel prog hpr in
+      [vdecl]
+    else
+      Saout.view_decl_of_hprel iprog prog hpr
+      (* view_decl_of_hprel prog hpr *)
     in
-    let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) Cprinter.string_of_view_decl_short) vdecl in
-    vdecl) single_hprel_list
+    let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) (pr_list_ln Cprinter.string_of_view_decl_short)) vdecls in
+    acc@vdecls
+  ) [] single_hprel_list
 
 (*************************)
 (***** DERIVING VIEW *****)
@@ -727,17 +731,17 @@ let derive_view_norm prog other_hprels hprels =
   let simplified_selective_hprels = simplify_hprel_list selective_merged_hprels in
   simplified_selective_hprels
 
-let derive_view prog other_hprels hprels = 
+let derive_view iprog prog other_hprels hprels = 
   let simplified_selective_hprels = derive_view_norm prog other_hprels hprels in
   (* DERIVING VIEW *)
-  let derived_views = trans_hprel_to_view prog simplified_selective_hprels in
+  let derived_views = trans_hprel_to_view iprog prog simplified_selective_hprels in
   (derived_views, simplified_selective_hprels)
 
-let derive_view prog other_hprels hprels = 
+let derive_view iprog prog other_hprels hprels = 
   let pr1 = Cprinter.string_of_hprel_list_short in
   let pr2 = pr_list Cprinter.string_of_view_decl_short in
   Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
-    (derive_view prog) other_hprels hprels
+    (derive_view iprog prog) other_hprels hprels
 
 (*****************************)
 (***** ELIM HEAD OF PRED *****)

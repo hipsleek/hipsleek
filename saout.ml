@@ -268,6 +268,22 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
     (fun _ -> trans_hprel_2_cview_x iprog cprog proc_name hp_rels)
     hp_rels
 
+let view_decl_of_hprel iprog prog hpr=
+  let extract_heap f =
+    let f_h, _, _, _, _, _ = CF.split_components f in
+    f_h
+  in
+  let proc_name = "" in
+  let hprel_name, hprel_args = SynUtils.sig_of_hprel hpr in
+  let r = CP.to_unprimed (List.hd hprel_args) in
+  let cont_args = List.tl hprel_args in
+  let lhs,rhs = if SynUtils.is_pre_hprel hpr then (extract_heap hpr.CF.hprel_lhs),hpr.CF.hprel_rhs
+  else (extract_heap hpr.CF.hprel_rhs), hpr.CF.hprel_lhs in
+  let hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn ( hprel_name, r, cont_args)) lhs
+    ([(rhs , hpr.CF.hprel_guard)]) None  in
+  let hpdefs = [hp_def] in
+  let vdcls,_ = trans_hprel_2_cview iprog prog proc_name hpdefs in
+  vdcls
 
 let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equivs f=
   (* let rec part_sv_from_pos ls n n_need rem= *)
