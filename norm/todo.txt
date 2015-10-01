@@ -579,12 +579,20 @@ pred_unify_disj[app4].
           (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
     ]
 ===================================================================
-# ex21u3e4.slk 
+# ex21u3e4.slk (FIXED)
 
 
 # need to update view_scc_obj graph for this unfolding ..
 
 To support single non-recursive unfolding
+    || :EBase 
+          exists (Impl)[Anon_13; 
+          q](* lbl: *){4}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
+          {FLOW,(1,26)=__flow#E}[]
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true)
+
+# implicit is being renamed. However, is it also an existential?
+
 where possible.
 
 !!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true) #DONE

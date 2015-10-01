@@ -285,8 +285,8 @@ and coercion_decl = {
   coercion_name : ident;
   coercion_head : F.formula; (* used as antecedent during --elp *)
   coercion_head_norm : F.formula; (* used as consequent during --elp *)
-  coercion_body : F.formula; (* used as antecedent during --elp *)
-  coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
+  mutable coercion_body : F.formula; (* used as antecedent during --elp *)
+  mutable coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
   coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
 
@@ -3933,15 +3933,6 @@ let update_view_raw_base_case fn vdef =
   let uf = map_opt fn uf in
   vdef.view_raw_base_case <- uf
 
-let sort_gen_list score vlist =
-  let compare v1 v2 =
-    let n1 = score v1 in
-    let n2 = score v2 in
-    if n1<n2 then -1
-    else if n1=n2 then 0
-    else 1 in
-  List.sort compare vlist
-
 let sort_view_list vlist =
   let score v = 
     let name = v.view_name in
@@ -3952,4 +3943,16 @@ let sort_view_list vlist =
       HipUtil.view_scc_obj # set_sorted;
       sort_gen_list score vlist
     end
+
+(* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
+let repl_unfold_lemma u_lst lem =
+  let body = lem.coercion_body in
+  let body_norm = lem.coercion_body_norm in
+  let () = y_binfo_hp (add_str "body" !F.print_formula) body in
+  let body = repl_unfold_formula "" u_lst body in
+  let () = y_binfo_hp (add_str "unfolded body" !F.print_formula) body in
+  lem.coercion_body <- body;
+  lem
+  (* failwith x_tbi *)
+
 

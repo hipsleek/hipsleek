@@ -183,24 +183,25 @@ let cobj_def = { Cast.data_name = "Object";
                  Cast.data_pure_inv = None;
                  Cast.data_methods = [] }
 
-let cprog = ref { 
-    Cast.prog_data_decls = [];
-    Cast.prog_view_decls = [];
-    Cast.prog_logical_vars = [];
-    (*	Cast.prog_func_decls = [];*)
-    (* Cast.prog_rel_decls = []; (\* An Hoa *\) *)
-    Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in s);
-    Cast.prog_templ_decls = [];
-    Cast.prog_ui_decls = [];
-    Cast.prog_ut_decls = [];
-    Cast.prog_hp_decls = [];
-    Cast.prog_view_equiv = [];
-    Cast.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
-    (*Cast.old_proc_decls = [];*)
-    Cast.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
-    (*Cast.prog_left_coercions = [];
-      Cast.prog_right_coercions = [];*)
-    Cast. prog_barrier_decls = []}
+let cprog = Cprinter.cprog
+ (* ref {  *)
+ (*    Cast.prog_data_decls = []; *)
+ (*    Cast.prog_view_decls = []; *)
+ (*    Cast.prog_logical_vars = []; *)
+ (*    (\*	Cast.prog_func_decls = [];*\) *)
+ (*    (\* Cast.prog_rel_decls = []; (\\* An Hoa *\\) *\) *)
+ (*    Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in s); *)
+ (*    Cast.prog_templ_decls = []; *)
+ (*    Cast.prog_ui_decls = []; *)
+ (*    Cast.prog_ut_decls = []; *)
+ (*    Cast.prog_hp_decls = []; *)
+ (*    Cast.prog_view_equiv = []; *)
+ (*    Cast.prog_axiom_decls = []; (\* [4/10/2011] An Hoa *\) *)
+ (*    (\*Cast.old_proc_decls = [];*\) *)
+ (*    Cast.new_proc_decls = Hashtbl.create 1; (\* no need for proc *\) *)
+ (*    (\*Cast.prog_left_coercions = []; *)
+ (*      Cast.prog_right_coercions = [];*\) *)
+ (*    Cast. prog_barrier_decls = []} *)
 
 let _ =
   Lem_store.all_lemma # clear_right_coercion;
@@ -2503,10 +2504,11 @@ let process_shape_split pre_hps post_hps=
     print_endline_quiet "*************************************";
   end;
   ()
-let get_sorted_view_decls () =
-  let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in
-  !cprog.Cast.prog_view_decls <- vdefs;
-  vdefs
+
+let get_sorted_view_decls () = Cprinter.get_sorted_view_decls ()
+  (* let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
+  (* !cprog.Cast.prog_view_decls <- vdefs; *)
+  (* vdefs *)
 
 let process_shape_elim_useless sel_vnames=
   let vdefs = get_sorted_view_decls () in
@@ -2529,7 +2531,6 @@ let process_pred_unfold reg_to_vname =
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
   let to_vns = regex_search reg_to_vname vdefs in
   Norm.norm_unfold iprog !cprog vdefs to_vns
-
 
 let process_shape_reuse_subs reg_to_vname =
   (* failwith (x_loc^"TBI") *)
@@ -3103,3 +3104,5 @@ let meta_constr_to_constr (meta_constr: meta_formula * meta_formula): (CF.formul
   let (n_tl,f1) = meta_to_formula_not_rename if1 false [] []  in
   let (n_tl,f2) = meta_to_formula_not_rename if2 false [] n_tl  in
   (f1,f2)
+
+

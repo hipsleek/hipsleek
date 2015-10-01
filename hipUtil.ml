@@ -81,17 +81,19 @@ class graph =
         match lst with
         | [x] -> x=m
         | _ -> false in
-      try
-        let edges = Hashtbl.find nlst n in
-        if (List.exists (fun a -> a=m) edges) then
-          let edges_m = Hashtbl.find nlst m in
-          let old_e = List.filter (fun e -> not(e=m)) edges in
-          let add_e = BList.difference_eq (=) edges_m old_e in
-          if unchanged add_e then ()
-          else self # replace n (add_e@old_e)
-        else
-          self # fail_with ("unfold cannot find "^m^" in "^n)
-      with e -> self # fail_exc e msg
+      if n="" then ()
+      else
+        try
+          let edges = Hashtbl.find nlst n in
+          if (List.exists (fun a -> a=m) edges) then
+            let edges_m = Hashtbl.find nlst m in
+            let old_e = List.filter (fun e -> not(e=m)) edges in
+            let add_e = BList.difference_eq (=) edges_m old_e in
+            if unchanged add_e then ()
+            else self # replace n (add_e@old_e)
+          else
+            self # fail_with ("unfold cannot find "^m^" in "^n)
+        with e -> self # fail_exc e msg
 
     method exists n  =
       Hashtbl.mem nlst n
