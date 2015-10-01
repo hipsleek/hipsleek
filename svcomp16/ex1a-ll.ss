@@ -14,13 +14,15 @@ inv n>=0.
 pred cll<n> == self::node<_,q>*q::lseg<self,n-1>
 inv n>=1;
 
-lemma_safe self::lseg<p,n> <- self::lseg<q,m>*q::node<_,p> & n=m+1.
+lemma_unsafe self::lseg<p,n> <- self::lseg<q,m>*q::node<_,p> & n=m+1.
 
 int length(node xs)
   requires xs::cll<n>@L & Loop
   ensures false;
+/*
   requires xs::ll<n>@L & Term[n]
   ensures res=n;
+*/
 {
   if (xs==null) return 0;
   else return 1+length(xs.next);
