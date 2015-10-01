@@ -579,12 +579,15 @@ pred_unify_disj[app4].
           (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
     ]
 ===================================================================
-# ex21u3e4.slk
+# ex21u3e4.slk 
 
-To support single non-recursive unfoldng
+
+# need to update view_scc_obj graph for this unfolding ..
+
+To support single non-recursive unfolding
 where possible.
 
-!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true)
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true) #DONE
 
     {FLOW,(1,26)=__flow#E}[], view dp<>= 
   EList
@@ -599,10 +602,12 @@ where possible.
     :EBase 
        emp&self=null&{FLOW,(1,26)=__flow#E}[]
     || :EBase 
-          self::node<Anon_84,p_85>@M * p_85::dp<>@M&{FLOW,(1,26)=__flow#E}[]
+          (exists Anon_86,p_87: self::node<Anon_86,p_87>@M * p_87::dp<>@M&
+          {FLOW,(1,26)=__flow#E}[])
     ]
 
-# can keep labels?
+
+# can keep labels? (FIXED)
 
 
 ===================================================================

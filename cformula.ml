@@ -7710,7 +7710,8 @@ and subst_hprel_hf hf0 from_hps to_hp=
   in
   if from_hps = [] then hf0 else helper hf0
 
-and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula = add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
+(* and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula =  *)
+(*   add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f *)
 
 let drop_views_h_formula hf0 views=
   let rec helper hf=
@@ -15128,6 +15129,31 @@ let rec label_view (f0:struc_formula):struc_formula =
     | EList b -> EList (map_l_snd label_struc b) in
   label_struc f0
 
+
+let add_label_opt f l = 
+  match f with
+  | Base b -> Base { b with formula_base_label = l}
+  | Exists b -> Exists  {b with formula_exists_label = l}
+  | Or b -> f
+
+let add_label_opt_struc sf l = 
+  match sf with
+  | EBase b -> EBase {b with formula_struc_base = add_label_opt b.formula_struc_base l}
+  | _ -> sf
+
+let add_label f l = add_label_opt f (Some l)
+
+let get_label f = 
+  match f with
+  | Base b -> b.formula_base_label
+  | Exists b -> b.formula_exists_label
+  | Or b -> None
+
+let get_label_struc sf = 
+  match sf with
+  | EBase b -> get_label b.formula_struc_base
+  | _ -> None
+
 let get_view_branches_x (f0:struc_formula):(formula * formula_label) list= 
   let rec formula_br (f:formula):(formula * formula_label) list = (
     match f with
@@ -15164,12 +15190,6 @@ let get_view_branches_x (f0:struc_formula):(formula * formula_label) list=
     | EList b -> fold_l_snd struc_formula_br b
   ) in
 
-  let rec add_label f l = (
-    match f with
-    | Base b -> Base { b with formula_base_label = Some l}
-    | Exists b -> Exists  {b with formula_exists_label = Some l}
-    | Or b -> f
-  ) in
 
   let res = struc_formula_br f0 in
   List.map (fun (f,lbl) -> ((add_label f lbl),lbl)) res
@@ -19880,11 +19900,15 @@ let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 
 let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 
-let get_view_unfold stk vl to_args f =
+let get_view_unfold vd_name stk vl to_args f =
     let args = vl.h_formula_view_arguments in 
+    let vv = vl.h_formula_view_name in
+    let () = y_binfo_hp (add_str "unfolding vv" pr_id) vv in
+    let () = y_binfo_hp (add_str "inside" pr_id) vd_name in
     (* let new_args = trans_args sst args in *)
     let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
     let new_f = subst_all sst f in
+    let grh = HipUtil.view_scc_obj # unfold_in vv vd_name in
     let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
     let (qv,(hf,pure_f,_,_,_,_)) = split_components_exist ~rename_flag:true new_f in
     let pure_f = MCP.pure_of_mix pure_f in
@@ -19895,7 +19919,7 @@ let get_view_unfold stk vl to_args f =
     let () = stk # push (qv,pure_f) in
     hf
 
-let repl_unfold_heap stk u_lst hf =
+let repl_unfold_heap vd stk u_lst hf =
   let find n =
     try
       Some (List.find (fun (m,_,_) -> string_eq n m) u_lst)
@@ -19909,7 +19933,7 @@ let repl_unfold_heap stk u_lst hf =
       | Some (m,to_args,f) -> 
         (* WN : take care of pure by mutable *)
         let () = y_binfo_hp (add_str "unfolding " (pr_pair pr_id !print_formula)) (name,f) in
-        let n_hf = get_view_unfold stk vl to_args f in
+        let n_hf = get_view_unfold vd stk vl to_args f in
         Some (n_hf)
         (* failwith (x_loc^"TBI") *)
       | _ -> Some hf 
@@ -19917,20 +19941,42 @@ let repl_unfold_heap stk u_lst hf =
     | _ -> None
   in map_h_formula hf f
 
-let repl_unfold_formula u_lst f =
+let repl_unfold_formula vd u_lst f =
   let pr = pr_pair !CP.print_svl !CP.print_formula in
   let stk = new stack_pr "" pr (==) in
-  let res=map_formula_heap_only (repl_unfold_heap stk u_lst) f in
+  let res = map_formula_heap_only (repl_unfold_heap vd stk u_lst) f in
   let lst = stk # get_stk in
   (* let () = if not(stk # is_empty)  *)
   (*   then y_winfo_hp (add_str "TODO:add pure & qvars" pr_id) (stk # string_of) in *)
   let res = if lst==[] then res
     else let (qv,pure) = List.fold_left (fun (qv1,p1) (qv2,p2) -> (qv1@qv2,CP.mkAnd p1 p2 no_pos)) ([],CP.mkTrue no_pos) lst in
-      let () = y_winfo_hp (add_str "TODO:add pure & qvars" pr) (qv,pure) in
+      (* let () = y_winfo_hp (add_str "TODO:add pure & qvars" pr) (qv,pure) in *)
+      let res = add_pure_formula_to_formula pure res in
+      let res = push_exists qv res in
       res
   in res
 
 let convert_un_struc_to_formula body =
   match body with
   | [] -> failwith (x_loc^"should not be empty")
-  | (f,_)::lst -> List.fold_left (fun f (nf,_) -> mkOr f nf no_pos) f lst
+  | (f,l)::lst -> 
+    let f = add_label f l in
+    List.fold_left (fun acc (nf,l) -> mkOr acc (add_label nf l) no_pos) f lst
+
+let add_label_to_struc_formula s_f old_sf =
+  let () = y_binfo_hp (add_str "sf" !print_struc_formula) s_f in
+  let () = y_binfo_hp (add_str "old sf" !print_struc_formula) old_sf in
+  match s_f,old_sf with
+  | EList lst,EList lst2 ->
+    begin
+      try
+        let  nlst = List.combine lst lst2 in
+        EList (List.map (fun ((_,f),(l,old_f)) -> 
+            let lbl = get_label_struc old_f in
+            (l,(add_label_opt_struc f lbl))) nlst)
+      with _ -> 
+        let () = y_winfo_pp "struc mismatch with label list" in
+        s_f
+    end
+  | _ -> s_f
+

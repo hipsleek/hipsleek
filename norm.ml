@@ -284,13 +284,15 @@ let norm_unfold iprog cprog
   let () = y_binfo_hp (add_str "views selected for unfolding"
                          (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
   List.iter (fun (v,unf_lst) -> (* transform body of views *)
-      let () = C.update_un_struc_formula (x_add CF.repl_unfold_formula unf_lst) v in
-      let view_body = v.C.view_un_struc_formula in
-      let view_body = CF.convert_un_struc_to_formula view_body in
+      let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in
+      let view_body_lbl = v.C.view_un_struc_formula in
+      let old_sf = v.C.view_formula in
+      let view_body = CF.convert_un_struc_to_formula view_body_lbl in
       let args = v.C.view_vars in
       (* struc --> better to re-transform it *)
       let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
       let view_struc = CF.formula_to_struc_formula new_view_body in
+      let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
       let () = C.update_view_formula (fun _ -> view_struc) v in
       (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
       ()
