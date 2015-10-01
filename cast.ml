@@ -3891,7 +3891,7 @@ let get_simple_unfold lst =
   match lst with
   | [] -> failwith "empty defn?"
   | [(f,_)] ->
-    let () = y_binfo_hp (add_str "simple formula?" 
+    let () = y_tinfo_hp (add_str "simple formula?" 
                            !Cformula.print_formula) f in
     Some f
   | _ -> None

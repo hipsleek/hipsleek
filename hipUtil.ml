@@ -39,7 +39,7 @@ class graph =
 
     method replace n lst  =
       grp <- None;
-      let () = y_binfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
+      let () = y_tinfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
       Hashtbl.replace nlst n lst
 
     method remove n  =

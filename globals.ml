@@ -53,6 +53,10 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
 
+let is_lemma_ahead m = match m with
+  | LEM_PROP| LEM_SPLIT | LEM | LEM_UNSAFE | LEM_SAFE -> true
+  | _ -> false
+
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
   | LEM_GEN           (* automatically generated/inferred lemma *)

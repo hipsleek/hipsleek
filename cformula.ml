@@ -19756,17 +19756,17 @@ let extr_exists_hprel ra =
   let lhs = ra.hprel_lhs in
   let guard = ra.hprel_guard in
   let kind = ra.hprel_kind in
-  (* let () = y_binfo_hp (add_str "lhs" !print_formula) lhs in *)
-  (* let () = y_binfo_hp (add_str "guard" (pr_option !print_formula)) guard in *)
+  (* let () = y_tinfo_hp (add_str "lhs" !print_formula) lhs in *)
+  (* let () = y_tinfo_hp (add_str "guard" (pr_option !print_formula)) guard in *)
   let (lhs_vs,lhs_h_vs) = (fv lhs,fv_heap_of lhs) in
   let (guard_vs,guard_h_vs) = match guard with
     None -> ([],[])
     | Some f -> (fv f,fv_heap_of f) in
-  (* let () = y_binfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in *)
-  (* let () = y_binfo_hp (add_str "guard_vs" !CP.print_svl) guard_vs in *)
+  (* let () = y_tinfo_hp (add_str "lhs_vs" !CP.print_svl) lhs_vs in *)
+  (* let () = y_tinfo_hp (add_str "guard_vs" !CP.print_svl) guard_vs in *)
   let ex_lhs_vars = CP.diff_svl lhs_vs lhs_h_vs in
   let ex_guard_vars = CP.diff_svl guard_vs (lhs_h_vs@guard_h_vs) in
-  (* let () = y_binfo_hp (add_str "guard" (string_of_rel_cat)) kind in *)
+  (* let () = y_tinfo_hp (add_str "guard" (string_of_rel_cat)) kind in *)
   (ex_lhs_vars,ex_guard_vars)
 
 (* let add_unfold_flag lst =  *)
@@ -19903,8 +19903,8 @@ let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 let get_view_unfold vd_name stk vl to_args f =
     let args = vl.h_formula_view_arguments in 
     let vv = vl.h_formula_view_name in
-    let () = y_binfo_hp (add_str "unfolding vv" pr_id) vv in
-    let () = y_binfo_hp (add_str "inside" pr_id) vd_name in
+    let () = y_tinfo_hp (add_str "unfolding vv" pr_id) vv in
+    let () = y_tinfo_hp (add_str "inside" pr_id) vd_name in
     (* let new_args = trans_args sst args in *)
     let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
     let new_f = subst_all sst f in
@@ -19912,10 +19912,10 @@ let get_view_unfold vd_name stk vl to_args f =
     let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
     let (qv,(hf,pure_f,_,_,_,_)) = split_components_exist ~rename_flag:true new_f in
     let pure_f = MCP.pure_of_mix pure_f in
-    let () = y_binfo_hp (add_str "f" !print_formula) f in
-    let () = y_binfo_hp (add_str "new_f" !print_formula) new_f in
-    let () = y_binfo_hp (add_str "hf" !print_h_formula) hf in
-    let () = y_binfo_hp (add_str "pure" !CP.print_formula) pure_f in
+    let () = y_tinfo_hp (add_str "f" !print_formula) f in
+    let () = y_tinfo_hp (add_str "new_f" !print_formula) new_f in
+    let () = y_tinfo_hp (add_str "hf" !print_h_formula) hf in
+    let () = y_tinfo_hp (add_str "pure" !CP.print_formula) pure_f in
     let () = stk # push (qv,pure_f) in
     hf
 
@@ -19932,7 +19932,7 @@ let repl_unfold_heap vd stk u_lst hf =
       match find name with
       | Some (m,to_args,f) -> 
         (* WN : take care of pure by mutable *)
-        let () = y_binfo_hp (add_str "unfolding " (pr_pair pr_id !print_formula)) (name,f) in
+        let () = y_tinfo_hp (add_str "unfolding " (pr_pair pr_id !print_formula)) (name,f) in
         let n_hf = get_view_unfold vd stk vl to_args f in
         Some (n_hf)
         (* failwith (x_loc^"TBI") *)
@@ -19964,8 +19964,8 @@ let convert_un_struc_to_formula body =
     List.fold_left (fun acc (nf,l) -> mkOr acc (add_label nf l) no_pos) f lst
 
 let add_label_to_struc_formula s_f old_sf =
-  let () = y_binfo_hp (add_str "sf" !print_struc_formula) s_f in
-  let () = y_binfo_hp (add_str "old sf" !print_struc_formula) old_sf in
+  let () = y_tinfo_hp (add_str "sf" !print_struc_formula) s_f in
+  let () = y_tinfo_hp (add_str "old sf" !print_struc_formula) old_sf in
   match s_f,old_sf with
   | EList lst,EList lst2 ->
     begin

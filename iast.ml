@@ -3865,3 +3865,5 @@ let update_view_decl prog vdecl =
 let case_normalize_formula : (prog_decl -> ((ident*primed) list) ->  Iformula.formula -> Iformula.formula) ref =
   ref (fun p h f -> failwith "TBI")
 
+let is_lemma_decl_ahead c = 
+  is_lemma_ahead c.coercion_list_kind

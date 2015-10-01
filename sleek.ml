@@ -165,11 +165,11 @@ module M = Lexer.Make(Token.Token)
     | Time (b,s,_) -> 
       if b then Gen.Profiling.push_time s 
       else Gen.Profiling.pop_time s
-    (* | LemmaDef ldef -> process_list_lemma ldef *)
+    | LemmaDef ldef -> if not(I.is_lemma_decl_ahead ldef) then process_list_lemma ldef
     | TemplSolv idl -> process_templ_solve idl
     | TermInfer -> process_term_infer ()
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
-    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
+    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
     | TemplDef _ | UtDef _ -> ()
     | ExpectInfer (t, e) -> process_validate_infer t e
     | EmptyCmd -> () 
@@ -281,7 +281,9 @@ let parse_file (parse) (source_file : string) =
   *)
   let proc_one_lemma c =
     match c with
-    | LemmaDef ldef -> x_add_1 process_list_lemma ldef
+    | LemmaDef ldef -> 
+      if I.is_lemma_decl_ahead ldef then x_add_1 process_list_lemma ldef
+      else ()
     | _             -> () in
   (* | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (\* An Hoa *\) *)
   (* | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ *)
