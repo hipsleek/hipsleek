@@ -15,16 +15,16 @@ pred app4<> ==
   inv self!=null.
 // no change
 
-pred tmp_app4<> ==
-  self::node<_, p> * p::dp<>
-  inv self!=null.
+pred tmp_app4<n> ==
+  self::node<_, p> * p::dp<n-1>
+  inv self!=null& n>0.
 // no change
 
-pred dp<> ==
-  self = null 
-  or self::tmp_app4<>
+pred dp<n> ==
+  self = null & n=0
+  or self::tmp_app4<n>
   //or self::node<_, p> * p::dp<>
-  inv true.
+  inv n>=0.
 // unfold tmp_app4
 
 pred tmp_app4a<> ==
@@ -44,8 +44,11 @@ print views.
 pred_reuse [*][*].
 
 
-lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
+lemma_test "L2" self::tmp_app4<n> <-> self::node<_, p> * p::dp<n-1>.
 // fails because dp not normalized
+
+checkentail x::node<_,null> |- x::dp<n>.
+print residue.
 
 //lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
 // valid
