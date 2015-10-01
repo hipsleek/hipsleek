@@ -52,10 +52,11 @@ class graph =
       let () = y_tinfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
       Hashtbl.replace nlst n lst
 
-    method set_sorted =
+    method set_sorted = 
+      if grp==None then self # build_scc_void 8;
       sorted_flag <- true
 
-    method is_sorted =
+    method is_sorted = 
       sorted_flag
 
     method remove n  =
@@ -74,6 +75,8 @@ class graph =
       failwith m
 
     method unfold_in m n = (* unfold m in n *)
+      let msg = ("unfold "^m^" in "^n) in
+      let () = y_binfo_pp msg in
       let unchanged lst =
         match lst with
         | [x] -> x=m
@@ -88,7 +91,7 @@ class graph =
           else self # replace n (add_e@old_e)
         else
           self # fail_with ("unfold cannot find "^m^" in "^n)
-      with e -> self # fail_exc e ("unfold "^m^" in "^n)
+      with e -> self # fail_exc e msg
 
     method exists n  =
       Hashtbl.mem nlst n

@@ -38,8 +38,7 @@ pred dp1<> ==
   inv true.
 
 print views.
-
-pred_unfold [*].
+//pred_unfold [*].
 print views.
 pred_reuse [*][*].
 
