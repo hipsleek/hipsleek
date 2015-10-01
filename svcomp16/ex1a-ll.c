@@ -1,21 +1,25 @@
+struct node {
+  int val;
+  struct node* next;
+};
 
 /*@
 ll<n> == self=null & n=0
-  or self::char_star<_,q>*q::ll<n-1>
+  or self::node<_,q>*q::ll<n-1>
 inv n>=0.
 
 lseg<p,n> == self=p   & n=0
-  or self::char_star<_,q>*q::lseg<p,n-1>
+  or self::node<_,q>*q::lseg<p,n-1>
 inv n>=0.
 
-cll<n> == self::char_star<_,q>*q::lseg<self,n-1>
+cll<n> == self::node<_,q>*q::lseg<self,n-1>
 inv n>=1;
 
-lemma_safe self::lseg<p,n> <- self::lseg<q,m>*q::char_star<_,p> & n=m+1.
+lemma_safe self::lseg<p,n> <- self::lseg<q,m>*q::node<_,p> & n=m+1.
 
 */
 
-int length(char* xs)
+int length(struct node* xs)
   /*@
      requires xs::cll<n>@L & Loop
      ensures false;
@@ -25,7 +29,6 @@ int length(char* xs)
 {
   if (xs == NULL) 
     return 0;
-  xs++;
-  return (1+length(xs));
+  return (1+length(xs->next));
 }
 
