@@ -1,0 +1,22 @@
+# ex21r.slk
+
+This is meant to determine
+if U* can be expressed in terms of K*
+
+ pred_reuse [U*][K*].
+
+If we use:
+
+ pred_reuse [U*][*].
+
+It means to process the predicate in topological order,
+and to have U* checked againts those before it.
+
+
+If we use:
+
+ pred_reuse [*][*].
+
+It means to process the predicate in topological order,
+and to have each predicate checked against the previous one;
+and to maximise on reuse where possible.

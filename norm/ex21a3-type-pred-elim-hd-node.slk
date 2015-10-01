@@ -1,0 +1,60 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred app2<y:node> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+//pred_elim_hd_node [ll].
+//no change
+
+//pred_elim_hd_node [lseg].
+//no change
+
+pred_elim_hd_node [app2].
+
+//pred_reuse [*][ll].
+
+/*
+# ex21a3.slk
+
+ pred_elim_hd_node [app2].
+
+# a sleek failure msg for app with y. 
+  can print the elim_hd lemma generated?
+
+========================
+ Performing Deriving Segmented Views
+========================
+
+!!! **syn.ml#696:derived_views:
+[ view DP_68<y_67:TVar[43]>= 
+  EList
+    :EBase 
+       self::app2<y_67>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          self::node<Anon_104,flted_14_105>@M * flted_14_105::GP_106<self>@M&
+          self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+Last Proving Location: ex21a3-pred-elim-hd-node.slk_11:4_11:30
+
+ERROR: at _0:0_0:0
+Message: GP_106 is neither 2 a data nor view name
+
+Exception processed: Failure("GP_106 is neither 2 a data nor view name")
+error at: 
+SLEEK FAILURE (END)
+
+*/

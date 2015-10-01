@@ -1,0 +1,95 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+
+HeapPred U(node x).
+HeapPred U1(node x).
+HeapPred U2(node x,node@NI y).
+HeapPred U3(node x,node y).
+
+lemma_unsafe 
+  self::app3<> -> self::node<_,q>*U(q).
+
+
+/*
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  self_lem_19::node<Anon_18,q>@M * U(q).
+
+ <1>emp&Anon_136=Anon_18 & q_137=q & q!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(q)&q!=null --> GP_163(q,q@NI)&true; 
+                  q::node<Anon_136,q>@M * GP_163(q,q@NI)&q!=null --> U(q)&
+                   true]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  (Lemma ==> lem_191 :(q_137,q)) ==> (left: lem_19) ==>  Match(q_137,q) ==>  InferUnfold ]]
+
+*/
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+print residue.
+/*
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18: self_lem_19::node<Anon_18,q>@M * U(q)).
+# OK
+*/
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+print residue.
+
+/*
+# ex21d1b2.slk
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+# Why is existential cannot be instantiated?
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#1432:Can not instantiate
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_unfold
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Match(self_lem_19,self_lem_19) ==>  (Lemma ==> lem_191 :(q_137,q_150)) ==> (left: lem_19) ==>  Match(q_137,q_137) ==>  InferUnfold ]]
+ CEX:true
+
+==================
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+# GOT
+
+ <1>emp&q=q_137 & q_137!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(q_175)&q!=null --> GP_176(q_175,q@NI)&true; 
+                  q::node<Anon_174,q_175>@M * GP_176(q_175,q@NI)&
+                   q!=null --> U(q)&true]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  (Lemma ==> lem_191 :(q_137,q)) ==> (left: lem_19) ==>  Match(q_137,q) ==>  InferUnfold ]]
+
+
+
+
+*/

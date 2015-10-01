@@ -388,7 +388,7 @@ let set_tp user_flag tp_str =
   (******we allow normalization/simplification that may not hold
          in the presence of floating point constraints*)
   (* let () = print_endline ("solver:" ^ tp_str) in *)
-  let () = print_endline_quiet ("!!! set_tp " ^ tp_str) in 
+  let () = x_binfo_pp (* print_endline_quiet *) ("set_tp " ^ tp_str) no_pos in 
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
@@ -489,14 +489,14 @@ let init_tp () =
                   let () = Omega.omegacalc := "./oc" in
                   ()
                 else ()) in
-      let () = print_endline_quiet ("!!! init_tp by default: ") in 
+      let () = x_binfo_pp ("init_tp by default: ") no_pos in 
       x_add_1 set_tp false !Smtsolver.smtsolver_name (* "z3" *)
       (* set_tp "parahip" *)
     end
 
 let pr_p = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula_exp
 
-let imm_stk = new Gen.stack_pr pr_p (fun (x,_) (y,_) -> CP.eq_spec_var x y )
+let imm_stk = new Gen.stack_pr "imm-stk" pr_p (fun (x,_) (y,_) -> CP.eq_spec_var x y )
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
@@ -975,7 +975,14 @@ let cnv_imm_to_int_p_formula pf lbl =
   bv  --> 1<=bv
 *)
 let cnv_ptr_to_int (ex_flag,st_flag) f = 
-  let f = x_add_1 Immutils.simplify_imm_addition f in
+  let f = x_add_1 (fun f ->
+    (* a=min(b,c) & some subtyping *)
+    let f_0 = Immutils.prune_eq_min_max_imm f in
+    (* a=min(b,c) --> (... | ...) *)
+    let f_1 = Immutils.simplify_imm_min_max f_0 in
+    (* a=top & a <: b & a != b *)
+    let f_2 = Immutils.prune_eq_top_bot_imm f_1 in
+    f_2) f in
   let f_f arg e = None in
   let f_bf (ex_flag,st_flag) bf = 
     let (pf, l) = bf in
@@ -1407,6 +1414,7 @@ let add_imm_inv f1 f2 =
   (* form a list of imm_inv to add *)
   let vs = fv (mkAnd f1 f2 no_pos) in
   let vs = List.filter (fun v -> CP.is_ann_type (CP.type_of_spec_var v)) vs in
+  let vs = CP.remove_dups_svl vs in
   let inv = List.map (fun v -> 
       let vp=Var(v,no_pos) in 
       mkAnd (mkSubAnn const_ann_bot vp) (mkSubAnn vp const_ann_top) no_pos ) vs in
@@ -1823,7 +1831,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   (* Drop array formula *)
   (* let f = translate_array_relation f in *)
   (* let f = drop_array_formula f in *)
-
+  let _ = CP.filter_bag_constrain f f in
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
@@ -2926,8 +2934,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (*let _ = print_endline ("After Drop ante: "^(Cprinter.string_of_pure_formula d_ante)^" conseq: "^(Cprinter.string_of_pure_formula d_conseq)) in*)
   (* let _ = print_endline ("tp_imply_no_cache ante (after drop): "^(Cprinter.string_of_pure_formula ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache conseq (after drop): "^(Cprinter.string_of_pure_formula conseq)) in *)
-  let ante = ante in
-  let conseq = conseq in 
+  (*let _ = CP.filter_bag_constrain ante conseq in*)
   (**************************************)
   let res,ante,conseq = x_add tp_imply_preprocess ante conseq in
   match res with | Some ret -> ret | None -> (*continue normally*)
@@ -3147,9 +3154,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante,conseq = if !Globals.simpl_unfold3 then simpl_equalities ante conseq else (ante,conseq) in
-  let ante = 
-    if !Globals.allow_imm_inv then add_imm_inv ante conseq
-    else ante in
+  (* let ante =  *)
+  (*   if !Globals.allow_imm_inv then add_imm_inv ante conseq *)
+  (*   else ante in *)
   let ante = x_add_1 cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
   let flag = tp_imply_no_cache ante conseq imp_no timeout process in
@@ -3220,6 +3227,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
+  let _ = CP.filter_bag_constrain ante conseq in
   Debug.no_4(* _loop *) "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
     (fun _ _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no !pure_tp
 

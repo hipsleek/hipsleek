@@ -1153,8 +1153,9 @@ and add_last_diff ls1 ls2 res=
   | _ -> raise (Invalid_argument "first is longer than second")
 
 and try_unify_data_type_args prog c v deref ies tlist pos =
+  let pr_tl =  string_of_tlist in
   let pr = add_str "ies" (pr_list Iprinter.string_of_formula_exp) in
-  Debug.no_2 "try_unify_data_type_args" pr_none pr pr_none (fun _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies
+  Debug.no_3 "try_unify_data_type_args" pr_id pr pr_tl pr_tl (fun _ _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies tlist
 
 and try_unify_data_type_args_x prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
@@ -1367,7 +1368,12 @@ and get_spec_var_type_list_infer ?(d_tt = []) (v : ident * primed) fvs pos =
   Debug.no_2 "get_spec_var_type_list_infer" pr_v string_of_tlist ( pr_sv)
     (fun _ _ -> get_spec_var_type_list_infer_x d_tt v fvs pos) v  d_tt
 
+(* type: CP.spec_var list -> Globals.ident -> Globals.typ * bool *)
 and get_var_type fvs v : (typ * bool) = 
+  let pr_out = pr_pair string_of_typ string_of_bool in
+  Debug.no_2 "get_var_type" !CP.print_svl pr_id pr_out get_var_type_x fvs v
+
+and get_var_type_x fvs v : (typ * bool) = 
   let warning_if_non_empty lst tlst =
     if lst != [] then
       let () = x_binfo_pp "WARNING : free_vars_list contains duplicates" no_pos in
@@ -1391,7 +1397,7 @@ and get_var_type fvs v : (typ * bool) =
         let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls v in
         (RelT (List.map fst rdef.I.rel_typed_vars),false)
       with _ ->
-        let () = x_winfo_pp ("Cannot find "^v^" in fvs, TODO: fail?")  no_pos in
+        let () = x_tinfo_pp ("Cannot find "^v^" in rel_decls, use Void type?")  no_pos in
         (Void ,false)
     end
   | sv::lst ->
@@ -1469,6 +1475,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     in
     let gather_type_info_ann c tlist = (
       match c with
+      | IP.NoAnn -> tlist
       | IP.ConstAnn _ -> tlist
       | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (x_add gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
     ) in
@@ -1606,3 +1613,48 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
   | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
   (* TODO:WN:HVar *)
   | IF.HVar (v,hvar_vs) -> (v,{sv_info_kind = FORM;id=0})::tlist
+
+(* and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) = *)
+
+let trans_formula : (I.prog_decl -> bool -> ident list -> bool ->  Iformula.formula -> spec_var_type_list -> bool -> (spec_var_type_list * CF.formula)) ref =
+  ref (fun _ _ _ _ _ _ -> failwith "TBI")
+
+let trans_view : (I.prog_decl -> ident list -> Cast.view_decl list ->   (ident * spec_var_info) list -> I.view_decl -> Cast.view_decl) ref =
+  ref (fun _ _ _ _ _ -> failwith "TBI")
+
+(* and spec_var_type_list = (( ident*spec_var_info)  list) *)
+
+let mk_spec_var_info t = { sv_info_kind =t; id = 0}
+  
+let sv_to_typ sv = match sv with
+  | CP.SpecVar(t,i,p) ->(i, mk_spec_var_info t)
+
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+  (* cformula --> iformula *)
+  (* iformula --> normalize *)
+  (* iformula --> cformula *)
+  let free_vs = CF.fv f in
+  let () = y_tinfo_hp (add_str "free_vs" !CP.print_svl) free_vs in
+  let f = !CF.rev_trans_formula f in
+  let fvars = List.map CP.name_of_spec_var avail_vars in
+  let tlist = List.map sv_to_typ free_vs  in
+  let avail_vars = List.map CP.primed_ident_of_spec_var avail_vars in
+  let expl_vars = List.map CP.primed_ident_of_spec_var expl_vars in
+  (* let (f,r_avail,r_expl) = !Iast.case_normalize_formula iprog avail_vars expl_vars f in *)
+  let f = !Iast.case_normalize_formula iprog avail_vars f in
+  let quantify = true in
+  let clean_res = false in
+  let sep_collect = true in
+  let (sv,f) = !trans_formula iprog quantify (fvars : ident list) sep_collect f tlist clean_res in
+  f
+
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+  Debug.no_2 "Norm:case_norm" !CP.print_svl !CF.print_formula !CF.print_formula (fun _ _ -> case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula)) avail_vars f  
+
+let create_view (iprog:I.prog_decl) (id:ident) (vs:CP.spec_var list) (f:CF.formula): Cast.view_decl =
+  let f = !CF.rev_trans_formula f in
+  let f = Iformula.formula_to_struc_formula f in
+  let vs_ident = List.map CP.name_of_spec_var vs in
+  let iview = Iast.mk_iview_decl ~v_kind:View_NORM id "" vs_ident f no_pos in
+  let cview = !trans_view iprog [] [] [] iview in
+  cview

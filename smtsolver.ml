@@ -30,8 +30,13 @@ type rel_def = {
   rel_cache_smt_declare_fun : string;
 }
 
+let string_of_rel_def rd = rd.rel_name^(!CP.print_svl rd.rel_vars)
+let eq_rel_def rd1 rd2 = rd1.rel_name = rd2.rel_name
+
 (* TODO use hash table for fast retrieval *)
-let global_rel_defs = ref ([] : rel_def list)
+(* let global_rel_defs = ref ([] : rel_def list) *)
+let global_rel_defs = new Gen.stack_pr "global_rel_defs" string_of_rel_def eq_rel_def
+
 
 type axiom_type = 
   | IMPLIES
@@ -257,9 +262,9 @@ let default_formula_info = {
 (* Collect information about a formula f or combined information about 2 formulas *)
 let rec collect_formula_info f = 
   let info = collect_formula_info_raw f in
-  let indirect_relations = List.flatten (List.map (fun x -> if (List.mem x.rel_name info.relations) then x.related_rels else []) !global_rel_defs) in
+  let indirect_relations = List.flatten (List.map (fun x -> if (List.mem x.rel_name info.relations) then x.related_rels else []) global_rel_defs # get_stk) in
   let all_relations = Gen.BList.remove_dups_eq (=) (info.relations @ indirect_relations) in
-  let all_axioms = List.flatten (List.map (fun x -> if (List.mem x.rel_name all_relations) then x.related_axioms else []) !global_rel_defs) in
+  let all_axioms = List.flatten (List.map (fun x -> if (List.mem x.rel_name all_relations) then x.related_axioms else []) global_rel_defs # get_stk) in
   let all_axioms = Gen.BList.remove_dups_eq (=) all_axioms in
   { relations = all_relations;
     axioms = all_axioms;}
@@ -314,7 +319,7 @@ let add_axiom h dir c =
   let info = collect_combine_formula_info_raw h c in
   (* let () = print_endline ("Directly related relations : " ^ (String.concat "," info.relations)) in *)
   (* assumption: at the time of adding this axiom, all relations in global_rel_defs has their related axioms computed *)
-  let indirectly_related_relations = List.filter (fun x -> List.mem x.rel_name info.relations) !global_rel_defs in
+  let indirectly_related_relations = List.filter (fun x -> List.mem x.rel_name info.relations) global_rel_defs # get_stk in
   let indirectly_related_relations = List.map (fun x -> x.related_rels) indirectly_related_relations in
   let related_relations = info.relations @ (List.flatten indirectly_related_relations) in
   let related_relations = Gen.BList.remove_dups_eq (=) related_relations in
@@ -323,18 +328,20 @@ let add_axiom h dir c =
     (* Modifying every relations appearing in h and c by
        1)   Add reference to 'h dir c' as a related axiom
        2)   Add all other relations (appearing in h and c) to the list of related relations *)
-    global_rel_defs := List.map (fun x ->
+    let new_rel_defs =  List.map (fun x ->
         if (List.mem x.rel_name related_relations) then
           let rs = Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 =0) (x.related_rels @ related_relations) in
           { x with 
             related_rels = rs;
             related_axioms = x.related_axioms @ [aindex]; }
         else x
-      ) !global_rel_defs;
+      ) global_rel_defs # get_stk in
+    global_rel_defs # reset_pr;
+    global_rel_defs # push_list_pr new_rel_defs;
     (* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
     let params = List.append (CP.fv h) (CP.fv c) in
     (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
-    let rel_ids = List.map (fun r -> CP.SpecVar(RelT[],r.rel_name,Unprimed)) !global_rel_defs in
+    let rel_ids = List.map (fun r -> CP.SpecVar(RelT[],r.rel_name,Unprimed)) global_rel_defs # get_stk in
     let params = Gen.BList.difference_eq CP.eq_spec_var params rel_ids in
     (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
     let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
@@ -383,7 +390,7 @@ let add_relation (rname1:string) rargs rform =
       related_axioms = []; (* to be filled up by add_axiom *)
       rel_cache_smt_declare_fun = cache_smt_input;
     } in
-    global_rel_defs := !global_rel_defs @ [rdef];
+    global_rel_defs # push_list_pr [rdef];
     (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
     match rform with
     | CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
@@ -407,7 +414,7 @@ let add_hp_relation (rname1:string) rargs rform =
                related_rels = []; (* to be filled up by add_axiom *)
                related_axioms = []; (* to be filled up by add_axiom *)
                rel_cache_smt_declare_fun = cache_smt_input; } in
-  global_rel_defs := !global_rel_defs @ [rdef];
+  global_rel_defs # push_list_pr [rdef];
   (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
 
   (***************************************************************
@@ -683,11 +690,11 @@ and start() =
         if !smtsolver_name = "z3-2.19" then
           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
         else if !smtsolver_name = "z3-4.2" then
-          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2"; "-in"|]) set_process prelude
         else if !smtsolver_name = "z3-4.3.1" then
-          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2";"-in"|]) set_process prelude
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "./z3-4.3.1", [|!smtsolver_name; "-smt2"; "-in"|]) set_process prelude
         else
-          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"|]) set_process prelude
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_path, [|!smtsolver_path; "-smt2"; "-in"; "unsat_core=true"|]) set_process prelude
       ) in
       is_z3_running := true;
     )
@@ -795,9 +802,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
   let used_rels = info.relations in
-  let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) !global_rel_defs) in
+  let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) global_rel_defs # get_stk) in
   (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
-  let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") !global_rel_defs) in
+  let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") global_rel_defs # get_stk) in
   (* Necessary axioms *)
   (* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
   let axiom_asserts = String.concat "" (List.map (fun ax_id ->
@@ -1275,7 +1282,7 @@ open Z3m
 
 let smt_timeout = ref 5.0
 
-let push_smt_input inp timeout f_timeout = 
+let push_smt_input is_opt inp timeout f_timeout = 
   let tstartlog = Gen.Profiling.get_time () in 
   if not !is_z3_running then start ()
   else if (!z3_call_count = !z3_restart_interval) then (
@@ -1284,7 +1291,8 @@ let push_smt_input inp timeout f_timeout =
   );
   let fnc f = (
     let () = incr z3_call_count in
-    let new_f = "(push)\n" ^ f ^ "(pop)\n" in
+    let new_f = if not is_opt then "(push)\n" ^ f ^ "(pop)\n" else f in
+    let () = x_tinfo_hp (add_str "SMT input" idf) new_f no_pos in
     let () = if (!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel)) in
@@ -1319,7 +1327,7 @@ let get_model is_linear vars assertions =
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
   ) in
-  let () = push_smt_input smt_inp !smt_timeout fail_with_timeout in
+  let () = push_smt_input false smt_inp !smt_timeout fail_with_timeout in
 
   let r =
     try
@@ -1348,3 +1356,79 @@ let norm_model (m: (string * z3m_val) list): (string * int) list =
   let pr2 = pr_list (pr_pair idf string_of_int) in
   Debug.no_1 "z3_norm_model" pr1 pr2
     norm_model m
+
+let assert_label_prefix = "z3_l_"
+
+let init_unsat_cores_option = ref false
+
+let set_unsat_cores_option () =
+  if not !init_unsat_cores_option then
+    let smt_inp = "(set-option :produce-unsat-cores true)\n" in
+    let fail_with_timeout _ = (
+      restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
+    ) in
+    init_unsat_cores_option := true;
+    push_smt_input true smt_inp !smt_timeout fail_with_timeout
+  else ()
+
+let get_unsat_core assertions =
+  let vars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.concat (List.map CP.fv assertions)) in
+  (* Variable declarations *)
+  let smt_var_decls = List.map (fun v ->
+      let typ = (CP.type_of_spec_var v)in
+      let t = smt_of_typ typ in
+      "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
+    ) vars in
+  let smt_var_decls = String.concat "" smt_var_decls in
+
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let assertions_w_label = fst (List.fold_left (fun (acc, i) a ->
+      acc @ [(i + 1, a)], i + 1) ([], 0) assertions) in
+  let smt_asserts = List.map (fun (i, a) ->
+      let label = assert_label_prefix ^ (string_of_int i) in
+      "(assert (! " ^ (smt_of_formula pr_w pr_s a) ^ " :named " ^ label ^ "))\n") assertions_w_label in
+  let smt_asserts = String.concat "" smt_asserts in
+  let smt_inp = 
+    (* "(set-option :produce-unsat-cores true)\n" ^ *)
+    ";Variables Declarations\n" ^ smt_var_decls ^
+    ";Assertion Declations\n" ^ smt_asserts ^
+    "(check-sat)\n" ^
+    "(get-unsat-core)\n"
+  in
+
+  (* let () = print_endline ("smt_inp: \n" ^ smt_inp) in *)
+
+  let fail_with_timeout _ = (
+    restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
+  ) in
+  (* let () = set_unsat_cores_option () in *)
+  let () = push_smt_input false smt_inp !smt_timeout fail_with_timeout in
+
+  let eq_str s1 s2 = String.compare s1 s2 == 0 in
+
+  (* let out_str = String.concat "\n" (icollect_output !prover_process.inchannel []) in *)
+  (* let lexbuf = Lexing.from_string out_str in                                         *)
+  (* let () = x_binfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
+  let lexbuf = Lexing.from_channel !prover_process.inchannel in
+  let unsat_core =
+    try
+      let r = Z3mparser.output_unsat_core Z3mlexer.tokenizer lexbuf in
+      let () = x_tinfo_hp (add_str "Unsat Core" string_of_z3m_res) r no_pos in
+      match r with
+      | Sat_or_Unk _ -> []
+      | Unsat unsat_core_ids ->
+        List.fold_left (fun acc id -> 
+          let a = snd (List.find (fun (i, a) ->
+            let label = assert_label_prefix ^ (string_of_int i) in
+            eq_str id label) assertions_w_label) 
+          in
+          acc @ [a]) [] unsat_core_ids
+    with e -> 
+      let tok = Lexing.lexeme lexbuf in
+      let () = x_tinfo_pp ((Printexc.to_string e) ^ ": Unexpected token " ^ tok) no_pos in
+      []
+  in unsat_core
+
+let get_unsat_core assertions =
+  let pr = pr_list !CP.print_formula in
+  Debug.no_1 "z3_get_unsat_core" pr pr get_unsat_core assertions

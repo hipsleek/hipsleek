@@ -20,12 +20,12 @@ int foo(cell c)
 int foo2(cell c)
   infer [P]
   requires c::cell<v>@a & a=@M
-     /* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
+/* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
   ensures c::cell<w>@b & P(b)   ;
 {
- int x = c.fst;
- if (x>0) c.fst = 5;
- return x;
+  int x = c.fst;
+  if (x>0) c.fst = 5;
+  return x;
 }
 
 /*

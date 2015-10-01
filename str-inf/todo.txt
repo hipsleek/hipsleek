@@ -1,0 +1,149 @@
+# ex13c1.slk
+
+infer [H1,P] H1(q) * s::char_star<v,q> & v!=0 |- P(q).
+print residue.
+
+GOT:
+ <1>s::char_star<v,q>@M&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(q)&true --> P(q)&true]
+
+Expects:
+   H1(q) | s::char_star<v,q> --> P(q)
+
+infer [H1,P,@leak] H1(q) * s::char_star<v,q> & v=0 |- true.
+print residue.
+
+GOT:
+ <1>emp&v=0&{FLOW,(20,21)=__norm#E}[]
+
+Expects:
+   H1(q) | s::char_star<v,q> --> emp 
+===========================================================================
+# ex13c3.slk
+
+infer [P] p::node2<_,null> * s::node2<_,p> |- P(p,s).
+print residue.
+
+GOT:
+Starting Omega.../usr/local/bin/oc
+ <1>s::node2<Anon_13,p>@M&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [p::node2<Anon_12,flted_9_18>@M&
+                   flted_9_18=null --> P(p,s@NI)&true]
+
+# Why did we not obtain below. Do we need some flag?
+  p::node2<_,null> | s::node2<_,p> --> P(p,s)
+
+===========================================================================
+# ex13c4.slk
+
+infer [H1,@leak] H1(q)  |- emp.
+
+# Why isn't classic inference working?
+
+Entail (2) : Fail.(may) cause: H1(q)&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+===========================================================================
+# ex13c.ss
+
+void while1(ref char_star s)
+  infer [P]
+  requires P(s)
+  ensures true;
+{
+  int x=get_char(s);
+  if (x!=0) {
+    s = plus_plus_char(s);
+    while1(s);
+  }
+}
+
+  // P(s) 
+  //   |- s::chr<v,q>@L
+  int x=get_char(s);
+  //   P(s) -> s::chr<v,q>*H1(q)
+  // s::chr<v,q>*H1(q) & x'=v & s'=s
+  if (x!=0) {
+    // s::chr<v,q>*H1(q) & x'=v & v!=0 & s'=s
+    //   |- s::chr<v,q>
+    s = plus_plus_char(s);
+    // s::chr<v,q>*H1(q) & x'=v & v!=0 & s'=q
+    //   |- P(s')
+    while1(s);
+    //   H1(q) | s::chr<v,q> & v!=0 --> P(q) 
+    // s::chr<v,q> & x'=v & v!=0 & s'=q
+    //   |- htrue
+    // emp & x'=v & v!=0 & s'=q
+  }
+  // s::chr<v,q>*H1(q) & x'=v & v=0
+  //   |- htrue
+  //   H1(q) | s::chr<v,q> & v=0 --> emp 
+  // emp & x'=v & v=0
+}
+
+  P(s) -> s::chr<v,q>*H1(q)
+  H1(q) | s::chr<v,q> & v!=0 --> P(q) 
+  H1(q) | s::chr<v,q> & v=0 --> emp
+
+==> add-dangling
+  P(s) -> s::chr<v,q>*H1(q)
+  H1(q) | s::chr<v,q> & v!=0 --> P(q) 
+  H1(q) | s::chr<v,q> & v=0 --> D(q)
+
+==> specialize
+  P(s) -> s::chr<v,q> * P(q) & v!=0
+  P(s) -> s::chr<v,q> * D(q) & v=0
+
+==> parameterize-dangling
+  P(s,d) -> s::chr<v,q> * P(q,d) & v!=0
+  P(s,d) -> s::chr<v,d> & v=0
+
+==> unknown segment
+  P(x,d) -> U(x,q) * q::chr<0,d>
+
+==> segmented-pred
+  P(x,d) -> U(x,q) * q::chr<v,d>
+  U(x,q) -> x=q
+  U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
+===========================================================================
+--------------------------------------------------
+predicate normalization from ex16c.slk
+-----simplify <1>
+ U(self_lem_12,q_151)&
+   true |#| q_151::char_star<flted_26_150,p>@M&true 
+   --> emp & self_lem_12=q_151]
+
+-----simplify <2>
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M&flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    HP_171(q_169,q_165@NI,self_lem_12@NI)& v_168!=0true]
+
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    U(q_169,q_165) & v_168!=0true]
+
+== drop guard ==
+ U(self_lem_12,q_151)&
+   --> emp & self_lem_12=q_151]
+
+ U(self_lem_12,q_165)&
+  --> self_lem_12::char_star<v_168,q_169>@M * 
+     U(q_169,q_165) & v_168!=0true]
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+

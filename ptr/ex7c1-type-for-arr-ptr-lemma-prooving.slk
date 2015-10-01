@@ -4,11 +4,11 @@
 data arr_int {
   int val;
   arr_int next; /* this is virtual link */
-}  //inv self+1=next;
+}  inv self+1=next
 .
 
 
-lemma_unsafe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 & p=self+n
+lemma_safe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 //& p=self+n
   <->  (exists q: self::arr_seg<q,a>*q::arr_seg<p,b>).
 
   pred arr_seg<p,n> == case {
@@ -20,7 +20,7 @@ lemma_unsafe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 & p=self+n
 
 checkentail
   self::arr_int<_,q1>*q1::arr_seg<p,n-1> //& q1=self+1 
-     & a>0 & n=a+b & b>=0 & p=self+n
+     & a>0 & n=a+b & b>=0 //& p=self+n
   |- self::arr_seg<q,a>*q::arr_seg<p,b>
 .
 print residue.

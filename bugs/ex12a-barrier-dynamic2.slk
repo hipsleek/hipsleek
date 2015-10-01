@@ -1,0 +1,61 @@
+/*
+  For static barriers, a=0 always.
+  Do dynamic barriers, a!=0 possibly (both negative and positive)
+
+--en-para -perm bperm -tp redlog
+*/
+
+//********************************************
+//********************************************
+
+
+//(26)
+//Example of D-SEP, which is done automatically in xpure_perm
+checkentail bbb1::barrier(c1,t1,a1)<p1> * b2::barrier(c2,t2,a2)<p2> & t1!=t2 |- bbb1!=b2.
+print residue. //VALID, D-SEP
+
+
+/*
+# ex12a.slk --en-para -perm bperm -tp redlog
+
+# Why is b1!=b2 missing now? 
+# What is barrier?
+
+(==solver.ml#7465==)
+xpure_perm@7@6
+xpure_perm inp1 : bbb1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_perm inp2 : t1!=t2
+xpure_perm@7 EXIT: b2!=bbb1
+
+# Above did not propagate to xpure causing problem ..
+
+chin@loris-7:~/hg/sl_imm$ hg bisect -b
+The first bad revision is:
+changeset:   16340:5d191f8ce91b
+branch:      infer-incr
+parent:      16336:0aebdb4fdc34
+user:        locle <locle@laptop>
+date:        Sun Aug 16 00:42:04 2015 +0800
+summary:     infer_collect_hp_rel with emp rhs
+
+
+!!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1045:Data Pure Inv (not tested) 
+(==cvutil.ml#1781==)
+xpure_heap_mem_enum#6@106@105
+xpure_heap_mem_enum#6 inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_heap_mem_enum#6 inp2 : b2!=b1 & t1!=t2
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@106 EXIT: b1!=null & c1>=0 & (t1+a1)>=c1 & t1>=0 & b2!=null & c2>=0 & (t2+a2)>=c2 & 
+ t2>=0 #  []
+
+(==solver.ml#2797==)
+xpure_heap#1@105
+xpure_heap#1 inp1 : b1::barrier( (c1,t1,a1))<p1>@M * b2::barrier( (c2,t2,a2))<p2>@M
+xpure_heap#1 inp2 : b2!=b1 & t1!=t2
+xpure_heap#1 inp3 :1
+xpure_heap#1@105 EXIT:( b1!=null & c1>=0 & (t1+a1)>=c1 & t1>=0 & b2!=null & c2>=0 & (t2+a2)>=c2 & 
+ t2>=0,[], [])#true
+Nested Timer(stop)
+
+*/

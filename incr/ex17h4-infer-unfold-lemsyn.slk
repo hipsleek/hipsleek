@@ -1,0 +1,97 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+
+HeapPred H(node a).
+HeapPred H2(node a, node b).
+//lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+// fail due to complex lemma
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+//lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
+lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
+
+//infer [H,@classic]  self=null |- self::lseg<qqq> * H(qqq).
+//print residue.
+
+//infer [H,@classic]  self::node<_,q>*q::sll<> |- self::lseg<qqq> * H(qqq).
+//print residue.
+
+infer [H,@classic]  H(x) |- H(x).
+print residue.
+
+infer [H,@classic]  H(x) & x=null |- H(x).
+print residue.
+
+infer [H,@classic]  H(x) |- H(y).
+print residue.
+/*
+!!! **infer.ml#3888:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3889:  lhs : H(x)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3890:  classic :true
+!!! **infer.ml#3888:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3889:  lhs : H(x)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3890:  classic :true
+Entail (3) : Fail.(may) cause: emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+*/
+
+infer [H2,@classic]  H2(x,y) |- H2(x,y).
+print residue.
+
+infer [H2,@classic]  H2(x,y) |- H2(y,x).
+print residue.
+/*
+# ex17h4a.slk
+
+# expects H2(x,y) --> H2(y,x)
+
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> H2(y,x)&true]
+[[ COND ==>  InferHeap]]
+*/
+
+infer [H2,@classic]  H2(x,y) & y=null |- H2(y,x).
+print residue.
+/*
+# ex17h4b.slk
+
+# GOT
+inferred hprel: [emp&y=null |#|3  --> H2(y,x)&true; 
+                  H2(x,y)&y=null |#|3  --> emp&true]
+
+# Avoid split, better use:
+     H2(x,y) & y=null --> H2(y,x)
+
+
+*/
+
+/*
+# ex17h4.slk (Loc : please fix)
+
+infer [H,@classic]  H(x) |- H(x).
+print residue.
+
+
+# GOT before which is trivially true.
+  Can we discard such hprel?
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(x)&true |#|3  --> H(x)&true]
+[[ COND ==>  InferHeap]]
+
+
+*/

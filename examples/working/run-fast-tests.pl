@@ -1934,7 +1934,7 @@ my $dis = '--dis-inv-baga';
                       ["classic/classic1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", (), "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic1a.slk", "", (), "Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["classic/classic1b.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail."],
+                      ["classic/classic1b.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["classic/classic2.slk", "", (), "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", (), "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
@@ -1947,7 +1947,7 @@ my $dis = '--dis-inv-baga';
          ["lemmas/lseg.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid.Valid."]), ""],
         # ["lemmas/lseg.slk", " --elp ", "", ""],
         ["lemmas/lseg1.slk", " --elp --dis-lem-gen ", ([$lem,"Valid."]), ""],
-        ["lemmas/rlseg.slk", " --elp --dis-lem-gen", ([$lem,"Valid.Valid.Valid."]), ""],
+        ["lemmas/rlseg.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Valid.Valid."]), ""],
         ["lemmas/lemma-fold.slk", " --elp ", ([$lem,"Valid."]),"Valid.Fail.Valid.Fail.Valid.Fail."],
         ["lemmas/rd-lem-1.slk", " --elp --dis-lem-gen ", ([$lem,"Fail.Valid."]),""],
         ["lemmas/rd-lem-2.slk", "", (), "Fail."],
@@ -1964,21 +1964,24 @@ my $dis = '--dis-inv-baga';
         # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
         ["lemmas/sll_tailL.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
         # ["lemmas/dseg-new.slk", " --elp --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
-        ["lemmas/dseg-new.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Fail.Valid."]), ""],
+  # --old-empty-to-conseq is an unsound feature used by complex lemmas
+        ["lemmas/dseg-new.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Fail.Valid."]), ""],
         # 2nd lemma requires another rlseg<..> <--> lseg to prove..
         ["lemmas/dseg1.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Fail."]), ""],
         # loop with --eps. Why?
         ["lemmas/odd-lseg.slk", " --elp --dis-lem-gen --dis-eps", ([$lem,"Valid.Valid."]), "Fail.Valid.Valid.Fail.Valid.Fail.Valid"],
-        ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
-              ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-              ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
+  # --old-norm-w-coerc causes infinite loop for some examples
+              # loop without old-search-always
+              ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+              ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
               ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
-              ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
-              ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid."],
-              ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
-              ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"],
-              ["conchip/threads.slk"," -tp parahip", "", "Valid.Valid.Valid"],
-              ["conchip/latch.slk"," -tp parahip", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail"],
+              ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
+              ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Valid.Valid.Valid.Valid."],
+              ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+              ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog  --old-lemma-settings", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"],
+              ["conchip/threads.slk"," -tp parahip --old-lemma-settings", "", "Valid.Valid.Valid"],
+              ["conchip/latch.slk"," -tp parahip --old-lemma-settings", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail"],
                       ],
       "sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-imm --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
         			  ["../tree_shares/barrier3.slk", "--eps --dis-field-imm --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
@@ -2290,7 +2293,7 @@ sub sleek_process_file  {
           }
           $script_args = $script_arguments." ".$extra_options;
           $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
-          print LOGFILE "\n======================================\n";
+          print LOGFILE "\n=================$test->[0]=====================\n";
           print LOGFILE "$output";
           #print "\n!!!output: $output";
           my $lemmas_results = "";

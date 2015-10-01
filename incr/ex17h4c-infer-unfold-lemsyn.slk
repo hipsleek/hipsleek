@@ -1,0 +1,52 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+
+HeapPred H(node a).
+HeapPred H2(node a, node b).
+//lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+// fail due to complex lemma
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+//lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
+lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
+
+
+infer [H,@classic]  H(x) |- H(y).
+print residue.
+/*
+# ex17h4c.slk
+
+!!! **infer.ml#3888:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3889:  lhs : H(x)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3890:  classic :true
+!!! **infer.ml#3888:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3889:  lhs : H(x)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3890:  classic :true
+Entail (3) : Fail.(may) cause: emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+*/
+
+infer [H,@classic]  H(x) & x=y |- H(y).
+print residue.
+// OK
+
+
+infer [H,@classic]  H(x) |- H(y) & x=y.
+print residue.
+
+infer [H,@classic]  H(x) |- H(x) & x=y.
+print residue.
+

@@ -1,0 +1,62 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+// (21)
+infer [] y::node<_,_>@w |- y::node<a,b>@w .
+
+/*
+
+INPUT 0: [][] 
+ ### ante =  y::node<Anon_12,Anon_13>@w&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[a; b](ex)[]y::node<a,b>@w&{FLOW,(20,21)=__norm#E}[]
+
+!!! **WARNING****solver.ml#4226:FREE VAR IN HEAP RHS :[w]LHS:  y::node<Anon_12,Anon_13>@w&{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   exists (Expl)[](Impl)[a; b](ex)[]y::node<a,b>@w&{FLOW,(20,21)=__norm#E}[]
+
+*/
+
+infer [] y::node<_,_>@w |- y::node<a,b>@v .
+print residue.
+
+/*
+
+INPUT 0: [][] 
+ ### ante =  y::node<Anon_14,Anon_15>@w&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[v; a; b](ex)[]y::node<a,b>@v&
+   {FLOW,(20,21)=__norm#E}[]
+
+
+*/
+
+infer [] y::node<_,_>@w & v=@L |- y::node<a,b>@v .
+print residue.
+
+/*
+# ex53b.slk
+
+# Is free var in conseq supported properly for annotations?
+
+INPUT 0: [][] 
+ ### ante =  y::node<Anon_16,Anon_17>@w&v=@L&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[a; b](ex)[]y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+
+run_infer:
+ y::node<Anon_16,Anon_17>@w&v=@L&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[a; b](ex)[]y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+
+!!! **WARNING****solver.ml#4226:FREE VAR IN HEAP RHS :[v]LHS:  y::node<Anon_16,Anon_17>@w&v=@L&{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   exists (Expl)[](Impl)[a; b](ex)[]y::node<a,b>@v&{FLOW,(20,21)=__norm#E}[]
+
+Entail (3) : Fail.(may) cause: v=@L |-  w<:v. LOCS:[38;0] (may-bug)
+
+*/

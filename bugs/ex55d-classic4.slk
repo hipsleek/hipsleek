@@ -1,0 +1,25 @@
+data node{
+	node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<q>*q::ll<n-1>
+inv n>=0.
+
+/*
+checkentail_exact x::ll<n> & n=0 |- emp.
+print residue.
+expect Valid.
+*/
+
+checkentail_exact x::ll<n> |- emp.
+print residue.
+expect Fail.
+
+/*
+
+Total number of errors: 3 in files:
+  inflem.slk({E2#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+*/

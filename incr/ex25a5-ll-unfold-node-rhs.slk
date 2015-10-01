@@ -1,0 +1,39 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+HeapPred U2(node x,node@NI y).
+
+//infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+//infer [U1,@classic] U1(x) |- x=null.
+
+infer [U1,@classic] U1(q2) |- q2::ll<>.
+print residue.
+
+/*
+# ex25a5.slk 
+
+infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+
+# Correct operation..
+
+(==solver.ml#13148==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs: U1(q2)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: q2::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U1(q2)
+infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1]
+ es_infer_hp_rel: [U1(q2) |#|  --> q2::ll<>@M],3: q2::ll<>@M,4:None,5:None)
+
+
+
+*/

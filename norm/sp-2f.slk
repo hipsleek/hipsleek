@@ -1,0 +1,34 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred zip<y> ==
+  self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>
+inv true.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+
+
+lemma_infer [P1,P2] self::zip<y> -> P1(self) * P2(y).
+print residue.
+
+
+//infer [P1,P2] self::zip<y> |- P1(self) * P2(y).
+//print residue.
+
+/* should unfold views in lhs/rhs before calling sleek_entail
+infer [P1,P2] P1(self) * P2(y) |- self=null & y=null
+or self::node<_,p>*y::node<_,q>*p::zip<q>.
+print residue.
+*/
+
+/*
+ (a) add lemma to repo
+ (b) unfold LHS and for infer_cmd
+ (c) collect and print result from
+ (d) remove lemma repo
+*/
+

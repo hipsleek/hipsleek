@@ -70,7 +70,7 @@ infer [H1] H1(p)* x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
 print residue.
 
 //(16)
-infer [H1] H1(p)* x::node<1,p> |- x::node<1,x2>*x2::node<3,q> & q=null.
+infer [H1,@pure_field] H1(p)* x::node<1,p> |- x::node<1,x2>*x2::node<3,q> & q=null.
 print residue.
 
 //(17)

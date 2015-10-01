@@ -1,0 +1,70 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = null 
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+pred PP2<> == 
+       [q] self::node<_,q> 
+          case {q=null -> [] emp;
+              q!=null -> [] q::PP2<>;
+           } 
+inv self!=null.
+
+HeapPred U(node x).
+HeapPred U2(node x,node y).
+HeapPred U3(node x,node y).
+
+lemma_infer [U,classic]
+  self::app3<> <- self::node<_,q>*U(q).
+//  self::PP2<> <- self::node<_,q>*U(q).
+print residue.
+
+
+/*
+# ex21d2.slk 
+
+lemma_infer [U,classic]
+  self::app3<> <- self::node<_,q>*U(q).
+print residue.
+
+# Result a bit complex 
+# Why is <1> [[ Match(self_lem_17,self_lem_17)]] trace is so short?
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_110(q_109,q_105@NI)&true --> U(q_109)&true; 
+                  U(q_105)&
+                   true --> q_105::node<Anon_108,q_109>@M * 
+                            HP_110(q_109,q_105@NI)&
+                   true; 
+                  U(q_101)&true --> emp&q_101=null]
+[[ Match(self_lem_17,self_lem_17)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_110(q_109,q_105@NI)&true --> emp&q_105!=null; 
+                 HP_110(q_109,q_105@NI)&true --> U(q_109)&true; 
+                 U(q_105)&
+                  true --> q_105::node<Anon_108,q_109>@M * 
+                           HP_110(q_109,q_105@NI)&
+                  true; 
+                 U(q_101)&true --> emp&q_101=null]
+[[ Match(self_lem_17,self_lem_17) ==>  COND ==>  (Lemma <== lem_171 :(q_105,q_93)) ==>  Match(q_105,q_93) ==>  InferUnfold ]]
+
+
+
+*/

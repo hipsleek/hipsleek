@@ -206,6 +206,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
 
+let mk_hrel id cl pos =
+  HRel(id,cl,pos)
+
 let mk_absent_ann = Ipure_D.ConstAnn Accs
 let print_pure_formula = ref(fun (c:Ipure.formula) -> "printer not initialized")
 (* Interactive command line *)
@@ -222,6 +225,7 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 (* 		in Hashtbl.add !linking_exp_list zero 0 *)
 
 let apply_one_imm (fr,t) a = match a with
+  | P.NoAnn -> a
   | P.ConstAnn _ -> a
   | P.PolyAnn (sv, pos) -> P.PolyAnn ((if P.eq_var sv fr then t else sv), pos)
 
@@ -430,7 +434,7 @@ and mkETrueF () = mkETrue n_flow no_pos
 and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
 
 (*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
-  	if isEConstTrue f1 || isEConstTrue f2 then mkETrue top_flow pos
+  if isEConstTrue f1 || isEConstTrue f2 then mkETrue top_flow pos
   else if isEConstFalse f1 then f2
   else if isEConstFalse f2 then f1
   else EOr { formula_struc_or_f1 = f1; formula_struc_or_f2 = f2; formula_struc_or_pos = pos}*)
@@ -646,6 +650,7 @@ and ann_opt_to_ann_lst (ann_opt_lst: P.ann option list) (default_ann: P.ann): P.
   | (None) :: t      ->  default_ann :: (ann_opt_to_ann_lst t default_ann) 
 
 and fv_imm ann = match ann with
+  | P.NoAnn -> []
   | P.ConstAnn _ -> []
   | P.PolyAnn (id,_) -> [id]
 
@@ -719,66 +724,70 @@ and fv_ann_formula (f:formula):(ident*primed) list =
 and collect_annot_vars f  = fv_ann_formula f
 
 
-and h_fv (f:h_formula):(ident*primed) list = match f with   
-  | Conj ({h_formula_conj_h1 = h1; 
-           h_formula_conj_h2 = h2; 
-           h_formula_conj_pos = pos})
-  | ConjStar ({h_formula_conjstar_h1 = h1; 
-               h_formula_conjstar_h2 = h2; 
-               h_formula_conjstar_pos = pos})
-  | ConjConj ({h_formula_conjconj_h1 = h1; 
-               h_formula_conjconj_h2 = h2; 
-               h_formula_conjconj_pos = pos})	   	   
-  | Phase ({h_formula_phase_rd = h1; 
-            h_formula_phase_rw = h2; 
-            h_formula_phase_pos = pos}) 
-  | StarMinus ({h_formula_starminus_h1 = h1; 
-                h_formula_starminus_h2 = h2; 
-                h_formula_starminus_pos = pos})
-  | Star ({h_formula_star_h1 = h1; 
-           h_formula_star_h2 = h2; 
-           h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
-  (*WN:TODO:DONE*)
-  | HeapNode {h_formula_heap_node = name ;
-              (* An Hoa : problem detected and fix - name is a 
-                 quantified id so that we need to extract the 
-                 real information inside *)
-              h_formula_heap_perm = perm; (*LDK*)
-              h_formula_heap_imm = imm; 
-              h_formula_heap_imm_param = ann_param;
-              h_formula_heap_ho_arguments = ho_b;
-              h_formula_heap_arguments = b} ->
-    let perm_vars = (fv_iperm ()) perm in
-    let imm_vars =  fv_imm imm in
-    let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
-    let imm_vars = if true (* (!Globals.allow_field_ann) *) then imm_vars@prm_ann else imm_vars in
-    let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
-    Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
-  | HeapNode2 { h_formula_heap2_node = name ;
-                h_formula_heap2_perm = perm; (*LDK*)
-                h_formula_heap2_imm = imm;
-                h_formula_heap2_ho_arguments = ho_b;
-                h_formula_heap2_arguments = b}-> 
-    let perm_vars =  (fv_iperm ()) perm in
-    let imm_vars =  fv_imm imm in
-    let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
-    Gen.BList.remove_dups_eq (=)  (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
-  | ThreadNode {h_formula_thread_node = name ;
-                h_formula_thread_perm = perm;
-                h_formula_thread_delayed = dl;
-                h_formula_thread_resource = rsr} ->
-    let perm_vars = (fv_iperm ()) perm in
-    let rsr_vars = heap_fv rsr in (*TOCHECK: currently recursively look into resource*)
-    (*This is h_fv, hence, dl is not included*)
-    Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@([extract_var_from_id name]))
-  | HRel (_, args, _)->
-    let args_fv = List.concat (List.map Ipure.afv args) in
-    Gen.BList.remove_dups_eq (=) args_fv
-  (* TODO:WN:HVar -*)
-  | HVar (v,ls) -> [(v,Unprimed)]@(List.map (fun v -> (v,Unprimed)) ls) (* TODO:HO -prime? *)
-  | HTrue -> []
-  | HFalse -> [] 
-  | HEmp -> [] 
+and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list = 
+  let rec aux f =
+    match f with   
+    | Conj ({h_formula_conj_h1 = h1; 
+             h_formula_conj_h2 = h2; 
+             h_formula_conj_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = h1; 
+                 h_formula_conjstar_h2 = h2; 
+                 h_formula_conjstar_pos = pos})
+    | ConjConj ({h_formula_conjconj_h1 = h1; 
+                 h_formula_conjconj_h2 = h2; 
+                 h_formula_conjconj_pos = pos})	   	   
+    | Phase ({h_formula_phase_rd = h1; 
+              h_formula_phase_rw = h2; 
+              h_formula_phase_pos = pos}) 
+    | StarMinus ({h_formula_starminus_h1 = h1; 
+                  h_formula_starminus_h2 = h2; 
+                  h_formula_starminus_pos = pos})
+    | Star ({h_formula_star_h1 = h1; 
+             h_formula_star_h2 = h2; 
+             h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((aux h1)@(aux h2))
+    (*WN:TODO:DONE*)
+    | HeapNode {h_formula_heap_node = name ;
+                (* An Hoa : problem detected and fix - name is a 
+                   quantified id so that we need to extract the 
+                   real information inside *)
+                h_formula_heap_perm = perm; (*LDK*)
+                h_formula_heap_imm = imm; 
+                h_formula_heap_imm_param = ann_param;
+                h_formula_heap_ho_arguments = ho_b;
+                h_formula_heap_arguments = b} ->
+      let perm_vars = (fv_iperm ()) perm in
+      let imm_vars =  fv_imm imm in
+      let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
+      let imm_vars = if true (* (!Globals.allow_field_ann) *) then imm_vars@prm_ann else imm_vars in
+      let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
+      Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
+    | HeapNode2 { h_formula_heap2_node = name ;
+                  h_formula_heap2_perm = perm; (*LDK*)
+                  h_formula_heap2_imm = imm;
+                  h_formula_heap2_ho_arguments = ho_b;
+                  h_formula_heap2_arguments = b}-> 
+      let perm_vars =  (fv_iperm ()) perm in
+      let imm_vars =  fv_imm imm in
+      let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
+      Gen.BList.remove_dups_eq (=)  (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+    | ThreadNode {h_formula_thread_node = name ;
+                  h_formula_thread_perm = perm;
+                  h_formula_thread_delayed = dl;
+                  h_formula_thread_resource = rsr} ->
+      let perm_vars = (fv_iperm ()) perm in
+      let rsr_vars = heap_fv rsr in (*TOCHECK: currently recursively look into resource*)
+      (*This is h_fv, hence, dl is not included*)
+      Gen.BList.remove_dups_eq (=) (perm_vars@rsr_vars@([extract_var_from_id name]))
+    | HRel (_, args, _)-> 
+      if vartype # is_heap_only then []
+      else let args_fv = List.concat (List.map Ipure.afv args) 
+        in Gen.BList.remove_dups_eq (=) args_fv
+    (* TODO:WN:HVar -*)
+    | HVar (v,ls) -> [(v,Unprimed)]@(List.map (fun v -> (v,Unprimed)) ls) (* TODO:HO -prime? *)
+    | HTrue -> []
+    | HFalse -> [] 
+    | HEmp -> [] 
+  in aux f
 
 and get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
   let rec helper f =match f with
@@ -812,28 +821,31 @@ and get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
   in
   helper f0
 
-and heap_fv_one_formula (f:one_formula):(ident*primed) list =  (h_fv f.formula_heap)
+and heap_fv_one_formula ?(vartype=Global_var.var_with_none) (f:one_formula):(ident*primed) list =  (h_fv ~vartype:vartype f.formula_heap)
 
 (*TO CHECK: how about formula_and*)
-and heap_fv (f:formula):(ident*primed) list = match f with
+and heap_fv ?(vartype=Global_var.var_with_none) (f:formula):(ident*primed) list = match f with
   | Base b-> 
     let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
-    let hvars = (h_fv b.formula_base_heap) in
+    let hvars = (h_fv ~vartype:vartype b.formula_base_heap) in
     Gen.BList.remove_dups_eq (=) hvars@avars
   | Exists b-> 
     let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
-    let hvars =  (h_fv b.formula_exists_heap) in
-    Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars)
-      b.formula_exists_qvars 
-  | Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
+    let hvars =  (h_fv ~vartype:vartype b.formula_exists_heap) in
+    let qvars =  b.formula_exists_qvars in
+    let qvars = if vartype # is_exists then [] else qvars in
+    Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) hvars@avars) qvars
 
-and struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
-  | EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt struc_hp_fv b.formula_struc_continuation)@(heap_fv b.formula_struc_base)) 
+  | Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv ~vartype:vartype b.formula_or_f1)@(heap_fv ~vartype:vartype b.formula_or_f2))
+
+and struc_hp_fv ?(vartype=Global_var.var_with_none) (f:struc_formula): (ident*primed) list =  match f with
+  | EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt (struc_hp_fv ~vartype:vartype) b.formula_struc_continuation)
+                                           @(heap_fv ~vartype:vartype b.formula_struc_base)) 
                 (b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
-  | ECase b-> Gen.fold_l_snd struc_hp_fv b.formula_case_branches
-  | EAssume b-> heap_fv b.formula_assume_simpl
-  | EInfer b -> struc_hp_fv b.formula_inf_continuation
-  | EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_hp_fv b)
+  | ECase b-> Gen.fold_l_snd (struc_hp_fv ~vartype:vartype) b.formula_case_branches
+  | EAssume b-> heap_fv ~vartype:vartype b.formula_assume_simpl
+  | EInfer b -> struc_hp_fv ~vartype:vartype b.formula_inf_continuation
+  | EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd (struc_hp_fv ~vartype:vartype) b)
 
 and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
   | EBase b-> Gen.BList.difference_eq (=)(Gen.fold_opt struc_case_fv b.formula_struc_continuation)
@@ -845,16 +857,18 @@ and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
   | EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_case_fv b)
 
 (*TO CHECK: how about formula_and*)
-and unbound_heap_fv (f:formula):(ident*primed) list = match f with
-  | Base b-> 
-    let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in
-    let hvars = Gen.BList.difference_eq (=) (h_fv b.formula_base_heap) (get_hprel_svl_hf b.formula_base_heap) in
-    Gen.BList.remove_dups_eq (=) hvars@avars
-  | Exists b-> 
-    let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in
-    let hvars = Gen.BList.difference_eq (=) (h_fv b.formula_exists_heap) (get_hprel_svl_hf b.formula_exists_heap) in
-    Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars
-  | Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
+(* excludes HRel arguments *)
+and unbound_heap_fv (f:formula):(ident*primed) list = heap_fv ~vartype:Global_var.var_with_heap_only f
+  (* match f with *)
+  (* | Base b->  *)
+  (*   let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in *)
+  (*   let hvars = Gen.BList.difference_eq (=) (h_fv ~vartype:vartype b.formula_base_heap) (get_hprel_svl_hf b.formula_base_heap) in *)
+  (*   Gen.BList.remove_dups_eq (=) hvars@avars *)
+  (* | Exists b->  *)
+  (*   let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in *)
+  (*   let hvars = Gen.BList.difference_eq (=) (h_fv b.formula_exists_heap) (get_hprel_svl_hf b.formula_exists_heap) in *)
+  (*   Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars *)
+  (* | Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2)) *)
 
 and struc_free_vars with_inst (f:struc_formula) :(ident*primed) list= match f with
   | EBase b -> Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) 
@@ -934,13 +948,15 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
     mkExists new_qvars h p vp f a pos (*TO CHECK*)
   | _ -> failwith ("add_quantifiers: invalid argument")
 
-and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
-  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
-    let new_f1 = push_exists qvars f1 in
-    let new_f2 = push_exists qvars f2 in
-    let resform = mkOr new_f1 new_f2 pos in
-    resform
-  | _ -> add_quantifiers qvars f
+and push_exists (qvars : (ident*primed) list) (f : formula) = 
+  let rec aux f = match f with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+      let new_f1 = aux f1 in
+      let new_f2 = aux f2 in
+      let resform = mkOr new_f1 new_f2 pos in
+      resform
+    | _ -> add_quantifiers qvars f
+  in if qvars==[] then f else aux f
 
 and formula_to_struc_formula (f:formula):struc_formula =
   let rec helper (f:formula):struc_formula = match f with
@@ -3230,3 +3246,19 @@ let transform_bexp_hf prog hf0=
   let pr1 = !print_h_formula in
   Debug.no_1 "transform_bexp_hf" pr1 (pr_pair pr1 (pr_list !Ipure.print_formula))
     (fun _ -> transform_bexp_hf_x prog hf0) hf0
+
+let clear_type_info_formula (f: formula): formula = 
+  let rec clear_type_info_exp (e: P.exp) =
+    let f_e e = 
+      match e with
+      | P.Ann_Exp (ae, _, _) -> Some (clear_type_info_exp ae)
+      | _ -> None
+    in
+    P.transform_exp f_e e
+  in
+  let f_p_e e = Some (clear_type_info_exp e) in
+  transform_formula (nonef, nonef, nonef, (nonef, nonef, nonef, nonef, f_p_e)) f
+
+let clear_type_info_formula (f: formula): formula = 
+  let pr = !print_formula in
+  Debug.no_1 "clear_type_info_formula" pr pr clear_type_info_formula f

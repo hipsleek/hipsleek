@@ -1,0 +1,48 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+
+infer [U2,U,@classic,@pure_field] U2(q3,p) & p!=null  |- U(q3,q).
+print residue.
+
+//infer [U2,U,@classic,@pure_field] U2(q3,p) & p!=q  |- U(q3,q).
+
+
+/*
+# ex16c4.slk (FIXED by removing heuristic for matching)
+
+ <1>emp&p!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,p)&p!=null |#|3  --> U(q3,q)&true]
+
+-------------------------
+
+infer [U2,U,@classic,@pure_field] U2(q3,p) & p!=q  |- U(q3,q).
+ <1>emp&p!=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,p)&p!=q |#|3  --> U(q3,q)&true]
+
+        (* let () = y_winfo_pp "the second condition is heur" in *)
+         (* WN : this heuristic caused problem for str-inf/ex16c4.slk *)
+         if CP.eq_spec_var hn1 hn2
+           (* L2: huer here *)
+           (* || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2)) *)
+
+
+infer [U2,U,@classic,@pure_field] U2(q3,p)  |- U(q3,p).
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+# How did U2 and U get proven without below?
+
+U2(q3,p) --> U(q3,p)
+
+
+*/

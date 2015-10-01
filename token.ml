@@ -26,10 +26,27 @@ type sleek_token =
   | CHECKENTAIL |  CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT
   | DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | RELDEFN 
-  | SHAPE_INFER | SHAPE_INFER_PROP | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
-  | SHAPE_SPLIT_BASE | SHAPE_ELIM_USELESS | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
+  | SHAPE_INFER | SHAPE_INFER_PROP 
+  | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
+  | SHAPE_SPLIT_BASE 
+  | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
   | SHAPE_STRENGTHEN_CONSEQ | SHAPE_WEAKEN_ANTE
-  | PRED_SPLIT | PRED_NORM_DISJ | PRED_SPEC | PRED_NORM_SEG
+  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING 
+  | SHAPE_SIMPLIFY | SHAPE_MERGE | SHAPE_TRANS_TO_VIEW
+  | SHAPE_DERIVE_PRE (* to derive pre-predicate into view *)
+  | SHAPE_DERIVE_POST (* to derive post-predicate into view *)
+  | SHAPE_DERIVE_VIEW
+  | SHAPE_NORMALIZE
+  | PRED_ELIM_HEAD
+  | PRED_ELIM_TAIL
+  | PRED_UNIFY_DISJ
+  | PRED_SPEC 
+  | PRED_SPLIT  
+  | PRED_NORM_SEG | PRED_NORM_DISJ
+  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *) 
+  | PRED_REUSE
+  | PRED_REUSE_SUBS
+  | PRED_UNFOLD
   | REL_INFER
   | DTIME
   | ELSE_TT
@@ -46,7 +63,10 @@ type sleek_token =
   | MAX | MIN 
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
-  | PRED | PRED_PRIM | DPRINT | PRED_EXT | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
+  | PRED | PRED_PRIM | DPRINT | PRED_EXT 
+  | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
+  (* | PRINT_VIEW *)
+  (* | PRINT_VIEW_LONG *)
   | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
@@ -57,8 +77,10 @@ type sleek_token =
   | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMUST_ONLY | INFER_AT_ERRMAY | INFER_AT_DE_EXC | INFER_AT_PREMUST
   | INFER_AT_VER_POST
   | INFER_AT_TERM | INFER_AT_TERM_WO_POST | INFER_AT_FIELD_IMM
-  | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_ERROR | INFER_AT_FLOW
+  | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_SHAPE_PRE | INFER_AT_SHAPE_POST | INFER_AT_SHAPE_PRE_POST
+  | INFER_AT_ERROR | INFER_AT_FLOW | INFER_AT_PURE_FIELD
   | INFER_AT_SIZE | INFER_AT_ARR_AS_VAR 
+  | INFER_IMM_PRE | INFER_IMM_POST
   | UTPRE | UTPOST
   | UIPRE | UIPOST
   | UNFOLD | UNION
@@ -124,12 +146,31 @@ module Token = struct
     | CHECK_NONDET -> "check_nondet"
     | CHECKSAT -> "checksat"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
-    |  SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
-    | SHAPE_SPLIT_BASE -> "shape_split_base" | SHAPE_ELIM_USELESS -> "shape_elim_useless" | SHAPE_EXTRACT -> "shape_extract"
+    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
+    | SHAPE_SPLIT_BASE -> "shape_split_base" 
+    | SHAPE_EXTRACT -> "shape_extract"
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
     | SHAPE_STRENGTHEN_CONSEQ -> "shape_strengthen_conseq"
     | SHAPE_WEAKEN_ANTE -> "shape_weaken_ante"
-    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
+    | SHAPE_ADD_DANGLING -> "shape_add_dangling"
+    | SHAPE_UNFOLD -> "shape_unfold"
+    | SHAPE_PARAM_DANGLING -> "shape_param_dangling"
+    | SHAPE_SIMPLIFY -> "shape_simplify"
+    | SHAPE_MERGE -> "shape_merge"
+    | SHAPE_TRANS_TO_VIEW -> "shape_trans_to_view"
+    | SHAPE_DERIVE_PRE -> "shape_derive_pre"
+    | SHAPE_DERIVE_POST -> "shape_derive_post"
+    | SHAPE_DERIVE_VIEW -> "shape_derive_view"
+    | SHAPE_NORMALIZE -> "shape_normalize"
+    | PRED_ELIM_HEAD -> "pred_elim_hd_node"
+    | PRED_ELIM_TAIL -> "pred_elim_tl_node"
+    | PRED_UNIFY_DISJ -> "pred_unify_disj"
+    | PRED_ELIM_USELESS -> "pred_elim_useless" 
+    | PRED_REUSE -> "pred_reuse" 
+    | PRED_REUSE_SUBS -> "pred_reuse_subs" 
+    | PRED_UNFOLD -> "pred_unfold" 
+    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" 
+    | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
@@ -148,6 +189,8 @@ module Token = struct
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
     | PRINT -> "print" 
     | PRINT_LEMMAS -> "print_lemmas" 
+    (* | PRINT_VIEW -> "print_view"  *)
+    (* | PRINT_VIEW_LONG -> "print_view_long"  *)
     |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
@@ -207,12 +250,18 @@ module Token = struct
     | INFER_AT_CLASSIC -> "@leak"
     | INFER_AT_PAR -> "@par"
     | INFER_AT_IMM -> "@imm"
+    | INFER_AT_PURE_FIELD -> "@pure_field"
     | INFER_AT_FIELD_IMM -> "@field_imm"
     | INFER_AT_ARR_AS_VAR -> "@arrvar"
     | INFER_AT_SHAPE -> "@shape"
+    | INFER_AT_SHAPE_PRE -> "@shape_pre"
+    | INFER_AT_SHAPE_POST -> "@shape_post"
+    | INFER_AT_SHAPE_PRE_POST -> "@shape_prepost"
     | INFER_AT_ERROR -> "@error"
     | INFER_AT_FLOW -> "@flow"
     | INFER_AT_SIZE -> "@size"
+    | INFER_IMM_PRE -> "@imm_pre"
+    | INFER_IMM_POST -> "@imm_post"
     | TREL_ASSUME -> "termAssume"
     | TERM_INFER -> "term_infer"
     | XPURE -> "XPURE"

@@ -1557,6 +1557,7 @@ Total verification time: 435.56 second
 	Time spent in child processes: 30.98 second
 	Number of false contexts: 413
 
+===================================================================
 --eps -tp oc loris-7
 Total verification time: 839.46 second
 	Time spent in main process: 752.19 second
@@ -1568,8 +1569,6 @@ Total verification time: 818.88 second
 	Time spent in main process: 761.41 second
 	Time spent in child processes: 57.47 second
 	Number of false contexts: 413
-
-====================================================================
 All test results were as expected.
 Total verification time: 99.18 second
 	Time spent in main process: 67.60 second
@@ -1583,12 +1582,277 @@ Total verification time: 878.75 second
 	Number of false contexts: 413
 
 ====================================================================
+# ann_2
+
+# timing seems worse in this branch. need to check performance issues..
+
+Total verification time: 514.66 second
+	Time spent in main process: 455.60 second
+	Time spent in child processes: 59.06 second
+	Number of false contexts: 413
+
+# native..
+
+Total verification time: 148.53 second
+	Time spent in main process: 91.67 second
+	Time spent in child processes: 56.86 second
+	Number of false contexts: 413
+
+=====================================================================
+
+./run-fast-tests.pl sleek -flags "--eps"
+All test results were as expected.
+Total verification time: 36.24 second
+	Time spent in main process: 19.71 second
+	Time spent in child processes: 16.53 second
+	Number of false contexts: 98
+
+
+./run-fast-tests.pl sleek -flags "--eps --assert-unsound-false"
+98 false contexts
+Total number of errors: 1 in files:
+  imm/imm9-early-inst.slk({E11#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 35.68 second
+	Time spent in main process: 19.35 second
+	Time spent in child processes: 16.33 second
+	Number of false contexts: 98
+
+
+./run-fast-tests.pl sleek -flags "--assert-unsound-false"
+Total number of errors: 1 in files:
+  imm/imm9-early-inst.slk({E11#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 47.91 second
+	Time spent in main process: 17.09 second
+	Time spent in child processes: 30.82 second
+	Number of false contexts: 93
+
+./run-fast-tests.pl sleek 
+
+All test results were as expected.
+Total verification time: 47.84 second
+	Time spent in main process: 17.13 second
+	Time spent in child processes: 30.71 second
+	Number of false contexts: 93
+
 ====================================================================
+./run-fast-test hip -flags "-tp z3" (Aug 21)
+
+Total number of errors: 147 in files:
+ error at: eps.ss get_next
+error at: eps.ss get_next_next
+error at: append.ss append
+error at: append-tail.ss append
+error at: avl-bind.ss height
+error at: avl-bind.ss build_avl1
+error at: avl-bind.ss build_avl2
+error at: avl-bind.ss insert
+error at: avl.ss height
+error at: avl.ss build_avl1
+error at: avl.ss build_avl2
+error at: avl.ss insert
+error at: avl.ss insert_inline
+error at: avl-orig-2.ss height
+error at: avl-orig-2.ss insert
+error at: avl-orig-2.ss double_left_child
+error at: avl-orig-2.ss double_right_child
+error at: avl-orig-2.ss rotate_left_child
+error at: avl-orig-2.ss rotate_right_child
+error at: avl-orig3.ss height
+error at: avl-orig3.ss insert
+error at: avl-orig3.ss double_left_child
+error at: avl-orig3.ss double_right_child
+error at: avl-orig3.ss rotate_left_child
+error at: avl-orig3.ss rotate_right_child
+error at: bll.ss delete
+error at: bubble.ss id2
+error at: bubble.ss id3
+error at: bubble.ss bubble
+error at: cll.ss test
+error at: cll.ss insert
+error at: cll.ss count_rest
+error at: cll.ss count
+error at: cll.ss delete
+error at: complete.ss height
+error at: complete.ss min_height
+error at: complete.ss insert
+error at: dll.ss insert
+error at: dll.ss delete
+error at: dll.ss delete1
+error at: dll.ss test_del
+error at: dll.ss test_del2
+error at: dll.ss test_fold
+error at: dll.ss append
+error at: dll.ss append1
+error at: heaps.ss insert
+error at: heaps.ss deleteoneel
+error at: heaps.ss ripple
+error at: heaps.ss deletemax
+error at: insertion.ss insert
+error at: insertion.ss insertion_sort
+error at: ll.ss append
+error at: ll.ss get_next
+error at: ll.ss set_next
+error at: ll.ss set_null
+error at: ll.ss get_next_next
+error at: ll.ss insert
+error at: ll.ss delete
+error at: ll.ss reverse
+error at: merge.ss count
+error at: merge.ss split_func
+error at: merge.ss merge_sort
+error at: merge.ss merge
+error at: merge.ss insert
+error at: perfect.ss simple_insert
+error at: perfect.ss height
+error at: qsort.ss partition
+error at: qsort.ss append_bll
+error at: qsort.ss qsort
+error at: selection.ss find_min
+error at: selection.ss delete_min
+error at: sll.ss insert
+error at: sll.ss insert2
+error at: sll.ss delete
+error at: sll.ss get_tail
+error at: sll.ss insertion_sort
+error at: trees.ss append
+error at: trees.ss count
+error at: trees.ss flatten
+error at: trees.ss insert
+error at: trees.ss remove_min
+error at: trees.ss delete
+error at: rb.ss is_red
+error at: rb.ss is_black
+error at: rb.ss del_6
+error at: rb.ss del_6r
+error at: rb.ss del_2
+error at: rb.ss remove_min
+error at: rb.ss del
+error at: rb.ss insert
+error at: global-ll.ss insert_rec
+error at: global-ll.ss delete_last_rec
+error at: classic/classic1.ss foo1
+error at: classic/classic1.ss foo2
+error at: classic/classic1.ss foo2
+error at: classic/classic1a.ss foo1
+error at: classic/classic1a.ss foo2
+error at: classic/classic1a.ss foo1
+error at: classic/classic2.ss foo2
+error at: classic/classic2a.ss foo1
+error at: classic/classic3.ss foo1
+error at: classic/classic3.ss foo2
+error at: classic/classic3a.ss foo1
+error at: classic/classic3a.ss foo2
+error at: ../../modular_examples/dll-modular.ss append
+error at: ../../modular_examples/dll-modular.ss append1
+error at: ../../modular_examples/dll-modular.ss append2
+error at: ../../modular_examples/dll-modular.ss delete
+error at: ../../modular_examples/dll-modular.ss delete1
+error at: ../../modular_examples/dll-modular.ss insert
+error at: ../../modular_examples/dll-modular.ss test_del
+error at: ../../modular_examples/dll-modular.ss test_del2
+error at: ../../modular_examples/dll-modular.ss test_fold
+error at: ../../modular_examples/selection-modular.ss delete_min
+error at: ../../modular_examples/selection-modular.ss find_min
+error at: ../../modular_examples/qsort-modular.ss append_bll
+error at: ../../modular_examples/qsort-modular.ss partition
+error at: ../../modular_examples/qsort-modular.ss qsort
+error at: vperm/ho_vperm_check.ss incCell
+error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.
+Total verification time: 68.20 second
+        Time spent in main process: 45.88 second
+        Time spent in child processes: 22.32 second
+        Number of false contexts: 77
+
 ====================================================================
+Problems below:
+
+--new-classic-rhs-emp
+Total number of errors: 3 in files:
+  classic/classic4.slk({E1#Valid},{E3#Valid},{E5#Valid},{E7#Valid}) 
+  lemmas/nlseg4e.slk({L2#Valid}) 
+  lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
 ====================================================================
+16Sept15
+
+# why do many false context?
+
+All test results were as expected.
+Total verification time: 82.08 second
+	Time spent in main process: 48.32 second
+	Time spent in child processes: 33.76 second
+	Number of false contexts: 99
+
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 81.18 second
+	Time spent in main process: 50.25 second
+	Time spent in child processes: 30.93 second
+	Number of false contexts: 99
 ====================================================================
+# commented out sort_wt end --old-search-always
+
+Total number of errors: 1 in files:
+  lemmas/nlseg4e1.slk({E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 76.15 second
+	Time spent in main process: 42.90 second
+	Time spent in child processes: 33.25 second
+	Number of false contexts: 99
+
+--smart-search
+Looping?
+Checking fracperm/split_simple.slk (runs with extra options: --en-para -perm fperm -tp redlog --old-norm-w-coerc)
+
+Starting hip-sleek tests:
+All test results were as expected.
+Total verification time: 86.06 second
+	Time spent in main process: 49.57 second
+	Time spent in child processes: 36.49 second
+	Number of false contexts: 99
+
+
 ====================================================================
-====================================================================
+22Sept15
+------
+Starting hip-sleek tests:
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 132.92 second
+	Time spent in main process: 45.39 second
+	Time spent in child processes: 87.53 second
+	Number of false contexts: 99
 ====================================================================
 ====================================================================
 ====================================================================

@@ -1,0 +1,57 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+//1
+infer [H,P,classic] H(p) * x::node<1,p> & p=null |- P(p).
+print residue.
+
+infer_exact [H,P,classic] H(p) * x::node<1,p> & p=null |- P(p).
+print residue.
+
+
+/*
+# ex15a.slk 
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
+
+ <1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> P(p)&true]
+[[ COND ==>  InferHeap]]
+
+EXPECTS:
+  H(p)&p=null | x::node<_,p> --> P(p)
+which shows the heap context of p..
+
+# need to fix find_guard
+
+(==infer.ml#2606==)
+find_guard@2@1
+find_guard inp1 :left heap:[ x::node<flted_12_16,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :[(H,[p])]
+find_guard inp4 :[p]
+find_guard@2 EXIT:NONE
+
+
+*/
+
+/*
+//2
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(x).
+print residue.
+//expected?
+
+//3
+infer [H,P] H(p) * x::node<1,t> & p=null |- P(p).
+print residue.
+//expected?
+*/
+

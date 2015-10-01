@@ -1,8 +1,8 @@
 /* Build a list of the form 1->...->1->0 */
 
 data node {
- node next;
- node prev;
+  node prev;
+  node next;
 }
 
 bool bool_nondet()
@@ -12,9 +12,9 @@ node new_node()
   requires emp & true ensures res::node<_,_>;
 
 //HeapPred H(node x, node b). // non-ptrs are @NI by default
-//  PostPred G(node x,  node b,  node c, node d). // non-ptrs are @NI by default
+  PostPred G1(node x,  node b,  node@NI c, node@NI d). // non-ptrs are @NI by default
 
-HeapPred H(node x, node@NI y). // non-ptrs are @NI by default
+HeapPred H(node x). // non-ptrs are @NI by default
 PostPred G(node x,  node b).
 
 
@@ -23,24 +23,45 @@ PostPred G(node x,  node b).
   or self::node<p,q>*q::dllseg<self,l>
   ;
 
- dllseg1<p,l> == self::node<p,l>
-  or self::node<p,q>*q::dllseg1<self,l>
+ dllseg1<p> == self::node<_,_> & self=p
+  or p::node<prev,_>*self::dllseg1<prev>
   ;
 
 lseg<p> == self::node<_,p>
   or self::node<_,q>*q::lseg<p>
   ;
 
+rlseg<p> == self=p
+  or p::node<q,_>*self::rlseg<q>
+  ;
 
-void create_dll (ref node list, ref node t)
+rlseg1<prev> == self=prev
+  or self::node<prev,n>*n::rlseg1<self>
+  ;
+
+dll_seg3<a,last,pp> == self=pp & a=last
+  or self::node<a,q>*q::dll_seg3<self,last,pp>;
+
+
+lemma_safe self::dll_seg3<a,last,pp>  
+      <- self::dll_seg3<a,r,last>*last::node<r,pp>.
+
+
+
+
+//lemma_safe self::node<pre,n> * n::rlseg2<self>   -> self::rlseg2<list> * list::node<_,_>.
+
+void create_dll (ref node list)
 
 //infer [H,G] requires H(list)   ensures G(list,list');
-//  infer [H] requires H(list,t)   ensures true;
-
-  requires list::dllseg<_,_> ensures list'::dllseg<_,l> ; //'
-
-
+//  infer [H] requires H(list)   ensures true;
+//  infer [G1] requires list::node<pre,n>   ensures G1(list,list',pre,n);
+ infer [G] requires list::node<pre,n>   ensures G(list,list');
+// requires list::rlseg2<p> ensures list'::rlseg2<list> * list::rlseg2<p> ;
+requires list::node<_,pp>   ensures list'::dll_seg3<_,r,list> * list::node<r,pp>;
+// requires list::node<pre,_>  ensures list'::rlseg3<list> * list::node<pre,_>;
 {
+  node t;
   if (bool_nondet()) {
     //list::node<_,q> * q::lseg<l>
     t = new_node();
@@ -52,42 +73,14 @@ void create_dll (ref node list, ref node t)
     list = t;
     // list'::node<_,list> * list::node<t',q> * q::lseg<l> & list'=t'
     // pre-rec list'::node<_,list> * list::node<t',q> * q::lseg<l> & list'=t' |- list'::lseg<l>
-    create_dll(list,t);
+    create_dll(list);
   }
 }
 
 /*
-list::node<_,q> * q::lseg<>
- */
 
-
-/* void create_dll1 (node list, node t) */
-
-/* //infer [H,G] requires H(list)   ensures G(list,list'); */
-/*   infer [H] requires H(list,t)   ensures true; */
-
-/* //requires list::dllseg<_> ensures list'::dllseg<_> ; //' */
-/* { */
-/*   if (bool_nondet()) { */
-/*      t = new_node(); */
-/*     list.prev = t; */
-/*     create_dll1(list.next,list); */
-/*   } */
-/* } */
-
-/*
-*************************************
-*******shape relational assumptions ********
-*************************************
-[ // BIND
-(1;0)H(list)&
-true --> list::node<next_37_1477,prev_37_1478>@M * HP_1479(next_37_1477) *
-         HP_1480(prev_37_1478)&
-true,
- // PRE_REC
-(1;0)list'::node<list_1482,Anon_1473>@M * HP_1479(next_37_1477) *
-     list_1482::node<next_37_1477,list'>@M&true --> H(list')&
-true]
-
+ G(list_1568,list_1569) ::= list_1569::node<pre,n>@M&list_1569=list_1568
+ or list_1568::node<t_1567,n>@M * G(t_1567,list_1569)&t_1567!=null
 
  */
+

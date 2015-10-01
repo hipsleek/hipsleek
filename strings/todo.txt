@@ -15,7 +15,7 @@ Procedure while2$STR~STR SUCCESS.
 Termination checking result: 
 (70)->(70) (ERR: invalid transition)  Term[101; k-n] ->  MayLoop[]
 ==================================================================
-# ex3.c
+# ex3.c (FIXED)
 
 Currently translate char* to int*.
 Perhaps, we should use string type?
@@ -66,7 +66,7 @@ ret# s1)})}
 {(20,1),(33,2)}
 
 ==================================================================
-# bug4.ss -p while2
+# bug4.ss -p while2 (FIXED)
 
 void while2(ref str s1,ref str s2)
   requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
@@ -377,7 +377,7 @@ Error3(s) detected at main
 
 [4]+  Done                    ../hip ex18a-infer-cstrcat-memsafe.ss e todo.txt
 ==================================================================
-# ex19a1.ss
+# ex19a1.ss (FIXED by Muoi)
 
   how to handle pointer arithmetic?
 
@@ -397,7 +397,7 @@ Exception occurred: Failure("TYPE ERROR 1 : Found int but expecting char_star")
 Error3(s) detected at main 
 
 ==================================================================
-# ex19b.s --pip
+# ex19b.s --pip (FIXED)
 
 # should use char_star instead of int_star
 # also instead of
@@ -524,7 +524,7 @@ heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context:
 ==================================================================
 # strings/ex8d6.slk --pcp
 
-printing problem ..
+printing problem .. (FIXED)
 
   base case: 
   v=0->v=0 & self!=nullview_complex_inv: None
@@ -852,6 +852,18 @@ Total number of errors: 2 in files:
 ==================================================================
 ==================================================================
 ==================================================================
+# ex3-string-simple.c
+
+# Why precondition in method __write_char$char_star~int failed?
+
+# prelude.ss
+void __write_char(char_star x, int v)
+  requires x::char_star<_,_>@L & Term[]
+  ensures x::char_star<v,_>;
+
+Checking procedure cstrcat$char_star~char_star... 
+Proving precondition in method __write_char$char_star~int Failed.
+  (may) cause: do_unmatched_rhs : s'::char_star<Anon_26,Anon_27>@L(may)
 ==================================================================
 ==================================================================
 ==================================================================

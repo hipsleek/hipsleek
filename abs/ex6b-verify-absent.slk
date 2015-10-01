@@ -1,0 +1,27 @@
+data node {
+ int val;
+ node next;
+}.
+
+pred  ll<n> == self=null & n=0 or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+pred  lseg<p> == self=p or self::node<_,q>*q::lseg<p>.
+
+
+checkentail x::ll<n> * x::node<_,_>@A |- false.
+expect Fail.
+// Got Fail_Must
+
+checkentail x::ll<n> * x::node<_,_>@A |- n>0.
+expect Valid.
+print residue.
+
+checkentail x::ll<n> * x::node<_,_>@A |- n=0.
+expect Fail.
+print residue.
+
+checkentail x::ll<n> * x::node<_,_> |- false.
+expect Valid.
+print residue.
+

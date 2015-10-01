@@ -3,6 +3,7 @@ open VarGen
 open Globals
 open Gen
 open Cformula
+open Exc.GTable
 
 module DD = Debug
 module CF=Cformula
@@ -11,6 +12,10 @@ module MCP=Mcpure
 module C = Cast
 module TP = Tpdispatcher
 (* module SAU = Sautility *)
+
+let check_lemeq_sem = ref (fun (iprog:Iast.prog_decl)
+  (prog:C.prog_decl) (f1:CF.formula) (f2:CF.formula)
+  (hpdefs:CF.hp_rel_def list) (ls1:ident list) (ls2:ident list) -> false)
 
 
 (***********************************************)
@@ -42,7 +47,7 @@ let norm_elim_useless_para_x view_name sf args=
       (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
       (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
-      let () = Debug.info_zprint  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
+      let () = x_binfo_zp  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
       (new_vname, new_args, ss)
     else
       (view_name, args, [])
@@ -106,7 +111,7 @@ let norm_elim_useless_x vdefs sel_vns=
     | vdef::rest -> let new_defs,new_rest = process_one_view vdef rest in
       interate_helper new_rest (done_vdefs@new_defs)
   in
-  let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = Cast.View_NORM) vdefs in
+  let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = View_NORM) vdefs in
   let n_normal_view = interate_helper normal_view [] in
   (rest_views@n_normal_view)
 
@@ -115,6 +120,259 @@ let norm_elim_useless vdefs sel_vns=
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   Debug.no_2 "norm_elim_useless" pr2 pr1 pr2
     (fun _ _ -> norm_elim_useless_x vdefs sel_vns) vdefs sel_vns
+
+let norm_reuse_one_frm_view iprog prog ?(all=true)
+    cur_equivs frm_vdcl (to_vdcls: C.view_decl list)=
+  let check_equiv frm_vdcl to_vdcl =
+    let () = y_tinfo_hp (add_str "frm_vdcl" pr_id) frm_vdcl.Cast.view_name in
+    let () = y_tinfo_hp (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name in
+    let frm_view_name =  frm_vdcl.Cast.view_name in
+    let to_view_name =  to_vdcl.Cast.view_name in
+    let () = y_tinfo_hp (add_str "frm_to_name" pr_id) (frm_view_name^to_view_name) in
+    if string_eq frm_view_name to_view_name then [to_view_name]
+    else if string_eq frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name 
+    (* && *)
+    (* does not handle transitivity *)
+    (* not (List.exists (fun (vn1,vn2) -> *)
+    (*     (string_eq frm_vdcl.Cast.view_name vn1 && *)
+    (*      string_eq to_vdcl.Cast.view_name vn2) || (string_eq frm_vdcl.Cast.view_name vn2 && *)
+    (*                                                string_eq to_vdcl.Cast.view_name vn1) *)
+    (*   ) cur_equivs) *)
+    then
+      let () = x_tinfo_hp (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
+      let self_t = (Named frm_vdcl.Cast.view_data_name) in
+      let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
+      let frm_args = frm_vdcl.Cast.view_vars in
+      let to_args = to_vdcl.Cast.view_vars in
+      if List.length frm_args != List.length to_args then []
+      else
+        let get_name_typ v = (string_of_typ (CP.type_of_spec_var v),v) in
+        let name_to_args = List.map get_name_typ to_args in
+        let name_frm_args = List.map get_name_typ frm_args in
+        let ntyp_to_args = add_num name_to_args in
+        let ntyp_frm_args = add_num name_frm_args in
+        let cmp ((s1,_),_) ((s2,_),_) = String.compare s1 s2 in
+        let sort_to_args = List.sort cmp ntyp_to_args in
+        let sort_frm_args = List.sort cmp ntyp_frm_args in
+        let pr2 ((_,sv),n) = pr_pair !CP.print_sv string_of_int (sv,n) in 
+        let () = y_tinfo_hp (add_str "sort from" (pr_list pr2)) sort_frm_args in
+        let pr = pr_list (pr_pair (pr_pair pr_id !CP.print_sv) string_of_int) in
+        let () = y_tinfo_hp (add_str "sort to"  (pr_list pr2)) sort_to_args in
+        let sst_ntyp = List.combine sort_frm_args sort_to_args in
+        (* let sst_typ = List.combine typ_frm_args typ_to_args in *)
+        let (f_eq,eq_str) = List.fold_left (fun (f_eq,f_eq_str) (((t1,_),n1),((t2,_),n2)) ->
+            let flag = f_eq && string_eq t1 t2 in
+            (flag, f_eq_str && flag && n1==n2)) (true,true) sst_ntyp in
+        let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (s1,s2)) sst_ntyp in
+        let keep_sst = if eq_str then [] else 
+            let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (n1,n2)) sst_ntyp in
+            let sst_from = List.sort (fun (n1,_) (n2,_) -> n1-n2) sst in
+            List.map snd sst_from 
+        in
+        (* let str_diff = List.exists (fun (sv1, sv2) -> not (cmp_typ (get_typ sv1) (get_typ sv2))) sst in *)
+        let () = y_tinfo_hp (add_str "sort_to_args" pr) sort_to_args in
+        let () = y_tinfo_hp (add_str "sort_frm_args" pr) sort_frm_args in
+        let () = y_tinfo_hp (add_str "(f_eq,eq_str)" (pr_pair string_of_bool string_of_bool)) 
+            (f_eq,eq_str) in
+        (*type comparison*)
+        if not(f_eq)  (* str_diff *) then []
+        else
+          let () = x_tinfo_hp (add_str "sst" (pr_list (pr_pair
+                                                         !CP.print_sv !CP.print_sv))) sst no_pos in
+          let frm_vnode = Cformula.mkViewNode (self_sv ) frm_vdcl.Cast.view_name
+              (frm_vdcl.Cast.view_vars) no_pos in
+
+          let to_vnode = Cformula.mkViewNode (self_sv ) to_vdcl.Cast.view_name
+              (to_vdcl.Cast.view_vars) no_pos in
+          let f1_frm = Cformula.formula_of_heap frm_vnode no_pos in
+          let f1 = x_add Cformula.subst sst f1_frm in
+          let f2 = Cformula.formula_of_heap to_vnode no_pos in
+          let flag = Wrapper.wrap_exc_as_false ~msg:"check_lemeq_sem" (!check_lemeq_sem iprog prog f1 f2 [] []) [] in
+          let msg = if flag then "\n Proven :" else "\n Failed :" in
+          let () = y_binfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
+          if flag (* !check_lemeq_sem iprog prog f1 f2 [] [] [] *) then
+            (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
+            (* let frm_view_name = frm_vdcl.Cast.view_name in *)
+            (* let () = to_vdcl.Cast.view_equiv_set # push from_view_name in *)
+            let to_view_name = to_vdcl.Cast.view_name in
+            let () = Cast.add_equiv_to_view_decl frm_vdcl keep_sst to_view_name in
+            [to_view_name]
+          else []
+    else []
+  in
+  let rec to_vdcls_iter vdcls acc =
+    match vdcls with
+    | [] -> acc
+    | v::rest -> 
+      let eq_views = check_equiv frm_vdcl v in
+      if eq_views = [] || all then
+        to_vdcls_iter rest (acc@eq_views)
+      else
+        eq_views
+  in
+  let () = x_tinfo_hp (add_str "frm vdecl" pr_id) frm_vdcl.Cast.view_name no_pos in
+  let eq_views = to_vdcls_iter to_vdcls [] in
+  List.map (fun vn -> (frm_vdcl.Cast.view_name, vn)) eq_views
+
+let norm_reuse_one_frm_view iprog prog ?(all=true) cur_equivs frm_vdecl (to_vdecls: C.view_decl list)=
+  let pr1 = Cprinter.string_of_view_decl_short in
+  let pr2 = pr_list pr1 in
+  let pr_out = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_2 "norm_reuse_one_frm_view" pr1 pr2 pr_out
+    (fun _ _-> norm_reuse_one_frm_view iprog prog ~all:all cur_equivs frm_vdecl to_vdecls)
+    frm_vdecl to_vdecls
+
+(* change body of view to equiv *)
+let norm_reuse_mk_eq iprog prog edefs =
+  List.iter (fun e -> 
+      if e.C.view_equiv_set # is_empty then ()
+      else 
+        let name = e.C.view_name in
+        let (sst,to_n) = e.C.view_equiv_set # get in
+        let args = e.C.view_vars in
+        let new_args = CF.trans_args sst args in
+        let () = y_ninfo_hp (add_str "TBI: view" Cprinter.string_of_view_decl_short) e in
+        let () = y_ninfo_hp (add_str "TBI: from" (pr_pair pr_id !CP.print_svl)) (name,args) in
+        let () = y_ninfo_hp (add_str "TBI: to" (pr_pair pr_id !CP.print_svl)) (to_n,new_args) in
+        let self_node = CP.SpecVar (Named name, Globals.self, Unprimed) in
+        let view_node = CF.mkViewNode self_node to_n new_args no_pos in
+        let view_body = CF.set_flow_in_formula_override 
+            { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
+            (CF.formula_of_heap view_node no_pos) 
+        in
+        let () = y_tinfo_hp (add_str "view_body" !CF.print_formula) view_body in
+        let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+        let view_struc = CF.formula_to_struc_formula new_view_body in
+        let () = y_tinfo_hp (add_str "view_body(new)" !CF.print_formula) new_view_body in
+        let () = y_tinfo_hp (add_str "view_struc(new)" !CF.print_struc_formula) view_struc in
+        (* let new_view = Typeinfer.create_view iprog name args view_body in *)
+        (* let () = y_tinfo_hp (add_str "new view" Cprinter.string_of_view_decl) new_view in *)
+        let () = y_tinfo_hp (add_str "old view" Cprinter.string_of_view_decl) e in
+        let () = C.update_un_struc_formula_one view_body e in
+        let () = C.update_view_formula (fun _ -> view_struc) e in
+        let () = C.update_view_raw_base_case (fun _ -> view_body) e in
+        let () = y_tinfo_hp (add_str "updated view" Cprinter.string_of_view_decl) e in
+        ()
+    ) edefs
+
+let uses_views_fn fn eq_lst f = (* does f uses views from eq_lst? *) 
+  if eq_lst ==[] then []
+  else 
+    let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in
+    (BList.intersect_eq fn eq_lst p_lst) 
+
+let uses_views_set eq_lst f = uses_views_fn string_eq eq_lst f
+
+let uses_views eq_lst f = (* does f uses views from eq_lst? *) 
+  (uses_views_set eq_lst f)!=[]
+
+let norm_unfold iprog cprog 
+    vdefs  (* all views *)
+    (to_vns:ident list) (* pred to transform *) =
+  let unfold_set0 = C.get_unfold_set vdefs (* set of unfoldable views *) in
+  (* let unfold_set = List.map (fun (m,vd) -> m) unfold_set0 in *)
+  let uses_unfold_set f = uses_views_fn 
+      (fun (m,_,_) m2 -> string_eq m m2) unfold_set0 f in
+  let vdefs = List.filter (fun vd -> 
+      let n = vd.C.view_name in
+      List.exists (fun vn -> string_eq vn n) to_vns
+    ) vdefs in
+  let ans = List.map (fun vd -> (vd,uses_unfold_set vd.C.view_un_struc_formula)) vdefs in
+  let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
+  let pr_vn v = v.C.view_name in
+  let pr2 (v,_,f) = (pr_pair pr_id !CF.print_formula) (v,f) in
+  let () = y_binfo_hp (add_str "views selected for unfolding"
+                         (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
+  List.iter (fun (v,unf_lst) -> (* transform body of views *)
+      let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in
+      let view_body_lbl = v.C.view_un_struc_formula in
+      let old_sf = v.C.view_formula in
+      let view_body = CF.convert_un_struc_to_formula view_body_lbl in
+      let args = v.C.view_vars in
+      (* struc --> better to re-transform it *)
+      let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+      let view_struc = CF.formula_to_struc_formula new_view_body in
+      let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
+      let () = C.update_view_formula (fun _ -> view_struc) v in
+      (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
+      ()
+    ) ans
+
+
+
+let norm_reuse_subs iprog cprog vdefs to_vns =
+  let equiv_set = C.get_all_view_equiv_set vdefs in
+  let eq_lst = List.map (fun (m,_) -> m) equiv_set in
+  let in_equiv_set n = List.exists (string_eq n) eq_lst in 
+  let uses_eq_view f = uses_views eq_lst f
+      (* f uses views from eq_lst? *) 
+    (* if eq_lst ==[] then false *)
+    (* else  *)
+    (*   let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in *)
+    (*   (BList.intersect_eq string_eq eq_lst p_lst) != [] *)
+  in
+  let vdefs = List.filter (fun vd -> 
+      let n = vd.C.view_name in
+      List.exists (fun vn -> string_eq vn n) to_vns
+    ) vdefs in
+  let (edefs,vdefs) = List.partition 
+      (fun vd -> vd.C.view_equiv_set # is_avail) vdefs in
+  let to_decls = List.filter (fun vdcl ->
+      uses_eq_view vdcl.C.view_un_struc_formula) vdefs in
+  let find_f name = 
+    try
+      let (m,ans) = List.find (fun (m,_) -> string_eq m name) equiv_set in
+      Some ans
+    with _ -> None
+  in
+  let () = y_tinfo_hp (add_str "equiv_set" (pr_list (pr_pair pr_id (pr_pair pr_none pr_id)))) equiv_set in
+  let () = y_tinfo_hp (add_str "to_decls" (pr_list Cprinter.string_of_view_decl_short)) to_decls in
+  let () = norm_reuse_mk_eq iprog cprog edefs in
+  List.iter (fun v -> (* transform body of views *)
+      let () = C.update_un_struc_formula (x_add CF.repl_equiv_formula find_f) v in
+      let () = C.update_view_formula (x_add CF.repl_equiv_struc_formula find_f) v in
+      let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in
+      ()
+    ) to_decls
+
+(*
+ assume frm_vns and to_vns are topo sorted
+*)
+let norm_reuse iprog cprog vdefs frm_vns to_vns=
+  (*filter vdefs to keep order*)
+  let () = y_tinfo_hp (add_str "norm_reuse (from_vns)" (pr_list pr_id)) frm_vns in
+  let () = y_tinfo_hp (add_str "norm_reuse (to_vns)" (pr_list pr_id)) to_vns in
+  let frm_vdcls = List.filter (fun vdcl ->
+      List.exists (fun vn -> string_eq vn vdcl.C.view_name) frm_vns
+  ) vdefs in
+  let to_vdcls = List.filter (fun vdcl ->
+      List.exists (fun vn -> string_eq vn vdcl.C.view_name) to_vns
+  ) vdefs in
+  List.fold_left (fun acc frm_vdcl ->
+      let new_eqs = norm_reuse_one_frm_view iprog cprog ~all:false acc
+        frm_vdcl to_vdcls in
+      acc@new_eqs
+  ) [] frm_vdcls
+
+let norm_reuse iprog cprog vdefs frm_vns to_vns=
+  let pr1 = pr_list pr_id in
+  let pr2 = pr_list_ln Cprinter.string_of_view_decl in
+  let pr3 = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_3 "norm_reuse" pr2 pr1 pr1 pr3
+    (fun _ _ _ -> norm_reuse iprog cprog vdefs frm_vns to_vns) vdefs frm_vns to_vns
+
+let regex_search reg_id vdefs =
+  match reg_id with
+    | REGEX_LIST ids -> ids
+    | REGEX_STAR -> 
+      let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
+      all_ids
+
+let norm_reuse_rgx iprog cprog vdefs reg_frm_vns reg_to_vns =
+  let frm_vns = regex_search reg_frm_vns vdefs in
+  let to_vns = regex_search reg_to_vns vdefs in
+  norm_reuse iprog cprog vdefs frm_vns to_vns
+
 (***********************************************)
 (********EXTRACT common pattern **********)
 (***********************************************)
@@ -697,6 +955,7 @@ let eq_context (ctx1: CF.context) (ctx2: CF.context): bool =
     Gen.BList.list_setequal_eq  eq_estate es_l1 es_l2
   | _, _ -> false
 
+(* WN : such equality need to take into account inference result too, not just final states *)
 let merge_contexts_x (ctx: CF.list_context): CF.list_context =
   match ctx with
   | FailCtx _        -> ctx

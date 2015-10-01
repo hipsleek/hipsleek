@@ -171,6 +171,7 @@ let rec string_of_typed_var_list l = match l with
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
 
 let string_of_imm imm = match imm with
+  | P.NoAnn -> ""
   | P.ConstAnn(Accs) -> "@A"
   | P.ConstAnn(Imm) -> "@I"
   | P.ConstAnn(Lend) -> "@L"
@@ -682,9 +683,9 @@ and  string_of_struc_formula c = match c with
     let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
     let string_of_continuation = string_of_struc_formula continuation in
     "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
-  | F.EList b ->   List.fold_left  (fun a (l,c)-> 
+  | F.EList b -> "EList" ^ (List.fold_left  (fun a (l,c)-> 
       let l_s = (string_of_spec_label_def l) ^": " in
-      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b
+      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
   (*let sl = if b then "("^(string_of_int (fst l))^",\""^(snd l)^"\"): " else "" in*)
 
 
@@ -786,7 +787,13 @@ let rec string_of_exp = function
             if (need_parenthesis2 e) then ("(" ^ (string_of_exp e) ^ ")")
             else (string_of_exp e)
         ) in
-        "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
+        let newexp = (
+          match idl with 
+            | ["val"] -> "__get_char_(" ^ base_str ^ ")"
+            | _ -> "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
+        ) in
+        newexp
+        (*"__get_char_(" ^ base_str ^ ")" (*^ (concatenate_string_list idl "~~>")*)*)
   | Assign ({exp_assign_op = op;
     exp_assign_lhs = e1;
     exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
@@ -1012,6 +1019,9 @@ let string_of_coerc_decl c =
   ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
   ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
   ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
+
+let string_of_coercion c = string_of_coerc_decl c
+
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
   | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name

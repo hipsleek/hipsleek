@@ -1,0 +1,41 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x, node y).
+
+lemma_unsafe 
+  self::app2<y> -> self::node<_,q>*U(q,y).
+
+infer [U,@classic] self::node<_,null> |- self::node<_,q>*U(q,y).
+print residue.
+
+
+
+/*
+# ex21b1.ss
+
+infer [U,@classic] self::node<_,null> |- self::node<_,q>*U(q,y).
+print residue.
+
+# can we use a diff message than UnmatchedRHSData?
+
+Residue:
+ <1>emp&Anon_17=Anon_16 & q=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&q=null --> U(q,y)&true]
+[[ Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
+
+
+
+
+*/
