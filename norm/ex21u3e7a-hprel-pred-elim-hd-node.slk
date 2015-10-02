@@ -46,14 +46,13 @@ checkentail x::dp1<> |- x::dp<>.
 
 checkentail x::app4<> |- x::tmp_app4<>.
 
-
-
-
-
 checkentail x::app4<> |- x::tmp_app4<>.
 
 
 checkentail x::app4<> |- x::tmp_app4a<>.
+print residue.
+
+checkentail x::app4<> |- x::dp1<>.
 print residue.
 
 
@@ -67,6 +66,8 @@ lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
 lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
 
 lemma_test "L3" self::tmp_app4<> <-> self::tmp_app4a<>.
+
+//lemma_test "L6" self::app4<> -> self::dp<>.
 
 
 //print views.

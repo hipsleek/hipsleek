@@ -3879,7 +3879,7 @@ let smart_view_name_equiv view_decls vl vr =
         else 
           let (sst,new_name) =  (vdef2.view_equiv_set # get) in
           if new_name = vl_name then 
-            let msg = "Using equiv "^vl_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+            let msg = "Using equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
             let () = y_winfo_pp msg in
             let new_vr = get_view_equiv vl sst new_name in
             Some (vl,new_vr)
@@ -3887,7 +3887,7 @@ let smart_view_name_equiv view_decls vl vr =
       else if vdef2.view_equiv_set # is_empty then
         let (sst,new_name) =  (vdef1.view_equiv_set # get) in
         if new_name = vr_name then 
-          let msg = "Using equiv "^vr_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let msg = "Using equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
           let () = y_winfo_pp msg in
           let new_vl = get_view_equiv vr sst new_name in
           Some (new_vl,vr)
@@ -3896,7 +3896,9 @@ let smart_view_name_equiv view_decls vl vr =
         let (sst_l,new_l_name) =  (vdef1.view_equiv_set # get) in
         let (sst_r,new_r_name) =  (vdef2.view_equiv_set # get) in
         if new_l_name = new_r_name then 
-          let () = y_winfo_pp "double equiv" in
+          let msg1 = "Double equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+          let msg2 = "\nUsing equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let () = y_winfo_pp (msg1^msg2) in
           let new_vl = get_view_equiv vl sst_l new_l_name in
           let new_vr = get_view_equiv vr sst_r new_r_name in
           Some (new_vl,new_vr)
