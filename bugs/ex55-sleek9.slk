@@ -30,3 +30,23 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
 //lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n = a + b.
 	
 
+/*
+# ex55.slk --new-lemma-unfold
+
+ lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
+
+# Why did it cause problem below?
+
+ERROR: at ex55-sleek9.slk_28:30_28:67
+Message: malfunction with float out exp: n-1
+Exception(linearize_heap(dup)):Failure("malfunction with float out exp: n-1")
+Exception(linearize_formula):Failure("malfunction with float out exp: n-1")
+Exception(trans_formula):Failure("malfunction with float out exp: n-1")
+Exception(manage_unsafe_lemmas):Failure("malfunction with float out exp: n-1")
+Exception(process_list_lemma_helper):Failure("malfunction with float out exp: n-1")
+Exception(process_list_lemma):Failure("malfunction with float out exp: n-1")
+
+Exception processed: Failure("malfunction with float out exp: n-1")
+error at: 
+SLEEK FAILURE (END)
+*/

@@ -236,14 +236,14 @@ let unfold_body_lemma iprog ldef ulst =
       ldef
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
-let process_one_lemma iprog cprog ldef =
+let process_one_lemma unfold_flag iprog cprog ldef =
   let pr = Iprinter.string_of_coerc_decl      in
   (* let () = y_tinfo_pp "unfold RHS of lemma" in *)
   (* let () = y_tinfo_hp (add_str "lemma" Iprinter.string_of_coerc_decl) ldef in *)
   let vdefs = Cprinter.get_sorted_view_decls () in
   let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
   (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
-  let ldef = unfold_body_lemma iprog ldef ulst in
+  let ldef = if unfold_flag then unfold_body_lemma iprog ldef ulst else ldef in
   (* let () = y_tinfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in *)
   (* let () = y_tinfo_hp (add_str "cbody" !CF.print_formula) cbody in *)
   (* let () = y_tinfo_hp (add_str "cbody_uf" !CF.print_formula) cbody_uf in *)
@@ -264,9 +264,9 @@ let process_one_lemma iprog cprog ldef =
 
 
 (* ilemma repo ----> (left coerc list, right coerc list, typ, name) *)
-let process_one_repo repo iprog cprog = 
+let process_one_repo unfold_flag repo iprog cprog = 
   List.map (fun ldef -> 
-      let l2r,r2l,typ = process_one_lemma iprog cprog ldef in
+      let l2r,r2l,typ = process_one_lemma unfold_flag iprog cprog ldef in
       (l2r,r2l,typ,(ldef.I.coercion_name))
     ) repo
 
@@ -286,8 +286,8 @@ let verify_one_repo lems cprog =
   res
 
 (* update store with given repo without verifying the lemmas *)
-let manage_unsafe_lemmas_new ?(force_pr=false) ?(vdefs=[]) repo iprog cprog  =
-  let lems = process_one_repo repo iprog cprog in
+let manage_lemmas_x(* _new *) ?(unfold_flag=true) ?(force_pr=false) ?(vdefs=[]) repo iprog cprog  =
+  let lems = process_one_repo unfold_flag repo iprog cprog in
   let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
   let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
   (* let vdefs = Cprinter.get_sorted_view_decls () in *)
@@ -304,7 +304,7 @@ let manage_unsafe_lemmas_new ?(force_pr=false) ?(vdefs=[]) repo iprog cprog  =
   lems
 
 let manage_unsafe_lemmas ?(force_pr=false) repo iprog cprog : (CF.list_context list option) =
-  let (_:'a list) = manage_unsafe_lemmas_new ~force_pr:force_pr repo iprog cprog in 
+  let (_:'a list) = manage_lemmas_x(* _new *) ~unfold_flag:false ~force_pr:force_pr repo iprog cprog in 
   None
 
 let manage_unsafe_lemmas ?(force_pr=false) repo iprog cprog: (CF.list_context list option) =
@@ -318,7 +318,7 @@ let update_store_with_repo ?(vdefs=[]) repo iprog cprog =
   (* let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in *)
   (* let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in *)
   (* let () = Lem_store.all_lemma # add_coercion left right in *)
-  let lems = manage_unsafe_lemmas_new ~vdefs:vdefs ~force_pr:false repo iprog cprog in
+  let lems = manage_lemmas_x ~vdefs:vdefs ~force_pr:false repo iprog cprog in
   let (invalid_lem, lctx) =  verify_one_repo lems cprog in
   (invalid_lem, lctx)
 
