@@ -44,8 +44,10 @@ checkentail x::dp<> |- x::dp1<>.
 
 checkentail x::dp1<> |- x::dp<>.
 
-
 checkentail x::app4<> |- x::tmp_app4<>.
+
+
+
 
 
 checkentail x::app4<> |- x::tmp_app4<>.
