@@ -1882,6 +1882,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              {m_res with match_res_lhs_node = ViewNode vl;
                          match_res_rhs_node = ViewNode vr},vl,vr 
          in
+         let () = y_tinfo_hp (add_str "\nVIEW vs VIEW (after view_equiv)" (pr_pair pr pr)) (vl,vr) in
          (* let vr_name = vr.h_formula_view_name in *)
          (* let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in *)
          (* let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in *)

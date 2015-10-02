@@ -3879,17 +3879,17 @@ let smart_view_name_equiv view_decls vl vr =
         else 
           let (sst,new_name) =  (vdef2.view_equiv_set # get) in
           if new_name = vl_name then 
-            let msg = "Using equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+            let msg = "Using equiv "^vl_name^" <-> "^(vdef2.view_equiv_set # string_of) in
             let () = y_winfo_pp msg in
-            let new_vr = get_view_equiv vr sst new_name in
+            let new_vr = get_view_equiv vl sst new_name in
             Some (vl,new_vr)
           else None
       else if vdef2.view_equiv_set # is_empty then
         let (sst,new_name) =  (vdef1.view_equiv_set # get) in
         if new_name = vr_name then 
-          let msg = "Using equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let msg = "Using equiv "^vr_name^" <-> "^(vdef1.view_equiv_set # string_of) in
           let () = y_winfo_pp msg in
-          let new_vl = get_view_equiv vl sst new_name in
+          let new_vl = get_view_equiv vr sst new_name in
           Some (new_vl,vr)
         else None
       else 
@@ -3902,7 +3902,17 @@ let smart_view_name_equiv view_decls vl vr =
           Some (new_vl,new_vr)
         else None
     with _ -> None
-  in (vdef1,vdef2,vl_name,vr_name,ans)
+  in
+  let vdef1,vdef2,vl_name,vr_name = match ans with
+    | None -> vdef1,vdef2,vl_name,vr_name
+    | Some (vl,vr) ->
+          let vl_name = vl.h_formula_view_name in
+          let vr_name = vr.h_formula_view_name in
+          let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
+          let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+          vdef1, vdef2,vl_name,vr_name
+  in
+  (vdef1,vdef2,vl_name,vr_name,ans)
 
 let get_view_name_equiv view_decls vl =
   let vname = vl.h_formula_view_name in

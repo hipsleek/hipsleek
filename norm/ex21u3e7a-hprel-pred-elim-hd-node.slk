@@ -41,19 +41,23 @@ pred_reuse[*][*].
 
 
 checkentail x::dp<> |- x::dp1<>.
-//checkentail x::dp1<> |- x::dp<>.
 
-//checkentail x::app4<> |- x::tmp_app4<>.
+checkentail x::dp1<> |- x::dp<>.
 
-
-//checkentail x::app4<> |- x::tmp_app4<>.
+checkentail x::app4<> |- x::tmp_app4<>.
 
 
-//checkentail x::app4<> |- x::tmp_app4a<>.
+
+
+
+checkentail x::app4<> |- x::tmp_app4<>.
+
+
+checkentail x::app4<> |- x::tmp_app4a<>.
 print residue.
 
 
-/*
+
 lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
 
 lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
@@ -63,7 +67,7 @@ lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
 lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
 
 lemma_test "L3" self::tmp_app4<> <-> self::tmp_app4a<>.
-*/
+
 
 //print views.
 
