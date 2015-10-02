@@ -38,17 +38,14 @@ pred_unfold[*].
 pred_reuse[*][*].
 
 lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
-// fails cos tmp_app4 not unfolded
 
-lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
-// fails because dp not normalized
+//lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
 
-lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
-// fails cos tmp_app4a not unfolded
+//lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
 
-lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
+//lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
 
-print views.
+//print views.
 
 //pred_reuse[*][*].
 
@@ -56,11 +53,15 @@ print views.
 
 
 /*
-# ex21u3e7.slk
+# ex21u3e7a.slk --new-view-equiv
 
+PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(dp1,dp),(tmp_app4a,tmp_app4a),(app4,tmp_app4)]
 
-# pred_reuse caused lemma proving problem later..
+# --new-view-equiv causing LOOPING problem..
 
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+
+!!! **hipUtil.ml#79:unfold tmp_app4 in 
 !!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
 !!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
 !!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
@@ -69,32 +70,7 @@ print views.
 !!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
 !!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
 !!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
-!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
 
-lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
-
-# Why app4 <-> tmp_app4 fails, when L3 succeeded?
-
-PRED REUSE FOUND:[(dp,dp),(dp1,dp),(tmp_app4a,tmp_app4a),
-   (app4,app4),(tmp_app4,tmp_app4a)]
-
-!!! **lemma.ml#226:unfold RHS of lemma
-!!! **hipUtil.ml#79:unfold tmp_app4a in 
-!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
-!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
-!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
-!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
-!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
-!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
-!!! 
-Entailing lemma tmp_941: Fail. Details below:
-
-!!! **norm.ml#192:
- Failed : self::app4<>@M&{FLOW,(1,26)=__flow#E}[] <->  self::tmp_app4a<>@M&{FLOW,(1,26)=__flow#E}[]
-
-
-
-//PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(app4,tmp_app4)]
 
 
 */

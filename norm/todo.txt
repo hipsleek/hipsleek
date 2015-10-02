@@ -624,7 +624,7 @@ SCC:[[dp];[dp1];[tmp_app4a];[app4];[tmp_app4]]
 PRED REUSE FOUND:[(dp1,dp1),(app4,app4),(tmp_app4a,tmp_app4a),(tmp_app4,tmp_app4),(dp,dp1)]
 
 ===================================================================
-# ex21u3e7.slk
+# ex21u3e7.slk (FIXED)
 
 lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
 
@@ -643,6 +643,24 @@ p: (* lbl: *){5}->self::node<Anon_15,p>@M * p::dp1<>@M&
 p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
 {FLOW,(1,26)=__flow#E}[]))]
 ===================================================================
+# ex21u3e7a.slk --new-view-equiv
+
+PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(dp1,dp),(tmp_app4a,tmp_app4a),(app4,tmp_app4)]
+
+# --new-view-equiv causing LOOPING problem..
+
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+
+!!! **hipUtil.ml#79:unfold tmp_app4 in 
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+
 ===================================================================
 ===================================================================
 ===================================================================
