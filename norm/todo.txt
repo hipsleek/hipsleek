@@ -624,6 +624,24 @@ SCC:[[dp];[dp1];[tmp_app4a];[app4];[tmp_app4]]
 PRED REUSE FOUND:[(dp1,dp1),(app4,app4),(tmp_app4a,tmp_app4a),(tmp_app4,tmp_app4),(dp,dp1)]
 
 ===================================================================
+# ex21u3e7.slk
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+
+# unfolding RHS self::tmp_app4a<> will allow lemma
+  proving to succeed.
+
+!!! **lemma.ml#218:unfold RHS of lemma
+!!! **lemma.ml#220:ldef:
+<=>coerc L3
+	 head: (emp ; (emp ; (self::app4{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)
+	 body:(emp ; (emp ; (self::tmp_app4a{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)testing lemmas
+!!! **lemma.ml#224:unfold_lst:
+[(tmp_app4a,[], (* lbl: *){5}->(exists Anon_15,
+p: (* lbl: *){5}->self::node<Anon_15,p>@M * p::dp1<>@M&
+{FLOW,(1,26)=__flow#E}[])),(tmp_app4,[], (* lbl: *){6}->(exists Anon_14,
+p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
+{FLOW,(1,26)=__flow#E}[]))]
 ===================================================================
 ===================================================================
 ===================================================================
