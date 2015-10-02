@@ -26,7 +26,7 @@ void* alloca(int size) __attribute__ ((noreturn))
 /*** Pointer Arithmetic ***/
 /**************************/
 int lt___(int* p, int* q)
-/*@
+/*
   requires p::int*<vp, op> * q::int*<vq, oq>
   case {
     op <  oq -> ensures p::int*<vp, op> * q::int*<vq, oq> & res > 0;
