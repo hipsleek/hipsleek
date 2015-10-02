@@ -7458,25 +7458,27 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist 
     prR linearize_formula_x prog f0 tlist
 
-and match_exp tlist f0 (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
-  let pos = IF.pos_of_formula f0 in
+and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
+  let pos = no_pos in 
+  (* IF.pos_of_formula f0 in *)
   let rec aux hargs =
     match hargs with
     | (e, _) :: rest ->
+      let str = (Iprinter.string_of_formula_exp e) in
       let e_hvars = match e with
         | IP.Var ((ve, pe), pos_e) ->   [CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)]
         | IP.AConst (a, pos_e )    -> [CP.imm_to_view_arg a]
         (* | IP.Ann_Exp (IP.AConst ((ve, pe), pos_e ), t, _) -> CP *)
         | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, l) -> [CP.sv_to_view_arg (trans_var_safe (ve, pe) t tlist pos_e)] (*annotated self*)
         | IP.Bptriple ((ec,et,ea), pos_e) ->
+          (* WN: what is Bptriple? *)
           let apply_one e =
             (match e with
              | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)
-             | _ -> report_error (* (IF.pos_of_formula f0) *) pos ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0)))
+             | _ -> report_error (* (IF.pos_of_formula f0) *) pos ("linearize_formula : match_exp : Expecting Var in Bptriple "^(str(* Iprinter.string_of_formula f0 *))))
           in
           List.map apply_one [ec;et;ea]
-        | _ -> let s = (Iprinter.string_of_formula_exp e) in
-          report_error pos (* (IF.pos_of_formula f0) *) ("malfunction with float out exp: "^s) in
+        | _ ->  report_error pos (* (IF.pos_of_formula f0) *) ("malfunction with float out exp: "^str) in
       (* (Iprinter.string_of_formula f0))in *)
       let rest_hvars = aux rest in
       let hvars = e_hvars @ rest_hvars in
@@ -7486,7 +7488,7 @@ and match_exp tlist f0 (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
   : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
-  let match_exp hargs = match_exp tlist f0 hargs in
+  let match_exp hargs = match_exp tlist hargs in
   (* let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.view_arg list) = *)
   (*   match hargs with *)
   (*   | (e, _) :: rest -> *)
