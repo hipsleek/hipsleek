@@ -729,7 +729,7 @@ let process_list_lemma ldef_lst  =
 (*   | Some(c::_) -> CF.set_residue true c *)
 
 let process_list_lemma ldef_lst =
-  Debug.no_1 "process_list_lemma" pr_none pr_none process_list_lemma  ldef_lst
+  Debug.no_1 "process_list_lemma" !I.print_coerc_decl_list pr_unit process_list_lemma  ldef_lst
 
 let process_data_def ddef =
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then

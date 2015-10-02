@@ -213,13 +213,21 @@ let generate_lemma_4_views iprog cprog=
 
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
-let process_one_lemma iprog cprog ldef = 
+let process_one_lemma iprog cprog ldef =
+  let pr = Iprinter.string_of_coerc_decl      in
+  let () = y_binfo_pp "unfold RHS of lemma" in
+  (* let () = y_binfo_hp (add_str "lemma" Iprinter.string_of_coerc_decl) ldef in *)
+  let () = y_binfo_hp (add_str "ldef" pr) ldef in
+  let vdefs = Cprinter.get_sorted_view_decls () in
+  let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
+  (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
+
+  (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let pr = Cprinter.string_of_coerc_decl_list in
-  let () = y_binfo_hp (add_str "lemma" Iprinter.string_of_coerc_decl) ldef in
   let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
-  let () = y_binfo_hp (add_str "l2r" pr) l2r in
-  let () = y_binfo_hp (add_str "r2l" pr) r2l in
+  (* let () = y_binfo_hp (add_str "l2r" pr) l2r in *)
+  (* let () = y_binfo_hp (add_str "r2l" pr) r2l in *)
   let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) l2r) in
   let r2l = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) r2l) in
   let () = if (!Globals.print_input || !Globals.print_input_all) then 
