@@ -1869,15 +1869,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          src
        | HVar _, HVar _ -> (1, M_match m_res)
        | ViewNode vl, ViewNode vr -> 
-         pr_debug "VIEW vs VIEW\n";
+         let pr v = v.h_formula_view_name in
+         let () = y_tinfo_hp (add_str "\nVIEW vs VIEW" (pr_pair pr pr)) (vl,vr) in
          (* let l1 = [(1,M_base_case_unfold m_res)] in *)
-         let (vl_name,vl_vdef,vl,flag1) = Cast.get_view_name_equiv view_decls vl in
-         let (vr_name,vr_vdef,vr,flag2) = Cast.get_view_name_equiv view_decls vr in
+         let (vl_vdef,vr_vdef,vl_name,vr_name,ans) = Cast.smart_view_name_equiv view_decls vl vr in
+         (* let (vl_name,vl_vdef,vl,flag1) = Cast.get_view_name_equiv view_decls vl in *)
+         (* let (vr_name,vr_vdef,vr,flag2) = Cast.get_view_name_equiv view_decls vr in *)
          (* WN : changing m_res to use view_equiv_set *)
-         let m_res = if flag1 || flag2 then 
+         let m_res,vl,vr = match ans with
+           | None -> m_res,vl,vr
+           | Some (vl,vr) -> 
              {m_res with match_res_lhs_node = ViewNode vl;
-                     match_res_rhs_node = ViewNode vr} 
-           else m_res 
+                         match_res_rhs_node = ViewNode vr},vl,vr 
          in
          (* let vr_name = vr.h_formula_view_name in *)
          (* let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in *)

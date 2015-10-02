@@ -3864,6 +3864,46 @@ let update_view_decl prog vdecl =
 let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
   frm_vdecl.view_equiv_set # set (keep_sst,to_view)
 
+let smart_view_name_equiv view_decls vl vr =
+  let vl_name = vl.h_formula_view_name in
+  let vr_name = vr.h_formula_view_name in
+  let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
+  let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+  let ans = try
+      if !Globals.old_view_equiv then None
+      else 
+      if vl_name=vr_name then None
+      else 
+      if vdef1.view_equiv_set # is_empty then
+        if vdef2.view_equiv_set # is_empty then None
+        else 
+          let (sst,new_name) =  (vdef1.view_equiv_set # get) in
+          if new_name = vr_name then 
+            let msg = "Using equiv "^vl_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+            let () = y_winfo_pp msg in
+            let new_vl = get_view_equiv vl sst new_name in
+            Some (new_vl,vr)
+          else None
+      else if vdef1.view_equiv_set # is_empty then
+        let (sst,new_name) =  (vdef2.view_equiv_set # get) in
+        if new_name = vl_name then 
+          let msg = "Using equiv "^vr_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let () = y_winfo_pp msg in
+          let new_vr = get_view_equiv vr sst new_name in
+          Some (vl,new_vr)
+        else None
+      else 
+        let (sst_l,new_l_name) =  (vdef1.view_equiv_set # get) in
+        let (sst_r,new_r_name) =  (vdef2.view_equiv_set # get) in
+        if new_l_name = new_r_name then 
+          let () = y_winfo_pp "double equiv" in
+          let new_vl = get_view_equiv vl sst_l new_l_name in
+          let new_vr = get_view_equiv vr sst_r new_r_name in
+          Some (new_vl,new_vr)
+        else None
+    with _ -> None
+  in (vdef1,vdef2,vl_name,vr_name,ans)
+
 let get_view_name_equiv view_decls vl =
   let vname = vl.h_formula_view_name in
   let vdef = look_up_view_def_raw 25 view_decls vname in
