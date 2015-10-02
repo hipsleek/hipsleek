@@ -1658,3 +1658,13 @@ let create_view (iprog:I.prog_decl) (id:ident) (vs:CP.spec_var list) (f:CF.formu
   let iview = Iast.mk_iview_decl ~v_kind:View_NORM id "" vs_ident f no_pos in
   let cview = !trans_view iprog [] [] [] iview in
   cview
+
+
+let trans_iformula_to_cformula iprog body =
+  let tlist = [] in
+  let quantify = true in
+  let clean_res = false in
+  let sep_collect = true in
+  let fvars = [] in
+  let (sv,nbody) = !trans_formula iprog quantify (fvars : ident list) sep_collect body tlist clean_res in
+  nbody

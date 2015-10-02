@@ -58,6 +58,19 @@ print views.
 /*
 # ex21u3e7.slk
 
+
+# pred_reuse caused lemma proving problem later..
+
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+
 lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
 
 # Why app4 <-> tmp_app4 fails, when L3 succeeded?

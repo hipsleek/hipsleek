@@ -3955,4 +3955,8 @@ let repl_unfold_lemma u_lst lem =
   lem
   (* failwith x_tbi *)
 
+let get_lemma_cprog cdefs =
+  let lst = List.map (fun d -> d.coercion_name) cdefs in
+  let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
+  ()
 

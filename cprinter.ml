@@ -5675,3 +5675,8 @@ let get_sorted_view_decls () =
   let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in
   !cprog.Cast.prog_view_decls <- vdefs;
   vdefs
+
+(* let get_coercion_lemmas () = *)
+(*   let cdefs = Cast.sort_view_list !cprog.Cast.prog_coercion_decls in *)
+(*   get_lemma_cprog cdefs; *)
+(*   cdefs *)

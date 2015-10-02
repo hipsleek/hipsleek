@@ -38,7 +38,11 @@ pred dp1<> ==
   inv true.
 
 print views.
+pred_reuse[*][*].
 pred_unfold [*].
+pred_reuse[*][*].
+
+lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
 
 print views.
 
