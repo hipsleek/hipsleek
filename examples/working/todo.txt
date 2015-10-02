@@ -1855,24 +1855,10 @@ Total verification time: 132.92 second
 	Number of false contexts: 99
 ====================================================================
 -flags "--new-lemma-unfold"
-
-Total number of errors: 15 in files:
-  sleek9.slk(no result  for {E}) 
-  inflem.slk(no result  for {E}) 
-  lemmas/sort2.slk({L10#Valid},{L2#Valid},{L3#Valid},{L4#Valid},{L5#Valid},{L6#Fail},{L7#Valid},{L8#Valid},{L9#Fail}) 
-  lemmas/lemma-fold.slk(no result  for {E}) 
-  lemmas/app-tail.slk(no result  for {E}) 
-  lemmas/ll_tail.slk(no result  for {E}) 
-  lemmas/nlseg3.slk(no result  for {E}) 
-  lemmas/nlseg4e1.slk({E2#Valid},{E3#Valid},{E4#Fail},{E8#Valid}) 
-  lemmas/sll_tailL.slk({L2#Valid}) 
+T
   lemmas/dseg-new.slk({L2#Fail}) 
-  fracperm/split_simple.slk(no result  for {E}) 
-  fracperm/split-combine.slk(no result  for {E}) 
-  veribsync/bperm-split-combine.slk(no result  for {E}) 
-  veribsync/barrier-static.slk(no result  for {E}) 
-  veribsync/barrier-dynamic2.slk(no result  for {E}).
-!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+  fracperm/split_simple.slk({E1#Valid},{E3#Valid}) 
+  fracperm/split-combine.slk({E13#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================

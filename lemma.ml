@@ -212,15 +212,19 @@ let generate_lemma_4_views iprog cprog=
 (* Below are methods used for lemma transformation (ilemma->lemma), lemma proving and lemma store update *)
 
 let unfold_body_lemma iprog ldef ulst =
-  if !Globals.old_lemma_unfold then ldef
+  if !Globals.old_lemma_unfold || ulst==[] then ldef
   else
-    let pr = Iprinter.string_of_coerc_decl      in
-    let body = ldef.Iast.coercion_body in
-    (* let () = y_binfo_hp (add_str "ldef" pr) ldef in *)
-    let cbody = Typeinfer.trans_iformula_to_cformula iprog body in
-    let cbody_uf = CF.repl_unfold_formula "" ulst cbody in
-    let ibody_uf = !CF.rev_trans_formula cbody_uf in
-    { ldef with Iast.coercion_body = ibody_uf }
+    try
+      let pr = Iprinter.string_of_coerc_decl      in
+      let body = ldef.Iast.coercion_body in
+      (* WN: collect heap views to see if overlaps with unfold set *)
+      let fvars = IF.all_fv body in
+      (* let () = y_binfo_hp (add_str "ldef" pr) ldef in *)
+      let cbody = Typeinfer.trans_iformula_to_cformula iprog body in
+      let cbody_uf = CF.repl_unfold_formula "" ulst cbody in
+      let ibody_uf = !CF.rev_trans_formula cbody_uf in
+      { ldef with Iast.coercion_body = ibody_uf }
+    with _ -> ldef
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
 let process_one_lemma iprog cprog ldef =

@@ -821,7 +821,7 @@ and get_hprel_svl_hf (f0:h_formula):(ident*primed) list =
   in
   helper f0
 
-and heap_fv_one_formula ?(vartype=Global_var.var_with_none) (f:one_formula):(ident*primed) list =  (h_fv ~vartype:vartype f.formula_heap)
+and heap_fv_one_formula ?(vartype =Global_var.var_with_none) (f:one_formula):(ident*primed) list =  (h_fv ~vartype:vartype f.formula_heap)
 
 (*TO CHECK: how about formula_and*)
 and heap_fv ?(vartype=Global_var.var_with_none) (f:formula):(ident*primed) list = match f with
