@@ -2349,7 +2349,7 @@ and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef :
   let pr3 = add_str "ann_typs" (pr_list (pr_pair pr_id pr_none)) in
   (* let pr_r = pr_none in  *)
   Debug.no_4 "trans_view" pr pr2 pr2a pr3 pr_r  (fun _ _ _ _ -> trans_view_x prog  mutrec_vnames
-                                       transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
+                                                    transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
@@ -4553,7 +4553,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       (* let m_vars = List.filter (fun m -> m.Cast.mater_target_view!=[]) m_vars in *)
       let m_vars = List.map (fun m -> let vs = m.Cast.mater_target_view in
                               let vs2 = List.filter (fun v -> (is_not_global_rel prog v)
-                                                             &&  (is_not_global_hp_def prog v) ) vs in
+                                                              &&  (is_not_global_hp_def prog v) ) vs in
                               (m,vs,vs2)) m_vars in
       let m_vars = List.filter (fun (m,vs,vs2) -> vs==[] (* no change *) || vs2!=[]) m_vars in
       let m_vars = List.map (fun (m,vs,vs2) -> {m with Cast.mater_target_view = vs2}) m_vars in
@@ -7458,9 +7458,9 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist 
     prR linearize_formula_x prog f0 tlist
 
-and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
-  : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
-  let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.view_arg list) =
+and match_exp tlist f0 (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
+  let pos = IF.pos_of_formula f0 in
+  let rec aux hargs =
     match hargs with
     | (e, _) :: rest ->
       let e_hvars = match e with
@@ -7472,16 +7472,43 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
           let apply_one e =
             (match e with
              | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)
-             | _ -> report_error (IF.pos_of_formula f0) ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0)))
+             | _ -> report_error (* (IF.pos_of_formula f0) *) pos ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0)))
           in
           List.map apply_one [ec;et;ea]
         | _ -> let s = (Iprinter.string_of_formula_exp e) in
-          report_error (IF.pos_of_formula f0) ("malfunction with float out exp: "^s) in
+          report_error pos (* (IF.pos_of_formula f0) *) ("malfunction with float out exp: "^s) in
       (* (Iprinter.string_of_formula f0))in *)
-      let rest_hvars = match_exp rest pos in
+      let rest_hvars = aux rest in
       let hvars = e_hvars @ rest_hvars in
       hvars
-    | [] -> [] in
+    | [] -> [] in 
+  aux hargs
+
+and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
+  : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
+  let match_exp hargs = match_exp tlist f0 hargs in
+  (* let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.view_arg list) = *)
+  (*   match hargs with *)
+  (*   | (e, _) :: rest -> *)
+  (*     let e_hvars = match e with *)
+  (*       | IP.Var ((ve, pe), pos_e) ->   [CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)] *)
+  (*       | IP.AConst (a, pos_e )    -> [CP.imm_to_view_arg a] *)
+  (*       (\* | IP.Ann_Exp (IP.AConst ((ve, pe), pos_e ), t, _) -> CP *\) *)
+  (*       | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, l) -> [CP.sv_to_view_arg (trans_var_safe (ve, pe) t tlist pos_e)] (\*annotated self*\) *)
+  (*       | IP.Bptriple ((ec,et,ea), pos_e) -> *)
+  (*         let apply_one e = *)
+  (*           (match e with *)
+  (*            | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e) *)
+  (*            | _ -> report_error (IF.pos_of_formula f0) ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0))) *)
+  (*         in *)
+  (*         List.map apply_one [ec;et;ea] *)
+  (*       | _ -> let s = (Iprinter.string_of_formula_exp e) in *)
+  (*         report_error (IF.pos_of_formula f0) ("malfunction with float out exp: "^s) in *)
+  (*     (\* (Iprinter.string_of_formula f0))in *\) *)
+  (*     let rest_hvars = match_exp rest in *)
+  (*     let hvars = e_hvars @ rest_hvars in *)
+  (*     hvars *)
+  (*   | [] -> [] in *)
   let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * VarGen.primed) list) = (
     match f with
     | IF.HeapNode {IF.h_formula_heap_node = n;
@@ -7671,7 +7698,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
             (* An Hoa : The rest are copied from the original code with modification to account for the holes *)
             let labels = List.map (fun _ -> LO.unlabelled) exps in
-            let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels) pos) in
+            let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels)) in
             (* [Internal] Create a list [x,x+1,...,x+n-1] *)
             let rec first_naturals n x = 
               if n = 0 then [] 
@@ -7716,7 +7743,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               | Some f -> 
                 let perms = [f] in
                 let permlabels = List.map (fun _ -> LO.unlabelled) perms in
-                let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels) pos) in
+                let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels)) in
                 (match !Globals.perm with
                  | Bperm ->
                    (*Note: ordering is important*)
@@ -7762,7 +7789,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             try (
               let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
               let labels = fst vdef.I.view_labels in
-              let params_orig = match_exp (List.combine exps labels) pos in
+              let params_orig = match_exp (List.combine exps labels) in
               (* andreeac: TODO insert test check map compatib *)
               (* let hvars, labels, annot_params = CP.split_view_args (List.combine params_orig labels) in *)
               let hvars, labels, annot_params, params_orig = x_add_1 Immutable.split_view_args params_orig vdef in 
@@ -7780,7 +7807,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | Some f -> 
                     let perms = f :: [] in
                     let permlabels = List.map (fun _ -> LO.unlabelled) perms in
-                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels) pos) in
+                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels)) in
                     (match !Globals.perm with
                      | Bperm ->
                        (*Note: ordering is important*)
@@ -7818,7 +7845,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             )
             with Not_found ->
               let labels = List.map (fun _ -> LO.unlabelled) exps in
-              let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels) pos) in
+              let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels)) in
               let new_v = CP.SpecVar (Named c, v, p) in
               (* An Hoa : find the holes here! *)
               let rec collect_holes vars n = (match vars with
@@ -7835,7 +7862,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | Some f -> 
                     let perms = f :: [] in
                     let permlabels = List.map (fun _ -> LO.unlabelled) perms in
-                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels) pos) in
+                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels)) in
                     (match !Globals.perm with
                      | Bperm ->
                        (*Note: ordering is important*)
