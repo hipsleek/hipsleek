@@ -3877,20 +3877,20 @@ let smart_view_name_equiv view_decls vl vr =
       if vdef1.view_equiv_set # is_empty then
         if vdef2.view_equiv_set # is_empty then None
         else 
-          let (sst,new_name) =  (vdef1.view_equiv_set # get) in
-          if new_name = vr_name then 
-            let msg = "Using equiv "^vl_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+          let (sst,new_name) =  (vdef2.view_equiv_set # get) in
+          if new_name = vl_name then 
+            let msg = "Using equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
             let () = y_winfo_pp msg in
-            let new_vl = get_view_equiv vl sst new_name in
-            Some (new_vl,vr)
+            let new_vr = get_view_equiv vr sst new_name in
+            Some (vl,new_vr)
           else None
-      else if vdef1.view_equiv_set # is_empty then
-        let (sst,new_name) =  (vdef2.view_equiv_set # get) in
-        if new_name = vl_name then 
-          let msg = "Using equiv "^vr_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+      else if vdef2.view_equiv_set # is_empty then
+        let (sst,new_name) =  (vdef1.view_equiv_set # get) in
+        if new_name = vr_name then 
+          let msg = "Using equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
           let () = y_winfo_pp msg in
-          let new_vr = get_view_equiv vr sst new_name in
-          Some (vl,new_vr)
+          let new_vl = get_view_equiv vl sst new_name in
+          Some (new_vl,vr)
         else None
       else 
         let (sst_l,new_l_name) =  (vdef1.view_equiv_set # get) in
