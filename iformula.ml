@@ -750,26 +750,32 @@ and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list =
                 (* An Hoa : problem detected and fix - name is a 
                    quantified id so that we need to extract the 
                    real information inside *)
+                h_formula_heap_name = vname;
                 h_formula_heap_perm = perm; (*LDK*)
                 h_formula_heap_imm = imm; 
                 h_formula_heap_imm_param = ann_param;
                 h_formula_heap_ho_arguments = ho_b;
                 h_formula_heap_arguments = b} ->
-      let perm_vars = (fv_iperm ()) perm in
-      let imm_vars =  fv_imm imm in
-      let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
-      let imm_vars = if true (* (!Globals.allow_field_ann) *) then imm_vars@prm_ann else imm_vars in
-      let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
-      Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
+      if vartype # is_view_only then [(vname,Unprimed)]
+      else
+        let perm_vars = (fv_iperm ()) perm in
+        let imm_vars =  fv_imm imm in
+        let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
+        let imm_vars = if true (* (!Globals.allow_field_ann) *) then imm_vars@prm_ann else imm_vars in
+        let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
+        Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
     | HeapNode2 { h_formula_heap2_node = name ;
+                  h_formula_heap2_name = vname;
                   h_formula_heap2_perm = perm; (*LDK*)
                   h_formula_heap2_imm = imm;
                   h_formula_heap2_ho_arguments = ho_b;
                   h_formula_heap2_arguments = b}-> 
-      let perm_vars =  (fv_iperm ()) perm in
-      let imm_vars =  fv_imm imm in
-      let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
-      Gen.BList.remove_dups_eq (=)  (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+      if vartype # is_view_only then [(vname,Unprimed)]
+      else
+        let perm_vars =  (fv_iperm ()) perm in
+        let imm_vars =  fv_imm imm in
+        let hvars = List.concat (List.map (fun ff -> heap_fv ff.rflow_base) ho_b) in
+        Gen.BList.remove_dups_eq (=)  (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
     | ThreadNode {h_formula_thread_node = name ;
                   h_formula_thread_perm = perm;
                   h_formula_thread_delayed = dl;
@@ -859,16 +865,16 @@ and struc_case_fv (f:struc_formula): (ident*primed) list =  match f with
 (*TO CHECK: how about formula_and*)
 (* excludes HRel arguments *)
 and unbound_heap_fv (f:formula):(ident*primed) list = heap_fv ~vartype:Global_var.var_with_heap_only f
-  (* match f with *)
-  (* | Base b->  *)
-  (*   let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in *)
-  (*   let hvars = Gen.BList.difference_eq (=) (h_fv ~vartype:vartype b.formula_base_heap) (get_hprel_svl_hf b.formula_base_heap) in *)
-  (*   Gen.BList.remove_dups_eq (=) hvars@avars *)
-  (* | Exists b->  *)
-  (*   let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in *)
-  (*   let hvars = Gen.BList.difference_eq (=) (h_fv b.formula_exists_heap) (get_hprel_svl_hf b.formula_exists_heap) in *)
-  (*   Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars *)
-  (* | Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2)) *)
+(* match f with *)
+(* | Base b->  *)
+(*   let avars = List.concat (List.map heap_fv_one_formula b.formula_base_and) in *)
+(*   let hvars = Gen.BList.difference_eq (=) (h_fv ~vartype:vartype b.formula_base_heap) (get_hprel_svl_hf b.formula_base_heap) in *)
+(*   Gen.BList.remove_dups_eq (=) hvars@avars *)
+(* | Exists b->  *)
+(*   let avars = List.concat (List.map heap_fv_one_formula b.formula_exists_and) in *)
+(*   let hvars = Gen.BList.difference_eq (=) (h_fv b.formula_exists_heap) (get_hprel_svl_hf b.formula_exists_heap) in *)
+(*   Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars *)
+(* | Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2)) *)
 
 and struc_free_vars with_inst (f:struc_formula) :(ident*primed) list= match f with
   | EBase b -> Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) 
@@ -915,17 +921,27 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
   helper f0
 
 
-and all_fv_one_formula (f:one_formula):(ident*primed) list = 
-  Gen.BList.remove_dups_eq (=) ((h_fv f.formula_heap)@(Ipure.fv f.formula_pure))
+and all_fv_one_formula ?(vartype=Global_var.var_with_none) (f:one_formula):(ident*primed) list = 
+  let hvars = h_fv ~vartype:vartype f.formula_heap in
+  let pvars = if vartype # is_heap_only then [] else Ipure.fv f.formula_pure in
+  Gen.BList.remove_dups_eq (=) (hvars@pvars)
 
-and all_fv (f:formula):(ident*primed) list = match f with
-  | Base b->
-    let avars= List.concat (List.map all_fv_one_formula b.formula_base_and) in
-    Gen.BList.remove_dups_eq (=) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure)@avars)
-  | Exists b-> 
-    let avars= (List.concat (List.map all_fv_one_formula b.formula_exists_and)) @(h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure) in
-    Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) avars) b.formula_exists_qvars 
-  | Or b-> Gen.BList.remove_dups_eq (=) ((all_fv b.formula_or_f1)@(all_fv b.formula_or_f2))
+and all_fv ?(vartype=Global_var.var_with_none) (f:formula):(ident*primed) list =
+  let rec aux f =
+    match f with
+    | Base b->
+      let avars = List.concat (List.map (all_fv_one_formula ~vartype:vartype) b.formula_base_and) in
+      let hvars = h_fv ~vartype:vartype b.formula_base_heap in
+      let pvars = if vartype # is_heap_only then [] else Ipure.fv b.formula_base_pure in
+      (* Gen.BList.remove_dups_eq (=) *) (hvars@pvars@avars)
+    | Exists b-> 
+      let avars = List.concat (List.map (all_fv_one_formula ~vartype:vartype) b.formula_exists_and) in
+      let hvars = h_fv ~vartype:vartype b.formula_exists_heap in
+      let pvars = if vartype # is_heap_only then [] else Ipure.fv b.formula_exists_pure in
+      (* let avars= (List.concat (List.map all_fv_one_formula b.formula_exists_and)) @(h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure) in *)
+      Gen.BList.difference_eq (=) ((* Gen.BList.remove_dups_eq (=) *) (avars@hvars@pvars)) b.formula_exists_qvars 
+    | Or b-> (* Gen.BList.remove_dups_eq (=) *) ((aux b.formula_or_f1)@(aux b.formula_or_f2))
+  in Gen.BList.remove_dups_eq (=) (aux f)
 
 and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
   | Base ({ 

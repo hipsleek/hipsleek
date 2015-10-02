@@ -557,7 +557,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident lis
     let scclist = view_scc_obj # get_scc in
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
-    let () = y_binfo_hp (add_str "\n" pr_id) (view_scc_obj # string_of) in
+    let () = y_tinfo_hp (add_str "\n" pr_id) (view_scc_obj # string_of) in
     (* if not(mr==[]) *)
     (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
     (* g *)
@@ -2511,11 +2511,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 let p = MCP.pure_of_mix p in
                 let emap = Infer.get_eqset p in
                 let (_,l_args,l_node_name,_,_,_,_,_) = CF.get_args_of_node h in
-                y_binfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
-                y_binfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
-                y_binfo_hp (add_str "body" (!CF.print_h_formula)) h;
-                y_binfo_hp (add_str "pure" (!CP.print_formula)) p;
-                y_binfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
+                y_tinfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
+                y_tinfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
+                y_tinfo_hp (add_str "body" (!CF.print_h_formula)) h;
+                y_tinfo_hp (add_str "pure" (!CP.print_formula)) p;
+                y_tinfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
               end
             | _ -> ()
           end
@@ -3023,7 +3023,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         (*   cviews0 *)
       in
       (* let () = (\* if !Globals.gen_baga_inv then *\) ( *)
-      (*   x_binfo_pp "end gen baga\n" no_pos; *)
+      (*   x_tinfo_pp "end gen baga\n" no_pos; *)
       (*   Globals.dis_inv_baga () *)
       (* ) in *)
       cviews1

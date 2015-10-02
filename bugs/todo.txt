@@ -2146,11 +2146,11 @@ Total verification time: 137.75 second
 	Number of false contexts: 414
 
 ===================================================================
-# ex55.slk --new-lemma-unfold
+# ex55.slk --new-lemma-unfold (FIXED with a try-catch)
 
  lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
 
-# Why did it cause problem below?
+# Why did it cause problem below? 
 
 ERROR: at ex55-sleek9.slk_28:30_28:67
 Message: malfunction with float out exp: n-1
@@ -2163,6 +2163,40 @@ Exception(process_list_lemma):Failure("malfunction with float out exp: n-1")
 
 Exception processed: Failure("malfunction with float out exp: n-1")
 error at: 
+===================================================================
+# ex56.slk --en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings --new-lemma-unfold
+
+# unfolding affected normalization of some permissions lemma ..
+
+!!! **WARNING****solver.ml#9915:impl_inst and to_conseq not properly built
+!!! **cvutil.ml#893:h_formula_2_mem: [Begin] check fractional variable  perm_38_282 is full_perm
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+!!!:0: 0: **lemma.ml#230:ldef:
+=>coerc split2
+	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
+	 body:(emp ; (emp ; ((self::cellp{}(f1)<v>[HeapNode1]) * (self::cellp{}(f2)<v>[HeapNode1])))) * ([] & true)( FLOW __norm)lemmas(to be proved and saved)
+
+!!!:0: 0: **lemma.ml#231:res_ldef:
+=>coerc split2
+	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
+	 body:(EX v_192 v_191 . (emp ; (emp ; ((self::cell{}()<v_191,>@M[HeapNode1]) * (self::cell{}()<v_192,>@M[HeapNode1]))))*([] & (((v_192:int)) = ((v:int))) & (((v_191:int)) = ((v:int))))( FLOW __norm))lemmas(to be proved and saved)
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================

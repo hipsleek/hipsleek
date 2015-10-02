@@ -218,33 +218,42 @@ let unfold_body_lemma iprog ldef ulst =
       let pr = Iprinter.string_of_coerc_decl      in
       let body = ldef.Iast.coercion_body in
       (* WN: collect heap views to see if overlaps with unfold set *)
-      let fvars = IF.all_fv body in
-      (* let () = y_binfo_hp (add_str "ldef" pr) ldef in *)
-      let cbody = Typeinfer.trans_iformula_to_cformula iprog body in
-      let cbody_uf = CF.repl_unfold_formula "" ulst cbody in
-      let ibody_uf = !CF.rev_trans_formula cbody_uf in
-      { ldef with Iast.coercion_body = ibody_uf }
-    with _ -> ldef
+      let fvars = IF.all_fv ~vartype:Global_var.var_with_view_only body in
+      let () = y_tinfo_hp (add_str "views" (pr_list string_of_primed_ident)) fvars in
+      let rs = BList.intersect_eq (fun (v,_) (w,_,_) -> v=w) fvars ulst in
+      if rs==[] then ldef
+      else 
+        let cbody = Typeinfer.trans_iformula_to_cformula iprog body in
+        let cbody_uf = CF.repl_unfold_formula "" ulst cbody in
+        let ibody_uf = !CF.rev_trans_formula cbody_uf in
+        let res = { ldef with Iast.coercion_body = ibody_uf } in
+        let () = y_tinfo_hp (add_str "ldef" pr) ldef in
+        let () = y_tinfo_hp (add_str "res_ldef" pr) res in
+
+        res
+    with _ -> 
+      (* linearize_heap(dup)@14 EXIT ExceptionFailure("malfunction with float out exp: n-1")Occurred! *)
+      ldef
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
 let process_one_lemma iprog cprog ldef =
   let pr = Iprinter.string_of_coerc_decl      in
   (* let () = y_tinfo_pp "unfold RHS of lemma" in *)
-  (* let () = y_binfo_hp (add_str "lemma" Iprinter.string_of_coerc_decl) ldef in *)
+  (* let () = y_tinfo_hp (add_str "lemma" Iprinter.string_of_coerc_decl) ldef in *)
   let vdefs = Cprinter.get_sorted_view_decls () in
   let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
   (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
   let ldef = unfold_body_lemma iprog ldef ulst in
-  (* let () = y_binfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in *)
-  (* let () = y_binfo_hp (add_str "cbody" !CF.print_formula) cbody in *)
-  (* let () = y_binfo_hp (add_str "cbody_uf" !CF.print_formula) cbody_uf in *)
+  (* let () = y_tinfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in *)
+  (* let () = y_tinfo_hp (add_str "cbody" !CF.print_formula) cbody in *)
+  (* let () = y_tinfo_hp (add_str "cbody_uf" !CF.print_formula) cbody_uf in *)
 
   (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let pr = Cprinter.string_of_coerc_decl_list in
   let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
-  (* let () = y_binfo_hp (add_str "l2r" pr) l2r in *)
-  (* let () = y_binfo_hp (add_str "r2l" pr) r2l in *)
+  (* let () = y_tinfo_hp (add_str "l2r" pr) l2r in *)
+  (* let () = y_tinfo_hp (add_str "r2l" pr) r2l in *)
   let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) l2r) in
   let r2l = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) r2l) in
   let () = if (!Globals.print_input || !Globals.print_input_all) then 

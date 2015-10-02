@@ -76,7 +76,7 @@ class graph =
 
     method unfold_in m n = (* unfold m in n *)
       let msg = ("unfold "^m^" in "^n) in
-      let () = y_binfo_pp msg in
+      let () = y_tinfo_pp msg in
       let unchanged lst =
         match lst with
         | [x] -> x=m
