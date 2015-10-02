@@ -579,12 +579,20 @@ pred_unify_disj[app4].
           (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
     ]
 ===================================================================
-# ex21u3e4.slk 
+# ex21u3e4.slk (FIXED)
 
 
 # need to update view_scc_obj graph for this unfolding ..
 
 To support single non-recursive unfolding
+    || :EBase 
+          exists (Impl)[Anon_13; 
+          q](* lbl: *){4}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
+          {FLOW,(1,26)=__flow#E}[]
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true)
+
+# implicit is being renamed. However, is it also an existential?
+
 where possible.
 
 !!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true) #DONE
@@ -609,9 +617,50 @@ where possible.
 
 # can keep labels? (FIXED)
 
+# order of reuse wrong. need to use:
+
+SCC:[[dp];[dp1];[tmp_app4a];[app4];[tmp_app4]]
+
+PRED REUSE FOUND:[(dp1,dp1),(app4,app4),(tmp_app4a,tmp_app4a),(tmp_app4,tmp_app4),(dp,dp1)]
 
 ===================================================================
+# ex21u3e7.slk (FIXED)
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+
+# unfolding RHS self::tmp_app4a<> will allow lemma
+  proving to succeed.
+
+!!! **lemma.ml#218:unfold RHS of lemma
+!!! **lemma.ml#220:ldef:
+<=>coerc L3
+	 head: (emp ; (emp ; (self::app4{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)
+	 body:(emp ; (emp ; (self::tmp_app4a{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)testing lemmas
+!!! **lemma.ml#224:unfold_lst:
+[(tmp_app4a,[], (* lbl: *){5}->(exists Anon_15,
+p: (* lbl: *){5}->self::node<Anon_15,p>@M * p::dp1<>@M&
+{FLOW,(1,26)=__flow#E}[])),(tmp_app4,[], (* lbl: *){6}->(exists Anon_14,
+p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
+{FLOW,(1,26)=__flow#E}[]))]
 ===================================================================
+# ex21u3e7a.slk --new-view-equiv
+
+PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(dp1,dp),(tmp_app4a,tmp_app4a),(app4,tmp_app4)]
+
+# --new-view-equiv causing LOOPING problem..
+
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+
+!!! **hipUtil.ml#79:unfold tmp_app4 in 
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+
 ===================================================================
 ===================================================================
 ===================================================================

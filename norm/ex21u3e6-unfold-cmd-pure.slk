@@ -15,34 +15,44 @@ pred app4<> ==
   inv self!=null.
 // no change
 
-pred tmp_app4<> ==
-  self::node<_, p> * p::dp<>
+// 1 Parameters
+pred tmp_app1<n> ==
+  self::node<n, p> * p::dp<3> & n>1
   inv self!=null.
 // no change
 
-pred dp<> ==
+pred dp1<k> ==
+  self = null & k<5
+  or self::tmp_app1<5>
+  inv true.
+
+// 2 Parameters
+pred tmp_app4<n,m> ==
+  self::node<n, p> * p::dp<m> & n>m
+  inv self!=null.
+// no change
+
+pred dp<k> ==
   self = null 
-  or self::tmp_app4<>
+  or self::tmp_app4<5,k>
   //or self::node<_, p> * p::dp<>
   inv true.
 // unfold tmp_app4
 
-pred tmp_app4a<> ==
-  self::node<_, p> * p::dp1<>
-  inv self!=null.
-// no change
+
+
+// pred tmp_app4a<> ==
+//   self::node<_, p> * p::dp1<>
+//   inv self!=null.
+// // no change
   
-pred dp1<> ==
-  self = null 
-  or self::node<_, p> * p::dp1<>
-  inv true.
+// pred dp1<> ==
+//   self = null 
+//   or self::node<_, p> * p::dp1<>
+//   inv true.
 
 print views.
-pred_reuse[*][*].
 pred_unfold [*].
-pred_reuse[*][*].
-
-lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
 
 print views.
 

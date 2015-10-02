@@ -67,6 +67,15 @@ struct
         else if a>b then -1
         else 1) l
 
+  let sort_gen_list score vlist =
+    let compare v1 v2 =
+      let n1 = score v1 in
+      let n2 = score v2 in
+      if n1<n2 then -1
+      else if n1=n2 then 0
+      else 1 in
+    List.sort compare vlist
+
   let silenced_print f s = if !silence_output then () else f s 
 
   let rec restart f arg =

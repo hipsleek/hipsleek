@@ -285,8 +285,8 @@ and coercion_decl = {
   coercion_name : ident;
   coercion_head : F.formula; (* used as antecedent during --elp *)
   coercion_head_norm : F.formula; (* used as consequent during --elp *)
-  coercion_body : F.formula; (* used as antecedent during --elp *)
-  coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
+  mutable coercion_body : F.formula; (* used as antecedent during --elp *)
+  mutable coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
   coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
 
@@ -3864,6 +3864,46 @@ let update_view_decl prog vdecl =
 let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
   frm_vdecl.view_equiv_set # set (keep_sst,to_view)
 
+let smart_view_name_equiv view_decls vl vr =
+  let vl_name = vl.h_formula_view_name in
+  let vr_name = vr.h_formula_view_name in
+  let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
+  let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+  let ans = try
+      if !Globals.old_view_equiv then None
+      else 
+      if vl_name=vr_name then None
+      else 
+      if vdef1.view_equiv_set # is_empty then
+        if vdef2.view_equiv_set # is_empty then None
+        else 
+          let (sst,new_name) =  (vdef1.view_equiv_set # get) in
+          if new_name = vr_name then 
+            let msg = "Using equiv "^vl_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+            let () = y_winfo_pp msg in
+            let new_vl = get_view_equiv vl sst new_name in
+            Some (new_vl,vr)
+          else None
+      else if vdef1.view_equiv_set # is_empty then
+        let (sst,new_name) =  (vdef2.view_equiv_set # get) in
+        if new_name = vl_name then 
+          let msg = "Using equiv "^vr_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let () = y_winfo_pp msg in
+          let new_vr = get_view_equiv vr sst new_name in
+          Some (vl,new_vr)
+        else None
+      else 
+        let (sst_l,new_l_name) =  (vdef1.view_equiv_set # get) in
+        let (sst_r,new_r_name) =  (vdef2.view_equiv_set # get) in
+        if new_l_name = new_r_name then 
+          let () = y_winfo_pp "double equiv" in
+          let new_vl = get_view_equiv vl sst_l new_l_name in
+          let new_vr = get_view_equiv vr sst_r new_r_name in
+          Some (new_vl,new_vr)
+        else None
+    with _ -> None
+  in (vdef1,vdef2,vl_name,vr_name,ans)
+
 let get_view_name_equiv view_decls vl =
   let vname = vl.h_formula_view_name in
   let vdef = look_up_view_def_raw 25 view_decls vname in
@@ -3891,7 +3931,7 @@ let get_simple_unfold lst =
   match lst with
   | [] -> failwith "empty defn?"
   | [(f,_)] ->
-    let () = y_binfo_hp (add_str "simple formula?" 
+    let () = y_tinfo_hp (add_str "simple formula?" 
                            !Cformula.print_formula) f in
     Some f
   | _ -> None
@@ -3933,4 +3973,30 @@ let update_view_raw_base_case fn vdef =
   let uf = map_opt fn uf in
   vdef.view_raw_base_case <- uf
 
+let sort_view_list vlist =
+  let score v = 
+    let name = v.view_name in
+    HipUtil.view_scc_obj # posn name in
+  if HipUtil.view_scc_obj # is_sorted then vlist
+  else 
+    begin 
+      HipUtil.view_scc_obj # set_sorted;
+      sort_gen_list score vlist
+    end
+
+(* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
+let repl_unfold_lemma u_lst lem =
+  let body = lem.coercion_body in
+  let body_norm = lem.coercion_body_norm in
+  let () = y_binfo_hp (add_str "body" !F.print_formula) body in
+  let body = repl_unfold_formula "" u_lst body in
+  let () = y_binfo_hp (add_str "unfolded body" !F.print_formula) body in
+  lem.coercion_body <- body;
+  lem
+  (* failwith x_tbi *)
+
+let get_lemma_cprog cdefs =
+  let lst = List.map (fun d -> d.coercion_name) cdefs in
+  let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
+  ()
 

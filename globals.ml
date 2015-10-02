@@ -53,6 +53,10 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
 
+let is_lemma_ahead m = match m with
+  | LEM_PROP| LEM_SPLIT | LEM | LEM_UNSAFE | LEM_SAFE -> true
+  | _ -> false
+
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
   | LEM_GEN           (* automatically generated/inferred lemma *)
@@ -1288,6 +1292,7 @@ let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_view_equiv = ref false (* false *)
+  (* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false
 let rev_priority = ref false
 

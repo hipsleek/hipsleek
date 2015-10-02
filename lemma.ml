@@ -211,11 +211,34 @@ let generate_lemma_4_views iprog cprog=
 (* ============================ lemma translation and store update================================= *)
 (* Below are methods used for lemma transformation (ilemma->lemma), lemma proving and lemma store update *)
 
+let unfold_body_lemma iprog ldef ulst =
+  let pr = Iprinter.string_of_coerc_decl      in
+  let body = ldef.Iast.coercion_body in
+  (* let () = y_binfo_hp (add_str "ldef" pr) ldef in *)
+  let cbody = Typeinfer.trans_iformula_to_cformula iprog body in
+  let cbody_uf = CF.repl_unfold_formula "" ulst cbody in
+  let ibody_uf = !CF.rev_trans_formula cbody_uf in
+  { ldef with Iast.coercion_body = ibody_uf }
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
-let process_one_lemma iprog cprog ldef = 
+let process_one_lemma iprog cprog ldef =
+  let pr = Iprinter.string_of_coerc_decl      in
+  (* let () = y_tinfo_pp "unfold RHS of lemma" in *)
+  (* let () = y_binfo_hp (add_str "lemma" Iprinter.string_of_coerc_decl) ldef in *)
+  let vdefs = Cprinter.get_sorted_view_decls () in
+  let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
+  (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
+  let ldef = unfold_body_lemma iprog ldef ulst in
+  (* let () = y_binfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in *)
+  (* let () = y_binfo_hp (add_str "cbody" !CF.print_formula) cbody in *)
+  (* let () = y_binfo_hp (add_str "cbody_uf" !CF.print_formula) cbody_uf in *)
+
+  (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
+  let pr = Cprinter.string_of_coerc_decl_list in
   let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  (* let () = y_binfo_hp (add_str "l2r" pr) l2r in *)
+  (* let () = y_binfo_hp (add_str "r2l" pr) r2l in *)
   let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) l2r) in
   let r2l = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) r2l) in
   let () = if (!Globals.print_input || !Globals.print_input_all) then 
@@ -248,10 +271,14 @@ let verify_one_repo lems cprog =
   res
 
 (* update store with given repo without verifying the lemmas *)
-let manage_unsafe_lemmas_new ?(force_pr=false) repo iprog cprog  =
+let manage_unsafe_lemmas_new ?(force_pr=false) ?(vdefs=[]) repo iprog cprog  =
   let lems = process_one_repo repo iprog cprog in
   let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
   let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
+  (* let vdefs = Cprinter.get_sorted_view_decls () in *)
+  (* let ulst = Cast.get_unfold_set vdefs (\* set of unfoldable views *\) in *)
+  (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
+  (* let right = List.map (Cast.repl_unfold_lemma ulst) right in *)
   let () = Lem_store.all_lemma # add_coercion left right in
   if force_pr (*&& !Globals.dump_lem_proc *) then
     begin
@@ -271,12 +298,12 @@ let manage_unsafe_lemmas ?(force_pr=false) repo iprog cprog: (CF.list_context li
     (fun _ -> manage_unsafe_lemmas ~force_pr:force_pr repo iprog cprog) repo
 
 (* update the lemma store with the lemmas in repo and check for their validity *)
-let update_store_with_repo repo iprog cprog =
+let update_store_with_repo ?(vdefs=[]) repo iprog cprog =
   (* let lems = process_one_repo repo iprog cprog in *)
   (* let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in *)
   (* let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in *)
   (* let () = Lem_store.all_lemma # add_coercion left right in *)
-  let lems = manage_unsafe_lemmas_new ~force_pr:false repo iprog cprog in
+  let lems = manage_unsafe_lemmas_new ~vdefs:vdefs ~force_pr:false repo iprog cprog in
   let (invalid_lem, lctx) =  verify_one_repo lems cprog in
   (invalid_lem, lctx)
 
