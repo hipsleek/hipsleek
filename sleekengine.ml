@@ -2540,7 +2540,8 @@ let process_shape_reuse_subs reg_to_vname =
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
   let to_vns = regex_search reg_to_vname vdefs in
-  Norm.norm_reuse_subs iprog !cprog vdefs to_vns
+  let rs = Norm.norm_reuse_subs iprog !cprog vdefs to_vns in
+  rs
 
 let process_shape_reuse reg_frm_vname reg_to_vname=
   let _ = x_tinfo_zp  (lazy  ("shape reuse  \n")) no_pos in
@@ -2556,6 +2557,7 @@ let process_shape_reuse reg_frm_vname reg_to_vname=
   let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog vdefs (* !cprog.Cast.prog_view_decls *) frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in
   let _ = x_binfo_zp  (lazy  ("\nPRED REUSE FOUND:" ^ (pr eq_pairs) ^ "\n" )) no_pos in
+  let () = Norm.norm_trans_equiv iprog !cprog vdefs in
   ()
 
 let process_shape_extract sel_vnames=

@@ -11,13 +11,24 @@ pred app5<> == self=null
         or self::node<_,q> * q::app5<>
   inv true.
 
+pred ls<> == self=null
+        or self::node<_,q> * q::ls<>
+  inv true.
+
+pred ll<> == self=null
+        or self::node<_,q> * q::ll<>
+  inv true.
+
 pred U<> == self::app5<>
   inv true.
 
 lemma_test self::app5<> <-> self::U<>.
+//lemma_test self::U<> <-> self::app5<>. //Fails
 
-//pred_reuse [*][*].
-//print views.
+pred_reuse [app5][ls].
+
+pred_reuse [*][*].
+print views.
 
 /*
 # ex21u3c2.slk

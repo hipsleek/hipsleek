@@ -3861,8 +3861,36 @@ let update_view_decl prog vdecl =
   in
   prog.prog_view_decls <- others @ [vdecl]
 
-let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
-  frm_vdecl.view_equiv_set # set (keep_sst,to_view)
+let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
+  (* let frm_name = frm_vdecl.view_name in *)
+  (* if HipUtil.view_scc_obj # compare frm_name to_name  < 0 then *)
+  (*   begin *)
+  (*   y_binfo_pp "change order of sst"; *)
+  (*   to_vdecl.view_equiv_set # set (keep_sst,frm_name) *)
+  (*   end *)
+  (* else  *)
+  frm_vdecl.view_equiv_set # set (keep_sst,to_vdecl.view_name)
+
+(* let add_equiv_to_view_decl frm_vdecl keep_sst to_view = *)
+(*   frm_vdecl.view_equiv_set # set (keep_sst,to_view) *)
+
+let is_finish_equiv_view_decl frm_vdecl to_vdecl =
+  let (_,target_frm) = frm_vdecl.view_equiv_set # get in
+  let (_,target_to) = to_vdecl.view_equiv_set # get in
+  let frm_name = frm_vdecl.view_name in
+  let to_name = to_vdecl.view_name in
+  if (frm_name=target_to) || (to_name=target_frm) then true
+  else if not(target_frm="") && not(target_to="") then true
+  else false
+
+(* let change_to_view_decl frm_vdecl to_vdecl = *)
+(*   let frm_flag = frm_vdecl.view_equiv_set # is_avail in *)
+(*   let (_,target_to) = to_vdecl.view_equiv_set # get in *)
+(*   if frm_flag then (to_vdecl,true) (\* finish since frm_vdecl already has an equiv *\) *)
+(*   else if not(target_to="") then  *)
+(*     let () = y_winfo_hp (add_str  "change to_decl to" pr_id) target_to in *)
+(*     (to_vdecl,false) *)
+(*   else (to_vdecl,false) *)
 
 let smart_view_name_equiv view_decls vl vr =
   let vl_name = vl.h_formula_view_name in

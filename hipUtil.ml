@@ -43,6 +43,21 @@ class graph =
         | x::xs -> if x=name then n else find xs (n+1)
       in find posn_lst 0
 
+    method scc_posn name =
+      if grp==None then self # build_scc_void 13;
+      let rec find xss n =
+        match xss with
+        | [] -> (-1)
+        | xs::xss -> if List.exists (fun a -> a=name) xs then n else find xss (n+1)
+      in find scc 0
+
+    method compare name1 name2 =
+      let n1 = self # scc_posn name1 in
+      let n2 = self # scc_posn name2 in
+      if n1<n2 then -1
+      else if n1=n2 then 0
+      else 1
+
     method reset =
       grp <- None;
       Hashtbl.clear nlst

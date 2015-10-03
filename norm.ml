@@ -115,7 +115,7 @@ let norm_elim_useless_x vdefs sel_vns=
   let n_normal_view = interate_helper normal_view [] in
   (rest_views@n_normal_view)
 
-let norm_elim_useless vdefs sel_vns=
+let norm_elim_useless vdefs sel_vns =
   let pr1 = pr_list pr_id in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   Debug.no_2 "norm_elim_useless" pr2 pr1 pr2
@@ -124,12 +124,13 @@ let norm_elim_useless vdefs sel_vns=
 let norm_reuse_one_frm_view iprog prog ?(all=true)
     cur_equivs frm_vdcl (to_vdcls: C.view_decl list)=
   let check_equiv frm_vdcl to_vdcl =
-    let () = y_tinfo_hp (add_str "frm_vdcl" pr_id) frm_vdcl.Cast.view_name in
-    let () = y_tinfo_hp (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name in
     let frm_view_name =  frm_vdcl.Cast.view_name in
     let to_view_name =  to_vdcl.Cast.view_name in
-    let () = y_tinfo_hp (add_str "frm_to_name" pr_id) (frm_view_name^to_view_name) in
-    if string_eq frm_view_name to_view_name then [to_view_name]
+    let () = y_binfo_hp (add_str "Equiv (from,to) " (pr_pair pr_id pr_id)) (frm_view_name,to_view_name) in
+    (* let () = y_tinfo_hp (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name in *)
+    (* let () = y_tinfo_hp (add_str "frm_to_name" pr_id) (frm_view_name^to_view_name) in *)
+    if string_eq frm_view_name to_view_name || HipUtil.view_scc_obj # compare frm_view_name to_view_name < 0 
+    then [(* to_view_name *)]
     else if string_eq frm_vdcl.Cast.view_data_name to_vdcl.Cast.view_data_name 
     (* && *)
     (* does not handle transitivity *)
@@ -139,65 +140,75 @@ let norm_reuse_one_frm_view iprog prog ?(all=true)
     (*                                                string_eq to_vdcl.Cast.view_name vn1) *)
     (*   ) cur_equivs) *)
     then
-      let () = x_tinfo_hp (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
-      let self_t = (Named frm_vdcl.Cast.view_data_name) in
-      let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
-      let frm_args = frm_vdcl.Cast.view_vars in
-      let to_args = to_vdcl.Cast.view_vars in
-      if List.length frm_args != List.length to_args then []
+      (* let (to_vdcl,finish_flag) = Cast.change_to_view_decl frm_vdcl to_vdcl in *)
+      if frm_vdcl.view_equiv_set # is_avail then []
       else
-        let get_name_typ v = (string_of_typ (CP.type_of_spec_var v),v) in
-        let name_to_args = List.map get_name_typ to_args in
-        let name_frm_args = List.map get_name_typ frm_args in
-        let ntyp_to_args = add_num name_to_args in
-        let ntyp_frm_args = add_num name_frm_args in
-        let cmp ((s1,_),_) ((s2,_),_) = String.compare s1 s2 in
-        let sort_to_args = List.sort cmp ntyp_to_args in
-        let sort_frm_args = List.sort cmp ntyp_frm_args in
-        let pr2 ((_,sv),n) = pr_pair !CP.print_sv string_of_int (sv,n) in 
-        let () = y_tinfo_hp (add_str "sort from" (pr_list pr2)) sort_frm_args in
-        let pr = pr_list (pr_pair (pr_pair pr_id !CP.print_sv) string_of_int) in
-        let () = y_tinfo_hp (add_str "sort to"  (pr_list pr2)) sort_to_args in
-        let sst_ntyp = List.combine sort_frm_args sort_to_args in
-        (* let sst_typ = List.combine typ_frm_args typ_to_args in *)
-        let (f_eq,eq_str) = List.fold_left (fun (f_eq,f_eq_str) (((t1,_),n1),((t2,_),n2)) ->
-            let flag = f_eq && string_eq t1 t2 in
-            (flag, f_eq_str && flag && n1==n2)) (true,true) sst_ntyp in
-        let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (s1,s2)) sst_ntyp in
-        let keep_sst = if eq_str then [] else 
-            let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (n1,n2)) sst_ntyp in
-            let sst_from = List.sort (fun (n1,_) (n2,_) -> n1-n2) sst in
-            List.map snd sst_from 
-        in
-        (* let str_diff = List.exists (fun (sv1, sv2) -> not (cmp_typ (get_typ sv1) (get_typ sv2))) sst in *)
-        let () = y_tinfo_hp (add_str "sort_to_args" pr) sort_to_args in
-        let () = y_tinfo_hp (add_str "sort_frm_args" pr) sort_frm_args in
-        let () = y_tinfo_hp (add_str "(f_eq,eq_str)" (pr_pair string_of_bool string_of_bool)) 
-            (f_eq,eq_str) in
-        (*type comparison*)
-        if not(f_eq)  (* str_diff *) then []
+        let () = x_tinfo_hp (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
+        let self_t = (Named frm_vdcl.Cast.view_data_name) in
+        let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
+        let frm_args = frm_vdcl.Cast.view_vars in
+        let to_args = to_vdcl.Cast.view_vars in
+        if List.length frm_args != List.length to_args 
+        then []
         else
-          let () = x_tinfo_hp (add_str "sst" (pr_list (pr_pair
-                                                         !CP.print_sv !CP.print_sv))) sst no_pos in
-          let frm_vnode = Cformula.mkViewNode (self_sv ) frm_vdcl.Cast.view_name
-              (frm_vdcl.Cast.view_vars) no_pos in
+          let get_name_typ v = (string_of_typ (CP.type_of_spec_var v),v) in
+          let name_to_args = List.map get_name_typ to_args in
+          let name_frm_args = List.map get_name_typ frm_args in
+          let ntyp_to_args = add_num name_to_args in
+          let ntyp_frm_args = add_num name_frm_args in
+          let cmp ((s1,_),_) ((s2,_),_) = String.compare s1 s2 in
+          let sort_to_args = List.sort cmp ntyp_to_args in
+          let sort_frm_args = List.sort cmp ntyp_frm_args in
+          let pr2 ((_,sv),n) = pr_pair !CP.print_sv string_of_int (sv,n) in 
+          let () = y_tinfo_hp (add_str "sort from" (pr_list pr2)) sort_frm_args in
+          let pr = pr_list (pr_pair (pr_pair pr_id !CP.print_sv) string_of_int) in
+          let () = y_tinfo_hp (add_str "sort to"  (pr_list pr2)) sort_to_args in
+          let sst_ntyp = List.combine sort_frm_args sort_to_args in
+          (* let sst_typ = List.combine typ_frm_args typ_to_args in *)
+          let (f_eq,eq_str) = List.fold_left (fun (f_eq,f_eq_str) (((t1,_),n1),((t2,_),n2)) ->
+              let flag = f_eq && string_eq t1 t2 in
+              (flag, f_eq_str && flag && n1==n2)) (true,true) sst_ntyp in
+          let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (s1,s2)) sst_ntyp in
+          let keep_sst = if eq_str then [] else 
+              let sst = List.map (fun (((t1,s1),n1),((t2,s2),n2)) -> (n1,n2)) sst_ntyp in
+              let sst_from = List.sort (fun (n1,_) (n2,_) -> n1-n2) sst in
+              List.map snd sst_from 
+          in
+          (* let str_diff = List.exists (fun (sv1, sv2) -> not (cmp_typ (get_typ sv1) (get_typ sv2))) sst in *)
+          let () = y_tinfo_hp (add_str "sort_to_args" pr) sort_to_args in
+          let () = y_tinfo_hp (add_str "sort_frm_args" pr) sort_frm_args in
+          let () = y_tinfo_hp (add_str "(f_eq,eq_str)" (pr_pair string_of_bool string_of_bool)) 
+              (f_eq,eq_str) in
+          (*type comparison*)
+          if not(f_eq)  (* str_diff *) then []
+          else
+            let () = x_tinfo_hp (add_str "sst" (pr_list (pr_pair
+                                                           !CP.print_sv !CP.print_sv))) sst no_pos in
+            let frm_vnode = Cformula.mkViewNode (self_sv ) frm_vdcl.Cast.view_name
+                (frm_vdcl.Cast.view_vars) no_pos in
 
-          let to_vnode = Cformula.mkViewNode (self_sv ) to_vdcl.Cast.view_name
-              (to_vdcl.Cast.view_vars) no_pos in
-          let f1_frm = Cformula.formula_of_heap frm_vnode no_pos in
-          let f1 = x_add Cformula.subst sst f1_frm in
-          let f2 = Cformula.formula_of_heap to_vnode no_pos in
-          let flag = Wrapper.wrap_exc_as_false ~msg:"check_lemeq_sem" (!check_lemeq_sem iprog prog f1 f2 [] []) [] in
-          let msg = if flag then "\n Proven :" else "\n Failed :" in
-          let () = y_tinfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
-          if flag (* !check_lemeq_sem iprog prog f1 f2 [] [] [] *) then
-            (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
-            (* let frm_view_name = frm_vdcl.Cast.view_name in *)
-            (* let () = to_vdcl.Cast.view_equiv_set # push from_view_name in *)
-            let to_view_name = to_vdcl.Cast.view_name in
-            let () = Cast.add_equiv_to_view_decl frm_vdcl keep_sst to_view_name in
-            [to_view_name]
-          else []
+            let to_vnode = Cformula.mkViewNode (self_sv ) to_vdcl.Cast.view_name
+                (to_vdcl.Cast.view_vars) no_pos in
+            let f1_frm = Cformula.formula_of_heap frm_vnode no_pos in
+            let f1 = x_add Cformula.subst sst f1_frm in
+            let f2 = Cformula.formula_of_heap to_vnode no_pos in
+            let is_rec_flag = HipUtil.view_scc_obj # is_rec frm_view_name in
+            (* put non-rec call on RHS where it can be unfolded *)
+            let (f1,f2) = if is_rec_flag then (f1,f2) else 
+                let () = y_binfo_pp "Swapping non-rec view to RHS" in 
+                (f2,f1) 
+            in
+            let flag = Wrapper.wrap_exc_as_false ~msg:"check_lemeq_sem" (!check_lemeq_sem iprog prog f1 f2 [] []) [] in
+            let msg = if flag then "\n Proven :" else "\n Failed :" in
+            let () = y_binfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
+            if flag (* !check_lemeq_sem iprog prog f1 f2 [] [] [] *) then
+              (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
+              (* let frm_view_name = frm_vdcl.Cast.view_name in *)
+              (* let () = to_vdcl.Cast.view_equiv_set # push from_view_name in *)
+              (* let to_view_name = to_vdcl.Cast.view_name in *)
+              let () = Cast.add_equiv_to_view_decl frm_vdcl keep_sst to_vdcl in
+              [to_view_name]
+            else []
     else []
   in
   let rec to_vdcls_iter vdcls acc =
@@ -334,6 +345,63 @@ let norm_reuse_subs iprog cprog vdefs to_vns =
       let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in
       ()
     ) to_decls
+
+(* to be invoked after reuse to maintain transitivity of equiv *)
+(* assumes vdefs in topo sorted order *)
+let norm_trans_equiv iprog cprog vdefs =
+  let ordered xs =
+    let rec aux xs n =
+      match xs with
+      | [] -> true
+      | x::xs -> n<x && (aux xs x)
+    in match xs with
+    | [] -> true
+    | x::xs -> aux xs x in
+  let comp sst1 sst2 =
+    try
+      let new_sst = List.combine sst1 sst2 in
+      let new_sst = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_sst in
+      let sst = List.map fst new_sst in
+      if ordered sst then []
+      else sst
+    with _ -> failwith(x_loc^"mismatching sst") in
+  let comp_sst sst1 sst2 =
+    match sst1 with
+    | [] -> sst2
+    | _ -> 
+      begin
+        match sst2 with
+        | [] -> sst1
+        | _ -> 
+          let pr_sst = pr_list string_of_int in
+          let final_sst = comp sst1 sst2 in
+          let () = y_binfo_hp (add_str "Composing -> " (pr_triple pr_sst pr_sst pr_sst)) (sst1,sst2,final_sst) in
+          final_sst
+      end
+  in
+  let find_trans vn = 
+    try
+      let vd = List.find (fun vd -> vn=vd.Cast.view_name) vdefs in
+      if vd.Cast.view_equiv_set # is_avail then
+        Some (vd)
+      else None
+    with _ -> None in
+  List.iter (fun frm_vd ->
+      if frm_vd.Cast.view_equiv_set # is_avail then
+        begin
+          let (sst1,to_name) = frm_vd.Cast.view_equiv_set # get in
+          match find_trans to_name with
+          | None -> ()
+          | Some to_vd ->
+            let frm_name = frm_vd.Cast.view_name in
+            let (sst2,last_name) = to_vd.Cast.view_equiv_set # get in
+            let () = y_binfo_hp (add_str "trans" (pr_triple pr_id pr_id pr_id)) (frm_name,to_name,last_name) in
+            let new_sst = comp_sst sst1 sst2 in
+            let () = frm_vd.Cast.view_equiv_set # set (new_sst,last_name) in
+            ()
+        end
+    ) vdefs
+
 
 (*
  assume frm_vns and to_vns are topo sorted

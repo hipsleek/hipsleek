@@ -245,14 +245,13 @@ let unfold_body_lemma iprog ldef ulst =
 let process_one_lemma unfold_flag iprog cprog ldef =
   let pr = Iprinter.string_of_coerc_decl      in
   (* let () = y_tinfo_pp "unfold RHS of lemma" in *)
-  (* let () = y_tinfo_hp (add_str "lemma" Iprinter.string_of_coerc_decl) ldef in *)
   let vdefs = Cprinter.get_sorted_view_decls () in
   let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
   (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
   let ldef = if unfold_flag then unfold_body_lemma iprog ldef ulst else ldef in
-  (* let () = y_tinfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in *)
-  (* let () = y_tinfo_hp (add_str "cbody" !CF.print_formula) cbody in *)
-  (* let () = y_tinfo_hp (add_str "cbody_uf" !CF.print_formula) cbody_uf in *)
+  let () = y_tinfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in
+  let () = y_tinfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag in
+  let () = y_tinfo_hp (add_str "lemma(after unfold)" Iprinter.string_of_coerc_decl) ldef in
 
   (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
