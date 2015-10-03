@@ -21,9 +21,13 @@ pred_unify_disj[app4].
 print views.
 
 /*
-# ex21u3e2.slk
+# ex21u3e2.slk -dre "lemma_unfold"
+
+ pred_unify_disj[app4].
 
 # why wasn't lemma unfold done?
+
+# DP_60(flted_31_59) is still a HREL and need to be converted to flted_31_109::DP_60<>@M&
 
 [ view tmp_app4<>= 
   EBase 

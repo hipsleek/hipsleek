@@ -434,9 +434,9 @@ error at:
 SLEEK FAILURE (END)
 
 ===================================================================
-# ex21u3c2.slk
+# ex21u3c2.slk  (FIXED with lemma unfold)
 
-pred app5<> == self=null
+ pred app5<> == self=null
         or self::node<_,q> * q::app5<>
   inv true.
 pred U<> == self::app5<>
