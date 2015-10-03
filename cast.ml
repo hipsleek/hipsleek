@@ -3880,7 +3880,7 @@ let smart_view_name_equiv view_decls vl vr =
           let (sst,new_name) =  (vdef2.view_equiv_set # get) in
           if new_name = vl_name then 
             let msg = "Using equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
-            let () = y_winfo_pp msg in
+            let () = y_tinfo_pp msg in
             let new_vr = get_view_equiv vl sst new_name in
             Some (vl,new_vr)
           else None
@@ -3888,7 +3888,7 @@ let smart_view_name_equiv view_decls vl vr =
         let (sst,new_name) =  (vdef1.view_equiv_set # get) in
         if new_name = vr_name then 
           let msg = "Using equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
-          let () = y_winfo_pp msg in
+          let () = y_tinfo_pp msg in
           let new_vl = get_view_equiv vr sst new_name in
           Some (new_vl,vr)
         else None
@@ -3898,7 +3898,7 @@ let smart_view_name_equiv view_decls vl vr =
         if new_l_name = new_r_name then 
           let msg1 = "Double equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
           let msg2 = "\nUsing equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
-          let () = y_winfo_pp (msg1^msg2) in
+          let () = y_tinfo_pp (msg1^msg2) in
           let new_vl = get_view_equiv vl sst_l new_l_name in
           let new_vr = get_view_equiv vr sst_r new_r_name in
           Some (new_vl,new_vr)
@@ -3924,7 +3924,7 @@ let get_view_name_equiv view_decls vl =
   else 
     let (sst,new_name) =  (vdef.view_equiv_set # get) in
     let msg = "Using equiv "^vname^" <-> "^(vdef.view_equiv_set # string_of) in
-    let () = y_winfo_pp msg in
+    let () = y_tinfo_pp msg in
     let new_vl = get_view_equiv vl sst new_name in
     (* let args = vl.h_formula_view_arguments in (\* need to change other parameters *\) *)
     (* let new_args =  *)

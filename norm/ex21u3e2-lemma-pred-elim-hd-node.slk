@@ -12,22 +12,6 @@ pred ll<> == self=null
   inv true.
 
 
-/*
-pred app4a<> == self::node<_,q> * q::DP<>
-  inv true.
-
-pred app4b<> == self::node<_,q> * q::ll<>
-  inv self!=null.
-
-pred DP<> == self=null
- 	or self::app4a<> & self!=null
-  inv true.
-
-pred DP1<> == self=null
- 	or self::node<_,q1> * q1::DP1<>
-  inv true.
-*/
-
 pred app4<> == self::node<_,null>
  	or self::node<_, q> * q::app4<> & q!=null 
   inv self!=null.
@@ -38,6 +22,30 @@ print views.
 
 /*
 # ex21u3e2.slk
+
+# why wasn't lemma unfold done?
+
+[ view tmp_app4<>= 
+  EBase 
+    exists (Impl)[flted_31_59](* lbl: *){13}->(exists Anon_58: (* lbl: *){13}->
+    self::node<Anon_58,flted_31_59>@M * DP_60(flted_31_59)&
+    {FLOW,(1,26)=__flow#E}[]), 
+  view DP_60<>= 
+  EList
+    :EBase 
+       exists (Impl)[flted_31_109](* lbl: *){21}->(exists Anon_108: (* lbl: *){21}->
+       self::node<Anon_108,flted_31_109>@M * flted_31_109::DP_60<>@M&
+       self!=null&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    equiv_set: ([],ll)
+  ]
+!!! **syn.ml#820:XXX fail <--- 
+!!! **syn.ml#821:<=coerc lem_inf_app4_rev
+	 kind: LEM_TEST
+	 origin: generated
+	 head: (self::app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
 
 # Why is target of tmp_app4 and DP_60 empty?
 

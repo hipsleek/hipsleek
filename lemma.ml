@@ -211,6 +211,7 @@ let generate_lemma_4_views iprog cprog=
 (* ============================ lemma translation and store update================================= *)
 (* Below are methods used for lemma transformation (ilemma->lemma), lemma proving and lemma store update *)
 
+
 let unfold_body_lemma iprog ldef ulst =
   if !Globals.old_lemma_unfold || ulst==[] then ldef
   else
@@ -234,6 +235,11 @@ let unfold_body_lemma iprog ldef ulst =
     with _ -> 
       (* linearize_heap(dup)@14 EXIT ExceptionFailure("malfunction with float out exp: n-1")Occurred! *)
       ldef
+
+let unfold_body_lemma iprog ldef ulst =
+  let pr1 = Iprinter.string_of_coerc_decl      in
+  let pr2 = (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) in
+  Debug.no_2 "lemma_unfold" pr1 pr2 pr1 (fun _ _ -> unfold_body_lemma iprog ldef ulst) ldef ulst
 
 (* ilemma  ----> (left coerc list, right coerc list) *)
 let process_one_lemma unfold_flag iprog cprog ldef =

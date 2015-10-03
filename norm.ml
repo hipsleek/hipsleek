@@ -189,7 +189,7 @@ let norm_reuse_one_frm_view iprog prog ?(all=true)
           let f2 = Cformula.formula_of_heap to_vnode no_pos in
           let flag = Wrapper.wrap_exc_as_false ~msg:"check_lemeq_sem" (!check_lemeq_sem iprog prog f1 f2 [] []) [] in
           let msg = if flag then "\n Proven :" else "\n Failed :" in
-          let () = y_binfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
+          let () = y_tinfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
           if flag (* !check_lemeq_sem iprog prog f1 f2 [] [] [] *) then
             (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
             (* let frm_view_name = frm_vdcl.Cast.view_name in *)
@@ -281,7 +281,7 @@ let norm_unfold iprog cprog
   let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
   let pr_vn v = v.C.view_name in
   let pr2 (v,_,f) = (pr_pair pr_id !CF.print_formula) (v,f) in
-  let () = y_binfo_hp (add_str "views selected for unfolding"
+  let () = y_tinfo_hp (add_str "views selected for unfolding"
                          (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
   List.iter (fun (v,unf_lst) -> (* transform body of views *)
       let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in
