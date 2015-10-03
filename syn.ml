@@ -809,7 +809,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in
     let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in
     let () = y_binfo_hp (add_str "XXX reuse found .." (pr_list (pr_pair pr_id pr_id))) lst in
-    let () = y_binfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
+    let () = y_tinfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
         all_d_views in
     (* Equiv test to form new pred *)
     let r_cbody = trans_hrel_to_view_formula l_body in

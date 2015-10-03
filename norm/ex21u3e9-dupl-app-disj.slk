@@ -1,0 +1,45 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred appA<> == self=null
+        or self::node<_,null>
+ 	or self::node<_, q> * q::appA<> & q!=null 
+  inv true.
+
+pred_unify_disj[appA].
+pred_unfold[*].
+//print views.
+pred_reuse[*][*].
+print views.
+
+/*
+# ex21u3e9.slk -dre "lemma_unfold" 
+
+pred_unify_disj[appA].
+pred_unfold[*].
+//print views.
+pred_reuse[*][*].
+print views.
+
+# Any unfold? Any reuse?
+
+PRED REUSE FOUND:[(tmp_appA,tmp_appA),(DP_38,DP_38),(appA,appA)]
+
+pred_unify_disj[appA].
+pred_unfold[*].
+//print views.
+pred_reuse[*][*].
+
+# can we have a better reuse algo? where the equi 
+  views are not re-checked? and SCC ordering takes that 
+  into account.
+
+
+
+*/
