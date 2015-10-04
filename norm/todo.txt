@@ -749,7 +749,7 @@ trans_one_coercion inp1 :<=>coerc lem_14
 	 head: (EX  . (self::G3{}<y>[HeapNode1])*([] & true)( FLOW __norm))
 	 body:(EX  . (self::G3a{}<>[HeapNode1])*([] & true)( FLOW __norm))safe lemmas(added to store only if valid)
 ===================================================================
-# ex21u1e.slk  (Loc?)
+# ex21u1e.slk  (FIXED)
 
 pred_elim_useless [G1,G2].
 

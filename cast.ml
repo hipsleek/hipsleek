@@ -98,7 +98,12 @@ and barrier_decl = {
 and view_decl = {
   view_name : ident;
 
+  (* these seem related to parameters of view *)
   view_vars : P.spec_var list;
+  view_ann_params : (P.annot_arg * int) list;
+  view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
+  view_cont_vars : P.spec_var list;
+
   view_pos : loc;
 
   view_is_prim : bool;
@@ -110,7 +115,6 @@ and view_decl = {
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
 
-  view_cont_vars : P.spec_var list;
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
@@ -130,10 +134,8 @@ and view_decl = {
   view_parent_name: ident option; (*for view_spec*)
   (*a map of shape <-> pure properties*)
   (*View_EXT have been applied in this view*)
-  view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
   (* below to detect @L in post-condition *)
   mutable view_contains_L_ann : bool;
-  view_ann_params : (P.annot_arg * int) list;
   view_params_orig: (P.view_arg * int) list;
   mutable view_partially_bound_vars : bool list;
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
