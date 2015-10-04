@@ -4518,13 +4518,13 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*   true (\*check_pre*\) in *)
   (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
   (**********moved END*************)
-  let () = y_binfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
-  let () = y_binfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
+  let () = y_tinfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
+  let () = y_tinfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
   let (n_tl,c_head_norm) = x_add trans_head new_head (if false then l_fnames else fnames) quant n_tl in
   let c_head_norm =  CF.add_original c_head_norm false in
   let c_head_norm_rlem = if coer_type = I.Equiv then
-      let () = y_binfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
-      let () = y_binfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
+      let () = y_tinfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
+      let () = y_tinfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
       let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] no_pos in
       snd (x_add trans_head new_head ((* rhs_fnames *)  l_fnames) quant n_tl)
     else c_head_norm in
