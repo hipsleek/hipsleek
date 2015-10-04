@@ -18,38 +18,6 @@ or:
 The command should be idempotent in that the 
 2nd application will cause no-change.
 ===================================================================
-# ex21u1.slk --dd-calls-all
-
-# was lemma proving invoked?
-  It seems that lemmas were generated
-  but never proven? compare with ex21r4.slk
-
-(==lemma.ml#1863==)
-generate_view_rev_rec_lemmas@3
-generate_view_rev_rec_lemmas inp1 : view G2<p:node,y:node>= 
-  EList
-    :EBase 
-       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
-    || :EBase 
-          exists (Impl)[Anon_14; tt; pp](* lbl: *){2}->(exists pp_16,
-          y_17: (* lbl: *){2}->self::node<Anon_14,pp,tt>@M * 
-                               tt::G2<pp_16,y_17>@M&
-          pp_16=pp & y_17=y&{FLOW,(1,26)=__flow#E}[])
-    
-generate_view_rev_rec_lemmas@3 EXIT:[=>coerc rev_G2_65
-	 head: (self::G2{}<p,y>@M[HeapNode1]) * ([] & !(((self:node)) = ((y:node))))( FLOW __flow)
-	 body:((tt::node{}<Anon_14,pp,y,>@M[HeapNode1]) * (self::G2{}<pp,tt>@M[HeapNode1])) * ([] & true)( FLOW __flow)safe lemmas(added to store only if valid)
-]
-
-(==lemma.ml#1863==)
-generate_view_rev_rec_lemmas@4
-generate_view_rev_rec_lemmas inp1 : view G1<y:node>= 
-  EBase 
-    exists (Impl)[Anon_13; t; p](* lbl: *){3}->(exists p_18,
-    y_19: (* lbl: *){3}->self::node<Anon_13,p,t>@M * t::G2<p_18,y_19>@M&
-    p_18=p & y_19=y&{FLOW,(1,26)=__flow#E}[])
-generate_view_rev_rec_lemmas@4 EXIT:[]
-
 ===================================================================
 # ex21r3.slk
 
@@ -745,11 +713,79 @@ pred_reuse[*][*].
 # can we have a better reuse algo? where the equi 
   views are not re-checked? and SCC ordering takes that 
   into account.
+===================================================================
+# ex21u1a.slk -(Loc to fix?)
+
+  pred_elim_useless [G1,G2].
+
+# Why did G2_66 still has two parameters in view header?
+  
+   view G2_66<p:node,y:node>= 
+
+[ view G2_66<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; 
+          pp]self::node<Anon_14,pp,tt>@M * tt::G2_66<y>@M&
+          {FLOW,(1,26)=__flow#E}[]
 
 ===================================================================
+# ex21u1c.slk --esl -dre "trans_one_coercion" (FIXED)
+ (FIXED by not making LHS existential for <-> proving)
+
+ lemma_test self::G3<y> <-> self::G3a<>.
+
+# Why did this lemma succeeded? y is NOT useless?
+
+# Why is there exists y below?
+  cannot wrap exists y for head nor body ..
+
+head_norm:  (exists y: self::G3<y>@M&{FLOW,(20,21)=__norm#E}[])
+ 
+trans_one_coercion@1
+trans_one_coercion inp1 :<=>coerc lem_14
+	 head: (EX  . (self::G3{}<y>[HeapNode1])*([] & true)( FLOW __norm))
+	 body:(EX  . (self::G3a{}<>[HeapNode1])*([] & true)( FLOW __norm))safe lemmas(added to store only if valid)
 ===================================================================
+# ex21u1e.slk  (Loc?)
+
+pred_elim_useless [G1,G2].
+
+!!! **norm.ml#50:  ELIMINATE parameters:[y] of view G2
+!!! **norm.ml#50:  ELIMINATE parameters:[y] of view G1
+
+# Change G2_43<y:TVar[36]> G1_44<y:TVar[42]> to NO parameters
+  view G2_43<y:TVar[36]>= 
+  view G1_44<y:TVar[42]>= 
 ===================================================================
-===================================================================
+# ex21u1e.slk --dd-calls-all (Loc?) -dre ".*coercion"
+
+# Why no lemma proving? Compare with ex21u1f.slk
+  It seems that lemma were generated but not send for proving..
+
+%%% generate_view_lemmas
+%%%  cformula.elim_exists (2)
+%%%   get_subst_equation_formula
+%%%    get_subst_equation_b_formula 
+
+(==lemma.ml#1863==)
+generate_view_rev_rec_lemmas@3
+generate_view_rev_rec_lemmas inp1 : view G2<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; pp](* lbl: *){2}->(exists pp_16,
+          y_17: (* lbl: *){2}->self::node<Anon_14,pp,tt>@M * 
+                               tt::G2<pp_16,y_17>@M&
+          pp_16=pp & y_17=y&{FLOW,(1,26)=__flow#E}[])
+    
+generate_view_rev_rec_lemmas@3 EXIT:[=>coerc rev_G2_65
+	 head: (self::G2{}<p,y>@M[HeapNode1]) * ([] & !(((self:node)) = ((y:node))))( FLOW __flow)
+	 body:((tt::node{}<Anon_14,pp,y,>@M[HeapNode1]) * (self::G2{}<pp,tt>@M[HeapNode1])) * ([] & true)( FLOW __flow)safe lemmas(added to store only if valid)
+]
 ===================================================================
 ===================================================================
 ===================================================================

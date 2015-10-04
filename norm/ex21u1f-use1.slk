@@ -1,0 +1,49 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred G2<y> == self=null
+  or self::node<_,tt> * tt::G2<y>.
+
+pred ll<> == self=null
+  or self::node<_,tt> * tt::ll<>.
+
+//print views.
+//pred_elim_useless [G2].
+
+//print views.
+
+lemma_test self::G2<y> <-> self::ll<>.
+
+/*
+# ex21u1f.slk -dre "process_coercion_check"
+
+(==lemproving.ml#384==)
+process_coercion_check@6@5@4
+process_coercion_check inp1 : emp&self_lem_14_left=null&{FLOW,(20,21)=__norm#E}[]
+ or (exists y_51,Anon_52,tt_53,
+    y_45: self_lem_14_left::node<Anon_52,tt_53>@M * tt_53::G2<y_51>@M&
+    y_51=y_45&{FLOW,(20,21)=__norm#E}[])
+ 
+process_coercion_check inp2 : EBase 
+   self_lem_14_left::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+process_coercion_check inp3 :inf_vars:[]
+process_coercion_check inp4 :iexact:false
+process_coercion_check@6 EXIT:(true, [  emp&self_lem_14_left=null&{FLOW,(20,21)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   es_trace:  COND ==>  BaseCaseFold
+  CtxOR
+    emp&tt_61=tt_58 & Anon_60=Anon_57&{FLOW,(20,21)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   es_heap: tt_58::ll<>@M * self_lem_14_left::node<Anon_57,tt_58>@M
+   es_ante_evars: [Anon_57; tt_58; y_59]
+   es_trace:  Fold ==>  Match(self_lem_14_left,self_lem_14_left) ==>  SEARCH ==>  (Lemma ==> lem_14_left(tt_58,tt_61)) ==> (left: lem_14_left) ==>  COND ==>  Match(tt_58,tt_61)
+   es_proof_traces: 
+     [self_lem_14_left::node<Anon_57,tt_58>@M * tt_58::G2<y_59>@M:self_lem_14_left::ll<>@M&
+      {FLOW,(20,21)=__norm#E}[]]
+  ])
+
+*/
+

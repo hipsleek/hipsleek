@@ -1,0 +1,28 @@
+data node{
+	int val;
+	node next;
+}.
+
+//pred G1<y> == self::node<_,t> * t::G2<y>.
+
+pred G2<y> == self=null
+  or self::node<_,tt> * tt::G2<y>.
+
+print views.
+pred_elim_useless [G2].
+
+print views.
+
+/*
+# ex21u1e.slk -dre ".*coercion"
+
+pred_elim_useless [G1,G2].
+
+!!! **norm.ml#50:  ELIMINATE parameters:[y] of view G2
+
+# Why no lemma proving? Compare with ex21u1f.slk
+
+
+
+*/
+

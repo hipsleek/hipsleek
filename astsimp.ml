@@ -4504,8 +4504,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let head_pure = if coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
   let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
-  let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
+  let rhs_fnames =  Gen.BList.remove_dups_eq (=) (List.map CP.name_of_spec_var (CF.fv c_rhs)) in
+  let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
   let fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@rhs_fnames) in
+  let l_fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@lhs_fnames) in
   let quant = true in
   (*moved to internal trans_head*)
   (* let h = List.map (fun c-> (c,Unprimed)) fnames in *)
@@ -4516,11 +4518,15 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*   true (\*check_pre*\) in *)
   (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
   (**********moved END*************)
-  let (n_tl,c_head_norm) = x_add trans_head new_head fnames quant n_tl in
+  let () = y_binfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
+  let () = y_binfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
+  let (n_tl,c_head_norm) = x_add trans_head new_head (if false then l_fnames else fnames) quant n_tl in
   let c_head_norm =  CF.add_original c_head_norm false in
   let c_head_norm_rlem = if coer_type = I.Equiv then
+      let () = y_binfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
+      let () = y_binfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
       let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] no_pos in
-      snd (x_add trans_head new_head (Gen.BList.remove_dups_eq (=)  rhs_fnames) quant n_tl)
+      snd (x_add trans_head new_head ((* rhs_fnames *)  l_fnames) quant n_tl)
     else c_head_norm in
   (* free vars in RHS but not LHS *)
   let hrels = List.map (fun (a,_) -> a) (CF.get_HRels_f c_rhs ) in

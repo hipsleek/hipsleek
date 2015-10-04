@@ -1,20 +1,20 @@
 data node{
 	int val;
-        node prev;
 	node next;
 }.
 
-pred G1<y> == self::node<_,p,t> * t::G2<p,y>.
+pred G1<y> == self::node<_,t> * t::G2<y>.
 
-pred G2<p:node,y> == self=y
-  or self::node<_,pp,tt> * tt::G2<pp,y>.
+pred G2<y> == self=y
+  or self::node<_,tt> * tt::G2<y>.
 
+print views.
 pred_elim_useless [G1,G2].
 
 print views.
 
 /*
-# ex21u1.slk --dd-calls-all
+# ex21u1d.slk --dd-calls-all
 
 # was lemma proving invoked?
   It seems that lemmas were generated
