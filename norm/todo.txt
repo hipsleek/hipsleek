@@ -787,7 +787,7 @@ generate_view_rev_rec_lemmas@3 EXIT:[=>coerc rev_G2_65
 	 body:((tt::node{}<Anon_14,pp,y,>@M[HeapNode1]) * (self::G2{}<pp,tt>@M[HeapNode1])) * ([] & true)( FLOW __flow)safe lemmas(added to store only if valid)
 ]
 ===================================================================
-# ex21u1j.slk 
+# ex21u1j.slk (FIXED by adding to iprog)
 
 pred_elim_useless [G1,G2].
 pred_reuse[*][*].

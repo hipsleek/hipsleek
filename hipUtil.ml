@@ -51,6 +51,10 @@ class graph =
         | xs::xss -> if List.exists (fun a -> a=name) xs then n else find xss (n+1)
       in find scc 0
 
+    method get_scc_posn =
+      if grp==None then self # build_scc_void 13;
+      posn_lst
+
     method compare name1 name2 =
       let n1 = self # scc_posn name1 in
       let n2 = self # scc_posn name2 in
@@ -149,6 +153,21 @@ class graph =
     method build_scc n  =
       let () = y_tinfo_pp ("calling build_scc "^(string_of_int n))  in
       let g = NG.create () in
+      let alpha_order e1 e2 = 
+        1 
+      in
+      let is_edges s1 s2 =
+        List.exists (fun n1 ->
+            List.exists (fun n2 ->
+                NG.mem_edge g n1 n2
+              ) s2
+          ) s1 in
+      let order_scc s1 s2 =
+        if is_edges s1 s2 then 1
+        else if is_edges s2 s1 then -1
+        else alpha_order s1 s2 in
+      let sort_scc scc =
+        List.sort order_scc scc in
       (* self_rec <- []; *)
       pto <- [];
       dom <- Hashtbl.fold (fun n xs acc-> n::acc) nlst [];
@@ -159,6 +178,7 @@ class graph =
             ) edges
         ) nlst in
       let scclist = NGComponents.scc_list g in
+      let scclist = sort_scc scclist in
       scc <- scclist;
       posn_lst <- List.concat scclist;
       sorted_flag <- false;

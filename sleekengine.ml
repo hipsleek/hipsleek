@@ -175,6 +175,8 @@ let iprog = { I.prog_include_decls =[];
               I.prog_test_comps = [];
             }
 
+let () = Iast.set_iprog iprog 
+
 let cobj_def = { Cast.data_name = "Object";
                  Cast.data_fields = [];
                  Cast.data_fields_new = [];
@@ -1234,7 +1236,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let _ = Infer.rel_ass_stk # reset in
   (* let _ = Sa2.rel_def_stk # reset in *)
   let _ = CF.rel_def_stk # reset in
-  let _ = Iast.set_iprog iprog in
+  (* let _ = Iast.set_iprog iprog in *)
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = x_dinfo_pp ("\nrun_entail_check 1:"
                       ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
@@ -2553,10 +2555,12 @@ let process_shape_reuse reg_frm_vname reg_to_vname=
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) !cprog.Cast.prog_view_decls in *)
   let frm_vnames = regex_search reg_frm_vname vdefs in
   let to_vnames = regex_search reg_to_vname vdefs in
-  let () = x_tinfo_hp (add_str "frm vnamse"  (pr_list pr_id)) frm_vnames no_pos in
   let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
   let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog vdefs (* !cprog.Cast.prog_view_decls *) frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in
+  let scc_posn = HipUtil.view_scc_obj #  get_scc_posn in
+  let () = x_binfo_hp (add_str "frm_vnames"  (pr_list pr_id)) frm_vnames no_pos in
+  let () = x_binfo_hp (add_str "scc_posn"  (pr_list pr_id)) scc_posn no_pos in
   let _ = x_binfo_zp  (lazy  ("\nPRED REUSE FOUND:" ^ (pr eq_pairs) ^ "\n" )) no_pos in
   let () = Norm.norm_trans_equiv iprog !cprog vdefs in
   ()

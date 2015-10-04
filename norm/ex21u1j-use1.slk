@@ -11,12 +11,12 @@ pred G1<y> == self::node<_,t> * t::G2<y>. //& y=self.
 pred G2<y> == self=null
   or self::node<_,tt> * tt::G2<y>.
 
-//print views.
+print views.
 pred_elim_useless [G1,G2].
 
 pred_reuse[*][*].
 
-//print views.
+print views.
 
 /*
 # ex21u1j.slk 

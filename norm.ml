@@ -146,7 +146,8 @@ let norm_elim_useless vdefs sel_vns=
         let new_def = elim_vdef ss new_def in
         let () = Cprog_sleek.update_view_decl_cprog link_view in
         let () = Cprog_sleek.update_view_decl_cprog new_def in
-        let () = y_winfo_pp "Need to update iprog views too" in
+        let () = Cprog_sleek.update_view_decl_iprog (Rev_ast.rev_trans_view_decl new_def) in
+        (* let () = y_winfo_pp "Need to update iprog views too" in *)
         ([link_view;new_def], List.map (elim_vdef ss) rem_vdefs)
     else
       ([vdef],rem_vdefs)
