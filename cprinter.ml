@@ -5527,23 +5527,23 @@ let string_of_html_hprel_def_short hp =
   poly_string_of_pr pr_html_hprel_def_short hp;;
 
 
-let cprog = ref { 
-    Cast.prog_data_decls = [];
-    Cast.prog_view_decls = [];
-    Cast.prog_logical_vars = [];
-    Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" string_of_rel_decl (=) in s);
-    Cast.prog_templ_decls = [];
-    Cast.prog_ui_decls = [];
-    Cast.prog_ut_decls = [];
-    Cast.prog_hp_decls = [];
-    Cast.prog_view_equiv = [];
-    Cast.prog_axiom_decls = []; 
-    (* [4/10/2011] An Hoa *)
-    (*Cast.old_proc_decls = [];*)
-    Cast.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
-    (*Cast.prog_left_coercions = [];
-      Cast.prog_right_coercions = [];*)
-    Cast. prog_barrier_decls = []} ;;
+(* let cprog = ref {  *)
+(*     Cast.prog_data_decls = []; *)
+(*     Cast.prog_view_decls = []; *)
+(*     Cast.prog_logical_vars = []; *)
+(*     Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" string_of_rel_decl (=) in s); *)
+(*     Cast.prog_templ_decls = []; *)
+(*     Cast.prog_ui_decls = []; *)
+(*     Cast.prog_ut_decls = []; *)
+(*     Cast.prog_hp_decls = []; *)
+(*     Cast.prog_view_equiv = []; *)
+(*     Cast.prog_axiom_decls = [];  *)
+(*     (\* [4/10/2011] An Hoa *\) *)
+(*     (\*Cast.old_proc_decls = [];*\) *)
+(*     Cast.new_proc_decls = Hashtbl.create 1; (\* no need for proc *\) *)
+(*     (\*Cast.prog_left_coercions = []; *)
+(*       Cast.prog_right_coercions = [];*\) *)
+(*     Cast. prog_barrier_decls = []} ;; *)
 
 Slicing.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure_D.print_mp_f := string_of_memo_pure_formula ;;
@@ -5671,10 +5671,10 @@ Cfout.print_formula := string_of_formula;
 Cfout.print_pure_formula := string_of_pure_formula;
 Cfout.print_sv := string_of_spec_var;;
 
-let get_sorted_view_decls () =
-  let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in
-  !cprog.Cast.prog_view_decls <- vdefs;
-  vdefs
+(* let get_sorted_view_decls () = *)
+(*   let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
+(*   !cprog.Cast.prog_view_decls <- vdefs; *)
+(*   vdefs *)
 
 (* let get_coercion_lemmas () = *)
 (*   let cdefs = Cast.sort_view_list !cprog.Cast.prog_coercion_decls in *)

@@ -794,6 +794,13 @@ pred_reuse[*][*].
 
 # Why are the generated views not kept?
 
+!!! **cast.ml#3863:Updating an available view decl (G1[y]) in cprog.
+!!! **cast.ml#3864:Adding the view G1_44[] into cprog.
+!!! **WARNING****norm.ml#149:Need to update iprog views too
+!!! **norm.ml#162:USELESS Parameters eliminated:
+[(G1,[y]),
+(G2,[y])]
+
 ERROR: at _0:0_0:0
 Message: G1_54 is neither 2 a data nor view name
 

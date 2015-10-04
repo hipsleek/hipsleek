@@ -105,7 +105,7 @@ let norm_elim_useless vdefs sel_vns=
                        C.view_prune_conditions_baga = [];
                        C.view_prune_invariants = []
                       } in
-        let () = y_binfo_hp (add_str "link_view" Cprinter.string_of_view_decl_short) link_view in
+        let () = y_tinfo_hp (add_str "link_view" Cprinter.string_of_view_decl(* _short *)) link_view in
         let vars = vdef.Cast.view_vars in
         let len = List.length vars in
         let mk_mask len keep_pos =
@@ -141,9 +141,13 @@ let norm_elim_useless vdefs sel_vns=
         let () = y_binfo_hp (add_str "view_vars2" !CP.print_svl) view_sv_vars2 in
         let () = y_binfo_hp (add_str "view_vars" !CP.print_svl) view_sv_vars in
         let () = y_binfo_hp (add_str "vars" !CP.print_svl) vars in
-        let () = y_binfo_hp (add_str "new_def" Cprinter.string_of_view_decl(* _short *)) new_def in
+        let () = y_tinfo_hp (add_str "new_def" Cprinter.string_of_view_decl(* _short *)) new_def in
         (*update rem_vdefs*)
-        ([link_view;(elim_vdef ss new_def)], List.map (elim_vdef ss) rem_vdefs)
+        let new_def = elim_vdef ss new_def in
+        let () = Cprog_sleek.update_view_decl_cprog link_view in
+        let () = Cprog_sleek.update_view_decl_cprog new_def in
+        let () = y_winfo_pp "Need to update iprog views too" in
+        ([link_view;new_def], List.map (elim_vdef ss) rem_vdefs)
     else
       ([vdef],rem_vdefs)
   in

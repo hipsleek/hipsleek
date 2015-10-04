@@ -13,6 +13,7 @@ open Gen.Basic
 open Exc.GTable
 open Perm
 open Label_only
+open Cprog_sleek
 
 let last_entail_lhs_xpure = ref None
 
@@ -183,7 +184,7 @@ let cobj_def = { Cast.data_name = "Object";
                  Cast.data_pure_inv = None;
                  Cast.data_methods = [] }
 
-let cprog = Cprinter.cprog
+let cprog = Cprog_sleek.cprog
  (* ref {  *)
  (*    Cast.prog_data_decls = []; *)
  (*    Cast.prog_view_decls = []; *)
@@ -2505,7 +2506,7 @@ let process_shape_split pre_hps post_hps=
   end;
   ()
 
-let get_sorted_view_decls () = Cprinter.get_sorted_view_decls ()
+let get_sorted_view_decls () = get_sorted_view_decls ()
   (* let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
   (* !cprog.Cast.prog_view_decls <- vdefs; *)
   (* vdefs *)
@@ -2513,9 +2514,9 @@ let get_sorted_view_decls () = Cprinter.get_sorted_view_decls ()
 let process_shape_elim_useless sel_vnames=
   let vdefs = get_sorted_view_decls () in
   let view_defs = Norm.norm_elim_useless vdefs sel_vnames in
-  let _ = !cprog.Cast.prog_view_decls <- view_defs in
+  (* let _ = !cprog.Cast.prog_view_decls <- view_defs in *)
   let pr = pr_list_ln Cprinter.string_of_view_decl_short in
-  let _ = x_binfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
+  let _ = x_tinfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
 let regex_search reg_id vdefs =
