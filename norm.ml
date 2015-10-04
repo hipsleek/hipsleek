@@ -20,7 +20,7 @@ let check_lemeq_sem = ref (fun (iprog:Iast.prog_decl)
 
 (***********************************************)
 (*****ELIM unused parameters of view **********)
-let norm_elim_useless_para_x view_name sf args=
+let norm_elim_useless_para useless_stk view_name sf args=
   let extract_svl f=
     let f1 = CF.elim_exists f in
     let new_f = CF.drop_views_formula f1 [view_name] in
@@ -47,19 +47,21 @@ let norm_elim_useless_para_x view_name sf args=
       (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
       (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
-      let () = x_binfo_zp  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
+      let () = x_tinfo_zp  (lazy  ("  ELIMINATE parameters:" ^ (!CP.print_svl dropped_args) ^ " of view " ^ view_name ^ "\n" )) no_pos in
+      let () = useless_stk # push (view_name,dropped_args) in
       (new_vname, new_args, ss)
     else
       (view_name, args, [])
 
-let norm_elim_useless_para view_name sf args=
+let norm_elim_useless_para stk view_name sf args =
   let pr1 = Cprinter.string_of_struc_formula in
   let pr2 = pr_triple pr_id !CP.print_svl (pr_list (pr_triple pr_id pr_id (pr_list string_of_int))) in
   Debug.no_2 "norm_elim_useless_para" pr1 !CP.print_svl pr2
-    (fun _ _ -> norm_elim_useless_para_x view_name sf args) sf args
+    (fun _ _ -> norm_elim_useless_para stk view_name sf args) sf args
 
 (*assume views are sorted*)
-let norm_elim_useless_x vdefs sel_vns=
+let norm_elim_useless vdefs sel_vns=
+  let useless_stk = new stack_pr ""  (pr_pair pr_id !CP.print_svl) (=) in
   let elim_vdef ss vdef=
     let new_vdef = { vdef with
                      Cast.view_formula = CF.drop_view_paras_struc_formula vdef.Cast.view_formula ss;
@@ -71,7 +73,7 @@ let norm_elim_useless_x vdefs sel_vns=
   let process_one_view vdef rem_vdefs=
     if List.exists (fun vn -> String.compare vn vdef.Cast.view_name = 0) sel_vns then
       (*update vdef*)
-      let new_vname, view_sv_vars, ss = norm_elim_useless_para vdef.Cast.view_name vdef.Cast.view_formula  vdef.Cast.view_vars in
+      let new_vname, view_sv_vars, ss = norm_elim_useless_para useless_stk vdef.Cast.view_name vdef.Cast.view_formula  vdef.Cast.view_vars in
       (*push it back*)
       if ss = [] then ([vdef],rem_vdefs) else
         let vn = CF.mkViewNode (CP.SpecVar (Named new_vname, self, Unprimed))
@@ -113,13 +115,14 @@ let norm_elim_useless_x vdefs sel_vns=
   in
   let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = View_NORM) vdefs in
   let n_normal_view = interate_helper normal_view [] in
+  let () = y_binfo_hp (add_str "USELESS Parameters eliminated" (fun s -> s # string_of)) useless_stk in
   (rest_views@n_normal_view)
 
 let norm_elim_useless vdefs sel_vns =
   let pr1 = pr_list pr_id in
   let pr2 = pr_list_ln Cprinter.string_of_view_decl in
   Debug.no_2 "norm_elim_useless" pr2 pr1 pr2
-    (fun _ _ -> norm_elim_useless_x vdefs sel_vns) vdefs sel_vns
+    (fun _ _ -> norm_elim_useless vdefs sel_vns) vdefs sel_vns
 
 let norm_reuse_one_frm_view iprog prog ?(all=true)
     cur_equivs frm_vdcl (to_vdcls: C.view_decl list)=
