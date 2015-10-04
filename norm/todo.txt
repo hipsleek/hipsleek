@@ -787,6 +787,32 @@ generate_view_rev_rec_lemmas@3 EXIT:[=>coerc rev_G2_65
 	 body:((tt::node{}<Anon_14,pp,y,>@M[HeapNode1]) * (self::G2{}<pp,tt>@M[HeapNode1])) * ([] & true)( FLOW __flow)safe lemmas(added to store only if valid)
 ]
 ===================================================================
+# ex21u1j.slk 
+
+pred_elim_useless [G1,G2].
+pred_reuse[*][*].
+
+# Why are the generated views not kept?
+
+ERROR: at _0:0_0:0
+Message: G1_54 is neither 2 a data nor view name
+
+ERROR: at _0:0_0:0
+Message: G2_53 is neither 2 a data nor view name
+
+ view G2_53<y:TVar[40]>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt]self::node<Anon_14,tt>@M * tt::G2_53<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1_54<y:TVar[46]>= 
+  EBase 
+    exists (Impl)[Anon_13; t]self::node<Anon_13,t>@M * t::G2_53<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
 ===================================================================
 ===================================================================
 ===================================================================
