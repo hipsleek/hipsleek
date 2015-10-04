@@ -800,6 +800,11 @@ Message: G1_54 is neither 2 a data nor view name
 ERROR: at _0:0_0:0
 Message: G2_53 is neither 2 a data nor view name
 
+# Solution : Can use :
+let update_view_decl prog vdecl = 
+!!! **iast.ml#3861:Adding the view tmp_app4 into iprog.
+!!! **cast.ml#3860:Adding the view tmp_app4 into cprog.
+
  view G2_53<y:TVar[40]>= 
   EList
     :EBase 
@@ -814,6 +819,42 @@ Message: G2_53 is neither 2 a data nor view name
     {FLOW,(1,26)=__flow#E}[]]
 
 ===================================================================
+# ex20c.slk
+
+# deriving pre for ll method incr/ex20a.ss
+
+# Why did P has two parameters?
+     next_27_1635::P<x_70>
+
+  Can we print more info on what is being added..
+
+!!! **cast.ml#3861:Adding the view P[x_66] into cprog.
+!!! **cast.ml#3861:Adding the view HP_1637[x] into cprog.
+!!! **cast.ml#3861:Adding the view HP_1636[x] into cprog.
+
+ # How was the integer parameter eliminated?
+
+ view P<x_66:node>= 
+  EList
+    :EBase 
+       exists (Impl)[val_27_1634; 
+       next_27_1635](* lbl: *){7}->(exists x_70: (* lbl: *){7}->
+    self::node<val_27_1634,next_27_1635>@M * 
+                          next_27_1635::P<x_70>@M&
+       self!=null & x_70=x_66&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){8}->emp&x_66=null&{FLOW,(1,26)=__flow#E}[]
+    , 
+
+[ view HP_1636<x:node>= 
+  EBase 
+    (* lbl: *){10}->emp&{FLOW,(1,26)=__flow#E}[], 
+
+view HP_1637<x:node>= 
+  EBase 
+    exists (Impl)[x_66](* lbl: *){9}->self::P<x_66>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
 ===================================================================
 ===================================================================
 ===================================================================

@@ -1036,7 +1036,7 @@ let syn_pre_preds prog (is: CF.infer_state) =
   
     let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
     let is_all_constrs = x_add_1 dangling_parameterizing is_all_constrs in
-    let () = x_tinfo_hp (add_str "Parameterizing result" 
+    let () = x_binfo_hp (add_str "Parameterizing result" 
         pr_hprel_list) is_all_constrs no_pos
     in
 

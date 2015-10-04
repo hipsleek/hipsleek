@@ -129,7 +129,7 @@ let norm_reuse_one_frm_view iprog prog ?(all=true)
   let check_equiv frm_vdcl to_vdcl =
     let frm_view_name =  frm_vdcl.Cast.view_name in
     let to_view_name =  to_vdcl.Cast.view_name in
-    let () = y_binfo_hp (add_str "Equiv (from,to) " (pr_pair pr_id pr_id)) (frm_view_name,to_view_name) in
+    let () = y_tinfo_hp (add_str "Equiv (from,to) " (pr_pair pr_id pr_id)) (frm_view_name,to_view_name) in
     (* let () = y_tinfo_hp (add_str "to_vdcl" pr_id) to_vdcl.Cast.view_name in *)
     (* let () = y_tinfo_hp (add_str "frm_to_name" pr_id) (frm_view_name^to_view_name) in *)
     if string_eq frm_view_name to_view_name || HipUtil.view_scc_obj # compare frm_view_name to_view_name < 0 

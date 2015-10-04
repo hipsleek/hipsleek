@@ -19,8 +19,8 @@ pred app4<> == self::node<_,null>
 pred_unify_disj[app4].
 
 print views.
-pred_reuse[*][*].
-print views.
+//pred_reuse[*][*].
+//print views.
 
 /*
 # ex21u3e2.slk -dre "lemma_unfold" (FIXED)

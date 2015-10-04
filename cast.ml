@@ -3852,12 +3852,13 @@ let add_view_decl prog vdecl =
 
 let update_view_decl prog vdecl = 
   let vdecl_id = vdecl.view_name in
+  let vdecl_args = vdecl.view_vars in
   let same_vdecls, others = List.partition (fun v -> 
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
   let () = 
     if not (is_empty same_vdecls) then 
       y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in cprog.")
-    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") 
+    else y_binfo_pp ("Adding the view " ^ vdecl_id ^(!CP.print_svl vdecl_args)^" into cprog.") 
   in
   prog.prog_view_decls <- others @ [vdecl]
 

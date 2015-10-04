@@ -1564,11 +1564,11 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
            let () = if not (IF.is_param_ann_list_empty ann_param) then
                (* let () = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
                report_error pos (" predicate parameters are not allowed to have imm annotations") in
-           try_unify_view_type_args prog v_name vdef v deref ies hoa n_tl pos 
+           x_add try_unify_view_type_args prog v_name vdef v deref ies hoa n_tl pos 
          with
          | Not_found ->
            (try
-              let n_tl = try_unify_data_type_args prog v_name v deref ies n_tl pos in 
+              let n_tl = x_add try_unify_data_type_args prog v_name v deref ies n_tl pos in 
               n_tl
             with
             | Not_found ->
