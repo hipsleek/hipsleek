@@ -177,7 +177,7 @@ class graph =
             ) edges
         ) nlst in
       let scclist = NGComponents.scc_list g in
-      let scclist = sort_scc scclist in
+      (* let scclist = sort_scc scclist in *)
       scc <- scclist;
       posn_lst <- List.concat scclist;
       sorted_flag <- false;

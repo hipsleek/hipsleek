@@ -50,19 +50,27 @@ let update_view_decl_cprog vdef =
 let update_view_decl_iprog ?(update_scc=false) vdef = 
   try
     let iprog = Iast.get_iprog () in
+    let is_data c = 
+      try 
+        let _ = Iast.look_up_data_def_raw iprog.Iast.prog_data_decls c in
+        true
+      with _ -> false in
     if update_scc then
       begin
         let n = vdef.Iast.view_name in
         let view_decls = iprog.Iast.prog_view_decls in
         let lst = Iast.gen_name_pairs_struc view_decls n vdef.Iast.view_formula in
         let body = vdef.Iast.view_formula in
-        let () = y_binfo_hp (add_str "body" Iprinter.string_of_struc_formula) body in
-        let () = y_binfo_hp (add_str "view" Iprinter.string_of_view_decl) vdef in
+        let () = y_tinfo_hp (add_str "body" Iprinter.string_of_struc_formula) body in
+        let () = y_tinfo_hp (add_str "view" Iprinter.string_of_view_decl) vdef in
         let fvars = Iformula.struc_hp_fv ~vartype:Global_var.var_with_view_only body in
-        let () = y_binfo_hp (add_str "fvars(view)" string_of_primed_ident_list) fvars in
-        let () = y_binfo_hp (add_str "view" pr_id) n in
-        let () = y_binfo_hp (add_str "lst(pairs)" (pr_list (pr_pair pr_id pr_id))) lst in
-        HipUtil.view_scc_obj # replace n (List.map fst fvars)
+        let fvars = List.map fst fvars in
+        let () = y_tinfo_hp (add_str "fvars(view)" (pr_list pr_id)) fvars in
+        let fvars2 = List.filter (fun c -> not(is_data c)) fvars in
+        let () = y_tinfo_hp (add_str "fvars2" (pr_list pr_id)) fvars2 in
+        let () = y_tinfo_hp (add_str "view" pr_id) n in
+        let () = y_tinfo_hp (add_str "lst(pairs)" (pr_list (pr_pair pr_id pr_id))) lst in
+        HipUtil.view_scc_obj # replace n fvars2
       end;
     Iast.update_view_decl iprog vdef
   with _ -> failwith (x_loc^" iprog not found")

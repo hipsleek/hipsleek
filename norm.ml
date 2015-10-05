@@ -47,13 +47,13 @@ let norm_elim_useless_para useless_stk view_name sf args=
       (* let n_sf = CF.drop_view_paras_struc_formula sf ss in *)
       (* let n_ufs = List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) ufs in *)
       let dropped_args = CP.diff_svl args svl in
-      let () = y_binfo_hp  (add_str "ELIMINATE parameters" !CP.print_svl) dropped_args in
-      let () = y_binfo_hp  (add_str "Keep parameters" !CP.print_svl) svl in
-      let () = y_binfo_hp  (add_str "args" !CP.print_svl) args in
-      let () = y_binfo_hp  (add_str "new_args" !CP.print_svl) new_args in
-      let () = y_binfo_hp  (add_str "View" pr_id) view_name in
-      let () = y_binfo_hp  (add_str "new_View" pr_id) new_vname in
-      let () = y_binfo_hp  (add_str "keep_pos" (pr_list string_of_int)) keep_pos in
+      let () = y_tinfo_hp  (add_str "ELIMINATE parameters" !CP.print_svl) dropped_args in
+      let () = y_tinfo_hp  (add_str "Keep parameters" !CP.print_svl) svl in
+      let () = y_tinfo_hp  (add_str "args" !CP.print_svl) args in
+      let () = y_tinfo_hp  (add_str "new_args" !CP.print_svl) new_args in
+      let () = y_tinfo_hp  (add_str "View" pr_id) view_name in
+      let () = y_tinfo_hp  (add_str "new_View" pr_id) new_vname in
+      let () = y_tinfo_hp  (add_str "keep_pos" (pr_list string_of_int)) keep_pos in
       let () = useless_stk # push (view_name,dropped_args) in
       (new_vname, new_args, ss)
     else
@@ -118,29 +118,28 @@ let norm_elim_useless vdefs sel_vns=
         let get_useless_para_mask ss = match ss with
           | [] -> []
           | (_,_,keep_pos)::_ -> mk_mask len keep_pos in
-        let select_w_mask mask vars =
+        let select_w_mask s mask vars =
           try
             let tmp = List.combine vars mask in
             let tmp = List.filter (fun (_,v) -> v>=0) tmp in
             List.map fst tmp
           with _ -> 
-            let () = y_winfo_pp "mismatched vars and ss" in vars in
+            let () = y_winfo_pp (s^"mismatched vars and ss") in vars in
         let mask = get_useless_para_mask ss in
-        let view_sv_vars2 = select_w_mask mask vars in
-        let ann_params = select_w_mask mask vdef.Cast.view_ann_params in
+        let view_sv_vars2 = select_w_mask x_loc mask vars in
         let new_def = {vdef with
                        Cast.view_name = new_vname;
                        Cast.view_vars = view_sv_vars2;
-                       Cast.view_ann_params = ann_params;
-                       Cast.view_cont_vars = select_w_mask mask vdef.Cast.view_cont_vars;
-                       Cast.view_labels = select_w_mask mask vdef.Cast.view_labels;
-                       Cast.view_params_orig = select_w_mask mask vdef.Cast.view_params_orig;
-                       (* Cast.view_domains = select_w_mask mask vdef.Cast.view_domains; *)
+                       (* Cast.view_ann_params = select_w_mask x_loc mask vdef.Cast.view_ann_params; *)
+                       (* Cast.view_cont_vars = select_w_mask x_loc mask vdef.Cast.view_cont_vars; *)
+                       Cast.view_labels = select_w_mask x_loc mask vdef.Cast.view_labels;
+                       Cast.view_params_orig = select_w_mask x_loc mask vdef.Cast.view_params_orig;
+                       (* Cast.view_domains = select_w_mask x_loc mask vdef.Cast.view_domains; *)
                       } in
-        let () = y_binfo_hp (add_str "mask" (pr_list string_of_int)) mask in
-        let () = y_binfo_hp (add_str "view_vars2" !CP.print_svl) view_sv_vars2 in
-        let () = y_binfo_hp (add_str "view_vars" !CP.print_svl) view_sv_vars in
-        let () = y_binfo_hp (add_str "vars" !CP.print_svl) vars in
+        let () = y_tinfo_hp (add_str "mask" (pr_list string_of_int)) mask in
+        let () = y_tinfo_hp (add_str "view_vars2" !CP.print_svl) view_sv_vars2 in
+        let () = y_tinfo_hp (add_str "view_vars" !CP.print_svl) view_sv_vars in
+        let () = y_tinfo_hp (add_str "vars" !CP.print_svl) vars in
         let () = y_tinfo_hp (add_str "new_def" Cprinter.string_of_view_decl(* _short *)) new_def in
         (*update rem_vdefs*)
         let new_def = elim_vdef ss new_def in
@@ -244,7 +243,7 @@ let norm_reuse_one_frm_view iprog prog ?(all=true)
             let is_rec_flag = HipUtil.view_scc_obj # is_rec frm_view_name in
             (* put non-rec call on RHS where it can be unfolded *)
             let (f1,f2) = if is_rec_flag then (f1,f2) else 
-                let () = y_binfo_pp "Swapping non-rec view to RHS" in 
+                let () = y_tinfo_pp "Swapping non-rec view to RHS" in 
                 (f2,f1) 
             in
             let flag = Wrapper.wrap_exc_as_false ~msg:"check_lemeq_sem" (!check_lemeq_sem iprog prog f1 f2 [] []) [] in

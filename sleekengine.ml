@@ -2559,8 +2559,8 @@ let process_shape_reuse reg_frm_vname reg_to_vname=
   let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog vdefs (* !cprog.Cast.prog_view_decls *) frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in
   let scc_posn = HipUtil.view_scc_obj #  get_scc_posn in
-  let () = x_binfo_hp (add_str "frm_vnames"  (pr_list pr_id)) frm_vnames no_pos in
-  let () = x_binfo_hp (add_str "scc_posn"  (pr_list pr_id)) scc_posn no_pos in
+  let () = x_tinfo_hp (add_str "frm_vnames"  (pr_list pr_id)) frm_vnames no_pos in
+  let () = x_tinfo_hp (add_str "scc_posn"  (pr_list pr_id)) scc_posn no_pos in
   let _ = x_binfo_zp  (lazy  ("\nPRED REUSE FOUND:" ^ (pr eq_pairs) ^ "\n" )) no_pos in
   let () = Norm.norm_trans_equiv iprog !cprog vdefs in
   ()
