@@ -481,47 +481,52 @@ and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2_x prog b.IF.formula_inf_continuation}
   | IF.EList b -> IF.EList (map_l_snd (convert_struc2_x prog) b)
 
+
+
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident list list) =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
   (* vdef                                                                  *)
-  let rec gen_name_pairs_heap vname h =
-    match h with
-    | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 }
-    | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 }
-    | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 }
-    | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 }
-    | IF.Phase { IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } ->
-      (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
-    | IF.HeapNode { IF.h_formula_heap_name = c } ->
-      (* if c = vname *)
-      (* then [] *)
-      (* else *)
-      (try 
-         let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
-       with | Not_found -> 
-         if view_scc_obj # in_dom c then [(vname,c)]
-         else []
-      )
-    | IF.HRel (c,_,_) -> [(vname,c)]
-    | _ -> [] in
+  (* let rec gen_name_pairs_heap vname h = *)
+  (*   match h with *)
+  (*   | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } *)
+  (*   | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } *)
+  (*   | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 } *)
+  (*   | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 } *)
+  (*   | IF.Phase { IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } -> *)
+  (*     (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2) *)
+  (*   | IF.HeapNode { IF.h_formula_heap_name = c } -> *)
+  (*     (\* if c = vname *\) *)
+  (*     (\* then [] *\) *)
+  (*     (\* else *\) *)
+  (*     (try  *)
+  (*        let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ] *)
+  (*      with | Not_found ->  *)
+  (*        if view_scc_obj # in_dom c then [(vname,c)] *)
+  (*        else [] *)
+  (*     ) *)
+  (*   | IF.HRel (c,_,_) -> [(vname,c)] *)
+  (*   | _ -> [] in *)
 
-  let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
-    match f with
-    | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
-      (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
-    | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } ->
-      gen_name_pairs_heap vname h
-    | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
-      gen_name_pairs_heap vname h in
+  (* let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list = *)
+  (*   match f with *)
+  (*   | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } -> *)
+  (*     (gen_name_pairs vname f1) @ (gen_name_pairs vname f2) *)
+  (*   | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } -> *)
+  (*     gen_name_pairs_heap vname h *)
+  (*   | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } -> *)
+  (*     gen_name_pairs_heap vname h in *)
 
-  let rec gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list = match f with
-    | IF.EAssume b-> (gen_name_pairs vname b.IF.formula_assume_simpl)
-    | IF.ECase b -> fold_l_snd (gen_name_pairs_struc vname) b.IF.formula_case_branches
-    | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}->
-      (gen_name_pairs vname fb) @(fold_opt (gen_name_pairs_struc vname) cont)
-    | IF.EInfer b -> gen_name_pairs_struc vname b.IF.formula_inf_continuation
-    | IF.EList b ->  fold_l_snd (gen_name_pairs_struc vname) b
-  in
+  (* let rec gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list = match f with *)
+  (*   | IF.EAssume b-> (gen_name_pairs vname b.IF.formula_assume_simpl) *)
+  (*   | IF.ECase b -> fold_l_snd (gen_name_pairs_struc vname) b.IF.formula_case_branches *)
+  (*   | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}-> *)
+  (*     (gen_name_pairs vname fb) @(fold_opt (gen_name_pairs_struc vname) cont) *)
+  (*   | IF.EInfer b -> gen_name_pairs_struc vname b.IF.formula_inf_continuation *)
+  (*   | IF.EList b ->  fold_l_snd (gen_name_pairs_struc vname) b *)
+  (* in *)
+
+  let gen_name_pairs_struc  vname (f:IF.struc_formula): (ident * ident) list = 
+    I.gen_name_pairs_struc view_decls0 vname f in
 
   let gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list =
     Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id))

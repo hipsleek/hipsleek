@@ -47,8 +47,17 @@ let update_view_decl_cprog vdef =
   Cast.update_view_decl !cprog vdef
 
 
-let update_view_decl_iprog vdef = 
+let update_view_decl_iprog ?(update_scc=false) vdef = 
   try
     let iprog = Iast.get_iprog () in
+    if update_scc then
+      begin
+        let n = vdef.Iast.view_name in
+        let view_decls = iprog.Iast.prog_view_decls in
+        let lst = Iast.gen_name_pairs_struc view_decls n vdef.Iast.view_formula in
+        let () = y_binfo_hp (add_str "view" pr_id) n in
+        let () = y_binfo_hp (add_str "lst(pairs)" (pr_list (pr_pair pr_id pr_id))) lst in
+        ()
+      end;
     Iast.update_view_decl iprog vdef
   with _ -> failwith (x_loc^" iprog not found")

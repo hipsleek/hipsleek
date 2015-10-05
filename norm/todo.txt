@@ -863,6 +863,25 @@ view HP_1637<x:node>=
     {FLOW,(1,26)=__flow#E}[]]
 
 ===================================================================
+# ex21u1j.slk (FIXED by adding to iprog)
+
+ pred_elim_useless [G1,G2].
+ pred_reuse[*][*].
+
+# Need an updated SCC..
+
+!!! **sleekengine.ml#2562:frm_vnames:[ll,G2,G2_53,G1,G1_54]
+!!! **sleekengine.ml#2563:scc_posn:[G2,G1,ll]
+
+SCC:[[G2];[G1];[ll]]
+Graph:[(G1,[G2]);(ll,[ll]);(G2,[G2])]
+
+!!! **cprog_sleek.ml#58:view:G2
+!!! **cprog_sleek.ml#59:lst(pairs):[]
+!!! **WARNING****iast.ml#3860:Updating an available view decl (G2) in iprog
+!!! **cast.ml#3864:Adding the view G2_53[] into cprog.
+!!! **cprog_sleek.ml#58:view:G2_53
+!!! **cprog_sleek.ml#59:lst(pairs):[]
 ===================================================================
 ===================================================================
 ===================================================================

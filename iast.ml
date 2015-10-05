@@ -3868,3 +3868,43 @@ let case_normalize_formula : (prog_decl -> ((ident*primed) list) ->  Iformula.fo
 let is_lemma_decl_ahead c = 
   is_lemma_ahead c.coercion_list_kind
 
+let gen_name_pairs_struc view_decls0 vname (f:F.struc_formula): (ident * ident) list = 
+  let rec gen_name_pairs_heap vname h =
+    match h with
+    | F.Star { F.h_formula_star_h1 = h1; F.h_formula_star_h2 = h2 }
+    | F.Conj { F.h_formula_conj_h1 = h1; F.h_formula_conj_h2 = h2 }
+    | F.ConjStar { F.h_formula_conjstar_h1 = h1; F.h_formula_conjstar_h2 = h2 }
+    | F.ConjConj { F.h_formula_conjconj_h1 = h1; F.h_formula_conjconj_h2 = h2 }
+    | F.Phase { F.h_formula_phase_rd = h1; F.h_formula_phase_rw = h2 } ->
+      (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
+    | F.HeapNode { F.h_formula_heap_name = c } ->
+      (* if c = vname *)
+      (* then [] *)
+      (* else *)
+      (try 
+         let todo_unk = look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
+       with | Not_found -> 
+         if view_scc_obj # in_dom c then [(vname,c)]
+         else []
+      )
+    | F.HRel (c,_,_) -> [(vname,c)]
+    | _ -> [] in
+
+  let rec gen_name_pairs vname (f : F.formula) : (ident * ident) list =
+    match f with
+    | F.Or { F.formula_or_f1 = f1; F.formula_or_f2 = f2 } ->
+      (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
+    | F.Base { F.formula_base_heap = h; F.formula_base_pure = p } ->
+      gen_name_pairs_heap vname h
+    | F.Exists { F.formula_exists_heap = h; F.formula_exists_pure = p } ->
+      gen_name_pairs_heap vname h in
+
+  let rec aux f =
+    match f with
+    | F.EAssume b-> (gen_name_pairs vname b.F.formula_assume_simpl)
+    | F.ECase b -> fold_l_snd (aux) b.F.formula_case_branches
+    | F.EBase {F.formula_struc_base =fb; F.formula_struc_continuation = cont}->
+      (gen_name_pairs vname fb) @(fold_opt (aux) cont)
+    | F.EInfer b -> aux b.F.formula_inf_continuation
+    | F.EList b ->  fold_l_snd (aux) b
+  in aux f
