@@ -2509,6 +2509,39 @@ let regex_search reg_id vdefs =
 
 
 let process_pred_split ids=
+  let prog = !cprog in
+  let lem_proving (vn, args, new_hp_args,new_rel_args, orig_vn_hf, new_hrels_comb, new_pure_rel_comb)=
+    let l_name = "lem_inf_" ^ vn in
+    let l_ivars = List.map (CP.name_of_spec_var) (List.map fst new_hp_args) in
+    let l_head = CF.formula_of_heap orig_vn_hf no_pos in
+    let l_body = CF.formula_of_heap new_hrels_comb no_pos in
+    let l_ihead = Rev_ast.rev_trans_formula l_head in
+    let l_ibody = Rev_ast.rev_trans_formula l_body in
+    let llemma = I.mk_lemma l_name LEM_INFER LEM_GEN I.Left l_ivars l_ihead l_ibody in
+    let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
+    (* let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (\* @pure_field *\) *)
+    let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
+    (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
+    let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog prog in
+    let flag = if not lres then
+      false
+    else
+      let derived_views, new_hprels = SynUtils.process_hprel_assumes_res "Deriving Split Views"
+        CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
+        (Syn.derive_view iprog prog)
+      in
+      let () = y_binfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
+        derived_views in
+      true
+    in
+    let msg = if flag then "\n Proven :" else "\n Failed :" in
+    let () = y_binfo_pp (msg ^ (!CF.print_formula l_head) ^ " -> " ^ (!CF.print_formula l_body)) in
+    if flag then
+      (* derive views *)
+      [vn]
+    else []
+  in
+  (******************)
   let _ = Debug.info_hprint (add_str "process_pred_split" (pr_id)) (((pr_list pr_id) ids) ^ "\n" ) no_pos in
   let () = if not !Globals.new_pred_syn then
     let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
@@ -2529,7 +2562,9 @@ let process_pred_split ids=
     ()
   else
     let vdefs = get_sorted_view_decls () in
-    let _ = Norm.norm_split iprog !cprog vdefs ids in
+    let cands = Norm.norm_split iprog !cprog vdefs ids in
+    (* proving lemmas *)
+    let split_vns = List.fold_left (fun acc cand -> acc@(lem_proving cand)) [] cands in
     ()
   in ()
 

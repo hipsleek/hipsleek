@@ -10,11 +10,12 @@ module CF=Cformula
 module CP=Cpure
 module MCP=Mcpure
 module C = Cast
+module I = Iast
 module TP = Tpdispatcher
 (* module SAU = Sautility *)
 
 let check_lemeq_sem = ref (fun (iprog:Iast.prog_decl)
-  (prog:C.prog_decl) (f1:CF.formula) (f2:CF.formula)
+  (prog:C.prog_decl) (f1:CF.formula) (f2:CF.formula) ?(lemtyp=I.Equiv)
   (hpdefs:CF.hp_rel_def list) (ls1:ident list) (ls2:ident list) -> false)
 
 
@@ -533,6 +534,16 @@ let check_view_split_global_x iprog prog cands =
   let pred_helper1 pos args =
     let args1 = List.map (fun sv -> (sv,I)) args in
     let hf,new_hp_sv = Sautil.add_raw_hp_rel prog true false args1 pos in
+    (*add rel decl in iprog*)
+    let ihp_decl = { Iast.hp_name = CP.name_of_spec_var new_hp_sv;
+                      Iast.hp_typed_inst_vars = List.map (fun (CP.SpecVar (t,id,_), i) -> (t,id,i)) args1;
+                      Iast.hp_root_pos = 0;
+                      Iast.hp_part_vars = [];
+                      Iast.hp_is_pre = false;
+                      Iast.hp_formula = Iformula.mkTrue_nf pos;
+                    }
+    in
+    let () = iprog.Iast.prog_hp_decls <- (ihp_decl :: iprog.Iast.prog_hp_decls) in
     ((new_hp_sv,args), hf)
   in
   (*each partition, create new rel and its corresponding rel pure formula*)
@@ -639,15 +650,15 @@ let norm_split_x iprog prog vdefs sel_vns=
   let split_cands = view_split_cands prog sel_vdecls in
   (* check global + generate unknown preds *)
   let split_map_view_subst = check_view_split_global iprog prog split_cands in
-  (* proving lemmas *)
-  (* derive views *)
-  []
+  split_map_view_subst
 
 let norm_split iprog cprog vdefs sel_vns=
   let pr1 = pr_list pr_id in
-  let pr2 = pr_list_ln Cprinter.string_of_view_decl_short in
-  let pr3 = pr_list (Cprinter.string_of_h_formula) in
-  Debug.no_2 "norm_split" pr1 pr2 pr3
+  let pr2a = pr_list_ln Cprinter.string_of_view_decl_short in
+  let pr2 = Cprinter.string_of_h_formula in
+  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr3 = pr_list_ln (pr_hepta pr_id !CP.print_svl pr4 pr4 pr2 pr2 !CP.print_formula) in
+  Debug.no_2 "norm_split" pr1 pr2a pr3
       (fun _ _ -> norm_split_x iprog cprog vdefs sel_vns)
       sel_vns vdefs
 
