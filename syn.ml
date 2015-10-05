@@ -51,6 +51,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
         MCP.ptr_equations_with_null guard_p
     in
     let aliases = CP.find_all_closures (lhs_aliases @ guard_aliases) in
+    let () = y_binfo_hp (add_str "aliases" (pr_list !CP.print_svl)) aliases in
     let null_aliases =
       try List.find (fun svl -> List.exists CP.is_null_const svl) aliases
       with _ -> []

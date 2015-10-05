@@ -807,6 +807,10 @@ let is_null_const (s:spec_var) : bool =
 (* let n = name_of_spec_var s in *)
 (* (is_null_str n)  *)
 
+let is_null_const (s:spec_var) : bool =
+  Debug.no_1 "is_null_const" !print_sv string_of_bool
+    is_null_const s
+
 (* is string a constant?  *)
 let is_null_const_exp (e:exp) : bool = match e with
   | Var(v,_) -> is_null_const v
