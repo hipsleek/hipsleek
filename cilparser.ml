@@ -1303,15 +1303,16 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
         let base_typ = typ_of_cil_exp e in
         let _ = x_binfo_hp (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
         match base_typ with
-        | Cil.TPtr (Cil.TComp _, _) ->
+        | Cil.TPtr (Cil.TComp _, _) 
+        | Cil.TPtr (Cil.TNamed _, _) ->
           let base = translate_exp e  in
           create_complex_exp base offset [] pos
-        (*| Cil.TPtr (Cil.TNamed _, _) ->
-          let ptr_base = translate_exp e  in
-          let data_fields = [str_value] in
-          let base = Iast.mkMember ptr_base data_fields None pos in
-          create_complex_exp base offset [] pos*)
-        | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (
+        (* | Cil.TPtr (Cil.TNamed _, _) ->                             *)
+        (*   let ptr_base = translate_exp e  in                        *)
+        (*   let data_fields = [str_value] in                          *)
+        (*   let base = Iast.mkMember ptr_base data_fields None pos in *)
+        (*   create_complex_exp base offset [] pos                     *)
+        | Cil.TPtr (Cil.TInt (Cil.IChar, _), _) -> (
             let data_base = translate_exp e  in
             let data_fields = [str_char] in
             let base = Iast.mkMember data_base data_fields None pos in
