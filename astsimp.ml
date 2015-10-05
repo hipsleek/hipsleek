@@ -481,47 +481,52 @@ and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2_x prog b.IF.formula_inf_continuation}
   | IF.EList b -> IF.EList (map_l_snd (convert_struc2_x prog) b)
 
+
+
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident list list) =
   (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
   (* vdef                                                                  *)
-  let rec gen_name_pairs_heap vname h =
-    match h with
-    | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 }
-    | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 }
-    | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 }
-    | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 }
-    | IF.Phase { IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } ->
-      (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
-    | IF.HeapNode { IF.h_formula_heap_name = c } ->
-      (* if c = vname *)
-      (* then [] *)
-      (* else *)
-      (try 
-         let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
-       with | Not_found -> 
-         if view_scc_obj # in_dom c then [(vname,c)]
-         else []
-      )
-    | IF.HRel (c,_,_) -> [(vname,c)]
-    | _ -> [] in
+  (* let rec gen_name_pairs_heap vname h = *)
+  (*   match h with *)
+  (*   | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } *)
+  (*   | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } *)
+  (*   | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 } *)
+  (*   | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 } *)
+  (*   | IF.Phase { IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } -> *)
+  (*     (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2) *)
+  (*   | IF.HeapNode { IF.h_formula_heap_name = c } -> *)
+  (*     (\* if c = vname *\) *)
+  (*     (\* then [] *\) *)
+  (*     (\* else *\) *)
+  (*     (try  *)
+  (*        let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ] *)
+  (*      with | Not_found ->  *)
+  (*        if view_scc_obj # in_dom c then [(vname,c)] *)
+  (*        else [] *)
+  (*     ) *)
+  (*   | IF.HRel (c,_,_) -> [(vname,c)] *)
+  (*   | _ -> [] in *)
 
-  let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
-    match f with
-    | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
-      (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
-    | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } ->
-      gen_name_pairs_heap vname h
-    | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
-      gen_name_pairs_heap vname h in
+  (* let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list = *)
+  (*   match f with *)
+  (*   | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } -> *)
+  (*     (gen_name_pairs vname f1) @ (gen_name_pairs vname f2) *)
+  (*   | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } -> *)
+  (*     gen_name_pairs_heap vname h *)
+  (*   | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } -> *)
+  (*     gen_name_pairs_heap vname h in *)
 
-  let rec gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list = match f with
-    | IF.EAssume b-> (gen_name_pairs vname b.IF.formula_assume_simpl)
-    | IF.ECase b -> fold_l_snd (gen_name_pairs_struc vname) b.IF.formula_case_branches
-    | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}->
-      (gen_name_pairs vname fb) @(fold_opt (gen_name_pairs_struc vname) cont)
-    | IF.EInfer b -> gen_name_pairs_struc vname b.IF.formula_inf_continuation
-    | IF.EList b ->  fold_l_snd (gen_name_pairs_struc vname) b
-  in
+  (* let rec gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list = match f with *)
+  (*   | IF.EAssume b-> (gen_name_pairs vname b.IF.formula_assume_simpl) *)
+  (*   | IF.ECase b -> fold_l_snd (gen_name_pairs_struc vname) b.IF.formula_case_branches *)
+  (*   | IF.EBase {IF.formula_struc_base =fb; IF.formula_struc_continuation = cont}-> *)
+  (*     (gen_name_pairs vname fb) @(fold_opt (gen_name_pairs_struc vname) cont) *)
+  (*   | IF.EInfer b -> gen_name_pairs_struc vname b.IF.formula_inf_continuation *)
+  (*   | IF.EList b ->  fold_l_snd (gen_name_pairs_struc vname) b *)
+  (* in *)
+
+  let gen_name_pairs_struc  vname (f:IF.struc_formula): (ident * ident) list = 
+    I.gen_name_pairs_struc view_decls0 vname f in
 
   let gen_name_pairs_struc vname (f:IF.struc_formula): (ident * ident) list =
     Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id))
@@ -537,7 +542,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident lis
     let () = List.iter (fun vd ->
         let n = vd.I.view_name in
         let lst = gen_name_pairs_struc n vd.I.view_formula in
-        view_scc_obj # replace n (List.map snd lst)
+        view_scc_obj # replace x_loc n (List.map snd lst)
       ) vdefs in
     let selfrec = List.filter (fun l -> List.exists (fun (x,y) -> x=y) l) tmp in
     let selfrec = List.map (fun l -> fst (List.hd l)) selfrec in
@@ -557,7 +562,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident lis
     let scclist = view_scc_obj # get_scc in
     view_rec := selfrec@mutrec ;
     view_scc := scclist ;
-    let () = y_binfo_hp (add_str "\n" pr_id) (view_scc_obj # string_of) in
+    let () = y_tinfo_hp (add_str "\n" pr_id) (view_scc_obj # string_of) in
     (* if not(mr==[]) *)
     (* then report_warning no_pos ("View definitions "^str^" are mutually recursive") ; *)
     (* g *)
@@ -1578,7 +1583,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          (* let () =  print_endline " after case normalize" in *)
          (* let () = I.find_empty_static_specs prog in *)
          let ctempls = List.map (x_add trans_templ prog) prog.I.prog_templ_decls in
-         let tmp_views,ls_mut_rec_views = order_views prog.I.prog_view_decls in
+         let tmp_views,ls_mut_rec_views = x_add_1 order_views prog.I.prog_view_decls in
          let cuts = List.map (x_add trans_ut prog) prog.I.prog_ut_decls in
          let cuis = List.map (trans_ui prog) prog.I.prog_ui_decls in
          (* let () = x_add Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
@@ -2349,7 +2354,7 @@ and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef :
   let pr3 = add_str "ann_typs" (pr_list (pr_pair pr_id pr_none)) in
   (* let pr_r = pr_none in  *)
   Debug.no_4 "trans_view" pr pr2 pr2a pr3 pr_r  (fun _ _ _ _ -> trans_view_x prog  mutrec_vnames
-                                       transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
+                                                    transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
@@ -2511,11 +2516,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 let p = MCP.pure_of_mix p in
                 let emap = Infer.get_eqset p in
                 let (_,l_args,l_node_name,_,_,_,_,_) = CF.get_args_of_node h in
-                y_binfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
-                y_binfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
-                y_binfo_hp (add_str "body" (!CF.print_h_formula)) h;
-                y_binfo_hp (add_str "pure" (!CP.print_formula)) p;
-                y_binfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
+                y_tinfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
+                y_tinfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
+                y_tinfo_hp (add_str "body" (!CF.print_h_formula)) h;
+                y_tinfo_hp (add_str "pure" (!CP.print_formula)) p;
+                y_tinfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
               end
             | _ -> ()
           end
@@ -3023,7 +3028,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         (*   cviews0 *)
       in
       (* let () = (\* if !Globals.gen_baga_inv then *\) ( *)
-      (*   x_binfo_pp "end gen baga\n" no_pos; *)
+      (*   x_tinfo_pp "end gen baga\n" no_pos; *)
       (*   Globals.dis_inv_baga () *)
       (* ) in *)
       cviews1
@@ -4504,8 +4509,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let head_pure = if coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
   let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
-  let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
+  let rhs_fnames =  Gen.BList.remove_dups_eq (=) (List.map CP.name_of_spec_var (CF.fv c_rhs)) in
+  let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
   let fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@rhs_fnames) in
+  let l_fnames = Gen.BList.remove_dups_eq (=) (guard_fnames@lhs_fnames) in
   let quant = true in
   (*moved to internal trans_head*)
   (* let h = List.map (fun c-> (c,Unprimed)) fnames in *)
@@ -4516,11 +4523,15 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*   true (\*check_pre*\) in *)
   (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
   (**********moved END*************)
-  let (n_tl,c_head_norm) = x_add trans_head new_head fnames quant n_tl in
+  let () = y_tinfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
+  let () = y_tinfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
+  let (n_tl,c_head_norm) = x_add trans_head new_head (if false then l_fnames else fnames) quant n_tl in
   let c_head_norm =  CF.add_original c_head_norm false in
   let c_head_norm_rlem = if coer_type = I.Equiv then
+      let () = y_tinfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
+      let () = y_tinfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
       let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] no_pos in
-      snd (x_add trans_head new_head (Gen.BList.remove_dups_eq (=)  rhs_fnames) quant n_tl)
+      snd (x_add trans_head new_head ((* rhs_fnames *)  l_fnames) quant n_tl)
     else c_head_norm in
   (* free vars in RHS but not LHS *)
   let hrels = List.map (fun (a,_) -> a) (CF.get_HRels_f c_rhs ) in
@@ -4553,7 +4564,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       (* let m_vars = List.filter (fun m -> m.Cast.mater_target_view!=[]) m_vars in *)
       let m_vars = List.map (fun m -> let vs = m.Cast.mater_target_view in
                               let vs2 = List.filter (fun v -> (is_not_global_rel prog v)
-                                                             &&  (is_not_global_hp_def prog v) ) vs in
+                                                              &&  (is_not_global_hp_def prog v) ) vs in
                               (m,vs,vs2)) m_vars in
       let m_vars = List.filter (fun (m,vs,vs2) -> vs==[] (* no change *) || vs2!=[]) m_vars in
       let m_vars = List.map (fun (m,vs,vs2) -> {m with Cast.mater_target_view = vs2}) m_vars in
@@ -7458,30 +7469,59 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist 
     prR linearize_formula_x prog f0 tlist
 
-and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
-  : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
-  let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.view_arg list) =
+and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
+  let pos = no_pos in 
+  (* IF.pos_of_formula f0 in *)
+  let rec aux hargs =
     match hargs with
     | (e, _) :: rest ->
+      let str = (Iprinter.string_of_formula_exp e) in
       let e_hvars = match e with
         | IP.Var ((ve, pe), pos_e) ->   [CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)]
         | IP.AConst (a, pos_e )    -> [CP.imm_to_view_arg a]
         (* | IP.Ann_Exp (IP.AConst ((ve, pe), pos_e ), t, _) -> CP *)
         | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, l) -> [CP.sv_to_view_arg (trans_var_safe (ve, pe) t tlist pos_e)] (*annotated self*)
         | IP.Bptriple ((ec,et,ea), pos_e) ->
+          (* WN: what is Bptriple? *)
           let apply_one e =
             (match e with
              | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)
-             | _ -> report_error (IF.pos_of_formula f0) ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0)))
+             | _ -> report_error (* (IF.pos_of_formula f0) *) pos ("linearize_formula : match_exp : Expecting Var in Bptriple "^(str(* Iprinter.string_of_formula f0 *))))
           in
           List.map apply_one [ec;et;ea]
-        | _ -> let s = (Iprinter.string_of_formula_exp e) in
-          report_error (IF.pos_of_formula f0) ("malfunction with float out exp: "^s) in
+        | _ ->  report_error pos (* (IF.pos_of_formula f0) *) ("malfunction with float out exp: "^str) in
       (* (Iprinter.string_of_formula f0))in *)
-      let rest_hvars = match_exp rest pos in
+      let rest_hvars = aux rest in
       let hvars = e_hvars @ rest_hvars in
       hvars
-    | [] -> [] in
+    | [] -> [] in 
+  aux hargs
+
+and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
+  : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
+  let match_exp hargs = match_exp tlist hargs in
+  (* let rec match_exp (hargs : (IP.exp * LO.t) list) pos : (CP.view_arg list) = *)
+  (*   match hargs with *)
+  (*   | (e, _) :: rest -> *)
+  (*     let e_hvars = match e with *)
+  (*       | IP.Var ((ve, pe), pos_e) ->   [CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)] *)
+  (*       | IP.AConst (a, pos_e )    -> [CP.imm_to_view_arg a] *)
+  (*       (\* | IP.Ann_Exp (IP.AConst ((ve, pe), pos_e ), t, _) -> CP *\) *)
+  (*       | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, l) -> [CP.sv_to_view_arg (trans_var_safe (ve, pe) t tlist pos_e)] (\*annotated self*\) *)
+  (*       | IP.Bptriple ((ec,et,ea), pos_e) -> *)
+  (*         let apply_one e = *)
+  (*           (match e with *)
+  (*            | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e) *)
+  (*            | _ -> report_error (IF.pos_of_formula f0) ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0))) *)
+  (*         in *)
+  (*         List.map apply_one [ec;et;ea] *)
+  (*       | _ -> let s = (Iprinter.string_of_formula_exp e) in *)
+  (*         report_error (IF.pos_of_formula f0) ("malfunction with float out exp: "^s) in *)
+  (*     (\* (Iprinter.string_of_formula f0))in *\) *)
+  (*     let rest_hvars = match_exp rest in *)
+  (*     let hvars = e_hvars @ rest_hvars in *)
+  (*     hvars *)
+  (*   | [] -> [] in *)
   let expand_dereference_node (f: IF.h_formula) pos : (IF.h_formula * (Globals.ident * VarGen.primed) list) = (
     match f with
     | IF.HeapNode {IF.h_formula_heap_node = n;
@@ -7671,7 +7711,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             let num_ptrs = I.get_typ_size prog.I.prog_data_decls rootptr_type in
             (* An Hoa : The rest are copied from the original code with modification to account for the holes *)
             let labels = List.map (fun _ -> LO.unlabelled) exps in
-            let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels) pos) in
+            let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels)) in
             (* [Internal] Create a list [x,x+1,...,x+n-1] *)
             let rec first_naturals n x = 
               if n = 0 then [] 
@@ -7716,7 +7756,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               | Some f -> 
                 let perms = [f] in
                 let permlabels = List.map (fun _ -> LO.unlabelled) perms in
-                let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels) pos) in
+                let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels)) in
                 (match !Globals.perm with
                  | Bperm ->
                    (*Note: ordering is important*)
@@ -7762,7 +7802,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             try (
               let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
               let labels = fst vdef.I.view_labels in
-              let params_orig = match_exp (List.combine exps labels) pos in
+              let params_orig = match_exp (List.combine exps labels) in
               (* andreeac: TODO insert test check map compatib *)
               (* let hvars, labels, annot_params = CP.split_view_args (List.combine params_orig labels) in *)
               let hvars, labels, annot_params, params_orig = x_add_1 Immutable.split_view_args params_orig vdef in 
@@ -7780,7 +7820,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | Some f -> 
                     let perms = f :: [] in
                     let permlabels = List.map (fun _ -> LO.unlabelled) perms in
-                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels) pos) in
+                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels)) in
                     (match !Globals.perm with
                      | Bperm ->
                        (*Note: ordering is important*)
@@ -7818,7 +7858,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             )
             with Not_found ->
               let labels = List.map (fun _ -> LO.unlabelled) exps in
-              let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels) pos) in
+              let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels)) in
               let new_v = CP.SpecVar (Named c, v, p) in
               (* An Hoa : find the holes here! *)
               let rec collect_holes vars n = (match vars with
@@ -7835,7 +7875,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   | Some f -> 
                     let perms = f :: [] in
                     let permlabels = List.map (fun _ -> LO.unlabelled) perms in
-                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels) pos) in
+                    let permvars = CP.view_arg_to_sv_list (match_exp (List.combine perms permlabels)) in
                     (match !Globals.perm with
                      | Bperm ->
                        (*Note: ordering is important*)
@@ -11192,7 +11232,8 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
       else look_up_view rest vn0
   in
   let new_views = List.map fst ls_pr_new_view_tis in
-  let tmp_views, ls_mut_rec_views = (order_views (iprog.I.prog_view_decls)) in
+  let tmp_views, ls_mut_rec_views = (x_add_1 order_views 
+                                       (List.rev (iprog.I.prog_view_decls))) in
   let () = x_add Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   iprog.I.prog_view_decls <- tmp_views;
   let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in

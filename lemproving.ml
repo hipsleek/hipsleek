@@ -501,7 +501,8 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
           let () = (
             if valid then print_lemma_entail_result valid residue num_id
             else
-              let () = Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos in
+              let force_print = !Globals.lemma_ep && !Globals.lemma_ep_verbose in
+              if force_print then Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos;
               let typ1_str = Cprinter.string_of_coercion_type typ1 in
               let typ2_str = Cprinter.string_of_coercion_type typ2 in
               let () = print_lemma_entail_result valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in

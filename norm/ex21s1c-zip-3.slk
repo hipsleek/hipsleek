@@ -1,0 +1,61 @@
+data node{
+     int val;
+     node next;
+}.
+
+/*
+HeapPred zip(node@RO a, node b, node c).
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+*/
+/*
+HeapPred zip2(node@RO a, node b).
+
+relDefn zip2(x,y) <->
+  x=null & y=null
+or x::node<_,p>*y::node<_,q>*zip2(p,q).
+*/
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+pred lseg<y> ==
+   emp & self=y
+or self::node<_,p>*p::lseg<y>.
+
+pred zip2<y> ==
+   self=null & y=null
+or self::node<_,p>*y::node<_,q> * p::zip2<q>.
+
+print views.
+
+pred_split [zip2].
+//pred_split [lseg].
+//pred_split [zip2].
+pred_reuse [*][*].
+pred_reuse_subs [*].
+print views.
+
+/*
+# ex21s1c.slk
+
+pred_split [zip2,zip,ll,lseg].
+//pred_split [lseg].
+//pred_split [zip2].
+pred_reuse [*][*].
+pred_reuse_subs [*].
+print views.
+
+# After this synthesis, can we add the lemma:
+   self::zip2<y> ->  HP_69(self) * HP_70(y)
+ that was proven. 
+
+ Better still, Could we perhaps test for:
+   self::zip2<y> <->  HP_69(self) * HP_70(y)
+ and then check which direction had been proven,
+ adding the relevant lemma into our lemma library?
+
+*/

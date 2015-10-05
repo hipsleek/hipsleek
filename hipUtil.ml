@@ -6,7 +6,6 @@ open Globals
 
 let proc_files = new stack_noexc "proc_files" "__no_file" pr_id (fun s1 s2 -> s1=s2) 
 
-
 module Name =
 struct
   type t = ident
@@ -32,8 +31,13 @@ class graph =
     (* val mutable self_rec_only = [] (\* those with self-recursive call only *\) *)
     (* val mutable mut_rec = [] (\* those in mutual-recursion *\) *)
     val mutable dom = [] 
+    val mutable nodes = [] 
 
     (* let pr = pr_list (pr_pair pr_id (pr_list pr_id)) *)
+
+    method add_node name =
+      if (List.exists (fun x -> x=name) nodes) then ()
+      else nodes <- name::nodes
 
     method posn name =
       if grp==None then self # build_scc_void 13;
@@ -43,14 +47,34 @@ class graph =
         | x::xs -> if x=name then n else find xs (n+1)
       in find posn_lst 0
 
+    method scc_posn name =
+      if grp==None then self # build_scc_void 13;
+      let rec find xss n =
+        match xss with
+        | [] -> (-1)
+        | xs::xss -> if List.exists (fun a -> a=name) xs then n else find xss (n+1)
+      in find scc 0
+
+    method get_scc_posn =
+      if grp==None then self # build_scc_void 13;
+      posn_lst
+
+    method compare name1 name2 =
+      let n1 = self # scc_posn name1 in
+      let n2 = self # scc_posn name2 in
+      if n1<n2 then -1
+      else if n1=n2 then 0
+      else 1
+
     method reset =
       grp <- None;
       Hashtbl.clear nlst
 
-    method replace n lst  =
+    method replace s n lst  =
       grp <- None;
-      let () = y_tinfo_hp (add_str "replace" ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
-      Hashtbl.replace nlst n lst
+      let () = y_binfo_hp (add_str (s^"replace") ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
+      Hashtbl.replace nlst n lst;
+      self # add_node n
 
     method set_sorted = 
       if grp==None then self # build_scc_void 8;
@@ -61,7 +85,7 @@ class graph =
 
     method remove n  =
       grp <- None;
-      let () = y_tinfo_hp (add_str "remove" pr_id) n in
+      let () = y_binfo_hp (add_str "remove" pr_id) n in
       Hashtbl.remove nlst n
 
     method fail_exc e m =
@@ -76,7 +100,7 @@ class graph =
 
     method unfold_in m n = (* unfold m in n *)
       let msg = ("unfold "^m^" in "^n) in
-      let () = y_binfo_pp msg in
+      let () = y_tinfo_pp msg in
       let unchanged lst =
         match lst with
         | [x] -> x=m
@@ -90,7 +114,7 @@ class graph =
             let old_e = List.filter (fun e -> not(e=m)) edges in
             let add_e = BList.difference_eq (=) edges_m old_e in
             if unchanged add_e then ()
-            else self # replace n (add_e@old_e)
+            else self # replace "" n (add_e@old_e)
           else
             self # fail_with ("unfold cannot find "^m^" in "^n)
         with e -> self # fail_exc e msg
@@ -134,6 +158,31 @@ class graph =
     method build_scc n  =
       let () = y_tinfo_pp ("calling build_scc "^(string_of_int n))  in
       let g = NG.create () in
+      let find_posn n = 
+        let rec aux xs i =
+          match xs with 
+          | [] -> -1
+          | x::xs -> if x=n then i else aux xs (i+1)
+        in aux nodes 0 in
+      let alpha_order e1 e2 = 
+        match e1,e2 with
+        | n1::_,n2::_ -> 
+          let p1 = find_posn n1 in
+          let p2 = find_posn n2 in
+          p2-p1
+        | _,_ -> 0 in
+      let is_edges s1 s2 =
+        List.exists (fun n1 ->
+            List.exists (fun n2 ->
+                NG.mem_edge g n1 n2
+              ) s2
+          ) s1 in
+      let order_scc s1 s2 =
+        if is_edges s1 s2 then 1
+        else if is_edges s2 s1 then -1
+        else alpha_order s1 s2 in
+      let sort_scc scc =
+        List.sort order_scc scc in
       (* self_rec <- []; *)
       pto <- [];
       dom <- Hashtbl.fold (fun n xs acc-> n::acc) nlst [];
@@ -144,6 +193,7 @@ class graph =
             ) edges
         ) nlst in
       let scclist = NGComponents.scc_list g in
+      let scclist = sort_scc scclist in
       scc <- scclist;
       posn_lst <- List.concat scclist;
       sorted_flag <- false;

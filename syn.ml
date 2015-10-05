@@ -51,6 +51,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
         MCP.ptr_equations_with_null guard_p
     in
     let aliases = CP.find_all_closures (lhs_aliases @ guard_aliases) in
+    let () = y_tinfo_hp (add_str "aliases" (pr_list !CP.print_svl)) aliases in
     let null_aliases =
       try List.find (fun svl -> List.exists CP.is_null_const svl) aliases
       with _ -> []
@@ -174,14 +175,14 @@ let merge_pre_hprel_list prog hprels =
       let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
       let unsat_core = Smtsolver.get_unsat_core sub_conds in
       if is_empty unsat_core then
-        let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
+        let () = y_winfo_pp "Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
         hprels
       else
         let cond_guards = List.map (fun c -> cond_guard_of_pre_hprel unsat_core c) conds in
         let cond_guard_hprels = List.combine cond_guards hprels in
         let trans_hprels = List.map (fun (c, hpr) -> transform_pre_hprel_w_cond_guard c hpr) cond_guard_hprels in
         if not (should_merge_pre_hprels prog trans_hprels) then
-          let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in
+          let () = y_winfo_pp "Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in
           hprels
         else
           let disj_rhs_list = List.fold_left (fun acc (c, hprel) ->
@@ -268,7 +269,7 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
   (* Prevent self-recursive pred to avoid infinite unfolding *)
   if mem hrel_name hprel_rhs_fv then
-    let () = y_binfo_pp (
+    let () = y_tinfo_pp (
       "WARNING: Unfolding self-recursive predicate " ^ 
       (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
     in
@@ -756,6 +757,10 @@ let derive_view iprog cprog other_hprels hprels =
   (* let derived_views = List.map (fun view -> unfolding_view iprog cprog view) derived_views in *)
   (derived_views, simplified_selective_hprels)
 
+(* type: Saout.I.prog_decl -> *)
+(*   Sautil.C.prog_decl -> *)
+(*   SynUtils.CF.hprel list -> *)
+(*   SynUtils.CF.hprel list -> Rev_ast.C.view_decl list * SynUtils.CF.hprel list *)
 let derive_view iprog prog other_hprels hprels = 
   let pr1 = Cprinter.string_of_hprel_list_short in
   let pr2 = pr_list Cprinter.string_of_view_decl_short in
@@ -789,12 +794,12 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
   else
     let () = y_binfo_pp "XXX proven infer ---> " in
     let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
-    (* let () = List.iter (fun v ->                                           *)
-    (*   let () = C.update_un_struc_formula trans_hrel_to_view_formula v in   *)
-    (*   let () = C.update_view_formula trans_hrel_to_view_struc_formula v in *)
-    (*   let () = C.update_view_decl cprog v in                               *)
-    (*   let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in *)
-    (*   ()) tmp_views in                                                     *)
+    let () = List.iter (fun v ->
+      let () = C.update_un_struc_formula trans_hrel_to_view_formula v in
+      let () = C.update_view_formula trans_hrel_to_view_struc_formula v in
+      let () = C.update_view_decl cprog v in
+      let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
+      ()) tmp_views in
     (* derived_views have been added into prog_view_decls of iprog and cprog *)
     let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
         CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
@@ -809,7 +814,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in
     let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in
     let () = y_binfo_hp (add_str "XXX reuse found .." (pr_list (pr_pair pr_id pr_id))) lst in
-    let () = y_binfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
+    let () = y_tinfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
         all_d_views in
     (* Equiv test to form new pred *)
     let r_cbody = trans_hrel_to_view_formula l_body in
@@ -1036,7 +1041,7 @@ let syn_pre_preds prog (is: CF.infer_state) =
   
     let () = x_binfo_pp ">>>>> Step 3: Dangling Parameterizing <<<<<" no_pos in
     let is_all_constrs = x_add_1 dangling_parameterizing is_all_constrs in
-    let () = x_tinfo_hp (add_str "Parameterizing result" 
+    let () = x_binfo_hp (add_str "Parameterizing result" 
         pr_hprel_list) is_all_constrs no_pos
     in
 

@@ -1,0 +1,46 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred G2<yy,nnn> == self=null
+  or self::node<nnn,tt> * tt::G2<yy,_>.
+
+//print views.
+pred_elim_useless [G2].
+
+print views.
+
+/*
+# ex21u1e.slk -dre ".*coercion"
+
+pred_elim_useless [G1,G2].
+
+!!! **norm.ml#50:  ELIMINATE parameters:[y] of view G2
+
+# Why no lemma proving? Compare with ex21u1f.slk
+
+[ view G2<y:TVar[36]>= 
+  EBase 
+    self::G2_43<>@M&{FLOW,(1,26)=__flow#E}[],
+
+ view G2_43<y:TVar[36]>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_13; tt]self::node<Anon_13,tt>@M * tt::G2_43<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1<y:TVar[42]>= 
+  EBase 
+    self::G1_44<>@M&{FLOW,(1,26)=__flow#E}[],
+
+ view G1_44<y:TVar[42]>= 
+  EBase 
+    exists (Impl)[Anon_12; t]self::node<Anon_12,t>@M * t::G2_43<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+
+*/
+

@@ -98,7 +98,12 @@ and barrier_decl = {
 and view_decl = {
   view_name : ident;
 
+  (* these seem related to parameters of view *)
   view_vars : P.spec_var list;
+  view_ann_params : (P.annot_arg * int) list;
+  view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
+  view_cont_vars : P.spec_var list;
+
   view_pos : loc;
 
   view_is_prim : bool;
@@ -110,7 +115,6 @@ and view_decl = {
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
 
-  view_cont_vars : P.spec_var list;
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
@@ -130,10 +134,8 @@ and view_decl = {
   view_parent_name: ident option; (*for view_spec*)
   (*a map of shape <-> pure properties*)
   (*View_EXT have been applied in this view*)
-  view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
   (* below to detect @L in post-condition *)
   mutable view_contains_L_ann : bool;
-  view_ann_params : (P.annot_arg * int) list;
   view_params_orig: (P.view_arg * int) list;
   mutable view_partially_bound_vars : bool list;
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
@@ -3852,17 +3854,47 @@ let add_view_decl prog vdecl =
 
 let update_view_decl prog vdecl = 
   let vdecl_id = vdecl.view_name in
+  let vdecl_args = vdecl.view_vars in
+  let vhdr = vdecl_id ^(!CP.print_svl vdecl_args) in
   let same_vdecls, others = List.partition (fun v -> 
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
   let () = 
     if not (is_empty same_vdecls) then 
-      y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in cprog.")
-    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") 
+      y_binfo_pp ("Updating an available view decl (" ^ vhdr^ ") in cprog.")
+    else y_binfo_pp ("Adding the view " ^vhdr^" into cprog.") 
   in
   prog.prog_view_decls <- others @ [vdecl]
 
-let add_equiv_to_view_decl frm_vdecl keep_sst to_view =
-  frm_vdecl.view_equiv_set # set (keep_sst,to_view)
+let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
+  (* let frm_name = frm_vdecl.view_name in *)
+  (* if HipUtil.view_scc_obj # compare frm_name to_name  < 0 then *)
+  (*   begin *)
+  (*   y_binfo_pp "change order of sst"; *)
+  (*   to_vdecl.view_equiv_set # set (keep_sst,frm_name) *)
+  (*   end *)
+  (* else  *)
+  frm_vdecl.view_equiv_set # set (keep_sst,to_vdecl.view_name)
+
+(* let add_equiv_to_view_decl frm_vdecl keep_sst to_view = *)
+(*   frm_vdecl.view_equiv_set # set (keep_sst,to_view) *)
+
+let is_finish_equiv_view_decl frm_vdecl to_vdecl =
+  let (_,target_frm) = frm_vdecl.view_equiv_set # get in
+  let (_,target_to) = to_vdecl.view_equiv_set # get in
+  let frm_name = frm_vdecl.view_name in
+  let to_name = to_vdecl.view_name in
+  if (frm_name=target_to) || (to_name=target_frm) then true
+  else if not(target_frm="") && not(target_to="") then true
+  else false
+
+(* let change_to_view_decl frm_vdecl to_vdecl = *)
+(*   let frm_flag = frm_vdecl.view_equiv_set # is_avail in *)
+(*   let (_,target_to) = to_vdecl.view_equiv_set # get in *)
+(*   if frm_flag then (to_vdecl,true) (\* finish since frm_vdecl already has an equiv *\) *)
+(*   else if not(target_to="") then  *)
+(*     let () = y_winfo_hp (add_str  "change to_decl to" pr_id) target_to in *)
+(*     (to_vdecl,false) *)
+(*   else (to_vdecl,false) *)
 
 let smart_view_name_equiv view_decls vl vr =
   let vl_name = vl.h_formula_view_name in
@@ -3879,16 +3911,16 @@ let smart_view_name_equiv view_decls vl vr =
         else 
           let (sst,new_name) =  (vdef2.view_equiv_set # get) in
           if new_name = vl_name then 
-            let msg = "Using equiv "^vl_name^" <-> "^(vdef2.view_equiv_set # string_of) in
-            let () = y_winfo_pp msg in
+            let msg = "Using equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+            let () = y_tinfo_pp msg in
             let new_vr = get_view_equiv vl sst new_name in
             Some (vl,new_vr)
           else None
       else if vdef2.view_equiv_set # is_empty then
         let (sst,new_name) =  (vdef1.view_equiv_set # get) in
         if new_name = vr_name then 
-          let msg = "Using equiv "^vr_name^" <-> "^(vdef1.view_equiv_set # string_of) in
-          let () = y_winfo_pp msg in
+          let msg = "Using equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let () = y_tinfo_pp msg in
           let new_vl = get_view_equiv vr sst new_name in
           Some (new_vl,vr)
         else None
@@ -3896,7 +3928,9 @@ let smart_view_name_equiv view_decls vl vr =
         let (sst_l,new_l_name) =  (vdef1.view_equiv_set # get) in
         let (sst_r,new_r_name) =  (vdef2.view_equiv_set # get) in
         if new_l_name = new_r_name then 
-          let () = y_winfo_pp "double equiv" in
+          let msg1 = "Double equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+          let msg2 = "\nUsing equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let () = y_tinfo_pp (msg1^msg2) in
           let new_vl = get_view_equiv vl sst_l new_l_name in
           let new_vr = get_view_equiv vr sst_r new_r_name in
           Some (new_vl,new_vr)
@@ -3922,7 +3956,7 @@ let get_view_name_equiv view_decls vl =
   else 
     let (sst,new_name) =  (vdef.view_equiv_set # get) in
     let msg = "Using equiv "^vname^" <-> "^(vdef.view_equiv_set # string_of) in
-    let () = y_winfo_pp msg in
+    let () = y_tinfo_pp msg in
     let new_vl = get_view_equiv vl sst new_name in
     (* let args = vl.h_formula_view_arguments in (\* need to change other parameters *\) *)
     (* let new_args =  *)

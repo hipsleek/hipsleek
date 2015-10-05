@@ -1,0 +1,42 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred app5<a:int,b:node> == self=null
+        or self::node<_,q> * q::app5<a,b>
+  inv true.
+
+pred ls<b:node,a:int> == self=null
+        or self::node<_,q> * q::ls<b,a>
+  inv true.
+
+pred ll<a:int,b:node> == self=null
+        or self::node<_,q> * q::ll<a,b>
+  inv true.
+
+pred U<> == self::app5<0,null>
+  inv true.
+
+//lemma_test self::app5<> <-> self::U<>.
+//lemma_test self::U<> <-> self::app5<>. //Fails
+
+pred_reuse [app5][ls].
+
+pred_reuse [*][*].
+print views.
+
+/*
+# ex21u3c2.slk
+
+PRED REUSE FOUND:[(app5,ls)]
+PRED REUSE FOUND:[(ls,ll),(U,ll)]
+
+# GOT app5 -> ls; ls ->ll; U -> ll
+# need a separate pred_equiv_trans phase for app5->ll
+
+*/

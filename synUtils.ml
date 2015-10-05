@@ -258,7 +258,7 @@ let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.sp
             in heap_node @ (get_feasible_node_args prog h)) heaps)) in
       if is_empty null_aliases then heap_args
       else
-        List.filter (fun arg -> Gen.BList.mem_eq CP.eq_spec_var arg null_aliases) heap_args
+        List.filter (fun arg -> not (Gen.BList.mem_eq CP.eq_spec_var arg null_aliases)) heap_args
     | CF.Or ({ formula_or_f1 = f1; formula_or_f2 = f2; }) ->
       (helper f1) @ (helper f2)
   in helper f

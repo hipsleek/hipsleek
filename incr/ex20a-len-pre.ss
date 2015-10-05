@@ -21,7 +21,7 @@ HeapPred P(node x).
 int length(node x)
   infer [P,@classic,@pure_field]
   requires P(x)
-     ensures true;
+   ensures true;
 {    
   if (x==null) return 0;
   else return 1+length(x.next);

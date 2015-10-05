@@ -1854,6 +1854,11 @@ Total verification time: 132.92 second
 	Time spent in child processes: 87.53 second
 	Number of false contexts: 99
 ====================================================================
+-flags "--new-lemma-unfold"
+T
+  lemmas/dseg-new.slk({L2#Fail}) 
+  fracperm/split_simple.slk({E1#Valid},{E3#Valid}) 
+  fracperm/split-combine.slk({E13#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================

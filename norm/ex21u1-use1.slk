@@ -11,6 +11,8 @@ pred G2<p:node,y> == self=y
 
 pred_elim_useless [G1,G2].
 
+print views.
+
 /*
 # ex21u1.slk --dd-calls-all
 
