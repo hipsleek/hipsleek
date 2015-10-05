@@ -873,6 +873,22 @@ view HP_1637<x:node>=
 !!! **sleekengine.ml#2562:frm_vnames:[ll,G2,G2_53,G1,G1_54]
 !!! **sleekengine.ml#2563:scc_posn:[G2,G1,ll]
 
+# need to drop node from views ..
+
+!!! **cprog_sleek.ml#62:fvars(view):[(node,),(G2_53,)]
+!!! **cprog_sleek.ml#63:view:G1_54
+!!! **cprog_sleek.ml#64:lst(pairs):[(G1_54,G2_53)]
+!!! **iast.ml#3861:Adding the view G1_54 into iprog.
+!!! **norm.ml#164:USELESS Parameters eliminated:
+[(G1,[y]),
+(G2,[y])]
+!!! **norm.ml#252:
+ Proven : self::ll<>@M&{FLOW,(1,26)=__flow#E}[] <->  self::G2_53<>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **norm.ml#252:
+ Failed : self::G2_53<>@M&{FLOW,(1,26)=__flow#E}[] <->  self::G1_54<>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#2562:frm_vnames:[ll,G2,G2_53,G1,G1_54]
+!!! **sleekengine.ml#2563:scc_posn:[G2,G1_54,G1,node,G2_53,ll]
+
 SCC:[[G2];[G1];[ll]]
 Graph:[(G1,[G2]);(ll,[ll]);(G2,[G2])]
 
