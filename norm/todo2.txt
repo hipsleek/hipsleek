@@ -17,6 +17,21 @@ print views.
  adding the relevant lemma into our lemma library?
 
 =========================================================
+# ex21s1d.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+pred_split [zip2].
+
+!!! process_pred_split:
+[zip2]
+
+# Unsuccessful split. Can you do a SCC on the
+  parameters, so that you known that to split by
+  self::zip2(y,p) --> H1(self) * H2(y,p)
+
 =========================================================
 =========================================================
 =========================================================

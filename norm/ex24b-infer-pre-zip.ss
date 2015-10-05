@@ -11,10 +11,10 @@ HeapPred P(node x, node y).
 
 node zip(node x,node y)
 /*
- requires x::ll<a>*y::ll<b> & a=b
+ requires x::ll<a>*y::ll<b> & a<=b
  ensures res::ll<n> & n=a;
 */
-  infer[P,@classic]
+ infer[P,@classic]
  requires P(x,y)
  ensures true;
 {
