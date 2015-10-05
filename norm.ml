@@ -423,7 +423,7 @@ let norm_trans_equiv iprog cprog vdefs =
         | _ -> 
           let pr_sst = pr_list string_of_int in
           let final_sst = comp sst1 sst2 in
-          let () = y_binfo_hp (add_str "Composing -> " (pr_triple pr_sst pr_sst pr_sst)) (sst1,sst2,final_sst) in
+          let () = y_tinfo_hp (add_str "Composing -> " (pr_triple pr_sst pr_sst pr_sst)) (sst1,sst2,final_sst) in
           final_sst
       end
   in

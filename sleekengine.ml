@@ -3026,7 +3026,7 @@ let process_print_command pcmd0 =
       }in
     let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
-  | PCmd pcmd ->
+  | PCmd (pcmd,_) ->
     if pcmd = "lemmas" then
       Lem_store.all_lemma # dump
     else if pcmd = "residue" then

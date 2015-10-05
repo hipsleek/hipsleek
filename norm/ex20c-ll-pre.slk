@@ -37,8 +37,9 @@ print relAssumes.
 //shape_normalize [DP_58].
 
 shape_derive_view [*].
-pred_reuse[*][*].
-print views.
+//pred_reuse[*][*].
+//pred_reuse_subs[*].
+//print views.
 //print relAssumes.
 
 /*
