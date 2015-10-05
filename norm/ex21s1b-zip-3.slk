@@ -39,6 +39,7 @@ or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
 pred_split [zip2,zip,ll,lseg].
 //pred_split [lseg].
 //pred_split [zip2].
+pred_reuse [*][*].
 
 print residue.
 
