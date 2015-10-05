@@ -51,7 +51,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
         MCP.ptr_equations_with_null guard_p
     in
     let aliases = CP.find_all_closures (lhs_aliases @ guard_aliases) in
-    let () = y_binfo_hp (add_str "aliases" (pr_list !CP.print_svl)) aliases in
+    let () = y_tinfo_hp (add_str "aliases" (pr_list !CP.print_svl)) aliases in
     let null_aliases =
       try List.find (fun svl -> List.exists CP.is_null_const svl) aliases
       with _ -> []
@@ -175,14 +175,14 @@ let merge_pre_hprel_list prog hprels =
       let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
       let unsat_core = Smtsolver.get_unsat_core sub_conds in
       if is_empty unsat_core then
-        let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
+        let () = y_winfo_pp "Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
         hprels
       else
         let cond_guards = List.map (fun c -> cond_guard_of_pre_hprel unsat_core c) conds in
         let cond_guard_hprels = List.combine cond_guards hprels in
         let trans_hprels = List.map (fun (c, hpr) -> transform_pre_hprel_w_cond_guard c hpr) cond_guard_hprels in
         if not (should_merge_pre_hprels prog trans_hprels) then
-          let () = y_binfo_pp "WARNING: Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in
+          let () = y_winfo_pp "Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in
           hprels
         else
           let disj_rhs_list = List.fold_left (fun acc (c, hprel) ->
@@ -269,7 +269,7 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
   (* Prevent self-recursive pred to avoid infinite unfolding *)
   if mem hrel_name hprel_rhs_fv then
-    let () = y_binfo_pp (
+    let () = y_tinfo_pp (
       "WARNING: Unfolding self-recursive predicate " ^ 
       (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
     in
@@ -757,6 +757,10 @@ let derive_view iprog cprog other_hprels hprels =
   (* let derived_views = List.map (fun view -> unfolding_view iprog cprog view) derived_views in *)
   (derived_views, simplified_selective_hprels)
 
+(* type: Saout.I.prog_decl -> *)
+(*   Sautil.C.prog_decl -> *)
+(*   SynUtils.CF.hprel list -> *)
+(*   SynUtils.CF.hprel list -> Rev_ast.C.view_decl list * SynUtils.CF.hprel list *)
 let derive_view iprog prog other_hprels hprels = 
   let pr1 = Cprinter.string_of_hprel_list_short in
   let pr2 = pr_list Cprinter.string_of_view_decl_short in

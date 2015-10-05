@@ -632,7 +632,7 @@ lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
 ===================================================================
 # ex21u3e2.slk -dre "lemma_unfold"
 
- pred_unify_disj[app4].
+  pred_unify_disj[app4].
 
 # why wasn't lemma unfold done?
 
@@ -714,7 +714,7 @@ pred_reuse[*][*].
   views are not re-checked? and SCC ordering takes that 
   into account.
 ===================================================================
-# ex21u1a.slk -(Loc to fix?)
+# ex21u1a.slk -(FIXED)
 
   pred_elim_useless [G1,G2].
 
@@ -826,7 +826,7 @@ let update_view_decl prog vdecl =
     {FLOW,(1,26)=__flow#E}[]]
 
 ===================================================================
-# ex20c.slk (FIXED)
+# ex20c.slk
 
 # deriving pre for ll method incr/ex20a.ss
 
@@ -863,98 +863,11 @@ view HP_1637<x:node>=
     {FLOW,(1,26)=__flow#E}[]]
 
 ===================================================================
-# ex21u1j.slk (FIXED by adding to iprog)
-
- pred_elim_useless [G1,G2].
- pred_reuse[*][*].
-
-# Need an updated SCC..(FIXED)
-
-!!! **sleekengine.ml#2562:frm_vnames:[ll,G2,G2_53,G1,G1_54]
-!!! **sleekengine.ml#2563:scc_posn:[G2,G1,ll]
-
-# need to drop node from views ..
-
-!!! **cprog_sleek.ml#62:fvars(view):[(node,),(G2_53,)]
-!!! **cprog_sleek.ml#63:view:G1_54
-!!! **cprog_sleek.ml#64:lst(pairs):[(G1_54,G2_53)]
-!!! **iast.ml#3861:Adding the view G1_54 into iprog.
-!!! **norm.ml#164:USELESS Parameters eliminated:
-[(G1,[y]),
-(G2,[y])]
-!!! **norm.ml#252:
- Proven : self::ll<>@M&{FLOW,(1,26)=__flow#E}[] <->  self::G2_53<>@M&{FLOW,(1,26)=__flow#E}[]
-!!! **norm.ml#252:
- Failed : self::G2_53<>@M&{FLOW,(1,26)=__flow#E}[] <->  self::G1_54<>@M&{FLOW,(1,26)=__flow#E}[]
-!!! **sleekengine.ml#2562:frm_vnames:[ll,G2,G2_53,G1,G1_54]
-!!! **sleekengine.ml#2563:scc_posn:[G2,G1_54,G1,node,G2_53,ll]
-
-SCC:[[G2];[G1];[ll]]
-Graph:[(G1,[G2]);(ll,[ll]);(G2,[G2])]
-
-!!! **cprog_sleek.ml#58:view:G2
-!!! **cprog_sleek.ml#59:lst(pairs):[]
-!!! **WARNING****iast.ml#3860:Updating an available view decl (G2) in iprog
-!!! **cast.ml#3864:Adding the view G2_53[] into cprog.
-!!! **cprog_sleek.ml#58:view:G2_53
-!!! **cprog_sleek.ml#59:lst(pairs):[]
-
-# Graph is correct but SCC seems wrong.. (FIXED after remove SCC_sorting)
-
-SCC:[[G2];[G1];[ll]]
-Graph:[(G1,[G2]);(ll,[ll]);(G2,[G2])]
-
-SCC:[[G2];[G1_54];[G1];[G2_53];[ll]]
-Graph:[(G1_54,[G2_53]);(G1,[G1_54]);(ll,[ll]);(G2,[G2_53]);(G2_53,[G2_53])]
-!!! **sleekengine.ml#3052:Printing Views
-:
-[ view G2<y:TVar[40]>= 
-  EBase 
-    self::G2_53<>@M&{FLOW,(1,26)=__flow#E}[], 
-
-  view G1_54<>= 
-  EBase 
-    exists (Impl)[Anon_13; t]self::node<Anon_13,t>@M * t::G2_53<>@M&
-    {FLOW,(1,26)=__flow#E}[], 
-
-  view G1<y:TVar[46]>= 
-  EBase 
-    self::G1_54<>@M&{FLOW,(1,26)=__flow#E}[], 
-
-  view G2_53<>= 
-  EList
-    :EBase 
-       (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
-    || :EBase 
-          exists (Impl)[Anon_14; tt]self::node<Anon_14,tt>@M * tt::G2_53<>@M&
-          {FLOW,(1,26)=__flow#E}[]
-    , 
-  view ll<>= 
-  EList
-    :EBase 
-       (* lbl: *){4}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
-    || :EBase 
-          exists (Impl)[Anon_12; 
-          tt](* lbl: *){5}->self::node<Anon_12,tt>@M * tt::ll<>@M&
-          {FLOW,(1,26)=__flow#E}[]
-    equiv_set: ([],G2_53)
-  ]
-===================================================================
-# ex20d.slk
-
-  print views[P].
-
-# Can we print just P instead of all views
-
-  print views_trans[P].
-
-
-# Can we print just P and its dependencies ..
-
 ===================================================================
 ===================================================================
 ===================================================================
-==================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================

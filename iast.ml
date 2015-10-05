@@ -2324,7 +2324,7 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
             v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
           (* self has unknown type *)
-          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+          report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined")
         else ()
       else 
         let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in

@@ -105,8 +105,8 @@ type command =
   | EmptyCmd
 
 and print_cmd =
-  | PVar of ident
-  | PCmd of ident
+  | PVar of ident 
+  | PCmd of ident * (regex_id_list option)
 
 and meta_formula =
   | MetaVar of ident

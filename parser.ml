@@ -2599,7 +2599,7 @@ shapeElim_cmd:
    ]];
 
 shapeReuseSubs_cmd:
-   [[ `PRED_REUSE_SUBS; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   [[ `PRED_REUSE_SUBS; `OSQUARE;il1= shape_selective_id_list;`CSQUARE ->
    (* let il1 = un_option il1 [] in *)
    (il1)
    ]];
@@ -2627,6 +2627,10 @@ shape_selective_id_list:
    | `STAR -> REGEX_STAR
   ]];
 
+selective_id_list_bracket:
+  [[ `OSQUARE;il1= shape_selective_id_list;`CSQUARE -> il1
+  ]];
+
 shape_add_dangling_cmd:
   [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
@@ -2638,7 +2642,8 @@ shape_unfold_cmd:
   ]];
 
 shape_param_dangling_cmd:
-  [[ `SHAPE_PARAM_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+  [[ `SHAPE_PARAM_DANGLING; il=selective_id_list_bracket
+                              (* `OSQUARE; il=shape_selective_id_list; `CSQUARE *)
      ->  il
   ]];
 
@@ -2769,9 +2774,10 @@ compose_cmd:
    | `COMPOSE; `OPAREN; mc1=meta_constr; `SEMICOLON; mc2=meta_constr; `CPAREN -> ([], mc1, mc2)]];
 
 print_cmd:
-  [[ `PRINT; `IDENTIFIER id           -> PCmd id
+  [[ `PRINT; `IDENTIFIER id; 
+        ilopt=OPT selective_id_list_bracket  -> PCmd (id,ilopt)
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
-   | `PRINT_LEMMAS  -> PCmd "lemmas"
+   | `PRINT_LEMMAS  -> PCmd ("lemmas",None)
    (* | `PRINT_VIEW  -> PCmd "view" *)
    (* | `PRINT_VIEW_LONG  -> PCmd "view_long" *)
   ]];
