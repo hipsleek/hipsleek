@@ -241,20 +241,27 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   core_typ
 )
 
+let get_core_cil_typ (t: Cil.typ) : Cil.typ =
+  let pr = string_of_cil_typ in
+  Debug.no_1 "get_core_cil_typ" pr pr get_core_cil_typ t
 
 let rec is_cil_struct_pointer (ty: Cil.typ) : bool = (
   match ty with
   | Cil.TPtr (Cil.TComp (comp, _), _) -> true
-  | Cil.TPtr (Cil.TNamed (tinfo, _), _) ->
+  | Cil.TPtr (Cil.TNamed (tinfo, _), a) ->
     let _ = Debug.ninfo_hprint (add_str "tinfo" string_of_cil_typ) tinfo.Cil.ttype no_pos in
     let ty = get_core_cil_typ tinfo.Cil.ttype in
-    is_cil_struct_pointer ty
+    is_cil_struct_pointer (Cil.TPtr (ty, a))
   (* true *)
   | Cil.TPtr (ty, _) ->
     let _ = Debug.ninfo_hprint (add_str "ty" string_of_cil_typ) ty no_pos in
     is_cil_struct_pointer ty
   | _ -> false
 )
+
+let is_cil_struct_pointer (ty: Cil.typ) : bool =
+  Debug.no_1 "is_cil_struct_pointer" string_of_cil_typ string_of_bool
+    is_cil_struct_pointer ty
 
 (* location  functions *)
 let makeLocation (startPos: Lexing.position) (endPos: Lexing.position) : VarGen.loc =
