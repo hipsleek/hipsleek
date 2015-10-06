@@ -986,6 +986,30 @@ inv true.
           (* lbl: *){11}->self::ll<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
  
 ===================================================================
+# ex30a.slk
+
+lemma_infer[P1,P2,@classic]
+        self::zip2<y,p> -> P1(self)*P2(y,p).
+
+ inferred hprel: [P1(p)&true --> emp&true; 
+                  P2(q_90,p)&true --> GP_95(q_90,p,y@NI)&true; 
+                  emp&true --> GP_91(p,self_lem_14@NI)&true; 
+                  y::node<Anon_89,q_90>@M * GP_95(q_90,p,y@NI)&
+                   true --> P2(y,p)&true; 
+                  self_lem_14::node<Anon_88,p>@M * GP_91(p,self_lem_14@NI)&
+                   true --> P1(self_lem_14)&true; 
+                  emp&y=p --> P2(y,p)&true; 
+                  emp&self_lem_14=null --> P1(self_lem_14)&true]
+
+# There seems to be a proble with P1
+  I think due to mismatched in number of parameters..
+
+========================
+ Performing Deriving Views
+========================
+
+!!! **syn.ml#687:Cannot transform the hprels of [P1] into view declarations.
+!!! **sleekengine.ml#3095:
 ==================================================================
 ===================================================================
 ===================================================================
