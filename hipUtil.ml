@@ -78,7 +78,7 @@ class graph =
 
     method add s n lst  =
       grp <- None;
-      let () = y_tinfo_hp (add_str (s^"add") ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
+      let () = y_binfo_hp (add_str (s^"add") ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
       let () = try
         let old = Hashtbl.find nlst n in
         let () = y_tinfo_hp (add_str (s^"old") (((pr_list pr_id)))) (old) in

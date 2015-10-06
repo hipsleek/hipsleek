@@ -341,7 +341,8 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
       String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
     let new_vdef = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
     let () =  x_binfo_hp (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
-    let () = x_binfo_hp (add_str "(raw) new view (donot have base case, addr, material)" Cprinter.string_of_view_decl(* _short *)) new_vdef no_pos in
+    let () = x_binfo_hp (add_str "(raw) new view (donot have base case, addr, material)" Cprinter.string_of_view_decl_short) new_vdef no_pos in
+    let () = Cprog_sleek.update_view_decl_scc_only new_vdef in
     (true,new_vdef)
   else
     let () =  x_dinfo_hp (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
@@ -619,7 +620,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
   let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.Cast.prog_view_decls der_view_dclr in
   (* let () = Globals.do_infer_inv := old_flag in *)
   let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in
-  let _ = cprog.Cast.prog_view_decls <- cprog.Cast.prog_view_decls@[nc_view] in
+  (* let _ = cprog.Cast.prog_view_decls <- cprog.Cast.prog_view_decls@[nc_view] in *)
   nc_view
 
 let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map_views view extn_view=

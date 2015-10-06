@@ -13,8 +13,9 @@ pred_extn size[R]<k> ==
    or R::size<i> & k=1+i // recursive case
    inv k>=0.
 
-pred llN<n> == extends ll<> with size[REC]<n> .
-//pred llN<n> == extends ll<> with size[REC]<n> .
+print views.
+
+pred llN<nnn> == extends ll<> with size[REC]<nnn> .
 
 print views.
 

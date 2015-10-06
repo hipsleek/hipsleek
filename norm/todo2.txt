@@ -33,7 +33,7 @@ pred_split [zip2].
   self::zip2(y,p) --> H1(self) * H2(y,p)
 
 =========================================================
-# ex25a.slk
+# ex25a.slk (FIXED)
 
 # llN not maintained correctly in SCC and graph..
 

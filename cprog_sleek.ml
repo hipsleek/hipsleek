@@ -46,8 +46,7 @@ let get_sorted_view_decls () =
 let update_view_decl_cprog vdef = 
   Cast.update_view_decl !cprog vdef
 
-
-let update_view_decl_iprog ?(update_scc=false) vdef = 
+let update_view_decl_iprog_g update_scc upd_flag vdef = 
   try
     let iprog = Iast.get_iprog () in
     let is_data c = 
@@ -72,5 +71,19 @@ let update_view_decl_iprog ?(update_scc=false) vdef =
         let () = y_tinfo_hp (add_str "lst(pairs)" (pr_list (pr_pair pr_id pr_id))) lst in
         HipUtil.view_scc_obj # replace x_loc n fvars2
       end;
-    Iast.update_view_decl iprog vdef
+    if upd_flag then Iast.update_view_decl iprog vdef
   with _ -> failwith (x_loc^" iprog not found")
+
+let update_view_decl_iprog ?(update_scc=false) vdef =
+  let upd_flag=true in
+  update_view_decl_iprog_g update_scc upd_flag vdef
+
+let update_view_decl_scc_only vdef =
+  let upd_flag=false in
+  update_view_decl_iprog_g true upd_flag (Rev_ast.rev_trans_view_decl vdef)
+
+let update_view_decl_both ?(update_scc=false) vdef = 
+  let () = update_view_decl_cprog vdef in
+  let () = update_view_decl_iprog ~update_scc:update_scc  
+      (Rev_ast.rev_trans_view_decl vdef) in
+  ()
