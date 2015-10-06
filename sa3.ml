@@ -3275,7 +3275,8 @@ let infer_shapes iprog prog proc_name (constrs0: CF.hprel list)
       link_hpargs0 need_preprocess detect_dang flow_int
   else
     let hprels = CF.add_infer_type_to_hprel constrs0 in
-    let derived_views, nhprels = Syn.derive_view iprog prog [] hprels in (* shape_derive_view [*] *)
+    let sel_hprels, others = SynUtils.select_hprel_assume hprels (List.map CP.name_of_spec_var sel_hps) in
+    let derived_views, nhprels = Syn.derive_view iprog prog others sel_hprels in (* shape_derive_view [sel_hps] *)
     let () = y_binfo_hp (add_str "DERIVED VIEWS" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
     (nhprels, [], [])
 
@@ -3313,11 +3314,19 @@ let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident
         ()
     else ()
   in
-  Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_triple pr1 pr2 !CP.print_svl)
-    (fun _ _ _ _ _ _ -> infer_shapes iprog prog proc_name hp_constrs sel_hp_rels
+  Debug.no_7 "infer_shapes" 
+    (add_str "proc_name" pr_id)
+    (add_str "hp_constrs" pr1) 
+    (add_str "sel_hp_rels" !CP.print_svl) 
+    (add_str "sel_post_hp_rels" !CP.print_svl) 
+    (add_str "hp_rel_unkmap" pr4)
+    (add_str "unk_hpargs" pr5) 
+    (add_str "link_hpargs" pr5a) 
+    (pr_triple pr1 pr2 !CP.print_svl)
+    (fun _ _ _ _ _ _ _ -> infer_shapes iprog prog proc_name hp_constrs sel_hp_rels
         sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
         need_preprocess detect_dang flow_int)
-    proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
+    proc_name hp_constrs sel_hp_rels sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
 
 
 (**************************)
