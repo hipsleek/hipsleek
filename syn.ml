@@ -686,15 +686,16 @@ let trans_hprel_to_view iprog prog hprels =
       let svl = List.map fst others in
       y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
   in
-  let derived_views = List.fold_left (fun acc (sv, hpr) ->
+  let derived_views = 
+    List.fold_left (fun acc (sv, hpr) ->
       let vdecls = if !Globals.new_pred_syn then
           let vdecl = view_decl_of_hprel prog hpr in
           [vdecl]
         else Saout.view_decl_of_hprel iprog prog hpr
       in
       (* let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) (pr_list_ln Cprinter.string_of_view_decl_short)) vdecls in *)
-      acc@vdecls
-  ) [] single_hprel_list in
+      acc @ vdecls) [] single_hprel_list 
+  in
   let () = y_tinfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
   (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
   let norm_derived_views = norm_derived_views iprog prog derived_views in
