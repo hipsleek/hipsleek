@@ -3,29 +3,15 @@ data node{
      node next;
 }.
 
-pred zip2<y,p> ==
-   self=null & y=p
-or self::node<_,pp>*y::node<_,q> * pp::zip2<q,p>.
+pred tmp<> == self::even<>.
 
-HeapPred P1(node x).
-HeapPred P2(node x, node y).
+pred even<> == self::odd<>.
 
-lemma_infer[P1,P2,@classic]
-        self::zip2<y,p> -> P1(self)*P2(y,p).
+pred odd<> == self::even<>.
 
-print residue.
+print views [even].
 
-//shape_derive_view[P2].
-
-shape_derive_view[P1,P2].
-
-print views.
-
-print views[*].
-
-print views[P1,P2].
-
-print views [P1*].
+print views [even*].
 
 /*
 

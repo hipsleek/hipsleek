@@ -3070,7 +3070,7 @@ let process_print_command pcmd0 =
       }in
     let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
-  | PCmd (pcmd,_) ->
+  | PCmd (pcmd,opt) ->
     if pcmd = "lemmas" then
       Lem_store.all_lemma # dump
     else if pcmd = "residue" then
@@ -3091,6 +3091,7 @@ let process_print_command pcmd0 =
     else if pcmd = "views" then
       let () = HipUtil.view_scc_obj # build_scc_void 15 in
       let view_list =  get_sorted_view_decls () (* !cprog.prog_view_decls *) in
+      let view_list = Cast.get_selected_views opt view_list in
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
       let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
       y_binfo_hp (add_str "Printing Views\n" (pr_list Cprinter.string_of_view_decl_short)) lst
