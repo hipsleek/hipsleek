@@ -210,7 +210,7 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   let core_typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
-    (*| Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])*)
+    | Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])
     | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
     | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
@@ -609,6 +609,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "bool"  -> "<_,o>"
           | "float" -> "<_,o>"
           | "void"  -> "<_,o>"
+          | "char"  -> "<_,q>"
           | _ -> (
               try 
                 let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
@@ -621,13 +622,20 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
             ) 
         ) in
         let cast_proc = (
-          typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
-          "  case { \n" ^
-          "    p =  null -> ensures res = null; \n" ^
-          "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-          (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-          "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
-          "  }\n"
+          match base_data with
+          | "char" -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+                      "  case { \n" ^
+                      "    p =  null -> ensures res = null; \n" ^
+                      "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
+                      "                 ensures res!=null; \n" ^
+                      "  }\n"
+          | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+                 "  case { \n" ^
+                 "    p =  null -> ensures res = null; \n" ^
+                 "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
+                 (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
+                 "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
+                 "  }\n"
         ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -708,11 +716,17 @@ and create_int_to_pointer_casting_proc (pointer_typ_name: string) : Iast.proc_de
       Hashtbl.find tbl_aux_proc proc_name
     with Not_found -> (
         let cast_proc = (
-          pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
-          "  case { \n" ^
-          "    p =  0 -> ensures res =  null; \n" ^
-          "    p != 0 -> ensures res != null; \n" ^
-          "  }\n"
+          match pointer_typ_name with
+          | "char_star" -> pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
+                           "  case { \n" ^
+                           "    p =  0 -> ensures res::char_star<0,_>; \n" ^
+                           "    p != 0 -> ensures res::char_star<p,_> & p!=0; \n" ^
+                           "  }\n"
+          | _ -> pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
+                 "  case { \n" ^
+                 "    p =  0 -> ensures res =  null; \n" ^
+                 "    p != 0 -> ensures res != null; \n" ^
+                 "  }\n"
         ) in
         let pd = Parser.parse_c_aux_proc "int_to_pointer_casting_proc" cast_proc in
         Hashtbl.add tbl_aux_proc proc_name pd;
@@ -1471,8 +1485,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | _ -> translate_typ ty pos
         ) in
       let input_exp = translate_exp exp in
-      (* let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
-      (* let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
+(*       let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
+(*       let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
       if (input_typ = output_typ) then
         (* no need casting *)
         input_exp

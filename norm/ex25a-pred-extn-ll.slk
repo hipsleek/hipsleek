@@ -10,7 +10,7 @@ pred_extn size[R]<k> ==
    inv k>=0.
 
 // infer/sort/der-2.slk
-pred llN<n> == extend ll<> with size[REC]<n> .
+pred llN<n> == extends ll<> with size[REC]<n> .
 
 //print views.
 
