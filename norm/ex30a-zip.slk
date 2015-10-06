@@ -5,7 +5,7 @@ data node{
 
 pred zip2<y,p> ==
    self=null & y=p
-or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+or self::node<_,pp>*y::node<_,q> * pp::zip2<q,p>.
 
 HeapPred P1(node x).
 HeapPred P2(node x, node y).
@@ -17,7 +17,7 @@ print residue.
 
 //shape_derive_view[P2].
 
-shape_derive_view[P1].
+shape_derive_view[P1,P2].
 
 print views.
 
@@ -27,14 +27,22 @@ print views.
 lemma_infer[P1,P2,@classic]
         self::zip2<y,p> -> P1(self)*P2(y,p).
 
- inferred hprel: [P1(p)&true --> emp&true; 
+ inferred hprel: 
+                [ P1(p)&true --> emp&true; 
+
                   P2(q_90,p)&true --> GP_95(q_90,p,y@NI)&true; 
+
                   emp&true --> GP_91(p,self_lem_14@NI)&true; 
+
                   y::node<Anon_89,q_90>@M * GP_95(q_90,p,y@NI)&
                    true --> P2(y,p)&true; 
+
+
+                  emp&y=p --> P2(y,p)&true; 
+
                   self_lem_14::node<Anon_88,p>@M * GP_91(p,self_lem_14@NI)&
                    true --> P1(self_lem_14)&true; 
-                  emp&y=p --> P2(y,p)&true; 
+
                   emp&self_lem_14=null --> P1(self_lem_14)&true]
 
 # There seems to be a proble with P1
