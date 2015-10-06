@@ -76,6 +76,17 @@ class graph =
       Hashtbl.replace nlst n lst;
       self # add_node n
 
+    method add s n lst  =
+      grp <- None;
+      let () = y_binfo_hp (add_str (s^"add") ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
+      let () = try
+        let old = Hashtbl.find nlst n in
+        let () = y_tinfo_hp (add_str (s^"old") (((pr_list pr_id)))) (old) in
+        Hashtbl.replace nlst n (Gen.BList.remove_dups_eq string_eq (old@lst));
+      with _ -> Hashtbl.replace nlst n lst
+      in
+      self # add_node n
+
     method set_sorted = 
       if grp==None then self # build_scc_void 8;
       sorted_flag <- true
@@ -137,6 +148,28 @@ class graph =
         snd(List.find (fun (a,_) -> a=n) pto)
       with _ -> []
 
+    method get_trans n = 
+      let extend xs =
+        List.fold_left (fun acc x ->
+            try
+              let nx = Hashtbl.find nlst x in
+              nx@acc
+            with _ -> acc
+          ) [] xs in
+      if grp==None then self # build_scc_void 1;
+      let scc1 = List.rev scc in
+      let rec aux scc acc ans =
+        match scc with
+        | [] -> ans
+        | xs::xss -> 
+          if (Gen.BList.intersect_eq (=) xs acc)==[] then aux xss acc ans
+          else
+            let ans = xs::ans in
+            let exts = extend xs in
+            let acc = Gen.BList.remove_dups_eq (=) (xs@exts@acc) in
+            aux xss acc ans
+      in aux scc1 [n] []
+
     method split  =
       if grp==None then self # build_scc_void 2;
       let (nrec_n,rec_n) = List.partition (fun (a,r) -> r==[]) pto in
@@ -158,6 +191,7 @@ class graph =
     method build_scc n  =
       let () = y_tinfo_pp ("calling build_scc "^(string_of_int n))  in
       let g = NG.create () in
+
       let find_posn n = 
         let rec aux xs i =
           match xs with 
@@ -246,3 +280,4 @@ class graph =
   end;;
 
 let view_scc_obj = new graph;;
+let view_args_scc_obj = new graph;;

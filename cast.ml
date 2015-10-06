@@ -4044,3 +4044,11 @@ let get_lemma_cprog cdefs =
   let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
   ()
 
+(* type: Globals.regex_e option *)
+let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
+  match opt with
+  | None -> view_list
+  | Some ans -> 
+    let () = y_binfo_pp "get selected views ..." in
+    view_list
+  
