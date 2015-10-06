@@ -3,14 +3,33 @@ data node{
      node next#REC;
 }.
 
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
 
 pred_extn size[R]<k> ==
    k=0 // base case
    or R::size<i> & k=1+i // recursive case
    inv k>=0.
 
-// infer/sort/der-2.slk
 pred llN<n> == extends ll<> with size[REC]<n> .
+//pred llN<n> == extends ll<> with size[REC]<n> .
 
-//print views.
+print views.
 
+/*
+# ex25a.slk
+
+# llN not maintained correctly in SCC and graph..
+
+SCC:[[ll];[size]]
+Graph:[(size,[size]);(ll,[ll]);(llN,[])]
+!!! **sleekengine.ml#3096:Printing Views
+:
+[ view llN<n:int>= 
+  EList
+    :EBase 
+       (* lbl: *){5}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+
+*/

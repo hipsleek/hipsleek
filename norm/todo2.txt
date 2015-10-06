@@ -33,6 +33,18 @@ pred_split [zip2].
   self::zip2(y,p) --> H1(self) * H2(y,p)
 
 =========================================================
+# ex25a.slk
+
+# llN not maintained correctly in SCC and graph..
+
+SCC:[[ll];[size]]
+Graph:[(size,[size]);(ll,[ll]);(llN,[])]
+!!! **sleekengine.ml#3096:Printing Views
+:
+[ view llN<n:int>= 
+  EList
+    :EBase 
+       (* lbl: *){5}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
 =========================================================
 =========================================================
 =========================================================
