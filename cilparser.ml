@@ -210,6 +210,8 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   let core_typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
+    | Cil.TInt (Cil.IUChar, _)
+    | Cil.TInt (Cil.ISChar, _)
     | Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])
     | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
     | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
@@ -798,12 +800,14 @@ and create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
     )
 
 and create_string_proc (t1: Cil.typ) (t2: Cil.typ) =
-  let typ1 = translate_typ t1 no_pos in
-  let typ2 = translate_typ t2 no_pos in
+  let coretyp1 = get_core_cil_typ t1 in   (* translate all char types into one *)
+  let coretyp2 = get_core_cil_typ t2 in
+  let typ1 = translate_typ coretyp1 no_pos in
+  let typ2 = translate_typ coretyp2 no_pos in
   let typ1_name = string_of_typ typ1 in
   let typ2_name = string_of_typ typ2 in
   let proc_name = (
-    match t1, t2 with
+    match coretyp1, coretyp2 with
       | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_)
       | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__write_char"
       | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__get_char"
@@ -821,7 +825,7 @@ and create_string_proc (t1: Cil.typ) (t2: Cil.typ) =
       Debug.ninfo_hprint (add_str "t1" Cil.string_of_typ) t1 no_pos;
       Debug.ninfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
       let proc_str = (
-        match t1, t2 with
+        match coretyp1, coretyp2 with
         | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> 
              typ1_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x)\n"
            ^ "requires x::char_star<v,_>@L & Term[] \n"
@@ -1384,6 +1388,8 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
         (*   let data_fields = [str_value] in                          *)
         (*   let base = Iast.mkMember ptr_base data_fields None pos in *)
         (*   create_complex_exp base offset [] pos                     *)
+        | Cil.TPtr (Cil.TInt (Cil.IUChar, _), _)
+        | Cil.TPtr (Cil.TInt (Cil.ISChar, _), _)
         | Cil.TPtr (Cil.TInt (Cil.IChar, _), _) -> (
             let pointer_arith_proc = create_string_proc base_typ base_typ in
             let proc_name = pointer_arith_proc.Iast.proc_name in
@@ -1485,8 +1491,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | _ -> translate_typ ty pos
         ) in
       let input_exp = translate_exp exp in
-(*       let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
-(*       let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
+(*      let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
+(*      let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
       if (input_typ = output_typ) then
         (* no need casting *)
         input_exp
