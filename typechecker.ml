@@ -3527,6 +3527,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
               nprog,true
           else
             let nprog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
+            let nprog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
             nprog, true
         in
         let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in

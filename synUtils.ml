@@ -330,22 +330,61 @@ let rec trans_hrel_to_view_struc_formula (sf: CF.struc_formula) =
     CF.EInfer { ei with 
       CF.formula_inf_continuation = trans_hrel_to_view_struc_formula ei.CF.formula_inf_continuation; }
 
-let trans_hrel_to_view_spec_proc cprog proc =
+(* let trans_hrel_to_view_spec_proc cprog proc =                                            *)
+(*   let spec = proc.C.proc_stk_of_static_specs # top in                                    *)
+(*   let nspec = trans_hrel_to_view_struc_formula spec in                                   *)
+(*   let () = proc.C.proc_stk_of_static_specs # push_pr ("SynUtils:" ^ x_loc) nspec in      *)
+(*   let nproc = { proc with                                                                *)
+(*     C.proc_static_specs = nspec;                                                         *)
+(*     C.proc_dynamic_specs = trans_hrel_to_view_struc_formula proc.C.proc_dynamic_specs; } *)
+(*   in                                                                                     *)
+(*   nproc                                                                                  *)
+
+(* let trans_hrel_to_view_spec_scc cprog scc_procs =                                        *)
+(*   let n_tbl = Cast.proc_decls_map (fun proc ->                                           *)
+(*       if mem_id proc.C.proc_name scc_procs then                                          *)
+(*         trans_hrel_to_view_spec_proc cprog proc                                          *)
+(*       else proc) cprog.Cast.new_proc_decls in                                            *)
+(*   { cprog with Cast.new_proc_decls = n_tbl }                                             *)
+
+let rec remove_inf_vars_struc_formula inf_vars (sf: CF.struc_formula) =
+  match sf with
+  | CF.EList el -> CF.EList (List.map (fun (sld, sf) -> (sld, remove_inf_vars_struc_formula inf_vars sf)) el)
+  | CF.ECase ec -> 
+    CF.ECase { ec with
+      CF.formula_case_branches = List.map (fun (c, sf) -> 
+          (c, remove_inf_vars_struc_formula inf_vars sf)) ec.CF.formula_case_branches; }
+  | CF.EBase eb -> 
+    CF.EBase { eb with
+      CF.formula_struc_continuation = map_opt (remove_inf_vars_struc_formula inf_vars) eb.CF.formula_struc_continuation; }
+  | CF.EAssume _ -> sf
+  | EInfer ei -> 
+    CF.EInfer { ei with 
+      CF.formula_inf_vars = diff ei.CF.formula_inf_vars inf_vars;
+      CF.formula_inf_continuation = remove_inf_vars_struc_formula inf_vars ei.CF.formula_inf_continuation; }
+
+let trans_spec_proc trans_f cprog proc =
   let spec = proc.C.proc_stk_of_static_specs # top in
-  let nspec = trans_hrel_to_view_struc_formula spec in
+  let nspec = trans_f spec in
   let () = proc.C.proc_stk_of_static_specs # push_pr ("SynUtils:" ^ x_loc) nspec in
   let nproc = { proc with
     C.proc_static_specs = nspec;
-    C.proc_dynamic_specs = trans_hrel_to_view_struc_formula proc.C.proc_dynamic_specs; }
+    C.proc_dynamic_specs = trans_f proc.C.proc_dynamic_specs; }
   in
   nproc
 
-let trans_hrel_to_view_spec_scc cprog scc_procs =
+let trans_spec_scc trans_f cprog scc_procs =
   let n_tbl = Cast.proc_decls_map (fun proc ->
       if mem_id proc.C.proc_name scc_procs then
-        trans_hrel_to_view_spec_proc cprog proc
+        trans_spec_proc trans_f cprog proc
       else proc) cprog.Cast.new_proc_decls in
   { cprog with Cast.new_proc_decls = n_tbl }
+
+let trans_hrel_to_view_spec_scc cprog scc_procs =
+  trans_spec_scc trans_hrel_to_view_struc_formula cprog scc_procs
+
+let remove_inf_vars_spec_scc cprog scc_procs inf_vars = 
+  trans_spec_scc (remove_inf_vars_struc_formula inf_vars) cprog scc_procs
 
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
