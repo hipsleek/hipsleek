@@ -2387,24 +2387,6 @@ let process_shape_sante pre_hps post_hps=
   (* in *)
   ()
 
-let process_pred_split ids=
-  let _ = Debug.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
-  (*find all sel pred def*)
-  let sel_hp_defs = List.fold_left (fun r (_,def) ->
-      match def.CF.def_cat with
-      | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
-        if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
-      | _ -> r
-    ) [] !sleek_hprel_defns in
-  let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk sel_hp_defs in
-  let _ = if split_map = [] then () else
-      (*print*)
-      let _ = print_endline_quiet ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
-      ()
-  in
-  ()
 
 let process_norm_seg ids=
   let _ = Debug.info_hprint (add_str "process_pred_norm_seg" pr_id) "\n" no_pos in
@@ -2527,6 +2509,68 @@ let regex_search reg_id vdefs =
     | REGEX_STAR -> 
       let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
       all_ids
+
+
+let process_pred_split ids=
+  let prog = !cprog in
+  let lem_proving (vn, args, new_hp_args,new_rel_args, orig_vn_hf, new_hrels_comb, new_pure_rel_comb)=
+    let l_name = "lem_inf_" ^ vn in
+    let l_ivars = List.map (CP.name_of_spec_var) (List.map fst new_hp_args) in
+    let l_head = CF.formula_of_heap orig_vn_hf no_pos in
+    let l_body = CF.formula_of_heap new_hrels_comb no_pos in
+    let l_ihead = Rev_ast.rev_trans_formula l_head in
+    let l_ibody = Rev_ast.rev_trans_formula l_body in
+    let llemma = I.mk_lemma l_name LEM_INFER LEM_GEN I.Left l_ivars l_ihead l_ibody in
+    let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
+    (* let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (\* @pure_field *\) *)
+    let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
+    (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
+    let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog prog in
+    let flag = if not lres then
+      false
+    else
+      let derived_views, new_hprels = SynUtils.process_hprel_assumes_res "Deriving Split Views"
+        CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
+        (Syn.derive_view iprog prog)
+      in
+      let () = y_binfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
+        derived_views in
+      true
+    in
+    let msg = if flag then "\n Proven :" else "\n Failed :" in
+    let () = y_binfo_pp (msg ^ (!CF.print_formula l_head) ^ " -> " ^ (!CF.print_formula l_body)) in
+    if flag then
+      (* derive views *)
+      [vn]
+    else []
+  in
+  (******************)
+  let _ = Debug.info_hprint (add_str "process_pred_split" (pr_id)) (((pr_list pr_id) ids) ^ "\n" ) no_pos in
+  let () = if not !Globals.new_pred_syn then
+    let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
+    let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+    (*find all sel pred def*)
+    let sel_hp_defs = List.fold_left (fun r (_,def) ->
+        match def.CF.def_cat with
+          | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
+            if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
+          | _ -> r
+    ) [] !sleek_hprel_defns in
+    let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk sel_hp_defs in
+    let _ = if split_map = [] then () else
+      (*print*)
+      let _ = print_endline_quiet ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
+      ()
+    in
+    ()
+  else
+    let vdefs = get_sorted_view_decls () in
+    let cands = Norm.norm_split iprog !cprog vdefs ids in
+    (* proving lemmas *)
+    let split_vns = List.fold_left (fun acc cand -> acc@(lem_proving cand)) [] cands in
+    ()
+  in ()
+
 
 let process_pred_unfold reg_to_vname =
   let vdefs = get_sorted_view_decls () in
