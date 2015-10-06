@@ -7,26 +7,47 @@ data node {
 	node next;	
 }.
 
+pred tmp<> == self=null
+    or self::node<_,q>*q::ll<>
+ inv true.
+
+pred ll<> == self=null
+    or self::node<_,q>*q::ll<>
+ inv true.
+
 pred appA<> == self=null
         or self::node<_,null>
  	or self::node<_, q> * q::appA<> & q!=null 
   inv true.
 
-pred_unify_disj[appA].
-pred_unfold[*].
-print views.
-pred_reuse[*][*].
-print views.
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+
+lemma_test "L1" self::appA<> <-> self::tmp<>.
+
+lemma_test "L2" self::appA<> <-> self::ll<>.
+
+lemma_test "L2a" self::app4a<> <-> self::ll<>.
 
 /*
-# ex21u3e9.slk -dre "lemma_unfold" 
+# ex21u3e9a.slk -dre "lemma_unfold" 
 
 pred_unify_disj[appA].
 pred_unfold[*].
 pred_reuse[*][*].
 print views.
 
-# Any unfold? Any reuse?
+# To improve: 
+    (i) unfold
+   (ii) reuse with case-spec
 
 PRED REUSE FOUND:[(tmp_appA,tmp_appA),(DP_38,DP_38),(appA,appA)]
 

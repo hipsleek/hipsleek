@@ -950,8 +950,27 @@ Graph:[(G1_54,[G2_53]);(G1,[G1_54]);(ll,[ll]);(G2,[G2_53]);(G2_53,[G2_53])]
 
 
 # Can we print just P and its dependencies ..
-
 ===================================================================
+# ex21u3e9a.slk 
+
+# better case-sepc
+
+lemma_test "L2" self::appA<> <-> self::ll<>. //fail
+lemma_test "L2a" self::app4a<> <-> self::ll<>. //valid
+
+# Cam we derive app4a?
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+
 ===================================================================
 ===================================================================
 ==================================================================
