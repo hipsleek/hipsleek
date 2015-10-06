@@ -70,7 +70,7 @@ let update_view_decl_iprog ?(update_scc=false) vdef =
         let () = y_tinfo_hp (add_str "fvars2" (pr_list pr_id)) fvars2 in
         let () = y_tinfo_hp (add_str "view" pr_id) n in
         let () = y_tinfo_hp (add_str "lst(pairs)" (pr_list (pr_pair pr_id pr_id))) lst in
-        HipUtil.view_scc_obj # replace n fvars2
+        HipUtil.view_scc_obj # replace x_loc n fvars2
       end;
     Iast.update_view_decl iprog vdef
   with _ -> failwith (x_loc^" iprog not found")

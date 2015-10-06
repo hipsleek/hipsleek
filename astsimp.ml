@@ -542,7 +542,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident lis
     let () = List.iter (fun vd ->
         let n = vd.I.view_name in
         let lst = gen_name_pairs_struc n vd.I.view_formula in
-        view_scc_obj # replace n (List.map snd lst)
+        view_scc_obj # replace x_loc n (List.map snd lst)
       ) vdefs in
     let selfrec = List.filter (fun l -> List.exists (fun (x,y) -> x=y) l) tmp in
     let selfrec = List.map (fun l -> fst (List.hd l)) selfrec in
@@ -1583,7 +1583,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          (* let () =  print_endline " after case normalize" in *)
          (* let () = I.find_empty_static_specs prog in *)
          let ctempls = List.map (x_add trans_templ prog) prog.I.prog_templ_decls in
-         let tmp_views,ls_mut_rec_views = order_views prog.I.prog_view_decls in
+         let tmp_views,ls_mut_rec_views = x_add_1 order_views prog.I.prog_view_decls in
          let cuts = List.map (x_add trans_ut prog) prog.I.prog_ut_decls in
          let cuis = List.map (trans_ui prog) prog.I.prog_ui_decls in
          (* let () = x_add Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
@@ -11232,7 +11232,8 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
       else look_up_view rest vn0
   in
   let new_views = List.map fst ls_pr_new_view_tis in
-  let tmp_views, ls_mut_rec_views = (order_views (iprog.I.prog_view_decls)) in
+  let tmp_views, ls_mut_rec_views = (x_add_1 order_views 
+                                       (List.rev (iprog.I.prog_view_decls))) in
   let () = x_add Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   iprog.I.prog_view_decls <- tmp_views;
   let tmp_views_derv,tmp_views= List.partition (fun v -> v.I.view_derv) tmp_views in
