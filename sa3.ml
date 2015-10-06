@@ -2376,7 +2376,7 @@ let rec infer_shapes_from_fresh_obligation_x iprog cprog iflow proc_name callee_
         (List.filter (fun (hp,_) -> not (CP.mem_svl hp new_sel_hps)) is.Cformula.is_link_hpargs )
         need_preprocess detect_dang iflow
     in
-    let is2 = infer_core iprog cprog proc_name callee_hps is1 need_preprocess detect_dang in
+    let is2 = x_add infer_core iprog cprog proc_name callee_hps is1 need_preprocess detect_dang in
     {is2 with Cformula.is_constrs = [];
               Cformula.is_hp_defs = is.Cformula.is_hp_defs@is2.Cformula.is_hp_defs;
     }
@@ -2771,9 +2771,7 @@ and iprocess_action_x iprog prog proc_name callee_hps is act need_preprocess det
   let rec_fct l_is l_act = iprocess_action_x iprog prog proc_name callee_hps l_is l_act need_preprocess detect_dang in
   match act with
   | IC.I_pre_add_dangling -> failwith "to be implemented"
-  | IC.I_infer_dang -> 
-    let is = x_add Syn.syn_pre_preds prog is in
-    infer_analize_dang prog is
+  | IC.I_infer_dang -> infer_analize_dang prog is
   (* | IC.I_pre_trans_closure -> infer_pre_trans_closure prog is *)
   | IC.I_split_base -> infer_split_base prog is
   | IC.I_partition -> infer_shapes_proper iprog prog proc_name callee_hps is need_preprocess detect_dang
@@ -2812,9 +2810,16 @@ and infer_init iprog prog proc_name cond_path constrs0 callee_hps sel_hps
   (* iprocess_action iprog prog proc_name callee_hps is act need_preprocess detect_dang *)
   is
 
-and infer_core iprog prog proc_name callee_hps is need_preprocess detect_dang =
+and infer_core_x iprog prog proc_name callee_hps is need_preprocess detect_dang =
   let act = IC.icompute_action_init need_preprocess detect_dang in
   x_add iprocess_action iprog prog proc_name callee_hps is act need_preprocess detect_dang
+
+and infer_core iprog prog proc_name callee_hps is need_preprocess detect_dang =
+  let pr1 = Cprinter.string_of_infer_state in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "infer_core" pr2 pr1 pr1
+    (fun _ _ -> infer_core_x iprog prog proc_name callee_hps is need_preprocess detect_dang) 
+    callee_hps is
 
 let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) callee_hps sel_hps all_post_hps
     hp_rel_unkmap unk_hpargs0 link_hpargs_w_path need_preprocess detect_dang iflow =
@@ -2846,7 +2851,7 @@ let infer_shapes_divide_x iprog prog proc_name (constrs0: Cformula.hprel list) c
         callee_hps sel_hps all_post_hps hp_rel_unkmap unk_hpargs0
         link_hpargs need_preprocess detect_dang iflow in
     let is = if !Globals.sa_syn then
-        let is1a = infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang in
+        let is1a = x_add infer_core iprog prog proc_name callee_hps is0 need_preprocess detect_dang in
         let is1 = {is1a with CF.is_hp_defs = List.map rectify_type_root is1a.CF.is_hp_defs;
                              (* CF.is_sel_hps = sel_hps; *)
                              (* CF.is_post_hps = all_post_hps; *)
@@ -3194,7 +3199,7 @@ let infer_shapes_conquer_old iprog prog proc_name ls_path_defs_setting sel_hps i
   let () = List.iter (fun hp_def -> CF.rel_def_stk # push hp_def) (cmb_defs@tupled_defs) in
   cmb_defs
 
-let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs0a link_hpargs0 need_preprocess detect_dang flow_int: (CF.hprel list * CF.hp_rel_def list * CP.spec_var list)
+let infer_shapes_ops iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_hps hp_rel_unkmap unk_hpargs0a link_hpargs0 need_preprocess detect_dang flow_int: (CF.hprel list * CF.hp_rel_def list * CP.spec_var list)
 (* (Cformula.hprel list * Cformula.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list ) *) =
   (*move to outer func*)
   (* let callee_hpdefs = *)
@@ -3261,6 +3266,18 @@ let infer_shapes_x iprog prog proc_name (constrs0: CF.hprel list) sel_hps post_h
     let () = print_endline_quiet ("\n --error: "^" at:"^(get_backtrace_quiet ())) in
     ([],[],[])
 
+let infer_shapes iprog prog proc_name (constrs0: CF.hprel list) 
+  sel_hps post_hps hp_rel_unkmap unk_hpargs0a link_hpargs0 need_preprocess detect_dang flow_int: 
+  (CF.hprel list * CF.hp_rel_def list * CP.spec_var list) =
+  if not !Globals.new_pred_syn then
+    infer_shapes_ops iprog prog proc_name constrs0
+      sel_hps post_hps hp_rel_unkmap unk_hpargs0a 
+      link_hpargs0 need_preprocess detect_dang flow_int
+  else
+    let hprels = CF.add_infer_type_to_hprel constrs0 in
+    let _ = Syn.derive_view iprog prog [] hprels in (* shape_derive_view [*] *)
+    ([], [], [])
+
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)
     (hp_constrs: Cformula.hprel list) (sel_hp_rels: CP.spec_var list) (sel_post_hp_rels: CP.spec_var list)
     (hp_rel_unkmap: ((CP.spec_var * int list) * CP.xpure_view) list)
@@ -3296,7 +3313,7 @@ let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident
     else ()
   in
   Debug.no_6 "infer_shapes" pr_id pr1 !CP.print_svl pr4 pr5 pr5a (pr_triple pr1 pr2 !CP.print_svl)
-    (fun _ _ _ _ _ _ -> infer_shapes_x iprog prog proc_name hp_constrs sel_hp_rels
+    (fun _ _ _ _ _ _ -> infer_shapes iprog prog proc_name hp_constrs sel_hp_rels
         sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs
         need_preprocess detect_dang flow_int)
     proc_name hp_constrs sel_post_hp_rels hp_rel_unkmap unk_hpargs link_hpargs

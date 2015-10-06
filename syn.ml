@@ -688,11 +688,9 @@ let trans_hprel_to_view iprog prog hprels =
   in
   let derived_views = List.fold_left (fun acc (sv, hpr) ->
       let vdecls = if !Globals.new_pred_syn then
-        let vdecl = view_decl_of_hprel prog hpr in
-        [vdecl]
-      else
-        Saout.view_decl_of_hprel iprog prog hpr
-            (* view_decl_of_hprel prog hpr *)
+          let vdecl = view_decl_of_hprel prog hpr in
+          [vdecl]
+        else Saout.view_decl_of_hprel iprog prog hpr
       in
       (* let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) (pr_list_ln Cprinter.string_of_view_decl_short)) vdecls in *)
       acc@vdecls

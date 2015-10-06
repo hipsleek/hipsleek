@@ -330,6 +330,23 @@ let rec trans_hrel_to_view_struc_formula (sf: CF.struc_formula) =
     CF.EInfer { ei with 
       CF.formula_inf_continuation = trans_hrel_to_view_struc_formula ei.CF.formula_inf_continuation; }
 
+let trans_hrel_to_view_spec_proc cprog proc =
+  let spec = proc.C.proc_stk_of_static_specs # top in
+  let nspec = trans_hrel_to_view_struc_formula spec in
+  let () = proc.C.proc_stk_of_static_specs # push_pr ("SynUtils:" ^ x_loc) nspec in
+  let nproc = { proc with
+    C.proc_static_specs = nspec;
+    C.proc_dynamic_specs = trans_hrel_to_view_struc_formula proc.C.proc_dynamic_specs; }
+  in
+  nproc
+
+let trans_hrel_to_view_spec_scc cprog scc_procs =
+  let n_tbl = Cast.proc_decls_map (fun proc ->
+      if mem_id proc.C.proc_name scc_procs then
+        trans_hrel_to_view_spec_proc cprog proc
+      else proc) cprog.Cast.new_proc_decls in
+  { cprog with Cast.new_proc_decls = n_tbl }
+
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
   let aliases = MCP.ptr_equations_without_null f_p in
