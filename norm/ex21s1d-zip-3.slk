@@ -28,9 +28,10 @@ pred lseg<y> ==
 or self::node<_,p>*p::lseg<y>.
 */
 
-pred zip2<y,p> ==
-   self=null & y=p
-or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+pred zip2<y,z> ==
+   self=null & y=z
+or self::node<_,p>*y::node<_,q> * p::zip2<q,z>.
+
 
 pred_split [zip2].
 print views.

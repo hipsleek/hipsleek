@@ -76,6 +76,17 @@ class graph =
       Hashtbl.replace nlst n lst;
       self # add_node n
 
+    method add s n lst  =
+      grp <- None;
+      let () = y_tinfo_hp (add_str (s^"add") ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
+      let () = try
+        let old = Hashtbl.find nlst n in
+        let () = y_tinfo_hp (add_str (s^"old") (((pr_list pr_id)))) (old) in
+        Hashtbl.replace nlst n (Gen.BList.remove_dups_eq string_eq (old@lst));
+      with _ -> Hashtbl.replace nlst n lst
+      in
+      self # add_node n
+
     method set_sorted = 
       if grp==None then self # build_scc_void 8;
       sorted_flag <- true
@@ -246,3 +257,4 @@ class graph =
   end;;
 
 let view_scc_obj = new graph;;
+let view_args_scc_obj = new graph;;
