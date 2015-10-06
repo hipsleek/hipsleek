@@ -3275,7 +3275,8 @@ let infer_shapes iprog prog proc_name (constrs0: CF.hprel list)
       link_hpargs0 need_preprocess detect_dang flow_int
   else
     let hprels = CF.add_infer_type_to_hprel constrs0 in
-    let _, nhprels = Syn.derive_view iprog prog [] hprels in (* shape_derive_view [*] *)
+    let derived_views, nhprels = Syn.derive_view iprog prog [] hprels in (* shape_derive_view [*] *)
+    let () = y_binfo_hp (add_str "DERIVED VIEWS" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
     (nhprels, [], [])
 
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)
