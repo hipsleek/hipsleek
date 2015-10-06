@@ -1,0 +1,61 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred tmp<> == self=null
+    or self::node<_,q>*q::ll<>
+ inv true.
+
+pred ll<> == self=null
+    or self::node<_,q>*q::ll<>
+ inv true.
+
+pred appA<> == self=null
+        or self::node<_,null>
+ 	or self::node<_, q> * q::appA<> & q!=null 
+  inv true.
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+
+pred_reuse[*][*].
+pred_reuse_subs[*].
+print views.
+//lemma_test "L1" self::appA<> <-> self::tmp<>.
+
+//lemma_test "L2" self::appA<> <-> self::ll<>.
+
+//lemma_test "L2a" self::app4a<> <-> self::ll<>.
+
+/*
+# ex21u3e9b.slk 
+
+# case-infer needs to make equiv assertion ..
+
+PRED REUSE FOUND:[(tmp,ll),(app4a,ll)]
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+
+*/
