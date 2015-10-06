@@ -3971,27 +3971,44 @@ let get_view_name_equiv view_decls vl =
     (*              } in *)
     (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
 
-let get_simple_unfold lst = 
-  match lst with
-  | [] -> failwith "empty defn?"
-  | [(f,_)] ->
-    let () = y_tinfo_hp (add_str "simple formula?" 
-                           !Cformula.print_formula) f in
-    Some f
-  | _ -> None
+(* let get_lst_unfold lst = List.map fst lst *)
 
-let get_unfold_set vdefs =  
+let get_unfold_set_gen vdefs =  
   let equiv_set = List.fold_left (fun acc vd -> 
       let name = vd.view_name in
       let f = vd.view_un_struc_formula in
       if HipUtil.view_scc_obj # is_self_rec name then acc 
       else 
         begin
-          match (get_simple_unfold f) with
-          | Some f -> (name,vd.view_vars,f)::acc
-          | None -> acc
+          let lst=List.map fst f in
+          (name,vd.view_vars,lst)::acc
+          (* match (get_simple_unfold f) with *)
+          (* | Some f -> (name,vd.view_vars,f)::acc *)
+          (* | None -> acc *)
         end) [] vdefs in
   equiv_set
+
+let get_unfold_set_simple vdefs = 
+  let lst = get_unfold_set_gen vdefs in
+  let lst = List.filter (fun (_,_,fs) -> (List.length fs) <=1) lst in
+  List.map (fun (v,vs,lst) -> match lst with
+      | f::_ -> (v,vs,f)
+      | _ -> failwith (x_loc^"empty unfold")) lst
+
+
+let get_unfold_set vdefs =  
+  get_unfold_set_simple vdefs  
+  (* let equiv_set = List.fold_left (fun acc vd ->  *)
+  (*     let name = vd.view_name in *)
+  (*     let f = vd.view_un_struc_formula in *)
+  (*     if HipUtil.view_scc_obj # is_self_rec name then acc  *)
+  (*     else  *)
+  (*       begin *)
+  (*         match (get_simple_unfold f) with *)
+  (*         | Some f -> (name,vd.view_vars,f)::acc *)
+  (*         | None -> acc *)
+  (*       end) [] vdefs in *)
+  (* equiv_set *)
 
 let get_all_view_equiv_set vdefs =  
   let equiv_set = List.fold_left (fun acc v -> if v.view_equiv_set # is_empty then acc else (v.view_name,v.view_equiv_set # get)::acc) [] vdefs in

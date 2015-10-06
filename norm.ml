@@ -325,10 +325,20 @@ let uses_views_set eq_lst f = uses_views_fn string_eq eq_lst f
 let uses_views eq_lst f = (* does f uses views from eq_lst? *) 
   (uses_views_set eq_lst f)!=[]
 
-let norm_unfold iprog cprog 
+let norm_unfold qual iprog cprog 
     vdefs  (* all views *)
     (to_vns:ident list) (* pred to transform *) =
   let unfold_set0 = C.get_unfold_set vdefs (* set of unfoldable views *) in
+  let unfold_set1 = C.get_unfold_set_gen vdefs (* set of unfoldable views *) in
+  let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
+  let pr2 = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
+  let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
+  let pr2 = pr_list (pr_triple pr_id !CP.print_svl (pr_list !CF.print_formula)) in
+  (* unfold_set0 - single disj unfold set *)
+  let () = y_binfo_hp (add_str "unfold_set0" pr) unfold_set0 in
+  (* unfold_set1 - multiple disjs unfold set *)
+  let unfold_set1 = List.filter (fun (_,_,l) -> List.length l > 1) unfold_set1 in
+  let () = y_binfo_hp (add_str "unfold_set1" pr2) unfold_set1 in
   (* let unfold_set = List.map (fun (m,vd) -> m) unfold_set0 in *)
   let uses_unfold_set f = uses_views_fn 
       (fun (m,_,_) m2 -> string_eq m m2) unfold_set0 f in

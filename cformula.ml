@@ -19932,8 +19932,11 @@ let repl_unfold_heap vd stk u_lst hf =
       match find name with
       | Some (m,to_args,f) -> 
         (* WN : take care of pure by mutable *)
-        let () = y_tinfo_hp (add_str "unfolding " (pr_pair pr_id !print_formula)) (name,f) in
+        (* let () = y_binfo_hp (add_str "Unfolding " (pr_pair pr_id !print_formula)) (name,f) in *)
         let n_hf = get_view_unfold vd stk vl to_args f in
+        let pr_hf = !print_h_formula in
+        let () = y_binfo_hp (add_str "Unfolding -> " (pr_pair pr_hf pr_hf)) (hf,n_hf) in
+        let () = y_binfo_hp (add_str "(exist vars,pure)  " (fun s -> s # string_of)) stk in
         Some (n_hf)
         (* failwith (x_loc^"TBI") *)
       | _ -> Some hf 
@@ -19941,6 +19944,8 @@ let repl_unfold_heap vd stk u_lst hf =
     | _ -> None
   in map_h_formula hf f
 
+(* type: HipUtil.NG.V.label -> *)
+(*   (String.t * CP.spec_var list * formula) list -> formula -> formula *)
 let repl_unfold_formula vd u_lst f =
   let pr = pr_pair !CP.print_svl !CP.print_formula in
   let stk = new stack_pr "" pr (==) in

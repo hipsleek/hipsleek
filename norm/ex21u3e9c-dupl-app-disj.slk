@@ -15,23 +15,17 @@ pred ll<> == self=null
     or self::node<_,q>*q::ll<>
  inv true.
 
-pred appA<> == self=null
-        or self::node<_,null>
- 	or self::node<_, q> * q::appA<> & q!=null 
-  inv true.
+pred ll2<> == self=null
+    or self::tmp2<> & self!=null
+ inv true.
 
-pred app4a<> == 
-   case {
-    self=null -> [] self=null;
-    self!=null -> [] self::node<_,q> 
-         case {
-           q=null -> [] q=null;
-           q!=null -> [] q::app4a<>;
-         };
-    }
-inv true.
+pred tmp2<> == self::node<_,q>*q::ll2<>
+ inv true.
+
 
 pred_unfold[*].
+print views.
+pred_unfold disj[*].
 print views.
 
 /*
