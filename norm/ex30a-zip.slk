@@ -23,7 +23,7 @@ print views.
 
 print views[*].
 
-print views[P1,P2].
+print views[P1].
 
 print views [P1*].
 

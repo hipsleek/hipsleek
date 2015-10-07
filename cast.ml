@@ -4044,11 +4044,20 @@ let get_lemma_cprog cdefs =
   let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
   ()
 
-(* type: Globals.regex_e option *)
+let get_t_v v = HipUtil.view_scc_obj # get_trans v
+
+(* type: (Globals.ident * bool) Globals.regex_list option *)
 let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
   match opt with
   | None -> view_list
   | Some ans -> 
     let () = y_binfo_pp "get selected views ..." in
-    view_list
+    let sel (v,p) = if p then get_t_v v else [v] in
+    match ans with
+    | REGEX_STAR ->  view_list
+    | REGEX_LIST lst ->  
+      let lst = List.map (fun vp -> sel vp) lst in
+      let lst = Gen.BList.remove_dups_eq (=) (List.concat lst) in
+      let ans = Gen.BList.intersect_eq (fun v n -> v.view_name = n) view_list lst in
+      ans
   

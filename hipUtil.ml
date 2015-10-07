@@ -153,7 +153,7 @@ class graph =
         | xs::xss -> 
           if (Gen.BList.intersect_eq (=) xs acc)==[] then aux xss acc ans
           else
-            let ans = xs::ans in
+            let ans = xs@ans in
             let exts = extend xs in
             let acc = Gen.BList.remove_dups_eq (=) (xs@exts@acc) in
             aux xss acc ans

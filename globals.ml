@@ -2535,5 +2535,10 @@ type 'a regex_list =
 
 type regex_id_list = ident regex_list
 
+let string_of_regex_list pr m =
+  match m with
+  | REGEX_STAR -> "*"
+  | REGEX_LIST lst -> pr_list pr lst
+
 
 
