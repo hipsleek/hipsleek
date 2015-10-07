@@ -3093,7 +3093,7 @@ let process_print_command pcmd0 =
       (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
       (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
     else if pcmd = "views" then
-      let () = HipUtil.view_scc_obj # build_scc_void 15 in
+      let () = HipUtil.view_scc_obj # build_scc_void x_loc in
       let view_list =  get_sorted_view_decls () (* !cprog.prog_view_decls *) in
       let view_list = Cast.get_selected_views opt view_list in
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in

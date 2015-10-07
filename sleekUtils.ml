@@ -114,7 +114,7 @@ let process_all_iview_decls iprog =
 
 let norm_cview_decls iprog cprog cviews =
   let old_view_decls = cprog.Cast.prog_view_decls in
-  let () = y_binfo_hp (add_str "old_view_decls" (pr_list Cprinter.string_of_view_decl)) old_view_decls in
+  let () = y_tinfo_hp (add_str "old_view_decls" (pr_list Cprinter.string_of_view_decl)) old_view_decls in
   let _ = cprog.Cast.prog_view_decls <- old_view_decls@cviews in
   let () = y_tinfo_hp (add_str "cviews(1)" (pr_list Cprinter.string_of_view_decl(*_short*))) cviews in
   let cviews1 =
