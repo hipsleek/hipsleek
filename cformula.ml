@@ -5044,6 +5044,7 @@ let check_nbelongsto_vnode vn vn_names=
 let check_neq_hpargs id ls=
   not (Gen.BList.mem_eq check_hp_arg_eq id ls)
 
+
 (*check a data node belongs to a list of data node names*)
 let select_dnode dn1 dn_names=
   List.exists (CP.eq_spec_var dn1.h_formula_data_node) dn_names
@@ -19980,3 +19981,5 @@ let add_label_to_struc_formula s_f old_sf =
     end
   | _ -> s_f
 
+let eq_hprel_defn f1 f2 =
+  (f1.hprel_lhs = f2.hprel_lhs) && (f1.hprel_rhs = f2.hprel_rhs)  && (f1.hprel_guard = f2.hprel_guard)

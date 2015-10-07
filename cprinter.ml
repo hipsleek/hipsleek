@@ -3225,7 +3225,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
       pr_wrap_test "inferred templ: " Gen.is_empty  (pr_seq "" pr_templ_assume) lt;
       pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp);
       pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel);
-      pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog [])) (hprel);
+      pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog [])) (Gen.BList.remove_dups_eq (eq_hprel_defn) hprel);
       pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq_ln "" (pr_map_aux pr_spec_var pr_formula)) (lho);
       (* pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (pr_seq "" (fun vps -> pr_vperm_sets vps)) vperm_sets; *)
       pr_wrap_test "inferred UTPost rel: "

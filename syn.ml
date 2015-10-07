@@ -750,6 +750,11 @@ let derive_view_norm prog other_hprels hprels =
     (derive_view_norm prog other_hprels) hprels
 
 let derive_view iprog cprog other_hprels hprels = 
+  let hprels = Gen.BList.remove_dups_eq CF.eq_hprel_defn hprels in
+  let other_hprels = Gen.BList.remove_dups_eq CF.eq_hprel_defn other_hprels in
+  let pr = Cprinter.string_of_hprel_list_short in
+  (* let () = y_binfo_hp (add_str "hprels" pr) hprels in *)
+  (* let () = y_binfo_hp (add_str "other hprels" pr) other_hprels in *)
   let simplified_selective_hprels = derive_view_norm cprog other_hprels hprels in
   (* DERIVING VIEW *)
   let derived_views = trans_hprel_to_view iprog cprog simplified_selective_hprels in
