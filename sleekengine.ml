@@ -3070,6 +3070,7 @@ let process_print_command pcmd0 =
       }in
     let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
+  (* type: (Globals.ident * bool) Globals.regex_list option *)
   | PCmd (pcmd,opt) ->
     if pcmd = "lemmas" then
       Lem_store.all_lemma # dump
@@ -3094,7 +3095,10 @@ let process_print_command pcmd0 =
       let view_list = Cast.get_selected_views opt view_list in
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
       let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
-      y_binfo_hp (add_str "Printing Views\n" (pr_list Cprinter.string_of_view_decl_short)) lst
+      let pr (a,f) = if f then a^"*" else a in
+      let opt_str = (match opt with None -> ""
+                                 | Some lst -> string_of_regex_list pr lst) in
+      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
     else
       print_string (x_loc^"unsupported print command: " ^ pcmd)
 

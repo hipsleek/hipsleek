@@ -16,13 +16,20 @@ pred_elim_useless [G1,G2].
 
 pred_reuse[*][*].
 
-print views.
+print views[*].
+
+print views[G1*,G2*].
 
 /*
 # ex21u1j.slk 
 
 pred_elim_useless [G1,G2].
 pred_reuse[*][*].
+
+# Why is SCC not typologically sorted?
+
+SCC:[[ll];[G2];[G1_54];[G1];[G2_53]]
+Graph:[(G1_54,[G2_53]);(G1,[G1_54]);(ll,[ll]);(G2,[G2_53]);(G2_53,[G2_53])]
 
 # Why are the generated views not kept?
 
