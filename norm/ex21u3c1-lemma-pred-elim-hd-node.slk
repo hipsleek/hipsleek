@@ -1,0 +1,43 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred app4<> == self=null
+  or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=true -> [] self::node<_,q> * q::app4a<>;
+    }
+inv true.
+
+/*
+# ex21u3c1.slk
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=true -> [] self::node<_,q> * q::app4a<>;
+    }
+inv true.
+
+Why isn't this a parser or case-spec error?
+
+ERROR: at _0:-1_0:-1
+Message: with 2 convert bexpr  1
+File "ex21u3c1-lemma-pred-elim-hd-node.slk", line 19, characters 10-14
+ error: Failure("with 2 convert bexpr  1")
+ at:
+Exception processed: Failure("with 2 convert bexpr  1")
+error at: 
+SLEEK FAILURE (END)
+
+*/

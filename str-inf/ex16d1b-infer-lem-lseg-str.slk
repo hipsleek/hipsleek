@@ -25,8 +25,15 @@ pred WFG<p> ==
 
  lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
 
+/*
  infer [U,@pure_field,@classic] 
    self::char_star<v,q2>*q2::WFG<p> & v!=0  |-  U(self,q)*q::char_star<0,p>.
+*/
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p>   |-  U(q2,q)*q::char_star<0,p>.
+
+
  print residue.
 
 /*

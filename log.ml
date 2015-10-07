@@ -488,11 +488,15 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
         end
       | _ -> None in
     (* let () = Debug.info_pprint "logging .." no_pos in *)
-    let (ho_vars_map,str) = match es_opt with
-      | None -> ([],""); 
-      | Some es -> (es.es_ho_vars_map, " es_infer_obj: "^(es.es_infer_obj # string_of)) in
-    let str = str^" globals: "^(Globals.infer_const_obj # string_of) in
     let (stk_slk_no,src,slk_parent_no) = last_cmd # get_sleek_no in
+    let (ho_vars_map,str,hp_rels) = match es_opt with
+      | None -> 
+        let () = y_winfo_hp (add_str "sleekno(no entail-state?)" string_of_int) slk_no in
+        ([],"",[]); 
+      | Some es -> (es.es_ho_vars_map, " es_infer_obj: "^(es.es_infer_obj # string_of)
+                   ,if slk_parent_no>=0 then es.es_infer_hp_rel # get_stk_recent
+                    else es.es_infer_hp_rel # get_stk_recent_reset) in
+    let str = str^" globals: "^(Globals.infer_const_obj # string_of) in
     if slk_no != stk_slk_no then print_endline_quiet ("LOGGING ERROR : inconsistent slk_no problem "
                                                       ^(string_of_int slk_no)^" "^((add_str "stk" string_of_int) stk_slk_no));
     let sleek_log_entry = {
@@ -512,7 +516,7 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
       sleek_proving_ante = ante;
       sleek_proving_conseq = conseq;
       sleek_proving_tntrel_ass = current_tntrel_ass_stk # get_stk;
-      sleek_proving_hprel_ass = current_hprel_ass_stk # get_stk;
+      sleek_proving_hprel_ass = hp_rels (* current_hprel_ass_stk # get_stk *);
       sleek_proving_rel_ass = current_infer_rel_stk # get_stk;
       sleek_proving_c_heap = consumed_heap;
       sleek_proving_evars = evars;

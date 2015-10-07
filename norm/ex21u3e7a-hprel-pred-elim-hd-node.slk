@@ -1,0 +1,107 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred U(node x).
+
+pred app4<> == 
+  self::node<_,null>
+  or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred tmp_app4<> ==
+  self::node<_, p> * p::dp<>
+  inv self!=null.
+  
+pred dp<> ==
+  self = null 
+  //or self::node<_, p> * p::tmp_app4<>
+  or self::tmp_app4<>
+  inv true.
+
+pred tmp_app4a<> ==
+  self::node<_, p> * p::dp1<>
+  inv self!=null.
+  
+pred dp1<> ==
+  self = null 
+  or self::node<_, p> * p::dp1<>
+  inv true.
+
+pred_unfold[*].
+
+pred_reuse[*][*].
+
+//print views.
+
+
+checkentail x::dp<> |- x::dp1<>.
+
+checkentail x::dp1<> |- x::dp<>.
+
+checkentail x::app4<> |- x::tmp_app4<>.
+
+checkentail x::app4<> |- x::tmp_app4<>.
+
+
+checkentail x::app4<> |- x::tmp_app4a<>.
+print residue.
+
+checkentail x::app4<> |- x::dp1<>.
+print residue.
+
+
+
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+
+lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+
+lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
+
+lemma_test "L3" self::tmp_app4<> <-> self::tmp_app4a<>.
+
+//lemma_test "L6" self::app4<> -> self::dp<>.
+
+
+//print views.
+
+//pred_reuse[*][*].
+
+// valid
+
+
+/*
+# ex21u3e7a.slk --new-view-equiv
+
+
+PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(dp1,dp),
+    (tmp_app4a,tmp_app4),(app4,tmp_app4)]
+
+PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(dp1,dp),
+    (tmp_app4a,tmp_app4a),(app4,tmp_app4)]
+
+
+# --new-view-equiv causing LOOPING problem..
+
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+
+!!! **hipUtil.ml#79:unfold tmp_app4 in 
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+
+
+
+*/

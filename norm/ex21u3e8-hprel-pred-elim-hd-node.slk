@@ -1,0 +1,81 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred U(node x).
+
+pred app4<> == 
+  self::node<_,null>
+  or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred tmp_app4<> ==
+  self::node<_, p> * p::dp<>
+  inv self!=null.
+  
+pred dp<> ==
+  self = null 
+  //or self::node<_, p> * p::tmp_app4<>
+  or self::tmp_app4<>
+  inv true.
+
+
+pred_unfold[*].
+
+pred_reuse[*][*].
+
+print views.
+
+// valid
+
+/*
+//pred_reuse [*][*].
+
+//pred_reuse_subs [*].
+
+pred app4a<> == self::node<_, p> * U(p)
+  inv self!=null.
+
+lemma_infer [U,@classic,@pure_field] self::app4<> -> self::app4a<>.
+print residue.
+*/
+
+/*
+pred_elim_hd_node [app4].
+
+print views.
+*/
+
+/*
+pred_unify_disj [app4].
+
+print relAssumes.
+*/
+
+/*
+# ex21u3e7.slk
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+
+# unfolding RHS self::tmp_app4a<> will allow lemma
+  proving to succeed.
+
+!!! **lemma.ml#218:unfold RHS of lemma
+!!! **lemma.ml#220:ldef:
+<=>coerc L3
+	 head: (emp ; (emp ; (self::app4{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)
+	 body:(emp ; (emp ; (self::tmp_app4a{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)testing lemmas
+!!! **lemma.ml#224:unfold_lst:
+[(tmp_app4a,[], (* lbl: *){5}->(exists Anon_15,
+p: (* lbl: *){5}->self::node<Anon_15,p>@M * p::dp1<>@M&
+{FLOW,(1,26)=__flow#E}[])),(tmp_app4,[], (* lbl: *){6}->(exists Anon_14,
+p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
+{FLOW,(1,26)=__flow#E}[]))]
+
+
+*/

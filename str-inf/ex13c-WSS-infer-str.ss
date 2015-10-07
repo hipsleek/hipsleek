@@ -6,6 +6,9 @@ data char_star {
 }
 */
 
+pred_prim Dangling<>
+inv true;
+
 WSS<p> ==
   self::WFSeg<q>*q::char_star<0,p> 
   inv self!=null;
@@ -13,6 +16,11 @@ WSS<p> ==
 WFSeg<p> ==
   self=p 
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true;
+
+WFS<> ==
+  self::char_star<0,_> 
+  or self::char_star<v,q>*q::WFS<> & v!=0
   inv true;
 
 /*
@@ -24,10 +32,13 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-  infer [P,@classic,@pure_field]
+  infer [P,@classic,@pure_field
+  ]
   requires P(s)
   ensures true;
 /*
+  requires s::WFS<> 
+  ensures true;
   requires s::WSS<p> 
   ensures s::WFSeg<s'>*s'::char_star<0,p> ;
 */
@@ -40,20 +51,75 @@ void while1(ref char_star s)
 }
 
 /*
-# ex13c.ss
+# ex13c.ss -dre "iprocess_a\|add_dang" 
+
+# GOT
+
+!!! **syn.ml#15:TODO : this proc is to add dangling references
+(==sa3.ml#2771==)
+add_dangling@3@2@1
+add_dangling inp1 : 
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> emp]
+add_dangling@3 EXIT: 
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> emp]
+
+# EXPECTS emp to be converted to Dangling<Anon_1619>
+
+  All_RA: [(0)P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                            HP_1620(Anon_1619); 
+           (1;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618!=0 --> P(Anon_1619); 
+           (2;0)HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+            v_1618=0 --> Dangling<Anon_1619>]
 
 [ // PRE
-(0)P(s)&true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602)&
-true,
- // PRE_REC
-(1;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
-v_1601!=0 --> P(Anon_1602)&
-true,
+(0)P(s)&true |#|3  --> s::char_star<v_1601,Anon_1602>@M 
+     * HP_1603(Anon_1602)& true,
+// PRE_REC
+(1;0)HP_1603(Anon_1602)&true |#| 
+    s::char_star<v_1601,Anon_1602>@M& v_1601!=0 --> P(Anon_1602)&true,
  // POST
-(2;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
-v_1601=0 --> emp&
+(2;0)HP_1603(Anon_1602)&true |#| 
+    s::char_star<v_1601,Anon_1602>@M & v_1601=0 --> emp&true]
 true]
 
+---------------------------------
+# without @pure_field
+
+# missing base-case post?
+*************************************
+[ // PRE
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1603(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+true --> P(Anon_1602)&
+true]
+------------------------------------------------------
+# with @pure_field
+
+# missing base-case post? + fixcalc error
+*************************************
+[ // PRE
+:fixcalc: Parse error on line 1 rest of line: ) && 1=1)
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(v_1601@NI,s@NI) * 
+               HP_1604(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1604(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
 
 *********************************************************
 [ P(s_1633) |#| emp&v_1621!=0
@@ -63,7 +129,7 @@ true]
 ----------------
 
 void while1(ref char_star s)
-  infer [P]
+  infer [P,@classic,@pure_field]
   requires P(s)
   ensures true;
 {
@@ -106,6 +172,9 @@ iprocess_action inp1 :pre, pre-oblg, post, post-oblg
 iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, post, post-oblg)
 
 
+
+Relational assumptions
+----------------------
   P(s) -> s::chr<v,q>*H1(q)
   H1(q) | s::chr<v,q> & v!=0 --> P(q) 
   H1(q) | s::chr<v,q> & v=0 --> emp
@@ -115,7 +184,7 @@ iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, 
   H1(q) | s::chr<v,q> & v!=0 --> P(q) 
   H1(q) | s::chr<v,q> & v=0 --> D(q)
 
-==> specialize
+==> specialize (unfold)
   P(s) -> s::chr<v,q> * P(q) & v!=0
   P(s) -> s::chr<v,q> * D(q) & v=0
 
@@ -127,7 +196,7 @@ iprocess_action inp1 :seq:(0,analize dangling);(0,split base);(0,pre, pre-oblg, 
   P(x,d) -> U(x,q) * q::chr<0,d>
 
 ==> segmented-pred
-  P(x,d) -> U(x,q) * q::chr<v,d>
+  P(x,d) -> U(x,q) * q::chr<0,d>
   U(x,q) -> x=q
   U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
 

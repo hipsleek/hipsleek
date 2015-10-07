@@ -1,0 +1,49 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred zip<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+HeapPred P1(node a).
+HeapPred P2(node a).
+HeapPred P3(node a).
+
+/*
+HeapPred zip(node@RO a, node b, node c).
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+*/
+
+lemma_infer [P1,P2,P3]
+  self::zip<ys,zs> -> P1(self)*P2(ys)*P3(zs).
+//pred_split [zip].
+
+print residue.
+
+shape_derive_view [P1,P2,P3].
+print views.
+
+/*
+!!! **syn.ml#681:View Decl of P1:
+ view P1<>= 
+  EBase 
+    self::node<Anon_94,p_97>@M * p_97::P1<>NOANN&{FLOW,(20,21)=__norm#E}[]
+    or emp&self=null&{FLOW,(20,21)=__norm#E}[]
+    
+!!! **syn.ml#681:View Decl of P2:
+ view P2<>= 
+  EBase 
+    self::node<Anon_95,q_98>@M * q_98::P2<>NOANN&{FLOW,(20,21)=__norm#E}[]
+    or emp&self=null&{FLOW,(20,21)=__norm#E}[]
+    
+!!! **syn.ml#681:View Decl of P3:
+ view P3<>= 
+  EBase 
+    self::node<Anon_96,t_99>@M * t_99::P3<>NOANN&{FLOW,(20,21)=__norm#E}[]
+    or emp&self=null&{FLOW,(20,21)=__norm#E}[]
+*/

@@ -44,7 +44,8 @@ module UnCa=
            res
    end;;
 
-let is_sat_raw = ref(fun (c:Mcpure.mix_formula) -> true)
+let is_sat_raw = Mcpure.is_sat_raw
+(* ref(fun (c:Mcpure.mix_formula) -> true) *)
 let simplify_raw = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
 let pairwisecheck = ref(fun (c:Cpure.formula) -> mkTrue no_pos)
 

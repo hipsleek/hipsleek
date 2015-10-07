@@ -1,0 +1,37 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+HeapPred Q(node x, node y).
+HeapPred GP_1655(node x, node y, node@NI z).
+HeapPred GP_1656(node x, node y, node@NI z).
+
+relAssume //(1)
+s::node<flted_22_1632,Anon_1633>@M * GP_1656(Anon_1633,s',s)&
+    s'=s & flted_22_1632=0 --> Q(s,s').
+    
+relAssume //(2)
+emp&s'=s --> GP_1656(Anon_1633,s',s).
+
+relAssume //(3) 
+s::node<v_1635,q>@M * GP_1655(q,s',s)&
+    v_1635!=0 --> Q(s,s').
+    
+relAssume //(4) 
+Q(q,s') --> GP_1655(q,s',s).
+
+print relAssumes.
+
+shape_simplify [Q,GP_1655,GP_1656].
+
+print relAssumes.
+
+shape_unfold [Q,GP_1655,GP_1656].
+
+print relAssumes.
+
+shape_merge [Q,GP_1655,GP_1656].
+
+print relAssumes.

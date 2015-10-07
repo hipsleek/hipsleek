@@ -1014,8 +1014,12 @@ infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula:
  es_infer_vars_hp_rel: [U]
  es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
 
-===========================================================================
-# ex16d1c.slk dre "process_one_m" 
+==========================================================================
+# ex16d1c.slk dre "process_one_m" (WN to fix) (FIXED)
+
+ infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
 
 # is there a smarter base-case-fold scheduling?
 
@@ -1041,7 +1045,11 @@ process_one_match@1 EXIT: Prio:1
   InferFold =>
   ]
 ===========================================================================
-# ex16d1b.slk -dre "process_one_m"
+# ex16d1b.slk -dre "process_one_m"  (WN to fix) (OK)
+
+(FIXED)
+process_one_match@2 EXIT: Prio:4
+ NothingToDo => No common parameters :  q2::WFG<p>@M vs  U(self,q)
 
 # should not schedule lemma if there are no common materialization ..
 
@@ -1060,6 +1068,134 @@ process_one_match inp6 :rhs_p: flted_29_146=0 & p_145=p
 process_one_match inp7 :([(p_145,p)],None)
 process_one_match@2 EXIT: Prio:1
  (Lemma ==> lem_12) =>
+
+===========================================================================
+# ex16d2b.slk -dre "process_one_m" (FIXED)
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U2(q3,q)*q::char_star<0,p>.
+   
+(==context.ml#2727==)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::WFG<p>@M
+ RHS: U2(q3,q)
+ lhs_rest: emp
+ rhs_rest: q::char_star<flted_33_149,p_148>@M
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::WFG<p>@M
+process_one_match inp3 :lhs_p: q2=q3 & v!=0
+process_one_match inp4 :rhs_node: U2(q3,q)
+process_one_match inp5 :rhs_rest: q::char_star<flted_33_149,p_148>@M
+process_one_match inp6 :rhs_p: flted_33_149=0 & p_148=p
+process_one_match inp7 :([(p_148,p)],None)
+process_one_match@1 EXIT: Prio:2
+ InferFold =>
+===========================================================================
+# str-inf/ex16d2a.slk -dre "rewrite_coercion\|coer_target"
+  (FIXED by removing it via old-coer-target *)
+
+# run-fast-test not affected by removal or coer-target
+
+Total number of errors: 26 in files:
+Total verification time: 140.69 second
+	Time spent in main process: 89.88 second
+	Time spent in child processes: 50.81 second
+	Number of false contexts: 414
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U(q3,q)*q::char_star<0,p>.
+
+# Why is coer_target needed?
+  Need to fix this to work with HRel?
+
+(==solver.ml#14066==)
+coer_target@1
+coer_target inp1 :node: q2::WFG<p>@M
+coer_target inp2 :target_rhs: q2::WFG<p>@M&q2=q3 & v!=0&{FLOW,(20,21)=__norm#E}[]
+coer_target inp3 :lhs: U(q3,q) * q::char_star<flted_34_149,p_148>@M&flted_34_149=0 & p_148=p&
+{FLOW,(20,21)=__norm#E}[]
+coer_target inp4 :rhs_eqset:[(p_148,p)]
+coer_target@1 EXIT:false
+
+# Why Rewrite cannot be applied?
+===========================================================================
+# ex16d2c1.slk -dre "process_one_m" (OK)
+
+ infer [U2,@classic] U(q2,q_155) & q2=q3  |-  U2(q3,q).
+
+# Why infer_fold fail?
+
+  EXPECTS:  U2(q2,q) <-- U(q2,q)
+
+  Do we represent FOLD as U(..) <-- RHS
+
+!!! **solver.ml#12425:process_action (steps) :
+ ### action :
+ InferFold =>
+   Type: Root
+   LHS: U(q2,q_155)
+   RHS: U2(q3,q)
+   lhs_rest: emp
+   rhs_rest: emp
+   rhs_inst: []
+ ### estate :
+ ex_formula : U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : U2(q3,q)&{FLOW,(20,21)=__norm#E}[]
+
+!!! **lemma.ml#259:
+Updated lemma store with unsafe repo::[lem_12]
+(==solver.ml#13337==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs_node: U(q2,q_155)
+infer_collect_hp_rel#1 inp2 :rhs_node: U2(q3,q)
+infer_collect_hp_rel#1 inp3 :lhs: U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: U2(q3,q)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es: U(q2,q_155)&q2=q3
+infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula: 
+ U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2]
+ es_infer_hp_rel: [emp |#|  --> U2(q2,q)],3:abd heap: U2(q2,q),4:Some( emp),5:None)
+===========================================================================
+# ex16d2c2.slk FIXED
+
+# No need to instantiate q is already known on LHS..
+
+//(5)
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
+ expect Valid.
+// expects U(q2,q_155) --> U2(q2,q_155)
+
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#265:Can not inst
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+(==solver.ml#11206==)
+do_inst@1
+do_inst inp1 :lhs_b: U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[q_155]
+do_inst inp3 :rargs:[q]
+do_inst inp4 :hps:[U]
+do_inst@1 EXIT:(false, U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[])
+
+(==solver.ml#11206==)
+do_inst@1
+do_inst inp1 :lhs_b: U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[q_155]
+do_inst inp3 :rargs:[q]
+do_inst inp4 :hps:[U]
+do_inst@1 EXIT:(true, U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[])
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000548
+Entail (1) : Failure("sau.add_raw_hp_rel: args should be not empty")
+Validate 1: Expecting ValidBUT got no residue
+
 ===========================================================================
 # ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
 
@@ -1095,67 +1231,591 @@ infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula:
  es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
 
 ===========================================================================
-# ex16d1c.slk dre "process_one_m" (WN to fix)
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" FIXED
 
-# is there a smarter base-case-fold scheduling?
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
 
-(==context.ml#2600==)
-process_one_match@1
-process_one_match inp1 :match_res:
- Type: Root
- LHS: self::char_star<v,q2>@M
- RHS: U(self,p)
- lhs_rest: q2::char_star<flted_29_106,p>@M
- rhs_rest: emp
-process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M
-process_one_match inp3 :lhs_p: v!=0 & flted_29_106=0
-process_one_match inp4 :rhs_node: U(self,p)
-process_one_match inp5 :rhs_rest: emp
-process_one_match inp6 :rhs_p: true
-process_one_match inp7 :([],None)
-process_one_match@1 EXIT: Prio:1
- SEARCH =>[
-  Prio:1
-  BaseCaseFold =>;
-  Prio:1
-  InferFold =>
-  ]
-===========================================================================
-# ex16d1b.slk -dre "process_one_m"  (WN to fix)
+# Can omit v!=0 if @pure_field absent..
 
-# should not schedule lemma if there are no common materialization ..
-
-(==context.ml#2602==)
-process_one_match@2
-process_one_match inp1 :match_res: Type: MaterializedArg (self,full,[U]) coerc_defn_mater: ==> lem_12
- LHS: q2::WFG<p>@M
- RHS: U(self,q)
- lhs_rest: self::char_star<v,q2>@M
- rhs_rest: q::char_star<flted_29_146,p_145>@M
-process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::WFG<p>@M
-process_one_match inp3 :lhs_p: v!=0
-process_one_match inp4 :rhs_node: U(self,q)
-process_one_match inp5 :rhs_rest: q::char_star<flted_29_146,p_145>@M
-process_one_match inp6 :rhs_p: flted_29_146=0 & p_145=p
-process_one_match inp7 :([(p_145,p)],None)
-process_one_match@2 EXIT: Prio:1
- (Lemma ==> lem_12) =>
+push_list(es_infer_hp_rel):[ 
+self::char_star<v,q2>@M * GP_118(q2,self,p)&v!=0 |#|  --> U(self,p)]
 
 ===========================================================================
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" --dis-infer-back-ptr FIXED
+
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# GOT:
+push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
+
+# EXPECT:
+  self::char_star<v,q2>@M * GP_118(q2,p) |#|  --> U(self,p)
+
 ===========================================================================
+# ex16d1d2.slk dre "infer_c" -show-push-list ".*hp_" FIXED
+
+//(1)
+
+infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# I think can use just GP_30(q2,self,p), otherwise we may
+  have too many parameters.
+
+push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M * GP_30(q2,self,p,v)&v!=0 
+
+
 ===========================================================================
+# ex16d2c2.slk FIXED
+
+# No need to instantiate q if it is already known on LHS..
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#237:Can not inst
+
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+
+# Why exception below?
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000331
+Entail (2) : Failure("sau.add_raw_hp_rel: args should be not empty")
+
 ===========================================================================
+# ex16d1d3.slk dre "infer_c" -show-push-list ".*hp_": FIXED
+
+//(1)
+
+infer [U,@pure_field,@classic] 
+   self::char_star<v,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# I think GP_24(self) is unnecessary since
+  it does not have any instantiating parameter..
+
+# Expects just:
+
+  self::char_star<v,p>@M 
+        v!=0 |#|3  --> U(self,p)&true]
+
+ <1>emp&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> GP_24(self)&true; 
+                  self::char_star<v,p>@M * GP_24(self)&
+                   v!=0 |#|3  --> U(self,p)&true]
+[[ InferFold  ==>  Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
 ===========================================================================
+# ex16d1b5.slk -dre "process_one_m": FIXED
+
+
+ infer [U2,@pure_field,@classic] 
+   U(q2,q3)*q3::char_star<0,p>    |-  U2(q2,q)*q::char_star<0,p>.
+
+# where did we obtain HP_153? Why did we infer for U when it is not in
+  the infer set?
+
+
+push_list(es_infer_hp_rel):[ U(q2,q) |#|  --> U2(q2,q)]
+push_list(es_infer_hp_rel):[ emp |#|  --> HP_153(flted_39_152,q2,q)]
+push_list(es_infer_hp_rel):[ q::char_star<flted_39_128,p>@M * GP_156(p,q2,q)&
+  flted_39_128=0 |#|  --> U(q2,q)]
+
 ===========================================================================
+# ex16c7.slk (FIXED)
+
+ infer [U,@pure_field,@classic]  U(self,q)*q::char_star<0,p> 
+    |- self::char_star<0,p>.
+ print residue.
+
+# GOT
+
+ inferred hprel: [U(self,q)&true |#| q::char_star<flted_33_161,p>@M&
+                   true --> emp&self=q]
+
+# Since we had @pure_field, it should be:
+
+ inferred hprel: [U(self,q)&true |#| q::char_star<flted_33_161,p>@M&
+                   flted_33_161=0 --> emp&self=q]
+
+!!! **WARNING****solver.ml#9516:do_base_unfold_hp_rel (TBI)
+push_list(es_infer_hp_rel):[ U(self,q) |#| q::char_star<flted_35_132,p>@M --> emp&self=q]
+
+(==solver.ml#8329==)
+infer_collect_hp_rel_empty_rhs#1@3
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ emp&flted_35_132=0 & self=q&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [U(self,q) |#| q::char_star<flted_35_132,p>@M --> emp&
+                    self=q]
+infer_collect_hp_rel_empty_rhs#1 inp2 : flted_35_132=0 & p=p
+infer_collect_hp_rel_empty_rhs#1@3 EXIT:(Res:false,Sel HP:
+ es_formula: 
+ emp&flted_35_132=0 & self=q&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [U(self,q) |#| q::char_star<flted_35_132,p>@M --> emp&
+                    self=q],Inferred Relations:[],lhs base: emp&flted_35_132=0 & self=q&{FLOW,(20,21)=__norm#E}[])
 ===========================================================================
+# ex16e1.slk
+
+ infer [U,@pure_field,@classic] U(self,sp,q)*q::char_star<0,p> 
+        |- self::char_star<0,p> & sp=self.
+
+# base-case unfold seems to have failed:
+
+!!! **solver.ml#12895:inst_vs:[]
+!!! **WARNING****solver.ml#9516:do_base_unfold_hp_rel (TBI)
+push_list(es_infer_hp_rel):[ U(self,sp,q) |#| q::char_star<flted_15_101,p>@M --> emp&self=q]
+
+ $  add HP_XX on the RHS; add pure guard flted_15_101=0
+
+  U(self,sp,q) |#| q::char_star<flted_15_101,p> & flted_15_101=0
+     --> HP_XX(self@NI,sp@NI,q@NI) & emp&self=q
+
+(==solver.ml#12898==)
+do_unfold_hp_rel@4@3@2
+do_unfold_hp_rel inp1 :  U(self,sp,q) * q::char_star<flted_15_101,p>@M&flted_15_101=0&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [p_122; flted_16_123]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@leak,@pure_field]
+ es_evars: [p_122; flted_16_123]
+ es_rhs_eqset: [sp:self; p_122:p]
+ es_trace:  SEARCH ==>  BaseCaseUnfold
+ es_infer_vars_hp_rel: [U]
+do_unfold_hp_rel inp2 :U
+do_unfold_hp_rel inp3 :[self,sp,q]
+do_unfold_hp_rel inp4 : self::char_star<flted_16_123,p_122>@M
+do_unfold_hp_rel@4 EXIT: failctxfe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+    fc_message:  self!=null |-  sp=self. LOCS:[15;16] (may-bug)
+    fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+  }
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(q,self)]]false
+
 ===========================================================================
+# ex13c5a.ss (FIXED)
+
+---------------------------------
+# without @pure_field
+
+# missing base-case post?
+*************************************
+[ // PRE
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1603(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+true --> P(Anon_1602)&
+true]
+
 ===========================================================================
+# ex13c5b.ss (OK)
+
+# with @pure_field
+
+[ // PRE
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(v_1601@NI,s@NI) * 
+               HP_1604(Anon_1602,s@NI)&true,
+
+ // PRE_REC
+(1;0)HP_1604(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
+true,
+
+# why did we have (v=0 | v=v_1601) ?
+  what happen to just v=0 ??
+
+ // POST
+(2;0)HP_1604(Anon_1602,s@NI)&
+s'=s & Anon_19=Anon_1602 |#| s::char_star<v_1601,Anon_1602>@M&
+(v=0 | v=v_1601) --> emp&
+true,
+
+ // POST
+(2;0)HP_1603(v_1601@NI,s@NI)&
+s'=s & v=v_1601 & v=0 |#| s::char_star<v_1601,Anon_1602>@M&
+Anon_19=Anon_1602 --> emp&
+true,
+
+ // POST
+(1;0)HP_1603(v_1601@NI,s@NI)&
+Anon_18=v_1601 & v=v_1601 & s_1617=s & v!=0 |#| s::char_star<v_1601,Anon_1602>@M&
+(q=Anon_1602 | Anon_19=Anon_1602) --> emp&
+true]
+
+
+(fixcalc error disappeared)
+
+# + fixcalc error
+*************************************
+[ // PRE
+:fixcalc: Parse error on line 1 rest of line: ) && 1=1)
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(v_1601@NI,s@NI) * 
+               HP_1604(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1604(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
+true]
+
+====================================================================
+
+ // POST
+(2;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601=0 --> emp&
+true]
+
 ===========================================================================
+# ex13c5b1.slk -dre "infer_c" (OK)
+
+infer [HP,@classic,@pure_field] 
+HP(v_1601,s) * s::char_star<v_1601,Anon_1602>@M 
+& q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598' 
+ |-  htrue.
+
+<1>emp&v_bool_37_1598' & s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+        Anon_18=v_1601 & q=Anon_1602&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP(v_1601@NI,s)&
+                   s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+                   Anon_18=v_1601 & q=Anon_1602 |#|3  --> emp&true]
+
+# can we use simplifier? Why is guard outcome different1
+  from ex13c5b.ss --esl. Where is the heap guard? WHere is trace?
+
+id: 11; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604,P]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * s::char_star<v_1601,Anon_1602>@M * (htrue)&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (1;0)HP_1603(v_1601,s)&
+  Anon_18=v_1601 & v=v_1601 & s_1617=s & v!=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  (q=Anon_1602 | Anon_19=Anon_1602) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598'&{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
+
+(==solver.ml#8329==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ HP(v_1601,s) * s::char_star<v_1601,Anon_1602>@M&
+ v_bool_37_1598' & s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+ Anon_18=v_1601 & q=Anon_1602&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [HP]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ s::char_star<v_1601,Anon_1602>@M&
+ v
 ===========================================================================
+# ex13c5b3.slk (FIXED)
+
+infer [HP3,HP4,@classic,@pure_field] 
+ HP3(v_1601,s) * HP4(Anon_1602,s) * s::char_star<v_1601,Anon_1602>@M&
+!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0 
+ |-  htrue.
+
+ <1>emp&v=0 & Anon_19=Anon_1602 & v=v_1601 & s'=s & !(v_bool_37_1598')&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP3(v_1601@NI,s@NI)&v=v_1601 & s'=s & v=0 |#|3  --> emp&
+                   true; 
+                  HP4(Anon_1602,s@NI)&
+                   Anon_19=Anon_1602 & s'=s |#| s::char_star<v_1601,Anon_1602>@M&
+                   v=0 & v=v_1601 --> emp&true]
+
+#  Why is guard outcome diff from --esl from ex13c5b.ss --esl
+   Did we remove the node before unknown predicate?
+   Why is there no trace?
+
+id: 12; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * HP_1604(Anon_1602,s) * s::char_star<v_1601,Anon_1602>@M&
+!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (2;0)HP_1603(v_1601,s)&
+  s'=s & v=v_1601 & v=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  Anon_19=Anon_1602 --> emp,
+ (2;0)HP_1604(Anon_1602,s)&
+  s'=s & Anon_19=Anon_1602 |#| s::char_star<v_1601,Anon_1602>@M&
+  (v=0 | v=v_1601) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0&
+{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
+
+prel_ass: [ (2;0)
+
+parameters : v_1601,s
+guard      : v_1601,Anon_1602
+
+  HP_1603(v_1601,s)&
+  (exists s',v: s'=s & v=v_1601 & v=0) |#| s::char_star<v_1601,Anon_1602>@M&
+  (exists Anon_19: Anon_19=Anon_1602) --> emp,
+
 ===========================================================================
+# ex13e.ss
+
+chin@loris-7:~/hg/sl_incr/str-inf$ ../hip ex13e-WSS-infer-post.ss -show-push-list "" > 1
+fixcalc: Parse error on line 1 rest of line:  1=1)
 ===========================================================================
+# ex21d1.slk
+
+lemma_infer_pred [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+# Chanh: these are based on post-predicate
+
+************************************
+*******shape relational assumptions ********
+*************************************
+[ emp&flted_22_139=null --> U(flted_22_139)&true,
+ q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147@NI)&
+  q_147!=null --> U(q_147)&true,
+ U(q_153)&q_147!=null --> GP_154(q_153,q_147@NI)&true]
+
+!!! **syn.ml#458:>>>>> Step 1: Adding dangling references <<<<<
+!!! **syn.ml#49:Dangling args:[]
+!!! **syn.ml#49:Dangling args:[q_153]
+!!! **syn.ml#49:Dangling args:[]
+!!! **syn.ml#468:Detected dangling vars:
+ 
+  [U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147); 
+   q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+    q_147!=null |#|  --> U(q_147) * q_153::Dangling<>@M; 
+   emp&flted_22_139=null |#|  --> U(flted_22_139)]
+!!! **syn.ml#473:>>>>> Step 2: Unfolding <<<<<
+ --error:  at:
+
 ===========================================================================
+# ex20c.slk (FIXED)
+
+# emp&flted_22_139=null --> U(flted_22_139).
+
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+error at: 
+SLEEK FAILURE (END)
+
 ===========================================================================
+# ex20.slk (FIXED by avoiding linearization of guard)
+
+# where was Anon_1619=Anon_1619 introduced and why?
+
+ [P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * HP_1620(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618!=0 & Anon_1619=Anon_1619 --> P(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618=0 & Anon_1619=Anon_1619 --> emp]
+
+!!!:0: 0: **sleekengine.ml#1442: HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+  v_1618!=0 & Anon_1619=Anon_1619 --> P(Anon_1619)
+(==astsimp.ml#7386==)
+process_rel_assume@2
+process_rel_assume inp1 :IFORM:(emp ; (emp ; (HRel HP_1620(Anon_1619)))) * ([] & true)( FLOW __norm)
+process_rel_assume inp2 :Some(IFORM:(emp ; (emp ; (s::char_star{}<v_1618,Anon_1619>@M[HeapNode1]))) * ([] & v_1618 != 0)( FLOW __norm))
+process_rel_assume inp3 :IFORM:(emp ; (emp ; (HRel P(Anon_1619)))) * ([] & true)( FLOW __norm)
+process_rel_assume@2 EXIT:?
+===========================================================================
+# ex20c.slk (FIXED)
+
+Please add a shape_merge sleek command ..
+
+shape_merge [U,GP_164].
+
+===========================================================================
+# ex20c.slk
+
+Please add a shape_merge command ..
+
+shape_merge [U,GP_164].
+
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+error at: 
+SLEEK FAILURE (END)
+
+===========================================================================
+# ex20.slk
+
+shape_trans_to_view [P,HP_1620].
+
+# current method to transform is below:
+
+# Loc: can we use an older method to perform the
+  translation as it may be more complete the the
+  correct normalization
+
+let process_shape_trans_to_view hps = 
+  let f hps =
+    let trans_views = Syn.trans_hprel_to_view !cprog hps in
+    hps 
+  in
+  process_sleek_hprel_assumes "Transforming to View" hps f
+
+ view P<>= 
+  EBase 
+    self::char_star<v_1618,Anon_1619>@M * Anon_1619::P<Anon_33>NOANN&
+    v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or self::char_star<v_1618,Anon_33>@M&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+    
+!!! **cprinter.ml#4410:view_labels:[]
+!!! **cprinter.ml#4412:v.view_params_orig:[]
+!!! **syn.ml#671:View Decl of HP_1620:
+ view HP_1620<>= 
+  EBase 
+    self::P<Anon_33>NOANN&v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or emp&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+===========================================================================
+# ex20.slk --pcp  (FIXED)
+
+# why isn't views printed in detail?
+  Is it in view_decls field?
+
+# Can we make sure that trans_to_view is done
+  only once and would be idempotent?
+
+  shape_trans_to_view [P,HP_1620].
+===========================================================================
+# ex20.slk
+
+  [unfold P(s,Anon_37) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                                P(Anon_1619,Anon_37)&v_1618!=0
+                                or s::char_star<v_1618,Anon_37>@M&v_1618=0
+                                ; 
+
+# transform to view lacks the dangling parameter derived for P.
+  similarly for HP_1620 
+
+  [unfold P(s,Anon_37) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                                P(Anon_1619,Anon_37)&v_1618!=0
+                                or s::char_star<v_1618,Anon_37>@M&v_1618=0
+                                ; 
+   unfold HP_1620(Anon_1619,Anon_38) |#| s::char_star<v_1618,Anon_1619>@M --> 
+    P(Anon_1619,Anon_37)&v_1618!=0
+    or emp&v_1618=0
+    ]
+
+ view P<>= 
+  EBase 
+    self::char_star<v_1618,Anon_1619>@M * Anon_1619::P<Anon_37>NOANN&
+    v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or self::char_star<v_1618,Anon_37>@M&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+
+ view HP_1620<>= 
+  EBase 
+    self::P<Anon_37>NOANN&v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or emp&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+===========================================================================
+# ex20e.slk (DONE)
+
+shape_derive_pre [P,HP_1620].
+
+  # should be similar to ex20.slk where
+  we derive the views eventually..
+
+========================
+ Performing Deriving Pre-Predicates
+========================
+To be Implemented
+===========================================================================
+# ex20c.slk (FIXED by Chanh)
+
+========================
+ Performing Simplifying
+========================
+
+# How simplification does not reduce redundant 
+  and duplicated expressions?
+ 
+  [fold emp&flted_22_139=null
+        or flted_22_139::node<Anon_31,q_32>@M * U(q_153)&
+           flted_22_139!=null & flted_22_139!=null & q_32=q_153 & 
+           flted_22_139!=null
+         |#|  --> U(flted_22_139); 
+   fold U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147)]
+
+
+# Expects:
+
+  [fold emp&flted_22_139=null
+        or flted_22_139::node<Anon_31,q_32>@M * U(q_153)&
+      & q_32=q_153 & flted_22_139!=null --> U(flted_22_139); 
+   fold U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147)]
+
+
+===========================================================================
+# ex21d1.slk
+
+lemma_infer  [U,classic] "L21d1"
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+print relAssumes.
+shape_derive_view [U].
+print relAssumes.
+
+# can we add a command
+
+ shape_norm (which stop short of deriving predicate)
+
+
+ [unknown U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146); 
+   unknown q_146::node<Anon_151,q_152>@M * GP_153(q_152,q_146)&
+    q_146!=null |#|  --> U(q_146); 
+   unknown emp&flted_22_138=null |#|  --> U(flted_22_138)]
+
+# why do we get unfolded twice below? and can we simplify?
+ 
+  [fold q_146::node<Anon_151,q_152>@M * U(q_152)&
+        q_146!=null & q_146!=null & q_146!=null
+        or emp&q_146=null
+        or q_146::node<Anon_151,q_152>@M * U(q_152)&
+           q_146!=null & q_146!=null & q_146!=null
+        or emp&q_146=null
+         |#|  --> U(q_146); 
+   fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
+
+===========================================================================
+# ex21u1.slk
+
+shape_elim_useless [G1,G2].
+
+# Minor problems with view below:
+  Elim need to eliminate orig parameters too.
+
+!!! **sleekengine.ml#2471:views after ELIM: 
+[ view G2<p:node,y:node>= 
+  EBase 
+    self::G2_66<y>@M&{FLOW,(1,26)=__flow#E}[],
+ view G2_66<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; 
+          pp]self::node<Anon_14,pp,tt>@M * tt::G2_66<y>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1<y:node>= 
+  EBase 
+    exists (Impl)[Anon_13; t; p]self::node<Anon_13,p,t>@M * t::G2_66<y>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

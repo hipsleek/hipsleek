@@ -1950,7 +1950,7 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
       (* let constrs3, unk_map1, unk_hpargs = Sacore.detect_dangling_pred constrs2 sel_hp_rels unk_map in *)
       let constrs1, unk_hpargs1, unk_map1, link_hpargs1, punk_map0 =
         if detect_dang then
-          Sacore.analize_unk prog sel_post_hps constrs0 hp_rel_unkmap unk_hpargs link_hpargs
+          x_add Sacore.analize_unk prog sel_post_hps constrs0 hp_rel_unkmap unk_hpargs link_hpargs
         else
           (*if dangling is not analized, find partial dangling/unknown*)
           let punk_map =  [] in

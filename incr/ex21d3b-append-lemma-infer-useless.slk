@@ -1,0 +1,51 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = null 
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred U2<p> == self = null 
+	or self::node<_, q> * q::U2<p> & p!=null
+  inv true.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred U2(node x,node y).
+HeapPred U3(node x,node y).
+
+
+/*
+lemma_infer [U2,classic]
+  self::app3<> -> U2(self,q) * q::node<_,null>.
+
+print residue.mv 
+*/
+
+lemma_test self::lseg<p> <-> self::U2<p>.
+
+/*
+# ex21d3b.slk 
+
+# lemma proving works..
+
+//merge U2
+U2(self_lem_17,q_112).
+ <-- emp&self_lem_17=q_112
+  or self_lem_17::node<Anon_127,q_128>@M * 
+     U2(q_128,q_131) &q_128!=null 
+
+*/

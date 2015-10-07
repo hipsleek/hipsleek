@@ -53,6 +53,10 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
 
+let is_lemma_ahead m = match m with
+  | LEM_PROP| LEM_SPLIT | LEM | LEM_UNSAFE | LEM_SAFE -> true
+  | _ -> false
+
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
   | LEM_GEN           (* automatically generated/inferred lemma *)
@@ -247,7 +251,7 @@ let string_of_view_kind k = match k with
 
 let is_undef_typ t =
   match t with
-  |UNK |RelT _ |HpT |UtT _ -> true
+  | UNK | RelT _ | HpT | UtT _ -> true
   | _ -> false 
 
 let is_node_typ t =
@@ -906,6 +910,7 @@ let allow_lemma_fold = ref true
 
 let allow_lemma_norm = ref false
 let show_push_list = ref (None:string option)
+let show_push_list_rgx = ref (None:Str.regexp option)
 
 let old_norm_w_coerc = ref false
 let old_keep_all_matchres = ref false
@@ -920,6 +925,7 @@ let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
+let sa_part = ref false
 
 let prelude_is_mult = ref false
 
@@ -1071,7 +1077,7 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
-let en_norm_ctx = ref true
+let en_norm_ctx = ref false (* true - not suitable for inference *)
 
 let en_trec_lin = ref false
 
@@ -1080,6 +1086,7 @@ let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)
 
 let lemma_ep = ref true
+let lemma_ep_verbose = ref true
 
 let dis_sem = ref false
 
@@ -1280,7 +1287,15 @@ let assert_no_glob_vars = ref false
 
 let new_rm_htrue = ref true
 let new_infer_large_step = ref true
+let infer_back_ptr = ref true
 let old_infer_complex_lhs = ref false
+let old_coer_target = ref false
+let old_search_always = ref false (* false *)
+let old_lemma_unfold = ref false (* false *)
+let old_view_equiv = ref false (* false *)
+  (* false here causes ex21u3e7.slk to go into a loop FIXED *)
+let cond_action_always = ref false
+let rev_priority = ref false
 
 let old_collect_false = ref false
 let old_collect_hprel = ref false
@@ -1919,6 +1934,9 @@ let clone_sub_infer_const_obj_sel () =
 let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
+(* String Inference *)
+let new_pred_syn = ref true
+
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
 let gen_templ_slk = ref false
@@ -2184,7 +2202,7 @@ let fresh_int () =
 (*   seq_number := !seq_number + 1; *)
 (*   !seq_number *)
 
-let string_compare s1 s2 =  String.compare s1 s2=0
+let string_eq s1 s2 =  String.compare s1 s2=0
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
@@ -2510,4 +2528,12 @@ let is_prim_method pn =
 let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
 
 let check_is_classic () = check_is_classic_local infer_const_obj
+
+type 'a regex_list = 
+  | REGEX_STAR
+  | REGEX_LIST of 'a list
+
+type regex_id_list = ident regex_list
+
+
 

@@ -1,0 +1,56 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5a<>
+  inv true.
+
+pred app5a<> == self=null 
+	or self::node<_, q> * q::app5<> 
+  inv true.
+
+//pred_elim_hd_node [app3].
+//print views.
+
+pred_reuse [*][*].
+
+/*
+# ex21a6.slk
+
+# why isn't app3 hd node eliminated?
+
+
+Elim hd node ...
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred app4<> == self=null
+      or self::node<_,q> * q::app4a<>
+
+pred app4a
+
+   app4<> ==
+*/

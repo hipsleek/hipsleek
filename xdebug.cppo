@@ -2,6 +2,8 @@
 #define n_binfo_pp Debug.binfo_pprint
 #define n_binfo_zp Debug.binfo_zprint
 #define x_loc (build_loc_str __FILE__ __LINE__)
+#define x_tbi ((build_loc_str __FILE__ __LINE__)^"TBI")
+#define fail_tbi (failwith ((build_loc_str __FILE__ __LINE__)^"TBI"))
 #ifdef TRACE
 #define x_binfo_hp (fun f -> \
   Debug.binfo_hprint (fun x -> (VarGen.build_loc_str __FILE__ __LINE__)^(f x)))

@@ -303,6 +303,38 @@ let add_post_shape_relation prog proc sf =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "add_post_shape_relation" pr pr (fun _ -> add_post_shape_relation_x prog proc sf) sf
 
+
+let get_post_preds_x spec=
+   let rec recf sf =match sf with
+    | CF.EList el -> List.fold_left (fun acc (_,sf) ->
+          acc@(recf sf)) [] el
+    | CF.EBase eb -> begin
+        match eb.CF.formula_struc_continuation with
+          | None -> []
+          | Some cont -> recf cont
+      end
+    | CF.EAssume ea ->
+          (List.map fst (CF.get_HRels_f ea.CF.formula_assume_simpl))@(recf ea.CF.formula_assume_struc)
+    | CF.EInfer ei ->
+          CP.intersect_svl ei.CF.formula_inf_vars (recf ei.CF.formula_inf_continuation)
+    | CF.ECase ec ->
+          List.fold_left (fun acc (pf,sf) ->
+              acc@(recf sf)
+          ) [] ec.CF.formula_case_branches
+   in
+   recf spec
+
+let get_post_preds sf =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "get_post_preds" pr (!CP.print_svl) (fun _ -> get_post_preds_x sf) sf
+
+
+let get_post_preds_scc scc =
+  List.fold_left (fun acc proc ->
+      let spec = proc.Cast.proc_stk_of_static_specs # top in
+      acc@(get_post_preds spec)
+  ) [] scc
+
 (*
   add_fnc:
     - add_pre_shape_relation
@@ -363,7 +395,7 @@ let proc_extract_inf_props prog proc_name=
 *)
 let extend_views iprog prog rev_formula_fnc trans_view_fnc ext_pred_names proc=
   let vns = get_views_struc proc.Cast.proc_stk_of_static_specs # top in
-  let vns1 = Gen.BList.remove_dups_eq string_compare (List.map (fun vn -> vn.h_formula_view_name) vns) in
+  let vns1 = Gen.BList.remove_dups_eq string_eq (List.map (fun vn -> vn.h_formula_view_name) vns) in
   let () =  Debug.ninfo_hprint (add_str "vns1" (pr_list pr_id)) vns1 no_pos in
   let cl_vns1 = Cfutil.get_closed_view prog vns1 in
   let rev_cl_vns1 = List.rev cl_vns1 in

@@ -1,0 +1,37 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+pred G1<y> == self::node<_,p,t> * t::G2<p,y>.
+
+pred G2<p:node,y> == self=y
+  or self::node<_,pp,tt> * tt::G2<pp,y>.
+
+
+shape_elim_useless [G1,G2].
+
+/*
+
+[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(p,t,y_26))&true,
+ HP_27(p,t,y_26) ::= 
+ emp&t=y_26
+ or t::node<Anon_11,p_28,t_29>@M * (HP_27(p_28,t_29,y_26))&true
+ ]
+
+--sa-useless
+
+BUG with useless elim. 
+should be HP_27(t_20,y_26)
+
+[ G1(c_25,y_26) ::= c_25::node<Anon_11,p,t>@M * (HP_27(y_26,y_26))&true,
+ HP_27(t,y_26) ::= 
+ emp&t=y_26
+ or t::node<Anon_11,p_28,t_29>@M * (HP_27(y_26,y_26))&true
+                                         ^^^^^ t_29
+ ]
+
+
+*/
+

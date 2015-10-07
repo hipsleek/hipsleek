@@ -282,8 +282,8 @@ let rec check_eq_formula args is_strict f10 f20=
               try
                 let pre1 = String.sub id1 0 5 in
                 let pre2 = String.sub id2 0 5 in
-                let b1 = string_compare pre1 dang_hp_default_prefix_name in
-                let b2 = string_compare pre2 dang_hp_default_prefix_name in
+                let b1 = string_eq pre1 dang_hp_default_prefix_name in
+                let b2 = string_eq pre2 dang_hp_default_prefix_name in
                 (b1 && b2) || (not b1 && not b2)
               with _ -> true
             ) ss

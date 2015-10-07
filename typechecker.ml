@@ -939,6 +939,15 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let new_false_cnt = tmp_false_cnt # get in
                 let () = x_tinfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
                 let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
+                let () = 
+                  if not(!Globals.old_infer_hp_collect) then
+                    begin
+                      let hp_rel_list = Infer.collect_hp_rel_list_partial_context tmp_ctx in
+                      let () = Infer.rel_ass_stk # push_list (hp_rel_list) in
+                      let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+                      ()
+                    end
+                in
                 let cnt_before = CF.count_sat_pc_list res_ctx in
                 let cnt_after = CF.count_sat_pc_list tmp_ctx + new_false_cnt in
                 (*                      x_dinfo_pp ">>>>> Performing check_post ENDS" no_pos;*)
@@ -3304,7 +3313,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (*   let () = Debug.info_hprint (add_str "proc.proc_name"  pr_id) (proc.proc_name)  no_pos in *)
     (*   r_hps@proc.Cast.proc_sel_hps) [] scc_procs *)
     in
-    let scc_sel_post_hps = !scc_proc_sel_post_hps
+    let scc_sel_post_hps = CP.remove_dups_svl (!scc_proc_sel_post_hps@Iincr.get_post_preds_scc scc_procs)
     (* List.fold_left (fun r_hps proc -> r_hps@proc.Cast.proc_sel_post_hps) [] scc_procs *) in
     let () = Debug.ninfo_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_hprel_ass"  string_of_int) (List.length scc_hprel_ass)  no_pos in
     (* let () = Debug.info_hprint (add_str "proc_mutual_scc_shape_infer: List.length scc_sel_hps"  string_of_int) (List.length scc_sel_hps)  no_pos in *)
@@ -3340,6 +3349,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     in
     (* final form *)
     let print_hpdefs_one_flow flow_int=
+      if not !Globals.new_pred_syn then
       begin
         let hpdefs = List.filter (fun hpdef ->
             match hpdef.CF.hprel_def_flow with
@@ -3432,9 +3442,15 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       else [],[],[]
     in
     (* update hpdefs for func call *)
-    let () = List.iter (fun proc ->
-        let () = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
-        ()) scc_procs
+    let () =
+      if not !Globals.new_pred_syn then (* --old-pred-synthesis *)
+        List.iter (fun proc ->
+          let () = Cast.update_hpdefs_proc prog.Cast.new_proc_decls scc_inferred_hps proc.proc_name in
+          ()) scc_procs
+      else
+        let () = y_tinfo_hp (add_str "cviews" (pr_list Cprinter.string_of_view_decl_short)) prog.prog_view_decls in
+        let () = y_tinfo_hp (add_str "iviews" (pr_list Iprinter.string_of_view_decl)) iprog.prog_view_decls in
+        ()
     in
     (* let () = if !Globals.sae then *)
     (*   let defs1 = x_add Sautil.combine_hpdef_flow (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps (CF.rel_def_stk # get_stk) in *)
@@ -3481,13 +3497,26 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       scc_inferred_hps
     *)
     let scc_procs_names = (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs)) in
-    let new_scc_procs = if !Globals.pred_trans_view then
-        let nprog,is_print_inferred_spec = match scc_procs with
-          | [] -> prog,false
-          | [p] -> if (* (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && *)  p.Cast.proc_sel_hps != [] then
-              let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
-                  scc_inferred_hps
-              in
+    let new_scc_procs = 
+      if !Globals.pred_trans_view then
+        let nprog, is_print_inferred_spec = 
+          if not !Globals.new_pred_syn then (* --old-pred-synthesis *)
+            match scc_procs with
+            | [] -> prog,false
+            | [p] -> if (* (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && *)  p.Cast.proc_sel_hps != [] then
+                let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
+                    scc_inferred_hps
+                in
+                let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+                (* let () = List.iter (fun proc -> *)
+                (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
+                (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
+                (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
+                (*     () *)
+                (* ) new_scc_procs in *)
+                nprog,true
+              else prog,false
+            | _ -> let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
               let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
               (* let () = List.iter (fun proc -> *)
               (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
@@ -3496,16 +3525,12 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
               (*     () *)
               (* ) new_scc_procs in *)
               nprog,true
-            else prog,false
-          | _ -> let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps  scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
-            let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-            (* let () = List.iter (fun proc -> *)
-            (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
-            (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
-            (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
-            (*     () *)
-            (* ) new_scc_procs in *)
-            nprog,true
+          else
+            if is_empty scc_sel_hps then prog, false
+            else
+              let nprog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
+              let nprog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
+              nprog, true
         in
         let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
         let () = List.iter (fun proc ->
@@ -3707,9 +3732,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                 begin
                   if (* !VarGen.sap *) true then begin
                     print_endline_quiet "";
-                    print_endline_quiet "*************************************";
-                    print_endline_quiet "*******shape relational assumptions ********";
-                    print_endline_quiet "*************************************";
+                    print_endline_quiet "********************************************";
+                    print_endline_quiet "******* shape relational assumptions *******";
+                    print_endline_quiet "********************************************";
                   end;
                   let ras = Infer.rel_ass_stk # get_stk in
                   let () = Infer.scc_rel_ass_stk # push_list ras in
@@ -4357,8 +4382,9 @@ let rec check_prog iprog (prog : prog_decl) =
   (******************************************************************)
   let verify_scc_helper prog verified_sccs scc =
 
-    let scc, ini_hpdefs =
-      Da.find_rel_args_groups_scc prog scc (* scc,[] *)
+    let scc, ini_hpdefs = if !Globals.sa_part then
+      Da.find_rel_args_groups_scc prog scc
+    else (scc,[])
     in
     let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
     let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in

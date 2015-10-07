@@ -627,12 +627,15 @@ let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
-let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
-  let mix_true = Mcpure.mkMTrue pos in
-  let vs = List.map fst vars in (* where to store annotation? *)
-        { view_name = hp_n;
+(* let mk_iview_decl name dname vars f pos = *)
+(* type: Globals.ident -> *)
+(*   Globals.ident -> *)
+(*   (Globals.ident * 'a) list -> *)
+(*   Iformula.struc_formula -> VarGen.loc -> view_decl *)
+let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
+        { view_name =name;
           view_pos = pos;
-          view_data_name = hp_n;
+          view_data_name = dname;
           view_type_of_self = None;
           view_imm_map = [];
           view_vars = (* List.map fst *) vs;
@@ -643,11 +646,11 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
           view_modes = [];
           view_typed_vars = [];
           view_pt_by_self  = [];
-          view_formula = F.mkETrue top_flow pos;
+          view_formula = f;
           view_inv_lock = None;
           view_is_prim = false;
           view_is_hrel = None;
-          view_kind = View_HREL;
+          view_kind = v_kind (* View_HREL *);
           view_prop_extns = [];
           view_derv_info = [];
           view_invariant = P.mkTrue pos;
@@ -658,6 +661,41 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
 	  view_materialized_vars = [];
           try_case_inference = false;
 			}
+
+let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
+  (* let mix_true = Mcpure.mkMTrue pos in *)
+  let f = F.mkETrue top_flow pos in
+  let vs = List.map fst vars in (* where to store annotation? *)
+  mk_iview_decl hp_n hp_n vs f pos
+  (* let vs = List.map fst vars in (\* where to store annotation? *\) *)
+  (*       { view_name = hp_n; *)
+  (*         view_pos = pos; *)
+  (*         view_data_name = hp_n; *)
+  (*         view_type_of_self = None; *)
+  (*         view_imm_map = []; *)
+  (*         view_vars = (\* List.map fst *\) vs; *)
+  (*         view_ho_vars = []; *)
+  (*         view_derv = false; *)
+  (*         view_parent_name = None; *)
+  (*         view_labels = [],false; *)
+  (*         view_modes = []; *)
+  (*         view_typed_vars = []; *)
+  (*         view_pt_by_self  = []; *)
+  (*         view_formula = F.mkETrue top_flow pos; *)
+  (*         view_inv_lock = None; *)
+  (*         view_is_prim = false; *)
+  (*         view_is_hrel = None; *)
+  (*         view_kind = View_HREL; *)
+  (*         view_prop_extns = []; *)
+  (*         view_derv_info = []; *)
+  (*         view_invariant = P.mkTrue pos; *)
+  (*         view_baga_inv = None; *)
+  (*         view_baga_over_inv = None; *)
+  (*         view_baga_under_inv = None; *)
+  (*         view_mem = None; *)
+  (*         view_materialized_vars = []; *)
+  (*         try_case_inference = false; *)
+  (*       		} *)
 
 
 let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
@@ -2286,7 +2324,7 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
             v.view_data_name <- (v.view_name)
         else if String.length v.view_data_name = 0 then
           (* self has unknown type *)
-          report_warning no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+          report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined")
         else ()
       else 
         let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
@@ -3803,3 +3841,70 @@ let prim_sanity_check iprog=
   let pr_procs prog= (pr_list pr_proc) prog.prog_proc_decls in
   Debug.no_1 "prim_sanity_check" pr_procs pr_none
       (fun _ -> prim_sanity_check_x iprog) iprog
+
+let add_view_decl prog vdecl = 
+  let prog_vdecl_ids = List.map (fun v -> v.view_name) prog.prog_view_decls in
+  let vdecl_id = vdecl.view_name in
+  if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
+    y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into iprog before.")
+  else
+    let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.") in
+    prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
+
+let update_view_decl prog vdecl = 
+  let vdecl_id = vdecl.view_name in
+  let same_vdecls, others = List.partition (fun v -> 
+      eq_str v.view_name vdecl_id) prog.prog_view_decls in
+  let () = 
+    if not (is_empty same_vdecls) then 
+      y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog")
+    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.")  
+  in
+  prog.prog_view_decls <- others @ [vdecl]
+
+let case_normalize_formula : (prog_decl -> ((ident*primed) list) ->  Iformula.formula -> Iformula.formula) ref =
+  ref (fun p h f -> failwith "TBI")
+
+let is_lemma_decl_ahead c = 
+  is_lemma_ahead c.coercion_list_kind
+
+let gen_name_pairs_struc view_decls0 vname (f:F.struc_formula): (ident * ident) list = 
+  let rec gen_name_pairs_heap vname h =
+    match h with
+    | F.Star { F.h_formula_star_h1 = h1; F.h_formula_star_h2 = h2 }
+    | F.Conj { F.h_formula_conj_h1 = h1; F.h_formula_conj_h2 = h2 }
+    | F.ConjStar { F.h_formula_conjstar_h1 = h1; F.h_formula_conjstar_h2 = h2 }
+    | F.ConjConj { F.h_formula_conjconj_h1 = h1; F.h_formula_conjconj_h2 = h2 }
+    | F.Phase { F.h_formula_phase_rd = h1; F.h_formula_phase_rw = h2 } ->
+      (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
+    | F.HeapNode { F.h_formula_heap_name = c } ->
+      (* if c = vname *)
+      (* then [] *)
+      (* else *)
+      (try 
+         let todo_unk = look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
+       with | Not_found -> 
+         if view_scc_obj # in_dom c then [(vname,c)]
+         else []
+      )
+    | F.HRel (c,_,_) -> [(vname,c)]
+    | _ -> [] in
+
+  let rec gen_name_pairs vname (f : F.formula) : (ident * ident) list =
+    match f with
+    | F.Or { F.formula_or_f1 = f1; F.formula_or_f2 = f2 } ->
+      (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
+    | F.Base { F.formula_base_heap = h; F.formula_base_pure = p } ->
+      gen_name_pairs_heap vname h
+    | F.Exists { F.formula_exists_heap = h; F.formula_exists_pure = p } ->
+      gen_name_pairs_heap vname h in
+
+  let rec aux f =
+    match f with
+    | F.EAssume b-> (gen_name_pairs vname b.F.formula_assume_simpl)
+    | F.ECase b -> fold_l_snd (aux) b.F.formula_case_branches
+    | F.EBase {F.formula_struc_base =fb; F.formula_struc_continuation = cont}->
+      (gen_name_pairs vname fb) @(fold_opt (aux) cont)
+    | F.EInfer b -> aux b.F.formula_inf_continuation
+    | F.EList b ->  fold_l_snd (aux) b
+  in aux f

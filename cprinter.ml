@@ -2804,11 +2804,13 @@ let pr_hprel hpa=
 
 let skip_cond_path_trace l = Gen.is_empty l || not(!Globals.cond_path_trace)
 
-let pr_hprel_short hpa=
+let pr_hprel_short hpa =
   fmt_open_box 1;
   (* fmt_string "hprel(1)"; *)
   pr_wrap_test_nocut "" skip_cond_path_trace (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
+  fmt_string (string_of_infer_type hpa.hprel_type);
+  fmt_string " ";
   prtt_pr_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
     | None -> fmt_string " |#| "(* () *)
@@ -2821,6 +2823,11 @@ let pr_hprel_short hpa=
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
   fmt_string (if !Globals.sae then (String.concat "," (List.map string_of_flow hpa.hprel_flow)) else "" );
+  fmt_close()
+
+let pr_hprel_list_short hprl = 
+  fmt_open_box 1;
+  pr_wrap_test "" Gen.is_empty (pr_seq "" pr_hprel_short) hprl;
   fmt_close()
 
 let pr_hprel_short_inst cprog post_hps hpa=
@@ -2840,7 +2847,7 @@ let pr_hprel_short_inst cprog post_hps hpa=
     (fun p -> fmt_string ((pr_list_round_sep ";" (fun s -> string_of_int s)) p)) hpa.hprel_path;
   (* prtt_pr_formula_inst cprog *)print_formula hpa.hprel_lhs;
   let () = match hpa.hprel_guard with
-    | None -> fmt_string " |#|3 " (* () *)
+    | None -> (* fmt_string " |#|3 " *) ()
     (* fmt_string " NONE " *)
     | Some hf ->
       begin
@@ -3073,6 +3080,8 @@ let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
 
+let string_of_hprel_list_short hpl = poly_string_of_pr pr_hprel_list_short hpl
+
 let string_of_hprel_short_inst prog post_hps hp =
   poly_string_of_pr (pr_hprel_short_inst prog post_hps) hp
 
@@ -3140,6 +3149,9 @@ let pr_infer_state is =
   (* fmt_string (pr_list_ln string_of_hprel_short is.is_constrs); *)
   (* fmt_string (pr_list_ln string_of_hprel_short is.is_all_constrs); *)
   (* fmt_string (pr_list_ln string_of_hp_rel_def is.is_hp_defs); *)
+  pr_wrap_test "sel_hps: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (is.is_sel_hps);
+  pr_wrap_test "pre_hps: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (is.is_prefix_hps);
+  pr_wrap_test "post_hps: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (is.is_post_hps);
   pr_wrap_test "Link_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_link_hpargs);
   pr_wrap_test "Dang_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_dang_hpargs);
   pr_wrap_test "cond_path: " Gen.is_empty (pr_list_int) is.is_cond_path;
@@ -3160,12 +3172,12 @@ let pr_infer_state_short is =
   pr_wrap_test "Link_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_link_hpargs);
   pr_wrap_test "Dang_HPargs: " Gen.is_empty (fun x -> fmt_string (string_of_spec_var_list x)) (List.map fst is.is_dang_hpargs);
   pr_wrap_test "cond_path: " Gen.is_empty (pr_list_int) is.is_cond_path;
-  pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs;
+  (* pr_wrap_test "RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_constrs; *)
   pr_wrap_test "All_RA: " Gen.is_empty (pr_seq "" pr_hprel_short) is.is_all_constrs;
   pr_wrap_test "hp_defs: " Gen.is_empty (pr_seq "" pr_hp_ref_def) is.is_hp_defs;
   fmt_close()
 
-let string_of_infer_state_short is: string =  poly_string_of_pr  pr_infer_state_short is
+let string_of_infer_state_short is: string = poly_string_of_pr pr_infer_state_short is
 
 let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace)) list) (count:int) f =
   match e with
@@ -4330,6 +4342,8 @@ let pr_view_decl v =
        (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
+  pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
+    (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
   pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
   pr_add_str_cut  ~emp_test:(Gen.is_empty) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
@@ -4390,21 +4404,23 @@ let pr_view_decl_short v =
   (*   match bc with *)
   (*         | None -> () *)
   (*     | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) () *)
-  (* in *)
+   (* in *)
   fmt_open_vbox 1;
   (* (\* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^v.view_name) pr_typed_spec_var_lbl  *\) *)
   (* (\*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *\) *)
   try
-    x_binfo_hp (add_str "view_labels" (pr_list (fun l ->     if LO.is_common l then ""
+    x_tinfo_hp (add_str "view_labels" (pr_list (fun l ->     if LO.is_common l then ""
                                                  else (LO.string_of l)^":"))) v.view_labels  no_pos;
-    x_binfo_hp (add_str "v.view_params_orig" (pr_list 
+    x_tinfo_hp (add_str "v.view_params_orig" (pr_list 
                                                 (pr_pair string_of_typed_view_arg string_of_int)
                                              ))
       v.view_params_orig no_pos;
 
     wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_view_arg_lbl
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
-  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
+    fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
+    pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
+    (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_short, List.combine v.view_labels... ";
     (* fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;  *)
     (* pr_vwrap  "cont vars: "  pr_list_of_spec_var v.view_cont_vars; *)
@@ -4818,6 +4834,7 @@ let string_of_coerc_opt op c =
     else s2
          ^"\n head match:"^c.coercion_head_view
          ^"\n body view:"^c.coercion_body_view
+         ^"\n body pred_list:"^((pr_list pr_id) c.coercion_body_pred_list)
          ^"\n coercion_univ_vars: "^(string_of_spec_var_list c.coercion_univ_vars)
          ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)
          ^"\n coercion_case: "^(string_of_coercion_case c.Cast.coercion_case)
@@ -4964,6 +4981,26 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*)
                           (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
+
+let string_of_derived_program p = 
+  "\n*****************************" ^ 
+  "\n     DERIVED PREDICATES " ^ 
+  "\n*****************************\n" ^ 
+  (* (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ *)
+  ((pr_list string_of_view_decl_short) (List.filter 
+                               (fun v -> v.Cast.view_kind==View_HREL || not(v.Cast.view_equiv_set # is_empty)) p.prog_view_decls)) ^ "\n\n" 
+  (* (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ *)
+  (* (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^ *)
+  (* (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^ *)
+  (* (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ *)
+  (* (\* WN_all_lemma - override usage? *\) *)
+  (* (string_of_coerc_decl_list (\*p.prog_left_coercions*\) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^ *)
+  (* (string_of_coerc_decl_list (\*p.prog_right_coercions*\) (Lem_store.all_lemma # get_right_coercion))^"\n\n"^ *)
+  (* (\* TODO: PD *\) *)
+  (* (\*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*\) *)
+  (* (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n" *)
+;;
+
 
 (* pretty printing for program written in core language separating prelude.ss program *)
 let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
@@ -5489,6 +5526,25 @@ let string_of_html_hprel_short_inst prog hp =
 let string_of_html_hprel_def_short hp =
   poly_string_of_pr pr_html_hprel_def_short hp;;
 
+
+(* let cprog = ref {  *)
+(*     Cast.prog_data_decls = []; *)
+(*     Cast.prog_view_decls = []; *)
+(*     Cast.prog_logical_vars = []; *)
+(*     Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" string_of_rel_decl (=) in s); *)
+(*     Cast.prog_templ_decls = []; *)
+(*     Cast.prog_ui_decls = []; *)
+(*     Cast.prog_ut_decls = []; *)
+(*     Cast.prog_hp_decls = []; *)
+(*     Cast.prog_view_equiv = []; *)
+(*     Cast.prog_axiom_decls = [];  *)
+(*     (\* [4/10/2011] An Hoa *\) *)
+(*     (\*Cast.old_proc_decls = [];*\) *)
+(*     Cast.new_proc_decls = Hashtbl.create 1; (\* no need for proc *\) *)
+(*     (\*Cast.prog_left_coercions = []; *)
+(*       Cast.prog_right_coercions = [];*\) *)
+(*     Cast. prog_barrier_decls = []} ;; *)
+
 Slicing.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure_D.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure_D.print_mg_f := string_of_memoised_group ;;
@@ -5537,6 +5593,7 @@ Cformula.print_failure_kind_full := string_of_failure_kind_full;;
 Cformula.print_fail_type := string_of_fail_type;;
 Cformula.print_hprel_def_short := string_of_hprel_def_short;;
 Cformula.print_hprel_short := string_of_hprel_short;;
+Cformula.print_hprel_list_short := string_of_hprel_list_short;;
 (* Cformula.print_nflow := string_of_nflow;; *)
 Cformula.print_flow := string_of_flow;;
 Cformula.print_context_short := string_of_context_short;;
@@ -5612,4 +5669,14 @@ Trans_arr.print_pure := string_of_pure_formula;;
 Trans_arr.print_p_formula := string_of_p_formula;;
 Cfout.print_formula := string_of_formula;
 Cfout.print_pure_formula := string_of_pure_formula;
-Cfout.print_sv := string_of_spec_var;
+Cfout.print_sv := string_of_spec_var;;
+
+(* let get_sorted_view_decls () = *)
+(*   let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
+(*   !cprog.Cast.prog_view_decls <- vdefs; *)
+(*   vdefs *)
+
+(* let get_coercion_lemmas () = *)
+(*   let cdefs = Cast.sort_view_list !cprog.Cast.prog_coercion_decls in *)
+(*   get_lemma_cprog cdefs; *)
+(*   cdefs *)

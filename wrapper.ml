@@ -14,10 +14,16 @@ let wrap_infer_inv f a b =
     (is_inferring := flag;
      raise e)
 
-let wrap_exception dval f e =
+let wrap_exception ?(msg="") dval f e =
   try
     f e
-  with _ -> dval
+  with _ -> 
+    begin
+      if msg!="" then print_endline_quiet ("Exception :"^msg);
+      dval
+    end 
+
+let wrap_exc_as_false ?(msg="") f e = wrap_exception ~msg:msg false f e
 
 let wrap_num_disj f n a b c d =
   let old_disj = !fixcalc_disj in
@@ -331,6 +337,9 @@ let print_header s =
   print_endline_quiet "\n=====================================";
   print_endline_quiet ("   "^s);
   print_endline_quiet "====================================="
+
+let wrap_lemma_quiet f a =
+  wrap_one_bool Globals.lemma_ep_verbose false f a
 
 let wrap_dd s f a =
   let s1 = "START -dd "^s in

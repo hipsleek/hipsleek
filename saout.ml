@@ -202,7 +202,10 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
           try
             let () =  Debug.ninfo_pprint (" hp: " ^ (!CP.print_sv hp)) no_pos in
             let view = x_add C.look_up_view_def_raw 33 cprog.C.prog_view_decls hp_name in
-            (ls1,ls2, ls3@[view])
+            if view.Cast.view_kind == View_HREL then
+              (ls1@[hp], ls2@[def], ls3)
+            else
+              (ls1,ls2, ls3@[view])
           with _ -> (ls1@[hp], ls2@[def], ls3)
         end
       | _ -> (ls1,ls2, ls3)
@@ -232,10 +235,19 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
     let iviews0, new_views = List.fold_left (fun (ls1,ls2) (id,iv) -> ((ls1@[iv]), (ls2@[id]))) ([],[]) pair_iviews in
     let n_iproc,iviews = plugin_inferred_iviews pair_iviews iprog cprog in
     (* let () = iprog.I.prog_view_decls <- n_iproc.I.prog_view_decls in *)
+    let old_view_scc = !Astsimp.view_scc in
+    let () = Astsimp.view_scc := [] in
+    (* let old_flag = !Globals.do_infer_inv in *)
+    (* let () = Globals.do_infer_inv := true in *)
     let () = List.iter (Astsimp.process_pred_def_4_iast iprog false) iviews in
+    let () = Astsimp.view_scc := old_view_scc in
     (* let () = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
     (*convert to cview. new_views: view with annotated types*)
     let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog false) in
+    let todo_unk =  (List.map (fun vdef -> Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews) in
+    let todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cprog.Cast.prog_view_decls) in
+    let cprog = Astsimp.fill_base_case cprog in
+    (* let () = Globals.do_infer_inv := old_flag in *)
     let () = cprog.C.prog_hp_decls <- crem_hprels in
     (*put back*)
     (* let () = iprog.I.prog_hp_decls <- iprog.I.prog_hp_decls@idef_hprels in *)
@@ -256,6 +268,22 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
     (fun _ -> trans_hprel_2_cview_x iprog cprog proc_name hp_rels)
     hp_rels
 
+let view_decl_of_hprel iprog prog hpr=
+  let extract_heap f =
+    let f_h, _, _, _, _, _ = CF.split_components f in
+    f_h
+  in
+  let proc_name = "" in
+  let hprel_name, hprel_args = SynUtils.sig_of_hprel hpr in
+  let r = CP.to_unprimed (List.hd hprel_args) in
+  let cont_args = List.tl hprel_args in
+  let lhs,rhs = if SynUtils.is_pre_hprel hpr then (extract_heap hpr.CF.hprel_lhs),hpr.CF.hprel_rhs
+  else (extract_heap hpr.CF.hprel_rhs), hpr.CF.hprel_lhs in
+  let hp_def = CF.mk_hp_rel_def1 (CP.HPRelDefn ( hprel_name, r, cont_args)) lhs
+    ([(rhs , hpr.CF.hprel_guard)]) None  in
+  let hpdefs = [hp_def] in
+  let vdcls,_ = trans_hprel_2_cview iprog prog proc_name hpdefs in
+  vdcls
 
 let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equivs f=
   (* let rec part_sv_from_pos ls n n_need rem= *)
@@ -338,7 +366,10 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
           with _ -> view_name0
         in
         let args0 = (List.fold_left List.append [] (List.map CP.afv eargs)) in
-        let args =get_args_w_useless hp args0 in
+        let args = (* get_args_w_useless hp args0 *) args0 in
+        x_tinfo_hp (add_str "args" !CP.print_svl) args no_pos;
+        x_tinfo_hp (add_str "args0" !CP.print_svl) args0 no_pos;
+        x_tinfo_hp (add_str "hp" !CP.print_sv) hp no_pos;
         match look_up_root hpdefs hp args with
         | Some (r,tl) ->
           (* let r,tl = C.get_root_args_hprel chprels_decl view_name args in *)

@@ -22,7 +22,7 @@ pred WFG<p> ==
 
   HeapPred U(char_star x,char_star y).
 
-  lemma_infer [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+  lemma_infer [U,@classic] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
   print residue.
 
 /*

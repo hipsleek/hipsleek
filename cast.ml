@@ -98,16 +98,23 @@ and barrier_decl = {
 and view_decl = {
   view_name : ident;
 
+  (* these seem related to parameters of view *)
   view_vars : P.spec_var list;
+  view_ann_params : (P.annot_arg * int) list;
+  view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
+  view_cont_vars : P.spec_var list;
+
   view_pos : loc;
 
   view_is_prim : bool;
   view_is_hrel : bool option; (* bool is PreHeap *)
 
+  view_equiv_set : ((int list) * ident) VarGen.store;
+  (* [] - no change in parameter posn; [..] target position; target view *)
+
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
 
-  view_cont_vars : P.spec_var list;
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
@@ -127,14 +134,18 @@ and view_decl = {
   view_parent_name: ident option; (*for view_spec*)
   (*a map of shape <-> pure properties*)
   (*View_EXT have been applied in this view*)
-  view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
   (* below to detect @L in post-condition *)
   mutable view_contains_L_ann : bool;
-  view_ann_params : (P.annot_arg * int) list;
   view_params_orig: (P.view_arg * int) list;
   mutable view_partially_bound_vars : bool list;
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
-  view_formula : F.struc_formula; (* case-structured formula *)
+  (* main body of a predicate *)
+  mutable view_formula : F.struc_formula; (* case-structured formula *)
+  mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
+    (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+  mutable view_raw_base_case: Cformula.formula option;
+  mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
+  (* end of main body of a predicate *)
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
   view_inv_lock : F.formula option;
@@ -152,16 +163,13 @@ and view_decl = {
   mutable view_addr_vars : P.spec_var list;
   (* if view has only a single eqn, then place complex subpart into complex_inv *)
   view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
-  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-  view_linear_formula : (Cformula.formula * formula_label) list ;
-  view_base_case : (P.formula *MP.mix_formula) option; (* guard for base case, base case*)
+   view_linear_formula : (Cformula.formula * formula_label) list ;
   view_prune_branches: formula_label list; (* all the branches of a view *)
   view_is_rec : bool;
   view_pt_by_self : ident list;
   view_prune_conditions: (P.b_formula * (formula_label list)) list;
   view_prune_conditions_baga: ba_prun_cond list;
   view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-  view_raw_base_case: Cformula.formula option;
   view_ef_pure_disj : Excore.ef_pure_disj option
 }
 
@@ -279,8 +287,8 @@ and coercion_decl = {
   coercion_name : ident;
   coercion_head : F.formula; (* used as antecedent during --elp *)
   coercion_head_norm : F.formula; (* used as consequent during --elp *)
-  coercion_body : F.formula; (* used as antecedent during --elp *)
-  coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
+  mutable coercion_body : F.formula; (* used as antecedent during --elp *)
+  mutable coercion_body_norm : F.struc_formula; (* used as consequent during --elp *)
   coercion_impl_vars : P.spec_var list; (* list of implicit vars *)
   coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
 
@@ -296,6 +304,7 @@ and coercion_decl = {
   coercion_head_view : ident; 
   (* the name of the predicate where this coercion can be applied *)
   coercion_body_view : ident;  (* used for cycles checking *)
+  coercion_body_pred_list : ident list;  (* used for lemma triggering *)
   coercion_mater_vars : mater_property list;
   (* coercion_simple_lhs :bool; (\* signify if LHS is simple or complex *\) *)
   coercion_case : coercion_case; (*Simple or Complex*)
@@ -614,13 +623,17 @@ let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let mix_true = MP.mkMTrue pos in
   let vs = List.map fst vars in (* where to store annotation? *)
+  let vparams = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list vs) in
   (* let vs = match vs with _::ts -> ts | _ -> failwith "impossible" in *)
+  let view_sv_vars = vs in
+  (* let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in *)
+  (* let _  = Immutable.split_sv in *)
   {
     view_name = hp_n; (* CP.name_of_spec_var hp_n; *)
     view_vars = vs;
     view_pos = pos;
     view_is_hrel = Some (is_pre);
-
+    view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id) ;
     view_is_prim = false;
     view_data_name = "";
     view_ho_vars = [];
@@ -629,7 +642,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_seg_opz = None;
     view_case_vars = [];
     view_uni_vars = [];
-    view_labels = [];
+    view_labels = List.map (fun _ -> LO.unlabelled) vs;
     view_modes = [];
     view_type_of_self = None;
     view_is_touching = false;
@@ -646,7 +659,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_domains= [];
     view_contains_L_ann = false;
     view_ann_params = [];
-    view_params_orig= [];
+    view_params_orig = vparams;
     view_partially_bound_vars = [];
     view_materialized_vars = [];
     view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
@@ -674,6 +687,68 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_pt_by_self = [];
     view_prune_conditions= [];
     view_prune_conditions_baga= [];
+    view_prune_invariants = [];
+    view_raw_base_case= None;
+    view_ef_pure_disj = None;
+  }
+
+let mk_view_prim v_name v_args v_inv pos =
+  let mix_true = MP.mkMTrue pos in
+  {
+    view_name = v_name;
+    view_vars = v_args;
+    view_pos = pos;
+    view_is_hrel = None;
+    view_is_prim = true;
+    view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id);
+    view_data_name = "";
+    view_ho_vars = [];
+    view_cont_vars = [];
+    view_seg_opz = None;
+    view_case_vars = [];
+    view_uni_vars = [];
+    view_labels = [];
+    view_modes = [];
+    view_type_of_self = None;
+    view_is_touching = false;
+    view_is_segmented = false;
+    view_is_tail_recursive = false;
+    view_residents = [];
+    view_forward_ptrs = [];
+    view_forward_fields = [];
+    view_backward_ptrs = [];
+    view_backward_fields = [];
+    view_kind = View_PRIM;
+    view_prop_extns =  [];
+    view_parent_name = None;
+    view_domains = [];
+    view_contains_L_ann = false;
+    view_ann_params = [];
+    view_params_orig = [];
+    view_partially_bound_vars = [];
+    view_materialized_vars = [];
+    view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
+    view_user_inv = v_inv;
+    view_mem = None;
+    view_inv_lock = None;
+    view_fixcalc = None;
+    view_x_formula = mix_true;
+    view_baga_inv = None;
+    view_baga_over_inv = None;
+    view_baga_x_over_inv = None;
+    view_baga_under_inv = None;
+    view_xpure_flag = false;
+    view_baga = CP.BagaSV.mkEmpty;
+    view_addr_vars = [];
+    view_complex_inv = None;
+    view_un_struc_formula = [];
+    view_linear_formula = [];
+    view_base_case = None;
+    view_prune_branches= [];
+    view_is_rec = false;
+    view_pt_by_self = [];
+    view_prune_conditions = [];
+    view_prune_conditions_baga = [];
     view_prune_invariants = [];
     view_raw_base_case= None;
     view_ef_pure_disj = None;
@@ -1399,7 +1474,8 @@ let is_lock_inv prog (name : ident) : bool =
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
 (* get specialized baga form *)
-let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
+  let () = x_tinfo_hp (add_str "c= " (pr_id)) c no_pos in
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   (* let ba = vdef.view_baga in *)
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
@@ -1488,6 +1564,15 @@ let rec look_up_data_def_raw (ddefs : data_decl list) (name : string) =
     if d.data_name = name then d 
     else look_up_data_def_raw rest name
   | [] -> raise Not_found
+
+let look_up_data_def_prog prog (name : string) =
+  let ddefs = prog.prog_data_decls in
+  look_up_data_def_raw ddefs name
+
+let look_up_data_def_imp  (name : string) =
+  match !global_prog with
+    Some prog -> look_up_data_def_prog prog name
+  | None -> failwith "global_prog not initialized"
 
 let look_up_extn_info_rec_field_x ddefs dname=
   let rec look_up_helper fields=
@@ -1780,7 +1865,8 @@ let case_of_coercion lhs rhs =
   Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
-  List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
+  List.filter (fun p ->  p.coercion_head_view = c 
+                         && (p.coercion_body_view = t || List.exists (fun x -> x=t) p.coercion_body_pred_list)  ) coers
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
   let pr1 = pr_list !print_coercion in
@@ -3756,3 +3842,213 @@ let rm_NI_from_hp_rel prog hp args =
   let lst = List.combine args hpdef.hp_vars_inst in
   let rm_lst = List.filter (fun (_,(_,k)) -> k==I) lst in
   List.map fst rm_lst
+
+let add_view_decl prog vdecl = 
+  let prog_vdecl_ids = List.map (fun v -> v.view_name) prog.prog_view_decls in
+  let vdecl_id = vdecl.view_name in
+  if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
+    y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
+  else
+    let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
+    prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
+
+let update_view_decl prog vdecl = 
+  let vdecl_id = vdecl.view_name in
+  let vdecl_args = vdecl.view_vars in
+  let vhdr = vdecl_id ^(!CP.print_svl vdecl_args) in
+  let same_vdecls, others = List.partition (fun v -> 
+      eq_str v.view_name vdecl_id) prog.prog_view_decls in
+  let () = 
+    if not (is_empty same_vdecls) then 
+      y_binfo_pp ("Updating an available view decl (" ^ vhdr^ ") in cprog.")
+    else y_binfo_pp ("Adding the view " ^vhdr^" into cprog.") 
+  in
+  prog.prog_view_decls <- others @ [vdecl]
+
+let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
+  (* let frm_name = frm_vdecl.view_name in *)
+  (* if HipUtil.view_scc_obj # compare frm_name to_name  < 0 then *)
+  (*   begin *)
+  (*   y_binfo_pp "change order of sst"; *)
+  (*   to_vdecl.view_equiv_set # set (keep_sst,frm_name) *)
+  (*   end *)
+  (* else  *)
+  frm_vdecl.view_equiv_set # set (keep_sst,to_vdecl.view_name)
+
+(* let add_equiv_to_view_decl frm_vdecl keep_sst to_view = *)
+(*   frm_vdecl.view_equiv_set # set (keep_sst,to_view) *)
+
+let is_finish_equiv_view_decl frm_vdecl to_vdecl =
+  let (_,target_frm) = frm_vdecl.view_equiv_set # get in
+  let (_,target_to) = to_vdecl.view_equiv_set # get in
+  let frm_name = frm_vdecl.view_name in
+  let to_name = to_vdecl.view_name in
+  if (frm_name=target_to) || (to_name=target_frm) then true
+  else if not(target_frm="") && not(target_to="") then true
+  else false
+
+(* let change_to_view_decl frm_vdecl to_vdecl = *)
+(*   let frm_flag = frm_vdecl.view_equiv_set # is_avail in *)
+(*   let (_,target_to) = to_vdecl.view_equiv_set # get in *)
+(*   if frm_flag then (to_vdecl,true) (\* finish since frm_vdecl already has an equiv *\) *)
+(*   else if not(target_to="") then  *)
+(*     let () = y_winfo_hp (add_str  "change to_decl to" pr_id) target_to in *)
+(*     (to_vdecl,false) *)
+(*   else (to_vdecl,false) *)
+
+let smart_view_name_equiv view_decls vl vr =
+  let vl_name = vl.h_formula_view_name in
+  let vr_name = vr.h_formula_view_name in
+  let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
+  let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+  let ans = try
+      if !Globals.old_view_equiv then None
+      else 
+      if vl_name=vr_name then None
+      else 
+      if vdef1.view_equiv_set # is_empty then
+        if vdef2.view_equiv_set # is_empty then None
+        else 
+          let (sst,new_name) =  (vdef2.view_equiv_set # get) in
+          if new_name = vl_name then 
+            let msg = "Using equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+            let () = y_tinfo_pp msg in
+            let new_vr = get_view_equiv vl sst new_name in
+            Some (vl,new_vr)
+          else None
+      else if vdef2.view_equiv_set # is_empty then
+        let (sst,new_name) =  (vdef1.view_equiv_set # get) in
+        if new_name = vr_name then 
+          let msg = "Using equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let () = y_tinfo_pp msg in
+          let new_vl = get_view_equiv vr sst new_name in
+          Some (new_vl,vr)
+        else None
+      else 
+        let (sst_l,new_l_name) =  (vdef1.view_equiv_set # get) in
+        let (sst_r,new_r_name) =  (vdef2.view_equiv_set # get) in
+        if new_l_name = new_r_name then 
+          let msg1 = "Double equiv "^vr_name^" <-> "^(vdef2.view_equiv_set # string_of) in
+          let msg2 = "\nUsing equiv "^vl_name^" <-> "^(vdef1.view_equiv_set # string_of) in
+          let () = y_tinfo_pp (msg1^msg2) in
+          let new_vl = get_view_equiv vl sst_l new_l_name in
+          let new_vr = get_view_equiv vr sst_r new_r_name in
+          Some (new_vl,new_vr)
+        else None
+    with _ -> None
+  in
+  let vdef1,vdef2,vl_name,vr_name = match ans with
+    | None -> vdef1,vdef2,vl_name,vr_name
+    | Some (vl,vr) ->
+          let vl_name = vl.h_formula_view_name in
+          let vr_name = vr.h_formula_view_name in
+          let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
+          let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+          vdef1, vdef2,vl_name,vr_name
+  in
+  (vdef1,vdef2,vl_name,vr_name,ans)
+
+let get_view_name_equiv view_decls vl =
+  let vname = vl.h_formula_view_name in
+  let vdef = look_up_view_def_raw 25 view_decls vname in
+  (* (vname,vdef) *)
+  if vdef.view_equiv_set # is_empty || !Globals.old_view_equiv then (vname,vdef,vl,false)
+  else 
+    let (sst,new_name) =  (vdef.view_equiv_set # get) in
+    let msg = "Using equiv "^vname^" <-> "^(vdef.view_equiv_set # string_of) in
+    let () = y_tinfo_pp msg in
+    let new_vl = get_view_equiv vl sst new_name in
+    (* let args = vl.h_formula_view_arguments in (\* need to change other parameters *\) *)
+    (* let new_args =  *)
+    (*   if sst==[] then args  *)
+    (*   else  *)
+    (*     let new_args = List.combine args sst in *)
+    (*     let new_args = List.sort (fun (_,n1) (_,n2) -> n1-n2) new_args in *)
+    (*     List.map fst new_args *)
+    (* in *)
+    (* let new_vl = {vl with h_formula_view_name = new_name; *)
+    (*                       h_formula_view_arguments = new_args; *)
+    (*              } in *)
+    (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
+
+let get_simple_unfold lst = 
+  match lst with
+  | [] -> failwith "empty defn?"
+  | [(f,_)] ->
+    let () = y_tinfo_hp (add_str "simple formula?" 
+                           !Cformula.print_formula) f in
+    Some f
+  | _ -> None
+
+let get_unfold_set vdefs =  
+  let equiv_set = List.fold_left (fun acc vd -> 
+      let name = vd.view_name in
+      let f = vd.view_un_struc_formula in
+      if HipUtil.view_scc_obj # is_self_rec name then acc 
+      else 
+        begin
+          match (get_simple_unfold f) with
+          | Some f -> (name,vd.view_vars,f)::acc
+          | None -> acc
+        end) [] vdefs in
+  equiv_set
+
+let get_all_view_equiv_set vdefs =  
+  let equiv_set = List.fold_left (fun acc v -> if v.view_equiv_set # is_empty then acc else (v.view_name,v.view_equiv_set # get)::acc) [] vdefs in
+  equiv_set
+
+let update_un_struc_formula fn vdef =
+  let uf = vdef.view_un_struc_formula in
+  let uf = List.map (fun (f,l) -> (fn f,l)) uf in
+  vdef.view_un_struc_formula <- uf
+
+let update_un_struc_formula_one f vdef =
+  (* let uf = vdef.view_un_struc_formula in *)
+  (* let uf = List.map (fun (f,l) -> (fn f,l)) uf in *)
+  vdef.view_un_struc_formula <- [(f,(0,""))]
+
+let update_view_formula fn vdef =
+  let uf = vdef.view_formula in
+  let uf = fn uf in
+  vdef.view_formula <- uf
+
+let update_view_raw_base_case fn vdef =
+  let uf = vdef.view_raw_base_case in
+  let uf = map_opt fn uf in
+  vdef.view_raw_base_case <- uf
+
+let sort_view_list vlist =
+  let score v = 
+    let name = v.view_name in
+    HipUtil.view_scc_obj # posn name in
+  if HipUtil.view_scc_obj # is_sorted then vlist
+  else 
+    begin 
+      HipUtil.view_scc_obj # set_sorted;
+      sort_gen_list score vlist
+    end
+
+(* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
+let repl_unfold_lemma u_lst lem =
+  let body = lem.coercion_body in
+  let body_norm = lem.coercion_body_norm in
+  let () = y_binfo_hp (add_str "body" !F.print_formula) body in
+  let body = repl_unfold_formula "" u_lst body in
+  let () = y_binfo_hp (add_str "unfolded body" !F.print_formula) body in
+  lem.coercion_body <- body;
+  lem
+  (* failwith x_tbi *)
+
+let get_lemma_cprog cdefs =
+  let lst = List.map (fun d -> d.coercion_name) cdefs in
+  let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
+  ()
+
+(* type: Globals.regex_e option *)
+let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
+  match opt with
+  | None -> view_list
+  | Some ans -> 
+    let () = y_binfo_pp "get selected views ..." in
+    view_list
+  

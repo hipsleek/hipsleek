@@ -27,9 +27,12 @@ let sv_n = CP.name_of_spec_var
 let rec rev_trans_exp e = match e with
   | CP.Null p -> IP.Null p 
   (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
-  | CP.Var (v,p) -> let t =  CP.type_of_spec_var v in
+  | CP.Var (v,p) -> 
+    let t =  CP.type_of_spec_var v in
     (* let () = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
-    IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
+    if is_type_var t then IP.Var (rev_trans_spec_var v, p)
+    else
+      IP.Ann_Exp (IP.Var (rev_trans_spec_var v, p), t, p) (*L2: added annotated sv instead sv here*)
   | CP.Bptriple ((c,t,a),p) ->
     let nc = IP.Var (rev_trans_spec_var c, p) in
     let nt = IP.Var (rev_trans_spec_var t, p) in
@@ -256,5 +259,104 @@ let transform_hp_rels_to_iviews hp_rels =
   let pr2 = pr_list (pr_triple pr_id pr_id Iprinter.string_of_view_decl) in
   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
 
+let rev_trans_hp_decl (hp_decl: C.hp_decl): I.hp_decl = 
+  { I.hp_name = hp_decl.C.hp_name;
+    I.hp_typed_inst_vars = List.map (fun (sv, k) -> 
+        (CP.type_of_spec_var sv, CP.name_of_spec_var sv, k)) hp_decl.C.hp_vars_inst;
+    I.hp_part_vars = hp_decl.C.hp_part_vars;
+    I.hp_root_pos = hp_decl.C.hp_root_pos;
+    I.hp_is_pre = hp_decl.C.hp_is_pre;
+    I.hp_formula = rev_trans_formula hp_decl.C.hp_formula; }
 
-let () = Solver.rev_trans_formula := rev_trans_formula
+let rec rev_trans_ann (a: CP.ann): IP.ann = 
+  match a with
+  | CP.NoAnn -> IP.NoAnn
+  | CP.ConstAnn x -> IP.ConstAnn x
+  | CP.PolyAnn sv -> IP.PolyAnn ((CP.name_of_spec_var sv, CP.primed_of_spec_var sv), no_pos)
+  | CP.TempAnn t -> rev_trans_ann t
+  | CP.TempRes _ -> failwith "rev_trans_ann: Unexpected ann"
+
+let rev_trans_mem_formula (m: CF.mem_perm_formula): IF.mem_formula = 
+  { IF.mem_formula_exp = rev_trans_exp m.CF.mem_formula_exp;
+    IF.mem_formula_exact = m.CF.mem_formula_exact;
+    IF.mem_formula_field_values = List.map (fun (id, el) -> (id, List.map rev_trans_exp el)) m.CF.mem_formula_field_values;
+    IF.mem_formula_field_layout = List.map (fun (id, al) -> (id, List.map rev_trans_ann al)) m.CF.mem_formula_field_layout;
+    IF.mem_formula_guards = List.map rev_trans_pure m.CF.mem_formula_guards; }
+
+let rec rev_trans_struc_formula (sf: CF.struc_formula): IF.struc_formula = 
+  match sf with
+  | CF.EList l -> IF.EList (List.map (fun (sld, sf) -> (sld, rev_trans_struc_formula sf)) l)
+  | CF.ECase c -> IF.ECase (rev_trans_struc_case_formula c)
+  | CF.EBase b -> IF.EBase (rev_trans_struc_base_formula b)
+  | CF.EAssume a -> IF.EAssume (rev_trans_struc_assume_formula a) 
+  | CF.EInfer i -> IF.EInfer (rev_trans_struc_infer_formula i)
+
+and rev_trans_struc_infer_formula (i: CF.struc_infer_formula): IF.struc_infer_formula =
+  { IF.formula_inf_obj = i.CF.formula_inf_obj;
+    IF.formula_inf_post = i.CF.formula_inf_post;
+    IF.formula_inf_xpost = i.CF.formula_inf_xpost;
+    IF.formula_inf_transpec = i.CF.formula_inf_transpec;
+    IF.formula_inf_vars = List.map rev_trans_spec_var_primed i.CF.formula_inf_vars;
+    IF.formula_inf_continuation = rev_trans_struc_formula i.CF.formula_inf_continuation;
+    IF.formula_inf_pos = i.CF.formula_inf_pos; }
+
+and rev_trans_struc_assume_formula (a: CF.assume_formula): IF.assume_formula =
+  { IF.formula_assume_simpl = rev_trans_formula a.CF.formula_assume_simpl;
+    IF.formula_assume_struc = rev_trans_struc_formula a.CF.formula_assume_struc;
+    IF.formula_assume_lbl = a.CF.formula_assume_lbl;
+    IF.formula_assume_ensures_type = a.CF.formula_assume_ensures_type; }
+
+and rev_trans_struc_case_formula (c: CF.struc_case_formula): IF.struc_case_formula =
+  { IF.formula_case_branches = List.map (fun (e, sf) -> (rev_trans_pure e, rev_trans_struc_formula sf)) c.CF.formula_case_branches;
+    IF.formula_case_pos = c.CF.formula_case_pos; }
+
+and rev_trans_struc_base_formula (b: CF.struc_base_formula): IF.struc_base_formula =
+  { IF.formula_struc_explicit_inst = List.map rev_trans_spec_var_primed b.CF.formula_struc_explicit_inst;
+    IF.formula_struc_implicit_inst = List.map rev_trans_spec_var_primed b.CF.formula_struc_implicit_inst;
+    IF.formula_struc_exists = List.map rev_trans_spec_var_primed b.CF.formula_struc_exists;
+    IF.formula_struc_base = rev_trans_formula b.CF.formula_struc_base;
+    IF.formula_struc_is_requires = b.CF.formula_struc_is_requires;
+    IF.formula_struc_continuation = map_opt rev_trans_struc_formula b.CF.formula_struc_continuation;
+    IF.formula_struc_pos = b.CF.formula_struc_pos; }
+
+and rev_trans_spec_var_primed (sv: CP.spec_var): (ident * primed) =
+  (CP.name_of_spec_var sv, CP.primed_of_spec_var sv)
+
+let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
+  let rev_trans_baga_inv baga_inv =
+    map_opt (List.map ((fun (svl, f) -> (List.map CP.name_of_spec_var svl, rev_trans_pure f)))) baga_inv
+  in
+  { I.view_name = v.C.view_name;
+    I.view_vars = List.map CP.name_of_spec_var v.C.view_vars;
+    I.view_pos = v.C.view_pos;
+    I.view_is_prim = v.C.view_is_prim;
+    I.view_is_hrel = v.C.view_is_hrel;
+    I.view_data_name = v.C.view_data_name;
+    I.view_ho_vars = List.map (fun (fk, sv, sk) -> (fk, CP.name_of_spec_var sv, sk)) v.C.view_ho_vars;
+    I.view_imm_map = []; (* TODO *)
+    I.view_labels = v.C.view_labels, List.exists (fun c -> not (LO.is_unlabelled c)) v.C.view_labels;
+    I.view_modes = v.C.view_modes;
+    I.view_typed_vars = List.map (fun sv -> (CP.type_of_spec_var sv, CP.name_of_spec_var sv)) v.C.view_vars;
+    I.view_parent_name = v.C.view_parent_name;
+    I.view_derv = false; (* TODO *)
+    I.view_derv_info = []; (* TODO *)
+    I.view_type_of_self = v.C.view_type_of_self;
+    I.view_kind = v.C.view_kind;
+    I.view_prop_extns = List.map (fun sv -> (CP.type_of_spec_var sv, CP.name_of_spec_var sv)) v.C.view_prop_extns;
+    I.view_invariant = rev_trans_mix v.C.view_user_inv;
+    I.view_baga_inv = rev_trans_baga_inv v.C.view_baga_inv;
+    I.view_baga_over_inv = rev_trans_baga_inv v.C.view_baga_over_inv;
+    I.view_baga_under_inv = rev_trans_baga_inv v.C.view_baga_under_inv;
+    I.view_mem = map_opt rev_trans_mem_formula v.C.view_mem;
+    I.view_formula = rev_trans_struc_formula v.C.view_formula;
+    I.view_inv_lock = map_opt rev_trans_formula v.C.view_inv_lock;
+    I.view_pt_by_self = v.C.view_pt_by_self;
+    I.try_case_inference = false; (* TODO *)
+    I.view_materialized_vars = List.map (fun mv -> CP.name_of_spec_var mv.C.mater_var) v.C.view_materialized_vars; }
+
+let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
+  let pr1 = Cprinter.string_of_view_decl in
+  let pr2 = Iprinter.string_of_view_decl in
+  Debug.no_1 "rev_trans_view_decl" pr1 pr2 rev_trans_view_decl v
+
+let () = CF.rev_trans_formula := rev_trans_formula

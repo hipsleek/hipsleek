@@ -64,7 +64,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let (_,mix_rf0,_,_,_,_) = Cformula.split_components (Cformula.Base rhs_b0) in
     let r_emap0 = get_eqset (Mcpure.pure_of_mix mix_rf0) in
     let r_eqsetmap0 = CP.EMapSV.build_eset es.Cformula.es_rhs_eqset in
-    let lhs_b1, rhs_b1, _ = Cfutil.smart_subst_new lhs_b0 rhs_b0 []
+    let lhs_b1, rhs_b1, _,_ = Cfutil.smart_subst_new lhs_b0 rhs_b0 []
         l_emap0 r_emap0 r_eqsetmap0 [] ([lr;rr])
     in
     (*left*)

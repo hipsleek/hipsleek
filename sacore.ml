@@ -950,13 +950,24 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   in
   (new_cs, tot_unk_hpargs, new_map, link_hpargs4, punk_map)
 
+(* type: Sautil.C.prog_decl -> *)
+(*   CP.spec_var list -> *)
+(*   CF.hprel list -> *)
+(*   ((CP.spec_var * int list) * CP.xpure_view) list -> *)
+(*   (CP.spec_var * CP.spec_var list) list -> *)
+(*   (CP.spec_var * CP.spec_var list) list -> *)
+(*   CF.hprel list * (CP.spec_var * CP.spec_var list) list * *)
+(*   ((CP.spec_var * int list) * CP.xpure_view) list * *)
+(*   (CP.spec_var * CP.spec_var list) list * (CP.spec_var * int list) list *)
 let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2a = pr_list (pr_pair !CP.print_sv (pr_list string_of_int)) in
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_penta pr1 pr3 pr2 pr3 pr2a in
-  Debug.no_5 "analize_unk" pr1 pr2 !CP.print_svl pr3 pr3 pr4
+  Debug.no_5 "analize_unk_main" (add_str "hprels" pr1) (add_str "unk_map" pr2) 
+    (add_str "post_hps" !CP.print_svl) (add_str "unk_hpargs" pr3) 
+    (add_str "link_hpargs" pr3) pr4
     (fun _ _ _ _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
     constrs total_unk_map post_hps unk_hpargs link_hpargs
 

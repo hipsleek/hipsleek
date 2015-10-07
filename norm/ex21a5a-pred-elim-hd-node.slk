@@ -1,0 +1,51 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred lseg<n,p> == self = p & n=0 
+	or self::node<_, q> * q::lseg<n-1,p> 
+  inv n>=0.
+
+/*
+pred lseg2<p,n> == self = p & n=0 
+	or self::node<_, q> * q::lseg2<p,n-1> 
+  inv n>=0.
+*/
+
+pred foo<nnn,p> == self::lseg<nnn,p> 
+  inv nnn>=0.
+
+pred_reuse [*][*].
+print views.
+//pred_reuse_subs[*].
+
+/*
+# ex21a5a.slk -dre "trans_f"
+
+pred_reuse_subs [*].
+
+!!! **norm.ml#233:TBI: view:
+ view lseg<n:int,p:node>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; q](* lbl: *){4}->(exists p_20,
+          flted_11_19: (* lbl: *){4}->self::node<Anon_12,q>@M * 
+                                      q::lseg<flted_11_19,p_20>@M&
+          flted_11_19+1=n & p_20=p&{FLOW,(1,26)=__flow#E}[])
+    equiv_set: ([1,0],lseg2)
+  
+# change after to self::lseg<p,n> == self::lseg2<p,n> after reuse detection
+
+
+!!! **norm.ml#234:TBI: from:(lseg,[n,p])
+!!! **norm.ml#235:TBI: to:(lseg2,[p,n])
+
+
+*/

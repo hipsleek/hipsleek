@@ -1,0 +1,24 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred lseg<n,p> == self::lseg111<n,p>.
+
+pred lseg111<n,p> == self::lseg<n,p>.
+
+
+/*
+# ex21r4c1.slk
+
+pred lseg<n,p> == self::lseg111<n,p>.
+
+# do we get false as invariant?
+
+
+*/

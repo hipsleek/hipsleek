@@ -1,0 +1,62 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star@NI z).
+
+ lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+
+ infer [U,@pure_field,@classic] 
+  //self::char_star<v,q2>*q2::WFG<p> & v!=0  |-  U(self,q)*q::char_star<0,p>.
+  //self::char_star<v,q2>*q2::WFG<p> & v!=0  |-  self::char_star<w,q3>*U3(q3,q,self)*q::char_star<0,p>.
+ // q2::WFG<p> & v!=0 & q2=q3  |-  U3(q3,q,self)*q::char_star<0,p>.
+   q2::WFG<p> & v!=0 & q2=q3  |-  U2(q3,q)*q::char_star<0,p>.
+// q2::WFG<p> & v!=0 & q2=q3  |-  U(q3,q)*q::char_star<0,p>.
+ print residue.
+
+/*
+# ex16d2b.slk -dre "process_one_m"
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U2(q3,q)*q::char_star<0,p>.
+   
+(==context.ml#2727==)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::WFG<p>@M
+ RHS: U2(q3,q)
+ lhs_rest: emp
+ rhs_rest: q::char_star<flted_33_149,p_148>@M
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::WFG<p>@M
+process_one_match inp3 :lhs_p: q2=q3 & v!=0
+process_one_match inp4 :rhs_node: U2(q3,q)
+process_one_match inp5 :rhs_rest: q::char_star<flted_33_149,p_148>@M
+process_one_match inp6 :rhs_p: flted_33_149=0 & p_148=p
+process_one_match inp7 :([(p_148,p)],None)
+process_one_match@1 EXIT: Prio:2
+ InferFold =>
+
+
+*/

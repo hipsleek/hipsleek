@@ -1,0 +1,49 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred lseg<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg<n-1,p> 
+  inv true.
+
+pred lseg2<n,p> == 
+	self::node<_, q> * q::lseg2<n-1,p> 
+        or self = p & n=0
+  inv true.
+
+pred lseg4<n,p> == 
+	self::node<_, q> * q::lseg4<n-1,p> 
+        or self = p & n=0
+  inv true.
+
+pred lseg3<p,n> == 
+	self::node<_, q> * q::lseg3<p,n-1> 
+        or self = p & n=0
+  inv true.
+
+pred lseg3a<n,p> == 
+	self::node<_, q> * q::lseg3a<n-1,p> 
+        or self=p & n=0
+  inv true.
+
+
+//pred_reuse [lseg2,lseg3,lseg4,lseg3a][lseg].
+// fail
+
+pred_reuse [lseg4,lseg3a][lseg,lseg3].
+
+/*
+# ex21r1.slk
+
+pred lseg3<p,n> == 
+	self::node<_, q> * q::lseg3<p,n-1> 
+        or self = p & n=0
+  inv true.
+
+
+*/

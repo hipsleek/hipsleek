@@ -1,0 +1,11 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred HP(node@RO a, node b).
+
+relDefn HP(x,y) <->
+  x=null & y=null.
+
+pred_split [HP].

@@ -49,6 +49,20 @@ let rec compute_cmd cprog scc: icmd=
     in
     mk_seq_icmd (1,pre_cmd) (1,snd_cmd)
   else
+    if List.exists (fun it -> it = INF_SHAPE_PRE) infs && List.exists (fun it -> it = INF_SHAPE_POST) infs then
+      let pre_cmd = if List.exists (fun it -> it = INF_CLASSIC) infs then
+         mk_norm_icmd [INF_SHAPE_PRE;INF_CLASSIC]
+      else mk_norm_icmd [INF_SHAPE_PRE]
+      in
+      let post_cmd = mk_norm_icmd [INF_SHAPE_POST] in
+      let rem = List.filter (fun it -> it!= INF_SHAPE_PRE && it != INF_SHAPE_POST && it != INF_CLASSIC) infs in
+      let snd_cmd = if rem != [] then
+        mk_seq_icmd (1,post_cmd) ( mk_norm_icmd_wt 1 rem )
+      else
+        post_cmd
+      in
+      mk_seq_icmd (1,pre_cmd) (1,snd_cmd)
+    else
     (* let has_infer_shape_pre_proc =List.exists (fun it -> it = INF_SHAPE_PRE) infs in *)
     (* if has_infer_shape_pre_proc then *)
     (*   (\*TOFIX: care other infer consts*\) *)
