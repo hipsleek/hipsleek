@@ -721,6 +721,11 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       (* remove dupl *)
       let s = super # get_stk in
       BList.remove_dups_eq eq s
+    (* method get_stk  =  *)
+    (*   (\* remove dupl *\) *)
+    (*   let s = self # get_stk_no_dupl in *)
+    (*   print_endline ("\nget_stk("^name^"):"^((Basic.pr_list epr) s));  *)
+    (*   s *)
     method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
       (* WN : below is to be removed later *)
       (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
@@ -746,7 +751,9 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     method push_pr (s:string) (ls:'a) =  
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
       super # push ls 
-    method string_of = Basic.pr_list_ln elem_pr stk
+    method string_of = 
+      let stk2 = self # get_stk(* _no_dupl *) in
+      Basic.pr_list_ln elem_pr stk
     method string_of_recent = 
       let stk = self # get_stk_recent in
       Basic.pr_list_ln elem_pr stk
