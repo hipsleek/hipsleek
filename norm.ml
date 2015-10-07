@@ -885,6 +885,25 @@ let norm_split_x iprog prog vdefs sel_vns=
     let ls_vn_args = List.map (fun name -> part_v name) pairs in
     group ls_vn_args []
   in
+  let rec bubble_fst_root svl root_cands done_svl=
+    match svl with
+      | [] -> done_svl
+      | sv::rest -> if CP.mem_svl sv root_cands then
+          sv::(done_svl@rest)
+        else bubble_fst_root rest root_cands (done_svl@[sv])
+  in
+  let rec examine_one_arg fs a res=
+    match fs with
+    | [] -> res
+    | f::fs_tl ->
+      (*get ptos of all nodes*)
+      let hds = Sautil.get_hdnodes f in
+      let ptos = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
+      let args = List.concat (List.map (fun hd -> hd.CF.h_formula_data_arguments) hds) in
+      let new_res = if not (CP.mem_svl a ptos) || CP.mem_svl a args then res else true
+      in
+      examine_one_arg fs_tl a new_res
+  in
   let add_view_args (vn, parts)=
     let vdecl = C.look_up_view_def_raw 68 vdefs vn in
     let self_sv = CP.SpecVar ((Named vdecl.Cast.view_data_name) ,self, Unprimed) in
@@ -894,7 +913,15 @@ let norm_split_x iprog prog vdefs sel_vns=
             string_eq (CP.name_of_spec_var sv) id
         ) args) ids
     ) parts in
-    (vn, args, sv_parts, no_pos, [])
+    let fs = List.map (fun (f,_) -> f) vdecl.C.view_un_struc_formula in
+    let root_cands = List.filter (fun sv -> examine_one_arg fs sv false) args in
+    let () = y_tinfo_hp (add_str ("root_cands") !CP.print_svl) root_cands in
+    let sv_parts_rooted = List.map ( fun svl -> match svl with
+      | [] -> []
+      | [x] -> [x]
+      | _ ->  bubble_fst_root svl root_cands []
+    ) sv_parts in
+    (vn, args, sv_parts_rooted, no_pos, [])
   in
   let () = y_tinfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
   let scclist = HipUtil.view_scc_obj # get_scc in
@@ -906,7 +933,7 @@ let norm_split_x iprog prog vdefs sel_vns=
   let () = List.iter (update_scc_view_args prog) sel_vdecls in
   (* let split_cands = view_split_cands prog sel_vdecls in *)
   HipUtil.view_args_scc_obj # set_sorted;
-  let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_args_scc_obj # string_of) in
+  let () = y_tinfo_hp (add_str "\n" pr_id) (HipUtil.view_args_scc_obj # string_of) in
   let view_args_scclist = HipUtil.view_args_scc_obj # get_scc in
   let parts = List.fold_left (fun acc pair ->
       let res = group_view_args pair in
@@ -918,6 +945,8 @@ let norm_split_x iprog prog vdefs sel_vns=
   let parts1 = group parts [] in
   let () = y_tinfo_hp (add_str ("parts1") (pr_list(pr_pair pr_id (pr_list (pr_list pr_id))))) parts1 in
   let split_cands = List.map add_view_args parts1 in
+  let () = y_tinfo_hp (add_str ("split_cands") (pr_list (fun (vn,args,parts,_,_) ->
+      (pr_triple pr_id !CP.print_svl (pr_list !CP.print_svl)) (vn,args,parts) ))) split_cands in
   (* check global + generate unknown preds *)
   let split_map_view_subst = check_view_split_global iprog prog split_cands in
   split_map_view_subst
