@@ -3159,7 +3159,7 @@ and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_dec
   let chprel = {C.hp_name = hp_n;
                 C.hp_vars_inst = hp_sv_vars1;
                 C.hp_part_vars = hpdef.I.hp_part_vars;
-                Cast.hp_root_pos = 0; (*default, reset when def is inferred*)
+                Cast.hp_root_pos = None; (*default, reset when def is inferred*)
                 C.hp_is_pre = is_pre;
                 C.hp_view = new_view;
                 C.hp_formula = crf; }

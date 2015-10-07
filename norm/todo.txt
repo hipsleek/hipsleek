@@ -1011,6 +1011,19 @@ lemma_infer[P1,P2,@classic]
 !!! **syn.ml#687:Cannot transform the hprels of [P1] into view declarations.
 !!! **sleekengine.ml#3095:
 ==================================================================
+# ex17a.slk
+
+lemma_test self::wseg<q>*q::char_star<0,r>
+           ->
+    self::seg<pp>*pp::char_star<0,rr>.
+
+# no residue. is it cos lemma proving is not delayed?
+
+# can more general complex lemma be now handled?
+
+ Lemma infer proved succeeded in current context.
+: no residue 
+
 ===================================================================
 ===================================================================
 ===================================================================

@@ -1043,6 +1043,7 @@ non_empty_command:
       | t = shape_derive_pre_cmd -> ShapeDerivePre t
       | t = shape_derive_post_cmd -> ShapeDerivePost t
       | t = shape_derive_view_cmd -> ShapeDeriveView t
+      | t = shape_extn_view_cmd -> ShapeExtnView t
       | t = shape_normalize_cmd -> ShapeNormalize t
       | t = pred_elim_head_cmd -> PredElimHead t
       | t = pred_elim_tail_cmd -> PredElimTail t
@@ -2686,6 +2687,11 @@ shape_derive_view_cmd:
      ->  il
   ]];
 
+shape_extn_view_cmd:
+  [[ `SHAPE_EXTN_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE; `WITH; extn=id
+     ->  (il, extn)
+  ]];
+
 shape_normalize_cmd:
   [[ `SHAPE_NORMALIZE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
@@ -3180,9 +3186,9 @@ hp_decl:[[
     let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
      if !Globals.hrel_as_view_flag then
-       mk_hp_decl_w_view id tl root_pos parts pos1 
+       mk_hp_decl_w_view id tl (Some root_pos) parts pos1 
          (* report_error (get_pos 1) "hrel_as_view : to be implemented (3)" *)
-     else mk_hp_decl id tl root_pos parts pos1
+     else mk_hp_decl id tl (Some root_pos) parts pos1
     (*  { *)
     (*     hp_name = id; *)
     (*     hp_typed_inst_vars = tl; *)
@@ -3198,9 +3204,9 @@ hp_decl:[[
     let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
      if !Globals.hrel_as_view_flag then
-       mk_hp_decl_w_view ~is_pre:false id tl root_pos parts pos1 
+       mk_hp_decl_w_view ~is_pre:false id tl (Some root_pos) parts pos1 
        (* report_error (get_pos 1) "hrel_as_view : to be implemented (4)" *)
-     else mk_hp_decl ~is_pre:false id tl root_pos parts pos1
+     else mk_hp_decl ~is_pre:false id tl (Some root_pos) parts pos1
     (* { *)
     (*     hp_name = id; *)
     (*     hp_typed_inst_vars = tl; *)

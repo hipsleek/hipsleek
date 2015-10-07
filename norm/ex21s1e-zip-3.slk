@@ -3,29 +3,23 @@ data node{
      node next;
 }.
 
-pred zip<y,z> ==
-   self=null & y=null & z=null
-or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+pred zip2<yy,zzz> ==
+   self=null & yy=zzz
+or self::node<_,p>*yy::node<_,q> * p::zip2<q,zzz>.
 
 HeapPred P1(node a).
-HeapPred P2(node a).
-HeapPred P3(node a).
+HeapPred P2(node a,node b).
 
-/*
-HeapPred zip(node@RO a, node b, node c).
 
-relDefn zip(x,y,z) <->
-  x=null & y=null & z=null
-or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
-*/
-
-lemma_infer [P1,P2,P3]
-  self::zip<ys,zs> -> P1(self)*P2(ys)*P3(zs).
+lemma_infer [P1,P2,@classic]
+  self::zip2<ys,zs> -> P1(self)*P2(ys,zs).
 //pred_split [zip].
 
-print residue.
+//print residue.
 
-shape_derive_view [P1,P2,P3].
+print relAssumes.
+
+shape_derive_view [P1,P2].
 print views.
 
 /*

@@ -42,3 +42,13 @@ int lt___(int* p, int* q)
 */
 
 ;
+
+
+int abs (int x)
+/*@
+  case{
+    x <  0 -> requires true ensures res = -x;
+    x >= 0 -> requires true ensures res = x;
+  }
+*/
+;

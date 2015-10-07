@@ -144,10 +144,10 @@ let norm_elim_useless vdefs sel_vns=
         let () = y_tinfo_hp (add_str "new_def" Cprinter.string_of_view_decl(* _short *)) new_def in
         (*update rem_vdefs*)
         let new_def = elim_vdef ss new_def in
-        let () = Cprog_sleek.update_view_decl_cprog link_view in
-        let () = Cprog_sleek.update_view_decl_iprog ~update_scc:true  (Rev_ast.rev_trans_view_decl link_view) in
-        let () = Cprog_sleek.update_view_decl_cprog new_def in
-        let () = Cprog_sleek.update_view_decl_iprog ~update_scc:true  (Rev_ast.rev_trans_view_decl new_def) in
+        let () = Cprog_sleek.update_view_decl_both  ~update_scc:true link_view in
+        (* let () = Cprog_sleek.update_view_decl_iprog ~update_scc:true  (Rev_ast.rev_trans_view_decl link_view) in *)
+        let () = Cprog_sleek.update_view_decl_both ~update_scc:true  new_def in
+        (* let () = Cprog_sleek.update_view_decl_iprog ~update_scc:true  (Rev_ast.rev_trans_view_decl new_def) in *)
         (* let () = y_winfo_pp "Need to update iprog views too" in *)
         ([link_view;new_def], List.map (elim_vdef ss) rem_vdefs)
     else
@@ -493,6 +493,35 @@ let norm_reuse_rgx iprog cprog vdefs reg_frm_vns reg_to_vns =
 (*=============**************************================*)
 (*=============PRED SPLIT================*)
 (*=============**************************================*)
+let build_args_aset args eqs eqNulls=
+  let acc_alias_from_eq_pairs tpl0 eqs=
+    List.fold_left (fun tpl (sv1,sv2) -> CP.add_equiv_eq tpl sv1 sv2) tpl0 eqs
+  in
+  (*ls_eqs: all svs in this list are aliasing*)
+  let rec acc_alias_from_eq_list tpl0 ls_eqs=
+    match ls_eqs with
+    | [] -> tpl0
+    | sv::rest ->
+      let eqs = List.map (fun sv2 -> (sv,sv2)) rest in
+      let n_tpl =  acc_alias_from_eq_pairs tpl0 eqs in
+      acc_alias_from_eq_list n_tpl rest
+  in
+  let rec partition_args_aset args tpl res=
+    match args with
+    | sv::rest -> let lst_eq_sv = CP.EMapSV.find_equiv_all sv tpl in
+      let inter_rest,rest2 = List.partition (fun sv2 -> CP.mem_svl sv2 lst_eq_sv) rest in
+      let n_res = if inter_rest = [] then res else
+          res@[sv::inter_rest]
+      in
+      partition_args_aset rest2 tpl n_res
+    | [] -> res
+  in
+  let tpl_aset = CP.EMapSV.mkEmpty in
+  let tpl_aset1 = acc_alias_from_eq_pairs tpl_aset eqs in
+  let tpl_aset2 = acc_alias_from_eq_list tpl_aset1 eqNulls in
+  partition_args_aset args tpl_aset2 []
+  
+
 let view_split_cands_one_branch_x prog vdecl f=
   (*******************INTERNAL************************)
   (*partition args into dependent groups*)
@@ -530,44 +559,47 @@ let view_split_cands_one_branch_x prog vdecl f=
       else parts
     | _ -> parts
   in
-  let acc_alias_from_eq_pairs tpl0 eqs=
-    List.fold_left (fun tpl (sv1,sv2) -> CP.add_equiv_eq tpl sv1 sv2) tpl0 eqs
-  in
-  (*ls_eqs: all svs in this list are aliasing*)
-  let rec acc_alias_from_eq_list tpl0 ls_eqs=
-    match ls_eqs with
-    | [] -> tpl0
-    | sv::rest ->
-      let eqs = List.map (fun sv2 -> (sv,sv2)) rest in
-      let n_tpl =  acc_alias_from_eq_pairs tpl0 eqs in
-      acc_alias_from_eq_list n_tpl rest
-  in
-  let rec partition_args_aset args tpl res=
-    match args with
-    | sv::rest -> let lst_eq_sv = CP.EMapSV.find_equiv_all sv tpl in
-      let inter_rest,rest2 = List.partition (fun sv2 -> CP.mem_svl sv2 lst_eq_sv) rest in
-      let n_res = if inter_rest = [] then res else
-          res@[sv::inter_rest]
-      in
-      partition_args_aset rest2 tpl n_res
-    | [] -> res
-  in
-  let build_args_aset args eqs eqNulls=
-    let tpl_aset = CP.EMapSV.mkEmpty in
-    let tpl_aset1 = acc_alias_from_eq_pairs tpl_aset eqs in
-    let tpl_aset2 = acc_alias_from_eq_list tpl_aset1 eqNulls in
-    partition_args_aset args tpl_aset2 []
-  in
+  (* let acc_alias_from_eq_pairs tpl0 eqs= *)
+  (*   List.fold_left (fun tpl (sv1,sv2) -> CP.add_equiv_eq tpl sv1 sv2) tpl0 eqs *)
+  (* in *)
+  (* (\*ls_eqs: all svs in this list are aliasing*\) *)
+  (* let rec acc_alias_from_eq_list tpl0 ls_eqs= *)
+  (*   match ls_eqs with *)
+  (*   | [] -> tpl0 *)
+  (*   | sv::rest -> *)
+  (*     let eqs = List.map (fun sv2 -> (sv,sv2)) rest in *)
+  (*     let n_tpl =  acc_alias_from_eq_pairs tpl0 eqs in *)
+  (*     acc_alias_from_eq_list n_tpl rest *)
+  (* in *)
+  (* let rec partition_args_aset args tpl res= *)
+  (*   match args with *)
+  (*   | sv::rest -> let lst_eq_sv = CP.EMapSV.find_equiv_all sv tpl in *)
+  (*     let inter_rest,rest2 = List.partition (fun sv2 -> CP.mem_svl sv2 lst_eq_sv) rest in *)
+  (*     let n_res = if inter_rest = [] then res else *)
+  (*         res@[sv::inter_rest] *)
+  (*     in *)
+  (*     partition_args_aset rest2 tpl n_res *)
+  (*   | [] -> res *)
+  (* in *)
+  (* let build_args_aset args eqs eqNulls= *)
+  (*   let tpl_aset = CP.EMapSV.mkEmpty in *)
+  (*   let tpl_aset1 = acc_alias_from_eq_pairs tpl_aset eqs in *)
+  (*   let tpl_aset2 = acc_alias_from_eq_list tpl_aset1 eqNulls in *)
+  (*   partition_args_aset args tpl_aset2 [] *)
+  (* in *)
   (*******************END INTERNAL************************)
   let () = Debug.ninfo_hprint (add_str "f" (Cprinter.string_of_formula)) f no_pos in
   let ( _,mf,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let quans,bare = CF.split_quantifiers f in
+  let () = Debug.ninfo_hprint (add_str "quans" !CP.print_svl) quans no_pos in
   let quans_eqs = List.fold_left (fun acc (sv1,sv2) ->
-      if List.mem sv1 quans && not (List.mem sv2 quans) then
+      if CP.mem_svl sv1 quans (* && not (CP.mem_svl sv2 quans) *) then
         acc@[(sv1,sv2)]
       else acc
   ) [] eqs in
+  let () = Debug.ninfo_hprint (add_str "eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) eqs no_pos in
+  let () = Debug.ninfo_hprint (add_str "quans_eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) quans_eqs no_pos in
   let f1 = CF.subst quans_eqs bare in
   let () = Debug.ninfo_hprint (add_str "f1" (Cprinter.string_of_formula)) f1 no_pos in
   let ( _,mf,_,_,_,_) = CF.split_components f1 in
@@ -653,7 +685,7 @@ let check_view_split_global_x iprog prog cands =
     (*add rel decl in iprog*)
     let ihp_decl = { Iast.hp_name = CP.name_of_spec_var new_hp_sv;
                       Iast.hp_typed_inst_vars = List.map (fun (CP.SpecVar (t,id,_), i) -> (t,id,i)) args1;
-                      Iast.hp_root_pos = 0;
+                      Iast.hp_root_pos = None;
                       Iast.hp_part_vars = [];
                       Iast.hp_is_pre = false;
                       Iast.hp_formula = Iformula.mkTrue_nf pos;
@@ -759,11 +791,133 @@ let check_view_split_global iprog prog cands =
   Debug.no_1 "check_view_split_global" pr1 pr3
     (fun _ -> check_view_split_global_x iprog prog cands) cands
 
+let add_v vn name=
+  vn^"#"^ name
+
+let part_v name=
+  let indx = String.index name '#' in
+  (String.sub name 0 (indx), String.sub name (indx+1) ((String.length name) - indx - 1))
+
+let update_scc_view_args prog vdecl=
+  let rec update_scc_alias svl done_svl=
+    match svl with
+      | [] -> ()
+      | sv::rest ->
+            let () = HipUtil.view_args_scc_obj # add x_loc sv (done_svl@rest) in
+             update_scc_alias rest (done_svl@[sv])
+  in
+  let update_scc_view_args_alias args eqs =
+    let parts = build_args_aset args eqs [] in
+    List.iter (fun svl ->
+        update_scc_alias (List.map (fun sv ->
+            let name = CP.name_of_spec_var sv in
+            add_v vdecl.Cast.view_name name
+        ) svl) []
+    ) (List.filter (fun ls -> List.length ls >= 2) parts)
+  in
+  let update_scc_view_args_ptos sv eqs hns hvs =
+    let part1 = CF.find_close [sv] eqs in
+    let () = Debug.ninfo_hprint (add_str "part1" (!CP.print_svl)) part1 no_pos in
+    let part2 = CF.look_up_reachable_ptr_args prog hns [] (CP.remove_dups_svl part1) in
+    let part2a = (CF.find_close part2 eqs) in
+    let inter_hvs = List.fold_left (fun acc hv ->
+        let v_args = (hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments) in
+        let inter_svl = CP.intersect_svl v_args part2a in
+        if inter_svl != [] then
+          let vdecl1 = Cast.look_up_view_def_raw 67 prog.Cast.prog_view_decls hv.CF.h_formula_view_name in
+          let self_sv = CP.SpecVar ((Named vdecl1.Cast.view_data_name) ,self, Unprimed) in
+          let sst = List.combine v_args (self_sv::vdecl1.Cast.view_vars) in
+          let inter_rename = CP.subst_var_list sst inter_svl in
+          let ids = List.map (fun sv ->
+              let name = CP.name_of_spec_var sv in
+              add_v vdecl1.Cast.view_name name
+          ) inter_rename in
+          acc@[ids]
+        else
+          acc
+    ) [] hvs in
+    let name = CP.name_of_spec_var sv in
+    let src_id = add_v vdecl.Cast.view_name name in
+    List.iter (fun dest_names ->
+        HipUtil.view_args_scc_obj # add x_loc src_id dest_names
+    ) inter_hvs
+  in
+  let update_scc_view_args_branch args f =
+    let () = Debug.ninfo_hprint (add_str "f" (Cprinter.string_of_formula)) f no_pos in
+    let ( _,mf,_,_,_,_) = CF.split_components f in
+    let eqs = (MCP.ptr_equations_without_null mf) in
+    let quans,bare = CF.split_quantifiers f in
+    let () = Debug.ninfo_hprint (add_str "quans" !CP.print_svl) quans no_pos in
+    let quans_eqs = List.fold_left (fun acc (sv1,sv2) ->
+        if CP.mem_svl sv1 quans then
+          acc@[(sv1,sv2)]
+        else acc
+    ) [] eqs in
+    let () = Debug.ninfo_hprint (add_str "eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) eqs no_pos in
+    let () = Debug.ninfo_hprint (add_str "quans_eqs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) quans_eqs no_pos in
+    let f1 = CF.subst quans_eqs bare in
+    let () = Debug.ninfo_hprint (add_str "f1" (Cprinter.string_of_formula)) f1 no_pos in
+    let ( _,mf,_,_,_,_) = CF.split_components f1 in
+    let eqs = (MCP.ptr_equations_without_null mf) in
+    let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mf) in
+    let hns, hvs, _ = CF.get_hp_rel_formula f1 in
+    let () =  update_scc_view_args_alias args eqs in
+    let () =  List.iter (fun sv -> update_scc_view_args_ptos sv eqs hns hvs) args in
+    ()
+  in
+  (******************)
+  let self_sv = (CP.SpecVar (Named (vdecl.Cast.view_data_name),self, Unprimed)) in
+  let args = self_sv::vdecl.Cast.view_vars in
+  if List.length args < 2 then ()
+  else
+    let fs = List.map (fun (f,_) -> f) vdecl.C.view_un_struc_formula in
+    List.iter (update_scc_view_args_branch args) fs
 
 let norm_split_x iprog prog vdefs sel_vns=
+  let rec group ls_vn_args parts=
+    match ls_vn_args with
+      | [] -> parts
+      | (vn,args)::rest ->
+            let same,others = List.partition (fun (vn1,_) -> string_eq vn vn1) rest in
+            group others (parts@[(vn, args::(List.map snd same))])
+  in
+  let group_view_args pairs=
+    let ls_vn_args = List.map (fun name -> part_v name) pairs in
+    group ls_vn_args []
+  in
+  let add_view_args (vn, parts)=
+    let vdecl = C.look_up_view_def_raw 68 vdefs vn in
+    let self_sv = CP.SpecVar ((Named vdecl.Cast.view_data_name) ,self, Unprimed) in
+    let args = self_sv::vdecl.C.view_vars in
+    let sv_parts = List.map (fun ids ->
+        List.map (fun id -> List.find (fun sv ->
+            string_eq (CP.name_of_spec_var sv) id
+        ) args) ids
+    ) parts in
+    (vn, args, sv_parts, no_pos, [])
+  in
+  let () = y_tinfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
+  let scclist = HipUtil.view_scc_obj # get_scc in
+  let sel_scclist = List.filter (fun scc -> (Gen.BList.intersect_eq string_eq scc sel_vns) != []) scclist in
+  let cl_sel_vns = List.concat sel_scclist in
+  let () = y_tinfo_hp (add_str "\n" pr_id) ((pr_list pr_id) cl_sel_vns) in
   let sel_vdecls = List.map (C.look_up_view_def_raw 66 vdefs) sel_vns in
   (* split candidate *)
-  let split_cands = view_split_cands prog sel_vdecls in
+  let () = List.iter (update_scc_view_args prog) sel_vdecls in
+  (* let split_cands = view_split_cands prog sel_vdecls in *)
+  HipUtil.view_args_scc_obj # set_sorted;
+  let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_args_scc_obj # string_of) in
+  let view_args_scclist = HipUtil.view_args_scc_obj # get_scc in
+  let parts = List.fold_left (fun acc pair ->
+      let res = group_view_args pair in
+      let () = y_tinfo_hp (add_str ("res") (pr_list(pr_pair pr_id (pr_list pr_id)))) res in
+      acc@(List.filter (fun (vn,_) -> List.exists (fun id -> string_eq id vn) sel_vns) res)
+  )
+    [] view_args_scclist in
+  let () = y_tinfo_hp (add_str ("parts") (pr_list(pr_pair pr_id  (pr_list pr_id)))) parts in
+  let parts1 = group parts [] in
+  let () = y_tinfo_hp (add_str ("parts1") (pr_list(pr_pair pr_id (pr_list (pr_list pr_id))))) parts1 in
+  let split_cands = List.map add_view_args parts1 in
   (* check global + generate unknown preds *)
   let split_map_view_subst = check_view_split_global iprog prog split_cands in
   split_map_view_subst

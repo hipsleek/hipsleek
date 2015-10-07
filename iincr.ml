@@ -206,7 +206,7 @@ let add_pre_shape_relation_x prog proc spec=
               (sv, in_info)
             ) rel_vars;
           Cast.hp_part_vars = [];
-          Cast.hp_root_pos = 0;
+          Cast.hp_root_pos = None;
           Cast.hp_is_pre = true;
           Cast.hp_view = None;
           Cast.hp_formula = CF.mkHTrue_nf pos;
@@ -274,7 +274,7 @@ let add_post_shape_relation_x prog proc spec=
                     (sv, in_info)
                 ) rel_vars;
                 Cast.hp_part_vars = [];
-                Cast.hp_root_pos = 0;
+                Cast.hp_root_pos = None;
                 Cast.hp_is_pre = true;
                 Cast.hp_view = None;
                 Cast.hp_formula = CF.mkHTrue_nf pos;
