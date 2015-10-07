@@ -17,6 +17,8 @@ lemma_infer [P1,P2,@classic]
 
 //print residue.
 
+print relAssumes.
+
 shape_derive_view [P1,P2].
 print views.
 

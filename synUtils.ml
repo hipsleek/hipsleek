@@ -64,7 +64,6 @@ let is_pre_hprel (hpr: CF.hprel) =
   | INFER_UNFOLD -> true
   | _ -> false
   
-  
 let is_post_hprel (hpr: CF.hprel) =
   match hpr.hprel_type with
   | INFER_FOLD -> true
