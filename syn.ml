@@ -906,6 +906,44 @@ let elim_head_pred_list iprog cprog preds =
 let elim_tail_pred_list iprog cprog preds =
   norm_pred_list (elim_tail_pred iprog cprog) preds
 
+let extn_norm_pred iprog cprog extn_pred norm_pred =
+  let norm_ipred = I.look_up_view_def_raw 21 iprog.I.prog_view_decls norm_pred.C.view_name in
+  let extn_view_name = "extn_" ^ norm_ipred.I.view_name in
+  let extn_view_var = extn_pred.C.view_name ^ "_prop" in
+  let extn_iview = I.mk_iview_decl ~v_kind:View_DERV extn_view_name "" 
+      (norm_ipred.I.view_vars @ [extn_view_var])
+      (IF.mkETrue top_flow no_pos) no_pos
+  in
+  let orig_info = (norm_ipred.I.view_name, norm_ipred.I.view_vars) in
+  let extn_info = (extn_pred.C.view_name, ["REC"], [extn_view_var]) in
+  let extn_iview = { extn_iview with I.view_derv_info = [(orig_info, extn_info)] } in
+  let extn_cview = Derive.trans_view_dervs iprog 
+    Rev_ast.rev_trans_formula Astsimp.trans_view [] 
+    cprog.C.prog_view_decls extn_iview
+  in
+  let extn_cview = { extn_cview with C.view_name = norm_pred.C.view_name } in
+  let () = C.update_view_decl cprog extn_cview in
+  extn_cview
+
+let extn_norm_pred_list iprog cprog extn_pred norm_preds = 
+  List.map (fun pred -> extn_norm_pred iprog cprog extn_pred pred) norm_preds
+
+let extn_pred_list iprog cprog extn preds =
+  let extn_pred = C.look_up_view_def_raw 20 cprog.C.prog_view_decls extn in
+  match extn_pred.C.view_kind with
+  | View_EXTN -> 
+    let norm_preds = List.fold_left (fun acc pred ->
+      match pred.C.view_kind with
+      | View_NORM -> acc @ [pred]
+      | k -> 
+        let () = report_warning no_pos (
+          "Cannot extend the " ^ (string_of_view_kind k) ^
+          " " ^ pred.C.view_name)
+        in acc) [] preds 
+    in
+    extn_norm_pred_list iprog cprog extn_pred norm_preds
+  | _ -> failwith (extn ^ " is not a View_EXTN")
+
 (*********************************)
 (***** COMBINE DISJ BRANCHES *****)
 (*********************************)

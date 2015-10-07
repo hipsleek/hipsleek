@@ -1043,6 +1043,7 @@ non_empty_command:
       | t = shape_derive_pre_cmd -> ShapeDerivePre t
       | t = shape_derive_post_cmd -> ShapeDerivePost t
       | t = shape_derive_view_cmd -> ShapeDeriveView t
+      | t = shape_extn_view_cmd -> ShapeExtnView t
       | t = shape_normalize_cmd -> ShapeNormalize t
       | t = pred_elim_head_cmd -> PredElimHead t
       | t = pred_elim_tail_cmd -> PredElimTail t
@@ -2684,6 +2685,11 @@ shape_derive_post_cmd:
 shape_derive_view_cmd:
   [[ `SHAPE_DERIVE_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
+  ]];
+
+shape_extn_view_cmd:
+  [[ `SHAPE_EXTN_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE; `WITH; extn=id
+     ->  (il, extn)
   ]];
 
 shape_normalize_cmd:

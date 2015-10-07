@@ -1773,6 +1773,9 @@ let process_pred_elim_head (ids: regex_id_list) =
 let process_pred_unify_disj (ids: regex_id_list) = 
   process_sleek_norm_preds "Unify Disj" ids (Syn.unify_disj_pred_list iprog !cprog)
 
+let process_shape_extn_view (ids: regex_id_list) (extn: ident) =
+  process_sleek_norm_preds "Pred Extension" ids (Syn.extn_pred_list iprog !cprog extn)
+
 (******************************************************************************)
 
 let relation_pre_process constrs pre_hps post_hps=

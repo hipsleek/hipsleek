@@ -163,7 +163,7 @@ and view_decl = {
   mutable view_addr_vars : P.spec_var list;
   (* if view has only a single eqn, then place complex subpart into complex_inv *)
   view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
-   view_linear_formula : (Cformula.formula * formula_label) list ;
+  view_linear_formula : (Cformula.formula * formula_label) list ;
   view_prune_branches: formula_label list; (* all the branches of a view *)
   view_is_rec : bool;
   view_pt_by_self : ident list;
@@ -3862,13 +3862,13 @@ let add_view_decl prog vdecl =
 let update_view_decl prog vdecl = 
   let vdecl_id = vdecl.view_name in
   let vdecl_args = vdecl.view_vars in
-  let vhdr = vdecl_id ^(!CP.print_svl vdecl_args) in
+  let vhdr = vdecl_id ^ (!CP.print_svl vdecl_args) in
   let same_vdecls, others = List.partition (fun v -> 
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
   let () = 
     if not (is_empty same_vdecls) then 
-      y_binfo_pp ("Updating an available view decl (" ^ vhdr^ ") in cprog.")
-    else y_binfo_pp ("Adding the view " ^vhdr^" into cprog.") 
+      y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
+    else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
   prog.prog_view_decls <- others @ [vdecl]
 
