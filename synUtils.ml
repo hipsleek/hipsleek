@@ -101,6 +101,30 @@ let args_of_hprel (hpr: CF.hprel) =
 let body_of_hprel (hpr: CF.hprel) =
   if is_pre_hprel hpr then hpr.hprel_rhs else hpr.hprel_lhs
 
+let is_non_inst_hprel prog (hprel: CF.hprel) =
+  let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
+  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hprel_name in
+  let hprel_inst = hprel_def.Cast.hp_vars_inst in
+  List.for_all (fun (_, i) -> i = Globals.NI) hprel_inst
+
+let is_non_inst_hrel prog (hrel: CF.h_formula) =
+  let hrel_name = CP.name_of_spec_var (name_of_hrel hrel) in
+  let hrel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
+  let hrel_inst = hrel_def.Cast.hp_vars_inst in
+  List.for_all (fun (_, i) -> i = Globals.NI) hrel_inst
+
+let get_non_inst_args_hprel_id prog id args = 
+  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls id in
+  let hprel_inst = hprel_def.Cast.hp_vars_inst in
+  List.fold_left (fun acc (arg, (_, i)) ->
+    if i = Globals.NI then acc
+    else acc @ [arg]) [] (List.combine args hprel_inst)
+
+let get_non_inst_args_hprel prog (hprel: CF.hprel) =
+  let hprel_name, hprel_args = sig_of_hprel hprel in
+  let hprel_id = CP.name_of_spec_var hprel_name in
+  get_non_inst_args_hprel_id prog hprel_id hprel_args
+
 module Ident = struct
   type t = ident
   let compare = String.compare
@@ -188,10 +212,14 @@ let heap_chain_of_formula aset f =
 let mk_num_args args = 
   fst (List.fold_left (fun (acc, i) arg -> (acc @ [(arg, i)], i + 1)) ([], 0) args)
 
-let find_root_hprel_formula_base hprel_name num_args f =
+let find_root_hprel_formula_base prog hprel_name num_args f =
   let f_fv = CF.fv f in
+  let args = List.map fst num_args in
+  let ni_args = get_non_inst_args_hprel_id prog hprel_name args in
   let feasible_num_args = List.filter (fun (sv, _) -> 
-    (CP.is_node_typ sv) && (mem sv f_fv)) num_args in
+    (CP.is_node_typ sv) && 
+    (* not (mem sv ni_args) && *)
+    (mem sv f_fv)) num_args in
   match feasible_num_args with
   | [] -> None
   | r::[] -> Some r
@@ -247,16 +275,16 @@ let find_root_hprel_formula_base hprel_name num_args f =
         helper f_rec_hrels
     end)
 
-let rec find_root_hprel_formula hprel_name num_args f =
+let rec find_root_hprel_formula prog hprel_name num_args f =
   match f with
   | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->
-    let r1 = find_root_hprel_formula hprel_name num_args f1 in
+    let r1 = find_root_hprel_formula prog hprel_name num_args f1 in
     (match r1 with
-    | None -> find_root_hprel_formula hprel_name num_args f2
+    | None -> find_root_hprel_formula prog hprel_name num_args f2
     | _ -> r1)
-  | _ -> find_root_hprel_formula_base hprel_name num_args f
+  | _ -> find_root_hprel_formula_base prog hprel_name num_args f
 
-let find_root_one_hprel hprel = 
+let find_root_one_hprel prog hprel = 
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let pr = Cprinter.string_of_hprel_short in
   match hprel_args with
@@ -265,7 +293,7 @@ let find_root_one_hprel hprel =
   | _ ->
     let hprel_body = body_of_hprel hprel in
     let num_args = mk_num_args hprel_args in
-    let root = find_root_hprel_formula (CP.name_of_spec_var hprel_name) num_args hprel_body in
+    let root = find_root_hprel_formula prog (CP.name_of_spec_var hprel_name) num_args hprel_body in
     (begin match root with
     | None ->
       (begin try
@@ -275,10 +303,11 @@ let find_root_one_hprel hprel =
       with _ -> failwith ("Cannot find root of the hprel " ^ (pr hprel)) end)
     | Some s -> s end)
 
-let find_root_one_hprel hprel =
+let find_root_one_hprel prog hprel =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = pr_pair !CP.print_sv string_of_int in
-  Debug.no_1 "Syn.find_root_one_hprel" pr1 pr2 find_root_one_hprel hprel
+  Debug.no_1 "Syn.find_root_one_hprel" pr1 pr2 
+    (find_root_one_hprel prog) hprel
 
 let find_root_hprel prog hprel = 
   let hprel_name, hprel_args = sig_of_hprel hprel in
@@ -287,7 +316,7 @@ let find_root_hprel prog hprel =
     let root_pos = C.get_proot_hp_def_raw prog.C.prog_hp_decls hprel_id in
     (List.nth hprel_args root_pos, root_pos)
   with _ -> 
-    let root_var, root_pos = find_root_one_hprel hprel in
+    let root_var, root_pos = find_root_one_hprel prog hprel in
     let hp_decl = C.set_proot_hp_def_raw root_pos prog.C.prog_hp_decls hprel_id in
     (root_var, root_pos)
 
@@ -430,18 +459,6 @@ let simplify_hprel (hprel: CF.hprel) =
 let simplify_hprel (hprel: CF.hprel) =
   let pr = Cprinter.string_of_hprel_short in
   Debug.no_1 "simplify_hprel" pr pr simplify_hprel hprel
-
-let is_non_inst_hprel prog (hprel: CF.hprel) =
-  let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
-  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hprel_name in
-  let hprel_inst = hprel_def.Cast.hp_vars_inst in
-  List.for_all (fun (_, i) -> i = Globals.NI) hprel_inst
-
-let is_non_inst_hrel prog (hrel: CF.h_formula) =
-  let hrel_name = CP.name_of_spec_var (name_of_hrel hrel) in
-  let hrel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
-  let hrel_inst = hrel_def.Cast.hp_vars_inst in
-  List.for_all (fun (_, i) -> i = Globals.NI) hrel_inst
 
 let get_feasible_node_args prog (hf: CF.h_formula) =
   match hf with
