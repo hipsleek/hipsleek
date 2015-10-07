@@ -3071,11 +3071,15 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
                  h_formula_data_param_imm = param_ann;
                  h_formula_data_arguments = vs}) -> h_fv_node ~vartype:vartype v perm ann param_ann vs [] []
     | ViewNode ({h_formula_view_node = v;
+                 h_formula_view_name = i;
                  h_formula_view_perm = perm;
                  h_formula_view_imm = ann;
                  h_formula_view_ho_arguments = ho_vs;
                  h_formula_view_annot_arg = ann_args;
-                 h_formula_view_arguments = vs}) ->  h_fv_node ~vartype:vartype v perm ann [] vs ho_vs ann_args
+                 h_formula_view_arguments = vs}) ->  
+      if vartype # is_view_only then [CP.mk_spec_var i]
+      else 
+        h_fv_node ~vartype:vartype v perm ann [] vs ho_vs ann_args
     | ThreadNode ({h_formula_thread_node = v;
                    h_formula_thread_perm = perm;
                    h_formula_thread_delayed = dl;
@@ -19985,3 +19989,8 @@ let add_label_to_struc_formula s_f old_sf =
     end
   | _ -> s_f
 
+let is_sat_raw = Mcpure.is_sat_raw
+
+let complex_unfold unfold_set1 f =
+  let () = y_binfo_pp "insider complex fold" in
+  failwith "TBI"

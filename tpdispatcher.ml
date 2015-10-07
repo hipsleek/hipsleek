@@ -4386,6 +4386,7 @@ let check_diff xp0 xp1 =
 let () = 
   CP.simplify := simplify;
   Cast.imply_raw := imply_raw;
+  (* CF.is_unsat_raw  := is_unsat_raw; *)
   CP.tp_imply := (fun l r -> Wrapper.wrap_dis_non_linear (imply_raw l) r);
   Excore.is_sat_raw := is_sat_raw;
   Excore.simplify_raw := simplify_raw;
