@@ -378,6 +378,9 @@ let mk_HRel_as_view n args loc =
 
   }
 
+let mk_HRel_as_view_w_root n root args loc =
+  mk_HRel_as_view n (root::args) loc
+
 (* this will be set to TPdispatcher.simplify_omega later *)
 let simplify_omega = ref(fun (c:Cpure.formula) -> c)
 let print_formula = ref(fun (c:formula) -> "printer not initialized")

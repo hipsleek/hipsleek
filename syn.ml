@@ -232,16 +232,6 @@ let merging prog hprels =
 (*********************)
 (***** UNFOLDING *****)
 (*********************)
-module Ident = struct
-  type t = ident
-  let compare = String.compare
-  let hash = Hashtbl.hash
-  let equal i1 i2 = compare i1 i2 == 0 
-end
-
-module CG = Graph.Persistent.Digraph.Concrete(Ident)
-module CGC = Graph.Components.Make(CG)
-
 let hprel_num = ref 0
 
 let fresh_hprel_num () =
@@ -470,37 +460,6 @@ let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let pr = Cprinter.string_of_hprel_short in
   Debug.no_1 "Syn:unfolding_hprel" pr (pr_list pr)
     (fun _ -> unfolding_hprel prog hprel_groups hpr) hpr
-
-let rec dependent_graph_of_formula dg hprel_name hprel_f =
-  match hprel_f with
-  | CF.Base { formula_base_heap = f_h; }
-  | CF.Exists { formula_exists_heap = f_h; } ->
-    let f_hrels = List.filter CF.is_hrel (CF.split_star_conjunctions f_h) in
-    let f_hrels_name = List.map (fun hr -> CP.name_of_spec_var (name_of_hrel hr)) f_hrels in
-    List.fold_left (fun dg hr_name -> CG.add_edge dg hprel_name hr_name) dg f_hrels_name
-  | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->
-    let dg = dependent_graph_of_formula dg hprel_name f1 in
-    dependent_graph_of_formula dg hprel_name f2
-
-let dependent_graph_of_hprel dg hprel = 
-  let hpr_name = CP.name_of_spec_var (name_of_hprel hprel) in 
-  let hpr_f = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
-  let dg = CG.add_vertex dg hpr_name in
-  dependent_graph_of_formula dg hpr_name hpr_f
-
-let dependent_graph_of_hprel_list hprel_list =
-  let dg = CG.empty in
-  List.fold_left (fun dg hprel -> dependent_graph_of_hprel dg hprel) dg hprel_list
-
-let sort_hprel_list hprel_list = 
-  let dg = dependent_graph_of_hprel_list hprel_list in
-  let _, scc_f = CGC.scc dg in
-  let compare hpr1 hpr2 =
-    let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in
-    let hpr2_name = CP.name_of_spec_var (name_of_hprel hpr2) in 
-    (scc_f hpr1_name) - (scc_f hpr2_name)
-  in
-  List.sort compare hprel_list
 
 let rec update_hprel_id_groups hprel_id hprel_sv hprel_id_list hprel_id_groups =
   match hprel_id_groups with
@@ -799,8 +758,8 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let () = y_binfo_pp "XXX proven infer ---> " in
     let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
     let () = List.iter (fun v ->
-      let () = C.update_un_struc_formula trans_hrel_to_view_formula v in
-      let () = C.update_view_formula trans_hrel_to_view_struc_formula v in
+      let () = C.update_un_struc_formula (trans_hrel_to_view_formula cprog) v in
+      let () = C.update_view_formula (trans_hrel_to_view_struc_formula cprog) v in
       let () = C.update_view_decl cprog v in
       let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
       ()) tmp_views in
@@ -821,7 +780,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let () = y_tinfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
         all_d_views in
     (* Equiv test to form new pred *)
-    let r_cbody = trans_hrel_to_view_formula l_body in
+    let r_cbody = trans_hrel_to_view_formula cprog l_body in
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
     let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
     let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in

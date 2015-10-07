@@ -206,7 +206,7 @@ and hp_decl = {
   hp_name : ident;
   mutable hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
   hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
-  mutable hp_root_pos: int;
+  mutable hp_root_pos: int option;
   hp_is_pre: bool;
   hp_view: (Iast.view_decl * view_decl) option;
   hp_formula : F.formula;}
@@ -1345,7 +1345,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
                    if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
                   ^ (string_of_int (Globals.fresh_int()));
         hp_part_vars = [];
-        hp_root_pos = 0; (*default, reset when def is inferred*)
+        hp_root_pos = None; (*default, reset when def is inferred*)
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
         hp_view = None;
@@ -1378,12 +1378,18 @@ let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
 
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
-  let () = hpdclr.hp_root_pos <- r_pos in
+  let () = hpdclr.hp_root_pos <- (Some r_pos) in
   hpdclr
 
-let get_proot_hp_def_raw defs name=
+let get_proot_hp_def_raw defs name =
   let hpdclr = look_up_hp_def_raw defs name in
-  hpdclr.hp_root_pos
+  match hpdclr.hp_root_pos with
+  | None -> failwith ("hp_root_pos has not yet set.")
+  | Some i -> i
+
+let get_proot_hp_def_raw defs name =
+  let pr = string_of_int in
+  Debug.no_1 "get_proot_hp_def_raw" idf pr (get_proot_hp_def_raw defs) name
 
 let get_root_args_hprel hprels hp_name actual_args=
   let rec part_sv_from_pos ls n n_need rem=
@@ -1408,7 +1414,8 @@ let get_root_typ_hprel hprels hp_name=
   in
   let retrieve_root hp_name=
     let hpdclr = look_up_hp_def_raw hprels hp_name in
-    let rpos = hpdclr.hp_root_pos in
+    (* let rpos = hpdclr.hp_root_pos in *)
+    let rpos = get_proot_hp_def_raw hprels hp_name in
     let r,_ = part_sv_from_pos (List.map fst hpdclr.hp_vars_inst) 0 rpos [] in
     match Cpure.type_of_spec_var r with
     | Named id -> id
