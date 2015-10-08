@@ -38,8 +38,25 @@ pred ll2<> ==
    emp & self=null
 or self::node<_,p>*p::ll<>.
 
+
+---------------------------------------
+# check if mutual-rec
+
 pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
 pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+(==derive.ml#209==)
+extract_abs_formula_branch@1
+extract_abs_formula_branch inp1 :[ (* lbl: *){5}->emp&self=null&{FLOW,(1,26)=__flow#E}[], (exists p_47,Anon_46: self::node<Anon_46,p_47>@M * p_47::ll2<>@M&
+{FLOW,(1,26)=__flow#E}[])]
+extract_abs_formula_branch inp2 :ll
+extract_abs_formula_branch inp3 :llN1
+extract_abs_formula_branch inp4 :[nnn]
+
+extract_abs_formula_branch inp5 :[(node,1)]
+extract_abs_formula_branch inp6 :[self]
+extract_abs_formula_branch@1 EXIT:([( (* lbl: *){5}->emp&self=null&{FLOW,(1,26)=__flow#E}[],[]),( (exists p_47,Anon_46: self::node<Anon_46,p_47>@M * p_47::ll2<>@M&
+{FLOW,(1,26)=__flow#E}[]),[p_47])],[])
 
 !!! **astsimp.ml#2431:vs1a:[]
 !!! **astsimp.ml#2476:raw_base_case:Some( (* lbl: *){7}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[])
