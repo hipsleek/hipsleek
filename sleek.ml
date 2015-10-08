@@ -383,10 +383,12 @@ let parse_file (parse) (source_file : string) =
   let () = if (!Globals.print_core || !Globals.print_core_all) then
       print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   (*-------------END lemma --------------------*)
+  y_tinfo_pp "sleek : end of lemma " ;
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
+  y_tinfo_pp "sleek : after cviews calling add_uni_vars " ;
   Sleekengine.unexpected_cmd # reset (* := [] *);
   List.iter proc_one_cmd cmds
 

@@ -940,13 +940,13 @@ Graph:[(G1_54,[G2_53]);(G1,[G1_54]);(ll,[ll]);(G2,[G2_53]);(G2_53,[G2_53])]
     equiv_set: ([],G2_53)
   ]
 ===================================================================
-# ex20d.slk
+# ex20d.slk (DONE)
 
   print views[P].
 
 # Can we print just P instead of all views
 
-  print views_trans[P].
+  print views[P*].
 
 
 # Can we print just P and its dependencies ..

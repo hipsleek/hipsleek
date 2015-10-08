@@ -171,7 +171,9 @@ class graph =
       in aux scc1 [n] []
 
     method split  =
-      (* if grp==None then self # build_scc_void "split"; *)
+      (* important : if not may go into stack overflow for *)
+      (*  add_uni_vars_to_view, see ex25a1.slk which has mutual-rec views *)
+      if grp==None then self # build_scc_void "split";
       let (nrec_n,rec_n) = List.partition (fun (a,r) -> r==[]) pto in
       let (self_r,mut_r) = List.partition (fun (a,r) -> List.exists (fun m -> a=m) r) rec_n in
       (List.map fst nrec_n,List.map fst self_r,List.map fst mut_r)
