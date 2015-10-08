@@ -919,6 +919,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
       (IF.mkETrue top_flow no_pos) no_pos
   in
   let orig_info = (norm_ipred.I.view_name, norm_ipred.I.view_vars) in
+  (* TODO: Auto derive REC *)
   let extn_info = (extn_pred.C.view_name, ["REC"], [extn_view_var]) in
   let extn_iview = { extn_iview with I.view_derv_info = [(orig_info, extn_info)] } in
   let extn_cview = Derive.trans_view_dervs iprog 
