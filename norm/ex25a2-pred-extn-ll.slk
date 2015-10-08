@@ -41,7 +41,26 @@ or self::node<_,p>*p::ll<>.
 pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
 pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 
+!!! **astsimp.ml#2431:vs1a:[]
+!!! **astsimp.ml#2476:raw_base_case:Some( (* lbl: *){7}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[])
+!!!**fixcalc.ml#644:Input of fixcalc: 
+>> llN1:={[self,nnn_63] -> [] -> []: (0=0 && self<=0 && nnn_63=0) ||  exists (Anon_46,p_47: (self>0 && ll2(p_47)) && nnn_63=0)
+>> };
+>> bottomupgen([llN1], [1], SimHeur);fixcalc: bad mutual recursion detected :"ll2"
+
+Exception processed: Failure("nth")
+error at: 
+SLEEK FAILURE (END)
+
+======================
 # segmentation fault for size extension of mutual-rec views
+
+!!! **cformula.ml#9454:ls_bases:[( (* lbl: *){5}->emp&self=null&{FLOW,(1,26)=__flow#E}[],[])]
+!!! **cformula.ml#9455:ls_inds:[( (exists p_47,Anon_46: self::node<Anon_46,p_47>@M * p_47::ll2<>@M&
+{FLOW,(1,26)=__flow#E}[]),?,?)]
+!!! **cformula.ml#9456:ls_inds:[(?,[],[(p_47,1)])]
+!!! **cformula.ml#9460:7a
+!!! **cformula.ml#9463:7bSegmentation fault (core dumped)
 
 !!! **hipUtil.ml#75:**astsimp.ml#545:replace:(llN2,[])
 !!! **hipUtil.ml#200:invoking build_scc splitSegmentation fault (core dumped)

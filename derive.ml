@@ -206,7 +206,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   let () =  Debug.ninfo_hprint (add_str "   orig_view.Cast.view_data_name: " (pr_id )) orig_view.Cast.view_data_name pos in
   let self_sv = (CP.SpecVar (Named (orig_view.Cast.view_data_name),self, Unprimed)) in
   let pure_extn_svl = [self_sv] in
-  let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_view.Cast.view_name view_derv.Iast.view_name n_args ls_dname_pos  pure_extn_svl false true in
+  let (base_brs,ind_brs) = x_add CF.extract_abs_formula_branch fs orig_view.Cast.view_name view_derv.Iast.view_name n_args ls_dname_pos  pure_extn_svl false true in
   (*extend base cases*)
   let extn_base_brs = List.map (fun (p,val_svl)-> do_extend_base_case extn_ho_bs n_args val_svl p) base_brs in
   (*extend ind cases*)
@@ -426,7 +426,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   let ss = List.combine orig_view.Cast.view_vars spec_view.Cast.view_vars in
   let spec_fs = List.map (x_add CF.subst ss) orig_fs in
   let pure_extn_svl = [ (CP.SpecVar (Named (view_derv.Iast.view_data_name),self, Unprimed))] in
-  let (orig_b_brs,orig_ind_brs) = CF.extract_abs_formula_branch spec_fs orig_view.Cast.view_name view_derv.Iast.view_name spec_view.Cast.view_vars ls_dname_pos pure_extn_svl true true in
+  let (orig_b_brs,orig_ind_brs) = x_add CF.extract_abs_formula_branch spec_fs orig_view.Cast.view_name view_derv.Iast.view_name spec_view.Cast.view_vars ls_dname_pos pure_extn_svl true true in
   (* let orig_inv_p = (MCP.pure_of_mix spec_view.Cast.view_user_inv) in *)
   (* let (orig_brs, orig_val_extns) = CF.classify_formula_branch orig_fs orig_inv_p orig_view.Cast.view_name *)
   (*   orig_view.Cast.view_vars orig_view.Cast.view_prop_extns in *)
@@ -617,7 +617,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
   (* let old_flag = !Globals.do_infer_inv in *)
   (* let () = Globals.do_infer_inv := true in *)
   let () =  Debug.ninfo_hprint (add_str "orig_view_name" pr_id) orig_view_name no_pos in
-  let nc_view = trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.Cast.prog_view_decls der_view_dclr in
+  let nc_view = x_add_1 trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.Cast.prog_view_decls der_view_dclr in
   (* let () = Globals.do_infer_inv := old_flag in *)
   let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in
   (* let _ = cprog.Cast.prog_view_decls <- cprog.Cast.prog_view_decls@[nc_view] in *)

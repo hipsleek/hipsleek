@@ -451,7 +451,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
   let fs0 = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] orig_pred.CF.def_rhs in
   let fs = List.map (x_add CF.subst orig_ss) fs0 in
   let pure_extn_svl = CF.retrieve_args_from_locs orig_args ls_extn_pos in
-  let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_pred_name (CP.name_of_spec_var hp) n_args ls_dname_pos pure_extn_svl false false in
+  let (base_brs,ind_brs) = x_add CF.extract_abs_formula_branch fs orig_pred_name (CP.name_of_spec_var hp) n_args ls_dname_pos pure_extn_svl false false in
   (*extend base cases*)
   let extn_base_brs = List.map (fun (p,val_svl)-> do_extend_base_case extn_ho_bs n_args val_svl p) base_brs in
   (*extend ind cases*)
