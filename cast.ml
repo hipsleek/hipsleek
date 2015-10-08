@@ -1206,7 +1206,9 @@ let unmingle_name (m : ident) =
 
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
-  | [] -> raise Not_found
+  | [] ->
+    let () = report_warning no_pos ("Cannot find definition of view " ^ name) in 
+    raise Not_found
 
 let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in

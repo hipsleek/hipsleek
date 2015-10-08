@@ -18,10 +18,15 @@ ll<> == self = null
 	or self::node<_, q> * q::ll<> 
   inv true;
 
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0;
+
 HeapPred P(node x).
 
 int length(node x)
-  infer [P,@classic,@pure_field]
+  infer [P,@classic,@pure_field,@size]
   requires P(x)
    ensures true;
 /*
