@@ -76,9 +76,12 @@ void traverse (node_t* _head)
 void main ()
   /*@
     requires true
-    ensures false;
+    ensures true;
   */
 {
-  node_t* x = new_cll(0);
+  int n = abs(__VERIFIER_nondet_int());
+  node_t* x = new_cll(n + 1);
 }
+
+
 

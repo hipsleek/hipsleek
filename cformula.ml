@@ -378,6 +378,9 @@ let mk_HRel_as_view n args loc =
 
   }
 
+let mk_HRel_as_view_w_root n root args loc =
+  mk_HRel_as_view n (root::args) loc
+
 (* this will be set to TPdispatcher.simplify_omega later *)
 let simplify_omega = ref(fun (c:Cpure.formula) -> c)
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
@@ -5043,6 +5046,7 @@ let check_nbelongsto_vnode vn vn_names=
 
 let check_neq_hpargs id ls=
   not (Gen.BList.mem_eq check_hp_arg_eq id ls)
+
 
 (*check a data node belongs to a list of data node names*)
 let select_dnode dn1 dn_names=
@@ -19980,3 +19984,5 @@ let add_label_to_struc_formula s_f old_sf =
     end
   | _ -> s_f
 
+let eq_hprel_defn f1 f2 =
+  (f1.hprel_lhs = f2.hprel_lhs) && (f1.hprel_rhs = f2.hprel_rhs)  && (f1.hprel_guard = f2.hprel_guard)

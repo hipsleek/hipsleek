@@ -47,7 +47,7 @@ char* __VERIFIER_nondet_String(void)
 char *(cstrchr)(const char *s, int c)
   /*@
      requires s::WFS<m>
-     ensures res::char_star<0,q>*q::BADS<>
+     ensures res::char_star<0,_>
      or res::char_star<c, q>*q::WFS<n>;
   */
  {

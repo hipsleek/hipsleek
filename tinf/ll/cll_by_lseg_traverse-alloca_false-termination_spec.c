@@ -79,6 +79,10 @@ void main ()
     ensures false;
   */
 {
-  node_t* x = new_cll(0);
+  int n = abs(__VERIFIER_nondet_int());
+  node_t* x = new_cll(n + 1);
+  traverse(x);
 }
+
+
 

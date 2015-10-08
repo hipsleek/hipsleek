@@ -15,7 +15,9 @@ lemma_infer [P1,P2,@classic]
   self::zip2<ys,zs> -> P1(self)*P2(zs,ys).
 //pred_split [zip].
 
-//print residue.
+print residue.
+
+//print relAssumes.
 
 shape_derive_view [P1,P2].
 print views.

@@ -685,7 +685,7 @@ let check_view_split_global_x iprog prog cands =
     (*add rel decl in iprog*)
     let ihp_decl = { Iast.hp_name = CP.name_of_spec_var new_hp_sv;
                       Iast.hp_typed_inst_vars = List.map (fun (CP.SpecVar (t,id,_), i) -> (t,id,i)) args1;
-                      Iast.hp_root_pos = 0;
+                      Iast.hp_root_pos = None;
                       Iast.hp_part_vars = [];
                       Iast.hp_is_pre = false;
                       Iast.hp_formula = Iformula.mkTrue_nf pos;

@@ -1011,8 +1011,58 @@ lemma_infer[P1,P2,@classic]
 !!! **syn.ml#687:Cannot transform the hprels of [P1] into view declarations.
 !!! **sleekengine.ml#3095:
 ==================================================================
+# ex17a.slk
+
+lemma_test self::wseg<q>*q::char_star<0,r>
+           ->
+    self::seg<pp>*pp::char_star<0,rr>.
+
+# no residue. is it cos lemma proving is not delayed?
+
+# can more general complex lemma be now handled?
+
+ Lemma infer proved succeeded in current context.
+: no residue 
+
 ===================================================================
+# ex25a1.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+
+# add_uni_vars_to_view@5 EXIT ExceptionStack overflowOccurred!
+
+# contains a loop in above method
+# this seems unrelated to shape_extends_view
+
+Starting Omega.../usr/local/bin/oc
+Exception(add_uni_vars_to_view):Stack overflow
+
+Exception processed: Stack overflow
+error at: 
 ===================================================================
+# ex25a2.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+
+shape_extends_view [ll] with size.
+
+WARNING: _0:0_0:0:Cannot extend the View_EXTN size
+Segmentation fault (core dumped)
+
 ===================================================================
 ===================================================================
 ===================================================================

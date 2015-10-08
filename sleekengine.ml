@@ -1773,6 +1773,9 @@ let process_pred_elim_head (ids: regex_id_list) =
 let process_pred_unify_disj (ids: regex_id_list) = 
   process_sleek_norm_preds "Unify Disj" ids (Syn.unify_disj_pred_list iprog !cprog)
 
+let process_shape_extn_view (ids: regex_id_list) (extn: ident) =
+  process_sleek_norm_preds "Pred Extension" ids (Syn.extn_pred_list iprog !cprog extn)
+
 (******************************************************************************)
 
 let relation_pre_process constrs pre_hps post_hps=
@@ -3070,6 +3073,7 @@ let process_print_command pcmd0 =
       }in
     let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
+  (* type: (Globals.ident * bool) Globals.regex_list option *)
   | PCmd (pcmd,opt) ->
     if pcmd = "lemmas" then
       Lem_store.all_lemma # dump
@@ -3089,12 +3093,15 @@ let process_print_command pcmd0 =
       (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
       (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
     else if pcmd = "views" then
-      let () = HipUtil.view_scc_obj # build_scc_void 15 in
+      let () = HipUtil.view_scc_obj # build_scc_void x_loc in
       let view_list =  get_sorted_view_decls () (* !cprog.prog_view_decls *) in
       let view_list = Cast.get_selected_views opt view_list in
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
       let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
-      y_binfo_hp (add_str "Printing Views\n" (pr_list Cprinter.string_of_view_decl_short)) lst
+      let pr (a,f) = if f then a^"*" else a in
+      let opt_str = (match opt with None -> ""
+                                 | Some lst -> string_of_regex_list pr lst) in
+      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
     else
       print_string (x_loc^"unsupported print command: " ^ pcmd)
 

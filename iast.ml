@@ -163,7 +163,7 @@ and hp_decl = { hp_name : ident;
                 (* rel_labels : branch_label list; *)
                 mutable hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
                 hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
-                mutable hp_root_pos: int;
+                mutable hp_root_pos: int option;
                 hp_is_pre : bool;
                 hp_formula : Iformula.formula ;
                 (* try_case_inference: bool *)
@@ -1284,7 +1284,7 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
-let mk_hp_decl_0 ?(is_pre=true) ?(view_d=None) id tl (root_pos:int) parts body =
+let mk_hp_decl_0 ?(is_pre=true) ?(view_d=None) id tl (root_pos:int option) parts body =
      {
         hp_name = id;
         hp_typed_inst_vars = tl;
@@ -1453,7 +1453,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
               (arg.param_type, arg.param_name, in_info)
             ) args;
           hp_part_vars = [];
-          hp_root_pos = 0;
+          hp_root_pos = None;
           hp_is_pre = true;
           hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
           (* hp_view = None *)
@@ -1494,7 +1494,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
                 (* | _ -> [(ret, res_name, Globals.I)] *)
               );
           hp_part_vars = [];
-          hp_root_pos = 0;
+          hp_root_pos = None;
           hp_is_pre = false;
           (* hp_view = None; *)
           hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;}
