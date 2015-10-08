@@ -395,6 +395,12 @@ let norm_reuse_subs iprog cprog vdefs to_vns =
       ()
     ) to_decls
 
+let norm_reuse_subs iprog cprog vdefs to_vns =
+  let pr1 = pr_list Cprinter.string_of_view_decl_short in
+  let pr2 = pr_list idf in
+  Debug.no_2 "norm_reuse_subs" pr1 pr2 (fun () -> pr1 cprog.C.prog_view_decls)
+    (fun _ _ -> norm_reuse_subs iprog cprog vdefs to_vns) vdefs to_vns
+
 (* to be invoked after reuse to maintain transitivity of equiv *)
 (* assumes vdefs in topo sorted order *)
 let norm_trans_equiv iprog cprog vdefs =
@@ -455,7 +461,7 @@ let norm_trans_equiv iprog cprog vdefs =
 (*
  assume frm_vns and to_vns are topo sorted
 *)
-let norm_reuse iprog cprog vdefs frm_vns to_vns=
+let norm_reuse iprog cprog vdefs frm_vns to_vns =
   (*filter vdefs to keep order*)
   let () = y_tinfo_hp (add_str "norm_reuse (from_vns)" (pr_list pr_id)) frm_vns in
   let () = y_tinfo_hp (add_str "norm_reuse (to_vns)" (pr_list pr_id)) to_vns in
@@ -481,7 +487,7 @@ let norm_reuse iprog cprog vdefs frm_vns to_vns=
 let regex_search reg_id vdefs =
   match reg_id with
     | REGEX_LIST ids -> ids
-    | REGEX_STAR -> 
+    | REGEX_STAR ->
       let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
       all_ids
 

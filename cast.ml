@@ -4035,6 +4035,11 @@ let sort_view_list vlist =
       sort_gen_list score vlist
     end
 
+let get_sorted_view_decls prog =
+  let vdefs = sort_view_list prog.prog_view_decls in
+  prog.prog_view_decls <- vdefs;
+  vdefs
+
 (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
 let repl_unfold_lemma u_lst lem =
   let body = lem.coercion_body in

@@ -1,11 +1,11 @@
 data node{
-     int val;
-     node next#REC;
+  int val;
+  node next#REC;  
 }.
 
 pred ll<> ==
    emp & self=null
-or self::node<_,p>*p::ll<>.
+or self::node<_, p>*p::ll<>.
 
 pred lseg<p> ==
   emp & self=p 
