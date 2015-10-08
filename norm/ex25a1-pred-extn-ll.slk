@@ -11,12 +11,14 @@ pred ll2<> ==
    emp & self=null
 or self::node<_,p>*p::ll<>.
 
+/*
 pred_extn size[R]<k> ==
    k=0 // base case
    or R::size<i> & k=1+i // recursive case
    inv k>=0.
+*/
 
-print views.
+//print views.
 
 //pred llN<nnn> == extends ll<> with size[REC]<nnn>.
 

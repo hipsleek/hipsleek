@@ -906,6 +906,10 @@ let elim_head_pred_list iprog cprog preds =
 let elim_tail_pred_list iprog cprog preds =
   norm_pred_list (elim_tail_pred iprog cprog) preds
 
+(*********************)
+(***** PRED EXTN *****)
+(*********************)
+
 let extn_norm_pred iprog cprog extn_pred norm_pred =
   let norm_ipred = I.look_up_view_def_raw 21 iprog.I.prog_view_decls norm_pred.C.view_name in
   let extn_view_name = "extn_" ^ norm_ipred.I.view_name in
@@ -929,20 +933,22 @@ let extn_norm_pred_list iprog cprog extn_pred norm_preds =
   List.map (fun pred -> extn_norm_pred iprog cprog extn_pred pred) norm_preds
 
 let extn_pred_list iprog cprog extn preds =
-  let extn_pred = C.look_up_view_def_raw 20 cprog.C.prog_view_decls extn in
-  match extn_pred.C.view_kind with
-  | View_EXTN -> 
-    let norm_preds = List.fold_left (fun acc pred ->
-      match pred.C.view_kind with
-      | View_NORM -> acc @ [pred]
-      | k -> 
-        let () = report_warning no_pos (
-          "Cannot extend the " ^ (string_of_view_kind k) ^
-          " " ^ pred.C.view_name)
-        in acc) [] preds 
-    in
-    extn_norm_pred_list iprog cprog extn_pred norm_preds
-  | _ -> failwith (extn ^ " is not a View_EXTN")
+  try
+    let extn_pred = C.look_up_view_def_raw 20 cprog.C.prog_view_decls extn in
+    match extn_pred.C.view_kind with
+    | View_EXTN -> 
+      let norm_preds = List.fold_left (fun acc pred ->
+        match pred.C.view_kind with
+        | View_NORM -> acc @ [pred]
+        | k -> 
+          let () = report_warning no_pos (
+            "Cannot extend the " ^ (string_of_view_kind k) ^
+            " " ^ pred.C.view_name)
+          in acc) [] preds 
+      in
+      extn_norm_pred_list iprog cprog extn_pred norm_preds
+    | _ -> failwith (extn ^ " is not a View_EXTN")
+  with Not_found -> failwith ("Cannot find the View_EXTN " ^ extn)
 
 (*********************************)
 (***** COMBINE DISJ BRANCHES *****)
