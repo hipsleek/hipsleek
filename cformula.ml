@@ -19991,9 +19991,49 @@ let add_label_to_struc_formula s_f old_sf =
 
 let is_sat_raw = Mcpure.is_sat_raw
 
-let complex_unfold unfold_set1 f =
+let complex_unfold (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
   let () = y_binfo_pp "insider complex fold" in
-  f
+  let pure_of_f = get_pure f in
+  let () = y_binfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
+
+  (* try to replace views if the corresponding list of formulae in unfold_set1
+   * has only 1 satisfiable formula *)
+  let f_h_f _ hf =
+    match hf with
+    | ViewNode ({ h_formula_view_node = vsv; h_formula_view_name = vname; } as v)
+      (* can only unfold on self *)
+      when string_eq "self" (CP.name_of_spec_var vsv) ->
+        (let () = y_binfo_hp (add_str "transform .. view node" !CP.print_sv) vsv in
+         let () = y_binfo_hp (add_str "transform .. view name" pr_id) vname in
+         (* formulae for view name *)
+         try
+           let (_,_,fl) = List.find (fun (id,_,_) -> string_eq id vname) unfold_set1 in
+           let sat_fl = List.filter (fun unf_f ->
+             let unf_pure_f = get_pure unf_f in
+             let conj = (CP.mkAnd pure_of_f unf_pure_f no_pos) in
+             let () = y_binfo_hp (add_str "transform .. check sat" !CP.print_formula) conj in
+             !is_sat_raw (MCP.mix_of_pure conj)) fl in
+           let () = y_binfo_hp (add_str "transform .. sat fl" (pr_list !print_formula)) sat_fl in
+           (match sat_fl with
+            (* if we match with none, we *could* replace with false *)
+            | [] -> None
+            (* if we have only one satisfiable formula, use that here *)
+            | [replace_f] ->
+              (* todo: if we need to replace with h_formula, but have
+               * replace_f : formula, so how?? *)
+              None
+            | _ -> None)
+         with
+           Not_found -> None)
+    | _ -> None
+  in
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_trans = (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) in
+  let f_arg = voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2 in
+  let (nf, _) = trans_formula f () f_trans f_arg List.concat in
+  nf
 
 let complex_unfold (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
   let pr_f = !print_formula in
