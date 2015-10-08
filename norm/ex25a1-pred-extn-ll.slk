@@ -53,4 +53,10 @@ Exception processed: Stack overflow
 error at: 
 
 
+pls2nus@loris-laptop:~/hg/sl_imm$ hg bisect -g
+Testing changeset 17207:b840ac680abf (89 changesets remaining, ~6 tests)
+104 files updated, 0 files merged, 0 files removed, 0 files unresolved
+pls2nus@loris-laptop:~/hg/sl_imm$ 
+
+% OCAMLRUNPARAM="b" ./ab
 */
