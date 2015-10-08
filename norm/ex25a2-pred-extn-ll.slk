@@ -22,9 +22,9 @@ print views.
 
 //pred lsegN<p,n> == extends lseg<p> with size[REC]<n>.
 
-shape_extends_view [*] with size.
+//shape_extends_view [*] with size.
 
-//shape_extends_view [ll] with size.
+shape_extends_view [ll] with size.
 
 print views.
 

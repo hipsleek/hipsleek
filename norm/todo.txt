@@ -1047,6 +1047,22 @@ Exception(add_uni_vars_to_view):Stack overflow
 Exception processed: Stack overflow
 error at: 
 ===================================================================
+# ex25a2.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+
+shape_extends_view [ll] with size.
+
+WARNING: _0:0_0:0:Cannot extend the View_EXTN size
+Segmentation fault (core dumped)
+
 ===================================================================
 ===================================================================
 ===================================================================
