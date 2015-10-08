@@ -1064,7 +1064,44 @@ WARNING: _0:0_0:0:Cannot extend the View_EXTN size
 Segmentation fault (core dumped)
 
 ===================================================================
+# ex20a1.ss --pred-en-equiv
+
+# please schedule pred-reuse when below turned on
+
+  ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
+
+
+# compare --ops (old predicate synthesis)
+
+ EInfer @pure_field,@leak[P]
+   EBase 
+     x::ll<>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]Stop z3... 108 invocations 
 ===================================================================
+# ex20b.ss
+
+  infer [P1,@classic,@pure_field]
+  requires x::ll<>
+  //ensures P(x,res);
+  ensures P1(x);
+
+# below will need the complex unfolding that Richard is currently doing
+
+[ view P1<>= 
+  EList
+    :EBase 
+       exists (Impl)[q_1631](* lbl: *){285}->(exists Anon_1630: (* lbl: *){285}->
+       self::node<Anon_1630,q_1631>@M * q_1631::P1<>@M&self!=null&
+       {FLOW,(1,28)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){286}->self::ll<>@M&self=null&{FLOW,(1,28)=__flow#E}[]
+    ]
+
 ===================================================================
 ===================================================================
 ===================================================================
