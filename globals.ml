@@ -2540,5 +2540,6 @@ let string_of_regex_list pr m =
   | REGEX_STAR -> "*"
   | REGEX_LIST lst -> pr_list pr lst
 
+type regex_id_star_list = (ident * bool) regex_list
 
-
+let string_of_regex_star_list m = string_of_regex_list (fun (i,b) -> i^(if b then "*" else "")) m

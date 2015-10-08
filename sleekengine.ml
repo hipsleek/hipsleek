@@ -1744,6 +1744,11 @@ let process_shape_derive_view (ids: regex_id_list) =
   in
   process_sleek_hprel_assumes_others "Deriving Views" ids f
 
+let process_data_mark_rec (ids: regex_id_star_list) =
+  let () = y_binfo_hp (add_str "dmr args" string_of_regex_star_list) ids in
+  Norm.find_rec_data !cprog ids
+  (* in failwith x_tbi *)
+
 let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
     let new_hprels = Syn.derive_view_norm !cprog others hps in

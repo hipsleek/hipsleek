@@ -130,6 +130,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeDeriveView ids -> process_shape_derive_view ids
     | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
     | ShapeNormalize ids -> process_shape_normalize ids
+    | DataMarkRec ids -> process_data_mark_rec ids 
     | PredElimHead ids -> process_pred_elim_head ids
     | PredElimTail ids -> process_pred_elim_tail ids
     | PredUnifyDisj ids -> process_pred_unify_disj ids

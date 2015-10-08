@@ -1044,6 +1044,7 @@ non_empty_command:
       | t = shape_derive_post_cmd -> ShapeDerivePost t
       | t = shape_derive_view_cmd -> ShapeDeriveView t
       | t = shape_extn_view_cmd -> ShapeExtnView t
+      | t = data_mark_rec_cmd -> DataMarkRec t
       | t = shape_normalize_cmd -> ShapeNormalize t
       | t = pred_elim_head_cmd -> PredElimHead t
       | t = pred_elim_tail_cmd -> PredElimTail t
@@ -2641,6 +2642,11 @@ selective_id_star_list_bracket:
   [[ `OSQUARE;il1= shape_selective_id_star_list;`CSQUARE -> il1
   ]];
 
+data_mark_rec_cmd:
+  [[ `DATA_MARK_REC; `OSQUARE; il=shape_selective_id_star_list; `CSQUARE
+     ->  il
+  ]];
+
 shape_add_dangling_cmd:
   [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
@@ -2696,6 +2702,7 @@ shape_normalize_cmd:
   [[ `SHAPE_NORMALIZE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
   ]];
+
 
 pred_elim_head_cmd:
   [[ `PRED_ELIM_HEAD; `OSQUARE; il=shape_selective_id_list; `CSQUARE

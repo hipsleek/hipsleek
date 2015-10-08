@@ -1,6 +1,6 @@
 data node{
      int val;
-     node next; //#REC;
+     node1 next; //#REC;
 }.
 
 data node1{
@@ -13,7 +13,7 @@ data cell{
      int val;
 }.
 
-data_mark_rec [*].
+data_mark_rec [cell*].
 
 
 /*
@@ -22,7 +22,7 @@ data_mark_rec [*].
 # Can we mark the mutual recursive fields of data nodes
   with #REC. This is needed for size extension of ex25a.slk
 
-   data_mark_rec [*].
+   data_mark_rec [cell*].
 
 This command will process all data_decl and then mark the recursive
 fields with  #REC
