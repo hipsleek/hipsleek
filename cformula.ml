@@ -19993,4 +19993,9 @@ let is_sat_raw = Mcpure.is_sat_raw
 
 let complex_unfold unfold_set1 f =
   let () = y_binfo_pp "insider complex fold" in
-  failwith "TBI"
+  f
+
+let complex_unfold (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
+  let pr_f = !print_formula in
+  let pr1 = pr_list (pr_triple pr_id (pr_list !print_spec_var) (pr_list pr_f)) in
+  Debug.no_2 "complex_unfold" pr1 pr_f pr_f complex_unfold unfold_set1 f
