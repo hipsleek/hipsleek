@@ -353,7 +353,8 @@ let norm_complex_unfold iprog cprog
     let ans = List.map (fun vd -> (vd,uses_unfold_set1 vd.C.view_un_struc_formula)) vdefs in
     let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
     List.iter (fun (v,unf_lst) -> (* transform body of views *)
-        let fn = CF.complex_unfold unf_lst in
+        let vn = v.C.view_name in
+        let fn = CF.complex_unfold vn unf_lst in
         let () = C.update_un_struc_formula fn v in
         let view_body_lbl = v.C.view_un_struc_formula in
         let old_sf = v.C.view_formula in

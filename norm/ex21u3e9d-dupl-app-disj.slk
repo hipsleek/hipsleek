@@ -15,6 +15,11 @@ pred ll3<> == self=null
     or self::node<_,q>*q::tmp<> & self!=null
  inv true.
 
+pred ll<> == self=null
+    or self::node<_,q>*q::ll<>
+ inv true.
+
+print views.
 pred_unfold disj[*].
 print views.
 
