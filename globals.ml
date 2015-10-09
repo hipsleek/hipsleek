@@ -582,6 +582,8 @@ let pr_list f xs = pr_list_brk "[" "]" f xs
 let pr_list_angle f xs = pr_list_brk "<" ">" f xs
 let pr_list_round f xs = pr_list_brk "(" ")" f xs
 
+let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
+
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
@@ -1572,6 +1574,28 @@ type infer_extn = {
   mutable extn_props: ident list;
 }
 
+let string_of_infer_extn extn = 
+  pr_pair idf (pr_list idf) (extn.extn_pred, extn.extn_props)
+
+let mk_infer_extn id props = {
+  extn_pred = id;
+  extn_props = props; }
+
+let add_avai_infer_extn_lst lst extn =
+  try
+    let pred, props = extn.extn_pred, extn.extn_props in
+    let pred_extn = List.find (fun extn -> eq_str extn.extn_pred pred) lst in
+    let () = pred_extn.extn_props <- (pred_extn.extn_props @ props) in
+    lst
+  with _ -> lst @ [extn]
+
+let rec merge_infer_extn_lsts lsts = 
+  match lsts with
+  | [] -> []
+  | l::ls ->
+    let merged_ls = merge_infer_extn_lsts ls in
+    List.fold_left (fun lst extn -> add_avai_infer_extn_lst lst extn) merged_ls l 
+
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_TERM_WO_POST (* For infer[@term_wo_post] *)
@@ -1639,7 +1663,7 @@ let string_of_inf_const x =
   | INF_VER_POST -> "@ver_post"
   | INF_IMM_PRE -> "@imm_pre"
   | INF_IMM_POST -> "@imm_post"
-  | INF_EXTN _ -> "@extn"
+  | INF_EXTN lst -> "@extn" ^ (pr_list string_of_infer_extn lst)
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1826,22 +1850,14 @@ class inf_obj  =
       with _ -> []
     method add_infer_extn_lst pred props = 
       let rec helper inf_obj_lst pred props =
+        let inf_extn = mk_infer_extn pred props in
         match inf_obj_lst with
-        | [] -> 
-          let inf_extn = { extn_pred = pred; extn_props = props; } in
-          [(INF_EXTN [inf_extn])]
+        | [] -> [(INF_EXTN [inf_extn])]
         | inf::infs ->
           (begin match inf with
           | INF_EXTN lst ->
-            begin try
-              let pred_extn = List.find (fun extn -> eq_str extn.extn_pred pred) lst in
-              let () = pred_extn.extn_props <- (pred_extn.extn_props @ props) in
-              inf::infs
-            with _ ->
-              let inf_extn = { extn_pred = pred; extn_props = props; } in
-              let n_lst = lst @ [inf_extn] in
-              (INF_EXTN n_lst)::infs
-            end
+            let n_lst = add_avai_infer_extn_lst lst inf_extn in
+            (INF_EXTN n_lst)::infs
           | _ -> inf::(helper infs pred props)
           end)
       in

@@ -130,10 +130,18 @@ let hp_names = new Gen.stack (* list of names of heap preds declared *)
 
 let  conv_ivars_icmd il_w_itype =
   let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
-  let (i_consts,ivl) = List.fold_left
-      (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
-                                         | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
+  let (i_consts,ivl,extn_lst) = List.fold_left
+      (fun (lst_l,lst_r,lst_e) e -> 
+        match e with 
+        | FstAns l ->
+          (begin match l with
+          | INF_EXTN lst -> (lst_l,lst_r,lst::lst_e)
+          | _ -> (l::lst_l,lst_r,lst_e)
+          end)
+        | SndAns r -> (lst_l,r::lst_r,lst_e)) ([],[],[]) il_w_itype in
   let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+  let infer_extn_lst = merge_infer_extn_lsts (List.rev extn_lst) in
+  let i_consts = if is_empty infer_extn_lst then i_consts else i_consts @ [INF_EXTN infer_extn_lst] in
   let () = inf_o # set_list i_consts in 
   (inf_o,i_consts,ivl)
 
@@ -2744,11 +2752,26 @@ infer_type:
    ]];
 
 infer_id:
-    [[ t = infer_type -> FstAns t
-      | `IDENTIFIER id -> SndAns id  ]];
+  [[ t = infer_type -> [FstAns t]
+   | `IDENTIFIER id; t = OPT infer_extn_for_id -> 
+      match t with
+      | None -> [SndAns id]
+      | Some props ->
+        let inf_extn = mk_infer_extn id props in 
+        let inf_extn_obj = INF_EXTN [inf_extn] in
+        [SndAns id; FstAns inf_extn_obj]
+  ]];
+
+infer_extn_prop:
+  [[ `IDENTIFIER prop -> prop ]];
+
+infer_extn_for_id:
+  [[ `HASH; prop = infer_extn_prop -> [prop]
+   | `HASH; `OBRACE; lst = LIST1 infer_extn_prop SEP `COMMA; `CBRACE -> lst
+  ]];
 
 infer_type_list:
-    [[ itl = LIST0 infer_id SEP `COMMA -> itl ]];
+    [[ itl = LIST0 infer_id SEP `COMMA -> List.concat itl ]];
 
 (* id_list_w_sqr:                                                     *)
 (*     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]]; *)
