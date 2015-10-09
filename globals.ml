@@ -1567,6 +1567,11 @@ let nondet_int_rel_name = "nondet_int__"
 
 let hip_sleek_keywords = ["res"]
 
+type infer_extn = {
+  extn_pred: ident;
+  mutable extn_props: ident list;
+}
+
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_TERM_WO_POST (* For infer[@term_wo_post] *)
@@ -1595,6 +1600,7 @@ type infer_type =
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
   | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
+  | INF_EXTN of infer_extn list
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1633,6 +1639,7 @@ let string_of_inf_const x =
   | INF_VER_POST -> "@ver_post"
   | INF_IMM_PRE -> "@imm_pre"
   | INF_IMM_POST -> "@imm_post"
+  | INF_EXTN _ -> "@extn"
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1806,6 +1813,39 @@ class inf_obj  =
     method is_classic  = self # get INF_CLASSIC
     method is_par  = self # get INF_PAR
     method is_add_flow  = self # get INF_FLOW
+    method is_extn = 
+      List.exists (fun inf -> 
+        match inf with | INF_EXTN _ -> true | _ -> false) arr
+    method get_infer_extn_lst = 
+      try
+        let inf_extn = List.find (fun inf ->
+          match inf with | INF_EXTN _ -> true | _ -> false) arr in
+        match inf_extn with
+        | INF_EXTN lst -> lst
+        | _ -> []
+      with _ -> []
+    method add_infer_extn_lst pred props = 
+      let rec helper inf_obj_lst pred props =
+        match inf_obj_lst with
+        | [] -> 
+          let inf_extn = { extn_pred = pred; extn_props = props; } in
+          [(INF_EXTN [inf_extn])]
+        | inf::infs ->
+          (begin match inf with
+          | INF_EXTN lst ->
+            begin try
+              let pred_extn = List.find (fun extn -> eq_str extn.extn_pred pred) lst in
+              let () = pred_extn.extn_props <- (pred_extn.extn_props @ props) in
+              inf::infs
+            with _ ->
+              let inf_extn = { extn_pred = pred; extn_props = props; } in
+              let n_lst = lst @ [inf_extn] in
+              (INF_EXTN n_lst)::infs
+            end
+          | _ -> inf::(helper infs pred props)
+          end)
+      in
+      arr <- (helper arr pred props)
     (* method get_arr  = arr *)
     method is_infer_type t  = self # get t
     method get_lst = arr
