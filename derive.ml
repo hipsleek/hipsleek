@@ -497,42 +497,52 @@ let do_sanity_check derv =
   else ()
 
 let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
-      (cviews (*orig _extn*): Cast.view_decl list) derv : Cast.view_decl =
+    (cviews (*orig _extn*): Cast.view_decl list) derv : Cast.view_decl =
   let () = do_sanity_check derv in
   let old_flag = !Globals.do_infer_inv in
   let () = Globals.do_infer_inv := true in
   let res =
-  match derv.Iast.view_derv_info with
-  | [] -> 
-    let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
-    let () = y_binfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.Cast.view_name)))  cviews in
-    let () = y_binfo_hp (add_str "view_name" pr_id)  derv.Iast.view_name in
-    let () = y_binfo_hp (add_str "view_from" (pr_option (string_of_regex_list (pr_pair pr_id string_of_bool))))  derv.Iast.view_derv_from in
-    failwith x_tbi
-    (* report_error no_pos (x_loc^"astsimp.trans_view_dervs: 1") *)
-  | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
-    let der_view(*,s*) =
-      let extn_view = x_add Cast.look_up_view_def_raw 51 cviews extn_view_name in
-      if extn_view.Cast.view_kind = View_SPEC then
-        let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
-        (der_view(*,("************VIEW_SPECIFIED*************")*))
-      else
-        let _,der_view = trans_view_one_derv prog rev_form_fnc trans_view_fnc lower_map_views
-            cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
-        let iderv_view = Iast.look_up_view_def_raw 53 prog.Iast.prog_view_decls derv.Iast.view_name in
-        let () = iderv_view.Iast.view_data_name <- der_view.Cast.view_data_name in
-        let () = iderv_view.Iast.view_derv <- false in
-        (der_view(*,("************VIEW_DERIVED*************")*))
-    in
-    (* let () = *)
-    (*      if !debug_derive_flag then *)
-    (*        let () =  print_endline s in *)
-    (*        let () =  print_endline (Cprinter.string_of_view_decl_short der_view)  in *)
-    (*        () *)
-    (*      else () *)
-    (* in *)
-    der_view
-  | _ -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: not handle yet")
+    match derv.Iast.view_derv_info with
+    | [] ->
+      begin
+        match derv.Iast.view_derv_from with
+        | Some rgx ->
+          let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
+          let scc = HipUtil.view_scc_obj # get_scc in
+          let () = y_binfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.Cast.view_name)))  cviews in
+          let () = y_binfo_hp (add_str "view_name" pr_id)  derv.Iast.view_name in
+          let () = y_binfo_hp (add_str "derv_from" (string_of_regex_list (pr_pair pr_id string_of_bool)))  rgx in
+          let pr = pr_list pr_id in
+          let () = y_binfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) derv.Iast.view_derv_extns in
+          let sel = List.map (fun mr -> List.filter (fun e -> true) mr) scc in
+          let () = y_binfo_hp (add_str "scc selected" (pr_list (pr_list pr_id))) scc in
+          failwith x_tbi
+        | None ->
+          report_error no_pos (x_loc^"astsimp.trans_view_dervs: (unknown command)")
+      end
+    | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
+      let der_view(*,s*) =
+        let extn_view = x_add Cast.look_up_view_def_raw 51 cviews extn_view_name in
+        if extn_view.Cast.view_kind = View_SPEC then
+          let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
+          (der_view(*,("************VIEW_SPECIFIED*************")*))
+        else
+          let _,der_view = trans_view_one_derv prog rev_form_fnc trans_view_fnc lower_map_views
+              cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
+          let iderv_view = Iast.look_up_view_def_raw 53 prog.Iast.prog_view_decls derv.Iast.view_name in
+          let () = iderv_view.Iast.view_data_name <- der_view.Cast.view_data_name in
+          let () = iderv_view.Iast.view_derv <- false in
+          (der_view(*,("************VIEW_DERIVED*************")*))
+      in
+      (* let () = *)
+      (*      if !debug_derive_flag then *)
+      (*        let () =  print_endline s in *)
+      (*        let () =  print_endline (Cprinter.string_of_view_decl_short der_view)  in *)
+      (*        () *)
+      (*      else () *)
+      (* in *)
+      der_view
+    | _ -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: not handle yet")
   in
   let () = Globals.do_infer_inv := old_flag in
   res
