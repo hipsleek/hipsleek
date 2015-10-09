@@ -2541,4 +2541,5 @@ let string_of_regex_list pr m =
   | REGEX_LIST lst -> pr_list pr lst
 
 
+type regex_id_star_list = (ident * bool) regex_list
 

@@ -10287,7 +10287,13 @@ and mark_rec_and_der_order (views: I.view_decl list) : (I.view_decl) list =
 
 and mark_der_order_x (views: I.view_decl list) scc_list cg : (int*I.view_decl) list=
   let _, fscc = I.IGC.scc cg in
-  let odered_views = List.map (fun v -> (fscc v.I.view_name, v)) views in
+  let odered_views = List.map (fun v -> 
+      try 
+        (fscc v.I.view_name, v)
+      with e -> 
+        let () = y_binfo_pp "..Not Found exc" in
+        (0,v)
+    ) views in
   odered_views
 
 and mark_der_order (views: I.view_decl list) scc_list cg : (int*I.view_decl) list =

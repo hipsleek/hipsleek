@@ -485,12 +485,14 @@ let trans_view_one_spec (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.vi
   let pr_r = Cprinter.string_of_view_decl in
   Debug.no_1 "trans_view_one_spec" pr pr_r  (fun _ -> trans_view_one_spec_x prog cviews derv view_spec) view_spec
 
-let do_sanity_check derv=
+let do_sanity_check derv =
   let derv_args = derv.Iast.view_vars in
   let all_extn_args = List.concat (List.map (fun ((_,orig_args),(_,_,extn_args)) -> orig_args@extn_args) derv.Iast.view_derv_info) in
+  let all_extn_args2 = List.concat (List.map (fun (_,_,extn_args) -> extn_args) derv.Iast.view_derv_extns) in
+  let all_extn_args = all_extn_args@all_extn_args2 in
   let diff = Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 =0) derv_args all_extn_args in
   if diff <> [] then
-    report_error no_pos ("in view_extn: " ^ derv.Iast.view_name ^ ", args: " ^
+    report_error no_pos (x_loc^"in view_extn: " ^ derv.Iast.view_name ^ ", args: " ^
                          (String.concat ", " diff) ^ " are not declared.")
   else ()
 
@@ -501,7 +503,13 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower
   let () = Globals.do_infer_inv := true in
   let res =
   match derv.Iast.view_derv_info with
-  | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
+  | [] -> 
+    let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
+    let () = y_binfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.Cast.view_name)))  cviews in
+    let () = y_binfo_hp (add_str "view_name" pr_id)  derv.Iast.view_name in
+    let () = y_binfo_hp (add_str "view_from" (pr_option (string_of_regex_list (pr_pair pr_id string_of_bool))))  derv.Iast.view_derv_from in
+    failwith x_tbi
+    (* report_error no_pos (x_loc^"astsimp.trans_view_dervs: 1") *)
   | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
     let der_view(*,s*) =
       let extn_view = x_add Cast.look_up_view_def_raw 51 cviews extn_view_name in
@@ -524,7 +532,7 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower
     (*      else () *)
     (* in *)
     der_view
-  | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
+  | _ -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: not handle yet")
   in
   let () = Globals.do_infer_inv := old_flag in
   res
@@ -584,7 +592,8 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
   let extn_args = [n_arg] in
   let vars = iview_dclr.Iast.view_vars@extn_args in
   let extn_targs = [(Int,n_arg)] in
-  let der_view_dclr = { Iast.view_name = iview_dclr.Iast.view_name ^"_"^extn_view.Cast.view_name;
+  let der_view_dclr = 
+    { Iast.view_name = iview_dclr.Iast.view_name ^"_"^extn_view.Cast.view_name;
           Iast.view_pos = no_pos;
           Iast.view_data_name = "";
           view_type_of_self = None;
@@ -592,6 +601,8 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
           Iast.view_vars = vars;
           Iast.view_ho_vars = []; 
           Iast.view_derv = true;
+          Iast.view_derv_from = None;
+          Iast.view_derv_extns = [];
           Iast.view_parent_name = None;
           Iast.view_labels =  List.map (fun _ ->  Label_only.LOne.unlabelled) vars,false;
           Iast.view_modes = iview_dclr.Iast.view_modes;

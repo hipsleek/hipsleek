@@ -482,7 +482,7 @@ let extend_pred_one_derv (prog : I.prog_decl) cprog hp_defs hp args extn_info =
 let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
   (* let () = do_sanity_check derv_info in *)
   match derv_info with
-  | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
+  | [] -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: 1")
   | [((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss)] ->
     let der_view(*,s*) =
       (* let extn_view = x_add Cast.look_up_view_def_raw 46 cprog.Cast.prog_view_decls extn_view_name in *)
@@ -494,7 +494,7 @@ let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
       (der_view(*,("************VIEW_DERIVED*************")*))
     in
     der_view
-  | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
+  | _ -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: not handle yet")
 
 
 let extend_pred_dervs (prog : I.prog_decl) cprog hp_defs hp args derv_info =
