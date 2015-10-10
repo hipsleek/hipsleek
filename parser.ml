@@ -1213,9 +1213,23 @@ view_decl:
               view_inv_lock = li;
               try_case_inference = (snd vb) }
     |  vh = view_header; `EQEQ; `EXTENDS; orig_v = derv_view; `WITH ; extn = prop_extn ->
-           { vh with view_derv = true;
+      let vd = { vh with view_derv = true;
                view_derv_info = [(orig_v,extn)];
                view_kind = View_DERV;
+           } in
+      if !Globals.old_pred_extn then vd
+      else 
+        (* let (id,_) = orig_v in *)
+        { vd with 
+              view_derv_from = Some (REGEX_LIST [(fst(orig_v),true)]); (* views for extension *)
+              view_derv_extns = [extn]; (* features of expension *)
+            }
+    |  vh = view_header; `EQEQ; `EXTENDS; orig_v = selective_id_star_list_bracket; `WITH ; extn = prop_extn ->
+           { vh with view_derv = true;
+               (* view_derv_info = [(orig_v,extn)]; *)
+               view_kind = View_DERV;
+               view_derv_from = Some orig_v; (* views for extension *)
+               view_derv_extns = [extn]; (* features of expension *)
            }
  ]];
 
@@ -1438,46 +1452,14 @@ branch: [[ `STRING (_,id);`COLON ->
 
 view_header:
   [[ `IDENTIFIER vn; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
-      let cids, anns = List.split l in
-      let cids_t, br_labels = List.split cids in
-	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
-      (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
-      let _, cids = List.split cids_t in
-      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
-      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
-      (* else *)
-      let modes = get_modes anns in
       let () = view_names # push vn in
-        { view_name = vn;
-          view_pos = get_pos_camlp4 _loc 1;
-          view_data_name = "";
-          view_type_of_self = None;
-          view_imm_map = [];
-          view_vars = (* List.map fst *) cids;
-          view_ho_vars = un_option opt1 []; 
-          view_derv = false;
-          view_parent_name = None;
-          (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels,has_labels;
-          view_modes = modes;
-          view_typed_vars = cids_t;
-          view_pt_by_self  = [];
-          view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
-          view_inv_lock = None;
-          view_is_prim = false;
-          view_is_hrel = None;
-          view_kind = View_NORM;
-          view_prop_extns = [];
-          view_derv_info = [];
-          view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
-          view_baga_inv = None;
-          view_baga_over_inv = None;
-          view_baga_under_inv = None;
-          view_mem = None;
-	  view_materialized_vars = get_mater_vars l;
-          try_case_inference = false;
-			}]];
-
+      let mvs = get_mater_vars l in
+      let cids, anns = List.split l in
+      let modes = get_modes anns in
+      let pos = get_pos_camlp4 _loc 1 in
+      Iast.mk_view_header vn opt1 cids mvs modes pos
+]];
+                                          
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
 (* form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]]; *)
@@ -1540,6 +1522,8 @@ view_header_ext:
           view_labels = br_labels,has_labels;
           view_parent_name = None;
           view_derv = false;
+          view_derv_from = None;
+          view_derv_extns = [];
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];

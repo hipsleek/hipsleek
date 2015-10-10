@@ -5,7 +5,7 @@ data node{
 
 pred ll<> ==
    emp & self=null
-or self::node<_,p>*p::ll<>.
+or self::node<_,p>*p::node<_,q>*q::ll<>.
 
 pred ll2<> ==
    self::ll<>.
@@ -17,8 +17,8 @@ pred_extn size[R]<k> ==
 
 print views.
 
-//pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
-pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+//pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 
 //shape_extends_view [*] with size.
 

@@ -945,7 +945,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   (* TODO: Auto derive REC *)
   let extn_info = (extn_pred.C.view_name, ["REC"], [extn_view_var]) in
   let extn_iview = { extn_iview with I.view_derv_info = [(orig_info, extn_info)] } in
-  let extn_cview = Derive.trans_view_dervs iprog 
+  let extn_cview = x_add_1 Derive.trans_view_dervs iprog 
     Rev_ast.rev_trans_formula Astsimp.trans_view [] 
     cprog.C.prog_view_decls extn_iview
   in

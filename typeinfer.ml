@@ -1668,3 +1668,20 @@ let trans_iformula_to_cformula iprog body =
   let fvars = [] in
   let (sv,nbody) = !trans_formula iprog quantify (fvars : ident list) sep_collect body tlist clean_res in
   nbody
+
+let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
+  let () = vd.C.view_un_struc_formula <- view_body_lbl in
+  let iprog = match iprog with 
+    | Some ip -> ip
+    | None ->  Iast.get_iprog () in
+  let old_sf = vd.C.view_formula in
+  let view_body = CF.convert_un_struc_to_formula view_body_lbl in
+  let args = vd.C.view_vars in
+  (* struc --> better to re-transform it *)
+  let new_view_body = case_normalize_renamed_formula iprog args [] view_body in
+  let view_struc = CF.formula_to_struc_formula new_view_body in
+  let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
+  let () = C.update_view_formula (fun _ -> view_struc) vd in
+  let () = if base_flag then y_binfo_pp "update_view_new_body need to change base-cases too" in
+  (* (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
+  ()

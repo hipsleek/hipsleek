@@ -5,21 +5,19 @@ data node{
 
 pred ll<> ==
    emp & self=null
-or self::node<_,p>*p::ll2<>.
-
-pred ll2<> ==
-   emp & self=null
-or self::node<_,p>*p::ll<>.
+//or self::node<_,p>*p::ll<>.
+or self::node<_,p>*p::node<_,q>*q::ll<>.
 
 pred_extn size[R]<k> ==
    k=0 // base case
    or R::size<i> & k=1+i // recursive case
    inv k>=0.
 
-print views.
 
-pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
-pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+pred ss<nnn> == extends [*] with size[REC]<nnn>.
+
+//pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+//pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 
 //shape_extends_view [*] with size.
 
@@ -28,7 +26,7 @@ pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 print views.
 
 /*
-# ex25a2.slk
+# ex25a5.slk
 
 pred ll<> ==
    emp & self=null
@@ -39,11 +37,24 @@ pred ll2<> ==
 or self::node<_,p>*p::ll<>.
 
 
+Exception(look_up_view_def_raw):Not_found
+Exception(trans_view_one_derv):Invalid_argument("List.combine")
+Exception(trans_view_dervs):Invalid_argument("List.combine")
+Exception(process_selective_iview_decls):Invalid_argument("List.combine")
+Exception(convert_data_and_pred_to_cast):Invalid_argument("List.combine")
+
+Exception processed: Invalid_argument("List.combine")
+error at: 
+SLEEK FAILURE (END)
+
+
 ---------------------------------------
 # check if mutual-rec
 
 pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
 pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+pred ss<nnn> == extends_rec [ll*] with size[REC]<nnn>.
 
 (==derive.ml#209==)
 extract_abs_formula_branch@1
