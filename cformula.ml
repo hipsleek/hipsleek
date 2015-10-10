@@ -19616,6 +19616,21 @@ let repl_equiv_heap find_f hf =
     | _ -> None
   in map_h_formula hf f
 
+(* let process_heap_prop_extn p_tab pname vns (\* mutual-rec *\) nnn_sv hf = *)
+(*   let f hf = match hf with *)
+(*     | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf *)
+(*     | DataNode dl -> *)
+(*       failwith x_tbi *)
+(*     | ViewNode vl -> *)
+(*       let name = vl.h_formula_view_name in *)
+(*       if List.exists (fun v -> v=name) vns then *)
+(*         begin *)
+(*           failwith x_tbi *)
+(*         end *)
+(*       else Some hf *)
+(*     | _ -> None *)
+(*   in map_h_formula hf f *)
+
 let repl_equiv_formula find_f f =
   map_formula_heap_only (repl_equiv_heap find_f) f
 

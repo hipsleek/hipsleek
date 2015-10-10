@@ -17,13 +17,14 @@ module Err = Error
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
+module C = Cast
 (* module GV = Globalvars*)
 module CP = Cpure
 module MCP = Mcpure
 module H = Hashtbl
 (* module TP = Tpdispatcher *)
 module Chk = Checks
-
+module CFE = Cf_ext
 
 (******************************************)
 (***************PURE*****************)
@@ -134,27 +135,27 @@ let generate_extn_ho_procs prog cviews extn_view_name=
       in
       (n_p3,quans)
   in
-  let extn_v = x_add Cast.look_up_view_def_raw 47  cviews extn_view_name in
-  let extn_fs = fst (List.split extn_v.Cast.view_un_struc_formula) in
-  let inv_p = (MCP.pure_of_mix extn_v.Cast.view_user_inv) in
+  let extn_v = x_add C.look_up_view_def_raw 47  cviews extn_view_name in
+  let extn_fs = fst (List.split extn_v.C.view_un_struc_formula) in
+  let inv_p = (MCP.pure_of_mix extn_v.C.view_user_inv) in
   let (brs, val_extns) = CF.classify_formula_branch extn_fs inv_p extn_view_name
-      extn_v.Cast.view_vars extn_v.Cast.view_prop_extns in
+      extn_v.C.view_vars extn_v.C.view_prop_extns in
   let b_brs, ind_brs = List.partition (fun (_, ls) -> ls=[]) brs in
   (*now, we assume we always have <= 1 base case and <=1 ind case*)
-  let ho_bs = List.map (fun (p,_) ->  mk_ho_b extn_v.Cast.view_vars val_extns p) b_brs in
-  let ho_inds = List.map (fun (p, ls) -> mk_ho_ind extn_v.Cast.view_vars
+  let ho_bs = List.map (fun (p,_) ->  mk_ho_b extn_v.C.view_vars val_extns p) b_brs in
+  let ho_inds = List.map (fun (p, ls) -> mk_ho_ind extn_v.C.view_vars
                              val_extns p ls) ind_brs in
   (* (extn_view_name, b_brs, ind_brs, val_extns, extn_inv) *)
-  (* let () =  Debug.info_pprint ("   extn_v.Cast.view_vars: "^ (!CP.print_svl extn_v.Cast.view_vars)) no_pos in *)
-  (extn_view_name, ho_bs, ho_inds(* , CP.filter_var inv_p extn_v.Cast.view_vars *))
+  (* let () =  Debug.info_pprint ("   extn_v.C.view_vars: "^ (!CP.print_svl extn_v.C.view_vars)) no_pos in *)
+  (extn_view_name, ho_bs, ho_inds(* , CP.filter_var inv_p extn_v.C.view_vars *))
 
 (*
 lower_map_views: a map of the transformation of lower views in the hierachy
 *)
 let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc lower_map_views
-    (cviews (*orig _extn*) : Cast.view_decl list) view_derv
+    (cviews (*orig _extn*) : C.view_decl list) view_derv
     ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
-  Cast.view_decl =
+  C.view_decl =
   let do_extend_base_case ho_bs extn_args val_svl f=
     match ho_bs with
     | [] -> f
@@ -184,9 +185,9 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
    Now, always generate a new one
  *)
   (**********************************)
-  let extn_view = x_add Cast.look_up_view_def_raw 48 cviews extn_view_name in
+  let extn_view = x_add C.look_up_view_def_raw 48 cviews extn_view_name in
   (*subst args of extn and extn_args*)
-  let ss = List.combine extn_args extn_view.Cast.view_vars in
+  let ss = List.combine extn_args extn_view.C.view_vars in
   let (extn_vname, extn_ho_bs, extn_ho_inds(* , extn_user_inv *)) = generate_extn_ho_procs prog cviews extn_view_name in
   (**********************************)
  (*
@@ -195,24 +196,24 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   (**********************************)
   (*new args*)
   let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
-  let orig_view = x_add Cast.look_up_view_def_raw 49 cviews orig_view_name in
+  let orig_view = x_add C.look_up_view_def_raw 49 cviews orig_view_name in
   (*find data fields anns*)
-  let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
+  let ls_dname_pos = Iast.look_up_field_ann prog orig_view.C.view_data_name extn_props in
   (*formula: extend with new args*)
-  let fs,labels = List.split orig_view.Cast.view_un_struc_formula in
+  let fs,labels = List.split orig_view.C.view_un_struc_formula in
   let fs1 = List.map (fun f -> fst (Cfutil.subst_views_form lower_map_views false f)) fs in
   let fs = List.map Cformula.elim_exists (List.map Cfutil.fresh_exists fs1) in
   let pos = view_derv.Iast.view_pos in
-  let () =  Debug.ninfo_hprint (add_str "   orig_view.Cast.view_data_name: " (pr_id )) orig_view.Cast.view_data_name pos in
-  let self_sv = (CP.SpecVar (Named (orig_view.Cast.view_data_name),self, Unprimed)) in
+  let () =  Debug.ninfo_hprint (add_str "   orig_view.C.view_data_name: " (pr_id )) orig_view.C.view_data_name pos in
+  let self_sv = (CP.SpecVar (Named (orig_view.C.view_data_name),self, Unprimed)) in
   let pure_extn_svl = [self_sv] in
-  let (base_brs,ind_brs) = x_add CF.extract_abs_formula_branch fs orig_view.Cast.view_name view_derv.Iast.view_name n_args ls_dname_pos  pure_extn_svl false true in
+  let (base_brs,ind_brs) = x_add CF.extract_abs_formula_branch fs orig_view.C.view_name view_derv.Iast.view_name n_args ls_dname_pos  pure_extn_svl false true in
   (*extend base cases*)
   let extn_base_brs = List.map (fun (p,val_svl)-> do_extend_base_case extn_ho_bs n_args val_svl p) base_brs in
   (*extend ind cases*)
   let extn_ind_brs = List.map (do_extend_ind_case extn_ho_inds n_args) ind_brs in
   (*unstruct*)
-  let view_sv = orig_view.Cast.view_vars@n_args in
+  let view_sv = orig_view.C.view_vars@n_args in
   let n_pure_domains = [(extn_view_name, 0, List.length view_sv)] in
   (*OLD**)
   (* let new_un_struc_formulas = List.combine (extn_base_brs@extn_ind_brs) labels in *)
@@ -220,7 +221,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   (* let struct_fs = List.map (fun f -> let p = CF.pos_of_formula f in CF.struc_formula_of_formula f p) *)
   (*   (extn_base_brs@extn_ind_brs) in *)
   (* let new_struct_f = match struct_fs with *)
-  (*   | [] -> orig_view.Cast.view_formula *)
+  (*   | [] -> orig_view.C.view_formula *)
   (*   | _ -> *)
   (*     CF.EList (List.map  (fun sf -> (Label_only.empty_spec_label_def, sf)) struct_fs) *)
   (* in *)
@@ -240,15 +241,15 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   (*       | Some f1  -> Some (CF.mkOr f1 fc no_pos) *)
   (*       | None -> Some fc) None new_un_struc_formulas *)
   (* in *)
-  (* let orig_user_inv = (MCP.pure_of_mix orig_view.Cast.view_user_inv) in *)
+  (* let orig_user_inv = (MCP.pure_of_mix orig_view.C.view_user_inv) in *)
   (* (\* let () =  Debug.info_pprint ("   extn_inv: "^ (!CP.print_formula extn_user_inv)) no_pos in *\) *)
   (* let extn_user_inv = try *)
-  (*   let ss = List.combine extn_view.Cast.view_vars n_args in *)
-  (*   CP.subst ss (MCP.pure_of_mix extn_view.Cast.view_user_inv) *)
+  (*   let ss = List.combine extn_view.C.view_vars n_args in *)
+  (*   CP.subst ss (MCP.pure_of_mix extn_view.C.view_user_inv) *)
   (* with _ -> CP.mkTrue no_pos *)
   (* in *)
   (* let n_user_inv =  MCP.mix_of_pure (CP.mkAnd orig_user_inv extn_user_inv (CP.pos_of_formula orig_user_inv)) in *)
-  (* let iview_orig = Iast.look_up_view_def_raw 53 prog.Iast.prog_view_decls orig_view.Cast.view_name in *)
+  (* let iview_orig = Iast.look_up_view_def_raw 53 prog.Iast.prog_view_decls orig_view.C.view_name in *)
   (* (\* let () =  Debug.info_pprint ("  iview_orig.Iast.view_imm_map: "^ ( *\) *)
   (* (\*   (pr_list (pr_pair Ipure.string_of_ann string_of_int)) iview_orig.Iast.view_imm_map)) no_pos in *\) *)
   (* let view_derv = {view_derv with Iast.view_labels = (List.map (fun _ -> Label_only.LOne.unlabelled) view_sv_vars, false); *)
@@ -257,24 +258,24 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   (* let view_sv, labels, ann_params, view_vars_gen = Immutable.split_sv view_sv_vars view_derv in *)
   (* (\* let () =  Debug.info_pprint ("  ann_params: "^ ( *\) *)
   (* (\*   (pr_list (pr_pair !CP.print_annot_arg string_of_int)) ann_params)) no_pos in *\) *)
-  (* (\* let () =  Debug.info_pprint ("  Cast.view_ann_params: "^ ( *\) *)
-  (* (\*   (pr_list (pr_pair !CP.print_annot_arg string_of_int)) orig_view.Cast.view_ann_params)) no_pos in *\) *)
+  (* (\* let () =  Debug.info_pprint ("  C.view_ann_params: "^ ( *\) *)
+  (* (\*   (pr_list (pr_pair !CP.print_annot_arg string_of_int)) orig_view.C.view_ann_params)) no_pos in *\) *)
   (* (\* let () =  Debug.info_pprint ("  view_vars_gen: "^ ( *\) *)
   (* (\*       (pr_list (pr_pair CP.print_view_arg string_of_int)) (view_vars_gen))) no_pos in *\) *)
   (* (\*always generate the new arg to the end, root is 0*\) *)
   (* let der_view = {orig_view with *)
-  (*     Cast.view_name = view_derv.Iast.view_name; *)
-  (*       (\* Cast.view_kind = View_DERV; *\) *)
-  (*     Cast.view_vars = view_sv ; *)
-  (*     Cast.view_labels = labels; *)
-  (*     Cast.view_ann_params  = ann_params; *)
-  (*     Cast.view_params_orig = view_vars_gen; *)
-  (*     Cast.view_formula = new_struct_f; *)
-  (*     Cast.view_un_struc_formula = new_un_struc_formulas; *)
-  (*     Cast.view_raw_base_case = rbc; *)
-  (*     Cast.view_is_rec = extn_ind_brs <> []; *)
-  (*     Cast.view_domains = orig_view.Cast.view_domains@n_pure_domains; *)
-  (*     Cast.view_user_inv = n_user_inv; *)
+  (*     C.view_name = view_derv.Iast.view_name; *)
+  (*       (\* C.view_kind = View_DERV; *\) *)
+  (*     C.view_vars = view_sv ; *)
+  (*     C.view_labels = labels; *)
+  (*     C.view_ann_params  = ann_params; *)
+  (*     C.view_params_orig = view_vars_gen; *)
+  (*     C.view_formula = new_struct_f; *)
+  (*     C.view_un_struc_formula = new_un_struc_formulas; *)
+  (*     C.view_raw_base_case = rbc; *)
+  (*     C.view_is_rec = extn_ind_brs <> []; *)
+  (*     C.view_domains = orig_view.C.view_domains@n_pure_domains; *)
+  (*     C.view_user_inv = n_user_inv; *)
   (* } *)
   (* in *)
   (*END **** OLD**)
@@ -294,7 +295,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
       (r_ifs@[ isf], r_tis@tis)
     ) ([],[]) (extn_base_brs@extn_ind_brs) in
   let struc_body = Iformula.EList (List.map (fun sf -> (Label_only.empty_spec_label_def, sf)) is_fs) in
-  let data_name = orig_view.Cast.view_data_name in
+  let data_name = orig_view.C.view_data_name in
   let vars =  List.map (fun (CP.SpecVar (_, v, p))-> (v^(match p with Primed -> "PRM"| _ -> ""))
     ) view_sv in
   let tvars = (List.map (fun (CP.SpecVar (t, v, _))-> (t,v)) (view_sv)) in
@@ -319,7 +320,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_is_hrel = None;
                   Iast.view_invariant = Ipure.mkTrue no_pos;
                   Iast.view_mem = None;
-                  Iast.view_materialized_vars = List.map (fun mp -> CP.name_of_spec_var mp.Cast.mater_var) orig_view.Cast.view_materialized_vars;
+                  Iast.view_materialized_vars = List.map (fun mp -> CP.name_of_spec_var mp.C.mater_var) orig_view.C.view_materialized_vars;
                   Iast.try_case_inference = false; }
   in
   let () = try
@@ -331,14 +332,14 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
       ()
   in
   let der_view0 = trans_view_fnc prog [] cviews tis n_iview in
-  let der_view = {der_view0 with Cast.view_domains = orig_view.Cast.view_domains@n_pure_domains;} in
+  let der_view = {der_view0 with C.view_domains = orig_view.C.view_domains@n_pure_domains;} in
   der_view
 
 let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views cviews derv
     (((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) as view_derv)=
-  let orig_view = x_add Cast.look_up_view_def_raw 52 cviews orig_view_name in
+  let orig_view = x_add C.look_up_view_def_raw 52 cviews orig_view_name in
   if List.for_all (fun (l_extn_view,_,_) ->
-      String.compare l_extn_view extn_view_name !=0) orig_view.Cast.view_domains then
+      String.compare l_extn_view extn_view_name !=0) orig_view.C.view_domains then
     let new_vdef = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
     let () =  x_binfo_hp (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
     let () = x_binfo_hp (add_str "(raw) new view (donot have base case, addr, material)" Cprinter.string_of_view_decl_short) new_vdef no_pos in
@@ -349,7 +350,7 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
     (false,orig_view)
 
 let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
-      (cviews (*orig _extn*) :  Cast.view_decl list) derv view_derv: (bool*Cast.view_decl) =
+      (cviews (*orig _extn*) :  C.view_decl list) derv view_derv: (bool*C.view_decl) =
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
@@ -357,8 +358,8 @@ let trans_view_one_derv (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lowe
     (fun _ -> trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
         cviews derv view_derv) view_derv
 
-let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.view_decl list) view_derv ((orig_view_name,orig_args),(spec_view_name,extn_props,extn_args)) :
-  Cast.view_decl =
+let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(spec_view_name,extn_props,extn_args)) :
+  C.view_decl =
   let do_extend_base_case orig_fs spec_fs=
     match orig_fs with
     | [] -> []
@@ -385,7 +386,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
     in
     helper spec_ind_fs
   in
-  let spec_view = x_add Cast.look_up_view_def_raw 49 cviews spec_view_name in
+  let spec_view = x_add C.look_up_view_def_raw 49 cviews spec_view_name in
   (**********************************)
  (*
    EXTN: (1) lookup, not found: (2) generate one and store for other use.
@@ -393,23 +394,23 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
  *)
   (**********************************)
   let extn_view_name=
-    match spec_view.Cast.view_parent_name with
+    match spec_view.C.view_parent_name with
     | None -> report_error no_pos "derive.trans_view_one_spec_x: a spec view must base on extn view"
     | Some n -> n
   in
   (* let () =  Debug.info_pprint ("   extn_view_name: "^ extn_view_name) no_pos in *)
   (* let (extn_vname, extn_ho_bs, extn_ho_inds(\* , extn_user_inv *\)) = generate_extn_ho_procs prog cviews extn_view_name in *)
-  (* let extn_view = x_add Cast.look_up_view_def_raw cviews extn_view_name in *)
+  (* let extn_view = x_add C.look_up_view_def_raw cviews extn_view_name in *)
   (**********************************)
  (*
    SPEC
  *)
   (**********************************)
   (*spec process*)
-  let spec_fs,_ = List.split spec_view.Cast.view_un_struc_formula in
-  let inv_p = (MCP.pure_of_mix spec_view.Cast.view_user_inv) in
-  let (spec_brs, spec_val_extns) = CF.classify_formula_branch spec_fs inv_p extn_view_name (* spec_view.Cast.view_name *)
-      spec_view.Cast.view_vars spec_view.Cast.view_prop_extns in
+  let spec_fs,_ = List.split spec_view.C.view_un_struc_formula in
+  let inv_p = (MCP.pure_of_mix spec_view.C.view_user_inv) in
+  let (spec_brs, spec_val_extns) = CF.classify_formula_branch spec_fs inv_p extn_view_name (* spec_view.C.view_name *)
+      spec_view.C.view_vars spec_view.C.view_prop_extns in
   let spec_b_brs, spec_ind_brs = List.partition (fun (_, ls) -> ls=[]) spec_brs in
   (**********************************)
  (*
@@ -419,17 +420,17 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   (*formula: spec*)
   (*new args*)
   (* let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in *)
-  let orig_view = x_add Cast.look_up_view_def_raw 50 cviews orig_view_name in
+  let orig_view = x_add C.look_up_view_def_raw 50 cviews orig_view_name in
   (*find data fields anns*)
-  let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
-  let orig_fs,labels = List.split orig_view.Cast.view_un_struc_formula in
-  let ss = List.combine orig_view.Cast.view_vars spec_view.Cast.view_vars in
+  let ls_dname_pos = Iast.look_up_field_ann prog orig_view.C.view_data_name extn_props in
+  let orig_fs,labels = List.split orig_view.C.view_un_struc_formula in
+  let ss = List.combine orig_view.C.view_vars spec_view.C.view_vars in
   let spec_fs = List.map (x_add CF.subst ss) orig_fs in
   let pure_extn_svl = [ (CP.SpecVar (Named (view_derv.Iast.view_data_name),self, Unprimed))] in
-  let (orig_b_brs,orig_ind_brs) = x_add CF.extract_abs_formula_branch spec_fs orig_view.Cast.view_name view_derv.Iast.view_name spec_view.Cast.view_vars ls_dname_pos pure_extn_svl true true in
-  (* let orig_inv_p = (MCP.pure_of_mix spec_view.Cast.view_user_inv) in *)
-  (* let (orig_brs, orig_val_extns) = CF.classify_formula_branch orig_fs orig_inv_p orig_view.Cast.view_name *)
-  (*   orig_view.Cast.view_vars orig_view.Cast.view_prop_extns in *)
+  let (orig_b_brs,orig_ind_brs) = x_add CF.extract_abs_formula_branch spec_fs orig_view.C.view_name view_derv.Iast.view_name spec_view.C.view_vars ls_dname_pos pure_extn_svl true true in
+  (* let orig_inv_p = (MCP.pure_of_mix spec_view.C.view_user_inv) in *)
+  (* let (orig_brs, orig_val_extns) = CF.classify_formula_branch orig_fs orig_inv_p orig_view.C.view_name *)
+  (*   orig_view.C.view_vars orig_view.C.view_prop_extns in *)
   (* let orig_b_brs, orig_ind_brs = List.partition (fun (_, ls) -> ls=[]) orig_brs in *)
   (*extend base cases*)
   let extn_base_brs = do_extend_base_case (fst (List.split orig_b_brs)) spec_b_brs in
@@ -441,9 +442,9 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   let struct_fs = List.map (fun f -> let p = CF.pos_of_formula f in CF.struc_formula_of_formula f p)
       (extn_base_brs@extn_ind_brs) in
   let new_struct_f = match struct_fs with
-    | [] -> orig_view.Cast.view_formula
+    | [] -> orig_view.C.view_formula
     | _ -> CF.EList (List.map  (fun sf -> (Label_only.empty_spec_label_def, sf)) struct_fs)
-    (* let p = CF.pos_of_struc_formula orig_view.Cast.view_formula in *)
+    (* let p = CF.pos_of_struc_formula orig_view.C.view_formula in *)
     (* List.fold_left (fun f1 f2 -> CF.mkEOr f1 f2 p) (List.hd struct_fs) (List.tl struct_fs) *)
   in
   (*todo: view_base_case*)
@@ -462,24 +463,24 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
         | Some f1  -> Some (CF.mkOr f1 fc no_pos)
         | None -> Some fc) None new_un_struc_formulas
   in
-  (* let orig_user_inv = (MCP.pure_of_mix orig_view.Cast.view_user_inv) in *)
+  (* let orig_user_inv = (MCP.pure_of_mix orig_view.C.view_user_inv) in *)
   (* let () =  Debug.info_pprint ("   extn_inv: "^ (!CP.print_formula extn_user_inv)) no_pos in *)
   (* let n_user_inv =  MCP.mix_of_pure (CP.mkAnd orig_user_inv extn_user_inv (CP.pos_of_formula orig_user_inv)) in *)
   (* let () =  Debug.info_pprint ("   n_user_inv: "^ (!CP.print_formula (MCP.pure_of_mix n_user_inv))) no_pos in *)
   let spec_view = {orig_view with
-                   Cast.view_name = view_derv.Iast.view_name;
-                   (* Cast.view_kind = View_DERV; *)
-                   Cast.view_vars = spec_view.Cast.view_vars;
-                   Cast.view_formula = new_struct_f;
-                   Cast.view_un_struc_formula = new_un_struc_formulas;
-                   Cast.view_raw_base_case = rbc;
-                   Cast.view_is_rec = extn_ind_brs <> [];
-                   (* Cast.view_user_inv = n_user_inv; *)
+                   C.view_name = view_derv.Iast.view_name;
+                   (* C.view_kind = View_DERV; *)
+                   C.view_vars = spec_view.C.view_vars;
+                   C.view_formula = new_struct_f;
+                   C.view_un_struc_formula = new_un_struc_formulas;
+                   C.view_raw_base_case = rbc;
+                   C.view_is_rec = extn_ind_brs <> [];
+                   (* C.view_user_inv = n_user_inv; *)
                   }
   in
   spec_view
 
-let trans_view_one_spec (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.view_decl list) derv view_spec : Cast.view_decl =
+let trans_view_one_spec (prog : Iast.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv view_spec : C.view_decl =
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
@@ -497,7 +498,7 @@ let do_sanity_check derv =
   else ()
 
 let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
-    (cviews (*orig _extn*): Cast.view_decl list) derv : Cast.view_decl =
+    (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl =
   let () = do_sanity_check derv in
   let old_flag = !Globals.do_infer_inv in
   let () = Globals.do_infer_inv := true in
@@ -509,7 +510,7 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower
         | Some rgx ->
           let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
           let scc = HipUtil.view_scc_obj # get_scc in
-          let () = y_binfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.Cast.view_name)))  cviews in
+          let () = y_binfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.C.view_name)))  cviews in
           let () = y_binfo_hp (add_str "view_name" pr_id)  derv.Iast.view_name in
           let () = y_binfo_hp (add_str "derv_from" (string_of_regex_list (pr_pair pr_id string_of_bool)))  rgx in
           let pr = pr_list pr_id in
@@ -522,15 +523,15 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower
       end
     | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
       let der_view(*,s*) =
-        let extn_view = x_add Cast.look_up_view_def_raw 51 cviews extn_view_name in
-        if extn_view.Cast.view_kind = View_SPEC then
+        let extn_view = x_add C.look_up_view_def_raw 51 cviews extn_view_name in
+        if extn_view.C.view_kind = View_SPEC then
           let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
           (der_view(*,("************VIEW_SPECIFIED*************")*))
         else
           let _,der_view = trans_view_one_derv prog rev_form_fnc trans_view_fnc lower_map_views
               cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
           let iderv_view = Iast.look_up_view_def_raw 53 prog.Iast.prog_view_decls derv.Iast.view_name in
-          let () = iderv_view.Iast.view_data_name <- der_view.Cast.view_data_name in
+          let () = iderv_view.Iast.view_data_name <- der_view.C.view_data_name in
           let () = iderv_view.Iast.view_derv <- false in
           (der_view(*,("************VIEW_DERIVED*************")*))
       in
@@ -549,12 +550,214 @@ let trans_view_dervs_x (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower
 
 
 let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
-      (cviews (*orig _extn*): Cast.view_decl list) derv : Cast.view_decl =
+      (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl =
   let pr_r = Cprinter.string_of_view_decl in
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> trans_view_dervs_x prog rev_form_fnc trans_view_fnc
       lower_map_views cviews derv) derv
 
+let pr_sv = CP.print_sv
+
+(* class data_table = *)
+(*   object (self) *)
+(*     val mutable lst = [] (\* (ptr,value) list *\) *)
+(*     method add_data dn param =  *)
+(*       lst <- (dn,param)::lst *)
+(*     method find_tags dn =  *)
+(*       try *)
+(*         snd(List.find (fun (n,_) -> n=dn) lst) *)
+(*       with _ -> failwith (x_loc^"does not exist :"^dn) *)
+(*     method get_tag_mask dn (t:string) =  *)
+(*       try  *)
+(*         let tags = self # find_tags dn in *)
+(*         List.map (fun ls -> List.mem t ls) tags *)
+(*       with _ ->  *)
+(*         if dn="node" then [false;true] *)
+(*         else [false;true;true] *)
+(*   end *)
+
+let data_decl_obj = CFE.data_decl_obj
+
+class prop_table pname eq nnn tag =
+  object (self)
+    val mutable lst = [] (* (ptr,value) list *)
+    val mutable def_lst = [] (* list of ptr with defined value *)
+    val mutable pure_lst = []
+    val mutable vns = []
+    val fresh = CP.fresh_spec_var
+    val pr = !pr_sv
+    val orig_sv = CP.mk_typed_spec_var NUM nnn 
+    val mutable self_sv = CP.mk_self None
+    val mk_base = (fun v -> (!pr_sv v)^"=0")
+    val mk_max = (fun v v1 v2 -> (!pr_sv v)^" = max("^(!pr_sv v1)^","^(!pr_sv v2)^")")
+    val mk_inc = (fun v1 v2 -> (!pr_sv v1)^" = 1+"^(!pr_sv v2))
+    method reset =
+      def_lst <- [];
+      lst <- [(self_sv,orig_sv)];
+      pure_lst <- []
+    method reset_view typ =
+      self_sv <- CP.mk_self (Some typ)
+    method reset_mut vs =
+      vns <- vs;
+      self # reset
+    method is_mut_view vn =
+      List.exists (fun v -> v=vn) vns
+    method proc_data ptr name args =
+      let filter_mask mask ptrs =
+        let rec aux mask ptrs =
+          match mask,ptrs with
+          | [],ptrs -> ptrs
+          | _,[] -> []
+          | x::ms,p::ps -> if x then p::(aux ms ps) else aux ms ps
+        in aux mask ptrs
+      in
+      let () = y_binfo_hp (add_str "proc_data" (pr_triple pr pr_id (pr_list pr))) (ptr,name,args) in
+      let mask = data_decl_obj # get_tag_mask name tag in
+      let to_ptrs = filter_mask mask args in
+      self # add_node ptr to_ptrs
+    method add_node ptr to_ptrs =
+      if to_ptrs==[] then self # mk_zero ptr
+      else 
+        let v0 = self # find_or_add ptr in
+        let vs = List.map (fun p -> (self # find_or_add p)) to_ptrs in
+        let rec aux v xs acc = match xs with
+          | [] -> (v,acc)
+          | x::rest -> 
+            let fr_v = fresh orig_sv in
+            let p = mk_max fr_v x v in
+            (* (pr fr_v)^" = max("^(pr x)^","^pr v^")" in *)
+            aux fr_v rest (p::acc) in
+        let (v,pure) = match vs with
+          | [] -> failwith "impossible"
+          | x::xs -> aux x xs [] in
+        let final = mk_inc v0 v in
+        (* (pr v0)^" = 1+"^(pr v) in *)
+        self # push_def ptr;
+        pure_lst <- final::pure@pure_lst
+    method proc_view ptr vn =
+      if self # is_mut_view vn then
+        let new_vname = vn^"_"^pname in
+        let (root,new_sv) = 
+          match ptr with
+          | None ->  (self_sv,orig_sv)
+          | Some ptr -> self # push_def ptr; (ptr,self # find_or_add ptr) in
+        let r = (new_vname,new_sv) in
+        let () = y_binfo_hp (add_str "proc_view" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
+        r
+      else failwith "not a recursive view"
+    method get_pure = pure_lst
+    method add ptr new_nnn =
+      lst <- (ptr,new_nnn):: lst
+    method push_def ptr =
+      def_lst <- ptr::def_lst
+    method push_pure s =
+      pure_lst <- s::pure_lst
+    method find_or_add ptr =
+      (* let fresh nnn = nnn in *)
+      try
+        snd(List.find (fun (x,_) -> eq x ptr) lst)
+      with _ -> 
+        let new_nnn = fresh orig_sv in
+        self # add ptr new_nnn;
+        new_nnn
+    method get_undef =
+      let und = Gen.BList.difference_eq (fun (p1,_) p2 -> CP.eq_spec_var p1 p2) lst def_lst in
+      List.map fst und 
+    method mk_zero ptr =
+      let v = self # find_or_add ptr in
+      self # push_def ptr;
+      self # push_pure (mk_base v)
+    method mk_undef_zero =
+      let lst = self # get_undef in
+      List.iter (fun p -> self # mk_zero p) lst
+    method string_of =
+      let str = (pr_list (pr_pair pr pr)) lst in
+      str^"\n"^((pr_list pr_id) pure_lst)
+  end;;
+
+
+(* let prc_heap ptab = CFE.process_heap_prop_extn ptab *)
+
+let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_tag (* property *) 
+    nnn (* extended parameter *) =
+  (* let nnn_sv = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
+  let p_tab = new prop_table pname (CP.eq_spec_var) nnn prop_tag in
+  let extend_size_disj vns (*mutual call*) f =
+    let () = p_tab # reset in
+    let map_h h = CFE.process_heap_prop_extn p_tab h in
+    let new_f = CF.map_formula_heap_only map_h f in
+    (* collected pure property and extended predicates *)
+    (* base cases for size here *)
+    let base_vars = p_tab # mk_undef_zero in
+    let pure_lst = p_tab # get_pure in
+    let () = y_binfo_hp (add_str "new_f" (!CF.print_formula)) new_f in
+    let () = y_binfo_hp (add_str "pure_lst computed" (pr_list pr_id)) pure_lst in
+    (* if base_vars!=[] then *)
+    (*   begin *)
+    (*     let () = y_binfo_hp (add_str "bases not yet added= 0" !pr_svl) base_vars in *)
+    (*     () *)
+    (*   end; *)
+    new_f
+  in
+  let extend_size_vdecl vns (*mutual call*) vd =
+    (* let nnn = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
+    (* let new_name = vd.C.view_name^"_"^pname in *)
+    let typ = Named (vd.C.view_data_name) in
+    let () = p_tab # reset_view typ in
+    let new_name,nnn_sv = p_tab # proc_view None vd.C.view_name in
+    let new_vs = vd.C.view_vars@[nnn_sv] in
+    let new_labels = vd.C.view_labels@[LOne.unlabelled] in
+    let body = vd.C.view_un_struc_formula in
+    (* (Cformula.formula * formula_label) list *)
+    let body = List.map (fun (f,l) -> (extend_size_disj vns f,l)) body in
+    let new_vd = { vd with C.view_vars = new_vs; C.view_name = new_name; C.view_un_struc_formula=body;
+                 C.view_labels = new_labels} in
+    let () = y_binfo_hp (add_str "new_vd" Cprinter.string_of_view_decl) new_vd in
+    let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
+    let () = Typeinfer.update_view_new_body ~base_flag:true new_vd body in
+    new_vd
+  in
+  let extend_size_scc scc =
+    let (vns,vds) = List.split scc in
+    let () = p_tab # reset_mut vns in
+    let vds = List.map (extend_size_vdecl vns) vds in
+    vds in
+  let new_vdecls = List.map (extend_size_scc) scc_vdecls in
+  new_vdecls
+
+let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
+    (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl =
+  let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
+  let scc = HipUtil.view_scc_obj # get_scc in
+  let () = y_binfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.C.view_name)))  cviews in
+  let vname = derv.Iast.view_name in
+  let () = y_binfo_hp (add_str "view_name" pr_id)  vname in
+  let pr = pr_list pr_id in
+  let d =  derv.Iast.view_derv_extns in
+  let () = y_binfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) d in
+  let field,nnn = (match d with
+    | (prop,[field],[nnn])::_ -> field,nnn
+    | _-> failwith (x_loc^" no prop")) in
+  let scc = List.filter (fun mr -> match mr with
+      | [] -> false
+      | x::_ -> try 
+          let v = List.find (fun v -> v.C.view_name=x) cviews in
+          v.C.view_kind = View_NORM
+        with _ -> false) scc in
+  let () = y_binfo_hp (add_str "scc selected" (pr_list (pr_list pr_id))) scc in
+  let scc_vdecls = List.map (fun mr -> 
+      List.map (fun n ->
+          try 
+            let v = List.find (fun v -> v.C.view_name=n) cviews in
+            (n,v)
+          with _ -> failwith (x_loc^" view "^n^" not found")
+        ) mr) scc in
+  let vdecls = extend_size vname scc_vdecls field nnn in
+  let vdecls = List.concat vdecls in
+  let () = y_binfo_pp "need to keep entire mutual-rec vdecl generated" in  
+  let () = y_binfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl_short)) vdecls in
+  List.hd vdecls
+  
 
 let leverage_self_info_x xform formulas anns data_name=
   let detect_anns_f f=
@@ -582,7 +785,7 @@ let leverage_self_info xform formulas anns data_name=
 (*     BUILD PURE EXTN MAP  *)
 (*****************************************************************************************)
 
-let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_map_views (view: Cast.view_decl) extn_view=
+let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_map_views (view: C.view_decl) extn_view=
   let get_extns d_name=
     let d_dclr = Iast.look_up_data_def 67 no_pos iprog.Iast.prog_data_decls d_name in
     let extn_fields = List.fold_left (fun acc ((t,_),_,_,props) -> begin
@@ -593,17 +796,17 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
     ) [] d_dclr.Iast.data_fields in
     Gen.BList.remove_dups_eq string_eq extn_fields
   in
-  let iview_dclr = Iast.look_up_view_def_raw 66 iprog.Iast.prog_view_decls view.Cast.view_name in
-  let orig_view_name = view.Cast.view_name in
+  let iview_dclr = Iast.look_up_view_def_raw 66 iprog.Iast.prog_view_decls view.C.view_name in
+  let orig_view_name = view.C.view_name in
   let orig_args = iview_dclr.Iast.view_vars in
-  let extn_view_name = extn_view.Cast.view_name in
-  let extn_props = get_extns view.Cast.view_data_name in
-  let n_arg = fresh_any_name extn_view.Cast.view_name in
+  let extn_view_name = extn_view.C.view_name in
+  let extn_props = get_extns view.C.view_data_name in
+  let n_arg = fresh_any_name extn_view.C.view_name in
   let extn_args = [n_arg] in
   let vars = iview_dclr.Iast.view_vars@extn_args in
   let extn_targs = [(Int,n_arg)] in
   let der_view_dclr = 
-    { Iast.view_name = iview_dclr.Iast.view_name ^"_"^extn_view.Cast.view_name;
+    { Iast.view_name = iview_dclr.Iast.view_name ^"_"^extn_view.C.view_name;
           Iast.view_pos = no_pos;
           Iast.view_data_name = "";
           view_type_of_self = None;
@@ -638,17 +841,17 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
   (* let old_flag = !Globals.do_infer_inv in *)
   (* let () = Globals.do_infer_inv := true in *)
   let () =  Debug.ninfo_hprint (add_str "orig_view_name" pr_id) orig_view_name no_pos in
-  let nc_view = x_add_1 trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.Cast.prog_view_decls der_view_dclr in
+  let nc_view = x_add_1 trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.C.prog_view_decls der_view_dclr in
   (* let () = Globals.do_infer_inv := old_flag in *)
-  let nc_view = {nc_view with Cast.view_domains = view.Cast.view_domains@[(extn_view.Cast.view_name,0,List.length vars -1)]} in
-  (* let _ = cprog.Cast.prog_view_decls <- cprog.Cast.prog_view_decls@[nc_view] in *)
+  let nc_view = {nc_view with C.view_domains = view.C.view_domains@[(extn_view.C.view_name,0,List.length vars -1)]} in
+  (* let _ = cprog.C.prog_view_decls <- cprog.C.prog_view_decls@[nc_view] in *)
   nc_view
 
 let expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map_views view extn_view=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
-  let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
-              ^ (pr1 v.Cast.view_domains) in
-  let pr3 v =  v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">" in
+  let pr2 v = v.C.view_name ^ "<" ^ (!CP.print_svl v.C.view_vars) ^ ">, "
+              ^ (pr1 v.C.view_domains) in
+  let pr3 v =  v.C.view_name ^ "<" ^ (!CP.print_svl v.C.view_vars) ^ ">" in
   Debug.no_2 "expose_pure_extn_one_view" pr2 pr3 pr2
     (fun _ _ -> expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view lower_map_views view extn_view)
     view extn_view
@@ -661,14 +864,14 @@ let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
       let lst_view = List.fold_left (fun r extn_view ->
           expose_pure_extn_one_view iprog cprog rev_trans_formula trans_view acc v extn_view
       ) v extn_views in
-      let new_map = ((v.Cast.view_name, v.Cast.view_vars), (lst_view.Cast.view_name, lst_view.Cast.view_vars)) in
+      let new_map = ((v.C.view_name, v.C.view_vars), (lst_view.C.view_name, lst_view.C.view_vars)) in
       acc@[new_map]
     ) [] views
 
 let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
   let pr1 = pr_list (pr_triple pr_id string_of_int string_of_int) in
-  let pr2 v = v.Cast.view_name ^ "<" ^ (!CP.print_svl v.Cast.view_vars) ^ ">, "
-              ^ (pr1 v.Cast.view_domains) in
+  let pr2 v = v.C.view_name ^ "<" ^ (!CP.print_svl v.C.view_vars) ^ ">, "
+              ^ (pr1 v.C.view_domains) in
   let pr3 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
   Debug.no_2 "expose_pure_extn" (pr_list_ln pr2) (pr_list_ln pr2) (pr_list pr3)
       (fun _ _ -> expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views)

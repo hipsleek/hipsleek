@@ -100,6 +100,7 @@ and view_decl = {
 
   (* these seem related to parameters of view *)
   view_vars : P.spec_var list;
+  view_labels : LO.t list;
   view_ann_params : (P.annot_arg * int) list;
   view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
   view_cont_vars : P.spec_var list;
@@ -118,7 +119,6 @@ and view_decl = {
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-  view_labels : LO.t list;
   view_modes : mode list;
   view_type_of_self : typ option;
   view_is_touching : bool;
@@ -1207,8 +1207,11 @@ let unmingle_name (m : ident) =
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] ->
-    let () = report_warning no_pos ("Cannot find definition of view " ^ name) in 
+    let msg = ("Cannot find definition of cview " ^ name) in 
+    let () = y_tinfo_pp (x_loc^msg) in
     raise Not_found
+    (* let msg = ("Cannot find definition of view " ^ name) in  *)
+    (* failwith (x_loc^msg) *)
 
 let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in

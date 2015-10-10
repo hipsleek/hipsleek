@@ -1629,6 +1629,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let caxms = List.map (x_add trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
          (* let () = print_string "trans_prog :: trans_rel PASSED\n" in *)
          let cdata =  List.map (x_add trans_data prog) prog.I.prog_data_decls in
+         let () = Cf_ext.add_data_tags_to_obj cdata in
          (* let () = print_string "trans_prog :: trans_data PASSED\n" in *)
          (* let () = print_endline ("trans_prog :: trans_data PASSED :: procs = " ^ (Iprinter.string_of_proc_decl_list prog.I.prog_proc_decls)) in *)
          let todo_unk = List.map (fun p ->
@@ -7386,8 +7387,13 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
               let rec copy_list fv tl = (
                 match fv with
                 | [] -> []
-                | h::t -> let (v,en) = List.find (fun (v,en) -> v=h) tl
-                  in (v,en)::(copy_list t tl) 
+                | h::t -> 
+                  try
+                    let (v,en) = List.find (fun (v,en) -> v=h) tl
+                    in (v,en)::(copy_list t tl) 
+                  with r -> 
+                    let () = y_binfo_hp (add_str "var not in type table" pr_id) h in
+                    raise r
               ) in
               let n_tl = copy_list fvars n_tl in
               n_tl
@@ -7440,8 +7446,12 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
               match fv with
               | [] -> []
               | h::t -> 
-                let (v,en) = List.find (fun (v,en) -> v=h) tl
-                in (v,en)::(copy_list t tl) 
+                try
+                  let (v,en) = List.find (fun (v,en) -> v=h) tl
+                  in (v,en)::(copy_list t tl) 
+                with r -> 
+                  let () = y_binfo_hp (add_str "var not in type table" pr_id) h in
+                  raise r
             ) in
             copy_list fvars n_tl
           else n_tl
@@ -8616,8 +8626,11 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
         | Not_found -> (false,List.map (fun _ -> LO.unlabelled) b.IF.h_formula_heap_arguments,[])
       in
       (* Redundant checking: Already done in typeinfer.ml? *)
-      let () = if (List.length b.IF.h_formula_heap_arguments) != (List.length labels) then
-          report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
+      let args = b.IF.h_formula_heap_arguments in
+      let () = y_binfo_hp (add_str "labels" (pr_list (fun x->LO.string_of x))) labels in 
+      let () = if (List.length args) != (List.length labels) then
+          let msg = ((pr_list Iprinter.string_of_formula_exp) args)^" vs "^((pr_list (fun x->LO.string_of x)) labels) in
+          report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"^msg)
       in
       if (isInv) then
         (*TO CHECK: if heap node is a LOCK invariant => do nothing*)

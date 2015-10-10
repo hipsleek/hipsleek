@@ -14994,16 +14994,34 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     (* let () = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
     List.map fst map
 
+(* Ocaml compiler bug here *)
+(* norm/ex25a5.slk *)
+(* !!! **cpure.ml#15002:lst_sv:[] *)
+(* !!! **cpure.ml#15003:lst:[] *)
+(* !!! **cpure.ml#15011:**cpure.ml#15011:combine_labels:([],[]) *)
+let rec combine_noexc ls1 ls2 =
+  match ls1,ls2 with
+  | [],_ -> []
+  | _,[] -> []
+  | x::xs,y::ys -> (x,y)::(combine_noexc xs ys)
+
 let combine_labels_w_view_arg  lbl view_arg =
-  let no_lst = Gen.range 1 (List.length view_arg) in
-  let lst = List.combine no_lst view_arg in
-  let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
-  let lst_sv = List.combine lbl lst_sv in
-  let lst_ann = List.map (fun a -> (LO.unlabelled,a)) lst_ann in
-  let no_view_args = lst_sv@lst_ann in
-  let no_view_args = List.sort (fun (_,(no1,_)) (_,(no2,_)) -> no1 - no2) no_view_args in
-  let view_args_w_lbl = List.map (fun (l,(_,a)) -> (l,a)) no_view_args in
-  view_args_w_lbl
+  try
+    let no_lst = Gen.range 1 (List.length view_arg) in
+    let lst = List.combine no_lst view_arg in
+    let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
+    let () = y_binfo_hp (add_str "lst_sv" (pr_list pr_none)) lst_sv in
+    let () = y_binfo_hp (add_str "lst" (pr_list pr_none)) lst in
+    let lst_sv = combine_noexc lbl lst_sv in
+    let lst_ann = List.map (fun a -> (LO.unlabelled,a)) lst_ann in
+    let no_view_args = lst_sv@lst_ann in
+    let no_view_args = List.sort (fun (_,(no1,_)) (_,(no2,_)) -> no1 - no2) no_view_args in
+    let view_args_w_lbl = List.map (fun (l,(_,a)) -> (l,a)) no_view_args in
+    view_args_w_lbl
+  with r -> 
+    let () = y_winfo_hp (add_str (x_loc^"combine_labels") 
+                           (pr_pair (pr_list (fun (a,_)->a)) (pr_list pr_none))) (lbl,view_arg) in
+    raise r
 
 let initialize_positions_for_view_params (va: 'a list) = 
   let positions = Gen.range 1 (List.length va) in

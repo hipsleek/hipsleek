@@ -84,6 +84,7 @@ and view_decl =
     view_name : ident; 
     mutable view_vars : ident list;
     view_pos : loc;
+    view_labels : LO.t list * bool;
 
     view_is_prim : bool;
     view_is_hrel : bool option; (* bool is for PostHeap *)
@@ -93,7 +94,6 @@ and view_decl =
     mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
 
     mutable view_imm_map: (P.ann * int) list;
-    view_labels : LO.t list * bool;
     view_modes : mode list;
     mutable view_typed_vars : (typ * ident) list;
     view_parent_name: (ident) option;
@@ -617,7 +617,7 @@ let set_iprog ip=
 let get_iprog ()=
   match !iprog with
   | Some ip -> ip
-  | None -> raise Not_found
+  | None -> failwith "iprog not found"
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
@@ -1803,7 +1803,10 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) =
 
 and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x rest name
-  | [] -> raise Not_found
+  | [] -> 
+    let msg = ("Cannot find definition of iview " ^ name) in 
+    let () = y_tinfo_pp (x_loc^msg) in
+    raise Not_found
 
 and look_up_view_def_raw i (defs : view_decl list) (name : ident) 
   = let pr = pr_list !print_view_decl in
