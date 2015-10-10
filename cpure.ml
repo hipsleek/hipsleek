@@ -15491,3 +15491,25 @@ let rec gen_cl_eqs pos svl p_res=
               mkAnd acc_p p pos
           ) p_res rest in
           gen_cl_eqs pos rest new_p_res
+
+let mk_bform pf = BForm((pf,None),None) 
+
+let mk_eq_zero a1 = 
+  let a1 = mkVar a1 no_pos in
+  mk_bform (Eq (a1, mkIConst 0 no_pos,no_pos))
+
+let mk_max a a1 a2 = 
+  let a = mkVar a no_pos in
+  let a1 = mkVar a1 no_pos in
+  let a2 = mkVar a2 no_pos in
+  mk_bform (mkEqMax a a1 a2 no_pos)
+
+let mkEqExp_raw (ae1 : exp) (ae2 : exp) pos :formula =
+  mk_bform (Eq (ae1, ae2, pos))
+
+let mk_inc lhs rhs = 
+  let lhs = mkVar lhs no_pos in
+  let rhs = mkVar rhs no_pos in
+  let rhs = mkAdd rhs (mkIConst 0 no_pos) no_pos in
+  mkEqExp_raw lhs rhs no_pos
+

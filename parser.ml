@@ -1205,10 +1205,17 @@ view_decl:
               view_inv_lock = li;
               try_case_inference = (snd vb) }
     |  vh = view_header; `EQEQ; `EXTENDS; orig_v = derv_view; `WITH ; extn = prop_extn ->
-           { vh with view_derv = true;
+      let vd = { vh with view_derv = true;
                view_derv_info = [(orig_v,extn)];
                view_kind = View_DERV;
-           }
+           } in
+      if !Globals.old_pred_extn then vd
+      else 
+        (* let (id,_) = orig_v in *)
+        { vd with 
+              view_derv_from = Some (REGEX_LIST [(fst(orig_v),true)]); (* views for extension *)
+              view_derv_extns = [extn]; (* features of expension *)
+            }
     |  vh = view_header; `EQEQ; `EXTENDS; orig_v = selective_id_star_list_bracket; `WITH ; extn = prop_extn ->
            { vh with view_derv = true;
                (* view_derv_info = [(orig_v,extn)]; *)
