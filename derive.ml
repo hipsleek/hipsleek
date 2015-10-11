@@ -751,7 +751,9 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let body = List.map (fun (f,l) -> (extend_size_disj vns f,l)) body in
     let new_vd = { vd with C.view_vars = new_vs; C.view_name = new_name; C.view_un_struc_formula=body;
                  C.view_labels = new_labels; C.view_params_orig = vparams; C.view_domains = new_domains;
-                 C.view_user_inv = MCP.mix_of_pure uinv;} in
+                 C.view_user_inv = MCP.mix_of_pure uinv;
+                 C.view_baga_over_inv = None;
+                 } in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
     let () = Typeinfer.update_view_new_body ~base_flag:true new_vd body in
     new_vd

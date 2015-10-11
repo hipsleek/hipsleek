@@ -127,6 +127,9 @@ let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
   (*       ) lst in *)
   (*     Some rr *)
   (* in *)
+  let vbc_o = match vbc_o with
+    | None -> Some (Excore.EPureI.mk_epure new_pf) 
+    | Some _ -> vbc_o in
   let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
   let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
   let unfold_once baga =
@@ -153,4 +156,20 @@ let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
     | Some vbi -> vboi
     (* x_dinfo_hp (add_str ("baga over inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos  *)
   in (vboi,vbui,user_inv,user_x_inv)
+
+(* type: Excore.EPureI.epure list option -> *)
+(*   Excore.EPureI.epure list option -> *)
+(*   Excore.EPureI.epure list option -> *)
+(*   Cformula.CP.formula -> *)
+(*   VarGen.loc -> *)
+(*   Excore.EPureI.epure list option * Excore.EPureI.epure list option * *)
+(*   Cformula.MCP.mix_formula * Cformula.MCP.mix_formula *)
+let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
+  let pr = pr_option (fun x -> Excore.EPureI.string_of_disj x) in
+  let pr1 = pr_triple pr pr pr in
+  let pr2 = !CP.print_formula in
+  let pr2a f = pr2 (MCP.pure_of_mix f) in
+  let pr3 = pr_quad pr pr pr2a pr2a in
+  Debug.no_2 "compute_baga_invs" pr1 pr2 pr3 (fun _ _ -> compute_baga_invs vbc_i vbc_o vbc_u new_pf pos) (vbc_i,vbc_o,vbc_u) new_pf
+
 

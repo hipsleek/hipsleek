@@ -1688,7 +1688,21 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
         let () = y_tinfo_pp "updating base case now" in
         let is_prim_v = vd.C.view_is_prim in
         let rbc = CFE.compute_raw_base_case is_prim_v view_body_lbl in
+        let vbc_i = vd.C.view_baga_inv in
+        let vbc_o = vd.C.view_baga_over_inv in
+        let vbc_u = vd.C.view_baga_under_inv in
+        (* let vbc_i = conv_baga_inv vbi_i (\* vd.I.view_baga_inv *\) in *)
+        (* let vbc_o = conv_baga_inv vbi_o in *)
+        (* let vbc_u = conv_baga_inv vbi_u in *)
+        let new_pf = MCP.pure_of_mix vd.C.view_user_inv in
+        let (vboi,vbui,user_inv,user_x_inv) = CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos in
         let () = vd.C.view_raw_base_case <- rbc in
+        let () = vd.C.view_user_inv <- user_inv in
+        let () = vd.C.view_x_formula <- user_x_inv in
+        (* let () = vd.C.view_baga_inv <- vbc_i in *)
+        let () = vd.C.view_baga_over_inv <- vboi in
+        let () = vd.C.view_baga_x_over_inv <- vboi in
+        let () = vd.C.view_baga_under_inv <- vbui in
         ()
       end
   in
