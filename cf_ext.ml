@@ -15,6 +15,8 @@ open Perm
 open Label_only
 open Label
 open Cpure
+open Mcpure_D
+open Mcpure
 
 module Err = Error
 module CP = Cpure
@@ -96,3 +98,58 @@ let compute_raw_base_case is_prim_v n_un_str =
           | Some f1  -> Some (CF.mkOr f1 fc no_pos)
           | None -> Some fc) None n_un_str 
   in rbc
+
+(* type: Excore.EPureI.epure list option -> *)
+(*   Excore.EPureI.epure list option -> *)
+(*   Excore.EPureI.epure list option -> *)
+(*   Cformula.CP.formula -> *)
+(*   VarGen.loc -> *)
+(*   Excore.EPureI.epure list option * Excore.EPureI.epure list option * *)
+(*   Cformula.MCP.mix_formula * Cformula.MCP.mix_formula *)
+let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
+  (* let vbi_i = vdef.I.view_baga_inv in *)
+  (* let vbi_o = vdef.I.view_baga_over_inv in *)
+  (* let vbi_u = vdef.I.view_baga_under_inv in *)
+  (* let trans_var = t_v in *)
+  (* let trans_pure_formula = t_pf in *)
+  (* let vbc_i = conv_baga_inv vbi_i (\* vdef.I.view_baga_inv *\) in *)
+  (* let vbc_o = conv_baga_inv vbi_o in *)
+  (* let vbc_u = conv_baga_inv vbi_u in *)
+  (* let conv_baga_inv baga_inv = *)
+  (*   match baga_inv with *)
+  (*   | None -> None *)
+  (*   | Some lst -> *)
+  (*     let rr = List.map (fun (idl,pf) -> *)
+  (*         let svl = List.map (fun c -> x_add trans_var (c,Unprimed) n_tl pos) idl in *)
+  (*         let cpf = x_add trans_pure_formula pf n_tl in *)
+  (*         let cpf = x_add Cpure.arith_simplify 1 cpf in *)
+  (*         (svl,cpf) *)
+  (*       ) lst in *)
+  (*     Some rr *)
+  (* in *)
+  let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
+  let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
+  let unfold_once baga =
+    match baga with
+    | None -> None
+    | Some lst ->
+      if List.length lst == 1 then
+        Some lst (* unfold once *)
+      else baga in
+  let (vboi,vbui,user_inv,user_x_inv) = match vbc_i with
+    | Some ef ->
+      let new_f = Excore.EPureI.ef_conv_disj ef in
+      let new_mix_f = x_add_1 Mcpure.mix_of_pure new_f in
+      (vbc_i,vbc_i,new_mix_f,new_mix_f)
+    | _ -> (vbc_o (* vdef.I.view_baga_over_inv *),
+            vbc_u (* conv_baga_inv vbi_u *) (* vdef.I.view_baga_under_inv *),memo_pf_N,memo_pf_P) in
+  let vboi = match vboi with
+    | None ->
+      begin
+        x_dinfo_hp (add_str "pure to_be added" Cprinter.string_of_pure_formula) new_pf no_pos;
+        (Some [([],new_pf)])
+        (* Debug.ninfo_hprint (add_str ("baga inv("^vn^")") (fun x -> x)) "None" no_pos *)
+      end
+    | Some vbi -> vboi
+    (* x_dinfo_hp (add_str ("baga over inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos  *)
+  in (vboi,vbui,user_inv,user_x_inv)
