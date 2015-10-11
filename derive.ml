@@ -742,7 +742,6 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let body = List.map (fun (f,l) -> (extend_size_disj vns f,l)) body in
     let new_vd = { vd with C.view_vars = new_vs; C.view_name = new_name; C.view_un_struc_formula=body;
                  C.view_labels = new_labels; C.view_params_orig = vparams; C.view_domains = new_domains} in
-    let () = y_binfo_hp (add_str "der_view(new)" Cprinter.string_of_view_decl) new_vd in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
     let () = Typeinfer.update_view_new_body ~base_flag:true new_vd body in
     new_vd
@@ -751,6 +750,8 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let (vns,vds) = List.split scc in
     let () = p_tab # reset_mut vns in
     let vds = List.map (extend_size_vdecl vns) vds in
+    let () = y_binfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in
+    let () = failwith (x_tbi^"Chanh: update_view_new_body/update_view_decl_both of view body are incomplete, see todo.txt with ex25a5.slk") in
     vds in
   let new_vdecls = List.map (extend_size_scc) scc_vdecls in
   new_vdecls

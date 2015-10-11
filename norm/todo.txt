@@ -1103,22 +1103,7 @@ Segmentation fault (core dumped)
     ]
 
 ===================================================================
-# ex25a5.slk
-
-# to fix ptr equality
-
-# to fix mutual-rerursion
-
-# to fix double node
-
-# struc not transformed?
-      || :EBase 
-            exists (Impl)[Anon_12; 
-            p](* lbl: *){8}->self::node<Anon_12,p>@M * p::ll<>@M&
-            {FLOW,(1,26)=__flow#E}[]
-
-# is_rec marker (OK)
-  is_recursive?: true
+# ex25a5.slk --new-pred-extn
 
 # base-case
   raw base case: 
@@ -1129,6 +1114,50 @@ Segmentation fault (core dumped)
   baga over inv: [([], true)]
   baga over inv (unfolded): [([], true)]
   xform: true
+
+# is_rec marker (OK)
+  is_recursive?: true
+
+# to fix ptr equality
+
+# to check mutual-rerursion
+
+# to check double node
+
+--new-pred-extn
+ 
+view ll_ss{}[]<nnn:int>= 
+  view_domains: (size,0,1)
+   view ll_ss<nnn:int>= 
+     EList
+      :EBase 
+         (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; p; Anon_13; 
+            q](* lbl: *){8}->self::node<Anon_12,p>@M * 
+                             p::node<Anon_13,q>@M * q::ll<>@M&
+            {FLOW,(1,26)=__flow#E}[]
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  
+  unstructured formula: 
+    (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){8}->(exists Anon_12,p,Anon_13,
+       q: (* lbl: *){8}->self::node<Anon_12,p>@M * p::node<Anon_13,q>@M * 
+                         q::ll_ss<nnn_61>@M&
+       {FLOW,(1,26)=__flow#E}[])
+  xform: true
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
 
 --old-pred-extn
 
@@ -1168,48 +1197,6 @@ Segmentation fault (core dumped)
   (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
  
 
---new-pred-extn
-
-!!! **astsimp.ml#7453:var not in type table:nnn
-Exception(trans_formula):Not_found
-Exception(Norm:case_norm):Not_found
-Exception(process_selective_iview_decls):Not_found
-Exception(convert_data_and_pred_to_cast):Not_found
-
-Exception processed: Not_found
- 
-view ll_ss{}[]<nnn:int>= 
-  view_domains: (size,0,1)
-   view ll_ss<nnn:int>= 
-     EList
-      :EBase 
-         (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
-      || :EBase 
-            exists (Impl)[Anon_12; p; Anon_13; 
-            q](* lbl: *){8}->self::node<Anon_12,p>@M * 
-                             p::node<Anon_13,q>@M * q::ll<>@M&
-            {FLOW,(1,26)=__flow#E}[]
-      
-  view vars: nnn
-  ann vars (0 - not a posn): (@M,0),(@M,0)
-  inv: true
-  
-  baga over inv: [([], true)]
-  baga over inv (unfolded): [([], true)]
-  
-  unstructured formula: 
-    (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
-    || (* lbl: *){8}->(exists Anon_12,p,Anon_13,
-       q: (* lbl: *){8}->self::node<Anon_12,p>@M * p::node<Anon_13,q>@M * 
-                         q::ll_ss<nnn_61>@M&
-       {FLOW,(1,26)=__flow#E}[])
-  xform: true
-  is_recursive?: true
-  same_xpure?: NO
-  view_data_name: node
-  
-  raw base case: 
-  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
 ===================================================================
 ===================================================================
 ===================================================================

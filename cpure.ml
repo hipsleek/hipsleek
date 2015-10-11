@@ -15510,6 +15510,6 @@ let mkEqExp_raw (ae1 : exp) (ae2 : exp) pos :formula =
 let mk_inc lhs rhs = 
   let lhs = mkVar lhs no_pos in
   let rhs = mkVar rhs no_pos in
-  let rhs = mkAdd rhs (mkIConst 0 no_pos) no_pos in
+  let rhs = mkAdd rhs (mkIConst 1 no_pos) no_pos in
   mkEqExp_raw lhs rhs no_pos
 
