@@ -27,7 +27,20 @@ pred_extn size[R]<k> ==
 //pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
 
 pred ss<nnn> == extends ll<> with size[REC]<nnn>.
-//pred ss<nnn> == extends ll1<> with size[REC]<nnn>.
+
+/*
+   pred ss<nnn> == extends ll<> with size[REC]<nnn>.
+   // transform ll its mutual-rec set
+
+   pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+   // transform ll its mutual-rec set
+   //  new view has name ll_ss
+
+   pred ss<nnn> == extends [*] with size[REC]<nnn>.
+   // transform all View_NORM and their mutual-rec set
+
+*/
+
 
 //pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 

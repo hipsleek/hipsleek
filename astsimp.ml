@@ -25,6 +25,7 @@ module I = Iast
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
+module CFE = Cf_ext
 (* module CFU = Cfutil *)
 module CFS = Cfsolver
 (* module GV = Globalvars *)
@@ -2367,7 +2368,6 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     else vdef.I.view_data_name in
   (
     (* let () = x_tinfo_hp (add_str "XXX:data_name" pr_id) data_name no_pos in  *)
-    (* let () = x_tinfo_hp (add_str "XXX:view_name" pr_id) vdef.I.view_name no_pos in *)
     vdef.I.view_data_name <- data_name;
     let vtv = vdef.I.view_typed_vars in
     let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
@@ -2457,24 +2457,27 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
       let cf = CF.label_view cf in
       let n_un_str =  CF.get_view_branches cf in   
-      let rec f_tr_base f = 
-        let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in
-        match f with
-        | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
-        | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
-        | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
-      let is_prim_v = vdef.I.view_is_prim in
       let is_hrel_v = vdef.I.view_is_hrel in
-      let rbc = 
-        if is_prim_v then None
-        else List.fold_left (fun a (c,l)-> 
-            let fc = f_tr_base c in
-            if (CF.isAnyConstFalse fc) then a 
-            else match a with 
-              | Some f1  -> Some (CF.mkOr f1 fc no_pos)
-              | None -> Some fc) None n_un_str 
-      in
-      let () = y_tinfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
+      (* moved to cf_ext.ml *)
+      (* let rec f_tr_base f =  *)
+      (*   let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in *)
+      (*   match f with *)
+      (*   | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos *)
+      (*   | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos *)
+      (*   | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in *)
+      let is_prim_v = vdef.I.view_is_prim in
+      let rbc = CFE.compute_raw_base_case is_prim_v n_un_str in
+      (* let rbc =  *)
+      (*   if is_prim_v then None *)
+      (*   else List.fold_left (fun a (c,l)->  *)
+      (*       let fc = f_tr_base c in *)
+      (*       if (CF.isAnyConstFalse fc) then a  *)
+      (*       else match a with  *)
+      (*         | Some f1  -> Some (CF.mkOr f1 fc no_pos) *)
+      (*         | None -> Some fc) None n_un_str  *)
+      (* in *)
+      let () = x_binfo_hp (add_str "XXX:view_name" pr_id) vdef.I.view_name no_pos in
+      let () = y_binfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = try
           not(is_prim_v) && is_view_recursive vdef.I.view_name

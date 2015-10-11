@@ -1105,7 +1105,7 @@ Segmentation fault (core dumped)
 ===================================================================
 # ex25a5.slk --new-pred-extn
 
-# base-case
+# base-case (FIXED)
   raw base case: 
   (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
 

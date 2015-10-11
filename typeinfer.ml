@@ -17,6 +17,7 @@ module I = Iast
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
+module CFE = Cf_ext
 module CP = Cpure
 module MCP = Mcpure
 module H = Hashtbl
@@ -1682,6 +1683,14 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
   let view_struc = CF.formula_to_struc_formula new_view_body in
   let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
   let () = C.update_view_formula (fun _ -> view_struc) vd in
-  let () = if base_flag then y_binfo_pp "update_view_new_body need to change base-cases too" in
+  let () = if base_flag then 
+      begin
+        let () = y_tinfo_pp "updating base case now" in
+        let is_prim_v = vd.C.view_is_prim in
+        let rbc = CFE.compute_raw_base_case is_prim_v view_body_lbl in
+        let () = vd.C.view_raw_base_case <- rbc in
+        ()
+      end
+  in
   (* (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
   ()

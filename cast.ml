@@ -143,9 +143,11 @@ and view_decl = {
   mutable view_formula : F.struc_formula; (* case-structured formula *)
   mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
     (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+
   mutable view_raw_base_case: Cformula.formula option;
   mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
   (* end of main body of a predicate *)
+
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
   view_inv_lock : F.formula option;
