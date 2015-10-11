@@ -9,6 +9,11 @@ pred ll<> ==
 or self::node<_,p>*p::ll<>.
 //or self::node<_,p>*p::node<_,q>*q::ll<>.
 
+pred llsize<n> ==
+   emp & self=null & n=0
+or self::node<_,p>*p::llsize<n-1>
+  inv true.
+
 pred ll1<> ==
    emp & self=null
 or self::node<_,p>*p::ll2<>.

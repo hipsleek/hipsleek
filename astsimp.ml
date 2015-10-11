@@ -2358,6 +2358,24 @@ and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef :
   Debug.no_4 "trans_view" pr pr2 pr2a pr3 pr_r  (fun _ _ _ _ -> trans_view_x prog  mutrec_vnames
                                                     transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
 
+(* type: String.t list -> *)
+(*   String.t -> *)
+(*   Fixcalc.CP.spec_var list -> *)
+(*   (Fixbag.CF.formula * 'f) list -> *)
+(*   Cast.view_decl list -> Cformula.CP.formula -> Cformula.CP.formula *)
+and compute_fixpt_x mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
+  (* let vn = vdef.I.view_name in *)
+  let data_name = () in
+  let new_pf = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
+      vn (* vdef.I.view_name *)  mutrec_vnames then inv_pf
+    else x_add Fixcalc.compute_inv vn (* vdef.I.view_name *) view_sv_vars n_un_str data_name transed_views inv_pf 
+  in new_pf
+
+and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
+  let pr1 = add_str "view_name" pr_id in
+  let pr2 = add_str "inv_pf" !CP.print_formula in
+  Debug.no_2 "compute_fixpt" pr1 pr2 pr2 (fun _ _ -> compute_fixpt_x mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf) vn inv_pf
+
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
@@ -2493,9 +2511,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let () = Debug.ninfo_hprint (add_str "cf 2" Cprinter.string_of_struc_formula) cf no_pos in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      let new_pf = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0)
-          vdef.I.view_name  mutrec_vnames then inv_pf
-        else x_add Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str data_name transed_views inv_pf in
+      let vn = vdef.I.view_name in
+      let new_pf = compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf in
+      (* let new_pf = if Gen.BList.mem_eq (fun s1 s2 -> String.compare s1 s2 = 0) *)
+      (*     vdef.I.view_name  mutrec_vnames then inv_pf *)
+      (*   else x_add Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str data_name transed_views inv_pf in *)
       x_dinfo_hp (add_str "inv_pf" Cprinter.string_of_pure_formula) inv_pf no_pos;
       x_dinfo_hp (add_str "new_pf" Cprinter.string_of_pure_formula) new_pf no_pos;
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
@@ -2621,17 +2641,19 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_materialized_vars = mvars;
         C.view_data_name = data_name;
         C.view_formula = cf;
-        C.view_x_formula = user_x_inv;
         C.view_fixcalc = None;
+ 
+        C.view_user_inv = user_inv;
+        C.view_x_formula = user_x_inv;
         C.view_baga_inv = vbc_i;
         C.view_baga_over_inv = vboi;
         C.view_baga_x_over_inv = vboi;
         C.view_baga_under_inv = vbui;
+
         C.view_xpure_flag = xpure_flag;
         C.view_addr_vars = [];
         C.view_baga = [];
         C.view_complex_inv = None;
-        C.view_user_inv = user_inv;
         C.view_mem = mem_form;
         C.view_inv_lock = inv_lock;
         C.view_un_struc_formula = n_un_str;

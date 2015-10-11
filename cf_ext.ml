@@ -153,3 +153,4 @@ let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
     | Some vbi -> vboi
     (* x_dinfo_hp (add_str ("baga over inv("^vn^")") (Cprinter.string_of_ef_pure_disj)) vbi no_pos  *)
   in (vboi,vbui,user_inv,user_x_inv)
+
