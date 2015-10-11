@@ -1,3 +1,13 @@
+
+/*
+array initialization
+void init(ref int[] a,int i){
+   if(i<10){
+      a[i]=5;
+      init(a,i+1);
+   }
+}
+*/
 data arr_int {
   int val;
   arr_int next;
@@ -23,8 +33,9 @@ arr_seg2<p,n> == self=p & n=0
   or self::arr_int<5,q>*q::arr_seg2<p,n-1>
   inv n>=0;
 
+
 void foo2(arr_int a,int i)
-  requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
+ requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
   ensures a::arr_seg2<q,10-i> *q::arr_seg<p,5>
   ;
 {
@@ -35,14 +46,3 @@ void foo2(arr_int a,int i)
 }
 
 
-/*
-  a,offset
-
-   case {
-     i>=10 --> a'=a
-     i<=10 --> 
-   }
-
-}
-
-*/
