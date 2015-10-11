@@ -1595,7 +1595,11 @@ let rec merge_infer_extn_lsts lsts =
   | [] -> []
   | l::ls ->
     let merged_ls = merge_infer_extn_lsts ls in
-    List.fold_left (fun lst extn -> add_avai_infer_extn_lst lst extn) merged_ls l 
+    List.fold_left (fun lst extn -> add_avai_infer_extn_lst lst extn) merged_ls l
+
+let expand_infer_extn_lst lst =
+  List.concat (List.map (fun extn -> 
+    List.map (fun prop -> (extn.extn_pred, prop)) extn.extn_props) lst)
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)

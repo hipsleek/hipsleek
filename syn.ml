@@ -976,6 +976,27 @@ let extn_pred_list iprog cprog extn preds =
     | _ -> failwith (extn ^ " is not a View_EXTN")
   with Not_found -> failwith ("Cannot find the View_EXTN " ^ extn)
 
+let extn_pred_id_list iprog cprog extn preds =
+  let pred_decls = List.map (fun id ->
+    try C.look_up_view_def_raw 21 cprog.C.prog_view_decls id
+    with _ -> failwith ("Cannot find the view " ^ id)) preds in
+  extn_pred_list iprog cprog extn pred_decls
+
+let extn_pred_scc iprog cprog scc_proc_names = 
+  let scc_procs = List.map (fun proc_name ->
+    let proc = C.look_up_proc_def_raw cprog.C.new_proc_decls proc_name in
+    proc) scc_proc_names in
+  let scc_proc_specs = List.map (fun proc -> 
+    proc.C.proc_stk_of_static_specs # top) scc_procs in
+  let extn_lst = merge_infer_extn_lsts 
+      (List.map get_inf_pred_extn_struc_formula scc_proc_specs) in
+  let extn_pred_lst = partition_by_key 
+    (fun (_, prop) -> prop) eq_str
+    (expand_infer_extn_lst extn_lst) in
+  List.map (fun (extn, extn_pred_lst) ->
+    let preds = List.map (fun (id, _) -> id) extn_pred_lst in
+    extn_pred_id_list iprog cprog extn preds) extn_pred_lst
+
 (*********************************)
 (***** COMBINE DISJ BRANCHES *****)
 (*********************************)
