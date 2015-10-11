@@ -15513,3 +15513,7 @@ let mk_inc lhs rhs =
   let rhs = mkAdd rhs (mkIConst 1 no_pos) no_pos in
   mkEqExp_raw lhs rhs no_pos
 
+let mk_geq v i = 
+  let lhs = mkVar v no_pos in
+  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e

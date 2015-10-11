@@ -1109,18 +1109,21 @@ Segmentation fault (core dumped)
   raw base case: 
   (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
 
-# inv not generated?
-  inv: true
-  baga over inv: [([], true)]
-  baga over inv (unfolded): [([], true)]
-  xform: true
+# inv not generated? (FIXED via # get_inv)
+
+  inv: nnn>=0
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+  xform: nnn>=0
 
 # is_rec marker (OK)
   is_recursive?: true
 
+# --inv and --inv-baga
+
 # to fix ptr equality
 
-# to check mutual-rerursion
+# to check mutual-recursion
 
 # to check double node
 
@@ -1198,7 +1201,7 @@ view ll_ss{}[]<nnn:int>=
  
 
 ===================================================================
-# ex25a5e.slk -dre "compute_fixpt"
+# ex25a5e.slk -dre "compute_fixpt" (need to use --inv and --inv-baga)
 
 pred llsize<n> ==
    emp & self=null & n=0

@@ -597,7 +597,13 @@ class prop_table pname eq nnn tag =
     val mk_base = (fun v -> CP.mk_eq_zero v)
     val mk_max = (fun v v1 v2 -> CP.mk_max v v1 v2)
     val mk_inc = (fun v v1 -> CP.mk_inc v v1)
+    (* val mk_inv = (fun  -> CP.mk_inc v v1) *)
     val pr_pure = fun x -> !CP.print_formula x
+    val mutable inv = CP.mkTrue no_pos
+    method set = 
+      inv <- CP.mk_geq orig_sv 0
+    method get_inv =
+      inv
     method reset_disj =
       def_lst <- [];
       lst <- [(self_sv,orig_sv)];
@@ -733,6 +739,8 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let vars = vd.C.view_vars in
     let new_vs = vars@[nnn_sv] in
     let new_labels = vd.C.view_labels@[LOne.unlabelled] in
+    let uinv = MCP.pure_of_mix (vd.C.view_user_inv) in
+    let uinv = CP.mkAnd uinv (p_tab # get_inv) no_pos in
     let new_domains = vd.C.view_domains@[(prop_name (* extn_view.C.view_name *),0,List.length new_vs)] in
     (* let spec_view = x_add C.look_up_view_def_raw 49 cviews spec_view_name in *)
     (* let nc_view = {nc_view with C.view_domains = view.C.view_domains@[(extn_view.C.view_name,0,List.length vars -1)]} in *)
@@ -741,7 +749,8 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     (* (Cformula.formula * formula_label) list *)
     let body = List.map (fun (f,l) -> (extend_size_disj vns f,l)) body in
     let new_vd = { vd with C.view_vars = new_vs; C.view_name = new_name; C.view_un_struc_formula=body;
-                 C.view_labels = new_labels; C.view_params_orig = vparams; C.view_domains = new_domains} in
+                 C.view_labels = new_labels; C.view_params_orig = vparams; C.view_domains = new_domains;
+                 C.view_user_inv = MCP.mix_of_pure uinv;} in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
     let () = Typeinfer.update_view_new_body ~base_flag:true new_vd body in
     new_vd
