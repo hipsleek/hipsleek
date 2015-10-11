@@ -600,7 +600,7 @@ class prop_table pname eq nnn tag =
     (* val mk_inv = (fun  -> CP.mk_inc v v1) *)
     val pr_pure = fun x -> !CP.print_formula x
     val mutable inv = CP.mkTrue no_pos
-    method set = 
+    method set_inv = 
       inv <- CP.mk_geq orig_sv 0
     method get_inv =
       inv
@@ -735,7 +735,8 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     (* let new_name = vd.C.view_name^"_"^pname in *)
     let typ = Named (vd.C.view_data_name) in
     let () = p_tab # reset_view typ in
-    let new_name,nnn_sv = p_tab # proc_view None vd.C.view_name in
+    let () = p_tab # set_inv in
+     let new_name,nnn_sv = p_tab # proc_view None vd.C.view_name in
     let vars = vd.C.view_vars in
     let new_vs = vars@[nnn_sv] in
     let new_labels = vd.C.view_labels@[LOne.unlabelled] in
