@@ -754,8 +754,12 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
                  C.view_user_inv = MCP.mix_of_pure uinv;
                  C.view_baga_over_inv = None;
                  } in
+    let vn = new_vd.C.view_name in
+    let () = y_binfo_hp (add_str "b4 update_view" pr_id) vn  in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
+    let () = y_binfo_hp (add_str "aft update_view" pr_id) vn  in
     let () = Typeinfer.update_view_new_body ~base_flag:true new_vd body in
+    let () = y_binfo_hp (add_str "aft update_view(2)" pr_id) vn  in
     new_vd
   in
   let all_vd_names = List.map (List.map (fun (s,vd) -> s)) scc_vdecls in
