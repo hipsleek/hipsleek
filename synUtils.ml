@@ -20,6 +20,7 @@ let intersect = Gen.BList.intersect_eq CP.eq_spec_var
 let eq_id s1 s2 = String.compare s1 s2 == 0
 
 let mem_id = Gen.BList.mem_eq eq_id
+let subset_id = Gen.BList.subset_eq eq_id
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -632,6 +633,19 @@ let trans_hrel_to_view_spec_scc cprog scc_procs =
 
 let remove_inf_vars_spec_scc cprog scc_procs inf_vars = 
   trans_spec_scc (remove_inf_vars_struc_formula inf_vars) cprog scc_procs
+
+let rec get_inf_pred_extn_struc_formula f = 
+  match f with
+  | CF.EInfer ei -> ei.formula_inf_obj # get_infer_extn_lst
+  | CF.EBase eb -> begin
+      match eb.formula_struc_continuation with
+      | None -> []
+      | Some c -> get_inf_pred_extn_struc_formula c
+    end 
+  | CF.EAssume _ -> []
+  | CF.ECase ec -> List.concat (List.map 
+      (fun (_, c) -> get_inf_pred_extn_struc_formula c) ec.formula_case_branches)
+  | CF.EList el -> List.concat (List.map (fun (_, c) -> get_inf_pred_extn_struc_formula c) el)
 
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
