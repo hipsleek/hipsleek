@@ -508,10 +508,10 @@ let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_m
       begin
         match derv.Iast.view_derv_from with
         | Some rgx ->
-          let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
+          let () = y_tinfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
           let scc = HipUtil.view_scc_obj # get_scc in
-          let () = y_binfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.C.view_name)))  cviews in
-          let () = y_binfo_hp (add_str "view_name" pr_id)  derv.Iast.view_name in
+          let () = y_tinfo_hp (add_str "view_scc_obj" (pr_list (fun v -> v.C.view_name)))  cviews in
+          let () = y_tinfo_hp (add_str "view_name" pr_id)  derv.Iast.view_name in
           let () = y_binfo_hp (add_str "derv_from" (string_of_regex_list (pr_pair pr_id string_of_bool)))  rgx in
           let pr = pr_list pr_id in
           let () = y_binfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) derv.Iast.view_derv_extns in
@@ -542,7 +542,7 @@ let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_m
       (*        () *)
       (*      else () *)
       (* in *)
-      let () = y_binfo_hp (add_str "der_view(old)" Cprinter.string_of_view_decl) der_view in
+      let () = y_tinfo_hp (add_str "der_view(old)" Cprinter.string_of_view_decl) der_view in
       der_view
     | _ -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: not handle yet")
   in
@@ -626,7 +626,7 @@ class prop_table pname eq nnn tag =
           | x::ms,p::ps -> if x then p::(aux ms ps) else aux ms ps
         in aux mask ptrs
       in
-      let () = y_binfo_hp (add_str "proc_data" (pr_triple pr pr_id (pr_list pr))) (ptr,name,args) in
+      let () = y_tinfo_hp (add_str "proc_data" (pr_triple pr pr_id (pr_list pr))) (ptr,name,args) in
       let mask = data_decl_obj # get_tag_mask name tag in
       let to_ptrs = filter_mask mask args in
       self # add_node ptr to_ptrs
@@ -657,7 +657,7 @@ class prop_table pname eq nnn tag =
           | None ->  (self_sv,orig_sv)
           | Some ptr -> self # push_def ptr; (ptr,self # find_or_add ptr) in
         let r = (new_vname,new_sv) in
-        let () = y_binfo_hp (add_str "proc_view" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
+        let () = y_tinfo_hp (add_str "proc_view" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
         r
       else failwith "not a recursive view"
     method get_pure = pure_lst
@@ -716,9 +716,9 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let base_vars = p_tab # mk_undef_zero in
     let pure_lst = p_tab # get_pure in
     let qv = p_tab # get_quan in
-    let () = y_binfo_hp (add_str "new_f" (!CF.print_formula)) new_f in
+    let () = y_tinfo_hp (add_str "new_f" (!CF.print_formula)) new_f in
     (* let () = y_tinfo_hp (add_str "pure_lst computed" (pr_id)) pure_lst in *)
-    let () = y_binfo_hp (add_str "p_tab" (fun x -> x # string_of)) p_tab in
+    let () = y_tinfo_hp (add_str "p_tab" (fun x -> x # string_of)) p_tab in
     let pure = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) pure_lst in
     let res = CF.add_pure_formula_to_formula pure new_f in
     let res = CF.push_exists qv res in
@@ -755,9 +755,9 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
                  C.view_baga_over_inv = None;
                  } in
     let vn = new_vd.C.view_name in
-    let () = y_binfo_hp (add_str "b4 update_view" pr_id) vn  in
+    let () = y_tinfo_hp (add_str "b4 update_view" pr_id) vn  in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
-    let () = y_binfo_hp (add_str "aft update_view" pr_id) vn  in
+    let () = y_tinfo_hp (add_str "aft update_view" pr_id) vn  in
     new_vd
   in
   let all_vd_names = List.map (List.map (fun (s,vd) -> s)) scc_vdecls in
@@ -769,10 +769,10 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let () = List.iter (fun vd ->
         let body = vd.C.view_un_struc_formula in
         let () = Typeinfer.update_view_new_body ~base_flag:true vd body in
-        let () = y_binfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
+        let () = y_tinfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
         ()
       ) vds in
-     let () = y_binfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in
+     let () = y_tinfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in
     (* let () = failwith (x_tbi^"Chanh: update_view_new_body/update_view_decl_both of view body are incomplete, see todo.txt with ex25a5.slk") in *)
     vds in
   let new_vdecls = List.map (extend_size_scc) scc_vdecls in
@@ -780,12 +780,12 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
 
 let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
     (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl list =
-  let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
+  let () = y_tinfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
   let scc = HipUtil.view_scc_obj # get_scc in
   let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews in
-  let () = y_binfo_hp (add_str "cviews" (pr_list (fun v -> v.C.view_name)))  cviews in
+  let () = y_tinfo_hp (add_str "cviews" (pr_list (fun v -> v.C.view_name)))  cviews in
   let vname = derv.Iast.view_name in
-  let () = y_binfo_hp (add_str "view_name" pr_id)  vname in
+  let () = y_tinfo_hp (add_str "view_name" pr_id)  vname in
   let pr = pr_list pr_id in
   let d =  derv.Iast.view_derv_extns in
   let () = y_binfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) d in
@@ -802,13 +802,13 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   (*     view_list *)
   (*   | None -> failwith x_tbi *)
   (* in *)
-  let () = y_binfo_hp (add_str "vd_list(rgx)" (pr_list (fun v -> v.C.view_name))) vd_lst in
-  let () = y_binfo_hp (add_str "scc(b4)" (pr_list (pr_list pr_id)))  scc in
+  let () = y_tinfo_hp (add_str "vd_list(rgx)" (pr_list (fun v -> v.C.view_name))) vd_lst in
+  let () = y_tinfo_hp (add_str "scc(b4)" (pr_list (pr_list pr_id)))  scc in
   let scc = List.filter (fun mr -> 
       let common = Gen.BList.intersect_eq (fun n v -> v.C.view_name=n) mr vd_lst in
       common!=[]
     ) scc in
-  let () = y_binfo_hp (add_str "scc(after)" (pr_list (pr_list pr_id))) scc in
+  let () = y_tinfo_hp (add_str "scc(after)" (pr_list (pr_list pr_id))) scc in
   let scc_vdecls = List.map (fun mr -> 
       List.map (fun n ->
           try 
@@ -818,8 +818,8 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
         ) mr) scc in
   let vdecls = extend_size vname scc_vdecls property field nnn in
   let vdecls = List.concat vdecls in
-  let () = y_binfo_pp "need to keep entire mutual-rec vdecl generated" in  
-  let () = y_binfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl_short)) vdecls in
+  let () = y_tinfo_pp "need to keep entire mutual-rec vdecl generated" in  
+  let () = y_tinfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl_short)) vdecls in
   vdecls
   
 (* TODO : why is this method call in many places, code clone? *)

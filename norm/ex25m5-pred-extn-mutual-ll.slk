@@ -31,9 +31,11 @@ pred_extn size[R]<k> ==
 
 //pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
 
-pred ss<nnn> == extends [ll2*] with size[REC]<nnn>.
+pred ss<nnn> == extends [ll1*] with size[REC]<nnn>.
 
-//shape_extends_view [ll] with size.
+//pred ss<nnn> == extends [ll1] with size[REC]<nnn>.
+
+//shape_extends_view [ll1] with size.
 
 /*
    pred ss<nnn> == extends ll<> with size[REC]<nnn>.

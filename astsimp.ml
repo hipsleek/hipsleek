@@ -2494,8 +2494,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (*         | Some f1  -> Some (CF.mkOr f1 fc no_pos) *)
       (*         | None -> Some fc) None n_un_str  *)
       (* in *)
-      let () = x_binfo_hp (add_str "XXX:view_name" pr_id) vdef.I.view_name no_pos in
-      let () = y_binfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
+      let () = x_tinfo_hp (add_str "XXX:view_name" pr_id) vdef.I.view_name no_pos in
+      let () = y_tinfo_hp (add_str "raw_base_case" (pr_option !CF.print_formula)) rbc in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = try
           not(is_prim_v) && is_view_recursive vdef.I.view_name
@@ -8663,7 +8663,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       in
       (* Redundant checking: Already done in typeinfer.ml? *)
       let args = b.IF.h_formula_heap_arguments in
-      let () = y_binfo_hp (add_str "labels" (pr_list (fun x->LO.string_of x))) labels in 
+      let () = y_tinfo_hp (add_str "labels" (pr_list (fun x->LO.string_of x))) labels in 
       let () = if (List.length args) != (List.length labels) then
           let msg = ((pr_list Iprinter.string_of_formula_exp) args)^" vs "^((pr_list (fun x->LO.string_of x)) labels) in
           report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"^msg)

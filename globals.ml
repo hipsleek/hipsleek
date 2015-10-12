@@ -2604,3 +2604,6 @@ let string_of_regex_list pr m =
 
 type regex_id_star_list = (ident * bool) regex_list
 
+let string_of_regex_id_star_list =
+  string_of_regex_list (pr_pair idf string_of_bool)
+

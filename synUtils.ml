@@ -535,20 +535,31 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
     | CF.HRel _ ->
       let hrel_name, hrel_args = sig_of_hrel hf in
       let hrel_id = CP.name_of_spec_var hrel_name in
-      let subs_hrel_name =
-        if not !Globals.pred_equiv then hrel_name
-        else
+      let subs_hrel_name, view_args =
           try
             let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls hrel_id in
-            if vdef.C.view_equiv_set # is_empty then hrel_name
-            else
-              let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
-              match hrel_name with
-              | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p)
-          with _ -> hrel_name
+            let vargs = vdef.view_vars in
+            let subs_name = 
+              if not !Globals.pred_equiv then hrel_name
+              else if vdef.C.view_equiv_set # is_empty then hrel_name
+              else
+                let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
+                match hrel_name with
+                | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p)
+            in subs_name, vargs
+          with _ -> hrel_name, []
       in
       let hrel_root, hrel_args = get_root_args_hp prog hrel_id hrel_args in
-      let n_hf = CF.mk_HRel_as_view_w_root subs_hrel_name hrel_root hrel_args no_pos in
+      let extn_args =
+        let rec helper h_args v_args =
+          match h_args, v_args with
+          | [], _ -> v_args
+          | _, [] -> []
+          | h::hs, v::vs -> helper hs vs 
+        in
+        helper hrel_args view_args  
+      in
+      let n_hf = CF.mk_HRel_as_view_w_root subs_hrel_name hrel_root (hrel_args @ extn_args) no_pos in
       (match n_hf with
       | CF.ViewNode v ->
         (* Setting imm is important for lemma proving *)

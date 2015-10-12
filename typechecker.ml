@@ -3528,8 +3528,8 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
           else
             if is_empty scc_sel_hps then prog, false
             else
-              let nprog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
               let nprog = Syn.extn_pred_scc iprog prog scc_procs_names in
+              let nprog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
               let nprog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
               nprog, true
         in

@@ -4070,13 +4070,16 @@ let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
   match opt with
   | None -> view_list
   | Some ans -> 
-    let () = y_binfo_pp "get selected views ..." in
     let sel (v,p) = if p then get_t_v v else [v] in
-    match ans with
-    | REGEX_STAR ->  view_list
+    let res = match ans with
+    | REGEX_STAR -> view_list
     | REGEX_LIST lst ->  
       let lst = List.map (fun vp -> sel vp) lst in
       let lst = Gen.BList.remove_dups_eq (=) (List.concat lst) in
       let ans = Gen.BList.intersect_eq (fun v n -> v.view_name = n) view_list lst in
       ans
+    in
+    let () = y_tinfo_hp (add_str "get selected views ... " 
+      (pr_list (fun v -> v.view_name))) res in
+    res
   
