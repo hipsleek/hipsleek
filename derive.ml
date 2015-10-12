@@ -600,21 +600,26 @@ class prop_table pname eq nnn tag =
     (* val mk_inv = (fun  -> CP.mk_inc v v1) *)
     val pr_pure = fun x -> !CP.print_formula x
     val mutable inv = CP.mkTrue no_pos
+    val mutable emap = CP.EMapSV.mkEmpty 
+    method mk_emap p =
+      emap <- CP.EMapSV.build_eset (CP.pure_ptr_equations p)
     method set_inv = 
       inv <- CP.mk_geq orig_sv 0
     method get_inv =
       inv
-    method reset_disj =
+    method reset_disj f =
+      let (h,p,_,_,_,_) = CF.split_components f in
+      self # mk_emap (MCP.pure_of_mix p);
       def_lst <- [];
       lst <- [(self_sv,orig_sv)];
       quan_vs <- [];
       pure_lst <- []
     method reset_view typ =
       self_sv <- CP.mk_self (Some typ);
-      self # reset_disj
+      (* self # reset_disj *)
     method reset_mut vs =
       vns <- vs;
-      self # reset_disj
+      (* self # reset_disj *)
     method is_mut_view vn =
       List.exists (fun v -> v=vn) vns
     method proc_data ptr name args =
@@ -675,13 +680,14 @@ class prop_table pname eq nnn tag =
     method find_or_add ptr =
       (* let fresh nnn = nnn in *)
       try
-        snd(List.find (fun (x,_) -> eq x ptr) lst)
+        snd(List.find (fun (x,_) -> 
+            eq x ptr || CP.EMapSV.is_equiv emap x ptr) lst)
       with _ -> 
         let new_nnn = self # fresh_var in
         self # add ptr new_nnn;
         new_nnn
     method get_undef =
-      let und = Gen.BList.difference_eq (fun (p1,_) p2 -> CP.eq_spec_var p1 p2) lst def_lst in
+      let und = Gen.BList.difference_eq (fun (p1,_) p2 -> eq p1 p2 || CP.EMapSV.is_equiv emap p1 p2) lst def_lst in
       List.map fst und 
     method mk_zero ptr =
       let v = self # find_or_add ptr in
@@ -708,7 +714,7 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
   (* let nnn_sv = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
   let p_tab = new prop_table pname (CP.eq_spec_var) nnn field_tag in
   let extend_size_disj vns (*mutual call*) f =
-    let () = p_tab # reset_disj in
+    let () = p_tab # reset_disj f in
     let map_h h = CFE.process_heap_prop_extn p_tab h in
     let new_f = CF.map_formula_heap_only map_h f in
     (* collected pure property and extended predicates *)

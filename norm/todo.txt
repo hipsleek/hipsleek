@@ -18,7 +18,6 @@ or:
 The command should be idempotent in that the 
 2nd application will cause no-change.
 ===================================================================
-===================================================================
 # ex21r3.slk
 
 pred lseg2a<n,p> == self = p & n=0
@@ -1105,9 +1104,9 @@ Segmentation fault (core dumped)
 ===================================================================
 # ex25a5.slk --new-pred-extn
 
-# to fix ptr equality
+# to use code from pred_extn
 
-# to use code for extnn
+# to fix ptr equality (DONE)
 
 # to check mutual-recursion (OK)
 
