@@ -15517,3 +15517,8 @@ let mk_geq v i =
   let lhs = mkVar v no_pos in
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
   mk_bform e
+
+let is_AndList f =
+  match f with
+  | AndList _ -> true
+  | _ -> false

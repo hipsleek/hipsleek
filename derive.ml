@@ -758,18 +758,20 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let () = Typeinfer.update_view_new_body ~base_flag:true new_vd body in
     new_vd
   in
+  let all_vd_names = List.map (List.map (fun (s,vd) -> s)) scc_vdecls in
   let extend_size_scc scc =
     let (vns,vds) = List.split scc in
     let () = p_tab # reset_mut vns in
     let vds = List.map (extend_size_vdecl vns) vds in
-    let () = y_binfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in
-    let () = failwith (x_tbi^"Chanh: update_view_new_body/update_view_decl_both of view body are incomplete, see todo.txt with ex25a5.slk") in
+    let vds = FixUtil.compute_inv_baga all_vd_names vds in
+     let () = y_binfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in
+    (* let () = failwith (x_tbi^"Chanh: update_view_new_body/update_view_decl_both of view body are incomplete, see todo.txt with ex25a5.slk") in *)
     vds in
   let new_vdecls = List.map (extend_size_scc) scc_vdecls in
   new_vdecls
 
 let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
-    (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl =
+    (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl list =
   let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
   let scc = HipUtil.view_scc_obj # get_scc in
   let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews in
@@ -810,14 +812,15 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   let vdecls = List.concat vdecls in
   let () = y_binfo_pp "need to keep entire mutual-rec vdecl generated" in  
   let () = y_binfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl_short)) vdecls in
-  List.hd vdecls
+  vdecls
   
+(* TODO : why is this method call in many places, code clone? *)
 let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
-      (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl =
-  let pr_r = Cprinter.string_of_view_decl in
+      (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl list =
+  let pr_r = pr_list Cprinter.string_of_view_decl in
   let pr = Iprinter.string_of_view_decl in
-  let fn = if !Globals.old_pred_extn then trans_view_dervs
-    else trans_view_dervs_new in
+  let fn a b c d e f = if !Globals.old_pred_extn then [trans_view_dervs a b c d e f]
+    else trans_view_dervs_new a b c d e f in
   Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> fn prog rev_form_fnc trans_view_fnc
       lower_map_views cviews derv) derv
 
@@ -904,7 +907,8 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
   (* let old_flag = !Globals.do_infer_inv in *)
   (* let () = Globals.do_infer_inv := true in *)
   let () =  Debug.ninfo_hprint (add_str "orig_view_name" pr_id) orig_view_name no_pos in
-  let nc_view = x_add_1 trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.C.prog_view_decls der_view_dclr in
+  let nc_view_lst = x_add_1 trans_view_dervs iprog rev_formula_fnc trans_view_fnc lower_map_views cprog.C.prog_view_decls der_view_dclr in
+  let nc_view = List.hd nc_view_lst in
   (* let () = Globals.do_infer_inv := old_flag in *)
   let nc_view = {nc_view with C.view_domains = view.C.view_domains@[(extn_view.C.view_name,0,List.length vars -1)]} in
   (* let _ = cprog.C.prog_view_decls <- cprog.C.prog_view_decls@[nc_view] in *)

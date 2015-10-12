@@ -24,16 +24,16 @@ or self::node<_,p>*p::ll1<>.
 
 pred_extn size[R]<k> ==
    k=0 // base case
-   or R::size<i> & k=1+i // recursive case
+   or R::size<i> & k=1+max(i,i) // recursive case
    inv k>=0.
 
 //print views.
 
 //pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
 
-//pred ss<nnn> == extends ll<> with size[REC]<nnn>.
+pred ss<nnn> == extends ll<> with size[REC]<nnn>.
 
-shape_extends_view [ll] with size.
+//shape_extends_view [ll] with size.
 
 /*
    pred ss<nnn> == extends ll<> with size[REC]<nnn>.

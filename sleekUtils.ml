@@ -95,9 +95,10 @@ let process_selective_iview_decls is_all iprog iviews =
   (* x_tinfo_pp "after trans_view" no_pos; *)
   (* derv and spec views *)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
+  (* TODO: this code is duplicated *)
   let cviews_derv = List.fold_left (fun norm_views v ->
       let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in
-      (norm_views@[der_view])
+      (norm_views@der_view)
     ) cviews0 tmp_views_derv1 in
   let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   cviews_derv

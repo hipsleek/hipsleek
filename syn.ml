@@ -947,10 +947,11 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   let extn_iview = { extn_iview with 
     I.view_derv_info = [(orig_info, extn_info)];
     I.view_derv_extns = [extn_info] } in
-  let extn_cview = x_add_1 Derive.trans_view_dervs iprog 
+  let extn_cview_lst = x_add Derive.trans_view_dervs iprog 
     Rev_ast.rev_trans_formula Astsimp.trans_view [] 
-    cprog.C.prog_view_decls extn_iview
-  in
+    cprog.C.prog_view_decls extn_iview in
+  let () = y_winfo_pp "Chanh, Losing some cviews here .." in
+  let extn_cview = List.hd extn_cview_lst in
   let extn_cview = { extn_cview with C.view_name = norm_pred.C.view_name } in
   let () = C.update_view_decl cprog extn_cview in
   extn_cview

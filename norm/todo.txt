@@ -1109,12 +1109,14 @@ Segmentation fault (core dumped)
   raw base case: 
   (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
 
-# inv not generated? 
+# inv not generated? # use --inv-baga
 
-  inv: nnn>=0 (partly FIXED via # get_inv)
-  baga over inv: [([], true)]
-  baga over inv (unfolded): [([], true)]
-  xform: true
+  inv: ((nnn=0 & self=null) | (self!=null & 1<=nnn))
+  baga inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga over inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga over inv (unfolded): [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga under inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  xform: ((nnn=0 & self=null) | (self!=null & 1<=nnn))
 
 # is_rec marker (OK)
   is_recursive?: true
@@ -1169,7 +1171,7 @@ view ll_ss{}[]<nnn:int>=
   view_domains: (size,0,1)
    view ss<nnn:int>= 
     EList
-      :EBase 
+          :EBase 
          (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
       || :EBase 
             exists (Impl)[Anon_55; 

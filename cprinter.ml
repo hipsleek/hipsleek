@@ -4347,13 +4347,13 @@ let pr_view_decl v =
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
   pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
   pr_add_str_cut  ~emp_test:(Gen.is_empty) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
+  pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv;
   pr_add_str_opt_cut  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
   pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
   pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
   pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
   pr_add_str_cut   ~emp_test:Gen.is_None  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
-  pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   if (v.view_is_tail_recursive) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
   pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula;
   pr_add_str_cut ~emp_test:(fun b -> b==false) "is_recursive?: "  pr_bool v.view_is_rec;
