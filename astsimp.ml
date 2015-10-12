@@ -2734,7 +2734,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   let omega_call_count1 = !Omega.omega_call_count in
   let () = x_tinfo_pp ("Omega call before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   (* WN: moved out as a separate method *)
-  let cviews0 = FixUtil.compute_inv_baga ls_mut_rec_views cviews0 in
+  let cviews0 = x_add FixUtil.compute_inv_baga ls_mut_rec_views cviews0 in
   (*   if !Globals.gen_baga_inv then *)
   (*     let () = x_binfo_pp "Generate baga inv\n" no_pos in *)
   (*     (\* let cviews0 = List.filter (fun cv -> *\) *)

@@ -749,14 +749,20 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let body = vd.C.view_un_struc_formula in
     (* (Cformula.formula * formula_label) list *)
     let body = List.map (fun (f,l) -> (extend_size_disj vns f,l)) body in
+    let () = y_binfo_hp (add_str "body" (pr_list !CF.print_formula)) (List.map fst body) in
     let new_vd = { vd with C.view_vars = new_vs; C.view_name = new_name; C.view_un_struc_formula=body;
                  C.view_labels = new_labels; C.view_params_orig = vparams; C.view_domains = new_domains;
                  C.view_user_inv = MCP.mix_of_pure uinv;
+                 (* reset the inv to re-compute later, *)
+                 (* as previous view's computed inv may be incorrect *)
                  C.view_baga_over_inv = None;
+                 C.view_baga_inv = None;
+                 C.view_baga_under_inv = None;
                  } in
     let vn = new_vd.C.view_name in
     let () = y_tinfo_hp (add_str "b4 update_view" pr_id) vn  in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
+    let () = y_binfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in
     let () = y_tinfo_hp (add_str "aft update_view" pr_id) vn  in
     new_vd
   in
@@ -765,11 +771,12 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
     let (vns,vds) = List.split scc in
     let () = p_tab # reset_mut vns in
     let vds = List.map (extend_size_vdecl vns) vds in
-    let vds = FixUtil.compute_inv_baga all_vd_names vds in
+    let vds = x_add FixUtil.compute_inv_baga all_vd_names vds in
     let () = List.iter (fun vd ->
         let body = vd.C.view_un_struc_formula in
         let () = Typeinfer.update_view_new_body ~base_flag:true vd body in
-        let () = y_tinfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
+        let () = y_binfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
+        let () = y_binfo_hp (add_str "new_vd" Cprinter.string_of_view_decl_short) vd in
         ()
       ) vds in
      let () = y_tinfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in

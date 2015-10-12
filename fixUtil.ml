@@ -334,36 +334,46 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                 else () in
               if precise then
                 match cv.Cast.view_baga_inv with
-                | None -> {cv with
+                | None -> 
+                    let mf = (Excore.EPureI.ef_conv_disj inv) in
+                    let () = y_binfo_hp (add_str "pure inv3" !CP.print_formula) mf in
+                    let mf =  Mcpure.mix_of_pure mf  in
+                  {cv with
                            C.view_baga = Excore.EPureI.get_baga inv;
                            C.view_baga_inv = Some inv;
                            C.view_baga_over_inv = Some inv;
                            C.view_baga_under_inv = Some inv;
                            C.view_baga_x_over_inv = Some inv;
-                           C.view_user_inv = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-                           C.view_x_formula = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                           C.view_user_inv = mf;
+                           C.view_x_formula = mf;
                           }
                 | Some inv0 ->
                   if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then 
+                    let mf = (Excore.EPureI.ef_conv_disj inv) in
+                    let () = y_binfo_hp (add_str "pure inv2" !CP.print_formula) mf in
+                    let mf =  Mcpure.mix_of_pure mf  in
                     {cv with
                      C.view_baga = Excore.EPureI.get_baga inv;
                      C.view_baga_inv = Some inv;
                      C.view_baga_over_inv = Some inv;
                      C.view_baga_under_inv = Some inv;
                      C.view_baga_x_over_inv = Some inv;
-                     C.view_user_inv = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-                     C.view_x_formula = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                     C.view_user_inv = mf;
+                     C.view_x_formula = mf;
                     }
                   else cv
               else
                 let inf_inv = Excore.EPureI.ef_conv_disj inv in
                 if (Tpdispatcher.imply_raw inf_inv user_inv) || (not is_sound) then
+                  let mf = (Excore.EPureI.ef_conv_disj inv) in
+                  let () = y_binfo_hp (add_str "pure inv" !CP.print_formula) mf in
+                  let mf =  Mcpure.mix_of_pure mf  in
                   {cv with
                    C.view_baga = Excore.EPureI.get_baga inv;
                    C.view_baga_over_inv = Some inv;
                    C.view_baga_x_over_inv = Some inv;
-                   C.view_user_inv = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
-                   C.view_x_formula = x_add_1 Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj inv);
+                   C.view_user_inv = mf;
+                   C.view_x_formula = mf;
                   }
                 else cv
           ) cviews0
@@ -378,3 +388,8 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
     else
       cviews0
   in cviews0
+
+let compute_inv_baga ls_mut_rec_views cviews0 =
+  let pr = pr_list (fun vd -> vd.C.view_name) in
+  let pr2 = pr_list_ln Cprinter.string_of_view_decl_inv in
+  Debug.no_1 "compute_inv_baga" pr pr2 (fun _ -> compute_inv_baga ls_mut_rec_views cviews0) cviews0

@@ -1105,11 +1105,19 @@ Segmentation fault (core dumped)
 ===================================================================
 # ex25a5.slk --new-pred-extn
 
+# to fix ptr equality
+
+# to use code for extnn
+
+# to check mutual-recursion (OK)
+
+# to check double node (OK)
+
 # base-case (FIXED)
   raw base case: 
   (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
 
-# inv not generated? # use --inv-baga
+# inv not generated? # use --inv-baga (OK)
 
   inv: ((nnn=0 & self=null) | (self!=null & 1<=nnn))
   baga inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
@@ -1121,13 +1129,8 @@ Segmentation fault (core dumped)
 # is_rec marker (OK)
   is_recursive?: true
 
-# --inv and --inv-baga
+# --inv and --inv-baga (OK)
 
-# to fix ptr equality
-
-# to check mutual-recursion
-
-# to check double node
 
 --new-pred-extn
  
@@ -1203,7 +1206,9 @@ view ll_ss{}[]<nnn:int>=
  
 
 ===================================================================
-# ex25a5e.slk -dre "compute_fixpt" (need to use --inv and --inv-baga)
+# ex25a5e.slk -dre "compute_fixpt" (OK)
+
+(need to use --inv and --inv-baga)
 
 pred llsize<n> ==
    emp & self=null & n=0
@@ -1212,15 +1217,20 @@ pred llsize<n> ==
 
 # why doens't compute_fixpt work?
 
-compute_fixpt@1
-compute_fixpt inp1 :view_name:llsize
-compute_fixpt inp2 :inv_pf: true
-compute_fixpt@1 EXIT:inv_pf: true
+// should inv = xform?
 
-  inv: true
-  baga over inv: [([], true)]
-  baga over inv (unfolded): [([self], true),([], self=null & n=0)]
-  xform: (self!=null | (self=null & n=0))
+(==astsimp.ml#2737==)
+compute_inv_baga@2
+compute_inv_baga inp1 :[llsize]
+compute_inv_baga@2 EXIT:[ view llsize{}[]<n:int>= 
+ inv: ((self=null & n=0) | (self!=null & 1<=n))
+ baga inv: [([], self=null & n=0),([self], 1<=n)]
+ baga over inv: [([], self=null & n=0),([self], 1<=n)]
+ baga over inv (unfolded): [([], self=null & n=0),([self], 1<=n)]
+ baga under inv: [([], self=null & n=0),([self], 1<=n)]
+ xform: ((self=null & n=0) | (self!=null & 1<=n))
+ ]
+
 ===================================================================
 # ex25m5b.slk
 
@@ -1247,6 +1257,79 @@ Inv Check: Fail.(View ll_ss:Under)
 chinwn@loris-60:~/hg/sleekex/norm$ fixcalc logs/fixcalc.inp 
 # ll_ss:={ ... };
 (nnn_52 = 2*idx_53 && idx_53 >= 0)
+
+===================================================================
+# ex25m5c.slk
+
+ll<n> view:
+  inv: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+  
+  baga over inv: [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  
+  xform: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+
+===================================================================
+# ex25m5b.slk (FIXED)
+
+# try simplify inv generated .. (FIXED)
+
+compute_inv_baga@3
+compute_inv_baga inp1 :[size,ll]
+compute_inv_baga@3 EXIT:[ view_extn size{}[R:size]<k:int>= 
+ inv: (k>=0 | k>=0)
+ baga inv: [([], k>=0),([], k>=0)]
+ baga over inv: [([], k>=0),([], k>=0)]
+ baga over inv (unfolded): [([], k>=0),([], k>=0)]
+ baga under inv: [([], k>=0),([], k>=0)]
+ xform: (k>=0 | k>=0)
+ ,
+ view ll{}[]<>= 
+ inv: (self=null | self!=null)
+ baga inv: [([], self=null),([self], true)]
+ baga over inv: [([], self=null),([self], true)]
+ baga over inv (unfolded): [([], self=null),([self], true)]
+ baga under inv: [([], self=null),([self], true)]
+ xform: (self=null | self!=null)
+ ]
+
+
+ex25m5b.slk
+!!! **derive.ml#761:new_vd:
+ inv: ((self=null | self!=null)) & nnn>=0
+baga over inv (unfolded): [([], self=null),([self], true)]
+xform: (self=null | self!=null)
+
+# baga_inv and under inv wrong; should contain only (FIXED)
+
+compute_inv_baga@2 EXIT:[ view ll_ss{}[]<nnn:int>= 
+  inv: ((nnn=0 & self=null) | 
+        (self!=null & 2<=nnn & exists(alpha:2*alpha=nnn)))
+  baga inv: [([], self=null),([self], true)] # not valid
+  baga over inv: [([], nnn=0 & self=null),([self], 2<=nnn & exists(alpha:2*alpha=nnn))]
+  baga over inv (unfolded): [([], nnn=0 & self=null),([self], 2<=nnn & exists(alpha:2*alpha=nnn))]
+  baga under inv: [([], self=null),([self], true)] # not valie
+  xform: ((nnn=0 & self=null) | 
+          (self!=null & 2<=nnn & exists(alpha:2*alpha=nnn)))
+
+--before compute_inv_baga
+  inv: ((self=null | self!=null)) & nnn>=0
+  baga inv: [([], self=null),([self], true)]
+  
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+  xform: (self=null | self!=null)
+
+
+!!! **derive.ml#757:new_vd:
+ view ll_ss{}[]<nnn:int>= 
+ inv: ((self=null | self!=null)) & nnn>=0
+  baga inv: [([], self=null),([self], true)]
+  
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+  xform: (self=null | self!=null)
+
 ===================================================================
 ===================================================================
 ===================================================================

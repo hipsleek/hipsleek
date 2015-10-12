@@ -1695,7 +1695,7 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
         (* let vbc_o = conv_baga_inv vbi_o in *)
         (* let vbc_u = conv_baga_inv vbi_u in *)
         let new_pf = MCP.pure_of_mix vd.C.view_user_inv in
-        let (vboi,vbui,user_inv,user_x_inv) = CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos in
+        let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos in
         let () = vd.C.view_raw_base_case <- rbc in
         let () = vd.C.view_user_inv <- user_inv in
         let () = vd.C.view_x_formula <- user_x_inv in
