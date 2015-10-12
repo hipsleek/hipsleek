@@ -338,12 +338,12 @@ let norm_complex_unfold iprog cprog
     (* let () = y_binfo_hp (add_str "unfold_set0" pr) unfold_set0 in *)
     (* unfold_set1 - multiple disjs unfold set *)
     let unfold_set1 = List.filter (fun (_,_,l) -> List.length l > 1) unfold_set1 in
-    let () = y_binfo_hp (add_str "unfold_set1" pr2) unfold_set1 in
+    let () = y_tinfo_hp (add_str "unfold_set1" pr2) unfold_set1 in
     let uses_unfold_set1 f = 
       let svl = List.concat (List.map (fun (f,_) -> fv ~vartype:Global_var.var_with_view_only f) f) in
-      let () = y_binfo_hp (add_str "views" !CP.print_svl) svl in
+      let () = y_ninfo_hp (add_str "views" !CP.print_svl) svl in
       let unf = Gen.BList.intersect_eq (fun (e,_,_) sv -> e=(CP.name_of_spec_var sv)) unfold_set1 svl in
-      let () = y_binfo_hp (add_str "unf" (pr_list (fun (e,_,_) ->e))) unf in
+      let () = y_ninfo_hp (add_str "unf" (pr_list (fun (e,_,_) ->e))) unf in
       unf
     in
     let vdefs = List.filter (fun vd -> 

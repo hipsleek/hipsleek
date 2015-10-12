@@ -20003,9 +20003,8 @@ let add_label_to_struc_formula s_f old_sf =
 let is_sat_raw = Mcpure.is_sat_raw
 
 let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
-  let () = y_binfo_pp "insider complex fold" in
   let pure_of_f = get_pure f in
-  let () = y_binfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
+  let () = y_tinfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
 
   (* try to replace views if the corresponding list of formulae in unfold_set1
    * has only 1 satisfiable formula *)
@@ -20020,8 +20019,8 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
         let vl = v in
         let args = vl.h_formula_view_arguments in 
         let vv = vl.h_formula_view_name in
-        let () = y_binfo_hp (add_str "transform .. view node" !CP.print_sv) vsv in
-        let () = y_binfo_hp (add_str "transform .. view name" pr_id) vname in
+        let () = y_tinfo_hp (add_str "transform .. view node" !CP.print_sv) vsv in
+        let () = y_tinfo_hp (add_str "transform .. view name" pr_id) vname in
         (* formulae for view name *)
         try
           let (_,to_args,fl) = List.find (fun (id,_,_) -> string_eq id vname) unfold_set1 in
@@ -20032,9 +20031,9 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
               let unf_pure_f = get_pure unf_f in
               let conj = (CP.mkAnd pure_of_f unf_pure_f no_pos) in
               let flag = !is_sat_raw (MCP.mix_of_pure conj) in
-              let () = y_binfo_hp (add_str "transform .. check sat" (pr_pair !CP.print_formula string_of_bool)) (conj,flag) in
+              let () = y_tinfo_hp (add_str "transform .. check sat" (pr_pair !CP.print_formula string_of_bool)) (conj,flag) in
               flag) fl in
-          let () = y_binfo_hp (add_str "transform .. sat fl" (pr_list !print_formula)) sat_fl in
+          let () = y_tinfo_hp (add_str "transform .. sat fl" (pr_list !print_formula)) sat_fl in
           (match sat_fl with
            (* if we match with none, we *could* replace with false *)
            | [] -> None
