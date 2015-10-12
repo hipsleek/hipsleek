@@ -1222,6 +1222,31 @@ compute_fixpt@1 EXIT:inv_pf: true
   baga over inv (unfolded): [([self], true),([], self=null & n=0)]
   xform: (self!=null | (self=null & n=0))
 ===================================================================
+# ex25m5b.slk
+
+no --inv-baga
+
+  inv: nnn>=0
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+
+# wrong over-approx & unsound under-approx
+
+--inv-baga
+
+  inv: (self=null | self!=null)
+  baga inv: [([], self=null),([self], true)]
+  baga over inv: [([], self=null),([self], true)]
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+
+ERROR: at ex25m5b-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Under)
+
+chinwn@loris-60:~/hg/sleekex/norm$ fixcalc logs/fixcalc.inp 
+# ll_ss:={ ... };
+(nnn_52 = 2*idx_53 && idx_53 >= 0)
 ===================================================================
 ===================================================================
 ===================================================================
