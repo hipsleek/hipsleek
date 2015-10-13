@@ -36,7 +36,7 @@ arr_seg2<p,n> == self=p & n=0
 
 void foo2(arr_int a,int i)
  requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
-  ensures a::arr_seg2<q,10-i> *q::arr_seg<p,5>
+  ensures a::arr_seg<q,10-i> *q::arr_seg<p,5>
   ;
 {
   if (i<10) {

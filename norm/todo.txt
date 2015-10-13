@@ -1330,6 +1330,21 @@ compute_inv_baga@2 EXIT:[ view ll_ss{}[]<nnn:int>=
   xform: (self=null | self!=null)
 
 ===================================================================
+# ex25m5d.slk  =--inv-baga
+
+// fixcalc error ...
+fixcalc: Argument of widen is not a formula
+
+Last Proving Location: ex25m5d-pred-extn-double-ll.slk_8:3_8:18
+
+ERROR: at ex25m5d-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Over)
+
+Exception processed: Failure("\nInv Check: Fail.(View ll_ss:Over)")
+
+
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================

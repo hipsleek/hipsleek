@@ -596,9 +596,9 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
     (* val mk_max = (fun v v1 v2 -> (!pr_sv v)^" = max("^(!pr_sv v1)^","^(!pr_sv v2)^")") *)
     (* val mk_inc = (fun v1 v2 -> (!pr_sv v1)^" = 1+"^(!pr_sv v2)) *)
     (* val pr_pure = fun x -> x *)
-    val mk_base = (fun v -> CP.mk_eq_zero v)
-    val mk_max = (fun v v1 v2 -> CP.mk_max v v1 v2)
-    val mk_inc = (fun v v1 -> CP.mk_inc v v1)
+    val mutable mk_base = (fun v -> CP.mk_eq_zero v)
+    val mutable mk_max = (fun v v1 v2 -> CP.mk_max v v1 v2)
+    val mutable mk_inc = (fun v v1 -> CP.mk_inc v v1)
     (* val mk_inv = (fun  -> CP.mk_inc v v1) *)
     val pr_pure = fun x -> !CP.print_formula x
     val mutable inv = CP.mkTrue no_pos

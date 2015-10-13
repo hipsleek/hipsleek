@@ -2025,9 +2025,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let uns_view = C.formula_of_unstruc_view_f vdef in
         let ep_disj = x_add Cvutil.xpure_symbolic_baga prog uns_view in
         let lhs_pure_enum = Excore.EPureI.ef_conv_enum_disj ep_disj in
-        let () = x_tinfo_hp (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
-        let () = x_tinfo_hp (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
-        let () = x_tinfo_hp (add_str "lhs_pure_enum" Cprinter.string_of_pure_formula) lhs_pure_enum no_pos in
+        let () = y_winfo_pp "TODO: fix replacement of rec view with inv" in
+        let () = x_binfo_hp (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
+        let () = x_binfo_hp (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
+        let () = x_binfo_hp (add_str "lhs_pure_enum" Cprinter.string_of_pure_formula) lhs_pure_enum no_pos in
         CF.formula_of_pure_formula lhs_pure_enum pos in
       let form_body_inv_baga_enum  vdef =
         let pr vd = pr_id vd.C.view_name in
@@ -2062,13 +2063,15 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (CF.fv formula1) in
       let formula1_under = wrap_under_baga form_body_sym vdef in
-      let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
-      let ctx = CF.add_infer_vars_templ_ctx ctx templ_vars in
+      let ctx0 = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+      let ctx = CF.add_infer_vars_templ_ctx ctx0 templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let () = x_tinfo_hp (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
-      let () = x_tinfo_hp (add_str "context" Cprinter.string_of_context) ctx no_pos in
-      let () = x_tinfo_hp (add_str "formula" Cprinter.string_of_formula) formula no_pos in
+      let () = x_binfo_hp (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
+      let () = x_binfo_hp (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let () = x_binfo_hp (add_str "templ_vars" !CP.print_svl) templ_vars no_pos in
+      let () = x_binfo_hp (add_str "context0" Cprinter.string_of_context) ctx0 no_pos in
+      let () = x_binfo_hp (add_str "context" Cprinter.string_of_context) ctx no_pos in
+      let () = x_binfo_hp (add_str "formula" Cprinter.string_of_formula) formula no_pos in
 
 
       let (rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
@@ -2103,8 +2106,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
         | Some disj -> true,CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
-      let () = x_tinfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
-      let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let () = x_binfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
+      let () = x_binfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
 
@@ -2201,7 +2204,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           | Some f ->
             if fail_res then
               (* print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")") *)
-              report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")")
+              report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc)
           (* else *)
           (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
           | None -> ()

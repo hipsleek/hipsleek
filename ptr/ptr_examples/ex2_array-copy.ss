@@ -29,23 +29,32 @@ arr_seg<p,n> == self=p & n=0
   or self::arr_int<_,q>*q::arr_seg<p,n-1>
   inv n>=0;
 
+arr_seg1<p,f,n> == self=p & n=0
+  or self::arr_int<v,q>*q::arr_seg1<p,f,n-1> & f[n]=v
+  inv n>=0;
+
 arr_seg2<p,n> == self=p & n=0
   or self::arr_int<5,q>*q::arr_seg2<p,n-1>
   inv n>=0;
-
 
 arr_seg_copy<b,p,n> == self=p & n=0
   or self::arr_int<v,q>*b::arr_int<v,qb>*q::arr_seg_copy<qb,p,n-1>
   inv n>=0;
 
 void copy(arr_int a,arr_int b,int i)
+/*
   requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
-  ensures a::arr_seg_copy<b,q,10-i> *q::arr_seg<p,5>
-  ;
+  ensures a::arr_seg_copy<b,q,10-i> *q::arr_seg<p,5>;
+  requires a::arr_seg1<p,g,n> * b::arr_seg1<p,f,n> & n=10-i+5 & i>=0 & i<=10
+  ensures a::arr_seg1<q,f,10-i> *q::arr_seg<p,g,5>;
+*/
+  requires a::arr_seg<p,n> * b::arr_seg<p2,n>@L & n=10-i+5 & i>=0 & i<=10
+  ensures a::arr_seg<q,10-i> *q::arr_seg<p,5>;
+
 {
   if (i<10) {
     upd_arr(a,get_arr(b));
-    foo2(arr_inc(a),i+1);
+    copy(arr_inc(a),arr_inc(b),i+1);
   }
 }
 

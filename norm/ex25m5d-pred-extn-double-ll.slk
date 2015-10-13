@@ -6,8 +6,8 @@ data node{
 
 pred ll<> ==
    emp & self=null
-//or self::node<_,p>*p::ll<>.
-or self::node<_,p>*p::node<_,q>*q3::ll<> & q=q3.
+or self::node<_,p>*p::ll<>.
+//or self::node<_,p>*p::node<_,q>*q3::ll<> & q=q3.
 
 pred_extn size[R]<k> ==
    k=0 // base case
