@@ -579,7 +579,7 @@ let pr_sv = CP.print_sv
 
 let data_decl_obj = CFE.data_decl_obj
 
-class prop_table pname (*name of extn*) pview (*extension view*) eq nnn tag =
+class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq nnn tag =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
     val mutable def_lst = [] (* list of ptr with defined value *)
@@ -619,7 +619,7 @@ class prop_table pname (*name of extn*) pview (*extension view*) eq nnn tag =
       (* self # reset_disj *)
     method reset_mut vs =
       let () = y_binfo_hp (add_str "p_table:name" pr_id) pname in
-      let () = y_binfo_hp (add_str "p_table:prop" pr_id) pview.C.view_name in
+      let () = y_binfo_hp (add_str "p_table:prop" pr_id) prop_name in
       vns <- vs;
       (* self # reset_disj *)
     method is_mut_view vn =
@@ -711,12 +711,11 @@ class prop_table pname (*name of extn*) pview (*extension view*) eq nnn tag =
 
 (* let prc_heap ptab = CFE.process_heap_prop_extn ptab *)
 
-let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_view field_tag (* property *) 
+let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name,prop_view) as xx) field_tag (* property *) 
     nnn (* extended parameter *) =
   (* let nnn_sv = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
-  let prop_name = prop_view.C.view_name in
   let () = y_binfo_hp (add_str "prop_name" pr_id) prop_name in 
-  let p_tab = new prop_table pname prop_view (CP.eq_spec_var) nnn field_tag in
+  let p_tab = new prop_table pname xx (CP.eq_spec_var) nnn field_tag in
   let extend_size_disj vns (*mutual call*) f =
     let () = p_tab # reset_disj f in
     let map_h h = CFE.process_heap_prop_extn p_tab h in
@@ -814,10 +813,10 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   let vd_lst = Cast.get_selected_views opt view_list in
   let prop_view = 
     try 
-      List.find (fun v -> v.C.view_name=property) cviews
+      Some(List.find (fun v -> v.C.view_name=property) cviews)
     with e -> 
       let ()= y_binfo_hp (add_str "Property view cannot be found" pr_id) property in
-      raise e
+      None
   in
   (*   match opt with *)
   (*   | Some rgx -> *)
@@ -840,7 +839,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
             (n,v)
           with _ -> failwith (x_loc^" view "^n^" not found")
         ) mr) scc in
-  let vdecls = extend_size vname scc_vdecls prop_view field nnn in
+  let vdecls = extend_size vname scc_vdecls (property,prop_view) field nnn in
   let vdecls = List.concat vdecls in
   let () = y_tinfo_pp "need to keep entire mutual-rec vdecl generated" in  
   let () = y_tinfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl_short)) vdecls in
