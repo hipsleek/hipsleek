@@ -26,7 +26,7 @@ let find_baga_inv view  =
   (*     | Some efpd -> efpd *)
   (*     | None -> failwith (x_loc^"cannot find baga inv 2") *)
   try
-    Hashtbl.find Excore.map_baga_invs view.Cast.view_name
+    Excore.map_baga_invs # find view.Cast.view_name
   with _ ->
     match view.Cast.view_baga_inv with
     | Some efpd -> efpd
@@ -395,7 +395,7 @@ let build_ef_view (view_decl : Cast.view_decl) (all_views : Cast.view_decl list)
 let fix_test num (view_list : Cast.view_decl list) (inv_list : ef_pure_disj list) : (ef_pure_disj list * bool) =
   let lhs_list = inv_list in
   let rhs_list = List.map (fun vd ->
-      Hashtbl.find map_baga_invs vd.Cast.view_name) view_list in
+      map_baga_invs # find vd.Cast.view_name) view_list in
   let rhs_list = List.map (fun epd -> EPureI.from_cpure_disj epd) rhs_list in
   let pair_list = List.combine lhs_list rhs_list in
   let inv_r_list = List.map (fun (a, c) ->
@@ -429,7 +429,7 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
       inv_list
     else
       let () = List.iter (fun (vc,inv) ->
-          Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
+          map_baga_invs # replace x_loc vc.Cast.view_name (EPureI.to_cpure_disj inv)
         ) (List.combine view_list inv_list) in
       let inv_list = List.fold_left (fun inv_list vc ->
           inv_list@[(build_ef_view vc all_views)]
@@ -442,7 +442,7 @@ let fix_ef_x (view_list : Cast.view_decl list) (all_views : Cast.view_decl list)
       (* this version is being printed *)
       (* let () = Debug.ninfo_hprint (add_str ("baga inv("^vc.Cast.view_name^")") (EPureI.string_of_disj)) inv no_pos in *)
       (* let () = print_string_quiet "\n" in *)
-      Hashtbl.replace map_baga_invs vc.Cast.view_name (EPureI.to_cpure_disj inv)
+      map_baga_invs # replace x_loc vc.Cast.view_name (EPureI.to_cpure_disj inv)
     ) (List.combine view_list inv_list) in
   inv_list
 

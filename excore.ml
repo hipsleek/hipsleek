@@ -1717,6 +1717,27 @@ module EPureI = EPURE(SV)
 
 type ef_pure_disj = EPureI.epure_disj
 
+
+class ['a] inv_store name (pr:'a->string) =
+  object (self)
+    val tab = Hashtbl.create 10
+    method find vn =
+      Hashtbl.find tab vn
+    method replace m vn (fix:'a) =
+      if not(name="") then y_binfo_hp (add_str ("replace("^name^m^")") (pr_pair pr_id pr)) (vn,fix);
+      Hashtbl.replace tab vn fix
+    method string_of =
+      let lst = Hashtbl.fold (fun a b lst -> (a,b)::lst) tab [] in
+      pr_list (pr_pair pr_id pr) lst 
+  end;;
+
 let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
 let map_num_invs : ((string, (Cpure.spec_var list * Cpure.formula)) Hashtbl.t) = Hashtbl.create 10
 let map_precise_invs : ((string, bool) Hashtbl.t) = Hashtbl.create 10
+
+let map_baga_invs 
+  = new inv_store "XXX" EPureI.string_of_disj
+let map_num_invs 
+  = new inv_store "" (pr_pair !Cpure.print_svl !Cpure.print_formula) 
+let map_precise_invs 
+  = new inv_store "" string_of_bool

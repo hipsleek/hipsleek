@@ -48,8 +48,8 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
       (*     (not cv.Cast.view_is_prim) *)
       (*   ) cviews0 in *)
       let () = List.iter (fun cv ->
-          Hashtbl.add Excore.map_baga_invs cv.C.view_name Excore.EPureI.mk_false_disj;
-          Hashtbl.add Excore.map_precise_invs cv.C.view_name true
+          (* Hashtbl.add *) Excore.map_baga_invs # replace x_loc cv.C.view_name Excore.EPureI.mk_false_disj;
+          (* Hashtbl.add *) Excore.map_precise_invs # replace x_loc cv.C.view_name true
         ) cviews0 in
       let cviews0_with_index = Expure.add_index_to_views cviews0 in
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
@@ -192,7 +192,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
           let precise_list,num_invs = List.split precise_num_invs in
           let () = x_tinfo_pp ("Omega call after infer num inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           (* let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_baga in *)
-          let baga_invs = List.map (fun vd -> Hashtbl.find Excore.map_baga_invs vd.Cast.view_name) view_list_num_with_inv in
+          let baga_invs = List.map (fun vd -> Excore.map_baga_invs # find vd.Cast.view_name) view_list_num_with_inv in
           let fixcalc_invs = List.map (fun vd -> vd.Cast.view_fixcalc) view_list_baga in
           let fixcalc_invs_cviews0 = List.map (fun vd -> vd.Cast.view_fixcalc) cviews0 in
           let () = x_ninfo_hp (add_str "fixcalc_invs" (pr_list (pr_option Cprinter.string_of_mix_formula))) fixcalc_invs no_pos in
@@ -201,7 +201,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
           let () = x_tinfo_hp (add_str "num_invs" (pr_list Cprinter.string_of_pure_formula)) num_invs no_pos in
           let () = x_tinfo_hp (add_str "baga_invs" (pr_list Excore.EPureI.string_of_disj)) baga_invs no_pos in
           let () = List.iter (fun (vd,inv) ->
-              Hashtbl.add Excore.map_num_invs vd.Cast.view_name ((CP.mk_self None)::vd.Cast.view_vars,inv)
+              (* Hashtbl.add *) Excore.map_num_invs # replace x_loc vd.Cast.view_name ((CP.mk_self None)::vd.Cast.view_vars,inv)
             ) (List.combine view_list_baga0 num_invs) in
           let baga_num_invs = List.combine baga_invs num_invs in
           let combined_invs = List.map (fun (disj,pf) ->
@@ -211,7 +211,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
             ) baga_num_invs in
           let () = x_tinfo_hp (add_str "combined_invs" (pr_list Excore.EPureI.string_of_disj)) combined_invs no_pos in
           let () = List.iter (fun (vd,inv) ->
-              Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name inv
+              Excore.map_baga_invs # replace x_loc vd.Cast.view_name inv
             ) (List.combine view_list_baga0 combined_invs) in
           let () = x_tinfo_pp ("Omega call after combine inv: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
           let unfold_cnt = new Gen.change_flag in
@@ -241,13 +241,13 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
               let () = Debug.ninfo_hprint (add_str "new_invs" (pr_list Excore.EPureI.string_of_disj)) new_invs no_pos in
               if List.length old_invs = 0 then
                 let () = List.iter (fun (vd,new_inv) ->
-                    Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_inv
+                    Excore.map_baga_invs # replace x_loc vd.Cast.view_name new_inv
                   ) (List.combine view_list_baga0 new_invs) in
                 unfold precise new_invs
               else if not precise then
                 let () = List.iter (fun (vd,new_inv) ->
-                    Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_inv;
-                    Hashtbl.replace Excore.map_precise_invs vd.Cast.view_name false
+                    Excore.map_baga_invs # replace x_loc vd.Cast.view_name new_inv;
+                    Excore.map_precise_invs # replace x_loc vd.Cast.view_name false
                   ) (List.combine view_list_baga0 new_invs) in
                 new_invs
               else if List.for_all (fun (ante,cons) ->
@@ -255,7 +255,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                 old_invs
               else
                 let () = List.iter (fun (vd,new_inv) ->
-                    Hashtbl.replace Excore.map_baga_invs vd.Cast.view_name new_inv
+                    Excore.map_baga_invs # replace x_loc vd.Cast.view_name new_inv
                   ) (List.combine view_list_baga0 new_invs) in
                 unfold precise new_invs
           in
@@ -318,12 +318,12 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                 (CP.is_AndList (Mcpure.pure_of_mix p))
               ) cv.Cast.view_un_struc_formula)
             then cv else
-              let inv = Hashtbl.find Excore.map_baga_invs cv.C.view_name in
+              let inv = (* Hashtbl.find *) Excore.map_baga_invs # find cv.C.view_name in
               let inv = List.fold_left (fun acc (b,f) ->
                   let fl = CP.split_disjunctions f in
                   acc@(List.map (fun f -> (b,f)) fl)
                 ) [] inv in
-              let precise = Hashtbl.find Excore.map_precise_invs cv.C.view_name in
+              let precise = Excore.map_precise_invs # find cv.C.view_name in
               let () = x_binfo_hp (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv (* (Excore.EPureI.pairwisecheck_disj inv) *) no_pos in
               let () = print_string_quiet "\n" in
               let user_inv = MCP.pure_of_mix cv.Cast.view_user_inv in

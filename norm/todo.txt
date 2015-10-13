@@ -1330,7 +1330,7 @@ compute_inv_baga@2 EXIT:[ view ll_ss{}[]<nnn:int>=
   xform: (self=null | self!=null)
 
 ===================================================================
-# ex25m5d.slk  =--inv-baga --dre "build_ef_h"
+# ex25m5d.slk  --inv-baga --dre "build_ef_h"
 
 // fixcalc error ...
 

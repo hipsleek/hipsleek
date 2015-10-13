@@ -245,7 +245,7 @@ let rec fixcalc_of_h_formula f = match f with
     else
       let str =
         try
-          let (svl1,pf) = Hashtbl.find Excore.map_num_invs c in
+          let (svl1,pf) = Excore.map_num_invs # find c in
           let svl2 = sv::svs in
           let svl2 = if (List.length svl1 < List.length svl2) then
               List.rev (List.tl (List.rev svl2)) (* svl2 has idx variable, remove it *)
