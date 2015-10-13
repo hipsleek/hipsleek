@@ -1,0 +1,65 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg_one<p> == self = p
+	or self::node<_, q> * q::lseg_one<p>
+  inv true.
+
+pred sll_two<> == self = null 
+	or self::node<_, q> * q::sll_two<>
+  inv true.
+
+/*
+checkentail (exists a_1655: a'::lseg_one<a_1655>@M&a_1655=null)
+ |-  a'::sll_two<>.
+*/
+
+HeapPred H(node a).
+lemma_unsafe self::sll_two<> <- self::lseg_one<q> * H(q) .
+
+
+infer [H] self::lseg_one<q> * H(q) |- self::sll_two<>.
+
+
+infer [H,classic] H(q) & self=q |- self::sll_two<>.
+print residue.
+/*
+ <1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(q)&true |#|3  --> q::sll_two<>@M&true]
+[[ COND ==>  InferHeap]]
+*/
+
+infer [H,classic] self::node<_, q> * q::lseg_one<p> * H(p) |- self::sll_two<>.
+print residue.
+
+/*
+ <1>emp&q=p&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&true |#|3  --> H(p)&true]
+[[ Fold ==>  SEARCH ==>  Match(self,self) ==>  SEARCH ==>  (Lemma <== lem_14(q,q_69)) ==>  COND ==>  Match(q,q_69) ==>  COND ==>  InferHeap]]
+*/
+
+//lemma_safe self::sll_two<> <- self::lseg_one<q> * q::sll_two<>.
+// above is provable
+
+/*
+#ex17c.slk
+
+lemma_infer_pred [H]  self::sll_two<> <- self::lseg_one<q> * H(q).
+
+# can we automate above lemma synthesis?
+
+After collecting below:
+ inferred hprel: [H(q)&true |#|3  --> q::sll_two<>@M&true]
+ inferred hprel: [H(p)&true |#|3  --> H(p)&true]
+
+Can conclude:
+[   H(q)&true |#|3  --> q::sll_two<>@M&true]
+
+Thus:
+  self::sll_two<> <- self::lseg_one<q> * q::sll_two<>
+*/
+

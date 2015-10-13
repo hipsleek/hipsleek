@@ -1,0 +1,43 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred PP<p> == self::node<_,p>
+	or self::node<_, q> * q::PP<p> & q!=null 
+inv true.
+
+HeapPred P(node x, node y).
+HeapPred U(node x, node y).
+
+
+lemma_test self::PP<y> -> self::node<_,q>*q::lseg<y>.
+
+lemma_test self::PP<y> <- self::node<_,q>*q::lseg<y>.
+
+
+/*
+# ex21e5a.ss
+
+lemma_test self::PP<y> -> self::node<_,q>*q::lseg<y>.
+
+# Why is there an exception below?
+
+!!! WARNING logtime exception:7.1e-05
+!!! WARNING logtime exception:0.000279exception in lemma "lem_17" check
+
+Entailing lemma lem_17: Fail. (cex)(must) cause: exception in lemma proving
+
+
+*/

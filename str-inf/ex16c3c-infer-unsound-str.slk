@@ -1,0 +1,124 @@
+        data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+ HeapPred D(char_star x).
+
+//lemma_unsafe self::WFG<p> <- U(self,q2)*q2::char_star<0,p>.
+
+//infer [U2,@classic,@pure_field] U2(q3,q)  |- U(q3,q).
+//print residue.
+
+//infer [U2,@pure_field] U2(q3,q) * q::char_star<0,p> & q!=qq  |- U(q3,qq) *qq::char_star<n,p>.
+
+//(1)
+infer [U2,@pure_field] U2(q3,q) & q!=qq  |- U(q3,qq) .
+expect Fail.
+
+//(2)
+infer [U2,@pure_field] U2(q3,q) |- U(q3,qq) & q=qq .
+print residue.
+expect Valid.
+
+//(3)
+infer [U2,@pure_field] U2(q3,q) & q!=null  |- U(q3,qq) .
+print residue.
+expect Valid.
+// inferred hprel: [U2(q3,q)&q!=null |#|3  --> U(q3,q)&true]
+
+
+//(4)
+infer [U2,@pure_field] U2(q3,q) & qq!=null  |- U(q3,qq) .
+print residue.
+expect Fail.
+
+//(5)
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<0,q> .
+print residue.
+expect Fail.
+
+//(6)
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<0,qqq> .
+print residue.
+expect Valid.
+/*
+ <1>emp&qq=q & qqq=p&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#| q::char_star<flted_55_164,p>@M&
+                   flted_55_164=0 --> U(q3,q)&true]
+[[ InferUnfold  ==>  SEARCH ==>  Match(q,qq)]]
+*/
+
+//(7)
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<0,p> .
+print residue.
+expect Valid.
+/*
+ <1>emp&qq=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#| q::char_star<flted_60_184,p>@M&
+                   flted_60_184=0 --> U(q3,q)&true]
+[[ InferUnfold  ==>  SEARCH ==>  Match(q,qq)]]
+*/
+
+//(8)
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<1,p> .
+print residue.
+expect Fail.
+//Entail (8) : Fail.(must) cause: flted_64_209=0 |-  flted_64_209=1. LOCS:[64]
+
+//(9)
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<n,p> .
+print residue.
+expect Valid.
+
+/*
+ <1>emp&qq=q & n=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#| q::char_star<flted_68_234,p>@M&
+                   flted_68_234=0 --> U(q3,q)&true]
+[[ InferUnfold  ==>  SEARCH ==>  Match(q,qq)]]
+*/
+
+/*
+# ex16c3c.slk (OK)
+
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<n,p> .
+
+ <1>emp&qq=q & n=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#|3  --> U(q3,q)&true]
+
+# Please add the heap guard:
+
+    U2(q3,q)&true |#| q::char<0,_>  --> U(q3,q)&true]
+
+-----------------------------------------------------------
+
+infer [U2,@pure_field] U2(q3,q) * q::char_star<0,p> & q!=qq  |- U(q3,qq) *qq::char_star<n,p>.
+
+infer [U2,@pure_field] U2(q3,q) & q!=qq  |- U(q3,qq) .
+
+# sound instantiation may lead to unsoundness.
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&q!=q |#|3  --> U(q3,q)&true]
+
+# can we check that qq is not free in LHS before instantiating??
+# Also, each such var is instantiated only once.
+
+*/

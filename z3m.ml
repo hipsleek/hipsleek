@@ -12,11 +12,11 @@ let string_of_z3m_val = function
   | Frac (f1, f2) -> (string_of_float f1) ^ "/" ^ (string_of_float f2)
 
 type z3m_res =
-  | Unsat
+  | Unsat of ident list
   | Sat_or_Unk of (string * z3m_val) list 
 
 let string_of_z3m_res = function
-  | Unsat -> "Unsat"
+  | Unsat unsat_core -> "Unsat" ^ (pr_list idf unsat_core)
   | Sat_or_Unk m -> "Sat or Unk: " ^
                     (pr_list (pr_pair (fun s -> s) string_of_z3m_val) m)
 

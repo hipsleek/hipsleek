@@ -10,22 +10,38 @@ let lem_eq = (==)
 
 class lemma_store =
   object (self)
-    val left_lem = new Gen.stack_pr !lem_pr lem_eq
-    val right_lem = new Gen.stack_pr !lem_pr lem_eq
-    val num_left_lem_stk = new Gen.stack_noexc 0 string_of_int (==)
-    val num_right_lem_stk = new Gen.stack_noexc 0 string_of_int (==)
+    val left_lem = new Gen.stack_pr "left-lem" !lem_pr lem_eq
+    val right_lem = new Gen.stack_pr "right-lem" !lem_pr lem_eq
+    val num_left_lem_stk = new Gen.stack_noexc "num_left_lem_stk" 0 string_of_int (==)
+    val num_right_lem_stk = new Gen.stack_noexc "num_right_lem_stk" 0 string_of_int (==)
     val mutable num_left_lem = 0
     val mutable num_right_lem = 0
 
     method add_left_coercion lem =
       let len = List.length lem in
-      if len>0 then num_left_lem <- num_left_lem + len;
+      if len>0 then 
+        begin
+        num_left_lem <- num_left_lem + len;
+        if !Globals.dump_lem_proc then 
+            begin
+              (* y_binfo_pp "XXXX add_LEFT_coercion"; *)
+              y_binfo_hp (pr_list !lem_pr) lem;
+            end
+        end;
       left_lem # push_list lem;
       num_left_lem_stk # push len
 
     method add_right_coercion lem =
       let len = List.length lem in
-      if len>0 then num_right_lem <- num_right_lem + len;
+      if len>0 then
+        begin
+          num_right_lem <- num_right_lem + len;
+          if !Globals.dump_lem_proc then 
+            begin
+              (* y_binfo_pp "XXXX add_RIGHT_coercion"; *)
+              y_binfo_hp (pr_list !lem_pr) lem;
+            end
+        end;
       right_lem # push_list lem;
       num_right_lem_stk # push len
 
@@ -154,7 +170,7 @@ let all_lemma = new lemma_store;;
 
 class lemma_list_store = 
   object (self)
-    val lst = new Gen.stack_pr !ilem_lst_pr Iast.eq_coercion_list
+    val lst = new Gen.stack_pr "lemma-list-store" !ilem_lst_pr Iast.eq_coercion_list
     (* prt empty at this time *)
 
     method add_ilemma lemma_list =

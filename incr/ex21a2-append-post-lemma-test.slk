@@ -1,0 +1,66 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred PP<y> == self::node<_,null>
+	or self::node<_, q> * q::PP<y> & q!=null 
+inv true.
+
+pred PP0<> == self::node<_,null>
+	or self::node<_, q> * q::PP0<> & q!=null 
+inv true.
+
+pred PP2<> == 
+       [q] self::node<_,q> 
+          case {q=null -> [] emp;
+              q!=null -> [] q::PP2<>;
+           } 
+inv self!=null.
+
+
+
+HeapPred P(node x, node y).
+HeapPred U(node x, node y).
+
+lemma_test "L6" self::PP0<> <- self::ll<> & self!=null.
+// can we unfold again if there is a false?
+
+lemma_test "L7" self::PP2<> <-> self::ll<> & self!=null.
+// can we unfold again if there is a false?
+
+/*
+Entailing lemma lem_16: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (cex)(may) cause: UnionR[ (q_149!=null | q_149=null) |-  q_149=null. LOCS:[1;0;17] (may-bug),base case unfold failed]
+*/
+
+//lemma_test self::PP<y> <-> self::ll<> & self!=null.
+
+//lemma_test self::PP<y> -> self::lseg<y> & self!=null.
+
+//lemma_test self::PP<y> <-> self::node<_,q>*q::lseg<y>.
+
+
+/*
+# ex21a2.ss
+
+lemma_test "L7" self::PP2<> <-> self::ll<> & self!=null.
+
+Entailing lemma L7: Valid.
+
+ Temp Lemma(s) proved is valid in current context.
+
+
+*/

@@ -1,0 +1,156 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,int v).
+
+
+//infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
+infer [U1,@classic,@pure_field] x::ll<>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
+//infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+print residue.
+expect Valid.
+
+
+/*
+# ex25b8.slk  (OK)
+
+infer [U1,@classic,@pure_field] x::ll<>  |- U1(x).
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [x::ll<>@M&true |#|3  --> U1(x)&true]
+[[ InferFold ]]
+
+--------------------------
+
+ infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+
+Entail (1) : Fail.(may) cause:**solver.ml#13179:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferFold ]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+# InferHeap scheduled but infer_collect_hp_rel failed ..
+
+(==solver.ml#13174==)
+infer_collect_hp_rel#1@4
+infer_collect_hp_rel#1 inp1 :lhs: x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: x::ll<>@M
+infer_collect_hp_rel#1@4 EXIT:(false,2: es_formula: 
+ x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],3: U1(x),4:None,5:None)
+
+(==solver.ml#11120==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::ll<>@M
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ U1(x)]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[]
+compute_actions@1 EXIT: InferFold =>
+   LHS: x::ll<>@M
+   RHS: U1(x)
+
+--------------------------------------------
+infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
+
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: x::ll<>@M * y::node<flted_14_29,Anon_13>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[x]
+spatial_ctx_extract inp4 :rhs_node: U1(x)
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: x::ll<>@M
+ RHS: U1(x)
+ lhs_rest: y::node<flted_14_29,Anon_13>@M
+ rhs_rest: y::ll<>@M]
+-----------------------------------------
+
+infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+
+!!! **context.ml#2491:process_matches (steps) :
+ ### LHS : U1(x)
+ ### RHS : x::ll<>@M
+ ### matches :
+[ Type: Root
+ LHS: U1(x)
+ RHS: x::ll<>@M
+ lhs_rest: emp
+ rhs_rest: emp]
+
+infer [U2,@classic,@pure_field] U2(x,v)  |- v!=0 .
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  v=0. LOCS:[0;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+============================
+
+infer [U2,@classic,@pure_field] U2(x,v) |- x!=null .
+print residue.
+
+infer [U2,@classic,@pure_field] U2(x,v) |- x=null .
+print residue.
+
+# why is v@NI?
+ inferred hprel: [U2(x,v@NI)&true |#|3  --> emp&x=null]
+
+
+infer [U2,@classic,@pure_field] U2(x,v) |- v!=0 .
+
+Entail (1) : Fail.(may) cause: true |-  v!=0. LOCS:[0;14] (may-bug)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  v!=0. LOCS:[0;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ U2(x,v)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2]
+infer_collect_hp_rel_empty_rhs#1 inp2 : v!=0
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],Inferred Relations:[ U2(x,v) |#|  --> emp])
+
+
+*/

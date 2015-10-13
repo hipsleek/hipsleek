@@ -1,0 +1,65 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+relation RR(node a).
+
+//lemma_infer [R] self::sll<> <- self::lseg<q> & q=null .
+//lemma_infer [R] self::sll<> <- self::lseg<q> & R(q) .
+//print residue.
+
+//infer [R] R(self) |- self=null.
+//print residue.
+
+//infer [H,@classic] H(self) |- self::sll<>.
+//print residue.
+//inferred hprel: [H(self)&true |#|3  --> self::sll<>@M&true]
+
+infer [RR] RR(self) |- self::sll<>.
+print residue.
+expect Valid.
+
+infer [] emp |- x::sll<>.
+print residue.
+expect Fail.
+
+pred nll<> == self::node<5, q>
+  inv true.
+
+infer [] x::node<v,_> |- x::nll<>.
+expect Fail.
+
+infer [v] x::node<v,_> |- x::nll<>.
+expect Fail.
+
+
+/*
+# ex17i5.slk (WN to fix..)
+
+infer [R] R(self) |- self::sll<>.
+
+# Why did this fail?
+
+Entail (1) : Fail.(may) cause:M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  UnmatchedRHSData]]
+ CEX:false
+
+*/
+

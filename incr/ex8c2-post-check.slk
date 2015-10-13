@@ -1,0 +1,28 @@
+data node {
+ int h;
+ node next;
+}.
+
+pred lseg_one<p> == self=p
+  or self::node<1,q>*q::lseg_one<p>
+  .
+
+lemma_safe self::lseg_one<t> * t::node<1,p> -> self::lseg_one<p>.
+
+checkentail p'::lseg_one<t> * t::node<1,p> |- p'::lseg_one<p>.
+print residue.
+
+/*
+# ex8c1.slk
+
+# Why no lemma message?
+
+Entail 4: Valid. 
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(p',p')]]
+
+
+*/
+

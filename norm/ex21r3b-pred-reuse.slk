@@ -1,0 +1,43 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+
+pred lseg<n,p> == self::lseg111<n,p>.
+
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv n>=0.
+
+/*
+pred lseg222<n,p> == 
+    case {
+      n=0 -> [] self = p & n=0;
+      n!=0 -> [] self::node<_, q> * q::lseg222<n-1,p>;
+    }
+  inv n>=0.
+
+lemma_unsafe self::lseg<n,p> <-> self::lseg222<n,p>.
+print residue.
+*/
+
+lemma_unsafe self::lseg<n,p> <- self::lseg111<n,p>.
+
+infer[@classic]  self::lseg111<n,p> |- self::lseg<n,p>.
+
+infer[@classic]   self::node<_, q> * q::lseg111<n-1,p> 
+     |- self::lseg<n,p>.
+print residue.
+
+infer[@classic]   self = p & n=0 |- self::lseg111<n,p>.
+print residue.
+
+infer[@classic]   self = p & n=0 |- self::lseg<n,p>.
+print residue.

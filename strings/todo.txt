@@ -15,7 +15,7 @@ Procedure while2$STR~STR SUCCESS.
 Termination checking result: 
 (70)->(70) (ERR: invalid transition)  Term[101; k-n] ->  MayLoop[]
 ==================================================================
-# ex3.c
+# ex3.c (FIXED)
 
 Currently translate char* to int*.
 Perhaps, we should use string type?
@@ -66,7 +66,7 @@ ret# s1)})}
 {(20,1),(33,2)}
 
 ==================================================================
-# bug4.ss -p while2
+# bug4.ss -p while2 (FIXED)
 
 void while2(ref str s1,ref str s2)
   requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
@@ -377,7 +377,7 @@ Error3(s) detected at main
 
 [4]+  Done                    ../hip ex18a-infer-cstrcat-memsafe.ss e todo.txt
 ==================================================================
-# ex19a1.ss
+# ex19a1.ss (FIXED by Muoi)
 
   how to handle pointer arithmetic?
 
@@ -397,7 +397,7 @@ Exception occurred: Failure("TYPE ERROR 1 : Found int but expecting char_star")
 Error3(s) detected at main 
 
 ==================================================================
-# ex19b.s --pip
+# ex19b.s --pip (FIXED)
 
 # should use char_star instead of int_star
 # also instead of
@@ -524,7 +524,7 @@ heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context:
 ==================================================================
 # strings/ex8d6.slk --pcp
 
-printing problem ..
+printing problem .. (FIXED)
 
   base case: 
   v=0->v=0 & self!=nullview_complex_inv: None
@@ -681,7 +681,189 @@ incr_fixpt_view@1
 incr_fixpt_view inp1 :[__Exc,__Error,__MayError,__Fail,int_ptr_ptr,int_ptr,lock,barrier,thrd,__RET,__ArrBoundErr,__DivByZeroErr,Object,String,str]
 incr_fixpt_view inp2 :[WAITS,WAIT,memLoc,DDD]
 incr_fixpt_view@1 EXIT:WAITS
+            p_86](ex)[](* lbl: *){11}->(exists n_87: (* lbl: *){11}->
+            self::node<Anon_85,p_86>@M * p_86::llN<n_87>@M&
+            self!=null & n=n_87+1 & 0<=n_87&{FLOW,(1,26)=__flow#E}[]
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], 1<=n & self!=null),([], self=null & n=0)]
+
+# Why true? Can we get n>=0 from baga inv computation?
+
 ==================================================================
+# ex9e2.slk
+
+Given:
+
+pred llN<n:int> == extends ll<> with size[REC]<n> .
+pred ll_one_exN<n:int> == extends ll_one_ex<> with size[REC]<n> .
+
+# Where is llN? Where did beloe come from?
+
+llN: extend ll to size
+
+# It seems that only the last command is derived.
+
+ view ll_one_exN{}[]<n:int>= 
+  view_domains: (size,0,1)
+   view ll_one_exN<n:int>= 
+    EList
+      :EBase 
+         exists (Expl)[](Impl)[Anon_110; 
+         q_111](ex)[](* lbl: *){12}->(exists n_112: (* lbl: *){12}->self::node<Anon_110,q_111>@M * 
+                                                                    q_111::lln<n_112>@M&
+         n=n_112+1 & 0<=n_112&{FLOW,(1,26)=__flow#E}[]
+==================================================================
+# ex12c.ss
+
+# Why the use of ' var caused problem?
+
+checkentail x::str<w,q>*q::WFSeg<s2>*s2::str<0,p>
+            |- x::WFSeg<s2>*s2::str<0,p>.
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::str<v,q>@M, yyy'::str<flted_12_36,p>@M)
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+# Why wasn't false counted?
+
+0 false contexts at: ()
+==================================================================
+# ex12e.ss
+
+checkentail x::str<yyy,_> |- x::str<yyy,_> .
+
+# Why is yyy_19 implicit & existential???
+
+ x::str<yyy,Anon_12>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[Anon_13; 
+   yyy_19](ex)[](exists yyy_19: x::str<yyy_19,Anon_13>@M&yyy_19=yyy&
+   {FLOW,(20,21)=__norm#E}[]
+
+(==astsimp.ml#8591==)
+linearize_heap@4
+linearize_heap inp1 :[]
+linearize_heap inp2 :emp ; (emp ; (x::str{}<yyy,Anon_13>@M[HeapNode1]))
+linearize_heap@4 EXIT:[(Anon_13,)][(yyy_19,)]x::str{}<yyy_19,Anon_13>@M[HeapNode1]&&$yyy_19 = yyy
+
+(==astsimp.ml#7282==)
+linearize_formula@5
+linearize_formula inp1 :view_decls:[]
+linearize_formula inp2 :(x::str{}<yyy_19,Anon_13>@M[HeapNode1]) * ([] & yyy_19 = yyy)( FLOW __norm)
+linearize_formula inp3 :[(yyy:16:int)(TVar__23:23:int)(yyy_19:20:int)(TVar__22:22:int)(Anon_13:21:str)(x:15:str)(Anon_full_perm:18:float)(Anon_12:17:str)]
+linearize_formula@5 EXIT:( x::str<yyy_19,Anon_13>@M&yyy_19=yyy&{FLOW,(20,21)=__norm#E}[],
+ qvars::[])
+==================================================================
+# ex12d.ss (FIXED)
+
+# partially fixed primed vars
+
+# why is yy_17 not classified as EX, rather than IMPL
+
+run_infer:
+ x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+==================================================================
+# ex12a2.ss 
+
+Why isn't ss implicit?
+
+   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
+   EBase 
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       ref [s]
+       (exists p_62,flted_31_61,
+       ss: s::WFSeg<ss>@M * ss::str<flted_31_61,p_62>@M&
+       flted_31_61=0 & ss=s' & p_62=p&{FLOW,(4,5)=__norm#E}[]
+==================================================================
+# ex12d1.slk (FIXED)
+
+# why is yyy_17 not classified as EX, rather than IMPL
+
+INPUT 0: [][] 
+ ### ante =  x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+
+---
+
+(==sleekengine.ml#1291==)
+struc_formula_trans_heap_node@2
+struc_formula_trans_heap_node inp1 : EBase 
+   exists (Expl)[](Impl)[bbb](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&
+   yyy_17=yyy'&{FLOW,(20,21)=__norm#E}[]
+struc_formula_trans_heap_node@2 EXIT: EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+
+==================================================================
+# ex12c2.slk (FIXED)
+
+# Why is flted_13_43 marked implicit but hidden under exists?
+
+INPUT 0: [][] 
+ ### ante =  x::str<v,q>@M * q::WFSeg<yyy'>@M * yyy'::str<flted_12_31,p>@M&
+flted_12_31=0 & 0<v&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[zz; flted_13_43](ex)[](exists p_44,
+   flted_13_43: x::WFSeg<zz>@M * zz::str<flted_13_43,p_44>@M&
+   flted_13_43=0 & zz=yyy' & p_44=p&{FLOW,(20,21)=__norm#E}[]
+==================================================================
+--old-impl-gather (issues)
+All test results were as expected.
+Total verification time: 51.04 second
+	Time spent in main process: 34.64 second
+	Time spent in child processes: 16.40 second
+	Number of false contexts: 90
+
+without
+-------
+Total number of errors: 2 in files:
+  classic/classic1a.slk({E15#Valid}) classic/classic1b.slk({E15#Valid}).
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+# ex3-string-simple.c
+
+# Why precondition in method __write_char$char_star~int failed?
+
+# prelude.ss
+void __write_char(char_star x, int v)
+  requires x::char_star<_,_>@L & Term[]
+  ensures x::char_star<v,_>;
+
+Checking procedure cstrcat$char_star~char_star... 
+Proving precondition in method __write_char$char_star~int Failed.
+  (may) cause: do_unmatched_rhs : s'::char_star<Anon_26,Anon_27>@L(may)
 ==================================================================
 ==================================================================
 ==================================================================

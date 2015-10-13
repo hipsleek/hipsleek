@@ -1,0 +1,35 @@
+data node { int val ; node next }.
+
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+pred lseg<n, p> == 
+   case {
+      n=0 -> [] self = p ;
+      n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+   }     inv n >= 0.
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 
+    <-> self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+# ex55g3.slk
+
+# Can we derive case-spec:
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+==>
+pred lseg<n, p> == 
+   case {
+      n=0 -> [] self = p ;
+      n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+   }     inv n >= 0.
+
+Valid Lemmas : [lem_12:<==>] added to lemma store.
+
+*/

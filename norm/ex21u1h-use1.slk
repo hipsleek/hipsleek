@@ -1,0 +1,48 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+
+pred lseg<y> == self=y
+  or self::node<_,tt> * tt::lseg<y>.
+
+pred ll2<> == emp
+  or self::node<_,tt> * tt::ll2<>.
+
+//print views.
+//pred_elim_useless [G2].
+
+//print views.
+
+
+lemma_test "L1" self::lseg<y> <-> self::ll2<>.
+// useless parameter lemma now fail
+
+lemma_test "L2" self::ll2<> <-> (exists y: self::lseg<y>).
+// this is not useless parameter lemma
+
+lemma_test "L3" self::ll2<> <-> self::lseg<y>.
+// this is not useless parameter lemma
+
+/*
+# ex21u1h.slk -dre "process_coercion_check"
+
+pred lseg<y> == self=y
+  or self::node<_,tt> * tt::lseg<y>.
+pred ll2<> == emp
+  or self::node<_,tt> * tt::ll2<>.
+
+lemma_test "L1" self::lseg<y> <-> self::ll2<>.
+lemma_test "L2" self::ll2<> <-> (exists y: self::lseg<y>).
+lemma_test "L3" self::ll2<> <-> self::lseg<y>.
+
+L1 is useless parameter lemma but not L2, L3.
+
+L1 can be offered to confirm useless parameter.
+It was unsound previously since it was being translated to 
+the equivalent of L2.
+
+*/
+

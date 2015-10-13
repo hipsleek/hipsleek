@@ -1,0 +1,146 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+//or self::node<_,p>*p::node<_,q>*q::ll<>.
+
+pred llsize<n> ==
+   emp & self=null & n=0
+or self::node<_,p>*p::llsize<n-1>
+  inv true.
+
+pred ll1<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll1<>.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+max(i,i) // recursive case
+   inv k>=0.
+
+//print views.
+
+//pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+
+pred ss<nnn> == extends [ll1*] with size[REC]<nnn>.
+
+//pred ss<nnn> == extends [ll1] with size[REC]<nnn>.
+
+//shape_extends_view [ll1] with size.
+
+/*
+   pred ss<nnn> == extends ll<> with size[REC]<nnn>.
+   // transform ll its mutual-rec set
+
+   pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+   // transform ll its mutual-rec set
+   //  new view has name ll_ss
+
+   pred ss<nnn> == extends [*] with size[REC]<nnn>.
+   // transform all View_NORM and their mutual-rec set
+
+*/
+
+
+//pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+//shape_extends_view [*] with size.
+
+//shape_extends_view [ll] with size.
+
+//print views.
+
+/*
+# ex25a5.slk
+
+--old-pred-extn
+
+!!! **derive.ml#545:der_view(old):
+ view ss{}[]<nnn:int>= 
+  view_domains: (size,0,1)
+   view ss<nnn:int>= 
+    EList
+      :EBase 
+         (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_55; 
+            p_56](* lbl: *){10}->(exists nnn_57: (* lbl: *){10}->self::node<Anon_55,p_56>@M * 
+                                                                 p_56::ss<nnn_57>@M&
+            nnn=nnn_57+1 & 0<=nnn_57&{FLOW,(1,26)=__flow#E}[])
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: nnn>=0
+  
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+  
+  unstructured formula: (* lbl: *){9}->emp&self=null & nnn=0&
+                        {FLOW,(1,26)=__flow#E}[]|| (* lbl: *){10}->(exists nnn_57,
+                                                   Anon_55,
+                                                   p_56: (* lbl: *){10}->
+                                                   self::node<Anon_55,p_56>@M * 
+                                                   p_56::ss<nnn_57>@M&
+                                                   nnn=nnn_57+1 & 0<=nnn_57&
+                                                   {FLOW,(1,26)=__flow#E}[])
+  xform: nnn>=0
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
+ 
+
+--new-pred-extn
+
+!!! **astsimp.ml#7453:var not in type table:nnn
+Exception(trans_formula):Not_found
+Exception(Norm:case_norm):Not_found
+Exception(process_selective_iview_decls):Not_found
+Exception(convert_data_and_pred_to_cast):Not_found
+
+Exception processed: Not_found
+ 
+view ll_ss{}[]<nnn:int>= 
+  view_domains: (size,0,1)
+   view ll_ss<nnn:int>= 
+     EList
+      :EBase 
+         (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; p; Anon_13; 
+            q](* lbl: *){8}->self::node<Anon_12,p>@M * 
+                             p::node<Anon_13,q>@M * q::ll<>@M&
+            {FLOW,(1,26)=__flow#E}[]
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  
+  unstructured formula: 
+    (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){8}->(exists Anon_12,p,Anon_13,
+       q: (* lbl: *){8}->self::node<Anon_12,p>@M * p::node<Anon_13,q>@M * 
+                         q::ll_ss<nnn_61>@M&
+       {FLOW,(1,26)=__flow#E}[])
+  xform: true
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+  
+*/

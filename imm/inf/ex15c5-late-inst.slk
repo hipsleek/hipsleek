@@ -1,0 +1,14 @@
+
+data cell{
+ int fst;
+}.
+
+
+checkentail c::cell<Anon_11>@ann_1227 * d::cell<Anon_12>@ann_1228&
+(!v_bool_14_1200') & Anon_11<=0 & //P__1229(ann_1228,ann_1227) & 
+d'=d & 
+c'=c & ann_1227<:@L & res=Anon_11 
+ |-  (exists Anon_1207,Anon_1208: c::cell<Anon_1207>@ann_1225 * d::cell<Anon_1208>@ann_1226).
+
+print residue.
+

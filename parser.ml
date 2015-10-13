@@ -128,6 +128,23 @@ let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
 
+let  conv_ivars_icmd il_w_itype =
+  let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
+  let (i_consts,ivl,extn_lst) = List.fold_left
+      (fun (lst_l,lst_r,lst_e) e -> 
+        match e with 
+        | FstAns l ->
+          (begin match l with
+          | INF_EXTN lst -> (lst_l,lst_r,lst::lst_e)
+          | _ -> (l::lst_l,lst_r,lst_e)
+          end)
+        | SndAns r -> (lst_l,r::lst_r,lst_e)) ([],[],[]) il_w_itype in
+  let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+  let infer_extn_lst = merge_infer_extn_lsts (List.rev extn_lst) in
+  let i_consts = if is_empty infer_extn_lst then i_consts else i_consts @ [INF_EXTN infer_extn_lst] in
+  let () = inf_o # set_list i_consts in 
+  (inf_o,i_consts,ivl)
+
 (****** global vars used by CIL parser *****)
 let is_cparser_mode = ref false
 
@@ -902,7 +919,7 @@ let rec get_heap_ann annl : P.ann =
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
-    | [] ->  P.ConstAnn(Mutable)
+    | [] ->  P.NoAnn (* P.ConstAnn Mutable *)
 
 and get_heap_ann_opt annl : P.ann option = 
   match annl with
@@ -912,7 +929,7 @@ and get_heap_ann_opt annl : P.ann option =
 and get_heap_ann_list annl : P.ann list  = 
   match annl with
     | (Some a) :: r -> a :: get_heap_ann_list r
-    |  None :: r ->  P.ConstAnn(Mutable) :: get_heap_ann_list r
+    |  None :: r ->  P.NoAnn (* P.ConstAnn Mutable  *):: get_heap_ann_list r
     | [] -> []
 
 let stmt_list_to_block t pos = 
@@ -1017,11 +1034,28 @@ non_empty_command:
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
+      | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
+      | t=shapeReuse_cmd     -> ShapeReuse t
+      | t=predUnfold_cmd     -> PredUnfold t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
+      | t = shape_add_dangling_cmd -> ShapeAddDangling t
+      | t = shape_unfold_cmd -> ShapeUnfold t
+      | t = shape_param_dangling_cmd -> ShapeParamDangling t
+      | t = shape_simplify_cmd -> ShapeSimplify t
+      | t = shape_merge_cmd -> ShapeMerge t
+      | t = shape_trans_to_view_cmd -> ShapeTransToView t
+      | t = shape_derive_pre_cmd -> ShapeDerivePre t
+      | t = shape_derive_post_cmd -> ShapeDerivePost t
+      | t = shape_derive_view_cmd -> ShapeDeriveView t
+      | t = shape_extn_view_cmd -> ShapeExtnView t
+      | t = shape_normalize_cmd -> ShapeNormalize t
+      | t = pred_elim_head_cmd -> PredElimHead t
+      | t = pred_elim_tail_cmd -> PredElimTail t
+      | t = pred_unify_disj_cmd -> PredUnifyDisj t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -1043,14 +1077,19 @@ non_empty_command:
       | t = term_assume_cmd -> TermAssume t
       | t = expect_infer -> t
       | t=macro	-> EmptyCmd]];
-  
+
+pure_inv: [[`INV; pf=pure_constr -> pf]];
+
+opt_pure_inv: [[t=OPT pure_inv -> t ]];
+
 data_decl:
-    [[ dh=data_header ; db = data_body 
+    [[ dh=data_header ; db = data_body ; dinv = opt_pure_inv
         -> {data_name = dh;
             data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
+            data_pure_inv = dinv;
             data_is_template = false;
             data_methods = [];} ]];
 
@@ -1061,6 +1100,7 @@ template_data_decl:
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
+            data_pure_inv = None;
             data_is_template = true;
             data_methods = [];} ]];
 
@@ -1168,13 +1208,28 @@ view_decl:
               view_baga_under_inv = obui;
               view_mem = mpb;
               view_is_prim = false;
-          view_kind = Iast.View_NORM; (* TODO : *)
+              view_is_hrel = None;
+              view_kind = View_NORM; (* TODO : *)
               view_inv_lock = li;
               try_case_inference = (snd vb) }
     |  vh = view_header; `EQEQ; `EXTENDS; orig_v = derv_view; `WITH ; extn = prop_extn ->
-           { vh with view_derv = true;
+      let vd = { vh with view_derv = true;
                view_derv_info = [(orig_v,extn)];
-               view_kind = Iast.View_DERV;
+               view_kind = View_DERV;
+           } in
+      if !Globals.old_pred_extn then vd
+      else 
+        (* let (id,_) = orig_v in *)
+        { vd with 
+              view_derv_from = Some (REGEX_LIST [(fst(orig_v),true)]); (* views for extension *)
+              view_derv_extns = [extn]; (* features of expension *)
+            }
+    |  vh = view_header; `EQEQ; `EXTENDS; orig_v = selective_id_star_list_bracket; `WITH ; extn = prop_extn ->
+           { vh with view_derv = true;
+               (* view_derv_info = [(orig_v,extn)]; *)
+               view_kind = View_DERV;
+               view_derv_from = Some orig_v; (* views for extension *)
+               view_derv_extns = [extn]; (* features of expension *)
            }
  ]];
 
@@ -1187,19 +1242,20 @@ prim_view_decl:
           view_baga_inv = obi;
           view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
-          view_kind = Iast.View_PRIM;
+          view_kind = View_PRIM;
           view_is_prim = true;
+          view_is_hrel = None;
           view_inv_lock = li} ]];
 
 view_decl_ext:
-  [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
+  [[ vh= view_header_ext; `EQEQ; vb= view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       -> let (oi, oboi) = oi in
           { vh with view_formula = (fst vb);
           view_invariant = oi;
           view_baga_inv = obi;
           view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
-          view_kind = Iast.View_EXTN;
+          view_kind = View_EXTN;
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -1231,7 +1287,7 @@ view_decl_ext:
 (*             view_baga_inv = obi;                                                                                                                             *)
 (*             view_baga_over_inv = oboi;                                                                                                                       *)
 (*             view_baga_under_inv = obui;                                                                                                                      *)
-(*             view_kind = Iast.View_SPEC;                                                                                                                      *)
+(*             view_kind = View_SPEC;                                                                                                                      *)
 (*             view_parent_name = Some va.view_name;                                                                                                            *)
 (*             view_inv_lock = li;                                                                                                                              *)
 (*             try_case_inference = (snd vb) } ]];                                                                                                              *)
@@ -1396,45 +1452,14 @@ branch: [[ `STRING (_,id);`COLON ->
 
 view_header:
   [[ `IDENTIFIER vn; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
-      let cids, anns = List.split l in
-      let cids_t, br_labels = List.split cids in
-	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
-      (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
-      let _, cids = List.split cids_t in
-      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
-      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
-      (* else *)
-      let modes = get_modes anns in
       let () = view_names # push vn in
-        { view_name = vn;
-          view_pos = get_pos_camlp4 _loc 1;
-          view_data_name = "";
-          view_type_of_self = None;
-          view_imm_map = [];
-          view_vars = (* List.map fst *) cids;
-          view_ho_vars = un_option opt1 []; 
-          view_derv = false;
-          view_parent_name = None;
-          (* view_frac_var = empty_iperm; *)
-          view_labels = br_labels,has_labels;
-          view_modes = modes;
-          view_typed_vars = cids_t;
-          view_pt_by_self  = [];
-          view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
-          view_inv_lock = None;
-          view_is_prim = false;
-          view_kind = View_NORM;
-          view_prop_extns = [];
-          view_derv_info = [];
-          view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
-          view_baga_inv = None;
-          view_baga_over_inv = None;
-          view_baga_under_inv = None;
-          view_mem = None;
-	  view_materialized_vars = get_mater_vars l;
-          try_case_inference = false;
-			}]];
-
+      let mvs = get_mater_vars l in
+      let cids, anns = List.split l in
+      let modes = get_modes anns in
+      let pos = get_pos_camlp4 _loc 1 in
+      Iast.mk_view_header vn opt1 cids mvs modes pos
+]];
+                                          
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
 (* form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]]; *)
@@ -1497,12 +1522,15 @@ view_header_ext:
           view_labels = br_labels,has_labels;
           view_parent_name = None;
           view_derv = false;
+          view_derv_from = None;
+          view_derv_extns = [];
           view_modes = modes;
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_is_prim = false;
+          view_is_hrel = None;
           view_kind = View_EXTN;
           view_prop_extns = sl;
           view_derv_info = [];
@@ -1933,10 +1961,16 @@ simple_heap_constr:
      (* High-order variables, e.g. %P*)
    | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
-        if hp_names # mem id then
-           F.HRel(id, cl, (get_pos_camlp4 _loc 2))
-             (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
-         else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+     let pos = get_pos_camlp4 _loc 2 in
+     if hp_names # mem id then
+       if !Globals.hrel_as_view_flag then
+         (* report_error (get_pos 1) "hrel_as_view : to be implemented (1)" *)
+         F.mk_hrel id cl pos 
+       else
+         F.mk_hrel id cl pos 
+           (* F.HRel(id, cl, (get_pos_camlp4 _loc 2)) *)
+         (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
+     else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
@@ -2204,13 +2238,18 @@ cexp_w:
         (* Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1))) *)
         mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
-        if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+      if hp_names # mem id then 
+        if !Globals.hrel_as_view_flag then
+          (* report_error (get_pos 1) "hrel_as_view : to be implemented (2)" *)
+          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         else
-          begin
-            if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
-            else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
-            Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
-          end
+          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+      else
+        begin
+          if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+          else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+        end
     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
       (* AnHoa: relation constraint, for instance, given the relation 
        * s(a,b,c) == c = a + b.
@@ -2222,7 +2261,7 @@ cexp_w:
         else if templ_names # mem id then
           Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
         else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
-          report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
+          report_error (get_pos 1) ("should be a pure relation, and not a heap pred here")
         else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then 
           begin
             let _, is_pre = ui_names # find (fun (name,  _) -> name = id) in
@@ -2547,16 +2586,124 @@ shapesplit_base_cmd:
    ]];
 
 shapeElim_cmd:
-   [[ `SHAPE_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   [[ `PRED_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    (il1)
    ]];
+
+shapeReuseSubs_cmd:
+   [[ `PRED_REUSE_SUBS; `OSQUARE;il1= shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
+predUnfold_cmd:
+   [[ `PRED_UNFOLD; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
+shapeReuse_cmd:
+   [[ `PRED_REUSE; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ; `OSQUARE;il2=shape_selective_id_list;`CSQUARE->
+       (il1,il2)
+   ]];
+
 
 shapeExtract_cmd:
    [[ `SHAPE_EXTRACT; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    (il1)
    ]];
+
+shape_selective_id_list:
+  [[ il = OPT id_list -> REGEX_LIST (un_option il [])
+   | `STAR -> REGEX_STAR
+  ]];
+
+shape_selective_id_star_list:
+  [[ il = OPT id_star_list -> REGEX_LIST (un_option il [])
+   | `STAR -> REGEX_STAR
+  ]];
+
+selective_id_list_bracket:
+  [[ `OSQUARE;il1= shape_selective_id_list;`CSQUARE -> il1
+  ]];
+
+selective_id_star_list_bracket:
+  [[ `OSQUARE;il1= shape_selective_id_star_list;`CSQUARE -> il1
+  ]];
+
+shape_add_dangling_cmd:
+  [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_unfold_cmd:
+  [[ `SHAPE_UNFOLD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_param_dangling_cmd:
+  [[ `SHAPE_PARAM_DANGLING; il=selective_id_list_bracket
+                              (* `OSQUARE; il=shape_selective_id_list; `CSQUARE *)
+     ->  il
+  ]];
+
+shape_simplify_cmd:
+  [[ `SHAPE_SIMPLIFY; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_merge_cmd:
+  [[ `SHAPE_MERGE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_trans_to_view_cmd:
+  [[ `SHAPE_TRANS_TO_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_derive_pre_cmd:
+  [[ `SHAPE_DERIVE_PRE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_derive_post_cmd:
+  [[ `SHAPE_DERIVE_POST; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_derive_view_cmd:
+  [[ `SHAPE_DERIVE_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_extn_view_cmd:
+  [[ `SHAPE_EXTN_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE; `WITH; extn=id
+     ->  (il, extn)
+  ]];
+
+shape_normalize_cmd:
+  [[ `SHAPE_NORMALIZE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+pred_elim_head_cmd:
+  [[ `PRED_ELIM_HEAD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+pred_elim_tail_cmd:
+  [[ `PRED_ELIM_TAIL; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+pred_unify_disj_cmd:
+  [[ `PRED_UNIFY_DISJ; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
 
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM
@@ -2567,9 +2714,15 @@ infer_type:
    | `INFER_AT_CLASSIC -> INF_CLASSIC
    | `INFER_AT_PAR -> INF_PAR
    | `INFER_AT_VER_POST -> INF_VER_POST
+   | `INFER_IMM_PRE -> INF_IMM_PRE
+   | `INFER_IMM_POST -> INF_IMM_POST
    | `INFER_AT_IMM -> INF_IMM
+   | `INFER_AT_PURE_FIELD -> INF_PURE_FIELD
    | `INFER_AT_ARR_AS_VAR -> INF_ARR_AS_VAR
    | `INFER_AT_SHAPE -> INF_SHAPE
+   | `INFER_AT_SHAPE_PRE -> INF_SHAPE_PRE
+   | `INFER_AT_SHAPE_POST -> INF_SHAPE_POST
+   | `INFER_AT_SHAPE_PRE_POST -> INF_SHAPE_PRE_POST
    | `INFER_AT_ERROR -> INF_ERROR
    | `INFER_AT_SIZE -> INF_SIZE
    | `INFER_AT_EFA -> INF_EFA
@@ -2583,11 +2736,26 @@ infer_type:
    ]];
 
 infer_id:
-    [[ t = infer_type -> FstAns t
-      | `IDENTIFIER id -> SndAns id  ]];
+  [[ t = infer_type -> [FstAns t]
+   | `IDENTIFIER id; t = OPT infer_extn_for_id -> 
+      match t with
+      | None -> [SndAns id]
+      | Some props ->
+        let inf_extn = mk_infer_extn id props in 
+        let inf_extn_obj = INF_EXTN [inf_extn] in
+        [SndAns id; FstAns inf_extn_obj]
+  ]];
+
+infer_extn_prop:
+  [[ `IDENTIFIER prop -> prop ]];
+
+infer_extn_for_id:
+  [[ `HASH; prop = infer_extn_prop -> [prop]
+   | `HASH; `OBRACE; lst = LIST1 infer_extn_prop SEP `COMMA; `CBRACE -> lst
+  ]];
 
 infer_type_list:
-    [[ itl = LIST0 infer_id SEP `COMMA -> itl ]];
+    [[ itl = LIST0 infer_id SEP `COMMA -> List.concat itl ]];
 
 (* id_list_w_sqr:                                                     *)
 (*     [[ `OSQUARE; il = OPT id_list; `CSQUARE -> un_option il [] ]]; *)
@@ -2598,19 +2766,26 @@ infer_type_list:
 (*    | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, []) *)
 (*   ]]; *)
 
+
 infer_cmd:
   [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-      let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
-      let (i_consts,ivl) = List.fold_left 
-        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
-          | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
-      let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+      (* let inf_o = new Globals.inf_obj_sub (\* Globals.clone_sub_infer_const_obj () *\) (\* Globals.infer_const_obj # clone *\) in *)
+      (* let (i_consts,ivl) = List.fold_left  *)
+      (*   (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)  *)
+      (*     | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in *)
+      (* let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in *)
+      let (_,i_consts,ivl) = conv_ivars_icmd il_w_itype in
     (* let k, il = un_option il_w_itype (None, [])  *)
       (i_consts,ivl,t,b,None)
-    | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in ([],il,t,b,Some true)
-    | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in ([],il,t,b,Some false)
+    | `INFER_EXACT;  il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+      let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      (* let il = un_option il [] in  *)
+      (i_consts,il,t,b,Some true)
+    | `INFER_INEXACT; il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+      let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      let i_consts = List.filter (fun i -> i!=INF_CLASSIC) i_consts in
+      (* let il = un_option il [] in  *)
+      (i_consts,il,t,b,Some false)
   ]];
 
 captureresidue_cmd:
@@ -2620,10 +2795,16 @@ compose_cmd:
   [[ `COMPOSE; `OSQUARE; il=id_list; `CSQUARE; `OPAREN; mc1=meta_constr; `SEMICOLON; mc2=meta_constr; `CPAREN ->(il, mc1, mc2)
    | `COMPOSE; `OPAREN; mc1=meta_constr; `SEMICOLON; mc2=meta_constr; `CPAREN -> ([], mc1, mc2)]];
 
+
 print_cmd:
-  [[ `PRINT; `IDENTIFIER id           -> PCmd id
+  [[ `PRINT; `IDENTIFIER id; 
+        ilopt=OPT selective_id_star_list_bracket  -> 
+        (* let ilopt = map_opt (List.map () lst) ilopt in *)
+        PCmd (id,ilopt)
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
-   | `PRINT_LEMMAS  -> PCmd "lemmas"
+   | `PRINT_LEMMAS  -> PCmd ("lemmas",None)
+   (* | `PRINT_VIEW  -> PCmd "view" *)
+   (* | `PRINT_VIEW_LONG  -> PCmd "view_long" *)
   ]];
 
 cmp_cmd:
@@ -2655,6 +2836,7 @@ coercion_decl:
       { coercion_type = cd;
         coercion_exact = false;
         coercion_infer_vars = [];
+        coercion_infer_obj = new Globals.inf_obj_sub;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
@@ -2683,7 +2865,10 @@ coercion_decl_list:
 
 infer_coercion_decl:
     [[
-        `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
+         ivl_w_itype = cid_list_w_itype (* il=OPT id_list *);  t = coercion_decl -> 
+        let (inf_o,i_consts,ivl) = conv_ivars_icmd ivl_w_itype in
+        (* let () = DD.binfo_hprint (add_str "PPPP inf_obj" (fun e -> e # string_of)) inf_o no_pos in *)
+        {t with coercion_infer_vars = ivl; coercion_infer_obj = inf_o;}
     ]];
 
 (* infer_coercion_decl_list: *)
@@ -2772,11 +2957,19 @@ int_list:[[t= LIST1 integer_literal SEP `SEMICOLON ->t]];
 
 list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
+id_star_list:[[t=LIST1 id_star SEP `COMMA -> t]];
+
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
 id_list_w_brace: [[`OBRACE; t=id_list; `CBRACE -> t]];
 
 id:[[`IDENTIFIER id-> id]];
+
+triv_star:[[`STAR -> 1]];
+
+id_star:[[`IDENTIFIER id; v = OPT triv_star -> 
+          let v = match v with None -> false | Some _ -> true in
+          (id,v)]];
 
 (********** Higher Order Preds *******)
 
@@ -2997,28 +3190,38 @@ hp_decl:[[
     let () = hp_names # push id in
     let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
-    {
-        hp_name = id;
-        hp_typed_inst_vars = tl;
-        hp_root_pos = root_pos;
-        hp_part_vars = parts;
-        hp_is_pre = true;
-        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1);
-    }
+     if !Globals.hrel_as_view_flag then
+       mk_hp_decl_w_view id tl (Some root_pos) parts pos1 
+         (* report_error (get_pos 1) "hrel_as_view : to be implemented (3)" *)
+     else mk_hp_decl id tl (Some root_pos) parts pos1
+    (*  { *)
+    (*     hp_name = id; *)
+    (*     hp_typed_inst_vars = tl; *)
+    (*     hp_root_pos = root_pos; *)
+    (*     hp_part_vars = parts; *)
+    (*     hp_is_pre = true; *)
+    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1); *)
+    (* } *)
   | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let () = hp_names # push id in
     let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
+    let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
-    {
-        hp_name = id;
-        hp_typed_inst_vars = tl;
-        hp_part_vars = parts;
-        hp_root_pos = root_pos;
-        hp_is_pre = false;
-        hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1);
-    }
+     if !Globals.hrel_as_view_flag then
+       mk_hp_decl_w_view ~is_pre:false id tl (Some root_pos) parts pos1 
+       (* report_error (get_pos 1) "hrel_as_view : to be implemented (4)" *)
+     else mk_hp_decl ~is_pre:false id tl (Some root_pos) parts pos1
+    (* { *)
+    (*     hp_name = id; *)
+    (*     hp_typed_inst_vars = tl; *)
+    (*     hp_part_vars = parts; *)
+    (*     hp_root_pos = root_pos; *)
+    (*     hp_is_pre = false; *)
+    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1); *)
+    (* } *)
 ]];
 
  (*end of sleek part*)   
@@ -3072,12 +3275,14 @@ hprogn:
                     data_fields = [];
                     data_parent_name = "";
                     data_invs = []; (* F.mkTrue no_pos; *)
+                    data_pure_inv = None;
                     data_is_template = false;
                     data_methods = [] } in
     let string_def = { data_name = "String";
                        data_fields = [];
                        data_pos = no_pos;
                        data_parent_name = "Object";
+                       data_pure_inv = None;
                        data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
                        data_methods = [] } in
@@ -3203,6 +3408,7 @@ class_decl:
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
                    data_invs = t2;
+                   data_pure_inv = None;
                    data_is_template = false;
                    data_methods = t3 } in
       let todo_unk = List.map (fun d -> set_proc_data_decl d cdef) t3 in
@@ -3289,11 +3495,12 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      (* let inf_o = Globals.infer_const_obj # clone in *)
-     let inf_o = new Globals.inf_obj_sub in
-     let (i_consts,ivl) = List.fold_left
-       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
-         | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
-     let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+     (* let inf_o = new Globals.inf_obj_sub in *)
+     (* let (i_consts,ivl) = List.fold_left *)
+     (*   (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) *)
+     (*     | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in *)
+     (* let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in *)
+     let (inf_o,i_consts,ivl) = conv_ivars_icmd ivl_w_itype in
      let () = List.iter (fun itype -> inf_o # set itype) i_consts in
      let ivl_t = List.map (fun e -> (e,Unprimed)) ivl in
      F.EInfer {

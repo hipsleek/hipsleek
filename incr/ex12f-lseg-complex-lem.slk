@@ -1,0 +1,55 @@
+//Valid.Valid.Valid.Valid
+data node { int val ; node next }.
+
+pred lseg<n, p> == 
+  case {
+    n=0 -> [] self = p & n = 0;
+    n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+  }  inv n >= 0.
+
+
+//lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p>  
+//     -> self::lseg<n, p> & n = a + b & a,b >=0.
+
+//lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 
+//     <- self::lseg<a, r> * r::lseg<b, p>.
+
+lemma_unsafe "V21a" 
+  self::lseg<a, r> * r::lseg<b, p>  & a,b >=0
+  -> self::lseg<n, p> & n = a + b 
+.
+
+/*
+# ex12e.slk --assert-no-glob-vars
+
+Fail to prove lemma:
+
+lemma_safe "V21a" 
+  self::lseg<a, r> * r::lseg<b, p>  & a,b >=0
+  -> self::lseg<n, p> & n = a + b 
+.
+
+# Is such complex lemma correct? Why is there glob_vs?
+# Where did they come from?
+
+--pcp unsafe_lemma:
+
+left:
+ Lemma "V21a":  self::lseg<a,r>@M * r::lseg<b,p>@M&0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]==> (exists n: self::lseg<n,p>@M&n=b+a&{FLOW,(20,21)=__norm#E}[]
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head_norm:  (exists a_72,b_73,p_74,r: self::lseg<a_72,r>@M * r::lseg<b_73,p_74>@M&
+0<=a & 0<=b & a_72=a & b_73=b & p_74=p&{FLOW,(20,21)=__norm#E}[]
+ body_norm:  EBase 
+   exists (Expl)[](Impl)[n](ex)[](exists p_64: self::lseg<n,p_64>@M&
+   n=b+a & p_64=p&{FLOW,(20,21)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_kind: LEM_UNSAFE
+
+
+*/

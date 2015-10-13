@@ -1,0 +1,46 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+# ex55g2.slk (FIXED)
+
+# Why no printing? Is it inside repo?
+
+--dlpi
+
+!!! **lem_store.ml#41:XXXX add_RIGHT_coercion
+!!! **lem_store.ml#42:[Lemma "lem_12":  self::lseg<n,p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists r_75,a,b: self::lseg<a,r_75>@M * r_75::lseg<b,p>@M&
+n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[])
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::lseg<n,p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists r_75,a,b: self::lseg<a,r_75>@M * r_75::lseg<b,p>@M&
+n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists n_67,p_68: self::lseg<n_67,p_68>@M&n_67=n & p_68=p&
+{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   (exists r_76,a_77,b_78,a,
+   b: self::lseg<a_77,r_76>@M * r_76::lseg<b_78,p>@M&
+   n=b+a & 0<=a & 0<=b & n=b_78+a_77 & 0<=a_77 & 0<=b_78&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_UNSAFE
+ coercion_fold: None
+]
+!!! **lemma.ml#260:
+Updated lemma store with unsafe repo::[lem_12]
+
+
+
+*/

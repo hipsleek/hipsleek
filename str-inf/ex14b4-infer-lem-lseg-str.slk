@@ -1,0 +1,125 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+
+  lemma_infer [U,@classic,@pure_field] 
+     self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+/*
+  lemma_infer_pred [U,@classic,@pure_field] 
+     self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+*/
+  //infer[U,@classic] U(self,q)*q::char_star<0,p> |- self::WFG<p>.
+  print residue.
+
+/*
+# ex14b.slk --dlpi
+
+ lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+# body_view?? // unknown pred U
+
+ head match:WFG
+ body view:
+
+# ex14g4.slk --dlpi
+
+ lemma_unsafe
+       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+
+ head match:WFG
+ body view:WFSeg
+
+!!! **lem_store.ml#42:[Lemma "lem_12":  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists flted_25_125,
+q_126: U(self,q_126) * q_126::char_star<flted_25_125,p>@M&flted_25_125=0&
+{FLOW,(20,21)=__norm#E}[])
+ head match:WFG
+ body view:
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Simple
+ head:  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists flted_25_125,
+q_126: U(self,q_126) * q_126::char_star<flted_25_125,p>@M&flted_25_125=0&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists p_121: self::WFG<p_121>@M&p_121=p&{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   (exists flted_25_127,
+   q_128: U(self,q_128) * q_128::char_star<flted_25_127,p>@M&flted_25_127=0&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_UNSAFE
+ coercion_fold: None
+]
+
+# no lemma scheduled?
+
+(==context.ml#2631==)
+choose_context@3@2@1
+choose_context inp1 :LHS node: U(self,q) * q::char_star<flted_27_130,p>@M
+choose_context inp2 :RHS node: self::WFG<p_143>@M
+choose_context inp3 :LHS pure: flted_27_130=0
+choose_context inp4 :RHS pure: p_143=p
+choose_context inp5 :right aliase:[(p_143,p)]
+choose_context@3 EXIT:[]
+
+(==context.ml#2347==)
+process_infer_heap_match@5@4@2@1
+process_infer_heap_match inp1 :lhs_h: U(self,q) * q::char_star<flted_27_130,p>@M
+process_infer_heap_match inp2 :lhs_p: flted_27_130=0
+process_infer_heap_match inp3 :rhs_node: self::WFG<p_143>@M
+process_infer_heap_match inp4 :rhs_rest: emp
+process_infer_heap_match@5 EXIT: Prio:-1
+ COND =>[
+  Prio:2
+  InferHeap => ( self::WFG<p_143>@M, emp)
+   ;
+  Prio:2
+  BaseCaseFold =>;
+  Prio:4
+  UnmatchedRHSData =>  self::WFG<p_143>@M
+  ]
+
+(==mcpure.ml#2286==)
+process_matches@4@2@1
+process_matches inp1 :lhs_h: U(self,q) * q::char_star<flted_27_130,p>@M
+process_matches inp2 :matches:[]
+process_matches inp3 :rhs_node: self::WFG<p_143>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@4 EXIT: Prio:-1
+ COND =>[
+  Prio:2
+  InferHeap => ( self::WFG<p_143>@M, emp)
+   ;
+  Prio:2
+  BaseCaseFold =>;
+  Prio:4
+  UnmatchedRHSData =>  self::WFG<p_143>@M
+  ]
+
+
+
+*/

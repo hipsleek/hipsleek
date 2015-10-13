@@ -1,0 +1,73 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+pred G1<y> == self::node<_,p,t> * t::G2<p,y>.
+
+pred G2<p:node,y> == self=y
+  or self::node<_,pp,tt> * tt::G2<pp,y>.
+
+pred_elim_useless [G1,G2].
+
+print views.
+
+/*
+# ex21u1.slk --dd-calls-all
+
+# was lemma proving invoked?
+  It seems that lemmas were generated
+  but never proven?
+
+(==lemma.ml#1863==)
+generate_view_rev_rec_lemmas@3
+generate_view_rev_rec_lemmas inp1 : view G2<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; pp](* lbl: *){2}->(exists pp_16,
+          y_17: (* lbl: *){2}->self::node<Anon_14,pp,tt>@M * 
+                               tt::G2<pp_16,y_17>@M&
+          pp_16=pp & y_17=y&{FLOW,(1,26)=__flow#E}[])
+    
+generate_view_rev_rec_lemmas@3 EXIT:[=>coerc rev_G2_65
+	 head: (self::G2{}<p,y>@M[HeapNode1]) * ([] & !(((self:node)) = ((y:node))))( FLOW __flow)
+	 body:((tt::node{}<Anon_14,pp,y,>@M[HeapNode1]) * (self::G2{}<pp,tt>@M[HeapNode1])) * ([] & true)( FLOW __flow)safe lemmas(added to store only if valid)
+]
+
+(==lemma.ml#1863==)
+generate_view_rev_rec_lemmas@4
+generate_view_rev_rec_lemmas inp1 : view G1<y:node>= 
+  EBase 
+    exists (Impl)[Anon_13; t; p](* lbl: *){3}->(exists p_18,
+    y_19: (* lbl: *){3}->self::node<Anon_13,p,t>@M * t::G2<p_18,y_19>@M&
+    p_18=p & y_19=y&{FLOW,(1,26)=__flow#E}[])
+generate_view_rev_rec_lemmas@4 EXIT:[]
+
+
+# Minor problems with view below:
+  Elim need to eliminate orig parameters too.
+
+!!! **sleekengine.ml#2471:views after ELIM: 
+[ view G2<p:node,y:node>= 
+  EBase 
+    self::G2_66<y>@M&{FLOW,(1,26)=__flow#E}[],
+ view G2_66<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; 
+          pp]self::node<Anon_14,pp,tt>@M * tt::G2_66<y>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1<y:node>= 
+  EBase 
+    exists (Impl)[Anon_13; t; p]self::node<Anon_13,p,t>@M * t::G2_66<y>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+
+*/
+

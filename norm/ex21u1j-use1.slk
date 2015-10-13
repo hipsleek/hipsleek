@@ -1,0 +1,57 @@
+data node{
+	int val;
+	node next;
+}.
+
+pred ll<> == self=null
+  or self::node<_,tt> * tt::ll<>.
+
+pred G1<y> == self::node<_,t> * t::G2<y>. //& y=self.
+
+pred G2<y> == self=null
+  or self::node<_,tt> * tt::G2<y>.
+
+print views.
+pred_elim_useless [G1,G2].
+
+pred_reuse[*][*].
+
+print views[*].
+
+print views[G1*,G2*].
+
+/*
+# ex21u1j.slk 
+
+pred_elim_useless [G1,G2].
+pred_reuse[*][*].
+
+# Why is SCC not typologically sorted?
+
+SCC:[[ll];[G2];[G1_54];[G1];[G2_53]]
+Graph:[(G1_54,[G2_53]);(G1,[G1_54]);(ll,[ll]);(G2,[G2_53]);(G2_53,[G2_53])]
+
+# Why are the generated views not kept?
+
+ERROR: at _0:0_0:0
+Message: G1_54 is neither 2 a data nor view name
+
+ERROR: at _0:0_0:0
+Message: G2_53 is neither 2 a data nor view name
+
+ view G2_53<y:TVar[40]>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt]self::node<Anon_14,tt>@M * tt::G2_53<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1_54<y:TVar[46]>= 
+  EBase 
+    exists (Impl)[Anon_13; t]self::node<Anon_13,t>@M * t::G2_53<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+
+*/
+

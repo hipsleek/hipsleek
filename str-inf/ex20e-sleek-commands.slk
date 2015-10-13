@@ -1,0 +1,46 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred PP<p:char_star> ==
+   self::char_star<v,q> * q::PP<p> & v!=0
+   or self::char_star<v,p> & v=0.
+
+HeapPred P(char_star x).
+HeapPred HP_1620(char_star x).
+
+relAssume //(1)
+P(s) --> s::char_star<v_1618,Anon_1619>@M * HP_1620(Anon_1619).
+
+relAssume //(2)
+HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&v_1618!=0 --> P(Anon_1619).
+
+relAssume //(3)
+HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&v_1618=0 --> emp.
+
+print relAssumes.
+
+
+shape_derive_pre [P,HP_1620].
+//shape_derive_view [P,HP_1620].
+
+
+print relAssumes.
+
+
+
+/*
+# ex20e.slk
+
+shape_derive_pre [P,HP_1620].
+
+  # should be similar to ex20.slk where
+  we derive the views eventually..
+
+========================
+ Performing Deriving Pre-Predicates
+========================
+To be Implemented
+
+*/

@@ -1,0 +1,31 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred llsize<n> ==
+   emp & self=null & n=0
+  or self::node<_,p>*p::llsize<n-1>
+  inv true.
+
+/*
+# ex25a5e.slk -dre "compute_fixpt"
+
+pred llsize<n> ==
+   emp & self=null & n=0
+  or self::node<_,p>*p::llsize<n-1>
+  inv true.
+
+# why doens't compute_fixpt work?
+
+compute_fixpt@1
+compute_fixpt inp1 :view_name:llsize
+compute_fixpt inp2 :inv_pf: true
+compute_fixpt@1 EXIT:inv_pf: true
+
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true),([], self=null & n=0)]
+  xform: (self!=null | (self=null & n=0))
+
+*/

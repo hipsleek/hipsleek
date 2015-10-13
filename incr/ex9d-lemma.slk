@@ -1,0 +1,32 @@
+data node {
+  node prev;
+  node next;
+}.
+
+pred rlseg_one<p> == self::node<_,_> & self=p
+  or p::node<prev,_>*self::rlseg_one<prev>.
+
+pred rlseg<p> == self=p
+  or p::node<q,_>*self::rlseg<q>
+  .
+
+pred lseg_one<p> == self::node<_,_> & self=p
+  or self::node<prev,_>*prev::lseg_one<p>.
+
+pred lseg<p> == self=p
+  or self::node<q,_>*q::lseg<p>
+  .
+
+lemma_safe "bwd" self::rlseg_one<list>  -> self::rlseg<list> * list::node<_,_>.
+
+lemma_safe "fwd" self::lseg_one<list>  -> self::lseg<list> * list::node<_,_>.
+
+/*
+# ex9a-lemma
+
+Entailing lemma bwd: Fail. (cex)(may) cause: Nothing_to_do?Cond_action []
+
+Failed to prove bwd:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+*/

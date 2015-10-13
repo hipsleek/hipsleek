@@ -1,0 +1,50 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+  /*
+pred app4<y> == self::node<_,q>
+  case { 
+         q=null -> [] emp;
+         q!=null -> [] q::app4<y>;
+  }
+  inv self!=null.
+  */
+
+pred app3<y> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app3<y> & q!=null 
+  inv true.
+
+HeapPred U(node x).
+HeapPred U2(node x, node y).
+
+lemma_unsafe
+  self::app2<y> -> U(self).
+
+infer[U,classic]
+  self::node<_, q> * q::app2<y> & q!=null |- U(self).
+print residue.
+
+
+/*
+# ex21b3b.slk
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&flted_37_93=null --> GP_103(flted_37_93,self@NI)&true; 
+                  self::node<Anon_17,flted_37_93>@M * 
+                  GP_103(flted_37_93,self@NI)&flted_37_93=null --> U(self)&
+                   true]
+ 
+
+*/

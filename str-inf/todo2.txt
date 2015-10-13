@@ -1,0 +1,1823 @@
+# ex14b.slk
+
+  HeapPred U(char_star x,char_star y).
+  lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+!!! **WARNING****solver.ml#12993:do_match after infer_heap
+!!! **solver.ml#12994:rhs_h_matched set:[]
+!!! **solver.ml#12995:lhs_h: self_lem_12::WFG<p>@M
+!!! **solver.ml#12996:rhs_h: self_lem_12::WFG<p_133>@M
+!!! **infer.ml#3897:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3898:  lhs :
+ HP_134(p,q_132) * HP_135(q_132,self_lem_12)&flted_25_131=0&
+{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3899:  classic :true
+!!! **infer.ml#3897:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3898:  lhs :
+ HP_137(p,q_132) * HP_138(q_132,self_lem_12)&flted_25_131=0&
+{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3899:  classic :true
+Entailing lemma lem_12: Fail. (cex)(may) cause:  emp&flted_25_131=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+!!! fixpoint1:[]
+*/
+
+  /*
+==> unknown segment
+  P(x,d) -> U(x,q) * q::chr<0,d>
+
+==> segmented-pred
+  P(x,d) -> U(x,q) * q::chr<v,d>
+  U(x,q) -> x=q
+  U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
+
+===========================================================================
+# ex14d.slk
+
+  lemma_infer_pred [U,@classic,@pure_field] self::WFG<p> -> self::WFSeg<q>*U(q,p).
+
+# why is @pure_field not working here?
+
+[ U(q_172,p_173) ::= q_172::char_star<v_174,p_173>@M
+ or q_172::char_star<v_174,q_138>@M * q_138::WFG<p_173>@M
+ (20,21)]
+
+===========================================================================
+# ex14e.slk
+
+  lemma_infer_pred [U,@classic] self::WFG<p> <- self::WFSeg<q>*U(q,p).
+
+# residue problem?
+
+!!! **WARNING****solver.ml#12993:do_match after infer_heap
+!!! **solver.ml#12994:rhs_h_matched set:[]
+!!! **solver.ml#12995:lhs_h: self_lem_12::WFG<p>@M
+!!! **solver.ml#12996:rhs_h: self_lem_12::WFG<p_128>@M
+!!! **infer.ml#3897:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3898:  lhs : HP_129(p,self_lem_12)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3899:  classic :true
+!!! **infer.ml#3897:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3898:  lhs : HP_131(p,self_lem_12)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3899:  classic :true
+Entailing lemma lem_12: Fail. (cex)(may) cause:  emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+===========================================================================
+# ex14g.slk (FIXED by Loc)
+
+  infer [U,@classic,@pure_field] 
+   self::char_star<0,p> |- self::WFSeg<q>*U(q,p) .
+
+# What happen to the pure field inference?
+
+  infer [U,@pure_field] 
+   x::char_star<n,p> & n=0 |- U(x,p) .
+  print residue.
+
+  inferred hprel: [x::char_star<n,p>@M&true |#|3  --> U(x,p)&true]
+   # EXPECTs
+   hprel: [x::char_star<n,p>@M& n=0  --> U(x,p)&true]
+
+  infer [U,@pure_field] 
+   x::char_star<0,p>  |- U(x,p) .
+  print residue.
+
+   hprel: [x::char_star<flted_42_129,p>@M&true |#|3  --> U(x,p)&true]
+   # EXPECTs
+   hprel: [x::char_star<flted_42_129,p>@M& = flted_42_129null  --> U(x,p)&true]
+
+  infer [U,@classic,@pure_field] 
+   self::char_star<0,p> |- self::WFSeg<q>*U(q,p) .
+  print residue.
+
+<1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q::char_star<flted_52_120,p>@M&true |#|3  --> U(q,p)&true]
+   # EXPECTs
+   hprel: [x::char_star<flted_42_129,p>@M& = flted_42_129null  --> U(x,p)&true]
+===========================================================================
+# ex14g3.slk --esl (WN to fix)
+
+  lemma_infer [U,@pure_field]
+       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+
+# Why is @pure_field mssing in entail_state?
+
+id: 4; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@leak]
+ checkentail (exists flted_16_124: self_lem_12::char_star<flted_16_124,p>@M&
+flted_16_124=0&{FLOW,(20,21)=__norm#E}[])
+ |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)&
+{FLOW,(20,21)=__norm#E}[]). 
+hprel_ass: [ q_131::char_star<flted_16_130,p>@M |#|  --> U(q_131,p)]
+ho_vars: nothing?
+res:  1[
+    emp&flted_16_130=0&{FLOW,(20,21)=__norm#E}[]
+   es_infer_hp_rel: [q_131::char_star<flted_16_130,p>@M |#|  --> U(q_131,p)]
+   ]
+
+--dlpi
+
+# Why is infer_obj empty?
+
+ coercion_infer_vars: [U]
+ coercion_infer_obj: []
+
+===========================================================================
+# ex14g4.slk -dd-esl 4 
+# DIFFERS from ex14g3.slk -dd-esl 11
+
+# Why are the dumps of the two proofs different?
+
+infer [U,@pure_field,@classic]
+ (exists v_126, q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0 )
+ |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)). 
+   print residue.
+
+# GOT
+
+Residue:
+ <1>emp&v_115!=0&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(self_lem_12,self_lem_12) ==>  SEARCH ==>  (Lemma ==> lem_12(q_116,q_129)) ==> (left: lem_12) ==>  COND ==>  Match(q_116,q_129) ==>  COND ==>  InferHeap]]
+
+# DIFFERS from ex14g3.slk -dd-esl 11
+# HIDDEN
+
+HIDE! id: 17<:11; caller: [11]; line: 30; classic: true; kind: Verify_Lemma; hec_num: 1; evars: [q_142]; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@pure_field,@leak]
+ checkentail self_lem_12::char_star<v_140,q_141>@M * q_141::WFG<p>@M&v_140!=0&
+{FLOW,(20,21)=__norm#E}[]
+ |-  (exists q_142: U(q_142,p)&self_lem_12=q_142&{FLOW,(20,21)=__norm#E}[]). 
+hprel_ass: [ q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)]
+ho_vars: nothing?
+res:  1[
+    emp&v_140!=0&{FLOW,(20,21)=__norm#E}[]
+   es_infer_hp_rel: [q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)]
+   ]
+
+
+id: 11; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@pure_field,@leak]
+ checkentail (exists v_126,
+q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0&
+{FLOW,(20,21)=__norm#E}[])
+ |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)&
+{FLOW,(20,21)=__norm#E}[]). 
+
+hprel_ass: [ q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)]
+
+ho_vars: nothing?
+res:  2[
+    emp&v_140!=0&{FLOW,(20,21)=__norm#E}[]
+   es_infer_hp_rel: [q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)];
+    emp&v_140!=0 & v_143=v_140 & q_144=q_141&{FLOW,(20,21)=__norm#E}[]
+   ]
+===========================================================================
+# ex14b2.slk --dlpi (FIXED)
+
+  lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+  infer[U,@classic] U(self,q)*q::char_star<0,p> |- self::WFG<p>.
+  print residue.
+ 
+ =====================================
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
+
+ lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+# body_view?? // unknown pred U
+
+ head match:WFG
+ body view:
+
+# ex14g4.slk --dlpi
+
+ lemma_unsafe
+       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+
+ head match:WFG
+ body view:WFSeg
+
+!!! **lem_store.ml#42:[Lemma "lem_12":  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists flted_25_125,
+q_126: U(self,q_126) * q_126::char_star<flted_25_125,p>@M&flted_25_125=0&
+{FLOW,(20,21)=__norm#E}[])
+ head match:WFG
+ body view:
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Simple
+ head:  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists flted_25_125,
+q_126: U(self,q_126) * q_126::char_star<flted_25_125,p>@M&flted_25_125=0&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists p_121: self::WFG<p_121>@M&p_121=p&{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   (exists flted_25_127,
+   q_128: U(self,q_128) * q_128::char_star<flted_25_127,p>@M&flted_25_127=0&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_UNSAFE
+ coercion_fold: None
+]
+
+# no lemma scheduled?
+
+!!! **lemma.ml#259:
+Updated lemma store with unsafe repo::[lem_12]
+(==solver.ml#11027==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[(p_143,p)]
+compute_actions inp2 :LHS heap: U(self,q) * q::char_star<flted_27_130,p>@M
+compute_actions inp3 :LHS pure: flted_27_130=0
+compute_actions inp4 :RHS cand:[ self::WFG<p_143>@M]
+compute_actions inp5 :RHS pure: p_143=p
+compute_actions inp6 :right alias:[p_143]
+compute_actions@1 EXIT: COND =>[
+  Prio:2
+  InferHeap => ( self::WFG<p_143>@M, emp)
+   ;
+  Prio:2
+  BaseCaseFold =>
+    LHS: emp
+    RHS: self::WFG<p_143>@M;
+  Prio:4
+  UnmatchedRHSData =>  self::WFG<p_143>@M
+  ]
+===========================================================================
+# ex14b2.slk (FIXED)
+
+!!! **context.ml#1000:common:[self]
+!!! **context.ml#1001:f: U(self,q)
+!!! **context.ml#1002:f0: U(self,q) * q::char_star<flted_27_130,p>@M
+
+(==mcpure.ml#2286==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: U(self,q) * q::char_star<flted_27_130,p>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[self]
+spatial_ctx_extract inp4 :rhs_node: self::WFG<p_143>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: self::WFG<p_143>@M
+ RHS: self::WFG<p_143>@M
+ lhs_rest: U(self,q) * q::char_star<flted_27_130,p>@M
+ rhs_rest: emp]
+===========================================================================
+# ex14b2 --dd-steps (FIXED)
+
+# Can we schedule a matching of UNKNOWN predicates?
+
+!!! **context.ml#2435:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_27_130,p>@M
+ ### RHS : U(self,q_149)
+ ### matches :[]
+===========================================================================
+# ex14b2 --dd-steps (FIXED)
+
+# removed from printing as they are trivial
+
+# Why are there so many NothingToDo? They did not come
+  from compute_actions?
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action : NothingToDo => No duplicated nodes!
+ ### estate : ex_formula : U(self,q) * q::char_star<flted_27_130,p>@M&flted_27_130=0&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq :
+ (exists flted_25_144,
+q_145: U(self,q_145) * q_145::char_star<flted_25_144,p_143>@M&flted_25_144=0&
+{FLOW,(20,21)=__norm#E}[])
+===========================================================================
+# ex14b3.slk -dd-steps (FIXED)
+
+
+ <1>emp&u=0&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
+
+# schedule do_match to work with UNK predicates..
+
+!!! **context.ml#2435:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_8_16,p>@M
+ ### RHS : U(self,q1_38)
+ ### matches :[]
+===========================================================================
+# ex14b4a.slk --dd-steps (FIXED)
+
+Added an option:
+   --new-base-case-fold-hprel
+
+  infer [U,@classic,@pure_field] self::char_star<0,p> 
+    |- U(self,q)*q::char_star<0,p>
+
+# Answer:
+
+ <1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&self=q |#|3  --> U(self,q)&true]
+[[ SEARCH ==>  BaseCaseFold ==>  SEARCH ==>  Match(self,q)]]
+
+# 11429 is location of base_case_fold operation..
+
+Entail (1) : Fail.(may) cause:UnionR[**solver.ml#11429:,M_unmatched_rhs (infer_collect_hp_rel 3b)]
+
+Residue:
+ MaybeErr Context: 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: do_base_fold_hp_rel (TBI)(U,[self,q])
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  BaseCaseFold]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  InferHeap ==>  COND ==>  UnmatchedRHSData]]
+
+
+# Below is now scheduled as a M_base_case_fold
+
+       | DataNode _,  HRel _  -> 
+         (* failwith "TBI"  *)
+         let act1 = M_base_case_fold m_res in
+         let act2 = M_infer_heap (rhs_node,HEmp) in
+         let wt = 2 in
+         (wt,Search_action [(wt,act1);(wt,act2)])
+
+I would expect to have:
+   self=q <- U(self,q) 
+to be generated as a hprel_ass, and
+then self=q added as a fold_def prior to do_fold
+===========================================================
+# ex14b4b.slk (OK)
+
+ infer [U,@classic,@pure_field] self::char_star<0,p> 
+   |- U(self,p) .
+
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [self::char_star<flted_31_104,p>@M&
+                   flted_31_104=0 |#|3  --> U(self,p)&true]
+[[ SEARCH ==>  InferHeap]]
+
+
+===========================================================================
+# ex14g2.slk (OK)
+
+  lemma_infer [U,@classic,@pure_field] 
+       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+
+Two possible outcomes:
+
+    self::WFG<p> -> (exists q: self::WFSeg<q>*q::char_star<0,p>).
+    self::WFG<p> -> (exists q: self::WFSeg<q>*q::WFG<p>)
+
+# Why are there two outcomes? Where was the search introduced?
+  # choices from folding?
+
+# Perhaps, can choose a state with shorter inferred relational assumption.
+
+Temp Lemma(s) inferred is valid in current context.
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [q_131::char_star<flted_16_130,p>@M&
+                   flted_16_130=0 |#|3  --> U(q_131,p)&true; 
+                  q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M&
+                   true |#|3  --> U(q_142,p)&true]
+[[ Fold ==>  COND ==>  InferHeap ==> ||OR|| ==>  Fold ==>  COND ==>  InferHeap]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+   or emp&{FLOW,(20,21)=__norm#E}[]
+   
+inferred hprel: [q_131::char_star<flted_16_130,p>@M&
+                  flted_16_130=0 |#|3  --> U(q_131,p)&true]
+[[ Fold ==>  SEARCH ==>  Match(self_lem_12,self_lem_12) ==>  SEARCH ==>  (Lemma ==> lem_12(q_141,q_144)) ==> (left: lem_12) ==>  COND ==>  Match(q_141,q_144) ==>  Match(UNK) ==> ||OR|| ==>  Fold ==>  COND ==>  InferHeap]]
+===========================================================================
+# ex14b5.slk --dlpi
+
+  lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
+
+# How come no relational assumption inferred?
+  Was there any unfolding?
+
+ Temp Lemma(s) inferred is valid in current context.
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q_132,q_132)]]
+
+===========================================================================
+# ex14b5.slk --dlpi (FIXED - force RHS to be unfolded)
+
+  lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
+
+# How come no relational assumption inferred?
+  Was unable to  unfold U(..) on LHS ..
+
+ Temp Lemma(s) inferred is valid in current context.
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q_132,q_132)]]
+===========================================================================
+# ex14b5.slk 
+
+  lemma_infer [U,@classic,@pure_field] self::WFG<p> <- U(self,q)*q::char_star
+
+Entailing lemma lem_12: Fail. (cex)(may) cause: UnionR[ emp&flted_25_148=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.,M_unmatched_rhs (infer_collect_hp_rel 3b)]
+===========================================================================
+# ex14b5a.slk --dlpi
+
+  infer [U,@classic,@pure_field] U(self,q)*q::char_star<0,p> |- self::char_star<0,p>.
+
+!!! **infer.ml#3951:  classic :true
+Entail (1) : Fail.(may) cause:UnionR[base case unfold failed, emp&flted_28_130=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.]
+
+!!! **context.ml#2840:compute_action (steps) :
+ ### RHS Cand :[ self::char_star<flted_28_149,p_148>@M]
+ ### action :
+ SEARCH =>[
+  Prio:2
+  BaseCaseUnfold =>
+    LHS: U(self,q)
+    RHS: self::char_star<flted_28_149,p_148>@M;
+  Prio:2
+  InferHeap => ( self::char_star<flted_28_149,p_148>@M, emp)
+   
+  ]
+
+# I think we may need to schedule two possibilities
+
+  (i)  BaseCaseFold with U(self,q) --> self=q
+
+  (ii) Unfold for Unknown, where:
+           U(self,q) --> self::char_star<_,q1>*H(q1,q,self@NI)
+
+I think the notion of InferHeap is too general, and would
+need to be dissipated into our more structured commands that
+we have already introduced to support verification. This 
+instantiation step has been done below, but presumably not 
+through sleek?
+
+----------------------------------------------------------\
+# Need to schedule a base_case_unfold ..
+
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : self::char_star<flted_28_149,p_148>@M
+ ### matches :
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<flted_28_149,p_148>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: emp]
+
+!!! **context.ml#2833:compute_action (steps) :
+ ### RHS Cand :[ self::char_star<flted_28_149,p_148>@M]
+ ### action :
+ InferHeap => ( self::char_star<flted_28_149,p_148>@M, emp)
+===========================================================================
+# ex14b5b.slk --dlpi
+
+  infer [U,@classic,@pure_field] U(self,q)*q::char_star<0,p> |- self::char_star<v,qq> * qq::WFG<p> & v!=0.
+
+Entail (1) : Fail.(may) cause:M_unmatched_rhs (infer_collect_hp_rel 3b)
+
+# Need to schedule an unfold for hprel..
+
+!!! **lemma.ml#259:
+Updated lemma store with unsafe repo::[lem_12]
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : self::char_star<v,qq>@M
+ ### matches :
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<v,qq>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: qq::WFG<p_147>@M]
+
+!!! **context.ml#2465:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : qq::WFG<p_147>@M
+ ### matches :[]
+
+===========================================================================
+# ex14b5a.slk --dlpi
+
+  infer [U,@classic,@pure_field] 
+     U(self,q)*q::char_star<0,p> |- self::char_star<0,p>.
+
+ <1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(self,q)&true |#|3  --> emp&self=q]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q,self)]]
+
+# Not sure if we need guard of the form:
+
+ [U(self,q)&true |#| q::char_star<0,p>  --> emp&self=q]
+
+Another alternative is:
+
+ U(self,q)&true |#| q::char_star<0,p>  --> 
+     self::node<_,qq>*qq::H<q,self@NI> 
+
+But this will subsequently cause a residue problem.
+
+-----------------------------------
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<v,qq>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: qq::WFG<p_147>@M]
+
+!!! **context.ml#2472:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_28_130,p>@M
+ ### RHS : qq::WFG<p_147>@M
+ ### matches :[]
+
+# incorrect compute action!
+
+!!! **context.ml#2840:compute_action (steps) :
+ ### RHS Cand :[ self::char_star<v,qq>@M, qq::WFG<p_147>@M]
+ ### action :
+
+
+process_matches@1
+process_matches inp1 :lhs_h: U(self,q) * q::char_star<flted_28_130,p>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: U(self,q)
+ RHS: self::char_star<v,qq>@M
+ lhs_rest: q::char_star<flted_28_130,p>@M
+ rhs_rest: qq::WFG<p_147>@M]
+process_matches inp3 :rhs_node: self::char_star<v,qq>@M
+process_matches inp4 :rhs_rest: qq::WFG<p_147>@M
+process_matches@1 EXIT: Prio:2
+ SEARCH =>[
+  Prio:2
+  Unfold 1 =>;
+  Prio:2
+  InferHeap => ( self::char_star<v,qq>@M, emp)
+   
+  ]
+
+
+process_matches@2
+process_matches inp1 :lhs_h: U(self,q) * q::char_star<flted_28_130,p>@M
+process_matches inp2 :matches:[]
+process_matches inp3 :rhs_node: qq::WFG<p_147>@M
+process_matches inp4 :rhs_rest: self::char_star<v,qq>@M
+process_matches@2 EXIT: Prio:-1
+ COND =>[
+  Prio:2
+  InferHeap => ( qq::WFG<p_147>@M, self::char_star<v,qq>@M)
+   ;
+  Prio:2
+  BaseCaseFold =>;
+  Prio:4
+  UnmatchedRHSData =>  qq::WFG<p_147>@M
+  ]
+
+===========================================================================
+# ex16c1.slk (FIXED)
+
+ infer [U,@classic,@pure_field] U(x,q)*q::char_star<0,p>  |- x::WFG<p>.
+
+# Can we trigger lemma, just like ex16c2.slk?
+
+  <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_155(p,q@NI)&true |#|3  --> emp&true; 
+                  HP_156(q,x@NI)&true |#|3  --> emp&true; 
+                  U(x,q) * q::char_star<flted_31_132,p>@M&
+                   flted_31_132=0 |#|3  --> x::WFG<p>@M * HP_155(p,q@NI) * 
+                                            HP_156(q,x@NI)&
+                   true]
+[[ SEARCH ==>  InferUnfold ]]
+
+# ex16c2.slk
+
+  infer [@classic,@pure_field] U(x,q)*q::char_star<0,p> 
+         |- x::WFG<p>.
+
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
+
+===========================================================================
+# ex16c3.slk
+
+infer [U,U2,@classic,@pure_field] U(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+
+
+# This schedules an InferUnfold:
+
+!!! **context.ml#2876:compute_action (steps) :
+ ### RHS Cand :[ q3::WFG<p_145>@M]
+ ### action :
+ InferUnfold =>
+   LHS: U2(q3,q)
+   RHS: q3::WFG<p_145>@M
+
+# Since U2 is inferable, can we also schedule a
+  Lemma in the same way as this example:
+
+infer [U,U2,@classic,@pure_field] U(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+
+!!! **context.ml#2876:compute_action (steps) :
+ ### RHS Cand :[ q3::WFG<p_145>@M]
+ ### action :
+ SEARCH =>[
+  Prio:2
+  InferUnfold =>
+    LHS: U(q3,q)
+    RHS: q3::WFG<p_145>@M;
+  Prio:3
+  (Lemma <== lem_12) =>
+    LHS: U(q3,q)
+    RHS: q3::WFG<p_145>@M
+  ]
+
+!!! **context.ml#611:XXX body_view:U
+!!! **context.ml#612:XXX Matching rhs:U2
+(==context.ml#944==)
+coerc_mater_match@5@3@2@1
+coerc_mater_match inp1 :coercs:[Lemma "lem_12":  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]<==]
+coerc_mater_match inp2 :WFG
+coerc_mater_match inp3 :[q3,p_145]
+coerc_mater_match inp4 :[q3]
+coerc_mater_match inp5 : U2(q3,q)
+coerc_mater_match@5 EXIT:[]
+
+====> if U2 is inferrable..
+
+coerc_mater_match@5 EXIT:[( emp, U3(q3,q), MaterializedArg (self,full,[U]) coerc_defn_mater: <== lem_12)]
+
+
+(==context.ml#943==)
+coerc_mater_match@5@3
+coerc_mater_match inp1 :coercs:[Lemma "lem_12":  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]<==]
+coerc_mater_match inp2 :WFG
+coerc_mater_match inp3 :[q3,p_145]
+coerc_mater_match inp4 :[q3]
+coerc_mater_match inp5 : U(q3,q)
+coerc_mater_match@5 EXIT:[( emp, U(q3,q), MaterializedArg (self,full,[U]) coerc_defn_mater: <== lem_12)]
+
+===========================================================================
+# ex16c4.slk (FIXED by removing heuristic for matching)
+
+        (* let () = y_winfo_pp "the second condition is heur" in *)
+         (* WN : this heuristic caused problem for str-inf/ex16c4.slk *)
+         if CP.eq_spec_var hn1 hn2
+           (* L2: huer here *)
+           (* || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2)) *)
+
+
+infer [U2,U,@classic,@pure_field] U2(q3,p)  |- U(q3,p).
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+# How did U2 and U get proven without below?
+
+U2(q3,p) --> U(q3,p)
+===========================================================================
+# ex16c3b.slk (FIXED)
+
+infer [U2,@classic,@pure_field] U2(q3,q) & D(p)  |- U(q3,qq) & D(qq).
+print residue.
+// fail
+// can we support InferUnfold with instantiation?
+//     U2(q3,q) --> U(q3,qq) & qq=q
+//  D(p) & qq=q |- D(qq)
+
+# Why did an InferUnfold fail?
+
+!!! **astsimp.ml#8930:impl_var:[]
+Entail (2) : Fail.(may) cause:**solver.ml#13222:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+ CEX:true
+===========================================================================
+# ex16c3c.slk (FIXED)
+
+infer [U2,@pure_field] U2(q3,q) & q!=null  |- U(q3,qq) .
+expect Valid.
+
+# expect Valid since qq is not present on LHS and
+can therefore be instanitated.
+
+  U2(q3,q) --> U(q3,qq) & qq=q
+
+-------------------
+
+infer [U2,@pure_field] U2(q3,q) * q::char_star<0,p> & q!=qq  |- U(q3,qq) *qq::char_star<n,p>.
+ 
+infer [U2,@pure_field] U2(q3,q) & q!=qq  |- U(q3,qq) .
+
+# sound instantiation may lead to unsoundness.
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&q!=q |#|3  --> U(q3,q)&true]
+
+# can we check that qq is not free in LHS before instantiating??
+# Also, each such var is instantiated only once.
+===========================================================================
+# ex16c3c.slk (OK)
+
+infer [U2,@pure_field] U2(q3,q) *q::char_star<0,p>  |- U(q3,qq)*qq::char_star<n,p> .
+
+ <1>emp&qq=q & n=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#|3  --> U(q3,q)&true]
+
+# Please add the heap guard:
+
+    U2(q3,q)&true |#| q::char<0,_>  --> U(q3,q)&true]
+==========================================================================
+# ex16c3d.slk: FIXED
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Valid.
+
+# too complex
+<1>HP_138(q,q3)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q) * q::char_star<flted_31_124,p>@M&
+                   true |#|3  --> q3::WFG<q>@M * HP_138(q,q3@NI)&true]
+
+# expects 
+   U2(q3,q) --> q3::WFG<q>
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<r> .
+   U2(q3,q) --> q3::WFG<q4> * HP3(q4,q,q3@NI)
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::node<_,r>
+   U2(q3,q) --> q3::node<_,q4> * HP3(q4,q,q3@NI)
+
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> .
+print residue.
+expect Valid.
+//   EXPECTS: U2(q3,q) --> q3::WFG<qq> & qq=q
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+print residue.
+expect Valid.
+//   EXPECTS: infer_unfold (on U2) or fold (on WFG)
+
+===========================================================================
+# ex16c5b.slk: FIXED
+
+ infer [U2,U3] U2(qq,p) * U3(p,x)  |- qq::char_star<b,p>.
+
+# complex LHS:
+
+ inferred hprel: [U2(qq,p@NI) * U3(p,x@NI)&
+                   true |#|3  --> qq::char_star<b_180,p>@M&true]
+
+# expects:
+
+  U2(qq,p@NI) |#|3  --> qq::char_star<b_180,s> * HP(s,p@NI)
+  HP(s,p) --> s=p
+  U3(p,x) --> emp
+
+--------------------
+
+ infer [U2,U3] U2(qq,p)  |- qq::char_star<b,p>.
+
+# GOT
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(qq,p@NI)&true |#|3  --> qq::char_star<b_167,p>@M&true]
+[[ SEARCH ==>  InferUnfold ]]
+
+# BETTER in smaller steps..
+
+  U2(qq,p@NI) |#|3  --> qq::char_star<b_180,s> * HP(s,p@NI)
+  HP(s,p) --> s=p
+===========================================================================
+# ex13e2.slk (FIXED - reset old-infer-collect )
+
+infer[Q,@classic,@pure_field]
+ s::char_star<v_1631,q_1632>@M * Q(q,s',p_1648)&
+q_1616!=null & q=q_1632 & Anon_18=v_1631 & v!=0 & Anon_19=q_1632 & 
+v=v_1631 & v_1631!=0 & p_1630=q_1616 & s_1647=s & p_1614=p & 
+flted_10_1615=0 & v_bool_37_1602' & q_1651=p_1630 & p_1614=p_1648 
+ |-  Q(s,s',p).
+
+# (1) fold may be done in two steps
+# (2) Where did spurious relational assumption in ex13e.ss came from?
+   (1;0)emp&s=s' & s=p & s'=p |#|  --> Q(s,s',p)]
+===========================================================================
+# ex16c3d.slk: FIXED
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+
+# We should avoid complex LHS. I suggest FAILING since p is
+  free, and we cannot prove q=p.
+# complex LHS should only be enabled old_infer_complex_lhs which
+  I just added
+
+Entail (8) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q) * q::char_star<flted_83_216,p>@M&
+                   true |#|3  --> q3::WFG<p>@M&true]
+[[ InferUnfold ]]
+
+WRONG : why is there a q=p in the relational assumption?
+
+ <1>q::char_star<flted_83_218,p>@M * HP_232(p,q3)&flted_83_218=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,p)&q=p |#| q::char_star<flted_83_218,p>@M&
+                   true --> q3::WFG<p>@M * HP_232(p,q3@NI)&true]
+[[ InferUnfold ]]
+
+===========================================================================
+# ex16c5b.slk: FIXED
+
+//(8) 
+ infer [U] U(x,p)  |- x::char_star<v,qq>.
+ print residue.
+
+
+ <1>HP_275(qq,x)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(x,p)&
+                   true |#|3  --> x::char_star<v_273,qq_274>@M * 
+                                  HP_275(qq_274,x@NI)&
+                   true]
+
+# p is still missing, I would expect @NI parameters to be added:
+
+ residue: HP_271(qq,p,x@NI)
+ U(x,p)& --> x::char_star<v_269,qq_270>@M * HP_271(qq_270,p,x@NI)&
+
+----------
+
+ //(6)
+ infer [U2,U3] U2(qq,p) & qq=p  |- qq::char_star<b,qq>.
+ print residue.
+expect Valid.
+
+# Why is there an UNFOLD scheduled?
+
+# infer_unfold should work like (5)
+
+ MaybeErr Context: 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  Unfold 1 ==>  COND ==>  UnmatchedRHSData]]
+   FAIL_UNION 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: infer_heap_node
+        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+      }
+    [[ SEARCH ==>  InferUnfold ]]
+   
+ CEX:true
+Validate 6: Expecting(3)Valid BUT got : Fail_May
+===========================================================================
+# ex16c6a.slk
+
+//(1)
+ infer [U2a] U2a(self,q) |- U2(self,q).
+ print residue.
+/*
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2a(self,q)&true |#|3  --> U2(self,q)&true]
+[[ InferUnfold ]]
+*/
+
+//(2)
+ infer [U3] U3(self,_,q) |- U2(self,q).
+ print residue.
+ // Why fail? Similar to (1).
+
+//(3)
+ infer [U2] U2(self,q)*q::char_star<0,p> |- self::WFG<p>.
+ print residue.
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(self,q)&true |#| q::char_star<flted_41_150,p>@M&
+                   true --> U(self,q)&true]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  InferUnfold  ==>  SEARCH ==>  Match(q,q_169)]]
+
+//(4)
+ infer [U3] U3(self,_,q)*q::char_star<0,p> |- self::WFG<p>.
+ print residue.
+ // Why fail? Similar to (3).
+===========================================================================
+# ex16c6b.slk -show-push-list "es_infer_hp_rel"
+
+# Please avoid complex LHS (@ 2nd InferUnfold):
+
+!!! **infer.ml#3837:mis-matched:(false,false,false)
+push_list(es_infer_hp_rel):[ U(self,qqq) * qqq::char_star<flted_32_137,p>@M&
+  flted_32_137=0 |#|  --> self::char_star<v_155,q2_156>@M * 
+                          HP_157(v_155,self) * HP_158(q2_156,self)]
+
+(==solver.ml#13282==)
+infer_collect_hp_rel#1@4@3@2
+infer_collect_hp_rel#1 inp1 :lhs_node: U(self,qqq)
+infer_collect_hp_rel#1 inp2 :rhs_node: self::char_star<v,q2>@M
+infer_collect_hp_rel#1 inp3 :lhs: U(self,qqq) * qqq::char_star<flted_32_137,p>@M&flted_32_137=0&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs:
+ self::char_star<v,q2>@M * q2::WFG<p_154>@M&v!=0 & p_154=p&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es: U(self,qqq) * qqq::char_star<flted_32_137,p>@M&flted_32_137=0
+infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
+ HP_157(v_155,self) * HP_158(q2_156,self)&flted_32_137=0&
+ {FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U; HP_157; HP_158]
+ es_infer_hp_rel: [U(self,qqq) * qqq::char_star<flted_32_137,p>@M&
+                    flted_32_137=0 |#|  --> self::char_star<v_155,q2_156>@M * 
+                                            HP_157(v_155,self) * 
+                                            HP_158(q2_156,self)],3:abd heap: self::char_star<v_155,q2_156>@M,4:None,5:None)
+===========================================================================
+# ex16c3d11.slk:
+
+infer [U2] U2(q3,q)*q::char_star<1,p>  |- q3::WFG<qq> * qq::WFG<p>.
+print residue.
+expect Fail.
+
+===========================================================================
+# ex16c6c2.slk
+
+ infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
+    |- U2(self,qq) * qq::char_star<0,p>.
+
+# need to instantiate q to qq for above to succeed.
+  Need to look into the context of calls to decide that qq can
+  be so instantiated,
+
+!!! **solver.ml#12409:process_action (steps) :
+ ### action :
+ InferUnfold =>
+   Type: Root
+   LHS: U3(self,q,x)
+   RHS: U2(self,qq)
+   lhs_rest: q::char_star<flted_10_19,p>@M
+   rhs_rest: qq::char_star<flted_11_41,p_40>@M
+ ### estate : ex_formula : U3(self,q,x) * q::char_star<flted_10_19,p>@M&flted_10_19=0&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : U2(self,qq) * qq::char_star<flted_11_41,p_40>@M&flted_11_41=0 & p_40=p&
+{FLOW,(20,21)=__norm#E}[]
+===========================================================================
+# ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
+
+# to fix infer_collect for folding:
+
+  push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
+
+# since p is global and q2 does not match it, we need to schedule:
+  where v!=null is picked due to the use of @pure_field
+
+ self::char_star<v,q2>@M * HP(q2,p) & v!=null  
+         --> U(self,p)
+
+# Let us use a flag --en-infer-back-ptr to obtain:
+
+ self::char_star<v,q2>@M * HP(q2,p,self@NI) & v!=null  
+         --> U(self,p)
+
+(==solver.ml#13319==)
+infer_collect_hp_rel#1@4@3@2
+infer_collect_hp_rel#1 inp1 :lhs_node: self::char_star<v,q2>@M
+infer_collect_hp_rel#1 inp2 :rhs_node: U(self,p)
+infer_collect_hp_rel#1 inp3 :lhs:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0
+infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
+ emp&v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
+
+==========================================================================
+# ex16d1c.slk dre "process_one_m" (WN to fix) (FIXED)
+
+ infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# is there a smarter base-case-fold scheduling?
+
+(==context.ml#2600==)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: self::char_star<v,q2>@M
+ RHS: U(self,p)
+ lhs_rest: q2::char_star<flted_29_106,p>@M
+ rhs_rest: emp
+process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M
+process_one_match inp3 :lhs_p: v!=0 & flted_29_106=0
+process_one_match inp4 :rhs_node: U(self,p)
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@1 EXIT: Prio:1
+ SEARCH =>[
+  Prio:1
+  BaseCaseFold =>;
+  Prio:1
+  InferFold =>
+  ]
+===========================================================================
+# ex16d1b.slk -dre "process_one_m"  (WN to fix) (OK)
+
+(FIXED)
+process_one_match@2 EXIT: Prio:4
+ NothingToDo => No common parameters :  q2::WFG<p>@M vs  U(self,q)
+
+# should not schedule lemma if there are no common materialization ..
+
+(==context.ml#2602==)
+process_one_match@2
+process_one_match inp1 :match_res: Type: MaterializedArg (self,full,[U]) coerc_defn_mater: ==> lem_12
+ LHS: q2::WFG<p>@M
+ RHS: U(self,q)
+ lhs_rest: self::char_star<v,q2>@M
+ rhs_rest: q::char_star<flted_29_146,p_145>@M
+process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::WFG<p>@M
+process_one_match inp3 :lhs_p: v!=0
+process_one_match inp4 :rhs_node: U(self,q)
+process_one_match inp5 :rhs_rest: q::char_star<flted_29_146,p_145>@M
+process_one_match inp6 :rhs_p: flted_29_146=0 & p_145=p
+process_one_match inp7 :([(p_145,p)],None)
+process_one_match@2 EXIT: Prio:1
+ (Lemma ==> lem_12) =>
+
+===========================================================================
+# ex16d2b.slk -dre "process_one_m" (FIXED)
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U2(q3,q)*q::char_star<0,p>.
+   
+(==context.ml#2727==)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::WFG<p>@M
+ RHS: U2(q3,q)
+ lhs_rest: emp
+ rhs_rest: q::char_star<flted_33_149,p_148>@M
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::WFG<p>@M
+process_one_match inp3 :lhs_p: q2=q3 & v!=0
+process_one_match inp4 :rhs_node: U2(q3,q)
+process_one_match inp5 :rhs_rest: q::char_star<flted_33_149,p_148>@M
+process_one_match inp6 :rhs_p: flted_33_149=0 & p_148=p
+process_one_match inp7 :([(p_148,p)],None)
+process_one_match@1 EXIT: Prio:2
+ InferFold =>
+===========================================================================
+# str-inf/ex16d2a.slk -dre "rewrite_coercion\|coer_target"
+  (FIXED by removing it via old-coer-target *)
+
+# run-fast-test not affected by removal or coer-target
+
+Total number of errors: 26 in files:
+Total verification time: 140.69 second
+	Time spent in main process: 89.88 second
+	Time spent in child processes: 50.81 second
+	Number of false contexts: 414
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U(q3,q)*q::char_star<0,p>.
+
+# Why is coer_target needed?
+  Need to fix this to work with HRel?
+
+(==solver.ml#14066==)
+coer_target@1
+coer_target inp1 :node: q2::WFG<p>@M
+coer_target inp2 :target_rhs: q2::WFG<p>@M&q2=q3 & v!=0&{FLOW,(20,21)=__norm#E}[]
+coer_target inp3 :lhs: U(q3,q) * q::char_star<flted_34_149,p_148>@M&flted_34_149=0 & p_148=p&
+{FLOW,(20,21)=__norm#E}[]
+coer_target inp4 :rhs_eqset:[(p_148,p)]
+coer_target@1 EXIT:false
+
+# Why Rewrite cannot be applied?
+===========================================================================
+# ex16d2c1.slk -dre "process_one_m" (OK)
+
+ infer [U2,@classic] U(q2,q_155) & q2=q3  |-  U2(q3,q).
+
+# Why infer_fold fail?
+
+  EXPECTS:  U2(q2,q) <-- U(q2,q)
+
+  Do we represent FOLD as U(..) <-- RHS
+
+!!! **solver.ml#12425:process_action (steps) :
+ ### action :
+ InferFold =>
+   Type: Root
+   LHS: U(q2,q_155)
+   RHS: U2(q3,q)
+   lhs_rest: emp
+   rhs_rest: emp
+   rhs_inst: []
+ ### estate :
+ ex_formula : U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : U2(q3,q)&{FLOW,(20,21)=__norm#E}[]
+
+!!! **lemma.ml#259:
+Updated lemma store with unsafe repo::[lem_12]
+(==solver.ml#13337==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs_node: U(q2,q_155)
+infer_collect_hp_rel#1 inp2 :rhs_node: U2(q3,q)
+infer_collect_hp_rel#1 inp3 :lhs: U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: U2(q3,q)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es: U(q2,q_155)&q2=q3
+infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula: 
+ U(q2,q_155)&q2=q3&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2]
+ es_infer_hp_rel: [emp |#|  --> U2(q2,q)],3:abd heap: U2(q2,q),4:Some( emp),5:None)
+===========================================================================
+# ex16d2c2.slk FIXED
+
+# No need to instantiate q is already known on LHS..
+
+//(5)
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  |-  U2(q3,q).
+ expect Valid.
+// expects U(q2,q_155) --> U2(q2,q_155)
+
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#265:Can not inst
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+(==solver.ml#11206==)
+do_inst@1
+do_inst inp1 :lhs_b: U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[q_155]
+do_inst inp3 :rargs:[q]
+do_inst inp4 :hps:[U]
+do_inst@1 EXIT:(false, U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[])
+
+(==solver.ml#11206==)
+do_inst@1
+do_inst inp1 :lhs_b: U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[q_155]
+do_inst inp3 :rargs:[q]
+do_inst inp4 :hps:[U]
+do_inst@1 EXIT:(true, U(q2,q_155)&q_155=q & q2=q3&{FLOW,(20,21)=__norm#E}[])
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000548
+Entail (1) : Failure("sau.add_raw_hp_rel: args should be not empty")
+Validate 1: Expecting ValidBUT got no residue
+
+===========================================================================
+# ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
+
+# to fix infer_collect for folding:
+
+  push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
+
+# since p is global and q2 does not match it, we need to schedule:
+  where v!=null is picked due to the use of @pure_field
+
+ self::char_star<v,q2>@M * HP(q2,p) & v!=null  
+         --> U(self,p)
+
+# Let us use a flag --en-infer-back-ptr to obtain:
+
+ self::char_star<v,q2>@M * HP(q2,p,self@NI) & v!=null  
+         --> U(self,p)
+
+(==solver.ml#13319==)
+infer_collect_hp_rel#1@4@3@2
+infer_collect_hp_rel#1 inp1 :lhs_node: self::char_star<v,q2>@M
+infer_collect_hp_rel#1 inp2 :rhs_node: U(self,p)
+infer_collect_hp_rel#1 inp3 :lhs:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0
+infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
+ emp&v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
+
+===========================================================================
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" FIXED
+
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# Can omit v!=0 if @pure_field absent..
+
+push_list(es_infer_hp_rel):[ 
+self::char_star<v,q2>@M * GP_118(q2,self,p)&v!=0 |#|  --> U(self,p)]
+
+===========================================================================
+# ex16d1d1.slk dre "infer_c" -show-push-list ".*hp_" --dis-infer-back-ptr FIXED
+
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# GOT:
+push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
+
+# EXPECT:
+  self::char_star<v,q2>@M * GP_118(q2,p) |#|  --> U(self,p)
+
+===========================================================================
+# ex16d1d2.slk dre "infer_c" -show-push-list ".*hp_" FIXED
+
+//(1)
+
+infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# I think can use just GP_30(q2,self,p), otherwise we may
+  have too many parameters.
+
+push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M * GP_30(q2,self,p,v)&v!=0 
+
+
+===========================================================================
+# ex16d2c2.slk FIXED
+
+# No need to instantiate q if it is already known on LHS..
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#237:Can not inst
+
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+
+# Why exception below?
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000331
+Entail (2) : Failure("sau.add_raw_hp_rel: args should be not empty")
+
+===========================================================================
+# ex16d1d3.slk dre "infer_c" -show-push-list ".*hp_": FIXED
+
+//(1)
+
+infer [U,@pure_field,@classic] 
+   self::char_star<v,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# I think GP_24(self) is unnecessary since
+  it does not have any instantiating parameter..
+
+# Expects just:
+
+  self::char_star<v,p>@M 
+        v!=0 |#|3  --> U(self,p)&true]
+
+ <1>emp&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> GP_24(self)&true; 
+                  self::char_star<v,p>@M * GP_24(self)&
+                   v!=0 |#|3  --> U(self,p)&true]
+[[ InferFold  ==>  Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
+===========================================================================
+# ex16d1b5.slk -dre "process_one_m": FIXED
+
+
+ infer [U2,@pure_field,@classic] 
+   U(q2,q3)*q3::char_star<0,p>    |-  U2(q2,q)*q::char_star<0,p>.
+
+# where did we obtain HP_153? Why did we infer for U when it is not in
+  the infer set?
+
+
+push_list(es_infer_hp_rel):[ U(q2,q) |#|  --> U2(q2,q)]
+push_list(es_infer_hp_rel):[ emp |#|  --> HP_153(flted_39_152,q2,q)]
+push_list(es_infer_hp_rel):[ q::char_star<flted_39_128,p>@M * GP_156(p,q2,q)&
+  flted_39_128=0 |#|  --> U(q2,q)]
+
+===========================================================================
+# ex16c7.slk (FIXED)
+
+ infer [U,@pure_field,@classic]  U(self,q)*q::char_star<0,p> 
+    |- self::char_star<0,p>.
+ print residue.
+
+# GOT
+
+ inferred hprel: [U(self,q)&true |#| q::char_star<flted_33_161,p>@M&
+                   true --> emp&self=q]
+
+# Since we had @pure_field, it should be:
+
+ inferred hprel: [U(self,q)&true |#| q::char_star<flted_33_161,p>@M&
+                   flted_33_161=0 --> emp&self=q]
+
+!!! **WARNING****solver.ml#9516:do_base_unfold_hp_rel (TBI)
+push_list(es_infer_hp_rel):[ U(self,q) |#| q::char_star<flted_35_132,p>@M --> emp&self=q]
+
+(==solver.ml#8329==)
+infer_collect_hp_rel_empty_rhs#1@3
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ emp&flted_35_132=0 & self=q&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [U(self,q) |#| q::char_star<flted_35_132,p>@M --> emp&
+                    self=q]
+infer_collect_hp_rel_empty_rhs#1 inp2 : flted_35_132=0 & p=p
+infer_collect_hp_rel_empty_rhs#1@3 EXIT:(Res:false,Sel HP:
+ es_formula: 
+ emp&flted_35_132=0 & self=q&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [U(self,q) |#| q::char_star<flted_35_132,p>@M --> emp&
+                    self=q],Inferred Relations:[],lhs base: emp&flted_35_132=0 & self=q&{FLOW,(20,21)=__norm#E}[])
+===========================================================================
+# ex16e1.slk
+
+ infer [U,@pure_field,@classic] U(self,sp,q)*q::char_star<0,p> 
+        |- self::char_star<0,p> & sp=self.
+
+# base-case unfold seems to have failed:
+
+!!! **solver.ml#12895:inst_vs:[]
+!!! **WARNING****solver.ml#9516:do_base_unfold_hp_rel (TBI)
+push_list(es_infer_hp_rel):[ U(self,sp,q) |#| q::char_star<flted_15_101,p>@M --> emp&self=q]
+
+ $  add HP_XX on the RHS; add pure guard flted_15_101=0
+
+  U(self,sp,q) |#| q::char_star<flted_15_101,p> & flted_15_101=0
+     --> HP_XX(self@NI,sp@NI,q@NI) & emp&self=q
+
+(==solver.ml#12898==)
+do_unfold_hp_rel@4@3@2
+do_unfold_hp_rel inp1 :  U(self,sp,q) * q::char_star<flted_15_101,p>@M&flted_15_101=0&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [p_122; flted_16_123]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@leak,@pure_field]
+ es_evars: [p_122; flted_16_123]
+ es_rhs_eqset: [sp:self; p_122:p]
+ es_trace:  SEARCH ==>  BaseCaseUnfold
+ es_infer_vars_hp_rel: [U]
+do_unfold_hp_rel inp2 :U
+do_unfold_hp_rel inp3 :[self,sp,q]
+do_unfold_hp_rel inp4 : self::char_star<flted_16_123,p_122>@M
+do_unfold_hp_rel@4 EXIT: failctxfe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+    fc_message:  self!=null |-  sp=self. LOCS:[15;16] (may-bug)
+    fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+  }
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(q,self)]]false
+
+===========================================================================
+# ex13c5a.ss (FIXED)
+
+---------------------------------
+# without @pure_field
+
+# missing base-case post?
+*************************************
+[ // PRE
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1603(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+true --> P(Anon_1602)&
+true]
+
+===========================================================================
+# ex13c5b.ss (OK)
+
+# with @pure_field
+
+[ // PRE
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(v_1601@NI,s@NI) * 
+               HP_1604(Anon_1602,s@NI)&true,
+
+ // PRE_REC
+(1;0)HP_1604(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
+true,
+
+# why did we have (v=0 | v=v_1601) ?
+  what happen to just v=0 ??
+
+ // POST
+(2;0)HP_1604(Anon_1602,s@NI)&
+s'=s & Anon_19=Anon_1602 |#| s::char_star<v_1601,Anon_1602>@M&
+(v=0 | v=v_1601) --> emp&
+true,
+
+ // POST
+(2;0)HP_1603(v_1601@NI,s@NI)&
+s'=s & v=v_1601 & v=0 |#| s::char_star<v_1601,Anon_1602>@M&
+Anon_19=Anon_1602 --> emp&
+true,
+
+ // POST
+(1;0)HP_1603(v_1601@NI,s@NI)&
+Anon_18=v_1601 & v=v_1601 & s_1617=s & v!=0 |#| s::char_star<v_1601,Anon_1602>@M&
+(q=Anon_1602 | Anon_19=Anon_1602) --> emp&
+true]
+
+
+(fixcalc error disappeared)
+
+# + fixcalc error
+*************************************
+[ // PRE
+:fixcalc: Parse error on line 1 rest of line: ) && 1=1)
+(0)P(s)&
+true |#|3  --> s::char_star<v_1601,Anon_1602>@M * HP_1603(v_1601@NI,s@NI) * 
+               HP_1604(Anon_1602,s@NI)&
+true,
+ // PRE_REC
+(1;0)HP_1604(Anon_1602,s@NI)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601!=0 --> P(Anon_1602)&
+true]
+
+====================================================================
+
+ // POST
+(2;0)HP_1603(Anon_1602)&true |#| s::char_star<v_1601,Anon_1602>@M&
+v_1601=0 --> emp&
+true]
+
+===========================================================================
+# ex13c5b1.slk -dre "infer_c" (OK)
+
+infer [HP,@classic,@pure_field] 
+HP(v_1601,s) * s::char_star<v_1601,Anon_1602>@M 
+& q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598' 
+ |-  htrue.
+
+<1>emp&v_bool_37_1598' & s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+        Anon_18=v_1601 & q=Anon_1602&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP(v_1601@NI,s)&
+                   s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+                   Anon_18=v_1601 & q=Anon_1602 |#|3  --> emp&true]
+
+# can we use simplifier? Why is guard outcome different1
+  from ex13c5b.ss --esl. Where is the heap guard? WHere is trace?
+
+id: 11; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604,P]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * s::char_star<v_1601,Anon_1602>@M * (htrue)&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (1;0)HP_1603(v_1601,s)&
+  Anon_18=v_1601 & v=v_1601 & s_1617=s & v!=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  (q=Anon_1602 | Anon_19=Anon_1602) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&
+q=Anon_1602 & Anon_18=v_1601 & v!=0 & Anon_19=Anon_1602 & v=v_1601 & 
+s_1617=s & v_bool_37_1598'&{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
+
+(==solver.ml#8329==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ HP(v_1601,s) * s::char_star<v_1601,Anon_1602>@M&
+ v_bool_37_1598' & s_1617=s & v=v_1601 & Anon_19=Anon_1602 & v!=0 & 
+ Anon_18=v_1601 & q=Anon_1602&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [HP]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ s::char_star<v_1601,Anon_1602>@M&
+ v
+===========================================================================
+# ex13c5b3.slk (FIXED)
+
+infer [HP3,HP4,@classic,@pure_field] 
+ HP3(v_1601,s) * HP4(Anon_1602,s) * s::char_star<v_1601,Anon_1602>@M&
+!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0 
+ |-  htrue.
+
+ <1>emp&v=0 & Anon_19=Anon_1602 & v=v_1601 & s'=s & !(v_bool_37_1598')&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP3(v_1601@NI,s@NI)&v=v_1601 & s'=s & v=0 |#|3  --> emp&
+                   true; 
+                  HP4(Anon_1602,s@NI)&
+                   Anon_19=Anon_1602 & s'=s |#| s::char_star<v_1601,Anon_1602>@M&
+                   v=0 & v=v_1601 --> emp&true]
+
+#  Why is guard outcome diff from --esl from ex13c5b.ss --esl
+   Did we remove the node before unknown predicate?
+   Why is there no trace?
+
+id: 12; caller: []; line: 30; classic: true; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,HP_1603,HP_1604]; c_heap: emp; others:  es_infer_obj: [@leak,@pure_field] globals: [@flow,@ver_post,@leak]
+ checkentail HP_1603(v_1601,s) * HP_1604(Anon_1602,s) * s::char_star<v_1601,Anon_1602>@M&
+!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (2;0)HP_1603(v_1601,s)&
+  s'=s & v=v_1601 & v=0 |#| s::char_star<v_1601,Anon_1602>@M&
+  Anon_19=Anon_1602 --> emp,
+ (2;0)HP_1604(Anon_1602,s)&
+  s'=s & Anon_19=Anon_1602 |#| s::char_star<v_1601,Anon_1602>@M&
+  (v=0 | v=v_1601) --> emp]
+ho_vars: nothing?
+res:  1[
+    emp&!(v_bool_37_1598') & s'=s & v=v_1601 & Anon_19=Anon_1602 & v=0&
+{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
+
+prel_ass: [ (2;0)
+
+parameters : v_1601,s
+guard      : v_1601,Anon_1602
+
+  HP_1603(v_1601,s)&
+  (exists s',v: s'=s & v=v_1601 & v=0) |#| s::char_star<v_1601,Anon_1602>@M&
+  (exists Anon_19: Anon_19=Anon_1602) --> emp,
+
+===========================================================================
+# ex13e.ss
+
+chin@loris-7:~/hg/sl_incr/str-inf$ ../hip ex13e-WSS-infer-post.ss -show-push-list "" > 1
+fixcalc: Parse error on line 1 rest of line:  1=1)
+===========================================================================
+# ex21d1.slk
+
+lemma_infer_pred [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+# Chanh: these are based on post-predicate
+
+************************************
+*******shape relational assumptions ********
+*************************************
+[ emp&flted_22_139=null --> U(flted_22_139)&true,
+ q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147@NI)&
+  q_147!=null --> U(q_147)&true,
+ U(q_153)&q_147!=null --> GP_154(q_153,q_147@NI)&true]
+
+!!! **syn.ml#458:>>>>> Step 1: Adding dangling references <<<<<
+!!! **syn.ml#49:Dangling args:[]
+!!! **syn.ml#49:Dangling args:[q_153]
+!!! **syn.ml#49:Dangling args:[]
+!!! **syn.ml#468:Detected dangling vars:
+ 
+  [U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147); 
+   q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+    q_147!=null |#|  --> U(q_147) * q_153::Dangling<>@M; 
+   emp&flted_22_139=null |#|  --> U(flted_22_139)]
+!!! **syn.ml#473:>>>>> Step 2: Unfolding <<<<<
+ --error:  at:
+
+===========================================================================
+# ex20c.slk (FIXED)
+
+# emp&flted_22_139=null --> U(flted_22_139).
+
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+error at: 
+SLEEK FAILURE (END)
+
+===========================================================================
+# ex20.slk (FIXED by avoiding linearization of guard)
+
+# where was Anon_1619=Anon_1619 introduced and why?
+
+ [P(s) |#|  --> s::char_star<v_1618,Anon_1619>@M * HP_1620(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618!=0 & Anon_1619=Anon_1619 --> P(Anon_1619); 
+   HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+    v_1618=0 & Anon_1619=Anon_1619 --> emp]
+
+!!!:0: 0: **sleekengine.ml#1442: HP_1620(Anon_1619) |#| s::char_star<v_1618,Anon_1619>@M&
+  v_1618!=0 & Anon_1619=Anon_1619 --> P(Anon_1619)
+(==astsimp.ml#7386==)
+process_rel_assume@2
+process_rel_assume inp1 :IFORM:(emp ; (emp ; (HRel HP_1620(Anon_1619)))) * ([] & true)( FLOW __norm)
+process_rel_assume inp2 :Some(IFORM:(emp ; (emp ; (s::char_star{}<v_1618,Anon_1619>@M[HeapNode1]))) * ([] & v_1618 != 0)( FLOW __norm))
+process_rel_assume inp3 :IFORM:(emp ; (emp ; (HRel P(Anon_1619)))) * ([] & true)( FLOW __norm)
+process_rel_assume@2 EXIT:?
+===========================================================================
+# ex20c.slk (FIXED)
+
+Please add a shape_merge sleek command ..
+
+shape_merge [U,GP_164].
+
+===========================================================================
+# ex20c.slk
+
+Please add a shape_merge command ..
+
+shape_merge [U,GP_164].
+
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+error at: 
+SLEEK FAILURE (END)
+
+===========================================================================
+# ex20.slk
+
+shape_trans_to_view [P,HP_1620].
+
+# current method to transform is below:
+
+# Loc: can we use an older method to perform the
+  translation as it may be more complete the the
+  correct normalization
+
+let process_shape_trans_to_view hps = 
+  let f hps =
+    let trans_views = Syn.trans_hprel_to_view !cprog hps in
+    hps 
+  in
+  process_sleek_hprel_assumes "Transforming to View" hps f
+
+ view P<>= 
+  EBase 
+    self::char_star<v_1618,Anon_1619>@M * Anon_1619::P<Anon_33>NOANN&
+    v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or self::char_star<v_1618,Anon_33>@M&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+    
+!!! **cprinter.ml#4410:view_labels:[]
+!!! **cprinter.ml#4412:v.view_params_orig:[]
+!!! **syn.ml#671:View Decl of HP_1620:
+ view HP_1620<>= 
+  EBase 
+    self::P<Anon_33>NOANN&v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or emp&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+===========================================================================
+# ex20.slk --pcp  (FIXED)
+
+# why isn't views printed in detail?
+  Is it in view_decls field?
+
+# Can we make sure that trans_to_view is done
+  only once and would be idempotent?
+
+  shape_trans_to_view [P,HP_1620].
+===========================================================================
+# ex20.slk
+
+  [unfold P(s,Anon_37) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                                P(Anon_1619,Anon_37)&v_1618!=0
+                                or s::char_star<v_1618,Anon_37>@M&v_1618=0
+                                ; 
+
+# transform to view lacks the dangling parameter derived for P.
+  similarly for HP_1620 
+
+  [unfold P(s,Anon_37) |#|  --> s::char_star<v_1618,Anon_1619>@M * 
+                                P(Anon_1619,Anon_37)&v_1618!=0
+                                or s::char_star<v_1618,Anon_37>@M&v_1618=0
+                                ; 
+   unfold HP_1620(Anon_1619,Anon_38) |#| s::char_star<v_1618,Anon_1619>@M --> 
+    P(Anon_1619,Anon_37)&v_1618!=0
+    or emp&v_1618=0
+    ]
+
+ view P<>= 
+  EBase 
+    self::char_star<v_1618,Anon_1619>@M * Anon_1619::P<Anon_37>NOANN&
+    v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or self::char_star<v_1618,Anon_37>@M&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+
+ view HP_1620<>= 
+  EBase 
+    self::P<Anon_37>NOANN&v_1618!=0&{FLOW,(20,21)=__norm#E}[]
+    or emp&v_1618=0&{FLOW,(20,21)=__norm#E}[]
+===========================================================================
+# ex20e.slk (DONE)
+
+shape_derive_pre [P,HP_1620].
+
+  # should be similar to ex20.slk where
+  we derive the views eventually..
+
+========================
+ Performing Deriving Pre-Predicates
+========================
+To be Implemented
+===========================================================================
+# ex20c.slk (FIXED by Chanh)
+
+========================
+ Performing Simplifying
+========================
+
+# How simplification does not reduce redundant 
+  and duplicated expressions?
+ 
+  [fold emp&flted_22_139=null
+        or flted_22_139::node<Anon_31,q_32>@M * U(q_153)&
+           flted_22_139!=null & flted_22_139!=null & q_32=q_153 & 
+           flted_22_139!=null
+         |#|  --> U(flted_22_139); 
+   fold U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147)]
+
+
+# Expects:
+
+  [fold emp&flted_22_139=null
+        or flted_22_139::node<Anon_31,q_32>@M * U(q_153)&
+      & q_32=q_153 & flted_22_139!=null --> U(flted_22_139); 
+   fold U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147)]
+
+
+===========================================================================
+# ex21d1.slk
+
+lemma_infer  [U,classic] "L21d1"
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+print relAssumes.
+shape_derive_view [U].
+print relAssumes.
+
+# can we add a command
+
+ shape_norm (which stop short of deriving predicate)
+
+
+ [unknown U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146); 
+   unknown q_146::node<Anon_151,q_152>@M * GP_153(q_152,q_146)&
+    q_146!=null |#|  --> U(q_146); 
+   unknown emp&flted_22_138=null |#|  --> U(flted_22_138)]
+
+# why do we get unfolded twice below? and can we simplify?
+ 
+  [fold q_146::node<Anon_151,q_152>@M * U(q_152)&
+        q_146!=null & q_146!=null & q_146!=null
+        or emp&q_146=null
+        or q_146::node<Anon_151,q_152>@M * U(q_152)&
+           q_146!=null & q_146!=null & q_146!=null
+        or emp&q_146=null
+         |#|  --> U(q_146); 
+   fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
+
+===========================================================================
+# ex21u1.slk
+
+shape_elim_useless [G1,G2].
+
+# Minor problems with view below:
+  Elim need to eliminate orig parameters too.
+
+!!! **sleekengine.ml#2471:views after ELIM: 
+[ view G2<p:node,y:node>= 
+  EBase 
+    self::G2_66<y>@M&{FLOW,(1,26)=__flow#E}[],
+ view G2_66<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; 
+          pp]self::node<Anon_14,pp,tt>@M * tt::G2_66<y>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1<y:node>= 
+  EBase 
+    exists (Impl)[Anon_13; t; p]self::node<Anon_13,p,t>@M * t::G2_66<y>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================
+===========================================================================

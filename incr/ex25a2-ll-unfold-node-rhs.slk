@@ -1,0 +1,66 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+
+//infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+
+//infer [U1,@classic] U1(x) |- x=null.
+print residue.
+
+/*
+# ex25a2.slk 
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+# This example is supposed to schedule an M_unfold
+  However, I have now scheduled an InferHeap since it also
+  captures the effect of unfolding and folding.
+
+  Can we split M_infer_heap to capture folding and
+  unfolding separately?
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_35(q_34)&true |#|3  --> emp&true; 
+                  U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
+                   true]
+[[ InferHeap]]
+
+-------------------------------
+
+!!! **context.ml#2472:process_matches (steps) :
+ ### LHS : U1(x)
+ ### RHS : x::node<Anon_13,q>@M
+ ### matches :
+[ Type: Root
+ LHS: U1(x)
+ RHS: x::node<Anon_13,q>@M
+ lhs_rest: emp
+ rhs_rest: q::ll<>@M]
+
+!!! **context.ml#2843:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_13,q>@M, q::ll<>@M]
+ ### action :
+ SEARCH =>[
+  Prio:2
+  Unfold 1 =>
+    LHS: U1(x)
+    RHS: x::node<Anon_13,q>@M;
+  Prio:2
+  InferHeap => ( x::node<Anon_13,q>@M, emp)
+   
+
+
+
+*/

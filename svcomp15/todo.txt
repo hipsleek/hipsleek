@@ -3,36 +3,209 @@ Descriptions: heap-manipulation, list-properties, ldv-regression, ddv-machzwd
 
 heap-manipulation/*_false-unreach-call*.i
 heap-manipulation/*_true-unreach-call*.i
+============================================
+note: shapes
+
+bubble_sort_linux.c - Bubble-Sort implementation operating on native Linux lists
+bubble_sort_linux_BUG.c - bubble_sort_linux.c with an injected bug
+
+dll_of_dll.c - NULL-terminated doubly-linked list of doubly-linked lists
+dll_of_dll_BUG.c - dll_of_dll.c with an injected bug
+  The program creates a doubly-linked list of doubly-linked lists, 
+  then destroys the shape in several phases.
+
+merge_sort.c - Merge-Sort algorithm operating on two level singly-linked lists
+merge_sort_BUG.c - merge_sort.c with an injected bug
+
+sll_to_dll_rev.c - conversion of singly-linked list to doubly-linked list
+sll_to_dll_rev_BUG.c - sll_to_dll_rev.c with an injected bug
+  The program converts a singly-linked list to a doubly-linked list, 
+  reverses the list, and then coverts it back to a singly-linked list.
+
+
+
+==============
 list-properties/*_false-unreach-call*.i
 list-properties/*_true-unreach-call*.i
 
+1.
+/* Build a list of the form (1->2)*->3
+   * with 1,2 depending on some flag
+*/
+
+alternating_list*.c
+list_flag*.c
+splice_*.c
+
+2.
+/* Build a list of the form 1->...->1->2->....->2->3 */
+list_false*.c
+list_true*.c
+
+3. build-list-search (e.g. /* Build a list of the form 1->...->1->0 */)
+list_search_*.c
+simple_built*
+simple_true
+
+==============
 ldv-regression/*_false-unreach-call*.i
 ldv-regression/*_true-unreach-call*.i
+
+==============
 ddv-machzwd/*_false-unreach-call*.i
 ddv-machzwd/*_true-unreach-call*.i
 
+============================
  Memory Safety
-memsafety, memsafety-ext
+Descriptions: memsafety, memsafety-ext
 
 memsafety/*_false-valid-deref*.i
 memsafety/*_false-valid-free*.i
 memsafety/*_false-valid-memtrack*.i
 memsafety/*_true-valid-memsafety*.i
+
+
+
+
+==============
 memsafety-ext/*_true-valid-memsafety*.i
+
+note: shapes: dll, skiplist, tree_cnstr, tree_dsw, tree_of_cslls, tree_parent_ptr, tree_stack
+
+==============
 list-ext-properties/*_false-valid-deref*.i
 list-ext-properties/*_false-valid-free*.i
 list-ext-properties/*_false-valid-memtrack*.i
 list-ext-properties/*_true-valid-memsafety*.i
+
+note: shape + pure field + size
+
+array:
+960521-1_1_-*.c
+
+ /* Build a list of the form 1->...->1->2->....->2->3 */
+list-ext*.c
+
+/* Build a list of the form 1->2->2->...->1->3
+   * with 1,2 depending on some flag
+*/
+list-ext_flag*.c
+
+ /* Build a list of the form 0->1->...->29->30 */
+simple-ext*.c
+
+field values of 1 node (bag of val/addr)
+test-0019*.c
+
+OK:  test-0019_1_true-valid-memsafety.c
+
+field + array
+test-0158
+test-0214
+
+
+list+length
+ test-0232
+
+dll
+ test-0504_
+
+==============
 memory-alloca/*_false-valid-deref*.i
 memory-alloca/*_false-valid-free*.i
 memory-alloca/*_false-valid-memtrack*.i
 memory-alloca/*_true-valid-memsafety*.i
+
+
+1. one node + pure field (fix point) (__VERIFIER_nondet_int)
+a.*.c
+add_last-*
+Avery-2006FLOPS-Tabel1_true-alloca_true-valid-memsafety.c
+b.*.c
+Ben-Amram-2010LMCS-Ex2.3-alloca_true-valid-memsafety.c
+BradleyMannaSipma-2005CAV-Fig1-modified-alloca_unknown-valid-memsafety.c
+BradleyMannaSipma-2005ICALP-Fig1-alloca_unknown-valid-memsafety.c 
+BrockschmidtCookFuhs-2013CAV-*.c
+ChenFlurMukhopadhyay-2012SAS-Fig1-alloca_true-valid-memsafety.c
+CookSee*.c (if-while)
+easySum-alloca_true-valid-memsafety.c
+flag-alloca_true-valid-memsafety.c
+gcd1-alloca_true-valid-memsafety.c
+genady-alloca_true-valid-memsafety.c
+GulwaniJainKoskinen-2009PLDI-Fig1-alloca_true-valid-memsafety.c
+HarrisLalNoriRajamani-2010SAS-Fig2-alloca_unknown-valid-memsafety.c
+HarrisLalNoriRajamani-2010SAS-Fig3-alloca_true-valid-memsafety.c
+java_AG313-alloca_true-valid-memsafety.c
+java_Break-alloca_true-valid-memsafety.c
+java_Continue1-alloca_true-valid-memsafety.c
+java_Nested-alloca_true-valid-memsafety.c
+java_Sequence-alloca_true-valid-memsafety.c
+min_rf-alloca_true-valid-memsafety.c
+NoriSharma-2013FSE*.c
+openbsd_*.c
+TelAviv-Amir-Minimum-alloca_true-valid-memsafety.c
+Toulouse-*.c
+Urban-2013*.c
+ Velroyen-alloca_false-valid-memsafety.c
+
+2. array:
+array0*.c
+bubblesort-alloca_true-valid-memsafety.c
+bubble_sort_unsafe_false-valid-deref.c
+bubblesort_unsafe_false-valid-deref.c
+count_down-alloca_true-valid-memsafety.c
+count_down_unsafe_false-valid-deref.c
+diff-alloca_true-valid-memsafety.c
+diff_usafe_false-valid-deref.c
+insertionsort-alloca_true-valid-memsafety.c
+insertion_sort_unsafe_false-valid-deref.c
+insertionsort_unsafe_false-valid-deref.c 
+java_BubbleSort-alloca_true-valid-memsafety.c
+java_BubbleSort_unsafe_false-valid-deref.c
+knapsack_alloca_unsafe_false-valid-deref.c
+knapsack_unsafe_false-valid-deref.c
+LarrazOliverasRodriguez-CarbonellRubio-2013FMCAD-Fig1-alloca_unknown-valid-memsafety.c
+lis-alloca_true-valid-memsafety.c
+lis_unsafe_false-valid-deref.c
+mult_array-*.c
+rec_strlen-alloca_true-valid-memsafety.c
+reverse_array*.c
+selection*.c
+
+
+3a. div
+aviad_true-alloca_true-valid-memsafety.c
+java_LogBuiltIn-alloca_true-valid-memsafety.c (var/cons)
+KroeningSharyginaTsitovichWintersteiger-2010CAV-Fig1-alloca_true-valid-memsafety.c (var/cons)
+twisted-alloca_true-valid-memsafety.c
+
+
+3b. *
+BradleyMannaSipma-2005CAV-Fig1-alloca_unknown-valid-memsafety.c 
+c.* (const * var)
+ex*.c (var * var)
+fermat-alloca_true-valid-memsafety.c (var * var)
+HarrisLalNoriRajamani-2010SAS-Fig1-alloca_true-valid-memsafety.c (const * var)
+Masse-alloca_unknown-valid-memsafety.c (const * var)
+PodelskiRybalchenko-2004VMCAI-Ex2-alloca_false-valid-memsafety.c (const * var)
+
+
+string
+cstr*:
+str
+subseq-alloca_true-valid-memsafety.c
+substring-alloca_true-valid-memsafety.c
+
+==============
 memory-unsafe/*_false-valid-deref*.i
 memory-unsafe/*_false-valid-free*.i
 memory-unsafe/*_false-valid-memtrack*.i
 memory-unsafe/*_true-valid-memsafety*.i
 
-
+========================================================
+========================================================
+========================================================
+========================================================
 
 #ex1-200204.c (false-memtrack)
 

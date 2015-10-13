@@ -1,3 +1,5 @@
+let dummy = ()
+
 type print_level =
   (* | P_Quiet *)
   (* | P_VShort *)
@@ -18,6 +20,8 @@ type print_set =
 let compete_mode = ref false
 let trace_failure = ref false
 let trace_exc = ref false
+let trace_loop = ref false
+let trace_loop_all = ref false
 let verbose_num = ref 0
 
 let last_posn = ref (None:string option)
@@ -103,6 +107,7 @@ class ['a] store (x_init:'a) (epr:'a->string) =
     method is_avail : bool = match lc with
       | None -> false
       | Some _ -> true
+    method is_empty : bool = lc ==None
     method set (nl:'a) = lc <- Some nl
     method get :'a = match lc with
       | None -> emp_val

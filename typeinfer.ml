@@ -17,6 +17,7 @@ module I = Iast
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
+module CFE = Cf_ext
 module CP = Cpure
 module MCP = Mcpure
 module H = Hashtbl
@@ -559,15 +560,33 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tlist3,_) = must_unify_expect t3 Int n_tlist2 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist3 in
     (n_tl, Bptyp)
-  | IP.Add (a1, a2, pos) -> 
+  | IP.Add (a1, a2, pos) ->
+    let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
+      if is_node_typ t1 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = must_unify_expect t1 et n_tl2 pos in
+        let (n_tlist2,t2) = must_unify_expect t2 Int n_tl2 pos in
+        (n_tlist2,t1)        
+      else if is_node_typ t2 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = must_unify_expect t2 et n_tl2 pos in
+        let (n_tlist2,t2) = must_unify_expect t1 Int n_tl2 pos in
+        (n_tlist2,t2)
+      else 
+        let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
+        let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+        (n_tlist2,t2)
+    in
     let todo_unk:Globals.typ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in          
+    let (new_et2, n_tl) = fresh_tvar n_tl in          
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
     let (tmp1,tmp2)=nt in           
+    let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
+    let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
-    let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
-    let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+    let () = x_tinfo_hp (add_str "add(t1)" string_of_typ) t1 no_pos in
+    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et2 in
+    let () = x_tinfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
+    let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
@@ -1135,8 +1154,9 @@ and add_last_diff ls1 ls2 res=
   | _ -> raise (Invalid_argument "first is longer than second")
 
 and try_unify_data_type_args prog c v deref ies tlist pos =
+  let pr_tl =  string_of_tlist in
   let pr = add_str "ies" (pr_list Iprinter.string_of_formula_exp) in
-  Debug.no_2 "try_unify_data_type_args" pr_none pr pr_none (fun _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies
+  Debug.no_3 "try_unify_data_type_args" pr_id pr pr_tl pr_tl (fun _ _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies tlist
 
 and try_unify_data_type_args_x prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
@@ -1323,16 +1343,21 @@ and get_spec_var_ident (tlist:spec_var_type_list) (var : ident) p =
   | Not_found -> CP.SpecVar(UNK,var,p)
 
 
-and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
+and get_spec_var_type_list_x ?(lprime=Unprimed) (v : ident) tlist pos =
   try
     let v_info = snd(List.find (fun (tv,en) -> tv=v) tlist) in
     match v_info.sv_info_kind with
     | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
+                                Err.error_text = v ^ " is undefined (7)"; }
     | t -> let sv = CP.SpecVar (t, v, lprime) in sv
   with
-  | Not_found -> Err.report_error { Err.error_loc = pos;
-                                    Err.error_text = v ^ " is undefined"; }
+  | Not_found -> let () = x_ninfo_pp (v^" not found in tlist ") pos in
+    raise Not_found
+(* ;Err.report_error { Err.error_loc = pos; *)
+(*                                   Err.error_text = v ^ " is undefined (8)"; } *)
+
+and get_spec_var_type_list ?(lprime=Unprimed) (v : ident) tlist pos =
+  Debug.no_1 "get_spec_var_type_list" pr_id pr_none (fun _ -> get_spec_var_type_list_x ~lprime:lprime (v : ident) tlist pos) v
 
 (* type: ?d_tt:spec_var_type_list -> *)
 (*   Globals.ident * VarGen.primed -> *)
@@ -1344,35 +1369,52 @@ and get_spec_var_type_list_infer ?(d_tt = []) (v : ident * primed) fvs pos =
   Debug.no_2 "get_spec_var_type_list_infer" pr_v string_of_tlist ( pr_sv)
     (fun _ _ -> get_spec_var_type_list_infer_x d_tt v fvs pos) v  d_tt
 
-and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
+(* type: CP.spec_var list -> Globals.ident -> Globals.typ * bool *)
+and get_var_type fvs v : (typ * bool) = 
+  let pr_out = pr_pair string_of_typ string_of_bool in
+  Debug.no_2 "get_var_type" !CP.print_svl pr_id pr_out get_var_type_x fvs v
+
+and get_var_type_x fvs v : (typ * bool) = 
   let warning_if_non_empty lst tlst =
     if lst != [] then
       let () = x_binfo_pp "WARNING : free_vars_list contains duplicates" no_pos in
       x_binfo_hp (add_str "fvs" Cprinter.string_of_typed_spec_var_list) tlst no_pos
   in
-  let get_var_type v : (typ * bool) = 
-    (* let res_list =  *)
-    (*   CP.remove_dups_svl (List.filter ( *)
-    (*       fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c) *)
-    (*     ) fv_list ) in *)
-    let res_list = 
-      (List.filter (
-          fun c -> (v = CP.name_of_spec_var c) (* && (p = CP.primed_of_spec_var c) *)
-        ) fvs ) in
-    match res_list with
-    | [] -> (Void ,false)
-    | sv::lst ->
-      let () = warning_if_non_empty lst res_list in
-      (CP.type_of_spec_var sv,true)
-      (* | _ -> Err.report_error { *)
-      (*     Err.error_loc = pos; *)
-      (*     Err.error_text = "could not find a coherent " ^ v ^ " type"; *)
-      (*   } *)
-  in
+  (* let () = x_binfo_hp (add_str "fvs" !CP.print_svl) fvs no_pos in *)
+  (* let res_list = *)
+  (*   CP.remove_dups_svl (List.filter ( *)
+  (*       fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c) *)
+  (*     ) fv_list ) in *)
+  let res_list = 
+    (List.filter (
+        fun c -> (v = CP.name_of_spec_var c) (* && (p = CP.primed_of_spec_var c) *)
+      ) fvs ) in
+  match res_list with
+  | [] ->   
+
+    let prog = I.get_iprog () in
+    begin
+      try
+        let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls v in
+        (RelT (List.map fst rdef.I.rel_typed_vars),false)
+      with _ ->
+        let () = x_tinfo_pp ("Cannot find "^v^" in rel_decls, use Void type?")  no_pos in
+        (Void ,false)
+    end
+  | sv::lst ->
+    let () = warning_if_non_empty lst res_list in
+    (CP.type_of_spec_var sv,true)
+(* | _ -> Err.report_error { *)
+(*     Err.error_loc = pos; *)
+(*     Err.error_text = "could not find a coherent " ^ v ^ " type"; *)
+(*   } *)
+
+and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
   try 
-    (get_spec_var_type_list ~lprime:p v d_tt pos)
+    (x_add (get_spec_var_type_list ~lprime:p) v d_tt pos)
   with _ ->
-    let vtyp, check = get_var_type v in
+    let vtyp, check = get_var_type fvs v in
+    let () = x_ninfo_hp (add_str "TODO: fix quick patch to type infer" pr_id) v pos in
     (* WN TODO : this is a quick patch to type infer problem *)
     (* if check = false then *)
     (*   Err.report_error { Err.error_loc = pos; *)
@@ -1380,7 +1422,7 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
     (* else *)
     match vtyp with
     | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined"; }
+                                Err.error_text = v ^ " is undefined (9)"; }
     | t -> CP.SpecVar (t, v, p (* Unprimed *))
 
 and gather_type_info_heap prog (h0 : IF.h_formula) tlist =
@@ -1434,6 +1476,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     in
     let gather_type_info_ann c tlist = (
       match c with
+      | IP.NoAnn -> tlist
       | IP.ConstAnn _ -> tlist
       | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (x_add gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
     ) in
@@ -1522,11 +1565,11 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
            let () = if not (IF.is_param_ann_list_empty ann_param) then
                (* let () = print_string ("\n(andreeac) searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" ann_param length:"^ (string_of_int (List.length ann_param))  ^"\n") in *)
                report_error pos (" predicate parameters are not allowed to have imm annotations") in
-           try_unify_view_type_args prog v_name vdef v deref ies hoa n_tl pos 
+           x_add try_unify_view_type_args prog v_name vdef v deref ies hoa n_tl pos 
          with
          | Not_found ->
            (try
-              let n_tl = try_unify_data_type_args prog v_name v deref ies n_tl pos in 
+              let n_tl = x_add try_unify_data_type_args prog v_name v deref ies n_tl pos in 
               n_tl
             with
             | Not_found ->
@@ -1571,3 +1614,97 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
   | IF.HTrue | IF.HFalse | IF.HEmp -> tlist
   (* TODO:WN:HVar *)
   | IF.HVar (v,hvar_vs) -> (v,{sv_info_kind = FORM;id=0})::tlist
+
+(* and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) = *)
+
+let trans_formula : (I.prog_decl -> bool -> ident list -> bool ->  Iformula.formula -> spec_var_type_list -> bool -> (spec_var_type_list * CF.formula)) ref =
+  ref (fun _ _ _ _ _ _ -> failwith "TBI")
+
+let trans_view : (I.prog_decl -> ident list -> Cast.view_decl list ->   (ident * spec_var_info) list -> I.view_decl -> Cast.view_decl) ref =
+  ref (fun _ _ _ _ _ -> failwith "TBI")
+
+(* and spec_var_type_list = (( ident*spec_var_info)  list) *)
+
+let mk_spec_var_info t = { sv_info_kind =t; id = 0}
+  
+let sv_to_typ sv = match sv with
+  | CP.SpecVar(t,i,p) ->(i, mk_spec_var_info t)
+
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+  (* cformula --> iformula *)
+  (* iformula --> normalize *)
+  (* iformula --> cformula *)
+  let free_vs = CF.fv f in
+  let () = y_tinfo_hp (add_str "free_vs" !CP.print_svl) free_vs in
+  let f = !CF.rev_trans_formula f in
+  let fvars = List.map CP.name_of_spec_var avail_vars in
+  let tlist = List.map sv_to_typ free_vs  in
+  let avail_vars = List.map CP.primed_ident_of_spec_var avail_vars in
+  let expl_vars = List.map CP.primed_ident_of_spec_var expl_vars in
+  (* let (f,r_avail,r_expl) = !Iast.case_normalize_formula iprog avail_vars expl_vars f in *)
+  let f = !Iast.case_normalize_formula iprog avail_vars f in
+  let quantify = true in
+  let clean_res = false in
+  let sep_collect = true in
+  let (sv,f) = !trans_formula iprog quantify (fvars : ident list) sep_collect f tlist clean_res in
+  f
+
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+  Debug.no_2 "Norm:case_norm" !CP.print_svl !CF.print_formula !CF.print_formula (fun _ _ -> case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula)) avail_vars f  
+
+let create_view (iprog:I.prog_decl) (id:ident) (vs:CP.spec_var list) (f:CF.formula): Cast.view_decl =
+  let f = !CF.rev_trans_formula f in
+  let f = Iformula.formula_to_struc_formula f in
+  let vs_ident = List.map CP.name_of_spec_var vs in
+  let iview = Iast.mk_iview_decl ~v_kind:View_NORM id "" vs_ident f no_pos in
+  let cview = !trans_view iprog [] [] [] iview in
+  cview
+
+
+let trans_iformula_to_cformula iprog body =
+  let tlist = [] in
+  let quantify = true in
+  let clean_res = false in
+  let sep_collect = true in
+  let fvars = [] in
+  let (sv,nbody) = !trans_formula iprog quantify (fvars : ident list) sep_collect body tlist clean_res in
+  nbody
+
+let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
+  let () = vd.C.view_un_struc_formula <- view_body_lbl in
+  let iprog = match iprog with 
+    | Some ip -> ip
+    | None ->  Iast.get_iprog () in
+  let old_sf = vd.C.view_formula in
+  let view_body = CF.convert_un_struc_to_formula view_body_lbl in
+  let args = vd.C.view_vars in
+  (* struc --> better to re-transform it *)
+  let new_view_body = case_normalize_renamed_formula iprog args [] view_body in
+  let view_struc = CF.formula_to_struc_formula new_view_body in
+  let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
+  let () = C.update_view_formula (fun _ -> view_struc) vd in
+  let () = if base_flag then 
+      begin
+        let () = y_tinfo_pp "updating base case now" in
+        let is_prim_v = vd.C.view_is_prim in
+        let rbc = CFE.compute_raw_base_case is_prim_v view_body_lbl in
+        let vbc_i = vd.C.view_baga_inv in
+        let vbc_o = vd.C.view_baga_over_inv in
+        let vbc_u = vd.C.view_baga_under_inv in
+        (* let vbc_i = conv_baga_inv vbi_i (\* vd.I.view_baga_inv *\) in *)
+        (* let vbc_o = conv_baga_inv vbi_o in *)
+        (* let vbc_u = conv_baga_inv vbi_u in *)
+        let new_pf = MCP.pure_of_mix vd.C.view_user_inv in
+        let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos in
+        let () = vd.C.view_raw_base_case <- rbc in
+        let () = vd.C.view_user_inv <- user_inv in
+        let () = vd.C.view_x_formula <- user_x_inv in
+        (* let () = vd.C.view_baga_inv <- vbc_i in *)
+        let () = vd.C.view_baga_over_inv <- vboi in
+        let () = vd.C.view_baga_x_over_inv <- vboi in
+        let () = vd.C.view_baga_under_inv <- vbui in
+        ()
+      end
+  in
+  (* (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
+  ()

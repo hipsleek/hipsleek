@@ -13,7 +13,7 @@ lemma "V1" self::ll_s<n> -> self::ll<>.
 
 lemma "V2" self::ll_s<n> <- self::ll<>.
 
-lemma "V3" self::ll_s<n> <-> self::ll<>.
+lemma "V3" self::ll_s<n> <-> self::ll<>. //should FAIL
 
 lemma "V4" self::ll<> -> (exists n: self::ll_s<n>).
 

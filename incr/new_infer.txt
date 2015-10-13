@@ -1,0 +1,12 @@
+
+
+ H(..) |- emp
+
+
+ // base-case-fold
+ emp |- H(self,..)
+
+  H(self,..) | ... <- self=p
+
+
+ H(self,q) <

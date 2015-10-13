@@ -34,7 +34,7 @@ void append(node x, node tx, node y, node ty)
 //	requires x::ll_tail<tx> * y::ll_tail<ty>
 //	ensures x::ll_tail<ty>;
 	requires x::ll_tail2<tx, n> * y::ll_tail2<ty, m>
-	ensures x::ll_tail2<ty, q> & q=m+n;
+        ensures x::ll_tail2<ty, m+n> ;
 	//ensures x::lseg2<q,a> * q::lseg2<ty,b> * ty::node<_,null> & a+b+1=m+n;
 	//ensures x::lseg2<ty, m+n-1> * ty::node<_, null>;
 {

@@ -233,7 +233,7 @@ let process_lib_file prog =
     let lib_prog = parse_file_full lib false in
     (*each template data of lib, find corres. data in progs, generate corres. view*)
     let tmpl_data_decls = List.filter (fun dd -> dd.Iast.data_is_template) lib_prog.Iast.prog_data_decls in
-    let horm_views = Sa.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
+    let horm_views = Sa3.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
     (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls@horm_views)
   in
   let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
@@ -573,7 +573,7 @@ let process_source_full source =
   (* else cprog.Cast.prog_view_decls *)
   (* in *)
   (* ========= lemma process (normalize, translate, verify) ========= *)
-  let () = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
+  let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
   (* ========= end - lemma process (normalize, translate, verify) ========= *)
   let c = cprog in
   let () = if !Globals.gen_coq_file 
@@ -870,9 +870,10 @@ let process_source_full source =
   (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   hip_epilogue ();
   if (not !Globals.web_compile_flag) then 
+    let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in 
     print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                         (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^
-                                                   ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n")
+                                                   ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" rev_false_ctx_line_list )^")\n")
   else ();
   Timelog.logtime # dump;
   silenced_print print_string ("\nTotal verification time: " 

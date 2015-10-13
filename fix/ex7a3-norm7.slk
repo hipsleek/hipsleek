@@ -1,0 +1,29 @@
+// Valid.Valid.Valid.Fail.Valid.Valid.
+
+data node{
+ int val;
+ node next;
+}.
+
+pred ll<p> == self=p or
+  self::node<_,q>*q::ll<p> //& self!=p
+  inv true.
+
+
+//3
+checkentail x::ll<n> * y::node<_, q>@A * q::ll<m>@A &x=y |- x::ll<n>.
+print residue.
+expect Valid.
+
+//5
+/*
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- x::ll<u>.
+print residue.
+expect Valid.
+*/
+//6
+/*
+checkentail x::ll<u> * y::node<_, q>@A * q::ll<v>@A &x=y |- q::ll<_>.
+print residue.
+expect Valid.
+*/

@@ -150,7 +150,8 @@ let fresh_data_v_x f0=
   (* let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in *)
   (* let sst = List.combine v_sps3 fr_v_sps2 in *)
   (* subst sst f0 *)
-  if not !Globals.sa_pure_field then
+  if not (Globals.infer_const_obj # is_pure_field) 
+  (* !Globals.sa_pure_field *) then
     formula_trans_heap_node fresh_hf f0
   else f0
 
@@ -796,9 +797,9 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
   let lsvl = fv (Base lhs_b) in
   let rsvl = (fv (Base rhs_b))@(CP.EMapSV.get_elems r_emap)@(CP.EMapSV.get_elems r_qemap) in
   let comm_svl = CP.intersect_svl lsvl rsvl in
-  let lhs_b1, rhs_b1, prog_vars =
+  let lhs_b1, rhs_b1, prog_vars,sst1 =
     if comm_svl = [] then
-      (lhs_b, rhs_b, prog_vars)
+      (lhs_b, rhs_b, prog_vars,[])
     else
       let l_emap1, null_ps, null_sst = expose_expl_closure_eq_null lhs_b all_args l_emap in
       let emap0 = CP.EMapSV.merge_eset l_emap r_emap in
@@ -828,16 +829,17 @@ let smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars
                                     (CP.remove_redundant (MCP.pure_of_mix rhs_b1.formula_base_pure));
                                 formula_base_heap = trans_heap_hf (h_subst (null_sst@eq_sst) ls_eq_args) rhs_b1.formula_base_heap;
                    } in
-      (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars)
+      (lhs_b2, rhs_b2, CP.subst_var_list (ss@null_sst@eq_sst) prog_vars, (ss@null_sst@eq_sst))
   in
-  (lhs_b1, rhs_b1, prog_vars)
+  (lhs_b1, rhs_b1, prog_vars, sst1)
 
 let smart_subst_new lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars=
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = !CP.print_svl in
   let pr3 = CP.EMapSV.string_of in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_triple pr1 pr1 pr2)
+  let pr5 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_7 "smart_subst_new" pr1 pr1 pr4 pr2 pr3 pr3 pr3 (pr_quad pr1 pr1 pr2 pr5)
     (fun _ _ _ _ _ _ _-> smart_subst_new_x lhs_b rhs_b hpargs l_emap r_emap r_qemap unk_svl prog_vars)
     lhs_b rhs_b hpargs prog_vars l_emap r_emap r_qemap
 
@@ -932,7 +934,7 @@ let unfold_non_rec_views prog unfold_fnc is_view_rec_fnc f=
     f
 let check_inconsistency hf mixf=
   let new_mf = xpure_for_hnodes hf in
-  let cmb_mf = MCP.merge_mems new_mf mixf true in
+  let cmb_mf = x_add MCP.merge_mems new_mf mixf true in
   not (TP.is_sat_raw cmb_mf)
 
 let check_inconsistency_f f0 pure_f=
@@ -2437,7 +2439,7 @@ let look_up_first_field prog lsctx0 dname=
   let rec look_up_ctx ctx=
     match ctx with
     | Ctx es ->
-      List.find (fun dn -> string_compare dname dn.h_formula_data_name)
+      List.find (fun dn -> string_eq dname dn.h_formula_data_name)
         (get_datas es.es_formula)
     | OCtx (c1,c2) -> begin
         try
@@ -2477,3 +2479,261 @@ let look_up_first_field prog lsctx0 dname=
 let is_view_node_segmented vn prog =
   let vdcl = Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
   vdcl.Cast.view_is_segmented
+
+let subst_views_form_x map_views is_pre f=
+  (***************INTERNAL****************)
+  let rec refresh_der_args args orig_args (pure_r,res)=
+    match args with
+      | [] -> (pure_r,res)
+      | sv::rest -> if CP.mem_svl sv orig_args then
+          refresh_der_args rest orig_args (pure_r,res@[sv])
+        else
+          let n_sv = CP.fresh_spec_var sv in
+          refresh_der_args rest orig_args (pure_r@[n_sv],res@[n_sv])
+  in
+  let rec lookup_map map vn v_args=
+    match map with
+      | [] -> raise Not_found
+      | ((orig_vn,orig_v_args),(der_vn,der_v_args))::rest ->
+            if string_eq vn orig_vn then
+              let sst = List.combine orig_v_args v_args in
+              let pure_svl, svl = (refresh_der_args der_v_args orig_v_args ([],[])) in
+              (der_vn, pure_svl, CP.subst_var_list sst svl)
+            else lookup_map rest vn v_args
+  in
+  let formula_map_add_ex hf_fct f0=
+    let rec helper f=
+      match f with
+        | Base b ->
+              let new_hf, ex_quans = hf_fct [] b.formula_base_heap in
+              let new_f = Base {b with formula_base_heap = new_hf} in
+              let new_f1 =  if is_pre then new_f else
+                add_quantifiers ex_quans new_f
+              in
+              (new_f1, ex_quans)
+        | Exists _ ->
+              let quans ,base = split_quantifiers f in
+              let new_base, svl = helper base in
+              (add_quantifiers quans new_base, svl)
+        | Or orf ->
+              let new_f1, svl1 = helper orf.formula_or_f1 in
+              let new_f2, svl2 = helper orf.formula_or_f2 in
+              Or {orf with formula_or_f1 = new_f1;
+                  formula_or_f2 = new_f2;
+              }, svl1@svl2
+    in
+    helper f0
+  in
+  let rec hview_subst_trans impl_svl hn = match hn with
+    | ViewNode vn -> begin
+        try
+          let der_vn,impl_vars, der_args = lookup_map map_views vn.h_formula_view_name vn.h_formula_view_arguments in
+          let () =  Debug.ninfo_hprint (add_str "der_args" (!CP.print_svl)) der_args no_pos in
+          let () =  Debug.ninfo_hprint (add_str "impl_vars" (!CP.print_svl)) impl_vars no_pos in
+          let args_orig,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.SVArg sv, i)], i+1)) ([],0) der_args in
+          let args_annot,_ = List.fold_left (fun (r,i) sv -> (r@[(CP.ImmAnn (CP.ConstAnn Mutable),i)], i+1) ) ([],0) der_args in
+          (ViewNode {vn with h_formula_view_name = der_vn;
+          h_formula_view_arguments = der_args ;
+          h_formula_view_annot_arg = args_annot;
+          h_formula_view_args_orig = args_orig;}, impl_svl@impl_vars)
+        with Not_found -> (hn, impl_svl)
+      end
+    | Star { h_formula_star_h1 = hf1;
+      h_formula_star_h2 = hf2;
+      h_formula_star_pos = pos} ->
+          let nhf1, impl_svl1 = hview_subst_trans impl_svl hf1 in
+          let nhf2, impl_svl2 = hview_subst_trans impl_svl1 hf2 in
+          (Star {h_formula_star_h1 = nhf1;
+          h_formula_star_h2 = nhf2;
+          h_formula_star_pos = pos}, impl_svl2)
+    | _ -> (hn, impl_svl)
+  in
+  (*************END**INTERNAL****************)
+  (formula_map_add_ex (hview_subst_trans)) f
+
+(*
+  is_pre = true: do NOT add quans variables/impl will be added afterward
+  is_pre = false: do add quans variables
+ *)
+let subst_views_form map_views is_pre f=
+  let pr1 = !print_formula in
+  let pr2 =  pr_pair (pr_pair pr_id !CP.print_svl) (pr_pair pr_id !CP.print_svl) in
+  Debug.no_2 "subst_views_form" (pr_list pr2) pr1 (pr_pair pr1 !CP.print_svl)
+      (fun _ _ -> subst_views_form_x map_views is_pre f) map_views f
+
+let subst_views_struc map_views cf=
+  let rec struc_formula_trans_heap_node formula_fct f=
+    let recf = struc_formula_trans_heap_node formula_fct in
+    match f with
+      | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd (recf) b.formula_case_branches}
+      | EBase b ->
+            let f1, new_impl1 = formula_fct true b.formula_struc_base in
+            let impl_vs = b.formula_struc_implicit_inst in
+            let new_impl2 = (impl_vs@new_impl1) in
+            let () =  x_tinfo_hp (add_str "new impl2" (!CP.print_svl)) new_impl2 no_pos in
+            EBase {b with
+                formula_struc_continuation = Gen.map_opt (recf) b.formula_struc_continuation;
+                formula_struc_implicit_inst = new_impl2;
+                formula_struc_base= f1;
+            }
+      | EAssume ea-> begin
+          let f1,_ = formula_fct false ea.formula_assume_simpl in
+          let ass_sf =  (recf) ea.formula_assume_struc in
+          EAssume {ea with  formula_assume_simpl =  f1;
+              formula_assume_struc =ass_sf  }
+        end
+      | EInfer b -> EInfer {b with formula_inf_continuation = (recf) b.formula_inf_continuation}
+      | EList l -> EList (Gen.map_l_snd (recf) l)
+  in
+  struc_formula_trans_heap_node (subst_views_form map_views) cf
+
+let get_closed_view prog (init_vns: string list)=
+  let rec dfs_find_closure working_vns done_vns=
+    match working_vns with
+      | [] -> done_vns
+      | vn::rest -> if List.exists (fun vn1 -> string_eq vn vn1) done_vns then
+          dfs_find_closure rest done_vns
+        else
+          let vdclr = Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls vn in
+          let dep_hviews = get_views_struc vdclr.Cast.view_formula in
+          let vns1 = Gen.BList.remove_dups_eq string_eq (List.map (fun vn -> vn.h_formula_view_name) dep_hviews) in
+          dfs_find_closure (Gen.BList.remove_dups_eq string_eq (rest@vns1)) (done_vns@[vn])
+  in
+  dfs_find_closure init_vns []
+
+let fresh_exists f0=
+  let rec recf f= match f with
+    | Base _ -> f
+    | Exists _ -> let quans, base_f = split_quantifiers f in
+      let new_quans = CP.fresh_spec_vars quans in
+      add_quantifiers new_quans (subst (List.combine quans new_quans) base_f)
+    | Or orf -> Or {orf with formula_or_f1 =  (recf orf.formula_or_f1);
+          formula_or_f2 = (recf orf.formula_or_f2)}
+  in
+  recf f0
+
+
+
+(*
+  to check whether qq can be inst by q
+
+  U3(self,q,x)*q::char_star<0,p>
+    |- U2(self,qq) * qq::char_star<0,p>
+*)
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl =
+  let find_reach_f fb sv drop_hp=
+    let lhds, lhvs, lhrels = get_hp_rel_bformula fb in
+    let lhrels1 = List.fold_left (fun acc (hp, eargs,_) ->
+        if CP.eq_spec_var hp drop_hp then
+          acc
+        else
+          acc@[(hp, List.map  CP.exp_to_sv eargs)]
+    ) [] lhrels in
+    let reach_lf = keep_data_view_hpargs_nodes prog (Base fb) lhds lhvs [sv] lhrels1 in
+    let () = Debug.tinfo_hprint (add_str  "reach_f" !print_formula) reach_lf no_pos in
+    reach_lf
+  in
+  let rec check_one_right reach_rf rsv rest_lsvl done_svl= match rest_lsvl with
+    | [] -> [], done_svl
+    | lsv::rest ->
+          let sst = [(lsv,rsv)] in
+          let lhs_b = subst_b sst lhs_b in
+          let reach_lf = find_reach_f lhs_b rsv lhp in
+          let is_homo,_ = Checkeq.checkeq_formulas (List.map CP.name_of_spec_var [root;rsv]) reach_lf reach_rf in
+          if is_homo then (sst, done_svl@rest)
+          else
+            check_one_right reach_rf rsv rest (done_svl@[lsv])
+  in
+  let sst,_ = List.fold_left (fun (acc,rest_lsvl) rsv ->
+      let reach_rf = find_reach_f rhs_b rsv rhp in
+      let sst0, rest = check_one_right reach_rf rsv rest_lsvl [] in
+      (acc@sst0,rest)
+  ) ([], lsvl) (CP.diff_svl rsvl lsvl) in
+  let () = Debug.tinfo_hprint (add_str  "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst no_pos in
+  sst
+
+let exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = !print_formula_base in
+  let pr_out = (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
+  Debug.no_7 "exam_homo_arguments" (add_str "lhs" pr3) (add_str "rhs" pr3)
+      (add_str "left pred" pr1) (add_str "right pred" pr1)
+      (add_str "root" pr1) (add_str "left args" pr2) (add_str "right args" pr2) pr_out
+      (fun _ _ _ _ _ _ _ -> exam_homo_arguments prog lhs_b rhs_b lhp rhp root rsvl lsvl)
+      lhs_b rhs_b lhp rhp root rsvl lsvl
+
+let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
+  match leargs, reargs with
+    | er::rest1,_::rest2 -> begin
+        let largs = (List.map CP.exp_to_sv rest1) in
+        let rargs = (List.map CP.exp_to_sv rest2) in
+        if List.length rargs != List.length largs then
+          (* let r = (CP.exp_to_sv er) in *)
+          (* let sst_old = exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
+          (* let () = y_binfo_hp (add_str "rhs_inst old" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst_old in *)
+          let sst_new = check_compatible_eb ~inst_rhs:true prog largs rargs lhs_b (* lhp *) rhs_b (* rhp *) in
+          let () = y_tinfo_hp (add_str "rhs_inst new" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst_new  in
+          sst_new
+        else (* List.length rargs = List.length largs *)
+          (* delay for checking exist infor in lhs *)
+          (* List.filter (fun (sv1,sv2) -> not (CP.eq_spec_var sv1 sv2)) (List.combine largs rargs) *)
+          []
+      end
+    | _ -> []
+
+let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = !print_formula_base in
+  let pr_out = (pr_list (pr_pair !CP.print_sv !CP.print_sv)) in
+  Debug.no_4 "compute_eager_inst" (add_str "lhs" pr3) (add_str "rhs" pr3)
+      (add_str "left pred" pr1) (add_str "right pred" pr1)
+       pr_out
+      (fun _ _ _ _ -> compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs)
+      lhs_b rhs_b lhp rhp
+
+(* type: I.prog_decl -> *)
+(*   (Globals.ident * VarGen.primed) list -> *)
+(*   (Globals.ident * VarGen.primed) list -> *)
+(*   IF.formula -> *)
+(*   (Globals.ident * VarGen.primed) list -> *)
+(*   IF.formula * (Globals.ident * VarGen.primed) list * *)
+(*   (Globals.ident * VarGen.primed) list *)
+(* and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula) ann_vars: *)
+(*   IF.formula* ((ident*primed)list) * ((ident*primed)list) =  *)
+  (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
+  (*returns the new formula, used variables and vars to be explicitly instantiated*)
+(* let case_normalize_renamed_formula prog (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:formula): IF.formula * CP.spec_var list * CP.spec_var list  = *)
+(*   let rec match_exp used_vars hargs pos = *)
+(*     failwith "TBI"  *)
+(*   in *)
+(*   let rec linearize_heap (used_names:(CP.spec_var list)) (f : h_formula): (CP.spec_var list) * (CP.spec_var list) * h_formula * CP.formula = *)
+(*     failwith "TBI"  *)
+(*   in *)
+(*   let rec normalize_base heap cp vp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) = *)
+
+(*   let rec helper (f:formula):formula *(CP.spec_var list) * (CP.spec_var list) = *)
+(*     match f with *)
+(*     | Or b ->  *)
+(*       let f1,l1,expl1 = (helper b.formula_or_f1) in *)
+(*       let f2,l2,expl2 = (helper b.formula_or_f2) in *)
+(*       (Or {b with formula_or_f1 = f1; formula_or_f2 = f2},l1@l2,expl1@expl2) *)
+(*     | Base b -> normalize_base  *)
+(*                      b.formula_base_heap b.formula_base_pure b.formula_base_vperm  *)
+(*                      b.formula_base_flow b.formula_base_and [] b.formula_base_pos *)
+(*     | Exists b -> normalize_base  *)
+(*                        b.formula_exists_heap b.formula_exists_pure b.formula_exists_vperm *)
+(*                        b.formula_exists_flow b.formula_exists_and b.formula_exists_qvars b.formula_exists_pos  *)
+(*   in *)
+(*   let helper f =  *)
+(*     let (f,sv1,sv2) = helper f in *)
+(*     (f,CP.remove_dups_svl sv1,CP.remove_dups_svl sv2) *)
+(*   helper f     *)
+  (* rec normalize_base heap cp vp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) = *)
+
+(* let  case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula) ann_vars: *\) *)
+
+(* and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect *)
+(*     (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) = *)
+

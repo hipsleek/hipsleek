@@ -1,0 +1,144 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star@NI z).
+
+ lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+
+ infer [U,@pure_field,@classic] 
+  //self::char_star<v,q2>*q2::WFG<p> & v!=0  |-  U(self,q)*q::char_star<0,p>.
+  //self::char_star<v,q2>*q2::WFG<p> & v!=0  |-  self::char_star<w,q3>*U3(q3,q,self)*q::char_star<0,p>.
+ // q2::WFG<p> & v!=0 & q2=q3  |-  U3(q3,q,self)*q::char_star<0,p>.
+//   q2::WFG<p> & v!=0 & q2=q3  |-  U2(q3,q)*q::char_star<0,p>.
+   q2::WFG<p> & v!=0 & q2=q3  |-  U(q3,q)*q::char_star<0,p>.
+ print residue.
+
+/*
+# str-inf/ex16d2a.slk -dre "rewrite_coercion\|coer_target"
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p> & v!=0 & q2=q3  |-  U(q3,q)*q::char_star<0,p>.
+
+# Why is coer_target needed?
+  Need to fix this to work with HRel?
+
+(==solver.ml#14066==)
+coer_target@1
+coer_target inp1 :node: q2::WFG<p>@M
+coer_target inp2 :target_rhs: q2::WFG<p>@M&q2=q3 & v!=0&{FLOW,(20,21)=__norm#E}[]
+coer_target inp3 :lhs: U(q3,q) * q::char_star<flted_34_149,p_148>@M&flted_34_149=0 & p_148=p&
+{FLOW,(20,21)=__norm#E}[]
+coer_target inp4 :rhs_eqset:[(p_148,p)]
+coer_target@1 EXIT:false
+
+# Why Rewrite cannot be applied?
+
+!!! **WARNING****solver.ml#14069:Rewrite cannot be applied : 0
+
+(==solver.ml#14363==)
+rewrite_coercion@10@9@8
+rewrite_coercion inp1 : q2::WFG<p>@M
+rewrite_coercion inp2 : emp&q2=q3 & v!=0&{FLOW,(20,21)=__norm#E}[]
+rewrite_coercion inp3 :Lemma "lem_12":  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]==> (exists flted_27_110,q: U(self,q) * q::char_star<flted_27_110,p>@M&
+flted_27_110=0&{FLOW,(20,21)=__norm#E}[])
+ head match:WFG
+ body view:U
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Simple
+ head:  self::WFG<p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists flted_27_110,q: U(self,q) * q::char_star<flted_27_110,p>@M&
+flted_27_110=0&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists p_126: self::WFG<p_126>@M&p_126=p&{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[q](exists p_119,
+   flted_27_118: U(self,q) * q::char_star<flted_27_118,p_119>@M&
+   flted_27_118=0 & p_119=p&{FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_UNSAFE
+ coercion_fold: None
+rewrite_coercion inp4 :  q2::WFG<p>@M&q2=q3 & v!=0&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [p_148; flted_34_149]
+ es_gen_impl_vars(E): [q]
+ es_infer_obj: [@leak,@pure_field]
+ es_evars: [p_148; flted_34_149]
+ es_gen_impl_vars: [q]
+ es_rhs_eqset: [p_148:p]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(UNK))
+ es_infer_vars_hp_rel: [U]
+rewrite_coercion@10 EXIT:(0, emp&{FLOW,(1,26)=__flow#E}[])
+
+--------------------------------
+
+# Why lemma scheduled twice? Maybe lemm
+
+(==context.ml#2988==)
+choose_context@1
+choose_context inp1 :LHS node: q2::WFG<p>@M
+choose_context inp2 :RHS node: U(q3,q)
+choose_context inp3 :LHS pure: q2=q3 & v!=0
+choose_context inp4 :RHS pure: flted_34_149=0 & p_148=p
+choose_context inp5 :right aliase:[(p_148,p)]
+choose_context@1 EXIT:[ Type: Root
+ LHS: q2::WFG<p>@M
+ RHS: U(q3,q)
+ lhs_rest: emp
+ rhs_rest: q::char_star<flted_34_149,p_148>@M
+ rhs_inst: [], 
+Type: MaterializedArg (self,full,[U]) coerc_defn_mater: ==> lem_12
+ LHS: q2::WFG<p>@M
+ RHS: U(q3,q)
+ lhs_rest: emp
+ rhs_rest: q::char_star<flted_34_149,p_148>@M
+ rhs_inst: []]
+
+
+(==context.ml#2732==)
+process_one_match@4@3
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::WFG<p>@M
+ RHS: U(q3,q)
+ lhs_rest: emp
+ rhs_rest: q::char_star<flted_34_149,p_148>@M
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::WFG<p>@M
+process_one_match inp3 :lhs_p: q2=q3 & v!=0
+process_one_match inp4 :rhs_node: U(q3,q)
+process_one_match inp5 :rhs_rest: q::char_star<flted_34_149,p_148>@M
+process_one_match inp6 :rhs_p: flted_34_149=0 & p_148=p
+process_one_match inp7 :([(p_148,p)],None)
+process_one_match@4 EXIT: Prio:-1
+ SEARCH =>[
+  Prio:2
+  InferFold =>;
+  Prio:1
+  (Lemma ==> lem_12) =>
+  ]
+
+*/

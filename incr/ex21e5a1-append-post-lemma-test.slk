@@ -1,0 +1,60 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred PP<p> == self::node<_,p>
+	or self::node<_, q> * q::PP<p> & q!=null 
+inv self!=null.
+
+HeapPred P(node x, node y).
+HeapPred U(node x, node y).
+
+
+lemma_unsafe self::PP<y> -> self::node<_,q>*q::lseg<y>.
+
+//infer[@classic] self::node<_,p> |- self::node<_,q>*q::lseg<y>.
+
+infer[@classic] self::node<_, q2> * q2::PP<p> & q2!=null
+          |- self::node<_,q>*q::lseg<p>.
+
+/*
+# ex21e5a.ss
+
+lemma_test self::PP<y> -> self::node<_,q>*q::lseg<y>.
+
+# need to schedule guided lemma .. beyond data..
+
+(==context.ml#2851==)
+process_one_match@2
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::PP<p>@M
+ RHS: q::lseg<p_123>@M
+ lhs_rest: emp
+ rhs_rest: emp
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::PP<p>@M
+process_one_match inp3 :lhs_p: q2!=null & Anon_19=Anon_18 & q=q2 & Anon_19=Anon_18 & q=q2
+process_one_match inp4 :rhs_node: q::lseg<p_123>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: p_123=p
+process_one_match inp7 :([(p_123,p)],None)
+process_one_match@2 EXIT: Prio:1
+ NothingToDo => cond action is empty
+
+Entail (1) : Fail.(may) cause:Nothing_to_do?cond action is empty
+
+
+*/

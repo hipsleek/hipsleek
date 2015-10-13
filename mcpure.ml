@@ -2141,6 +2141,8 @@ type mix_formula =
   | MemoF of Mcpure_D.memo_pure
   | OnePF of Cpure.formula 
 
+let is_sat_raw = ref(fun (c:mix_formula) -> true)
+
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
 let print_mix_formula  = print_mix_f
 
@@ -2233,6 +2235,10 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
     MemoF (memoise_add_pure_N f2_m f1_f)
   | MemoF f1_m, OnePF f2_f ->
     MemoF (memoise_add_pure_N f1_m f2_f)
+
+let merge_mix_w_pure mf pf = match mf with
+  | MemoF f1 -> MemoF (memoise_add_pure_N f1 pf) 
+  | OnePF f1 -> OnePF (mkAnd f1 pf no_pos) 
 
 (* let merge_mems f1 f2 slice_dup = match (f1,f2) with *)
 (*   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup) *)
@@ -2554,7 +2560,8 @@ let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isC
 (*   in *)
 (*   helper [v] vv *)
 
-let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = find_closure v (ptr_equations_with_null f)
+let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = 
+  find_closure v (ptr_equations_with_null f)
 
 let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list = 
   Debug.no_2 "find_closure_mix_formula" 
@@ -2562,6 +2569,13 @@ let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list =
     !print_mix_f
     !print_sv_l_f
     find_closure_mix_formula_x v f
+
+let find_all_closures_mix_formula (f: mix_formula) : (spec_var list) list = 
+  find_all_closures (ptr_equations_with_null f)
+
+let find_all_closures_mix_formula (f: mix_formula) : (spec_var list) list = 
+  Debug.no_1 "find_all_closures_mix_formula" !print_mix_f (pr_list !print_sv_l_f)
+    find_all_closures_mix_formula f
 
 (*let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = *)
 (*  let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in*)
@@ -2966,3 +2980,6 @@ let partition_mix_formula (mf: mix_formula) ff : mix_formula * mix_formula =
     let mf = memoise_add_pure_N_m (mkMTrue_no_mix ()) f in
     let fmf, omf = List.partition (fun m -> ff m) mf in
     OnePF (pure_of_mix (MemoF fmf)), OnePF (pure_of_mix (MemoF omf))
+
+let update_pure_of_mix f (mf: mix_formula) =
+  transform_mix_formula (nonef, nonef, f, somef, somef) mf

@@ -1,0 +1,119 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//(1)
+infer_exact [H] H(p) & p=null |- true.
+print residue.
+/*
+# ex10b3.slk (1)
+
+ ### ante =  H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   htrue&{FLOW,(20,21)=__norm#E}[]
+
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> emp&true]
+
+
+(==solver.ml#7655==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(true, es_formula: 
+ emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H])
+
+*/
+
+
+//(2)
+infer [H] H(p) & p=null |- true.
+print residue.
+// expect H(p) as residue
+// expect_infer Valid R{H(p) & p=null}.
+// <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+// OK
+
+//(3)
+infer [] H(p) & p=null |- true.
+print residue.
+// expect H(p) as residue
+//expect_infer Valid R{H(p) & p=null}.
+// <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+//4
+infer [@leak] H(p) & p=null |- true.
+print residue.
+// expect H(p) as residue
+//expect_infer Valid R{emp}. // L2: H2 was not selected, thus hp inference was not trigered. res = H(p) & p=null
+
+//5
+infer [@leak,H] H(p) & p=null |- true.
+print residue.
+// expect H(p) as residue
+expect_infer Valid R{emp}.
+
+//6
+infer [H] H(p) & p=null |- emp.
+print residue.
+
+//7
+infer [] H(p) & p=null |- emp.
+print residue.
+
+//8
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
+
+//9
+infer_exact [] H(p) & p=null |- emp.
+print residue.
+//expect Fail
+
+//10
+infer [@leak,H] H(p) & p=null |- emp.
+print residue.
+
+//11
+infer [@leak] H(p) & p=null |- emp.
+print residue.
+//expect Fail
+
+/*
+# ex10b3.slk (4)
+
+INPUT 0: [][H] 
+ ### ante =  H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   htrue&{FLOW,(20,21)=__norm#E}[]
+
+GOT
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+# expects 
+  emp & p=null
+*/
+
+/*
+# ex10b2.alk
+
+# Why did 3.1 fail?
+
+Residue:
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+
+!!! **sleekengine.ml#1741:str:
+Expect_Infer 3.1: 
+!!! **sleekengine.ml#1742:res_f_str:( H(p)&p=null&{FLOW,(20,21)=__norm#E}[])
+Expect_Infer 3.1: Expected Valid but got Fail ( H(p)&p=null&{FLOW,(20,21)=__norm#E}[])
+
+*/
+

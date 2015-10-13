@@ -4,6 +4,8 @@ open VarGen
 
 let debug_on = ref false
 let devel_debug_on = ref false
+let devel_debug_steps = ref false
+let devel_debug_sleek_proof = ref (-1)
 let debug_print = ref false (* to support more printing for debugging *)
 let devel_debug_print_orig_conseq = ref false
 let debug_pattern_on = ref false
@@ -247,6 +249,19 @@ let info_zprint m (pos:loc) =
 (* let trace_zprint msg (pos:loc) =  *)
 (* 	lazy_print (fun () -> " ") msg *)
 
+let y_binfo_pprint msg = binfo_pprint msg no_pos
+let y_binfo_zprint msg = binfo_zprint msg no_pos
+let y_binfo_hprint pr msg = binfo_hprint pr msg no_pos
+
+let y_dinfo_pprint msg = dinfo_pprint msg no_pos
+let y_dinfo_zprint msg = dinfo_zprint msg no_pos
+let y_dinfo_hprint pr msg = dinfo_hprint pr msg no_pos
+
+let y_tinfo_pprint msg = tinfo_pprint msg no_pos
+let y_tinfo_zprint msg = tinfo_zprint msg no_pos
+let y_tinfo_hprint pr msg = tinfo_hprint pr msg no_pos
+
+let y_winfo_pprint msg = winfo_pprint msg no_pos
 
 let print_info prefix str (pos:loc) = 
   let tmp = "\n" ^ prefix ^ ":" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^": " ^ str ^ "\n" in
@@ -485,7 +500,7 @@ struct
     let prefix = "%%%" in
     let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
     let summarized_stack stk =
-      let new_stk = new Gen.stack_pr pr_cnt (==) in
+      let new_stk = new Gen.stack_pr "debug-calls" pr_cnt (==) in
       match (List.rev stk#get_stk) with
         | [] -> new_stk
         | hd::tl ->
@@ -506,7 +521,7 @@ struct
       val overflow = prefix^"****************************************"
       val mutable lastline = "\n"
       val mutable rgx = None
-      val stk = new Gen.stack_pr pr_id (==)
+      val stk = new Gen.stack_pr "debug-calls(2)" pr_id (==)
       val mutable offset = -1
       val mutable last_matched_len = max_int
       method dump =
@@ -677,7 +692,10 @@ struct
     let lc = (Gen.StackTrace.ctr # get_last_call) in
     let () = debug_calls # add_id lc in
     let h = pre_str^"\n"^h in
-    (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " (pick_front 80 args))^"\n"));
+    let arg = if loop_d || !VarGen.trace_loop_all 
+      then String.concat "  " (pick_front 80 args) else "" in
+    (if loop_d || !VarGen.trace_loop 
+     then print_string ("\n"^h^" ENTRY :"^arg^"\n"));
     flush stdout;
     let r = (try
                pop_aft_apply_with_exc s f e

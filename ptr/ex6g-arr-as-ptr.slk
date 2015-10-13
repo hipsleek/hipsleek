@@ -1,0 +1,33 @@
+/* without virtual ptrs */
+
+data arr_int {
+  int val;
+}.
+
+pred arr_seg<p,n> == self::arr_int<_>*q::arr_seg<p,n-1> & q=self+1
+     or self=p & n=0
+  inv n>=0 & p=self+n.
+
+  //checkentail x::arr_seg<p,n> & n>0 |- p>x. 
+
+checkentail x=p |- x::arr_seg<p,n>.
+print residue.
+
+  //checkentail x=p+1 |- x::arr_seg<p,n>.
+print residue.
+
+checkentail x!=p |- x::arr_seg<p,n>.
+print residue.
+
+checkentail n=0 |- x::arr_seg<p,n>.
+print residue.
+
+/*
+checkentail x::arr_int<_> |- x::arr_seg<p,n>.
+print residue.
+
+checkentail x::arr_int<_> & p=x+1 |- x::arr_seg<p,1>.
+print residue.
+*/
+checkentail x::arr_int<_> * q::arr_seg<p,n-1> & q=x+1 & n>0 |- x::arr_seg<p,n>.
+print residue.

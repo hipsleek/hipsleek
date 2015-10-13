@@ -249,13 +249,22 @@ let checkeq_pure qvars1 qvars2 p1 p2=
   Debug.no_2 "checkeq_pure" pr1 pr1 string_of_bool
     (fun _ _ -> checkeq_pure_x qvars1 qvars2 p1 p2) p1 p2
 
-let rec check_relaxeq_formula_x args f10 f20=
+let rec check_eq_formula args is_strict f10 f20=
+  let rec is_cyc_subst sst=
+    match sst with
+      | [] -> false
+      | [x] -> false
+      | (sv1,sv2)::rest -> if List.exists (fun (sv3,sv4) ->
+            CP.eq_spec_var sv1 sv4 && CP.eq_spec_var sv2 sv3
+        ) rest then true else
+          is_cyc_subst rest
+  in
   (********REMOVE dup branches**********)
   let fs11 = Cformula.list_of_disjs f10 in
-  let fs12 = Gen.BList.remove_dups_eq (check_relaxeq_formula args) fs11 in
+  let fs12 = Gen.BList.remove_dups_eq (check_eq_formula args is_strict) fs11 in
   let f1 = Cformula.disj_of_list fs12 (Cformula.pos_of_formula f10) in
   let fs21 = Cformula.list_of_disjs f20 in
-  let fs22 = Gen.BList.remove_dups_eq (check_relaxeq_formula_x args) fs21 in
+  let fs22 = Gen.BList.remove_dups_eq (check_eq_formula args is_strict) fs21 in
   let f2 = Cformula.disj_of_list fs22 (Cformula.pos_of_formula f20) in
   (********END********)
   try
@@ -266,15 +275,15 @@ let rec check_relaxeq_formula_x args f10 f20=
     Debug.ninfo_zprint  (lazy  ("   mf1: " ^(Cprinter.string_of_mix_formula mf1))) no_pos;
     Debug.ninfo_zprint  (lazy  ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2))) no_pos;
     (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
-    let r1,ss = check_stricteq_h_fomula false hf1 hf2 in
-    if r1 then
+    let r1,ss = check_stricteq_h_fomula is_strict hf1 hf2 in
+    if r1 && not (is_cyc_subst ss) then
       let r2 = if !Globals.pred_elim_dangling then
           List.for_all (fun ((CP.SpecVar (_,id1,_)), (CP.SpecVar (_,id2,_))) ->
               try
                 let pre1 = String.sub id1 0 5 in
                 let pre2 = String.sub id2 0 5 in
-                let b1 = string_compare pre1 dang_hp_default_prefix_name in
-                let b2 = string_compare pre2 dang_hp_default_prefix_name in
+                let b1 = string_eq pre1 dang_hp_default_prefix_name in
+                let b2 = string_eq pre2 dang_hp_default_prefix_name in
                 (b1 && b2) || (not b1 && not b2)
               with _ -> true
             ) ss
@@ -312,10 +321,16 @@ let rec check_relaxeq_formula_x args f10 f20=
       false
   with _ -> false
 
+and check_relaxeq_formula_x args f1 f2=
+  check_eq_formula args false f1 f2
+
 and check_relaxeq_formula args f1 f2=
   let pr1 = Cprinter.string_of_formula in
   Debug.no_2 "check_relaxeq_formula" pr1 pr1 string_of_bool
     (fun _ _ -> check_relaxeq_formula_x args f1 f2) f1 f2
+
+and check_stricteq_formula args f1 f2=
+  check_eq_formula args true f1 f2
 
 (*exactly eq*)
 let checkeq_pair_formula (f11,f12) (f21,f22)=

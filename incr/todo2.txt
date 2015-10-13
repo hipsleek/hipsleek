@@ -1,0 +1,463 @@
+# ex12c.slk
+
+lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p> 
+   -> self::lseg<n, p> & n = a + b & a,b >=0.
+
+lemma_safe "V21" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+# V21 is mirror of V22
+  Why only V22 fails by itself?
+
+Entailing lemma V22: Fail. (cex)(may) cause: AndR[ (flted_13_451+1)!=0 & exists(n_456:n_456!=0 & flted_13_451+1=n_456) & 
+ (((1<=flted_13_451 & r_453!=null) | (r_454=r_453 & flted_13_451=0))) & 
+ (((1<=b & r_454!=null) | (p=r_454 & b=0))) & exists(p_455:r_454=p_455) |-  r_454=p. LOCS:[13;1;0;33];  exists(p_455:r_454=p_455) & 
+ (((1<=flted_13_451 & r_453!=null) | (r_454=r_453 & flted_13_451=0))) & 
+ (((1<=b & r_454!=null) | (p=r_454 & b=0))) & a!=0 & flted_13_451+1=a & 
+ exists(n_456:n_456!=0 & flted_13_451+1=n_456) |-  1+flted_13_451=a+b. LOCS:[1;0;13;33] (may-bug).]
+=========================================================================
+# ex12d.slk --assert-no-glob-vars
+
+lemma_safe "V22" self::lseg<a, r> * r::lseg<b, p> 
+   -> self::lseg<n, p> & n = a + b & a,b >=0.
+
+!!! WARNING logtime exception:0.000242error at: 
+SLEEK FAILURE (END)
+
+# can we print more better messages ..
+
+!!! **solver.ml#9571:impl_vars:[]
+!!! **solver.ml#9572:glob_vs:[b_113,p_114]
+!!! **solver.ml#9573:evars:[]
+!!! **solver.ml#9574:ivars:[]
+!!! WARNING logtime exception:0.000268
+Exception processed: Failure("non-empty global vars to_conseq(glob):[(b_113,b_87),(p_114,p_88)]")
+error at: 
+SLEEK FAILURE (END)
+=========================================================================
+# ex21b1a.slk
+
+infer [U,@classic] self::node<_,null> |- self::node<_,q>*U(q,y).
+print residue.
+
+# can we use a diff message than UnmatchedRHSData?
+
+Residue:
+ <1>emp&Anon_17=Anon_16 & q=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&q=null --> U(q,y)&true]
+[[ Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
+=========================================================================
+# ex21b3c.slk --old-search-action
+
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:1
+  (Lemma ==> lem_16) =>
+    LHS: self::app2<y>@M
+    RHS: U1(self);
+  Prio:2
+  InferFold =>
+    LHS: self::app2<y>@M
+    RHS: U1(self)
+  ]
+
+# How come no searching? There is but seems Only one answer
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [self::app2<y>@M&true --> U1(self)&true]
+[[ SEARCH ==>  InferFold  ==>  COND ==>  Match(self,self)]]
+=========================================================================
+# ex21d4.slk
+
+# should print without --old-pred-synthesis
+
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U3(self_lem_19,q_156)&
+                   true |#| q_156::node<Anon_157,flted_32_155>@M&
+                   flted_32_155=null --> emp&self_lem_19=q_156]
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(q_156,self_lem_19)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_181(q_148,q_171@NI,self_lem_19@NI)&true --> emp& q_148!=null; 
+                 HP_181(q_148,q_171@NI,self_lem_19@NI)& true --> U3(q_148,q_171)&true; 
+                 U3(self_lem_19,q_171)&
+                  true |#| q_171::node<Anon_172,flted_32_170>@M&
+                  flted_32_170=null --> self_lem_19::node<Anon_179,q_180>@M * 
+                                        HP_181(q_180,q_171@NI,self_lem_19@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold  ==>  COND ==>  (Lemma <== lem_19(q_180,q_148)) ==>  InferUnfold  ==>  Match(q_171,q_187)]]
+==========================================
+
+  HP_181(q_148,q_171@NI,self_lem_19@NI)&true --> emp& q_148!=null; 
+  HP_181(q_148,q_171@NI,self_lem_19@NI)& true --> U3(q_148,q_171)&true; 
+
+  HP_181(q_148,q_171@NI,self_lem_19@NI) --> U3(q_148,q_171)&true &q_148!=null
+
+  HP_181(q_148,q_171@NI,self_lem_19@NI) == U3(q_148,q_171)&true &q_148!=null
+
+========================
+
+ U3(self_lem_19,q_156)& true |#| q_156::node<Anon_157,flted_32_155>@M& flted_32_155=null 
+          --> emp&self_lem_19=q_156]
+ // drop guard
+ U3(self_lem_19,q_156) --> emp&self_lem_19=q_156]
+
+ U3(self_lem_19,q_171)& true |#| q_171::node<Anon_172,flted_32_170>@M& flted_32_170=null 
+     --> self_lem_19::node<Anon_179,q_180>@M *  HP_181(q_180,q_171@NI,self_lem_19@NI)&
+ // unfold HP
+ U3(self_lem_19,q_171)& true |#| q_171::node<Anon_172,flted_32_170>@M& flted_32_170=null 
+     --> self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+ // drop guard
+ U3(self_lem_19,q_171)& true 
+     --> self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+
+ Combine
+ =======
+ U3(self_lem_19,q_156) --> emp&self_lem_19=q_156]
+ \/  U3(self_lem_19,q_171)& true 
+     --> self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+ // combine
+ U3(self_lem_19,q_156) --> emp&self_lem_19=q_156]
+   or self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+ // form defn
+ U3(self_lem_19,q_156) == emp&self_lem_19=q_156]
+   or self_lem_19::node<Anon_179,q_180>@M *  U3(q_148,q_171)&true &q_148!=null
+
+=========================================================================
+# ex21d1a.slk (Loc to fix) (OK)
+
+lemma_unsafe
+  self::app3<> -> self::node<_,q>*U(q).
+
+infer [U1,classic]
+  self::app3<> & q2!=null 
+   |- U1(self).
+
+# infer_fold 1
+# lemma ==>
+
+Need to schedule this inside:
+     process_one_match_mater_unk_w_view [] right_preds vl_name h_name m_res ms alternative
+     (* TODO : if data_node for view, schedule Seq_action [infer_fold 1; lemma] *)
+
+--=========================================================================
+# ex21f.ss
+
+ requires x::ll<> & x!=null
+  ensures x::node<_,q>*q::lseg<y>;
+  requires x::node<_,q>*q::ll<> 
+  ensures  x::node<_,q2>*q2::lseg<y>;
+
+# What is this warning for?
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( v_node_31_1657'::node<Anon_1782,q>@M, q::lseg<y_1781>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( v_node_31_1657'::node<Anon_1782,q>@M, q::lseg<y_1781>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( v_node_31_1657'::node<Anon_1782,q>@M, q::lseg<y_1781>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( q::node<Anon_1782,q>@M, q::lseg<y'>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( q::node<Anon_1782,q>@M, q::lseg<y'>@M)
+=========================================================================
+# ex21d1b2.slk (OK)
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+# Why is existential not working properly?
+
+Entail (1) : Fail.(may) cause:Nothing_to_do?No common parameters :  q_137::app3<>@M vs  U(q_150)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: No common parameters :  q_137::app3<>@M vs  U(q_150)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Match(self_lem_19,self_lem_19) ==>  NothingToDoNo common parameters :  q_137::app3<>@M vs  U(q_150)]]
+ CEX:false
+=========================================================================
+# ex21d1b2b.slk (OK)
+
+infer [U,@classic]
+self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)).
+
+Did smart fold fail here due to presence of 
+ here?
+
+ <1>emp&q_137!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q_137::app3<>@M&q_137!=null --> U(q_137)&true; 
+                  q_137::node<Anon_76,q_77>@M * GP_78(q_77,q_137@NI)&
+                   q_137!=null --> U(q_137)&true]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  InferFold 0 ==>  COND ==>  Match(q_137,q_137)]]
+=========================================================================
+# ex21d1b2e.slk
+
+# inferHP.ml
+
+  let rhs_inst = r.Context.match_res_compatible in
+  (* WN:TODO: need to improve res_compatible so that it really indicate comparable ptrs *)
+  (* it seems mostly empty for now *)
+  (* see ex21d1b2e *)
+
+# compatibility seems to give no info..
+
+!!! infer_unfold:rhs_inst:[]
+!!! fvp:[r,y]
+!!! rargs:[y]
+(==inferHP.ml#1411==)
+do_inst@1
+do_inst inp1 :lhs_b: U3(x,r)&r=null & y!=null&{FLOW,(20,21)=__norm#E}[]
+do_inst inp2 :largs:[r]
+do_inst inp3 :rargs:[y]
+do_inst inp4 :hps:[U2]
+do_inst@1 EXIT:(false, U3(x,r)&r=null & y!=null&{FLOW,(20,21)=__norm#E}[])
+=========================================================================
+# ex21d5.slk
+
+lemma_infer_pred [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+# error from new-pred-synthesis
+
+  [U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147); 
+   q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+    q_147!=null |#|  --> U(q_147) * q_153::Dangling<>@M; 
+   emp&flted_22_139=null |#|  --> U(flted_22_139)]
+!!! **syn.ml#440:>>>>> Step 2: Unfolding <<<<<
+ --error:  at:
+=========================================================================
+# ex21d2.slk (FIXED by Loc)
+
+lemma_infer [U,classic]
+  self::app3<> <- self::node<_,q>*U(q).
+print residue.
+
+# Result is too weak. Failure due to lack of case or
+  insufficient guided unfold lemma?
+
+ Temp Lemma(s) inferred is valid in current context.
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(q_135)&true --> q_135::app3<>@M&true; 
+                  U(q_143)&true --> emp&q_143=null]
+[[ Match(self_lem_19,self_lem_19)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [U(q_135)&true --> q_135::app3<>@M&true; 
+                 U(q_143)&true --> emp&q_143=null]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  InferUnfold ]]
+=========================================================================
+# ex21d3.slk (Muoi : Can check if this is correct?)
+
+lemma_infer [U2,classic]
+  self::app3<> -> U2(self,q) * q::node<_,null>.
+
+Temp Lemma(s) inferred is valid in current context.
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [emp&self_lem_17=q_112 --> U2(self_lem_17,q_112)&true; 
+                  U2(q_128,q_131)&
+                   q_128!=null |#| q_131::node<Anon_140,flted_29_138>@M&
+                   flted_29_138=null --> GP_133(q_128,q_131,self_lem_17@NI)&
+                   true; 
+                  self_lem_17::node<Anon_127,q_128>@M * 
+                  GP_133(q_128,q_131,self_lem_17@NI)&
+                   q_128!=null --> U2(self_lem_17,q_131)&true]
+[[ InferFold 0 ==>  COND ==>  Match(self_lem_17,self_lem_17) ==>  COND ==>  (Lemma ==> lem_17(q_128,q_128)) ==> (left: lem_17) ==>  InferUnfold  ==>  Match(q_139,q_131) ==> ||OR|| ==>  SEARCH ==>  BaseCaseFold ==>  Match(self_lem_17,q_112)]]
+=========================================================================
+# ex21d4.slk (Chanh..)
+
+# Chanh to work on pred-sythesis
+
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U3(self_lem_19,q_156)&
+                   true |#| q_156::node<Anon_157,flted_32_155>@M&
+                   flted_32_155=null --> emp&self_lem_19=q_156]
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(q_156,self_lem_19)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_181(q_148,q_171@NI,self_lem_19@NI)&true --> emp& q_148!=null; 
+                 HP_181(q_148,q_171@NI,self_lem_19@NI)& true --> U3(q_148,q_171)&true; 
+                 U3(self_lem_19,q_171)&
+                  true |#| q_171::node<Anon_172,flted_32_170>@M&
+                  flted_32_170=null --> self_lem_19::node<Anon_179,q_180>@M * 
+                                        HP_181(q_180,q_171@NI,self_lem_19@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold  ==>  COND ==>  (Lemma <== lem_19(q_180,q_148)) ==>  InferUnfold  ==>  Match(q_171,q_187)]]
+=========================================================================
+# ex21p2a1.slk
+
+lemma_test self::P<p,x> <-> self::lseg<p> 
+   & (self=p & x=null | self!=null & self=x)
+.
+
+# is INV precise? fail to prove in other direction.
+  incomplete prehaps?
+
+Entailing lemma lem_16: Fail. Details below:
+         "==>" implication: : Valid.
+         "<==" implication: : Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_lem_16_left_right::P<p_237,x_238>@M(must),
+ ((q_243!=null | p=q_243)) & 
+ (((q_243=p & Anon_248=null) | (q_243!=null & q_243=Anon_248))) & 
+ ((q_243=p | q_243!=null)) & self_lem_16_left_right!=null & 
+ (((self_lem_16_left_right=p & x=null) | 
+   (self_lem_16_left_right!=null & self_lem_16_left_right=x))) |-  self_lem_16_left_right=x. LOCS:[1;0;18;34;33] (may-bug)
+
+=========================================================================
+# ex21e5b.slk (FIXED)
+
+lemma_test self::PP<y> <- self::node<_,q>*q::lseg<y>.
+
+# Why is there an exception below?
+
+!!! WARNING logtime exception:8.3e-05
+!!! WARNING logtime exception:0.000541exception in lemma "lem_17" check
+
+Entailing lemma lem_17: Fail. (cex)(must) cause: exception in lemma proving
+
+Failed to proved for lem_17:==> (invalid lemma encountered).
+=========================================================================
+# ex21e5a1.ss (FIXED with coercion_body_pred_list)
+
+lemma_test self::PP<y> -> self::node<_,q>*q::lseg<y>.
+
+# need to schedule guided lemma .. beyond data..
+
+(==context.ml#2851==)
+process_one_match@2
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q2::PP<p>@M
+ RHS: q::lseg<p_123>@M
+ lhs_rest: emp
+ rhs_rest: emp
+ rhs_inst: []
+process_one_match inp2 :lhs_h: q2::PP<p>@M
+process_one_match inp3 :lhs_p: q2!=null & Anon_19=Anon_18 & q=q2 & Anon_19=Anon_18 & q=q2
+process_one_match inp4 :rhs_node: q::lseg<p_123>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: p_123=p
+process_one_match inp7 :([(p_123,p)],None)
+process_one_match@2 EXIT: Prio:1
+ NothingToDo => cond action is empty
+
+Entail (1) : Fail.(may) cause:Nothing_to_do?cond action is empty
+=========================================================================
+# ex21a2.slk (SOLVED with case-spec - see ex21a2c.slk)
+
+lemma_test "L6" self::PP0<> <- self::ll<> & self!=null.
+
+# extra unfolds needed when false detected on branches..
+
+Entailing lemma lem_16: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (cex)(may) cause: UnionR[ (q_149!=null | q_149=null) |-  q_149=null. LOCS:[1;0;17] (may-bug),base case unfold failed]
+
+# ex21a2.ss
+
+lemma_test "L7" self::PP2<> <-> self::ll<> & self!=null.
+
+Entailing lemma L7: Valid.
+
+ Temp Lemma(s) proved is valid in current context.
+=========================================================================
+# ex20c.slk 
+
+let extr_exists_hprel ra = 
+
+ Temp Lemma(s) proved is valid in c
+# existential vars in hprel to be eliminated
+
+!!! **cformula.ml#19630:XXX ex_guard_vars to eliminate:[]
+!!! **cformula.ml#19629:XXX ex_lhs_vars to eliminate:[res,y',x']
+!!! **cformula.ml#19630:XXX ex_guard_vars to eliminate:[]
+!!! **cformula.ml#19629:XXX ex_lhs_vars to eliminate:[]
+!!! **cformula.ml#19630:XXX ex_guard_vars to eliminate:[]
+!!! **cformula.ml#19629:XXX ex_lhs_vars to eliminate:[res,y',x']
+=========================================================================
+# ex21d2a.slk (FIXED by Loc)
+
+lemma_infer [U,classic]
+  self::PP2<> <- self::node<_,q>*U(q).
+print residue.
+
+pred PP2<> == 
+       [] self::node<_,q> 
+          case {q=null -> [] emp;
+              q!=null -> [] q::PP2<>;
+           } 
+inv self!=null.
+
+# Used case-spec for better completeness but met with a runtime
+  bug:
+
+ERROR: at _0:0_0:0
+Message: combine_struc_base unexpected continuations
+
+Exception processed: Failure("combine_struc_base unexpected continuations")
+error at: 
+SLEEK FAILURE (END)
+=========================================================================
+# ex21d2.slk 
+
+lemma_infer [U,classic]
+  self::app3<> <- self::node<_,q>*U(q).
+print residue.
+
+# Result a bit complex 
+# Why is <1> [[ Match(self_lem_17,self_lem_17)]] trace is so short?
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_110(q_109,q_105@NI)&true --> U(q_109)&true; 
+                  U(q_105)&
+                   true --> q_105::node<Anon_108,q_109>@M * 
+                            HP_110(q_109,q_105@NI)&
+                   true; 
+                  U(q_101)&true --> emp&q_101=null]
+[[ Match(self_lem_17,self_lem_17)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_110(q_109,q_105@NI)&true --> emp&q_105!=null; 
+                 HP_110(q_109,q_105@NI)&true --> U(q_109)&true; 
+                 U(q_105)&
+                  true --> q_105::node<Anon_108,q_109>@M * 
+                           HP_110(q_109,q_105@NI)&
+                  true; 
+                 U(q_101)&true --> emp&q_101=null]
+[[ Match(self_lem_17,self_lem_17) ==>  COND ==>  (Lemma <== lem_171 :(q_105,q_93)) ==>  Match(q_105,q_93) ==>  InferUnfold ]]
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================

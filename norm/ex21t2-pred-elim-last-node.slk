@@ -1,0 +1,74 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+/*
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p 
+	or self::node<v, q> * q::lseg<p> & v!=0
+  inv true.
+*/
+
+HeapPred U(node x, node y).
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+lemma_infer [U,@pure_field] 
+ self::app3<> -> U(self,p)*p::node<0,null>.
+print residue.
+
+shape_derive_view[U].
+
+
+/*
+# ex21t2 --trace-exc
+
+lemma_infer [U,@pure_field] 
+ self::app3<> -> U(self,p)*p::node<0,null>.
+print residue.
+
+shape_derive_view[U].
+
+Exception(try_unify_data_type_args):Not_found
+
+Last Proving Location: ex21t2-pred-elim-last-node.slk_23:4_23:49
+
+ERROR: at _0:0_0:0
+Message: GP_105 is neither 2 a data nor view name
+Exception(gather_type_info_heap):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_struc_f):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_I2C_struc_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_view):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_views):Failure("GP_105 is neither 2 a data nor view name")
+Exception(process_selective_iview_decls):Failure("GP_105 is neither 2 a data nor view name")
+Exception(norm_derived_views):Failure("GP_105 is neither 2 a data nor view name")
+Exception(Syn:trans_hprel_to_view):Failure("GP_105 is neither 2 a data nor view name")
+Exception(Syn:derive_view):Failure("GP_105 is neither 2 a data nor view name")
+
+Exception processed: Failure("GP_105 is neither 2 a data nor view name")
+error at: 
+SLEEK FAILURE (END)
+
+
+---------------------------------
+
+pred_elim_tl_node [*].
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+# need to check <-> holds
+  need to use @pure_field for lemma_inference
+
+*/

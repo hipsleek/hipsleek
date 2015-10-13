@@ -1,0 +1,59 @@
+/* with virtual ptrs */
+
+
+data arr_int {
+  int val;
+  arr_int next; /* this is virtual link */
+}  inv self+1=next & next!=null
+.
+
+/*
+checkentail x::arr_int<_,_> |- x!=null.
+expect Valid.
+
+checkentail x::arr_int<_,_> |- x=null.
+expect Fail_Must.
+
+checkentail x::arr_int<_,p> |- x!=p.
+expect Valid.
+*/
+//Entail 3: Fail.(may) cause: x=1 |-  x!=p. LOCS:[17] (may-bug)
+//Validate 3: Expecting(3)Valid BUT got : Fail_May
+
+checkentail x::arr_int<_,p> |- x+1=p.
+expect Valid.
+//Entail 4: Fail.(may) cause: x=1 |-  x=p+1. LOCS:[20] (may-bug)
+//Validate 4: Expecting(3)Valid BUT got : Fail_May
+
+
+/*
+
+(==cvutil.ml#1534==)
+xpure_heap_symbolic_i@2@1
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : x::arr_int<Anon_12,p>@M
+xpure_heap_symbolic_i@2 EXIT:( x!=null,[x],true)
+
+(==astsimp.ml#7288==)
+xpure_heap_symbolic#999@1
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::arr_int<Anon_12,p>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@1 EXIT: x!=null#[x]# [[x]]true
+
+(==cvutil.ml#1735==)
+xpure_heap_mem_enum#6@4@3
+xpure_heap_mem_enum#6 inp1 : x::arr_int<Anon_12,p>@M
+xpure_heap_mem_enum#6 inp2 : true
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@4 EXIT: x=1 #  [[x]]
+==> x!=null & p=x+1
+
+(==solver.ml#2794==)
+xpure_heap#1@3
+xpure_heap#1 inp1 : x::arr_int<Anon_12,p>@M
+xpure_heap#1 inp2 : true
+xpure_heap#1 inp3 :1
+xpure_heap#1@3 EXIT:( x=1,[], [])#true
+
+*/

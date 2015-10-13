@@ -38,6 +38,9 @@ let isLend = CP.isLend
 let isImm = CP.isImm 
 let isMutable = CP.isMutable
 
+let defCImm = ref (CP.ConstAnn Mutable)
+let defIImm = ref (Ipure.ConstAnn Mutable)
+
 let isAccsList (al : CP.ann list) : bool = List.for_all isAccs al
 let isMutList (al : CP.ann list) : bool = List.for_all isMutable al
 
@@ -56,7 +59,9 @@ let split_imm_pure_lst pf =
     (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos) in
   let disj = CP.split_disjunctions_deep pf in
   let disj_part = List.map split_imm_pure_helper disj in (* split each disj in imm formula + pure formula *)
+  let () = x_binfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
   let disj_part = List.map (fun (ximm,ypure) -> (TP.simplify_tp ximm, ypure)) disj_part in (* simplify the imm formula of each disjunct *)
+  let () = x_binfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
   let disj_part = List.filter (fun (ximm,ypure) -> not (CP.is_False ximm)) disj_part in  (* remove unsat disjuncts *)
   let imms, pures = List.split disj_part in
   (imms, pures)
@@ -68,6 +73,22 @@ let split_imm_pure pf =
 let split_imm_pure pf =
   let pr = !CP.print_formula in
   Debug.no_1 "split_imm_pure" pr (pr_pair pr pr) split_imm_pure pf
+
+let imm_unify (form:CP.formula): CP.formula = 
+  let simp_immf, pure = split_imm_pure form in
+  if not (CP.is_False simp_immf) then
+    let immf = simp_immf in
+    (* let pure = CP.join_disjunctions pures in *)
+    let pr = !CP.print_formula in
+    let () = x_tinfo_hp (add_str " vp_pos:" (pr_pair (add_str "imm" pr) (add_str "pure" pr) ) ) (immf, pure) no_pos in
+    (* let pure = TP.simplify_tp pure in  *)  (* TODOIMM check if pure simplif is also mandatory? temp disabled*)
+    CP.mkAnd immf pure no_pos 
+  else form (* if we cannot strenghten the imm formula, return the initial formula *)
+
+let imm_unify (form:CP.formula): CP.formula = 
+  let pr = !CP.print_formula in
+  Debug.no_1 "imm_unify" pr pr imm_unify form
+
 
 (* if pure contains sv=AConst, then instantiate to AConst *)
 let pick_equality_instantiation sv loc pure : CP.formula option =
@@ -206,7 +227,7 @@ let pick_bounds ~upper:upper bounds var_to_be_instantiated sv_to_be_instantiated
   let pr_out = pr_pair (pr_opt pr) (pr_opt (pr_list pr)) in 
   Debug.no_1 "pick_bounds" pr1 pr_out (fun _ -> pick_bounds upper bounds var_to_be_instantiated sv_to_be_instantiated) bounds 
 
-let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
+let pick_weakest_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
   let rhs_exp = CP.Var(rhs_sv,loc) in
   let lrsubtype = lhs_rhs_rel lhs_exp rhs_exp in
   let pure_lhs = CF.get_pure lhs_f in
@@ -307,10 +328,10 @@ let pick_wekeast_instatiation_new lhs_exp rhs_sv loc lhs_f rhs_f ivars evars =
       Some (CP.join_conjunctions (lrsubtype::to_lhs_lst)), Some [] (* this is not very sound... *)
     else to_lhs, to_rhs 
 
-let pick_wekeast_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
+let pick_weakest_instatiation lhs rhs loc lhs_f rhs_f ivars evars=
   let pr2 = Cprinter.string_of_formula in
   let pr3 = pr_pair (pr_opt Cprinter.string_of_pure_formula) (pr_opt (pr_list Cprinter.string_of_pure_formula) ) in
-  Debug.no_2 "pick_wekeast_instatiation" pr2 pr2 pr3 (fun _ _ -> pick_wekeast_instatiation_new lhs rhs loc lhs_f rhs_f ivars evars) lhs_f rhs_f
+  Debug.no_2 "pick_weakest_instatiation" pr2 pr2 pr3 (fun _ _ -> pick_weakest_instatiation_new lhs rhs loc lhs_f rhs_f ivars evars) lhs_f rhs_f
 
 let get_emaps lhs_f rhs_f elhs erhs =
   match elhs, erhs with  
@@ -329,22 +350,24 @@ let post_process_subtype_answer v emap unk_fnc rec_fnc =
     ) imm_l  
 
 (* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
-let subtype_ann_pair_x  elhs erhs (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
+let subtype_ann_pair_x  elhs erhs strong_subtype (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
   let rec helper imm1 imm2 = 
     match imm1 with
     | CP.PolyAnn v1 ->
       let unk_sv () =
         match imm2 with
         | CP.PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
-        | CP.ConstAnn k2 -> 
-          (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+        | CP.ConstAnn k2 -> if strong_subtype then (false, None)
+          else (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
         | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
         | CP.TempRes (al,ar) -> (helper imm1 ar)  (* andreeac should it be Accs? *) in
       post_process_subtype_answer v1 elhs unk_sv (fun imm -> helper imm imm2 )
     | CP.ConstAnn k1 ->
       (match imm2 with
        | CP.PolyAnn v2 -> 
-         let unk_sv () =  (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos))) in
+         let unk_sv () = 
+           if strong_subtype then (true, None) 
+           else (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos))) in
          post_process_subtype_answer v2 erhs unk_sv (fun imm -> helper imm1 imm )
        | CP.ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
        | CP.TempAnn _ | CP.NoAnn -> (helper imm1 (CP.ConstAnn(Accs)))
@@ -357,26 +380,27 @@ let subtype_ann_pair_x  elhs erhs (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.
 let subtype_ann_pair 
     ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
     ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
+    ?strong_subtype:(ss=false)
     (imm1 : CP.ann) (imm2 : CP.ann) : bool * ((CP.exp * CP.exp) option) =
   let pr_imm = Cprinter.string_of_imm in
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
   let pr2 = CP.EMapSV.string_of in
   let pr_exp = CP.ArithNormalizer.string_of_exp in
   let pr_out = pr_pair string_of_bool (pr_option (pr_pair (add_str "l(subtype)" pr_exp) (add_str "r(subtype_" pr_exp)) ) in
-  Debug.no_3 "subtype_ann_pair" pr1 (add_str "emap_lhs" pr2) (add_str "emap_rhs" pr2) pr_out (fun _ _ _ -> subtype_ann_pair_x elhs erhs imm1 imm2) (imm1,imm2) elhs erhs
+  Debug.no_3 "subtype_ann_pair" pr1 (add_str "emap_lhs" pr2) (add_str "emap_rhs" pr2) pr_out (fun _ _ _ -> subtype_ann_pair_x elhs erhs ss imm1 imm2) (imm1,imm2) elhs erhs
 
 (* bool denotes possible subyping *)
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
-let subtype_ann_x (imm1 : CP.ann) (imm2 : CP.ann) : bool =
-  let (r,op) = x_add subtype_ann_pair imm1 imm2 in r
+let subtype_ann_x ?strong_subtype:(ss=false)  (imm1 : CP.ann) (imm2 : CP.ann) : bool =
+  let (r,op) = x_add (subtype_ann_pair ~strong_subtype:ss) imm1 imm2 in r
 
 (* return true if imm1 <: imm2 *)	
 (* M <: I <: L <: A*)
-let subtype_ann caller (imm1 : CP.ann) (imm2 : CP.ann) : bool = 
+let subtype_ann caller ?strong_subtype:(ss=false) (imm1 : CP.ann) (imm2 : CP.ann) : bool = 
   let pr_imm = Cprinter.string_of_imm in
   let pr1 (imm1,imm2) =  (pr_imm imm1) ^ " <: " ^ (pr_imm imm2) ^ "?" in
-  Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x imm1 imm2) (imm1,imm2)
+  Debug.no_1_num caller "subtype_ann"  pr1 string_of_bool (fun _ -> subtype_ann_x ~strong_subtype:ss imm1 imm2) (imm1,imm2)
 
 let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm2 : CP.ann): 
   bool * (CP.formula list) * (CP.formula list) * (CP.formula list) =
@@ -399,11 +423,11 @@ let subtype_ann_gen_x lhs_f rhs_f elhs erhs impl_vars evars (imm1 : CP.ann) (imm
     begin
       match r with
       | CP.Var(rhs_sv,loc) -> 
-        let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in
+        let inst, to_rhs' = x_add pick_weakest_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in
         let to_lhs = map_opt_def to_lhs (fun x -> x) inst in
         (* implicit var annotation on rhs *)
         if CP.mem rhs_sv impl_vars then 
-          (* let inst, to_rhs' = x_add pick_wekeast_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in *)
+          (* let inst, to_rhs' = x_add pick_weakest_instatiation l rhs_sv loc lhs_f rhs_f impl_vars evars in *)
           (* let to_lhs = map_opt_def to_lhs (fun x -> x) inst in *)
           let to_rhs = map_opt_def [to_rhs] (fun x ->  x) to_rhs' in
           (f, [to_lhs], to_rhs, [])
@@ -433,8 +457,12 @@ let subtype_ann_gen
 let subtype_ann_list_x 
     ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
     ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
+    ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
     impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
-  let elhs,erhs = get_emaps lhs_f rhs_f [] [] in
+  let elhs0,erhs0 = get_emaps lhs_f rhs_f [] [] in
+  let elhs = CP.EMapSV.merge_eset elhs0 elhs in
+  let erhs = CP.EMapSV.merge_eset erhs0 erhs in
   let rec helper impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) =
     match (ann1, ann2) with
     | ([], [])         -> (true, [], [], [])
@@ -452,6 +480,8 @@ let subtype_ann_list_x
 let subtype_ann_list 
     ?lhs:(lhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
     ?rhs:(rhs_f = CF.mkTrue (mkTrueFlow ()) no_pos )
+    ?emap_lhs:(elhs = CP.EMapSV.mkEmpty)
+    ?emap_rhs:(erhs = CP.EMapSV.mkEmpty)
     impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) : bool * (CP.formula  list) * (CP.formula  list) * (CP.formula  list) =
   let pr1 = !CP.print_svl in
   let pr2 = pr_list (Cprinter.string_of_imm)  in
@@ -461,23 +491,31 @@ let subtype_ann_list
   let pr_f =  Cprinter.string_of_formula in
   Debug.no_6 "subtype_ann_list" (add_str "impl" pr1) (add_str "evars" pr1) pr2 pr2
     (add_str "lhs_f" pr_f) (add_str "rhs_f" pr_f) pr3 
-    (fun _ _ _ _ _ _ -> subtype_ann_list_x ~lhs:lhs_f ~rhs:rhs_f impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) )  impl_vars evars ann1 ann2 lhs_f rhs_f
+    (fun _ _ _ _ _ _ -> subtype_ann_list_x ~lhs:lhs_f ~rhs:rhs_f ~emap_lhs:elhs ~emap_rhs:erhs impl_vars evars (ann1 : CP.ann list) (ann2 : CP.ann list) )  impl_vars evars ann1 ann2 lhs_f rhs_f
 
 
-let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
+let get_strongest_imm  (ann_lst: CP.ann list): CP.ann option = 
   let rec helper ann ann_lst = 
     match ann_lst with
-    | []   -> ann
-    | (CP.ConstAnn(Mutable)) :: t -> (CP.ConstAnn(Mutable))
+    | []   -> Some ann
+    | (CP.ConstAnn(Mutable)) :: t -> Some (CP.ConstAnn(Mutable))
     | x::t -> if subtype_ann 3 x ann then helper x t else helper ann t
-  in helper (CP.ConstAnn(Accs)) ann_lst
+  in
+  map_list_def None (fun lst -> helper (List.hd lst) (List.tl lst)) ann_lst
 
-let get_weakest_imm  (ann_lst: CP.ann list): CP.ann = 
+let get_strongest_imm  (ann_lst: CP.ann list): CP.ann option = 
+  let pr =  Cprinter.string_of_imm in
+  Debug.no_1 "get_strongest_imm" (pr_list pr) (pr_opt pr) get_strongest_imm ann_lst
+
+let get_strongest_imm  (ann_lst: CP.ann list): CP.ann = 
+  map_opt_def (CP.ConstAnn(Accs)) (fun x -> x) (get_strongest_imm ann_lst)
+
+let get_weakest_imm  ?strong_subtype:(ss = false) (ann_lst: CP.ann list)  : CP.ann = 
   let rec helper ann ann_lst = 
     match ann_lst with
     | []   -> ann
     | (CP.ConstAnn(Accs)) :: t -> (CP.ConstAnn(Accs))
-    | x::t -> if subtype_ann 4 ann x then helper x t else helper ann t
+    | x::t -> if subtype_ann 4 ~strong_subtype:ss ann x  then helper x t else helper ann t
   in helper (CP.ConstAnn(Mutable)) ann_lst
 
 let rec remove_true_rd_phase (h : h_formula) : h_formula = 
@@ -631,6 +669,9 @@ let maybe_replace_w_empty h =
   (* in new_h *)
   | _ -> h
 
+let maybe_replace_w_empty h =
+  let pr = Cprinter.string_of_h_formula in
+  Debug.no_1 "maybe_replace_w_empty" pr pr maybe_replace_w_empty h 
 
 (* let maybe_replace_w_empty h = *)
 (*   match h with *)
@@ -667,6 +708,7 @@ let rec ann_opt_to_ann_lst (ann_opt_lst: Ipure.ann option list) (default_ann: Ip
 
 let iformula_ann_to_cformula_ann (iann : Ipure.ann) : CP.ann = 
   match iann with
+  | Ipure.NoAnn -> if not (!Globals.allow_noann) then !defCImm else CP.NoAnn 
   | Ipure.ConstAnn(x) -> CP.ConstAnn(x)
   | Ipure.PolyAnn((id,p), l) -> 
     CP.PolyAnn(CP.SpecVar (AnnT, id, p))
@@ -675,7 +717,12 @@ let iformula_ann_to_cformula_ann_lst (iann_lst : Ipure.ann list) : CP.ann list =
   List.map iformula_ann_to_cformula_ann iann_lst
 
 let iformula_ann_opt_to_cformula_ann_lst (iann_lst : Ipure.ann option list) : CP.ann list = 
-  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst  (Ipure.ConstAnn(Mutable)))
+  let def_ann = if not (!Globals.allow_noann) || not(!Globals.allow_field_ann) then !defIImm else Ipure.NoAnn in
+  List.map iformula_ann_to_cformula_ann (ann_opt_to_ann_lst iann_lst def_ann)
+
+let iformula_ann_to_cformula_ann_node_level (iann : Ipure.ann) : CP.ann = 
+  (* if we are doing ifnerence at field level, translate node level NoAnn to @M *)
+  Wrapper.wrap_one_bool (Globals.allow_noann) (not(!Globals.allow_field_ann) && !Globals.allow_noann)  iformula_ann_to_cformula_ann iann
 
 (* check lending property (@L) in classic reasoning. Hole is treated like @L *)
 let rec is_classic_lending_hformula (f: h_formula) : bool =
@@ -1143,7 +1190,7 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
         			It should behave similar to the datanode...
         			*)
       (*f*)
-      ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);})
+      ViewNode({f1 with h_formula_view_imm = get_weakest_imm ~strong_subtype:true (imm::[f1.CF.h_formula_view_imm]);})
     else
       let new_node_imm = imm in
       let new_args_imm = List.fold_left (fun acc (fr,t) ->
@@ -1157,14 +1204,14 @@ and propagate_imm_h_formula_x (f : h_formula) view_name (imm : CP.ann)  (imm_p: 
       (*             | CP.ConstAnn _ -> imm *)
       (*             | _ -> f1.Cformula.h_formula_view_imm  *)
       (*         end *)
-      ViewNode({f1 with h_formula_view_imm = get_weakest_imm (imm::[f1.CF.h_formula_view_imm]);(* new_node_imm; <--- andreeac: this is not correct when field-ann is enabled, to adjust *)
+      ViewNode({f1 with h_formula_view_imm = get_weakest_imm ~strong_subtype:true (imm::[f1.CF.h_formula_view_imm]);(* new_node_imm; <--- andreeac: this is not correct when field-ann is enabled, to adjust *)
                         h_formula_view_annot_arg = CP.update_positions_for_annot_view_params new_args_imm f1.h_formula_view_annot_arg;
                })
   | DataNode f1 -> 
     (* if not(CP.is_self_spec_var f1.CF.h_formula_data_node) then f *)
     (* else *)
     let new_param_imm = List.map (fun a -> replace_imm a imm_p emap) f1.CF.h_formula_data_param_imm in
-    DataNode({f1 with h_formula_data_imm =  get_weakest_imm (imm::[f1.CF.h_formula_data_imm]);
+    DataNode({f1 with h_formula_data_imm =  get_weakest_imm ~strong_subtype:true (imm::[f1.CF.h_formula_data_imm]);
                       h_formula_data_param_imm = new_param_imm;})
 
   (* andreeac: why was below needed? *)
@@ -1230,14 +1277,16 @@ and param_ann_equals_node_ann (ann_lst : CP.ann list) (node_ann: CP.ann): bool =
 and subtract_ann_x (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =
   match ann_r with
   | CP.ConstAnn(Mutable)
+  | CP.NoAnn
   | CP.ConstAnn(Imm)     -> ((CP.ConstAnn(Accs), ann_r), [],(([],[],[]),[]))
   | CP.ConstAnn(Lend)    -> ((CP.TempAnn(ann_l), CP.ConstAnn(Accs)), [],(([],[],[]),[]))
-  | CP.TempAnn _ | CP.NoAnn
+  | CP.TempAnn _ 
   | CP.TempRes _  
   | CP.ConstAnn(Accs)    -> ((ann_l, CP.ConstAnn(Accs)), [],(([],[],[]),[]))
   | CP.PolyAnn(_)        ->
     match ann_l with
     | CP.ConstAnn(Mutable)
+    | CP.NoAnn
     | CP.ConstAnn(Imm)
     | CP.PolyAnn(_) -> 
       if norm then 
@@ -1245,6 +1294,7 @@ and subtract_ann_x (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars no
         ((res_ann, cons_ann),fv, ((to_lhs, to_rhs, to_rhs_ex),subst))
       else  ((CP.TempRes(ann_l, ann_r), ann_r), [], (([],[],[]),[]))
     (* TempRes(ann_l, ann_r) *)
+    (* better use explicit patterns below .. *)
     | _          -> ((ann_l, CP.ConstAnn(Accs)), [],(([],[],[]),[]))
 
 and subtract_ann (ann_l: CP.ann) (ann_r: CP.ann)  impl_vars expl_vars evars norm (* : ann *) =
@@ -1900,7 +1950,7 @@ let push_node_imm_to_field_imm_x (h: CF.h_formula):  CF.h_formula  * (CP.formula
 
 let push_node_imm_to_field_imm caller (h:CF.h_formula) : CF.h_formula * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
   let pr = Cprinter.string_of_h_formula in
-  let pr_out = pr_triple Cprinter.string_of_h_formula pr_none pr_none in
+  let pr_out = pr_triple Cprinter.string_of_h_formula (pr_list !CP.print_formula) pr_none in
   Debug.no_1_num caller "push_node_imm_to_field_imm" pr pr_out push_node_imm_to_field_imm_x h 
 
 let normalize_field_ann_heap_node_x (h:CF.h_formula): CF.h_formula  * (CP.formula list) * ((Globals.ident * VarGen.primed) list) =
@@ -2226,6 +2276,7 @@ let collect_imm_from_struc_iformula sf data_name =
 let add_position_to_imm_ann (a: Ipure.ann) (vp_pos: (ident * int) list) = 
   let a_pos = 
     match a with
+    | Ipure.NoAnn -> (a,0)
     | Ipure.ConstAnn _        -> (a,0)
     | Ipure.PolyAnn ((v,_),_) -> 
       let ff p = if (String.compare (fst p) v == 0) then Some (a,snd p) else None in
@@ -2263,7 +2314,10 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
   (* retrieve imm_map from I.view_decl *)
   (* let view_vars_gen = CP.sv_to_view_arg_list sv in *)
   let view_arg_lbl =  try (List.combine view_args (fst vdef.I.view_labels))
-    with  Invalid_argument _ -> failwith "Immutable.ml, split_view_args: error while combining view args with labels 1" in
+    with  Invalid_argument _ -> 
+      List.map (fun v -> (v,LO.unlabelled)) view_args 
+      (* failwith "Immutable.ml, split_view_args: error while combining view args with labels 1"  *)
+  in
   let ann_map_pos = vdef.I.view_imm_map in
   (* let () = x_binfo_hp (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in *)
   (* let () = x_binfo_hp (add_str " view_arg_lbl:" (pr_list (pr_pair pr_none pr_label))) view_arg_lbl no_pos in *)
@@ -2345,14 +2399,29 @@ let crop_incompatible_disjuncts unfolded_f dn emap =
 
   in helper unfolded_f
 
+let crop_incompatible_disjuncts unfolded_f dn emap =
+  let pr = !CF.print_formula in
+  let pr1 = CP.EMapSV.string_of in
+  Debug.no_2 "crop_incompatible_disjuncts" pr pr1 (pr_opt pr) (fun _ _ -> crop_incompatible_disjuncts unfolded_f dn emap) unfolded_f emap
+
 let unfold_and_norm vn vh dn emap unfold_fun qvars emap =
   let v =  vn.h_formula_view_node in
   let aset = v::(CP.EMapSV.find_equiv_all v emap) in           
   let uf = 0 in               (* is 0 ok or can it cause infinite unroll? *)
-  let unfolded_f = unfold_fun vh aset v uf in
-  let ret_f = push_exists qvars unfolded_f in
-  let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in
-  ret_f
+  let unfolded_f = unfold_fun vh v uf in
+  (* let ret_f = push_exists qvars unfolded_f in *)
+  (* let ret_f = crop_incompatible_disjuncts unfolded_f dn emap in *)
+  Some unfolded_f (* ret_f *)
+
+(*  @imm1=max(imm2,imm3) *)
+let max_guard emap imm1 imm2 imm3 =
+  let pure_max = CP.mkPure (CP.mkEqMax (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) (CP.imm_to_exp imm3 no_pos) no_pos) in
+  Immutils.norm_eqmax emap imm1 imm2 imm3 pure_max
+
+(*  @imm1=min(imm2,imm3) *)
+let min_guard emap imm1 imm2 imm3 =
+  let pure_min = CP.mkPure (CP.mkEqMin (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) (CP.imm_to_exp imm3 no_pos) no_pos) in
+  Immutils.norm_eqmin emap imm1 imm2 imm3 pure_min
 
 (* imm_bound<:max(immr1,immr2) *)
 let bound_max_guard emap imm_bound immr1 immr2 =
@@ -2383,21 +2452,20 @@ let mk_imm_add emap imml immr1 immr2 =
 
   (imml, guard_lst)
 
-(* c=a-b ----> a=c+b & @L<:max(c,b) *)
+(* c=a-b ----> a=min(c,b) & @L<:max(c,b) *)
 let subtraction_guards emap imm1 imm2 =
-  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
-  let fresh_ann_var = CP.Var(fresh_ann_sv, no_pos) in
-  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in  
-
   (*  @L<:max(c,b) *)
-  let guard = bound_max_guard emap (CP.mkConstAnn Lend) imm1 imm2 in
+  let guard_max = bound_max_guard emap (CP.mkConstAnn Lend) imm1 imm2 in
 
-  (* a=c+b *)
-  let emap0 = Immutils.build_eset_of_imm_formula (CP.join_conjunctions guard) in
+  (* a=min(c,b) *)
+  let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+  let fresh_ann =  (CP.mkPolyAnn fresh_ann_sv) in  
+  let emap0 = Immutils.build_eset_of_imm_formula (CP.join_conjunctions guard_max) in
   let emap = CP.EMapSV.merge_eset emap0 emap in
-  let _, guard_add = mk_imm_add emap imm1 fresh_ann imm2 in
+  (* let _, guard_add = mk_imm_add emap imm1 fresh_ann imm2 in *)
+  let guard_min = min_guard emap imm1 fresh_ann imm2 in
 
-  fresh_ann, guard@guard_add
+  fresh_ann, guard_max@[guard_min]
 
 let subtraction_guards emap imm1 imm2 =
   let pr1 = CP.EMapSV.string_of in
@@ -2408,7 +2476,8 @@ let subtraction_guards emap imm1 imm2 =
 let get_simpler_imm emap imm =
   match imm with
   | CP.TempRes (a1,a2) -> subtraction_guards emap a1 a2
-  | CP.TempAnn (a) -> subtraction_guards emap a (CP.mkConstAnn Lend)
+  (*not sound to do this -  might get back the borrowed permission before solving the entailment*)
+  (* | CP.TempAnn (a) -> subtraction_guards emap a (CP.mkConstAnn Lend) *) 
   | _ -> imm, []
 
 let get_simpler_imm emap imm =
@@ -2416,11 +2485,7 @@ let get_simpler_imm emap imm =
   let pr2 = CP.string_of_imm in
   Debug.no_2 "get_simpler_imm" pr1 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) get_simpler_imm emap imm
 
-(*  @A=max(imm1,imm2) *)
-let max_guard emap imm1 imm2 =
-  let min_one_abs = CP.mkPure (CP.mkEqMax CP.const_ann_abs (CP.imm_to_exp imm1 no_pos) (CP.imm_to_exp imm2 no_pos) no_pos) in
-  Immutils.norm_eqmax emap CP.imm_ann_top imm1 imm2 min_one_abs
-
+(* TODOIMM not safe to return @a from @[a]+@L *)
 let check_for_trivial_merge emap imm1 imm2 =
   let helper def a1 a2 =  try
       if (CP.EMapSV.is_equiv emap (CP.imm_to_spec_var a1) (CP.imm_to_spec_var a2)) then Some def,[]
@@ -2431,8 +2496,8 @@ let check_for_trivial_merge emap imm1 imm2 =
   match imm1, imm2 with
   | CP.TempRes (a1,a2), a
   | a, CP.TempRes (a1,a2) -> helper a1 a a2
-  | a,  CP.TempAnn (at)
-  | CP.TempAnn (at), a -> helper at a (CP.ConstAnn Lend) 
+  (* | a,  CP.TempAnn (at) *)
+  (* | CP.TempAnn (at), a -> helper at a (CP.ConstAnn Lend)  *)
   | _ -> None, []  
 
 let check_for_trivial_merge emap imm1 imm2 = 
@@ -2446,27 +2511,37 @@ let merge_guards emap imm1 imm2 =
   match imm with
   | Some a -> a, guards00
   | None   ->
-    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
     let imm1, guard1 = get_simpler_imm emap imm1 in
     let imm2, guard2 = get_simpler_imm emap imm2 in
 
     (* @A=max(imm1,imm2) *)
-    let min_one_abs = max_guard emap imm1 imm2 in
+    let min_one_abs = max_guard emap (CP.ConstAnn Accs) imm1 imm2 in
 
-    (* imm=imm1+imm2 *)
+    (* fresh_sv=min(imm1,imm2) *)
     let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in
     let emap = CP.EMapSV.merge_eset emap0 emap in
-    let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in
+    let fresh_ann_sv = CP.fresh_spec_var_ann ~old_name:"imm" () in
+    let imm = CP.mkPolyAnn fresh_ann_sv in
+    let min_guard = min_guard emap imm imm1 imm2 in
+    (* let imm, guard =  mk_imm_add emap (CP.mkPolyAnn fresh_ann_sv) imm1 imm2 in *)
 
-    (* simplify addition *)
-    (* let emap0 = Immutils.build_eset_of_imm_formula min_one_abs in *)
-    (* let guard = List.map (x_add_1 (Immutils.simplify_imm_addition ~emap:(CP.EMapSV.merge_eset emap0 emap))) guard in *)
+    (imm, min_guard::guard1@guard2@[min_one_abs])
 
-    (imm, guard@guard1@guard2@[min_one_abs])
+let merge_guards emap imm1 imm2 =
+  match imm1, imm2 with
+  | CP.TempAnn a, CP.TempAnn b ->
+    let imm, guards = merge_guards emap a b in
+    (CP.TempAnn imm, guards)
+  | (CP.TempAnn a), imm
+  | imm , (CP.TempAnn a) ->
+    if (Immutils.is_lend ~emap:emap imm) then (a,[])
+    else let imm_new, guards = merge_guards emap a imm in
+      (CP.TempAnn imm_new, guards)
+  | _ -> merge_guards emap imm1 imm2
 
 let merge_guards emap imm1 imm2 = 
   let pr1 = CP.EMapSV.string_of in
-  let pr2 = CP.string_of_ann in
+  let pr2 = CP.string_of_imm in
   Debug.no_3 "merge_guards" pr1 pr2 pr2 (pr_pair pr2 (pr_list !CP.print_formula)) merge_guards emap imm1 imm2
 
 (* return (compatible_flag, to_keep_node) *)
@@ -2556,8 +2631,9 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
       (* imm1 & imm2 are imm constants, but none is @A *)
       let pr = Cprinter.string_of_h_formula in
       (* let () = print_endline "*** at overlapping location" in- *)
-      let () = report_warning no_pos ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2)) ) in
-      (false, h1, []) 
+      let () = report_warning no_pos ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2))) in
+      (false, h1, [])
+      (* failwith ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2))) *)
     else
       let imm, guards = merge_guards emap imm1 imm2 in
       let h = set_imm h1 imm in
@@ -2613,6 +2689,7 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap =
   let comp, ret_h, _, guards = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
   let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
   let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
+  let () = x_binfo_hp (add_str "view_is_segmented" string_of_bool) (Cfutil.is_view_node_segmented vn1 prog)  no_pos in
   (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
   if comp  && comp_view then
     let (eqs, subs) = partition_eqs_subs vn1.h_formula_view_arguments vn2.h_formula_view_arguments quantif in
@@ -2698,6 +2775,7 @@ let merge_alias_nodes_h_formula_helper prog p lst emap quantif xpure unfold_fun 
     (* | [h]  -> let new_h, pure = norm_abs_node h p xpure in  *)
     (*   ([new_h], (opt_to_list pure)) *)  (* andreeac: uncomment this 2 lines if you wnat to replace @A node with HEmp & xpure*)
     | h::t ->
+      (* TODOIMM to merge tmpann as a special case *)
       let updated_head, updated_tail, eqs_lst, subs_lst, struc_lst, pf_lst = merge_list_w_node h t emap prog quantif unfold_fun qvars in
       let (fixpoint, emap) = List.fold_left 
           ( fun (fixpoint,emap) (a,b) -> 
@@ -2726,7 +2804,10 @@ let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = (
     let new_pure = MCP.memoise_add_pure new_pure (CP.join_conjunctions pf) in
     let new_pure = MCP.subst_avoid_capture_memo fr t new_pure in
     (updated_f, new_pure, fixpoint, struc)
-  (* | DataNode _ | ViewNode _ -> norm_abs_node f p xpure *) (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
+  (* | DataNode _ | ViewNode _ ->  *)   (* andreeac: uncommnet this line if you wnat to replace @A node with HEmp & xpure*)
+  (*   let new_h, new_pf = norm_abs_node f p xpure emap in *)
+  (*   let new_pf = map_opt_def p (MCP.memoise_add_pure p) new_pf in *)
+  (*   (new_h, new_pf, true, []) *)
   | _ -> (f, p, true, [])
 
 let merge_alias_nodes_h_formula prog f p emap quantif xpure unfold_fun qvars = 
@@ -2755,9 +2836,9 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
 (*   merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars *)
 
 let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f rec_fun =
-  let fl  = flow_formula_of_formula f in 
+  let _, _, vperm, fl, _, a = split_components f in
   let pos = pos_of_formula f in
-  let new_h, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars in
+  let new_h, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl qvars vperm pure a) qvars in
   let new_f =  mk_new_f new_h new_p in
   let ret_f = match unfold_f_lst with
     | [] -> new_f
@@ -2944,17 +3025,118 @@ let norm_imm_rel_formula ?post_vars:(vars_post=[]) ?rel_head:(rel=CP.mkTrue no_p
 (*   let pr_lst = Cprinter.string_of_spec_var_list in *)
 (*   Debug.no_2 "weaken_imm_rel_formula" pr_lst pr pr  weaken_imm_rel_formula vars_post rel *)
 
-let norm_rel_list lst =
-  List.map (fun (rel_ct,rel1,rel2) ->
+let norm_fn (rel_ct,rel1,rel2) =
       match rel_ct with
       | CP.RelAssume _ -> 
         let rel2 = (* x_add_1 *) norm_imm_rel_formula ~rel_head:rel1 rel2  in
         (rel_ct, rel1, rel2)
       | _ -> (rel_ct,rel1,rel2) 
-    ) lst
+
+let norm_rel_list lst =
+  List.map norm_fn lst
+    (* (fun (rel_ct,rel1,rel2) -> *)
+    (*   match rel_ct with *)
+    (*   | CP.RelAssume _ ->  *)
+    (*     let rel2 = (\* x_add_1 *\) norm_imm_rel_formula ~rel_head:rel1 rel2  in *)
+    (*     (rel_ct, rel1, rel2) *)
+    (*   | _ -> (rel_ct,rel1,rel2)  *)
+    (* ) lst *)
 
 let weaken_infer_rel_in_es es =
-  {es with es_infer_rel =  norm_rel_list es.es_infer_rel}
+  let () =  es.es_infer_rel # map norm_fn in
+  es
+(* below to move to immutable *)
+let is_imm_relation pure = 
+  if not(CP.is_RelForm pure) then false
+  else 
+    let fv = CP.fv_wo_rel pure in
+    List.for_all CP.is_ann_typ fv
+
+let is_imm_relation pure = 
+   let pr = Cprinter.string_of_pure_formula in
+   Debug.no_1 "is_imm_relation" pr string_of_bool is_imm_relation pure
+
+let get_relevant rels oblg = (* true *)
+  let fv = CP.fv rels in
+  let oblg =  CP.filter_var_new oblg fv in
+  oblg
+
+(* splits an obligation which is a combination of pure and imm relation, 
+   into pure obligations and imm obligations  *)
+let split_rel rel =
+  match rel with
+    | CP.RelAssume svl, p1, p2  -> 
+          if List.length svl > 1 then
+            let p1_conj = CP.split_conjunctions p1 in
+            let p1_imm, p1_pure = List.partition is_imm_relation p1_conj in
+            if (List.length p1_imm == 0 || List.length p1_pure == 0) then [rel]
+            else
+              let p1_imm = CP.join_conjunctions p1_imm in
+              let p1_pure = CP.join_conjunctions p1_pure in
+              let p2_imm, p2_pure = split_imm_pure_lst p2 in
+              let p2_imm_relev = List.map (get_relevant p1_imm) p2_imm in
+              let p2_pure_relev = List.map (get_relevant p1_pure) p2_pure in
+              let p2_imm = CP.join_disjunctions p2_imm_relev in 
+              let p2_pure = CP.join_disjunctions p2_pure_relev in 
+              let svl_imm, svl_pure = List.partition (fun x -> CP.EMapSV.mem x (CP.fv p1_imm)) svl in
+              [CP.RelAssume svl_imm, p1_imm, p2_imm; CP.RelAssume svl_pure, p1_pure, p2_pure ]
+          else [rel] 
+    | _ -> [rel]
+
+let split_rel rel =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_oblg = (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "split_rel"  pr_oblg (pr_list pr_oblg) split_rel rel
+
+let norm_rel_oblgs reloblgs =
+  let is_rel_eq rel1 rel2 = 
+    (fun (r1,a1,_) (r2,a2,_) ->  
+       if not(CP.is_RelForm a1 && CP.is_RelForm a2) then false
+       else try
+           let get_ids f = map_opt_def [] (fun (id, args) -> id::args) (CP.get_relargs_opt f) in
+           let ids =  List.combine (get_ids a1) (get_ids a2) in 
+           List.fold_left (fun acc (sv1, sv2) -> acc && (CP.eq_spec_var sv1 sv2 )) true ids
+         with _ -> false
+    ) rel1 rel2 in
+  let rec update_acc ((a1,b1,c1) as rel) acc =
+    match acc with
+    | []   -> [rel]
+    | ((a2,b2,c2) as h)::t -> if is_rel_eq rel h then (a1,b1, CP.mkAnd c1 c2 no_pos)::t
+      else h::(update_acc rel t)
+  in
+  let rec helper lst acc = 
+    let fnc acc lst = 
+      let acc = update_acc (List.hd lst) acc in 
+      helper (List.tl lst) acc in
+    map_list_def acc (fnc acc) lst
+  in
+  let reloblgs_new = List.fold_left (fun acc rel -> (split_rel rel)@acc) [] reloblgs in (* split mixed rels *)
+  let reloblgs_new = helper reloblgs_new [] in
+  let reloblgs_new = List.map (fun ((rel_c,rel_n,rel_d) as rel) -> 
+      if CP.contains_undef rel_d then rel 
+      else (rel_c, rel_n, imm_unify ((* TP.simplify_tp *) rel_d))) reloblgs_new  in
+  reloblgs_new
+
+let norm_rel_oblgs reloblgs =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "norm_rel_oblgs" pr_oblg pr_oblg norm_rel_oblgs reloblgs
+
+let norm_reloblgs_and_init_defs reloblgs =
+  (* norm *)
+  let reloblgs = norm_rel_oblgs reloblgs in
+  (* init defs *)
+  let reloblgs_new, reldefs = List.partition (fun (_,_,rel_d) -> CP.contains_undef rel_d) reloblgs in 
+  let reldefs = List.map (fun (_,a,b) -> (b,a)) reldefs in
+  reloblgs, reldefs
+
+let norm_reloblgs_and_init_defs reloblgs =
+  let pr = Cprinter.string_of_pure_formula in
+  let pr_def = pr_list (pr_pair pr pr) in
+  let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
+  Debug.no_1 "norm_reloblgs_and_init_defs" pr_oblg 
+    (pr_pair (add_str "norm reloblgs:" pr_oblg) (add_str "new defs:" pr_def))
+    norm_reloblgs_and_init_defs reloblgs
 
 (* ==================== END norm inferred pre/post ======================== *)
 
@@ -3022,21 +3204,18 @@ let infer_specs_imm_post_process (spec: CF.struc_formula) : CF.struc_formula =
   let spec = helper fncs spec in
   spec
 
-let imm_unify (form:CP.formula): CP.formula = 
-  let simp_immf, pure = split_imm_pure form in
-  if not (CP.is_False simp_immf) then
-    let immf = simp_immf in
-    (* let pure = CP.join_disjunctions pures in *)
-    let pr = !CP.print_formula in
-    let () = x_tinfo_hp (add_str " vp_pos:" (pr_pair (add_str "imm" pr) (add_str "pure" pr) ) ) (immf, pure) no_pos in
-    (* let pure = TP.simplify_tp pure in  *)  (* TODOIMM check if pure simplif is also mandatory? temp disabled*)
-    CP.mkAnd immf pure no_pos 
-  else form (* if we cannot strenghten the imm formula, return the initial formula *)
-
-let imm_unify (form:CP.formula): CP.formula = 
-  let pr = !CP.print_formula in
-  Debug.no_1 "imm_unify" pr pr imm_unify form
-
+(* let strenghten_disj lst_disj = *)
+(*   (\* all fv in the disjunctions *\) *)
+(*   let fv_lst = List.fold_left (fun acc x -> acc@(CP.fv x)) [] lst_disj in *)
+(*   let fv_lst = Gen.BList.remove_dups_eq CP.eq_spec_var fv_lst in *)
+(*   (\* search for fv=const for all fv *\) *)
+(*   let fv_guards = List.map (fun sv_x -> *)
+(*       let eqs = List.fold_left (fun acc pure -> (get_imm_from_pure_ann_list sv_x pure)@acc) [] lst_disj in *)
+(*       let imm = get_strongest_imm eqs in *)
+(*       map_opt_def () (fun x -> ) imm *)
+(*       (\* TODOIMM  *\) *)
+(*     ) fv_lst in *)
+  
 let postprocess_post post post_f pre_vars = 
   let post_var = Gen.BList.difference_eq CP.eq_spec_var (CP.all_vars post) pre_vars in
   norm_imm_rel_formula ~post_vars:post_var ~rel_head:post post_f
@@ -3053,8 +3232,9 @@ let postprocess_pre pre pre_f =
 
 (* ======================= remove absent nodes ============================= *)
 (* TODOIMM need to investigate if removing an absent node means i need to add its xpure to the pure part *)
+(*
 let remove_abs_nodes_h_formula emap h =
-  let helper h = if not (!Globals.remove_abs) then Some h 
+  let helper h =
     else
       match h with
       | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm;} ->
@@ -3069,27 +3249,88 @@ let remove_abs_nodes_h_formula emap h =
       |_ -> None in
   let h = CF.transform_h_formula helper h in h
 
-let remove_abs_nodes_h_formula emap h = 
+let remove_abs_nodes_h_formula emap h =
   let pr = Cprinter.string_of_h_formula in
   let pr2 = CP.EMapSV.string_of in
-  Debug.no_2 "remove_abs_nodes_h_formula" pr2 pr pr remove_abs_nodes_h_formula emap h 
+  Debug.no_2 "remove_abs_nodes_h_formula" pr2 pr pr remove_abs_nodes_h_formula emap h
+*)
+let remove_abs_nodes_and_collect_imm_h_formula emap h =
+  let helper _ h =
+    let sv_of ann args =
+      List.fold_right (fun ann acc -> match ann with CP.PolyAnn sv -> sv::acc | _ -> acc) (ann::(List.map CP.mkPolyAnn args)) [] in
+    match h with
+    | CF.DataNode { CF.h_formula_data_imm = imm; CF.h_formula_data_param_imm = param_imm; CF.h_formula_data_arguments = args } ->
+       let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, sv_of imm args)
+                         else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap param_imm) then (HEmp, sv_of imm args) else (h, [])
+       in Some (heap, ann)
+    | CF.ViewNode { CF.h_formula_view_imm = imm; CF.h_formula_view_annot_arg = annot_arg; CF.h_formula_view_arguments = args } ->
+       let pimm = (CP.annot_arg_to_imm_ann_list_no_pos annot_arg) in
+       let (heap, ann) = if (not !Globals.allow_field_ann) && (Imm.is_abs ~emap:emap imm) then (HEmp, sv_of imm args)
+                         else if (!Globals.allow_field_ann) && (Imm.is_abs_list ~emap:emap pimm) then (HEmp, sv_of imm args) else (h, [])
+       in Some (heap, ann)
+    |_ -> None in
+  CF.trans_h_formula h [] helper (fun x _ -> x) List.concat
+
+let remove_abs_nodes_and_collect_imm_h_formula emap h =
+  let pr = Cprinter.string_of_h_formula in
+  let pr2 = CP.EMapSV.string_of in
+  let pr3 = pr_pair pr Cprinter.string_of_spec_var_list in
+  Debug.no_2 "remove_abs_nodes_and_collect_imm_formula" pr2 pr pr3
+             remove_abs_nodes_and_collect_imm_h_formula emap h
 
 let remove_abs_nodes_formula_helper form =
-  let transform_h form heap = 
+  let emap = Imm.build_eset_of_imm_formula (CF.get_pure_ignore_exists form) in
+  let exp_to_eq_a not_relevant e = match e with
+    | CP.Var (sv, loc) -> Some (if CP.EMapSV.mem sv not_relevant then CP.AConst(Accs,loc) else e)
+    | _ -> None in
+  let prune_a_eq_a formula =
+    let aux = function
+      | CP.BForm ((CP.Eq (CP.AConst (Accs,_), CP.AConst (Accs, _), _),_),_) -> None
+      | CP.BForm ((CP.Eq ((CP.AConst (Accs,_)) as a, ((CP.Var _) as b), x),y),z) ->
+         Some (CP.BForm ((CP.Eq (b,a,x),y),z))
+      | s -> Some s in
+    let prune_a_eq_a_d disjunct =
+      let conjuncts = CP.split_conjunctions disjunct in
+      CP.join_conjunctions (List.fold_right (fun f acc -> map_opt_def acc (fun f -> f::acc) (aux f))
+                                            conjuncts []) in
+    let disjuncts = CP.split_disjunctions formula in
+    CP.join_disjunctions (List.map prune_a_eq_a_d disjuncts) in
+  let transform_heap_and_pure heap pure =
     let () = x_ninfo_hp (add_str "pure" (!CP.print_formula)) (CF.get_pure_ignore_exists form) no_pos in
-    let emap = Imm.build_eset_of_imm_formula (CF.get_pure_ignore_exists form) in
-    remove_abs_nodes_h_formula emap heap in
+    let (new_heap, not_relevant) = remove_abs_nodes_and_collect_imm_h_formula emap heap in
+    let new_pure = MCP.update_pure_of_mix (fun pure ->
+      let new_pure_1 = CP.transform_formula (nonef, nonef, nonef, nonef, exp_to_eq_a not_relevant) pure in
+      Some(prune_a_eq_a new_pure_1)) pure in
+    (new_heap, new_pure, not_relevant)
+  in
   match form with
-  | CF.Base   b -> Some (CF.Base{ b with CF.formula_base_heap = transform_h form b.CF.formula_base_heap;})
+  | CF.Base b ->
+     let (new_heap, new_pure, _) = transform_heap_and_pure b.CF.formula_base_heap b.CF.formula_base_pure in
+     Some (CF.Base{ b with
+                    CF.formula_base_heap = new_heap;
+                    CF.formula_base_pure = new_pure })
   | CF.Exists e -> 
-    Some (CF.Exists{ e with CF.formula_exists_heap = transform_h form e.CF.formula_exists_heap;})
+     let (new_heap, new_pure, svl) = transform_heap_and_pure e.CF.formula_exists_heap e.CF.formula_exists_pure in
+     let removed_qvars = List.filter (fun s -> List.mem s svl) e.CF.formula_exists_qvars in
+     (match (CF.remove_quantifiers removed_qvars form) with
+      | CF.Base b ->
+         Some (CF.Base { b with
+                         CF.formula_base_heap = new_heap;
+                         CF.formula_base_pure = new_pure})
+      | CF.Exists e ->
+         Some (CF.Exists { e with
+                           CF.formula_exists_heap = new_heap;
+                           CF.formula_exists_pure = new_pure })
+      | CF.Or _ -> None)
   | CF.Or _ -> None
 
 let remove_abs_nodes_formula formula =
+  if (not !Globals.remove_abs) then formula else
   let fnc = (nonef, remove_abs_nodes_formula_helper, nonef, (somef,somef,somef,somef,somef)) in
   CF.transform_formula fnc formula
 
 let remove_abs_nodes_struc struc =
+  if (not !Globals.remove_abs) then struc else
   let fnc = (nonef, remove_abs_nodes_formula_helper, nonef, (somef,somef,somef,somef,somef)) in
   CF.transform_struc_formula fnc struc 
 
@@ -3112,7 +3353,8 @@ let fnc_pure = (nonef,nonef,nonef,f_bf,f_e)
 let fnc = (nonef, nonef, nonef, fnc_pure )
 
 let map_imm_to_int_pure_formula form = 
-  let form = x_add_1 Immutils.simplify_imm_addition form in
+  (* let form = x_add_1 Immutils.simplify_imm_addition form in *)
+  let form = x_add_1 Immutils.simplify_imm_min_max form in
   CP.transform_formula fnc_pure form
 
 let map_imm_to_int_pure_formula form = 
@@ -3145,4 +3387,5 @@ let map_int_to_imm_struc_formula form = CF.transform_struc_formula fnc form
 
 
 (* ======================= END prover pre/post-process  ============================= *)
+
 

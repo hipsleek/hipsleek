@@ -1,0 +1,46 @@
+Syn:merging@2
+>> Syn:merging inp1 :
+>> � [(2;0)HP_1623(Anon_1621,s)&
+>> � � s'=s & Anon_20=Anon_1621 |#| s::char_star<v_1620,Anon_1621>@M&
+>> � � v=0 & v=v_1620 --> Anon_1621::Dangling<>@M;
+>> � �(1;0)HP_1623(Anon_1621,s) |#| s::char_star<v_1620,Anon_1621>@M&
+>> � � v_1620!=0 --> P(Anon_1621)]
+>> Syn:merging@2 EXIT:
+>> � [(2;0)HP_1623(Anon_1621,s)&
+>> � � s=s' & Anon_1621=Anon_20 |#| s::char_star<v_1620,Anon_1621>@M -->
+>> � � Anon_1621::Dangling<>@M&v=0 & v=v_1620
+>> � � or P(Anon_1621)&v_1620!=0   
+>> � � ]
+
+//simplification
+>> Syn:merging inp1 :
+ HP_1623(Anon_1621,s)&
+ s'=s & Anon_20=Anon_1621 |#| s::char_star<v_1620,Anon_1621>@M&
+ v=0 & v=v_1620 --> Anon_1621::Dangling<>@M;
+ // exists
+ HP_1623(Anon_1621,s)&
+ (exists s',Anno_20 : s'=s & Anon_20=Anon_1621) 
+  |#| s::char_star<v_1620,Anon_1621>@M&
+  (exists v:  v=0 & v=v_1620) --> Anon_1621::Dangling<>@M;
+ // exists
+ HP_1623(Anon_1621,s)& true
+  |#| s::char_star<v_1620,Anon_1621>@M& 0=v_1620 --> Anon_1621::Dangling<>@M;
+
+//simplification
+>> � �(1;0)HP_1623(Anon_1621,s) |#| s::char_star<v_1620,Anon_1621>@M&
+>> � � v_1620!=0 --> P(Anon_1621)]
+
+
+merging will then yield
+>> Syn:merging@2 EXIT:
+   HP_1623(Anon_1621,s)  |#| s::char_star<v_1620,Anon_1621>@M --> 
+     Anon_1621::Dangling<>@M & 0=v_1620
+     or P(Anon_1621)&v_1620!=0   
+
+
+>> � �(1;0)HP_1623(Anon_1621,s) |#| s::char_star<v_1620,Anon_1621>@M&
+>> � � v_1620!=0 --> P(Anon_1621)]
+
+
+(1;0)HP_1623(Anon_1621,s) |#| s::char_star<v_1620,Anon_1621>@M&
+    v_1620!=0 --> P(Anon_1621)]

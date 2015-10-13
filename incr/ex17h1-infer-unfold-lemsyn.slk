@@ -1,0 +1,70 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+
+HeapPred H(node a).
+//lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+// fail due to complex lemma
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
+print residue.
+/*
+# ex17h1.slk (WN to fix)
+
+lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
+
+# Why is above not working?
+
+Starting Omega.../usr/local/bin/oc
+
+!!! WARNING logtime exception:0.000326
+!!! WARNING logtime exception:0.0307exception in lemma "lem_14" check
+
+Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
+
+# Can we use wrapping to handle lemma synthesis?
+
+// comparing with ex17h1.slk
+
+lemma_safe  self::sll<> -> self::lseg<q> * q::sll<>.
+
+(==lemma.ml#239==)
+verify_lemma#3@2@1
+verify_lemma#3 inp1 :[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]==> (exists q: self::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[])
+ head match:sll
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(q,full,[H]); (self,full,[lseg])]
+ // materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists q: self::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body_norm:  EBase 
+   self::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[]
+ //body_norm:  EBase  exists (Impl)[q]self::lseg<q>@M * q::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_INFER_PRED
+ //coercion_kind: LEM_SAFE
+ coercion_fold: None
+]
+
+
+
+*/
