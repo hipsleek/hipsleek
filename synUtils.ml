@@ -529,6 +529,16 @@ let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
   Debug.no_2 "Syn.heap_entail_exact_formula" pr1 pr1 pr2 
     (fun _ _ -> heap_entail_exact_formula prog ante conseq) ante conseq
 
+let get_equiv_pred prog vid =
+  try
+    let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls vid in
+    if not !Globals.pred_equiv then vid
+    else if vdef.C.view_equiv_set # is_empty then vid
+    else
+      let (_, subs_vid) = vdef.C.view_equiv_set # get in
+      subs_vid
+  with _ -> vid
+
 let trans_hrel_to_view_formula prog (f: CF.formula) = 
   let f_h_f _ hf = 
     match hf with
@@ -538,19 +548,26 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
       let subs_hrel_name, view_args =
           try
             let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls hrel_id in
-            let vargs = vdef.view_vars in
-            let subs_name = 
-              if not !Globals.pred_equiv then hrel_name
-              else if vdef.C.view_equiv_set # is_empty then hrel_name
-              else
-                let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
-                match hrel_name with
-                | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p)
-            in subs_name, vargs
+            if not !Globals.pred_equiv then hrel_name, vdef.view_vars
+            else if vdef.C.view_equiv_set # is_empty then hrel_name, vdef.view_vars
+            else
+              let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
+              let equiv_pred = match hrel_name with
+                | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p) in
+              let equiv_pred_args = 
+                try 
+                  let edef = C.look_up_view_def_raw 50 prog.Cast.prog_view_decls subs_hrel_id in
+                  edef.view_vars
+                with _ ->
+                  let () = report_warning no_pos ("Cannot find the definition of the equiv pred " ^ subs_hrel_id) in 
+                  vdef.view_vars
+              in
+              equiv_pred, equiv_pred_args
           with _ -> hrel_name, []
       in
       let hrel_root, hrel_args = get_root_args_hp prog hrel_id hrel_args in
       let extn_args =
+        (* Get the extn pred arguments *)
         let rec helper h_args v_args =
           match h_args, v_args with
           | [], _ -> v_args
@@ -618,6 +635,7 @@ let rec remove_inf_vars_struc_formula inf_vars (sf: CF.struc_formula) =
       CF.formula_struc_continuation = map_opt (remove_inf_vars_struc_formula inf_vars) eb.CF.formula_struc_continuation; }
   | CF.EAssume _ -> sf
   | EInfer ei -> 
+    let () = ei.CF.formula_inf_obj # reset (INF_EXTN []) in
     CF.EInfer { ei with 
       CF.formula_inf_vars = diff ei.CF.formula_inf_vars inf_vars;
       CF.formula_inf_continuation = remove_inf_vars_struc_formula inf_vars ei.CF.formula_inf_continuation; }

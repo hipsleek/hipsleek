@@ -934,7 +934,8 @@ let elim_tail_pred_list iprog cprog preds =
 (*********************)
 
 let extn_norm_pred iprog cprog extn_pred norm_pred =
-  let norm_ipred = I.look_up_view_def_raw 21 iprog.I.prog_view_decls norm_pred.C.view_name in
+  let equiv_pid = get_equiv_pred cprog norm_pred.C.view_name in 
+  let norm_ipred = I.look_up_view_def_raw 21 iprog.I.prog_view_decls equiv_pid in
   let extn_view_name = "extn_" ^ norm_ipred.I.view_name in
   let extn_view_var = extn_pred.C.view_name ^ "_prop" in
   let extn_iview = I.mk_iview_decl ~v_kind:View_DERV extn_view_name "" 
@@ -955,7 +956,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
   let comb_extn_name = norm_ipred.I.view_name ^ "_" ^ extn_view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
-  let extn_cview = { extn_cview with C.view_name = norm_pred.C.view_name } in
+  let extn_cview = { extn_cview with C.view_name = equiv_pid } in
   let () = C.update_view_decl cprog extn_cview in
   extn_cview
 
