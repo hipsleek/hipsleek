@@ -537,7 +537,7 @@ let remove_dangling_heap_formula (f: CF.formula) =
       else Some (hf, [])
     | _ -> None
   in
-  trans_heap_formula f_h_f f
+  CF.trans_heap_formula f_h_f f
 
 let remove_dangling_heap_formula (f: CF.formula) = 
   let pr1 = !CF.print_formula in
@@ -555,7 +555,7 @@ let add_dangling_params hrel_name dangling_params (f: CF.formula) =
       else Some (hf, [])
     | _ -> None
   in
-  fst (trans_heap_formula f_h_f f)
+  fst (CF.trans_heap_formula f_h_f f)
 
 let add_dangling_params hrel_name dangling_params (f: CF.formula) = 
   let pr1 = !CF.print_formula in
@@ -780,7 +780,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let () = y_binfo_pp "XXX proven infer ---> " in
     let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
     let () = List.iter (fun v ->
-      let () = C.update_un_struc_formula (trans_hrel_to_view_formula cprog) v in
+      let () = C.update_un_struc_formula (fun f -> fst (trans_hrel_to_view_formula cprog f)) v in
       let () = C.update_view_formula (trans_hrel_to_view_struc_formula cprog) v in
       let () = C.update_view_decl cprog v in
       let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
@@ -803,7 +803,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     (*     all_d_views in                                                                          *)
     let lst = aux_pred_reuse iprog cprog all_d_views in
     (* Equiv test to form new pred *)
-    let r_cbody = trans_hrel_to_view_formula cprog l_body in
+    let r_cbody, _ = trans_hrel_to_view_formula cprog l_body in
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
     let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
     let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
@@ -954,9 +954,10 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
     cprog.C.prog_view_decls extn_iview in
   let () = y_binfo_hp (add_str "extn_cview_lst" 
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
-  let comb_extn_name = norm_ipred.I.view_name ^ "_" ^ extn_view_name in
+  let comb_extn_name = Derive.mk_extn_pred_name norm_ipred.I.view_name extn_view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
-  let extn_cview = { extn_cview with C.view_name = equiv_pid } in
+  let extn_cview = C.rename_view extn_cview equiv_pid in 
+  (* let extn_cview = { extn_cview with C.view_name = equiv_pid } in *)
   let () = C.update_view_decl cprog extn_cview in
   extn_cview
 

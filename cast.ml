@@ -4083,3 +4083,12 @@ let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
       (pr_list (fun v -> v.view_name))) res in
     res
   
+let rename_view vdecl new_name = 
+  let old_name = vdecl.view_name in
+  let sst = [(old_name, new_name)] in
+  { vdecl with
+    view_name = new_name;
+    view_formula = F.rename_view_struc sst vdecl.view_formula;
+    view_un_struc_formula = List.map (fun (f, lbl) -> (F.rename_view_formula sst f, lbl)) vdecl.view_un_struc_formula; }
+
+

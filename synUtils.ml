@@ -414,14 +414,14 @@ let combine_Star prog f1 f2 =
   let pr = !CF.print_formula in
   Debug.no_2 "combine_Star" pr pr pr (combine_Star prog) f1 f2
 
-let trans_heap_formula f_h_f (f: CF.formula) = 
-  let somef2 _ f = Some (f, []) in
-  let id2 f _ = (f, []) in
-  let ida _ f = (f, []) in
-  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
-  CF.trans_formula f () 
-    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
-    f_arg List.concat
+(* let trans_heap_formula f_h_f (f: CF.formula) =                                       *)
+(*   let somef2 _ f = Some (f, []) in                                                   *)
+(*   let id2 f _ = (f, []) in                                                           *)
+(*   let ida _ f = (f, []) in                                                           *)
+(*   let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in          *)
+(*   CF.trans_formula f ()                                                              *)
+(*     (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2))  *)
+(*     f_arg List.concat                                                                *)
 
 let rec trans_pure_formula f_m_f (f: CF.formula) = 
   match f with
@@ -581,11 +581,11 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
       | CF.ViewNode v ->
         (* Setting imm is important for lemma proving *)
         let n_hf = CF.ViewNode { v with CF.h_formula_view_imm = CP.ConstAnn(Mutable); } in
-        Some (n_hf, [])
+        Some (n_hf, extn_args)
       | _ -> None)
     | _ -> None
   in
-  fst (trans_heap_formula f_h_f f)
+  CF.trans_heap_formula f_h_f f
 
 let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
   match sf with
@@ -595,12 +595,14 @@ let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
       CF.formula_case_branches = List.map (fun (c, sf) -> 
           (c, trans_hrel_to_view_struc_formula prog sf)) ec.CF.formula_case_branches; }
   | CF.EBase eb -> 
+    let n_base, extn_args = trans_hrel_to_view_formula prog eb.CF.formula_struc_base in
     CF.EBase { eb with
-      CF.formula_struc_base = trans_hrel_to_view_formula prog eb.CF.formula_struc_base;
+      CF.formula_struc_base = n_base;
+      CF.formula_struc_implicit_inst = remove_dups (eb.CF.formula_struc_implicit_inst @ extn_args);
       CF.formula_struc_continuation = map_opt (trans_hrel_to_view_struc_formula prog) eb.CF.formula_struc_continuation; }
   | CF.EAssume ea ->
     CF.EAssume { ea with 
-      CF.formula_assume_simpl = trans_hrel_to_view_formula prog ea.CF.formula_assume_simpl;
+      CF.formula_assume_simpl = fst (trans_hrel_to_view_formula prog ea.CF.formula_assume_simpl);
       CF.formula_assume_struc = trans_hrel_to_view_struc_formula prog ea.CF.formula_assume_struc; }
   | EInfer ei -> 
     CF.EInfer { ei with 
@@ -688,7 +690,7 @@ let find_heap_node root (f: CF.formula) =
       else None
     | _ -> None
   in
-  let n_f, root_node = trans_heap_formula f_h_f f in
+  let n_f, root_node = CF.trans_heap_formula f_h_f f in
   n_f, root_node
 
 let is_consistent_node_list nodes = 
@@ -791,7 +793,7 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let vargs = List.map (fun sv -> (sv, NI)) (diff hprel_args [hprel_root]) (* List.tl hprel_args *) in
   let vbody = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
   let vbody = CF.elim_prm vbody in
-  let vbody = trans_hrel_to_view_formula prog vbody in
+  let vbody, _ = trans_hrel_to_view_formula prog vbody in
   let vbody = CF.subst [(hprel_self, vself)] vbody in
   (* Set flow for view *)
   let vbody = CF.set_flow_in_formula_override 

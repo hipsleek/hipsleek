@@ -579,6 +579,8 @@ let pr_sv = CP.print_sv
 
 let data_decl_obj = CFE.data_decl_obj
 
+let mk_extn_pred_name vn pname = vn ^ "_" ^ pname
+
 class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq nnn_s tag_s =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
@@ -664,7 +666,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
         pure_lst <- final::pure@pure_lst
     method proc_view ptr vn =
       if self # is_mut_view vn then
-        let new_vname = vn^"_"^pname in
+        let new_vname = mk_extn_pred_name vn pname (* vn^"_"^pname *) in
         let (root,new_sv) = 
           match ptr with
           | None ->  (self_sv,orig_sv)

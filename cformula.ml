@@ -20079,3 +20079,35 @@ let add_label_to_struc_formula s_f old_sf =
 
 let eq_hprel_defn f1 f2 =
   (f1.hprel_lhs = f2.hprel_lhs) && (f1.hprel_rhs = f2.hprel_rhs)  && (f1.hprel_guard = f2.hprel_guard)
+
+let trans_heap_formula f_h_f (f: formula) = 
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  trans_formula f () 
+    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
+    f_arg List.concat
+
+let aux_rename_view_h_formula sst hf =
+  match hf with
+  | ViewNode v ->
+    let vn = v.h_formula_view_name in
+    (try
+      let new_vn = List.assoc vn sst in
+      Some (ViewNode { v with h_formula_view_name = new_vn; }) 
+    with _ -> Some hf)
+  | _ -> None
+
+let rename_view_formula sst f =
+  let f_h_f = (fun _ hf -> 
+    match (aux_rename_view_h_formula sst hf) with
+    | Some nhf -> Some (nhf, [])
+    | None -> None) in 
+  fst (trans_heap_formula f_h_f f)
+
+let rename_view_struc sst f = 
+  let f_h_f = (fun hf -> aux_rename_view_h_formula sst hf) in 
+  let f_f = nonef, nonef, f_h_f, (somef, somef, somef, somef, somef) in
+  transform_struc_formula f_f f
+
