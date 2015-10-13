@@ -1330,6 +1330,34 @@ compute_inv_baga@2 EXIT:[ view ll_ss{}[]<nnn:int>=
   xform: (self=null | self!=null)
 
 ===================================================================
+# ex25m5d.slk  =--inv-baga
+
+// fixcalc error ...
+fixcalc: Argument of widen is not a formula
+
+Last Proving Location: ex25m5d-pred-extn-double-ll.slk_8:3_8:18
+
+ERROR: at ex25m5d-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Over)
+
+Exception processed: Failure("\nInv Check: Fail.(View ll_ss:Over)")
+
+===================================================================
+# ex25m5d.slk
+
+# modify method in p_table to update
+    val mutable mk_base = (fun v -> CP.mk_eq_zero v)
+    val mutable mk_max = (fun v v1 v2 -> CP.mk_max v v1 v2)
+    val mutable mk_inc = (fun v v1 -> CP.mk_inc v v1)
+
+!!! **WARNING****derive.ml#628:TODO : need to build functions of views here
+
+!!! **derive.ml#630:p_table:prop view:size
+!!! **derive.ml#631:p_table:vars:[k]
+!!! **derive.ml#632:p_table:prop_extns:[R:size]
+!!! **derive.ml#633:p_table:body:[ (* lbl: *){1}->emp&k=0&{FLOW,(1,26)=__flow#E}[], (* lbl: *){2}->(exists R,i: (* lbl: *){2}->R::size<i>@M&
+exists(max_13:k=max_13+1 & max_13=max(i,i))&{FLOW,(1,26)=__flow#E}[])]
 ===================================================================
 ===================================================================
 ===================================================================
