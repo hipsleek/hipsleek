@@ -2156,7 +2156,7 @@ and pr_h_formula_for_spec h =
     pr_spec_var sv;
     fmt_string "::";
     (* if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs; *)
-    if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
+    (* if svs_orig = [] then fmt_string (c^"<>") else *) pr_angle (c^perm_str) pr_view_arg params;
     (*    pr_imm imm;*)
     pr_derv dr;
     pr_split split;
