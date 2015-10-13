@@ -16,15 +16,24 @@ open Cprinter
 
 
 let find_baga_inv view  =
-  if !Globals.is_inferring (* !Globals.gen_baga_inv *) then
+  (* if !Globals.is_inferring (\* || !Globals.gen_baga_inv *\) then *)
+  (*   Hashtbl.find Excore.map_baga_invs view.Cast.view_name *)
+  (* else *)
+  (*   match view.Cast.view_baga_inv with *)
+  (*   | Some efpd -> efpd *)
+  (*   | None -> *)
+  (*     match view.Cast.view_baga_x_over_inv with *)
+  (*     | Some efpd -> efpd *)
+  (*     | None -> failwith (x_loc^"cannot find baga inv 2") *)
+  try
     Hashtbl.find Excore.map_baga_invs view.Cast.view_name
-  else
+  with _ ->
     match view.Cast.view_baga_inv with
     | Some efpd -> efpd
     | None ->
       match view.Cast.view_baga_x_over_inv with
       | Some efpd -> efpd
-      | None -> failwith "cannot find baga inv 2"
+      | None -> failwith (x_loc^"cannot find baga inv 2")
 
 let find_baga_under_inv view =
   match view.Cast.view_baga_under_inv with
@@ -188,12 +197,13 @@ let rec build_ef_heap_formula_x is_shape (cf0 : Cformula.h_formula) (all_views :
     let svl = vnf.Cformula.h_formula_view_node::vnf.Cformula.h_formula_view_arguments in
     let efpd =
       let view = List.find (fun v -> v.Cast.view_name = vnf.Cformula.h_formula_view_name) all_views in
+      let () = y_tinfo_hp (add_str "XXXview(ef_heap)" Cprinter.string_of_view_decl_inv) view in
       if !do_under_baga_approx then find_baga_under_inv view
       else find_baga_inv view
       (* if !Globals.gen_baga_inv then *)
       (*   try *)
       (* let disj = Hashtbl.find map_baga_invs vnf.Cformula.h_formula_view_name in *)
-      (* let () = x_binfo_hp (add_str "disj" Excore.EPureI.string_of_disj) disj no_pos in *)
+      (* let () = x_tinfo_hp (add_str "disj" Excore.EPureI.string_of_disj) disj no_pos in *)
       (*     disj *)
       (*   with Not_found -> failwith "cannot find in init_map too" *)
       (* else *)

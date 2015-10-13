@@ -1330,10 +1330,16 @@ compute_inv_baga@2 EXIT:[ view ll_ss{}[]<nnn:int>=
   xform: (self=null | self!=null)
 
 ===================================================================
-# ex25m5d.slk  =--inv-baga
+# ex25m5d.slk  =--inv-baga --dre "build_ef_h"
 
 // fixcalc error ...
+
 fixcalc: Argument of widen is not a formula
+
+
+# This is not an over-inv; but should be a precise inv
+
+!!! **fixUtil.ml#189:Predicate ll_ss has over invariant (exc) 
 
 Last Proving Location: ex25m5d-pred-extn-double-ll.slk_8:3_8:18
 

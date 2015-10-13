@@ -773,13 +773,15 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
                  (* reset the inv to re-compute later, *)
                  (* as previous view's computed inv may be incorrect *)
                  C.view_baga_over_inv = None;
+                 C.view_baga_x_over_inv = None;
                  C.view_baga_inv = None;
                  C.view_baga_under_inv = None;
                  } in
     let vn = new_vd.C.view_name in
     let () = y_tinfo_hp (add_str "b4 update_view" pr_id) vn  in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
-    let () = y_binfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in
+    (* let () = y_binfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in *)
+    let () = y_binfo_hp (add_str "vd(orig)" Cprinter.string_of_view_decl_short) vd in
     let () = y_tinfo_hp (add_str "aft update_view" pr_id) vn  in
     new_vd
   in
@@ -794,6 +796,7 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
         let () = Typeinfer.update_view_new_body ~base_flag:true vd body in
         let () = y_binfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
         let () = y_binfo_hp (add_str "new_vd" Cprinter.string_of_view_decl_short) vd in
+        let () = y_binfo_hp (add_str "new_vd(inv)" Cprinter.string_of_view_decl_inv) vd in
         ()
       ) vds in
      let () = y_tinfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in
