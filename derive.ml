@@ -624,13 +624,29 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
       begin
         match pview with
         | None -> ()
-        | Some vd -> 
+        | Some vd ->
           let () = y_winfo_pp "TODO : need to build functions of views here" in
           let l_f = List.map fst vd.C.view_un_struc_formula in
           let () = y_binfo_hp (add_str "p_table:prop view" pr_id) vd.C.view_name in
           let () = y_binfo_hp (add_str "p_table:vars" !CP.print_svl) vd.C.view_vars in
-          let () = y_binfo_hp (add_str "p_table:prop_extns" (pr_list Cprinter.essstring_of_typed_spec_var)) vd.C.view_prop_extns in
+          let () = y_binfo_hp (add_str "p_table:prop_extns" (pr_list Cprinter.string_of_typed_spec_var)) vd.C.view_prop_extns in
           let () = y_binfo_hp (add_str "p_table:body" (pr_list !CF.print_formula)) l_f in
+          (* replace the mk_base *)
+          (* assumption: base case will be first formula *)
+          (* assumption: base case will contain  *)
+          let pf = CF.get_pure (List.hd l_f) in
+          let eqs = CP.find_eq_at_toplevel pf in
+          let eqs = List.filter (fun (kexp,_) -> (List.exists (CP.eq_ident_var (CP.extr_spec_var kexp)) vd.C.view_vars)) eqs in
+          let () = (match eqs with
+            | [] -> ()
+            | (kexp,vexp)::_ ->
+              (* use k=v as the new base case *)
+              mk_base <- (fun v ->
+                (* not a function of spec_var v, due to above assumptions *)
+                let () = y_binfo_hp (add_str "mk_base from" (pr_pair !CP.print_exp !CP.print_exp)) (kexp, vexp) in
+                CP.mk_bform (CP.mkEq kexp vexp no_pos))) in
+          (* replace the mk_max *)
+          (* replace the mk_inc *)
           vns <- vs
       end
       (* self # reset_disj *)
