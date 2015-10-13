@@ -2060,7 +2060,6 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         if !Globals.use_baga then form_body_inv_baga_enum,form_body_inv_baga
         else (form_body_inv 1),(form_body_inv 2) in
       let formula1 = form_body_enum vdef in
-      let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
       let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (CF.fv formula1) in
       let formula1_under = wrap_under_baga form_body_sym vdef in
       let ctx0 = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
@@ -2867,7 +2866,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
   (*                     let f3p = Excore.simplify_with_label TP.pairwisecheck_raw f3 in *)
   (*                     let f4 = CF.project_body_num vd.Cast.view_un_struc_formula f3p vd.Cast.view_vars in *)
   (*                     let f4 = x_add_1 Excore.simplify_with_label Tpdispatcher.simplify_raw (CP.wrap_exists_svl f4 [idx]) in *)
-  (*                     let f5 = Fixcalc.widen f3 f4 in *)
+  (*                     let f5 = x_add Fixcalc.widen f3 f4 in *)
   (*                     f5 *)
   (*                   in *)
   (*                   let () = x_tinfo_hp (add_str "alter_num_inv" Cprinter.string_of_pure_formula) alter_num_inv no_pos in *)

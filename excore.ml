@@ -561,12 +561,17 @@ module EPURE =
           ) ((mkEqVarInt (List.hd baga) (* !i *)1 no_pos),1) (List.tl baga)
         in f
 
+
     (* ef_conv_enum :  ef_pure -> formula *)
     (* provide an enumeration that can be used by ante *)
     (* ([a,a,b],pure)  --> a=1 & a=2 & a=3 & pure *)
     let ef_conv_enum ((baga,f)) : formula =
       let bf = baga_enum baga in
       mkAnd bf f no_pos
+
+    let ef_conv_enum baga : formula =
+      Debug.no_1 "ef_conv_enum" string_of !Cpure.print_formula
+        ef_conv_enum baga
 
     let ef_conv_disj_ho conv disj : formula =
       let f = List.fold_left (fun f ep ->
@@ -581,12 +586,14 @@ module EPURE =
       Debug.no_1 "ef_conv_disj" string_of_disj !Cpure.print_formula
         ef_conv_disj_x disj
 
-    let ef_conv_enum_disj_x disj : formula =
+    let ef_conv_enum_disj disj : formula =
       ef_conv_disj_ho ef_conv_enum disj
 
+    (* code has bug for ex25m5d.slk *)
     let ef_conv_enum_disj disj : formula =
-      (* Debug.no_1 "ef_conv_enum_disj" string_of_ef_pure_disj string_of_pure_formula *)
-      ef_conv_enum_disj_x disj
+      Debug.no_1 "ef_conv_enum_disj" string_of_disj !Cpure.print_formula
+        (* ef_conv_disj_x disj *)
+        ef_conv_enum_disj disj
 
     let mk_star_wrap efp1 efp2 =
       if (is_false efp1) || (is_false efp2) then mk_false
@@ -1029,9 +1036,9 @@ module EPUREN =
             then mk_false
             else 
               let new_baga = merge_baga baga1 baga2 in
-              (* x_binfo_hp (add_str "eq1" EM.string_of_debug) eq1 no_pos; *)
-              (* x_binfo_hp (add_str "eq2" EM.string_of) eq2 no_pos; *)
-              (* x_binfo_hp (add_str "part2" string_of_epart) p2 no_pos; *)
+              (* x_tinfo_hp (add_str "eq1" EM.string_of_debug) eq1 no_pos; *)
+              (* x_tinfo_hp (add_str "eq2" EM.string_of) eq2 no_pos; *)
+              (* x_tinfo_hp (add_str "part2" string_of_epart) p2 no_pos; *)
               let new_eq = EM.merge_eset eq1 eq2 in
               let new_eq2 = (new_eq,mk_partition new_eq) in
               check_eqmap "mk_part:2" new_eq2;
@@ -1721,10 +1728,12 @@ type ef_pure_disj = EPureI.epure_disj
 class ['a] inv_store name (pr:'a->string) =
   object (self)
     val tab = Hashtbl.create 10
+    val mutable pr = pr
+    method set_pr pp = pr <- pp
     method find vn =
       Hashtbl.find tab vn
     method replace m vn (fix:'a) =
-      if not(name="") then y_binfo_hp (add_str ("replace("^name^m^")") (pr_pair pr_id pr)) (vn,fix);
+      if not(name="") then y_tinfo_hp (add_str ("replace("^name^m^")") (pr_pair pr_id pr)) (vn,fix);
       Hashtbl.replace tab vn fix
     method string_of =
       let lst = Hashtbl.fold (fun a b lst -> (a,b)::lst) tab [] in
@@ -1736,8 +1745,8 @@ let map_num_invs : ((string, (Cpure.spec_var list * Cpure.formula)) Hashtbl.t) =
 let map_precise_invs : ((string, bool) Hashtbl.t) = Hashtbl.create 10
 
 let map_baga_invs 
-  = new inv_store "XXX" EPureI.string_of_disj
+  = new inv_store  "XXXBAGAXXX "  EPureI.string_of_disj
 let map_num_invs 
-  = new inv_store "" (pr_pair !Cpure.print_svl !Cpure.print_formula) 
+  = new inv_store  "XXXNUMXXX " (pr_pair !Cpure.print_svl !Cpure.print_formula) 
 let map_precise_invs 
-  = new inv_store "" string_of_bool
+  = new inv_store "XXXprecise " string_of_bool

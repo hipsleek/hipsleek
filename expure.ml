@@ -169,7 +169,7 @@ let add_index_to_views view_list =
 let widen_disj_x disj1 disj2 =
   let pair_list = List.combine disj1 disj2 in
   List.map (fun ((b1,f1), (b2,f2)) ->
-      (b1,Fixcalc.widen f1 f2)
+      (b1,x_add Fixcalc.widen f1 f2)
     ) pair_list
 
 let widen_disj disj1 disj2 =

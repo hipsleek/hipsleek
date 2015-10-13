@@ -468,7 +468,7 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
       "F2W:=widen(F1,F2,SimHeur);\nF2W;"
     with _ -> report_error no_pos "Error in widening with fixcalc"
   in
-  DD.ninfo_pprint ("input = " ^ input_fixcalc) no_pos;
+  DD.binfo_pprint ("input = " ^ input_fixcalc) no_pos;
 
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
@@ -491,6 +491,9 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   let () = x_binfo_hp (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
   inv
 
+let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_2 "widen" pr pr pr widen f1 f2
 (******************************************************************************)
 
 let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =

@@ -1349,7 +1349,80 @@ Inv Check: Fail.(View ll_ss:Over)
 
 Exception processed: Failure("\nInv Check: Fail.(View ll_ss:Over)")
 
+!!! **astsimp.ml#2073:context:  emp&(nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))&
+{FLOW,(1,26)=__flow#E}[]
+ es_gen_impl_vars(E): []
+ 
+ es_unsat_flag: false
+!!! **astsimp.ml#2109:baga_over_formula:
+ emp&
+((self=null & nnn=0) | (exists(alpha:2*alpha=nnn) & self!=null & 2<=nnn))&
+{FLOW,(1,26)=__flow#E}[]
 
+
+!!! **fixUtil.ml#158:num_inv:
+
+
+(==smtsolver.ml#1158==)
+imply_raw@7
+imply_raw inp1 : exists(alpha:2*alpha=nnn) & 0<=nnn
+imply_raw inp2 : ((exists(idx:idx=0) & exists(self:self=null) & nnn=0) | 
+  (exists(idx:exists(idx_55:idx=idx_55+1)) & 
+   exists(nnn_53:exists(nnn_54:exists(alpha:2*alpha=nnn_54) & 0<=nnn_54 & 
+                               nnn_53=nnn_54+1) & 
+                 nnn=nnn_53+1) & 
+   exists(q3:exists(q:q=q3)) & exists(p:p>0) & exists(self:self>0)))
+imply_raw@7 EXIT:false
+
+(* Z3 wasn't precise, and this causes some issue below ..*)
+
+!!! **fixUtil.ml#163:Imprecise path ... ll_ss
+!!! input = F1:={[nnn]: (nnn=0 || (nnn=2 || nnn=4))};
+F2:={[nnn]: (nnn=0 || (nnn=6 || (nnn=2 || nnn=4)))};
+F2W:=widen(F1,F2,SimHeur);
+F2W;
+!!! **fixcalc.ml#491:result: nnn>=0
+(==fixUtil.ml#175==)
+widen@8
+widen inp1 : (nnn=0 | nnn=2 | nnn=4)
+widen inp2 : (nnn=0 | nnn=6 | nnn=2 | nnn=4)
+widen@8 EXIT: nnn>=0
+
+(==omega.ml#1165==)
+imply_raw@9
+imply_raw inp1 : nnn>=0
+imply_raw inp2 : (nnn=0 | 2<=nnn)
+imply_raw@9 EXIT:false
+
+!!! **fixUtil.ml#185:Predicate ll_ss has over invariant
+
+------------------------
+ex25m5d.slk --inv-baga -dre "form_body_inv\|build_ef_formula\|ef_conv_"
+
+# Below loses precision. Need to trace the code of ef_conv_enum_disj to see
+  what is wrong with it.
+
+# seems redundant?
+
+# correction : use om_simplify instead of TP.simplify_raw
+
+(====)
+simplify_omega@778@774@744
+simplify_omega inp1 : ((nnn=0 & self=null) | (self=1 & nnn=2) | 
+  (self=1 & 4<=nnn & exists(alpha:2*alpha=nnn)))
+simplify_omega@778 EXIT: ((self=1 & nnn=2) | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn) | 
+  (self=null & nnn=0))
+
+(====)
+simplify_raw@759@755@723
+simplify_raw inp1 : ((nnn=0 & self=null) | (self=1 & nnn=2) | 
+  (self=1 & 4<=nnn & exists(alpha:2*alpha=nnn)))
+simplify_raw@759 EXIT: (nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))
+
+(==#0==)
+ef_conv_enum_disj@83@81
+ef_conv_enum_disj inp1 :[([], nnn=0 & self=null),([self], nnn=2),([self], 4<=nnn & exists(alpha:2*alpha=nnn))]
+ef_conv_enum_disj@83 EXIT: (nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))
 ===================================================================
 ===================================================================
 ===================================================================

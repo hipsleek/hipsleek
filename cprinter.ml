@@ -5719,3 +5719,5 @@ Cfout.print_sv := string_of_spec_var;;
 (*   let cdefs = Cast.sort_view_list !cprog.Cast.prog_coercion_decls in *)
 (*   get_lemma_cprog cdefs; *)
 (*   cdefs *)
+
+let () = Excore.map_num_invs # set_pr (pr_pair !Cpure.print_svl !Cpure.print_formula) 
