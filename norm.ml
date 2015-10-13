@@ -344,21 +344,12 @@ let norm_unfold iprog cprog
   let () = y_tinfo_hp (add_str "views selected for unfolding"
                          (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
   List.iter (fun (v,unf_lst) -> (* transform body of views *)
-      let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in
       let view_body_lbl = v.C.view_un_struc_formula in
-      let old_sf = v.C.view_formula in
-      let view_body = CF.convert_un_struc_to_formula view_body_lbl in
-      let args = v.C.view_vars in
-      (* struc --> better to re-transform it *)
-      let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
-      let view_struc = CF.formula_to_struc_formula new_view_body in
-      let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
-      let () = C.update_view_formula (fun _ -> view_struc) v in
-      (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
-      ()
+      let view_body_lbl = List.map (fun (f,l) -> (CF.repl_unfold_formula v.C.view_name unf_lst f,l)) view_body_lbl in
+      (* let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in *)
+      (* let view_body_lbl = v.C.view_un_struc_formula in *)
+      Typeinfer.update_view_new_body ~iprog:(Some iprog) v view_body_lbl
     ) ans
-
-
 
 let norm_reuse_subs iprog cprog vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in
@@ -394,6 +385,12 @@ let norm_reuse_subs iprog cprog vdefs to_vns =
       let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in
       ()
     ) to_decls
+
+let norm_reuse_subs iprog cprog vdefs to_vns =
+  let pr1 = pr_list Cprinter.string_of_view_decl_short in
+  let pr2 = pr_list idf in
+  Debug.no_2 "norm_reuse_subs" pr1 pr2 (fun () -> pr1 cprog.C.prog_view_decls)
+    (fun _ _ -> norm_reuse_subs iprog cprog vdefs to_vns) vdefs to_vns
 
 (* to be invoked after reuse to maintain transitivity of equiv *)
 (* assumes vdefs in topo sorted order *)
@@ -455,7 +452,7 @@ let norm_trans_equiv iprog cprog vdefs =
 (*
  assume frm_vns and to_vns are topo sorted
 *)
-let norm_reuse iprog cprog vdefs frm_vns to_vns=
+let norm_reuse iprog cprog vdefs frm_vns to_vns =
   (*filter vdefs to keep order*)
   let () = y_tinfo_hp (add_str "norm_reuse (from_vns)" (pr_list pr_id)) frm_vns in
   let () = y_tinfo_hp (add_str "norm_reuse (to_vns)" (pr_list pr_id)) to_vns in
@@ -481,7 +478,7 @@ let norm_reuse iprog cprog vdefs frm_vns to_vns=
 let regex_search reg_id vdefs =
   match reg_id with
     | REGEX_LIST ids -> ids
-    | REGEX_STAR -> 
+    | REGEX_STAR ->
       let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
       all_ids
 

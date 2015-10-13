@@ -3,21 +3,19 @@ data node{
      node next#REC;
 }.
 
+
 pred ll<> ==
    emp & self=null
-or self::node<_,p>*p::ll2<>.
+or self::node<_,p>*p::ll<>.
+//or self::node<_,p>*p::node<_,q>*q::ll<>.
 
 pred ll1<> ==
    emp & self=null
-or self::node<_,p>*p::ll1<>.
-
-pred lls<n> ==
-   emp & self=null & n=0
-or self::node<_,p>*p::lls<n-1>.
+or self::node<_,p>*p::ll2<>.
 
 pred ll2<> ==
    emp & self=null
-or self::node<_,p>*p::ll<>.
+or self::node<_,p>*p::ll1<>.
 
 pred_extn size[R]<k> ==
    k=0 // base case
@@ -26,11 +24,10 @@ pred_extn size[R]<k> ==
 
 print views.
 
-pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
-pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+//pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
 
-//pred llN1<nnn> == extends ll1<> with size[REC]<nnn>.
-//pred llN11<n,nnn> == extends lls<n> with size[REC]<nnn>.
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+//pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 
 //shape_extends_view [*] with size.
 
@@ -39,15 +36,17 @@ pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 print views.
 
 /*
-# ex25a2.slk
+# ex25a4.slk
 
-pred ll<> ==
-   emp & self=null
-or self::node<_,p>*p::ll2<>.
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
 
-pred ll2<> ==
-   emp & self=null
-or self::node<_,p>*p::ll<>.
+SCC:[[ll];[ll2;ll1];[size]]
+Graph:[(ll2,[ll1]);(size,[size]);(ll1,[ll2]);(ll,[ll]);(llN1,[])]
+!!! **derive.ml#681:view_scc_obj:[size,ll2,ll1,ll]
+!!! **derive.ml#683:view_name:llN1
+!!! **derive.ml#686:derv_extns:[]
+Exception processed: Failure("**derive.ml#689: no prop")
+error at: 
 
 
 ---------------------------------------
@@ -55,6 +54,8 @@ or self::node<_,p>*p::ll<>.
 
 pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
 pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+pred ss<nnn> == extends_rec [ll*] with size[REC]<nnn>.
 
 (==derive.ml#209==)
 extract_abs_formula_branch@1

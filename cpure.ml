@@ -14994,16 +14994,34 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     (* let () = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
     List.map fst map
 
+(* Ocaml compiler bug here *)
+(* norm/ex25a5.slk *)
+(* !!! **cpure.ml#15002:lst_sv:[] *)
+(* !!! **cpure.ml#15003:lst:[] *)
+(* !!! **cpure.ml#15011:**cpure.ml#15011:combine_labels:([],[]) *)
+let rec combine_noexc ls1 ls2 =
+  match ls1,ls2 with
+  | [],_ -> []
+  | _,[] -> []
+  | x::xs,y::ys -> (x,y)::(combine_noexc xs ys)
+
 let combine_labels_w_view_arg  lbl view_arg =
-  let no_lst = Gen.range 1 (List.length view_arg) in
-  let lst = List.combine no_lst view_arg in
-  let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
-  let lst_sv = List.combine lbl lst_sv in
-  let lst_ann = List.map (fun a -> (LO.unlabelled,a)) lst_ann in
-  let no_view_args = lst_sv@lst_ann in
-  let no_view_args = List.sort (fun (_,(no1,_)) (_,(no2,_)) -> no1 - no2) no_view_args in
-  let view_args_w_lbl = List.map (fun (l,(_,a)) -> (l,a)) no_view_args in
-  view_args_w_lbl
+  try
+    let no_lst = Gen.range 1 (List.length view_arg) in
+    let lst = List.combine no_lst view_arg in
+    let lst_sv,lst_ann = List.partition ( fun (_,a) -> is_view_var_arg a) lst in
+    let () = y_tinfo_hp (add_str "lst_sv" (pr_list pr_none)) lst_sv in
+    let () = y_tinfo_hp (add_str "lst" (pr_list pr_none)) lst in
+    let lst_sv = combine_noexc lbl lst_sv in
+    let lst_ann = List.map (fun a -> (LO.unlabelled,a)) lst_ann in
+    let no_view_args = lst_sv@lst_ann in
+    let no_view_args = List.sort (fun (_,(no1,_)) (_,(no2,_)) -> no1 - no2) no_view_args in
+    let view_args_w_lbl = List.map (fun (l,(_,a)) -> (l,a)) no_view_args in
+    view_args_w_lbl
+  with r -> 
+    let () = y_winfo_hp (add_str (x_loc^"combine_labels") 
+                           (pr_pair (pr_list (fun (a,_)->a)) (pr_list pr_none))) (lbl,view_arg) in
+    raise r
 
 let initialize_positions_for_view_params (va: 'a list) = 
   let positions = Gen.range 1 (List.length va) in
@@ -15473,3 +15491,34 @@ let rec gen_cl_eqs pos svl p_res=
               mkAnd acc_p p pos
           ) p_res rest in
           gen_cl_eqs pos rest new_p_res
+
+let mk_bform pf = BForm((pf,None),None) 
+
+let mk_eq_zero a1 = 
+  let a1 = mkVar a1 no_pos in
+  mk_bform (Eq (a1, mkIConst 0 no_pos,no_pos))
+
+let mk_max a a1 a2 = 
+  let a = mkVar a no_pos in
+  let a1 = mkVar a1 no_pos in
+  let a2 = mkVar a2 no_pos in
+  mk_bform (mkEqMax a a1 a2 no_pos)
+
+let mkEqExp_raw (ae1 : exp) (ae2 : exp) pos :formula =
+  mk_bform (Eq (ae1, ae2, pos))
+
+let mk_inc lhs rhs = 
+  let lhs = mkVar lhs no_pos in
+  let rhs = mkVar rhs no_pos in
+  let rhs = mkAdd rhs (mkIConst 1 no_pos) no_pos in
+  mkEqExp_raw lhs rhs no_pos
+
+let mk_geq v i = 
+  let lhs = mkVar v no_pos in
+  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let is_AndList f =
+  match f with
+  | AndList _ -> true
+  | _ -> false

@@ -17,6 +17,7 @@ module I = Iast
 module IF = Iformula
 module IP = Ipure
 module CF = Cformula
+module CFE = Cf_ext
 module CP = Cpure
 module MCP = Mcpure
 module H = Hashtbl
@@ -1668,3 +1669,42 @@ let trans_iformula_to_cformula iprog body =
   let fvars = [] in
   let (sv,nbody) = !trans_formula iprog quantify (fvars : ident list) sep_collect body tlist clean_res in
   nbody
+
+let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
+  let () = vd.C.view_un_struc_formula <- view_body_lbl in
+  let iprog = match iprog with 
+    | Some ip -> ip
+    | None ->  Iast.get_iprog () in
+  let old_sf = vd.C.view_formula in
+  let view_body = CF.convert_un_struc_to_formula view_body_lbl in
+  let args = vd.C.view_vars in
+  (* struc --> better to re-transform it *)
+  let new_view_body = case_normalize_renamed_formula iprog args [] view_body in
+  let view_struc = CF.formula_to_struc_formula new_view_body in
+  let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
+  let () = C.update_view_formula (fun _ -> view_struc) vd in
+  let () = if base_flag then 
+      begin
+        let () = y_tinfo_pp "updating base case now" in
+        let is_prim_v = vd.C.view_is_prim in
+        let rbc = CFE.compute_raw_base_case is_prim_v view_body_lbl in
+        let vbc_i = vd.C.view_baga_inv in
+        let vbc_o = vd.C.view_baga_over_inv in
+        let vbc_u = vd.C.view_baga_under_inv in
+        (* let vbc_i = conv_baga_inv vbi_i (\* vd.I.view_baga_inv *\) in *)
+        (* let vbc_o = conv_baga_inv vbi_o in *)
+        (* let vbc_u = conv_baga_inv vbi_u in *)
+        let new_pf = MCP.pure_of_mix vd.C.view_user_inv in
+        let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos in
+        let () = vd.C.view_raw_base_case <- rbc in
+        let () = vd.C.view_user_inv <- user_inv in
+        let () = vd.C.view_x_formula <- user_x_inv in
+        (* let () = vd.C.view_baga_inv <- vbc_i in *)
+        let () = vd.C.view_baga_over_inv <- vboi in
+        let () = vd.C.view_baga_x_over_inv <- vboi in
+        let () = vd.C.view_baga_under_inv <- vbui in
+        ()
+      end
+  in
+  (* (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
+  ()

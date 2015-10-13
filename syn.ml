@@ -666,6 +666,28 @@ let trans_hprel_to_view iprog cprog hprels =
   let pr2 = pr_list Cprinter.string_of_view_decl_short in
   Debug.no_1 "Syn:trans_hprel_to_view" pr1 pr2 
     (fun _ -> trans_hprel_to_view iprog cprog hprels) hprels
+
+(**********************)
+(***** PRED REUSE *****)
+(**********************)
+let aux_pred_reuse iprog cprog all_views =
+  let ids = List.map (fun x -> x.Cast.view_name) all_views in 
+  (* let vdefs = cprog.Cast.prog_view_decls in *)
+  let vdefs = C.get_sorted_view_decls cprog in
+  let () = y_binfo_pp "XXX Scheduling pred_elim_useless" in
+  let vdefs = Norm.norm_elim_useless vdefs ids in
+  let () = y_binfo_pp "XXX Scheduling pred_reuse" in
+  let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
+  let () = y_binfo_pp "XXX Scheduling pred_reuse" in
+  let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
+  let () = y_tinfo_hp (add_str "XXX derived views" 
+      (pr_list Cprinter.string_of_view_decl_short)) all_views in
+  let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in
+  let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in
+  let () = y_binfo_hp (add_str "XXX reuse found ..." (pr_list (pr_pair pr_id pr_id))) lst in
+  let () = y_binfo_pp "XXX Scheduling pred_reuse_subs" in
+  let () = Norm.norm_reuse_subs iprog cprog vdefs ids in
+  lst
   
 (*************************)
 (***** DERIVING VIEW *****)
@@ -768,17 +790,18 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
         CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
         (derive_view iprog cprog) 
     in
-    let () = y_binfo_pp "XXX Scheduling pred_reuse_subs" in
+    (* let () = y_binfo_pp "XXX Scheduling pred_reuse_subs" in                                     *)
     let all_d_views = tmp_views@derived_views in
-    let ids = List.map (fun x -> x.Cast.view_name) all_d_views in
-    let vdefs = cprog.Cast.prog_view_decls in
-    let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
-    let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
-    let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in
-    let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in
-    let () = y_binfo_hp (add_str "XXX reuse found .." (pr_list (pr_pair pr_id pr_id))) lst in
-    let () = y_tinfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short)) 
-        all_d_views in
+    (* let ids = List.map (fun x -> x.Cast.view_name) all_d_views in                               *)
+    (* let vdefs = cprog.Cast.prog_view_decls in                                                   *)
+    (* let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in                                   *)
+    (* let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in               *)
+    (* let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in            *)
+    (* let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in              *)
+    (* let () = y_binfo_hp (add_str "XXX reuse found .." (pr_list (pr_pair pr_id pr_id))) lst in   *)
+    (* let () = y_tinfo_hp (add_str "derived views" (pr_list Cprinter.string_of_view_decl_short))  *)
+    (*     all_d_views in                                                                          *)
+    let lst = aux_pred_reuse iprog cprog all_d_views in
     (* Equiv test to form new pred *)
     let r_cbody = trans_hrel_to_view_formula cprog l_body in
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
@@ -919,12 +942,19 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
       (IF.mkETrue top_flow no_pos) no_pos
   in
   let orig_info = (norm_ipred.I.view_name, norm_ipred.I.view_vars) in
+  (* TODO: Auto derive REC *)
   let extn_info = (extn_pred.C.view_name, ["REC"], [extn_view_var]) in
-  let extn_iview = { extn_iview with I.view_derv_info = [(orig_info, extn_info)] } in
-  let extn_cview = Derive.trans_view_dervs iprog 
+  let extn_iview = { extn_iview with 
+    I.view_derv_from = Some (REGEX_LIST [(norm_ipred.I.view_name, true)]);
+    I.view_derv_info = [(orig_info, extn_info)];
+    I.view_derv_extns = [extn_info] } in
+  let extn_cview_lst = x_add Derive.trans_view_dervs iprog 
     Rev_ast.rev_trans_formula Astsimp.trans_view [] 
-    cprog.C.prog_view_decls extn_iview
-  in
+    cprog.C.prog_view_decls extn_iview in
+  let () = y_binfo_hp (add_str "extn_cview_lst" 
+      (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
+  let comb_extn_name = norm_ipred.I.view_name ^ "_" ^ extn_view_name in
+  let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
   let extn_cview = { extn_cview with C.view_name = norm_pred.C.view_name } in
   let () = C.update_view_decl cprog extn_cview in
   extn_cview
@@ -949,6 +979,27 @@ let extn_pred_list iprog cprog extn preds =
       extn_norm_pred_list iprog cprog extn_pred norm_preds
     | _ -> failwith (extn ^ " is not a View_EXTN")
   with Not_found -> failwith ("Cannot find the View_EXTN " ^ extn)
+
+let extn_pred_id_list iprog cprog extn preds =
+  let pred_decls = List.map (fun id ->
+    try C.look_up_view_def_raw 21 cprog.C.prog_view_decls id
+    with _ -> failwith ("Cannot find the view " ^ id)) preds in
+  extn_pred_list iprog cprog extn pred_decls
+
+let extn_pred_scc iprog cprog scc_proc_names = 
+  let scc_procs = List.map (fun proc_name ->
+    let proc = C.look_up_proc_def_raw cprog.C.new_proc_decls proc_name in
+    proc) scc_proc_names in
+  let scc_proc_specs = List.map (fun proc -> 
+    proc.C.proc_stk_of_static_specs # top) scc_procs in
+  let extn_lst = merge_infer_extn_lsts 
+      (List.map get_inf_pred_extn_struc_formula scc_proc_specs) in
+  let extn_pred_lst = partition_by_key 
+    (fun (_, prop) -> prop) eq_str
+    (expand_infer_extn_lst extn_lst) in
+  List.map (fun (extn, extn_pred_lst) ->
+    let preds = List.map (fun (id, _) -> id) extn_pred_lst in
+    extn_pred_id_list iprog cprog extn preds) extn_pred_lst
 
 (*********************************)
 (***** COMBINE DISJ BRANCHES *****)

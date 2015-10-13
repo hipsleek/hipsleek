@@ -9363,22 +9363,54 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let sel_args = get_args_from_pos dn.h_formula_data_arguments all_sel_pos in
     sel_args
   in
+  let get_last_n n args =
+    (* BUG : OCaml compiler bug when n>length args *)
+    (* let args = hv.h_formula_view_arguments in *)
+    let len = List.length args in
+    let () = y_ninfo_hp (add_str "len" string_of_int) len in
+    let () = y_ninfo_hp (add_str "n" string_of_int) n in
+    let () = y_ninfo_hp (add_str "args" !CP.print_svl) args in
+    let arr = Array.of_list args in
+    let arr_ex = Array.sub arr (len - n) n in
+    let r = Array.to_list arr_ex in
+    let () = y_ninfo_hp (add_str "r" !CP.print_svl) r in
+    r
+  in
+  let get_last_n n args =
+    let n_a = List.length args in
+    let rec drop args n =
+      if n<=0 then args
+      else 
+        match args with
+        | [] -> []
+        | x::xs -> drop xs (n-1) in
+    drop args (n_a - n) in
+  let get_last_n n args =
+    let pr = !CP.print_svl in
+    Debug.no_2 "get_last_n" string_of_int pr pr get_last_n n args in
   let classify_rec_svl hvs n sv=
     let rec look_up l_hvs=
       match l_hvs with
       | [] -> []
       | hv::rest -> if CP.eq_spec_var hv.h_formula_view_node sv then
           begin
-            let arr = Array.of_list hv.h_formula_view_arguments in
-            let arr_ex = Array.sub arr (List.length hv.h_formula_view_arguments -
-                                        n) n in
-            Array.to_list arr_ex
+            let args = hv.h_formula_view_arguments in
+            get_last_n n args
+            (* let len = List.length args in *)
+            (* let () = y_ninfo_hp (add_str "len" string_of_int) len in *)
+            (* let () = y_ninfo_hp (add_str "n" string_of_int) n in *)
+            (* let () = y_ninfo_hp (add_str "args" !CP.print_svl) args in *)
+            (* let arr = Array.of_list args in *)
+            (* let arr_ex = Array.sub arr (len - n) n in *)
+            (* let r = Array.to_list arr_ex in *)
+            (* let () = y_ninfo_hp (add_str "r" !CP.print_svl) r in *)
+            (* r *)
           end
         else
           look_up rest
     in
     let extra_args= look_up hvs in
-    (* let () =  Debug.info_pprint ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in *)
+    let () =  x_ninfo_pp ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in
     if extra_args = [] then ([sv],[]) else ([],[(sv,extra_args)])
   in
   let pred_classify_rec_svl hrels n sv=
@@ -9389,9 +9421,10 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
         let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
         if CP.mem_svl sv args then
           begin
-            let arr = Array.of_list args in
-            let arr_ex = Array.sub arr (List.length args - n) n in
-            Array.to_list arr_ex
+            get_last_n n args
+            (*  let arr = Array.of_list args in *)
+            (* let arr_ex = Array.sub arr (List.length args - n) n in *)
+            (* Array.to_list arr_ex *)
           end
         else
           look_up rest
@@ -9415,27 +9448,72 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let hds,hvs, hrels= flatten_nodes f1 in
     let sel_svl = CP.remove_dups_svl ( List.concat (List.map get_sel_args_from_dnode hds)) in
     (*process null pointer*)
-    let () =  Debug.ninfo_pprint ("  f1: "^ (!print_formula f1)) no_pos in
-    let () =  Debug.ninfo_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in
+    let () =  x_ninfo_pp ("  f1: "^ (!print_formula f1)) no_pos in
+    let () =  x_ninfo_pp ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in
     let null_svl,null_paired_svl = classify_sel_null_svl f1 sel_svl in
-    (* let () =  Debug.info_pprint ("  null_svl: "^ (!CP.print_svl null_svl)) no_pos in *)
-    let sel_svl_rest = CP.diff_svl sel_svl null_svl in
+    let () =  x_ninfo_pp ("  null_svl: "^ (!CP.print_svl null_svl)) no_pos in
+    let sel_svl_rest = x_add CP.diff_svl sel_svl null_svl in
     (* let () =  Debug.info_pprint ("  sel_svl_rest: "^ (!CP.print_svl sel_svl_rest)) no_pos in *)
+    let () = y_tinfo_pp "1" in
     let val_svl,rec_svl= if is_view then
+        let () = y_tinfo_pp "2a" in
         List.split (List.map (classify_rec_svl hvs (List.length extn_args)) sel_svl_rest)
       else
+        let () = y_tinfo_pp "2b" in
         List.split (List.map (pred_classify_rec_svl hrels (List.length extn_args)) sel_svl_rest)
     in
+    let () = y_tinfo_hp (add_str "rec_svl" (pr_list (pr_list (pr_pair !CP.print_sv pr_none)))) rec_svl in
+    let () = y_tinfo_pp "3" in
     let val_svl1 = List.concat val_svl in
+    let () = y_tinfo_pp "4" in
     let rec_svl1 = List.concat rec_svl in
     if (* val_svl1=[] && *) rec_svl1=[] && null_paired_svl = []
     then ([(f1,val_svl1)],[]) else ([],
                                     [(f1, (* List.filter (fun sv -> not (CP.is_node_typ sv)) *) val_svl1 (*todo: should improve with double check*),
                                       rec_svl1@null_paired_svl)])
   in
+  let () = y_tinfo_pp "5" in
   let ls_bases,ls_inds = List.split (List.map process_one fs) in
-  (List.concat ls_bases, List.concat ls_inds)
+  let () = y_tinfo_pp "6" in
+  let r1 = List.concat ls_bases in
+  let n1 = List.length r1 in
+  let () = y_tinfo_hp (add_str "ls_bases" string_of_int) n1 in
+  let r2 = List.concat ls_inds in
+  let n2 = List.length r2 in
+  let () = y_tinfo_hp (add_str "ls_inds" string_of_int) n2 in
+  let pr1a x = string_of_int (List.length x) in
+  let pr1 = !CP.print_svl in
+  let pr_1 = (pr_list (pr_pair !print_formula pr1)) in
+  let pr_2 = (pr_list (pr_triple pr_none pr1 (pr_list (pr_pair !CP.print_sv pr1a)))) in
+  let pr_3 = (pr_list (pr_triple !print_formula pr_none pr_none)) in
+  let () = y_tinfo_hp (add_str "ls_bases" pr_1) r1 in
+  let () = y_tinfo_hp (add_str "ls_inds" pr_3) r2 in
+  let () = y_tinfo_hp (add_str "ls_inds" pr_2) r2 in
+  (* let v = match r2 with *)
+  (*   | [(_,_,lst)] -> lst  *)
+  (*   | _ -> [] in *)
+  (* let () = y_tinfo_pp "7a" in *)
+  (* let v = List.hd v in *)
+  (* let v = List.hd (snd v) in *)
+  (* let () = y_tinfo_pp "7b" in *)
+  (* let t = CP.type_of_spec_var v in *)
+  (* let () = y_tinfo_pp "7b1" in *)
+  (* let n = CP.name_of_spec_var v in *)
+  (* let () = y_tinfo_pp "8" in *)
+  (* let () = y_tinfo_hp (add_str "len(problem sv)" (fun s -> string_of_int (String.length s))) n in   *)
+  (r1,r2)
 
+(* (==derive.ml#209==) *)
+(* extract_abs_formula_branch@2 *)
+(* extract_abs_formula_branch inp1 :[ emp&self=null&{FLOW,(1,26)=__flow#E}[], (exists p_82,Anon_81: self::node<Anon_81,p_82>@M * p_82::ll<>@M& *)
+(* {FLOW,(1,26)=__flow#E}[])] *)
+(* extract_abs_formula_branch inp2 :ll *)
+(* extract_abs_formula_branch inp3 :extn_ll *)
+(* extract_abs_formula_branch inp4 :[size_prop] *)
+(* extract_abs_formula_branch inp5 :[(node,1)] *)
+(* extract_abs_formula_branch inp6 :[self] *)
+(* extract_abs_formula_branch@2 EXIT:(emp&self=null&{FLOW,(1,26)=__flow#E}[],[])],[( (exists p_82,Anon_81: self::node<Anon_81,p_82>@M * p_82::extn_ll<size_83>@M& *)
+(* {FLOW,(1,26)=__flow#E}[]),[],[(p_82,[size_83])])]) *)
 let extract_abs_formula_branch fs v_base_name v_new_name extn_args ls_ann_infos
     pure_extn_svl is_spec is_view=
   let pr0 = pr_list !print_formula in
@@ -19537,6 +19615,21 @@ let repl_equiv_heap find_f hf =
       end
     | _ -> None
   in map_h_formula hf f
+
+(* let process_heap_prop_extn p_tab pname vns (\* mutual-rec *\) nnn_sv hf = *)
+(*   let f hf = match hf with *)
+(*     | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf *)
+(*     | DataNode dl -> *)
+(*       failwith x_tbi *)
+(*     | ViewNode vl -> *)
+(*       let name = vl.h_formula_view_name in *)
+(*       if List.exists (fun v -> v=name) vns then *)
+(*         begin *)
+(*           failwith x_tbi *)
+(*         end *)
+(*       else Some hf *)
+(*     | _ -> None *)
+(*   in map_h_formula hf f *)
 
 let repl_equiv_formula find_f f =
   map_formula_heap_only (repl_equiv_heap find_f) f

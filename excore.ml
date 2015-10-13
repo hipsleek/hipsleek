@@ -569,9 +569,10 @@ module EPURE =
       mkAnd bf f no_pos
 
     let ef_conv_disj_ho conv disj : formula =
-      List.fold_left (fun f ep ->
+      let f = List.fold_left (fun f ep ->
           mkOr f (conv ep) None no_pos
-        ) (mkFalse no_pos) disj
+        ) (mkFalse no_pos) disj in
+      !simplify_raw f
 
     let ef_conv_disj_x disj : formula =
       ef_conv_disj_ho ef_conv_neq disj

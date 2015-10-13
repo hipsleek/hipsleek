@@ -995,9 +995,18 @@ let string_of_barrier_decl b =
 (* pretty printig for view declaration *)
 let string_of_view_decl v = 
   let ho_str = "{"^(String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v^(string_of_ho_split_kind sk)) v.view_ho_vars))^"}" in
+  let extn_str =
+    match v.view_derv_from with
+    | None -> ""
+    | Some regex_ids -> string_of_regex_id_star_list regex_ids
+  in
   v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-  (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
-  ^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
+  (string_of_struc_formula v.view_formula) 
+  ^ " inv " ^ (string_of_pure_formula v.view_invariant) 
+  ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) 
+  ^ " view_data_name: " ^ v.view_data_name 
+  ^ " view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
+  ^ " extends" ^ extn_str
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
@@ -1228,6 +1237,8 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
 ;;
 
+let string_of_pure_exp = string_of_formula_exp;;
+
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
@@ -1244,5 +1255,5 @@ Iast.print_coerc_decl_list := string_of_coerc_decl_list;;
 Ipure.print_formula :=string_of_pure_formula;
 Ipure.print_b_formula :=string_of_b_formula;
 Ipure.print_formula_exp := string_of_formula_exp;
-Ipure.print_id := string_of_id;
+Ipure.print_id := string_of_id
 

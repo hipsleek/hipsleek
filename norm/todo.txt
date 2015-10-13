@@ -18,7 +18,6 @@ or:
 The command should be idempotent in that the 
 2nd application will cause no-change.
 ===================================================================
-===================================================================
 # ex21r3.slk
 
 pred lseg2a<n,p> == self = p & n=0
@@ -1064,10 +1063,287 @@ WARNING: _0:0_0:0:Cannot extend the View_EXTN size
 Segmentation fault (core dumped)
 
 ===================================================================
+# ex20a1.ss --pred-en-equiv
+
+# please schedule pred-reuse when below turned on
+
+  ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
+
+
+# compare --ops (old predicate synthesis)
+
+ EInfer @pure_field,@leak[P]
+   EBase 
+     x::ll<>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]Stop z3... 108 invocations 
 ===================================================================
+# ex20b.ss
+
+  infer [P1,@classic,@pure_field]
+  requires x::ll<>
+  //ensures P(x,res);
+  ensures P1(x);
+
+# below will need the complex unfolding that Richard is currently doing
+
+[ view P1<>= 
+  EList
+    :EBase 
+       exists (Impl)[q_1631](* lbl: *){285}->(exists Anon_1630: (* lbl: *){285}->
+       self::node<Anon_1630,q_1631>@M * q_1631::P1<>@M&self!=null&
+       {FLOW,(1,28)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){286}->self::ll<>@M&self=null&{FLOW,(1,28)=__flow#E}[]
+    ]
+
 ===================================================================
+# ex25a5.slk --new-pred-extn
+
+# to use code from pred_extn
+
+# to fix ptr equality (DONE)
+
+# to check mutual-recursion (OK)
+
+# to check double node (OK)
+
+# base-case (FIXED)
+  raw base case: 
+  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+
+# inv not generated? # use --inv-baga (OK)
+
+  inv: ((nnn=0 & self=null) | (self!=null & 1<=nnn))
+  baga inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga over inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga over inv (unfolded): [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga under inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  xform: ((nnn=0 & self=null) | (self!=null & 1<=nnn))
+
+# is_rec marker (OK)
+  is_recursive?: true
+
+# --inv and --inv-baga (OK)
+
+
+--new-pred-extn
+ 
+view ll_ss{}[]<nnn:int>= 
+  view_domains: (size,0,1)
+   view ll_ss<nnn:int>= 
+     EList
+      :EBase 
+         (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; p; Anon_13; 
+            q](* lbl: *){8}->self::node<Anon_12,p>@M * 
+                             p::node<Anon_13,q>@M * q::ll<>@M&
+            {FLOW,(1,26)=__flow#E}[]
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  
+  unstructured formula: 
+    (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){8}->(exists Anon_12,p,Anon_13,
+       q: (* lbl: *){8}->self::node<Anon_12,p>@M * p::node<Anon_13,q>@M * 
+                         q::ll_ss<nnn_61>@M&
+       {FLOW,(1,26)=__flow#E}[])
+  xform: true
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+
+--old-pred-extn
+
+!!! **derive.ml#545:der_view(old):
+ view ss{}[]<nnn:int>= 
+  view_domains: (size,0,1)
+   view ss<nnn:int>= 
+    EList
+          :EBase 
+         (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_55; 
+            p_56](* lbl: *){10}->(exists nnn_57: (* lbl: *){10}->self::node<Anon_55,p_56>@M * 
+                                                                 p_56::ss<nnn_57>@M&
+            nnn=nnn_57+1 & 0<=nnn_57&{FLOW,(1,26)=__flow#E}[])
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: nnn>=0
+  
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+  
+  unstructured formula: (* lbl: *){9}->emp&self=null & nnn=0&
+                        {FLOW,(1,26)=__flow#E}[]|| (* lbl: *){10}->(exists nnn_57,
+                                                   Anon_55,
+                                                   p_56: (* lbl: *){10}->
+                                                   self::node<Anon_55,p_56>@M * 
+                                                   p_56::ss<nnn_57>@M&
+                                                   nnn=nnn_57+1 & 0<=nnn_57&
+                                                   {FLOW,(1,26)=__flow#E}[])
+  xform: nnn>=0
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
+ 
+
 ===================================================================
+# ex25a5e.slk -dre "compute_fixpt" (OK)
+
+(need to use --inv and --inv-baga)
+
+pred llsize<n> ==
+   emp & self=null & n=0
+  or self::node<_,p>*p::llsize<n-1>
+  inv true.
+
+# why doens't compute_fixpt work?
+
+// should inv = xform?
+
+(==astsimp.ml#2737==)
+compute_inv_baga@2
+compute_inv_baga inp1 :[llsize]
+compute_inv_baga@2 EXIT:[ view llsize{}[]<n:int>= 
+ inv: ((self=null & n=0) | (self!=null & 1<=n))
+ baga inv: [([], self=null & n=0),([self], 1<=n)]
+ baga over inv: [([], self=null & n=0),([self], 1<=n)]
+ baga over inv (unfolded): [([], self=null & n=0),([self], 1<=n)]
+ baga under inv: [([], self=null & n=0),([self], 1<=n)]
+ xform: ((self=null & n=0) | (self!=null & 1<=n))
+ ]
+
 ===================================================================
+# ex25m5b.slk
+
+no --inv-baga
+
+  inv: nnn>=0
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+
+# wrong over-approx & unsound under-approx
+
+--inv-baga
+
+  inv: (self=null | self!=null)
+  baga inv: [([], self=null),([self], true)]
+  baga over inv: [([], self=null),([self], true)]
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+
+ERROR: at ex25m5b-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Under)
+
+chinwn@loris-60:~/hg/sleekex/norm$ fixcalc logs/fixcalc.inp 
+# ll_ss:={ ... };
+(nnn_52 = 2*idx_53 && idx_53 >= 0)
+
+===================================================================
+# ex25m5c.slk
+
+ll<n> view:
+  inv: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+  
+  baga over inv: [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  
+  xform: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+
+===================================================================
+# ex25m5b.slk (FIXED)
+
+# try simplify inv generated .. (FIXED)
+
+compute_inv_baga@3
+compute_inv_baga inp1 :[size,ll]
+compute_inv_baga@3 EXIT:[ view_extn size{}[R:size]<k:int>= 
+ inv: (k>=0 | k>=0)
+ baga inv: [([], k>=0),([], k>=0)]
+ baga over inv: [([], k>=0),([], k>=0)]
+ baga over inv (unfolded): [([], k>=0),([], k>=0)]
+ baga under inv: [([], k>=0),([], k>=0)]
+ xform: (k>=0 | k>=0)
+ ,
+ view ll{}[]<>= 
+ inv: (self=null | self!=null)
+ baga inv: [([], self=null),([self], true)]
+ baga over inv: [([], self=null),([self], true)]
+ baga over inv (unfolded): [([], self=null),([self], true)]
+ baga under inv: [([], self=null),([self], true)]
+ xform: (self=null | self!=null)
+ ]
+
+
+ex25m5b.slk
+!!! **derive.ml#761:new_vd:
+ inv: ((self=null | self!=null)) & nnn>=0
+baga over inv (unfolded): [([], self=null),([self], true)]
+xform: (self=null | self!=null)
+
+# baga_inv and under inv wrong; should contain only (FIXED)
+
+compute_inv_baga@2 EXIT:[ view ll_ss{}[]<nnn:int>= 
+  inv: ((nnn=0 & self=null) | 
+        (self!=null & 2<=nnn & exists(alpha:2*alpha=nnn)))
+  baga inv: [([], self=null),([self], true)] # not valid
+  baga over inv: [([], nnn=0 & self=null),([self], 2<=nnn & exists(alpha:2*alpha=nnn))]
+  baga over inv (unfolded): [([], nnn=0 & self=null),([self], 2<=nnn & exists(alpha:2*alpha=nnn))]
+  baga under inv: [([], self=null),([self], true)] # not valie
+  xform: ((nnn=0 & self=null) | 
+          (self!=null & 2<=nnn & exists(alpha:2*alpha=nnn)))
+
+--before compute_inv_baga
+  inv: ((self=null | self!=null)) & nnn>=0
+  baga inv: [([], self=null),([self], true)]
+  
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+  xform: (self=null | self!=null)
+
+
+!!! **derive.ml#757:new_vd:
+ view ll_ss{}[]<nnn:int>= 
+ inv: ((self=null | self!=null)) & nnn>=0
+  baga inv: [([], self=null),([self], true)]
+  
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+  xform: (self=null | self!=null)
+
+===================================================================
+# ex25m5d.slk  =--inv-baga
+
+// fixcalc error ...
+fixcalc: Argument of widen is not a formula
+
+Last Proving Location: ex25m5d-pred-extn-double-ll.slk_8:3_8:18
+
+ERROR: at ex25m5d-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Over)
+
+Exception processed: Failure("\nInv Check: Fail.(View ll_ss:Over)")
+
+
 ===================================================================
 ===================================================================
 ===================================================================

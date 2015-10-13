@@ -20,6 +20,7 @@ let intersect = Gen.BList.intersect_eq CP.eq_spec_var
 let eq_id s1 s2 = String.compare s1 s2 == 0
 
 let mem_id = Gen.BList.mem_eq eq_id
+let subset_id = Gen.BList.subset_eq eq_id
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -534,8 +535,31 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
     | CF.HRel _ ->
       let hrel_name, hrel_args = sig_of_hrel hf in
       let hrel_id = CP.name_of_spec_var hrel_name in
+      let subs_hrel_name, view_args =
+          try
+            let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls hrel_id in
+            let vargs = vdef.view_vars in
+            let subs_name = 
+              if not !Globals.pred_equiv then hrel_name
+              else if vdef.C.view_equiv_set # is_empty then hrel_name
+              else
+                let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
+                match hrel_name with
+                | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p)
+            in subs_name, vargs
+          with _ -> hrel_name, []
+      in
       let hrel_root, hrel_args = get_root_args_hp prog hrel_id hrel_args in
-      let n_hf = CF.mk_HRel_as_view_w_root hrel_name hrel_root hrel_args no_pos in
+      let extn_args =
+        let rec helper h_args v_args =
+          match h_args, v_args with
+          | [], _ -> v_args
+          | _, [] -> []
+          | h::hs, v::vs -> helper hs vs 
+        in
+        helper hrel_args view_args  
+      in
+      let n_hf = CF.mk_HRel_as_view_w_root subs_hrel_name hrel_root (hrel_args @ extn_args) no_pos in
       (match n_hf with
       | CF.ViewNode v ->
         (* Setting imm is important for lemma proving *)
@@ -620,6 +644,19 @@ let trans_hrel_to_view_spec_scc cprog scc_procs =
 
 let remove_inf_vars_spec_scc cprog scc_procs inf_vars = 
   trans_spec_scc (remove_inf_vars_struc_formula inf_vars) cprog scc_procs
+
+let rec get_inf_pred_extn_struc_formula f = 
+  match f with
+  | CF.EInfer ei -> ei.formula_inf_obj # get_infer_extn_lst
+  | CF.EBase eb -> begin
+      match eb.formula_struc_continuation with
+      | None -> []
+      | Some c -> get_inf_pred_extn_struc_formula c
+    end 
+  | CF.EAssume _ -> []
+  | CF.ECase ec -> List.concat (List.map 
+      (fun (_, c) -> get_inf_pred_extn_struc_formula c) ec.formula_case_branches)
+  | CF.EList el -> List.concat (List.map (fun (_, c) -> get_inf_pred_extn_struc_formula c) el)
 
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
