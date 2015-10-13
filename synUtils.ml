@@ -587,6 +587,12 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
   in
   CF.trans_heap_formula f_h_f f
 
+let trans_hrel_to_view_formula prog (f: CF.formula) = 
+  let pr1 = !CF.print_formula in
+  let pr2 = pr_pair (add_str "trans_f" pr1) (add_str "extn_args" !CP.print_svl) in
+  Debug.no_1 "Syn.trans_hrel_to_view_formula" pr1 pr2 
+    (fun _ -> trans_hrel_to_view_formula prog f) f
+
 let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
   match sf with
   | CF.EList el -> CF.EList (List.map (fun (sld, sf) -> (sld, (trans_hrel_to_view_struc_formula prog) sf)) el)
@@ -645,6 +651,9 @@ let rec remove_inf_vars_struc_formula inf_vars (sf: CF.struc_formula) =
 let trans_spec_proc trans_f cprog proc =
   let spec = proc.C.proc_stk_of_static_specs # top in
   let nspec = trans_f spec in
+  let pr_spec = Cprinter.string_of_struc_formula_for_spec in
+  let () = y_binfo_hp (add_str "spec" pr_spec) spec in
+  let () = y_binfo_hp (add_str "nspec" pr_spec) nspec in
   let () = proc.C.proc_stk_of_static_specs # push_pr ("SynUtils:" ^ x_loc) nspec in
   let nproc = { proc with
     C.proc_static_specs = nspec;

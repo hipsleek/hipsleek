@@ -14998,6 +14998,12 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     (* let () = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
     List.map fst map
 
+let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) = 
+  let pr1 = pr_list (pr_pair print_view_arg string_of_int) in
+  let pr2 = pr_list (pr_pair !print_annot_arg string_of_int) in
+  Debug.no_3 "create_view_arg_list_from_pos_map" pr1 !print_svl pr2 (pr_list print_view_arg) 
+    create_view_arg_list_from_pos_map map hargs annot
+
 (* Ocaml compiler bug here *)
 (* norm/ex25a5.slk *)
 (* !!! **cpure.ml#15002:lst_sv:[] *)
