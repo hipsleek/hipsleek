@@ -7,6 +7,14 @@ pred ll<> ==
    emp & self=null
 or self::node<_,p>*p::ll2<>.
 
+pred ll1<> ==
+   emp & self=null
+or self::node<_,p>*p::ll1<>.
+
+pred lls<n> ==
+   emp & self=null & n=0
+or self::node<_,p>*p::lls<n-1>.
+
 pred ll2<> ==
    emp & self=null
 or self::node<_,p>*p::ll<>.
@@ -20,6 +28,9 @@ print views.
 
 pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
 pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+//pred llN1<nnn> == extends ll1<> with size[REC]<nnn>.
+//pred llN11<n,nnn> == extends lls<n> with size[REC]<nnn>.
 
 //shape_extends_view [*] with size.
 

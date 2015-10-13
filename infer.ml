@@ -4179,7 +4179,8 @@ let get_eqset puref =
 (*   ) in *)
 (*   let pr4 = Cprinter.string_of_h_formula in *)
 (*   Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" (add_str "estate" pr1) (\* pr4 *\) (add_str "rhs_p" pr2) pr3 *)
-(*     ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es lhs_b (\* rhs0 *\) rhs_p pos) es(\* .CF.es_formula *\) (\* rhs0 *\) rhs_p *)
+(*     ( fun _ _ -> 
+infer_collect_hp_rel_empty_rhs prog es lhs_b (\* rhs0 *\) rhs_p pos) es(\* .CF.es_formula *\) (\* rhs0 *\) rhs_p *)
 
 (*******************************************************)
 (*******************************************************)
