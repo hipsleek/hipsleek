@@ -629,7 +629,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
           let l_f = List.map fst vd.C.view_un_struc_formula in
           let () = y_binfo_hp (add_str "p_table:prop view" pr_id) vd.C.view_name in
           let () = y_binfo_hp (add_str "p_table:vars" !CP.print_svl) vd.C.view_vars in
-          let () = y_binfo_hp (add_str "p_table:prop_extns" (pr_list Cprinter.essstring_of_typed_spec_var)) vd.C.view_prop_extns in
+          let () = y_binfo_hp (add_str "p_table:prop_extns" (pr_list Cprinter.string_of_typed_spec_var)) vd.C.view_prop_extns in
           let () = y_binfo_hp (add_str "p_table:body" (pr_list !CF.print_formula)) l_f in
           vns <- vs
       end
