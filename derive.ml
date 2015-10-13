@@ -559,7 +559,7 @@ let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_m
 
 let pr_sv = CP.print_sv
 
-(* class data_table = *)
+(* class datatable = *)
 (*   object (self) *)
 (*     val mutable lst = [] (\* (ptr,value) list *\) *)
 (*     method add_data dn param =  *)
@@ -579,16 +579,18 @@ let pr_sv = CP.print_sv
 
 let data_decl_obj = CFE.data_decl_obj
 
-class prop_table pname eq nnn tag =
+class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq nnn_s tag_s =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
     val mutable def_lst = [] (* list of ptr with defined value *)
     val mutable pure_lst = []
     val mutable vns = []
     val mutable quan_vs = []
+    val nnn = List.hd nnn_s
+    val tag = List.hd tag_s
     val fresh = CP.fresh_spec_var
     val pr = !pr_sv
-    val orig_sv = CP.mk_typed_spec_var Int nnn 
+    val orig_sv = CP.mk_typed_spec_var Int (List.hd nnn_s) 
     val mutable self_sv = CP.mk_self None
     (* val mk_base = (fun v -> (!pr_sv v)^"=0") *)
     (* val mk_max = (fun v v1 v2 -> (!pr_sv v)^" = max("^(!pr_sv v1)^","^(!pr_sv v2)^")") *)
@@ -618,6 +620,12 @@ class prop_table pname eq nnn tag =
       self_sv <- CP.mk_self (Some typ);
       (* self # reset_disj *)
     method reset_mut vs =
+      let () = y_binfo_hp (add_str "p_table:name" pr_id) pname in
+      (match pview with
+      | None -> ()
+      | Some vd -> 
+        let () = y_winfo_pp "TODO : need to build functions of views here" in
+        y_binfo_hp (add_str "p_table:prop view" pr_id) vd.C.view_name);
       vns <- vs;
       (* self # reset_disj *)
     method is_mut_view vn =
@@ -709,10 +717,11 @@ class prop_table pname eq nnn tag =
 
 (* let prc_heap ptab = CFE.process_heap_prop_extn ptab *)
 
-let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name field_tag (* property *) 
-    nnn (* extended parameter *) =
+let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name,prop_view) as xx) field_tag_s (* property *) 
+    nnn_s (* extended parameter *) =
   (* let nnn_sv = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
-  let p_tab = new prop_table pname (CP.eq_spec_var) nnn field_tag in
+  let () = y_binfo_hp (add_str "prop_name" pr_id) prop_name in 
+  let p_tab = new prop_table pname xx (CP.eq_spec_var) nnn_s field_tag_s in
   let extend_size_disj vns (*mutual call*) f =
     let () = p_tab # reset_disj f in
     let map_h h = CFE.process_heap_prop_extn p_tab h in
@@ -792,22 +801,29 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) prop_name f
   new_vdecls
 
 let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
-    (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl list =
+    (cviews0 (*orig _extn*): C.view_decl list) derv : C.view_decl list =
   let () = y_tinfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
   let scc = HipUtil.view_scc_obj # get_scc in
-  let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews in
-  let () = y_tinfo_hp (add_str "cviews" (pr_list (fun v -> v.C.view_name)))  cviews in
   let vname = derv.Iast.view_name in
   let () = y_tinfo_hp (add_str "view_name" pr_id)  vname in
   let pr = pr_list pr_id in
   let d =  derv.Iast.view_derv_extns in
   let () = y_binfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) d in
-  let property,field,nnn = (match d with
-      | (prop,[field],[nnn])::_ -> prop,field,nnn
+  let property,field_s,nnn_s = (match d with
+      | (prop,((_::_) as field_s),((_::_) as nnn_s))::_ -> prop,field_s,nnn_s
       | _-> failwith (x_loc^" no prop")) in
-  let view_list = cviews in
   let opt = derv.Iast.view_derv_from in
+  let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews0 in
+  let () = y_tinfo_hp (add_str "cviews" (pr_list (fun v -> v.C.view_name)))  cviews in
+  let view_list = cviews in
   let vd_lst = Cast.get_selected_views opt view_list in
+  let prop_view = 
+    try 
+      Some(List.find (fun v -> v.C.view_name=property) cviews0)
+    with e -> 
+      let ()= y_binfo_hp (add_str "Property view cannot be found (using default depth view)" pr_id) property in
+      None
+  in
   (*   match opt with *)
   (*   | Some rgx -> *)
   (*     let () = y_binfo_hp (add_str "derv_from" (string_of_regex_list (pr_pair pr_id string_of_bool)))  rgx in *)
@@ -829,7 +845,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
             (n,v)
           with _ -> failwith (x_loc^" view "^n^" not found")
         ) mr) scc in
-  let vdecls = extend_size vname scc_vdecls property field nnn in
+  let vdecls = extend_size vname scc_vdecls (property,prop_view) field_s nnn_s in
   let vdecls = List.concat vdecls in
   let () = y_tinfo_pp "need to keep entire mutual-rec vdecl generated" in  
   let () = y_tinfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl_short)) vdecls in
