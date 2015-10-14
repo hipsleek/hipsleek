@@ -8,6 +8,11 @@ pred zip2<y,z> ==
    self=null & y=z
 or self::node<_,p>*y::node<_,q> * p::zip2<q,z>.
 
+/*
+pred zip3<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q> * z::node<_,t> * p::zip3<q,t>.
+*/
 
 pred_split [zip2].
 print views.

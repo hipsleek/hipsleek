@@ -344,21 +344,12 @@ let norm_unfold iprog cprog
   let () = y_tinfo_hp (add_str "views selected for unfolding"
                          (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
   List.iter (fun (v,unf_lst) -> (* transform body of views *)
-      let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in
       let view_body_lbl = v.C.view_un_struc_formula in
-      let old_sf = v.C.view_formula in
-      let view_body = CF.convert_un_struc_to_formula view_body_lbl in
-      let args = v.C.view_vars in
-      (* struc --> better to re-transform it *)
-      let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
-      let view_struc = CF.formula_to_struc_formula new_view_body in
-      let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
-      let () = C.update_view_formula (fun _ -> view_struc) v in
-      (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
-      ()
+      let view_body_lbl = List.map (fun (f,l) -> (CF.repl_unfold_formula v.C.view_name unf_lst f,l)) view_body_lbl in
+      (* let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in *)
+      (* let view_body_lbl = v.C.view_un_struc_formula in *)
+      Typeinfer.update_view_new_body ~iprog:(Some iprog) v view_body_lbl
     ) ans
-
-
 
 let norm_reuse_subs iprog cprog vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in
@@ -394,6 +385,12 @@ let norm_reuse_subs iprog cprog vdefs to_vns =
       let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in
       ()
     ) to_decls
+
+let norm_reuse_subs iprog cprog vdefs to_vns =
+  let pr1 = pr_list Cprinter.string_of_view_decl_short in
+  let pr2 = pr_list idf in
+  Debug.no_2 "norm_reuse_subs" pr1 pr2 (fun () -> pr1 cprog.C.prog_view_decls)
+    (fun _ _ -> norm_reuse_subs iprog cprog vdefs to_vns) vdefs to_vns
 
 (* to be invoked after reuse to maintain transitivity of equiv *)
 (* assumes vdefs in topo sorted order *)
@@ -455,7 +452,7 @@ let norm_trans_equiv iprog cprog vdefs =
 (*
  assume frm_vns and to_vns are topo sorted
 *)
-let norm_reuse iprog cprog vdefs frm_vns to_vns=
+let norm_reuse iprog cprog vdefs frm_vns to_vns =
   (*filter vdefs to keep order*)
   let () = y_tinfo_hp (add_str "norm_reuse (from_vns)" (pr_list pr_id)) frm_vns in
   let () = y_tinfo_hp (add_str "norm_reuse (to_vns)" (pr_list pr_id)) to_vns in
@@ -481,7 +478,7 @@ let norm_reuse iprog cprog vdefs frm_vns to_vns=
 let regex_search reg_id vdefs =
   match reg_id with
     | REGEX_LIST ids -> ids
-    | REGEX_STAR -> 
+    | REGEX_STAR ->
       let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
       all_ids
 
@@ -885,6 +882,25 @@ let norm_split_x iprog prog vdefs sel_vns=
     let ls_vn_args = List.map (fun name -> part_v name) pairs in
     group ls_vn_args []
   in
+  let rec bubble_fst_root svl root_cands done_svl=
+    match svl with
+      | [] -> done_svl
+      | sv::rest -> if CP.mem_svl sv root_cands then
+          sv::(done_svl@rest)
+        else bubble_fst_root rest root_cands (done_svl@[sv])
+  in
+  let rec examine_one_arg fs a res=
+    match fs with
+    | [] -> res
+    | f::fs_tl ->
+      (*get ptos of all nodes*)
+      let hds = Sautil.get_hdnodes f in
+      let ptos = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
+      let args = List.concat (List.map (fun hd -> hd.CF.h_formula_data_arguments) hds) in
+      let new_res = if not (CP.mem_svl a ptos) || CP.mem_svl a args then res else true
+      in
+      examine_one_arg fs_tl a new_res
+  in
   let add_view_args (vn, parts)=
     let vdecl = C.look_up_view_def_raw 68 vdefs vn in
     let self_sv = CP.SpecVar ((Named vdecl.Cast.view_data_name) ,self, Unprimed) in
@@ -894,7 +910,15 @@ let norm_split_x iprog prog vdefs sel_vns=
             string_eq (CP.name_of_spec_var sv) id
         ) args) ids
     ) parts in
-    (vn, args, sv_parts, no_pos, [])
+    let fs = List.map (fun (f,_) -> f) vdecl.C.view_un_struc_formula in
+    let root_cands = List.filter (fun sv -> examine_one_arg fs sv false) args in
+    let () = y_tinfo_hp (add_str ("root_cands") !CP.print_svl) root_cands in
+    let sv_parts_rooted = List.map ( fun svl -> match svl with
+      | [] -> []
+      | [x] -> [x]
+      | _ ->  bubble_fst_root svl root_cands []
+    ) sv_parts in
+    (vn, args, sv_parts_rooted, no_pos, [])
   in
   let () = y_tinfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
   let scclist = HipUtil.view_scc_obj # get_scc in
@@ -906,7 +930,7 @@ let norm_split_x iprog prog vdefs sel_vns=
   let () = List.iter (update_scc_view_args prog) sel_vdecls in
   (* let split_cands = view_split_cands prog sel_vdecls in *)
   HipUtil.view_args_scc_obj # set_sorted;
-  let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_args_scc_obj # string_of) in
+  let () = y_tinfo_hp (add_str "\n" pr_id) (HipUtil.view_args_scc_obj # string_of) in
   let view_args_scclist = HipUtil.view_args_scc_obj # get_scc in
   let parts = List.fold_left (fun acc pair ->
       let res = group_view_args pair in
@@ -918,6 +942,8 @@ let norm_split_x iprog prog vdefs sel_vns=
   let parts1 = group parts [] in
   let () = y_tinfo_hp (add_str ("parts1") (pr_list(pr_pair pr_id (pr_list (pr_list pr_id))))) parts1 in
   let split_cands = List.map add_view_args parts1 in
+  let () = y_tinfo_hp (add_str ("split_cands") (pr_list (fun (vn,args,parts,_,_) ->
+      (pr_triple pr_id !CP.print_svl (pr_list !CP.print_svl)) (vn,args,parts) ))) split_cands in
   (* check global + generate unknown preds *)
   let split_map_view_subst = check_view_split_global iprog prog split_cands in
   split_map_view_subst
@@ -1910,5 +1936,10 @@ let find_rec_data cprog ids =
       ()
     ) data_d_lst in
   let () = y_binfo_hp (add_str "data_scc_obj" pr_id) HipUtil.data_scc_obj # string_of in
-  let () = y_binfo_hp (add_str "scc" (pr_list (pr_list pr_id))) HipUtil.data_scc_obj # get_scc in
+  let lst = HipUtil.data_scc_obj # get_scc in
+  let () = y_binfo_hp (add_str "scc" (pr_list (pr_list pr_id))) lst in
+  let sel_scc = Cast.get_selected_scc_each ids (fun x -> x) lst in
+  let sel_data_d = build_sel_scc sel_scc (fun d -> d.Cast.data_name) data_d_lst in
+  let () = y_binfo_hp (add_str "sel_scc" (pr_list (pr_list pr_id))) sel_scc in
+  let () = y_binfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
   failwith x_tbi

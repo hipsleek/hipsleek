@@ -13,7 +13,12 @@ data cell{
      int val;
 }.
 
-data_mark_rec [cell*].
+//data_mark_rec [cell*].
+//data_mark_rec [node*].
+//data_mark_rec [node].
+//data_mark_rec [node,node1].
+//data_mark_rec [].
+data_mark_rec [*].
 
 
 /*

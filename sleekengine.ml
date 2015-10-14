@@ -2498,10 +2498,11 @@ let process_shape_split pre_hps post_hps=
   end;
   ()
 
-let get_sorted_view_decls () = get_sorted_view_decls ()
-  (* let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
-  (* !cprog.Cast.prog_view_decls <- vdefs; *)
-  (* vdefs *)
+(* let get_sorted_view_decls () = get_sorted_view_decls ()                *)
+(*   (* let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *) *)
+(*   (* !cprog.Cast.prog_view_decls <- vdefs; *)                          *)
+(*   (* vdefs *)                                                          *)
+let get_sorted_view_decls () = C.get_sorted_view_decls !cprog
 
 let process_shape_elim_useless sel_vnames=
   let vdefs = get_sorted_view_decls () in
@@ -2511,12 +2512,13 @@ let process_shape_elim_useless sel_vnames=
   let _ = x_tinfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
-let regex_search reg_id vdefs =
-  match reg_id with
-    | REGEX_LIST ids -> ids
-    | REGEX_STAR -> 
-      let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
-      all_ids
+(* Use regex_search in Norm *)
+(* let regex_search reg_id vdefs =                                         *)
+(*   match reg_id with                                                     *)
+(*     | REGEX_LIST ids -> ids                                             *)
+(*     | REGEX_STAR ->                                                     *)
+(*       let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
+(*       all_ids                                                           *)
 
 
 let process_pred_split ids=
@@ -2584,7 +2586,7 @@ let process_pred_unfold reg_to_vname =
   let vdefs = get_sorted_view_decls () in
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
-  let to_vns = regex_search reg_to_vname vdefs in
+  let to_vns = Norm.regex_search reg_to_vname vdefs in
   Norm.norm_unfold iprog !cprog vdefs to_vns
 
 let process_shape_reuse_subs reg_to_vname =
@@ -2594,7 +2596,7 @@ let process_shape_reuse_subs reg_to_vname =
   (* !cprog.Cast.prog_view_decls <- vdefs; *)
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
-  let to_vns = regex_search reg_to_vname vdefs in
+  let to_vns = Norm.regex_search reg_to_vname vdefs in
   let rs = Norm.norm_reuse_subs iprog !cprog vdefs to_vns in
   rs
 
@@ -2605,8 +2607,8 @@ let process_shape_reuse reg_frm_vname reg_to_vname=
   (* !cprog.Cast.prog_view_decls <- vdefs; *)
   (* let vdefs = !cprog.Cast.prog_view_decls in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) !cprog.Cast.prog_view_decls in *)
-  let frm_vnames = regex_search reg_frm_vname vdefs in
-  let to_vnames = regex_search reg_to_vname vdefs in
+  let frm_vnames = Norm.regex_search reg_frm_vname vdefs in
+  let to_vnames = Norm.regex_search reg_to_vname vdefs in
   let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
   let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog vdefs (* !cprog.Cast.prog_view_decls *) frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in

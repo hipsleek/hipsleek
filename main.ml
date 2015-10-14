@@ -868,7 +868,7 @@ let process_source_full source =
   (* let () = Log.process_sleek_logging () in *)
   (* print mapping table control path id and loc *)
   (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-  hip_epilogue ();
+  (* hip_epilogue (); *)
   if (not !Globals.web_compile_flag) then 
     let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in 
     print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
@@ -1105,6 +1105,7 @@ let process_source_full_after_parser source (prog, prims_list) =
                                ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 let main1 () =
+  let () = y_binfo_pp "XXXX main1" in
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
   (* Cprinter.fmt_cut (); *)
@@ -1181,6 +1182,7 @@ let finalize_bug () =
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () =
+  let () = y_binfo_pp "XXXX old_main" in
   try
     main1 ();
     (* let () =  *)
@@ -1193,7 +1195,7 @@ let old_main () =
     (* let _ = print_endline ("Excore.UnCa.miss:" ^ (string_of_int !Excore.UnCa.miss_cache)) in *)
     let () = Gen.Profiling.print_counters_info () in
     let () = Gen.Profiling.print_info () in
-    ()
+    hip_epilogue ()
   with _ as e -> begin
       finalize_bug ();
       print_string_quiet "caught\n"; 
@@ -1206,7 +1208,8 @@ let old_main () =
           print_web_mode ("\nError: " ^ (Printexc.to_string e))
         else if (!Globals.svcomp_compete_mode) then
           print_endline "UNKNOWN" (* UNKNOWN(5) *)
-      )
+      );
+      hip_epilogue ()
     end
 
 let () = 
@@ -1232,7 +1235,7 @@ let () =
           (*   else () in *)
           let () = Gen.Profiling.print_counters_info () in
           let () = Gen.Profiling.print_info () in
-          ()
+           ()
       with _ as e -> begin
           finalize_bug ();
           print_string_quiet "caught\n"; Printexc.print_backtrace stdout;

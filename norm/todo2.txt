@@ -101,8 +101,82 @@ pred_split [zip2].
 !!! **sleekengine.ml#3096:
 
 =========================================================
+# ex21s1d4.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+lemma_test "L1" self::zip2<y,z>
+   <- self::ll<n1> * y::lseg<z,n2> & n1<=n2.
+
+# Why did this above proof fails?
+  A folding problem?
+
+Entailing lemma L1: Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_L1::zip2<y_133,z_134>@M(must),
+valid
+]
+
+chinwn@loris-60:~/hg/sleekex/norm$ 
 =========================================================
+# ex25a2.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+# segmentation fault for size extension of mutual-rec views
+
+!!! **hipUtil.ml#75:**astsimp.ml#545:replace:(llN2,[])
+!!! **hipUtil.ml#200:invoking build_scc splitSegmentation fault (core dumped)
+chinwn@loris-60:~/hg/sleekex/norm$ 
 =========================================================
+# ex20d.ss
+
+# Why did P go from 2 --> 3 parameters?
+  What happen to "self" in the base-case?
+
+!!! **iast.ml#3915:Adding the view P into iprog.
+!!! **cast.ml#3877:Updating an available view decl (P[p,x_1677]) in cprog.
+!!! **syn.ml#677:XXX Scheduling pred_elim_useless
+!!! **norm.ml#164:USELESS Parameters eliminated:[]
+!!! **syn.ml#680:XXX Scheduling pred_reuse
+!!! **syn.ml#681:XXX derived_view names:[P]
+!!! **syn.ml#684:XXX existing view names:[memLoc,size,lseg,ll,P]
+!!! **syn.ml#686:XXX reuse found ...:[]
+!!! **syn.ml#687:XXX Scheduling pred_reuse_subs
+!!! **sa3.ml#3289:DERIVED VIEWS:
+
+[ view P<p:node,x_1677:node>= 
+  EList
+    :EBase 
+       (* lbl: *){291}->emp&x_1677=p&{FLOW,(1,28)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[val_45_1657; 
+          next_45_1658](* lbl: *){292}->(exists p_1679,
+          x_1680: (* lbl: *){292}->self::node<val_45_1657,next_45_1658>@M * 
+                                   next_45_1658::P<p_1679,x_1680>@M&
+          self!=p & p_1679=p & x_1680=x_1677&{FLOW,(1,28)=__flow#E}[])
+    ]
+!!! INFERRED SHAPE SPEC:
+ EInfer @pure_field,@leak[]
+   EBase 
+     exists (Impl)[x_1677]x::P<p,x_1677>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]Stop z3... 102 invocations 
+Stop Omega... 73 invocations 
 =========================================================
 =========================================================
 =========================================================

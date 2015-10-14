@@ -100,6 +100,7 @@ and view_decl = {
 
   (* these seem related to parameters of view *)
   view_vars : P.spec_var list;
+  view_labels : LO.t list;
   view_ann_params : (P.annot_arg * int) list;
   view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
   view_cont_vars : P.spec_var list;
@@ -118,7 +119,6 @@ and view_decl = {
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-  view_labels : LO.t list;
   view_modes : mode list;
   view_type_of_self : typ option;
   view_is_touching : bool;
@@ -143,9 +143,11 @@ and view_decl = {
   mutable view_formula : F.struc_formula; (* case-structured formula *)
   mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
     (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+
   mutable view_raw_base_case: Cformula.formula option;
   mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
   (* end of main body of a predicate *)
+
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
   view_inv_lock : F.formula option;
@@ -1206,7 +1208,12 @@ let unmingle_name (m : ident) =
 
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
-  | [] -> raise Not_found
+  | [] ->
+    let msg = ("Cannot find definition of cview " ^ name) in 
+    let () = y_tinfo_pp (x_loc^msg) in
+    raise Not_found
+    (* let msg = ("Cannot find definition of view " ^ name) in  *)
+    (* failwith (x_loc^msg) *)
 
 let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
@@ -4035,6 +4042,11 @@ let sort_view_list vlist =
       sort_gen_list score vlist
     end
 
+let get_sorted_view_decls prog =
+  let vdefs = sort_view_list prog.prog_view_decls in
+  prog.prog_view_decls <- vdefs;
+  vdefs
+
 (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
 let repl_unfold_lemma u_lst lem =
   let body = lem.coercion_body in
@@ -4051,6 +4063,39 @@ let get_lemma_cprog cdefs =
   let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
   ()
 
+let  get_selected_scc_gen (opt:((ident * bool) regex_list) (* option *)) get_name sel_fn scc_lst =
+  let ans = opt in
+  (* match opt with *)
+  (* | None -> scc_lst *)
+  (* | Some ans ->  *)
+    begin
+      match ans with
+      | REGEX_STAR -> scc_lst
+      | REGEX_LIST lst ->  
+        let sel_lst = List.map (fun scc -> 
+            let ns = List.map (fun v -> get_name v) scc in
+            let lst = List.filter (fun (id,_) -> List.mem id ns) lst in
+            lst
+          ) scc_lst in
+        let c_lst = List.combine sel_lst scc_lst in
+        let c_lst = List.filter (fun (lst,scc) -> lst!=[]) c_lst in
+        List.map sel_fn c_lst
+    end
+
+let  get_selected_scc_whole opt get_name scc_lst =
+  get_selected_scc_gen opt get_name snd scc_lst
+
+let  get_selected_scc_each opt get_name scc_lst =
+  let sel_f (lst,scc) =
+    if (List.exists (fun (_,b)->b) lst) then scc
+    else Gen.BList.intersect_eq (fun v1 (v2,_) -> v1=v2) scc lst in
+  let sel_f p = 
+    let pr_scc = pr_list pr_id in
+    let pr1 = pr_pair (pr_list (pr_pair pr_id string_of_bool)) pr_scc  in
+    Debug.no_1 "sel_f" pr1 pr_scc sel_f p 
+  in
+  get_selected_scc_gen opt get_name sel_f scc_lst
+
 let get_t_v v = HipUtil.view_scc_obj # get_trans v
 
 (* type: (Globals.ident * bool) Globals.regex_list option *)
@@ -4058,13 +4103,25 @@ let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
   match opt with
   | None -> view_list
   | Some ans -> 
-    let () = y_binfo_pp "get selected views ..." in
     let sel (v,p) = if p then get_t_v v else [v] in
-    match ans with
-    | REGEX_STAR ->  view_list
+    let res = match ans with
+    | REGEX_STAR -> view_list
     | REGEX_LIST lst ->  
       let lst = List.map (fun vp -> sel vp) lst in
       let lst = Gen.BList.remove_dups_eq (=) (List.concat lst) in
       let ans = Gen.BList.intersect_eq (fun v n -> v.view_name = n) view_list lst in
       ans
+    in
+    let () = y_tinfo_hp (add_str "get selected views ... " 
+      (pr_list (fun v -> v.view_name))) res in
+    res
   
+let rename_view vdecl new_name = 
+  let old_name = vdecl.view_name in
+  let sst = [(old_name, new_name)] in
+  { vdecl with
+    view_name = new_name;
+    view_formula = F.rename_view_struc sst vdecl.view_formula;
+    view_un_struc_formula = List.map (fun (f, lbl) -> (F.rename_view_formula sst f, lbl)) vdecl.view_un_struc_formula; }
+
+

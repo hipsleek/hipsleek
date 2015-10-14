@@ -34,6 +34,7 @@ void foo2(arr_int a,int i)
   }
 }
 
+
 /*
   a,offset
 

@@ -451,7 +451,7 @@ let extend_pred_one_derv_x (prog : I.prog_decl) cprog hp_defs hp args ((orig_pre
   let fs0 = List.fold_left (fun r (f,_) -> r@(CF.list_of_disjs f)) [] orig_pred.CF.def_rhs in
   let fs = List.map (x_add CF.subst orig_ss) fs0 in
   let pure_extn_svl = CF.retrieve_args_from_locs orig_args ls_extn_pos in
-  let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_pred_name (CP.name_of_spec_var hp) n_args ls_dname_pos pure_extn_svl false false in
+  let (base_brs,ind_brs) = x_add CF.extract_abs_formula_branch fs orig_pred_name (CP.name_of_spec_var hp) n_args ls_dname_pos pure_extn_svl false false in
   (*extend base cases*)
   let extn_base_brs = List.map (fun (p,val_svl)-> do_extend_base_case extn_ho_bs n_args val_svl p) base_brs in
   (*extend ind cases*)
@@ -482,7 +482,7 @@ let extend_pred_one_derv (prog : I.prog_decl) cprog hp_defs hp args extn_info =
 let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
   (* let () = do_sanity_check derv_info in *)
   match derv_info with
-  | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
+  | [] -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: 1")
   | [((orig_pred_name,orig_args),(extn_view_name,extn_props,extn_args), extn_poss)] ->
     let der_view(*,s*) =
       (* let extn_view = x_add Cast.look_up_view_def_raw 46 cprog.Cast.prog_view_decls extn_view_name in *)
@@ -494,7 +494,7 @@ let extend_pred_dervs_x (prog : I.prog_decl) cprog hp_defs hp args derv_info =
       (der_view(*,("************VIEW_DERIVED*************")*))
     in
     der_view
-  | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
+  | _ -> report_error no_pos (x_loc^"astsimp.trans_view_dervs: not handle yet")
 
 
 let extend_pred_dervs (prog : I.prog_decl) cprog hp_defs hp args derv_info =

@@ -2555,7 +2555,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 (*       if Gen.BList.mem_eq (fun (hp1,args1) (hp2,args2) -> *)
 (*           CP.eq_spec_var hp1 hp2 && (CP.eq_spec_var_order_list args1 args2) *)
 (*         ) (hp,args) selected_hpargs then *)
-(*         let args_ins,_ = Sautil.partition_hp_args prog hp args in *)
+(*         let args_ins,_ = x_add Sautil.partition_hp_args prog hp args in *)
 (*         let args_ins1 = fst (List.split args_ins) in *)
 (*         let opto = loop_helper (\*find_pt_new*\) lhs_hds args_ins1 [] in *)
 (*         (match opto with *)
@@ -2687,7 +2687,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 (*   (\* find post_hps NI- cll case *\) *)
 (*   let post_svl_ni = List.fold_left (fun svl (hp, args) -> *)
 (*       if CP.mem_svl hp post_hps then *)
-(*         let args_i,_ = Sautil.partition_hp_args prog hp args in *)
+(*         let args_i,_ = x_add Sautil.partition_hp_args prog hp args in *)
 (*         svl@(List.map fst args_i) *)
 (*       else svl *)
 (*     ) [] ls_lhp_args in *)
@@ -4179,7 +4179,8 @@ let get_eqset puref =
 (*   ) in *)
 (*   let pr4 = Cprinter.string_of_h_formula in *)
 (*   Debug.no_2_num i "infer_collect_hp_rel_empty_rhs" (add_str "estate" pr1) (\* pr4 *\) (add_str "rhs_p" pr2) pr3 *)
-(*     ( fun _ _ -> infer_collect_hp_rel_empty_rhs prog es lhs_b (\* rhs0 *\) rhs_p pos) es(\* .CF.es_formula *\) (\* rhs0 *\) rhs_p *)
+(*     ( fun _ _ -> 
+infer_collect_hp_rel_empty_rhs prog es lhs_b (\* rhs0 *\) rhs_p pos) es(\* .CF.es_formula *\) (\* rhs0 *\) rhs_p *)
 
 (*******************************************************)
 (*******************************************************)

@@ -2438,7 +2438,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          if !Globals.old_base_case_unfold_hprel then (wt,act2)
          (* (2,M_infer_heap (rhs,HEmp)) *)
          else if List.length args<2 then (wt,act3)
-         else (wt,mk_search_action [(wt,act1);(wt,act3)])
+         else (wt,mk_search_action [(wt,act3);(wt,act1)]) (* (wt,mk_search_action [(wt,act3);(wt,act1)]) *)
        (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
          (* TODO:WN : how about base-case unfold for views? *)

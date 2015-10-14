@@ -20,6 +20,7 @@ let intersect = Gen.BList.intersect_eq CP.eq_spec_var
 let eq_id s1 s2 = String.compare s1 s2 == 0
 
 let mem_id = Gen.BList.mem_eq eq_id
+let subset_id = Gen.BList.subset_eq eq_id
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -116,9 +117,21 @@ let is_non_inst_hrel prog (hrel: CF.h_formula) =
 let get_non_inst_args_hprel_id prog id args = 
   let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls id in
   let hprel_inst = hprel_def.Cast.hp_vars_inst in
-  List.fold_left (fun acc (arg, (_, i)) ->
-    if i = Globals.NI then acc
-    else acc @ [arg]) [] (List.combine args hprel_inst)
+  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_binfo_hp (add_str "hprel_inst" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) hprel_inst in
+  (* List.fold_left (fun acc (arg, (_, i)) ->              *)
+  (*   if i = Globals.NI then acc                          *)
+  (*   else acc @ [arg]) [] (List.combine args hprel_inst) *)
+  let rec helper args insts =
+    match args, insts with
+    | _, [] -> []
+    | [], _ -> []
+    | arg::args, (_, i)::insts ->
+      let r = helper args insts in
+      if i = Globals.NI then r
+      else arg::r
+  in
+  helper args hprel_inst
 
 let get_non_inst_args_hprel prog (hprel: CF.hprel) =
   let hprel_name, hprel_args = sig_of_hprel hprel in
@@ -215,7 +228,7 @@ let mk_num_args args =
 let find_root_hprel_formula_base prog hprel_name num_args f =
   let f_fv = CF.fv f in
   let args = List.map fst num_args in
-  let ni_args = get_non_inst_args_hprel_id prog hprel_name args in
+  (* let ni_args = get_non_inst_args_hprel_id prog hprel_name args in *)
   let feasible_num_args = List.filter (fun (sv, _) -> 
     (CP.is_node_typ sv) && 
     (* not (mem sv ni_args) && *)
@@ -278,7 +291,7 @@ let find_root_hprel_formula_base prog hprel_name num_args f =
 let rec find_root_hprel_formula prog hprel_name num_args f =
   match f with
   | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->
-    let r1 = find_root_hprel_formula prog hprel_name num_args f1 in
+    let r1 = x_add find_root_hprel_formula prog hprel_name num_args f1 in
     (match r1 with
     | None -> find_root_hprel_formula prog hprel_name num_args f2
     | _ -> r1)
@@ -313,7 +326,7 @@ let find_root_hprel prog hprel =
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let hprel_id = CP.name_of_spec_var hprel_name in
   try
-    let root_pos = C.get_proot_hp_def_raw prog.C.prog_hp_decls hprel_id in
+    let root_pos = x_add C.get_proot_hp_def_raw prog.C.prog_hp_decls hprel_id in
     (List.nth hprel_args root_pos, root_pos)
   with _ -> 
     let root_var, root_pos = find_root_one_hprel prog hprel in
@@ -330,8 +343,8 @@ let find_root_hprel_list prog hprels =
   match hprels with
   | [] -> None
   | h::hs ->
-    let _, h_i = find_root_hprel prog h in
-    let hs_roots = List.map (find_root_hprel prog) hs in
+    let _, h_i = x_add find_root_hprel prog h in
+    let hs_roots = List.map (x_add find_root_hprel prog) hs in
     let is_consistent = List.for_all (fun (_, i) -> i == h_i) hs_roots in
     if not is_consistent then
       failwith ("TO FIX: Inconsistency in find_root_hprel_list")
@@ -413,14 +426,14 @@ let combine_Star prog f1 f2 =
   let pr = !CF.print_formula in
   Debug.no_2 "combine_Star" pr pr pr (combine_Star prog) f1 f2
 
-let trans_heap_formula f_h_f (f: CF.formula) = 
-  let somef2 _ f = Some (f, []) in
-  let id2 f _ = (f, []) in
-  let ida _ f = (f, []) in
-  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
-  CF.trans_formula f () 
-    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
-    f_arg List.concat
+(* let trans_heap_formula f_h_f (f: CF.formula) =                                       *)
+(*   let somef2 _ f = Some (f, []) in                                                   *)
+(*   let id2 f _ = (f, []) in                                                           *)
+(*   let ida _ f = (f, []) in                                                           *)
+(*   let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in          *)
+(*   CF.trans_formula f ()                                                              *)
+(*     (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2))  *)
+(*     f_arg List.concat                                                                *)
 
 let rec trans_pure_formula f_m_f (f: CF.formula) = 
   match f with
@@ -528,23 +541,69 @@ let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
   Debug.no_2 "Syn.heap_entail_exact_formula" pr1 pr1 pr2 
     (fun _ _ -> heap_entail_exact_formula prog ante conseq) ante conseq
 
+let get_equiv_pred prog vid =
+  try
+    let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls vid in
+    if not !Globals.pred_equiv then vid
+    else if vdef.C.view_equiv_set # is_empty then vid
+    else
+      let (_, subs_vid) = vdef.C.view_equiv_set # get in
+      subs_vid
+  with _ -> vid
+
 let trans_hrel_to_view_formula prog (f: CF.formula) = 
   let f_h_f _ hf = 
     match hf with
     | CF.HRel _ ->
       let hrel_name, hrel_args = sig_of_hrel hf in
       let hrel_id = CP.name_of_spec_var hrel_name in
+      let subs_hrel_name, view_args =
+          try
+            let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls hrel_id in
+            if not !Globals.pred_equiv then hrel_name, vdef.view_vars
+            else if vdef.C.view_equiv_set # is_empty then hrel_name, vdef.view_vars
+            else
+              let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
+              let equiv_pred = match hrel_name with
+                | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p) in
+              let equiv_pred_args = 
+                try 
+                  let edef = C.look_up_view_def_raw 50 prog.Cast.prog_view_decls subs_hrel_id in
+                  edef.view_vars
+                with _ ->
+                  let () = report_warning no_pos ("Cannot find the definition of the equiv pred " ^ subs_hrel_id) in 
+                  vdef.view_vars
+              in
+              equiv_pred, equiv_pred_args
+          with _ -> hrel_name, []
+      in
       let hrel_root, hrel_args = get_root_args_hp prog hrel_id hrel_args in
-      let n_hf = CF.mk_HRel_as_view_w_root hrel_name hrel_root hrel_args no_pos in
+      let extn_args =
+        (* Get the extn pred arguments *)
+        let rec helper h_args v_args =
+          match h_args, v_args with
+          | [], _ -> v_args
+          | _, [] -> []
+          | h::hs, v::vs -> helper hs vs 
+        in
+        helper hrel_args view_args  
+      in
+      let n_hf = CF.mk_HRel_as_view_w_root subs_hrel_name hrel_root (hrel_args @ extn_args) no_pos in
       (match n_hf with
       | CF.ViewNode v ->
         (* Setting imm is important for lemma proving *)
         let n_hf = CF.ViewNode { v with CF.h_formula_view_imm = CP.ConstAnn(Mutable); } in
-        Some (n_hf, [])
+        Some (n_hf, extn_args)
       | _ -> None)
     | _ -> None
   in
-  fst (trans_heap_formula f_h_f f)
+  CF.trans_heap_formula f_h_f f
+
+let trans_hrel_to_view_formula prog (f: CF.formula) = 
+  let pr1 = !CF.print_formula in
+  let pr2 = pr_pair (add_str "trans_f" pr1) (add_str "extn_args" !CP.print_svl) in
+  Debug.no_1 "Syn.trans_hrel_to_view_formula" pr1 pr2 
+    (fun _ -> trans_hrel_to_view_formula prog f) f
 
 let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
   match sf with
@@ -554,12 +613,14 @@ let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
       CF.formula_case_branches = List.map (fun (c, sf) -> 
           (c, trans_hrel_to_view_struc_formula prog sf)) ec.CF.formula_case_branches; }
   | CF.EBase eb -> 
+    let n_base, extn_args = trans_hrel_to_view_formula prog eb.CF.formula_struc_base in
     CF.EBase { eb with
-      CF.formula_struc_base = trans_hrel_to_view_formula prog eb.CF.formula_struc_base;
+      CF.formula_struc_base = n_base;
+      CF.formula_struc_implicit_inst = remove_dups (eb.CF.formula_struc_implicit_inst @ extn_args);
       CF.formula_struc_continuation = map_opt (trans_hrel_to_view_struc_formula prog) eb.CF.formula_struc_continuation; }
   | CF.EAssume ea ->
     CF.EAssume { ea with 
-      CF.formula_assume_simpl = trans_hrel_to_view_formula prog ea.CF.formula_assume_simpl;
+      CF.formula_assume_simpl = fst (trans_hrel_to_view_formula prog ea.CF.formula_assume_simpl);
       CF.formula_assume_struc = trans_hrel_to_view_struc_formula prog ea.CF.formula_assume_struc; }
   | EInfer ei -> 
     CF.EInfer { ei with 
@@ -594,6 +655,7 @@ let rec remove_inf_vars_struc_formula inf_vars (sf: CF.struc_formula) =
       CF.formula_struc_continuation = map_opt (remove_inf_vars_struc_formula inf_vars) eb.CF.formula_struc_continuation; }
   | CF.EAssume _ -> sf
   | EInfer ei -> 
+    let () = ei.CF.formula_inf_obj # reset (INF_EXTN []) in
     CF.EInfer { ei with 
       CF.formula_inf_vars = diff ei.CF.formula_inf_vars inf_vars;
       CF.formula_inf_continuation = remove_inf_vars_struc_formula inf_vars ei.CF.formula_inf_continuation; }
@@ -601,6 +663,9 @@ let rec remove_inf_vars_struc_formula inf_vars (sf: CF.struc_formula) =
 let trans_spec_proc trans_f cprog proc =
   let spec = proc.C.proc_stk_of_static_specs # top in
   let nspec = trans_f spec in
+  let pr_spec = Cprinter.string_of_struc_formula_for_spec in
+  let () = y_tinfo_hp (add_str "spec" pr_spec) spec in
+  let () = y_tinfo_hp (add_str "nspec" pr_spec) nspec in
   let () = proc.C.proc_stk_of_static_specs # push_pr ("SynUtils:" ^ x_loc) nspec in
   let nproc = { proc with
     C.proc_static_specs = nspec;
@@ -621,6 +686,19 @@ let trans_hrel_to_view_spec_scc cprog scc_procs =
 let remove_inf_vars_spec_scc cprog scc_procs inf_vars = 
   trans_spec_scc (remove_inf_vars_struc_formula inf_vars) cprog scc_procs
 
+let rec get_inf_pred_extn_struc_formula f = 
+  match f with
+  | CF.EInfer ei -> ei.formula_inf_obj # get_infer_extn_lst
+  | CF.EBase eb -> begin
+      match eb.formula_struc_continuation with
+      | None -> []
+      | Some c -> get_inf_pred_extn_struc_formula c
+    end 
+  | CF.EAssume _ -> []
+  | CF.ECase ec -> List.concat (List.map 
+      (fun (_, c) -> get_inf_pred_extn_struc_formula c) ec.formula_case_branches)
+  | CF.EList el -> List.concat (List.map (fun (_, c) -> get_inf_pred_extn_struc_formula c) el)
+
 let find_heap_node root (f: CF.formula) =
   let _, f_p, _, _, _, _ = CF.split_components f in
   let aliases = MCP.ptr_equations_without_null f_p in
@@ -633,7 +711,7 @@ let find_heap_node root (f: CF.formula) =
       else None
     | _ -> None
   in
-  let n_f, root_node = trans_heap_formula f_h_f f in
+  let n_f, root_node = CF.trans_heap_formula f_h_f f in
   n_f, root_node
 
 let is_consistent_node_list nodes = 
@@ -730,13 +808,13 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let pos = no_pos in
   (* let hprel_self = CP.to_unprimed (List.hd hprel_args) in *)
-  let hprel_root = fst (find_root_hprel prog hprel) in
+  let hprel_root = fst (x_add find_root_hprel prog hprel) in
   let hprel_self = CP.to_unprimed hprel_root in
   let vself = match hprel_self with CP.SpecVar (t, _, p) -> CP.SpecVar (t, Globals.self, p) in
   let vargs = List.map (fun sv -> (sv, NI)) (diff hprel_args [hprel_root]) (* List.tl hprel_args *) in
   let vbody = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
   let vbody = CF.elim_prm vbody in
-  let vbody = trans_hrel_to_view_formula prog vbody in
+  let vbody, _ = trans_hrel_to_view_formula prog vbody in
   let vbody = CF.subst [(hprel_self, vself)] vbody in
   (* Set flow for view *)
   let vbody = CF.set_flow_in_formula_override 

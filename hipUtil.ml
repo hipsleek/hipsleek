@@ -72,7 +72,7 @@ class graph =
 
     method replace s n lst  =
       grp <- None;
-      let () = y_binfo_hp (add_str (s^"replace") ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
+      let () = y_tinfo_hp (add_str (s^"replace") ((pr_pair pr_id (pr_list pr_id)))) (n,lst) in
       Hashtbl.replace nlst n lst;
       self # add_node n
 
@@ -197,7 +197,7 @@ class graph =
     method build_scc s  =
       if not(grp==None) then scc
       else
-        let () = y_binfo_pp ("invoking build_scc "^s)  in
+        let () = y_tinfo_pp ("invoking build_scc "^s)  in
         let g = NG.create () in
         let find_posn n = 
           let rec aux xs i =

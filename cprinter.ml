@@ -2156,7 +2156,7 @@ and pr_h_formula_for_spec h =
     pr_spec_var sv;
     fmt_string "::";
     (* if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs; *)
-    if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
+    (* if svs_orig = [] then fmt_string (c^"<>") else *) pr_angle (c^perm_str) pr_view_arg params;
     (*    pr_imm imm;*)
     pr_derv dr;
     pr_split split;
@@ -4310,15 +4310,9 @@ let pr_bool b = fmt_string (string_of_bool b)
 
 let pr_list_id b = fmt_string (pr_list pr_id b)
 
-(* pretty printing for a view *)
-let pr_view_decl v =
-  pr_mem:=false;
-  let f_base_case bc =
-    match bc with
-    | None -> ()
-    | Some (s1,s2) -> pr_add_str_cut "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
-  in
-  fmt_open_vbox 1;
+(* pretty printing for invariants of a view *)
+
+let pr_view_hdr v =
   let s = match v.view_kind with
     | View_NORM -> " "
     | View_HREL -> "_hrel "
@@ -4329,10 +4323,50 @@ let pr_view_decl v =
   in
   let ho_str = match v.view_ho_vars with
     (* | [] -> "" *)
-    | s -> "{"^String.concat "," (List.map string_of_ho_var  s)^"}" in
+    | s -> ("{"^String.concat "," (List.map string_of_ho_var  s)^"}")
+  in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ho_str^
                                         "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]"))
-                       pr_typed_spec_var v.view_vars; fmt_string "= ") (); fmt_cut ();
+                       pr_typed_spec_var v.view_vars; fmt_string "= ") (); fmt_cut ();s 
+
+let pr_view_decl_inv_only v =
+  pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv;
+  pr_add_str_opt_cut  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
+  pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
+  pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
+  pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
+  pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula
+
+let pr_view_decl_inv v =
+  fmt_open_vbox 0;
+  let s = pr_view_hdr v in
+  pr_view_decl_inv_only v;
+  fmt_close_box ()
+
+(* pretty printing for a view *)
+let pr_view_decl v =
+  pr_mem:=false;
+  let f_base_case bc =
+    match bc with
+    | None -> ()
+    | Some (s1,s2) -> pr_add_str_cut "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
+  in
+  fmt_open_vbox 1;
+  let s = pr_view_hdr v in
+  (* let s = match v.view_kind with *)
+  (*   | View_NORM -> " " *)
+  (*   | View_HREL -> "_hrel " *)
+  (*   | View_PRIM -> "_prim " *)
+  (*   | View_EXTN -> "_extn " *)
+  (*   | View_SPEC -> "_spec " *)
+  (*   | View_DERV -> "_derv " *)
+  (* in *)
+  (* let ho_str = match v.view_ho_vars with *)
+  (*   (\* | [] -> "" *\) *)
+  (*   | s -> "{"^String.concat "," (List.map string_of_ho_var  s)^"}" in *)
+  (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ho_str^ *)
+  (*                                       "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) *)
+  (*                      pr_typed_spec_var v.view_vars; fmt_string "= ") (); fmt_cut (); *)
   pr_add_str_cut "view_domains: "  fmt_string (String.concat ";" (List.map (fun (v,p1,p2) ->
       "(" ^ v ^ "," ^ (string_of_int p1) ^ "," ^ (string_of_int p2) ^ ")" ) v.view_domains));
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
@@ -4347,15 +4381,16 @@ let pr_view_decl v =
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
   pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
   pr_add_str_cut  ~emp_test:(Gen.is_empty) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
-  pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv;
-  pr_add_str_opt_cut  "baga inv: "  pr_ef_pure_disj v.view_baga_inv;
-  pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
-  pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
-  pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
-  pr_add_str_cut   ~emp_test:Gen.is_None  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
+  pr_view_decl_inv_only v;
+  (* pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv; *)
+  (* pr_add_str_opt_cut  "baga inv: "  pr_ef_pure_disj v.view_baga_inv; *)
+  (* pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv; *)
+  (* pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv; *)
+  (* pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv; *)
+  (* pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula; *)
+  pr_add_str_cut   ~emp_test:Gen.is_None  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   if (v.view_is_tail_recursive) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
-  pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula;
   pr_add_str_cut ~emp_test:(fun b -> b==false) "is_recursive?: "  pr_bool v.view_is_rec;
   pr_add_str_cut ~emp_test:(fun b -> b==false) "is_primitive?: " pr_bool  v.view_is_prim;
   pr_add_str_cut ~emp_test:(fun b -> b==false) "is_touching?: " pr_bool  v.view_is_touching;
@@ -4418,7 +4453,9 @@ let pr_view_decl_short v =
 
     wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_view_arg_lbl
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
-    fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;
+    fmt_cut (); 
+    wrap_box ("B",0) pr_struc_formula v.view_formula;
+    (* pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula; *)
     pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_short, List.combine v.view_labels... ";
@@ -4475,6 +4512,8 @@ let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
 let string_of_view_base_case (bc:(P.formula *MP.mix_formula) option): string =  poly_string_of_pr pr_view_base_case bc
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
+
+let string_of_view_decl_inv (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_inv v
 
 let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_short v
 
@@ -5680,3 +5719,5 @@ Cfout.print_sv := string_of_spec_var;;
 (*   let cdefs = Cast.sort_view_list !cprog.Cast.prog_coercion_decls in *)
 (*   get_lemma_cprog cdefs; *)
 (*   cdefs *)
+
+let () = Excore.map_num_invs # set_pr (pr_pair !Cpure.print_svl !Cpure.print_formula) 

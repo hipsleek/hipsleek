@@ -466,7 +466,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
       (*do not split unk_hps and link_hps, all non-ptrs args*)
       let non_split_hps = unk_hps @ link_hps in
       let ls_lhp_args1, ls_lhs_non_node_hpargs = List.fold_left (fun (r1,r2) (hp,args) ->
-          let arg_i,_ = Sautil.partition_hp_args prog hp args in
+          let arg_i,_ = x_add Sautil.partition_hp_args prog hp args in
           if ((List.filter (fun (sv,_) -> CP.is_node_typ sv) arg_i) = []) then
             (r1, r2@[(hp,args)])
           else if not (CP.mem_svl hp non_split_hps) then
@@ -3277,6 +3277,15 @@ let infer_shapes iprog prog proc_name (constrs0: CF.hprel list)
     let hprels = CF.add_infer_type_to_hprel constrs0 in
     let sel_hprels, others = SynUtils.select_hprel_assume hprels (List.map CP.name_of_spec_var sel_hps) in
     let derived_views, nhprels = Syn.derive_view iprog prog others sel_hprels in (* shape_derive_view [sel_hps] *)
+    let view_aset, derived_views =
+      if !Globals.pred_equiv then
+        let view_aset = Syn.aux_pred_reuse iprog prog derived_views in
+        let derived_views = List.map (fun v -> 
+          try Cast.look_up_view_def_raw 30 prog.Cast.prog_view_decls v.Cast.view_name
+          with _ -> v) derived_views in
+        view_aset, derived_views
+      else [], derived_views
+    in
     let () = y_binfo_hp (add_str "DERIVED VIEWS" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
     (nhprels, [], [])
 

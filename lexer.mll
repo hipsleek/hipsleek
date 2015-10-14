@@ -152,11 +152,11 @@ module Make (Token : SleekTokenS)
    ("pred_elim_hd_node", PRED_ELIM_HEAD);
    ("pred_elim_tl_node", PRED_ELIM_TAIL);
    ("pred_unify_disj", PRED_UNIFY_DISJ);
-   ("pred_elim_useless", PRED_ELIM_USELESS );
-   ("pred_reuse", PRED_REUSE );
-   ("pred_unfold", PRED_UNFOLD );
-   ("pred_reuse_subs", PRED_REUSE_SUBS );
-   ("shape_extract", SHAPE_EXTRACT );
+   ("pred_elim_useless", PRED_ELIM_USELESS);
+   ("pred_reuse", PRED_REUSE);
+   ("pred_unfold", PRED_UNFOLD);
+   ("pred_reuse_subs", PRED_REUSE_SUBS);
+   ("shape_extract", SHAPE_EXTRACT);
    ("shape_add_dangling", SHAPE_ADD_DANGLING);
    ("shape_unfold", SHAPE_UNFOLD);
    ("shape_param_dangling", SHAPE_PARAM_DANGLING);
@@ -196,6 +196,7 @@ module Make (Token : SleekTokenS)
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
    ("extends", EXTENDS);
+   (* ("extends_rec", EXTENDS_REC); *)
    ("expect_infer", EXPECT_INFER);
    ("false", FALSE);
    ("finalizes", FINALIZE);

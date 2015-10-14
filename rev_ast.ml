@@ -232,6 +232,8 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_imm_map = [];
                          I.view_parent_name = None;
                          I.view_derv = false;
+                         I.view_derv_from = None;
+                         I.view_derv_extns = [];
                          I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
                          I.view_modes = List.map (fun _ -> ModeOut) vars ;
                          I.view_typed_vars =  tvars;
@@ -339,6 +341,8 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_typed_vars = List.map (fun sv -> (CP.type_of_spec_var sv, CP.name_of_spec_var sv)) v.C.view_vars;
     I.view_parent_name = v.C.view_parent_name;
     I.view_derv = false; (* TODO *)
+    I.view_derv_from = None;
+    I.view_derv_extns = [];
     I.view_derv_info = []; (* TODO *)
     I.view_type_of_self = v.C.view_type_of_self;
     I.view_kind = v.C.view_kind;
