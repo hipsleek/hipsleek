@@ -20100,6 +20100,16 @@ let add_label_to_struc_formula s_f old_sf =
 let eq_hprel_defn f1 f2 =
   (f1.hprel_lhs = f2.hprel_lhs) && (f1.hprel_rhs = f2.hprel_rhs)  && (f1.hprel_guard = f2.hprel_guard)
 
+let trans_heap_formula_new fh (f: formula) = 
+  let f_h_f _ hf = fh hf in 
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  trans_formula f () 
+    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
+    f_arg List.concat
+
 let trans_heap_formula f_h_f (f: formula) = 
   let somef2 _ f = Some (f, []) in
   let id2 f _ = (f, []) in
@@ -20120,11 +20130,17 @@ let aux_rename_view_h_formula sst hf =
   | _ -> None
 
 let rename_view_formula sst f =
-  let f_h_f = (fun _ hf -> 
+  let f_h_f = (fun hf -> 
     match (aux_rename_view_h_formula sst hf) with
     | Some nhf -> Some (nhf, [])
     | None -> None) in 
-  fst (trans_heap_formula f_h_f f)
+  fst (trans_heap_formula_new f_h_f f)
+
+(* let new_f = build_ctx_with_emp orig_f hf in *)
+let build_context_with_emp f hf_ptr =
+  let f_h_f = (fun hf ->  if hf==hf_ptr then Some(HEmp,[])
+                else Some(hf,[])) in
+  fst (trans_heap_formula_new f_h_f f)
 
 let rename_view_struc sst f = 
   let f_h_f = (fun hf -> aux_rename_view_h_formula sst hf) in 
@@ -20133,8 +20149,11 @@ let rename_view_struc sst f =
 
 let is_sat_raw = Mcpure.is_sat_raw
 
-let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
-  let pure_of_f = get_pure f in
+let is_xpure_unsat = ref (fun (f:formula) -> ((failwith x_loc):bool))
+
+let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) orig_f =
+  let pure_of_f = get_pure orig_f in
+  let () = y_tinfo_hp (add_str "complex_unfold(f)" !print_formula) orig_f in
   let () = y_tinfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
 
   (* try to replace views if the corresponding list of formulae in unfold_set1
@@ -20147,6 +20166,7 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
     (* can only unfold on self *)
     (* when string_eq "self" (CP.name_of_spec_var vsv) *) ->
       begin
+        let new_f = build_context_with_emp orig_f hf in
         let vl = v in
         let args = vl.h_formula_view_arguments in 
         let vv = vl.h_formula_view_name in
@@ -20156,14 +20176,21 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
         try
           let (_,to_args,fl) = List.find (fun (id,_,_) -> string_eq id vname) unfold_set1 in
           let sat_fl = List.filter (fun unf_f ->
-              let f = unf_f in
+              (* let f = unf_f in *)
               let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
-              let unf_f = subst_all sst f in
-              let unf_pure_f = get_pure unf_f in
-              let conj = (CP.mkAnd pure_of_f unf_pure_f no_pos) in
-              let flag = !is_sat_raw (MCP.mix_of_pure conj) in
-              let () = y_tinfo_hp (add_str "transform .. check sat" (pr_pair !CP.print_formula string_of_bool)) (conj,flag) in
-              flag) fl in
+              let unf_f = subst_all sst unf_f in
+              (* let unf_pure_f = get_pure unf_f in *)
+              let () = y_tinfo_hp (add_str "complex_unfold(unf_f)" !print_formula) unf_f in
+              (* let conj = (CP.mkAnd pure_of_f unf_pure_f no_pos) in *)
+              let cf_star = (mkStar_combine new_f unf_f Flow_combine no_pos) in
+              (* let flag1 = !is_sat_raw (MCP.mix_of_pure conj) in *)
+              let flag = (!is_xpure_unsat cf_star) in
+              (* let diff_flag = not(flag=flag1) in *)
+              (* let msg = if diff_flag then " DIFFERENT" else "" in *)
+              let pr_b = string_of_bool in
+              (* let () = if diff_flag then y_tinfo_hp !CP.print_formula unf_pure_f in *)
+              let () = y_tinfo_hp (add_str ("check sat"(* ^msg *)) (pr_pair !print_formula pr_b)) (cf_star,flag) in
+              not(flag)) fl in
           let () = y_tinfo_hp (add_str "transform .. sat fl" (pr_list !print_formula)) sat_fl in
           (match sat_fl with
            (* if we match with none, we *could* replace with false *)
@@ -20186,7 +20213,7 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
   let ida _ f = (f, []) in
   let f_trans = (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) in
   let f_arg = voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2 in
-  let (nf, _) = trans_formula f () f_trans f_arg List.concat in
+  let (nf, _) = trans_formula orig_f () f_trans f_arg List.concat in
   add_qv_pure stk nf
 
 (* type: HipUtil.NG.V.label -> h_formula_view -> *)

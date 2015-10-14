@@ -2837,6 +2837,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 (* let npf = MCP.merge_mems qp ph true in *)
 (* tp_call_wrapper npf *)
 
+(* type: Cast.prog_decl -> int ref -> CF.formula -> bool *)
 and unsat_base_a prog (sat_subno:  int ref) f  : bool=
   let () = if !Globals.sleek_gen_sat then CF.sat_stk # push f else () in
   (*need normal lize heap_normal_form*)
@@ -16853,3 +16854,13 @@ ation }
 		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
 	List.map hlp f
 	*)
+
+let is_unsat_0 f =
+  let pg = Cast.get_cprog () in
+  let n = 111 in
+  unsat_base_nth n pg (ref n) f
+
+let is_unsat_0 f =
+  Debug.no_1 "is_xpure_unsat" !print_formula string_of_bool is_unsat_0 f
+
+let () = CF.is_xpure_unsat := is_unsat_0

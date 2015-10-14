@@ -4109,3 +4109,14 @@ let rename_view vdecl new_name =
     view_un_struc_formula = List.map (fun (f, lbl) -> (F.rename_view_formula sst f, lbl)) vdecl.view_un_struc_formula; }
 
 
+let cprog:(prog_decl option) ref = ref None
+
+let get_cprog () = match !cprog with
+  | Some cp -> cp
+  | None -> failwith ("cprog not yet created " ^x_loc)
+
+let set_prog cp = 
+  cprog := Some cp
+
+
+
