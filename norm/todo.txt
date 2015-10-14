@@ -1396,15 +1396,30 @@ imply_raw@9 EXIT:false
 
 !!! **fixUtil.ml#185:Predicate ll_ss has over invariant
 
-------------------------
-ex25m5d.slk --inv-baga -dre "form_body_inv\|build_ef_formula\|ef_conv_"
+===================================================================
+ex25m5d.slk --inv-baga --old-tp-simplify -dre "form_body_inv\|build_ef_formula\|ef_conv_"
 
-# Below loses precision. Need to trace the code of ef_conv_enum_disj to see
+Last Proving Location: ex25m5d-pred-extn-double-ll.slk_8:3_8:18
+
+ERROR: at ex25m5d-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Over)**astsimp.ml#2206:
+
+Exception processed: Failure("\nInv Check: Fail.(View ll_ss:Over)**astsimp.ml#2206:")
+error at: 
+SLEEK FAILURE (END)
+
+# Below loses precision. Need to trace the code of TP.simplify_raw  to see
   what is wrong with it.
+# incorrect TP.simplify_raw
 
-# seems redundant?
+(====)
+simplify_raw@759@755@723
+simplify_raw inp1 : ((nnn=0 & self=null) | (self=1 & nnn=2) | 
+  (self=1 & 4<=nnn & exists(alpha:2*alpha=nnn)))
+simplify_raw@759 EXIT: (nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))
 
-# correction : use om_simplify instead of TP.simplify_raw
+# correction : use om_simplify instead of TP.simplify_raw --new-tp-simplify
 
 (====)
 simplify_omega@778@774@744
@@ -1413,11 +1428,18 @@ simplify_omega inp1 : ((nnn=0 & self=null) | (self=1 & nnn=2) |
 simplify_omega@778 EXIT: ((self=1 & nnn=2) | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn) | 
   (self=null & nnn=0))
 
-(====)
-simplify_raw@759@755@723
-simplify_raw inp1 : ((nnn=0 & self=null) | (self=1 & nnn=2) | 
-  (self=1 & 4<=nnn & exists(alpha:2*alpha=nnn)))
-simplify_raw@759 EXIT: (nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))
+# seems redundant?
+(==tpdispatcher.ml#978==)
+simplify_imm_min_max@785
+simplify_imm_min_max inp1 : ((nnn=0 & self=null) | (nnn=2 & self!=null) | (nnn=4 & self!=null) | 
+  (nnn=6 & self!=null) | 
+  (exists(alpha_190:2*alpha_190=nnn) & self!=null & 4<=nnn))
+simplify_imm_min_max@785 EXIT: ((nnn=0 & self=null) | (nnn=2 & self!=null) | (nnn=4 & self!=null) | 
+  (nnn=6 & self!=null) | 
+  (exists(alpha_190:2*alpha_190=nnn) & self!=null & 4<=nnn))
+
+
+
 
 (==#0==)
 ef_conv_enum_disj@83@81

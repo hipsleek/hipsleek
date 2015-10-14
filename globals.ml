@@ -1295,6 +1295,7 @@ let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
 let old_pred_extn = ref false (* false *)
+let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false
