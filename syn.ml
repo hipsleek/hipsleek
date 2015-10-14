@@ -57,7 +57,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
       with _ -> []
     in
     let lhs_args = collect_feasible_heap_args_formula prog null_aliases hpr.hprel_lhs in
-    let lhs_nodes = CF.collect_node_var_formula hpr.hprel_lhs in
+    (* let lhs_nodes = CF.collect_node_var_formula hpr.hprel_lhs in *)
     let rhs_args = collect_feasible_heap_args_formula prog null_aliases hpr.hprel_rhs in
     let rhs_args_w_aliases = List.concat (List.map (fun arg ->
       try List.find (fun svl -> mem arg svl) aliases
@@ -579,7 +579,11 @@ let dangling_parameterizing_hprel (hpr: CF.hprel) =
     let n_f_disjs, dangling_params_lists = List.split (List.map (fun (disj, dangling_vars) ->
       let fresh_dangling_vars = CP.fresh_spec_vars dangling_vars in
       let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) fresh_dangling_vars in
-      let n_disj = CF.subst (List.combine dangling_vars fresh_dangling_vars) disj in
+      (* Adding equality fresh_dangling_var = dangling_vars instead of renaming *)
+      (* let n_disj = CF.subst (List.combine dangling_vars fresh_dangling_vars) disj in *)
+      let n_disj = List.fold_left (fun f (dv, fdv) ->
+          CF.add_pure_formula_to_formula (CP.mkEqVar fdv dv no_pos) f) 
+        disj (List.combine dangling_vars fresh_dangling_vars) in
       (n_disj, dangling_params)) n_f_disjs_w_dangling_vars)
     in
     let n_f_opt = CF.join_conjunct_opt n_f_disjs in
