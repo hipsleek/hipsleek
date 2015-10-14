@@ -19914,7 +19914,7 @@ let get_view_unfold_g vd_name vl to_args f =
     (* let new_args = trans_args sst args in *)
     let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
     let new_f = subst_all sst f in
-    let () = y_binfo_hp pr_id (HipUtil.view_scc_obj # string_of) in
+    let () = y_tinfo_hp pr_id (HipUtil.view_scc_obj # string_of) in
     let grh = HipUtil.view_scc_obj # unfold_in vv vd_name in
     let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
     let (qv,(hf,pure_f,_,_,_,_)) = split_components_exist ~rename_flag:true new_f in
@@ -19955,11 +19955,11 @@ let repl_unfold_heap vd stk u_lst hf =
       match find name with
       | Some (m,to_args,f) -> 
         (* WN : take care of pure by mutable *)
-        (* let () = y_binfo_hp (add_str "Unfolding " (pr_pair pr_id !print_formula)) (name,f) in *)
+        (* let () = y_tinfo_hp (add_str "Unfolding " (pr_pair pr_id !print_formula)) (name,f) in *)
         let n_hf = get_view_unfold vd stk vl to_args f in
         let pr_hf = !print_h_formula in
-        let () = y_binfo_hp (add_str "Unfolding -> " (pr_pair pr_hf pr_hf)) (hf,n_hf) in
-        let () = y_binfo_hp (add_str "(exist vars,pure)  " (fun s -> s # string_of)) stk in
+        let () = y_tinfo_hp (add_str "Unfolding -> " (pr_pair pr_hf pr_hf)) (hf,n_hf) in
+        let () = y_tinfo_hp (add_str "(exist vars,pure)  " (fun s -> s # string_of)) stk in
         Some (n_hf)
         (* failwith (x_loc^"TBI") *)
       | _ -> Some hf 
@@ -20003,9 +20003,9 @@ let add_label_to_struc_formula s_f old_sf =
 let is_sat_raw = Mcpure.is_sat_raw
 
 let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
-  let () = y_binfo_pp "insider complex fold" in
+  let () = y_tinfo_pp "insider complex fold" in
   let pure_of_f = get_pure f in
-  let () = y_binfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
+  let () = y_tinfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
 
   (* try to replace views if the corresponding list of formulae in unfold_set1
    * has only 1 satisfiable formula *)
@@ -20020,8 +20020,8 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
         let vl = v in
         let args = vl.h_formula_view_arguments in 
         let vv = vl.h_formula_view_name in
-        let () = y_binfo_hp (add_str "transform .. view node" !CP.print_sv) vsv in
-        let () = y_binfo_hp (add_str "transform .. view name" pr_id) vname in
+        let () = y_tinfo_hp (add_str "transform .. view node" !CP.print_sv) vsv in
+        let () = y_tinfo_hp (add_str "transform .. view name" pr_id) vname in
         (* formulae for view name *)
         try
           let (_,to_args,fl) = List.find (fun (id,_,_) -> string_eq id vname) unfold_set1 in
@@ -20032,9 +20032,9 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
               let unf_pure_f = get_pure unf_f in
               let conj = (CP.mkAnd pure_of_f unf_pure_f no_pos) in
               let flag = !is_sat_raw (MCP.mix_of_pure conj) in
-              let () = y_binfo_hp (add_str "transform .. check sat" (pr_pair !CP.print_formula string_of_bool)) (conj,flag) in
+              let () = y_tinfo_hp (add_str "transform .. check sat" (pr_pair !CP.print_formula string_of_bool)) (conj,flag) in
               flag) fl in
-          let () = y_binfo_hp (add_str "transform .. sat fl" (pr_list !print_formula)) sat_fl in
+          let () = y_tinfo_hp (add_str "transform .. sat fl" (pr_list !print_formula)) sat_fl in
           (match sat_fl with
            (* if we match with none, we *could* replace with false *)
            | [] -> None

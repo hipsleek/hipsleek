@@ -3977,8 +3977,8 @@ let get_unfold_set_gen vdefs =
   let equiv_set = List.fold_left (fun acc vd -> 
       let name = vd.view_name in
       let f = vd.view_un_struc_formula in
-      if HipUtil.view_scc_obj # is_self_rec name then acc 
-      else 
+      (* if HipUtil.view_scc_obj # is_self_rec name then acc  *)
+      (* else  *)
         begin
           let lst=List.map fst f in
           (name,vd.view_vars,lst)::acc

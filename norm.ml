@@ -335,22 +335,26 @@ let norm_complex_unfold iprog cprog
     let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
     let pr2 = pr_list (pr_triple pr_id !CP.print_svl (pr_list !CF.print_formula)) in
     (* unfold_set0 - single disj unfold set *)
-    (* let () = y_binfo_hp (add_str "unfold_set0" pr) unfold_set0 in *)
+    (* let () = y_tinfo_hp (add_str "unfold_set0" pr) unfold_set0 in *)
     (* unfold_set1 - multiple disjs unfold set *)
     let unfold_set1 = List.filter (fun (_,_,l) -> List.length l > 1) unfold_set1 in
-    let () = y_binfo_hp (add_str "unfold_set1" pr2) unfold_set1 in
-    let uses_unfold_set1 f = 
+    let () = y_tinfo_hp (add_str "unfold_set1" pr2) unfold_set1 in
+    let uses_unfold_set1 vd =
+      let f = vd.C.view_un_struc_formula in
+      let vn =  vd.C.view_name in
+      let unfold_set1 = List.filter (fun (n,_,_) -> not(n=vn)) unfold_set1 in 
       let svl = List.concat (List.map (fun (f,_) -> fv ~vartype:Global_var.var_with_view_only f) f) in
-      let () = y_binfo_hp (add_str "views" !CP.print_svl) svl in
+      let () = y_tinfo_hp (add_str "svl" !CP.print_svl) svl in
       let unf = Gen.BList.intersect_eq (fun (e,_,_) sv -> e=(CP.name_of_spec_var sv)) unfold_set1 svl in
-      let () = y_binfo_hp (add_str "unf" (pr_list (fun (e,_,_) ->e))) unf in
+      let () = y_tinfo_hp (add_str "unf" (pr_list (fun (e,_,_) ->e))) unf in
       unf
     in
     let vdefs = List.filter (fun vd -> 
         let n = vd.C.view_name in
         List.exists (fun vn -> string_eq vn n) to_vns
       ) vdefs in
-    let ans = List.map (fun vd -> (vd,uses_unfold_set1 vd.C.view_un_struc_formula)) vdefs in
+    let ans = List.map (fun vd -> (vd,uses_unfold_set1 vd)) vdefs in
+    let () = y_tinfo_hp (add_str "selected vdefs" (pr_list (pr_pair (fun vd -> vd.C.view_name ) (pr_list (fun (v,_,_)->v)) ))) ans in
     let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
     List.iter (fun (v,unf_lst) -> (* transform body of views *)
         let vn = v.C.view_name in
@@ -382,11 +386,11 @@ let norm_unfold qual iprog cprog
     let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
     let pr2 = pr_list (pr_triple pr_id !CP.print_svl (pr_list !CF.print_formula)) in
     (* unfold_set0 - single disj unfold set *)
-    let () = y_binfo_hp (add_str "unfold_set0" pr) unfold_set0 in
+    let () = y_tinfo_hp (add_str "unfold_set0" pr) unfold_set0 in
     (* unfold_set1 - multiple disjs unfold set *)
     (* let unfold_set1 = List.filter (fun (_,_,l) -> List.length l > 1) unfold_set1 in *)
     (* let () = if qual!=None then  *)
-    (*     y_binfo_hp (add_str "unfold_set1" pr2) unfold_set1 in *)
+    (*     y_tinfo_hp (add_str "unfold_set1" pr2) unfold_set1 in *)
     (* let unfold_set = List.map (fun (m,vd) -> m) unfold_set0 in *)
     let uses_unfold_set f = uses_views_fn 
         (fun (m,_,_) m2 -> string_eq m m2) unfold_set0 f in
@@ -502,7 +506,7 @@ let norm_trans_equiv iprog cprog vdefs =
           | Some to_vd ->
             let frm_name = frm_vd.Cast.view_name in
             let (sst2,last_name) = to_vd.Cast.view_equiv_set # get in
-            let () = y_binfo_hp (add_str "trans" (pr_triple pr_id pr_id pr_id)) (frm_name,to_name,last_name) in
+            let () = y_tinfo_hp (add_str "trans" (pr_triple pr_id pr_id pr_id)) (frm_name,to_name,last_name) in
             let new_sst = comp_sst sst1 sst2 in
             let () = frm_vd.Cast.view_equiv_set # set (new_sst,last_name) in
             ()

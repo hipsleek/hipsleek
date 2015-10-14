@@ -23,10 +23,9 @@ pred tmp2<> == self::node<_,q>*q::ll2<>
  inv true.
 
 print views.
-pred_unfold[*].
+//pred_unfold[*].
+pred_unfold disj[*].
 print views.
-//pred_unfold disj[*].
-//print views.
 
 /*
 # ex21u3e9c.slk 
