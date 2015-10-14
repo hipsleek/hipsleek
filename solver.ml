@@ -9535,7 +9535,7 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let norm_rhs_view_node_args = (CP.diff_svl (CF.get_ptrs_w_args ~en_pure_field:estate.CF.es_infer_obj # is_pure_field_all rhs_node) vs) in
   let rhs_view_node_args = CP.subst_var_list estate.CF.es_rhs_eqset norm_rhs_view_node_args in
   let ass_guard = x_add InferHP.find_guard prog lhds leqs leqNulls
-      [(hp,CP.diff_svl (CP.remove_dups_svl (vs@rhs_view_node_args)) leqNulls)] (* rhs_arg *)[] in
+      [(hp,CP.diff_svl ((* CP.remove_dups_svl *) (vs(* @rhs_view_node_args *))) leqNulls)] (* rhs_arg *)(CP.diff_svl  (rhs_view_node_args) leqNulls) (* [] *) in
   let sel_eqns_svl = match ass_guard with
     | None -> vs
     | Some f -> CP.intersect_svl vs ((CF.get_ptrs f)@ (CF.get_ptrs rhs_node)) in

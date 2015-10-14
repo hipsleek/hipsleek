@@ -109,7 +109,7 @@ let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
       ls@sel_args
       with _ -> ls@args
   ) [] l_selhpargs in
-  let l_args2 = CF.find_close l_args1 leqs in
+  let l_args2 = CF.find_close (l_args1@rhs_args) leqs in
   let cl_null_ptrs = CF.find_close null_ptrs leqs in
   let l_args3 = CP.diff_svl l_args2(* (CP.remove_dups_svl (l_args2@rhs_args)) *) cl_null_ptrs in
   let () = Debug.ninfo_hprint (add_str "l_args2"  !CP.print_svl) l_args2 no_pos in

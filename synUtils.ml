@@ -291,7 +291,7 @@ let find_root_hprel_formula_base prog hprel_name num_args f =
 let rec find_root_hprel_formula prog hprel_name num_args f =
   match f with
   | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->
-    let r1 = find_root_hprel_formula prog hprel_name num_args f1 in
+    let r1 = x_add find_root_hprel_formula prog hprel_name num_args f1 in
     (match r1 with
     | None -> find_root_hprel_formula prog hprel_name num_args f2
     | _ -> r1)
@@ -326,7 +326,7 @@ let find_root_hprel prog hprel =
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let hprel_id = CP.name_of_spec_var hprel_name in
   try
-    let root_pos = C.get_proot_hp_def_raw prog.C.prog_hp_decls hprel_id in
+    let root_pos = x_add C.get_proot_hp_def_raw prog.C.prog_hp_decls hprel_id in
     (List.nth hprel_args root_pos, root_pos)
   with _ -> 
     let root_var, root_pos = find_root_one_hprel prog hprel in
@@ -343,8 +343,8 @@ let find_root_hprel_list prog hprels =
   match hprels with
   | [] -> None
   | h::hs ->
-    let _, h_i = find_root_hprel prog h in
-    let hs_roots = List.map (find_root_hprel prog) hs in
+    let _, h_i = x_add find_root_hprel prog h in
+    let hs_roots = List.map (x_add find_root_hprel prog) hs in
     let is_consistent = List.for_all (fun (_, i) -> i == h_i) hs_roots in
     if not is_consistent then
       failwith ("TO FIX: Inconsistency in find_root_hprel_list")
@@ -808,7 +808,7 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let pos = no_pos in
   (* let hprel_self = CP.to_unprimed (List.hd hprel_args) in *)
-  let hprel_root = fst (find_root_hprel prog hprel) in
+  let hprel_root = fst (x_add find_root_hprel prog hprel) in
   let hprel_self = CP.to_unprimed hprel_root in
   let vself = match hprel_self with CP.SpecVar (t, _, p) -> CP.SpecVar (t, Globals.self, p) in
   let vargs = List.map (fun sv -> (sv, NI)) (diff hprel_args [hprel_root]) (* List.tl hprel_args *) in
