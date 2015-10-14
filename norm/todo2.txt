@@ -101,6 +101,25 @@ pred_split [zip2].
 !!! **sleekengine.ml#3096:
 
 =========================================================
+# ex21s1d4.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+lemma_test "L1" self::zip2<y,z>
+   <- self::ll<n1> * y::lseg<z,n2> & n1<=n2.
+
+# Why did this above proof fails?
+  A folding problem?
+
+Entailing lemma L1: Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_L1::zip2<y_133,z_134>@M(must),
+valid
+]
+
+chinwn@loris-60:~/hg/sleekex/norm$ 
+=========================================================
 # ex25a2.slk
 
 pred ll<> ==
@@ -119,7 +138,6 @@ pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
 !!! **hipUtil.ml#75:**astsimp.ml#545:replace:(llN2,[])
 !!! **hipUtil.ml#200:invoking build_scc splitSegmentation fault (core dumped)
 chinwn@loris-60:~/hg/sleekex/norm$ 
-=========================================================
 =========================================================
 =========================================================
 =========================================================

@@ -1,6 +1,6 @@
 data node{
      int val;
-     node next;
+     node next#REC;
 }.
 
 
@@ -8,14 +8,29 @@ pred zip2<y,z> ==
    self=null & y=z
 or self::node<_,p>*y::node<_,q> * p::zip2<q,z>.
 
+pred ll<> == self=null
+    or self::node<_,q>*q::ll<>.
+
+pred lseg<p> == self=p
+    or self::node<_,q>*q::lseg<p>.
+
 /*
-pred zip3<y,z> ==
-   self=null & y=null & z=null
-or self::node<_,p>*y::node<_,q> * z::node<_,t> * p::zip3<q,t>.
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+pred llN<nnn> == extends ll<> with size[REC]<nnn> .
+pred lsegN<p,nnn> == extends lseg<p> with size[REC]<nnn> .
 */
 
-pred_split [zip2].
+//pred_split [zip2].
 print views.
+relation R(int a,int b).
+
+lemma_infer [R] self::zip2<y,z>
+   <- self::llN<n1> * y::lsegN<z,n2> & R(n1,n2).
+print residue.
 
 /*
 # ex21s1d.slk
