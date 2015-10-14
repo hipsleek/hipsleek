@@ -414,14 +414,15 @@ void delete_ptr(int_ptr_ptr@R x)
   requires x::int_ptr_ptr<v>
   ensures true;
 
-/* Muoi updated: We can generate int_star from cilparser.
+/* Muoi updated: We can generate int_star from cilparser. 
 data int_star{
   int value;
 }
-*/
+
 int_star __pointer_add__int_star__int__(int_star p, int i)
   requires p::int_star<value>
   ensures res::int_star<value+i>;
+*/
 
 /* ********<<<*************/
 /* Pointer translation  */
