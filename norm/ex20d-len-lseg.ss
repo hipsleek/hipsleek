@@ -27,7 +27,7 @@ pred_extn size[R]<k> ==
    or R::size<i> & k=1+i // recursive case
    inv k>=0;
 
-HeapPred P(node x,node y).
+HeapPred P(node x,node@NI y).
 
   int len_seg(node x,node p)
   infer [P,@classic,@pure_field]
@@ -57,8 +57,20 @@ HeapPred P(node x,node y).
   else return 1+len_seg(x.next,p);
 }
 
+!!! **WARNING****solver.ml#9527:do_base_unfold_hp_rel (TBI)Exception(partition_hp_args):Invalid_argument("List.combine")
+Exception(look_up_view_def_raw):Not_found
+
+********************************************
+******* shape relational assumptions *******
+********************************************
+[ // POST
+(1;0)P(x,p@NI)&p'=p & x'=x & x'=p' --> emp&
+true]
+
+
 ExceptionInvalid_argument("List.combine")Occurred!
-!!! **tpdispatcher.ml#2498:xxx rel Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
+!!! **tpdispatcher.ml#2498:xxx rel 
+Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
 Exception(Syn.find_root_one_hprel):Invalid_argument("List.combine")
 Exception(Syn.find_root_hprel):Invalid_argument("List.combine")
 Exception(Syn.view_decl_of_hprel):Invalid_argument("List.combine")
