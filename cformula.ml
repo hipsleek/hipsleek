@@ -20003,7 +20003,6 @@ let add_label_to_struc_formula s_f old_sf =
 let is_sat_raw = Mcpure.is_sat_raw
 
 let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
-  let () = y_tinfo_pp "insider complex fold" in
   let pure_of_f = get_pure f in
   let () = y_tinfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
 
