@@ -80,10 +80,10 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   let n_hpr_list, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) hpr_list) in
   let has_dangling_vars = or_list has_dangling_vars in
-  let prog =
+  let () =
     if has_dangling_vars then
-      { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }
-    else prog
+      (* { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; } *)
+      prog.Cast.prog_view_decls <- prog.Cast.prog_view_decls @ [mk_dangling_view_prim]
   in
   n_hpr_list
   
@@ -307,21 +307,23 @@ let unfolding_one_hrel prog ctx hrel hrel_defs =
       with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
     ) merged_hrel_defs
   in
-  let guarded_hrel_defs, unguarded_hrel_defs = List.partition (fun hrel_def ->
-      match hrel_def.CF.hprel_guard with Some _ -> true | None -> false) subst_hrel_defs in
-  let non_inst_unguarded_hrel_defs, unguarded_hrel_defs = List.partition (is_non_inst_hprel prog) unguarded_hrel_defs in
-  (* Only unfolding guarded hrel or non-inst hrel *)
+  (* let guarded_hrel_defs, unguarded_hrel_defs = List.partition (fun hrel_def ->                                           *)
+  (*     match hrel_def.CF.hprel_guard with Some _ -> true | None -> false) subst_hrel_defs in                              *)
+  (* let non_inst_unguarded_hrel_defs, unguarded_hrel_defs = List.partition (is_non_inst_hprel prog) unguarded_hrel_defs in *)
+  (* (* Only unfolding guarded hrel or non-inst hrel *)                                                                     *)
   let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
       let unfolding_ctx = x_add unfolding_one_hrel_def prog ctx hrel hrel_def in
       match unfolding_ctx with
       | None -> acc
-      | Some ctx -> acc @ [ctx]) [] (guarded_hrel_defs @ non_inst_unguarded_hrel_defs)
+      | Some ctx -> acc @ [ctx]) [] 
+    (* (guarded_hrel_defs @ non_inst_unguarded_hrel_defs) *)
+    subst_hrel_defs
   in
-  let unfolding_ctx_list = 
-    if is_empty unguarded_hrel_defs 
-    then unfolding_ctx_list
-    else unfolding_ctx_list @ [add_back_hrel prog ctx hrel]
-  in
+  (* let unfolding_ctx_list =                                  *)
+  (*   if is_empty unguarded_hrel_defs                         *)
+  (*   then unfolding_ctx_list                                 *)
+  (*   else unfolding_ctx_list @ [add_back_hrel prog ctx hrel] *)
+  (* in                                                        *)
   if is_empty unfolding_ctx_list then
     [add_back_hrel prog ctx hrel]
   else unfolding_ctx_list
@@ -445,7 +447,7 @@ let rec unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF
 
 let unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF.formula) =
   let pr = !CF.print_formula in
-  Debug.no_1 "unfolding_hprel_formula" pr (pr_list pr)
+  Debug.no_1 "Syn:unfolding_hprel_formula" pr (pr_list pr)
     (fun _ -> unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f) f
 
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =

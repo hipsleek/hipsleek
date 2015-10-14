@@ -19,7 +19,7 @@ ll<> == self = null
   inv true;
 
 lseg<p> == self = p
-	or self::node<_, q> * q::lseg<p> 
+	or self::node<_, q> * q::lseg<p> & self != p
   inv true;
 
 pred_extn size[R]<k> ==
@@ -27,7 +27,7 @@ pred_extn size[R]<k> ==
    or R::size<i> & k=1+i // recursive case
    inv k>=0;
 
-HeapPred P(node x,node@NI y).
+HeapPred P(node x,node y).
 
 int len_seg(node x,node p)
   infer [P,@classic,@pure_field]

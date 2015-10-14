@@ -34,7 +34,7 @@ int len_seg(node x,node p)
   //infer [P,@classic,@pure_field,@size,@term]
   //infer [P#{size,sum},@classic,@pure_field]
   //infer [P#size,P#sum,@classic,@pure_field]
-  requires P(x,p)
+  requires P(x,y)
   ensures true;
 /*
   requires x::ll<>

@@ -356,6 +356,11 @@ let get_root_args_hp prog id all_args =
   let args = diff all_args [root] in
   root, args
 
+let get_root_args_hp prog id all_args =
+  let pr1 = !CP.print_svl in
+  Debug.no_2 "get_root_args_hp" idf pr1 (pr_pair !CP.print_sv pr1)
+    (fun _ _ -> get_root_args_hp prog id all_args) id all_args
+
 let select_obj name_of obj_list obj_id_list = 
   List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list
 
