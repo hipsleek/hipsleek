@@ -9524,7 +9524,7 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
               CF.h_formula_star_pos = pos}
     | _ -> hf
   in
-  let () = y_winfo_pp "do_base_unfold_hp_rel (TBI)" in
+  let () = y_tinfo_pp "do_base_unfold_hp_rel (TBI)" in
   let knd = CP.RelAssume [hp] in
   let es_cond_path = CF.get_es_cond_path estate in
   let matched_svl = [] in
@@ -9542,6 +9542,11 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
     | Some f -> CP.intersect_svl vs ((CF.get_ptrs f)@ (CF.get_ptrs rhs_node)) in
   let () = DD.ninfo_hprint (add_str "sel_eqns_svl" !CP.print_svl) sel_eqns_svl no_pos in 
   let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl sel_eqns_svl) (CP.mkTrue pos) in
+  let is_sat = TP.is_sat_raw (MCP.memoise_add_pure_N mlf rhs_p) in
+  if not is_sat then
+    let ls_ctx = Errctx.mkFailCtx_may ~conseq:(Some conseq) x_loc "do_unfold (false)" estate pos in
+    (ls_ctx, Unknown)
+  else
   let rhs_b = CF.formula_base_of_pure (MCP.mix_of_pure rhs_p) pos in
   (* let rhs = CF.formula_of_pure_formula rhs_p pos in *)
   let rhs = CF.Base rhs_b in
