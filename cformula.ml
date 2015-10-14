@@ -3045,7 +3045,7 @@ and f_h_fv (f : formula) : CP.spec_var list =
   | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars
 
 and h_fv ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list =
-  Debug.no_1 "h_fv" !print_h_formula !print_svl (h_fv_x ~vartype:vartype) h
+  (* Debug.no_1 "h_fv" !print_h_formula !print_svl *) (h_fv_x ~vartype:vartype) h
 
 and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list = 
   let rec aux h =
@@ -4274,7 +4274,7 @@ and get_exists (f : formula) : CP.spec_var list =
 
 and elim_exists (f0 : formula) : formula =
   let pr =  !print_formula in
-  Debug.no_1 "cformula.elim_exists" pr pr elim_exists_x f0
+  (* Debug.no_1 "cformula.elim_exists" pr pr *) elim_exists_x f0
 
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
 and elim_exists_x (f0 : formula) : formula = match f0 with
@@ -13926,7 +13926,7 @@ let transform_formula_x f (e:formula):formula =
 
 let transform_formula f (e:formula):formula =
   let pr = !print_formula in
-  Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
+  (* Debug.no_2 "transform_formula" (fun _ -> "f") pr pr *) transform_formula_x f e
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
   let r =  f e in 

@@ -469,7 +469,7 @@ and convert_heap2 prog (f0:IF.formula):IF.formula =
 
 and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula =
   let pr = Iprinter.string_of_struc_formula in
-  Debug.no_1 "convert_struc2" pr pr (convert_struc2_x prog) f0
+  (* Debug.no_1 "convert_struc2" pr pr *) (convert_struc2_x prog) f0
 
 and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EAssume b -> IF.EAssume {b with 
@@ -8226,7 +8226,7 @@ and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula
   let pr_f = !IP.print_formula in
   let pr_tlist = string_of_tlist in
   let pr_out = !CP.print_formula in
-  Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out trans_pure_formula_x f0 tlist
+  (* Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out *) trans_pure_formula_x f0 tlist
 
 and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0                 
@@ -9104,7 +9104,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
       "\n allow_post_vars: "^(string_of_bool allow_post_vars)^
       "\n lax_implicit: "^(string_of_bool lax_implicit)
       ^"\n strad_vs: "^(prl strad_vs)^"\n" in
-    Debug.no_1 "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) (helper h_vars strad_vs [])  nf 
+    (* Debug.no_1 "case_normalize_helper2" pr (pr_pair !IF.print_struc_formula (fun _ -> "")) *) (helper h_vars strad_vs [])  nf 
   in
   (* Question : What is purpose of straddle vars? *)
   let h_vars = h_vars@p_vars in

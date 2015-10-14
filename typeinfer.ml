@@ -71,10 +71,9 @@ let res_retrieve tlist clean_res fl =
 
 let res_retrieve tlist clean_res fl =
   let pr = pr_id in
-  Debug.no_eff_2 "res_retrieve" [true]
-    string_of_tlist pr pr_no
+  (* Debug.no_eff_2 "res_retrieve" [true] *)
+  (*   string_of_tlist pr pr_no *)
     (fun _ _ -> res_retrieve tlist clean_res fl) tlist fl
-
 
 let res_replace tlist rl clean_res fl =
   if clean_res&&(CF.subsume_flow !raisable_flow_int (exlist # get_hash fl)) then 
@@ -86,8 +85,8 @@ let res_replace tlist rl clean_res fl =
 
 let res_replace tlist rl clean_res fl =
   let pr = pr_id in
-  Debug.no_eff_2 "res_replace" [true]
-    string_of_tlist pr pr_no
+  (* Debug.no_eff_2 "res_replace" [true] *)
+  (*   string_of_tlist pr pr_no *)
     (fun _ _ -> res_replace tlist rl clean_res fl) tlist fl
 
 let check_shallow_var = ref false (* true *) (*LDK: test*)
@@ -475,7 +474,7 @@ and sub_type_x (t1 : typ) (t2 : typ) =
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in
-  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2
+  (* Debug.no_2 "sub_type" pr pr string_of_bool *) sub_type_x t1 t2
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
@@ -749,7 +748,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) 
       end
 
 and gather_type_info_pure prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =
-  Debug.no_eff_2 "gather_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_tlist string_of_tlist
+  (* Debug.no_eff_2 "gather_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_tlist string_of_tlist *)
     (gather_type_info_pure_x prog) p0 tlist
 
 and gather_type_info_p_formula prog pf tlist =  match pf with
@@ -1105,8 +1104,8 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
     n_tl
 
 and gather_type_info_struc_f prog (f0:IF.struc_formula) tlist =
-  Debug.no_eff_2 "gather_type_info_struc_f" [false;true]
-    Iprinter.string_of_struc_formula string_of_tlist string_of_tlist
+  (* Debug.no_eff_2 "gather_type_info_struc_f" [false;true] *)
+  (*   Iprinter.string_of_struc_formula string_of_tlist string_of_tlist *)
     (fun _ _ -> gather_type_info_struc_f_x prog f0 tlist) f0 tlist
 
 and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist = 

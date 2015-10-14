@@ -9528,7 +9528,8 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let knd = CP.RelAssume [hp] in
   let es_cond_path = CF.get_es_cond_path estate in
   let matched_svl = [] in
-  let (lhf,mlf,_,_,_,_) = CF.split_components estate.CF.es_formula in
+  let estate_lhs = estate.CF.es_formula in
+  let (lhf,mlf,_,_,_,_) = CF.split_components estate_lhs in
   let lhds, _, _ = CF.get_hp_rel_h_formula lhf in
   let leqs = (MCP.ptr_equations_without_null mlf) in
   let leqNulls = MCP.get_null_ptrs mlf in
@@ -9549,6 +9550,8 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
   (* from unfolding *)
   let hp_rel = CF.mkHprel ~fold_type:false knd [] [] matched_svl lhs grd rhs es_cond_path in
+  let () = y_binfo_hp (add_str "do_unfold:hp_rel" Cprinter.string_of_hprel_short) hp_rel in
+  let () = y_binfo_hp (add_str "do_unfold:estate_lhs" !CF.print_formula) estate_lhs in
   if !Globals.old_infer_hp_collect then
     begin
       x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;

@@ -496,7 +496,7 @@ struct
   (* let threshold = 20 in (\* print calls above this threshold *\) *)
 
   let debug_calls  =
-    let len = 61 in
+    let len = 100 in
     let prefix = "%%%" in
     let pr_cnt (s, cnt) = s ^ (if cnt > 1 then " (" ^ (string_of_int cnt) ^ ")" else "") in
     let summarized_stack stk =

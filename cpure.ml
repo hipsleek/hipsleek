@@ -3060,7 +3060,7 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  (* Debug.no_1 "split_conjunctions" pr (pr_list pr) *) split_conjunctions_x f 
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
@@ -6782,7 +6782,7 @@ and simp_mult_x (e : exp) :  exp =
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   let pr1 = pr_opt !print_exp in
-  Debug.no_1 "split_sums" !print_exp (pr_pair pr1 pr1)
+  (* Debug.no_1 "split_sums" !print_exp (pr_pair pr1 pr1) *)
     split_sums_x e
 
 and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
@@ -6935,7 +6935,7 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
 
 and purge_mult (e: exp) : exp =
   let pr = !print_exp in
-  Debug.no_1 "purge_mult" pr pr purge_mult_x e
+  (* Debug.no_1 "purge_mult" pr pr *) purge_mult_x e
 
 (* TODO : must elim some multiply for MONA *)
 and purge_mult_x (e :  exp):  exp = match e with
