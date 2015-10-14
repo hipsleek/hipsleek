@@ -9,7 +9,7 @@ arr_seg<p,n> == self=p & n=0
   inv n>=0 & p=self+n;
 
 lemma_safe self::arr_seg<p,n> & n=a+b & a>=0 & b>=0 
-      <-> 
+      <->
   (exists q: self::arr_seg<q,a> * q::arr_seg<p,b>);
 
 void upd_arr(arr_int a, int v)
@@ -37,7 +37,6 @@ void foo2(arr_int a,int i)
   requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
   ensures a::arr_seg2<q,10-i> *q::arr_seg<p,5>
   ;
-
 {
   if (i<10) {
     upd_arr(a,5);

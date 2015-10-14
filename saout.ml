@@ -80,6 +80,8 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_modes = List.map (fun _ -> ModeOut) vars ;
                            I.view_typed_vars =  tvars;
                            I.view_kind = View_NORM;
+                           I.view_derv_from = None;
+                           I.view_derv_extns = [];
                            I.view_derv = false;
                            I.view_parent_name = None;
                            I.view_prop_extns = [];

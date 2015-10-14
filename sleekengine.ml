@@ -1773,6 +1773,9 @@ let process_pred_elim_head (ids: regex_id_list) =
 let process_pred_unify_disj (ids: regex_id_list) = 
   process_sleek_norm_preds "Unify Disj" ids (Syn.unify_disj_pred_list iprog !cprog)
 
+let process_shape_extn_view (ids: regex_id_list) (extn: ident) =
+  process_sleek_norm_preds "Pred Extension" ids (Syn.extn_pred_list iprog !cprog extn)
+
 (******************************************************************************)
 
 let relation_pre_process constrs pre_hps post_hps=
@@ -2387,24 +2390,6 @@ let process_shape_sante pre_hps post_hps=
   (* in *)
   ()
 
-let process_pred_split ids=
-  let _ = Debug.info_hprint (add_str "process_pred_split" pr_id) "\n" no_pos in
-  let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
-  let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
-  (*find all sel pred def*)
-  let sel_hp_defs = List.fold_left (fun r (_,def) ->
-      match def.CF.def_cat with
-      | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
-        if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
-      | _ -> r
-    ) [] !sleek_hprel_defns in
-  let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk sel_hp_defs in
-  let _ = if split_map = [] then () else
-      (*print*)
-      let _ = print_endline_quiet ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
-      ()
-  in
-  ()
 
 let process_norm_seg ids=
   let _ = Debug.info_hprint (add_str "process_pred_norm_seg" pr_id) "\n" no_pos in
@@ -2508,10 +2493,11 @@ let process_shape_split pre_hps post_hps=
   end;
   ()
 
-let get_sorted_view_decls () = get_sorted_view_decls ()
-  (* let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
-  (* !cprog.Cast.prog_view_decls <- vdefs; *)
-  (* vdefs *)
+(* let get_sorted_view_decls () = get_sorted_view_decls ()                *)
+(*   (* let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *) *)
+(*   (* !cprog.Cast.prog_view_decls <- vdefs; *)                          *)
+(*   (* vdefs *)                                                          *)
+let get_sorted_view_decls () = C.get_sorted_view_decls !cprog
 
 let process_shape_elim_useless sel_vnames=
   let vdefs = get_sorted_view_decls () in
@@ -2521,18 +2507,81 @@ let process_shape_elim_useless sel_vnames=
   let _ = x_tinfo_zp  (lazy  ("views after ELIM: \n" ^ (pr view_defs))) no_pos in
   ()
 
-let regex_search reg_id vdefs =
-  match reg_id with
-    | REGEX_LIST ids -> ids
-    | REGEX_STAR -> 
-      let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in
-      all_ids
+(* Use regex_search in Norm *)
+(* let regex_search reg_id vdefs =                                         *)
+(*   match reg_id with                                                     *)
+(*     | REGEX_LIST ids -> ids                                             *)
+(*     | REGEX_STAR ->                                                     *)
+(*       let all_ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
+(*       all_ids                                                           *)
+
+
+let process_pred_split ids=
+  let prog = !cprog in
+  let lem_proving (vn, args, new_hp_args,new_rel_args, orig_vn_hf, new_hrels_comb, new_pure_rel_comb)=
+    let l_name = "lem_inf_" ^ vn in
+    let l_ivars = List.map (CP.name_of_spec_var) (List.map fst new_hp_args) in
+    let l_head = CF.formula_of_heap orig_vn_hf no_pos in
+    let l_body = CF.formula_of_heap new_hrels_comb no_pos in
+    let l_ihead = Rev_ast.rev_trans_formula l_head in
+    let l_ibody = Rev_ast.rev_trans_formula l_body in
+    let llemma = I.mk_lemma l_name LEM_INFER LEM_GEN I.Left l_ivars l_ihead l_ibody in
+    let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
+    (* let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (\* @pure_field *\) *)
+    let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
+    (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
+    let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog prog in
+    let flag = if not lres then
+      false
+    else
+      let derived_views, new_hprels = SynUtils.process_hprel_assumes_res "Deriving Split Views"
+        CF.sleek_hprel_assumes snd (REGEX_LIST l_ivars)
+        (Syn.derive_view iprog prog)
+      in
+      let () = y_binfo_hp (add_str "derived views" (pr_list (fun v -> v.Cast.view_name) (* Cprinter.string_of_view_decl_short *))) 
+        derived_views in
+      true
+    in
+    let msg = if flag then "\n Proven :" else "\n Failed :" in
+    let () = y_binfo_pp (msg ^ (!CF.print_formula l_head) ^ " -> " ^ (!CF.print_formula l_body)) in
+    if flag then
+      (* derive views *)
+      [vn]
+    else []
+  in
+  (******************)
+  let _ = Debug.info_hprint (add_str "process_pred_split" (pr_id)) (((pr_list pr_id) ids) ^ "\n" ) no_pos in
+  let () = if not !Globals.new_pred_syn then
+    let unk_hps = List.map (fun (_, (hp,_)) -> hp) (!sleek_hprel_unknown) in
+    let unk_hps = (List.map (fun (hp,_) -> hp) (!sleek_hprel_dang))@ unk_hps in
+    (*find all sel pred def*)
+    let sel_hp_defs = List.fold_left (fun r (_,def) ->
+        match def.CF.def_cat with
+          | CP.HPRelDefn (hp,_,_) -> let hp_name = CP.name_of_spec_var hp in
+            if Gen.BList.mem_eq (fun id1 id2 -> String.compare id1 id2 = 0) hp_name ids then (r@[def]) else r
+          | _ -> r
+    ) [] !sleek_hprel_defns in
+    let hp_defs1, split_map = Sacore.pred_split_hp iprog !cprog unk_hps Infer.rel_ass_stk Cformula.rel_def_stk sel_hp_defs in
+    let _ = if split_map = [] then () else
+      (*print*)
+      let _ = print_endline_quiet ("\n" ^((pr_list_ln Cprinter.string_of_hp_rel_def) hp_defs1)) in
+      ()
+    in
+    ()
+  else
+    let vdefs = get_sorted_view_decls () in
+    let cands = Norm.norm_split iprog !cprog vdefs ids in
+    (* proving lemmas *)
+    let split_vns = List.fold_left (fun acc cand -> acc@(lem_proving cand)) [] cands in
+    ()
+  in ()
+
 
 let process_pred_unfold qual reg_to_vname =
   let vdefs = get_sorted_view_decls () in
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
-  let to_vns = regex_search reg_to_vname vdefs in
+  let to_vns = Norm.regex_search reg_to_vname vdefs in
   Norm.norm_unfold qual iprog !cprog vdefs to_vns
 
 let process_shape_reuse_subs reg_to_vname =
@@ -2542,7 +2591,7 @@ let process_shape_reuse_subs reg_to_vname =
   (* !cprog.Cast.prog_view_decls <- vdefs; *)
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
-  let to_vns = regex_search reg_to_vname vdefs in
+  let to_vns = Norm.regex_search reg_to_vname vdefs in
   let rs = Norm.norm_reuse_subs iprog !cprog vdefs to_vns in
   rs
 
@@ -2553,8 +2602,8 @@ let process_shape_reuse reg_frm_vname reg_to_vname=
   (* !cprog.Cast.prog_view_decls <- vdefs; *)
   (* let vdefs = !cprog.Cast.prog_view_decls in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) !cprog.Cast.prog_view_decls in *)
-  let frm_vnames = regex_search reg_frm_vname vdefs in
-  let to_vnames = regex_search reg_to_vname vdefs in
+  let frm_vnames = Norm.regex_search reg_frm_vname vdefs in
+  let to_vnames = Norm.regex_search reg_to_vname vdefs in
   let () = x_tinfo_hp (add_str "to vnamse"  (pr_list pr_id)) to_vnames no_pos in
   let eq_pairs = Wrapper.wrap_lemma_quiet (Norm.norm_reuse iprog !cprog vdefs (* !cprog.Cast.prog_view_decls *) frm_vnames) to_vnames in
   let pr = pr_list (pr_pair pr_id pr_id) in
@@ -3026,7 +3075,8 @@ let process_print_command pcmd0 =
       }in
     let (n_tl,pf) = x_add meta_to_struc_formula mf false [] [] in
     print_string ((Cprinter.string_of_struc_formula pf) ^ "XXXHello\n")
-  | PCmd (pcmd,_) ->
+  (* type: (Globals.ident * bool) Globals.regex_list option *)
+  | PCmd (pcmd,opt) ->
     if pcmd = "lemmas" then
       Lem_store.all_lemma # dump
     else if pcmd = "residue" then
@@ -3045,11 +3095,15 @@ let process_print_command pcmd0 =
       (*           print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog *)
       (*               (CF.list_formula_trace_of_list_context ls_ctx))^"\n" ); *)
     else if pcmd = "views" then
-      let () = HipUtil.view_scc_obj # build_scc_void 15 in
+      let () = HipUtil.view_scc_obj # build_scc_void x_loc in
       let view_list =  get_sorted_view_decls () (* !cprog.prog_view_decls *) in
+      let view_list = Cast.get_selected_views opt view_list in
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
       let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
-      y_binfo_hp (add_str "Printing Views\n" (pr_list Cprinter.string_of_view_decl_short)) lst
+      let pr (a,f) = if f then a^"*" else a in
+      let opt_str = (match opt with None -> ""
+                                 | Some lst -> string_of_regex_list pr lst) in
+      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
     else
       print_string (x_loc^"unsupported print command: " ^ pcmd)
 

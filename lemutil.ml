@@ -12,7 +12,7 @@ module I = Iast
 (* module CF=Cformula *)
 module CP=Cpure
 
-let checkeq_sem iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
+let checkeq_sem iprog0 cprog0 f1 f2 ?(lemtyp=I.Equiv) hpdefs to_infer_hps12 to_infer_hps21=
   (*************INTERNAL******************)
   let back_up_progs iprog cprog=
     (iprog.I.prog_view_decls,iprog.I.prog_data_decls, iprog.I.prog_hp_decls, cprog.C.prog_view_decls,
@@ -80,7 +80,7 @@ let checkeq_sem iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
     (* let f23 = do_unfold_view cprog0 f22 in *)
     let r=
       let lemma_name = "tmp" in
-      let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN I.Equiv to_infer_hps12 if12 if22 in
+      let l_coer = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN lemtyp to_infer_hps12 if12 if22 in
       let r1,_ = manage_test_lemmas1 ~res_print:false [l_coer] iprog0 cprog0 in
       r1
       (* let fnc = wrap_proving_kind PK_SA_EQUIV (fun f1 f2 -> Sleekcore.sleek_entail_check [] cprog0 [(\* (f12,f22) *\)] f1 (Cformula.struc_formula_of_formula f2 no_pos)) in *)
@@ -99,11 +99,11 @@ let checkeq_sem iprog0 cprog0 f1 f2 hpdefs to_infer_hps12 to_infer_hps21=
   with _ -> (* let () = Debug.info_hprint (add_str "view_equivs: " pr_id) "1" no_pos in *)
     false
 
-let checkeq_sem iprog cprog f1 f2 hpdefs to_infer_hps12 to_infer_hps21 =
+let checkeq_sem iprog cprog f1 f2 ?(lemtyp=I.Equiv) hpdefs to_infer_hps12 to_infer_hps21 =
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_5 "LEM.checkeq_sem" pr1 pr1 pr2 (pr_list pr_id) (pr_list pr_id) string_of_bool
-    (fun _ _ _ _ _ ->  checkeq_sem iprog cprog f1 f2 hpdefs to_infer_hps12 to_infer_hps21)
+    (fun _ _ _ _ _ ->  checkeq_sem iprog cprog f1 f2 ~lemtyp:lemtyp hpdefs to_infer_hps12 to_infer_hps21)
     f1 f2 hpdefs to_infer_hps12 to_infer_hps21
 
 let norm_checkeq_views_x iprog cprog cviews0=

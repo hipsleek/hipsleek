@@ -1,0 +1,47 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred tmp<> == self::node<_,q>*q::even<>.
+
+pred even<> == self::odd<>.
+
+pred odd<> == self::node<_,q>*q::even<>.
+
+print views [even].
+
+print views [even*].
+
+print views [odd*].
+
+print views [tmp].
+
+print views [tmp*].
+
+/*
+# ex30b.slk (OK)
+
+print views [even].
+
+print views [even*].
+
+print views [odd*].
+
+print views [tmp].
+
+print views [tmp*].
+
+
+# ex30a.slk (FIXED due to typo)
+
+# There seems to be a problem with P1
+  I think due to mismatched in number of parameters..
+
+========================
+ Performing Deriving Views
+========================
+
+!!! **syn.ml#687:Cannot transform the hprels of [P1] into view declarations.
+!!! **sleekengine.ml#3095:
+*/

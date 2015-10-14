@@ -26,6 +26,7 @@ lemma_infer [P1,P2,P3]
 print residue.
 
 shape_derive_view [P1,P2,P3].
+print views.
 
 /*
 !!! **syn.ml#681:View Decl of P1:

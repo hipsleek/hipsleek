@@ -1,0 +1,58 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred zip2<yy,zzz> ==
+   self=null & yy=zzz
+or self::node<_,p>*yy::node<_,q> * p::zip2<q,zzz>.
+
+HeapPred P1(node a).
+HeapPred P2(node a,node b).
+
+
+lemma_infer [P1,P2,@classic]
+  self::zip2<ys,zs> -> P1(self)*P2(zs,ys).
+//pred_split [zip].
+
+print residue.
+
+//print relAssumes.
+
+shape_derive_view [P1,P2].
+print views.
+
+/*
+# ex21s1f.slk -dre "Syn:"
+
+lemma_infer [P1,P2,@classic]
+  self::zip2<ys,zs> -> P1(self)*P2(zs,ys).
+
+# Having P2(zs,ys) parameters in wrong order seems to have led to:
+  Can we make it more robust. (compare with ex21s1e.slk)
+
+    , view P1<>= 
+  EList
+    :EBase 
+       exists (Impl)[p_82](* lbl: *){13}->(exists Anon_80: (* lbl: *){13}->
+       self::node<Anon_80,p_82>@M * p_82::P1<>@M&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          exists (Impl)[p_82](* lbl: *){14}->(exists Anon_80: (* lbl: *){14}->
+          self::node<Anon_80,p_82>@M * p_82::P1<>@M&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){15}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+# this was triggered by:
+
+(==syn.ml#79==)
+Syn:add_dangling_hprel@8@2@1
+Syn:add_dangling_hprel inp1 : fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2)
+Syn:add_dangling_hprel@8 EXIT:( fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2),false)
+
+(==syn.ml#79==)
+Syn:add_dangling_hprel@9@2@1
+Syn:add_dangling_hprel inp1 : fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2)
+Syn:add_dangling_hprel@9 EXIT:( fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2),false)
+
+*/

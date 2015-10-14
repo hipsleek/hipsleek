@@ -582,6 +582,8 @@ let pr_list f xs = pr_list_brk "[" "]" f xs
 let pr_list_angle f xs = pr_list_brk "<" ">" f xs
 let pr_list_round f xs = pr_list_brk "(" ")" f xs
 
+let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
+
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
@@ -1292,6 +1294,8 @@ let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
+let old_pred_extn = ref false (* false *)
+let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false
@@ -1567,6 +1571,37 @@ let nondet_int_rel_name = "nondet_int__"
 
 let hip_sleek_keywords = ["res"]
 
+type infer_extn = {
+  extn_pred: ident;
+  mutable extn_props: ident list;
+}
+
+let string_of_infer_extn extn = 
+  pr_pair idf (pr_list idf) (extn.extn_pred, extn.extn_props)
+
+let mk_infer_extn id props = {
+  extn_pred = id;
+  extn_props = props; }
+
+let add_avai_infer_extn_lst lst extn =
+  try
+    let pred, props = extn.extn_pred, extn.extn_props in
+    let pred_extn = List.find (fun extn -> eq_str extn.extn_pred pred) lst in
+    let () = pred_extn.extn_props <- (pred_extn.extn_props @ props) in
+    lst
+  with _ -> lst @ [extn]
+
+let rec merge_infer_extn_lsts lsts = 
+  match lsts with
+  | [] -> []
+  | l::ls ->
+    let merged_ls = merge_infer_extn_lsts ls in
+    List.fold_left (fun lst extn -> add_avai_infer_extn_lst lst extn) merged_ls l
+
+let expand_infer_extn_lst lst =
+  List.concat (List.map (fun extn -> 
+    List.map (fun prop -> (extn.extn_pred, prop)) extn.extn_props) lst)
+
 type infer_type =
   | INF_TERM (* For infer[@term] *)
   | INF_TERM_WO_POST (* For infer[@term_wo_post] *)
@@ -1595,6 +1630,14 @@ type infer_type =
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
   | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
+  | INF_EXTN of infer_extn list
+
+let eq_infer_type i1 i2 = 
+  match i1, i2 with
+  | INF_EXTN _, INF_EXTN _ -> true
+  | INF_EXTN _, _ -> false
+  | _, INF_EXTN _ -> false
+  | _, _ -> i1 == i2
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1633,6 +1676,7 @@ let string_of_inf_const x =
   | INF_VER_POST -> "@ver_post"
   | INF_IMM_PRE -> "@imm_pre"
   | INF_IMM_POST -> "@imm_post"
+  | INF_EXTN lst -> "@extn" ^ (pr_list string_of_infer_extn lst)
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1806,6 +1850,31 @@ class inf_obj  =
     method is_classic  = self # get INF_CLASSIC
     method is_par  = self # get INF_PAR
     method is_add_flow  = self # get INF_FLOW
+    method is_extn = 
+      List.exists (fun inf -> 
+        match inf with | INF_EXTN _ -> true | _ -> false) arr
+    method get_infer_extn_lst = 
+      try
+        let inf_extn = List.find (fun inf ->
+          match inf with | INF_EXTN _ -> true | _ -> false) arr in
+        match inf_extn with
+        | INF_EXTN lst -> lst
+        | _ -> []
+      with _ -> []
+    method add_infer_extn_lst pred props = 
+      let rec helper inf_obj_lst pred props =
+        let inf_extn = mk_infer_extn pred props in
+        match inf_obj_lst with
+        | [] -> [(INF_EXTN [inf_extn])]
+        | inf::infs ->
+          (begin match inf with
+          | INF_EXTN lst ->
+            let n_lst = add_avai_infer_extn_lst lst inf_extn in
+            (INF_EXTN n_lst)::infs
+          | _ -> inf::(helper infs pred props)
+          end)
+      in
+      arr <- (helper arr pred props)
     (* method get_arr  = arr *)
     method is_infer_type t  = self # get t
     method get_lst = arr
@@ -1817,7 +1886,7 @@ class inf_obj  =
       List.filter is_selected arr
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
-    method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method reset c  = arr <- List.filter (fun x -> not (eq_infer_type c x)) arr
     method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
@@ -2535,4 +2604,14 @@ type 'a regex_list =
 
 type regex_id_list = ident regex_list
 
+let string_of_regex_list pr m =
+  match m with
+  | REGEX_STAR -> "*"
+  | REGEX_LIST lst -> pr_list pr lst
+
+
+type regex_id_star_list = (ident * bool) regex_list
+
+let string_of_regex_id_star_list =
+  string_of_regex_list (pr_pair idf string_of_bool)
 

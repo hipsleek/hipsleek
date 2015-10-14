@@ -34,7 +34,7 @@ let process_selective_iview_decls is_all iprog iviews =
   let () = y_tinfo_hp (add_str "view_decls" (pr_list Iprinter.string_of_view_decl)) iprog.I.prog_view_decls in
   let () = y_tinfo_hp (add_str "iviews" (pr_list Iprinter.string_of_view_decl)) iviews in
   let () = y_tinfo_hp (add_str "tmp_views" (pr_list Iprinter.string_of_view_decl)) tmp_views in
-  let tmp_views,ls_mut_rec_views = (Astsimp.order_views tmp_views) in
+  let tmp_views,ls_mut_rec_views = (x_add_1 Astsimp.order_views (List.rev tmp_views)) in
   let () = x_tinfo_pp "after order_views" no_pos in
   let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   let () = x_tinfo_pp "after check_fixpt" no_pos in
@@ -42,7 +42,7 @@ let process_selective_iview_decls is_all iprog iviews =
     if is_all then iprog.I.prog_view_decls <- tmp_views
     else 
       (* iprog.I.prog_view_decls <- (iprog.I.prog_view_decls @ iviews) *)
-      List.iter (I.update_view_decl iprog) iviews
+      List.iter (Cprog_sleek.update_view_decl_iprog ~update_scc:true) iviews
   in
   (* collect immutable info for splitting view params *)
   let _ = List.map (fun v -> 
@@ -95,9 +95,10 @@ let process_selective_iview_decls is_all iprog iviews =
   (* x_tinfo_pp "after trans_view" no_pos; *)
   (* derv and spec views *)
   let tmp_views_derv1 = Astsimp.mark_rec_and_der_order tmp_views_derv in
+  (* TODO: this code is duplicated *)
   let cviews_derv = List.fold_left (fun norm_views v ->
-      let der_view = Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in
-      (norm_views@[der_view])
+      let der_view = x_add_1 Derive.trans_view_dervs iprog Rev_ast.rev_trans_formula Astsimp.trans_view [] norm_views v in
+      (norm_views@der_view)
     ) cviews0 tmp_views_derv1 in
   let _ = x_tinfo_hp (add_str "derv length" (fun ls -> string_of_int (List.length ls))) tmp_views_derv1 no_pos in
   cviews_derv
@@ -116,6 +117,7 @@ let norm_cview_decls iprog cprog cviews =
   let old_view_decls = cprog.Cast.prog_view_decls in
   let () = y_tinfo_hp (add_str "old_view_decls" (pr_list Cprinter.string_of_view_decl)) old_view_decls in
   let _ = cprog.Cast.prog_view_decls <- old_view_decls@cviews in
+  let () = y_tinfo_hp (add_str "cviews(1)" (pr_list Cprinter.string_of_view_decl(*_short*))) cviews in
   let cviews1 =
     if !Globals.norm_extract then
       Norm.norm_extract_common iprog cprog cviews (List.map (fun vdef -> vdef.Cast.view_name) cviews)
@@ -129,13 +131,15 @@ let norm_cview_decls iprog cprog cviews =
       cviews1
   in
   let _ = cprog.Cast.prog_view_decls <- old_view_decls@cviews2 in
+  let () = y_tinfo_hp (add_str "cviews(2)" (pr_list Cprinter.string_of_view_decl(*_short*))) cviews2 in
   let _ =  (List.map (fun vdef -> Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in
   x_tinfo_pp "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cviews2) in
-  let cviews2 = (List.map (fun vdef -> Norm.norm_formula_for_unfold cprog vdef) cviews2) in
-  let _ = cprog.Cast.prog_view_decls <-  old_view_decls@cviews2 in
+  let cviews3 = (List.map (fun vdef -> Norm.norm_formula_for_unfold cprog vdef) cviews2) in
+  let _ = cprog.Cast.prog_view_decls <-  old_view_decls@cviews3 in
+  let () = y_tinfo_hp (add_str "cviews(3)" (pr_list Cprinter.string_of_view_decl(*_short*))) cviews3 in
   x_tinfo_pp "after materialzed_prop" no_pos;
-  cviews2
+  cviews3
 
 let norm_cview_decls iprog cprog cviews =
   let pr = pr_list Cprinter.string_of_view_decl in

@@ -81,6 +81,7 @@ type command =
   | ShapeDerivePre of regex_id_list
   | ShapeDerivePost of regex_id_list
   | ShapeDeriveView of regex_id_list
+  | ShapeExtnView of (regex_id_list * ident)
   | ShapeNormalize of regex_id_list
   | PredElimHead of regex_id_list
   | PredElimTail of regex_id_list
@@ -106,7 +107,7 @@ type command =
 
 and print_cmd =
   | PVar of ident 
-  | PCmd of ident * (regex_id_list option)
+  | PCmd of ident * (((ident * bool) regex_list) option)
 
 and meta_formula =
   | MetaVar of ident
@@ -191,6 +192,7 @@ let string_of_command c = match c with
   | ShapeDerivePre _ -> "ShapeDerivePre"
   | ShapeDerivePost _ -> "ShapeDerivePost"
   | ShapeDeriveView _ -> "ShapeDeriveView"
+  | ShapeExtnView _ -> "ShapeExtnView"
   | ShapeNormalize _ -> "ShapeNormalize"
   | PredElimHead _ -> "PredElimHead"
   | PredElimTail _ -> "PredElimTail"

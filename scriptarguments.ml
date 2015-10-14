@@ -332,6 +332,10 @@ let common_arguments = [
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--new-tp-simplify", Arg.Clear Globals.old_tp_simplify,"Use om_simplify instead of TP.simplify_raw");
+  ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
+  ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");
+  ("--old-pred-extn", Arg.Set Globals.old_pred_extn,"Use new pred extension approach");
   ("--old-lemma-unfold", Arg.Set Globals.old_lemma_unfold,"Do not use lemma single unfold");
   ("--new-lemma-unfold", Arg.Clear Globals.old_lemma_unfold,"Use lemma single unfold");
   ("--old-view-equiv", Arg.Set Globals.old_view_equiv,"Do not use view equivalence (pred reuse)");

@@ -724,7 +724,7 @@ struct
               (get elist)
           in
           let pr = pr_pair string_of_int string_of_int in
-          Debug.no_1 "get_hash2" pr_id pr foo f
+          (* Debug.no_1 "get_hash2" pr_id pr *) foo f
         end
       method get_exc_hash (f:string) : nflow option =
         try

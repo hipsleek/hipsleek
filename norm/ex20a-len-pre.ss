@@ -14,12 +14,22 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
+/*
+ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true;
+*/
+
 HeapPred P(node x).
 
 int length(node x)
+/*
   infer [P,@classic,@pure_field]
   requires P(x)
    ensures true;
+*/
+  requires x::ll<n>
+  ensures true;
 {    
   if (x==null) return 0;
   else return 1+length(x.next);

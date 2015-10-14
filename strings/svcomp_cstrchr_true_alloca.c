@@ -26,8 +26,8 @@ extern int __VERIFIER_nondet_int(void);
 char *(cstrchr)(const char *s, int c)
  /*@
      requires s::WFS<>
-     ensures res::char_star<0,q>*q::BADS<>
-     or res::char_star<c, q>*q::WFS<>;
+     ensures res::char_star<c, q>*q::WFS<>
+     or res::char_star<0,_>;
   */
  {
      /* Scan s for the character.  When this loop is finished,
