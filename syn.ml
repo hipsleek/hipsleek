@@ -676,7 +676,6 @@ let aux_pred_reuse iprog cprog all_views =
   let vdefs = C.get_sorted_view_decls cprog in
   let () = y_binfo_pp "XXX Scheduling pred_elim_useless" in
   let vdefs = Norm.norm_elim_useless vdefs ids in
-  let () = y_binfo_pp "XXX Scheduling pred_reuse" in
   let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
   let () = y_binfo_pp "XXX Scheduling pred_reuse" in
   let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
