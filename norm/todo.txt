@@ -1446,6 +1446,57 @@ ef_conv_enum_disj@83@81
 ef_conv_enum_disj inp1 :[([], nnn=0 & self=null),([self], nnn=2),([self], 4<=nnn & exists(alpha:2*alpha=nnn))]
 ef_conv_enum_disj@83 EXIT: (nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))
 ===================================================================
+# ex20d.ss --pred-en-equiv
+
+  int len_seg(node x,node p)
+  infer [P,@classic,@pure_field]
+  requires P(x,p)
+  ensures true;
+{    
+  if (x==p) return 0;
+  else return 1+len_seg(x.next,p);
+}
+
+
+# How did an exception lead to FALSE?
+
+(==inferHP.ml#107==)
+partition_hp_args@2@1
+partition_hp_args inp1 :P
+partition_hp_args inp2 :[x,p,x',val_45_1631',next_45_1632']
+partition_hp_args@2 EXIT ExceptionInvalid_argument("List.combine")Occurred!
+
+ es_infer_vars_hp_rel: [P]
+heap_entail_non_empty_rhs_heap inp2 :LHS base: P(x,p)&!(v_bool_44_1641') & x'!=p' & p'=p & x'=x & v_int_45_1639'=1&
+{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp3 :RHS base: x'::node<val_45_1631',next_45_1632'>@L&{FLOW,(1,28)=__flow#E}[]
+heap_entail_non_empty_rhs_heap inp4 :ante    : P(x,p)&!(v_bool_44_1641') & x'!=p' & p'=p & x'=x & v_int_45_1639'=1&
+{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp5 :conseq  : x'::node<val_45_1631',next_45_1632'>@L&{FLOW,(1,28)=__flow#E}[]
+heap_entail_non_empty_rhs_heap inp6 :matched_set:[]
+heap_entail_non_empty_rhs_heap@1 EXIT:( [ hfalse&false&{FLOW,(4,5)=__norm#E}[]
+  es_infer_hp_rel: [(2;0)unknown P(x,p) |#|  --> emp&x=p]
+  es_gen_impl_vars(E): []
+  es_orig_ante: Some(emp&
+                 v_int_45_1639'=1 & x'=x & p'=p & x'!=p' & 
+                 !(v_bool_44_1641') & x=p&{FLOW,(4,5)=__norm#E}[])
+  es_infer_obj: [@leak,@pure_field]
+  es_var_measures 1: Some(MayLoop[]{})
+  
+  es_infer_vars_hp_rel: [P]
+  es_infer_hp_rel: [(2;0)unknown P(x,p) |#|  --> emp&x=p]],<Failure></Failure>)
+
+
+ExceptionInvalid_argument("List.combine")Occurred!
+!!! **tpdispatcher.ml#2498:xxx rel Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
+Exception(Syn.find_root_one_hprel):Invalid_argument("List.combine")
+Exception(Syn.find_root_hprel):Invalid_argument("List.combine")
+Exception(Syn.view_decl_of_hprel):Invalid_argument("List.combine")
+Exception(Syn:trans_hprel_to_view):Invalid_argument("List.combine")
+Exception(Syn:derive_view):Invalid_argument("List.combine")
+Exception(infer_shapes):Invalid_argument("List.combine")
+Exception(wrapper_infer_imm_pre_post):Invalid_argument("List.combine")
+
 ===================================================================
 ===================================================================
 ===================================================================
