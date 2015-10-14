@@ -27,7 +27,7 @@ pred_extn size[R]<k> ==
    or R::size<i> & k=1+i // recursive case
    inv k>=0;
 
-HeapPred P(node x,node y).
+HeapPred P(node x,node@NI y).
 
 int len_seg(node x,node p)
   infer [P,@classic,@pure_field]
