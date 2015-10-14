@@ -117,9 +117,21 @@ let is_non_inst_hrel prog (hrel: CF.h_formula) =
 let get_non_inst_args_hprel_id prog id args = 
   let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls id in
   let hprel_inst = hprel_def.Cast.hp_vars_inst in
-  List.fold_left (fun acc (arg, (_, i)) ->
-    if i = Globals.NI then acc
-    else acc @ [arg]) [] (List.combine args hprel_inst)
+  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_binfo_hp (add_str "hprel_inst" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) hprel_inst in
+  (* List.fold_left (fun acc (arg, (_, i)) ->              *)
+  (*   if i = Globals.NI then acc                          *)
+  (*   else acc @ [arg]) [] (List.combine args hprel_inst) *)
+  let rec helper args insts =
+    match args, insts with
+    | _, [] -> []
+    | [], _ -> []
+    | arg::args, (_, i)::insts ->
+      let r = helper args insts in
+      if i = Globals.NI then r
+      else arg::r
+  in
+  helper args hprel_inst
 
 let get_non_inst_args_hprel prog (hprel: CF.hprel) =
   let hprel_name, hprel_args = sig_of_hprel hprel in
@@ -216,7 +228,7 @@ let mk_num_args args =
 let find_root_hprel_formula_base prog hprel_name num_args f =
   let f_fv = CF.fv f in
   let args = List.map fst num_args in
-  let ni_args = get_non_inst_args_hprel_id prog hprel_name args in
+  (* let ni_args = get_non_inst_args_hprel_id prog hprel_name args in *)
   let feasible_num_args = List.filter (fun (sv, _) -> 
     (CP.is_node_typ sv) && 
     (* not (mem sv ni_args) && *)
@@ -652,8 +664,8 @@ let trans_spec_proc trans_f cprog proc =
   let spec = proc.C.proc_stk_of_static_specs # top in
   let nspec = trans_f spec in
   let pr_spec = Cprinter.string_of_struc_formula_for_spec in
-  let () = y_binfo_hp (add_str "spec" pr_spec) spec in
-  let () = y_binfo_hp (add_str "nspec" pr_spec) nspec in
+  let () = y_tinfo_hp (add_str "spec" pr_spec) spec in
+  let () = y_tinfo_hp (add_str "nspec" pr_spec) nspec in
   let () = proc.C.proc_stk_of_static_specs # push_pr ("SynUtils:" ^ x_loc) nspec in
   let nproc = { proc with
     C.proc_static_specs = nspec;

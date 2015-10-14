@@ -29,7 +29,7 @@ pred_extn size[R]<k> ==
 
 HeapPred P(node x,node@NI y).
 
-  int len_seg(node x,node p)
+int len_seg(node x,node p)
   infer [P,@classic,@pure_field]
   //infer [P,@classic,@pure_field,@size,@term]
   //infer [P#{size,sum},@classic,@pure_field]
@@ -48,7 +48,7 @@ HeapPred P(node x,node@NI y).
 /*
 # ex21d.ss --pred-en-equiv
 
-  int len_seg(node x,node p)
+int len_seg(node x,node p)
   infer [P,@classic,@pure_field]
   requires P(x,p)
   ensures true;

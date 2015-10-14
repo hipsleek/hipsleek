@@ -2495,7 +2495,7 @@ let rec simplify_raw (f: CP.formula) =
         ) disjs in
       List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
     else
-      let () = y_binfo_pp "xxx rel " in
+      (* let () = y_binfo_pp "xxx rel " in *)
       let rels = CP.get_RelForm f in
       let ids = List.concat (List.map get_rel_id_list rels) in
       let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
