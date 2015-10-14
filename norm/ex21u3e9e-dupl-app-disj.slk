@@ -8,22 +8,14 @@ data node {
 }.
 
 pred tmp<> == self=null
-    or self::ll<> & self!=null
+    or self::ll<> & self=null
  inv true.
 
 pred ll<> == self=null
     or self::node<_,q>*q::ll<>
  inv true.
 
-pred ll2<> == self=null
-    or self::tmp2<> & self!=null
- inv true.
-
-pred tmp2<> == self::node<_,q>*q::ll2<>
- inv true.
-
 print views.
-//pred_unfold[*].
 pred_unfold disj[*].
 print views.
 

@@ -67,7 +67,7 @@ type command =
   | ShapeElim of (ident list)
   | ShapeReuse of (regex_id_list * regex_id_list)
   | ShapeReuseSubs of (regex_id_list)
-  | PredUnfold of (regex_id_list)
+  | PredUnfold of (ident option * regex_id_list)
   | ShapeExtract of (ident list)
   | ShapeDeclDang of (ident list)
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
