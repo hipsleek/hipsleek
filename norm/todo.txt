@@ -1574,6 +1574,27 @@ x!=p]
 !!! **syn.ml#654:Cannot transform the hprels of [P] into view declarations.
 
 ===================================================================
+# ex20e5.ss 
+
+# for check_pre_post; if post_cond is false, please
+  use Wrapper.wrap_classic Some(true))
+
+              let f x = 
+                (* let () = y_binfo_pp "if post_cond is false, inference on and orig classic on, apply Wrapper.wrap_classic" in *)
+                f x in
+
+(==typechecker.ml#2951==)
+check_pre_post(2)@2
+check_pre_post(2) inp1 : EInfer @pure_field,@leak[P]
+   EBase 
+     P(x,p)&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         hfalse&false&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+check_pre_post(2) inp2 : List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 
 ===================================================================
 ===================================================================
 ===================================================================

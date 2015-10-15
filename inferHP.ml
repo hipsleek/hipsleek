@@ -796,10 +796,10 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
 
   (*******DROP*******)
   (*TOFIX*)
-  let classic_nodes = if es.CF.es_infer_obj # is_classic_all then CF.get_ptrs lhs_b.CF.formula_base_heap else [] in
+  let classic_nodes = if check_is_classic () (* es.CF.es_infer_obj # is_classic_all  *)then CF.get_ptrs lhs_b.CF.formula_base_heap else [] in
   let lhs_keep_root_svl = rhs_svl in
   let rhs_keep_root_svl = (rhs_svl(* @keep_root_hrels@classic_nodes*)) in
-  let lhs_b1 = if es.CF.es_infer_obj # is_classic_all || !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) then lhs_b
+  let lhs_b1 = if check_is_classic () (* es.CF.es_infer_obj # is_classic_all *) || !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) then lhs_b
   else
     {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CP.remove_dups_svl (lhs_keep_rootvars@rhs_args_ni));}
   in

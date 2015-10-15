@@ -9,12 +9,13 @@ data node {
 
 HeapPred P(node x,node@NI y).
 HeapPred HP(node x,node@NI y,node@NI z).
+HeapPred K(int x,node@NI y,node@NI z).
 
-/*
 infer[P,HP] 
  HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
 print residue.
 
+/*
  <1>x::node<val_48_1600,n'>@M&x!=p&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [HP(n',p@NI,x@NI)&x!=p |#| x::node<val_48_1600,n'>@M&
                    true --> P(n',p@NI)&true]
@@ -22,7 +23,7 @@ print residue.
 */
 
 
-infer[P,HP,@classic] 
+infer[P,HP,K,@classic] K(v,p,x)*
  HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
 print residue.
 /*
