@@ -15,8 +15,10 @@ relation R(node x,node y).
 infer[P] P(x,y) & x=y |- false.
 print residue.
 
+
 infer[R] R(x,y) & x=y |- false.
 print residue.
+
 
 /*
 # ex20e6d.slk

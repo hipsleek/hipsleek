@@ -5491,14 +5491,18 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
           let () = Debug.ninfo_hprint (add_str "rele_p_rhs_xpure"  (!CP.print_formula)) rele_p_rhs_xpure pos in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map pos in
           let () = pr_hdebug (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
-          let hinf_args_map0 =  List.filter (fun (_,args) ->
+           let hinf_args_map0 = if Gen.BList.overlap_eq CP.eq_spec_var (CP.fv lhs_p) (CP.fv pf) then
+             hinf_args_map
+           else
+            List.filter (fun (_,args) ->
               let rele_p0 = CP.filter_var p_contr_lhs args in
-              let () = Debug.ninfo_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
+              let () = Debug.info_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
               let rele_ps0 = CP.list_of_conjs rele_p0 in
               let rele_ps1 = List.filter (fun p -> not (CP.equalFormula p rele_p_rhs_xpure)) rele_ps0 in
               let rele_p = CP.conj_of_list rele_ps1 (CP.pos_of_formula rele_p0) in
+              let () = Debug.info_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
               TP.is_sat_raw (MCP.mix_of_pure rele_p)
-            ) hinf_args_map in
+          ) hinf_args_map in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
           Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
         let () = x_tinfo_hp (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
@@ -5508,8 +5512,8 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
           else
             match res_ctx_opt with
             | None -> 
-              x_winfo_hp (add_str "WARNING : Inferred pure not added" !print_pure_f) pf no_pos;
-              new_estate
+                  x_winfo_hp (add_str "WARNING : Inferred pure not added" !print_pure_f) pf no_pos;
+                  new_estate
             (* contra due to direct vars *)
             (* WN :why did we rely on !=null !! *)
             (* let res_es = if CP.is_neq_null_exp pf then new_estate else *)
@@ -12346,10 +12350,16 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
       let fv = CP.fv f in
       let rcontr_lst = List.fold_left (fun x hp_rel0 -> 
           let h_inf_args0, _ = get_heap_inf_args_hp_rel estate [hp_rel0] in
-          let eqs1 = List.map (fun (sv1, sv2) ->
-              if CP.mem_svl sv1 h_inf_args0 then (sv2,sv1)
-              else (sv1,sv2)
-            ) eqs0 in
+          let eqs1 = List.fold_left (fun acc (sv1, sv2) ->
+              let b1 = CP.mem_svl sv1 h_inf_args0 in
+              let b2 = CP.mem_svl sv2 h_inf_args0 in
+              match b1,b2 with
+                | true, false -> acc@[(sv2,sv1)]
+                | true, true -> acc
+                | _ -> acc@[(sv1,sv2)]
+              (* if CP.mem_svl sv1 h_inf_args0  then (sv2,sv1) *)
+              (* else (sv1,sv2) *)
+            ) [] eqs0 in
           let f = CP.subst eqs1 f in
           let h_inf_args1 = (CF.find_close h_inf_args0 eqs0) in
           let f = 

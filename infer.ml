@@ -4589,10 +4589,11 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
     let new_rels = List.fold_left (fun res_rels c->
         let fv = CP.fv c in
         let new_hd = List.filter (fun (_,vl)-> Gen.BList.overlap_eq CP.eq_spec_var fv vl) h_arg_map in
+        (* let () = Debug.info_hprint (add_str "h_arg_map"  (pr_list (fun (_,svl) -> (!print_svl svl)))) h_arg_map no_pos in *)
         (*let () = print_string ("\n matching rels: "^(string_of_int (List.length new_hd))^"\n") in*)
         (* let () = print_string ("\n new_cp fv: "^(!print_svl fv)^"\n") in *)
         (* let pr1 = pr_list (pr_pair (pr_pair !print_sv pr_none) !print_svl) in *)
-        (* let () = Debug.info_hprint (add_str "new_hd"  pr1) new_hd no_pos in *)
+        (* let () = Debug.ninfo_hprint (add_str "new_hd"  pr1) new_hd no_pos in *)
         match new_hd with
         | [] -> let () = Debug.ninfo_hprint (add_str "Not_found 0"  pr_none) () no_pos in
           raise Not_found
@@ -4606,8 +4607,8 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
               let () = Debug.ninfo_hprint (add_str "rhs_p : " ( (!CP.print_formula))) rhs_p pos in
               if not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions [rhs_p;n_p]))) then
                 let new_rel = mkHprel (CP.RelAssume [h]) [] [] []
-                    (CF.mkBase hf (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos)
-                    None (CF.mkFalse_nf pos ) es_cond_path in
+                    (CF.formula_of_heap hf (* (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow () ) [] *) pos)
+                    None (CF.mkBase CF.HTrue  (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow () ) [] pos) (* (CF.mkFalse_nf pos ) *) es_cond_path in
                 r@[new_rel]
               else r
             ) [] rel_cands in
