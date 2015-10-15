@@ -1578,7 +1578,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
         | x::_ -> x
       with _ ->
         PK_Unknown in
-    if Infer.no_infer_hp_rel es0 || MCP.isTrivMTerm mix_rf || ( pk != PK_POST && not (check_is_classic ())) then
+    if Infer.no_infer_hp_rel es0 (* || MCP.isTrivMTerm mix_rf *) || ( pk != PK_POST && not (check_is_classic ())) then
       (false, es0, [], lhs_b)
     else
       let ivs = es0.es_infer_vars_hp_rel in
