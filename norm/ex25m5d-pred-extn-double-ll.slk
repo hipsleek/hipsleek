@@ -43,4 +43,26 @@ chinwn@loris-60:~/hg/sleekex/norm$ fixcalc logs/fixcalc.inp
 
 */
 
+/*
+Rev 037b0 has following error:
+trace using in astsimp
+              let () = y_binfo_hp (add_str "Failed view:" !C.print_view_decl_short) vdef in
 
+!!! **astsimp.ml#2207:Failed view::
+ view ll_ss<nnn:int>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&k=0 & self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){4}->(exists Anon_40,p_41,
+          nnn_42: (* lbl: *){4}->self::node<Anon_40,p_41>@M * 
+                                 p_41::ll_ss<nnn_42>@M&
+          nnn=1+nnn_42&{FLOW,(1,26)=__flow#E}[])
+    
+Last Proving Location: /home/richardg/hg/fix-bug1/norm/ex25m5d-pred-extn-double-ll.slk_8:3_8:18
+
+ERROR: at /home/richardg/hg/fix-bug1/norm/ex25m5d-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Over)**astsimp.ml#2208:
+
+*/
