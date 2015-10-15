@@ -11,7 +11,7 @@ HeapPred P(node x,node@NI y).
 HeapPred HP(node x,node@NI y,node@NI z).
 HeapPred K(int x,node@NI y,node@NI z).
 
-infer[P,HP] 
+infer[P,HP,@classic] 
  HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
 print residue.
 

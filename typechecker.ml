@@ -1252,7 +1252,8 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
     let res = if (CF.isFailListFailescCtx ctx) then
         let () = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
         ctx 
-      else check_pre_post (proc.proc_stk_of_static_specs#top) ctx scall_pre_cond_pushed
+    else
+      check_pre_post (proc.proc_stk_of_static_specs#top) ctx scall_pre_cond_pushed
     in
     let () = if !print_proof then Prooftracer.add_pre e0 in
     let () = if !print_proof && scall_pre_cond_pushed then 
@@ -2571,9 +2572,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr2 = Cprinter.string_of_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
+              let () = Debug.ninfo_hprint (add_str  "org_spec" Cprinter.string_of_struc_formula) org_spec no_pos in
+              let is_post_false = CF.is_struc_false_post org_spec in
+              let wrap_classic_fnc a b = if is_post_false then
+                wrap_classic (Some true) (check_pre_post_orig a) b else check_pre_post_orig a b in
+              let () = Debug.ninfo_hprint (add_str  "is_post_false" string_of_bool) is_post_false no_pos in
               let wrap_fnc = if CF.is_infer_pre_must org_spec then wrap_err_must else wrap_err_pre in
               let pre_post_op_wrapper a b c =
-                (* wrap_err_pre *) wrap_fnc (* (Some false) *) (check_pre_post_orig a b) c
+                (* wrap_err_pre *) wrap_fnc (* (Some false) *)
+                (* (check_pre_post_orig a b) *)  (wrap_classic_fnc a b )   c
               in
               let pk = if ir then PK_PRE_REC else PK_PRE in
               let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in

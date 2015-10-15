@@ -46,9 +46,9 @@ int len_seg(node x,node p)
   if (x==p) return 0;
   else { 
     node n = x.next;
-    dprint;
+    // dprint;
     int r=len_seg(n,p);
-    dprint;
+    //  dprint;
     return 1+r;
   }
 }
