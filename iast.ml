@@ -3700,7 +3700,7 @@ let annot_args_getter prog vn =
 let annotate_field_pure_ext iprog=
   let idatas = List.map (fun ddef ->
       let ndfields = List.map (fun ((t, c), pos, il, ann) ->
-          let n_ann = if ann = [] then [gen_field_ann t] else ann in
+          let n_ann = if ann = [] then (gen_field_ann t) else ann in
           ((t, c), pos, il, n_ann)
         ) ddef.data_fields in
       {ddef with data_fields = ndfields}

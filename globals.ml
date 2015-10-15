@@ -1294,6 +1294,7 @@ let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
+let old_field_tag = ref false (* false *)
 let new_trace_classic = ref false (* false *)
 let old_pred_extn = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
@@ -2542,6 +2543,10 @@ let gen_field_ann t=
   | Named _ -> fresh_any_name field_rec_ann
   | _ -> fresh_any_name field_val_ann
 
+let gen_field_ann t =
+  if !old_field_tag then [gen_field_ann t]
+  else []
+
 let un_option opt default_val = match opt with
   | Some v -> v
   | None -> default_val
@@ -2613,9 +2618,17 @@ let string_of_regex_list pr m =
   | REGEX_STAR -> "*"
   | REGEX_LIST lst -> pr_list pr lst
 
-
 type regex_id_star_list = (ident * bool) regex_list
+
+let string_of_regex_star_list m = string_of_regex_list (fun (i,b) -> i^(if b then "*" else "")) m
 
 let string_of_regex_id_star_list =
   string_of_regex_list (pr_pair idf string_of_bool)
 
+let build_sel_scc scc_lst get_name lst =
+  List.map 
+    (fun scc
+      -> List.map (fun c ->
+          List.find (fun v -> (get_name v)=c) lst
+        ) scc
+    ) scc_lst

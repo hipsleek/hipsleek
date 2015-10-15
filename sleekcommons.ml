@@ -83,6 +83,7 @@ type command =
   | ShapeDeriveView of regex_id_list
   | ShapeExtnView of (regex_id_list * ident)
   | ShapeNormalize of regex_id_list
+  | DataMarkRec of regex_id_star_list
   | PredElimHead of regex_id_list
   | PredElimTail of regex_id_list
   | PredUnifyDisj of regex_id_list
@@ -194,6 +195,7 @@ let string_of_command c = match c with
   | ShapeDeriveView _ -> "ShapeDeriveView"
   | ShapeExtnView _ -> "ShapeExtnView"
   | ShapeNormalize _ -> "ShapeNormalize"
+  | DataMarkRec _ -> "DataMarkRec"
   | PredElimHead _ -> "PredElimHead"
   | PredElimTail _ -> "PredElimTail"
   | PredUnifyDisj _ -> "PredUnifyDisj"

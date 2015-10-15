@@ -58,7 +58,7 @@ and data_field_ann =
 and data_decl = {
   data_name : ident;
   data_pos : loc;
-  data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
+  mutable data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
   data_fields_new : (P.spec_var * (ident list) (* data_field_ann *)) list;
   data_parent_name : ident;
   data_invs : F.formula list;
@@ -4079,6 +4079,39 @@ let get_lemma_cprog cdefs =
   let lst = List.map (fun d -> d.coercion_name) cdefs in
   let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
   ()
+
+let  get_selected_scc_gen (opt:((ident * bool) regex_list) (* option *)) get_name sel_fn scc_lst =
+  let ans = opt in
+  (* match opt with *)
+  (* | None -> scc_lst *)
+  (* | Some ans ->  *)
+    begin
+      match ans with
+      | REGEX_STAR -> scc_lst
+      | REGEX_LIST lst ->  
+        let sel_lst = List.map (fun scc -> 
+            let ns = List.map (fun v -> get_name v) scc in
+            let lst = List.filter (fun (id,_) -> List.mem id ns) lst in
+            lst
+          ) scc_lst in
+        let c_lst = List.combine sel_lst scc_lst in
+        let c_lst = List.filter (fun (lst,scc) -> lst!=[]) c_lst in
+        List.map sel_fn c_lst
+    end
+
+let  get_selected_scc_whole opt get_name scc_lst =
+  get_selected_scc_gen opt get_name snd scc_lst
+
+let  get_selected_scc_each opt get_name scc_lst =
+  let sel_f (lst,scc) =
+    if (List.exists (fun (_,b)->b) lst) then scc
+    else Gen.BList.intersect_eq (fun v1 (v2,_) -> v1=v2) scc lst in
+  let sel_f p = 
+    let pr_scc = pr_list pr_id in
+    let pr1 = pr_pair (pr_list (pr_pair pr_id string_of_bool)) pr_scc  in
+    Debug.no_1 "sel_f" pr1 pr_scc sel_f p 
+  in
+  get_selected_scc_gen opt get_name sel_f scc_lst
 
 let get_t_v v = HipUtil.view_scc_obj # get_trans v
 

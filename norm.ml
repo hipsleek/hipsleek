@@ -1998,3 +1998,40 @@ let imm_norm_struc prog f (conseq: bool) unfold_fun pos =
   let f = imm_abs_norm_struc_formula f conseq prog (unfold_fun prog pos) in 
   let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_struc f else f in
   f
+
+let find_rec_data cprog ids =
+  let data_d_lst = cprog.Cast.prog_data_decls in
+  let () = y_binfo_hp (add_str "data_decls" (pr_list (fun d -> d.Cast.data_name))) data_d_lst in
+  let () = List.iter (fun d ->
+      let n = d.Cast.data_name in
+      let () = y_binfo_hp (add_str "name" pr_id) n in
+      let fields = List.map (fun ((t,id),_) -> t) d.Cast.data_fields in
+      let fields = List.filter (fun t -> is_node_typ t ) fields in
+      let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
+      (* let () = y_binfo_hp (add_str "fields" (pr_list (pr_pair CF.string_of_typed_ident (pr_list pr_id)))) d.Cast.data_fields in *)
+      let () = y_binfo_hp (add_str "fields" (pr_list pr_id)) fields in
+      let () = HipUtil.data_scc_obj # replace x_loc n fields in
+      ()
+    ) data_d_lst in
+  let () = y_binfo_hp (add_str "data_scc_obj" pr_id) HipUtil.data_scc_obj # string_of in
+  let lst = HipUtil.data_scc_obj # get_scc in
+  let () = y_binfo_hp (add_str "scc" (pr_list (pr_list pr_id))) lst in
+  let sel_scc = Cast.get_selected_scc_each ids (fun x -> x) lst in
+  let sel_data_d = build_sel_scc sel_scc (fun d -> d.Cast.data_name) data_d_lst in
+  let () = y_binfo_hp (add_str "sel_scc" (pr_list (pr_list pr_id))) sel_scc in
+  let () = y_binfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+  (* let sel_scc = List.map List.concat sel_scc in *)
+  let com_scc = List.combine sel_data_d sel_scc in
+  let com_scc = List.map (fun (d_lst,vns) ->
+      List.iter (fun dd ->
+          let lst = dd.Cast.data_fields in
+          let new_lst = List.map (fun (id,acc)->
+              let t = name_of_typ (fst(id)) in
+              (id,if List.mem t vns then ("REC")::acc else acc)) lst in
+          dd.Cast.data_fields <- new_lst;
+            ) d_lst;
+          d_lst
+    ) com_scc in
+  let () = y_binfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+  ()
+

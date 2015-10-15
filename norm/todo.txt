@@ -1046,6 +1046,39 @@ Exception(add_uni_vars_to_view):Stack overflow
 Exception processed: Stack overflow
 error at: 
 ===================================================================
+# ex25d.slk (see also ex25a.slk) (DONE)
+
+data_mark_rec [*].
+
+[[data cell {
+  int val@;
+}
+],[data node {
+  int val@;
+  node1 next@REC;
+}
+,data node1 {
+  int val@;
+  cell prev@;
+  node next@REC;
+}
+]]
+
+# Can we mark the mutual recursive fields of data nodes
+  with #REC. This is needed for size extension of ex25a.slk
+
+   data_mark_rec [cell*].
+
+This command will process all data_decl and then mark the recursive
+fields with  #REC
+
+Add a data_mark_rec command. Pick data declaraction from
+!cprog. Use HipUtil.graph to build a strongly conncted graph.
+For each SCC, travere the data structure to mark the recursive fileds.
+
+Provide also a command to print the latest data declarations:
+  print data [*].
+  ===================================================================
 # ex25a2.slk
 
 pred ll<> ==
@@ -1061,6 +1094,7 @@ shape_extends_view [ll] with size.
 
 WARNING: _0:0_0:0:Cannot extend the View_EXTN size
 Segmentation fault (core dumped)
+
 
 ===================================================================
 # ex20a1.ss --pred-en-equiv

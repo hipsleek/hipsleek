@@ -1744,6 +1744,11 @@ let process_shape_derive_view (ids: regex_id_list) =
   in
   process_sleek_hprel_assumes_others "Deriving Views" ids f
 
+let process_data_mark_rec (ids: regex_id_star_list) =
+  let () = y_binfo_hp (add_str "dmr args" string_of_regex_star_list) ids in
+  Norm.find_rec_data !cprog ids
+  (* in failwith x_tbi *)
+
 let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
     let new_hprels = Syn.derive_view_norm !cprog others hps in
@@ -3104,6 +3109,53 @@ let process_print_command pcmd0 =
       let opt_str = (match opt with None -> ""
                                  | Some lst -> string_of_regex_list pr lst) in
       y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
+    else if pcmd = "data" then
+      let data_d_lst = !cprog.Cast.prog_data_decls in
+      let () = List.iter (fun d ->
+          let n = d.Cast.data_name in
+          let fields = List.map (fun ((t,id),_) -> t) d.Cast.data_fields in
+          let fields = List.filter (fun t -> is_node_typ t ) fields in
+          let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
+          let () = HipUtil.data_scc_obj # replace x_loc n fields in
+      ()
+    ) data_d_lst in
+      let lst = HipUtil.data_scc_obj # get_scc in
+      let get_selected_scc_gen (opt:((ident * bool) regex_list) option) get_name sel_fn scc_lst =
+         match opt with 
+         | None -> scc_lst 
+         | Some ans ->  
+        begin
+          match ans with
+          | REGEX_STAR -> scc_lst
+          | REGEX_LIST lst ->  
+            let sel_lst = List.map (fun scc -> 
+                let ns = List.map (fun v -> get_name v) scc in
+                let lst = List.filter (fun (id,_) -> List.mem id ns) lst in
+                lst
+              ) scc_lst in
+            let c_lst = List.combine sel_lst scc_lst in
+            let c_lst = List.filter (fun (lst,scc) -> lst!=[]) c_lst in
+            List.map sel_fn c_lst
+        end
+      in
+      let  get_selected_scc_each opt get_name scc_lst =
+        let sel_f (lst,scc) =
+          if (List.exists (fun (_,b)->b) lst) then scc
+          else Gen.BList.intersect_eq (fun v1 (v2,_) -> v1=v2) scc lst in
+        let sel_f p = 
+          let pr_scc = pr_list pr_id in
+          let pr1 = pr_pair (pr_list (pr_pair pr_id string_of_bool)) pr_scc  in
+          Debug.no_1 "sel_f" pr1 pr_scc sel_f p 
+        in
+        get_selected_scc_gen opt get_name sel_f scc_lst
+      in
+      let sel_scc = get_selected_scc_each opt (fun x -> x) lst in
+      let sel_data_d = build_sel_scc sel_scc (fun d -> d.Cast.data_name) data_d_lst in
+      let pr (a,f) = if f then a^"*" else a in
+      let opt_str = (match opt with None -> ""
+                                 | Some lst -> string_of_regex_list pr lst) in
+      let () = y_binfo_hp (add_str ("Printing data" ^ opt_str ^ "\n") (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+      ()
     else
       print_string (x_loc^"unsupported print command: " ^ pcmd)
 

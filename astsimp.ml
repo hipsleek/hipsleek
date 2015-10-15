@@ -1841,7 +1841,7 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (*     | Iast.F_NO_ANN -> Cast.F_NO_ANN *)
   (* in *)
   let trans_field ((t, c), pos, il, ann) =
-    let n_ann = if ann = [] then [gen_field_ann t] else ann in
+    let n_ann = if ann = [] then (gen_field_ann t) else ann in
     (((trans_type prog t pos), c),(* trans_field_ann *) n_ann)
   in
   (* let () = print_endline ("[trans_data] translate data type { " ^ ddef.I.data_name ^ " }") in *)

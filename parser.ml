@@ -1062,6 +1062,7 @@ non_empty_command:
       | t = shape_derive_post_cmd -> ShapeDerivePost t
       | t = shape_derive_view_cmd -> ShapeDeriveView t
       | t = shape_extn_view_cmd -> ShapeExtnView t
+      | t = data_mark_rec_cmd -> DataMarkRec t
       | t = shape_normalize_cmd -> ShapeNormalize t
       | t = pred_elim_head_cmd -> PredElimHead t
       | t = pred_elim_tail_cmd -> PredElimTail t
@@ -1145,40 +1146,40 @@ field_anns: [[
 ]];
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, [(gen_field_ann t)] (* F_NO_ANN *))]
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,false, (gen_field_ann t) (* F_NO_ANN *))]
   | t = typ; `IDENTIFIER n ; ann=field_anns -> [((t,n),get_pos_camlp4 _loc 1,false, ann)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, [(gen_field_ann t)](* F_NO_ANN *))]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,false, (gen_field_ann t)(* F_NO_ANN *))]
   |  t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
 	 if List.mem n (List.map get_field_name fl) then
 	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	 else
-	   ((t, n), get_pos_camlp4 _loc 3, false, [(gen_field_ann t)] (* F_NO_ANN *)) :: fl )
+	   ((t, n), get_pos_camlp4 _loc 3, false, (gen_field_ann t) (* F_NO_ANN *)) :: fl )
   |  t=typ; `IDENTIFIER n; ann=field_anns ; peek_try; `SEMICOLON; fl = SELF ->(  
 	 if List.mem n (List.map get_field_name fl) then
 	   report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	 else
-           let ann = if ann=[] then [gen_field_ann t] else ann in
+           let ann = if ann=[] then (gen_field_ann t) else ann in
 	   ((t, n), get_pos_camlp4 _loc 3, false,ann) :: fl )
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
 	(if List.mem n (List.map get_field_name fl) then
 	  report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	else
-	  ((t1, n), get_pos_camlp4 _loc 3, false, [(gen_field_ann t1)](*F_NO_ANN*)) :: fl )
+	  ((t1, n), get_pos_camlp4 _loc 3, false, (gen_field_ann t1)(*F_NO_ANN*)) :: fl )
 ]
     (* An Hoa [22/08/2011] Inline fields extension*)
   | "inline fields" [
-	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true, [gen_field_ann t] (*F_NO_ANN*))]
+	`INLINE; t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1,true, (gen_field_ann t) (*F_NO_ANN*))]
       | `INLINE; t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1,true, [] (*F_NO_ANN*))]
       | `INLINE; t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(
 	    if List.mem n (List.map get_field_name fl) then
 	      report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	    else
-	      ((t, n), get_pos_camlp4 _loc 3, true, [gen_field_ann t] (*F_NO_ANN*)) :: fl )
+	      ((t, n), get_pos_camlp4 _loc 3, true, (gen_field_ann t) (*F_NO_ANN*)) :: fl )
       | `INLINE; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
 	    (if List.mem n (List.map get_field_name fl) then
 	      report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	    else
-	      ((t1, n), get_pos_camlp4 _loc 3, true, [gen_field_ann t1] (*F_NO_ANN*)) :: fl )]];
+	      ((t1, n), get_pos_camlp4 _loc 3, true, (gen_field_ann t1) (*F_NO_ANN*)) :: fl )]];
 
 (* one_field:   *)
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
@@ -2649,6 +2650,11 @@ selective_id_star_list_bracket:
   [[ `OSQUARE;il1= shape_selective_id_star_list;`CSQUARE -> il1
   ]];
 
+data_mark_rec_cmd:
+  [[ `DATA_MARK_REC; `OSQUARE; il=shape_selective_id_star_list; `CSQUARE
+     ->  il
+  ]];
+
 shape_add_dangling_cmd:
   [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
@@ -2704,6 +2710,7 @@ shape_normalize_cmd:
   [[ `SHAPE_NORMALIZE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
      ->  il
   ]];
+
 
 pred_elim_head_cmd:
   [[ `PRED_ELIM_HEAD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
@@ -2817,6 +2824,9 @@ print_cmd:
         ilopt=OPT selective_id_star_list_bracket  -> 
         (* let ilopt = map_opt (List.map () lst) ilopt in *)
         PCmd (id,ilopt)
+   | `PRINT; `DATA; 
+        ilopt=OPT selective_id_star_list_bracket  -> 
+        PCmd ("data",ilopt)
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
    | `PRINT_LEMMAS  -> PCmd ("lemmas",None)
    (* | `PRINT_VIEW  -> PCmd "view" *)
@@ -3418,7 +3428,7 @@ class_decl:
   [[ `CLASS; `IDENTIFIER id; par=OPT extends; ml=class_body ->
       let t1, t2, t3 = split_members ml in
 		(* An Hoa [22/08/2011] : blindly add the members as non-inline because we do not support inline fields in classes. TODO revise. *)
-		let t1 = List.map (fun ((t,id), p) -> ((t,id), p, false, [gen_field_ann t] (* F_NO_ANN *))) t1 in
+		let t1 = List.map (fun ((t,id), p) -> ((t,id), p, false, (gen_field_ann t) (* F_NO_ANN *))) t1 in
       let cdef = { data_name = id;
                    data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";
