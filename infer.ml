@@ -644,42 +644,50 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
     let check_sat = TP.is_sat_raw lhs_xpure in
     if not(check_sat) then None
     else
-      let f = simplify_contra 1 (MCP.pure_of_mix lhs_xpure) ivars in
+      let f_orig = MCP.pure_of_mix lhs_xpure in
+      let f = simplify_contra 1 f_orig ivars in
+      let () = x_binfo_hp (add_str "lhs_contra:f(after simplify)" !print_formula) f pos in
       let eqs0 = (MCP.ptr_equations_without_null lhs_xpure) in
       let eqs1 = List.map (fun (sv1, sv2) ->
           if CP.mem_svl sv1 ivars then (sv2,sv1)
           else (sv1,sv2)
         ) eqs0 in
+      let pr_sv = !print_sv in
+      let () = y_binfo_hp (add_str "lhs_contra:subs" (pr_list (pr_pair pr_sv pr_sv))) eqs1 in
       let f = CP.subst eqs1 f in
+      let () = x_binfo_hp (add_str "lhs_contra:f(after subs)" !print_formula) f pos in
       let vf = CP.fv f in
       let over_v = CP.intersect vf ivars in
       if (over_v ==[]) then None
       else 
         let exists_var = CP.diff_svl vf ivars in
-        let () = DD.ninfo_hprint (add_str "f (before simplify_helper): " !print_formula) f pos in
+        let () = x_binfo_hp (add_str "lhs_contra:f" !print_formula) f pos in
         let qvars0, bare_f = split_ex_quantifiers f in
+        let () = x_binfo_hp (add_str "lhs_contra:bare_f" !print_formula) bare_f pos in
         let ptr_qvars0, non_ptrs0_qvars0 = List.partition CP.is_node_typ qvars0 in
         let ps = CP.list_of_conjs (CP.remove_redundant bare_f) in
+        let () = x_binfo_hp (add_str "lhs_contra:ps" (pr_list !print_formula)) ps pos in
         (* let ptrs_ps, non_ptrs_ps = List.partition (fun p -> List.for_all (CP.is_node_typ) (CP.fv p)) ps in *)
         (* WN : do not distinguish between ptr and non-ptrs *)
         (* see zp-1a.slk *)
         let ptrs_ps, non_ptrs_ps = ([],ps) in
-        let () = x_tinfo_hp (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in
-        let () = x_tinfo_hp (add_str " non_ptrs_ps: " (pr_list !print_formula)) non_ptrs_ps pos in
+        let () = x_binfo_hp (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in
+        let () = x_binfo_hp (add_str " non_ptrs_ps: " (pr_list !print_formula)) non_ptrs_ps pos in
         let non_ptr_f = simplify_helper 
             (CP.mkExists (non_ptrs0_qvars0@exists_var) 
                (CP.conj_of_list non_ptrs_ps pos) None pos) in
         let () = x_tinfo_hp (add_str "evars: " !print_svl) (non_ptrs0_qvars0@exists_var) pos in
-        let () = x_tinfo_hp (add_str "non_ptr_f: " !print_formula) non_ptr_f pos in 
+        let () = x_binfo_hp (add_str "non_ptr_f: " !print_formula) non_ptr_f pos in 
         let qvars1, non_ptr_bare_f = split_ex_quantifiers non_ptr_f in
         let e_ptr_vars = CP.diff_svl (List.concat (List.map CP.fv ptrs_ps)) ivars in
         let () = x_tinfo_hp (add_str "e_ptr_vars: " !print_svl) e_ptr_vars pos in
         let exists_vars = qvars1@ptr_qvars0@e_ptr_vars in
         let ps = List.map (fun p -> CP.mkExists exists_vars p None pos) (List.filter (fun p -> not(CP.isConstTrue p)) (non_ptr_bare_f::ptrs_ps)) in
         let f = CP.conj_of_list ps pos in
+        let () = y_binfo_hp (add_str "lhs_contra:pure" !CP.print_formula) f in
         (* let a_fml = CP.conj_of_list (List.filter (fun p -> not(CP.isConstTrue p)) (non_ptr_bare_f::ptrs_ps)) pos in *)
         (* let f = CP.mkExists exists_vars a_fml None pos in *)
-        let () = DD.ninfo_hprint (add_str "exists_vars: " !print_svl) exists_vars pos in
+        let () = y_tinfo_hp (add_str "exists_vars: " !print_svl) exists_vars in
         (* let () = DD.info_hprint (add_str "f: " !print_formula) f pos in  *)
         (* let f = simplify_helper (CP.mkExists exists_var f None pos) in *)
         if CP.isConstTrue f || CP.isConstFalse f then None
