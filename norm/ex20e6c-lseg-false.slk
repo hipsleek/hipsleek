@@ -7,5 +7,6 @@
 //print residue.
 
 //infer[y] x=0 & y=1 |- false.
-infer[x,y] x=y |- false.
+//infer[x,y] x=y |- false.
+infer[y] x=y |- false.
 print residue.
