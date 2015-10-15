@@ -796,16 +796,17 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
 
   (*******DROP*******)
   (*TOFIX*)
+  let classic_nodes = if es.CF.es_infer_obj # is_classic_all then CF.get_ptrs lhs_b.CF.formula_base_heap else [] in
   let lhs_keep_root_svl = rhs_svl in
   let rhs_keep_root_svl = (rhs_svl(* @keep_root_hrels@classic_nodes*)) in
-  let lhs_b1 = if !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) then lhs_b
+  let lhs_b1 = if es.CF.es_infer_obj # is_classic_all || !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) then lhs_b
   else
     {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CP.remove_dups_svl (lhs_keep_rootvars@rhs_args_ni));}
   in
   let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all
     (!Globals.old_infer_complex_lhs || iact != 1)
     lhs_b1 rhs_b
-      (* (hds@filter_his) hvs *) new_hds new_hvs (* (lhp_args@rhp_args) *) leqs reqs lhs_keep_root_svl rhs_keep_root_svl
+      (* (hds@filter_his) hvs *) new_hds new_hvs (* (lhp_args@rhp_args) *) leqs reqs (lhs_keep_root_svl@classic_nodes) rhs_keep_root_svl
       (lhs_keep_rootvars(* @keep_root_hrels *)) lhp_args lhs_args_ni
       rhs_selected_hps (* rhs_keep_rootvars *) rhs_args_ni
       (* unk_svl *) (* (CP.remove_dups_svl prog_vars) *) in
@@ -1111,7 +1112,7 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
                                               new_hrels)) in
   let new_rhs_b0 = {new_rhs_b with 
                     CF.formula_base_heap =  CF.check_imm_mis rhs new_rhs_b.CF.formula_base_heap} in
-  let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog iact es lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
+  let (new_lhs_b,new_rhs_b) = x_add simplify_lhs_rhs prog iact es lhs_b0 new_rhs_b0 leqs reqs hds hvs lhras (rhras@new_hrels)
       (lselected_hpargs) new_rselected_hpargs
       total_unk_svl prog_vars (* lvi_ni_svl *) (* classic_nodes *) in
   (*simply add constraints: *)
@@ -1505,7 +1506,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
     (*   CP.spec_var * CF.CP.spec_var list -> CF.hprel option *)
     let generate_constrs lhs_b rhs_b leqs reqs hds hvs lhras (hp,args)=
       (* WN : Why did this simplify_lhs_rhs has so many parameters? *)
-      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog 0 es0 lhs_b rhs_b leqs reqs hds hvs lhras []
+      let (new_lhs_b,new_rhs_b) = x_add simplify_lhs_rhs prog 0 es0 lhs_b rhs_b leqs reqs hds hvs lhras []
           [(hp,args)] [] [] [] in
       let lhs0 = (CF.Base new_lhs_b) in
       (* WN : Why do we remove !=null? *)
