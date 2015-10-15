@@ -1294,6 +1294,7 @@ let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
+let old_field_tag = ref false (* false *)
 let old_pred_extn = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
@@ -2540,6 +2541,10 @@ let gen_field_ann t=
   match t with
   | Named _ -> fresh_any_name field_rec_ann
   | _ -> fresh_any_name field_val_ann
+
+let gen_field_ann t =
+  if !old_field_tag then [gen_field_ann t]
+  else []
 
 let un_option opt default_val = match opt with
   | Some v -> v

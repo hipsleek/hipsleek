@@ -58,7 +58,7 @@ and data_field_ann =
 and data_decl = {
   data_name : ident;
   data_pos : loc;
-  data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
+  mutable data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
   data_fields_new : (P.spec_var * (ident list) (* data_field_ann *)) list;
   data_parent_name : ident;
   data_invs : F.formula list;

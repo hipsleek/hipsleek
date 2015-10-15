@@ -1064,8 +1064,8 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                     let ftyp = deref_ty in
                     let fname = str_value in
-                    let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
-                    let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
+                    let val_field = ((ftyp, fname), no_pos, false, (gen_field_ann ftyp) (* Iast.F_NO_ANN *)) in
+                    let offset_field = ((Int, str_offset), no_pos, false, (gen_field_ann Int)) in
                     let dfields = [val_field; offset_field] in
                     let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                     let dtyp = Globals.Named dname in
@@ -1164,15 +1164,15 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
           with Not_found -> (
               (* create new Globals.typ and Iast.data_decl update to hash tables *)
               let value_typ = translate_typ core_type pos in
-              let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
+              let value_field = ((value_typ, str_value), no_pos, false, (gen_field_ann value_typ) (* Iast.F_NO_ANN *)) in
               let dname = match ty with
 		| Cil.TInt(Cil.IChar, _) -> "char_star"
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
               let offset_field = match ty with
-                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, [gen_field_ann dtype])
-                | _ -> ((Int, str_offset), no_pos, false, [gen_field_ann Int]) (*other types have an integer offset*)
+                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, (gen_field_ann dtype))
+                | _ -> ((Int, str_offset), no_pos, false, (gen_field_ann Int)) (*other types have an integer offset*)
               in
               let dfields = match ty with
                 | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
@@ -1273,7 +1273,7 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
   match ftyp with
   | Cil.TComp (comp, _) ->
     let ty = Globals.Named comp.Cil.cname in
-    ((ty, name), pos, true, [gen_field_ann ty] (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
+    ((ty, name), pos, true, (gen_field_ann ty) (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
   | Cil.TPtr (ty, _) ->
     let _ = Debug.ninfo_hprint (add_str "ftyp" string_of_cil_typ) ftyp no_pos in
     let _ = Debug.ninfo_hprint (add_str "ty" string_of_cil_typ) ty no_pos in
@@ -1284,10 +1284,10 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
       else
         translate_typ ftyp pos
     ) in
-    ((new_ty, name), pos, false, [gen_field_ann new_ty] (* Iast.F_NO_ANN *))
+    ((new_ty, name), pos, false, (gen_field_ann new_ty) (* Iast.F_NO_ANN *))
   | _ ->
     let ty = translate_typ ftyp pos in
-    ((ty, name), pos, false, [gen_field_ann ty] (* Iast.F_NO_ANN *))
+    ((ty, name), pos, false, (gen_field_ann ty) (* Iast.F_NO_ANN *))
 
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
