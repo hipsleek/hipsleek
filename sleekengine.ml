@@ -2582,12 +2582,12 @@ let process_pred_split ids=
   in ()
 
 
-let process_pred_unfold reg_to_vname =
+let process_pred_unfold qual reg_to_vname =
   let vdefs = get_sorted_view_decls () in
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
   let to_vns = Norm.regex_search reg_to_vname vdefs in
-  Norm.norm_unfold iprog !cprog vdefs to_vns
+  Norm.norm_unfold qual iprog !cprog vdefs to_vns
 
 let process_shape_reuse_subs reg_to_vname =
   (* failwith (x_loc^"TBI") *)

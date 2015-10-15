@@ -38,6 +38,8 @@ let cprog = ref {
       Cast.prog_right_coercions = [];*)
     Cast. prog_barrier_decls = []} ;;
 
+let () = Cast.set_prog !cprog
+
 (* let get_sorted_view_decls () =                                   *)
 (*   let vdefs = Cast.sort_view_list !cprog.Cast.prog_view_decls in *)
 (*   !cprog.Cast.prog_view_decls <- vdefs;                          *)

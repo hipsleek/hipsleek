@@ -405,7 +405,7 @@ let replace_with_user_include
 
 (***************end process compare file*****************)
 
-let saved_cprog = ref None
+let saved_cprog = Cast.cprog (* ref None *)
 let saved_prim_names = ref None
 
 (*Working*)

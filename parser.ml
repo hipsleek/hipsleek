@@ -1036,7 +1036,17 @@ non_empty_command:
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
       | t=shapeReuse_cmd     -> ShapeReuse t
-      | t=predUnfold_cmd     -> PredUnfold t
+      | t=predUnfold_cmd     -> 
+        let check_qualifier q =
+          begin
+           match q with
+           | Some id -> 
+             if id="disj" then () else failwith ("found "^id^" qbut expecting disj")
+           | None -> ()
+          end in
+        let q = fst t in
+        let () = check_qualifier q in
+        PredUnfold t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
@@ -2599,9 +2609,10 @@ shapeReuseSubs_cmd:
    ]];
 
 predUnfold_cmd:
-   [[ `PRED_UNFOLD; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   [[ `PRED_UNFOLD; arg = qualifier_selective_id_list_bracket ->
+      (* `OSQUARE;il1= shape_selective_id_list;`CSQUARE -> *)
    (* let il1 = un_option il1 [] in *)
-   (il1)
+   ((arg))
    ]];
 
 shapeReuse_cmd:
@@ -2628,6 +2639,11 @@ shape_selective_id_star_list:
 
 selective_id_list_bracket:
   [[ `OSQUARE;il1= shape_selective_id_list;`CSQUARE -> il1
+  ]];
+
+qualifier_selective_id_list_bracket:
+  [[ qual = OPT id; `OSQUARE;il1= shape_selective_id_list;`CSQUARE -> 
+     (qual,il1)
   ]];
 
 selective_id_star_list_bracket:
