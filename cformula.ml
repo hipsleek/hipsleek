@@ -3045,7 +3045,7 @@ and f_h_fv (f : formula) : CP.spec_var list =
   | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars
 
 and h_fv ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list =
-  Debug.no_1 "h_fv" !print_h_formula !print_svl (h_fv_x ~vartype:vartype) h
+  (* Debug.no_1 "h_fv" !print_h_formula !print_svl *) (h_fv_x ~vartype:vartype) h
 
 and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list = 
   let rec aux h =
@@ -3074,11 +3074,15 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
                  h_formula_data_param_imm = param_ann;
                  h_formula_data_arguments = vs}) -> h_fv_node ~vartype:vartype v perm ann param_ann vs [] []
     | ViewNode ({h_formula_view_node = v;
+                 h_formula_view_name = i;
                  h_formula_view_perm = perm;
                  h_formula_view_imm = ann;
                  h_formula_view_ho_arguments = ho_vs;
                  h_formula_view_annot_arg = ann_args;
-                 h_formula_view_arguments = vs}) ->  h_fv_node ~vartype:vartype v perm ann [] vs ho_vs ann_args
+                 h_formula_view_arguments = vs}) ->  
+      if vartype # is_view_only then [CP.mk_spec_var i]
+      else 
+        h_fv_node ~vartype:vartype v perm ann [] vs ho_vs ann_args
     | ThreadNode ({h_formula_thread_node = v;
                    h_formula_thread_perm = perm;
                    h_formula_thread_delayed = dl;
@@ -4274,7 +4278,7 @@ and get_exists (f : formula) : CP.spec_var list =
 
 and elim_exists (f0 : formula) : formula =
   let pr =  !print_formula in
-  Debug.no_1 "cformula.elim_exists" pr pr elim_exists_x f0
+  (* Debug.no_1 "cformula.elim_exists" pr pr *) elim_exists_x f0
 
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
 and elim_exists_x (f0 : formula) : formula = match f0 with
@@ -13926,7 +13930,7 @@ let transform_formula_x f (e:formula):formula =
 
 let transform_formula f (e:formula):formula =
   let pr = !print_formula in
-  Debug.no_2 "transform_formula" (fun _ -> "f") pr pr transform_formula_x f e
+  (* Debug.no_2 "transform_formula" (fun _ -> "f") pr pr *) transform_formula_x f e
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
   let r =  f e in 
@@ -19997,7 +20001,9 @@ let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 
 let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 
-let get_view_unfold vd_name stk vl to_args f =
+(* type: HipUtil.NG.V.label -> h_formula_view -> *)
+(*   CP.spec_var list -> formula -> h_formula * CP.spec_var list * Cpure.formula *)
+let get_view_unfold_g vd_name vl to_args f =
     let args = vl.h_formula_view_arguments in 
     let vv = vl.h_formula_view_name in
     let () = y_tinfo_hp (add_str "unfolding vv" pr_id) vv in
@@ -20005,6 +20011,7 @@ let get_view_unfold vd_name stk vl to_args f =
     (* let new_args = trans_args sst args in *)
     let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
     let new_f = subst_all sst f in
+    let () = y_tinfo_hp pr_id (HipUtil.view_scc_obj # string_of) in
     let grh = HipUtil.view_scc_obj # unfold_in vv vd_name in
     let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
     let (qv,(hf,pure_f,_,_,_,_)) = split_components_exist ~rename_flag:true new_f in
@@ -20013,8 +20020,24 @@ let get_view_unfold vd_name stk vl to_args f =
     let () = y_tinfo_hp (add_str "new_f" !print_formula) new_f in
     let () = y_tinfo_hp (add_str "hf" !print_h_formula) hf in
     let () = y_tinfo_hp (add_str "pure" !CP.print_formula) pure_f in
-    let () = stk # push (qv,pure_f) in
-    hf
+    (hf,qv,pure_f)
+
+let get_view_unfold vd_name stk vl to_args f =
+  let (hf,qv,pure_f) = get_view_unfold_g vd_name vl to_args f in
+  let () = stk # push (qv,pure_f) in
+  hf
+  
+let add_qv_pure stk res =
+  let lst = stk # get_stk in
+  (* let () = if not(stk # is_empty)  *)
+  (*   then y_winfo_hp (add_str "TODO:add pure & qvars" pr_id) (stk # string_of) in *)
+  let res = if lst==[] then res
+    else let (qv,pure) = List.fold_left (fun (qv1,p1) (qv2,p2) -> (qv1@qv2,CP.mkAnd p1 p2 no_pos)) ([],CP.mkTrue no_pos) lst in
+      (* let () = y_winfo_hp (add_str "TODO:add pure & qvars" pr) (qv,pure) in *)
+      let res = add_pure_formula_to_formula pure res in
+      let res = push_exists qv res in
+      res
+  in res
 
 let repl_unfold_heap vd stk u_lst hf =
   let find n =
@@ -20029,8 +20052,11 @@ let repl_unfold_heap vd stk u_lst hf =
       match find name with
       | Some (m,to_args,f) -> 
         (* WN : take care of pure by mutable *)
-        let () = y_tinfo_hp (add_str "unfolding " (pr_pair pr_id !print_formula)) (name,f) in
+        (* let () = y_tinfo_hp (add_str "Unfolding " (pr_pair pr_id !print_formula)) (name,f) in *)
         let n_hf = get_view_unfold vd stk vl to_args f in
+        let pr_hf = !print_h_formula in
+        let () = y_tinfo_hp (add_str "Unfolding -> " (pr_pair pr_hf pr_hf)) (hf,n_hf) in
+        let () = y_tinfo_hp (add_str "(exist vars,pure)  " (fun s -> s # string_of)) stk in
         Some (n_hf)
         (* failwith (x_loc^"TBI") *)
       | _ -> Some hf 
@@ -20038,20 +20064,14 @@ let repl_unfold_heap vd stk u_lst hf =
     | _ -> None
   in map_h_formula hf f
 
+(* type: HipUtil.NG.V.label -> *)
+(*   (String.t * CP.spec_var list * formula) list -> formula -> formula *)
 let repl_unfold_formula vd u_lst f =
   let pr = pr_pair !CP.print_svl !CP.print_formula in
   let stk = new stack_pr "" pr (==) in
   let res = map_formula_heap_only (repl_unfold_heap vd stk u_lst) f in
-  let lst = stk # get_stk in
-  (* let () = if not(stk # is_empty)  *)
-  (*   then y_winfo_hp (add_str "TODO:add pure & qvars" pr_id) (stk # string_of) in *)
-  let res = if lst==[] then res
-    else let (qv,pure) = List.fold_left (fun (qv1,p1) (qv2,p2) -> (qv1@qv2,CP.mkAnd p1 p2 no_pos)) ([],CP.mkTrue no_pos) lst in
-      (* let () = y_winfo_hp (add_str "TODO:add pure & qvars" pr) (qv,pure) in *)
-      let res = add_pure_formula_to_formula pure res in
-      let res = push_exists qv res in
-      res
-  in res
+  add_qv_pure stk res
+
 
 let convert_un_struc_to_formula body =
   match body with
@@ -20079,3 +20099,128 @@ let add_label_to_struc_formula s_f old_sf =
 
 let eq_hprel_defn f1 f2 =
   (f1.hprel_lhs = f2.hprel_lhs) && (f1.hprel_rhs = f2.hprel_rhs)  && (f1.hprel_guard = f2.hprel_guard)
+
+let trans_heap_formula_new fh (f: formula) = 
+  let f_h_f _ hf = fh hf in 
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  trans_formula f () 
+    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
+    f_arg List.concat
+
+let trans_heap_formula f_h_f (f: formula) = 
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_arg = (voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2) in
+  trans_formula f () 
+    (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) 
+    f_arg List.concat
+
+let aux_rename_view_h_formula sst hf =
+  match hf with
+  | ViewNode v ->
+    let vn = v.h_formula_view_name in
+    (try
+      let new_vn = List.assoc vn sst in
+      Some (ViewNode { v with h_formula_view_name = new_vn; }) 
+    with _ -> Some hf)
+  | _ -> None
+
+let rename_view_formula sst f =
+  let f_h_f = (fun hf -> 
+    match (aux_rename_view_h_formula sst hf) with
+    | Some nhf -> Some (nhf, [])
+    | None -> None) in 
+  fst (trans_heap_formula_new f_h_f f)
+
+(* let new_f = build_ctx_with_emp orig_f hf in *)
+let build_context_with_emp f hf_ptr =
+  let f_h_f = (fun hf ->  if hf==hf_ptr then Some(HEmp,[])
+                else Some(hf,[])) in
+  fst (trans_heap_formula_new f_h_f f)
+
+let rename_view_struc sst f = 
+  let f_h_f = (fun hf -> aux_rename_view_h_formula sst hf) in 
+  let f_f = nonef, nonef, f_h_f, (somef, somef, somef, somef, somef) in
+  transform_struc_formula f_f f
+
+let is_sat_raw = Mcpure.is_sat_raw
+
+let is_xpure_unsat = ref (fun (f:formula) -> ((failwith x_loc):bool))
+
+let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) orig_f =
+  let pure_of_f = get_pure orig_f in
+  let () = y_tinfo_hp (add_str "complex_unfold(f)" !print_formula) orig_f in
+  let () = y_tinfo_hp (add_str "pure formula of inp2" !CP.print_formula) pure_of_f in
+
+  (* try to replace views if the corresponding list of formulae in unfold_set1
+   * has only 1 satisfiable formula *)
+  let pr = pr_pair !CP.print_svl !CP.print_formula in
+  let stk = new stack_pr "" pr (==) in
+  let f_h_f _ hf =
+    match hf with
+    | ViewNode ({ h_formula_view_node = vsv; h_formula_view_name = vname; } as v)
+    (* can only unfold on self *)
+    (* when string_eq "self" (CP.name_of_spec_var vsv) *) ->
+      begin
+        let new_f = build_context_with_emp orig_f hf in
+        let vl = v in
+        let args = vl.h_formula_view_arguments in 
+        let vv = vl.h_formula_view_name in
+        let () = y_tinfo_hp (add_str "transform .. view node" !CP.print_sv) vsv in
+        let () = y_tinfo_hp (add_str "transform .. view name" pr_id) vname in
+        (* formulae for view name *)
+        try
+          let (_,to_args,fl) = List.find (fun (id,_,_) -> string_eq id vname) unfold_set1 in
+          let sat_fl = List.filter (fun unf_f ->
+              (* let f = unf_f in *)
+              let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
+              let unf_f = subst_all sst unf_f in
+              (* let unf_pure_f = get_pure unf_f in *)
+              let () = y_tinfo_hp (add_str "complex_unfold(unf_f)" !print_formula) unf_f in
+              (* let conj = (CP.mkAnd pure_of_f unf_pure_f no_pos) in *)
+              let cf_star = (mkStar_combine new_f unf_f Flow_combine no_pos) in
+              (* let flag1 = !is_sat_raw (MCP.mix_of_pure conj) in *)
+              let flag = (!is_xpure_unsat cf_star) in
+              (* let diff_flag = not(flag=flag1) in *)
+              (* let msg = if diff_flag then " DIFFERENT" else "" in *)
+              let pr_b = string_of_bool in
+              (* let () = if diff_flag then y_tinfo_hp !CP.print_formula unf_pure_f in *)
+              let () = y_tinfo_hp (add_str ("check sat"(* ^msg *)) (pr_pair !print_formula pr_b)) (cf_star,flag) in
+              not(flag)) fl in
+          let () = y_tinfo_hp (add_str "transform .. sat fl" (pr_list !print_formula)) sat_fl in
+          (match sat_fl with
+           (* if we match with none, we *could* replace with false *)
+           | [] -> None
+           (* if we have only one satisfiable formula, use that here *)
+           | [replace_f] ->
+             (* todo: if we need to replace with h_formula, but have
+              * replace_f : formula, so how?? *)
+             let hf = get_view_unfold vn stk vl to_args replace_f in
+             Some(hf,[])
+             (* None *)
+           | _ -> None)
+        with
+          Not_found -> None
+      end
+    | _ -> None
+  in
+  let somef2 _ f = Some (f, []) in
+  let id2 f _ = (f, []) in
+  let ida _ f = (f, []) in
+  let f_trans = (nonef2, nonef2, f_h_f, (somef2, somef2, somef2), (somef2, id2, ida, id2, id2)) in
+  let f_arg = voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2 in
+  let (nf, _) = trans_formula orig_f () f_trans f_arg List.concat in
+  add_qv_pure stk nf
+
+(* type: HipUtil.NG.V.label -> h_formula_view -> *)
+(*   CP.spec_var list -> formula -> h_formula * CP.spec_var list * Cpure.formula *)
+(* let get_view_unfold_g vd_name vl to_args f = *)
+
+let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formula list)) list) f =
+  let pr_f = !print_formula in
+  let pr1 = pr_list (pr_triple pr_id (pr_list !print_spec_var) (pr_list pr_f)) in
+  Debug.no_2 "complex_unfold" pr1 pr_f pr_f (complex_unfold vn) unfold_set1 f

@@ -2156,7 +2156,7 @@ and pr_h_formula_for_spec h =
     pr_spec_var sv;
     fmt_string "::";
     (* if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs; *)
-    if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
+    (* if svs_orig = [] then fmt_string (c^"<>") else *) pr_angle (c^perm_str) pr_view_arg params;
     (*    pr_imm imm;*)
     pr_derv dr;
     pr_split split;
@@ -5719,3 +5719,5 @@ Cfout.print_sv := string_of_spec_var;;
 (*   let cdefs = Cast.sort_view_list !cprog.Cast.prog_coercion_decls in *)
 (*   get_lemma_cprog cdefs; *)
 (*   cdefs *)
+
+let () = Excore.map_num_invs # set_pr (pr_pair !Cpure.print_svl !Cpure.print_formula) 

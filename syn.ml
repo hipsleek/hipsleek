@@ -57,12 +57,14 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
       with _ -> []
     in
     let lhs_args = collect_feasible_heap_args_formula prog null_aliases hpr.hprel_lhs in
-    let lhs_nodes = CF.collect_node_var_formula hpr.hprel_lhs in
+    (* let lhs_nodes = CF.collect_node_var_formula hpr.hprel_lhs in *)
     let rhs_args = collect_feasible_heap_args_formula prog null_aliases hpr.hprel_rhs in
     let rhs_args_w_aliases = List.concat (List.map (fun arg ->
       try List.find (fun svl -> mem arg svl) aliases
-      with _ -> [arg]) rhs_args) in 
-    let dangling_args = List.filter CP.is_node_typ (diff (* (diff lhs_args lhs_nodes) *) lhs_args rhs_args_w_aliases) in
+      with _ -> [arg]) rhs_args) in
+    let lhs_def_vars = remove_dups (List.concat (List.map (fun (a, b) -> [a; b]) lhs_aliases)) in
+    let dangling_args = List.filter CP.is_node_typ 
+      (diff (* (diff lhs_args lhs_nodes) *) (diff lhs_args lhs_def_vars) rhs_args_w_aliases) in
     let () = x_tinfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
     let combine_dangling_args f = List.fold_left (fun acc_f dangling_arg ->
         CF.mkStar_combine_heap acc_f (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
@@ -78,10 +80,10 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   let n_hpr_list, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) hpr_list) in
   let has_dangling_vars = or_list has_dangling_vars in
-  let prog =
+  let () =
     if has_dangling_vars then
-      { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; }
-    else prog
+      (* { prog with Cast.prog_view_decls = prog.Cast.prog_view_decls @ [mk_dangling_view_prim]; } *)
+      prog.Cast.prog_view_decls <- prog.Cast.prog_view_decls @ [mk_dangling_view_prim]
   in
   n_hpr_list
   
@@ -305,21 +307,23 @@ let unfolding_one_hrel prog ctx hrel hrel_defs =
       with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
     ) merged_hrel_defs
   in
-  let guarded_hrel_defs, unguarded_hrel_defs = List.partition (fun hrel_def ->
-      match hrel_def.CF.hprel_guard with Some _ -> true | None -> false) subst_hrel_defs in
-  let non_inst_unguarded_hrel_defs, unguarded_hrel_defs = List.partition (is_non_inst_hprel prog) unguarded_hrel_defs in
-  (* Only unfolding guarded hrel or non-inst hrel *)
+  (* let guarded_hrel_defs, unguarded_hrel_defs = List.partition (fun hrel_def ->                                           *)
+  (*     match hrel_def.CF.hprel_guard with Some _ -> true | None -> false) subst_hrel_defs in                              *)
+  (* let non_inst_unguarded_hrel_defs, unguarded_hrel_defs = List.partition (is_non_inst_hprel prog) unguarded_hrel_defs in *)
+  (* (* Only unfolding guarded hrel or non-inst hrel *)                                                                     *)
   let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
       let unfolding_ctx = x_add unfolding_one_hrel_def prog ctx hrel hrel_def in
       match unfolding_ctx with
       | None -> acc
-      | Some ctx -> acc @ [ctx]) [] (guarded_hrel_defs @ non_inst_unguarded_hrel_defs)
+      | Some ctx -> acc @ [ctx]) [] 
+    (* (guarded_hrel_defs @ non_inst_unguarded_hrel_defs) *)
+    subst_hrel_defs
   in
-  let unfolding_ctx_list = 
-    if is_empty unguarded_hrel_defs 
-    then unfolding_ctx_list
-    else unfolding_ctx_list @ [add_back_hrel prog ctx hrel]
-  in
+  (* let unfolding_ctx_list =                                  *)
+  (*   if is_empty unguarded_hrel_defs                         *)
+  (*   then unfolding_ctx_list                                 *)
+  (*   else unfolding_ctx_list @ [add_back_hrel prog ctx hrel] *)
+  (* in                                                        *)
   if is_empty unfolding_ctx_list then
     [add_back_hrel prog ctx hrel]
   else unfolding_ctx_list
@@ -443,7 +447,7 @@ let rec unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF
 
 let unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF.formula) =
   let pr = !CF.print_formula in
-  Debug.no_1 "unfolding_hprel_formula" pr (pr_list pr)
+  Debug.no_1 "Syn:unfolding_hprel_formula" pr (pr_list pr)
     (fun _ -> unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f) f
 
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
@@ -537,7 +541,7 @@ let remove_dangling_heap_formula (f: CF.formula) =
       else Some (hf, [])
     | _ -> None
   in
-  trans_heap_formula f_h_f f
+  CF.trans_heap_formula f_h_f f
 
 let remove_dangling_heap_formula (f: CF.formula) = 
   let pr1 = !CF.print_formula in
@@ -555,7 +559,7 @@ let add_dangling_params hrel_name dangling_params (f: CF.formula) =
       else Some (hf, [])
     | _ -> None
   in
-  fst (trans_heap_formula f_h_f f)
+  fst (CF.trans_heap_formula f_h_f f)
 
 let add_dangling_params hrel_name dangling_params (f: CF.formula) = 
   let pr1 = !CF.print_formula in
@@ -579,7 +583,11 @@ let dangling_parameterizing_hprel (hpr: CF.hprel) =
     let n_f_disjs, dangling_params_lists = List.split (List.map (fun (disj, dangling_vars) ->
       let fresh_dangling_vars = CP.fresh_spec_vars dangling_vars in
       let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) fresh_dangling_vars in
-      let n_disj = CF.subst (List.combine dangling_vars fresh_dangling_vars) disj in
+      (* Adding equality fresh_dangling_var = dangling_vars instead of renaming *)
+      (* let n_disj = CF.subst (List.combine dangling_vars fresh_dangling_vars) disj in *)
+      let n_disj = List.fold_left (fun f (dv, fdv) ->
+          CF.add_pure_formula_to_formula (CP.mkEqVar fdv dv no_pos) f) 
+        disj (List.combine dangling_vars fresh_dangling_vars) in
       (n_disj, dangling_params)) n_f_disjs_w_dangling_vars)
     in
     let n_f_opt = CF.join_conjunct_opt n_f_disjs in
@@ -676,7 +684,6 @@ let aux_pred_reuse iprog cprog all_views =
   let vdefs = C.get_sorted_view_decls cprog in
   let () = y_binfo_pp "XXX Scheduling pred_elim_useless" in
   let vdefs = Norm.norm_elim_useless vdefs ids in
-  let () = y_binfo_pp "XXX Scheduling pred_reuse" in
   let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
   let () = y_binfo_pp "XXX Scheduling pred_reuse" in
   let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
@@ -780,7 +787,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let () = y_binfo_pp "XXX proven infer ---> " in
     let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
     let () = List.iter (fun v ->
-      let () = C.update_un_struc_formula (trans_hrel_to_view_formula cprog) v in
+      let () = C.update_un_struc_formula (fun f -> fst (trans_hrel_to_view_formula cprog f)) v in
       let () = C.update_view_formula (trans_hrel_to_view_struc_formula cprog) v in
       let () = C.update_view_decl cprog v in
       let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
@@ -803,7 +810,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     (*     all_d_views in                                                                          *)
     let lst = aux_pred_reuse iprog cprog all_d_views in
     (* Equiv test to form new pred *)
-    let r_cbody = trans_hrel_to_view_formula cprog l_body in
+    let r_cbody, _ = trans_hrel_to_view_formula cprog l_body in
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
     let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
     let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
@@ -934,8 +941,9 @@ let elim_tail_pred_list iprog cprog preds =
 (*********************)
 
 let extn_norm_pred iprog cprog extn_pred norm_pred =
-  let norm_ipred = I.look_up_view_def_raw 21 iprog.I.prog_view_decls norm_pred.C.view_name in
-  let extn_view_name = "extn_" ^ norm_ipred.I.view_name in
+  let equiv_pid = get_equiv_pred cprog norm_pred.C.view_name in 
+  let norm_ipred = I.look_up_view_def_raw 21 iprog.I.prog_view_decls equiv_pid in
+  let extn_view_name = extn_pred.C.view_name (* "extn_" ^ norm_ipred.I.view_name *) in
   let extn_view_var = extn_pred.C.view_name ^ "_prop" in
   let extn_iview = I.mk_iview_decl ~v_kind:View_DERV extn_view_name "" 
       (norm_ipred.I.view_vars @ [extn_view_var])
@@ -953,10 +961,11 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
     cprog.C.prog_view_decls extn_iview in
   let () = y_binfo_hp (add_str "extn_cview_lst" 
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
-  let comb_extn_name = norm_ipred.I.view_name ^ "_" ^ extn_view_name in
+  let comb_extn_name = Derive.mk_extn_pred_name norm_ipred.I.view_name extn_view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
-  let extn_cview = { extn_cview with C.view_name = norm_pred.C.view_name } in
+  (* let extn_cview = C.rename_view extn_cview equiv_pid in  *)
   let () = C.update_view_decl cprog extn_cview in
+  let () = norm_pred.C.view_equiv_set # set ([], comb_extn_name) in
   extn_cview
 
 let extn_norm_pred_list iprog cprog extn_pred norm_preds = 

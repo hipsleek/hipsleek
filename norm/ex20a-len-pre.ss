@@ -9,14 +9,16 @@ data node {
 
 
 /* view for a singly linked list */
-/*
+
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
-*/
+
+/*
 ll<> == self = null 
 	or self::node<_, q> * q::ll<> 
   inv true;
+*/
 
 HeapPred P(node x).
 
@@ -26,7 +28,7 @@ int length(node x)
   requires P(x)
    ensures true;
 */
-  requires x::ll<>
+  requires x::ll<n>
   ensures true;
 {    
   if (x==null) return 0;

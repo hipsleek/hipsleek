@@ -466,7 +466,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
       (*do not split unk_hps and link_hps, all non-ptrs args*)
       let non_split_hps = unk_hps @ link_hps in
       let ls_lhp_args1, ls_lhs_non_node_hpargs = List.fold_left (fun (r1,r2) (hp,args) ->
-          let arg_i,_ = Sautil.partition_hp_args prog hp args in
+          let arg_i,_ = x_add Sautil.partition_hp_args prog hp args in
           if ((List.filter (fun (sv,_) -> CP.is_node_typ sv) arg_i) = []) then
             (r1, r2@[(hp,args)])
           else if not (CP.mem_svl hp non_split_hps) then
@@ -1021,7 +1021,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
       else f2
     in
     (* fresh non-shape values *)
-    let f4 = Cfutil.fresh_data_v(*_no_change*) f3 in
+    let f4 = Cfutil.fresh_data_v_no_change f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f4,Cformula.subst_opt subst og, unk_args1)

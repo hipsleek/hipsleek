@@ -453,7 +453,7 @@ and mkAnd_x f1 f2 pos = match f1 with
 
 and mkAnd f1 f2 pos = 
   let pr = !print_formula in
-  Debug.no_2 "mkAnd" pr pr pr (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
+  (* Debug.no_2 "mkAnd" pr pr pr *) (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
 
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 

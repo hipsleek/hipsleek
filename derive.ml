@@ -579,6 +579,8 @@ let pr_sv = CP.print_sv
 
 let data_decl_obj = CFE.data_decl_obj
 
+let mk_extn_pred_name vn pname = vn ^ "_" ^ pname
+
 class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq nnn_s tag_s =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
@@ -664,7 +666,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
         pure_lst <- final::pure@pure_lst
     method proc_view ptr vn =
       if self # is_mut_view vn then
-        let new_vname = vn^"_"^pname in
+        let new_vname = mk_extn_pred_name vn pname (* vn^"_"^pname *) in
         let (root,new_sv) = 
           match ptr with
           | None ->  (self_sv,orig_sv)
@@ -771,13 +773,15 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
                  (* reset the inv to re-compute later, *)
                  (* as previous view's computed inv may be incorrect *)
                  C.view_baga_over_inv = None;
+                 C.view_baga_x_over_inv = None;
                  C.view_baga_inv = None;
                  C.view_baga_under_inv = None;
                  } in
     let vn = new_vd.C.view_name in
     let () = y_tinfo_hp (add_str "b4 update_view" pr_id) vn  in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
-    let () = y_binfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in
+    (* let () = y_binfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in *)
+    let () = y_binfo_hp (add_str "vd(orig)" Cprinter.string_of_view_decl_short) vd in
     let () = y_tinfo_hp (add_str "aft update_view" pr_id) vn  in
     new_vd
   in
@@ -792,6 +796,7 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
         let () = Typeinfer.update_view_new_body ~base_flag:true vd body in
         let () = y_binfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
         let () = y_binfo_hp (add_str "new_vd" Cprinter.string_of_view_decl_short) vd in
+        let () = y_binfo_hp (add_str "new_vd(inv)" Cprinter.string_of_view_decl_inv) vd in
         ()
       ) vds in
      let () = y_tinfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in

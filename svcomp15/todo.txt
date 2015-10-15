@@ -512,6 +512,26 @@ note: remove free_data in main: OK
 duplicated top-level name(s): free$__anonstruct_TData_1_star, __anonstruct_TData_1_star
 
 ==============================================================
+
+list-ext
+todo/#ex12-test19
+
+
+todo/#ex13-test158
+CIL: needs handle union
+
+union {
+        void *p0;
+
+        struct {
+            char c[2];
+            int p1;
+            int p2;
+        } str;
+    } data;
+
+array
+
 ==============================================================
 ==============================================================
 ==============================================================

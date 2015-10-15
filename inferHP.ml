@@ -104,12 +104,12 @@ let match_unk_preds prog lhs_hpargs rhs_hp rhs_args=
 let find_guard  prog lhds (* lhvs *) leqs null_ptrs l_selhpargs rhs_args =
   let l_args1 = List.fold_left (fun ls (hp,args) ->
       try
-        let i_args, ni_args = Sautil.partition_hp_args prog hp args in
+        let i_args, ni_args = x_add Sautil.partition_hp_args prog hp args in
         let sel_args = List.map fst i_args in
       ls@sel_args
       with _ -> ls@args
   ) [] l_selhpargs in
-  let l_args2 = CF.find_close l_args1 leqs in
+  let l_args2 = CF.find_close (l_args1@rhs_args) leqs in
   let cl_null_ptrs = CF.find_close null_ptrs leqs in
   let l_args3 = CP.diff_svl l_args2(* (CP.remove_dups_svl (l_args2@rhs_args)) *) cl_null_ptrs in
   let () = Debug.ninfo_hprint (add_str "l_args2"  !CP.print_svl) l_args2 no_pos in
@@ -190,7 +190,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       match hpargs with
       | [] -> (false, false, [],[], [])
       | (hp,args)::tl ->
-        let i_args, ni_args = Sautil.partition_hp_args prog hp args in
+        let i_args, ni_args = x_add Sautil.partition_hp_args prog hp args in
         let inter,rem = List.partition
             (fun (sv,_) ->
                 let () = DD.ninfo_hprint (add_str  "sv" !CP.print_sv) sv pos in
@@ -294,7 +294,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       if Gen.BList.mem_eq (fun (hp1,args1) (hp2,args2) ->
           CP.eq_spec_var hp1 hp2 && (CP.eq_spec_var_order_list args1 args2)
         ) (hp,args) selected_hpargs then
-        let args_ins,_ = Sautil.partition_hp_args prog hp args in
+        let args_ins,_ = x_add Sautil.partition_hp_args prog hp args in
         let args_ins1 = fst (List.split args_ins) in
         let opto = loop_helper (*find_pt_new*) lhs_hds args_ins1 [] in
         (match opto with
@@ -426,7 +426,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
   (* find post_hps NI- cll case *)
   let post_svl_ni = List.fold_left (fun svl (hp, args) ->
       if CP.mem_svl hp post_hps then
-        let args_i,_ = Sautil.partition_hp_args prog hp args in
+        let args_i,_ = x_add Sautil.partition_hp_args prog hp args in
         svl@(List.map fst args_i)
       else svl
     ) [] ls_lhp_args in
@@ -738,7 +738,7 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
   let  crt_holes = es.CF.es_crt_holes in
   let partition_i_ni_svl (hp,args)=
     (* let () = Debug.info_zprint (lazy  ("    args:" ^ (!CP.print_svl hd) ^ ": "^(!CP.print_svl args))) no_pos in *)
-    let i_args_w_inst, i_args_w_ni = Sautil.partition_hp_args prog hp args in
+    let i_args_w_inst, i_args_w_ni = x_add Sautil.partition_hp_args prog hp args in
     (List.map fst i_args_w_inst, List.map fst i_args_w_ni)
   in
   let filter_non_selected_hp selected_hpargs (hp,args)= Gen.BList.mem_eq Sautil.check_hp_arg_eq (hp,args) selected_hpargs in
@@ -1704,7 +1704,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
         | er::_ ->
           let args = List.map CP.exp_to_sv eargs_w_r in
           let r = List.hd args in
-          let i_args, ni_args = Sautil.partition_hp_args prog hp args in
+          let i_args, ni_args = x_add Sautil.partition_hp_args prog hp args in
           let i_args_wo_r = List.filter (fun (sv,_) -> not(CP.eq_spec_var sv r)) i_args in
           let ni_args_wo_r = List.filter (fun (sv,_) -> not(CP.eq_spec_var sv r)) ni_args in
           (* let ni_args1 = List.fold_left (fun acc (sv,_) -> *)

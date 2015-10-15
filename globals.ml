@@ -1295,6 +1295,7 @@ let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
 let old_pred_extn = ref false (* false *)
+let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false
@@ -1631,6 +1632,13 @@ type infer_type =
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
   | INF_EXTN of infer_extn list
 
+let eq_infer_type i1 i2 = 
+  match i1, i2 with
+  | INF_EXTN _, INF_EXTN _ -> true
+  | INF_EXTN _, _ -> false
+  | _, INF_EXTN _ -> false
+  | _, _ -> i1 == i2
+
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
 (*   else if x==1 then INF_POST *)
@@ -1878,7 +1886,7 @@ class inf_obj  =
       List.filter is_selected arr
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
-    method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method reset c  = arr <- List.filter (fun x -> not (eq_infer_type c x)) arr
     method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)

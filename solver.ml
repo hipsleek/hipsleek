@@ -2837,6 +2837,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 (* let npf = MCP.merge_mems qp ph true in *)
 (* tp_call_wrapper npf *)
 
+(* type: Cast.prog_decl -> int ref -> CF.formula -> bool *)
 and unsat_base_a prog (sat_subno:  int ref) f  : bool=
   let () = if !Globals.sleek_gen_sat then CF.sat_stk # push f else () in
   (*need normal lize heap_normal_form*)
@@ -9524,23 +9525,29 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
               CF.h_formula_star_pos = pos}
     | _ -> hf
   in
-  let () = y_winfo_pp "do_base_unfold_hp_rel (TBI)" in
+  let () = y_tinfo_pp "do_base_unfold_hp_rel (TBI)" in
   let knd = CP.RelAssume [hp] in
   let es_cond_path = CF.get_es_cond_path estate in
   let matched_svl = [] in
-  let (lhf,mlf,_,_,_,_) = CF.split_components estate.CF.es_formula in
+  let estate_lhs = estate.CF.es_formula in
+  let (lhf,mlf,_,_,_,_) = CF.split_components estate_lhs in
   let lhds, _, _ = CF.get_hp_rel_h_formula lhf in
   let leqs = (MCP.ptr_equations_without_null mlf) in
   let leqNulls = MCP.get_null_ptrs mlf in
   let norm_rhs_view_node_args = (CP.diff_svl (CF.get_ptrs_w_args ~en_pure_field:estate.CF.es_infer_obj # is_pure_field_all rhs_node) vs) in
   let rhs_view_node_args = CP.subst_var_list estate.CF.es_rhs_eqset norm_rhs_view_node_args in
   let ass_guard = x_add InferHP.find_guard prog lhds leqs leqNulls
-      [(hp,CP.diff_svl (CP.remove_dups_svl (vs@rhs_view_node_args)) leqNulls)] (* rhs_arg *)[] in
+      [(hp,CP.diff_svl ((* CP.remove_dups_svl *) (vs(* @rhs_view_node_args *))) leqNulls)] (* rhs_arg *)(CP.diff_svl  (rhs_view_node_args) leqNulls) (* [] *) in
   let sel_eqns_svl = match ass_guard with
     | None -> vs
     | Some f -> CP.intersect_svl vs ((CF.get_ptrs f)@ (CF.get_ptrs rhs_node)) in
   let () = DD.ninfo_hprint (add_str "sel_eqns_svl" !CP.print_svl) sel_eqns_svl no_pos in 
   let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl sel_eqns_svl) (CP.mkTrue pos) in
+  let is_sat = TP.is_sat_raw (MCP.memoise_add_pure_N mlf rhs_p) in
+  if not is_sat then
+    let ls_ctx = Errctx.mkFailCtx_may ~conseq:(Some conseq) x_loc "do_unfold (false)" estate pos in
+    (ls_ctx, Unknown)
+  else
   let rhs_b = CF.formula_base_of_pure (MCP.mix_of_pure rhs_p) pos in
   (* let rhs = CF.formula_of_pure_formula rhs_p pos in *)
   let rhs = CF.Base rhs_b in
@@ -9549,6 +9556,8 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
   (* from unfolding *)
   let hp_rel = CF.mkHprel ~fold_type:false knd [] [] matched_svl lhs grd rhs es_cond_path in
+  let () = y_tinfo_hp (add_str "do_unfold:hp_rel" Cprinter.string_of_hprel_short) hp_rel in
+  let () = y_tinfo_hp (add_str "do_unfold:estate_lhs" !CF.print_formula) estate_lhs in
   if !Globals.old_infer_hp_collect then
     begin
       x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
@@ -16845,3 +16854,13 @@ ation }
 		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
 	List.map hlp f
 	*)
+
+let is_unsat_0 f =
+  let pg = Cast.get_cprog () in
+  let n = 111 in
+  unsat_base_nth n pg (ref n) f
+
+let is_unsat_0 f =
+  Debug.no_1 "is_xpure_unsat" !print_formula string_of_bool is_unsat_0 f
+
+let () = CF.is_xpure_unsat := is_unsat_0
