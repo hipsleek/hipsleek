@@ -18,9 +18,11 @@ data cell{
 //data_mark_rec [node].
 //data_mark_rec [node,node1].
 //data_mark_rec [].
-//data_mark_rec [*].
-
-
+//print data [cell].
+//print data [*].
+//print data [node*].
+//print data [node1].
+print data.
 /*
 # ex25d.slk (see also ex25a.slk)
 

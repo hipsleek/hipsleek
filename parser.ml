@@ -2824,6 +2824,9 @@ print_cmd:
         ilopt=OPT selective_id_star_list_bracket  -> 
         (* let ilopt = map_opt (List.map () lst) ilopt in *)
         PCmd (id,ilopt)
+   | `PRINT; `DATA; 
+        ilopt=OPT selective_id_star_list_bracket  -> 
+        PCmd ("data",ilopt)
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
    | `PRINT_LEMMAS  -> PCmd ("lemmas",None)
    (* | `PRINT_VIEW  -> PCmd "view" *)
