@@ -2594,7 +2594,10 @@ let prim_method_names = [ nondet_int_proc_name ]
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
 
-let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
+let check_is_classic_local obj = 
+  let r = obj (* infer_const_obj *) # get INF_CLASSIC in
+  print_endline ("Globals.check_is_classic:"^(string_of_bool r));
+  r
 
 let check_is_classic () = check_is_classic_local infer_const_obj
 

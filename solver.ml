@@ -4487,7 +4487,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (* always do nonclassical reasoning whenever there is continuation in struct formula *)
                        (* let saved_classic_setting = !do_classic_frame_rule in *)
                        let n_ctx_list, prf, new_delayed_f =
-                         if (formula_cont != None) then Wrapper.wrap_classic (Some false) cont_fn ()
+                         if (CF.is_pre_cont formula_cont) 
+                         then Wrapper.wrap_classic x_loc (Some false) cont_fn ()
                          else cont_fn ()
                        in
                        (* restore classic setting *)
@@ -10959,7 +10960,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
                   let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
                   let res_ctx, res_prf =
-                    Wrapper.wrap_classic (Some true) (* exact *)
+                    Wrapper.wrap_classic x_loc (Some true) (* exact *)
                       (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true 
                   in
                   begin match res_ctx with

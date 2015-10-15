@@ -442,7 +442,7 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
   let field_imm_flag = CF.determine_infer_type sp INF_FIELD_IMM in
   let classic_flag = CF.determine_infer_classic sp in
   let ck_sp x = (check_specs_infer_a prog proc ctx e0 do_infer) x in
-  let fn x = if classic_flag then wrap_classic (Some true) ck_sp x else ck_sp x in
+  let fn x = if classic_flag then wrap_classic x_loc (Some true) ck_sp x else ck_sp x in
   let fn x = 
     if field_imm_flag then wrap_field_imm (Some true) fn x 
     else fn x in
@@ -1638,7 +1638,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
          (match c_assume_opt with 
             None -> if ivars==[] then PK_Assert else PK_Infer_Assume
           | _ -> PK_Assert_Assume)
-         (wrap_classic atype (assert_op_wrapper))) ()
+         (wrap_classic x_loc atype (assert_op_wrapper))) ()
 
     | Assign ({ 
         exp_assign_lhs = v;
@@ -2008,7 +2008,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let do_classic_frame = (check_is_classic ()) in *)
             (* let () = Wrapper.set_classic  false in *)
             let fn = heap_entail_struc_list_failesc_context_init 5 prog false  true unfolded struc_vheap None None None pos in
-            let rs_prim, prf = x_add Wrapper.wrap_classic (Some false) fn (Some pid) in
+            let rs_prim, prf = x_add Wrapper.wrap_classic x_loc (Some false) fn (Some pid) in
             (* recover classic_frame for mem leak detection at post proving*)
             (* let () = Wrapper.set_classic  do_classic_frame in *)
             let () = consume_all := false in
@@ -2573,20 +2573,25 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
               let () = Debug.ninfo_hprint (add_str  "org_spec" Cprinter.string_of_struc_formula) org_spec no_pos in
-              let is_post_false = CF.is_struc_false_post org_spec in
-              let wrap_classic_fnc a b = if is_post_false then
-                wrap_classic (Some true) (check_pre_post_orig a) b else check_pre_post_orig a b in
-              let () = Debug.ninfo_hprint (add_str  "is_post_false" string_of_bool) is_post_false no_pos in
+              (* let is_post_false = CF.is_struc_false_post org_spec in *)
+              (* let wrap_classic_fnc a b = check_pre_post_orig a b in *)
+                (*   if is_post_false then *)
+                (* wrap_classic (Some true) (check_pre_post_orig a) b  *)
+                (* else check_pre_post_orig a b in *)
+              (* let () = Debug.ninfo_hprint (add_str  "is_post_false" string_of_bool) is_post_false no_pos in *)
               let wrap_fnc = if CF.is_infer_pre_must org_spec then wrap_err_must else wrap_err_pre in
               let pre_post_op_wrapper a b c =
                 (* wrap_err_pre *) wrap_fnc (* (Some false) *)
-                (* (check_pre_post_orig a b) *)  (wrap_classic_fnc a b )   c
+                (* (check_pre_post_orig a b) *)  (check_pre_post_orig a b )   c
               in
               let pk = if ir then PK_PRE_REC else PK_PRE in
               let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in
+              let is_post_false = CF.is_struc_false_post org_spec in
               let f x = 
                 (* let () = y_binfo_pp "if post_cond is false, inference on and orig classic on, apply Wrapper.wrap_classic" in *)
-                f x in
+                if is_post_false then 
+                  wrap_msg "check pre/post classic" (wrap_classic x_loc (Some true) f) x
+                else f x in
               Debug.no_2(* _loop *) "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 
             let check_pre_post ir org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
@@ -3084,7 +3089,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
-  (wrap_classic etype (check_post_x_x prog proc ctx posts pos)) pid
+  (wrap_classic x_loc etype (check_post_x_x prog proc ctx posts pos)) pid
 
 
 and pr_spec = Cprinter.string_of_struc_formula

@@ -39,7 +39,7 @@ let collect_ho_ass iprog cprog is_pre def_hps unk_hps (acc_constrs, post_no_def)
   (* let tmp = Wrapper.check_is_classic in *)
   (* let () = Wrapper.set_classic  true in *)
   let f = wrap_proving_kind log_str (Sacore.do_entail_check (infer_hps@unk_hps) iprog cprog) in
-  let new_constrs = Wrapper.wrap_classic (Some true) f cs in
+  let new_constrs = Wrapper.wrap_classic x_loc (Some true) f cs in
   (* let () = Wrapper.set_classic  tmp in *)
   (acc_constrs@new_constrs, post_no_def@linfer_hps)
 

@@ -538,7 +538,7 @@ let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
     (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq
 
 let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
-  fst (Wrapper.wrap_classic (Some true) (heap_entail_formula prog ante) conseq)
+  fst (Wrapper.wrap_classic x_loc (Some true) (heap_entail_formula prog ante) conseq)
 
 let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let pr1 = !CF.print_formula in

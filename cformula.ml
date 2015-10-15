@@ -20245,3 +20245,15 @@ let rec is_struc_false_post sf =
   | EAssume b -> isAllConstFalse b.formula_assume_simpl
   | EInfer b-> recf b.formula_inf_continuation
   | EList l-> List.exists (fun (_, sf1) -> recf sf1) l
+
+
+let is_pre_cont f =
+  match f with
+  | None -> false
+  | Some e -> (match e with
+    | EAssume _ -> false
+    | _ -> true)
+
+let is_pre_cont f =
+  let pr = pr_option !print_struc_formula in
+  Debug.no_1 "is_pre_cont" pr string_of_bool is_pre_cont f 
