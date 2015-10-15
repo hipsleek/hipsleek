@@ -1294,6 +1294,7 @@ let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
+let new_trace_classic = ref false (* false *)
 let old_pred_extn = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
@@ -2596,7 +2597,7 @@ let is_prim_method pn =
 
 let check_is_classic_local obj = 
   let r = obj (* infer_const_obj *) # get INF_CLASSIC in
-  print_endline ("Globals.check_is_classic:"^(string_of_bool r));
+  if !new_trace_classic then print_endline ("Globals.check_is_classic:"^(string_of_bool r));
   r
 
 let check_is_classic () = check_is_classic_local infer_const_obj

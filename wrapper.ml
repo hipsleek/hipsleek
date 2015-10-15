@@ -150,7 +150,8 @@ let wrap_msg msg f a =
 
 let wrap_classic str et f a = 
   let r = "wrap_gen"^str^((pr_option string_of_bool) et) in
-  wrap_msg r (wrap_gen INF_CLASSIC et f) a
+  if !Globals.new_trace_classic then wrap_msg r (wrap_gen INF_CLASSIC et f) a
+  else (wrap_gen INF_CLASSIC et f) a
 
 let wrap_classic_local obj et f a = wrap_gen_local obj INF_CLASSIC et f a
 

@@ -2590,7 +2590,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let f x = 
                 (* let () = y_binfo_pp "if post_cond is false, inference on and orig classic on, apply Wrapper.wrap_classic" in *)
                 if is_post_false then 
-                  wrap_msg "check pre/post classic" (wrap_classic x_loc (Some true) f) x
+                  if !Globals.new_trace_classic then 
+                    wrap_msg "check pre/post classic" (wrap_classic x_loc (Some true) f) x
+                  else (wrap_classic x_loc (Some true) f) x
                 else f x in
               Debug.no_2(* _loop *) "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 
