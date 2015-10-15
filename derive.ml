@@ -642,9 +642,11 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
             | (kexp,vexp)::_ ->
               (* use k=v as the new base case *)
               mk_base <- (fun v ->
-                (* not a function of spec_var v, due to above assumptions *)
-                let () = y_binfo_hp (add_str "mk_base from" (pr_pair !CP.print_exp !CP.print_exp)) (kexp, vexp) in
-                CP.mk_bform (CP.mkEq kexp vexp no_pos))) in
+                (* assumption: variable given in v maps to variable in kexp *)
+                let ve = CP.mkVar v no_pos in
+                let () = y_binfo_hp (add_str "mk_base from" (pr_pair !CP.print_exp !CP.print_exp)) (ve, vexp) in
+                let () = y_binfo_hp (add_str "given specvar" !CP.print_sv) v in
+                CP.mk_bform (CP.mkEq ve vexp no_pos))) in
           (* replace the mk_max *)
           (* replace the mk_inc *)
           vns <- vs
