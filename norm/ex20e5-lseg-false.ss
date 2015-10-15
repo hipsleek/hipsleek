@@ -44,7 +44,13 @@ int len_seg(node x,node p)
   ensures false;
 {    
   if (x==p) return 0;
-  else return 1+len_seg(x.next,p);
+  else { 
+    node n = x.next;
+    dprint;
+    int r=len_seg(n,p);
+    dprint;
+    return 1+r;
+  }
 }
 
 /*
