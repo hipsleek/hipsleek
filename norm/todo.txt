@@ -1046,7 +1046,23 @@ Exception(add_uni_vars_to_view):Stack overflow
 Exception processed: Stack overflow
 error at: 
 ===================================================================
-# ex25d.slk (see also ex25a.slk)
+# ex25d.slk (see also ex25a.slk) (DONE)
+
+data_mark_rec [*].
+
+[[data cell {
+  int val@;
+}
+],[data node {
+  int val@;
+  node1 next@REC;
+}
+,data node1 {
+  int val@;
+  cell prev@;
+  node next@REC;
+}
+]]
 
 # Can we mark the mutual recursive fields of data nodes
   with #REC. This is needed for size extension of ex25a.slk
@@ -1592,7 +1608,7 @@ x!=p]
 !!! **syn.ml#654:Cannot transform the hprels of [P] into view declarations.
 
 ===================================================================
-# ex20e5.ss 
+# ex20e5.ss (OK)
 
 # for check_pre_post; if post_cond is false, please
   use Wrapper.wrap_classic Some(true))
@@ -1614,8 +1630,117 @@ check_pre_post(2) inp1 : EInfer @pure_field,@leak[P]
                   hfalse&false&{FLOW,(4,5)=__norm#E}[]
 check_pre_post(2) inp2 : List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 
 ===================================================================
+# ex20f1.ss 
+
+int len_seg(node x)
+  infer [P,@classic,@pure_field]
+  requires P(x)
+  ensures false;
+{    
+  if (x==null) return 0;
+  else { 
+    node n = x.next;
+    // dprint;
+    int r=len_seg(n);
+    //  dprint;
+    return 1+r;
+  }
+}
+
+# should we use just relation and not HeapPred
+
+[ // BIND
+(2;0)P(x)&
+x!=null --> x::node<val_48_1593,next_48_1594>@M * 
+            HP_1595(val_48_1593@NI,x@NI) * HP_1596(next_48_1594,x@NI)&
+true,
+ // PRE_REC
+(2;0)HP_1595(val_48_1593@NI,x@NI)&x!=null --> emp&
+true,
+ // PRE_REC
+(2;0)HP_1596(n',x@NI) * x::node<val_48_1593,n'>@M&true --> P(n')&
+true,
+ // POST
+P(x)&true --> htrue&
+x!=null]
 ===================================================================
+# ex20g2.ss 
+
+int fact(int i)
+  infer [R]
+  requires R(i)
+  ensures false;
+{    
+  if (i==0) return 1;
+  else return i * fact(i-1);
+}
+
+# can we make fixcalc to work better with pre-conditions?
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN R: ( R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0) -->  R(v_int_18_1500'),
+RELASS [R]: ( R(i)) -->  i!=0]
+
+***************************************
+** relation obligations after imm norm **
+*****************************************
+[RELASS [R]: ( R(i)) -->  i!=0]
+*****************************************
+Exception(substitute_args):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(extract_inv_helper):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(compute_fixpoint_xx):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(compute_fixpoint_x):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(compute_fixpoint_td):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(pre_calculate):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(pre_rel_fixpoint):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(update_with_td_fp):Failure("substitute_args: failure with look_up_rel_args_type")
+
+!!! PROBLEM with fix-point calculationException(wrapper_infer_imm_pre_post):Failure("substitute_args: failure with look_up_rel_args_type")
+
+ExceptionFailure("substitute_args: failure with look_up_rel_args_type")Occurred!
+
+Error1(s) detected at main 
+Stop z3... 66 invocations 
+Stop Omega... 18 invocations caught
+
+Exception occurred: Failure("substitute_args: failure with look_up_rel_args_type")
+Error3(s) detected at main 
 ===================================================================
+# ex20g4.ss 
+
+  infer [R]
+  requires true
+  ensures  R(i);
+{    
+  if (i==0) return 1;
+  else return i + fact(i-1);
+}
+
+# can we add i>=0 to pre-condition?
+  How to use outcome of topdown?
+  Has top-down been generalized to mutual recursion?
+
+*************************************
+****** Before putting into fixcalc*******
+pre_vars: i
+post_vars: 
+*************************************
+formula:  (i=0 | (exists(v_int_18_1526:v_int_18_1526+1=i & R(v_int_18_1526)) & i!=0))
+*************************************
+
+!!! **fixcalc.ml#1043:Input of fixcalc: :R:={[i] -> [] -> []: (i=0 ||  (exists (v_int_18_1526:v_int_18_1526+1=i && R(v_int_18_1526)))  && ((i<0) || (i>0)))
+};
+bottomupgen([R], [2], SimHeur);
+
+===================
+R:={[i] -> [] -> []: (i=0 ||  (exists (v_int_18_1526:v_int_18_1526+1=i && R(v_int_18_1526)))  && ((i<0) || (i>0)))
+};
+bottomupgen([R], [2], SimHeur);
+# i>=0
+topdown(R, 2, SimHeur);
+# {[i,RECi]:((i >= RECi + 1 && 0 >= 1 + i) || (RECi >= 0 && i >= 1 + RECi))};
 ===================================================================
 ===================================================================
 ===================================================================

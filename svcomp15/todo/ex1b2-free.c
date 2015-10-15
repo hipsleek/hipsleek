@@ -1,6 +1,5 @@
 #include "stdlib.h"
 
-
 typedef struct {
     int *lo;
 } TData;
@@ -15,3 +14,10 @@ int main() {
      alloc_data(&data);
     return 0;
 }
+
+/*
+
+
+
+
+*/

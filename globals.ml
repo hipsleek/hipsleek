@@ -1295,6 +1295,7 @@ let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
 let old_field_tag = ref false (* false *)
+let new_trace_classic = ref false (* false *)
 let old_pred_extn = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
@@ -2599,7 +2600,10 @@ let prim_method_names = [ nondet_int_proc_name ]
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
 
-let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
+let check_is_classic_local obj = 
+  let r = obj (* infer_const_obj *) # get INF_CLASSIC in
+  if !new_trace_classic then print_endline ("Globals.check_is_classic:"^(string_of_bool r));
+  r
 
 let check_is_classic () = check_is_classic_local infer_const_obj
 

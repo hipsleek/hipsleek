@@ -6202,6 +6202,8 @@ let rec struc_formula_drop_unk unk_hps f =
         EInfer {b with formula_inf_continuation  = recf b.formula_inf_continuation}
   | EList l-> EList (Gen.map_l_snd recf l)
 
+
+
 let formula_map hf_fct f0=
   let rec helper f=
     match f with
@@ -20230,3 +20232,36 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
   let pr_f = !print_formula in
   let pr1 = pr_list (pr_triple pr_id (pr_list !print_spec_var) (pr_list pr_f)) in
   Debug.no_2 "complex_unfold" pr1 pr_f pr_f (complex_unfold vn) unfold_set1 f
+
+let rec is_struc_false_post sf =
+  let recf = is_struc_false_post in
+  match sf with
+  | ECase b-> List.exists (fun (_, sf1) -> recf sf1) b.formula_case_branches
+  | EBase b -> begin
+      match b.formula_struc_continuation with
+        | Some sf1 -> recf sf1
+        | None -> false
+    end
+  | EAssume b -> isAllConstFalse b.formula_assume_simpl
+  | EInfer b-> recf b.formula_inf_continuation
+  | EList l-> List.exists (fun (_, sf1) -> recf sf1) l
+
+(* this check if this should be the last component prior to EAssume *)
+(* if so, we will allow residue in proving process *)
+let rec is_pre_post_cont f =
+  match f with
+  | None -> false
+  | Some e -> (match e with
+    | EAssume b -> 
+      if isAllConstFalse b.formula_assume_simpl then false
+      else true
+    | EBase b -> let f = b.formula_struc_base in
+      let (h,p,_,_,_,_) = split_components f in
+      if h==HEmp then is_pre_post_cont b.formula_struc_continuation
+      else true
+    | _ -> true
+      )
+
+let is_pre_post_cont f =
+  let pr = pr_option !print_struc_formula in
+  Debug.no_1 "is_pre_cont" pr string_of_bool is_pre_post_cont f 

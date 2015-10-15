@@ -13,11 +13,12 @@ data cell{
      int val;
 }.
 
+
 //data_mark_rec [cell*].
 //data_mark_rec [node*].
 //data_mark_rec [node].
 //data_mark_rec [node,node1].
-//data_mark_rec [].
+data_mark_rec [*].
 //print data [cell].
 //print data [*].
 //print data [node*].
@@ -25,6 +26,22 @@ data cell{
 print data.
 /*
 # ex25d.slk (see also ex25a.slk)
+
+data_mark_rec [*].
+
+[[data cell {
+  int val@;
+}
+],[data node {
+  int val@;
+  node1 next@REC;
+}
+,data node1 {
+  int val@;
+  cell prev@;
+  node next@REC;
+}
+]]
 
 # Can we mark the mutual recursive fields of data nodes
   with #REC. This is needed for size extension of ex25a.slk

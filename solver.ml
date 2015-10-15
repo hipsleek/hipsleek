@@ -4487,7 +4487,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (* always do nonclassical reasoning whenever there is continuation in struct formula *)
                        (* let saved_classic_setting = !do_classic_frame_rule in *)
                        let n_ctx_list, prf, new_delayed_f =
-                         if (formula_cont != None) then Wrapper.wrap_classic (Some false) cont_fn ()
+                         if (CF.is_pre_post_cont formula_cont) 
+                         then Wrapper.wrap_classic x_loc (Some false) cont_fn ()
                          else cont_fn ()
                        in
                        (* restore classic setting *)
@@ -5496,11 +5497,11 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
            else
             List.filter (fun (_,args) ->
               let rele_p0 = CP.filter_var p_contr_lhs args in
-              let () = Debug.info_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
+              let () = Debug.ninfo_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
               let rele_ps0 = CP.list_of_conjs rele_p0 in
               let rele_ps1 = List.filter (fun p -> not (CP.equalFormula p rele_p_rhs_xpure)) rele_ps0 in
               let rele_p = CP.conj_of_list rele_ps1 (CP.pos_of_formula rele_p0) in
-              let () = Debug.info_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
+              let () = Debug.ninfo_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
               TP.is_sat_raw (MCP.mix_of_pure rele_p)
           ) hinf_args_map in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
@@ -10959,7 +10960,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
                   let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
                   let res_ctx, res_prf =
-                    Wrapper.wrap_classic (Some true) (* exact *)
+                    Wrapper.wrap_classic x_loc (Some true) (* exact *)
                       (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true 
                   in
                   begin match res_ctx with

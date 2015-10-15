@@ -340,6 +340,8 @@ let common_arguments = [
   ("--new-field-tag", Arg.Clear Globals.old_field_tag,"Do not old field tags VAL_i, REC_i to data fields");
   ("--old-lemma-unfold", Arg.Set Globals.old_lemma_unfold,"Do not use lemma single unfold");
   ("--new-lemma-unfold", Arg.Clear Globals.old_lemma_unfold,"Use lemma single unfold");
+  ("--new-trace-classic", Arg.Set Globals.new_trace_classic,"Trace classic ");
+  ("--old-trace-classic", Arg.Clear Globals.new_trace_classic,"No tracing for classic ");
   ("--old-view-equiv", Arg.Set Globals.old_view_equiv,"Do not use view equivalence (pred reuse)");
   ("--new-view-equiv", Arg.Clear Globals.old_view_equiv,"Use view equivalence (pred reuse)");
   ("--old-search-always", Arg.Set Globals.old_search_always,"Allow search_action always..");

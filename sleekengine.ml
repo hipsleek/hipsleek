@@ -2632,7 +2632,7 @@ let process_shape_extract sel_vnames=
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (etype: entail_type) =
-  wrap_classic etype (fun conseq ->
+  wrap_classic x_loc etype (fun conseq ->
       let (r, (cante, cconseq)) = x_add run_infer_one_pass_set_states [] [] iante0 conseq in
       (*let _ = print_endline "run_entail_check_2" in*)
       let res, _, _ = r in
@@ -3025,7 +3025,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   in
   (* let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in *)
   let num_id = "\nEntail "^nn in
-  let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
+  let run_infer x = wrap_classic x_loc etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
   let run_infer x = 
     if is_field_imm_flag then wrap_field_imm (Some true) run_infer x
     else run_infer x in
@@ -3038,7 +3038,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       let (valid, rs, sel_hps),_ = run_infer iconseq0 in
       let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MUST_ONLY itype || List.mem INF_ERR_MAY itype) in
       (* let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) in*)
-      (* let (valid, rs, sel_hps),_ = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in *)
+      (* let (valid, rs, sel_hps),_ = wrap_classic x_loc etype (run_infer_one_pass_set_states itype ivars [iante0]) iconseq0 in *)
       let _ = if is_tnt_flag then should_infer_tnt := !should_infer_tnt && res in
       (*   match itype with *)
       (* | Some INF_TERM -> should_infer_tnt := !should_infer_tnt && res *)
