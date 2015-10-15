@@ -1497,35 +1497,9 @@ Exception(Syn:derive_view):Invalid_argument("List.combine")
 Exception(infer_shapes):Invalid_argument("List.combine")
 Exception(wrapper_infer_imm_pre_post):Invalid_argument("List.combine")
 
-===================================================================
-# ex20e5.ss 
-
-int len_seg(node x,node p)
-  infer [P,@classic,@pure_field]
-  requires P(x,p)
-  ensures false
-{    
-  if (x==p) return 0;
-  else return 1+len_seg(x.next,p);
-}
-
-!!! **solver.ml#5511:WARNING : Inferred pure not added: p!=x
-Procedure len_seg$node~node SUCCESS.
-
-
-!!! **solver.ml#5511:WARNING : Inferred pure not added: p!=x
-Procedure len_seg$node~node SUCCESS.
-
-Exception(look_up_view_def_raw):Not_found
-Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
-Exception(Syn.get_root_args_hp):Failure("hp_root_pos has not yet set.")
-Exception(Syn.trans_hrel_to_view_formula):Failure("hp_root_pos has not yet set.")
-Exception(wrapper_infer_imm_pre_post):Failure("hp_root_pos has not yet set.")
-
-ExceptionFailure("hp_root_pos has not yet set.")Occurred!
 
 ===================================================================
-# should be y!=x inferred..
+# should be y!=x inferred.. (FIXED)
 
 (==infer.ml#785==)
 infer_lhs_contra#1@3@2
@@ -1562,6 +1536,43 @@ Residue:
  <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
  inferred rel: [RELASS [R]: ( R(x,y)) -->  x!=y]
 ===================================================================
+# ex20e5a (with @classic)
+
+infer[P,HP,@classic] 
+ HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
+
+# if @classic present, can we use:
+
+   P(n',p) <- HP(n',p,x) * x::node<val_48_1600,n'> & x!=p 
+===================================================================
+# ex20e5.ss 
+
+int len_seg(node x,node p)
+  infer [P,@classic,@pure_field]
+  requires P(x,p)
+  ensures false
+{    
+  if (x==p) return 0;
+  else return 1+len_seg(x.next,p);
+}
+
+[ // BIND
+(2;0)P(x,p@NI)&
+x!=p --> x::node<val_48_1600,next_48_1601>@M * 
+         HP_1602(val_48_1600@NI,p@NI,x@NI) * HP_1603(next_48_1601,p@NI,x@NI)&
+true,
+ // PRE_REC
+(2;0)HP_1603(n',p@NI,x@NI)&x!=p |#| x::node<val_48_1600,n'>@M&
+true --> P(n',p@NI)&
+true,
+ // POST
+P(x,p@NI)&true --> htrue&
+x!=p]
+
+
+!!! **WARNING****syn.ml#180:Merging is not performed due to the set of pre-hprels does not have disjoint conditions
+!!! **syn.ml#654:Cannot transform the hprels of [P] into view declarations.
+
 ===================================================================
 ===================================================================
 ===================================================================

@@ -11345,7 +11345,9 @@ let isFalseBranchCtxL (ss:branch_ctx list) =
 
 let is_inferred_pre estate = 
   not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && 
-      estate.es_infer_rel # is_empty_recent)
+      estate.es_infer_rel # is_empty_recent
+        && estate.es_infer_hp_rel # is_empty
+     )
 (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
 (* if r>0 then true else false *)
 
@@ -11364,7 +11366,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(x_add_1 is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    x_tinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
+    x_binfo_hp (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]
@@ -12455,9 +12457,9 @@ let rank (t:partial_context):float = match t with
     let fn,sn =float (List.length(l1)), float(List.length(l2)) in
     sn /.(fn +. sn)
 
-let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = remove_dupl_false_pc_list (l1 @ l2)
+let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = x_add_1 remove_dupl_false_pc_list (l1 @ l2)
 
-let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = remove_dupl_false_fe_list (l1 @ l2)
+let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = x_add_1 remove_dupl_false_fe_list (l1 @ l2)
 
 let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = 
   let pr x = string_of_int(List.length x) in
@@ -12491,8 +12493,8 @@ let rec merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail li
       ((l2,b2)::res, l2::pt)
 
 let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context) : partial_context =
-  let s1 = remove_dupl_false s1 in
-  let s2 = remove_dupl_false s2 in
+  let s1 = x_add_1 remove_dupl_false s1 in
+  let s2 = x_add_1 remove_dupl_false s2 in
   let (res_f,pt_fail_list) = merge_fail f1 f2 in  
   let res_s = merge_success s1 s2 in
   (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f1,s1))); *)
@@ -12524,8 +12526,8 @@ let merge_esc f e1 e2 =
   Debug.no_2 "merge_esc" pr1 pr1 pr_no (fun _ _ -> merge_esc f e1 e2) e1 e2 
 
 let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_context) : failesc_context =
-  let s1 = remove_dupl_false s1 in
-  let s2 = remove_dupl_false s2 in
+  let s1 = x_add_1 remove_dupl_false s1 in
+  let s2 = x_add_1 remove_dupl_false s2 in
   let (res_f,pt_fail_list) = merge_fail f1 f2 in
   let res_s = merge_success s1 s2 in
   (* WN[((0,""),[])] : this should be added at the beginning of each proc, and not here *)
@@ -12543,7 +12545,7 @@ let merge_failesc_context_or f (((f1,e1,s1):failesc_context) as x1) (((f2,e2,s2)
     (fun _ _ -> merge_failesc_context_or f (x1) (x2)) x1 x2
 
 
-let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2),  remove_dupl_false ((snd pc1)@(snd pc2)) ) 
+let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2),  x_add_1 remove_dupl_false ((snd pc1)@(snd pc2)) ) 
 
 let list_partial_context_or_naive (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1)
@@ -12554,14 +12556,14 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
   if List.length l1 = 0 then l2
   else if List.length l2 = 0 then l1
   else
-    List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_pc (merge_partial_context_or pc1 pc2)) l2)) l1)
+    List.concat (List.map (fun pc1-> (List.map (fun pc2 -> x_add_1 remove_dupl_false_pc (merge_partial_context_or pc1 pc2)) l2)) l1)
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
   Debug.no_2(*_loop*) "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
-  List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
+  List.concat (List.map (fun pc1-> (List.map (fun pc2 -> x_add_1 remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   let pr = !print_list_failesc_context in
@@ -12741,7 +12743,7 @@ and compose_context_formula_norm_flow (ctx : context) (phi : formula) (x : CP.sp
           let new_c2 = compose_context_formula_norm_flow ctx phi2 x force_sat flow_tr pos in
           let res = (mkOCtx new_c1 new_c2 pos ) in
           res
-        | _ -> let new_es_f,(* new_history, *)rho2 = compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
+        | _ -> let new_es_f,(* new_history, *)rho2 = x_add compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
           Ctx {es with es_formula = new_es_f;
                        (* es_history = new_history; *)
                        (* es_subst_ref = rho2; *)
@@ -12763,7 +12765,7 @@ and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var l
         let new_c2 = compose_context_formula_x ctx phi2 x force_sat flow_tr pos in
         let res = (mkOCtx new_c1 new_c2 pos ) in
         res
-      | _ -> let new_es_f,(* new_history, *)rho2 = compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
+      | _ -> let new_es_f,(* new_history, *)rho2 = x_add compose_formula_new es.es_formula phi x flow_tr (* es.es_history *) pos in
         Ctx {es with es_formula = new_es_f;
                      (* es_history = new_history; *)
                      (* es_subst_ref = rho2; *)

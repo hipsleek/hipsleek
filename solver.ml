@@ -1363,18 +1363,18 @@ and list_context_and_unsat_now prog (ctx : list_context) : list_context =
 (*and list_partial_context_and_unsat_now prog (ctx : list_partial_context) : list_partial_context = 
   (* let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in *)
   let r = transform_list_partial_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) ctx in
-  let r = remove_dupl_false_pc_list r in
+  let r = x_add_1 remove_dupl_false_pc_list r in
   TP.incr_sat_no () ; r*)
 
 and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es 6 prog (ref 1))) ctx in
-  let r = List.map CF.remove_dupl_false_fe r in
+  let r = List.map (x_add_1 CF.remove_dupl_false_fe) r in
   TP.incr_sat_no () ; r
 
 and combine_list_failesc_context_and_unsat_now_x prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now 2 prog (ref 1))) r in
-  let r = List.map CF.remove_dupl_false_fe r in
+  let r = List.map (x_add_1 CF.remove_dupl_false_fe) r in
   TP.incr_sat_no () ; r
 
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context =
@@ -1384,7 +1384,7 @@ and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context)
 
 and combine_list_failesc_context prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
-  let r = List.map CF.remove_dupl_false_fe r in r
+  let r = List.map (x_add_1 CF.remove_dupl_false_fe) r in r
 
 and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context =
   let pr_ctx = Cprinter.string_of_context_short in

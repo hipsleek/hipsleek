@@ -1580,7 +1580,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
                     else 
                       CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
-                  let res = List.map CF.remove_dupl_false_fe r in
+                  let res = List.map (x_add_1 CF.remove_dupl_false_fe) r in
                   match assert_failed_msg with
                   | None -> res
                   | Some (s,fk_msg) -> begin
