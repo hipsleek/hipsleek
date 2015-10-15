@@ -5497,11 +5497,11 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
            else
             List.filter (fun (_,args) ->
               let rele_p0 = CP.filter_var p_contr_lhs args in
-              let () = Debug.info_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
+              let () = Debug.ninfo_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
               let rele_ps0 = CP.list_of_conjs rele_p0 in
               let rele_ps1 = List.filter (fun p -> not (CP.equalFormula p rele_p_rhs_xpure)) rele_ps0 in
               let rele_p = CP.conj_of_list rele_ps1 (CP.pos_of_formula rele_p0) in
-              let () = Debug.info_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
+              let () = Debug.ninfo_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
               TP.is_sat_raw (MCP.mix_of_pure rele_p)
           ) hinf_args_map in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
