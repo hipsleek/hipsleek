@@ -351,7 +351,7 @@ let find_root_hprel_list prog hprels =
     else Some h_i
 
 let get_root_args_hp prog id all_args =
-  let root_pos = C.get_proot_hp_def_raw prog.C.prog_hp_decls id in
+  let root_pos = x_add C.get_proot_hp_def_raw prog.C.prog_hp_decls id in
   let root = List.nth all_args root_pos in
   let args = diff all_args [root] in
   root, args
@@ -582,24 +582,26 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
               equiv_pred, equiv_pred_args
           with _ -> hrel_name, []
       in
-      let hrel_root, hrel_args = get_root_args_hp prog hrel_id hrel_args in
-      let extn_args =
-        (* Get the extn pred arguments *)
-        let rec helper h_args v_args =
-          match h_args, v_args with
-          | [], _ -> v_args
-          | _, [] -> []
-          | h::hs, v::vs -> helper hs vs 
+      (begin try
+        let hrel_root, hrel_args = get_root_args_hp prog hrel_id hrel_args in
+        let extn_args =
+          (* Get the extn pred arguments *)
+          let rec helper h_args v_args =
+            match h_args, v_args with
+            | [], _ -> v_args
+            | _, [] -> []
+            | h::hs, v::vs -> helper hs vs 
+          in
+          helper hrel_args view_args  
         in
-        helper hrel_args view_args  
-      in
-      let n_hf = CF.mk_HRel_as_view_w_root subs_hrel_name hrel_root (hrel_args @ extn_args) no_pos in
-      (match n_hf with
-      | CF.ViewNode v ->
-        (* Setting imm is important for lemma proving *)
-        let n_hf = CF.ViewNode { v with CF.h_formula_view_imm = CP.ConstAnn(Mutable); } in
-        Some (n_hf, extn_args)
-      | _ -> None)
+        let n_hf = CF.mk_HRel_as_view_w_root subs_hrel_name hrel_root (hrel_args @ extn_args) no_pos in
+        (match n_hf with
+        | CF.ViewNode v ->
+          (* Setting imm is important for lemma proving *)
+          let n_hf = CF.ViewNode { v with CF.h_formula_view_imm = CP.ConstAnn(Mutable); } in
+          Some (n_hf, extn_args)
+        | _ -> None)
+      with _ -> Some (hf, []) end)
     | _ -> None
   in
   CF.trans_heap_formula f_h_f f
@@ -618,14 +620,14 @@ let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
       CF.formula_case_branches = List.map (fun (c, sf) -> 
           (c, trans_hrel_to_view_struc_formula prog sf)) ec.CF.formula_case_branches; }
   | CF.EBase eb -> 
-    let n_base, extn_args = trans_hrel_to_view_formula prog eb.CF.formula_struc_base in
+    let n_base, extn_args = x_add trans_hrel_to_view_formula prog eb.CF.formula_struc_base in
     CF.EBase { eb with
       CF.formula_struc_base = n_base;
       CF.formula_struc_implicit_inst = remove_dups (eb.CF.formula_struc_implicit_inst @ extn_args);
       CF.formula_struc_continuation = map_opt (trans_hrel_to_view_struc_formula prog) eb.CF.formula_struc_continuation; }
   | CF.EAssume ea ->
     CF.EAssume { ea with 
-      CF.formula_assume_simpl = fst (trans_hrel_to_view_formula prog ea.CF.formula_assume_simpl);
+      CF.formula_assume_simpl = fst (x_add trans_hrel_to_view_formula prog ea.CF.formula_assume_simpl);
       CF.formula_assume_struc = trans_hrel_to_view_struc_formula prog ea.CF.formula_assume_struc; }
   | EInfer ei -> 
     CF.EInfer { ei with 
@@ -686,7 +688,7 @@ let trans_spec_scc trans_f cprog scc_procs =
   { cprog with Cast.new_proc_decls = n_tbl }
 
 let trans_hrel_to_view_spec_scc cprog scc_procs =
-  trans_spec_scc (trans_hrel_to_view_struc_formula cprog) cprog scc_procs
+  trans_spec_scc (x_add trans_hrel_to_view_struc_formula cprog) cprog scc_procs
 
 let remove_inf_vars_spec_scc cprog scc_procs inf_vars = 
   trans_spec_scc (remove_inf_vars_struc_formula inf_vars) cprog scc_procs
@@ -819,7 +821,7 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let vargs = List.map (fun sv -> (sv, NI)) (diff hprel_args [hprel_root]) (* List.tl hprel_args *) in
   let vbody = if is_pre_hprel hprel then hprel.hprel_rhs else hprel.hprel_lhs in
   let vbody = CF.elim_prm vbody in
-  let vbody, _ = trans_hrel_to_view_formula prog vbody in
+  let vbody, _ = x_add trans_hrel_to_view_formula prog vbody in
   let vbody = CF.subst [(hprel_self, vself)] vbody in
   (* Set flow for view *)
   let vbody = CF.set_flow_in_formula_override 
