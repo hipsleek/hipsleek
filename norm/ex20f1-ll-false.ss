@@ -33,58 +33,62 @@ pred_extn size[R]<k> ==
    or R::size<i> & k=1+i // recursive case
    inv k>=0;
 
-HeapPred P(node x,node@NI y).
+HeapPred P(node x).
 
-int len_seg(node x,node p)
+int len_seg(node x)
   //infer [P,@classic,@pure_field,@size,@term]
   //infer [P#{size,sum},@classic,@pure_field]
   //infer [P#size,P#sum,@classic,@pure_field]
   infer [P,@classic,@pure_field]
-  requires P(x,p)
+  requires P(x)
   ensures false;
 {    
-  if (x==p) return 0;
+  if (x==null) return 0;
   else { 
     node n = x.next;
     // dprint;
-    int r=len_seg(n,p);
+    int r=len_seg(n);
     //  dprint;
     return 1+r;
   }
 }
 
 /*
-# ex20e5.ss 
+# ex20f1.ss 
 
-int len_seg(node x,node p)
+int len_seg(node x)
+  //infer [P,@classic,@pure_field,@size,@term]
+  //infer [P#{size,sum},@classic,@pure_field]
+  //infer [P#size,P#sum,@classic,@pure_field]
   infer [P,@classic,@pure_field]
-  requires P(x,p)
-  ensures false
+  requires P(x)
+  ensures false;
 {    
-  if (x==p) return 0;
-  else return 1+len_seg(x.next,p);
+  if (x==null) return 0;
+  else { 
+    node n = x.next;
+    // dprint;
+    int r=len_seg(n);
+    //  dprint;
+    return 1+r;
+  }
 }
 
-!!! **solver.ml#5511:WARNING : Inferred pure not added: p!=x
-Procedure len_seg$node~node SUCCESS.
+[ // BIND
+(2;0)P(x)&
+x!=null --> x::node<val_48_1593,next_48_1594>@M * 
+            HP_1595(val_48_1593@NI,x@NI) * HP_1596(next_48_1594,x@NI)&
+true,
+ // PRE_REC
+(2;0)HP_1595(val_48_1593@NI,x@NI)&x!=null --> emp&
+true,
+ // PRE_REC
+(2;0)HP_1596(n',x@NI) * x::node<val_48_1593,n'>@M&true --> P(n')&
+true,
+ // POST
+P(x)&true --> htrue&
+x!=null]
 
 
-!!! **solver.ml#5511:WARNING : Inferred pure not added: p!=x
-Procedure len_seg$node~node SUCCESS.
-
-Exception(look_up_view_def_raw):Not_found
-Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
-Exception(Syn.get_root_args_hp):Failure("hp_root_pos has not yet set.")
-Exception(Syn.trans_hrel_to_view_formula):Failure("hp_root_pos has not yet set.")
-Exception(wrapper_infer_imm_pre_post):Failure("hp_root_pos has not yet set.")
-
-ExceptionFailure("hp_root_pos has not yet set.")Occurred!
-
-Error1(s) detected at main 
-Stop z3... 90 invocations 
-Stop Omega... 39 invocations caught
-
-Exception occurred: Failure("hp_root_pos has not yet set.")
-Error3(s) detected at main 
 
 */

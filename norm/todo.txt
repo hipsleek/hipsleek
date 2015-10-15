@@ -1574,7 +1574,7 @@ x!=p]
 !!! **syn.ml#654:Cannot transform the hprels of [P] into view declarations.
 
 ===================================================================
-# ex20e5.ss 
+# ex20e5.ss (OK)
 
 # for check_pre_post; if post_cond is false, please
   use Wrapper.wrap_classic Some(true))
