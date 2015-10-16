@@ -2604,7 +2604,7 @@ let is_prim_method pn =
 
 let check_is_classic_local obj = 
   let r = obj (* infer_const_obj *) # get INF_CLASSIC in
-  if !new_trace_classic then print_endline ("Globals.check_is_classic:"^(string_of_bool r));
+  if !new_trace_classic then print_endline ("Globals.check_is_classic: " ^ (string_of_bool r));
   r
 
 let check_is_classic () = check_is_classic_local infer_const_obj

@@ -442,6 +442,7 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
   let field_imm_flag = CF.determine_infer_type sp INF_FIELD_IMM in
   let classic_flag = CF.determine_infer_classic sp in
   let ck_sp x = (check_specs_infer_a prog proc ctx e0 do_infer) x in
+  (* CLASSIC: Set classic reasoning for hip with infer[@classic] spec *)
   let fn x = if classic_flag then wrap_classic x_loc (Some true) ck_sp x else ck_sp x in
   let fn x = 
     if field_imm_flag then wrap_field_imm (Some true) fn x 

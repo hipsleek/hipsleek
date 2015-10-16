@@ -3025,6 +3025,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   in
   (* let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in *)
   let num_id = "\nEntail "^nn in
+  (* CLASSIC: Set classic reasoning for sleek with infer[@classic] cmd *)
   let run_infer x = wrap_classic x_loc etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
   let run_infer x = 
     if is_field_imm_flag then wrap_field_imm (Some true) run_infer x
