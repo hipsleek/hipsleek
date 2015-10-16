@@ -128,6 +128,15 @@ let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
 
+let  conv_ivars_icmd il_w_itype =
+  let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
+  let (i_consts,ivl) = List.fold_left
+      (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
+                                         | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
+  let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+  let () = inf_o # set_list i_consts in 
+  (inf_o,i_consts,ivl)
+
 (****** global vars used by CIL parser *****)
 let is_cparser_mode = ref false
 
@@ -1017,11 +1026,27 @@ non_empty_command:
       | t=shapeinfer_proper_cmd     -> ShapeInferProp t
       | t=shapesplit_base_cmd     -> ShapeSplitBase t
       | t=shapeElim_cmd     -> ShapeElim t
+      | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
+      | t=shapeReuse_cmd     -> ShapeReuse t
+      | t=predUnfold_cmd     -> PredUnfold t
       | t=shapeExtract_cmd     -> ShapeExtract t
       | t=decl_dang_cmd        -> ShapeDeclDang t
       | t= decl_unknown_cmd        -> ShapeDeclUnknown t
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
+      | t = shape_add_dangling_cmd -> ShapeAddDangling t
+      | t = shape_unfold_cmd -> ShapeUnfold t
+      | t = shape_param_dangling_cmd -> ShapeParamDangling t
+      | t = shape_simplify_cmd -> ShapeSimplify t
+      | t = shape_merge_cmd -> ShapeMerge t
+      | t = shape_trans_to_view_cmd -> ShapeTransToView t
+      | t = shape_derive_pre_cmd -> ShapeDerivePre t
+      | t = shape_derive_post_cmd -> ShapeDerivePost t
+      | t = shape_derive_view_cmd -> ShapeDeriveView t
+      | t = shape_normalize_cmd -> ShapeNormalize t
+      | t = pred_elim_head_cmd -> PredElimHead t
+      | t = pred_elim_tail_cmd -> PredElimTail t
+      | t = pred_unify_disj_cmd -> PredUnifyDisj t
       | t=pred_split_cmd     -> PredSplit t
       | t=pred_norm_seg_cmd     -> PredNormSeg t
       | t=pred_norm_disj_cmd     -> PredNormDisj t
@@ -1200,7 +1225,7 @@ prim_view_decl:
           view_inv_lock = li} ]];
 
 view_decl_ext:
-  [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
+  [[ vh= view_header_ext; `EQEQ; vb= view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       -> let (oi, oboi) = oi in
           { vh with view_formula = (fst vb);
           view_invariant = oi;
@@ -2568,16 +2593,119 @@ shapesplit_base_cmd:
    ]];
 
 shapeElim_cmd:
-   [[ `SHAPE_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
+   [[ `PRED_ELIM_USELESS; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    (il1)
    ]];
+
+shapeReuseSubs_cmd:
+   [[ `PRED_REUSE_SUBS; `OSQUARE;il1= shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
+predUnfold_cmd:
+   [[ `PRED_UNFOLD; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ->
+   (* let il1 = un_option il1 [] in *)
+   (il1)
+   ]];
+
+shapeReuse_cmd:
+   [[ `PRED_REUSE; `OSQUARE;il1=shape_selective_id_list;`CSQUARE ; `OSQUARE;il2=shape_selective_id_list;`CSQUARE->
+       (il1,il2)
+   ]];
+
 
 shapeExtract_cmd:
    [[ `SHAPE_EXTRACT; `OSQUARE;il1=OPT id_list;`CSQUARE ->
    let il1 = un_option il1 [] in
    (il1)
    ]];
+
+shape_selective_id_list:
+  [[ il = OPT id_list -> REGEX_LIST (un_option il [])
+   | `STAR -> REGEX_STAR
+  ]];
+
+shape_selective_id_star_list:
+  [[ il = OPT id_star_list -> REGEX_LIST (un_option il [])
+   | `STAR -> REGEX_STAR
+  ]];
+
+selective_id_list_bracket:
+  [[ `OSQUARE;il1= shape_selective_id_list;`CSQUARE -> il1
+  ]];
+
+selective_id_star_list_bracket:
+  [[ `OSQUARE;il1= shape_selective_id_star_list;`CSQUARE -> il1
+  ]];
+
+shape_add_dangling_cmd:
+  [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_unfold_cmd:
+  [[ `SHAPE_UNFOLD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_param_dangling_cmd:
+  [[ `SHAPE_PARAM_DANGLING; il=selective_id_list_bracket
+                              (* `OSQUARE; il=shape_selective_id_list; `CSQUARE *)
+     ->  il
+  ]];
+
+shape_simplify_cmd:
+  [[ `SHAPE_SIMPLIFY; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_merge_cmd:
+  [[ `SHAPE_MERGE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_trans_to_view_cmd:
+  [[ `SHAPE_TRANS_TO_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_derive_pre_cmd:
+  [[ `SHAPE_DERIVE_PRE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_derive_post_cmd:
+  [[ `SHAPE_DERIVE_POST; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_derive_view_cmd:
+  [[ `SHAPE_DERIVE_VIEW; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+shape_normalize_cmd:
+  [[ `SHAPE_NORMALIZE; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+pred_elim_head_cmd:
+  [[ `PRED_ELIM_HEAD; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+pred_elim_tail_cmd:
+  [[ `PRED_ELIM_TAIL; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
+pred_unify_disj_cmd:
+  [[ `PRED_UNIFY_DISJ; `OSQUARE; il=shape_selective_id_list; `CSQUARE
+     ->  il
+  ]];
+
 
 infer_type:
    [[ `INFER_AT_TERM -> INF_TERM
@@ -2625,19 +2753,26 @@ infer_type_list:
 (*    | `OSQUARE; t = infer_type; `CSQUARE -> (Some t, []) *)
 (*   ]]; *)
 
+
 infer_cmd:
   [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
-      let inf_o = new Globals.inf_obj_sub (* Globals.clone_sub_infer_const_obj () *) (* Globals.infer_const_obj # clone *) in
-      let (i_consts,ivl) = List.fold_left 
-        (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) 
-          | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in
-      let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+      (* let inf_o = new Globals.inf_obj_sub (\* Globals.clone_sub_infer_const_obj () *\) (\* Globals.infer_const_obj # clone *\) in *)
+      (* let (i_consts,ivl) = List.fold_left  *)
+      (*   (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)  *)
+      (*     | SndAns r -> (lst_l,r::lst_r)) ([],[]) il_w_itype in *)
+      (* let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in *)
+      let (_,i_consts,ivl) = conv_ivars_icmd il_w_itype in
     (* let k, il = un_option il_w_itype (None, [])  *)
       (i_consts,ivl,t,b,None)
-    | `INFER_EXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in ([],il,t,b,Some true)
-    | `INFER_INEXACT; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
-    let il = un_option il [] in ([],il,t,b,Some false)
+    | `INFER_EXACT;  il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+      let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      (* let il = un_option il [] in  *)
+      (i_consts,il,t,b,Some true)
+    | `INFER_INEXACT; il_w_itype = cid_list_w_itype (* il=OPT id_list *); t=meta_constr; `DERIVE; b=extended_meta_constr -> 
+      let (_,i_consts,il) = conv_ivars_icmd il_w_itype in
+      let i_consts = List.filter (fun i -> i!=INF_CLASSIC) i_consts in
+      (* let il = un_option il [] in  *)
+      (i_consts,il,t,b,Some false)
   ]];
 
 captureresidue_cmd:
@@ -2647,10 +2782,16 @@ compose_cmd:
   [[ `COMPOSE; `OSQUARE; il=id_list; `CSQUARE; `OPAREN; mc1=meta_constr; `SEMICOLON; mc2=meta_constr; `CPAREN ->(il, mc1, mc2)
    | `COMPOSE; `OPAREN; mc1=meta_constr; `SEMICOLON; mc2=meta_constr; `CPAREN -> ([], mc1, mc2)]];
 
+
 print_cmd:
-  [[ `PRINT; `IDENTIFIER id           -> PCmd id
+  [[ `PRINT; `IDENTIFIER id; 
+        ilopt=OPT selective_id_star_list_bracket  -> 
+        (* let ilopt = map_opt (List.map () lst) ilopt in *)
+        PCmd (id,ilopt)
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id
-   | `PRINT_LEMMAS  -> PCmd "lemmas"
+   | `PRINT_LEMMAS  -> PCmd ("lemmas",None)
+   (* | `PRINT_VIEW  -> PCmd "view" *)
+   (* | `PRINT_VIEW_LONG  -> PCmd "view_long" *)
   ]];
 
 cmp_cmd:
@@ -2682,6 +2823,7 @@ coercion_decl:
       { coercion_type = cd;
         coercion_exact = false;
         coercion_infer_vars = [];
+        coercion_infer_obj = new Globals.inf_obj_sub;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
@@ -2710,7 +2852,10 @@ coercion_decl_list:
 
 infer_coercion_decl:
     [[
-        `OSQUARE; il=OPT id_list; `CSQUARE;  t = coercion_decl -> {t with coercion_infer_vars = un_option il [] }
+         ivl_w_itype = cid_list_w_itype (* il=OPT id_list *);  t = coercion_decl -> 
+        let (inf_o,i_consts,ivl) = conv_ivars_icmd ivl_w_itype in
+        (* let () = DD.binfo_hprint (add_str "PPPP inf_obj" (fun e -> e # string_of)) inf_o no_pos in *)
+        {t with coercion_infer_vars = ivl; coercion_infer_obj = inf_o;}
     ]];
 
 (* infer_coercion_decl_list: *)
@@ -2799,11 +2944,19 @@ int_list:[[t= LIST1 integer_literal SEP `SEMICOLON ->t]];
 
 list_int_list:[[t= LIST1 int_list SEP `COMMA ->t]];
 
+id_star_list:[[t=LIST1 id_star SEP `COMMA -> t]];
+
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
 id_list_w_brace: [[`OBRACE; t=id_list; `CBRACE -> t]];
 
 id:[[`IDENTIFIER id-> id]];
+
+triv_star:[[`STAR -> 1]];
+
+id_star:[[`IDENTIFIER id; v = OPT triv_star -> 
+          let v = match v with None -> false | Some _ -> true in
+          (id,v)]];
 
 (********** Higher Order Preds *******)
 
@@ -3329,11 +3482,12 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; ivl_w_itype = cid_list_w_itype; s = SELF ->
     (* WN : need to use a list of @sym *)
      (* let inf_o = Globals.infer_const_obj # clone in *)
-     let inf_o = new Globals.inf_obj_sub in
-     let (i_consts,ivl) = List.fold_left
-       (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)
-         | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in
-     let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in
+     (* let inf_o = new Globals.inf_obj_sub in *)
+     (* let (i_consts,ivl) = List.fold_left *)
+     (*   (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r) *)
+     (*     | SndAns r -> (lst_l,r::lst_r)) ([],[]) ivl_w_itype in *)
+     (* let (i_consts,ivl) = (List.rev i_consts,List.rev ivl) in *)
+     let (inf_o,i_consts,ivl) = conv_ivars_icmd ivl_w_itype in
      let () = List.iter (fun itype -> inf_o # set itype) i_consts in
      let ivl_t = List.map (fun e -> (e,Unprimed)) ivl in
      F.EInfer {

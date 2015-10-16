@@ -1,0 +1,47 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+pred app3<y> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app3<y> & q!=null 
+  inv true.
+
+HeapPred U(node x, node y).
+HeapPred U2(node x, node y).
+
+lemma_infer[U,classic]
+  self::app3<y> -> U(self,y).
+
+print residue.
+
+
+
+/*
+# ex21b1b.slk
+
+infer [U,@classic] self::node<_, q2> * q2::app2<y> & q2!=null
+   |- self::node<_,q>*U(q,y).
+
+ <1>emp&q2!=null & Anon_17=Anon_16 & q=q2&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q::app2<y>@M&true --> U(q,y)&true]
+[[ Match(self,self) ==>  SEARCH ==>  COND ==>  UnmatchedRHSData]]
+
+----------------------------
+
+
+q=null -> U(q,y)
+q::app2<y>@M&true --> U(q,y)
+q::app2<y>@M&true --> U(q,y)
+
+*/

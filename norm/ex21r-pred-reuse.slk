@@ -1,0 +1,81 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred ll5<> == 
+	 q::ll5<> * self::node<_, q> 
+        or self != null 
+  inv true.
+
+pred ll2<> == 
+	self::node<_, q> * q::ll<> 
+        or self = null 
+  inv true.
+
+pred ll3<> == 
+	self::node<_, q> * q::ll3<> 
+        or self = null 
+  inv true.
+
+pred ll4<> == 
+	 q::ll4<> * self::node<_, q> 
+        or self = null 
+  inv true.
+
+pred ll4a<> == 
+	 q::ll4a<> * self::node<_, q1> *q1::node<_,q>
+        or self = null 
+  inv true.
+
+
+
+pred_reuse [ll5][ll].
+// fail
+
+
+pred_reuse [ll2][ll,ll5].
+// yes ll2
+
+/*
+pred_reuse [ll3,ll4,ll4a][ll,ll5].
+// yes for ll3,ll4
+
+
+pred_reuse [ll3,ll4,ll4a][*].
+// yes for ll3,ll4
+*/
+
+/*
+# ex21r.slk
+
+This is meant to determine
+if U* can be expressed in terms of K*
+
+ pred_reuse [U*][K*].
+
+If we use:
+
+ pred_reuse [U*][*].
+
+It means to process the predicate in topological order,
+and to have U* checked againts those before it.
+
+
+If we use:
+
+ pred_reuse [*][*].
+
+It means to process the predicate in topological order,
+and to have each predicate checked against the previous one;
+and to maximise on reuse where possible.
+
+*/

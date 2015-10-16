@@ -1,0 +1,78 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred appA<> == self=null
+        or self::node<_,null>
+ 	or self::node<_, q> * q::appA<> & q!=null 
+  inv true.
+
+pred_unify_disj[appA].
+pred_unfold[*].
+print views.
+pred_reuse[*][*].
+print views.
+
+/*
+# ex21u3e9.slk -dre "lemma_unfold" 
+
+pred_unify_disj[appA].
+pred_unfold[*].
+pred_reuse[*][*].
+print views.
+
+# Any unfold? Any reuse?
+
+PRED REUSE FOUND:[(tmp_appA,tmp_appA),(DP_38,DP_38),(appA,appA)]
+
+pred_unify_disj[appA].
+pred_unfold[*].
+//print views.
+pred_reuse[*][*].
+
+# can we have a better reuse algo? where the equi 
+  views are not re-checked? and SCC ordering takes that 
+  into account.
+
+# appA<> --> tmp_appA<>
+  unfold not so smart here ..
+
+[ view tmp_appA<>= 
+  EList
+    :EBase 
+       (* lbl: *){8}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[flted_11_37](* lbl: *){9}->(exists Anon_36: (* lbl: *){9}->
+          self::node<Anon_36,flted_11_37>@M * flted_11_37::DP_38<>@M&
+          {FLOW,(1,26)=__flow#E}[])
+    , 
+
+view DP_38<>= 
+  EList
+    :EBase 
+       (* lbl: *){18}->self::tmp_appA<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){19}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+ 
+ view appA<>= 
+  EList
+    :EList
+       :EBase 
+          (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+       || :EBase 
+             exists (Impl)[Anon_12](* lbl: *){2}->(exists flted_11_16: (* lbl: *){2}->
+             self::node<Anon_12,flted_11_16>@M&flted_11_16=null&
+             {FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          exists (Impl)[Anon_13; 
+          q](* lbl: *){3}->self::node<Anon_13,q>@M * q::appA<>@M&q!=null&
+          {FLOW,(1,26)=__flow#E}[]
+    ]
+
+
+*/

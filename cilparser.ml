@@ -210,7 +210,9 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   let core_typ = (
     match t with
     | Cil.TVoid _ -> Cil.TVoid []
-    (*| Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])*)
+    | Cil.TInt (Cil.IUChar, _)
+    | Cil.TInt (Cil.ISChar, _)
+    | Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])
     | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
     | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
@@ -241,20 +243,27 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
   core_typ
 )
 
+let get_core_cil_typ (t: Cil.typ) : Cil.typ =
+  let pr = string_of_cil_typ in
+  Debug.no_1 "get_core_cil_typ" pr pr get_core_cil_typ t
 
 let rec is_cil_struct_pointer (ty: Cil.typ) : bool = (
   match ty with
   | Cil.TPtr (Cil.TComp (comp, _), _) -> true
-  | Cil.TPtr (Cil.TNamed (tinfo, _), _) ->
+  | Cil.TPtr (Cil.TNamed (tinfo, _), a) ->
     let _ = Debug.ninfo_hprint (add_str "tinfo" string_of_cil_typ) tinfo.Cil.ttype no_pos in
     let ty = get_core_cil_typ tinfo.Cil.ttype in
-    is_cil_struct_pointer ty
+    is_cil_struct_pointer (Cil.TPtr (ty, a))
   (* true *)
   | Cil.TPtr (ty, _) ->
     let _ = Debug.ninfo_hprint (add_str "ty" string_of_cil_typ) ty no_pos in
     is_cil_struct_pointer ty
   | _ -> false
 )
+
+let is_cil_struct_pointer (ty: Cil.typ) : bool =
+  Debug.no_1 "is_cil_struct_pointer" string_of_cil_typ string_of_bool
+    is_cil_struct_pointer ty
 
 (* location  functions *)
 let makeLocation (startPos: Lexing.position) (endPos: Lexing.position) : VarGen.loc =
@@ -602,6 +611,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
           | "bool"  -> "<_,o>"
           | "float" -> "<_,o>"
           | "void"  -> "<_,o>"
+          | "char"  -> "<_,q>"
           | _ -> (
               try 
                 let data_decl = Hashtbl.find tbl_data_decl (Globals.Named base_data) in
@@ -614,13 +624,20 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
             ) 
         ) in
         let cast_proc = (
-          typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
-          "  case { \n" ^
-          "    p =  null -> ensures res = null; \n" ^
-          "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-          (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-          "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
-          "  }\n"
+          match base_data with
+          | "char" -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+                      "  case { \n" ^
+                      "    p =  null -> ensures res = null; \n" ^
+                      "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
+                      "                 ensures res!=null; \n" ^
+                      "  }\n"
+          | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+                 "  case { \n" ^
+                 "    p =  null -> ensures res = null; \n" ^
+                 "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
+                 (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
+                 "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
+                 "  }\n"
         ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
@@ -701,11 +718,17 @@ and create_int_to_pointer_casting_proc (pointer_typ_name: string) : Iast.proc_de
       Hashtbl.find tbl_aux_proc proc_name
     with Not_found -> (
         let cast_proc = (
-          pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
-          "  case { \n" ^
-          "    p =  0 -> ensures res =  null; \n" ^
-          "    p != 0 -> ensures res != null; \n" ^
-          "  }\n"
+          match pointer_typ_name with
+          | "char_star" -> pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
+                           "  case { \n" ^
+                           "    p =  0 -> ensures res::char_star<0,_>; \n" ^
+                           "    p != 0 -> ensures res::char_star<p,_> & p!=0; \n" ^
+                           "  }\n"
+          | _ -> pointer_typ_name ^ " " ^ proc_name ^ " (int p)\n" ^
+                 "  case { \n" ^
+                 "    p =  0 -> ensures res =  null; \n" ^
+                 "    p != 0 -> ensures res != null; \n" ^
+                 "  }\n"
         ) in
         let pd = Parser.parse_c_aux_proc "int_to_pointer_casting_proc" cast_proc in
         Hashtbl.add tbl_aux_proc proc_name pd;
@@ -776,7 +799,67 @@ and create_bool_casting_proc (typ: Globals.typ) : Iast.proc_decl =
       proc_decl
     )
 
-(*char_star + char?*)
+and create_string_proc (t1: Cil.typ) (t2: Cil.typ) =
+  let coretyp1 = get_core_cil_typ t1 in   (* translate all char types into one *)
+  let coretyp2 = get_core_cil_typ t2 in
+  let typ1 = translate_typ coretyp1 no_pos in
+  let typ2 = translate_typ coretyp2 no_pos in
+  let typ1_name = string_of_typ typ1 in
+  let typ2_name = string_of_typ typ2 in
+  let proc_name = (
+    match coretyp1, coretyp2 with
+      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_)
+      | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__write_char"
+      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__get_char"
+      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _
+      | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__plus_plus_char"
+      | _ ->
+        let msg = "Invalid string operator: " ^ (add_str "t1" Cil.string_of_typ) t1 ^ (add_str "t2" Cil.string_of_typ) t2 in
+        report_error no_pos msg
+    )
+  in
+  try
+    Hashtbl.find tbl_aux_proc proc_name
+  with Not_found -> (
+      Debug.ninfo_hprint (add_str "proc_name" pr_id) proc_name no_pos;
+      Debug.ninfo_hprint (add_str "t1" Cil.string_of_typ) t1 no_pos;
+      Debug.ninfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
+      let proc_str = (
+        match coretyp1, coretyp2 with
+        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> 
+             typ1_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x)\n"
+           ^ "requires x::char_star<v,_>@L & Term[] \n"
+           ^ "ensures res=v ;\n"
+        | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> 
+             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"
+           ^ "requires x::char_star<_,q>@L & Term[] \n"
+           ^ "ensures x::char_star<v,q> ;\n"
+        | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) ->
+             typ2_name ^ " " ^ proc_name ^ "(" ^ typ2_name ^ " x)\n"
+           ^ "requires x::char_star<_,q>@L & Term[] \n"
+           ^ "ensures res=q ;\n"
+        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_) -> 
+             typ1_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"
+           ^ "requires x::char_star<_,q>@L & Term[] \n"
+           ^ "ensures x::char_star<v,q> ;\n"
+        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ ->
+             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " x)\n"
+           ^ "requires x::char_star<_,q>@L & Term[] \n"
+           ^ "ensures res=q ;\n"
+        | _ ->
+          let msg = "Incompatible pointers when translating pointer arithmetic: "
+                    ^ typ1_name ^ " vs " ^ typ2_name in
+          report_error no_pos msg
+      ) in
+      Debug.ninfo_hprint (add_str "pointer_arith_proc_str" pr_id) proc_str no_pos;
+      let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
+      let _ = Debug.ninfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
+      Hashtbl.add tbl_aux_proc proc_name proc_decl;
+      proc_decl
+    )
+
+
+
 and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   let typ1 = translate_typ t1 no_pos in
   let typ2 = translate_typ t2 no_pos in
@@ -784,8 +867,8 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
       | Cil.MinusPI | Cil.MinusPP -> ("minus", "-")
       | Cil.PlusPI | Cil.IndexPI -> (
 	match t1, t2 with
-          | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ -> ("plus", "+")
-          | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> ("plus", "+")
+(*          | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ -> ("plus", "+")*)
+(*          | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> ("plus", "+")*)
           | _, _ -> ("add", "+")
       )
       | Cil.Lt -> ("lt", "<")
@@ -802,10 +885,10 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
   let typ2_name = string_of_typ typ2 in
   let proc_name = (
     match t1, t2 with
-      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_)
-      | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__write_char"
-      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _
-      | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__plus_" ^ op_name ^ "_char"
+(*      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_)*)
+(*      | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__write_char"*)
+(*      | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _*)
+(*      | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> "__plus_" ^ op_name ^ "_char"*)
       | _, _ -> "__pointer_" ^ op_name ^ "__" ^ typ1_name ^ "__" ^ typ2_name ^ "__"
     )
   in
@@ -819,27 +902,27 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
       Debug.ninfo_hprint (add_str "t2" Cil.string_of_typ) t2 no_pos;
       let proc_str = (
         match t1, t2 with
-        | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> 
-             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"
-           ^ "requires x::char_star<_,_>@L & Term[] \n"
-           ^ "ensures x::char_star<v,_> ;\n"
-        | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) ->
-             typ2_name ^ " " ^ proc_name ^ "(" ^ typ2_name ^ " x)\n"
-           ^ "requires x::char_star<_,q>@L & Term[] \n"
-           ^ "ensures res=q ;\n"
+(*        | Cil.TInt(Cil.IChar,_), Cil.TPtr(Cil.TInt(Cil.IChar,_),_) -> *)
+(*             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"*)
+(*           ^ "requires x::char_star<_,_>@L & Term[] \n"*)
+(*           ^ "ensures x::char_star<v,_> ;\n"*)
+(*        | _, Cil.TPtr(Cil.TInt(Cil.IChar,_),_) ->*)
+(*             typ2_name ^ " " ^ proc_name ^ "(" ^ typ2_name ^ " x)\n"*)
+(*           ^ "requires x::char_star<_,q>@L & Term[] \n"*)
+(*           ^ "ensures res=q ;\n"*)
         | Cil.TInt _, Cil.TPtr _ ->
             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"
             ^ "  requires p::" ^ typ2_name^ "<val>\n"
             ^ "  ensures p::" ^ typ2_name^ "<val>"
                ^ " * res::" ^ typ2_name^ "<val " ^ op_str ^ " i>;\n"
-        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_) -> 
-             typ1_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"
-           ^ "requires x::char_star<_,_>@L & Term[] \n"
-           ^ "ensures x::char_star<v,_> ;\n"
-        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ ->
-             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " x)\n"
-           ^ "requires x::char_star<_,q>@L & Term[] \n"
-           ^ "ensures res=q ;\n"
+(*        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_) -> *)
+(*             typ1_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"*)
+(*           ^ "requires x::char_star<_,_>@L & Term[] \n"*)
+(*           ^ "ensures x::char_star<v,_> ;\n"*)
+(*        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), _ ->*)
+(*             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " x)\n"*)
+(*           ^ "requires x::char_star<_,q>@L & Term[] \n"*)
+(*           ^ "ensures res=q ;\n"*)
         | Cil.TPtr _, Cil.TInt _ ->
             typ1_name ^ " " ^ proc_name ^ "(" ^ typ1_name ^ " p, " ^ typ2_name ^ " i)\n"
             ^ "  requires p::" ^ typ1_name^ "<val>\n"
@@ -1296,19 +1379,27 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
         let base_typ = typ_of_cil_exp e in
         let _ = x_binfo_hp (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
         match base_typ with
-        | Cil.TPtr (Cil.TComp _, _) ->
+        | Cil.TPtr (Cil.TComp _, _) 
+        | Cil.TPtr (Cil.TNamed _, _) ->
           let base = translate_exp e  in
           create_complex_exp base offset [] pos
-        (*| Cil.TPtr (Cil.TNamed _, _) ->
-          let ptr_base = translate_exp e  in
-          let data_fields = [str_value] in
-          let base = Iast.mkMember ptr_base data_fields None pos in
-          create_complex_exp base offset [] pos*)
-        | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (
-            let data_base = translate_exp e  in
+        (* | Cil.TPtr (Cil.TNamed _, _) ->                             *)
+        (*   let ptr_base = translate_exp e  in                        *)
+        (*   let data_fields = [str_value] in                          *)
+        (*   let base = Iast.mkMember ptr_base data_fields None pos in *)
+        (*   create_complex_exp base offset [] pos                     *)
+        | Cil.TPtr (Cil.TInt (Cil.IUChar, _), _)
+        | Cil.TPtr (Cil.TInt (Cil.ISChar, _), _)
+        | Cil.TPtr (Cil.TInt (Cil.IChar, _), _) -> (
+            let pointer_arith_proc = create_string_proc base_typ base_typ in
+            let proc_name = pointer_arith_proc.Iast.proc_name in
+            let le = translate_exp e in
+            let base = Iast.mkCallNRecv proc_name None [le] None None pos in
+            create_complex_exp base offset [] pos
+            (*let data_base = translate_exp e  in
             let data_fields = [str_char] in
             let base = Iast.mkMember data_base data_fields None pos in
-            create_complex_exp base offset [] pos
+            create_complex_exp base offset [] pos*)
           )
         | _ -> (
             let data_base = translate_exp e  in
@@ -1400,8 +1491,8 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | _ -> translate_typ ty pos
         ) in
       let input_exp = translate_exp exp in
-      (* let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
-      (* let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
+(*      let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
+(*      let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
       if (input_typ = output_typ) then
         (* no need casting *)
         input_exp
@@ -1467,17 +1558,17 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   (* pointer arithmetic *)
   | Cil.TInt(Cil.IChar, _), Cil.TPtr(Cil.TInt(Cil.IChar, _), _)
   | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , Cil.TInt(Cil.IChar, _) ->
-    let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
+    let pointer_arith_proc = create_string_proc t1 t2 in
     let proc_name = pointer_arith_proc.Iast.proc_name in
     let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
     Iast.mkCallNRecv proc_name None [e1; e2] None None pos
   | _, Cil.TPtr(Cil.TInt(Cil.IChar, _), _) ->
-    let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
+    let pointer_arith_proc = create_string_proc t1 t2 in
     let proc_name = pointer_arith_proc.Iast.proc_name in
     let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
     Iast.mkCallNRecv proc_name None [e2] None None pos
   | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , _ ->
-    let pointer_arith_proc = create_pointer_arithmetic_proc op t1 t2 in
+    let pointer_arith_proc = create_string_proc t1 t2 in
     let proc_name = pointer_arith_proc.Iast.proc_name in
     let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
     Iast.mkCallNRecv proc_name None [e1] None None pos
@@ -1507,16 +1598,16 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
           | Cil.Mem e -> (
               let base_typ = typ_of_cil_exp e in
               match base_typ with
-                | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (
+                | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (   (* write_char(char_star s, c) *)
               	    let pos = translate_location l in
                     let le = translate_exp e in
                     (*let re = Iast.mkBinary Iast.OpPlus le (translate_exp exp) None pos in*)
-                    (*let re = Cil.BinOp (Cil.PlusPI, e, exp, base_typ, l) in
-                    let new_re = translate_exp re in*)
+                    (*let re = Cil.BinOp (Cil.PlusPI, e, exp, base_typ, l) in*)
+                    (*let new_re = translate_exp re in*)
 		    let t1 = typ_of_cil_exp e in
                     let t2 = typ_of_cil_exp exp in
                     let re = translate_exp exp in
-                    let pointer_arith_proc = create_pointer_arithmetic_proc Cil.PlusPI t1 t2 in
+                    let pointer_arith_proc = create_string_proc t1 t2 in
                     let proc_name = pointer_arith_proc.Iast.proc_name in
     		    Iast.mkCallNRecv proc_name None [le; re] None None pos
                     (*Iast.mkAssign Iast.OpAssign le new_re None pos*)
@@ -2236,9 +2327,9 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
         end
         |  Iformula.EInfer i_sf ->
                let () =  Debug.info_hprint (add_str "infer_const_obj 2" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
-               if Globals.infer_const_obj # is_shape || i_sf.Iformula.formula_inf_obj # is_shape ||
-                 Globals.infer_const_obj # is_shape_pre || i_sf.Iformula.formula_inf_obj # is_shape_pre ||
-                 Globals.infer_const_obj # is_shape_post || i_sf.Iformula.formula_inf_obj # is_shape_post
+               if Globals.infer_const_obj # is_shape || i_sf.Iformula.formula_inf_obj # is_shape (* || *)
+                 (* Globals.infer_const_obj # is_shape_pre || i_sf.Iformula.formula_inf_obj # is_shape_pre || *)
+                 (* Globals.infer_const_obj # is_shape_post || i_sf.Iformula.formula_inf_obj # is_shape_post *)
                then
           let is_simpl, pre,post = Iformula.get_pre_post i_sf.Iformula.formula_inf_continuation in
           if is_simpl then
@@ -2402,7 +2493,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   (* update some global settings *)
   Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) && ((String.compare  data.Iast.data_name "int_star")!=0)  then data_decls := data::!data_decls) tbl_data_decl;
   (* aux procs *)
-  Hashtbl.iter (fun _ p -> if ((String.compare p.Iast.proc_name "__plus_plus_char")!=0) && ((String.compare p.Iast.proc_name "__write_char")!=0) && ((String.compare p.Iast.proc_name "__pointer_add__int_star__int__")!=0) then  proc_decls := p::!proc_decls) tbl_aux_proc;
+  Hashtbl.iter (fun _ p -> if ((String.compare p.Iast.proc_name "__plus_plus_char")!=0) && ((String.compare p.Iast.proc_name "__get_char")!=0) && ((String.compare p.Iast.proc_name "__write_char")!=0) && ((String.compare p.Iast.proc_name "__pointer_add__int_star__int__")!=0) then  proc_decls := p::!proc_decls) tbl_aux_proc;
   (* return *)
   let newprog : Iast.prog_decl = {
     Iast.prog_data_decls = (* obj_def :: string_def ::  *)!data_decls;

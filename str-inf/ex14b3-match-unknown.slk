@@ -1,0 +1,22 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+  HeapPred U(char_star x,char_star y).
+
+  infer[U,@classic] U(self,q)*q::char_star<0,p> 
+    |- (exists q1: U(self,q1)*q1::char_star<0,p>).
+  print residue.
+
+/*
+# ex14b3.slk -dd-steps
+
+# schedule do_match to work with UNK predicates..
+
+!!! **context.ml#2435:process_matches (steps) :
+ ### LHS : U(self,q) * q::char_star<flted_8_16,p>@M
+ ### RHS : U(self,q1_38)
+ ### matches :[]
+
+*/

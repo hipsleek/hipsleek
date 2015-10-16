@@ -1,0 +1,17 @@
+data node{
+	node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<q>*q::ll<n-1>
+inv n>=0.
+
+checkentail_exact x::ll<n> & n=0 |- emp.
+print residue.
+expect Valid.
+
+/*
+checkentail_exact x::ll<n> |- emp.
+print residue.
+expect Fail.
+*/

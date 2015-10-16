@@ -1,0 +1,41 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node v).
+
+
+
+infer [@classic,@pure_field] U2(xx,_) |- U2(xx,null).
+//infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
+//infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
+print residue.
+expect Valid.
+
+
+/*
+# ex25b3b.slk 
+
+infer [@classic,@pure_field] U2(x,_) |- U2(x,x).
+
+------------------------------
+# ex25b3b.slk --pcp
+
+infer [@classic,@pure_field] U2(xx,_) |- U2(xx,null).
+
+# Nice translation below:
+
+INPUT 0: [@leak,@pure_field][] 
+ ### ante =  U2(xx,Anon_13)&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   (exists flted_15_33: U2(xx,flted_15_33)&flted_15_33=null&
+   {FLOW,(20,21)=__norm#E}[])
+
+
+*/

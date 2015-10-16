@@ -1,0 +1,134 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//checkentail x=null |- x::ll<0>.
+
+checkentail x::node<_, null> |- x::ll<m> & m = 1.
+
+//checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 2>.
+//checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 1>.
+
+//checkentail x::node<_, null> |- x::ll<3>.
+print residue.
+
+//checkentail x::ll<n> /** r::ll<n>*/ |- x::ll<n+1>.
+
+
+let $a = x' = 1.
+let $b = x' = x + 1.
+let $c = compose[x]($a; $b).
+let $d = x' = 3.
+
+/*
+# ex55n.slk
+
+checkentail x::node<_, null> |- x::ll<m> & m = 1.
+
+-dd-steps will print
+ (1) outcome of process_matches
+ (2) outcome of compute_actions
+ (3) start of process_action
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action : NothingToDo => No duplicated nodes!
+ ### estate : ex_formula : emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,26)=__flow#E}[]
+ es_heap:emp
+ ### conseq : emp&0<=n&{FLOW,(1,26)=__flow#E}[]
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action : NothingToDo => No duplicated nodes!
+ ### estate : ex_formula : emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,26)=__flow#E}[]
+ es_heap:emp
+ ### conseq : emp&0<=n&{FLOW,(1,26)=__flow#E}[]
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action : NothingToDo => No duplicated nodes!
+ ### estate : ex_formula : x::node<Anon_12,flted_9_35>@M&flted_9_35=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : x::ll<m>@M&m=1&{FLOW,(20,21)=__norm#E}[]
+
+!!! **context.ml#2438:process_matches (steps) :
+ ### LHS : x::node<Anon_12,flted_9_35>@M
+ ### RHS : x::ll<m>@M
+ ### matches :
+[ Type: Root
+ LHS: x::node<Anon_12,flted_9_35>@M
+ RHS: x::ll<m>@M
+ lhs_rest: emp
+ rhs_rest: emp]
+
+!!! **context.ml#2806:compute_action (steps) :
+ ### RHS Cand :[ x::ll<m>@M]
+ ### action :
+ Fold =>
+   LHS: x::node<Anon_12,flted_9_35>@M
+   RHS: x::ll<m>@M
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action :
+ Fold =>
+   Type: Root
+   LHS: x::node<Anon_12,flted_9_35>@M
+   RHS: x::ll<m>@M
+   lhs_rest: emp
+   rhs_rest: emp
+ ### estate : ex_formula : x::node<Anon_12,flted_9_35>@M&flted_9_35=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : x::ll<m>@M&m=1&{FLOW,(20,21)=__norm#E}[]
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action : NothingToDo => No duplicated nodes!
+ ### estate : ex_formula : x::node<Anon_12,flted_9_35>@M&flted_9_35=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : (* lbl: *){1}->emp&x=null & m=0&{FLOW,(1,26)=__flow#E}[]
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action : NothingToDo => No duplicated nodes!
+ ### estate : ex_formula : x::node<Anon_12,flted_9_35>@M&flted_9_35=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : (* lbl: *){2}->(exists flted_4_48: (* lbl: *){2}->x::node<Anon_46,r_47>@M * 
+                                                   r_47::ll<flted_4_48>@M&
+flted_4_48+1=m&{FLOW,(1,26)=__flow#E}[])
+
+!!! **context.ml#2438:process_matches (steps) :
+ ### LHS : x::node<Anon_12,flted_9_35>@M
+ ### RHS : x::node<Anon_46,r_47>@M
+ ### matches :
+[ Type: Root
+ LHS: x::node<Anon_12,flted_9_35>@M
+ RHS: x::node<Anon_46,r_47>@M
+ lhs_rest: emp
+ rhs_rest: r_47::ll<flted_4_51>@M]
+
+!!! **context.ml#2438:process_matches (steps) :
+ ### LHS : x::node<Anon_12,flted_9_35>@M
+ ### RHS : r_47::ll<flted_4_51>@M
+ ### matches :[]
+
+!!! **context.ml#2806:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_46,r_47>@M, r_47::ll<flted_4_51>@M]
+ ### action :
+ SEARCH =>[
+  Prio:1
+  Match =>
+    LHS: x::node<Anon_12,flted_9_35>@M
+    RHS: x::node<Anon_46,r_47>@M
+  ]
+
+!!! **solver.ml#12212:process_action (steps) :
+ ### action :
+ Match =>
+   Type: Root
+   LHS: x::node<Anon_12,flted_9_35>@M
+   RHS: x::node<Anon_46,r_47>@M
+   lhs_rest: emp
+   rhs_rest: r_47::ll<flted_4_51>@M
+ ### estate : ex_formula : x::node<Anon_12,flted_9_35>@M&flted_9_35=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : x::node<Anon_46,r_47>@M * r_47::ll<flted_4_51>@M&flted_4_51+1=m&
+{FLOW,(1,26)=__flow#E}[]
+
+*/

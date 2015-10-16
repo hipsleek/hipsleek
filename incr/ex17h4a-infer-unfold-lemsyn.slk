@@ -1,0 +1,60 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+
+HeapPred H(node a).
+HeapPred H2(node a, node b).
+//lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+// fail due to complex lemma
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+//lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
+lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
+
+
+infer [H2,@classic]  H2(x,y) |- H2(y,x).
+print residue.
+
+infer [H2,@classic]  H2(x,y) |- H2(x,y).
+print residue.
+
+infer [H2,@classic]  H2(x,null) |- H2(x,y).
+print residue.
+//<1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H2(x,flted_34_60)&flted_34_60=null |#|3  --> H2(x,y)&true
+// # redundant
+
+infer [H2,@classic]  H2(x,y) |- H2(x,null).
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H2(x,y)&true |#|3  --> H2(x,flted_37_79)&true]
+// unsound
+expect Fail.
+
+
+/*
+# ex17h4a.slk
+
+infer [H2,@classic]  H2(x,y) |- H2(y,x).
+
+# expects H2(x,y) --> H2(y,x)
+
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> H2(y,x)&true]
+[[ COND ==>  InferHeap]]
+*/
+

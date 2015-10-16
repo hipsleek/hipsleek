@@ -1,0 +1,61 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+HeapPred U(node x).
+HeapPred GP_153(node x,node@NI b).
+
+// from ex21d1.slk
+
+relAssume //(1)
+U(q_152)&q_146!=null |#| true --> GP_153(q_152,q_146).
+ 
+relAssume //(2)
+q_146::node<Anon_151,q_152>@M * GP_153(q_152,q_146)&
+    q_146!=null |#|  true --> U(q_146).
+
+relAssume //(3)
+emp&flted_22_138=null |#| true --> U(flted_22_138).
+
+
+print relAssumes. // To add hprel type
+
+shape_derive_post [U].
+//shape_derive_post [U,GP_153].
+//shape_derive_post [*].
+
+print relAssumes.
+
+/*
+# ex20d2.slk
+
+# naive solution works..
+
+!!! **syn.ml#676:View Decl of U:
+ view U<>= 
+  EBase 
+    emp&self=null&{FLOW,(20,21)=__norm#E}[]
+    or (htrue) * self::node<Anon_33,q_34>@M * q_152::U<>NOANN&
+       self!=null & self!=null & q_34=q_152 & self!=null&
+       {FLOW,(20,21)=__norm#E}[]
+    
+!!! **cprinter.ml#4410:view_labels:[]
+!!! **cprinter.ml#4412:v.view_params_orig:[]
+!!! **syn.ml#676:View Decl of GP_153:
+ view GP_153<>= 
+  EBase 
+    self::U<>NOANN&q_146!=null&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1635:Current list of heap relational assumptions:
+ 
+  [fold emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           flted_22_138!=null & flted_22_138!=null & q_34=q_152 & 
+           flted_22_138!=null
+         |#| htrue --> U(flted_22_138); 
+   fold U(q_152)&q_146!=null |#| htrue --> GP_153(q_152,q_146)]
+Stop z3... 8 invocations 
+
+*/
+

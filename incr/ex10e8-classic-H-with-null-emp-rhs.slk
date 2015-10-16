@@ -1,0 +1,41 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+
+//(10)
+infer_exact [H] H(p) * x::node<_,p> |- emp.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+print residue.
+expect Fail.
+
+//(11)
+infer_exact [H] H(p) * x::node<_,p> & p=null |- emp.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+print residue.
+expect Fail.
+
+//(11)
+infer_exact [H] H(p) & p=null & n>6 |- emp & n>7.
+//Entail (1) : Fail.(must) cause: x::node<Anon_12,p>@M&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+print residue.
+expect Fail.
+
+/*
+# ex10b8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+//(15)
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+*/

@@ -284,7 +284,7 @@ let checkeq_formula (hvs1,mf1) (hvs2,mf2)=
   match hvs1,hvs2 with
     | [],[] -> CP.equalFormula (MCP.pure_of_mix mf1) (MCP.pure_of_mix mf2)
     | [hv1],[hv2] ->
-          if string_compare hv1.h_formula_view_name hv2.h_formula_view_name then
+          if string_eq hv1.h_formula_view_name hv2.h_formula_view_name then
             let sst = List.combine (hv1.h_formula_view_node::hv1.h_formula_view_arguments) (hv2.h_formula_view_node::hv2.h_formula_view_arguments) in
             let p1 = (MCP.pure_of_mix mf1) in
             let p2 = (MCP.pure_of_mix mf2) in

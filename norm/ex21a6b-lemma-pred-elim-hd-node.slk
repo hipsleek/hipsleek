@@ -1,0 +1,52 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred ll2<> == 
+    case {
+     self = null -> [] emp; 
+     self!=null -> [] self::node<_, q> * q::ll2<>;
+   } 
+  inv true.
+
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+pred app6<> == 
+  case { self=null -> [] emp;
+   self!=null -> [] self::node<_,q>
+        case {q=null -> [] true;
+         //q!=null -> [] q::app6<>;};
+         q!=null -> [] q::node<_,qq>*qq::app6<>;};
+  }
+  inv true.
+
+lemma_test "L1" self::ll<> <-> self::app4<>.
+lemma_test "L2" self::ll<> <-> self::app6<>.
+lemma_test "L3" self::ll2<> <-> self::app6<>.
+
+//pred_elim_hd_node [app3].
+//print views.
+
+//pred_reuse [*][*].
+
+/*
+# ex21a6b.slk
+
+# case-spec isn't helpful. seems cyclic proving
+  is required. alternatively mutual recursion?
+
+*/

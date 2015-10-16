@@ -10,10 +10,7 @@ HeapPred H(node a).
 HeapPred P(node a).
 
 infer [H,P,@pure_field] H(p) * x::node<1,p> & p=null |- P(p).
-
-
 print residue.
-
 
 
 /*

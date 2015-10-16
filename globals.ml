@@ -53,11 +53,15 @@ let assert_err_fn = "__VERIFIER_error"
 
 let method2pred mn = mn^"_v"
 
-let ptr_arith_flag = ref false
+let ptr_arith_flag = ref true (* false *)
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
+
+let is_lemma_ahead m = match m with
+  | LEM_PROP| LEM_SPLIT | LEM | LEM_UNSAFE | LEM_SAFE -> true
+  | _ -> false
 
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
@@ -253,7 +257,7 @@ let string_of_view_kind k = match k with
 
 let is_undef_typ t =
   match t with
-  |UNK |RelT _ |HpT |UtT _ -> true
+  | UNK | RelT _ | HpT | UtT _ -> true
   | _ -> false 
 
 let is_node_typ t =
@@ -913,7 +917,14 @@ let allow_lemma_fold = ref true
 (* unsound if false for lemma/bugs/app-t2c1.slk *)
 
 let allow_lemma_norm = ref false
+let show_push_list = ref (None:string option)
+let show_push_list_rgx = ref (None:Str.regexp option)
+
 let old_norm_w_coerc = ref false
+let old_keep_all_matchres = ref false
+
+let old_do_match_infer_heap = ref true
+let old_incr_infer = ref false
 
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true
@@ -922,6 +933,7 @@ let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
+let sa_part = ref false
 
 let prelude_is_mult = ref false
 
@@ -1073,7 +1085,7 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
-let en_norm_ctx = ref true
+let en_norm_ctx = ref false (* true - not suitable for inference *)
 
 let en_trec_lin = ref false
 
@@ -1082,6 +1094,7 @@ let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)
 
 let lemma_ep = ref true
+let lemma_ep_verbose = ref true
 
 let dis_sem = ref false
 
@@ -1282,10 +1295,38 @@ let assert_nonlinear = ref false
 let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
+let new_rm_htrue = ref true
+let new_infer_large_step = ref true
+let infer_back_ptr = ref true
+let old_infer_complex_lhs = ref false
+let old_coer_target = ref false
+let old_search_always = ref false (* false *)
+let old_lemma_unfold = ref false (* false *)
+let old_view_equiv = ref false (* false *)
+  (* false here causes ex21u3e7.slk to go into a loop FIXED *)
+let cond_action_always = ref false
+let rev_priority = ref false
+
 let old_collect_false = ref false
+let old_collect_hprel = ref false
+let old_infer_hprel_classic = ref false
+let old_classic_rhs_emp = ref false
+let old_post_conv_impl = ref true (* affected by incr/ex14d.ss *)
+let old_post_impl_to_ex = ref true
+let old_keep_triv_relass = ref false
+let old_mater_coercion = ref false
+let old_infer_heap = ref false
+let old_fvars_as_impl_match = ref true
+let old_base_case_fold_hprel = ref false
+let old_base_case_unfold_hprel = ref false
+let warn_do_match_infer_heap = ref false
 let warn_nonempty_perm_vars = ref false
+let warn_trans_context = ref false
+let warn_post_free_vars = ref false
+let warn_fvars_rhs_match = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
+let old_infer_hp_collect = ref false
 let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
@@ -1787,6 +1828,7 @@ class inf_obj  =
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
     (*   let l = self # get_lst in *)
@@ -1886,6 +1928,7 @@ class inf_obj_sub  =
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
+    method empty = arr <- []
   end;;
 
 let clone_sub_infer_const_obj_all () =
@@ -1900,6 +1943,9 @@ let clone_sub_infer_const_obj_sel () =
 
 let tnt_thres = ref 6
 let tnt_verbose = ref 1
+
+(* String Inference *)
+let new_pred_syn = ref true
 
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
@@ -1933,8 +1979,10 @@ let do_infer_inv = ref false
 let do_test_inv = ref true (* false *)
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref false                (* option --classic is turned on or not? *)
-let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+(* let opt_classic = ref false                (\* option --classic is turned on or not? *\) *)
+(* replaced by check_is_classic () & infer_const_obj *)
+(* let do_classic_frame_rule = ref false      (\* use classic frame rule or not? *\) *)
+
 let dis_impl_var = ref false (* Disable implicit vars *)
 
 let show_unexpected_ents = ref true
@@ -2164,7 +2212,7 @@ let fresh_int () =
 (*   seq_number := !seq_number + 1; *)
 (*   !seq_number *)
 
-let string_compare s1 s2 =  String.compare s1 s2=0
+let string_eq s1 s2 =  String.compare s1 s2=0
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
@@ -2486,6 +2534,16 @@ let prim_method_names = [ nondet_int_proc_name ]
 
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
+
+let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
+
+let check_is_classic () = check_is_classic_local infer_const_obj
+
+type 'a regex_list = 
+  | REGEX_STAR
+  | REGEX_LIST of 'a list
+
+type regex_id_list = ident regex_list
 
 
 

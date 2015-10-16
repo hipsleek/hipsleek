@@ -1,0 +1,132 @@
+data node {
+	int val;
+	node next;
+}.
+
+
+/* view for a singly linked list */
+pred sll_size<n> == self = null & n = 0
+	or (exists m: self::node<_, q> * q::sll_size<m> & m=n-1)
+  inv n >= 0.
+
+  relation R(int a,int b, int c).
+
+infer [R] x::sll_size<size_1675>@M&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' 
+ |- x::sll_size<size_1676>@M&R(size_1676,size_1675,res).
+
+print residue.
+
+
+
+/*
+<1>emp&res=v_int_40_1636' & v_int_40_1636'=0 & x'=x & x'=null & 
+        v_bool_39_1645' & size_1676=size_1675&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN R: ( res=0 & size_1676=0 & size_1675=0) -->  R(size_1676,size_1675,res)]
+[[ COND ==>  Match(x,x)]]
+
+*/
+
+infer [R] x::sll_size<size_1675>@M&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' 
+ |- (exists size_1676: x::sll_size<size_1676>@M&R(size_1676,size_1675,res)).
+
+print residue.
+
+
+/*
+
+ <1>emp&res=v_int_40_1636' & v_int_40_1636'=0 & x'=x & x'=null & 
+        v_bool_39_1645'&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN R: ( res=0 & size_1675=0) -->  R(size_1675,size_1675,res)]
+[[ COND ==>  Match(x,x)]]
+*/
+
+/*
+
+ view sll_size{}[]<n:int>= 
+  view_domains: 
+   view sll_size<n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; 
+            q](* lbl: *){2}->(exists flted_9_18: (* lbl: *){2}->self::node<Anon_12,q>@M * 
+                                                                q::sll_size<flted_9_18>@M&
+            flted_9_18+1=n&{FLOW,(1,26)=__flow#E}[])
+
+ view sll_size<size_1651:int>= 
+  EList
+    :EBase 
+       (* lbl: *){261}->emp&self=null & size_1651=0&{FLOW,(1,28)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_1652; 
+          q_1653](* lbl: *){262}->(exists size_1654: (* lbl: *){262}->
+          self::node<Anon_1652,q_1653>@M * q_1653::sll_size<size_1654>@M&
+          size_1651=size_1654+1 & 0<=size_1654&{FLOW,(1,28)=__flow#E}[])
+
+id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ R]; c_heap: emp; others: [] globals: []
+ checkentail x::sll_size<size_1675>@M&
+res=v_int_40_1636' & v_int_40_1636'=0 & x'=x & x'=null & v_bool_39_1645'&
+{FLOW,(20,21)=__norm#E}[]
+ |-  x::sll_size<size_1676>@M&R(size_1676,size_1675,res)&
+{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+res=v_int_40_1636' & v_int_40_1636'=0 & x'=x & x'=null & v_bool_39_1645' & 
+size_1676=size_1675&{FLOW,(20,21)=__norm#E}[]
+   es_infer_rel: [RELDEFN R: ( res=0 & size_1676=0 & size_1675=0) -->  R(size_1676,size_1675,res)]
+   ]
+
+Yid: 15; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1678]; c_heap: emp; others: [@post] globals: [@flow,@ver_post]
+ checkentail x::sll_size<size_1675>@M&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  : x::sll_size<size_1676>@M&post_1678(size_1676,size_1675,res,flow)&
+{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' & 
+size_1676=size_1675&{FLOW,(4,5)=__norm#E}[]
+   es_infer_rel: [RELDEFN post_1678: ( res=0 & size_1676=size_1675 & 0<=size_1675) -->  post_1678(size_1676,size_1675,res,flow)]
+   ]
+
+
+# Why below two differs?
+
+# ex14k1.ss
+
+id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; impl_vars: [size_1676]; infer_vars: [ R]; c_heap: emp; others: [] globals: []
+ checkentail x::sll_size<size_1675>@M&
+res=v_int_40_1636' & v_int_40_1636'=0 & x'=x & x'=null & v_bool_39_1645'&
+{FLOW,(20,21)=__norm#E}[]
+ |-  x::sll_size<size_1676>@M&R(size_1676,size_1675,res)&
+{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+res=v_int_40_1636' & v_int_40_1636'=0 & x'=x & x'=null & v_bool_39_1645' & 
+size_1676=size_1675&{FLOW,(20,21)=__norm#E}[]
+   es_infer_rel: [RELDEFN R: ( res=0 & size_1676=0 & size_1675=0) -->  R(size_1676,size_1675,res)]
+   ]
+
+# ex14k1.ss
+
+id: 15; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; impl_vars: [size_1676]; infer_vars: [ post_1678]; c_heap: emp; others: [@post] globals: [@flow,@ver_post]
+ checkentail x::sll_size<size_1675>@M&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  : x::sll_size<size_1676>@M&post_1678(size_1676,size_1675,res,flow)&
+{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+v_bool_39_1645' & x'=null & x'=x & v_int_40_1636'=0 & res=v_int_40_1636' & 
+size_1676=size_1675&{FLOW,(4,5)=__norm#E}[]
+   es_infer_rel: [RELDEFN post_1678: ( res=0 & size_1676=size_1675 & 0<=size_1675) -->  post_1678(size_1676,size_1675,res,flow)]
+   ]
+
+*/

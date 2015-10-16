@@ -1,0 +1,56 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+//(2)
+infer [U,@pure_field,@classic] 
+//infer [U,@classic] self::char_star<v,p> & v!=0  |-  U(s,p).
+//infer [U] self::char_star<v,p> & v!=0  |-  U(s,p).
+ print residue.
+
+
+/*
+# ex16d1d3.slk dre "infer_c" -show-push-list ".*hp_"
+
+//(1)
+
+infer [U,@pure_field,@classic] 
+   self::char_star<v,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# I think GP_24(self) is unnecessary since
+  it does not have any instantiating parameter..
+
+# Expects just:
+
+  self::char_star<v,p>@M 
+        v!=0 |#|3  --> U(self,p)&true]
+
+ <1>emp&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> GP_24(self)&true; 
+                  self::char_star<v,p>@M * GP_24(self)&
+                   v!=0 |#|3  --> U(self,p)&true]
+[[ InferFold  ==>  Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
+
+-------------------------------------
+
+infer [U,@classic] 
+   self::char_star<v,p> & v!=0  |-  U(self,r).
+ print residue.
+
+# OK below
+
+ <1>emp&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> GP_33(p,self,r)&true; 
+                  self::char_star<v,p>@M * GP_33(p,self,r)&
+                   true |#|3  --> U(self,r)&true]
+[[ InferFold  ==>  Match(self,self) ==>  COND ==>  UnmatchedRHSData]]
+
+
+
+*/

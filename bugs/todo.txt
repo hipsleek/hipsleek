@@ -1882,6 +1882,309 @@ WARNING: _0:0_0:0:* between overlapping heaps: ( x::cellp( f2_310)<v_319>@M, x::
 Total number of errors: 1 in files:
   infer/infer14.slk({E16#Valid}).
 ===================================================================
+Total number of errors: 1 in files: (FIXED)
+  classic/classic1b.slk({E19#Fail},{E22#Fail},{E23#Fail},{E25#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' 
+===================================================================
+Total number of errors: 2 in files:
+  lemmas/nlseg4e.slk({L2#Valid})
+   lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
+===================================================================
+# ex55f.slk (FIXED with --old-do-match-infer-heap)
+
+# BUT --new-do-match-infer-heap UNSOUND
+
+infer [H1]  H1(y) |- y::node<a,null> .
+
+Residue:
+ <1>HP_27(flted_9_26)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(y)&
+                   true |#|3  --> y::node<a_25,flted_9_26>@M * 
+                                  HP_27(flted_9_26)&
+                   true]
+ [[ COND ==>  InferHeap]]
+
+# EXPECTS
+    HP_27(flted_9_26)&true |#|3  --> emp&flted_9_26=null]
+===================================================================
+# ex55h.ss (FIXED on filtering cond for mater_list)
+
+
+void append(node x, node tx, node y, node ty)
+	requires x::ll_tail2<tx, n> * y::ll_tail2<ty, m>
+        ensures x::ll_tail2<ty, m+n> ;
+{
+	tx.next = y;
+}
+
+# Why bind failure?
+
+Exception Failure("bind failure exception") Occurred!
+
+==============================================================
+# ex55g1.slk (FIXED via ex55g3.slk)
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+	 "<==" implication: : Valid.
+
+Failed to prove lem_12:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+# Would case-spec solve this?
+
+==============================================================
+# ex55g1.slk (FIXED by adding existential es_evars)
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> 
+     self::lseg<a, r> * r::lseg<b, p>.
+
+# should r be implicit, and p free & existential?
+
+# why free var warning?
+
+!!! **lem_store.ml#27:XXXX add_LEFT_coercion
+!!! **lem_store.ml#28:[Lemma "lem_12_left":  self::lseg<n,p>@M&n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[] ==> (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: [a,b]
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::lseg<n,p>@M&n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists n_67,p_68: self::lseg<n_67,p_68>@M&
+n=b+a & 0<=a & 0<=b & n_67=n & p_68=p&{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[r](exists a_55,b_56,
+   p_57: self::lseg<a_55,r>@M * r::lseg<b_56,p_57>@M&
+   a_55=a & b_56=b & p_57=p&{FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: [a,b]
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_SAFE
+ coercion_fold: None
+]
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[p_429]
+impl/expl vars:[]
+LHS:
+  r_359::lseg<b_358,p>@M&
+r_366=r_360 & Anon_365=Anon_361 & 0<=b_358 & 0<=(flted_5_362+1) & 
+n=b_358+flted_5_362+1 & 0<=b_356 & 0<=a_357 & n=b_356+a_357&
+{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   (exists r_547,a_548,b_549,a_550,
+   b_551: r_359::lseg<a_548,r_547>@M * r_547::lseg<b_549,p_429>@M&
+   b_514=b_551+a_550 & 0<=a_550 & 0<=b_551 & b_514=b_549+a_548 & 0<=a_548 & 
+   0<=b_549&{FLOW,(20,21)=__norm#E}[])
+
+--warn-free-vars-conseq
+
+Total number of errors: 30 in files:
+ error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/cell.ss test
+error at: parahip/ordered-locking.ss func
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+
+Total number of errors: 28 in files:
+ error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+
+===================================================================
+# ex55g3.slk (OK)
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 
+    <-> self::lseg<a, r> * r::lseg<b, p>.
+
+# case-spec below help with proving
+
+pred lseg<n, p> == 
+   case {
+      n=0 -> [] self = p ;
+      n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+   }     inv n >= 0.
+
+===================================================================
+# ex55g4.slk --eci
+
+# How come case-spec inference not working?
+
+   view lseg<n:int,p:node>= 
+    EList
+      :EBase 
+         (* lbl: *){3}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_17; r](* lbl: *){4}->(exists p_20,
+            flted_5_19: (* lbl: *){4}->self::node<Anon_17,r>@M * 
+                                       r::lseg<flted_5_19,p_20>@M&
+            flted_5_19+1=n & p_20=p&{FLOW,(1,26)=__flow#E}[])
+
+===================================================================
+# rft sleek
+
+Bugs with some lemmas due to changes in context.ml
+
+ sleek9.slk({E3#Valid},{E4#Valid}) 
+ lemmas/app-tail.slk({E1#Valid}) 
+ lemmas/ll_tail.slk(no result  for {E}) 
+ lemmas/nlseg4e.slk({L2#Valid}) 
+ lemmas/nlseg4e1.slk({E2#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+ lemmas/sll_tailL.slk({L2#Valid}) 
+ lemmas/dseg-new.slk({L3#Valid}) lemmas/dseg1.slk({L1#Valid}) 
+ lemmas/lseg_complex.slk({E3#Fail}).
+
+
+===================================================================
+--new-infer-heap
+
+ infer/infer1.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) 
+infer/infer2.slk({E5#Valid}) 
+ infer/infer5.slk({E4#Valid}) 
+ infer/infer6.slk({E1#Valid}) 
+ infer/infer7.slk({E10#Valid}) 
+ infer/infer8.slk({E1#Valid},{E10#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) infer/infer13.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid}) infer/infer14.slk({E1#Valid},{E11#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) 
+ infer/infer15.slk({E1#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}).
+===================================================================
+--old-infer-heap
+
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+===================================================================
+ex55k-dseg-new-unsound.slk --lem-en-lhs-unfold --old-empty-to-conseq --dis-lem-gen
+
+pred dseg<lm, rm:node,last> == self=rm & lm=last
+  or self::node<_,lm, p> * p::dseg<self,rm,last>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma_safe "2" self::rlseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
+
+# why can we prove this without lem_generation?
+
+Entailing lemma 2: Valid.
+Valid Lemmas : [2:<==] added to lemma store.
+===================================================================
+--old-kepp-all-matchres
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 82.87 second
+	Time spent in main process: 49.09 second
+	Time spent in child processes: 33.77 second
+	Number of false contexts: 93
+
+Total verification time: 136.55 second
+	Time spent in main process: 86.62 second
+	Time spent in child processes: 49.93 second
+	Number of false contexts: 414
+
+
+--new-kepp-all-matchres
+Total verification time: 87.70 second
+	Time spent in main process: 47.10 second
+	Time spent in child processes: 40.59 second
+	Number of false contexts: 93
+
+Total verification time: 137.75 second
+	Time spent in main process: 87.44 second
+	Time spent in child processes: 50.31 second
+	Number of false contexts: 414
+
+===================================================================
+# ex55.slk --new-lemma-unfold (FIXED with a try-catch)
+
+ lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
+
+# Why did it cause problem below? 
+
+ERROR: at ex55-sleek9.slk_28:30_28:67
+Message: malfunction with float out exp: n-1
+Exception(linearize_heap(dup)):Failure("malfunction with float out exp: n-1")
+Exception(linearize_formula):Failure("malfunction with float out exp: n-1")
+Exception(trans_formula):Failure("malfunction with float out exp: n-1")
+Exception(manage_unsafe_lemmas):Failure("malfunction with float out exp: n-1")
+Exception(process_list_lemma_helper):Failure("malfunction with float out exp: n-1")
+Exception(process_list_lemma):Failure("malfunction with float out exp: n-1")
+
+Exception processed: Failure("malfunction with float out exp: n-1")
+error at: 
+===================================================================
+# ex56.slk --en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings --new-lemma-unfold
+
+# unfolding affected normalization of some permissions lemma ..
+
+!!! **WARNING****solver.ml#9915:impl_inst and to_conseq not properly built
+!!! **cvutil.ml#893:h_formula_2_mem: [Begin] check fractional variable  perm_38_282 is full_perm
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+!!!:0: 0: **lemma.ml#230:ldef:
+=>coerc split2
+	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
+	 body:(emp ; (emp ; ((self::cellp{}(f1)<v>[HeapNode1]) * (self::cellp{}(f2)<v>[HeapNode1])))) * ([] & true)( FLOW __norm)lemmas(to be proved and saved)
+
+!!!:0: 0: **lemma.ml#231:res_ldef:
+=>coerc split2
+	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
+	 body:(EX v_192 v_191 . (emp ; (emp ; ((self::cell{}()<v_191,>@M[HeapNode1]) * (self::cell{}()<v_192,>@M[HeapNode1]))))*([] & (((v_192:int)) = ((v:int))) & (((v_191:int)) = ((v:int))))( FLOW __norm))lemmas(to be proved and saved)
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================

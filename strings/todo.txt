@@ -524,7 +524,7 @@ heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context:
 ==================================================================
 # strings/ex8d6.slk --pcp
 
-printing problem ..
+printing problem .. (FIXED)
 
   base case: 
   v=0->v=0 & self!=nullview_complex_inv: None

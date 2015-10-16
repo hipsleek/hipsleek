@@ -1,0 +1,130 @@
+# ex21s1c.slk
+
+pred_split [zip2,zip,ll,lseg].
+//pred_split [lseg].
+//pred_split [zip2].
+pred_reuse [*][*].
+pred_reuse_subs [*].
+print views.
+
+# After this synthesis, can we add the lemma:
+   self::zip2<y> ->  HP_69(self) * HP_70(y)
+ that was proven. 
+
+ Better still, Could we perhaps test for:
+   self::zip2<y> <->  HP_69(self) * HP_70(y)
+ and then check which direction had been proven,
+ adding the relevant lemma into our lemma library?
+
+=========================================================
+# ex21s1d.slk (FIXED)
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+pred_split [zip2].
+
+!!! process_pred_split:
+[zip2]
+
+# Unsuccessful split. Can you do a SCC on the
+  parameters, so that you known that to split by
+  self::zip2(y,p) --> H1(self) * H2(y,p)
+
+=========================================================
+# ex25a.slk (FIXED)
+
+# llN not maintained correctly in SCC and graph..
+
+SCC:[[ll];[size]]
+Graph:[(size,[size]);(ll,[ll]);(llN,[])]
+!!! **sleekengine.ml#3096:Printing Views
+:
+[ view llN<n:int>= 
+  EList
+    :EBase 
+       (* lbl: *){5}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+=========================================================
+# ex21s1f.slk -dre "Syn:"
+
+lemma_infer [P1,P2,@classic]
+  self::zip2<ys,zs> -> P1(self)*P2(zs,ys).
+
+# Having P2(zs,ys) parameters in wrong order seems to have led to:
+  Can we make it more robust. (compare with ex21s1e.slk)
+
+    , view P1<>= 
+  EList
+    :EBase 
+       exists (Impl)[p_82](* lbl: *){13}->(exists Anon_80: (* lbl: *){13}->
+       self::node<Anon_80,p_82>@M * p_82::P1<>@M&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          exists (Impl)[p_82](* lbl: *){14}->(exists Anon_80: (* lbl: *){14}->
+          self::node<Anon_80,p_82>@M * p_82::P1<>@M&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){15}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+# this was triggered by:
+
+(==syn.ml#79==)
+Syn:add_dangling_hprel@8@2@1
+Syn:add_dangling_hprel inp1 : fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2)
+Syn:add_dangling_hprel@8 EXIT:( fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2),false)
+
+(==syn.ml#79==)
+Syn:add_dangling_hprel@9@2@1
+Syn:add_dangling_hprel inp1 : fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2)
+Syn:add_dangling_hprel@9 EXIT:( fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2),false)
+
+=========================================================
+# ex21s1d.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+pred_split [zip2].
+
+# Below was scheduled. Duplicate or due to putting
+  root parmater y as 2nd parameter.
+  Can we check instantiatinng paramete and
+  try to make them root where possible.
+
+  Use HP_44(y,z) rather than HP_44(z,y)
+
+
+!!! **sleekengine.ml#2541:
+ Proven : self::zip2<y,z>@M&{FLOW,(1,26)=__flow#E}[] ->  
+     HP_44(z,y) * HP_45(self)&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#3096:
+
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================

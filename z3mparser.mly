@@ -14,12 +14,23 @@
 %start output
   %type <Z3m.z3m_res> output
   /* %type <(string * Z3m.z3m_val) list> output */
+
+%start output_unsat_core
+  %type <Z3m.z3m_res> output_unsat_core
 %%
 
 output:
     sat_unk model { Z3m.Sat_or_Unk $2 }
-  | UNSAT OPAREN discardable_tokens CPAREN { Z3m.Unsat }
+  | UNSAT z3_message { Z3m.Unsat [] }
   ;
+
+output_unsat_core:
+    sat_unk z3_message { Z3m.Sat_or_Unk [] }
+  | UNSAT unsat_core { Z3m.Unsat $2 }
+
+z3_message:
+    {}
+  | OPAREN discardable_tokens CPAREN {}
 
 discardable_tokens:
     discardable_tokens discardable_token {}
@@ -32,6 +43,9 @@ discardable_token:
   | INT_LIT {}
   | COLON {}
   | QUOTATION {}
+  | SAT {}
+  | UNSAT {}
+  | UNK {}
   ;
 
 sat_unk:
@@ -56,6 +70,13 @@ sol_list:
 sol:
     OPAREN DEFFUN ID OPAREN CPAREN z3m_typ z3m_val CPAREN { ($3, $7) }
   ;
+
+unsat_core:
+    OPAREN id_list CPAREN { $2 }
+
+id_list:
+    ID { [$1] }
+  | id_list ID { $1 @ [$2] }
 
 z3m_typ:
     INT {}

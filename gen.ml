@@ -52,6 +52,12 @@ struct
   exception Bad_string
   exception Bail
 
+  let add_num ls =
+    let rec aux ls n = match ls with
+      | [] -> []
+      | x::xs -> (x,n)::(aux xs (n+1)) in
+    aux ls 0
+
   let hash_to_list ht =
     Hashtbl.fold (fun a b c -> (a,b)::c) ht []
 
@@ -60,6 +66,15 @@ struct
         if a=b then 0
         else if a>b then -1
         else 1) l
+
+  let sort_gen_list score vlist =
+    let compare v1 v2 =
+      let n1 = score v1 in
+      let n2 = score v2 in
+      if n1<n2 then -1
+      else if n1=n2 then 0
+      else 1 in
+    List.sort compare vlist
 
   let silenced_print f s = if !silence_output then () else f s 
 
@@ -608,7 +623,7 @@ class change_flag =
     method no_change = (cnt==0)
   end;;
 
-class ['a] stack  =
+class ['a] stack =
   object (self)
     val mutable recent = 0
     val mutable stk = []
@@ -621,6 +636,12 @@ class ['a] stack  =
     method get_stk_recent  = 
       if recent<=0 then []
       else BList.take recent stk 
+    method get_stk_recent_reset  = 
+      if recent<=0 then []
+      else 
+        (* let () = print_endline ("XXXX get_stk_recent_reset "^(string_of_int recent)) in *)
+        let s=BList.take recent stk in
+        (self # reset_recent;s)
     (* return recent content of stack *)
     method get_stk_and_reset  = 
       let s=stk in 
@@ -677,11 +698,11 @@ class ['a] stack  =
       end
     method reset = 
       begin
-        stk <- []; 
-        recent <- 0
+        self # reset_recent;
+        stk <- []
       end
     method reset_recent = 
-      recent <- 0
+      recent <- 0;
     method clone =
       Oo.copy self
       (* let n = new Gen.stack in *)
@@ -700,20 +721,42 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       (* remove dupl *)
       let s = super # get_stk in
       BList.remove_dups_eq eq s
-    method push_list_pr (ls:'a list) =  
+    (* method get_stk  =  *)
+    (*   (\* remove dupl *\) *)
+    (*   let s = self # get_stk_no_dupl in *)
+    (*   print_endline ("\nget_stk("^name^"):"^((Basic.pr_list epr) s));  *)
+    (*   s *)
+    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
       (* WN : below is to be removed later *)
+      (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
       let n = List.length ls in
-      if n=0 then ()
+      if n=0 || name=""  then ()
       else 
-        (* let () = print_endline ("\nXXXX push_list("^name^":"^(string_of_int n)^")"^(Basic.pr_list epr ls)) in *)
-        super # push_list ls 
+      let () = 
+        match !Globals.show_push_list with
+        | None -> ()
+        | Some s -> 
+          let flag = match !Globals.show_push_list_rgx with
+            | None -> true
+            | Some rgx -> Str.string_match rgx name 0 in
+          if flag (* s=name || s="" *) then
+            print_endline ("\npush_list("^name^"):"^(string_of_int n)^((Basic.pr_list epr) ls)) 
+          else () in
+      super # push_list ls 
+    method push_list_pr (ls:'a list) =  
+      self # push_list (* ~pr_flag:true *) ls
     method reset_pr  =  
         (* let () = print_endline ("\nXXXX reset("^name) in *)
         super # reset 
     method push_pr (s:string) (ls:'a) =  
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
       super # push ls 
-    method string_of = Basic.pr_list_ln elem_pr stk
+    method string_of = 
+      let stk2 = self # get_stk(* _no_dupl *) in
+      Basic.pr_list_ln elem_pr stk
+    method string_of_recent = 
+      let stk = self # get_stk_recent in
+      Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
     method string_of_no_ln_rev = 
       let s = super#reverse_of in
@@ -733,6 +776,13 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     method overlap (ls:'a list) = 
       if (ls == []) then false
       else List.exists (fun x -> List.exists (elem_eq x) ls) stk
+    method reset_recent = 
+      (* if nn="es_infer_hp_rel" then  *)
+      (*   begin *)
+      (*     print_endline ("XXXX reset recent "^(string_of_int recent)); *)
+      (*     print_endline ("XXXX "^(self # string_of_recent)) *)
+      (*   end; *)
+      super # reset_recent
   end;;
 
 
@@ -2405,3 +2455,4 @@ let range a b =
     if a > b then [] else a :: aux (a+1) b  in
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
+

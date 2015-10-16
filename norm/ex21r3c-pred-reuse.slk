@@ -1,0 +1,57 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+
+pred lseg<n,p> == self::lseg111<n,p>.
+
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv n>=0.
+
+lemma_unsafe self::lseg<n,p> <- self::lseg111<n,p>.
+
+infer[@classic]  self::lseg111<n,p> |- self::lseg<n,p>.
+
+infer[@classic]   self::node<_, q> * q::lseg111<n-1,p> 
+     |- self::lseg<n,p>.
+print residue.
+
+infer[@classic]   self = p & n=0 |- self::lseg111<n,p>.
+print residue.
+
+infer[@classic]   self = p & n=0 |- self::lseg<n,p>.
+print residue.
+
+
+/*
+# ex21r3c.slk
+
+ pred lseg<n,p> == self::lseg111<n,p>.
+
+# raw base case need to include non-heap and non-recursive item
+ raw_base_case : self::lseg111<n,p>
+
+  not sure if guarded base-case is useful?
+
+-----
+
+lseg111<..>
+  materialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){1}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}
+  []base case: n=0->self=p & 
+                                                                    n=0
+lseg111<..>
+  materialized vars: [(self,full,[lseg111])]
+
+*/

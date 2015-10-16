@@ -1,0 +1,49 @@
+data cell {
+ int val;
+}.
+
+//(1)
+infer [] true |- true.
+print residue.
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+//(2)
+infer [] htrue * x::cell<_> |- emp.
+print residue.
+// <1>(htrue) * x::cell<Anon_11>@M&{FLOW,(20,21)=__norm#E}[]
+
+//(3)
+infer [] htrue * htrue |- true.
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+
+//(4)
+infer [] x::cell<_> * emp |- true.
+print residue.
+// <1>x::cell<Anon_12>@M&{FLOW,(20,21)=__norm#E}[]
+
+//(5)
+infer [] htrue * x::cell<_> |- true.
+print residue.
+// <1>x::cell<Anon_12>@M&{FLOW,(20,21)=__norm#E}[]
+
+//(6)
+infer [] x::cell<_> * htrue |- true.
+print residue.
+// <1>x::cell<Anon_12>@M&{FLOW,(20,21)=__norm#E}[]
+
+/*
+# ex10c8.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+  (FIXED)
+
+//(15)
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+*/

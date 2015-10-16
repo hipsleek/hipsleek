@@ -1,0 +1,73 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+HeapPred U(node x).
+HeapPred  GP_154(node x,node@NI b).
+
+
+relAssume //(1)
+emp&flted_22_139=null --> U(flted_22_139).
+
+
+relAssume //(1)
+q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+  q_147!=null --> U(q_147).
+
+relAssume //(1)
+U(q_153)&q_147!=null --> GP_154(q_153,q_147).
+
+print relAssumes. // To add hprel type
+
+shape_add_dangling [U,GP_154].
+
+//print relAssumes.
+
+shape_simplify [U,GP_154].
+
+print relAssumes.
+
+//shape_unfold [U].
+//shape_unfold [GP_154].
+shape_unfold [U,GP_154].
+
+print relAssumes.
+
+shape_merge [U,GP_154].
+
+print relAssumes.
+
+shape_simplify [U,GP_154].
+
+print relAssumes.
+
+/*
+# ex20c.slk
+
+Please add a shape_merge command ..
+
+shape_merge [U,GP_164].
+
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+error at: 
+SLEEK FAILURE (END)
+
+--------------------------
+let add_infer_type_to_hprel ras =
+
+  hprel_type: hprel_infer_type;
+  hprel_unknown: CP.spec_var list; (* the unknown vars inferred *)
+
+!!! **cformula.ml#19713:add_infer_type(output):[(fold,[U]),(fold,[U]),(fold,[GP_154])]
+!!! **sleekengine.ml#1628:Current list of heap relational assumptions:
+ 
+  [emp&flted_22_139=null |#|  --> U(flted_22_139); 
+   q_147::node<Anon_31,q_32>@M * GP_154(q_153,q_147)&
+    q_147!=null & Anon_31=Anon_152 & q_32=q_153 |#|  --> U(q_147); 
+   U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147)]
+Exception processed: Failure("Unexpected formula in the LHS/RHS of a hprel  emp&flted_22_139=null |#|  --> U(flted_22_139)")
+
+*/
+

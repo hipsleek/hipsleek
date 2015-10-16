@@ -25,9 +25,9 @@ void append(node x, node y)
   ensures x::lseg<r,n> * r::node<b,y>;
 {
   // dprint;
-	node tmp = x.next;
-	bool fl = tmp != null;
-	if (fl) {
+	//node tmp = x.next;
+	//bool fl = tmp != null;
+	if (x.next!=null) {
 		append(x.next, y);
 		return;
 	}

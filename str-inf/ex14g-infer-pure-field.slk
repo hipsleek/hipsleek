@@ -1,0 +1,84 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+
+  //lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+  //lemma_infer [U,@classic] self::WFG<p> <- self::WFSeg<q>*U(q,p).
+  // Failed to inferred for lem_12:<== (invalid lemma encountered)
+  //lemma_infer_pred [U,@classic] self::WFG<p> -> self::WFSeg<q>*U(q,p).
+  lemma_infer [U,@classic,@pure_field] self::WFG<p> -> self::WFSeg<q>*U(q,p).
+  print residue.
+
+
+  infer [U,@pure_field] 
+   x::char_star<n,p> & n=0 |- U(x,p) .
+  print residue.
+  /*
+ inferred hprel: [x::char_star<n,p>@M&n=0 |#|3  --> U(x,p)&true]
+
+  */
+
+
+  infer [U,@pure_field] 
+   x::char_star<0,p>  |- U(x,p) .
+  print residue.
+  /*
+   hprel: [x::char_star<flted_42_129,p>@M&true |#|3  --> U(x,p)&true]
+   # EXPECTs
+   hprel: [x::char_star<flted_42_129,p>@M& = flted_42_129=0  --> U(x,p)&true]
+  */
+
+  infer [U,@classic,@pure_field] 
+   self::char_star<0,p> |- self::WFSeg<q>*U(q,p) .
+  print residue.
+/*
+ inferred hprel: [x::char_star<flted_44_111,p>@M&
+                   flted_44_111=0 |#|3  --> U(x,p)&true]
+*/
+
+
+/*
+# ex14g.slk
+
+  infer [U,@classic,@pure_field] 
+   self::char_star<0,p> |- self::WFSeg<q>*U(q,p) .
+
+# What happened to the pure field?
+
+<1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [q::char_star<flted_33_173,p>@M&true |#|3  --> U(q,p)&true]
+[[ Fold ==>  COND ==>  InferHeap]]
+
+
+id: 4; caller: []; line: 0; classic: true; kind: Sleek_Entail(1); hec_num: 1; evars: []; impl_vars: [q]; infer_vars: [ U]; c_heap: emp; others: [@pure_field,@leak] globals: [@leak,@pure_field]
+ checkentail self::char_star<flted_33_104,p>@M&flted_33_104=0&{FLOW,(20,21)=__norm#E}[]
+ |-  self::WFSeg<q>@M * U(q,p)&{FLOW,(20,21)=__norm#E}[]. 
+hprel_ass: [ q::char_star<flted_33_104,p>@M |#|  --> U(q,p)]
+ho_vars: nothing?
+res:  1[
+    emp&self=q & flted_33_104=0&{FLOW,(20,21)=__norm#E}[]
+   es_infer_hp_rel: [q::char_star<flted_33_104,p>@M |#|  --> U(q,p)]
+   ]
+
+
+*/

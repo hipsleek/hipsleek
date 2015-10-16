@@ -1,0 +1,33 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+
+HeapPred H(node a).
+//lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+// fail due to complex lemma
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+lemma_safe  self::sll<> -> self::lseg<qqq> * qqq::sll<>.
+//print residue.
+/*
+# ex17h2.slk
+
+lemma_safe  self::sll<> -> self::lseg<q> * q::sll<>.
+
+# This lemma can be proven 
+
+
+*/

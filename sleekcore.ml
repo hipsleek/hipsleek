@@ -560,7 +560,7 @@ let validate_x ls_ex_es0 ls_act_es0=
     (*compare constrs*)
     if b1 then
       let b2= if ls_ex_ass = [] then true else
-          let ls_act_ass = (List.map (fun hp -> (hp.CF.hprel_lhs, hp.CF.hprel_rhs)) es.CF.es_infer_hp_rel)@
+          let ls_act_ass = (List.map (fun hp -> (hp.CF.hprel_lhs, hp.CF.hprel_rhs)) es.CF.es_infer_hp_rel # get_stk_recent)@
                            (List.map (fun (_,lhs,rhs) ->
                                 (CF.formula_of_pure_P lhs no_pos,
                                  CF.formula_of_pure_P rhs no_pos)) es.CF.es_infer_rel # get_stk_recent) in

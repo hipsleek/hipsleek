@@ -25,7 +25,7 @@ let simplify f args =
   let bnd_vars = diff (CP.fv f) args in
   if bnd_vars == [] then f else
     CP.mkExists_with_simpl om_simplify (* Tpdispatcher.simplify_raw *)
-      (diff (CP.fv f) args) f None (CP.pos_of_formula f)
+      bnd_vars f None (CP.pos_of_formula f)
 
 let simplify f args =
   let pr1 = !CP.print_formula in

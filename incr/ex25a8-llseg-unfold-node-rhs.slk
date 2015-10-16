@@ -1,0 +1,49 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+
+//infer [U1,@classic,@pure_field] U1(x) |- x::node<_,q>*q::ll<>.
+
+//infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> |- x::node<0,p>.
+
+infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> 
+    |- x::node<v,q2>*U2(q2,q3)*q3::node<0,p>.
+print residue.
+expect Valid.
+
+/*
+# ex25a8.slk 
+
+infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> 
+    |- x::node<v,q2>*U2(q2,q3)*q3::node<0,p>.
+
+# InferHeap below seems complicated as it has
+  a complex LHS. I think we really need to perform
+  unfolding gradually one unfold at a time, followed
+  by matches subsequently.
+
+  Complex LHS will be hard to transform..
+
+GOT below
+=========
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_57(v_54@NI,q@NI)&true |#|3  --> emp&true; 
+                  HP_58(q2_55,q@NI)&true |#|3  --> emp&true; 
+                  HP_59(q,x@NI)&true |#|3  --> emp&true; 
+                  U2(x,q) * q::node<flted_17_28,p>@M&
+                   true |#|3  --> x::node<v_54,q2_55>@M * 
+                                  HP_57(v_54@NI,q@NI) * HP_58(q2_55,q@NI) * 
+                                  HP_59(q,x@NI)&
+                   true]
+[[ SEARCH ==>  InferHeap]]
+
+
+*/

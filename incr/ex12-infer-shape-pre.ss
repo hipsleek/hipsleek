@@ -1,5 +1,5 @@
 /* singly linked lists */
-
+//../hip ex12-infer-shape-pre.ss --classic
 /* representation of a node */
 data node {
 	int val;

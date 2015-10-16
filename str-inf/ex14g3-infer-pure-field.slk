@@ -1,0 +1,52 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+
+  //lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+  //lemma_infer [U,@classic] self::WFG<p> <- self::WFSeg<q>*U(q,p).
+  // Failed to inferred for lem_12:<== (invalid lemma encountered)
+  //lemma_infer_pred [U,@classic] self::WFG<p> -> self::WFSeg<q>*U(q,p).
+  lemma_infer [U,@classic,@pure_field]
+       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+
+   print residue.
+ 
+/*
+# ex14g3.slk
+
+  lemma_infer [U,@pure_field]
+       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+
+# What happened to the pure field in lemma proving?
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [q_131::char_star<flted_16_130,p>@M&
+                   true |#|3  --> U(q_131,p)&true; 
+                  q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M&
+                   true |#|3  --> U(q_142,p)&true]
+
+
+
+*/

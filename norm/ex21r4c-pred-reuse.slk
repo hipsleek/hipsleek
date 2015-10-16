@@ -1,0 +1,50 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+/*
+pred lseg2a<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg<n-1,p> 
+  inv true.
+*/
+
+pred lseg<n,p> == self::lseg111<n,p>.
+
+/*
+pred lseg3<p,n> == self = p & n=0
+	or self::node<_, q> * q::lseg3<p,n-1> 
+  inv true.
+*/
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+
+pred_reuse [*][*].
+
+/*
+checkentail x::lseg3<p,1> |- x::lseg2a<n,p>.
+print residue.
+*/
+
+/*
+# ex21r4c.slk
+
+pred lseg<n,p> == self::lseg111<n,p>.
+
+# can we handle explicit pred equivalence by
+  adding to view_equiv_set.
+
+!!! **astsimp.ml#2444:raw_base_case:None
+!!! **astsimp.ml#2485:vars:[n,p]
+!!! **astsimp.ml#2486:body: self::lseg111<n_22,p_23>@M
+!!! **astsimp.ml#2487:pure: n_22=n & p_23=p
+!!! **astsimp.ml#2488:view_pt_by_self:[lseg111]
+
+*/

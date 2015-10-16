@@ -1,0 +1,72 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = null 
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred U1(node x).
+HeapPred U2(node x,node@NI y).
+HeapPred U3(node x,node y).
+
+lemma_infer [U,@classic]
+  self::app3<> -> self::node<_,q>*U(q).
+
+print residue.
+
+/*
+# ex21d1b.slk
+
+
+lemma_infer [U,@classic]
+  self::app3<> -> self::node<_,q>*U(q).
+
+# Why did we have below?
+
+   q_147::app3<>@M&q_147!=null --> U(q_147)&true
+
+# ex21d1a .slk did not show it.
+
+ inferred hprel: [q_147::app3<>@M&q_147!=null --> U(q_147)&true; 
+                  q_147::node<Anon_18,q>@M * GP_152(q,q_147@NI)&
+                   q_147!=null --> U(q_147)&true; 
+                  emp&flted_22_140=null --> U(flted_22_140)&true]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  InferFold 0 ==>  COND ==>  Match(q_147,q_147) ==> ||OR|| ==>  Match(self_lem_19,self_lem_19) ==>  UnmatchedRHSData]]
+
+
+id: 7; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: [q]; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@leak]
+ checkentail (exists Anon_136,
+q_137: self_lem_19::node<Anon_136,q_137>@M * q_137::app3<>@M&q_137!=null&
+{FLOW,(20,21)=__norm#E}[])
+ |-  (exists Anon_18,q: self_lem_19::node<Anon_18,q>@M * U(q)&
+{FLOW,(20,21)=__norm#E}[]). 
+hprel_ass: [ q_147::app3<>@M&q_147!=null |#|  --> U(q_147),
+ q_147::node<Anon_18,q>@M * GP_152(q,q_147)&q_147!=null |#|  --> U(q_147)]
+ho_vars: nothing?
+res:  1[
+    emp&q_147!=null&{FLOW,(20,21)=__norm#E}[]
+   es_evars: [Anon_148; q_149]
+   es_gen_impl_vars(E): [q]
+   ]
+
+
+*/

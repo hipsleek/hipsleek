@@ -1,0 +1,53 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+infer [H,@classic] H(p) * x::node<1,null> & p=null |- true.
+print residue.
+
+infer [H,@classic,P] P(y) * z::node<1,y> * H(p) * x::node<1,null> & p=null |- true.
+print residue.
+
+/*
+<1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+*/
+
+
+infer [H,@classic] H(p) * x::node<1,p> & p=null |- true.
+print residue.
+/*
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_52_95,p>@M&true --> emp&true]
+*/
+
+/*
+# ex15d3.slk 
+
+infer [H,@classic] H(p) * x::node<1,p> & p=null |- true.
+
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_52_95,p>@M&true --> emp&true]
+
+# Since p=null, maybe below is sufficient:
+
+ inferred hprel: [H(p)&p=null --> emp&true]
+
+
+(==infer.ml#3781==)
+find_guard@12
+find_guard inp1 :left heap:[ x::node<flted_22_34,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :left selected preds:[(H,[p])]
+find_guard inp4 :[]
+find_guard@12 EXIT:Some( x::node<flted_22_34,p>@M)
+
+
+*/

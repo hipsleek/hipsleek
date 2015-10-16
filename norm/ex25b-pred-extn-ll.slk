@@ -1,0 +1,29 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred B<> == self::node<_,q>*q::A<> * x::C<>.
+
+pred C<> == self=null.
+
+pred A<> == self::B<>.
+
+
+print views.
+
+/*
+# ex25a.slk
+
+# llN not maintained correctly in SCC and graph..
+
+SCC:[[ll];[size]]
+Graph:[(size,[size]);(ll,[ll]);(llN,[])]
+!!! **sleekengine.ml#3096:Printing Views
+:
+[ view llN<n:int>= 
+  EList
+    :EBase 
+       (* lbl: *){5}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+
+*/

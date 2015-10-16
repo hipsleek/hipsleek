@@ -200,8 +200,20 @@ let common_arguments = [
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
-  ("-dd", Arg.Set Debug.devel_debug_on,
+  ("-dd", Arg.Unit (fun _ ->
+      Debug.devel_debug_on :=true;
+      Debug.devel_debug_steps :=true
+     ),
    "Turn on devel_debug on short and normal output");
+  ("-dd-steps", Arg.Set Debug.devel_debug_steps,
+   "Turn on tracing of entailment proving steps ");
+  ("-dd-esl", Arg.Int (fun n -> 
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Debug.devel_debug_on:=false;
+       Debug.devel_debug_sleek_proof := n;
+     ),
+   "Turn on devel_debug for a particular sleek proof");
   ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
    "Turn on devel_debug only short output");
   ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),
@@ -304,9 +316,7 @@ let common_arguments = [
   ("--log-mona", Arg.Set Mona.log_all_flag,
    "Log all formulae sent to Mona in file allinput.mona");
   ("--log-redlog", Arg.Set Redlog.is_log_all,
-   "Log all formulae sent to Reduce/Redlog in file al
-
-linput.rl");
+   "Log all formulae sent to Reduce/Redlog in file allinput.rl");
   ("--log-math", Arg.Set Mathematica.is_log_all,
    "Log all formulae sent to Mathematica in file allinput.math");
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
@@ -314,12 +324,56 @@ linput.rl");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
   ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--warn-fvars-rhs-match", Arg.Set Globals.warn_fvars_rhs_match,"Enable Warning of Free Vars in RHS of Match");
+  ("--warn-post-free-vars", Arg.Set Globals.warn_post_free_vars,"Enable Warning of Free Vars in Post-Conditions");
+  ("--warn-trans-context", Arg.Set Globals.warn_trans_context,"Enable Warning of Non-empty Perm Vars");
   ("--warn-nonempty-perm-vars", Arg.Set Globals.warn_nonempty_perm_vars,"Enable Warning of Non-empty Perm Vars");
+  ("--warn-do-match-infer-heap", Arg.Set Globals.warn_do_match_infer_heap,"Enable Warning of do_match during infer_heap");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
+  ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--old-lemma-unfold", Arg.Set Globals.old_lemma_unfold,"Do not use lemma single unfold");
+  ("--new-lemma-unfold", Arg.Clear Globals.old_lemma_unfold,"Use lemma single unfold");
+  ("--old-view-equiv", Arg.Set Globals.old_view_equiv,"Do not use view equivalence (pred reuse)");
+  ("--new-view-equiv", Arg.Clear Globals.old_view_equiv,"Use view equivalence (pred reuse)");
+  ("--old-search-always", Arg.Set Globals.old_search_always,"Allow search_action always..");
+  ("--new-search-always", Arg.Clear Globals.old_search_always,"Use smart search_action always..");
+  ("--en-cond-always", Arg.Set Globals.cond_action_always,"Allow cond_action always..");
+  ("--en-rev-priority", Arg.Set Globals.rev_priority,"Allow reverser priority for action ");
+  ("--old-coer-target", Arg.Set Globals.old_coer_target,"Allow coer_target check before applying lemma");
+  ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
+  ("--en-infer-back-ptr", Arg.Set Globals.infer_back_ptr,"Enable infer back pointer for infer_fold");
+("--dis-infer-back-ptr", Arg.Clear Globals.infer_back_ptr,"Disble infer back pointer for infer_fold");
+  ("--new-infer-complex-lhs", Arg.Clear Globals.old_infer_complex_lhs,"Disallow inference of complex LHS");
+  ("--old-infer-complex-lhs", Arg.Set Globals.old_infer_complex_lhs,"Allow inference of complex LHS");
+  ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
+  ("--old-base-case-fold-hprel", Arg.Set Globals.old_base_case_fold_hprel,"Use old method of base_case_fold for inferring hprel");
+  ("--new-base-case-fold-hprel", Arg.Clear Globals.old_base_case_fold_hprel,"Use new  method of base_case_fold for inferring hprel");
+  ("--old-fvars-as-impl-match", Arg.Set Globals.old_fvars_as_impl_match,"Use old method where free var is treated as implicit vars");
+  ("--new-fvars-as-impl-match", Arg.Clear Globals.old_fvars_as_impl_match,"New method where free var are not treated as implicit vars");
+  ("--old-infer-heap", Arg.Set Globals.old_infer_heap,"Use old method of scheduling Infer_Heap");
+  ("--new-infer-heap", Arg.Clear Globals.old_infer_heap,"Use new method of scheduling Infer_Heap");
+  ("--old-mater-coercion", Arg.Set Globals.old_mater_coercion,"Use Old Mater Coercion Selection");
+  ("--new-mater-coercion", Arg.Clear Globals.old_mater_coercion,"Use New Mater Coercion Selection");
+  ("--old-keep-triv-relass", Arg.Set Globals.old_keep_triv_relass,"Keep trivial relation assume (hp_rel and pure relation) during inference");
+  ("--new-keep-triv-relass", Arg.Clear Globals.old_keep_triv_relass,"Remove trivial relation assume during inference");
+  ("--old-post-impl-to-ex", Arg.Set Globals.old_post_impl_to_ex,"Convert impl to exist vars in post-condition");
+  ("--old-post-conv-impl", Arg.Set Globals.old_post_conv_impl,"Convert exist vars in post-condition to implicit");
+  ("--new-post-conv-impl", Arg.Clear Globals.old_post_conv_impl,"Convert exist vars in post-condition to implicit");
+  ("--old-classic-rhs-emp", Arg.Set Globals.old_classic_rhs_emp,"Use old handling of classic rhs emp");
+  ("--new-classic-rhs-emp", Arg.Clear Globals.old_classic_rhs_emp,"Use new handling of classic rhs emp");
+  ("--old-incr-infer", Arg.Set Globals.old_incr_infer,"Use old inference system");
+  ("--old-rm-htrue", Arg.Clear Globals.new_rm_htrue,"Disable removal of htrue from ante");
+  ("--old-keep-all-matchres", Arg.Set Globals.old_keep_all_matchres,"Keep all matchres including empty ones");
+  ("--new-keep-all-matchres", Arg.Clear Globals.old_keep_all_matchres,"Filter out matchres that are empty first");
+  ("--old-do-match-infer-heap", Arg.Set Globals.old_do_match_infer_heap,"Enable do match during infer_heap (seems wrong)");
+  ("--new-do-match-infer-heap", Arg.Clear Globals.old_do_match_infer_heap,"Disable do match during infer_heap (cleaner)");
+  ("--old-infer-hprel-classic", Arg.Set Globals.old_infer_hprel_classic,"Enable infer hp_rel handling of classic (seems redundant)");
+  ("--old-collect-hprel", Arg.Set Globals.old_collect_hprel,"Enable Old False which invokes infer_hp_rel without classic");
   ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
   ("--old-base-case-unfold", Arg.Set Globals.old_base_case_unfold,"Enable Old BaseCaseUnfold Method");
   ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
+  ("--old-infer-hp-collect", Arg.Set Globals.old_infer_hp_collect,"Enable Old Infer Collect Method for Shape");
   ("--old-impl-gather", Arg.Set Globals.old_impl_gather,"Enable Extra Impl Gather at CF.struc_formula_trans_heap_node");
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
   ("--en-hrel-as-view", Arg.Set Globals.hrel_as_view_flag,"Enable HRel as view");
@@ -582,6 +636,13 @@ linput.rl");
        Debug.read_main ()
      ),
    "Shorthand for -debug-regexp");
+  ("-show-push-list", Arg.String (fun s ->
+       let _ = print_endline ("!!!-show-push-list "^s) in
+       let () = Globals.show_push_list:=Some s in
+       let () = if not(s="") then Globals.show_push_list_rgx := Some (Str.regexp s) in
+       ()
+     ),
+   "Show all push-list with that name (reg-ex)");
   ("-drea", Arg.String (fun s ->
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),
@@ -710,6 +771,11 @@ linput.rl");
   (*maintains multi slices but combines them into one slice just before going to the prover
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
+
+  (* String Inference *)
+  ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
+  ("--ops", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
+  ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
 
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
@@ -879,6 +945,10 @@ linput.rl");
    (* Arg.Clear Globals.opt_classic,  *)
    "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--old-lemma-settings", Arg.Unit (fun _ ->
+       Globals.old_norm_w_coerc := true;
+       Globals.old_search_always := true;
+     ), "Allow old lemma settings");
   ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
@@ -910,6 +980,8 @@ linput.rl");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--sa-en-part", Arg.Set Globals.sa_part, "enable partition parameters into rele groups");
+  ("--sa-dis-part", Arg.Clear Globals.sa_part, "disable partition parameters into rele groups");
   ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--sa-prefix-pred", Arg.Clear Globals.sa_prefix_emp, "disable pre-condition fixpoint as empty during shape analysis");
   ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");

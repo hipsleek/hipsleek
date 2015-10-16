@@ -1,0 +1,89 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred U(node x).
+
+pred app4<> == 
+  self::node<_,null>
+  or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+// no change
+
+pred tmp_app4<n> ==
+  self::node<_, p> * p::dp<n-1>
+  inv self!=null& n>0.
+// no change
+
+pred dp<n> ==
+  self = null & n=0
+  or self::tmp_app4<n>
+  //or self::node<_, p> * p::dp<>
+  inv n>=0.
+// unfold tmp_app4
+
+pred tmp_app4a<> ==
+  self::node<_, p> * p::dp1<>
+  inv self!=null.
+// no change
+  
+pred dp1<> ==
+  self = null 
+  or self::node<_, p> * p::dp1<>
+  inv true.
+
+print views.
+pred_unfold [*].
+pred_unfold [*].
+print views.
+pred_reuse [*][*].
+
+
+lemma_test "L2" self::tmp_app4<n> <-> self::node<_, p> * p::dp<n-1>.
+// fails because dp not normalized
+
+checkentail x::node<_,null> |- x::dp<n>.
+print residue.
+
+//lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
+// valid
+
+
+/*
+# ex21u3e5.slk
+
+pred_unfold [*].
+
+print views.
+
+lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
+// fails because dp not normalized
+
+Seems that all lemmas are proven prior to the other
+commands. Can we process the lemmas in accordance with the
+order of the commands?
+
+!!! 
+Entailing lemma L2: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (no cex)(may) cause: UnionR[Nothing_to_do?cond action is empty,Nothing_to_do?cond action is empty]
+
+Failed to infer proved for L2:<==> (invalid lemma encountered).
+
+Entailing lemma L4: Valid.
+
+ Lemma infer proved succeeded in current context.
+
+!!! **norm.ml#284:views selected for unfolding:
+[(dp,[(tmp_app4, (* lbl: *){6}->(exists Anon_14,
+p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
+{FLOW,(1,26)=__flow#E}[]))])]
+!!! **sleekengine.ml#3031:
+
+
+*/

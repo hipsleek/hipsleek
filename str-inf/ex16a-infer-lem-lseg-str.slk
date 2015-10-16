@@ -1,0 +1,71 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+
+  lemma_infer [U,@classic] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+  print residue.
+
+/*
+# ex14b.slk
+
+ lemma_infer [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+# can get a more general U that is inductive?
+
+Entailing lemma lem_12: Valid.
+ Temp Lemma(s) inferred is valid in current context.
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(self_lem_12,q_149)&true |#|3  --> emp&self_lem_12=q_149]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q_149,self_lem_12)]]
+
+!!! **WARNING****solver.ml#12993:do_match after infer_heap
+!!! **solver.ml#12994:rhs_h_matched set:[]
+!!! **solver.ml#12995:lhs_h: self_lem_12::WFG<p>@M
+!!! **solver.ml#12996:rhs_h: self_lem_12::WFG<p_133>@M
+!!! **infer.ml#3897:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3898:  lhs :
+ HP_134(p,q_132) * HP_135(q_132,self_lem_12)&flted_25_131=0&
+{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3899:  classic :true
+!!! **infer.ml#3897:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3898:  lhs :
+ HP_137(p,q_132) * HP_138(q_132,self_lem_12)&flted_25_131=0&
+{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3899:  classic :true
+Entailing lemma lem_12: Fail. (cex)(may) cause:  emp&flted_25_131=0&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+--------
+
+==> unknown segment
+  P(x,d) -> U(x,q) * q::chr<0,d>
+
+==> segmented-pred
+  P(x,d) -> U(x,q) * q::chr<v,d>
+  U(x,q) -> x=q
+  U(x,q) -> x::chr<v,q1>*U(q1,q) & v!=0
+
+
+
+
+*/
