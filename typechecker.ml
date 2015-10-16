@@ -2589,7 +2589,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let is_post_false = CF.is_struc_false_post org_spec in
               let f x = 
                 (* let () = y_binfo_pp "if post_cond is false, inference on and orig classic on, apply Wrapper.wrap_classic" in *)
-                if (* is_post_false *) false then 
+                if is_post_false then 
                   if !Globals.new_trace_classic then 
                     wrap_msg "check pre/post classic" (wrap_classic x_loc (Some true) f) x
                   else (wrap_classic x_loc (Some true) f) x

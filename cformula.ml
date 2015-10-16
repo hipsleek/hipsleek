@@ -20255,13 +20255,14 @@ let rec is_pre_post_cont f =
     | EAssume b -> 
       if isAllConstFalse b.formula_assume_simpl then false
       else true
-    | EBase b -> let f = b.formula_struc_base in
-      let (h,p,_,_,_,_) = split_components f in
-      if h==HEmp then is_pre_post_cont b.formula_struc_continuation
+    | EBase b -> 
+      let f = b.formula_struc_base in
+      let (h, p, _, _, _, _) = split_components f in
+      if h == HEmp then is_pre_post_cont b.formula_struc_continuation
       else true
     | _ -> true
       )
 
 let is_pre_post_cont f =
   let pr = pr_option !print_struc_formula in
-  Debug.no_1 "is_pre_cont" pr string_of_bool is_pre_post_cont f 
+  Debug.no_1 "is_pre_post_cont" pr string_of_bool is_pre_post_cont f 
