@@ -2006,7 +2006,7 @@ let find_rec_data cprog ids =
       let n = d.Cast.data_name in
       let () = y_binfo_hp (add_str "name" pr_id) n in
       let fields = List.map (fun ((t,id),_) -> t) d.Cast.data_fields in
-      let fields = List.filter (fun t -> is_node_typ t ) fields in
+      let fields = List.filter (fun t -> is_node_typ t) fields in
       let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
       (* let () = y_binfo_hp (add_str "fields" (pr_list (pr_pair CF.string_of_typed_ident (pr_list pr_id)))) d.Cast.data_fields in *)
       let () = y_binfo_hp (add_str "fields" (pr_list pr_id)) fields in
@@ -2027,7 +2027,7 @@ let find_rec_data cprog ids =
           let lst = dd.Cast.data_fields in
           let new_lst = List.map (fun (id,acc)->
               let t = name_of_typ (fst(id)) in
-              (id,if List.mem t vns then ("REC")::acc else acc)) lst in
+              (id,if List.mem t vns then rec_field_id::acc else acc)) lst in
           dd.Cast.data_fields <- new_lst;
             ) d_lst;
           d_lst

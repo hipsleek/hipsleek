@@ -1573,6 +1573,8 @@ let nondet_int_rel_name = "nondet_int__"
 
 let hip_sleek_keywords = ["res"]
 
+let rec_field_id = "REC"
+
 type infer_extn = {
   extn_pred: ident;
   mutable extn_props: ident list;

@@ -4,7 +4,7 @@
 
 data node {
 	int val; 
-	node next#REC;	
+	node next;	
 }
 
 
