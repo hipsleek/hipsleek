@@ -308,7 +308,8 @@ let subst_inv_lower_view_x view_invs f0=
           let (_,(form_args, inv)) = List.find (fun (s1,_) -> String.compare s1 vn.h_formula_view_name = 0) view_invs in
           let sst = List.combine form_args (vn.h_formula_view_node::vn.h_formula_view_arguments) in
           (HEmp, [ (CP.subst sst (MCP.pure_of_mix inv))])
-        with _ -> hf,[]
+        with _ -> (* hf,[] *)
+            (HEmp, [])
       end
     | _ -> hf,[]
   in
@@ -331,7 +332,8 @@ let subst_inv_lower_view_x view_invs f0=
           })
   in
   (*****************************************)
-  if view_invs = [] then f0 else subst_helper f0
+  (* if view_invs = [] then f0 else subst_helper f0 *)
+  subst_helper f0
 
 let subst_inv_lower_view view_invs f=
   let pr1= Cprinter.string_of_formula in
@@ -547,7 +549,7 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
       "\n};\n"
     with _ -> report_error no_pos "slk2fix_body: Error in translating the input for fixcalc"
   in
-  DD.info_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
+  DD.ninfo_zprint (lazy (("Input of fixcalc: " ^ input_fixcalc))) no_pos;
   (input_fixcalc, fr_vars, rev_sst)
 
 let slk2fix_body_wo_fresh_vars lower_invs fml0 vname para_names=
@@ -582,6 +584,7 @@ let compute_invs_fixcalc input_fixcalc=
   in
   let output_of_sleek =  (* Globals.fresh_any_name *) "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
   let () = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
+  let () = DD.info_pprint ("input of fixcalc: " ^ input_fixcalc) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -592,7 +595,7 @@ let compute_invs_fixcalc input_fixcalc=
   let res = remove_paren res (String.length res) in
 
   (* Parse result *)
-  let () = DD.ninfo_hprint (add_str "res= " pr_id) res no_pos in
+  let () = DD.info_hprint (add_str "res= " pr_id) res no_pos in
   (* let () = print_endline ("res ="^ res) in *)
   let lines = get_lines res 0 [] in
   let () = DD.ninfo_hprint (add_str "lines" (pr_list_ln pr_id)) lines no_pos in
@@ -641,7 +644,7 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
     let fixc_header = slk2fix_header 1 [name] in
     (fixc_body ^ fixc_header, fr_vars, rev_sst)
   in
-  x_tinfo_zp (lazy (("Input of fixcalc: " ^ (format_str_file input_fixcalc)))) no_pos;
+  x_ninfo_zp (lazy (("Input of fixcalc: " ^ (format_str_file input_fixcalc)))) no_pos;
 
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
@@ -682,7 +685,15 @@ let compute_inv_x name vars fml data_name lower_views pf =
   if List.exists CP.is_bag_typ vars then Fixbag.compute_inv name vars fml pf 1
   else
   if not !Globals.do_infer_inv then pf
-  else let new_pf = x_add compute_heap_pure_inv fml name data_name vars lower_views in
+  else
+    (* let vns = List.fold_left (fun acc (f,_) -> acc @ (Cformula.get_views f)) [] fml in *)
+    (* let lower_vns = Gen.BList.remove_dups_eq string_eq (List.map (fun vn -> vn.Cformula.h_formula_view_name) vns) in *)
+    (* let lower_vdcls = List.fold_left (fun acc vn -> *)
+    (*     try *)
+    (*       acc@[(Cast.look_up_view_def_raw 67 prog.Cast.prog_view_decls vn)] *)
+    (*     with _ -> acc *)
+    (* ) [] lower_vns in *)
+    let new_pf = x_add compute_heap_pure_inv fml name data_name vars (lower_views) in
     let check_imply = TP.imply_raw new_pf pf in
     if check_imply then
       let () = DD.ninfo_hprint (add_str ("new 1 inv("^name^")") !CP.print_formula) new_pf no_pos in

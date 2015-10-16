@@ -51,6 +51,8 @@ let err_var = "e"
 
 let assert_err_fn = "__VERIFIER_error"
 
+let verify_td = ref(false:bool)
+
 let method2pred mn = mn^"_v"
 
 let ptr_arith_flag = ref true (* false *)

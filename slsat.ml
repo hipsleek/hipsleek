@@ -366,10 +366,10 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
                 (*   (new_disjs@rest_disjs) *)
                 (* in *)
                 let _ = disjs_i := rest_disjs in
-                if idecided=0 then ()
-                else
+                (* if idecided=0 && rest_disjs=[] then () *)
+                (* else *)
                   let _ =  disjs_i_ind := !disjs_i_ind@[f_j] in
-                  let _ = disjs_i_plus := !disjs_i_plus @ new_disjs in
+                  let _ = disjs_i_plus := !disjs_i_plus @ new_disjs @ (!disjs_i) in
                   (* check_sat_topdown_iter prog is_only_eq form_red_fnc is_inconsistent_fnc acc_disjs (count+1) bound *)
                   if !disjs_i=[] then
                     let _ =

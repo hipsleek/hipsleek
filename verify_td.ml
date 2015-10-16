@@ -141,6 +141,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body pos=
   let old_symex_td = !symex_td in
   let () = symex_td := true in
   let () = Td_utils.func_call_no := 0 in
+  (* topdown symex *)
   let res_ctx = x_add Typechecker.check_exp prog proc lfe body label in
   let () = symex_td := old_symex_td in
   let () = x_tinfo_hp (add_str ("symex_gen_view:" ^ proc.C.proc_name) (Cprinter.string_of_list_failesc_context_short)) res_ctx no_pos in
@@ -221,10 +222,10 @@ let symex_gen_view_from_proc iprog prog proc=
     - parse body
   *)
   let pred_name = (C.unmingle_name proc.CA.proc_name) ^ "_v" in
-  let r_args = (* match proc.CA.proc_return with *)
+  let r_args =(*  match proc.CA.proc_return with *)
     (* | Void -> [] *)
-    (* | _ -> let r_arg =  res_name in *)
-      [CP.SpecVar (proc.CA.proc_return, res_name,Unprimed)]
+    (* | _ -> *)
+    [CP.SpecVar (proc.CA.proc_return, res_name,Unprimed)]
   in
   let e_arg = CP.SpecVar (Int, err_var, Unprimed) in
   let proc_args = (List.map (fun (t,arg) -> CP.SpecVar (t,arg,Unprimed)) proc.CA.proc_args) in
@@ -266,7 +267,7 @@ let verify_td_scc iprog prog scc=
           let () = Debug.info_hprint (add_str "query"
                                  (!CF.print_formula)
                               ) query no_pos in
-          let r = Slsat.check_sat_topdown_x prog false query in
+          let r = Slsat.check_sat_topdown prog false query in
           match r with
             | 0 -> VTD_Safe
             | 1 -> VTD_Unsafe
@@ -294,6 +295,7 @@ let verify_td_sccs iprog prog fast_return scc_procs=
             let () = Globals.do_infer_inv := true in
             let cviews = (Astsimp.convert_pred_to_cast pairs false iprog prog false) in
             let () = Globals.do_infer_inv := old_inv_gen in
+            let () = prog.Cast.prog_view_decls <- prog.Cast.prog_view_decls@cviews in
             let () = Debug.info_hprint (add_str " predicated generated"
                 (pr_list_ln Cprinter.string_of_view_decl_short)
             ) cviews no_pos in

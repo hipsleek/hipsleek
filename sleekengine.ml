@@ -874,7 +874,10 @@ let convert_data_and_pred_to_cast_x () =
   (*     let cviews2a = Norm.cont_para_analysis !cprog cviews1 in                                             *)
   (*     cviews2a                                                                                             *)
   (*   else                                                                                                   *)
-  let _ =  if  (!Globals.pred_has_pure_props) then (List.map (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) else [] in
+  (* let () =  if  (!Globals.pred_has_pure_props) then *)
+  (*   (List.iter (fun vdef -> Astsimp.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) *)
+  (* else () *)
+  (* in *)
   (*     cviews1                                                                                              *)
   (* in                                                                                                       *)
   (* let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews2 in                                         *)
@@ -895,7 +898,7 @@ let convert_data_and_pred_to_cast_x () =
   let cprog6 =  if
     (* !Globals.smt_compete_mode && (!Globals.pred_sat || !Globals.graph_norm ) && *)
     (not (!Globals.lemma_gen_safe || !Globals.lemma_gen_unsafe
-          || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold || !Globals.seg_fold || !Globals.lemma_syn || (* !Globals.allow_field_ann *) !Globals.imm_merge)) then
+          || !Globals.lemma_gen_safe_fold || !Globals.lemma_gen_unsafe_fold || !Globals.seg_fold || !Globals.lemma_syn || (* !Globals.allow_field_ann *) !Globals.imm_merge)) || !verify_td then
       begin 
         x_tinfo_pp "skip categorize cprog5" no_pos;
         cprog5

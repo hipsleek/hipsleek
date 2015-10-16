@@ -42,7 +42,7 @@ pred main_v<e> == _::f_v<2,e1> & e1=0 & e=0
 
 
 
-checksat _::main_v<e> & e=0.
+checksat _::main_v<e> & e=1.
 
 expect Unsat.
 

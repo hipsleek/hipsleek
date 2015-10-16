@@ -22,9 +22,11 @@ void f(int n)
 }
 */
 
-pred f_v<n,e> == n<3 & e=0
+pred f_v<n,e> ==
+    _::f_v<n-1,e1> & n>=3 & e1=1 & e=1
    or _::f_v<n-1,e1> & n>=3 & e1=0 & e=1
-   or _::f_v<n-1,e1> & n>=3 & e1=1 & e=1.
+    or n<3 & e=0
+   .
 
 /*
 void main()
@@ -37,8 +39,9 @@ void main()
 }
 */
 
-pred main_v<e> == _::f_v<4,e1> & e1=0 & e=0
-   or _::f_v<4,e1> & e1=1 & e=1.
+pred main_v<e> == _::f_v<4,e1> & e1=1 & e=1
+     or _::f_v<4,e1> & e1=0 & e=0
+     .
 
 
 
