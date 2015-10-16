@@ -31,6 +31,11 @@ let build_eset_of_imm_formula f =
     ) EMapSV.mkEmpty lst in 
   emap
 
+let build_eset_of_imm_formula f =
+  let pr = !print_formula in
+  let pr_out = EMapSV.string_of in
+  Debug.no_1 "build_eset_of_imm_formula" pr pr_out build_eset_of_imm_formula f
+
 module Poset =
   struct
     type t = spec_var
@@ -42,31 +47,59 @@ module Poset =
 
 module GenImmSV = Gen.GenRel (SV) (PtrSV) (Poset);;
 
+let build_imm_helper fixpt e1 e2 test4change_fnc rel_fnc =
+  let is_imm = is_exp_ann in
+  let imm2sv = conv_ann_exp_to_var_exc in
+  if (is_imm e1) && (is_imm e2) then 
+    let e1, e2 = (imm2sv e1, imm2sv e2) in
+    if test4change_fnc e1 e2 then None
+    else let () = fixpt:= false in Some (rel_fnc e1 e2 )
+  else None
+
 (* assumption: f is in CNF *)
 let build_imm_genrel_of_formula f =
+  let fixpt = ref true in
   let is_imm = is_exp_ann in
   let imm2sv = conv_ann_exp_to_var_exc in
   let f_bf irel bf =
     let pf, _ = bf in
     match pf with
-    | Eq (e1, e2, _),_ -> 
-      if (is_imm e1) && (is_imm e2) then Some (GenImmSV.add_eq irel (imm2sv e1) (imm2sv e2))
+    | Eq (e1, e2, _) -> (* build_imm_helper fixpt e1 e2 (GenImmSV.is_equiv irel) (GenImmSV.add_eq irel)  *)
+      if (is_imm e1) && (is_imm e2) then 
+        if GenImmSV.is_equiv irel (imm2sv e1) (imm2sv e2) then None
+        else let () = fixpt:= false in Some (GenImmSV.add_eq irel (imm2sv e1) (imm2sv e2))
       else None
-    | Neq (e1, e2, _),_ -> 
-      if (is_imm e1) && (is_imm e2) then Some (GenImmSV.add_disj irel (imm2sv e1) (imm2sv e2))
+    | Neq (e1, e2, _) -> (* build_imm_helper fixpt e1 e2 (GenImmSV.is_disj irel) (GenImmSV.add_disj irel) *) 
+      if (is_imm e1) && (is_imm e2) then 
+        if GenImmSV.is_disj irel (imm2sv e1) (imm2sv e2) then None
+        else let () = fixpt:= false in Some (GenImmSV.add_disj irel (imm2sv e1) (imm2sv e2))
       else None
-    | SubAnn (e1, e2, _), _ -> 
-      if (is_imm e1) && (is_imm e2) then Some (GenImmSV.add_sub irel (imm2sv e1) (imm2sv e2))
+    | SubAnn (e1, e2, _) ->  (* build_imm_helper fixpt e1 e2 (GenImmSV.is_sub irel) (GenImmSV.add_sub irel) *)
+      if (is_imm e1) && (is_imm e2) then 
+        if GenImmSV.is_sub irel (imm2sv e1) (imm2sv e2) then None
+        else let () = fixpt:= false in Some (GenImmSV.add_sub irel (imm2sv e1) (imm2sv e2))
       else None
     | _ -> None
   in
-  let irel = GenImmSV.mkEmpty in
-  fold_formula_arg f irel (nonef2,nonef2,nonef2) (idf2, idf2, idf2) GenImmSV.merge_list
+  let f_bf irel bf =
+    Debug.no_1 "f_bf_genimm" !print_b_formula (pr_option GenImmSV.string_of) (f_bf irel) bf in
 
-let build_eset_of_imm_formula f =
+  let irel = GenImmSV.mkEmpty in
+  let rec fold_fixpt irel  =
+    let () = fixpt:= true in
+    let fnc rel = fold_formula_arg f rel (nonef2,f_bf,nonef2) (idf2, idf2, idf2) GenImmSV.merge_list in
+    let () = y_binfo_hp (add_str "imm rel 0 " GenImmSV.string_of) irel in
+    let rel = fnc irel in
+    let () = y_binfo_hp (add_str "imm rel 1 " GenImmSV.string_of) rel in
+    (* TODOIMM: old rel shouldn't be added below. Why is it not working wothout rel *)
+    if not(!fixpt) then fold_fixpt rel (* GenImmSV.merge_list [(fnc rel);rel] *)
+    else rel
+  in fold_fixpt irel
+
+let build_imm_genrel_of_formula f =
   let pr = !print_formula in
-  let pr_out = EMapSV.string_of in
-  Debug.no_1 "build_eset_of_imm_formula" pr pr_out build_eset_of_imm_formula f
+  let pr_out = GenImmSV.string_of in
+  Debug.no_1 "build_imm_genrel_of_formula" pr pr_out build_imm_genrel_of_formula f
 
 let int_imm_to_exp i loc =
   mkExpAnnSymb (mkConstAnn (heap_ann_of_int i)) loc
@@ -526,7 +559,9 @@ let prune_imm_min_max_conjunct poset f =
   3. a=bot & b <: a & a != b
 *)
 let prune_eq_top_bot_imm_disjunct f =
-  let emap = build_eset_of_imm_formula f in 
+  let immrels = build_imm_genrel_of_formula f in
+  let emap = immrels.gen_emap in
+  (* let emap = build_eset_of_imm_formula f in *)
   let collect_subann p_f =
     match p_f with
     | SubAnn (Var(sv1,_), Var(sv2,_),_) -> [(sv1, sv2)]

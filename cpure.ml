@@ -667,7 +667,7 @@ let to_int_var (sv : spec_var) : spec_var = match sv with
 (* name prefix for int const *)
 let const_prefix = "__CONST_Int_"
 
-let imm_const_prefix = "__CONST_Imm_"
+let imm_const_prefix = "__CONST_"
 
 let const_prefix_len = String.length(const_prefix)
 

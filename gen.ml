@@ -2440,6 +2440,14 @@ module Make_POSET
     (* tail of the node *)
     let adjacent_of v = match v with Node (_,n) -> n
 
+    let rec string_of_node n = 
+      let head = Eq.string_of (node_of n) in
+      match (adjacent_of n) with
+      | []  -> head ^ "<: [] " 
+      | lst -> BList.string_of_f (fun x -> head ^ "<:" ^ (string_of_node x)) lst
+
+    let string_of t = M.fold (fun k n acc -> (("\nkey:") ^ (Eq.string_of k) ^ " --> ") ^ (string_of_node n) ^ acc ) t "" 
+
     (* creates a node with head e and tail vs *)
     let mk_vertex (e: key) (vs: node list) = Node(e, vs)
 
@@ -2457,25 +2465,6 @@ module Make_POSET
 
     let mem map e = M.mem e map
     let find map e = M.find e map
-    
-    (* connect v2 to v1 *)
-    let connect map (v1: node) (v2: node) =
-      let e1 = node_of v1 in
-      let vs = adjacent_of v1 in
-      let new_e1 = mk_vertex e1 (v2::vs) in
-      (* t.tbl <- M.remove e1 t.tbl; *)
-      M.add e1 new_e1 map
-    
-    (* adds an ordered pair to the poset *)
-    let add map (e1:key) (e2:key) =
-      let map, v1 = try map, find map e1 with Not_found -> add_vertex map e1 in
-      let map, v2 = try map, find map e2 with Not_found -> add_vertex map e2 in
-      (* (\* connect t t.top v1; *\) *)
-      connect map v1 v2
-
-    (* adds a list of pairs to the poset *)
-    let add_list (map: node M.t) (xs: (M.key * M.key) list) : node M.t  = 
-      List.fold_left (fun acc (k1,k2) -> add acc k1 k2) map xs
 
     (* to be removed? *)
     let vertex_eq v1 v2 = Eq.eq (node_of v1) (node_of v2)
@@ -2490,7 +2479,13 @@ module Make_POSET
     let has_path t e1 e2 =
       try has_path_v (find t e1) (find t e2) with Not_found -> false
 
-    let is_lt t e1 e2 = has_path t e1 e2
+    let is_lt t e1 e2 = 
+      let res = has_path t e1 e2 in
+      (* let () = print_endline ("map - t:" ^ (string_of t)) in *)
+      (* let () = print_endline ((Eq.string_of e1) ^ "<:" ^ (Eq.string_of e2) ^ "? " ^ (string_of_bool res))  in *)
+      res
+
+    let is_lt_lst t e1_lst e2 = List.fold_left (fun acc e1 -> acc || (is_lt t e1 e2)) false e1_lst
 
     let is_gte t e1 e2 = not (is_lt t e1 e2)
 
@@ -2502,13 +2497,98 @@ module Make_POSET
 
     let fold t f init = List.fold_left f init (List.map fst (M.bindings t))
 
+    (* connect v2 to v1 *)
+    let connect map (v1: node) (v2: node) =
+      (* let () = print_endline ("v1:" ^ (string_of_node v1)) in *)
+      (* let () = print_endline ("v2:" ^ (string_of_node v2)) in *)
+      let e1 = node_of v1 in
+      let vs = adjacent_of v1 in
+      let new_e1 = mk_vertex e1 (v2::vs) in
+      (* let () = print_endline ("new_e1:" ^ (string_of_node new_e1)) in *)
+      (* let () = print_endline ("map - connect 0 :" ^ (string_of map)) in *)
+      (* t.tbl <- M.remove e1 t.tbl; *)
+      let map = M.add e1 new_e1 map in
+      (* let () = print_endline ("map - connect 1 :" ^ (string_of map)) in *)
+      map
+
+    (* TODOIMM solve the overlapping problem *)
+    (* let connect map (v1: node) (v2: node) = *)
+    (*   match v1, v2 with *)
+    (*   | Node(k1,ls1), Node(k2,ls2) -> *)
+    (*     if vertex_eq v1 v2 then  *)
+    (*       match ls2 with *)
+    (*       | []    -> [] *)
+    (*       | h::[] ->  *)
+
+    let connect map (acc: node) (add: node) =
+      if vertex_eq acc add then
+        let adj = adjacent_of add in
+        let map = List.fold_left (fun map node ->
+            (* TODOIMM: acc must contain the new adj from map *)
+            let map = if (is_lt map (node_of acc) (node_of node)) then map
+              else
+                (* let () = print_endline ("connecting... :" ^ (string_of map)) in  *)
+                let map, acc = try map, find map (node_of acc) with Not_found -> add_vertex map (node_of acc) in
+                connect map acc node
+            in
+            (* let () = print_endline ("map - connect acc :" ^ (string_of map)) in *)
+            map
+          ) map adj in
+        map
+      else
+        connect map acc add 
+
+    (* adds an ordered pair to the poset *)
+    let add map (e1:key) (e2:key) : poset =
+      (* let () = print_endline ("e1:" ^ (Eq.string_of e1)) in *)
+      (* let () = print_endline ("e2:" ^ (Eq.string_of e2)) in *)
+      if is_lt map e1 e2 then map 
+      else
+        let map, v1 = try map, find map e1 with Not_found -> 
+          (* let () = print_endline ("e1 (not_found)") in *)
+          add_vertex map e1 in
+        let map, v2 = try map, find map e2 with Not_found -> 
+          (* let () = print_endline ("e2 (not_found)") in *)
+          add_vertex map e2 in
+        (* (\* connect t t.top v1; *\) *)
+        connect map v1 v2
+
+    (* adds a list of pairs to the poset *)
+    let add_list (map: node M.t) (xs: (M.key * M.key) list) : node M.t  = 
+      List.fold_left (fun acc (k1,k2) -> add acc k1 k2) map xs
+
     let merge_poset t1 t2 = 
+      (* let () = print_endline ("map - merge 1 :" ^ (string_of t1)) in *)
+      (* let () = print_endline ("map - merge 2 :" ^ (string_of t2)) in *)
       let bindingst2 = M.bindings t2 in
       let connect t sv node = 
         let t, v1 = try t, find t sv with Not_found -> add_vertex t sv in
+        (* TODOIMM: i need to check for duplications here *)
         connect t v1 node in
-      let merge t sv node =  List.fold_left (fun t node -> connect t sv node) t (adjacent_of node) in 
-      let mergedt = List.fold_left ( fun t1 (sv, node) -> merge t1 sv node ) t1 bindingst2 in
+      let merge t sv node =
+        match (adjacent_of node) with
+        | []  -> let t, _ = try t, find t sv with Not_found -> add_vertex t sv in t
+        | lst -> List.fold_left (fun t node -> connect t sv node) t lst in 
+      let mergedt = List.fold_left ( fun t1 (sv, node) -> merge t1 sv node) t1 bindingst2 in
+      (* let () = print_endline ("map - mergedt :" ^ (string_of mergedt)) in *)
+      mergedt
+
+
+    let merge_poset t1 t2 = 
+      (* let () = print_endline ("map - merge 1 :" ^ (string_of t1)) in *)
+      (* let () = print_endline ("map - merge 2 :" ^ (string_of t2)) in *)
+      let bindingst2 = M.bindings t2 in
+      let connect t sv node = 
+        let t, v1 = try t, find t sv with Not_found -> add_vertex t sv in
+        (* TODOIMM: i need to check for duplications here *)
+        connect t v1 node in
+      let merge t sv node =
+        match (adjacent_of node) with
+        | []  -> let t, _ = try t, find t sv with Not_found -> add_vertex t sv in t
+        | lst -> connect t sv node
+          (* List.fold_left (fun t node -> connect t sv node) t lst *) in 
+      let mergedt = List.fold_left ( fun t1 (sv, node) -> merge t1 sv node) t1 bindingst2 in
+      (* let () = print_endline ("map - mergedt :" ^ (string_of mergedt)) in *)
       mergedt
 
   end
@@ -2519,7 +2599,6 @@ exception EqConflict
 (* module used for detecting conflicting info: 
    (i) a!=b & a=b 
    (ii) a<:b & b<:a & a!=b
-
 *)
 module GenRel 
     (Eq : EQ_TYPE) 
@@ -2535,7 +2614,7 @@ module GenRel
     module SubP = Make_POSET(Eq)
 
     type genrel =  {
-      gen_emap: EMap.emap;
+      gen_emap:  EMap.emap;
       gen_dpart: DSet.dpart;
       gen_poset: SubP.poset;
     }
@@ -2546,11 +2625,17 @@ module GenRel
       gen_poset = SubP.mkEmpty;
     }
 
+    let string_of gen = String.concat "\n" 
+        ["### emap:  " ^ (EMap.string_of gen.gen_emap);
+         "### disj:  " ^ (DSet.string_of gen.gen_dpart);
+         "### poset: " ^ (SubP.string_of gen.gen_poset);
+        ]
+
     let merge gen1 gen2 = 
       let emap = EMap.merge_eset gen1.gen_emap gen2.gen_emap in
       let dset = DSet.merge_disj_set gen1.gen_dpart gen2.gen_dpart in
-      let subp = SubP.merge_poset gen1.gen_poset gen2.gen_poset in  (*TODOIMM: to create merge for poset*)
-      { gen_emap  = emap; gen_dpart = dset; gen_poset = gen1.gen_poset;}
+      let subp = SubP.merge_poset gen1.gen_poset gen2.gen_poset in  
+      { gen_emap  = emap; gen_dpart = dset; gen_poset = subp;}
 
     let merge_list gen  = 
       List.fold_left merge mkEmpty gen
@@ -2565,12 +2650,19 @@ module GenRel
     let add_eq_exc (gen: genrel) (e1:t) (e2:t) =
       if DSet.is_disj PEq.eq gen.gen_dpart e1 e2 then raise EqConflict
       else add_eq gen (e1:t) (e2:t)
+          
+    let is_disj (gen: genrel) (e1:t) (e2:t) =
+      DSet.is_disj (is_equiv gen) gen.gen_dpart e1 e2
 
+    (* TODOIMM to check why merge not working *)
     let add_disj (gen: genrel) (e1:t) (e2:t) =
-      let ds1 = DSet.singleton_dset e1 in
-      let ds2 = DSet.singleton_dset e2 in
-      let ds12 = DSet.star_disj_set ds1 ds2 in
-      {gen with gen_dpart = DSet.merge_disj_set gen.gen_dpart ds12}
+      if (is_disj gen e1 e2) then gen 
+      else 
+        let ds1 = DSet.singleton_dset e1 in
+        let ds2 = DSet.singleton_dset e2 in
+        let ds12 = DSet.star_disj_set ds1 ds2 in
+        let new_dpart = DSet.remove_dups_disj_set (DSet.merge_disj_set gen.gen_dpart ds12) in 
+        {gen with gen_dpart = new_dpart}
 
     (* throw an exception if conflicting info exists: eg. (a=b & a!=b) *)
     let add_disj_exc (gen: genrel) (e1:t) (e2:t) =
@@ -2585,15 +2677,16 @@ module GenRel
       (* check if e1 == e2 or if any of e1'<:e2' , e1' = alias(e1), e2'= alias(e2) *)
       if is_bot gen e1 || is_top gen e2 || is_equiv gen e1 e2 then true
       else
-        let is_lt e1 e2 = Basic.map_opt_def false (fun x -> x) (SubP.is_lt_opt gen.gen_poset e1 e2) in
-        let is_lt_lst e1_lst e2 = List.fold_left (fun acc e1 -> acc || (is_lt e1 e2)) false e1_lst in
-        let ae1 = EMap.find_equiv_all_new e1 gen.gen_emap in
-        let ae2 = EMap.find_equiv_all_new e2 gen.gen_emap in
-        List.fold_left (fun acc e2 -> acc || (is_lt_lst ae1 e2)) false ae2
+        let ae1 = (EMap.find_equiv_all_new e1 gen.gen_emap) in
+        let ae2 = (EMap.find_equiv_all_new e2 gen.gen_emap) in
+        List.fold_left (fun acc e2 -> acc || (SubP.is_lt_lst gen.gen_poset ae1 e2)) false ae2
 
     (* decide for e1 <: e2 *)
     let add_sub (gen: genrel) (e1:t) (e2:t) =
-      if not(is_sub gen e2 e1) then {gen with gen_poset = SubP.add gen.gen_poset e1 e2}
+      if not(is_sub gen e2 e1) then 
+        let gen = {gen with gen_poset = SubP.add gen.gen_poset e1 e2} in 
+        let () = print_endline ("gen:" ^ (string_of gen)) in
+        gen
       else add_eq gen e1 e2 (* e1<:e2 & e2<:e1 ---> e1=e2 *)
 
     (* decide for e1 <: e2, throw exception if conflicting info found *)
