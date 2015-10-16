@@ -10,8 +10,12 @@ int fact(int i)
   //infer [P#size,P#sum,@classic,@pure_field]
 //infer [P,@classic,@pure_field]
 //  requires P(i)
+/*
   infer [R]
   requires R(i)
+  ensures false;
+*/
+  requires i<(0)
   ensures false;
 {    
   if (i==0) return 1;
