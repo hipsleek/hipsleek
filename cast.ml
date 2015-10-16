@@ -58,7 +58,7 @@ and data_field_ann =
 and data_decl = {
   data_name : ident;
   data_pos : loc;
-  data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
+  mutable data_fields : (typed_ident * (ident list) (* data_field_ann *)) list;
   data_fields_new : (P.spec_var * (ident list) (* data_field_ann *)) list;
   data_parent_name : ident;
   data_invs : F.formula list;
@@ -100,6 +100,7 @@ and view_decl = {
 
   (* these seem related to parameters of view *)
   view_vars : P.spec_var list;
+  view_labels : LO.t list;
   view_ann_params : (P.annot_arg * int) list;
   view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
   view_cont_vars : P.spec_var list;
@@ -118,7 +119,6 @@ and view_decl = {
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
-  view_labels : LO.t list;
   view_modes : mode list;
   view_type_of_self : typ option;
   view_is_touching : bool;
@@ -143,9 +143,11 @@ and view_decl = {
   mutable view_formula : F.struc_formula; (* case-structured formula *)
   mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
     (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+
   mutable view_raw_base_case: Cformula.formula option;
   mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
   (* end of main body of a predicate *)
+
   mutable view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
   view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
   view_inv_lock : F.formula option;
@@ -163,7 +165,7 @@ and view_decl = {
   mutable view_addr_vars : P.spec_var list;
   (* if view has only a single eqn, then place complex subpart into complex_inv *)
   view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
-   view_linear_formula : (Cformula.formula * formula_label) list ;
+  view_linear_formula : (Cformula.formula * formula_label) list ;
   view_prune_branches: formula_label list; (* all the branches of a view *)
   view_is_rec : bool;
   view_pt_by_self : ident list;
@@ -206,7 +208,7 @@ and hp_decl = {
   hp_name : ident;
   mutable hp_vars_inst : (P.spec_var * Globals.hp_arg_kind) list;
   hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
-  mutable hp_root_pos: int;
+  mutable hp_root_pos: int option;
   hp_is_pre: bool;
   hp_view: (Iast.view_decl * view_decl) option;
   hp_formula : F.formula;}
@@ -1206,7 +1208,12 @@ let unmingle_name (m : ident) =
 
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
-  | [] -> raise Not_found
+  | [] ->
+    let msg = ("Cannot find definition of cview " ^ name) in 
+    let () = y_tinfo_pp (x_loc^msg) in
+    raise Not_found
+    (* let msg = ("Cannot find definition of view " ^ name) in  *)
+    (* failwith (x_loc^msg) *)
 
 let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
@@ -1345,7 +1352,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
                    if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
                   ^ (string_of_int (Globals.fresh_int()));
         hp_part_vars = [];
-        hp_root_pos = 0; (*default, reset when def is inferred*)
+        hp_root_pos = None; (*default, reset when def is inferred*)
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
         hp_view = None;
@@ -1378,12 +1385,18 @@ let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
 
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
-  let () = hpdclr.hp_root_pos <- r_pos in
+  let () = hpdclr.hp_root_pos <- (Some r_pos) in
   hpdclr
 
-let get_proot_hp_def_raw defs name=
+let get_proot_hp_def_raw defs name =
   let hpdclr = look_up_hp_def_raw defs name in
-  hpdclr.hp_root_pos
+  match hpdclr.hp_root_pos with
+  | None -> failwith ("hp_root_pos has not yet set.")
+  | Some i -> i
+
+let get_proot_hp_def_raw defs name =
+  let pr = string_of_int in
+  Debug.no_1 "get_proot_hp_def_raw" idf pr (get_proot_hp_def_raw defs) name
 
 let get_root_args_hprel hprels hp_name actual_args=
   let rec part_sv_from_pos ls n n_need rem=
@@ -1393,7 +1406,7 @@ let get_root_args_hprel hprels hp_name actual_args=
       else part_sv_from_pos rest (n+1) n_need (rem@[sv1])
   in
   let retrieve_root hp_name args=
-    let rpos = get_proot_hp_def_raw hprels hp_name in
+    let rpos = x_add get_proot_hp_def_raw hprels hp_name in
     let r,paras = part_sv_from_pos args 0 rpos [] in
     (r,paras)
   in
@@ -1408,7 +1421,8 @@ let get_root_typ_hprel hprels hp_name=
   in
   let retrieve_root hp_name=
     let hpdclr = look_up_hp_def_raw hprels hp_name in
-    let rpos = hpdclr.hp_root_pos in
+    (* let rpos = hpdclr.hp_root_pos in *)
+    let rpos = x_add get_proot_hp_def_raw hprels hp_name in
     let r,_ = part_sv_from_pos (List.map fst hpdclr.hp_vars_inst) 0 rpos [] in
     match Cpure.type_of_spec_var r with
     | Named id -> id
@@ -3855,13 +3869,13 @@ let add_view_decl prog vdecl =
 let update_view_decl prog vdecl = 
   let vdecl_id = vdecl.view_name in
   let vdecl_args = vdecl.view_vars in
-  let vhdr = vdecl_id ^(!CP.print_svl vdecl_args) in
+  let vhdr = vdecl_id ^ (!CP.print_svl vdecl_args) in
   let same_vdecls, others = List.partition (fun v -> 
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
   let () = 
     if not (is_empty same_vdecls) then 
-      y_binfo_pp ("Updating an available view decl (" ^ vhdr^ ") in cprog.")
-    else y_binfo_pp ("Adding the view " ^vhdr^" into cprog.") 
+      y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
+    else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
   prog.prog_view_decls <- others @ [vdecl]
 
@@ -3971,27 +3985,44 @@ let get_view_name_equiv view_decls vl =
     (*              } in *)
     (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
 
-let get_simple_unfold lst = 
-  match lst with
-  | [] -> failwith "empty defn?"
-  | [(f,_)] ->
-    let () = y_tinfo_hp (add_str "simple formula?" 
-                           !Cformula.print_formula) f in
-    Some f
-  | _ -> None
+(* let get_lst_unfold lst = List.map fst lst *)
 
-let get_unfold_set vdefs =  
+let get_unfold_set_gen vdefs =  
   let equiv_set = List.fold_left (fun acc vd -> 
       let name = vd.view_name in
       let f = vd.view_un_struc_formula in
-      if HipUtil.view_scc_obj # is_self_rec name then acc 
-      else 
+      (* if HipUtil.view_scc_obj # is_self_rec name then acc  *)
+      (* else  *)
         begin
-          match (get_simple_unfold f) with
-          | Some f -> (name,vd.view_vars,f)::acc
-          | None -> acc
+          let lst=List.map fst f in
+          (name,vd.view_vars,lst)::acc
+          (* match (get_simple_unfold f) with *)
+          (* | Some f -> (name,vd.view_vars,f)::acc *)
+          (* | None -> acc *)
         end) [] vdefs in
   equiv_set
+
+let get_unfold_set_simple vdefs = 
+  let lst = get_unfold_set_gen vdefs in
+  let lst = List.filter (fun (_,_,fs) -> (List.length fs) <=1) lst in
+  List.map (fun (v,vs,lst) -> match lst with
+      | f::_ -> (v,vs,f)
+      | _ -> failwith (x_loc^"empty unfold")) lst
+
+
+let get_unfold_set vdefs =  
+  get_unfold_set_simple vdefs  
+  (* let equiv_set = List.fold_left (fun acc vd ->  *)
+  (*     let name = vd.view_name in *)
+  (*     let f = vd.view_un_struc_formula in *)
+  (*     if HipUtil.view_scc_obj # is_self_rec name then acc  *)
+  (*     else  *)
+  (*       begin *)
+  (*         match (get_simple_unfold f) with *)
+  (*         | Some f -> (name,vd.view_vars,f)::acc *)
+  (*         | None -> acc *)
+  (*       end) [] vdefs in *)
+  (* equiv_set *)
 
 let get_all_view_equiv_set vdefs =  
   let equiv_set = List.fold_left (fun acc v -> if v.view_equiv_set # is_empty then acc else (v.view_name,v.view_equiv_set # get)::acc) [] vdefs in
@@ -4028,6 +4059,11 @@ let sort_view_list vlist =
       sort_gen_list score vlist
     end
 
+let get_sorted_view_decls prog =
+  let vdefs = sort_view_list prog.prog_view_decls in
+  prog.prog_view_decls <- vdefs;
+  vdefs
+
 (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
 let repl_unfold_lemma u_lst lem =
   let body = lem.coercion_body in
@@ -4044,11 +4080,76 @@ let get_lemma_cprog cdefs =
   let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
   ()
 
-(* type: Globals.regex_e option *)
+let  get_selected_scc_gen (opt:((ident * bool) regex_list) (* option *)) get_name sel_fn scc_lst =
+  let ans = opt in
+  (* match opt with *)
+  (* | None -> scc_lst *)
+  (* | Some ans ->  *)
+    begin
+      match ans with
+      | REGEX_STAR -> scc_lst
+      | REGEX_LIST lst ->  
+        let sel_lst = List.map (fun scc -> 
+            let ns = List.map (fun v -> get_name v) scc in
+            let lst = List.filter (fun (id,_) -> List.mem id ns) lst in
+            lst
+          ) scc_lst in
+        let c_lst = List.combine sel_lst scc_lst in
+        let c_lst = List.filter (fun (lst,scc) -> lst!=[]) c_lst in
+        List.map sel_fn c_lst
+    end
+
+let  get_selected_scc_whole opt get_name scc_lst =
+  get_selected_scc_gen opt get_name snd scc_lst
+
+let  get_selected_scc_each opt get_name scc_lst =
+  let sel_f (lst,scc) =
+    if (List.exists (fun (_,b)->b) lst) then scc
+    else Gen.BList.intersect_eq (fun v1 (v2,_) -> v1=v2) scc lst in
+  let sel_f p = 
+    let pr_scc = pr_list pr_id in
+    let pr1 = pr_pair (pr_list (pr_pair pr_id string_of_bool)) pr_scc  in
+    Debug.no_1 "sel_f" pr1 pr_scc sel_f p 
+  in
+  get_selected_scc_gen opt get_name sel_f scc_lst
+
+let get_t_v v = HipUtil.view_scc_obj # get_trans v
+
+(* type: (Globals.ident * bool) Globals.regex_list option *)
 let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
   match opt with
   | None -> view_list
   | Some ans -> 
-    let () = y_binfo_pp "get selected views ..." in
-    view_list
+    let sel (v,p) = if p then get_t_v v else [v] in
+    let res = match ans with
+    | REGEX_STAR -> view_list
+    | REGEX_LIST lst ->  
+      let lst = List.map (fun vp -> sel vp) lst in
+      let lst = Gen.BList.remove_dups_eq (=) (List.concat lst) in
+      let ans = Gen.BList.intersect_eq (fun v n -> v.view_name = n) view_list lst in
+      ans
+    in
+    let () = y_tinfo_hp (add_str "get selected views ... " 
+      (pr_list (fun v -> v.view_name))) res in
+    res
   
+let rename_view vdecl new_name = 
+  let old_name = vdecl.view_name in
+  let sst = [(old_name, new_name)] in
+  { vdecl with
+    view_name = new_name;
+    view_formula = F.rename_view_struc sst vdecl.view_formula;
+    view_un_struc_formula = List.map (fun (f, lbl) -> (F.rename_view_formula sst f, lbl)) vdecl.view_un_struc_formula; }
+
+
+let cprog:(prog_decl option) ref = ref None
+
+let get_cprog () = match !cprog with
+  | Some cp -> cp
+  | None -> failwith ("cprog not yet created " ^x_loc)
+
+let set_prog cp = 
+  cprog := Some cp
+
+
+

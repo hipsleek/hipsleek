@@ -1363,18 +1363,18 @@ and list_context_and_unsat_now prog (ctx : list_context) : list_context =
 (*and list_partial_context_and_unsat_now prog (ctx : list_partial_context) : list_partial_context = 
   (* let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in *)
   let r = transform_list_partial_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) ctx in
-  let r = remove_dupl_false_pc_list r in
+  let r = x_add_1 remove_dupl_false_pc_list r in
   TP.incr_sat_no () ; r*)
 
 and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es 6 prog (ref 1))) ctx in
-  let r = List.map CF.remove_dupl_false_fe r in
+  let r = List.map (x_add_1 CF.remove_dupl_false_fe) r in
   TP.incr_sat_no () ; r
 
 and combine_list_failesc_context_and_unsat_now_x prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now 2 prog (ref 1))) r in
-  let r = List.map CF.remove_dupl_false_fe r in
+  let r = List.map (x_add_1 CF.remove_dupl_false_fe) r in
   TP.incr_sat_no () ; r
 
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context =
@@ -1384,7 +1384,7 @@ and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context)
 
 and combine_list_failesc_context prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
-  let r = List.map CF.remove_dupl_false_fe r in r
+  let r = List.map (x_add_1 CF.remove_dupl_false_fe) r in r
 
 and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context =
   let pr_ctx = Cprinter.string_of_context_short in
@@ -2837,6 +2837,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 (* let npf = MCP.merge_mems qp ph true in *)
 (* tp_call_wrapper npf *)
 
+(* type: Cast.prog_decl -> int ref -> CF.formula -> bool *)
 and unsat_base_a prog (sat_subno:  int ref) f  : bool=
   let () = if !Globals.sleek_gen_sat then CF.sat_stk # push f else () in
   (*need normal lize heap_normal_form*)
@@ -4486,7 +4487,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (* always do nonclassical reasoning whenever there is continuation in struct formula *)
                        (* let saved_classic_setting = !do_classic_frame_rule in *)
                        let n_ctx_list, prf, new_delayed_f =
-                         if (formula_cont != None) then Wrapper.wrap_classic (Some false) cont_fn ()
+                         if (CF.is_pre_post_cont formula_cont) 
+                         then Wrapper.wrap_classic x_loc (Some false) cont_fn ()
                          else cont_fn ()
                        in
                        (* restore classic setting *)
@@ -5490,14 +5492,18 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
           let () = Debug.ninfo_hprint (add_str "rele_p_rhs_xpure"  (!CP.print_formula)) rele_p_rhs_xpure pos in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map pos in
           let () = pr_hdebug (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
-          let hinf_args_map0 =  List.filter (fun (_,args) ->
+           let hinf_args_map0 = if Gen.BList.overlap_eq CP.eq_spec_var (CP.fv lhs_p) (CP.fv pf) then
+             hinf_args_map
+           else
+            List.filter (fun (_,args) ->
               let rele_p0 = CP.filter_var p_contr_lhs args in
               let () = Debug.ninfo_hprint (add_str "rele_p0"  (!CP.print_formula)) rele_p0 pos in
               let rele_ps0 = CP.list_of_conjs rele_p0 in
               let rele_ps1 = List.filter (fun p -> not (CP.equalFormula p rele_p_rhs_xpure)) rele_ps0 in
               let rele_p = CP.conj_of_list rele_ps1 (CP.pos_of_formula rele_p0) in
+              let () = Debug.ninfo_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
               TP.is_sat_raw (MCP.mix_of_pure rele_p)
-            ) hinf_args_map in
+          ) hinf_args_map in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
           Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
         let () = x_tinfo_hp (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
@@ -5507,8 +5513,8 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
           else
             match res_ctx_opt with
             | None -> 
-              x_winfo_hp (add_str "WARNING : Inferred pure not added" !print_pure_f) pf no_pos;
-              new_estate
+                  x_winfo_hp (add_str "WARNING : Inferred pure not added" !print_pure_f) pf no_pos;
+                  new_estate
             (* contra due to direct vars *)
             (* WN :why did we rely on !=null !! *)
             (* let res_es = if CP.is_neq_null_exp pf then new_estate else *)
@@ -9524,23 +9530,29 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
               CF.h_formula_star_pos = pos}
     | _ -> hf
   in
-  let () = y_winfo_pp "do_base_unfold_hp_rel (TBI)" in
+  let () = y_tinfo_pp "do_base_unfold_hp_rel (TBI)" in
   let knd = CP.RelAssume [hp] in
   let es_cond_path = CF.get_es_cond_path estate in
   let matched_svl = [] in
-  let (lhf,mlf,_,_,_,_) = CF.split_components estate.CF.es_formula in
+  let estate_lhs = estate.CF.es_formula in
+  let (lhf,mlf,_,_,_,_) = CF.split_components estate_lhs in
   let lhds, _, _ = CF.get_hp_rel_h_formula lhf in
   let leqs = (MCP.ptr_equations_without_null mlf) in
   let leqNulls = MCP.get_null_ptrs mlf in
   let norm_rhs_view_node_args = (CP.diff_svl (CF.get_ptrs_w_args ~en_pure_field:estate.CF.es_infer_obj # is_pure_field_all rhs_node) vs) in
   let rhs_view_node_args = CP.subst_var_list estate.CF.es_rhs_eqset norm_rhs_view_node_args in
   let ass_guard = x_add InferHP.find_guard prog lhds leqs leqNulls
-      [(hp,CP.diff_svl (CP.remove_dups_svl (vs@rhs_view_node_args)) leqNulls)] (* rhs_arg *)[] in
+      [(hp,CP.diff_svl ((* CP.remove_dups_svl *) (vs(* @rhs_view_node_args *))) leqNulls)] (* rhs_arg *)(CP.diff_svl  (rhs_view_node_args) leqNulls) (* [] *) in
   let sel_eqns_svl = match ass_guard with
     | None -> vs
     | Some f -> CP.intersect_svl vs ((CF.get_ptrs f)@ (CF.get_ptrs rhs_node)) in
   let () = DD.ninfo_hprint (add_str "sel_eqns_svl" !CP.print_svl) sel_eqns_svl no_pos in 
   let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl sel_eqns_svl) (CP.mkTrue pos) in
+  let is_sat = TP.is_sat_raw (MCP.memoise_add_pure_N mlf rhs_p) in
+  if not is_sat then
+    let ls_ctx = Errctx.mkFailCtx_may ~conseq:(Some conseq) x_loc "do_unfold (false)" estate pos in
+    (ls_ctx, Unknown)
+  else
   let rhs_b = CF.formula_base_of_pure (MCP.mix_of_pure rhs_p) pos in
   (* let rhs = CF.formula_of_pure_formula rhs_p pos in *)
   let rhs = CF.Base rhs_b in
@@ -9549,6 +9561,8 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
   (* from unfolding *)
   let hp_rel = CF.mkHprel ~fold_type:false knd [] [] matched_svl lhs grd rhs es_cond_path in
+  let () = y_tinfo_hp (add_str "do_unfold:hp_rel" Cprinter.string_of_hprel_short) hp_rel in
+  let () = y_tinfo_hp (add_str "do_unfold:estate_lhs" !CF.print_formula) estate_lhs in
   if !Globals.old_infer_hp_collect then
     begin
       x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
@@ -10946,7 +10960,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
                   let f_ctx = elim_unsat_es_now 13 prog (ref 1) f_es in
                   let res_ctx, res_prf =
-                    Wrapper.wrap_classic (Some true) (* exact *)
+                    Wrapper.wrap_classic x_loc (Some true) (* exact *)
                       (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true 
                   in
                   begin match res_ctx with
@@ -12337,10 +12351,16 @@ and solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg =
       let fv = CP.fv f in
       let rcontr_lst = List.fold_left (fun x hp_rel0 -> 
           let h_inf_args0, _ = get_heap_inf_args_hp_rel estate [hp_rel0] in
-          let eqs1 = List.map (fun (sv1, sv2) ->
-              if CP.mem_svl sv1 h_inf_args0 then (sv2,sv1)
-              else (sv1,sv2)
-            ) eqs0 in
+          let eqs1 = List.fold_left (fun acc (sv1, sv2) ->
+              let b1 = CP.mem_svl sv1 h_inf_args0 in
+              let b2 = CP.mem_svl sv2 h_inf_args0 in
+              match b1,b2 with
+                | true, false -> acc@[(sv2,sv1)]
+                | true, true -> acc
+                | _ -> acc@[(sv1,sv2)]
+              (* if CP.mem_svl sv1 h_inf_args0  then (sv2,sv1) *)
+              (* else (sv1,sv2) *)
+            ) [] eqs0 in
           let f = CP.subst eqs1 f in
           let h_inf_args1 = (CF.find_close h_inf_args0 eqs0) in
           let f = 
@@ -16845,3 +16865,13 @@ ation }
 		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
 	List.map hlp f
 	*)
+
+let is_unsat_0 f =
+  let pg = Cast.get_cprog () in
+  let n = 111 in
+  unsat_base_nth n pg (ref n) f
+
+let is_unsat_0 f =
+  Debug.no_1 "is_xpure_unsat" !print_formula string_of_bool is_unsat_0 f
+
+let () = CF.is_xpure_unsat := is_unsat_0

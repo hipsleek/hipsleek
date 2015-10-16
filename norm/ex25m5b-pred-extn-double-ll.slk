@@ -1,0 +1,54 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred ll<> ==
+   emp & self=null
+//or self::node<_,p>*p::ll<>.
+or self::node<_,p>*p::node<_,q>*q::ll<>.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+max(i,i) // recursive case
+   inv k>=0.
+
+//print views.
+
+//pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+
+pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+
+//shape_extends_view [ll] with size.
+
+/*
+# ex25m5b.slk
+
+no --inv-baga
+
+  inv: nnn>=0
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+
+# wrong over-approx & unsound under-approx
+
+--inv-baga
+
+  inv: (self=null | self!=null)
+  baga inv: [([], self=null),([self], true)]
+  baga over inv: [([], self=null),([self], true)]
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+
+ERROR: at ex25m5b-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Under)
+
+chinwn@loris-60:~/hg/sleekex/norm$ fixcalc logs/fixcalc.inp 
+# ll_ss:={ ... };
+(nnn_52 = 2*idx_53 && idx_53 >= 0)
+
+*/
+
+

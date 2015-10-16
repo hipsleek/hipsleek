@@ -1,0 +1,47 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred tmp<> == self=null
+    or self::ll3<> & self!=null
+ inv true.
+
+pred ll3<> == self=null
+    or self::node<_,q>*q::tmp<> & self!=null
+ inv true.
+
+pred ll<> == self=null
+    or self::node<_,q>*q::ll<>
+ inv true.
+
+print views.
+pred_unfold disj[*].
+print views.
+
+/*
+# ex21u3e9d.slk 
+
+ pred tmp<> == self=null
+    or self::ll3<> & self!=null
+ inv true.
+
+ pred ll3<> == self=null
+    or self::node<_,q>*q::tmp<> & self!=null
+ inv true.
+
+# deeper unfold needed below..
+
+    , view tmp<>= 
+  EList
+    :EBase 
+       (* lbl: *){10}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){11}->self::ll<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+ 
+
+*/

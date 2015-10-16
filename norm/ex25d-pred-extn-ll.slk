@@ -1,0 +1,61 @@
+data node{
+     int val;
+     node1 next; //#REC;
+}.
+
+data node1{
+     int val;
+     cell prev; // this is not REC
+     node next; //#REC;
+}.
+
+data cell{
+     int val;
+}.
+
+
+//data_mark_rec [cell*].
+//data_mark_rec [node*].
+//data_mark_rec [node].
+//data_mark_rec [node,node1].
+data_mark_rec [*].
+//print data [cell].
+//print data [*].
+//print data [node*].
+//print data [node1].
+print data.
+/*
+# ex25d.slk (see also ex25a.slk)
+
+data_mark_rec [*].
+
+[[data cell {
+  int val@;
+}
+],[data node {
+  int val@;
+  node1 next@REC;
+}
+,data node1 {
+  int val@;
+  cell prev@;
+  node next@REC;
+}
+]]
+
+# Can we mark the mutual recursive fields of data nodes
+  with #REC. This is needed for size extension of ex25a.slk
+
+   data_mark_rec [cell*].
+
+This command will process all data_decl and then mark the recursive
+fields with  #REC
+
+Add a data_mark_rec command. Pick data declaraction from
+!cprog. Use HipUtil.graph to build a strongly conncted graph.
+For each SCC, travere the data structure to mark the recursive fileds.
+
+Provide also a command to print the latest data declarations:
+  print data [*].
+ 
+*/

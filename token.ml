@@ -36,7 +36,9 @@ type sleek_token =
   | SHAPE_DERIVE_PRE (* to derive pre-predicate into view *)
   | SHAPE_DERIVE_POST (* to derive post-predicate into view *)
   | SHAPE_DERIVE_VIEW
+  | SHAPE_EXTN_VIEW
   | SHAPE_NORMALIZE
+  | DATA_MARK_REC
   | PRED_ELIM_HEAD
   | PRED_ELIM_TAIL
   | PRED_UNIFY_DISJ
@@ -51,7 +53,9 @@ type sleek_token =
   | DTIME
   | ELSE_TT
   | EMPTY
-  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXPECT_INFER | EXTENDS
+  | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXPECT_INFER
+  | EXTENDS 
+  (* | EXTENDS_REC *)
   | FALSE | FLOAT | FORALL | FUNC
   | HP | HPPOST
   | HTRUE
@@ -161,7 +165,9 @@ module Token = struct
     | SHAPE_DERIVE_PRE -> "shape_derive_pre"
     | SHAPE_DERIVE_POST -> "shape_derive_post"
     | SHAPE_DERIVE_VIEW -> "shape_derive_view"
+    | SHAPE_EXTN_VIEW -> "shape_extends_view"
     | SHAPE_NORMALIZE -> "shape_normalize"
+    | DATA_MARK_REC -> "data_mark_rec"
     | PRED_ELIM_HEAD -> "pred_elim_hd_node"
     | PRED_ELIM_TAIL -> "pred_elim_tl_node"
     | PRED_UNIFY_DISJ -> "pred_unify_disj"

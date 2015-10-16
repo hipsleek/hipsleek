@@ -116,7 +116,7 @@ let run_entail_check inf_obj ctx (iante : lem_formula) (iconseq : lem_formula) (
     | None -> if (!Globals.allow_lemma_residue) then Some false (* inexact *) else Some true (* exact *) 
     | _ -> exact_flag in
   (* TODO:WN Using wrap_inf_obj_obly cos inf_obj is not properly propated *)
-  wrap_inf_obj_only inf_obj (wrap_classic allow_r (run_entail_check_helper ctx iante iconseq inf_vars)) cprog
+  wrap_inf_obj_only inf_obj (wrap_classic x_loc allow_r (run_entail_check_helper ctx iante iconseq inf_vars)) cprog
 
 let run_entail_check inf_obj ctx (iante : lem_formula) (iconseq : lem_formula) 
     (inf_vars: CP.spec_var list) (cprog: C.prog_decl) (exact : bool option) =

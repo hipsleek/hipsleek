@@ -247,7 +247,7 @@ let smt_of_formula pr_w pr_s f =
 
 
 let smt_of_formula pr_w pr_s f =
-  Debug.no_1 "smt_of_formula" !print_pure pr_id (fun _ -> smt_of_formula pr_w pr_s f) f
+  (* Debug.no_1 "smt_of_formula" !print_pure pr_id *) (fun _ -> smt_of_formula pr_w pr_s f) f
 
 (***************************************************************
                        FORMULA INFORMATION                      

@@ -19,8 +19,8 @@ print residue.
 
 //print relAssumes.
 
-//shape_derive_view [P1,P2].
-//print views.
+shape_derive_view [P1,P2].
+print views.
 
 /*
 # ex21s1f.slk -dre "Syn:"

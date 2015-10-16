@@ -499,7 +499,39 @@ assert/assume:ex1-check.ss:18: 4:  : failed
 
 
 ==============================================================
+#todo/ex1b1
+
+ERROR: at ../todo/ex1b-free.c_26:4_26:12
+Message: trans_exp :: case CallNRecv :: procedure call free$int_star has invalid argument types (exc)
+
+note: remove free_data in main: OK
+
 ==============================================================
+#todo/ex1b2
+
+duplicated top-level name(s): free$__anonstruct_TData_1_star, __anonstruct_TData_1_star
+
+==============================================================
+
+list-ext
+todo/#ex12-test19
+
+
+todo/#ex13-test158
+CIL: needs handle union
+
+union {
+        void *p0;
+
+        struct {
+            char c[2];
+            int p1;
+            int p2;
+        } str;
+    } data;
+
+array
+
 ==============================================================
 ==============================================================
 ==============================================================

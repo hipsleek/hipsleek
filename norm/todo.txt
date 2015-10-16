@@ -18,7 +18,6 @@ or:
 The command should be idempotent in that the 
 2nd application will cause no-change.
 ===================================================================
-===================================================================
 # ex21r3.slk
 
 pred lseg2a<n,p> == self = p & n=0
@@ -1024,6 +1023,724 @@ lemma_test self::wseg<q>*q::char_star<0,r>
  Lemma infer proved succeeded in current context.
 : no residue 
 
+===================================================================
+# ex25a1.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+
+# add_uni_vars_to_view@5 EXIT ExceptionStack overflowOccurred!
+
+# contains a loop in above method
+# this seems unrelated to shape_extends_view
+
+Starting Omega.../usr/local/bin/oc
+Exception(add_uni_vars_to_view):Stack overflow
+
+Exception processed: Stack overflow
+error at: 
+===================================================================
+# ex25d.slk (see also ex25a.slk) (DONE)
+
+data_mark_rec [*].
+
+[[data cell {
+  int val@;
+}
+],[data node {
+  int val@;
+  node1 next@REC;
+}
+,data node1 {
+  int val@;
+  cell prev@;
+  node next@REC;
+}
+]]
+
+# Can we mark the mutual recursive fields of data nodes
+  with #REC. This is needed for size extension of ex25a.slk
+
+   data_mark_rec [cell*].
+
+This command will process all data_decl and then mark the recursive
+fields with  #REC
+
+Add a data_mark_rec command. Pick data declaraction from
+!cprog. Use HipUtil.graph to build a strongly conncted graph.
+For each SCC, travere the data structure to mark the recursive fileds.
+
+Provide also a command to print the latest data declarations:
+  print data [*].
+  ===================================================================
+# ex25a2.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+
+shape_extends_view [ll] with size.
+
+WARNING: _0:0_0:0:Cannot extend the View_EXTN size
+Segmentation fault (core dumped)
+
+
+===================================================================
+# ex20a1.ss --pred-en-equiv
+
+# please schedule pred-reuse when below turned on
+
+  ("--pred-en-equiv", Arg.Set Globals.pred_equiv, "attempt to reuse predicates with identical definition");
+
+
+# compare --ops (old predicate synthesis)
+
+ EInfer @pure_field,@leak[P]
+   EBase 
+     x::ll<>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]Stop z3... 108 invocations 
+===================================================================
+# ex20b.ss
+
+  infer [P1,@classic,@pure_field]
+  requires x::ll<>
+  //ensures P(x,res);
+  ensures P1(x);
+
+# below will need the complex unfolding that Richard is currently doing
+
+[ view P1<>= 
+  EList
+    :EBase 
+       exists (Impl)[q_1631](* lbl: *){285}->(exists Anon_1630: (* lbl: *){285}->
+       self::node<Anon_1630,q_1631>@M * q_1631::P1<>@M&self!=null&
+       {FLOW,(1,28)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){286}->self::ll<>@M&self=null&{FLOW,(1,28)=__flow#E}[]
+    ]
+
+===================================================================
+# ex25a5.slk --new-pred-extn
+
+# to use code from pred_extn
+
+# to fix ptr equality (DONE)
+
+# to check mutual-recursion (OK)
+
+# to check double node (OK)
+
+# base-case (FIXED)
+  raw base case: 
+  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+
+# inv not generated? # use --inv-baga (OK)
+
+  inv: ((nnn=0 & self=null) | (self!=null & 1<=nnn))
+  baga inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga over inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga over inv (unfolded): [([], nnn=0 & self=null),([self], 1<=nnn)]
+  baga under inv: [([], nnn=0 & self=null),([self], 1<=nnn)]
+  xform: ((nnn=0 & self=null) | (self!=null & 1<=nnn))
+
+# is_rec marker (OK)
+  is_recursive?: true
+
+# --inv and --inv-baga (OK)
+
+
+--new-pred-extn
+ 
+view ll_ss{}[]<nnn:int>= 
+  view_domains: (size,0,1)
+   view ll_ss<nnn:int>= 
+     EList
+      :EBase 
+         (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; p; Anon_13; 
+            q](* lbl: *){8}->self::node<Anon_12,p>@M * 
+                             p::node<Anon_13,q>@M * q::ll<>@M&
+            {FLOW,(1,26)=__flow#E}[]
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  
+  unstructured formula: 
+    (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){8}->(exists Anon_12,p,Anon_13,
+       q: (* lbl: *){8}->self::node<Anon_12,p>@M * p::node<Anon_13,q>@M * 
+                         q::ll_ss<nnn_61>@M&
+       {FLOW,(1,26)=__flow#E}[])
+  xform: true
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+
+--old-pred-extn
+
+!!! **derive.ml#545:der_view(old):
+ view ss{}[]<nnn:int>= 
+  view_domains: (size,0,1)
+   view ss<nnn:int>= 
+    EList
+          :EBase 
+         (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_55; 
+            p_56](* lbl: *){10}->(exists nnn_57: (* lbl: *){10}->self::node<Anon_55,p_56>@M * 
+                                                                 p_56::ss<nnn_57>@M&
+            nnn=nnn_57+1 & 0<=nnn_57&{FLOW,(1,26)=__flow#E}[])
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: nnn>=0
+  
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+  
+  unstructured formula: (* lbl: *){9}->emp&self=null & nnn=0&
+                        {FLOW,(1,26)=__flow#E}[]|| (* lbl: *){10}->(exists nnn_57,
+                                                   Anon_55,
+                                                   p_56: (* lbl: *){10}->
+                                                   self::node<Anon_55,p_56>@M * 
+                                                   p_56::ss<nnn_57>@M&
+                                                   nnn=nnn_57+1 & 0<=nnn_57&
+                                                   {FLOW,(1,26)=__flow#E}[])
+  xform: nnn>=0
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){9}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[]
+ 
+
+===================================================================
+# ex25a5e.slk -dre "compute_fixpt" (OK)
+
+(need to use --inv and --inv-baga)
+
+pred llsize<n> ==
+   emp & self=null & n=0
+  or self::node<_,p>*p::llsize<n-1>
+  inv true.
+
+# why doens't compute_fixpt work?
+
+// should inv = xform?
+
+(==astsimp.ml#2737==)
+compute_inv_baga@2
+compute_inv_baga inp1 :[llsize]
+compute_inv_baga@2 EXIT:[ view llsize{}[]<n:int>= 
+ inv: ((self=null & n=0) | (self!=null & 1<=n))
+ baga inv: [([], self=null & n=0),([self], 1<=n)]
+ baga over inv: [([], self=null & n=0),([self], 1<=n)]
+ baga over inv (unfolded): [([], self=null & n=0),([self], 1<=n)]
+ baga under inv: [([], self=null & n=0),([self], 1<=n)]
+ xform: ((self=null & n=0) | (self!=null & 1<=n))
+ ]
+
+===================================================================
+# ex25m5b.slk
+
+no --inv-baga
+
+  inv: nnn>=0
+  baga over inv: [([], nnn>=0)]
+  baga over inv (unfolded): [([], nnn>=0)]
+
+# wrong over-approx & unsound under-approx
+
+--inv-baga
+
+  inv: (self=null | self!=null)
+  baga inv: [([], self=null),([self], true)]
+  baga over inv: [([], self=null),([self], true)]
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+
+ERROR: at ex25m5b-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Under)
+
+chinwn@loris-60:~/hg/sleekex/norm$ fixcalc logs/fixcalc.inp 
+# ll_ss:={ ... };
+(nnn_52 = 2*idx_53 && idx_53 >= 0)
+
+===================================================================
+# ex25m5c.slk
+
+ll<n> view:
+  inv: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+  
+  baga over inv: [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  
+  xform: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+
+===================================================================
+# ex25m5b.slk (FIXED)
+
+# try simplify inv generated .. (FIXED)
+
+compute_inv_baga@3
+compute_inv_baga inp1 :[size,ll]
+compute_inv_baga@3 EXIT:[ view_extn size{}[R:size]<k:int>= 
+ inv: (k>=0 | k>=0)
+ baga inv: [([], k>=0),([], k>=0)]
+ baga over inv: [([], k>=0),([], k>=0)]
+ baga over inv (unfolded): [([], k>=0),([], k>=0)]
+ baga under inv: [([], k>=0),([], k>=0)]
+ xform: (k>=0 | k>=0)
+ ,
+ view ll{}[]<>= 
+ inv: (self=null | self!=null)
+ baga inv: [([], self=null),([self], true)]
+ baga over inv: [([], self=null),([self], true)]
+ baga over inv (unfolded): [([], self=null),([self], true)]
+ baga under inv: [([], self=null),([self], true)]
+ xform: (self=null | self!=null)
+ ]
+
+
+ex25m5b.slk
+!!! **derive.ml#761:new_vd:
+ inv: ((self=null | self!=null)) & nnn>=0
+baga over inv (unfolded): [([], self=null),([self], true)]
+xform: (self=null | self!=null)
+
+# baga_inv and under inv wrong; should contain only (FIXED)
+
+compute_inv_baga@2 EXIT:[ view ll_ss{}[]<nnn:int>= 
+  inv: ((nnn=0 & self=null) | 
+        (self!=null & 2<=nnn & exists(alpha:2*alpha=nnn)))
+  baga inv: [([], self=null),([self], true)] # not valid
+  baga over inv: [([], nnn=0 & self=null),([self], 2<=nnn & exists(alpha:2*alpha=nnn))]
+  baga over inv (unfolded): [([], nnn=0 & self=null),([self], 2<=nnn & exists(alpha:2*alpha=nnn))]
+  baga under inv: [([], self=null),([self], true)] # not valie
+  xform: ((nnn=0 & self=null) | 
+          (self!=null & 2<=nnn & exists(alpha:2*alpha=nnn)))
+
+--before compute_inv_baga
+  inv: ((self=null | self!=null)) & nnn>=0
+  baga inv: [([], self=null),([self], true)]
+  
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+  xform: (self=null | self!=null)
+
+
+!!! **derive.ml#757:new_vd:
+ view ll_ss{}[]<nnn:int>= 
+ inv: ((self=null | self!=null)) & nnn>=0
+  baga inv: [([], self=null),([self], true)]
+  
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  baga under inv: [([], self=null),([self], true)]
+  xform: (self=null | self!=null)
+
+===================================================================
+# ex25m5d.slk  --inv-baga --dre "build_ef_h"
+
+// fixcalc error ...
+
+fixcalc: Argument of widen is not a formula
+
+
+# This is not an over-inv; but should be a precise inv
+
+!!! **fixUtil.ml#189:Predicate ll_ss has over invariant (exc) 
+
+Last Proving Location: ex25m5d-pred-extn-double-ll.slk_8:3_8:18
+
+ERROR: at ex25m5d-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Over)
+
+Exception processed: Failure("\nInv Check: Fail.(View ll_ss:Over)")
+
+!!! **astsimp.ml#2073:context:  emp&(nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))&
+{FLOW,(1,26)=__flow#E}[]
+ es_gen_impl_vars(E): []
+ 
+ es_unsat_flag: false
+!!! **astsimp.ml#2109:baga_over_formula:
+ emp&
+((self=null & nnn=0) | (exists(alpha:2*alpha=nnn) & self!=null & 2<=nnn))&
+{FLOW,(1,26)=__flow#E}[]
+
+
+!!! **fixUtil.ml#158:num_inv:
+
+
+(==smtsolver.ml#1158==)
+imply_raw@7
+imply_raw inp1 : exists(alpha:2*alpha=nnn) & 0<=nnn
+imply_raw inp2 : ((exists(idx:idx=0) & exists(self:self=null) & nnn=0) | 
+  (exists(idx:exists(idx_55:idx=idx_55+1)) & 
+   exists(nnn_53:exists(nnn_54:exists(alpha:2*alpha=nnn_54) & 0<=nnn_54 & 
+                               nnn_53=nnn_54+1) & 
+                 nnn=nnn_53+1) & 
+   exists(q3:exists(q:q=q3)) & exists(p:p>0) & exists(self:self>0)))
+imply_raw@7 EXIT:false
+
+(* Z3 wasn't precise, and this causes some issue below ..*)
+
+!!! **fixUtil.ml#163:Imprecise path ... ll_ss
+!!! input = F1:={[nnn]: (nnn=0 || (nnn=2 || nnn=4))};
+F2:={[nnn]: (nnn=0 || (nnn=6 || (nnn=2 || nnn=4)))};
+F2W:=widen(F1,F2,SimHeur);
+F2W;
+!!! **fixcalc.ml#491:result: nnn>=0
+(==fixUtil.ml#175==)
+widen@8
+widen inp1 : (nnn=0 | nnn=2 | nnn=4)
+widen inp2 : (nnn=0 | nnn=6 | nnn=2 | nnn=4)
+widen@8 EXIT: nnn>=0
+
+(==omega.ml#1165==)
+imply_raw@9
+imply_raw inp1 : nnn>=0
+imply_raw inp2 : (nnn=0 | 2<=nnn)
+imply_raw@9 EXIT:false
+
+!!! **fixUtil.ml#185:Predicate ll_ss has over invariant
+
+===================================================================
+ex25m5d.slk --inv-baga --old-tp-simplify -dre "form_body_inv\|build_ef_formula\|ef_conv_"
+
+Last Proving Location: ex25m5d-pred-extn-double-ll.slk_8:3_8:18
+
+ERROR: at ex25m5d-pred-extn-double-ll.slk_7:5_7:9
+Message: 
+Inv Check: Fail.(View ll_ss:Over)**astsimp.ml#2206:
+
+Exception processed: Failure("\nInv Check: Fail.(View ll_ss:Over)**astsimp.ml#2206:")
+error at: 
+SLEEK FAILURE (END)
+
+# Below loses precision. Need to trace the code of TP.simplify_raw  to see
+  what is wrong with it.
+# incorrect TP.simplify_raw
+
+(====)
+simplify_raw@759@755@723
+simplify_raw inp1 : ((nnn=0 & self=null) | (self=1 & nnn=2) | 
+  (self=1 & 4<=nnn & exists(alpha:2*alpha=nnn)))
+simplify_raw@759 EXIT: (nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))
+
+# correction : use om_simplify instead of TP.simplify_raw --new-tp-simplify
+
+(====)
+simplify_omega@778@774@744
+simplify_omega inp1 : ((nnn=0 & self=null) | (self=1 & nnn=2) | 
+  (self=1 & 4<=nnn & exists(alpha:2*alpha=nnn)))
+simplify_omega@778 EXIT: ((self=1 & nnn=2) | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn) | 
+  (self=null & nnn=0))
+
+# seems redundant?
+(==tpdispatcher.ml#978==)
+simplify_imm_min_max@785
+simplify_imm_min_max inp1 : ((nnn=0 & self=null) | (nnn=2 & self!=null) | (nnn=4 & self!=null) | 
+  (nnn=6 & self!=null) | 
+  (exists(alpha_190:2*alpha_190=nnn) & self!=null & 4<=nnn))
+simplify_imm_min_max@785 EXIT: ((nnn=0 & self=null) | (nnn=2 & self!=null) | (nnn=4 & self!=null) | 
+  (nnn=6 & self!=null) | 
+  (exists(alpha_190:2*alpha_190=nnn) & self!=null & 4<=nnn))
+
+
+
+
+(==#0==)
+ef_conv_enum_disj@83@81
+ef_conv_enum_disj inp1 :[([], nnn=0 & self=null),([self], nnn=2),([self], 4<=nnn & exists(alpha:2*alpha=nnn))]
+ef_conv_enum_disj@83 EXIT: (nnn=2*self | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))
+===================================================================
+# ex20d.ss --pred-en-equiv
+
+  int len_seg(node x,node p)
+  infer [P,@classic,@pure_field]
+  requires P(x,p)
+  ensures true;
+{    
+  if (x==p) return 0;
+  else return 1+len_seg(x.next,p);
+}
+
+
+# How did an exception lead to FALSE?
+
+(==inferHP.ml#107==)
+partition_hp_args@2@1
+partition_hp_args inp1 :P
+partition_hp_args inp2 :[x,p,x',val_45_1631',next_45_1632']
+partition_hp_args@2 EXIT ExceptionInvalid_argument("List.combine")Occurred!
+
+ es_infer_vars_hp_rel: [P]
+heap_entail_non_empty_rhs_heap inp2 :LHS base: P(x,p)&!(v_bool_44_1641') & x'!=p' & p'=p & x'=x & v_int_45_1639'=1&
+{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp3 :RHS base: x'::node<val_45_1631',next_45_1632'>@L&{FLOW,(1,28)=__flow#E}[]
+heap_entail_non_empty_rhs_heap inp4 :ante    : P(x,p)&!(v_bool_44_1641') & x'!=p' & p'=p & x'=x & v_int_45_1639'=1&
+{FLOW,(4,5)=__norm#E}[]
+heap_entail_non_empty_rhs_heap inp5 :conseq  : x'::node<val_45_1631',next_45_1632'>@L&{FLOW,(1,28)=__flow#E}[]
+heap_entail_non_empty_rhs_heap inp6 :matched_set:[]
+heap_entail_non_empty_rhs_heap@1 EXIT:( [ hfalse&false&{FLOW,(4,5)=__norm#E}[]
+  es_infer_hp_rel: [(2;0)unknown P(x,p) |#|  --> emp&x=p]
+  es_gen_impl_vars(E): []
+  es_orig_ante: Some(emp&
+                 v_int_45_1639'=1 & x'=x & p'=p & x'!=p' & 
+                 !(v_bool_44_1641') & x=p&{FLOW,(4,5)=__norm#E}[])
+  es_infer_obj: [@leak,@pure_field]
+  es_var_measures 1: Some(MayLoop[]{})
+  
+  es_infer_vars_hp_rel: [P]
+  es_infer_hp_rel: [(2;0)unknown P(x,p) |#|  --> emp&x=p]],<Failure></Failure>)
+
+
+ExceptionInvalid_argument("List.combine")Occurred!
+!!! **tpdispatcher.ml#2498:xxx rel Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
+Exception(Syn.find_root_one_hprel):Invalid_argument("List.combine")
+Exception(Syn.find_root_hprel):Invalid_argument("List.combine")
+Exception(Syn.view_decl_of_hprel):Invalid_argument("List.combine")
+Exception(Syn:trans_hprel_to_view):Invalid_argument("List.combine")
+Exception(Syn:derive_view):Invalid_argument("List.combine")
+Exception(infer_shapes):Invalid_argument("List.combine")
+Exception(wrapper_infer_imm_pre_post):Invalid_argument("List.combine")
+
+
+===================================================================
+# should be y!=x inferred.. (FIXED)
+
+(==infer.ml#785==)
+infer_lhs_contra#1@3@2
+infer_lhs_contra#1 inp1 : x=y
+infer_lhs_contra#1 inp2 :[y,x]
+infer_lhs_contra#1 inp3 :EARLY CONTRA DETECTION
+infer_lhs_contra#1@3 EXIT:Some( x!=y)
+
+(==solver.ml#12280==)
+infer_lhs_contra_estate#4@2
+infer_lhs_contra_estate#4 inp1 :estate:
+ ex_formula : P(x,y)&x=y&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [y; x]
+infer_lhs_contra_estate#4 inp2 :lhs_xpure: x=y
+infer_lhs_contra_estate#4 inp3 :EARLY CONTRA DETECTION
+infer_lhs_contra_estate#4@2 EXIT:(Some(( ex_formula : hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [y; x], x!=y)),[])
+
+!!! **solver.ml#5511:WARNING : Inferred pure not added: x!=x
+Entail (1) : Valid. 
+
+!!! **solver.ml#5511:WARNING : Inferred pure not added: x!=x
+Entail (1) : Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+[UNSOUNDNESS] WARNING : satisfiable state at 1 File "ex20e6d-lseg-false.slk",Line:17,Col:25 became hfalse
+
+Entail (2) : Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  x!=y]
+===================================================================
+# ex20e5a (with @classic)
+
+infer[P,HP,@classic] 
+ HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
+
+# if @classic present, can we use:
+
+   P(n',p) <- HP(n',p,x) * x::node<val_48_1600,n'> & x!=p 
+===================================================================
+# ex20e5.ss 
+
+int len_seg(node x,node p)
+  infer [P,@classic,@pure_field]
+  requires P(x,p)
+  ensures false
+{    
+  if (x==p) return 0;
+  else return 1+len_seg(x.next,p);
+}
+
+[ // BIND
+(2;0)P(x,p@NI)&
+x!=p --> x::node<val_48_1600,next_48_1601>@M * 
+         HP_1602(val_48_1600@NI,p@NI,x@NI) * HP_1603(next_48_1601,p@NI,x@NI)&
+true,
+ // PRE_REC
+(2;0)HP_1603(n',p@NI,x@NI)&x!=p |#| x::node<val_48_1600,n'>@M&
+true --> P(n',p@NI)&
+true,
+ // POST
+P(x,p@NI)&true --> htrue&
+x!=p]
+
+
+!!! **WARNING****syn.ml#180:Merging is not performed due to the set of pre-hprels does not have disjoint conditions
+!!! **syn.ml#654:Cannot transform the hprels of [P] into view declarations.
+
+===================================================================
+# ex20e5.ss (OK)
+
+# for check_pre_post; if post_cond is false, please
+  use Wrapper.wrap_classic Some(true))
+
+              let f x = 
+                (* let () = y_binfo_pp "if post_cond is false, inference on and orig classic on, apply Wrapper.wrap_classic" in *)
+                f x in
+
+(==typechecker.ml#2951==)
+check_pre_post(2)@2
+check_pre_post(2) inp1 : EInfer @pure_field,@leak[P]
+   EBase 
+     P(x,p)&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         hfalse&false&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+check_pre_post(2) inp2 : List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 
+===================================================================
+# ex20f1.ss 
+
+int len_seg(node x)
+  infer [P,@classic,@pure_field]
+  requires P(x)
+  ensures false;
+{    
+  if (x==null) return 0;
+  else { 
+    node n = x.next;
+    // dprint;
+    int r=len_seg(n);
+    //  dprint;
+    return 1+r;
+  }
+}
+
+# should we use just relation and not HeapPred
+
+[ // BIND
+(2;0)P(x)&
+x!=null --> x::node<val_48_1593,next_48_1594>@M * 
+            HP_1595(val_48_1593@NI,x@NI) * HP_1596(next_48_1594,x@NI)&
+true,
+ // PRE_REC
+(2;0)HP_1595(val_48_1593@NI,x@NI)&x!=null --> emp&
+true,
+ // PRE_REC
+(2;0)HP_1596(n',x@NI) * x::node<val_48_1593,n'>@M&true --> P(n')&
+true,
+ // POST
+P(x)&true --> htrue&
+x!=null]
+===================================================================
+# ex20g2.ss 
+
+int fact(int i)
+  infer [R]
+  requires R(i)
+  ensures false;
+{    
+  if (i==0) return 1;
+  else return i * fact(i-1);
+}
+
+# can we make fixcalc to work better with pre-conditions?
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN R: ( R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0) -->  R(v_int_18_1500'),
+RELASS [R]: ( R(i)) -->  i!=0]
+
+***************************************
+** relation obligations after imm norm **
+*****************************************
+[RELASS [R]: ( R(i)) -->  i!=0]
+*****************************************
+Exception(substitute_args):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(extract_inv_helper):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(compute_fixpoint_xx):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(compute_fixpoint_x):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(compute_fixpoint_td):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(pre_calculate):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(pre_rel_fixpoint):Failure("substitute_args: failure with look_up_rel_args_type")
+Exception(update_with_td_fp):Failure("substitute_args: failure with look_up_rel_args_type")
+
+!!! PROBLEM with fix-point calculationException(wrapper_infer_imm_pre_post):Failure("substitute_args: failure with look_up_rel_args_type")
+
+ExceptionFailure("substitute_args: failure with look_up_rel_args_type")Occurred!
+
+Error1(s) detected at main 
+Stop z3... 66 invocations 
+Stop Omega... 18 invocations caught
+
+Exception occurred: Failure("substitute_args: failure with look_up_rel_args_type")
+Error3(s) detected at main 
+===================================================================
+# ex20g4.ss 
+
+  infer [R]
+  requires true
+  ensures  R(i);
+{    
+  if (i==0) return 1;
+  else return i + fact(i-1);
+}
+
+# can we add i>=0 to pre-condition?
+  How to use outcome of topdown?
+  Has top-down been generalized to mutual recursion?
+
+*************************************
+****** Before putting into fixcalc*******
+pre_vars: i
+post_vars: 
+*************************************
+formula:  (i=0 | (exists(v_int_18_1526:v_int_18_1526+1=i & R(v_int_18_1526)) & i!=0))
+*************************************
+
+!!! **fixcalc.ml#1043:Input of fixcalc: :R:={[i] -> [] -> []: (i=0 ||  (exists (v_int_18_1526:v_int_18_1526+1=i && R(v_int_18_1526)))  && ((i<0) || (i>0)))
+};
+bottomupgen([R], [2], SimHeur);
+
+===================
+R:={[i] -> [] -> []: (i=0 ||  (exists (v_int_18_1526:v_int_18_1526+1=i && R(v_int_18_1526)))  && ((i<0) || (i>0)))
+};
+bottomupgen([R], [2], SimHeur);
+# i>=0
+topdown(R, 2, SimHeur);
+# {[i,RECi]:((i >= RECi + 1 && 0 >= 1 + i) || (RECi >= 0 && i >= 1 + RECi))};
 ===================================================================
 ===================================================================
 ===================================================================

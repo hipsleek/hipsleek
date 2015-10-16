@@ -1,0 +1,26 @@
+
+X := {[nnn]:((exists(idx:idx=0) & exists(self:self<=0) & nnn=0) | 
+  (exists(idx:exists(idx_55:idx=idx_55+1)) & 
+   exists(nnn_53:exists(nnn_54:exists(alpha:2*alpha=nnn_54) & 0<=nnn_54 & 
+                               nnn_53=nnn_54+1) & 
+                 nnn=nnn_53+1) & 
+   exists(q3:exists(q:q=q3)) & exists(p:p>0) & exists(self:self>0)))};
+Y := {[nnn]: exists(alpha:2*alpha=nnn) & 0<=nnn};
+
+X subset Y;
+Y subset X;
+
+
+Body := {[self,nnn]: (nnn=2*self & nnn>=0 | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))};
+
+Body2 := {[self,nnn]: (nnn=0 & self=0 | nnn=2 & self=1 | (self=1 & exists(alpha:2*alpha=nnn) & 4<=nnn))};
+
+Inv := {[self,nnn]:((self<=0 & nnn=0) | (exists(alpha:2*alpha=nnn) & self>0 & 2<=nnn))};
+
+Body subset Inv;
+Body2 subset Inv;
+
+KK := {[self,nnn]: nnn=0 & self=0 |
+  self=1 & nnn=2 | self=1 & 4<=nnn & exists(alpha:2*alpha=nnn)};
+
+KK;

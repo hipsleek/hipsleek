@@ -1,0 +1,59 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred zip2<y,z> ==
+   self=null & y=z
+or self::node<_,p>*y::node<_,q> * p::zip2<q,z>.
+
+pred ll<> == self=null
+    or self::node<_,q>*q::ll<>.
+
+pred lseg<p> == self=p
+    or self::node<_,q>*q::lseg<p>.
+
+/*
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+pred llN<nnn> == extends ll<> with size[REC]<nnn> .
+pred lsegN<p,nnn> == extends lseg<p> with size[REC]<nnn> .
+*/
+
+//pred_split [zip2].
+print views.
+relation R(int a,int b).
+
+lemma_infer [R] self::zip2<y,z>
+   <- self::llN<n1> * y::lsegN<z,n2> & R(n1,n2).
+print residue.
+
+/*
+# ex21s1d.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+pred_split [zip2].
+
+# Below was scheduled. Duplicate or due to putting
+  root parmater y as 2nd parameter.
+  Can we check instantiatinng paramete and
+  try to make them root where possible.
+
+  Use HP_44(y,z) rather than HP_44(z,y)
+
+
+!!! **sleekengine.ml#2541:
+ Proven : self::zip2<y,z>@M&{FLOW,(1,26)=__flow#E}[] ->  
+     HP_44(z,y) * HP_45(self)&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#3096:
+
+
+
+*/

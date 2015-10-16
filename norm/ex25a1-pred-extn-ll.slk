@@ -1,0 +1,79 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+//print views.
+
+//pred llN<nnn> == extends ll<> with size[REC]<nnn>.
+
+//pred lsegN<p,n> == extends lseg<p> with size[REC]<n>.
+
+shape_extends_view [ll,ll2] with size.
+
+//shape_extends_view [ll] with size.
+
+print views.
+
+/*
+# ex25a1.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+
+shape_extends_view [*] with size.
+
+WARNING: _0:0_0:0:Cannot extend the View_EXTN size
+Segmentation fault (core dumped)
+
+=======
+
+# Without size[R]<k>, got messgae below:
+   Better have more informative message.
+
+Exception processed: Not_found
+error at: 
+SLEEK FAILURE (END)
+
+============================
+(FIXED)
+
+
+# add_uni_vars_to_view@5 EXIT ExceptionStack overflowOccurred!
+
+# contains a loop in above method
+# this seems unrelated to shape_extends_view
+
+Starting Omega.../usr/local/bin/oc
+Exception(add_uni_vars_to_view):Stack overflow
+
+Exception processed: Stack overflow
+error at: 
+
+
+pls2nus@loris-laptop:~/hg/sl_imm$ hg bisect -g
+Testing changeset 17207:b840ac680abf (89 changesets remaining, ~6 tests)
+104 files updated, 0 files merged, 0 files removed, 0 files unresolved
+pls2nus@loris-laptop:~/hg/sl_imm$ 
+
+% OCAMLRUNPARAM="b" ./ab
+*/

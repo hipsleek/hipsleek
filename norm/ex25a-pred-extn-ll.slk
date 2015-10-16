@@ -1,11 +1,15 @@
 data node{
-     int val;
-     node next#REC;
+  int val;
+  node next#REC;  
 }.
 
 pred ll<> ==
    emp & self=null
-or self::node<_,p>*p::ll<>.
+or self::node<_, p>*p::ll<>.
+
+pred lseg<p> ==
+  emp & self=p 
+  or self::node<_, q> * q::lseg<p>.
 
 
 pred_extn size[R]<k> ==
@@ -15,9 +19,18 @@ pred_extn size[R]<k> ==
 
 print views.
 
-pred llN<nnn> == extends ll<> with size[REC]<nnn> .
+//pred llN<nnn> == extends ll<> with size[REC]<nnn>.
+
+//pred lsegN<p,n> == extends lseg<p> with size[REC]<n>.
+
+shape_extends_view [*] with size.
+
+//shape_extends_view [ll] with size.
+
 
 print views.
+
+data_mark_rec [*].
 
 /*
 # ex25a.slk
