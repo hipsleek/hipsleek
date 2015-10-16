@@ -1049,7 +1049,27 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
                   | _ -> lv_ty
                 ) in
-              let deref_ty = translate_typ refined_ty pos in
+              
+              try 
+                let addr_dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
+                let addr_ddecl = Hashtbl.find tbl_data_decl addr_dtyp in
+                let addr_dname = (
+                  match addr_dtyp with
+                  | Globals.Named s -> s
+                  | _ -> report_error pos "gather_addrof_exp: unexpected type!"
+                ) in
+                let addr_vname = str_addr ^ lv_str in
+                let addr_vdecl = (
+                  (* create and temporarily initiate a new object *)
+                  let init_params = [(translate_lval lv)] in
+                  let init_data = Iast.mkNew addr_dname init_params pos in
+                  Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
+                ) in
+                aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
+                Hashtbl.add tbl_addrof_info lv_str addr_vname;
+              with Not_found -> Hashtbl.add tbl_addrof_info lv_str lv_str; (*Muoi: Address of a struct is itself*)
+              
+              (*let deref_ty = translate_typ refined_ty pos in
               let (addr_dtyp, addr_dname, addr_ddecl) = (
                 try 
                   let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
@@ -1084,7 +1104,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                 Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
               ) in
               aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
-              Hashtbl.add tbl_addrof_info lv_str addr_vname;
+              Hashtbl.add tbl_addrof_info lv_str addr_vname;*)
             )
         )
     )
@@ -1170,13 +1190,13 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
-              let offset_field = match ty with
-                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, (gen_field_ann dtype))
-                | _ -> ((Int, str_offset), no_pos, false, (gen_field_ann Int)) (*other types have an integer offset*)
-              in
+(*              let offset_field = match ty with*)
+(*                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, (gen_field_ann dtype))*)
+(*                | _ -> ((Int, str_offset), no_pos, false, (gen_field_ann Int)) (*other types have an integer offset*)*)
+(*              in*)
               let dfields = match ty with
                 | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
-                | _ -> [value_field; offset_field] 
+                | _ -> [value_field(*; offset_field*)] 
               in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
