@@ -43,7 +43,25 @@ int length(node x)
 }
 
 /*
-# ex20a1.ss --pred-en-equiv
+# ex20a1.ss 
+
+# what happen to size_prop=0, should be termination
+  base case..
+
+Procedure length: UNKNOWN
+ requires x::ll_size<size_prop> & true
+ case {
+   1<=size_prop -> requires emp & Term[77,1]
+                   ensures true & true;
+                   
+                     
+   size_prop<=0 -> requires emp & MayLoop[]
+                   ensures true & true;
+                   
+                     
+   }
+
+-----------------------------
 
 # please schedule pred-reuse when below turned on
 
