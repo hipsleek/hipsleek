@@ -29,6 +29,22 @@ int fact(int i)
   else return i * fact(i-1);
 }
 
+
+(==fixcalc.ml#981==)
+drop_nonlinear_formula@1
+drop_nonlinear_formula inp1 : (i=0 | 
+  exists(v_int_18_1521:exists(i':exists(v_int_18_1523:exists(v_int_18_1498':
+                                 exists(res:res=v_int_18_1498') & 
+                                 v_int_18_1498'=i'*v_int_18_1523)) & 
+                                 1+v_int_18_1521=i' & i'=i & i'!=0) & 
+                       R(v_int_18_1521)))
+drop_nonlinear_formula@1 EXIT: (i=0 | 
+  exists(v_int_18_1521:exists(i':exists(v_int_18_1523:exists(v_int_18_1498':
+                                 exists(res:res=v_int_18_1498') & true)) & 
+                                 1+v_int_18_1521=i' & i'=i & i'!=0) & 
+                       R(v_int_18_1521)))
+
+
 *************************************
 ****** Before putting into fixcalc*******
 pre_vars: i

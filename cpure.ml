@@ -15536,3 +15536,6 @@ let is_AndList f =
   match f with
   | AndList _ -> true
   | _ -> false
+
+(* let pr = drop_nonlinear_formula pf in *)
+
