@@ -54,37 +54,22 @@ int len_seg(node x)
 }
 
 /*
-# ex20e5.ss 
+# ex20e7.ss 
 
-int len_seg(node x,node p)
-  infer [P,@classic,@pure_field]
-  requires P(x,p)
-  ensures false
-{    
-  if (x==p) return 0;
-  else return 1+len_seg(x.next,p);
-}
+[ // BIND
+(2;0)P(x)&
+x!=null --> x::node<val_48_1587,next_48_1588>@M * 
+            HP_1589(val_48_1587@NI,x@NI) * HP_1590(next_48_1588,x@NI)&
+true,
+ // PRE_REC
+(2;0)HP_1589(val_48_1587@NI,x@NI)&x!=null --> emp&
+true,
+ // PRE_REC
+(2;0)HP_1590(n',x@NI) * x::node<val_48_1587,n'>@M&true --> P(n')&
+true,
+ // POST
+P(x)&true --> htrue& x!=null]
 
-!!! **solver.ml#5511:WARNING : Inferred pure not added: p!=x
-Procedure len_seg$node~node SUCCESS.
 
-
-!!! **solver.ml#5511:WARNING : Inferred pure not added: p!=x
-Procedure len_seg$node~node SUCCESS.
-
-Exception(look_up_view_def_raw):Not_found
-Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
-Exception(Syn.get_root_args_hp):Failure("hp_root_pos has not yet set.")
-Exception(Syn.trans_hrel_to_view_formula):Failure("hp_root_pos has not yet set.")
-Exception(wrapper_infer_imm_pre_post):Failure("hp_root_pos has not yet set.")
-
-ExceptionFailure("hp_root_pos has not yet set.")Occurred!
-
-Error1(s) detected at main 
-Stop z3... 90 invocations 
-Stop Omega... 39 invocations caught
-
-Exception occurred: Failure("hp_root_pos has not yet set.")
-Error3(s) detected at main 
 
 */
