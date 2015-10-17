@@ -4142,7 +4142,8 @@ let rename_view vdecl new_name =
     view_un_struc_formula = List.map (fun (f, lbl) -> (F.rename_view_formula sst f, lbl)) vdecl.view_un_struc_formula; }
 
 
-let cprog:(prog_decl option) ref = ref None
+(* let cprog:(prog_decl option) ref = ref None *)
+let cprog = global_prog
 
 let get_cprog () = match !cprog with
   | Some cp -> cp
