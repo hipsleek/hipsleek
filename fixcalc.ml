@@ -978,6 +978,7 @@ let compute_def (rel_fml, pf, no) ante_vars =
     print_endline_quiet "*************************************";
   end;
   try
+    let (pf2,subs) = x_add_1 CP.extract_mult pf in
     let pf = x_add_1 CP.drop_nonlinear_formula pf in
     let rhs = x_add_1 fixcalc_of_pure_formula pf in
     let input_fixcalc =
