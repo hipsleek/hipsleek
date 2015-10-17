@@ -1999,7 +1999,7 @@ let imm_norm_struc prog f (conseq: bool) unfold_fun pos =
   let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_struc f else f in
   f
 
-let find_rec_data cprog ids =
+let find_rec_data iprog cprog ids =
   let data_d_lst = cprog.Cast.prog_data_decls in
   let () = y_tinfo_hp (add_str "data_decls" (pr_list (fun d -> d.Cast.data_name))) data_d_lst in
   let () = List.iter (fun d ->
@@ -2030,10 +2030,15 @@ let find_rec_data cprog ids =
               (id, if List.mem t vns then rec_field_id::acc else acc)) lst 
           in
           dd.Cast.data_fields <- new_lst;
+          try
+            let idd = I.look_up_data_def_raw iprog.I.prog_data_decls dd.Cast.data_name in
+            idd.Iast.data_fields <- List.map (fun (i, ann) -> (i, no_pos, false, ann)) new_lst;
+          with _ -> ()
         ) d_lst;
         d_lst
     ) com_scc in
   let () = y_binfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
-  let () = y_binfo_hp (add_str "prog_data_decls" (pr_list Cprinter.string_of_data_decl)) cprog.Cast.prog_data_decls in
+  let () = y_binfo_hp (add_str "iprog_data_decls" (pr_list Iprinter.string_of_data_decl)) iprog.Iast.prog_data_decls in
+  let () = y_binfo_hp (add_str "cprog_data_decls" (pr_list Cprinter.string_of_data_decl)) cprog.Cast.prog_data_decls in
   ()
 

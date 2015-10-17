@@ -49,7 +49,7 @@ We have:
 
 data node {
 	int val; 
-	node next;	
+	node next; //#REC;	
 }
 
 Please schedule #REC to be added (as shown in ex20a3.slk)
