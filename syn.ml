@@ -951,7 +951,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   in
   let orig_info = (norm_ipred.I.view_name, norm_ipred.I.view_vars) in
   (* TODO: Auto derive REC *)
-  let extn_info = (extn_pred.C.view_name, ["REC"], [extn_view_var]) in
+  let extn_info = (extn_pred.C.view_name, [rec_field_id], [extn_view_var]) in
   let extn_iview = { extn_iview with 
     I.view_derv_from = Some (REGEX_LIST [(norm_ipred.I.view_name, true)]);
     I.view_derv_info = [(orig_info, extn_info)];

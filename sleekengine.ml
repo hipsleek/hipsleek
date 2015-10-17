@@ -1746,7 +1746,7 @@ let process_shape_derive_view (ids: regex_id_list) =
 
 let process_data_mark_rec (ids: regex_id_star_list) =
   let () = y_binfo_hp (add_str "dmr args" string_of_regex_star_list) ids in
-  Norm.find_rec_data !cprog ids
+  Norm.find_rec_data iprog !cprog ids
   (* in failwith x_tbi *)
 
 let process_shape_normalize (ids: regex_id_list) =
@@ -3025,6 +3025,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   in
   (* let run_infer x = wrap_classic etype (run_infer_one_pass_set_states itype ivars [iante0]) x in *)
   let num_id = "\nEntail "^nn in
+  (* CLASSIC: Set classic reasoning for sleek with infer[@classic] cmd *)
   let run_infer x = wrap_classic x_loc etype (run_infer_one_pass_set_states itype ivars [iante0]) x in
   let run_infer x = 
     if is_field_imm_flag then wrap_field_imm (Some true) run_infer x

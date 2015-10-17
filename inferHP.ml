@@ -796,15 +796,16 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
 
   (*******DROP*******)
   (*TOFIX*)
-  let classic_local = (* check_is_classic () *) es.CF.es_infer_obj # is_classic in
+  let classic_local = check_is_classic () (* es.CF.es_infer_obj # is_classic *) in
   let () = Debug.ninfo_hprint (add_str  "check_is_classic ()" string_of_bool) (check_is_classic ()) no_pos in
   let () = Debug.ninfo_hprint (add_str  "es.CF.es_infer_obj # is_classic" string_of_bool) (es.CF.es_infer_obj # is_classic) no_pos in
-  let classic_nodes = if classic_local then CF.get_ptrs lhs_b.CF.formula_base_heap else [] in
+  let classic_nodes = if classic_local (* && !Globals.adhoc_flag_2 *) then CF.get_ptrs lhs_b.CF.formula_base_heap else [] in
   let lhs_keep_root_svl = rhs_svl in
   let rhs_keep_root_svl = (rhs_svl(* @keep_root_hrels@classic_nodes*)) in
-  let lhs_b1 = if classic_local (* check_is_classic () *) (* es.CF.es_infer_obj # is_classic_all *) || !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) then lhs_b
-  else
-    {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CP.remove_dups_svl (lhs_keep_rootvars@rhs_args_ni));}
+  let lhs_b1 = if classic_local (* check_is_classic () *) (* es.CF.es_infer_obj # is_classic_all *) || !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) 
+    then lhs_b
+    else
+      {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CP.remove_dups_svl (lhs_keep_rootvars@rhs_args_ni));}
   in
   let lhs_b1a,rhs_b1a = Sautil.keep_data_view_hrel_nodes_two_fbs prog es.CF.es_infer_obj # is_pure_field_all
     (!Globals.old_infer_complex_lhs || iact != 1)
@@ -2107,16 +2108,17 @@ let infer_collect_hp_rel i prog iact (es:entail_state) lhs_node rhs rhs_rest (rh
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-  let pr4 = Cprinter.string_of_estate_infer_hp in
+  let pr4 = Cprinter.string_of_estate(*_infer_hp*) in
   let pr5 =  pr_hexa string_of_bool pr4 (add_str "abd heap" Cprinter.string_of_h_formula)
       (pr_option Cprinter.string_of_h_formula) (pr_option pr2)
       (add_str "new rest" (pr_option Cprinter.string_of_h_formula))
   in
-  Debug.no_5_num i "infer_collect_hp_rel" (* pr2 *)
+  Debug.no_6_num i "infer_collect_hp_rel" (* pr2 *)
       (add_str "lhs_node" !CF.print_h_formula) (add_str "rhs_node" !CF.print_h_formula)
-      (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr2) pr5
-    ( fun _ _ _ _ _ -> infer_collect_hp_rel prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
-      (* es *) lhs_node rhs lhs_b rhs_b es
+      (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr4) 
+      (add_str "classic" string_of_bool) pr5
+    ( fun _ _ _ _ _ _ -> infer_collect_hp_rel prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
+      (* es *) lhs_node rhs lhs_b rhs_b es (check_is_classic ())
 
 (*
   assume

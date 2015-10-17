@@ -4,7 +4,7 @@
 
 data node {
 	int val; 
-	node next; //#REC;	
+	node next#REC;	
 }
 
 
@@ -26,12 +26,11 @@ pred_extn size[R]<k> ==
 HeapPred P(node x).
 
 int length(node x)
-   infer [P#size
+  infer [P#size
     ,@classic
     ,@pure_field,@term]
   //infer [P#{size,sum},@classic,@pure_field]
   //infer [P#size,P#sum,@classic,@pure_field]
-//infer [P#size,@classic,@pure_field]
   requires P(x)
   ensures true;
 /*
@@ -45,34 +44,6 @@ int length(node x)
 
 /*
 # ex20a1.ss 
-
-We have:
-
-data node {
-	int val; 
-	node next; //#REC;	
-}
-
-Please schedule #REC to be added (as shown in ex20a3.slk)
-
-	node next#REC;	
-
-
-Otherwise pred_extn fails as below:
-
-!!! **derive.ml#797:aft Typeinfer.update_view:ll_size
-!!! **derive.ml#798:new_vd:
- view ll_size<size_prop:int>= 
-  EList
-    :EBase 
-       (* lbl: *){235}->emp&size_prop=0 & self=null&{FLOW,(1,28)=__flow#E}[]
-    || :EBase 
-          (* lbl: *){236}->(exists Anon_1648,q_1649,
-          size_1650: (* lbl: *){236}->self::node<Anon_1648,q_1649>@M * 
-                                      q_1649::ll_size<size_1650>@M&
-          size_prop=0&{FLOW,(1,28)=__flow#E}[])
-
-
 
 # what happen to size_prop=0, should be termination
   base case..

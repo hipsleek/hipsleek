@@ -139,17 +139,17 @@ let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
 (*      raise e) *)
 
 let wrap_msg msg f a = 
-  let () = y_binfo_pp ("====WRAP START "^msg) in
+  let () = y_binfo_pp ("====WRAP START " ^ msg) in
   try 
     let r = f a in
-    let () = y_binfo_pp ("====WRAP END "^msg) in
+    let () = y_binfo_pp ("====WRAP END " ^ msg) in
     r
   with e ->
-    let () = y_binfo_pp ("====WRAP END(exc) "^msg) in
+    let () = y_binfo_pp ("====WRAP END (exc) " ^ msg) in
     raise e
 
 let wrap_classic str et f a = 
-  let r = "wrap_gen"^str^((pr_option string_of_bool) et) in
+  let r = "wrap_gen" ^ str ^ ((pr_option string_of_bool) et) in
   if !Globals.new_trace_classic then wrap_msg r (wrap_gen INF_CLASSIC et f) a
   else (wrap_gen INF_CLASSIC et f) a
 

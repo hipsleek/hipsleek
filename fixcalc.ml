@@ -851,7 +851,7 @@ let substitute_args_x a_rel = match a_rel with
       let prog =
         match !Cast.global_prog with
         | Some p -> p
-        | None -> failwith "substitute_args: Initialize globas_prog first!"
+        | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!")
       in
       let typed_args = 
         try

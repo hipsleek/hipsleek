@@ -2,7 +2,7 @@
  * Date: 30/09/2015
  * Created by: Ton Chanh Le (chanhle@comp.nus.edu.sg)
  */
-
+ 
 #include <stdlib.h>
 
 extern int __VERIFIER_nondet_int();
@@ -30,7 +30,6 @@ node_t* init_cll (int n)
   
   curr->next = head;
 }
-/*Muoi: Need to make this example run first */
 
 void search (node_t* head, int i)
 {
@@ -45,7 +44,7 @@ void main ()
 {
   int n = __VERIFIER_nondet_int();
   node_t* head = init_cll(n);
-  search(head, __VERIFIER_nondet_int());
+  search(head, __VERIFIER_nondet_int() % n);
 }
 
 
