@@ -2022,16 +2022,18 @@ let find_rec_data cprog ids =
   let () = y_tinfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
   (* let sel_scc = List.map List.concat sel_scc in *)
   let com_scc = List.combine sel_data_d sel_scc in
-  let com_scc = List.map (fun (d_lst,vns) ->
+  let com_scc = List.map (fun (d_lst, vns) ->
       List.iter (fun dd ->
           let lst = dd.Cast.data_fields in
-          let new_lst = List.map (fun (id,acc)->
+          let new_lst = List.map (fun (id, acc) ->
               let t = name_of_typ (fst(id)) in
-              (id,if List.mem t vns then rec_field_id::acc else acc)) lst in
+              (id, if List.mem t vns then rec_field_id::acc else acc)) lst 
+          in
           dd.Cast.data_fields <- new_lst;
-            ) d_lst;
-          d_lst
+        ) d_lst;
+        d_lst
     ) com_scc in
-  let () = y_tinfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+  let () = y_binfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+  let () = y_binfo_hp (add_str "prog_data_decls" (pr_list Cprinter.string_of_data_decl)) cprog.Cast.prog_data_decls in
   ()
 
