@@ -18,15 +18,15 @@ ll<> == self = null
 	or self::node<_, q> * q::ll<> 
   inv true;
 
-/*
-lseg<p> == self = p
-	or self::node<_, q> * q::lseg<p> & self != p
-  inv true;
-*/
 
-lseg2<p> == self = p
-	or self::node<_, q> * q::lseg2<p> 
+lseg<p> == self = p
+  or self::node<_, q> * q::lseg<p> //& self != p
   inv true;
+
+
+lemma_safe self::lseg<p> <- self::lseg<q>*q::node<_,p>;
+
+clist<> == self::node<_,q>*q::lseg<self>;
 
 pred_extn size[R]<k> ==
    k=0 // base case
@@ -39,16 +39,19 @@ int len_seg(node x)
   //infer [P,@classic,@pure_field,@size,@term]
   //infer [P#{size,sum},@classic,@pure_field]
   //infer [P#size,P#sum,@classic,@pure_field]
-  infer [P,@classic,@pure_field]
+/* infer [P,@classic]
   requires P(x)
+  ensures false;
+*/
+  requires x::clist<>
   ensures false;
 {    
   if (x==null) return 0;
   else { 
     node n = x.next;
-    dprint;
+    //dprint;
     int r=len_seg(n);
-    dprint;
+    //dprint;
     return 1+r;
   }
 }

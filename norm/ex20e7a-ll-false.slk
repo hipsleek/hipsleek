@@ -1,0 +1,46 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred P(node x).
+HeapPred HP9(int v,node@NI x).
+HeapPred HP1(node v,node@NI x).
+
+relAssume
+P(x) & x!=null --> x::node<val_487,next_488>@M * HP1(next_488,x).
+
+relAssume
+HP1(n',x) * x::node<val_487,n'>@M&true --> P(n').
+
+relAssume
+P(x)&true --> htrue & x!=null. //from contra
+
+print relAssumes.
+
+/*
+# ex20e7a.slk
+
+  [unknown P(x) |#|  --> htrue&x!=null; 
+   unknown HP1(n',x) * x::node<val_32,n'>@M&val_32=val_487 |#|  --> P(n'); 
+   unknown P(x)&
+    x!=null |#|  --> x::node<val_487,next_488>@M * HP1(next_488,x)]
+
+
+P(x) = x::node<_,n>*n::HP(x)
+
+HP<p> = self=p
+  or self::node<_,n>*n::HP<p>
+
+HP<p> <- x::HP<q>*q::node<_,q>
+
+HP<p> & x=p -> emp
+HP<p> & x!=p -> x::node<_,q>*q::HP<p>
+
+HP<p> -> x=p
+   or x::node<_,q>*q::HP<p> & x!=p
+
+
+HP(x) ->
+
+*/
