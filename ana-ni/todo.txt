@@ -1,4 +1,4 @@
-# ex2.ss -p hoo --ana-ni
+# ex2.ss -p hoo --ana-ni (FIXED)
 
 int hoo(node x)
   infer [@ana_ni]
@@ -28,6 +28,33 @@ int hoo(node x)
 
 Context of Verification Failure: ex2-ptr.ss_17:10_17:14
 ==========================================================================
+# ex2a.ss --ana-ni
+
+# Need to consider greatest fix-point compute..
+
+[RELASS [R]: ( R(x)) -->  2<=x]
+
+# Let us preserve x>=2
+!!! top_down_fp:[]
+!!! **pi.ml#754:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#755:>>REL POST:  true
+!!! **pi.ml#756:>>POST:  true
+!!! **pi.ml#757:>>REL PRE :  true
+!!! **pi.ml#758:>>PRE :  true
+!!! **immutable.ml#62:imm + pure:[( true, true)]
+!!! **immutable.ml#64:imm + pure:[( true, true)]
+!!! **immutable.ml#62:imm + pure:[( true, true)]
+!!! **immutable.ml#64:imm + pure:[( true, true)]
+!!! **pi.ml#806:new_specs1:
+[ EInfer @ana_ni[R]
+   EBase 
+     emp&R(x)&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]]
 ==========================================================================
 ==========================================================================
 ==========================================================================

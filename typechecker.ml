@@ -557,6 +557,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       x_dinfo_zp (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
       (* let itnt = b.CF.formula_inf_tnt in *)
       let inf_o = b.CF.formula_inf_obj in
+      let inf_o_lst = inf_o # get_lst in
+      let is_ana_ni = List.exists (fun x -> x==Globals.INF_ANA_NI) inf_o_lst in
+      let wrap_ana_ni f x = 
+        if is_ana_ni then  Wrapper.wrap_ana_ni (Some true) f x else f x in
+      let () = y_binfo_hp (add_str "inf_o_lst" (pr_list string_of_inf_const)) inf_o_lst in
       let postf = b.CF.formula_inf_post in
       let postxf = b.CF.formula_inf_xpost in
       let old_vars = if do_infer then b.CF.formula_inf_vars else [] in
@@ -694,12 +699,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           CF.es_infer_vars_rel = es.CF.es_infer_vars_rel@vars_rel;
                           CF.es_infer_vars_templ = es.CF.es_infer_vars_templ@vars_templ;
                           (* CF.es_infer_tnt = es.CF.es_infer_tnt || itnt; *)
-                          CF.es_infer_obj = es.CF.es_infer_obj # mk_or_lst (inf_o # get_lst);
+                          CF.es_infer_obj = es.CF.es_infer_obj # mk_or_lst (inf_o_lst);
                           CF.es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@vars_hp_rel;
                           CF.es_infer_vars_sel_hp_rel = es.CF.es_infer_vars_sel_hp_rel@vars_hp_rel;
                           CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
                           CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
-      let (c,pre,rel,hprel, _, post_hps ,unk_map,f) = helper nctx new_formula_inf_continuation in
+      let (c,pre,rel,hprel, _, post_hps ,unk_map,f) = wrap_ana_ni (helper nctx) new_formula_inf_continuation in
       (*            let nctx_sc, pr_rel, po_rel, new_formula_inf_continuation_sc =*)
       (*              if !TP.tp == TP.Z3 & proc.proc_is_recursive then*)
       (*                let tmp_rel1, tmp_rel2, tmp_fml = CF.remove_rel new_formula_inf_continuation in*)
@@ -1098,7 +1103,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           |_ as e ->
             let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e
   in
-  helper ctx spec
+  Wrapper.wrap_ana_ni (Some false) (helper ctx) spec
 
 (*we infer automatically from ctx*)
 and infer_lock_invariant_x lock_var ctx pos =
@@ -1941,8 +1946,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*             None) *)
           (*     else None) *)
           (* in *)
+          let bind_ptr = if !Globals.large_bind then p else v_prim in
           let vdatanode = CF.DataNode ({
-              CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
+              CF.h_formula_data_node = bind_ptr;
               CF.h_formula_data_name = c;
               CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
               CF.h_formula_data_split = SPLIT0; (*TO CHECK: assume false*)
@@ -1958,8 +1964,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.h_formula_data_pruning_conditions = [];
               CF.h_formula_data_pos = pos}) in
           let vheap = CF.formula_of_heap vdatanode pos in
-          let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
-          let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
+          let () = x_binfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
+          let () = x_binfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
+          let () = x_binfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
           (*Test whether fresh_perm_exp is full permission or not
             writable -> fresh_perm_exp = full_perm => normally
             read-only -> fresh_perm_exp != full_perm => in order to 
@@ -1996,14 +2003,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
           x_tinfo_pp to_print pos;
 
-          if (Gen.is_empty unfolded) then unfolded
+          if (Gen.is_empty unfolded) then 
+            let () = y_binfo_pp "unfolded body is empty" in
+            unfolded
           else
             let () = consume_all := true in
             (* let () = DD.info_zprint (lazy (("       sleek-logging (binding):" ^ (to_print)))) pos in *)
             (* let () = Log.update_sleek_proving_kind Log.BINDING in *)
             (* let () = x_tinfo_pp ("Andreea : we need to normalise struc_vheap") no_pos in *)
             (* let () = x_tinfo_pp ("==========================================") no_pos in *)
-            (* let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in *)
+            let () = y_binfo_pp "need to use local version of infer_const_obj" in
+            let struc_vheap = 
+              if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_struc bind_ptr else struc_vheap in
+            let () = x_binfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
             (* let do_classic_frame = (check_is_classic ()) in *)

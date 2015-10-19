@@ -158,7 +158,7 @@ let wrap_classic str et f a =
 
 let wrap_classic_local obj et f a = wrap_gen_local obj INF_CLASSIC et f a
 
-let wrap_ana_ni et f a = wrap_gen_global  INF_ANA_NI et f a
+let wrap_ana_ni et f a = wrap_gen_global INF_ANA_NI et f a
 
     (* !do_classic_frame_rule *)
 

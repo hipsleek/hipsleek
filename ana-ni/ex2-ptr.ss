@@ -20,6 +20,32 @@ int hoo(node x)
   return y;
 }
 
+int hoo1(node x)
+  requires x>1
+  ensures true;
+{
+  int y = x.val;
+  return y;
+}
+
+int hoo3(node x)
+  requires x::node<v,_>
+  ensures res=v;
+{
+  int y = x.val;
+  return y;
+}
+
+
+int hoo2(node x)
+  infer [@ana_ni]
+  requires x>1
+  ensures true;
+{
+  assert x'!=null;
+  return 0;
+}
+
 /*
 # ex2.ss -p hoo
 
