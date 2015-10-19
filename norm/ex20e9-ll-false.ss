@@ -18,15 +18,18 @@ ll<> == self = null
 	or self::node<_, q> * q::ll<> 
   inv true;
 
-/*
+
 lseg<p> == self = p
-	or self::node<_, q> * q::lseg<p> & self != p
+  or self::node<_, q> * q::lseg<p> //& self != p
   inv true;
+
+lemma_safe self::lseg<p> <- self::lseg<q>*q::node<_,p>;
+/*
+lemma_unsafe "lseg" self::node<_,q1>*q1::lseg<p> 
+    <-> self::lseg<q>*q::node<_,p>;
 */
 
-lseg2<p> == self = p
-	or self::node<_, q> * q::lseg2<p> 
-  inv true;
+clist<> == self::node<_,q>*q::lseg<self>;
 
 pred_extn size[R]<k> ==
    k=0 // base case
@@ -34,21 +37,38 @@ pred_extn size[R]<k> ==
    inv k>=0;
 
 HeapPred P(node x).
+HeapPred P2(node x,node y).
+
+
+clist2<> == 
+  self::node<_,q>*q::lseg<self>
+  or self::lseg<q2>*q2::node<_,self>;
+
+//clist2<> --> self::node<_,q>*q::lseg<self>;
+//clist2<> <-- self::lseg<q2>*q2::node<_,self>;
+
+//lemma_safe "cir" self::clist<> -> self::clist2<>.
+
+lemma_safe self::clist<> 
+   <- self::lseg<q2>*q2::node<_,self>.
 
 int len_seg(node x)
   //infer [P,@classic,@pure_field,@size,@term]
   //infer [P#{size,sum},@classic,@pure_field]
   //infer [P#size,P#sum,@classic,@pure_field]
-  infer [P,@classic,@pure_field]
+/* infer [P,@classic]
   requires P(x)
   ensures false;
+*/
+  //requires x::clist<>  ensures false;
+  requires x::clist2<>  ensures false;
 {    
   if (x==null) return 0;
   else { 
     node n = x.next;
-    dprint;
+    //dprint;
     int r=len_seg(n);
-    dprint;
+    //dprint;
     return 1+r;
   }
 }
