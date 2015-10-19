@@ -23,7 +23,11 @@ lseg<p> == self = p
   or self::node<_, q> * q::lseg<p> //& self != p
   inv true;
 
-lemma_safe self::lseg<p> <- self::lseg<q>*q::node<_,p>;
+lemma_safe "cir" self::clist<> 
+   <- self::lseg<q2>*q2::node<_,self>.
+   
+lemma_unsafe "lseg" self::lseg<p> <- self::lseg<q>*q::node<_,p>;
+
 /*
 lemma_unsafe "lseg" self::node<_,q1>*q1::lseg<p> 
     <-> self::lseg<q>*q::node<_,p>;
@@ -48,9 +52,6 @@ clist2<> ==
 //clist2<> <-- self::lseg<q2>*q2::node<_,self>;
 
 //lemma_safe "cir" self::clist<> -> self::clist2<>.
-
-lemma_safe self::clist<> 
-   <- self::lseg<q2>*q2::node<_,self>.
 
 int len_seg(node x)
   //infer [P,@classic,@pure_field,@size,@term]

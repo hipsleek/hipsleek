@@ -288,7 +288,7 @@ and coercion_decl = { coercion_type : coercion_type;
 
 and coercion_decl_list = {
   coercion_list_elems : coercion_decl list;
-  coercion_list_kind:   lemma_kind;
+  coercion_list_kind: lemma_kind;
 }
 
 and coercion_type = 
