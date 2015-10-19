@@ -141,6 +141,7 @@ let symex_td_method_call prog proc ctx ecall=
     })) ctx in
     (* ecall contain assert_error *)
     let is_clone = mdecl.CA.proc_has_assert_err in
+    let () = Debug.ninfo_hprint (add_str " is_clone" string_of_bool) is_clone no_pos in
     let e_exp = CP.Var (e, no_pos) in
     let safe_fl = MCP.mix_of_pure (CP.mkEqExp e_exp (CP.IConst (0, no_pos)) no_pos) in
     let err_fl = (CP.mkEqExp e_exp (CP.IConst (1, no_pos)) no_pos) in

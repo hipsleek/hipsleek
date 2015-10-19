@@ -84,7 +84,8 @@ let exam_ass_error_proc prog proc=
 
 let exam_ass_error_scc iprog scc=
   (*func call error*)
-  List.exists (exam_ass_error_proc iprog) scc
+  let err_asserts = List.map (exam_ass_error_proc iprog) scc in
+  List.exists (fun b -> b) err_asserts
 
 let simplify_symex_trace_x prog v_args fs=
   let f_pf p0=
@@ -419,7 +420,8 @@ let verify_as_sat iprog prog iprims=
       (pr_list_ln (pr_list Astsimp.pr_proc_call_order))
   ) proc_scc0 no_pos in
   (* look up assert error location *)
-  if List.exists (exam_ass_error_scc prog) proc_scc0 then
+  let ass_errors = List.map (exam_ass_error_scc prog) proc_scc0 in
+  if List.exists (fun b -> b) ass_errors then
     (* transform *)
     let res = verify_td_sccs iprog prog true proc_scc0 in
     (* check sat *)
