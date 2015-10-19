@@ -2037,7 +2037,7 @@ let find_rec_data iprog cprog ids =
         ) d_lst;
         d_lst
     ) com_scc in
-  let () = y_binfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+  let () = y_tinfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
   let data_lst = List.concat  sel_data_d in
   let () = Cf_ext.add_data_tags_to_obj data_lst in
   (* let () = y_binfo_hp (add_str "iprog_data_decls" (pr_list Iprinter.string_of_data_decl)) iprog.Iast.prog_data_decls in *)

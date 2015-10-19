@@ -47,6 +47,8 @@ HeapPred P2(node x,node y).
 clist2<> == 
   self::node<_,q>*q::lseg<self>
   or self::lseg<q2>*q2::node<_,self>;
+  
+clist3<> == self::node<_, q> * P2(q, self);
 
 //clist2<> --> self::node<_,q>*q::lseg<self>;
 //clist2<> <-- self::lseg<q2>*q2::node<_,self>;
@@ -62,7 +64,10 @@ int len_seg(node x)
   ensures false;
 */
   //requires x::clist<>  ensures false;
-  requires x::clist2<>  ensures false;
+  //requires x::clist2<>  ensures false;
+  infer [P2,@pure_field]
+  requires x::node<_, q> * P2(q, x)
+  ensures false;
 {    
   if (x==null) return 0;
   else { 
