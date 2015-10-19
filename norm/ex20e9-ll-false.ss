@@ -65,8 +65,8 @@ int len_seg(node x)
 */
   //requires x::clist<>  ensures false;
   //requires x::clist2<>  ensures false;
-  infer [P2,@pure_field]
-  requires x::node<_, q> * P2(q, x)
+  infer [P2,@classic]//@pure_field]
+  requires P2(x,p) //x::node<_, q> * P2(q, x)
   ensures false;
 {    
   if (x==null) return 0;
@@ -80,22 +80,50 @@ int len_seg(node x)
 }
 
 /*
-# ex20e7.ss 
+# ex20e9.ss -dre "infer_collect_hp_rel"
 
 [ // BIND
-(2;0)P(x)&
-x!=null --> x::node<val_48_1587,next_48_1588>@M * 
-            HP_1589(val_48_1587@NI,x@NI) * HP_1590(next_48_1588,x@NI)&
+(2;0)P2(x,p)&
+x!=null --> x::node<val_74_1706,next_74_1707>@M * 
+            HP_1708(next_74_1707,p,x@NI)&
 true,
  // PRE_REC
-(2;0)HP_1589(val_48_1587@NI,x@NI)&x!=null --> emp&
-true,
- // PRE_REC
-(2;0)HP_1590(n',x@NI) * x::node<val_48_1587,n'>@M&true --> P(n')&
+(2;0)HP_1708(n',p,x@NI) * x::node<val_74_1706,n'>@M&
+true --> P2(n',p_1711) * HP_1714(p)&
 true,
  // POST
-P(x)&true --> htrue& x!=null]
+P2(x,p)&true --> htrue&
+x!=null]
 
 
+# why are we getting a complex RHS
+      P2(n',p_1711) * HP_1714(p) ?
+
+infer_collect_hp_rel#1@8 EXIT:(true,2:  HP_1714(p)&!(v_bool_72_1621') & x'!=null & x'=x & n'=next_74_1707&
+{FLOW,(4,5)=__norm#E}[]
+ es_infer_hp_rel: [(2;0)unknown HP_1708(n',p,x) * x::node<val_74_1706,n'>@M |#|  --> 
+                    P2(n',p_1711) * HP_1714(p); 
+                   (2;0)unknown P2(x,p)&
+                    x!=null |#|  --> x::node<val_74_1706,next_74_1707>@M * 
+                                     HP_1708(next_74_1707,p,x)]
+
+--------------------------------------------
+
+id: 24; caller: []; line: 76; classic: true; kind: PRE_REC; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P2,HP_1708]; c_heap: emp; others:  es_infer_obj: [@leak] globals: [@dis_err,@leak]
+ checkentail HP_1708(next_74_1707,p,x) * x::node<val_74_1706,next_74_1707>@M&
+!(v_bool_72_1621') & x'!=null & x'=x & n'=next_74_1707 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  P2(n',p_1711)&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (2;0)unknown HP_1708(n',p,x) * x::node<val_74_1706,n'>@M |#|  --> P2(n',p_1711) * 
+                                                                   HP_1714(p),
+ (2;0)unknown P2(x,p)&
+  x!=null |#|  --> x::node<val_74_1706,next_74_1707>@M * 
+                   HP_1708(next_74_1707,p,x)]
+ho_vars: nothing?
+res:  1[
+    HP_1714(p)&!(v_bool_72_1621') & x'!=null & x'=x & n'=next_74_1707&
+{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
 
 */
