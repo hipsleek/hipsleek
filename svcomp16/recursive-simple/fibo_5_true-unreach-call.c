@@ -8,7 +8,14 @@ int fibo(int n) {
     } else if (n == 1) {
         return 1;
     } else {
-        return fibo(n-1) + fibo(n-2);
+      int r1 = fibo(n-1);
+       //@dprint;
+      int r2 = fibo(n-2);
+       //@dprint;
+      int r = r1 + r2;
+      // int r = fibo(n-1) + fibo(n-2);
+        //@dprint;
+        return r;
     }
 }
 

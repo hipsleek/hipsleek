@@ -125,7 +125,7 @@ let gen_iview iprog vname pos f_body0 v_args0 sst_res =
   let f_body = CF.subst sst_res f_body0 in
   let vars = List.map CP.name_of_spec_var v_args in
   let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
-  let f_body1,tis = Cfutil.norm_free_vars f_body (v_args) in
+  let f_body1,tis = Cfutil.norm_free_vars ~reset:false f_body (v_args) in
   let () = Debug.info_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
   let no_prm_body = CF.elim_prm f_body1 in
   let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
@@ -186,7 +186,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
   let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
   let old_symex_td = !symex_td in
   let () = symex_td := true in
-  let () = Td_utils.func_call_no := 0 in
+  let () = Td_utils.func_call_no := Td_utils.func_call_init in
   (* topdown symex *)
   let res_ctx = x_add Typechecker.check_exp prog proc lfe body label in
   let () = symex_td := old_symex_td in
@@ -272,7 +272,7 @@ let symex_gen_view_from_proc iprog prog proc=
   let r_args =(*  match proc.CA.proc_return with *)
     (* | Void -> [] *)
     (* | _ -> *)
-    [CP.SpecVar (proc.CA.proc_return, res_name,Unprimed)]
+    [CP.SpecVar (proc.CA.proc_return, res_name ,Unprimed)]
   in
   let fr_r_args = CP.fresh_spec_vars r_args in
   let sst_res = List.combine r_args fr_r_args in

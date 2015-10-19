@@ -225,8 +225,21 @@ let simplify_htrue hf=
   Debug.no_1 "simplify_htrue" pr1 pr1
     (fun _ -> simplify_htrue_x hf) hf
 
+(* let reset_num f= *)
+(*   let rec reset svl n res= *)
+(*     match svl with *)
+(*       | [] -> res *)
+(*       | (CP.SpecVar (t,_,p))::rest -> *)
+(*             let n_sv = CP.SpecVar(t, "v" ^ (string_of_int n), p) in *)
+(*             reset rest (n+1) (res@[n_sv]) *)
+(*   in *)
+(*   let quans, base_f = split_quantifiers f in *)
+(*   let quans1 = reset quans 0 [] in *)
+(*   let base_f1 = subst (List.combine quans quans1) base_f in *)
+(*   add_quantifiers quans1 base_f1 *)
+
 (*arg is global vars*)
-let norm_free_vars f0 args=
+let norm_free_vars ?(reset=false) f0 args=
   let rec helper f=
     match f with
     | Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv))
@@ -237,14 +250,20 @@ let norm_free_vars f0 args=
       else
         let () = Debug.ninfo_hprint (add_str "fr_svl" !CP.print_svl) fr_svl no_pos in
         (*rename primed quantifiers*)
-        let fr_svl1,ss = List.fold_left (fun (r_svl, r_ss) ((CP.SpecVar(t,id,p)) as sv) ->
+        let fr_svl1,ss,_ = List.fold_left (fun (r_svl, r_ss,n) ((CP.SpecVar(t,id,p)) as sv) ->
             if p = Unprimed then
-              (r_svl@[sv], r_ss)
+              let n_sv,n_sst, nn =if reset then
+                let n_sv = (CP.SpecVar(t,"v"^string_of_int n,p)) in
+                (n_sv, (r_ss@[(sv, n_sv)]), (n+1))
+              else sv,r_ss, n
+              in
+              (r_svl@[n_sv], n_sst,nn)
             else
               (* let sv = CP.SpecVar (t, (ex_first ^ id), p ) in *)
-              let fr_sv = CP.fresh_spec_var sv in
-              (r_svl@[fr_sv], r_ss@[(sv,fr_sv)])
-          ) ([],[]) fr_svl
+              let fr_sv = CP.fresh_spec_var sv
+              in
+              (r_svl@[fr_sv], r_ss@[(sv,fr_sv)],n)
+          ) ([],[],0) fr_svl
         in
         let nf0 = if ss = [] then (Base fb) else
             x_add subst ss (Base fb)

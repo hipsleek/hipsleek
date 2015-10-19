@@ -2819,6 +2819,13 @@ let print_exception_result s (num_id: string) =
   let _ = silenced_print print_string (num_id^": EXCast. "^s^"\n") in
   ()
 
+let print_sat_result_three res (num_id: string) =
+  let res =
+    if res=0 then "unsat\n\n"
+    else if res=1 then "sat\n\n"
+    else "unknown\n\n"
+  in silenced_print print_string (num_id^": "^res); flush stdout
+
 let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
   let res =
     if unsat then let () = num_unsat := !num_unsat + 1 in "UNSAT\n\n"
@@ -2836,6 +2843,24 @@ let print_exc (check_id: string) =
   print_backtrace_quiet ();
   (* dummy_exception() ; *)
   print_string_quiet ("exception caught " ^ check_id ^ " check\n")
+
+let process_sat_check_new (f : meta_formula) =
+  let nn = (sleek_proof_counter#inc_and_get) in
+  let num_id = "\nCheckSat "^(string_of_int nn) in
+  let (_,f) = meta_to_formula f false [] [] in
+  let f = Cvutil.prune_preds !cprog true f in
+  let unsat_command f = not(Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+  (* let _ = Slsat.check_sat_with_uo !cprog f in *)
+  let ires = Slsat.check_sat_topdown !cprog true f in
+  (* let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in *)
+  (* let sat_res = *)
+  (*   if res then false *)
+  (*   else wrap_under_baga unsat_command f (\* WN: invoke SAT checking *\) *)
+  (* in *)
+  let sat_res = if ires=0 then false else true in
+  let _ = CF.residues := Some ((CF.SuccCtx []), sat_res) in
+  print_sat_result_three ires num_id
+
 
 let process_sat_check_x (f : meta_formula) =
   let nn = (sleek_proof_counter#inc_and_get) in
@@ -2856,7 +2881,7 @@ let process_sat_check_x (f : meta_formula) =
 
 let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in
-  Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_x f
+  Debug.no_1 "process_sat_check" pr (fun _ -> "?") process_sat_check_new f
 
 let process_nondet_check (v: ident) (mf: meta_formula) =
   if (!Globals.print_input || !Globals.print_input_all) then (

@@ -340,7 +340,7 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
   (**************END*INTERNAL****************)
   let _ = 
   while not !finished do
-    (* let _ = DD.info_hprint (add_str "count_i" string_of_int) (!count_i) no_pos in *)
+    let _ = DD.info_hprint (add_str "count_i" string_of_int) (!count_i) no_pos in
     (* let pr1 = !CP.print_svl in *)
     (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
     (* let pr3 hv = (!print_h_formula (ViewNode hv)) in *)

@@ -20,9 +20,18 @@ module CP = Cpure
 
 let dump_self () =
   let id = (fresh_trailer()) in
-  CP.SpecVar (null_type, "Anon_"^id, Unprimed)
+  CP.SpecVar (null_type, "r__"^id, Unprimed)
 
-let func_call_no = ref (0: int)
+let func_call_res = "tmpr"
+let func_call_init = -1
+let func_call_no = ref (func_call_init: int)
+
+let str_of_post_func num = "__" ^ (string_of_int num)
+
+let get_last_func_call_res () =
+  let tmp_no = !func_call_no - 1 in
+  if tmp_no=func_call_init then func_call_res else
+  func_call_res ^ (str_of_post_func tmp_no)
 
 let subst_view_by_hole holes0 f0=
   (* let rec look_up_hole holes vn= *)
@@ -120,10 +129,11 @@ let symex_td_method_call prog proc ctx ecall=
     let res = if mdecl.CA.proc_return = Void then
       CP.SpecVar (mdecl.CA.proc_return,  res_name ^(fresh_trailer()) , Unprimed)
     else
-      let tmp_no = if !func_call_no= 0 then "" else
-        "___" ^ (string_of_int !func_call_no)
+      let tmp_no = if !func_call_no= func_call_init then "" else
+        str_of_post_func !func_call_no
+        (* "___" ^ (string_of_int !func_call_no) *)
       in
-      CP.SpecVar (mdecl.CA.proc_return,  ("tmp" ^ tmp_no), Primed) in
+      CP.SpecVar (mdecl.CA.proc_return,  (func_call_res ^ tmp_no), Unprimed) in
     let e = CP.SpecVar (Int, err_var^(fresh_trailer()), Unprimed) in
     let view_args_extra = view_args@[res; e] in
     let hv = CF.mkViewNode (dump_self ()) (method2pred mn) view_args_extra ecall.CA.exp_scall_pos in
