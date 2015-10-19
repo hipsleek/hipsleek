@@ -41,7 +41,7 @@ pred_extn size[R]<k> ==
    inv k>=0;
 
 HeapPred P(node x).
-HeapPred P2(node x,node y).
+HeapPred P2(node x,node@NI y).
 
 
 clist2<> == 
