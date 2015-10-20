@@ -26,6 +26,7 @@ int hoo1(node x)
 {
   int y = x.val;
   return y;
+
 }
 
 int hoo3(node x)
