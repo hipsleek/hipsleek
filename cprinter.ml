@@ -4896,6 +4896,8 @@ let string_of_coerc_med c = string_of_coerc_opt 1 c;;
 
 let string_of_coerc_long c = string_of_coerc_opt 0 c;;
 
+let string_of_coercion_short c = string_of_coerc_short c;;
+
 (* let string_of_coerc c = (string_of_coerc_short c) *)
 (*   ^ (string_of_formula c.coercion_body) *)
 (*   ;; *)

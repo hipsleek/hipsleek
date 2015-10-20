@@ -16,6 +16,35 @@ print residue.
 /*
 # ex20e9f5.slk
 
+Updated lemma store with unsafe repo::[compl]
+
+# check if complex LHS or RHS applicable..
+
+!!! **context.ml#1800:Root for:( H2(q1,y,Anon_13), H(q1,ss))
+!!! **context.ml#1802:Complex lemma:[Lemma "compl":  H(self,y) * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]==> (exists Anon_12,q: self::node<Anon_12,q>@M * H(q,ss)&
+{FLOW,(20,21)=__norm#E}[])]
+!!! **context.ml#1803:to check if complex lemma applicable here for LHS and RHS here using signature
+!!! **context.ml#2409:HRel vs HREL
+
+(==context.ml#2882==)
+process_one_match@2@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: H2(q1,y,Anon_13)
+ RHS: H(q1,ss)
+ lhs_rest: y::node<Anon_14,ss>@M
+ rhs_rest: emp
+ rhs_inst: []
+process_one_match inp2 :lhs_h: H2(q1,y,Anon_13) * y::node<Anon_14,ss>@M
+process_one_match inp3 :lhs_p: true
+process_one_match inp4 :rhs_node: H(q1,ss)
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@2 EXIT: Prio:2
+
+-----------------------------------
+
 lemma_unsafe "compl" H(self,y) * y::node<_,ss> -> self::node<_,q>*H(q,ss).
 
 infer [H,H2,@classic] H2(q1,y,_) * y::node<_,ss>  |- H(q1,ss).

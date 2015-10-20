@@ -1,6 +1,7 @@
 #include "xdebug.cppo"
 open Gen.Basic
 open Gen.BList
+open Cast
 
 let lem_pr = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
 let lem_pr_med = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
@@ -81,8 +82,11 @@ class lemma_store =
       self # set_left_coercion left;
       self # set_right_coercion right
 
+    method get_complex_coercion =
+      List.filter (fun c -> c.coercion_case==Complex) left_lem # get_stk
+
     method get_left_coercion =
-      left_lem # get_stk
+      List.filter (fun c -> not(c.coercion_case==Complex)) left_lem # get_stk
 
     method get_right_coercion =
       right_lem # get_stk

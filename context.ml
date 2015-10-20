@@ -1794,7 +1794,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   let r = match m_res.match_res_type with 
     | Root ->
       let view_decls = prog.prog_view_decls in
-      (match lhs_node, rhs_node with
+      let tup = (lhs_node,rhs_node) in
+      let comp_lems = Lem_store.all_lemma # get_complex_coercion in
+      let pr_hf = !CF.print_h_formula in
+      let () = y_binfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
+      let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in
+      let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems  in
+      let () = y_binfo_pp "to check if complex lemma applicable here for LHS and RHS here using signature" in
+      (match tup (* lhs_node, rhs_node *) with
        | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                       CF.h_formula_thread_origins = dl_origins;
                       CF.h_formula_thread_derv = dl_derv;
@@ -2399,7 +2406,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in res
        (* TODO:old_infer_heap *)
        | HRel (hn1, args1, _), (HRel (hn2, args2, _) as rhs) -> 
-         let () = x_tinfo_pp "HRel vs HREL\n" no_pos in
+         let () = x_binfo_pp "HRel vs HREL\n" no_pos in
          let pr_sv = Cprinter.string_of_spec_var in
          let eq_fst_ptr ls1 ls2= match ls1,ls2 with
            | sv1::_,sv2::_ -> CP.eq_spec_var sv1 sv2
