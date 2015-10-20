@@ -11,7 +11,7 @@ pred lseg<p,n> ==
 
 void forloop(ref int i, int n, ref node curr)
   requires curr::node<_,_> & i<=n & Term[n-i]
-  ensures  curr::lseg<curr',m>*curr'::node<_,_> & i'=n & i'>=i & m=n+i;
+  ensures  curr::lseg<curr',m>*curr'::node<_,_> & i'=n & i'>=i & m=n-i;
 {
   if (i>=n) return;
   else {

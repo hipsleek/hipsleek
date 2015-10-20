@@ -30,8 +30,8 @@ typedef struct node {
 //Initialize a circular linked list with length n
 node_t* init_cll (int n)
   /*@
-    requires true
-    ensures res::cll<_>;
+    requires n>=1
+    ensures res::cll<n>;
   */
 {
   node_t* head;
@@ -41,9 +41,9 @@ node_t* init_cll (int n)
   head = curr;
   
   for (int i = 1; i < n; i++) 
-    /*@
-       requires curr::node<i-1,_>
-       ensures curr::lseg<curr',_>*curr'::node<_,_>;
+    /*@ 
+       requires curr::node<_,_> & i<=n & Term[n-i]
+       ensures  curr::lseg<curr',n-i>*curr'::node<_,_> & i'=n & i'>=i;
     */
   {
     node_t* next_node = alloca(sizeof(node_t));
@@ -56,21 +56,33 @@ node_t* init_cll (int n)
   return curr;
 }
 
-/*void search (node_t* head, int i)*/
-/*{*/
-/*  node_t* curr = head;*/
-/*  while (curr->val != i) {*/
-/*    curr = curr->next;*/
-/*  }*/
-/*}*/
+void search (node_t* h, int i) 
+  /*@
+    requires h::cll<n> & n >= 1
+    ensures true;
+  */
+{
+  node_t* curr = h;
+  while (curr->val != i) 
+    /*@
+      requires curr::cll<n> & n>=1
+      ensures curr'::node<i,_>;
+    */
+  {
+    curr = curr->next;
+  }
+}
 
 
-/*void main ()*/
-/*{*/
-/*  int n = __VERIFIER_nondet_int();*/
-/*  node_t* head = init_cll(n);*/
-/*  search(head, __VERIFIER_nondet_int());*/
-/*}*/
+void main ()
+{
+  int n = __VERIFIER_nondet_int();
+/*Muoi: Since a circle list has at least one element, the condition of size is nondet_int is not sufficient to be verified*/
+  if (n < 1)  
+    n = 1;
+  node_t* head = init_cll(n);
+  search(head, __VERIFIER_nondet_int());
+}
 
 
 
