@@ -292,7 +292,8 @@ let verify_one_repo lems cprog =
 
 let verify_one_repo lems cprog =
   let pr = pr_list (fun (_, _, _, name) -> name) in
-  Debug.no_1 "verify_one_repo" pr (fun _ -> "") 
+  let pr_out = pr_pair (pr_opt pr_id) (pr_list Cprinter.string_of_list_context) in 
+  Debug.no_1 "verify_one_repo" pr pr_out
     (fun _ -> verify_one_repo lems cprog) lems
 
 (* update store with given repo without verifying the lemmas *)

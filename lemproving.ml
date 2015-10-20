@@ -387,7 +387,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = Cprinter.string_of_struc_formula in
-  Debug.no_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
+  Debug.no_3 "check_coercion_struc" pr1 pr2 pr3 (fun (valid,rs) -> string_of_bool valid) 
+    (fun _ _ _ -> check_coercion_struc coer lhs rhs cprog ) coer lhs rhs
 
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
@@ -411,7 +412,9 @@ let check_left_coercion coer (cprog: C.prog_decl) =
 
 let check_left_coercion coer cprog  =
   let pr = Cprinter.string_of_coercion in
-  Debug.no_1 "check_left_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_left_coercion coer cprog ) coer
+  let pr_out = pr_pair string_of_bool !CF.print_list_context in
+  Debug.no_1 "check_left_coercion" pr pr_out 
+    (fun _ -> check_left_coercion coer cprog ) coer
 
 (* sets the lhs & rhs of the entailment when proving r2l lemma (coercion), where the rhs (coercion head) is normalized  *)
 let check_right_coercion coer (cprog: C.prog_decl) =
@@ -529,7 +532,8 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
 let verify_lemma caller (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr_t = Iprinter.string_of_coerc_type in
   let pr = pr_list Cprinter.string_of_coercion in
-  Debug.no_4_num caller "verify_lemma" pr pr (fun x -> x) pr_t (Cprinter.string_of_list_context) (fun _ _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name coerc_type
+  Debug.no_4_num caller "verify_lemma" pr pr (fun x -> x) pr_t (Cprinter.string_of_list_context) 
+    (fun _ _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name coerc_type
 
 
 (* check the validity of the lemma where:

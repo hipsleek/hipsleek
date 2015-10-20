@@ -1388,7 +1388,8 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
   let rhs_node = r.Context.match_res_rhs_node in
   let rhs_rest = r.Context.match_res_rhs_rest in
   let rhs_inst = r.Context.match_res_compatible in
-  let is_succ_inst, n_estate, n_lhs_b = match lhs_node,rhs_node with
+  let is_succ_inst, n_estate, n_lhs_b = 
+    match lhs_node,rhs_node with
     | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
       if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
         match leargs, reargs with
@@ -1418,7 +1419,8 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
         | _ -> return_out_of_inst estate lhs_b [rhp]
       else
         return_out_of_inst estate lhs_b []
-    | HRel (lhp,leargs,_),ViewNode vn -> begin
+    | HRel (lhp,leargs,_),ViewNode vn -> 
+      begin
         if CP.mem_svl lhp estate.es_infer_vars_hp_rel then
           match leargs with
           | _::rest1 ->
@@ -1439,7 +1441,23 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
     let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
     pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest))
 
-
+let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
+  : (Cformula.list_context * Prooftracer.proof) =
+  let length_ctx ctx = match ctx with
+    | CF.FailCtx _ -> 0
+    | CF.SuccCtx ctx0 -> List.length ctx0 in
+  let pr2 x = 
+    "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ 
+    " \n Context:"^ Cprinter.string_of_list_context(* _short *) (fst x) in
+  let pr3 = Cprinter.string_of_formula in
+  Debug.no_4 "infer_unfold"
+    (add_str "estate" Cprinter.string_of_entail_state(* _short *))
+    (add_str "action" Context.string_of_match_res) 
+    (add_str "lhs_b" pr3) 
+    (add_str "rhs_b" pr3)
+    pr2
+    (fun _ _ _ _ -> infer_unfold prog pm_aux action estate lhs_b rhs_b rhs_h_matched_set pos) 
+    estate action (Base lhs_b) (Base rhs_b) 
 
 let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
   : (Cformula.list_context * Prooftracer.proof) =

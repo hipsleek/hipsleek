@@ -6,10 +6,12 @@ pred lseg<p> ==
   self = p or
   self::node<q> * q::lseg<p>.
   
-lemma_safe "lseg" self::lseg<p> * p::node<q> -> self::lseg<q>. 
+//lemma_safe "lseg" self::lseg<p> * p::node<q> -> self::lseg<q>. 
+
+//lemma_safe "cir" self::lseg<p> * p::node<q> -> self::node<t> * t::lseg<q>.
   
-checkentail x::lseg<y> * y::node<x> |- x::node<p> * p::lseg<x>.
-print residue.
+//checkentail x::lseg<y> * y::node<x> |- x::node<p> * p::lseg<x>.
+//print residue.
 
 HeapPred H(node x, node y).
 
