@@ -13,8 +13,8 @@ node hoo(node x)
 {
   node y = x.next;
   dprint;
-  y = null;
-  y = y.next;
+  //y = null;
+  y.next = null;
   dprint;
   return y;
 }
@@ -26,7 +26,7 @@ node hoo(node x)
 # Need to add next_15_1687' into the heap-state; so that we 
   have y'>1 at dprint.
 
-dprint(simpl): ex2c-ptr.ss:15: ctx:  
+dprint(simpl): ex2c-ptr.ss: 15: ctx:  
      emp&1<x & x'=x&{FLOW,(4,5)=__norm#E}[]
 
 

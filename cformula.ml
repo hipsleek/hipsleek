@@ -20272,6 +20272,11 @@ let mk_bind_ptr x =
   let f = CP.mk_bform p in
   f
 
+let rec mk_bind_ptr_f x =
+  let pure = mk_bind_ptr x in
+  let ef = mkTrue (mkTrueFlow ()) no_pos in
+  mkAnd_pure ef (MCP.mix_of_pure pure) no_pos
+
 let rec mk_bind_ptr_struc x =
   let pure = mk_bind_ptr x in
   let ef = mkETrue (mkTrueFlow ()) no_pos in

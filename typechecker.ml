@@ -1964,6 +1964,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.h_formula_data_pruning_conditions = [];
               CF.h_formula_data_pos = pos}) in
           let vheap = CF.formula_of_heap vdatanode pos in
+          let vheap = 
+              if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
+
           let () = x_binfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
           let () = x_binfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
           let () = x_binfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
@@ -2013,8 +2016,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let () = x_tinfo_pp ("Andreea : we need to normalise struc_vheap") no_pos in *)
             (* let () = x_tinfo_pp ("==========================================") no_pos in *)
             let () = y_binfo_pp "need to use local version of infer_const_obj" in
-            let struc_vheap = 
-              if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_struc bind_ptr else struc_vheap in
+            (* let struc_vheap =  *)
+            (*   if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_struc bind_ptr else struc_vheap in *)
             let () = x_binfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
@@ -2039,7 +2042,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* (\* add branch info *\) *)
                   (*   let () = Debug.print_info ("(Cause of Bind Failure)") *)
                   (*     (Cprinter.string_of_failure_list_failesc_context rs) pos in *)
-                  let to_print = ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
+                  let to_print = ("bind 3: node " ^ (Cprinter.string_of_formula vheap (*vdatanode*)) ^
                                   " cannot be derived from context (") ^ (string_of_loc pos) ^ ")" in
                   let idf = (fun c -> c) in
                   CF.transform_list_failesc_context (idf,idf,
@@ -2048,7 +2051,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 else
                   (*delay pritinting to check post*)
                   let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^ 
-                           ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^
+                           ("bind: node " ^ (Cprinter.string_of_formula vheap (* vdatanode *)) ^
                             " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n" (* add branch info *)
                            (* add branch info *)
                            ^ ("(Cause of Bind Failure)") ^
