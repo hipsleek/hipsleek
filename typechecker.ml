@@ -2080,10 +2080,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 x_tinfo_hp (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
                 x_tinfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
+                let bind_field = CF.mk_bind_fields_struc vs_prim in
                 let tmp_res2 =
                   let idf = (fun c -> c) in
                   CF.transform_list_failesc_context (idf,idf,
-                                                     (fun es -> CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;}))
+                                                     (fun es ->
+                                                         let es_f = if Globals.infer_const_obj # is_ana_ni then
+                                                           CF.mkAnd_pure es.CF.es_formula (MCP.mix_of_pure bind_field) no_pos
+                                                         else es.CF.es_formula in
+                                                         CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog (* es.CF.es_formula *)es_f Solver.unfold_for_abs_merge pos;}))
                     tmp_res2
                 in
                 let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in

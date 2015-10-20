@@ -20276,3 +20276,9 @@ let rec mk_bind_ptr_struc x =
   let pure = mk_bind_ptr x in
   let ef = mkETrue (mkTrueFlow ()) no_pos in
   mkAnd_pure_pre_struc_formula pure ef
+
+let mk_bind_fields_struc fields =
+  let ptrs = List.filter (CP.is_node_typ) fields in
+  let ps = List.map mk_bind_ptr ptrs in
+  let pure = CP.conj_of_list ps no_pos in
+  pure
