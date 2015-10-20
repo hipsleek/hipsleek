@@ -10,6 +10,8 @@ lemma_infer [H,@classic] H(self,y)*y::node<_,self>
   -> self::node<_,q>*H(q,self).
 print residue.
 
+infer [H,@classic] H(self,y) |- self::node<_,q>.
+print residue.
 
 /*
 # ex20e9f.slk
