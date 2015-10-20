@@ -31,7 +31,7 @@ typedef struct node {
 node_t* init_cll (int n)
   /*@
     requires true
-    ensures true;
+    ensures res::cll<_>;
   */
 {
   node_t* head;
@@ -43,7 +43,7 @@ node_t* init_cll (int n)
   for (int i = 1; i < n; i++) 
     /*@
        requires curr::node<i-1,_>
-       ensures curr'::node<x,_> & x>=n-1;
+       ensures curr::lseg<curr',_>*curr'::node<_,_>;
     */
   {
     node_t* next_node = alloca(sizeof(node_t));
@@ -53,7 +53,7 @@ node_t* init_cll (int n)
   }
   
   curr->next = head;
-  return head;
+  return curr;
 }
 
 /*void search (node_t* head, int i)*/
