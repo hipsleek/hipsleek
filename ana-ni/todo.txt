@@ -86,29 +86,6 @@ dprint(simpl): ex2c-ptr.ss:15: ctx:
      emp&MayLoop[] & 1<x & x'=x&{FLOW,(4,5)=__norm#E}[]
  
 ==========================================================================
-#ex6.ss --ana-ni
-
-Proving binding in method skip0$node2~node2 for spec  EAssume
-   htrue&{FLOW,(4,5)=__norm#E}[]
-   struct:EBase
-            htrue&{FLOW,(4,5)=__norm#E}[], Line 23
-
-( [(,1 ); (,2 ); (,1 ); (,2 )]) bind: node  l'::node2<val_27_1696',n_27_1697',s_27_1698'>@L cannot be derived from context
-1 File "ex6-skip2.ss",Line:27,Col:21
-
-(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
- Failed States:
- [
-  Label: [(,1 ); (,2 ); (,1 ); (,2 )]
-  State:
-    fe_kind: MAY
-    fe_name: logical bug
-    fe_locs: {
-        fc_message:  l'!=null & l'!=e |-  1<l'. LOCS:[26;20;25;0] (may-bug)
-        fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
-      }
-    [[empty]]
-  ]1 File "ex6-skip2.ss",Line:27,Col:21
 
 
 ==========================================================================

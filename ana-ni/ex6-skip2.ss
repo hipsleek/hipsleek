@@ -10,16 +10,17 @@ relation Q(node2 x).
 
 bool skip1(node2 l)
   infer [@ana_ni,R,P,Q]
-  requires R(x)
+  requires R(l)
   ensures true;
 {
   if (l==null) return true;
   else return skip1(l.s) && skip0(l.n,l.s);
 }
 
+
 bool skip0(node2 l, node2 e) 
   infer [@ana_ni,Q,P,R]
-  requires P(x) & Q(y)
+  requires P(l) & Q(e)
   ensures true;
 {
   if (l == e) return true;
@@ -27,28 +28,37 @@ bool skip0(node2 l, node2 e)
   else  return skip0(l.n, e) && l.s == null;
 }
 
+
 /*
+************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [Q,P]: ( Q(e) & P(l)) -->  ((e<l & l<=0) | (l<=(e-1) & l<=0) | 2<=l | l=e),
+RELDEFN Q: ( P(l) & 1<=l & l!=e' & Q(e')) -->  Q(e'),
+RELDEFN P: ( 2<=v_node2_28_1699') -->  P(v_node2_28_1699'),
+RELASS [Q,P]: ( Q(e) & P(l)) -->  ((e<l & l<=0) | (l<=(e-1) & l<=0) | 2<=l | l=e)]
+*************************************
 
-Proving binding in method skip0$node2~node2 for spec  EAssume
-   htrue&{FLOW,(4,5)=__norm#E}[]
-   struct:EBase
-            htrue&{FLOW,(4,5)=__norm#E}[], Line 23
+***************************************
+** relation obligations after imm norm **
+*****************************************
+[RELASS [Q,P]: ( Q(e) & P(l)) -->  (2<=l | (l<=(e-1) & l<=0) | (e<l & l<=0) | l=e),
+RELASS [Q,P]: ( Q(e) & P(l)) -->  (2<=l | (l<=(e-1) & l<=0) | (e<l & l<=0) | l=e)]
+*****************************************
 
-( [(,1 ); (,2 ); (,1 ); (,2 )]) bind: node  l'::node2<val_27_1696',n_27_1697',s_27_1698'>@L cannot be derived from context
-1 File "ex6-skip2.ss",Line:27,Col:21
 
-(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
- Failed States:
- [
-  Label: [(,1 ); (,2 ); (,1 ); (,2 )]
-  State:
-    fe_kind: MAY
-    fe_name: logical bug
-    fe_locs: {
-        fc_message:  l'!=null & l'!=e |-  1<l'. LOCS:[26;20;25;0] (may-bug)
-        fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
-      }
-    [[empty]]
-  ]1 File "ex6-skip2.ss",Line:27,Col:21
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [R]: ( R(l)) -->  l!=1,
+RELDEFN R: ( 2<=v_node2_17_1723') -->  R(v_node2_17_1723')]
+*************************************
+
+***************************************
+** relation obligations after imm norm **
+*****************************************
+[RELASS [R]: ( R(l)) -->  l!=1]
+*****************************************
 
  */
