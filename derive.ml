@@ -633,7 +633,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
           let () = y_binfo_hp (add_str "p_table:body" (pr_list !CF.print_formula)) l_f in
           (* replace the mk_base *)
           (* assumption: base case will be first formula *)
-          (* assumption: base case will contain  *)
+          (* assumption: base case will contain some k=K expr *)
           let pf = CF.get_pure (List.hd l_f) in
           let eqs = CP.find_eq_at_toplevel pf in
           let eqs = List.filter (fun (kexp,_) -> (List.exists (CP.eq_ident_var (CP.extr_spec_var kexp)) vd.C.view_vars)) eqs in
@@ -648,7 +648,56 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
                 let () = y_binfo_hp (add_str "given specvar" !CP.print_sv) v in
                 CP.mk_bform (CP.mkEq ve vexp no_pos))) in
           (* replace the mk_max *)
+          (* assumption: (for now), only variation is whether size is EqMin or EqMax *)
+          (* later, should substitute variables accordingly *)
+          let rc_pf = CF.get_pure (List.nth l_f 1) in
+          (* Look for a min or a max in the formula *)
+          let f_bf = fun (pf,_) ->
+            begin
+              match pf with
+              | (CP.EqMin (lhs,rhs1,rhs2,pos) as m)
+              | (CP.EqMax (lhs,rhs1,rhs2,pos) as m) ->
+                Some [m]
+              | _ -> None
+            end in
+          let minmax_pfs = CP.fold_formula rc_pf (nonef, f_bf, nonef) (List.concat) in
+          let () = (match minmax_pfs with
+            | (CP.EqMax (lhs,rhs1,rhs2,pos))::_ ->
+              (* val mutable mk_max = (fun v v1 v2 -> CP.mk_max v v1 v2) *)
+              mk_max <- (fun v v1 v2 ->
+                (* subst using v,v1,v2 in place of ... what?? *)
+                (* using CP.e_apply_subs *)
+                (* let nlhs = lhs in *)
+                (* let nrhs1 = CP.e_apply_subs [()] rhs1 in *)
+                (* let nrhs2 = rhs2 in *)
+                (* CP.mk_bform (CP.EqMax (nlhs,nrhs1,nrhs2,no_pos)) *)
+                CP.mk_max v v1 v2)
+            | (CP.EqMin (lhs,rhs1,rhs2,pos))::_ -> ()
+            | _ -> ()) in
           (* replace the mk_inc *)
+          (* similar to the bc, find some "k=...",
+           * assume it's *single* bin-op (e.g. +, * ) ...
+           * and the non-existential var is the const.... *)
+          let f_bf = fun (pf,_) ->
+            begin
+              match pf with
+              (* should check whether sv is in ptable's vars *)
+              | CP.Eq (CP.Var (sv,_),rhs,pos) ->
+                Some [(sv,rhs)]
+              | _ -> None
+            end in
+          let inc_pfs = CP.fold_formula rc_pf (nonef, f_bf, nonef) (List.concat) in
+          let () = (match inc_pfs with
+            (* in order to know what the increment is,
+             * either assume it's numeric, or assume it's ... first? *)
+            (* the exp is like k=max_13+1 *)
+            | (sv, (CP.Add (CP.Var (maxv,_),op2,_) as op))::_ ->
+              (* val mutable mk_max = (fun v v1 v2 -> CP.mk_max v v1 v2) *)
+              mk_inc <- (fun v v1 ->
+                (* subst using v,v1 in place of ... what?? *)
+                let n_op = CP.e_apply_subs [(maxv, v1)] op in
+                CP.mk_bform (CP.Eq (CP.mkVar v no_pos, n_op, no_pos)))
+            | _ -> ()) in
           vns <- vs
       end
       (* self # reset_disj *)
