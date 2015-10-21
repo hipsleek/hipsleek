@@ -120,6 +120,26 @@ if (l.parent==p) and parent > 1 & l.parent=p
  */
 
 ==========================================================================
+#ex4a.ss
+
+Why this entailment generates assumptions but ex4a1 does not?
+
+
+id: 6; caller: []; line: 14; classic: false; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ R,P]; c_heap: emp; others:  es_infer_obj: [@ana_ni] globals: [@flow,@ver_post,@ana_ni]
+ checkentail (exists v_node_25_1690': emp&
+!(v_bool_25_1691') & P(y) & R(x) & y'=y & x'=x & 2<=x & v_node_25_1690'>1 & 
+v_node_25_1690'!=y' & res=y' & MayLoop[]&{FLOW,(4,5)=__norm#E}[])
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+!(v_bool_25_1691') & P(y) & R(x) & y'=y & x'=x & 2<=x & v_node_25_1712>1 & 
+v_node_25_1712!=y' & res=y'&{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   es_infer_rel: [RELASS [R]: ( R(x)) -->  2<=x; 
+                  RELASS [R]: ( R(x)) -->  2<=x]
+   ]
+
 ==========================================================================
 ==========================================================================
 ==========================================================================
