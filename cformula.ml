@@ -20266,3 +20266,29 @@ let rec is_pre_post_cont f =
 let is_pre_post_cont f =
   let pr = pr_option !print_struc_formula in
   Debug.no_1 "is_pre_post_cont" pr string_of_bool is_pre_post_cont f 
+
+
+let extract_nodes stk hf =
+  match hf with
+  | ViewNode v ->
+    let vn = v.h_formula_view_name in
+    let ptr = v.h_formula_view_node in
+    let args = v.h_formula_view_arguments in
+    let () = stk # push (1,vn,ptr,args) in
+    Some hf
+  | DataNode v ->
+    let vn = v.h_formula_data_name in
+    let ptr = v.h_formula_data_node in
+    let args = v.h_formula_data_arguments in
+    let () = stk # push (2,vn,ptr,args) in
+    Some hf
+  | HRel (n,lst,_) ->
+    let vn = CP.name_of_spec_var n in
+    let args = List.map (fun e -> match e with Var(v,_) -> v | _ -> failwith "not a Var") lst in
+    let (ptr,args) = match args with
+      | [] -> failwith "HRel without self?"
+      | x::y -> (x,y)
+    in
+    let () = stk # push (3,vn,ptr,args) in
+    Some hf
+  | _ -> None
