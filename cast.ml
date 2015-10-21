@@ -1210,9 +1210,9 @@ let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] ->
     let msg = ("Cannot find definition of cview " ^ name) in 
-    let () = y_tinfo_pp (x_loc^msg) in
+    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
     raise Not_found
-    (* let msg = ("Cannot find definition of view " ^ name) in  *)
+    (* let msg = ("Cannot find definition of view " ^ name) in *)
     (* failwith (x_loc^msg) *)
 
 let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 

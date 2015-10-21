@@ -2399,8 +2399,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let orig_tl = ann_typs@tlist in
     let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (orig_tl) false
         true (*check_pre*) in
-    let () = y_binfo_hp (add_str "orig_tl" string_of_tlist) orig_tl in
-    let () = y_binfo_hp (add_str "n_tl" string_of_tlist) n_tl in
+    let self_ty = Typeinfer.get_type_of_self n_tl in
+    let data_name = match self_ty with
+      | Named s -> s
+      | _ -> "" in
+    let () = vdef.I.view_data_name <- data_name in
+    let () = y_tinfo_hp (add_str "orig_tl" string_of_tlist) orig_tl in
+    let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
     (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
     let inv_lock = vdef.I.view_inv_lock in

@@ -1792,9 +1792,13 @@ let rec typ_of_exp (e: exp) : typ =
                 Gen.Basic.report_error pos "Ununified type in 2 expressions 1"
             | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 2"
           )
-      | _ -> ( match typ2 with
-          | Array (t,_) -> if t== UNK || t=typ1 then typ1 else Gen.Basic.report_error pos "Ununified type in 2 expressions 3"
-          | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 4"
+      | _ -> 
+        (let msg = string_of_typ typ2 in
+         match typ2 with
+          | Array (t,_) -> 
+            if t== UNK || t=typ1 then typ1 
+            else Gen.Basic.report_error pos ("Ununified type in 2 expressions 3"^msg)
+          | _ -> Gen.Basic.report_error pos ("Ununified type in 2 expressions 4"^msg)
         )
     )
   in
@@ -1810,7 +1814,8 @@ let rec typ_of_exp (e: exp) : typ =
       (* Gen.Basic.report_error pos "Ununified type in 2 expressions" *)
   in
   match e with
-  | Ann_Exp (ex, ty, _)       -> let ty2 = typ_of_exp ex in
+  | Ann_Exp (ex, ty, _)       -> 
+    let ty2 = typ_of_exp ex in
     merge_types ty2 ty
   | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
   | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)

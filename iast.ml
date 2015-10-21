@@ -1789,7 +1789,10 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 
 let rec look_up_data_def_x pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def_x pos rest name
-  | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
+  | [] -> 
+    let msg = ("Cannot find definition of iview " ^ name) in 
+    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
+    Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
 
 and look_up_data_def i pos (defs : data_decl list) (name : ident) 
   = Debug.no_1_num i "look_up_data_def" pr_id pr_none (look_up_data_def_x pos defs) name 
@@ -1807,7 +1810,7 @@ and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs w
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x rest name
   | [] -> 
     let msg = ("Cannot find definition of iview " ^ name) in 
-    let () = y_tinfo_pp (x_loc^msg) in
+    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
     raise Not_found
 
 and look_up_view_def_raw i (defs : view_decl list) (name : ident) 
@@ -2378,9 +2381,9 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
             (* let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in *)
             (* let () = x_tinfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in *)
             v.view_data_name <- (v.view_name)
-        else if String.length v.view_data_name = 0 then
-          (* self has unknown type *)
-          report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined")
+        (* else if String.length v.view_data_name = 0 then *)
+        (*   (\* self has unknown type *\) *)
+        (*   report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
       else 
         let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
@@ -3914,7 +3917,7 @@ let update_view_decl prog vdecl =
   let () = 
     if not (is_empty same_vdecls) then 
       y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog")
-    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.")  
+    else y_binfo_pp ("adding the view " ^ vdecl_id ^ " into iprog.")  
   in
   prog.prog_view_decls <- others @ [vdecl]
 

@@ -3,5 +3,10 @@ data arr_int2 {
   int val;
 }.
 
-checkentail x::arr_int2<_> & x=y+1 |- true.
+pred arr_int<o:int,v:int> ==
+    p::arr_int2<v> & //p=self.
+      p=self+1.
+//      p=(self:arr_int2)+1.
+
+//checkentail x::arr_int2<_> & x=y+1 |- true.
 
