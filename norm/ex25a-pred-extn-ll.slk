@@ -30,6 +30,8 @@ shape_extends_view [*] with size.
 
 print views.
 
+data_mark_rec [*].
+
 /*
 # ex25a.slk
 

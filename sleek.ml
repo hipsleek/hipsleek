@@ -115,7 +115,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
     | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
     | ShapeReuseSubs to_view_names -> process_shape_reuse_subs to_view_names
-    | PredUnfold to_view_names -> process_pred_unfold to_view_names
+    | PredUnfold (qual,to_view_names) -> process_pred_unfold qual to_view_names
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
@@ -130,6 +130,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeDeriveView ids -> process_shape_derive_view ids
     | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
     | ShapeNormalize ids -> process_shape_normalize ids
+    | DataMarkRec ids -> process_data_mark_rec ids 
     | PredElimHead ids -> process_pred_elim_head ids
     | PredElimTail ids -> process_pred_elim_tail ids
     | PredUnifyDisj ids -> process_pred_unify_disj ids

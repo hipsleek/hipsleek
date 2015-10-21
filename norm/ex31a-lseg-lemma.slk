@@ -1,0 +1,11 @@
+data node{
+     int val;
+     node next;
+}.
+
+HeapPred P(node x, node y).
+
+lemma_infer[P,@classic,@pure_field]
+  self::node<_, z> * P(z, self) <- P(self, y) * y::node<_, self>.
+
+print residue.

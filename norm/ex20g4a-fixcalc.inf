@@ -1,0 +1,6 @@
+R:={[i] -> [] -> []: (i=0 ||  (exists (v_int_18_1526:v_int_18_1526+1=i && R(v_int_18_1526)))  && ((i<0) || (i>0)))
+};
+bottomupgen([R], [2], SimHeur);
+# i>=0
+topdown(R, 2, SimHeur);
+# {[i,RECi]:((i >= RECi + 1 && 0 >= 1 + i) || (RECi >= 0 && i >= 1 + RECi))};

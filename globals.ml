@@ -1294,7 +1294,10 @@ let old_infer_complex_lhs = ref false
 let old_coer_target = ref false
 let old_search_always = ref false (* false *)
 let old_lemma_unfold = ref false (* false *)
+let old_field_tag = ref false (* false *)
+let new_trace_classic = ref false (* false *)
 let old_pred_extn = ref false (* false *)
+let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false
@@ -1570,6 +1573,8 @@ let nondet_int_rel_name = "nondet_int__"
 
 let hip_sleek_keywords = ["res"]
 
+let rec_field_id = "REC"
+
 type infer_extn = {
   extn_pred: ident;
   mutable extn_props: ident list;
@@ -1630,6 +1635,13 @@ type infer_type =
   | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
   | INF_EXTN of infer_extn list
+
+let eq_infer_type i1 i2 = 
+  match i1, i2 with
+  | INF_EXTN _, INF_EXTN _ -> true
+  | INF_EXTN _, _ -> false
+  | _, INF_EXTN _ -> false
+  | _, _ -> i1 == i2
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1878,7 +1890,7 @@ class inf_obj  =
       List.filter is_selected arr
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
-    method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method reset c  = arr <- List.filter (fun x -> not (eq_infer_type c x)) arr
     method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
@@ -2533,6 +2545,10 @@ let gen_field_ann t=
   | Named _ -> fresh_any_name field_rec_ann
   | _ -> fresh_any_name field_val_ann
 
+let gen_field_ann t =
+  if !old_field_tag then [gen_field_ann t]
+  else []
+
 let un_option opt default_val = match opt with
   | Some v -> v
   | None -> default_val
@@ -2586,7 +2602,10 @@ let prim_method_names = [ nondet_int_proc_name ]
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
 
-let check_is_classic_local obj = obj (* infer_const_obj *) # get INF_CLASSIC
+let check_is_classic_local obj = 
+  let r = obj (* infer_const_obj *) # get INF_CLASSIC in
+  if !new_trace_classic then print_endline ("Globals.check_is_classic:"^(string_of_bool r));
+  r
 
 let check_is_classic () = check_is_classic_local infer_const_obj
 
@@ -2601,9 +2620,17 @@ let string_of_regex_list pr m =
   | REGEX_STAR -> "*"
   | REGEX_LIST lst -> pr_list pr lst
 
-
 type regex_id_star_list = (ident * bool) regex_list
+
+let string_of_regex_star_list m = string_of_regex_list (fun (i,b) -> i^(if b then "*" else "")) m
 
 let string_of_regex_id_star_list =
   string_of_regex_list (pr_pair idf string_of_bool)
 
+let build_sel_scc scc_lst get_name lst =
+  List.map 
+    (fun scc
+      -> List.map (fun c ->
+          List.find (fun v -> (get_name v)=c) lst
+        ) scc
+    ) scc_lst

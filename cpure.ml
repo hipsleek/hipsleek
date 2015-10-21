@@ -131,6 +131,10 @@ let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
   | _ -> false
 
+let is_hp_typ sv = match sv with
+  | SpecVar (HpT,_,_) -> true
+  | _ -> false
+
 let is_var_typ sv =
   match sv with
   | SpecVar (t, _, _) -> is_type_var t
@@ -619,6 +623,10 @@ let primed_ident_of_spec_var (sv : spec_var) = match sv with
 
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
+
+let rename_spec_var (sv: spec_var) new_name = 
+  match sv with
+  | SpecVar (t, _, p) -> SpecVar (t, new_name, p)
 
 let flted_rgx = Str.regexp "flted_[1-9][0-9]*_[1-9][0-9]*" 
 
@@ -3052,7 +3060,7 @@ and split_conjunctions_x =  function
 
 and split_conjunctions f =  
   let pr = !print_formula in
-  Debug.no_1 "split_conjunctions" pr (pr_list pr) split_conjunctions_x f 
+  (* Debug.no_1 "split_conjunctions" pr (pr_list pr) *) split_conjunctions_x f 
 
 
 and join_conjunctions fl = conj_of_list fl no_pos
@@ -6774,7 +6782,7 @@ and simp_mult_x (e : exp) :  exp =
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   let pr1 = pr_opt !print_exp in
-  Debug.no_1 "split_sums" !print_exp (pr_pair pr1 pr1)
+  (* Debug.no_1 "split_sums" !print_exp (pr_pair pr1 pr1) *)
     split_sums_x e
 
 and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
@@ -6927,7 +6935,7 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
 
 and purge_mult (e: exp) : exp =
   let pr = !print_exp in
-  Debug.no_1 "purge_mult" pr pr purge_mult_x e
+  (* Debug.no_1 "purge_mult" pr pr *) purge_mult_x e
 
 (* TODO : must elim some multiply for MONA *)
 and purge_mult_x (e :  exp):  exp = match e with
@@ -12366,7 +12374,7 @@ let split_disjunctions_deep (f:formula) : formula list =
 
 let split_disjunctions_deep (f:formula) : formula list =
   let pr = !print_formula in
-  Debug.no_1 "split_disjunctions_deep" pr (pr_list pr) split_disjunctions_deep f
+  (* Debug.no_1 "split_disjunctions_deep" pr (pr_list pr) *) split_disjunctions_deep f
 
 let drop_exists (f:formula) :formula = 
   let rec helper f =
@@ -14993,6 +15001,12 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     (* raise (Invalid_argument (s ^ " at Cpure.create_view_arg_list_from_pos_map") ) *)
     (* let () = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
     List.map fst map
+
+let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) = 
+  let pr1 = pr_list (pr_pair print_view_arg string_of_int) in
+  let pr2 = pr_list (pr_pair !print_annot_arg string_of_int) in
+  Debug.no_3 "create_view_arg_list_from_pos_map" pr1 !print_svl pr2 (pr_list print_view_arg) 
+    create_view_arg_list_from_pos_map map hargs annot
 
 (* Ocaml compiler bug here *)
 (* norm/ex25a5.slk *)

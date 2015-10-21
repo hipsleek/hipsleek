@@ -2156,7 +2156,7 @@ and pr_h_formula_for_spec h =
     pr_spec_var sv;
     fmt_string "::";
     (* if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs; *)
-    if svs_orig = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_view_arg params;
+    (* if svs_orig = [] then fmt_string (c^"<>") else *) pr_angle (c^perm_str) pr_view_arg params;
     (*    pr_imm imm;*)
     pr_derv dr;
     pr_split split;
@@ -3792,7 +3792,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
       pr_wrap_test ~below:true "es_infer_term_rel: " Gen.is_empty  (pr_seq "" print_tntrel) es.es_infer_term_rel;
       pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure;
-      pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel # get_stk_recent;
+      (* pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) es.es_infer_hp_rel # get_stk_recent; *)
       pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel # get_stk_recent;
       (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
       (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
@@ -5719,3 +5719,5 @@ Cfout.print_sv := string_of_spec_var;;
 (*   let cdefs = Cast.sort_view_list !cprog.Cast.prog_coercion_decls in *)
 (*   get_lemma_cprog cdefs; *)
 (*   cdefs *)
+
+let () = Excore.map_num_invs # set_pr (pr_pair !Cpure.print_svl !Cpure.print_formula) 
