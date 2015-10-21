@@ -1,0 +1,16 @@
+data node2 {
+	int val;
+	node2 left;
+	node2 right;
+}.
+
+pred tree<> == self = null
+  or self::node2<_,p,q> * p::tree<> * q::tree<>.
+
+
+pred_extn size2[L,R]<k> ==
+   k=0 // base case
+   or L::size2<i> & R::size2<j> & k=1+max(i,j) // recursive case
+   inv k>=0.
+
+pred ss<nnn> == extends [tree*] with size2[REC]<nnn>.
