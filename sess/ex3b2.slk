@@ -1,0 +1,31 @@
+data str {
+  int val;
+}.
+
+data addr {
+  int val;
+}.
+
+data date {
+  int val;
+}.
+
+
+pred_prim Send{-%P}<>.
+
+pred_prim Rec{+%P}<>.
+
+/* pred buyer_ch<> ==  !r:String#r>1;;?r:Addr#r>1;;( !1:int or !r:Addr#r=2 ). */
+pred buyer_ch<> == self::Send{- self::str<a> & a>1}<>.
+
+pred buyer_ch0<yy> == yy::Send{- yy::str<a> & a>1}<>.
+
+/*pred buyer_ch1<> == y::Send{- y::str<a> & a>1}<> * x::Rec{+ x::addr<b> & b>1}<>.
+  pred buyer_ch2<> == y::Send{- y::str<a> & a>1}<> * x::Rec{+ x::addr<b> & b>0}<>. */
+
+
+checkentail xx::buyer_ch<> |- xx::Send{- xx::str<a> & a>1}<>.
+print residue.
+
+checkentail zz::buyer_ch0<xx> |- xx::Send{- xx::str<a> & a>1}<>.
+print residue.

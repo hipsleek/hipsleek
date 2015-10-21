@@ -1,0 +1,33 @@
+data str {
+  int val;
+}.
+
+data addr {
+  int val;
+}.
+
+data date {
+  int val;
+}.
+
+
+pred_prim Send{-%P}<>.
+
+pred_prim Rec{+%P}<>.
+
+/* pred buyer_ch<> ==  !r:String#r>1;;?r:Addr#r>1;;( !1:int or !r:Addr#r=2 ). */
+pred buyer_ch0<> ==  self::Send{- self::str<bbb> & bbb>1}<>.
+
+pred buyer_ch1<> ==  self::Send{- self::str<a> & a>1}<>.
+
+
+//1
+checkentail xx::buyer_ch0<> |- xx::Send{- xx::str<a> & a>0}<>.
+expect Fail.
+print residue.
+
+//2
+checkentail xx::buyer_ch1<> |- xx::Send{- xx::str<a> & a>0}<>.
+expect Fail.
+print residue.
+/* should fail, there's a variable name clash TOCHECK unfold renaming for HO abstract pred*/

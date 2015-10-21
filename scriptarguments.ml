@@ -58,6 +58,10 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
+  ("--en-categ-view", Arg.Set Globals.categorize_view,
+   "Categorize view def (fw/bkwpointers, segmented, etc)");
+  ("--dis-categ-view", Arg.Clear Globals.categorize_view,
+   "Categorize view def (fw/bkwpointers, segmented, etc)");
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
   ("--sdp", Arg.Set Globals.simplify_dprint,
    "Simplify the entail state before printing the dprint state."); (* An Hoa *)

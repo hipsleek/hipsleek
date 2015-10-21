@@ -1,0 +1,37 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred p1<n1> == self::node<a1,nx1> * nx1::node<b1,null> * n1::node<z1,null> & a1>1 & z1 <3.
+
+pred p2<n2> == self::node<a2,nx2>  * n2::node<z2,null> * nx2::node<b1,null> & a2>2 & z2 >5.
+
+
+checkentail n::node<z,null> * x::p1<n>   |- x::p2<n> * n::node<z,null>.
+print residue.
+expect Valid.
+
+/*
+checkentail
+	xx::node<a1,nx1> * nx1::node<b1,null> * n::node<z1,null> & a1>1 & z1 <3
+	|-
+	xx::node<a2,nx2>  * n::node<z2,null> * nx2::node<b1,null> & a2>2 & z2 >5.
+print residue.
+expect Valid.
+
+
+checkentail
+	xx::node<a1,nx1> * nx1::node<b1,null> * n::node<z1,null> & a1>1
+	|-
+	xx::node<a2,nx2>  * n::node<z2,null> * nx2::node<b1,null> & a2>2.
+print residue.
+expect Valid.
+
+checkentail
+	xx::node<a1,nx1> * nx1::node<b1,null> * n::node<z1,null> & a1>2
+	|-
+	xx::node<a2,nx2>  * n::node<z2,null> * nx2::node<b1,null> & a2>1.
+print residue.
+expect Valid.
+*/

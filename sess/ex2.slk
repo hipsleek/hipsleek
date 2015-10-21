@@ -1,0 +1,34 @@
+data double {
+  int val;
+}.
+
+pred_prim Send{-%P}<>.
+
+pred_prim Recv{+%P}<>.
+
+/*
+pred buyer_ch2<xx,yy> == ! xx:int # {xx::double<a> & a>1}; ! yy:int # {yy::double<a> & a>1}.
+pred buyer_ch4<xx,yy> == ! xx:int # {xx::double<a> & a>1}; ! yy:int # {yy::double<a> & a>1}.
+
+
+checkentail zz::buyer_ch2<xx,yy> |- zz::buyer_ch4<xx,yy>.
+expect Valid.
+print residue.
+
+*/
+
+/*
+pred buyer_ch_x1<xx> == self::Send{- xx::double<a> & a>1}<>.
+pred buyer_ch_x2<xx> == self::Send{- xx::double<a> & a>1}<>.
+checkentail zz::buyer_ch_x1<yy> |- zz::buyer_ch_x2<yy>.
+expect Valid.
+print residue.
+*/
+
+pred buyer_ch_1<yy,zz,xx> == self::Send{- yy::double<a1> & a1>1}<> * xx::Send{- zz::double<a2> & a2>1}<>.
+pred buyer_ch_2<gg,vv,rr> == self::Send{- gg::double<b1> & b1>1}<> * rr::Send{- vv::double<b2> & b2>1}<>.
+checkentail zz::buyer_ch_1<y1,z1,r1> |- zz::buyer_ch_2<y1,z1,r1>.
+/*
+expect Valid.
+print residue.
+*/

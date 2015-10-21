@@ -1,0 +1,40 @@
+data str {
+  int val;
+}.
+
+data addr {
+  int val;
+}.
+
+data date {
+  int val;
+}.
+
+
+pred_prim Send{-%P}<>.
+
+pred_prim Rec{+%P}<>.
+
+/* pred buyer_ch<> ==  !r:String#r>1;;?r:Addr#r>1;;( !1:int or !r:Addr#r=2 ). */
+pred buyer_ch<> == self::Send{- xx::str<a> & a>1}<>.
+pred buyer_ch1<> == self::Send{- y::str<a> & a>1}<> * x::Rec{+ x::addr<b> & b>1}<>.
+pred buyer_ch2<> == self::Send{- y::str<a> & a>1}<> * x::Rec{+ x::addr<b> & b>0}<>.
+pred buyer_ch3<> == self::Send{- x::Rec{+ x::addr<b> & b>0}<>}<>.
+pred buyer_ch4<> == self::Send{- x::Rec{+ x::addr<b> & b>10}<> or x::Rec{+ x::addr<b> & b>0 & b<=9}<> or x::Rec{+ x::addr<b> & b=0}<>}<>.
+
+/**
+pros:
+(i)   vars are bound to send/receive predicate
+(ii)  supports nested choices
+(iii) can use same or for choice and for formula
+
+cons:
+(i)  vars are not locally scoped, they are globals; thus cannot reuse the same 
+     var name for the different choices eg { ?r:int#r>10 ;; ?r:addr#r::addr<a> } 
+     would not type check
+(ii) need to implement cont for EList ?
+*/
+
+
+checkentail x::buyer_ch1<> |- x::buyer_ch1<>.
+print residue.

@@ -1,0 +1,45 @@
+data node{
+     int id;
+}.
+
+
+data String{
+     int id;
+}.
+
+pred_prim Send{-%P}<>.
+
+pred_prim Recv{+%P}<>.
+
+/**
+  !x:int # x>0 ;; !r:node # r!=null |- !String. 
+*/
+
+pred buyer_ch<> == self::Send{- y::String<a> & true}<>;s1::Recv{+ s1 > 0}<>;s2::Send{- s2=1}<> or s2::Send{- s2=0}<>.
+
+pred buyer_ch_s1<> == self::Send{- y::String<a> & true}<>.
+ 
+/**
+pred buyer_ch<> == 
+  !r:String # true ;; ?r:int # r>0 ;; 
+  ((!1:int ;; !r:Addr;; ?r:Date) or !0:int) .
+*/  
+checkentail x::Send{- x>0}<> ; r::Send{- r!=null}<> |- true.
+
+expect Valid.
+print residue.
+
+checkentail x::Send{- x>0 or x=0}<> or x::Send{- x=1 }<>|- true.
+
+expect Valid.
+print residue.
+
+checkentail x::buyer_ch<> |- true.
+
+expect Valid.
+print residue.
+
+checkentail x::buyer_ch_s1<> |- true.
+
+expect Valid.
+print residue.

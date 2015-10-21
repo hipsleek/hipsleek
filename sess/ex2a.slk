@@ -1,0 +1,13 @@
+data double {
+  int val;
+}.
+
+pred_prim Send{-%P}<>.
+
+pred_prim Recv{+%P}<>.
+
+
+pred buyer_ch_11<yy> == self::Recv{+ yy::double<a1> & a1>1}<> .
+pred buyer_ch_22<gg> == self::Recv{+ gg::double<b1> & b1>1}<> .
+checkentail zz::buyer_ch_11<y1> |- zz::buyer_ch_22<y1>.
+

@@ -917,6 +917,8 @@ let show_push_list_rgx = ref (None:Str.regexp option)
 let old_norm_w_coerc = ref false
 let old_keep_all_matchres = ref false
 
+let categorize_view = ref true
+
 let old_do_match_infer_heap = ref true
 let old_incr_infer = ref false
 

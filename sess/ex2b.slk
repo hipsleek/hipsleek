@@ -1,0 +1,16 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self::node<a,null> or
+     self::node<a,q>*q::ll<>
+     inv self!=null.
+
+pred ll1<> == self::node<a1,null> or
+     self::node<a1,q1>*q1::ll1<>
+     inv self!=null.
+
+checkentail x::node<aaa,null> |- x::ll<>.
+
+checkentail x::ll1<> |- x::ll<>.

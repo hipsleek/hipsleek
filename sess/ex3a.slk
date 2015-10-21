@@ -1,0 +1,22 @@
+data node{
+     int id;
+}.
+
+
+data String{
+     int id;
+}.
+
+pred_prim Send{-%P}<>.
+
+pred_prim Rec{+%P}<>.
+
+/**
+  !x:int # x>0 ;; !r:node # r!=null |- !String. 
+*/
+
+checkentail x::Send{- x>0}<> * r::Send{- r!=null}<> |- true.
+print residue.
+
+checkentail x::Send{- x>0 or x=0}<> or x::Send{- x=1 }<>|- true.
+print residue.

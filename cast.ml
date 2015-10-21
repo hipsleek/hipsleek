@@ -3552,7 +3552,7 @@ let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp
 let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
   : (  P.spec_var list * (data_decl * ident) list
        * P.spec_var list * (data_decl * ident) list ) option =
-  if vdecl.view_kind != View_NORM then None
+  if vdecl.view_kind != View_NORM || not(!categorize_view) then None
   else 
     let pos = vdecl.view_pos in
     let vname = vdecl.view_name in

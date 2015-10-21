@@ -1,0 +1,32 @@
+data node{
+     int id;
+     node next;
+}.
+
+
+data String{
+     int id;
+}.
+
+pred_prim Send{-%P}<>.
+
+pred_prim Recv{+%P}<>.
+
+pred_prim Chan{%P}<>.
+
+pred buy_or1<x> == self::Send{- self::String<a> & a>1}<> * x::Recv{+ x::String<b> & b=0}<>.
+
+//pred pair<x> == self::node<_,_> * x::node<_,_>.
+
+/*
+pred buy_or2<x> == self::Send{- self::String<a> & a>1}<> * x::Recv{+ x::String<b> & b=0}<>.
+
+pred buyer_ch1<x4,x> == self::Chan{ x4::buy_or1<x>}<>.
+
+
+checkentail zz::buyer_ch1<s2,y>|-  zz::Chan{s2::buy_or1<y>}<>.
+expect Valid.
+print residue.
+
+
+*/

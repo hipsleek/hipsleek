@@ -1,0 +1,35 @@
+data str {
+  int val;
+}.
+
+data addr {
+  int val;
+}.
+
+data date {
+  int val;
+}.
+
+
+pred_prim Send{-%P}<>.
+
+pred_prim Rec{+%P}<>.
+
+/* pred buyer_ch<> ==  !r:String#r>1;;?r:Addr#r>1;;( !1:int or !r:Addr#r=2 ). */
+pred buyer_ch<xx> ==  xx::Send{- xx::str<a> & a>1}<>.
+pred buyer_ch0<> ==  self::Send{- self::str<a> & a>1}<>.
+pred buyer_ch1OR<> == x::Send{- y::str<a> & a>1}<> or x::Rec{+ x::addr<b> & b>1}<>.
+pred buyer_ch1<> == y::Send{- y::str<a> & a>1}<> * x::Rec{+ x::addr<b> & b>1}<> * z::buyer_ch1OR<> * z::Rec{+ z::addr<c> & c>1}<>. // ;;;
+// pred buyer_ch1<> == y::Send{- y::str<a> & a>1}<> * x::Rec{+ x::addr<b> & b>1}<> * x::Send{- y::str<a> & a>1}<> or x::Rec{+ x::addr<b> & b>1}<> * z::Rec{+ z::addr<c> & c>1}<>. // ;;;
+pred buyer_ch2<> == y::Send{- y::str<a> & a>1}<> * x::Rec{+ x::addr<b> & b>0}<>.
+
+//1
+checkentail zz::buyer_ch<xx> |- xx::Send{- xx::str<a> & a>1}<>.
+expect Valid.
+print residue.
+
+
+//2
+checkentail xx::Send{- xx::str<a> & a>1}<> * yy::Rec{+ yy::str<b> & b>1}<>. |- yy::Rec{+ yy::str<b> & b>1}<> * xx::Send{- xx::str<a> & a>1}<>.
+expect Fail.
+print residue.

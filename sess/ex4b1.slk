@@ -1,0 +1,39 @@
+data node{
+     int id;
+}.
+
+
+data String{
+     int id;
+}.
+
+pred_prim Send{-%P}<>.
+
+pred_prim Recv{+%P}<>.
+
+pred_prim Chan{%P}<>.
+
+pred buyer_ch1<xx,yy,s1> == self::Chan{xx::Send{- xx::String<a> & a>1}<> * yy::Send{- yy>1}<> * s1::Recv{+ s1 > 2}<> }<>.
+
+pred buyer_ch2<xx,s1> == xx::Send{- xx::String<a> & a>1}<> * s1::Recv{+ s1 > 2}<> .
+
+/*
+pred buyer_ch2<xx,s1> == self::Chan{xx::Send{- xx::String<a> & a>1}<> * s1::Recv{+ s1 > 2}<> }<>.
+*/
+
+checkentail zz::buyer_ch2<x,s>|-  zz::buyer_ch2<x,s>.
+expect Valid.
+print residue.
+
+checkentail zz::buyer_ch1<x,y,s>|-  zz::buyer_ch1<x,y,s>.
+expect Valid.
+print residue.
+
+checkentail zz::buyer_ch1<x,y,s>|-  zz::Chan{x::Send{- x::String<a> & a>1}<> * y::Send{- y>1}<> * s::Recv{+ s > 2}<>}<>.
+expect Valid.
+print residue.
+
+checkentail zz::buyer_ch1<x,y,s>|-  zz::Chan{x::Send{- x::String<a> & a>1}<> * s::Recv{+ s > 2}<> * y::Send{- y>1}<> }<>.
+expect Fail.
+print residue.
+
