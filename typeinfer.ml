@@ -563,17 +563,21 @@ and gather_type_info_exp_x prog a0 tlist et =
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
       if is_node_typ t1 && !Globals.ptr_arith_flag then
         let (n_tl2,_) = must_unify_expect t1 et n_tl2 pos in
-        let (n_tlist2,t2) = must_unify_expect t2 Int n_tl2 pos in
+        let (n_tlist2,_) = must_unify_expect t2 Int n_tl2 pos in
         (n_tlist2,t1)        
       else if is_node_typ t2 && !Globals.ptr_arith_flag then
         let (n_tl2,_) = must_unify_expect t2 et n_tl2 pos in
-        let (n_tlist2,t2) = must_unify_expect t1 Int n_tl2 pos in
+        let (n_tlist2,_) = must_unify_expect t1 Int n_tl2 pos in
         (n_tlist2,t2)
       else 
         let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
         let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
         (n_tlist2,t2)
     in
+    let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
+      let pr_t = string_of_typ in 
+      Debug.no_3 "unify_ptr_arithmetic" pr_t pr_t string_of_tlist (fun (_,v) -> string_of_typ v)
+        (fun _ _ _ -> unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos) t1 t2 n_tl2 in
     let todo_unk:Globals.typ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in          
     let (new_et2, n_tl) = fresh_tvar n_tl in          
@@ -768,13 +772,28 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     n_tl
   | IP.ImmRel(r, cond, pos) ->  gather_type_info_p_formula prog r tlist
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
-    let (new_et,n_tl) = fresh_tvar tlist in
-    let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et in
-    let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in
-    let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in
-    let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *) 
-    n_tl
+    let unify_ptr_cmp t1 t2 n_tl pos =
+      if !Globals.ptr_arith_flag (* Globals.infer_const_obj # is_ana_ni *) then
+        if is_node_typ t1 then
+          let (n_tlist2,_) = must_unify_expect t2 Int n_tl pos in
+          (true,n_tlist2)        
+        else if is_node_typ t2 then
+          let (n_tlist2,_) = must_unify_expect t1 Int n_tl pos in
+          (true,n_tlist2) 
+        else (false,n_tl) 
+      else (false,n_tl) 
+    in
+    let (new_et1,n_tl) = fresh_tvar tlist in
+    let (new_et2,n_tl) = fresh_tvar n_tl in
+    let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et1 in (* tvar, Int, Float *)
+    let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et2 in
+    let (flag,n_tl) = unify_ptr_cmp t1 t2 n_tl pos in
+    if flag then n_tl
+    else 
+      let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in
+      let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in
+      let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *) 
+      n_tl
   | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) ->
     let (new_et,n_tl) = fresh_tvar tlist in
     let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)

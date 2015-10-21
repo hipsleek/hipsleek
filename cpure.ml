@@ -15536,3 +15536,35 @@ let is_AndList f =
   match f with
   | AndList _ -> true
   | _ -> false
+
+(* let pr = drop_nonlinear_formula pf in *)
+
+let tmp_mult_var = mk_spec_var "_mult_var"
+
+let mk_fresh_sv v = 
+  match v with
+  | SpecVar (t, i, p) ->
+    SpecVar (t, fresh_old_name i, p) 
+
+(* this procedure is meant to extract multiplication
+   replacing them by fresh_var *)
+let extract_mult (f:formula) : (formula * ((spec_var * exp * exp) list)) = 
+  let stk = new Gen.stack in
+  let helper f =
+    let f_f f = None in
+    let f_bf bf = None in
+    let f_e e = match e with
+      | Mult(a,b,l) -> 
+        let new_v = mk_fresh_sv (tmp_mult_var) in
+        let () = stk # push (new_v,a,b) in
+        Some (Var(new_v,l))
+      | _ -> Some(e) in
+    map_formula f (f_f,f_bf,f_e) in 
+  let f = helper f in
+  let subs = stk # get_stk in
+  (f,subs)
+
+let extract_mult (f:formula) : (formula * ((spec_var * exp * exp) list)) =
+  let pr = !print_formula in
+  let pr2 = pr_pair pr (pr_list (pr_triple !print_sv !print_exp !print_exp)) in
+  Debug.no_1 "extract_mult" pr pr2 extract_mult f

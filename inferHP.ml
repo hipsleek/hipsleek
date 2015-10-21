@@ -799,7 +799,7 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
   let classic_local = check_is_classic () (* es.CF.es_infer_obj # is_classic *) in
   let () = Debug.ninfo_hprint (add_str  "check_is_classic ()" string_of_bool) (check_is_classic ()) no_pos in
   let () = Debug.ninfo_hprint (add_str  "es.CF.es_infer_obj # is_classic" string_of_bool) (es.CF.es_infer_obj # is_classic) no_pos in
-  let classic_nodes = if classic_local then CF.get_ptrs lhs_b.CF.formula_base_heap else [] in
+  let classic_nodes = if classic_local (* && !Globals.adhoc_flag_2 *) then CF.get_ptrs lhs_b.CF.formula_base_heap else [] in
   let lhs_keep_root_svl = rhs_svl in
   let rhs_keep_root_svl = (rhs_svl(* @keep_root_hrels@classic_nodes*)) in
   let lhs_b1 = if classic_local (* check_is_classic () *) (* es.CF.es_infer_obj # is_classic_all *) || !Globals.old_infer_complex_lhs || iact != 1 (*infer_unfold*) 

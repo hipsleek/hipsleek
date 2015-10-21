@@ -1,0 +1,7 @@
+
+data arr_int2 {
+  int val;
+}.
+
+checkentail x::arr_int2<_> & x=y+1 |- true.
+

@@ -573,6 +573,10 @@ let process_source_full source =
   (* else cprog.Cast.prog_view_decls *)
   (* in *)
   (* ========= lemma process (normalize, translate, verify) ========= *)
+  let () = y_tinfo_hp (add_str "lemma list" 
+      (pr_list (fun l -> pr_list (fun lem -> lem.Iast.coercion_name) l.Iast.coercion_list_elems))) 
+      tiprog.Iast.prog_coercion_decls in
+  let () = Lemma.sort_list_lemma tiprog in
   let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
   (* ========= end - lemma process (normalize, translate, verify) ========= *)
   let c = cprog in

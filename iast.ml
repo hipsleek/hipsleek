@@ -55,8 +55,10 @@ and data_field_ann =
 
 and data_decl = { 
   data_name : ident;
-  data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
-  (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+  mutable data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
+  (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. *)
+  (* TODO design revision on how to make this more extensible; for instance:                 *)
+  (* use a record instead of a bool to capture additional information on the field?          *)
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pos : loc;
@@ -286,7 +288,7 @@ and coercion_decl = { coercion_type : coercion_type;
 
 and coercion_decl_list = {
   coercion_list_elems : coercion_decl list;
-  coercion_list_kind:   lemma_kind;
+  coercion_list_kind: lemma_kind;
 }
 
 and coercion_type = 

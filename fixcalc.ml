@@ -851,7 +851,7 @@ let substitute_args_x a_rel = match a_rel with
       let prog =
         match !Cast.global_prog with
         | Some p -> p
-        | None -> failwith "substitute_args: Initialize globas_prog first!"
+        | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!")
       in
       let typed_args = 
         try
@@ -979,7 +979,9 @@ let compute_def (rel_fml, pf, no) ante_vars =
     print_endline_quiet "*************************************";
   end;
   try
-    let rhs = fixcalc_of_pure_formula pf in
+    let (pf2,subs) = x_add_1 CP.extract_mult pf in
+    let pf = x_add_1 CP.drop_nonlinear_formula pf in
+    let rhs = x_add_1 fixcalc_of_pure_formula pf in
     let input_fixcalc =
       name ^ ":={["
       ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> ["
@@ -987,7 +989,8 @@ let compute_def (rel_fml, pf, no) ante_vars =
       ^ rhs ^ "\n};"
     in input_fixcalc
   with e ->
-    report_error ~exc:(Some e) no_pos "compute_def:Error in translating the input for fixcalc"
+    let () = y_binfo_pp ("Toan : need to remove * in pf for fixcalc") in
+    report_error ~exc:(Some e) no_pos (x_loc^"compute_def:Error in translating the input for fixcalc")
 ;;
 
 let compute_def (rel_fml, pf, no) ante_vars =

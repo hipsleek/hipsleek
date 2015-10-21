@@ -629,6 +629,10 @@ let common_arguments = [
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-infer", Arg.String (fun s ->
        Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
+  ("--ana-ni",Arg.Unit (fun () -> 
+       Globals.ptr_arith_flag := true;
+       Globals.infer_const_obj # set INF_ANA_NI
+     ),"Enable analysis of @NI");
   ("-debug", Arg.String (fun s ->
        Debug.z_debug_file:=s; z_debug_flag:=true),
    "Read from a debug log file");
