@@ -12471,11 +12471,15 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
                             ^ "\n"))  pos 
         end
     end;
-  (*add tracing into the entailment state*)
-  let action_name:string = Context.string_of_action_name a in
+  (* (*add tracing into the entailment state*)                               *)
+  (* let action_name:string = Context.string_of_action_name a in             *)
+  (* let estate = { estate with es_trace = action_name::estate.es_trace } in *)
   let () = rhs_rest_emp := Context.get_rhs_rest_emp_flag a !rhs_rest_emp in
-  let estate = {estate with es_trace = action_name::estate.es_trace} in
-  let rec pm_aux estate lhs_b a = match a with  (* r1: list_context, r2: proof *)
+  let rec pm_aux_x estate lhs_b a =
+    (* Add tracing into the entailment state *)
+    let action_name = Context.string_of_action_name a in
+    let estate = { estate with es_trace = action_name::estate.es_trace } in
+    match a with  (* r1: list_context, r2: proof *)
     | Context.M_match ({
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_lhs_rest = lhs_rest;
@@ -13800,7 +13804,15 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in
         (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
         Debug.ninfo_hprint (add_str "Search action combined context" (Cprinter.string_of_list_context)) ctx_lst no_pos;
-        (ctx_lst, pf) in
+        (ctx_lst, pf) 
+  
+  and pm_aux estate lhs_b a =
+    let pr1 = Cprinter.string_of_entail_state in
+    let pr2 = (fun (r, _) -> Cprinter.string_of_list_context r) in
+    let pr3 = Context.string_of_action_res_simpl in
+    Debug.no_3 "pm_aux" pr1 !CF.print_formula pr3 pr2
+      (fun _ _ _ -> pm_aux_x estate lhs_b a) estate (Base lhs_b) a
+  in
   let r1a,r2a = pm_aux estate lhs_b a in
   if (Context.is_complex_action a) 
   then (Debug.ninfo_pprint ("Detected Iscomplex") no_pos;  (r1a,r2a))

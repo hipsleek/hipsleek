@@ -1285,6 +1285,11 @@ let return_out_of_inst estate lhs_b extended_hps =
   } in
   (true, n_estate,lhs_b)
 
+let return_out_of_inst estate lhs_b extended_hps =
+  let pr = Cprinter.string_of_entail_state in
+  Debug.no_1 "return_out_of_inst" pr (fun (_, es, _) -> pr es)
+    (fun _ -> return_out_of_inst estate lhs_b extended_hps) estate
+
 (* the inst is currently guided by RHS eqset *)
 let gen_inst prog estate lhds lhvs sst =
   let rec aux sst acc_p =
@@ -1388,9 +1393,13 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
   let rhs_node = r.Context.match_res_rhs_node in
   let rhs_rest = r.Context.match_res_rhs_rest in
   let rhs_inst = r.Context.match_res_compatible in
+  let () = y_binfo_hp (add_str "lhs_node" !CF.print_h_formula) lhs_node in
+  let () = y_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+  let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
   let is_succ_inst, n_estate, n_lhs_b = 
     match lhs_node,rhs_node with
     | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
+      let () = y_binfo_pp "HRel vs HRel" in
       if CP.mem_svl lhp estate.es_infer_vars_hp_rel (* && not (CP.mem_svl rhp estate.es_infer_vars_hp_rel) *) then
         match leargs, reargs with
         | er::rest1,_::rest2 -> begin
@@ -1420,6 +1429,7 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
       else
         return_out_of_inst estate lhs_b []
     | HRel (lhp,leargs,_),ViewNode vn -> 
+      let () = y_binfo_pp "HRel vs ViewNode" in
       begin
         if CP.mem_svl lhp estate.es_infer_vars_hp_rel then
           match leargs with
@@ -1431,15 +1441,18 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
         else
           return_out_of_inst estate lhs_b []
       end
-    | _ -> return_out_of_inst estate lhs_b []
+    | _ ->
+      let () = y_binfo_pp "_" in 
+      return_out_of_inst estate lhs_b []
   in
+  let () = y_binfo_hp (add_str "n_estate" Cprinter.string_of_entail_state) n_estate in
   if not is_succ_inst then
     let err_msg = "infer_unfold (cannot inst)" in
     let conseq = Some (Base rhs_b) in
     (Errctx.mkFailCtx_may ~conseq:conseq x_loc err_msg estate pos,NoAlias)
   else
-    let () = Debug.ninfo_hprint (add_str  "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
-    pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node,rhs_rest))
+    let () = Debug.ninfo_hprint (add_str "n_estate.es_formula" !CF.print_formula) n_estate.es_formula no_pos in
+    pm_aux n_estate n_lhs_b (Context.M_infer_heap (1, lhs_node, rhs_node, rhs_rest))
 
 let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rhs_b (* a *) (rhs_h_matched_set: CP.spec_var list) (* is_folding *) pos
   : (Cformula.list_context * Prooftracer.proof) =
