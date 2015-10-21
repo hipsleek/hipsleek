@@ -13,6 +13,7 @@ module IF = Iformula
 module CF = Cformula
 module CVU = Cvutil
 module MCP = Mcpure
+module CFU = Cfutil
 (* module CEQ = Checkeq *)
 
 (**************************)
@@ -409,7 +410,7 @@ let unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups 
       let ctx_list = x_add process_one_hrel prog is_unfolding ctx hprel_name hr hprel_groups in
       List.concat (List.map (fun ctx -> helper ctx hrl) ctx_list)
   in
-  let non_inst_hrel_list, norm_hrel_list = List.partition (is_non_inst_hrel prog) hrel_list in
+  let non_inst_hrel_list, norm_hrel_list = List.partition (CFU.is_non_inst_hrel prog) hrel_list in
   helper ctx (norm_hrel_list @ non_inst_hrel_list)
 
 let unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups =

@@ -5,10 +5,10 @@ open Gen
 open Cformula
 
 (* module DD = Debug *)
-(* module CF = Cformula *)
+module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
-(* module C = Cast *)
+module C = Cast
 (* module I = Iast *)
 module TP = Tpdispatcher
 
@@ -2736,4 +2736,147 @@ let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
 
 (* and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect *)
 (*     (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) = *)
+
+(*************************)
+(***** UTILS FOR SYN *****)
+(*************************)
+let mem = Gen.BList.mem_eq CP.eq_spec_var
+let diff = Gen.BList.difference_eq CP.eq_spec_var
+let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var
+let intersect = Gen.BList.intersect_eq CP.eq_spec_var
+
+let is_pre_hprel (hpr: CF.hprel) = 
+  match hpr.hprel_type with
+  | INFER_UNFOLD -> true
+  | _ -> false
+  
+let is_post_hprel (hpr: CF.hprel) =
+  match hpr.hprel_type with
+  | INFER_FOLD -> true
+  | _ -> false
+
+let sig_of_hrel (h: CF.h_formula) =
+  match h with
+  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args h)
+  | _ -> failwith ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
+
+let name_of_hrel (h: CF.h_formula) = 
+  fst (sig_of_hrel h) 
+
+let args_of_hrel (h: CF.h_formula) = 
+  snd (sig_of_hrel h)
+
+let sig_of_hprel (hpr: CF.hprel) =
+  let is_pre = is_pre_hprel hpr in
+  let hpr_f = if is_pre then hpr.hprel_lhs else hpr.hprel_rhs in
+  let f_h, _, _, _, _, _ = x_add_1 CF.split_components hpr_f in
+  match f_h with
+  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args f_h)
+  | _ -> failwith ("Unexpected formula in the " ^ 
+                   (if is_pre then "LHS" else "RHS") ^ " of a " ^
+                   (if is_pre then "pre-" else "post-") ^ "hprel " ^ 
+                   (Cprinter.string_of_hprel_short hpr))
+
+let name_of_hprel (hpr: CF.hprel) = 
+  fst (sig_of_hprel hpr) 
+
+let args_of_hprel (hpr: CF.hprel) = 
+  snd (sig_of_hprel hpr)
+
+let body_of_hprel (hpr: CF.hprel) =
+  if is_pre_hprel hpr then hpr.hprel_rhs else hpr.hprel_lhs
+
+let is_non_inst_hprel prog (hprel: CF.hprel) =
+  let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
+  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hprel_name in
+  let hprel_inst = hprel_def.Cast.hp_vars_inst in
+  List.for_all (fun (_, i) -> i = Globals.NI) hprel_inst
+
+let is_non_inst_hrel prog (hrel: CF.h_formula) =
+  let hrel_name = CP.name_of_spec_var (name_of_hrel hrel) in
+  let hrel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
+  let hrel_inst = hrel_def.Cast.hp_vars_inst in
+  List.for_all (fun (_, i) -> i = Globals.NI) hrel_inst
+
+let get_non_inst_args_hprel_id prog id args = 
+  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls id in
+  let hprel_inst = hprel_def.Cast.hp_vars_inst in
+  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_binfo_hp (add_str "hprel_inst" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) hprel_inst in
+  (* List.fold_left (fun acc (arg, (_, i)) ->              *)
+  (*   if i = Globals.NI then acc                          *)
+  (*   else acc @ [arg]) [] (List.combine args hprel_inst) *)
+  let rec helper args insts =
+    match args, insts with
+    | _, [] -> []
+    | [], _ -> []
+    | arg::args, (_, i)::insts ->
+      let r = helper args insts in
+      if i = Globals.NI then r
+      else arg::r
+  in
+  helper args hprel_inst
+
+let get_non_inst_args_hprel prog (hprel: CF.hprel) =
+  let hprel_name, hprel_args = sig_of_hprel hprel in
+  let hprel_id = CP.name_of_spec_var hprel_name in
+  get_non_inst_args_hprel_id prog hprel_id hprel_args
+
+(* Get root and args of a hrel or hprel *)
+let get_root_args_hp prog id all_args =
+  let root_pos = x_add C.get_proot_hp_def_raw prog.C.prog_hp_decls id in
+  let root = List.nth all_args root_pos in
+  let args = diff all_args [root] in
+  root, args
+
+let get_root_args_hp prog id all_args =
+  let pr1 = !CP.print_svl in
+  Debug.no_2 "Syn.get_root_args_hp" idf pr1 (pr_pair !CP.print_sv pr1)
+    (fun _ _ -> get_root_args_hp prog id all_args) id all_args
+
+let get_node_var prog (h: h_formula) =
+  match h with
+  | HRel _ ->
+    let hrel_name, hrel_args = sig_of_hrel h in
+    let hrel_id = CP.name_of_spec_var hrel_name in
+    begin try
+      let hrel_var, _ = get_root_args_hp prog hrel_id hrel_args in
+      hrel_var
+    with _ -> CF.get_node_var h end
+  | _ -> CF.get_node_var h
+
+let sig_of_h_formula_list prog aset root (hs: h_formula list) =
+  let rec helper root hs = 
+    if is_empty hs then [], []
+    else 
+      let root_aliases = CP.EMapSV.find_equiv_all_new root aset in
+      let root_nodes, rest_nodes = List.partition (fun h ->
+        let pt = get_node_var prog h in
+        mem pt root_aliases) hs in
+      match root_nodes with
+      | [] -> [], rest_nodes
+      | root_node::[] ->
+        let root_args = diff (CF.get_node_args root_node) root_aliases in
+        let sig_of_root_args, rem_nodes = List.fold_left (fun (acc, rem_nodes) ra ->
+          let sig_of_ra, rem_nodes = helper ra rem_nodes in
+          (acc @ sig_of_ra, rem_nodes)) ([], rest_nodes) root_args
+        in
+        (CF.get_node_name 30 root_node)::sig_of_root_args, rem_nodes
+      | _ -> failwith ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula hs))
+  in fst (helper root hs)
+
+let rec sig_of_formula prog root (f: CF.formula) = 
+  match f with
+  | CF.Base ({ formula_base_heap = h; formula_base_pure = p; })
+  | CF.Exists ({ formula_exists_heap = h; formula_exists_pure = p; }) ->
+    let aliases = MCP.ptr_equations_without_null p in
+    let aset = CP.EMapSV.build_eset aliases in
+    sig_of_h_formula_list prog aset root (CF.split_star_conjunctions h)
+  | CF.Or ({ formula_or_f1 = f1; formula_or_f2 = f2; }) ->
+    (sig_of_formula prog root f1) @ (sig_of_formula prog root f2)
+
+let sig_of_lem prog (lem: C.coercion_decl) =
+  let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem.C.coercion_head) in
+  sig_of_formula prog self_var lem.C.coercion_head, 
+  sig_of_formula prog self_var lem.C.coercion_body
 

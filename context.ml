@@ -1798,9 +1798,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       let comp_lems = Lem_store.all_lemma # get_complex_coercion in
       let pr_hf = !CF.print_h_formula in
       let () = y_binfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
-      let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in
-      let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems  in
+      (* let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in *)
+      let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems in
       let () = y_binfo_pp "to check if complex lemma applicable here for LHS and RHS here using signature" in
+      let pr_id_list = pr_list idf in
+      let () = List.iter (fun lem -> 
+        y_binfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
+        (CFU.sig_of_lem prog lem)) comp_lems in
       (match tup (* lhs_node, rhs_node *) with
        | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                       CF.h_formula_thread_origins = dl_origins;

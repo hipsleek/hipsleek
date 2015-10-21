@@ -11,6 +11,7 @@ module CP = Cpure
 module IF = Iformula
 module CF = Cformula
 module MCP = Mcpure
+module CFU = Cfutil
 
 let mem = Gen.BList.mem_eq CP.eq_spec_var
 let diff = Gen.BList.difference_eq CP.eq_spec_var
@@ -61,82 +62,23 @@ let push_exists_for_args f args =
 (*****************)
 (***** UTILS *****)
 (*****************)
-let is_pre_hprel (hpr: CF.hprel) = 
-  match hpr.hprel_type with
-  | INFER_UNFOLD -> true
-  | _ -> false
+let is_pre_hprel = CFU.is_pre_hprel
   
-let is_post_hprel (hpr: CF.hprel) =
-  match hpr.hprel_type with
-  | INFER_FOLD -> true
-  | _ -> false
+let is_post_hprel = CFU.is_post_hprel
 
-let sig_of_hrel (h: CF.h_formula) =
-  match h with
-  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args h)
-  | _ -> failwith ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
+let sig_of_hrel = CFU.sig_of_hrel
 
-let name_of_hrel (h: CF.h_formula) = 
-  fst (sig_of_hrel h) 
+let name_of_hrel = CFU.name_of_hrel
 
-let args_of_hrel (h: CF.h_formula) = 
-  snd (sig_of_hrel h)
+let args_of_hrel = CFU.args_of_hrel
 
-let sig_of_hprel (hpr: CF.hprel) =
-  let is_pre = is_pre_hprel hpr in
-  let hpr_f = if is_pre then hpr.hprel_lhs else hpr.hprel_rhs in
-  let f_h, _, _, _, _, _ = x_add_1 CF.split_components hpr_f in
-  match f_h with
-  | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args f_h)
-  | _ -> failwith ("Unexpected formula in the " ^ 
-                   (if is_pre then "LHS" else "RHS") ^ " of a " ^
-                   (if is_pre then "pre-" else "post-") ^ "hprel " ^ 
-                   (Cprinter.string_of_hprel_short hpr))
+let sig_of_hprel = CFU.sig_of_hprel
 
-let name_of_hprel (hpr: CF.hprel) = 
-  fst (sig_of_hprel hpr) 
+let name_of_hprel = CFU.name_of_hprel
 
-let args_of_hprel (hpr: CF.hprel) = 
-  snd (sig_of_hprel hpr)
+let args_of_hprel = CFU.args_of_hprel
 
-let body_of_hprel (hpr: CF.hprel) =
-  if is_pre_hprel hpr then hpr.hprel_rhs else hpr.hprel_lhs
-
-let is_non_inst_hprel prog (hprel: CF.hprel) =
-  let hprel_name = CP.name_of_spec_var (name_of_hprel hprel) in
-  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hprel_name in
-  let hprel_inst = hprel_def.Cast.hp_vars_inst in
-  List.for_all (fun (_, i) -> i = Globals.NI) hprel_inst
-
-let is_non_inst_hrel prog (hrel: CF.h_formula) =
-  let hrel_name = CP.name_of_spec_var (name_of_hrel hrel) in
-  let hrel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
-  let hrel_inst = hrel_def.Cast.hp_vars_inst in
-  List.for_all (fun (_, i) -> i = Globals.NI) hrel_inst
-
-let get_non_inst_args_hprel_id prog id args = 
-  let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls id in
-  let hprel_inst = hprel_def.Cast.hp_vars_inst in
-  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
-  let () = y_binfo_hp (add_str "hprel_inst" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) hprel_inst in
-  (* List.fold_left (fun acc (arg, (_, i)) ->              *)
-  (*   if i = Globals.NI then acc                          *)
-  (*   else acc @ [arg]) [] (List.combine args hprel_inst) *)
-  let rec helper args insts =
-    match args, insts with
-    | _, [] -> []
-    | [], _ -> []
-    | arg::args, (_, i)::insts ->
-      let r = helper args insts in
-      if i = Globals.NI then r
-      else arg::r
-  in
-  helper args hprel_inst
-
-let get_non_inst_args_hprel prog (hprel: CF.hprel) =
-  let hprel_name, hprel_args = sig_of_hprel hprel in
-  let hprel_id = CP.name_of_spec_var hprel_name in
-  get_non_inst_args_hprel_id prog hprel_id hprel_args
+let body_of_hprel = CFU.body_of_hprel
 
 module Ident = struct
   type t = ident
@@ -199,8 +141,11 @@ module VG = Graph.Persistent.Digraph.Concrete(SV)
 module VGC = Graph.Components.Make(CG)
 module VGO = Graph.Oper.P(VG)
 
-let heap_chain_of_formula aset f =
+let heap_chain_of_formula f =
   let dg = VG.empty in
+  let f_h, f_p, _, _, _, _ = CF.split_components f in
+  let aliases = MCP.ptr_equations_without_null f_p in
+  let aset = CP.EMapSV.build_eset aliases in
   let rec helper dg f =
     match f with
     | CF.Base { formula_base_heap = f_h; }
@@ -240,7 +185,7 @@ let find_root_hprel_formula_base prog hprel_name num_args f =
     let f_h, f_p, _, _, _, _ = CF.split_components f in
     let aliases = MCP.ptr_equations_without_null f_p in
     let aset = CP.EMapSV.build_eset aliases in
-    let dg = heap_chain_of_formula aset f in
+    let dg = heap_chain_of_formula (* aset *) f in
     (begin 
       try
         (* Find root of heap chain *)
@@ -349,17 +294,6 @@ let find_root_hprel_list prog hprels =
     if not is_consistent then
       failwith ("TO FIX: Inconsistency in find_root_hprel_list")
     else Some h_i
-
-let get_root_args_hp prog id all_args =
-  let root_pos = x_add C.get_proot_hp_def_raw prog.C.prog_hp_decls id in
-  let root = List.nth all_args root_pos in
-  let args = diff all_args [root] in
-  root, args
-
-let get_root_args_hp prog id all_args =
-  let pr1 = !CP.print_svl in
-  Debug.no_2 "Syn.get_root_args_hp" idf pr1 (pr_pair !CP.print_sv pr1)
-    (fun _ _ -> get_root_args_hp prog id all_args) id all_args
 
 let select_obj name_of obj_list obj_id_list = 
   List.partition (fun obj -> mem_id (name_of obj) obj_id_list) obj_list
@@ -505,7 +439,7 @@ let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.sp
       in
       let heap_args = Gen.BList.remove_dups_eq CP.eq_spec_var 
           (List.concat (List.map (fun h ->
-            let heap_node = try [CF.get_node_var h] with _ -> []
+            let heap_node = try [CFU.get_node_var prog h] with _ -> []
             in heap_node @ (get_feasible_node_args prog h)) heaps)) in
       if is_empty null_aliases then heap_args
       else
@@ -583,7 +517,7 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
           with _ -> hrel_name, []
       in
       (begin try
-        let hrel_root, hrel_args = get_root_args_hp prog hrel_id hrel_args in
+        let hrel_root, hrel_args = CFU.get_root_args_hp prog hrel_id hrel_args in
         let extn_args =
           (* Get the extn pred arguments *)
           let rec helper h_args v_args =
