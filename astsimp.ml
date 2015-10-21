@@ -2391,9 +2391,16 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     vdef.I.view_data_name <- data_name;
     let vtv = vdef.I.view_typed_vars in
     let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
-    let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false
+    let (s_t,tlist) = if data_name="" then 
+        let (new_et, n_tl) = fresh_tvar tlist in
+        (new_et,n_tl)
+      else (Named data_name,tlist) in
+    let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
+    let orig_tl = ann_typs@tlist in
+    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (orig_tl) false
         true (*check_pre*) in
+    let () = y_binfo_hp (add_str "orig_tl" string_of_tlist) orig_tl in
+    let () = y_binfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
     (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
     let inv_lock = vdef.I.view_inv_lock in

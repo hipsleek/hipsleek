@@ -202,7 +202,7 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * 
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
   let pr = string_of_spec_var_kind in
-  let pr2 (_, t) = pr_option pr t in
+  let pr2 = pr_pair string_of_tlist (pr_option pr) in
   Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
@@ -223,9 +223,9 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-    | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) ->   (* k1 is primitive memory predicate *)
+    | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
       (tl, Some (Named n2))
-    | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) ->   (* k2 is primitive memory predicate *)
+    | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
       (tl, Some (Named n1))
     | t1, t2  -> (
         let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
@@ -425,6 +425,11 @@ and fresh_tvar tlist =
   let (en, n_tlist) = fresh_tvar_rec tlist in
   (en.sv_info_kind,n_tlist)
 
+and fresh_int_en en = 
+  match en with
+  | TVar i -> i
+  | _ -> fresh_int()
+
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
@@ -561,11 +566,11 @@ and gather_type_info_exp_x prog a0 tlist et =
     (n_tl, Bptyp)
   | IP.Add (a1, a2, pos) ->
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
-      if is_node_typ t1 && !Globals.ptr_arith_flag then
+      if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
         let (n_tl2,_) = must_unify_expect t1 et n_tl2 pos in
         let (n_tlist2,_) = must_unify_expect t2 Int n_tl2 pos in
         (n_tlist2,t1)        
-      else if is_node_typ t2 && !Globals.ptr_arith_flag then
+      else if is_possible_node_typ t2 && !Globals.ptr_arith_flag then
         let (n_tl2,_) = must_unify_expect t2 et n_tl2 pos in
         let (n_tlist2,_) = must_unify_expect t1 Int n_tl2 pos in
         (n_tlist2,t2)
@@ -753,7 +758,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) 
 
 and gather_type_info_pure prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =
   (* Debug.no_eff_2 "gather_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_tlist string_of_tlist *)
-    (gather_type_info_pure_x prog) p0 tlist
+  (gather_type_info_pure_x prog) p0 tlist
 
 and gather_type_info_p_formula prog pf tlist =  match pf with
   | IP.Frm _ -> tlist
@@ -827,11 +832,15 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et1 in (* tvar, Int, Float *)
       let (new_et2,n_tl) = fresh_tvar n_tl in
       let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et2 in
-      match t1, t2 with
-      | Named _, Named _ -> n_tl
-      | _ ->
-        let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
-        n_tl
+      let () = y_tinfo_hp (add_str "Eq:t1" string_of_typ) t1 in
+      let () = y_tinfo_hp (add_str "Eq:t2" string_of_typ) t2 in
+      let ntl = match t1, t2 with
+        (* | Named _, Named _ -> n_tl *)
+        | _ ->
+          let (n_tl,_) =must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
+          n_tl in
+      let () = y_tinfo_hp (add_str "Eq:ntl" string_of_tlist) ntl in
+      ntl
     )
   | IP.BagMax ((v1, p1), (v2, p2), pos) 
   | IP.BagMin ((v1, p1), (v2, p2), pos) -> (* V1=BagMin(V2) *)
@@ -1123,9 +1132,9 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
     n_tl
 
 and gather_type_info_struc_f prog (f0:IF.struc_formula) tlist =
-  (* Debug.no_eff_2 "gather_type_info_struc_f" [false;true] *)
-  (*   Iprinter.string_of_struc_formula string_of_tlist string_of_tlist *)
-    (fun _ _ -> gather_type_info_struc_f_x prog f0 tlist) f0 tlist
+  Debug.no_eff_2 "gather_type_info_struc_f" [false;true]
+    Iprinter.string_of_struc_formula string_of_tlist string_of_tlist
+  (fun _ _ -> gather_type_info_struc_f_x prog f0 tlist) f0 tlist
 
 and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist = 
   let rec inner_collector (f0:IF.struc_formula) tl = (

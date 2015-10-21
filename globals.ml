@@ -256,7 +256,13 @@ let is_undef_typ t =
 
 let is_node_typ t =
   match t with
-  | Named id -> String.compare id "" != 0
+  | Named id -> true (* String.compare id "" != 0 *)
+  | _ -> false
+
+let is_possible_node_typ t =
+  match t with
+  | Named id -> true (* String.compare id "" != 0 *)
+  | TVar _ -> true
   | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
