@@ -8,7 +8,7 @@ relation R(node x).
 relation P(node x).
 
 
-node append (node x,node y)
+node foo (node x,node y)
   infer [@ana_ni,R,P]
   requires R(x) & P(y)
   ensures true;
@@ -23,8 +23,7 @@ node append (node x,node y)
    }
   */
   if (x.next == y){
-    dprint;
-    return x;
+    return foo(x.next,y);
   }
   return y;
  }

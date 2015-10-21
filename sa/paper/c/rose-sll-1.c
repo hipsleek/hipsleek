@@ -40,19 +40,19 @@ requires t::treep<> //& t!=null
    else return check_child(t->children,t);
 }
 
-int check_child (struct node* l, struct tree* par)
+int check_child (struct node* l, struct tree* p)
 /*
- requires l::sll<par> 
+ requires l::sll<p> 
   ensures  res=1;
  */
 /*@
   infer [H1,H2,G2,G2]
-  requires H2(l,par) //l::sll<par>@L 
-  ensures  G2(l,par) & res=1;
+  requires H2(l,p) //l::sll<p>@L 
+  ensures  G2(l,p) & res=1;
 */
 {
 	if (l==NULL) return 1;
-	else if (l->parent==par) return check_child(l->next, par)&& check_tree(l->child);
+	else if (l->parent==p) return check_child(l->next, p)&& check_tree(l->child);
 	else return 0;
 }
 

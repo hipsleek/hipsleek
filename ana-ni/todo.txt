@@ -84,61 +84,115 @@ dprint(simpl): ex2c-ptr.ss:15: ctx:
 
 dprint(simpl): ex2c-ptr.ss:15: ctx:  
      emp&MayLoop[] & 1<x & x'=x&{FLOW,(4,5)=__norm#E}[]
- 
+
+==========================================================================
+# ex2a.ss
+
+******pure relation assumption 1 *******
+*************************************
+[RELASS [R]: ( R(x)) -->  2<=x]
+*************************************
+
+R(x) & x<1 --> false. OK
+
+==========================================================================
+# ex3.ss (ex2b.ss)
+
+*************************************
+[RELASS [R]: ( R(x)) -->  2<=x,
+RELDEFN P: ( 2<=x' & R(x')) -->  P(x'),
+RELDEFN R: ( P(y')) -->  R(y')]
+*************************************
+
+R(x) & x<1 --> false. OK
+P(y) & y<1 --> false. OK (subst R(x) RHS of 2rd)
+
+==========================================================================
+# ex4.ss 
+
+[RELASS [R]: ( R(x)) -->  x!=1,
+RELDEFN R: ( 2<=v_node_18_1692') -->  R(v_node_18_1692')]
+
+Round 1:
+from (1)
+R(x)) ==  x!=1 (over)
+
+subst into (2):
+ 2<=v_node_18_1692' --> x!=1
+
+R(x) & x<1 --> false. FAIL. refinement
+      R(x) & x<1 --> false (x>=1)
+      R(x)  --> x!=1       (x>1)
+==>
+      R(x) == x>1 (over)
+
+Round 2: checking. OK all
+
+==========================================================================
+# ex5.ss 
+RELASS [R]: ( R(x)) -->  x!=1,
+RELDEFN P: ( true) -->  P(y_1718),
+RELDEFN R: ( 2<=v_node_20_1695') -->  R(v_node_20_1695')
+
+Round 1:
+From (1)
+     R(x)) ==  x!=1 (over)
+subst(2): OK
+subst (3). OK.
+
+R(x) & x<1 --> false. FAIL. refinement
+similar above
+
+P(y) & y<1 --> false. FAIL. refinement
+     P(y) == y>=1.
+checking with (2). FAIL. refinement
+     P(y) == y>=1. not refined => stop
+
+==========================================================================
+# ex6.ss 
+
+************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [Q,P]: ( Q(e) & P(l)) -->  ((e<l & l<=0) | (l<=(e-1) & l<=0) | 2<=l | l=e),
+RELDEFN Q: ( P(l) & 1<=l & l!=e' & Q(e')) -->  Q(e'),
+RELDEFN P: ( 2<=v_node2_28_1699') -->  P(v_node2_28_1699')]
+*************************************
+
+P(v) & v<1 --> false. OK
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [R]: ( R(l)) -->  l!=1,
+RELDEFN R: ( 2<=v_node2_17_1723') -->  R(v_node2_17_1723')]
+*************************************
+
+R(x) & x<1 --> false. OK
+
 ==========================================================================
 #ex7.ss
 
 *************************************
 ******pure relation assumption 1 *******
 *************************************
-[RELASS [R]: ( R(t)) -->  2<=t,
-RELDEFN Q: ( 2<=t' & R(t')) -->  Q(t'),
-RELDEFN P: ( 2<=v_node_23_1765') -->  P(v_node_23_1765'),
-RELASS [P]: ( P(l)) -->  l!=1,
-RELDEFN Q: ( 2<=p' & Q(p')) -->  Q(p'),
-RELDEFN P: ( 2<=v_node_34_1738') -->  P(v_node_34_1738'),
-RELDEFN R: ( 2<=v_tree_34_1744') -->  R(v_tree_34_1744')]
+[
+(1) ( R(t)) -->  2<=t,
+(2) ( 2<=t' & R(t')) -->  Q(t'),
+(3) ( 2<=v_node_23_1765') -->  P(v_node_23_1765'),
+(4) ( P(l)) -->  l!=1,
+(5) ( 2<=p' & Q(p')) -->  Q(p'),
+(6) ( 2<=v_tree_34_1744') -->  R(v_tree_34_1744')]
 *************************************
-***************************************
-** relation obligations after imm norm **
-*****************************************
-[RELASS [R]: ( R(t)) -->  2<=t,
-RELASS [P]: ( P(l)) -->  l!=1]
-*****************************************
 
-
-===>
-RELDEFN Q: ( 2<=t' & R(t')) -->  Q(t'),
-RELDEFN R: ( 2<=v_tree_34_1744') -->  R(v_tree_34_1744')
-RELDEFN Q: ( 2<=p' & Q(p')) -->  Q(p'),
-
-==>
-2<=t' -->  Q(t') ??? not correct
-
-caused by
-if (l.parent==p) and parent > 1 & l.parent=p
- */
+R(x) & x<1 --> false. OK
 
 ==========================================================================
-#ex4a.ss
-
-Why this entailment generates assumptions but ex4a1 does not?
-
-
-id: 6; caller: []; line: 14; classic: false; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ R,P]; c_heap: emp; others:  es_infer_obj: [@ana_ni] globals: [@flow,@ver_post,@ana_ni]
- checkentail (exists v_node_25_1690': emp&
-!(v_bool_25_1691') & P(y) & R(x) & y'=y & x'=x & 2<=x & v_node_25_1690'>1 & 
-v_node_25_1690'!=y' & res=y' & MayLoop[]&{FLOW,(4,5)=__norm#E}[])
- |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
-ho_vars: nothing?
-res:  1[
-    emp&
-!(v_bool_25_1691') & P(y) & R(x) & y'=y & x'=x & 2<=x & v_node_25_1712>1 & 
-v_node_25_1712!=y' & res=y'&{FLOW,(4,5)=__norm#E}[]
-   es_gen_impl_vars(E): []
-   es_infer_rel: [RELASS [R]: ( R(x)) -->  2<=x; 
-                  RELASS [R]: ( R(x)) -->  2<=x]
-   ]
+#ex8.ss
+[RELASS [P]: ( P(x)) -->  2<=x,
+RELDEFN P: ( 2<=v_node_38_1715') -->  P(v_node_38_1715'),
+RELDEFN R: ( 2<=x' & P(x')) -->  R(x'),
+RELDEFN Q: ( true) -->  Q(l_most')]
 
 ==========================================================================
 ==========================================================================

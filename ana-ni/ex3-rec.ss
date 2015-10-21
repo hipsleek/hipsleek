@@ -22,5 +22,14 @@ int hoo(node x,node y)
  }
 
 
+/*
+*****pure relation assumption 1 *******
+*************************************
+[RELASS [R]: ( R(x)) -->  2<=x,
+RELDEFN P: ( 2<=x' & R(x')) -->  P(x'),
+RELDEFN R: ( P(y')) -->  R(y')]
+*************************************
+
+ */
 
 
