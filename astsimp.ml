@@ -4325,11 +4325,11 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
 
 and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
-  if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars ==[] then
+  if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
     (* complex_lhs <- rhs    ==> rhs    -> complex_lhs                    *)
     (* complex_lhs <-> rhs   ==> complex_lhs -> rhs && rhs -> complex_lhs *)
-    let  coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
-    (* let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in *)
+    let coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
+    let coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in
     if coercion_lhs_type == Complex then 
       if coer.I.coercion_type == I.Right then
         let () = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
@@ -4337,6 +4337,13 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
                                   I.coercion_body = coer.I.coercion_head;
                                   I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
                                   I.coercion_type = I.Left} in
+        trans_one_coercion_x prog new_coer
+      else if coer.I.coercion_type == I.Left && coercion_rhs_type == Simple then
+        let () = Debug.info_pprint "WARNING : changing lemma from -> to <-" no_pos in
+        let new_coer = {coer with I.coercion_head = coer.I.coercion_body;
+                                  I.coercion_body = coer.I.coercion_head;
+                                  I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
+                                  I.coercion_type = I.Right} in
         trans_one_coercion_x prog new_coer
       else if (coer.I.coercion_type == I.Equiv) then 
         let () = Debug.info_pprint "WARNING : split equiv lemma into two -> lemmas " no_pos in
