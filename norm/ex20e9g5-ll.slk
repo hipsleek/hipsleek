@@ -6,7 +6,7 @@ data node {
 pred_prim foo<p:node>.
 
 
-lemma_unsafe "compl" self::foo<y> * y::node<_,ss> -> self::node<_,q>*q::foo<ss>.
+lemma_unsafe "compl" self::foo<p> * p::node<_,yy> -> self::node<_,q>*q::foo<yy>.
 
 infer [] x::foo<y> * y::node<_,ss> |- x::node<_,r>.
 print residue.

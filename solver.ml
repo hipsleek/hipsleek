@@ -14604,195 +14604,36 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   in
   let () = y_binfo_hp (add_str "anode" !CF.print_h_formula) anode in
   let () = y_binfo_hp (add_str "head_node" !CF.print_h_formula) head_node in
-  match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
-  | ViewNode ({ h_formula_view_node = p1;
-                h_formula_view_name = c1;
-                h_formula_view_origins = origs;
-                (* h_formula_view_original = original; (*LDK: unused*) *)
-                h_formula_view_remaining_branches = br1;
-                h_formula_view_perm = perm1; (*LDK*)
-                h_formula_view_arguments = ps1} (* as h1 *)),
-    ViewNode ({ h_formula_view_node = p2;
-                h_formula_view_name = c2;
-                h_formula_view_remaining_branches = br2;
-                h_formula_view_perm = perm2; (*LDK*)
-                h_formula_view_arguments = ps2} (* as h2 *)) 
-  | DataNode ({ h_formula_data_node = p1;
-                h_formula_data_name = c1;
-                h_formula_data_origins = origs;
-                h_formula_data_remaining_branches = br1;
-                h_formula_data_perm = perm1; (*LDK*)
-                h_formula_data_arguments = ps1} (* as h1 *)),
-    DataNode ({ h_formula_data_node = p2;
-                h_formula_data_name = c2;
-                h_formula_data_remaining_branches = br2;
-                h_formula_data_perm = perm2; (*LDK*)
-                h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) ->
 
-    (*temporarily skip this step. What is it for???*)
-    (* let apply_coer = (x_add coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
-    let ho_ps1  = CF.get_node_ho_args anode in
-    let ho_ps2  = CF.get_node_ho_args head_node in
-    if (is_cycle_coer coer origs)
-    then
-      (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
-      let () = x_dinfo_zp (lazy("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *))) pos in
-      let msg = "failed left coercion application: in a cycle" in
-      (CF.mkFailCtx_in( Basic_Reason ( { 
-           fc_message =(* "failed left coercion application: in a cycle" *) msg;
-           fc_current_lhs = estate;
-           fc_prior_steps = estate.es_prior_steps;
-           fc_orig_conseq = estate.es_orig_conseq;
-           fc_current_conseq = CF.formula_of_heap HFalse pos; 
-           fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
-           CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate) , msg, Failure_Must msg) (mk_cex true), [])
-    else
-      let perms1,perms2 =
-        if (Perm.allow_perm ()) then
-          match perm1,perm2 with
-          | Some f1, Some f2 ->
-            let f1 = List.hd (Perm.get_cperm_var perm1) in
-            let f2 = List.hd (Perm.get_cperm_var perm2) in
-            ([f1],[f2])
-          | Some f1, None ->
-            let f1 = List.hd (Perm.get_cperm_var perm1) in
-            ([f1],[full_perm_var ()])
-          | None, Some f2 ->
-            let f2 = List.hd (Perm.get_cperm_var perm2) in
-            ([full_perm_var  ()],[f2])
-          | None, None ->
-            ([],[])
-        else
-          ([],[])
+  let extract_info h =
+    match h with
+    | ViewNode ({ 
+        h_formula_view_node = p;
+        h_formula_view_name = c;
+        h_formula_view_origins = origs;
+        h_formula_view_remaining_branches = br;
+        h_formula_view_perm = perm;
+        h_formula_view_arguments = ps; })
+    | DataNode ({ 
+        h_formula_data_node = p;
+        h_formula_data_name = c;
+        h_formula_data_origins = origs;
+        h_formula_data_remaining_branches = br;
+        h_formula_data_perm = perm;
+        h_formula_data_arguments = ps; }) ->
+      p, c, origs, br, perm, ps
+    | HRel _ ->
+      let hrel_name, hrel_args = CFU.sig_of_hrel h in
+      let c = CP.name_of_spec_var hrel_name in
+      let p, ps = 
+        try C.get_root_args_hp prog c hrel_args
+        with _ -> List.hd hrel_args, List.tl hrel_args
       in
-      let fr_vars = perms2@(p2 :: ps2)in
-      let to_vars = perms1@(p1 :: ps1)in
-      let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
-      let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
-      let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
-      let coer_rhs_new1,extra_heap_new =
-        if (Perm.allow_perm ()) then
-          match perm1,perm2 with
-          | Some f1, None ->
-            (*propagate perm into coercion*)
-            let f1 = List.hd (Perm.get_cperm_var perm1) in
-            let rhs = propagate_perm_formula coer_rhs_new1 f1 in
-            let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
-            (rhs,extra)
-          | _ -> (coer_rhs_new1, extra_heap_new)
-        else
-          (coer_rhs_new1,extra_heap_new)
-      in
-      let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name ::origs) in
-      (*avoid apply a complex lemma twice*)
-      let f = add_origins f [coer.coercion_name] in
-      let f = add_original f false in
-      let new_es_heap = CF.mkStarH anode estate.es_heap no_pos in (*consumed*)
+      p, c, [], None, None, ps
+    | _ -> failwith (x_loc ^ "[extract_info] Unexpected formula")
+  in
 
-      (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
-      let old_trace = estate.es_trace in
-      let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace)} in
-      let new_ctx1 = Ctx new_estate in
-      let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
-      (*prove extra heap + guard*)
-      let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) lhs_vperm CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
-
-      (* let () = print_endline_quiet ("ho_ps1 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps1)) in *)
-      (* let () = print_endline_quiet ("ho_ps2 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps2)) in *)
-
-      (*=====================================================*)
-      (***********Handle high-order argument: BEGIN**********)
-      if (List.length ho_ps1 != List.length ho_ps2) then
-        let () = print_endline_quiet ("apply_left_coercion_complex: ho_args mismatched between anode and head_node") in
-        x_tinfo_zp (lazy ("apply_left_coercion_complex: ho_args mismatched between anode and head_node")) no_pos;
-        let msg = "failed left coercion application, ho_args mismatched between anode and head_node" in
-        (CF.mkFailCtx_in( Basic_Reason ( { 
-             fc_message =(* "failed left coercion application, ho_args mismatched between anode and head_node" *) msg;
-             fc_current_lhs = estate;
-             fc_prior_steps = estate.es_prior_steps;
-             fc_orig_conseq = estate.es_orig_conseq;
-             fc_current_conseq = CF.formula_of_heap HFalse pos; 
-             fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
-             CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), msg, Failure_Must msg) (mk_cex true), [])
-      else
-        let coer_rhs_new =
-          if (ho_ps1=[]) then coer_rhs_new else
-            let args = List.combine ho_ps1 ho_ps2 in
-            let maps = List.map match_one_ho_arg_simple args in
-            let maps = List.concat maps in
-            let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
-            coer_rhs_new
-        in
-        (* let () = print_endline_quiet ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in *)
-
-        (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
-        (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
-        (***********Handle high-order argument: END**********)
-
-        x_dinfo_zp (lazy ("apply_left_coercion_complex: check extra heap")) pos;
-        x_dinfo_zp (lazy ("apply_left_coercion_complex: new_ctx after folding: "
-                          ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-                          ^ (Cprinter.string_of_context new_ctx1))) pos;
-        x_dinfo_zp (lazy ("apply_left_coercion_complex: conseq_extra:\n"
-                          ^ (Cprinter.string_of_formula conseq_extra))) pos;
-
-        let check_res, check_prf = x_add heap_entail prog false new_ctx conseq_extra pos in
-
-        x_dinfo_zp (lazy ("apply_left_coercion_complex: after check extra heap: "
-                          ^ (Cprinter.string_of_spec_var p2) ^ "\n"
-                          ^ (Cprinter.string_of_list_context check_res))) pos;
-
-        (*PROCCESS RESULT*)
-        let rec process_one_x (ss:CF.steps) res = match res with
-          | OCtx (c1, c2) ->
-            let tmp1, prf1 = process_one_x (add_to_steps ss "left OR 4 in ante") c1 in
-            let tmp2, prf2 = process_one_x  (add_to_steps ss "right OR 4 in ante") c2 in
-            let tmp3 = or_list_context tmp1 tmp2 in
-            let prf3 = Prooftracer.mkOrLeft res f [prf1; prf2] in
-            (tmp3, prf3)
-          | Ctx es ->
-            let es = CF.overwrite_estate_with_steps es ss in
-            (* rhs_coerc * es.es_formula /\ lhs.p |-  conseq*)
-            let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
-            let new_ante = add_mix_formula_to_formula lhs_p new_ante1 in
-            let new_ante = x_add_1 Cformula.translate_set_comp_rel new_ante in
-            let new_es = {new_estate with es_formula=new_ante; es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace); es_heap = HEmp} in
-            let new_ctx = (Ctx new_es) in
-
-            x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: resume entail check")) pos;
-            x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: resume entail check: new_ctx = \n" ^ (Cprinter.string_of_context new_ctx))) pos;
-            x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: resume entail check: conseq = " ^ (Cprinter.string_of_formula conseq))) pos;
-
-
-            let rest_rs, prf = x_add heap_entail_one_context 10 prog is_folding new_ctx conseq None None None pos in
-
-
-            x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: after resume entail check: rest_rs =  " ^ (Cprinter.string_of_list_context rest_rs))) pos;
-
-            (rest_rs,prf)
-        in
-        let process_one (ss:CF.steps) res = 
-          let pr1 = Cprinter.string_of_context  in
-          let pr2 (c,_) = Cprinter.string_of_list_context c in
-          Debug.no_1 "apply_left_coercion_complex:process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) res) res in
-
-        (match check_res with 
-         | FailCtx _ -> 
-           let () = x_dinfo_zp (lazy ("apply_left_coercion_complex: extra state of the lhs is not satisfied \n")) pos in
-           let msg = "failed left coercion application: can not match extra heap" in
-           (CF.mkFailCtx_in( Basic_Reason ( { 
-                fc_message =(* "failed left coercion application: can not match extra heap" *) msg;
-                fc_current_lhs = estate;
-                fc_prior_steps = estate.es_prior_steps;
-                fc_orig_conseq = estate.es_orig_conseq;
-                fc_current_conseq = CF.formula_of_heap HFalse pos; 
-                fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
-                CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), msg, Failure_Must msg) (mk_cex true), [])
-         | SuccCtx res -> 
-           let t1,p1 = List.split (List.map (process_one []) res) in
-           let t1 = fold_context_left 16 t1 in
-           (t1,p1))
-  | _ -> let msg = "failed left coercion application, can not match head node" in
+  let mk_fail_ctx estate anode msg = 
     (CF.mkFailCtx_in( Basic_Reason ( { 
          fc_message =(* "failed left coercion application, can not match head node" *) msg;
          fc_current_lhs = estate;
@@ -14801,6 +14642,218 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
          fc_current_conseq = CF.formula_of_heap HFalse pos; 
          fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},
          CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), msg, Failure_Must msg) (mk_cex true), [])
+  in
+  
+  match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
+  (* | ViewNode ({ h_formula_view_node = p1;                                                                                                         *)
+  (*               h_formula_view_name = c1;                                                                                                         *)
+  (*               h_formula_view_origins = origs;                                                                                                   *)
+  (*               (* h_formula_view_original = original; (*LDK: unused*) *)                                                                         *)
+  (*               h_formula_view_remaining_branches = br1;                                                                                          *)
+  (*               h_formula_view_perm = perm1; (*LDK*)                                                                                              *)
+  (*               h_formula_view_arguments = ps1} (* as h1 *)),                                                                                     *)
+  (*   ViewNode ({ h_formula_view_node = p2;                                                                                                         *)
+  (*               h_formula_view_name = c2;                                                                                                         *)
+  (*               h_formula_view_remaining_branches = br2;                                                                                          *)
+  (*               h_formula_view_perm = perm2; (*LDK*)                                                                                              *)
+  (*               h_formula_view_arguments = ps2} (* as h2 *))                                                                                      *)
+  (* | DataNode ({ h_formula_data_node = p1;                                                                                                         *)
+  (*               h_formula_data_name = c1;                                                                                                         *)
+  (*               h_formula_data_origins = origs;                                                                                                   *)
+  (*               h_formula_data_remaining_branches = br1;                                                                                          *)
+  (*               h_formula_data_perm = perm1; (*LDK*)                                                                                              *)
+  (*               h_formula_data_arguments = ps1} (* as h1 *)),                                                                                     *)
+  (*   DataNode ({ h_formula_data_node = p2;                                                                                                         *)
+  (*               h_formula_data_name = c2;                                                                                                         *)
+  (*               h_formula_data_remaining_branches = br2;                                                                                          *)
+  (*               h_formula_data_perm = perm2; (*LDK*)                                                                                              *)
+  (*               h_formula_data_arguments = ps2} (* as h2 *)) when CF.is_eq_node_name(*is_eq_view_spec*) c1 c2 (*c1=c2 && (br_match br1 br2) *) -> *)
+  | ViewNode _, ViewNode _
+  | DataNode _, DataNode _ 
+  | HRel _, HRel _ ->
+    let p1, c1, origs, br1, perm1, ps1 = extract_info anode in
+    let p2, c2, _, br2, perm2, ps2 = extract_info head_node in
+
+    if not (C.is_hp_name prog c1) && 
+       not (C.is_hp_name prog c2) && 
+       not (CF.is_eq_node_name c1 c2) 
+    then
+      let msg = "failed left coercion application, can not match head node" in 
+      mk_fail_ctx estate anode msg
+    else
+      (*temporarily skip this step. What is it for???*)
+      (* let apply_coer = (x_add coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
+      let ho_ps1  = CF.get_node_ho_args anode in
+      let ho_ps2  = CF.get_node_ho_args head_node in
+      if (is_cycle_coer coer origs)
+      then
+        (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
+        let () = x_dinfo_zp (lazy("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *))) pos in
+        let msg = "failed left coercion application: in a cycle" in
+        mk_fail_ctx estate anode msg
+        (* (CF.mkFailCtx_in( Basic_Reason ( {                                                                                                        *)
+        (*      fc_message =(* "failed left coercion application: in a cycle" *) msg;                                                                *)
+        (*      fc_current_lhs = estate;                                                                                                             *)
+        (*      fc_prior_steps = estate.es_prior_steps;                                                                                              *)
+        (*      fc_orig_conseq = estate.es_orig_conseq;                                                                                              *)
+        (*      fc_current_conseq = CF.formula_of_heap HFalse pos;                                                                                   *)
+        (*      fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},                                                       *)
+        (*      CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate) , msg, Failure_Must msg) (mk_cex true), []) *)
+      else
+        let perms1,perms2 =
+          if (Perm.allow_perm ()) then
+            match perm1,perm2 with
+            | Some f1, Some f2 ->
+              let f1 = List.hd (Perm.get_cperm_var perm1) in
+              let f2 = List.hd (Perm.get_cperm_var perm2) in
+              ([f1],[f2])
+            | Some f1, None ->
+              let f1 = List.hd (Perm.get_cperm_var perm1) in
+              ([f1],[full_perm_var ()])
+            | None, Some f2 ->
+              let f2 = List.hd (Perm.get_cperm_var perm2) in
+              ([full_perm_var  ()],[f2])
+            | None, None ->
+              ([],[])
+          else
+            ([],[])
+        in
+        let fr_vars = perms2@(p2 :: ps2)in
+        let to_vars = perms1@(p1 :: ps1)in
+        let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
+        let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+        let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
+        let coer_rhs_new1,extra_heap_new =
+          if (Perm.allow_perm ()) then
+            match perm1,perm2 with
+            | Some f1, None ->
+              (*propagate perm into coercion*)
+              let f1 = List.hd (Perm.get_cperm_var perm1) in
+              let rhs = propagate_perm_formula coer_rhs_new1 f1 in
+              let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
+              (rhs,extra)
+            | _ -> (coer_rhs_new1, extra_heap_new)
+          else
+            (coer_rhs_new1,extra_heap_new)
+        in
+        let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name ::origs) in
+        (*avoid apply a complex lemma twice*)
+        let f = add_origins f [coer.coercion_name] in
+        let f = add_original f false in
+        let new_es_heap = CF.mkStarH anode estate.es_heap no_pos in (*consumed*)
+  
+        (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
+        let old_trace = estate.es_trace in
+        let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace)} in
+        let new_ctx1 = Ctx new_estate in
+        let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
+        (*prove extra heap + guard*)
+        let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) lhs_vperm CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+  
+        (* let () = print_endline_quiet ("ho_ps1 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps1)) in *)
+        (* let () = print_endline_quiet ("ho_ps2 = " ^ (pr_list Cprinter.string_of_rflow_formula ho_ps2)) in *)
+  
+        (*=====================================================*)
+        (***********Handle high-order argument: BEGIN**********)
+        if (List.length ho_ps1 != List.length ho_ps2) then
+          let () = print_endline_quiet ("apply_left_coercion_complex: ho_args mismatched between anode and head_node") in
+          x_tinfo_zp (lazy ("apply_left_coercion_complex: ho_args mismatched between anode and head_node")) no_pos;
+          let msg = "failed left coercion application, ho_args mismatched between anode and head_node" in
+          mk_fail_ctx estate anode msg
+          (* (CF.mkFailCtx_in( Basic_Reason ( {                                                                                                       *)
+          (*      fc_message =(* "failed left coercion application, ho_args mismatched between anode and head_node" *) msg;                           *)
+          (*      fc_current_lhs = estate;                                                                                                            *)
+          (*      fc_prior_steps = estate.es_prior_steps;                                                                                             *)
+          (*      fc_orig_conseq = estate.es_orig_conseq;                                                                                             *)
+          (*      fc_current_conseq = CF.formula_of_heap HFalse pos;                                                                                  *)
+          (*      fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},                                                      *)
+          (*      CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), msg, Failure_Must msg) (mk_cex true), []) *)
+        else
+          let coer_rhs_new =
+            if (ho_ps1=[]) then coer_rhs_new else
+              let args = List.combine ho_ps1 ho_ps2 in
+              let maps = List.map match_one_ho_arg_simple args in
+              let maps = List.concat maps in
+              let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
+              coer_rhs_new
+          in
+          (* let () = print_endline_quiet ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in *)
+  
+          (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
+          (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
+          (***********Handle high-order argument: END**********)
+  
+          x_dinfo_zp (lazy ("apply_left_coercion_complex: check extra heap")) pos;
+          x_dinfo_zp (lazy ("apply_left_coercion_complex: new_ctx after folding: "
+                            ^ (Cprinter.string_of_spec_var p2) ^ "\n"
+                            ^ (Cprinter.string_of_context new_ctx1))) pos;
+          x_dinfo_zp (lazy ("apply_left_coercion_complex: conseq_extra:\n"
+                            ^ (Cprinter.string_of_formula conseq_extra))) pos;
+  
+          let check_res, check_prf = x_add heap_entail prog false new_ctx conseq_extra pos in
+  
+          let () = y_binfo_hp (add_str "new_ctx" !CF.print_list_context) new_ctx in
+          let () = y_binfo_hp (add_str "conseq_extra" !CF.print_formula) conseq_extra in
+          let () = y_binfo_hp (add_str "check_res" !CF.print_list_context) check_res in
+  
+          x_dinfo_zp (lazy ("apply_left_coercion_complex: after check extra heap: "
+                            ^ (Cprinter.string_of_spec_var p2) ^ "\n"
+                            ^ (Cprinter.string_of_list_context check_res))) pos;
+  
+          (*PROCCESS RESULT*)
+          let rec process_one_x (ss:CF.steps) res = match res with
+            | OCtx (c1, c2) ->
+              let tmp1, prf1 = process_one_x (add_to_steps ss "left OR 4 in ante") c1 in
+              let tmp2, prf2 = process_one_x  (add_to_steps ss "right OR 4 in ante") c2 in
+              let tmp3 = or_list_context tmp1 tmp2 in
+              let prf3 = Prooftracer.mkOrLeft res f [prf1; prf2] in
+              (tmp3, prf3)
+            | Ctx es ->
+              let es = CF.overwrite_estate_with_steps es ss in
+              (* rhs_coerc * es.es_formula /\ lhs.p |-  conseq*)
+              let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
+              let new_ante = add_mix_formula_to_formula lhs_p new_ante1 in
+              let new_ante = x_add_1 Cformula.translate_set_comp_rel new_ante in
+              let new_es = {new_estate with es_formula=new_ante; es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace); es_heap = HEmp} in
+              let new_ctx = (Ctx new_es) in
+  
+              x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: resume entail check")) pos;
+              x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: resume entail check: new_ctx = \n" ^ (Cprinter.string_of_context new_ctx))) pos;
+              x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: resume entail check: conseq = " ^ (Cprinter.string_of_formula conseq))) pos;
+  
+  
+              let rest_rs, prf = x_add heap_entail_one_context 10 prog is_folding new_ctx conseq None None None pos in
+  
+  
+              x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: after resume entail check: rest_rs =  " ^ (Cprinter.string_of_list_context rest_rs))) pos;
+  
+              (rest_rs,prf)
+          in
+          let process_one (ss:CF.steps) res = 
+            let pr1 = Cprinter.string_of_context  in
+            let pr2 (c,_) = Cprinter.string_of_list_context c in
+            Debug.no_1 "apply_left_coercion_complex:process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) res) res in
+  
+          (match check_res with 
+           | FailCtx _ -> 
+             let () = x_dinfo_zp (lazy ("apply_left_coercion_complex: extra state of the lhs is not satisfied \n")) pos in
+             let msg = "failed left coercion application: can not match extra heap" in
+             mk_fail_ctx estate anode msg
+             (* (CF.mkFailCtx_in( Basic_Reason ( {                                                                                                       *)
+             (*      fc_message =(* "failed left coercion application: can not match extra heap" *) msg;                                                 *)
+             (*      fc_current_lhs = estate;                                                                                                            *)
+             (*      fc_prior_steps = estate.es_prior_steps;                                                                                             *)
+             (*      fc_orig_conseq = estate.es_orig_conseq;                                                                                             *)
+             (*      fc_current_conseq = CF.formula_of_heap HFalse pos;                                                                                  *)
+             (*      fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},                                                      *)
+             (*      CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), msg, Failure_Must msg) (mk_cex true), []) *)
+           | SuccCtx res -> 
+             let t1,p1 = List.split (List.map (process_one []) res) in
+             let t1 = fold_context_left 16 t1 in
+             (t1,p1))
+  | _ -> 
+    let msg = "failed left coercion application, can not match head node" in
+    mk_fail_ctx estate anode msg
 
 and apply_left_coercion_complex estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in

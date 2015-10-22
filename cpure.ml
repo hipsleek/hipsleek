@@ -4412,11 +4412,13 @@ and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
     subst_avoid_capture_x fr t f
 
 and subst_avoid_capture_x (fr : spec_var list) (t : spec_var list) (f : formula) =
-  let st1 = List.combine fr t in
-  (* let f2 = subst st1 f in *) 
-  (* changing to a parallel substitution below *)
-  let f2 = par_subst st1 f in 
-  f2
+  try 
+    let st1 = List.combine fr t in
+    (* let f2 = subst st1 f in *) 
+    (* changing to a parallel substitution below *)
+    let f2 = par_subst st1 f in 
+    f2
+  with _ -> failwith (x_loc ^ "[subst_avoid_capture]: Cannot combine fr and t")
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_subs sst f
 (* match sst with *)
