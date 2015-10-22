@@ -27,6 +27,7 @@ open Cvutil
 (* module Inf = Infer *)
 module CP = Cpure
 module CF = Cformula
+module CFU = Cfutil
 (* module PR = Cprinter *)
 module MCP = Mcpure
 module Err = Error
@@ -14461,7 +14462,12 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 (*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_5 "apply_left_coercion"  Cprinter.string_of_entail_state Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion Cprinter.string_of_formula pr
+  Debug.no_5 "apply_left_coercion" 
+    (add_str "estate" Cprinter.string_of_entail_state) 
+    (add_str "anode" Cprinter.string_of_h_formula)
+    (add_str "resth1" Cprinter.string_of_h_formula) 
+    (add_str "coer" Cprinter.string_of_coercion)
+    (add_str "conseq" Cprinter.string_of_formula) pr
     (fun _ _ _ _ _-> apply_left_coercion_a estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
     estate anode resth1 coer conseq
 (* anode - LHS matched node
@@ -14557,10 +14563,12 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   (************************************************************************)
   (* rename the free vars in the lhs and rhs to avoid name collision *)
   (* between lemmas and entailment formulas*)
-  let lhs_fv = (CF.fv coer_lhs) in
+  let lhs_fv = List.filter (fun sv -> not (CP.is_hp_typ sv)) (CF.fv coer_lhs) in
   let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
   let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
+  let () = y_binfo_hp (add_str "coer_lhs" !CF.print_formula) coer_lhs in
   let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
+  let () = y_binfo_hp (add_str "coer_lhs" !CF.print_formula) coer_lhs in
   let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
   (************************************************************************)
   let lhs_heap, lhs_guard, lhs_vperm, lhs_flow, _, lhs_a = split_components coer_lhs in
@@ -14578,7 +14586,14 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
   let () = y_binfo_hp (add_str "lhs_heap" !CF.print_h_formula) lhs_heap in
   let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
-  let head_node, rest = pick_up_node lhs_hs Globals.self in
+  let renamed_self =
+    try
+      let _, fresh_self = List.find (fun (sv, _) -> eq_str Globals.self (CP.name_of_spec_var sv)) tmp_rho in
+      CP.name_of_spec_var fresh_self
+    with _ -> Globals.self 
+  in
+  let () = y_binfo_hp (add_str "renamed_self" idf) renamed_self in
+  let head_node, rest = pick_up_node prog lhs_hs renamed_self (* Globals.self *) in
   let extra_opt = join_star_conjunctions_opt rest in
   let extra_heap = 
     (match (extra_opt) with
@@ -14759,7 +14774,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
         let process_one (ss:CF.steps) res = 
           let pr1 = Cprinter.string_of_context  in
           let pr2 (c,_) = Cprinter.string_of_list_context c in
-          Debug.no_1 "apply_left_coercion_complex: process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) res) res in
+          Debug.no_1 "apply_left_coercion_complex:process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) res) res in
 
         (match check_res with 
          | FailCtx _ -> 
@@ -14789,24 +14804,45 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
 
 and apply_left_coercion_complex estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3 "apply_left_coercion_complex" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
-    (fun _ _ _ -> apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos) anode resth1 coer
+  Debug.no_5 "apply_left_coercion_complex" 
+    (add_str "anode" Cprinter.string_of_h_formula) 
+    (add_str "resth1" Cprinter.string_of_h_formula) 
+    (add_str "coer" Cprinter.string_of_coercion)
+    (add_str "lhs_b" !CF.print_formula)
+    (add_str "rhs_b" !CF.print_formula) pr
+    (fun _ _ _ _ _ -> apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos) 
+    anode resth1 coer (CF.Base lhs_b) (CF.Base rhs_b)
 
 (*pickup a node named "name" from a list of nodes*)
-and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
+and pick_up_node prog (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
+  let rec pr xs =
+    match xs with
+    | [] -> ""
+    | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
+  in
+  let pr2 (a,b) =
+    (Cprinter.string_of_h_formula a) ^ "|&&&|"  ^ (pr b)
+  in
+  Debug.no_2 "pick_up_node"
+    pr (fun id -> id) pr2
+    (pick_up_node_x prog) ls name
+
+(*pickup a node named "name" from a list of nodes*)
+and pick_up_node_x prog (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
   let rec helper ls =
     match ls with
     | [] -> CF.HEmp,[]
     | x::xs ->
       match x with
-      | ViewNode ({h_formula_view_node = c})
-      | DataNode ({h_formula_data_node = c}) ->
-
+      | ViewNode _
+      | DataNode _ 
+      | HRel _ ->
+        let c = CFU.get_node_var prog x in
         let c_str = (CP.name_of_spec_var c) in
-        let ri = try  (String.rindex c_str '_') with  _ -> (String.length c_str) in
-        let c_name = (String.sub c_str 0 ri)  in
+        (* let ri = try (String.rindex c_str '_') with  _ -> (String.length c_str) in *)
+        (* let c_name = (String.sub c_str 0 ri)  in                                   *)
         (* let () = print_string ("pick_up_node:" ^ c_name ^ " &&"  ^ name ^ "\n\n " ) in *)
-        if ((String.compare c_name name) ==0)
+        if ((String.compare c_str name) == 0)
         then
           (x,xs)
         else
@@ -14863,20 +14899,6 @@ and test_frac_eq prog lhs rhs_p l_perm r_perm =
   let pr2 = Cprinter.string_of_mix_formula in
   let pr3 c = match c with | None -> "Top" | Some v -> Cprinter.string_of_spec_var v in
   Debug.no_4 "test_frac_eq" pr1 pr2 pr3 pr3 string_of_bool (test_frac_eq_x prog) lhs rhs_p l_perm r_perm
-
-(*pickup a node named "name" from a list of nodes*)
-and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formula list) =
-  let rec pr xs =
-    match xs with
-    | [] -> ""
-    | x::xs1 -> (!print_h_formula x) ^ "|*|" ^ pr xs1
-  in
-  let pr2 (a,b) =
-    (Cprinter.string_of_h_formula a) ^ "|&&&|"  ^ (pr b)
-  in
-  Debug.no_2 "pick_up_node"
-    pr (fun id -> id) pr2
-    pick_up_node_x ls name
 
 (* normalize a formula using normalization lemma                   *)
 (* normaliztion lemmas are similar to complex lemma                *)

@@ -2845,6 +2845,10 @@ let get_node_var prog (h: h_formula) =
     with _ -> CF.get_node_var h end
   | _ -> CF.get_node_var h
 
+let get_node_var prog (h: h_formula) =
+  Debug.no_1 "CFU.get_node_var" !CF.print_h_formula !CP.print_sv
+    (fun _ -> get_node_var prog h) h
+
 let sig_of_h_formula_list prog aset root (hs: h_formula list) =
   let rec helper root hs = 
     if is_empty hs then [], []

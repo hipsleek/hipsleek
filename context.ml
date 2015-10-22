@@ -1798,13 +1798,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       let tup = (lhs_node,rhs_node) in
       let comp_lems = Lem_store.all_lemma # get_complex_coercion in
       let pr_hf = !CF.print_h_formula in
-      let () = y_binfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
+      let () = y_tinfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
       (* let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in *)
-      let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems in
+      let () = y_tinfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems in
       (* let () = y_binfo_pp "to check if complex lemma applicable here for LHS and RHS here using signature" in *)
       let pr_id_list = pr_list idf in
       let () = List.iter (fun lem -> 
-        y_binfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
+        y_tinfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
         (CFU.sig_of_lem prog lem)) comp_lems in
       (match tup (* lhs_node, rhs_node *) with
        | ThreadNode ({CF.h_formula_thread_original = dl_orig;
@@ -1831,7 +1831,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     CF.h_formula_data_name = dr_name;
                    }) -> 
          (**TO CHECK: follow view nodes *)
-         let () = y_binfo_pp "DATA vs DATA" in
+         let () = y_tinfo_pp "DATA vs DATA" in
          let dl_flag, dr_flag = 
            if !ann_derv then
              (not(dl_derv)),(not(dr_derv))
@@ -1879,10 +1879,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            else [] in
          let src = (wt,mk_search_action (l2@l3)) in
          src
-       | HVar _, HVar _ -> let () = y_binfo_pp "HVAR vs HVAR" in (1, M_match m_res)
+       | HVar _, HVar _ -> let () = y_tinfo_pp "HVAR vs HVAR" in (1, M_match m_res)
        | ViewNode vl, ViewNode vr -> 
          let pr v = v.h_formula_view_name in
-         let () = y_binfo_hp (add_str "VIEW vs VIEW" (pr_pair pr pr)) (vl,vr) in
+         let () = y_tinfo_hp (add_str "VIEW vs VIEW" (pr_pair pr pr)) (vl,vr) in
          (* let l1 = [(1,M_base_case_unfold m_res)] in *)
          let (vl_vdef,vr_vdef,vl_name,vr_name,ans) = Cast.smart_view_name_equiv view_decls vl vr in
          (* let (vl_name,vl_vdef,vl,flag1) = Cast.get_view_name_equiv view_decls vl in *)
@@ -1894,7 +1894,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              {m_res with match_res_lhs_node = ViewNode vl;
                          match_res_rhs_node = ViewNode vr},vl,vr 
          in
-         let () = y_binfo_hp (add_str "VIEW vs VIEW (after view_equiv)" (pr_pair pr pr)) (vl,vr) in
+         let () = y_tinfo_hp (add_str "VIEW vs VIEW (after view_equiv)" (pr_pair pr pr)) (vl,vr) in
          (* let vr_name = vr.h_formula_view_name in *)
          (* let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in *)
          (* let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in *)
@@ -1986,7 +1986,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))  
                then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                else a1 in
-             let () = y_binfo_hp (add_str "a1" pr_act) a1 in
+             let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
              (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
              (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
              let a2 = (
@@ -2029,14 +2029,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                      m_act
              ) in
              let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
-             let () = y_binfo_hp (add_str "a2" pr_act) a2 in
+             let () = y_tinfo_hp (add_str "a2" pr_act) a2 in
              let a3 = (
                (*Do not fold/unfold LOCKs, only match*)
                if (is_l_lock || is_r_lock) then Some a2 else 
                if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2]) (* if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]) *)
                else None
              ) in
-             let () = y_binfo_hp (add_str "a3" (pr_option pr_act)) a3 in
+             let () = y_tinfo_hp (add_str "a3" (pr_option pr_act)) a3 in
              let a4 = (
                (*Do not fold/unfold LOCKs*)
                if (is_l_lock || is_r_lock) then None else
@@ -2052,7 +2052,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    Some (2,M_fold m_res) 
                  else None
              ) in
-             let () = y_binfo_hp (add_str "a4" (pr_option pr_act)) a4 in
+             let () = y_tinfo_hp (add_str "a4" (pr_option pr_act)) a4 in
              let a5 = (
                if a4==None then
                  begin
@@ -2082,7 +2082,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  end
                else a4 
              ) in
-             let () = y_binfo_hp (add_str "a5" (pr_option pr_act)) a5 in
+             let () = y_tinfo_hp (add_str "a5" (pr_option pr_act)) a5 in
              let a6 = (
                match a3 with 
                | None -> a5
@@ -2093,7 +2093,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    | None -> a3
                    | Some a2 -> Some (1,Cond_action [a2; a1]) 
              ) in
-             let () = y_binfo_hp (add_str "a6" (pr_option pr_act)) a6 in
+             let () = y_tinfo_hp (add_str "a6" (pr_option pr_act)) a6 in
              let a7 =
                if (!Globals.smart_lem_search ) then
                  let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split 
@@ -2104,7 +2104,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                    | None   -> if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None
                else a6
              in
-             let () = y_binfo_hp (add_str "a7" (pr_option pr_act)) a7 in
+             let () = y_tinfo_hp (add_str "a7" (pr_option pr_act)) a7 in
              match a6 with
              | Some a -> [a],syn_lem_typ
              | None -> let () = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
@@ -2170,13 +2170,13 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (*     left_act@right_act *)
          (*   else  [] *)
          (* ) in *)
-         let () = y_binfo_hp (add_str "l2" (pr_list pr_act)) l2 in
+         let () = y_tinfo_hp (add_str "l2" (pr_list pr_act)) l2 in
          let l3 = 
            if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
              search_lemma_candidates prog flag_lem ann_derv vr_view_split 
                (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset 
            else [] in
-         let () = y_binfo_hp (add_str "l3" (pr_list pr_act)) l3 in
+         let () = y_tinfo_hp (add_str "l3" (pr_list pr_act)) l3 in
          (*let l4 = 
            (* TODO WN : what is original?? *)
            (* Without it, run-fast-test of big imm runs faster while
@@ -2201,7 +2201,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
          (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | DataNode dl, ViewNode vr -> 
-         let () = y_binfo_pp "DATA vs VIEW" in
+         let () = y_tinfo_pp "DATA vs VIEW" in
          let vr_name = vr.h_formula_view_name in
          let vr_vdef = look_up_view_def_raw 15 view_decls vr_name in
          let vr_self_pts = vr_vdef.view_pt_by_self in
@@ -2339,7 +2339,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
          (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | ViewNode vl, DataNode dr -> 
-         let () = y_binfo_pp "VIEW vs DATA" in
+         let () = y_tinfo_pp "VIEW vs DATA" in
          let vl_name = vl.h_formula_view_name in
          let vl_vdef = look_up_view_def_raw 16 view_decls vl_name in
          let vl_self_pts = vl_vdef.view_pt_by_self in
@@ -2423,7 +2423,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in res
        (* TODO:old_infer_heap *)
        | HRel (hn1, args1, _) as lhs, (HRel (hn2, args2, _) as rhs) -> 
-         let () = y_binfo_pp "HREL vs HREL" in
+         let () = y_tinfo_pp "HREL vs HREL" in
          let pr_sv = Cprinter.string_of_spec_var in
          let pr_res = add_str "act" pr_act in
          let eq_fst_ptr ls1 ls2= match ls1,ls2 with
@@ -2432,10 +2432,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in
          let lhs_root = CFU.get_node_var prog lhs in
          let lhs_sig = CFU.sig_of_formula prog lhs_root (CF.mkBase_simp lhs_h lhs_p) in
-         let () = y_binfo_hp (add_str "lhs root" !CP.print_sv) lhs_root in
-         let () = y_binfo_hp (add_str "lhs sig" (pr_list idf)) lhs_sig in
+         let () = y_tinfo_hp (add_str "lhs root" !CP.print_sv) lhs_root in
+         let () = y_tinfo_hp (add_str "lhs sig" (pr_list idf)) lhs_sig in
          let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig comp_lems in
-         let () = y_binfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
+         let () = y_tinfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
          let lem_act = List.map (fun lem -> (3, M_lemma (m_res, Some lem, 0))) applicable_lems in
          let orig_act = 
            (* let () = y_winfo_pp "the second condition is heur" in *)
@@ -2464,12 +2464,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in 
          let res_act = 
            if is_empty lem_act then orig_act
-           else (1, x_add_1 norm_search_action (lem_act (* @ [orig_act] *)))
+           else (1, x_add_1 norm_search_action (lem_act @ [orig_act]))
          in
          let () = y_binfo_hp (add_str "res_act" pr_act) res_act in
          res_act
        | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) ->
-         let () = y_binfo_pp "HREL vs DATA" in
+         let () = y_tinfo_pp "HREL vs DATA" in
          (* TODO : check if h_name in the infer_vars *)
          (* TODO: can we have smarter base-case-unfold? *)
          let act1 = M_base_case_unfold (m_res) in (* base-case unfold implemented *)
@@ -2483,7 +2483,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          else (wt,mk_search_action [(wt,act1);(wt,act3)])
        (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
        | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
-         let () = y_binfo_pp "HREL vs VIEW" in
+         let () = y_tinfo_pp "HREL vs VIEW" in
          (* TODO:WN : how about base-case unfold for views? *)
          (* TODO : check if h_esname in the infer_vars *)
          (* let act1 = M_unfold (m_res, 1) in *)
@@ -2493,7 +2493,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* (wt,Search_action [(wt,act3);(wt,act2)]) *)
          (wt,act2)
        | DataNode dn,  HRel (hp,args,_)  -> 
-         let () = y_binfo_pp "DATA vs HREL" in
+         let () = y_tinfo_pp "DATA vs HREL" in
          (* failwith "TBI"  *)
          (* useful for base-case fold x::node<_,_> |- U(x,y) *)
          let pr_hf = !CF.print_h_formula in
@@ -2560,7 +2560,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
            (-1, (mk_search_action ((1,a1)::l1)))
        | HRel (h_name, args, _), ViewNode vl -> begin
-           let () = y_binfo_pp "HREL vs VIEW" in
+           let () = y_tinfo_pp "HREL vs VIEW" in
            let h_name = Cpure.name_of_spec_var h_name in
            let vl_name = vl.h_formula_view_name in
            let pt = vl.h_formula_view_node in
@@ -2600,7 +2600,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          end
        | ViewNode vl, HRel (h_name, args, _) -> 
          begin
-           let () = y_binfo_pp "VIEW vs HREL" in
+           let () = y_tinfo_pp "VIEW vs HREL" in
            let h_name = Cpure.name_of_spec_var h_name in
            let vl_name = vl.h_formula_view_name in
            let pt = vl.h_formula_view_node in
@@ -2685,7 +2685,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              (5, (Cond_action (a2::l1)))
          in a1
        | HRel _, _ ->
-         let () = y_binfo_pp "HREL vs OTHERS" in 
+         let () = y_tinfo_pp "HREL vs OTHERS" in 
          (1,M_Nothing_to_do ("3matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | _ -> report_error no_pos "process_one_match unexpected formulas 2\n"	
       )
