@@ -1795,7 +1795,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
   let r = match m_res.match_res_type with 
     | Root ->
       let view_decls = prog.prog_view_decls in
-      let tup = (lhs_node,rhs_node) in
+      let tup = (lhs_node, rhs_node) in
       let comp_lems = Lem_store.all_lemma # get_complex_coercion in
       let pr_hf = !CF.print_h_formula in
       let () = y_tinfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
@@ -1806,7 +1806,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       let () = List.iter (fun lem -> 
         y_tinfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
         (CFU.sig_of_lem prog lem)) comp_lems in
-      (match tup (* lhs_node, rhs_node *) with
+      let lhs_root = CFU.get_node_var prog lhs_node in
+      let lhs_sig = CFU.sig_of_formula prog lhs_root (CF.mkBase_simp lhs_h lhs_p) in
+      let () = y_tinfo_hp (add_str "lhs_root" !CP.print_sv) lhs_root in
+      let () = y_tinfo_hp (add_str "lhs_sig" (pr_list idf)) lhs_sig in
+      let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig comp_lems in
+      let () = y_tinfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
+      let lem_act = List.map (fun lem -> (3, M_lemma (m_res, Some lem, 0))) applicable_lems in
+      let act = (match tup (* lhs_node, rhs_node *) with
        | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                       CF.h_formula_thread_origins = dl_origins;
                       CF.h_formula_thread_derv = dl_derv;
@@ -2430,13 +2437,6 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
            | sv1::_,sv2::_ -> CP.eq_spec_var sv1 sv2
            | _ -> false
          in
-         let lhs_root = CFU.get_node_var prog lhs in
-         let lhs_sig = CFU.sig_of_formula prog lhs_root (CF.mkBase_simp lhs_h lhs_p) in
-         let () = y_tinfo_hp (add_str "lhs root" !CP.print_sv) lhs_root in
-         let () = y_tinfo_hp (add_str "lhs sig" (pr_list idf)) lhs_sig in
-         let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig comp_lems in
-         let () = y_tinfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
-         let lem_act = List.map (fun lem -> (3, M_lemma (m_res, Some lem, 0))) applicable_lems in
          let orig_act = 
            (* let () = y_winfo_pp "the second condition is heur" in *)
            (* WN : this heuristic caused problem for str-inf/ex16c4.slk *)
@@ -2462,12 +2462,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              else 
                (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
          in 
-         let res_act = 
-           if is_empty lem_act then orig_act
-           else (1, x_add_1 norm_search_action (lem_act @ [orig_act]))
-         in
-         let () = y_binfo_hp (add_str "res_act" pr_act) res_act in
-         res_act
+         let () = y_binfo_hp (add_str "orig_act" pr_act) orig_act in
+         orig_act
        | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) ->
          let () = y_tinfo_pp "HREL vs DATA" in
          (* TODO : check if h_name in the infer_vars *)
@@ -2522,6 +2518,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
        | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
       )
+      in
+      if is_empty lem_act then act
+      else (1, x_add_1 norm_search_action (lem_act @ [act]))
     | MaterializedArg (mv,ms) ->
       let () = pr_debug "materialized args  analysis here!" in  
       let uf_i = 
