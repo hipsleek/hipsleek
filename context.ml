@@ -616,15 +616,19 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     in
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
-    let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let lhs_p2 =MCP.pure_of_mix lhs_p in
+    let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
+    let () = y_binfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
+    let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
+    let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
     let emap = CP.EMapSV.build_eset eqns' in
-    let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
+    let () = x_binfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
     (* let paset = p::paset in *)
     let asets = Csvutil.alias_nth 3 ((p, p) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
-    let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
     if Gen.is_empty paset then
       failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
     else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then

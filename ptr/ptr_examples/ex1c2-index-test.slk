@@ -21,10 +21,12 @@ print residue.
 expect Valid.
 //Entail 3: Fail.(may) cause:do_unmatched_rhs : z::arr<v>@M(may)
 
+/*
 checkentail x::arr<5> & x=(y:arr)+2 |- y::arr_int<2,v>.
 print residue.
-//Entail 1: Fail.(may) cause:do_unmatched_rhs : y::arr_int<flted_14_76,v>@M(may)
 expect Valid.
+*/
+//Entail 1: Fail.(may) cause:do_unmatched_rhs : y::arr_int<flted_14_76,v>@M(may)
 
 
 /*

@@ -3019,6 +3019,8 @@ and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
   let vs = vs@pvars in
   let other_vs = avars@hvars in
   (* WN : is_heap_only excludes ann_vars and higher-order vars for now *)
+  let () = y_ninfo_hp (add_str "vv" !CP.print_sv) vv in
+  let () = y_ninfo_hp (add_str "vs" !CP.print_svl) vs in
   if vartype # is_heap_only then
     begin
       (* if other_vs!=[] then x_winfo_pp ((add_str "other free vars?" !CP.print_svl) other_vs) no_pos; *)
@@ -3026,6 +3028,7 @@ and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
       (* let () = x_tinfo_hp (add_str "v" !CP.print_sv) vv no_pos in *)
       vs
     end
+  else if vartype # is_heap_ptr_only then [vv]
   else (if CP.mem_svl vv vs then vs else vv :: vs)@other_vs
 
 and rf_fv (f: rflow_formula) = fv f.rflow_base 
@@ -3072,7 +3075,8 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
                  h_formula_data_perm = perm;
                  h_formula_data_imm = ann;
                  h_formula_data_param_imm = param_ann;
-                 h_formula_data_arguments = vs}) -> h_fv_node ~vartype:vartype v perm ann param_ann vs [] []
+                 h_formula_data_arguments = vs}) -> 
+      h_fv_node ~vartype:vartype v perm ann param_ann vs [] []
     | ViewNode ({h_formula_view_node = v;
                  h_formula_view_name = i;
                  h_formula_view_perm = perm;
@@ -3091,12 +3095,14 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
       let perm_vars = fv_cperm perm in
       let rsr_vars = fv rsr in
       let dl_vars = CP.fv dl in
-      Gen.BList.remove_dups_eq (=) (v::(perm_vars@rsr_vars@dl_vars))
+      let old_vs = Gen.BList.remove_dups_eq (=) (v::(perm_vars@rsr_vars@dl_vars)) in
+      if vartype # is_heap_only || vartype # is_heap_ptr_only  then []
+      else old_vs
     | HRel (r, args, _) ->
       let vid = r in
       let old_vs = vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args)) in
       let () = x_tinfo_hp (add_str "HRel(vs)" !CP.print_svl) old_vs no_pos in
-      if vartype # is_heap_only then []
+      if vartype # is_heap_only || vartype # is_heap_ptr_only  then []
       else old_vs
     | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
     | HVar (v,ls) -> v::ls
