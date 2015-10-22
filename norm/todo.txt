@@ -1876,7 +1876,49 @@ inferred hprel: [HP_43(q_42,y_33@NI,self_lem_13@NI)&
 [[ SEARCH ==>  InferUnfold  ==>  InferUnfold ]]
 
 ===================================================================
+# ex20e9g5.slk --dump-lemmas
+
+# need to add LHS signature to complex lemma
+
+[Lemma "compl":  self::foo<y>@M * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]==> (exists Anon_12,q: self::node<Anon_12,q>@M * q::foo<ss>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head match:foo
+ body view:node
+ body pred_list:[foo]
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head:  self::foo<y>@M * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists Anon_12,q: self::node<Anon_12,q>@M * q::foo<ss>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists ss_28,Anon_11,y: self::foo<y>@M * y::node<Anon_11,ss_28>@M&ss_28=ss&
+{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[q](exists ss_24,
+   Anon_12: self::node<Anon_12,q>@M * q::foo<ss_24>@M&ss_24=ss&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_UNSAFE
+ coercion_fold: None
 ===================================================================
+# ex20e9f5a.slk
+
+infer [H,H3,@classic]
+    H3(x,y1)  |-  H(x,y) .
+print residue.
+
+<1>emp&y1=y&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H3(x,y@NI)&true --> H(x,y@NI)&true]
+
+# Why below fails to instantiate?
+
+infer [H,H3,@classic]
+    H3(x,y1) * y1::node<_,ss> |- [y] H(x,y) * y::node<_,ss>.
+print residue.
 ===================================================================
 ===================================================================
 ===================================================================
