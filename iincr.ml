@@ -12,23 +12,23 @@ module CP = Cpure
 module CF = Cformula
 
 (* INFERENCE CHECK: which kind of inference *)
-let is_infer_const sf0 it =
-  let rec recf sf= match sf with
-    | CF.EList el -> List.exists (fun (lbl,sf) ->
-          recf sf) el
-    | CF.EInfer ei ->
-          let inf_obj = ei.CF.formula_inf_obj in
-          (inf_obj # get it)
-  | _ -> false
-  in
-  recf sf0
+(* let is_infer_const sf0 it = *)
+(*   let rec recf sf= match sf with *)
+(*     | CF.EList el -> List.exists (fun (lbl,sf) -> *)
+(*           recf sf) el *)
+(*     | CF.EInfer ei -> *)
+(*           let inf_obj = ei.CF.formula_inf_obj in *)
+(*           (inf_obj # get it) *)
+(*   | _ -> false *)
+(*   in *)
+(*   recf sf0 *)
 
-let is_infer_const sf it =
-  let pr = Cprinter.string_of_struc_formula in
-  Debug.no_2 "is_infer_const" pr string_of_inf_const string_of_bool is_infer_const sf it
+(* let is_infer_const sf it = *)
+(*   let pr = Cprinter.string_of_struc_formula in *)
+(*   Debug.no_2 "is_infer_const" pr string_of_inf_const string_of_bool is_infer_const sf it *)
 
-let is_infer_const_scc scc it=
-  List.exists (fun proc -> is_infer_const (proc.Cast.proc_stk_of_static_specs # top) it) scc
+let is_infer_const_scc scc it= Pi.is_infer_const_scc scc it
+(*   List.exists (fun proc -> is_infer_const (proc.Cast.proc_stk_of_static_specs # top) it) scc *)
 
 let get_infer_const sf0 =
   let rec recf sf= match sf with

@@ -26,6 +26,65 @@ let pr = !CP.print_formula
 type fc_type = CP.formula * CP.formula * CP.formula * CP.formula
 let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr "fixcalc_stk" (pr_quad pr pr pr pr) (==)
 
+let is_infer_const sf0 it =
+  let rec recf sf= match sf with
+    | CF.EList el -> List.exists (fun (lbl,sf) ->
+          recf sf) el
+    | CF.EInfer ei ->
+          let inf_obj = ei.CF.formula_inf_obj in
+          (inf_obj # get it)
+  | _ -> false
+  in
+  recf sf0
+
+let is_infer_const sf it =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_2 "is_infer_const" pr string_of_inf_const string_of_bool is_infer_const sf it
+
+let is_infer_const_scc scc it=
+  List.exists (fun proc -> is_infer_const (proc.Cast.proc_stk_of_static_specs # top) it) scc
+
+let update_i_para i_rels proc=
+   let rec collect_rels_pre sf=
+    match sf with
+        | CF.EList el -> List.fold_left (fun acc (_,sf) ->
+          acc@(collect_rels_pre sf)) [] el
+    | CF.EBase eb -> CF.get_list_rel_args eb.CF.formula_struc_base
+    | CF.EAssume ea -> []
+    | CF.EInfer ei ->
+          let inf_obj = ei.CF.formula_inf_obj in
+          let infs = inf_obj # get_lst in
+          if List.exists (fun it -> it = INF_ANA_NI) infs then
+            collect_rels_pre ei.CF.formula_inf_continuation
+          else []
+    | CF.ECase ec -> List.fold_left (fun acc (_,sf) ->
+          acc@(collect_rels_pre sf)
+          ) []ec.CF.formula_case_branches
+  in
+  let spec = (proc.Cast.proc_stk_of_static_specs # top) in
+  let rels = collect_rels_pre spec in
+  let i_paras = List.fold_left (fun acc (r,args) -> begin
+    match args with
+      | [sv] -> if CP.mem_svl r i_rels then
+          acc@[sv]
+        else acc
+      | _ -> acc
+  end
+  ) [] rels in
+  let () = x_tinfo_hp (add_str "i_paras" !CP.print_svl) i_paras no_pos in
+  let n_proc_args_wi = List.map (fun (id, _) ->
+      if List.exists (fun (CP.SpecVar (_,id1,_)) -> string_eq id id1) i_paras then
+        (id, I)
+      else (id, NI)
+  ) proc.Cast.proc_args_wi in
+  let () = x_binfo_hp (add_str "proc.Cast.proc_name" pr_id) proc.Cast.proc_name no_pos in
+  let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) n_proc_args_wi no_pos in
+  let () = proc.Cast.proc_args_wi <- n_proc_args_wi in
+  ()
+
+let update_i_para_scc i_rels scc=
+  List.iter (fun proc -> update_i_para i_rels proc) scc
+
 let rec add_relation_to_formula f rel =
   match f with
   | CF.Base b ->
@@ -641,8 +700,13 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                 print_endline_quiet "*************************************";
               end;
-            let svl = Nia.classify_ni prog rels in
-            let () = x_binfo_hp (add_str "I preds" pr_svl) svl no_pos in
+            let () = if is_infer_const_scc scc INF_ANA_NI then
+              let svl = Nia.classify_ni prog rels in
+              let () = x_binfo_hp (add_str "I preds" pr_svl) svl no_pos in
+              let () = update_i_para_scc svl scc in
+              ()
+            else ()
+            in
             let () = if !Globals.sa_gen_slk then
                 try
                   let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv

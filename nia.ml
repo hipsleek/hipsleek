@@ -110,7 +110,7 @@ let classify_ni prog rels=
     let check_I_rel (rel_Is, rest_const, rest_defs) ((_,lhs, rhs) as rel) =
         match CP.get_relargs_opt lhs with
           | Some (id, svl) -> begin
-              let () = x_binfo_hp (add_str "svl" pr_svl) svl no_pos in
+              let () = x_tinfo_hp (add_str "svl" pr_svl) svl no_pos in
               match svl with
                 | [sv] -> if is_neq rhs sv 1 then
                     let is_reduced, rest = look_up_reduced id sv rest_defs [] in
