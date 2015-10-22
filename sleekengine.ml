@@ -560,7 +560,7 @@ end
 *)
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
-  let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  let l2r, r2l = Astsimp.trans_one_coercion iprog !cprog ldef in
   let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec !cprog c) l2r) in
   let r2l = List.concat (List.map (fun c-> Astsimp.coerc_spec !cprog c) r2l) in
   (* TODO : WN print input_ast *)

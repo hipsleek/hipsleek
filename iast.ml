@@ -1337,6 +1337,12 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+let get_proot_hp_def_raw defs name =
+  let hpdclr = look_up_hp_def_raw defs name in
+  match hpdclr.hp_root_pos with
+  | None -> failwith ("hp_root_pos has not yet set.")
+  | Some i -> i
+
 let mk_hp_decl_0 ?(is_pre=true) ?(view_d=None) id tl (root_pos:int option) parts body =
      {
         hp_name = id;

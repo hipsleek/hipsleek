@@ -517,7 +517,7 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
           with _ -> hrel_name, []
       in
       (begin try
-        let hrel_root, hrel_args = CFU.get_root_args_hp prog hrel_id hrel_args in
+        let hrel_root, hrel_args = C.get_root_args_hp prog hrel_id hrel_args in
         let extn_args =
           (* Get the extn pred arguments *)
           let rec helper h_args v_args =
@@ -889,6 +889,7 @@ let mater_vars_of_lemma prog l_head l_body =
 let mk_lemma prog l_name l_is_classic l_ivars l_itypes l_kind l_type l_head l_body pos =
   let iobj = new Globals.inf_obj_sub in
   let () = iobj # set_list l_itypes in
+  let l_case = C.case_of_coercion l_head l_body in
   { C.coercion_type = l_type;
     C.coercion_exact = l_is_classic;
     C.coercion_name = l_name;
@@ -905,7 +906,8 @@ let mk_lemma prog l_name l_is_classic l_ivars l_itypes l_kind l_type l_head l_bo
     C.coercion_body_view = Astsimp.find_view_name l_body Globals.self pos;
     C.coercion_body_pred_list = CF.extr_pred_list l_body;
     C.coercion_mater_vars = mater_vars_of_lemma prog l_head l_body;
-    C.coercion_case = C.case_of_coercion l_head l_body;
+    C.coercion_case = l_case;
     C.coercion_type_orig = None;
     C.coercion_kind = l_kind;
-    C.coercion_origin = LEM_GEN; }
+    C.coercion_origin = LEM_GEN; 
+    C.coercion_lhs_sig = CFU.sig_of_lem_formula prog l_case l_head; }

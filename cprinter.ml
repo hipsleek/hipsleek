@@ -4888,6 +4888,7 @@ let string_of_coerc_opt op c =
          ^"\n coercion_infer_obj: "^(c.Cast.coercion_infer_obj # string_of)
          ^"\n coercion_kind: " ^ (string_of_lemma_kind c.Cast.coercion_kind)
          ^"\n coercion_fold: " ^ ((pr_option string_of_view_decl) c.Cast.coercion_fold_def # get)
+         ^"\n coercion_lhs_sig: " ^ ((pr_option (string_of_list_f idf)) c.Cast.coercion_lhs_sig)
          ^"\n";;
 
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;

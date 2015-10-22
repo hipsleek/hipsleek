@@ -2822,25 +2822,13 @@ let get_non_inst_args_hprel prog (hprel: CF.hprel) =
   let hprel_id = CP.name_of_spec_var hprel_name in
   get_non_inst_args_hprel_id prog hprel_id hprel_args
 
-(* Get root and args of a hrel or hprel *)
-let get_root_args_hp prog id all_args =
-  let root_pos = x_add C.get_proot_hp_def_raw prog.C.prog_hp_decls id in
-  let root = List.nth all_args root_pos in
-  let args = diff all_args [root] in
-  root, args
-
-let get_root_args_hp prog id all_args =
-  let pr1 = !CP.print_svl in
-  Debug.no_2 "Syn.get_root_args_hp" idf pr1 (pr_pair !CP.print_sv pr1)
-    (fun _ _ -> get_root_args_hp prog id all_args) id all_args
-
 let get_node_var prog (h: h_formula) =
   match h with
   | HRel _ ->
     let hrel_name, hrel_args = sig_of_hrel h in
     let hrel_id = CP.name_of_spec_var hrel_name in
     begin try
-      let hrel_var, _ = get_root_args_hp prog hrel_id hrel_args in
+      let hrel_var, _ = C.get_root_args_hp prog hrel_id hrel_args in
       hrel_var
     with _ -> CF.get_node_var h end
   | _ -> CF.get_node_var h
@@ -2883,6 +2871,13 @@ let sig_of_lem prog (lem: C.coercion_decl) =
   let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem.C.coercion_head) in
   sig_of_formula prog self_var lem.C.coercion_head, 
   sig_of_formula prog self_var lem.C.coercion_body
+
+let sig_of_lem_formula prog case f =
+  match case with
+  | C.Complex -> 
+    let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv f) in
+    Some (sig_of_formula prog self_var f)
+  | _ -> None 
 
 let is_compatible_sig prog sig1 sig2 = 
   let rec helper ss1 ss2 =

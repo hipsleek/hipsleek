@@ -26,7 +26,7 @@ module IF = Iformula
 module IP = Ipure
 module CF = Cformula
 module CFE = Cf_ext
-(* module CFU = Cfutil *)
+module CFU = Cfutil
 module CFS = Cfsolver
 (* module GV = Globalvars *)
 module CP = Cpure
@@ -4300,10 +4300,10 @@ and ident_list_to_spec_var_list ivs n_tl prog =
   new_ivs
 
 (* transform coercion lemma from iast to cast *)
-and trans_coercions (prog : I.prog_decl) :
+and trans_coercions (prog : I.prog_decl) (cprog : C.prog_decl):
   ((C.coercion_decl list) * (C.coercion_decl list)) =
   let tmp =
-    List.map (fun coer -> trans_one_coercion prog coer)
+    List.map (fun coer -> trans_one_coercion prog cprog coer)
       (List.fold_left (fun a coerc_lst -> a@(coerc_lst.I.coercion_list_elems)) [] (prog.I.prog_coercion_decls)) in
   let (tmp1, tmp2) = List.split tmp in
   let tmp3 = List.concat tmp1 in let tmp4 = List.concat tmp2 in (tmp3, tmp4)
@@ -4313,17 +4313,17 @@ and trans_coercions (prog : I.prog_decl) :
 (*   Debug.info_hprint (add_str "orig body" pri_f) body no_pos; *)
 (*   body *)
 
-and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
+and trans_one_coercion (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x =  Iprinter.string_of_coerc_decl x in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_a prog coer) coer
+  Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_a prog cprog coer) coer
 
 (* let pr x = "?" in *)
 (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
 (* Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer *)
 
-and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
+and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
   if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
     (* complex_lhs <- rhs    ==> rhs    -> complex_lhs                    *)
@@ -4337,14 +4337,14 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
                                   I.coercion_body = coer.I.coercion_head;
                                   I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
                                   I.coercion_type = I.Left} in
-        trans_one_coercion_x prog new_coer
+        trans_one_coercion_x prog cprog new_coer
       else if coer.I.coercion_type == I.Left && coercion_rhs_type == Simple then
         let () = Debug.info_pprint ("WARNING: changing lemma " ^ coer.I.coercion_name ^ " from -> to <-") no_pos in
         let new_coer = {coer with I.coercion_head = coer.I.coercion_body;
                                   I.coercion_body = coer.I.coercion_head;
                                   I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
                                   I.coercion_type = I.Right} in
-        trans_one_coercion_x prog new_coer
+        trans_one_coercion_x prog cprog new_coer
       else if (coer.I.coercion_type == I.Equiv) then 
         let () = Debug.info_pprint ("WARNING: split equiv lemma " ^ coer.I.coercion_name ^ " into two -> lemmas") no_pos in
         let new_coer1 = {coer with I.coercion_head = coer.I.coercion_head;
@@ -4355,15 +4355,15 @@ and trans_one_coercion_a (prog : I.prog_decl) (coer : I.coercion_decl) :
                                    I.coercion_body = coer.I.coercion_head;
                                    I.coercion_type_orig = Some I.Right; (* store origin coercion type *)
                                    I.coercion_type = I.Left} in
-        let (cdl11, cdl12) = trans_one_coercion_x prog new_coer1 in
-        let (cdl21, cdl22) = trans_one_coercion_x prog new_coer2 in
+        let (cdl11, cdl12) = trans_one_coercion_x prog cprog new_coer1 in
+        let (cdl21, cdl22) = trans_one_coercion_x prog cprog new_coer2 in
         (cdl11@cdl21, cdl12@cdl22)
-      else trans_one_coercion_x prog coer
-    else trans_one_coercion_x prog coer
-  else trans_one_coercion_x prog coer
+      else trans_one_coercion_x prog cprog coer
+    else trans_one_coercion_x prog cprog coer
+  else trans_one_coercion_x prog cprog coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
-and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
+and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
   (***********INTERNAL************)
   let trans_head new_head fnames quant n_tl=
@@ -4615,27 +4615,30 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       let m_vars = List.filter (fun (m,vs,vs2) -> vs==[] (* no change *) || vs2!=[]) m_vars in
       let m_vars = List.map (fun (m,vs,vs2) -> {m with Cast.mater_target_view = vs2}) m_vars in
       let () = y_tinfo_hp pr_mater_vars m_vars in
-      let c_coer ={ C.coercion_type = coer_type;
-                    C.coercion_type_orig = None;
-                    C.coercion_exact= coer.I.coercion_exact;
-                    C.coercion_name = coer.I.coercion_name ;
-                    C.coercion_head = c_lhs;
-                    C.coercion_head_norm = c_head_norm;
-                    C.coercion_body = c_rhs;
-                    C.coercion_body_norm = cs_body_norm;
-                    C.coercion_impl_vars = []; (* ex_vars; *)
-                    C.coercion_univ_vars = univ_vars;
-                    C.coercion_infer_vars = ident_list_to_spec_var_list (List.map (fun id -> (id, Unprimed)) coer.I.coercion_infer_vars ) n_tl prog; 
-                    C.coercion_infer_obj = coer.I.coercion_infer_obj;
-                    C.coercion_head_view = lhs_name;
-                    C.coercion_fold_def = new Gen.mut_option;
-                    (* C.vdef_lemma_fold prog c_lhs cs_body_norm; *)
-                    C.coercion_body_view = rhs_name;                    
-                    C.coercion_body_pred_list = pred_list;
-                    C.coercion_mater_vars = m_vars;
-                    C.coercion_case = (Cast.case_of_coercion c_lhs c_rhs);
-                    C.coercion_kind = coer.I.coercion_kind;
-                    C.coercion_origin = coer.I.coercion_origin;
+      let coer_case = Cast.case_of_coercion c_lhs c_rhs in
+      let lhs_sig = CFU.sig_of_lem_formula cprog coer_case c_lhs in
+      let c_coer = { C.coercion_type = coer_type;
+                     C.coercion_type_orig = None;
+                     C.coercion_exact= coer.I.coercion_exact;
+                     C.coercion_name = coer.I.coercion_name ;
+                     C.coercion_head = c_lhs;
+                     C.coercion_head_norm = c_head_norm;
+                     C.coercion_body = c_rhs;
+                     C.coercion_body_norm = cs_body_norm;
+                     C.coercion_impl_vars = []; (* ex_vars; *)
+                     C.coercion_univ_vars = univ_vars;
+                     C.coercion_infer_vars = ident_list_to_spec_var_list (List.map (fun id -> (id, Unprimed)) coer.I.coercion_infer_vars ) n_tl prog; 
+                     C.coercion_infer_obj = coer.I.coercion_infer_obj;
+                     C.coercion_head_view = lhs_name;
+                     C.coercion_fold_def = new Gen.mut_option;
+                     (* C.vdef_lemma_fold prog c_lhs cs_body_norm; *)
+                     C.coercion_body_view = rhs_name;                    
+                     C.coercion_body_pred_list = pred_list;
+                     C.coercion_mater_vars = m_vars;
+                     C.coercion_case = coer_case;
+                     C.coercion_kind = coer.I.coercion_kind;
+                     C.coercion_origin = coer.I.coercion_origin;
+                     C.coercion_lhs_sig = lhs_sig;
                   } in
       let change_univ x = change_univ c_head_norm_rlem x in
       match coer_type with

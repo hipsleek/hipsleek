@@ -33,12 +33,12 @@ let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name
                          (a, b, c)
                        )
 
-let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
+let generate_lemma_helper iprog cprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
   let ilemma = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN coer_type ihps ihead ibody in
   (*transfrom ilemma to clemma*)
   let ldef = Astsimp.case_normalize_coerc iprog ilemma in
-  let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  let l2r, r2l = Astsimp.trans_one_coercion iprog cprog ldef in
   l2r, r2l
 
 let generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody
@@ -50,7 +50,7 @@ let generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbo
     else Sleekcore.sleek_entail_check 5 [] [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
   ) in
   if res then
-    let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type [] ihead ibody in
+    let l2r, r2l = generate_lemma_helper iprog cprog lemma_n coer_type [] ihead ibody in
     l2r, r2l
   else [],[]
 
@@ -256,7 +256,7 @@ let process_one_lemma unfold_flag iprog cprog ldef =
   (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let pr = Cprinter.string_of_coerc_decl_list in
-  let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  let l2r, r2l = Astsimp.trans_one_coercion iprog cprog ldef in
   (* let () = y_tinfo_hp (add_str "l2r" pr) l2r in *)
   (* let () = y_tinfo_hp (add_str "r2l" pr) r2l in *)
   let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) l2r) in

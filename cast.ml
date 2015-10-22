@@ -313,6 +313,7 @@ and coercion_decl = {
   coercion_type_orig: coercion_type option; 
   coercion_kind: lemma_kind;
   coercion_origin: lemma_origin;
+  coercion_lhs_sig: F.formula_sig option;
 }
 
 and coercion_type = Iast.coercion_type
@@ -1404,6 +1405,18 @@ let get_proot_hp_def_raw defs name =
 let get_proot_hp_def_raw defs name =
   let pr = string_of_int in
   Debug.no_1 "get_proot_hp_def_raw" idf pr (get_proot_hp_def_raw defs) name
+
+(* Get root and args of a hrel or hprel *)
+let get_root_args_hp prog id all_args =
+  let root_pos = x_add get_proot_hp_def_raw prog.prog_hp_decls id in
+  let root = List.nth all_args root_pos in
+  let args = Gen.BList.difference_eq CP.eq_spec_var all_args [root] in
+  root, args
+
+let get_root_args_hp prog id all_args =
+  let pr1 = !CP.print_svl in
+  Debug.no_2 "C.get_root_args_hp" idf pr1 (pr_pair !CP.print_sv pr1)
+    (fun _ _ -> get_root_args_hp prog id all_args) id all_args
 
 let get_root_args_hprel hprels hp_name actual_args=
   let rec part_sv_from_pos ls n n_need rem=
