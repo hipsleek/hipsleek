@@ -641,6 +641,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                 print_endline_quiet "*************************************";
               end;
+            let svl = Nia.classify_ni prog rels in
+            let () = x_binfo_hp (add_str "I preds" pr_svl) svl no_pos in
             let () = if !Globals.sa_gen_slk then
                 try
                   let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv
