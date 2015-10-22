@@ -2880,3 +2880,28 @@ let sig_of_lem prog (lem: C.coercion_decl) =
   sig_of_formula prog self_var lem.C.coercion_head, 
   sig_of_formula prog self_var lem.C.coercion_body
 
+let is_compatible_sig prog sig1 sig2 = 
+  let rec helper ss1 ss2 =
+    match ss1, ss2 with
+    | [], [] -> true
+    | s1::ss1, s2::ss2 ->
+      if (eq_str s1 s2) || 
+         (C.is_hp_name prog s1 && C.is_hp_name prog s2)
+      then helper ss1 ss2
+      else false
+    | _ -> false
+  in helper sig1 sig2
+
+let is_compatible_lem prog lhs_sig lem =
+  let lem_f = 
+    match lem.C.coercion_type with
+    | Right -> lem.C.coercion_body
+    | _ -> lem.C.coercion_head
+  in
+  let lem_self = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem_f) in 
+  let lem_sig = sig_of_formula prog lem_self lem_f in
+  is_compatible_sig prog lhs_sig lem_sig
+
+let find_all_compatible_lem prog lhs_sig lems = 
+  List.find_all (is_compatible_lem prog lhs_sig) lems
+

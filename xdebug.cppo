@@ -61,6 +61,10 @@
 #define y_ninfo_hp (fun pr s -> ())
 #define y_ninfo_pp (fun s > ())
 #define y_ninfo_zp (fun s -> ())
+#define y_bres_hp (fun f r -> \
+  let () = Debug.y_binfo_hprint (fun x -> (VarGen.build_loc_str __FILE__ __LINE__)^(f x)) r in r)
+#define y_tres_hp (fun f r -> \
+  let () = Debug.y_tinfo_hprint (fun x -> (VarGen.build_loc_str __FILE__ __LINE__)^(f x)) r in r)
 #define x_add_0 (fun f -> let () = VarGen.store_loc_str  __FILE__ __LINE__ in f)
 #define x_add_1 (fun f x -> let () = VarGen.store_loc_str  __FILE__ __LINE__ in f x)
 #define x_add (fun f x y -> let () = VarGen.store_loc_str  __FILE__ __LINE__ in f x y)

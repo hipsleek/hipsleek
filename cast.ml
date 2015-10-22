@@ -1301,6 +1301,13 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+let is_hp_name prog id = 
+  let defs = prog.prog_hp_decls in
+  try
+    let def = look_up_hp_def_raw defs id in
+    true
+  with _ -> false
+
 (* let look_up_hp_def_raw defs name= *)
 (*   let pr1 = !print_hp_decl in *)
 (*   Debug.no_1 "look_up_hp_def_raw" pr_id pr1 *)

@@ -14,6 +14,7 @@ infer [H,H2,@classic] H2(q1,y,_) * y::node<_,ss>  |- H(q1,ss).
 print residue.
 // H2(q1,y,_) --> H(self,y)
 
+/*
 infer [H,H2,@classic] q1::node<_,q2>*H2(q2,ss,_)  |- H(q1,ss).
 print residue.
 
@@ -23,6 +24,7 @@ print residue.
 infer [H,H2,@classic]
     H2(x,y,_) * y::node<_,ss> |- H(x,y) * y::node<_,ss>.
 print residue.
+*/
 
 /*
 # ex20e9f5.slk
