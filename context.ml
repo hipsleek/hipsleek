@@ -616,10 +616,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     in
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
-    let lhs_p2 =MCP.pure_of_mix lhs_p in
-    let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
-    let () = y_binfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
-    let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
     let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
     let emap = CP.EMapSV.build_eset eqns' in
     let () = x_binfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
@@ -629,6 +625,26 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let asets = Csvutil.alias_nth 3 ((p, p) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
     let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    let rhs_ptr = p in
+    let enhance_paset paset =
+      if !Globals.ptr_arith_flag then
+        let lhs_p2 =MCP.pure_of_mix lhs_p in
+        let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
+        let () = y_binfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
+        let () = y_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
+        let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
+        let diff_ptrs = Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset in
+        let () = y_binfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in
+        let lst = List.filter (fun d -> 
+            (* lhs_p2 |- rhs_ptr=d  *)
+            let rhs = CP.mkEqn d rhs_ptr no_pos in
+            let r = !CP.tp_imply lhs_p2 rhs in
+            r
+          ) diff_ptrs in
+        let () = y_binfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in
+        lst@paset
+      else paset in
+    let paset = enhance_paset paset in
     if Gen.is_empty paset then
       failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
     else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then

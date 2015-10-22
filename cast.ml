@@ -121,6 +121,7 @@ and view_decl = {
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
   view_modes : mode list;
   view_type_of_self : typ option;
+  view_actual_root : P.exp option;
   view_is_touching : bool;
   view_is_segmented : bool;
   view_is_tail_recursive: bool;        (* true if view is tail-recursively defined *)
@@ -647,6 +648,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_labels = List.map (fun _ -> LO.unlabelled) vs;
     view_modes = [];
     view_type_of_self = None;
+    view_actual_root = None;
     view_is_touching = false;
     view_is_segmented = false;
     view_is_tail_recursive= false;        (* true if view is tail-recursively defined *)
@@ -712,6 +714,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_labels = [];
     view_modes = [];
     view_type_of_self = None;
+    view_actual_root = None;
     view_is_touching = false;
     view_is_segmented = false;
     view_is_tail_recursive = false;

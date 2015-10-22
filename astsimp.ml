@@ -2622,6 +2622,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       Debug.ninfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
       Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
       Debug.ninfo_hprint (add_str "vbi" (pr_option pr)) vbc_i no_pos;
+      let lst_uns = List.map fst n_un_str in
+      let lst_heap_ptrs = List.map (fun f -> 
+          let (h,_,_,_,_,_) = CF.split_components f in
+          CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h) lst_uns in
+      let () = y_binfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in
+      let () = y_binfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in
       let cvdef = {
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;
@@ -2638,6 +2644,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_fields = [];
         C.view_kind = view_kind;
         C.view_type_of_self = vdef.I.view_type_of_self;
+        C.view_actual_root = 
+          (let () = y_binfo_pp "ZH : need to compute actual root.." in
+          None);
         C.view_prop_extns = view_prop_extns;
         C.view_parent_name = None;
         C.view_domains = [];

@@ -29,7 +29,7 @@ res:  failctxfe_kind: MAY
 [[ Fold ==>  UnmatchedRHSData]]falseStop z3... 100 invocations 
 
 =================================================================
-# ex1c2.ss
+# ex1c2.slk
 
 # current ptr failures..
 

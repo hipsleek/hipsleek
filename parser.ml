@@ -1527,6 +1527,7 @@ view_header_ext:
           view_data_name = "";
           view_imm_map = [];
           view_type_of_self = None;
+          (* view_actual_root = None; *)
           view_vars = (* List.map fst *) cids;
           view_ho_vars = [];
           (* view_frac_var = empty_iperm; *)

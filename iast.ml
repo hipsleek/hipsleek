@@ -101,6 +101,7 @@ and view_decl =
     view_parent_name: (ident) option;
     mutable view_derv: bool;
     view_type_of_self : typ option;
+    (* view_actual_root : P.exp option; *)
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
@@ -641,6 +642,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_pos = pos;
           view_data_name = dname;
           view_type_of_self = None;
+          (* view_actual_root = None; *)
           view_imm_map = [];
           view_vars = (* List.map fst *) vs;
           view_ho_vars = [];
@@ -685,6 +687,7 @@ let mk_view_header vn opt1 cids mvs modes pos =
     view_pos = pos ;
     view_data_name = "";
     view_type_of_self = None;
+    (* view_actual_root = None; *)
     view_imm_map = [];
     view_vars = (* List.map fst *) cids;
     view_ho_vars = un_option opt1 []; 
