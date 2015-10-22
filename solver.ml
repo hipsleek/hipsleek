@@ -14576,6 +14576,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   let coer_rhs = subst_avoid_capture lhs_qvars lhs_qvars_new coer_rhs in
   (************************************************************************)
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
+  let () = y_binfo_hp (add_str "lhs_heap" !CF.print_h_formula) lhs_heap in
   let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
   let head_node, rest = pick_up_node lhs_hs Globals.self in
   let extra_opt = join_star_conjunctions_opt rest in
@@ -14586,6 +14587,8 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
        CF.HEmp
      | Some res_f -> res_f)
   in
+  let () = y_binfo_hp (add_str "anode" !CF.print_h_formula) anode in
+  let () = y_binfo_hp (add_str "head_node" !CF.print_h_formula) head_node in
   match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
   | ViewNode ({ h_formula_view_node = p1;
                 h_formula_view_name = c1;

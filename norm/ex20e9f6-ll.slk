@@ -10,5 +10,7 @@ pred lseg<q> == self = q or
 
 lemma_safe "compl2" self::lseg<y> * y::node<_,ss> -> self::lseg<ss>.
 
+//lemma_safe "compl3" self::node<_,y> * y::node<_,ss> -> self::node<_, p> * p::lseg<ss>.
+
 checkentail q1::lseg<y> * y::node<_,ss>  |- q1::lseg<ss>.
 print residue.
