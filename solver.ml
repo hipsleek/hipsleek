@@ -10337,9 +10337,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   (* x_tinfo_hp (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
   (* x_tinfo_hp (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
   let l_ho_args, l_args, l_node_name, node_kind,_, l_perm, l_ann, l_param_ann
-    = CF.get_args_of_node l_node in
+    = x_add_1 CF.get_args_of_node l_node in
   let r_ho_args, r_args, r_node_name, _, r_var, r_perm, r_ann, r_param_ann 
-    = CF.get_args_of_node r_node in
+    = x_add_1 CF.get_args_of_node r_node in
   let fvars_rhs = CF.get_args_of_hrel r_node in
   let () = y_tinfo_hp (add_str "l_args(do match)" !CP.print_svl) l_args in
   let () = y_tinfo_hp (add_str "r_args(do match)" !CP.print_svl) r_args in

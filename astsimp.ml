@@ -2533,23 +2533,27 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in
       let view_ho_sv = List.map (fun (fk,i,sk) -> (fk, CP.SpecVar (FORM,i,Unprimed), sk)) vdef.I.view_ho_vars in (* TODO;HO *)
       (* TODO:WN : checking for implicit equiv_view *)
-      let () = if sf!=[] then 
+      let data_name = if sf!=[] then 
           begin
+            let () = y_tinfo_hp (add_str "TODO: view_pt_by_self" (pr_list pr_id)) sf in
             match n_un_str with
             | [(f,_)] ->
               begin
                 let (h,p,_,_,_,_) = CF.split_components f in
                 let p = MCP.pure_of_mix p in
                 let emap = Infer.get_eqset p in
-                let (_,l_args,l_node_name,_,_,_,_,_) = CF.get_args_of_node h in
-                y_tinfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
+                (* WARNING : h may not be a single node *)
+                (* nothing is being computed below *)
+                (* let (_,l_args,l_node_name,_,_,_,_,_) = x_add_1 CF.get_args_of_node h in *)
+                (* y_tinfo_hp (add_str "l_args" (!CP.print_svl)) l_args; *)
                 y_tinfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
                 y_tinfo_hp (add_str "body" (!CF.print_h_formula)) h;
                 y_tinfo_hp (add_str "pure" (!CP.print_formula)) p;
-                y_tinfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
+                if data_name="" then List.hd sf else data_name
               end
-            | _ -> ()
+            | _ -> data_name
           end
+        else data_name 
       in
       let conv_baga_inv baga_inv =
         match baga_inv with
