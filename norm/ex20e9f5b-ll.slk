@@ -1,0 +1,17 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+relAssume H(y,z) --> H2(y,x,z).
+
+relAssume x::node<Anon_14,y> * H2(y,x,z) --> H(x,z).
+                   
+shape_derive_view [H].
+
+print views.
