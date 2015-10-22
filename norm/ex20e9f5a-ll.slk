@@ -16,11 +16,6 @@ infer [H,H2,@classic]
 print residue.
 */
 
-
-infer [H,H3,@classic]
-    H3(x,y1)  |- H(x,y) .
-print residue.
-
 infer [H,H3,@classic]
     H3(x,y1)  |- [y] H(x,y) .
 print residue.
@@ -32,7 +27,16 @@ print residue.
 
 
 infer [H,H3,@classic]
+    H3(x,y1) * y1::node<_,ss> |- H(x,y) * y::node<_,ss>.
+print residue.
+
+
+infer [H,H3,@classic]
     H3(x,y1)  |-  H(x,y) .
+print residue.
+
+infer [H,H2,@classic]
+    H2(x,y,_) * y::node<_,ss> |- H(x,y) * y::node<_,ss>.
 print residue.
 
 
