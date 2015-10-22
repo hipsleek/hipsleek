@@ -79,11 +79,11 @@ let update_i_para i_rels proc=
   ) proc.Cast.proc_args_wi in
   let () = x_binfo_hp (add_str "proc.Cast.proc_name" pr_id) proc.Cast.proc_name no_pos in
   let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) n_proc_args_wi no_pos in
-  let () = proc.Cast.proc_args_wi <- n_proc_args_wi in
-  ()
+  let proc = {proc with Cast.proc_args_wi = n_proc_args_wi} in
+  proc
 
 let update_i_para_scc i_rels scc=
-  List.iter (fun proc -> update_i_para i_rels proc) scc
+  List.map (fun proc -> update_i_para i_rels proc) scc
 
 let rec add_relation_to_formula f rel =
   match f with
@@ -700,12 +700,12 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                 print_endline_quiet "*************************************";
               end;
-            let () = if is_infer_const_scc scc INF_ANA_NI then
+            let scc = if is_infer_const_scc scc INF_ANA_NI then
               let svl = Nia.classify_ni prog rels in
               let () = x_binfo_hp (add_str "I preds" pr_svl) svl no_pos in
-              let () = update_i_para_scc svl scc in
-              ()
-            else ()
+              let scc = update_i_para_scc svl scc in
+              scc
+            else scc
             in
             let () = if !Globals.sa_gen_slk then
                 try

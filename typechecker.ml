@@ -4680,25 +4680,33 @@ let rec check_prog iprog (prog : prog_decl) =
     match icmd with
       | Icmd.I_Norm {cmd_res_infs = infs} ->
             let iscc,_ = List.split (Iincr.set_infer_const_scc infs scc) in
-            let () = if List.exists (fun it -> it = INF_SHAPE_PRE) infs then
-              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation iscc in
+            let () = if List.exists (fun it -> it = INF_ANA_NI) infs then
+              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_ana_ni_relation iscc in
               ()
-            else if List.exists (fun it -> it = INF_SHAPE_POST) infs then
-              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
-              ()
-            else if List.exists (fun it -> it = INF_SIZE) infs then
-              let _ = List.map (fun proc ->
-                  let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
-                  let todo_unk = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
-                  let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
-                    (proc.Cast.proc_stk_of_static_specs # top) no_pos in
-                  res
+            else
+              if List.exists (fun it -> it = INF_SHAPE_PRE) infs then
+                let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation iscc in
+                ()
+              else if List.exists (fun it -> it = INF_SHAPE_POST) infs then
+                let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
+                ()
+              else if List.exists (fun it -> it = INF_SIZE) infs then
+                let _ = List.map (fun proc ->
+                    let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
+                    let todo_unk = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
+                    let () =  Debug.info_hprint (add_str "SEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
+                      (proc.Cast.proc_stk_of_static_specs # top) no_pos in
+                    res
+                ) iscc in
+                ()
+              else () in
+              let iscc1 = List.filter (fun proc ->
+                  let ptr_paras = List.filter (fun (t,_) -> is_node_typ t) proc.Cast.proc_args in
+                  ptr_paras != []
               ) iscc in
-              ()
-            else () in
-            let res = verify_scc_incr cprog verified_sccs iscc in
-            (* let todo_unk = Iincr.reset_infer_const_scc infs iscc in *)
-            res
+              let res = verify_scc_incr cprog verified_sccs iscc1 in
+              (* let todo_unk = Iincr.reset_infer_const_scc infs iscc in *)
+              res
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
             List.fold_left (fun (acc_cprog, _) (_, cmd) ->  process_cmd iprog acc_cprog verified_sccs scc cmd)
@@ -4775,9 +4783,10 @@ let rec check_prog iprog (prog : prog_decl) =
           (* let () = List.iter (fun proc -> *)
           (* DD.info_hprint (add_str "  " Cprinter.string_of_struc_formula) (proc.Cast.proc_stk_of_static_specs # top) no_pos) scc in *)
           if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
-            else
-              let icmd = Icmd.compute_cmd prog scc in
-              process_cmd iprog prog verified_sccs scc icmd
+          else
+            let infs = Iincr.get_infer_const_scc scc in
+            let icmd = Icmd.compute_cmd prog scc infs in
+            process_cmd iprog prog verified_sccs scc icmd
       in
       let no_verified_sccs = List.map (fun scc -> List.map (fun proc ->
           let spec = proc.proc_stk_of_static_specs # top in

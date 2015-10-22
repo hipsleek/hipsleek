@@ -180,6 +180,13 @@ let rec htrue2emp hf= match hf with
   | _ -> hf
 
 let add_pre_shape_relation_x prog proc spec=
+  let rec look_up_i info id=
+    match info with
+      | [] -> NI
+      | (id1,k)::rest ->
+            if string_eq id id1 then k
+            else  look_up_i rest id
+  in
   let pos = no_pos in
   let rec recf sf rel_name rel_vars=match sf with
     | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
@@ -197,12 +204,13 @@ let add_pre_shape_relation_x prog proc spec=
     let rel_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int())) in
     let proc_args = List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.Cast.proc_args in
     let rel_vars = List.filter CP.is_node_typ proc_args in
+    let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) proc.Cast.proc_args_wi no_pos in
     if rel_vars = [] then sf else
       let rel_vars = CP.remove_dups_svl rel_vars in
       let hp_pre_decl = {
           Cast.hp_name = rel_name;
           Cast.hp_vars_inst = List.map (fun sv ->
-              let in_info =  Globals.I in
+              let in_info =  look_up_i proc.Cast.proc_args_wi (CP.name_of_spec_var sv) in
               (sv, in_info)
             ) rel_vars;
           Cast.hp_part_vars = [];
@@ -212,8 +220,8 @@ let add_pre_shape_relation_x prog proc spec=
           Cast.hp_formula = CF.mkHTrue_nf pos;
           }
       in
-      let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ proc.Cast.proc_name ^ ": ") pr_id)
-        hp_pre_decl.Cast.hp_name no_pos in
+      let () = Debug.x_binfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ proc.Cast.proc_name ^ ": ") pr_id)
+        (hp_pre_decl.Cast.hp_name ^"(" ^ ((pr_list (pr_pair !CP.print_sv string_of_arg_kind)) (hp_pre_decl.Cast.hp_vars_inst ) ^")")) no_pos in
       let pre_inf_sv = (CP.SpecVar (HpT, hp_pre_decl.Cast.hp_name, Unprimed)) in
       let () = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
       let new_cont = recf ei.CF.formula_inf_continuation rel_name rel_vars in
@@ -302,6 +310,51 @@ let add_post_shape_relation_x prog proc spec=
 let add_post_shape_relation prog proc sf =
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "add_post_shape_relation" pr pr (fun _ -> add_post_shape_relation_x prog proc sf) sf
+
+let add_ana_ni_relation_x prog proc spec=
+  let pos = no_pos in
+  let rec recf sf pre_f rel_vs =match sf with
+    | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+          (lbl, recf sf pre_f rel_vs)) el)
+    | CF.EBase eb ->
+          CF.EBase {eb with
+              CF.formula_struc_base = pre_f}
+  | CF.EAssume ea -> sf
+  | CF.EInfer ei ->
+        let new_cont = recf ei.CF.formula_inf_continuation pre_f rel_vs in
+        CF.EInfer {ei with
+          CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@rel_vs);
+          CF.formula_inf_continuation = new_cont}
+  | CF.ECase ec -> CF.ECase { ec with
+                              CF.formula_case_branches = List.map (fun (pf,sf) ->
+                                  (pf, recf sf pre_f rel_vs)
+                              ) ec.CF.formula_case_branches
+    }
+  in
+  let rel_formula = CP.mkTrue no_pos in
+  let rel_vs, rel_ps = List.fold_left (fun (name_acc, p_acc) (t,id) ->
+      let rel_name = fresh_any_name ("_i_"^id) in
+      let rel_var = CP.mk_typed_spec_var t id in
+      let rel_decl = {Cast.rel_name = rel_name; Cast.rel_vars = [rel_var];
+      Cast.rel_formula = rel_formula} in
+      let () = prog.Cast.prog_rel_decls # push rel_decl in
+      (*L2: to update its definition after inference*)
+      let _= Smtsolver.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
+      let _= Z3.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
+      let rel_type = RelT [t] in
+      let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in
+      let rel_args = [(CP.mkVar rel_var no_pos)] in
+      let new_rel = CP.mkRel rel_spec_var rel_args no_pos in
+      (name_acc@[rel_spec_var], p_acc@[new_rel])
+  ) ([],[]) (List.filter (fun (t,_) -> is_node_typ t) proc.Cast.proc_args) in
+  if rel_vs = [] then spec else
+    let p = CP.conj_of_list rel_ps no_pos in
+    let pre_f = CF.formula_of_pure_formula p no_pos in
+    recf spec pre_f rel_vs
+
+let add_ana_ni_relation prog proc sf =
+  let pr = Cprinter.string_of_struc_formula in
+  Debug.no_1 "add_ana_ni_relation" pr pr (fun _ -> add_ana_ni_relation_x prog proc sf) sf
 
 
 let get_post_preds_x spec=
