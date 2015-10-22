@@ -74,7 +74,7 @@ int len_seg(node x)
     node n = x.next;
     //dprint;
     int r=len_seg(n);
-    //dprint;
+    // dprint;
     return 1+r;
   }
 }

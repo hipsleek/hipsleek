@@ -788,7 +788,7 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
   let () = Debug.ninfo_hprint (add_str  "is_match" string_of_bool) is_match no_pos in
 
   let lhs_b, new_hds, new_hvs = if is_match then
-    let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (rhs_svl(* @keep_root_hrels@classic_nodes*));} in
+    let n_lhs_b = {lhs_b with CF.formula_base_heap= CF.drop_hnodes_hf lhs_b.CF.formula_base_heap (CF.get_ptrs lhs_b.CF.formula_base_heap) (* (rhs_svl@lhs_args_ni(* @keep_root_hrels@classic_nodes*)) *);} in
     n_lhs_b,[],[] (*matching unkown pred lhs vs. rhs*)
   else
     lhs_b,(hds(* @filter_his *)), hvs
@@ -1445,7 +1445,7 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
       let () = y_binfo_pp "_" in 
       return_out_of_inst estate lhs_b []
   in
-  let () = y_binfo_hp (add_str "n_estate" Cprinter.string_of_entail_state) n_estate in
+  let () = y_tinfo_hp (add_str "n_estate" Cprinter.string_of_entail_state) n_estate in
   if not is_succ_inst then
     let err_msg = "infer_unfold (cannot inst)" in
     let conseq = Some (Base rhs_b) in
