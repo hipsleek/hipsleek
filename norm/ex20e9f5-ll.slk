@@ -8,21 +8,23 @@ HeapPred H(node x,node@NI y).
 HeapPred H2(node x,node@NI y,node@NI z).
 HeapPred H3(node x,node@NI y).
 
-lemma_unsafe "compl" H(self,y) * y::node<_,ss> -> self::node<_,q>*H(q,ss).
+lemma_unsafe "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
 
-/*
-infer [H,H2,@classic] H2(q1,y,_) * y::node<_,ss>  |- H(q1,ss).
+
+infer [H,H2,@classic] H2(q1,_,y) * y::node<_,ss>  |- H(q1,ss).
 print residue.
 // H2(q1,y,_) --> H(self,y)
-*/
 
+/*
 infer [H,H3,@classic] H3(q1,y) * y::node<_,ss>  |- H(q1,ss).
 print residue.
-
+*/
+/*
 infer [H,@classic] x::node<_, y> * H(y, z)  |- H(x, z).
 print residue.
 
 print relAssumes.
+*/
 
 /*
 infer [H,H2,@classic]

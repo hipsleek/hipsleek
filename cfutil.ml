@@ -2837,7 +2837,7 @@ let get_node_var prog (h: h_formula) =
   Debug.no_1 "CFU.get_node_var" !CF.print_h_formula !CP.print_sv
     (fun _ -> get_node_var prog h) h
 
-let sig_of_h_formula_list prog aset root (hs: h_formula list) =
+let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
   let rec helper root hs = 
     if is_empty hs then [], []
     else 
@@ -2853,19 +2853,22 @@ let sig_of_h_formula_list prog aset root (hs: h_formula list) =
           let sig_of_ra, rem_nodes = helper ra rem_nodes in
           (acc @ sig_of_ra, rem_nodes)) ([], rest_nodes) root_args
         in
-        (CF.get_node_name 30 root_node)::sig_of_root_args, rem_nodes
+        root_node::sig_of_root_args, rem_nodes
       | _ -> failwith ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula hs))
   in fst (helper root hs)
 
-let rec sig_of_formula prog root (f: CF.formula) = 
+let rec complx_sig_of_formula prog root (f: CF.formula) = 
   match f with
   | CF.Base ({ formula_base_heap = h; formula_base_pure = p; })
   | CF.Exists ({ formula_exists_heap = h; formula_exists_pure = p; }) ->
     let aliases = MCP.ptr_equations_without_null p in
     let aset = CP.EMapSV.build_eset aliases in
-    sig_of_h_formula_list prog aset root (CF.split_star_conjunctions h)
+    complx_sig_of_h_formula_list prog aset root (CF.split_star_conjunctions h)
   | CF.Or ({ formula_or_f1 = f1; formula_or_f2 = f2; }) ->
-    (sig_of_formula prog root f1) @ (sig_of_formula prog root f2)
+    (complx_sig_of_formula prog root f1) @ (complx_sig_of_formula prog root f2)
+
+let sig_of_formula prog root (f: CF.formula) = 
+  List.map (CF.get_node_name 30) (complx_sig_of_formula prog root f)
 
 let sig_of_lem prog (lem: C.coercion_decl) =
   let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem.C.coercion_head) in

@@ -14589,11 +14589,11 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   let renamed_self =
     try
       let _, fresh_self = List.find (fun (sv, _) -> eq_str Globals.self (CP.name_of_spec_var sv)) tmp_rho in
-      CP.name_of_spec_var fresh_self
-    with _ -> Globals.self 
+      fresh_self
+    with _ -> failwith (x_loc ^ "Cannot find self in the lemma")
   in
-  let () = y_binfo_hp (add_str "renamed_self" idf) renamed_self in
-  let head_node, rest = pick_up_node prog lhs_hs renamed_self (* Globals.self *) in
+  let () = y_binfo_hp (add_str "renamed_self" !CP.print_sv) renamed_self in
+  let head_node, rest = pick_up_node prog lhs_hs (CP.name_of_spec_var renamed_self) (* Globals.self *) in
   let extra_opt = join_star_conjunctions_opt rest in
   let extra_heap = 
     (match (extra_opt) with
@@ -14674,6 +14674,8 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
     let p1, c1, origs, br1, perm1, ps1 = extract_info anode in
     let p2, c2, _, br2, perm2, ps2 = extract_info head_node in
 
+    let is_hrel_matching = CF.is_hrel anode in
+
     if not (C.is_hp_name prog c1) && 
        not (C.is_hp_name prog c2) && 
        not (CF.is_eq_node_name c1 c2) 
@@ -14718,11 +14720,41 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           else
             ([],[])
         in
-        let fr_vars = perms2@(p2 :: ps2)in
-        let to_vars = perms1@(p1 :: ps1)in
+
+        let () = y_binfo_hp (add_str "lhs_guard" !CP.print_formula) lhs_guard in
+        let () = y_binfo_hp (add_str "coer_rhs" !CF.print_formula) coer_rhs in
+        let () = y_binfo_hp (add_str "extra_heap" !CF.print_h_formula) extra_heap in
+        
+        let fr_vars, to_vars = 
+          if not is_hrel_matching then 
+            (p2::ps2), (p1::ps1) 
+          else
+            let complx_lem_sig = CFU.complx_sig_of_formula prog renamed_self coer_lhs in
+            let lhs_root = CFU.get_node_var prog anode in
+            let complx_lhs_sig = CFU.complx_sig_of_formula prog lhs_root (CF.Base lhs_b) in
+            let () = y_binfo_hp (add_str "complx_lem_sig" (pr_list !CF.print_h_formula)) complx_lem_sig in
+            let () = y_binfo_hp (add_str "complx_lhs_sig" (pr_list !CF.print_h_formula)) complx_lhs_sig in
+
+            let lem_args = CF.get_node_args head_node in
+            let matching_nodes = List.combine complx_lem_sig complx_lhs_sig in
+            let subst = List.fold_left (fun acc sv ->
+              if List.exists (fun (v, _) -> CP.eq_spec_var v sv) acc then acc
+              else
+                try
+                  let _, matching_lhs_node = List.find (fun (h_lem, _) -> 
+                      CP.eq_spec_var (CFU.get_node_var prog h_lem) sv) matching_nodes in
+                  acc @ [(sv, CFU.get_node_var prog matching_lhs_node)]
+                with _ -> acc
+            ) [(renamed_self, lhs_root)] lem_args in
+            List.split subst
+        in
+        let fr_vars, to_vars = perms2@fr_vars, perms1@to_vars in
+        let () = y_binfo_hp (add_str "fr_vars" !CP.print_svl) fr_vars in
+        let () = y_binfo_hp (add_str "to_vars" !CP.print_svl) to_vars in
+        let head_node_new = subst_avoid_capture_h fr_vars to_vars head_node in
         let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
         let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
-        let extra_heap_new =  CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
+        let extra_heap_new = CF.subst_avoid_capture_h fr_vars to_vars extra_heap in
         let coer_rhs_new1,extra_heap_new =
           if (Perm.allow_perm ()) then
             match perm1,perm2 with
@@ -14744,7 +14776,19 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   
         (* let new_es_heap = CF.mkStarH head_node estate.es_heap no_pos in *)
         let old_trace = estate.es_trace in
-        let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace)} in
+        let new_estate = { estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace)} in
+        let () =
+          if is_hrel_matching then
+            let lhs_hrel_name, _ = CFU.sig_of_hrel anode in
+            let lem_hrel_name, _ = CFU.sig_of_hrel head_node_new in
+            let rel_kind = CP.RelAssume [lhs_hrel_name; lem_hrel_name] in
+            let rel_path = CF.get_es_cond_path new_estate in
+            let lhs_f = CF.mkBase_simp anode (MCP.mkMTrue no_pos) in
+            let rhs_f = CF.mkBase_simp head_node_new (MCP.mkMTrue no_pos) in
+            let unk_svl = [lhs_hrel_name; lem_hrel_name] in
+            let rel_assume = CF.mkHprel rel_kind unk_svl [] [] lhs_f None rhs_f rel_path in
+            new_estate.es_infer_hp_rel # push rel_assume
+        in
         let new_ctx1 = Ctx new_estate in
         let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
         (*prove extra heap + guard*)
