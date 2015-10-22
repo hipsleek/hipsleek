@@ -606,7 +606,7 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et in
     let () = x_tinfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
     let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et) et n_tl2 pos in
-    let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
+    let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
   | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
