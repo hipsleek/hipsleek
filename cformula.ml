@@ -5686,12 +5686,21 @@ let rec look_up_rev_view_node ls node_name=
       (* List.filter CP.is_node_typ *) [vn.h_formula_view_node]
     else look_up_rev_view_node vs node_name
 
-let look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
+let rec look_up_hrel_sig ls node_name = 
+  match ls with
+  | [] -> []
+  | (rn, rargs)::rs ->
+    if CP.eq_spec_var node_name rn then rargs
+    else look_up_hrel_sig rs node_name
+
+let look_up_ptr_args_one_node prog hd_nodes hv_nodes ?(hr_sigs = []) node_name =
   let ptrs = look_up_data_node hd_nodes node_name in
-  if ptrs = [] then look_up_view_node hv_nodes node_name
+  if ptrs = [] then 
+    (look_up_view_node hv_nodes node_name) @
+    (look_up_hrel_sig hr_sigs node_name)
   else ptrs
 
-let look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name=
+let look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name =
   let ptrs = look_up_rev_data_node hd_nodes node_name in
   let () = Debug.ninfo_hprint (add_str "ptrs"  !CP.print_svl) ptrs no_pos in
   if ptrs = [] then look_up_rev_view_node hv_nodes node_name
@@ -5706,9 +5715,9 @@ let look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name=
 
 (*should improve: should take care hrel also*)
 let look_up_reachable_ptr_args prog hd_nodes hv_nodes ?(hr_sigs = []) node_names =
-  let rec helper old_ptrs inc_ptrs=
+  let rec helper old_ptrs inc_ptrs =
     let new_ptrs = List.concat
-        (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes)
+        (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes ~hr_sigs:hr_sigs)
            inc_ptrs) in
     let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
     let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
@@ -5761,10 +5770,15 @@ let look_up_reachable_ptrs_w_alias_helper prog hd_nodes hv_nodes eqset roots=
   helper cl_roots cl_roots
 
 let look_up_first_reachable_unfold_ptr prog hd_nodes hv_nodes ?(hr_sigs = []) roots =
-  let rec helper old_ptrs inc_ptrs=
+  let is_unfold_ptr hv_nodes hr_sigs sv =
+     (List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes) ||
+     (List.exists (fun (hr_root, _) -> CP.eq_spec_var hr_root sv) hr_sigs)
+  in
+
+  let rec helper old_ptrs inc_ptrs =
     let new_ptrs = List.fold_left (fun r sv ->
-        r@(look_up_ptr_args_one_node prog hd_nodes hv_nodes sv)) [] inc_ptrs in
-    let unfold_ptrs = List.filter (fun sv -> List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes) new_ptrs in
+        r@(look_up_ptr_args_one_node prog hd_nodes hv_nodes ~hr_sigs:hr_sigs sv)) [] inc_ptrs in
+    let unfold_ptrs = List.filter (fun sv -> is_unfold_ptr hv_nodes hr_sigs sv) new_ptrs in
     if unfold_ptrs != [] then unfold_ptrs 
     else
       let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
@@ -5773,10 +5787,8 @@ let look_up_first_reachable_unfold_ptr prog hd_nodes hv_nodes ?(hr_sigs = []) ro
       else (helper (old_ptrs@diff_ptrs) diff_ptrs)
   in
   (*check onl_ptrs are unfold points - view*)
-  if List.exists (fun sv -> 
-      (List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes) ||
-      (List.exists (fun (hr_root, _) -> CP.eq_spec_var hr_root sv) hr_sigs)
-    ) roots then roots 
+  if List.exists (fun sv -> is_unfold_ptr hv_nodes hr_sigs sv) roots 
+  then roots 
   else helper roots roots
 
 let extract_HRel_orig hf=

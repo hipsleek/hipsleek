@@ -297,8 +297,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     if !Globals.enable_lemma_lhs_unfold || !Globals.enable_lemma_rhs_unfold then ([],[]) 
     else (* must re-check this -if- {**} *)
       (* rhs_unfold_ptrs below really needed? isn't lhs unfold enough? *)
-      let lhs_unfold_ptrs = CFU.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true in
-      let rhs_unfold_ptrs = CFU.look_up_reachable_ptrs_sf cprog new_rhs [rhs_sv_self] true true in
+      let lhs_unfold_ptrs = x_add CFU.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true in
+      let rhs_unfold_ptrs = x_add CFU.look_up_reachable_ptrs_sf cprog new_rhs [rhs_sv_self] true true in
       if is_singl lhs_sv_self lhs_unfold_ptrs then
         if is_singl rhs_sv_self rhs_unfold_ptrs then
           let lhs_vns = CF.get_views lhs in
