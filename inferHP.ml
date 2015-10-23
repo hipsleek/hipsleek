@@ -713,7 +713,8 @@ let get_h_formula_data_fr_hnode hn=
 
 let is_match_pred lhs_selected_hpargs rhs_selected_hpargs =
   match lhs_selected_hpargs, rhs_selected_hpargs with
-    | [(lhp,largs)], [(rhp,rargs)] -> CP.eq_spec_var_order_list largs rargs
+    | [(lhp,largs)], [(rhp,rargs)] -> (* CP.eq_spec_var_order_list largs rargs *)
+          CP.diff_svl largs rargs = [] || CP.diff_svl rargs largs = []
     | _ -> false
 
 let is_match_node lhs_selected_hpargs rhs_b =
