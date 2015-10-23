@@ -15568,3 +15568,20 @@ let extract_mult (f:formula) : (formula * ((spec_var * exp * exp) list)) =
   let pr = !print_formula in
   let pr2 = pr_pair pr (pr_list (pr_triple !print_sv !print_exp !print_exp)) in
   Debug.no_1 "extract_mult" pr pr2 extract_mult f
+
+
+(* let map_formula (e: formula) (f_f, f_bf, f_e) : formula = *)
+  
+let extr_eqn (f:formula)  = 
+  let stk = new Gen.stack in
+  let rec helper f =
+    let f_f f = None in
+    let f_bf bf = match bf with
+      | (Eq (e1,e2,_),_) -> 
+        let () = stk # push (e1,e2) in
+        Some bf
+      | _ -> Some bf in
+    let f_e e = Some e in
+    map_formula f (f_f,f_bf,f_e) in
+  let _ = helper f in
+  stk # get_stk

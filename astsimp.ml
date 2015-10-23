@@ -2622,11 +2622,27 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       Debug.ninfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
       Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
       Debug.ninfo_hprint (add_str "vbi" (pr_option pr)) vbc_i no_pos;
-      let lst_uns = List.map fst n_un_str in
-      let lst_heap_ptrs = List.map (fun f -> 
-          let (h,_,_,_,_,_) = CF.split_components f in
-          CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h) lst_uns in
-      let () = y_binfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in
+      (* let lst_uns = List.map fst n_un_str in *)
+      let () = y_binfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
+      let keep_vs = CP.self_sv::view_sv in
+      let lst_heap_ptrs = List.map (fun (f,_) -> 
+          let (h,pure,_,_,_,_) = CF.split_components f in
+          let pure = MCP.pure_of_mix pure in
+          let vs = CP.fv pure in
+          let lst = CF.get_data_and_views h in
+          let lst = List.map (fun (v,hf) ->
+              let keep_vs = v::keep_vs in
+              let ex_vs = Gen.BList.difference_eq CP.eq_spec_var vs keep_vs in
+              let new_p = CP.mkExists_with_simpl !CP.simplify ex_vs pure None no_pos in
+              let eq_lst = CP.extr_eqn new_p in
+              let () = y_binfo_hp !CP.print_formula new_p in
+              (v,eq_lst)
+            ) lst in
+           let () = y_binfo_hp (pr_list (pr_pair !CP.print_sv (pr_list (pr_pair !CP.print_exp !CP.print_exp)))) lst in
+          let () = y_binfo_hp !CP.print_formula pure in
+          CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h
+        ) n_un_str in
+      (* let () = y_binfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
       let () = y_binfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in
       let cvdef = {
         C.view_name = vn;

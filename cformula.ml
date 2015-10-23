@@ -20293,3 +20293,15 @@ let mk_bind_fields_struc fields =
   let ps = List.map mk_bind_ptr ptrs in
   let pure = CP.conj_of_list ps no_pos in
   pure
+
+let get_data_and_views f =
+  let stk = new Gen.stack in
+  let f_h_f hf = 
+    match hf with
+    | ViewNode ({ h_formula_view_node = vsv; h_formula_view_name = vname; } as v) ->
+      let () = stk # push (vsv,hf) in Some hf
+    | DataNode ({ h_formula_data_node = vsv; h_formula_data_name = vname; } as v) ->
+      let () = stk # push (vsv,hf) in Some hf
+    | _ -> None in 
+  let _ = (map_h_formula f f_h_f) in
+  stk # get_stk
