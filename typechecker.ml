@@ -4541,6 +4541,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) then wrap_reverify_scc reverify_scc prog scc true in
     let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.infer_pure prog scc in
     let () = x_tinfo_hp (add_str "stk_of_static_specs (pure)" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) scc no_pos in
+    let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in
     (* let () = List.iter (fun proc -> *)
     (*     DD.ninfo_hprint (add_str "spec after infer post" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top) no_pos) scc in *)
 
@@ -4608,12 +4609,18 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = Ti.finalize () in
     
     let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
+    let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in
     let updated_scc = List.fold_left (fun r proc_id ->
         try
           let proc = Cast.look_up_proc_def_raw prog.Cast.new_proc_decls proc_id in
+          let () = try
+            proc.Cast.proc_args_wi <- (Nia.get_ni proc_id scc)
+          with _ -> ()
+          in
           r@[proc]
         with _ -> r
       ) [] scc_ids in
+    let () = x_tinfo_hp (add_str "(updated)proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) updated_scc no_pos in
     let () = Term.term_res_stk # reset in
     let () = x_ninfo_hp (add_str "updated_scc" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))) updated_scc no_pos in
     let n_verified_sccs = verified_sccs@[updated_scc] in
@@ -4694,7 +4701,7 @@ let rec check_prog iprog (prog : prog_decl) =
                 let _ = List.map (fun proc ->
                     let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
                     let todo_unk = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
-                    let () =  Debug.info_hprint (add_str "SEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
+                    let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula))
                       (proc.Cast.proc_stk_of_static_specs # top) no_pos in
                     res
                 ) iscc in
@@ -4704,13 +4711,16 @@ let rec check_prog iprog (prog : prog_decl) =
                   let ptr_paras = List.filter (fun (t,_) -> is_node_typ t) proc.Cast.proc_args in
                   ptr_paras != []
               ) iscc in
-              let res = verify_scc_incr cprog verified_sccs iscc1 in
+              let res, nsccs = verify_scc_incr cprog verified_sccs iscc1 in
               (* let todo_unk = Iincr.reset_infer_const_scc infs iscc in *)
-              res
+              let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list_ln (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  ))))) nsccs no_pos in
+              res,nsccs
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
-            List.fold_left (fun (acc_cprog, _) (_, cmd) ->  process_cmd iprog acc_cprog verified_sccs scc cmd)
-                (cprog, verified_sccs) cmds
+            List.fold_left (fun (acc_cprog, acc_sccs) (_, cmd) ->
+                let scc1 = Nia.update_ni_scc scc (List.concat acc_sccs) in
+                process_cmd iprog acc_cprog verified_sccs scc1 cmd
+            ) (cprog, verified_sccs) cmds
   in
   (********************************************************)
   (********************************************************)

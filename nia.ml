@@ -164,3 +164,15 @@ let classify_ni prog rels=
   let pr1 = pr_list_ln CP.string_of_infer_rel in
   Debug.no_1 "classify_ni" pr1 !CP.print_svl
       (fun _ -> classify_ni prog rels) rels
+
+let get_ni proc_name from_scc=
+  let from_proc = List.find (fun from_p -> string_eq proc_name from_p.Cast.proc_name) from_scc in
+  from_proc.Cast.proc_args_wi
+
+let update_ni_scc scc from_scc=
+  List.map (fun proc ->
+      try
+        let () = proc.Cast.proc_args_wi <- (get_ni proc.Cast.proc_name from_scc) in
+        proc
+      with _ -> proc
+  ) scc

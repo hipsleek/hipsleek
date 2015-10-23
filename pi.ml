@@ -79,7 +79,7 @@ let update_i_para i_rels proc=
   ) proc.Cast.proc_args_wi in
   let () = x_binfo_hp (add_str "proc.Cast.proc_name" pr_id) proc.Cast.proc_name no_pos in
   let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) n_proc_args_wi no_pos in
-  let proc = {proc with Cast.proc_args_wi = n_proc_args_wi} in
+  let () = proc.Cast.proc_args_wi <- n_proc_args_wi in
   proc
 
 let update_i_para_scc i_rels scc=
@@ -700,14 +700,15 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                 print_endline_quiet "*************************************";
               end;
-            let scc = if is_infer_const_scc scc INF_ANA_NI then
+            let () = if is_infer_const_scc scc INF_ANA_NI then
               let svl = Nia.classify_ni prog rels in
               let () = x_binfo_hp (add_str "I preds" pr_svl) svl no_pos in
               let scc = update_i_para_scc svl scc in
-              scc
-            else scc
-            in
-            let () = if !Globals.sa_gen_slk then
+              let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in
+              ()
+            else ()
+          in
+              let () = if !Globals.sa_gen_slk then
                 try
                   let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv
                                                            && not(CP.mem_svl sv post_vars)) pre_vars in
@@ -717,7 +718,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 with _ -> ()
               else ()
             in
-            let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
+              let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
             let reloblgs = x_add_1 Immutable.norm_rel_oblgs reloblgs_init in
