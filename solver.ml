@@ -1567,14 +1567,16 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       else res in 
   transform_list_failesc_context (idf,idf,fct) ctx
 
-and unfold_struc_nth (n:int) (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : struc_formula =
+and unfold_struc_nth (n:int) (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var) 
+  (already_unsat:bool) (uf:int) (pos : loc) : struc_formula =
   let pr = Cprinter.string_of_struc_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let prs = Cprinter.string_of_spec_var in
   Debug.no_4_num n "unfold_struc_nth" string_of_bool prs pr pr2 pr 
     (fun _ _ _ _ -> unfold_struc_x prog f v already_unsat uf pos) already_unsat v f prog
 
-and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : struc_formula = 
+and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var) 
+  (already_unsat:bool) (uf:int) (pos : loc) : struc_formula = 
 
   let struc_unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos 
       qvars ee ei ii already_unsat (uf:int) : struc_formula option=
@@ -1734,18 +1736,24 @@ and struc_unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.sp
   let prs = Cprinter.string_of_spec_var in
   let pr_out = ( (pr_pair prh (pr_opt pr))  ) in
   Debug.no_5 "struc_unfold_heap"  prh (pr_list prs) prs pr2 (pr_list prs) pr_out
-    (fun _ _ _ _ _ -> struc_unfold_heap_x prog f aset v  uf qvars pos)  f aset v prog qvars
+    (fun _ _ _ _ _ -> struc_unfold_heap_x prog f aset v uf qvars pos)  f aset v prog qvars
 
-and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc): (formula * (CP.spec_var*CP.spec_var) list) =
+and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) 
+  ?(lem_unfold = false) (already_unsat:bool) (uf:int) (pos : loc): (formula * (CP.spec_var*CP.spec_var) list) =
   (* unfold_x prog f v already_unsat pos *)
   let prs = Cprinter.string_of_spec_var in
   let pr = Cprinter.string_of_formula in
   let pr2 = Cprinter.string_of_prog_or_branches in
   let pr_out = pr_pair pr (pr_list (pr_pair prs prs)) in
-  Debug.no_4_num (*loop*) n "unfold" string_of_bool prs pr pr2 pr_out
-    (fun _ _ _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat v f prog
+  Debug.no_5_num (*loop*) n "unfold" 
+    (add_str "lem_unfold" string_of_bool)
+    (add_str "already_unsat" string_of_bool) 
+    prs pr pr2 pr_out
+    (fun _ _ _ _ _ -> unfold_x prog f v ~lem_unfold:lem_unfold already_unsat uf pos) 
+    lem_unfold already_unsat v f prog
 
-and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc)  = 
+and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) 
+  ?(lem_unfold = false) (already_unsat:bool) (uf:int) (pos : loc)  = 
   let rec aux f v  uf pos = 
     match f with
     | Base ({ 
@@ -1755,7 +1763,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
         formula_base_flow = fl;
         formula_base_and = a;
         formula_base_pos = pos}) ->  
-      let new_f = unfold_baref prog h p vp a fl v pos [] already_unsat uf in
+      let new_f = unfold_baref prog h p vp a fl v pos [] ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) 
 
@@ -1765,7 +1773,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
       let qvars, baref = split_quantifiers rf in
       let h, p, vp, fl, t, a = split_components baref in
       (*let () = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-      let uf = unfold_baref prog h p vp a fl v pos qvars already_unsat uf in
+      let uf = unfold_baref prog h p vp a fl v pos qvars ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       (normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*)
     | Or ({formula_or_f1 = f1;
@@ -1780,11 +1788,12 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
   let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in
   new_f,ss0
 
-and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
+and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) 
+  pos qvars ?(lem_unfold = false) already_unsat (uf:int) =
   let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = x_add Csvutil.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
-  let unfolded_h = unfold_heap prog h aset v fl uf pos in
+  let unfolded_h = unfold_heap prog h aset v fl uf ~lem_unfold:lem_unfold pos in
   (* let () = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
   let pure_f = mkBase HEmp p vp TypeTrue (mkTrueFlow ()) [] pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
@@ -1800,28 +1809,34 @@ and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_set
     | _ -> resform
   else resform
 
-and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) =
+and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) 
+  pos qvars ?(lem_unfold = false) already_unsat (uf:int) =
   let pr1 = Cprinter.string_of_h_formula in
   let pr_out = Cprinter.string_of_formula in
   Debug.no_1 "unfold_baref" 
     (add_str "lhs heap:" pr1)
     pr_out
-    (fun _ -> unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) pos qvars already_unsat (uf:int) ) h 
+    (fun _ -> unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) 
+      pos qvars ~lem_unfold:lem_unfold already_unsat (uf:int) ) h 
 
-and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos : formula = 
+and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) 
+  fl (uf:int) ?(lem_unfold = false) pos : formula = 
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_spec_var in
   let pr3 = pr_list pr2 in
   let pr_out = Cprinter.string_of_formula in
-  Debug.no_4 "unfold_heap" 
+  Debug.no_5 "unfold_heap" 
     (add_str "lhs heap:" pr1) 
     (add_str "lhs var:" pr2)
     (add_str "lhs aset:" pr3)
+    (add_str "lem_unfold" string_of_bool)
     (add_str "unfold count:" string_of_int)
     pr_out
-    (fun _ _ _ _ -> unfold_heap_x prog f aset v fl uf pos) f v aset uf
+    (fun _ _ _ _ _ -> unfold_heap_x prog f aset v fl uf ~lem_unfold:lem_unfold pos) 
+    f v aset lem_unfold uf
 
-and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) fl (uf:int) pos: formula = 
+and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) 
+  fl (uf:int) ?(lem_unfold = false) pos: formula = 
   (*  let () = print_string("unfold heap " ^ (Cprinter.string_of_h_formula f) ^ "\n\n") in*)
   match f with
   | ViewNode ({h_formula_view_node = p;
@@ -1916,8 +1931,8 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
       formula_of_heap_fl f fl pos
   | Star ({h_formula_star_h1 = f1;
            h_formula_star_h2 = f2}) ->
-    let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
-    let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
+    let uf1 = unfold_heap_x prog f1 aset v fl uf ~lem_unfold:lem_unfold pos in
+    let uf2 = unfold_heap_x prog f2 aset v fl uf ~lem_unfold:lem_unfold pos in
     normalize_combine_star uf1 uf2 pos
   | StarMinus ({h_formula_starminus_h1 = f1;
                 h_formula_starminus_aliasing = al;
@@ -1928,24 +1943,27 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
             normalize_combine_starminus uf1 uf2 al pos (*TO CHECK*)*)
   | Conj ({h_formula_conj_h1 = f1;
            h_formula_conj_h2 = f2}) ->
-    let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
-    let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
+    let uf1 = unfold_heap_x prog f1 aset v fl uf ~lem_unfold:lem_unfold pos in
+    let uf2 = unfold_heap_x prog f2 aset v fl uf ~lem_unfold:lem_unfold pos in
     normalize_combine_conj uf1 uf2 pos
   | ConjConj ({h_formula_conjconj_h1 = f1;
                h_formula_conjconj_h2 = f2}) ->
-    let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
-    let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
+    let uf1 = unfold_heap_x prog f1 aset v fl uf ~lem_unfold:lem_unfold pos in
+    let uf2 = unfold_heap_x prog f2 aset v fl uf ~lem_unfold:lem_unfold pos in
     normalize_combine_conjconj uf1 uf2 pos
   | ConjStar ({h_formula_conjstar_h1 = f1;
                h_formula_conjstar_h2 = f2}) ->
-    let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
-    let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
+    let uf1 = unfold_heap_x prog f1 aset v fl uf ~lem_unfold:lem_unfold pos in
+    let uf2 = unfold_heap_x prog f2 aset v fl uf ~lem_unfold:lem_unfold pos in
     normalize_combine_conjstar uf1 uf2 pos
   | Phase ({h_formula_phase_rd = f1;
             h_formula_phase_rw = f2}) ->
-    let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
-    let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
+    let uf1 = unfold_heap_x prog f1 aset v fl uf ~lem_unfold:lem_unfold pos in
+    let uf2 = unfold_heap_x prog f2 aset v fl uf ~lem_unfold:lem_unfold pos in
     normalize_combine_phase uf1 uf2 pos
+  | HRel _ -> 
+    let () = if lem_unfold then y_binfo_pp ("TODO: Unfolding HRel") in
+    formula_of_heap_fl f fl pos
   | _ -> formula_of_heap_fl f fl pos
 
 and unfold_for_abs_merge prog pos = 

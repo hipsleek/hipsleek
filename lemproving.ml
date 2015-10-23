@@ -338,7 +338,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
         (* let sv = CP.subst_var_par ss sv0 in *)
         let sv = CP.subs_one ss sv0 in
         (* let () = print_endline ("-- unfold lsh on " ^ (Cprinter.string_of_spec_var sv)) in *)
-        let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv true 0 pos in
+        let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv ~lem_unfold:true true 0 pos in
+        let () = y_binfo_hp (add_str "unfold:f" !CF.print_formula) f in
+        let () = y_binfo_hp (add_str "unfold:sv" !CF.print_sv) sv in
+        let () = y_binfo_hp (add_str "unfold:nf" !CF.print_formula) nf in
         (nf, ss@ss1)
       ) (lhs, []) lhs_unfold_ptrs
   ) in
