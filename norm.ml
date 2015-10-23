@@ -7,6 +7,7 @@ open Exc.GTable
 
 module DD = Debug
 module CF=Cformula
+module CFU = Cfutil
 module CP=Cpure
 module MCP=Mcpure
 module C = Cast
@@ -1404,7 +1405,7 @@ let cont_para_analysis_view cprog vdef other_vds=
   let process_branch_x vname args f=
     let _, vns, _ = CF.get_hp_rel_formula f in
     if vns = [] then args else
-      let _, reach_dns, reach_vns = look_up_reachable_ptrs_w_alias cprog f [self_sv] 3 in
+      let _, reach_dns, reach_vns = CFU.look_up_reachable_ptrs_w_alias cprog f [self_sv] 3 in
       let ( _,mix_f,_,_,_,_) = CF.split_components f in
       let eqs = (MCP.ptr_equations_without_null mix_f) in
       let rec_vns, other_vns = List.partition (fun vn ->

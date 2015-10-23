@@ -292,7 +292,8 @@ let check_simp_hp_eq (hp1, _) (hp2, _)=
 (*     (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)) *)
 (*   else report_error pos "sau.add_raw_hp_rel: args should be not empty" *)
 
-let add_raw_hp_rel prog is_pre is_unknown unknown_args pos= Cast.add_raw_hp_rel prog is_pre is_unknown unknown_args pos
+let add_raw_hp_rel prog is_pre is_unknown unknown_args pos = 
+  Cast.add_raw_hp_rel prog is_pre is_unknown unknown_args pos
 (*   let pr1 = pr_list (pr_pair !CP.print_sv print_arg_kind) in *)
 (*   let pr2 = Cprinter.string_of_h_formula in *)
 (*   let pr4 (hf,_) = pr2 hf in *)

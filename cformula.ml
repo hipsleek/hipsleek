@@ -5705,7 +5705,7 @@ let look_up_rev_ptr_node_one_node prog hd_nodes hv_nodes node_name=
       hd_nodes hv_nodes node_name
 
 (*should improve: should take care hrel also*)
-let look_up_reachable_ptr_args prog hd_nodes hv_nodes node_names=
+let look_up_reachable_ptr_args prog hd_nodes hv_nodes ?(hr_sigs = []) node_names =
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.concat
         (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes)
@@ -5760,22 +5760,24 @@ let look_up_reachable_ptrs_w_alias_helper prog hd_nodes hv_nodes eqset roots=
   let cl_roots = find_close roots eqset in
   helper cl_roots cl_roots
 
-let look_up_first_reachable_unfold_ptr prog hd_nodes hv_nodes roots=
+let look_up_first_reachable_unfold_ptr prog hd_nodes hv_nodes ?(hr_sigs = []) roots =
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.fold_left (fun r sv ->
         r@(look_up_ptr_args_one_node prog hd_nodes hv_nodes sv)) [] inc_ptrs in
     let unfold_ptrs = List.filter (fun sv -> List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes) new_ptrs in
-    if unfold_ptrs != [] then unfold_ptrs else
+    if unfold_ptrs != [] then unfold_ptrs 
+    else
       let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
       let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
       if diff_ptrs = [] then []
       else (helper (old_ptrs@diff_ptrs) diff_ptrs)
   in
   (*check onl_ptrs are unfold points - view*)
-  if List.exists (fun sv -> List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes
-                 ) roots then roots else
-    helper roots roots
-
+  if List.exists (fun sv -> 
+      (List.exists (fun vn -> CP.eq_spec_var vn.h_formula_view_node sv) hv_nodes) ||
+      (List.exists (fun (hr_root, _) -> CP.eq_spec_var hr_root sv) hr_sigs)
+    ) roots then roots 
+  else helper roots roots
 
 let extract_HRel_orig hf=
   match hf with
@@ -6428,106 +6430,110 @@ and get_hp_rel_h_formula hf=
   | HFalse
   | HEmp | HVar _-> ([],[],[])
 
+(*******************)
+(* Moved to Cfutil *)
+(*******************)
+(* (*first_ptr = true: stop at the first*)                                                        *)
+(* let look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr =                               *)
+(*   let search_fnc =                                                                             *)
+(*     if first_ptr then look_up_first_reachable_unfold_ptr                                       *)
+(*     else look_up_reachable_ptr_args                                                            *)
+(*   in                                                                                           *)
+(*   let obtain_reachable_ptr_conj f =                                                            *)
+(*     let hds, hvs, hrs = get_hp_rel_formula f in                                                *)
+(*     let hrs = List.map (fun hr -> CFU.) hrs in                                                 *)
+(*     search_fnc prog hds hvs roots                                                              *)
+(*   in                                                                                           *)
+(*   let fs = list_of_disjs f in                                                                  *)
+(*   let ptrs = List.fold_left (fun r f -> r@(obtain_reachable_ptr_conj f)) [] fs in              *)
+(*   let ptrs1 = CP.remove_dups_svl ptrs in                                                       *)
+(*   if ptr_only then List.filter CP.is_node_typ ptrs1 else ptrs1                                 *)
 
-(*first_ptr = true: stop at the first*)
-let look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr=
-  let search_fnc = if first_ptr then look_up_first_reachable_unfold_ptr
-    else look_up_reachable_ptr_args
-  in
-  let obtain_reachable_ptr_conj f=
-    let hds, hvs, _ = get_hp_rel_formula f in
-    search_fnc prog hds hvs roots
-  in
-  let fs = list_of_disjs f in
-  let ptrs = List.fold_left (fun r f -> r@(obtain_reachable_ptr_conj f)) [] fs in
-  let ptrs1 = CP.remove_dups_svl ptrs in
-  if ptr_only then List.filter CP.is_node_typ ptrs1 else ptrs1
+(* let look_up_reachable_ptrs_f prog f roots ptr_only first_ptr=                                  *)
+(*   let pr1 = !print_formula in                                                                  *)
+(*   let pr2 = !print_spec_var_list in                                                            *)
+(*   let pr_out = !print_spec_var_list in                                                         *)
+(*   Debug.no_2 "look_up_reachable_ptrs_f" pr1 pr2 pr_out                                         *)
+(*     (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr) f roots            *)
 
-let look_up_reachable_ptrs_f prog f roots ptr_only first_ptr=
-  let pr1 = !print_formula in
-  let pr2 = !print_spec_var_list in
-  let pr_out = !print_spec_var_list in
-  Debug.no_2 "look_up_reachable_ptrs_f" pr1 pr2 pr_out
-    (fun _ _ -> look_up_reachable_ptrs_f_x prog f roots ptr_only first_ptr) f roots
+(* (*                                                                                             *)
+(* output_ctr = 0 return all pointer                                                              *)
+(* output_ctr = 1 return output_ctr + dnodes                                                      *)
+(* output_ctr = 2 return output_ctr + vnodes                                                      *)
+(* output_ctr = 3 return output_ctr + dnodes + vnodes                                             *)
+(* *)                                                                                             *)
+(* let look_up_reachable_ptrs_w_alias_x prog f roots output_ctr=                                  *)
+(*   let search_fnc = look_up_reachable_ptrs_w_alias_helper in                                    *)
+(*   let obtain_reachable_ptr_conj f=                                                             *)
+(*     let (h ,mf,_,_,_,_) = split_components f in                                                *)
+(*     let hds, hvs, _ = get_hp_rel_h_formula h in                                                *)
+(*     let eqsets = (MCP.ptr_equations_without_null mf) in                                        *)
+(*     let reach_ptrs = search_fnc prog hds hvs eqsets roots in                                   *)
+(*     let dnodes = List.filter (fun hd -> CP.mem_svl hd.h_formula_data_node reach_ptrs) hds in   *)
+(*     let vnodes = List.filter (fun vn -> CP.mem_svl vn.h_formula_view_node reach_ptrs) hvs in   *)
+(*     (reach_ptrs, dnodes, vnodes)                                                               *)
+(*   in                                                                                           *)
+(*   let fs = list_of_disjs f in                                                                  *)
+(*   let reach_ptrs,dnodes, vnodes = List.fold_left (fun (r1,r2,r3) f ->                          *)
+(*       let reach_ptrs, reach_dns, reach_vns = obtain_reachable_ptr_conj f in                    *)
+(*       (r1@reach_ptrs, r2@reach_dns, r3@reach_vns)                                              *)
+(*     ) ([],[],[]) fs in                                                                         *)
+(*   reach_ptrs,dnodes, vnodes                                                                    *)
 
-(*
-output_ctr = 0 return all pointer
-output_ctr = 1 return output_ctr + dnodes
-output_ctr = 2 return output_ctr + vnodes
-output_ctr = 3 return output_ctr + dnodes + vnodes
-*)
-let look_up_reachable_ptrs_w_alias_x prog f roots output_ctr=
-  let search_fnc = look_up_reachable_ptrs_w_alias_helper in
-  let obtain_reachable_ptr_conj f=
-    let (h ,mf,_,_,_,_) = split_components f in
-    let hds, hvs, _ = get_hp_rel_h_formula h in
-    let eqsets = (MCP.ptr_equations_without_null mf) in
-    let reach_ptrs = search_fnc prog hds hvs eqsets roots in
-    let dnodes = List.filter (fun hd -> CP.mem_svl hd.h_formula_data_node reach_ptrs) hds in
-    let vnodes = List.filter (fun vn -> CP.mem_svl vn.h_formula_view_node reach_ptrs) hvs in
-    (reach_ptrs, dnodes, vnodes)
-  in
-  let fs = list_of_disjs f in
-  let reach_ptrs,dnodes, vnodes = List.fold_left (fun (r1,r2,r3) f ->
-      let reach_ptrs, reach_dns, reach_vns = obtain_reachable_ptr_conj f in
-      (r1@reach_ptrs, r2@reach_dns, r3@reach_vns)
-    ) ([],[],[]) fs in
-  reach_ptrs,dnodes, vnodes
+(* let look_up_reachable_ptrs_w_alias prog f roots output_ctr=                                    *)
+(*   let pr1 = !print_formula in                                                                  *)
+(*   let pr2 = !print_spec_var_list in                                                            *)
+(*   let pr_data_node dn= !print_h_formula (DataNode dn) in                                       *)
+(*   let pr_view_node dn= !print_h_formula (ViewNode dn) in                                       *)
+(*   Debug.no_3 "look_up_reachable_ptrs_w_alias" pr1 pr2 string_of_int                            *)
+(*     (pr_triple !CP.print_svl (pr_list pr_data_node) (pr_list pr_view_node) )                   *)
+(*     (fun _ _ _ -> look_up_reachable_ptrs_w_alias_x prog f roots output_ctr)                    *)
+(*     f roots output_ctr                                                                         *)
 
-let look_up_reachable_ptrs_w_alias prog f roots output_ctr=
-  let pr1 = !print_formula in
-  let pr2 = !print_spec_var_list in
-  let pr_data_node dn= !print_h_formula (DataNode dn) in
-  let pr_view_node dn= !print_h_formula (ViewNode dn) in
-  Debug.no_3 "look_up_reachable_ptrs_w_alias" pr1 pr2 string_of_int
-    (pr_triple !CP.print_svl (pr_list pr_data_node) (pr_list pr_view_node) )
-    (fun _ _ _ -> look_up_reachable_ptrs_w_alias_x prog f roots output_ctr)
-    f roots output_ctr
+(* let look_up_reachable_first_reachable_view prog f roots=                                       *)
+(*   let ptrs = look_up_reachable_ptrs_f prog f roots true true in                                *)
+(*   if ptrs = [] then [] else                                                                    *)
+(*     let _, hvs, _ = get_hp_rel_formula f in                                                    *)
+(*     List.filter (fun hv -> CP.mem_svl hv.h_formula_view_node ptrs) hvs                         *)
 
-let look_up_reachable_first_reachable_view prog f roots=
-  let ptrs = look_up_reachable_ptrs_f prog f roots true true in
-  if ptrs = [] then [] else
-    let _, hvs, _ = get_hp_rel_formula f in
-    List.filter (fun hv -> CP.mem_svl hv.h_formula_view_node ptrs) hvs
+(* let look_up_reachable_first_reachable_view prog f roots=                                       *)
+(*   let pr1 = !print_formula in                                                                  *)
+(*   let pr_view_node dn= !print_h_formula (ViewNode dn) in                                       *)
+(*   Debug.no_2 "look_up_reachable_first_reachable_view" pr1 !CP.print_svl (pr_list pr_view_node) *)
+(*     (fun _ _ -> look_up_reachable_first_reachable_view prog f roots)                           *)
+(*     f roots                                                                                    *)
 
-let look_up_reachable_first_reachable_view prog f roots=
-  let pr1 = !print_formula in
-  let pr_view_node dn= !print_h_formula (ViewNode dn) in
-  Debug.no_2 "look_up_reachable_first_reachable_view" pr1 !CP.print_svl (pr_list pr_view_node)
-    (fun _ _ -> look_up_reachable_first_reachable_view prog f roots)
-    f roots
+(* let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=                          *)
+(*   let look_up_reachable_ptrs_sf_list prog sfs roots = (                                        *)
+(*     let ptrs = List.fold_left (fun r (_, sf) ->                                                *)
+(*         r @ (look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr)                       *)
+(*       ) [] sfs in                                                                              *)
+(*     CP.remove_dups_svl ptrs                                                                    *)
+(*   ) in                                                                                         *)
+(*   match sf with                                                                                *)
+(*   | EList sfs -> look_up_reachable_ptrs_sf_list prog sfs roots                                 *)
+(*   | ECase { formula_case_branches = sfs } ->                                                   *)
+(*     look_up_reachable_ptrs_sf_list prog sfs roots                                              *)
+(*   | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->                   *)
+(*     let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only first_ptr in                    *)
+(*     let ptrs2 = (match sf_opt with                                                             *)
+(*         | None -> []                                                                           *)
+(*         | Some sf -> look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr                *)
+(*       ) in                                                                                     *)
+(*     CP.remove_dups_svl (ptrs1 @ ptrs2)                                                         *)
+(*   | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->                          *)
+(*     let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only first_ptr in                    *)
+(*     let ptrs2 = look_up_reachable_ptrs_sf prog sf roots  ptr_only first_ptr in                 *)
+(*     CP.remove_dups_svl (ptrs1 @ ptrs2)                                                         *)
+(*   | EInfer { formula_inf_continuation = sf } ->                                                *)
+(*     look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr                                 *)
 
-let rec look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr=
-  let look_up_reachable_ptrs_sf_list prog sfs roots = (
-    let ptrs = List.fold_left (fun r (_, sf) ->
-        r @ (look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr)
-      ) [] sfs in
-    CP.remove_dups_svl ptrs
-  ) in
-  match sf with
-  | EList sfs -> look_up_reachable_ptrs_sf_list prog sfs roots
-  | ECase { formula_case_branches = sfs } ->
-    look_up_reachable_ptrs_sf_list prog sfs roots
-  | EBase { formula_struc_base = f; formula_struc_continuation = sf_opt } ->
-    let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only first_ptr in
-    let ptrs2 = (match sf_opt with
-        | None -> []
-        | Some sf -> look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr
-      ) in
-    CP.remove_dups_svl (ptrs1 @ ptrs2)
-  | EAssume { formula_assume_simpl = f; formula_assume_struc = sf} ->
-    let ptrs1 = look_up_reachable_ptrs_f prog f roots ptr_only first_ptr in
-    let ptrs2 = look_up_reachable_ptrs_sf prog sf roots  ptr_only first_ptr in
-    CP.remove_dups_svl (ptrs1 @ ptrs2)
-  | EInfer { formula_inf_continuation = sf } ->
-    look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr
-
-and look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr=
-  let pr1 = !print_struc_formula in
-  let pr2 = !print_spec_var_list in
-  let pr_out = !print_spec_var_list in
-  Debug.no_2 "look_up_reachable_ptrs_sf" pr1 pr2 pr_out
-    (fun _ _ -> look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr) sf roots
+(* and look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr=                                *)
+(*   let pr1 = !print_struc_formula in                                                            *)
+(*   let pr2 = !print_spec_var_list in                                                            *)
+(*   let pr_out = !print_spec_var_list in                                                         *)
+(*   Debug.no_2 "look_up_reachable_ptrs_sf" pr1 pr2 pr_out                                        *)
+(*     (fun _ _ -> look_up_reachable_ptrs_sf_x prog sf roots ptr_only first_ptr) sf roots         *)
 
 let rec get_hprel (f:formula) =
   match f with

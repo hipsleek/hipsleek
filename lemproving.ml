@@ -9,6 +9,7 @@ open Label_only
 (* module AS = Astsimp *)
 module C  = Cast
 module CF = Cformula
+module CFU = Cfutil
 module CP = Cpure
 module H  = Hashtbl
 module I  = Iast
@@ -281,6 +282,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     List.find (fun (CP.SpecVar (_,id,_)) -> id=self) fv_rhs
   with _ -> sv_self
   in
+  let () = y_binfo_hp (add_str "lhs_sv_self" !CP.print_sv) lhs_sv_self in
+  let () = y_binfo_hp (add_str "rhs_sv_self" !CP.print_sv) rhs_sv_self in
   (* let () = print_endline ("\n== old lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
   let lhs_unfold_ptrs0,rhs_unfold_ptrs0 =
     (* let lhs_pt = if !Globals.enable_lemma_lhs_unfold then  *)
@@ -294,8 +297,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     if !Globals.enable_lemma_lhs_unfold || !Globals.enable_lemma_rhs_unfold then ([],[]) 
     else (* must re-check this -if- {**} *)
       (* rhs_unfold_ptrs below really needed? isn't lhs unfold enough? *)
-      let lhs_unfold_ptrs = CF.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true in
-      let rhs_unfold_ptrs = CF.look_up_reachable_ptrs_sf cprog new_rhs [rhs_sv_self] true true in
+      let lhs_unfold_ptrs = CFU.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true in
+      let rhs_unfold_ptrs = CFU.look_up_reachable_ptrs_sf cprog new_rhs [rhs_sv_self] true true in
       if is_singl lhs_sv_self lhs_unfold_ptrs then
         if is_singl rhs_sv_self rhs_unfold_ptrs then
           let lhs_vns = CF.get_views lhs in
@@ -321,10 +324,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
       end
   in
   let () = y_binfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
-  let () = y_binfo_hp (add_str "rhs_unfold_ptrs10" !CP.print_svl) rhs_unfold_ptrs0 in
+  let () = y_binfo_hp (add_str "rhs_unfold_ptrs0" !CP.print_svl) rhs_unfold_ptrs0 in
   let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
       if !Globals.allow_lemma_deep_unfold then
-        CF.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true
+        CFU.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true
       else [lhs_sv_self]
     else
       lhs_unfold_ptrs0
@@ -353,7 +356,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     (* make sure RHS is unfolded if LHS is not unfolded *)
     let rhs_unfold_ptrs = if lhs_unfold_ptrs==[] || !Globals.enable_lemma_rhs_unfold then
         if !Globals.allow_lemma_deep_unfold then
-          CF.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
+          CFU.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
       else  []                          (* rhs_unfold_ptrs0  *) (*cancelling the effect of computing the pointers in the -if- {**} above *)
     in

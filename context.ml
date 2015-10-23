@@ -1813,6 +1813,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig comp_lems in
       let () = y_tinfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
       let lem_act = List.map (fun lem -> (3, M_lemma (m_res, Some lem, 0))) applicable_lems in
+      let () = if not (is_empty lem_act) then y_binfo_hp (add_str "lem_act" (pr_list pr_act)) lem_act in
       let act = (match tup (* lhs_node, rhs_node *) with
        | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                       CF.h_formula_thread_origins = dl_origins;
@@ -2254,7 +2255,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
                        vr_name) >0 then
                    (*find the first viewnode readable from left datanode*)
-                   let lvs = CF.look_up_reachable_first_reachable_view prog
+                   let lvs = CFU.look_up_reachable_first_reachable_view prog
                        (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
                    let uf_i = if new_orig_r then 0 else 1 in
                    if lvs = [] then
@@ -2382,7 +2383,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs reqset in
                if syn_lem_typ =3 || (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
                  (*find the first viewnode readable from right datanode*)
-                 let lvs = CF.look_up_reachable_first_reachable_view prog
+                 let lvs = CFU.look_up_reachable_first_reachable_view prog
                      rhs [dr.CF.h_formula_data_node] in
                  if lvs = [] then [(1,M_unfold (m_res,uf_i))] else
                    [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
@@ -2462,7 +2463,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              else 
                (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
          in 
-         let () = y_binfo_hp (add_str "orig_act" pr_act) orig_act in
+         let () = y_tinfo_hp (add_str "orig_act" pr_act) orig_act in
          orig_act
        | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) ->
          let () = y_tinfo_pp "HREL vs DATA" in
