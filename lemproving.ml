@@ -320,8 +320,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs, CP.diff_svl rhs_unfold_ptrs lhs_unfold_ptrs)
       end
   in
-  let () = y_tinfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
-  let () = y_tinfo_hp (add_str "rhs_unfold_ptrs10" !CP.print_svl) rhs_unfold_ptrs0 in
+  let () = y_binfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
+  let () = y_binfo_hp (add_str "rhs_unfold_ptrs10" !CP.print_svl) rhs_unfold_ptrs0 in
   let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
       if !Globals.allow_lemma_deep_unfold then
         CF.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true
@@ -340,7 +340,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
       ) (lhs, []) lhs_unfold_ptrs
   ) in
   (* let () = print_endline ("== new lhs = " ^ (Cprinter.string_of_formula lhs)) in *)
-  let () = pr_debug (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs pos in
+  let () = y_binfo_hp (add_str "LP.lhs(unfolded)" Cprinter.string_of_formula) lhs     in
   (*let () = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
   let () = pr_debug (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in

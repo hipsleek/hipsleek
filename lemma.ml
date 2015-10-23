@@ -248,7 +248,7 @@ let process_one_lemma unfold_flag iprog cprog ldef =
   let vdefs = Cprog_sleek.get_sorted_view_decls () in
   let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
   (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
-  let ldef = if unfold_flag then unfold_body_lemma iprog ldef ulst else ldef in
+  let ldef = if unfold_flag then x_add unfold_body_lemma iprog ldef ulst else ldef in
   let () = y_tinfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in
   let () = y_tinfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag in
   let () = y_tinfo_hp (add_str "lemma(after unfold)" Iprinter.string_of_coerc_decl) ldef in
