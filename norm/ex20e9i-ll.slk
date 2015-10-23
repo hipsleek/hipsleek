@@ -1,0 +1,12 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+lemma_infer [H,@classic,@pure_field] "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
+print residue.
