@@ -392,8 +392,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let lhs = CF.subst_avoid_capture self_sv_lst self_sv_renamed_lst lhs in
   let rhs = CF.subst_struc_avoid_capture self_sv_lst self_sv_renamed_lst rhs in
   (* let rhs = CF.case_to_disjunct rhs in *)
+  let () = y_tinfo_hp (add_str "coercion_exact" string_of_bool) coer.C.coercion_exact in
+  let () = y_tinfo_hp (add_str "is_classic" string_of_bool) (coer.C.coercion_infer_obj # is_classic) in
   x_add process_coercion_check coer (CFormula lhs) (CSFormula rhs) (coer.C.coercion_infer_vars @ new_hp_infer_vars)
-    coer.C.coercion_exact coer.C.coercion_name cprog
+    coer.C.coercion_exact (* (coer.C.coercion_infer_obj # is_classic) *) coer.C.coercion_name cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in

@@ -288,9 +288,10 @@ and sleek_entail_check i itype isvl (cprog: C.prog_decl) proof_traces ante conse
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let pr4 = pr_list_ln (pr_pair pr1 pr1) in
   let pr5 = pr_list string_of_inf_const in
-  Debug.no_5_num i "sleek_entail_check" pr5 !CP.print_svl  pr1 pr2 pr4 pr3
-    (fun _ _ _ _ _ -> sleek_entail_check_x itype isvl cprog proof_traces ante conseq)
-    itype isvl ante conseq proof_traces
+  Debug.no_6_num i "sleek_entail_check" 
+    pr5 !CP.print_svl pr1 pr2 pr4 (add_str "is_classic" string_of_bool) pr3
+    (fun _ _ _ _ _ _ -> sleek_entail_check_x itype isvl cprog proof_traces ante conseq)
+    itype isvl ante conseq proof_traces (check_is_classic ())
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ =
