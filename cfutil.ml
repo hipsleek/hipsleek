@@ -306,9 +306,9 @@ let rec_unfold_formula_of_hrel prog hrel_root hrel_args =
   | Named d_name ->
     let d_decl = C.look_up_data_def_prog prog d_name in
     let d_args = List.map (fun (v, _) -> CP.fresh_spec_var v) d_decl.C.data_fields_new in
-    let d_node = CF.mkDataNode hrel_root d_decl.C.data_name d_args pos in
-    let f = CF.ex_formula_of_heap d_args d_node pos in
     let ptr_d_args = List.filter CP.is_node_typ d_args in
+    let d_node = CF.mkDataNode hrel_root d_decl.C.data_name d_args pos in
+    let f = CF.ex_formula_of_heap d_args (* CF.formula_of_heap *) d_node pos in
     let ni_hr_args = List.map (fun a -> (a, Globals.NI)) (hrel_root::hrel_args) in
     List.fold_left (fun f ptr ->
       let hr_args = (ptr, I)::ni_hr_args in

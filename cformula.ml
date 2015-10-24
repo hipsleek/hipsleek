@@ -2729,6 +2729,14 @@ and struc_fv ?(vartype=Global_var.var_with_none) (f: struc_formula) : CP.spec_va
     | EList b -> rdv (fold_l_snd aux b)
   in aux f
 
+and struc_implicit_vars (f: struc_formula): CP.spec_var list =
+  match f with
+  | EList el -> List.concat (List.map (fun (_, sf) -> struc_implicit_vars sf) el)
+  | ECase ec -> List.concat (List.map (fun (_, sf) -> struc_implicit_vars sf) ec.formula_case_branches)
+  | EBase eb -> eb.formula_struc_implicit_inst
+  | EAssume ae -> []
+  | EInfer ei -> struc_implicit_vars ei.formula_inf_continuation
+
 and struc_fv_infer (f: struc_formula) : CP.spec_var list =
   let rdv = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let dsvl l1 l2 = Gen.BList.difference_eq CP.eq_spec_var (rdv l1) l2 in

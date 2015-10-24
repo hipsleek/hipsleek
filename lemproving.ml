@@ -215,17 +215,18 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 
 
 let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : CF.struc_formula * (CP.spec_var list) =
+  let e_implicit_vars = CF.struc_implicit_vars e in
   let f_none _ _ = None in
   let c_h_formula qvs fv_lhs x =  
     let vs = CF.h_fv x in
     let hrels = List.map (fun (a,_) -> a) (CF.get_HRels x ) in
     (* let hrels = Gen.BList.difference_eq CP.eq_spec_var hrels qvs in *)
-    let vs = Gen.BList.difference_eq CP.eq_spec_var vs (fv_lhs@qvs@hrels) in
+    let vs = Gen.BList.difference_eq CP.eq_spec_var vs (fv_lhs@qvs@hrels@e_implicit_vars) in
     (x, vs) in
   let f_f fv_lhs e = 
     match e with
-    | CF.Base ({CF.formula_base_heap = hf}) 
-      -> let (n_hf,vs) = c_h_formula [] fv_lhs hf in
+    | CF.Base ({CF.formula_base_heap = hf}) -> 
+      let (n_hf,vs) = c_h_formula [] fv_lhs hf in
       Some (CF.push_exists vs e,vs)
     | CF.Exists ({CF.formula_exists_heap = hf; 
                   CF.formula_exists_qvars = qvs}) 
@@ -271,8 +272,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let () = pr_debug (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
   let () = pr_debug (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
   let fv_rhs = CF.struc_fv rhs in
+  let () = y_binfo_hp (add_str "rhs" Cprinter.string_of_struc_formula) rhs in
   (* WN : fv_rhs2 seems incorrect as it does not pick free vars of rhs *)
   let (new_rhs,fv_rhs2) = add_exist_heap_of_struc fv_lhs rhs in
+  (* let () = y_binfo_hp (add_str "new_rhs" Cprinter.string_of_struc_formula) new_rhs in *)
   let sv_self = (CP.SpecVar (Globals.null_type, self, Unprimed)) in
   let lhs_sv_self = try
     List.find (fun (CP.SpecVar (_,id,_)) -> id=self) fv_lhs
@@ -354,7 +357,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   (*let () = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
   let glob_vs_rhs = Gen.BList.difference_eq CP.eq_spec_var fv_rhs fv_lhs in
   let () = pr_debug (add_str "LP.rhs" Cprinter.string_of_struc_formula) rhs pos in
-  let () = pr_debug (add_str "LP.new_rhs" Cprinter.string_of_struc_formula) new_rhs pos in
+  let () = y_binfo_hp (add_str "LP.new_rhs" Cprinter.string_of_struc_formula) new_rhs in
   let () = pr_debug (add_str "LP.glob_vs_rhs" Cprinter.string_of_spec_var_list) glob_vs_rhs pos in
   let () = pr_debug (add_str "LP.fv_rhs" Cprinter.string_of_spec_var_list) fv_rhs pos in
   
@@ -371,13 +374,13 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let unfolded_rhs = List.fold_left (fun sf sv ->
         Solver.unfold_struc_nth 9 (cprog,None) sf sv true 0 pos
       ) new_rhs rhs_unfold_ptrs in
-    let () = pr_debug (add_str "LP.unfolded_rhs" Cprinter.string_of_struc_formula) unfolded_rhs pos in
+    let () = y_binfo_hp (add_str "LP.unfolded_rhs" Cprinter.string_of_struc_formula) unfolded_rhs in
     (* WN : elim_exists on RHS caused unsoundness for lemma proving! *)
     (* WN : rhs of entailment need to be in normalized state! *)
     (* CF.struc_elim_exist *) unfolded_rhs
   in
   (* let () = print_endline ("== new rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
-  let () = pr_debug (add_str "LP.rhs(after elim_exists)" Cprinter.string_of_struc_formula) rhs pos in
+  let () = y_binfo_hp (add_str "LP.rhs(after elim_exists)" Cprinter.string_of_struc_formula) rhs in
   let lhs = if(coer.C.coercion_case == C.Ramify) then 
       Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
     else lhs
