@@ -1861,8 +1861,8 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
     else if CP.mem p aset then (
       match (snd prog) with
       | None ->
-        let prog = fst prog in
-        let vdef = x_add Cast.look_up_view_def pos prog.prog_view_decls lhs_name in
+        (* let prog = fst prog in                                                      *)
+        (* let vdef = x_add Cast.look_up_view_def pos prog.prog_view_decls lhs_name in *)
         let uf = old_uf+uf in
         (*let () = print_string "\n y\n" in*)
         let joiner f = formula_of_disjuncts (fst (List.split f)) in
@@ -1962,8 +1962,24 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
     let uf2 = unfold_heap_x prog f2 aset v fl uf ~lem_unfold:lem_unfold pos in
     normalize_combine_phase uf1 uf2 pos
   | HRel _ -> 
-    let () = if lem_unfold then y_binfo_pp ("TODO: Unfolding HRel") in
-    formula_of_heap_fl f fl pos
+    if lem_unfold then 
+      try
+        let () = x_nodo "Unfold HRel" in
+        let cprog = fst prog in
+        let hr_root, hr_args = CFU.get_node_var_args cprog f in
+        let unfold_f = CFU.unfold_formula_of_hrel cprog hr_root hr_args in
+        let () = y_tinfo_hp (add_str "f" !CF.print_h_formula) f in
+        let () = y_tinfo_hp (add_str "unfold_f" !CF.print_formula) unfold_f in 
+        unfold_f
+        (* let renamed_view_formula = x_add_1 rename_bound_vars forms in                             *)
+        (* let renamed_view_formula = add_unfold_num renamed_view_formula (uf + 1)s in               *)
+        (* let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::vdef.view_vars in *)
+        (* let to_vars = v::vs in                                                                    *)
+        (* let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in                *)
+        (* let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)     *)
+        (* CF.replace_formula_label v_lbl res_form                                                   *)
+      with _ -> formula_of_heap_fl f fl pos
+    else formula_of_heap_fl f fl pos
   | _ -> formula_of_heap_fl f fl pos
 
 and unfold_for_abs_merge prog pos = 
@@ -9563,7 +9579,7 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let sel_eqns_svl = match ass_guard with
     | None -> vs
     | Some f -> CP.intersect_svl vs ((CF.get_ptrs f)@ (CF.get_ptrs rhs_node)) in
-  let () = y_binfo_hp (add_str "sel_eqns_svl" !CP.print_svl) sel_eqns_svl in 
+  let () = y_tinfo_hp (add_str "sel_eqns_svl" !CP.print_svl) sel_eqns_svl in 
   let rhs_p = CP.gen_cl_eqs pos (CP.remove_dups_svl sel_eqns_svl) (CP.mkTrue pos) in
   let is_sat = TP.is_sat_raw (MCP.memoise_add_pure_N mlf rhs_p) in
   if not is_sat then
@@ -9578,11 +9594,11 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
   (* from unfolding *)
   let hp_rel = CF.mkHprel ~fold_type:false knd [] [] matched_svl lhs grd rhs es_cond_path in
-  let () = y_binfo_hp (add_str "do_unfold:hp_rel" Cprinter.string_of_hprel_short) hp_rel in
-  let () = y_binfo_hp (add_str "do_unfold:estate_lhs" !CF.print_formula) estate_lhs in
+  let () = y_tinfo_hp (add_str "do_unfold:hp_rel" Cprinter.string_of_hprel_short) hp_rel in
+  let () = y_tinfo_hp (add_str "do_unfold:estate_lhs" !CF.print_formula) estate_lhs in
   if !Globals.old_infer_hp_collect then
     begin
-      x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
+      x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
       let () = Infer.rel_ass_stk # push_list ([hp_rel]) in
       let () = Log.current_hprel_ass_stk # push_list ([hp_rel]) in
       ()
@@ -12953,9 +12969,9 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_compatible = inst_vs;
         Context.match_res_rhs_node = rhs_node;}->
-      let () = y_binfo_pp "M_base_case_unfold" in
-      let () = y_binfo_hp (add_str "lhs_node" !CF.print_h_formula) lhs_node in
-      let () = y_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+      let () = y_tinfo_pp "M_base_case_unfold" in
+      let () = y_tinfo_hp (add_str "lhs_node" !CF.print_h_formula) lhs_node in
+      let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
       begin
         match lhs_node with
         | HRel (hp,args,_) ->
@@ -13441,7 +13457,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         (*       | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state_short es))  in *)
         (*   let f = wrap_proving_kind "CONTRA DETECTION for pure" early_pure_contra_detection_x hec_num in *)
         (*   Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res f estate in *)
-        let () = y_binfo_hp (add_str "estate" !CF.print_entail_state) estate in
+        let () = y_tinfo_hp (add_str "estate" !CF.print_entail_state) estate in
         let (contra, _, lc, prf ) = early_pure_contra_detection 13 prog estate conseq pos msg is_folding in
         
         let do_match () =
@@ -13454,7 +13470,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
 
             let (res, new_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt) = 
                 x_add InferHP.infer_collect_hp_rel 1 prog iact estate lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
-            let () = y_binfo_hp (add_str "new_estate" !CF.print_entail_state) new_estate in
+            let () = y_tinfo_hp (add_str "new_estate" !CF.print_entail_state) new_estate in
             (* Debug.info_hprint (add_str "DD: n_lhs" (Cprinter.string_of_h_formula)) n_lhs pos; *)
             if (not res) then (* r *)
               let err_msg = "infer_heap_node" in

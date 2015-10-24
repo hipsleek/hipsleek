@@ -12,9 +12,9 @@ module C = Cast
 (* module I = Iast *)
 module TP = Tpdispatcher
 
-(*************************)
-(***** UTILS FOR SYN *****)
-(*************************)
+(********************************)
+(***** UTILS FOR SYN: BEGIN *****)
+(********************************)
 let mem = Gen.BList.mem_eq CP.eq_spec_var
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var
@@ -290,9 +290,40 @@ let look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr=
   Debug.no_2 "look_up_reachable_ptrs_sf" pr1 pr2 pr_out
     (fun _ _ -> look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr) sf roots
 
-(******************************************************************************)
-(******************************************************************************)
-(******************************************************************************)
+let base_unfold_formula_of_hrel hrel_root hrel_args =
+  let pos = no_pos in
+  let ptr_hrel_args = List.filter CP.is_node_typ hrel_args in
+  let base_p = 
+    if is_empty hrel_args then CP.mk_eq_null hrel_root
+    else CP.gen_cl_eqs pos (CP.remove_dups_svl (hrel_root::ptr_hrel_args)) (CP.mkTrue pos)
+  in
+  CF.Base (CF.formula_base_of_pure (MCP.mix_of_pure base_p) pos)
+
+let rec_unfold_formula_of_hrel prog hrel_root hrel_args = 
+  let pos = no_pos in
+  let root_typ = CP.type_of_spec_var hrel_root in
+  match root_typ with
+  | Named d_name ->
+    let d_decl = C.look_up_data_def_prog prog d_name in
+    let d_args = List.map (fun (v, _) -> CP.fresh_spec_var v) d_decl.C.data_fields_new in
+    let d_node = CF.mkDataNode hrel_root d_decl.C.data_name d_args pos in
+    let f = CF.ex_formula_of_heap d_args d_node pos in
+    let ptr_d_args = List.filter CP.is_node_typ d_args in
+    let ni_hr_args = List.map (fun a -> (a, Globals.NI)) (hrel_root::hrel_args) in
+    List.fold_left (fun f ptr ->
+      let hr_args = (ptr, I)::ni_hr_args in
+      let (hr, _) = C.add_raw_hp_rel prog true true hr_args pos in
+      CF.mkAnd_f_hf f hr pos) f ptr_d_args
+  | _ -> failwith "[rec_unfold_formula_of_hrel]: Unexpected root type of HRel"
+
+let unfold_formula_of_hrel prog hrel_root hrel_args =
+  let base = base_unfold_formula_of_hrel hrel_root hrel_args in
+  let recur = rec_unfold_formula_of_hrel prog hrel_root hrel_args in
+  CF.mkOr base recur no_pos
+
+(******************************)
+(***** UTILS FOR SYN: END *****)
+(******************************)
 
 let rec get_pos_x ls n sv=
   match ls with

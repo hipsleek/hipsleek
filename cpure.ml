@@ -15514,6 +15514,10 @@ let mk_eq_zero a1 =
   let a1 = mkVar a1 no_pos in
   mk_bform (Eq (a1, mkIConst 0 no_pos,no_pos))
 
+let mk_eq_null sv = 
+  let v = mkVar sv no_pos in
+  mk_bform (Eq (v, Null no_pos, no_pos))
+
 let mk_max a a1 a2 = 
   let a = mkVar a no_pos in
   let a1 = mkVar a1 no_pos in

@@ -1101,9 +1101,9 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
   (*****************END INTERNAL********************)
   let new_rhs_b,rvhp_rels,new_post_hps, new_hrels,r_new_hfs =
     List.fold_left update_fb (rhs_b1,[],[],[],[]) ls_unknown_ptrs in
-  let () = y_binfo_hp (add_str "ls_unknown_ptrs" (pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv string_of_arg_kind))))) ls_unknown_ptrs in 
-  let () = y_binfo_hp (add_str "rhs_b1" !CF.print_formula) (CF.Base rhs_b1) in
-  let () = y_binfo_hp (add_str "new_rhs_b" !CF.print_formula) (CF.Base new_rhs_b) in
+  let () = y_tinfo_hp (add_str "ls_unknown_ptrs" (pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv string_of_arg_kind))))) ls_unknown_ptrs in 
+  let () = y_tinfo_hp (add_str "rhs_b1" !CF.print_formula) (CF.Base rhs_b1) in
+  let () = y_tinfo_hp (add_str "new_rhs_b" !CF.print_formula) (CF.Base new_rhs_b) in
   (*add roots from history*)
   let matched_svl = CF.get_ptrs (*es.CF.es_heap*) lhs_b.CF.formula_base_heap in
   let matched_svl1 = (List.fold_left Sautil.close_def matched_svl (leqs@reqs)) in
@@ -1112,7 +1112,7 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
   (*     | _ -> [hf] *)
   (*   ) no_es_history) in *)
   (* let sel_his = [] in *)
-  DD.ninfo_hprint (add_str  "  new_rhs_b" Cprinter.string_of_formula_base) new_rhs_b pos;
+  DD.ninfo_hprint (add_str "new_rhs_b" Cprinter.string_of_formula_base) new_rhs_b pos;
   let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
   let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
   let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
@@ -1153,7 +1153,7 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 defined_hps
     let () = x_tinfo_hp (add_str "lhs"  Cprinter.prtt_string_of_formula) lhs no_pos in
     let () = y_tinfo_hp (add_str "rhs"  Cprinter.prtt_string_of_formula) rhs in
     let hp_rel = CF.mkHprel knd [] [] matched_svl lhs grd rhs es_cond_path in
-    let () = y_binfo_hp (add_str "hp_rel" Cprinter.string_of_hprel_short) hp_rel in
+    let () = y_tinfo_hp (add_str "hp_rel" Cprinter.string_of_hprel_short) hp_rel in
     [hp_rel], Some (match lhs with
         | CF.Base fb -> fb.CF.formula_base_heap
         | _ -> report_error no_pos "INFER.generate_constrains: impossible"
@@ -1413,9 +1413,9 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
   let rhs_node = r.Context.match_res_rhs_node in
   let rhs_rest = r.Context.match_res_rhs_rest in
   let rhs_inst = r.Context.match_res_compatible in
-  let () = y_binfo_hp (add_str "lhs_node" !CF.print_h_formula) lhs_node in
-  let () = y_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
-  let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
+  let () = y_tinfo_hp (add_str "lhs_node" !CF.print_h_formula) lhs_node in
+  let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+  let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
   let is_succ_inst, n_estate, n_lhs_b = 
     match lhs_node,rhs_node with
     | HRel (lhp,leargs,_),HRel (rhp,reargs,_) ->
@@ -2135,7 +2135,7 @@ let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rh
               let rhds, rhvs, _ = CF.get_hp_rel_h_formula rhs in
               let hds = lhds@rhds in
               let hvs = lhvs@rhvs in
-              let () = y_binfo_hp (add_str "hp_rel_list" (pr_list Cprinter.string_of_hprel_short)) hp_rel_list in
+              let () = y_tinfo_hp (add_str "hp_rel_list" (pr_list Cprinter.string_of_hprel_short)) hp_rel_list in
               let new_es, new_lhs = update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
                   rvhp_rels (leqs) all_aset m new_post_hps unk_map hp_rel_list pos in
               let n_es_heap = match rhs with

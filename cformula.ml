@@ -1998,6 +1998,9 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp:
     (t : t_formula) (fl:flow_formula) a (pos : loc) = 
   mkExists_w_lbl svs h p vp t fl a pos None
 
+and ex_formula_of_heap svl h pos = 
+  mkExists svl h (MCP.mkMTrue pos) CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos
+
 and is_view (h : h_formula) = match h with
   | ViewNode _ -> true
   | _ -> false
@@ -18024,8 +18027,9 @@ let trans_flow_struc_formula sf =
   let pr = !print_struc_formula in
   Debug.no_1 "trans_flow_struc_formula" pr pr (fun _ -> trans_flow_struc_formula sf) sf
 
-let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
-    { h_formula_view_node = view_node;
+let mkViewNode view_node view_name view_args (* view_args_orig *) pos = 
+  ViewNode { 
+      h_formula_view_node = view_node;
       h_formula_view_name = view_name;
       h_formula_view_derv = false;
       h_formula_view_split = SPLIT0;
@@ -18044,7 +18048,25 @@ let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
-      h_formula_view_pos = pos}
+      h_formula_view_pos = pos; }
+
+let mkDataNode data_node data_name data_args pos =
+  DataNode {
+      h_formula_data_node = data_node;
+      h_formula_data_name = data_name;
+      h_formula_data_derv = false;
+      h_formula_data_split = SPLIT0;
+      h_formula_data_imm = CP.ConstAnn Mutable;
+      h_formula_data_param_imm = List.map (fun _ -> CP.NoAnn) data_args;
+      h_formula_data_perm = None;
+      h_formula_data_origins = [];
+      h_formula_data_original = false;
+      h_formula_data_arguments = data_args;
+      h_formula_data_holes = [];
+      h_formula_data_remaining_branches = None;
+      h_formula_data_pruning_conditions = [];
+      h_formula_data_label = None;
+      h_formula_data_pos = pos; }
 
 let rec take_tl lst n = 
   if n=0 then lst

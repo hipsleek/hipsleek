@@ -968,6 +968,8 @@ let common_arguments = [
   ("--lem-dis-residue", Arg.Clear Globals.allow_lemma_residue, "Disallow residue for Lemma Proving");
   ("--lem-dis-lhs-unfold", Arg.Clear Globals.enable_lemma_lhs_unfold, "Disable LHS unfold for Lemma Proving");
   ("--lem-en-lhs-unfold", Arg.Set Globals.enable_lemma_lhs_unfold, "Enable LHS unfold for Lemma Proving");
+  ("--lem-dis-unk-unfold", Arg.Clear Globals.enable_lemma_unk_unfold, "Disable unknown heap unfold for Lemma Proving");
+  ("--lem-en-unk-unfold", Arg.Set Globals.enable_lemma_unk_unfold, "Enable unknown heap unfold for Lemma Proving");
   ("--ulhs", Arg.Set Globals.enable_lemma_lhs_unfold, "Shortcut for --lem-en-lhs-unfold");
   ("--urhs", Arg.Set Globals.enable_lemma_rhs_unfold, "Shortcut for --lem-en-rhs-unfold");
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");

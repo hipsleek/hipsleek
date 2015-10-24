@@ -1360,7 +1360,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
                    if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
                   ^ (string_of_int (Globals.fresh_int()));
         hp_part_vars = [];
-        hp_root_pos = None; (*default, reset when def is inferred*)
+        hp_root_pos = Some 0; (* First ptr is the root of the new HPRel *) (* None; (* default, reset when def is inferred *) *)
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
         hp_view = None;
@@ -2366,8 +2366,8 @@ let check_proper_return cret_type exc_list f =
   Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
 (* TODO : res must be consistent with flow outcome *)
 
-let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
-
+let formula_of_unstruc_view_f vd = 
+  F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
 
 let vdef_fold_use_bc prog ln2  = match ln2 with
   | F.ViewNode vn -> 
