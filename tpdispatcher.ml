@@ -1874,7 +1874,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let z3n_is_sat f = Z3.is_sat_ops_cex pr_weak_z3 pr_strong_z3 f sat_no in
 
   (* let () = Gen.Profiling.push_time "tp_is_sat" in *)
-  let f = x_add_1 Cpure.subs_const_var_formula f in
+  (* let () = print_endline ("tpd 1") in *)
+  let f = if !sat_td then f
+  else
+    x_add_1 Cpure.subs_const_var_formula f in
+  (* let () = print_endline ("tpd 2") in *)
   let res = (
     match !pure_tp with
     | DP -> 

@@ -451,7 +451,7 @@ let rec send_and_receive f timeout=
           else
           f *)
       in
-      (* let () = print_endline ("before omega: " ^ new_f) in *)
+      (* let () = print_endline ("(send)Omega: " ^ new_f) in *)
       output_string (!process.outchannel) new_f;
       flush (!process.outchannel);
       (* try *)

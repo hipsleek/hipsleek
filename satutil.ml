@@ -109,9 +109,16 @@ let is_inconsistent_general_x cviews ptos eqs neqs cl_eqNulls cl_neqNulls hvs mf
   let p_total = List.fold_left (fun p1 p2 ->
       CP.mkAnd p1 p2 no_pos
   ) (MCP.pure_of_mix mf) (p_addrs@p_eqs@p_neqs@p_eqNulls@p_neqNulls@vinvs) in
-  not(is_sat_pure_fnc p_total)
+  (* let () = print_endline (!CP.print_formula p_total) in *)
+  let r = not(is_sat_pure_fnc p_total) in
+  (* let () = print_endline ("r=" ^ (string_of_bool r)) in *)
+  r
+
+(* let sat_count = ref (0: int) *)
 
 let is_inconsistent_general transed_views ptos eqs neqs cl_eqNulls cl_neqNulls hvs mf=
+  (* let () = sat_count := !sat_count + 1 in *)
+  (* let () = print_endline (string_of_int !sat_count) in *)
   let pr1 = !CP.print_svl in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 vnode = Cprinter.prtt_string_of_h_formula (ViewNode vnode) in

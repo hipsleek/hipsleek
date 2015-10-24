@@ -52,6 +52,7 @@ let err_var = "e"
 let assert_err_fn = "__VERIFIER_error"
 
 let verify_td = ref(false:bool)
+let sat_td = ref(true:bool)
 
 let method2pred mn = mn^"_v"
 

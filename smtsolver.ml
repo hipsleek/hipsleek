@@ -739,6 +739,7 @@ let check_formula f timeout =
     (*due to global stack - incremental, push current env into a stack before working and
       removing it after that. may be improved *)
     let new_f = "(push)\n" ^ f ^ "(pop)\n" in
+    (* let () = print_endline ("smtsolver=start" ^ !smtsolver_name) in *)
     let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
     output_string (!prover_process.outchannel) new_f;
     flush (!prover_process.outchannel);
@@ -755,7 +756,8 @@ let check_formula f timeout =
   ) in
   let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
   let tstoplog = Gen.Profiling.get_time () in
-  let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
+  let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in
+  (* let () = print_endline ("smtsolver=" ^ (string_of_smt_output res)) in *)
   res
 
 let check_formula f timeout =
@@ -1187,7 +1189,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  * We also consider unknown is the same as sat
 *)
 let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool =
-  (* let () = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
+  (* let () = print_endline ("smt_is_sat : " ^ (!print_pure f)^ "\n") in *)
   (* (*drop VarPerm beforehand*)                           *)
   (* let f =                                               *)
   (*   if (!Globals.ann_vp) then CP.drop_varperm_formula f *)

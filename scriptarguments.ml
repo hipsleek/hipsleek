@@ -907,6 +907,7 @@ let common_arguments = [
       Globals.gen_pres_sat:=true
      ), "Generate Presbuger  sat pure formula");
   ("--verify-td", Arg.Unit (fun _ ->
+      let () = Globals.sat_td := true in
       Globals.verify_td := true
   ), "Generate Presbuger  sat pure formula");
   (* abduce pre from post *)
