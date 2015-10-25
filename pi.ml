@@ -77,8 +77,8 @@ let update_i_para i_rels proc=
         (id, I)
       else (id, NI)
   ) proc.Cast.proc_args_wi in
-  let () = x_binfo_hp (add_str "proc.Cast.proc_name" pr_id) proc.Cast.proc_name no_pos in
-  let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) n_proc_args_wi no_pos in
+  let () = x_tinfo_hp (add_str "proc.Cast.proc_name" pr_id) proc.Cast.proc_name no_pos in
+  let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) n_proc_args_wi no_pos in
   let () = proc.Cast.proc_args_wi <- n_proc_args_wi in
   proc
 
@@ -632,6 +632,70 @@ let norm_post_rel_def post_rel_df pre_rel_ids all_reldefns =
     (add_str "pre_rel_ids "pr_svl)
     (add_str "all_reldefns" pr_def) pr_def norm_post_rel_def post_rel_df pre_rel_ids all_reldefns
 
+let add_prepost_shape_relation_scc prog add_fnc scc =
+  let () = List.iter (fun proc ->
+      let spec = proc.Cast.proc_stk_of_static_specs # top in
+      let new_spec = add_fnc prog proc spec in
+      proc.Cast.proc_stk_of_static_specs # push_pr "ii:275" new_spec
+    ) scc in
+  let () = if List.length scc > 1 then
+      let infer_vars = List.fold_left (fun acc proc ->
+          let spec = proc.Cast.proc_stk_of_static_specs # top in
+          acc@(CF.struc_infer_relation spec)
+        ) [] scc in
+      List.iter (fun proc ->
+          let spec = proc.Cast.proc_stk_of_static_specs # top in
+          let new_spec = modify_infer_vars spec infer_vars in
+          proc.Cast.proc_stk_of_static_specs # push_pr "ii:285" new_spec
+        ) scc
+  in ()
+
+let remove_ana_ni prog proc sf0=
+  let remove_rel_formula f=
+    let f_ef _ = None in
+    let f_f _ = None in
+    let f_m mp = Some mp in
+    let f_a a = Some a in
+    let f_hf hf = Some hf in
+    let f_pf p = Some (CP.drop_rel_formula p) in
+    let f_b bf= Some bf in
+    let f_e e = Some e in
+    let new_f = CF.transform_formula (f_ef, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) f in new_f
+  in
+  let rec recf sf = match sf with
+    | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
+          (lbl, recf sf)) el)
+    | CF.EBase eb -> begin
+        CF.EBase {eb with CF.formula_struc_base = remove_rel_formula eb.CF.formula_struc_base}
+      end
+    | CF.EAssume _ -> sf
+    | CF.EInfer ei ->
+          let inf_obj = ei.CF.formula_inf_obj in
+      if inf_obj # is_ana_ni then
+        let new_inf_obj = inf_obj # clone in
+        let () = new_inf_obj # reset INF_ANA_NI in
+        let new_inf_vars = List.filter (fun sv -> not (Cpure.is_rel_typ sv)) ei.CF.formula_inf_vars in
+        let new_cont = recf ei.CF.formula_inf_continuation in
+        new_cont
+        (* if new_inf_vars = [] && inf_obj # is_empty then new_cont *)
+        (* else *)
+        (*   CF.EInfer {ei with *)
+        (*       CF.formula_inf_obj = new_inf_obj; *)
+        (*       CF.formula_inf_vars = new_inf_vars; *)
+        (*       CF.formula_inf_continuation = new_cont; *)
+        (*   } *)
+      else sf
+    | CF.ECase ec -> CF.ECase { ec with
+          CF.formula_case_branches = List.map (fun (pf,sf) ->
+              (pf, recf sf)
+          ) ec.CF.formula_case_branches
+      }
+  in
+  recf sf0
+
+let remove_ana_ni_scc prog scc=
+  add_prepost_shape_relation_scc prog remove_ana_ni scc
+
 let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* WN: simplify_ann is unsound *)
   (* let () = x_binfo_hp (add_str "proc_specs" (pr_list Cprinter.string_of_struc_formula)) proc_specs no_pos in *)
@@ -647,7 +711,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
   let pr = Cprinter.string_of_pure_formula in
   let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-  let () = x_binfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
+  let () = x_tinfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
   (* =============== END imm rel norm ================== *)
   (* let lst_assume = Gen.Basic.remove_dups lst_assume in *)
   (* let rels = Immutable.norm_rel_list rels in *)
@@ -655,9 +719,19 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
 
   if rels = [] && lst_assume = [] then ()
   else
+    let rels = rels_orig (* Infer.infer_rel_stk # get_stk *) in
+    let () = Infer.infer_rel_stk # reset in
+    if is_infer_const_scc scc INF_ANA_NI then
+      let svl = Nia.classify_ni prog rels in
+      let () = x_tinfo_hp (add_str "I preds" pr_svl) svl no_pos in
+      let scc = update_i_para_scc svl scc in
+      let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in
+      let _ = remove_ana_ni_scc prog scc in
+      ()
+    else
     let new_specs =
-      let rels = rels_orig (* Infer.infer_rel_stk # get_stk *) in
-      let () = Infer.infer_rel_stk # reset in
+      (* let rels = rels_orig (\* Infer.infer_rel_stk # get_stk *\) in *)
+      (* let () = Infer.infer_rel_stk # reset in *)
       let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
         List.fold_left (fun (pres_acc,posts_wo_rel_acc,all_posts_acc,inf_vars_acc,pre_fmls_acc,grp_post_rel_flag) proc ->
             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
@@ -700,14 +774,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
                 print_endline_quiet "*************************************";
               end;
-            let () = if is_infer_const_scc scc INF_ANA_NI then
-              let svl = Nia.classify_ni prog rels in
-              let () = x_binfo_hp (add_str "I preds" pr_svl) svl no_pos in
-              let scc = update_i_para_scc svl scc in
-              let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in
-              ()
-            else ()
-          in
+            (* let rels,lst_assume = if is_infer_const_scc scc INF_ANA_NI then *)
+          (*     let svl = Nia.classify_ni prog rels in *)
+          (*     let () = x_tinfo_hp (add_str "I preds" pr_svl) svl no_pos in *)
+          (*     let scc = update_i_para_scc svl scc in *)
+          (*     let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in *)
+          (*     [],[] *)
+          (*   else rels,lst_assume *)
+          (* in *)
               let () = if !Globals.sa_gen_slk then
                 try
                   let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv

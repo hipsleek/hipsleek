@@ -204,7 +204,7 @@ let add_pre_shape_relation_x prog proc spec=
     let rel_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int())) in
     let proc_args = List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.Cast.proc_args in
     let rel_vars = List.filter CP.is_node_typ proc_args in
-    let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) proc.Cast.proc_args_wi no_pos in
+    let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (pr_pair pr_id string_of_arg_kind))) proc.Cast.proc_args_wi no_pos in
     if rel_vars = [] then sf else
       let rel_vars = CP.remove_dups_svl rel_vars in
       let hp_pre_decl = {
@@ -393,23 +393,23 @@ let get_post_preds_scc scc =
     - add_pre_shape_relation
     - add_post_shape_relation
 *)
-let add_prepost_shape_relation_scc prog add_fnc scc =
-  let () = List.iter (fun proc ->
-      let spec = proc.Cast.proc_stk_of_static_specs # top in
-      let new_spec = add_fnc prog proc spec in
-      proc.Cast.proc_stk_of_static_specs # push_pr "ii:275" new_spec
-    ) scc in
-  let () = if List.length scc > 1 then
-      let infer_vars = List.fold_left (fun acc proc ->
-          let spec = proc.Cast.proc_stk_of_static_specs # top in
-          acc@(CF.struc_infer_relation spec)
-        ) [] scc in
-      List.iter (fun proc ->
-          let spec = proc.Cast.proc_stk_of_static_specs # top in
-          let new_spec = Pi.modify_infer_vars spec infer_vars in
-          proc.Cast.proc_stk_of_static_specs # push_pr "ii:285" new_spec
-        ) scc
-  in ()
+let add_prepost_shape_relation_scc prog add_fnc scc = Pi.add_prepost_shape_relation_scc prog add_fnc scc
+  (* let () = List.iter (fun proc -> *)
+  (*     let spec = proc.Cast.proc_stk_of_static_specs # top in *)
+  (*     let new_spec = add_fnc prog proc spec in *)
+  (*     proc.Cast.proc_stk_of_static_specs # push_pr "ii:275" new_spec *)
+  (*   ) scc in *)
+  (* let () = if List.length scc > 1 then *)
+  (*     let infer_vars = List.fold_left (fun acc proc -> *)
+  (*         let spec = proc.Cast.proc_stk_of_static_specs # top in *)
+  (*         acc@(CF.struc_infer_relation spec) *)
+  (*       ) [] scc in *)
+  (*     List.iter (fun proc -> *)
+  (*         let spec = proc.Cast.proc_stk_of_static_specs # top in *)
+  (*         let new_spec = Pi.modify_infer_vars spec infer_vars in *)
+  (*         proc.Cast.proc_stk_of_static_specs # push_pr "ii:285" new_spec *)
+  (*       ) scc *)
+  (* in () *)
 
 let get_infer_type its0 inf0=
   (* let rec look_up ifts inf rem= *)

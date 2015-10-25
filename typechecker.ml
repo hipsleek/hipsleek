@@ -1967,9 +1967,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let vheap = 
               if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
 
-          let () = x_binfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
-          let () = x_binfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
-          let () = x_binfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
+          let () = x_tinfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
+          let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
+          let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
           (*Test whether fresh_perm_exp is full permission or not
             writable -> fresh_perm_exp = full_perm => normally
             read-only -> fresh_perm_exp != full_perm => in order to 
@@ -2015,10 +2015,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let () = Log.update_sleek_proving_kind Log.BINDING in *)
             (* let () = x_tinfo_pp ("Andreea : we need to normalise struc_vheap") no_pos in *)
             (* let () = x_tinfo_pp ("==========================================") no_pos in *)
-            let () = y_binfo_pp "need to use local version of infer_const_obj" in
+            let () = y_tinfo_pp "need to use local version of infer_const_obj" in
             (* let struc_vheap =  *)
             (*   if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_struc bind_ptr else struc_vheap in *)
-            let () = x_binfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
+            let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
             (* let do_classic_frame = (check_is_classic ()) in *)
@@ -4713,7 +4713,7 @@ let rec check_prog iprog (prog : prog_decl) =
               ) iscc in
               let res, nsccs = verify_scc_incr cprog verified_sccs iscc1 in
               (* let todo_unk = Iincr.reset_infer_const_scc infs iscc in *)
-              let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list_ln (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  ))))) nsccs no_pos in
+              let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list_ln (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  ))))) nsccs no_pos in
               res,nsccs
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
