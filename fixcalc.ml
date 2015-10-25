@@ -308,8 +308,8 @@ let subst_inv_lower_view_x view_invs f0=
           let (_,(form_args, inv)) = List.find (fun (s1,_) -> String.compare s1 vn.h_formula_view_name = 0) view_invs in
           let sst = List.combine form_args (vn.h_formula_view_node::vn.h_formula_view_arguments) in
           (HEmp, [ (CP.subst sst (MCP.pure_of_mix inv))])
-        with _ -> (* hf,[] *)
-            (HEmp, [])
+        with _ -> hf,[]
+            (* (HEmp, []) *)
       end
     | _ -> hf,[]
   in
@@ -532,6 +532,12 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
   let inv = List.hd (x_add_1 Parse_fix.parse_fix res) in
   inv
 
+let base_unsat f=
+  let (hf,mf,_,_,_,_) = split_components f in
+  if hf = HEmp || hf = HTrue then
+    not(TP.is_sat_raw mf)
+  else false
+
 (******************************************************************************)
 let slk2fix_body lower_invs fml0 vname dataname para_names=
   (*rename to avoid clashing, capture rev_subst also*)
@@ -545,7 +551,8 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
     try
       vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^
       "] -> [] -> []: " ^
-      (string_of_elems fs (fun c-> fixcalc_of_formula c) op_or) ^
+      ( (* if List.exists  base_unsat fs then "0=0" else *)
+          (string_of_elems fs (fun c-> fixcalc_of_formula c) op_or) ) ^
       "\n};\n"
     with _ -> report_error no_pos "slk2fix_body: Error in translating the input for fixcalc"
   in
@@ -602,7 +609,6 @@ let compute_invs_fixcalc input_fixcalc=
   let invs = List.fold_left (fun r line -> r@(x_add_1 Parse_fix.parse_fix line)) [] lines in
   let () = DD.ninfo_hprint (add_str "res(parsed)= " (pr_list !CP.print_formula)) invs no_pos in
   invs
-
 
 let compute_invs_fixcalc input_fixcalc =
   let pr = (pr_list Cprinter.string_of_pure_formula) in
@@ -704,9 +710,10 @@ let compute_inv_x name vars fml data_name lower_views pf =
 let compute_inv name vars fml data_name lower_views pf =
   let pr1 (f,_) = Cprinter.prtt_string_of_formula f in
   let pr2 = !CP.print_formula in
-  Debug.no_4 " compute_inv" pr_id !CP.print_svl (pr_list_ln pr1) pr2 pr2
-    (fun _ _ _ _ -> compute_inv_x name vars fml data_name lower_views pf)
-    name vars fml pf
+  let pr3 vdecl = pr_id vdecl.Cast.view_name in
+  Debug.no_5 " compute_inv" pr_id !CP.print_svl (pr_list_ln pr1) (pr_list pr3) pr2 pr2
+    (fun _ _ _ _ _ -> compute_inv_x name vars fml data_name lower_views pf)
+    name vars fml lower_views pf
 
 (*compute invs of views in one loop*)
 let compute_inv_mutrec mutrec_vnames views =

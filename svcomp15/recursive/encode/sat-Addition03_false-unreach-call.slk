@@ -25,8 +25,8 @@ int addition(int m, int n) {
 */
 
 pred addition_v<m,n,r,e> == n=0 & r=m & e=0
-     or _::addition_v<m+1,n-1,r1,e1> & n>0 & r=r1 & e=e1
-     or _::addition_v<m-1,n+1,r1,e1> & n<0 & r=r1 & e=e1.
+     or _::addition_v<m+1,n-1,r1,e1> & n>0 & r=r1 & e=0
+     or _::addition_v<m-1,n+1,r1,e1> & n<0 & r=r1 & e=0.
 
 /*
 int main() {
@@ -41,13 +41,13 @@ int main() {
 }
 */
 
-pred main_v<m,n,r,e> ==
-     _::addition_v<m,n,r1,e1> & m<100 & r=0 & e=e1
-     or _::addition_v<m,n,r1,e1> & n<100 & r=0 & e=e1
-     or _::addition_v<m,n,r1,e1> & r1>=200 & r=0 & e=e1
-     or _::addition_v<m,n,r1,e1> & m>=100 & n>=100 & r1<200 & e=1.
+pred main_v<r,t2> ==
+     _::addition_v<m,n,r1,e1> & m<100 & r=0 & t2=0
+     or _::addition_v<m,n,r1,e1> & n<100 & r=0 & t2=0
+     or _::addition_v<m,n,r1,e1> & r1>=200 & r=0 & t2=0
+     or _::addition_v<m,n,r1,e1> & m>=100 & n>=100 & r1<200 & t2=1.
 
 
-checksat _::main_v<m,n,r,e> & e=1.
+checksat _::main_v<r,e> & e=1.
 
 expect Sat.

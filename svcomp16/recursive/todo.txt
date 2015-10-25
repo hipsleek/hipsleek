@@ -72,6 +72,18 @@ Last Proving Location: Fibonacci01_true-unreach-call.c_34:15_34:33
 ERROR: at _0:0_0:0
 Message: mismatched number in merge_esc methd 
 
+---------
+01, 03
+
+
+inv: res > x
+
+04:
+Exception processed: Stack overflow
+error at: 
+SLEEK FAILURE (END)
+
+
 ================================================
 #gcd01
 

@@ -27,6 +27,15 @@ Total verification time: 0.105202 second(s)
 	Time spent in main process: 0.071685 second(s)
 	Time spent in child processes: 0.033517 second(s)
 
+=========================
+#Add03
+
+CheckSat 1: unsat
+
+Validate 1: Expecting Sat BUT got : Unsat (or Unknown)
+
+wrong example
+
 ========================================================
 
 sat-gcd02_true-unreach-call.slk
@@ -64,3 +73,8 @@ sat-recHanoi01_true-unreach-call_true-termination.slk
 sat-BallRajamani-SPIN2000-Fig1_false-unreach-call.slk
 
 global variable
+
+
+==================================
+ sat-EvenOdd01_true-unreac
+

@@ -405,6 +405,7 @@ and check_sat_topdown_iter prog is_shape_only form_red_fnc is_inconsistent_fnc d
 
 
 let check_sat_topdown_x prog need_slice f0=
+  print_endline_quiet "slsat";
   let _ = DD.ninfo_hprint (add_str "f0" Cprinter.prtt_string_of_formula) f0 no_pos in
   let bound = 50000 in
   let is_shape_only,form_red_fnc, is_inconsistent_fnc =

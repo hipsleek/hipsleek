@@ -62,6 +62,6 @@ pred main_v<m,n,r,e> == m<=0 & r=0 & e=0
      or _::gcd_v<m,n,z,e1> & n<=0 & e=e1.
 
 
-checksat _::main<m,n,r,e> & e=1.
+checksat _::main_v<m,n,r,e> & e=1.
 
 expect Unsat.

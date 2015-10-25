@@ -310,11 +310,12 @@ exp:
     [ "exp" LEFTA
         [ x = SELF; "+"; y = SELF -> Add (x, y, loc)
           | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
-                (* | x = INT; y = SELF -> *)
-                (*       let ni=IConst (int_of_string x, loc)  *)
-                (*       in Mult (ni, y, loc) *) (* bugs in post/t/ack3.ss : res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0 *)
+          (* | x = INT; y = SELF -> *)
+          (*       let ni=IConst (int_of_string x, loc) *)
+          (*       in Mult (ni, y, loc) *)
+           (* bugs in post/t/ack3.ss : res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0 *)
           | x = INT; "*"; y = SELF ->
-                let ni=IConst (int_of_string x, loc) 
+                let ni=IConst (int_of_string x, loc)
                 in Mult (ni, y, loc)
           | x = specvar             -> Var (x, loc)
           | x = INT                 -> IConst (int_of_string x, loc) 
