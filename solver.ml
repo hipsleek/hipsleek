@@ -5434,7 +5434,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   if (Perm.allow_perm ()) then (true,false, None) else
     (* if there is no hp inf, post pone contra detection *)
     (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
-  if (Infer.no_infer_all_all estate) || not (!Globals.early_contra_flag) || x_add_1 is_error_flow estate.es_formula
+  if (no_infer_all_all estate) || not (!Globals.early_contra_flag) || x_add_1 is_error_flow estate.es_formula
   then
     let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
@@ -7730,7 +7730,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           (* !rhs_rest_emp && (\*remove this since it is untrackable*\) *)
                           then (
                             (* WN : shouldn't we fail if no_infer_hp_rel *)
-                            if  (* not *) (Infer.no_infer_hp_rel estate) then
+                            if  (* not *) (no_infer_hp_rel estate) then
                               let () = x_tinfo_pp "no_infer_hp_rel? " no_pos in
                               let err_msg =  "residue is forbidden.(1)" in
                               let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
@@ -8452,7 +8452,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
 
   (* if must_error, and need to infer *)
   let res = 
-    if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (Infer.no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
+    if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
       (* negation of rhs *)
       let () = x_tinfo_pp "first if-then" no_pos in
       let neg_conseq = neg_empty_heap_formula conseq in
@@ -8565,7 +8565,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (*for pure inference, we need return verbose xpure to expose the disjunction:
     infer [n] x::ll<n> |- x!=null
   *)
-  let () = if !Globals.en_slc_ps && not (Infer.no_infer_pure estate_orig) then
+  let () = if !Globals.en_slc_ps && not (no_infer_pure estate_orig) then
       let () = force_verbose_xpure := true in ()
     else ()
   in
@@ -9084,7 +9084,7 @@ type: bool *
                               | Some s1,Some s2 -> (s1,s2)::a
                               | _ -> a) [] r_succ_match)@estate.es_success_pts;
                           es_unsat_flag = false; (*the new context could be unsat*)
-                          (* es_unsat_flag = estate.es_unsat_flag && (Infer.no_infer_rel estate); *)
+                          (* es_unsat_flag = estate.es_unsat_flag && (no_infer_rel estate); *)
                          } in
             let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
             (* TODO-WN why are there two elim_unsat_ctx? *)
@@ -11974,7 +11974,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
 
 and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = (* no longer used this function *)
-  if not !Globals.fo_iheap ||  Infer.no_infer_pure estate then
+  if not !Globals.fo_iheap ||  no_infer_pure estate then
     let err_msg = "infer_heap_node" in
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "infer_heap_node" *)err_msg estate (Base rhs_b) None pos,
                                     CF.mk_failure_may ("Disabled Infer heap and pure 2") sl_error, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) (mk_cex false), NoAlias) 
@@ -12782,7 +12782,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       (*     {estate with es_formula = nf} *)
       (* in *)
       let estate =
-        if Infer.no_infer_rel estate then estate
+        if no_infer_rel estate then estate
         else
           let lhs_h, lhs_p, _, _, _, lhs_a  = CF.split_components estate.es_formula in
           let lhs_alias = MCP.ptr_equations_without_null lhs_p in
@@ -12977,7 +12977,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
             (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown)
         | _ ->
           let estate =
-            if Infer.no_infer_rel estate then estate
+            if no_infer_rel estate then estate
             else 
               let lhs_h,lhs_p,_,_, _, lhs_a = CF.split_components estate.es_formula in
               let lhs_alias = MCP.ptr_equations_without_null lhs_p in
@@ -13002,7 +13002,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;} ->
       let estate =
-        if Infer.no_infer_rel estate then estate
+        if no_infer_rel estate then estate
         else 
           (* WN : what is the purpose of this normalization? *)
           let lhs_h, lhs_p, _, _, _, lhs_a = CF.split_components estate.es_formula in
@@ -13056,7 +13056,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       let rhs_node = m_res.Context.match_res_rhs_node in
       let rhs_rest = m_res.Context.match_res_rhs_rest in
       let estate =
-        if Infer.no_infer_rel estate then estate
+        if no_infer_rel estate then estate
         else
           let lhs_h,lhs_p,_,_, _, lhs_a  = CF.split_components estate.es_formula in
           let lhs_alias = MCP.ptr_equations_without_null lhs_p in
@@ -13592,7 +13592,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
               begin
                 match relass with
                 | [] -> (
-                    if Infer.no_infer_all_all estate then
+                    if no_infer_all_all estate then
                       let l_h, l_p, l_vp, l_fl, l_t, l_a = CF.split_components estate.es_formula in
                       let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
                       let hv = match l_h with
