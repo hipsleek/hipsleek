@@ -195,6 +195,18 @@ RELDEFN R: ( 2<=x' & P(x')) -->  R(x'),
 RELDEFN Q: ( true) -->  Q(l_most')]
 
 ==========================================================================
+# ex2a2.ss -p hoo
+
+!!! **iast.ml#3917:Adding the view HP_1695 into iprog.
+ExceptionFailure("iast.gather_type_info_heap :gather_type_info_heap: relation HP_1700 cannot be found")Occurred!
+
+Error1(s) detected at main 
+Stop z3... 62 invocations 
+Stop Omega... 45 invocations caught
+
+Exception occurred: Failure("iast.gather_type_info_heap :gather_type_info_heap: relation HP_1700 cannot be found")
+Error3(s) detected at main 
+
 ==========================================================================
 ==========================================================================
 ==========================================================================
