@@ -7523,7 +7523,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                     let (v,en) = List.find (fun (v,en) -> v=h) tl
                     in (v,en)::(copy_list t tl) 
                   with r -> 
-                    let () = y_winfo_hp (add_str "var not in type table" pr_id) h in
+                    let () = y_binfo_hp (add_str "var not in type table" pr_id) h in
                     raise r
               ) in
               let n_tl = copy_list fvars n_tl in

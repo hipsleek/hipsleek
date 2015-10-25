@@ -10,17 +10,17 @@ inv o>=0.
 // root=Some(self+o)
 // add this @ trans_view
 
-checkentail y::arr_int<2,5> & xxx=y:arr+2 
-     |- xxx::arr<v>.
-print residue.
-expect Valid. //k=2 
-
-checkentail y::arr_int<2,5> & xxx=y:arr+3 
-     |- xxx::arr<v>.
-print residue.
-expect Fail. //k=2 
-
 infer[i] y::arr_int<i,5> & xxx=y:arr+3 
      |- xxx::arr<v>.
 print residue.
 expect Valid. //k=2 
+
+/*
+# ex1c6b.slk
+
+infer[i] y::arr_int<i,5> & xxx=y:arr+3 
+     |- xxx::arr<v>.
+
+# Inference does not work with array segments ..
+
+*/

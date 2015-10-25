@@ -576,6 +576,29 @@ let convert_starminus ls =
 
 (*  (resth1, anode, r_flag, phase, ctx) *)
 
+let get_views_offset prog f =
+  let stk = new Gen.stack in
+  let f_h_f hf = 
+    match hf with
+    | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name } -> 
+      let vr = get_root_view prog name p args in
+      let () = stk # push (p,Some vr) in Some hf 
+    | DataNode ({ h_formula_data_node = vsv; } ) 
+    | ThreadNode {h_formula_thread_node=vsv;}
+    | HVar (vsv,_) ->
+      let () = stk # push (vsv,None) in Some hf
+    | HRel (hp, e, _)   ->
+        let args = CP.diff_svl (get_all_sv hf) [hp] in
+        let root, _ = Sautil.find_root prog [hp] args [] in
+        let () = stk # push (root,None) in Some hf
+    | _ -> None in 
+  let _ = (map_h_formula f f_h_f) in
+  let r = stk # get_stk in
+  let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in
+  let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in
+  r
+
+
 (* 
  * Trung, delete later: 
  *   - Choose context, requires rhs_node is either a HRel or a Node (Data, View, Thread)
@@ -638,6 +661,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* let () = y_binfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
     let enhance_paset paset =
       let lhs_p2 =MCP.pure_of_mix lhs_p in
+      let lhs_nodes = get_views_offset prog lhs_h in
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
       let () = y_binfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
       let () = y_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
@@ -645,19 +669,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let diff_ptrs = heap_ptrs in
       (* let diff_ptrs = Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset in *)
       let () = y_binfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in
-      let () = y_winfo_pp "unfolding need to access to view_root_lhs" in
-      let lst = List.map (fun d -> 
+      (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
+      let lst = List.map (fun (d,root_lhs) -> 
           match view_root_rhs with
-          | None -> 
-            (* lhs_p2 |- rhs_ptr=d  *)
-            let rhs = CP.mkEqn d rhs_ptr no_pos in
-            let r = !CP.tp_imply lhs_p2 rhs in
-            (d,r,None)
-          | Some ls -> 
+          | Some ((v,rf)::_) -> 
             (* lhs_p2 |- d>=rhs_ptr  *)
             begin
-              match ls with
-              | [(v,rf)] ->
+              match root_lhs with
+              | None | Some [] ->
                 let rhs = CP.mk_is_base_ptr d rhs_ptr in
                 let r = !CP.tp_imply lhs_p2 rhs in
                 let () =  y_binfo_hp (add_str "lhs>=rhs_ptr" string_of_bool) r  in
@@ -673,9 +692,32 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_binfo_hp (add_str "is_sat hs & rhs & root_ptr" string_of_bool) r  in
                   (d,r,Some rf)
                 else (d,r,None)
-              | _ -> (d,false,None)
+              | Some ((v,pf)::_) ->
+                failwith (x_loc^"view matching..")
             end
-        ) diff_ptrs in
+          | None | Some []  -> 
+            begin
+              match root_lhs with
+              | None | Some [] ->
+                (* lhs_p2 |- rhs_ptr=d  *)
+                let rhs = CP.mkEqn d rhs_ptr no_pos in
+                let r = !CP.tp_imply lhs_p2 rhs in
+                (d,r,None)
+              | Some ((root,root_pf)::_) ->
+                let () = y_binfo_hp (add_str "d" !CP.print_sv) d in
+                let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
+                let () = y_binfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
+                (* let rhs = CP.mk_is_base_ptr rhs_ptr d in *)
+                let rhs = CP.mkEqVars rhs_ptr root in
+                let r = !CP.tp_imply (CP.mkAnd lhs_p2 root_pf no_pos) rhs in
+                let () = y_binfo_hp (add_str "rhs" !CP.print_formula) rhs in
+                let () =  y_binfo_hp (add_str "rhs_ptr=root" string_of_bool) r  in
+                  (d,r,None) (* Some rf *)
+                (* failwith (x_loc^"unfolding") *)
+            end
+            (*   | _ -> (d,false,None) *)
+            (* end *)
+        ) lhs_nodes (* diff_ptrs *) in
       (* let () = y_tinfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in *)
       lst in
     let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in

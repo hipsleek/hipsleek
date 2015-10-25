@@ -74,27 +74,52 @@ Entail 1: EXCast. Failure("UNIFICATION ERROR : at location {(Line:20,Col:24),(Li
 : no residue 
 
 =================================================================
-(PATCHED) 
-
-error at: rb.ss rotate_case_3
-error at: rb.ss case_2
-error at: rb.ss rotate_case_3r
-error at: rb.ss case_2r
-error at: rb.ss is_red
-error at: rb.ss is_black
-error at: rb.ss del_6
-error at: rb.ss del_6r
-error at: rb.ss del_5
-error at: rb.ss del_5r
-error at: rb.ss del_4
-../error at: rb.ss del_4r
-error at: rb.ss del_3
-error at: rb.ss del_3r
-error at: rb.ss del_2
-error at: rb.ss remove_min
-error at: rb.ss del
-error at: rb.ss insert
+Total number of errors: 37 in files:
+ error at: vperm/task_decompose.ss creator
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-static-consistency.ss main_fail
+error at: veribsync/barrier-static-consistency.ss participant
+error at: veribsync/barrier-static-consistency.ss participant1
+error at: veribsync/barrier-static-consistency.ss participant_fail
+error at: veribsync/barrier-dynamic-exp3.ss main
+error at: veribsync/barrier-dynamic-exp3.ss thread1
+error at: veribsync/barrier-dynamic-exp3.ss thread2
+error at: veribsync/barrier-dynamic-exp3.ss thread3
+error at: veribsync/barrier-dynamic-exp4.ss childthread1
+error at: veribsync/barrier-dynamic-exp4.ss childthread2
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread1
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.
 =================================================================
+# ex1c6b.slk
+
+infer[i] y::arr_int<i,5> & xxx=y:arr+3 
+     |- xxx::arr<v>.
+
+# Inference does not work with array segments ..
 =================================================================
 =================================================================
 =================================================================

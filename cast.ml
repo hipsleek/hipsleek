@@ -4165,4 +4165,25 @@ let set_prog cp =
   cprog := Some cp
 
 
+(* let get_views_offset prog f = *)
+(*   let stk = new Gen.stack in *)
+(*   let f_h_f hf =  *)
+(*     match hf with *)
+(*     | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name } ->  *)
+(*       let vr = get_root_view prog name p args in *)
+(*       let () = stk # push (p,Some vr) in Some hf  *)
+(*     | DataNode ({ h_formula_data_node = vsv; } )  *)
+(*     | ThreadNode {h_formula_thread_node=vsv;} *)
+(*     | HVar (vsv,_) -> *)
+(*       let () = stk # push (vsv,None) in Some hf *)
+(*     | HRel (hp, e, _)   -> *)
+(*         let args = CP.diff_svl (get_all_sv hf) [hp] in *)
+(*         (\* let root, _ = Sautil.find_root prog [hp] args [] in *\) *)
+(*         let () = stk # push (root,None) in Some hf *)
+(*     | _ -> None in  *)
+(*   let _ = (map_h_formula f f_h_f) in *)
+(*   let r = stk # get_stk in *)
+(*   let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in *)
+(*   let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in *)
+(*   r *)
 

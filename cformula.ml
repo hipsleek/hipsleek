@@ -20307,4 +20307,8 @@ let get_data_and_views f =
       let () = stk # push (vsv,(0,hf)) in Some hf
     | _ -> None in 
   let _ = (map_h_formula f f_h_f) in
-  stk # get_stk
+  let r = stk # get_stk in
+  let pr = pr_pair !CP.print_sv (pr_pair string_of_int !print_h_formula) in
+  let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in
+  r
+
