@@ -4530,30 +4530,33 @@ and formula_of_disjuncts (f:formula list) : formula=
   | [] -> (mkTrue (mkTrueFlow()) no_pos)
   | x::xs -> List.fold_left (fun a c-> mkOr a c no_pos) x xs
 
-and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
+and rename_struc_bound_vars ?(stk=None) (f:struc_formula):struc_formula = match f with
   | ECase b-> 
     (* let sst3 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_case_exists in *)
     let f = ECase {b with (* formula_case_exists = (snd (List.split sst3)); *)
-                   formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.rename_top_level_bound_vars c1),(rename_struc_bound_vars c2))) b.formula_case_branches;} in
+                   formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.rename_top_level_bound_vars c1),(rename_struc_bound_vars ~stk:stk c2))) b.formula_case_branches;} in
     (* subst_struc  sst3  f *)
     f
   | EBase b-> 
     let sst1 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_explicit_inst in
     let sst2 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_implicit_inst in
     let sst3 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_exists in
+    let () = match stk with
+      | None -> ()
+      | Some stk -> stk # push_list sst2 in
     let sst = sst1@sst2@sst3 in
     let f = EBase {b with 
                    formula_struc_implicit_inst = (snd (List.split sst2));
                    formula_struc_explicit_inst = (snd (List.split sst1));
                    formula_struc_exists = (snd (List.split sst3));
                    formula_struc_base = rename_bound_vars b.formula_struc_base;
-                   formula_struc_continuation = map_opt rename_struc_bound_vars b.formula_struc_continuation; }in
+                   formula_struc_continuation = map_opt (rename_struc_bound_vars ~stk:stk) b.formula_struc_continuation; }in
     subst_struc sst f
   | EAssume b-> EAssume {b with
                          formula_assume_simpl = rename_bound_vars b.formula_assume_simpl;
-                         formula_assume_struc = rename_struc_bound_vars b.formula_assume_struc;}
-  | EInfer b -> EInfer { b with formula_inf_continuation = rename_struc_bound_vars b.formula_inf_continuation;}
-  | EList b -> EList (map_l_snd rename_struc_bound_vars b)
+                         formula_assume_struc = rename_struc_bound_vars ~stk:stk b.formula_assume_struc;}
+  | EInfer b -> EInfer { b with formula_inf_continuation = rename_struc_bound_vars ~stk:stk b.formula_inf_continuation;}
+  | EList b -> EList (map_l_snd (rename_struc_bound_vars ~stk:stk) b)
 
 (* and rename_struc_bound_vars (f:struc_formula):struc_formula = *)
 (*   let pr1 = !print_struc_formula in *)
@@ -20299,9 +20302,9 @@ let get_data_and_views f =
   let f_h_f hf = 
     match hf with
     | ViewNode ({ h_formula_view_node = vsv; h_formula_view_name = vname; } as v) ->
-      let () = stk # push (vsv,hf) in Some hf
+      let () = stk # push (vsv,(1,hf)) in Some hf
     | DataNode ({ h_formula_data_node = vsv; h_formula_data_name = vname; } as v) ->
-      let () = stk # push (vsv,hf) in Some hf
+      let () = stk # push (vsv,(0,hf)) in Some hf
     | _ -> None in 
   let _ = (map_h_formula f f_h_f) in
   stk # get_stk

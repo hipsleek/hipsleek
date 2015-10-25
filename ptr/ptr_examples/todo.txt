@@ -63,7 +63,37 @@ choose_context inp5 :right aliase:[]
 choose_context@3 EXIT:[]
 
 =================================================================
+# ex1c4.ss
+
+ checkentail x::arr<5> & x=y+2 |- y::arr_int<2,v>.
+
+ERROR: at ex1c4-index-test.slk_20:24_20:29
+Message: UNIFICATION ERROR : at location {(Line:20,Col:24),(Line:20,Col:29)} types arr and int are inconsistent
+
+Entail 1: EXCast. Failure("UNIFICATION ERROR : at location {(Line:20,Col:24),(Line:20,Col:29)} types arr and int are inconsistent")
+: no residue 
+
 =================================================================
+(PATCHED) 
+
+error at: rb.ss rotate_case_3
+error at: rb.ss case_2
+error at: rb.ss rotate_case_3r
+error at: rb.ss case_2r
+error at: rb.ss is_red
+error at: rb.ss is_black
+error at: rb.ss del_6
+error at: rb.ss del_6r
+error at: rb.ss del_5
+error at: rb.ss del_5r
+error at: rb.ss del_4
+../error at: rb.ss del_4r
+error at: rb.ss del_3
+error at: rb.ss del_3r
+error at: rb.ss del_2
+error at: rb.ss remove_min
+error at: rb.ss del
+error at: rb.ss insert
 =================================================================
 =================================================================
 =================================================================

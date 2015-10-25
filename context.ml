@@ -19,6 +19,7 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  match_res_root_inst : (CP.spec_var (* * CP.formula *)) option;
   (* this indicates compatible variables from LHS/RHS that can be used *)
   (* for base-case-fold/unfold and instantiation *)
   match_res_compatible: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
@@ -94,7 +95,7 @@ and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (l
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
-let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
+let mk_match_res ?(holes=[]) ?(root_inst=None)mt lhs_node lhs_rest rhs_node rhs_rest =
   {
     match_res_lhs_node = lhs_node;
     match_res_lhs_rest = lhs_rest;
@@ -103,6 +104,7 @@ let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
     match_res_compatible = [];
     match_res_rhs_node = rhs_node;
     match_res_rhs_rest = rhs_rest;
+    match_res_root_inst = root_inst;
   }
 
 (*
@@ -241,6 +243,7 @@ let pr_match_res (c:match_res):unit =
   pr_hwrap "Type: " pr_match_type c.match_res_type; fmt_cut ();
   pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
   pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node; fmt_cut ();
+  pr_hwrap "root_inst: " fmt_string ((pr_option !CP.print_sv) c.match_res_root_inst); fmt_cut ();
   fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
   fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest; fmt_cut ();
   fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_compatible) ;
@@ -587,19 +590,22 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   | DataNode _ 
   | HVar _
   | ViewNode _ ->
-    let imm, pimm, p = match rhs_node with
-      | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (imm, pimm, p)
-      | ViewNode { h_formula_view_node=p; h_formula_view_imm=imm } -> (imm, [], p)
+    let view_root_rhs,imm, pimm, p = match rhs_node with
+      | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (None,imm, pimm, p)
+      | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name; h_formula_view_imm=imm } -> 
+        let vr = get_root_view prog name p args in
+        (Some vr,imm, [], p)
       (* TODO:WN:HVar *)
-      | HVar (v,_) -> (CP.ConstAnn(Mutable), [], v)
-      | ThreadNode { h_formula_thread_node=p; } -> (CP.ConstAnn(Mutable), [], p)
+      | HVar (v,_) -> (None,CP.ConstAnn(Mutable), [], v)
+      | ThreadNode { h_formula_thread_node=p; } -> (None,CP.ConstAnn(Mutable), [], p)
       | HRel (hp, e, _) ->
         let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
         let root, _ = Sautil.find_root prog [hp] args [] in
         let () = x_tinfo_hp (add_str "root" Cprinter.string_of_spec_var) root pos in
-        (CP.ConstAnn(Mutable), [], root)
+        (None,CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
     in
+    let () = y_binfo_hp (add_str "view_root_rhs" (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
     let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
     let eqns' = MCP.ptr_equations_without_null lhs_p in
     (* let emap = CP.EMapSV.build_eset eqns' in *)
@@ -616,35 +622,80 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     in
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
-    let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
     let emap = CP.EMapSV.build_eset eqns' in
-    let () = x_binfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
+    let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
     (* let paset = p::paset in *)
     let asets = Csvutil.alias_nth 3 ((p, p) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
-    let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    let view_root_flag = match view_root_rhs with
+      | None -> false
+      | Some lst -> if lst==[] then false else true in
     let rhs_ptr = p in
+    (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
+    (* let () = y_binfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
     let enhance_paset paset =
-      if !Globals.ptr_arith_flag then
-        let lhs_p2 =MCP.pure_of_mix lhs_p in
-        let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
-        let () = y_binfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
-        let () = y_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
-        let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
-        let diff_ptrs = Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset in
-        let () = y_binfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in
-        let lst = List.filter (fun d -> 
+      let lhs_p2 =MCP.pure_of_mix lhs_p in
+      let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
+      let () = y_binfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
+      let () = y_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
+      let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
+      let diff_ptrs = heap_ptrs in
+      (* let diff_ptrs = Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset in *)
+      let () = y_binfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in
+      let () = y_winfo_pp "unfolding need to access to view_root_lhs" in
+      let lst = List.map (fun d -> 
+          match view_root_rhs with
+          | None -> 
             (* lhs_p2 |- rhs_ptr=d  *)
             let rhs = CP.mkEqn d rhs_ptr no_pos in
             let r = !CP.tp_imply lhs_p2 rhs in
-            r
-          ) diff_ptrs in
-        let () = y_binfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in
-        lst@paset
+            (d,r,None)
+          | Some ls -> 
+            (* lhs_p2 |- d>=rhs_ptr  *)
+            begin
+              match ls with
+              | [(v,rf)] ->
+                let rhs = CP.mk_is_base_ptr d rhs_ptr in
+                let r = !CP.tp_imply lhs_p2 rhs in
+                let () =  y_binfo_hp (add_str "lhs>=rhs_ptr" string_of_bool) r  in
+                if r then 
+                  let eq = CP.mkEqVars v d in
+                  let rhs_p = MCP.pure_of_mix rhs_p in
+                  let () =  y_binfo_hp (add_str "rhs_p" !CP.print_formula) rhs_p  in
+                  let f = CP.join_conjunctions [lhs_p2;eq;rf;rhs_p] in
+                  let r = !CP.tp_is_sat f in
+                  let () =  y_binfo_hp (add_str "rf" !CP.print_formula) rf  in
+                  let rf = CP.apply_subs [(v,d)] rf in
+                  let () =  y_binfo_hp (add_str "rf" !CP.print_formula) rf  in
+                  let () =  y_binfo_hp (add_str "is_sat hs & rhs & root_ptr" string_of_bool) r  in
+                  (d,r,Some rf)
+                else (d,r,None)
+              | _ -> (d,false,None)
+            end
+        ) diff_ptrs in
+      (* let () = y_tinfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in *)
+      lst in
+    let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    let lst = if !Globals.ptr_arith_flag then
+        let lst = enhance_paset paset in
+        let lst = List.filter (fun (_,f,_) -> f) lst in
+        let lst = List.map (fun (d,_,r) -> (d,r)) lst in
+        lst 
+      else [] in
+    let paset = 
+      if !Globals.ptr_arith_flag then 
+        if lst==[] then paset
+        else List.map fst lst 
       else paset in
-    let paset = enhance_paset paset in
+    (* view with root ptrs *)
+    let root_lst = List.fold_left (fun acc (d,r) ->
+        match r with 
+        | None -> acc
+        | Some r -> (d,r)::acc
+      ) [] lst in
     if Gen.is_empty paset then
       failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
     else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
@@ -656,7 +707,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
-      let mt_res = x_add spatial_ctx_extract prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
+      let mt_res = x_add (spatial_ctx_extract ~view_roots:root_lst) prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
       (* WN: why is there a need to filter out root parameters? *)
       (*  affects str-inf/ex14b[23].slk *)
       (* let mt_res = x_add filter_match_res_list mt_res rhs_node in *)
@@ -862,15 +913,15 @@ and coerc_mater_match estate coercs l_vname (l_vargs:P.spec_var list) r_vname r_
   rr - right rest
 *)
 (* Trung, delete later: extract node in LHS (f) to match with node in RHS *)
-and spatial_ctx_extract p estate f a i pi rn rr emap = 
+and spatial_ctx_extract ?(view_roots=[]) p estate f a i pi rn rr emap = 
   let pr = pr_list string_of_match_res in
-  let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr_svl = !CP.print_svl in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
   Debug.no_4 "spatial_ctx_extract" (add_str "h_formula" string_of_h_formula) 
     (add_str "imm" Cprinter.string_of_imm) (add_str "aset" pr_svl) 
     (add_str "rhs_node" string_of_h_formula) (add_str "list of match_res" pr) 
-    (fun _ _ _ _-> spatial_ctx_extract_x p estate f a i pi rn rr emap) f i a rn 
+    (fun _ _ _ _-> spatial_ctx_extract_x ~view_roots:view_roots p estate f a i pi rn rr emap) f i a rn 
 
 and update_field_imm (f : h_formula) (pimm1 : CP.ann list) (consumed_ann: CP.ann list) (residue: bool): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -1136,8 +1187,8 @@ and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_
   Debug.no_4 "coerc_mater_match_gen" pr_id pr_svl pr_svl (add_str "lhs" !CF.print_h_formula) pr2
     (fun _ _ _ _ -> coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset lhs_f
 
-and spatial_ctx_extract_x prog estate (f0 : h_formula)
-    (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list)
+and spatial_ctx_extract_x ?(view_roots=[]) prog estate (f0 : h_formula)
+    aset (imm : CP.ann) (pimm : CP.ann list)
     rhs_node rhs_rest emap
   : match_res list  =
   let () = x_tinfo_hp (add_str "lhs?" !CF.print_h_formula) f0 no_pos in
@@ -1167,6 +1218,7 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
   (*   | _ -> failwith "Failure of name_of_h_formula" *)
   (* in *)
   let right_name,r_vargs =  CF.name_of_h_formula rhs_node in
+  let stk = new Gen.stack in
   let rec helper f = 
     match f with    (* f is formula in LHS *)
     | HTrue -> []
@@ -1214,6 +1266,14 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
             (* failwith "TBI" *)
           else []
         | _      ->
+          let () = y_tinfo_hp (add_str "DataNode" !CP.print_sv) p1 in
+          let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
+          let add_roots stk p1 lst =
+            try
+              let (r,rt) = List.find (fun (v,_) -> CP.eq_spec_var p1 v) lst in
+              stk # push (f,(r,rt))
+            with _ -> () in
+          let () = add_roots stk p1 view_roots in
           if ((CP.mem p1 aset) (* && (subtyp) *)) then 
             if ( (not !Globals.allow_field_ann) && produces_hole imm) then
               (* not consuming the node *)
@@ -1438,9 +1498,13 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
   let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l no_pos in
+  let lst = stk # get_stk in
+  let find r = try
+      Some (fst (snd (List.find (fun (hf,_) -> hf==r) lst)))
+    with _ -> None in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let () = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
-      mk_match_res ~holes:holes mt lhs_node lhs_rest rhs_node rhs_rest
+      mk_match_res ~holes:holes ~root_inst:(find lhs_node) mt lhs_node lhs_rest rhs_node rhs_rest
       (* { match_res_lhs_node = lhs_node; *)
       (*  match_res_lhs_rest = lhs_rest; *)
       (*  match_res_holes = holes; *)
@@ -1806,7 +1870,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
         else
           let b = 
             if (!Globals.perm = Frac) || (!Globals.perm = Bperm)
-           then not b else b 
+            then not b else b 
           in
           if b || !use_split_match then false else true 
       | _ -> true) l
@@ -2553,18 +2617,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let ptr = ref None in
              let left_preds = match ms with
                | Coerc_mater d ->
-                     let l_v = d.coercion_body_view in
-                     let () = y_tinfo_hp (add_str "left_view" (pr_id)) l_v in
-                     let lst = List.filter (fun vn -> not (string_eq vn h_name) ) mv.mater_target_view in
-                     let () = if lst == [] then
-                       try
-                         let _ = look_up_data_def_prog prog l_v in
-                         let () = y_tinfo_hp (add_str "coercing data " pr_id) l_v in
-                         let () = ptr := Some (l_v,M_lemma (m_res,Some d,1)) in
-                         ()
-                       with _ -> ()
-                     in
-                     l_v::lst
+                 let l_v = d.coercion_body_view in
+                 let () = y_tinfo_hp (add_str "left_view" (pr_id)) l_v in
+                 let lst = List.filter (fun vn -> not (string_eq vn h_name) ) mv.mater_target_view in
+                 let () = if lst == [] then
+                     try
+                       let _ = look_up_data_def_prog prog l_v in
+                       let () = y_tinfo_hp (add_str "coercing data " pr_id) l_v in
+                       let () = ptr := Some (l_v,M_lemma (m_res,Some d,1)) in
+                       ()
+                     with _ -> ()
+                 in
+                 l_v::lst
                | _ -> []
              in
              let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
@@ -3015,7 +3079,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
   let ls = List.map recalibrate_wt ys in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
   let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
-   let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
+  let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
   (* WN : is below critical? why do we need them? *)
   (* let ucert, cert = List.partition uncertain sl in (\*delay uncertain*\) *)
   (* let sl = cert@ucert in *)
@@ -3071,10 +3135,10 @@ and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running
   (action_wt list)=
   match ys with
   | [] -> let new_rs =
-    match running with
-    | [] -> rs
-    | [a] -> rs @ [a]
-    | _ -> rs @ [(running_w, Cond_action running)]
+            match running with
+            | [] -> rs
+            | [a] -> rs @ [a]
+            | _ -> rs @ [(running_w, Cond_action running)]
     in new_rs
   | (w, act)::ss ->
     if (w > running_w) then

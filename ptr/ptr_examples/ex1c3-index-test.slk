@@ -3,7 +3,8 @@ data arr {
 }.
 
 pred arr_int<o:int,v:int> ==
-    p::arr<v> * q::arr<v> & p=self+o & q=p+1 & o>=0
+    p1::arr<v> * q::arr<v> & p1=self+o & q=p1+1 & o>=0
+or  q::arr<v> * p::arr<v>  & p=self+o+1 & q=p+1 & o>=0
 inv o>=0.
 // root=Some(self+o)
 // add this @ trans_view

@@ -515,7 +515,7 @@ $output_file = "log";
              "remove_min","SUCCESS",
              "delete","SUCCESS",
             ],
-            ["rb.ss",18, "--use-baga", "rotate_case_3","SUCCESS",
+            ["rb.ss",18, "--use-baga --dis-ptr-arith", "rotate_case_3","SUCCESS",
              "case_2","SUCCESS",
              "rotate_case_3r","SUCCESS",
              "case_2r","SUCCESS",

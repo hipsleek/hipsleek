@@ -1,0 +1,34 @@
+data arr {
+  int val;
+}.
+
+pred arr_int<o:int,v:int> ==
+    p1::arr<v> & p1=self+o & o>=0
+//  p1::arr<v> * q::arr<v> & p1=self+o & q=p1+1 & o>=0
+//or  q::arr<v> * p::arr<v>  & p=self+o+1 & q=p+1 & o>=0
+inv o>=0.
+// root=Some(self+o)
+// add this @ trans_view
+
+
+checkentail xxx::arr<5> & xxx=y+0
+     |- y::arr_int<k,v>.
+print residue.
+expect Valid. //k=2 
+
+/*
+# ex1c5f.slk
+
+checkentail xxx::arr<5> & xxx=y+0
+     |- y::arr_int<k,v>.
+
+ERROR: at ex1c5e-index-test.slk_23:26_23:33
+Message: UNIFICATION ERROR : at location {(Line:23,Col:26),(Line:23,Col:33)} types arr and int are inconsistent
+
+Entail 3: EXCast. Failure("UNIFICATION ERROR : at location {(Line:23,Col:26),(Line:23,Col:33)} types arr and int are inconsistent")
+: no residue 
+Validate 3: Expecting ValidBUT got no residue
+
+
+
+*/

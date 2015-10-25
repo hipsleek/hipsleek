@@ -8063,6 +8063,8 @@ let rec replace_pure_formula_label nl f = match f with
 
 let store_tp_is_sat : (formula -> bool) ref = ref (fun _ -> true)
 
+let tp_is_sat = store_tp_is_sat
+
 let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
   x_dinfo_hp (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
   x_dinfo_hp (add_str "coseq : " ( !print_formula)) conseq no_pos;
@@ -15578,10 +15580,20 @@ let extr_eqn (f:formula)  =
     let f_f f = None in
     let f_bf bf = match bf with
       | (Eq (e1,e2,_),_) -> 
-        let () = stk # push (e1,e2) in
+        let () = stk # push (BForm (bf,None))(* (e1,e2) *) in
         Some bf
       | _ -> Some bf in
     let f_e e = Some e in
     map_formula f (f_f,f_bf,f_e) in
   let _ = helper f in
   stk # get_stk
+
+let mkLtVars a1 a2 =
+  BForm ((Lt (Var (a1,no_pos),Var(a2,no_pos), no_pos),None),None)
+
+let mkEqVars a1 a2 =
+  BForm ((Eq (Var (a1,no_pos),Var(a2,no_pos), no_pos),None),None)
+
+let mk_is_base_ptr d rhs_ptr =
+  BForm ((Gte (Var (d,no_pos),Var(rhs_ptr,no_pos), no_pos),None),None)
+
