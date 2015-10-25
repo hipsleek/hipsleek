@@ -10,16 +10,6 @@ inv o>=0.
 // root=Some(self+o)
 // add this @ trans_view
 
-infer[i] y::arr_int<i,5> & xxx=y:arr+3 
-     |- xxx::arr<v>.
-print residue.
-expect Valid. //k=2 
-
-infer[i] p::arr<5> & p=y:arr+i & xxx=y:arr+3 
-     |- xxx::arr<v>.
-print residue.
-expect Valid. //k=2 
-
 
 infer[i] p=y:arr+i & xxx=y:arr+3 
      |- p=xxx.
@@ -27,11 +17,14 @@ print residue.
 expect Valid. //k=2 
 
 /*
-# ex1c6b.slk
+# ex1c6c.slk
 
-infer[i] y::arr_int<i,5> & xxx=y:arr+3 
-     |- xxx::arr<v>.
+infer[i] p=y:arr+i & xxx=y:arr+3 
+     |- p=xxx.
 
-# Inference does not work with array segments ..
+# why is i undefined? 
+ERROR: at _0:0_0:0
+Message: i is undefined (7)
+Exception(get_spec_var_type_list):Failure("i is undefined (7)")
 
 */

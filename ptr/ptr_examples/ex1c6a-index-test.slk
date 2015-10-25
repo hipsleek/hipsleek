@@ -20,7 +20,9 @@ checkentail y::arr_int<2,5> & xxx=y:arr+3
 print residue.
 expect Fail. //k=2 
 
+/*
 infer[i] y::arr_int<i,5> & xxx=y:arr+3 
      |- xxx::arr<v>.
 print residue.
 expect Valid. //k=2 
+*/

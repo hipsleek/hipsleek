@@ -701,17 +701,19 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               | None | Some [] ->
                 (* lhs_p2 |- rhs_ptr=d  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
-                let r = !CP.tp_imply lhs_p2 rhs in
+                let r = if CF.no_infer_all_all estate then !CP.tp_imply lhs_p2 rhs 
+                  else true (*can we check if it shares same base *) in
                 (d,r,None)
               | Some ((root,root_pf)::_) ->
                 let () = y_binfo_hp (add_str "d" !CP.print_sv) d in
                 let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
                 let () = y_binfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
-                (* let rhs = CP.mk_is_base_ptr rhs_ptr d in *)
-                let rhs = CP.mkEqVars rhs_ptr root in
+                let rhs = if CF.no_infer_all_all estate then
+                    CP.mkEqVars rhs_ptr root
+                  else CP.mk_is_base_ptr rhs_ptr d in
                 let r = !CP.tp_imply (CP.mkAnd lhs_p2 root_pf no_pos) rhs in
-                let () = y_binfo_hp (add_str "rhs" !CP.print_formula) rhs in
-                let () =  y_binfo_hp (add_str "rhs_ptr=root" string_of_bool) r  in
+                let () = y_binfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
+                let () = y_binfo_hp (add_str "rhs_ptr=root" string_of_bool) r  in
                   (d,r,None) (* Some rf *)
                 (* failwith (x_loc^"unfolding") *)
             end

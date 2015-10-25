@@ -78,19 +78,19 @@ let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr "scc_rel_ass_stk"
 (*   DD.info_zprint (lazy  (rel_ass_stk # string_of_reverse_log)); *)
 (*   DD.info_pprint "==========================================" *)
 
-let no_infer_vars estate = (estate.es_infer_vars == []) 
+(* let no_infer_vars estate = (estate.es_infer_vars == [])  *)
 
-let no_infer_rel estate = (estate.es_infer_vars_rel == [])
+(* let no_infer_rel estate = (estate.es_infer_vars_rel == []) *)
 
-let no_infer_templ estate = (estate.es_infer_vars_templ == [])
-let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == []) || is_error_flow estate.es_formula
+(* let no_infer_templ estate = (estate.es_infer_vars_templ == []) *)
+(* let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == []) || is_error_flow estate.es_formula *)
 
 
-(* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *)
+(* (\* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *\) *)
 
-let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
+(* let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == []) *)
 
-let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate
+(* let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate *)
 
 (* WN: Why is there a need to remove vars_rel? *)
 let remove_infer_vars_all estate =

@@ -407,7 +407,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
         lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
         let rank_formula = MCP.pure_of_mix rank_formula in*)
       let estate, entail_dec_res = 
-        if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+        if not (CF.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
           let () = Globals.templ_term_inf := true in
           (* let () = print_endline "COLLECT RANK" in *)
           let es = Template.collect_templ_assume_init estate lhs_p rank_formula pos in 

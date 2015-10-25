@@ -20312,3 +20312,16 @@ let get_data_and_views f =
   let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in
   r
 
+let no_infer_vars estate = (estate.es_infer_vars == []) 
+
+let no_infer_rel estate = (estate.es_infer_vars_rel == [])
+
+let no_infer_templ estate = (estate.es_infer_vars_templ == [])
+let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == []) || is_error_flow estate.es_formula
+
+
+(* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *)
+
+let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
+
+let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate
