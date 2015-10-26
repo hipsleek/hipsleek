@@ -87,6 +87,33 @@ let exam_ass_error_scc iprog scc=
   let err_asserts = List.map (exam_ass_error_proc iprog) scc in
   List.exists (fun b -> b) err_asserts
 
+(* let simplify_symex_trace_x prog v_args fs= *)
+(*   let f_pf p0= *)
+(*     let ps = CP.list_of_conjs p0 in *)
+(*     (\* elim bool vars *\) *)
+(*     let ps1 = List.filter (fun p -> not (CP.is_bool_formula p)) ps in *)
+(*     let p1 = (CP.conj_of_list ps1 (CP.pos_of_formula p0)) in *)
+(*     let eqs = (MCP.ptr_equations_without_null (MCP.mix_of_pure p1)) in *)
+(*     let sel_eqs = List.fold_left (fun acc (sv1,sv2) -> *)
+(*         match CP.mem_svl sv1 v_args, CP.mem_svl sv2 v_args with *)
+(*           | true, false -> acc@[(sv2,sv1)] *)
+(*           | false, true -> acc@[(sv1,sv2)] *)
+(*           | _ -> acc *)
+(*     ) [] eqs in *)
+(*     Some (CP.remove_redundant (CP.subst sel_eqs p1)) *)
+(*   in *)
+(*   let f_ef _ = None in *)
+(*   let f_f _ = None in *)
+(*   let f_hf _ = None in *)
+(*   let f_m mp = Some mp in *)
+(*   let f_a a = Some a in *)
+(*   let f_b bf= Some bf in *)
+(*   let f_e e = Some e in *)
+(*   let simplify_pure f = CF.transform_formula (f_ef, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) f in *)
+(*   (\* let fs1 = Gen.BList.remove_dups_eq (Syn_checkeq.check_relaxeq_formula v_args) fs in *\) *)
+(*   let fs1 = List.map simplify_pure fs in *)
+(*   fs1 *)
+
 let simplify_symex_trace_x prog v_args fs=
   let f_pf p0=
     let ps = CP.list_of_conjs p0 in
@@ -100,18 +127,28 @@ let simplify_symex_trace_x prog v_args fs=
           | false, true -> acc@[(sv1,sv2)]
           | _ -> acc
     ) [] eqs in
-    Some (CP.remove_redundant (CP.subst sel_eqs p1))
+    (CP.remove_redundant (CP.subst sel_eqs p1)), sel_eqs
   in
-  let f_ef _ = None in
-  let f_f _ = None in
-  let f_hf _ = None in
-  let f_m mp = Some mp in
-  let f_a a = Some a in
-  let f_b bf= Some bf in
-  let f_e e = Some e in
-  let simplify_pure f = CF.transform_formula (f_ef, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) f in
-  (* let fs1 = Gen.BList.remove_dups_eq (Syn_checkeq.check_relaxeq_formula v_args) fs in *)
-  let fs1 = List.map simplify_pure fs in
+  let rec recf f= match f with
+      | CF.Base fb ->
+            let np, sst = f_pf (MCP.pure_of_mix fb.CF.formula_base_pure) in
+            let nh = CF.h_subst sst fb.CF.formula_base_heap in
+            let nf = CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure np;
+                CF.formula_base_heap = nh;
+            } in
+            nf, sst
+      | CF.Exists _ -> let quans1, base1 = CF.split_quantifiers f in
+        let base2,sst = recf base1 in
+        let quans2 = CP.subst_var_list sst quans1 in
+        CF.add_quantifiers quans2 base2, sst
+      | CF.Or orf ->
+            let nf1,sst1 =(recf orf.CF.formula_or_f1) in
+            let nf2,sst2 =(recf orf.CF.formula_or_f2) in
+           (CF.Or {orf with CF.formula_or_f1 = nf1;
+            CF.formula_or_f2 = nf2;
+           }, sst1@sst2)
+  in
+  let fs1 = List.map (fun f -> fst (recf f)) fs in
   fs1
 
 let simplify_symex_trace prog v_args fs=
@@ -200,7 +237,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
   let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
+  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
   let e = CP.SpecVar (Int, err_var, Unprimed) in
   let safe_fl = MCP.mix_of_pure (CP.mkEqExp (CP.Var (e, no_pos)) (CP.IConst (0, no_pos)) no_pos) in
   let brs1 = List.fold_left (fun fs f ->

@@ -23,11 +23,11 @@ int ackermann(int m, int n) {
 
 
 int main() {
-  int m ;//= __VERIFIER_nondet_int();
+  int m = __VERIFIER_nondet_int();
     if (m < 0 || m > 3) {
         return 0;
     }
-    int n ;//=__VERIFIER_nondet_int();
+    int n =__VERIFIER_nondet_int();
     if (n < 0 || n > 23) {
         return 0;
     }
@@ -40,3 +40,6 @@ int main() {
   
 }
 
+/* int main() { */
+/* __VERIFIER_error(); */
+/* } */
