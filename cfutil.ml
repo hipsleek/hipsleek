@@ -33,7 +33,7 @@ let is_post_hprel (hpr: CF.hprel) =
 let sig_of_hrel (h: CF.h_formula) =
   match h with
   | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args h)
-  | _ -> failwith ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
+  | _ -> x_fail ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
 
 let name_of_hrel (h: CF.h_formula) = 
   fst (sig_of_hrel h) 
@@ -47,7 +47,7 @@ let sig_of_hprel (hpr: CF.hprel) =
   let f_h, _, _, _, _, _ = x_add_1 CF.split_components hpr_f in
   match f_h with
   | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args f_h)
-  | _ -> failwith ("Unexpected formula in the " ^ 
+  | _ -> x_fail ("Unexpected formula in the " ^ 
                    (if is_pre then "LHS" else "RHS") ^ " of a " ^
                    (if is_pre then "pre-" else "post-") ^ "hprel " ^ 
                    (Cprinter.string_of_hprel_short hpr))
@@ -135,7 +135,7 @@ let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
           (acc @ sig_of_ra, rem_nodes)) ([], rest_nodes) root_args
         in
         root_node::sig_of_root_args, rem_nodes
-      | _ -> failwith ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula hs))
+      | _ -> x_fail ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula hs))
   in fst (helper root hs)
 
 let rec complx_sig_of_formula prog root (f: CF.formula) = 
@@ -314,7 +314,7 @@ let rec_unfold_formula_of_hrel prog hrel_root hrel_args =
       let hr_args = (ptr, I)::ni_hr_args in
       let (hr, _) = C.add_raw_hp_rel prog true true hr_args pos in
       CF.mkAnd_f_hf f hr pos) f ptr_d_args
-  | _ -> failwith "[rec_unfold_formula_of_hrel]: Unexpected root type of HRel"
+  | _ -> x_fail "[rec_unfold_formula_of_hrel]: Unexpected root type of HRel"
 
 let unfold_formula_of_hrel prog hrel_root hrel_args =
   let base = base_unfold_formula_of_hrel hrel_root hrel_args in

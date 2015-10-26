@@ -246,8 +246,8 @@ let find_root_one_hprel prog hprel =
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let pr = Cprinter.string_of_hprel_short in
   match hprel_args with
-  | [] -> failwith ("Unexpected hprel with empty arguments: " ^ (pr hprel))
-  | r::[] -> if CP.is_node_typ r then (r, 0) else failwith ("Cannot find root of the hprel " ^ (pr hprel))
+  | [] -> x_fail ("Unexpected hprel with empty arguments: " ^ (pr hprel))
+  | r::[] -> if CP.is_node_typ r then (r, 0) else x_fail ("Cannot find root of the hprel " ^ (pr hprel))
   | _ ->
     let hprel_body = body_of_hprel hprel in
     let num_args = mk_num_args hprel_args in
@@ -256,9 +256,9 @@ let find_root_one_hprel prog hprel =
     | None ->
       (begin try
         let r = List.find (fun (sv, _) -> CP.is_node_typ sv) num_args in
-        let () = report_warning no_pos ("Choose the first heap arguments of hprel as its root at our own risk.") in
+        let () = x_warn ("Choose the first heap arguments of hprel as its root at our own risk.") in
         r
-      with _ -> failwith ("Cannot find root of the hprel " ^ (pr hprel)) end)
+      with _ -> x_fail ("Cannot find root of the hprel " ^ (pr hprel)) end)
     | Some s -> s end)
 
 let find_root_one_hprel prog hprel =
@@ -292,7 +292,7 @@ let find_root_hprel_list prog hprels =
     let hs_roots = List.map (x_add find_root_hprel prog) hs in
     let is_consistent = List.for_all (fun (_, i) -> i == h_i) hs_roots in
     if not is_consistent then
-      failwith ("TO FIX: Inconsistency in find_root_hprel_list")
+      x_fail ("TO FIX: Inconsistency in find_root_hprel_list")
     else Some h_i
 
 let select_obj name_of obj_list obj_id_list = 
@@ -301,10 +301,17 @@ let select_obj name_of obj_list obj_id_list =
 let select_hprel_assume hprel_list hprel_id_list = 
   select_obj (fun hpr -> CP.name_of_spec_var (name_of_hprel hpr)) hprel_list hprel_id_list
 
+let pr_act s = 
+  let act_str = " Performing " ^ s ^ " " in
+  let s_len = String.length act_str in
+  let line = String.init s_len (fun _ -> '=') in
+  let () = print_endline_quiet ("\n" ^ line) in
+  let () = print_endline_quiet act_str in
+  let () = print_endline_quiet (line ^ "\n") in
+  ()
+
 let process_hprel_assumes_others s hprel_assume_stk (ids: regex_id_list) f_proc = 
-  let () = print_endline_quiet "\n========================" in
-  let () = print_endline_quiet (" Performing "^s) in
-  let () = print_endline_quiet "========================" in
+  let () = pr_act s in
   let () = hprel_assume_stk # set (CF.add_infer_type_to_hprel (hprel_assume_stk # get)) in
   let sel_hprel_assume_list, others =
     match ids with
@@ -315,9 +322,7 @@ let process_hprel_assumes_others s hprel_assume_stk (ids: regex_id_list) f_proc 
   hprel_assume_stk # set (res @ others)
 
 let process_hprel_assumes_res s hprel_assume_stk hprel_assume_of_res (ids: regex_id_list) f_proc = 
-  let () = print_endline_quiet "\n========================" in
-  let () = print_endline_quiet (" Performing "^s) in
-  let () = print_endline_quiet "========================" in
+  let () = pr_act s in
   let () = hprel_assume_stk # set (CF.add_infer_type_to_hprel (hprel_assume_stk # get)) in
   let sel_hprel_assume_list, others =
     match ids with
@@ -419,12 +424,12 @@ let get_feasible_node_args prog (hf: CF.h_formula) =
     let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hrel_name in
     let el_inst = 
       try List.combine el (List.map snd hprel_def.Cast.hp_vars_inst)
-      with Invalid_argument _ -> failwith ("SynUtils: Number of arguments of HRel " ^ hrel_name ^ " mismatched.")
+      with Invalid_argument _ -> x_fail ("SynUtils: Number of arguments of HRel " ^ hrel_name ^ " mismatched.")
     in
     List.fold_left (fun acc (e, i) ->
         match e with
         | CP.Var (sv, _) -> if i = Globals.NI then acc else acc @ [sv]
-        | _ -> failwith ("Unexpected exp (not CP.Var) in HRel " ^ hrel_name ^ "'s arguments.")) 
+        | _ -> x_fail ("Unexpected exp (not CP.Var) in HRel " ^ hrel_name ^ "'s arguments.")) 
       [] el_inst
   | _ -> CF.get_node_args hf
 
@@ -510,7 +515,7 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
                   let edef = C.look_up_view_def_raw 50 prog.Cast.prog_view_decls subs_hrel_id in
                   edef.view_vars
                 with _ ->
-                  let () = report_warning no_pos ("Cannot find the definition of the equiv pred " ^ subs_hrel_id) in 
+                  let () = x_warn ("Cannot find the definition of the equiv pred " ^ subs_hrel_id) in 
                   vdef.view_vars
               in
               equiv_pred, equiv_pred_args
@@ -664,7 +669,7 @@ let is_consistent_node_list nodes =
 
 let norm_node_list nodes =
   match nodes with
-  | [] -> failwith "Unexpected empty node list."
+  | [] -> x_fail "Unexpected empty node list."
   | n::_ ->
     let n_args = CP.fresh_spec_vars n.CF.h_formula_data_arguments in
     let sst_list = List.map (fun n -> List.combine n.CF.h_formula_data_arguments n_args) nodes in
@@ -675,11 +680,11 @@ let rec find_common_node_chain root (fs: CF.formula list) =
   let residue_fs, root_node_list = List.split (List.map (find_heap_node root) fs) in
   if List.exists is_empty root_node_list then (fs, [])
   else if List.exists (fun ns -> List.length ns > 1) root_node_list then
-    failwith "There is a formula which has more than one root nodes."
+    x_fail "There is a formula which has more than one root nodes."
   else 
     let root_node_list = List.map List.hd root_node_list in
     if not (is_consistent_node_list root_node_list) then
-      failwith "The list of root nodes is not consistent."
+      x_fail "The list of root nodes is not consistent."
     else
       let root_node, sst_list = norm_node_list root_node_list in
       let root_node = { root_node with CF.h_formula_data_node = root } in
@@ -700,7 +705,7 @@ let find_common_node_chain root (fs: CF.formula list) =
 let find_common_node_chain_branches root (fs: CF.formula list) =
   let common_node_list = List.map (fun f -> snd (find_heap_node root f)) fs in
   if List.exists (fun ns -> List.length ns > 1) common_node_list then
-    failwith "There is a formula which has more than one root nodes."
+    x_fail "There is a formula which has more than one root nodes."
   else
     let fs_share_heap_node, others = List.partition 
         (fun (_, ns) -> not (is_empty ns)) 

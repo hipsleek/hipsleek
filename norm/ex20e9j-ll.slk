@@ -13,6 +13,8 @@ print residue.
 
 print relAssumes.
 
+shape_derive_view [H].
+
 /*
 lemma_unsafe "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
 

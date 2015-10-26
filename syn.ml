@@ -99,7 +99,7 @@ let rename_hprel_args n_args hprel =
   try
     let sst = List.combine hprel_args n_args in
     CF.subst_hprel_constr sst hprel 
-  with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hprel_name))
+  with _ -> x_fail ("Mismatch number of arguments of " ^ (!CP.print_sv hprel_name))
 
 let rename_hprel_list hprels = 
   match hprels with
@@ -305,7 +305,7 @@ let unfolding_one_hrel prog ctx hrel hrel_defs =
       try
         let sst = List.combine (args_of_hprel hprel) hrel_args in
         CF.subst_hprel_constr sst hprel 
-      with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
+      with _ -> x_fail ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
     ) merged_hrel_defs
   in
   (* let guarded_hrel_defs, unguarded_hrel_defs = List.partition (fun hrel_def ->                                           *)
@@ -367,7 +367,7 @@ let folding_one_hrel prog ctx hrel hrel_defs =
       try
         let sst = List.combine (args_of_hprel hprel) hrel_args in
         CF.subst_hprel_constr sst hprel 
-      with _ -> failwith ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
+      with _ -> x_fail ("Mismatch number of arguments of " ^ (!CP.print_sv hrel_name))
     ) hrel_defs
   in
  let folding_ctx_list = List.fold_left (fun acc hrel_def ->
@@ -928,7 +928,7 @@ let rec norm_pred_list f_norm preds =
       n_p::(Lazy.force lazy_ps)
     with e ->
       let () = y_binfo_pp (Printexc.to_string e) in
-      let () = report_warning no_pos ("Cannot normalize the view " ^ p.C.view_name) in
+      let () = x_warn ("Cannot normalize the view " ^ p.C.view_name) in
       Lazy.force lazy_ps
 
 let elim_head_pred_list iprog cprog preds =
@@ -981,19 +981,17 @@ let extn_pred_list iprog cprog extn preds =
         match pred.C.view_kind with
         | View_NORM -> acc @ [pred]
         | k -> 
-          let () = report_warning no_pos (
-            "Cannot extend the " ^ (string_of_view_kind k) ^
-            " " ^ pred.C.view_name)
+          let () = x_warn ("Cannot extend the " ^ (string_of_view_kind k) ^ " " ^ pred.C.view_name)
           in acc) [] preds 
       in
       extn_norm_pred_list iprog cprog extn_pred norm_preds
-    | _ -> failwith (extn ^ " is not a View_EXTN")
-  with Not_found -> failwith ("Cannot find the View_EXTN " ^ extn)
+    | _ -> x_fail (extn ^ " is not a View_EXTN")
+  with Not_found -> x_fail ("Cannot find the View_EXTN " ^ extn)
 
 let extn_pred_id_list iprog cprog extn preds =
   let pred_decls = List.map (fun id ->
     try C.look_up_view_def_raw 21 cprog.C.prog_view_decls id
-    with _ -> failwith ("Cannot find the view " ^ id)) preds in
+    with _ -> x_fail ("Cannot find the view " ^ id)) preds in
   extn_pred_list iprog cprog extn pred_decls
 
 let extn_pred_scc iprog cprog scc_proc_names = 
