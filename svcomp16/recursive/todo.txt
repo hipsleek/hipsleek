@@ -1,6 +1,6 @@
-#Ackermann01_true-unreach-call.c
+#Ackermann01_true-unreach-call.c FIXED
 
-bug: lost res= r1 in the first branch
+bug: lost res= r1 in the first branch: FIXED
 
 view ackermann_v<m:int,n:int,res_1676:int,e:int>= 
   EList
@@ -49,7 +49,7 @@ Message: mismatched number in merge_esc methd
 
 
 ================================================
-#Add
+#Add FIXED (trans_proc not !verify_td )
 ERROR: at Addition01_true-unreach-call_true-termination.c_13:0_23:1
 Message: not all paths of addition contain a return
 
