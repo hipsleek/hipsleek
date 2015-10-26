@@ -37,9 +37,9 @@ type assert_err=
   | VTD_NotApp
 
 let string_of_assert_err res= match res with
-    | VTD_Safe -> "safe"
-    | VTD_Unsafe -> "unsafe"
-    | VTD_Unk -> "unknown"
+    | VTD_Safe -> "TRUE"
+    | VTD_Unsafe -> "FALSE"
+    | VTD_Unk -> "UNKNOWN"
     | VTD_NotApp -> "not applicable"
 
 
@@ -140,7 +140,7 @@ let simplify_symex_trace_x prog v_args fs=
       | CF.Exists _ -> let quans1, base1 = CF.split_quantifiers f in
         let base2,sst = recf base1 in
         let quans2 = CP.subst_var_list sst quans1 in
-        CF.add_quantifiers quans2 base2, sst
+        CF.add_quantifiers (List.filter (fun sv -> not (CP.is_rel_typ sv)) quans2) base2, sst
       | CF.Or orf ->
             let nf1,sst1 =(recf orf.CF.formula_or_f1) in
             let nf2,sst2 =(recf orf.CF.formula_or_f2) in
@@ -163,7 +163,7 @@ let gen_iview iprog vname pos f_body0 v_args0 sst_res =
   let vars = List.map CP.name_of_spec_var v_args in
   let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
   let f_body1,tis = Cfutil.norm_free_vars ~reset:false f_body (v_args) in
-  let () = Debug.info_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
+  let () = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
   let no_prm_body = CF.elim_prm f_body1 in
   let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
   let i_body = Rev_ast.rev_trans_formula new_body in
@@ -237,7 +237,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
   let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
+  let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
   let e = CP.SpecVar (Int, err_var, Unprimed) in
   let safe_fl = MCP.mix_of_pure (CP.mkEqExp (CP.Var (e, no_pos)) (CP.IConst (0, no_pos)) no_pos) in
   let brs1 = List.fold_left (fun fs f ->
@@ -248,7 +248,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
       fs@[new_f]
   ) [] brs0 in
   let brs2 = simplify_symex_trace prog v_args brs1 in
-  let () = x_binfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
+  let () = x_tinfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
   (* generate new iview *)
   let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs2) (List.tl brs2) in
   (* let vars = List.map CP.name_of_spec_var v_args in *)

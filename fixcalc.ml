@@ -157,6 +157,7 @@ let rec fixcalc_of_b_formula b =
     ^ e3str ^ " < " ^ e2str ^ " && " ^ e1str ^ " = " ^ e3str ^ "))"
   | CP.RelForm (id,args,_) ->
         let () = x_tinfo_hp (add_str "fixcalc_of_b_formula RelForm: " Cprinter.string_of_b_formula) b no_pos in
+        if string_eq (CP.name_of_spec_var id) nondet_int_rel_name then "0=0" else
         if List.exists
           (fun x -> match x with | CP.IConst _ -> true | _ -> false) args
         then "0=0"

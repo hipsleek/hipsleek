@@ -242,7 +242,7 @@ let simplify_htrue hf=
 let norm_free_vars ?(reset=false) f0 args=
   let rec helper f=
     match f with
-    | Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv))
+    | Base fb -> let fr_svl = CP.remove_dups_svl (CP.diff_svl (List.filter (fun sv -> not (CP.is_hprel_typ sv || CP.is_rel_typ sv))
                                                                  (* (CF.h_fv fb.CF.formula_base_heap) *)
                                                                  (fv f)
                                                               ) args) in
