@@ -11,6 +11,8 @@ HeapPred H3(node x,node@NI y).
 lemma_infer [H,@classic] "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
 print residue.
 
+print relAssumes.
+
 /*
 lemma_unsafe "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
 

@@ -74,6 +74,8 @@
   Debug.y_binfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^"TODO: "^s))
 #define x_nodo (fun s -> \
   Debug.y_tinfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^"TODO: "^s))
+#define x_warn (fun s -> \
+  Debug.y_binfo_pprint ((VarGen.build_loc_str __FILE__ __LINE__)^"WARNING: "^s))
 #else
 #define x_binfo_hp Debug.binfo_hprint
 #define x_binfo_pp Debug.binfo_pprint 

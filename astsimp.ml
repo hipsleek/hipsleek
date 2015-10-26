@@ -4487,12 +4487,12 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
                              | RLEM -> true | _ -> false in 
                      if b
                      then () 
-                     else print_string ("[astimp] Warning: head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
+                     else x_warn ("head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
         | _ -> 
-          let () = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node\n" in 
+          let () = x_warn "lhs head node of a coercion is neither a view node nor a data node\n" in 
           ""
       else
-        let () = print_string "[astsimp] Warning: lhs of a coercion is neither simple or complex\n" in 
+        let () = x_warn "lhs of a coercion is neither simple or complex\n" in 
         ""
   in
   (*LDK: In the body of a coercions, there may be multiple nodes with
