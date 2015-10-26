@@ -4369,10 +4369,13 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let trans_head new_head fnames quant n_tl=
     let h = List.map (fun c-> (c,Unprimed)) fnames in
     let p = List.map (fun c-> (c,Primed)) fnames in
+    let () = y_tinfo_hp (add_str "new_head" Iprinter.string_of_formula) new_head in
     let wf,_ = case_normalize_struc_formula 2 prog h p (IF.formula_to_struc_formula new_head) false 
         false (*allow_post_vars*) true [] in
+    let () = y_tinfo_hp (add_str "wf" Iprinter.string_of_struc_formula) wf in
     let (n_tl,cs_head_norm) = trans_I2C_struc_formula 5 prog false quant (* fv_names  *) fnames  wf n_tl false 
         true (*check_pre*) in
+    let () = y_tinfo_hp (add_str "cs_head_norm" Cprinter.string_of_struc_formula) cs_head_norm in
     let c_head_norm = CF.struc_to_formula cs_head_norm in
     (n_tl,c_head_norm)
   in

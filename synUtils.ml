@@ -801,10 +801,10 @@ let norm_one_derived_view iprog cprog derived_view =
     let norm_cview = match cview with v::[] -> v | _ -> derived_view in
     (* norm_cview might not be updated/added into cprog due to exception *)
     let () = Cast.update_view_decl cprog norm_cview in
-    let () = y_binfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
-    let () = y_binfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
-    let () = y_binfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
-    let () = y_binfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
+    let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
+    let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
+    let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
+    let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
     norm_cview
   (* with _ ->                                                   *)
   (*   let () = x_warn ("Cannot normalize the derived views") in *)
