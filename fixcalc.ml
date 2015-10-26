@@ -742,12 +742,15 @@ let compute_inv_mutrec mutrec_vnames views =
         let () = DD.ninfo_hprint (add_str "new_pf" !CP.print_formula) new_pf no_pos in
         let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue no_pos) new_pf in
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
-        (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
+        let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) new_pf in
+        let xpure_flag = false (* Tpdispatcher.check_diff memo_pf_N memo_pf_P *) in
         begin
           x_tinfo_hp (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
           view.Cast.view_fixcalc <- Some memo_pf_P;
-          (* view.Cast.view_x_formula <- memo_pf_P; *)
+          view.Cast.view_x_formula <- memo_pf_P;
+          view.Cast.view_user_inv <- memo_pf_N;
           view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
+          view.Cast.view_xpure_flag <- xpure_flag;
           view
         end
       else view
