@@ -917,20 +917,6 @@ let elim_tail_pred iprog cprog pred =
   Debug.no_1 "elim_tail_pred" pr pr 
     (fun _ -> elim_tail_pred iprog cprog pred) pred
 
-let rec norm_pred_list f_norm preds = 
-  (* List.map (elim_head_pred iprog cprog) preds *)
-  match preds with
-  | [] -> []
-  | p::ps ->
-    let lazy_ps = lazy (norm_pred_list f_norm ps) in
-    try
-      let n_p = f_norm p in
-      n_p::(Lazy.force lazy_ps)
-    with e ->
-      let () = y_binfo_pp (Printexc.to_string e) in
-      let () = x_warn ("Cannot normalize the view " ^ p.C.view_name) in
-      Lazy.force lazy_ps
-
 let elim_head_pred_list iprog cprog preds =
   norm_pred_list (elim_head_pred iprog cprog) preds
 

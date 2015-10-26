@@ -2521,7 +2521,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       )
       in
       if is_empty lem_act then act
-      else (1, x_add_1 norm_cond_action (lem_act @ [act]))
+      else (1, x_add_1 norm_cond_action (lem_act @ [act])) (* Try lem_act first *)
     | MaterializedArg (mv,ms) ->
       let () = pr_debug "materialized args  analysis here!" in  
       let uf_i = 

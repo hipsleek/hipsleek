@@ -779,17 +779,38 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let pr2 = Cprinter.string_of_view_decl in
   Debug.no_1 "Syn.view_decl_of_hprel" pr1 pr2 (view_decl_of_hprel prog) hprel
 
-let norm_derived_views iprog cprog derived_views = 
-  (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
-  let iviews = List.map Rev_ast.rev_trans_view_decl derived_views in
-  let cviews = SleekUtils.process_selective_iview_decls false iprog iviews in
-  let norm_cviews = (* SleekUtils.norm_cview_decls iprog cprog *) cviews in
-  let () = List.iter (Cast.update_view_decl cprog) norm_cviews in
-  let () = y_tinfo_hp (add_str "derived_views" Cprinter.string_of_view_decl_list) derived_views in
-  let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl_list) iviews in
-  let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cviews in
-  let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl_list) norm_cviews in
-  norm_cviews
+let rec norm_pred_list f_norm preds = 
+  (* List.map (elim_head_pred iprog cprog) preds *)
+  match preds with
+  | [] -> []
+  | p::ps ->
+    let lazy_ps = lazy (norm_pred_list f_norm ps) in
+    try
+      let n_p = f_norm p in
+      n_p::(Lazy.force lazy_ps)
+    with e ->
+      let () = y_binfo_pp (Printexc.to_string e) in
+      let () = x_warn ("Cannot normalize the view " ^ p.C.view_name) in
+      p::(Lazy.force lazy_ps)
+
+let norm_one_derived_view iprog cprog derived_view = 
+  (* try *)
+    (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
+    let iview = Rev_ast.rev_trans_view_decl derived_view in
+    let cview = SleekUtils.process_selective_iview_decls false iprog [iview] in
+    let norm_cview = match cview with v::[] -> v | _ -> derived_view in
+    let () = Cast.update_view_decl cprog norm_cview in
+    let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
+    let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
+    let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
+    let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
+    norm_cview
+  (* with _ ->                                                   *)
+  (*   let () = x_warn ("Cannot normalize the derived views") in *)
+  (*   derived_view                                              *)
+
+let rec norm_derived_views iprog cprog derived_views = 
+  norm_pred_list (norm_one_derived_view iprog cprog) derived_views
 
 let norm_derived_views iprog cprog derived_views =
   let pr = pr_list Cprinter.string_of_view_decl in
@@ -797,10 +818,11 @@ let norm_derived_views iprog cprog derived_views =
     (norm_derived_views iprog cprog) derived_views
 
 let norm_single_view iprog cprog view = 
-  let norm_view = norm_derived_views iprog cprog [view] in
-  match norm_view with
-  | v::[] -> v
-  | _ -> view
+  norm_one_derived_view iprog cprog view
+  (* let norm_view = norm_derived_views iprog cprog [view] in *)
+  (* match norm_view with                                     *)
+  (* | v::[] -> v                                             *)
+  (* | _ -> view                                              *)
 
 let restore_view iprog cprog view = 
   let iview = Rev_ast.rev_trans_view_decl view in
