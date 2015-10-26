@@ -664,10 +664,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let lhs_nodes = get_views_offset prog lhs_h in
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
       let () = y_binfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
+      let () = y_binfo_hp (add_str "pasets" !CP.print_svl) paset in
       let () = y_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
       let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
-      let diff_ptrs = heap_ptrs in
-      (* let diff_ptrs = Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset in *)
+      (* let diff_ptrs = heap_ptrs in *)
+      let diff_ptrs = if true (* not(!Globals.adhoc_flag_2) *) then
+          Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset 
+        else heap_ptrs
+      in
       let () = y_binfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
       let lst = List.map (fun (d,root_lhs) -> 
@@ -722,7 +726,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         ) lhs_nodes (* diff_ptrs *) in
       (* let () = y_tinfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in *)
       lst in
-    let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    (* let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in *)
     let lst = if !Globals.ptr_arith_flag then
         let lst = enhance_paset paset in
         let lst = List.filter (fun (_,f,_) -> f) lst in
@@ -732,7 +736,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let paset = 
       if !Globals.ptr_arith_flag then 
         if lst==[] then paset
-        else List.map fst lst 
+        else (List.map fst lst)@paset
       else paset in
     (* view with root ptrs *)
     let root_lst = List.fold_left (fun acc (d,r) ->

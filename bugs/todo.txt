@@ -2183,6 +2183,29 @@ Entail 1: Fail.(may) cause:base case unfold failed
 	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
 	 body:(EX v_192 v_191 . (emp ; (emp ; ((self::cell{}()<v_191,>@M[HeapNode1]) * (self::cell{}()<v_192,>@M[HeapNode1]))))*([] & (((v_192:int)) = ((v:int))) & (((v_191:int)) = ((v:int))))( FLOW __norm))lemmas(to be proved and saved)
 ===================================================================
+# ex62b.slk 
+
+infer [x] x::ll<n> |- x::node<_,b>.
+
+# performance problem with --en-ptr-arith
+  scheduling repeated unfolds ..
+
+[ Type: Root
+ LHS: x::node<Anon_47,q_48>@M
+ RHS: x::node<Anon_12,b>@M
+ root_inst: None
+ lhs_rest: q_48::ll<flted_7_46>@M
+ rhs_rest: emp
+ rhs_inst: [], 
+  Type: Root
+ LHS: q_48::ll<flted_7_46>@M
+ RHS: x::node<Anon_12,b>@M
+ root_inst: None
+ lhs_rest: x::node<Anon_47,q_48>@M
+ rhs_rest: emp
+ rhs_inst: []]
+
+
 ===================================================================
 ===================================================================
 ===================================================================

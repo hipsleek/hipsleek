@@ -63,7 +63,7 @@ choose_context inp5 :right aliase:[]
 choose_context@3 EXIT:[]
 
 =================================================================
-# ex1c4.ss
+# ex1c4.ss (FIXED by ZH)
 
  checkentail x::arr<5> & x=y+2 |- y::arr_int<2,v>.
 
@@ -121,7 +121,7 @@ infer[i] y::arr_int<i,5> & xxx=y:arr+3
 
 # Inference does not work with array segments ..
 =================================================================
-# ex1c6c.slk
+# ex1c6c.slk (FIXED)
 
 infer[i] p=y:arr+i & xxx=y:arr+3 
      |- p=xxx.
@@ -148,7 +148,34 @@ Total verification time: 4.962621 second(s)
 	Z3 Prover Time: 0.008265 second(s)
 
 =============================================================
-=================================================================
+# ex9a.ss
+
+  infer [@ana_ni]//,R]
+  requires true
+ ensures true;
+
+Checking procedure zip$node~node... 
+!!! **typechecker.ml#564:inf_o_lst:[@ana_ni]
+Proving binding in method zip$node~node for spec  EAssume 
+   htrue&{FLOW,(4,5)=__norm#E}[]
+   struct:EBase 
+            htrue&{FLOW,(4,5)=__norm#E}[], Line 23
+
+( [(,1 ); (,2 )]) bind: node  emp&r'>1&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+1 File "ex9a-zip.ss",Line:28,Col:4
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+ Failed States:
+ [
+  Label: [(,1 ); (,2 )]
+  State:
+    fe_kind: MAY
+    fe_name: logical bug
+    fe_locs: {
+        fc_message:  r'!=null |-  1<r'. LOCS:[27;0] (may-bug)
+        fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  
+ *=================================================================
 =================================================================
 =================================================================
 =================================================================

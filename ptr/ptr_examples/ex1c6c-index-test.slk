@@ -11,7 +11,7 @@ inv o>=0.
 // add this @ trans_view
 
 
-infer[i] p=y:arr+i & xxx=y:arr+3 
+infer[ii] p=y:arr+ii & xxx=y:arr+3 
      |- p=xxx.
 print residue.
 expect Valid. //k=2 

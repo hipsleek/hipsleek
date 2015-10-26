@@ -588,8 +588,8 @@ and gather_type_info_exp_x prog a0 tlist et =
     in
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
       let pr_t = string_of_typ in
-      Debug.no_3 "unify_ptr_arithmetic" pr_t pr_t string_of_tlist (fun (_,v) -> string_of_typ v)
-        (fun _ _ _ -> unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos) t1 t2 n_tl2 in
+      Debug.no_4 "unify_ptr_arithmetic" pr_t pr_t pr_t string_of_tlist (pr_pair string_of_tlist string_of_typ)
+        (fun _ _ _ _ -> unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos) t1 t2 et n_tl2 in
     let todo_unk:Globals.typ = x_add must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = 
       if !Globals.ptr_arith_flag then (UNK,tlist)
@@ -602,10 +602,14 @@ and gather_type_info_exp_x prog a0 tlist et =
     let () = x_binfo_hp (add_str "add(et)" string_of_typ) et no_pos in
     let () = x_binfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let () = x_binfo_hp (add_str "add(t1)" string_of_typ) t1 no_pos in
-    let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et in
-    let () = x_binfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
-    let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et) et n_tl2 pos in
+    let () = x_binfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
+    let () = x_binfo_hp (add_str "t1" string_of_typ) t1 no_pos in
+    let new_et2 = if is_node_typ t1 && !Globals.ptr_arith_flag 
+      then Int else new_et in
+    let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et2 in
+    let () = x_binfo_hp (add_str "a1" !IP.print_exp) a2 no_pos in
+    let () = x_binfo_hp (add_str "t2" string_of_typ) t2 no_pos in
+    let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
