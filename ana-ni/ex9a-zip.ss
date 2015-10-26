@@ -24,6 +24,7 @@ node zip(node x,node y)
 {
   if (x==null) return x;
   else {
+    // node t = new node(0,null);
     node r = new node(x.val+y.val,null);
     r.next = zip(x.next,y.next);
     return r;

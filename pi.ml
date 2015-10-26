@@ -723,9 +723,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let () = Infer.infer_rel_stk # reset in
     if is_infer_const_scc scc INF_ANA_NI then
       let svl = Nia.classify_ni prog rels in
-      let () = x_tinfo_hp (add_str "I preds" pr_svl) svl no_pos in
+      let () = x_binfo_hp (add_str "I preds" pr_svl) svl no_pos in
       let scc = update_i_para_scc svl scc in
-      let () = x_tinfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in
+      let () = x_binfo_hp (add_str "proc.Cast.proc_args_wi" (pr_list (fun proc -> ((pr_list (pr_pair pr_id string_of_arg_kind)) proc.Cast.proc_args_wi  )))) scc no_pos in
       let _ = remove_ana_ni_scc prog scc in
       ()
     else

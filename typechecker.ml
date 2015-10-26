@@ -1712,6 +1712,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
+                  let () = x_tinfo_hp (add_str "vsv" (!CP.print_sv)) vsv pos in
+                  let () = x_tinfo_hp (add_str "tmp_vsv" (!CP.print_sv)) tmp_vsv pos in
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
@@ -2377,7 +2379,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             CF.h_formula_data_pos = pos}) in
         (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
         (*If this is not a lock, level_f = true*)
-        let aux_f = MCP.memoise_add_pure_N level_f perm_f in
+        let aux_f0 = MCP.memoise_add_pure_N level_f perm_f in
+        let aux_f = if Globals.infer_const_obj # is_ana_ni then
+          let aux_f1 = MCP.memoise_add_pure_N aux_f0 (CF.mk_bind_ptr res_var) in
+          let () = x_tinfo_hp (add_str "aux_f1" (!MCP.print_mix_f)) aux_f1 pos in
+          aux_f1
+        else aux_f0 in
         let heap_form = if (perm_vars!=[]) then
             CF.mkExists perm_vars heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
           else
