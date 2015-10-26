@@ -1,3 +1,15 @@
+
+TODO:
+#Even01
+#Fibo (make native 02)
+#gcd01-02 (stack)
+#Mc01-02 (stack)
+#MultCommutative (stack)
+#recHanoi01 (unexpected FALSE- global vars)
+##Primes (stack)
+
+================================================
+
 #Ackermann01_true-unreach-call.c FIXED
 
 bug: lost res= r1 in the first branch: FIXED
@@ -56,7 +68,7 @@ Message: not all paths of addition contain a return
 
 
 ================================================
-#BallRajamani
+#BallRajamani FIXED
 
 ERROR: at BallRajamani-SPIN2000-Fig1_false-unreach-call.c_16:0_22:1
 Message: not all paths of A contain a return
@@ -65,14 +77,18 @@ Message: not all paths of A contain a return
 ================================================
 #Even
 
-Last Proving Location: EvenOdd01_true-unreach-call_true-termination.c_47:15_47:33
-
+=========
 ERROR: at _0:0_0:0
-Message: mismatched number in merge_esc methd 
+Message: mismatched number in merge_esc methd FIXED
+
+=========
+bottomupgen([main_v], [1], SimHeur);fixcalc: bad mutual recursion detected :"isEven_v"
+
+Exception occurred: Stack overflow
 
 
 ================================================
-#Fibo
+#Fibo (FIXED)
 
 stack e1:  : stack e2:  Escaped States:
  [
@@ -95,24 +111,23 @@ ERROR: at _0:0_0:0
 Message: mismatched number in merge_esc methd 
 
 ---------
-01, 03
+01, 03 FIXED
 
 
 inv: res > x
 
-04:
+04: FIXED
 Exception processed: Stack overflow
 error at: 
 SLEEK FAILURE (END)
 
+----------
+02: make native
 
 ================================================
 #gcd01
 
-unsafe
-
-expect
-safe
+Exception processed: Stack overflow
 
 ================================================
 #gcd02
@@ -121,51 +136,29 @@ ERROR: at _0:0_0:0
 Message: remove goto: not find matched label!
 
 ================================================
-#Mc01
+#Mc01-02
 
 Exception occurred: Failure("remove goto: not find matched label!")
 
 ================================================
 #MultCommutative_true-unreach-call_true-termination.c 
 
-GOT
-unsafe
+Stack overflow
 
-====
-Expect
- safe
+
 
 ================================================
 #Primes_true-unreach-call.c
 
-Exception occurred: Failure("not all paths of is_prime_ contain a return")
+Stack overflow
 
 ================================================
-#recHanoi
+#recHanoi: (global vars)
 
-stack e1:  : stack e2:  Escaped States:
- [
-  
-  Try-Block:-1:-1:
-  [
-   Path: [(,1 ); (,2 ); (,1 ); (,2 ); (,1 ); (,2 )]
-   State:  r___1840::applyHanoi_v<n',v_int_45_1592',v_int_45_1591',v_int_45_1590',counter_21',res_1838,e_1839>@M * 
- r___1843::hanoi_v<n',tmp___0',e_1842>@M&
-!(v_bool_48_1610') & !(v_bool_41_1583') & !(v_bool_41_1584') & 
-counter_1834=counter_21 & nondet_int__(v_nd_40_1568') & tmp'=v_nd_40_1568' & 
-n'=tmp' & 1<=n' & n'<=31 & counter_21'=0 & v_int_45_1592'=1 & 
-v_int_45_1591'=3 & v_int_45_1590'=2 & e_1839=0 & e_1842=0 & 
-result'=tmp___0' & result'!=counter_21'&{FLOW,(6,10)=__Error#E}[]
-          es_gen_impl_vars(E): []
-   ]
-  ]:
-
-Last Proving Location: recHanoi01_true-unreach-call_true-termination.c_51:15_51:33
-
-ERROR: at _0:0_0:0
-Message: mismatched number in merge_esc methd 
+01: unexpected FALSE
 
 ================================================
+# 
 ================================================
 ================================================
 ================================================
