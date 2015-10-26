@@ -19,7 +19,7 @@ module TP = Tpdispatcher
 
 (*1. pick up
      R(x) --> x>=2
-     R(x) --> x!=1 /\ x>=2 --> R(x)
+     R(x) --> x!=1 and x>=2 --> R(x)
   2. subst into rhs
   3. go to 1
   *)
@@ -135,10 +135,44 @@ let classify_ni prog rels=
     let rels1 = List.map (fun (a,lhs,rhs) -> (a, lhs, replace_with_def rel_const rhs)) rels in
     rels1
   in
+  let is_consistent rel_name rel_consts (a, lhs, rhs)=
+    let rel_ids = List.fold_left (fun acc p -> acc@(CP.get_rel_id_list p)) []
+      ((CP.list_of_conjs lhs)@(CP.list_of_conjs rhs)) in
+    if CP.mem_svl rel_name rel_ids then
+      let n_lhs = List.fold_left (fun acc_f rel_const -> replace_with_def rel_const acc_f) lhs rel_consts in
+      let n_rhs = List.fold_left (fun acc_f rel_const -> replace_with_def rel_const acc_f) rhs rel_consts in
+      TP.imply_raw n_lhs n_rhs
+    else true
+  in
+  let look_up_I_cond2 rel_I_preds reldefs=
+    let check_I_rel (rel_Is, rest_defs) ((_,lhs, rhs) as rel) =
+        match CP.get_relargs_opt rhs with
+          | Some (id, svl) -> begin
+              let () = x_binfo_hp (add_str "svl" pr_svl) svl no_pos in
+              match svl with
+                | [sv] -> if is_gte lhs sv 2 then
+                    let new_I_pred = ((id, svl), pure_I sv) in
+                    if List.for_all (is_consistent id (rel_I_preds@[new_I_pred])) reldefs then
+                      (rel_Is@[new_I_pred], rest_defs)
+                    else  (rel_Is, rest_defs@[rel])
+                  else (rel_Is, rest_defs@[rel])
+                | _ -> (rel_Is,rest_defs@[rel])
+            end
+          | None -> (rel_Is,rest_defs@[rel])
+    in
+    List.fold_left check_I_rel ([],[]) reldefs
+  in
+  let look_up_I_cond2 rel_I_preds reldefs=
+    let pr1 = pr_list_ln CP.string_of_infer_rel in
+    let pr2 = pr_list (pr_pair (pr_pair !CP.print_sv !CP.print_svl) !CP.print_formula) in
+    Debug.no_1 "look_up_I_cond2" pr1 (pr_pair pr2 pr1)
+        (fun _ -> look_up_I_cond2 rel_I_preds reldefs) reldefs
+  in
   let rec comp_fix rels_const reldefs pred_Is=
     let pr_pred_Is_1,rest_const = look_up_I rels_const in
-    let pr_pred_Is_2,rest,rest_reldefs = look_up_I_cond rest_const reldefs in
-    let pr_pred_Is = pr_pred_Is_1@pr_pred_Is_2 in
+    let pr_pred_Is_2,rest,reldefs2 = look_up_I_cond rest_const reldefs in
+    let pr_pred_Is_3,rest_reldefs = look_up_I_cond2 (pr_pred_Is_1@pr_pred_Is_2) reldefs2 in
+    let pr_pred_Is = pr_pred_Is_1@pr_pred_Is_2@pr_pred_Is_3 in
     if pr_pred_Is = [] then pred_Is
     else
       (* subst *)

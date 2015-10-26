@@ -13,7 +13,7 @@ bool rand()
 
 int hoo(node x,node y)
   infer [@ana_ni,R,P]
-  requires R(x) & P(y)
+  requires  R(x) & P(y)
   ensures true;
 {
   int t = x.val;
