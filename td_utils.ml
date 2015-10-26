@@ -122,10 +122,11 @@ let symex_td_method_call prog proc ctx ecall=
     (*otherwise*)
     (* generate a pred wrt. method call *)
     let mdecl = CA.look_up_proc_def_raw prog.Cast.new_proc_decls ecall.CA.exp_scall_method_name in
+    let sst= List.combine ecall.exp_scall_arguments mdecl.CA.proc_args in
     let view_args =
-      let sst= List.combine ecall.exp_scall_arguments mdecl.CA.proc_args in
-      List.map (fun (act, (t, form)) -> CP.SpecVar (t, act, Primed)) sst
+      List.map (fun  (act, (t, from)) -> CP.SpecVar (t, act, Primed) ) sst
     in
+    let ref_args = List.map (fun (CP.SpecVar (t,id,_)) -> CP.SpecVar (t,id^"_PRM", Unprimed)) mdecl.CA.proc_by_name_params in
     let res = if mdecl.CA.proc_return = Void then
       CP.SpecVar (mdecl.CA.proc_return,  res_name ^(fresh_trailer()) , Unprimed)
     else
@@ -135,18 +136,31 @@ let symex_td_method_call prog proc ctx ecall=
       in
       CP.SpecVar (mdecl.CA.proc_return,  (func_call_res ^ tmp_no), Unprimed) in
     let e = CP.SpecVar (Int, err_var^(fresh_trailer()), Unprimed) in
-    let view_args_extra = view_args@[res; e] in
+    let view_args_extra = view_args@ref_args@[res; e] in
     let hv = CF.mkViewNode (dump_self ()) (method2pred mn) view_args_extra ecall.CA.exp_scall_pos in
     let hole_id = fresh_int () in
     let hole = CF.Hole hole_id in
     (* let hv_f = CF.formula_of_heap hv ecall.CA.exp_scall_pos in *)
     (* let hv_f = CF.formula_of_heap hole ecall.CA.exp_scall_pos in *)
     let hv_f = CF.formula_of_heap hv ecall.CA.exp_scall_pos in
+    (*for ref vars*)
+    let ref_svl = List.fold_left (fun acc (CP.SpecVar (t,id,_)) ->
+        try
+          let act,(t,_) = List.find (fun  (act, (t, from)) -> string_eq from id) sst in
+          acc@[(CP.SpecVar (t, act, Primed))]
+        with _ -> acc
+    ) [] mdecl.CA.proc_by_name_params in
+    let ref_fr_svl =  List.map (fun (CP.SpecVar (t,id,_)) -> CP.SpecVar (t, fresh_any_name id, Primed)) ref_svl in
+    let sst_ref = (List.combine ref_svl ref_fr_svl)@(List.combine ref_args ref_svl) in
     let ctx1 = CF.transform_list_failesc_context 
     (idf,idf,(fun es ->
         (* let es_f, new_crt_holes = subst_view_by_hole  es.CF.es_crt_holes es.es_formula in *)
-        Ctx{es with es_formula =
-                CF.mkStar (* es_f *) es.es_formula hv_f CF.Flow_combine ecall.CA.exp_scall_pos;
+        let es_f1 = CF.mkStar (* es_f *) es.es_formula hv_f CF.Flow_combine ecall.CA.exp_scall_pos in
+        let () = x_tinfo_hp (add_str ("es_f1") (!CF.print_formula)) es_f1 no_pos in
+        let es_f2 = CF.subst sst_ref es_f1 in
+        let () = x_tinfo_hp (add_str ("es_f2") (!CF.print_formula)) es_f2 no_pos in
+        Ctx{es with es_formula = es_f2 ;
+                (* CF.mkStar (\* es_f *\) es.es_formula hv_f CF.Flow_combine ecall.CA.exp_scall_pos; *)
         CF.es_crt_holes = es.CF.es_crt_holes(* @new_crt_holes@[(hv, hole_id)] *)
     })) ctx in
     (* ecall contain assert_error *)

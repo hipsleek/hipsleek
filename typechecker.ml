@@ -1707,6 +1707,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
                   let func_call_svs = CP.SpecVar (t, Td_utils.get_last_func_call_res (), Unprimed) in
+                  let () = x_tinfo_hp (add_str ("vsv") !CP.print_sv) vsv no_pos in
+                  let () = x_tinfo_hp (add_str ("tmp_vsv") !CP.print_sv) tmp_vsv no_pos in
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv); (func_call_svs, vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)

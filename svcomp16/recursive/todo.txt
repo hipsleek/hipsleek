@@ -1,11 +1,11 @@
 
 TODO:
-#Even01
-#Fibo (make native 02)
+#Even01 (stack)
+#Fibo (make native 02) OK
 #gcd01-02 (stack)
 #Mc01-02 (stack)
 #MultCommutative (stack)
-#recHanoi01 (unexpected FALSE- global vars)
+#recHanoi01 (unexpected FALSE- global vars: FIXED) stack
 ##Primes (stack)
 
 ================================================
@@ -155,7 +155,9 @@ Stack overflow
 ================================================
 #recHanoi: (global vars)
 
-01: unexpected FALSE
+01: unexpected FALSE (FIXED)
+
+ Stack overflow
 
 ================================================
 # 

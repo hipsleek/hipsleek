@@ -158,8 +158,15 @@ let simplify_symex_trace prog v_args fs=
       (fun _ _ -> simplify_symex_trace_x prog v_args fs) v_args fs
 
 let gen_iview iprog vname pos f_body0 v_args0 sst_res =
-  let v_args = CP.subst_var_list sst_res v_args0 in
-  let f_body = CF.subst sst_res f_body0 in
+  let v_args0 = CP.subst_var_list sst_res v_args0 in
+  let v_args,sst0 = List.fold_left (fun (acc_vs, acc_sst) ((CP.SpecVar (t,id,p)) as sv) ->
+      if p = Unprimed then
+        (acc_vs@[sv], acc_sst)
+      else
+        let n_sv = CP.SpecVar(t,id^"PRM",Unprimed) in
+        (acc_vs@[n_sv], acc_sst@[(sv,n_sv)])
+  ) ([],[]) v_args0 in
+  let f_body = CF.subst (sst_res@sst0) f_body0 in
   let vars = List.map CP.name_of_spec_var v_args in
   let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
   let f_body1,tis = Cfutil.norm_free_vars ~reset:false f_body (v_args) in
@@ -315,7 +322,9 @@ let symex_gen_view_from_proc iprog prog proc=
   let sst_res = List.combine r_args fr_r_args in
   let e_arg = CP.SpecVar (Int, err_var, Unprimed) in
   let proc_args = (List.map (fun (t,arg) -> CP.SpecVar (t,arg,Unprimed)) proc.CA.proc_args) in
-  let pred_args = proc_args @ r_args @ [e_arg] in
+  let proc_primed_args = List.map (fun sv -> match sv with
+        | CP.SpecVar (t,id,_) -> CP.SpecVar (t,id,Primed)) proc.CA.proc_by_name_params in
+  let pred_args = proc_args @ proc_primed_args @ r_args @ [e_arg] in
   let iviews = match proc.CA.proc_body with
     | Some body -> begin
         try
@@ -349,9 +358,13 @@ let verify_td_scc iprog prog scc=
   let build_f_from_method mdecl=
     let view_args =
       List.map (fun (t, form) -> CP.SpecVar (t, form, Unprimed)) mdecl.CA.proc_args in
+    let proc_primed_args = List.map (fun sv -> match sv with
+        | CP.SpecVar (t,id,_) -> CP.SpecVar (t,id,Primed)) mdecl.CA.proc_by_name_params in
+    let () = x_tinfo_hp (add_str "view_args" Cprinter.string_of_typed_spec_var_list) view_args no_pos in
+    let () = x_tinfo_hp (add_str "proc_primed_args" Cprinter.string_of_typed_spec_var_list) proc_primed_args no_pos in
     let res = CP.SpecVar (mdecl.CA.proc_return, res_name, Unprimed) in
     let e = CP.SpecVar (Int, err_var, Unprimed) in
-    let view_args_extra = view_args@[res; e] in
+    let view_args_extra = view_args@proc_primed_args@[res; e] in
     let hv = CF.mkViewNode (Td_utils.dump_self ()) (method2pred (CA.unmingle_name mdecl.CA.proc_name)) view_args_extra no_pos in
     let hv_f = CF.formula_of_heap_fl hv (CF.mkNormalFlow ()) no_pos in
     CF.mkAnd_pure hv_f (MCP.mix_of_pure CP.err_p) no_pos
