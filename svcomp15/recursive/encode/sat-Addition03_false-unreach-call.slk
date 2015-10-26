@@ -33,7 +33,7 @@ int main() {
     int m = __VERIFIER_nondet_int();
     int n = __VERIFIER_nondet_int();
     int result = addition(m,n);
-    if (m < 100 || n < 100 || result >= 200) {
+    if (m < 100 || n < 100 || result >= 200) { //2147483647
         return 0;
     } else {
         ERROR: __VERIFIER_error();

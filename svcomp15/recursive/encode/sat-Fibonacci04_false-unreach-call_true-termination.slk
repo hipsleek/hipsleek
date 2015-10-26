@@ -24,9 +24,10 @@ int fibonacci(int n) {
 
 pred fibonacci_v<n,r,e> == n<1 & r=0 & e=0
      or n=1 & r=1 & e=0
-     or _::fibonacci_v<n-1,r1,e1> * _::fibonacci_v<n-2,r2,e2> & r=r1+r2 & e1=0 & e2=0 & e=0
-     or _::fibonacci_v<n-1,r1,e1> * _::fibonacci_v<n-2,r2,e2> & e1=1 & e=1
-     or _::fibonacci_v<n-1,r1,e1> * _::fibonacci_v<n-2,r2,e2> & e2=1 & e=1.
+     or _::fibonacci_v<n-1,r1,e1> * _::fibonacci_v<n-2,r2,e2> & n>1& r=r1+r2 & e1=0 & e2=0 & e=0
+ //    or _::fibonacci_v<n-1,r1,e1> * _::fibonacci_v<n-2,r2,e2> & e1=1 & e=1
+//     or _::fibonacci_v<n-1,r1,e1> * _::fibonacci_v<n-2,r2,e2> & e2=1 & e=1
+.
 
 /*
 int main() {

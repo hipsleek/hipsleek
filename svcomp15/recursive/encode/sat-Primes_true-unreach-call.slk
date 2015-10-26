@@ -52,9 +52,9 @@ int multiple_of(int n, int m) {
 */
 
 pred multiple_of_v<n,m,r,e> == _::multiple_of_v<n,-m,r1,e1> & m<0 & r=r1 & e=e1
-     or _::multiple_of_v< -n,m,r1,e1> & n<0 & r=r1 & e=e1
+     or _::multiple_of_v< -n,m,r1,e1> & m>=0 & n<0 & r=r1 & e=e1
      or m=0 & r=0 & e=0
-     or n=0 & r=0 & e=0
+     or n=0 & r=1 & e=0
      or _::multiple_of_v<n-m,m,r1,e1> & m>0 & n>0 & r=r1 & e=e1.
 
 // int is_prime_(int n, int m);

@@ -31,7 +31,7 @@ pred addition_v<m,n,r,e> == n=0 & r=m & e=0
 /*
 int main() {
     int m = __VERIFIER_nondet_int();
-    if (m < 0 || m > 2147483647) {
+    if (m < 0 || m > 2147483647) { //  2^31 − 1
         return 0;
     }
     int n = __VERIFIER_nondet_int();

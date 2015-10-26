@@ -1,7 +1,29 @@
 #Ackermann01_true-unreach-call.c
+
+bug: lost res= r1 in the first branch
+
+view ackermann_v<m:int,n:int,res_1676:int,e:int>= 
+  EList
+    :EBase 
+       (* lbl: *){386}->(exists r___1716,tmp_1740,e_1715,v_int_19_1741,
+       v_int_19_1742: (* lbl: *){386}->r___1716::ackermann_v<v_int_19_1742,v_int_19_1741,tmp_1740,e_1715>@M&
+       e=0 & e_1715=0 & v_int_19_1741=1 & 1+v_int_19_1742=m & n=0 & m!=0& res_1676=tmp_1740
+                                                                          ^^^^^^^^^^^^^^^^^
+       {FLOW,(1,28)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){385}->emp&e=0 & res_1676=n+1 & m=0&
+          {FLOW,(1,28)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){384}->(exists r___1726,m_1748,r___1737,tmp___1749,
+          e_1736,v_int_21_1750,e_1725,
+          v_int_21_1734: (* lbl: *){384}->r___1726::ackermann_v<m_1748,v_int_21_1734,tmp___1749,e_1725>@M * 
+                                          r___1737::ackermann_v<v_int_21_1750,tmp___1749,res_1676,e_1736>@M&
+          e=0 & e_1736=0 & 1+v_int_21_1750=m & e_1725=0 & 
+          1+v_int_21_1734=n & n!=0 & m!=0&{FLOW,(1,28)=__flow#E}[])
+
 Ackermann02
 
-
+FIXED
 tack e1:  : stack e2:  Escaped States:
  [
   

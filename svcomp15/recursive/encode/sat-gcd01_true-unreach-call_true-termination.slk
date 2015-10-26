@@ -27,11 +27,12 @@ int gcd(int y1, int y2) {
 }
 */
 
-pred gcd_v<y1,y2,r,e> == y1<=0 & r=0 & e=0
-     or y2<=0 & r=0 & e=0
-     or y1=y2 & r=y1 & e=0
-     or _::gcd_v<y1-y2,y2,r1,e1> & y1>y2 & r=r1 & e=e1
-     or _::gcd_v<y1,y2-y1,r1,e1> & y2>=y1 & r=r1 & e=e1.
+pred gcd_v<y1,y2,r,e> == // y1<=0 & r=0 & e=0
+    // or y1>0 & y2<=0 & r=0 & e=0
+//     or
+ y1>0 & y2>0 & y1=y2 & r=y1 & e=0
+     or _::gcd_v<y1-y2,y2,r1,e1> & y1>0 & y2>0  & y1>y2 & r=r1 & e=0
+     or _::gcd_v<y1,y2-y1,r1,e1> & y1>0 & y2>0 & y2>y1 & r=r1 & e=0.
 
 /*
 int main() {

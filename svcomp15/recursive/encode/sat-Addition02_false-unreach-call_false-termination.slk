@@ -32,7 +32,7 @@ pred addition_v<m,n,r,e> == n=0 & r=m & e=0
 int main() {
     int m = __VERIFIER_nondet_int();
     int n = __VERIFIER_nondet_int();
-    int result = addition(m,n);
+    int result = addition(m,n); //2147483647
     if (result == m - n) {
         return 0;
     } else {

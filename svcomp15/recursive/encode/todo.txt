@@ -1,31 +1,6 @@
-sat-Addition01_true-unreach-call_true-termination.slk
 
-!!! init_tp by default: 
-!!! Using z3
-Starting z3... 
-
-Starting Omega.../usr/local/bin/oc
-
-!!! WARNING logtime exception:10.
-
-Stop z3... 10 invocations Stop Omega... 47 invocations 
-SAT Count   : 9
-SAT % Hit   : 100.%
-
-SAT : 0
-UNSAT : 0
-UNKNOWN : 0
-
-IMPLY Count : 1
-IMPLY % Hit : 100.%
-Time(cache overhead) : 0.003831 (seconds)
-
-!!! log(small):(0.029644,56)
-!!! 
- log(bigger)(>4s)(1):(10.,[(pairwise:57<0:TIMEOUT:Z3*EXC*,10.)])
-Total verification time: 0.105202 second(s)
-	Time spent in main process: 0.071685 second(s)
-	Time spent in child processes: 0.033517 second(s)
+#sat-Addition01_true-unreach-call_true-termination.slk: OK
+Add02: OK
 
 =========================
 #Add03
@@ -38,34 +13,19 @@ wrong example
 
 ========================================================
 
+gcd01
+
+CheckSat 1: sat
+
+Validate 1: Expecting Unsat BUT got : Sat (or Unknown)
+
+
+require inv m=0, n=0, r=0 \/ m>=1 & n>1 & r>=1
+
+---------
 sat-gcd02_true-unreach-call.slk
 
-!!! init_tp by default: 
-!!! Using z3
-Starting z3... 
-
-Starting Omega.../usr/local/bin/oc
-
-!!! WARNING logtime exception:10.
-
-Stop z3... 59 invocations Stop Omega... 87 invocations 
-SAT Count   : 58
-SAT % Hit   : 98.27%
-
-SAT : 0
-UNSAT : 0
-UNKNOWN : 0
-
-IMPLY Count : 1
-IMPLY % Hit : 0.%
-Time(cache overhead) : 0.007409 (seconds)
-
-!!! log(small):(0.095152,145)
-!!! 
- log(bigger)(>4s)(1):(10.,[(pairwise2:146<0:TIMEOUT:Z3*EXC*,10.)])
-Total verification time: 0.21347 second(s)
-	Time spent in main process: 0.113953 second(s)
-	Time spent in child processes: 0.099517 second(s)
+Exception processed: Stack overflow
 
 ========================================================
 
@@ -78,3 +38,27 @@ global variable
 ==================================
  sat-EvenOdd01_true-unreac
 
+========================================================
+
+overflow
+
+given range
+ Ack01-02-03-04
+ Add01
+without given range
+ - Add02-03
+ - Ball
+
+===========================================
+#Multi
+
+Exception processed: Stack overflow
+
+===========================================
+#Prime
+
+CheckSat 1: sat
+
+Validate 1: Expecting Unsat BUT got : Sat (or Unknown)
+===========================================
+===========================================
