@@ -263,6 +263,8 @@ let is_possible_node_typ t =
   match t with
   | Named id -> true (* String.compare id "" != 0 *)
   | TVar _ -> true
+   (* Unknown can also be a node *)
+  | UNK -> true
   | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =

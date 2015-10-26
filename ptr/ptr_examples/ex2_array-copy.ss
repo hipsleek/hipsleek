@@ -89,5 +89,36 @@ void copy2(arr_int a,arr_int b,int i)
 }
 
 
+arr_seg_index_p<index,length,end> == self=end & length=0
+  or self::arr_int<_,p> * p::arr_seg_index_p<index+1,length-1,end>
+  inv length>=0;
+
+arr_seg_index_value_p<index,length,f,end> == self=end & length=0
+  or self::arr_int<v,p> * p::arr_seg_index_value_p<index+1,length-1,f,end>
+  & f[index]=v
+  inv length>=0;
+
+
+void copy3(arr_int a,arr_int b,int i)
+  requires a::arr_seg_index_p<i,10-i,end_a> * b::arr_seg_index_value_p<i,10-i,f,end_b> & i>=0 & i<=10
+  ensures a::arr_seg_index_value_p<i,10-i,f,end_a> * b::arr_seg_index_value_p<i,10-i,f,end_b>;
+
+{
+  if (i<10) {
+    upd_arr(a,get_arr(b));
+    copy3(arr_inc(a),arr_inc(b),i+1);
+  }
+}
+
+void copy3(arr_int a,arr_int b,int i)
+{
+  if (i<10) {
+    *a = *b;
+    copy3(a++,b++,i+1);
+  }
+}
+
+
+
 
 

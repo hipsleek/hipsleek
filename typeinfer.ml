@@ -575,7 +575,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
         let (n_tl2,_) = x_add must_unify_expect t1 et n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
-        (n_tlist2,t1)        
+        (n_tlist2,t1)
       else if is_possible_node_typ t2 && !Globals.ptr_arith_flag then
         let (n_tl2,_) = x_add must_unify_expect t2 et n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
@@ -587,7 +587,7 @@ and gather_type_info_exp_x prog a0 tlist et =
         (n_tlist2,t2)
     in
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
-      let pr_t = string_of_typ in 
+      let pr_t = string_of_typ in
       Debug.no_3 "unify_ptr_arithmetic" pr_t pr_t string_of_tlist (fun (_,v) -> string_of_typ v)
         (fun _ _ _ -> unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos) t1 t2 n_tl2 in
     let todo_unk:Globals.typ = x_add must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
@@ -599,12 +599,12 @@ and gather_type_info_exp_x prog a0 tlist et =
         fst(List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl)
       with _ -> "" in
     (* let (tmp1,tmp2)=nt in            *)
-    let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
-    let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
+    let () = x_binfo_hp (add_str "add(et)" string_of_typ) et no_pos in
+    let () = x_binfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let () = x_tinfo_hp (add_str "add(t1)" string_of_typ) t1 no_pos in
+    let () = x_binfo_hp (add_str "add(t1)" string_of_typ) t1 no_pos in
     let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et in
-    let () = x_tinfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
+    let () = x_binfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
     let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et) et n_tl2 pos in
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
