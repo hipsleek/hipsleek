@@ -711,10 +711,16 @@ let get_h_formula_data_fr_hnode hn=
   | _ -> report_error no_pos
            "infer.get_h_formula_data_fr_hnode: input must be a list of hnodes"
 
+(* this caused problem with ex20e9a1.slk *)
+(* how about ex20e9f5h.slk? *)
 let is_match_pred lhs_selected_hpargs rhs_selected_hpargs =
   match lhs_selected_hpargs, rhs_selected_hpargs with
-    | [(lhp,largs)], [(rhp,rargs)] -> (* CP.eq_spec_var_order_list largs rargs *)
-          CP.diff_svl largs rargs = [] || CP.diff_svl rargs largs = []
+    | [(lhp,largs)], [(rhp,rargs)] -> 
+      let () = y_binfo_hp (add_str "largs" !CP.print_svl) largs in
+      let () = y_binfo_hp (add_str "rargs" !CP.print_svl) rargs in
+      if not(!Globals.adhoc_flag_3) then 
+        CP.eq_spec_var_order_list largs rargs
+      else CP.diff_svl largs rargs = [] || CP.diff_svl rargs largs = [] 
     | _ -> false
 
 let is_match_node lhs_selected_hpargs rhs_b =
@@ -744,8 +750,12 @@ let simplify_lhs_rhs prog iact es lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_se
   in
   let filter_non_selected_hp selected_hpargs (hp,args)= Gen.BList.mem_eq Sautil.check_hp_arg_eq (hp,args) selected_hpargs in
   let filter_non_selected_hp_rhs selected_hps (hp,_)= CP.mem_svl hp selected_hps in
-  let is_match_pred = is_match_pred lhs_selected_hpargs rhs_selected_hpargs in
-  let is_match = is_match_pred || is_match_node lhs_selected_hpargs rhs_b in
+  let lhs_hp = lhs_b.CF.formula_base_heap in
+  let rhs_hp = rhs_b.CF.formula_base_heap in
+  let () = y_binfo_hp (add_str "lhs_hp" !CF.print_h_formula) lhs_hp in
+  let () = y_binfo_hp (add_str "rhs_hp" !CF.print_h_formula) rhs_hp in
+  let is_match_flag = is_match_pred lhs_selected_hpargs rhs_selected_hpargs in
+  let is_match = is_match_flag || is_match_node lhs_selected_hpargs rhs_b in
      (****************************************)
   (*****************INTERNAL********************)
   (*lhs*)
