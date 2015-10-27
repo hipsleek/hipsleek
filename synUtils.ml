@@ -944,3 +944,4 @@ let mk_lemma prog l_name l_is_classic l_ivars l_itypes l_kind l_type l_head l_bo
     C.coercion_kind = l_kind;
     C.coercion_origin = LEM_GEN; 
     C.coercion_lhs_sig = CFU.sig_of_lem_formula prog l_case l_head; }
+

@@ -762,9 +762,6 @@ let derive_view iprog prog other_hprels hprels =
   Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
     (derive_view iprog prog) other_hprels hprels
 
-(*******************************************)
-(***** ELIM HEAD / TAIL / DISJ OF PRED *****)
-(*******************************************)
 (* type:                                                     *)
 (*   Astsimp.I.prog_decl ->                                  *)
 (*   Astsimp.C.prog_decl ->                                  *)
@@ -853,6 +850,9 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
   Debug.no_3 "Syn:derive_equiv_view_by_lem" pr1 pr2 pr2 pr3
     (fun _ _ _ -> derive_equiv_view_by_lem ~tmp_views:tmp_views iprog cprog view l_ivars l_head l_body) l_ivars l_head l_body
 
+(*******************************************)
+(***** ELIM HEAD / TAIL / DISJ OF PRED *****)
+(*******************************************)
 let elim_head_pred iprog cprog pred = 
   let pred_f = C.formula_of_unstruc_view_f pred in
   let self_node = mk_self_node pred.C.view_name pred_f in

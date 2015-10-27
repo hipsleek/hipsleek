@@ -240,10 +240,11 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       let () = y_tinfo_hp (add_str "     niu_svl_ni" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_ni in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
-      let () = DD.ninfo_hprint (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field pos in
-       let () = DD.ninfo_hprint (add_str  " es.CF.es_infer_obj # is_pure_field_all" string_of_bool)  es.CF.es_infer_obj # is_pure_field_all pos in
+      let () = y_tinfo_hp (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field in
+      let () = y_tinfo_hp (add_str  " es.CF.es_infer_obj # is_pure_field_all" string_of_bool)  es.CF.es_infer_obj # is_pure_field_all in
       let args11 = if (* Globals.infer_const_obj # is_pure_field *)
-        es.CF.es_infer_obj # is_pure_field_all
+        (es.CF.es_infer_obj # is_pure_field_all) &&
+        !Globals.sep_pure_fields
       (* !Globals.sa_pure_field *) then
           let args11 = List.map (fun sv ->
               if CP.is_node_typ sv then (sv, I)
@@ -265,6 +266,17 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
       let () = y_tinfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
       let () = y_tinfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
+      let get_data_ni_svl knd = 
+        if is_view || !Globals.sep_pure_fields then []
+        else 
+          match knd with
+          | NI -> []
+          | I -> 
+            let pure_svl = List.filter (fun a -> 
+              not (CP.is_node_typ a) && not (List.exists (fun (a1, _) -> CP.eq_spec_var a a1) niu_svl_ni_total)) args1
+            in
+            List.map (fun a -> (a, NI)) pure_svl
+      in
       let ls_fwd_svl =(*  if args12 =[] then *)
         (*   if is_view then *)
         (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
@@ -272,16 +284,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         (*   else [] *)
         (* else *) 
           List.map (fun ((arg, knd) as sv) ->
-            let data_ni_svl = 
-              if is_view then []
-              else 
-                match knd with
-                | NI -> []
-                | I -> 
-                  List.filter (fun (a, k) -> 
-                    k == NI && not (List.exists (fun (a1, _) -> CP.eq_spec_var a a1) niu_svl_ni_total)) args12
-            in
-            let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
+            let fwd_svl = sv::niu_svl_ni_total@(get_data_ni_svl knd)@[(h_node, NI)] in
             (is_pre, fwd_svl)) args12
       in
       (* str-inf/ex16c5b(8) do not need extra_clls *)
@@ -743,7 +746,7 @@ let is_match_pred lhs_selected_hpargs rhs_selected_hpargs =
     | [(lhp,largs)], [(rhp,rargs)] -> 
       let () = y_tinfo_hp (add_str "largs" !CP.print_svl) largs in
       let () = y_tinfo_hp (add_str "rargs" !CP.print_svl) rargs in
-      if not(!Globals.adhoc_flag_3) then 
+      if true (* not(!Globals.adhoc_flag_3) *) then 
         CP.eq_spec_var_order_list largs rargs
       else 
         CP.diff_svl largs rargs = [] || CP.diff_svl rargs largs = [] 

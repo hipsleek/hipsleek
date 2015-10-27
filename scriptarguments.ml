@@ -1002,6 +1002,8 @@ let common_arguments = [
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
   ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
+  ("--sa-en-sep-pure-fields", Arg.Set Globals.sep_pure_fields, "separate pure fields in unknown heap predicates");
+  ("--sa-dis-sep-pure-fields", Arg.Clear Globals.sep_pure_fields, "combine pure fields in unknown heap predicates");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
   ("--en-syn-mode", Arg.Set Globals.syntatic_mode, "check two formulas are equivalent syntatically. default is semantic checking via sleek");

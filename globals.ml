@@ -1080,6 +1080,8 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
+let sep_pure_fields = ref false
+
 let en_norm_ctx = ref false (* true - not suitable for inference *)
 
 let en_trec_lin = ref false
