@@ -62,7 +62,7 @@
 <edge source="A3" target="A23">
 <data key="sourcecode">return;</data>
 <data key="startline">4</data>
-<data key="returnFunction">f</data>
+<data key="returnFrom">f</data>
 </edge>
 <node id="A24">
 <data key="violation">true</data>

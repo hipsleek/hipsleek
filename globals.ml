@@ -1239,6 +1239,7 @@ let print_clean_flag = ref false
 
 let print_assume_struc = ref false
 let web_compile_flag = ref false (*enable compilation flag for website*)
+let xml_flag = ref false
 
 
 (* Decide whether normalization/simplification
