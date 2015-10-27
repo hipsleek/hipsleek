@@ -478,3 +478,22 @@ let verify_as_sat iprog prog iprims=
     res
   else
     VTD_NotApp
+
+let print_verify_resule res  str_time=
+  if res != VTD_NotApp then
+    let () = print_endline ("\n(" ^(string_of_assert_err res) ^ "," ^  str_time ^ ")") in
+    ()
+
+let verify_as_sat_main iprog prog iprims=
+  let res=
+    try verify_as_sat iprog prog iprims
+    with e ->
+        if !Globals.svcomp_compete_mode then
+        VTD_Unk
+        else raise e
+  in
+  let ptime4 = Unix.times () in
+  let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+  let str_time = (string_of_float t4) ^ "(s)" in
+  let () = print_verify_resule res str_time in
+  res
