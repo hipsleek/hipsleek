@@ -776,7 +776,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
   let llemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left l_ivars l_ihead l_ibody in
   let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
   let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (* @pure_field *)
-  let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
+  let () = y_binfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
   
   (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
   let lres, _ = wrap_classic x_loc (Some true) (fun llemma -> x_add Lemma.manage_infer_lemmas [llemma] iprog cprog) llemma in
@@ -907,11 +907,16 @@ let elim_tail_pred iprog cprog pred =
     let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
     let unknown_h, unknown_hpred = C.add_raw_hp_rel cprog false true [(self_node, I); (fresh_self_node, I)] no_pos in
     let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
-    let unknown_f = CF.mkStar_combine_heap 
-        (CF.subst [(self_node, fresh_self_node)] node_base_case) 
-        unknown_h CF.Flow_combine no_pos in
+    let sst = (self_node, fresh_self_node)::(List.combine pred.C.view_vars fresh_pred_args) in
+    let unknown_f = 
+      (* CF.mkStar_combine_heap (CF.subst sst node_base_case) unknown_h CF.Flow_combine no_pos in *)
+      CF.mkStar_combine (CF.formula_of_heap unknown_h no_pos) (CF.subst sst node_base_case) CF.Flow_combine no_pos in
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
+    let pred_f_sv = CF.fv pred_f in
+    let unknown_f_sv = CF.fv unknown_f in
+    let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in
+    let unknown_f = CF.push_exists ex_vars unknown_f in
     x_add derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
   with _ -> pred
 

@@ -10,11 +10,10 @@ HeapPred H3(node x,node@NI y).
 HeapPred DP_36(node x,node@NI y,node@NI z).
 HeapPred GP_66(node x,node@NI y,node@NI z).
 
-/*
 lemma_infer [H,@classic] "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
 print residue.
-*/
 
+/*
 relAssume DP_36(next_47,self_compl,yy_49) * yy_49::node<Anon_48,zz> & true --> H(next_47,zz) & true.
 
 relAssume emp&zz=q --> H(q,zz)&true.
@@ -37,6 +36,7 @@ print relAssumes.
 shape_derive_view [H].
 
 print views [H].
+*/
 
 /*
 lemma_unsafe "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
