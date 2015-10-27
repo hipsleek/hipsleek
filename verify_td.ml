@@ -481,7 +481,7 @@ let verify_as_sat iprog prog iprims=
 
 let print_verify_resule res  str_time=
   if res != VTD_NotApp then
-    let () = print_endline ("\n(" ^(string_of_assert_err res) ^ "," ^  str_time ^ ")") in
+    let () = print_endline ("(" ^(string_of_assert_err res) ^ ", " ^  str_time ^ ")\n") in
     ()
 
 let verify_as_sat_main iprog prog iprims=
