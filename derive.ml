@@ -646,11 +646,44 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
                 let ve = CP.mkVar v no_pos in
                 let () = y_binfo_hp (add_str "mk_base from" (pr_pair !CP.print_exp !CP.print_exp)) (ve, vexp) in
                 let () = y_binfo_hp (add_str "given specvar" !CP.print_sv) v in
-                CP.mk_bform (CP.mkEq ve vexp no_pos))) in
+                let f = CP.mk_bform (CP.mkEq ve vexp no_pos) in
+                let () = y_binfo_hp (add_str "mk_base" !CP.print_formula) f in
+                f)) in
           (* replace the mk_max *)
-          (* assumption: (for now), only variation is whether size is EqMin or EqMax *)
-          (* later, should substitute variables accordingly *)
-          let rc_pf = CF.get_pure (List.nth l_f 1) in
+          let rc_f = (List.nth l_f 1) in
+          let rc_pf = CF.get_pure rc_f in
+          (* look for k=exp, where `k` is the var in the p_table...
+             the INCR will be v1+K, where `K` is the IConst term in `exp`
+             the MAX will be summation of all the Var term in `exp` *)
+          let key_sv = List.hd vd.C.view_vars in (* assume only one var, k *)
+          let key_exp = CP.exp_of_sv_eq_in_formula rc_pf key_sv in
+          (* assume summation of var,iconst only *)
+          let f_exp = fun e ->
+            begin
+              match e with
+              | CP.Var _ as v -> Some [v]
+              | CP.IConst _ as i -> Some [i]
+              | _ -> None
+            end in
+          let key_terms = CP.fold_exp (CP.exp_of_sv_eq_in_formula rc_pf key_sv) f_exp List.concat in
+          let (key_max_var_exps, inc_terms) = List.partition CP.is_var key_terms in
+          let () = y_binfo_hp (add_str "extracted max var exps" (pr_list !CP.print_exp)) key_max_var_exps in
+          let max_terms = List.map (fun ve -> CP.exp_of_sv_eq_in_formula rc_pf (CP.extr_spec_var ve)) key_max_var_exps in
+          let () = y_binfo_hp (add_str "extracted max terms" (pr_list !CP.print_exp)) max_terms in
+          let summation exp_list =
+            List.fold_right (fun e sum -> CP.mkAdd e sum no_pos) exp_list (CP.mkIConst 0 no_pos) in
+          let inc_exp = summation inc_terms in
+          let max_exp = summation max_terms in
+          let () = y_binfo_hp (add_str "extracted inc exp" !CP.print_exp) inc_exp in
+          let () = y_binfo_hp (add_str "extracted max exp" !CP.print_exp) max_exp in
+          (* also need to 'find' i,j from the ... so we can replace them. *)
+          let views = CF.get_views rc_f in
+          let () = y_binfo_hp (add_str "heap views" (pr_list (fun { CF.h_formula_view_node = sv ; _ } -> CP.string_of_typed_spec_var sv))) views in
+          let () = y_binfo_hp (add_str "heap view args" (pr_list (fun { CF.h_formula_view_arguments = svs ; _ } -> pr_list CP.string_of_typed_spec_var svs))) views in
+          (* assume ALL the views in the rc_f are the same as vd.C.view_prop_extns *)
+          (* assume only one argument per view.. *)
+          let view_args = List.concat (List.map (fun v -> v.CF.h_formula_view_arguments) views) in
+          let () = y_binfo_hp (add_str "heap view args" (pr_list CP.string_of_typed_spec_var)) view_args in
           (* Look for a min or a max in the formula *)
           let f_bf = fun (pf,_) ->
             begin
@@ -671,7 +704,9 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
                 (* let nrhs1 = CP.e_apply_subs [()] rhs1 in *)
                 (* let nrhs2 = rhs2 in *)
                 (* CP.mk_bform (CP.EqMax (nlhs,nrhs1,nrhs2,no_pos)) *)
-                CP.mk_max v v1 v2)
+                let f = CP.mk_max v v1 v2 in
+                let () = y_binfo_hp (add_str "mk_max" !CP.print_formula) f in
+                f)
             | (CP.EqMin (lhs,rhs1,rhs2,pos))::_ -> ()
             | _ -> ()) in
           (* replace the mk_inc *)
@@ -696,7 +731,9 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
               mk_inc <- (fun v v1 ->
                 (* subst using v,v1 in place of ... what?? *)
                 let n_op = CP.e_apply_subs [(maxv, v1)] op in
-                CP.mk_bform (CP.Eq (CP.mkVar v no_pos, n_op, no_pos)))
+                let f = CP.mk_bform (CP.Eq (CP.mkVar v no_pos, n_op, no_pos)) in
+                let () = y_binfo_hp (add_str "mk_inc" !CP.print_formula) f in
+                f)
             | _ -> ()) in
           vns <- vs
       end
