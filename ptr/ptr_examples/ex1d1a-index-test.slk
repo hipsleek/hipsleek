@@ -3,8 +3,9 @@ data arr {
 }.
 
 pred arr_int<o:int,v:int> ==
-    p1::arr<v> & p1=self+o & o>=0 & self!=null
-inv self!=null & o>=0.
+    p1::arr<v> & p1=self+o & o>=0 //& self!=null
+   inv //self!=null & 
+    o>=0.
 
 
 infer [o] y::arr_int<o,5> & x=y+2 |- x::arr<v>.

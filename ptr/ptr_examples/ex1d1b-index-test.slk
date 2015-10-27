@@ -1,0 +1,30 @@
+data arr {
+  int val;
+}.
+
+pred arr_int<o:int,v:int> ==
+    p1::arr<v> & p1=self+o & o>=0 //& self!=null
+   inv //self!=null & 
+    o>=0.
+
+
+infer [o] y::arr_int<o,5> & x=y+2 |- x::arr_int<o,5> .
+print residue.
+expect Fail.
+
+
+/*
+# ex1d1b.ss
+
+infer [o] y::arr_int<o,5> & x=y+2 |- x::arr<v>.
+print residue.
+expect Valid.
+
+!!! WARNING logtime exception:0.000212
+Entail (1) : Failure("**context.ml#705:view matching..")
+: no residue 
+Validate 1: Expecting ValidBUT got no residue
+
+
+
+ */
