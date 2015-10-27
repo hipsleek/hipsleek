@@ -886,7 +886,7 @@ let elim_head_pred iprog cprog pred =
 
 let elim_head_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
-  Debug.no_1 "elim_head_pred" pr pr 
+  Debug.no_1 "Syn:elim_head_pred" pr pr 
     (fun _ -> elim_head_pred iprog cprog pred) pred
 
 let elim_tail_pred iprog cprog pred = 
@@ -916,7 +916,7 @@ let elim_tail_pred iprog cprog pred =
 
 let elim_tail_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
-  Debug.no_1 "elim_tail_pred" pr pr 
+  Debug.no_1 "Syn:elim_tail_pred" pr pr 
     (fun _ -> elim_tail_pred iprog cprog pred) pred
 
 let elim_head_pred_list iprog cprog preds =

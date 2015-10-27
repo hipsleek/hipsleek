@@ -302,12 +302,16 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
       (* rhs_unfold_ptrs below really needed? isn't lhs unfold enough? *)
       let lhs_unfold_ptrs = x_add CFU.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true in
       let rhs_unfold_ptrs = x_add CFU.look_up_reachable_ptrs_sf cprog new_rhs [rhs_sv_self] true true in
+      let () = y_binfo_hp (add_str "lhs_unfold_ptrs" !CP.print_svl) lhs_unfold_ptrs in
+      let () = y_binfo_hp (add_str "rhs_unfold_ptrs" !CP.print_svl) rhs_unfold_ptrs in
       if is_singl lhs_sv_self lhs_unfold_ptrs then
         if is_singl rhs_sv_self rhs_unfold_ptrs then
           let lhs_vns = CF.get_views lhs in
           let rhs_vns = CF.get_views_struc new_rhs in
+          let () = y_binfo_hp (add_str "lhs_vns" (pr_list (fun v -> !CF.print_h_formula (CF.ViewNode v)))) lhs_vns in
+          let () = y_binfo_hp (add_str "rhs_vns" (pr_list (fun v -> !CF.print_h_formula (CF.ViewNode v)))) rhs_vns in
           if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
-            let () = Debug.ninfo_hprint (add_str "xxx" pr_id) "1" pos in
+            let () = x_binfo_hp (add_str "xxx" pr_id) "1" pos in
             [lhs_sv_self],[]
           else
             (* if List.length (CF.get_dnodes lhs) = 0 &&  List.length (CF.get_dnodes_struc new_rhs) =0 then [],[] else *)
@@ -316,7 +320,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           [lhs_sv_self],[]
       else begin
         if is_singl rhs_sv_self rhs_unfold_ptrs then
-          let () = Debug.ninfo_hprint (add_str "xxx" pr_id) "2" pos in
+          let () = x_binfo_hp (add_str "xxx" pr_id) "2" pos in
           (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs),[rhs_sv_self]
         else if !Globals.allow_lemma_deep_unfold then
           let l_ptrs = if lhs_unfold_ptrs != [] then [lhs_sv_self] else [] in
