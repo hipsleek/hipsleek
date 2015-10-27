@@ -605,6 +605,9 @@ let get_views_offset prog f =
  *   - In acc-fold: choose_context must allow rhs_node is a general heap formula
  *     (or a chain of heap nodes and views )
  *)
+
+let adhoc_stk = new Gen.stack
+
 let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   match rhs_node with
@@ -707,13 +710,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               | None  ->
                 (* lhs_p2 |- rhs_ptr=d  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
-                let r = if true (* CF.no_infer_all_all estate *) then !CP.tp_imply lhs_p2 rhs 
+                let r = if CF.no_infer_all_all estate then !CP.tp_imply lhs_p2 rhs 
                   else 
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)
                       let () = y_winfo_pp "TODO : check if share same base" in
                       let () =  y_binfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
-                      let1 () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                      let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                      let () = adhoc_stk # push rhs in
                       true (*can we check if it shares same base *) 
                     end
                 in
