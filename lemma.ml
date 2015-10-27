@@ -443,8 +443,9 @@ let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog
   (* Debug.no_3 "manage_infer_lemmas_x" pr3 pr4 pr1 (pr_pair string_of_bool (pr_opt pr2))               *)
   (*   (fun _ _ _ -> manage_infer_lemmas_x ~res_print:res_print ~pop_all:pop_all str repo iprog cprog)  *)
   (*   iprog cprog repo                                                                                 *)
-  Debug.no_1 "manage_infer_lemmas_x" pr1 (pr_pair string_of_bool (pr_opt pr2))
-    (fun _ -> manage_infer_lemmas_x ~res_print:res_print ~pop_all:pop_all str repo iprog cprog) repo
+  Debug.no_2 "manage_infer_lemmas_x" pr1 (add_str "is_classic" string_of_bool) (pr_pair string_of_bool (pr_opt pr2))
+    (fun _ _ -> manage_infer_lemmas_x ~res_print:res_print ~pop_all:pop_all str repo iprog cprog) 
+    repo (check_is_classic ())
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 

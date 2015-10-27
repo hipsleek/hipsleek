@@ -5,6 +5,7 @@ open Gen
 open Others
 open Label_only
 open SynUtils
+open Wrapper
 open Exc.GTable
 module C = Cast
 module I = Iast
@@ -778,7 +779,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
   let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
   
   (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
-  let lres, _ = x_add Lemma.manage_infer_lemmas [llemma] iprog cprog in
+  let lres, _ = wrap_classic x_loc (Some true) (fun llemma -> x_add Lemma.manage_infer_lemmas [llemma] iprog cprog) llemma in
   if not lres then
     let () = y_binfo_pp "XXX fail infer ---> " in
     let () = restore_view iprog cprog view in
