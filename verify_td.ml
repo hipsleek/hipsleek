@@ -494,6 +494,6 @@ let verify_as_sat_main iprog prog iprims=
   in
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-  let str_time = (string_of_float t4) ^ "(s)" in
+  let str_time = (string_of_float t4) ^ "(seconds)" in
   let () = print_verify_resule res str_time in
   res
