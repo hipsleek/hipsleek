@@ -668,11 +668,13 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let () = y_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
       let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
       (* let diff_ptrs = heap_ptrs in *)
-      let diff_ptrs = if true (* not(!Globals.adhoc_flag_2) *) then
-          Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset 
-        else heap_ptrs
-      in
-      let () = y_binfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in
+      (* let diff_ptrs = if true (\* not(!Globals.adhoc_flag_2) *\) then *)
+      (*     Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset  *)
+      (*   else heap_ptrs *)
+      (* in *)
+      (* let () = y_binfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in *)
+      let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in
+      let () = y_binfo_hp (add_str "lhs_nodes" !CP.print_svl) (List.map fst lhs_nodes) in
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
       let lst = List.map (fun (d,root_lhs) -> 
           match view_root_rhs with
@@ -705,14 +707,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               | None  ->
                 (* lhs_p2 |- rhs_ptr=d  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
-                let r = if CF.no_infer_all_all estate then !CP.tp_imply lhs_p2 rhs 
+                let r = if true (* CF.no_infer_all_all estate *) then !CP.tp_imply lhs_p2 rhs 
                   else 
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)
                       let () = y_winfo_pp "TODO : check if share same base" in
                       let () =  y_binfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
-                      let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-                      false (*can we check if it shares same base *) 
+                      let1 () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                      true (*can we check if it shares same base *) 
                     end
                 in
                 (d,r,None)
@@ -720,8 +722,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let () = y_binfo_hp (add_str "d" !CP.print_sv) d in
                 let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
                 let () = y_binfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
-                let rhs = if CF.no_infer_all_all estate then
-                    CP.mkEqVars rhs_ptr root
+                let rhs = if CF.no_infer_all_all estate then CP.mkEqVars rhs_ptr root
                   else CP.mk_is_base_ptr rhs_ptr d in
                 let r = !CP.tp_imply (CP.mkAnd lhs_p2 root_pf no_pos) rhs in
                 let () = y_binfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
