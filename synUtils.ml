@@ -791,7 +791,7 @@ let rec norm_pred_list f_norm preds =
     with e ->
       let () = y_binfo_pp (Printexc.to_string e) in
       let () = x_warn ("Cannot normalize the view " ^ p.C.view_name) in
-      (* p:: *)(Lazy.force lazy_ps)
+      p::(Lazy.force lazy_ps)
 
 let norm_one_derived_view iprog cprog derived_view = 
   (* try *)
