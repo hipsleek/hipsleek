@@ -157,7 +157,7 @@ let should_merge_pre_hprels prog hprels =
           (heap_entail_exact_formula prog g gr) &&
           (heap_entail_exact_formula prog gr g)
         | _ -> false
-      in (equiv_lhs ()) && (equiv_guard ())) hprs
+      in (equiv_lhs ()) (* && (equiv_guard ()) *)) hprs
 
 let should_pre_merge_hprels prog hprels = 
   let pr = pr_hprel_list in
@@ -178,14 +178,16 @@ let merge_pre_hprel_list prog hprels =
       let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
       let unsat_core = Smtsolver.get_unsat_core sub_conds in
       if is_empty unsat_core then
-        let () = y_winfo_pp "Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
+        let msg = "Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
+        let () = y_winfo_hp (add_str msg pr_hprel_list) hprels in
         hprels
       else
         let cond_guards = List.map (fun c -> cond_guard_of_pre_hprel unsat_core c) conds in
         let cond_guard_hprels = List.combine cond_guards hprels in
         let trans_hprels = List.map (fun (c, hpr) -> transform_pre_hprel_w_cond_guard c hpr) cond_guard_hprels in
         if not (should_merge_pre_hprels prog trans_hprels) then
-          let () = y_winfo_pp "Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in
+          let msg = "Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards" in
+          let () = y_winfo_hp (add_str msg pr_hprel_list) hprels in
           hprels
         else
           let disj_rhs_list = List.fold_left (fun acc (c, hprel) ->
@@ -199,7 +201,7 @@ let merge_pre_hprel_list prog hprels =
 
 let merge_pre_hprel_list prog hprels =
   let pr = pr_hprel_list in
-  Debug.no_1 "merge_pre_hprel_list" pr pr (merge_pre_hprel_list prog) hprels
+  Debug.no_1 "Syn:merge_pre_hprel_list" pr pr (merge_pre_hprel_list prog) hprels
 
 (* (A -> C) /\ (B -> C) --> (A \/ B) -> C *)
 let merge_post_hprel_list prog hprels =
@@ -217,7 +219,7 @@ let merge_post_hprel_list prog hprels =
 
 let merge_post_hprel_list prog hprels =
   let pr = pr_hprel_list in
-  Debug.no_1 "merge_post_hprel_list" pr pr (merge_post_hprel_list prog) hprels
+  Debug.no_1 "Syn:merge_post_hprel_list" pr pr (merge_post_hprel_list prog) hprels
 
 let merge_hprel_list prog hprels = 
   let pre_hprels, post_hprels = List.partition is_pre_hprel hprels in

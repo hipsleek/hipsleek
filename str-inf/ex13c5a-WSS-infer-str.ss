@@ -6,6 +6,7 @@ data char_star {
 }
 */
 
+/*
 WSS<p> ==
   self::WFSeg<q>*q::char_star<0,p> 
   inv self!=null;
@@ -14,6 +15,7 @@ WFSeg<p> ==
   self=p 
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
   inv true;
+*/
 
 /*
 BADS<> ==
@@ -24,7 +26,7 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-  infer [P,@classic//,@pure_field
+  infer [P,@classic,@pure_field
   ]
   requires P(s)
   ensures true;
