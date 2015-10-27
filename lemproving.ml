@@ -308,6 +308,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
         if is_singl rhs_sv_self rhs_unfold_ptrs then
           let lhs_vns = CF.get_views lhs in
           let rhs_vns = CF.get_views_struc new_rhs in
+          let () = y_binfo_hp (add_str "lhs" !CF.print_formula) lhs in
+          let () = y_binfo_hp (add_str "new_rhs" !CF.print_struc_formula) new_rhs in
           let () = y_binfo_hp (add_str "lhs_vns" (pr_list (fun v -> !CF.print_h_formula (CF.ViewNode v)))) lhs_vns in
           let () = y_binfo_hp (add_str "rhs_vns" (pr_list (fun v -> !CF.print_h_formula (CF.ViewNode v)))) rhs_vns in
           if is_iden_unfold sv_self sv_self lhs_vns rhs_vns then
