@@ -13,4 +13,22 @@ pred_extn size2[L,R]<k> ==
    or L::size2<i> & R::size2<j> & k=1+max(i,j) // recursive case
    inv k>=0.
 
-pred ss<nnn> == extends [tree*] with size2[REC]<nnn>.
+// # non-leaf nodes
+pred_extn size3[L,R]<k> ==
+   k=0 // base case
+   or L::size3<i> & R::size3<j> & k=1+i+j // recursive case
+   inv k>=0.
+
+// # nodes
+pred_extn size4[L,R]<k> ==
+   k=1 // base case
+   or L::size4<i> & R::size4<j> & k=1+i+j // recursive case
+   inv k>=0.
+
+// # leaf nodes
+pred_extn size5[L,R]<k> ==
+   k=1 // base case
+   or L::size5<i> & R::size5<j> & k=0+i+j // recursive case
+   inv k>=0.
+
+pred ss<nnn> == extends [tree*] with size3[REC]<nnn>.
