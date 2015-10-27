@@ -272,14 +272,16 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         (*   else [] *)
         (* else *) 
           List.map (fun ((arg, knd) as sv) ->
-            let extra_ni_svl = 
-              match knd with
-              | NI -> []
-              | I -> 
-                List.filter (fun (a, k) -> 
-                  k == NI && not (List.exists (fun (a1, _) -> CP.eq_spec_var a a1) niu_svl_ni_total)) args12
+            let data_ni_svl = 
+              if is_view then []
+              else 
+                match knd with
+                | NI -> []
+                | I -> 
+                  List.filter (fun (a, k) -> 
+                    k == NI && not (List.exists (fun (a1, _) -> CP.eq_spec_var a a1) niu_svl_ni_total)) args12
             in
-            let fwd_svl = sv::niu_svl_ni_total@extra_ni_svl@[(h_node, NI)] in
+            let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
             (is_pre, fwd_svl)) args12
       in
       (* str-inf/ex16c5b(8) do not need extra_clls *)
