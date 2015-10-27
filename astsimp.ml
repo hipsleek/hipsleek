@@ -2634,16 +2634,23 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               let lst = CF.get_data_and_views h in
               let lst = List.map (fun (v,(no,hf)) ->
                   let keep_vs = v::keep_vs in
+                  let () = y_binfo_hp (add_str "pure" !CP.print_formula)pure in
+                  let () = y_binfo_hp (add_str "keep_vs" !CP.print_svl) keep_vs in
                   let ex_vs = Gen.BList.difference_eq CP.eq_spec_var vs keep_vs in
                   let new_p = CP.mkExists_with_simpl !CP.simplify ex_vs pure None no_pos in
-                  let eq_lst = CP.extr_eqn new_p in
-                  let () = y_tinfo_hp (add_str "new_p" !CP.print_formula) new_p in
-                  (v, no,eq_lst)
+                  (* let vars = CP.fv new_p in *)
+                  let (ptrs,eq_lst) = CP.extr_ptr_eqn new_p in
+                  let base_vars = List.map snd ptrs in
+                  let eq_lst = 
+                    if List.exists (CP.eq_spec_var CP.self_sv) base_vars 
+                    then eq_lst else [] in
+                  let () = y_binfo_hp (add_str "new_p" !CP.print_formula) new_p in
+                  (v,no,eq_lst)
                     (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
                     (* else (\* view node*\) []) *)
                 ) lst in
-              (* let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst in *)
-              let () = y_tinfo_hp !CP.print_formula pure in
+              (* let () = y_binfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst in *)
+              let () = y_binfo_hp !CP.print_formula pure in
               (* CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h *)
               (pure,lst)
             ) n_un_str in
@@ -2690,7 +2697,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           lst
         else []
       in
-      let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
+      let () = y_binfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
       (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
       (* let () = y_tinfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in *)
       let cvdef = {

@@ -624,6 +624,9 @@ let primed_ident_of_spec_var (sv : spec_var) = match sv with
 let name_of_sv (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+let typ_of_sv (sv : spec_var)  = match sv with
+  | SpecVar (t, v, _) -> t
+
 let rename_spec_var (sv: spec_var) new_name = 
   match sv with
   | SpecVar (t, _, p) -> SpecVar (t, new_name, p)
@@ -15588,6 +15591,26 @@ let extr_eqn (f:formula)  =
   let _ = helper f in
   stk # get_stk
 
+(* to return (ptr,v) from ptr=v+c and eq1=eq2 equations *)
+let extr_ptr_eqn (f:formula)  = 
+  let stk = new Gen.stack in
+  let stk_ptr = new Gen.stack in
+  let rec helper f =
+    let f_f f = None in
+    let f_bf bf = match bf with
+      | (Eq (Var(v1,_),Add(Var(v2,_),_,_),_),_) -> 
+         if is_ptr_arith (typ_of_sv v2) then stk_ptr # push (v1,v2);
+         let () = stk # push (BForm (bf,None)) in
+         Some bf
+      | (Eq _,_) -> 
+         let () = stk # push (BForm (bf,None)) in
+         Some bf
+      | _ -> Some bf in
+    let f_e e = Some e in
+    map_formula f (f_f,f_bf,f_e) in
+  let _ = helper f in
+  (stk_ptr # get_stk,stk # get_stk)
+ 
 let mkLtVars a1 a2 =
   BForm ((Lt (Var (a1,no_pos),Var(a2,no_pos), no_pos),None),None)
 
