@@ -15522,3 +15522,48 @@ let is_AndList f =
   match f with
   | AndList _ -> true
   | _ -> false
+
+(* look for some sv=rhs, return the rhs *)
+let exp_of_sv_eq_in_formula f v =
+  let f_bf = fun (pf,_) ->
+    begin
+      match pf with
+      (* should check whether sv is in ptable's vars *)
+      | Eq (Var (sv,_),rhs,pos) when eq_spec_var sv v ->
+        Some [rhs]
+      (* construct a Max exp from EqMax b_formula*)
+      | EqMax (Var (sv,_),v1,v2,pos) when eq_spec_var sv v ->
+        Some [mkMax v1 v2 pos]
+      | EqMin (Var (sv,_),v1,v2,pos) when eq_spec_var sv v ->
+        Some [mkMin v1 v2 pos]
+      | _ -> None
+    end in
+  let res = fold_formula f (nonef, f_bf, nonef) (List.concat) in
+  match res with
+  | e::_ -> e
+  (* if there's no sv=rhs in the formula, return exp of the sv instead *)
+  | [] -> mkVar v no_pos
+
+let exp_of_sv_eq_in_formula (f : formula) (sv : spec_var) =
+  let pr1 = !print_formula in
+  let pr2 = string_of_spec_var in
+  let pr3 = !print_exp in
+  Debug.no_2 "exp_of_sv_eq_in_formula" pr1 pr2 pr3 exp_of_sv_eq_in_formula f sv
+
+(* for exps like max(i,i), want to substitute sv for only first instance of i *)
+let subst_sv_once_exp (e : exp) (sv1 : spec_var) (sv2 : spec_var) : exp =
+  (* easiest to use a ref + transform_exp *)
+  let has_replaced = ref false in
+  let f_e exp =
+    match exp with
+    | Var (v,pos) when eq_spec_var v sv1 && not !has_replaced ->
+      (* replace *)
+      let () = has_replaced := true in
+      Some (Var (sv2,pos))
+    | _ -> None in
+  transform_exp f_e e
+
+let subst_sv_once_exp (e : exp) (sv1 : spec_var) (sv2 : spec_var) : exp =
+  let pr1 = !print_exp in
+  let pr2 = string_of_spec_var in
+  Debug.no_3 "subst_sv_once_exp " pr1 pr2 pr2 pr1 subst_sv_once_exp e sv1 sv2
