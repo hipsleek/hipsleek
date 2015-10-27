@@ -1303,6 +1303,9 @@ let old_view_equiv = ref false (* false *)
 let cond_action_always = ref false
 let rev_priority = ref false
 
+let witness_gen = ref false
+let call_stks = ref ([]:(ident * int list) list)
+
 let old_collect_false = ref false
 let old_collect_hprel = ref false
 let old_infer_hprel_classic = ref false
