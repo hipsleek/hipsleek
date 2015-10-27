@@ -2724,13 +2724,13 @@ and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
   (*     | Var (v1,_), IConst(0,l)  *)
   (*           -> ae1,(if (is_otype (type_of_spec_var v1)) then Null no_pos else ae2) *)
   (*     | _ -> ae1,ae2 in *)
-  match (ae1, ae2) with
-  | (Var v1, Var v2) ->
-    if eq_spec_var (fst v1) (fst v2) then
-      mkTrue pos 
-    else
-      BForm ((Eq (ae1, ae2, pos), None),None)
-  | _ ->  BForm ((Eq (ae1, ae2, pos), None),None)
+  (* match (ae1, ae2) with *)
+  (* | (Var v1, Var v2) -> *)
+  (*   if eq_spec_var (fst v1) (fst v2) then *)
+  (*     mkTrue pos  *)
+  (*   else *)
+  (*     BForm ((Eq (ae1, ae2, pos), None),None) *)
+  (* | _ ->  *) BForm ((Eq (ae1, ae2, pos), None),None)
 
 and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->

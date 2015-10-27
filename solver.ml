@@ -2275,15 +2275,15 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
         let form = if use_case==None then Cformula.case_to_disjunct brs else brs in 
         (*let form = x_add_1 Cformula.case_to_disjunct brs in *)
-        let () = y_tinfo_hp (add_str "actual_root" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) root_inst2 in
+        let () = y_tinfo_hp (add_str "actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) root_inst2 in
         (* let () = y_tinfo_hp (add_str "root_inst" (pr_option !CP.print_sv )) root_inst in *)
         let () = y_tinfo_hp (add_str "do_fold: form" Cprinter.string_of_struc_formula) form in
         let stk = new Gen.stack in
         let renamed_view_formula = rename_struc_bound_vars ~stk:(Some stk) form in
         let sst = stk # get_stk in
         let new_inst = match root_inst2 with
-          | [] -> None
-          | (p,_)::_ -> 
+          | None -> None
+          | Some((p,_)) -> 
             begin
               match root_inst with
               | None -> None

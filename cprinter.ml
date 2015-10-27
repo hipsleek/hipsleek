@@ -214,6 +214,10 @@ let pr_list_open_sep ?(lvl=(!glob_lvl)) (f_open:unit -> unit)
   | [] -> f_empty()
   | xs -> f_open(); helper xs; f_close()) xs
 
+(* let pr_list_sep x = pr_list_open_sep (fun x -> x) (fun x -> x) x  *)
+(* let pr_list x = pr_list_sep fmt_space x;; *)
+(* let pr_list_comma x = pr_list_sep (fun () -> fmt_string ","; fmt_space()) x  *)
+
 (* let pr_list_open_sep (f_open:unit -> unit) *)
 (*     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit) *)
 (*     (f_elem:'a -> unit) (xs:'a list) : unit = *)
@@ -4406,7 +4410,8 @@ let pr_view_decl v =
   pr_add_str_cut  "same_xpure?: " fmt_string
     (if v.view_xpure_flag then "YES" else "NO");
   pr_add_str_cut  "view_data_name: " fmt_string v.view_data_name;
-  (* pr_vwrap  "view_type_of_self: " (pr_opt string_of_typ) v.view_type_of_self; *)
+  pr_vwrap  "type_of_self: " (pr_opt string_of_typ) v.view_type_of_self;
+  pr_vwrap  "actual_root: " fmt_string ((pr_option (pr_pair !CP.print_sv !CP.print_formula)) v.view_actual_root);
   pr_add_str_cut ~emp_test:Gen.is_empty  "self preds: " pr_list_id v.view_pt_by_self;
   pr_add_str_cut ~emp_test:Gen.is_empty "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
   pr_add_str_cut ~emp_test:Gen.is_empty "addr vars: " pr_list_of_spec_var v.view_addr_vars;

@@ -2712,7 +2712,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_actual_root = 
           (
             (* let () = y_tinfo_pp "ZH : need to compute actual root.." in *)
-            lst_heap_ptrs);
+            match lst_heap_ptrs with
+            | x::_ -> Some x
+            | _ -> None
+          );
         C.view_prop_extns = view_prop_extns;
         C.view_parent_name = None;
         C.view_domains = [];

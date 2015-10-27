@@ -582,7 +582,7 @@ let get_views_offset prog f =
     match hf with
     | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name } -> 
       let vr = get_root_view prog name p args in
-      let () = stk # push (p,Some vr) in Some hf 
+      let () = stk # push (p,vr) in Some hf 
     | DataNode ({ h_formula_data_node = vsv; } ) 
     | ThreadNode {h_formula_thread_node=vsv;}
     | HVar (vsv,_) ->
@@ -594,7 +594,7 @@ let get_views_offset prog f =
     | _ -> None in 
   let _ = (map_h_formula f f_h_f) in
   let r = stk # get_stk in
-  let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in
+  let pr = pr_pair !CP.print_sv (pr_option ((pr_pair !CP.print_sv !CP.print_formula))) in
   let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in
   r
 
@@ -617,7 +617,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (None,imm, pimm, p)
       | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name; h_formula_view_imm=imm } -> 
         let vr = get_root_view prog name p args in
-        (Some vr,imm, [], p)
+        (vr,imm, [], p)
       (* TODO:WN:HVar *)
       | HVar (v,_) -> (None,CP.ConstAnn(Mutable), [], v)
       | ThreadNode { h_formula_thread_node=p; } -> (None,CP.ConstAnn(Mutable), [], p)
@@ -628,7 +628,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         (None,CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
     in
-    let () = y_binfo_hp (add_str "view_root_rhs" (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
+    let () = y_binfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
     let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
     let eqns' = MCP.ptr_equations_without_null lhs_p in
     (* let emap = CP.EMapSV.build_eset eqns' in *)
@@ -655,7 +655,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
     let view_root_flag = match view_root_rhs with
       | None -> false
-      | Some lst -> if lst==[] then false else true in
+      | Some _ -> true in
     let rhs_ptr = p in
     (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
     (* let () = y_binfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
@@ -676,11 +676,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
       let lst = List.map (fun (d,root_lhs) -> 
           match view_root_rhs with
-          | Some ((v,rf)::_) -> 
+          | Some ((v,rf)) -> 
             (* lhs_p2 |- d>=rhs_ptr  *)
             begin
               match root_lhs with
-              | None | Some [] ->
+              | None  ->
                 let rhs = CP.mk_is_base_ptr d rhs_ptr in
                 let r = !CP.tp_imply lhs_p2 rhs in
                 let () =  y_binfo_hp (add_str "lhs>=rhs_ptr" string_of_bool) r  in
@@ -696,19 +696,27 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_binfo_hp (add_str "is_sat hs & rhs & root_ptr" string_of_bool) r  in
                   (d,r,Some rf)
                 else (d,r,None)
-              | Some ((v,pf)::_) ->
+              | Some ((v,pf)) ->
                 failwith (x_loc^"view matching..")
             end
-          | None | Some []  -> 
+          | None   -> 
             begin
               match root_lhs with
-              | None | Some [] ->
+              | None  ->
                 (* lhs_p2 |- rhs_ptr=d  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
                 let r = if CF.no_infer_all_all estate then !CP.tp_imply lhs_p2 rhs 
-                  else true (*can we check if it shares same base *) in
+                  else 
+                    begin
+                      (* to avoid loop for bugs/ex62b.slk *)
+                      let () = y_winfo_pp "TODO : check if share same base" in
+                      let () =  y_binfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
+                      let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                      false (*can we check if it shares same base *) 
+                    end
+                in
                 (d,r,None)
-              | Some ((root,root_pf)::_) ->
+              | Some ((root,root_pf)) ->
                 let () = y_binfo_hp (add_str "d" !CP.print_sv) d in
                 let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
                 let () = y_binfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
