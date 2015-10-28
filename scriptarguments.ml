@@ -391,6 +391,9 @@ let common_arguments = [
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
+  ("--adhoc-4", Arg.Set Globals.adhoc_flag_4,"Enable Adhoc Flag 4");
+  ("--adhoc-5", Arg.Set Globals.adhoc_flag_5,"Enable Adhoc Flag 5");
+  ("--adhoc-6", Arg.Set Globals.adhoc_flag_6,"Enable Adhoc Flag 6");
   ("--old-keep-absent", Arg.Set Globals.old_keep_absent,"Keep absent nodes during expure - unsound");
   ("--old-empty-to-conseq", Arg.Set Globals.old_empty_to_conseq,"Keep to_conseq empty");
   ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Flag unsound false");

@@ -283,6 +283,7 @@ and coercion_case =
            Otherwise, simple or complex
         *)
 
+
 and coercion_decl = { 
   coercion_type : coercion_type;
   coercion_exact : bool;
@@ -4190,5 +4191,8 @@ let get_cprog () = match !cprog with
 let set_prog cp = 
   cprog := Some cp
 
-
+let is_folding_coercion c =
+   (c.coercion_case == Simple) 
+  && c.coercion_type=Iast.Right
+  (* && c.coercion_univ_vars=[] *)
 

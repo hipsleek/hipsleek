@@ -271,10 +271,13 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   in
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let fv_lhs = CF.fv lhs in
-  let () = pr_debug (add_str "LP.lhs" Cprinter.string_of_formula) lhs pos in
-  let () = pr_debug (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs pos in
+  let is_folding_flag = Cast.is_folding_coercion coer && !Globals.adhoc_flag_3 in
+  let () = y_binfo_hp (add_str "is_folding_coerc" string_of_bool) is_folding_flag in
+  let () = y_binfo_hp (add_str "coerc" Cprinter.string_of_coerc) coer in
+  let () = y_binfo_hp (add_str "LP.lhs" Cprinter.string_of_formula) lhs in
+  let () = y_binfo_hp (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs in
   let fv_rhs = CF.struc_fv rhs in
-  let () = y_tinfo_hp (add_str "rhs" Cprinter.string_of_struc_formula) rhs in
+  let () = y_binfo_hp (add_str "rhs" Cprinter.string_of_struc_formula) rhs in
   (* WN : fv_rhs2 seems incorrect as it does not pick free vars of rhs *)
   let (new_rhs,fv_rhs2) = add_exist_heap_of_struc fv_lhs rhs in
   (* let () = y_tinfo_hp (add_str "new_rhs" Cprinter.string_of_struc_formula) new_rhs in *)
@@ -334,8 +337,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
           (CP.diff_svl lhs_unfold_ptrs rhs_unfold_ptrs, CP.diff_svl rhs_unfold_ptrs lhs_unfold_ptrs)
       end
   in
-  let () = y_tinfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
-  let () = y_tinfo_hp (add_str "rhs_unfold_ptrs0" !CP.print_svl) rhs_unfold_ptrs0 in
+  let () = y_binfo_hp (add_str "lhs_unfold_ptrs0" !CP.print_svl) lhs_unfold_ptrs0 in
+  let () = y_binfo_hp (add_str "rhs_unfold_ptrs0" !CP.print_svl) rhs_unfold_ptrs0 in
   let lhs_unfold_ptrs = if !Globals.enable_lemma_lhs_unfold then
       if !Globals.allow_lemma_deep_unfold then
         CFU.look_up_reachable_ptrs_f cprog lhs [lhs_sv_self] true true
@@ -373,7 +376,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   (* let () = print_endline ("== old rhs = " ^ (Cprinter.string_of_struc_formula rhs)) in *)
   let rhs =
     (* make sure RHS is unfolded if LHS is not unfolded *)
-    let rhs_unfold_ptrs = if lhs_unfold_ptrs==[] || !Globals.enable_lemma_rhs_unfold then
+    let rhs_unfold_ptrs = if lhs_unfold_ptrs==[] || 
+                             !Globals.enable_lemma_rhs_unfold || is_folding_flag then
         if !Globals.allow_lemma_deep_unfold then
           CFU.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
