@@ -5,6 +5,10 @@ data char_star {
   char_star next;
 }
 */
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0;
 
 WSS<p> ==
   self::WFSeg<q>*q::char_star<0,p> 
@@ -14,6 +18,15 @@ WFSeg<p> ==
   self=p 
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
   inv true;
+  
+WSS_sz<p, n> ==
+  self::WFSeg_sz<q, n1>*q::char_star<0,p> & n=n1+1
+  inv self!=null & n>0;
+
+WFSeg_sz<p, n> ==
+  self=p & n=0
+  or self::char_star<v,q>*q::WFSeg_sz<p,n1> & v!=0 & n=n1+1
+  inv n>=0;
 
 /*
 BADS<> ==
@@ -24,14 +37,23 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-  infer [P,@classic,@pure_field
+/*
+  infer [P
+    ,@classic,@pure_field
+    ,@size
+    ,@term_wo_post
   ]
   requires P(s)
   ensures true;
+*/
 /*
   requires s::WSS<p> 
-  ensures s::WFSeg<s'>*s'::char_star<0,p> ;
+  //ensures s::WFSeg<s'>*s'::char_star<0,p> ;
+  ensures true;
 */
+  infer [@term_wo_post]
+  requires s::WSS_sz<p, n> // & Term[n]
+  ensures true;
 {
   int x=get_char(s);
   if (x!=0) {

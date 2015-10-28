@@ -961,7 +961,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
       (IF.mkETrue top_flow no_pos) no_pos
   in
   let orig_info = (norm_ipred.I.view_name, norm_ipred.I.view_vars) in
-  (* TODO: Auto derive REC *)
+  (* DONE: Auto derive REC (Norm.find_rec_data iprog prog REGEX_STAR) *)
   let extn_info = (extn_pred.C.view_name, [rec_field_id], [extn_view_var]) in
   let extn_iview = { extn_iview with 
     I.view_derv_from = Some (REGEX_LIST [(norm_ipred.I.view_name, true)]);
@@ -978,6 +978,12 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   let () = x_add C.update_view_decl cprog extn_cview in
   let () = norm_pred.C.view_equiv_set # set ([], comb_extn_name) in
   extn_cview
+
+let extn_norm_pred iprog cprog extn_pred norm_pred =
+  let pr = Cprinter.string_of_view_decl_short in
+  Debug.no_2 "extn_norm_pred" 
+    (add_str "extn_pred" pr) (add_str "norm_pred" pr) pr
+    (fun _ _ -> extn_norm_pred iprog cprog extn_pred norm_pred) extn_pred norm_pred
 
 let extn_norm_pred_list iprog cprog extn_pred norm_preds = 
   List.map (fun pred -> extn_norm_pred iprog cprog extn_pred pred) norm_preds

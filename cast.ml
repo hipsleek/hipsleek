@@ -1207,22 +1207,23 @@ let unmingle_name (m : ident) =
   with
   | Not_found -> m
 
-let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
+let rec look_up_view_def_raw loc (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
   | [] ->
     let msg = ("Cannot find definition of cview " ^ name) in 
-    let () = y_tinfo_pp (x_loc^msg) in
+    let () = y_binfo_pp (loc^msg) in
     raise Not_found
     (* let msg = ("Cannot find definition of view " ^ name) in  *)
     (* failwith (x_loc^msg) *)
 
-let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
+let look_up_view_def_raw loc (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1 "look_up_view_def_raw" pr pr_out 
+    (fun _ -> look_up_view_def_raw defs name) name
 
 let look_up_view_def_prog prog (name : ident) =
-  look_up_view_def_raw 30 prog.prog_view_decls name
+  look_up_view_def_raw x_loc prog.prog_view_decls name
 
 let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
   let ext_views = List.filter (fun v ->
@@ -1252,7 +1253,7 @@ let extract_view_x_invs transed_views=
     ) [] transed_views
 
 let look_up_view_inv defs act_args name inv_compute_fnc =
-  let vdcl = look_up_view_def_raw 46 defs name in
+  let vdcl = look_up_view_def_raw x_loc defs name in
   let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
   let inv =
     let p1 = MP.pure_of_mix vdcl.view_user_inv in
