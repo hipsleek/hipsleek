@@ -1239,7 +1239,6 @@ let print_clean_flag = ref false
 
 let print_assume_struc = ref false
 let web_compile_flag = ref false (*enable compilation flag for website*)
-let xml_flag = ref false
 
 
 (* Decide whether normalization/simplification
@@ -1306,6 +1305,7 @@ let rev_priority = ref false
 
 let witness_gen = ref false
 let call_stks = ref ([]:(ident * int list) list)
+let xml_flag = ref false
 
 let old_collect_false = ref false
 let old_collect_hprel = ref false
