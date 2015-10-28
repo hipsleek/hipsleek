@@ -786,11 +786,10 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     view
   else
     let () = y_binfo_pp "XXX proven infer ---> " in
-    let () = y_binfo_hp (Iprinter.string_of_coercion) llemma in
     let () = List.iter (fun v ->
       let () = C.update_un_struc_formula (fun f -> fst (trans_hrel_to_view_formula cprog f)) v in
       let () = C.update_view_formula (x_add_1 trans_hrel_to_view_struc_formula cprog) v in
-      let () = C.update_view_decl cprog v in
+      let () = x_add C.update_view_decl cprog v in
       let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
       ()) tmp_views in
     (* derived_views have been added into prog_view_decls of iprog and cprog *)
@@ -898,6 +897,12 @@ let elim_head_pred iprog cprog pred =
     (fun _ -> elim_head_pred iprog cprog pred) pred
 
 let elim_tail_pred iprog cprog pred = 
+  let () =
+    try
+      let view_def = C.look_up_view_def_prog cprog pred.C.view_name in
+      ()
+    with _ -> y_winfo_pp ("Cannot find the definition of view " ^ pred.C.view_name ^ " in cprog")
+  in 
   let pred_f = C.formula_of_unstruc_view_f pred in
   let self_node =
     try
@@ -920,10 +925,10 @@ let elim_tail_pred iprog cprog pred =
       CF.mkStar_combine (CF.formula_of_heap unknown_h no_pos) (CF.subst sst node_base_case) CF.Flow_combine no_pos in
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
-    (* let pred_f_sv = CF.fv pred_f in                                                              *)
-    (* let unknown_f_sv = CF.fv unknown_f in                                                        *)
-    (* let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in *)
-    (* let unknown_f = CF.push_exists (remove_dups ex_vars) unknown_f in                            *)
+    let pred_f_sv = CF.fv pred_f in
+    let unknown_f_sv = CF.fv unknown_f in
+    let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in
+    let unknown_f = CF.push_exists (remove_dups ex_vars) unknown_f in
     x_add derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
   with _ -> pred
 
@@ -966,7 +971,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   let comb_extn_name = Derive.mk_extn_pred_name norm_ipred.I.view_name extn_view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
   (* let extn_cview = C.rename_view extn_cview equiv_pid in  *)
-  let () = C.update_view_decl cprog extn_cview in
+  let () = x_add C.update_view_decl cprog extn_cview in
   let () = norm_pred.C.view_equiv_set # set ([], comb_extn_name) in
   extn_cview
 

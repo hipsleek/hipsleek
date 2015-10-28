@@ -800,7 +800,7 @@ let norm_one_derived_view iprog cprog derived_view =
     let cview = SleekUtils.process_selective_iview_decls false iprog [iview] in
     let norm_cview = match cview with v::[] -> v | _ -> derived_view in
     (* norm_cview might not be updated/added into cprog due to exception *)
-    let () = Cast.update_view_decl cprog norm_cview in
+    let () = x_add Cast.update_view_decl cprog norm_cview in
     let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
     let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
     let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
@@ -832,7 +832,7 @@ let norm_single_view iprog cprog view =
 
 let restore_view iprog cprog view = 
   let iview = Rev_ast.rev_trans_view_decl view in
-  let () = C.update_view_decl cprog view in
+  let () = x_add C.update_view_decl cprog view in
   let () = I.update_view_decl iprog iview in
   ()
 

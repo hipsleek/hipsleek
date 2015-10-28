@@ -2537,17 +2537,17 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           begin
             match n_un_str with
             | [(f,_)] ->
-              begin
+              begin try
                 let (h,p,_,_,_,_) = CF.split_components f in
                 let p = MCP.pure_of_mix p in
                 let emap = Infer.get_eqset p in
-                let (_,l_args,l_node_name,_,_,_,_,_) = CF.get_args_of_node h in
+                let (_,l_args,l_node_name,_,_,_,_,_) = x_add_1 CF.get_args_of_node h in
                 y_tinfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
                 y_tinfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
                 y_tinfo_hp (add_str "body" (!CF.print_h_formula)) h;
                 y_tinfo_hp (add_str "pure" (!CP.print_formula)) p;
                 y_tinfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
-              end
+              with _ -> () end
             | _ -> ()
           end
       in

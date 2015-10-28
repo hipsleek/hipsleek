@@ -23,7 +23,7 @@ pred app3<> == self::node<0,null>
   inv self!=null.
   
 pred app4<p> == self::node<0,p> 
-	or self::node<v, q> * q::app4<p> & q!=null & v!=0 
+	or self::node<v, q> * q::app4<p> & v!=0 
   inv self!=null.
 
 pred app4a<> == self::node<_,null> 
@@ -56,7 +56,7 @@ lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>. // should f
 
 //print residue.
 
-//pred_elim_tl_node [app4b].
+//pred_elim_tl_node [app4].
 
 //pred_elim_hd_node [app4b].
 

@@ -1221,6 +1221,9 @@ let look_up_view_def_raw i (defs : view_decl list) (name : ident) =
   let pr_out = !print_view_decl in
   Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
 
+let look_up_view_def_prog prog (name : ident) =
+  look_up_view_def_raw 30 prog.prog_view_decls name
+
 let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
   let ext_views = List.filter (fun v ->
       let b1 = v.view_kind=View_EXTN && List.length v.view_prop_extns = 1 in
@@ -3898,6 +3901,12 @@ let update_view_decl prog vdecl =
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
   prog.prog_view_decls <- others @ [vdecl]
+
+let update_view_decl prog vdecl = 
+  let pr = !print_view_decl_short in
+  let dummy_pr = fun _ -> "" in
+  Debug.no_1 "update_view_decl" pr dummy_pr 
+    (fun _ -> update_view_decl prog vdecl) vdecl
 
 let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
   (* let frm_name = frm_vdecl.view_name in *)

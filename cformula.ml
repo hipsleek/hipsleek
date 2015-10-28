@@ -19813,9 +19813,17 @@ let get_args_of_node l_node =
     (* TODO:WN:HVar -*)
     | HVar (v,hvar_vs) -> ([], [], CP.name_of_spec_var v, "ho_var",v, None, CP.ConstAnn Mutable, [])
     | HRel (rhp, eargs, _) -> ([], (List.fold_left List.append [] (List.map CP.afv eargs)), "", "hrel",rhp, None, CP.ConstAnn Mutable, [])
-    | _ -> let h_f = !print_h_formula l_node in
-      report_error no_pos ("[solver.ml]: do_match cannot handle "^h_f^"\n")
+    | _ -> 
+      let h_f = !print_h_formula l_node in
+      (* report_error no_pos ("[solver.ml]: do_match cannot handle "^h_f^"\n") *)
+      x_fail ("get_args_of_node cannot handle "^ h_f ^ "\n")
   in l_ho_args, l_args, l_node_name, node_kind, r_var, l_perm, l_ann, l_param_ann
+
+let get_args_of_node l_node =
+  let pr = !print_h_formula in
+  let dummy_pr = fun _ -> "" in
+  Debug.no_1 "get_args_of_node" pr dummy_pr 
+    get_args_of_node l_node
 
 
 let get_args_of_hrel l_node =
