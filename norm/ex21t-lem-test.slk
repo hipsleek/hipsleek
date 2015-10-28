@@ -15,7 +15,7 @@ pred ll<> == self = null
   inv true.
 
 pred lseg<p> == self = p 
-	or self::node<v, q> * q::lseg<p> & v!=0
+	or self::node<v, q> * q::lseg<p> // & v!=0
   inv true.
 
 pred app3<> == self::node<0,null> 
@@ -33,25 +33,34 @@ pred app4a<> == self::node<_,null>
 pred app4b<> == self::node<0,null> 
 	or self::node<v, q> * q::app4b<> & q!=null & v!=0
   inv self!=null.
+  
+pred app4c<p> == self::node<_,p> 
+	or self::node<_, q> * q::app4c<p> & q!=null
+  inv self!=null.
 
-lemma_safe "app4a_lem" self::app4a<> -> self::lseg<q> * q::node<_, null>.
+//lemma_safe "app4a_lem" self::app4a<> -> self::lseg<q> * q::node<_, null>.
 
-lemma_safe "app4b_lem" self::app4b<> -> self::lseg<q> * q::node<0, null>.
+//lemma_safe "app4b_lem" self::app4b<> -> self::lseg<q> * q::node<0, null>.
+
+lemma_safe "app4b_llem" self::app4b<> -> self::node<_, q> * q::ll<>.
+lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>.
 
 //lemma_infer [HP,@classic] self::app4<p> -> q::node<v, p1> * HP(self, q) & p1=p & v=0.
+
+//lemma_infer [HP,@classic,@pure_field] self::app4b<> -> self::node<v, q> * HP(q, self).
 
 //lemma_infer [HP,@classic] self::app3<> -> q::node<0, null> * HP(self, q).
 
 //print residue.
 
-//pred_elim_tl_node [app4a].
+//pred_elim_tl_node [app4b].
 
-//pred_elim_hd_node [app4].
+//pred_elim_hd_node [app4b].
 
 //print views.
 
 /*
-# ex21t1
+# ex21t1q
 
 pred_elim_tl_node [*].
 pred app3<> == self::node<0,null> 
