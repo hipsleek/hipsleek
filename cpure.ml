@@ -2610,7 +2610,7 @@ and mkAnd_x f1 f2 (*b*) pos =
     match no_andl f1 , no_andl f2 with 
     | true, true -> And (f1, f2, pos) 
     (*if b then And (f1, f2, pos) 
-      	      else 	join_disjunctions (Gen.BList.remove_dups_eq equalFormula ((split_disjunctions f1)@(split_disjunctions f2)))*)
+      else 	join_disjunctions (Gen.BList.remove_dups_eq equalFormula ((split_disjunctions f1)@(split_disjunctions f2)))*)
     | true, false -> helper f2 f1
     | false, true -> helper f1 f2
     | false, false ->
@@ -2665,10 +2665,10 @@ and mkOr_x f1 f2 lbl pos=
   else if (isConstFalse f2) then f1
   else if (isConstTrue f2) then f2
   else (*match f1, f2 with 
-         	 | AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
-         	 | AndList l, f
-         	 | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
-         	 | _ -> *)Or (f1, f2, lbl ,pos)
+         | AndList l1, AndList l2 -> AndList (or_branches l1 l2 lbl pos)
+         | AndList l, f
+         | f, AndList l -> AndList (or_branches l [(LO.unlabelled,f)] lbl pos)
+         | _ -> *)Or (f1, f2, lbl ,pos)
 
 and mkOr f1 f2 lbl pos = Debug.no_2 "pure_mkOr" !print_formula !print_formula !print_formula (fun _ _ -> mkOr_x f1 f2 lbl pos) f1 f2
 
@@ -2682,7 +2682,7 @@ and mkStupid_Or_x f1 f2 lbl pos=
           let l2 = List.assoc branch l2 in
           (branch, mkOr l1 l2 lbl pos)
         with Not_found -> (branch, mkTrue pos)
-        with Not_found -> (branch, mkTrue pos )
+      with Not_found -> (branch, mkTrue pos )
     in
     Label_Pure.norm  (List.map map_fun branches) in
   if (isConstFalse f1) then f2
@@ -2727,13 +2727,15 @@ and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
   (*     | Var (v1,_), IConst(0,l)  *)
   (*           -> ae1,(if (is_otype (type_of_spec_var v1)) then Null no_pos else ae2) *)
   (*     | _ -> ae1,ae2 in *)
-  (* match (ae1, ae2) with *)
-  (* | (Var v1, Var v2) -> *)
-  (*   if eq_spec_var (fst v1) (fst v2) then *)
-  (*     mkTrue pos  *)
-  (*   else *)
-  (*     BForm ((Eq (ae1, ae2, pos), None),None) *)
-  (* | _ ->  *) BForm ((Eq (ae1, ae2, pos), None),None)
+  if !Globals.mkeqn_opt_flag then
+    match (ae1, ae2) with
+    | (Var v1, Var v2) ->
+      if eq_spec_var (fst v1) (fst v2) then
+        mkTrue pos
+      else
+        BForm ((Eq (ae1, ae2, pos), None),None)
+    | _ -> BForm ((Eq (ae1, ae2, pos), None),None)
+  else BForm ((Eq (ae1, ae2, pos), None),None)
 
 and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
@@ -2858,15 +2860,15 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
         if l1=[] then l2
         else  pusher v l1 l2
         (*let lul, ll = List.partition (fun (lb,_,_)-> LO.is_unlabelled lb) l1 in
-          		if lul=[] || ll=[] then pusher v l1 l2
-          		else
-          		let lrel = split_conjunctions ((fun (_,_,f)-> f) (List.hd lul)) in
-          		let lrel,lunrel = List.partition (fun c->List.mem v (fv c)) lrel in
-          		let lrelf = join_conjunctions lrel in
-          		let lunrelf = join_conjunctions lunrel in
-          		let lrel = ((fun (l,_,_)-> l)(List.hd ll),fv lrelf, lrelf) in
-          		let lunrel = (LO.unlabelled, fv lunrelf, lunrelf) in
-          		pusher v (lrel::ll) (lunrel::l2) *)
+          if lul=[] || ll=[] then pusher v l1 l2
+          else
+          let lrel = split_conjunctions ((fun (_,_,f)-> f) (List.hd lul)) in
+          let lrel,lunrel = List.partition (fun c->List.mem v (fv c)) lrel in
+          let lrelf = join_conjunctions lrel in
+          let lunrelf = join_conjunctions lunrel in
+          let lrel = ((fun (l,_,_)-> l)(List.hd ll),fv lrelf, lrelf) in
+          let lunrel = (LO.unlabelled, fv lunrelf, lunrelf) in
+          pusher v (lrel::ll) (lunrel::l2) *)
       )lst vs in
     let l = List.map (fun (l,_,f)-> (l,f)) lst1 in
     let () = x_ninfo_hp (add_str "l0" (pr_list (pr_pair Label_only.LOne.string_of !print_formula))) l no_pos in
@@ -2889,17 +2891,17 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | Or (f1,f2,lbl,pos) ->
     Or (mkExists_x vs f1 lbel pos, mkExists_x vs f2 lbel pos, lbl, pos)
   (*| And(f1,f2,pos) ->
-    	      let lconj = split_conjunctions f in
-    	      let lrel,lunrel = List.partition (fun c->List.exists (fun v-> List.mem v (fv c)) vs) lconj in
-    	      if lrel=[] then f
-    	      else
-    	      let lrelf = join_conjunctions lrel in
-    	      let lunrelf = join_conjunctions lunrel in
-    	      let lrelf =
-    	      let fvs = fv lrelf in
-    	      let to_push = List.filter (fun c-> mem c fvs) vs in
-    	      List.fold_left (fun a v-> Exists (v,a,lbel,pos)) lrelf to_push in
-    	      mkAnd_dumb lunrelf lrelf pos*)
+    let lconj = split_conjunctions f in
+    let lrel,lunrel = List.partition (fun c->List.exists (fun v-> List.mem v (fv c)) vs) lconj in
+    if lrel=[] then f
+    else
+    let lrelf = join_conjunctions lrel in
+    let lunrelf = join_conjunctions lunrel in
+    let lrelf =
+    let fvs = fv lrelf in
+    let to_push = List.filter (fun c-> mem c fvs) vs in
+    List.fold_left (fun a v-> Exists (v,a,lbel,pos)) lrelf to_push in
+    mkAnd_dumb lunrelf lrelf pos*)
   | _ ->
     (* let fvs = fv f in
      * let to_push = List.filter (fun c-> mem c fvs) vs in

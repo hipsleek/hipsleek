@@ -114,7 +114,7 @@ error at: conchip/deadpool.ss main
 error at: conchip/deadpool.ss thread
 .
 =================================================================
-# ex1c6b.slk (partial FIX)
+# ex1c6b.slk (OK)
 
 infer[i] y::arr_int<i,5> & xxx=y:arr+3 
      |- xxx::arr<v>.
@@ -131,7 +131,7 @@ ERROR: at _0:0_0:0
 Message: i is undefined (7)
 Exception(get_spec_var_type_list):Failure("i is undefined (7)")
 =================================================================
-# ex9.ss
+# ex9.ss (FIXED)
 
 # quite slow here..(is it in a loop?)
 
@@ -148,11 +148,16 @@ Total verification time: 4.962621 second(s)
 	Z3 Prover Time: 0.008265 second(s)
 
 =============================================================
-# ex9a.ss
+# ex9a.ss (FIXED)
 
   infer [@ana_ni]//,R]
   requires true
  ensures true;
+
+   ..  |- x'::node<val',next'>@L
+
+   ..  |- x'::node<val',next'>@M
+
 
 Checking procedure zip$node~node... 
 !!! **typechecker.ml#564:inf_o_lst:[@ana_ni]
@@ -175,7 +180,7 @@ Proving binding in method zip$node~node for spec  EAssume
         fc_message:  r'!=null |-  1<r'. LOCS:[27;0] (may-bug)
         fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
 =================================================================
-# ex1d1a.ss
+# ex1d1a.ss (FIXED)
 
 infer [o] y::arr_int<o,5> & x=y+2 |- x::arr<v>.
 print residue.
@@ -200,6 +205,25 @@ Why is above not inferring o?
 [[ Unfold 0 ==>  Match(p1_54,x)]]
 
 =================================================================
+Total number of errors: 3 in files:
+  infer/infer14.slk({E15#Fail}) 
+  infer/infer16.slk({E2#Valid},{E3#Valid},{E5#Valid},{E6#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+  infer/infer14.slk({E15#Fail}) 
+  infer/infer16.slk({E2#Valid},{E3#Valid},{E5#Valid},{E6#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+chinwn@loris-60:~/hg/sl_dup$ hg bisect -b
+The first bad revision is:
+changeset:   17501:c15c09216cca
+branch:      arr_infer
+user:        chinwn@loris-laptop
+date:        Tue Oct 27 08:24:08 2015 +0800
+summary:     to reduce ptr matching
+
 =================================================================
 =================================================================
 =================================================================

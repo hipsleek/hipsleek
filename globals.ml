@@ -1312,6 +1312,7 @@ let old_field_tag = ref false (* false *)
 let new_trace_classic = ref false (* false *)
 let old_pred_extn = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
+let mkeqn_opt_flag = ref true (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false

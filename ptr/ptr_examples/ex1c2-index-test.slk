@@ -10,39 +10,42 @@ pred arr_seg<i:int,n:int> == emp & i>=n & n>=0
   or self::arr_int<i,_> * self::arr_seg<i+1,n>
   inv n>=0 & i>=0.
 
-/*
+//(1)
 checkentail x::arr<5> * y::arr<4> & x=(y:arr)+2 |- y::arr<v>.
 print residue.
 expect Valid.
-*/
 
+//(2)
 checkentail x::arr<5> * y::arr<4> & x=y+2 & z=y+2 |- z::arr<v>.
 print residue.
 expect Valid.
-//Entail 3: Fail.(may) cause:do_unmatched_rhs : z::arr<v>@M(may)
+// v=5
 
+//(3)
 checkentail x::arr<5> * y::arr<4> & x=y+2 & z=y+2 |- z::arr<v>@L.
 print residue.
 expect Valid.
 
-
+//(4)
 checkentail x::arr<5> * y::arr<4> & x=y+2 & z=y+3 |- z::arr<v>.
 print residue.
 expect Fail.
 
+//(5)
 checkentail x::arr<5> * y::arr<4> & x=y+2 & z=y+3 |- false.
 print residue.
 expect Fail.
 
+
+//(6) false ctx
 checkentail x::arr<5> * y::arr<_> & x=(z:arr)+1 & y=z+1 |- false.
 print residue.
 expect Valid.
 
-/*
+//(7) v=5
 checkentail x::arr<5> & x=(y:arr)+2 |- y::arr_int<2,v>.
 print residue.
 expect Valid.
-*/
 //Entail 1: Fail.(may) cause:do_unmatched_rhs : y::arr_int<flted_14_76,v>@M(may)
 
 

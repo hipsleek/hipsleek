@@ -2226,6 +2226,29 @@ expect Valid.
   lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail}) fracperm/split_simple.slk({E4#Fail},{E6#Valid},{E7#Valid},{E8#Valid}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ===================================================================
+# ex62c.slk --dis-mkeqn-opt
+
+# picking up p=p for inference; need to avoid that
+  in infer_lhs_comtra to avoid inferring p!=p
+
+infer [H1] H1(p)* x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
+print residue.
+
+
+Entail (1) : Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(p)&true --> htrue&p!=p]
+
+(==infer.ml#787==)
+infer_lhs_contra#1@3@2
+infer_lhs_contra#1 inp1 : flted_13_34=1 & x2=p & x2=p
+infer_lhs_contra#1 inp2 :[p]
+infer_lhs_contra#1 inp3 :M_infer_heap : x2::node<b,q>@M
+infer_lhs_contra#1@3 EXIT:Some( p!=p)
+
 ===================================================================
 ===================================================================
 ===================================================================
