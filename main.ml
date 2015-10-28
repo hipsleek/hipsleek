@@ -42,8 +42,21 @@ let print_version () =
 
 let parse_file_full file_name (primitive: bool) =
   proc_files # push file_name;
+  let tbl_conditions : (int, string) Hashtbl.t = Hashtbl.create 1 in
   let org_in_chnl = open_in file_name in
   try
+    while true; do
+      let line = input_line org_in_chnl in
+      let r = Str.regexp ".*\(+(.*)\).*/" in
+      let condition = Str.replace_first r "\\1" line in 
+        Debug.info_zprint (lazy ((" XXX \"" ^ condition ^ "\n"))) no_pos
+(*      if (Str.search_forward (Str.regexp "if") line 0 >=0) then*)
+(*        Debug.info_zprint (lazy ((" XXX \"" ^ lines ^ "\n"))) no_pos*)
+(*        begin*)
+(*          let condition = Str.global_replace r "$" line in*)
+(*          Hashtbl.add tbl_conditions 1 condition;*)
+(*        end*)
+    done; 
     Globals.input_file_name:= file_name;
     (* choose parser to be used *)
     let parser_to_use = (
