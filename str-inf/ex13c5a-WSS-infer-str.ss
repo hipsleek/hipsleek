@@ -6,7 +6,6 @@ data char_star {
 }
 */
 
-/*
 WSS<p> ==
   self::WFSeg<q>*q::char_star<0,p> 
   inv self!=null;
@@ -15,7 +14,6 @@ WFSeg<p> ==
   self=p 
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
   inv true;
-*/
 
 /*
 BADS<> ==
