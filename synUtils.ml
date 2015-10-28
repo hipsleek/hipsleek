@@ -750,6 +750,19 @@ let find_pred_base_case (pred: C.view_decl): CF.formula list =
 (******************)
 (* UTILS FOR VIEW *)
 (******************)
+let norm_view_formula vname f = 
+  (* Set flow for view *)
+  let f = CF.set_flow_in_formula_override
+      { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None }
+      f 
+  in
+  let sf = CF.formula_to_struc_formula f in
+  let sf = CF.mark_derv_self vname sf in
+  let sf = CF.label_view sf in
+  let sf = CF.struc_formula_set_lhs_case false sf in 
+  let sf_un_str = CF.get_view_branches sf in
+  sf, sf_un_str
+
 let view_decl_of_hprel prog (hprel: CF.hprel) =
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let pos = no_pos in
@@ -762,14 +775,16 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let vbody = CF.elim_prm vbody in
   let vbody, _ = x_add trans_hrel_to_view_formula prog vbody in
   let vbody = CF.subst [(hprel_self, vself)] vbody in
-  (* Set flow for view *)
-  let vbody = CF.set_flow_in_formula_override 
-      { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
-      vbody in
-  let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hprel_name) vargs false pos in
+  (* (* Set flow for view *)                                                        *)
+  (* let vbody = CF.set_flow_in_formula_override                                    *)
+  (*     { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None }  *)
+  (*     vbody in                                                                   *)
+  let hprel_str = CP.name_of_spec_var hprel_name in
+  let vdecl = Cast.mk_view_decl_for_hp_rel hprel_str vargs false pos in
+  let v_sf, v_un_str = norm_view_formula hprel_str vbody in
   let vdecl_w_def = { vdecl with 
-      Cast.view_formula = CF.formula_to_struc_formula vbody;
-      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
+      Cast.view_formula = v_sf; (* CF.formula_to_struc_formula vbody; *)
+      Cast.view_un_struc_formula = v_un_str; (* [(vbody, (fresh_int (), ""))]; *)
       Cast.view_kind = View_NORM; } in
   (* let () = Cast.update_view_decl prog vdecl_w_def in *)
   vdecl_w_def
@@ -867,10 +882,14 @@ let unfolding_view iprog cprog view =
   let view_branches = List.map (fun f -> unfolding_formula cprog f_unfold f) view_branches in
   let unfold_view_f = CF.formula_of_disjuncts view_branches in
   let self_node = mk_self_node view.C.view_name unfold_view_f in
+  let unfold_view_f = Typeinfer.case_normalize_renamed_formula iprog 
+      (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f in
+  let v_sf, v_un_str = norm_view_formula view.C.view_name unfold_view_f in
   let () = 
-    view.C.view_formula <- CF.formula_to_struc_formula 
-        (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f);
-    view.C.view_un_struc_formula <- [(unfold_view_f, (fresh_int (), ""))];
+    view.C.view_formula <- v_sf;
+      (* CF.formula_to_struc_formula                                                                                            *)
+      (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f); *)
+    view.C.view_un_struc_formula <- v_un_str; (* [(unfold_view_f, (fresh_int (), ""))]; *)
   in
   let norm_view = norm_single_view iprog cprog view in
   norm_view

@@ -829,11 +829,15 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       in
       let () = y_binfo_hp (add_str "vbody" !CF.print_formula) vbody in
       let self_node = mk_self_node view.C.view_name vbody in
+      let vbody = Typeinfer.case_normalize_renamed_formula iprog 
+          (self_node::(elim_useless_vars view.C.view_vars)) [] vbody in
+      let v_sf, v_un_str = norm_view_formula view.C.view_name vbody in
       let () = 
-        view.C.view_formula <- CF.formula_to_struc_formula 
-            (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] vbody);
-        view.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];
-        view.C.view_raw_base_case <- None;
+        view.C.view_formula <- v_sf;
+          (* CF.formula_to_struc_formula                                                                                    *)
+          (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] vbody); *)
+        view.C.view_un_struc_formula <- v_un_str; (* [(vbody, (fresh_int (), ""))]; *)
+        view.C.view_raw_base_case <- Cf_ext.compute_raw_base_case false v_un_str;
         view.C.view_base_case <- None
       in
       let () = y_binfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in
@@ -1047,10 +1051,11 @@ let unify_disj_pred iprog cprog pred =
     
     (* Construct a new view with unknown HeapPred *)
     let tmp_name = "tmp_" ^ pred.C.view_name in
+    let tmp_sf, tmp_un_str = norm_view_formula tmp_name vbody in
     let tmp_cpred = { pred with
       C.view_name = tmp_name;
-      C.view_formula = CF.formula_to_struc_formula vbody;
-      C.view_un_struc_formula = [(vbody, (fresh_int (), ""))]; } 
+      C.view_formula = tmp_sf; (* CF.formula_to_struc_formula vbody; *)
+      C.view_un_struc_formula = tmp_un_str; (* [(vbody, (fresh_int (), ""))]; *) }  
     in
     (* let tmp_ipred = Rev_ast.rev_trans_view_decl tmp_cpred in *)
     (* let () = C.update_view_decl cprog tmp_cpred in           *)

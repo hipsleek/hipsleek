@@ -4018,6 +4018,8 @@ let get_view_name_equiv view_decls vl =
 
 let get_unfold_set_gen vdefs =  
   let equiv_set = List.fold_left (fun acc vd -> 
+    if vd.view_is_prim then acc
+    else
       let name = vd.view_name in
       let f = vd.view_un_struc_formula in
       (* if HipUtil.view_scc_obj # is_self_rec name then acc  *)
@@ -4032,12 +4034,18 @@ let get_unfold_set_gen vdefs =
   equiv_set
 
 let get_unfold_set_simple vdefs = 
+  let pr = pr_list (pr_triple idf !P.print_svl (pr_list !F.print_formula)) in
   let lst = get_unfold_set_gen vdefs in
+  let () = y_tinfo_hp (add_str "lst" pr) lst in
   let lst = List.filter (fun (_,_,fs) -> (List.length fs) <=1) lst in
   List.map (fun (v,vs,lst) -> match lst with
       | f::_ -> (v,vs,f)
       | _ -> failwith (x_loc^"empty unfold")) lst
 
+let get_unfold_set_simple vdefs = 
+  let pr1 = pr_list !print_view_decl in
+  let pr2 = pr_list (pr_triple idf !P.print_svl !F.print_formula) in
+  Debug.no_1 "get_unfold_set_simple" pr1 pr2 get_unfold_set_simple vdefs
 
 let get_unfold_set vdefs =  
   get_unfold_set_simple vdefs  
