@@ -1589,7 +1589,7 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
     let newexp = Iast.mkCast target_typ binexp pos in 
     newexp
 
-and translate_instr (instr: Cil.instr) : Iast.exp =
+and translate_instr_x (instr: Cil.instr) : Iast.exp =
   (* detect address-of operator *)
   match instr with
   | Cil.Set (lv, exp, l) -> (
@@ -1619,7 +1619,9 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                     (Iast.mkAssign Iast.OpAssign le re None pos)
                   )
             )
-          | _ -> (
+          | _ ->
+                let () = x_tinfo_hp (add_str "translate_instr exp" (string_of_cil_instr)) instr no_pos in
+                (
               let lv_typ = typ_of_cil_lval lv in
       	      let exp_typ = typ_of_cil_exp exp in
               let pos = translate_location l in
@@ -1663,7 +1665,13 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
       (Iast.Empty pos)
     )
 
-and translate_stmt (s: Cil.stmt) : Iast.exp =
+and translate_instr (instr: Cil.instr)=
+  let pr1= string_of_cil_instr in
+  let pr2= (add_str "res" !Iast.print_exp) in
+  Debug.no_1 "translate_instr" pr1 pr2
+      (fun _ -> translate_instr_x instr) instr
+
+and translate_stmt_x (s: Cil.stmt) : Iast.exp =
   let skind = s.Cil.skind in
   match skind with
   | Cil.Instr instrs ->
@@ -1813,6 +1821,13 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
     (* TODO: temporarily skip translate stmt *)
     let p = translate_location l in
     translate_hip_exp iast_exp p
+
+and translate_stmt stmt=
+  let pr1 = string_of_cil_stmt in
+  let pr2 = Iprinter.string_of_exp in
+  Debug.no_1 "translate_stmt" pr1 pr2
+      (fun _ -> translate_stmt_x stmt) stmt
+
 (*iast_exp*)
 
 and translate_hip_exp (exp: Iast.exp) pos : Iast.exp =

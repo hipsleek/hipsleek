@@ -8,6 +8,7 @@ open Gen.Basic
 module CF = Cformula
 module CP = Cpure
 module I = Iast
+module IP = Iprinter
 
 
 let init_proc_name = "main"
@@ -143,9 +144,24 @@ let rec witness_search_loop iprog cprog call_stk inter_id intra_id e prev_n_id p
           else
             witness_search_loop iprog cprog call_stk inter_id n_intra_id eb  n_node_id procn rest_ctls n_res_str
     | I.Raise _ -> false, call_stk, inter_id, intra_id , prev_n_id , path_ctls, res_str
-    | I.Return _ ->
+    | I.Return {
+          exp_return_val = e_opt;
+          exp_return_pos = p;
+      } ->
           let () = x_binfo_hp (add_str "witness" (pr_id)) "return" no_pos in
-          false, call_stk, inter_id, intra_id , prev_n_id , path_ctls, res_str
+          let str_code = "return " ^ ( match e_opt with
+            | None -> ""
+            | Some e1 -> (IP.string_of_exp e1)
+          ) ^ ";" in
+          let str_line = line_number_of_pos p in
+          let n_node_id = (id_to_string inter_id intra_id) in
+          let node = mk_node n_node_id in
+          let edge = mk_edge_return prev_n_id n_node_id str_code str_line procn in
+          let n_intra_id = intra_id+1 in
+          false, call_stk, inter_id, n_intra_id , n_node_id , path_ctls, (res_str ^ node ^ edge)
+    | Label (_, e1) ->
+          let () = x_binfo_hp (add_str "witness" (pr_id)) "Label" no_pos in
+          recf_no_change e1
     | I.CallRecv _ ->
           let () = x_binfo_hp (add_str "witness" (pr_id)) "CallRecv" no_pos in
           false, call_stk, inter_id, intra_id , prev_n_id , path_ctls, res_str
@@ -190,9 +206,18 @@ let rec witness_search_loop iprog cprog call_stk inter_id intra_id e prev_n_id p
           else
             witness_search_loop iprog cprog rest_call_stk inter_id1 intra_id1 e2 last_n_id procn ctls1 res_str1
     | I.While {exp_while_body = wb} -> failwith "not handled yet"
-    | I.Assign _ ->
+    | I.Assign {exp_assign_op =op;
+      exp_assign_lhs =e1;
+      exp_assign_rhs = e2;
+      exp_assign_pos = p} ->
           let () = x_binfo_hp (add_str "witness" (pr_id)) "Assgin" no_pos in
-          false, call_stk, inter_id, intra_id , prev_n_id , path_ctls, res_str
+          let str_code = (IP.string_of_exp e1) ^ (IP.string_of_assign_op op) ^ (IP.string_of_exp e2) ^";" in
+          let str_line = line_number_of_pos p in
+          let n_node_id = (id_to_string inter_id intra_id) in
+          let node = mk_node n_node_id in
+          let edge = mk_edge prev_n_id n_node_id str_code str_line in
+          let n_intra_id = intra_id+1 in
+          false, call_stk, inter_id, n_intra_id , n_node_id , path_ctls, (res_str ^ node ^ edge)
     | I.Binary _ ->
           let () = x_binfo_hp (add_str "witness" (pr_id)) "Binary" no_pos in
           false, call_stk, inter_id, intra_id , prev_n_id , path_ctls, res_str
