@@ -254,7 +254,7 @@ let extract_callee_view_info_x prog f=
     | [] -> res
   in
   let extract_pto vn= [vn.h_formula_view_node]
-  (* let vdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vn.h_formula_view_name in *)
+  (* let vdcl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn.h_formula_view_name in *)
   (* let neqNulls = CP.get_neq_null_svl (Mcpure.pure_of_mix vdcl.Cast.view_x_formula) in *)
   (* let formal_args = CP.SpecVar (Named vdcl.Cast.view_data_name, self, Unprimed):: vdcl.Cast.view_vars in *)
   (* let neqNulls1 = CP.intersect_svl neqNulls formal_args in *)
@@ -446,7 +446,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
         ([],[],new_vis)
   in
   (*********************************)
-  let vdecl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in
+  let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then
       CP.SpecVar (Named vdecl.Cast.view_data_name,self,Unprimed)
     else
@@ -2549,7 +2549,7 @@ assumption:
 *)
 let get_oa_node_view_x prog seg_vnames=
   let get_oa res vname=
-    let vdecl = x_add Cast.look_up_view_def_raw 56 prog.Cast.prog_view_decls vname in
+    let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
     let ddecl = Cast.look_up_data_def_raw prog.Cast.prog_data_decls vdecl.Cast.view_data_name in
     if List.length vdecl.Cast.view_cont_vars = 1 &&
        List.length vdecl.Cast.view_vars = List.length (List.filter (fun ((t,_),_) ->

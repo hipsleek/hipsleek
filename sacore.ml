@@ -2558,7 +2558,7 @@ let do_entail_check_x vars iprog cprog cs=
   let () = Infer.rel_ass_stk # reset in
   let get_view_def vname=
     let () = Debug.ninfo_hprint (add_str "vname" pr_id) vname no_pos in
-    let vdef = (x_add Cast.look_up_view_def_raw 40 cprog.Cast.prog_view_decls vname) in
+    let vdef = (x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls vname) in
     (vname, vdef.Cast.view_un_struc_formula,vdef.Cast.view_vars)
   in
   let has_unknown vdef =

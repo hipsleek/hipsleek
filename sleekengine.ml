@@ -269,7 +269,7 @@ let clear_all () =
 (*   with *)
 (* 	| Not_found -> begin *)
 (* 		try *)
-(* 		  let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in *)
+(* 		  let _ = I.look_up_view_def_raw x_loc iprog.I.prog_view_decls name in *)
 (* 			false *)
 (* 		with *)
 (* 		  | Not_found -> (\*true*\) *)

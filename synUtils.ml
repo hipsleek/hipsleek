@@ -487,7 +487,7 @@ let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
 
 let get_equiv_pred prog vid =
   try
-    let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls vid in
+    let vdef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vid in
     if not !Globals.pred_equiv then vid
     else if vdef.C.view_equiv_set # is_empty then vid
     else
@@ -503,7 +503,7 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
       let hrel_id = CP.name_of_spec_var hrel_name in
       let subs_hrel_name, view_args =
           try
-            let vdef = C.look_up_view_def_raw 40 prog.Cast.prog_view_decls hrel_id in
+            let vdef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls hrel_id in
             if not !Globals.pred_equiv then hrel_name, vdef.view_vars
             else if vdef.C.view_equiv_set # is_empty then hrel_name, vdef.view_vars
             else
@@ -512,7 +512,7 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
                 | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p) in
               let equiv_pred_args = 
                 try 
-                  let edef = C.look_up_view_def_raw 50 prog.Cast.prog_view_decls subs_hrel_id in
+                  let edef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls subs_hrel_id in
                   edef.view_vars
                 with _ ->
                   let () = x_warn ("Cannot find the definition of the equiv pred " ^ subs_hrel_id) in 

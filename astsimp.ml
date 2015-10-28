@@ -502,7 +502,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list * (ident lis
   (*     (\* then [] *\) *)
   (*     (\* else *\) *)
   (*     (try  *)
-  (*        let todo_unk = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ] *)
+  (*        let todo_unk = I.look_up_view_def_raw x_loc view_decls0 c in [ (vname, c) ] *)
   (*      with | Not_found ->  *)
   (*        if view_scc_obj # in_dom c then [(vname,c)] *)
   (*        else [] *)
@@ -5400,7 +5400,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 (* Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize/acquire/release requires an associated lock");} *)
                 | Some v ->
                   (try
-                     let vdef = I.look_up_view_def_raw 8 prog.I.prog_view_decls v in
+                     let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v in
                      let n1 = List.length args in
                      let n2 = List.length (vdef.I.view_vars) in
                      if (n1-1) != n2 then
@@ -7619,7 +7619,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         else if (deref > 0) then (
           let base_heap_id = (
             try
-              let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
+              let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c in
               if vdef.I.view_data_name = "" then 
                 (fill_view_param_types vdef; vdef.I.view_data_name)
               else vdef.I.view_data_name
@@ -7875,7 +7875,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
           else (
             (* Not a field access, proceed with the original code *)
             try (
-              let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
+              let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c in
               let labels = fst vdef.I.view_labels in
               let params_orig = match_exp (List.combine exps labels) in
               (* andreeac: TODO insert test check map compatib *)
@@ -8686,7 +8686,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       let pos = b.IF.h_formula_heap_pos in
       (*flag to check whether the heap node representing an invariant or not*)
       let isInv,labels,tp_vars = try
-          let vdef = I.look_up_view_def_raw 11 prog.I.prog_view_decls b.IF.h_formula_heap_name in
+          let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls b.IF.h_formula_heap_name in
           let flag = match vdef.I.view_inv_lock with
             | None -> false
             | Some _ -> true
@@ -11242,7 +11242,7 @@ let check_data_pred_name iprog name : bool =
     let todo_unk = x_add I.look_up_data_def_raw iprog.I.prog_data_decls name in false
   with | Not_found -> begin
       try
-        let todo_unk = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in false
+        let todo_unk = I.look_up_view_def_raw x_loc iprog.I.prog_view_decls name in false
       with | Not_found -> begin
           try
             let todo_unk = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in false

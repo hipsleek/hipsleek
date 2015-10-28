@@ -399,7 +399,7 @@ let elim_null_vnodes_x prog sf=
     match hf with
     | ViewNode vn ->
       if String.compare (CP.name_of_spec_var vn.h_formula_view_node) null_name = 0 then
-        let vdcecl = x_add Cast.look_up_view_def_raw 58 prog.Cast.prog_view_decls vn.h_formula_view_name in
+        let vdcecl = x_add C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn.h_formula_view_name in
         if vdcecl.Cast.view_is_segmented && CP.diff_svl vn.h_formula_view_arguments eq_nulls = [] then
           HEmp
         else hf
@@ -1378,7 +1378,7 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
   else
     match r_reach_vns with
     | [rvn] ->
-      let rvdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
+      let rvdcl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls rvn.h_formula_view_name in
       let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
       let sst = List.combine (self_sv::rvdcl.Cast.view_vars) (rvn.h_formula_view_node::rvn.h_formula_view_arguments) in
       let rec_def_heaps = List.fold_left (fun r (f,_) ->
@@ -1437,7 +1437,7 @@ let poss_prune_pred prog vnode f=
 
 let is_out_of_scope prog lvnode rvnode=
   if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
-    let vdcl = Cast.look_up_view_def_raw 61 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+    let vdcl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls lvnode.h_formula_view_name in
     List.exists (fun (f, _) ->
         let vns = get_views f in
         let rec_vns, other = List.partition (fun vn ->
@@ -1552,7 +1552,7 @@ let need_cycle_checkpoint_fold_helper prog lroots lhs rroots rhs=
 (* if r_reach_dns != [] then -1 else *)
 (* match r_reach_vns with *)
 (*   | [rvn] -> *)
-(*         let rvdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in *)
+(*         let rvdcl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls rvn.h_formula_view_name in *)
 (*         let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in *)
 (*         let rec_def_heaps = List.fold_left (fun r (f,_) -> *)
 (*             let views = Cformula.get_views f in *)
@@ -1671,7 +1671,7 @@ let is_seg_fold_form_helper prog lroot largs lhs0 rroot rargs rhs0 remap conseq_
 let is_seg_view2_fold_form_x prog lvnode lhs0 rvnode rhs0 remap conseq_pure_opt=
   let seg_fold_view lvnode rvnode=
     if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
-      let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+      let vdcl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls lvnode.h_formula_view_name in
       if vdcl.Cast.view_is_segmented then
         let fwd_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_forward_ptrs in
         if List.length fwd_seg_ptrs  = 1 then
@@ -1711,7 +1711,7 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_op
       else is_seg_match rest
   in
   let exist_full_fold lhs rvnode=
-    let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+    let vdecl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls rvnode.h_formula_view_name in
     let self_sv =  CP.SpecVar (Named vdecl.Cast.view_data_name, self, Unprimed) in
     let sst = [(self_sv,rvnode.h_formula_view_node)] in
     let ivars = [CP.name_of_spec_var rvnode.h_formula_view_node] in
@@ -1730,7 +1730,7 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_op
       ) vdecl.Cast.view_un_struc_formula
   in
   let seg_fold_view ldnode rvnode=
-    let vdcl = Cast.look_up_view_def_raw 59 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+    let vdcl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls rvnode.h_formula_view_name in
     if String.compare ldnode.h_formula_data_name vdcl.Cast.view_data_name = 0 then
       if vdcl.Cast.view_is_segmented then
         let fwd_seg_ptrs = CP.intersect vdcl.Cast.view_cont_vars vdcl.Cast.view_forward_ptrs in
@@ -1794,7 +1794,7 @@ let split_r_vnode cut_points cont_args_pos rvnode conseq rhs_b = match cut_point
   | _ -> (false, conseq, rhs_b)
 
 let seg_fold_view2_x prog lvnode rvnode conseq rhs_b=
-  let vdecl = Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
+  let vdecl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls lvnode.h_formula_view_name in
   (* get pos of fwd seg ptrs. todo: backward seg ptrs *)
   let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0  sv)
       (CP.intersect_svl vdecl.Cast. view_forward_ptrs vdecl.Cast.view_cont_vars) in
@@ -1866,7 +1866,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
           sst,res,dist_segs0
     | [] -> [],res,dist_segs0
   in
-  let vdecl = x_add Cast.look_up_view_def_raw 60 prog.Cast.prog_view_decls rvnode.h_formula_view_name in
+  let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls rvnode.h_formula_view_name in
   (* get pos of fwd seg ptrs. todo: backward seg ptrs *)
   let fwd_seg_args = (CP.intersect_svl vdecl.Cast.view_forward_ptrs vdecl.Cast.view_cont_vars) in
   let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0 sv)
@@ -2789,7 +2789,7 @@ let look_up_first_field prog lsctx0 dname=
   process_failesc_contexts lsctx0
 
 let is_view_node_segmented vn prog =
-  let vdcl = Cast.look_up_view_def_raw 62 prog.Cast.prog_view_decls vn.h_formula_view_name in
+  let vdcl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn.h_formula_view_name in
   vdcl.Cast.view_is_segmented
 
 let subst_views_form_x map_views is_pre f=
@@ -2906,7 +2906,7 @@ let get_closed_view prog (init_vns: string list)=
       | vn::rest -> if List.exists (fun vn1 -> string_eq vn vn1) done_vns then
           dfs_find_closure rest done_vns
         else
-          let vdclr = Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls vn in
+          let vdclr = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn in
           let dep_hviews = get_views_struc vdclr.Cast.view_formula in
           let vns1 = Gen.BList.remove_dups_eq string_eq (List.map (fun vn -> vn.h_formula_view_name) dep_hviews) in
           dfs_find_closure (Gen.BList.remove_dups_eq string_eq (rest@vns1)) (done_vns@[vn])

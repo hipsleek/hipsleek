@@ -337,7 +337,7 @@ let reverify_with_hp_rel old_cprog iprog =
       match hp_kind with
       |  Cpure.HPRelDefn (hp,r,args) -> begin
           try
-            let todo_unk = x_add Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+            let todo_unk = x_add Cast.look_up_view_def_raw x_loc old_cprog.Cast.prog_view_decls
                 (Cpure.name_of_spec_var hp)
             in
             (r_hp_defs, r_unk_hps)

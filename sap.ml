@@ -43,7 +43,7 @@ let view_pure_ext iprog cprog view_ext extn_sv view=
   let extn_props = Cast.look_up_extn_info_rec_field cprog.Cast.prog_data_decls data_name in
   let extn_info = ((view.Cast.view_name,
                     List.map CP.name_of_spec_var view.Cast.view_vars),(extn_view_name, extn_props , [extn_id] )) in
-  let iview = Iast.look_up_view_def_raw 48 iprog.Iast.prog_view_decls view.Cast.view_name in
+  let iview = Iast.look_up_view_def_raw x_loc iprog.Iast.prog_view_decls view.Cast.view_name in
   let vars =  iview.Iast.view_vars@[(extn_id)] in
   let der_view = {iview with Iast.view_name = fresh_any_name view.Cast.view_name;
                              Iast.view_vars = vars;

@@ -455,9 +455,9 @@ let solve no_verification_errors should_infer_tnt prog =
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
   if turels = [] && trrels = [] then 
-    x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to empty set of relational assumptions.\n\n") no_pos
+    x_winfo_pp ("Termination Inference is not performed due to empty set of relational assumptions.") no_pos
   else if not no_verification_errors then
-    x_tinfo_pp ("\n\n!!! Termination Inference is not performed due to errors in verification process.\n\n") no_pos
+    x_winfo_pp ("Termination Inference is not performed due to errors in verification process.") no_pos
   else if not should_infer_tnt then ()
   else
     let () = print_endline_quiet "\n\n*****************************" in

@@ -116,7 +116,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
     | [] -> []
   in
   try
-    let vdef = I.look_up_view_def_raw 6 prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
+    let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
     let args = h0.IF.h_formula_heap2_arguments in
     let hargs, hanns =
       if args==[] then ([],[]) (* don't convert if empty *)
@@ -435,7 +435,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
      with
      | Not_found ->
        (try
-          let todo_unk = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
+          let todo_unk = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c
           in Named c
         with
         | Not_found ->
@@ -1558,7 +1558,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     else (* End dealing with generic ptr, continue what the original system did *)
       let n_tl = 
         (try
-           let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
+           let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
            (* let () = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
            (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
            let () = if not (IF.is_param_ann_list_empty ann_param) then

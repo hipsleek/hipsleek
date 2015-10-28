@@ -1208,10 +1208,10 @@ let unmingle_name (m : ident) =
   | Not_found -> m
 
 let rec look_up_view_def_raw loc (defs : view_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw loc rest name
   | [] ->
     let msg = ("Cannot find definition of cview " ^ name) in 
-    let () = y_binfo_pp (loc^msg) in
+    let () = y_tinfo_pp (loc^msg) in
     raise Not_found
     (* let msg = ("Cannot find definition of view " ^ name) in  *)
     (* failwith (x_loc^msg) *)
@@ -1220,7 +1220,7 @@ let look_up_view_def_raw loc (defs : view_decl list) (name : ident) =
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
   Debug.no_1 "look_up_view_def_raw" pr pr_out 
-    (fun _ -> look_up_view_def_raw defs name) name
+    (fun _ -> look_up_view_def_raw loc defs name) name
 
 let look_up_view_def_prog prog (name : ident) =
   look_up_view_def_raw x_loc prog.prog_view_decls name
@@ -1498,13 +1498,13 @@ let is_rec_view_def prog (name : ident) : bool =
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =
-  let vdef = look_up_view_def_raw 1 prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw x_loc prog.prog_view_decls name in
   match vdef.view_inv_lock with
   | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
   | Some f -> (true, f)
 
 let is_lock_inv prog (name : ident) : bool =
-  let vdef = look_up_view_def_raw 2 prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw x_loc prog.prog_view_decls name in
   match vdef.view_inv_lock with
   | None -> false
   | Some f -> true
@@ -2376,7 +2376,7 @@ let formula_of_unstruc_view_f vd =
 let vdef_fold_use_bc prog ln2  = match ln2 with
   | F.ViewNode vn -> 
     (try 
-       let vd = look_up_view_def_raw 3 prog.prog_view_decls vn.F.h_formula_view_name in
+       let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn.F.h_formula_view_name in
        match vd.view_raw_base_case with
        | None -> None
        | Some f-> Some {vd with view_formula = F.formula_to_struc_formula f}
@@ -2416,7 +2416,7 @@ let vdef_lemma_fold prog coer  =
           match bf.F.formula_base_heap with
           | F.ViewNode vn -> 
             (try 
-               let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
+               let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn.F.h_formula_view_name in
                let to_vars = vd.view_vars in
                let from_vars = vn.F.h_formula_view_arguments in
                let subs = List.combine from_vars to_vars in
@@ -2451,7 +2451,7 @@ let vdef_lemma_fold prog coer  =
 (*               match bf.F.formula_base_heap with *)
 (*                 | F.ViewNode vn ->  *)
 (*                       (try  *)
-(*                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in *)
+(*                         let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn.F.h_formula_view_name in *)
 (*                         Some {vd with view_formula = rhs} *)
 (*                       with   *)
 (*                         | Not_found -> None *)
@@ -2576,7 +2576,7 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
       | F.ViewNode vn ->
         if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
         else
-          let vdef = look_up_view_def_raw 4 cprog.prog_view_decls vn.F.h_formula_view_name in
+          let vdef = look_up_view_def_raw x_loc cprog.prog_view_decls vn.F.h_formula_view_name in
           let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
           let vdef_uni_vars = vdef.view_uni_vars in
           let fr = vdef.view_vars in
@@ -2768,7 +2768,7 @@ let collect_hp_rels prog= Hashtbl.fold (fun i p acc->
     (List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
 
 let look_up_cont_args_x a_args vname cviews=
-  let vdef = look_up_view_def_raw 5 cviews vname in
+  let vdef = look_up_view_def_raw x_loc cviews vname in
   let pr_args = List.combine vdef.view_vars a_args in
   List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
 
@@ -3943,8 +3943,8 @@ let is_finish_equiv_view_decl frm_vdecl to_vdecl =
 let smart_view_name_equiv view_decls vl vr =
   let vl_name = vl.h_formula_view_name in
   let vr_name = vr.h_formula_view_name in
-  let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
-  let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+  let vdef1 = look_up_view_def_raw x_loc view_decls vl_name in
+  let vdef2 = look_up_view_def_raw x_loc view_decls vr_name in
   let ans = try
       if !Globals.old_view_equiv then None
       else 
@@ -3986,15 +3986,15 @@ let smart_view_name_equiv view_decls vl vr =
     | Some (vl,vr) ->
           let vl_name = vl.h_formula_view_name in
           let vr_name = vr.h_formula_view_name in
-          let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
-          let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+          let vdef1 = look_up_view_def_raw x_loc view_decls vl_name in
+          let vdef2 = look_up_view_def_raw x_loc view_decls vr_name in
           vdef1, vdef2,vl_name,vr_name
   in
   (vdef1,vdef2,vl_name,vr_name,ans)
 
 let get_view_name_equiv view_decls vl =
   let vname = vl.h_formula_view_name in
-  let vdef = look_up_view_def_raw 25 view_decls vname in
+  let vdef = look_up_view_def_raw x_loc view_decls vname in
   (* (vname,vdef) *)
   if vdef.view_equiv_set # is_empty || !Globals.old_view_equiv then (vname,vdef,vl,false)
   else 
@@ -4013,7 +4013,7 @@ let get_view_name_equiv view_decls vl =
     (* let new_vl = {vl with h_formula_view_name = new_name; *)
     (*                       h_formula_view_arguments = new_args; *)
     (*              } in *)
-    (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
+    (new_name,look_up_view_def_raw x_loc view_decls new_name,new_vl,true)
 
 (* let get_lst_unfold lst = List.map fst lst *)
 

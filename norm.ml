@@ -900,7 +900,7 @@ let update_scc_view_args prog vdecl=
         let v_args = (hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments) in
         let inter_svl = CP.intersect_svl v_args part2a in
         if inter_svl != [] then
-          let vdecl1 = Cast.look_up_view_def_raw 67 prog.Cast.prog_view_decls hv.CF.h_formula_view_name in
+          let vdecl1 = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls hv.CF.h_formula_view_name in
           let self_sv = CP.SpecVar ((Named vdecl1.Cast.view_data_name) ,self, Unprimed) in
           let sst = List.combine v_args (self_sv::vdecl1.Cast.view_vars) in
           let inter_rename = CP.subst_var_list sst inter_svl in
@@ -981,7 +981,7 @@ let norm_split_x iprog prog vdefs sel_vns=
       examine_one_arg fs_tl a new_res
   in
   let add_view_args (vn, parts)=
-    let vdecl = C.look_up_view_def_raw 68 vdefs vn in
+    let vdecl = C.look_up_view_def_raw x_loc vdefs vn in
     let self_sv = CP.SpecVar ((Named vdecl.Cast.view_data_name) ,self, Unprimed) in
     let args = self_sv::vdecl.C.view_vars in
     let sv_parts = List.map (fun ids ->
@@ -1004,7 +1004,7 @@ let norm_split_x iprog prog vdefs sel_vns=
   let sel_scclist = List.filter (fun scc -> (Gen.BList.intersect_eq string_eq scc sel_vns) != []) scclist in
   let cl_sel_vns = List.concat sel_scclist in
   let () = y_tinfo_hp (add_str "\n" pr_id) ((pr_list pr_id) cl_sel_vns) in
-  let sel_vdecls = List.map (C.look_up_view_def_raw 66 vdefs) sel_vns in
+  let sel_vdecls = List.map (C.look_up_view_def_raw x_loc vdefs) sel_vns in
   (* split candidate *)
   let () = List.iter (update_scc_view_args prog) sel_vdecls in
   (* let split_cands = view_split_cands prog sel_vdecls in *)

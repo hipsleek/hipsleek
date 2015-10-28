@@ -400,7 +400,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
         let seg_views = List.map (fun (vn,_,_) -> vn) view_emp_map in
         let oamap_data_views = Cvutil.get_oa_node_view prog seg_views in
         let seg_data_names = List.map (fun vn ->
-            let vdecl = x_add Cast.look_up_view_def_raw 55 prog.Cast.prog_view_decls vn in
+            let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn in
             vdecl.Cast.view_data_name
           ) seg_views in
         let ante1,is_pto_inconsistent, ante_nemps, ante_neq = Cfutil.xpure_graph_pto prog seg_data_names oamap_data_views ante1a in

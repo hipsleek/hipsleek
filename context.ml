@@ -703,7 +703,7 @@ and view_mater_match prog c vs1 aset imm f anns =
     (add_str "aset" pr2) pr (fun _ _ _ _ -> view_mater_match_x prog c vs1 aset imm f anns) f c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f anns =
-  let vdef = look_up_view_def_raw 11 prog.prog_view_decls c in
+  let vdef = look_up_view_def_raw x_loc prog.prog_view_decls c in
   let vdef_param = (self_param vdef)::(vdef.view_vars) in
   let mvs = subst_mater_list_nth 1 vdef_param vs1 vdef.view_materialized_vars in
   let vars =  vdef.view_vars in
@@ -1523,8 +1523,8 @@ and lookup_lemma_action_x prog (c:match_res) :action =
        | ViewNode vl, ViewNode vr ->
          let vl_name = vl.h_formula_view_name in
          let vr_name = vr.h_formula_view_name in
-         let vl_vdef = look_up_view_def_raw 12 view_decls vl_name in
-         let vr_vdef = look_up_view_def_raw 13 view_decls vr_name in
+         let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
+         let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in
          let vl_view_orig = vl.h_formula_view_original in
          let vr_view_orig = vr.h_formula_view_original in
          let vl_view_derv =  vl.h_formula_view_derv in
@@ -1706,7 +1706,7 @@ and process_one_match_accfold_x (prog: C.prog_decl) (mt_res: match_res)
             else false
         ) in
         if (try_accfold) then (
-          let vdecl = look_up_view_def_raw 1 prog.prog_view_decls vr_name in
+          let vdecl = look_up_view_def_raw x_loc prog.prog_view_decls vr_name in
           let heap_chains = Acc_fold.collect_heap_chains lhs_h lhs_p lv vdecl prog in
           let fold_seqs = List.map (fun ((hf,_,_,_),hf_rest) ->
               let fold_steps = Acc_fold.detect_fold_sequence hf lv vdecl prog in
@@ -1904,8 +1904,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          in
          let () = y_tinfo_hp (add_str "VIEW vs VIEW (after view_equiv)" (pr_pair pr pr)) (vl,vr) in
          (* let vr_name = vr.h_formula_view_name in *)
-         (* let vl_vdef = look_up_view_def_raw 14 view_decls vl_name in *)
-         (* let vr_vdef = look_up_view_def_raw 14 view_decls vr_name in *)
+         (* let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in *)
+         (* let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in *)
          let vl_is_rec = vl_vdef.view_is_rec in
          let vl_is_prim = vl_vdef.view_is_prim in
          let vr_is_prim = vr_vdef.view_is_prim in
@@ -2211,7 +2211,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | DataNode dl, ViewNode vr -> 
          let () = y_tinfo_pp "DATA vs VIEW" in
          let vr_name = vr.h_formula_view_name in
-         let vr_vdef = look_up_view_def_raw 15 view_decls vr_name in
+         let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in
          let vr_self_pts = vr_vdef.view_pt_by_self in
          let vr_is_prim = vr_vdef.view_is_prim in
          let vr_view_orig = vr.h_formula_view_original in
@@ -2349,7 +2349,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | ViewNode vl, DataNode dr -> 
          let () = y_tinfo_pp "VIEW vs DATA" in
          let vl_name = vl.h_formula_view_name in
-         let vl_vdef = look_up_view_def_raw 16 view_decls vl_name in
+         let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
          let vl_self_pts = vl_vdef.view_pt_by_self in
          let vl_view_orig = vl.h_formula_view_original in
          let vl_view_derv = vl.h_formula_view_derv in
@@ -2534,7 +2534,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
        | DataNode dl, _ -> (1,M_Nothing_to_do ("1matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ThreadNode dt, _ -> (1,M_Nothing_to_do ("2matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
        | ViewNode vl, ViewNode vr ->
-         let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
+         let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vl.CF.h_formula_view_name in
          let vl_name = vl.h_formula_view_name in
          let vr_name = vr.h_formula_view_name in
          let vl_view_orig = vl.h_formula_view_original in
@@ -2662,7 +2662,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             | Coerc_mater s -> (* (uf_i,M_lemma (m_res,Some s))) in *)
               (1,M_lemma (m_res,Some s,0))) in
          (* WHY do we need LHS_CASE_ANALYSIS? *)
-         let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vl.CF.h_formula_view_name in
+         let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vl.CF.h_formula_view_name in
          let lem_infer_opt = CFU.check_seg_split_pred prog estate.CF.es_formula vdef vl dr in
          let a1 = if !Globals.lemma_syn && lem_infer_opt !=None then
              let () = DD.ninfo_hprint (add_str "infer lemma" pr_id) "1" no_pos in
@@ -2788,8 +2788,8 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
         let vl_name = vl.h_formula_view_name in
         let vr_name = vr.h_formula_view_name in
-        let vl_vdef = look_up_view_def_raw 24 prog.Cast.prog_view_decls vl_name in
-        let vr_vdef = look_up_view_def_raw 24 prog.Cast.prog_view_decls vr_name in
+        let vl_vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls vl_name in
+        let vr_vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls vr_name in
         let vl_is_rec = vl_vdef.view_is_rec in
         let vl_is_prim = vl_vdef.view_is_prim in
         let vr_is_rec = vr_vdef.view_is_rec in

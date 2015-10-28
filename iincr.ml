@@ -400,15 +400,15 @@ let extend_views iprog prog rev_formula_fnc trans_view_fnc ext_pred_names proc=
   let cl_vns1 = Cfutil.get_closed_view prog vns1 in
   let rev_cl_vns1 = List.rev cl_vns1 in
   let () =  Debug.ninfo_hprint (add_str "rev_cl_vns1" (pr_list pr_id)) rev_cl_vns1 no_pos in
-  let vdcls = List.map (x_add Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls) ( rev_cl_vns1) in
-  let pure_extn_views = List.map (Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls) ext_pred_names in
+  let vdcls = List.map (x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls) ( rev_cl_vns1) in
+  let pure_extn_views = List.map (Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls) ext_pred_names in
   (* (orig_view, der_view) list *)
   let old_view_scc = !Astsimp.view_scc in
   let () = Astsimp.view_scc := [] in
   let map_ext_views = x_add Derive.expose_pure_extn iprog prog rev_formula_fnc trans_view_fnc vdcls pure_extn_views in
   let () = Astsimp.view_scc := old_view_scc in
   let new_vns = List.map (fun (_,(vn,_)) -> vn)  map_ext_views in
-  let new_vdclrs = List.map (Cast.look_up_view_def_raw 65 prog.Cast.prog_view_decls) new_vns in
+  let new_vdclrs = List.map (Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls) new_vns in
   let todo_unk =  (List.map (fun vdef -> Astsimp.compute_view_x_formula prog vdef !Globals.n_xpure) new_vdclrs) in
   let todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) prog.Cast.prog_view_decls) in
   let prog = Astsimp.fill_base_case prog in

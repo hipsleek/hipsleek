@@ -2300,7 +2300,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         let vdef = match vd with 
           | None -> (
               (* in full_fold, vd = None *)
-              try look_up_view_def_raw 6 prog.Cast.prog_view_decls c
+              try look_up_view_def_raw x_loc prog.Cast.prog_view_decls c
               with Not_found -> report_error no_pos ("fold: view def not found:"^c^"\n") 
             )
           | Some vd -> vd in
@@ -3922,7 +3922,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
 
 and need_unfold_rhs prog vn=
   let rec look_up_view vn0=
-    let vdef = x_add C.look_up_view_def_raw 42 prog.C.prog_view_decls vn0.CF.h_formula_view_name in
+    let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vn0.CF.h_formula_view_name in
     let fs = List.map fst vdef.view_un_struc_formula in
     let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
     match hv_opt with
@@ -9655,7 +9655,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     (* c1,v1,p1 *)
     let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let () = Gen.Profiling.push_time "empty_predicate_testing" in
-    let lhs_vd = (look_up_view_def_raw 7 prog.prog_view_decls lhs_name) in
+    let lhs_vd = (look_up_view_def_raw x_loc prog.prog_view_decls lhs_name) in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
                         es_formula = ante;
                         es_heap = estate.es_heap;
@@ -9845,7 +9845,7 @@ and do_lhs_case prog ante conseq estate lhs_node rhs_node is_folding pos =
 
 and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
   let c1,v1,p1 = get_node_name 20 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
-  let vd = (look_up_view_def_raw 8 prog.prog_view_decls c1) in
+  let vd = (look_up_view_def_raw x_loc prog.prog_view_decls c1) in
   let na,prf =
     (match vd.view_base_case with
      | None ->
@@ -10624,7 +10624,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       (* An Hoa : end added code *)
       let label_list = 
         try 
-          let vdef = x_add Cast.look_up_view_def_raw 9 prog.prog_view_decls l_node_name in
+          let vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name in
           vdef.Cast.view_labels
         with Not_found ->
           begin List.map (fun _ -> LO.unlabelled) l_args end
@@ -10920,7 +10920,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (None, new_ante, new_conseq, new_exist_vars, [])
             else
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
-              let l_vdef = x_add Cast.look_up_view_def_raw 9 prog.prog_view_decls l_node_name in
+              let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name in
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
               let args = List.combine l_ho_args r_ho_args in
@@ -11321,7 +11321,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
   let asets = Csvutil.alias_nth 9 ptr_eq in
   try
-    let vdef = look_up_view_def_raw 10 prog.Cast.prog_view_decls c2 in
+    let vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls c2 in
     let subs_vars = List.combine vdef.view_vars v2 in
     let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
     let subs_vars = (sf,var_to_fold)::subs_vars in
@@ -11787,7 +11787,7 @@ and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding
     ) in
   (* let (estate,iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in *)
   let vd = (
-    try look_up_view_def_raw 6 prog.Cast.prog_view_decls vname
+    try look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname
     with Not_found ->
       let msg = "do_acc_fold: view def not found: " ^ vname ^"\n" in
       report_error no_pos msg
@@ -15828,7 +15828,7 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) resth2 ln2 (*rhs_p
 (*               match bf.CF.formula_base_heap with *)
 (*                 | CF.ViewNode vn ->  *)
 (*                       (try  *)
-(*                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in *)
+(*                         let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn.F.h_formula_view_name in *)
 (*                         let to_vars = vd.view_vars in *)
 (*                         let from_vars = vn.h_formula_view_arguments in *)
 (*                         let subs = List.combine from_vars to_vars in *)

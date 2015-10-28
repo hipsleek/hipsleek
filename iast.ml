@@ -1809,16 +1809,16 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) =
   | d :: rest -> if d.data_name = name then d else look_up_data_def_raw rest name
   | [] -> raise Not_found
 
-and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x rest name
+and look_up_view_def_raw_x loc (defs : view_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x loc rest name
   | [] -> 
     let msg = ("Cannot find definition of iview " ^ name) in 
-    let () = y_tinfo_pp (x_loc^msg) in
+    let () = y_tinfo_pp (loc^msg) in
     raise Not_found
 
-and look_up_view_def_raw i (defs : view_decl list) (name : ident) 
+and look_up_view_def_raw loc (defs : view_decl list) (name : ident) 
   = let pr = pr_list !print_view_decl in
-  Debug.no_2_num i "look_up_view_def_raw" pr pr_id pr_none (look_up_view_def_raw_x) defs name 
+  Debug.no_2 "look_up_view_def_raw" pr pr_id pr_none (look_up_view_def_raw_x loc) defs name 
 
 and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs with
   | d :: rest -> if d.func_name = name then d else look_up_func_def_raw rest name
@@ -2376,7 +2376,7 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
         else if v.view_kind = View_DERV  then
           match v.view_derv_info with
           | ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))::_ ->
-            let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
+            let orig_vdecl = look_up_view_def_raw x_loc iprog.prog_view_decls orig_view_name in
             let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
             let () = x_tinfo_hp (add_str "XXX:orig_vdecl" pr_id) orig_vdecl.view_data_name no_pos in
             v.view_data_name <- orig_vdecl.view_data_name
@@ -2446,7 +2446,7 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
         (* if c is a view, use the view's data name recursively.
            			   Otherwise (c is data) use c *)
         try
-          let vdef = look_up_view_def_raw 1 view_decls c in
+          let vdef = look_up_view_def_raw x_loc view_decls c in
           if String.length (vdef.view_data_name) > 0 then
             Some vdef.view_data_name
           else
@@ -3680,7 +3680,7 @@ let trans_to_exp_form exp0 =
 
 let lbl_getter prog vn id = 
   try 
-    let vd = look_up_view_def_raw 15 prog.prog_view_decls vn in
+    let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn in
     let vl, v_has_l = vd.view_labels in
     if v_has_l then
       try
@@ -3696,7 +3696,7 @@ let eq_coercion_list = (==)             (* to be modified *)
 
 let annot_args_getter_all prog vn: (P.ann * int) list =
   try 
-    let vd = look_up_view_def_raw 18 prog.prog_view_decls vn in
+    let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn in
     vd.view_imm_map
   with 
   | Not_found -> [] 
@@ -3944,7 +3944,7 @@ let gen_name_pairs_struc view_decls0 vname (f:F.struc_formula): (ident * ident) 
       (* then [] *)
       (* else *)
       (try 
-         let todo_unk = look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
+         let todo_unk = look_up_view_def_raw x_loc view_decls0 c in [ (vname, c) ]
        with | Not_found -> 
          if view_scc_obj # in_dom c then [(vname,c)]
          else []
