@@ -674,7 +674,7 @@ let remove_goto_x (fd: Cil.fundec) : Cil.fundec =
           (*  let () = report_warning no_pos "remove goto: not find matched label!" in *)
       (* raise Not_found *)
     | (label,i,j)::labels -> begin
-        (* (match_stmt goto label) *)
+        (* if (match_stmt goto label) then *)
         if (match_stmt_w_label goto label) then
           (label,i,j)
         else find_matched_label goto labels
@@ -683,30 +683,30 @@ let remove_goto_x (fd: Cil.fundec) : Cil.fundec =
   let fd = normalize_goto_fundec fd in
   let (gotos, labels, _) = collect_goto_label_in_fundec fd in
   (* try *)
-    let new_fd = List.fold_left (fun fd (goto, gi, gj) ->
-        let (matched_label,li,lj) = find_matched_label goto labels in
-        let () = x_tinfo_hp (add_str "gi" string_of_int) gi no_pos in
-        let () = x_tinfo_hp (add_str "li" string_of_int) li no_pos in
-        let () = x_tinfo_hp (add_str "matched_label.Cil.labels" (pr_list string_of_cil_label)) matched_label.Cil.labels no_pos in
-        let is_error_label = match matched_label.Cil.labels with
-          | [x] -> begin
-              string_eq "ERROR:" (String.trim (string_of_cil_label x))
-            end
-          | _ -> false
-        in
-        if is_error_label then (* should check no loop also *)
-          replace_goto_with_stmt goto (List.hd goto.Cil.labels) fd
+  let new_fd = List.fold_left (fun fd (goto, gi, gj) ->
+      let (matched_label,li,lj) = find_matched_label goto labels in
+      let () = x_tinfo_hp (add_str "gi" string_of_int) gi no_pos in
+      let () = x_tinfo_hp (add_str "li" string_of_int) li no_pos in
+      let () = x_tinfo_hp (add_str "matched_label.Cil.labels" (pr_list string_of_cil_label)) matched_label.Cil.labels no_pos in
+      let is_error_label = match matched_label.Cil.labels with
+        | [x] -> begin
+            string_eq "ERROR:" (String.trim (string_of_cil_label x))
+          end
+        | _ -> false
+      in
+      if is_error_label then (* should check no loop also *)
+        replace_goto_with_stmt goto (List.hd goto.Cil.labels) fd
+      else
+        if (gj != lj)
+        then report_error no_pos "remove goto: goto and label are not the same level!"
         else
-          if (gj != lj)
-          then report_error no_pos "remove goto: goto and label are not the same level!"
-          else
-            let label = List.hd goto.Cil.labels in
-            if (gi < li) then
-              remove_goto_with_if_fundec goto label fd
-            else remove_goto_with_while_fundec goto label fd
-    ) fd gotos in
-    new_fd
-  (* with Not_found -> fd *)
+          let label = List.hd goto.Cil.labels in
+          if (gi < li) then
+            remove_goto_with_if_fundec goto label fd
+          else remove_goto_with_while_fundec goto label fd
+  ) fd gotos in
+  new_fd
+      (* with Not_found -> fd *)
 
 let remove_goto (fd: Cil.fundec) : Cil.fundec =
   let pr = string_of_cil_fundec in
