@@ -77,7 +77,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
 
 let add_dangling_hprel prog (hpr: CF.hprel) = 
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "Syn:add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
+  Debug.no_1 "Syn.add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
 
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   let n_hpr_list, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) hpr_list) in
@@ -202,7 +202,7 @@ let merge_pre_hprel_list prog hprels =
 
 let merge_pre_hprel_list prog hprels =
   let pr = pr_hprel_list in
-  Debug.no_1 "Syn:merge_pre_hprel_list" pr pr (merge_pre_hprel_list prog) hprels
+  Debug.no_1 "Syn.merge_pre_hprel_list" pr pr (merge_pre_hprel_list prog) hprels
 
 (* (A -> C) /\ (B -> C) --> (A \/ B) -> C *)
 let merge_post_hprel_list prog hprels =
@@ -220,7 +220,7 @@ let merge_post_hprel_list prog hprels =
 
 let merge_post_hprel_list prog hprels =
   let pr = pr_hprel_list in
-  Debug.no_1 "Syn:merge_post_hprel_list" pr pr (merge_post_hprel_list prog) hprels
+  Debug.no_1 "Syn.merge_post_hprel_list" pr pr (merge_post_hprel_list prog) hprels
 
 let merge_hprel_list prog hprels = 
   let pre_hprels, post_hprels = List.partition is_pre_hprel hprels in
@@ -229,7 +229,7 @@ let merge_hprel_list prog hprels =
 
 let merge_hprel_list prog hprels =
   let pr = pr_hprel_list in
-  Debug.no_1 "Syn:merging" pr pr (merge_hprel_list prog) hprels
+  Debug.no_1 "Syn.merging" pr pr (merge_hprel_list prog) hprels
 
 let merging prog hprels = 
   let hprel_lists = List.map snd (partition_hprel_list hprels) in
@@ -297,7 +297,7 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
   let pr2 = Cprinter.string_of_hprel_short in
-  Debug.no_2 "Syn:unfolding_one_hrel_def" pr1 pr2 (pr_option pr1)
+  Debug.no_2 "Syn.unfolding_one_hrel_def" pr1 pr2 (pr_option pr1)
     (fun _ _ -> unfolding_one_hrel_def prog ctx hrel hrel_def) ctx hrel_def
 
 let unfolding_one_hrel prog ctx hrel hrel_defs = 
@@ -401,7 +401,7 @@ let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =
 let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =
   let pr1 = !CF.print_formula in
   let pr2 = !CF.print_h_formula in
-  Debug.no_2 "Syn:process_one_hrel" pr1 pr2 (pr_list pr1)
+  Debug.no_2 "Syn.process_one_hrel" pr1 pr2 (pr_list pr1)
     (fun _ _ -> process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups) 
     ctx hrel
 
@@ -419,7 +419,7 @@ let unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups 
 let unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups =
   let pr1 = !CF.print_formula in
   let pr2 = pr_list !CF.print_h_formula in
-  Debug.no_2 "Syn:unfolding_hrel_list" pr1 pr2 (pr_list pr1)
+  Debug.no_2 "Syn.unfolding_hrel_list" pr1 pr2 (pr_list pr1)
     (fun _ _ -> unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups) 
     ctx hrel_list
 
@@ -451,7 +451,7 @@ let rec unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF
 
 let unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF.formula) =
   let pr = !CF.print_formula in
-  Debug.no_1 "Syn:unfolding_hprel_formula" pr (pr_list pr)
+  Debug.no_1 "Syn.unfolding_hprel_formula" pr (pr_list pr)
     (fun _ -> unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f) f
 
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
@@ -466,7 +466,7 @@ let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
     
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "Syn:unfolding_hprel" pr (pr_list pr)
+  Debug.no_1 "Syn.unfolding_hprel" pr (pr_list pr)
     (fun _ -> unfolding_hprel prog hprel_groups hpr) hpr
 
 let rec update_hprel_id_groups hprel_id hprel_sv hprel_id_list hprel_id_groups =
@@ -499,7 +499,7 @@ let helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
   let pr1 = pr_hprel_list in
   let pr2 hpril = pr1 (List.map (fun hpri -> hpri.hprel_constr) hpril) in
   let pr3 = pr_list (pr_pair !CP.print_sv pr2) in
-  Debug.no_2 "Syn:helper_unfolding_hprel_list" pr2 pr3 pr1
+  Debug.no_2 "Syn.helper_unfolding_hprel_list" pr2 pr3 pr1
     (fun _ _ -> helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list)
     hprel_id_list hprel_id_groups
 
@@ -521,7 +521,7 @@ let selective_unfolding prog other_hprels hprels =
 
 let selective_unfolding prog other_hprels hprels = 
   let pr = pr_hprel_list in
-  Debug.no_2 "Syn:selective_unfolding" pr pr pr 
+  Debug.no_2 "Syn.selective_unfolding" pr pr pr 
     (fun _ _ -> selective_unfolding prog other_hprels hprels) other_hprels hprels
 
 let unfolding prog hprels = 
@@ -529,7 +529,7 @@ let unfolding prog hprels =
 
 let unfolding prog hprels = 
   let pr = pr_hprel_list in
-  Debug.no_1 "Syn:unfolding" pr pr (fun _ -> unfolding prog hprels) hprels
+  Debug.no_1 "Syn.unfolding" pr pr (fun _ -> unfolding prog hprels) hprels
 
 (**************************)
 (***** PARAMETERIZING *****)
@@ -550,7 +550,7 @@ let remove_dangling_heap_formula (f: CF.formula) =
 let remove_dangling_heap_formula (f: CF.formula) = 
   let pr1 = !CF.print_formula in
   let pr2 = !CP.print_svl in
-  Debug.no_1 "Syn:remove_dangling_heap_formula" pr1 (pr_pair pr1 pr2)
+  Debug.no_1 "Syn.remove_dangling_heap_formula" pr1 (pr_pair pr1 pr2)
     remove_dangling_heap_formula f
   
 let add_dangling_params hrel_name dangling_params (f: CF.formula) = 
@@ -569,7 +569,7 @@ let add_dangling_params hrel_name dangling_params (f: CF.formula) =
   let pr1 = !CF.print_formula in
   let pr2 = !CP.print_sv in
   let pr3 = pr_list !CP.print_exp in
-  Debug.no_3 "Syn:add_dangling_params" pr1 pr2 pr3 pr1
+  Debug.no_3 "Syn.add_dangling_params" pr1 pr2 pr3 pr1
     (fun _ _ _ -> add_dangling_params hrel_name dangling_params f)
     f hrel_name dangling_params
 
@@ -619,7 +619,7 @@ let dangling_parameterizing_hprel (hpr: CF.hprel) =
 let dangling_parameterizing_hprel (hpr: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
   let pr2 = fun (hpr, _) -> pr1 hpr in
-  Debug.no_1 "Syn:dangling_parameterizing_hprel" pr1 pr2 dangling_parameterizing_hprel hpr
+  Debug.no_1 "Syn.dangling_parameterizing_hprel" pr1 pr2 dangling_parameterizing_hprel hpr
 
 let rec dangling_parameterizing hprels =
   let rec helper_x acc hprels = 
@@ -642,7 +642,7 @@ let rec dangling_parameterizing hprels =
 
 let dangling_parameterizing hprels = 
   let pr = pr_hprel_list in
-  Debug.no_1 "Syn:parameterizing" pr pr 
+  Debug.no_1 "Syn.parameterizing" pr pr 
     (fun _ -> dangling_parameterizing hprels) hprels
 
 (***********************************)
@@ -676,7 +676,7 @@ let trans_hprel_to_view iprog prog hprels =
 let trans_hprel_to_view iprog cprog hprels = 
   let pr1 = Cprinter.string_of_hprel_list_short in
   let pr2 = pr_list Cprinter.string_of_view_decl_short in
-  Debug.no_1 "Syn:trans_hprel_to_view" pr1 pr2 
+  Debug.no_1 "Syn.trans_hprel_to_view" pr1 pr2 
     (fun _ -> trans_hprel_to_view iprog cprog hprels) hprels
 
 (**********************)
@@ -738,7 +738,7 @@ let derive_view_norm prog other_hprels hprels =
 
 let derive_view_norm prog other_hprels hprels = 
   let pr = Cprinter.string_of_hprel_list_short in
-  Debug.no_1 "Syn:derive_view_norm" pr pr
+  Debug.no_1 "Syn.derive_view_norm" pr pr
     (derive_view_norm prog other_hprels) hprels
 
 let derive_view iprog cprog other_hprels hprels = 
@@ -760,7 +760,7 @@ let derive_view iprog cprog other_hprels hprels =
 let derive_view iprog prog other_hprels hprels = 
   let pr1 = Cprinter.string_of_hprel_list_short in
   let pr2 = pr_list Cprinter.string_of_view_decl_short in
-  Debug.no_2 "Syn:derive_view" pr1 pr1 (pr_pair pr2 pr1)
+  Debug.no_2 "Syn.derive_view" pr1 pr1 (pr_pair pr2 pr1)
     (derive_view iprog prog) other_hprels hprels
 
 (* type:                                                     *)
@@ -855,7 +855,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
   let pr1 = pr_list pr_id in
   let pr2 = !CF.print_formula in
   let pr3 = Cprinter.string_of_view_decl_short in
-  Debug.no_3 "Syn:derive_equiv_view_by_lem" pr1 pr2 pr2 pr3
+  Debug.no_3 "Syn.derive_equiv_view_by_lem" pr1 pr2 pr2 pr3
     (fun _ _ _ -> derive_equiv_view_by_lem ~tmp_views:tmp_views iprog cprog view l_ivars l_head l_body) l_ivars l_head l_body
 
 (*******************************************)
@@ -897,7 +897,7 @@ let elim_head_pred iprog cprog pred =
 
 let elim_head_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
-  Debug.no_1 "Syn:elim_head_pred" pr pr 
+  Debug.no_1 "Syn.elim_head_pred" pr pr 
     (fun _ -> elim_head_pred iprog cprog pred) pred
 
 let elim_tail_pred iprog cprog pred = 
@@ -938,7 +938,7 @@ let elim_tail_pred iprog cprog pred =
 
 let elim_tail_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
-  Debug.no_1 "Syn:elim_tail_pred" pr pr 
+  Debug.no_1 "Syn.elim_tail_pred" pr pr 
     (fun _ -> elim_tail_pred iprog cprog pred) pred
 
 let elim_head_pred_list iprog cprog preds =
@@ -1129,5 +1129,5 @@ let syn_pre_preds prog (is: CF.infer_state) =
 
 let syn_pre_preds prog is = 
   let pr2 = Cprinter.string_of_infer_state_short in
-  Debug.no_1 "Syn:syn_pre_preds" pr2 pr2
+  Debug.no_1 "Syn.syn_pre_preds" pr2 pr2
     (fun _ -> syn_pre_preds prog is) is

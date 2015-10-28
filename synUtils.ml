@@ -811,15 +811,15 @@ let rec norm_pred_list f_norm preds =
 let norm_one_derived_view iprog cprog derived_view = 
   (* try *)
     (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
+    let () = y_binfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
     let iview = Rev_ast.rev_trans_view_decl derived_view in
+    let () = y_binfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
     let cview = SleekUtils.process_selective_iview_decls false iprog [iview] in
+    let () = y_binfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
     let norm_cview = match cview with v::[] -> v | _ -> derived_view in
+    let () = y_binfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
     (* norm_cview might not be updated/added into cprog due to exception *)
     let () = x_add Cast.update_view_decl cprog norm_cview in
-    let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
-    let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
-    let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
-    let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
     norm_cview
   (* with _ ->                                                   *)
   (*   let () = x_warn ("Cannot normalize the derived views") in *)

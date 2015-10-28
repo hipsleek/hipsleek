@@ -771,7 +771,9 @@ let is_null name =
   name == null_name
 
 let is_null_type t  =
-  t == null_type
+  match t with
+  | Named "" -> true
+  | _ -> false
 
 let inline_field_expand = "_"
 
