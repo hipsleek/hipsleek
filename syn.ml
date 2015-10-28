@@ -813,7 +813,9 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     (* Equiv test to form new pred *)
     let r_cbody, _ = x_add trans_hrel_to_view_formula cprog l_body in
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
-    let rlemma = I.mk_lemma (l_name ^ "_rev") LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
+    let r_name = l_name ^ "_rev" in
+    let rlemma = I.mk_lemma r_name LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
+    let () = y_binfo_hp (add_str ("rlemma " ^ r_name) Iprinter.string_of_coercion) rlemma in 
     let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
     if not rres then 
       let () = y_binfo_pp "XXX fail <--- " in
@@ -826,6 +828,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
           { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
           r_cbody 
       in
+      let () = y_binfo_hp (add_str "vbody" !CF.print_formula) vbody in
       let self_node = mk_self_node view.C.view_name vbody in
       let () = 
         view.C.view_formula <- CF.formula_to_struc_formula 
@@ -834,6 +837,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
         view.C.view_raw_base_case <- None;
         view.C.view_base_case <- None
       in
+      let () = y_binfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in
       let norm_view = norm_single_view iprog cprog view in
       let () = y_binfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
       norm_view
@@ -869,19 +873,22 @@ let elim_head_pred iprog cprog pred =
     let dangling_vars = List.filter CP.is_node_typ (diff args nodes) in
     let dangling_vars = remove_dups dangling_vars in
     let () = y_tinfo_hp (add_str "Unknown nodes" !CP.print_svl) dangling_vars in
-    let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
-    let fresh_pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars fresh_pred_args) in
+    (* let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in *)
+    (* let fresh_pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars fresh_pred_args) in *)
+    let pred_I_args = List.map (fun v -> (v, I)) (elim_useless_vars pred.C.view_vars) in
     let hrel_list, unknown_vars = List.split (List.map 
-        (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::fresh_pred_I_args) no_pos) dangling_vars) in
+        (fun v -> C.add_raw_hp_rel cprog false true ((v, I)::pred_I_args (* fresh_pred_I_args *)) no_pos) dangling_vars) in
     let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
     let unknown_f = List.fold_left (fun f h -> CF.mkStar_combine_heap f h CF.Flow_combine no_pos) common_f hrel_list in
-    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name pred.C.view_vars (* fresh_pred_args *) no_pos in
     (* let norm_flow = { CF.formula_flow_interval = exlist # get_hash n_flow; CF.formula_flow_link = None } in *)
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
-    (* let ex_vars = remove_dups (diff (diff (CF.fv unknown_f) unknown_vars) (CF.fv pred_f)) in *)
-    (* let unknown_f = CF.push_exists ex_vars unknown_f in                                      *)
-
+    let pred_f_sv = CF.fv pred_f in
+    let unknown_f_sv = CF.fv unknown_f in
+    let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in
+    let unknown_f = CF.push_exists (remove_dups ex_vars) unknown_f in
+    
     let ivars = List.map CP.name_of_spec_var unknown_vars in
     x_add derive_equiv_view_by_lem iprog cprog pred ivars pred_f unknown_f
 
@@ -902,12 +909,12 @@ let elim_tail_pred iprog cprog pred =
     let node_base_case = List.find (fun f -> 
         not (is_empty (snd (find_heap_node self_node f))) 
       ) base_cases in
-    let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
+    (* let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in *)
     let fresh_self_node = CP.fresh_spec_var self_node in
-    let pred_h = CF.mkViewNode self_node pred.C.view_name fresh_pred_args no_pos in
+    let pred_h = CF.mkViewNode self_node pred.C.view_name pred.C.view_vars (* fresh_pred_args *) no_pos in
     let unknown_h, unknown_hpred = C.add_raw_hp_rel cprog false true [(self_node, I); (fresh_self_node, I)] no_pos in
     let () =  iprog.I.prog_hp_decls <- (List.map Rev_ast.rev_trans_hp_decl cprog.C.prog_hp_decls) in
-    let sst = (self_node, fresh_self_node)::(List.combine pred.C.view_vars fresh_pred_args) in
+    let sst = [(self_node, fresh_self_node)] (* @ (List.combine pred.C.view_vars fresh_pred_args) *) in
     let unknown_f = 
       (* CF.mkStar_combine_heap (CF.subst sst node_base_case) unknown_h CF.Flow_combine no_pos in *)
       CF.mkStar_combine (CF.formula_of_heap unknown_h no_pos) (CF.subst sst node_base_case) CF.Flow_combine no_pos in
@@ -916,7 +923,7 @@ let elim_tail_pred iprog cprog pred =
     (* let pred_f_sv = CF.fv pred_f in                                                              *)
     (* let unknown_f_sv = CF.fv unknown_f in                                                        *)
     (* let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in *)
-    (* let unknown_f = CF.push_exists ex_vars unknown_f in                                          *)
+    (* let unknown_f = CF.push_exists (remove_dups ex_vars) unknown_f in                            *)
     x_add derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
   with _ -> pred
 

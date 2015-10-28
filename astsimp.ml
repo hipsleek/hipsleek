@@ -7430,7 +7430,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             let n_tl = x_add gather_type_info_pure prog p n_tl in
             x_add gather_type_info_heap prog hh n_tl
           else n_tl in
-        let todo_unk = List.map (fun x -> helper_one_formula x tl) a in
+        (* let todo_unk = List.map (fun x -> helper_one_formula x tl) a in *)
+        let n_tl = List.fold_right helper_one_formula a n_tl in
         (* transform bexpr *)
         (* let nh, ps = IF.transform_bexp_hf prog h in *)
         (* let np = if ps = [] then p else List.fold_left (fun r p1 -> Ipure.mkAnd r p1 pos) p ps in *)
@@ -7449,7 +7450,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                     let (v,en) = List.find (fun (v,en) -> v=h) tl
                     in (v,en)::(copy_list t tl) 
                   with r -> 
-                    let () = y_binfo_hp (add_str "var not in type table" pr_id) h in
+                    let () = y_winfo_hp (add_str "var not in type table" pr_id) h in
                     raise r
               ) in
               let n_tl = copy_list fvars n_tl in
@@ -7467,12 +7468,14 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_exists_and = a;
         IF.formula_exists_pos = pos} -> (
         let (n_tl,rl) = res_retrieve tl clean_res fl in
+        let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
         let n_tl = (
           if sep_collect then 
             let n_tl = gather_type_info_pure prog p n_tl in
             x_add gather_type_info_heap prog h n_tl
           else n_tl 
         ) in 
+        let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
         let n_tl = List.fold_right helper_one_formula a n_tl in
         let f1 = IF.Base ( {
             IF.formula_base_heap = h;
@@ -7504,12 +7507,14 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
               | [] -> []
               | h::t -> 
                 try
-                  let (v,en) = List.find (fun (v,en) -> v=h) tl
+                  let (v,en) = List.find (fun (v,en) -> eq_str v h) tl
                   in (v,en)::(copy_list t tl) 
                 with r -> 
                   let () = y_winfo_hp (add_str "var not in type table" pr_id) h in
                   raise r
             ) in
+            let () = y_tinfo_hp (add_str "fvars" (pr_list idf)) fvars in
+            let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
             copy_list fvars n_tl
           else n_tl
         ) in

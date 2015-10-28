@@ -61,6 +61,11 @@ let var_with_implicit_explicit =
   let () = v # set_explicit in
   v
 
+let var_with_exists = 
+  let v = new var_types in
+  let () = v # set_exists in
+  v
+
 let var_with_none =
   let v = new var_types in
   v
