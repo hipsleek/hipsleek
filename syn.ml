@@ -913,10 +913,10 @@ let elim_tail_pred iprog cprog pred =
       CF.mkStar_combine (CF.formula_of_heap unknown_h no_pos) (CF.subst sst node_base_case) CF.Flow_combine no_pos in
     let norm_flow = CF.flow_formula_of_formula unknown_f in
     let pred_f = CF.set_flow_in_formula_override norm_flow (CF.formula_of_heap pred_h no_pos) in
-    let pred_f_sv = CF.fv pred_f in
-    let unknown_f_sv = CF.fv unknown_f in
-    let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in
-    let unknown_f = CF.push_exists ex_vars unknown_f in
+    (* let pred_f_sv = CF.fv pred_f in                                                              *)
+    (* let unknown_f_sv = CF.fv unknown_f in                                                        *)
+    (* let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in *)
+    (* let unknown_f = CF.push_exists ex_vars unknown_f in                                          *)
     x_add derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
   with _ -> pred
 

@@ -7407,7 +7407,7 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) =
   let helper_one_formula (f:IF.one_formula) tl =
-    if sep_collect then 
+    if sep_collect then
       let n_tl = x_add gather_type_info_pure prog f.IF.formula_pure tl in
       x_add gather_type_info_heap prog f.IF.formula_heap n_tl
     else tl in
