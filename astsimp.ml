@@ -310,9 +310,11 @@ and look_for_anonymous_exp_list (args : IP.exp list) :
   | _ -> []
 
 and anon_var (id, p) = 
+  if not !Globals.anon_exist then []
+  else 
   if ((String.length id) > 5) &&
      ((String.compare (String.sub id 0 5) "Anon_") == 0)
-  then [ (* (id, p) *) ]
+  then [ (id, p) ]
   else []
 
 and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =

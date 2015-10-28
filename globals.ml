@@ -1382,7 +1382,7 @@ let move_exist_to_LHS = ref false
 let max_renaming = ref false
 
 
-let anon_exist = ref true
+let anon_exist = ref false
 
 let simplify_pure = ref false
 
