@@ -12454,8 +12454,8 @@ and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_s
       else MCP.memoise_add_pure rhs_p (CP.join_conjunctions new_p) in
     let () = x_dinfo_zp (lazy ("before_do_match rhs_p" ^ (Cprinter.string_of_mix_formula rhs_p))) pos in
     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-    x_binfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
-    let () = y_binfo_hp (add_str "n_rhs_b" !CF.print_formula) n_rhs_b in
+    x_tinfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
+    let () = y_tinfo_hp (add_str "n_rhs_b" !CF.print_formula) n_rhs_b in
     let res_es0, prf0 = x_add do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
     (* let () = Debug.info_zprint  (lazy  ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0))) no_pos in *)
     (res_es0,prf0)
@@ -12487,13 +12487,13 @@ and process_small_action prog estate act conseq is_folding pos
 
 and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set: CP.spec_var list) is_folding pos
   : (Cformula.list_context * Prooftracer.proof) =
-  y_binfo_hp (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b;
+  y_tinfo_hp (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b;
   Debug.ninfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
   if (Context.is_steps_action a) then
     begin
       if !Debug.devel_debug_on || !Debug.devel_debug_steps then
         begin
-          x_binfo_zp (lazy ("process_action (steps) :"
+          x_tinfo_zp (lazy ("process_action (steps) :"
                             ^ ((add_str "\n ### action " Context.string_of_action_res) a)
                             ^ ((add_str "\n ### estate " Cprinter.string_of_entail_state_short) estate)
                             ^ ((add_str "\n ### conseq " Cprinter.string_of_formula) conseq)
@@ -12520,8 +12520,8 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       let pure_to_add = match infer_opt with
         | Some f ->
             let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
-            let () = x_binfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
-            let () = x_binfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
+            let () = x_tinfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
+            let () = x_tinfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
             [f]
         | _ -> [] in
       (*******SPLIT/COMBINE permissions********>>
@@ -12639,7 +12639,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
          r
        | None  -> begin
            (*<<***END SPLIT/COMBINE permissions*******************)
-           y_binfo_pp ("Match action, do process_before_do_match r");
+           y_tinfo_pp ("Match action, do process_before_do_match r");
            let r = process_before_do_match pure_to_add prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
                lhs_node lhs_rest rhs_node rhs_rest holes in
            Debug.ninfo_hprint (add_str "Match action, context r" (fun x -> Cprinter.string_of_list_context (fst x))) r no_pos;

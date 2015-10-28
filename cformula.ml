@@ -20308,7 +20308,7 @@ let get_data_and_views f =
   let _ = (map_h_formula f f_h_f) in
   let r = stk # get_stk in
   let pr = pr_pair !CP.print_sv (pr_pair string_of_int !print_h_formula) in
-  let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in
+  let () = y_tinfo_hp (add_str "get_data_and_views" (pr_list pr)) r in
   r
 
 let no_infer_vars estate = (estate.es_infer_vars == []) 

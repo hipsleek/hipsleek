@@ -11231,7 +11231,7 @@ let enhance_eq_list eq_list =
           let () = x_binfo_pp "XXX:UNSOUND enhance_eq_list" no_pos in
           failwith "UNSOUND enhance_eq_list"
         else  () (* failwith "SOUND enhance_eq_list" *)
-            (* () *) (* x_binfo_pp "XXX:OK enhance_eq_list" no_pos *)  
+            (* () *) (* x_tinfo_pp "XXX:OK enhance_eq_list" no_pos *)  
       else ()
     in
     new_eq@eq_list
@@ -11292,7 +11292,7 @@ let spec_with_const em sv l =
 
 (* let add_to_em_set eq_list em_set = *)
 (*   let matrix = equality_to_matrix eq_list in *)
-(*   let () = x_binfo_pp ("matrix: "^(Matrix.print_matrix string_of_int matrix)) no_pos in *)
+(*   let () = x_tinfo_pp ("matrix: "^(Matrix.print_matrix string_of_int matrix)) no_pos in *)
 (*   let (em,eset) = List.fold_left (fun (em,set) (e1,e2) -> *)
 (*          (match e1,e2 with *)
 (*           | Var(sv1,_),Var(sv2,_) -> (EMapSV.add_equiv em sv1 sv2, set) *)
@@ -11474,7 +11474,7 @@ let add_eqmap_at_toplevel em e =
 (*   let f_arg_1 a e = a in *)
 (*   let f_arg = (f_arg_1,f_arg_1,f_arg_1) in *)
 (*   let eq_map = build_eqmap_at_toplevel (\* find_eq_all *\) f in *)
-(*   let () = x_binfo_pp (EMapSV.string_of eq_map) no_pos in *)
+(*   let () = x_tinfo_pp (EMapSV.string_of eq_map) no_pos in *)
 (*   map_formula_arg f eq_map ff f_arg *)
 
 
@@ -11600,7 +11600,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
     | None -> (true,EMapSV.mkEmpty,false) (* build_eqmap_at_toplevel (\* find_eq_all *\) f *) 
     | Some em -> em (* add_emap_at_toplevel em f *)
   in
-  (* let () = x_binfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
+  (* let () = x_tinfo_pp ((add_str "subs_const(emap)" EMapSV.string_of) eq_map) no_pos in *)
   if !Globals.non_linear_flag then map_formula_arg f init_arg ff f_arg
   else f
 
@@ -15620,12 +15620,12 @@ let extr_ptr_eqn (f:formula)  =
            | Some v2 -> stk_ptr # push (v1,v2)
            | _ -> ()
         end;
-        (* let () = y_binfo_hp (add_str "branch1" !print_formula) pf in *)
+        (* let () = y_tinfo_hp (add_str "branch1" !print_formula) pf in *)
         let () = stk # push pf in
         Some bf
       | (Eq _,_) -> 
          let () = stk # push pf in
-         let () = y_binfo_hp (add_str "other" !print_formula) pf in
+         let () = y_tinfo_hp (add_str "other" !print_formula) pf in
          Some bf
       | _ -> None in
     let f_e e = Some e in
@@ -15633,6 +15633,23 @@ let extr_ptr_eqn (f:formula)  =
   let _ = helper f in
   (stk_ptr # get_stk,stk # get_stk)
  
+let simplify_eqn (f:formula)  = 
+  let rec helper f =
+    let f_f f = None in
+    let f_bf bf = 
+      match bf with
+      | (Eq (Var(v1,_),Var(v2,_),_),_) -> 
+         if eq_spec_var v1 v2 then Some (BConst(true,no_pos),None)
+         else Some bf
+      | (Neq (Var(v1,_),Var(v2,_),_),_) -> 
+         if eq_spec_var v1 v2 then Some (BConst(false,no_pos),None)
+         else Some bf
+      | _ -> Some bf 
+    in
+    let f_e e = Some e in
+    map_formula f (f_f,f_bf,f_e) in
+  helper f
+
 let mkLtVars a1 a2 =
   BForm ((Lt (Var (a1,no_pos),Var(a2,no_pos), no_pos),None),None)
 
