@@ -1,6 +1,7 @@
 #include "xdebug.cppo"
 open VarGen
 open GlobProver
+open Gen
 
 let parse_only = ref false
 
@@ -55,6 +56,28 @@ let set_frontend fe_str = match fe_str  with
   | "xml" -> fe := XmlFE
   | _ -> failwith ("Unsupported frontend: " ^ fe_str)
 
+(* s = main:;f:1,2;f:1  *)
+let parse_call_stack s=
+  let parse_one_call str=
+    let idx = String.index str ':' in
+    let proc_name = String.sub str 0 idx in
+    let path_ctls =
+      let len = String.length str in
+      if len > idx+1 then
+        let str_rest = String.sub str (idx+1) (len - idx -1) in
+        let ctls = Str.split (Str.regexp "[,]+") str_rest  in
+        List.map int_of_string ctls
+      else []
+    in
+    (proc_name, path_ctls)
+  in
+  let regex = Str.regexp  "[;]+" in
+  let str_call_stacks = Str.split regex s in
+  let call_stacks = List.map parse_one_call str_call_stacks  in
+  let () = print_endline ("call_stacks:" ^ ((pr_list (pr_pair pr_id (pr_list string_of_int))) call_stacks)) in
+  let () = Globals.witness_gen := true in
+  let () = Globals.call_stks := call_stacks in
+  ()
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
@@ -776,7 +799,8 @@ let common_arguments = [
   ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--ops", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
-
+  ("--witness-gen", Arg.String parse_call_stack, "call stack for witness generation");
+   ("--dis-witness-orig", Arg.Clear Witness.witness_from_orig, "disable witness from original source file");
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
   ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 

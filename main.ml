@@ -815,6 +815,9 @@ let process_source_full source =
 
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
+    else
+      if !Globals.witness_gen then
+        Witness.witness_search intermediate_prog cprog (source) !Globals.call_stks
   else (try
           (* let () =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
           (* let () = I.set_iprog intermediate_prog in *)
