@@ -243,8 +243,9 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
           [f]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
+  let () = x_binfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
   let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
+  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
   let e = CP.SpecVar (Int, err_var, Unprimed) in
   let safe_fl = MCP.mix_of_pure (CP.mkEqExp (CP.Var (e, no_pos)) (CP.IConst (0, no_pos)) no_pos) in
   let brs1 = List.fold_left (fun fs f ->

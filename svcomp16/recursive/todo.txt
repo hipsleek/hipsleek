@@ -3,7 +3,7 @@ TODO:
 #Even01 (stack)
 #Fibo (make native 02) OK
 #gcd01-02 (stack)
-#Mc01-02 (stack)
+#Mc02 (stack)
 #MultCommutative (stack)
 #recHanoi01 (unexpected FALSE- global vars: FIXED) stack
 ##Primes (stack)
@@ -136,11 +136,16 @@ ERROR: at _0:0_0:0
 Message: remove goto: not find matched label!
 
 ================================================
-#Mc01-02
+#Mc01: FIXED
 
 Exception occurred: Failure("remove goto: not find matched label!")
 
 ================================================
+#Mc02:
+Stack overflow
+
+================================================
+
 #MultCommutative_true-unreach-call_true-termination.c 
 
 Stack overflow

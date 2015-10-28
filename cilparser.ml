@@ -366,16 +366,15 @@ and collect_goto_label_in_stmts (stmts: Cil.stmt list) (index: int) (depth: int)
     ) ([], [], index) stmts in
   (gotos, labels, index)
 
-let rec collect_goto_label_in_fundec_x (fd: Cil.fundec) =
+let collect_goto_label_in_fundec_x (fd: Cil.fundec) =
   let body = fd.Cil.sbody in
   collect_goto_label_in_block body 0 0
 
-and collect_goto_label_in_fundec (fd: Cil.fundec)
+let collect_goto_label_in_fundec (fd: Cil.fundec)
   : ((Cil.stmt * int * int) list * (Cil.stmt * int * int) list * int) =
   let pr_in = add_str "fundec: " string_of_cil_fundec in
   let pr_out = (fun (gotos, labels, _) ->
-      let pr_stmt (stmt, i, j) = ("[[ (" ^ (string_of_cil_stmt stmt) ^ "), <" 
-                                  ^ (string_of_int i) ^ ", " ^ (string_of_int j) ^ "> ]]") in
+      let pr_stmt = pr_triple string_of_cil_stmt string_of_int string_of_int in
       let gotos_str = add_str "\n  - gotos: " (pr_list pr_stmt) gotos in
       let labels_str = add_str "\n  - labels: " (pr_list pr_stmt) labels in
       gotos_str ^ labels_str
@@ -451,15 +450,40 @@ and normalize_goto_fundec (fd: Cil.fundec) : Cil.fundec =
   Debug.no_1 "normalize_goto_fundec" pr_in pr_out
     (fun _ -> normalize_goto_fundec_x fd) fd
 
-let match_stmt stmt1 stmt2 =
+let match_stmt_x stmt1 stmt2 =
   let s1 = string_of_cil_stmt stmt1 in
   let s2 = string_of_cil_stmt stmt2 in
-  if (String.compare s1 s2 == 0) then true else false
+  let () = x_binfo_hp (add_str "s1" pr_id) s1 no_pos in
+  let () = x_binfo_hp (add_str "s2" pr_id) s2 no_pos in
+  let b = string_eq s1 s2 in
+  let () = x_binfo_hp (add_str "res" string_of_bool) b no_pos in
+  (* if (String.compare s1 s2 == 0) then true else false *)
+  b
+
+let match_stmt stmt1 stmt2 =
+  let pr1 = string_of_cil_stmt in
+  Debug.no_2 "match_stmt" pr1 pr1 string_of_bool
+      (fun _ _ -> match_stmt_x stmt1 stmt2) stmt1 stmt2
+
+let match_stmt_w_label stmt1 stmt2 =
+  let () = x_tinfo_hp (add_str "ls1" (pr_list_ln string_of_cil_label))  stmt1.Cil.labels no_pos in
+  let () = x_tinfo_hp (add_str "ls2" (pr_list_ln string_of_cil_label))  stmt2.Cil.labels no_pos in
+  let rec eq_label ls1 ls2=
+    match ls1,ls2 with
+      | [],[] -> true
+      | l1::rest1, l2::rest2 -> begin
+          match l1,l2 with
+            | Cil.Label (s1,_,_),Cil.Label (s2,_,_) -> string_eq s1 s2
+            | _ -> false
+        end
+      | _ -> false
+  in
+  eq_label stmt1.Cil.labels stmt2.Cil.labels
 
 let match_label lbl1 lbl2 =
   let s1 = string_of_cil_label lbl1 in
   let s2 = string_of_cil_label lbl2 in
-  if (String.compare s1 s2 == 0) then true else false
+  string_eq s1 s2
 
 let rec remove_goto_with_if_stmts goto label stmts =
   let rec get_stmts stmts = match stmts with
@@ -479,6 +503,7 @@ let rec remove_goto_with_if_stmts goto label stmts =
     let skind = stmt.Cil.skind in
     let (new_skind, new_stmts) = match skind with
       | Cil.If (e, b1, b2, p) ->
+            let _ = x_tinfo_hp (add_str "b1.Cil.bstmts" (pr_list_ln string_of_cil_stmt)) b1.Cil.bstmts no_pos in
         let fst_stmt = List.hd b1.Cil.bstmts in
         let fst_skind = fst_stmt.Cil.skind in
         ( match fst_skind with
@@ -501,13 +526,92 @@ let rec remove_goto_with_if_stmts goto label stmts =
     in
     {stmt with Cil.skind = new_skind}::(remove_goto_with_if_stmts goto label new_stmts)
 
-and remove_goto_with_if_block goto label blk =
+and remove_goto_with_if_block_x goto label blk =
   let new_stmts = remove_goto_with_if_stmts goto label blk.Cil.bstmts in
   {blk with Cil.bstmts = new_stmts}
 
-let remove_goto_with_if_fundec goto label fd =
+and remove_goto_with_if_block goto label blk =
+  let pr1a = string_of_cil_stmt in
+  let pr1b = string_of_cil_label in
+  let pr2 = string_of_cil_block in
+  Debug.no_3 "remove_goto_with_if_block" pr1a pr1b pr2 pr2
+      (fun _ _ _ -> remove_goto_with_if_block_x goto label blk)
+      goto label blk
+
+let remove_goto_with_if_fundec_x goto label fd =
   let new_body = remove_goto_with_if_block goto label fd.Cil.sbody in
   {fd with Cil.sbody = new_body}
+
+let remove_goto_with_if_fundec goto label fd =
+  let pr1a = string_of_cil_stmt in
+  let pr1b = string_of_cil_label in
+  let pr2 = string_of_cil_fundec in
+  Debug.no_3 "remove_goto_with_if_fundec" pr1a pr1b pr2 pr2
+      (fun _ _ _ -> remove_goto_with_if_fundec_x goto label fd)
+      goto label fd
+
+
+(*******************)
+let rec replace_goto_with_stmt_stmts goto label stmts =
+  (* let rec get_stmts stmts = match stmts with *)
+  (*   | [] -> report_error no_pos "remove goto with if stmts: not find matched label!" *)
+  (*   | stmt::stmts -> *)
+  (*     if (List.exists (fun stmt_lbl -> *)
+  (*         match_label label stmt_lbl *)
+  (*       ) stmt.Cil.labels) *)
+  (*     then ([],stmt::stmts) *)
+  (*     else *)
+  (*       let (stmts1, stmts2) = get_stmts stmts in *)
+  (*       (stmt::stmts1, stmts2) *)
+  (* in *)
+  match stmts with
+  | [] -> []
+  | stmt::stmts ->
+    let skind = stmt.Cil.skind in
+    let (new_skind, new_stmts) = match skind with
+      | Cil.If (e, b1, b2, p) ->
+            let _ = x_binfo_hp (add_str "b1.Cil.bstmts" (pr_list_ln string_of_cil_stmt)) b1.Cil.bstmts no_pos in
+            (Cil.If (e, replace_goto_with_stmt_block  goto label b1, replace_goto_with_stmt_block  goto label b2, p), stmts)
+      | Cil.Switch (exp, blk, stmts1, p) -> (Cil.Switch (exp, replace_goto_with_stmt_block  goto label blk, stmts1, p), stmts)
+      | Cil.Block blk -> (Cil.Block (replace_goto_with_stmt_block  goto label blk), stmts)
+      | Cil.Loop (blk, sf, p, stmt1, stmt2) -> (Cil.Loop (replace_goto_with_stmt_block  goto label blk, sf, p, stmt1, stmt2), stmts)
+      | Cil.TryFinally (blk1, blk2, p) -> (Cil.TryFinally (replace_goto_with_stmt_block  goto label blk1, replace_goto_with_stmt_block  goto label blk2, p), stmts)
+      | Cil.TryExcept (blk1, ies, blk2, p) -> (Cil.TryExcept (replace_goto_with_stmt_block  goto label blk1, ies, replace_goto_with_stmt_block  goto label blk2, p), stmts)
+      | Cil.Goto (goto_stmt, _) ->
+            if (match_stmt goto !goto_stmt) then
+              let () = x_tinfo_hp (add_str "to replace" pr_id) "here" no_pos in
+              let new_blk = Cil.mkBlock [goto] in
+              (Cil.Block new_blk, stmts)
+            else (skind, stmts)
+      | _ -> (skind, stmts)
+    in
+    {stmt with Cil.skind = new_skind}::(replace_goto_with_stmt_stmts goto label new_stmts)
+
+and replace_goto_with_stmt_block_x goto label blk =
+  let new_stmts = replace_goto_with_stmt_stmts goto label blk.Cil.bstmts in
+  {blk with Cil.bstmts = new_stmts}
+
+and replace_goto_with_stmt_block goto label blk =
+  let pr1a = string_of_cil_stmt in
+  let pr1b = string_of_cil_label in
+  let pr2 = string_of_cil_block in
+  Debug.no_3 "replace_goto_with_stmt_block" pr1a pr1b pr2 pr2
+      (fun _ _ _ -> replace_goto_with_stmt_block_x goto label blk)
+      goto label blk
+
+let replace_goto_with_stmt_x goto label fd =
+  let new_body = replace_goto_with_stmt_block goto label fd.Cil.sbody in
+  {fd with Cil.sbody = new_body}
+
+let replace_goto_with_stmt goto label fd =
+  let pr1a = string_of_cil_stmt in
+  let pr1b = string_of_cil_label in
+  let pr2 = string_of_cil_fundec in
+  Debug.no_3 "replace_goto_with_stmt" pr1a pr1b pr2 pr2
+      (fun _ _ _ -> replace_goto_with_stmt_x goto label fd)
+      goto label fd
+
+(*********************)
 
 let rec remove_goto_with_while_stmts goto label stmts =
   let rec get_stmts stmts = match stmts with
@@ -563,28 +667,51 @@ let remove_goto_with_while_fundec goto label fd =
   let new_body = remove_goto_with_while_block goto label fd.Cil.sbody in
   {fd with Cil.sbody = new_body}
 
-let remove_goto (fd: Cil.fundec) : Cil.fundec =
+let remove_goto_x (fd: Cil.fundec) : Cil.fundec =
   let rec find_matched_label goto labels =
     match labels with
     | [] -> report_error no_pos "remove goto: not find matched label!"
-    | (label,i,j)::labels ->
-      if (match_stmt goto label)
-      then (label,i,j)
-      else find_matched_label goto labels
+          (*  let () = report_warning no_pos "remove goto: not find matched label!" in *)
+      (* raise Not_found *)
+    | (label,i,j)::labels -> begin
+        (* (match_stmt goto label) *)
+        if (match_stmt_w_label goto label) then
+          (label,i,j)
+        else find_matched_label goto labels
+      end
   in
   let fd = normalize_goto_fundec fd in
   let (gotos, labels, _) = collect_goto_label_in_fundec fd in
-  let new_fd = List.fold_left (fun fd (goto, gi, gj) ->
-      let (matched_label,li,lj) = find_matched_label goto labels in
-      if (gj != lj)
-      then report_error no_pos "remove goto: goto and label are not the same level!"
-      else
-        let label = List.hd goto.Cil.labels in
-        if (gi < li)
-        then remove_goto_with_if_fundec goto label fd
-        else remove_goto_with_while_fundec goto label fd
+  (* try *)
+    let new_fd = List.fold_left (fun fd (goto, gi, gj) ->
+        let (matched_label,li,lj) = find_matched_label goto labels in
+        if (gj != lj)
+        then report_error no_pos "remove goto: goto and label are not the same level!"
+        else
+          let label = List.hd goto.Cil.labels in
+          let () = x_tinfo_hp (add_str "gi" string_of_int) gi no_pos in
+          let () = x_tinfo_hp (add_str "li" string_of_int) li no_pos in
+          let () = x_tinfo_hp (add_str "matched_label.Cil.labels" (pr_list string_of_cil_label)) matched_label.Cil.labels no_pos in
+          if (gi < li) then
+            let is_error_label = match matched_label.Cil.labels with
+            | [x] -> begin
+                string_eq "ERROR:" (String.trim (string_of_cil_label x))
+              end
+            | _ -> false
+          in
+            if is_error_label then (* should check no loop also *)
+              replace_goto_with_stmt goto label fd
+            else
+              remove_goto_with_if_fundec goto label fd
+          else remove_goto_with_while_fundec goto label fd
     ) fd gotos in
-  new_fd
+    new_fd
+  (* with Not_found -> fd *)
+
+let remove_goto (fd: Cil.fundec) : Cil.fundec =
+  let pr = string_of_cil_fundec in
+  Debug.no_1 "remove_goto" pr pr
+      (fun _ -> remove_goto_x fd) fd
 
 (**********************************************)
 (****** create intermediate procedures  *******)

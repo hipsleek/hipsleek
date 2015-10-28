@@ -4798,7 +4798,7 @@ and doCondExp (asconst: bool) (** Try to evaluate the conditional expression
       let ce2 = doCondExp asconst e2 in
       let p = convLoc l in
       match ce1, ce2 with
-        CEExp (se1, ((Const _) as ci1)), _ -> 
+        CEExp (se1, ((Const _) as ci1)), _ ->
           if isConstTrue ci1 then 
             addChunkBeforeCE se1 ce2
           else 

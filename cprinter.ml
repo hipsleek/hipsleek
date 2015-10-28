@@ -4164,6 +4164,8 @@ let pr_esc_stack ?(nshort=true) e =
 
 let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
 
+let string_of_branch_ctx e = poly_string_of_pr  pr_successful_states e
+
 let pr_failesc_context ?(nshort=true) ((l1,l2,l3): failesc_context) =
   fmt_open_vbox 0;
   pr_failed_states ~nshort l1;
