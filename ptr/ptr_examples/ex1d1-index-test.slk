@@ -25,11 +25,13 @@ checkentail x::arr<5> & x=y:arr+2 & z=y+2
 print residue.
 expect Valid.
 
+//(3)
 checkentail x::arr<5> & x=y+2  
      |- y::arr_int<3,v>.
 print residue.
 expect Fail.
 
+//(4)
 checkentail x::arr<5> & x=y+2 & y!=null
      |- y::arr_int<2,v>.
 print residue.

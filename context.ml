@@ -19,6 +19,7 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  match_res_infer : CP.formula option;
   match_res_root_inst : (CP.spec_var (* * CP.formula *)) option;
   (* this indicates compatible variables from LHS/RHS that can be used *)
   (* for base-case-fold/unfold and instantiation *)
@@ -95,7 +96,7 @@ and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (l
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
-let mk_match_res ?(holes=[]) ?(root_inst=None)mt lhs_node lhs_rest rhs_node rhs_rest =
+let mk_match_res ?(holes=[]) ?(root_inst=None) ?(imprecise=None) mt lhs_node lhs_rest rhs_node rhs_rest =
   {
     match_res_lhs_node = lhs_node;
     match_res_lhs_rest = lhs_rest;
@@ -105,6 +106,7 @@ let mk_match_res ?(holes=[]) ?(root_inst=None)mt lhs_node lhs_rest rhs_node rhs_
     match_res_rhs_node = rhs_node;
     match_res_rhs_rest = rhs_rest;
     match_res_root_inst = root_inst;
+    match_res_infer = imprecise;
   }
 
 (*
@@ -247,6 +249,7 @@ let pr_match_res (c:match_res):unit =
   fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
   fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest; fmt_cut ();
   fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_compatible) ;
+  fmt_string "rhs_infer: "; fmt_string ((pr_opt !CP.print_formula) c.match_res_infer) ;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
@@ -606,7 +609,7 @@ let get_views_offset prog f =
  *     (or a chain of heap nodes and views )
  *)
 
-let adhoc_stk = new Gen.stack
+(* let adhoc_stk = new Gen.stack *)
 
 let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
@@ -649,7 +652,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
     let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let (same_base,_) = CP.extr_ptr_eqn (MCP.pure_of_mix lhs_p) in
     let emap = CP.EMapSV.build_eset eqns' in
+    let emap_base = CP.EMapSV.build_eset same_base in
     let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
@@ -662,7 +667,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let rhs_ptr = p in
     (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
     (* let () = y_binfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
-    let enhance_paset paset =
+    let enhance_paset impr_stk paset =
       let lhs_p2 =MCP.pure_of_mix lhs_p in
       let lhs_nodes = get_views_offset prog lhs_h in
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
@@ -710,18 +715,17 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               | None  ->
                 (* lhs_p2 |- rhs_ptr=d  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
-                let r = if CF.no_infer_all_all estate then !CP.tp_imply lhs_p2 rhs 
-                  else 
-                    begin
-                      (* to avoid loop for bugs/ex62b.slk *)
-                      let () = y_winfo_pp "TODO : check if share same base" in
-                      let () =  y_binfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
-                      let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-                      let () = adhoc_stk # push rhs in
-                      true (*can we check if it shares same base *) 
-                    end
-                in
-                (d,r,None)
+                let r = !CP.tp_imply lhs_p2 rhs  in
+                if CF.no_infer_all_all estate || r then (d,r,None)
+                else
+                  begin
+                    (* to avoid loop for bugs/ex62b.slk *)
+                    let () = y_winfo_pp "TODO : check if share same base" in
+                    let () =  y_binfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
+                    let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                    let () = impr_stk # push (d,rhs) in
+                    (d,true,None)   (*can we check if it shares same base *) 
+                  end
               | Some ((root,root_pf)) ->
                 let () = y_binfo_hp (add_str "d" !CP.print_sv) d in
                 let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
@@ -740,8 +744,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* let () = y_tinfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in *)
       lst in
     (* let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in *)
+    let impr_stk = new Gen.stack in
     let lst = if !Globals.ptr_arith_flag then
-        let lst = enhance_paset paset in
+        let lst = enhance_paset impr_stk paset in
         let lst = List.filter (fun (_,f,_) -> f) lst in
         let lst = List.map (fun (d,_,r) -> (d,r)) lst in
         lst 
@@ -768,7 +773,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
-      let mt_res = x_add (spatial_ctx_extract ~view_roots:root_lst) prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
+      let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst) prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
       (* WN: why is there a need to filter out root parameters? *)
       (*  affects str-inf/ex14b[23].slk *)
       (* let mt_res = x_add filter_match_res_list mt_res rhs_node in *)
@@ -974,7 +979,7 @@ and coerc_mater_match estate coercs l_vname (l_vargs:P.spec_var list) r_vname r_
   rr - right rest
 *)
 (* Trung, delete later: extract node in LHS (f) to match with node in RHS *)
-and spatial_ctx_extract ?(view_roots=[]) p estate f a i pi rn rr emap = 
+and spatial_ctx_extract ?(impr_lst=[]) ?(view_roots=[]) p estate f a i pi rn rr emap = 
   let pr = pr_list string_of_match_res in
   let pr_svl = !CP.print_svl in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
@@ -982,7 +987,7 @@ and spatial_ctx_extract ?(view_roots=[]) p estate f a i pi rn rr emap =
   Debug.no_4 "spatial_ctx_extract" (add_str "h_formula" string_of_h_formula) 
     (add_str "imm" Cprinter.string_of_imm) (add_str "aset" pr_svl) 
     (add_str "rhs_node" string_of_h_formula) (add_str "list of match_res" pr) 
-    (fun _ _ _ _-> spatial_ctx_extract_x ~view_roots:view_roots p estate f a i pi rn rr emap) f i a rn 
+    (fun _ _ _ _-> spatial_ctx_extract_x ~impr_lst:impr_lst ~view_roots:view_roots p estate f a i pi rn rr emap) f i a rn 
 
 and update_field_imm (f : h_formula) (pimm1 : CP.ann list) (consumed_ann: CP.ann list) (residue: bool): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -1248,7 +1253,7 @@ and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_
   Debug.no_4 "coerc_mater_match_gen" pr_id pr_svl pr_svl (add_str "lhs" !CF.print_h_formula) pr2
     (fun _ _ _ _ -> coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset lhs_f
 
-and spatial_ctx_extract_x ?(view_roots=[]) prog estate (f0 : h_formula)
+and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_formula)
     aset (imm : CP.ann) (pimm : CP.ann list)
     rhs_node rhs_rest emap
   : match_res list  =
@@ -1563,16 +1568,26 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   let find r = try
       Some (fst (snd (List.find (fun (hf,_) -> hf==r) lst)))
     with _ -> None in
+  let is_imprecise n = 
+    try
+      Some (snd(List.find (fun (v,pf) -> 
+          match n with
+          | DataNode f -> CP.eq_spec_var f.h_formula_data_node v 
+          | _ -> false) impr_lst))
+    with _ -> None 
+  in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let () = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
-      mk_match_res ~holes:holes ~root_inst:(find lhs_node) mt lhs_node lhs_rest rhs_node rhs_rest
-      (* { match_res_lhs_node = lhs_node; *)
-      (*  match_res_lhs_rest = lhs_rest; *)
-      (*  match_res_holes = holes; *)
-      (*  match_res_type = mt; *)
-      (*  match_res_rhs_node = rhs_node; *)
-      (*  match_res_compatible = []; *)
-      (*  match_res_rhs_rest = rhs_rest; } *)
+      mk_match_res ~holes:holes ~root_inst:(find lhs_node)
+        ~imprecise:(is_imprecise lhs_node)
+        mt lhs_node lhs_rest rhs_node rhs_rest
+        (* { match_res_lhs_node = lhs_node; *)
+        (*  match_res_lhs_rest = lhs_rest; *)
+        (*  match_res_holes = holes; *)
+        (*  match_res_type = mt; *)
+        (*  match_res_rhs_node = rhs_node; *)
+        (*  match_res_compatible = []; *)
+        (*  match_res_rhs_rest = rhs_rest; } *)
     ) l
 
 
@@ -3390,7 +3405,7 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
-  let pr2 = string_of_action_res_simpl in
+  let pr2 = string_of_action_res(* _simpl *) in
   Debug.no_6 "compute_actions"
     (add_str "EQ ptr" pr0) 
     (add_str "LHS heap" pr) 
