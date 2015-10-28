@@ -78,7 +78,7 @@ class data_table =
 let data_decl_obj = new data_table
 
 let add_data_tags_to_obj cdata =
-  let () = y_binfo_pp "add_data_tags_to_obj" in
+  let () = y_tinfo_pp "add_data_tags_to_obj" in
   data_decl_obj # reset;
   List.iter (fun cd ->
       let dn = cd.Cast.data_name in

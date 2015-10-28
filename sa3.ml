@@ -3287,7 +3287,8 @@ let infer_shapes iprog prog proc_name (constrs0: CF.hprel list)
         view_aset, derived_views
       else [], derived_views
     in
-    let () = y_binfo_hp (add_str "DERIVED VIEWS" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
+    let () = y_binfo_hp (add_str "===== DERIVED VIEWS =====\n" 
+      (pr_list_ln Cprinter.string_of_view_decl_short)) derived_views in
     (nhprels, [], [])
 
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)

@@ -782,10 +782,16 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let hprel_str = CP.name_of_spec_var hprel_name in
   let vdecl = Cast.mk_view_decl_for_hp_rel hprel_str vargs false pos in
   let v_sf, v_un_str = norm_view_formula hprel_str vbody in
+  let v_data_name =
+    match (CP.type_of_spec_var vself) with 
+    | Named n -> n
+    | _ -> ""
+  in
   let vdecl_w_def = { vdecl with 
       Cast.view_formula = v_sf; (* CF.formula_to_struc_formula vbody; *)
       Cast.view_un_struc_formula = v_un_str; (* [(vbody, (fresh_int (), ""))]; *)
-      Cast.view_kind = View_NORM; } in
+      Cast.view_kind = View_NORM; 
+      Cast.view_data_name = v_data_name; } in
   (* let () = Cast.update_view_decl prog vdecl_w_def in *)
   vdecl_w_def
 
@@ -801,8 +807,8 @@ let rec norm_pred_list f_norm preds =
   | p::ps ->
     let lazy_ps = lazy (norm_pred_list f_norm ps) in
     try
-      let n_p = f_norm p in
-      n_p::(Lazy.force lazy_ps)
+      let n_p_lst = f_norm p in
+      n_p_lst @ (Lazy.force lazy_ps)
     with e ->
       let () = y_binfo_pp (Printexc.to_string e) in
       let () = x_warn ("Cannot normalize the view " ^ p.C.view_name) in
@@ -811,13 +817,13 @@ let rec norm_pred_list f_norm preds =
 let norm_one_derived_view iprog cprog derived_view = 
   (* try *)
     (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
-    let () = y_binfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
+    let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
     let iview = Rev_ast.rev_trans_view_decl derived_view in
-    let () = y_binfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
+    let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
     let cview = SleekUtils.process_selective_iview_decls false iprog [iview] in
-    let () = y_binfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
+    let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
     let norm_cview = match cview with v::[] -> v | _ -> derived_view in
-    let () = y_binfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
+    let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
     (* norm_cview might not be updated/added into cprog due to exception *)
     let () = x_add Cast.update_view_decl cprog norm_cview in
     norm_cview
@@ -831,7 +837,7 @@ let norm_one_derived_view iprog cprog derived_view =
     (norm_one_derived_view iprog cprog) derived_view
 
 let rec norm_derived_views iprog cprog derived_views = 
-  norm_pred_list (norm_one_derived_view iprog cprog) derived_views
+  norm_pred_list (fun v -> [norm_one_derived_view iprog cprog v]) derived_views
 
 let norm_derived_views iprog cprog derived_views =
   let pr = pr_list Cprinter.string_of_view_decl in

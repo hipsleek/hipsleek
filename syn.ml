@@ -339,9 +339,9 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   (* Prevent self-recursive pred to avoid infinite folding *)
   let hprel_lhs_fv = CF.fv hrd_lhs in
   if mem hrel_name hprel_lhs_fv then
-    let () = y_binfo_pp (
-      "WARNING: Folding self-recursive predicate " ^
-      (!CF.print_h_formula hrel) ^ " is prohibited to avoid possibly infinite folding!")
+    let () = y_winfo_pp (
+      "Folding self-recursive predicate " ^ (!CF.print_h_formula hrel) ^ 
+      " is prohibited to avoid possibly infinite folding!")
     in
     None
   else
@@ -655,7 +655,7 @@ let trans_hprel_to_view iprog prog hprels =
   let () =
     if not (is_empty others) then
       let svl = List.map fst others in
-      y_binfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
+      y_winfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
   in
   let derived_views = 
     List.fold_left (fun acc (sv, hpr) ->
@@ -776,14 +776,14 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
   let llemma = I.mk_lemma l_name LEM_INFER LEM_GEN Left l_ivars l_ihead l_ibody in
   let () = llemma.I.coercion_infer_obj # set INF_CLASSIC in (* @classic *)
   let () = llemma.I.coercion_infer_obj # set INF_PURE_FIELD in (* @pure_field *)
-  let () = y_binfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
+  let () = y_tinfo_hp (add_str ("llemma " ^ l_name) Iprinter.string_of_coercion) llemma in 
   
   (* The below method updates CF.sleek_hprel_assumes via lemma proving *)
   let lres, _ = wrap_classic x_loc (Some true) (fun llemma -> x_add Lemma.manage_infer_lemmas [llemma] iprog cprog) llemma in
   if not lres then
     let () = y_binfo_pp "XXX fail infer ---> " in
     let () = restore_view iprog cprog view in
-    view
+    [view]
   else
     let () = y_binfo_pp "XXX proven infer ---> " in
     let () = List.iter (fun v ->
@@ -814,20 +814,20 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let r_ibody = Rev_ast.rev_trans_formula r_cbody in
     let r_name = l_name ^ "_rev" in
     let rlemma = I.mk_lemma r_name LEM_TEST LEM_GEN Right [] l_ihead r_ibody in
-    let () = y_binfo_hp (add_str ("rlemma " ^ r_name) Iprinter.string_of_coercion) rlemma in 
+    let () = y_tinfo_hp (add_str ("rlemma " ^ r_name) Iprinter.string_of_coercion) rlemma in 
     let rres, _ = x_add Lemma.manage_infer_lemmas_x "test" [rlemma] iprog cprog in
     if not rres then 
       let () = y_binfo_pp "XXX fail <--- " in
-      let () = y_binfo_hp (Iprinter.string_of_coercion) rlemma in
+      let () = y_tinfo_hp (add_str "rlemma" Iprinter.string_of_coercion) rlemma in
        let () = restore_view iprog cprog view in
-      view
+      [view]
     else
       let () = y_binfo_pp "XXX proven equiv ..." in
       let vbody = CF.set_flow_in_formula_override 
           { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
           r_cbody 
       in
-      let () = y_binfo_hp (add_str "vbody" !CF.print_formula) vbody in
+      let () = y_tinfo_hp (add_str "vbody" !CF.print_formula) vbody in
       let self_node = mk_self_node view.C.view_name vbody in
       let vbody = Typeinfer.case_normalize_renamed_formula iprog 
           (self_node::(elim_useless_vars view.C.view_vars)) [] vbody in
@@ -840,10 +840,10 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
         view.C.view_raw_base_case <- Cf_ext.compute_raw_base_case false v_un_str;
         view.C.view_base_case <- None
       in
-      let () = y_binfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in
+      let () = y_tinfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in
       let norm_view = norm_single_view iprog cprog view in
-      let () = y_binfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
-      norm_view
+      let () = y_tinfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
+      norm_view::derived_views
 
 (* type:                                                     *)
 (*   Astsimp.I.prog_decl ->                                  *)
@@ -854,7 +854,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
 let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_body =
   let pr1 = pr_list pr_id in
   let pr2 = !CF.print_formula in
-  let pr3 = Cprinter.string_of_view_decl_short in
+  let pr3 = pr_list Cprinter.string_of_view_decl_short in
   Debug.no_3 "Syn.derive_equiv_view_by_lem" pr1 pr2 pr2 pr3
     (fun _ _ _ -> derive_equiv_view_by_lem ~tmp_views:tmp_views iprog cprog view l_ivars l_head l_body) l_ivars l_head l_body
 
@@ -867,7 +867,7 @@ let elim_head_pred iprog cprog pred =
   let _, common_node_chain = find_common_node_chain self_node (CF.list_of_disjuncts pred_f) in
   let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
   match common_node_chain with
-  | [] -> pred
+  | [] -> [pred]
   | n::ns ->
     let common_heap = List.fold_left (fun acc f -> CF.mkStarH acc f no_pos) n ns in
     let common_f = CF.mkBase_simp common_heap (MCP.mkMTrue no_pos) in
@@ -897,16 +897,16 @@ let elim_head_pred iprog cprog pred =
 
 let elim_head_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
-  Debug.no_1 "Syn.elim_head_pred" pr pr 
+  Debug.no_1 "Syn.elim_head_pred" pr (pr_list pr) 
     (fun _ -> elim_head_pred iprog cprog pred) pred
 
 let elim_tail_pred iprog cprog pred = 
-  let () =
-    try
-      let view_def = C.look_up_view_def_prog cprog pred.C.view_name in
-      ()
-    with _ -> y_winfo_pp ("Cannot find the definition of view " ^ pred.C.view_name ^ " in cprog")
-  in 
+  (* let () =                                                                                        *)
+  (*   try                                                                                           *)
+  (*     let view_def = C.look_up_view_def_prog cprog pred.C.view_name in                            *)
+  (*     ()                                                                                          *)
+  (*   with _ -> y_winfo_pp ("Cannot find the definition of view " ^ pred.C.view_name ^ " in cprog") *)
+  (* in                                                                                              *)
   let pred_f = C.formula_of_unstruc_view_f pred in
   let self_node =
     try
@@ -934,11 +934,11 @@ let elim_tail_pred iprog cprog pred =
     let ex_vars = List.filter (fun sv -> not (CP.is_hp_typ sv)) (diff unknown_f_sv pred_f_sv) in
     let unknown_f = CF.push_exists (remove_dups ex_vars) unknown_f in
     x_add derive_equiv_view_by_lem iprog cprog pred [CP.name_of_spec_var unknown_hpred] pred_f unknown_f
-  with _ -> pred
+  with _ -> [pred]
 
 let elim_tail_pred iprog cprog pred = 
   let pr = Cprinter.string_of_view_decl_short in
-  Debug.no_1 "Syn.elim_tail_pred" pr pr 
+  Debug.no_1 "Syn.elim_tail_pred" pr (pr_list pr) 
     (fun _ -> elim_tail_pred iprog cprog pred) pred
 
 let elim_head_pred_list iprog cprog preds =
@@ -970,7 +970,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   let extn_cview_lst = x_add Derive.trans_view_dervs iprog 
     Rev_ast.rev_trans_formula Astsimp.trans_view [] 
     cprog.C.prog_view_decls extn_iview in
-  let () = y_binfo_hp (add_str "extn_cview_lst" 
+  let () = y_tinfo_hp (add_str "extn_cview_lst" 
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
   let comb_extn_name = Derive.mk_extn_pred_name norm_ipred.I.view_name extn_view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
@@ -1028,7 +1028,7 @@ let unify_disj_pred iprog cprog pred =
   let common_node_chain, other_branches = find_common_node_chain_branches self_node (CF.list_of_disjuncts pred_f) in
   let () = y_tinfo_hp (add_str "Common node chain" (pr_list !CF.print_h_formula)) common_node_chain in
   match common_node_chain with
-  | [] -> pred
+  | [] -> [pred]
   | n::ns ->
     let common_heap = List.fold_left (fun acc f -> CF.mkStarH acc f no_pos) n ns in
     let common_f = CF.mkBase_simp common_heap (MCP.mkMTrue no_pos) in
@@ -1062,7 +1062,7 @@ let unify_disj_pred iprog cprog pred =
     (* let () = I.update_view_decl iprog tmp_ipred in           *)
     let norm_tmp_cpred = norm_single_view iprog cprog tmp_cpred in 
     let tmp_v = [norm_tmp_cpred] in
-    let () = y_binfo_hp (add_str "new view_decls" (pr_list Cprinter.string_of_view_decl_short)) tmp_v in
+    let () = y_tinfo_hp (add_str "new view_decls" (pr_list Cprinter.string_of_view_decl_short)) tmp_v in
         (* cprog.C.prog_view_decls *) 
     let fresh_pred_args = CP.fresh_spec_vars pred.C.view_vars in
     let norm_flow = CF.flow_formula_of_formula unknown_branches in

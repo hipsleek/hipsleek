@@ -2682,9 +2682,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
 (*   (I.view_decl * (Globals.ident * Typeinfer.spec_var_info) list) list -> *)
 (*   C.view_decl list *)
 and trans_views iprog ls_mut_rec_views ls_pr_view_typ =
-  let pr = pr_list (fun v -> v.Cast.view_name) in
+  let pr = pr_list (fun v -> Cprinter.string_of_view_decl v) in
   let pr2 = pr_list (fun (v,p) -> (pr_pair pr_id (pr_list (pr_pair pr_id pr_none))) (v.Iast.view_name,p)) in
-  Debug.no_2 "trans_views" (pr_list (pr_list pr_id)) pr2 pr (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) ls_mut_rec_views ls_pr_view_typ
+  Debug.no_2 "trans_views" (pr_list (pr_list pr_id)) pr2 pr 
+    (fun _ _ -> trans_views_x iprog ls_mut_rec_views ls_pr_view_typ) ls_mut_rec_views ls_pr_view_typ
 
 (* type: I.prog_decl ->
    String.t list list ->
@@ -7449,7 +7450,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 | [] -> []
                 | h::t -> 
                   try
-                    let (v,en) = List.find (fun (v,en) -> v=h) tl
+                    let (v,en) = List.find (fun (v,en) -> eq_str v h) tl
                     in (v,en)::(copy_list t tl) 
                   with r -> 
                     let () = y_winfo_hp (add_str "var not in type table" pr_id) h in
@@ -7881,11 +7882,16 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               (* let hvars, labels, annot_params = CP.split_view_args (List.combine params_orig labels) in *)
               let hvars, labels, annot_params, params_orig = x_add_1 Immutable.split_view_args params_orig vdef in 
               let typ = (
-                if (vdef.I.view_is_prim) then UNK
-                else if vdef.I.view_data_name = "" then 
-                  (fill_view_param_types vdef;
-                   Named vdef.I.view_data_name)
-                else Named vdef.I.view_data_name 
+                try
+                  let v_typ_info = snd (List.find (fun (vv, _) -> eq_str vv v) tl) in
+                  let v_typ = v_typ_info.sv_info_kind in
+                  v_typ
+                with _ ->
+                  if (vdef.I.view_is_prim) then UNK
+                  else if vdef.I.view_data_name = "" then 
+                    (fill_view_param_types vdef;
+                    Named vdef.I.view_data_name)
+                  else Named vdef.I.view_data_name 
               ) in
               let new_v = CP.SpecVar (typ, v, p) in
               (*LDK: linearize perm permission as a spec var*)
