@@ -15591,21 +15591,41 @@ let extr_eqn (f:formula)  =
   let _ = helper f in
   stk # get_stk
 
+let get_ptr e1 e2 =
+  match e1,e2 with
+  | Var(v1,_),Var(v2,_) -> 
+    if is_ptr_arith (typ_of_sv v1) then Some v1
+    else if is_ptr_arith (typ_of_sv v2) then Some v2
+    else None
+  | Var(v1,_),_ -> 
+    if is_ptr_arith (typ_of_sv v1) then Some v1 else None
+  | _,Var(v1,_) -> 
+    if is_ptr_arith (typ_of_sv v1) then Some v1 else None
+  | _,_ -> None
+
 (* to return (ptr,v) from ptr=v+c and eq1=eq2 equations *)
 let extr_ptr_eqn (f:formula)  = 
   let stk = new Gen.stack in
   let stk_ptr = new Gen.stack in
   let rec helper f =
     let f_f f = None in
-    let f_bf bf = match bf with
-      | (Eq (Var(v1,_),Add(Var(v2,_),_,_),_),_) -> 
-         if is_ptr_arith (typ_of_sv v2) then stk_ptr # push (v1,v2);
-         let () = stk # push (BForm (bf,None)) in
-         Some bf
+    let f_bf bf = 
+      let pf = BForm (bf,None) in
+      match bf with
+      | (Eq (Var(v1,_),Add(e1,e2,_),_),_) -> 
+        begin
+         match get_ptr e1 e2 with
+           | Some v2 -> stk_ptr # push (v1,v2)
+           | _ -> ()
+        end;
+        (* let () = y_binfo_hp (add_str "branch1" !print_formula) pf in *)
+        let () = stk # push pf in
+        Some bf
       | (Eq _,_) -> 
-         let () = stk # push (BForm (bf,None)) in
+         let () = stk # push pf in
+         let () = y_binfo_hp (add_str "other" !print_formula) pf in
          Some bf
-      | _ -> Some bf in
+      | _ -> None in
     let f_e e = Some e in
     map_formula f (f_f,f_bf,f_e) in
   let _ = helper f in

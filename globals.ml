@@ -259,6 +259,7 @@ let is_ptr_arith t =
   | Named id -> true (* String.compare id "" != 0 *)
   | Array _ -> true
   | _ -> false
+
 let is_node_typ t =
   match t with
   | Named id -> true (* String.compare id "" != 0 *)

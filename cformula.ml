@@ -148,7 +148,6 @@ and formula =
   | Or of formula_or
   | Exists of formula_exists
 
-
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
   rflow_base: (* struc_ *)formula;

@@ -652,9 +652,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
     let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
-    let (same_base,_) = CP.extr_ptr_eqn (MCP.pure_of_mix lhs_p) in
+    let lhs_pp = MCP.pure_of_mix lhs_p in
+    let (same_base,other_eqn) = CP.extr_ptr_eqn lhs_pp in
     let emap = CP.EMapSV.build_eset eqns' in
     let emap_base = CP.EMapSV.build_eset same_base in
+    let () = x_binfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
+    let () = x_binfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in
+    let () = x_binfo_hp (add_str "other_eqn" (pr_list !CP.print_formula)) other_eqn no_pos in
+    let () = x_binfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
     let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
@@ -715,17 +720,22 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               | None  ->
                 (* lhs_p2 |- rhs_ptr=d  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
-                let r = !CP.tp_imply lhs_p2 rhs  in
-                if CF.no_infer_all_all estate || r then (d,r,None)
-                else
-                  begin
-                    (* to avoid loop for bugs/ex62b.slk *)
-                    let () = y_winfo_pp "TODO : check if share same base" in
-                    let () =  y_binfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
-                    let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-                    let () = impr_stk # push (d,rhs) in
-                    (d,true,None)   (*can we check if it shares same base *) 
-                  end
+                let same_base = CP.EMapSV.is_equiv emap_base d rhs_ptr in  
+                let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                if same_base then
+                  let r = !CP.tp_imply lhs_p2 rhs  in
+                  if CF.no_infer_all_all estate || r then (d,r,None)
+                  else
+                    begin
+                      (* to avoid loop for bugs/ex62b.slk *)
+                      let () = y_winfo_pp "pushing to infer" in
+                      let () =  y_binfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
+                      let () = impr_stk # push (d,rhs) in
+                      (d,true,None)   (*can we check if it shares same base *) 
+                    end
+                else 
+                  let () = y_binfo_pp "Not same base" in
+                  (d,false,None)
               | Some ((root,root_pf)) ->
                 let () = y_binfo_hp (add_str "d" !CP.print_sv) d in
                 let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
@@ -735,7 +745,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let r = !CP.tp_imply (CP.mkAnd lhs_p2 root_pf no_pos) rhs in
                 let () = y_binfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
                 let () = y_binfo_hp (add_str "rhs_ptr=root" string_of_bool) r  in
-                  (d,r,None) (* Some rf *)
+                (d,r,None) (* Some rf *)
                 (* failwith (x_loc^"unfolding") *)
             end
             (*   | _ -> (d,false,None) *)
