@@ -2663,6 +2663,50 @@ and mkCast target_typ body pos =
          exp_cast_body = body;
          exp_cast_pos = pos }
 
+
+let rec pos_of_exp (e:exp) :loc = match e with
+  | ArrayAt b -> b.exp_arrayat_pos
+  | ArrayAlloc b -> b.exp_aalloc_pos
+  | Assert b -> b.exp_assert_pos
+  | Assign b -> b.exp_assign_pos
+  | Binary b -> b.exp_binary_pos
+  | Bind b -> b.exp_bind_pos
+  | Block b -> b.exp_block_pos
+  | BoolLit b -> b.exp_bool_lit_pos
+  | Break b -> b.exp_break_pos
+  | Barrier b -> b.exp_barrier_pos
+  | CallRecv b -> b.exp_call_recv_pos
+  | CallNRecv b -> b.exp_call_nrecv_pos
+  | Cast b -> b.exp_cast_pos
+  | Cond b -> b.exp_cond_pos
+  | ConstDecl b -> b.exp_const_decl_pos
+  | Continue b -> b.exp_continue_pos
+  | Catch b -> b.exp_catch_pos
+  | Debug b -> b.exp_debug_pos
+  | Dprint b -> b.exp_dprint_pos
+  | Empty p -> p
+  | FloatLit b -> b.exp_float_lit_pos
+  | Finally b -> b.exp_finally_pos
+  | IntLit b -> b.exp_int_lit_pos
+  | Java b -> b.exp_java_pos
+  | Label (_, e1) -> pos_of_exp e1
+  | Member b -> b. exp_member_pos
+  | New b -> b.exp_new_pos
+  | Null p -> p
+  | Raise b -> b.exp_raise_pos
+  | Return b -> b.exp_return_pos
+  | Seq b -> b.exp_seq_pos
+  | This b -> b.exp_this_pos
+  | Time (_,_,p) -> p
+  | Try b -> b.exp_try_pos
+  | Unary b -> b.exp_unary_pos
+  | Unfold b -> b.exp_unfold_pos
+  | Var b -> b.exp_var_pos
+  | VarDecl b -> b.exp_var_decl_pos
+  | While b -> b.exp_while_pos
+  | Par b -> b.exp_par_pos
+
+
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
 (*************************************************************)

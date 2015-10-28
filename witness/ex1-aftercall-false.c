@@ -11,6 +11,6 @@ void f(int n) {
 }
 
 int main(void) {
-  //  int n = __VERIFIER_nondet_int();
+  int n = __VERIFIER_nondet_int();
   f(4);
 }

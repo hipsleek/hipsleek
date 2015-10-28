@@ -808,6 +808,7 @@ let common_arguments = [
   ("--ops", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
   ("--witness-gen", Arg.String parse_call_stack, "call stack for witness generation");
+   ("--dis-witness-orig", Arg.Clear Witness.witness_from_orig, "disable witness from original source file");
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
   ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 
