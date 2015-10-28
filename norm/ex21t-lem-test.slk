@@ -42,8 +42,11 @@ pred app4c<p> == self::node<_,p>
 
 //lemma_safe "app4b_lem" self::app4b<> -> self::lseg<q> * q::node<0, null>.
 
+lemma_safe "app4a_llem" self::app4a<> -> self::node<_, q> * q::ll<>.
+lemma_safe "app4a_rlem" self::app4a<> <- self::node<_, q> * q::ll<>.
+
 lemma_safe "app4b_llem" self::app4b<> -> self::node<_, q> * q::ll<>.
-lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>.
+lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>. // should fail?
 
 //lemma_infer [HP,@classic] self::app4<p> -> q::node<v, p1> * HP(self, q) & p1=p & v=0.
 
