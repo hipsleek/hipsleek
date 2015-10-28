@@ -570,7 +570,7 @@ let rec replace_goto_with_stmt_stmts goto label stmts =
     let skind = stmt.Cil.skind in
     let (new_skind, new_stmts) = match skind with
       | Cil.If (e, b1, b2, p) ->
-            let _ = x_binfo_hp (add_str "b1.Cil.bstmts" (pr_list_ln string_of_cil_stmt)) b1.Cil.bstmts no_pos in
+            let _ = x_tinfo_hp (add_str "b1.Cil.bstmts" (pr_list_ln string_of_cil_stmt)) b1.Cil.bstmts no_pos in
             (Cil.If (e, replace_goto_with_stmt_block  goto label b1, replace_goto_with_stmt_block  goto label b2, p), stmts)
       | Cil.Switch (exp, blk, stmts1, p) -> (Cil.Switch (exp, replace_goto_with_stmt_block  goto label blk, stmts1, p), stmts)
       | Cil.Block blk -> (Cil.Block (replace_goto_with_stmt_block  goto label blk), stmts)
@@ -578,7 +578,7 @@ let rec replace_goto_with_stmt_stmts goto label stmts =
       | Cil.TryFinally (blk1, blk2, p) -> (Cil.TryFinally (replace_goto_with_stmt_block  goto label blk1, replace_goto_with_stmt_block  goto label blk2, p), stmts)
       | Cil.TryExcept (blk1, ies, blk2, p) -> (Cil.TryExcept (replace_goto_with_stmt_block  goto label blk1, ies, replace_goto_with_stmt_block  goto label blk2, p), stmts)
       | Cil.Goto (goto_stmt, _) ->
-            if (match_stmt goto !goto_stmt) then
+            if (match_stmt_w_label goto !goto_stmt) then
               let () = x_tinfo_hp (add_str "to replace" pr_id) "here" no_pos in
               let new_blk = Cil.mkBlock [goto] in
               (Cil.Block new_blk, stmts)
