@@ -2391,9 +2391,21 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     vdef.I.view_data_name <- data_name;
     let vtv = vdef.I.view_typed_vars in
     let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
-    let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false
+    let (s_t,tlist) = if data_name="" then 
+        let (new_et, n_tl) = fresh_tvar tlist in
+        (new_et,n_tl)
+      else (Named data_name,tlist) in
+    let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
+    let orig_tl = ann_typs@tlist in
+    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (orig_tl) false
         true (*check_pre*) in
+    let self_ty = Typeinfer.get_type_of_self n_tl in
+    let data_name = match self_ty with
+      | Named s -> s
+      | _ -> "" in
+    let () = vdef.I.view_data_name <- data_name in
+    let () = y_tinfo_hp (add_str "orig_tl" string_of_tlist) orig_tl in
+    let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
     (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
     let inv_lock = vdef.I.view_inv_lock in
@@ -2610,6 +2622,84 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       Debug.ninfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
       Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
       Debug.ninfo_hprint (add_str "vbi" (pr_option pr)) vbc_i no_pos;
+      (* let lst_uns = List.map fst n_un_str in *)
+      let () = y_tinfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
+      let keep_vs = CP.self_sv::view_sv in
+      let lst_heap_ptrs = 
+        if !Globals.ptr_arith_flag then 
+          let lst = List.map (fun (f,_) -> 
+              let (h,pure,_,_,_,_) = CF.split_components f in
+              let pure = MCP.pure_of_mix pure in
+              let vs = CP.fv pure in
+              let lst = CF.get_data_and_views h in
+              let lst = List.map (fun (v,(no,hf)) ->
+                  let keep_vs = v::keep_vs in
+                  let () = y_tinfo_hp (add_str "pure" !CP.print_formula)pure in
+                  let () = y_tinfo_hp (add_str "keep_vs" !CP.print_svl) keep_vs in
+                  let ex_vs = Gen.BList.difference_eq CP.eq_spec_var vs keep_vs in
+                  let new_p = CP.mkExists_with_simpl !CP.simplify ex_vs pure None no_pos in
+                  (* let vars = CP.fv new_p in *)
+                  let (ptrs,eq_lst) = CP.extr_ptr_eqn new_p in
+                  let base_vars = List.map snd ptrs in
+                  let eq_lst = 
+                    if List.exists (CP.eq_spec_var CP.self_sv) base_vars 
+                    then eq_lst else [] in
+                  let () = y_tinfo_hp (add_str "new_p" !CP.print_formula) new_p in
+                  (v,no,eq_lst)
+                    (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
+                    (* else (\* view node*\) []) *)
+                ) lst in
+              (* let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst in *)
+              let () = y_tinfo_hp !CP.print_formula pure in
+              (* CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h *)
+              (pure,lst)
+            ) n_un_str in
+          let choose_smallest (pure,xs) =
+            let rec aux xs ((v,_,eq_lst) as acc) = match xs with
+              | [] -> [(v,CP.join_conjunctions eq_lst)]
+              | ((w,_,eq_lst_w) as x)::xs -> 
+                let rhs = CP.mkLtVars v w in
+                if !CP.tp_imply pure rhs then aux xs acc
+                else aux xs x in
+            (* remove views, keep data nodes only *)
+            let xs = List.filter (fun (v,no,eq_lst) -> no=0 && eq_lst!=[]) xs in
+            let xs = match xs with [] -> []
+                                 | x::xs -> aux xs x in
+            xs in
+          let choose_one xs = 
+            let rec aux xs ((v1,p1) as acc) = match xs with
+              | [] -> [acc]
+              | [(v2,p2)]::xss -> 
+                let rhs = CP.mkEqVars v1 v2 in
+                let lhs = CP.join_conjunctions [p1;p2] in
+                if !CP.tp_imply lhs rhs then aux xss acc
+                else [] 
+              | _::xss -> [] (* not consistent *) 
+            in
+            let ans = match xs with 
+            | [xs]::xss -> aux xss xs 
+            | _ -> [] in
+            let () = if xs!=[] && ans==[] then 
+                y_tinfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
+            in ans
+          in
+          let fresh_name (v,f) = (v,f) in
+              (* let fr_v = CP.fresh_spec_var v in *)
+              (* (fr_v,CP.apply_subs [(v,fr_v)] f) in *)
+          (* remove base-cases without data and heap nodes *)
+          let lst = List.filter (fun (_,x) -> x!=[]) lst in
+          (* remove views and choose smallest ptr *)
+          let lst = List.map choose_smallest lst in
+          (* ensure all non-empty branches has same root pointer *)
+          let lst = choose_one lst in
+          (* give fresh name for root ptr *)
+          let lst = List.map fresh_name lst in
+          lst
+        else []
+      in
+      let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
+      (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
+      (* let () = y_tinfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in *)
       let cvdef = {
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;
@@ -2626,6 +2716,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_fields = [];
         C.view_kind = view_kind;
         C.view_type_of_self = vdef.I.view_type_of_self;
+        C.view_actual_root = 
+          (
+            (* let () = y_tinfo_pp "ZH : need to compute actual root.." in *)
+            match lst_heap_ptrs with
+            | x::_ -> Some x
+            | _ -> None
+          );
         C.view_prop_extns = view_prop_extns;
         C.view_parent_name = None;
         C.view_domains = [];
@@ -2644,7 +2741,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_data_name = data_name;
         C.view_formula = cf;
         C.view_fixcalc = None;
- 
+
         C.view_user_inv = user_inv;
         C.view_x_formula = user_x_inv;
         C.view_baga_inv = vbc_i;
@@ -7210,7 +7307,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
             if b.IF.formula_inf_obj # is_size then
               let hpt_inf_vars = List.filter (fun sv -> (CP.is_node_typ sv) || (CP.is_hp_typ sv)) new_ivs in
               List.iter (fun iv -> b.IF.formula_inf_obj # 
-                add_infer_extn_lst (CP.name_of_spec_var iv) ["size"]) hpt_inf_vars
+                                     add_infer_extn_lst (CP.name_of_spec_var iv) ["size"]) hpt_inf_vars
           in
           (n_tl, CF.EInfer {
               (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)

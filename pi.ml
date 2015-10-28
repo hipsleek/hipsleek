@@ -632,7 +632,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let target_define =
               List.map (fun (r,pf,rel) -> pf) rels in
             let unchanged_result =
-              (Trans_arr.get_unchanged_fixpoint target_rel target_define) in
+              (Trans_arr.new_get_unchanged_fixpoint target_rel target_define) in
+            (* let unchanged_result = *)
+            (*   (Trans_arr.get_unchanged_fixpoint target_rel target_define) in *)
             if rels !=[] then
               begin
                 print_endline_quiet "\n*************************************";

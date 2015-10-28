@@ -19,6 +19,8 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  match_res_infer : CP.formula option;
+  match_res_root_inst : (CP.spec_var (* * CP.formula *)) option;
   (* this indicates compatible variables from LHS/RHS that can be used *)
   (* for base-case-fold/unfold and instantiation *)
   match_res_compatible: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
@@ -94,7 +96,7 @@ and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (l
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
-let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
+let mk_match_res ?(holes=[]) ?(root_inst=None) ?(imprecise=None) mt lhs_node lhs_rest rhs_node rhs_rest =
   {
     match_res_lhs_node = lhs_node;
     match_res_lhs_rest = lhs_rest;
@@ -103,6 +105,8 @@ let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
     match_res_compatible = [];
     match_res_rhs_node = rhs_node;
     match_res_rhs_rest = rhs_rest;
+    match_res_root_inst = root_inst;
+    match_res_infer = imprecise;
   }
 
 (*
@@ -241,9 +245,11 @@ let pr_match_res (c:match_res):unit =
   pr_hwrap "Type: " pr_match_type c.match_res_type; fmt_cut ();
   pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
   pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node; fmt_cut ();
+  pr_hwrap "root_inst: " fmt_string ((pr_option !CP.print_sv) c.match_res_root_inst); fmt_cut ();
   fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
   fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest; fmt_cut ();
   fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_compatible) ;
+  fmt_string "rhs_infer: "; fmt_string ((pr_opt !CP.print_formula) c.match_res_infer) ;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
@@ -573,12 +579,38 @@ let convert_starminus ls =
 
 (*  (resth1, anode, r_flag, phase, ctx) *)
 
+let get_views_offset prog f =
+  let stk = new Gen.stack in
+  let f_h_f hf = 
+    match hf with
+    | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name } -> 
+      let vr = get_root_view prog name p args in
+      let () = stk # push (p,vr) in Some hf 
+    | DataNode ({ h_formula_data_node = vsv; } ) 
+    | ThreadNode {h_formula_thread_node=vsv;}
+    | HVar (vsv,_) ->
+      let () = stk # push (vsv,None) in Some hf
+    | HRel (hp, e, _)   ->
+        let args = CP.diff_svl (get_all_sv hf) [hp] in
+        let root, _ = Sautil.find_root prog [hp] args [] in
+        let () = stk # push (root,None) in Some hf
+    | _ -> None in 
+  let _ = (map_h_formula f f_h_f) in
+  let r = stk # get_stk in
+  let pr = pr_pair !CP.print_sv (pr_option ((pr_pair !CP.print_sv !CP.print_formula))) in
+  let () = y_tinfo_hp (add_str "get_data_and_views" (pr_list pr)) r in
+  r
+
+
 (* 
  * Trung, delete later: 
  *   - Choose context, requires rhs_node is either a HRel or a Node (Data, View, Thread)
  *   - In acc-fold: choose_context must allow rhs_node is a general heap formula
  *     (or a chain of heap nodes and views )
  *)
+
+(* let adhoc_stk = new Gen.stack *)
+
 let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   match rhs_node with
@@ -587,19 +619,22 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   | DataNode _ 
   | HVar _
   | ViewNode _ ->
-    let imm, pimm, p = match rhs_node with
-      | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (imm, pimm, p)
-      | ViewNode { h_formula_view_node=p; h_formula_view_imm=imm } -> (imm, [], p)
+    let view_root_rhs,imm, pimm, p = match rhs_node with
+      | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (None,imm, pimm, p)
+      | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name; h_formula_view_imm=imm } -> 
+        let vr = get_root_view prog name p args in
+        (vr,imm, [], p)
       (* TODO:WN:HVar *)
-      | HVar (v,_) -> (CP.ConstAnn(Mutable), [], v)
-      | ThreadNode { h_formula_thread_node=p; } -> (CP.ConstAnn(Mutable), [], p)
+      | HVar (v,_) -> (None,CP.ConstAnn(Mutable), [], v)
+      | ThreadNode { h_formula_thread_node=p; } -> (None,CP.ConstAnn(Mutable), [], p)
       | HRel (hp, e, _) ->
         let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
         let root, _ = Sautil.find_root prog [hp] args [] in
         let () = x_tinfo_hp (add_str "root" Cprinter.string_of_spec_var) root pos in
-        (CP.ConstAnn(Mutable), [], root)
+        (None,CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
     in
+    let () = y_tinfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
     let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
     let eqns' = MCP.ptr_equations_without_null lhs_p in
     (* let emap = CP.EMapSV.build_eset eqns' in *)
@@ -617,14 +652,126 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
     let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let lhs_pp = MCP.pure_of_mix lhs_p in
+    let (same_base,other_eqn) = CP.extr_ptr_eqn lhs_pp in
     let emap = CP.EMapSV.build_eset eqns' in
+    let emap_base = CP.EMapSV.build_eset same_base in
+    let () = x_tinfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
+    let () = x_tinfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in
+    let () = x_tinfo_hp (add_str "other_eqn" (pr_list !CP.print_formula)) other_eqn no_pos in
+    let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
     let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
     (* let paset = p::paset in *)
     let asets = Csvutil.alias_nth 3 ((p, p) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets p in (* find the alias set containing p *)
-    let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    let view_root_flag = match view_root_rhs with
+      | None -> false
+      | Some _ -> true in
+    let rhs_ptr = p in
+    (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
+    (* let () = y_tinfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
+    let enhance_paset impr_stk paset =
+      let lhs_p2 =MCP.pure_of_mix lhs_p in
+      let lhs_nodes = get_views_offset prog lhs_h in
+      let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
+      let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
+      let () = y_tinfo_hp (add_str "pasets" !CP.print_svl) paset in
+      let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
+      let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
+      (* let diff_ptrs = heap_ptrs in *)
+      (* let diff_ptrs = if true (\* not(!Globals.adhoc_flag_2) *\) then *)
+      (*     Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset  *)
+      (*   else heap_ptrs *)
+      (* in *)
+      (* let () = y_tinfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in *)
+      let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in
+      let () = y_tinfo_hp (add_str "lhs_nodes" !CP.print_svl) (List.map fst lhs_nodes) in
+      (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
+      let lst = List.map (fun (d,root_lhs) -> 
+          match view_root_rhs with
+          | Some ((v,rf)) -> 
+            (* lhs_p2 |- d>=rhs_ptr  *)
+            begin
+              match root_lhs with
+              | None  ->
+                let rhs = CP.mk_is_base_ptr d rhs_ptr in
+                let r = !CP.tp_imply lhs_p2 rhs in
+                let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr" string_of_bool) r  in
+                if r then 
+                  let eq = CP.mkEqVars v d in
+                  let rhs_p = MCP.pure_of_mix rhs_p in
+                  let () =  y_tinfo_hp (add_str "rhs_p" !CP.print_formula) rhs_p  in
+                  let f = CP.join_conjunctions [lhs_p2;eq;rf;rhs_p] in
+                  let r = !CP.tp_is_sat f in
+                  let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
+                  let rf = CP.apply_subs [(v,d)] rf in
+                  let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
+                  let () =  y_tinfo_hp (add_str "is_sat hs & rhs & root_ptr" string_of_bool) r  in
+                  (d,r,Some rf)
+                else (d,r,None)
+              | Some ((v,pf)) ->
+                failwith (x_loc^"view matching..")
+            end
+          | None   -> 
+            begin
+              match root_lhs with
+              | None  ->
+                (* lhs_p2 |- rhs_ptr=d  *)
+                let rhs = CP.mkEqn d rhs_ptr no_pos in
+                let same_base = CP.EMapSV.is_equiv emap_base d rhs_ptr in  
+                let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                if same_base then
+                  let r = !CP.tp_imply lhs_p2 rhs  in
+                  if CF.no_infer_all_all estate || r then (d,r,None)
+                  else
+                    begin
+                      (* to avoid loop for bugs/ex62b.slk *)
+                      let () = y_winfo_pp "pushing to infer" in
+                      let () =  y_tinfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
+                      let () = impr_stk # push (d,rhs) in
+                      (d,true,None)   (*can we check if it shares same base *) 
+                    end
+                else 
+                  let () = y_tinfo_pp "Not same base" in
+                  (d,false,None)
+              | Some ((root,root_pf)) ->
+                let () = y_tinfo_hp (add_str "d" !CP.print_sv) d in
+                let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
+                let () = y_tinfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
+                let rhs = if CF.no_infer_all_all estate then CP.mkEqVars rhs_ptr root
+                  else CP.mk_is_base_ptr rhs_ptr d in
+                let r = !CP.tp_imply (CP.mkAnd lhs_p2 root_pf no_pos) rhs in
+                let () = y_tinfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
+                let () = y_tinfo_hp (add_str "rhs_ptr=root" string_of_bool) r  in
+                (d,r,None) (* Some rf *)
+                (* failwith (x_loc^"unfolding") *)
+            end
+            (*   | _ -> (d,false,None) *)
+            (* end *)
+        ) lhs_nodes (* diff_ptrs *) in
+      (* let () = y_tinfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in *)
+      lst in
+    (* let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in *)
+    let impr_stk = new Gen.stack in
+    let lst = if !Globals.ptr_arith_flag then
+        let lst = enhance_paset impr_stk paset in
+        let lst = List.filter (fun (_,f,_) -> f) lst in
+        let lst = List.map (fun (d,_,r) -> (d,r)) lst in
+        lst 
+      else [] in
+    let paset = 
+      if !Globals.ptr_arith_flag then 
+        if lst==[] then paset
+        else (List.map fst lst)@paset
+      else paset in
+    (* view with root ptrs *)
+    let root_lst = List.fold_left (fun acc (d,r) ->
+        match r with 
+        | None -> acc
+        | Some r -> (d,r)::acc
+      ) [] lst in
     if Gen.is_empty paset then
       failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
     else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
@@ -636,7 +783,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
-      let mt_res = x_add spatial_ctx_extract prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
+      let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst) prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
       (* WN: why is there a need to filter out root parameters? *)
       (*  affects str-inf/ex14b[23].slk *)
       (* let mt_res = x_add filter_match_res_list mt_res rhs_node in *)
@@ -842,15 +989,15 @@ and coerc_mater_match estate coercs l_vname (l_vargs:P.spec_var list) r_vname r_
   rr - right rest
 *)
 (* Trung, delete later: extract node in LHS (f) to match with node in RHS *)
-and spatial_ctx_extract p estate f a i pi rn rr emap = 
+and spatial_ctx_extract ?(impr_lst=[]) ?(view_roots=[]) p estate f a i pi rn rr emap = 
   let pr = pr_list string_of_match_res in
-  let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr_svl = !CP.print_svl in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
   (* let pr = pr_no in *)
   Debug.no_4 "spatial_ctx_extract" (add_str "h_formula" string_of_h_formula) 
     (add_str "imm" Cprinter.string_of_imm) (add_str "aset" pr_svl) 
     (add_str "rhs_node" string_of_h_formula) (add_str "list of match_res" pr) 
-    (fun _ _ _ _-> spatial_ctx_extract_x p estate f a i pi rn rr emap) f i a rn 
+    (fun _ _ _ _-> spatial_ctx_extract_x ~impr_lst:impr_lst ~view_roots:view_roots p estate f a i pi rn rr emap) f i a rn 
 
 and update_field_imm (f : h_formula) (pimm1 : CP.ann list) (consumed_ann: CP.ann list) (residue: bool): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -1116,8 +1263,8 @@ and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_
   Debug.no_4 "coerc_mater_match_gen" pr_id pr_svl pr_svl (add_str "lhs" !CF.print_h_formula) pr2
     (fun _ _ _ _ -> coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset lhs_f
 
-and spatial_ctx_extract_x prog estate (f0 : h_formula)
-    (aset : CP.spec_var list) (imm : CP.ann) (pimm : CP.ann list)
+and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_formula)
+    aset (imm : CP.ann) (pimm : CP.ann list)
     rhs_node rhs_rest emap
   : match_res list  =
   let () = x_tinfo_hp (add_str "lhs?" !CF.print_h_formula) f0 no_pos in
@@ -1147,6 +1294,7 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
   (*   | _ -> failwith "Failure of name_of_h_formula" *)
   (* in *)
   let right_name,r_vargs =  CF.name_of_h_formula rhs_node in
+  let stk = new Gen.stack in
   let rec helper f = 
     match f with    (* f is formula in LHS *)
     | HTrue -> []
@@ -1194,6 +1342,14 @@ and spatial_ctx_extract_x prog estate (f0 : h_formula)
             (* failwith "TBI" *)
           else []
         | _      ->
+          let () = y_tinfo_hp (add_str "DataNode" !CP.print_sv) p1 in
+          let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
+          let add_roots stk p1 lst =
+            try
+              let (r,rt) = List.find (fun (v,_) -> CP.eq_spec_var p1 v) lst in
+              stk # push (f,(r,rt))
+            with _ -> () in
+          let () = add_roots stk p1 view_roots in
           if ((CP.mem p1 aset) (* && (subtyp) *)) then 
             if ( (not !Globals.allow_field_ann) && produces_hole imm) then
               (* not consuming the node *)
@@ -1418,16 +1574,30 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
   let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l no_pos in
+  let lst = stk # get_stk in
+  let find r = try
+      Some (fst (snd (List.find (fun (hf,_) -> hf==r) lst)))
+    with _ -> None in
+  let is_imprecise n = 
+    try
+      Some (snd(List.find (fun (v,pf) -> 
+          match n with
+          | DataNode f -> CP.eq_spec_var f.h_formula_data_node v 
+          | _ -> false) impr_lst))
+    with _ -> None 
+  in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let () = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
-      mk_match_res ~holes:holes mt lhs_node lhs_rest rhs_node rhs_rest
-      (* { match_res_lhs_node = lhs_node; *)
-      (*  match_res_lhs_rest = lhs_rest; *)
-      (*  match_res_holes = holes; *)
-      (*  match_res_type = mt; *)
-      (*  match_res_rhs_node = rhs_node; *)
-      (*  match_res_compatible = []; *)
-      (*  match_res_rhs_rest = rhs_rest; } *)
+      mk_match_res ~holes:holes ~root_inst:(find lhs_node)
+        ~imprecise:(is_imprecise lhs_node)
+        mt lhs_node lhs_rest rhs_node rhs_rest
+        (* { match_res_lhs_node = lhs_node; *)
+        (*  match_res_lhs_rest = lhs_rest; *)
+        (*  match_res_holes = holes; *)
+        (*  match_res_type = mt; *)
+        (*  match_res_rhs_node = rhs_node; *)
+        (*  match_res_compatible = []; *)
+        (*  match_res_rhs_rest = rhs_rest; } *)
     ) l
 
 
@@ -1786,7 +1956,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
         else
           let b = 
             if (!Globals.perm = Frac) || (!Globals.perm = Bperm)
-           then not b else b 
+            then not b else b 
           in
           if b || !use_split_match then false else true 
       | _ -> true) l
@@ -2533,18 +2703,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
              let ptr = ref None in
              let left_preds = match ms with
                | Coerc_mater d ->
-                     let l_v = d.coercion_body_view in
-                     let () = y_tinfo_hp (add_str "left_view" (pr_id)) l_v in
-                     let lst = List.filter (fun vn -> not (string_eq vn h_name) ) mv.mater_target_view in
-                     let () = if lst == [] then
-                       try
-                         let _ = look_up_data_def_prog prog l_v in
-                         let () = y_tinfo_hp (add_str "coercing data " pr_id) l_v in
-                         let () = ptr := Some (l_v,M_lemma (m_res,Some d,1)) in
-                         ()
-                       with _ -> ()
-                     in
-                     l_v::lst
+                 let l_v = d.coercion_body_view in
+                 let () = y_tinfo_hp (add_str "left_view" (pr_id)) l_v in
+                 let lst = List.filter (fun vn -> not (string_eq vn h_name) ) mv.mater_target_view in
+                 let () = if lst == [] then
+                     try
+                       let _ = look_up_data_def_prog prog l_v in
+                       let () = y_tinfo_hp (add_str "coercing data " pr_id) l_v in
+                       let () = ptr := Some (l_v,M_lemma (m_res,Some d,1)) in
+                       ()
+                     with _ -> ()
+                 in
+                 l_v::lst
                | _ -> []
              in
              let () = y_tinfo_hp (add_str "left_preds" (pr_list pr_id)) left_preds in
@@ -2838,7 +3008,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
       let pr1 = pr_list string_of_match_res in
       let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
       let pr3 = string_of_action_wt_res0 in
-      x_binfo_zp (lazy ("process_matches (steps) :"
+      x_tinfo_zp (lazy ("process_matches (steps) :"
                         ^ ((add_str "\n ### LHS " pr) lhs_h)
                         ^ ((add_str "\n ### RHS " pr) rhs_node)
                         ^ ((add_str "\n ### matches " pr1) l)
@@ -2995,7 +3165,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
   let ls = List.map recalibrate_wt ys in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
   let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
-   let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
+  let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
   (* WN : is below critical? why do we need them? *)
   (* let ucert, cert = List.partition uncertain sl in (\*delay uncertain*\) *)
   (* let sl = cert@ucert in *)
@@ -3051,10 +3221,10 @@ and group_equal_actions_x (ys: action_wt list) (running:action_wt list) (running
   (action_wt list)=
   match ys with
   | [] -> let new_rs =
-    match running with
-    | [] -> rs
-    | [a] -> rs @ [a]
-    | _ -> rs @ [(running_w, Cond_action running)]
+            match running with
+            | [] -> rs
+            | [a] -> rs @ [a]
+            | _ -> rs @ [(running_w, Cond_action running)]
     in new_rs
   | (w, act)::ss ->
     if (w > running_w) then
@@ -3219,7 +3389,7 @@ and compute_actions_y prog estate es (* list of right aliases *)
       let pr1 x = pr_list (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) x in
       let pr4 = pr_list Cprinter.string_of_spec_var in
       let pr2 = string_of_action_res_simpl in
-      x_binfo_zp (lazy ("compute_action (steps) :"
+      x_tinfo_zp (lazy ("compute_action (steps) :"
                         (* ^ ((add_str "\n ### LHS " pr) lhs_h) *)
                         ^ ((add_str "\n ### RHS Cand " pr1) rhs_lst)
                         ^ ((add_str "\n ### action " string_of_action_res_simpl) r)
@@ -3245,7 +3415,7 @@ and compute_actions prog estate es (* list of right aliases *)
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) x in
   let pr4 = pr_list Cprinter.string_of_spec_var in
-  let pr2 = string_of_action_res_simpl in
+  let pr2 = string_of_action_res(* _simpl *) in
   Debug.no_6 "compute_actions"
     (add_str "EQ ptr" pr0) 
     (add_str "LHS heap" pr) 

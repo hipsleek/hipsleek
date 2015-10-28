@@ -227,6 +227,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_pos = no_pos;
                          I.view_data_name = "";
                          I.view_type_of_self = None;
+                         (* I.view_actual_root = None; *)
                          I.view_vars = vars;
                          I.view_ho_vars = []; (* TODO:HO *)
                          I.view_imm_map = [];
@@ -364,3 +365,14 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
   Debug.no_1 "rev_trans_view_decl" pr1 pr2 rev_trans_view_decl v
 
 let () = CF.rev_trans_formula := rev_trans_formula
+
+(* let rev_trans_data_decl (d: C.data_decl): I.data_decl =                              *)
+(*   let pos = d.C.data_pos in                                                          *)
+(*   { I.data_name = d.C.data_name;                                                     *)
+(*     I.data_fields = List.map (fun (i, ann) -> (i, pos, false, ann)) d.C.data_fields; *)
+(*     I.data_parent_name = d.C.data_parent_name;                                       *)
+(*     I.data_invs = List.map rev_trans_formula d.C.data_invs;                          *)
+(*     I.data_pos = pos;                                                                *)
+(*     I.data_pure_inv = map_opt rev_trans_pure d.C.data_pure_inv;                      *)
+(*     I.data_is_template = false;                                                      *)
+(*     I.data_methods = []; }                                                           *)

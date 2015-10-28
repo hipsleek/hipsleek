@@ -56,9 +56,12 @@ let process_heap_prop_extn p_tab (* pname vns *) (* mutual-rec *) (* nnn_sv *) h
 class data_table =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
-    method add_field_tags dn param = 
+    method reset =
+      lst <- []
+    method add_field_tags dn param =
+      let () = y_ninfo_hp (add_str "Add tag of" (pr_pair pr_id (pr_list (pr_list pr_id)))) (dn,param) in
       lst <- (dn,param)::lst
-    method find_tags dn = 
+    method find_tags dn =
       try
         snd(List.find (fun (n,_) -> n=dn) lst)
       with _ -> failwith (x_loc^"does not exist :"^dn)
@@ -67,16 +70,19 @@ class data_table =
         let tags = self # find_tags dn in
         List.map (fun ls -> List.mem t ls) tags
       with _ -> 
-        if dn="node" then [false;true]
-        else [false;true;true]
+        failwith (x_loc^"tag cannot be found")
+        (*   if dn="node" then [false;true] *)
+        (* else [false;true;true] *)
   end
 
 let data_decl_obj = new data_table
 
 let add_data_tags_to_obj cdata =
+  let () = y_tinfo_pp "add_data_tags_to_obj" in
+  data_decl_obj # reset;
   List.iter (fun cd ->
       let dn = cd.Cast.data_name in
-      let fields = cd.Cast.data_fields_new in
+      let fields = cd.Cast.data_fields in
       let tags = List.map snd fields in
       data_decl_obj # add_field_tags dn tags
     ) cdata

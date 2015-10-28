@@ -442,6 +442,7 @@ rule tokenizer file_name = parse
   | "@err_may" { INFER_AT_ERRMAY }
   | "@flow" { INFER_AT_FLOW }
   | "@size" { INFER_AT_SIZE }
+  | "@ana_ni" { INFER_ANA_NI }
   | "@efa" { INFER_AT_EFA }
   | "@dfa" { INFER_AT_DFA }
   | "termAssume" { TREL_ASSUME }

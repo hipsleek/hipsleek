@@ -55,8 +55,10 @@ and data_field_ann =
 
 and data_decl = { 
   data_name : ident;
-  data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
-  (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+  mutable data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
+  (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. *)
+  (* TODO design revision on how to make this more extensible; for instance:                 *)
+  (* use a record instead of a bool to capture additional information on the field?          *)
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pos : loc;
@@ -99,6 +101,7 @@ and view_decl =
     view_parent_name: (ident) option;
     mutable view_derv: bool;
     view_type_of_self : typ option;
+    (* view_actual_root : P.exp option; *)
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
@@ -286,7 +289,7 @@ and coercion_decl = { coercion_type : coercion_type;
 
 and coercion_decl_list = {
   coercion_list_elems : coercion_decl list;
-  coercion_list_kind:   lemma_kind;
+  coercion_list_kind: lemma_kind;
 }
 
 and coercion_type = 
@@ -639,6 +642,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_pos = pos;
           view_data_name = dname;
           view_type_of_self = None;
+          (* view_actual_root = None; *)
           view_imm_map = [];
           view_vars = (* List.map fst *) vs;
           view_ho_vars = [];
@@ -683,6 +687,7 @@ let mk_view_header vn opt1 cids mvs modes pos =
     view_pos = pos ;
     view_data_name = "";
     view_type_of_self = None;
+    (* view_actual_root = None; *)
     view_imm_map = [];
     view_vars = (* List.map fst *) cids;
     view_ho_vars = un_option opt1 []; 
@@ -1787,7 +1792,10 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 
 let rec look_up_data_def_x pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def_x pos rest name
-  | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
+  | [] -> 
+    let msg = ("Cannot find definition of iview " ^ name) in 
+    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
+    Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
 
 and look_up_data_def i pos (defs : data_decl list) (name : ident) 
   = Debug.no_1_num i "look_up_data_def" pr_id pr_none (look_up_data_def_x pos defs) name 
@@ -1805,7 +1813,7 @@ and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs w
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x rest name
   | [] -> 
     let msg = ("Cannot find definition of iview " ^ name) in 
-    let () = y_tinfo_pp (x_loc^msg) in
+    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
     raise Not_found
 
 and look_up_view_def_raw i (defs : view_decl list) (name : ident) 
@@ -2376,9 +2384,9 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
             (* let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in *)
             (* let () = x_tinfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in *)
             v.view_data_name <- (v.view_name)
-        else if String.length v.view_data_name = 0 then
-          (* self has unknown type *)
-          report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined")
+        (* else if String.length v.view_data_name = 0 then *)
+        (*   (\* self has unknown type *\) *)
+        (*   report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
       else 
         let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
@@ -3912,7 +3920,7 @@ let update_view_decl prog vdecl =
   let () = 
     if not (is_empty same_vdecls) then 
       y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog")
-    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.")  
+    else y_binfo_pp ("adding the view " ^ vdecl_id ^ " into iprog.")  
   in
   prog.prog_view_decls <- others @ [vdecl]
 

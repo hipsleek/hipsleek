@@ -1,0 +1,14 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+relation R(node x).
+relation P(node x).
+
+
+infer [R,P,@flow,@ver_post,@ana_ni] emp&x'=x & y=y' & P(y) & R(x) & 2<=x & 2<=y' |- emp & true.
+
+print residue.
+

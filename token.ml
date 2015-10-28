@@ -83,7 +83,8 @@ type sleek_token =
   | INFER_AT_TERM | INFER_AT_TERM_WO_POST | INFER_AT_FIELD_IMM
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_SHAPE_PRE | INFER_AT_SHAPE_POST | INFER_AT_SHAPE_PRE_POST
   | INFER_AT_ERROR | INFER_AT_FLOW | INFER_AT_PURE_FIELD
-  | INFER_AT_SIZE | INFER_AT_ARR_AS_VAR 
+  | INFER_AT_SIZE | INFER_ANA_NI
+  | INFER_AT_ARR_AS_VAR 
   | INFER_IMM_PRE | INFER_IMM_POST
   | UTPRE | UTPOST
   | UIPRE | UIPOST
@@ -149,8 +150,7 @@ module Token = struct
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
     | CHECK_NONDET -> "check_nondet"
     | CHECKSAT -> "checksat"
-    | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"
-    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
+    | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
     | SHAPE_SPLIT_BASE -> "shape_split_base" 
     | SHAPE_EXTRACT -> "shape_extract"
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
@@ -266,6 +266,7 @@ module Token = struct
     | INFER_AT_ERROR -> "@error"
     | INFER_AT_FLOW -> "@flow"
     | INFER_AT_SIZE -> "@size"
+    | INFER_ANA_NI -> "@ana_ni"
     | INFER_IMM_PRE -> "@imm_pre"
     | INFER_IMM_POST -> "@imm_post"
     | TREL_ASSUME -> "termAssume"

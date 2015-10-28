@@ -1527,6 +1527,7 @@ view_header_ext:
           view_data_name = "";
           view_imm_map = [];
           view_type_of_self = None;
+          (* view_actual_root = None; *)
           view_vars = (* List.map fst *) cids;
           view_ho_vars = [];
           (* view_frac_var = empty_iperm; *)
@@ -2748,6 +2749,7 @@ infer_type:
    | `INFER_AT_SHAPE_PRE_POST -> INF_SHAPE_PRE_POST
    | `INFER_AT_ERROR -> INF_ERROR
    | `INFER_AT_SIZE -> INF_SIZE
+   | `INFER_ANA_NI -> INF_ANA_NI
    | `INFER_AT_EFA -> INF_EFA
    | `INFER_AT_DFA -> INF_DFA
    | `INFER_AT_DE_EXC -> INF_DE_EXC
@@ -3342,7 +3344,7 @@ hprogn:
     prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
     prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
     prog_proc_decls = !proc_defs;
-    prog_coercion_decls = !coercion_defs;
+    prog_coercion_decls = List.rev !coercion_defs;
     prog_hopred_decls = !hopred_defs;
     prog_barrier_decls = !barrier_defs;
     prog_test_comps = [];
