@@ -4207,7 +4207,7 @@ let lemma_soundness =
    val mutable lhs = None
    val mutable progress = false
    method logging s =
-     (* let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
+     let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in
      ()
    method start_lemma_proving loc (coer:coercion_decl)  =
      self # logging ("Start Lemma Proving "^loc);
@@ -4228,8 +4228,13 @@ let lemma_soundness =
        end
    method start_disjunct loc = 
      (* triggerred by LHS disjunct *)
-     self # logging ("Start Disjunct"^loc)
-     ;progress <- false
+     match lemma with
+     | Some _ -> 
+       begin
+        if progress then self # logging ("Start Disjunct"^loc)
+        ;progress <- false
+       end
+     | _ -> ()
    method make_progress (c1:string) = 
      (* an folding to trigger progress *)
      self # logging "Make Progress";

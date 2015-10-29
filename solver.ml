@@ -3823,6 +3823,8 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
 (* each entailment should produce one proof, be it failure or *)
 (* success. *)
 and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid: (list_context * proof) =
+  let m = "***heap_entail_struc** " in
+  let () = lemma_soundness # start_disjunct (m^x_loc) in
   match cl with
   | FailCtx _ -> (cl,Failure)
   | SuccCtx cl ->
@@ -3878,6 +3880,8 @@ and heap_entail_one_context_struc i p i1 hp cl cs (tid: CP.spec_var option) (del
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   x_dinfo_zp (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
+  (* let m = "***heap_entail_one_context_struc** " in *)
+  (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
   let rec get_pure_conseq_from_formula f =
     match f with
     | Or fo ->
@@ -4065,6 +4069,8 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
           let tmp, prf = (* if CF.is_en_error_exc es && not (is_dis_error_exc es) then *)
             x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid
           in
+          let m = "***heap_entail_cnj_lhs_struc(after)** " in
+          let () = lemma_soundness # start_disjunct (m^x_loc) in
           (filter_set tmp, prf)
       end
     in wrap_trace es.es_path_label exec ()
@@ -4333,6 +4339,8 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
 
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
     (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
+  (* let m = "***heap_entail_cnj_lhs_struc** " in *)
+  (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
   let fv_s = CF.struc_fv ~vartype:Global_var.var_with_heap_only conseq in
   let impl_expl_vs = CF.collect_impl_expl_evars_context ctx_00 in
   (* let evars_rhs = CF.collect_evars_context ctx_00 in *)
@@ -5309,8 +5317,8 @@ and heap_entail p is_folding cl conseq pos : (list_context * proof) =
     (fun cl conseq -> heap_entail_x p is_folding cl conseq pos) cl conseq
 
 and heap_entail_x (prog : prog_decl) (is_folding : bool) (cl : list_context) (conseq : formula) pos : (list_context * proof) =
-  let m = "***heap_entail** " in
-  let () = lemma_soundness # start_disjunct (m^x_loc) in
+  (* let m = "***heap_entail** " in *)
+  (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
   match cl with
   | FailCtx _ -> (cl, Failure)
   | SuccCtx cl ->
