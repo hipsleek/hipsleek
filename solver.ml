@@ -56,6 +56,62 @@ let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.
 
 let vv_ref = ref 9999
 
+(* 
+   this object is to track progress to prevent
+   a lemma from being folded with itself prior to
+   a folding step on its LHS term 
+*)
+let lemma_soundness = Cast.lemma_soundness
+  (* object (self) *)
+  (*  val mutable lemma = None *)
+  (*  val mutable lhs = None *)
+  (*  val mutable progress = false *)
+  (*  method logging s = *)
+  (*    let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
+  (*    () *)
+  (*  method start_lemma_proving loc (coer:Cast.coercion_decl) (yy:string) = *)
+  (*    self # logging ("Start Lemma Proving "^loc); *)
+  (*    let h_v = coer.Cast.coercion_head_view in *)
+  (*    let b_v = coer.Cast.coercion_body_view in *)
+  (*    let ty = coer.Cast.coercion_type in *)
+  (*    let () = y_tinfo_hp (add_str "(hd,body)" (pr_pair pr_id pr_id)) (h_v,b_v) in *)
+  (*    let () = y_tinfo_hp (add_str "coer_type" (Cprinter.string_of_coercion_type)) ty in *)
+  (*    if  ty == Iast.Right then *)
+  (*      begin *)
+  (*        lemma <- Some coer; *)
+  (*        lhs <- Some h_v *)
+  (*      end *)
+  (*    else *)
+  (*      begin *)
+  (*        lemma <- None; *)
+  (*        lhs <- None *)
+  (*      end *)
+  (*  method start_disjunct loc =  *)
+  (*    (\* triggerred by LHS disjunct *\) *)
+  (*    self # logging ("Start Disjunct"^loc); *)
+  (*    progress <- false *)
+  (*  method make_progress (c1:string) =  *)
+  (*    (\* an folding to trigger progress *\) *)
+  (*    self # logging "Make Progress"; *)
+  (*    match lhs with *)
+  (*    | None -> () *)
+  (*    | Some c2 -> if c1==c2 then progress <- true; *)
+  (*  method safe_to_apply coer = *)
+  (*    let flag = match lemma with *)
+  (*    | None -> true *)
+  (*    | Some c2 -> progress || not(coer==c2) in *)
+  (*    if not(flag) then  *)
+  (*      self # logging "Not Safe for Lemma"; *)
+  (*    flag *)
+  (*  method end_lemma_proving loc =  *)
+  (*    self # logging ("End Lemma Proving "^loc); *)
+  (*    lemma <- None; *)
+  (*    lhs <- None; *)
+  (* end;; *)
+
+let wrapper_lemma_soundness = Cast.wrapper_lemma_soundness
+
+
 (*
 : (fun int ->
   Sautility.C.prog_decl ->
@@ -5253,6 +5309,8 @@ and heap_entail p is_folding cl conseq pos : (list_context * proof) =
     (fun cl conseq -> heap_entail_x p is_folding cl conseq pos) cl conseq
 
 and heap_entail_x (prog : prog_decl) (is_folding : bool) (cl : list_context) (conseq : formula) pos : (list_context * proof) =
+  let m = "***heap_entail** " in
+  let () = lemma_soundness # start_disjunct (m^x_loc) in
   match cl with
   | FailCtx _ -> (cl, Failure)
   | SuccCtx cl ->
@@ -5275,6 +5333,8 @@ and heap_entail_one_context i prog is_folding ctx conseq (tid: CP.spec_var optio
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.vv_trace "heap_entail_one_context" ;
+  (* let m = "***N**"^(string_of_int i) in *)
+  (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
@@ -5320,6 +5380,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
     let rs2, prf2 = heap_entail_after_sat prog is_folding c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
     ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
   | Ctx es ->
+    (* let () = lemma_soundness # start_disjunct x_loc in *)
     let exec_old () = 
       begin
         let pr = Cprinter.string_of_entail_state_short in
@@ -12802,6 +12863,11 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
           let init_pure = CP.conj_of_list init_pures pos in
           {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
       in
+      let () = y_tinfo_hp (add_str "M_fold (to make progress)" (Cprinter.string_of_h_formula)) rhs_node in
+      let lst = CF.extract_view_nodes rhs_node in
+      let () = match lst with
+        | n::_ -> Cast.lemma_soundness # make_progress n
+        | _ -> () in
       do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
     | (Context.M_infer_unfold (r,_,_))->
@@ -13327,24 +13393,25 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-      },ln,do_infer) ->
+      },coerc_opt,do_infer) ->
       (* let () = print_string ("xxx do_coercion: M_lemma \n") in *)
-      (* let () = match ln with *)
+      (* let () = match coerc_opt with *)
       (*   | None -> () *)
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
+      let () = y_tinfo_hp (add_str "M_lemma" (pr_opt Cprinter.string_of_coerc_short)) coerc_opt in
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)
         else if do_infer==1 then
           let n_estate = InferHP.infer_collect_hp_rel_unfold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
-              lhs_b rhs_b conseq ln pos in
+              lhs_b rhs_b conseq coerc_opt pos in
           (n_estate,conseq,rhs_rest,rhs_node, rhs_b)
         else
           let () = x_tinfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
           let () = x_tinfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
           let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
           let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
-              lhs_b rhs_b conseq ln pos in
+              lhs_b rhs_b conseq coerc_opt pos in
           (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
           (* failwith "need to perform infer_fold first"  *)
       in
@@ -13353,7 +13420,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
        let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
        let () = x_tinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
        let () = x_tinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
-      let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
+      let r1,r2 = do_coercion prog coerc_opt estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
     | Context.Undefined_action mr ->
       let err_msg = "undefined action" in

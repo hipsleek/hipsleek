@@ -1799,9 +1799,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       let comp_lems = Lem_store.all_lemma # get_complex_coercion in
       let pr_hf = !CF.print_h_formula in
       let () = y_tinfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
-      (* let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in *)
+      (* let () = y_tinfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in *)
       let () = y_tinfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems in
-      (* let () = y_binfo_pp "to check if complex lemma applicable here for LHS and RHS here using signature" in *)
+      (* let () = y_tinfo_pp "to check if complex lemma applicable here for LHS and RHS here using signature" in *)
       let pr_id_list = pr_list idf in
       let () = List.iter (fun lem -> 
         y_tinfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
@@ -1813,7 +1813,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig comp_lems in
       let () = y_tinfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
       let lem_act = List.map (fun lem -> (2, M_lemma (m_res, Some lem, 0))) applicable_lems in
-      let () = if not (is_empty lem_act) then y_binfo_hp (add_str "lem_act" (pr_list pr_act)) lem_act in
+      let () = if not (is_empty lem_act) then y_tinfo_hp (add_str "lem_act" (pr_list pr_act)) lem_act in
       let act = (match tup (* lhs_node, rhs_node *) with
        | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                       CF.h_formula_thread_origins = dl_origins;
@@ -2345,6 +2345,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
+         let () = y_tinfo_hp (add_str "actions" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
+         let a = List.filter (fun (_,x) -> match x with
+             | M_lemma (_,opt,_) ->
+               begin
+               match opt with 
+                 None -> true
+               | Some c -> Cast.lemma_soundness # safe_to_apply c
+               end
+             | _ -> true
+           ) a in
+         let () = y_tinfo_hp (add_str "actions(filtered unsoundness)" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
          (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | ViewNode vl, DataNode dr -> 
          let () = y_tinfo_pp "VIEW vs DATA" in
@@ -3206,12 +3217,12 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   let r = if !Globals.old_keep_all_matchres then r else new_r in
   let () = x_tinfo_hp (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (x_add process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
+  let () = x_tinfo_hp (add_str "weighted action"
+                         (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with
   | [] -> M_Nothing_to_do "no nodes on RHS"
   | xs -> 
     (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-    let () = x_tinfo_hp (add_str "weighted action"
-                           (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
     let ys = sort_wt_match opt r in
     let () = x_tinfo_hp (add_str "sorted action"
                            (pr_list_num_vert string_of_action_wt_res_simpl)) ys no_pos in

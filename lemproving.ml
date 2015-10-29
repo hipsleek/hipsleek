@@ -271,8 +271,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   in
   let pos = CF.pos_of_formula coer.C.coercion_head in
   let fv_lhs = CF.fv lhs in
-  let is_folding_flag = Cast.is_folding_coercion coer && !Globals.adhoc_flag_3 in
-  let () = y_tinfo_hp (add_str "is_folding_coerc" string_of_bool) is_folding_flag in
+  (* let is_folding_flag = Cast.is_folding_coercion coer (\* && !Globals.adhoc_flag_3 *\) in *)
+  (* let () = y_tinfo_hp (add_str "is_folding_coerc" string_of_bool) is_folding_flag in *)
   let () = y_tinfo_hp (add_str "coerc" Cprinter.string_of_coerc) coer in
   let () = y_tinfo_hp (add_str "LP.lhs" Cprinter.string_of_formula) lhs in
   let () = y_tinfo_hp (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs in
@@ -377,7 +377,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let rhs =
     (* make sure RHS is unfolded if LHS is not unfolded *)
     let rhs_unfold_ptrs = if lhs_unfold_ptrs==[] || 
-                             !Globals.enable_lemma_rhs_unfold || is_folding_flag then
+                             !Globals.enable_lemma_rhs_unfold (* || is_folding_flag *) then
         if !Globals.allow_lemma_deep_unfold then
           CFU.look_up_reachable_ptrs_sf cprog new_rhs [sv_self] true true
         else [sv_self]
@@ -411,6 +411,12 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let () = y_tinfo_hp (add_str "is_classic" string_of_bool) (coer.C.coercion_infer_obj # is_classic) in
   x_add process_coercion_check coer (CFormula lhs) (CSFormula rhs) (coer.C.coercion_infer_vars @ new_hp_infer_vars)
     coer.C.coercion_exact (* (coer.C.coercion_infer_obj # is_classic) *) coer.C.coercion_name cprog
+
+let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
+  match Cast.folding_coercion coer with
+  | None -> check_coercion_struc coer lhs rhs cprog
+  | Some c -> Solver.wrapper_lemma_soundness x_loc coer c 
+                (check_coercion_struc coer lhs rhs) cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in
