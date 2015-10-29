@@ -1,4 +1,5 @@
-# norm/ex21u2.slk (OK)
+CD ..
+MAK# norm/ex21u2.slk (OK)
 
 pred_elim_useless [ll].
 //no change
@@ -1920,129 +1921,8 @@ infer [H,H3,@classic]
     H3(x,y1) * y1::node<_,ss> |- [y] H(x,y) * y::node<_,ss>.
 print residue.
 ===================================================================
-# ex32a,ss
-
-void append3(node x, node y)
-  infer [H,@classic]
-  requires H(x,y)
-  ensures true;
-
-{    
-	if (x.next == null) 
-           x.next = y;
-	else
-           append3(x.next, y);
-}
-
-[ // BIND
-(0)H(x,y@NI)&
-true --> x::node<val_36_1569,next_36_1570>@M * 
-         HP_1571(next_36_1570,y@NI,x@NI)&
-true,
- // PRE_REC
-(2;0)HP_1571(next_36_1570,y@NI,x@NI)&
-next_36_1570!=null |#| x::node<val_36_1569,next_36_1570>@M&
-true --> H(next_36_1570,y@NI)&
-true,
- // POST
-(1;0)HP_1571(next_36_1570,y@NI,x@NI)&
-y'=y & x'=x & next_36_1570=null & next_37_1580=next_36_1570 --> emp&
-true]
-
---new-pred-synthesis  (default)
-
-# Why can't we infer:
-
-   requires x::lseg<null> & x!=null
-   ensures true;
-
-!!! **WARNING****syn.ml#188:Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards
-!!! **iast.ml#3923:Adding the view H into iprog.
-Context of Verification Failure: ex32a-app-lseg-pre.ss_34:10_34:14
-
-Last Proving Location: ex32a-app-lseg-pre.ss_39:11_39:29
-
-ERROR: at _0:0_0:0
-Message: HP_1571 is neither 2 a data nor view name
-
-!!! **synUtils.ml#792:Failure("HP_1571 is neither 2 a data nor view name")
-!!! **synUtils.ml#793:WARNING: Cannot normalize the view H
-!!! **syn.ml#686:XXX Scheduling pred_elim_useless
-!!! **norm.ml#165:USELESS Parameters eliminated:[]
-!!! **syn.ml#689:XXX Scheduling pred_reuse
-!!! **syn.ml#690:XXX derived_view names:[]
-!!! **syn.ml#693:XXX existing view names:[memLoc,H,ll]
-!!! **syn.ml#695:XXX reuse found ...:[]
-!!! **syn.ml#696:XXX Scheduling pred_reuse_subs
-!!! **sa3.ml#3289:DERIVED VIEWS:[]
-!!! **cf_ext.ml#81:add_data_tags_to_obj
-
---ops (wrong..)
-
-[ H(x_1600,y_1601) ::= x_1600::node<val_36_1569,next_36_1570>@M&next_36_1570=null(4,5)]
-
 ===================================================================
-# ex21t3a.slk -dre ".*coercion" --dd-calls-all
-
-(==solver.ml#14468==)
-apply_left_coercion@14@13@6@5@4
-apply_left_coercion inp1 :  q_131::app4b<>@M&v_130!=0 & q_131!=null&{FLOW,(20,21)=__norm#E}[]
- es_evars: [Anon_132; q_133]
- es_gen_impl_vars(E): [q]
- es_heap: self_app4b_llem::node<v_130,q_131>@M
-
-%%%                                apply_left_coercion
-%%%                                create_view_arg_list_from_pos_map (8)
-%%%                                create_view_arg_list_from_pos_map@14.
-
---adhoc-3
-
-Total number of errors: 21 in files:
-  sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
- sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
- sleek12-lend.slk({E1#Valid},{E2#Fail},{E3#Valid}) 
- infer/infer1.slk({E9#Fail}) infer/infer8.slk({E26#Fail}) imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) lemmas/lseg.slk({L3#Valid},{L4#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L1#Valid},{L3#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/lseg_case.slk({L2#Valid},{L3#Valid},{L4#Valid},{L6#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L3#Valid}) lemmas/dseg1.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
-
-  sleek12-lend.slk({E1#Valid},{E2#Fail},{E3#Valid}) 
-  infer/infer1.slk({E9#Fail}) 
-  infer/infer8.slk({E26#Fail}) 
-  imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) lemmas/rlseg.slk({L1#Valid},{L3#Valid}) 
-  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
-  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
-
 ===================================================================
-# ex21t1q
-
-lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>. 
-
-# should fail ..
-
- Lemma infer inferred succeeded in current context.
-Residue:
-
- <1>emp&{FLOW,(20,21)=__norm#E}[]
-    or emp&{FLOW,(20,21)=__norm#E}[]
-    
-[[ SEARCH ==>  
-  (Lemma <== app4b_rlem(self_app4b_rlem,self_app4b_rlem)) 
-  ==>  Match(self_app4b_rlem,self_app4b_rlem) 
-  ==>  Fold ==>  Match(q_148,q_148) ==>  
-  COND ==>  Match(q_146,q_209) ==> 
-||OR|| ==>  
- SEARCH ==>  
-  (Lemma <== app4b_rlem(self_app4b_rlem,self_app4b_rlem)) ==>  
-   Match(self_app4b_rlem,self_app4b_rlem) ==>  
-   COND ==>  BaseCaseFold]]
-
-
-!!! **solver.ml#12846:M_fold: self_app4b_rlem::app4b<>@M
-!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
-!!! **solver.ml#12846:M_fold: self_app4b_rlem::app4b<>@M
-!!! **solver.ml#12846:M_fold: q_152::app4b<>@M
-!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
-!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
-!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
-!!! **solver.ml#12846:M_fold: q_148::ll<>@M
 ===================================================================
 ===================================================================
 ===================================================================

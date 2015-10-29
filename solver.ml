@@ -56,6 +56,47 @@ let manage_unsafe_lemmas = ref (fun (repo: Iast.coercion_decl list) (iprog:Iast.
 
 let vv_ref = ref 9999
 
+(* 
+   this object is to track progress to prevent
+   a lemma from being folded with itself prior to
+   a folding step on its LHS term 
+*)
+let lemma_soundness =
+  object (self)
+   val mutable lemma = None
+   val mutable lhs = None
+   val mutable progress = false
+   method start_lemma_proving (coer:Cast.coercion_decl) (yy:string) = 
+     lemma <- Some coer;
+     lhs <- Some yy
+   method start_disjunct = 
+     (* triggerred by LHS disjunct *)
+     progress <- false
+   method make_progress (c1:string) = 
+     (* an folding to trigger progress *)
+     match lhs with
+     | None -> ()
+     | Some c2 -> if c1==c2 then progress <- true;
+   method safe_to_apply coer =
+     match lemma with
+     | None -> true
+     | Some c2 -> progress || not(coer==c2)
+   method end_lemma_proving = 
+     lemma <- None;
+     lhs <- None;
+  end;;
+
+let wrapper_lemma_soundness coer lhs f x =
+  let () = lemma_soundness # start_lemma_proving coer lhs in
+  try 
+    let r = f x in
+    let () = lemma_soundness # end_lemma_proving in
+    r
+  with e ->
+    let () = lemma_soundness # end_lemma_proving in
+    raise e
+
+
 (*
 : (fun int ->
   Sautility.C.prog_decl ->
@@ -12802,6 +12843,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
           let init_pure = CP.conj_of_list init_pures pos in
           {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
       in
+      let () = y_binfo_hp (add_str "M_fold" (Cprinter.string_of_h_formula)) rhs_node in
       do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
     | (Context.M_infer_unfold (r,_,_))->
@@ -13327,24 +13369,25 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-      },ln,do_infer) ->
+      },coerc_opt,do_infer) ->
       (* let () = print_string ("xxx do_coercion: M_lemma \n") in *)
-      (* let () = match ln with *)
+      (* let () = match coerc_opt with *)
       (*   | None -> () *)
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
+      let () = y_binfo_hp (add_str "M_lemma" (pr_opt Cprinter.string_of_coerc_short)) coerc_opt in
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)
         else if do_infer==1 then
           let n_estate = InferHP.infer_collect_hp_rel_unfold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
-              lhs_b rhs_b conseq ln pos in
+              lhs_b rhs_b conseq coerc_opt pos in
           (n_estate,conseq,rhs_rest,rhs_node, rhs_b)
         else
           let () = x_tinfo_hp (add_str  "conseq (before)" Cprinter.string_of_formula) conseq pos in
           let () = x_tinfo_hp (add_str  "estate.CF.es_formula" Cprinter.string_of_formula) estate.CF.es_formula  pos in
           let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
           let (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b) = InferHP.infer_collect_hp_rel_fold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
-              lhs_b rhs_b conseq ln pos in
+              lhs_b rhs_b conseq coerc_opt pos in
           (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
           (* failwith "need to perform infer_fold first"  *)
       in
@@ -13353,7 +13396,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
        let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
        let () = x_tinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
        let () = x_tinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
-      let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
+      let r1,r2 = do_coercion prog coerc_opt estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
     | Context.Undefined_action mr ->
       let err_msg = "undefined action" in

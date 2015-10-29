@@ -4191,8 +4191,9 @@ let get_cprog () = match !cprog with
 let set_prog cp = 
   cprog := Some cp
 
-let is_folding_coercion c =
-   (c.coercion_case == Simple) 
-  && c.coercion_type=Iast.Right
+let folding_coercion c =
+  if  (c.coercion_case == Simple) && c.coercion_type=Iast.Right 
+  then Some x_tbi
+  else None
   (* && c.coercion_univ_vars=[] *)
 

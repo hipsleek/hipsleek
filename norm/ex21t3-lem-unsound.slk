@@ -1,0 +1,93 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+HeapPred HP(node x, node y).
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p 
+	or self::node<v, q> * q::lseg<p> // & v!=0
+  inv true.
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+  
+pred app4<p> == self::node<0,p> 
+	or self::node<v, q> * q::app4<p> & v!=0 
+  inv self!=null.
+
+pred app4a<> == self::node<_,null> 
+	or self::node<_, q> * q::app4a<> & q!=null
+  inv self!=null.
+  
+pred app4b<> == self::node<0,null> 
+	or self::node<v, q> * q::app4b<> & q!=null & v!=0
+  inv self!=null.
+  
+pred app4c<p> == self::node<_,p> 
+	or self::node<_, q> * q::app4c<p> & q!=null
+  inv self!=null.
+
+//lemma_safe "app4a_lem" self::app4a<> -> self::lseg<q> * q::node<_, null>.
+
+//lemma_safe "app4b_lem" self::app4b<> -> self::lseg<q> * q::node<0, null>.
+
+lemma_safe "app4a_llem" self::app4a<> -> self::node<_, q> * q::ll<>.
+lemma_safe "app4a_rlem" self::app4a<> <- self::node<_, q> * q::ll<>.
+
+lemma_safe "app4b_llem" self::app4b<> -> self::node<_, q> * q::ll<>.
+lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>. // should fail?
+
+//lemma_infer [HP,@classic] self::app4<p> -> q::node<v, p1> * HP(self, q) & p1=p & v=0.
+
+//lemma_infer [HP,@classic,@pure_field] self::app4b<> -> self::node<v, q> * HP(q, self).
+
+//lemma_infer [HP,@classic] self::app3<> -> q::node<0, null> * HP(self, q).
+
+//print residue.
+
+//pred_elim_tl_node [app4].
+
+//pred_elim_hd_node [app4b].
+
+//print views.
+
+/*
+# ex21t1q
+
+pred_elim_tl_node [*].
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+# (1) need to use @pure_field for lemma_inference
+  (2) need to check <-> holds
+# Why app3<> dropped v!=0 pure field?
+
+[ view DP_54<>= 
+  EList
+    :EBase 
+       exists (Impl)[flted_20_83; 
+       flted_20_84](* lbl: *){14}->self::node<flted_20_83,flted_20_84>@M * 
+                                   flted_20_84::DP_54<>@M&
+       self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){15}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    , view app3<>= 
+  EBase 
+    exists (Impl)[flted_20_52; 
+    flted_20_53](* lbl: *){28}->self::node<flted_20_52,flted_20_53>@M * 
+                                flted_20_53::DP_54<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+*/
