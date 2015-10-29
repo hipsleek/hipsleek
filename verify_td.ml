@@ -491,13 +491,17 @@ let print_verify_resule res  str_time=
     let () = print_endline ("(" ^(string_of_assert_err res) ^ ", " ^  str_time ^ ")\n") in
     ()
 
-let verify_as_sat_main iprog prog iprims=
+let verify_as_sat_main iprog prog source iprims=
   let res=
     try verify_as_sat iprog prog iprims
     with e ->
         if !Globals.svcomp_compete_mode then
         VTD_Unk
         else raise e
+  in
+  let () = if !Globals.witness_gen then
+    Witness.witness_search iprog prog (source) !Globals.call_stks
+  else ()
   in
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in

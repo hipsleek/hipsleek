@@ -79,6 +79,19 @@ let parse_src src_lines fname=
   (* src_lines *)
   ()
 
+let xml_norm str=
+  let lte = Str.regexp "<=" in
+  let str1 = Str.global_replace lte "&lt;=" str in
+  let gte = Str.regexp ">=" in
+  let str2 = Str.global_replace gte "&gt;=" str1 in
+  let lt = Str.regexp "<" in
+  let str3 = Str.global_replace lt "&lt;" str2 in
+  let gt = Str.regexp ">" in
+  let str4 = Str.global_replace gt "&gt;" str3 in
+  let l_and = Str.regexp "&" in
+  let str5 = Str.global_replace l_and "&amp;" str4 in
+  str5
+
 let save_witness file_name s=
   try
     (try Unix.mkdir "logs" 0o750 with _ -> ());
@@ -217,7 +230,10 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
               (* let str_code_pure = !I.print_exp cond in *)
               let str_code_pure = if not !witness_from_orig then
                 !I.print_exp cond
-              else Array.get orig_src_lines intra_line in
+              else
+                let str = Array.get orig_src_lines intra_line in
+                xml_norm str
+              in
               let () = x_binfo_hp (add_str "COND" (pr_pair string_of_int pr_id)) (intra_line, str_code_pure) no_pos in
               let str_code = if ctl == 1 then "[" ^ str_code_pure ^ "]" else
                 "[(!" ^ str_code_pure ^ ")]"
