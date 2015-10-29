@@ -607,10 +607,10 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
         ) in
         let param = (
           match base_data with
-          | "int"   -> "<_,o>"
-          | "bool"  -> "<_,o>"
-          | "float" -> "<_,o>"
-          | "void"  -> "<_,o>"
+          | "int"   -> "<_>"
+          | "bool"  -> "<_>"
+          | "float" -> "<_>"
+          | "void"  -> "<_>"
           | "char"  -> "<_,q>"
           | _ -> (
               try 
@@ -636,7 +636,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                  "    p =  null -> ensures res = null; \n" ^
                  "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
                  (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-                 "                 ensures res::" ^ data_name ^ param ^ " & o>=0; \n" ^
+                 "                 ensures res::" ^ data_name ^ param ^ (* " & o>=0; \n" *) "; \n" ^
                  "  }\n"
         ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
@@ -912,9 +912,9 @@ and create_pointer_arithmetic_proc (op: Cil.binop) (t1: Cil.typ) (t2: Cil.typ) =
 (*           ^ "ensures res=q ;\n"*)
         | Cil.TInt _, Cil.TPtr _ ->
             typ2_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " i, " ^ typ2_name ^ " p)\n"
-            ^ "  requires p::" ^ typ2_name^ "<val>\n"
-            ^ "  ensures p::" ^ typ2_name^ "<val>"
-               ^ " * res::" ^ typ2_name^ "<val " ^ op_str ^ " i>;\n"
+            ^ "  requires p::" ^ typ2_name ^ "<val>\n"
+            ^ "  ensures p::" ^ typ2_name ^ "<val>"
+            ^ " * res::" ^ typ2_name ^ "<val " ^ op_str ^ " i>;\n"
 (*        | Cil.TPtr(Cil.TInt(Cil.IChar,_),_), Cil.TInt(Cil.IChar,_) -> *)
 (*             typ1_name ^ " " ^ proc_name ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " v)\n"*)
 (*           ^ "requires x::char_star<_,_>@L & Term[] \n"*)
