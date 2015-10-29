@@ -320,7 +320,7 @@ let add_pre_relation_scc prog scc =
 (*         else *)
 (*           sf *)
 (*   | _ -> sf *)
-
+(* old code with new/old spec *)
 let rec turn_off_infer_pure spec old_spec =
   match (spec,old_spec) with
   | (CF.EList el1,CF.EList el2) -> CF.EList (List.map (fun ((lbl,sf1),(_,sf2)) ->
@@ -353,14 +353,39 @@ let rec turn_off_infer_pure spec old_spec =
     CF.EInfer {ei with
                CF.formula_inf_obj = old_inf_obj;
                CF.formula_inf_vars = [];
-               CF.formula_inf_continuation = spec}
+               CF.formula_inf_continuation = spec }
   | _ -> spec (* failwith "turn off infer pure other" *)
 
+(* new code ignoring old_spec *)
+let rec turn_off_infer_pure spec =
+  match (spec) with
+  | (CF.EList el1) -> CF.EList (List.map (fun (lbl,sf1) ->
+      (lbl,turn_off_infer_pure sf1)) el1 )
+  | (CF.EInfer ei) ->
+    let old_inf_obj = ei.CF.formula_inf_obj # clone in
+    let () = old_inf_obj # reset INF_POST in
+    let () = old_inf_obj # reset INF_PRE in
+    let () = old_inf_obj # reset INF_SHAPE in
+    CF.EInfer {ei with
+               CF.formula_inf_obj = old_inf_obj;
+               CF.formula_inf_vars = [];}
+  | _ -> spec (* failwith "turn off infer pure other" *)
+
+let turn_off_infer_pure spec old_spec = turn_off_infer_pure spec
+  
 let resume_infer_obj_proc proc old_spec =
+  let () = y_tinfo_hp (add_str "old spec" !CF.print_struc_formula) old_spec in
+  let () = y_tinfo_hp (add_str "current spec" !CF.print_struc_formula) (proc.proc_stk_of_static_specs # top) in
   let spec = turn_off_infer_pure (proc.proc_stk_of_static_specs # top) old_spec in
-  let () = x_tinfo_hp (add_str "spec" Cprinter.string_of_struc_formula) spec no_pos in
+  let () = y_tinfo_hp (add_str "new spec" !CF.print_struc_formula) spec in
   let () = proc.proc_stk_of_static_specs # push_pr "pi:342" spec in
   proc
+
+let resume_infer_obj_proc proc old_spec =
+  let pr1 = !CF.print_struc_formula in
+  let pr2 = fun proc -> proc.Cast.proc_name in
+  Debug.no_2 "resume_infer_obj_proc" pr2 pr1 pr2
+    resume_infer_obj_proc proc old_spec
 
 let resume_infer_obj_scc scc old_specs =
   let tmp = List.combine scc old_specs in

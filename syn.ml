@@ -831,15 +831,16 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       let self_node = mk_self_node view.C.view_name vbody in
       let vbody = Typeinfer.case_normalize_renamed_formula iprog 
           (self_node::(elim_useless_vars view.C.view_vars)) [] vbody in
-      let v_sf, v_un_str = norm_view_formula view.C.view_name vbody in
-      let () = 
-        view.C.view_formula <- v_sf;
-          (* CF.formula_to_struc_formula                                                                                    *)
-          (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] vbody); *)
-        view.C.view_un_struc_formula <- v_un_str; (* [(vbody, (fresh_int (), ""))]; *)
-        view.C.view_raw_base_case <- Cf_ext.compute_raw_base_case false v_un_str;
-        view.C.view_base_case <- None
-      in
+      (* let v_sf, v_un_str = norm_view_formula view.C.view_name vbody in *)
+      (* let () =                                                                                                                 *)
+      (*   view.C.view_formula <- v_sf;                                                                                           *)
+      (*     (* CF.formula_to_struc_formula                                                                                    *) *)
+      (*     (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] vbody); *) *)
+      (*   view.C.view_un_struc_formula <- v_un_str; (* [(vbody, (fresh_int (), ""))]; *)                                         *)
+      (*   view.C.view_raw_base_case <- Cf_ext.compute_raw_base_case false v_un_str;                                              *)
+      (*   view.C.view_base_case <- None                                                                                          *)
+      (* in                                                                                                                       *)
+      let () = update_view_content cprog view vbody in
       let () = y_tinfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in
       let norm_view = norm_single_view iprog cprog view in
       let () = y_tinfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
@@ -977,6 +978,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   (* let extn_cview = C.rename_view extn_cview equiv_pid in  *)
   let () = x_add C.update_view_decl cprog extn_cview in
   let () = norm_pred.C.view_equiv_set # set ([], comb_extn_name) in
+  let () = x_add Astsimp.compute_view_x_formula cprog extn_cview !Globals.n_xpure in
   extn_cview
 
 let extn_norm_pred iprog cprog extn_pred norm_pred =
@@ -1057,12 +1059,14 @@ let unify_disj_pred iprog cprog pred =
     
     (* Construct a new view with unknown HeapPred *)
     let tmp_name = "tmp_" ^ pred.C.view_name in
-    let tmp_sf, tmp_un_str = norm_view_formula tmp_name vbody in
+    (* let tmp_sf, tmp_un_str = norm_view_formula tmp_name vbody in *)
     let tmp_cpred = { pred with
-      C.view_name = tmp_name;
-      C.view_formula = tmp_sf; (* CF.formula_to_struc_formula vbody; *)
-      C.view_un_struc_formula = tmp_un_str; (* [(vbody, (fresh_int (), ""))]; *) }  
+        C.view_name = tmp_name;
+        (* C.view_formula = tmp_sf; (* CF.formula_to_struc_formula vbody; *)           *)
+        (* C.view_un_struc_formula = tmp_un_str; (* [(vbody, (fresh_int (), ""))]; *)  *)
+      }  
     in
+    let () = update_view_content cprog tmp_cpred vbody in
     (* let tmp_ipred = Rev_ast.rev_trans_view_decl tmp_cpred in *)
     (* let () = C.update_view_decl cprog tmp_cpred in           *)
     (* let () = I.update_view_decl iprog tmp_ipred in           *)

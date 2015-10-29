@@ -824,7 +824,7 @@ let process_source_full source =
           end);
   if (!Globals.reverify_all_flag || !Globals.reverify_flag)
   then
-    let () =  Debug.info_pprint "re-verify\n" no_pos; in
+    let () = y_binfo_pp "RE-VERIFICATION\n" in
     reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
   else ();
 

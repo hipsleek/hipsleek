@@ -19754,9 +19754,16 @@ let collect_impl_expl_evars_context c =
 let collect_evars_context c =
    (fold_context (fun xs es -> es.es_evars @ xs) [] c)
 
-let remove_inf_cmd_spec new_spec = match new_spec with
+let remove_inf_cmd_spec new_spec = 
+  match new_spec with
   | EInfer s -> s.formula_inf_continuation
   | _ -> new_spec
+
+let remove_inf_cmd_spec new_spec = 
+  let pr = !print_struc_formula in
+  Debug.no_1 "remove_inf_cmd_spec" pr pr
+    remove_inf_cmd_spec new_spec
+  
 (* let un_opt e = match (CP.conv_exp_to_var e) with *)
 (*   | Some (sv,_) -> sv *)
 (*   | None ->  *)

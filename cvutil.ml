@@ -1041,6 +1041,7 @@ and conv_from_ef_disj disj =
 
 and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
   let vdef = look_up_view_def pos prog.prog_view_decls c in
+  let () = y_tinfo_hp (add_str "vdecl" !C.print_view_decl) vdef in
   (*add fractional invariant 0<f<=1, if applicable*)
   let frac_inv = match perm with
     | None -> CP.mkTrue pos
@@ -1063,7 +1064,7 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
      (* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *)
      | Some xp1 ->
        let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
-       let () = Debug.ninfo_hprint (add_str " which_xpure" string_of_int)  which_xpure no_pos in
+       let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int)  which_xpure no_pos in
        let vinv = match which_xpure with
          | -1 -> MCP.mkMTrue no_pos
          | 0 -> vdef.view_user_inv
@@ -1125,7 +1126,8 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
 
 and aux_xpure_for_view prog memset which_xpure c p vs perm rm_br pos =
   let pr = !print_sv in
-  Debug.no_3 "aux_xpure_for_view" pr_id pr !print_svl !Cast.print_mix_formula (fun _ _ _ -> aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos) c p vs
+  Debug.no_3 "aux_xpure_for_view" pr_id pr !print_svl !Cast.print_mix_formula 
+    (fun _ _ _ -> aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos) c p vs
       
 
 and xpure_heap_mem_enum_new

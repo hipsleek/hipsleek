@@ -1700,7 +1700,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
                         (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
                         C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
                         C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in
-         (ignore (List.map (fun vdef ->  (compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews2);
+         (ignore (List.map (fun vdef -> (x_add compute_view_x_formula cprog vdef !Globals.n_xpure)) cviews2);
           ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cprog1.C.prog_view_decls);
           ignore (C.build_hierarchy cprog1);
           let cprog1 = fill_base_case cprog1 in
@@ -2354,13 +2354,14 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
 
 and trans_view (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let pr = Iprinter.string_of_view_decl in
-  let pr_r = Cprinter.string_of_view_decl_short in
+  let pr_r = Cprinter.string_of_view_decl(*_short*) in
   let pr2 = add_str "mutrec" (pr_list pr_id) in
   let pr2a lst = (add_str "trans_views" (pr_list (fun v -> v.C.view_name))) lst in
   let pr3 = add_str "ann_typs" (pr_list (pr_pair pr_id pr_none)) in
   (* let pr_r = pr_none in  *)
-  Debug.no_4 "trans_view" pr pr2 pr2a pr3 pr_r  (fun _ _ _ _ -> trans_view_x prog  mutrec_vnames
-                                                    transed_views ann_typs vdef) vdef mutrec_vnames transed_views ann_typs 
+  Debug.no_4 "trans_view" pr pr2 pr2a pr3 pr_r 
+    (fun _ _ _ _ -> trans_view_x prog mutrec_vnames transed_views ann_typs vdef) 
+    vdef mutrec_vnames transed_views ann_typs 
 
 (* type: String.t list -> *)
 (*   String.t -> *)
@@ -2574,6 +2575,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let vbc_u = conv_baga_inv vbi_u in
       (* let vbi = vbc_i in *)
       let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf pos in
+      let () = y_tinfo_hp (add_str "user_inv" !MCP.print_mix_formula) user_inv in
+      let () = y_tinfo_hp (add_str "user_x_inv" !MCP.print_mix_formula) user_x_inv in
       (* let unfold_once baga = *)
       (*   match baga with *)
       (*   | None -> None *)
@@ -11370,7 +11373,7 @@ let convert_pred_to_cast_x ls_pr_new_view_tis is_add_pre iprog cprog do_pure_ext
   let () = Debug.ninfo_zprint (lazy (( "cviews1: " ^ (pr2 cviews1)))) no_pos in
   let cviews2 = x_add_1 Norm.cont_para_analysis cprog cviews1 in
   let () = cprog.C.prog_view_decls <- cprog.C.prog_view_decls@cviews2 in
-  let todo_unk =  (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in
+  let todo_unk =  (List.map (fun vdef -> x_add compute_view_x_formula cprog vdef !Globals.n_xpure) cviews2) in
   let todo_unk = (List.map (fun vdef -> set_materialized_prop vdef) cprog.C.prog_view_decls) in
   let cprog1 = fill_base_case cprog in
   let cprog2 = sat_warnings cprog1 in
@@ -11532,3 +11535,4 @@ let plugin_inferred_iviews views iprog cprog=
 let () = Iast.case_normalize_formula := case_normalize_formula;;
 let () = Typeinfer.trans_formula := trans_formula;;
 let () = Typeinfer.trans_view := trans_view;;
+let () = Derive.compute_view_x_formula := compute_view_x_formula;;
