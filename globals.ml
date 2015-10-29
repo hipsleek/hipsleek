@@ -2017,6 +2017,7 @@ let tnt_verbose = ref 1
 
 (* String Inference *)
 let new_pred_syn = ref true
+let pred_elim_node = ref false
 
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
