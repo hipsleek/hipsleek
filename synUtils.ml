@@ -763,6 +763,17 @@ let norm_view_formula vname f =
   let sf_un_str = CF.get_view_branches sf in
   sf, sf_un_str
 
+let update_view_content cprog vdecl f =
+  let v_sf, v_un_str = norm_view_formula vdecl.C.view_name f in
+  let () = 
+    vdecl.C.view_formula <- v_sf;
+    vdecl.C.view_un_struc_formula <- v_un_str;
+    vdecl.C.view_raw_base_case <- Cf_ext.compute_raw_base_case false v_un_str;
+  in
+  (* let () =  x_add Astsimp.compute_view_x_formula cprog vdecl !Globals.n_xpure in *)
+  (* let n_vdecl =  Astsimp.set_materialized_prop vdecl in                          *)
+  ()
+
 let view_decl_of_hprel prog (hprel: CF.hprel) =
   let hprel_name, hprel_args = sig_of_hprel hprel in
   let pos = no_pos in
@@ -781,18 +792,21 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   (*     vbody in                                                                   *)
   let hprel_str = CP.name_of_spec_var hprel_name in
   let vdecl = Cast.mk_view_decl_for_hp_rel hprel_str vargs false pos in
-  let v_sf, v_un_str = norm_view_formula hprel_str vbody in
+  (* let v_sf, v_un_str = norm_view_formula hprel_str vbody in *)
   let v_data_name =
     match (CP.type_of_spec_var vself) with 
     | Named n -> n
     | _ -> ""
   in
   let vdecl_w_def = { vdecl with 
-      Cast.view_formula = v_sf; (* CF.formula_to_struc_formula vbody; *)
-      Cast.view_un_struc_formula = v_un_str; (* [(vbody, (fresh_int (), ""))]; *)
+      (* Cast.view_formula = v_sf; (* CF.formula_to_struc_formula vbody; *)          *)
+      (* Cast.view_un_struc_formula = v_un_str; (* [(vbody, (fresh_int (), ""))]; *) *)
       Cast.view_kind = View_NORM; 
       Cast.view_data_name = v_data_name; } in
   (* let () = Cast.update_view_decl prog vdecl_w_def in *)
+  (* let () =  x_add Astsimp.compute_view_x_formula cprog vdecl_w_def !Globals.n_xpure in *)
+  (* let () =  Astsimp.set_materialized_prop vdecl_w_def in                               *)
+  let () = update_view_content prog vdecl_w_def vbody in
   vdecl_w_def
 
 let view_decl_of_hprel prog (hprel: CF.hprel) =
@@ -890,13 +904,14 @@ let unfolding_view iprog cprog view =
   let self_node = mk_self_node view.C.view_name unfold_view_f in
   let unfold_view_f = Typeinfer.case_normalize_renamed_formula iprog 
       (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f in
-  let v_sf, v_un_str = norm_view_formula view.C.view_name unfold_view_f in
-  let () = 
-    view.C.view_formula <- v_sf;
-      (* CF.formula_to_struc_formula                                                                                            *)
-      (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f); *)
-    view.C.view_un_struc_formula <- v_un_str; (* [(unfold_view_f, (fresh_int (), ""))]; *)
-  in
+  (* let v_sf, v_un_str = norm_view_formula view.C.view_name unfold_view_f in                                                         *)
+  (* let () =                                                                                                                         *)
+  (*   view.C.view_formula <- v_sf;                                                                                                   *)
+  (*     (* CF.formula_to_struc_formula                                                                                            *) *)
+  (*     (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f); *) *)
+  (*   view.C.view_un_struc_formula <- v_un_str; (* [(unfold_view_f, (fresh_int (), ""))]; *)                                         *)
+  (* in                                                                                                                               *)
+  let () = update_view_content cprog view unfold_view_f in
   let norm_view = norm_single_view iprog cprog view in
   norm_view
 

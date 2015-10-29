@@ -538,19 +538,22 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         | _ -> 0
       in
 
+      let () = y_tinfo_hp (add_str "lhs_p" !MCP.print_mix_formula) lhs_p in
+      let () = y_tinfo_hp (add_str "xpure_lhs_h1" !MCP.print_mix_formula) xpure_lhs_h1 in
+      let turel_ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
       let process_turel is_ret es =
-        let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
+        (* let turel_ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in *)
         let es = 
           if es.es_infer_obj # is_term (* es.es_infer_tnt *) then
-            let () = y_binfo_pp ("[process_turel] Adding termAssume into es") in
+            let () = y_tinfo_pp ("[process_turel] Adding termAssume into es") in
             if is_ret then 
-              let trel = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d c_pos in
+              let trel = Ti.add_ret_trel_stk prog turel_ctx es.es_term_res_lhs t_ann_d c_pos in
               { es with es_term_res_rhs = Some t_ann_d; es_infer_term_rel = es.es_infer_term_rel @ [Ret trel]; }
             else
-              let trel = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
+              let trel = Ti.add_call_trel_stk prog turel_ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
               { es with es_term_call_rhs =  Some t_ann_d; es_infer_term_rel = es.es_infer_term_rel @ [Call trel]; }
           else
-            let () = y_binfo_pp ("[process_turel] Not adding termAssume into es") in 
+            let () = y_tinfo_pp ("[process_turel] Not adding termAssume into es") in 
             es 
         in es
       in

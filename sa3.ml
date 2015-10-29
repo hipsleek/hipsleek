@@ -3277,7 +3277,7 @@ let infer_shapes iprog prog proc_name (constrs0: CF.hprel list)
     let hprels = CF.add_infer_type_to_hprel constrs0 in
     let sel_hprels, others = SynUtils.select_hprel_assume hprels (List.map CP.name_of_spec_var sel_hps) in
     let derived_views, nhprels = Syn.derive_view iprog prog others sel_hprels in (* shape_derive_view [sel_hps] *)
-    let derived_views = Syn.elim_tail_pred_list iprog prog derived_views in
+    (* let derived_views = Syn.elim_tail_pred_list iprog prog derived_views in *)
     let view_aset, derived_views =
       if !Globals.pred_equiv then
         let view_aset = Syn.aux_pred_reuse iprog prog derived_views in

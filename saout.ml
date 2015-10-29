@@ -246,7 +246,7 @@ let trans_hprel_2_cview_x iprog cprog proc_name hpdefs:
     (* let () = iprog.Iast.prog_view_decls <- iprog.Iast.prog_view_decls@iviews in *)
     (*convert to cview. new_views: view with annotated types*)
     let cviews = (Astsimp.convert_pred_to_cast new_views false iprog cprog false) in
-    let todo_unk =  (List.map (fun vdef -> Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews) in
+    let todo_unk =  (List.map (fun vdef -> x_add Astsimp.compute_view_x_formula cprog vdef !Globals.n_xpure) cviews) in
     let todo_unk = (List.map (fun vdef -> Astsimp.set_materialized_prop vdef) cprog.Cast.prog_view_decls) in
     let cprog = Astsimp.fill_base_case cprog in
     (* let () = Globals.do_infer_inv := old_flag in *)

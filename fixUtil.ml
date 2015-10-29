@@ -362,7 +362,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                            C.view_baga_under_inv = Some inv;
                            C.view_baga_x_over_inv = Some inv;
                            C.view_user_inv = mf;
-                           C.view_x_formula = mf;
+                           C.view_x_formula = Mcpure.merge_mems cv.C.view_x_formula mf true;
                           }
                 | Some inv0 ->
                   if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then 
@@ -376,7 +376,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                      C.view_baga_under_inv = Some inv;
                      C.view_baga_x_over_inv = Some inv;
                      C.view_user_inv = mf;
-                     C.view_x_formula = mf;
+                     C.view_x_formula = Mcpure.merge_mems cv.C.view_x_formula mf true;
                     }
                   else cv
               else
@@ -390,7 +390,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                    C.view_baga_over_inv = Some inv;
                    C.view_baga_x_over_inv = Some inv;
                    C.view_user_inv = mf;
-                   C.view_x_formula = mf;
+                   C.view_x_formula = Mcpure.merge_mems cv.C.view_x_formula mf true;
                   }
                 else cv
           ) cviews0

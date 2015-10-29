@@ -4455,6 +4455,8 @@ let pr_view_decl_short v =
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
     fmt_cut (); 
     wrap_box ("B",0) pr_struc_formula v.view_formula;
+    fmt_cut ();
+    pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
     (* pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula; *)
     pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;

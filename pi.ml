@@ -374,10 +374,10 @@ let rec turn_off_infer_pure spec =
 let turn_off_infer_pure spec old_spec = turn_off_infer_pure spec
   
 let resume_infer_obj_proc proc old_spec =
-  let () = y_binfo_hp (add_str "old spec" !CF.print_struc_formula) old_spec in
-  let () = y_binfo_hp (add_str "current spec" !CF.print_struc_formula) (proc.proc_stk_of_static_specs # top) in
+  let () = y_tinfo_hp (add_str "old spec" !CF.print_struc_formula) old_spec in
+  let () = y_tinfo_hp (add_str "current spec" !CF.print_struc_formula) (proc.proc_stk_of_static_specs # top) in
   let spec = turn_off_infer_pure (proc.proc_stk_of_static_specs # top) old_spec in
-  let () = y_binfo_hp (add_str "new spec" !CF.print_struc_formula) spec in
+  let () = y_tinfo_hp (add_str "new spec" !CF.print_struc_formula) spec in
   let () = proc.proc_stk_of_static_specs # push_pr "pi:342" spec in
   proc
 

@@ -4094,7 +4094,8 @@ let reverify_proc prog proc do_infer =
       let () = x_tinfo_hp (add_str "inside reverify" pr_id) (stk_vars # string_of_no_ln) no_pos in
       let pr_flag = not(!phase_infer_ind) in
       let new_spec = proc.proc_stk_of_static_specs # top in
-      let new_spec = CF.remove_inf_cmd_spec new_spec in
+      (* Do not remove inf_cmd when do_infer *)
+      let new_spec = if not do_infer then CF.remove_inf_cmd_spec new_spec else new_spec in
       if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then
         print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
       if pr_flag then
@@ -4363,12 +4364,14 @@ let print_infer_scc loc scc =
     | CF.EList lst -> List.concat (List.map (fun (_,s) -> collect s) lst)
     | CF.EInfer s -> (s.CF.formula_inf_vars,s.CF.formula_inf_obj)::(collect s.CF.formula_inf_continuation)
     | _ -> [] in
-  let lst = List.map (fun p -> 
-      let lst = p.proc_stk_of_static_specs # get_stk in
-      (p.proc_name,List.map collect lst)) scc in
   let head = "XXXX" in
-  let () = print_endline_quiet ("\n"^head^"Current SCC EInfer :"^loc) in
-  let () = print_endline_quiet (head^((pr_list (pr_pair pr_id (pr_list_num (pr_list_n (pr_pair !CP.print_svl (fun o -> o#string_of)))))) lst)) in
+  let () = y_tinfo_zp (lazy ("\n"^head^"Current SCC EInfer :"^loc)) in
+  let () = y_tinfo_zp (lazy (
+      let lst = List.map (fun p -> 
+        let lst = p.proc_stk_of_static_specs # get_stk in
+        (p.proc_name, List.map collect lst)) scc in
+      head^((pr_list (pr_pair pr_id (pr_list_num 
+          (pr_list_n (pr_pair !CP.print_svl (fun o -> o#string_of)))))) lst))) in
   ()
 
 let ext_pure_check_procs iprog prog proc_names error_traces=
@@ -4425,7 +4428,6 @@ let rec check_prog iprog (prog : prog_decl) =
   (****************************************************************)
   (*************************** INTERNAL ***************************)
   (****************************************************************)
-
   let verify_scc_helper prog verified_sccs scc =
 
     let () = print_infer_scc (x_loc^" Beginning") scc in
@@ -4446,8 +4448,8 @@ let rec check_prog iprog (prog : prog_decl) =
     (* let () = if (has_infer_shape_post_proc) then *)
     (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in *)
 
-    let () = x_binfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
-    let () = x_binfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
+    let () = x_tinfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
+    let () = x_tinfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
@@ -4462,7 +4464,7 @@ let rec check_prog iprog (prog : prog_decl) =
       then List.split (Pi.filter_infer_pure_scc scc) (* Remove INF_SHAPE *)
       else (scc,[]) in
     let () = print_infer_scc (x_loc^" After Remove INF_SHAPE") scc in
-    let () = y_binfo_hp (add_str "old_specs" (pr_list_ln !CF.print_struc_formula)) old_specs in
+    let () = y_tinfo_hp (add_str "old_specs" (pr_list_ln !CF.print_struc_formula)) old_specs in
 
     let () = List.iter (fun proc ->
         x_tinfo_hp (add_str "spec before phase inference for mutual-recursive groups" Cprinter.string_of_struc_formula) 
@@ -4588,9 +4590,9 @@ let rec check_prog iprog (prog : prog_decl) =
     let () =
       if has_infer_term_scc then
         let () = Ti3.add_term_relation_scc prog scc in
-        let () = wrap_reverify_scc (x_add reverify_scc) prog scc false in
+        let () = wrap_reverify_scc (x_add reverify_scc) prog scc true in
         let () = print_infer_scc (x_loc^" After term infer..") scc in
-          ()
+        ()
       else ()
     in
 
@@ -4632,6 +4634,8 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = Ti.solve verify_res should_infer_tnt prog in
     let prog = if verify_res && should_infer_tnt then Ti2.update_specs_prog prog else prog in
     let () = Ti.finalize () in
+
+    let () = print_infer_scc (x_loc^" After term infer result..") scc in
     
     let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
     let updated_scc = List.fold_left (fun r proc_id ->

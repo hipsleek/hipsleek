@@ -716,7 +716,9 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
       ^"\n quan:"^(self # string_of_quan)
   end;;
 
-
+let compute_view_x_formula: (C.prog_decl -> C.view_decl -> int -> unit) ref =
+  ref (fun _ _ _ -> failwith "TBI")
+  
 (* let prc_heap ptab = CFE.process_heap_prop_extn ptab *)
 
 let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name,prop_view) as xx) field_tag_s (* property *) 
@@ -781,22 +783,29 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
     let () = y_tinfo_hp (add_str "b4 update_view" pr_id) vn  in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
     (* let () = y_binfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in *)
-    let () = y_binfo_hp (add_str "vd(orig)" Cprinter.string_of_view_decl_short) vd in
+    let () = y_tinfo_hp (add_str "vd(orig)" Cprinter.string_of_view_decl_short) vd in
     let () = y_tinfo_hp (add_str "aft update_view" pr_id) vn  in
     new_vd
   in
+  let extend_size_vdecl vns (*mutual call*) vd =
+    let pr = !C.print_view_decl in
+    Debug.no_1 "extend_size_vdecl" pr pr 
+      (fun _ -> extend_size_vdecl vns vd) vd
+  in
+  
   let all_vd_names = List.map (List.map (fun (s,vd) -> s)) scc_vdecls in
   let extend_size_scc scc =
     let (vns,vds) = List.split scc in
     let () = p_tab # reset_mut vns in
     let vds = List.map (extend_size_vdecl vns) vds in
     let vds = x_add FixUtil.compute_inv_baga all_vd_names vds in
+    (* let () = List.iter (fun vd -> x_add !compute_view_x_formula cprog vd !Globals.n_xpure) vds in *)
     let () = List.iter (fun vd ->
         let body = vd.C.view_un_struc_formula in
         let () = Typeinfer.update_view_new_body ~base_flag:true vd body in
-        let () = y_binfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
-        let () = y_binfo_hp (add_str "new_vd" Cprinter.string_of_view_decl_short) vd in
-        let () = y_binfo_hp (add_str "new_vd(inv)" Cprinter.string_of_view_decl_inv) vd in
+        let () = y_tinfo_hp (add_str "aft Typeinfer.update_view" pr_id) vd.C.view_name  in
+        let () = y_tinfo_hp (add_str "new_vd" Cprinter.string_of_view_decl_short) vd in
+        let () = y_tinfo_hp (add_str "new_vd(inv)" Cprinter.string_of_view_decl_inv) vd in
         ()
       ) vds in
      let () = y_tinfo_hp (add_str "der_view(new)" (pr_list Cprinter.string_of_view_decl)) vds in
@@ -853,7 +862,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   let vdecls = extend_size vname scc_vdecls (property,prop_view) field_s nnn_s in
   let vdecls = List.concat vdecls in
   let () = y_tinfo_pp "need to keep entire mutual-rec vdecl generated" in  
-  let () = y_binfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl_short)) vdecls in
+  let () = y_binfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl(*_short*))) vdecls in
   vdecls
   
 (* TODO : why is this method call in many places, code clone? *)
@@ -861,10 +870,11 @@ let trans_view_dervs (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_m
       (cviews (*orig _extn*): C.view_decl list) derv : C.view_decl list =
   let pr_r = pr_list Cprinter.string_of_view_decl in
   let pr = Iprinter.string_of_view_decl in
-  let fn a b c d e f = if !Globals.old_pred_extn then [trans_view_dervs a b c d e f]
+  let fn a b c d e f = 
+    if !Globals.old_pred_extn then [trans_view_dervs a b c d e f]
     else trans_view_dervs_new a b c d e f in
-  Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> fn prog rev_form_fnc trans_view_fnc
-      lower_map_views cviews derv) derv
+  Debug.no_1 "trans_view_dervs" pr pr_r  
+    (fun _ -> fn prog rev_form_fnc trans_view_fnc lower_map_views cviews derv) derv
 
 
 let leverage_self_info_x xform formulas anns data_name=
