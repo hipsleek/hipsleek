@@ -9,7 +9,7 @@ extern int __VERIFIER_nondet_int();
 int main(void) {
   int n = 3;
   int m = __VERIFIER_nondet_int();
-  if (n>2 && n<4) {
+  if ( n>2 && m<1 || m>n) {
   ERROR: __VERIFIER_error();
   }
   return 0;
