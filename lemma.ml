@@ -78,7 +78,7 @@ let final_inst_analysis_view_x cprog vdef=
   in
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in
-  let s_hds, s_null = List.fold_left (fun (is_node, is_null) (f,_) ->
+  let s_hds, s_null = List.fold_left (fun (is_node, is_null) (f,_,_) ->
       process_branch (is_node, is_null) vname args f
     ) ([],[]) vdef.Cast.view_un_struc_formula
   in
@@ -129,8 +129,8 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
 
 (*if two views are equiv (subsume), generate an equiv (left/right) lemma*)
 let check_view_subsume iprog cprog view1 view2 need_cont_ana=
-  let v_f1 = CF.formula_of_disjuncts (List.map fst view1.C.view_un_struc_formula) in
-  let v_f2 = CF.formula_of_disjuncts (List.map fst view2.C.view_un_struc_formula) in
+  let v_f1 = CF.formula_of_disjuncts (List.map Gen.fst3 view1.C.view_un_struc_formula) in
+  let v_f2 = CF.formula_of_disjuncts (List.map Gen.fst3 view2.C.view_un_struc_formula) in
   let v_f11 = (* CF.formula_trans_heap_node (hn_c_trans (view1.C.view_name, view2.C.view_name)) *) v_f1 in
   let pos1 = (CF.pos_of_formula v_f1) in
   let pos2 = (CF.pos_of_formula v_f2) in
@@ -989,7 +989,7 @@ let do_unfold_view_hf cprog hf0 =
     | CF.ViewNode hv -> begin
         try
           let vdcl = x_add C.look_up_view_def_raw 40 cprog.C.prog_view_decls hv.CF.h_formula_view_name in
-          let fs = List.map fst vdcl.C.view_un_struc_formula in
+          let fs = List.map Gen.fst3 vdcl.C.view_un_struc_formula in
           let f_args = (CP.SpecVar (Named vdcl.C.view_name,self, Unprimed))::vdcl.C.view_vars in
           let a_args = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
           let ss = List.combine f_args  a_args in
@@ -1520,7 +1520,7 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
   if (String.compare dname "" = 0) then [] else
     let () = Debug.ninfo_hprint (add_str "dname" pr_id) dname no_pos in
     let ddecl = x_add I.look_up_data_def_raw iprog.I.prog_data_decls dname in
-    let processed_branches = List.map (fun (f, lbl) ->
+    let processed_branches = List.map (fun (f, lbl,c3) ->
         (* (* TRUNG: TODO remove it later *)                                                             *)
         (* let () = try                                                                                   *)
         (*   let self_sv = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in                     *)
@@ -1531,9 +1531,9 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
         (* with _ -> () in                                                                               *)
 
         let new_f = CF.elim_exists f in
-        (new_f, lbl)
+        (new_f, lbl,c3)
       ) vd.C.view_un_struc_formula in
-    let base_branches, inductive_branches = List.partition(fun (f, _) ->
+    let base_branches, inductive_branches = List.partition(fun (f, _,_) ->
         let (hf,_,_,_,_,_) = CF.split_components f in
         let views = collect_inductive_view_nodes hf vd in
         (List.length views = 0)
@@ -1551,8 +1551,8 @@ let generate_view_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog: C.prog
     (* statisfying view *)
     else (
       let forward_ptr = List.hd vd.C.view_forward_ptrs in
-      let base_f, base_lbl = List.hd base_branches in
-      let induct_f, induct_lbl = List.hd inductive_branches in
+      let base_f, base_lbl, _ = List.hd base_branches in
+      let induct_f, induct_lbl, _ = List.hd inductive_branches in
       let (induct_hf, _, _, _, _, _) = CF.split_components induct_f in
       let view_nodes = collect_inductive_view_nodes induct_hf vd in
       let induct_vnodes = List.filter (fun vn ->
@@ -1867,7 +1867,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
     in
     (********************************************)
     let view_args = self_sv::vd.Cast.view_vars in
-    let processed_brs = List.map (fun (f, lbl) ->
+    let processed_brs = List.map (fun (f, lbl, c3) ->
         let f1 = CF.elim_exists f in
         let _,new_f = CF.split_quantifiers f1 in
         (* let p,_,_ = x_add Cvutil.xpure_symbolic 20 cprog new_f in *)

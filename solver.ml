@@ -1675,7 +1675,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
       let vs_vdef = List.combine ((self_var vdef.view_data_name)::vdef.view_vars) (p::vs) in
       let is_in v lst = Gen.BList.mem_eq CP.eq_spec_var v lst in
       let quantif_case_vars = List.exists (fun (vdef_arg,varg) -> is_in varg eqvars && is_in vdef_arg vdef.view_case_vars) vs_vdef in
-      let joiner f = formula_of_disjuncts (fst (List.split f)) in
+      let joiner f = formula_of_disjuncts (* (fst (List.split f)) *) (List.map Gen.fst3 f) in
       let args = p::vs in
       let pr = Cprinter.string_of_spec_var in
       let () = x_tinfo_hp (add_str "quantif_case_vars" string_of_bool)  quantif_case_vars no_pos in
@@ -1688,7 +1688,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
           let f = joiner  vdef.view_un_struc_formula in 
           struc_formula_of_formula f  pos 
         | Some s,_      -> 
-          let f = joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+          let f = joiner (List.filter (fun (_,l,_)-> List.mem l s) vdef.view_un_struc_formula) in
           struc_formula_of_formula f  pos  in
       (* let joiner f = formula_of_disjuncts (fst (List.split f)) in *)
       (* let f = joiner (List.filter (fun (_,l)-> List.mem l brs) vdef.view_un_struc_formula) in *)
@@ -1849,10 +1849,10 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let vdef = x_add Cast.look_up_view_def pos prog.prog_view_decls lhs_name in
         let uf = old_uf+uf in
         (*let () = print_string "\n y\n" in*)
-        let joiner f = formula_of_disjuncts (fst (List.split f)) in
+        let joiner f = formula_of_disjuncts (* (fst (List.split f)) *) (List.map Gen.fst3 f) in
         let forms = match brs with 
           | None -> formula_of_unstruc_view_f vdef
-          | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
+          | Some s -> joiner (List.filter (fun (_,l, _)-> List.mem l s) vdef.view_un_struc_formula) in
         let () = y_tinfo_hp (add_str "forms 1" !CF.print_formula) forms in
         let from_ann = List.map fst vdef.view_ann_params in
         let anns = List.map fst anns in
@@ -3890,7 +3890,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
 and need_unfold_rhs prog vn=
   let rec look_up_view vn0=
     let vdef = x_add C.look_up_view_def_raw 42 prog.C.prog_view_decls vn0.CF.h_formula_view_name in
-    let fs = List.map fst vdef.view_un_struc_formula in
+    let fs = List.map Gen.fst3 vdef.view_un_struc_formula in
     let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
     match hv_opt with
     | Some vn1 -> look_up_view vn1
@@ -3898,14 +3898,14 @@ and need_unfold_rhs prog vn=
   in
   let vdef = look_up_view vn in
   (*looking for unknown case*)
-  let unk_hps = List.fold_left (fun r (f,_) ->
+  let unk_hps = List.fold_left (fun r (f,_,_) ->
       match CF.extract_hrel_head f with
       | Some (hp) -> r@[hp]
       | None -> r
     ) [] vdef.view_un_struc_formula in
   if unk_hps <> [] then
     let () = Debug.ninfo_zprint (lazy (("    xxxa " ))) no_pos in
-    ([(vn.CF.h_formula_view_name,vdef.C.view_un_struc_formula, vdef.C.view_vars)],unk_hps)
+    ([(vn.CF.h_formula_view_name, vdef.C.view_un_struc_formula, vdef.C.view_vars)],unk_hps)
   else
     ([],[])
 
@@ -9562,7 +9562,7 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
   let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hp) (List.map (fun sv -> (sv, NI)) (List.tl vs)) false pos in
   let vdecl_w_def = {vdecl with Cast.view_formula = CF.struc_formula_of_formula rhs pos;
-                                Cast.view_un_struc_formula = [(rhs, (fresh_int (),""))];
+                                Cast.view_un_struc_formula = [(rhs, (fresh_int (),""), None)];
                                 view_raw_base_case = Some rhs;
                                 Cast.view_base_case = Some (rhs_p, MCP.mix_of_pure rhs_p);
                     } in
@@ -11602,7 +11602,7 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
     let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
     let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hp) (List.map (fun sv -> (sv, NI)) (List.tl vs)) false pos in
     let vdecl_w_def = {vdecl with Cast.view_formula = CF.struc_formula_of_formula lhs pos;
-                                  Cast.view_un_struc_formula = [(lhs, (fresh_int (),""))];
+                                  Cast.view_un_struc_formula = [(lhs, (fresh_int (),""), None)];
                       } in
     let rhs_node1 = CF.mkViewNode (List.hd vs) (CP.name_of_spec_var hp) (List.tl vs) pos in
     do_fold prog (Some (iv,ivr,vdecl_w_def)) estate conseq rhs_node1 rhs_rest rhs_b is_folding pos
@@ -11743,7 +11743,7 @@ and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding
       report_error no_pos msg
   ) in
   (* create a new view to do fold *)
-  let induct_cases, base_cases = List.partition(fun (f, _) ->
+  let induct_cases, base_cases = List.partition(fun (f, _, _) ->
       let hviews = CF.get_views f in
       List.exists (fun hv ->
           String.compare hv.CF.h_formula_view_name vname = 0
@@ -11754,8 +11754,8 @@ and do_acc_fold_x prog estate conseq rhs_node rhs_rest rhs_b fold_seq is_folding
               ^ " but found: " ^ (!C.print_view_decl vd) ^ "\n" in
     report_error no_pos msg
   else (
-    let base_f = fst (List.hd base_cases) in
-    let induct_f = fst (List.hd induct_cases) in
+    let base_f = Gen.fst3 (List.hd base_cases) in
+    let induct_f = Gen.fst3 (List.hd induct_cases) in
     let new_vd = vdef_of_acc_fold vd base_f induct_f fold_seq in
     (* do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos                *)
     (* do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos = *)

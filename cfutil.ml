@@ -328,7 +328,7 @@ let rec collect_baga_models_heap prog hf0=
       let from_svs = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) :: vdef.Cast.view_vars in
       let to_svs = p :: vs in
       let ss = List.combine from_svs to_svs in
-      let fs = List.map (fun (f,_) -> x_add subst ss f) vdef.Cast.view_un_struc_formula in
+      let fs = List.map (fun (f,_,_) -> x_add subst ss f) vdef.Cast.view_un_struc_formula in
       List.fold_left (fun r f ->
           let m1 =  collect_consit_models prog f in
           let m12 = List.map (fun ls -> CP.intersect_svl ls to_svs) m1 in
@@ -1088,7 +1088,7 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
       let rvdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls rvn.h_formula_view_name in
       let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
       let sst = List.combine (self_sv::rvdcl.Cast.view_vars) (rvn.h_formula_view_node::rvn.h_formula_view_arguments) in
-      let rec_def_heaps = List.fold_left (fun r (f,_) ->
+      let rec_def_heaps = List.fold_left (fun r (f,_,_) ->
           let views = Cformula.get_views f in
           if List.exists (fun vn -> String.compare vn.Cformula.h_formula_view_name rvdcl.Cast.view_name = 0) views then
             let f1 = (x_add subst sst (elim_exists f)) in
@@ -1145,7 +1145,7 @@ let poss_prune_pred prog vnode f=
 let is_out_of_scope prog lvnode rvnode=
   if String.compare lvnode.h_formula_view_name rvnode.h_formula_view_name = 0 then
     let vdcl = Cast.look_up_view_def_raw 61 prog.Cast.prog_view_decls lvnode.h_formula_view_name in
-    List.exists (fun (f, _) ->
+    List.exists (fun (f, _, _) ->
         let vns = get_views f in
         let rec_vns, other = List.partition (fun vn ->
             String.compare vn.h_formula_view_name lvnode.h_formula_view_name = 0
@@ -1423,7 +1423,7 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_op
     let sst = [(self_sv,rvnode.h_formula_view_node)] in
     let ivars = [CP.name_of_spec_var rvnode.h_formula_view_node] in
     let init_mtl = [[]] in
-    List.exists (fun (f,_) ->
+    List.exists (fun (f,_,_) ->
         let dns = get_datas f in
         if List.exists (fun dn -> CP.eq_spec_var self_sv dn.h_formula_data_node) dns then
           let f1 = elim_exists f in
@@ -1581,7 +1581,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
   (* fwd *)
   let self_sv =  CP.SpecVar (Named vdecl.Cast.view_data_name, self, Unprimed) in
   let sst = [(self_sv,rvnode.h_formula_view_node)] in
-  let rhs_fs = List.fold_left (fun r (f,_) ->
+  let rhs_fs = List.fold_left (fun r (f,_,_) ->
       let dns = get_datas f in
       if List.exists (fun dn -> CP.eq_spec_var self_sv dn.h_formula_data_node) dns then
         let f1 = elim_exists f in

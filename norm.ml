@@ -72,7 +72,7 @@ let norm_elim_useless vdefs sel_vns=
   let elim_vdef ss vdef=
     let new_vdef = { vdef with
                      Cast.view_formula = CF.drop_view_paras_struc_formula vdef.Cast.view_formula ss;
-                     Cast.view_un_struc_formula =  List.map ( fun (uf, ufl) -> (CF.drop_view_paras_formula uf ss, ufl)) vdef.Cast.view_un_struc_formula;
+                     Cast.view_un_struc_formula =  List.map ( fun (uf, ufl, c3) -> (CF.drop_view_paras_formula uf ss, ufl, c3)) vdef.Cast.view_un_struc_formula;
                    }
     in
     new_vdef
@@ -95,7 +95,7 @@ let norm_elim_useless vdefs sel_vns=
                        C.view_complex_inv = None;
                        C.view_mem = None;
                        C.view_inv_lock = None;
-                       C.view_un_struc_formula = [(f, (0,"0"))];
+                       C.view_un_struc_formula = [(f, (0,"0"), None)];
                        C.view_base_case = None;
                        C.view_is_rec = false;
                        C.view_pt_by_self = [new_vname];
@@ -337,7 +337,7 @@ let norm_unfold iprog cprog
       let n = vd.C.view_name in
       List.exists (fun vn -> string_eq vn n) to_vns
     ) vdefs in
-  let ans = List.map (fun vd -> (vd,uses_unfold_set vd.C.view_un_struc_formula)) vdefs in
+  let ans = List.map (fun vd -> (vd,uses_unfold_set (List.map (fun (a,b,_) -> (a,b)) vd.C.view_un_struc_formula))) vdefs in
   let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
   let pr_vn v = v.C.view_name in
   let pr2 (v,_,f) = (pr_pair pr_id !CF.print_formula) (v,f) in
@@ -345,7 +345,7 @@ let norm_unfold iprog cprog
                          (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
   List.iter (fun (v,unf_lst) -> (* transform body of views *)
       let () = C.update_un_struc_formula (CF.repl_unfold_formula v.C.view_name unf_lst) v in
-      let view_body_lbl = v.C.view_un_struc_formula in
+      let view_body_lbl = List.map (fun (a,b,_) -> (a,b)) v.C.view_un_struc_formula in
       let old_sf = v.C.view_formula in
       let view_body = CF.convert_un_struc_to_formula view_body_lbl in
       let args = v.C.view_vars in
@@ -378,7 +378,7 @@ let norm_reuse_subs iprog cprog vdefs to_vns =
   let (edefs,vdefs) = List.partition 
       (fun vd -> vd.C.view_equiv_set # is_avail) vdefs in
   let to_decls = List.filter (fun vdcl ->
-      uses_eq_view vdcl.C.view_un_struc_formula) vdefs in
+      uses_eq_view (List.map (fun (a,b,_) -> (a,b)) vdcl.C.view_un_struc_formula)) vdefs in
   let find_f name = 
     try
       let (m,ans) = List.find (fun (m,_) -> string_eq m name) equiv_set in
@@ -646,7 +646,7 @@ let view_split_cands_x prog vdecls=
   in
   (*******END INTERNAL*******)
   let cands, non_split_vns = List.fold_left (fun (r, non_split_vns) vdecl ->
-      let fs = List.map (fun (f,_) -> f) vdecl.C.view_un_struc_formula in
+      let fs = List.map (fun (f,_,_) -> f) vdecl.C.view_un_struc_formula in
       let to_split, n_cands =  process_one_view vdecl [] fs in
       if to_split then
         (r@n_cands, non_split_vns)
@@ -870,7 +870,7 @@ let update_scc_view_args prog vdecl=
   let args = self_sv::vdecl.Cast.view_vars in
   if List.length args < 2 then ()
   else
-    let fs = List.map (fun (f,_) -> f) vdecl.C.view_un_struc_formula in
+    let fs = List.map (fun (f,_,_) -> f) vdecl.C.view_un_struc_formula in
     List.iter (update_scc_view_args_branch args) fs
 
 let norm_split_x iprog prog vdefs sel_vns=
@@ -1185,7 +1185,7 @@ let recover_view_decl_x old_vdecl vname vvars ir f=
     C.view_xpure_flag = xpure_flag;
     C.view_user_inv = memo_pf_N;
     C.view_mem = None;
-    C.view_un_struc_formula = n_un_str;
+    C.view_un_struc_formula = List.map (fun (a,b) -> (a,b,None)) n_un_str;
     C.view_is_rec = ir;
     C.view_pt_by_self = sf;
     C.view_case_vars = CP.intersect_svl vvars (CF.guard_vars cf);
@@ -1354,7 +1354,7 @@ let cont_para_analysis_view cprog vdef other_vds=
   in
   let vname = vdef.Cast.view_name in
   let args = vdef.Cast.view_vars in
-  let cont_paras = List.fold_left (fun cur_cont_paras (f,_) ->
+  let cont_paras = List.fold_left (fun cur_cont_paras (f,_,_) ->
       let br_cont_paras = (process_branch vname args f) in
       CP.intersect_svl cur_cont_paras br_cont_paras
     ) args vdef.Cast.view_un_struc_formula
@@ -1405,7 +1405,7 @@ let compute_base_case_raw branches=
       get_base r base
     | CF.Or _ -> r
   in
-  let ps = List.fold_left (fun r (f,_) -> get_base r f) [] branches in
+  let ps = List.fold_left (fun r (f,_,_) -> get_base r f) [] branches in
   match ps with
   | [p] -> Some p
   | _ -> None
@@ -1481,7 +1481,7 @@ let norm_ann_seg_opz iprog cprog cviews=
 (************* NORM for the FORMULA USED DURING UNFOLDING ***************)
 
 and norm_formula_for_unfold cprog vdef = 
-  let new_un_formula = List.map (fun (def,l) -> ((Cvutil.remove_imm_from_formula cprog def (CP.ConstAnn(Lend))), l)) vdef.C.view_un_struc_formula in
+  let new_un_formula = List.map (fun (def,l, c3) -> ((Cvutil.remove_imm_from_formula cprog def (CP.ConstAnn(Lend))), l, c3)) vdef.C.view_un_struc_formula in
   {vdef with C.view_un_struc_formula =  new_un_formula;}
 
 (*********** end NORM for the FORMULA USED DURING UNFOLDING *************)
@@ -1847,11 +1847,12 @@ let convert_vdef_to_linear_x prog (vdef: C.view_decl): C.view_decl =
   else 
     let vd = vdef in
     let f0 = vd.C.view_un_struc_formula in
-    let f1 = map_l_fst (fun f -> convert_formula_to_linear prog vdef f) f0 in
+    (* let f1 = map_l_fst (fun f -> convert_formula_to_linear prog vdef f) f0 in *)
+    let f1 = List.map (fun (f, c2,c3) -> (convert_formula_to_linear prog vdef f, c2,c3)) f0 in
     {vd with
      (* C.view_is_tail_recursive = false; *)
      (* view_formula : F.struc_formula *)
-     C.view_linear_formula = f1; 
+     C.view_linear_formula = List.map (fun (a,b,_) -> (a,b)) f1; 
      C.view_un_struc_formula = f1;
      (* view_materialized_vars : mater_property list; *)
     }

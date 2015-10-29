@@ -244,21 +244,26 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
   let () = x_binfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
-  let brs0 = List.fold_left (fun acc (_,ctx,_) -> acc@(collect_es ctx)) [] br_ctxs in
-  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in
+  let brs0 = List.fold_left (fun acc (pt,ctx,_) ->
+      let new_p_fs = List.map (fun f -> (f, pt) (collect_es ctx) in
+      acc@new_p_fs
+  ) [] br_ctxs in
+  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln (pr_pair !CF.print_formula Cprinter.string_of_path_trace))) brs0 no_pos in
+  (* let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in *)
   let e = CP.SpecVar (Int, err_var, Unprimed) in
   let safe_fl = MCP.mix_of_pure (CP.mkEqExp (CP.Var (e, no_pos)) (CP.IConst (0, no_pos)) no_pos) in
-  let brs1 = List.fold_left (fun fs f ->
+  let brs1 = List.fold_left (fun fs (f, pt) ->
       let new_f = if CF.is_error_flow f then
         let f1 = CF.substitute_flow_in_f !norm_flow_int !error_flow_int f in
         CF.mkAnd_pure f1 (MCP.mix_of_pure CP.err_p) no_pos
       else CF.mkAnd_pure f safe_fl no_pos  in
-      fs@[new_f]
+      fs@[(new_f, pt)]
   ) [] brs0 in
-  let brs2 = simplify_symex_trace prog v_args brs1 in
-  let () = x_tinfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
+  let brs2 = List.map (fun (f, pt) -> (simplify_symex_trace prog v_args f, pt)) brs1 in
+  let () = x_tinfo_hp (add_str ("brs2") (pr_list_ln (pr_pair !CF.print_formula Cprinter.string_of_path_trace))) brs2 no_pos in
   (* generate new iview *)
-  let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs2) (List.tl brs2) in
+  (* let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs2) (List.tl brs2) in *)
+  let f_body = brs2 in
   (* let vars = List.map CP.name_of_spec_var v_args in *)
   (* let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in *)
   (* let f_body1,tis = Cfutil.norm_free_vars f_body (v_args) in *)

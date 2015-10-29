@@ -2220,7 +2220,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                  CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
              if (syn_lem_typ != gen_lemma_action_invalid) then
                let acts =
-                 if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
+                 if (CFU.get_shortest_length_base (List.map fst3 vr_vdef.view_un_struc_formula)
                        vr_name) >0 then
                    (*find the first viewnode readable from left datanode*)
                    let lvs = CF.look_up_reachable_first_reachable_view prog

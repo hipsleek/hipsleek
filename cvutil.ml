@@ -405,7 +405,7 @@ let build_vis prog f=
     (fun _ -> build_vis_x prog f) f
 
 let rec find_self_sv fs= match fs with
-  | (f,_)::rest ->begin let svl = Cformula.fv f in
+  | (f,_,_)::rest ->begin let svl = Cformula.fv f in
     try
       let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) self = 0) svl in
       self_sv
@@ -418,7 +418,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
   (*********************************)
   let rec find_self_sv fs=
     match fs with
-    | (f,_)::rest ->begin let svl = Cformula.fv f in
+    | (f,_,_)::rest ->begin let svl = Cformula.fv f in
         try
           let self_sv = List.find (fun sv -> String.compare (CP.name_of_spec_var sv) self = 0) svl in
           self_sv
@@ -476,7 +476,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
   (*********************************)
   let rec fold_left_eager (r_unsat_vis,r_sat_vis, r_new_vis) brs=
     match brs with
-    | (f,_)::rest ->
+    | (f,_,_)::rest ->
       let n_unsat_vis, n_sat_vis, n_new_vis = (process_one_f fr_args sst f) in
       if term_first_sat &&  n_sat_vis !=[] then
         (r_unsat_vis@n_unsat_vis,r_sat_vis@n_sat_vis, r_new_vis@n_new_vis)

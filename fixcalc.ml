@@ -547,7 +547,7 @@ let slk2fix_body lower_invs fml0 vname dataname para_names=
   let fr_vars = CP.fresh_spec_vars (vars) in
   let sst = List.combine vars fr_vars in
   let rev_sst = List.combine fr_vars vars in
-  let fs = List.map (fun (f,_) -> x_add Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
+  let fs = List.map (fun (f,_,_) -> x_add Cformula.subst sst (x_add subst_inv_lower_view lower_invs f)) fml0 in
   let input_fixcalc =
     try
       vname ^ ":={[" ^ (self) ^ (if (List.length fr_vars > 0) then "," else "") ^ (string_of_elems fr_vars fixcalc_of_spec_var ",") ^
@@ -681,7 +681,7 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
 
 let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var list) lower_invs: CP.formula =
   let pr1 = !CP.print_formula in
-  let pr2 (f, _) = Cprinter.string_of_formula f in
+  let pr2 (f, _,_) = Cprinter.string_of_formula f in
   Debug.no_3 "compute_heap_pure_inv" (pr_list_ln pr2) pr_id !CP.print_svl pr1
     (fun _ _ _ ->  compute_heap_pure_inv fml name data_name para_names lower_invs)
     fml name para_names
@@ -689,7 +689,7 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
 (******************************************************************************)
 
 let compute_inv_x name vars fml data_name lower_views pf =
-  if List.exists CP.is_bag_typ vars then Fixbag.compute_inv name vars fml pf 1
+  if List.exists CP.is_bag_typ vars then Fixbag.compute_inv name vars (List.map (fun (a,b,_) -> (a,b)) fml) pf 1
   else
   if not !Globals.do_infer_inv then pf
   else
@@ -709,7 +709,7 @@ let compute_inv_x name vars fml data_name lower_views pf =
     else pf
 
 let compute_inv name vars fml data_name lower_views pf =
-  let pr1 (f,_) = Cprinter.prtt_string_of_formula f in
+  let pr1 (f,_,_) = Cprinter.prtt_string_of_formula f in
   let pr2 = !CP.print_formula in
   let pr3 vdecl = pr_id vdecl.Cast.view_name in
   Debug.no_5 " compute_inv" pr_id !CP.print_svl (pr_list_ln pr1) (pr_list pr3) pr2 pr2

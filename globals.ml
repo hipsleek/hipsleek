@@ -85,7 +85,6 @@ type flags =
   | Flag_int of int
   | Flag_float of float
 
-type prog_path_label = int list
 
 type bformula_label = int
 and ho_branch_label = string
@@ -125,6 +124,8 @@ let combine_lbl (i1,s1)(i2,s2) = match s1 with
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
 
 type path_trace = (control_path_id_strict * path_label) list
+
+
 
 (* and loc =  { *)
 (*     start_pos : Lexing.position (\* might be expanded to contain more information *\); *)

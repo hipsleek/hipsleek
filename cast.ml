@@ -141,7 +141,7 @@ and view_decl = {
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
   (* main body of a predicate *)
   mutable view_formula : F.struc_formula; (* case-structured formula *)
-  mutable view_un_struc_formula : (Cformula.formula * formula_label * prog_path_label option) list ; 
+  mutable view_un_struc_formula : (Cformula.formula * formula_label * path_trace option) list ; 
     (*used by the unfold, pre transformed in order to avoid multiple transformations*)
   mutable view_raw_base_case: Cformula.formula option;
   mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
@@ -2341,7 +2341,8 @@ let check_proper_return cret_type exc_list f =
   Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
 (* TODO : res must be consistent with flow outcome *)
 
-let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
+let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (* (fst (List.split vd.view_un_struc_formula)) *)
+  (List.map Gen.fst3 vd.view_un_struc_formula)
 
 
 let vdef_fold_use_bc prog ln2  = match ln2 with
@@ -2397,7 +2398,7 @@ let vdef_lemma_fold prog coer  =
                let rhs = F.subst_struc subs rhs in
                (* let un_struc =  F.struc_to_view_un_s (F.label_view rhs) in *)
                let un_struc =  F.get_view_branches (F.label_view rhs) in
-               Some {vd with view_formula = rhs; view_un_struc_formula = un_struc}
+               Some {vd with view_formula = rhs; view_un_struc_formula = List.map (fun (a,b) -> (a,b,None)) un_struc}
              with  
              | Not_found -> None
             )
@@ -3016,7 +3017,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
     (* imply the nontouching condition                                *)
     not (!imply_raw pf nontouching_cond)
   ) in
-  let branches, _ = List.split vdecl.view_un_struc_formula in
+  let branches, _,_ = (* List.split *) Gen.BList.split3 vdecl.view_un_struc_formula in
   List.for_all is_touching_branch branches
 
 let is_touching_view (vdecl: view_decl) : bool =
@@ -3047,7 +3048,7 @@ let is_segmented_view_x (vdecl: view_decl) : bool =
         not (!imply_raw pf null_cond)
       ) forward_ptrs
   ) in
-  let branches, _ = List.split vdecl.view_un_struc_formula in
+  let branches, _, _ = (* List.split *) Gen.BList.split3 vdecl.view_un_struc_formula in
   let segmented = (List.for_all is_segmented_branch branches) in
   segmented
 
@@ -3205,7 +3206,7 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
     let views = collect_view_pointed_by_self f in
     List.exists (fun vn -> String.compare vn vname = 0) views
   ) in
-  let branches, _ = List.split vd.view_un_struc_formula in
+  let branches, _, _ = (* List.split *) Gen.BList.split3 vd.view_un_struc_formula in
   let tail_recursive = (List.exists is_tail_recursive_branch branches) in
   tail_recursive
 
@@ -3290,7 +3291,7 @@ let collect_subs_from_view_formula (f: F.formula) (vd: view_decl)
 (* split view formula to base cases and inductive cases *) 
 let split_view_branches (vd: view_decl) : (F.formula list * F.formula list) =
   let vname = vd.view_name in
-  let branches,_ = List.split vd.view_un_struc_formula in
+  let branches,_,_ = (* List.split *) Gen.BList.split3 vd.view_un_struc_formula in
   let base_fs, induct_fs = List.partition (fun f ->
       let views = F.get_views f in
       let induct_views = List.filter (fun vd ->
@@ -3360,7 +3361,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
   let vname = vd.view_name in
   let dname = vd.view_data_name in
   let self_var = P.SpecVar (Named dname, self, Unprimed) in
-  let branches, _ = List.split vd.view_un_struc_formula in
+  let branches, _, _ = (* List.split *) Gen.BList.split3 vd.view_un_struc_formula in
   let base_fs, induct_fs = split_view_branches vd in
   if (List.length base_fs != 1) then []
   (* consider only the predicates have 1 base case*)
@@ -3983,7 +3984,7 @@ let get_view_name_equiv view_decls vl =
 let get_simple_unfold lst = 
   match lst with
   | [] -> failwith "empty defn?"
-  | [(f,_)] ->
+  | [(f,_,_)] ->
     let () = y_tinfo_hp (add_str "simple formula?" 
                            !Cformula.print_formula) f in
     Some f
@@ -4008,13 +4009,13 @@ let get_all_view_equiv_set vdefs =
 
 let update_un_struc_formula fn vdef =
   let uf = vdef.view_un_struc_formula in
-  let uf = List.map (fun (f,l) -> (fn f,l)) uf in
+  let uf = List.map (fun (f,l, c) -> (fn f,l, c)) uf in
   vdef.view_un_struc_formula <- uf
 
 let update_un_struc_formula_one f vdef =
   (* let uf = vdef.view_un_struc_formula in *)
   (* let uf = List.map (fun (f,l) -> (fn f,l)) uf in *)
-  vdef.view_un_struc_formula <- [(f,(0,""))]
+  vdef.view_un_struc_formula <- [(f,(0,""), None)]
 
 let update_view_formula fn vdef =
   let uf = vdef.view_formula in

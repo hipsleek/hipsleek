@@ -114,7 +114,7 @@ let norm_checkeq_views_x iprog cprog cviews0=
     Cformula.formula_of_heap vnode no_pos
   in
   let extract_unknown_preds vdcl=
-    let hps = List.fold_left (fun r (f,_) -> r@(Cformula.get_hp_rel_name_formula f)) [] vdcl.Cast. view_un_struc_formula in
+    let hps = List.fold_left (fun r (f,_,_) -> r@(Cformula.get_hp_rel_name_formula f)) [] vdcl.Cast. view_un_struc_formula in
     List.map CP.name_of_spec_var hps
   in
   let checkeq_view vdecl1 vdecl2=

@@ -835,7 +835,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       let () = 
         view.C.view_formula <- CF.formula_to_struc_formula 
             (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] vbody);
-        view.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""))];
+        view.C.view_un_struc_formula <- [(vbody, (fresh_int (), ""), None)];
         view.C.view_raw_base_case <- None;
         view.C.view_base_case <- None
       in
@@ -977,7 +977,7 @@ let unify_disj_pred iprog cprog pred =
     let tmp_cpred = { pred with
       C.view_name = tmp_name;
       C.view_formula = CF.formula_to_struc_formula vbody;
-      C.view_un_struc_formula = [(vbody, (fresh_int (), ""))]; } 
+      C.view_un_struc_formula = [(vbody, (fresh_int (), ""), None)]; } 
     in
     (* let tmp_ipred = Rev_ast.rev_trans_view_decl tmp_cpred in *)
     (* let () = C.update_view_decl cprog tmp_cpred in           *)

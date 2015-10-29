@@ -7032,7 +7032,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
         try
           let (v_name,v_un_struc_formula, v_vars) = look_up_vdef pr_views hv.h_formula_view_name in
           let f_args = (CP.SpecVar (Named v_name,self, Unprimed))::v_vars in
-          let fs = List.map (fun (f,_) -> fresh_var f_args f) v_un_struc_formula in
+          let fs = List.map (fun (f,_,_) -> fresh_var f_args f) v_un_struc_formula in
           let a_args = hv.h_formula_view_node::hv.h_formula_view_arguments in
           let ss = List.combine f_args  a_args in
           let fs1 = List.map (x_add subst ss) fs in
@@ -19138,7 +19138,7 @@ let project_formula_num f inv svl =
   helper f
 
 let project_body_num body inv svl =
-  List.fold_left (fun acc (f,_) ->
+  List.fold_left (fun acc (f,_,_) ->
       let pf = project_formula_num f inv svl in
       CP.mkOr acc pf None no_pos
     ) (CP.mkFalse no_pos) body
@@ -19148,7 +19148,7 @@ let project_body_num body inv svl =
 (*Loc: should support mutrec views*)
 let project_body_num body inv svl =
   let pr = !print_pure_f in
-  Debug.no_3 "project_body_num" (pr_list (fun (a,_) -> !print_formula a)) pr (!print_spec_var_list) pr project_body_num body inv svl 
+  Debug.no_3 "project_body_num" (pr_list (fun (a,_,_) -> !print_formula a)) pr (!print_spec_var_list) pr project_body_num body inv svl 
 
 let subst_hvar_struc f subst =
   let f_f e = Some (subst_hvar e subst) in

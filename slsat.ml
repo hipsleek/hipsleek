@@ -104,7 +104,7 @@ let unfold_one_view_x prog form_red_fnc (vnode:h_formula_view)=
     end
   in
   let sst = List.combine (self_sv::vdecl.Cast.view_vars) act_args1 in
-  let fs = List.map (fun (f, _) -> subst sst f) vdecl.Cast.view_un_struc_formula in
+  let fs = List.map (fun (f, _, path_ids) -> subst sst f) vdecl.Cast.view_un_struc_formula in
   (*base case should be the first*)
   let base_fs, rec_fs = List.partition (fun f -> Cfutil.is_empty_heap_f f) fs in
   let fs1 = base_fs@rec_fs in

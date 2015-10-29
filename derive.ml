@@ -135,7 +135,8 @@ let generate_extn_ho_procs prog cviews extn_view_name=
       (n_p3,quans)
   in
   let extn_v = x_add Cast.look_up_view_def_raw 47  cviews extn_view_name in
-  let extn_fs = fst (List.split extn_v.Cast.view_un_struc_formula) in
+  (* let extn_fs = fst (List.split extn_v.Cast.view_un_struc_formula) in *)
+  let extn_fs = List.map Gen.fst3 extn_v.Cast.view_un_struc_formula in
   let inv_p = (MCP.pure_of_mix extn_v.Cast.view_user_inv) in
   let (brs, val_extns) = CF.classify_formula_branch extn_fs inv_p extn_view_name
       extn_v.Cast.view_vars extn_v.Cast.view_prop_extns in
@@ -199,7 +200,8 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   (*find data fields anns*)
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
   (*formula: extend with new args*)
-  let fs,labels = List.split orig_view.Cast.view_un_struc_formula in
+  (* let fs,labels = List.split orig_view.Cast.view_un_struc_formula in *)
+  let fs,labels,_ = Gen.BList.split3 orig_view.Cast.view_un_struc_formula in
   let fs1 = List.map (fun f -> fst (Cfutil.subst_views_form lower_map_views false f)) fs in
   let fs = List.map Cformula.elim_exists (List.map Cfutil.fresh_exists fs1) in
   let pos = view_derv.Iast.view_pos in
@@ -406,7 +408,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
  *)
   (**********************************)
   (*spec process*)
-  let spec_fs,_ = List.split spec_view.Cast.view_un_struc_formula in
+  let spec_fs,_,_ = Gen.BList.split3 spec_view.Cast.view_un_struc_formula in
   let inv_p = (MCP.pure_of_mix spec_view.Cast.view_user_inv) in
   let (spec_brs, spec_val_extns) = CF.classify_formula_branch spec_fs inv_p extn_view_name (* spec_view.Cast.view_name *)
       spec_view.Cast.view_vars spec_view.Cast.view_prop_extns in
@@ -422,7 +424,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   let orig_view = x_add Cast.look_up_view_def_raw 50 cviews orig_view_name in
   (*find data fields anns*)
   let ls_dname_pos = Iast.look_up_field_ann prog orig_view.Cast.view_data_name extn_props in
-  let orig_fs,labels = List.split orig_view.Cast.view_un_struc_formula in
+  let orig_fs,labels,_ = Gen.BList.split3 orig_view.Cast.view_un_struc_formula in
   let ss = List.combine orig_view.Cast.view_vars spec_view.Cast.view_vars in
   let spec_fs = List.map (x_add CF.subst ss) orig_fs in
   let pure_extn_svl = [ (CP.SpecVar (Named (view_derv.Iast.view_data_name),self, Unprimed))] in
@@ -436,7 +438,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
   (*extend ind cases*)
   let extn_ind_brs = List.map (fun a -> do_extend_ind_case a spec_ind_brs) orig_ind_brs in
   (*unstruct*)
-  let new_un_struc_formulas = List.combine (extn_base_brs@extn_ind_brs) labels in
+  let new_un_struc_formulas = List.map (fun (a,b) -> (a,b,None)) (List.combine (extn_base_brs@extn_ind_brs) labels) in
   (*struct*)
   let struct_fs = List.map (fun f -> let p = CF.pos_of_formula f in CF.struc_formula_of_formula f p)
       (extn_base_brs@extn_ind_brs) in
@@ -455,7 +457,7 @@ let trans_view_one_spec_x (prog : Iast.prog_decl) (cviews (*orig _extn*) : Cast.
     | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
     | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos
   in
-  let rbc = List.fold_left (fun a (c,l)-> 
+  let rbc = List.fold_left (fun a (c,l,_)-> 
       let fc = f_tr_base c in
       if (CF.isAnyConstFalse fc) then a 
       else match a with 

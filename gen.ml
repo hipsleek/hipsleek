@@ -352,7 +352,6 @@ end;;
 (*       val reset : unit -> unit *)
 (*     end;; *)
 
-
 module BList =
 struct
 
@@ -458,6 +457,9 @@ struct
     match n with
     | [] -> false
     | q::qs -> if (List.exists (fun c-> eq q c) qs) then true else check_dups_eq eq qs 
+
+  let split3 l= List.fold_left (fun (acc1, acc2,acc3) (a1,a2,a3) -> (acc1@[a1], acc2@[a2],acc3@[a3]) ) ([],[],[]) l
+  let drop3rd l = List.map (fun (e1,e2,_) -> (e1,e2)) l
 
   let rec get_all_pairs ls = match ls with
     | [] -> []
@@ -2438,6 +2440,8 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
       try Some (not (has_path_exc t e1 e2)) with Not_found -> None
     let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
   end
+
+let fst3 (a,_,_) = a
 
 include Basic
 include SysUti
