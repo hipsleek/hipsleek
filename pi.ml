@@ -320,7 +320,7 @@ let add_pre_relation_scc prog scc =
 (*         else *)
 (*           sf *)
 (*   | _ -> sf *)
-
+(* old code with new/old spec *)
 let rec turn_off_infer_pure spec old_spec =
   match (spec,old_spec) with
   | (CF.EList el1,CF.EList el2) -> CF.EList (List.map (fun ((lbl,sf1),(_,sf2)) ->
@@ -356,6 +356,23 @@ let rec turn_off_infer_pure spec old_spec =
                CF.formula_inf_continuation = spec }
   | _ -> spec (* failwith "turn off infer pure other" *)
 
+(* new code ignoring old_spec *)
+let rec turn_off_infer_pure spec =
+  match (spec) with
+  | (CF.EList el1) -> CF.EList (List.map (fun (lbl,sf1) ->
+      (lbl,turn_off_infer_pure sf1)) el1 )
+  | (CF.EInfer ei) ->
+    let old_inf_obj = ei.CF.formula_inf_obj # clone in
+    let () = old_inf_obj # reset INF_POST in
+    let () = old_inf_obj # reset INF_PRE in
+    let () = old_inf_obj # reset INF_SHAPE in
+    CF.EInfer {ei with
+               CF.formula_inf_obj = old_inf_obj;
+               CF.formula_inf_vars = [];}
+  | _ -> spec (* failwith "turn off infer pure other" *)
+
+let turn_off_infer_pure spec old_spec = turn_off_infer_pure spec
+  
 let resume_infer_obj_proc proc old_spec =
   let () = y_binfo_hp (add_str "old spec" !CF.print_struc_formula) old_spec in
   let () = y_binfo_hp (add_str "current spec" !CF.print_struc_formula) (proc.proc_stk_of_static_specs # top) in
