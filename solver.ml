@@ -74,8 +74,8 @@ let lemma_soundness = Cast.lemma_soundness
   (*    let h_v = coer.Cast.coercion_head_view in *)
   (*    let b_v = coer.Cast.coercion_body_view in *)
   (*    let ty = coer.Cast.coercion_type in *)
-  (*    let () = y_binfo_hp (add_str "(hd,body)" (pr_pair pr_id pr_id)) (h_v,b_v) in *)
-  (*    let () = y_binfo_hp (add_str "coer_type" (Cprinter.string_of_coercion_type)) ty in *)
+  (*    let () = y_tinfo_hp (add_str "(hd,body)" (pr_pair pr_id pr_id)) (h_v,b_v) in *)
+  (*    let () = y_tinfo_hp (add_str "coer_type" (Cprinter.string_of_coercion_type)) ty in *)
   (*    if  ty == Iast.Right then *)
   (*      begin *)
   (*        lemma <- Some coer; *)
@@ -4333,7 +4333,6 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
 
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
     (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
-  let () = lemma_soundness # start_disjunct x_loc in
   let fv_s = CF.struc_fv ~vartype:Global_var.var_with_heap_only conseq in
   let impl_expl_vs = CF.collect_impl_expl_evars_context ctx_00 in
   (* let evars_rhs = CF.collect_evars_context ctx_00 in *)
@@ -5310,6 +5309,8 @@ and heap_entail p is_folding cl conseq pos : (list_context * proof) =
     (fun cl conseq -> heap_entail_x p is_folding cl conseq pos) cl conseq
 
 and heap_entail_x (prog : prog_decl) (is_folding : bool) (cl : list_context) (conseq : formula) pos : (list_context * proof) =
+  let m = "***heap_entail** " in
+  let () = lemma_soundness # start_disjunct (m^x_loc) in
   match cl with
   | FailCtx _ -> (cl, Failure)
   | SuccCtx cl ->
@@ -5332,6 +5333,8 @@ and heap_entail_one_context i prog is_folding ctx conseq (tid: CP.spec_var optio
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.vv_trace "heap_entail_one_context" ;
+  (* let m = "***N**"^(string_of_int i) in *)
+  (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
@@ -5377,6 +5380,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
     let rs2, prf2 = heap_entail_after_sat prog is_folding c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
     ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
   | Ctx es ->
+    (* let () = lemma_soundness # start_disjunct x_loc in *)
     let exec_old () = 
       begin
         let pr = Cprinter.string_of_entail_state_short in
@@ -12859,7 +12863,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
           let init_pure = CP.conj_of_list init_pures pos in
           {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
       in
-      let () = y_binfo_hp (add_str "M_fold (to make progress)" (Cprinter.string_of_h_formula)) rhs_node in
+      let () = y_tinfo_hp (add_str "M_fold (to make progress)" (Cprinter.string_of_h_formula)) rhs_node in
       let lst = CF.extract_view_nodes rhs_node in
       let () = match lst with
         | n::_ -> Cast.lemma_soundness # make_progress n
@@ -13394,7 +13398,7 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
       (* let () = match coerc_opt with *)
       (*   | None -> () *)
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
-      let () = y_binfo_hp (add_str "M_lemma" (pr_opt Cprinter.string_of_coerc_short)) coerc_opt in
+      let () = y_tinfo_hp (add_str "M_lemma" (pr_opt Cprinter.string_of_coerc_short)) coerc_opt in
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)

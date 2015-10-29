@@ -2006,9 +2006,34 @@ Total number of errors: 21 in files:
   sleek12-lend.slk({E1#Valid},{E2#Fail},{E3#Valid}) 
   infer/infer1.slk({E9#Fail}) 
   infer/infer8.slk({E26#Fail}) 
-  imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) lemmas/rlseg.slk({L1#Valid},{L3#Valid}) 
+  imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+  lemmas/rlseg.slk({L1#Valid},{L3#Valid}) 
   lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
-  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+  fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) 
+  fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
+  veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) 
+  veribsync/barrier-static.slk(no result  for {E}) 
+  veribsync/barrier-dynamic2.slk(no result  for {E}).
+
+29Oct
+
+  sleek12-lend.slk({E1#Valid},{E2#Fail},{E3#Valid}) 
+  infer/infer1.slk({E9#Fail}) 
+  infer/infer8.slk({E26#Fail}) 
+  imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+  lemmas/rlseg.slk({L1#Valid},{L3#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid})
+   lemmas/dseg1.slk({L1#Valid}) 
+  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+  fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) 
+  fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
+  veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) 
+  veribsync/barrier-static.slk(no result  for {E}) 
+  veribsync/barrier-dynamic2.slk(no result  for {E}).
 
 ===================================================================
 # ex21t3a
