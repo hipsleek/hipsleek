@@ -130,6 +130,8 @@ let string_of_path_label = string_of_int
 
 type path_trace = (control_path_id_strict * path_label) list
 
+type cond_path = int list
+
 (* and loc =  { *)
 (*     start_pos : Lexing.position (\* might be expanded to contain more information *\); *)
 (*     mid_pos : Lexing.position; *)
@@ -156,6 +158,8 @@ and vp_ann =
 
 let string_of_path_trace pt = "[" ^(String.concat ";"
    (List.map (fun (a,b) -> "(" ^ (string_of_control_path_id_strict a) ^", " ^ (string_of_path_label b) ^ ")") pt)) ^ "]"
+
+let string_of_cond_path c = "[" ^(String.concat ", " (List.map string_of_int c)) ^ "]" 
 
 let eq_vp_ann a1 a2 = 
   match a1, a2 with

@@ -225,9 +225,9 @@ let update_iprog ip=
 let sleek_hprel_assumes = CF.sleek_hprel_assumes 
     (* ref ([]: CF.hprel list) *)
 
-let sleek_hprel_defns = ref ([]: (CF.cond_path_type * CF.hp_rel_def) list)
+let sleek_hprel_defns = ref ([]: (cond_path * CF.hp_rel_def) list)
 
-let sleek_hprel_unknown = ref ([]: (CF.cond_path_type * (CP.spec_var * CP.spec_var list)) list)
+let sleek_hprel_unknown = ref ([]: (cond_path * (CP.spec_var * CP.spec_var list)) list)
 let sleek_hprel_dang = ref ([]: (CP.spec_var *CP.spec_var list) list)
 
 let should_infer_tnt = ref true

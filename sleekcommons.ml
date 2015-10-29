@@ -53,12 +53,12 @@ type command =
   | Simplify of (meta_formula)
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
-  | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
-  | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
+  | RelAssume of (cond_path * meta_formula * meta_formula option * meta_formula)
+  | RelDefn of (cond_path * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | ShapeInfer of (ident list * ident list)
   | Validate of (validate_result * ident option * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
   | ShapeDivide of (ident list * ident list)
-  | ShapeConquer of (ident list * CF.cond_path_type list)
+  | ShapeConquer of (ident list * cond_path list)
   | ShapeLFP of (ident list)
   | ShapeRec of (ident list)
   | ShapePostObl of (ident list * ident list)
@@ -70,7 +70,7 @@ type command =
   | PredUnfold of (regex_id_list)
   | ShapeExtract of (ident list)
   | ShapeDeclDang of (ident list)
-  | ShapeDeclUnknown of (CF.cond_path_type * ident list)
+  | ShapeDeclUnknown of (cond_path * ident list)
   | ShapeSConseq of (ident list * ident list)
   | ShapeAddDangling of regex_id_list
   | ShapeUnfold of regex_id_list
@@ -130,7 +130,7 @@ and validation =
   (* I{..} *)
   | V_Infer   of meta_formula option
   (* RA{..} *)
-  | V_RelAssume  of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula) option
+  | V_RelAssume  of (cond_path * meta_formula * meta_formula option * meta_formula) option
 (*
   The second component is IF.formula and not CF.formula since
   depending on how the formula is used (in negative or positive

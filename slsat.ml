@@ -7,6 +7,7 @@ open Cformula
 open Satutil
 
 module CP = Cpure
+module CF = Cformula
 
 let is_sat_pure_fnc_cex f = (let r = Tpdispatcher.is_sat_sub_no 21 f (ref 0) in (r,f))
 
@@ -15,6 +16,23 @@ let is_sat_pure_fnc f = Satutil.is_sat_pure_fnc f
 let slsat_num = ref (0:int)
 let slsat_unsat_num = ref (0:int)
 let slsat_sat_num = ref (0:int)
+
+let string_of_call_stk = pr_pair pr_id (pr_list string_of_int)
+
+let get_path_ctl f=
+  match (CF.get_path_trace f) with
+    | None -> []
+    | Some path_label ->
+          List.fold_left (fun acc (_, ctl) -> if ctl == 0 then acc else
+            acc@[ctl]
+          ) [] path_label
+
+let string_of_path (a1,a2,a3,a4,a5,a6,a7,a8) =
+  let pr1a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
+  let pr1b = Cprinter.string_of_mix_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  (pr_hepta !CP.print_svl pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) (pr_pair pr1b (pr_list string_of_call_stk)))
+    (a1,a2,a3,a4,a5,a6,(a7,a8))
 
 (**************************************** *)
 (*******************SAT******************* *)
@@ -126,14 +144,19 @@ let unfold_one_view_x prog form_red_fnc (vnode:h_formula_view)=
       let (is_unsat,ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf) =
         form_red_fnc prog f in
       if is_unsat then r else
-        r@[(ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf)]
+        let fname = let idx = String.rindex vname '_' in
+        String.sub vname 0 idx
+        in
+        let pt = get_path_ctl f in
+        r@[(ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf,[(fname,pt)])]
   ) [] (fs2)
 
 let unfold_one_view prog form_red_fnc (vnode:h_formula_view)=
   let pr1a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
   let pr1b = Cprinter.string_of_mix_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  let pr3  = (pr_hepta ( !CP.print_svl) pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) pr1b) in
+  let pr3 (a1,a2,a3,a4,a5,a6,a7,a8) = (pr_hepta ( !CP.print_svl) pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) (pr_pair pr1b (pr_list string_of_call_stk)))
+    (a1,a2,a3,a4,a5,a6,(a7,a8)) in
   Debug.no_1 "unfold_one_view" pr1a (pr_list_ln pr3)
       (fun _ -> unfold_one_view_x prog form_red_fnc vnode) vnode
 
@@ -147,20 +170,23 @@ let unfold_one_view prog form_red_fnc (vnode:h_formula_view)=
 (*       ) [] vn_brs *)
 (*   ) [(eqs0, neqs0, null_svl0, neqNull_svl0, hvs0, mf0)] ls_unfold_v_fs *)
 
-let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, _, mf0) vns0=
-  let combine_and_unsat_check unsat_caches (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1) (ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2)=
+let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, _, mf0, pt0) vns0=
+  let combine_and_unsat_check unsat_caches (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1,pt1) (ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2,pt2)=
     (* is conflict * on ptos *)
     if CP.intersect_svl ptos1 ptos2 != [] then [],unsat_caches else
-      let ((ptos, eqs, neqs, null_svl, neqNull_svl, hvs,mf) as new_f) =
+      let ((ptos, eqs, neqs, null_svl, neqNull_svl, hvs,mf) (* as new_f *)) =
         combine_formula_abs is_shape_only (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1)
             (ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2)
       in
       let is_unsat = is_inconsistent_fnc ptos eqs neqs null_svl neqNull_svl hvs mf in
-      if is_unsat then [],unsat_caches else [(new_f)],unsat_caches
+      if is_unsat then ([],unsat_caches)
+      else
+        (* [(new_f)],unsat_caches *)
+        ([(ptos, eqs, neqs, null_svl, neqNull_svl, hvs,mf, pt2@pt1)],unsat_caches)
   in
   let unfold_one_view_helper cur_disjs unfolded_vn_brs=
-    List.fold_left (fun (acc_unfolded_fs, unsat_caches) ((ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1) as br) -> (*each branch of vn*)
-        let fs_br,new_unc2 = List.fold_left (fun (acc_unfolded_br_fs,unc1) ((ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2) as unfolded_f)->
+    List.fold_left (fun (acc_unfolded_fs, unsat_caches) ((ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1, pt1) as br) -> (*each branch of vn*)
+        let fs_br,new_unc2 = List.fold_left (fun (acc_unfolded_br_fs,unc1) ((ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2,pt2) as unfolded_f)->
             (* combine with one current unfolded formula *)
             let new_disj,new_unsat_cache =(combine_and_unsat_check unc1 br unfolded_f) in
             acc_unfolded_br_fs@new_disj,new_unsat_cache
@@ -173,7 +199,7 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
       | disj::rest -> begin
           let new_disj,new_unsat_cache =(combine_and_unsat_check unc1 br disj) in
           match new_disj with
-            | (_, _, _, _, _, hvs, _)::_ -> if hvs=[] then
+            | (_, _, _, _, _, hvs, _,_)::_ -> if hvs=[] then
                 true, res@new_disj,new_unsat_cache
               else
                 combine_eager_return rest br new_unsat_cache (res@new_disj)
@@ -202,10 +228,10 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
     match vns with
       | [vn] -> (* the last view. return the first sat if possible *)
             let unfolded_vn_brs = unfold_one_view prog (fun p f -> form_red_fnc p false f) vn in
-        let under_vn_brs, over_vn_brs = List.partition (fun (_, _, _, _, _, hvs, _) -> hvs=[]) unfolded_vn_brs in
+        let under_vn_brs, over_vn_brs = List.partition (fun (_, _, _, _, _, hvs, _, _) -> hvs=[]) unfolded_vn_brs in
         let is_sat,unfolded_disjs_under = unfold_one_view_under_helper cur_disjs under_vn_brs [] in
         if is_sat then
-          1, []
+          1, unfolded_disjs_under
         else
           let unfolded_disjs_over,_ = unfold_one_view_helper cur_disjs over_vn_brs in
           let unfolded_disjs = unfolded_disjs_under@unfolded_disjs_over in
@@ -235,7 +261,7 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
   (* let ptos1 = CP.intersect_svl ptos view_args in *)
   (* let neqNull_svl1 = CP.intersect_svl neqNull_svl0 view_args in *)
   (* unfold_vn vns0 [(ptos1, eqs0, neqs0, null_svl0, neqNull_svl1, [], mf1)] *)
-  unfold_vn vns0 [(ptos, eqs0, neqs0, null_svl0, neqNull_svl0, [], mf0)]
+  unfold_vn vns0 [(ptos, eqs0, neqs0, null_svl0, neqNull_svl0, [], mf0, pt0)]
 
   (* let ls_unfold_v_fs = List.map (fun vn -> unfold_one_view prog vn) vns0 in *)
   (* let r = List.fold_left (fun ls vn_brs -> *)
@@ -257,16 +283,17 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
   (* r=[],r *)
 
 let unfold_bfs prog is_shape_only form_red_fnc is_inconsistent_fnc
-      (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, hvs0, mf0) vns=
+      (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, hvs0, mf0,pt0) vns=
   let pr1 = Cprinter.string_of_formula in
   let pr1a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
   let pr1b = Cprinter.string_of_mix_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  let pr3 = (pr_hepta !CP.print_svl pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) pr1b) in
+  let pr3 (a1,a2,a3,a4,a5,a6,a7,a8) = (pr_hepta !CP.print_svl pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) (pr_pair pr1b (pr_list string_of_call_stk)))
+    (a1,a2,a3,a4,a5,a6,(a7,a8)) in
   Debug.no_2 "unfold_bfs" pr3 (pr_list pr1a) (pr_pair string_of_int ( pr_list_ln pr3))
       (fun _ _ -> unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc
-          (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, hvs0, mf0) vns)
-      (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, hvs0, mf0) vns
+          (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, hvs0, mf0,pt0) vns)
+      (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, hvs0, mf0,pt0) vns
 
 (*
 0: unsat
@@ -320,7 +347,7 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
   let rec find_first_sat disjs=
     match disjs with
       | [] -> None,[]
-      | (ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf)::rest ->
+      | ((ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf,pt) as r)::rest ->
             (* let is_unsat, vns, mf = if is_only_eq then *)
             (*   form_red_eq prog f *)
             (* else form_red_all prog f *)
@@ -329,7 +356,7 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
             (*   (Some (f,vns), rest) *)
             (* else *)
             (*   find_first_sat rest *)
-            Some (ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf), rest
+            (Some r (* (ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf, pt) *), rest)
   in
   let return lres=
     (* let _ = DD.info_hprint (add_str "lres" string_of_int) (lres) no_pos in *)
@@ -352,14 +379,19 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
       let f_opt, rest_disjs = find_first_sat !disjs_i in
       match f_opt with
         | None -> return 0
-        | Some ((ptos, eqs, neqs, null_svl, neqNull_svl, vns, mf) as f_j)-> begin
+        | Some ((ptos, eqs, neqs, null_svl, neqNull_svl, vns, mf, pt) as f_j)-> begin
             (*is under-approximation - do not have any pred instances*)
-            if vns=[] then return 1
+            if vns=[] then
+              let () = DD.info_hprint (add_str "sat" (string_of_path)) f_j  no_pos in
+              let () = print_endline "" in
+              return 1
             else
               (*unfold f*)
               let idecided, new_disjs = unfold_bfs prog is_shape_only form_red_fnc is_inconsistent_fnc
-                (ptos,eqs, neqs, null_svl, neqNull_svl, [], mf) vns in
-              if idecided=1  then return idecided
+                (ptos,eqs, neqs, null_svl, neqNull_svl, [], mf, pt) vns in
+              if idecided=1  then
+                let _ = DD.info_hprint (add_str "sat list" (pr_list_ln string_of_path)) new_disjs  no_pos in
+                return idecided
               else
                 (* let acc_disjs = if idecided=0 then rest_disjs else *)
                 (*   let _ = disjs_i_plus := !disjs_i_plus @ new_disjs in *)
@@ -398,7 +430,8 @@ and check_sat_topdown_iter prog is_shape_only form_red_fnc is_inconsistent_fnc d
   let pr1a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
   let pr1b = Cprinter.string_of_mix_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  let pr3 = pr_list_ln (pr_hepta !CP.print_svl pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) pr1b) in
+  (* let pr3 = pr_list_ln (pr_hepta !CP.print_svl pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) pr1b) in *)
+  let pr3 = pr_list_ln string_of_path in
   Debug.no_3 "check_sat_topdown_iter" pr3 string_of_int string_of_int string_of_int
       (fun _ _ _ -> check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent_fnc disjs count bound)
       disjs count bound
@@ -422,7 +455,7 @@ let check_sat_topdown_x prog need_slice f0=
     if is_unsat then 0 else
       check_sat_topdown_iter prog is_shape_only
           form_red_fnc is_inconsistent_fnc
-          [(ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf)] 0 bound
+          [(ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf, [])] 0 bound
   in
   let rec iter_slice_helper fs=
     match fs with

@@ -30,7 +30,7 @@ let pre_subst_flag = ref false
 
 type ann = CP.ann
 
-type cond_path_type = int list
+(* type cond_path_type = int list  *)         (*  *)
 
 (* let string_of_cond_path c = "(" ^(String.concat ", " (List.map string_of_int c)) ^ ")" *)
 let string_of_cond_path c = pr_list_round string_of_int c
@@ -4988,7 +4988,7 @@ type hprel = {
   hprel_type: hprel_infer_type;
   hprel_unknown: CP.spec_var list; (* the unknown vars inferred *)
   hprel_rhs: formula;
-  hprel_path: cond_path_type;
+  hprel_path: cond_path;
   hprel_proving_kind: Others.proving_kind;
   hprel_flow: nflow list;
   (* hprel_fold: bool; *)
@@ -5002,7 +5002,7 @@ and hprel_def= {
   hprel_def_kind: CP.rel_cat;
   hprel_def_hrel: h_formula; (* LHS *)
   hprel_def_guard:  formula option;
-  hprel_def_body: (cond_path_type * (formula option) * (nflow option)) list; (* RHS *)
+  hprel_def_body: (cond_path * (formula option) * (nflow option)) list; (* RHS *)
   (* hprel_def_body: (cond_path_type * (formula_guard list)) list; (\* RHS *\) *)
   hprel_def_body_lib: (formula * (nflow option)) list; (* reuse of existing pred *)
   (* hprel_def_path: cond_path_type; *)
@@ -5039,7 +5039,7 @@ and infer_state = {
   is_sel_hps: CP.spec_var list;
   is_post_hps: CP.spec_var list;
   is_prefix_hps: CP.spec_var list;
-  is_cond_path: cond_path_type;
+  is_cond_path: cond_path;
   is_flow: nflow;
   is_hp_equivs: (CP.spec_var*CP.spec_var) list;
   is_hp_defs: hp_rel_def list;
@@ -9550,7 +9550,7 @@ type entail_state = {
   es_orig_ante   : formula option       ;  (* original antecedent formula *)
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
-  es_cond_path : cond_path_type;
+  es_cond_path : cond_path;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
   (* For Termination checking *)

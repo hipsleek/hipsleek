@@ -212,7 +212,7 @@ let form_red_eq prog check_unsat f=
   let pr1b = Cprinter.string_of_mix_formula in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 (a1,a2,a3,a4,a5,a6,a7,a8) =
-    (pr_hepta (pr_pair string_of_bool !CP.print_svl) pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) pr1b)
+    (pr_hepta (pr_pair string_of_bool !CP.print_svl) pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) ( pr1b ))
   ((a1,a2),a3,a4,a5,a6,a7,a8) in
   Debug.no_1 "form_red_eq" pr1 pr3
       (fun _ -> form_red_eq_x prog check_unsat f) f
@@ -300,12 +300,13 @@ let checkeq_formula (hvs1,mf1) (hvs2,mf2)=
     | _ -> false
 
 let rec checkeq_formula_list_x fs1 fs2=
-  let rec look_up_f ((_, _, _, _, _, hvs,mf) as f) fs fs1=
+  let rec look_up_f ((_, _, _, _, _, hvs,mf,_) as f) fs fs1=
     match fs with
       | [] -> (false, fs1)
-      | ((_, _, _, _, _, hvs1,mf1) as f1)::fss -> if (checkeq_formula  (hvs,mf) (hvs1,mf)) then
-            (true,fs1@fss)
-          else look_up_f f fss (fs1@[f1])
+      | ((_, _, _, _, _, hvs1,mf1,_) as f1)::fss ->
+            if (checkeq_formula (hvs,mf) (hvs1,mf)) then
+              (true,fs1@fss)
+            else look_up_f f fss (fs1@[f1])
   in
   if List.length fs1 = List.length fs2 then
     match fs1 with
@@ -323,7 +324,11 @@ and checkeq_formula_list fs1 fs2=
   let pr1 = !CP.print_svl in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 hv = (!print_h_formula (ViewNode hv)) in
-  let pr4 = pr_list_ln (pr_hepta pr1 pr2 pr2 pr1 pr1 (pr_list pr3)
-      Cprinter.string_of_mix_formula) in
-  Debug.no_2 "satutil.checkeq_formula_list" pr4 pr4 string_of_bool
+  let string_of_call_stk = pr_pair pr_id (pr_list string_of_int) in
+  let pr4 (a1,a2,a3,a4,a5,a6,a7,a8) =(pr_hepta pr1 pr2 pr2 pr1 pr1 (pr_list pr3)
+      (pr_pair Cprinter.string_of_mix_formula (pr_list string_of_call_stk)))
+    (a1,a2,a3,a4,a5,a6,(a7,a8))
+  in
+  let pr5 =  pr_list_ln pr4 in
+  Debug.no_2 "satutil.checkeq_formula_list" pr5 pr5 string_of_bool
       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2

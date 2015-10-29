@@ -171,7 +171,7 @@ let gen_iview iprog vname pos f_body0 v_args0 sst_res =
   let vars = List.map CP.name_of_spec_var v_args in
   let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
   let f_body1,tis = Cfutil.norm_free_vars ~reset:false f_body (v_args) in
-  let () = Debug.info_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
+  let () = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
   let no_prm_body = CF.elim_prm f_body1 in
   let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
   let i_body = Rev_ast.rev_trans_formula new_body in
@@ -244,7 +244,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
           [f]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
-  let () = x_tinfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
+  let () = x_binfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
   let brs0 = List.fold_left (fun acc (pt,ctx,_) ->
       let new_p_fs = List.map (fun f ->  CF.replace_path_trace f pt)(collect_es ctx) in
       acc@new_p_fs
