@@ -25,7 +25,7 @@ let add_ret_trel_stk prog ctx lhs rhs pos =
     termr_lhs = lhs;
     termr_rhs = rhs; 
     termr_pos = pos; } in 
-  (* let () = print_endline_quiet (print_ret_trel trel) in *)
+  let () = y_binfo_hp (add_str "ret_trel" print_ret_trel) trel in
   Log.current_tntrel_ass_stk # push (Ret trel);
   ret_trel_stk # push trel;
   trel
@@ -229,7 +229,7 @@ let add_call_trel_stk prog ctx lhs rhs callee args pos =
     termu_cle = callee;
     termu_rhs_args = args; 
     termu_pos = pos; } in 
-  (* let () = print_endline_quiet (print_call_trel trel) in *)
+  let () = y_binfo_hp (add_str "call_trel" print_call_trel) trel in
   Log.current_tntrel_ass_stk # push (Call trel);
   call_trel_stk # push trel;
   trel
@@ -455,9 +455,9 @@ let solve no_verification_errors should_infer_tnt prog =
   (* If turels is empty then there is no *)
   (* unknown termination behaviors       *)
   if turels = [] && trrels = [] then 
-    x_winfo_pp ("Termination Inference is not performed due to empty set of relational assumptions.") no_pos
+    x_winfo_pp ("\nTermination Inference is not performed due to empty set of relational assumptions.\n") no_pos
   else if not no_verification_errors then
-    x_winfo_pp ("Termination Inference is not performed due to errors in verification process.") no_pos
+    x_winfo_pp ("\nTermination Inference is not performed due to errors in verification process.\n") no_pos
   else if not should_infer_tnt then ()
   else
     let () = print_endline_quiet "\n\n*****************************" in

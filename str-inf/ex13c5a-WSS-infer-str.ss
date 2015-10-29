@@ -5,6 +5,7 @@ data char_star {
   char_star next;
 }
 */
+/*
 pred_extn size[R]<k> ==
    k=0 // base case
    or R::size<i> & k=1+i // recursive case
@@ -18,7 +19,8 @@ WFSeg<p> ==
   self=p 
   or self::char_star<v,q>*q::WFSeg<p> & v!=0
   inv true;
-  
+*/
+
 WSS_sz<p, n> ==
   self::WFSeg_sz<q, n1>*q::char_star<0,p> & n=n1+1
   inv self!=null & n>0;
@@ -52,7 +54,8 @@ void while1(ref char_star s)
   ensures true;
 */
   infer [@term_wo_post]
-  requires s::WSS_sz<p, n> // & Term[n]
+  //requires s::WSS_sz<p, n> // & Term[n]
+  requires s::WFSeg_sz<q, n>*q::char_star<0,p>
   ensures true;
 {
   int x=get_char(s);
