@@ -170,6 +170,7 @@ and rev_trans_formula f =
       IF.formula_base_vperm = (* b.CF.formula_base_vperm; *) IvpermUtils.empty_vperm_sets;
       IF.formula_base_flow = remove_s (exlist # get_closest b.CF.formula_base_flow.CF.formula_flow_interval);
       IF.formula_base_and = [];
+      IF.formula_base_path_trace = b.CF.formula_base_path_trace;
       IF.formula_base_pos = b.CF.formula_base_pos }
   | CF.Exists b -> IF.Exists {
       IF.formula_exists_qvars = List.map rev_trans_spec_var b.CF.formula_exists_qvars;
@@ -178,6 +179,7 @@ and rev_trans_formula f =
       IF.formula_exists_vperm = (* b.CF.formula_exists_vperm; *) IvpermUtils.empty_vperm_sets;
       IF.formula_exists_flow = remove_s (exlist # get_closest b.CF.formula_exists_flow.CF.formula_flow_interval);
       IF.formula_exists_and = [];
+      IF.formula_exists_path_trace = b.CF.formula_exists_path_trace;
       IF.formula_exists_pos =b.CF.formula_exists_pos}
   | CF.Or b-> IF.Or {
       IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1; 

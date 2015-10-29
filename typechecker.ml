@@ -1975,10 +1975,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               if (read_only)
               then
                 let read_f = mkPermInv () fresh_perm_exp in
-                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] None pos
               else
                 let write_f = mkPermWrite () fresh_perm_exp in
-                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] None pos
             else
               vheap
           in
@@ -2361,9 +2361,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (*If this is not a lock, level_f = true*)
         let aux_f = MCP.memoise_add_pure_N level_f perm_f in
         let heap_form = if (perm_vars!=[]) then
-            CF.mkExists perm_vars heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+            CF.mkExists perm_vars heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] None pos
           else
-            CF.mkBase heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+            CF.mkBase heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] None pos
         in
         (* let () = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in *)
         let heap_form = x_add Cvutil.prune_preds prog false heap_form in

@@ -578,7 +578,8 @@ let rec conv_formula_conj_to_star (f : CF.formula) : CF.formula =
               CF.formula_base_and = ol; 
               CF.formula_base_flow = fl;
               CF.formula_base_label = lbl;
-              CF.formula_base_pos = pos}) -> CF.mkBase_w_lbl (conv_h_formula_conj_to_star h) p vp t fl ol pos lbl
+              CF.formula_base_path_trace = pt;
+              CF.formula_base_pos = pos}) -> CF.mkBase_w_lbl (conv_h_formula_conj_to_star h) p vp t fl ol pos lbl pt
   | CF.Exists ({CF.formula_exists_qvars = qvars;
                 CF.formula_exists_heap = h;
                 CF.formula_exists_pure = p;
@@ -587,7 +588,8 @@ let rec conv_formula_conj_to_star (f : CF.formula) : CF.formula =
                 CF.formula_exists_and = ol; 
                 CF.formula_exists_flow = fl;
                 CF.formula_exists_label = lbl;
-                CF.formula_exists_pos = pos}) -> CF.mkExists_w_lbl qvars (conv_h_formula_conj_to_star h) p vp t fl ol pos lbl
+                CF.formula_exists_path_trace = pt;
+                CF.formula_exists_pos = pos}) -> CF.mkExists_w_lbl qvars (conv_h_formula_conj_to_star h) p vp t fl ol pos lbl pt
 
 let rec contains_conj (f:CF.h_formula) : bool = 
   (*let () = print_string ("Checking Conj = "^ (string_of_h_formula f) ^ "\n") in *)
@@ -2177,7 +2179,7 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
     (*let p = MCP.pure_of_mix mcp in*)
     let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
     let or_list = List.map (fun (h,rp) -> let p = MCP.merge_mems mcp (MCP.mix_of_pure rp) true in
-                             CF.mkBase h p vp t fl a pos) ramify_cases in
+                             CF.mkBase h p vp t fl a f.CF.formula_base_path_trace pos) ramify_cases in
     CF.disj_of_list or_list pos
   | CF.Exists f ->
     let pos = f.CF.formula_exists_pos in
@@ -2186,7 +2188,7 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
     (*let p = MCP.pure_of_mix mcp in*)
     let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
     let or_list = List.map (fun (h,rp) -> let p = MCP.merge_mems mcp (MCP.mix_of_pure rp) true in
-                             CF.mkExists qvars h p vp t fl a pos) ramify_cases in
+                             CF.mkExists qvars h p vp t fl a f.CF.formula_exists_path_trace pos) ramify_cases in
     CF.disj_of_list or_list pos
 
 let rec remove_accs_from_heap (h: CF.h_formula) : CF.h_formula * CP.formula = 
@@ -2248,7 +2250,7 @@ let rec remove_accs_from_formula (cf:CF.formula)  : CF.formula =
     (*let p = MCP.pure_of_mix mcp in*)
     let h,new_p = remove_accs_from_heap h in
     let mcp = MCP.merge_mems (MCP.mix_of_pure new_p) mcp true in
-    CF.mkBase h mcp vp t fl a pos
+    CF.mkBase h mcp vp t fl a f.CF.formula_base_path_trace pos
   | CF.Exists f ->
     let pos = f.CF.formula_exists_pos in
     let h,mcp,vp,fl,t,a = CF.split_components cf in
@@ -2256,7 +2258,7 @@ let rec remove_accs_from_formula (cf:CF.formula)  : CF.formula =
     (*let p = MCP.pure_of_mix mcp in*)
     let h,new_p = remove_accs_from_heap h in
     let mcp = MCP.merge_mems (MCP.mix_of_pure new_p) mcp true in
-    CF.mkExists qvars h mcp vp t fl a pos	
+    CF.mkExists qvars h mcp vp t fl a f.CF.formula_exists_path_trace pos
 
 let rec e_apply_subs sst e =
   match sst with
@@ -2330,6 +2332,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_base_vperm = vp;
       IF.formula_base_flow = fl;
       IF.formula_base_and = a;
+      IF.formula_base_path_trace =pt;
       IF.formula_base_pos = pos;}) -> 
     let new_exp, fieldl, fieldv = infer_mem_from_heap h prog in
     let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
@@ -2340,6 +2343,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_base_vperm = vp;
       IF.formula_base_flow = fl;
       IF.formula_base_and = a;
+      IF.formula_base_path_trace =pt;
       IF.formula_base_pos = pos; }, [p], fieldl, fieldv
   | IF.Exists ({
       IF.formula_exists_qvars = qvars;
@@ -2348,6 +2352,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_exists_vperm = vp;
       IF.formula_exists_flow = fl;
       IF.formula_exists_and = a;
+      IF.formula_exists_path_trace =pt;
       IF.formula_exists_pos = pos;}) -> 
     let new_exp, fieldl, fieldv = infer_mem_from_heap h prog in
     let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
@@ -2359,6 +2364,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_exists_vperm = vp;
       IF.formula_exists_flow = fl;
       IF.formula_exists_and = a;
+      IF.formula_exists_path_trace =pt;
       IF.formula_exists_pos = pos; }, [p], fieldl, fieldv
   | IF.Or ({IF.formula_or_f1 = f1;
             IF.formula_or_f2 = f2;

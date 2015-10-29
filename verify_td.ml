@@ -167,10 +167,11 @@ let gen_iview iprog vname pos f_body0 v_args0 sst_res =
         (acc_vs@[n_sv], acc_sst@[(sv,n_sv)])
   ) ([],[]) v_args0 in
   let f_body = CF.subst (sst_res@sst0) f_body0 in
+  let () = Debug.ninfo_hprint (add_str "f_body: " Cprinter.prtt_string_of_formula) f_body no_pos in
   let vars = List.map CP.name_of_spec_var v_args in
   let tvars = List.map (fun (CP.SpecVar (t,id,_)) -> (t,id)) v_args in
   let f_body1,tis = Cfutil.norm_free_vars ~reset:false f_body (v_args) in
-  let () = Debug.ninfo_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
+  let () = Debug.info_hprint (add_str "f_body1: " Cprinter.prtt_string_of_formula) f_body1 no_pos in
   let no_prm_body = CF.elim_prm f_body1 in
   let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} no_prm_body in
   let i_body = Rev_ast.rev_trans_formula new_body in
@@ -243,12 +244,12 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
           [f]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
-  let () = x_binfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
+  let () = x_tinfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
   let brs0 = List.fold_left (fun acc (pt,ctx,_) ->
-      let new_p_fs = List.map (fun f -> f (* CF.replace_path_trace f pt *))(collect_es ctx) in
+      let new_p_fs = List.map (fun f ->  CF.replace_path_trace f pt)(collect_es ctx) in
       acc@new_p_fs
   ) [] br_ctxs in
-  let () = x_binfo_hp (add_str ("brs0") (pr_list_ln (!CF.print_formula ))) brs0 no_pos in
+  let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln (!CF.print_formula ))) brs0 no_pos in
   (* let () = x_binfo_hp (add_str ("brs0") (pr_list_ln !CF.print_formula)) brs0 no_pos in *)
   let e = CP.SpecVar (Int, err_var, Unprimed) in
   let safe_fl = MCP.mix_of_pure (CP.mkEqExp (CP.Var (e, no_pos)) (CP.IConst (0, no_pos)) no_pos) in
@@ -260,7 +261,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
       fs@[(new_f)]
   ) [] brs0 in
   let brs2 = simplify_symex_trace prog v_args brs1 in
-  let () = x_tinfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
+  let () = x_binfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
   (* generate new iview *)
   let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs2) (List.tl brs2) in
 

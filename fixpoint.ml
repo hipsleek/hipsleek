@@ -231,7 +231,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
         List.filter (fun x -> not (CP.is_res_spec_var x || CP.is_hprel_typ x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
     let fml = CF.mkExists (CP.remove_dups_svl (evars @ bag_vars @ exists_h_vars))
         h (MCP.mix_of_pure p) b.CF.formula_base_vperm b.CF.formula_base_type b.CF.formula_base_flow b.CF.formula_base_and
-        b.CF.formula_base_pos
+        b.CF.formula_base_path_trace b.CF.formula_base_pos
     in (fml,pre)
 
 let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars = 
@@ -268,7 +268,7 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
         let pre = Wrapper.wrap_exception pre CF.simplify_aux pre in
         pre
     in
-    CF.mkBase h (MCP.mix_of_pure p) vp t fl a no_pos
+    CF.mkBase h (MCP.mix_of_pure p) vp t fl a (CF.get_path_trace pre_fml) no_pos
 
 let simplify_pre pre_fml lst_assume =
   let pr = !CF.print_formula in

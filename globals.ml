@@ -97,6 +97,9 @@ and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict option
 (*identifier for if, catch, call*)
 
+let string_of_formula_label (a,b) = "("^ (string_of_int a) ^","^(b)^ ")"
+let string_of_control_path_id_strict = string_of_formula_label
+
 let eq_ho_flow_kind k1 k2 = 
   match k1, k2 with
   | INFLOW, INFLOW
@@ -123,9 +126,9 @@ let combine_lbl (i1,s1)(i2,s2) = match s1 with
 
 type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
 
+let string_of_path_label = string_of_int
+
 type path_trace = (control_path_id_strict * path_label) list
-
-
 
 (* and loc =  { *)
 (*     start_pos : Lexing.position (\* might be expanded to contain more information *\); *)
@@ -150,6 +153,9 @@ and vp_ann =
   | VP_Zero | VP_Full | VP_Value
   | VP_Lend | VP_Frac of Frac.frac 
   (* | VP_Ref * *)
+
+let string_of_path_trace pt = "[" ^(String.concat ";"
+   (List.map (fun (a,b) -> "(" ^ (string_of_control_path_id_strict a) ^", " ^ (string_of_path_label b) ^ ")") pt)) ^ "]"
 
 let eq_vp_ann a1 a2 = 
   match a1, a2 with

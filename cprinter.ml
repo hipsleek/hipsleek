@@ -1024,6 +1024,9 @@ let pr_spec_label l  = fmt_string (LO.string_of l)
 let string_of_formula_label (i,s) s2:string = (* s2 *)
   ((string_of_int i) (* ^":#"^s^":#" *)^s2)
 
+let pr_path_trace  (pt:((int * 'a) * int) list) =
+  pr_seq "" (fun (c1,c3)-> fmt_string "("; (pr_op_adhoc (fun () -> pr_formula_label c1)  "," (fun () -> fmt_int c3)); fmt_string ")") pt
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -2302,8 +2305,10 @@ and pr_formula_base e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_label = lbl;
+      formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string ( (* "<NoLabel>" *)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
     pr_h_formula h;
     (if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp));
     (if not(MP.isConstMTrue p) then
@@ -2338,8 +2343,10 @@ and prtt_pr_formula_base e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_label = lbl;
+      formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string (  (* "<NoLabel> "*)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
     prtt_pr_h_formula h ;
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&" ; pr_mix_formula p))
@@ -2358,8 +2365,10 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_label = lbl;
+      formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
     prtt_pr_h_formula_inst prog h;
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
@@ -2373,8 +2382,10 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_label = lbl;
+      formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
     prtt_pr_h_formula_inst_html prog post_hps h ;
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
@@ -2397,6 +2408,7 @@ and pr_formula_1 e =
              formula_exists_flow = fl;
              formula_exists_and = a;
              formula_exists_label = lbl;
+             formula_exists_path_trace = pt0;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     let flag = not(svs==[]) in
@@ -2409,6 +2421,7 @@ and pr_formula_1 e =
         formula_base_flow = fl;
         formula_base_and = a;
         formula_base_label = lbl;
+        formula_base_path_trace = pt0;
         formula_base_pos = pos; });
     if flag then fmt_string ")"
 (* pr_h_formula h;                                        *)
@@ -2474,8 +2487,10 @@ and prtt_pr_formula e =
              formula_exists_flow = fl;
              formula_exists_and = a;
              formula_exists_label = lbl;
+             formula_exists_path_trace = pt0;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
     fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
     prtt_pr_h_formula h; pr_cut_after "&" ;
     pr_mix_formula p; pr_cut_after  ")";
@@ -3670,8 +3685,8 @@ let string_of_prior_steps pt =
   (String.concat "\n " (List.rev pt))
 
 
-let pr_path_trace  (pt:((int * 'a) * int) list) =
-  pr_seq "" (fun (c1,c3)-> fmt_string "("; (pr_op_adhoc (fun () -> pr_formula_label c1)  "," (fun () -> fmt_int c3)); fmt_string ")") pt
+(* let pr_path_trace  (pt:((int * 'a) * int) list) = *)
+(*   pr_seq "" (fun (c1,c3)-> fmt_string "("; (pr_op_adhoc (fun () -> pr_formula_label c1)  "," (fun () -> fmt_int c3)); fmt_string ")") pt *)
 let string_of_path_trace  (pt : path_trace) = poly_string_of_pr  pr_path_trace pt
 let printer_of_path_trace (fmt: Format.formatter) (pt : path_trace) =  poly_printer_of_pr fmt pr_path_trace pt
 

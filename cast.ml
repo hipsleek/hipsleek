@@ -1358,7 +1358,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
         hp_view = None;
-        hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) CVP.empty_vperm_sets F.TypeTrue (F.mkTrueFlow()) [] pos;}
+        hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) CVP.empty_vperm_sets F.TypeTrue (F.mkTrueFlow()) [] None pos;}
     in
     let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in
     prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);

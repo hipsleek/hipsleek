@@ -1055,7 +1055,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
           Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
       let new_h, new_p, new_vp, new_fl, new_t, new_a = Cformula.split_components f in
       let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
-      let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a no_pos in
+      let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a (Cformula.get_path_trace f) no_pos in
       new_f
   in
   match mf0 with

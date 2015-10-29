@@ -498,7 +498,7 @@ let simplify_context ?(prog_vs=None) ctx =
                          let pf3 = Cpure.mkExists bag_exists_svl pf2 None no_pos in
                          let pf_simp = Cpure.elim_exists pf3 in
                          let mf_simp = Mcpure.mix_of_pure pf_simp in
-                         let new_f0 = mkExists exists_svl h mf_simp vp t fl a no_pos in
+                         let new_f0 = mkExists exists_svl h mf_simp vp t fl a None no_pos in
                          let () = x_tinfo_hp (add_str "new_f0" !print_formula) new_f0 no_pos in
                          let new_f = elim_exists new_f0 in
                          let () = x_tinfo_hp (add_str "new_f" !print_formula) new_f no_pos in

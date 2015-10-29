@@ -359,6 +359,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         IF.formula_base_vperm = vp;
         IF.formula_base_flow = fl0;
         IF.formula_base_and = a0;
+        IF.formula_base_path_trace = pt;
         IF.formula_base_pos = l0
       } -> (*as f*)
     let tmp1 = look_for_anonymous_h_formula h0 in
@@ -377,6 +378,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
           IF.formula_exists_vperm = vp;
           IF.formula_exists_flow = fl0;
           IF.formula_exists_and = a1;
+          IF.formula_exists_path_trace = pt;
           IF.formula_exists_pos = l0;
         }
     else f0
@@ -4367,7 +4369,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
       {c with
        C.coercion_type = Iast.Right;
-       C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a no_pos;
+       C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a None no_pos;
        (* C.coercion_head_norm = new_head_norm; *)
        C.coercion_body = new_body;
        C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
@@ -7373,6 +7375,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_base_vperm = vp;
         IF.formula_base_flow = fl;
         IF.formula_base_and = a;
+        IF.formula_base_path_trace = pt;
         IF.formula_base_pos = pos} as fb) ->(
         let (n_tl,rl) = res_retrieve tl clean_res fl in
         let n_tl = 
@@ -7410,6 +7413,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_exists_vperm = vp;
         IF.formula_exists_flow = fl;
         IF.formula_exists_and = a;
+        IF.formula_exists_path_trace = pt;
         IF.formula_exists_pos = pos} -> (
         let (n_tl,rl) = res_retrieve tl clean_res fl in
         let n_tl = (
@@ -7425,6 +7429,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_vperm = vp;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
+            IF.formula_base_path_trace = pt;
             IF.formula_base_pos = pos; }) in
         (* let () = print_string ("Cform f1: "^(Iprinter.string_of_formula f1) ^"\n" ) in *)
         (* transform bexp *)
@@ -8041,6 +8046,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.formula_delayed = MCP.mkMTrue pos; (*LDK: TO DO*)
                   CF.formula_ref_vars = [];
                   CF.formula_label = None;
+                  (* CF.formula_base_path_trace = ; *)
                   CF.formula_pos = pos} in
     (* let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in *)
     (new_f,type_f, newvars, n_tl)
@@ -8096,24 +8102,28 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let pos = base.IF.formula_base_pos in
     let nh,np,nvp,nt,nfl,na,newvars,n_tl = (linearize_base base pos tlist) in
     let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-    (n_tl, CF.mkBase nh np nvp nt nfl na pos, newvars)
+    (n_tl, CF.mkBase nh np nvp nt nfl na base.formula_base_path_trace pos, newvars)
   | IF.Exists {IF.formula_exists_heap = h; 
                IF.formula_exists_pure = p;
                IF.formula_exists_vperm = vp;
                IF.formula_exists_flow = fl;
                IF.formula_exists_qvars = qvars;
                IF.formula_exists_and = a;
+               IF.formula_exists_path_trace = pt;
                IF.formula_exists_pos = pos} ->
     let base ={IF.formula_base_heap = h;
                IF.formula_base_pure = p;
                IF.formula_base_vperm = vp;
                IF.formula_base_flow = fl;
                IF.formula_base_and = a;
+               IF.formula_base_path_trace = pt;
                IF.formula_base_pos = pos;} in 
     let nh,np,nvp,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
     let np = memoise_add_pure_N (mkMTrue pos) np in
     let qvars = qvars @ newvars in
-    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na pos, [])
+    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na
+        pt
+        pos, [])
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 
   { CF.formula_flow_interval = exlist #  get_hash f0;
@@ -10652,7 +10662,7 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = x_add_1 Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
-    CF.mkExists [v;st_v] h p CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+    CF.mkExists [v;st_v] h p CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] None no_pos in
   let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
   let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
   let f_gen_tot st = 

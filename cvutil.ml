@@ -1392,22 +1392,24 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
     | Base b ->
       let ({ formula_base_heap = h;
              formula_base_pure = p;
+             formula_base_path_trace = pt;
              formula_base_pos = pos }) = b in
       let ph, addrs, _ = x_add xpure_heap_symbolic 2 prog h p 1 in
       let n_p = x_add MCP.merge_mems p ph true in
       (* Set a complex heap formula to a simpler one *)
-      let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
+      let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pt pos in (* formula_of_mix_formula n_p *)
       (n_f0, addrs)
     | Exists e ->
       let ({ formula_exists_qvars = qvars;
              formula_exists_heap = qh;
              formula_exists_pure = qp;
+             formula_exists_path_trace = pt;
              formula_exists_pos = pos}) = e in 
       let pqh, addrs', _ = x_add xpure_heap_symbolic 3 prog qh qp 1 in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
       let n_qp = x_add MCP.merge_mems qp pqh true in
       (* Set a complex heap formula to a simpler one *)
-      let n_f0 = mkExists qvars HEmp n_qp CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in
+      let n_f0 = mkExists qvars HEmp n_qp CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pt pos in
       (n_f0, addrs)
   in
   let pf, pa = xpure_symbolic_helper prog f0 in
@@ -2387,12 +2389,13 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
       let new_a = List.map helper_one_formula e.formula_exists_and in
       mkExists_w_lbl e.formula_exists_qvars rh rp e.formula_exists_vperm
         e.formula_exists_type e.formula_exists_flow new_a e.formula_exists_pos e.formula_exists_label
+          e.formula_exists_path_trace
     | Base b ->
       let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
       (* let () = print_endline ("\nprune_preds: before: rp = " ^ (Cprinter.string_of_mix_formula rp)) in *)
       let rp = f_p_simp rp in
       let new_a = List.map helper_one_formula b.formula_base_and in
-      mkBase_w_lbl rh rp b.formula_base_vperm b.formula_base_type  b.formula_base_flow new_a b.formula_base_pos b.formula_base_label in
+      mkBase_w_lbl rh rp b.formula_base_vperm b.formula_base_type  b.formula_base_flow new_a b.formula_base_pos b.formula_base_label b.formula_base_path_trace in
   (* if not !Globals.allow_pred_spec then f *)
   let helper_formulas f = 
     let p2 = Cprinter.string_of_formula in

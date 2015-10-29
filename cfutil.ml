@@ -290,6 +290,7 @@ let norm_free_vars ?(reset=false) f0 args=
           }, tis1@tis2)
   in
   let f,tis = helper f0 in
+  let () = Debug.ninfo_hprint (add_str "       f:" !print_formula) f no_pos in
   let def = List.map fst tis in
   let rem_svl = List.filter (fun (CP.SpecVar(t,sv,p)) ->
       let n = sv ^(match p with Primed -> "PRM"| _ -> "") in

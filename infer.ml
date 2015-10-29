@@ -4528,7 +4528,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
   (* let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] []  (formula_of_heap hf pos) None (formula_of_pure_N p pos) es_cond_path *)
   (* in *)
   let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] []
-      (CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos) None (CF.mkTrue (mkNormalFlow ()) pos) es_cond_path
+      (CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] None pos) None (CF.mkTrue (mkNormalFlow ()) pos) es_cond_path
   in
   let mkTupleRel ls_w_cans=
     let (hp0, hf0, _, p, _, pos) = List.hd ls_w_cans in
@@ -4595,7 +4595,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
               let () = Debug.ninfo_hprint (add_str "rhs_p : " ( (!CP.print_formula))) rhs_p pos in
               if not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions [rhs_p;n_p]))) then
                 let new_rel = mkHprel (CP.RelAssume [h]) [] [] []
-                    (CF.mkBase hf (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos)
+                    (CF.mkBase hf (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] None pos)
                     None (CF.mkFalse_nf pos ) es_cond_path in
                 r@[new_rel]
               else r

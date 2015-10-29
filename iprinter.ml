@@ -604,6 +604,7 @@ and string_of_rflow_formula ff =
   (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^
   (string_of_formula ff.F.rflow_base)
 
+
 (* pretty printing for formulae *) 
 and string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
@@ -611,6 +612,7 @@ and string_of_formula = function
                   F.formula_base_vperm = vp;
                   F.formula_base_flow = fl;
                   F.formula_base_and = a;
+                  F.formula_base_path_trace = pt0;
                   F.formula_base_pos = l}) ->
     let sa = if a == [] then "" else "\nAND " in
     let sa = sa ^ (string_of_one_formula_list a) in
@@ -620,7 +622,7 @@ and string_of_formula = function
       let s = if svp = "" then s else svp ^ " & " ^ s in
       (if s = "" then  (string_of_h_formula hf)
        else "(" ^ (string_of_h_formula hf) ^ ") * (" ^ s ^ ")( FLOW "^fl^")")
-    in rs ^ sa
+    in (match pt0 with | None -> "" | Some pt -> string_of_path_trace pt) ^ rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
                 F.formula_or_f2 = f2;
                 F.formula_or_pos = l}) ->
@@ -630,6 +632,7 @@ and string_of_formula = function
                     F.formula_exists_vperm = vp;
                     F.formula_exists_flow = fl;
                     F.formula_exists_and = a;
+                    F.formula_exists_path_trace = pt0;
                     F.formula_exists_pure = pf}) ->
     let sa = if a==[] then "" else "\nAND " in
     let sa = sa ^ string_of_one_formula_list a in
@@ -640,7 +643,7 @@ and string_of_formula = function
                if s = "" then  (string_of_h_formula hf)
                else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ s (* (string_of_pure_formula pf) *) ^ ")( FLOW "^fl^")")
             ^ ")"
-    in rs^sa
+    in (match pt0 with | None -> "" | Some pt -> string_of_path_trace pt)  ^ rs^sa
 
 and  string_of_struc_formula c = match c with 
   | F.ECase {
