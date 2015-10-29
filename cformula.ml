@@ -20353,3 +20353,11 @@ let extract_nodes stk hf =
     let () = stk # push (3,vn,ptr,args) in
     Some hf
   | _ -> None
+
+let extract_view_nodes hf =
+  let stk = new Gen.stack in
+  let _ = extract_nodes stk hf in
+  let lst = List.filter (fun (no,_,_,_) -> no==1) (stk # get_stk) in
+  let lst = List.map (fun (no,vn,_,_) -> vn) lst in
+  lst
+   

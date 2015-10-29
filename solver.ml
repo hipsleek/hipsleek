@@ -61,40 +61,55 @@ let vv_ref = ref 9999
    a lemma from being folded with itself prior to
    a folding step on its LHS term 
 *)
-let lemma_soundness =
-  object (self)
-   val mutable lemma = None
-   val mutable lhs = None
-   val mutable progress = false
-   method start_lemma_proving (coer:Cast.coercion_decl) (yy:string) = 
-     lemma <- Some coer;
-     lhs <- Some yy
-   method start_disjunct = 
-     (* triggerred by LHS disjunct *)
-     progress <- false
-   method make_progress (c1:string) = 
-     (* an folding to trigger progress *)
-     match lhs with
-     | None -> ()
-     | Some c2 -> if c1==c2 then progress <- true;
-   method safe_to_apply coer =
-     match lemma with
-     | None -> true
-     | Some c2 -> progress || not(coer==c2)
-   method end_lemma_proving = 
-     lemma <- None;
-     lhs <- None;
-  end;;
+let lemma_soundness = Cast.lemma_soundness
+  (* object (self) *)
+  (*  val mutable lemma = None *)
+  (*  val mutable lhs = None *)
+  (*  val mutable progress = false *)
+  (*  method logging s = *)
+  (*    let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
+  (*    () *)
+  (*  method start_lemma_proving loc (coer:Cast.coercion_decl) (yy:string) = *)
+  (*    self # logging ("Start Lemma Proving "^loc); *)
+  (*    let h_v = coer.Cast.coercion_head_view in *)
+  (*    let b_v = coer.Cast.coercion_body_view in *)
+  (*    let ty = coer.Cast.coercion_type in *)
+  (*    let () = y_binfo_hp (add_str "(hd,body)" (pr_pair pr_id pr_id)) (h_v,b_v) in *)
+  (*    let () = y_binfo_hp (add_str "coer_type" (Cprinter.string_of_coercion_type)) ty in *)
+  (*    if  ty == Iast.Right then *)
+  (*      begin *)
+  (*        lemma <- Some coer; *)
+  (*        lhs <- Some h_v *)
+  (*      end *)
+  (*    else *)
+  (*      begin *)
+  (*        lemma <- None; *)
+  (*        lhs <- None *)
+  (*      end *)
+  (*  method start_disjunct loc =  *)
+  (*    (\* triggerred by LHS disjunct *\) *)
+  (*    self # logging ("Start Disjunct"^loc); *)
+  (*    progress <- false *)
+  (*  method make_progress (c1:string) =  *)
+  (*    (\* an folding to trigger progress *\) *)
+  (*    self # logging "Make Progress"; *)
+  (*    match lhs with *)
+  (*    | None -> () *)
+  (*    | Some c2 -> if c1==c2 then progress <- true; *)
+  (*  method safe_to_apply coer = *)
+  (*    let flag = match lemma with *)
+  (*    | None -> true *)
+  (*    | Some c2 -> progress || not(coer==c2) in *)
+  (*    if not(flag) then  *)
+  (*      self # logging "Not Safe for Lemma"; *)
+  (*    flag *)
+  (*  method end_lemma_proving loc =  *)
+  (*    self # logging ("End Lemma Proving "^loc); *)
+  (*    lemma <- None; *)
+  (*    lhs <- None; *)
+  (* end;; *)
 
-let wrapper_lemma_soundness coer lhs f x =
-  let () = lemma_soundness # start_lemma_proving coer lhs in
-  try 
-    let r = f x in
-    let () = lemma_soundness # end_lemma_proving in
-    r
-  with e ->
-    let () = lemma_soundness # end_lemma_proving in
-    raise e
+let wrapper_lemma_soundness = Cast.wrapper_lemma_soundness
 
 
 (*
@@ -4318,6 +4333,7 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
 
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
     (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
+  let () = lemma_soundness # start_disjunct x_loc in
   let fv_s = CF.struc_fv ~vartype:Global_var.var_with_heap_only conseq in
   let impl_expl_vs = CF.collect_impl_expl_evars_context ctx_00 in
   (* let evars_rhs = CF.collect_evars_context ctx_00 in *)
@@ -12843,7 +12859,11 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
           let init_pure = CP.conj_of_list init_pures pos in
           {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
       in
-      let () = y_binfo_hp (add_str "M_fold" (Cprinter.string_of_h_formula)) rhs_node in
+      let () = y_binfo_hp (add_str "M_fold (to make progress)" (Cprinter.string_of_h_formula)) rhs_node in
+      let lst = CF.extract_view_nodes rhs_node in
+      let () = match lst with
+        | n::_ -> Cast.lemma_soundness # make_progress n
+        | _ -> () in
       do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
     | (Context.M_infer_unfold (r,_,_))->

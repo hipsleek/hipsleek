@@ -273,9 +273,9 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let fv_lhs = CF.fv lhs in
   (* let is_folding_flag = Cast.is_folding_coercion coer (\* && !Globals.adhoc_flag_3 *\) in *)
   (* let () = y_binfo_hp (add_str "is_folding_coerc" string_of_bool) is_folding_flag in *)
-  let () = y_binfo_hp (add_str "coerc" Cprinter.string_of_coerc) coer in
-  let () = y_binfo_hp (add_str "LP.lhs" Cprinter.string_of_formula) lhs in
-  let () = y_binfo_hp (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs in
+  let () = y_tinfo_hp (add_str "coerc" Cprinter.string_of_coerc) coer in
+  let () = y_tinfo_hp (add_str "LP.lhs" Cprinter.string_of_formula) lhs in
+  let () = y_tinfo_hp (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs in
   let fv_rhs = CF.struc_fv rhs in
   let () = y_binfo_hp (add_str "rhs" Cprinter.string_of_struc_formula) rhs in
   (* WN : fv_rhs2 seems incorrect as it does not pick free vars of rhs *)
@@ -415,7 +415,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   match Cast.folding_coercion coer with
   | None -> check_coercion_struc coer lhs rhs cprog
-  | Some c -> Solver.wrapper_lemma_soundness coer c 
+  | Some c -> Solver.wrapper_lemma_soundness x_loc coer c 
                 (check_coercion_struc coer lhs rhs) cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =

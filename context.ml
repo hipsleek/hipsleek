@@ -2209,7 +2209,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
          (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | DataNode dl, ViewNode vr -> 
-         let () = y_tinfo_pp "DATA vs VIEW" in
+         let () = y_binfo_pp "DATA vs VIEW" in
          let vr_name = vr.h_formula_view_name in
          let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in
          let vr_self_pts = vr_vdef.view_pt_by_self in
@@ -2345,6 +2345,17 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
          (* return *)
          (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
+         let () = y_binfo_hp (add_str "actions" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
+         let a = List.filter (fun (_,x) -> match x with
+             | M_lemma (_,opt,_) ->
+               begin
+               match opt with 
+                 None -> true
+               | Some c -> Cast.lemma_soundness # safe_to_apply c
+               end
+             | _ -> true
+           ) a in
+         let () = y_binfo_hp (add_str "actions(filtered unsoundness)" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
          (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
        | ViewNode vl, DataNode dr -> 
          let () = y_tinfo_pp "VIEW vs DATA" in
@@ -3206,12 +3217,12 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   let r = if !Globals.old_keep_all_matchres then r else new_r in
   let () = x_tinfo_hp (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (x_add process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
+  let () = x_binfo_hp (add_str "weighted action"
+                         (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with
   | [] -> M_Nothing_to_do "no nodes on RHS"
   | xs -> 
     (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-    let () = x_tinfo_hp (add_str "weighted action"
-                           (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
     let ys = sort_wt_match opt r in
     let () = x_tinfo_hp (add_str "sorted action"
                            (pr_list_num_vert string_of_action_wt_res_simpl)) ys no_pos in

@@ -4197,3 +4197,65 @@ let folding_coercion c =
   else None
   (* && c.coercion_univ_vars=[] *)
 
+(* 
+   this object is to track progress to prevent
+   a lemma from being folded with itself prior to
+   a folding step on its LHS term 
+*)
+let lemma_soundness =
+  object (self)
+   val mutable lemma = None
+   val mutable lhs = None
+   val mutable progress = false
+   method logging s =
+     let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in
+     ()
+   method start_lemma_proving loc (coer:coercion_decl) (yy:string) =
+     self # logging ("Start Lemma Proving "^loc);
+     let h_v = coer.coercion_head_view in
+     let b_v = coer.coercion_body_view in
+     let ty = coer.coercion_type in
+     let () = y_binfo_hp (add_str "(hd,body)" (pr_pair pr_id pr_id)) (h_v,b_v) in
+     (* let () = y_binfo_hp (add_str "coer_type" (Cprinter.string_of_coercion_type)) ty in *)
+     if  ty == Iast.Right then
+       begin
+         lemma <- Some coer;
+         lhs <- Some h_v
+       end
+     else
+       begin
+         lemma <- None;
+         lhs <- None
+       end
+   method start_disjunct loc = 
+     (* triggerred by LHS disjunct *)
+     self # logging ("Start Disjunct"^loc)
+     (* ;progress <- false *)
+   method make_progress (c1:string) = 
+     (* an folding to trigger progress *)
+     self # logging "Make Progress";
+     match lhs with
+     | None -> ()
+     | Some c2 -> if c1==c2 then progress <- true;
+   method safe_to_apply coer =
+     let flag = match lemma with
+     | None -> true
+     | Some c2 -> progress || not(coer==c2) in
+     if not(flag) then 
+       self # logging "Not Safe for Lemma";
+     flag
+   method end_lemma_proving loc = 
+     self # logging ("End Lemma Proving "^loc);
+     lemma <- None;
+     lhs <- None;
+  end;;
+
+let wrapper_lemma_soundness loc coer lhs f x =
+  let () = lemma_soundness # start_lemma_proving loc coer lhs in
+  try 
+    let r = f x in
+    let () = lemma_soundness # end_lemma_proving x_loc in
+    r
+  with e ->
+    let () = lemma_soundness # end_lemma_proving x_loc in
+    raise e
