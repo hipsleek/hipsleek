@@ -85,6 +85,8 @@ type flags =
   | Flag_int of int
   | Flag_float of float
 
+type prog_path_label = int list
+
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)

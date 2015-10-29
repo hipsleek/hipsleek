@@ -141,7 +141,7 @@ and view_decl = {
   mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
   (* main body of a predicate *)
   mutable view_formula : F.struc_formula; (* case-structured formula *)
-  mutable view_un_struc_formula : (Cformula.formula * formula_label) list ; 
+  mutable view_un_struc_formula : (Cformula.formula * formula_label * prog_path_label option) list ; 
     (*used by the unfold, pre transformed in order to avoid multiple transformations*)
   mutable view_raw_base_case: Cformula.formula option;
   mutable view_base_case : (P.formula * MP.mix_formula) option; (* guard for base case, base case*)
