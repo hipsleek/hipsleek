@@ -4432,8 +4432,7 @@ let pr_view_decl v =
   fmt_close_box ();
   pr_mem:=true
 
-
-let pr_view_decl_short v = 
+let pr_view_decl_short ?(pr_inv=false) v = 
   pr_mem:=false;
   (* let f bc = *)
   (*   match bc with *)
@@ -4455,8 +4454,7 @@ let pr_view_decl_short v =
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
     fmt_cut (); 
     wrap_box ("B",0) pr_struc_formula v.view_formula;
-    fmt_cut ();
-    pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
+    (if pr_inv then pr_view_decl_inv v);
     (* pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula; *)
     pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
@@ -4517,7 +4515,7 @@ let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view
 
 let string_of_view_decl_inv (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_inv v
 
-let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_short v
+let string_of_view_decl_short ?(pr_inv=false) (v: Cast.view_decl): string = poly_string_of_pr (pr_view_decl_short ~pr_inv:pr_inv) v
 
 let string_of_view_decl_clean (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_clean v
 let sleek_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr slk_view_decl v

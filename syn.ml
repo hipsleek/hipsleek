@@ -660,7 +660,7 @@ let trans_hprel_to_view iprog prog hprels =
   let derived_views = 
     List.fold_left (fun acc (sv, hpr) ->
       let vdecls = if !Globals.new_pred_syn then
-          let vdecl = view_decl_of_hprel prog hpr in
+          let vdecl = view_decl_of_hprel iprog prog hpr in
           [vdecl]
         else Saout.view_decl_of_hprel iprog prog hpr
       in
@@ -669,7 +669,7 @@ let trans_hprel_to_view iprog prog hprels =
   in
   let () = y_tinfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
   (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
-  let norm_derived_views = norm_derived_views iprog prog derived_views in
+  let norm_derived_views = (* norm_derived_views iprog prog *) derived_views in
   let () = y_tinfo_hp (add_str "Derived Views" (pr_list Cprinter.string_of_view_decl_short)) norm_derived_views in
   norm_derived_views
 
@@ -840,9 +840,9 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       (*   view.C.view_raw_base_case <- Cf_ext.compute_raw_base_case false v_un_str;                                              *)
       (*   view.C.view_base_case <- None                                                                                          *)
       (* in                                                                                                                       *)
-      let () = update_view_content cprog view vbody in
-      let () = y_tinfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in
-      let norm_view = norm_single_view iprog cprog view in
+      let norm_view = update_view_content iprog cprog view vbody in
+      (* let () = y_tinfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in *)
+      (* let norm_view = norm_single_view iprog cprog view in                            *)
       let () = y_tinfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
       norm_view::derived_views
 
@@ -1066,11 +1066,11 @@ let unify_disj_pred iprog cprog pred =
         (* C.view_un_struc_formula = tmp_un_str; (* [(vbody, (fresh_int (), ""))]; *)  *)
       }  
     in
-    let () = update_view_content cprog tmp_cpred vbody in
+    let norm_tmp_cpred = update_view_content iprog cprog tmp_cpred vbody in
     (* let tmp_ipred = Rev_ast.rev_trans_view_decl tmp_cpred in *)
     (* let () = C.update_view_decl cprog tmp_cpred in           *)
     (* let () = I.update_view_decl iprog tmp_ipred in           *)
-    let norm_tmp_cpred = norm_single_view iprog cprog tmp_cpred in 
+    (* let norm_tmp_cpred = norm_single_view iprog cprog tmp_cpred in  *)
     let tmp_v = [norm_tmp_cpred] in
     let () = y_tinfo_hp (add_str "new view_decls" (pr_list Cprinter.string_of_view_decl_short)) tmp_v in
         (* cprog.C.prog_view_decls *) 
