@@ -789,6 +789,8 @@ let common_arguments = [
   ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--ops", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
+  ("--en-pred-elim-node", Arg.Set Globals.pred_elim_node, "Eliminate common nodes in derived predicates");
+  ("--dis-pred-elim-node", Arg.Clear Globals.pred_elim_node, "Disable common nodes elimination in derived predicates");
 
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");

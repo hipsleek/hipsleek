@@ -862,7 +862,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   let vdecls = extend_size vname scc_vdecls (property,prop_view) field_s nnn_s in
   let vdecls = List.concat vdecls in
   let () = y_tinfo_pp "need to keep entire mutual-rec vdecl generated" in  
-  let () = y_binfo_hp (add_str "vdecls" (pr_list Cprinter.string_of_view_decl(*_short*))) vdecls in
+  let () = y_binfo_hp (add_str "vdecls" (pr_list_ln Cprinter.string_of_view_decl_short)) vdecls in
   vdecls
   
 (* TODO : why is this method call in many places, code clone? *)
