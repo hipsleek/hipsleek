@@ -56,10 +56,15 @@ let process_heap_prop_extn p_tab (* pname vns *) (* mutual-rec *) (* nnn_sv *) h
 class data_table =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
+    method logging s =
+      (* let m = "**data_table** " in *)
+      (* let () = print_endline_quiet (m^s) in *)
+      ()
     method reset =
+      self # logging "reset";
       lst <- []
     method add_field_tags dn param =
-      let () = y_ninfo_hp (add_str "Add tag of" (pr_pair pr_id (pr_list (pr_list pr_id)))) (dn,param) in
+      let () = self # logging ((add_str "Add tag of" (pr_pair pr_id (pr_list (pr_list pr_id)))) (dn,param)) in
       lst <- (dn,param)::lst
     method find_tags dn =
       try

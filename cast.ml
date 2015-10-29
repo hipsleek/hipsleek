@@ -4192,9 +4192,8 @@ let set_prog cp =
   cprog := Some cp
 
 let folding_coercion c =
-  if  (c.coercion_case == Simple) && c.coercion_type=Iast.Right 
-  then Some x_tbi
-  else None
+   (c.coercion_case == Simple) && c.coercion_type=Iast.Right 
+
   (* && c.coercion_univ_vars=[] *)
 
 (* 
@@ -4210,7 +4209,7 @@ let lemma_soundness =
    method logging s =
      (* let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
      ()
-   method start_lemma_proving loc (coer:coercion_decl) (yy:string) =
+   method start_lemma_proving loc (coer:coercion_decl)  =
      self # logging ("Start Lemma Proving "^loc);
      let h_v = coer.coercion_head_view in
      let b_v = coer.coercion_body_view in
@@ -4250,8 +4249,8 @@ let lemma_soundness =
      lhs <- None;
   end;;
 
-let wrapper_lemma_soundness loc coer lhs f x =
-  let () = lemma_soundness # start_lemma_proving loc coer lhs in
+let wrapper_lemma_soundness loc coer f x =
+  let () = lemma_soundness # start_lemma_proving loc coer in
   try 
     let r = f x in
     let () = lemma_soundness # end_lemma_proving x_loc in

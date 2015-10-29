@@ -413,10 +413,10 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     coer.C.coercion_exact (* (coer.C.coercion_infer_obj # is_classic) *) coer.C.coercion_name cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
-  match Cast.folding_coercion coer with
-  | None -> check_coercion_struc coer lhs rhs cprog
-  | Some c -> Solver.wrapper_lemma_soundness x_loc coer c 
-                (check_coercion_struc coer lhs rhs) cprog
+  if Cast.folding_coercion coer then 
+    Solver.wrapper_lemma_soundness x_loc coer 
+      (check_coercion_struc coer lhs rhs) cprog
+  else check_coercion_struc coer lhs rhs cprog
 
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   let pr1 = Cprinter.string_of_coercion in

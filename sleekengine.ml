@@ -766,6 +766,8 @@ let convert_data_and_pred_to_cast_x () =
         process_lemma (Iast.gen_normalize_lemma_comb ddef)
       ) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
     ) iprog.I.prog_data_decls;
+  let d_lst = !cprog.Cast.prog_data_decls in
+  let () = Cf_ext.add_data_tags_to_obj d_lst in
 
   (* convert pred *) 
   (* The below code is moved to SleekUtils.process_iview_decls *)
