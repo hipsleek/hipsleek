@@ -1,5 +1,5 @@
 
-// ../hip ex1-aftercall-false.c --witness-gen "main:;f:2;f:1"
+// ../hip ex2-f4-aftercall-false.c --witness-gen "main:;f:2;f:2;f:1"
 extern void __VERIFIER_error();
 extern int __VERIFIER_nondet_int();
 
@@ -12,5 +12,5 @@ void f(int n) {
 
 int main(void) {
   int n = __VERIFIER_nondet_int();
-  f(3);
+  f(4);
 }
