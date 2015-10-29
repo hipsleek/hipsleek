@@ -4355,8 +4355,9 @@ let pr_view_decl v =
   pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
   pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
   pr_add_str_cut   ~emp_test:Gen.is_None  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
-  pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_,c3)->
-      fmt_string ((string_of_formula c) ^ (match c3 with None -> "" | Some ids -> string_of_list_int ids ))))) v.view_un_struc_formula;
+  pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)->
+      (pr_formula c)))) v.view_un_struc_formula;
+  (* fmt_string ((string_of_formula c) ^ (match c3 with None -> "" | Some ids -> string_of_list_int ids ))))) v.view_un_struc_formula; *)
   if (v.view_is_tail_recursive) then pr_vwrap  "linear formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_linear_formula ;
   pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula;
   pr_add_str_cut ~emp_test:(fun b -> b==false) "is_recursive?: "  pr_bool v.view_is_rec;

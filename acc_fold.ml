@@ -391,7 +391,7 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
       )
     )
   ) in
-  let induct_branches, base_branches = List.partition(fun (f, _,_) ->
+  let induct_branches, base_branches = List.partition(fun (f, _) ->
       let hviews = CF.get_views f in
       List.exists (fun hv ->
           String.compare hv.CF.h_formula_view_name vname = 0
@@ -400,8 +400,8 @@ let detect_fold_sequence_x (hf: CF.h_formula) (root_sv: CP.spec_var)
   if (List.length base_branches != 1) || (List.length induct_branches != 1) then
     []
   else
-    let base_f = Gen.fst3 (List.hd base_branches) in
-    let induct_f = Gen.fst3 (List.hd induct_branches) in
+    let base_f = (* Gen.fst3 *) fst (List.hd base_branches) in
+    let induct_f = (* Gen.fst3 *) fst (List.hd induct_branches) in
     Debug.ninfo_hprint (add_str "base_f" !CF.print_formula) base_f no_pos;
     Debug.ninfo_hprint (add_str "induct_f" !CF.print_formula) induct_f no_pos;
     let view_f = (

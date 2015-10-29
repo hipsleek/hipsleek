@@ -171,6 +171,7 @@ and formula_base = {
   formula_base_and : one_formula list; (*to capture concurrent flows*)
   formula_base_flow : flow_formula;
   formula_base_label : formula_label option;
+  (* formula_base_path_trace: path_trace option; *)
   formula_base_pos : loc }
 
 and mem_formula = {
@@ -191,6 +192,7 @@ and formula_exists = {
   formula_exists_and : one_formula list;
   formula_exists_flow : flow_formula;
   formula_exists_label : formula_label option;
+  (* formula_exists_path_trace: path_trace option; *)
   formula_exists_pos : loc }
 
 and flow_formula = {  formula_flow_interval : nflow;
@@ -7032,7 +7034,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
         try
           let (v_name,v_un_struc_formula, v_vars) = look_up_vdef pr_views hv.h_formula_view_name in
           let f_args = (CP.SpecVar (Named v_name,self, Unprimed))::v_vars in
-          let fs = List.map (fun (f,_,_) -> fresh_var f_args f) v_un_struc_formula in
+          let fs = List.map (fun (f,_) -> fresh_var f_args f) v_un_struc_formula in
           let a_args = hv.h_formula_view_node::hv.h_formula_view_arguments in
           let ss = List.combine f_args  a_args in
           let fs1 = List.map (x_add subst ss) fs in
@@ -19138,7 +19140,7 @@ let project_formula_num f inv svl =
   helper f
 
 let project_body_num body inv svl =
-  List.fold_left (fun acc (f,_,_) ->
+  List.fold_left (fun acc (f,_) ->
       let pf = project_formula_num f inv svl in
       CP.mkOr acc pf None no_pos
     ) (CP.mkFalse no_pos) body
@@ -19148,7 +19150,7 @@ let project_body_num body inv svl =
 (*Loc: should support mutrec views*)
 let project_body_num body inv svl =
   let pr = !print_pure_f in
-  Debug.no_3 "project_body_num" (pr_list (fun (a,_,_) -> !print_formula a)) pr (!print_spec_var_list) pr project_body_num body inv svl 
+  Debug.no_3 "project_body_num" (pr_list (fun (a,_) -> !print_formula a)) pr (!print_spec_var_list) pr project_body_num body inv svl 
 
 let subst_hvar_struc f subst =
   let f_f e = Some (subst_hvar e subst) in
@@ -19993,3 +19995,12 @@ let add_label_to_struc_formula s_f old_sf =
     end
   | _ -> s_f
 
+(* let replace_path_trace f0 pt= *)
+(*   let rec recf f= match f with *)
+(*     | Base bf -> Base {bf with formula_base_path_trace = Some pt} *)
+(*     | Exists ef -> Exists {ef with ormula_exists_path_trace = Some pt} *)
+(*     | Or orf -> Or {orf with formula_or_f1 = recf orf.formula_or_f1; *)
+(*           formula_or_f2 = recf orf.formula_or_f2; *)
+(*       } *)
+(*   in *)
+(*   recf f0 *)

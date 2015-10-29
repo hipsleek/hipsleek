@@ -88,6 +88,7 @@ and formula_base = {
   formula_base_vperm : VP.vperm_sets;
   formula_base_flow : flow_formula;
   formula_base_and: one_formula list;
+  (* formula_base_path_trace: path_trace option; *)
   formula_base_pos : loc }
 
 and formula_exists = { 
@@ -97,6 +98,7 @@ and formula_exists = {
   formula_exists_vperm : VP.vperm_sets;
   formula_exists_flow : flow_formula;
   formula_exists_and : one_formula list;
+  (* formula_exists_path_trace: path_trace option; *)
   formula_exists_pos : loc }
 
 (*Note that one_formula and h_formula_thread

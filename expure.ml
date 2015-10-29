@@ -145,8 +145,8 @@ let add_index_to_view view =
   if List.exists is_int_typ view.Cast.view_vars then
     let sv = mk_typed_spec_var Int "idx" in
     let svl0 = view.Cast.view_vars in
-    let new_un_sf = List.map (fun (cf,lbl,c3) ->
-        (add_index_to_formula cf,lbl,c3)
+    let new_un_sf = List.map (fun (cf,lbl) ->
+        (add_index_to_formula cf,lbl)
       ) view.Cast.view_un_struc_formula in
     {view with Cast.view_vars = svl0@[sv];
                Cast.view_un_struc_formula = new_un_sf
@@ -356,7 +356,7 @@ and build_ef_formula ?(shape=false) (cf : Cformula.formula) (all_views : Cast.vi
 (*       ls2<self,p> == [(b2,f2)] *)
 let build_ef_view_x (view_decl : Cast.view_decl) (all_views : Cast.view_decl list) : ef_pure_disj =
   let is_shape_only = List.for_all (CP.is_node_typ) view_decl.Cast.view_vars in
-  let disj = List.flatten (List.map (fun (cf,_,_) ->
+  let disj = List.flatten (List.map (fun (cf,_) ->
       let disj = build_ef_formula ~shape:is_shape_only cf all_views in
       disj
     ) view_decl.Cast.view_un_struc_formula) in
@@ -546,7 +546,7 @@ and is_ep_cformula_arith (f : Cformula.formula) : bool =
     is_ep_cformula_arith_x f
 
 let is_ep_view_arith_x (cv : view_decl) : bool =
-  List.exists (fun (cf,_,_) -> is_ep_cformula_arith cf)
+  List.exists (fun (cf,_) -> is_ep_cformula_arith cf)
     cv.view_un_struc_formula
 
 let is_ep_view_arith (cv : view_decl) : bool =

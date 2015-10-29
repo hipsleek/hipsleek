@@ -2562,7 +2562,7 @@ let do_entail_check_x vars iprog cprog cs=
     (vname, vdef.Cast.view_un_struc_formula,vdef.Cast.view_vars)
   in
   let has_unknown vdef =
-    let hrels = List.fold_left (fun r (f,_,_) ->
+    let hrels = List.fold_left (fun r (f,_) ->
         r@((CF.get_hp_rel_name_formula f))) [] vdef in
     hrels <> []
   in

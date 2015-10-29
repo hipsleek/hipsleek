@@ -1787,9 +1787,9 @@ and sat_warnings cprog =
     in
 
     let trim_unsat_l f = 
-      let r1,r2 = List.split (List.map (fun (c1,c2,c3)-> 
+      let r1,r2 = List.split (List.map (fun (c1,c2)-> 
           let r1,r2 = trim_unsat c1 in
-          ((r1,c2,c3),r2)) f) in
+          ((r1,c2),r2)) f) in
       (r1,(List.concat r2)) in
 
     let n_pred_list = List.map (fun c->       
@@ -2185,8 +2185,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             (* ) baga_under_formula_list *)
       in
       let under_fail = if under_fail then
-          (* let body_under = fst (List.split vdef.view_un_struc_formula) in *)
-        let body_under = (List.map (fun (f,_,_) -> f) vdef.view_un_struc_formula) in
+          let body_under = fst (List.split vdef.view_un_struc_formula) in
+        (* let body_under = (List.map (fun (f,_) -> f) vdef.view_un_struc_formula) in *)
           match under_f with
           | None -> false
           | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
@@ -2456,7 +2456,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           (fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
       let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
       let cf = CF.label_view cf in
-      let n_un_str =  List.map (fun (a,b) -> (a,b,None))( CF.get_view_branches cf) in
+      let n_un_str =  ( CF.get_view_branches cf) in
       let rec f_tr_base f = 
         let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in
         match f with
@@ -2467,7 +2467,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let is_hrel_v = vdef.I.view_is_hrel in
       let rbc = 
         if is_prim_v then None
-        else List.fold_left (fun a (c,l,_)-> 
+        else List.fold_left (fun a (c,l)-> 
             let fc = f_tr_base c in
             if (CF.isAnyConstFalse fc) then a 
             else match a with 
@@ -2479,7 +2479,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let ir = try
           not(is_prim_v) && is_view_recursive vdef.I.view_name
         with Not_found ->
-          List.exists ( fun (f,_,_) ->
+          List.exists ( fun (f,_) ->
               let dep_vns = CF.get_views f in
               List.exists (fun vn -> string_eq vn.CF.h_formula_view_name vdef.I.view_name) dep_vns
             ) n_un_str
@@ -2511,7 +2511,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let () = if sf!=[] then 
           begin
             match n_un_str with
-            | [(f,_,_)] ->
+            | [(f,_)] ->
               begin
                 let (h,p,_,_,_,_) = CF.split_components f in
                 let p = MCP.pure_of_mix p in
@@ -2624,7 +2624,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_mem = mem_form;
         C.view_inv_lock = inv_lock;
         C.view_un_struc_formula = n_un_str;
-        C.view_linear_formula = List.map (fun (a,b,_) -> (a,b)) n_un_str;
+        C.view_linear_formula = n_un_str;
         C.view_base_case = None;
         C.view_is_rec = ir;
         C.view_pt_by_self = sf;
@@ -2732,12 +2732,12 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               List.mem vd.Cast.view_name idl
             ) cviews0 in
           let view_list_baga = List.map (fun vd ->
-              let new_un_struc_formula = List.map (fun (cf,lbl,c3) ->
+              let new_un_struc_formula = List.map (fun (cf,lbl) ->
                   let num_svl = List.filter (fun sv -> (CP.is_int_typ sv || CP.is_num_typ sv)) vd.Cast.view_vars in
                   let abs_fnc = if !Globals.delay_eelim_baga_inv then CF.shape_abs else CF.wrap_exists in
                   let new_cf = (* CF.wrap_exists *) abs_fnc  num_svl cf in
                   let () = Debug.tinfo_hprint (add_str "new_cf" Cprinter.string_of_formula) new_cf no_pos in
-                  (new_cf,lbl, c3)
+                  (new_cf,lbl)
                 ) vd.Cast.view_un_struc_formula in
               {vd with Cast.view_un_struc_formula = new_un_struc_formula}
             ) view_list_baga0 in
@@ -2745,13 +2745,13 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
               List.mem vd.Cast.view_name idl
             ) cviews0_with_index in
           let view_list_num = List.map (fun vd ->
-              let new_un_struc_formula = List.map (fun (cf,lbl,c3) ->
+              let new_un_struc_formula = List.map (fun (cf,lbl) ->
                   let baga_svl = List.filter (fun sv ->
                       not ((CP.is_int_typ sv) || (CP.is_num_typ sv))
                     ) vd.Cast.view_vars in
                   let baga_svl = [CP.mk_spec_var "self"]@baga_svl in
                   let new_cf = CF.wrap_exists baga_svl cf in
-                  (new_cf,lbl, c3)
+                  (new_cf,lbl)
                 ) vd.Cast.view_un_struc_formula in
               {vd with Cast.view_un_struc_formula = new_un_struc_formula}
             ) view_list_num0 in
@@ -2975,7 +2975,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
         ) ls_mut_rec_views1 in
       let cviews1 = (* if !Globals.gen_baga_inv then *)
         List.map (fun cv ->
-            if (List.exists (fun (f,_,_) ->
+            if (List.exists (fun (f,_) ->
                 let _,p,_,_,_,_ = Cformula.split_components f in
                 (is_AndList (Mcpure.pure_of_mix p))
               ) cv.Cast.view_un_struc_formula)
@@ -3215,8 +3215,8 @@ and rec_grp prog :ident list =
   recs
 
 and compute_base_case prog vn cf vars = 
-  (* let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in *)
-  let pr1 = pr_list_ln (fun (f,_,_) -> Cprinter.string_of_formula f) in
+  let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
+  (* let pr1 = pr_list_ln (fun (f,_,_) -> Cprinter.string_of_formula f) in *)
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 = pr_option (fun (p, _) -> Cprinter.string_of_pure_formula p) in
   Debug.no_3(* _loop *) "compute_base_case" pr_id pr1 pr2 pr3 (fun _ _ _ -> compute_base_case_x prog vn cf vars) vn cf vars
@@ -3259,13 +3259,13 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
       let pr = Cprinter.string_of_formula in
       let pr2 = pr_pair (pr_list Cprinter.string_of_mix_formula)  (pr_list Cprinter.string_of_pure_formula) in
       Debug.no_1 "compute_base_case_part" pr pr2 part f in
-    let lst = List.map (fun (c,_,_)->
+    let lst = List.map (fun (c,_)->
         let _= proving_loc #set (CF.pos_of_formula c) in
         let () = Debug.tinfo_hprint (add_str "c" ( Cprinter.string_of_formula)) c no_pos in
         x_add_1 part c
       ) cf in
-    let cf_f = List.map Gen.fst3 cf in
-    let is_base_pure = List.map (fun (f,_,_) -> CF.is_emp_formula f) cf in
+    let cf_f = List.map (* Gen.fst3 *) fst cf in
+    let is_base_pure = List.map (fun (f,_) -> CF.is_emp_formula f) cf in
     let lst2 = List.combine lst is_base_pure in
     let lst3 = List.map (fun ((l1,l2) as k,b)-> 
         if b || l2!=[] then k else ([],(List.map MCP.pure_of_mix l1)@l2)) lst2 in
@@ -10244,8 +10244,8 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
   let bars = List.map (barrier_prune_inv_inference cp) cp.C.prog_barrier_decls in
   let prog_views_inf = {cp with C.prog_view_decls  = preds;C.prog_barrier_decls = bars} in
   let preds = List.map (fun c-> 
-      let unstruc = List.map (fun (c1,c2,c3) ->
-          (Cvutil.prune_preds(*_debug*) prog_views_inf true c1,c2,c3))c.C.view_un_struc_formula in
+      let unstruc = List.map (fun (c1,c2) ->
+          (Cvutil.prune_preds(*_debug*) prog_views_inf true c1,c2))c.C.view_un_struc_formula in
       {c with 
        C.view_formula =  CF.erase_propagated (Cvutil.prune_pred_struc prog_views_inf true c.C.view_formula) ;
        C.view_un_struc_formula = unstruc;}) preds in
@@ -10871,8 +10871,8 @@ and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) =
   if not(!Globals.allow_mem) then () else
     match vdef.C.view_mem with
     | Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
-      (* let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in  *)
-      let list_of_disjuncts = (List.map Gen.fst3 vdef.C.view_un_struc_formula) in 
+      let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in
+      (* let list_of_disjuncts = (List.map Gen.fst3 vdef.C.view_un_struc_formula) in  *)
       let list_of_calcmem = 
         List.map (fun c -> CF.formula_of_mix_formula (Mem.xmem c prog.C.prog_view_decls a) pos) list_of_disjuncts in
       let combined_list = List.combine list_of_disjuncts list_of_calcmem in

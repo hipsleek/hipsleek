@@ -372,8 +372,8 @@ let generate_extn_ho_procs prog cviews extn_view_name extn_args=
       (n_p3,quans)
   in
   let extn_v = x_add Cast.look_up_view_def_raw 44 cviews extn_view_name in
-  (* let extn_fs0 = fst (List.split extn_v.Cast.view_un_struc_formula) in *)
-  let extn_fs0 = List.map Gen.fst3 extn_v.Cast.view_un_struc_formula in
+  let extn_fs0 = fst (List.split extn_v.Cast.view_un_struc_formula) in
+  (* let extn_fs0 = List.map Gen.fst3 extn_v.Cast.view_un_struc_formula in *)
   let inv_p0 = (MCP.pure_of_mix extn_v.Cast.view_user_inv) in
   let pr_ext_vars = List.combine extn_v.Cast.view_vars extn_args in
   let fr_extn_args,ss = List.fold_left (fun (r1,r2) (CP.SpecVar (t, id, p), new_id) ->

@@ -5691,14 +5691,14 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
   let get_view_info prog vn=
     let rec look_up_view vn0=
       let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vn0.CF.h_formula_view_name in
-      let fs = List.map Gen.fst3 vdef.C.view_un_struc_formula in
+      let fs = List.map (* Gen.fst3 *) fst vdef.C.view_un_struc_formula in
       let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
       match hv_opt with
       | Some vn1 -> look_up_view vn1
       | None -> vdef
     in
     let vdef = look_up_view vn in
-    ((vn.CF.h_formula_view_name,List.map (fun (a,b,c) -> (a,b,c)) vdef.C.view_un_struc_formula, vdef.C.view_vars))
+    ((vn.CF.h_formula_view_name, vdef.C.view_un_struc_formula, vdef.C.view_vars))
   in
   let try_unfold_view pure_f1 f2=
     let _,vns,_= CF.get_hp_rel_formula f2 in
@@ -7129,7 +7129,7 @@ let simp_tree unk_hps hpdefs=
 (************************************************************)
 (*syntactically equivalence checking*)
 let match_one_hp_one_view_x iprog prog hp hp_name args def_fs (vdcl: C.view_decl): bool=
-  let v_fl,_,_ = Gen.BList.split3 vdcl.C.view_un_struc_formula in
+  let v_fl,_ = (* Gen.BList.split3 *) List.split vdcl.C.view_un_struc_formula in
   (*get root*)
   let (CP.SpecVar (t,_,_)) = List.hd args in
   (*assume self is always unprimed*)

@@ -2441,7 +2441,6 @@ module Make_DAG(Eq : EQ_TYPE) : DAG with type e := Eq.t =
     let fold t f init = List.fold_left f init (List.map fst (M.bindings t.tbl))
   end
 
-let fst3 (a,_,_) = a
 
 include Basic
 include SysUti

@@ -507,7 +507,7 @@ let view_decl_of_hprel prog (hprel: CF.hprel) =
   let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hprel_name) vargs false pos in
   let vdecl_w_def = { vdecl with 
       Cast.view_formula = CF.formula_to_struc_formula vbody;
-      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""), None)];
+      Cast.view_un_struc_formula = [(vbody, (fresh_int (), ""))];
       Cast.view_kind = View_NORM; } in
   (* let () = Cast.update_view_decl prog vdecl_w_def in *)
   vdecl_w_def
@@ -580,7 +580,7 @@ let unfolding_view iprog cprog view =
   let () = 
     view.C.view_formula <- CF.formula_to_struc_formula 
         (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f);
-    view.C.view_un_struc_formula <- [(unfold_view_f, (fresh_int (), ""), None)];
+    view.C.view_un_struc_formula <- [(unfold_view_f, (fresh_int (), ""))];
   in
   let norm_view = norm_single_view iprog cprog view in
   norm_view
