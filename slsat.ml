@@ -127,7 +127,7 @@ let unfold_one_view_x prog form_red_fnc (vnode:h_formula_view)=
         form_red_fnc prog f in
       if is_unsat then r else
         r@[(ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf)]
-  ) [](fs2)
+  ) [] (fs2)
 
 let unfold_one_view prog form_red_fnc (vnode:h_formula_view)=
   let pr1a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in

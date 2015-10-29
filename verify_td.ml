@@ -499,7 +499,7 @@ let verify_as_sat_main iprog prog source iprims=
         VTD_Unk
         else raise e
   in
-  let () = if !Globals.witness_gen then
+  let () = if !Globals.witness_gen && !Globals.call_stks!=[] then
     Witness.witness_search iprog prog (source) !Globals.call_stks
   else ()
   in
