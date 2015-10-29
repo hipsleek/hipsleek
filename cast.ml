@@ -4152,7 +4152,11 @@ let  get_selected_scc_each opt get_name scc_lst =
   in
   get_selected_scc_gen opt get_name sel_f scc_lst
 
-let get_t_v v = HipUtil.view_scc_obj # get_trans v
+(* WN : only need to get mutual-rec rather than transitive set *)
+let get_t_v v = 
+  let x = HipUtil.view_scc_obj # find_rec (* get_trans *) v in
+  if x=[] then [v]
+  else x
 
 (* type: (Globals.ident * bool) Globals.regex_list option *)
 let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =

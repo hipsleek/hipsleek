@@ -579,7 +579,59 @@ let pr_sv = CP.print_sv
 
 let data_decl_obj = CFE.data_decl_obj
 
-let mk_extn_pred_name vn pname = vn ^ "_" ^ pname
+let global_extn_name =
+  object (self) 
+    val mutable lst = [] 
+    method logging (s:string): unit =
+      let h = "\n**global_extn_name** " in
+      let () = print_endline_quiet (h^s) in
+      ()
+    method mk_name given_name (vn:string)  (prop_name:string) : string =
+      let pname = 
+        if given_name = "" then vn^" "^prop_name 
+        else given_name in
+      let n = self # find vn prop_name in
+      match n with
+      | Some pn -> 
+        if given_name="" then pn
+        else if not(given_name=pn) then 
+          let () = y_binfo_hp (add_str "vn " pr_id) vn in
+          let () = y_binfo_hp (add_str "prop_name " pr_id) prop_name in
+          let () = y_binfo_pp (given_name^" diff from existing "^pn) in
+          pn
+        else pn
+      | None -> 
+        self # logging ("Created "^pname);
+        let () = lst <- ((vn,prop_name),pname)::lst in
+        pname
+    method find (vn:string) (prop_name:string): string option =
+      try
+        let (_,n) = List.find (fun ((v1,v2),_) -> v1=vn && v2=prop_name) lst in
+        let () = self # logging ("Found "^n) in
+        Some(n)
+      with _ -> None
+    method not_processed (vn:string)  (prop_name:string) =
+      ((self # find vn prop_name) = None)
+    method retr_name (vn:string) (prop_name:string) : string =
+      match self # find vn prop_name with
+      | Some n -> n
+      | None -> 
+        let () = y_binfo_pp ((add_str "retr_name (Not found)" (pr_pair pr_id pr_id)) (vn,prop_name)) in
+        ""
+    method retr_prop (pname:string) : string =
+      try
+        let (f,s) = List.find (fun ((v1,v2),n) -> n=pname) lst in
+        snd(f)
+      with _ ->
+        let () = self # logging ((add_str "retr_prop (Not found)" pr_id) pname) in
+        ""
+  end;;
+
+let mk_extn_pred_name vn pname prop_name =
+  global_extn_name # mk_name pname vn prop_name
+
+let retr_extn_pred_name vn pname  =
+  global_extn_name # retr_name vn pname 
 
 class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq nnn_s tag_s =
   object (self)
@@ -604,7 +656,22 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
     (* val mk_inv = (fun  -> CP.mk_inc v v1) *)
     val pr_pure = fun x -> !CP.print_formula x
     val mutable inv = CP.mkTrue no_pos
-    val mutable emap = CP.EMapSV.mkEmpty 
+    val mutable emap = CP.EMapSV.mkEmpty
+    method logging s =
+      let h = "\n**prop_table** " in
+      let () =print_endline_quiet (h^s) in
+      ()
+    method mk_extn_pred_name vn pname =
+      (* let () = y_binfo_hp (add_str "vn" pr_id) vn in *)
+      (* let () = y_binfo_hp (add_str "pname" pr_id) pname in *)
+      (* let () = y_binfo_hp (add_str "prop_name" pr_id) prop_name in *)
+      let n =  global_extn_name # mk_name pname vn prop_name in
+      (* let () = self # logging ("mk_extn_pred_name:"^n) in *)
+      n
+    method create_from_prop_name vn =
+      let n = global_extn_name # mk_name "" vn prop_name in
+      let () = self # logging ("create_from_prop_name "^n^" "^(prop_name)) in
+      n
     method mk_emap p =
       emap <- CP.EMapSV.build_eset (CP.pure_ptr_equations p)
     method set_inv = 
@@ -630,8 +697,11 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
         y_tinfo_hp (add_str "p_table:prop view" pr_id) vd.C.view_name);
       vns <- vs;
       (* self # reset_disj *)
-    method is_mut_view vn =
-      List.exists (fun v -> v=vn) vns
+    method is_mut_view (vn:string) : bool =
+      if List.exists (fun v -> v=vn) vns then true
+      else 
+        (* check if non-rec view already processed *)
+        not(global_extn_name # not_processed vn prop_name) 
     method proc_data ptr name args =
       let filter_mask mask ptrs =
         let rec aux mask ptrs =
@@ -646,6 +716,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
       let to_ptrs = filter_mask mask args in
       self # add_node ptr to_ptrs
     method add_node ptr to_ptrs =
+      let () = self # logging ((add_str "add_node " (pr_pair !CP.print_sv !CP.print_svl)) (ptr,to_ptrs)) in
       if to_ptrs==[] then self # mk_zero ptr
       else 
         let v0 = self # find_or_add ptr in
@@ -665,16 +736,19 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
         self # push_def ptr;
         pure_lst <- final::pure@pure_lst
     method proc_view ptr vn =
+      let () = self # logging ((add_str "proc_view " (pr_pair (pr_opt !CP.print_sv) pr_id)) (ptr,vn)) in
       if self # is_mut_view vn then
-        let new_vname = mk_extn_pred_name vn pname (* vn^"_"^pname *) in
+        let new_vname = self # mk_extn_pred_name vn pname (* vn^"_"^pname *) in
         let (root,new_sv) = 
           match ptr with
           | None ->  (self_sv,orig_sv)
           | Some ptr -> self # push_def ptr; (ptr,self # find_or_add ptr) in
         let r = (new_vname,new_sv) in
-        let () = y_tinfo_hp (add_str "proc_view" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
+        let () = y_binfo_hp (add_str "proc_view" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
         r
-      else failwith "not a recursive view"
+      else 
+        let () = self # logging "Not a mut-rec view.." in
+        failwith "not a recursive view"
     method get_pure = pure_lst
     method get_quan = quan_vs
     method add ptr new_nnn =
@@ -819,7 +893,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   let () = y_tinfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
   let scc = HipUtil.view_scc_obj # get_scc in
   let vname = derv.Iast.view_name in
-  let () = y_tinfo_hp (add_str "view_name" pr_id)  vname in
+  let () = y_binfo_hp (add_str "view_name" pr_id)  vname in
   let pr = pr_list pr_id in
   let d =  derv.Iast.view_derv_extns in
   let () = y_binfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) d in
@@ -828,8 +902,9 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
       | _-> failwith (x_loc^" no prop")) in
   let opt = derv.Iast.view_derv_from in
   let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews0 in
-  let () = y_tinfo_hp (add_str "cviews" (pr_list (fun v -> v.C.view_name)))  cviews in
+  let () = y_binfo_hp (add_str "cviews" (pr_list (fun v -> v.C.view_name)))  cviews in
   let view_list = cviews in
+  let () = y_binfo_hp (add_str "selected" (pr_opt string_of_regex_id_star_list)) opt in
   let vd_lst = Cast.get_selected_views opt view_list in
   let prop_view = 
     try 
@@ -845,13 +920,14 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   (*     view_list *)
   (*   | None -> failwith x_tbi *)
   (* in *)
-  let () = y_tinfo_hp (add_str "vd_list(rgx)" (pr_list (fun v -> v.C.view_name))) vd_lst in
-  let () = y_tinfo_hp (add_str "scc(b4)" (pr_list (pr_list pr_id)))  scc in
+  let vd_lst = List.filter (fun vd -> global_extn_name # not_processed vd.C.view_name property) vd_lst in
+  let () = y_binfo_hp (add_str "vd_list" (pr_list (fun v -> v.C.view_name))) vd_lst in
+  let () = y_binfo_hp (add_str "scc(b4)" (pr_list (pr_list pr_id)))  scc in
   let scc = List.filter (fun mr -> 
       let common = Gen.BList.intersect_eq (fun n v -> v.C.view_name=n) mr vd_lst in
       common!=[]
     ) scc in
-  let () = y_tinfo_hp (add_str "scc(after)" (pr_list (pr_list pr_id))) scc in
+  let () = y_binfo_hp (add_str "scc(after)" (pr_list (pr_list pr_id))) scc in
   let scc_vdecls = List.map (fun mr -> 
       List.map (fun n ->
           try 
@@ -859,9 +935,10 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
             (n,v)
           with _ -> failwith (x_loc^" view "^n^" not found")
         ) mr) scc in
+  let () = y_binfo_hp (add_str "scc_vdecls" (pr_list (pr_list (fun (vn,vd) -> vn^"+"^vd.C.view_name)))) scc_vdecls in
   let vdecls = extend_size vname scc_vdecls (property,prop_view) field_s nnn_s in
   let vdecls = List.concat vdecls in
-  let () = y_tinfo_pp "need to keep entire mutual-rec vdecl generated" in  
+  let () = y_binfo_pp "TODO: need to keep entire mutual-rec vdecl generated?" in  
   let () = y_binfo_hp (add_str "vdecls" (pr_list_ln (Cprinter.string_of_view_decl_short ~pr_inv:true))) vdecls in
   vdecls
   
