@@ -15518,14 +15518,27 @@ let mk_eq_null sv =
   let v = mkVar sv no_pos in
   mk_bform (Eq (v, Null no_pos, no_pos))
 
+let mk_eq_vars v1 v2 = 
+  let v1 = mkVar v1 no_pos in
+  let v2 = mkVar v2 no_pos in
+  mk_bform (Eq (v1, v2, no_pos))
+
 let mk_max a a1 a2 = 
   let a = mkVar a no_pos in
   let a1 = mkVar a1 no_pos in
   let a2 = mkVar a2 no_pos in
   mk_bform (mkEqMax a a1 a2 no_pos)
 
+
 let mkEqExp_raw (ae1 : exp) (ae2 : exp) pos :formula =
   mk_bform (Eq (ae1, ae2, pos))
+
+let mk_sum a a1 a2 = 
+  let lhs = mkVar a no_pos in
+  let a1 = mkVar a1 no_pos in
+  let a2 = mkVar a2 no_pos in
+  let rhs = mkAdd a1 a2 no_pos in
+  mkEqExp_raw lhs rhs no_pos
 
 let mk_inc lhs rhs = 
   let lhs = mkVar lhs no_pos in

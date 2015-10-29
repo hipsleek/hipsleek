@@ -650,9 +650,11 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
     (* val mk_max = (fun v v1 v2 -> (!pr_sv v)^" = max("^(!pr_sv v1)^","^(!pr_sv v2)^")") *)
     (* val mk_inc = (fun v1 v2 -> (!pr_sv v1)^" = 1+"^(!pr_sv v2)) *)
     (* val pr_pure = fun x -> x *)
+    val mk_eq = (fun v1 v2 -> CP.mk_eq_vars v1 v2)
     val mutable mk_base = (fun v -> CP.mk_eq_zero v)
     val mutable mk_max = (fun v v1 v2 -> CP.mk_max v v1 v2)
     val mutable mk_inc = (fun v v1 -> CP.mk_inc v v1)
+    val mutable mk_sum = (fun v v1 v2 -> CP.mk_sum v v1 v2)
     (* val mk_inv = (fun  -> CP.mk_inc v v1) *)
     val pr_pure = fun x -> !CP.print_formula x
     val mutable inv = CP.mkTrue no_pos
@@ -691,10 +693,10 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
     method reset_mut vs =
       let () = y_tinfo_hp (add_str "p_table:name" pr_id) pname in
       (match pview with
-      | None -> ()
-      | Some vd -> 
-        let () = y_winfo_pp "TODO : need to build functions of views here" in
-        y_tinfo_hp (add_str "p_table:prop view" pr_id) vd.C.view_name);
+       | None -> ()
+       | Some vd -> 
+         let () = y_winfo_pp "TODO : need to build functions of views here" in
+         y_tinfo_hp (add_str "p_table:prop view" pr_id) vd.C.view_name);
       vns <- vs;
       (* self # reset_disj *)
     method is_mut_view (vn:string) : bool =
@@ -703,6 +705,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
         (* check if non-rec view already processed *)
         not(global_extn_name # not_processed vn prop_name) 
     method proc_data ptr name args =
+      let () = self # logging ((add_str "proc_data" (pr_triple pr pr_id (pr_list pr))) (ptr,name,args)) in
       let filter_mask mask ptrs =
         let rec aux mask ptrs =
           match mask,ptrs with
@@ -711,7 +714,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
           | x::ms,p::ps -> if x then p::(aux ms ps) else aux ms ps
         in aux mask ptrs
       in
-      let () = y_tinfo_hp (add_str "proc_data" (pr_triple pr pr_id (pr_list pr))) (ptr,name,args) in
+      (* let () = y_tinfo_hp (add_str "proc_data" (pr_triple pr pr_id (pr_list pr))) (ptr,name,args) in *)
       let mask = data_decl_obj # get_tag_mask name tag in
       let to_ptrs = filter_mask mask args in
       self # add_node ptr to_ptrs
@@ -734,21 +737,36 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
         let final = mk_inc v0 v in
         (* (pr v0)^" = 1+"^(pr v) in *)
         self # push_def ptr;
-        pure_lst <- final::pure@pure_lst
+        self # push_pure_lst (final::pure)
+    method add_seg ptr sz opt_ptr =
+      (* this is to support ptr::lseg<sz,opt_ptr> views *)
+      let () = self # logging ((add_str "add_seg" (pr_pair !CP.print_sv (pr_opt !CP.print_sv))) (ptr,opt_ptr)) in
+      let v0 = self # find_or_add ptr in
+      begin
+        match opt_ptr with
+        | None -> self # push_pure (mk_eq v0 sz)
+        | Some nptr -> 
+          let v1 = self # find_or_add nptr in
+          self # push_pure (mk_sum v0 sz v1)
+      end
     method proc_view ptr vn =
+      (* ptr=None means header of view vn *)
       let () = self # logging ((add_str "proc_view " (pr_pair (pr_opt !CP.print_sv) pr_id)) (ptr,vn)) in
       if self # is_mut_view vn then
         let new_vname = self # mk_extn_pred_name vn pname (* vn^"_"^pname *) in
         let (root,new_sv) = 
           match ptr with
           | None ->  (self_sv,orig_sv)
-          | Some ptr -> self # push_def ptr; (ptr,self # find_or_add ptr) in
+          | Some ptr -> 
+            self # push_def ptr; 
+            (ptr,self # find_or_add ptr) 
+        in
         let r = (new_vname,new_sv) in
-        let () = y_binfo_hp (add_str "proc_view" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
+        let () = y_binfo_hp (add_str "proc_view(C)" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
         r
       else 
-        let () = self # logging "Not a mut-rec view.." in
-        failwith "not a recursive view"
+        let () = self # logging ("Not a mut-rec view.."^vn) in
+        failwith "not a recursive view?"
     method get_pure = pure_lst
     method get_quan = quan_vs
     method add ptr new_nnn =
@@ -756,13 +774,18 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
     method push_def ptr =
       def_lst <- ptr::def_lst
     method push_pure s =
+      let () = self # logging ((add_str "push_pure" !CP.print_formula) s) in
       pure_lst <- s::pure_lst
+    method push_pure_lst s =
+      let () = self # logging ((add_str "push_pure_lst" (pr_list !CP.print_formula)) s) in
+      pure_lst <- s@pure_lst
     method fresh_var =
       let v = fresh orig_sv in
       let () = quan_vs <-v::quan_vs in
       v
     method find_or_add ptr =
       (* let fresh nnn = nnn in *)
+      let () = self # logging ((add_str "find_or_add " !CP.print_sv) ptr) in
       try
         snd(List.find (fun (x,_) -> 
             eq x ptr || CP.EMapSV.is_equiv emap x ptr) lst)
