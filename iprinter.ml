@@ -622,7 +622,7 @@ and string_of_formula = function
       let s = if svp = "" then s else svp ^ " & " ^ s in
       (if s = "" then  (string_of_h_formula hf)
        else "(" ^ (string_of_h_formula hf) ^ ") * (" ^ s ^ ")( FLOW "^fl^")")
-    in (match pt0 with | None -> "" | Some pt -> string_of_path_trace pt) ^ rs ^ sa
+    in (match pt0 with | None -> "" | Some pt -> (string_of_cond_path pt)) ^ rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
                 F.formula_or_f2 = f2;
                 F.formula_or_pos = l}) ->
@@ -643,7 +643,7 @@ and string_of_formula = function
                if s = "" then  (string_of_h_formula hf)
                else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ s (* (string_of_pure_formula pf) *) ^ ")( FLOW "^fl^")")
             ^ ")"
-    in (match pt0 with | None -> "" | Some pt -> string_of_path_trace pt)  ^ rs^sa
+    in (match pt0 with | None -> "" | Some pt -> (string_of_cond_path pt))  ^ rs^sa
 
 and  string_of_struc_formula c = match c with 
   | F.ECase {

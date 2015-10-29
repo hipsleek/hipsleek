@@ -171,7 +171,7 @@ and formula_base = {
   formula_base_and : one_formula list; (*to capture concurrent flows*)
   formula_base_flow : flow_formula;
   formula_base_label : formula_label option;
-  formula_base_path_trace: path_trace option;
+  formula_base_path_trace: cond_path option;
   formula_base_pos : loc }
 
 and mem_formula = {
@@ -192,7 +192,7 @@ and formula_exists = {
   formula_exists_and : one_formula list;
   formula_exists_flow : flow_formula;
   formula_exists_label : formula_label option;
-  formula_exists_path_trace: path_trace option;
+  formula_exists_path_trace: cond_path option;
   formula_exists_pos : loc }
 
 and flow_formula = {  formula_flow_interval : nflow;

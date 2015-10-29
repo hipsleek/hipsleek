@@ -110,7 +110,7 @@ let save_witness file_name s=
       print_string_quiet ("\nSaving " ^ fname ^ "\n"); flush stdout;
       let () = Printf.fprintf  org_out_chnl "%s" s in
       let () = close_out org_out_chnl in
-      ()
+      fname
   with
     End_of_file -> exit 0
 
@@ -434,16 +434,17 @@ let witness_search iprog0 cprog src_fname call_stk=
                   1 inter_id (start_line_of_pos init_proc.I.proc_loc) [] e entry_id init_pname init_ctls entry_node
             in
             if not is_found || rest_call_stk != [] then
-              print_string_quiet "\nnot a valid error trace\n"
+              let () = print_string_quiet "\nnot a valid error trace\n" in
+              ""
             else
               (* header *)
               let witness_header = gen_witness_header () in
               let norm_src_fname =  Globals.norm_file_name src_fname in
               let str_conclude = get_witness_conclude () in
               let s = witness_header^body_str^str_conclude in
-              let () = save_witness (norm_src_fname  ^ ".graphml") s in
-              ()
-      | None -> ()
+              let fname = save_witness (norm_src_fname  ^ ".graphml") s in
+              fname
+      | None -> ""
   in
   let () = xml_flag := old_xml_flag in
   res

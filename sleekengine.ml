@@ -2851,7 +2851,7 @@ let process_sat_check_new (f : meta_formula) =
   let f = Cvutil.prune_preds !cprog true f in
   let unsat_command f = not(Solver.unsat_base_nth 7 !cprog (ref 0) f) in
   (* let _ = Slsat.check_sat_with_uo !cprog f in *)
-  let ires = Slsat.check_sat_topdown !cprog true f in
+  let ires,_ = Slsat.check_sat_topdown !cprog true f in
   (* let res = Solver.unsat_base_nth 1 !cprog (ref 0) f in *)
   (* let sat_res = *)
   (*   if res then false *)

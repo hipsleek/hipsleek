@@ -2308,7 +2308,7 @@ and pr_formula_base e =
       formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string ( (* "<NoLabel>" *)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
-    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
+    (match pt0 with | None -> fmt_string "" | Some pt -> fmt_string (string_of_cond_path pt));
     pr_h_formula h;
     (if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp));
     (if not(MP.isConstMTrue p) then
@@ -2346,7 +2346,7 @@ and prtt_pr_formula_base e =
       formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string (  (* "<NoLabel> "*)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
-    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
+    (match pt0 with | None -> fmt_string "" | Some pt -> fmt_string (string_of_cond_path pt));
     prtt_pr_h_formula h ;
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&" ; pr_mix_formula p))
@@ -2368,7 +2368,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
-    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
+    (match pt0 with | None -> fmt_string "" | Some pt -> fmt_string (string_of_cond_path pt));
     prtt_pr_h_formula_inst prog h;
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
@@ -2385,7 +2385,7 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
       formula_base_path_trace = pt0;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
-    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
+    (match pt0 with | None -> fmt_string "" | Some pt -> fmt_string (string_of_cond_path pt));
     prtt_pr_h_formula_inst_html prog post_hps h ;
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
@@ -2490,7 +2490,7 @@ and prtt_pr_formula e =
              formula_exists_path_trace = pt0;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
-    (match pt0 with | None -> fmt_string "" | Some pt -> pr_path_trace pt);
+    (match pt0 with | None -> fmt_string "" | Some pt -> fmt_string (string_of_cond_path pt));
     fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
     prtt_pr_h_formula h; pr_cut_after "&" ;
     pr_mix_formula p; pr_cut_after  ")";

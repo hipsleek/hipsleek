@@ -23,9 +23,9 @@ let get_path_ctl f=
   match (CF.get_path_trace f) with
     | None -> []
     | Some path_label ->
-          List.fold_left (fun acc (_, ctl) -> if ctl == 0 then acc else
-            acc@[ctl]
-          ) [] path_label
+          (* List.fold_left (fun acc (_, ctl) -> if ctl == 0 then acc else *)
+          (*   acc@[ctl] *)
+          (* ) [] *) path_label
 
 let string_of_path (a1,a2,a3,a4,a5,a6,a7,a8) =
   let pr1a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
@@ -341,7 +341,7 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
   let disjs_i_ind = ref ([]) in
   let disjs_i_minus_ind = ref ([]) in
   let count_i = ref (count) in
-  let res = ref (2:int) in
+  let res = ref ((2, None)) in
   let finished = ref false in
   (***************INTERNAL****************)
   let rec find_first_sat disjs=
@@ -374,24 +374,23 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
     (* let pr4 = pr_list_ln (pr_hepta pr1 pr2 pr2 pr1 pr1 (pr_list pr3)  Cprinter.string_of_mix_formula) in *)
     (* let _ = DD.info_hprint (add_str "!disjs_i" pr4) (!disjs_i) no_pos in *)
     if !count_i>=bound then
-      return 2
+      return (2, None)
     else
       let f_opt, rest_disjs = find_first_sat !disjs_i in
       match f_opt with
-        | None -> return 0
+        | None -> return (0, None)
         | Some ((ptos, eqs, neqs, null_svl, neqNull_svl, vns, mf, pt) as f_j)-> begin
             (*is under-approximation - do not have any pred instances*)
             if vns=[] then
-              let () = DD.info_hprint (add_str "sat" (string_of_path)) f_j  no_pos in
-              let () = print_endline "" in
-              return 1
+              let () = DD.ninfo_hprint (add_str "sat" (string_of_path)) f_j  no_pos in
+              return (1, Some f_j)
             else
               (*unfold f*)
               let idecided, new_disjs = unfold_bfs prog is_shape_only form_red_fnc is_inconsistent_fnc
                 (ptos,eqs, neqs, null_svl, neqNull_svl, [], mf, pt) vns in
               if idecided=1  then
-                let _ = DD.info_hprint (add_str "sat list" (pr_list_ln string_of_path)) new_disjs  no_pos in
-                return idecided
+                let _ = DD.ninfo_hprint (add_str "sat list" (pr_list_ln string_of_path)) new_disjs  no_pos in
+                return (idecided, Some (List.hd new_disjs))
               else
                 (* let acc_disjs = if idecided=0 then rest_disjs else *)
                 (*   let _ = disjs_i_plus := !disjs_i_plus @ new_disjs in *)
@@ -406,11 +405,11 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
                   if !disjs_i=[] then
                     let _ =
                       if !disjs_i_plus = [] then
-                        return 0
+                        return (0, None)
                       else
                         (* check fixpoint *)
                         if Satutil.checkeq_formula_list !disjs_i_minus_ind !disjs_i_ind then
-                          return 0
+                          return (0, None)
                         else
                           let _ = count_i := !count_i +1 in
                           let _ = disjs_i := !disjs_i_plus in
@@ -432,7 +431,8 @@ and check_sat_topdown_iter prog is_shape_only form_red_fnc is_inconsistent_fnc d
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   (* let pr3 = pr_list_ln (pr_hepta !CP.print_svl pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) pr1b) in *)
   let pr3 = pr_list_ln string_of_path in
-  Debug.no_3 "check_sat_topdown_iter" pr3 string_of_int string_of_int string_of_int
+  let pr4 (_,_,_,_,_,_,_,pt) = (pr_list string_of_call_stk) pt in
+  Debug.no_3 "check_sat_topdown_iter" pr3 string_of_int string_of_int (pr_pair string_of_int (pr_option pr4))
       (fun _ _ _ -> check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent_fnc disjs count bound)
       disjs count bound
 
@@ -452,35 +452,37 @@ let check_sat_topdown_x prog need_slice f0=
       (* if is_only_eq then form_red_eq_fnc prog f else form_red_all prog f *)
       form_red_fnc prog true f
     in
-    if is_unsat then 0 else
+    if is_unsat then (0, None) else
       check_sat_topdown_iter prog is_shape_only
           form_red_fnc is_inconsistent_fnc
           [(ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf, [])] 0 bound
   in
   let rec iter_slice_helper fs=
     match fs with
-      | [] -> 1
+      | [] -> 1, None
       | f::rest ->
-            let res1 = check_sat_one_slice f in
-            if res1!=1 then res1 else
+            let res1, cex = check_sat_one_slice f in
+            if res1!=1 then (res1, cex) else
               iter_slice_helper rest
   in
   (* let f0a = elim_exists f0 in *)
   (* let quans,f1 = split_quantifiers f0a in *)
-  let fs = if not need_slice ||  Cfutil.is_view_f f0 || not is_shape_only then [f0]
-  else (Frame.heap_normal_form prog f0 Hgraph.hgraph_grp_min_size_unsat)
-  in
-  let res = iter_slice_helper fs in
+  (* let fs = if not need_slice ||  Cfutil.is_view_f f0 || not is_shape_only then [f0] *)
+  (* else (Frame.heap_normal_form prog f0 Hgraph.hgraph_grp_min_size_unsat) *)
+  (* in *)
+  (* let res, cex = iter_slice_helper fs in *)
+  let res, cex = check_sat_one_slice f0 in
   let _ = slsat_num := !slsat_num + 1 in
   let _ = if res=0 then slsat_unsat_num := !slsat_unsat_num + 1 else
     if res=1 then slsat_sat_num := !slsat_sat_num + 1 else ()
   in
-  res
+  res,cex
   (* check_sat_one_slice f0 *)
 
 let check_sat_topdown prog need_slice f=
   let pr1 = Cprinter.string_of_formula in
-  Debug.no_1 "check_sat_topdown" pr1 string_of_int
+  let pr2 (_,_,_,_,_,_,_,pt) = (pr_list string_of_call_stk) pt in
+  Debug.no_1 "check_sat_topdown" pr1 (pr_pair string_of_int (pr_option pr2))
       (fun _ -> check_sat_topdown_x prog need_slice f)
       f
 

@@ -561,7 +561,11 @@ let process_source_full source =
   (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
   (* let _ = Ast2pred.verify_as_sat intermediate_prog in *)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-  (* !verify_td *)
+  if !Globals.witness_gen then
+    let _ = Witness.witness_search intermediate_prog cprog (source) !Globals.call_stks in
+    ()
+  else
+    (* !verify_td *)
   let td_r = Verify_td.verify_as_sat_main intermediate_prog cprog source iprims in
   if td_r != Verify_td.VTD_NotApp then
     (* let () = print_endline_quite ("\n" ^(Verify_td.string_of_assert_err td_r)) in *)
@@ -816,9 +820,7 @@ let process_source_full source =
   if (!Scriptarguments.typecheck_only) 
   then print_string (Cprinter.string_of_program cprog)
     else
-      if !Globals.witness_gen then
-        Witness.witness_search intermediate_prog cprog (source) !Globals.call_stks
-  else (try
+       (try
           (* let () =  Debug.info_zprint (lazy  ("XXXX 5: ")) no_pos in *)
           (* let () = I.set_iprog intermediate_prog in *)
           ignore (Typechecker.check_prog intermediate_prog cprog);

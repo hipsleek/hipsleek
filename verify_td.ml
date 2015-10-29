@@ -240,13 +240,17 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
   let rec collect_es c = match c with
     | CF.Ctx es ->
           let f = CF.substitute_flow_in_f !norm_flow_int !ret_flow_int es.CF.es_formula in
+          let () = x_tinfo_hp (add_str ("cond_path") (string_of_cond_path)) es.CF.es_cond_path no_pos in
+          let f1 = CF.replace_path_trace f es.CF.es_cond_path in
           (* let f1 = Immutable.apply_subs es.CF.es_crt_holes f in *)
-          [f]
+          [f1]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
-  let () = x_binfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
-  let brs0 = List.fold_left (fun acc (pt,ctx,_) ->
-      let new_p_fs = List.map (fun f ->  CF.replace_path_trace f pt)(collect_es ctx) in
+  let () = x_tinfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
+  let brs0 = List.fold_left (fun acc (_,ctx,_) ->
+      let new_p_fs = List.map (fun f ->  (* CF.replace_path_trace f pt *)
+          f
+      )(collect_es ctx) in
       acc@new_p_fs
   ) [] br_ctxs in
   let () = x_tinfo_hp (add_str ("brs0") (pr_list_ln (!CF.print_formula ))) brs0 no_pos in
@@ -378,17 +382,18 @@ let verify_td_scc iprog prog scc=
   in
   let rec build_sat_query procs=
     match procs with
-      | [] -> VTD_Unk
+      | [] -> VTD_Unk, None
       | [mdecl] -> begin
           let query = build_f_from_method mdecl in
           let () = Debug.info_hprint (add_str "query"
                                  (!CF.print_formula)
                               ) query no_pos in
-          let r = Slsat.check_sat_topdown prog false query in
-          match r with
+          let r, cex = Slsat.check_sat_topdown prog false query in
+          let res = match r with
             | 0 -> VTD_Safe
-            | 1 -> VTD_Unsafe
+            | 1 ->  VTD_Unsafe
             | _ -> VTD_Unk
+          in (res,cex)
         end
       | _::rest -> build_sat_query rest
   in
@@ -484,27 +489,34 @@ let verify_as_sat iprog prog iprims=
     (* check sat *)
     res
   else
-    VTD_NotApp
+    VTD_NotApp, None
 
-let print_verify_resule res  str_time=
+let print_verify_resule res witness_path str_time=
   if res != VTD_NotApp then
-    let () = print_endline ("(" ^(string_of_assert_err res) ^ ", " ^  str_time ^ ")\n") in
+    let () = print_endline ("(" ^(string_of_assert_err res) ^ ", " ^
+        witness_path  ^ ", " ^ 
+        str_time ^ ")\n") in
     ()
 
 let verify_as_sat_main iprog prog source iprims=
-  let res=
-    try verify_as_sat iprog prog iprims
-    with e ->
-        if !Globals.svcomp_compete_mode then
-        VTD_Unk
-        else raise e
-  in
-  let () = if !Globals.witness_gen && !Globals.call_stks!=[] then
-    Witness.witness_search iprog prog (source) !Globals.call_stks
-  else ()
-  in
-  let ptime4 = Unix.times () in
-  let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-  let str_time = (string_of_float t4) ^ "(seconds)" in
-  let () = print_verify_resule res str_time in
-  res
+  (* if !Globals.witness_gen && !Globals.call_stks!=[] then *)
+  (*   let _ = Witness.witness_search iprog prog (source) !Globals.call_stks in *)
+  (*   VTD_NotApp, None *)
+  (* else *)
+    let res, cex=
+      try verify_as_sat iprog prog iprims
+      with e ->
+          if !Globals.svcomp_compete_mode then
+            VTD_Unk, None
+          else raise e
+    in
+    let witness_path = match cex with
+      | None -> ""
+      | Some (_,_,_,_,_,_,_, cond_path) ->
+            Witness.witness_search iprog prog (source) cond_path
+    in
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+    let str_time = (string_of_float t4) ^ "(seconds)" in
+    let () = print_verify_resule res witness_path str_time in
+    res
