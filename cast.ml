@@ -4211,7 +4211,7 @@ let lemma_soundness =
    val mutable lhs = None
    val mutable progress = false
    method logging s =
-(*     let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in*)
+     (* let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
      ()
    method start_lemma_proving loc (coer:coercion_decl)  =
      self # logging ("Start Lemma Proving "^loc);

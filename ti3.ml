@@ -249,10 +249,11 @@ let is_infer_term_scc scc =
   Debug.no_1 "is_infer_term_scc" pr string_of_bool
     is_infer_term_scc scc
 
-let add_term_relation_proc prog proc spec = 
+let add_term_relation_proc prog proc = 
   let is_primitive = not (proc.proc_is_main) in
-  if is_primitive then spec
+  if is_primitive then ()
   else
+    let spec = proc.proc_stk_of_static_specs # top in
     let fname = unmingle_name proc.proc_name in
     let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
     (* TODO: We should not rely on collect_important_vars_in_spec *)
@@ -291,13 +292,11 @@ let add_term_relation_proc prog proc spec =
       CP.tu_icond = CP.mkTrue pos;
       CP.tu_sol = None;
       CP.tu_pos = pos; } in
-    CF.norm_struc_with_lexvar is_primitive true (Some uid) spec
+    let n_spec = CF.norm_struc_with_lexvar is_primitive true (Some uid) spec in
+    proc.proc_stk_of_static_specs # push_pr x_loc new_spec
 
 let add_term_relation_scc prog scc =
-  List.iter (fun proc ->
-      let spec = proc.proc_stk_of_static_specs # top in
-      let new_spec = add_term_relation_proc prog proc spec in
-      proc.proc_stk_of_static_specs # push_pr "ti3:288" new_spec) scc
+  List.iter (fun proc -> add_term_relation_proc prog proc) scc
 
 let partition_trels_by_proc trrels turels =
   let fn_trrels = 
