@@ -382,14 +382,14 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
         | Some ((ptos, eqs, neqs, null_svl, neqNull_svl, vns, mf, pt) as f_j)-> begin
             (*is under-approximation - do not have any pred instances*)
             if vns=[] then
-              let () = DD.ninfo_hprint (add_str "sat" (string_of_path)) f_j  no_pos in
+              let () = DD.info_hprint (add_str "sat" (string_of_path)) f_j  no_pos in
               return (1, Some f_j)
             else
               (*unfold f*)
               let idecided, new_disjs = unfold_bfs prog is_shape_only form_red_fnc is_inconsistent_fnc
                 (ptos,eqs, neqs, null_svl, neqNull_svl, [], mf, pt) vns in
               if idecided=1  then
-                let _ = DD.ninfo_hprint (add_str "sat list" (pr_list_ln string_of_path)) new_disjs  no_pos in
+                let _ = DD.info_hprint (add_str "sat list" (pr_list_ln string_of_path)) new_disjs  no_pos in
                 return (idecided, Some (List.hd new_disjs))
               else
                 (* let acc_disjs = if idecided=0 then rest_disjs else *)

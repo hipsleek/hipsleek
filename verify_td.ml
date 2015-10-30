@@ -241,12 +241,12 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
     | CF.Ctx es ->
           let f = CF.substitute_flow_in_f !norm_flow_int !ret_flow_int es.CF.es_formula in
           let () = x_tinfo_hp (add_str ("cond_path") (string_of_cond_path)) es.CF.es_cond_path no_pos in
-          let f1 = CF.replace_path_trace f es.CF.es_cond_path in
+          let f1 = CF.replace_path_trace f (List.rev es.CF.es_cond_path) in
           (* let f1 = Immutable.apply_subs es.CF.es_crt_holes f in *)
           [f1]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
-  let () = x_tinfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
+  let () = x_binfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
   let brs0 = List.fold_left (fun acc (_,ctx,_) ->
       let new_p_fs = List.map (fun f ->  (* CF.replace_path_trace f pt *)
           f
@@ -493,8 +493,8 @@ let verify_as_sat iprog prog iprims=
 
 let print_verify_resule res witness_path str_time=
   if res != VTD_NotApp then
-    let () = print_endline ("(" ^(string_of_assert_err res) ^ ", " ^
-        witness_path  ^ ", " ^ 
+    let () = print_endline ("Verification result:(" ^(string_of_assert_err res) ^ ", " ^
+         "witness: "^ (if string_eq witness_path "" then "" else (witness_path )) ^ ", " ^
         str_time ^ ")\n") in
     ()
 

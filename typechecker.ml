@@ -2168,7 +2168,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               exp_cond_else_arm = e2;
               exp_cond_path_id = pid;
               exp_cond_pos = pos}) ->
-      (* let () = x_binfo_hp (add_str "cond_path_id"  *)
+      (* let () = x_binfo_hp (add_str "cond_path_id" *)
       (*     (fun s -> Cprinter.pr_control_path_id_opt s)) pid pos in *)
       let cond_op () =
         begin

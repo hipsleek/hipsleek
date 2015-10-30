@@ -15,6 +15,7 @@ let witness_from_orig = ref true
 
 let init_proc_name = "main"
 let violation_proc_name = "__VERIFIER_error"
+let nondet_int_name = "__VERIFIER_nondet_int"
 let prefix_node = "A"
 
 let inter_num = ref (0:int)
@@ -30,6 +31,9 @@ let get_seq_id () =
   let n = !seq_num in
   let () = seq_num := !seq_num + 1 in
   n
+
+let string_of_call_stk s=
+  String.concat ";" (List.map (fun (fname, ids) -> fname ^ ":"^ (String.concat "," (List.map string_of_int ids))) s)
 
 let get_fst ls=
   match ls with
@@ -66,8 +70,8 @@ let get_source_if str=
   with Not_found -> false,str
 
 let get_source str=
-  let _,str = get_source_if str in
-  str
+  (* let _,str = get_source_if str in *)
+  String.trim str
 
 let start_line_of_pos p=p.start_pos.Lexing.pos_lnum
 
@@ -199,6 +203,13 @@ let id_to_string inter intra=
 let enter_fnc_id_to_string inter=
   prefix_node ^ (string_of_int inter) 
 
+let is_fun_call e=
+  match e with
+    | I.CallNRecv {exp_call_nrecv_method = pname;} ->
+          if not ( string_eq pname violation_proc_name || string_eq pname nondet_int_name) then Some pname
+          else None
+    | _ -> None
+
 (*
 last_cond_lno: cil does split
   if a && b then ==> if a then if b then
@@ -213,12 +224,44 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
       inter_id intra_id
       last_cond_lno var_decls
       e prev_n_id procn path_ctls res_str=
+  (**********************)
   let recf_no_change e1 = witness_search_loop iprog cprog orig_src_lines call_stk
     inter_id intra_id last_cond_lno var_decls e1 prev_n_id procn path_ctls res_str in
   let recf call_stk inter_id intra_id last_cond_lno1 var_decls1 e0 prev_n_id procn path_ctls res_str=
     witness_search_loop iprog cprog orig_src_lines call_stk
         inter_id intra_id last_cond_lno1 var_decls1 e0 prev_n_id procn path_ctls res_str
   in
+  let func_call call_stk pname e =
+    if call_stk=[] then
+      false, [], inter_id,intra_id, last_cond_lno, var_decls,false, prev_n_id, path_ctls,res_str
+    else
+      let (stk_pname, ctls), rest_stk = get_fst call_stk in
+      if not (string_eq stk_pname pname) then
+        failwith "not a valid error trace (CallNRecv 1)"
+      else
+        let proc = I.look_up_proc_def_raw iprog.I.prog_proc_decls pname in
+        match proc.I.proc_body with
+          | Some proc_body -> begin
+              let str_code =  if not !witness_from_orig then
+                (!I.print_exp e)
+              else
+                let str = Array.get orig_src_lines (start_line_of_pos (I.pos_of_exp e)) in
+                let r = Str.regexp pname in
+                let idx1 = Str.search_forward r str 0 in
+                let idx2 = String.rindex str ')' in
+                String.trim(String.sub str (idx1) (idx2-idx1+1))
+              in
+              let str_line = line_number_of_pos (I.pos_of_exp e) in
+              let n_node_id = enter_fnc_id_to_string inter_id in
+              let node = mk_node n_node_id in
+              let edge = mk_edge_func_call prev_n_id n_node_id str_code str_line pname in
+              let n_inter_id = get_inter_id () in
+              recf rest_stk n_inter_id 0 (start_line_of_pos proc.I.proc_loc)
+                  [] proc_body n_node_id pname ctls (res_str^node^edge)
+            end
+          | _ -> failwith "not a valid error trace (CallNRecv at Assign)"
+  in
+  (**********************)
   match e with
     | I.Block {I.exp_block_body = bb} -> recf_no_change bb
     | I.Cond {I.exp_cond_condition = cond;
@@ -244,6 +287,7 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
                 !I.print_exp cond
               else
                 let str = Array.get orig_src_lines src_line in
+                let _ ,str = get_source_if str in
                 xml_norm str
               in
               let () = x_binfo_hp (add_str "COND" (pr_pair string_of_int pr_id)) (src_line, str_code_pure) no_pos in
@@ -266,21 +310,30 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
           exp_return_pos = p;
       } ->
           let () = x_binfo_hp (add_str "RETURN" (string_of_int)) inter_id no_pos in
-          let str_code = "return " ^ ( match e_opt with
-            | None -> ""
-            | Some e1 -> (IP.string_of_exp e1)
-          ) ^ ";" in
-          let str_line = line_number_of_pos p in
+          let src_line = line_number_of_pos p in
+          let str_code =  if not !witness_from_orig then
+            "return " ^ ( match e_opt with
+              | None -> ""
+              | Some e1 -> (IP.string_of_exp e1)
+            ) ^ ";"
+          else
+            let str = Array.get orig_src_lines (start_line_of_pos p) in
+            let () = x_binfo_hp (add_str "RETURN" (pr_id)) str no_pos in
+            let r = Str.regexp "return" in
+            let idx1 = Str.search_forward r str 0 in
+            let idx2 = String.rindex str ';' in
+            String.trim(String.sub str (idx1) (idx2-idx1))
+          in
           let n_node_id = (id_to_string inter_id intra_id) in
           let node = mk_node n_node_id in
-          let edge = mk_edge_return prev_n_id n_node_id str_code str_line procn in
+          let edge = mk_edge_return prev_n_id n_node_id str_code src_line procn in
           let n_intra_id = intra_id+1 in
           false, call_stk, inter_id, n_intra_id , last_cond_lno, var_decls, true, n_node_id , path_ctls, (res_str ^ node ^ edge)
     | Label (_, e1) ->
-          let () = x_tinfo_hp (add_str "Label" (pr_id)) "" no_pos in
+          let () = x_binfo_hp (add_str "Label" (pr_id)) "" no_pos in
           recf_no_change e1
     | I.CallRecv _ ->
-          let () = x_tinfo_hp (add_str "CallRecv" (pr_id)) "" no_pos in
+          let () = x_binfo_hp (add_str "CallRecv" (pr_id)) "" no_pos in
           false, call_stk, inter_id, intra_id, last_cond_lno, var_decls, false, prev_n_id , path_ctls, res_str
     | I.CallNRecv { 
           exp_call_nrecv_method = pname ;
@@ -304,7 +357,8 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
           else
             let (stk_pname, ctls), rest_stk = get_fst call_stk in
             if not (string_eq stk_pname pname) then
-              failwith "not a valid error trace (CallNRecv 1)"
+              let () = print_endline  "WARN: not a valid error trace (CallNRecv 1)" in
+              true, call_stk, inter_id, intra_id, last_cond_lno, var_decls,false, prev_n_id , path_ctls, (res_str)
             else
               match proc.I.proc_body with
                 | Some e -> begin
@@ -340,7 +394,9 @@ end
     | I.Assign {exp_assign_op =op;
       exp_assign_lhs =e1;
       exp_assign_rhs = e2;
-      exp_assign_pos = p} ->
+      exp_assign_pos = p} -> begin
+        (**********************)
+        let assign_helper call_stk prev_n_id res_str=
           let () = x_binfo_hp (add_str ("Assgin" ^ (string_of_int inter_id) ) (!I.print_exp)) e no_pos in
           let new_node_edge str_code=
             let str_line = line_number_of_pos p in
@@ -367,6 +423,40 @@ end
               (intra_id, prev_n_id, res_str)
           in
           false, call_stk, inter_id, n_intra_id, last_cond_lno, var_decls,false, n_node_id , path_ctls, (n_res_str)
+        in
+        (**********************)
+        match is_fun_call e2 with
+          | None -> assign_helper call_stk prev_n_id res_str
+          | Some pname -> begin
+              let () = x_binfo_hp (add_str ("Call at RHS of Assign -> inter_id" ^ (string_of_int inter_id) ) (!I.print_exp)) e2 no_pos in
+              (* if call_stk=[] then *)
+              (*   false, [], inter_id,intra_id, last_cond_lno, var_decls,false, prev_n_id, path_ctls,res_str *)
+              (* else *)
+              (*   let (stk_pname, ctls), rest_stk = get_fst call_stk in *)
+              (*   if not (string_eq stk_pname pname) then *)
+              (*     failwith "not a valid error trace (CallNRecv 1)" *)
+              (*   else *)
+              (*     let proc = I.look_up_proc_def_raw iprog.I.prog_proc_decls pname in *)
+              (*     match proc.I.proc_body with *)
+              (*       | Some proc_body -> begin *)
+              (*           let str_code = (!I.print_exp e2) in *)
+              (*           let str_line = line_number_of_pos (I.pos_of_exp e2) in *)
+              (*           let n_node_id = enter_fnc_id_to_string inter_id in *)
+              (*           let node = mk_node n_node_id in *)
+              (*           let edge = mk_edge_func_call prev_n_id n_node_id str_code str_line pname in *)
+              (*           let n_inter_id = get_inter_id () in *)
+              (*           let ((is_found, rest_call_stk, inter_id1, intra_id1,last_cond_lno1, var_decls1, is_returning, last_n_id, ctls1,res_str1) as res) = *)
+              (*             recf rest_stk n_inter_id 0 (start_line_of_pos proc.I.proc_loc) *)
+              (*                 [] proc_body n_node_id pname ctls (res_str^node^edge) in *)
+              (*           if is_found then res *)
+              (*           else assign_helper rest_stk last_n_id res_str1 *)
+              (*         end *)
+              (*       | _ -> failwith "not a valid error trace (CallNRecv at Assign)" *)
+              let ((is_found, rest_call_stk, inter_id1, intra_id1,last_cond_lno1, var_decls1, is_returning, last_n_id, ctls1,res_str1) as res) =  func_call call_stk pname e2 in
+              if is_found then res
+              else assign_helper rest_call_stk last_n_id res_str1
+            end
+      end
     | I.Binary _ ->
           let () = x_binfo_hp (add_str "Binary" (pr_id)) "" no_pos in
           false, call_stk, inter_id, intra_id,last_cond_lno, var_decls,false, prev_n_id , path_ctls, res_str
@@ -395,7 +485,9 @@ end
              let n_intra_id = intra_id+1 in
              false, call_stk, inter_id, n_intra_id, last_cond_lno,(var_decls@[last_lno]), false, n_node_id , path_ctls, (res_str ^ node ^ edge)
       end
-    | _ -> false, call_stk, inter_id, intra_id,last_cond_lno, var_decls, false, prev_n_id , path_ctls, res_str
+    | _ ->
+          let () = x_binfo_hp (add_str "Not Handled " (!I.print_exp)) e no_pos in
+          false, call_stk, inter_id, intra_id,last_cond_lno, var_decls, false, prev_n_id , path_ctls, res_str
 
 (*TOFIX:
   orig
@@ -411,6 +503,7 @@ let remove_tmp_local_vars iprog=
   iprog
 
 let witness_search iprog0 cprog src_fname call_stk=
+  let () = print_string_quiet ("call_stk: " ^ (string_of_call_stk call_stk)) in
   let old_xml_flag = !xml_flag in
   let () = xml_flag := true in
   let src_lines = Array.create 100 ("") in
@@ -433,6 +526,7 @@ let witness_search iprog0 cprog src_fname call_stk=
               witness_search_loop iprog cprog src_lines rest_call_stk 
                   1 inter_id (start_line_of_pos init_proc.I.proc_loc) [] e entry_id init_pname init_ctls entry_node
             in
+            let () = print_string_quiet ("call_stk (final): " ^ (string_of_call_stk rest_call_stk)) in
             if not is_found || rest_call_stk != [] then
               let () = print_string_quiet "\nnot a valid error trace\n" in
               ""
