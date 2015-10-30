@@ -8,7 +8,66 @@ Proving binding in method foo$int_star for spec  EAssume
 ( []) bind: node  x'::int_star<value_13_1633'>@M cannot be derived from conte
 
 ==========================================================================
+# ex1a3.ss
+
+It seems we need to use IMPLICIT instead EXIST here for
+precondition; and maybe also postcondition.
+
+We probably also need to schedule @post to infer
+some relations..
+
+ infer[@shape_post GP_1629]requires EXISTS(value_15_1628: y::int_star<value_15_1628>@M&
+true&[]requires emp&MayLoop[]
+ ensures GP_1629(y)&true{,(4,5)=__norm#E};
+
+ es_gen_impl_vars(E): []]
+!!! **solver.ml#3087:free var to_conseq:y
+********************************************
+******* shape relational assumptions *******
+********************************************
+[ // POST
+(2;1;0)y::int_star<value_15_1634>@M&true --> GP_1629(y)&
+true]
 ==========================================================================
+# ex1a4.ss
+
+void loop (int* y)
+/*@
+  infer[@shape_prepost,@term]
+  requires true
+  ensures true;
+*/
+{
+    while (*y > 0) 
+  /*@
+    infer[@shape_prepost,@term]
+    requires true
+    ensures true;
+   */
+   {
+      *y = *y - 1;
+    }
+}
+
+# Why do we have split components problem here..
+ Why was post-shape scheduled so late?
+
+Context of Verification Failure: _0:0_0:0
+
+Last Proving Location: ex1a4-alloca-nested-while.c_14:4_22:5
+
+ERROR: at _0:0_0:0
+Message: split_components: don't expect OR
+
+ExceptionFailure("split_components: don't expect OR")Occurred!
+
+Error1(s) detected at main 
+Stop z3... 113 invocations 
+Stop Omega... 133 invocations caught
+
+Exception occurred: Failure("split_components: don't expect OR")
+Error3(s) detected at main 
+
 ==========================================================================
 ==========================================================================
 ==========================================================================
