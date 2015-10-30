@@ -264,7 +264,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       let niu_svl_ni_total = niu_svl_i2@niu_svl_ni in
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
-      let () = y_binfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
+      let () = y_tinfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
       let get_data_ni_svl knd = 
         if is_view || !Globals.sep_pure_fields then []
         else 
@@ -278,7 +278,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       in
       let ls_fwd_svl = if args12 =[] &&
         not ((es.CF.es_infer_obj # is_pure_field_all) && !Globals.sep_pure_fields) then
-          let () = y_binfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
+          let () = y_tinfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
           if niu_svl_ni_total==[] then []
           else [(is_pre, niu_svl_ni_total@[(h_node, NI)])]
         (*   if is_view then *)

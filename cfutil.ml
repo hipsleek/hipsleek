@@ -126,16 +126,17 @@ let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
       let root_nodes, rest_nodes = List.partition (fun h ->
         let pt = get_node_var prog h in
         mem pt root_aliases) hs in
+      (* patched to prevent exc in norm2/ex1a3.c *)
       match root_nodes with
       | [] -> [], rest_nodes
-      | root_node::[] ->
+      | root_node::dupl_rest ->
         let root_args = diff (CF.get_node_args root_node) root_aliases in
         let sig_of_root_args, rem_nodes = List.fold_left (fun (acc, rem_nodes) ra ->
           let sig_of_ra, rem_nodes = helper ra rem_nodes in
           (acc @ sig_of_ra, rem_nodes)) ([], rest_nodes) root_args
         in
-        root_node::sig_of_root_args, rem_nodes
-      | _ -> x_fail ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula hs))
+        root_node::sig_of_root_args, dupl_rest@rem_nodes
+      (* | _ -> x_fail ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes)) *)
   in fst (helper root hs)
 
 let rec complx_sig_of_formula prog root (f: CF.formula) = 

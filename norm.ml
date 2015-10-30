@@ -162,7 +162,7 @@ let norm_elim_useless vdefs sel_vns=
   in
   let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = View_NORM) vdefs in
   let n_normal_view = interate_helper normal_view [] in
-  let () = y_binfo_hp (add_str "USELESS Parameters eliminated" (fun s -> s # string_of)) useless_stk in
+  let () = if not(useless_stk # is_empty) then y_binfo_hp (add_str "USELESS Parameters eliminated" (fun s -> s # string_of)) useless_stk in
   (rest_views@n_normal_view)
 
 let norm_elim_useless vdefs sel_vns =

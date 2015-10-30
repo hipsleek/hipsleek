@@ -40,6 +40,24 @@ int main()
 /*
 # ex1a3.c --trace-exc
 
+# ex1a3.c --trace-exc
+
+Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
+Exception(C.get_root_args_hp):Failure("hp_root_pos has not yet set.")
+
+# Why was dangling introduced below?
+
+!!! **syn.ml#183:Merging is not performed due to the set of pre-hprels does not have disjoint conditions:
+ 
+  [(1;1;0)unfold HP_1695(y,x) |#|  --> y::int_star<value_21_1712>@M * 
+                                       HP_1713(x,y); 
+   (1;1;0)unfold HP_1695(y,x) |#|  --> y::Dangling<>@M&y=x]
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y::Dangling<>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y::Dangling<>@M)
+
+=================================
+
 Exception(look_up_view_def_raw):Not_found
 Exception(sig_of_formula):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
 Exception(process_one_match):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
