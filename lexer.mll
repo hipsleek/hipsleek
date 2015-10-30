@@ -431,9 +431,9 @@ rule tokenizer file_name = parse
   | "@field_imm" { INFER_AT_FIELD_IMM }
   | "@arrvar" { INFER_AT_ARR_AS_VAR }
   | "@shape" { INFER_AT_SHAPE }
-  | "@pre_shape" { INFER_AT_SHAPE_PRE }
-  | "@post_shape" { INFER_AT_SHAPE_POST }
-  | "@prepost_shape" { INFER_AT_SHAPE_PRE_POST }
+  | "@shape_pre" { INFER_AT_SHAPE_PRE }
+  | "@shape_post" { INFER_AT_SHAPE_POST }
+  | "@shape_prepost" { INFER_AT_SHAPE_PRE_POST }
   | "@error" { INFER_AT_ERROR }
   | "@dis_err" { INFER_AT_DE_EXC }
   | "@err_must" { INFER_AT_ERRMUST }
