@@ -13,7 +13,7 @@ print residue.
 HeapPred HP(cell a, cell b,node d).
 infer[HP] HP(x,y,z) |- x::cell<_>.
 print residue.
-
+*/
 /*
 # norm/ex4b.slk
 

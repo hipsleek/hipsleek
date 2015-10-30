@@ -277,13 +277,15 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
             in
             List.map (fun a -> (a, NI)) pure_svl
       in
-      let ls_fwd_svl =(*  if args12 =[] then *)
+      let ls_fwd_svl = if args12 =[] &&
+        not ((es.CF.es_infer_obj # is_pure_field_all) && !Globals.sep_pure_fields) then
+          [(is_pre, niu_svl_ni_total@[(h_node, NI)])]
         (*   if is_view then *)
         (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
-        (* else *) 
-          List.map (fun ((arg, knd) as sv) ->
+      else
+        List.map (fun ((arg, knd) as sv) ->
             let fwd_svl = sv::niu_svl_ni_total@(get_data_ni_svl knd)@[(h_node, NI)] in
             (is_pre, fwd_svl)) args12
       in
