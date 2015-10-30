@@ -1468,14 +1468,14 @@ let rec get_mut_vars e0 =
 
 let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_lst pos=
   let is_infer_ret r=
-    (((List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_POST) infer_lst ) ||
+    ((Globals.infer_const_obj # is_shape || (List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_POST) infer_lst ) ||
     g_infer_type = INF_SHAPE || g_infer_type = INF_SHAPE_POST ) && is_node_typ r)
   in
-  let is_infer_shape_pre ()=
+  let is_infer_shape_pre ()= Globals.infer_const_obj # is_shape ||
     (* now, consider local spec only *)
     List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_PRE || it = INF_SHAPE_PRE_POST) infer_lst
   in
-  let is_infer_shape_post ()=
+  let is_infer_shape_post ()= Globals.infer_const_obj # is_shape ||
     (* now, consider local spec only *)
     List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_POST) infer_lst
   in

@@ -1767,45 +1767,46 @@ class inf_obj  =
       if self # is_field_imm then allow_field_ann:=true;
       if self # get INF_ARR_AS_VAR then array_translate :=true
     method set_init_arr s = 
-      let helper r c =
+      let helper i r c =
         let reg = Str.regexp r in
         try
           begin
-            Str.search_forward reg s 0;
+            Str.search_forward reg s i;
             arr <- c::arr;
             (* Trung: temporarily disable printing for svcomp15, undo it later *) 
             (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
+            i + (String.length (string_of_inf_const c))
           end
-        with Not_found -> ()
+        with Not_found -> i
       in
       begin
-        helper "@term"          INF_TERM;
-        helper "@term_wo_post"  INF_TERM_WO_POST;
-        helper "@pre"           INF_PRE;
-        helper "@post"          INF_POST;
-        helper "@imm"           INF_IMM;
-        helper "@pure_field"    INF_PURE_FIELD;
-        helper "@field_imm"     INF_FIELD_IMM;
-        helper "@arrvar"        INF_ARR_AS_VAR;
-        helper "@shape"         INF_SHAPE;
-        helper "@shape_pre"     INF_SHAPE_PRE;
-        helper "@shape_post"    INF_SHAPE_POST;
-        helper "@shape_prepost" INF_SHAPE_PRE_POST;
-        helper "@error"         INF_ERROR;
-        helper "@dis_err"       INF_DE_EXC;
-        helper "@err_may"       INF_ERR_MAY;
-        helper "@err_must"      INF_ERR_MUST;
-        helper "@err_must_only" INF_ERR_MUST_ONLY;
-        helper "@size"          INF_SIZE;
-        helper "@efa"           INF_EFA;
-        helper "@dfa"           INF_DFA;
-        helper "@flow"          INF_FLOW;
-        helper "@leak"          INF_CLASSIC;
-        helper "@classic"       INF_CLASSIC;
-        helper "@par"           INF_PAR;
-        helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
-        helper "@imm_pre"       INF_IMM_PRE;
-        helper "@imm_post"      INF_IMM_POST;
+        let i = helper 0 "@term_wo_post"  INF_TERM_WO_POST in
+        let i = helper i "@pure_field"    INF_PURE_FIELD in
+        let i = helper i "@field_imm"     INF_FIELD_IMM in
+        let i = helper i "@arrvar"        INF_ARR_AS_VAR in
+        let i = helper i "@shape_prepost" INF_SHAPE_PRE_POST in
+        let i = helper i "@shape_pre"     INF_SHAPE_PRE in
+        let i = helper i "@shape_post"    INF_SHAPE_POST in
+        let i = helper i "@shape"         INF_SHAPE in
+        let i = helper i "@term"          INF_TERM in
+        let i = helper i "@pre"           INF_PRE in
+        let i = helper i "@post"          INF_POST in
+        let i = helper i "@imm"           INF_IMM in
+        let i = helper i "@error"         INF_ERROR in
+        let i = helper i "@dis_err"       INF_DE_EXC in
+        let i = helper i "@err_may"       INF_ERR_MAY in
+        let i = helper i "@err_must"      INF_ERR_MUST in
+        let i = helper i "@err_must_only" INF_ERR_MUST_ONLY in
+        let i = helper i "@size"          INF_SIZE in
+        let i = helper i "@efa"           INF_EFA in
+        let i = helper i "@dfa"           INF_DFA in
+        let i = helper i "@flow"          INF_FLOW in
+        let i = helper i "@leak"          INF_CLASSIC in
+        let i = helper i "@classic"       INF_CLASSIC in
+        let i = helper i "@par"           INF_PAR in
+        let i = helper i "@ver_post"      INF_VER_POST in (* @ato, @arr_to_var *)
+        let i = helper i "@imm_pre"       INF_IMM_PRE in
+        let i = helper i "@imm_post"      INF_IMM_POST in
         (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
       end

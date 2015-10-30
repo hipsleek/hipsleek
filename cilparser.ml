@@ -2334,19 +2334,23 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
   let static_specs1, hp_decls, args_wi = 
       if (not has_shape_args && not (is_node_typ return_typ)) || not !Globals.sags then
       static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
-    else match static_specs with
+      else
+        let () = Debug.ninfo_hprint (add_str "static_specs" !Iformula.print_struc_formula) static_specs no_pos in
+        match static_specs with
       | Iformula.EList [] -> begin
           match funbody with
           | Some _ ->
-                    let () =  Debug.ninfo_hprint (add_str "infer_const_obj 2" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
-            let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ
-                (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE [] pos in
-            let () = Debug.ninfo_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
-            (ss, hps, args_wi)
+                let () =  Debug.ninfo_hprint (add_str "infer_const_obj 1" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
+                if Globals.infer_const_obj # is_shape then
+                    let ss, hps, args_wi = Iast.genESpec name funbody funargs return_typ
+                      (Iformula.mkTrue_nf pos) (Iformula.mkTrue_nf pos) INF_SHAPE [] pos in
+                    let () = Debug.ninfo_hprint (add_str "ss" !Iformula.print_struc_formula) ss no_pos in
+                    (ss, hps, args_wi)
+                else static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
           | None -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
         end
         |  Iformula.EInfer i_sf ->
-               let () =  Debug.info_hprint (add_str "infer_const_obj 2" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
+               let () =  Debug.ninfo_hprint (add_str "infer_const_obj 2" (pr_id)) (Globals.infer_const_obj#string_of) no_pos in
                if Globals.infer_const_obj # is_shape || i_sf.Iformula.formula_inf_obj # is_shape (* || *)
                  (* Globals.infer_const_obj # is_shape_pre || i_sf.Iformula.formula_inf_obj # is_shape_pre || *)
                  (* Globals.infer_const_obj # is_shape_post || i_sf.Iformula.formula_inf_obj # is_shape_post *)
@@ -2365,7 +2369,8 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
             static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
         else
           static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
-      | _ -> static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
+      | _ ->
+            static_specs, [], List.map (fun p -> (p.Iast.param_name,Globals.I)) funargs
   in
   let newproc : Iast.proc_decl = {
     Iast.proc_name = name;
