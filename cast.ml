@@ -4267,3 +4267,19 @@ let wrapper_lemma_soundness loc coer f x =
   with e ->
     let () = lemma_soundness # end_lemma_proving x_loc in
     raise e
+let is_segmented_view vd =
+  let () = y_winfo_pp "This is segmented view quick hack" in
+  let self = vd.view_type_of_self in
+  let dn = vd.view_data_name in
+  let self = if dn="" then self
+    else Some(Named dn) in
+  let () = y_tinfo_hp (add_str "data_name" pr_id) dn in
+  match self with 
+  | None -> 
+    let () = y_tinfo_pp "No type for self" in
+    None
+  | Some ty -> 
+    let args = vd.view_vars in
+    let vn = vd.view_name in
+    is_segmented vn ty args (List.map fst vd.view_un_struc_formula)
+
