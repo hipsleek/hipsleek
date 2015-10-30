@@ -4,18 +4,17 @@
 
 // ../hip ex1a-alloca-while.c -infer "@shape_prepost@term"
 
-void loop (int* x, int* y)
+void loop (int* x)
 /*
   infer[@shape_prepost]
   requires true
   ensures true;
 */
 {
-  while (*x > 0) {
-    while (*y > 0) {
-      *y = *y - 1;
-    }
+  if (*x <= 0) return;
+  else {
     *x = *x - 1;
+    loop(x);
   }
 }
 

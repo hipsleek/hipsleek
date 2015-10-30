@@ -25,7 +25,7 @@ int test_fun(int x, int y)
         *y_ref = 0;
         while (*y_ref < *x_ref) 
         /*@
-          infer[@shape_prepost,@classic]
+          infer[@shape_prepost]
           requires true
           ensures true;
          */
