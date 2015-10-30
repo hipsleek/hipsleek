@@ -3,28 +3,27 @@
 //extern int __VERIFIER_nondet_int(void);
 
 // ../hip ex1a-alloca-while.c -infer "@shape_prepost@term"
+data cell{
+  int val;
+}
 
-void loop (int* y)
-/*@
-  infer[@shape_prepost,@term]
+void loop (cell y)
+  infer[@shape_prepost]
   requires true
   ensures true;
-*/
 {
-    while (*y > 0) 
-  /*@
-    infer[@shape_prepost,@term]
+    while (y.val > 0) 
+    infer[@shape_prepost]
     requires true
     ensures true;
-   */
    {
-      *y = *y - 1;
+      y.val = y.val - 1;
     }
 }
 
 
 /*
-# ex1a4.ss (FIXED)
+# ex1a4.ss
 
 # Why do we have split components problem here..
  Why was post-shape scheduled so late?

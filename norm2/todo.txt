@@ -1,3 +1,5 @@
+# ex1b.c (FIXED)
+
 C_INCLUDE_PATH=.. ../hip ex1b-simple-a.01-alloca.c -infer "@shape_prepost" 
 
 Proving binding in method foo$int_star for spec  EAssume 
@@ -29,7 +31,7 @@ true&[]requires emp&MayLoop[]
 (2;1;0)y::int_star<value_15_1634>@M&true --> GP_1629(y)&
 true]
 ==========================================================================
-# ex1a4.ss
+# ex1a4.c (FIXED)
 
 void loop (int* y)
 /*@
@@ -69,6 +71,12 @@ Exception occurred: Failure("split_components: don't expect OR")
 Error3(s) detected at main 
 
 ==========================================================================
+# ex1a3.c --trace-exc
+
+Exception(look_up_view_def_raw):Not_found
+Exception(sig_of_formula):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
+Exception(process_one_match):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
+
 ==========================================================================
 ==========================================================================
 ==========================================================================

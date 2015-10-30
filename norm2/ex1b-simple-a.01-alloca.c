@@ -4,7 +4,7 @@
 
 void foo(int* x)
 /*@
-  infer[@shape_prepost,@classic]
+  infer[@shape_prepost,@classic,@term]
   requires true
   ensures true;
 */

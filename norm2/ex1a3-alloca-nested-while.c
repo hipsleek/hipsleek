@@ -6,15 +6,27 @@
 
 void loop (int* x, int* y)
 /*@
-  infer[@shape_prepost,@term]
+  infer[@shape_prepost]
   requires true
   ensures true;
 */
 {
-  while (*x > 0) {
-    while (*y > 0) {
-      *y = *y - 1;
-    }
+  while (*x > 0) 
+    /*@
+      infer[@shape_prepost]
+      requires true
+      ensures true;
+    */
+    {
+    while (*y > 0) 
+      /*@
+        infer[@shape_prepost]
+        requires true
+        ensures true;
+      */
+      {
+        *y = *y - 1;
+      }
     *x = *x - 1;
   }
 }
@@ -26,7 +38,13 @@ int main()
 
 
 /*
-# ex1a3.ss
+# ex1a3.c --trace-exc
+
+Exception(look_up_view_def_raw):Not_found
+Exception(sig_of_formula):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
+Exception(process_one_match):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
+
+=====================================
 
 It seems we need to use IMPLICIT instead EXIST here for
 precondition; and maybe also postcondition.
