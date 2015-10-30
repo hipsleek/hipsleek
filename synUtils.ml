@@ -495,7 +495,7 @@ let get_equiv_pred prog vid =
       subs_vid
   with _ -> vid
 
-let trans_hrel_to_view_formula prog (f: CF.formula) = 
+let trans_hrel_to_view_formula ?(for_spec=false) prog (f: CF.formula) = 
   let f_h_f _ hf = 
     match hf with
     | CF.HRel _ ->
@@ -545,38 +545,41 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
   in
   let n_f, svl = CF.trans_heap_formula f_h_f f in
   let norm_f =
-    try Norm.norm_unfold_formula prog.C.prog_view_decls n_f
-    with _ -> n_f 
+    (* if not for_spec then n_f *)
+    (* else                     *)
+      try Norm.norm_unfold_formula prog.C.prog_view_decls n_f
+      with _ -> n_f 
   in
   norm_f, svl
 
-let trans_hrel_to_view_formula prog (f: CF.formula) = 
+let trans_hrel_to_view_formula ?(for_spec=false) prog (f: CF.formula) = 
   let pr1 = !CF.print_formula in
   let pr2 = pr_pair (add_str "trans_f" pr1) (add_str "extn_args" !CP.print_svl) in
-  Debug.no_1 "Syn.trans_hrel_to_view_formula" pr1 pr2 
-    (fun _ -> trans_hrel_to_view_formula prog f) f
+  Debug.no_2 "Syn.trans_hrel_to_view_formula" 
+    pr1 (add_str "for_spec" string_of_bool) pr2 
+    (fun _ _ -> trans_hrel_to_view_formula ~for_spec:for_spec prog f) f for_spec
 
 (* NOTE: struc_formula_trans_heap_node *)
-let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
+let rec trans_hrel_to_view_struc_formula ?(for_spec=false) prog (sf: CF.struc_formula) =
+  let rec_f = trans_hrel_to_view_struc_formula ~for_spec:for_spec prog in
   match sf with
-  | CF.EList el -> CF.EList (List.map (fun (sld, sf) -> (sld, (trans_hrel_to_view_struc_formula prog) sf)) el)
+  | CF.EList el -> CF.EList (List.map (fun (sld, sf) -> (sld, rec_f sf)) el)
   | CF.ECase ec -> 
     CF.ECase { ec with
       CF.formula_case_branches = List.map (fun (c, sf) -> 
-          (c, trans_hrel_to_view_struc_formula prog sf)) ec.CF.formula_case_branches; }
+          (c, rec_f sf)) ec.CF.formula_case_branches; }
   | CF.EBase eb -> 
     let n_base, extn_args = x_add trans_hrel_to_view_formula prog eb.CF.formula_struc_base in
     CF.EBase { eb with
       CF.formula_struc_base = n_base;
       CF.formula_struc_implicit_inst = remove_dups (eb.CF.formula_struc_implicit_inst @ extn_args);
-      CF.formula_struc_continuation = map_opt (trans_hrel_to_view_struc_formula prog) eb.CF.formula_struc_continuation; }
+      CF.formula_struc_continuation = map_opt rec_f eb.CF.formula_struc_continuation; }
   | CF.EAssume ea ->
     CF.EAssume { ea with 
-      CF.formula_assume_simpl = fst (x_add trans_hrel_to_view_formula prog ea.CF.formula_assume_simpl);
-      CF.formula_assume_struc = trans_hrel_to_view_struc_formula prog ea.CF.formula_assume_struc; }
+      CF.formula_assume_simpl = fst (x_add_1 (trans_hrel_to_view_formula ~for_spec:for_spec prog) ea.CF.formula_assume_simpl);
+      CF.formula_assume_struc = rec_f ea.CF.formula_assume_struc; }
   | EInfer ei -> 
-    CF.EInfer { ei with 
-      CF.formula_inf_continuation = trans_hrel_to_view_struc_formula prog ei.CF.formula_inf_continuation; }
+    CF.EInfer { ei with CF.formula_inf_continuation = rec_f ei.CF.formula_inf_continuation; }
 
 (* let trans_hrel_to_view_spec_proc cprog proc =                                            *)
 (*   let spec = proc.C.proc_stk_of_static_specs # top in                                    *)
@@ -633,7 +636,7 @@ let trans_spec_scc trans_f cprog scc_procs =
   { cprog with Cast.new_proc_decls = n_tbl }
 
 let trans_hrel_to_view_spec_scc cprog scc_procs =
-  trans_spec_scc (x_add trans_hrel_to_view_struc_formula cprog) cprog scc_procs
+  trans_spec_scc (x_add_1 (trans_hrel_to_view_struc_formula ~for_spec:true) cprog) cprog scc_procs
 
 let remove_inf_vars_spec_scc cprog scc_procs inf_vars = 
   trans_spec_scc (remove_inf_vars_struc_formula inf_vars) cprog scc_procs
