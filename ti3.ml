@@ -293,7 +293,7 @@ let add_term_relation_proc prog proc =
       CP.tu_sol = None;
       CP.tu_pos = pos; } in
     let n_spec = CF.norm_struc_with_lexvar is_primitive true (Some uid) spec in
-    proc.proc_stk_of_static_specs # push_pr x_loc new_spec
+    proc.proc_stk_of_static_specs # push_pr x_loc n_spec
 
 let add_term_relation_scc prog scc =
   List.iter (fun proc -> add_term_relation_proc prog proc) scc
