@@ -929,7 +929,7 @@ and
       string_of_exp_list l c = match l with  
         | []                          -> ""
         | h::[]                       -> string_of_exp h
-        | h::t 	                   -> (string_of_exp h) ^ c ^ " " ^ (string_of_exp_list t c)			    
+        | h::t 	                   -> (string_of_exp h) ^ c (* ^ " " *) ^ (string_of_exp_list t c)			    
               
 and string_of_exp_var_decl e = match e with
     {exp_var_decl_type = t;

@@ -246,7 +246,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
           [f1]
     | CF.OCtx (c1,c2) -> (collect_es c1)@(collect_es c2)
   in
-  let () = x_binfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
+  let () = x_tinfo_hp (add_str ("br_ctxs") (Cprinter.string_of_branch_ctx)) br_ctxs no_pos in
   let brs0 = List.fold_left (fun acc (_,ctx,_) ->
       let new_p_fs = List.map (fun f ->  (* CF.replace_path_trace f pt *)
           f

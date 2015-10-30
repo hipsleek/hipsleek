@@ -532,6 +532,8 @@ let string_of_pos_plain (p : Lexing.position) =
 (* An Hoa *)
 let line_number_of_pos p = string_of_int (p.start_pos.Lexing.pos_lnum)
 
+let string_of_offset p = string_of_int (p.start_pos.Lexing.pos_cnum)
+
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
 
 let string_of_loc_by_char_num (l : loc) = 

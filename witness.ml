@@ -35,7 +35,14 @@ let get_seq_id () =
 let string_of_call_stk s=
   String.concat ";" (List.map (fun (fname, ids) -> fname ^ ":"^ (String.concat "," (List.map string_of_int ids))) s)
 
-let get_fst ls=
+(*get the first met*)
+let rec get_fst_met pname ls res=
+  match ls with
+    | ((pname1,_) as x)::rest -> if string_eq pname pname1 then x, rest@res
+      else get_fst_met pname rest (res@[x])
+    | [] -> failwith "List is empty"
+
+let rec get_fst ls=
   match ls with
     | x::rest -> x, rest
     | [] -> failwith "List is empty"
@@ -235,22 +242,37 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
     if call_stk=[] then
       false, [], inter_id,intra_id, last_cond_lno, var_decls,false, prev_n_id, path_ctls,res_str
     else
-      let (stk_pname, ctls), rest_stk = get_fst call_stk in
+      let (stk_pname, ctls), rest_stk = get_fst_met pname call_stk [] in
       if not (string_eq stk_pname pname) then
         failwith "not a valid error trace (CallNRecv 1)"
       else
         let proc = I.look_up_proc_def_raw iprog.I.prog_proc_decls pname in
         match proc.I.proc_body with
           | Some proc_body -> begin
-              let str_code =  if not !witness_from_orig then
-                (!I.print_exp e)
-              else
-                let str = Array.get orig_src_lines (start_line_of_pos (I.pos_of_exp e)) in
-                let r = Str.regexp pname in
-                let idx1 = Str.search_forward r str 0 in
-                let idx2 = String.rindex str ')' in
-                String.trim(String.sub str (idx1) (idx2-idx1+1))
+              (* let str_code0 =  if not !witness_from_orig then *)
+              (*   (!I.print_exp e) *)
+              (* else *)
+              (*   let str = Array.get orig_src_lines (start_line_of_pos (I.pos_of_exp e)) in *)
+              (*   let r = Str.regexp pname in *)
+              (*   let idx1 = Str.search_forward r str 0 in *)
+              (*   let idx2 = String.rindex str ')' in *)
+              (*   String.trim(String.sub str (idx1) (idx2-idx1+1)) *)
+              (* in *)
+              let str_code2a = (!I.print_exp e) in
+              (* let () = x_binfo_hp (add_str "call" (!I.print_exp )) e no_pos in *)
+              (* let () = x_binfo_hp (add_str "call (src 0)" (pr_id )) str_code0 no_pos in *)
+              let str_code =
+                try
+                  let idx = String.index str_code2a ':' in
+                  let str_code2 = String.sub str_code2a (idx+1) ((String.length str_code2a) - idx -1) in
+                  let str_code1 = Str.global_replace (Str.regexp "(int)") "" str_code2 in
+                  (* let () = x_binfo_hp (add_str "call (src 1)" (pr_id )) str_code1 no_pos in *)
+                  (* if (Str.search_forward (Str.regexp str_code1) str_code0 0) >=0 then *)
+                  (*   str_code1 else str_code0 *)
+                  str_code1
+                with _ -> str_code2a
               in
+               let () = x_tinfo_hp (add_str "call (final)" (pr_id )) str_code no_pos in
               let str_line = line_number_of_pos (I.pos_of_exp e) in
               let n_node_id = enter_fnc_id_to_string inter_id in
               let node = mk_node n_node_id in
@@ -322,7 +344,7 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
             let r = Str.regexp "return" in
             let idx1 = Str.search_forward r str 0 in
             let idx2 = String.rindex str ';' in
-            String.trim(String.sub str (idx1) (idx2-idx1))
+            String.trim(String.sub str (idx1) (idx2-idx1+1))
           in
           let n_node_id = (id_to_string inter_id intra_id) in
           let node = mk_node n_node_id in
@@ -355,7 +377,7 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
           else if call_stk=[] then
             false, [], inter_id,intra_id, last_cond_lno, var_decls,false, prev_n_id, path_ctls,res_str
           else
-            let (stk_pname, ctls), rest_stk = get_fst call_stk in
+            let (stk_pname, ctls), rest_stk = get_fst_met pname call_stk [] in
             if not (string_eq stk_pname pname) then
               let () = print_endline  "WARN: not a valid error trace (CallNRecv 1)" in
               true, call_stk, inter_id, intra_id, last_cond_lno, var_decls,false, prev_n_id , path_ctls, (res_str)

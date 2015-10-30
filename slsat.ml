@@ -182,13 +182,13 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
       if is_unsat then ([],unsat_caches)
       else
         (* [(new_f)],unsat_caches *)
-        ([(ptos, eqs, neqs, null_svl, neqNull_svl, hvs,mf, pt2@pt1)],unsat_caches)
+        ([(ptos, eqs, neqs, null_svl, neqNull_svl, hvs,mf, pt1@pt2)],unsat_caches)
   in
   let unfold_one_view_helper cur_disjs unfolded_vn_brs=
     List.fold_left (fun (acc_unfolded_fs, unsat_caches) ((ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1, pt1) as br) -> (*each branch of vn*)
         let fs_br,new_unc2 = List.fold_left (fun (acc_unfolded_br_fs,unc1) ((ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2,pt2) as unfolded_f)->
             (* combine with one current unfolded formula *)
-            let new_disj,new_unsat_cache =(combine_and_unsat_check unc1 br unfolded_f) in
+            let new_disj,new_unsat_cache =(combine_and_unsat_check unc1  unfolded_f br) in
             acc_unfolded_br_fs@new_disj,new_unsat_cache
         ) ([],unsat_caches)  cur_disjs in
         acc_unfolded_fs@fs_br,new_unc2
@@ -197,7 +197,7 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
   let rec combine_eager_return disjs br unc1 res=
     match disjs with
       | disj::rest -> begin
-          let new_disj,new_unsat_cache =(combine_and_unsat_check unc1 br disj) in
+          let new_disj,new_unsat_cache =(combine_and_unsat_check unc1 disj br) in
           match new_disj with
             | (_, _, _, _, _, hvs, _,_)::_ -> if hvs=[] then
                 true, res@new_disj,new_unsat_cache
@@ -261,6 +261,7 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
   (* let ptos1 = CP.intersect_svl ptos view_args in *)
   (* let neqNull_svl1 = CP.intersect_svl neqNull_svl0 view_args in *)
   (* unfold_vn vns0 [(ptos1, eqs0, neqs0, null_svl0, neqNull_svl1, [], mf1)] *)
+
   unfold_vn vns0 [(ptos, eqs0, neqs0, null_svl0, neqNull_svl0, [], mf0, pt0)]
 
   (* let ls_unfold_v_fs = List.map (fun vn -> unfold_one_view prog vn) vns0 in *)
@@ -382,14 +383,14 @@ let rec check_sat_topdown_iter_x prog is_shape_only form_red_fnc is_inconsistent
         | Some ((ptos, eqs, neqs, null_svl, neqNull_svl, vns, mf, pt) as f_j)-> begin
             (*is under-approximation - do not have any pred instances*)
             if vns=[] then
-              let () = DD.info_hprint (add_str "sat" (string_of_path)) f_j  no_pos in
+              let () = DD.ninfo_hprint (add_str "sat" (string_of_path)) f_j  no_pos in
               return (1, Some f_j)
             else
               (*unfold f*)
               let idecided, new_disjs = unfold_bfs prog is_shape_only form_red_fnc is_inconsistent_fnc
                 (ptos,eqs, neqs, null_svl, neqNull_svl, [], mf, pt) vns in
               if idecided=1  then
-                let _ = DD.info_hprint (add_str "sat list" (pr_list_ln string_of_path)) new_disjs  no_pos in
+                let _ = DD.ninfo_hprint (add_str "sat list" (pr_list_ln string_of_path)) new_disjs  no_pos in
                 return (idecided, Some (List.hd new_disjs))
               else
                 (* let acc_disjs = if idecided=0 then rest_disjs else *)

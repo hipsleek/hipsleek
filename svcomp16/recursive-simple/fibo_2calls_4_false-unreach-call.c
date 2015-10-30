@@ -4,23 +4,23 @@ extern void __VERIFIER_error();
 int fibo1(int n);
 int fibo2(int n);
 
-int fibo1(int n) {
+int fibo_a(int n) {
     if (n < 1) {
         return 0;
     } else if (n == 1) {
         return 1;
     } else {
-        return fibo2(n-1) + fibo2(n-2);
+        return fibo_b(n-1) + fibo_b(n-2);
     }
 }
 
-int fibo2(int n) {
+int fibo_b(int n) {
     if (n < 1) {
         return 0;
     } else if (n == 1) {
         return 1;
     } else {
-        return fibo1(n-1) + fibo1(n-2);
+        return fibo_a(n-1) + fibo_a(n-2);
     }
 }
 
@@ -34,7 +34,7 @@ int fibo2(int n) {
 
 int main(void) {
     int x = 4;
-    int result = fibo1(x);
+    int result = fibo_a(x);
     if (result == 3) {
         ERROR: __VERIFIER_error();
     }
