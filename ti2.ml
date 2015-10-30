@@ -11,10 +11,6 @@ open Tlutils
 open Tid
 open Ti3
 
-(* Auxiliary methods *)
-let diff = Gen.BList.difference_eq CP.eq_spec_var
-let subset = Gen.BList.subset_eq CP.eq_spec_var
-
 let om_simplify f = 
   (* let () = x_tinfo_hp (add_str "om_simplify" !CP.print_formula) f no_pos in *)
   (* Tpdispatcher.simplify_raw f *)

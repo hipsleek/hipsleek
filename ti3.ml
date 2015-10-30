@@ -12,6 +12,12 @@ open Gen
 
 let eq_str s1 s2 = (String.compare s1 s2) = 0
 
+(* Auxiliary methods *)
+let diff = Gen.BList.difference_eq CP.eq_spec_var
+let subset = Gen.BList.subset_eq CP.eq_spec_var
+let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var
+let mem = Gen.BList.mem_eq CP.eq_spec_var
+
 let rec partition_by_key key_of key_eq ls = 
   match ls with
   | [] -> []
@@ -249,21 +255,101 @@ let is_infer_term_scc scc =
   Debug.no_1 "is_infer_term_scc" pr string_of_bool
     is_infer_term_scc scc
 
+let is_prim_type sv = 
+  let typ = CP.type_of_spec_var sv in
+  match typ with
+  | Int | Bool -> true
+  | _ -> false
+
+let collect_prim_args_base_formula ptr_vars h p =
+  let aliases = MCP.ptr_equations_without_null p in
+  let aset = CP.EMapSV.build_eset aliases in
+  let f_h_f _ h_f =
+    match h_f with
+    | CF.DataNode ({ CF.h_formula_data_node = pt; CF.h_formula_data_arguments = args;})
+    | CF.ViewNode ({ CF.h_formula_view_node = pt; CF.h_formula_view_arguments = args;}) ->
+      let is_mem_ptr_vars = 
+        if mem pt ptr_vars then true
+        else
+          let pt_aliases = CP.EMapSV.find_equiv_all_new pt aset in
+          List.exists (fun pta -> mem pta ptr_vars) pt_aliases
+      in
+      if is_mem_ptr_vars then 
+        let prim_args = List.filter is_prim_type args in 
+        Some (h_f, args)
+      else Some (h_f, [])
+    | _ -> None
+  in
+  snd (CF.trans_h_formula h () f_h_f voidf2 (List.concat))
+
+let rec collect_prim_args_formula ptr_vars (f: CF.formula) =
+  match f with
+  | CF.Base { CF.formula_base_heap = h; CF.formula_base_pure = p } ->
+    let prim_v = collect_prim_args_base_formula ptr_vars h p in
+    f, prim_v
+  | CF.Exists ({ CF.formula_exists_heap = h; CF.formula_exists_pure = p } as fe) -> 
+    let prim_v = collect_prim_args_base_formula ptr_vars h p in
+    (* prim_v will be moved to formula_struc_implicit_inst  *)
+    (* to visible in both pre- and post-condition           *)
+    CF.Exists { fe with CF.formula_exists_qvars = diff fe.CF.formula_exists_qvars prim_v },
+    prim_v
+  | CF.Or ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 } as fo ) ->
+    let n_f1, prim_v1 = collect_prim_args_formula ptr_vars f1 in
+    let n_f2, prim_v2 = collect_prim_args_formula ptr_vars f2 in
+    CF.Or { fo with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2; },
+    remove_dups (prim_v1 @ prim_v2)
+
+let rec collect_prim_args_struc_formula ptr_vars f =
+  let rec_f = collect_prim_args_struc_formula ptr_vars in
+  match f with
+  | CF.EList el ->
+    let n_el, prim_v_lst = List.split (List.map (fun (sld, sf) ->
+      let n_sf, prim_v = rec_f sf in ((sld, n_sf), prim_v)) el) in
+    CF.EList n_el, remove_dups (List.concat prim_v_lst)
+  | CF.ECase ec ->
+    let n_fcb, prim_v_lst = List.split (List.map (fun (c, sf) -> 
+      let n_sf, prim_v = rec_f sf in ((c, n_sf), prim_v)) ec.CF.formula_case_branches)
+    in
+    CF.ECase { ec with CF.formula_case_branches = n_fcb }, 
+    remove_dups (List.concat prim_v_lst)
+  | CF.EInfer ei ->
+    let n_cont, prim_v = rec_f ei.CF.formula_inf_continuation in
+    CF.EInfer { ei with CF.formula_inf_continuation = n_cont }, prim_v
+  | CF.EAssume _ ->
+    (* To avoid clashing with the implicit primitive args *) 
+    CF.rename_struc_bound_vars f, []
+  | CF.EBase eb ->
+    let n_base, prim_v_base = collect_prim_args_formula ptr_vars eb.CF.formula_struc_base in
+    let n_cont, prim_v_cont =
+      match eb.CF.formula_struc_continuation with
+      | None -> None, []
+      | Some sf -> let n_sf, prim_v = rec_f sf in Some n_sf, prim_v
+    in
+    CF.EBase { eb with
+        CF.formula_struc_base = n_base;
+        CF.formula_struc_continuation = n_cont;
+        CF.formula_struc_implicit_inst = remove_dups (eb.CF.formula_struc_implicit_inst @ prim_v_base);
+        CF.formula_struc_exists = diff eb.CF.formula_struc_exists prim_v_base; }, 
+    remove_dups (prim_v_base @ prim_v_cont)
+
 let add_term_relation_proc prog proc = 
   let is_primitive = not (proc.proc_is_main) in
   if is_primitive then ()
   else
     let spec = proc.proc_stk_of_static_specs # top in
     let fname = unmingle_name proc.proc_name in
-    let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
-    (* TODO: We should not rely on collect_important_vars_in_spec *)
-    let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
-    let params = imp_spec_vars @ params  in
-    let params = List.filter (fun sv -> 
-        match sv with
-        | CP.SpecVar(t, _, _) -> (match t with
-            | Int | Bool -> true
-            | _ -> false)) params in
+    let args = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
+    let prim_params, ptr_params = List.partition is_prim_type args in
+    let n_spec, impl_params = collect_prim_args_struc_formula ptr_params spec in
+    let params = prim_params @ impl_params in
+    (* (* NOTE: We should not rely on collect_important_vars_in_spec *)   *)
+    (* let imp_spec_vars = CF.collect_important_vars_in_spec true spec in *)
+    (* let params = imp_spec_vars @ params  in                            *)
+    (* let params = List.filter (fun sv ->                                *)
+    (*     match sv with                                                  *)
+    (*     | CP.SpecVar(t, _, _) -> (match t with                         *)
+    (*         | Int | Bool -> true                                       *)
+    (*         | _ -> false)) params in                                   *)
     let pos = proc.proc_loc in
 
     let utpre_name = fname ^ "pre" in
@@ -292,7 +378,7 @@ let add_term_relation_proc prog proc =
       CP.tu_icond = CP.mkTrue pos;
       CP.tu_sol = None;
       CP.tu_pos = pos; } in
-    let n_spec = CF.norm_struc_with_lexvar is_primitive true (Some uid) spec in
+    let n_spec = CF.norm_struc_with_lexvar is_primitive true (Some uid) n_spec in
     proc.proc_stk_of_static_specs # push_pr x_loc n_spec
 
 let add_term_relation_scc prog scc =

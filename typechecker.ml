@@ -4105,15 +4105,15 @@ let reverify_proc prog proc do_infer =
           x_dinfo_zp (lazy ("Specs :\n" ^ (Cprinter.string_of_struc_formula new_spec))) proc.proc_loc;
         end;
       let () = 
-        (* if proc.proc_sel_hps = [] then ()  *)
-        (* else                               *)
+        (* if proc.proc_sel_hps = [] || not do_infer then () *)
+        (* else                                              *)
           begin
             if (not !Globals.web_compile_flag) then
               print_endline_quiet "";
               print_endline_quiet "\n\n*******************************";
               print_endline_quiet     "******* SPECIFICATION 2 *******";
               print_endline_quiet     "*******************************";
-              print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog new_spec);
+              print_endline_quiet (Cprinter.string_of_struc_formula(*_for_spec_inst prog*) new_spec);
           end
       in
       (*****LOCKSET variable: ls'=ls *********)
