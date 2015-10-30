@@ -1587,11 +1587,38 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
     let proc_name = pointer_arith_proc.Iast.proc_name in
     let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
     Iast.mkCallNRecv proc_name None [e2] None None pos
-  | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , _ ->
-    let pointer_arith_proc = create_string_proc t1 t2 in
-    let proc_name = pointer_arith_proc.Iast.proc_name in
-    let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
-    Iast.mkCallNRecv proc_name None [e1] None None pos
+  | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , _ ->(
+      match exp2 with
+       | Cil.Const(Cil.CInt64 (i, _, _),_) -> (*Muoi: char_star+1 = plus_plus_char()*)
+         let pointer_arith_proc = create_string_proc t1 t2 in
+         let proc_name = pointer_arith_proc.Iast.proc_name in
+         let _ =  Debug.binfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+         Iast.mkCallNRecv proc_name None [e1] None None pos
+       | _ -> (*Muoi: For finalization string*)
+         let coretyp1 = get_core_cil_typ t1 in
+         let coretyp2 = get_core_cil_typ t2 in 
+         let typ1 = translate_typ coretyp1 no_pos in
+         let typ2 = translate_typ coretyp2 no_pos in
+         let typ1_name = string_of_typ typ1 in
+         let typ2_name = string_of_typ typ2 in
+         let pname = "__finalize_string" in
+         let proc_decl = 
+         try
+           Hashtbl.find tbl_aux_proc pname
+         with Not_found -> (
+           let proc_str = typ1_name ^ " " ^ pname ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " n)\n"
+                          ^ "requires x::WFSeg<p,m> & n < m \n"
+                          ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n"
+           in
+           let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
+           let _ = Debug.binfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
+           Hashtbl.add tbl_aux_proc pname proc_decl;
+           proc_decl
+         ) in
+         let proc_name = proc_decl.Iast.proc_name in
+         let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+         Iast.mkCallNRecv proc_name None [e1;e2] None None pos
+      )
   | Cil.TPtr _, Cil.TInt _
   | Cil.TInt _, Cil.TPtr _ ->
     (* | Cil.TPtr _, Cil.TPtr _ -> *)

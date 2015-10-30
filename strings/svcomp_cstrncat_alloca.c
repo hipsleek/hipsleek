@@ -81,7 +81,7 @@ int main()
     char* nondetString1 = (char*) alloca(length1 * sizeof(char));
     char* nondetString2 = (char*) alloca(length2 * sizeof(char));
     nondetString1[length1-n-1] = '\0';
-    nondetString2[length2-1] = '\0';
+    nondetString2[length2-1] = '\0'; 
     cstrncat(nondetString1, nondetString2, n);
     return 0;
 }
