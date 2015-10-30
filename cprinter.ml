@@ -4380,7 +4380,7 @@ let pr_view_decl v =
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
   pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
-  pr_add_str_cut  ~emp_test:(Gen.is_empty) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
+  pr_add_str_cut  ~emp_test:(fun x -> false) "cont vars: "  pr_list_of_spec_var v.view_cont_vars;
   pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_view_decl_inv_only v;
   (* pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv; *)

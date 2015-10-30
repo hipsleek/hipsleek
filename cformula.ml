@@ -20368,3 +20368,10 @@ let extract_view_nodes hf =
   let lst = List.map (fun (no,vn,_,_) -> vn) lst in
   lst
    
+let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
+  let ty = self_typ in
+  let args = List.filter (fun x -> CP.type_of_spec_var x = ty) args in
+  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  match args with
+  | [x] -> Some x
+  | _ -> None

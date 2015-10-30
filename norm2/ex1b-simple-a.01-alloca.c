@@ -4,7 +4,7 @@ extern int __VERIFIER_nondet_int(void);
 
 void foo(int* x)
 /*
-  infer[@shape_prepost]
+  infer[@shape_pre,@classic]
   requires true
   ensures true;
 */

@@ -691,13 +691,15 @@ let aux_pred_reuse iprog cprog all_views =
   let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
   let () = y_binfo_pp "XXX Scheduling pred_reuse" in
   let () = y_binfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
-  let () = y_tinfo_hp (add_str "XXX derived views" 
+  let () = y_binfo_hp (add_str "XXX derived views" 
       (pr_list Cprinter.string_of_view_decl_short)) all_views in
   let () = y_binfo_hp (add_str "XXX existing view names" (pr_list pr_id)) v_ids in
   let lst = Norm.norm_reuse_rgx iprog cprog vdefs (REGEX_LIST ids) REGEX_STAR in
   let () = y_binfo_hp (add_str "XXX reuse found ..." (pr_list (pr_pair pr_id pr_id))) lst in
   let () = y_binfo_pp "XXX Scheduling pred_reuse_subs" in
   let () = Norm.norm_reuse_subs iprog cprog vdefs ids in
+  let () = y_binfo_hp (add_str "XXX vdefs (after reuse)" 
+      (pr_list Cprinter.string_of_view_decl_short)) vdefs in
   lst
   
 (*************************)

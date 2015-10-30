@@ -582,10 +582,19 @@ let data_decl_obj = CFE.data_decl_obj
 let global_extn_name =
   object (self) 
     val mutable lst = [] 
+    val mutable seg_lst = [] 
     method logging (s:string): unit =
       let h = "\n**global_extn_name** " in
       let () = print_endline_quiet (h^s) in
       ()
+    method add_segmented (vn:string) res =
+      match res with
+      | None -> ()
+      | Some (p:CP.spec_var) -> seg_lst <- (vn,p)::seg_lst 
+    method get_segmented vn =
+      try
+        Some(snd(List.find (fun (v,_) -> vn=v) seg_lst))
+      with _ -> None
     method mk_name given_name (vn:string)  (prop_name:string) : string =
       let pname = 
         if given_name = "" then vn^" "^prop_name 
@@ -749,9 +758,9 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
           let v1 = self # find_or_add nptr in
           self # push_pure (mk_sum v0 sz v1)
       end
-    method proc_view ptr vn =
+    method proc_view ptr vn (args:CP.spec_var list) =
       (* ptr=None means header of view vn *)
-      let () = self # logging ((add_str "proc_view " (pr_pair (pr_opt !CP.print_sv) pr_id)) (ptr,vn)) in
+      let () = self # logging ((add_str "proc_view " (pr_triple (pr_opt !CP.print_sv) pr_id !CP.print_svl)) (ptr,vn,args)) in
       if self # is_mut_view vn then
         let new_vname = self # mk_extn_pred_name vn pname (* vn^"_"^pname *) in
         let (root,new_sv) = 
@@ -759,7 +768,23 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
           | None ->  (self_sv,orig_sv)
           | Some ptr -> 
             self # push_def ptr; 
-            (ptr,self # find_or_add ptr) 
+            let prop_var = self # find_or_add ptr in
+            let () = y_binfo_hp (add_str "prop_var" !CP.print_sv) prop_var in
+            let () = y_binfo_hp (add_str "ptr" !CP.print_sv) ptr in
+            let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+            (* !!! **derive.ml#772:prop_var:nnn_61 *)
+            (* !!! **derive.ml#773:ptr:q *)
+            (* !!! **derive.ml#774:args:[p_14] *)
+            (* !!! **derive.ml#778:proc_view(C):(q,(WFSeg_sz,nnn_61)) *)
+            begin
+              match args with
+              | qq::_ ->
+                let fresh_v = self # fresh_var in
+                let prop_qq = self # find_or_add qq in
+                let () = self # push_pure (mk_sum prop_var fresh_v prop_qq) in
+                (ptr,fresh_v)
+              | [] -> (ptr,prop_var) 
+            end
         in
         let r = (new_vname,new_sv) in
         let () = y_binfo_hp (add_str "proc_view(C)" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
@@ -818,10 +843,17 @@ let compute_view_x_formula: (C.prog_decl -> C.view_decl -> int -> unit) ref =
   
 (* let prc_heap ptab = CFE.process_heap_prop_extn ptab *)
 
+let store_segmented_view x vd =
+  let opt = Cast.is_segmented_view vd in
+  let () = global_extn_name # add_segmented x opt in
+  (x,opt)
+
 let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name,prop_view) as xx) field_tag_s (* property *) 
     nnn_s (* extended parameter *) =
   (* let nnn_sv = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
-  let () = y_tinfo_hp (add_str "prop_name" pr_id) prop_name in 
+  let () = y_tinfo_hp (add_str "prop_name" pr_id) prop_name in
+  let seg_lst = List.map (List.map (fun (x,vd) ->  store_segmented_view x vd)) scc_vdecls in
+  let () = y_binfo_hp (add_str "seg_lst" (pr_list (pr_list (pr_pair pr_id (pr_opt !CP.print_sv))))) seg_lst in
   let p_tab = new prop_table pname xx (CP.eq_spec_var) nnn_s field_tag_s in
   let extend_size_disj vns (*mutual call*) f =
     let () = p_tab # reset_disj f in
@@ -850,9 +882,10 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
     (* let nnn = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
     (* let new_name = vd.C.view_name^"_"^pname in *)
     let typ = Named (vd.C.view_data_name) in
+    let vars = vd.C.view_vars in
     let () = p_tab # reset_view typ in
     let () = p_tab # set_inv in
-     let new_name,nnn_sv = p_tab # proc_view None vd.C.view_name in
+    let new_name,nnn_sv = p_tab # proc_view None vd.C.view_name vars in
     let vars = vd.C.view_vars in
     let new_vs = vars@[nnn_sv] in
     let new_labels = vd.C.view_labels@[LOne.unlabelled] in
