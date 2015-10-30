@@ -544,7 +544,11 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
     | _ -> None
   in
   let n_f, svl = CF.trans_heap_formula f_h_f f in
-  (Norm.norm_unfold_formula prog.C.prog_view_decls n_f), svl
+  let norm_f =
+    try Norm.norm_unfold_formula prog.C.prog_view_decls n_f
+    with _ -> n_f 
+  in
+  norm_f, svl
 
 let trans_hrel_to_view_formula prog (f: CF.formula) = 
   let pr1 = !CF.print_formula in
