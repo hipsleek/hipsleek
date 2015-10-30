@@ -551,6 +551,7 @@ let trans_hrel_to_view_formula prog (f: CF.formula) =
   Debug.no_1 "Syn.trans_hrel_to_view_formula" pr1 pr2 
     (fun _ -> trans_hrel_to_view_formula prog f) f
 
+(* NOTE: struc_formula_trans_heap_node *)
 let rec trans_hrel_to_view_struc_formula prog (sf: CF.struc_formula) =
   match sf with
   | CF.EList el -> CF.EList (List.map (fun (sld, sf) -> (sld, (trans_hrel_to_view_struc_formula prog) sf)) el)
