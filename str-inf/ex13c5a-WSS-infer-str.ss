@@ -48,7 +48,7 @@ BADS<> ==
 HeapPred P(char_star x).
 
 void while1(ref char_star s)
-/*
+
   infer [P
     ,@classic,@pure_field
     ,@size
@@ -56,7 +56,7 @@ void while1(ref char_star s)
   ]
   requires P(s)
   ensures true;
-*/
+
 /*
   requires s::WSS<p> 
   //ensures s::WFSeg<s'>*s'::char_star<0,p> ;
