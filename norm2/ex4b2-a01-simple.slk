@@ -2,8 +2,8 @@ data cell {
   int val;
 }.
 
-HeapPred HP(cell a).
-infer[HP] HP(x) |- x::cell<_>.
+HeapPred HP(cell a,cell@NI b).
+infer[HP] HP(x,b) |- x::cell<_>.
 print residue.
 
 /*

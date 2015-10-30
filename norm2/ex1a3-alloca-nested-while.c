@@ -40,7 +40,50 @@ int main()
 /*
 # ex1a3.c --trace-exc
 
-# ex1a3.c --trace-exc
+# WHY is y (or x classified as dangling? 
+
+!!! **syn.ml#183:Merging is not performed due to the set of pre-hprels does not have disjoint conditions:
+ 
+  [(1;1;0)unfold HP_1695(y,x) |#|  --> y::int_star<value_21_1712>@M; 
+   (1;1;0)unfold HP_1695(y,x) |#|  --> y::Dangling<>@M&y=x]
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y::Dangling<>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y::Dangling<>@M)
+Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
+
+
+[ // BIND
+(1;0)HP_1687(x,y)&true --> x::int_star<value_14_1694>@M * HP_1695(y,x@NI)&
+true,
+ // PRE
+(1;1;0)HP_1695(y,x@NI)&true --> y::int_star<value_21_1712>@M&
+true,
+ // PRE_REC
+(1;1;0)y'::int_star<value_21_1722>@M * GP_1745(y',x'@NI)&
+y'!=null --> HP_1687(x',y')&
+true,
+ // PRE_REC
+(1;1;0)emp&y'!=null |#| x'::int_star<v_int_30_1744>@M&
+true --> GP_1745(y',x'@NI)&
+true,
+ // PRE
+(1;1;0)HP_1695(y,x@NI)&true --> emp&
+y=x,
+ // PRE_REC
+(1;1;0)x'::int_star<v_int_30_1742>@M * GP_1743(y',x'@NI)&
+y'=x' & x'!=null --> HP_1687(x',y')&
+true,
+ // PRE_REC
+(1;1;0)emp&x'!=null & y'=x' --> GP_1743(y',x'@NI)&
+true]
+
+Procedure while_14_2$int_star~int_star SUCCESS.
+
+Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
+Exception(C.get_root_args_hp):Failure("hp_root_pos has not yet set.")
+
+
+----------------------
 
 Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
 Exception(C.get_root_args_hp):Failure("hp_root_pos has not yet set.")

@@ -2121,6 +2121,27 @@ SLEEK FAILURE (END)
   baga over inv (unfolded): [([self], 1<=n)]
   
   xform: self!=null & 1<=n
+
+(==astsimp.ml#2745==)
+compute_inv_baga@3
+compute_inv_baga inp1 :[WFSeg,WSS]
+compute_inv_baga@3 EXIT:[ view WFSeg{}[]<p:node,nnn:int>= 
+ inv: ((self!=null & 1<=nnn) | (self=p & nnn=0))
+ baga inv: [([], self=p & nnn=0),([self], 1<=nnn)]
+ baga over inv: [([], self=p & nnn=0),([self], 1<=nnn)]
+ baga over inv (unfolded): [([], self=p & nnn=0),([self], 1<=nnn)]
+ baga under inv: [([], self=p & nnn=0),([self], 1<=nnn)]
+ xform: 0<=nnn & (((self!=null & 1<=nnn) | (self=p & nnn=0)))
+ ,
+ view WSS{}[]<p:node,bbb:int>= 
+ inv: self!=null & ((2<=bbb | bbb=1))
+ baga inv: [([self], bbb=1),([self], 2<=bbb)]
+ baga over inv: [([self], bbb=1),([self], 2<=bbb)]
+ baga over inv (unfolded): [([self], bbb=1),([self], 2<=bbb)]
+ baga under inv: [([self], bbb=1),([self], 2<=bbb)]
+ xform: self!=null & 0<=bbb & self!=null & ((2<=bbb | bbb=1))
+ ]
+
 ===================================================================
 ===================================================================
 ===================================================================
