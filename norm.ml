@@ -487,12 +487,18 @@ let uses_views_fn_new fn eq_lst f = (* does f uses views from eq_lst? *)
     let p_lst = CF.extr_pred_list f in
     (BList.intersect_eq fn eq_lst p_lst) 
 
+(* requires split_ctx_or to be applied *)
 let norm_unfold_formula vdefs f =
   let unfold_set0 = C.get_unfold_set vdefs in
   let uses_unfold_set f = uses_views_fn_new 
       (fun (m,_,_) m2 -> string_eq m m2) unfold_set0 f in
   let unf_set = uses_unfold_set f in
   CF.repl_unfold_formula "" unf_set f
+
+let norm_unfold_formula vdefs f =
+  let lst = CF.split_or f in
+  let lst = List.map (norm_unfold_formula vdefs) lst in
+  CF.join_or lst
 
 let norm_unfold_formula vdefs f =
   let pr = !CF.print_formula in

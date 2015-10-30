@@ -20381,3 +20381,18 @@ let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
   match args with
   | [x] -> Some x
   | _ -> None
+
+
+let rec split_or f =
+  match f with
+  | Or e -> (split_or e.formula_or_f2)@(split_or e.formula_or_f1)
+  | _ -> [f]
+
+let mk_or f1 f2 =
+  Or {formula_or_f1=f1; formula_or_f2=f2; formula_or_pos=no_pos; }
+
+let join_or f_lst =
+  match f_lst with
+  | [] -> failwith x_tbi
+  | x::lst -> List.fold_left (fun acc x -> mk_or x acc) x lst
+

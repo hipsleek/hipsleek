@@ -1,3 +1,5 @@
+# ex1b.c (FIXED)
+
 C_INCLUDE_PATH=.. ../hip ex1b-simple-a.01-alloca.c -infer "@shape_prepost" 
 
 Proving binding in method foo$int_star for spec  EAssume 
@@ -29,7 +31,7 @@ true&[]requires emp&MayLoop[]
 (2;1;0)y::int_star<value_15_1634>@M&true --> GP_1629(y)&
 true]
 ==========================================================================
-# ex1a4.ss
+# ex1a4.c
 
 void loop (int* y)
 /*@
