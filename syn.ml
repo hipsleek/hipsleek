@@ -648,25 +648,32 @@ let dangling_parameterizing hprels =
 (***********************************)
 (***** TRANSFORM HPREL TO VIEW *****)
 (***********************************)
+let trans_one_hprel_to_view iprog prog hv hprels = 
+  let hid = CP.name_of_spec_var hv in
+  let unfold_hprels, fold_hprels = List.partition CFU.is_pre_hprel hprels in
+  match unfold_hprels, fold_hprels with
+  | hpr::[], others 
+  | others, hpr::[] ->
+    let vdecls =
+      if !Globals.new_pred_syn then 
+        let vdecl = view_decl_of_hprel iprog prog hpr in
+        let () = y_binfo_hp (add_str ("other hprels of " ^ hid) Cprinter.string_of_hprel_list_short) others in
+        let others_check = List.for_all (fun hpr ->
+          let ante, _ = x_add trans_hrel_to_view_formula prog hpr.CF.hprel_lhs in
+          let conseq, _ = x_add trans_hrel_to_view_formula prog hpr.CF.hprel_rhs in
+          fst (x_add heap_entail_formula prog ante conseq)) others 
+        in
+        if others_check then [vdecl]
+        else x_fail ("Cannot transform the hprels of " ^ hid ^ " into view declarations.")
+      else Saout.view_decl_of_hprel iprog prog hpr
+    in
+    vdecls
+  | _ -> x_fail ("Cannot transform the hprels of " ^ hid ^ " into view declarations.")
+
 let trans_hprel_to_view iprog prog hprels = 
   let hprel_lists = partition_hprel_list hprels in
-  let single_hprel_lists, others = List.partition (fun (_, l) -> List.length l == 1) hprel_lists in
-  let single_hprel_list = List.map (fun (sv, l) -> (sv, List.hd l)) single_hprel_lists in
-  let () =
-    if not (is_empty others) then
-      let svl = List.map fst others in
-      y_winfo_pp ("Cannot transform the hprels of " ^ (!CP.print_svl svl) ^ " into view declarations.")
-  in
-  let derived_views = 
-    List.fold_left (fun acc (sv, hpr) ->
-      let vdecls = if !Globals.new_pred_syn then
-          let vdecl = view_decl_of_hprel iprog prog hpr in
-          [vdecl]
-        else Saout.view_decl_of_hprel iprog prog hpr
-      in
-      (* let () = y_binfo_hp (add_str ("View Decl of " ^ (!CP.print_sv sv)) (pr_list_ln Cprinter.string_of_view_decl_short)) vdecls in *)
-      acc @ vdecls) [] single_hprel_list 
-  in
+  let derived_views = List.concat (List.map (fun (hv, hprels) -> 
+      trans_one_hprel_to_view iprog prog hv hprels) hprel_lists) in
   let () = y_tinfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
   (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
   let norm_derived_views = (* norm_derived_views iprog prog *) derived_views in

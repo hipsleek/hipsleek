@@ -1,6 +1,6 @@
-#include <stdlib.h>
+//#include <stdlib.h>
 
-extern int __VERIFIER_nondet_int(void);
+//extern int __VERIFIER_nondet_int(void);
 
 void foo(int* x)
 /*

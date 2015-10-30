@@ -1397,7 +1397,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
       | Cil.Mem e ->
         (* access to data in pointer variable *)
         let base_typ = typ_of_cil_exp e in
-        let _ = x_binfo_hp (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
+        let _ = x_tinfo_hp (add_str "base_typ" string_of_cil_typ) base_typ no_pos in
         match base_typ with
         | Cil.TPtr (Cil.TComp _, _) 
         | Cil.TPtr (Cil.TNamed _, _) ->
