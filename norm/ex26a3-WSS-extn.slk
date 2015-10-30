@@ -10,7 +10,7 @@ pred WFSeg<p> ==
 
 pred WSS<p> ==
   self::WFSeg<q>*q::node<0,p> 
-  inv self!=null.
+  inv true. //self!=null.
 
 pred_extn size[R]<k> ==
    k=0 // base case

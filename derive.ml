@@ -584,8 +584,8 @@ let global_extn_name =
     val mutable lst = [] 
     val mutable seg_lst = [] 
     method logging (s:string): unit =
-      let h = "\n**global_extn_name** " in
-      let () = print_endline_quiet (h^s) in
+      (* let h = "\n**global_extn_name** " in *)
+      (* let () = print_endline_quiet (h^s) in *)
       ()
     method add_segmented (vn:string) res =
       match res with
@@ -604,9 +604,9 @@ let global_extn_name =
       | Some pn -> 
         if given_name="" then pn
         else if not(given_name=pn) then 
-          let () = y_binfo_hp (add_str "vn " pr_id) vn in
-          let () = y_binfo_hp (add_str "prop_name " pr_id) prop_name in
-          let () = y_binfo_pp (given_name^" diff from existing "^pn) in
+          let () = y_tinfo_hp (add_str "vn " pr_id) vn in
+          let () = y_tinfo_hp (add_str "prop_name " pr_id) prop_name in
+          let () = y_tinfo_pp (given_name^" diff from existing "^pn) in
           pn
         else pn
       | None -> 
@@ -669,8 +669,8 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
     val mutable inv = CP.mkTrue no_pos
     val mutable emap = CP.EMapSV.mkEmpty
     method logging s =
-      let h = "\n**prop_table** " in
-      let () =print_endline_quiet (h^s) in
+      (* let h = "\n**prop_table** " in *)
+      (* let () =print_endline_quiet (h^s) in *)
       ()
     method mk_extn_pred_name vn pname =
       (* let () = y_binfo_hp (add_str "vn" pr_id) vn in *)
@@ -769,9 +769,9 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
           | Some ptr -> 
             self # push_def ptr; 
             let prop_var = self # find_or_add ptr in
-            let () = y_binfo_hp (add_str "prop_var" !CP.print_sv) prop_var in
-            let () = y_binfo_hp (add_str "ptr" !CP.print_sv) ptr in
-            let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+            let () = y_tinfo_hp (add_str "prop_var" !CP.print_sv) prop_var in
+            let () = y_tinfo_hp (add_str "ptr" !CP.print_sv) ptr in
+            let () = y_tinfo_hp (add_str "args" !CP.print_svl) args in
             (* !!! **derive.ml#772:prop_var:nnn_61 *)
             (* !!! **derive.ml#773:ptr:q *)
             (* !!! **derive.ml#774:args:[p_14] *)
@@ -787,7 +787,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
             end
         in
         let r = (new_vname,new_sv) in
-        let () = y_binfo_hp (add_str "proc_view(C)" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
+        let () = y_tinfo_hp (add_str "proc_view(C)" (pr_pair pr (pr_pair pr_id pr))) (root,r) in
         r
       else 
         let () = self # logging ("Not a mut-rec view.."^vn) in
@@ -853,7 +853,7 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
   (* let nnn_sv = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
   let () = y_tinfo_hp (add_str "prop_name" pr_id) prop_name in
   let seg_lst = List.map (List.map (fun (x,vd) ->  store_segmented_view x vd)) scc_vdecls in
-  let () = y_binfo_hp (add_str "seg_lst" (pr_list (pr_list (pr_pair pr_id (pr_opt !CP.print_sv))))) seg_lst in
+  let () = y_tinfo_hp (add_str "seg_lst" (pr_list (pr_list (pr_pair pr_id (pr_opt !CP.print_sv))))) seg_lst in
   let p_tab = new prop_table pname xx (CP.eq_spec_var) nnn_s field_tag_s in
   let extend_size_disj vns (*mutual call*) f =
     let () = p_tab # reset_disj f in
@@ -912,7 +912,7 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
     let vn = new_vd.C.view_name in
     let () = y_tinfo_hp (add_str "b4 update_view" pr_id) vn  in
     let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
-    (* let () = y_binfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in *)
+    (* let () = y_tinfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in *)
     let () = y_tinfo_hp (add_str "vd(orig)" Cprinter.string_of_view_decl_short) vd in
     let () = y_tinfo_hp (add_str "aft update_view" pr_id) vn  in
     new_vd
@@ -949,10 +949,10 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   let () = y_tinfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
   let scc = HipUtil.view_scc_obj # get_scc in
   let vname = derv.Iast.view_name in
-  let () = y_binfo_hp (add_str "view_name" pr_id)  vname in
+  let () = y_tinfo_hp (add_str "view_name" pr_id)  vname in
   let pr = pr_list pr_id in
   let d =  derv.Iast.view_derv_extns in
-  let () = y_binfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) d in
+  let () = y_tinfo_hp (add_str "derv_extns" (pr_list (pr_triple pr_id pr pr))) d in
   let property,field_s,nnn_s = (match d with
       | (prop,((_::_) as field_s),((_::_) as nnn_s))::_ -> prop,field_s,nnn_s
       | _-> failwith (x_loc^" no prop")) in
@@ -977,13 +977,13 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   (*   | None -> failwith x_tbi *)
   (* in *)
   let vd_lst = List.filter (fun vd -> global_extn_name # not_processed vd.C.view_name property) vd_lst in
-  let () = y_binfo_hp (add_str "vd_list" (pr_list (fun v -> v.C.view_name))) vd_lst in
-  let () = y_binfo_hp (add_str "scc(b4)" (pr_list (pr_list pr_id)))  scc in
+  let () = y_tinfo_hp (add_str "vd_list" (pr_list (fun v -> v.C.view_name))) vd_lst in
+  let () = y_tinfo_hp (add_str "scc(b4)" (pr_list (pr_list pr_id)))  scc in
   let scc = List.filter (fun mr -> 
       let common = Gen.BList.intersect_eq (fun n v -> v.C.view_name=n) mr vd_lst in
       common!=[]
     ) scc in
-  let () = y_binfo_hp (add_str "scc(after)" (pr_list (pr_list pr_id))) scc in
+  let () = y_tinfo_hp (add_str "scc(after)" (pr_list (pr_list pr_id))) scc in
   let scc_vdecls = List.map (fun mr -> 
       List.map (fun n ->
           try 
@@ -991,7 +991,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
             (n,v)
           with _ -> failwith (x_loc^" view "^n^" not found")
         ) mr) scc in
-  let () = y_binfo_hp (add_str "scc_vdecls" (pr_list (pr_list (fun (vn,vd) -> vn^"+"^vd.C.view_name)))) scc_vdecls in
+  let () = y_tinfo_hp (add_str "scc_vdecls" (pr_list (pr_list (fun (vn,vd) -> vn^"+"^vd.C.view_name)))) scc_vdecls in
   let vdecls = extend_size vname scc_vdecls (property,prop_view) field_s nnn_s in
   let vdecls = List.concat vdecls in
   let () = y_binfo_pp "TODO: need to keep entire mutual-rec vdecl generated?" in  
