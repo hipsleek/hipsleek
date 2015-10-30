@@ -1,0 +1,23 @@
+/*
+id: 0; caller: []; line: 15; classic: false; kind: BIND; hec_num: 1; evars: []; impl_vars: [value_15_1759']; infer_vars: [ HP_1885]; c_heap: emp; others:  es_infer_obj: [@shape_pre] globals: [@dis_err,@shape_prepost]
+ checkentail HP_1885(c,x_ref,y_ref)&
+c'=c & x_ref'=x_ref & y_ref'=y_ref & v_bool_15_1830' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  y_ref'::int_star<value_15_1759'>@L&{FLOW,(1,30)=__flow#E}[]. 
+ho_vars: nothing?
+res:  1[
+    y_ref::int_star<value_15_1893>@M&
+c'=c & x_ref'=x_ref & y_ref'=y_ref & v_bool_15_1830' & 
+value_15_1759'=value_15_1893&{FLOW,(4,5)=__norm#E}[]
+   es_infer_hp_rel: [(1;0)unknown HP_1885(c,x_ref,y_ref) |#|  --> y_ref::int_star<value_15_1893>@M]
+   es_gen_impl_vars(E): []
+   ]
+*/
+data cell {
+ int val;
+}.
+
+HeapPred HP(cell a, cell b).
+
+infer[HP] HP(x,y) |- x::cell<_>.
+print residue.

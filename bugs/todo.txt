@@ -2191,6 +2191,24 @@ Entailing lemma lem_11: Fail. Details below:
          "==>" implication: : Valid.
          "<==" implication: : Fail. (cex)(must) cause: exception Failure("split_components: don't expect OR") in lemma proving
 ===================================================================
+# ex64.b.slk
+
+# problem with complex lemma
+
+Entailing lemma three: Fail. Details below:
+	 "==>" implication: : Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+	 "==>" implication: : Valid.
+
+The first bad revision is:
+changeset:   17436:78bf6a8733c9
+branch:      infer-str
+user:        chinwn@loris-laptop
+date:        Wed Oct 21 04:38:03 2015 +0800
+summary:     need to schedule complex lemma
+
 ===================================================================
 ===================================================================
 ===================================================================
