@@ -1798,22 +1798,22 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
       let tup = (lhs_node, rhs_node) in
       let comp_lems = Lem_store.all_lemma # get_complex_coercion in
       let pr_hf = !CF.print_h_formula in
-      let () = y_tinfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
+      let () = y_binfo_hp (add_str "Root for" (pr_pair pr_hf pr_hf)) tup  in
       (* let () = y_tinfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coercion_short)) comp_lems  in *)
-      let () = y_tinfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems in
+      let () = y_binfo_hp (add_str "Complex lemma" (pr_list Cprinter.string_of_coerc_med)) comp_lems in
       (* let () = y_tinfo_pp "to check if complex lemma applicable here for LHS and RHS here using signature" in *)
       let pr_id_list = pr_list idf in
       let () = List.iter (fun lem -> 
-        y_tinfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
+        y_binfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
         (CFU.sig_of_lem prog lem)) comp_lems in
-      let lhs_root = CFU.get_node_var prog lhs_node in
+      let lhs_root = x_add CFU.get_node_var prog lhs_node in
       let lhs_sig = CFU.sig_of_formula prog lhs_root (CF.mkBase_simp lhs_h lhs_p) in
-      let () = y_tinfo_hp (add_str "lhs_root" !CP.print_sv) lhs_root in
-      let () = y_tinfo_hp (add_str "lhs_sig" (pr_list idf)) lhs_sig in
+      let () = y_binfo_hp (add_str "lhs_root" !CP.print_sv) lhs_root in
+      let () = y_binfo_hp (add_str "lhs_sig" (pr_list idf)) lhs_sig in
       let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig comp_lems in
-      let () = y_tinfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
+      let () = y_binfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
       let lem_act = List.map (fun lem -> (2, M_lemma (m_res, Some lem, 0))) applicable_lems in
-      let () = if not (is_empty lem_act) then y_tinfo_hp (add_str "lem_act" (pr_list pr_act)) lem_act in
+      let () = if not (is_empty lem_act) then y_binfo_hp (add_str "lem_act" (pr_list pr_act)) lem_act in
       let act = (match tup (* lhs_node, rhs_node *) with
        | ThreadNode ({CF.h_formula_thread_original = dl_orig;
                       CF.h_formula_thread_origins = dl_origins;

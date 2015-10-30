@@ -151,6 +151,8 @@ let rec complx_sig_of_formula prog root (f: CF.formula) =
 let sig_of_formula prog root (f: CF.formula) = 
   List.map (CF.get_node_name 30) (complx_sig_of_formula prog root f)
 
+let sig_of_formula prog root (f: CF.formula) = 
+  Debug.no_2 "sig_of_formula" pr_none pr_none pr_none (sig_of_formula prog) root (f: CF.formula)
 let sig_of_lem prog (lem: C.coercion_decl) =
   let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem.C.coercion_head) in
   sig_of_formula prog self_var lem.C.coercion_head, 

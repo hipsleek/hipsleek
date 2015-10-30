@@ -2176,7 +2176,8 @@ and get_node_var_x (h : h_formula) = match h with
     | (CP.Var (sv, _))::_ -> sv
     | _ -> failwith ("Cannot find suitable root node of the HRel " ^ (CP.name_of_spec_var hrel)) 
     )
-  | _ -> failwith ("get_node_var: invalid argument"^(!print_h_formula h))
+  | _ -> CP.null_var 
+           (* failwith ("get_node_var: invalid argument"^(!print_h_formula h)) *)
 
 and get_node_var (h : h_formula) =
   Debug.no_1 "get_node_var" !print_h_formula !print_sv

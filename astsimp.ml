@@ -7722,7 +7722,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let new_dl = x_add Cpure.arith_simplify 5 new_dl in
         let sv2, rsr2, n_tl2 = x_add linearize_formula prog rsr tlist in
         let newNode = CF.ThreadNode {
-            CF.h_formula_thread_name = x_add CF.get_node_name 1 dataNode2;
+            CF.h_formula_thread_name = CF.get_node_name 1 dataNode2;
             CF.h_formula_thread_node = CF.get_node_var dataNode2;
             CF.h_formula_thread_resource = rsr2;
             CF.h_formula_thread_delayed = new_dl;
