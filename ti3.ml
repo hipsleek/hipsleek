@@ -255,6 +255,7 @@ let add_term_relation_proc prog proc spec =
   else
     let fname = unmingle_name proc.proc_name in
     let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) proc.proc_args in
+    (* TODO: We should not rely on collect_important_vars_in_spec *)
     let imp_spec_vars = CF.collect_important_vars_in_spec true spec in
     let params = imp_spec_vars @ params  in
     let params = List.filter (fun sv -> 
