@@ -1471,7 +1471,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     let ft = cperm_typ () in
     let gather_type_info_ho_args hoa tlist =
       List.fold_left (fun tl a ->
-          x_add gather_type_info_formula prog a.IF.rflow_base tl false) tlist hoa
+          x_add gather_type_info_struc_f prog a.IF.rflow_base tl) tlist hoa
     in
     let gather_type_info_ann c tlist = (
       match c with

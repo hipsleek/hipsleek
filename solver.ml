@@ -1864,7 +1864,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
           with _ -> forms
         in
         let renamed_view_formula = x_add_1 rename_bound_vars forms in
-        (* let () = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
+        let () = y_tinfo_hp (add_str "renamed_view_formula" Cprinter.string_of_formula) renamed_view_formula in
         let renamed_view_formula = add_unfold_num renamed_view_formula uf in
         (* propagate the immutability annotation inside the definition *)
         (*let () = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
@@ -1885,8 +1885,8 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
         (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
         (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
-        (* let () = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
-        (*   let () = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
+        let () = y_tinfo_hp (add_str "unfold pre subst: " Cprinter.string_of_formula) renamed_view_formula in
+        let () = y_tinfo_hp (add_str "unfold post subst: " Cprinter.string_of_formula) res_form in
         let res_form = add_origins res_form origs in
         (* let res_form = add_original res_form original in*)
         let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)
@@ -10883,7 +10883,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
               let l_vdef = x_add Cast.look_up_view_def_raw 9 prog.prog_view_decls l_node_name in
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
-              let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
+              let r_ho_args = List.map (trans_rflow_formula (subst_struc_avoid_capture r_subs l_subs)) r_ho_args in
               let args = List.combine l_ho_args r_ho_args in
               let args = List.combine args l_vdef_hvar_split_kinds in
 
@@ -10900,9 +10900,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (* We use flow_ann to decide                     *)
                 (* contravariant (-) or covariant (+) entailment *)
                 let flow_ann = lhs.CF.rflow_kind in
-                let ho_lhs = lhs.CF.rflow_base in
-                let ho_rhs = rhs.CF.rflow_base in
-                let shvars = CF.extract_single_hvar_f ho_rhs in
+                let ho_lhs = (CF.struc_to_formula lhs.CF.rflow_base) in
+                let ho_rhs = (CF.struc_to_formula rhs.CF.rflow_base) in
+                let shvars =  CF.extract_single_hvar_f ho_rhs in
                 let () = x_tinfo_hp (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
                 let hvars = CF.extract_hvar_f ho_rhs in
                 let () = x_tinfo_hp (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in
@@ -11098,7 +11098,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                         if (CVP.is_empty_vperm_sets (CF.get_vperm_set r) && ((isConstEmpFormula r) || (isConstTrueFormula2 r)))
                         then (flag, arg::result) (* splitable but empty residue *)
                         else
-                          let arg_r = { arg with CF.rflow_base = r; } in 
+                          let arg_r = { arg with CF.rflow_base = (CF.formula_to_struc_formula r); } in 
                           (true, arg_r::result)))
                 in
                 let is_split, new_l_ho_args = check_split (List.combine residues l_ho_args) in
@@ -13814,9 +13814,9 @@ and process_action_x caller cont_act prog estate conseq lhs_b rhs_b a (rhs_h_mat
 *)
 and match_one_ho_arg_simple_x ((lhs,rhs) : CF.rflow_formula * CF.rflow_formula): 
   (CP.spec_var * CF.formula) list =
-  let lhs = lhs.CF.rflow_base in
+  let lhs = (CF.struc_to_formula lhs.CF.rflow_base) in
   let rhs = rhs.CF.rflow_base in
-  let hvars = CF.extract_hvar_f rhs in
+  let hvars = CF.extract_hvar_struc_f rhs in
   [List.hd hvars, lhs]
 
 and match_one_ho_arg_simple ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 

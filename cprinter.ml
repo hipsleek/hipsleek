@@ -2427,9 +2427,11 @@ and pr_formula e =
   (* else e in *)
   pr_formula_1 e
 
+and pr_sf = ref (fun _ -> failwith x_tbi) 
+
 and pr_rflow_formula f =
   fmt_string ((string_of_ho_flow_kind f.rflow_kind) ^ " ");
-  pr_formula f.rflow_base
+  !pr_sf f.rflow_base
 (* fmt_string "[|"; pr_list_of_spec_var f.rflow_global_vars; fmt_string "|]" *)
 
 and slk_formula e =
@@ -3442,6 +3444,8 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
          let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
   		  let f_b e =  pr_bracket struc_formula_wo_paren pr_struc_formula e in
   	      pr_list_vbox_wrap "eor " f_b (arg1@arg2)*)
+
+let () = pr_sf := pr_struc_formula
 
 let rec pr_struc_formula_for_spec1 (e:struc_formula) =
   let res = match e with

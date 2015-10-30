@@ -17,22 +17,18 @@ pred_prim Chan{%P}<>.
 pred buy_or1<x> == self::Send{- self::String<a> & a>1}<> 
      * x::Recv{+ x::String<b> & b=0}<>.
 
-/*
-Message: [solver.ml]: do_match cannot handle  self:Unknown::Send{ - self:String::String<a:int>@M&1<a:int&{FLOW,(4,5)=__norm#E}[]}<>@M * 
- x:Unknown::Recv{ + x:String::String<b:int>@M&b:int=0&{FLOW,(4,5)=__norm#E}[]}<>@M
-*/
+pred buy_or2<> == self::Send{- self::String<a> & a>1}<> 
+     * x::Recv{+ x::String<b> & b=0}<>.
 
-//pred pair<x> == self::node<_,_> * x::node<_,_>.
-
-/*
-pred buy_or2<x> == self::Send{- self::String<a> & a>1}<> * x::Recv{+ x::String<b> & b=0}<>.
 
 pred buyer_ch1<x4,x> == self::Chan{ x4::buy_or1<x>}<>.
 
 
-checkentail zz::buyer_ch1<s2,y>|-  zz::Chan{s2::buy_or1<y>}<>.
+checkentail zz::buyer_ch1<s2,y>|-  zz::Chan{s2::buy_or1<z>}<>.
 expect Valid.
 print residue.
 
+checkentail zz::buyer_ch1<s2,y>|-  zz::Chan{s2::buy_or2<>}<>.
+expect Valid.
+print residue.
 
-*/

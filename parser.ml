@@ -1485,7 +1485,8 @@ rflow_kind:
 rflow_form: 
   [[ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
-       F.rflow_base = F.subst_stub_flow n_flow dc; }
+       (* TODOSESS: dc should be struct, not transformed to struc *)
+       F.rflow_base = F.subst_stub_flow_struc n_flow ( F.formula_to_struc_formula dc); }
       (* match cc with                                                                                  *)
       (* | F.Base f -> {                                                                                *)
       (*   F.rflow_kind = un_option k NEUTRAL;                                                          *)
@@ -1508,7 +1509,7 @@ id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
 opt_brace_vars : [[ `OBRACE; sl = id_ann_list_opt; `CBRACE -> sl ]];
 
 rflow_form_list : [[ `OBRACE; sl = rflow_form_list_opt; `CBRACE -> 
-    List.map (fun ff -> {ff with F.rflow_base = F.subst_stub_flow n_flow ff.F.rflow_base}) sl ]];
+    List.map (fun ff -> {ff with F.rflow_base = F.subst_stub_flow_struc n_flow ff.F.rflow_base}) sl ]];
 
 view_header_ext:
     [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt (*id_list*) ;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->

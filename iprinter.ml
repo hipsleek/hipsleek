@@ -537,7 +537,7 @@ let rec string_of_h_formula = function
     let perm_str = string_of_iperm perm in
     let ho_str = "{" ^ (String.concat "," (List.map 
                                              (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
-                                                        (string_of_formula ff.F.rflow_base)) ho_pl)) ^ "}" in
+                                                        (string_of_struc_formula ff.F.rflow_base)) ho_pl)) ^ "}" in
     let deref_str = ref "" in
     for i = 1 to deref do
       deref_str := !deref_str ^ "^";
@@ -573,7 +573,8 @@ let rec string_of_h_formula = function
                    F.h_formula_thread_perm = perm;
                    F.h_formula_thread_pos = l}) ->
     let perm_str = string_of_iperm perm in
-    let rsr_str = string_of_formula rsr in
+    (* TODOSESS: to change thread resource to be struc as well *)
+    let rsr_str = string_of_struc_formula (F.formula_to_struc_formula rsr) in
     ((string_of_id x) ^ "::" ^ id ^ perm_str 
      ^ "<" ^ (string_of_pure_formula dl) ^ " --> " ^ rsr_str ^ ">" ^ "[ThreadNode]")
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
@@ -601,11 +602,13 @@ and string_of_one_formula_list (f:F.one_formula list) =
   String.concat "\n AND" (List.map string_of_one_formula f)
 
 and string_of_rflow_formula ff =
-  (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^
-  (string_of_formula ff.F.rflow_base)
+  (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " 
+  (* TODO *)
+  ^
+  (string_of_struc_formula ff.F.rflow_base)
 
 (* pretty printing for formulae *) 
-and string_of_formula = function 
+and string_of_formula (f:F.formula)  = match f with 
   | Iast.F.Base ({F.formula_base_heap = hf;
                   F.formula_base_pure = pf;
                   F.formula_base_vperm = vp;
@@ -642,7 +645,7 @@ and string_of_formula = function
             ^ ")"
     in rs^sa
 
-and  string_of_struc_formula c = match c with 
+and  string_of_struc_formula (c:F.struc_formula) :string = match c with 
   | F.ECase {
       F.formula_case_branches  =  case_list ;
     } -> 

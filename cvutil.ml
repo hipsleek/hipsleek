@@ -2271,7 +2271,7 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
     let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
     let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
     let zip = List.combine fr_vars to_vars in
-    let new_ho_agrs = List.map (trans_rflow_formula (prune_preds prog true)) v.h_formula_view_ho_arguments in
+    let new_ho_agrs = List.map (trans_rflow_formula (prune_pred_struc prog true)) v.h_formula_view_ho_arguments in
     let v = {v with h_formula_view_ho_arguments = new_ho_agrs;} in
     let (rem_br, prun_cond, first_prune, chg) =  
       match v.h_formula_view_remaining_branches with
@@ -2405,7 +2405,7 @@ and prune_preds prog (simp_b:bool) (f:formula):formula =
   let p2 = Cprinter.string_of_formula in
   Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
 
-let prune_pred_struc_x prog (simp_b:bool) f = 
+and prune_pred_struc_x prog (simp_b:bool) f = 
   let rec helper f =
     if (is_no_heap_struc_formula f) then f
     else match f with
@@ -2422,7 +2422,7 @@ let prune_pred_struc_x prog (simp_b:bool) f =
 (*let () = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
 
 
-let prune_pred_struc prog (simp_b:bool) f = 
+and prune_pred_struc prog (simp_b:bool) f = 
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_2 "prune_pred_struc" pr string_of_bool pr (fun _ _ -> prune_pred_struc_x prog simp_b f) f simp_b
 

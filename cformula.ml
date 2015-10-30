@@ -151,7 +151,8 @@ and formula =
 
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
-  rflow_base: (* struc_ *)formula;
+  rflow_base: struc_formula;
+  (* rflow_base_list: formula list; *)
   (* rflow_global_vars: CP.spec_var list; *)
 }
 
@@ -3028,7 +3029,7 @@ and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
     end
   else (if CP.mem_svl vv vs then vs else vv :: vs)@other_vs
 
-and rf_fv (f: rflow_formula) = fv f.rflow_base 
+and rf_fv (f: rflow_formula) = struc_fv f.rflow_base 
 
 and f_h_fv (f : formula) : CP.spec_var list =
   (* let rec helper h = match h with *)
@@ -3448,7 +3449,7 @@ and vn_subst sst vn=
   | _ -> report_error no_pos "CF.vn_subst"
 
 and rf_subst sst (f: rflow_formula) = 
-  { f with rflow_base = (* subst sst *) f.rflow_base; }
+  { f with rflow_base = subst_struc sst f.rflow_base; }
 
 and h_subst sst (f : h_formula) = 
   match f with
@@ -3790,7 +3791,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
                      (* WN:subs_pre *)
                      h_formula_view_ho_arguments = 
                        if !pre_subst_flag then ho_svs
-                       else List.map (trans_rflow_formula (apply_one s)) ho_svs;
+                       else List.map (trans_rflow_formula (apply_one_struc s)) ho_svs;
                      h_formula_view_arguments = List.map (subst_var s) svs;
                      h_formula_view_annot_arg = apply_one_annot_arg s annot_args;
                      h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
@@ -4573,8 +4574,10 @@ and rename_bound_vars_x (f : formula) = match f with
   | Exists _ ->
     let qvars, base_f = split_quantifiers f in
     (*filter out RelT and HpT*)
+    let () = y_tinfo_hp (add_str "qvars" string_of_spec_var_list) qvars in
     let qvars = List.filter (fun sv -> not(CP.is_rel_all_var sv)) qvars in
     let new_qvars = CP.fresh_spec_vars qvars in
+    let () = y_tinfo_hp (add_str "new_qvars" string_of_spec_var_list) new_qvars in
     (*--- 09.05.2000 *)
     (*let () = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
     (*09.05.2000 ---*)
@@ -5910,6 +5913,9 @@ and get_ptrs_w_args_f ?(en_pure_field=false) (f: formula)=
     CP.remove_dups_svl (get_ptrs_w_args ~en_pure_field:en_pure_field fe.formula_exists_heap)
   | _ -> report_error no_pos "CF.get_ptrs_w_args_f: not handle yet"
 
+and get_ptrs_w_args_struc ?(en_pure_field=false) (f: struc_formula): CP.spec_var list = 
+  failwith x_tbi
+
 and get_ptrs_w_args ?(en_pure_field=false) (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c;
               h_formula_data_arguments = args} ->
@@ -5917,7 +5923,7 @@ and get_ptrs_w_args ?(en_pure_field=false) (f: h_formula): CP.spec_var list = ma
   | ViewNode {h_formula_view_node = c;
               h_formula_view_ho_arguments = ho_args;
               h_formula_view_arguments = args} ->
-    let hovars = List.concat (List.map (apply_rflow_formula get_ptrs_w_args_f) ho_args) in
+    let hovars = List.concat (List.map (apply_rflow_formula get_ptrs_w_args_struc) ho_args) in
     [c]@(if en_pure_field then args else List.filter CP.is_node_typ args)@hovars
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
@@ -6295,7 +6301,7 @@ let rec get_ptrs_group_hf hf0=
       (helper hf1)@(helper hf2)
     | DataNode hd -> [hd.h_formula_data_node::hd.h_formula_data_arguments]
     | ViewNode hv ->
-      let ho = List.concat (List.map (apply_rflow_formula get_ptrs_group) hv.h_formula_view_ho_arguments) in
+      let ho = List.concat (List.map (apply_rflow_formula get_ptrs_group_struc) hv.h_formula_view_ho_arguments) in
       [hv.h_formula_view_node::hv.h_formula_view_arguments]@ho
     | ThreadNode ht -> [[ht.h_formula_thread_node]] (*TOCHECK*)
     | HRel _
@@ -6339,7 +6345,10 @@ and get_node_args hf0 =
     | HEmp | HVar _ -> []
   in helper hf0
 
-and get_ptrs_group f0=
+and get_ptrs_group_struc f0 =
+  failwith x_tbi
+
+and get_ptrs_group f0 =
   let rec helper f=
     match f with
     | Base fb -> get_ptrs_group_hf fb.formula_base_heap
@@ -13754,6 +13763,12 @@ let extract_hvar_f (f0:formula) : CP.spec_var list =
   Debug.no_1 "extract_hvar_f" pr1 pr2
     (fun _ ->  extract_hvar_f_x f0) f0
 
+let extract_hvar_struc_f (f0:struc_formula) : CP.spec_var list =
+  failwith x_tbi
+
+let extract_single_hvar_struc_f (f0:struc_formula) : CP.spec_var option =
+  failwith x_tbi 
+
 (*get hvars whose spec_var belong to vars*)
 (* TODO:WN:HVar *)
 let get_hvar_x e vars =
@@ -13786,7 +13801,7 @@ let drop_hvar e vars =
 let rec subst_one_hvar_hf_x (hf:h_formula) ((f,t) : CP.spec_var * formula) : h_formula =
   let func hf = match hf with
     | ViewNode vn ->
-      let ho_args = List.map (trans_rflow_formula (fun f_base -> subst_one_hvar f_base (f,t))) 
+      let ho_args = List.map (trans_rflow_formula (fun f_base -> subst_one_hvar_struc f_base (f,t))) 
           vn.h_formula_view_ho_arguments in
       Some (ViewNode {vn with h_formula_view_ho_arguments = ho_args;})
     | _ -> None
@@ -13825,6 +13840,9 @@ and subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
                              formula_or_f2 = helper orf.formula_or_f2;}
   in
   helper f0
+
+and subst_one_hvar_struc f0 ((f,t) : CP.spec_var * formula) : struc_formula =
+  failwith x_tbi
 
 and subst_one_hvar f0 ((f,t) : CP.spec_var * formula) : formula =
   let pr1 = !print_formula in

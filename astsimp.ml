@@ -7729,9 +7729,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_pos = pos;
                      IF.h_formula_heap_label = pi;} ->
         (* expand the dereference heap node first *)
-        let trans_f f tl = x_add trans_formula prog false [] false f tl false in
+        let trans_sf f tl = (* x_add  *) trans_I2C_struc_formula
+(* trans_formula *) 0 prog false false [] f tl false false in
         let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
-            let (ntl, b) = trans_f a.IF.rflow_base tl in 
+            let (ntl, b) = trans_sf a.IF.rflow_base tl in 
             (ntl, ({ CF.rflow_kind = a.IF.rflow_kind; 
                      CF.rflow_base = b; })::r)) 
             (tl, []) ho_exps in
@@ -8728,7 +8729,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
           | None -> (None,hvars)
         in
         let ho_hvars = List.map (fun ff ->
-            let n_base, _ , _  = case_normalize_renamed_formula prog new_used_names posib_expl ff.IF.rflow_base ann_vars (*TOCHECH: how about two other return values*)
+            let n_base  = case_normalize_renamed_struc_formula prog new_used_names posib_expl ff.IF.rflow_base (* ann_vars *) (*TOCHECH: how about two other return values*)
             in { ff with IF.rflow_base = n_base; }) b.IF.h_formula_heap_ho_arguments
         in
         let new_h = IF.HeapNode{ b with 

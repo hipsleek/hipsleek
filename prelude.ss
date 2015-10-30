@@ -516,7 +516,7 @@ RS_mem malloc1(int n)
  ensures  res=null or res::RS_mem<n>;
 */
 
-//pred_prim WAIT<b:bag((Object,Object))>;
+pred_prim WAIT<b:bag((Object,Object))>;
 //pred_prim WAITS<G:bag((Object,Object)), S:bag(Object), d:Object>;
 
 relation set_comp(bag((Object,Object)) g, bag(Object) S, Object d).
