@@ -9,7 +9,7 @@ void foo(int* x)
   ensures true;
 */
 {
-  //@dprint;
+  //dprint;
   *x = 0;
 }
 

@@ -1778,18 +1778,18 @@ class inf_obj  =
         with Not_found -> ()
       in
       begin
-        helper "@term"          INF_TERM;
         helper "@term_wo_post"  INF_TERM_WO_POST;
+        helper "@term"          INF_TERM;
         helper "@pre"           INF_PRE;
         helper "@post"          INF_POST;
         helper "@imm"           INF_IMM;
         helper "@pure_field"    INF_PURE_FIELD;
         helper "@field_imm"     INF_FIELD_IMM;
         helper "@arrvar"        INF_ARR_AS_VAR;
+        helper "@prepost_shape" INF_SHAPE_PRE_POST;
+        helper "@pre_shape"     INF_SHAPE_PRE;
+        helper "@post_shape"    INF_SHAPE_POST;
         helper "@shape"         INF_SHAPE;
-        helper "@shape_pre"     INF_SHAPE_PRE;
-        helper "@shape_post"    INF_SHAPE_POST;
-        helper "@shape_prepost" INF_SHAPE_PRE_POST;
         helper "@error"         INF_ERROR;
         helper "@dis_err"       INF_DE_EXC;
         helper "@err_may"       INF_ERR_MAY;
