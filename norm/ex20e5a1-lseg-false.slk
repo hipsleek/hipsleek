@@ -1,0 +1,41 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next#REC;	
+}.
+
+HeapPred P(node x,node@NI y).
+HeapPred HP(node x,node@NI y,node@NI z).
+HeapPred K(int x,node y,node z).
+
+
+infer[P,HP,K,@classic
+ ] K(v,p,x)  & MayLoop |- emp & MayLoop.
+print residue.
+
+/*
+# ex20e5a1.slk
+
+infer[P,HP,K,@classic
+ ] K(v,p,x)  & MayLoop |- emp & MayLoop.
+
+# Fails but should succeed with
+
+     K(v,p,x) --> emp
+
+(==solver.ml#8346==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 :estate:
+ es_formula: 
+ K(v,p,x)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [P; HP; K]
+infer_collect_hp_rel_empty_rhs#1 inp2 :rhs_p: MayLoop[]
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:false,Sel HP:
+ es_formula: 
+ K(v,p,x)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [P; HP; K],Inferred Relations:[],lhs base: K(v,p,x)&{FLOW,(20,21)=__norm#E}[])
+G
+*/

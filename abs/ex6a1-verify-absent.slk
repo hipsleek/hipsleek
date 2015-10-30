@@ -1,0 +1,48 @@
+data node {
+ int val;
+ node next;
+}.
+
+
+checkentail x::node<_,_>@A * y::node<_,_> |- x!=y.
+expect Fail.
+//@A is the same as zero permission
+print residue.
+//checkentail y::node<_,_> & x!=null  |- emp.
+
+/*
+# ex6a1.slk
+
+# use --adhoc-3 to get old version
+
+checkentail x::node<_,_>@A * y::node<_,_> |- x!=y.
+expect Fail.
+
+# this entailment should fail..
+# some TODO at cvutil.ml for elim_absent_nodes and xpure*
+
+# to add a drop @A nodes during xpure and replace by its xpure
+
+!!! **cvutil.ml#129:DataNode(absent): x::node<Anon_12,Anon_13>@A
+!!! **cvutil.ml#1585:TODO: Need to add pure collected into p0
+!!! **cvutil.ml#1587:elim_abs (pure):[ x!=null]
+
+!!! **cvutil.ml#129:DataNode(absent): x::node<Anon_12,Anon_13>@A
+!!! **cvutil.ml#1588:TODO: Need to add pure collected into p0
+!!! **cvutil.ml#1590:elim_abs (pure):[ x!=null]
+
+(==cvutil.ml#1590==)
+xpure_heap_symbolic_i@2@1
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : y::node<Anon_14,Anon_15>@M
+xpure_heap_symbolic_i@2 EXIT:( y!=null,[y],true)
+
+(==astsimp.ml#7286==)
+xpure_heap_symbolic#999@1
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::node<Anon_12,Anon_13>@A * y::node<Anon_14,Anon_15>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@1 EXIT: y!=null#[y]# [[y]]true
+
+
+*/

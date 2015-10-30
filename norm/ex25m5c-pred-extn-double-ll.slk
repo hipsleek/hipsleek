@@ -1,0 +1,26 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred ll<n> ==
+   emp & self=null & n=0
+or self::node<_,p>*p::ll<n-1>.
+//or self::node<_,p>*p::node<_,q>*q::ll<n-2>.
+
+/*
+# ex25m5c.slk
+
+!!! **fixcalc.ml#491:result: n>=0
+!!! **fixUtil.ml#184:Predicate ll has over invariant
+
+!!! **fixUtil.ml#327:infered baga inv(ll):[([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+
+  inv: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+  baga over inv: [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 2<=n & exists(alpha:2*alpha=n))]
+  xform: ((self=null & n=0) | (self!=null & 2<=n & exists(alpha:2*alpha=n)))
+
+*/
+

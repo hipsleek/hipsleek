@@ -36,7 +36,7 @@ let simplify f args =
   let bnd_vars = diff (CP.fv f) args in
   if bnd_vars == [] then f else
     CP.mkExists_with_simpl om_simplify (* Tpdispatcher.simplify_raw *)
-      (diff (CP.fv f) args) f None (CP.pos_of_formula f)
+      bnd_vars f None (CP.pos_of_formula f)
 
 let simplify f args =
   let pr1 = !CP.print_formula in
@@ -608,7 +608,9 @@ let rec merge_tnt_case_spec_into_struc_formula prog ctx spec sf =
   | CF.EAssume af -> merge_tnt_case_spec_into_assume prog ctx spec af
   | CF.EInfer ei -> 
     let cont = merge_tnt_case_spec_into_struc_formula prog ctx spec ei.CF.formula_inf_continuation in
-    if ei.CF.formula_inf_obj # is_term then cont
+    let () = ei.CF.formula_inf_obj # reset INF_TERM in
+    let () = ei.CF.formula_inf_obj # reset INF_TERM_WO_POST in
+    if ei.CF.formula_inf_obj # is_empty then cont
     else CF.EInfer { ei with CF.formula_inf_continuation = cont }
   | CF.EList el -> 
     CF.mkEList_no_flatten (map_l_snd (merge_tnt_case_spec_into_struc_formula prog ctx spec) el)
@@ -686,14 +688,20 @@ let flatten_case_struc struc_f =
 
 let rec norm_struc struc_f = 
   match struc_f with
-  | CF.ECase ec -> CF.ECase { ec with CF.formula_case_branches =
-                                        List.map (fun (c, f) -> (om_simplify c, f)) ec.CF.formula_case_branches }
-  | CF.EBase eb -> CF.EBase { eb with CF.formula_struc_continuation =
-                                        map_opt norm_struc eb.CF.formula_struc_continuation }
+  | CF.ECase ec -> CF.ECase { ec with 
+      CF.formula_case_branches = List.map (fun (c, f) -> (om_simplify c, f)) ec.CF.formula_case_branches }
+  | CF.EBase eb -> CF.EBase { eb with 
+      CF.formula_struc_continuation = map_opt norm_struc eb.CF.formula_struc_continuation }
   | CF.EAssume _ -> struc_f
-  | CF.EInfer ei -> CF.EInfer { ei with CF.formula_inf_continuation =
-                                          norm_struc ei.CF.formula_inf_continuation }
+  | CF.EInfer ei ->
+    (* let () = ei.CF.formula_inf_obj # reset INF_TERM in *)
+    CF.EInfer { ei with
+      CF.formula_inf_continuation = norm_struc ei.CF.formula_inf_continuation }
   | CF.EList el -> CF.mkEList_no_flatten (map_l_snd norm_struc el)
+
+let norm_struc struc_f = 
+  let pr = !CF.print_struc_formula in
+  Debug.no_1 "norm_struc" pr pr norm_struc struc_f
 
 let tnt_spec_of_proc prog proc ispec =
   let ispec = add_cex_tnt_case_spec ispec in
@@ -702,19 +710,26 @@ let tnt_spec_of_proc prog proc ispec =
       (flatten_case_tnt_spec 
          (norm_nondet_tnt_case_spec ispec)) 
   in
+  let pr = string_of_struc_formula_for_spec in
   (* let spec = proc.Cast.proc_static_specs in *)
   let spec = proc.Cast.proc_stk_of_static_specs # top in
+  let () = y_tinfo_hp (add_str "original spec" pr) spec in
   let spec = merge_tnt_case_spec_into_struc_formula prog
       (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
+  let () = y_tinfo_hp (add_str "merged spec" pr) spec in
   let spec = flatten_case_struc spec in
+  let () = y_tinfo_hp (add_str "flatten spec" pr) spec in
   let spec = norm_struc spec in
+  let () = y_tinfo_hp (add_str "normed spec" pr) spec in
   spec
 
 let tnt_spec_of_proc prog proc ispec =
   let pr1 = print_tnt_case_spec in
   let pr2 = string_of_struc_formula_for_spec in
-  Debug.no_1 "tnt_spec_of_proc" pr1 pr2 
-    (fun _ -> tnt_spec_of_proc prog proc ispec) ispec
+  Debug.no_2 "tnt_spec_of_proc"
+    (add_str "proc_spec" (fun proc -> pr2 (proc.Cast.proc_stk_of_static_specs # top))) 
+    (add_str "ispec" pr1) pr2 
+    (fun _ _ -> tnt_spec_of_proc prog proc ispec) proc ispec
 
 let print_svcomp2015_result term_anns =
   let unknown_ans = "UNKNOWN" in
@@ -1273,7 +1288,7 @@ let infer_abductive_icond_edge prog g e =
     (* let bool_abd_conseq, abd_conseq = List.partition CP.is_bool_formula                      *)
     (*   (CP.split_conjunctions abd_conseq) in                                                  *)
   
-    (* if not (x_add imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None                   *)
+    (* if not (x_add imply eh_ctx (CP.join_conjunctions bool_abd_conseq)) then None             *)
     (* else                                                                                     *)
     (*   let abd_conseq = CP.join_conjunctions abd_conseq in                                    *)
     (*   let abd_templ, abd_templ_id, _, abd_templ_decl = templ_of_term_ann rel.termu_lhs in    *)
@@ -1283,7 +1298,7 @@ let infer_abductive_icond_edge prog g e =
     (*   (* let () = print_endline ("ABD LHS: " ^ (!CP.print_formula abd_ctx)) in    *)         *)
     (*   (* let () = print_endline ("ABD RHS: " ^ (!CP.print_formula abd_conseq)) in *)         *)
   
-    (*   if x_add imply eh_ctx abd_conseq then                                                        *)
+    (*   if x_add imply eh_ctx abd_conseq then                                                  *)
     (*     let icond = CP.mkTrue no_pos in (* The node has an edge looping on itself *)         *)
     (*     Some (uid, icond)                                                                    *)
     (*   else                                                                                   *)
@@ -1622,11 +1637,11 @@ let proving_non_termination_one_trrel prog lhs_uids rhs_uid trrel =
       (* let () = print_endline_quiet ("eh_ctx: " ^ (!CP.print_formula eh_ctx)) in                 *)
 
       (* if List.exists (fun c -> (x_add imply eh_ctx c)) loop_conds then NT_Yes      *)
-      (* (* For self loop on the same condition *)                              *)
+      (* (* For self loop on the same condition *)                                    *)
       (* else if List.exists (fun c -> (x_add imply eh_ctx c)) self_conds then NT_Yes *)
-      (* else if (self_conds != []) &&                                          *)
+      (* else if (self_conds != []) &&                                                *)
       (*         (x_add imply eh_ctx (CP.join_disjunctions self_conds))               *)
-      (*      then NT_Yes                                                       *)
+      (*      then NT_Yes                                                             *)
 
       let disj_loop_conds = join_disjs (self_conds @ loop_conds) in
       if (x_add imply eh_ctx disj_loop_conds) then NT_Yes
@@ -1998,7 +2013,7 @@ let proving_non_termination_scc prog trrels tg scc =
 
 (* Auxiliary methods for main algorithms *)
 let proving_termination_scc prog trrels tg scc =
-  let () = x_binfo_pp ("Analyzing scc: " ^ (pr_list string_of_int scc)) no_pos in
+  let () = x_tinfo_pp ("Analyzing scc: " ^ (pr_list string_of_int scc)) no_pos in
   (* Term with a ranking function for each scc's node *)
   let res = infer_ranking_function_scc prog tg scc in
   match res with

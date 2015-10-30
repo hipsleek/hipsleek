@@ -1,0 +1,47 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+infer [H,P,@pure_field] H(p) * x::node<1,p> & p=null |- P(p).
+print residue.
+
+
+/*
+# ex15b.slk 
+
+infer [H,P,@pure_field] H(p) * x::node<1,p> & p=null |- P(p).
+
+ <1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> P(p)&true]
+[[ COND ==>  InferHeap]]
+
+EXPECTS:
+  H(p)&p=null | x::node<v,p> & v=1 --> P(p)
+which shows the heap context of p?
+
+# How do we interpret the result? What are 2:,3:,4:,5:?
+
+(==solver.ml#12871==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 : H(p) * x::node<flted_12_16,p>@M&p=null & flted_12_16=1
+infer_collect_hp_rel#1 inp2 : H(p) * x::node<flted_12_16,p>@M&p=null & flted_12_16=1&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 : P(p)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1@1 EXIT:
+ (true,2: 
+  es_formula: 
+   x::node<flted_12_16,p>@M&p=null & flted_12_16=1&{FLOW,(20,21)=__norm#E}[]
+  es_infer_vars_hp_rel: [H; P]
+  es_infer_hp_rel: [H(p)&p=null --> P(p)],
+ 3: P(p),
+ 4:Some( H(p)),
+ 5:None)
+
+*/

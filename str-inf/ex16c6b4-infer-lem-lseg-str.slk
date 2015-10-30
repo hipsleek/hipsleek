@@ -1,0 +1,38 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U1(char_star x).
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U2a(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star z).
+ HeapPred U3a(char_star x,char_star y,char_star@NI z).
+ HeapPred U3b(int x,char_star y,char_star@NI z).
+ HeapPred U1b(int x).
+
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+ infer [U,U3b,U2,@pure_field] self::char_star<vv,q>
+      *U3b(vv,p,self) * U2(q,p) // *q::char_star<0,p> 
+    |- self::char_star<v,q2> *q2::WFG<p> & v!=0 . //  & v!=0.
+

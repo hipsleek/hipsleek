@@ -33,7 +33,7 @@ module MCP = Mcpure
 module SY_CEQ = Syn_checkeq
 
 
-let generate_lemma = ref (fun (iprog: I.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
+let generate_lemma = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
 (*
   let sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
@@ -219,7 +219,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let ctx =
       if !Globals.delay_proving_sat then ctx
       else CF.transform_context (x_add Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-    let () = if (CF.isAnyFalseCtx ctx) then
+    let () = 
+      if (CF.isAnyFalseCtx ctx) then
         (* Why is pos of ante 0.0 ? *)
         (* !!! **sleekcore.ml#222:pos of ante: 0:0 *)
         (* !!! **sleekcore.ml#223:pos of conseq: 24:41[Warning] False ctx *)
@@ -227,6 +228,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
         let () = x_dinfo_hp (add_str "pos of conseq" Cprinter.string_of_pos) pos3 no_pos in
         let () = add_false_ctx pos3 in
         print_endline_quiet ("[Warning] False ctx")
+      else last_sat_ctx # set (Some pos3)
     in
     (* let is_arrvar_flag = CF.is_arr_as_var_ctx ctx in *)
     (* let () = x_dinfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in *)
@@ -256,7 +258,18 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     (* let () = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
     (* tut/ex1/bugs-ex31-match.slk *)
     let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-    (* let () = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
+    let () = match last_sat_ctx # get with
+      | Some p -> if (CF.isAnyFalseListCtx rs) && not(!Globals.old_collect_false) then
+          let contra_flag = last_infer_lhs_contra # get in
+          let () = add_false_ctx p in
+          if contra_flag then ()
+          else
+            let () = print_endline_quiet ("[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse") in
+            if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
+            else ()
+      | None -> () 
+    in
+    let () = x_tinfo_pp ("WN# 2:"^(Cprinter.string_of_list_context rs)) no_pos in
     (* flush stdout; *)
     let res =
       if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
@@ -275,9 +288,10 @@ and sleek_entail_check i itype isvl (cprog: C.prog_decl) proof_traces ante conse
   let pr3 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let pr4 = pr_list_ln (pr_pair pr1 pr1) in
   let pr5 = pr_list string_of_inf_const in
-  Debug.no_5_num i "sleek_entail_check" pr5 !CP.print_svl  pr1 pr2 pr4 pr3
-    (fun _ _ _ _ _ -> sleek_entail_check_x itype isvl cprog proof_traces ante conseq)
-    itype isvl ante conseq proof_traces
+  Debug.no_6_num i "sleek_entail_check" 
+    pr5 !CP.print_svl pr1 pr2 pr4 (add_str "is_classic" string_of_bool) pr3
+    (fun _ _ _ _ _ _ -> sleek_entail_check_x itype isvl cprog proof_traces ante conseq)
+    itype isvl ante conseq proof_traces (check_is_classic ())
 
 and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
   let _ =
@@ -386,7 +400,7 @@ and check_entail_w_norm prog proof_traces init_ctx ante0 conseq0=
         let seg_views = List.map (fun (vn,_,_) -> vn) view_emp_map in
         let oamap_data_views = Cvutil.get_oa_node_view prog seg_views in
         let seg_data_names = List.map (fun vn ->
-            let vdecl = x_add Cast.look_up_view_def_raw 55 prog.Cast.prog_view_decls vn in
+            let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn in
             vdecl.Cast.view_data_name
           ) seg_views in
         let ante1,is_pto_inconsistent, ante_nemps, ante_neq = Cfutil.xpure_graph_pto prog seg_data_names oamap_data_views ante1a in
@@ -449,7 +463,7 @@ let check_equiv iprog cprog guiding_svl proof_traces need_lemma f1 f2=
   let gen_lemma (r_left, r_right) (ante,conseq)=
     let iante = Rev_ast.rev_trans_formula ante in
     let iconseq = Rev_ast.rev_trans_formula conseq in
-    let l2r,r2l = !generate_lemma iprog "temp" I.Equiv [] iante iconseq in
+    let l2r,r2l = !generate_lemma iprog cprog "temp" I.Equiv [] iante iconseq in
     (r_left@l2r, r_right@r2l)
   in
   if not (!Globals.syntatic_mode) then
@@ -547,7 +561,7 @@ let validate_x ls_ex_es0 ls_act_es0=
     (*compare constrs*)
     if b1 then
       let b2= if ls_ex_ass = [] then true else
-          let ls_act_ass = (List.map (fun hp -> (hp.CF.hprel_lhs, hp.CF.hprel_rhs)) es.CF.es_infer_hp_rel)@
+          let ls_act_ass = (List.map (fun hp -> (hp.CF.hprel_lhs, hp.CF.hprel_rhs)) es.CF.es_infer_hp_rel # get_stk_recent)@
                            (List.map (fun (_,lhs,rhs) ->
                                 (CF.formula_of_pure_P lhs no_pos,
                                  CF.formula_of_pure_P rhs no_pos)) es.CF.es_infer_rel # get_stk_recent) in

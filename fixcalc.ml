@@ -59,8 +59,8 @@ let gen_fixcalc_file str_fc=
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-  | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id
-  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
+  (* | CP.SpecVar (Named _, id, Unprimed) -> if String.compare id self =0 then id else "NOD" ^ id *)
+  (* | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id *)
   (* TODO: Handle mixture of non-numerical and numerical variables *)
   (* Still have problem with the order of parameters of relation *)
   (*  | CP.SpecVar (Named _, id, Unprimed)*)
@@ -245,7 +245,7 @@ let rec fixcalc_of_h_formula f = match f with
     else
       let str =
         try
-          let (svl1,pf) = Hashtbl.find Excore.map_num_invs c in
+          let (svl1,pf) = Excore.map_num_invs # find c in
           let svl2 = sv::svs in
           let svl2 = if (List.length svl1 < List.length svl2) then
               List.rev (List.tl (List.rev svl2)) (* svl2 has idx variable, remove it *)
@@ -372,6 +372,9 @@ let syscall cmd =
   let todo_unk = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
+(* TODO(WN): this already performs some feature of norm_pure_result *)
+(* mainly for pointers; need to remove this redundancy for performance *)
+(* need to handle SELF and REC variables (top-down fixcalc) *)
 let parse_fix_svl svl res =
   let fixpoints = x_add_1 Parse_fix.parse_fix res in
   let svl1 = List.fold_left (fun acc pf ->
@@ -386,10 +389,11 @@ let parse_fix_svl svl res =
             | hd::tl -> CP.SpecVar(CP.type_of_spec_var hd, id1, pr1)
   ) svl1 in
   let sst = List.combine svl1 svl2 in
-  let pr = Cprinter.string_of_spec_var_list in
+  let pr = Cprinter.string_of_typed_spec_var_list in
   let () = x_binfo_hp (add_str "svls (orig)" pr) svl no_pos in
-  let () = x_binfo_hp (add_str "svls (from parse_fix)" pr) svl1 no_pos in
-  let fixpoints = List.map (fun fp -> CP.subst sst fp) fixpoints in
+  let () = x_binfo_hp (add_str "svl1 (from parse_fix)" pr) svl1 no_pos in
+  let () = x_binfo_hp (add_str "svl2 (from parse_fix)" pr) svl2 no_pos in
+   let fixpoints = List.map (fun fp -> CP.subst sst fp) fixpoints in
   fixpoints
 
 let parse_fix_svl svl res =
@@ -402,7 +406,8 @@ let parse_fix_rel_defs rel_defs res =
       acc@(CP.fv pf1)@(CP.fv pf2)
   ) [] rel_defs in
   let svl = CP.remove_dups_svl svl in
-  parse_fix_svl svl res
+  let fs = parse_fix_svl svl res in
+  List.map Omega.trans_bool fs
 
 (******************************************************************************)
 
@@ -463,7 +468,7 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
       "F2W:=widen(F1,F2,SimHeur);\nF2W;"
     with _ -> report_error no_pos "Error in widening with fixcalc"
   in
-  DD.ninfo_pprint ("input = " ^ input_fixcalc) no_pos;
+  DD.binfo_pprint ("input = " ^ input_fixcalc) no_pos;
 
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
@@ -486,6 +491,9 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   let () = x_binfo_hp (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
   inv
 
+let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_2 "widen" pr pr pr widen f1 f2
 (******************************************************************************)
 
 let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
@@ -843,7 +851,7 @@ let substitute_args_x a_rel = match a_rel with
       let prog =
         match !Cast.global_prog with
         | Some p -> p
-        | None -> failwith "substitute_args: Initialize globas_prog first!"
+        | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!")
       in
       let typed_args = 
         try
@@ -880,13 +888,16 @@ let substitute_args_x a_rel = match a_rel with
   | _ -> report_error no_pos "substitute_args_x Expected a relation"
 
 let substitute_args rcase =
-  let rels = CP.get_RelForm rcase in
-  let rcase_wo_rel = x_add_1 TP.simplify_raw (CP.drop_rel_formula rcase) in
-  let rels, subs = 
-    List.split (List.map (fun rel -> substitute_args_x rel) rels) in
-  let res = [rcase_wo_rel]@rels@(List.concat subs) in
-  CP.conj_of_list res no_pos
-
+  (* TODOIMM this throws an exception for imm ex8e1f.ss. To fix *)
+  try
+    let rels = CP.get_RelForm rcase in
+    let rcase_wo_rel = x_add_1 TP.simplify_raw (CP.drop_rel_formula rcase) in
+    let rels, subs = 
+      List.split (List.map (fun rel -> substitute_args_x rel) rels) in
+    let res = [rcase_wo_rel]@rels@(List.concat subs) in
+    CP.conj_of_list res no_pos
+  with Invalid_argument _ -> rcase
+  
 let substitute_args rcase =
   let pr = !CP.print_formula in
   Debug.no_1 "substitute_args" pr pr substitute_args rcase
@@ -967,7 +978,9 @@ let compute_def (rel_fml, pf, no) ante_vars =
     print_endline_quiet "*************************************";
   end;
   try
-    let rhs = fixcalc_of_pure_formula pf in
+    let (pf2,subs) = x_add_1 CP.extract_mult pf in
+    let pf = x_add_1 CP.drop_nonlinear_formula pf in
+    let rhs = x_add_1 fixcalc_of_pure_formula pf in
     let input_fixcalc =
       name ^ ":={["
       ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> ["
@@ -975,7 +988,8 @@ let compute_def (rel_fml, pf, no) ante_vars =
       ^ rhs ^ "\n};"
     in input_fixcalc
   with e ->
-    report_error ~exc:(Some e) no_pos "compute_def:Error in translating the input for fixcalc"
+    let () = y_binfo_pp ("Toan : need to remove * in pf for fixcalc") in
+    report_error ~exc:(Some e) no_pos (x_loc^"compute_def:Error in translating the input for fixcalc")
 ;;
 
 let compute_def (rel_fml, pf, no) ante_vars =
@@ -1056,7 +1070,7 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   (* x_binfo_pp ("Result of fixcalc: " ^ res) no_pos; *)
 (* let parse_fix_with_type_from_rel_defs rel_defs res = *)
   let fixpoints = x_add_1 parse_fix_rel_defs rel_defs res in
-
+  let fixpoints = List.map TP.norm_pure_result fixpoints in
   x_binfo_hp (add_str "Result of fixcalc (parsed): "
                      (pr_list !CP.print_formula)) fixpoints no_pos;
 

@@ -1,0 +1,69 @@
+data node{
+     int val;
+     node next;
+}.
+
+/*
+HeapPred zip(node@RO a, node b, node c).
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+*/
+/*
+HeapPred zip2(node@RO a, node b).
+
+relDefn zip2(x,y) <->
+  x=null & y=null
+or x::node<_,p>*y::node<_,q>*zip2(p,q).
+*/
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+pred lseg<y> ==
+   emp & self=y
+or self::node<_,p>*p::lseg<y>.
+
+pred zip2<y> ==
+   self=null & y=null
+or self::node<_,p>*y::node<_,q> * p::zip2<q>.
+
+
+pred zip<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+
+pred_split [zip2,zip,ll,lseg].
+//pred_split [lseg].
+//pred_split [zip2].
+pred_reuse [*][*].
+print views.
+
+print residue.
+
+
+/*
+# ex21s1b.slk
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+
+pred_split [zip].
+
+# Instead of relDefn, can we use pred:
+  What is @RO? root?
+
+pred zip<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+
+# After that, call lemma_infer, followed by shape_derive_view[P1,P2,p3];
+  as shown in ex21s1a.slk
+
+
+*/

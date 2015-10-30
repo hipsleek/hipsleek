@@ -1,0 +1,70 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self=null
+ 	or self::node<_, q> * q::ll<> 
+  inv true.
+
+
+pred app4<> == self::node<_,null>
+ 	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+
+/*
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5<>
+  inv true.
+
+pred U<> == self::app5<>
+  inv true.
+*/
+
+pred_unify_disj[app4].
+//pred_unify_disj[app4a].
+
+print views.
+
+/*
+# ex21u3b.slk
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+pred_unify_disj[app4a].
+
+# This fails sinc  we need to apply pred_reuse_subs first.
+
+!!! **syn.ml#808:XXX fail <--- 
+!!! **syn.ml#809:<=coerc lem_inf_app4a_rev
+	 kind: LEM_TEST
+	 origin: generated
+	 head: (self::app4a{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4a{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+
+
+*/

@@ -768,7 +768,7 @@ a<:@A     a=@A        a=@A
 
 =======================================================
 
-# ex8d1.ss
+# ex8d1.ss (FIXED)
 
  int x = c.fst;
  return x;
@@ -905,7 +905,7 @@ compute_fixpoint#2@4 EXIT:[( Q(i,j,res), res>=i)]
 !!! **pi.ml#652:>>REL PRE :  P(i,j)
 !!! **pi.ml#653:>>PRE :  true
 ======================================================
-# ex8e5b.slk 
+# ex8e5b.slk  (FIXED)
 
 Why m=n and a=b not in residue.?
 
@@ -1557,6 +1557,287 @@ Entail (24) : Fail.(must) cause:
   true |-  ann_f_r_198=@M & @I<:ann_f_r_198. LOCS:[92;0] (RHS: contradiction)
 
 =======================================================
+# ex15c1.ss (FIXED)
+
+infer [P]
+  requires c::cell<_>@a1 * d::cell<_>@a2 & P(a1,a2)
+  ensures c::cell<_> * d::cell<_>;
+
+# Why isn't a2=@A since d is not accessed?
+
+ EInfer []
+   EBase 
+     exists (Expl)[](Impl)[a1; Anon_11; a2; 
+     Anon_12](ex)[]c::cell<Anon_11>@a1 * d::cell<Anon_12>@a2&a2=@M & a1=@M & 
+     MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       (exists Anon_1210,Anon_1211: c::cell<Anon_1210>@M * 
+       d::cell<Anon_1211>@M&{FLOW,(4,5)=__norm#E}[]Stop Omega... 321 invocations
+=======================================================
+# ex15b1.ss
+
+Given below. 
+
+infer [@imm_pre]
+  requires c::cell<_> * d::cell<_>
+  ensures c::cell<_> * d::cell<_>;
+
+I think you should first form:
+
+infer [U]
+  requires c::cell<_>@a1 * d::cell<_>@a2 & U(a1,a2)
+  ensures c::cell<_>@a3 * d::cell<_>@a4;
+
+And then try to obtain:
+
+  requires c::cell<_>@M * d::cell<_>@A
+  ensures c::cell<_>@a3 * d::cell<_>@a4;
+=======================================================
+# ex15b5.ss (FIXED)
+
+Given below. 
+
+infer [Q]
+  requires c::cell<_>@aaa & Q(aaa)
+  ensures c::cell<_>@bbb;
+
+# Why aren't we getting Q(aaa) == aaa=@A
+
+Since there is no requirement on pre-condition,
+we should make above assumption
+=======================================================
+# ex15b6.ss
+
+Given below. 
+
+  infer [Q]
+  requires c::cell<_>@a1 * d::cell<_>@a2 & Q(a1,a2)
+  ensures c::cell<_>@b1 * d::cell<_>@b2;
+{
+  int x = c.val;
+  return x;
+}
+
+GOT
+
+!!! **infer.ml#1367:RelInferred (rel_ass):[RELASS [Q]: ( Q(a1,a2)) -->  a1<:@L]
+!!! **typechecker.ml#834:WARNING : Spurious RelInferred (not collected):[RELASS [Q]: ( Q(a1,a2)) -->  a1<:@L]
+
+# Why is it spurious?
+
+# What happen to a2=@A? (FIXED)
+
+[ EInfer [Q]
+   EBase 
+     exists (Expl)[](Impl)[a1; Anon_11; a2; 
+     Anon_12](ex)[]c::cell<Anon_11>@a1 * d::cell<Anon_12>@a2&a1=@L&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists b1_1207,Anon_1208,b2_1209,
+         Anon_1210: c::cell<Anon_1208>@b1_1207 * d::cell<Anon_1210>@b2_1209&
+         {FLOW,(4,5)=__norm#E}[]]
+======================================================
+** working/imm_infer2.ss
+Expected @M, got @L
+
+data cell {
+ int fst;
+ int snd;
+}
+
+void recursive_write(tree t)
+   infer [@imm_pre]
+   requires t::tree<_,_,_>
+   ensures t::tree<_,_,_>;
+{
+  if (t.left != null) recursive_write(t.left);
+  t.node = t.node + 1;
+  if (t.right != null) recursive_write(t.right);
+ }
+
+=======================================================
+** working/imm_infer5.ss
+Inference not triggered. (FIXED)
+
+cell trick(cell y)
+    infer [@imm_pre]
+    requires y::cell<_,_>
+    ensures res::cell<_,_>;
+{
+    y = new cell(3, 4);
+    return y;
+}
+=======================================================
+** working/imm_infer3.ss
+Entailment failed (FIXED)
+int left_write(tree t)
+   infer [@imm_pre]
+   requires t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>
+   ensures t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>;
+{
+  t.left.node = t.left.node + 3;
+  return 0;
+}
+=======================================================
+# ex15c6.ss
+
+Post Inference result:
+foo2$cell~cell
+ EBase 
+   exists (Expl)[](Impl)[Anon_11; Anon_12](ex)[]c::cell<Anon_11>@L * (emp)&
+   MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists Anon_1205,Anon_1206,b1_1207,b2_1208: (emp) * (emp)&b2_1208=@A & 
+     b1_1207=@A&{FLOW,(4,5)=__norm#E}[]
+
+# Nice though d::cell<..> need not be removed from pre.
+# Can we use an option to control such removal.
+ We already have the --imm-remove-abs for this
+=======================================================
+# ex15b8.ss (FIXED)
+
+# need to make a2=@A explicit.
+
+Post Inference result:
+foo2$cell~cell
+ EBase 
+   exists (Expl)[](Impl)[a1; Anon_11; a2; 
+   Anon_12](ex)[]c::cell<Anon_11>@a1 * d::cell<Anon_12>@a2&a1=@M & MayLoop[]&
+   {FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists b1_1213,Anon_1214,b2_1215,
+     Anon_1216: c::cell<Anon_1214>@b1_1213 * d::cell<Anon_1216>@b2_1215&
+     {FLOW,(4,5)=__norm#E}[]
+
+=======================================================
+# ex15c8.ss
+
+# Good. Maybe can apply an extra step to remove the
+  existential vars; after absent elimination. (FIXED)
+
+
+foo2$cell~cell
+ EBase 
+   exists (Expl)[](Impl)[a1; Anon_11; a2; 
+   Anon_12](ex)[]c::cell<Anon_11>@a1 * (emp)&a1=@M & a2=@A & MayLoop[]&
+   {FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists Anon_1217,Anon_1218,b1_1219,
+     b2_1220: c::cell<Anon_1217>@b1_1219 * (emp)&b2_1220=@A & b1_1219=@M&
+     {FLOW,(4,5)=__norm#E}[]
+Stop Omega... 75 invocations 
+=======================================================
+# ex15c4.ss
+TO FIX the imm_unify
+
+!!! **immutable.ml#62:imm + pure:[( ann_1227=@M, true),( ann_1227<:@L, Anon_11<=0),( ann_1227=@A, true)]
+(====)
+split_imm_pure@18@17@16g
+split_imm_pure inp1 : (ann_1227=@M | (ann_1227<:@L & Anon_11<=0) | ann_1227=@A)
+split_imm_pure@18 EXIT:( ann_1227=@M & ann_1227<:@L & ann_1227=@A, true)
+
+(====)
+imm_unify@17@16
+imm_unify inp1 : (ann_1227=@M | (ann_1227<:@L & Anon_11<=0) | ann_1227=@A)
+imm_unify@17 EXIT: ann_1227=@M & ann_1227<:@L & ann_1227=@A
+
+=======================================================
+# ex15c4.ss to add ann_1226, ann_1225 to the list of existential vars (FIXED)
+
+!!! **pi.ml#384:new_spec:
+ EInfer @imm_pre[P__1229]
+   EBase 
+     exists (Expl)[](Impl)[Anon_11; 
+     Anon_12](ex)[]c::cell<Anon_11>@ann_1227 * d::cell<Anon_12>@ann_1228&
+     P__1229(ann_1228,ann_1227)&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists Anon_1207,Anon_1208: c::cell<Anon_1207>@ann_1225 * 
+         d::cell<Anon_1208>@ann_1226&{FLOW,(4,5)=__norm#E}[]
+=======================================================
+# ex15c4. to check why is taking so long when [@imm_pre] versus [P]
+{ 1.480756 second(s) versus  0.833354 second(s) } (FIXED)
+This is due to global ann vars vs local
+=======================================================
+# ex8e1f.ss 
+!!! **pi.ml#733:pre_fmls:[ Q(a) & c=2, MayLoop[]]
+!!! PROBLEM with fix-point calculation
+ExceptionInvalid_argument("List.combine")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 128 invocations caught
+
+Exception occurred: Invalid_argument("List.combine")
+=======================================================
+** working/imm_infer2.ss
+Inference failed in both for post
+
+data tree {
+ int node;
+ tree left;
+ tree right;
+}
+
+void recursive_read_only(tree t)
+   infer [@imm_post]
+   requires t::tree<_,_,_>@L
+   ensures t::tree<_,_,_>;
+{
+  if (t.left != null) recursive_read_only(t.left);
+  int c = t.node;
+  if (t.right != null) recursive_read_only(t.right);
+}
+
+void recursive_write(tree t)
+   infer [@imm_post]
+   requires t::tree<_,_,_>@M
+   ensures t::tree<_,_,_>;
+{
+  if (t.left != null) recursive_write(t.left);
+  t.node = t.node + 1;
+  if (t.right != null) recursive_write(t.right);
+ }
+
+=======================================================
+ex17a1.ss . 
+we should add pre automatically introduced annotations to the
+implicit set of spec vars. 
+
+
+Proving precondition in method foo$cell Failed.
+  (may) cause:  ann_1221<:@L & P__1222(ann_1221) |-  ann_1221<:ann_1239. LOCS:[1;12;0] (may-bug)
+
+Context of Verification Failure: _0:0_0:0
+
+Last Proving Location: ex17a1-heavy.ss_19:13_19:19
+
+Procedure foo$cell FAIL.(2)
+
+....
+
+!!! **pi.ml#384:new_spec:
+ EInfer @imm_pre[P__1222]
+   EBase 
+     exists (Expl)[](Impl)[v](ex)[]c::cell<v>@ann_1221&P__1222(ann_1221)&
+     {FLOW,(4,5)=__norm#E}[]
+=======================================================
+ex17a2.ss
+
+we could prune disjuncts like the following:
+(@A=imm_1321 & imm_1321<:a2_1318 & imm_1321!=a2_1318)
+
+in other words:
+a=top & a<:b & a!=b 
+a=bot & b<:a & a!=b
+
+ii) takes super long:
+Total verification time: 2.598301 second(s)
+	Time spent in main process: 1.130108 second(s)
+	Time spent in child processes: 1.468193 second(s)
+
 =======================================================
 =======================================================
 =======================================================
@@ -1568,7 +1849,7 @@ Entail (24) : Fail.(must) cause:
 =======================================================
 =======================================================
 =======================================================
-=======================================================
-=======================================================
-=======================================================
+
+
+
 

@@ -41,6 +41,8 @@ let disable_para () =
 
 (*To enable concurrency verification*)
 let enable_para () =
+  Globals.old_norm_w_coerc := true;
+  Globals.old_search_always := true;
   allow_norm:= false;
   allow_field_ann := false;
   perm:= (match !perm with

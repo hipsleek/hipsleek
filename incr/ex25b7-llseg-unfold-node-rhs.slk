@@ -1,0 +1,123 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,int v).
+
+
+//infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+infer [U1,@classic,@pure_field] U1(x) |- x::ll<> .
+print residue.
+expect Valid.
+
+
+/*
+# ex25b7.slk 
+
+infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+
+Entail (1) : Fail.(may) cause:**solver.ml#13187:infer_collect_hp_rel
+
+# Fails at infer_collect. Would m_res below be helpful to
+  infer_collect_hp_rel ?
+
+!!! **solver.ml#12376:process_action (steps) :
+ ### action :
+ InferUnfold =>
+   Type: Root
+   LHS: U1(x)
+   RHS: x::ll<>@M
+   lhs_rest: emp
+   rhs_rest: emp
+ ### estate :
+ ex_formula : U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#13182==)
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 :lhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: x::ll<>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U1(x)
+infer_collect_hp_rel#1@1 EXIT:(false,2: es_formula: 
+ U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],3: x::ll<>@M,4:None,5:None)
+
+Entail (1) : Fail.(may) cause:**solver.ml#13187:infer_collect_hp_rel
+
+
+-----------------------------------------
+
+infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+
+!!! **context.ml#2491:process_matches (steps) :
+ ### LHS : U1(x)
+ ### RHS : x::ll<>@M
+ ### matches :
+[ Type: Root
+ LHS: U1(x)
+ RHS: x::ll<>@M
+ lhs_rest: emp
+ rhs_rest: emp]
+
+infer [U2,@classic,@pure_field] U2(x,v)  |- v!=0 .
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  v=0. LOCS:[0;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+============================
+
+infer [U2,@classic,@pure_field] U2(x,v) |- x!=null .
+print residue.
+
+infer [U2,@classic,@pure_field] U2(x,v) |- x=null .
+print residue.
+
+# why is v@NI?
+ inferred hprel: [U2(x,v@NI)&true |#|3  --> emp&x=null]
+
+
+infer [U2,@classic,@pure_field] U2(x,v) |- v!=0 .
+
+Entail (1) : Fail.(may) cause: true |-  v!=0. LOCS:[0;14] (may-bug)
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  v!=0. LOCS:[0;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ U2(x,v)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2]
+infer_collect_hp_rel_empty_rhs#1 inp2 : v!=0
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],Inferred Relations:[ U2(x,v) |#|  --> emp])
+
+
+*/

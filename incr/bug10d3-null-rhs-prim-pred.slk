@@ -1,0 +1,52 @@
+/* singly linked lists */
+a
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+//HeapPred H(node a, node b).
+pred_prim G<a:node,n:node>.
+
+//checkentail H(p,qqq) |- H(p,null) .
+//checkentail x::G<p,qqq> |- x::G<p,null> .
+checkentail x::G<p,p> |- x::G<p,p> .
+print residue.
+
+
+/*
+# bug10d3.slk 
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:false
+
+
+# Why this message below not there? Is it because of
+  conditional search?
+
+do_match@1 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  qqq=null. LOCS:[0;13] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  Match(x,x)]]
+ CEX:false
+
+
+*/
+

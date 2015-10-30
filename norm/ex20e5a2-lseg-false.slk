@@ -1,0 +1,18 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next#REC;	
+}.
+
+HeapPred P(node x,node@NI y).
+HeapPred HP(node x,node@NI y,node@NI z).
+HeapPred K(int x,node y,node z).
+
+
+
+infer[P,HP,K,@classic
+ ] K(v,p,x)  & MayLoop |- emp .
+print residue.

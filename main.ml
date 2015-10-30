@@ -233,7 +233,7 @@ let process_lib_file prog =
     let lib_prog = parse_file_full lib false in
     (*each template data of lib, find corres. data in progs, generate corres. view*)
     let tmpl_data_decls = List.filter (fun dd -> dd.Iast.data_is_template) lib_prog.Iast.prog_data_decls in
-    let horm_views = Sa.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
+    let horm_views = Sa3.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
     (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls@horm_views)
   in
   let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
@@ -337,7 +337,7 @@ let reverify_with_hp_rel old_cprog iprog =
       match hp_kind with
       |  Cpure.HPRelDefn (hp,r,args) -> begin
           try
-            let todo_unk = x_add Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+            let todo_unk = x_add Cast.look_up_view_def_raw x_loc old_cprog.Cast.prog_view_decls
                 (Cpure.name_of_spec_var hp)
             in
             (r_hp_defs, r_unk_hps)
@@ -405,7 +405,7 @@ let replace_with_user_include
 
 (***************end process compare file*****************)
 
-let saved_cprog = ref None
+let saved_cprog = Cast.cprog (* ref None *)
 let saved_prim_names = ref None
 
 (*Working*)
@@ -573,7 +573,11 @@ let process_source_full source =
   (* else cprog.Cast.prog_view_decls *)
   (* in *)
   (* ========= lemma process (normalize, translate, verify) ========= *)
-  let () = List.iter (fun x -> Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
+  let () = y_tinfo_hp (add_str "lemma list" 
+      (pr_list (fun l -> pr_list (fun lem -> lem.Iast.coercion_name) l.Iast.coercion_list_elems))) 
+      tiprog.Iast.prog_coercion_decls in
+  let () = Lemma.sort_list_lemma tiprog in
+  let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
   (* ========= end - lemma process (normalize, translate, verify) ========= *)
   let c = cprog in
   let () = if !Globals.gen_coq_file 
@@ -820,7 +824,7 @@ let process_source_full source =
           end);
   if (!Globals.reverify_all_flag || !Globals.reverify_flag)
   then
-    let () =  Debug.info_pprint "re-verify\n" no_pos; in
+    let () = y_binfo_pp "RE-VERIFICATION\n" in
     reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
   else ();
 
@@ -868,7 +872,7 @@ let process_source_full source =
   (* let () = Log.process_sleek_logging () in *)
   (* print mapping table control path id and loc *)
   (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-  hip_epilogue ();
+  (* hip_epilogue (); *)
   if (not !Globals.web_compile_flag) then 
     let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in 
     print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
@@ -1105,6 +1109,7 @@ let process_source_full_after_parser source (prog, prims_list) =
                                ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 let main1 () =
+  let () = y_binfo_pp "XXXX main1" in
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
   (* Cprinter.fmt_cut (); *)
@@ -1181,6 +1186,7 @@ let finalize_bug () =
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () =
+  let () = y_binfo_pp "XXXX old_main" in
   try
     main1 ();
     (* let () =  *)
@@ -1193,7 +1199,7 @@ let old_main () =
     (* let _ = print_endline ("Excore.UnCa.miss:" ^ (string_of_int !Excore.UnCa.miss_cache)) in *)
     let () = Gen.Profiling.print_counters_info () in
     let () = Gen.Profiling.print_info () in
-    ()
+    hip_epilogue ()
   with _ as e -> begin
       finalize_bug ();
       print_string_quiet "caught\n"; 
@@ -1206,7 +1212,8 @@ let old_main () =
           print_web_mode ("\nError: " ^ (Printexc.to_string e))
         else if (!Globals.svcomp_compete_mode) then
           print_endline "UNKNOWN" (* UNKNOWN(5) *)
-      )
+      );
+      hip_epilogue ()
     end
 
 let () = 
@@ -1232,7 +1239,7 @@ let () =
           (*   else () in *)
           let () = Gen.Profiling.print_counters_info () in
           let () = Gen.Profiling.print_info () in
-          ()
+           ()
       with _ as e -> begin
           finalize_bug ();
           print_string_quiet "caught\n"; Printexc.print_backtrace stdout;

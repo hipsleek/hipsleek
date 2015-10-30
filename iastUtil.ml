@@ -1450,7 +1450,7 @@ let generate_free_fnc iprog=
     | _::rest -> gen_annon_field rest (res^"_,")
   in
   let gen_one_data acc ddclr=
-    if string_compare ddclr.data_name "Object" || string_compare ddclr.data_name "String" then acc else
+    if string_eq ddclr.data_name "Object" || string_eq ddclr.data_name "String" then acc else
       let free_proc = (
         "void free" ^ " (" ^ ddclr.data_name ^ " p)\n" ^
         "  requires p::" ^ ddclr.data_name ^ "<" ^ (gen_annon_field ddclr.data_fields "") ^ ">\n" ^ 

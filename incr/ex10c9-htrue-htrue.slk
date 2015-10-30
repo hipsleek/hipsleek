@@ -1,0 +1,31 @@
+data cell {
+ int val;
+}.
+
+/* FIXED */
+
+infer [] htrue * x::cell<1> |- true.
+expect Valid.
+print residue.
+capture_residue $r2. 
+// should be htrue (inex)
+
+infer_exact [] $r2 |- x::cell<1>.
+expect Valid.
+
+infer_exact [] $r2 |- x::cell<2>.
+expect Fail.
+
+
+/*
+# ex10c9.slk -dre "generate_co\|extract_hre\|simplify_lhs_rhs" 
+
+//(15)
+infer [] true |- true.
+print residue.
+// <1>htrue&{FLOW,(20,21)=__norm#E}[]
+// # EXPECTS
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+*/

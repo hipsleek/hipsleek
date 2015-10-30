@@ -1,0 +1,61 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self=p
+  or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred P<p,x> == self=p & x=null 
+  or self::node<_, q> * q::P<p,_> & x!=null & x=self
+  inv self=p &x=null | self!=null & self=x.
+
+/*
+lemma_test self::P<p,x> -> self::lseg<p>.
+
+relation R(node x,node y, node z).
+
+lemma_infer[R,@classic] self::P<p,x> -> self::lseg<p> & R(self,p,x).
+*/
+
+lemma_test self::P<p,x> <-> self::lseg<p> 
+   & (self=p & x=null | self!=null & self=x)
+.
+
+print residue.
+
+/*
+# ex21p2a1.ss
+
+lemma_test self::P<p,x> <-> self::lseg<p> 
+   & (self=p & x=null | self!=null & self=x)
+.
+
+# is INV precise? fail to prove in other direction.
+  incomplete prehaps?
+
+Entailing lemma lem_16: Fail. Details below:
+         "==>" implication: : Valid.
+         "<==" implication: : Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_lem_16_left_right::P<p_237,x_238>@M(must),
+ ((q_243!=null | p=q_243)) & 
+ (((q_243=p & Anon_248=null) | (q_243!=null & q_243=Anon_248))) & 
+ ((q_243=p | q_243!=null)) & self_lem_16_left_right!=null & 
+ (((self_lem_16_left_right=p & x=null) | 
+   (self_lem_16_left_right!=null & self_lem_16_left_right=x))) |-  self_lem_16_left_right=x. LOCS:[1;0;18;34;33] (may-bug)
+
+
+
+*/

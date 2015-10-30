@@ -7,11 +7,11 @@ let trace_timer = false
 
 class timelog =
   object (self)
-    val time_stk = new Gen.stack_noexc ("dummy",0.) (pr_pair pr_id string_of_float) (==)
-    val hist_big = new Gen.stack_pr (pr_pair pr_id string_of_float) (==) 
-    val hist_stk = new Gen.stack_pr (pr_pair pr_id string_of_float) (==) 
+    val time_stk = new Gen.stack_noexc "time_stk" ("dummy",0.) (pr_pair pr_id string_of_float) (==)
+    val hist_big = new Gen.stack_pr "hist-blg" (pr_pair pr_id string_of_float) (==) 
+    val hist_stk = new Gen.stack_pr "hist-stk" (pr_pair pr_id string_of_float) (==) 
     (* (fun (s,x) ->  s="kill" || x>=0.5 ) *)
-    val stk_t = new Gen.stack_noexc 0. string_of_float (==)
+    val stk_t = new Gen.stack_noexc "stk_t" 0. string_of_float (==)
     val mutable last_time = 0. 
     val mutable last_timeout_flag = false
     val mutable timer_val = None

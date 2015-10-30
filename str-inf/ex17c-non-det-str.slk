@@ -1,0 +1,26 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred seg<p> ==
+     self=p
+     or self::char_star<a,q>*q::seg<p> //& a=0
+     //or self::char_star<a,q>*q::seg<p> & a!=0
+ inv true.
+
+
+lemma_safe "L2"
+  self::seg<p> <- self::seg<r>*r::char_star<_,p>.
+
+print residue.
+
+
+
+/*
+# ex17c.slk
+
+Case analysis seems to be required if there is
+some test on predicate contents in RHS ..
+
+*/

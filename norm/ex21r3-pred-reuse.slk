@@ -1,0 +1,56 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+
+pred lseg2a<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg2a<n-1,p> 
+  inv true.
+
+//pred lseg<n,p> == self::lseg111<n,p>.
+
+pred lseg3<p,n> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+
+pred_reuse [*][*].
+
+/*
+# ex21r3.slk
+
+pred lseg2a<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg3<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred_reuse [*][*].
+
+!!! **norm.ml#193:norm_reuse (from_vns):[lseg111,lseg2a,lseg3]
+!!! **norm.ml#194:norm_reuse (to_vns):[lseg111,lseg2a,lseg3]
+
+# should we use topological sorting? where shorter names 
+  come first..
+
+Since lseg3 is shorter than lseg2a, we would expect
+it to come first.
+
+
+*/

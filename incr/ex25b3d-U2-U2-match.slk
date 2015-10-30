@@ -1,0 +1,45 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node v).
+HeapPred U3(node x,node v,node w).
+
+
+
+infer [@classic,@pure_field] U3(xx,a,b) |- U3(xx,ppp,ppp).
+
+print residue.
+expect Fail.
+
+
+/*
+# ex25b3d.slk (WN to fix)
+
+infer [@classic,@pure_field] U3(xx,a,b) |- U3(xx,x,x).
+
+
+
+INPUT 0: [@leak,@pure_field][] 
+ ### ante =  U3(xx,a,b)&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Impl)[x]U3(xx,x,x)&{FLOW,(20,21)=__norm#E}[]
+
+run_infer:
+ U3(xx,a,b)&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Impl)[x]U3(xx,x,x)&{FLOW,(20,21)=__norm#E}[]
+
+# How can two occurrences of x be both implicit?
+
+ <1>emp&x=a & x=b&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+# This can lead to unsoundness.
+
+*/

@@ -578,6 +578,7 @@ struct
   let error_flow_int  = ref empty_flow 
   let mayerror_flow_int  = ref empty_flow 
   let bfail_flow_int  = ref empty_flow 
+  let top_flow_int = ref empty_flow 
   let false_flow_int = (0,0) 
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
   let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2  
@@ -713,15 +714,17 @@ struct
               Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
             else
               let rec get (lst:(string*string*nflow)list):nflow = match lst with
-                | [] -> report_error no_pos ("Can not find flow of " ^ f) (* false_flow_int *)
+                | [] -> (* false_flow_int *) !top_flow_int
+(* report_error no_pos ("Can not find flow of " ^ f) (\* false_flow_int *\) *)
                 | (a,_,(b,c))::rst ->
                   (* let _ = print_endline a in *)
                   if (String.compare f a)==0 then (b,c)
                   else get rst in
+              (* let () = y_binfo_hp (self # string_of) in *)
               (get elist)
           in
           let pr = pr_pair string_of_int string_of_int in
-          Debug.no_1 "get_hash2" pr_id pr foo f
+          (* Debug.no_1 "get_hash2" pr_id pr *) foo f
         end
       method get_exc_hash (f:string) : nflow option =
         try

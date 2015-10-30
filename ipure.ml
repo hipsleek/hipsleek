@@ -453,7 +453,7 @@ and mkAnd_x f1 f2 pos = match f1 with
 
 and mkAnd f1 f2 pos = 
   let pr = !print_formula in
-  Debug.no_2 "mkAnd" pr pr pr (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
+  (* Debug.no_2 "mkAnd" pr pr pr *) (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
 
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 
@@ -662,7 +662,6 @@ and fresh_var (sv : (ident*primed)):(ident*primed) =
   (name, Unprimed) (* fresh names are unprimed *)
 
 and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_var svs
-
 
 and eq_var (f: (ident*primed))(t:(ident*primed)):bool = 
   ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
@@ -2345,3 +2344,7 @@ let rec transform_bexp_form f: formula=
   | Not (f1, a, b) -> Not (recf f1, a,b)
   | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c)
   | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c)
+
+let is_ann_type = (=) AnnT
+
+let is_anon_ident (n,p) : bool = ((String.length n) > 5) && ((String.compare (String.sub n 0 5) "Anon_") == 0) && (p==Unprimed)

@@ -1,0 +1,55 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+
+  HeapPred U2(char_star x,char_star@NI y).
+  HeapPred U3(char_star x,char_star y,char_star@NI z).
+ HeapPred U4(char_star x,char_star y,char_star@NI z,char_star@NI t).
+
+//1
+ infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
+    |- U2(self,qq) * qq::char_star<n,p>.
+ print residue.
+ expect Valid.
+
+//2
+infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
+    |- U2(self,qq) * qq::char_star<1,p>.
+ print residue.
+ expect Fail.
+
+//3
+infer [U3,U4,@pure_field,@classic] U4(self,q1,x,q2)*q1::char_star<0,p> *q2::char_star<1,p>
+    |- U3(self,qq1,qq2) * qq1::char_star<1,p> * qq2::char_star<0,p>.
+ print residue.
+ expect Valid.
+
+
+/*
+# ex16c6c2.slk
+
+ infer [U3,U2,@pure_field,@classic] U3(self,q,x)*q::char_star<0,p> 
+    |- U2(self,qq) * qq::char_star<0,p>.
+
+# need to instantiate q to qq for above to succeed.
+  Need to look into the context of calls to decide that qq can
+  be so instantiated,
+
+!!! **solver.ml#12409:process_action (steps) :
+ ### action :
+ InferUnfold =>
+   Type: Root
+   LHS: U3(self,q,x)
+   RHS: U2(self,qq)
+   lhs_rest: q::char_star<flted_10_19,p>@M
+   rhs_rest: qq::char_star<flted_11_41,p_40>@M
+ ### estate : ex_formula : U3(self,q,x) * q::char_star<flted_10_19,p>@M&flted_10_19=0&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : U2(self,qq) * qq::char_star<flted_11_41,p_40>@M&flted_11_41=0 & p_40=p&
+{FLOW,(20,21)=__norm#E}[]
+
+
+*/
+

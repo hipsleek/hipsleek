@@ -1,0 +1,37 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+HeapPred U3(node x,node y,node r).
+
+infer [U3,@classic] U3(x,r,q)*q::node<0,p> |- x::node<0,p>.
+
+//infer [U2,@classic] U2(q2,x) |- q2::ll<>.
+//infer [U1,@classic] U1(x) |- x=null.
+print residue.
+
+/*
+# ex25c2b.slk 
+
+infer [U3,@classic] U3(x,r,q)*q::node<0,p> |- x::node<0,p>.
+
+Residue:
+ <1>emp&r=x & q=x&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U3(x,r,q)&true |#|3  --> emp&x=r & x=q & r=q]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q,x)]]
+
+# The pre is too strong. We only need below.
+  If guard was also inferred, it could help us determine
+  which equality to add for this base_case_unfold attempt
+
+ inferred hprel: [U3(x,r,q) |#| q::node<0,_>  --> x=q
+
+
+*/

@@ -1,0 +1,32 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+
+//infer [U1,@classic,@pure_field] U1(x) |- x::node<_,q>*q::ll<>.
+
+infer [U1,@classic] U1(x) |- x=null.
+print residue.
+expect Valid.
+
+/*
+# ex25a1.slk -dd-steps
+
+infer [U1,@classic] U1(x) |- x=null.
+
+# How come no compute_match scheduled?
+  I would expect infer_heap to be scheduled..
+
+!!! **infer.ml#3949:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3950:  lhs : U1(x)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3951:  classic :true
+Entail (1) : Fail.(may) cause: emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+*/

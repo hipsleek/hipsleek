@@ -111,15 +111,64 @@ let rec simpl_pure_formula (f : CP.formula) : CP.formula = match f with
       	  let () = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
     simpl_f
 
+let pr_sv = Cprinter.string_of_spec_var 
+let pr_svl = pr_list pr_sv 
+
+let elim_absent_nodes view_xpure h0 which_xpure =
+  if !Globals.old_keep_absent then (h0,[])
+  else
+    let pf = CP.mkTrue no_pos in
+    let f a hf = match hf with
+      | DataNode ({ h_formula_data_node = pn;
+                    (* h_formula_data_arguments = args; *)
+                    (* h_formula_data_perm = perm; *)
+                    h_formula_data_name = name;
+                    h_formula_data_imm = ann;
+                    h_formula_data_label = lbl;
+                    h_formula_data_pos = pos}) -> 
+        if (* CP.is_absent_ann *) Immutils.is_abs ann then
+          begin
+            let () = x_tinfo_hp (add_str "DataNode(absent)" !print_h_formula) hf no_pos in
+            let () = x_tinfo_hp (add_str "DataNode.ann" CP.string_of_ann) ann no_pos in
+            let () = x_tinfo_hp (add_str "DataNode.name" pr_id) name no_pos in
+            let () = x_tinfo_hp (add_str "DataNode.node" pr_sv) pn no_pos in
+            let non_null = CP.BForm ((CP.Neq (CP.Var (pn, pos), CP.Null pos, pos), None), lbl) in
+            Some (HEmp,[non_null])
+          end
+        else None
+      | ViewNode ({ h_formula_view_node = pn;
+                    h_formula_view_arguments = vs;
+                    h_formula_view_perm = perm;
+                    h_formula_view_name = name;
+                    h_formula_view_imm = ann;
+                    h_formula_view_remaining_branches = rm_br;
+                    h_formula_view_pos = pos}) ->
+        if (* CP.is_absent_ann  *) Immutils.is_abs ann then
+          begin
+            let () = x_tinfo_hp (add_str "ViewNode(absent)" !print_h_formula) hf no_pos in
+            let () = x_tinfo_hp (add_str "ViewNode.ann" CP.string_of_ann) ann no_pos in
+            let () = x_tinfo_hp (add_str "ViewNode.name" pr_id) name no_pos in
+            let () = x_tinfo_hp (add_str "ViewNode.node" pr_sv) pn no_pos in
+            let xpure = view_xpure which_xpure name pn vs perm rm_br pos in
+            let xpure = MCP.pure_of_mix xpure in
+            Some (HEmp,[xpure])
+          end
+        else None
+      | _ -> None
+    in
+    let f_comb fs = List.concat fs in
+    let f_args a h = a in
+    let (n_hf,fs) = CF.trans_h_formula h0 () f f_args f_comb in 
+    (n_hf,fs) 
+
 (* find a subs that eliminates evars *)
 (* remove identity subs *)
+
 let build_subs_4_evars evars eset =
   let subs=CP.EMapSV.build_subs_4_evars evars eset in
   List.filter (fun (v1,v2) -> not(CP.eq_spec_var v1 v2)) subs
 
 let build_subs_4_evars evars eset =
-  let pr_sv = Cprinter.string_of_spec_var in
-  let pr_svl = pr_list pr_sv in
   let pr_subs = pr_list (pr_pair pr_sv pr_sv) in
   let pr_eset = CP.EMapSV.string_of in
   Debug.no_2 "build_subs_4_evars" pr_svl pr_eset pr_subs build_subs_4_evars evars eset
@@ -205,7 +254,7 @@ let extract_callee_view_info_x prog f=
     | [] -> res
   in
   let extract_pto vn= [vn.h_formula_view_node]
-  (* let vdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vn.h_formula_view_name in *)
+  (* let vdcl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn.h_formula_view_name in *)
   (* let neqNulls = CP.get_neq_null_svl (Mcpure.pure_of_mix vdcl.Cast.view_x_formula) in *)
   (* let formal_args = CP.SpecVar (Named vdcl.Cast.view_data_name, self, Unprimed):: vdcl.Cast.view_vars in *)
   (* let neqNulls1 = CP.intersect_svl neqNulls formal_args in *)
@@ -397,7 +446,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
         ([],[],new_vis)
   in
   (*********************************)
-  let vdecl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in
+  let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then
       CP.SpecVar (Named vdecl.Cast.view_data_name,self,Unprimed)
     else
@@ -738,6 +787,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
             | Some ls ->
               lookup_view_baga_with_subs ls vdef from_svs to_svs))
       in
+      let () = x_tinfo_hp (fun e -> CP.BagaSV.string_of e) new_mset no_pos in
       {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
     | StarMinus _
     | Hole _ -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
@@ -801,7 +851,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       | ViewNode ({ h_formula_view_node = p;h_formula_view_name = c;h_formula_view_arguments = vs; 
                     h_formula_view_imm = imm;
                     h_formula_view_remaining_branches = lbl_lst;h_formula_view_perm = perm;	h_formula_view_pos = pos}) ->
-        x_tinfo_hp (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
+        x_tinfo_hp (add_str "f" (fun f -> "#VN2#" ^ Cprinter.string_of_h_formula f)) f pos;
         (* let vdef = look_up_view_def pos prog.prog_view_decls c in *)
         (* (\*TO DO: Temporarily ignore LOCK*\) *)
         (* if  perm<> None then {mem_formula_mset =[]} *)
@@ -840,9 +890,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                (*prove that p0 |- var=full_perm*)
                let f0 = MCP.pure_of_mix p0 in
-               x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+               x_binfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
-               x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+               x_binfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                if (res) then
                  (match lbl_lst with
                   |None ->
@@ -863,6 +913,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                 | Some ls -> 
                   lookup_view_baga_with_subs ls vdef from_svs to_svs))
         in
+        let () = x_tinfo_hp (add_str "baga(view_node)" (fun e -> CP.BagaSV.string_of e)) new_mset no_pos in
         {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;}  
       | Star _  -> report_error no_pos "solver: h_mem should not get star at this point" in
     let r = List.fold_left (fun a c-> CP.DisjSetSV.star_disj_set a (mapper c).mem_formula_mset) CP.DisjSetSV.mkEmpty node_lst in
@@ -928,13 +979,13 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
               formula_base_pure = p;
               formula_base_pos = pos}) ->
       let (ph,_) = x_add xpure_heap_mem_enum 2 prog h p 1 in
-      MCP.merge_mems p ph true
+      x_add MCP.merge_mems p ph true
     | Exists ({ formula_exists_qvars = qvars;
                 formula_exists_heap = qh;
                 formula_exists_pure = qp;
                 formula_exists_pos = pos}) ->
       let (pqh,_) = x_add xpure_heap_mem_enum 3 prog qh qp 1 in
-      let tmp1 = MCP.merge_mems qp pqh true in
+      let tmp1 = x_add MCP.merge_mems qp pqh true in
       MCP.memo_pure_push_exists qvars tmp1
   in
   (xpure_helper prog f0, formula_2_mem f0 prog)
@@ -982,6 +1033,103 @@ and conv_from_ef_disj disj =
   let pr =  (fun (a1,a2)-> (Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2)) in
   Debug.no_1 "conv_from_ef_disj" Cprinter.string_of_ef_pure_disj pr (fun _ -> conv_from_ef_disj_x disj) disj
 
+(* type: Globals.ident -> *)
+(*   Prooftracer.CF.CP.spec_var -> *)
+(*   Prooftracer.CF.CP.spec_var list -> *)
+(*   Cpure.exp option -> *)
+(*   'a list option -> VarGen.loc -> Cformula.MCP.mix_formula *)
+
+and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
+  let vdef = look_up_view_def pos prog.prog_view_decls c in
+  let () = y_tinfo_hp (add_str "vdecl" !C.print_view_decl) vdef in
+  (*add fractional invariant 0<f<=1, if applicable*)
+  let frac_inv = match perm with
+    | None -> CP.mkTrue pos
+    | Some f -> mkPermInv () f in
+  let inv_opt =  Cast.get_xpure_one vdef rm_br in
+  (* let diff_flag = not(vdef.view_xpure_flag) in *)
+  let () = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) (!force_verbose_xpure) no_pos in
+  let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int) (which_xpure) no_pos in
+  (*LDK: ??? be careful to handle frac var properly.
+    Currently, no fracvar in view definition*)
+  let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+  let to_svs = p :: vs in
+  let res =
+    (match inv_opt with
+     | None ->
+       let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "None" no_pos in
+       let inv = if !force_verbose_xpure && which_xpure =1 && not(vdef.view_xpure_flag) then vdef.view_x_formula else vdef.view_user_inv in
+       let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
+       subst_m_fun (MCP.memoise_add_pure_N inv frac_inv)
+     (* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *)
+     | Some xp1 ->
+       let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
+       let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int)  which_xpure no_pos in
+       let vinv = match which_xpure with
+         | -1 -> MCP.mkMTrue no_pos
+         | 0 -> vdef.view_user_inv
+         | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
+       in
+       let () = x_tinfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
+       let () = x_tinfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
+       (* let () = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
+       (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
+       (*LDK: ??? be careful to handle frac var properly. 
+         Currently, no fracvar in view definition*)
+       (* let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in *)
+       (* let to_svs = p :: vs in *)
+       (*add fractional invariant*)
+       let frac_inv_mix = MCP.OnePF frac_inv in
+       let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
+       subst_m_fun (CF.add_mix_formula_to_mix_formula frac_inv_mix vinv))
+  in
+  (*res is the view invariant defined by users or
+    inferred by the system*)
+  (*if the ViewNode is a LOCK node, we add more information (p=i)
+    because LOCK is similar to a datanode*)
+  (*Handle LOCK ViewNode differently*)
+  (match vdef.view_inv_lock with
+   | Some f ->
+     if CF.is_mem_mem_formula p memset then 
+       (*full LOCK node*)
+       let non_null = CP.mkNeqNull p pos in
+       (* let i = fresh_int2 () in *)
+       (* let eq_i = CP.mkEqVarInt p i pos in *)
+       (* TO CHECK: temporarily use non-null*)
+       let eq_i = non_null in
+       MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
+     else
+       (*partial LOCK node*)
+       (*Because of fractional permissions, it is harder
+         to know whether two heap nodes are separated
+         A xpure_heap could try to identify separated
+         heap nodes (by using fractional permissions).
+         CURRENTLY, we take a simpler approach.
+         For any nodes x with frac<1, x is different from
+         any other nodes in memset. That is:
+         for all v in memset. v!=x
+
+         A better xpure could be:
+         forall x y. x_frac + y_frac>1 => x!=y
+       *)
+       let d = memset.mem_formula_mset in
+       let len = List.length d in
+       if (len=0) then res
+       else
+         let svars = List.hd d in
+         let ineqs = List.fold_left (fun mix_f sv ->
+             let neq_f = CP.mkNeqVar p sv no_pos in
+             MCP.memoise_add_pure_N mix_f neq_f) res svars
+         in
+         ineqs
+   | None -> res)
+
+and aux_xpure_for_view prog memset which_xpure c p vs perm rm_br pos =
+  let pr = !print_sv in
+  Debug.no_3 "aux_xpure_for_view" pr_id pr !print_svl !Cast.print_mix_formula 
+    (fun _ _ _ -> aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos) c p vs
+      
+
 and xpure_heap_mem_enum_new
     (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula)
   =
@@ -993,17 +1141,19 @@ and xpure_heap_mem_enum_new
   (*       (\*   (\\* using mcpure slicing - to fix *\\) *\) *)
   (*       (\*   xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) *\) *)
   (* else *)
-    (* to call xpure_heap_enum_baga *)
-    (* if !Globals.baga_xpure then *)
-    (*   let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
-    (*   let ans = conv_from_ef_disj disj in *)
-    (*   ans *)
-    (* else *)
-    xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
+  (* to call xpure_heap_enum_baga *)
+  (* if !Globals.baga_xpure then *)
+  (*   let disj = x_add xpure_heap_enum_baga (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) in *)
+  (*   let ans = conv_from_ef_disj disj in *)
+  (*   ans *)
+  (* else *)
+  xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int)
 
 and xpure_heap_mem_enum(*_debug*) i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
   let pr =  (fun (a1,a2)-> (Cprinter.string_of_mix_formula a1)^" # "^(Cprinter.string_of_mem_formula a2)) in
-  Debug.no_3_num i "xpure_heap_mem_enum" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula string_of_int pr
+  Debug.no_3_num i "xpure_heap_mem_enum" Cprinter.string_of_h_formula 
+    (add_str "lhs_pure" Cprinter.string_of_mix_formula) 
+    (add_str "xpure_int" string_of_int) pr
     (fun _ _ _ -> xpure_heap_mem_enum_new prog h0 p0 which_xpure) h0 p0 which_xpure
 
 and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CF.mem_formula) =
@@ -1068,94 +1218,105 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
                   h_formula_view_perm = perm;
                   h_formula_view_remaining_branches = rm_br;
                   h_formula_view_pos = pos}) ->
-      let vdef = look_up_view_def pos prog.prog_view_decls c in
-      (*add fractional invariant 0<f<=1, if applicable*)
-      let frac_inv = match perm with
-        | None -> CP.mkTrue pos
-        | Some f -> mkPermInv () f in
-      let inv_opt =  Cast.get_xpure_one vdef rm_br in
-      (* let diff_flag = not(vdef.view_xpure_flag) in *)
-      let () = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) (!force_verbose_xpure) no_pos in
-      let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int) (which_xpure) no_pos in
-      (*LDK: ??? be careful to handle frac var properly.
-        Currently, no fracvar in view definition*)
-      let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
-      let to_svs = p :: vs in
-      let res =
-        (match inv_opt with
-         | None ->
-           let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "None" no_pos in
-           let inv = if !force_verbose_xpure && which_xpure =1 && not(vdef.view_xpure_flag) then vdef.view_x_formula else vdef.view_user_inv in
-           let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
-           subst_m_fun (MCP.memoise_add_pure_N inv frac_inv)
-         (* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *)
-         | Some xp1 ->
-           let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
-           let () = Debug.ninfo_hprint (add_str " which_xpure" string_of_int)  which_xpure no_pos in
-           let vinv = match which_xpure with
-             | -1 -> MCP.mkMTrue no_pos
-             | 0 -> vdef.view_user_inv
-             | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
-           in
-           let () = x_tinfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
-           let () = x_tinfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
-           (* let () = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
-           (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
-           (*LDK: ??? be careful to handle frac var properly. 
-             Currently, no fracvar in view definition*)
-           (* let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in *)
-           (* let to_svs = p :: vs in *)
-           (*add fractional invariant*)
-           let frac_inv_mix = MCP.OnePF frac_inv in
-           let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
-           subst_m_fun (CF.add_mix_formula_to_mix_formula frac_inv_mix vinv))
-      in
-      (*res is the view invariant defined by users or
-        inferred by the system*)
-      (*if the ViewNode is a LOCK node, we add more information (p=i)
-        because LOCK is similar to a datanode*)
-      (*Handle LOCK ViewNode differently*)
-      (match vdef.view_inv_lock with
-       | Some f ->
-         if CF.is_mem_mem_formula p memset then 
-           (*full LOCK node*)
-           let non_null = CP.mkNeqNull p pos in
-           (* let i = fresh_int2 () in *)
-           (* let eq_i = CP.mkEqVarInt p i pos in *)
-           (* TO CHECK: temporarily use non-null*)
-           let eq_i = non_null in
-           MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
-         else
-           (*partial LOCK node*)
-           (*Because of fractional permissions, it is harder
-             to know whether two heap nodes are separated
-             A xpure_heap could try to identify separated
-             heap nodes (by using fractional permissions).
-             CURRENTLY, we take a simpler approach.
-             For any nodes x with frac<1, x is different from
-             any other nodes in memset. That is:
-             for all v in memset. v!=x
+      (* type: Globals.ident -> *)
+      (*   Prooftracer.CF.CP.spec_var -> *)
+      (*   Prooftracer.CF.CP.spec_var list -> *)
+      (*   Cpure.exp option -> *)
+      (*   'a list option -> VarGen.loc -> Cformula.MCP.mix_formula *)
 
-             A better xpure could be:
-             forall x y. x_frac + y_frac>1 => x!=y
-           *)
-           let d = memset.mem_formula_mset in
-           let len = List.length d in
-           if (len=0) then res
-           else
-             let svars = List.hd d in
-             let ineqs = List.fold_left (fun mix_f sv ->
-                 let neq_f = CP.mkNeqVar p sv no_pos in
-                 MCP.memoise_add_pure_N mix_f neq_f) res svars
-             in
-             ineqs
-       | None -> res)
+      (* let aux_xpure_for_view c p vs perm rm_br pos = *)
+      (*   let vdef = look_up_view_def pos prog.prog_view_decls c in *)
+      (*   (\*add fractional invariant 0<f<=1, if applicable*\) *)
+      (*   let frac_inv = match perm with *)
+      (*     | None -> CP.mkTrue pos *)
+      (*     | Some f -> mkPermInv () f in *)
+      (*   let inv_opt =  Cast.get_xpure_one vdef rm_br in *)
+      (*   (\* let diff_flag = not(vdef.view_xpure_flag) in *\) *)
+      (*   let () = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) (!force_verbose_xpure) no_pos in *)
+      (*   let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int) (which_xpure) no_pos in *)
+      (*   (\*LDK: ??? be careful to handle frac var properly. *)
+      (*     Currently, no fracvar in view definition*\) *)
+      (*   let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in *)
+      (*   let to_svs = p :: vs in *)
+      (*   let res = *)
+      (*     (match inv_opt with *)
+      (*      | None -> *)
+      (*        let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "None" no_pos in *)
+      (*        let inv = if !force_verbose_xpure && which_xpure =1 && not(vdef.view_xpure_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
+      (*        let subst_m_fun = MCP.subst_avoid_capture_memo(\*_debug1*\) from_svs to_svs in *)
+      (*        subst_m_fun (MCP.memoise_add_pure_N inv frac_inv) *)
+      (*      (\* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *\) *)
+      (*      | Some xp1 -> *)
+      (*        let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in *)
+      (*        let () = Debug.ninfo_hprint (add_str " which_xpure" string_of_int)  which_xpure no_pos in *)
+      (*        let vinv = match which_xpure with *)
+      (*          | -1 -> MCP.mkMTrue no_pos *)
+      (*          | 0 -> vdef.view_user_inv *)
+      (*          | _ ->  (\* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *\) xp1 *)
+      (*        in *)
+      (*        let () = x_tinfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in *)
+      (*        let () = x_tinfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in *)
+      (*        (\* let () = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *\) *)
+      (*        (\* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *\) *)
+      (*        (\*LDK: ??? be careful to handle frac var properly.  *)
+      (*          Currently, no fracvar in view definition*\) *)
+      (*        (\* let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in *\) *)
+      (*        (\* let to_svs = p :: vs in *\) *)
+      (*        (\*add fractional invariant*\) *)
+      (*        let frac_inv_mix = MCP.OnePF frac_inv in *)
+      (*        let subst_m_fun = MCP.subst_avoid_capture_memo(\*_debug1*\) from_svs to_svs in *)
+      (*        subst_m_fun (CF.add_mix_formula_to_mix_formula frac_inv_mix vinv)) *)
+      (*   in *)
+      (*   (\*res is the view invariant defined by users or *)
+      (*     inferred by the system*\) *)
+      (*   (\*if the ViewNode is a LOCK node, we add more information (p=i) *)
+      (*     because LOCK is similar to a datanode*\) *)
+      (*   (\*Handle LOCK ViewNode differently*\) *)
+      (*   (match vdef.view_inv_lock with *)
+      (*    | Some f -> *)
+      (*      if CF.is_mem_mem_formula p memset then  *)
+      (*        (\*full LOCK node*\) *)
+      (*        let non_null = CP.mkNeqNull p pos in *)
+      (*        (\* let i = fresh_int2 () in *\) *)
+      (*        (\* let eq_i = CP.mkEqVarInt p i pos in *\) *)
+      (*        (\* TO CHECK: temporarily use non-null*\) *)
+      (*        let eq_i = non_null in *)
+      (*        MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (\* full permission -> p=i*\) *)
+      (*      else *)
+      (*        (\*partial LOCK node*\) *)
+      (*        (\*Because of fractional permissions, it is harder *)
+      (*          to know whether two heap nodes are separated *)
+      (*          A xpure_heap could try to identify separated *)
+      (*          heap nodes (by using fractional permissions). *)
+      (*          CURRENTLY, we take a simpler approach. *)
+      (*          For any nodes x with frac<1, x is different from *)
+      (*          any other nodes in memset. That is: *)
+      (*          for all v in memset. v!=x *)
+
+      (*          A better xpure could be: *)
+      (*          forall x y. x_frac + y_frac>1 => x!=y *)
+      (*        *\) *)
+      (*        let d = memset.mem_formula_mset in *)
+      (*        let len = List.length d in *)
+      (*        if (len=0) then res *)
+      (*        else *)
+      (*          let svars = List.hd d in *)
+      (*          let ineqs = List.fold_left (fun mix_f sv -> *)
+      (*              let neq_f = CP.mkNeqVar p sv no_pos in *)
+      (*              MCP.memoise_add_pure_N mix_f neq_f) res svars *)
+      (*          in *)
+      (*          ineqs *)
+      (*    | None -> res) in *)
+      (* let aux_xpure_for_view c p vs perm rm_br pos = *)
+      (*   let pr = !print_sv in *)
+      (*   Debug.no_3 "aux_xpure_for_view" pr_id pr !print_svl !Cast.print_mix_formula (fun _ _ _ -> aux_xpure_for_view c p vs perm rm_br pos) c p vs in *)
+      x_add aux_xpure_for_view prog memset which_xpure c p vs perm rm_br pos
     | Star ({h_formula_star_h1 = h1;
              h_formula_star_h2 = h2;
              h_formula_star_pos = pos})
     (*| StarMinus ({h_formula_starminus_h1 = h1;
-      	        h_formula_starminus_h2 = h2;
-      	        h_formula_starminus_pos = pos})*)
+      h_formula_starminus_h2 = h2;
+      h_formula_starminus_pos = pos})*)
     | Phase ({h_formula_phase_rd = h1;
               h_formula_phase_rw = h2;
               h_formula_phase_pos = pos})
@@ -1173,7 +1334,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
       let () = Debug.ninfo_hprint (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
       let () = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
       let () = Debug.ninfo_hprint (add_str "memset" !CF.print_mem_formula) memset no_pos in
-      MCP.merge_mems ph1 ph2 true
+      x_add MCP.merge_mems ph1 ph2 true
     | StarMinus _
     | HTrue  -> MCP.mkMTrue no_pos
     | HFalse -> MCP.mkMFalse no_pos
@@ -1183,11 +1344,23 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     | FrmHole _ -> MCP.mkMTrue no_pos
   in
   (* to build a subs here *)
+  let (h0,pf) = elim_absent_nodes (x_add aux_xpure_for_view prog (* memset *) {mem_formula_mset = []}) h0 which_xpure in
+  let pf = CP.join_conjunctions pf in
+  (* let p0 = MCP.merge_mix_w_pure p0 pf in *)
+  (* let () = x_dinfo_pp "TODO: Need to add pure collected into p0" no_pos in *)
+  (* let mf_p0 = MCP.pure_of_mix p0 in *)
+  (* let () = x_dinfo_hp (add_str "elim_abs (p0)" !CP.print_formula) mf_p0 no_pos in *)
+  let () = x_tinfo_hp (add_str "elim_abs (pure)" !CP.print_formula) pf no_pos in
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
-  (* let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in *)
-  (* let () = x_tinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
+  let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
+  (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
   let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
-  if (is_sat_mem_formula memset) then (x_add xpure_heap_helper prog h0 which_xpure memset, memset)
+  if (is_sat_mem_formula memset) then 
+    let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
+    let pure_of_memset = 
+      if !Globals.old_keep_absent then pure_of_memset 
+      else MCP.merge_mix_w_pure pure_of_memset pf in
+    (pure_of_memset, memset)
   else
     (MCP.mkMFalse no_pos, memset)
 
@@ -1213,7 +1386,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
              formula_base_pure = p;
              formula_base_pos = pos }) = b in
       let ph, addrs, _ = x_add xpure_heap_symbolic 2 prog h p 1 in
-      let n_p = MCP.merge_mems p ph true in
+      let n_p = x_add MCP.merge_mems p ph true in
       (* Set a complex heap formula to a simpler one *)
       let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
       (n_f0, addrs)
@@ -1224,7 +1397,7 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
              formula_exists_pos = pos}) = e in 
       let pqh, addrs', _ = x_add xpure_heap_symbolic 3 prog qh qp 1 in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
-      let n_qp = MCP.merge_mems qp pqh true in
+      let n_qp = x_add MCP.merge_mems qp pqh true in
       (* Set a complex heap formula to a simpler one *)
       let n_f0 = mkExists qvars HEmp n_qp CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in
       (n_f0, addrs)
@@ -1409,7 +1582,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
               else MCP.mkMTrue no_pos
           ) (MCP.mkMTrue no_pos) (part2::ps) in
         (* END List.fold_left ( fun acc_f part -> *)
-        let nf = MCP.merge_mems res f1 true in
+        let nf = x_add MCP.merge_mems res f1 true in
         nf
     in
     let rec check parts =
@@ -1521,7 +1694,7 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
               formula_base_pure = p;
               formula_base_pos = pos}) ->
       let ph, addrs, _ = x_add xpure_heap_symbolic 5 prog h p 1 in
-      let n_p = MCP.merge_mems p ph true in
+      let n_p = x_add MCP.merge_mems p ph true in
       (n_p, addrs)
     | Exists ({ formula_exists_qvars = qvars;
                 formula_exists_heap = qh;
@@ -1552,10 +1725,26 @@ and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
   (*TODOIMM - I cannot cannot perform an alias merge at this point because I do not have an unfold_heap func*)
-  (* let h0 = Norm.imm_norm_h_formula prog h0 () in *) 
+  (* let h2 = Norm.imm_norm_h_formula prog h0 () in  *)
+  let () = x_tinfo_hp (add_str "elim_abs (b4)" !print_h_formula) h0 no_pos in
+  let (h0,pf) = elim_absent_nodes (x_add aux_xpure_for_view prog (* memset *) {mem_formula_mset = []} ) h0 which_xpure in
+  let pf = CP.join_conjunctions pf in
+  (* let p0 = MCP.merge_mix_w_pure p0 pf in *)
+  (* let () = x_dinfo_pp "TODO: Need to add pure collected into p0" no_pos in *)
+  (* let mf_p0 = MCP.pure_of_mix p0 in *)
+  (* let () = x_dinfo_hp (add_str "elim_abs (p0)" !CP.print_formula) mf_p0 no_pos in *)
+  let () = x_dinfo_hp (add_str "elim_abs (af)" !print_h_formula) h0 no_pos in
+  let () = x_dinfo_hp (add_str "elim_abs (pure)" !CP.print_formula) pf no_pos in
+  (* let () = x_dinfo_hp (add_str "imm_norm (af)" !print_h_formula) h2 no_pos in *)
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
+  (* TODOIMM should I remove absent nodes before h_formula_2_mem? *)
+  (* let (h0,pf) = elim_absent_nodes (aux_xpure_for_view prog memset) h0 which_xpure in *)
+  (* let pf = CP.join_conjunctions pf in *)
   let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
-  if (is_sat_mem_formula memset) then (ph, pa, memset)
+  if (is_sat_mem_formula memset) then 
+    let ph =  if !Globals.old_keep_absent then ph
+      else MCP.merge_mix_w_pure ph pf in
+    (ph, pa, memset)
   else (MCP.mkMFalse no_pos, pa, memset)
 
 
@@ -1658,7 +1847,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
        | Some f ->
          let () = x_winfo_pp "Data Pure Inv (not tested)" no_pos in
          let non_zero = map_opt_def non_zero (fun f -> CP.mkAnd f non_zero no_pos) new_p_inv in
-        let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
+         let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
          (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [p]))
 
     | ViewNode ({ h_formula_view_node = p;
@@ -2362,7 +2551,7 @@ assumption:
 *)
 let get_oa_node_view_x prog seg_vnames=
   let get_oa res vname=
-    let vdecl = x_add Cast.look_up_view_def_raw 56 prog.Cast.prog_view_decls vname in
+    let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
     let ddecl = Cast.look_up_data_def_raw prog.Cast.prog_data_decls vdecl.Cast.view_data_name in
     if List.length vdecl.Cast.view_cont_vars = 1 &&
        List.length vdecl.Cast.view_vars = List.length (List.filter (fun ((t,_),_) ->

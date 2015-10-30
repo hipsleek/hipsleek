@@ -474,7 +474,7 @@ let most_common_nonlinear_vars nl =
 let get_model_z3 is_linear templ_unks vars assertions =
   let res = Smtsolver.get_model is_linear vars assertions in
   match res with
-  | Z3m.Unsat -> Unsat
+  | Z3m.Unsat _ -> Unsat
   | Z3m.Sat_or_Unk m ->
     match m with
     | [] -> Unknown
@@ -518,7 +518,7 @@ let get_opt_model is_linear templ_unks vars assertions =
     (* Linearize constraints *)
     let res = Smtsolver.get_model true vars assertions in
     match res with
-    | Z3m.Unsat -> Unsat
+    | Z3m.Unsat _ -> Unsat
     | Z3m.Sat_or_Unk model -> if model = [] then Unknown else 
         let nl_var_list = List.concat (List.map nonlinear_var_list_formula assertions) in
         let subst_nl_vars = most_common_nonlinear_vars nl_var_list in

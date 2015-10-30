@@ -1,0 +1,47 @@
+data node{
+     int val;
+     node next;
+}.
+
+
+HeapPred ll_last(node@RO a).
+HeapPred ll_nth(node@RO a).
+HeapPred HP(node@RO a).
+
+Declare_Unknown [HP].
+
+relDefn ll_last(x) <->
+  x::node<_,null>
+or x::node<_,p>*ll_last(p) & p!=null.
+
+relDefn ll_nth(x) <->
+  x=null
+or x::node<_,p>*HP(x)
+or x::node<_,p>*ll_nth(p).
+
+pred_reuse [*][*].
+
+pred_disj_unify [ll_last].
+
+//pred_disj_unify [ll_nth].
+
+
+/*
+# udisj-1.slk
+
+pred_disj_unify [ll_last].
+
+# sleek parser failure ..
+
+File "udisj-1.slk", line 22, characters 17-18
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:
+Exception processed: Stream.Error("EOF expected after [command_list] (in [sprog])")
+error at: 
+SLEEK FAILURE (END)
+
+Stop z3... 0 invocations 
+0 false contexts at: ()
+
+
+*/

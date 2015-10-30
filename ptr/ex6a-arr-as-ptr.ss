@@ -27,10 +27,22 @@ void foo2(arr_int a,int i)
   requires a::arr_seg<p,n> & n=10-i+5 & i>=0 & i<=10
   ensures a::arr_seg2<q,10-i> *q::arr_seg<p,5>
   ;
-
 {
   if (i<10) {
     upd_arr(a,5);
     foo2(arr_inc(a),i+1);
   }
 }
+
+
+/*
+  a,offset
+
+   case {
+     i>=10 --> a'=a
+     i<=10 --> 
+   }
+
+}
+
+*/

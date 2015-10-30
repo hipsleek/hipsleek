@@ -1,0 +1,130 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+
+HeapPred H(node a).
+//lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+// fail due to complex lemma
+//lemma_infer_pred [H]  self::sll<> <- self::lseg<q> * H(q).
+// Valid
+
+//lemma_infer_pred [H]  self::sll<> -> self::lseg<qqq> * H(qqq).
+lemma_unsafe  self::sll<> -> self::lseg<qqq> * H(qqq).
+
+//infer [H,@classic]  self=null |- self::lseg<qqq> * H(qqq).
+//print residue.
+
+infer [H,@classic]  self::node<_,q>*q::sll<> |- self::lseg<qqq> * H(qqq).
+print residue.
+
+//infer [H,@classic]  H(x) |- H(x).
+//print residue.
+
+/*
+# ex17h3.slk (FIXED by not collecting H(..) -> emp during is_folding)
+
+infer [H,@classic]  self::node<_,q>*q::sll<> |- self::lseg<qqq> * H(qqq).
+print residue.
+
+# need to improved strategy:
+    Fold --> Match --> Lemma --> InferHeap..
+
+# Also, can we discard H(qqq) --> H(qqq)
+
+# proof search here. Can we choose the simplest one without any relational assuption
+
+Residue:
+ <1>emp&self=qqq&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [qqq::node<Anon_15,q>@M * q::sll<>@M&true |#|3  --> H(qqq)&
+                   true]
+[[ Fold ==>  COND ==>  InferHeap]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [H(qqq)&true |#|3  --> H(qqq)&true]
+[[ Fold ==>  SEARCH ==>  Match(self,self) ==>  SEARCH ==>  (Lemma ==> lem_14(q,q_57)) ==> (left: lem_14) ==>  COND ==>  Match(q,q_57) ==>  COND ==>  InferHeap]]
+
+<3>emp&qqq=q&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [q::sll<>@M&true |#|3  --> H(q)&true]
+[[ Fold ==>  SEARCH ==>  Match(self,self) ==>  SEARCH ==>  COND ==>  BaseCaseFold ==>  COND ==>  InferHeap]]
+==========================
+-dre "process_a\|compute_a\|do_match" 
+
+# not scheduled by why is this not scheduled by compute?
+
+(==solver.ml#12979==)
+do_match@25@24@23@2
+do_match inp1 : H(qqq)
+do_match inp2 : H(qqq)
+do_match inp3 :  emp&qqq_73=qqq & Anon_56=Anon_15 & q_57=q&{FLOW,(20,21)=__norm#E}[]
+ es_heap: q::lseg<qqq_73>@M * self::node<Anon_15,q>@M
+ es_infer_obj: [@leak]
+ es_rhs_eqset: [qqq_73:qqq]
+ es_trace:  Fold ==>  SEARCH ==>  Match(self,self) ==>  SEARCH ==>  (Lemma ==> lem_14(q,q_57)) ==> (left: lem_14) ==>  COND ==>  Match(q,q_57) ==>  COND ==>  InferHeap
+ es_infer_vars_hp_rel: [H]
+ es_infer_hp_rel: [H(qqq_73) |#|  --> emp; emp |#|  --> H(qqq)]
+ es_proof_traces: 
+   [self::node<Anon_15,q>@M * q::sll<>@M:self::lseg<qqq>@M * H(qqq)&
+    {FLOW,(20,21)=__norm#E}[]]
+do_match inp4 : emp&qqq_73=qqq&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@25 EXIT: [
+   emp&qqq_73=qqq & Anon_56=Anon_15 & q_57=q&{FLOW,(20,21)=__norm#E}[]
+  ]
+
+==========================
+
+lemma_infer_pred [H]  self::sll<> -> self::lseg<q> * H(q).
+
+# Why is above not working?
+
+Starting Omega.../usr/local/bin/oc
+
+!!! WARNING logtime exception:0.000326
+!!! WARNING logtime exception:0.0307exception in lemma "lem_14" check
+
+Entailing lemma lem_14: Fail. (cex)(must) cause: exception in lemma proving
+
+# Can we use wrapping to handle lemma synthesis?
+
+// comparing with ex17h1.slk
+
+lemma_safe  self::sll<> -> self::lseg<q> * q::sll<>.
+
+(==lemma.ml#239==)
+verify_lemma#3@2@1
+verify_lemma#3 inp1 :[Lemma "lem_14":  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]==> (exists q: self::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[])
+ head match:sll
+ body view:lseg
+ coercion_univ_vars: []
+ materialized vars:  [(q,full,[H]); (self,full,[lseg])]
+ // materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists q: self::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  self::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ body_norm:  EBase 
+   self::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[]
+ //body_norm:  EBase  exists (Impl)[q]self::lseg<q>@M * q::sll<>@M&{FLOW,(20,21)=__norm#E}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_INFER_PRED
+ //coercion_kind: LEM_SAFE
+ coercion_fold: None
+]
+
+
+
+*/

@@ -1,0 +1,66 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+
+infer [H,@classic] H(p) * x::node<1,p> & p=null 
+  |- htrue.
+print residue.
+
+
+/*
+Starting Omega.../usr/local/bin/oc
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|3  --> emp&true]
+
+find_guard@1
+find_guard inp1 :left heap:[ x::node<flted_13_16,p>@M]
+find_guard inp2 :lhs_eqs:[]
+find_guard inp3 :null_ptrs:[p]
+find_guard inp4 :left selected preds:[(H,[])]
+find_guard inp5 :rhs arg:[]
+find_guard@1 EXIT:None
+
+Entail (1) : Valid. 
+
+
+*/
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+/*
+# ex15g.slk -dre "find_g"
+
+infer [H,P] H(p) * x::node<1,p> & p=null 
+  |- P(p).
+print residue.
+
+(==infer.ml#2664==)
+find_guard@2
+find_guard inp1 :left heap:[ x::node<flted_36_28,p>@M]
+find_guard inp2 :lhs_eqs:[]
+find_guard inp3 :null_ptrs:[p]
+find_guard inp4 :left selected preds:[(H,[p])]
+find_guard inp5 :rhs arg:[p]
+find_guard@2 EXIT:None
+
+# GOT
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#| x::node<flted_23_28,p>@M&true --> P(p)&true
+
+# EXPECTS
+
+ <1>x::node<flted_23_28,p>@M&p=null & flted_23_28=1&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null |#|  --> P(p)&true
+
+*/

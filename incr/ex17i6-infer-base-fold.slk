@@ -1,0 +1,27 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+relation RR(node a).
+
+
+infer [x@NI] emp |- x::sll<>.
+print residue.
+// x=null?
+
+/*
+# ex17i6.slk
+
+infer [x@NI] emp |- x::sll<>.
+
+Can support @NI for variables?
+
+*/
+

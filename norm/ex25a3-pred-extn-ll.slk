@@ -1,0 +1,49 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::node<_,q>*q::ll<>.
+
+pred ll2<> ==
+   self::ll<>.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+print views.
+
+//pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+pred llN2<nnn> == extends [ll2*] with size[REC]<nnn>.
+
+//shape_extends_view [*] with size.
+
+//shape_extends_view [ll] with size.
+
+print views.
+
+/*
+# ex25a2.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+# segmentation fault for size extension of mutual-rec views
+
+!!! **hipUtil.ml#75:**astsimp.ml#545:replace:(llN2,[])
+!!! **hipUtil.ml#200:invoking build_scc splitSegmentation fault (core dumped)
+chinwn@loris-60:~/hg/sleekex/norm$ 
+
+*/

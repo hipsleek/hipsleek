@@ -1,0 +1,62 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+ lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+
+/*
+ infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>*q2::WFG<p> & v!=0  |-  U(self,q)*q::char_star<0,p>.
+*/
+
+ infer [U,@pure_field,@classic] 
+   q2::WFG<p>   |-  U(q2,q)*q::char_star<0,p>.
+
+
+ print residue.
+
+/*
+# ex16d1b.slk -dre "process_one_m"
+
+# should not schedule lemma if there are no common materialization ..
+
+(==context.ml#2602==)
+process_one_match@2
+process_one_match inp1 :match_res: Type: MaterializedArg (self,full,[U]) coerc_defn_mater: ==> lem_12
+ LHS: q2::WFG<p>@M
+ RHS: U(self,q)
+ lhs_rest: self::char_star<v,q2>@M
+ rhs_rest: q::char_star<flted_29_146,p_145>@M
+process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::WFG<p>@M
+process_one_match inp3 :lhs_p: v!=0
+process_one_match inp4 :rhs_node: U(self,q)
+process_one_match inp5 :rhs_rest: q::char_star<flted_29_146,p_145>@M
+process_one_match inp6 :rhs_p: flted_29_146=0 & p_145=p
+process_one_match inp7 :([(p_145,p)],None)
+process_one_match@2 EXIT: Prio:1
+ (Lemma ==> lem_12) =>
+
+
+
+*/

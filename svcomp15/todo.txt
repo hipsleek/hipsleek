@@ -81,7 +81,7 @@ list-ext-properties/*_true-valid-memsafety*.i
 note: shape + pure field + size
 
 array:
-960521-1_1_false-*.c
+960521-1_1_-*.c
 
  /* Build a list of the form 1->...->1->2->....->2->3 */
 list-ext*.c
@@ -96,6 +96,8 @@ simple-ext*.c
 
 field values of 1 node (bag of val/addr)
 test-0019*.c
+
+OK:  test-0019_1_true-valid-memsafety.c
 
 field + array
 test-0158
@@ -497,7 +499,39 @@ assert/assume:ex1-check.ss:18: 4:  : failed
 
 
 ==============================================================
+#todo/ex1b1
+
+ERROR: at ../todo/ex1b-free.c_26:4_26:12
+Message: trans_exp :: case CallNRecv :: procedure call free$int_star has invalid argument types (exc)
+
+note: remove free_data in main: OK
+
 ==============================================================
+#todo/ex1b2
+
+duplicated top-level name(s): free$__anonstruct_TData_1_star, __anonstruct_TData_1_star
+
+==============================================================
+
+list-ext
+todo/#ex12-test19
+
+
+todo/#ex13-test158
+CIL: needs handle union
+
+union {
+        void *p0;
+
+        struct {
+            char c[2];
+            int p1;
+            int p2;
+        } str;
+    } data;
+
+array
+
 ==============================================================
 ==============================================================
 ==============================================================

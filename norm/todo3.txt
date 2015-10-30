@@ -1,0 +1,910 @@
+# norm/ex21u2.slk (OK)
+
+pred_elim_useless [ll].
+//no change
+
+pred_elim_useless [app2].
+//elim y
+
+# Loc : can we refine the command's to the following:
+
+Instead of printing every view. Can we
+either print:
+  "No predicates here has useless parameters"
+
+or:
+  Pred P has parameter ? eliminated ..
+
+The command should be idempotent in that the 
+2nd application will cause no-change.
+===================================================================
+===================================================================
+# ex21r3.slk
+
+pred lseg2a<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg3<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred_reuse [*][*].
+
+!!! **norm.ml#193:norm_reuse (from_vns):[lseg111,lseg2a,lseg3]
+!!! **norm.ml#194:norm_reuse (to_vns):[lseg111,lseg2a,lseg3]
+
+# should we use topological sorting? where shorter names 
+  come first..
+
+Since lseg3 is shorter than lseg2a, we would expect
+it to come first.
+===================================================================
+# ex21r3c.slk
+
+ pred lseg<n,p> == self::lseg111<n,p>.
+
+# raw base case need to include non-heap and non-recursive item
+ raw_base_case : self::lseg111<n,p>
+
+  not sure if guarded base-case is useful?
+
+-----
+
+lseg111<..>
+  materialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){1}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}
+  []base case: n=0->self=p & 
+                                                                    n=0
+lseg111<..>
+  materialized vars: [(self,full,[lseg111])]
+===================================================================
+# ex21s1.slk (test file in ex21s1b.slk)
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+../
+pred_split [zip].
+
+# Instead of relDefn, can we use pred:
+  What is @RO? root?
+
+pred zip<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+
+# After that, call lemma_infer, followed by shape_derive_view[P1,P2,p3];
+  as shown in ex21s1a.slk
+
+===================================================================
+# ex21r4d.slk (FIXED)
+
+!!! **norm.ml#186:
+ Failed : self::lseg3<p,n>@M&{FLOW,(1,26)=__flow#E}[] <->  self::lseg2a<n,p>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#2502:
+
+# GOT
+PRED REUSE FOUND:[(lseg2a,lseg2a),(lseg3,lseg3)]
+
+# EXPECTS:
+PRED REUSE FOUND:[(lseg2a,lseg2a),(lseg3,lseg2a)]
+
+
+# equiv proving fails. the reason is that we prove
+  using two separate <-- and -->
+  instead of a single <->
+
+  Can we do this?
+===================================================================
+# ex21a3.slk (FIXED by marking unknown type parameter useless)
+
+ pred_elim_hd_node [app2].
+
+# a sleek failure msg for app with y. 
+  can print the elim_hd lemma generated?
+
+========================
+ Performing Deriving Segmented Views
+========================
+
+!!! **syn.ml#696:derived_views:
+[ view DP_68<y_67:TVar[43]>= 
+  EList
+    :EBase 
+       self::app2<y_67>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          self::node<Anon_104,flted_14_105>@M * flted_14_105::GP_106<self>@M&
+          self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+Last Proving Location: ex21a3-pred-elim-hd-node.slk_11:4_11:30
+
+ERROR: at _0:0_0:0
+Message: GP_106 is neither 2 a data nor view name
+
+Exception processed: Failure("GP_106 is neither 2 a data nor view name")
+error at: 
+SLEEK FAILURE (END)
+===================================================================
+# ex21a4.slk (OK)
+
+checkentail x::app2<> |- x::node<_,q>.
+print residue.
+
+Residue:
+ <1>q::DP_62<>@M&{FLOW,(20,21)=__norm#E}[]
+[[ Unfold 0 ==>  Match(x,x)]]
+
+
+# can we tidy with re-using pred in body by:
+  pred_reuse_subs [*]
+  print_view [*]
+  print_view_long [*]
+
+--------------------------------------
+
+!!! **sleekengine.ml#3003:[ view ll<>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; 
+          q](* lbl: *){4}->self::node<Anon_12,q>@M * q::ll<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    , view DP_65<>= 
+
+===================================================================
+# ex21a5.slk
+
+pred_reuse_subs [*].
+
+!!! **norm.ml#233:TBI: view:
+ view lseg<n:int,p:node>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; q](* lbl: *){4}->(exists p_20,
+          flted_11_19: (* lbl: *){4}->self::node<Anon_12,q>@M * 
+                                      q::lseg<flted_11_19,p_20>@M&
+          flted_11_19+1=n & p_20=p&{FLOW,(1,26)=__flow#E}[])
+    equiv_set: ([1,0],lseg2)
+  
+# change after to self::lseg<p,n> == self::lseg2<p,n> after reuse detection
+
+
+!!! **norm.ml#234:TBI: from:(lseg,[n,p])
+!!! **norm.ml#235:TBI: to:(lseg2,[p,n])
+===================================================================
+# ex21a6a.slk
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5a<>
+  inv true.
+
+pred app5a<> == self=null 
+	or self::node<_, q> * q::app5b<> 
+  inv true.
+
+pred app5b<> == self=null 
+	or self::node<_, q> * q::app5<> 
+  inv true.
+
+# deeper mutual recursion requires simultaneous lemma
+  proving considerations.
+===================================================================
+# udisj-1.slk
+
+pred_disj_unify [ll_last].
+
+# sleek parser failure ..
+
+File "udisj-1.slk", line 22, characters 17-18
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:
+Exception processed: Stream.Error("EOF expected after [command_list] (in [sprog])")
+error at: 
+SLEEK FAILURE (END)
+
+Stop z3... 0 invocations 
+0 false contexts at: ()
+===================================================================
+# ex21t2 --trace-exc
+
+lemma_infer [U,@pure_field] 
+ self::app3<> -> U(self,p)*p::node<0,null>.
+print residue.
+
+shape_derive_view[U].
+
+Exception(try_unify_data_type_args):Not_found
+
+Last Proving Location: ex21t2-pred-elim-last-node.slk_23:4_23:49
+
+ERROR: at _0:0_0:0
+Message: GP_105 is neither 2 a data nor view name
+Exception(gather_type_info_heap):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_struc_f):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_I2C_struc_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_view):Failure("GP_105 is neither 2 a data nor view name")
+===================================================================
+# ex21t1
+
+pred_elim_tl_node [*].
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+# (1) need to use @pure_field for lemma_inference
+  (2) need to check <-> holds
+# Why app3<> dropped v!=0 pure field?
+
+[ view DP_54<>= 
+  EList
+    :EBase 
+       exists (Impl)[flted_20_83; 
+       flted_20_84](* lbl: *){14}->self::node<flted_20_83,flted_20_84>@M * 
+                                   flted_20_84::DP_54<>@M&
+       self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){15}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    , view app3<>= 
+  EBase 
+    exists (Impl)[flted_20_52; 
+    flted_20_53](* lbl: *){28}->self::node<flted_20_52,flted_20_53>@M * 
+                                flted_20_53::DP_54<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+===================================================================
+# ex21t3.slk
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+pred_elim_tl_node [*].
+
+# expect to form:
+
+  lemma_infer   app3<> -> U(self,p)*p::node<0,null>
+
+Starting Omega.../usr/local/bin/oc
+Exception processed: Failure("**sleekengine.ml#1751: TBI")
+error at: 
+SLEEK FAILURE (END)
+
+===================================================================
+# ex21t1a.slk
+
+lemma_infer [UA,@classic] "L21t1a"
+  self::app3a<> -> self::node<v,q>*UA(q,v).
+print residue.
+
+# deemed a failure due to presence of app3a in inference outcome.
+  can detect and/or prevent?
+
+
+ inferred hprel: [q_79::app3a<>@M&q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  q_79::node<v_84,q_85>@M * GP_86(q_85,q_79@NI)&
+                   q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  emp&
+                   flted_25_72=null & flted_25_73=0 --> UA(flted_25_72,flted_25_73@NI)&
+
+===================================================================
+# ex21a5b.slk
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of lseg
+Exception(get_hash2):Failure("Can not find flow of lseg")
+Last Proving Location: ex21a5b-pred-elim-hd-node.slk_11:4_11:38
+ERROR: at _0:0_0:0
+Message: Can not find flow of node
+Exception(get_hash2):Failure("Can not find flow of node")
+
+(==cformula.ml#12156==)
+norm:case_norm@1
+norm:case_norm inp1 :[n,p]
+norm:case_norm inp2 : self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+norm:case_norm@1 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")Occurred!
+
+Exception processed: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")
+error at: 
+SLEEK FAILURE (END)
+(==astsimp.ml#7104==)
+trans_formula@4@2@1
+trans_formula inp1 :[(p:31:node)(TVar__46:46:node)(p_17:41:node)(TVar__45:45:node)(n:32:int)(TVar__43:43:int)(flted_15_16:40:int)(TVar__42:42:int)(q:39:node)(Anon_13:38:int)(self:33:node)(TVar__37:37:int)(TVar__36:36:int)(TVar__35:35:node)(TVar__34:34:node)]
+trans_formula inp2 :quantify:true
+trans_formula inp3 :cleanres:false
+trans_formula inp4 :[self,p,n]
+trans_formula inp5 :(EX p_17 flted_15_16 . ((self::node{}<Anon_13,q>[HeapNode1]) * (q::lseg{}<flted_15_16,p_17>[HeapNode1]))*([] & (flted_15_16 = n-1) & (p_17 = p))( FLOW __flow))
+trans_formula@4 EXIT: (exists p_17,
+flted_15_16: self::node<Anon_13,q>@M * q::lseg<flted_15_16,p_17>@M&
+flted_15_16+1=n & p_17=p&{FLOW,(1,26)=__flow#E}[])
+
+(==sleekUtils.ml#94==)
+trans_views@1
+trans_views inp1 :[[lseg2,lseg]]
+trans_views inp2 :[(lseg2,[]),(lseg,[])]
+trans_views@1 EXIT:[lseg2,lseg]
+
+pred lseg2<p:node,n:int> == self = p & n=0 
+
+# why is ann_typs always empty?
+
+rans_view inp2 :mutrec:[lseg2]
+trans_view inp3 :trans_views:[]
+trans_view inp4 :ann_typs:[]
+trans_view@2 EXIT: view lseg2<p:node,n:int>= 
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of lseg
+Exception(get_hash2):Failure("Can not find flow of lseg")
+Last Proving Location: ex21a5b-pred-elim-hd-node.slk_11:4_11:38
+ERROR: at _0:0_0:0
+Message: Can not find flow of node
+Exception(get_hash2):Failure("Can not find flow of node")
+
+(==cformula.ml#12156==)
+norm:case_norm@1
+norm:case_norm inp1 :[n,p]
+norm:case_norm inp2 : self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+norm:case_norm@1 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")Occurred!
+
+Exception processed: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")
+error at: 
+SLEEK FAILURE (END)
+===================================================================
+# ex21t3.slk
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+pred_elim_tl_node [*].
+
+# expect to form:
+
+  lemma_infer   app3<> -> U(self,p)*p::node<0,null>
+
+Starting Omega.../usr/local/bin/oc
+Exception processed: Failure("**sleekengine.ml#1751: TBI")
+error at: 
+SLEEK FAILURE (END)
+===================================================================
+# ex21u3c1.slk
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=true -> [] self::node<_,q> * q::app4a<>;
+    }
+inv true.
+
+Why isn't this a parser or case-spec error?
+
+ERROR: at _0:-1_0:-1
+Message: with 2 convert bexpr  1
+File "ex21u3c1-lemma-pred-elim-hd-node.slk", line 19, characters 10-14
+ error: Failure("with 2 convert bexpr  1")
+ at:
+Exception processed: Failure("with 2 convert bexpr  1")
+error at: 
+SLEEK FAILURE (END)
+
+===================================================================
+# ex21u3c2.slk  (FIXED with lemma unfold)
+
+ pred app5<> == self=null
+        or self::node<_,q> * q::app5<>
+  inv true.
+pred U<> == self::app5<>
+  inv true.
+lemma_test self::app5<> <-> self::U<>.
+
+# Why can't we prove trivial equality?
+
+!!! 
+Entailing lemma lem_13: Fail. Details below:
+	 "==>" implication: : Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_lem_13_left::U<>@M(must),
+valid
+]
+	 "<==" implication: : Valid.
+===================================================================
+# ex21u3b.slk
+
+# It seems app4 is unchanged. What we should do is assert
+       self::app4<> == self::tmp_app4<> 
+  after the predicate unification..
+
+!!! **WARNING****cast.ml#3859:Updating an available view decl (app4) in cprog.
+!!! **WARNING****iast.ml#3860:Updating an available view decl (app4) in iprog
+!!! **sleekengine.ml#3024:Printing Views
+:
+[ view tmp_app4<>= 
+  EList
+    :EBase 
+       (* lbl: *){8}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[flted_12_37](* lbl: *){9}->(exists Anon_36: (* lbl: *){9}->
+          self::node<Anon_36,flted_12_37>@M * DP_38(flted_12_37)&
+          {FLOW,(1,26)=__flow#E}[])
+    , view DP_38<>= 
+  EList
+    :EBase 
+       (* lbl: *){18}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){19}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    , view app4<>= 
+  EList
+    :EList
+       :EBase 
+          (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+       || :EBase 
+             exists (Impl)[Anon_12](* lbl: *){2}->(exists flted_12_16: (* lbl: *){2}->
+             self::node<Anon_12,flted_12_16>@M&flted_12_16=null&
+             {FLOW,(1,26)=__flow#E}[])
+       
+    || :EBase 
+          exists (Impl)[Anon_13; 
+          q](* lbl: *){3}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
+          {FLOW,(1,26)=__flow#E}[]
+    ]
+===================================================================
+# ex21u3b.slk
+
+pred app4a<> == 
+   case {
+    self=null -> [] self=null;
+    self!=null -> [] self::node<_,q> 
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         };
+    }
+inv true.
+pred_unify_disj[app4a].
+
+# This fails sinc  we need to apply pred_reuse_subs first.
+
+!!! **syn.ml#808:XXX fail <--- 
+!!! **syn.ml#809:<=coerc lem_inf_app4a_rev
+	 kind: LEM_TEST
+	 origin: generated
+	 head: (self::app4a{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4a{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+===================================================================
+# ex21c2.slk --eci
+
+pred app4<> == self=null
+  or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+# --eci not deep enough ..
+
+[ view app4<>= 
+  ECase
+   case {
+    self=null ->
+     EList
+       :EBase 
+          (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+       ;
+    self!=null ->
+     EList
+       :EBase 
+          exists (Impl)[Anon_12](* lbl: *){2}->(exists flted_12_16: (* lbl: *){2}->
+          self::node<Anon_12,flted_12_16>@M&flted_12_16=null&
+          {FLOW,(1,26)=__flow#E}[])
+       || :EBase 
+             exists (Impl)[Anon_13; 
+             q](* lbl: *){3}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
+             {FLOW,(1,26)=__flow#E}[]
+       ;
+    }
+   ]
+===================================================================
+# ex21u3e2.slk
+
+pred app4<> == self::node<_,null>
+ 	or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred_unify_disj[app4].
+
+# The derived DP_60<> need to unfold tmp_app4<>
+
+!!! **syn.ml#796:=>coerc lem_inf_app4
+	 kind: LEM_INFER
+	 origin: generated
+	 head: (self::app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+
+========================
+ Performing Deriving Segmented Views
+========================
+
+[ view tmp_app4<>= 
+  EBase 
+    self::node<Anon_58,flted_14_59>@M * DP_60(flted_14_59)&
+    {FLOW,(1,26)=__flow#E}[], 
+ view DP_60<>= 
+  EList
+    :EBase 
+       (* lbl: *){21}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+===================================================================
+# ex21u3e4.slk (FIXED)
+
+
+# need to update view_scc_obj graph for this unfolding ..
+
+To support single non-recursive unfolding
+    || :EBase 
+          exists (Impl)[Anon_13; 
+          q](* lbl: *){4}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
+          {FLOW,(1,26)=__flow#E}[]
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true)
+
+# implicit is being renamed. However, is it also an existential?
+
+where possible.
+
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true) #DONE
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){8}->self::tmp_app4<>@M&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (exists Anon_86,p_87: self::node<Anon_86,p_87>@M * p_87::dp<>@M&
+          {FLOW,(1,26)=__flow#E}[])
+    ]
+
+
+# can keep labels? (FIXED)
+
+# order of reuse wrong. need to use:
+
+SCC:[[dp];[dp1];[tmp_app4a];[app4];[tmp_app4]]
+
+PRED REUSE FOUND:[(dp1,dp1),(app4,app4),(tmp_app4a,tmp_app4a),(tmp_app4,tmp_app4),(dp,dp1)]
+
+===================================================================
+# ex21u3e7.slk (FIXED)
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+
+# unfolding RHS self::tmp_app4a<> will allow lemma
+  proving to succeed.
+
+!!! **lemma.ml#218:unfold RHS of lemma
+!!! **lemma.ml#220:ldef:
+<=>coerc L3
+	 head: (emp ; (emp ; (self::app4{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)
+	 body:(emp ; (emp ; (self::tmp_app4a{}<>[HeapNode1]))) * ([] & true)( FLOW __norm)testing lemmas
+!!! **lemma.ml#224:unfold_lst:
+[(tmp_app4a,[], (* lbl: *){5}->(exists Anon_15,
+p: (* lbl: *){5}->self::node<Anon_15,p>@M * p::dp1<>@M&
+{FLOW,(1,26)=__flow#E}[])),(tmp_app4,[], (* lbl: *){6}->(exists Anon_14,
+p: (* lbl: *){6}->self::node<Anon_14,p>@M * p::dp<>@M&
+{FLOW,(1,26)=__flow#E}[]))]
+===================================================================
+# ex21u3e7a.slk --new-view-equiv (FIXED)
+
+PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(dp1,dp),(tmp_app4a,tmp_app4),(app4,tmp_app4)]
+
+# --new-view-equiv causing LOOPING problem..
+
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+
+!!! **hipUtil.ml#79:unfold tmp_app4 in 
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+!!! **WARNING****cast.ml#3875:Using equiv app4 <-> ([],tmp_app4)
+
+===================================================================
+# ex21u3e2.slk -dre "lemma_unfold"
+
+  pred_unify_disj[app4].
+
+# why wasn't lemma unfold done?
+
+# DP_60(flted_31_59) is still a HREL and need to be converted to flted_31_109::DP_60<>@M&
+
+[ view tmp_app4<>= 
+  EBase 
+    exists (Impl)[flted_31_59](* lbl: *){13}->(exists Anon_58: (* lbl: *){13}->
+    self::node<Anon_58,flted_31_59>@M * DP_60(flted_31_59)&
+    {FLOW,(1,26)=__flow#E}[]), 
+  view DP_60<>= 
+  EList
+    :EBase 
+       exists (Impl)[flted_31_109](* lbl: *){21}->(exists Anon_108: (* lbl: *){21}->
+       self::node<Anon_108,flted_31_109>@M * flted_31_109::DP_60<>@M&
+       self!=null&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    equiv_set: ([],ll)
+  ]
+!!! **syn.ml#820:XXX fail <--- 
+!!! **syn.ml#821:<=coerc lem_inf_app4_rev
+	 kind: LEM_TEST
+	 origin: generated
+	 head: (self::app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+
+# Why is target of tmp_app4 and DP_60 empty?
+
+SCC:[[ll];[app4]]
+Graph:[(DP_60,[]);(tmp_app4,[]);(ll,[ll]);(app4,[app4])]
+(==astsimp.ml#8756==)
+order_views@3
+order_views inp1 :[DP_60]
+order_views@3 EXIT:([DP_60],[])
+
+
+[ view tmp_app4<>= 
+  EBase 
+    exists (Impl)[flted_31_59](* lbl: *){13}->(exists Anon_58: (* lbl: *){13}->
+    self::node<Anon_58,flted_31_59>@M * DP_60(flted_31_59)&
+    {FLOW,(1,26)=__flow#E}[])]
+
+view DP_60<>= 
+  EList
+    :EBase 
+       (* lbl: *){21}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+===================================================================
+# ex21u3e2.slk -dre "lemma_unfold" 
+
+PRED REUSE FOUND:[(ll,ll),(DP_60,ll),(tmp_app4,tmp_app4),
+   (app4,tmp_app4)]
+
+# can we have a better reuse algo? where the equi 
+  views are not re-checked? and SCC ordering takes that 
+  into account.
+===================================================================
+# ex21u3e9.slk -dre "lemma_unfold" 
+
+pred_unify_disj[appA].
+pred_unfold[*].
+//print views.
+pred_reuse[*][*].
+print views.
+
+# Any unfold? Any reuse?
+
+PRED REUSE FOUND:[(tmp_appA,tmp_appA),(DP_38,DP_38),(appA,appA)]
+
+pred_unify_disj[appA].
+pred_unfold[*].
+//print views.
+pred_reuse[*][*].
+
+# can we have a better reuse algo? where the equi 
+  views are not re-checked? and SCC ordering takes that 
+  into account.
+===================================================================
+# ex21u1a.slk -(FIXED)
+
+  pred_elim_useless [G1,G2].
+
+# Why did G2_66 still has two parameters in view header?
+  
+   view G2_66<p:node,y:node>= 
+
+[ view G2_66<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; 
+          pp]self::node<Anon_14,pp,tt>@M * tt::G2_66<y>@M&
+          {FLOW,(1,26)=__flow#E}[]
+
+===================================================================
+# ex21u1c.slk --esl -dre "trans_one_coercion" (FIXED)
+ (FIXED by not making LHS existential for <-> proving)
+
+ lemma_test self::G3<y> <-> self::G3a<>.
+
+# Why did this lemma succeeded? y is NOT useless?
+
+# Why is there exists y below?
+  cannot wrap exists y for head nor body ..
+
+head_norm:  (exists y: self::G3<y>@M&{FLOW,(20,21)=__norm#E}[])
+ 
+trans_one_coercion@1
+trans_one_coercion inp1 :<=>coerc lem_14
+	 head: (EX  . (self::G3{}<y>[HeapNode1])*([] & true)( FLOW __norm))
+	 body:(EX  . (self::G3a{}<>[HeapNode1])*([] & true)( FLOW __norm))safe lemmas(added to store only if valid)
+===================================================================
+# ex21u1e.slk  (FIXED)
+
+pred_elim_useless [G1,G2].
+
+!!! **norm.ml#50:  ELIMINATE parameters:[y] of view G2
+!!! **norm.ml#50:  ELIMINATE parameters:[y] of view G1
+
+# Change G2_43<y:TVar[36]> G1_44<y:TVar[42]> to NO parameters
+  view G2_43<y:TVar[36]>= 
+  view G1_44<y:TVar[42]>= 
+===================================================================
+# ex21u1e.slk --dd-calls-all (Loc?) -dre ".*coercion"
+
+# Why no lemma proving? Compare with ex21u1f.slk
+  It seems that lemma were generated but not send for proving..
+
+%%% generate_view_lemmas
+%%%  cformula.elim_exists (2)
+%%%   get_subst_equation_formula
+%%%    get_subst_equation_b_formula 
+
+(==lemma.ml#1863==)
+generate_view_rev_rec_lemmas@3
+generate_view_rev_rec_lemmas inp1 : view G2<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; pp](* lbl: *){2}->(exists pp_16,
+          y_17: (* lbl: *){2}->self::node<Anon_14,pp,tt>@M * 
+                               tt::G2<pp_16,y_17>@M&
+          pp_16=pp & y_17=y&{FLOW,(1,26)=__flow#E}[])
+    
+generate_view_rev_rec_lemmas@3 EXIT:[=>coerc rev_G2_65
+	 head: (self::G2{}<p,y>@M[HeapNode1]) * ([] & !(((self:node)) = ((y:node))))( FLOW __flow)
+	 body:((tt::node{}<Anon_14,pp,y,>@M[HeapNode1]) * (self::G2{}<pp,tt>@M[HeapNode1])) * ([] & true)( FLOW __flow)safe lemmas(added to store only if valid)
+]
+===================================================================
+# ex21u1j.slk (FIXED by adding to iprog)
+
+pred_elim_useless [G1,G2].
+pred_reuse[*][*].
+
+# Why are the generated views not kept?
+
+!!! **cast.ml#3863:Updating an available view decl (G1[y]) in cprog.
+!!! **cast.ml#3864:Adding the view G1_44[] into cprog.
+!!! **WARNING****norm.ml#149:Need to update iprog views too
+!!! **norm.ml#162:USELESS Parameters eliminated:
+[(G1,[y]),
+(G2,[y])]
+
+ERROR: at _0:0_0:0
+Message: G1_54 is neither 2 a data nor view name
+
+ERROR: at _0:0_0:0
+Message: G2_53 is neither 2 a data nor view name
+
+# Solution : Can use :
+let update_view_decl prog vdecl = 
+!!! **iast.ml#3861:Adding the view tmp_app4 into iprog.
+!!! **cast.ml#3860:Adding the view tmp_app4 into cprog.
+
+ view G2_53<y:TVar[40]>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt]self::node<Anon_14,tt>@M * tt::G2_53<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    ,
+ view G1_54<y:TVar[46]>= 
+  EBase 
+    exists (Impl)[Anon_13; t]self::node<Anon_13,t>@M * t::G2_53<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+===================================================================
+# ex20c.slk
+
+# deriving pre for ll method incr/ex20a.ss
+
+# Why did P has two parameters?
+     next_27_1635::P<x_70>
+
+  Can we print more info on what is being added..
+
+!!! **cast.ml#3861:Adding the view P[x_66] into cprog.
+!!! **cast.ml#3861:Adding the view HP_1637[x] into cprog.
+!!! **cast.ml#3861:Adding the view HP_1636[x] into cprog.
+
+ # How was the integer parameter eliminated?
+
+ view P<x_66:node>= 
+  EList
+    :EBase 
+       exists (Impl)[val_27_1634; 
+       next_27_1635](* lbl: *){7}->(exists x_70: (* lbl: *){7}->
+    self::node<val_27_1634,next_27_1635>@M * 
+                          next_27_1635::P<x_70>@M&
+       self!=null & x_70=x_66&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){8}->emp&x_66=null&{FLOW,(1,26)=__flow#E}[]
+    , 
+
+[ view HP_1636<x:node>= 
+  EBase 
+    (* lbl: *){10}->emp&{FLOW,(1,26)=__flow#E}[], 
+
+view HP_1637<x:node>= 
+  EBase 
+    exists (Impl)[x_66](* lbl: *){9}->self::P<x_66>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+
+===================================================================
+# ex25d.slk (see also ex25a.slk)
+
+# Can we mark the mutual recursive fields of data nodes
+  with #REC. This is needed for size extension of ex25a.slk
+
+   data_mark_rec [*].
+
+This command will process all data_decl and then mark the recursive
+fields with  #REC
+
+Add a data_mark_rec command. Pick data declaraction from
+!cprog. Use HipUtil.graph to build a strongly conncted graph.
+For each SCC, travere the data structure to mark the recursive fileds.
+
+Provide also a command to print the latest data declarations:
+  print data [*].
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================

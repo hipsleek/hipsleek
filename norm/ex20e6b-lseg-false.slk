@@ -1,0 +1,10 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+
+//infer[y] x=0 & y=1 |- x=1.
+//print residue.
+
+infer[y] x=0 & y=1 |- false.
+print residue.

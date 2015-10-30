@@ -950,13 +950,24 @@ let analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs=
   in
   (new_cs, tot_unk_hpargs, new_map, link_hpargs4, punk_map)
 
+(* type: Sautil.C.prog_decl -> *)
+(*   CP.spec_var list -> *)
+(*   CF.hprel list -> *)
+(*   ((CP.spec_var * int list) * CP.xpure_view) list -> *)
+(*   (CP.spec_var * CP.spec_var list) list -> *)
+(*   (CP.spec_var * CP.spec_var list) list -> *)
+(*   CF.hprel list * (CP.spec_var * CP.spec_var list) list * *)
+(*   ((CP.spec_var * int list) * CP.xpure_view) list * *)
+(*   (CP.spec_var * CP.spec_var list) list * (CP.spec_var * int list) list *)
 let analize_unk prog post_hps constrs total_unk_map unk_hpargs link_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2a = pr_list (pr_pair !CP.print_sv (pr_list string_of_int)) in
   let pr2 = (pr_list (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) CP.string_of_xpure_view)) in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_penta pr1 pr3 pr2 pr3 pr2a in
-  Debug.no_5 "analize_unk" pr1 pr2 !CP.print_svl pr3 pr3 pr4
+  Debug.no_5 "analize_unk_main" (add_str "hprels" pr1) (add_str "unk_map" pr2) 
+    (add_str "post_hps" !CP.print_svl) (add_str "unk_hpargs" pr3) 
+    (add_str "link_hpargs" pr3) pr4
     (fun _ _ _ _ _ -> analize_unk_x prog post_hps constrs total_unk_map unk_hpargs link_hpargs)
     constrs total_unk_map post_hps unk_hpargs link_hpargs
 
@@ -2547,7 +2558,7 @@ let do_entail_check_x vars iprog cprog cs=
   let () = Infer.rel_ass_stk # reset in
   let get_view_def vname=
     let () = Debug.ninfo_hprint (add_str "vname" pr_id) vname no_pos in
-    let vdef = (x_add Cast.look_up_view_def_raw 40 cprog.Cast.prog_view_decls vname) in
+    let vdef = (x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls vname) in
     (vname, vdef.Cast.view_un_struc_formula,vdef.Cast.view_vars)
   in
   let has_unknown vdef =
@@ -2785,6 +2796,12 @@ let compute_gfp_x prog is_pre is predefs pdefs=
   (********INTERNAL*******)
   let skip_hps = List.map fst (is.CF.is_dang_hpargs@is.CF.is_link_hpargs) in
   (********END INTERNAL*******)
+  if !Globals.sa_prefix_emp then
+    let (hp0,args0,f0) = List.hd pdefs in
+    let r,non_r_args = List.hd args0, List.tl args0  in
+    let fixn = CF.formula_of_heap CF.HEmp no_pos in
+    CF.mk_hp_rel_def hp0 (args0, r, non_r_args) None fixn None no_pos,[]
+  else
   let hp,def,n_unk_hpargs=
     match pdefs with
     | (hp0,args0,f0)::rest ->
@@ -2959,7 +2976,7 @@ let elim_diverg_paras_x prog pdefs=
   let find_diverg_paras (hp,args,f)=
     let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
     let f1, _ = CF.drop_hrel_f f [hp] in
-    let svl = CF.get_ptrs_w_args_f f1 in
+    let svl = CF.get_ptrs_w_args_f  ~en_pure_field:false f1 in
     let ( _,mf,_,_,_,_) = CF.split_components f in
     let eqNulls = MCP.get_null_ptrs mf in
     let eqs = (MCP.ptr_equations_without_null mf) in
@@ -3769,7 +3786,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
       in
       let orig_pred_name = CP.name_of_spec_var hp in
       let extn_view_name = ext_v.Cast.view_name in
-      let root_pos = Cast.get_proot_hp_def_raw cprog.Cast.prog_hp_decls orig_pred_name in
+      let root_pos = x_add Cast.get_proot_hp_def_raw cprog.Cast.prog_hp_decls orig_pred_name in
       let data_name = Cast.get_root_typ_hprel cprog.Cast.prog_hp_decls orig_pred_name in
       let extn_props = Cast.look_up_extn_info_rec_field cprog.Cast.prog_data_decls data_name in
       (* let extn_props = [("REC")] in *)
@@ -4122,6 +4139,12 @@ let pred_seg_split_hp iprog prog unk_hps ass_stk hpdef_stk (hp_defs: CF.hp_rel_d
 (*=============**************************================*)
 (*=============END PRED SPLIT================*)
 (*=============**************************================*)
+
+
+(***************************************************************)
+         (*=========== NORMALIZATION FOR RAW DEF===========*)
+(***************************************************************)
+
 let pred_norm_disj_x iprog prog unk_hps hp_defs=
 
   (1,[])
@@ -4248,11 +4271,13 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
   (****************END**INTERNAL***************)
   let () = Debug.ninfo_hprint (add_str " step 1" pr_id) "checking" no_pos in
   let to_norm_def, rest = List.fold_left (fun (acc_to, acc_rest) def -> begin
+    try
       let need_seg_opt = need_cutpoint def in
       match need_seg_opt with
         | Some conf ->
               (acc_to@[conf], acc_rest)
         | None -> (acc_to, acc_rest@[def])
+    with _ -> (acc_to, acc_rest@[def])
   end
   ) ([],[]) hp_defs in
   let () = Debug.ninfo_hprint (add_str " step 2" pr_id) "generating" no_pos in
@@ -4270,3 +4295,110 @@ let pred_norm_seg iprog prog unk_hps hp_defs=
   Debug.no_2 "pred_norm_seg" pr2 pr1 pr1
     (fun _ _ -> pred_norm_seg_x iprog prog unk_hps hp_defs)
     unk_hps hp_defs
+
+(***************************************************************)
+         (*===========END NORMALIZATION===========*)
+(***************************************************************)
+
+
+(***************************************************************)
+          (*=========== SIMPLIFICATION FOR RAW DEF===========*)
+(***************************************************************)
+
+(*
+  x::ll<> & x=null <=> x=null
+*)
+let simplify_trim_unsat_view_branches cprog def=
+  let unfold_ptrs f vptrs=
+    List.fold_left (fun (f,ss) sv0 ->
+        let sv = CP.subst_var_par ss sv0 in
+        let nf,ss1 = Solver.unfold_nth 9 (cprog, None) f sv true 0 no_pos in
+        (nf, ss@ss1)
+      ) (f, []) vptrs
+  in
+  let trim_unsat_g (f,og)=
+    if CF.is_trivial_f f then (f,og)
+    else
+      (* get view_nodes. then unfold *)
+      let vptrs = CF.get_vptrs f in
+      let () = Debug.ninfo_hprint (add_str "vptrs" !CP.print_svl) vptrs no_pos in
+      if vptrs = [] then (f,og)
+      else
+        let unfolded_f,_ = unfold_ptrs f vptrs in
+        let () = Debug.ninfo_hprint (add_str "unfolded_f" !CF.print_formula) unfolded_f no_pos in
+        (* unfold step already does trim. this only works for base case. *)
+        let unfolded_vptrs = CF.get_vptrs unfolded_f in
+        let nf = if unfolded_vptrs = [] then CF.simplify_pure_f unfolded_f else f
+        (* let goods,unsat_list = x_add_1 Solver.find_unsat cprog unfolded_f in *)
+        (* if unsat_list = [] then (f,og) *)
+        (* else *)
+        (*   let nf = match goods with *)
+        (*     | x::[]-> x *)
+        (*     | _ -> List.fold_left ( fun a c -> CF.mkOr c a no_pos) (CF.mkFalse (CF.mkTrueFlow ()) no_pos) goods *)
+        in
+        (nf,og)
+  in
+  let trimed_rhs = List.map trim_unsat_g def.CF.def_rhs in
+  {def with CF.def_rhs = trimed_rhs}
+
+let simplify_trim_unsat_view_branches cprog def=
+  let pr1 = Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "simplify_trim_unsat_view_branches" pr1 pr1
+      (fun _ -> simplify_trim_unsat_view_branches cprog def) def
+
+(*
+this simplify may overlap with split base case for post.
+*)
+let simplify_defined_pred def=
+  let elim_defined_pred_g (f,og)=
+    if CF.is_trivial_f f then (f,og)
+    else
+      let hp_rels = CF.get_HRels_f f in
+      if hp_rels = [] then (f,og)
+      else
+        let ( _,mf,_,_,_,_) = CF.split_components f in
+        let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mf) in
+        if eqNulls = [] then (f,og)
+        else
+          let defined_hps = List.fold_left (fun acc (hp,args) -> if CP.diff_svl args eqNulls = [] then
+            acc@[hp] else acc
+          ) [] hp_rels in
+          let nf = if defined_hps=[] then f
+          else fst (CF.drop_hrel_f f defined_hps)
+          in
+          let () = Debug.ninfo_hprint (add_str "nf" !CF.print_formula) nf no_pos in
+          (nf, og)
+  in
+  let elimed_rhs = List.map elim_defined_pred_g def.CF.def_rhs in
+  {def with CF.def_rhs = elimed_rhs}
+
+let simplify_defined_pred def=
+  let pr1 = Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "simplify_defined_pred" pr1 pr1
+      (fun _ -> simplify_defined_pred def) def
+
+(*
+  - this function simplifies the raw output of the synthesis
+  - preserve equivalence
+  - now, apply for post only
+ *)
+let simplify_def prog defs=
+  let simplify_post def=
+    (*simplify one branch, post*)
+    (*post synthesis usually includes views of pre-synthesis. do trim unsat branches*)
+    let def1 = simplify_trim_unsat_view_branches prog def in
+    (* this simplify may overlap with split base case for post. *)
+    (* simplify_defined_pred def1 *)
+    def1
+  in
+  List.map simplify_post defs
+
+
+let simplify_def prog defs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "simplify_def" pr1 pr1
+    (fun _ -> simplify_def prog defs) defs
+
+(***************************************************************)
+          (*===========END SIMPLIFICATION===========*)
+(***************************************************************)

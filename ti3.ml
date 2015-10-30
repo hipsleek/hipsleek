@@ -244,6 +244,11 @@ let is_infer_term sf =
 let is_infer_term_scc scc =
   List.exists (fun proc -> x_add_1 is_infer_term (proc.proc_stk_of_static_specs # top)) scc
 
+let is_infer_term_scc scc = 
+  let pr = pr_list (fun proc -> proc.proc_name) in
+  Debug.no_1 "is_infer_term_scc" pr string_of_bool
+    is_infer_term_scc scc
+
 let add_term_relation_proc prog proc spec = 
   let is_primitive = not (proc.proc_is_main) in
   if is_primitive then spec

@@ -1,0 +1,13 @@
+#verify_lemma
+#trans_one_coercion
+#,Trace
+#trans_head
+#change_univ
+#trans_I2C_struc_formula
+#trans_case_coverage,Trace
+#trans_formula
+#process_list_lemma
+#process_list_lemma_helper
+heap_entail_non_empty_rhs_heap,Trace
+do_match
+do_infer_heap

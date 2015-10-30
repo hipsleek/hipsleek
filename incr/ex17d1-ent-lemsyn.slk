@@ -1,0 +1,49 @@
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+lemma_unsafe self::sll<> <- self::lseg<q> * q::sll<>.
+
+checkentail x::lseg<null> |- x::sll<>.
+print residue.
+
+//checkentail x=fd & fd=null |- x::sll<>.
+//print residue.
+
+//checkentail x::lseg<null> |- x::lseg<q> * q::sll<>.
+//print residue.
+/*
+# ex17d1.slk
+
+How come cannot have:
+
+ checkentail x::lseg<null> |- x::sll<>.
+
+But can prove:
+
+ checkentail x::lseg<null> |- x::lseg<q> * q::sll<>.
+
+# refine strategy..
+
+Entail 2: Valid. 
+Residue:
+ <1>emp&q=null&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==>  COND ==>  BaseCaseFold]]
+
+*/
+
+/*
+HeapPred H(node a).
+lemma_infer_pred [H] self::lseg<q> * H(q) -> self::sll<>.
+print residue.
+*/

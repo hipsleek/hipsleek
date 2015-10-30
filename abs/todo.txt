@@ -1,0 +1,202 @@
+===============================================================
+# ex6a.slk
+
+@A should be treated as zero permission.
+
+The way is to first 
+ (i)   normalize both LHS + RHS by merging aliased nodes
+ (ii)  perform matching via imm rules
+ (iii) use special rule to convert at xpure stage
+      (which replace them by their pure equiv).
+
+I think (iii) needs to be added.
+
+checkentail x::node<_,_>@A * y::node<_,_> |- x!=y.
+expect Fail_May.
+//Got Valid, @A is the same as zero permission
+
+checkentail x::node<_,_>@A * y::node<_,_>@A |- x!=y.
+expect Fail_May.
+//Got Valid, @A is the same as zero permission
+
+checkentail x::node<_,_>@A * x::node<_,_>@A |- false.
+expect Fail_May.
+//Got Fail_Must, should be Fail_May.
+
+checkentail_exact x::node<_,_>@A |- emp.
+expect Valid.
+// Got Fail_Must
+//Entail 6: Fail.(must) cause: x::node<Anon_30,Anon_31>@A&{FLOW,(20,21)=__norm#E}[]:memory leak failure : residue is forbidden.
+===============================================================
+# ex6a1.slk
+
+# use --adhoc-3 to get old version
+
+checkentail x::node<_,_>@A * y::node<_,_> |- x!=y.
+expect Fail.
+
+# this entailment should fail..
+# some TODO at cvutil.ml for elim_absent_nodes and xpure*
+
+# to add a drop @A nodes during xpure and replace by its xpure
+
+!!! **cvutil.ml#129:DataNode(absent): x::node<Anon_12,Anon_13>@A
+!!! **cvutil.ml#1585:TODO: Need to add pure collected into p0
+!!! **cvutil.ml#1587:elim_abs (pure):[ x!=null]
+
+!!! **cvutil.ml#129:DataNode(absent): x::node<Anon_12,Anon_13>@A
+!!! **cvutil.ml#1588:TODO: Need to add pure collected into p0
+!!! **cvutil.ml#1590:elim_abs (pure):[ x!=null]
+
+(==cvutil.ml#1590==)
+xpure_heap_symbolic_i@2@1
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : y::node<Anon_14,Anon_15>@M
+xpure_heap_symbolic_i@2 EXIT:( y!=null,[y],true)
+
+(==astsimp.ml#7286==)
+xpure_heap_symbolic#999@1
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::node<Anon_12,Anon_13>@A * y::node<Anon_14,Anon_15>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@1 EXIT: y!=null#[y]# [[y]]true
+===============================================================
+# ex16a4.ss
+
+# Why did we have three push?
+# Why is there WARNING after push. Did the relation
+  table for z3 came from somewhere else?
+
+XXXX push_list(rel_decls}[ relation P__1395(AnnT ann_1396:AnnT).
+, relation P__1397(AnnT ann_1398:AnnT).
+]
+
+XXXX push_list(rel_decls}[ relation P__1419(AnnT ann_1420:AnnT).
+]
+
+WARNING: _0:0_0:0:Z3 error message: (error "line 1724 column 31: unknown function/constant P__1419")
+
+# ex5b2.slk did not have any WARNINGs for z3..
+
+===============================================================
+# ex7b --field-imm --en-imm-merge --eps
+
+# this error needs to be fixed from run-fast-test
+  the problem disappears without --eps. why?
+
+Validate 3: Expecting(3)Valid BUT got : Fail_May
+
+Unexpected List: [1,2,3]
+
+# Could it be due to views that are to be added?
+
+!!! **cvutil.ml#152:ViewNode(absent): q::ll<v>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): q::ll<v>@A@ rem br[{1,2}]
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+===============================================================
+# ex7c.slk
+
+Need todo following:
+
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+!!! **cvutil.ml#152:ViewNode(absent): x::ll<n>@A
+!!! **cvutil.ml#156:TODO: Need to add XPure by xpure_int
+===============================================================
+# ex2a1-norm2.slk -dre "merge_alias_nodes_f" --en-imm-merge
+
+checkentail x::cell<v>@A * x::cell<w>@A & x=y |- y!=null.
+
+# Why is below invoked so many times?
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@1
+merge_alias_nodes_formula inp1 : x::cell<v>@A * x::cell<w>@A&x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@1 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@2
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@2 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@3
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@3 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==immutable.ml#2854==)
+merge_alias_nodes_formula@4
+merge_alias_nodes_formula inp1 : emp&y!=null&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@4 EXIT: emp&y!=null&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@5
+merge_alias_nodes_formula inp1 : x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@5 EXIT: x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@6
+merge_alias_nodes_formula inp1 : x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@6 EXIT: x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@7
+merge_alias_nodes_formula inp1 : x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@7 EXIT: x::cell<v>@A&v=w & x=y&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@8
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@8 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+
+(==norm.ml#1053==)
+merge_alias_nodes_formula@9
+merge_alias_nodes_formula inp1 : x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@9 EXIT: x::cell<v>@A&x=y & v=w&{FLOW,(20,21)=__norm#E}[]
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+

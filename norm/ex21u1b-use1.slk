@@ -1,0 +1,31 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+
+pred G3<p:node,y> == self=y
+  or self::node<_,pp,tt> * tt::G3<pp,y>.
+
+pred G3a<p:node> == (exists y: self=y)
+  or self::node<_,pp,tt> * tt::G3a<pp>.
+
+lemma_test self::G3<p,y> <-> self::G3a<p>.
+
+
+//print views.
+
+/*
+# ex21u1b.slk --dd-calls-all
+
+ lemma_test self::G3<p,y> <-> self::G3a<p>.
+
+# Why did this lemma succeeded?
+  Why is y useless?
+
+Entailing lemma lem_15: Valid.
+ Lemma infer proved succeeded in current context.
+
+*/
+

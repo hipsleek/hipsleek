@@ -1,0 +1,18 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+   
+pred ll<> ==
+   self::node<_, null>
+   or self::node<_,p> * p::ll<>
+   inv self != null.
+   
+pred llN<nnn> == extends [ll*] with size[REC]<nnn>.
+
+print views.

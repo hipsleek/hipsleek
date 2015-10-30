@@ -1,0 +1,78 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star@NI z).
+
+//(5)
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q_155=q  
+ |-  U2(q3,q).
+print residue.
+ expect Valid.
+// expects U(q2,q_155) --> U2(q2,q_155)
+
+
+
+infer [U2,@classic] U(q2,q_155)  & q2=q3 //& q_155=q  
+ |-  U2(q3,q).
+print residue.
+ expect Valid.
+
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q!=null  & q_155=q
+ |-  U2(q3,q).
+print residue.
+ expect Valid.
+
+infer [U2,@classic] U(q2,q_155)  & q2=q3 & q!=null  //& q_155=q
+ |-  U2(q3,q).
+print residue.
+ expect Fail.
+
+infer [U2,@classic] U3(q2,_,q_155)  & q2=q3 & q!=null  & q_155=q
+ |-  U2(q3,q).
+print residue.
+ expect Valid.
+
+/*
+# ex16d2c2.slk 
+
+
+infer [U2,@classic] U3(q2,_,q_155)  & q2=q3 & q!=null  & q_155=q
+ |-  U2(q3,q).
+print residue.
+ expect Valid.
+
+ <1>emp&q_155=q & q!=null & q2=q3&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> GP_73(Anon_12)&true; 
+                  U3(q2,Anon_12,q@NI) * GP_73(Anon_12)&
+                   q!=null |#|3  --> U2(q2,q)&true]
+[[ InferFold  ==>  Match(UNK) ==>  COND ==>  UnmatchedRHSData]]
+
+
+-----------------------------
+
+  U(q2,q5) --> U2(q2,q)
+
+  U(q2,q5) & q5=q --> U2(q2,q)
+
+# No need to instantiate q if it is already known on LHS..
+
+Entail (1) : Fail.(may) cause:**inferHP.ml#237:Can not inst
+
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+
+# Why exception below?
+
+!!! **infer.ml#3566:undef_lhs_ptrs:[]
+ERROR: at _0:0_0:0
+Message: sau.add_raw_hp_rel: args should be not empty
+
+!!! WARNING logtime exception:0.000331
+Entail (2) : Failure("sau.add_raw_hp_rel: args should be not empty")
+
+
+*/

@@ -1,0 +1,58 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node v).
+
+
+
+infer [@classic,@pure_field] U2(xx,_) |- (exists xx2: U2(xx,xx2)).
+//infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
+//infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
+print residue.
+expect Valid.
+
+
+/*
+# ex25b3c.slk 
+
+infer [@classic,@pure_field] U2(xx,_) |- (exists xx2: U2(xx,xx2)).
+
+# I guess free is global and not implicit..
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ Match(UNK)]]
+
+(==solver.ml#12345==)
+do_match@1
+do_match inp1 : U2(xx,Anon_13)
+do_match inp2 : U2(xx,xx2_34)
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [xx2_34]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@pure_field,@leak]
+ es_evars: [xx2_34]
+ es_trace:  Match(UNK)
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@1 EXIT: [ emp&{FLOW,(20,21)=__norm#E}[]
+  es_evars: [xx2_34]
+  es_gen_impl_vars(E): []
+  es_heap: U2(xx,Anon_13)
+  es_infer_obj: [@pure_field,@leak]
+  es_evars: [xx2_34]
+  es_ante_evars: [xx2_34]
+  es_subst (from): [xx2_34]
+  es_subst (to): [Anon_13]
+  es_trace:  Match(UNK)]
+
+
+*/

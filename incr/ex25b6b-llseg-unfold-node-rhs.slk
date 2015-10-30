@@ -1,0 +1,57 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,int v).
+
+
+ infer [U1,@classic,@pure_field] x::node<5,q>*q::node<6,_>  |- U1(x).
+// infer [U1,@classic,@pure_field] x::node<5,null>  |- U1(x).
+// infer [U1,@classic] x::node<5,null>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
+//infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+print residue.
+expect Valid.
+
+
+/*
+# ex25b6.slk 
+
+
+----------------------------
+ infer [U1,@classic,@pure_field] x::node<5,null>  |- U1(x).
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [x::node<flted_14_30,flted_14_29>@M&
+                   flted_14_29=null & flted_14_30=5 |#|3  --> U1(x)&true]
+
+------------------------------------
+
+ infer [U1,@classic] x::node<5,null>  |- U1(x).
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [x::node<flted_14_30,flted_14_29>@M&
+                   flted_14_29=null |#|3  --> U1(x)&true]
+
+------------------
+
+ infer [U1,@classic,@pure_field] x::node<_,q>*q::node<_,_>  |- U1(x).
+
+Entail (1) : Valid. 
+
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [x::node<Anon_13,q>@M * q::node<Anon_14,Anon_15>@M&
+                   true |#|3  --> U1(x)&true]
+[[ InferFold ]]
+
+
+*/

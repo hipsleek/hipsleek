@@ -157,6 +157,10 @@ gsleek.native:
 	@ocamlbuild $(OBG_FLAGS) gsleek.native
 	cp -u _build/gsleek.native gsleek
 
+fact.byte: 
+	@ocamlbuild $(OBB_FLAGS) fact.byte
+	cp -u _build/fact.byte fact
+
 ghip.byte:
 	@ocamlbuild $(OBG_FLAGS) ghip.byte
 	cp -u _build/ghip.byte p-ghip
@@ -186,7 +190,7 @@ install-native: hip.native sleek.native
 	cp -u _build/main.native /usr/local/bin/hip
 	cp -u _build/sleek.native /usr/local/bin/sleek
 
-FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer 
+FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer imminfer
 
 init: clean_mli all create_mli
 
