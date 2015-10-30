@@ -8900,9 +8900,6 @@ let is_linear_formula f0 =
 let is_linear_formula f0 =
   Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
-let is_linear_formula f0 =
-  Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
-
 let is_linear_exp e0 =
   let f e =
     if is_bag e || is_list e then 
