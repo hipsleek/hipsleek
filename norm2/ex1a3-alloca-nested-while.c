@@ -38,9 +38,58 @@ int main()
 
 
 /*
-# ex1a3.c --trace-exc
+# ex1a3.c --trace-exc -show-push-list ".*_hp_rel"
 
-# WHY is y (or x classified as dangling? 
+# Why such a push? Where did HP_1695(y,x) came from?
+
+push_list(es_infer_hp_rel):1[ (1;1;0)unknown HP_1695(y,x) |#|  --> emp&y=x]
+
+!!! **inferHP.ml#267:args12:[]
+!!! **inferHP.ml#281:niu_svl_ni_total:[(x,@NI)]
+push_list(es_infer_hp_rel):1[ (1;1;0)unknown HP_1695(y,x) |#|  --> y::int_star<value_21_1712>@M]
+
+(==solver.ml#13547==)
+infer_collect_hp_rel#1@21@20
+infer_collect_hp_rel#1 inp1 :lhs_node: HP_1695(y,x)
+infer_collect_hp_rel#1 inp2 :rhs_node: y'::int_star<value_21_1707>@M
+infer_collect_hp_rel#1 inp3 :lhs:
+ HP_1695(y,x) * x::int_star<value_14_1694>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1694&
+{FLOW,(4,5)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: y'::int_star<value_21_1707>@M&{FLOW,(4,5)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es:
+  HP_1695(y,x) * x::int_star<value_14_1694>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1694&
+{FLOW,(4,5)=__norm#E}[]
+ es_infer_hp_rel: [(1;0)unknown HP_1687(x,y) |#|  --> x::int_star<value_14_1694>@M * 
+                                                      HP_1695(y,x)]
+ es_evars: [value_21_1707]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@shape_pre]
+ es_evars: [value_21_1707]
+ es_cond_path: [1; 1; 0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [HP_1687; HP_1695]
+infer_collect_hp_rel#1 inp6 :classic:false
+infer_collect_hp_rel#1@21 EXIT:(true,2:  x::int_star<value_14_1694>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1694&
+{FLOW,(4,5)=__norm#E}[]
+ es_infer_hp_rel: [(1;1;0)unknown HP_1695(y,x) |#|  --> y::int_star<value_21_1712>@M; 
+                   (1;0)unknown HP_1687(x,y) |#|  --> x::int_star<value_14_1694>@M * 
+                                                      HP_1695(y,x)]
+ es_evars: [value_21_1707]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@shape_pre]
+ es_evars: [value_21_1707]
+ es_cond_path: [1; 1; 0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [HP_1687; HP_1695],3:abd heap: y::int_star<value_21_1712>@M,4:None,5:None,6:new rest:None)
+
+===================================
+
+HY is y (or x classified as dangling? 
 
 !!! **syn.ml#183:Merging is not performed due to the set of pre-hprels does not have disjoint conditions:
  

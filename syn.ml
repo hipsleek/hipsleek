@@ -75,9 +75,9 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
     else
       { hpr with hprel_rhs = combine_dangling_args hpr.hprel_rhs }, true
 
-let add_dangling_hprel prog (hpr: CF.hprel) = 
-  let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "Syn.add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
+(* let add_dangling_hprel prog (hpr: CF.hprel) =  *)
+(*   let pr = Cprinter.string_of_hprel_short in *)
+(*   Debug.no_1 "Syn.add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr *)
 
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   let n_hpr_list, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) hpr_list) in
@@ -88,6 +88,11 @@ let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
       prog.Cast.prog_view_decls <- prog.Cast.prog_view_decls @ [mk_dangling_view_prim]
   in
   n_hpr_list
+
+let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
+  let pr = pr_list Cprinter.string_of_hprel_short in
+  Debug.no_1 "Syn.add_dangling_hprel_list" pr pr (add_dangling_hprel_list prog) hpr_list
+
   
 (*******************)
 (***** MERGING *****)

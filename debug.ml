@@ -508,7 +508,10 @@ struct
             let now = ref hd in
             List.iter (fun y ->
               if y = !now then incr ctr
-              else (new_stk#push (!now, !ctr); ctr := 1; now := y)) tl;
+              else 
+                let () = new_stk#push (!now, !ctr) in
+                let () = ctr := 1 in
+                now := y) tl;
             new_stk
     in
     object (self)
