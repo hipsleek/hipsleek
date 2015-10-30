@@ -316,18 +316,41 @@ let norm_reuse_mk_eq iprog prog edefs =
         ()
     ) edefs
 
+(* type: ('a -> Globals.ident -> bool) -> *)
+(*   'a list -> (CF.formula * 'b) list -> 'a list *)
 let uses_views_fn fn eq_lst f = (* does f uses views from eq_lst? *) 
   if eq_lst ==[] then []
   else 
     let p_lst = List.concat (List.map (fun (f,_) -> CF.extr_pred_list f) f) in
     (BList.intersect_eq fn eq_lst p_lst) 
 
+(* type: ('a -> Globals.ident -> bool) -> 'a list -> CF.formula list -> 'a list *)
+
 let uses_views_set eq_lst f = uses_views_fn string_eq eq_lst f
 
 let uses_views eq_lst f = (* does f uses views from eq_lst? *) 
   (uses_views_set eq_lst f)!=[]
 
-let norm_complex_unfold iprog cprog 
+let perform_unfold_decls iprog unfold_fn ans = 
+    List.iter (fun (v,unf_lst) -> (* transform body of views *)
+        let vn = v.C.view_name in
+        let fn = unfold_fn (* CF.complex_unfold *) vn unf_lst in
+        let () = C.update_un_struc_formula fn v in
+        let view_body_lbl = v.C.view_un_struc_formula in
+        let old_sf = v.C.view_formula in
+        let view_body = CF.convert_un_struc_to_formula view_body_lbl in
+        let args = v.C.view_vars in
+        (* struc --> better to re-transform it *)
+        let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+        let view_struc = CF.formula_to_struc_formula new_view_body in
+        let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
+        let () = C.update_view_formula (fun _ -> view_struc) v in
+        (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
+        ()
+      ) ans
+
+
+let norm_complex_unfold iprog  
     vdefs  (* all views *)
     (to_vns:ident list) (* pred to transform *) =
     (* let unfold_set0 = C.get_unfold_set vdefs (\* set of unfoldable views *\) in *)
@@ -358,38 +381,52 @@ let norm_complex_unfold iprog cprog
     let ans = List.map (fun vd -> (vd,uses_unfold_set1 vd)) vdefs in
     let () = y_tinfo_hp (add_str "selected vdefs" (pr_list (pr_pair (fun vd -> vd.C.view_name ) (pr_list (fun (v,_,_)->v)) ))) ans in
     let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
-    List.iter (fun (v,unf_lst) -> (* transform body of views *)
-        let vn = v.C.view_name in
-        let fn = CF.complex_unfold vn unf_lst in
-        let () = C.update_un_struc_formula fn v in
-        let view_body_lbl = v.C.view_un_struc_formula in
-        let old_sf = v.C.view_formula in
-        let view_body = CF.convert_un_struc_to_formula view_body_lbl in
-        let args = v.C.view_vars in
-        (* struc --> better to re-transform it *)
-        let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
-        let view_struc = CF.formula_to_struc_formula new_view_body in
-        let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
-        let () = C.update_view_formula (fun _ -> view_struc) v in
-        (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
-        ()
-      ) ans
+    let unfold_fn = CF.complex_unfold in
+    perform_unfold_decls iprog unfold_fn ans
+    (* List.iter (fun (v,unf_lst) -> (\* transform body of views *\) *)
+    (*     let vn = v.C.view_name in *)
+    (*     let fn = CF.complex_unfold vn unf_lst in *)
+    (*     let () = C.update_un_struc_formula fn v in *)
+    (*     let view_body_lbl = v.C.view_un_struc_formula in *)
+    (*     let old_sf = v.C.view_formula in *)
+    (*     let view_body = CF.convert_un_struc_to_formula view_body_lbl in *)
+    (*     let args = v.C.view_vars in *)
+    (*     (\* struc --> better to re-transform it *\) *)
+    (*     let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in *)
+    (*     let view_struc = CF.formula_to_struc_formula new_view_body in *)
+    (*     let view_struc = CF.add_label_to_struc_formula view_struc old_sf in *)
+    (*     let () = C.update_view_formula (fun _ -> view_struc) v in *)
+    (*     (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
+    (*     () *)
+    (*   ) ans *)
 
+let app_to_views iprog to_vns vdefs uses_unfold_set unfold_fn =
+    let vdefs = List.filter (fun vd -> 
+        let n = vd.C.view_name in
+        List.exists (fun vn -> string_eq vn n) to_vns
+      ) vdefs in
+    let ans = List.map (fun vd -> (vd,uses_unfold_set vd.C.view_un_struc_formula)) vdefs in
+    let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
+    (* let pr_vn v = v.C.view_name in *)
+    (* let pr2 (v,_,f) = (pr_pair pr_id !CF.print_formula) (v,f) in *)
+    (* let () = y_tinfo_hp (add_str "views selected for unfolding" *)
+    (*                        (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in *)
+    perform_unfold_decls iprog unfold_fn ans
 
-let norm_unfold qual iprog cprog 
+let norm_unfold qual iprog  
     vdefs  (* all views *)
     (to_vns:ident list) (* pred to transform *) =
-  if qual!=None then norm_complex_unfold iprog cprog vdefs to_vns
+  if qual!=None then norm_complex_unfold iprog vdefs to_vns
   else
     let () = y_binfo_hp (add_str "Perform simple unfolding for" (pr_list pr_id)) to_vns in
     let unfold_set0 = C.get_unfold_set vdefs (* set of unfoldable views *) in
-    let unfold_set1 = C.get_unfold_set_gen vdefs (* set of unfoldable views *) in
-    let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
-    let pr2 = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
-    let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
-    let pr2 = pr_list (pr_triple pr_id !CP.print_svl (pr_list !CF.print_formula)) in
-    (* unfold_set0 - single disj unfold set *)
-    let () = y_tinfo_hp (add_str "unfold_set0" pr) unfold_set0 in
+    (* let unfold_set1 = C.get_unfold_set_gen vdefs (\* set of unfoldable views *\) in *)
+    (* let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in *)
+    (* let pr2 = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in *)
+    (* let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in *)
+    (* let pr2 = pr_list (pr_triple pr_id !CP.print_svl (pr_list !CF.print_formula)) in *)
+    (* (\* unfold_set0 - single disj unfold set *\) *)
+    (* let () = y_tinfo_hp (add_str "unfold_set0" pr) unfold_set0 in *)
     (* unfold_set1 - multiple disjs unfold set *)
     (* let unfold_set1 = List.filter (fun (_,_,l) -> List.length l > 1) unfold_set1 in *)
     (* let () = if qual!=None then  *)
@@ -397,31 +434,36 @@ let norm_unfold qual iprog cprog
     (* let unfold_set = List.map (fun (m,vd) -> m) unfold_set0 in *)
     let uses_unfold_set f = uses_views_fn 
         (fun (m,_,_) m2 -> string_eq m m2) unfold_set0 f in
-    let vdefs = List.filter (fun vd -> 
-        let n = vd.C.view_name in
-        List.exists (fun vn -> string_eq vn n) to_vns
-      ) vdefs in
-    let ans = List.map (fun vd -> (vd,uses_unfold_set vd.C.view_un_struc_formula)) vdefs in
-    let ans = List.filter (fun (_,lst) -> lst!=[]) ans in
-    let pr_vn v = v.C.view_name in
-    let pr2 (v,_,f) = (pr_pair pr_id !CF.print_formula) (v,f) in
-    let () = y_tinfo_hp (add_str "views selected for unfolding"
-                           (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in
-    List.iter (fun (v,unf_lst) -> (* transform body of views *)
-        let fn = CF.repl_unfold_formula v.C.view_name unf_lst in
-        let () = C.update_un_struc_formula fn v in
-        let view_body_lbl = v.C.view_un_struc_formula in
-        let old_sf = v.C.view_formula in
-        let view_body = CF.convert_un_struc_to_formula view_body_lbl in
-        let args = v.C.view_vars in
-        (* struc --> better to re-transform it *)
-        let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
-        let view_struc = CF.formula_to_struc_formula new_view_body in
-        let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
-        let () = C.update_view_formula (fun _ -> view_struc) v in
-        (* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *)
-        ()
-      ) ans
+    let unfold_fn = CF.repl_unfold_formula in
+    app_to_views iprog to_vns vdefs  uses_unfold_set unfold_fn
+    (* let vdefs = List.filter (fun vd ->  *)
+    (*     let n = vd.C.view_name in *)
+    (*     List.exists (fun vn -> string_eq vn n) to_vns *)
+    (*   ) vdefs in *)
+    (* let ans = List.map (fun vd -> (vd,uses_unfold_set vd.C.view_un_struc_formula)) vdefs in *)
+    (* let ans = List.filter (fun (_,lst) -> lst!=[]) ans in *)
+    (* (\* let pr_vn v = v.C.view_name in *\) *)
+    (* (\* let pr2 (v,_,f) = (pr_pair pr_id !CF.print_formula) (v,f) in *\) *)
+    (* (\* let () = y_tinfo_hp (add_str "views selected for unfolding" *\) *)
+    (* (\*                        (pr_list (pr_pair pr_vn (pr_list pr2)))) ans in *\) *)
+    (* let unfold_fn = CF.repl_unfold_formula in *)
+    (* perform_unfold_decls iprog unfold_fn ans            *)
+    (* List.iter (fun (v,unf_lst) -> (\* transform body of views *\) *)
+    (*     let vn = v.C.view_name in *)
+    (*     let fn = CF.repl_unfold_formula vn unf_lst in *)
+    (*     let () = C.update_un_struc_formula fn v in *)
+    (*     let view_body_lbl = v.C.view_un_struc_formula in *)
+    (*     let old_sf = v.C.view_formula in *)
+    (*     let view_body = CF.convert_un_struc_to_formula view_body_lbl in *)
+    (*     let args = v.C.view_vars in *)
+    (*     (\* struc --> better to re-transform it *\) *)
+    (*     let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in *)
+    (*     let view_struc = CF.formula_to_struc_formula new_view_body in *)
+    (*     let view_struc = CF.add_label_to_struc_formula view_struc old_sf in *)
+    (*     let () = C.update_view_formula (fun _ -> view_struc) v in *)
+    (*     (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
+    (*     () *)
+    (*   ) ans *)
       
 (*
            let view_body_lbl = List.map (fun (f,l) -> (CF.repl_unfold_formula v.C.view_name unf_lst f,l)) view_body_lbl in
@@ -430,7 +472,32 @@ let norm_unfold qual iprog cprog
       Typeinfer.update_view_new_body ~iprog:(Some iprog) v view_body_lbl
 *)
 
+(* type: C.view_decl list -> *)
+(*   (((CF.formula * 'a) list -> *)
+(*     (String.t * C.P.spec_var list * C.F.formula) list) -> *)
+(*    (String.t -> *)
+(*     (String.t * CF.CP.spec_var list * CF.formula) list -> *)
+(*     CF.formula -> CF.formula) -> *)
+(*    'b -> 'c) -> *)
+(*   'b -> 'c *)
 
+let uses_views_fn_new fn eq_lst f = (* does f uses views from eq_lst? *) 
+  if eq_lst ==[] then []
+  else 
+    let p_lst = CF.extr_pred_list f in
+    (BList.intersect_eq fn eq_lst p_lst) 
+
+let norm_unfold_formula vdefs f =
+  let unfold_set0 = C.get_unfold_set vdefs in
+  let uses_unfold_set f = uses_views_fn_new 
+      (fun (m,_,_) m2 -> string_eq m m2) unfold_set0 f in
+  let unf_set = uses_unfold_set f in
+  CF.repl_unfold_formula "" unf_set f
+
+let norm_unfold_formula vdefs f =
+  let pr = !CF.print_formula in
+  Debug.no_1 "norm_unfold_formula" pr pr (norm_unfold_formula vdefs) f
+ 
 let norm_reuse_subs iprog cprog vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in
   let eq_lst = List.map (fun (m,_) -> m) equiv_set in
