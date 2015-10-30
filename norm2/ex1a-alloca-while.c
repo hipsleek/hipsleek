@@ -2,8 +2,10 @@
 
 //extern int __VERIFIER_nondet_int(void);
 
+// ../hip ex1a-alloca-while.c -infer "@shape_prepost@term"
+
 void loop (int* x)
-/*@
+/*
   infer[@shape_prepost]
   requires true
   ensures true;
