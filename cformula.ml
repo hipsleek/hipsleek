@@ -20368,6 +20368,11 @@ let extract_view_nodes hf =
   let lst = List.map (fun (no,vn,_,_) -> vn) lst in
   lst
    
+(*   self::P<..p> 
+           == self=p
+           or self::node<_,p>
+           or self::node<_,q>*q::P<..,p>
+*)
 let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
   let ty = self_typ in
   let args = List.filter (fun x -> CP.type_of_spec_var x = ty) args in

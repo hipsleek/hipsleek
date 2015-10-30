@@ -2069,7 +2069,58 @@ Residue:
 !!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
 !!! **solver.ml#12846:M_fold: q_148::ll<>@M
 ===================================================================
+# norm/ex26a3.slk
+
+# need to write recognize pred segment
+(*   self::P<..p> 
+           == self=p
+           or self::node<_,p>
+           or self::node<_,q>*q::P<..,p>
+*)
+let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
+  let ty = self_typ in
+
+without --inv-baga
+
+ERROR: at ex26a3-WSS-extn.slk_11:5_11:11
+Message: 
+Inv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:
+Exception processed: Failure("\nInv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:")
+error at: 
+SLEEK FAILURE (END)
+
+--inv-baga
+
+!!! **WARNING****derive.ml#707:TODO : need to build functions of views here
+!!! **cast.ml#3903:Adding the view WSS_sz[p,nnn] into cprog.
+!!! **WARNING****iast.ml#3922:Updating an available view decl (WSS_sz) in iprog
+Exception processed: Not_found
+error at: 
+SLEEK FAILURE (END)
 ===================================================================
+# ex26a4.slk --pcp
+
+  baga inv: [([self], n=1),([self], 2<=n)]
+ 
+# how come inv-baga gives complex unsimplified outcome
+
+--inv-baga
+
+ inv: self!=null & ((2<=n | n=1))
+  baga inv: [([self], n=1),([self], 2<=n)]
+  baga over inv: [([self], n=1),([self], 2<=n)]
+  baga over inv (unfolded): [([self], n=1),([self], 2<=n)]
+  baga under inv: [([self], n=1),([self], 2<=n)]
+  xform: self!=null & 0<=n & self!=null & ((2<=n | n=1))
+
+-wo inv-baga
+
+  inv: self!=null & 0<=n
+  
+  baga over inv: [([], self!=null & 0<=n)]
+  baga over inv (unfolded): [([self], 1<=n)]
+  
+  xform: self!=null & 1<=n
 ===================================================================
 ===================================================================
 ===================================================================

@@ -3,8 +3,8 @@
 //extern int __VERIFIER_nondet_int(void);
 
 void foo(int* x)
-/*
-  infer[@shape_pre,@classic]
+/*@
+  infer[@shape_prepost,@classic]
   requires true
   ensures true;
 */

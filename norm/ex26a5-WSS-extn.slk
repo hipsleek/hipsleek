@@ -10,7 +10,6 @@ pred WFSeg<p> ==
 
 pred WSS<p> ==
   self::WFSeg<q>*q::node<0,p> 
-  //inv true. 
   inv self!=null.
 
 pred_extn size[R]<k> ==
@@ -24,9 +23,19 @@ pred WFSeg_sz<p,nnn> == extends WFSeg<p> with size[REC]<nnn>.
 pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
 
 /*
-# ex26a3.slk
+# ex26a5.slk
 
 # Why self!=null cannot be proven?
+
+
+Last Proving Location: ex26a5-WSS-extn.slk_12:2_12:29
+
+ERROR: at ex26a5-WSS-extn.slk_11:5_11:11
+Message: 
+Inv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:
+
+Exception processed: Failure("\nInv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:")
+error at: 
 
 
 */

@@ -4211,7 +4211,7 @@ let lemma_soundness =
    val mutable lhs = None
    val mutable progress = false
    method logging s =
-     let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in
+     (* let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
      ()
    method start_lemma_proving loc (coer:coercion_decl)  =
      self # logging ("Start Lemma Proving "^loc);
@@ -4274,10 +4274,10 @@ let is_segmented_view vd =
   let dn = vd.view_data_name in
   let self = if dn="" then self
     else Some(Named dn) in
-  let () = y_binfo_hp (add_str "data_name" pr_id) dn in
+  let () = y_tinfo_hp (add_str "data_name" pr_id) dn in
   match self with 
   | None -> 
-    let () = y_binfo_pp "No type for self" in
+    let () = y_tinfo_pp "No type for self" in
     None
   | Some ty -> 
     let args = vd.view_vars in

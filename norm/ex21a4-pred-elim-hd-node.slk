@@ -22,6 +22,14 @@ pred app2<> == self::node<_,null>
 //no change
 
 pred_elim_hd_node [app2].
+pred_reuse[*][*].
+print views.
+
+
+pred_elim_tl_node [app2].
+print views.
+
+
 
 pred_reuse [*][ll].
 

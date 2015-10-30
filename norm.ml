@@ -381,6 +381,7 @@ let norm_unfold qual iprog cprog
     (to_vns:ident list) (* pred to transform *) =
   if qual!=None then norm_complex_unfold iprog cprog vdefs to_vns
   else
+    let () = y_binfo_hp (add_str "Perform simple unfolding for" (pr_list pr_id)) to_vns in
     let unfold_set0 = C.get_unfold_set vdefs (* set of unfoldable views *) in
     let unfold_set1 = C.get_unfold_set_gen vdefs (* set of unfoldable views *) in
     let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in
