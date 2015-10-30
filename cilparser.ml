@@ -629,7 +629,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                       "  case { \n" ^
                       "    p =  null -> ensures res = null; \n" ^
                       "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-                      "                 ensures res!=null; \n" ^
+                      "                 ensures res::WFSeg<q,s>; \n" ^
                       "  }\n"
           | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
                  "  case { \n" ^
@@ -1656,7 +1656,17 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                     let re = translate_exp exp in
                     let pointer_arith_proc = create_string_proc t1 t2 in
                     let proc_name = pointer_arith_proc.Iast.proc_name in
-    		    Iast.mkCallNRecv proc_name None [le; re] None None pos
+                    match e with
+                      | Cil.BinOp (_, exp1, exp2, _, _) -> (
+                          let t1 = typ_of_cil_exp exp1 in
+                          let t2 = typ_of_cil_exp exp2 in
+                          match (t1,exp2) with
+                            | Cil.TPtr(Cil.TInt(Cil.IChar, _), _), Cil.Const(Cil.CInt64 (i, _, _),_) 
+                              -> Iast.mkCallNRecv proc_name None [le; re] None None pos
+                            | Cil.TPtr(Cil.TInt(Cil.IChar, _), _), _ -> le
+                            | _, _ -> Iast.mkCallNRecv proc_name None [le; re] None None pos
+                        )
+                      | _ -> Iast.mkCallNRecv proc_name None [le; re] None None pos
                     (*Iast.mkAssign Iast.OpAssign le new_re None pos*)
                   )
                 | _ -> (
