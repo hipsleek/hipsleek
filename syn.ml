@@ -276,8 +276,8 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let hprel_rhs_fv = CF.fv hrel_def.hprel_rhs in
   (* Prevent self-recursive pred to avoid infinite unfolding *)
   if mem hrel_name hprel_rhs_fv then
-    let () = y_tinfo_pp (
-      "WARNING: Unfolding self-recursive predicate " ^ 
+    let () = y_winfo_pp (
+      "Unfolding self-recursive predicate " ^ 
       (!CF.print_h_formula hrel) ^ " is not allowed to avoid possibly infinite unfolding!")
     in
     None
@@ -294,21 +294,24 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
       | Some g -> g
     in
     let guard_h, guard_p, _, _, _, _ = x_add_1 CF.split_components guard_f in
-    let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in
+    (* let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in *)
+    let guard_h_f = CF.formula_of_heap guard_h no_pos in
     let rs, residue = x_add heap_entail_formula prog ctx guard_h_f in
     if rs then
       (* let _, ctx_p, _, _, _, _ = x_add_1 CF.split_components ctx in *)
       let ctx_p, _, _ = CVU.xpure_sym prog ctx in
-      if is_sat (MCP.merge_mems ctx_p guard_p true) then
-        let comb_f = x_add combine_Star prog guard_f residue in
-        Some (x_add combine_Star prog comb_f hrel_def.hprel_rhs)
-      else None
-    else None
+      let p_cond = MCP.merge_mems ex_lhs_p guard_p true in
+      if is_sat (MCP.merge_mems ctx_p p_cond true) then
+        let comb_f = x_add combine_Star prog guard_h_f residue in
+        Some (x_add combine_Star prog comb_f hrel_def.hprel_rhs, p_cond)
+      else None (* not unfolding as it causes a contradiction *)
+    else None (* guard_h is not satisfied by the current ctx *)
 
 let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pr1 = !CF.print_formula in
   let pr2 = Cprinter.string_of_hprel_short in
-  Debug.no_2 "Syn.unfolding_one_hrel_def" pr1 pr2 (pr_option pr1)
+  let pr3 = pr_pair pr1 !MCP.print_mix_formula in
+  Debug.no_2 "Syn.unfolding_one_hrel_def" pr1 pr2 (pr_option pr3)
     (fun _ _ -> unfolding_one_hrel_def prog ctx hrel hrel_def) ctx hrel_def
 
 let unfolding_one_hrel prog ctx hrel hrel_defs = 
@@ -326,11 +329,11 @@ let unfolding_one_hrel prog ctx hrel hrel_defs =
   (*     match hrel_def.CF.hprel_guard with Some _ -> true | None -> false) subst_hrel_defs in                              *)
   (* let non_inst_unguarded_hrel_defs, unguarded_hrel_defs = List.partition (is_non_inst_hprel prog) unguarded_hrel_defs in *)
   (* (* Only unfolding guarded hrel or non-inst hrel *)                                                                     *)
-  let unfolding_ctx_list = List.fold_left (fun acc hrel_def ->
-      let unfolding_ctx = x_add unfolding_one_hrel_def prog ctx hrel hrel_def in
-      match unfolding_ctx with
+  let unfolding_ctx_cond_list = List.fold_left (fun acc hrel_def ->
+      let unfolding_ctx_cond = x_add unfolding_one_hrel_def prog ctx hrel hrel_def in
+      match unfolding_ctx_cond with
       | None -> acc
-      | Some ctx -> acc @ [ctx]) [] 
+      | Some (ctx, p) -> acc @ [(ctx, p)]) []
     (* (guarded_hrel_defs @ non_inst_unguarded_hrel_defs) *)
     subst_hrel_defs
   in
@@ -339,9 +342,9 @@ let unfolding_one_hrel prog ctx hrel hrel_defs =
   (*   then unfolding_ctx_list                                 *)
   (*   else unfolding_ctx_list @ [add_back_hrel prog ctx hrel] *)
   (* in                                                        *)
-  if is_empty unfolding_ctx_list then
-    [add_back_hrel prog ctx hrel]
-  else unfolding_ctx_list
+  if is_empty unfolding_ctx_cond_list then
+    [(add_back_hrel prog ctx hrel, MCP.mkMTrue no_pos)]
+  else unfolding_ctx_cond_list
 
 let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
   let pos = no_pos in
@@ -359,20 +362,28 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
     (* let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in *)
     let lhs_p, _, _ = x_add CVU.xpure_sym prog hrd_lhs in
     let lhs_p = MCP.pure_of_mix lhs_p in
-    let ex_lhs_p = simplify lhs_p hrel_args in
-    let hrd_guard = hrel_def.hprel_guard in
-    let guard_f = 
-      let b = CF.mkBase_simp HEmp (MCP.mkMTrue pos) in
-      match hrd_guard with
-      | None -> b
-      | Some g -> b (* g *) (* Ignore guard in a post-hprel *)
-    in
-    let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
-    let rs, residue = x_add heap_entail_formula prog ctx guard_f in
-    if rs then
-        let comb_f = x_add combine_Star prog guard_f residue in
-        Some (x_add combine_Star prog comb_f hrel_def.hprel_lhs)
+    let ex_lhs_p = MCP.mix_of_pure (simplify lhs_p hrel_args) in
+    (* let hrd_guard = hrel_def.hprel_guard in                          *)
+    (* let guard_f =                                                    *)
+    (*   let b = CF.mkBase_simp HEmp (MCP.mkMTrue pos) in               *)
+    (*   match hrd_guard with                                           *)
+    (*   | None -> b                                                    *)
+    (*   | Some g -> b (* g *) (* Ignore guard in a post-hprel *)       *)
+    (* in                                                               *)
+    (* let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in *)
+    (* let rs, residue = x_add heap_entail_formula prog ctx guard_f in  *)
+    (* if rs then                                                       *)
+    let ctx_p, _, _ = CVU.xpure_sym prog ctx in
+    if is_sat (MCP.merge_mems ctx_p ex_lhs_p true) then
+      let comb_f = ctx (* x_add combine_Star prog guard_f residue *) in
+      Some (x_add combine_Star prog comb_f hrel_def.hprel_lhs)
     else None
+
+let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
+  let pr1 = !CF.print_formula in
+  let pr2 = Cprinter.string_of_hprel_short in
+  Debug.no_2 "Syn.folding_one_hrel_def" pr1 pr2 (pr_option pr1)
+    (fun _ _ -> folding_one_hrel_def prog ctx hrel hrel_def) ctx hrel_def
 
 let folding_one_hrel prog ctx hrel hrel_defs = 
   let hrel_name, hrel_args = sig_of_hrel hrel in
@@ -398,31 +409,36 @@ let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =
   let pos = no_pos in
   let hrel_name, hrel_args = sig_of_hrel hrel in
   if CP.eq_spec_var hprel_name hrel_name then
-    [add_back_hrel prog ctx hrel]
+    [(add_back_hrel prog ctx hrel, MCP.mkMTrue no_pos)]
   else
     let hrel_defs = List.filter (fun (hpr_sv, _) -> 
         CP.eq_spec_var hpr_sv hrel_name) hprel_groups in
     let hrel_defs = List.concat (List.map snd hrel_defs) in
-    if is_empty hrel_defs then [add_back_hrel prog ctx hrel]
+    if is_empty hrel_defs then [(add_back_hrel prog ctx hrel, MCP.mkMTrue no_pos)]
     else if is_unfolding then (* UNFOLDING FOR PRE-HPREL *)
       unfolding_one_hrel prog ctx hrel hrel_defs
     else (* FOLDING FOR POST-HPREL *)
-      folding_one_hrel prog ctx hrel hrel_defs
+      let folding_ctx_lst = folding_one_hrel prog ctx hrel hrel_defs in
+      List.map (fun ctx -> (ctx, MCP.mkMTrue no_pos)) folding_ctx_lst
 
 let process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups =
   let pr1 = !CF.print_formula in
   let pr2 = !CF.print_h_formula in
-  Debug.no_2 "Syn.process_one_hrel" pr1 pr2 (pr_list pr1)
+  let pr3 = pr_pair pr1 !MCP.print_mix_formula in
+  Debug.no_2 "Syn.process_one_hrel" pr1 pr2 (pr_list pr3)
     (fun _ _ -> process_one_hrel prog is_unfolding ctx hprel_name hrel hprel_groups) 
     ctx hrel
 
 let unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups =
   let rec helper ctx hrel_list = 
     match hrel_list with
-    | [] -> [ctx]
+    | [] -> [(ctx, MCP.mkMTrue no_pos)]
     | hr::hrl ->
-      let ctx_list = x_add process_one_hrel prog is_unfolding ctx hprel_name hr hprel_groups in
-      List.concat (List.map (fun ctx -> helper ctx hrl) ctx_list)
+      let ctx_cond_list = x_add process_one_hrel prog is_unfolding ctx hprel_name hr hprel_groups in
+      List.concat (List.map (fun (ctx, c) -> 
+        let n_ctx_cond_list = helper ctx hrl in
+        List.map (fun (n_ctx, n_c) -> n_ctx, MCP.merge_mems c n_c true) 
+          n_ctx_cond_list) ctx_cond_list)
   in
   let non_inst_hrel_list, norm_hrel_list = List.partition (CFU.is_non_inst_hrel prog) hrel_list in
   helper ctx (norm_hrel_list @ non_inst_hrel_list)
@@ -430,15 +446,16 @@ let unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups 
 let unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups =
   let pr1 = !CF.print_formula in
   let pr2 = pr_list !CF.print_h_formula in
-  Debug.no_2 "Syn.unfolding_hrel_list" pr1 pr2 (pr_list pr1)
+  let pr3 = pr_pair pr1 !MCP.print_mix_formula in
+  Debug.no_2 "Syn.unfolding_hrel_list" pr1 pr2 (pr_list pr3)
     (fun _ _ -> unfolding_hrel_list prog is_unfolding ctx hprel_name hrel_list hprel_groups) 
     ctx hrel_list
 
 let unfolding_hprel_base prog is_unfolding hprel_groups hprel_name f_h f_p =
   let f_hrels, f_hpreds = List.partition CF.is_hrel (CF.split_star_conjunctions f_h) in
   let ctx = CF.mkBase_simp (CF.join_star_conjunctions f_hpreds) f_p in
-  let unfolding_ctx_list = x_add unfolding_hrel_list prog is_unfolding ctx hprel_name f_hrels hprel_groups in
-  unfolding_ctx_list
+  let unfolding_ctx_cond_list = x_add unfolding_hrel_list prog is_unfolding ctx hprel_name f_hrels hprel_groups in
+  unfolding_ctx_cond_list
 
 let rec unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF.formula) =
   match f with 
@@ -450,30 +467,34 @@ let rec unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF
       formula_exists_qvars = svl;
       formula_exists_heap = h;
       formula_exists_pure = p } ->
-    let unfolding_f_list = unfolding_hprel_base prog is_unfolding hprel_groups hprel_name h p in
-    List.map (CF.push_exists svl) unfolding_f_list
+    let unfolding_f_cond_list = unfolding_hprel_base prog is_unfolding hprel_groups hprel_name h p in
+    List.map (fun (ctx, c) -> CF.push_exists svl ctx, MCP.mix_push_exists svl c) unfolding_f_cond_list
   | CF.Or {
       formula_or_f1 = f1;
       formula_or_f2 = f2;
       formula_or_pos = pos; } ->
-    let unfolding_f1_list = unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f1 in
-    let unfolding_f2_list = unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f2 in
-    List.concat (List.map (fun f1 -> List.map (fun f2 -> CF.mkOr f1 f2 pos) unfolding_f2_list) unfolding_f1_list)
+    let unfolding_f1_cond_list = unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f1 in
+    let unfolding_f2_cond_list = unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f2 in
+    List.concat (List.map (fun (f1, c1) -> 
+      List.map (fun (f2, c2) -> CF.mkOr f1 f2 pos, MCP.mkOr_mems c1 c2) unfolding_f2_cond_list) unfolding_f1_cond_list)
 
 let unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name (f: CF.formula) =
   let pr = !CF.print_formula in
-  Debug.no_1 "Syn.unfolding_hprel_formula" pr (pr_list pr)
+  let pr1 = pr_pair pr !MCP.print_mix_formula in
+  Debug.no_1 "Syn.unfolding_hprel_formula" pr (pr_list pr1)
     (fun _ -> unfolding_hprel_formula prog is_unfolding hprel_groups hprel_name f) f
 
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let hpr_name, hpr_args = sig_of_hprel hpr in
   let is_unfolding = is_pre_hprel hpr in
   let hpr_f = if is_unfolding then hpr.hprel_rhs else hpr.hprel_lhs in
-  let unfolding_ctx_list = x_add unfolding_hprel_formula prog is_unfolding hprel_groups hpr_name hpr_f in
-    let unfolding_hpr_list = List.map (fun unfolding_f ->
-        if is_unfolding then { hpr with hprel_rhs = unfolding_f }
-        else { hpr with hprel_lhs = unfolding_f }) unfolding_ctx_list in
-    unfolding_hpr_list
+  let unfolding_ctx_cond_list = x_add unfolding_hprel_formula prog is_unfolding hprel_groups hpr_name hpr_f in
+  let unfolding_hpr_list = List.map (fun (unfolding_f, c) ->
+      if is_unfolding then { hpr with 
+          hprel_rhs = unfolding_f; 
+          hprel_lhs = CF.add_pure_formula_to_formula (MCP.pure_of_mix c) hpr.hprel_lhs; }
+      else { hpr with hprel_lhs = unfolding_f }) unfolding_ctx_cond_list in
+  unfolding_hpr_list
     
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let pr = Cprinter.string_of_hprel_short in
@@ -661,6 +682,7 @@ let dangling_parameterizing hprels =
 (***********************************)
 let trans_one_hprel_to_view iprog prog hv hprels = 
   let hid = CP.name_of_spec_var hv in
+  let fail_msg = ("Cannot transform the hprels of " ^ hid ^ " into view declarations: ") in
   let unfold_hprels, fold_hprels = List.partition CFU.is_pre_hprel hprels in
   match unfold_hprels, fold_hprels with
   | hpr::[], others 
@@ -675,20 +697,26 @@ let trans_one_hprel_to_view iprog prog hv hprels =
           fst (x_add heap_entail_formula prog ante conseq)) others 
         in
         if others_check then [vdecl]
-        else x_fail ("Cannot transform the hprels of " ^ hid ^ " into view declarations.")
+        else x_fail (fail_msg ^ "Other hprels are not satisfiable.")
       else Saout.view_decl_of_hprel iprog prog hpr
     in
     vdecls
-  | _ -> x_fail ("Cannot transform the hprels of " ^ hid ^ " into view declarations.")
+  | _ -> x_fail (fail_msg ^ "Cannot find a single unfold/fold hprel.")
+
+let trans_one_hprel_to_view iprog prog hv hprels = 
+  let pr1 = Cprinter.string_of_hprel_list_short in
+  let pr2 = pr_list_ln Cprinter.string_of_view_decl_short in
+  Debug.no_2 "trans_one_hprel_to_view" !CP.print_sv pr1 pr2
+    (fun _ _ -> trans_one_hprel_to_view iprog prog hv hprels) hv hprels
 
 let trans_hprel_to_view iprog prog hprels = 
   let hprel_lists = partition_hprel_list hprels in
   let derived_views = List.concat (List.map (fun (hv, hprels) -> 
       trans_one_hprel_to_view iprog prog hv hprels) hprel_lists) in
-  let () = y_tinfo_hp (add_str "derived_views" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
+  let () = y_tinfo_hp (add_str "derived_views" (pr_list_ln Cprinter.string_of_view_decl_short)) derived_views in
   (* prog_view_decls of iprog and cprog are updated by norm_derived_views *)
   let norm_derived_views = (* norm_derived_views iprog prog *) derived_views in
-  let () = y_tinfo_hp (add_str "Derived Views" (pr_list Cprinter.string_of_view_decl_short)) norm_derived_views in
+  let () = y_tinfo_hp (add_str "Derived Views" (pr_list_ln Cprinter.string_of_view_decl_short)) norm_derived_views in
   norm_derived_views
 
 let trans_hprel_to_view iprog cprog hprels = 

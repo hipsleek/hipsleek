@@ -3293,7 +3293,7 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
             (List.map MCP.mix_of_pure l2,l1)
         else
           let l1,qv = e.CF.formula_exists_pure, e.CF.formula_exists_qvars in
-          ([MCP.memo_pure_push_exists qv l1],[])
+          ([MCP.mix_push_exists qv l1],[])
     in
     (* CF.formula -> MCP.mix_formula list * Cpure.formula list *)
     let part f = 

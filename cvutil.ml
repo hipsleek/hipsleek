@@ -986,7 +986,7 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
                 formula_exists_pos = pos}) ->
       let (pqh,_) = x_add xpure_heap_mem_enum 3 prog qh qp 1 in
       let tmp1 = x_add MCP.merge_mems qp pqh true in
-      MCP.memo_pure_push_exists qvars tmp1
+      MCP.mix_push_exists qvars tmp1
   in
   (xpure_helper prog f0, formula_2_mem f0 prog)
 
@@ -1704,7 +1704,7 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
       let () = Debug.ninfo_hprint (add_str "pqh" Cprinter.string_of_mix_formula) pqh no_pos in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
       let tmp1 = MCP.merge_mems qp pqh true in
-      let res_form = MCP.memo_pure_push_exists qvars tmp1 in
+      let res_form = MCP.mix_push_exists qvars tmp1 in
       let () = Debug.ninfo_hprint (add_str "pure res_form" Cprinter.string_of_mix_formula) res_form no_pos in
       (res_form, addrs) in
   let pf, pa = xpure_symbolic_helper prog f0 in

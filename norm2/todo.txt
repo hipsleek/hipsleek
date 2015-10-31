@@ -254,7 +254,7 @@ compute_actions@1 EXIT: SEARCH =>[
 
 */
 ==========================================================================
-# ex1a3.c
+# ex1a3.c (FIXED)
 
 [ // BIND
 (1;0)
@@ -266,7 +266,7 @@ HP_1692(y,x@NI)&true --> y::int_star<value_21_1705>@M&true,
 (1;1;0)
 y'::int_star<value_21_1711>@M * GP_1728(y',x'@NI)& y'!=null --> HP_1687(x',y')&true,
  // PRE_REC
-(1;1;0)
+1a3(1;1;0)
 emp&y'!=null |#| x'::int_star<v_int_30_1727>@M& true --> GP_1728(y',x'@NI)& true]
 
 !!! **syn.ml#671:other hprels of HP_1687: [(1;1;0)fold y'::int_star<value_21_1711>@M&y'!=null |#|  --> HP_1687(x',y')]
@@ -278,7 +278,7 @@ Stop Omega... 99 invocations caught
 
 Exception occurred: Failure("**syn.ml#678:Cannot transform the hprels of HP_1687 into view declarations.")
 ==========================================================================
-# norm/ex4b7b.slk
+# norm/ex4b7b.slk (FIXED)
 
 infer[HP]  y::cell<_> * x::cell<_> |- HP(x,y).
 print residue.

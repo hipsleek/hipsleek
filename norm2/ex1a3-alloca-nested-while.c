@@ -6,21 +6,21 @@
 
 void loop (int* x, int* y)
 /*@
-  infer[@shape_prepost]
+  infer[@shape_prepost,@term]
   requires true
   ensures true;
 */
 {
   while (*x > 0) 
     /*@
-      infer[@shape_prepost]
+      infer[@shape_prepost,@term]
       requires true
       ensures true;
     */
     {
     while (*y > 0) 
       /*@
-        infer[@shape_prepost]
+        infer[@shape_prepost,@term]
         requires true
         ensures true;
       */

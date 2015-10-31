@@ -451,11 +451,11 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
         let () = if (CF.is_empty_heap f) then ()
           else mem_guards_checking_reverse me.CF.mem_formula_guards (MCP.pure_of_mix p) pos
         in let fe = MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
-        (*in MCP.memo_pure_push_exists qvars fe*)
+        (*in MCP.mix_push_exists qvars fe*)
         in fe
       else (MCP.mix_of_pure f1)
-      (*MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)*)
-    in MCP.memo_pure_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
+      (*MCP.mix_push_exists qvars (MCP.mix_of_pure f1)*)
+    in MCP.mix_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
 
 let xmem_perm (f: CF.formula) (vl:C.view_decl list) : CF.mem_perm_formula * MCP.mix_formula * CP.spec_var list =
   let mix_true = MCP.mix_of_pure (CP.mkTrue no_pos) in 
@@ -482,7 +482,7 @@ let entail_mem_perm_formula (ante: CF.formula) (conseq: CF.formula) (vl: C.view_
   let subset_formula = CP.BForm((CP.BagSub(mfe_conseq,mfe_ante,pos),None),None) in
   let () = fl_subtyping ante_mem.CF.mem_formula_field_layout conseq_mem.CF.mem_formula_field_layout pos in
   let pure_formulas = MCP.merge_mems ante_mem_pure conseq_mem_pure true in
-  MCP.memo_pure_push_exists (ante_qvars@conseq_qvars) (MCP.merge_mems (MCP.mix_of_pure subset_formula) pure_formulas true)
+  MCP.mix_push_exists (ante_qvars@conseq_qvars) (MCP.merge_mems (MCP.mix_of_pure subset_formula) pure_formulas true)
 
 let get_data_fields (ddn : (ident * ((typed_ident * loc * bool) list)) list)  (name : ident) : ((typed_ident * loc * bool) list) = 
   try (snd (List.find (fun c -> (*let () = print_string(" DD: "^(fst c)^ "N: "^name) in  *)
@@ -1314,7 +1314,7 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
       	| _ -> false) (CP.list_of_conjs new_p) in
       	let new_p = CP.conj_of_list p_list f.CF.formula_exists_pos in*)
     let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
-    (*let new_mcp = MCP.memo_pure_push_exists f.CF.formula_exists_qvars new_mcp in*)
+    (*let new_mcp = MCP.mix_push_exists f.CF.formula_exists_qvars new_mcp in*)
     CF.Exists { f with
                 CF.formula_exists_qvars = qevars;
                 CF.formula_exists_heap = new_h;
