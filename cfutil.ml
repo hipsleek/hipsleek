@@ -126,17 +126,19 @@ let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
       let root_nodes, rest_nodes = List.partition (fun h ->
         let pt = get_node_var prog h in
         mem pt root_aliases) hs in
-      (* patched to prevent exc in norm2/ex1a3.c *)
       match root_nodes with
       | [] -> [], rest_nodes
-      | root_node::dupl_rest ->
+      (* patched to prevent exc in norm2/ex1a3.c *)
+      (* | root_node::dupl_rest ->               *)
+      | root_node::[] ->
         let root_args = diff (CF.get_node_args root_node) root_aliases in
         let sig_of_root_args, rem_nodes = List.fold_left (fun (acc, rem_nodes) ra ->
           let sig_of_ra, rem_nodes = helper ra rem_nodes in
           (acc @ sig_of_ra, rem_nodes)) ([], rest_nodes) root_args
         in
-        root_node::sig_of_root_args, dupl_rest@rem_nodes
-      (* | _ -> x_fail ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes)) *)
+        (* NOTE: Adding dupl_rest into rem_nodes might cause helper going into a loop *)
+        root_node::sig_of_root_args, (* dupl_rest @ *) rem_nodes
+      | _ -> x_fail ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes))
   in fst (helper root hs)
 
 let rec complx_sig_of_formula prog root (f: CF.formula) = 
@@ -153,7 +155,11 @@ let sig_of_formula prog root (f: CF.formula) =
   List.map (CF.get_node_name 30) (complx_sig_of_formula prog root f)
 
 let sig_of_formula prog root (f: CF.formula) = 
-  Debug.no_2 "sig_of_formula" pr_none pr_none pr_none (sig_of_formula prog) root (f: CF.formula)
+  let pr1 = !CP.print_sv in
+  let pr2 = !CF.print_formula in
+  let pr3 = pr_list pr_id in
+  Debug.no_2 "sig_of_formula" pr1 pr2 pr3 (sig_of_formula prog) root f
+
 let sig_of_lem prog (lem: C.coercion_decl) =
   let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem.C.coercion_head) in
   sig_of_formula prog self_var lem.C.coercion_head, 

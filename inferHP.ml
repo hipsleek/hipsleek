@@ -988,7 +988,7 @@ let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
         let n_es_form_e = CF.substitute_flow_into_f !error_flow_int n_es_form in
         let new_es = {es with (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list hp_rel_list; *)
                               CF.es_formula = n_es_form_e} in
-        let () =  new_es.CF.es_infer_hp_rel # push_list ~xloc:x_loc hp_rel_list in
+        let () =  new_es.CF.es_infer_hp_rel # push_list (* ~xloc:x_loc *) hp_rel_list in
         Some new_es
 
 let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
