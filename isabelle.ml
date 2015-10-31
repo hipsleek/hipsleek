@@ -58,7 +58,7 @@ let rec isabelle_of_typ = function
   | Array _ ->
     Error.report_error {Error.error_loc = no_pos; 
                         Error.error_text = "type var, array and named type not supported for Isabelle"}
-  | INFInt | Pointer _ -> Error.report_no_pattern ()  
+    | SESS | INFInt | Pointer _ -> Error.report_no_pattern ()  
   | Bptyp ->
     Error.report_error {Error.error_loc = no_pos; 
                         Error.error_text = "Bptyp type not supported for Isabelle"}

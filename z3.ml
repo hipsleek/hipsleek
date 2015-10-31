@@ -95,6 +95,7 @@ let rec smt_of_typ t =
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
   | Bptyp -> "int-triple"
+  | SESS -> "Session"
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t

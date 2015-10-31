@@ -67,7 +67,7 @@ type sleek_token =
   | MAX | MIN 
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
-  | PRED | PRED_PRIM | DPRINT | PRED_EXT 
+  | PRED | PRED_PRIM | PRED_SESS | DPRINT | PRED_EXT 
   | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
   (* | PRINT_VIEW *)
   (* | PRINT_VIEW_LONG *)
@@ -93,7 +93,7 @@ type sleek_token =
   (*operators*)  
   | CARET 
   | DOTDOT | ATPOS
-  | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | SPLIT1Ann | SPLIT2Ann | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  (* | VAL | REC *)
+  | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | NEGAT | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | SPLIT1Ann | SPLIT2Ann | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  (* | VAL | REC *)
   (* TermInf: Token for Termination Inference *)
   | TEMPLATE | TEMPL_SOLVE
   | NI | RO
@@ -102,11 +102,12 @@ type sleek_token =
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
   (* | TOPAREN | TCPAREN *)
   | PERCENT | PMACRO 
+	| QUERY
   | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac |PFRAC (* | PREF *)
   | SPLITANN
   | TUP2
   | PLUS | PRIME 
-  | SEMICOLON | SAT | SPEC
+  | SEMICOLON | SEMICOLONSEMICOLON | SAT | SPEC
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
   | INFER | INFER_EXACT | INFER_INEXACT | SUBANN | XPRE | PRE | XPOST | POST
@@ -192,8 +193,9 @@ module Token = struct
     | LEMMA TLEM_SPLIT ->"lemma_split"
     | LEMMA TLEM_PROP ->"lemma_prop"
     | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer" | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_SESS -> "pred_sess" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
     | PRINT -> "print" 
+		| QUERY -> "?" 
     | PRINT_LEMMAS -> "print_lemmas" 
     (* | PRINT_VIEW -> "print_view"  *)
     (* | PRINT_VIEW_LONG -> "print_view_long"  *)
@@ -204,12 +206,12 @@ module Token = struct
     (*operators*)
     | NI ->"@NI" | RO ->"@RO" | ATATSQ -> "@@[" | CARET -> "^"
     | DOTDOT ->".."
-    | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "--@"| AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| SPLIT1Ann ->"@S1" | SPLIT2Ann ->"@S2" | CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" |PFRAC -> "@frac"(* | VAL ->"@VAL" | REC ->"@REC"*)
+    | AND ->"&"  | ANDAND ->"&&" | ANDSTAR -> "&*" |  UNIONSTAR ->"U*" | STARMINUS -> "--@"| NEGAT ->"~@" | AT ->"@"  | ATAT -> "@@" | LEND->"@L" | ACCS ->"@A" | IMM->"@I"| DERV->"@D"| SPLIT1Ann ->"@S1" | SPLIT2Ann ->"@S2" | CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]" |PFRAC -> "@frac"(* | VAL ->"@VAL" | REC ->"@REC"*)
     | TEMPLATE -> "template" | TEMPL_SOLVE -> "template_solve"
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#" | REL_GUARD -> "|#|"
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
     | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||" 
-    | DERIVE -> "|-" | EQV -> "-|-" | CONSTR -> "-->" |  OSQUARE -> "[" | PERCENT ->"%" | PMACRO -> "PMACRO" | PLUS -> "+" | PRIME -> "'" | SEMICOLON -> ";" | STAR -> "*"
+    | DERIVE -> "|-" | EQV -> "-|-" | CONSTR -> "-->" |  OSQUARE -> "[" | PERCENT ->"%" | PMACRO -> "PMACRO" | PLUS -> "+" | PRIME -> "'" | SEMICOLON -> ";" | SEMICOLONSEMICOLON -> ";;" | STAR -> "*"
     | RAISE -> "raise" | THROWS -> "throws" | FINALLY -> "finally" | COMBINE -> "combine" | WITH -> "with" | JOIN -> "joinpred" | REFINES -> "refines"
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" | TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | INLIST -> "inlist" | HEAD -> "head"

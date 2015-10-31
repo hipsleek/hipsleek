@@ -242,6 +242,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_derv_info = [];
                          I.view_pt_by_self  = [];
                          I.view_formula = struc_body;
+												 I.view_session_formula = None;
                          I.view_inv_lock = None;
                          I.view_is_prim = false;
                          I.view_is_hrel = None;
@@ -353,6 +354,7 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_baga_under_inv = rev_trans_baga_inv v.C.view_baga_under_inv;
     I.view_mem = map_opt rev_trans_mem_formula v.C.view_mem;
     I.view_formula = rev_trans_struc_formula v.C.view_formula;
+		I.view_session_formula = None;
     I.view_inv_lock = map_opt rev_trans_formula v.C.view_inv_lock;
     I.view_pt_by_self = v.C.view_pt_by_self;
     I.try_case_inference = false; (* TODO *)

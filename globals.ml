@@ -69,6 +69,7 @@ type ho_flow_kind =
   | INFLOW
   | OUTFLOW
   | NEUTRAL
+	| SESSION
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
 type flags = 
@@ -91,7 +92,9 @@ let eq_ho_flow_kind k1 k2 =
   match k1, k2 with
   | INFLOW, INFLOW
   | OUTFLOW, OUTFLOW
-  | NEUTRAL, NEUTRAL -> true
+  | NEUTRAL, NEUTRAL
+	| NEUTRAL, SESSION
+	| SESSION, SESSION -> true
   | _ -> false
 
 let ho_always_split = ref false
@@ -180,10 +183,12 @@ type view_kind =
   | View_EXTN
   | View_DERV
   | View_SPEC
+	| View_SESS
 
 
 (* TODO : move typ here in future *)
 type typ =
+	| SESS (* session type*)
   | FORM (* Type for formula *)
   | UNK
   | TVar of int
@@ -241,6 +246,14 @@ type typ =
 
 type typed_ident = (typ * ident)
 
+(* ===================== session stuff ====================== *)
+let sess_send_pred = "Send"
+let sess_recv_pred = "Recv"
+let sess_op_sv_id = "sn"                (* send/receive operation spec var ? *)
+let sess_io_sv_id = "io"                (* I/O spec var name *)
+(* ===================== session stuff ====================== *)
+
+
 let string_of_view_kind k = match k with
   | View_PRIM -> "View_PRIM"
   | View_HREL -> "View_HREL"
@@ -248,6 +261,7 @@ let string_of_view_kind k = match k with
   | View_EXTN -> "View_EXTN"
   | View_DERV -> "View_DERV"
   | View_SPEC -> "View_SPEC"
+	| View_SESS -> "View_SESS"
 
 let is_undef_typ t =
   match t with
@@ -277,6 +291,7 @@ let rec param_typ_of_FuncT typ =
 let rec cmp_typ t1 t2=
   match t1,t2 with
   | FORM, FORM
+	| SESS, SESS
   | UNK, UNK
   | AnnT, AnnT
   | Bool, Bool
@@ -475,6 +490,7 @@ let string_of_ho_flow_kind (k:ho_flow_kind) =
   | INFLOW -> "-"
   | OUTFLOW -> "+"
   | NEUTRAL -> "."
+  | SESSION -> "Session"
 
 let string_of_ho_split_kind (k:ho_split_kind) =
   match k with
@@ -588,6 +604,7 @@ let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
 let rec string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
   | FORM          -> "Formula"
+	| SESS					-> "Session"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
@@ -639,6 +656,7 @@ let is_HpT x =
 let rec string_of_typ_alpha = function 
   (* may be based on types used !! *)
   | FORM          -> "Formula"
+	| SESS					-> "Session"
   | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
@@ -819,6 +837,8 @@ let proc_typ = Void  (*special thread id*)
 let fork_name = "fork"  (*generic, its args can vary*)
 let join_name = "join"
 
+let send_name = "send"  (*session types send function name*)
+let recv_name = "recv"  (*session types recv function name*)
 let init_name = "init"  (*generic, its args can vary*)
 let finalize_name = "finalize"
 let acquire_name = "acquire"
@@ -2636,3 +2656,10 @@ let build_sel_scc scc_lst get_name lst =
           List.find (fun v -> (get_name v)=c) lst
         ) scc
     ) scc_lst
+
+(*==============================session types begin =============================*)
+type session_kind = 
+	| SessionSend 
+	| SessionRecv
+
+(*==============================session types end =============================*)

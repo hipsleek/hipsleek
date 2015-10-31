@@ -108,7 +108,7 @@ and is_in_svars (e : CP.exp) (svars : CP.spec_var list) : bool =
     false
 
 and aug_class_name (t : typ) = match t with
-  | UNK  -> 	
+  | UNK | SESS -> 	
     Error.report_error {Error.error_loc = no_pos; 
                         Error.error_text = "unexpected UNKNOWN type"}
   | Pointer _ -> "Pointer"

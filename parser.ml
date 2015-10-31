@@ -26,6 +26,7 @@ module Lbl = Label_only
 module LO2 = Label_only.Lab2_List
 
 module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
+module Sess = Session
 
 (* some variables and functions decide which parser will be used *)
 let parser_name = (* ref "unknown" *) ref "default"
@@ -638,6 +639,7 @@ SHGram.Entry.of_parser "peek_print"
              | [UNION,_;OPAREN,_;_] -> ()
 	     (* | [XPURE,_;OPAREN,_;_] -> () *)
              | [IDENTIFIER id,_;OPAREN,_;_] ->  if hp_names # mem id then raise Stream.Failure else ()
+						 | [NOT,_;IDENTIFIER id,_;COLON,_] -> raise Stream.Failure
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
@@ -646,6 +648,12 @@ SHGram.Entry.of_parser "peek_print"
              (* | [i,_;j,_;k,_]-> print_string("start here: i:" ^ (Token.to_string i)^" j:"^(Token.to_string j)^" k:"^(Token.to_string k)^" end here \n");() *)
              | _ -> ())
 
+ let sess_trace =
+   SHGram.Entry.of_parser "peek_pure_out"
+       (fun strm -> 
+         match Stream.npeek 3 strm with
+           | [_,_;_,_;_] -> ()
+					 | _ -> ())	
  let peek_typecast = 
    SHGram.Entry.of_parser "peek_typecast"
        (fun strm -> 
@@ -726,6 +734,16 @@ let peek_hash_thread =
              | [_;COMMA,_;_;COMMA,_;_;SEMICOLON,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_sess = 
+   SHGram.Entry.of_parser "peek_sess"
+       (fun strm ->
+           match Stream.npeek 5 strm with
+             |[NOT,_;IDENTIFIER id,_;COLON,_;_;HASH,_] -> ()
+             |[QUERY,_;IDENTIFIER id,_;COLON,_;_;HASH,_] -> ()  
+						 |[AT,_;IDENTIFIER id,_;_;_;_] -> () 
+						 |[NEGAT,_;IDENTIFIER id,_;_;_;_] -> ()
+             | _ -> raise Stream.Failure)
+
  let peek_heap = 
    SHGram.Entry.of_parser "peek_heap"
        (fun strm ->
@@ -753,6 +771,27 @@ let peek_star =
              | [STAR,_;PZERO,_;_] -> raise Stream.Failure
              | _ -> ())                   
              
+let peek_sess_semicolon = 
+   SHGram.Entry.of_parser "peek_sess_semicolon"
+       (fun strm ->
+           match Stream.npeek 3 strm with
+             |[SEMICOLONSEMICOLON,_;NOT,_;IDENTIFIER id,_] -> ()
+             |[SEMICOLONSEMICOLON,_;QUERY,_;IDENTIFIER id,_] -> ()  
+						 |[SEMICOLONSEMICOLON,_;AT,_;IDENTIFIER id,_] -> () 
+						 |[SEMICOLONSEMICOLON,_;NEGAT,_;IDENTIFIER id,_] -> () 
+						 |[SEMICOLONSEMICOLON,_;OPAREN,_;_] -> ()  
+             | _ -> raise Stream.Failure)
+
+let peek_sess_with = 
+   SHGram.Entry.of_parser "peek_sess_with"
+       (fun strm ->
+           match Stream.npeek 3 strm with
+             |[WITH,_;NOT,_;IDENTIFIER id,_] -> ()
+             |[WITH,_;QUERY,_;IDENTIFIER id,_] -> ()  
+						 |[WITH,_;AT,_;IDENTIFIER id,_] -> () 
+						 |[WITH,_;NEGAT,_;IDENTIFIER id,_] -> () 
+						 |[WITH,_;OPAREN,_;_] -> ()  
+             | _ -> raise Stream.Failure)
 let peek_heap_and = 
    SHGram.Entry.of_parser "peek_heap_and"
        (fun strm ->
@@ -1010,6 +1049,7 @@ non_empty_command:
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
+      | `PRED_SESS;t=sess_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -1258,6 +1298,19 @@ prim_view_decl:
           view_is_hrel = None;
           view_inv_lock = li} ]];
 
+(*====================session formula begin ================================*)
+
+sess_view_decl:
+  [[ vh= view_header; `EQEQ; sc = OPT sess_constr -> 
+          { vh with
+          (* view_formula = None; *)
+          view_kind = View_SESS;
+	  view_session_formula = sc;
+          view_is_prim = true;
+          view_is_hrel = None;} ]];
+
+(*====================session formula end ==================================*)
+
 view_decl_ext:
   [[ vh= view_header_ext; `EQEQ; vb= view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       -> let (oi, oboi) = oi in
@@ -1486,7 +1539,14 @@ rflow_form:
   [[ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
        (* TODOSESS: dc should be struct, not transformed to struc *)
-       F.rflow_base = F.subst_stub_flow_struc n_flow ( F.formula_to_struc_formula dc); }
+       F.rflow_base = F.subst_stub_flow_struc n_flow ( F.formula_to_struc_formula dc);
+       F.session_formula = None; 
+     }
+   |	sc = sess_constr -> 
+     { F.rflow_kind = SESSION;
+       F.rflow_base = F.mkETrue n_flow (get_pos_camlp4 _loc 1); 
+       F.session_formula = Some sc; 
+     }
       (* match cc with                                                                                  *)
       (* | F.Base f -> {                                                                                *)
       (*   F.rflow_kind = un_option k NEUTRAL;                                                          *)
@@ -1540,6 +1600,7 @@ view_header_ext:
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
+					view_session_formula = None;
           view_inv_lock = None;
           view_is_prim = false;
           view_is_hrel = None;
@@ -1884,6 +1945,40 @@ non_thread_args2:
     `LT; hl= opt_data_h_args; `GT -> hl
   ]];
 
+(*====================session formula begin ================================*)
+
+sess_constr:	[[swr=sess_constr_rec -> swr]];
+
+sess_constr_rec:
+  [[   
+      shc = SELF; peek_sess_semicolon; `SEMICOLONSEMICOLON; hw= SELF -> Sess.sessionConnect shc hw
+    | shc = simple_session_constr        -> shc 
+    | `OPAREN; scc = session_constr_choice; `CPAREN -> scc
+  ]];
+
+session_constr_choice:
+	[[
+		shc=SELF; peek_star; `ORWORD; hw = sess_constr_rec -> Sess.mkSessionOr shc hw (get_pos_camlp4 _loc 1)
+	| shc=sess_constr_rec   -> shc 
+	]];
+	
+simple_session_constr:
+	[[
+          peek_sess; `NOT; id=cid; `COLON; ty=typ;`HASH; formula = sess_formula ->
+			Sess.mkSessionNode SessionSend id ty formula (get_pos_camlp4 _loc 2)
+	| peek_sess; `QUERY; id=cid; `COLON; ty=typ;`HASH; formula = sess_formula ->
+			Sess.mkSessionNode SessionRecv id ty formula (get_pos_camlp4 _loc 2)
+	| peek_sess; `AT; id=cid ->
+			Sess.mkSessionPred id false (get_pos_camlp4 _loc 2)	
+	| peek_sess; `NEGAT; id=cid ->
+			Sess.mkSessionPred id true (get_pos_camlp4 _loc 2)	
+	]];
+
+sess_formula: 
+  [[ `OBRACE;dc = disjunctive_constr;`CBRACE -> F.subst_stub_flow n_flow dc  ]];
+
+(*====================session formula end ================================*)
+ 
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
     [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm;
@@ -3410,6 +3505,7 @@ type_decl:
    | peek_view_decl; o = opt_pred; v=view_decl; `SEMICOLON -> View v
    | peek_view_decl; o = opt_pred; v=view_decl; `DOT -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
+	 | `PRED_SESS; v = sess_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
@@ -3624,6 +3720,12 @@ resource_param: [[ `WITH; `PERCENT; `IDENTIFIER hid ->
     param_loc = get_pos_camlp4 _loc 3;
     param_name = hid } ]];
 
+session_param: [[ `WITH; `AT; `IDENTIFIER hid -> 
+      { param_mod = NoMod;
+        param_type = FORM;
+        param_loc = get_pos_camlp4 _loc 3;
+        param_name = hid }]];
+
 opt_resource_param: [[ hid = OPT resource_param -> hid ]];
 
 proc_decl:
@@ -3638,10 +3740,10 @@ proc_header:
       let cur_file = proc_files # top in
      mkProc cur_file id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
-  | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; hparam = OPT session_param; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
     let cur_file = proc_files # top in
-    mkProc cur_file id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    mkProc cur_file id [] "" None false ot fpl void_type hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -4206,6 +4308,13 @@ ho_arg: [[ `WITH; dc = disjunctive_constr -> F.subst_stub_flow n_flow dc ]];
 
 opt_ho_arg: [[ oha = OPT ho_arg -> oha ]];
 
+(*======================================begin session types========================*)
+session_arg: [[ peek_sess_with; `WITH; sc = sess_constr -> sc ]];
+
+opt_session_arg: [[ osa = OPT session_arg -> osa ]];
+
+(*======================================end session types========================*)
+
 invocation_expression:
  [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
 	  CallRecv { exp_call_recv_receiver = fst qi;
@@ -4213,7 +4322,7 @@ invocation_expression:
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_ho_arg ->
+  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; osa = opt_session_arg; oha = opt_ho_arg ->
     let _ =
       if (Iast.is_tnt_prim_proc id) then
         Hashtbl.add Iast.tnt_prim_proc_tbl id id 

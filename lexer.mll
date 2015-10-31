@@ -254,6 +254,7 @@ module Make (Token : SleekTokenS)
    ("pred", PRED);
    ("spec", SPEC);
    ("pred_prim", PRED_PRIM);
+   ("pred_sess", PRED_SESS);	
    ("pred_extn", PRED_EXT);
    ("hip_include", HIP_INCLUDE);
    ("pred_split", PRED_SPLIT);
@@ -395,6 +396,7 @@ rule tokenizer file_name = parse
   | "&&" { ANDAND }
   | "U*" { UNIONSTAR }
   | "--@" { STARMINUS }
+	| "~@" { NEGAT }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
@@ -485,6 +487,7 @@ rule tokenizer file_name = parse
   | "-" { MINUS }
   | "!=" { NEQ }
   | "!" { NOT }
+	| '?' { QUERY}
   | '{' { OBRACE }
   | "[|" {OLIST}
   | '(' { OPAREN }
@@ -509,6 +512,7 @@ rule tokenizer file_name = parse
   | '+' { PLUS }
   | '\'' { PRIME }
   | ';' { SEMICOLON }
+	| ";;" { SEMICOLONSEMICOLON }
   | '*' { STAR }
   | "<:" { SUBANN }
   | '/' { DIV }

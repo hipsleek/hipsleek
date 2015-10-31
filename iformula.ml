@@ -80,7 +80,42 @@ and formula =
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
   rflow_base: struc_formula;
+	session_formula: s_formula option;
 }
+(*=================session formula begin============*)
+
+and s_formula = 
+  | SNode of session_formula_node
+	| SOr of session_formula_or
+	| SPred of session_formula_pred
+
+and session_formula_node = 
+	{ 
+		session_formula_node_kind : session_kind;
+		session_formula_node_spec : formula;
+    session_formula_node_id : ident;
+    session_formula_node_type : typ;		
+    session_formula_node_pos: loc; 
+		session_formula_node_next : s_formula option;		
+	}
+
+and session_formula_or = 
+	{ 
+		session_formula_or_l : s_formula;
+    session_formula_or_r : s_formula;
+    session_formula_or_pos : loc;
+		session_formula_or_next : s_formula option;				
+	}
+
+and session_formula_pred = 
+	{
+    session_formula_pred_name : ident;		 
+    session_formula_pred_neg : bool;
+    session_formula_pred_pos : loc;
+		session_formula_pred_next : s_formula option;				
+	}
+		
+(*=================session formula end============*)
 
 and formula_base = { 
   formula_base_heap : h_formula;
@@ -723,6 +758,30 @@ and fv_ann_formula (f:formula):(ident*primed) list =
 
 and collect_annot_vars f  = fv_ann_formula f
 
+(*============================session types begin =======================*)
+and iterateSessionFormula s_formula func merge def =
+		match s_formula with
+		| None -> def
+		| Some nnformula -> iterateSessionFormula_x nnformula func merge def
+
+and iterateSessionFormula_x s_formula func merge def= 
+	let iterateSessionFormulaNode s_node = (
+		let res_base = func s_node.session_formula_node_spec in
+		let next = iterateSessionFormula s_node.session_formula_node_next func merge def in
+		merge res_base next)
+	in
+	let iterateSessionFormulaOr s_node =(
+		let lp = iterateSessionFormula_x s_node.session_formula_or_l func merge def in		
+		let rp = iterateSessionFormula_x s_node.session_formula_or_r func merge def in		
+		let next = iterateSessionFormula s_node.session_formula_or_next func merge def in
+		merge next (merge lp rp))
+	in	
+	match s_formula with
+	| SNode nf -> iterateSessionFormulaNode nf
+	| SOr orr -> iterateSessionFormulaOr orr
+	| SPred pred -> iterateSessionFormula pred.session_formula_pred_next func merge def
+
+(*============================session types end =======================*)
 
 and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list = 
   let rec aux f =
@@ -763,7 +822,9 @@ and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list =
         let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann_lst ann_param imm)) in
         let imm_vars = if true (* (!Globals.allow_field_ann) *) then imm_vars@prm_ann else imm_vars in
         let hvars = List.concat (List.map (fun ff -> struc_fv ff.rflow_base) ho_b) in
-        Gen.BList.remove_dups_eq (=) (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
+	let getvar ff = iterateSessionFormula ff heap_fv (fun el1 el2 -> el1@el2) [] in
+        let svars = List.concat (List.map (fun ff -> getvar ff.session_formula) ho_b) in				
+        Gen.BList.remove_dups_eq (=) (svars@hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
     | HeapNode2 { h_formula_heap2_node = name ;
                   h_formula_heap2_name = vname;
                   h_formula_heap2_perm = perm; (*LDK*)
@@ -774,8 +835,10 @@ and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list =
       else
         let perm_vars =  (fv_iperm ()) perm in
         let imm_vars =  fv_imm imm in
+	let getvar ff = iterateSessionFormula ff heap_fv (fun el1 el2 -> el1@el2) [] (* failwith x_tbi *) in
+        let svars = List.concat (List.map (fun ff -> getvar ff.session_formula) ho_b) in				
         let hvars = List.concat (List.map (fun ff -> struc_fv ff.rflow_base) ho_b) in
-        Gen.BList.remove_dups_eq (=)  (hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
+        Gen.BList.remove_dups_eq (=)  (svars@hvars@imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
     | ThreadNode {h_formula_thread_node = name ;
                   h_formula_thread_perm = perm;
                   h_formula_thread_delayed = dl;

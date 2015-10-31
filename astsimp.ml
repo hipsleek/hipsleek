@@ -88,6 +88,7 @@ let hack_filter_global_rel prog ls =
 let rec new_string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
   | FORM          -> "Formula"
+	| SESS					-> "Session"
   | UNK          -> "Unknown"
   | Bool          -> "bool"
   | Float         -> "float"
@@ -5449,6 +5450,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               let (_, cf) = x_add trans_formula prog false free_vars true f n_tl false in
               Some cf 
           in
+          let nso_arg  = failwith x_tbi in
           if ( != ) (List.length args) (List.length proc_args) then
             Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
           else if (mn=Globals.join_name) &&  ((List.length args) != 1) then
@@ -6545,7 +6547,7 @@ and default_value (t :typ) pos : C.exp =
       "default_value: void/NUM/UNK/AnnT in variable declaration should have been rejected by parser"
   | (BagT _) ->
     failwith "default_value: bag can only be used for constraints"
-  | List _ | FORM | Tup2 _ ->
+  | List _ | FORM | SESS | Tup2 _ ->
     failwith "default_value: list/FORM/Tup2 can only be used for constraints"
   | INFInt ->
     failwith "default_value: INFInt can only be used for constraints"
@@ -7729,10 +7731,15 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_pos = pos;
                      IF.h_formula_heap_label = pi;} ->
         (* expand the dereference heap node first *)
-        let trans_sf f tl = (* x_add  *) trans_I2C_struc_formula
+        let trans_sf tl f = (* x_add  *) trans_I2C_struc_formula
 (* trans_formula *) 0 prog false false [] f tl false false in
         let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
-            let (ntl, b) = trans_sf a.IF.rflow_base tl in 
+            let (ntl, b) = trans_sf tl a.IF.rflow_base in 
+	    let (ntl, b) = Session.struc_of_opt_session a.IF.session_formula (ntl,b) (trans_sf tl) in
+       (*        match a.IF.session_formula with *)
+       (*        | None -> (ntl, b) *)
+       (*        | Some  *)
+       (* map_opt_def b (fun x -> snd trans_sf (Session.struc_of_session x) tl)  *)
             (ntl, ({ CF.rflow_kind = a.IF.rflow_kind; 
                      CF.rflow_base = b; })::r)) 
             (tl, []) ho_exps in

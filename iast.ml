@@ -111,6 +111,7 @@ and view_decl =
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
+		mutable view_session_formula: F.s_formula option; (* session formula *)
     view_inv_lock : F.formula option;
     mutable view_pt_by_self : ident list; (* list of views pointed by self *)
     (* view_targets : ident list;  *)(* list of views pointed within declaration *)
@@ -649,6 +650,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_typed_vars = [];
           view_pt_by_self  = [];
           view_formula = f;
+					view_session_formula = None;
           view_inv_lock = None;
           view_is_prim = false;
           view_is_hrel = None;
@@ -694,6 +696,7 @@ let mk_view_header vn opt1 cids mvs modes pos =
     view_typed_vars = cids_t;
     view_pt_by_self  = [];
     view_formula = F.mkETrue top_flow (pos);
+	view_session_formula = None;
     view_inv_lock = None;
     view_is_prim = false;
     view_is_hrel = None;

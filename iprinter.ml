@@ -535,9 +535,15 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_pos = l}) ->
     let perm_str = string_of_iperm perm in
-    let ho_str = "{" ^ (String.concat "," (List.map 
-                                             (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
-                                                        (string_of_struc_formula ff.F.rflow_base)) ho_pl)) ^ "}" in
+		let print_ho ff =
+			match ff.F.rflow_kind with
+			| SESSION -> 
+				(string_of_ho_flow_kind ff.F.rflow_kind) ^ 
+ 			(string_of_s_formula ff.F.session_formula)
+			| _-> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
+             (string_of_struc_formula ff.F.rflow_base)
+		in				
+    let ho_str = "{" ^ (String.concat "," (List.map print_ho ho_pl)) ^ "}" in
     let deref_str = ref "" in
     for i = 1 to deref do
       deref_str := !deref_str ^ "^";
@@ -583,6 +589,46 @@ let rec string_of_h_formula = function
   | F.HEmp -> "emp"
   | F.HVar (v,vs) -> "HVar "^v^(pr_list pr_id vs)
 
+(*============================session types begin================================*)
+and string_of_s_formula s_formula =
+		match s_formula with
+		| None -> ""
+		| Some nnformula -> string_of_s_formula_x nnformula
+
+and string_of_s_kind kind =
+	match kind with
+	| SessionSend -> "!" 
+	| SessionRecv -> "?"
+
+and string_of_s_neg kind =
+	match kind with
+	| true -> "~" 
+	| false -> ""
+
+and string_of_s_formula_x s_formula= 
+	let stringSessionFormulaNode s_node = (
+		let res_base = string_of_formula s_node.F.session_formula_node_spec in
+		let next = string_of_s_formula s_node.F.session_formula_node_next in
+		let kind =  string_of_s_kind s_node.F.session_formula_node_kind in
+		kind ^ s_node.F.session_formula_node_id ^ ":{" ^ res_base ^ "}; " ^ next)
+	in
+	let stringSessionFormulaOr s_node =(
+		let lp = string_of_s_formula_x s_node.F.session_formula_or_l in		
+		let rp = string_of_s_formula_x s_node.F.session_formula_or_r in		
+		let next = string_of_s_formula s_node.F.session_formula_or_next in
+		"(" ^lp ^ " or " ^ rp ^ "); " ^ next )
+	in	
+	let stringSessionFormulaPred s_node =(
+		let next = string_of_s_formula s_node.F.session_formula_pred_next in
+		let neg = string_of_s_neg s_node.F.session_formula_pred_neg in
+		neg ^ "@" ^ s_node.F.session_formula_pred_name ^ "; " ^ next)
+	in		
+	match s_formula with
+	| F.SNode nf -> stringSessionFormulaNode nf
+	| F.SOr orr -> stringSessionFormulaOr orr
+	| F.SPred pred -> stringSessionFormulaPred pred
+
+(*============================session types end================================*)
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
 and string_of_one_formula (f:F.one_formula) =
@@ -773,7 +819,7 @@ let rec string_of_exp = function
     exp_call_nrecv_ho_arg = ha })-> 
         let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
         string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")" ^ 
-            (match ha with | None -> "" | Some f -> string_of_formula f))
+            (match ha with | None -> "" | Some f -> string_of_formula f)(* ^ string_of_s_formula sl *))
   | CallRecv ({exp_call_recv_receiver = recv;
     exp_call_recv_method = id;
     exp_call_recv_path_id = pid;
