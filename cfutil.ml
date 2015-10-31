@@ -138,10 +138,15 @@ let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
         in
         (* NOTE: Adding dupl_rest into rem_nodes might cause helper going into a loop *)
         root_node::sig_of_root_args, (* dupl_rest @ *) rem_nodes
-      | root_node::rest -> 
-        let () = x_warn ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes)) in
-        [root_node], []
-  in fst (helper root hs)
+      | root_node::_ -> 
+        let () = y_winfo_pp ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes)) in
+        [root_node], rest_nodes
+  in 
+  let sig_hs, rem_nodes = helper root hs in
+  let () = if not (is_empty rem_nodes) then
+      y_winfo_hp (add_str "The signature does not cover remaining heap nodes" (pr_list !CF.print_h_formula)) rem_nodes
+  in
+  sig_hs
 
 let rec complx_sig_of_formula prog root (f: CF.formula) = 
   match f with
