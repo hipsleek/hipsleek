@@ -1676,14 +1676,18 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                            Iast.mkCallNRecv proc_name None [e1;e2] None None no_pos
                         )
                       | _ -> (
-                          let pos = translate_location l in
-                          let le = translate_exp e in
-                          let t1 = typ_of_cil_exp e in
-                          let t2 = typ_of_cil_exp exp in
-                          let re = translate_exp exp in
-                          let pointer_arith_proc = create_string_proc t1 t2 in
-                          let proc_name = pointer_arith_proc.Iast.proc_name in
-                          Iast.mkCallNRecv proc_name None [le; re] None None pos
+                          match e with
+                            | Cil.BinOp(_,_,_,_,_) -> failwith (x_tbi^"Muoi: to be implemented case: nondetString[length-1] = '\a';")
+                            | _ ->(
+                               let pos = translate_location l in
+                               let le = translate_exp e in
+                               let t1 = typ_of_cil_exp e in
+                               let t2 = typ_of_cil_exp exp in
+                               let re = translate_exp exp in
+                               let pointer_arith_proc = create_string_proc t1 t2 in
+                               let proc_name = pointer_arith_proc.Iast.proc_name in
+                               Iast.mkCallNRecv proc_name None [le; re] None None pos
+                            )
                         )
                   )
 (*                    match e with*)
