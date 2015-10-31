@@ -1513,6 +1513,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
       let input_exp = translate_exp exp in
 (*      let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
 (*      let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
+(*      let _ = Debug.binfo_hprint (add_str "new_base" Iprinter.string_of_exp) input_exp no_pos in*)
       if (input_typ = output_typ) then
         (* no need casting *)
         input_exp
@@ -1645,30 +1646,58 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
           | Cil.Mem e -> (
               let base_typ = typ_of_cil_exp e in
               match base_typ with
-                | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (   (* write_char(char_star s, c) *)
-                    let pos = translate_location l in
-                    let le = translate_exp e in
-                    (*let re = Iast.mkBinary Iast.OpPlus le (translate_exp exp) None pos in*)
-                    (*let re = Cil.BinOp (Cil.PlusPI, e, exp, base_typ, l) in*)
-                    (*let new_re = translate_exp re in*)
-                    let t1 = typ_of_cil_exp e in
-                    let t2 = typ_of_cil_exp exp in
-                    let re = translate_exp exp in
-                    let pointer_arith_proc = create_string_proc t1 t2 in
-                    let proc_name = pointer_arith_proc.Iast.proc_name in
-                    match e with
-                      | Cil.BinOp (_, exp1, exp2, _, _) -> (
-                          let t1 = typ_of_cil_exp exp1 in
-                          let t2 = typ_of_cil_exp exp2 in
-                          match (t1,exp2) with
-                            | Cil.TPtr(Cil.TInt(Cil.IChar, _), _), Cil.Const(Cil.CInt64 (i, _, _),_) 
-                              -> Iast.mkCallNRecv proc_name None [le; re] None None pos
-                            | Cil.TPtr(Cil.TInt(Cil.IChar, _), _), _ -> le
-                            | _, _ -> Iast.mkCallNRecv proc_name None [le; re] None None pos
+                | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (   (*Muoi: write_char(char_star s, c) or finalization strings *)
+                    match exp with
+                      | Cil.CastE(_, Cil.Const((Cil.CChr '\000'),_),_) -> (       (*Muoi: finalization strings when rhs='\0'*)
+                          let (e1, e2) = (
+                            match e with
+                              | Cil.Lval (lv, _) -> (translate_lval lv, Iast.mkIntLit 0 no_pos)
+                              | Cil.BinOp (_, e1, e2, _, _) -> (translate_exp e1, translate_exp e2)
+                              | _ -> report_error no_pos "Muoi: To handle other Cil.exp types later!"
+                            ) in
+                           let typ1_name = "char_star" in
+                           let typ2_name = "int" in
+                           let pname = "__finalize_string" in
+                           let proc_decl = 
+                             try
+                               Hashtbl.find tbl_aux_proc pname
+                             with Not_found -> (
+                               let proc_str = typ1_name ^ " " ^ pname ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " n)\n"
+                                              ^ "requires x::WFSeg<p,m> & n < m \n"
+                                              ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n"
+                                 in
+                               let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
+                               let _ = Debug.binfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
+                               Hashtbl.add tbl_aux_proc pname proc_decl;
+                               proc_decl
+                             ) in
+                           let proc_name = proc_decl.Iast.proc_name in
+                           let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+                           Iast.mkCallNRecv proc_name None [e1;e2] None None no_pos
                         )
-                      | _ -> Iast.mkCallNRecv proc_name None [le; re] None None pos
-                    (*Iast.mkAssign Iast.OpAssign le new_re None pos*)
+                      | _ -> (
+                          let pos = translate_location l in
+                          let le = translate_exp e in
+                          let t1 = typ_of_cil_exp e in
+                          let t2 = typ_of_cil_exp exp in
+                          let re = translate_exp exp in
+                          let pointer_arith_proc = create_string_proc t1 t2 in
+                          let proc_name = pointer_arith_proc.Iast.proc_name in
+                          Iast.mkCallNRecv proc_name None [le; re] None None pos
+                        )
                   )
+(*                    match e with*)
+(*                      | Cil.BinOp (_, exp1, exp2, _, _) -> *)
+(*                          let t1 = typ_of_cil_exp exp1 in*)
+(*                          let t2 = typ_of_cil_exp exp2 in*)
+(*                          match (t1,exp2) with*)
+(*                            | Cil.TPtr(Cil.TInt(Cil.IChar, _), _), Cil.Const(Cil.CInt64 (i, _, _),_) *)
+(*                              -> Iast.mkCallNRecv proc_name None [le; re] None None pos*)
+(*                            | Cil.TPtr(Cil.TInt(Cil.IChar, _), _), _ -> le*)
+(*                            | _, _ -> Iast.mkCallNRecv proc_name None [le; re] None None pos*)
+(*                        )*)
+(*                      | _ -> Iast.mkCallNRecv proc_name None [le; re] None None pos*)
+                    (*Iast.mkAssign Iast.OpAssign le new_re None pos*)
                 | _ -> (
               	    let pos = translate_location l in
                     let le = translate_lval lv in
