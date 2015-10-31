@@ -226,7 +226,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
 let update_rel_tables prog rel_list =
   let update_smtrel  rel_decl = Smtsolver.add_relation rel_decl.Cast.rel_name rel_decl.Cast.rel_vars rel_decl.Cast.rel_formula in
   let () = List.iter update_smtrel rel_list in 
-  let () = prog.C.prog_rel_decls # push_list_pr rel_list in 
+  let () = prog.C.prog_rel_decls # push_list_pr x_loc rel_list in 
   prog
 
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.prog_decl * C.proc_decl list =

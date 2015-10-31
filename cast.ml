@@ -63,7 +63,9 @@ and data_decl = {
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pure_inv : P.formula option;
-  data_methods : proc_decl list; }
+  mutable data_is_rec : bool;
+  data_methods : proc_decl list; (* for OO methods *)
+}
 
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
 

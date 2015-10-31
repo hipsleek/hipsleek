@@ -184,6 +184,7 @@ let cobj_def = { Cast.data_name = "Object";
                  Cast.data_parent_name = "";
                  Cast.data_invs = [];
                  Cast.data_pure_inv = None;
+                 Cast.data_is_rec = false;
                  Cast.data_methods = [] }
 
 let cprog = Cprog_sleek.cprog
@@ -1485,7 +1486,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
       let lr = [new_rel_ass] in
       let () = x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr no_pos in
-      let _ = Infer.infer_rel_stk # push_list_pr lr in
+      let _ = Infer.infer_rel_stk # push_list_pr x_loc lr in
       ()
   in
   ()

@@ -730,7 +730,7 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     (*   let s = self # get_stk_no_dupl in *)
     (*   print_endline ("\nget_stk("^name^"):"^((Basic.pr_list epr) s));  *)
     (*   s *)
-    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
+    method push_list_x f loc (* ?(pr_flag=false) *) (ls:'a list) =  
       (* WN : below is to be removed later *)
       (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
       let n = List.length ls in
@@ -743,12 +743,16 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
           let flag = match !Globals.show_push_list_rgx with
             | None -> true
             | Some rgx -> Str.string_match rgx name 0 in
-          if flag (* s=name || s="" *) then
-            print_endline ("\npush_list("^name^"):"^(string_of_int n)^((Basic.pr_list epr) ls)) 
+          if flag || f (* s=name || s="" *) then
+            print_endline ("\npush_list("^name^"):"^loc^(string_of_int n)^((Basic.pr_list epr) ls)) 
           else () in
       super # push_list ls 
-    method push_list_pr (ls:'a list) =  
-      self # push_list (* ~pr_flag:true *) ls
+    method push_list_loc s (ls:'a list) =  
+      self # push_list_x false s ls
+    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
+      self # push_list_x false "" ls
+    method push_list_pr loc (ls:'a list) =  
+      self # push_list_x true  loc (* ~pr_flag:true *) ls
     method reset_pr  =  
         (* let () = print_endline ("\nXXXX reset("^name) in *)
         super # reset 

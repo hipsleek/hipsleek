@@ -1227,7 +1227,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                         rel_ass_stk # push_list ([hp_rel])
                       end;
                     (* let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel # push_list [hp_rel];} in *)
-                    let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
+                    let () = estate.CF.es_infer_hp_rel # push_list_loc x_loc [hp_rel] in
                     (Some (estate, CP.mkTrue pos),None,[])
                 end
             | Some f ->
@@ -1453,7 +1453,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                         let new_es = {new_estate with (* CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel # push_list heap_ass; *)
                                                       CF.es_formula = n_es_formula;
                                      } in
-                        let () = new_es.CF.es_infer_hp_rel # push_list heap_ass in
+                        let () = new_es.CF.es_infer_hp_rel # push_list_loc x_loc heap_ass in
                         (rel_ass1, heap_ass,new_es)
                       else
                         (rel_ass, [],new_estate)
@@ -1465,7 +1465,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                       let () = if !Globals.old_infer_collect then 
                           begin
                             x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos;
-                            infer_rel_stk # push_list_pr rel_ass;
+                            infer_rel_stk # push_list_pr x_loc rel_ass;
                             Log.current_infer_rel_stk # push_list rel_ass;
                           end in
                       (* let () = new_estate.es_infer_rel # push_list rel_ass in *)
@@ -2264,7 +2264,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         if !Globals.old_infer_collect then 
           begin
             x_binfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
-            infer_rel_stk # push_list_pr inf_rel_ls;
+            infer_rel_stk # push_list_pr x_loc inf_rel_ls;
             Log.current_infer_rel_stk # push_list inf_rel_ls;
           end;
         let () = estate.es_infer_rel # push_list inf_rel_ls in
@@ -4639,7 +4639,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
       end;
     let scc_f es =
       let es = {es with es_infer_hp_rel = es.CF.es_infer_hp_rel # clone;} in
-      let () = es.CF.es_infer_hp_rel # push_list new_rels1 in
+      let () = es.CF.es_infer_hp_rel # push_list_loc x_loc new_rels1 in
       Ctx es
     in
     Some (transform_list_context (scc_f, (fun a -> a)) l)

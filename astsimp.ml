@@ -1684,7 +1684,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
            (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
-           C.prog_rel_decls = (let s = new Gen.stack_pr "rel_decls" Cprinter.string_of_rel_decl (=) in (s # push_list_pr xrels ; s));
+           C.prog_rel_decls = (let s = new Gen.stack_pr "rel_decls" Cprinter.string_of_rel_decl (=) in (s # push_list_pr x_loc xrels ; s));
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
            C.prog_ui_decls = (ui_vs);
@@ -1867,7 +1867,8 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
     C.data_fields = fields; (* to be made obsolete later *)
     C.data_fields_new = List.map (fun ((t,i),v) -> (CP.mk_typed_spec_var t i,v)) fields;
     C.data_parent_name = ddef.I.data_parent_name;
-    C.data_pure_inv = inv_pf; 
+    C.data_pure_inv = inv_pf;
+    C.data_is_rec = false;
     C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
     C.data_invs = [];
   } in

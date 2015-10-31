@@ -988,7 +988,7 @@ let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
         let n_es_form_e = CF.substitute_flow_into_f !error_flow_int n_es_form in
         let new_es = {es with (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list hp_rel_list; *)
                               CF.es_formula = n_es_form_e} in
-        let () =  new_es.CF.es_infer_hp_rel # push_list (* ~xloc:x_loc *) hp_rel_list in
+        let () =  new_es.CF.es_infer_hp_rel # push_list_loc x_loc hp_rel_list in
         Some new_es
 
 let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
@@ -1321,7 +1321,7 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
                           CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
                           CF.es_crt_holes = es.CF.es_crt_holes@new_holes;
                           CF.es_formula = new_es_formula1} in
-    let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
+    let () = new_es.CF.es_infer_hp_rel # push_list_loc x_loc hp_rel_list in
     x_tinfo_hp (add_str "  residue before matching: " Cprinter.string_of_formula) new_es.CF.es_formula pos;
     x_tinfo_hp (add_str "  new_es_formula: "  Cprinter.string_of_formula) new_es_formula pos;
     x_tinfo_hp (add_str "  new_lhs: "  Cprinter.string_of_h_formula) new_lhs pos;
@@ -1886,7 +1886,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
     } in
     (* let hp_rel_list = CF.add_fold_flag hp_rel_list in *)
-    let () = new_es.CF.es_infer_hp_rel # push_list hp_rel_list in
+    let () = new_es.CF.es_infer_hp_rel # push_list_loc x_loc hp_rel_list in
     let heap_of_rel_lhs = match (CF.heap_of rel_lhs) with
       | [hf] -> hf
       | _ -> failwith "infer_collect_hp_rel_fold 2" in
@@ -2113,7 +2113,7 @@ let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rh
                   end;
                 let new_es1 = {new_es with (* CF.es_infer_hp_rel = es.CF.es_infer_hp_rel # push_list  hprel_ass; *)
                     CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);} in
-                let () = new_es1.CF.es_infer_hp_rel # push_list hprel_ass in
+                let () = new_es1.CF.es_infer_hp_rel # push_list_loc x_loc hprel_ass in
                 (true, new_es1, rhs0, None, None, None)
               else
                 constant_checking prog rhs lhs_b0 rhs_b es
@@ -2430,7 +2430,7 @@ let infer_collect_hp_rel_classsic prog (es:entail_state) rhs pos =
                       CF.es_formula = n_es_formula}
         in
         (* let ls_ass = CF.add_unfold_flag ls_ass in *)
-        let () = new_es.CF.es_infer_hp_rel # push_list ls_ass in
+        let () = new_es.CF.es_infer_hp_rel # push_list_loc x_loc ls_ass in
         x_tinfo_hp (add_str  "  new residue " Cprinter.string_of_formula) new_es.CF.es_formula pos;
         (true, new_es)
     end

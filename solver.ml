@@ -2480,7 +2480,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
         if rels!=[] && !Globals.old_infer_collect then
           begin
             let () = x_winfo_hp (add_str "RelInferred (simplified/solver.ml)" (pr_list Cprinter.string_of_lhs_rhs)) rels no_pos in
-            let () = Infer.infer_rel_stk # push_list_pr rels in
+            let () = Infer.infer_rel_stk # push_list_pr x_loc rels in
             let () = Log.current_infer_rel_stk # push_list rels in
             ()
           end;
@@ -8519,7 +8519,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
           let new_cl = List.map (fun c ->
               (transform_context
                  (fun es ->
-                    let () = es.CF.es_infer_hp_rel # push_list hprel_ass in
+                    let () = es.CF.es_infer_hp_rel # push_list_loc x_loc hprel_ass in
                     Ctx es
                  ) c)) cl in
           SuccCtx(new_cl) in
@@ -8917,7 +8917,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                        (true,[],None))
                     | _ ->
                       (stk_inf_pure # push p;
-                       stk_rel_ass # push_list_pr relass;
+                       stk_rel_ass # push_list_pr x_loc relass;
                        let () = 
                          if entail_states = [] then
                            report_error pos "Expecting a non-empty list of entail states"
@@ -9663,8 +9663,8 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
   let grd = x_add InferHP.check_guard estate ass_guard lhs_b_orig lhs_b rhs_b pos in
   (* from unfolding *)
   let hp_rel = CF.mkHprel ~fold_type:false knd [] [] matched_svl lhs grd rhs es_cond_path in
-  let () = y_tinfo_hp (add_str "do_unfold:hp_rel" Cprinter.string_of_hprel_short) hp_rel in
-  let () = y_tinfo_hp (add_str "do_unfold:estate_lhs" !CF.print_formula) estate_lhs in
+  let () = y_binfo_hp (add_str "do_unfold:hp_rel" Cprinter.string_of_hprel_short) hp_rel in
+  let () = y_binfo_hp (add_str "do_unfold:estate_lhs" !CF.print_formula) estate_lhs in
   if !Globals.old_infer_hp_collect then
     begin
       x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] no_pos;
@@ -9672,7 +9672,7 @@ and do_unfold_hp_rel_x prog estate lhs_b_orig conseq rhs_node is_folding pos hp 
       let () = Log.current_hprel_ass_stk # push_list ([hp_rel]) in
       ()
     end;
-  let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
+  let () = estate.CF.es_infer_hp_rel # push_list_loc x_loc [hp_rel] in
   let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hp) (List.map (fun sv -> (sv, NI)) (List.tl vs)) false pos in
   let vdecl_w_def = {vdecl with Cast.view_formula = CF.struc_formula_of_formula rhs pos;
                                 Cast.view_un_struc_formula = [(rhs, (fresh_int (),""))];
@@ -11718,7 +11718,7 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
         let () = Log.current_hprel_ass_stk # push_list ([hp_rel]) in
         ()
       end;
-    let () = estate.CF.es_infer_hp_rel # push_list [hp_rel] in
+    let () = estate.CF.es_infer_hp_rel # push_list_loc x_loc [hp_rel] in
     let vdecl = Cast.mk_view_decl_for_hp_rel (CP.name_of_spec_var hp) (List.map (fun sv -> (sv, NI)) (List.tl vs)) false pos in
     let vdecl_w_def = {vdecl with Cast.view_formula = CF.struc_formula_of_formula lhs pos;
                                   Cast.view_un_struc_formula = [(lhs, (fresh_int (),""))];
@@ -14908,7 +14908,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
             let rhs_f = CF.mkBase_simp head_node_new (MCP.mkMTrue no_pos) in
             let unk_svl = [lhs_hrel_name; lem_hrel_name] in
             let rel_assume = CF.mkHprel rel_kind unk_svl [] [] lhs_f None rhs_f rel_path in
-            new_estate.es_infer_hp_rel # push rel_assume
+            new_estate.es_infer_hp_rel # push_list_loc x_loc [rel_assume]
         in
         let new_ctx1 = Ctx new_estate in
         let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in

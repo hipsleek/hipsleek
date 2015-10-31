@@ -57,8 +57,8 @@ class data_table =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
     method logging s =
-      (* let m = "**data_table** " in *)
-      (* let () = print_endline_quiet (m^s) in *)
+      let m = "**data_table** " in
+      let () = print_endline_quiet (m^s) in
       ()
     method reset =
       self # logging "reset";

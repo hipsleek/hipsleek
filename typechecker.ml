@@ -839,7 +839,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     x_winfo_pp "if important : need to add to estate.es_infer_rel" no_pos;
                     x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr pos;
                     (* lr seems to be spurious RelInferred which have already been collected? *)
-                    let () = Infer.infer_rel_stk # push_list_pr lr in
+                    let () = Infer.infer_rel_stk # push_list_pr x_loc lr in
                     ()
                   end;
                 (* let () = Log.current_infer_rel_stk # push_list lr in *)
