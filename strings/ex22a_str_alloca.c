@@ -15,10 +15,11 @@ int main()
     }
     char* nondetString = (char*) alloca(length * sizeof(char));
     char* nondetString2 = (char*) alloca(length * sizeof(char));
-/*    nondetString[length-1] = '\a';*/
+    /* nondetString[length-1] = '\a'; */
     nondetString2[length-1] = '\0';
     *nondetString++ = '\a';
     *nondetString = '\0';
+    *++nondetString2 = '\a';
     return 0;
 }
 

@@ -3981,7 +3981,7 @@ let add_view_decl prog vdecl =
     let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
 
-let update_view_decl prog vdecl = 
+let update_view_decl ?(loc="") prog vdecl = 
   let vdecl_id = vdecl.view_name in
   let vdecl_args = vdecl.view_vars in
   let vhdr = vdecl_id ^ (!CP.print_svl vdecl_args) in
@@ -3992,14 +3992,14 @@ let update_view_decl prog vdecl =
       y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
-  let () = cprog_obj # check_prog(* _only *) x_loc prog in
+  let () = cprog_obj # check_prog(* _only *) (x_loc ^ ":" ^ loc) prog in
   prog.prog_view_decls <- others @ [vdecl]
 
-let update_view_decl prog vdecl = 
+let update_view_decl ?(loc="") prog vdecl = 
   let pr = !print_view_decl_short in
   let dummy_pr = fun _ -> "" in
   Debug.no_1 "update_view_decl" pr dummy_pr 
-    (fun _ -> update_view_decl prog vdecl) vdecl
+    (fun _ -> update_view_decl ~loc:loc prog vdecl) vdecl
 
 let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
   (* let frm_name = frm_vdecl.view_name in *)

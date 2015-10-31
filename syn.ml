@@ -860,7 +860,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
     let () = List.iter (fun v ->
       let () = C.update_un_struc_formula (fun f -> fst (trans_hrel_to_view_formula cprog f)) v in
       let () = C.update_view_formula (x_add_1 trans_hrel_to_view_struc_formula cprog) v in
-      let () = x_add C.update_view_decl cprog v in
+      let () = x_add (C.update_view_decl ~loc:x_loc) cprog v in
       let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
       ()) tmp_views in
     (* derived_views have been added into prog_view_decls of iprog and cprog *)
@@ -1048,7 +1048,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_view_name (* "size" *) (*TODO*) in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
   (* let extn_cview = C.rename_view extn_cview equiv_pid in  *)
-  let () = x_add C.update_view_decl cprog extn_cview in
+  let () = x_add (C.update_view_decl ~loc:x_loc) cprog extn_cview in
   let () = norm_pred.C.view_equiv_set # set ([], comb_extn_name) in
   let () = x_add Astsimp.compute_view_x_formula cprog extn_cview !Globals.n_xpure in
   extn_cview
