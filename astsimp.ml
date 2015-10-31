@@ -1735,7 +1735,7 @@ and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
   let pr_in = Iprinter.string_of_program in
   let pr_out (cprog,iprog) = Cprinter.string_of_program cprog in
   let tp p = let (cp,_) as res = trans_prog_x p in
-    let () = Cast.global_prog := Some cp in
+    let () = Cast.global_prog := cp in
     res in
   Debug.no_1 "trans_prog" pr_in pr_out (fun x -> tp prog) prog
 

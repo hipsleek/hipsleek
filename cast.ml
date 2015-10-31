@@ -575,18 +575,37 @@ and exp = (* expressions keep their types *)
   | Par of exp_par
 
 
-let global_prog = ref (None : prog_decl option)
+let cprog = ref { 
+    prog_data_decls = [];
+    prog_view_decls = [];
+    prog_logical_vars = [];
+    prog_rel_decls = 
+      (let s = new Gen.stack_pr "prog_rel_decls(CAST)" 
+         (fun x -> "not yet initialized" ) (=) in s);
+    (* Cprinter.string_of_rel_decl (=)          *)
+    prog_templ_decls = [];
+    prog_ui_decls = [];
+    prog_ut_decls = [];
+    prog_hp_decls = [];
+    prog_view_equiv = [];
+    prog_axiom_decls = []; 
+    (* [4/10/2011] An Hoa *)
+    (*old_proc_decls = [];*)
+    new_proc_decls = Hashtbl.create 1; (* no need for proc *)
+    (*prog_left_coercions = [];
+      prog_right_coercions = [];*)
+     prog_barrier_decls = []} ;;
 
+let global_prog = cprog
+(* ref (None : prog_decl option) *)
 
 (* let cprog:(prog_decl option) ref = ref None *)
 let cprog = global_prog
 
-let get_cprog () = match !cprog with
-  | Some cp -> cp
-  | None -> failwith ("cprog not yet created " ^x_loc)
+let get_cprog () = !cprog
 
 let set_prog cp = 
-  cprog := Some cp
+  cprog := cp
 
 let folding_coercion c =
    (c.coercion_case == Simple) && c.coercion_type=Iast.Right 
@@ -610,37 +629,41 @@ let cprog_obj =
       let () = print_endline_quiet (m^s) in
       ()
     method check_prog_x flag prg =
-      match !cprog with
-      | None -> 
-        let () = y_binfo_pp "cprog still None" in
-        let () = cprog := Some prg in
-        false
-      | Some store_prg -> 
-        if not(prg==store_prg) then 
-          begin
-            let () = y_binfo_pp "prog and cprog are different" in
-            (* if prg = store_prg then  *)
-            (*   let () = y_binfo_pp "same content though" in *)
-            (*   () *)
-            (* else *)
-            (*   let () = y_binfo_hp (add_str "new prog" !print_prog) prg in *)
-            (*   let () = y_binfo_hp (add_str "old cprog" !print_prog) store_prg in *)
-            (*   (); *)
-            if flag then cprog := Some prg;
-            false
-          end
-        else true
+      let store_prg = !cprog in
+      (* match !cprog with *)
+      (* | None ->  *)
+      (*   let () = y_binfo_pp "cprog still None" in *)
+      (*   let () = cprog := Some prg in *)
+      (*   false *)
+      (* | Some store_prg ->  *)
+      if not(prg==store_prg) then 
+        begin
+          let () = y_binfo_pp "prog and cprog are different" in
+          (* if prg = store_prg then  *)
+          (*   let () = y_binfo_pp "same content though" in *)
+          (*   () *)
+          (* else *)
+          (*   let () = y_binfo_hp (add_str "new prog" !print_prog) prg in *)
+          (*   let () = y_binfo_hp (add_str "old cprog" !print_prog) store_prg in *)
+          (*   (); *)
+          if flag then cprog := prg;
+          false
+        end
+      else true
     method check_prog_only loc prog = 
       let r = self # check_prog_x false prog in
       self # logging ((add_str (loc^"check only (same prog?)") string_of_bool) r)
-    method check_prog loc prog = 
+    method check_prog_upd loc prog = 
       let r = self # check_prog_x true prog in
-      self # logging ((add_str (loc^"update (same prog?)") string_of_bool) r)
+      if not(r) then 
+        let () = y_winfo_pp "updating Cast.cprog" in
+        self # logging ((add_str (loc^"update (same prog?)") string_of_bool) r)
     method get_hp_decls =
-      match !cprog with
-      | None -> 
-        let () = y_winfo_pp "cprog_obj not yet intiliazed" in []
-      | Some cp -> cp.prog_hp_decls
+      (* match !cprog with *)
+      (* | None ->  *)
+      (*   let () = y_winfo_pp "cprog_obj not yet intiliazed" in [] *)
+      (* | Some cp ->  *)
+      !cprog.prog_hp_decls
     method get_hp_one_decl n =
       let lst = self # get_hp_decls in
       try
@@ -652,35 +675,36 @@ let cprog_obj =
       let n = CP.name_of_spec_var hp in
       let hp_d = self # get_hp_one_decl n in
       let () = match hp_d.hp_root_pos with
-      | Some i -> if posn!=i then y_winfo_hp (add_str "root previously set at" string_of_int) i;
-      | None -> () in 
+        | Some i -> if posn!=i then y_winfo_hp (add_str "root previously set at" string_of_int) i;
+        | None -> () in 
       let () = hp_d.hp_root_pos <- Some posn in
       ()
     method get_hp_root hp args =
       let n = CP.name_of_spec_var hp in
       let hp_d = self # get_hp_one_decl n in
       let posn = match hp_d.hp_root_pos with
-      | Some i -> i
-      | None -> 
-        let f_args = hp_d.hp_vars_inst in
-        let rec aux xs n =
-          match xs with
-          | [] -> failwith (x_loc^"no root position left")
-          | (_,ann)::xs -> 
-            if ann=NI then aux xs (n+1)
-            else n in
-        let posn = aux f_args 0 in
-        let () = hp_d.hp_root_pos <- Some posn in
-        posn in
+        | Some i -> i
+        | None -> 
+          let f_args = hp_d.hp_vars_inst in
+          let rec aux xs n =
+            match xs with
+            | [] -> failwith (x_loc^"no root position left")
+            | (_,ann)::xs -> 
+              if ann=NI then aux xs (n+1)
+              else n in
+          let posn = aux f_args 0 in
+          let () = hp_d.hp_root_pos <- Some posn in
+          posn in
       let () = self # logging ("get_hp_root "^n^" gives "^(string_of_int posn)) in
       let () = print_endline_quiet (self # show_roots) in
-        List.nth args posn
+      List.nth args posn
     method get_hp_root_posn hp =
       let n = CP.name_of_spec_var hp in
       let hp_d = self # get_hp_one_decl n in
       let posn = match hp_d.hp_root_pos with
         | Some i -> i
         | None -> 0
+      in posn
     method show_roots =
       let lst = self # get_hp_decls in
       let str = pr_list (fun vd -> (pr_pair pr_id (pr_opt string_of_int)) (vd.hp_name,vd.hp_root_pos)) lst in
@@ -1490,7 +1514,7 @@ let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    let () = cprog_obj # check_prog (x_loc ^ ":" ^ caller) prog in
+    let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in
     let () = x_binfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
@@ -1716,9 +1740,9 @@ let look_up_data_def_prog prog (name : string) =
   look_up_data_def_raw ddefs name
 
 let look_up_data_def_imp  (name : string) =
-  match !global_prog with
-    Some prog -> look_up_data_def_prog prog name
-  | None -> failwith "global_prog not initialized"
+  let prog = !global_prog in
+    look_up_data_def_prog prog name
+  (* | None -> failwith "global_prog not initialized" *)
 
 let look_up_extn_info_rec_field_x ddefs dname=
   let rec look_up_helper fields=
@@ -4011,7 +4035,7 @@ let update_view_decl ?(caller="") prog vdecl =
       y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
-  let () = cprog_obj # check_prog(* _only *) (x_loc ^ ":" ^ caller) prog in
+  let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in
   prog.prog_view_decls <- others @ [vdecl]
 
 let update_view_decl ?(caller="") prog vdecl = 

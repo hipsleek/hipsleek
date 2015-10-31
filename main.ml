@@ -560,7 +560,7 @@ let process_source_full source =
   (* let () = I.set_iprog intermediate_prog in *)
   (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-  let () = saved_cprog := Some cprog in
+  let () = saved_cprog := cprog in
   (* let () = if !Globals.sa_pure then *)
   (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
   (*       if v.Cast.view_kind = Cast.View_NORM then *)
@@ -1009,7 +1009,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* let () =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
   (* let () = I.set_iprog intermediate_prog in *)
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-  let () = saved_cprog := Some cprog in
+  let () = saved_cprog := cprog in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
@@ -1176,13 +1176,16 @@ let loop_cmd parsed_content =
 
 let finalize_bug () =
   let () = Log.last_cmd # dumping "finalize on hip" in
-  (match !saved_cprog,!saved_prim_names with
-   | Some(cprog),Some(prim_names) ->
-     let () = Log.process_proof_logging !Globals.source_files cprog prim_names in ()
-   | Some(cprog),None ->
-     let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
-   | _,_ ->
-     let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in ());
+  let cprog = !saved_cprog in
+  let () =
+    (match !saved_prim_names with
+     | Some(prim_names) ->
+       let () = Log.process_proof_logging !Globals.source_files cprog prim_names in ()
+     | None ->
+       let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
+       (* | _,_ -> *)
+       (*   let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in () *)
+    ) in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () =

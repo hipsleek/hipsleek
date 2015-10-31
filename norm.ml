@@ -69,7 +69,7 @@ let norm_elim_useless_para stk view_name sf args =
 
 (*assume views are sorted*)
 let norm_elim_useless vdefs sel_vns=
-  let () = Cast.cprog_obj # check_prog x_loc !Cprog_sleek.cprog in
+  (* let () = Cast.cprog_obj # check_prog_upd x_loc !Cprog_sleek.cprog in *)
   let useless_stk = new stack_pr ""  (pr_pair pr_id !CP.print_svl) (=) in
   let elim_vdef ss vdef=
     let new_vdef = { vdef with
@@ -164,7 +164,7 @@ let norm_elim_useless vdefs sel_vns=
   let normal_view, rest_views = List.partition (fun vdcl -> vdcl.Cast.view_kind = View_NORM) vdefs in
   let n_normal_view = interate_helper normal_view [] in
   let () = if not(useless_stk # is_empty) then y_binfo_hp (add_str "USELESS Parameters eliminated" (fun s -> s # string_of)) useless_stk in
-  let () = Cast.cprog_obj # check_prog x_loc !Cprog_sleek.cprog in
+  (* let () = Cast.cprog_obj # check_prog_upd x_loc !Cprog_sleek.cprog in *)
   (rest_views@n_normal_view)
 
 let norm_elim_useless vdefs sel_vns =

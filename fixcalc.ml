@@ -848,11 +848,11 @@ let rec is_not_rec pf = match pf with
 let substitute_args_x a_rel = match a_rel with
   | CP.BForm ((CP.RelForm (SpecVar (_,id,_) as name,args,o1),o2),o3) ->
     let new_args, subs =
-      let prog =
-        match !Cast.global_prog with
-        | Some p -> p
-        | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!")
-      in
+      let prog = !Cast.global_prog in
+      (*   match !Cast.global_prog with *)
+      (*   | Some p -> p *)
+      (*   | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!") *)
+      (* in *)
       let typed_args = 
         try
           List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 

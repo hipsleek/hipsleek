@@ -3440,11 +3440,11 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         else
           let (a,b,c,_) =
             let hprels_flows = x_add_1 Cformula.partition_hprel_flow scc_hprel_ass in
-            let () = Cast.cprog_obj # check_prog x_loc prog in
+            let () = Cast.cprog_obj # check_prog_upd x_loc prog in
             List.fold_left (fun (r1,r2,r3,scc_sel_hps1) (hprels, flow_n) ->
-                let () = Cast.cprog_obj # check_prog x_loc prog in
+                let () = Cast.cprog_obj # check_prog_upd x_loc prog in
                 let l1,l2,l3, new_sel_hps = do_infer_one_flow hprels scc_sel_hps1 flow_n in
-                let () = Cast.cprog_obj # check_prog x_loc prog in
+                let () = Cast.cprog_obj # check_prog_upd x_loc prog in
                 let () = print_hpdefs_one_flow (* l2 *) flow_n in
                 (* to combine hpdefs of set of states *)
                 r1@l1,r2@l2,r3@l3, CP.remove_dups_svl (scc_sel_hps1@new_sel_hps)
