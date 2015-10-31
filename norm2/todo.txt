@@ -257,19 +257,17 @@ compute_actions@1 EXIT: SEARCH =>[
 # ex1a3.c
 
 [ // BIND
-(1;0)HP_1687(x,y)&true --> x::int_star<value_14_1691>@M * HP_1692(y,x@NI)&
-true,
+(1;0)
+HP_1687(x,y)&true --> x::int_star<value_14_1691>@M * HP_1692(y,x@NI)&true,
  // PRE
-(1;1;0)HP_1692(y,x@NI)&true --> y::int_star<value_21_1705>@M&
-true,
+(1;1;0)
+HP_1692(y,x@NI)&true --> y::int_star<value_21_1705>@M&true,
  // PRE_REC
-(1;1;0)y'::int_star<value_21_1711>@M * GP_1728(y',x'@NI)&
-y'!=null --> HP_1687(x',y')&
-true,
+(1;1;0)
+y'::int_star<value_21_1711>@M * GP_1728(y',x'@NI)& y'!=null --> HP_1687(x',y')&true,
  // PRE_REC
-(1;1;0)emp&y'!=null |#| x'::int_star<v_int_30_1727>@M&
-true --> GP_1728(y',x'@NI)&
-true]
+(1;1;0)
+emp&y'!=null |#| x'::int_star<v_int_30_1727>@M& true --> GP_1728(y',x'@NI)& true]
 
 !!! **syn.ml#671:other hprels of HP_1687: [(1;1;0)fold y'::int_star<value_21_1711>@M&y'!=null |#|  --> HP_1687(x',y')]
 ExceptionFailure("**syn.ml#678:Cannot transform the hprels of HP_1687 into view declarations.")Occurred!
@@ -280,6 +278,40 @@ Stop Omega... 99 invocations caught
 
 Exception occurred: Failure("**syn.ml#678:Cannot transform the hprels of HP_1687 into view declarations.")
 ==========================================================================
+# norm/ex4b7b.slk
+
+infer[HP]  y::cell<_> * x::cell<_> |- HP(x,y).
+print residue.
+
+# Got:
+ inferred hprel: [emp&true |#| x::cell<Anon_12>@M&true --> GP_23(y,x@NI)&true; 
+                  y::cell<Anon_11>@M * GP_23(y,x@NI)&true --> HP(x,y)&true]
+
+Should get:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [y::cell<Anon_14>@M&true --> GP_30(y,x@NI)&true; 
+                  x::cell<Anon_13>@M * GP_30(y,x@NI)&true --> HP(x,y)&true]
+
+(==solver.ml#11313==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: y::cell<Anon_11>@M * x::cell<Anon_12>@M
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ HP(x,y)]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[]
+compute_actions@1 EXIT: COND =>[
+  Prio:2
+  InferFold 0=>
+    LHS: y::cell<Anon_11>@M
+    RHS: HP(x,y);
+  Prio:2
+  InferFold 0=>
+    LHS: x::cell<Anon_12>@M
+    RHS: HP(x,y)
+  ]
+
 ==========================================================================
 ==========================================================================
 ==========================================================================

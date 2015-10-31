@@ -20396,3 +20396,13 @@ let join_or f_lst =
   | [] -> failwith x_tbi
   | x::lst -> List.fold_left (fun acc x -> mk_or x acc) x lst
 
+let get_root_ptr hf =
+  match hf with
+  | DataNode {h_formula_data_node = pt} 
+  | ViewNode { h_formula_view_node = pt}
+  | ThreadNode { h_formula_thread_node = pt}
+  | HVar(pt,_)
+                 -> pt
+  | _ -> raise Not_found
+
+
