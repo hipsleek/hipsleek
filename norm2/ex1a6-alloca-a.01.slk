@@ -19,11 +19,12 @@ relAssume y_ref'::cell<v_int_16_1930> * GP_1951(y_ref',x_ref,c')&true --> GP_195
 
 relAssume emp&true |#| x_ref::cell<value_15_1904>&true --> GP_1951(y_ref',x_ref,c')&true.
 
-/*
-shape_unfold [*].
+shape_unfold [HP_1899].
 print relAssumes.
-*/
 
+
+/*
 shape_derive_view [HP_1894].
 print relAssumes.
 print views.
+*/

@@ -541,31 +541,43 @@ let unfolding_hprel_list prog hprel_list =
   let hprel_id_groups = partition_hprel_id_list hprel_id_list in
   x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
 
-let selective_unfolding prog other_hprels hprels = 
-  let sorted_hprel_list = sort_hprel_list (hprels @ other_hprels) in
-  let sel_hprel_names = List.map name_of_hprel hprels in
-  (* Progressive selective unfolding: Unfolding the selective hprels and their dependants *)
-  let sorted_dep_sel_hprel_lst, other_hprel_lst, _ =
-    List.fold_right (fun hpr (sacc, oacc, is_found) -> 
-      if is_found then (hpr::sacc, oacc, is_found)
-      else if mem (name_of_hprel hpr) sel_hprel_names then (hpr::sacc, oacc, true)
-      else (sacc, oacc, is_found)) sorted_hprel_list ([], [], false)
-  in
+let aggr_selective_unfolding prog other_hprels sel_hprels =
+  let all_hprels = sel_hprels @ other_hprels in
+  let sel_hprels_id = List.map (fun hpr -> CP.name_of_spec_var (name_of_hprel hpr)) sel_hprels in
+  let sorted_dep_sel_hprel_lst, other_hprel_lst = sort_dependent_hprel_list all_hprels sel_hprels_id in
+  (* let sorted_hprel_list = sort_hprel_list (hprels @ other_hprels) in                            *)
+  (* let sel_hprel_names = List.map name_of_hprel hprels in                                        *)
+  (* (* Progressive selective unfolding: Unfolding the selective hprels and their dependants *)    *)
+  (* let sorted_dep_sel_hprel_lst, other_hprel_lst, _ =                                            *)
+  (*   List.fold_right (fun hpr (sacc, oacc, is_found) ->                                          *)
+  (*     if is_found then (hpr::sacc, oacc, is_found)                                              *)
+  (*     else if mem (name_of_hprel hpr) sel_hprel_names then (hpr::sacc, oacc, true)              *)
+  (*     else (sacc, oacc, is_found)) sorted_hprel_list ([], [], false)                            *)
+  (* in                                                                                            *)
+
   let dep_sel_hprel_id_lst = List.map mk_hprel_id sorted_dep_sel_hprel_lst in
   let other_hprel_id_lst = List.map mk_hprel_id other_hprel_lst in
-  let hprel_id_groups = partition_hprel_id_list (dep_sel_hprel_id_lst @ other_hprel_id_lst) in 
-  x_add helper_unfolding_hprel_list prog hprel_id_groups dep_sel_hprel_id_lst
-  (* let sorted_selective_hprel_list = List.filter (fun s_hpr ->                             *)
-  (*     mem (name_of_hprel s_hpr) hprel_names) sorted_hprel_list in                         *)
-  (* let hprel_id_list = List.map mk_hprel_id sorted_selective_hprel_list in                 *)
-  (* let other_hprel_id_list = List.map mk_hprel_id other_hprels in                          *)
-  (* let hprel_id_groups = partition_hprel_id_list (hprel_id_list @ other_hprel_id_list) in  *)
-  (* x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list                    *)
+  let hprel_id_groups = partition_hprel_id_list (dep_sel_hprel_id_lst @ other_hprel_id_lst) in
+  x_add helper_unfolding_hprel_list prog hprel_id_groups dep_sel_hprel_id_lst,
+  other_hprel_lst
+  (* (* let sorted_selective_hprel_list = List.filter (fun s_hpr ->                             *) *)
+  (* (*     mem (name_of_hprel s_hpr) hprel_names) sorted_hprel_list in                         *) *)
+  (* (* let hprel_id_list = List.map mk_hprel_id sorted_selective_hprel_list in                 *) *)
+  (* (* let other_hprel_id_list = List.map mk_hprel_id other_hprels in                          *) *)
+  (* (* let hprel_id_groups = partition_hprel_id_list (hprel_id_list @ other_hprel_id_list) in  *) *)
+  (* (* x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list                    *) *)
 
-let selective_unfolding prog other_hprels hprels = 
+let comb_selective_unfolding prog other_hprels sel_hprels = 
+  let sel_unfolding_hprels, others = aggr_selective_unfolding prog other_hprels sel_hprels in
+  sel_unfolding_hprels @ others
+
+let selective_unfolding prog other_hprels sel_hprels = 
+  fst (aggr_selective_unfolding prog other_hprels sel_hprels)
+
+let selective_unfolding prog other_hprels sel_hprels = 
   let pr = pr_hprel_list in
   Debug.no_2 "Syn.selective_unfolding" pr pr pr 
-    (fun _ _ -> selective_unfolding prog other_hprels hprels) other_hprels hprels
+    (fun _ _ -> selective_unfolding prog other_hprels sel_hprels) other_hprels sel_hprels
 
 let unfolding prog hprels = 
   unfolding_hprel_list prog hprels

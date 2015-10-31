@@ -1661,7 +1661,7 @@ let print_sleek_hprel_assumes () =
       curr_hprel (* (sleek_hprel_assumes # get) *) no_pos
   else ()
 
-let process_sleek_hprel_assumes_others s (ids: regex_id_list) f_proc = 
+let process_sleek_hprel_assumes_others s ?(combined=false) (ids: regex_id_list) f_proc = 
   (* let () = classify_sleek_hprel_assumes () in                               *)
   (* let () = print_endline_quiet "\n========================" in              *)
   (* let () = print_endline_quiet (" Performing "^s) in                        *)
@@ -1673,7 +1673,7 @@ let process_sleek_hprel_assumes_others s (ids: regex_id_list) f_proc =
   (* in                                                                        *)
   (* let res = f_proc others sel_hprel_assume_list in                          *)
   (* update_sleek_hprel_assumes (res @ others)                                 *)
-  SynUtils.process_hprel_assumes_others s sleek_hprel_assumes ids f_proc
+  SynUtils.process_hprel_assumes_others s ~combined:combined sleek_hprel_assumes ids f_proc
 
 let process_sleek_hprel_assumes s (ids: regex_id_list) f_proc = 
   let f others x = f_proc x in
@@ -1683,7 +1683,7 @@ let process_shape_add_dangling (ids: regex_id_list) =
   process_sleek_hprel_assumes "Adding Dangling" ids (Syn.add_dangling_hprel_list !cprog)
 
 let process_shape_unfold (ids: regex_id_list) =
-  process_sleek_hprel_assumes_others "Unfolding" ids (Syn.selective_unfolding !cprog)
+  process_sleek_hprel_assumes_others "Unfolding" ~combined:true ids (Syn.comb_selective_unfolding !cprog)
 
   (* let sel_hprel_assume_list, others = select_hprel_assume (sleek_hprel_assumes # get) hps in *)
   (* let res = x_add Syn.selective_unfolding !cprog others sel_hprel_assume_list in *)

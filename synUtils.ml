@@ -22,6 +22,10 @@ let eq_id s1 s2 = String.compare s1 s2 == 0
 
 let mem_id = Gen.BList.mem_eq eq_id
 let subset_id = Gen.BList.subset_eq eq_id
+let remove_dups_id = Gen.BList.remove_dups_eq eq_id
+let diff_id = Gen.BList.difference_eq eq_id
+let overlap_id = Gen.BList.overlap_eq eq_id
+let intersect_id = Gen.BList.intersect_eq eq_id
 
 let rec partition_by_key key_of key_eq ls = 
   match ls with
@@ -126,6 +130,31 @@ let sort_hprel_list hprel_list =
   (*   (scc_f hpr1_name) - (scc_f hpr2_name)                        *)
   (* in                                                             *)
   List.sort (compare_hprel dg) hprel_list
+
+let sort_dependent_hprel_list all_hprels sel_hprels_id = 
+  let dg = dependent_graph_of_hprel_list all_hprels in
+  let rec collect_dep_id acc ws =
+    match ws with
+    | [] -> remove_dups_id acc
+    | _ ->
+      let succ_ws = List.fold_left (fun a n -> 
+        let succ_n = CG.succ dg n in a @ succ_n) [] ws in
+      let succ_ws = remove_dups_id succ_ws in
+      let () =
+        let common_ids = intersect_id succ_ws acc in
+        if not (is_empty common_ids) then
+          y_winfo_hp (add_str "Found a circle in hprels' dependent relation" (pr_list pr_id)) common_ids
+      in
+      (* Only add new hprels into the list *)
+      let n_ws = diff_id succ_ws acc in
+      let n_acc = acc @ succ_ws in
+      collect_dep_id n_acc n_ws
+  in
+  let dep_sel_hprels_id = collect_dep_id sel_hprels_id sel_hprels_id in
+  let dep_sel_hprels, other_hprels = List.partition (fun hpr -> 
+    let hpr_id = CP.name_of_spec_var (name_of_hprel hpr) in
+    mem_id hpr_id dep_sel_hprels_id) all_hprels in
+  List.sort (compare_hprel dg) dep_sel_hprels, other_hprels
 
 module SV = struct
   type t = CP.spec_var
@@ -310,7 +339,7 @@ let pr_act s =
   let () = print_endline_quiet (line ^ "\n") in
   ()
 
-let process_hprel_assumes_others s hprel_assume_stk (ids: regex_id_list) f_proc = 
+let process_hprel_assumes_others s ?(combined=false) hprel_assume_stk (ids: regex_id_list) f_proc = 
   let () = pr_act s in
   let () = hprel_assume_stk # set (CF.add_infer_type_to_hprel (hprel_assume_stk # get)) in
   let sel_hprel_assume_list, others =
@@ -319,7 +348,8 @@ let process_hprel_assumes_others s hprel_assume_stk (ids: regex_id_list) f_proc 
     | REGEX_LIST hps -> select_hprel_assume (hprel_assume_stk # get) hps
   in
   let res = f_proc others sel_hprel_assume_list in
-  hprel_assume_stk # set (res @ others)
+  if not combined then hprel_assume_stk # set (res @ others)
+  else hprel_assume_stk # set res (* Others has been added into res *)
 
 let process_hprel_assumes_res s hprel_assume_stk hprel_assume_of_res (ids: regex_id_list) f_proc = 
   let () = pr_act s in
