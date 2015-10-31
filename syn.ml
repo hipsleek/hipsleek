@@ -362,20 +362,28 @@ let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
     (* let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hrd_lhs in *)
     let lhs_p, _, _ = x_add CVU.xpure_sym prog hrd_lhs in
     let lhs_p = MCP.pure_of_mix lhs_p in
-    let ex_lhs_p = simplify lhs_p hrel_args in
-    let hrd_guard = hrel_def.hprel_guard in
-    let guard_f = 
-      let b = CF.mkBase_simp HEmp (MCP.mkMTrue pos) in
-      match hrd_guard with
-      | None -> b
-      | Some g -> b (* g *) (* Ignore guard in a post-hprel *)
-    in
-    let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in
-    let rs, residue = x_add heap_entail_formula prog ctx guard_f in
-    if rs then
-        let comb_f = x_add combine_Star prog guard_f residue in
-        Some (x_add combine_Star prog comb_f hrel_def.hprel_lhs)
+    let ex_lhs_p = MCP.mix_of_pure (simplify lhs_p hrel_args) in
+    (* let hrd_guard = hrel_def.hprel_guard in                          *)
+    (* let guard_f =                                                    *)
+    (*   let b = CF.mkBase_simp HEmp (MCP.mkMTrue pos) in               *)
+    (*   match hrd_guard with                                           *)
+    (*   | None -> b                                                    *)
+    (*   | Some g -> b (* g *) (* Ignore guard in a post-hprel *)       *)
+    (* in                                                               *)
+    (* let guard_f = CF.add_pure_formula_to_formula ex_lhs_p guard_f in *)
+    (* let rs, residue = x_add heap_entail_formula prog ctx guard_f in  *)
+    (* if rs then                                                       *)
+    let ctx_p, _, _ = CVU.xpure_sym prog ctx in
+    if is_sat (MCP.merge_mems ctx_p ex_lhs_p true) then
+      let comb_f = ctx (* x_add combine_Star prog guard_f residue *) in
+      Some (x_add combine_Star prog comb_f hrel_def.hprel_lhs)
     else None
+
+let folding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
+  let pr1 = !CF.print_formula in
+  let pr2 = Cprinter.string_of_hprel_short in
+  Debug.no_2 "Syn.folding_one_hrel_def" pr1 pr2 (pr_option pr1)
+    (fun _ _ -> folding_one_hrel_def prog ctx hrel hrel_def) ctx hrel_def
 
 let folding_one_hrel prog ctx hrel hrel_defs = 
   let hrel_name, hrel_args = sig_of_hrel hrel in
