@@ -435,7 +435,7 @@ let find_rel_args_groups_scc prog scc0 =
     let ls_inst_args = List.map (fun (i_args, ni_args) ->
         (List.map (fun sv -> (sv,I)) i_args)@(List.map (fun sv -> (sv,NI)) ni_args)) ls_sep_args in
     let n_hf, n_hps = List.fold_left (fun (hf, r) args ->
-        let nhf, nhp = Cast.add_raw_hp_rel prog true false args no_pos in
+        let nhf, nhp = x_add (Cast.add_raw_hp_rel ~caller:x_loc) prog true false args no_pos in
         (CF.mkStarH hf nhf no_pos, r@[nhp])
       ) (CF.HEmp,[]) ls_inst_args in
     let f = CF.formula_of_heap n_hf no_pos in

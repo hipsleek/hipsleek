@@ -1109,7 +1109,7 @@ let hn_trans_field_mut hn =
     | _ -> hn
 
 
-let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest defined_hps
+let generate_constraints ?(caller="") prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest defined_hps
     ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs
     (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs reqs eqNull prog_vars (* lvi_ni_svl *) (* classic_nodes *)
     pos =
@@ -1122,7 +1122,7 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest define
     match unknown_ptrs with
     | [] -> (fb,r_hprels,post_hps,hps,hfs)
     | _ ->
-      let (hf,vhp_rels) = Sautil.add_raw_hp_rel prog is_pre false unknown_ptrs pos in
+      let (hf,vhp_rels) = x_add (Sautil.add_raw_hp_rel ~caller:(x_loc ^ ":" ^ caller)) prog is_pre false unknown_ptrs pos in
       begin
         match hf with
         | HRel hp ->
@@ -1224,7 +1224,7 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest define
   let () = x_tinfo_hp (add_str  "  hp_rel_list"  (pr_list_ln Cprinter.string_of_hprel)) hp_rel_list pos in
   r_new_hfs, new_lhs_b,m,rvhp_rels,new_post_hps, hp_rel_list, n_es_heap_opt, ass_lhs
 
-let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest defined_hps
+let generate_constraints ?(caller="") prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest defined_hps
     ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs
     (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs reqs eqNull prog_vars (* lvi_ni_svl *) (* classic_nodes *)
     pos =
@@ -1233,7 +1233,7 @@ let generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest define
   let prr = (fun (_, _, _, _, _, hps, _, _) -> pr_list_ln pr2 hps) in
   Debug.no_2 "generate_constraints"
     (add_str "lhs_b" pr1) (add_str "rhs_b1" pr1) prr
-    (fun _ _ -> generate_constraints prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest defined_hps
+    (fun _ _ -> generate_constraints ~caller:caller prog iact es rhs lhs_b ass_guard rhs_b1 rhs_rest defined_hps
     ls_unknown_ptrs unk_pure unk_svl (* no_es_history *) lselected_hpargs rselected_hpargs
     (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs reqs eqNull prog_vars (* lvi_ni_svl *) (* classic_nodes *) pos)
     (CF.Base lhs_b) (CF.Base rhs_b1)
@@ -1842,7 +1842,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
       if undef_lhs_ptrs = [] || (List.filter (fun (_,n) -> n=I) undef_lhs_ptrs) = [] then
         [],[]
       else
-        let (pred_hf,new_hp_rel) = Sautil.add_raw_hp_rel prog false false undef_lhs_ptrs pos in
+        let (pred_hf,new_hp_rel) = x_add (Sautil.add_raw_hp_rel ~caller:x_loc) prog false false undef_lhs_ptrs pos in
         [pred_hf], [new_hp_rel]
     in
     let (lhf,lmf,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
@@ -1924,7 +1924,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
   CP.spec_var list ->
   CF.formula_base -> CF.formula_base -> VarGen.loc -> bool * CF.entail_st
 *)
-let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
+let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b0 rhs_b0 pos =
   (*********INTERNAL**********)
   let exist_uncheck_rhs_null_ptrs l_emap r_emap l_null_ptrs r_null_ptrs rhs_args=
     let cl_lnull_ptrs = CP.find_eq_closure l_emap l_null_ptrs in
@@ -2158,7 +2158,7 @@ let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rh
                 | hf::rest -> CF.mkAnd_fb_hf lhs_b1 (List.fold_left(fun a c-> mkStarH a c pos ) hf rest) pos
               in
               let r_new_hfs,ass_lhs_b, m,rvhp_rels, r_post_hps,hp_rel_list,n_es_heap_opt, ass_lhs =
-                x_add generate_constraints prog iact es rhs n_lhs_b1 ass_guard rhs_b1 rhs_rest
+                x_add (generate_constraints ~caller:(x_loc ^ ":" ^ caller)) prog iact es rhs n_lhs_b1 ass_guard rhs_b1 rhs_rest
                   defined_hps1 ls_unknown_ptrs unk_pure unk_svl
                     lselected_hpargs2 rselected_hpargs
                   (* hds hvs lhras *) lhrs (* rhras *) rhrs leqs1 reqs1 eqNull subst_prog_vars
@@ -2203,7 +2203,7 @@ let infer_collect_hp_rel prog iact (es0:entail_state) lhs_node rhs0 rhs_rest (rh
    - n_es_heap_opt: to do
    - oerror_es: for error inference
 *)
-let infer_collect_hp_rel i prog iact (es:entail_state) lhs_node rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
+let infer_collect_hp_rel ?(caller="") i prog iact (es:entail_state) lhs_node rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 es = Cprinter.prtt_string_of_formula es.CF.es_formula in
   (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
@@ -2216,7 +2216,7 @@ let infer_collect_hp_rel i prog iact (es:entail_state) lhs_node rhs rhs_rest (rh
       (add_str "lhs_node" !CF.print_h_formula) (add_str "rhs_node" !CF.print_h_formula)
       (add_str "lhs" pr1) (add_str "rhs" pr1) (add_str "es" pr4) 
       (add_str "classic" string_of_bool) pr5
-    ( fun _ _ _ _ _ _ -> infer_collect_hp_rel prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
+    ( fun _ _ _ _ _ _ -> infer_collect_hp_rel ~caller:caller prog iact es lhs_node rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos)
       (* es *) lhs_node rhs lhs_b rhs_b es (check_is_classic ())
 
 (*
@@ -2247,7 +2247,7 @@ let infer_collect_hp_rel_unfold_lemma_guided prog iact estate lhs_node rhs_node 
                     let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula) (CF.Base rhs_b)  pos in
                     let () = x_tinfo_hp (add_str  "lhs_b" Cprinter.string_of_formula) (CF.Base lhs_b)  pos in
                     let (res,n_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt)=
-                      x_add infer_collect_hp_rel 3 prog iact estate lhs_node n_rhs_node rhs_rest rhs_h_matched_set
+                      x_add (infer_collect_hp_rel ~caller:x_loc) 3 prog iact estate lhs_node n_rhs_node rhs_rest rhs_h_matched_set
                           lhs_b rhs_b pos in
                     if res then
                        let () = x_tinfo_hp (add_str  "new estate" Cprinter.string_of_formula) n_estate.CF.es_formula  pos in
@@ -2304,7 +2304,7 @@ let infer_collect_hp_rel_fold_lemma_guided prog iact estate lhs_node rhs_node rh
                     let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula) (CF.Base rhs_b)  pos in
                     let () = x_tinfo_hp (add_str  "lhs_b" Cprinter.string_of_formula) (CF.Base lhs_b)  pos in
                     let (res,n_estate, n_lhs, n_es_heap_opt, oerror_es, rhs_rest_opt)=
-                      x_add infer_collect_hp_rel 3 prog iact estate n_lhs_node rhs_node rhs_rest rhs_h_matched_set
+                      x_add (infer_collect_hp_rel ~caller:x_loc) 3 prog iact estate n_lhs_node rhs_node rhs_rest rhs_h_matched_set
                           lhs_b rhs_b pos in
                     if res then
                        let n_rhs_rest, n_rhs_node, n_conseq = match rhs_rest_opt with

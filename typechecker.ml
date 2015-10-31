@@ -3410,18 +3410,22 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
                 scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                                                 (fun ((hp1,_),_) ((hp2, _),_) ->
                                                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int
-            in (r1,r2,r3)
+            in
+            (r1,r2,r3)
           else
             let todo_unk = x_add (* Sa2.infer_shapes_new *) Sa3.infer_shapes iprog prog (* proc.proc_name *)"" hprels
                 scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
                                                 (fun ((hp1,_),_) ((hp2, _),_) ->
                                                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int
-            in ([],[], [])
+            in
+            ([],[], [])
         else
-          Sa3.infer_shapes iprog prog proc.proc_name (* "" *) hprels
+          let r = Sa3.infer_shapes iprog prog proc.proc_name (* "" *) hprels
             scc_sel_hps0 scc_sel_post_hps (Gen.BList.remove_dups_eq
                                              (fun ((hp1,_),_) ((hp2, _),_) ->
                                                 (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int
+          in
+          r
       in
       let sel_hps = List.map (fun hp_def -> Cformula.get_hpdef_name hp_def.Cformula.def_cat) hp_defs in
       (a, hp_defs,c, sel_hps)
@@ -3436,8 +3440,11 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         else
           let (a,b,c,_) =
             let hprels_flows = x_add_1 Cformula.partition_hprel_flow scc_hprel_ass in
+            let () = Cast.cprog_obj # check_prog x_loc prog in
             List.fold_left (fun (r1,r2,r3,scc_sel_hps1) (hprels, flow_n) ->
+                let () = Cast.cprog_obj # check_prog x_loc prog in
                 let l1,l2,l3, new_sel_hps = do_infer_one_flow hprels scc_sel_hps1 flow_n in
+                let () = Cast.cprog_obj # check_prog x_loc prog in
                 let () = print_hpdefs_one_flow (* l2 *) flow_n in
                 (* to combine hpdefs of set of states *)
                 r1@l1,r2@l2,r3@l3, CP.remove_dups_svl (scc_sel_hps1@new_sel_hps)
@@ -3460,7 +3467,8 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
             (*       scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
             (*           (fun ((hp1,_),_) ((hp2, _),_) -> *)
             (*               (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true *)
-          in (a,b,c)
+          in
+          (a,b,c)
       else [],[],[]
     in
     (* update hpdefs for func call *)
@@ -3551,10 +3559,10 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
             if is_empty scc_sel_hps || is_empty scc_hprel_ass then prog, false
             else
               let () = Norm.find_rec_data iprog prog REGEX_STAR in
-              let nprog = Syn.extn_pred_scc iprog prog scc_procs_names in
-              let nprog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
-              let nprog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
-              nprog, true
+              let extn_pred_lsts = Syn.extn_pred_scc iprog prog scc_procs_names in
+              let prog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
+              let prog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
+              prog, true
         in
         let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
         let () = List.iter (fun proc ->

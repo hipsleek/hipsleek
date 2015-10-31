@@ -47,7 +47,7 @@ let () = Cast.set_prog !cprog
 let get_sorted_view_decls () = Cast.get_sorted_view_decls !cprog
 
 let update_view_decl_cprog vdef = 
-  x_add (Cast.update_view_decl ~loc:x_loc) !cprog vdef
+  x_add (Cast.update_view_decl ~caller:x_loc) !cprog vdef
 
 let update_view_decl_iprog_g update_scc upd_flag vdef = 
   try

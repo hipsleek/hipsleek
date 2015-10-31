@@ -2744,7 +2744,7 @@ let gfp_gen_init prog is_pre r base_fs rec_fs=
     if CP.mem_svl r svl then
       (*neg for sl is not well defined. use unkhp*)
       if not rcomplete then
-        let (hf, n_hp) = Sautil.add_raw_hp_rel prog is_pre true [(r, I)] pos in
+        let (hf, n_hp) = x_add (Sautil.add_raw_hp_rel ~caller:x_loc) prog is_pre true [(r, I)] pos in
         let f = CF.formula_of_heap_w_normal_flow hf pos in
         (r_fs@[f], r_unk_hpargs@[(n_hp, [r])])
       else
@@ -3412,7 +3412,7 @@ let check_split_global_x iprog prog cands =
   (*each partition, create new hp and its corresponding HRel formula*)
   let hp_helper1 pos args =
     let args1 = List.map (fun sv -> (sv,I)) args in
-    let hf,new_hp_sv = Sautil.add_raw_hp_rel prog true false args1 pos in
+    let hf,new_hp_sv = x_add (Sautil.add_raw_hp_rel ~caller:x_loc) prog true false args1 pos in
     ((new_hp_sv,args), hf)
   in
   (*each partition, create new rel and its corresponding rel pure formula*)
@@ -3775,7 +3775,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
       let () =  Debug.ninfo_hprint (add_str "  args: " !CP.print_svl) args no_pos in
       (* let n_hp = CP.fresh_spec_var hp in *)
       let n_args = args@[ext_sv] in
-      let n_lhs, n_hp = Sautil.add_raw_hp_rel cprog true false (List.map (fun sv ->
+      let n_lhs, n_hp = x_add (Sautil.add_raw_hp_rel ~caller:x_loc) cprog true false (List.map (fun sv ->
           if CP.is_node_typ sv then (sv,I) else (sv,NI)) n_args) no_pos in
       (*new declaration for cprog*)
       let n_hpcl = Cast.look_up_hp_def_raw cprog.Cast.prog_hp_decls (CP.name_of_spec_var n_hp) in
@@ -4229,7 +4229,7 @@ let pred_norm_seg_x iprog prog unk_hps hp_defs=
     let seg_arg = fresh_any_name Globals.seg_arg in
     let seg_sv = CP.SpecVar (CP.type_of_spec_var orig_root, seg_arg ,Unprimed) in
     let orig_hpcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var orig_hp) in
-    let seg_def_lhs0, n_hp = Sautil.add_raw_hp_rel prog true false (orig_hpcl.Cast.hp_vars_inst@[(seg_sv,NI)]) no_pos in
+    let seg_def_lhs0, n_hp = x_add (Sautil.add_raw_hp_rel ~caller:x_loc) prog true false (orig_hpcl.Cast.hp_vars_inst@[(seg_sv,NI)]) no_pos in
     let sst0 = List.combine (List.map fst orig_hpcl.Cast.hp_vars_inst) orig_all_args in
     let seg_def_lhs = CF.h_subst sst0 seg_def_lhs0 in
     let n_hpcl = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls (CP.name_of_spec_var n_hp) in

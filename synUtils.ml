@@ -651,7 +651,7 @@ let trans_spec_proc trans_f cprog proc =
   let pr_spec = Cprinter.string_of_struc_formula_for_spec in
   let () = y_tinfo_hp (add_str "spec" pr_spec) spec in
   let () = y_tinfo_hp (add_str "nspec" pr_spec) nspec in
-  let () = proc.C.proc_stk_of_static_specs # push_pr ("SynUtils:" ^ x_loc) nspec in
+  let () = proc.C.proc_stk_of_static_specs # push_pr x_loc nspec in
   let nproc = { proc with
     C.proc_static_specs = nspec;
     C.proc_dynamic_specs = trans_f proc.C.proc_dynamic_specs; }
@@ -663,7 +663,8 @@ let trans_spec_scc trans_f cprog scc_procs =
       if mem_id proc.C.proc_name scc_procs then
         trans_spec_proc trans_f cprog proc
       else proc) cprog.Cast.new_proc_decls in
-  { cprog with Cast.new_proc_decls = n_tbl }
+  (* let cprog = { cprog with Cast.new_proc_decls = n_tbl } in *)
+  cprog
 
 let trans_hrel_to_view_spec_scc cprog scc_procs =
   trans_spec_scc (x_add_1 (trans_hrel_to_view_struc_formula ~for_spec:true) cprog) cprog scc_procs
@@ -814,7 +815,7 @@ let norm_one_derived_view iprog cprog derived_view =
     let norm_cview = match cview with v::[] -> v | _ -> derived_view in
     let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
     (* norm_cview might not be updated/added into cprog due to exception *)
-    let () = x_add (Cast.update_view_decl ~loc:x_loc) cprog norm_cview in
+    let () = x_add (Cast.update_view_decl ~caller:x_loc) cprog norm_cview in
     norm_cview
   with _ ->
     let () = x_warn ("Cannot normalize the derived views") in
@@ -842,7 +843,7 @@ let norm_single_view iprog cprog view =
 
 let restore_view iprog cprog view = 
   let iview = Rev_ast.rev_trans_view_decl view in
-  let () = x_add (C.update_view_decl ~loc:x_loc) cprog view in
+  let () = x_add (C.update_view_decl ~caller:x_loc) cprog view in
   let () = I.update_view_decl iprog iview in
   ()
   
@@ -868,7 +869,7 @@ let update_view_content iprog cprog vdecl f =
   in
   let normed_vdecl = norm_single_view iprog cprog vdecl in
   (* iprog has been updated by norm_single_view *)
-  let () = x_add (Cast.update_view_decl ~loc:x_loc) cprog normed_vdecl in
+  let () = x_add (Cast.update_view_decl ~caller:x_loc) cprog normed_vdecl in
   let () =  x_add Astsimp.compute_view_x_formula cprog normed_vdecl !Globals.n_xpure in
   let r_vdecl =  Astsimp.set_materialized_prop normed_vdecl in
   r_vdecl

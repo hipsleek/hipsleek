@@ -328,7 +328,7 @@ let rec_unfold_formula_of_hrel prog hrel_root hrel_args =
     let ni_hr_args = List.map (fun a -> (a, Globals.NI)) (hrel_root::hrel_args) in
     List.fold_left (fun f ptr ->
       let hr_args = (ptr, I)::ni_hr_args in
-      let (hr, _) = C.add_raw_hp_rel prog true true hr_args pos in
+      let (hr, _) = x_add (C.add_raw_hp_rel ~caller:x_loc) prog true true hr_args pos in
       CF.mkAnd_f_hf f hr pos) f ptr_d_args
   | _ -> x_fail "[rec_unfold_formula_of_hrel]: Unexpected root type of HRel"
 

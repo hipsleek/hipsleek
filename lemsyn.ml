@@ -199,7 +199,7 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
   (* let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vnode.Cformula.h_formula_view_name in *)
   let vself = CP.SpecVar (CP.type_of_spec_var vnode1.Cformula.h_formula_view_node, self, Unprimed) in
   let ss0 = [(vnode1.Cformula.h_formula_view_node, vself)] in
-  let rhs,n_hp =  C.add_raw_hp_rel prog false false [(vself,I);(dnode1.Cformula.h_formula_data_node,NI)] no_pos in
+  let rhs,n_hp = x_add (C.add_raw_hp_rel  ~caller:x_loc) prog false false [(vself,I);(dnode1.Cformula.h_formula_data_node,NI)] no_pos in
   (*add ihpdecl*)
   let iprog = Iast.get_iprog () in
   let hpdclr = C.look_up_hp_def_raw prog.C.prog_hp_decls (CP.name_of_spec_var n_hp) in

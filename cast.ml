@@ -1447,7 +1447,7 @@ let generate_pure_rel hprel=
   let _= Z3.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
   n_p_hprel
 
-let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
+let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
     let hp_decl =
       { hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
@@ -1473,18 +1473,18 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    let () = cprog_obj # check_prog x_loc prog in
+    let () = cprog_obj # check_prog (x_loc ^ ":" ^ caller) prog in
     let () = x_binfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
 
-let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
+let add_raw_hp_rel ?(caller="") prog is_pre is_unknown unknown_args pos=
   let pr1 = pr_list (pr_pair !P.print_sv print_arg_kind) in
   let pr2 = !F.print_h_formula in
   let pr4 (hf,_) = pr2 hf in
   Debug.no_1 "add_raw_hp_rel" pr1 pr4
-    (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
+    (fun _ -> add_raw_hp_rel_x ~caller:caller prog is_pre is_unknown unknown_args pos) unknown_args
 
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
@@ -3896,7 +3896,9 @@ let categorize_view (prog: prog_decl) : prog_decl =
       let vd = { vd with view_is_tail_recursive = tail_recursive } in
       vd
     ) vdecls in
-  { prog with prog_view_decls = new_vdecls }
+  (* { prog with prog_view_decls = new_vdecls } *)
+  let () = prog.prog_view_decls <- new_vdecls in
+  prog
 
 
 (*
@@ -3981,7 +3983,7 @@ let add_view_decl prog vdecl =
     let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
 
-let update_view_decl ?(loc="") prog vdecl = 
+let update_view_decl ?(caller="") prog vdecl = 
   let vdecl_id = vdecl.view_name in
   let vdecl_args = vdecl.view_vars in
   let vhdr = vdecl_id ^ (!CP.print_svl vdecl_args) in
@@ -3992,14 +3994,14 @@ let update_view_decl ?(loc="") prog vdecl =
       y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
-  let () = cprog_obj # check_prog(* _only *) (x_loc ^ ":" ^ loc) prog in
+  let () = cprog_obj # check_prog(* _only *) (x_loc ^ ":" ^ caller) prog in
   prog.prog_view_decls <- others @ [vdecl]
 
-let update_view_decl ?(loc="") prog vdecl = 
+let update_view_decl ?(caller="") prog vdecl = 
   let pr = !print_view_decl_short in
   let dummy_pr = fun _ -> "" in
   Debug.no_1 "update_view_decl" pr dummy_pr 
-    (fun _ -> update_view_decl ~loc:loc prog vdecl) vdecl
+    (fun _ -> update_view_decl ~caller:caller prog vdecl) vdecl
 
 let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
   (* let frm_name = frm_vdecl.view_name in *)
