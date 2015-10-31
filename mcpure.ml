@@ -2268,14 +2268,14 @@ let transform_mix_formula f_p_t f =
   | MemoF f -> MemoF (transform_memo_formula f_p_t f)
   | OnePF f -> OnePF (transform_formula f_p_t f)
 
-let memo_pure_push_exists qv f = match f with
+let mix_push_exists qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists qv f)
   | OnePF f -> OnePF (mkExists qv f None no_pos)
 
-let memo_pure_push_exists qv f =
-  Debug.no_2 "memo_pure_push_exists"
+let mix_push_exists qv f =
+  Debug.no_2 "mix_push_exists"
     !print_svl !print_mix_f !print_mix_f
-    memo_pure_push_exists qv f
+    mix_push_exists qv f
 
 let memo_pure_push_exists_lhs qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists_lhs qv f)

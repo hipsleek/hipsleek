@@ -756,7 +756,7 @@ let no_check_outer_vars = ref false
 (* 	formula_exists_pos = pos}) -> *)
 (*             let (pqh,_) = x_add xpure_heap_perm prog qh qp 1 in *)
 (*             let tmp1 = MCP.merge_mems qp pqh true in *)
-(*             MCP.memo_pure_push_exists qvars tmp1 *)
+(*             MCP.mix_push_exists qvars tmp1 *)
 (*   in  *)
 (*   (xpure_helper prog f0, formula_2_mem_perm f0 prog) *)
 
@@ -8051,7 +8051,7 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
   let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
   let tmp1 = elim_exists_mix_formula inner_vars conseq no_pos in
-  let tmp2 = MCP.memo_pure_push_exists outer_vars tmp1 in
+  let tmp2 = MCP.mix_push_exists outer_vars tmp1 in
   (* let () = print_string ("outer_vars: "^(pr_list Cprinter.string_of_spec_var outer_vars)^"\n inner_vars: "^(pr_list Cprinter.string_of_spec_var inner_vars)^"\n conseq: "^(Cprinter.string_of_mix_formula conseq) *)
   (*   ^"\n added inner: "^(Cprinter.string_of_mix_formula tmp1)^"\n added outer: "^(Cprinter.string_of_mix_formula tmp2)^"\n") in *)
   (ante,tmp2)
@@ -15689,7 +15689,7 @@ and prop_w_coers_x prog (estate: CF.entail_state) (coers: coercion_decl list)
           [(get_node_var h2)] @ (get_node_args h2)) pairs) in
       let diff = Gen.BList.difference_eq CP.eq_spec_var in
       let evars = diff (CF.fv rhs) inst_vars in
-      let rhs_p = MCP.memo_pure_push_exists evars coer_guard in
+      let rhs_p = MCP.mix_push_exists evars coer_guard in
       let r = x_add TP.imply_raw_mix e_lhs_p rhs_p in
       if r then Some (inst_vars, lhs_h_rest, e_lhs_p, lhs_fl)
       else None
