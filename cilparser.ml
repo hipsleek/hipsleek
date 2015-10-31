@@ -1646,12 +1646,12 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
               let base_typ = typ_of_cil_exp e in
               match base_typ with
                 | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (   (* write_char(char_star s, c) *)
-              	    let pos = translate_location l in
+                    let pos = translate_location l in
                     let le = translate_exp e in
                     (*let re = Iast.mkBinary Iast.OpPlus le (translate_exp exp) None pos in*)
                     (*let re = Cil.BinOp (Cil.PlusPI, e, exp, base_typ, l) in*)
                     (*let new_re = translate_exp re in*)
-		    let t1 = typ_of_cil_exp e in
+                    let t1 = typ_of_cil_exp e in
                     let t2 = typ_of_cil_exp exp in
                     let re = translate_exp exp in
                     let pointer_arith_proc = create_string_proc t1 t2 in
