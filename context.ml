@@ -19,6 +19,7 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  match_res_alias_set : CP.spec_var list;
   (* this indicates compatible variables from LHS/RHS that can be used *)
   (* for base-case-fold/unfold and instantiation *)
   match_res_compatible: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
@@ -94,7 +95,7 @@ and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (l
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
-let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
+let mk_match_res ?(holes=[]) ?(alias=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
   {
     match_res_lhs_node = lhs_node;
     match_res_lhs_rest = lhs_rest;
@@ -103,6 +104,7 @@ let mk_match_res ?(holes=[]) mt lhs_node lhs_rest rhs_node rhs_rest =
     match_res_compatible = [];
     match_res_rhs_node = rhs_node;
     match_res_rhs_rest = rhs_rest;
+    match_res_alias_set = alias;
   }
 
 (*
@@ -243,6 +245,7 @@ let pr_match_res (c:match_res):unit =
   pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node; fmt_cut ();
   fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
   fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest; fmt_cut ();
+  fmt_string "alias set: "; fmt_string ((pr_list pr_sv) c.match_res_alias_set) ;
   fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_compatible) ;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
@@ -582,6 +585,7 @@ let convert_starminus ls =
 let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   let hrel_stk = new Gen.stack in
+  let aset = posib_r_aliases in
   match rhs_node with
   | HRel _  
   | ThreadNode _ 
@@ -666,7 +670,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   | HTrue -> (
       if (rhs_rest = HEmp) then (
         (* if entire RHS is HTrue then it matches with the entire LHS*)
-        let mres = mk_match_res Root lhs_h HEmp HTrue HEmp in
+        let mres = mk_match_res (* ~alias:aset *) Root lhs_h HEmp HTrue HEmp in
         (* { match_res_lhs_node = lhs_h; *)
         (*          match_res_lhs_rest = HEmp; *)
         (*          match_res_holes = []; *)
@@ -1441,7 +1445,7 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l no_pos in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
       (* let () = print_string ("\n(andreeac) lhs_rest spatial_ctx_extract " ^ (Cprinter.string_of_h_formula lhs_rest) ^ "\n(andreeac) f0: " ^ (Cprinter.string_of_h_formula f0)) in *)
-      mk_match_res ~holes:holes mt lhs_node lhs_rest rhs_node rhs_rest
+      mk_match_res ~holes:holes ~alias:aset mt lhs_node lhs_rest rhs_node rhs_rest
       (* { match_res_lhs_node = lhs_node; *)
       (*  match_res_lhs_rest = lhs_rest; *)
       (*  match_res_holes = holes; *)
@@ -2812,7 +2816,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
   (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
   (* does removing original cause loop? should we use counting? *)
   if (is_view rhs_node) (* && (get_view_original rhs_node) *) then
-    let mr = mk_match_res Root HEmp lhs_h rhs_node rhs_rest in
+    let mr = mk_match_res (* aset *) Root HEmp lhs_h rhs_node rhs_rest in
     let r = (2, M_base_case_fold mr) in
     (* { match_res_lhs_node = HEmp; *)
     (*   match_res_lhs_rest = lhs_h; *)
@@ -2852,7 +2856,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         let vl_view_derv =  vl.h_formula_view_derv in
         let vr_view_derv = vr.h_formula_view_derv in
         let vr_view_split = vr.h_formula_view_split in
-        let m_res = mk_match_res Root (ViewNode vl) lhs_rest rhs_node rhs_rest in
+        let m_res = mk_match_res (* aset *) Root (ViewNode vl) lhs_rest rhs_node rhs_rest in
         (* let m_res = { match_res_lhs_node = ViewNode vl; *)
         (*               match_res_lhs_rest = lhs_rest; *)
         (*               match_res_holes = []; *)

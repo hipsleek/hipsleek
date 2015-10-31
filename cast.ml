@@ -648,6 +648,14 @@ let cprog_obj =
       with e -> 
         let () = y_binfo_hp (add_str "hp_decls: " (pr_list !print_hp_decl)) lst in
         failwith (x_loc^(" cannot find hp_rel "^n))
+    method set_hp_root hp posn =
+      let n = CP.name_of_spec_var hp in
+      let hp_d = self # get_hp_one_decl n in
+      let () = match hp_d.hp_root_pos with
+      | Some i -> if posn!=i then y_winfo_hp (add_str "root previously set at" string_of_int) i;
+      | None -> () in 
+      let () = hp_d.hp_root_pos <- Some posn in
+      ()
     method get_hp_root hp args =
       let n = CP.name_of_spec_var hp in
       let hp_d = self # get_hp_one_decl n in
@@ -667,6 +675,12 @@ let cprog_obj =
       let () = self # logging ("get_hp_root "^n^" gives "^(string_of_int posn)) in
       let () = print_endline_quiet (self # show_roots) in
         List.nth args posn
+    method get_hp_root_posn hp =
+      let n = CP.name_of_spec_var hp in
+      let hp_d = self # get_hp_one_decl n in
+      let posn = match hp_d.hp_root_pos with
+        | Some i -> i
+        | None -> 0
     method show_roots =
       let lst = self # get_hp_decls in
       let str = pr_list (fun vd -> (pr_pair pr_id (pr_opt string_of_int)) (vd.hp_name,vd.hp_root_pos)) lst in
@@ -1454,7 +1468,10 @@ let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
                    if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
                   ^ (string_of_int (Globals.fresh_int()));
         hp_part_vars = [];
-        hp_root_pos = Some 0; (* First ptr is the root of the new HPRel *) (* None; (* default, reset when def is inferred *) *)
+        hp_root_pos = None (* Some 0 *); 
+        (* Use None since we do not know how it will be instantiated *)
+        (* First ptr is the root of the new HPRel *) 
+        (* None; (* default, reset when def is inferred *) *)
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
         hp_view = None;

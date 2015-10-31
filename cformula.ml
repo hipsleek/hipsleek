@@ -20382,7 +20382,6 @@ let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
   | [x] -> Some x
   | _ -> None
 
-
 let rec split_or f =
   match f with
   | Or e -> (split_or e.formula_or_f2)@(split_or e.formula_or_f1)

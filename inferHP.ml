@@ -264,7 +264,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       let niu_svl_ni_total = niu_svl_i2@niu_svl_ni in
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
-      let () = y_binfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
+      let () = y_tinfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
       let get_data_ni_svl knd = 
         if is_view || !Globals.sep_pure_fields then []
         else 
@@ -278,7 +278,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       in
       let ls_fwd_svl = if args12 =[] &&
         not ((es.CF.es_infer_obj # is_pure_field_all) && !Globals.sep_pure_fields) then
-          let () = y_binfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
+          let () = y_tinfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
           (* find @I parameters *)
           let niu_i = List.filter (fun (_,i) -> i=I) niu_svl_ni_total in
           if niu_i==[] then []
@@ -1436,6 +1436,31 @@ let do_inst prog estate lhs_b largs rargs extended_hps =
   let pr_r (b,_,eb) = (pr_pair string_of_bool pr_bf) (b,eb) in
   Debug.no_4 "do_inst" (add_str "lhs_b" pr_bf) (add_str "largs" pr_svl) (add_str "rargs" pr_svl) (add_str "hps" pr_svl) pr_r (fun _ _ _ _ -> do_inst prog estate lhs_b largs rargs extended_hps) lhs_b largs rargs extended_hps 
 
+(* TODO : how about aliases *)
+let set_root_unfold lhs rhs alias_set =
+  match lhs with
+  | HRel(hp,args,_) -> 
+    begin
+      try
+        let ptr = CF.get_root_ptr rhs in
+        let rec aux xs n = match xs with
+          | [] -> 
+            let () = y_winfo_hp (add_str "no match with args" !CF.print_h_formula) rhs in
+            (-1)
+          | x::xs -> let v = CP.exp_to_sv x in
+            if List.exists (CP.eq_spec_var v) (ptr::alias_set) then n
+            else aux xs (n+1) in
+        let posn = aux args 0 in
+        let () = if posn>=0 then Cast.cprog_obj # set_hp_root hp posn in
+        ()
+      with _ -> 
+        let () = y_winfo_hp (add_str "no ptr on rhs?" !CF.print_h_formula) rhs in
+        ()
+    end
+  | _ -> 
+    let () = y_winfo_hp (add_str "not a hp_rel?" !CF.print_h_formula) lhs in
+    ()
+
 (*
 type: (CF.entail_state ->
    CF.formula_base ->
@@ -1459,8 +1484,13 @@ let infer_unfold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b 
   let rhs_node = r.Context.match_res_rhs_node in
   let rhs_rest = r.Context.match_res_rhs_rest in
   let rhs_inst = r.Context.match_res_compatible in
-  let () = y_tinfo_hp (add_str "lhs_node" !CF.print_h_formula) lhs_node in
-  let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+  let alias_set = r.Context.match_res_alias_set in
+  let () = y_tinfo_hp (add_str "(infer_unfold)lhs_node" !CF.print_h_formula) lhs_node in
+  let () = y_tinfo_hp (add_str "(infer_unfold)rhs_node" !CF.print_h_formula) rhs_node in
+  let () = y_tinfo_hp (add_str  "compatible"  (pr_list (pr_pair !CP.print_sv !CP.print_sv))) rhs_inst in
+  let () = y_tinfo_hp (add_str "roots" pr_id) Cast.cprog_obj # show_roots in
+  let () = set_root_unfold lhs_node rhs_node alias_set in
+  let () = y_tinfo_hp (add_str "roots(updated)" pr_id) Cast.cprog_obj # show_roots in
   let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
   let is_succ_inst, n_estate, n_lhs_b = 
     match lhs_node,rhs_node with
@@ -1545,6 +1575,11 @@ let infer_fold prog pm_aux action (* caller prog *) estate (* conseq *) lhs_b rh
   let r = action in
   let lhs_node = r.Context.match_res_lhs_node  in
   let rhs_node = r.Context.match_res_rhs_node  in
+  let alias_set = r.Context.match_res_alias_set  in
+  let () = y_tinfo_hp (add_str "infer_fold(lhs)" !CF.print_h_formula) lhs_node in
+  let () = y_tinfo_hp (add_str "infer_fold(rhs)" !CF.print_h_formula) rhs_node in
+  let () = y_tinfo_hp (add_str "alias_set" !CP.print_svl) alias_set in
+  let () = y_tinfo_hp (add_str "rhs_matched" !CP.print_svl) rhs_h_matched_set in
   let rhs_rest = r.Context.match_res_rhs_rest  in
   let rhs_inst = r.Context.match_res_compatible in
   (* WN:TODO: need to improve res_compatible so that it really indicate comparable ptrs *)
@@ -1813,29 +1848,48 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
           (*     if not (CP.is_node_typ sv) && not es0.CF.es_infer_obj # is_pure_field_all then acc else *)
           (*       acc@[(sv,NI)] *)
           (* ) [] ni_args in *)
-          i_args_wo_r@ni_args_wo_r
+          (* i_args_wo_r@ni_args_wo_r *)
+          i_args@ni_args
         | _ -> []
       end
     | _ -> []
   in
-  let get_root hf= match hf with
+  let get_root hf = match hf with
     | CF.ViewNode {CF.h_formula_view_node = sv}
     | CF.DataNode {CF.h_formula_data_node = sv} -> [(sv,NI)]
-    | CF.HRel (hp,eargs_w_r,_) -> begin
-        match eargs_w_r with
-        | r::_ ->
-          [((CP.exp_to_sv r),NI)]
-        | _ -> []
+    | CF.HRel (hp,args (* eargs_w_r *),_) -> begin
+        let args = List.map CP.exp_to_sv args in
+        try
+          [(Cast.cprog_obj # get_hp_root hp args,NI)]
+        with _ -> 
+          begin
+            match args (* eargs_w_r *) with
+            | r::_ ->
+              [(r,NI)]
+            | _ -> []
+          end
       end
     | _ -> []
   in
   let get_undefined_back_ptrs lhs_node rhs_node=
     let lhs_ptrs = get_ptrs_ni lhs_node in
     let rhs_ptrs = get_ptrs_ni rhs_node in
-    let res_lhs = Gen.BList.difference_eq (fun (sv1,_) (sv2,_) -> CP.eq_spec_var sv1 sv2) lhs_ptrs rhs_ptrs in
-    let res_rhs = Gen.BList.difference_eq (fun (sv1,_) (sv2,_) -> CP.eq_spec_var sv1 sv2) rhs_ptrs lhs_ptrs in
+    let root = get_root rhs_node in
+    let res_lhs = Gen.BList.difference_eq (fun (sv1,_) (sv2,_) -> CP.eq_spec_var sv1 sv2) lhs_ptrs (root@rhs_ptrs) in
+    let res_rhs = Gen.BList.difference_eq (fun (sv1,_) (sv2,_) -> CP.eq_spec_var sv1 sv2) rhs_ptrs (root@lhs_ptrs) in
     let i_svl, ni_svl = List.partition (fun (_,n) -> n=I) (res_lhs@res_rhs) in
-    i_svl@(get_root rhs_node)@ni_svl
+    let pr = pr_list (pr_pair !CP.print_sv print_arg_kind) in
+    let () = y_binfo_hp (add_str "lhs_ptrs" pr) lhs_ptrs in
+    let () = y_binfo_hp (add_str "rhs_ptrs" pr) rhs_ptrs in
+    let () = y_binfo_hp (add_str "root" pr) root in
+    let () = y_binfo_hp (add_str "res_lhs" pr) res_lhs in
+    let () = y_binfo_hp (add_str "res_rhs" pr) res_rhs in
+    i_svl@(root)@ni_svl
+  in
+  let get_undefined_back_ptrs lhs_node rhs_node =
+    let pr = !CF.print_h_formula in
+    let pr2 = pr_list (pr_pair !CP.print_sv print_arg_kind) in
+    Debug.no_2 "get_undefined_back_ptrs" pr pr pr2 get_undefined_back_ptrs lhs_node rhs_node
   in
   let generate_rel es undef_lhs_ptrs =
     let (pred_hfs,new_hp_decls)=
@@ -1884,7 +1938,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
       end;
     let n_ihvr = (es.CF.es_infer_vars_hp_rel@new_hp_decls) in
     let new_es = {es with CF.es_infer_vars_hp_rel = n_ihvr;
-    } in
+                 } in
     (* let hp_rel_list = CF.add_fold_flag hp_rel_list in *)
     let () = new_es.CF.es_infer_hp_rel # push_list_loc x_loc hp_rel_list in
     let heap_of_rel_lhs = match (CF.heap_of rel_lhs) with
@@ -1895,8 +1949,8 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
   (******************************************)
   (*********************END*********************)
   (******************************************)
-  let undef_lhs_ptrs_w_pure = get_undefined_back_ptrs lhs_node rhs_node in
-  let () = y_tinfo_hp (add_str "undef_lhs_ptrs_w_pure" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs_w_pure in
+  let undef_lhs_ptrs_w_pure = x_add get_undefined_back_ptrs lhs_node rhs_node in
+  let () = y_binfo_hp (add_str "undef_lhs_ptrs_w_pure" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs_w_pure in
   let undef_lhs_ptrs = List.filter (fun (sv,_) -> CP.is_node_typ sv) undef_lhs_ptrs_w_pure in
   (*generate constraint*)
   let new_es, heap_of_rel_lhs = generate_rel es0 undef_lhs_ptrs in

@@ -5778,7 +5778,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             && (is_view_user x || is_view_user e)) t in
         x_tinfo_hp (add_str "y" Cprinter.string_of_h_formula) y no_pos;
         let xy = if (is_view_user x) then x else y in
-        let mr = Context.mk_match_res Context.Root xy x x x in
+        let mr = Context.mk_match_res (* aset *) Context.Root xy x x x in
         (* let mr = { Context.match_res_lhs_node = xy; *)
         (*            Context.match_res_lhs_rest = x; (\* ??? why*\) *)
         (*            Context.match_res_holes = [] ; *)

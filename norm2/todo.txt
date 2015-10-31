@@ -345,6 +345,43 @@ push_list(es_infer_hp_rel):**inferHP.ml#1324:1[ (1;0)unknown HP_1648(c,x_ref,y_r
                                               HP_1654(c,y_ref,x_ref)]
 
 ==========================================================================
+# ex5a.c
+
+GOT below:
+
+Can we later derive:
+
+  HP_1643(c,x_ref,y_ref) = c::int_star<_>*x_ref::int_star<_>*y_ref::int_star<_>*
+
+Maybe, we can do so by ignoring the post-relation generated:
+  GP_1699(c',x_ref,y_ref'@NI)&
+  GP_1700(x_ref,c'@NI,y_ref'@NI)&
+
+
+[ // BIND
+(1;0)HP_1643(c,x_ref,y_ref)&
+true --> y_ref::int_star<value_8_1647>@M * HP_1648(c,x_ref,y_ref@NI)&
+true,
+ // BIND
+(1;0)HP_1648(c,x_ref,y_ref@NI)&
+true --> x_ref::int_star<value_8_1653>@M * HP_1654(c,y_ref@NI,x_ref@NI)&
+true,
+ // BIND
+(1;1;0)HP_1654(c,y_ref@NI,x_ref@NI)&true --> c::int_star<value_16_1680>@M&
+true,
+ // PRE_REC
+(1;1;0)y_ref'::int_star<v_int_15_1679>@M * GP_1699(c',x_ref,y_ref'@NI)&
+true --> HP_1643(c',x_ref,y_ref')&
+true,
+ // PRE_REC
+(1;1;0)c'::int_star<v_int_16_1698>@M * GP_1700(x_ref,c'@NI,y_ref'@NI)&
+true --> GP_1699(c',x_ref,y_ref'@NI)&
+true,
+ // PRE_REC
+(1;1;0)x_ref::int_star<value_8_1653>@M&
+true --> GP_1700(x_ref,c'@NI,y_ref'@NI)&
+true]
+
 ==========================================================================
 ==========================================================================
 ==========================================================================
