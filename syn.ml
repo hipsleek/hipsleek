@@ -72,7 +72,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
       (diff (* (diff lhs_args lhs_nodes) *) (diff lhs_args lhs_def_vars) rhs_args_w_aliases) in
     let dangling_args = List.filter (fun dl ->
       let dl_aliases = CP.EMapSV.find_equiv_all_new dl rhs_aset in
-      not (List.exists (fun dla -> mem dla lhs_args) dl_aliases)) dangling_args in
+      not (List.exists (fun dla -> mem dl lhs_args) dl_aliases)) dangling_args in
     let () = x_tinfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
     let combine_dangling_args f = List.fold_left (fun acc_f dangling_arg ->
         CF.mkStar_combine_heap acc_f (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
