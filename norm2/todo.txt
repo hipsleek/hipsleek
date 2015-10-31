@@ -95,9 +95,29 @@ WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y
 WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y::Dangling<>@M)
 
 ==========================================================================
-# ex1a3.c --trace-exc -show-push-list ".*_hp_rel"
+# ex1a3.c --trace-exc -show-push-list ".*_hp_rel" ( FIXED by considering only rec type *)
 
-# Why such a push? Where did HP_1695(y,x) came from?
+(==solver.ml#11313==)
+compute_actions@18
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: HP_1687(x,y)
+compute_actions inp3 :LHS pure: x'=x & y'=y & v_bool_14_1583'
+compute_actions inp4 :RHS cand:[ x'::int_star<value_14_1529'>@L]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[value_14_1529']
+compute_actions@18 EXIT: SEARCH =>[
+  Prio:2
+  BaseCaseUnfold =>
+    LHS: HP_1687(x,y)
+    RHS: x'::int_star<value_14_1529'>@L;
+  Prio:2
+  InferUnfold =>
+    LHS: HP_1687(x,y)
+    RHS: x'::int_star<value_14_1529'>@L
+  ]
+
+# Why such a push? Where did HP_1695(y,x) came from? 
+  base-case-fold for HP
 
 push_list(es_infer_hp_rel):1[ (1;1;0)unknown HP_1695(y,x) |#|  --> emp&y=x]
 
@@ -144,8 +164,121 @@ v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1694&
  es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap
  es_infer_vars_hp_rel: [HP_1687; HP_1695],3:abd heap: y::int_star<value_21_1712>@M,4:None,5:None,6:new rest:None)
 ==========================================================================
+# norm2/ex1a3.c --pcp 
+
+# Why isn't char_star printed by --pcp
+
+data __Exc {
+;
+}is_rec:false
+
+data __Error {
+;
+}is_rec:false
+
+data __MayError {
+;
+}is_rec:false
+
+data __Fail {
+;
+}is_rec:false
+
+data int_star {
+  int value@;
+}is_rec:false
+
+**data_table** reset
+**data_table** Add tag of:(__Exc,[])
+**data_table** Add fields of:(__Exc,[])
+**data_table** Add tag of:(__Error,[])
+**data_table** Add fields of:(__Error,[])
+**data_table** Add tag of:(__MayError,[])
+**data_table** Add fields of:(__MayError,[])
+**data_table** Add tag of:(__Fail,[])
+**data_table** Add fields of:(__Fail,[])
+**data_table** Add tag of:(Object,[])
+**data_table** Add fields of:(Object,[])
+**data_table** Add tag of:(String,[])
+**data_table** Add fields of:(String,[])
+**data_table** Add tag of:(char_star,[[],[]])
+**data_table** Add fields of:(char_star,[(int,val),(char_star,next)])
+**data_table** Add tag of:(int_ptr_ptr,[[]])
+**data_table** Add fields of:(int_ptr_ptr,[(int_ptr,val)])
+**data_table** Add tag of:(int_ptr,[[]])
+**data_table** Add fields of:(int_ptr,[(int,val)])
+**data_table** Add tag of:(lock,[])
+**data_table** Add fields of:(lock,[])
+**data_table** Add tag of:(barrier,[[]])
+**data_table** Add fields of:(barrier,[(int,phase)])
+**data_table** Add tag of:(thrd,[])
+**data_table** Add fields of:(thrd,[])
+**data_table** Add tag of:(__RET,[])
+**data_table** Add fields of:(__RET,[])
+**data_table** Add tag of:(__ArrBoundErr,[])
+**data_table** Add fields of:(__ArrBoundErr,[])
+**data_table** Add tag of:(__DivByZeroErr,[])
+**data_table** Add fields of:(__DivByZeroErr,[])
+**data_table** Add tag of:(int_star,[[]])
+**data_table** Add fields of:(int_star,[(int,value)])
+
 ==========================================================================
+# norm/ex4b4.slk
+
+HeapPred HP(cell a,cell@NI b).
+infer[HP,@classic] HP(x,y) |- x::cell<_>.
+print residue.
+
+ infer[HP,@classic] HP(x,y) |- x::cell<_>.
+
+# Can this be improved?
+
+(==solver.ml#11313==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: HP(x,y)
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ x::cell<Anon_11>@M]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[Anon_11]
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:2
+  BaseCaseUnfold =>
+    LHS: HP(x,y)
+    RHS: x::cell<Anon_11>@M;
+  Prio:2
+  InferUnfold =>
+    LHS: HP(x,y)
+    RHS: x::cell<Anon_11>@M
+  ]
+
+*/
 ==========================================================================
+# ex1a3.c
+
+[ // BIND
+(1;0)HP_1687(x,y)&true --> x::int_star<value_14_1691>@M * HP_1692(y,x@NI)&
+true,
+ // PRE
+(1;1;0)HP_1692(y,x@NI)&true --> y::int_star<value_21_1705>@M&
+true,
+ // PRE_REC
+(1;1;0)y'::int_star<value_21_1711>@M * GP_1728(y',x'@NI)&
+y'!=null --> HP_1687(x',y')&
+true,
+ // PRE_REC
+(1;1;0)emp&y'!=null |#| x'::int_star<v_int_30_1727>@M&
+true --> GP_1728(y',x'@NI)&
+true]
+
+!!! **syn.ml#671:other hprels of HP_1687: [(1;1;0)fold y'::int_star<value_21_1711>@M&y'!=null |#|  --> HP_1687(x',y')]
+ExceptionFailure("**syn.ml#678:Cannot transform the hprels of HP_1687 into view declarations.")Occurred!
+
+Error1(s) detected at main 
+Stop z3... 110 invocations 
+Stop Omega... 99 invocations caught
+
+Exception occurred: Failure("**syn.ml#678:Cannot transform the hprels of HP_1687 into view declarations.")
 ==========================================================================
 ==========================================================================
 ==========================================================================

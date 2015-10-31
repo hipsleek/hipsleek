@@ -254,6 +254,7 @@ let is_undef_typ t =
   | UNK | RelT _ | HpT | UtT _ -> true
   | _ -> false 
 
+
 let is_node_typ t =
   match t with
   | Named id -> String.compare id "" != 0
@@ -613,6 +614,9 @@ let rec string_of_typ (x:typ) : string = match x with
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
 ;;
+
+let string_of_typed_ident (typ,id) =
+  "("^(string_of_typ typ)^","^id^")"
 
 let is_RelT x =
   match x with

@@ -56,16 +56,22 @@ let process_heap_prop_extn p_tab (* pname vns *) (* mutual-rec *) (* nnn_sv *) h
 class data_table =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
+    val mutable flst = [] (* fields *)
     method logging s =
-      let m = "**data_table** " in
-      let () = print_endline_quiet (m^s) in
+      (* let m = "**data_table** " in *)
+      (* let () = print_endline_quiet (m^s) in *)
       ()
     method reset =
-      self # logging "reset";
-      lst <- []
+      let () = self # logging "reset" in
+      let () = lst <- [] in
+      let () = flst <- [] in
+      ()
     method add_field_tags dn param =
       let () = self # logging ((add_str "Add tag of" (pr_pair pr_id (pr_list (pr_list pr_id)))) (dn,param)) in
       lst <- (dn,param)::lst
+    method add_fields dn param =
+      let () = self # logging ((add_str "Add fields of" (pr_pair pr_id (pr_list string_of_typed_ident))) (dn,param)) in
+      flst <- (dn,param)::flst
     method find_tags dn =
       try
         snd(List.find (fun (n,_) -> n=dn) lst)
@@ -85,13 +91,31 @@ let data_decl_obj = new data_table
 let add_data_tags_to_obj cdata =
   let () = y_tinfo_pp "add_data_tags_to_obj" in
   data_decl_obj # reset;
-  List.iter (fun cd ->
+  let () = List.iter (fun cd ->
       let dn = cd.Cast.data_name in
       let fields = cd.Cast.data_fields in
-      let tags = List.map snd fields in
-      data_decl_obj # add_field_tags dn tags
-    ) cdata
+      let (flds,tags) = List.split fields in
+      let () = data_decl_obj # add_field_tags dn tags in
+      (* let () = data_decl_obj # add_fields dn flds in *)
+      let fields = List.map (fun ((t,id),_) -> t) fields in
+      let fields = List.filter (fun t -> Globals.is_node_typ t ) fields in
+      let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
+      let () = HipUtil.data_scc_obj # replace x_loc dn fields in
+      ()
+    ) cdata in
+  let lst = HipUtil.data_scc_obj # get_scc in
+  let () = y_binfo_hp (add_str "data table" pr_id) (HipUtil.data_scc_obj # string_of) in
+  let () = List.iter (fun cd ->
+      let dn = cd.Cast.data_name in
+      (* mark a type a recursive if it has mutual-rec fields *)
+      let () = cd.Cast.data_is_rec <- HipUtil.data_scc_obj # is_rec dn in
+      ()
+    ) cdata in
+  ()
   
+let is_data_rec id =
+  HipUtil.data_scc_obj # is_rec id
+
 let compute_raw_base_case is_prim_v n_un_str =
   (* let is_prim_v = vdef.I.view_is_prim in *)
   let rec f_tr_base f = 

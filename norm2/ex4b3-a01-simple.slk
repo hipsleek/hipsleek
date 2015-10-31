@@ -3,7 +3,7 @@ data cell {
 }.
 
 HeapPred HP(cell a,cell@NI b).
-infer[HP,@classic] x=b |- emp.
+infer[HP,@classic] HP(x,y) |- x::cell<_>.
 print residue.
 
 /*

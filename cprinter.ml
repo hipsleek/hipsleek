@@ -4840,7 +4840,8 @@ let string_of_data_pure_inv inv =
 ;;
 
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^(string_of_data_pure_inv d.data_pure_inv)
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^
+                            ((add_str "is_rec" string_of_bool) d.data_is_rec) ^(string_of_data_pure_inv d.data_pure_inv)
 ;;
 
 let slk_of_data_decl = string_of_data_decl
