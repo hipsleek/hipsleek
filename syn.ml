@@ -530,8 +530,8 @@ let rec helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
 let helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
   let pr1 = pr_hprel_list in
   let pr2 hpril = pr1 (List.map (fun hpri -> hpri.hprel_constr) hpril) in
-  let pr3 = pr_list (pr_pair !CP.print_sv pr2) in
-  Debug.no_2 "Syn.helper_unfolding_hprel_list" pr2 pr3 pr1
+  let pr3 = pr_list_ln (pr_pair !CP.print_sv pr2) in
+  Debug.no_2 "Syn.helper_unfolding_hprel_list" pr2 (add_str "hprel_id_groups\n" pr3) pr1
     (fun _ _ -> helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list)
     hprel_id_list hprel_id_groups
 
@@ -543,13 +543,24 @@ let unfolding_hprel_list prog hprel_list =
 
 let selective_unfolding prog other_hprels hprels = 
   let sorted_hprel_list = sort_hprel_list (hprels @ other_hprels) in
-  let hprel_names = List.map name_of_hprel hprels in
-  let sorted_selective_hprel_list = List.filter (fun s_hpr ->
-      mem (name_of_hprel s_hpr) hprel_names) sorted_hprel_list in
-  let hprel_id_list = List.map mk_hprel_id sorted_selective_hprel_list in
-  let other_hprel_id_list = List.map mk_hprel_id other_hprels in
-  let hprel_id_groups = partition_hprel_id_list (hprel_id_list @ other_hprel_id_list) in 
-  x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list
+  let sel_hprel_names = List.map name_of_hprel hprels in
+  (* Progressive selective unfolding: Unfolding the selective hprels and their dependants *)
+  let sorted_dep_sel_hprel_lst, other_hprel_lst, _ =
+    List.fold_right (fun hpr (sacc, oacc, is_found) -> 
+      if is_found then (hpr::sacc, oacc, is_found)
+      else if mem (name_of_hprel hpr) sel_hprel_names then (hpr::sacc, oacc, true)
+      else (sacc, oacc, is_found)) sorted_hprel_list ([], [], false)
+  in
+  let dep_sel_hprel_id_lst = List.map mk_hprel_id sorted_dep_sel_hprel_lst in
+  let other_hprel_id_lst = List.map mk_hprel_id other_hprel_lst in
+  let hprel_id_groups = partition_hprel_id_list (dep_sel_hprel_id_lst @ other_hprel_id_lst) in 
+  x_add helper_unfolding_hprel_list prog hprel_id_groups dep_sel_hprel_id_lst
+  (* let sorted_selective_hprel_list = List.filter (fun s_hpr ->                             *)
+  (*     mem (name_of_hprel s_hpr) hprel_names) sorted_hprel_list in                         *)
+  (* let hprel_id_list = List.map mk_hprel_id sorted_selective_hprel_list in                 *)
+  (* let other_hprel_id_list = List.map mk_hprel_id other_hprels in                          *)
+  (* let hprel_id_groups = partition_hprel_id_list (hprel_id_list @ other_hprel_id_list) in  *)
+  (* x_add helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list                    *)
 
 let selective_unfolding prog other_hprels hprels = 
   let pr = pr_hprel_list in
