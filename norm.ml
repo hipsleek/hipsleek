@@ -15,7 +15,7 @@ module I = Iast
 module TP = Tpdispatcher
 (* module SAU = Sautility *)
 
-let check_lemeq_sem = ref (fun (iprog:Iast.prog_decl)
+let check_lemeq_sem = ref (fun ?(force_pr=false) (iprog:Iast.prog_decl)
   (prog:C.prog_decl) (f1:CF.formula) (f2:CF.formula) ?(lemtyp=I.Equiv)
   (hpdefs:CF.hp_rel_def list) (ls1:ident list) (ls2:ident list) -> false)
 
@@ -250,9 +250,9 @@ let norm_reuse_one_frm_view iprog prog ?(all=true)
                 let () = y_tinfo_pp "Swapping non-rec view to RHS" in 
                 (f2,f1) 
             in
-            let flag = Wrapper.wrap_exc_as_false ~msg:"check_lemeq_sem" (!check_lemeq_sem iprog prog f1 f2 [] []) [] in
+            let flag = Wrapper.wrap_exc_as_false ~msg:("check_lemeq_sem"^x_loc) (!check_lemeq_sem iprog prog f1 f2 [] []) [] in
             let msg = if flag then "\n Proven :" else "\n Failed :" in
-            let () = y_binfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
+            let () = y_tinfo_pp (msg ^ (!CF.print_formula f1) ^ " <-> " ^ (!CF.print_formula f2)) in
             if flag (* !check_lemeq_sem iprog prog f1 f2 [] [] [] *) then
               (* let matched_vnode = Cformula.mkViewNode r vdcl.Cast.view_name paras no_pos in *)
               (* let frm_view_name = frm_vdcl.Cast.view_name in *)
@@ -420,7 +420,7 @@ let norm_unfold qual iprog
     (to_vns:ident list) (* pred to transform *) =
   if qual!=None then norm_complex_unfold iprog vdefs to_vns
   else
-    let () = y_binfo_hp (add_str "Perform simple unfolding for" (pr_list pr_id)) to_vns in
+    let () = y_tinfo_hp (add_str "Perform simple unfolding for" (pr_list pr_id)) to_vns in
     let unfold_set0 = C.get_unfold_set vdefs (* set of unfoldable views *) in
     (* let unfold_set1 = C.get_unfold_set_gen vdefs (\* set of unfoldable views *\) in *)
     (* let pr = pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula) in *)
@@ -2085,7 +2085,7 @@ let find_rec_data iprog cprog ids =
       let fields = List.map (fun ((t,id),_) -> t) d.Cast.data_fields in
       let fields = List.filter (fun t -> is_node_typ t) fields in
       let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
-      (* let () = y_binfo_hp (add_str "fields" (pr_list (pr_pair CF.string_of_typed_ident (pr_list pr_id)))) d.Cast.data_fields in *)
+      (* let () = y_tinfo_hp (add_str "fields" (pr_list (pr_pair CF.string_of_typed_ident (pr_list pr_id)))) d.Cast.data_fields in *)
       let () = y_tinfo_hp (add_str "fields" (pr_list pr_id)) fields in
       let () = HipUtil.data_scc_obj # replace x_loc n fields in
       ()
@@ -2117,7 +2117,7 @@ let find_rec_data iprog cprog ids =
   let () = y_tinfo_hp (add_str "sel_data" (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
   let data_lst = List.concat  sel_data_d in
   let () = Cf_ext.add_data_tags_to_obj data_lst in
-  (* let () = y_binfo_hp (add_str "iprog_data_decls" (pr_list Iprinter.string_of_data_decl)) iprog.Iast.prog_data_decls in *)
-  (* let () = y_binfo_hp (add_str "cprog_data_decls" (pr_list Cprinter.string_of_data_decl)) cprog.Cast.prog_data_decls in *)
+  (* let () = y_tinfo_hp (add_str "iprog_data_decls" (pr_list Iprinter.string_of_data_decl)) iprog.Iast.prog_data_decls in *)
+  (* let () = y_tinfo_hp (add_str "cprog_data_decls" (pr_list Cprinter.string_of_data_decl)) cprog.Cast.prog_data_decls in *)
   ()
 

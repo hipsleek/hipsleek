@@ -324,25 +324,25 @@ let manage_unsafe_lemmas ?(force_pr=false) repo iprog cprog: (CF.list_context li
     (fun _ -> manage_unsafe_lemmas ~force_pr:force_pr repo iprog cprog) repo
 
 (* update the lemma store with the lemmas in repo and check for their validity *)
-let update_store_with_repo ?(vdefs=[]) repo iprog cprog =
+let update_store_with_repo ?(force_pr=false) ?(vdefs=[]) repo iprog cprog =
   (* let lems = process_one_repo repo iprog cprog in *)
   (* let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in *)
   (* let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in *)
   (* let () = Lem_store.all_lemma # add_coercion left right in *)
-  let lems = manage_lemmas_x ~vdefs:vdefs ~force_pr:false repo iprog cprog in
+  let lems = manage_lemmas_x ~vdefs:vdefs ~force_pr:force_pr repo iprog cprog in
   let (invalid_lem, lctx) = x_add verify_one_repo lems cprog in
   (invalid_lem, lctx)
 
-let update_store_with_repo repo iprog cprog =
+let update_store_with_repo ?(force_pr=false) repo iprog cprog =
   let pr1 = pr_list Iprinter.string_of_coerc_decl in
   let pr_out = pr_pair (pr_opt pr_id) (pr_list Cprinter.string_of_list_context) in 
-  Debug.no_1 "update_store_with_repo"  pr1 pr_out (fun _ -> update_store_with_repo repo iprog cprog) repo
+  Debug.no_1 "update_store_with_repo"  pr1 pr_out (fun _ -> update_store_with_repo ~force_pr:force_pr repo iprog cprog) repo
 
 (* pop only if repo is invalid *)
 (* return None if all succeed, and result of first failure otherwise *)
 let manage_safe_lemmas ?(force_pr=false) repo iprog cprog = 
   let force_pr = !Globals.lemma_ep && !Globals.lemma_ep_verbose && force_pr in
-  let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
+  let (invalid_lem, nctx) = update_store_with_repo ~force_pr:force_pr repo iprog cprog in
   match invalid_lem with
   | Some name -> 
     let () = Log.last_cmd # dumping (name) in
@@ -406,9 +406,9 @@ let manage_lemmas ?(force_pr=false) repo iprog cprog =
 
 (* update store with given repo, but pop it out in the end regardless of the result of lemma verification *)
 (* return None if all succeed, return first failed ctx otherwise *)
-let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog = 
-  let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
-  let res_print = !Globals.lemma_ep_verbose && res_print in
+let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog = 
+  let (invalid_lem, nctx) = update_store_with_repo ~force_pr:force_pr repo iprog cprog in
+  let res_print = !Globals.lemma_ep_verbose && not(force_pr) in
   let () = if pop_all then
     Lem_store.all_lemma # pop_coercion
   else ()
@@ -435,24 +435,24 @@ let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog
       | _ -> () in
     true,Some nctx
 
-let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog = 
+let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog = 
   let pr1 = pr_list Iprinter.string_of_coerc_decl in
   let pr2 = pr_list !CF.print_list_context in
   let pr3 = Iprinter.string_of_program in
   let pr4 = Cprinter.string_of_program in
   (* Debug.no_3 "manage_infer_lemmas_x" pr3 pr4 pr1 (pr_pair string_of_bool (pr_opt pr2))               *)
-  (*   (fun _ _ _ -> manage_infer_lemmas_x ~res_print:res_print ~pop_all:pop_all str repo iprog cprog)  *)
+  (*   (fun _ _ _ -> manage_infer_lemmas_x ~force_pr:force_pr ~pop_all:pop_all str repo iprog cprog)  *)
   (*   iprog cprog repo                                                                                 *)
   Debug.no_2 "manage_infer_lemmas_x" pr1 (add_str "is_classic" string_of_bool) (pr_pair string_of_bool (pr_opt pr2))
-    (fun _ _ -> manage_infer_lemmas_x ~res_print:res_print ~pop_all:pop_all str repo iprog cprog) 
+    (fun _ _ -> manage_infer_lemmas_x ~force_pr:force_pr ~pop_all:pop_all str repo iprog cprog) 
     repo (check_is_classic ())
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
   manage_infer_lemmas_x "proved" repo iprog cprog; None (*Loc: while return None? instead full result*)
 
-let manage_test_lemmas1 ?(res_print=true) repo iprog cprog = 
-  manage_infer_lemmas_x ~res_print:res_print "proved" repo iprog cprog
+let manage_test_lemmas1 ?(force_pr=false) repo iprog cprog = 
+  manage_infer_lemmas_x ~force_pr:force_pr "proved" repo iprog cprog
 
 let manage_infer_lemmas ?(pop_all=true) repo iprog cprog = 
   (manage_infer_lemmas_x ~pop_all:pop_all "inferred" repo iprog cprog)

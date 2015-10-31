@@ -632,19 +632,19 @@ let cprog_obj =
       let store_prg = !cprog in
       (* match !cprog with *)
       (* | None ->  *)
-      (*   let () = y_binfo_pp "cprog still None" in *)
+      (*   let () = y_tinfo_pp "cprog still None" in *)
       (*   let () = cprog := Some prg in *)
       (*   false *)
       (* | Some store_prg ->  *)
       if not(prg==store_prg) then 
         begin
-          let () = y_binfo_pp "prog and cprog are different" in
+          let () = y_winfo_pp "prog and cprog are different" in
           (* if prg = store_prg then  *)
-          (*   let () = y_binfo_pp "same content though" in *)
+          (*   let () = y_tinfo_pp "same content though" in *)
           (*   () *)
           (* else *)
-          (*   let () = y_binfo_hp (add_str "new prog" !print_prog) prg in *)
-          (*   let () = y_binfo_hp (add_str "old cprog" !print_prog) store_prg in *)
+          (*   let () = y_tinfo_hp (add_str "new prog" !print_prog) prg in *)
+          (*   let () = y_tinfo_hp (add_str "old cprog" !print_prog) store_prg in *)
           (*   (); *)
           if flag then cprog := prg;
           false
@@ -669,7 +669,7 @@ let cprog_obj =
       try
         List.find (fun v -> v.hp_name = n) lst
       with e -> 
-        let () = y_binfo_hp (add_str "hp_decls: " (pr_list !print_hp_decl)) lst in
+        let () = y_tinfo_hp (add_str "hp_decls: " (pr_list !print_hp_decl)) lst in
         failwith (x_loc^(" cannot find hp_rel "^n))
     method set_hp_root hp posn =
       let n = CP.name_of_spec_var hp in
@@ -1515,7 +1515,7 @@ let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
               pos)
     in
     let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in
-    let () = x_binfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
+    let () = x_tinfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
@@ -4048,7 +4048,7 @@ let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
   (* let frm_name = frm_vdecl.view_name in *)
   (* if HipUtil.view_scc_obj # compare frm_name to_name  < 0 then *)
   (*   begin *)
-  (*   y_binfo_pp "change order of sst"; *)
+  (*   y_tinfo_pp "change order of sst"; *)
   (*   to_vdecl.view_equiv_set # set (keep_sst,frm_name) *)
   (*   end *)
   (* else  *)
@@ -4241,16 +4241,16 @@ let get_sorted_view_decls prog =
 let repl_unfold_lemma u_lst lem =
   let body = lem.coercion_body in
   let body_norm = lem.coercion_body_norm in
-  let () = y_binfo_hp (add_str "body" !F.print_formula) body in
+  let () = y_tinfo_hp (add_str "body" !F.print_formula) body in
   let body = repl_unfold_formula "" u_lst body in
-  let () = y_binfo_hp (add_str "unfolded body" !F.print_formula) body in
+  let () = y_tinfo_hp (add_str "unfolded body" !F.print_formula) body in
   lem.coercion_body <- body;
   lem
   (* failwith x_tbi *)
 
 let get_lemma_cprog cdefs =
   let lst = List.map (fun d -> d.coercion_name) cdefs in
-  let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
+  let () = y_tinfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
   ()
 
 let  get_selected_scc_gen (opt:((ident * bool) regex_list) (* option *)) get_name sel_fn scc_lst =

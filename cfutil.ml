@@ -76,8 +76,8 @@ let is_non_inst_hrel prog (hrel: CF.h_formula) =
 let get_non_inst_args_hprel_id prog id args = 
   let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls id in
   let hprel_inst = hprel_def.Cast.hp_vars_inst in
-  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
-  let () = y_binfo_hp (add_str "hprel_inst" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) hprel_inst in
+  let () = y_tinfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_tinfo_hp (add_str "hprel_inst" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) hprel_inst in
   (* List.fold_left (fun acc (arg, (_, i)) ->              *)
   (*   if i = Globals.NI then acc                          *)
   (*   else acc @ [arg]) [] (List.combine args hprel_inst) *)
@@ -144,7 +144,7 @@ let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
   in 
   let sig_hs, rem_nodes = helper root hs in
   let () = if not (is_empty rem_nodes) then
-      y_winfo_hp (add_str "The signature does not cover remaining heap nodes" (pr_list !CF.print_h_formula)) rem_nodes
+      y_tinfo_hp (add_str "The signature does not cover remaining heap nodes" (pr_list !CF.print_h_formula)) rem_nodes
   in
   sig_hs
 
@@ -2999,7 +2999,7 @@ let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
         if List.length rargs != List.length largs then
           (* let r = (CP.exp_to_sv er) in *)
           (* let sst_old = exam_homo_arguments prog lhs_b rhs_b lhp rhp r rargs largs in *)
-          (* let () = y_binfo_hp (add_str "rhs_inst old" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst_old in *)
+          (* let () = y_tinfo_hp (add_str "rhs_inst old" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst_old in *)
           let sst_new = check_compatible_eb ~inst_rhs:true prog largs rargs lhs_b (* lhp *) rhs_b (* rhp *) in
           let () = y_tinfo_hp (add_str "rhs_inst new" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst_new  in
           sst_new

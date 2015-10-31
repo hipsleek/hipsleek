@@ -1879,11 +1879,11 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
     let res_rhs = Gen.BList.difference_eq (fun (sv1,_) (sv2,_) -> CP.eq_spec_var sv1 sv2) rhs_ptrs (root@lhs_ptrs) in
     let i_svl, ni_svl = List.partition (fun (_,n) -> n=I) (res_lhs@res_rhs) in
     let pr = pr_list (pr_pair !CP.print_sv print_arg_kind) in
-    let () = y_binfo_hp (add_str "lhs_ptrs" pr) lhs_ptrs in
-    let () = y_binfo_hp (add_str "rhs_ptrs" pr) rhs_ptrs in
-    let () = y_binfo_hp (add_str "root" pr) root in
-    let () = y_binfo_hp (add_str "res_lhs" pr) res_lhs in
-    let () = y_binfo_hp (add_str "res_rhs" pr) res_rhs in
+    let () = y_tinfo_hp (add_str "lhs_ptrs" pr) lhs_ptrs in
+    let () = y_tinfo_hp (add_str "rhs_ptrs" pr) rhs_ptrs in
+    let () = y_tinfo_hp (add_str "root" pr) root in
+    let () = y_tinfo_hp (add_str "res_lhs" pr) res_lhs in
+    let () = y_tinfo_hp (add_str "res_rhs" pr) res_rhs in
     i_svl@(root)@ni_svl
   in
   let get_undefined_back_ptrs lhs_node rhs_node =
@@ -1950,7 +1950,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
   (*********************END*********************)
   (******************************************)
   let undef_lhs_ptrs_w_pure = x_add get_undefined_back_ptrs lhs_node rhs_node in
-  let () = y_binfo_hp (add_str "undef_lhs_ptrs_w_pure" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs_w_pure in
+  let () = y_tinfo_hp (add_str "undef_lhs_ptrs_w_pure" ((pr_list (pr_pair !CP.print_sv print_arg_kind)))) undef_lhs_ptrs_w_pure in
   let undef_lhs_ptrs = List.filter (fun (sv,_) -> CP.is_node_typ sv) undef_lhs_ptrs_w_pure in
   (*generate constraint*)
   let new_es, heap_of_rel_lhs = generate_rel es0 undef_lhs_ptrs in

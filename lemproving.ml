@@ -474,8 +474,8 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   Debug.no_1 "check_right_coercion" pr (fun (valid,_) -> string_of_bool valid) (fun _ -> check_right_coercion coer cprog ) coer
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
-let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: string) =
-  let force_print = !Globals.lemma_ep && !Globals.lemma_ep_verbose in
+let print_lemma_entail_result ?(force_pr=false) (valid: bool) (ctx: CF.list_context) (num_id: string) =
+  let force_print = !Globals.lemma_ep_verbose || (force_pr && !Globals.lemma_ep) in
   match valid with
   | true -> if force_print then print_string_quiet (num_id ^ ": Valid.\n") else ()
   | false ->
@@ -508,7 +508,7 @@ let print_lemma_entail_result (valid: bool) (ctx: CF.list_context) (num_id: stri
    coerc_name: lemma name
    coerc_type: lemma type (Right, Left or Equiv)
 *)
-let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  lemma_name lemma_type =
+let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  lemma_name lemma_type =
   let coercs = l2r @ r2l in
   let coercs_info = List.map (fun c ->
       let typ_orig = (match c.C.coercion_type_orig with
@@ -537,14 +537,14 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
           let residue = CF.and_list_context rs1 rs2 in
           let valid = valid1 && valid2 in
           let () = (
-            if valid then print_lemma_entail_result valid residue num_id
+            if valid then print_lemma_entail_result ~force_pr:force_pr valid residue num_id
             else
-              let force_print = !Globals.lemma_ep && !Globals.lemma_ep_verbose in
+              let force_print = (force_pr && !Globals.lemma_ep) || !Globals.lemma_ep_verbose in
               if force_print then Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos;
               let typ1_str = Cprinter.string_of_coercion_type typ1 in
               let typ2_str = Cprinter.string_of_coercion_type typ2 in
-              let () = print_lemma_entail_result valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
-              let () = print_lemma_entail_result valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
+              let () = print_lemma_entail_result ~force_pr:force_pr valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
+              let () = print_lemma_entail_result ~force_pr:force_pr valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
               ()
           ) in
           residue
@@ -554,21 +554,21 @@ let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog:
               | c::[] -> c
               | _ -> Error.report_error_msg "verify_lemma: Left- or Right-lemma expects 1 coercion" 
             ) in
-          let () = print_lemma_entail_result valid rs num_id  in rs
+          let () = print_lemma_entail_result ~force_pr:force_pr valid rs num_id  in rs
         )
     ) in
   residues
 (* else None *)
 
-let verify_lemma (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)
+let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)
     coerc_name coerc_type  =
-  wrap_proving_kind PK_Verify_Lemma ((verify_lemma l2r r2l cprog coerc_name)) coerc_type
+  wrap_proving_kind PK_Verify_Lemma ((verify_lemma ~force_pr:force_pr l2r r2l cprog coerc_name)) coerc_type
 
-let verify_lemma caller (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
+let verify_lemma ?(force_pr=false) caller (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  coerc_name coerc_type =
   let pr_t = Iprinter.string_of_coerc_type in
   let pr = pr_list Cprinter.string_of_coercion in
   Debug.no_4_num caller "verify_lemma" pr pr (fun x -> x) pr_t (Cprinter.string_of_list_context) 
-    (fun _ _ _ _ -> verify_lemma l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name coerc_type
+    (fun _ _ _ _ -> verify_lemma ~force_pr:force_pr l2r r2l cprog coerc_name coerc_type) l2r r2l coerc_name coerc_type
 
 
 (* check the validity of the lemma where:

@@ -1097,7 +1097,7 @@ let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)
 
 let lemma_ep = ref true
-let lemma_ep_verbose = ref true
+let lemma_ep_verbose = ref false 
 
 let dis_sem = ref false
 
