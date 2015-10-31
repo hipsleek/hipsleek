@@ -144,8 +144,10 @@ let unfold_one_view_x prog form_red_fnc (vnode:h_formula_view)=
       let (is_unsat,ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf) =
         form_red_fnc prog f in
       if is_unsat then r else
-        let fname = let idx = String.rindex vname '_' in
-        String.sub vname 0 idx
+        let fname = try
+          let idx = String.rindex vname '_' in
+          String.sub vname 0 idx
+        with Not_found -> vname
         in
         let pt = get_path_ctl f in
         r@[(ptos, eqs, neqs, null_svl, neqNull_svl, hvs, mf,[(fname,pt)])]

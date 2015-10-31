@@ -259,14 +259,14 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
               (*   String.trim(String.sub str (idx1) (idx2-idx1+1)) *)
               (* in *)
               let str_code2a = (!I.print_exp e) in
-              (* let () = x_binfo_hp (add_str "call" (!I.print_exp )) e no_pos in *)
-              (* let () = x_binfo_hp (add_str "call (src 0)" (pr_id )) str_code0 no_pos in *)
+              (* let () = x_tinfo_hp (add_str "call" (!I.print_exp )) e no_pos in *)
+              (* let () = x_tinfo_hp (add_str "call (src 0)" (pr_id )) str_code0 no_pos in *)
               let str_code =
                 try
                   let idx = String.index str_code2a ':' in
                   let str_code2 = String.sub str_code2a (idx+1) ((String.length str_code2a) - idx -1) in
                   let str_code1 = Str.global_replace (Str.regexp "(int)") "" str_code2 in
-                  (* let () = x_binfo_hp (add_str "call (src 1)" (pr_id )) str_code1 no_pos in *)
+                  (* let () = x_tinfo_hp (add_str "call (src 1)" (pr_id )) str_code1 no_pos in *)
                   (* if (Str.search_forward (Str.regexp str_code1) str_code0 0) >=0 then *)
                   (*   str_code1 else str_code0 *)
                   str_code1
@@ -291,12 +291,12 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
       I.exp_cond_else_arm=eb;
       I.exp_cond_pos = p
       } ->
-          let () = x_binfo_hp (add_str "COND" (string_of_int)) inter_id no_pos in
+          let () = x_tinfo_hp (add_str "COND" (string_of_int)) inter_id no_pos in
           (* retrieve the fst path ctrs: 1 -> then_arm; 2 -> else_arm *)
           let ctl, rest_ctls = get_fst path_ctls in
           let src_line = start_line_of_pos p in
-          let () = x_binfo_hp (add_str "last_cond_lno" string_of_int) last_cond_lno no_pos in
-          let () = x_binfo_hp (add_str "src_line" string_of_int) src_line no_pos in
+          let () = x_tinfo_hp (add_str "last_cond_lno" string_of_int) last_cond_lno no_pos in
+          let () = x_tinfo_hp (add_str "src_line" string_of_int) src_line no_pos in
           let n_intra_id, n_node_id,  n_res_str =
             if !witness_from_orig && src_line = last_cond_lno then
             (* case if if (a && b) is split into if a { if b}*)
@@ -312,7 +312,7 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
                 let _ ,str = get_source_if str in
                 xml_norm str
               in
-              let () = x_binfo_hp (add_str "COND" (pr_pair string_of_int pr_id)) (src_line, str_code_pure) no_pos in
+              let () = x_tinfo_hp (add_str "COND" (pr_pair string_of_int pr_id)) (src_line, str_code_pure) no_pos in
               let str_code = if ctl == 1 then "[" ^ str_code_pure ^ "]" else
                 "[!(" ^ str_code_pure ^ ")]"
               in
@@ -331,7 +331,7 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
           exp_return_val = e_opt;
           exp_return_pos = p;
       } ->
-          let () = x_binfo_hp (add_str "RETURN" (string_of_int)) inter_id no_pos in
+          let () = x_tinfo_hp (add_str "RETURN" (string_of_int)) inter_id no_pos in
           let src_line = line_number_of_pos p in
           let str_code =  if not !witness_from_orig then
             "return " ^ ( match e_opt with
@@ -340,7 +340,7 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
             ) ^ ";"
           else
             let str = Array.get orig_src_lines (start_line_of_pos p) in
-            let () = x_binfo_hp (add_str "RETURN" (pr_id)) str no_pos in
+            let () = x_tinfo_hp (add_str "RETURN" (pr_id)) str no_pos in
             let r = Str.regexp "return" in
             let idx1 = Str.search_forward r str 0 in
             let idx2 = String.rindex str ';' in
@@ -352,10 +352,10 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
           let n_intra_id = intra_id+1 in
           false, call_stk, inter_id, n_intra_id , last_cond_lno, var_decls, true, n_node_id , path_ctls, (res_str ^ node ^ edge)
     | Label (_, e1) ->
-          let () = x_binfo_hp (add_str "Label" (pr_id)) "" no_pos in
+          let () = x_tinfo_hp (add_str "Label" (pr_id)) "" no_pos in
           recf_no_change e1
     | I.CallRecv _ ->
-          let () = x_binfo_hp (add_str "CallRecv" (pr_id)) "" no_pos in
+          let () = x_tinfo_hp (add_str "CallRecv" (pr_id)) "" no_pos in
           false, call_stk, inter_id, intra_id, last_cond_lno, var_decls, false, prev_n_id , path_ctls, res_str
     | I.CallNRecv { 
           exp_call_nrecv_method = pname ;
@@ -363,7 +363,7 @@ let rec witness_search_loop iprog cprog orig_src_lines call_stk
           exp_call_nrecv_path_id = path_id;
           exp_call_nrecv_pos =p } -> begin
           let fnc_call = pname ^ "(" ^ (String.concat "," (List.map !I.print_exp eargs) )^ ")" in
-          let () = x_binfo_hp (add_str ("CallNRecv " ^fnc_call^ "inter_id" ) (string_of_int)) inter_id no_pos in
+          let () = x_tinfo_hp (add_str ("CallNRecv " ^fnc_call^ "inter_id" ) (string_of_int)) inter_id no_pos in
           let proc = I.look_up_proc_def_raw iprog.I.prog_proc_decls pname in
           let str_code = fnc_call^";" in
           let str_line = line_number_of_pos p in
@@ -398,19 +398,19 @@ end
       end
     | I.Seq {I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2} ->
           let seq_id = get_seq_id () in
-          let () = x_binfo_hp (add_str "=========START" string_of_int) seq_id no_pos in
-          let () = x_binfo_hp (add_str "SEQ - inter_id " string_of_int) inter_id no_pos in
+          let () = x_tinfo_hp (add_str "=========START" string_of_int) seq_id no_pos in
+          let () = x_tinfo_hp (add_str "SEQ - inter_id " string_of_int) inter_id no_pos in
           let is_found, rest_call_stk, inter_id1, intra_id1,last_cond_lno1, var_decls1, is_returning, last_n_id, ctls1,res_str1 = recf_no_change e1 in
           if is_found || is_returning then
-            let () = x_binfo_hp (add_str "----(found, returning)" (pr_pair string_of_bool string_of_bool)) (is_found,is_returning) no_pos in
+            let () = x_tinfo_hp (add_str "----(found, returning)" (pr_pair string_of_bool string_of_bool)) (is_found,is_returning) no_pos in
             is_found, rest_call_stk,  inter_id1, intra_id1, last_cond_lno1,var_decls1, is_returning, last_n_id, ctls1,res_str1
           else
-            let () = x_binfo_hp (add_str "----" pr_id) "NOT FOUND" no_pos in
+            let () = x_tinfo_hp (add_str "----" pr_id) "NOT FOUND" no_pos in
             let () = x_tinfo_hp (add_str "inter_id" (string_of_int)) inter_id no_pos in
             let res=
               recf rest_call_stk inter_id (intra_id1) last_cond_lno1 var_decls1 e2 last_n_id procn ctls1 res_str1
             in
-            let () = x_binfo_hp (add_str "=========END" string_of_int) seq_id no_pos in
+            let () = x_tinfo_hp (add_str "=========END" string_of_int) seq_id no_pos in
             res
     | I.While {exp_while_body = wb} -> failwith "not handled yet"
     | I.Assign {exp_assign_op =op;
@@ -419,7 +419,7 @@ end
       exp_assign_pos = p} -> begin
         (**********************)
         let assign_helper call_stk prev_n_id res_str=
-          let () = x_binfo_hp (add_str ("Assgin" ^ (string_of_int inter_id) ) (!I.print_exp)) e no_pos in
+          let () = x_tinfo_hp (add_str ("Assgin" ^ (string_of_int inter_id) ) (!I.print_exp)) e no_pos in
           let new_node_edge str_code=
             let str_line = line_number_of_pos p in
             let n_node_id = (id_to_string inter_id intra_id) in
@@ -450,7 +450,7 @@ end
         match is_fun_call e2 with
           | None -> assign_helper call_stk prev_n_id res_str
           | Some pname -> begin
-              let () = x_binfo_hp (add_str ("Call at RHS of Assign -> inter_id" ^ (string_of_int inter_id) ) (!I.print_exp)) e2 no_pos in
+              let () = x_tinfo_hp (add_str ("Call at RHS of Assign -> inter_id" ^ (string_of_int inter_id) ) (!I.print_exp)) e2 no_pos in
               (* if call_stk=[] then *)
               (*   false, [], inter_id,intra_id, last_cond_lno, var_decls,false, prev_n_id, path_ctls,res_str *)
               (* else *)
@@ -480,12 +480,12 @@ end
             end
       end
     | I.Binary _ ->
-          let () = x_binfo_hp (add_str "Binary" (pr_id)) "" no_pos in
+          let () = x_tinfo_hp (add_str "Binary" (pr_id)) "" no_pos in
           false, call_stk, inter_id, intra_id,last_cond_lno, var_decls,false, prev_n_id , path_ctls, res_str
     | I.VarDecl {I.exp_var_decl_decls = vars;
       exp_var_decl_pos = p;
       } -> begin
-          let () = x_binfo_hp (add_str ("VarDecl " ^ (string_of_int inter_id)) (!I.print_exp)) e no_pos in
+          let () = x_tinfo_hp (add_str ("VarDecl " ^ (string_of_int inter_id)) (!I.print_exp)) e no_pos in
           let is_tmp_var = if not !witness_from_orig then false
           else match vars with
             | [(id,_,_)] -> begin
@@ -508,7 +508,7 @@ end
              false, call_stk, inter_id, n_intra_id, last_cond_lno,(var_decls@[last_lno]), false, n_node_id , path_ctls, (res_str ^ node ^ edge)
       end
     | _ ->
-          let () = x_binfo_hp (add_str "Not Handled " (!I.print_exp)) e no_pos in
+          let () = x_tinfo_hp (add_str "Not Handled " (!I.print_exp)) e no_pos in
           false, call_stk, inter_id, intra_id,last_cond_lno, var_decls, false, prev_n_id , path_ctls, res_str
 
 (*TOFIX:
@@ -548,7 +548,7 @@ let witness_search iprog0 cprog src_fname call_stk=
               witness_search_loop iprog cprog src_lines rest_call_stk 
                   1 inter_id (start_line_of_pos init_proc.I.proc_loc) [] e entry_id init_pname init_ctls entry_node
             in
-            let () = print_string_quiet ("call_stk (final): " ^ (string_of_call_stk rest_call_stk)) in
+            (* let () = print_string_quiet ("call_stk (final): " ^ (string_of_call_stk rest_call_stk)) in *)
             if not is_found || rest_call_stk != [] then
               let () = print_string_quiet "\nnot a valid error trace\n" in
               ""

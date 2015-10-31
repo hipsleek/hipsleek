@@ -265,7 +265,7 @@ let symex_gen_view iprog prog proc vname proc_args v_args body sst_res pos=
       fs@[(new_f)]
   ) [] brs0 in
   let brs2 = simplify_symex_trace prog v_args brs1 in
-  let () = x_binfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
+  let () = x_tinfo_hp (add_str ("brs2") (pr_list_ln !CF.print_formula)) brs2 no_pos in
   (* generate new iview *)
   let f_body = List.fold_left (fun acc f -> CF.mkOr acc f pos) (List.hd brs2) (List.tl brs2) in
 
@@ -385,7 +385,7 @@ let verify_td_scc iprog prog scc=
       | [] -> VTD_Unk, None
       | [mdecl] -> begin
           let query = build_f_from_method mdecl in
-          let () = Debug.info_hprint (add_str "query"
+          let () = Debug.info_hprint (add_str "Verification Condition"
                                  (!CF.print_formula)
                               ) query no_pos in
           let r, cex = Slsat.check_sat_topdown prog false query in

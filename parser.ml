@@ -4475,6 +4475,7 @@ let add_tnt_prim_proc prog id =
       "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
       "  requires true\n" ^
       "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n"
+       (* "  ensures 0=0;\n " *)
     in
     let nondet_rel = {
       rel_name = nondet_int_rel_name;
