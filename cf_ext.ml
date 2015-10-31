@@ -104,7 +104,7 @@ let add_data_tags_to_obj cdata =
       ()
     ) cdata in
   let lst = HipUtil.data_scc_obj # get_scc in
-  let () = y_binfo_hp (add_str "data table" pr_id) (HipUtil.data_scc_obj # string_of) in
+  let () = y_tinfo_hp (add_str "data table" pr_id) (HipUtil.data_scc_obj # string_of) in
   let () = List.iter (fun cd ->
       let dn = cd.Cast.data_name in
       (* mark a type a recursive if it has mutual-rec fields *)

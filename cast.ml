@@ -600,27 +600,42 @@ let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initializ
 let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+let print_prog = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
 
 let cprog_obj = 
   object (self)
     (* val cprog = cprog *)
     method logging s =
-      let m = "**cprog** " in
+      let m = "\n*XXcprog** " in
       let () = print_endline_quiet (m^s) in
       ()
     method check_prog_x flag prg =
       match !cprog with
-      | None -> y_binfo_pp "cprog still None"
+      | None -> 
+        let () = y_binfo_pp "cprog still None" in
+        let () = cprog := Some prg in
+        false
       | Some store_prg -> 
         if not(prg==store_prg) then 
           begin
-            y_binfo_pp "prog and cprog are different";
+            let () = y_binfo_pp "prog and cprog are different" in
+            (* if prg = store_prg then  *)
+            (*   let () = y_binfo_pp "same content though" in *)
+            (*   () *)
+            (* else *)
+            (*   let () = y_binfo_hp (add_str "new prog" !print_prog) prg in *)
+            (*   let () = y_binfo_hp (add_str "old cprog" !print_prog) store_prg in *)
+            (*   (); *)
             if flag then cprog := Some prg;
+            false
           end
-    method check_prog_only prog = 
-      self # check_prog_x false prog 
-    method check_prog prog = 
-      self # check_prog_x true prog 
+        else true
+    method check_prog_only loc prog = 
+      let r = self # check_prog_x false prog in
+      self # logging ((add_str (loc^"check only (same prog?)") string_of_bool) r)
+    method check_prog loc prog = 
+      let r = self # check_prog_x true prog in
+      self # logging ((add_str (loc^"update (same prog?)") string_of_bool) r)
     method get_hp_decls =
       match !cprog with
       | None -> 
@@ -650,7 +665,12 @@ let cprog_obj =
         let () = hp_d.hp_root_pos <- Some posn in
         posn in
       let () = self # logging ("get_hp_root "^n^" gives "^(string_of_int posn)) in
+      let () = print_endline_quiet (self # show_roots) in
         List.nth args posn
+    method show_roots =
+      let lst = self # get_hp_decls in
+      let str = pr_list (fun vd -> (pr_pair pr_id (pr_opt string_of_int)) (vd.hp_name,vd.hp_root_pos)) lst in
+      str
   end;;
 
 (* Stack of Template Declarations *)
@@ -1453,7 +1473,7 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    let () = cprog_obj # check_prog prog in
+    let () = cprog_obj # check_prog x_loc prog in
     let () = x_binfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
@@ -3972,6 +3992,7 @@ let update_view_decl prog vdecl =
       y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
+  let () = cprog_obj # check_prog(* _only *) x_loc prog in
   prog.prog_view_decls <- others @ [vdecl]
 
 let update_view_decl prog vdecl = 

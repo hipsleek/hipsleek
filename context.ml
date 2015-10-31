@@ -598,10 +598,10 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
         (* let root, _ = Sautil.find_root prog [hp] args [] in *)
         let root = Cast.cprog_obj # get_hp_root hp args in
-        let () = x_binfo_hp (add_str "args" !CP.print_svl) args pos in
-        let () = x_binfo_hp (add_str "hp" !CP.print_sv) hp pos in
-        let () = x_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
-        let () = x_binfo_hp (add_str "root" !CP.print_sv) root pos in
+        let () = x_tinfo_hp (add_str "args" !CP.print_svl) args pos in
+        let () = x_tinfo_hp (add_str "hp" !CP.print_sv) hp pos in
+        let () = x_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
+        let () = x_tinfo_hp (add_str "root" !CP.print_sv) root pos in
         let () = hrel_stk # push root in
         (CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
@@ -630,8 +630,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* let paset = p::paset in *)
     let asets = Csvutil.alias_nth 3 ((root_ptr, root_ptr) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets root_ptr in (* find the alias set containing p *)
-    let () = x_binfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
-    let () = x_binfo_hp (add_str "root_ptr" !CP.print_sv) root_ptr no_pos in
+    let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in
+    let () = x_tinfo_hp (add_str "root_ptr" !CP.print_sv) root_ptr no_pos in
     if Gen.is_empty paset then
       failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var root_ptr))
     else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset)) then
@@ -660,7 +660,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       in
       let mt_res = if hrel_stk # is_empty then mt_res 
         else 
-          let () = y_binfo_hp (add_str "paset(b4 filter)" !CP.print_svl) paset in
+          let () = y_tinfo_hp (add_str "paset(b4 filter)" !CP.print_svl) paset in
           filter_root_hrel paset mt_res 
       in mt_res
   | HTrue -> (
