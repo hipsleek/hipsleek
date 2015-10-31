@@ -44,7 +44,10 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
     hpr, false
   else
     let _, lhs_p, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_lhs in
+    let _, rhs_p, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_rhs in
     let lhs_aliases = MCP.ptr_equations_with_null lhs_p in
+    let rhs_aliases = MCP.ptr_equations_with_null rhs_p in
+    let rhs_aset = CP.EMapSV.build_eset rhs_aliases in
     let guard_aliases =
       match hpr.hprel_guard with
       | None -> []
@@ -67,6 +70,9 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
     let lhs_def_vars = remove_dups (List.concat (List.map (fun (a, b) -> [a; b]) lhs_aliases)) in
     let dangling_args = List.filter CP.is_node_typ 
       (diff (* (diff lhs_args lhs_nodes) *) (diff lhs_args lhs_def_vars) rhs_args_w_aliases) in
+    let dangling_args = List.filter (fun dl ->
+      let dl_aliases = CP.EMapSV.find_equiv_all_new dl rhs_aset in
+      not (List.exists (fun dla -> mem dla lhs_args) dl_aliases)) dangling_args in
     let () = x_tinfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
     let combine_dangling_args f = List.fold_left (fun acc_f dangling_arg ->
         CF.mkStar_combine_heap acc_f (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
@@ -75,9 +81,9 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
     else
       { hpr with hprel_rhs = combine_dangling_args hpr.hprel_rhs }, true
 
-(* let add_dangling_hprel prog (hpr: CF.hprel) =  *)
-(*   let pr = Cprinter.string_of_hprel_short in *)
-(*   Debug.no_1 "Syn.add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr *)
+let add_dangling_hprel prog (hpr: CF.hprel) =
+  let pr = Cprinter.string_of_hprel_short in
+  Debug.no_1 "Syn.add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
 
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   let n_hpr_list, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) hpr_list) in
