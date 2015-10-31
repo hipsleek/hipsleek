@@ -608,11 +608,19 @@ let cprog_obj =
       let m = "**cprog** " in
       let () = print_endline_quiet (m^s) in
       ()
-    method check_prog prg =
+    method check_prog_x flag prg =
       match !cprog with
       | None -> y_binfo_pp "cprog still None"
       | Some store_prg -> 
-        if not(prg==store_prg) then y_binfo_pp "prog and cprog are different";
+        if not(prg==store_prg) then 
+          begin
+            y_binfo_pp "prog and cprog are different";
+            if flag then cprog := Some prg;
+          end
+    method check_prog_only prog = 
+      self # check_prog_x false prog 
+    method check_prog prog = 
+      self # check_prog_x true prog 
     method get_hp_decls =
       match !cprog with
       | None -> 
