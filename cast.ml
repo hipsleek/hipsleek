@@ -577,6 +577,74 @@ and exp = (* expressions keep their types *)
 
 let global_prog = ref (None : prog_decl option)
 
+
+(* let cprog:(prog_decl option) ref = ref None *)
+let cprog = global_prog
+
+let get_cprog () = match !cprog with
+  | Some cp -> cp
+  | None -> failwith ("cprog not yet created " ^x_loc)
+
+let set_prog cp = 
+  cprog := Some cp
+
+let folding_coercion c =
+   (c.coercion_case == Simple) && c.coercion_type=Iast.Right 
+
+let print_program = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
+let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
+let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_clean = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
+let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
+let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
+let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+
+let cprog_obj = 
+  object (self)
+    (* val cprog = cprog *)
+    method logging s =
+      let m = "**cprog** " in
+      let () = print_endline_quiet (m^s) in
+      ()
+    method check_prog prg =
+      match !cprog with
+      | None -> y_binfo_pp "cprog still None"
+      | Some store_prg -> 
+        if not(prg==store_prg) then y_binfo_pp "prog and cprog are different";
+    method get_hp_decls =
+      match !cprog with
+      | None -> 
+        let () = y_winfo_pp "cprog_obj not yet intiliazed" in []
+      | Some cp -> cp.prog_hp_decls
+    method get_hp_one_decl n =
+      let lst = self # get_hp_decls in
+      try
+        List.find (fun v -> v.hp_name = n) lst
+      with e -> 
+        let () = y_binfo_hp (add_str "hp_decls: " (pr_list !print_hp_decl)) lst in
+        failwith (x_loc^(" cannot find hp_rel "^n))
+    method get_hp_root hp args =
+      let n = CP.name_of_spec_var hp in
+      let hp_d = self # get_hp_one_decl n in
+      let posn = match hp_d.hp_root_pos with
+      | Some i -> i
+      | None -> 
+        let f_args = hp_d.hp_vars_inst in
+        let rec aux xs n =
+          match xs with
+          | [] -> failwith (x_loc^"no root position left")
+          | (_,ann)::xs -> 
+            if ann=NI then aux xs (n+1)
+            else n in
+        let posn = aux f_args 0 in
+        let () = hp_d.hp_root_pos <- Some posn in
+        posn in
+      let () = self # logging ("get_hp_root "^n^" gives "^(string_of_int posn)) in
+        List.nth args posn
+  end;;
+
 (* Stack of Template Declarations *)
 let templ_decls: templ_decl Gen.stack = new Gen.stack
 
@@ -609,15 +677,6 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 
-let print_program = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
-let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
-let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
-let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
-let print_view_decl_clean = ref (fun (c:view_decl) -> "cast printer has not been initialized")
-let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
-let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
-let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
-let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
 
 let slk_of_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been initialized")
@@ -1386,7 +1445,8 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    let () = x_tinfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
+    let () = cprog_obj # check_prog prog in
+    let () = x_binfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
@@ -4187,20 +4247,7 @@ let rename_view vdecl new_name =
     view_un_struc_formula = List.map (fun (f, lbl) -> (F.rename_view_formula sst f, lbl)) vdecl.view_un_struc_formula; }
 
 
-(* let cprog:(prog_decl option) ref = ref None *)
-let cprog = global_prog
-
-let get_cprog () = match !cprog with
-  | Some cp -> cp
-  | None -> failwith ("cprog not yet created " ^x_loc)
-
-let set_prog cp = 
-  cprog := Some cp
-
-let folding_coercion c =
-   (c.coercion_case == Simple) && c.coercion_type=Iast.Right 
-
-  (* && c.coercion_univ_vars=[] *)
+(* && c.coercion_univ_vars=[] *)
 
 (* 
    this object is to track progress to prevent
