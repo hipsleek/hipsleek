@@ -1,0 +1,100 @@
+comp/Ackermann01_true-unreach-call.c
+
+Verification result:(TRUE, witness: , 0.279575(seconds))
+
+comp/Ackermann02_false-unreach-call_false-termination.c
+
+Verification result:(FALSE, witness: logs/comp_Ackermann02_false-unreach-call_false-termination_c.graphml, 0.324075(seconds))
+
+comp/Ackermann03_true-unreach-call.c
+
+Verification result:(TRUE, witness: , 0.535709(seconds))
+
+comp/Ackermann04_true-unreach-call.c
+
+Verification result:(TRUE, witness: , 0.315478(seconds))
+
+comp/Addition01_true-unreach-call_true-termination.c
+
+Verification result:(TRUE, witness: , 0.204423(seconds))
+
+comp/Addition02_false-unreach-call_false-termination.c
+
+Verification result:(FALSE, witness: logs/comp_Addition02_false-unreach-call_false-termination_c.graphml, 0.18581(seconds))
+
+comp/Addition03_true-unreach-call.c
+
+Verification result:(TRUE, witness: , 0.184781(seconds))
+
+comp/BallRajamani-SPIN2000-Fig1_false-unreach-call.c
+
+Verification result:(FALSE, witness: logs/comp_BallRajamani-SPIN2000-Fig1_false-unreach-call_c.graphml, 0.191225(seconds))
+
+comp/EvenOdd01_true-unreach-call_true-termination.c
+
+Verification result:(UNKNOWN, witness: , 2.916286(seconds))
+
+comp/EvenOdd03_false-unreach-call_false-termination.c
+
+Verification result:(FALSE, witness: logs/comp_EvenOdd03_false-unreach-call_false-termination_c.graphml, 0.436942(seconds))
+
+comp/ex1-gl.c
+
+Verification result:(TRUE, witness: , 0.124016(seconds))
+
+comp/Fibonacci01_true-unreach-call.c
+
+Verification result:(TRUE, witness: , 0.194613(seconds))
+
+comp/Fibonacci02_true-unreach-call_true-termination.c
+
+Verification result:(TRUE, witness: , 8.963119(seconds))
+
+comp/Fibonacci03_true-unreach-call_true-termination.c
+
+Verification result:(TRUE, witness: , 0.804412(seconds))
+
+comp/Fibonacci04_false-unreach-call_true-termination.c
+
+Verification result:(FALSE, witness: logs/comp_Fibonacci04_false-unreach-call_true-termination_c.graphml, 0.257764(seconds))
+
+comp/Fibonacci05_false-unreach-call_true-termination.c
+
+Verification result:(FALSE, witness: logs/comp_Fibonacci05_false-unreach-call_true-termination_c.graphml, 2.934985(seconds))
+
+comp/gcd01_true-unreach-call_true-termination.c
+
+Verification result:(UNKNOWN, witness: , 1.993582(seconds))
+
+comp/gcd02_true-unreach-call.c
+
+Verification result:(UNKNOWN, witness: , 15.455257(seconds))
+
+comp/McCarthy91_false-unreach-call_false-termination.c
+
+Verification result:(FALSE, witness: logs/comp_McCarthy91_false-unreach-call_false-termination_c.graphml, 0.200932(seconds))
+
+comp/McCarthy91_true-unreach-call.c
+
+Verification result:(UNKNOWN, witness: , 5.892123(seconds))
+
+comp/MultCommutative_true-unreach-call_true-termination.c
+
+Verification result:(UNKNOWN, witness: , 29.739887(seconds))
+
+comp/Primes_true-unreach-call.c
+
+Verification result:(UNKNOWN, witness: , 5.353572(seconds))
+
+comp/recHanoi01_true-unreach-call_true-termination.c
+
+Verification result:(UNKNOWN, witness: , 15.887692(seconds))
+
+comp/recHanoi02_true-unreach-call_true-termination.c
+
+Verification result:(TRUE, witness: , 0.193545(seconds))
+
+comp/recHanoi03_true-unreach-call_true-termination.c
+
+Verification result:(TRUE, witness: , 0.192191(seconds))
+
