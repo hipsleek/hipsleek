@@ -3621,9 +3621,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
             print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
           if pr_flag then
             begin
-              print_string_web_mode (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-              x_binfo_hp (add_str "Static spec (proc)" Cprinter.string_of_struc_formula) proc.proc_static_specs;
-              x_binfo_hp (add_str "Static spec (stk of proc0)" Cprinter.string_of_struc_formula) (proc0.proc_stk_of_static_specs # top);
+              print_string_web_mode (("\n\nChecking procedure ") ^ proc.proc_name ^ "...\n"); flush stdout;
+              (* x_binfo_hp (add_str "Static spec (proc)" Cprinter.string_of_struc_formula) proc.proc_static_specs; flush stdout;           *)
+              (* x_binfo_hp (add_str "Static spec (stk of proc)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top);   *)
+              (* x_binfo_hp (add_str "Static spec (stk of proc0)" Cprinter.string_of_struc_formula) (proc0.proc_stk_of_static_specs # top); *)
+              (* print_endline_quiet ("Static spec (proc): " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs)); flush stdout;                         *)
+              (* print_endline_quiet ("Static spec (stk of proc): " ^ (Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))); flush stdout;   *)
+              (* print_endline_quiet ("Static spec (stk of proc0): " ^ (Cprinter.string_of_struc_formula (proc0.proc_stk_of_static_specs # top))); flush stdout; *)
               x_dinfo_zp (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
               x_dinfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
             end;
@@ -3634,8 +3638,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               print_endline_quiet "\n\n*******************************";
               print_endline_quiet     "******* SPECIFICATION 1 *******";
               print_endline_quiet     "*******************************";
-              print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog (proc0.proc_stk_of_static_specs # top)
-              (* proc0.Cast.proc_static_specs *))
+              print_endline_quiet (Cprinter.string_of_struc_formula_for_spec_inst prog (proc0.proc_stk_of_static_specs # top)); flush stdout
+              (* proc0.Cast.proc_static_specs *)
             end
           in
           (*****LOCKSET variable: ls'=ls *********)
