@@ -1906,6 +1906,7 @@ class inf_obj  =
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x -> not (eq_infer_type c x)) arr
     method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
+    method reset_inf_shape = self # reset_list [INF_SHAPE_PRE_POST; INF_SHAPE_PRE; INF_SHAPE_POST; INF_SHAPE]
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
     (*   let l = self # get_lst in *)

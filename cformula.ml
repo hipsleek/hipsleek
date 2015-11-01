@@ -4223,7 +4223,8 @@ and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula =
   Debug.no_2 "add_quantifiers" !print_svl !print_formula !print_formula add_quantifiers_x qvars f
 
 (* 19.05.2008 *)
-and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
+and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = 
+  match f with
   | Base _ -> f
   | Exists ({
       formula_exists_qvars = qvs;
@@ -4237,7 +4238,7 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = matc
     let new_qvars = (List.filter (fun x -> not (List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in
     if (List.length new_qvars == 0) then mkBase h p vp t fl a pos
     else mkExists new_qvars h p vp t fl a pos
-  | _ -> failwith ("add_quantifiers: invalid argument")
+  | _ -> failwith ("remove_quantifiers: invalid argument")
 (* 19.05.2008 *)
 
 and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) =
