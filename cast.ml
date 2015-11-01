@@ -161,6 +161,7 @@ and view_decl = {
   mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
   mutable view_baga : Gen.Baga(P.PtrSV).baga;
   mutable view_addr_vars : P.spec_var list;
+  mutable view_inv_is_precise: bool;
   (* if view has only a single eqn, then place complex subpart into complex_inv *)
   view_complex_inv : MP.mix_formula  option; (*COMPLEX INV for --eps option*)
    view_linear_formula : (Cformula.formula * formula_label) list ;
@@ -665,6 +666,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_materialized_vars = [];
     view_formula = F.mkETrue (F.mkTrueFlow ()) pos;
     view_user_inv = mix_true;
+    view_inv_is_precise = false;
     view_mem = None;
     view_inv_lock = None;
     view_fixcalc = None;
@@ -739,6 +741,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_baga_x_over_inv = None;
     view_baga_under_inv = None;
     view_xpure_flag = false;
+    view_inv_is_precise = false;
     view_baga = CP.BagaSV.mkEmpty;
     view_addr_vars = [];
     view_complex_inv = None;

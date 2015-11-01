@@ -592,7 +592,7 @@ let compute_invs_fixcalc input_fixcalc=
   in
   let output_of_sleek =  (* Globals.fresh_any_name *) "logs/fixcalc"^(* (fix_num # str_get_next)^ *)".inp" in
   let () = DD.ninfo_pprint ("fixcalc file name: " ^ output_of_sleek) no_pos in
-  let () = DD.info_pprint ("input of fixcalc: " ^ input_fixcalc) no_pos in
+  let () = DD.ninfo_pprint ("input of fixcalc: " ^ input_fixcalc) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -603,7 +603,7 @@ let compute_invs_fixcalc input_fixcalc=
   let res = remove_paren res (String.length res) in
 
   (* Parse result *)
-  let () = DD.info_hprint (add_str "res= " pr_id) res no_pos in
+  let () = DD.ninfo_hprint (add_str "res= " pr_id) res no_pos in
   (* let () = print_endline ("res ="^ res) in *)
   let lines = get_lines res 0 [] in
   let () = DD.ninfo_hprint (add_str "lines" (pr_list_ln pr_id)) lines no_pos in

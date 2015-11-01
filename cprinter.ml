@@ -4369,6 +4369,7 @@ let pr_view_decl v =
   pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
   pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
   pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
+  pr_add_str_cut  "inv_is_precise: " fmt_string (string_of_bool v.view_inv_is_precise);
   pr_add_str_cut   ~emp_test:Gen.is_None  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
   pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)->
       (pr_formula c)))) v.view_un_struc_formula;

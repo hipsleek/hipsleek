@@ -9,6 +9,8 @@ open Satutil
 module CP = Cpure
 module CF = Cformula
 
+let timeout = (10.0 : float)
+
 let is_sat_pure_fnc_cex f = (let r = Tpdispatcher.is_sat_sub_no 21 f (ref 0) in (r,f))
 
 let is_sat_pure_fnc f = Satutil.is_sat_pure_fnc f
@@ -441,7 +443,7 @@ and check_sat_topdown_iter prog is_shape_only form_red_fnc is_inconsistent_fnc d
 
 
 let check_sat_topdown_x prog need_slice f0=
-  print_endline_quiet "\n***slsat****";
+  (* print_endline_quiet "\n***slsat****"; *)
   let _ = DD.ninfo_hprint (add_str "f0" Cprinter.prtt_string_of_formula) f0 no_pos in
   let bound = 50000 in
   let is_shape_only,form_red_fnc, is_inconsistent_fnc =

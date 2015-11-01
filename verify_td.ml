@@ -29,6 +29,8 @@ module CP = Cpure
 module LO = Label_only.LOne
 module MCP = Mcpure
 
+let is_compete = false
+
 
 type assert_err=
   | VTD_Safe
@@ -364,6 +366,7 @@ let symex_gen_view_from_scc iprog prog scc=
       symex_gen_view iprog prog proc pred_name proc_args pred_args body sst_res no_pos
   ) vdecl_info
 
+
 (* main_v(..) /\ e=1*)
 let verify_td_scc iprog prog scc=
   let build_f_from_method mdecl=
@@ -466,7 +469,7 @@ let verify_as_sat iprog prog iprims=
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
   let sorted_proc_main = Cast.sort_proc_decls proc_main in
-  let () = Debug.info_hprint (add_str "sorted_proc_main"
+  let () = Debug.ninfo_hprint (add_str "sorted_proc_main"
                                  (pr_list Astsimp.pr_proc_call_order)
                               ) sorted_proc_main no_pos in
   (* this computes a list of scc mutual-recursive methods for processing *)
@@ -478,7 +481,7 @@ let verify_as_sat iprog prog iprims=
         else [x]::a
     ) [] sorted_proc_main in
   let proc_scc0 = List.rev proc_scc in
-  let () = Debug.info_hprint (add_str "proc_scc0"
+  let () = Debug.ninfo_hprint (add_str "proc_scc0"
       (pr_list_ln (pr_list Astsimp.pr_proc_call_order))
   ) proc_scc0 no_pos in
   (* look up assert error location *)

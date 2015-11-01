@@ -2623,6 +2623,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_baga = [];
         C.view_complex_inv = None;
         C.view_user_inv = user_inv;
+        C.view_inv_is_precise = false;
         C.view_mem = mem_form;
         C.view_inv_lock = inv_lock;
         C.view_un_struc_formula = n_un_str;

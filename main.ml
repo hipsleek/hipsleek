@@ -23,6 +23,7 @@ let set_source_file arg =
 let process_cmd_line () =
   if not (Perm.allow_perm ()) then Perm.disable_para();
   Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
+  let () = Scriptarguments.set_svcomp_compete Verify_td.is_compete in
   if !Globals.override_slc_ps then Globals.en_slc_ps:=false
   else ()
 
