@@ -1461,6 +1461,13 @@ let set_root_unfold lhs rhs alias_set =
     let () = y_winfo_hp (add_str "not a hp_rel?" !CF.print_h_formula) lhs in
     ()
 
+let set_root_unfold lhs rhs alias_set =
+  let pr = !CF.print_h_formula in
+  Debug.no_3 "set_root_unfold" 
+    (add_str "lhs" pr) (add_str "rhs" pr)
+    (add_str "aset" !CP.print_svl) (fun _ -> "")
+    set_root_unfold lhs rhs alias_set
+
 (*
 type: (CF.entail_state ->
    CF.formula_base ->

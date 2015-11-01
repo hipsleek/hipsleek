@@ -12248,18 +12248,24 @@ let is_term f =
   | BForm ((bf,_),_) -> is_term bf
   | _ -> false
 
-let is_TermR pf =
+let is_TermR ann = 
+  match ann with
+  | TermR _ -> true
+  | _ -> false
+
+let is_TermR_pf pf =
   match pf with
-  | LexVar t_info -> begin 
-      match t_info.lex_ann with
-      | TermR _ -> true
-      | _ -> false 
-    end
+  | LexVar t_info -> is_TermR t_info.lex_ann
+    (* begin                       *)
+    (*   match t_info.lex_ann with *)
+    (*   | TermR _ -> true         *)
+    (*   | _ -> false              *)
+    (* end                         *)
   | _ -> false
 
 let is_TermR_formula f = 
   match f with
-  | BForm ((bf,_),_) -> is_TermR bf
+  | BForm ((bf,_),_) -> is_TermR_pf bf
   | _ -> false
 
 let is_rel_assume rt = match rt with

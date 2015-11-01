@@ -3565,10 +3565,11 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
               prog, true
         in
         let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+        (* let () = cprog_obj # check_prog_only x_loc nprog in *)
         let () = List.iter (fun proc ->
             if is_print_inferred_spec then
-              let () =  Debug.info_hprint (add_str "INFERRED SHAPE SPEC"
-                                             (Cprinter.string_of_struc_formula)) (proc.proc_stk_of_static_specs#top) (*proc.proc_static_specs*)  no_pos in
+              let () = x_binfo_hp (add_str "INFERRED SHAPE SPEC" 
+                  (Cprinter.string_of_struc_formula)) (proc.proc_stk_of_static_specs#top) (*proc.proc_static_specs*)  no_pos in
               ()
             else ()
           ) new_scc_procs in
@@ -4379,14 +4380,14 @@ let print_infer_scc loc scc =
     | CF.EInfer s -> (s.CF.formula_inf_vars,s.CF.formula_inf_obj)::(collect s.CF.formula_inf_continuation)
     | _ -> [] in
   let head = "XXXX" in
-  let () = y_tinfo_zp (lazy ("\n"^head^"Current SCC EInfer :"^loc)) in
+  let () = y_binfo_zp (lazy ("\n"^head^"Current SCC EInfer :"^loc)) in
   let () = y_tinfo_zp (lazy (
       let lst = List.map (fun p -> 
         let lst = p.proc_stk_of_static_specs # get_stk in
         (p.proc_name, List.map collect lst)) scc in
       head^((pr_list (pr_pair pr_id (pr_list_num 
           (pr_list_n (pr_pair !CP.print_svl (fun o -> o#string_of)))))) lst))) in
-  let () = y_tinfo_zp (lazy (pr_list_ln 
+  let () = y_binfo_zp (lazy (pr_list_ln 
       (fun p -> Cprinter.string_of_struc_formula (p.proc_stk_of_static_specs # top)) scc)) in
   ()
 
@@ -4649,7 +4650,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let verify_res = is_all_verified2 && is_term_verified in
     let () = if should_infer_tnt then x_binfo_pp ("Starting TNT inference ...") no_pos in
     let () = Ti.solve verify_res should_infer_tnt prog in
-    let prog = if verify_res && should_infer_tnt then Ti2.update_specs_prog prog else prog in
+    let () = if verify_res && should_infer_tnt then Ti2.update_specs_prog prog in
     let () = Ti.finalize () in
 
     let () = print_infer_scc (x_loc^" After term infer result..") scc in

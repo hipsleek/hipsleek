@@ -20433,8 +20433,7 @@ let get_root_ptr hf =
   | DataNode {h_formula_data_node = pt} 
   | ViewNode { h_formula_view_node = pt}
   | ThreadNode { h_formula_thread_node = pt}
-  | HVar(pt,_)
-                 -> pt
+  | HVar(pt,_) -> pt
   | _ -> raise Not_found
 
 

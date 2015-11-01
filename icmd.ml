@@ -55,8 +55,8 @@ let print_infer_scc scc =
 
 let rec compute_cmd cprog scc: icmd =
   let infs = (Iincr.get_infer_const_scc scc) in
-  let () = y_binfo_hp (add_str "infs" (pr_list string_of_inf_const)) infs in
-  let () = y_binfo_hp (add_str "infer_const_obj" pr_id) (Globals.infer_const_obj # string_of) in
+  let () = y_tinfo_hp (add_str "infs" (pr_list string_of_inf_const)) infs in
+  let () = y_tinfo_hp (add_str "infer_const_obj" pr_id) (Globals.infer_const_obj # string_of) in
   let has_infer_shape_prepost_proc = 
     Globals.infer_const_obj # is_shape_pre_post ||
     List.exists (fun it -> it = INF_SHAPE_PRE_POST) infs in

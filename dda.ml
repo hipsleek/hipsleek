@@ -59,7 +59,7 @@ let has_named_params prog mn =
 let set_inf_obj_proc itype proc = 
   let n_static_specs = Cformula.set_inf_obj_struc itype proc.proc_static_specs in
   let n_dynamic_specs = Cformula.set_inf_obj_struc itype proc.proc_dynamic_specs in
-  let () = proc.proc_stk_of_static_specs # push_pr "dda:59" n_static_specs in
+  let () = proc.proc_stk_of_static_specs # push_pr x_loc n_static_specs in
   { proc with 
     proc_static_specs = n_static_specs;
     proc_dynamic_specs = n_dynamic_specs; }

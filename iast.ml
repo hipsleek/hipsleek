@@ -1518,7 +1518,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
           (* hp_view = None *)
         }
         in
-        let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
+        let () = x_binfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
             hp_pre_decl.hp_name no_pos in
         let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
         let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
