@@ -4899,36 +4899,62 @@ and disj_count (f0 : formula) = match f0 with
 
 let rec flatten_struc_formula sf =
   match sf with
-  | EList el -> EList (List.map (fun (lbl,sf) ->
-      (lbl,flatten_struc_formula sf)
-    ) el)
+  | EList el -> EList (List.map (fun (lbl,sf) -> (lbl, flatten_struc_formula sf)) el)
   | EBase eb1 -> (
       match eb1.formula_struc_continuation with
       | None -> sf
       | Some cont_f ->
         let new_cont_f = flatten_struc_formula cont_f in
-        match new_cont_f with
-        | EBase eb2 ->
-          let f1 = eb1.formula_struc_base in
-          let f2 = eb2.formula_struc_base in
-          let h1, p1, vp1, fl1, t1, a1 = split_components f1 in
-          let h2, p2, vp2, fl2, t2, a2 = split_components f2 in
-          if ((is_empty_heap h1) || (is_empty_heap h2)) then
-            let h = if (is_empty_heap h1) then h2 else h1 in
-            let p,_ = combine_and_pure f1 p1 p2 in
-            let vp = CVP.merge_vperm_sets [vp1; vp2] in
-            let t = mkAndType t1 t2 in
-            let fl = mkAndFlow fl1 fl2 Flow_combine in
-            let a = a1@a2 in
-            let new_base = mkBase h p vp t fl a no_pos in
-            EBase {eb1 with
-                   formula_struc_base = new_base;
-                   formula_struc_continuation = eb2.formula_struc_continuation}
-          else sf
-        | _ -> EBase {eb1 with formula_struc_continuation = Some new_cont_f}
+        flatten_struc_formula_base eb1 new_cont_f
+        (* match new_cont_f with                                                    *)
+        (* | EBase eb2 ->                                                           *)
+        (*   let f1 = eb1.formula_struc_base in                                     *)
+        (*   let f2 = eb2.formula_struc_base in                                     *)
+        (*   let h1, p1, vp1, fl1, t1, a1 = split_components f1 in                  *)
+        (*   let h2, p2, vp2, fl2, t2, a2 = split_components f2 in                  *)
+        (*   if ((is_empty_heap h1) || (is_empty_heap h2)) then                     *)
+        (*     let h = if (is_empty_heap h1) then h2 else h1 in                     *)
+        (*     let p,_ = combine_and_pure f1 p1 p2 in                               *)
+        (*     let vp = CVP.merge_vperm_sets [vp1; vp2] in                          *)
+        (*     let t = mkAndType t1 t2 in                                           *)
+        (*     let fl = mkAndFlow fl1 fl2 Flow_combine in                           *)
+        (*     let a = a1@a2 in                                                     *)
+        (*     let new_base = mkBase h p vp t fl a no_pos in                        *)
+        (*     EBase { eb1 with                                                     *)
+        (*            formula_struc_base = new_base;                                *)
+        (*            formula_struc_continuation = eb2.formula_struc_continuation } *)
+        (*   else sf                                                                *)
+        (* | _ -> EBase {eb1 with formula_struc_continuation = Some new_cont_f}     *)
     )
-  | EInfer ei -> flatten_struc_formula ei.formula_inf_continuation
-  | _ -> sf
+  | EInfer ei -> (* flatten_struc_formula ei.formula_inf_continuation *)
+    (* Add back EInfer to prevent lost information after @post *)
+    EInfer { ei with formula_inf_continuation = flatten_struc_formula ei.formula_inf_continuation }
+  | ECase ec -> ECase { ec with 
+        formula_case_branches = List.map (fun (c, sf) -> (c, flatten_struc_formula sf)) ec.formula_case_branches }
+  | EAssume _ -> sf
+
+and flatten_struc_formula_base eb1 sf = 
+  match sf with
+  | EBase eb2 ->
+    let f1 = eb1.formula_struc_base in
+    let f2 = eb2.formula_struc_base in
+    let h1, p1, vp1, fl1, t1, a1 = split_components f1 in
+    let h2, p2, vp2, fl2, t2, a2 = split_components f2 in
+    if ((is_empty_heap h1) || (is_empty_heap h2)) then
+      let h = if (is_empty_heap h1) then h2 else h1 in
+      let p, _ = combine_and_pure f1 p1 p2 in
+      let vp = CVP.merge_vperm_sets [vp1; vp2] in
+      let t = mkAndType t1 t2 in
+      let fl = mkAndFlow fl1 fl2 Flow_combine in
+      let a = a1@a2 in
+      let new_base = mkBase h p vp t fl a no_pos in
+      flatten_struc_formula (EBase { eb1 with
+             formula_struc_base = new_base;
+             formula_struc_continuation = eb2.formula_struc_continuation })
+    else EBase eb1
+  | EInfer ei -> EInfer { ei with 
+        formula_inf_continuation = flatten_struc_formula_base eb1 ei.formula_inf_continuation }
+  | _ -> EBase { eb1 with formula_struc_continuation = Some sf }
 
 let flatten_struc_formula sf =
   Debug.no_1 "flatten_struc_formula"

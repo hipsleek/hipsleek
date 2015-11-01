@@ -320,6 +320,7 @@ let add_pre_relation_scc prog scc =
 (*         else *)
 (*           sf *)
 (*   | _ -> sf *)
+
 (* old code with new/old spec *)
 let rec turn_off_infer_pure spec old_spec =
   match (spec,old_spec) with
@@ -356,6 +357,9 @@ let rec turn_off_infer_pure spec old_spec =
                CF.formula_inf_continuation = spec }
   | _ -> spec (* failwith "turn off infer pure other" *)
 
+let turn_off_infer_pure_old spec old_spec =
+  turn_off_infer_pure spec old_spec
+    
 (* new code ignoring old_spec *)
 let rec turn_off_infer_pure spec =
   match (spec) with
@@ -371,7 +375,18 @@ let rec turn_off_infer_pure spec =
                CF.formula_inf_vars = [];}
   | _ -> spec (* failwith "turn off infer pure other" *)
 
-let turn_off_infer_pure spec old_spec = turn_off_infer_pure spec
+let turn_off_infer_pure_new spec =
+  turn_off_infer_pure spec
+
+let turn_off_infer_pure spec old_spec = 
+  (* turn_off_infer_pure_old spec old_spec *)
+  turn_off_infer_pure_new spec
+  
+let turn_off_infer_pure spec old_spec =
+  let pr = !CF.print_struc_formula in
+  Debug.no_2 "turn_off_infer_pure" 
+    (add_str "SPEC" pr) (add_str "OLD_SPEC" pr) pr 
+    turn_off_infer_pure spec old_spec
   
 let resume_infer_obj_proc proc old_spec =
   let () = y_tinfo_hp (add_str "old spec" !CF.print_struc_formula) old_spec in
@@ -850,7 +865,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
     let new_specs = List.map (fun new_spec -> Immutable.remove_abs_nodes_struc new_spec) new_specs in
     (* let new_specs = List.map (fun new_spec -> Immutable.infer_specs_imm_post_process new_spec) new_specs in *)
     let () = List.iter (fun (proc,new_spec) ->
-        let () = proc.proc_stk_of_static_specs # push_pr "pi:854" new_spec in
+        let () = proc.proc_stk_of_static_specs # push_pr x_loc new_spec in
         print_endline_quiet "\nPost Inference result:";
         print_endline_quiet proc.proc_name;
         print_endline_quiet (Cprinter.string_of_struc_formula new_spec);
