@@ -825,6 +825,7 @@ let process_source_full source =
   if (!Globals.reverify_all_flag || !Globals.reverify_flag)
   then
     let () = y_binfo_pp "RE-VERIFICATION\n" in
+    let () = Globals.infer_const_obj # reset_all in
     reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
   else ();
 

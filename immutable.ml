@@ -59,9 +59,9 @@ let split_imm_pure_lst pf =
     (CP.conj_of_list imm_f no_pos), (CP.conj_of_list pure_f no_pos) in
   let disj = CP.split_disjunctions_deep pf in
   let disj_part = List.map split_imm_pure_helper disj in (* split each disj in imm formula + pure formula *)
-  let () = x_binfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
+  let () = x_tinfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
   let disj_part = List.map (fun (ximm,ypure) -> (TP.simplify_tp ximm, ypure)) disj_part in (* simplify the imm formula of each disjunct *)
-  let () = x_binfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
+  let () = x_tinfo_hp (add_str "imm + pure" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) disj_part no_pos in
   let disj_part = List.filter (fun (ximm,ypure) -> not (CP.is_False ximm)) disj_part in  (* remove unsat disjuncts *)
   let imms, pures = List.split disj_part in
   (imms, pures)

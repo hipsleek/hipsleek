@@ -1,9 +1,11 @@
 data cell { int val; }
 
 void dec (cell x) 
+/*
   infer [@post_n]
   requires true
   ensures true;
+*/
 {
   x.val = x.val - 1;
 }

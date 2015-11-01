@@ -4225,7 +4225,8 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
     (* Log.last_cmd # dumping; *)
     res
   with _ as e -> (
-      if !Globals.check_all then begin
+      (* if !Globals.check_all then  *)
+      begin
         (* dummy_exception(); *)
         let () = Infer.rel_ass_stk # reset in
         print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
@@ -4235,9 +4236,10 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
         Log.last_cmd # dumping (proc.proc_name^" FAIL2");
         (* print_endline "Last PURE PROOF FAILURE:"; *)
         (* Log.last_proof_command # dump; *)
-        false
-      end else
-        raise e
+        if !Globals.check_all then false
+        else raise e
+      end 
+      (* else raise e *)
     )
 (*
 let check_view vdef =

@@ -212,7 +212,7 @@ let add_pre_shape_relation_x prog proc spec=
           Cast.hp_formula = CF.mkHTrue_nf pos;
           }
       in
-      let () = x_binfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ proc.Cast.proc_name ^ ": ") pr_id)
+      let () = x_tinfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ proc.Cast.proc_name ^ ": ") pr_id)
         hp_pre_decl.Cast.hp_name no_pos in
       let pre_inf_sv = (CP.SpecVar (HpT, hp_pre_decl.Cast.hp_name, Unprimed)) in
       let () = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in

@@ -119,7 +119,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        is_infer := true;
        imm_pre_is_set := ff.formula_inf_obj # is_pre_imm && !should_infer_imm_pre;
        should_infer_imm_pre := !imm_pre_is_set;
-       x_binfo_hp (add_str "!should_infer_imm_pre" string_of_bool) !should_infer_imm_pre no_pos;
+       x_tinfo_hp (add_str "!should_infer_imm_pre" string_of_bool) !should_infer_imm_pre no_pos;
        (* has_infer_imm_pre := (!has_infer_imm_pre || !imm_pre_is_set) && !should_infer_imm_pre; *)
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
        should_infer_imm_post := !imm_post_is_set && (not(!imm_pre_is_set) || !should_infer_imm_post);

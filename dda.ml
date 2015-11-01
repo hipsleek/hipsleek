@@ -269,7 +269,7 @@ let seq_data_dependency_graph_of_call_exp prog ddg src index mn args =
       mn_decl.proc_by_name_params @
       List.filter CP.is_node_typ mn_decl.proc_by_value_params 
     in
-    let () = y_binfo_hp (add_str (mn ^ ":by_name_params") !CP.print_svl) by_name_params in
+    let () = y_tinfo_hp (add_str (mn ^ ":by_name_params") !CP.print_svl) by_name_params in
     let ddg = List.fold_left (fun g (arg, par) ->
         if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params 
         then CG.add_edge g par (mn, index)
