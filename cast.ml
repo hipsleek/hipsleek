@@ -1266,7 +1266,10 @@ let look_up_view_inv_simp defs act_args name inv_compute_fnc =
   let vdcl = look_up_view_def_raw 46 defs name in
   let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
   let inv =
-     MP.pure_of_mix vdcl.view_user_inv
+     if !Globals.do_infer_inv then
+       MP.pure_of_mix vdcl.view_x_formula
+     else
+       MP.pure_of_mix vdcl.view_user_inv
   in
   P.subst ss inv
 

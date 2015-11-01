@@ -525,7 +525,7 @@ let remove_tmp_local_vars iprog=
   iprog
 
 let witness_search iprog0 cprog src_fname call_stk=
-  let () = print_string_quiet ("call_stk: " ^ (string_of_call_stk call_stk)) in
+  (* let () = print_string_quiet ("call_stk: " ^ (string_of_call_stk call_stk)) in *)
   let old_xml_flag = !xml_flag in
   let () = xml_flag := true in
   let src_lines = Array.create 100 ("") in

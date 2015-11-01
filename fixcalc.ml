@@ -631,6 +631,53 @@ let lookup_inv invs pos fr_vars rev_sst=
   with _ ->
     List.nth invs pos
 
+
+let fix_pre_classify_x args pred_brs=
+  let rec look_up_cand brs res res2= match brs with
+    | [] -> begin
+        match res2 with
+          | [] ->  None, res
+          | x::xs -> let cand = List.fold_left (fun a b -> CP.mkOr a b None no_pos) x xs in
+            Some (Tpdispatcher.simplify_raw cand), res
+      end
+    | ((f, _) as e)::rest -> begin
+          let (hf,mf,_,_,_,_) = split_components f in
+          if hf = HEmp || hf = HTrue then
+             let p_br = MCP.pure_of_mix mf in
+             let () = DD.ninfo_hprint (add_str "p_br" !CP.print_formula) p_br no_pos in
+             let svl = CP.fv p_br in
+             if (* CP.diff_svl args svl = [] && *) List.for_all CP.is_simpl_exp (CP.list_of_conjs p_br) then
+               let () = DD.ninfo_hprint (add_str "p_br" pr_id) "OK" no_pos in
+               look_up_cand rest res (res2@[p_br])
+               (* (Some p_br, res@rest) *)
+             else look_up_cand rest (res@[e]) res2
+          else look_up_cand rest (res@[e]) res2
+      end
+  in
+  let rec contrad_check brs cand = match brs with
+    | [] -> true
+    | (f, _)::rest ->
+    let (_,mf,_,_,_,_) = split_components f in
+    let p_br = MCP.pure_of_mix mf in
+    let p = CP.filter_var p_br args in
+    if TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd p cand no_pos)) then false
+    else contrad_check rest cand
+  in
+  if List.length pred_brs <= 2 then None, pred_brs else
+    let cand_opt, rest = look_up_cand pred_brs [] [] in
+    match cand_opt with
+      | None -> None, pred_brs
+      | Some p -> if contrad_check rest p then
+          Some p, rest
+        else None, pred_brs
+
+let fix_pre_classify args pred_brs=
+  let pr1 (f,_) = Cprinter.string_of_formula f in
+  Debug.no_2 "fix_pre_classify" !CP.print_svl (pr_list_ln pr1)
+      (pr_pair (pr_option !CP.print_formula) (pr_list_ln pr1))
+      (fun _ _ -> fix_pre_classify_x args pred_brs)
+      args pred_brs
+
 (* TODO: TO MERGE WITH ABOVE *)
 let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var list) transed_views: CP.formula =
   let format_str_file s =
@@ -640,16 +687,18 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
   (* let vars = para_names in *)
   (* Prepare the input for the fixpoint calculation *)
   let lower_invs = Cast.extract_view_x_invs transed_views in
-  let input_fixcalc, fr_vars, rev_sst = 
+  let input_fixcalc, fr_vars, rev_sst,pure_disj = 
     (* try *)
     (*     name ^ ":={[" ^ self ^ "," ^ (string_of_elems vars fixcalc_of_spec_var ",") ^  *)
     (*     "] -> [] -> []: " ^  *)
     (*     (string_of_elems fml (fun (c,_)-> fixcalc_of_formula (x_add subst_inv_lower_view lower_invs c)) op_or) ^ *)
     (*     "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);" *)
     (*   with _ -> report_error no_pos "Error in translating the input for fixcalc" *)
-    let fixc_body,fr_vars, rev_sst = slk2fix_body lower_invs fml name data_name para_names in
+    let pure_disj, rest_fml = if List.length fml > 4 && !verify_td then
+          fix_pre_classify para_names fml else None, fml in
+    let fixc_body,fr_vars, rev_sst = slk2fix_body lower_invs (* rest_fml *) fml name data_name para_names in
     let fixc_header = slk2fix_header 1 [name] in
-    (fixc_body ^ fixc_header, fr_vars, rev_sst)
+    (fixc_body ^ fixc_header, fr_vars, rev_sst, pure_disj)
   in
   x_ninfo_zp (lazy (("Input of fixcalc: " ^ (format_str_file input_fixcalc)))) no_pos;
 
@@ -675,9 +724,30 @@ let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var lis
   (* let () = DD.info_hprint (add_str "res(parsed)= " !CP.print_formula) inv no_pos in *)
   (* inv *)
   let invs = (x_add_1 compute_invs_fixcalc input_fixcalc) in
-  try
+  let inv0 = try
     lookup_inv invs 0 fr_vars rev_sst
   with _ -> CP.mkTrue no_pos
+  in
+  let () = DD.ninfo_hprint (add_str "inv0 " !CP.print_formula) inv0 no_pos in
+  let inv1 = match pure_disj with
+    | None -> inv0
+    | Some p ->
+          let () = DD.ninfo_hprint (add_str "p" !CP.print_formula) p no_pos in
+          let () = DD.ninfo_hprint (add_str "p (simpl)" !CP.print_formula) (Tpdispatcher.simplify_raw p) no_pos in
+          let ps = CP.list_of_conjs inv0 in
+          let pos = CP.pos_of_formula inv0 in
+          let sim_ps, contra = List.partition (fun p1 -> Gen.BList.mem_eq CP.equalFormula p1 ps) (CP.list_of_conjs p) in
+          let () = DD.ninfo_hprint (add_str "sim_ps " (pr_list !CP.print_formula)) sim_ps no_pos in
+          let () = DD.ninfo_hprint (add_str "contra " (pr_list !CP.print_formula)) contra no_pos in
+          let neg_ps = List.map (fun p -> CP.mkNot_norm_new p None (CP.pos_of_formula p)) contra in
+          let () = DD.ninfo_hprint (add_str "neg_ps " (pr_list !CP.print_formula)) neg_ps no_pos in
+          let stre_inv0 = (CP.mkAnd (CP.conj_of_list neg_ps no_pos) inv0 pos) in
+          let () = DD.ninfo_hprint (add_str "stre_inv0 " !CP.print_formula) stre_inv0 no_pos in
+          let stre_inv0_1 = Tpdispatcher.simplify_raw stre_inv0 in
+          CP.mkOr p stre_inv0_1 None no_pos
+  in
+  let () = DD.ninfo_hprint (add_str "inv1 " !CP.print_formula) inv1 no_pos in
+  inv1
 
 let compute_heap_pure_inv fml (name:ident) data_name (para_names:CP.spec_var list) lower_invs: CP.formula =
   let pr1 = !CP.print_formula in
@@ -715,6 +785,7 @@ let compute_inv name vars fml data_name lower_views pf =
   Debug.no_5 " compute_inv" pr_id !CP.print_svl (pr_list_ln pr1) (pr_list pr3) pr2 pr2
     (fun _ _ _ _ _ -> compute_inv_x name vars fml data_name lower_views pf)
     name vars fml lower_views pf
+
 
 (*compute invs of views in one loop*)
 let compute_inv_mutrec mutrec_vnames views =
@@ -771,8 +842,8 @@ let compute_inv_mutrec mutrec_vnames views =
     (*gen cf of each view*)
     let fixc_bodys, vnames, vmaps = List.fold_left (fun (r1,r2,r3) view ->
         let fixc_body, fr_vars, rev_sst = slk2fix_body lower_invs
-            view.Cast.view_un_struc_formula view.Cast.view_name view.Cast.view_data_name view.Cast.view_vars in
-        (r1 ^ "\n" ^ fixc_body, r2@[view.Cast.view_name], r3@[(view.Cast.view_name,fr_vars, rev_sst)])
+             view.Cast.view_un_struc_formula view.Cast.view_name view.Cast.view_data_name view.Cast.view_vars in
+        ( r1 ^ "\n" ^ fixc_body, r2@[view.Cast.view_name], r3@[(view.Cast.view_name,fr_vars, rev_sst)])
       ) ("",[],[]) mutrec_views in
     let fixc_header = slk2fix_header 3 vnames in
     let input_fixcalc  =  fixc_bodys ^ fixc_header in
@@ -782,7 +853,7 @@ let compute_inv_mutrec mutrec_vnames views =
     in
     (* Call the fixpoint calculation *)
     let invs = (x_add_1 compute_invs_fixcalc input_fixcalc) in
-    let () = x_tinfo_hp (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
+    let () = x_binfo_hp (add_str "invs" (pr_list Cprinter.string_of_pure_formula)) invs no_pos in
     (*get result and revert back*)
     (*set invs + flags*)
     let all_rev_sst = List.fold_left (fun r (_,_,sst) -> r@sst) [] vmaps in

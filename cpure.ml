@@ -9121,6 +9121,51 @@ let mkNot_norm f lbl1 pos0 :formula= match f with
     end
   | _ -> Not (f, lbl1,pos0)
 
+let mkNot_norm_new f lbl1 pos0 :formula= match f with
+  | BForm (bf,lbl) ->
+    begin
+      let r,il =
+        let (pf,il) = bf in
+        let r = match pf with
+        | BConst (b, pos) -> Some (BConst ((not b), pos))
+        | Lt (e1, e2, pos) -> Some (Gte (e1, e2, pos))
+        | Lte (e1, e2, pos) -> Some(Gt (e1, e2, pos))
+        | Gt (e1, e2, pos) -> Some(Lte (e1, e2, pos))
+        | Gte (e1, e2, pos) -> Some(Lt (e1, e2, pos))
+        | Eq (e1, e2, pos) -> Some(Neq (e1, e2, pos))
+        | Neq (e1, e2, pos) -> Some(Eq (e1, e2, pos))
+        | BagIn e -> Some(BagNotIn e)
+        | BagNotIn e -> Some(BagIn e)
+        | _ -> None in
+        (r,il)
+      in
+      match r with 
+      | None -> Not (f, lbl,pos0)
+      | Some pf -> BForm((pf, il),lbl)
+    end
+  | _ -> Not (f, lbl1,pos0)
+
+let is_simpl_exp f :bool= match f with
+  | BForm (bf,lbl) ->
+    begin
+      let (pf,il) = bf in
+      let r = match pf with
+        | BConst (b, pos) -> true
+        | Lt (e1, e2, pos)
+        | Lte (e1, e2, pos) 
+        | Gt (e1, e2, pos) 
+        | Gte (e1, e2, pos)
+        | Eq (e1, e2, pos) 
+        | Neq (e1, e2, pos) ->  is_num e1 || is_num e2
+        | _ -> false
+      in r
+    end
+  | _ -> false
+
+let is_simpl_exp f=
+  Debug.no_1 "is_simpl_exp" !print_formula string_of_bool
+      (fun _ -> is_simpl_exp f) f
+
 
 let mkNot_b_norm (bf : b_formula) : b_formula option = 
   let r =

@@ -489,7 +489,8 @@ let verify_as_sat iprog prog iprims=
     (* check sat *)
     res
   else
-    VTD_NotApp, None
+    if !Globals.svcomp_compete_mode then VTD_Unk, None else
+      VTD_NotApp, None
 
 let print_verify_resule res witness_path str_time=
   if res != VTD_NotApp then
