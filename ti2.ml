@@ -709,15 +709,15 @@ let tnt_spec_of_proc prog proc ispec =
   let pr = string_of_struc_formula(*_for_spec*) in
   (* let spec = proc.Cast.proc_static_specs in *)
   let spec = proc.Cast.proc_stk_of_static_specs # top in
-  let () = y_binfo_hp (add_str "original spec" pr) spec in
+  let () = y_tinfo_hp (add_str "original spec" pr) spec in
   let spec = merge_tnt_case_spec_into_struc_formula prog
       (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
-  let () = y_binfo_hp (add_str "merged spec" pr) spec in
+  let () = y_tinfo_hp (add_str "merged spec" pr) spec in
   let spec = flatten_case_struc spec in
   let spec = CF.flatten_struc_formula spec in
-  let () = y_binfo_hp (add_str "flatten spec" pr) spec in
+  let () = y_tinfo_hp (add_str "flatten spec" pr) spec in
   let spec = norm_struc spec in
-  let () = y_binfo_hp (add_str "normed spec" pr) spec in
+  let () = y_tinfo_hp (add_str "normed spec" pr) spec in
   spec
 
 let tnt_spec_of_proc prog proc ispec =

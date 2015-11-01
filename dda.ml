@@ -5,6 +5,8 @@ open Globals
 open VarGen
 open Gen.Basic
 
+module CP = Cpure
+
 let is_prim_proc prog id = 
   try
     let proc = Hashtbl.find prog.new_proc_decls id in
@@ -263,7 +265,11 @@ let seq_data_dependency_graph_of_call_exp prog ddg src index mn args =
     let ddg = List.fold_left (fun g i -> CG.add_edge g (mn, index) i) ddg args in
     (* Pass-by-name (ref) parameters depend on their method call *)
     let mn_decl = look_up_proc_def_raw prog.new_proc_decls mn in
-    let by_name_params = mn_decl.proc_by_name_params in
+    let by_name_params = 
+      mn_decl.proc_by_name_params @
+      List.filter CP.is_node_typ mn_decl.proc_by_value_params 
+    in
+    let () = y_binfo_hp (add_str (mn ^ ":by_name_params") !CP.print_svl) by_name_params in
     let ddg = List.fold_left (fun g (arg, par) ->
         if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params 
         then CG.add_edge g par (mn, index)
@@ -283,9 +289,15 @@ let seq_data_dependency_graph_of_exp prog mn exp : CG.t =
     | Assign e -> helper ddg (e.exp_assign_lhs, var_index) index e.exp_assign_rhs
     | Bind e ->
       let bvar = snd e.exp_bind_bound_var in
-      let ddg = List.fold_left (fun g (_, i) ->
-          CG.add_edge g (bvar, var_index) (i, var_index)) ddg e.exp_bind_fields in
-      helper ddg (bvar, var_index) index e.exp_bind_body
+      if e.exp_bind_read_only then (* READ *)
+        let ddg = List.fold_left (fun g (_, i) ->
+            CG.add_edge g (i, var_index) (bvar, var_index)) ddg e.exp_bind_fields
+        in
+        helper ddg src index e.exp_bind_body
+      else (* WRITE *)
+        let ddg = List.fold_left (fun g (_, i) ->
+            CG.add_edge g (bvar, var_index) (i, var_index)) ddg e.exp_bind_fields in
+        helper ddg (bvar, var_index) index e.exp_bind_body
     | Block e -> helper ddg src index e.exp_block_body
     | Cond e ->
       let ddg = CG.add_edge ddg (mn, root_index) (e.exp_cond_condition, var_index) in

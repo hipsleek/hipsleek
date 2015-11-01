@@ -4380,14 +4380,14 @@ let print_infer_scc loc scc =
     | CF.EInfer s -> (s.CF.formula_inf_vars,s.CF.formula_inf_obj)::(collect s.CF.formula_inf_continuation)
     | _ -> [] in
   let head = "XXXX" in
-  let () = y_binfo_zp (lazy ("\n"^head^"Current SCC EInfer :"^loc)) in
+  let () = y_tinfo_zp (lazy ("\n"^head^"Current SCC EInfer :"^loc)) in
   let () = y_tinfo_zp (lazy (
       let lst = List.map (fun p -> 
         let lst = p.proc_stk_of_static_specs # get_stk in
         (p.proc_name, List.map collect lst)) scc in
       head^((pr_list (pr_pair pr_id (pr_list_num 
           (pr_list_n (pr_pair !CP.print_svl (fun o -> o#string_of)))))) lst))) in
-  let () = y_binfo_zp (lazy (pr_list_ln 
+  let () = y_tinfo_zp (lazy (pr_list_ln 
       (fun p -> Cprinter.string_of_struc_formula (p.proc_stk_of_static_specs # top)) scc)) in
   ()
 
