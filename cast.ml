@@ -628,7 +628,7 @@ let cprog_obj =
       let m = "\n*XXcprog** " in
       let () = print_endline_quiet (m^s) in
       ()
-    method check_prog_x flag prg =
+    method check_prog_x ?(loc="") flag prg =
       let store_prg = !cprog in
       (* match !cprog with *)
       (* | None ->  *)
@@ -638,7 +638,7 @@ let cprog_obj =
       (* | Some store_prg ->  *)
       if not(prg==store_prg) then 
         begin
-          let () = y_winfo_pp "prog and cprog are different" in
+          let () = y_winfo_pp (loc ^ "prog and cprog_obj are different") in
           (* if prg = store_prg then  *)
           (*   let () = y_tinfo_pp "same content though" in *)
           (*   () *)
@@ -653,6 +653,10 @@ let cprog_obj =
     method check_prog_only loc prog = 
       let r = self # check_prog_x false prog in
       self # logging ((add_str (loc^"check only (same prog?)") string_of_bool) r)
+    method check_prog_warning loc prog = 
+      let r = self # check_prog_x ~loc:loc false prog in
+      if not r then
+        self # logging ((add_str (loc^"check (same prog?)") string_of_bool) r)
     method check_prog_upd loc prog = 
       let r = self # check_prog_x true prog in
       if not(r) then 
@@ -1514,7 +1518,7 @@ let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in
+    (* let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in *)
     let () = x_tinfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
@@ -4035,7 +4039,7 @@ let update_view_decl ?(caller="") prog vdecl =
       y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
-  let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in
+  (* let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in *)
   prog.prog_view_decls <- others @ [vdecl]
 
 let update_view_decl ?(caller="") prog vdecl = 
