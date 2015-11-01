@@ -503,8 +503,10 @@ let norm_unfold_formula vdefs f =
   CF.join_or lst
 
 let norm_unfold_formula vdefs f =
-  let pr = !CF.print_formula in
-  Debug.no_1 "norm_unfold_formula" pr pr (norm_unfold_formula vdefs) f
+  let pr1 = !CF.print_formula in
+  let pr2 = pr_list_ln !C.print_view_decl_short in
+  Debug.no_2 "norm_unfold_formula" pr2 pr1 pr1 
+    norm_unfold_formula vdefs f
  
 let norm_reuse_subs iprog cprog vdefs to_vns =
   let equiv_set = C.get_all_view_equiv_set vdefs in

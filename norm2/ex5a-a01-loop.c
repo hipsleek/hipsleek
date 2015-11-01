@@ -1,3 +1,9 @@
+#include <stdlib.h>
+
+extern int __VERIFIER_nondet_int(void);
+
+//C_INCLUDE_PATH=.. ../hip ex5a-a01-loop.c
+
 int test_fun (int* x_ref, int* y_ref, int* c)
 /*@
   infer[@shape_prepost]
@@ -18,8 +24,20 @@ int test_fun (int* x_ref, int* y_ref, int* c)
     return *c;
 }
 
-int main() {
-  return test_fun(__VERIFIER_nondet_int(),__VERIFIER_nondet_int(),__VERIFIER_nondet_int());
+int main() 
+/*@
+  infer[@shape_prepost]
+  requires true
+  ensures true;
+*/
+{
+  int* x_ref = alloca(sizeof(int));
+  int* y_ref = alloca(sizeof(int));
+  int* c = alloca(sizeof(int));
+  *x_ref = __VERIFIER_nondet_int();
+  *y_ref = __VERIFIER_nondet_int();
+  *c = __VERIFIER_nondet_int();
+  return test_fun(x_ref, y_ref, c);
 }
 
 /*

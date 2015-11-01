@@ -20083,7 +20083,8 @@ let get_view_unfold_g vd_name vl to_args f =
     let () = y_tinfo_hp (add_str "inside" pr_id) vd_name in
     (* let new_args = trans_args sst args in *)
     let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
-    let new_f = subst_all sst f in
+    (* let new_f = subst_all sst f in                                                 *)
+    let new_f = subst_avoid_capture (CP.self_sv::to_args) (vl.h_formula_view_node::args) f in
     let () = y_tinfo_hp pr_id (HipUtil.view_scc_obj # string_of) in
     let grh = HipUtil.view_scc_obj # unfold_in vv vd_name in
     let () = y_tinfo_hp (add_str "subs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
@@ -20145,6 +20146,11 @@ let repl_unfold_formula vd u_lst f =
   let res = map_formula_heap_only (repl_unfold_heap vd stk u_lst) f in
   add_qv_pure stk res
 
+let repl_unfold_formula vd u_lst f =
+  let pr1 = !print_formula in
+  let pr2 = pr_triple pr_id !CP.print_svl pr1 in
+  Debug.no_3 "repl_unfold_formula" pr_id (pr_list_ln pr2) pr1 pr1
+    repl_unfold_formula vd u_lst f
 
 let convert_un_struc_to_formula body =
   match body with
