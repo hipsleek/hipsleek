@@ -4718,7 +4718,7 @@ let rec check_prog iprog (prog : prog_decl) =
     (*   with Not_found -> scc *)
     (* in *)
   in
-  let rec process_cmd iprog cprog verified_sccs scc icmd=
+  let rec process_cmd iprog cprog verified_sccs scc icmd =
     match icmd with
       | Icmd.I_Norm {cmd_res_infs = infs} ->
             let iscc,_ = List.split (Iincr.set_infer_const_scc infs scc) in
@@ -4821,14 +4821,14 @@ let rec check_prog iprog (prog : prog_decl) =
           (* let () = List.iter (fun proc -> *)
           (* DD.info_hprint (add_str "  " Cprinter.string_of_struc_formula) (proc.Cast.proc_stk_of_static_specs # top) no_pos) scc in *)
           if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
-            else
-              let icmd = Icmd.compute_cmd prog scc in
-              process_cmd iprog prog verified_sccs scc icmd
+          else
+            let icmd = Icmd.compute_cmd prog scc in
+            process_cmd iprog prog verified_sccs scc icmd
       in
       let no_verified_sccs = List.map (fun scc -> List.map (fun proc ->
           let spec = proc.proc_stk_of_static_specs # top in
           let new_spec = CF.remove_inf_cmd_spec spec in
-          let () = proc.proc_stk_of_static_specs # push_pr "typechecker:after_cmd" new_spec in
+          let () = proc.proc_stk_of_static_specs # push_pr (x_loc ^ "after_cmd") new_spec in
           proc
       ) scc ) n_verified_sccs in
       prog, no_verified_sccs

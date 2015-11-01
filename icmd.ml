@@ -31,8 +31,10 @@ let mk_norm_icmd_wt i infs= (i, I_Norm {cmd_res_infs=infs(* ;cmd_res_scc = scc *
 
 let mk_seq_icmd c1 c2 = I_Seq [c1;c2]
 
-let rec compute_cmd cprog scc: icmd=
-  let infs = (Iincr.get_infer_const_scc scc)  in
+let rec compute_cmd cprog scc: icmd =
+  let infs = (Iincr.get_infer_const_scc scc) in
+  let () = y_binfo_hp (add_str "infs" (pr_list string_of_inf_const)) infs in
+  let () = y_binfo_hp (add_str "infer_const_obj" pr_id) (Globals.infer_const_obj # string_of) in
   let has_infer_shape_prepost_proc = Globals.infer_const_obj # is_shape_pre_post ||
     List.exists (fun it -> it = INF_SHAPE_PRE_POST) infs in
   if has_infer_shape_prepost_proc then
@@ -65,16 +67,16 @@ let rec compute_cmd cprog scc: icmd=
       in
       mk_seq_icmd (1,pre_cmd) (1,snd_cmd)
     else
-    (* let has_infer_shape_pre_proc =List.exists (fun it -> it = INF_SHAPE_PRE) infs in *)
-    (* if has_infer_shape_pre_proc then *)
-    (*   (\*TOFIX: care other infer consts*\) *)
-    (*   let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation scc in *)
-    (*   mk_norm_icmd scc *)
-    (* else *)
-    (*   let has_infer_shape_post_proc = List.exists (fun it -> it = INF_SHAPE_POST) infs in *)
-    (*   if has_infer_shape_post_proc then *)
-    (*     (\*TOFIX: care other infer consts*\) *)
-    (*     let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in *)
-    (*     mk_norm_icmd scc *)
-    (*   else *)
-        mk_norm_icmd infs
+      (* let has_infer_shape_pre_proc =List.exists (fun it -> it = INF_SHAPE_PRE) infs in *)
+      (* if has_infer_shape_pre_proc then *)
+      (*   (\*TOFIX: care other infer consts*\) *)
+      (*   let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation scc in *)
+      (*   mk_norm_icmd scc *)
+      (* else *)
+      (*   let has_infer_shape_post_proc = List.exists (fun it -> it = INF_SHAPE_POST) infs in *)
+      (*   if has_infer_shape_post_proc then *)
+      (*     (\*TOFIX: care other infer consts*\) *)
+      (*     let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in *)
+      (*     mk_norm_icmd scc *)
+      (*   else *)
+      mk_norm_icmd infs
