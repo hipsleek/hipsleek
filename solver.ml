@@ -12058,6 +12058,7 @@ and do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_ma
     (fun _ _ _ _ _-> do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) rhs rhs_rest conseq (Base lhs_b) (Base rhs_b)
 
 and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos = (* no longer used this function *)
+  let () = y_binfo_hp (add_str "do_infer_heap:entry:rhs" !CF.print_h_formula) rhs in
   if not !Globals.fo_iheap ||  Infer.no_infer_pure estate then
     let err_msg = "infer_heap_node" in
     (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "infer_heap_node" *)err_msg estate (Base rhs_b) None pos,
@@ -13656,6 +13657,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
               else Infer.infer_lhs_contra_estate 5 estate lhs_xpure pos msg 
           in
           begin
+            let () = y_binfo_hp (add_str "lhs contra?" (pr_opt (fun (_,f) -> !CP.print_formula f))) r in
             match r with
             | Some (new_estate, pf) ->
               begin
@@ -13760,6 +13762,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                                (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                                                                CF.mk_failure_may (msg) sl_error, estate.es_trace)) ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex false), NoAlias))
                           | _ -> 
+                            let () = y_binfo_pp "to handle hprel?" in
                             let may_estate = {estate with es_formula = CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula} in
                             (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                                                             CF.mk_failure_may (msg) sl_error, estate.es_trace)) ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex false), NoAlias)
@@ -13781,6 +13784,15 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                         let new_rhs_base = CF.mkBase HEmp irrel_r_p r_vp r_t r_fl r_a pos in
                         x_add heap_entail_conjunct 19 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
                     else
+                      let () = y_binfo_pp "TODO: schedule infer_empty_hp_rel?" in
+                      let base_lhs = lhs_b in
+                      let _, pure_rhs, _, _, _, _ = CF.split_components conseq in
+                      match rhs,rhs_rest with
+                      | HRel _,HEmp -> let ctx, proof = x_add heap_entail_empty_rhs_heap 8
+                                      prog conseq is_folding estate base_lhs pure_rhs rhs_h_matched_set pos 
+                        in (ctx, proof)
+                                (* failwith x_tbi  *)
+                      | _ -> 
                       let (lc,_) as first_r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                       (* let () =  Debug.info_pprint ">>>>>> M_unmatched_rhs_data_node <<<<<<" pos in *)
                       if not(CF.isFailCtx lc) then first_r
