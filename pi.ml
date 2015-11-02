@@ -52,6 +52,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars =
   let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var in
   let diff = Gen.BList.difference_eq CP.eq_spec_var in
   let intersect = Gen.BList.intersect_eq CP.eq_spec_var in
+  let mem = Gen.BList.mem_eq CP.eq_spec_var in
   match sf with
   | CF.EList el -> CF.EList (List.map (fun (lbl, sf) ->
       (lbl, add_post_relation prog proc sf rel_name rel_type rel_vars)) el)
@@ -60,6 +61,34 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars =
       (match cont with
       | None -> sf
       | Some cont ->
+        (* To handle future disjunctive eb.formula_struc_base *)
+        (* let base = eb.formula_struc_base in                                                                           *)
+        (* let base_all_vars = CF.all_vars eb.formula_struc_base in                                                      *)
+        (* let base_fv = CF.fv eb.formula_struc_base in                                                                  *)
+        (* let impl_rel_vars, other_rel_vars =                                                                           *)
+        (*   List.partition (fun v -> mem v base_all_vars) rel_vars                                                      *)
+        (* in                                                                                                            *)
+        (* let free_impl_rel_vars, bnd_impl_rel_vars =                                                                   *)
+        (*   List.partition (fun v -> mem v base_fv) impl_rel_vars                                                       *)
+        (* in                                                                                                            *)
+        (* let fresh_bnd_impl_rel_vars = CP.fresh_spec_vars bnd_impl_rel_vars in                                         *)
+        (* (* bnd_impl_rel_vars become free, then need to be renamed *)                                                  *)
+        (* let n_base = CF.remove_quantifiers impl_rel_vars base in                                                      *)
+        (* let n_base = CF.subst_avoid_capture bnd_impl_rel_vars fresh_bnd_impl_rel_vars n_base in                       *)
+        (* let n_impl_rel_vars = free_impl_rel_vars @ fresh_bnd_impl_rel_vars in                                         *)
+        (* let subst_impl_vars = CP.subst_var_list_avoid_capture bnd_impl_rel_vars fresh_bnd_impl_rel_vars in            *)
+        (* let n_rel_vars = subst_impl_vars rel_vars in                                                                  *)
+        (* let n_cont = add_post_relation prog proc cont rel_name rel_type n_rel_vars in                                 *)
+        (* let n_eb = { eb with CF.formula_struc_continuation = Some n_cont } in                                         *)
+        (* try                                                                                                           *)
+        (*   (* Below for testing whether post relation has been added to EAssume or not *)                              *)
+        (*   let rel_def = look_up_rel_def_raw (prog.prog_rel_decls # get_stk) rel_name in                               *)
+        (*   CF.EBase { n_eb with                                                                                        *)
+        (*         CF.formula_struc_base = n_base;                                                                       *)
+        (*         CF.formula_struc_implicit_inst = remove_dups (n_eb.CF.formula_struc_implicit_inst @ n_impl_rel_vars); *)
+        (*         CF.formula_struc_exists = diff eb.CF.formula_struc_exists impl_rel_vars; }                            *)
+        (* with _ -> CF.EBase n_eb                                                                                       *)
+
         let n_cont = add_post_relation prog proc cont rel_name rel_type rel_vars in
         let n_eb = { eb with CF.formula_struc_continuation = Some n_cont } in
         try
@@ -72,7 +101,8 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars =
               CF.formula_struc_base = n_base;
               CF.formula_struc_implicit_inst = remove_dups (n_eb.CF.formula_struc_implicit_inst @ impl_rel_vars);
               CF.formula_struc_exists = diff eb.CF.formula_struc_exists impl_rel_vars; }
-        with _ -> CF.EBase n_eb)
+        with _ -> CF.EBase n_eb
+      )
   | CF.EAssume ea ->
     (* let rel_vars = (List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name] in *)
     let rel_formula = CP.mkTrue no_pos in

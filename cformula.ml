@@ -4243,7 +4243,8 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula =
       formula_exists_flow = fl;
       formula_exists_and = a;
       formula_exists_pos = pos }) ->
-    let new_qvars = (List.filter (fun x -> not (List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in
+    (* let new_qvars = (List.filter (fun x -> not (List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in *)
+    let new_qvars = Gen.BList.difference_eq CP.eq_spec_var qvs qvars in
     if (List.length new_qvars == 0) then mkBase h p vp t fl a pos
     else mkExists new_qvars h p vp t fl a pos
   | _ -> failwith ("remove_quantifiers: invalid argument")
