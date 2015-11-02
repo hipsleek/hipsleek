@@ -7569,7 +7569,7 @@ and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
              | _ -> report_error (* (IF.pos_of_formula f0) *) pos ("linearize_formula : match_exp : Expecting Var in Bptriple "^(str(* Iprinter.string_of_formula f0 *))))
           in
           List.map apply_one [ec;et;ea]
-        | _ ->  report_error pos (* (IF.pos_of_formula f0) *) ("malfunction with float out exp: "^str) in
+        | _ ->  x_fail (* (IF.pos_of_formula f0) *) ("malfunction with float out exp: "^str) in
       (* (Iprinter.string_of_formula f0))in *)
       let rest_hvars = aux rest in
       let hvars = e_hvars @ rest_hvars in

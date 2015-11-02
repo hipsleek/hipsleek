@@ -1663,7 +1663,7 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                                Hashtbl.find tbl_aux_proc pname
                              with Not_found -> (
                                let proc_str = typ1_name ^ " " ^ pname ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " n)\n"
-                                              ^ "requires x::WFSeg<p,m> & n < m \n"
+                                              ^ "requires x::WFSeg<p,m> & n < m & n >= 0\n"
                                               ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n"
                                  in
                                let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in

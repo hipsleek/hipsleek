@@ -17,6 +17,7 @@ let mem = Gen.BList.mem_eq CP.eq_spec_var
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var
 let intersect = Gen.BList.intersect_eq CP.eq_spec_var
+let overlap = Gen.BList.overlap_eq CP.eq_spec_var
 
 let eq_id s1 s2 = String.compare s1 s2 == 0
 
