@@ -3640,7 +3640,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           let sel_hps = CF.get_hp_rel_name_struc (proc0.Cast.proc_stk_of_static_specs # top) (* proc0.Cast.proc_static_specs *) in
           let () =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
           let () = 
-            (* if sel_hps = [] then () else *)
+            if sel_hps = [] then () else
             begin
               print_endline_quiet "";
               print_endline_quiet "\n\n*******************************";
