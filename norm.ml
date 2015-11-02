@@ -2046,7 +2046,9 @@ let convert_vdef_to_linear prog (vdef: C.view_decl): C.view_decl =
 let convert_tail_vdefs_to_linear prog =
   let vdecls = prog.C.prog_view_decls in
   let vdecls = List.map (convert_vdef_to_linear prog) vdecls in
-  { prog with C.prog_view_decls = vdecls }
+  (* { prog with C.prog_view_decls = vdecls } *)
+  let () = prog.C.prog_view_decls <- vdecls in
+  prog
 
 (************* end CONVERT TAIL-REC to LINEAR vdef ***************)
 

@@ -497,10 +497,15 @@ let set_inf_obj_for_tnt_prog prog =
   let inc_inf_term_mn = List.map (fun proc -> proc.proc_name) inc_inf_term_procs in
   let prog = { prog with
     new_proc_decls = proc_decls_map (fun proc ->
-        if List.mem proc.proc_name inc_inf_term_mn 
+        if List.mem proc.proc_name inc_inf_term_mn
         then set_inf_obj_proc INF_TERM proc
         else proc) prog.new_proc_decls; }
   in
+  (* let n_tbl = proc_decls_map (fun proc ->        *)
+  (*     if List.mem proc.proc_name inc_inf_term_mn *)
+  (*     then set_inf_obj_proc INF_TERM proc        *)
+  (*     else proc) prog.new_proc_decls             *)
+  (* in                                             *)
   if not !Globals.tnt_add_post then prog
   else
     (* Step 2: Incrementally adding @post into dependent procs of @term procs *)
@@ -525,9 +530,13 @@ let set_inf_obj_for_tnt_prog prog =
         collect_should_infer_post_procs_for_output prog inf_post_procs 
       else inf_post_procs
     in
-    
     { prog with
       new_proc_decls = proc_decls_map (fun proc ->
-          if List.mem proc.proc_name inc_inf_post_procs 
+          if List.mem proc.proc_name inc_inf_post_procs
           then set_inf_obj_proc INF_POST proc
           else proc) prog.new_proc_decls; }
+    (* let n_tbl = proc_decls_map (fun proc ->         *)
+    (*   if List.mem proc.proc_name inc_inf_post_procs *)
+    (*   then set_inf_obj_proc INF_POST proc           *)
+    (*   else proc) prog.new_proc_decls                *)
+    (* in ()                                           *)

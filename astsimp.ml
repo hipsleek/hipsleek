@@ -1727,7 +1727,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
           (* let () = print_endline (exlist # string_of) in *)
           (* let () = exlist # sort in *)
           (* let () = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in *)
-          (c,prog))))
+          (c, prog))))
     end)
   else failwith "Error detected at trans_prog"
 

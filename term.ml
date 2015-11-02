@@ -1274,7 +1274,8 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                 then subst_phase_num_proc rp subst proc
                 else proc
               ) prog.Cast.new_proc_decls in  
-            { prog with Cast.new_proc_decls = n_tbl }
+            (* { prog with Cast.new_proc_decls = n_tbl } *)
+            prog
           end
         else prog
       with Not_found -> prog
