@@ -3400,7 +3400,10 @@ and subst_x sst (f : formula) =
 and subst_all sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Debug.no_2 "subst_all" pr1 pr2 pr2 subst_all_x sst f 
+  let loc = VarGen.last_posn # get in
+  let () = y_winfo_pp (loc ^ ": You are using an unsafe substitution; should use subst_avoid_capture instead.") in
+  Debug.no_2 "subst_all" pr1 pr2 pr2 
+    (fun _ _ -> subst_all_x sst f) sst f 
 
 and subst_all_x sst (f : formula) =
   let rec helper f = match f with
@@ -20110,7 +20113,7 @@ let get_view_unfold_g vd_name vl to_args f =
     let () = y_tinfo_hp (add_str "inside" pr_id) vd_name in
     (* let new_args = trans_args sst args in *)
     let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
-    (* let new_f = subst_all sst f in                                                 *)
+    (* let new_f = x_add subst_all sst f in *)
     let new_f = subst_avoid_capture (CP.self_sv::to_args) (vl.h_formula_view_node::args) f in
     let () = y_tinfo_hp pr_id (HipUtil.view_scc_obj # string_of) in
     let grh = HipUtil.view_scc_obj # unfold_in vv vd_name in
@@ -20288,7 +20291,7 @@ let complex_unfold vn (unfold_set1:(Globals.ident * (CP.spec_var list) * (formul
           let sat_fl = List.filter (fun unf_f ->
               (* let f = unf_f in *)
               let sst = List.combine (CP.self_sv::to_args) (vl.h_formula_view_node::args) in
-              let unf_f = subst_all sst unf_f in
+              let unf_f = x_add subst_all sst unf_f in
               (* let unf_pure_f = get_pure unf_f in *)
               let () = y_tinfo_hp (add_str "complex_unfold(unf_f)" !print_formula) unf_f in
               (* let conj = (CP.mkAnd pure_of_f unf_pure_f no_pos) in *)

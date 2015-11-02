@@ -728,7 +728,11 @@ let rec find_common_node_chain root (fs: CF.formula list) =
     else
       let root_node, sst_list = norm_node_list root_node_list in
       let root_node = { root_node with CF.h_formula_data_node = root } in
-      let norm_fs = List.map (fun (f, sst) -> CF.subst_all sst f) (List.combine residue_fs sst_list) in
+      let norm_fs = List.map (fun (f, sst) ->
+          let fr, t = List.split sst in
+          CF.subst_avoid_capture fr t f 
+          (* x_add CF.subst_all sst f *)
+        ) (List.combine residue_fs sst_list) in
       List.fold_left (fun (fs, node_chain) arg -> 
           let n_fs, arg_node_chain = find_common_node_chain arg fs in
           n_fs, (node_chain @ arg_node_chain)) 
