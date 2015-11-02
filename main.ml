@@ -328,16 +328,17 @@ let print_spec cprog =
   in
   print_endline (helper (Cast.list_of_procs cprog))
 
-let reverify_with_hp_rel old_cprog iprog =
-  (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
-  (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
-  let hp_defs, post_hps = Saout.collect_hp_defs old_cprog in
+(* Should use only a unique version of cprog *)
+let reverify_with_hp_rel cprog iprog =
+  (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels cprog) in *)
+  (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog cprog) in *)
+  let hp_defs, post_hps = Saout.collect_hp_defs cprog in
   let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) (hp_def) ->
       let (hp_kind, _,_,f) = Cformula.flatten_hp_rel_def hp_def in
       match hp_kind with
       |  Cpure.HPRelDefn (hp,r,args) -> begin
           try
-            let todo_unk = x_add Cast.look_up_view_def_raw x_loc old_cprog.Cast.prog_view_decls
+            let todo_unk = x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls
                 (Cpure.name_of_spec_var hp)
             in
             (r_hp_defs, r_unk_hps)
@@ -367,8 +368,8 @@ let reverify_with_hp_rel old_cprog iprog =
     (* ) *) need_trans_hprels0
   in
   let proc_name = "" in
-  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps []
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name need_trans_hprels1 in
+  let () = Saout.trans_specs_hprel_2_cview iprog cprog proc_name unk_hps []
       [] [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 

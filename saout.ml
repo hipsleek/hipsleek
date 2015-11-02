@@ -1026,19 +1026,21 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       res
   in
   (* let () = print_endline ("unk_hps: "^ (!CP.print_svl unk_hps)) in *)
-  let old_procs = cprog.C.new_proc_decls in
-  let proc_decls = Hashtbl.fold (fun i p acc ->
-      let np = if String.compare p.C.proc_name proc_name == 0 then
-          plug_views_proc p
-        else p
-      in
-      acc@[(i,np)]
-    ) old_procs [] in
-  let () = Hashtbl.reset old_procs in
-  let () = List.iter (fun (i,p) -> Hashtbl.add old_procs i p) proc_decls in
-  {cprog with
-   C.new_proc_decls = old_procs;
-  }
+  (* let old_procs = cprog.C.new_proc_decls in                                 *)
+  (* let proc_decls = Hashtbl.fold (fun i p acc ->                             *)
+  (*     let np = if String.compare p.C.proc_name proc_name == 0 then          *)
+  (*         plug_views_proc p                                                 *)
+  (*       else p                                                              *)
+  (*     in                                                                    *)
+  (*     acc@[(i,np)]                                                          *)
+  (*   ) old_procs [] in                                                       *)
+  (* let () = Hashtbl.reset old_procs in                                       *)
+  (* let () = List.iter (fun (i,p) -> Hashtbl.add old_procs i p) proc_decls in *)
+  (* { cprog with C.new_proc_decls = old_procs; }                              *)
+  let n_tbl = Cast.proc_decls_map (fun p ->
+    if eq_str p.C.proc_name proc_name then plug_views_proc p else p) cprog.Cast.new_proc_decls 
+  in ()
+
 (*******************************)
 (********END REVERIFY**********)
 (*******************************)
@@ -1134,8 +1136,8 @@ let plug_shape_into_specs_x cprog iprog dang_hps proc_names pre_hps post_hps hp_
     (*   ) ([],[],[]) hp_defs *) in
   let unk_hps = CP.remove_dups_svl (dang_hps@unk_hps) in
   let () = Debug.ninfo_hprint (add_str "    unk_hps" (!CP.print_svl))  unk_hps no_pos in
-  let plug_proc need_trans_hprels1 chprels_decl cprog proc_name=
-    let cprog = trans_specs_hprel_2_cview iprog cprog proc_name unk_hps simpl_hps
+  let plug_proc need_trans_hprels1 chprels_decl cprog proc_name =
+    let () = trans_specs_hprel_2_cview iprog cprog proc_name unk_hps simpl_hps
         pre_hps post_hps need_trans_hprels1 chprels_decl in
     cprog
   in
