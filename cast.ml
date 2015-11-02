@@ -232,7 +232,7 @@ and proc_decl = {
   proc_flags : (ident*ident*(flags option)) list;
   mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
   (* WN : warning below is being supecedd by proc_stk_of_static_specs *)
-  proc_static_specs : Cformula.struc_formula;
+  (* proc_static_specs : Cformula.struc_formula; *) (* COMPLETELY REMOVED *)
   (* proc_static_specs_with_pre : Cformula.struc_formula; *)
   (* this puts invariant of pre into the post-condition *)
   proc_dynamic_specs : Cformula.struc_formula;
@@ -1849,8 +1849,10 @@ let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
 let update_sspec_proc (procs : (ident, proc_decl) Hashtbl.t) pname spec = 
   try
     let proc = Hashtbl.find procs pname in
-    let new_proc = {proc with proc_static_specs = spec} in
-    let () = Hashtbl.replace procs pname new_proc in
+    (* let new_proc = {proc with proc_static_specs = spec} in *)
+    (* let () = Hashtbl.replace procs pname new_proc in       *)
+    let () = proc.proc_stk_of_static_specs # push_pr x_loc spec in
+    let () = Hashtbl.replace procs pname proc in
     procs
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
@@ -2811,7 +2813,7 @@ let callgraph_of_prog prog : IG.t =
 
 let count_term_scc (procs: proc_decl list) : int =
   List.fold_left (fun acc p -> 
-      acc + (F.count_term_struc p.proc_static_specs)) 0 procs
+      acc + (F.count_term_struc (p.proc_stk_of_static_specs # top))) 0 procs
 
 (* Mutual groups with logical phase variables added *)
 (* those with logical variables explicitly added will
@@ -2841,7 +2843,7 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
         let mn = List.hd procs in
         (* TNT Inference: Enable call_num but Disable phase_num *)
         let inf_tnt = (Globals.infer_const_obj # is_term) || (List.exists (fun proc -> 
-            F.is_inf_tnt_struc_formula proc.proc_static_specs) procs) in 
+            F.is_inf_tnt_struc_formula (proc.proc_stk_of_static_specs # top)) procs) in 
         let pv = add_term_nums_proc_scc procs cp.new_proc_decls log_vars
             ((not !dis_call_num) || inf_tnt) ((not !dis_phase_num) && (not inf_tnt) && n>1 && mn.proc_is_recursive) 
         in (match pv with 
@@ -2891,10 +2893,12 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
       if add_call then Some proc.proc_call_order
       else None
     in
-    let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in
+    (* let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in *)
+    let n_ss, pvl1 = F.add_term_nums_struc (proc.proc_stk_of_static_specs # top) log_vars call_num add_phase in
     let n_ds, pvl2 = F.add_term_nums_struc proc.proc_dynamic_specs log_vars call_num add_phase in
+    let () = proc.proc_stk_of_static_specs # push_pr x_loc n_ss in
     ({ proc with
-       proc_static_specs = n_ss; 
+       (* proc_static_specs = n_ss; *)
        proc_dynamic_specs = n_ds; 
      }, pvl1 @ pvl2)
 
@@ -3036,7 +3040,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
       (*update hp_decl of precondition*)
       let () = if diff_args_i = [] then () else
           let () = x_tinfo_hp (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
-          let hpargs = Cformula.get_hp_rel_pre_struc_formula proc.proc_static_specs in
+          let hpargs = Cformula.get_hp_rel_pre_struc_formula (proc.proc_stk_of_static_specs # top) in
           let todo_unk = List.map (fun (hp,args) ->
               let s_args = List.map P.name_of_spec_var args in
               let inter = Gen.BList.intersect_eq string_cmp s_args diff_args_i in

@@ -314,7 +314,7 @@ let print_spec cprog =
     | p :: pl -> (match p.Cast.proc_body with
         | None -> ""
         | Some _ ->
-          let () = print_endline_quiet (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+          let () = print_endline_quiet (Cprinter.string_of_struc_formula (p.Cast.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *)) in
           (* let sf = p.Cast.proc_static_specs in *)
           (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Unprimed)) p.Cast.proc_args in *)
           (* let new_sf = List.fold_left (fun sf fv ->  *)
@@ -322,7 +322,8 @@ let print_spec cprog =
           (*     ) sf fvs in *)
           ("Procedure " ^ p.Cast.proc_name ^ "\n") ^
           (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (x_add Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Unprimed)) *\) false 1 no_pos) *)
-          Cprinter.string_of_struc_formula_for_spec (replace_struc_formula p.Cast.proc_static_specs cprog)
+          Cprinter.string_of_struc_formula_for_spec 
+              (replace_struc_formula (p.Cast.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *) cprog)
       ) ^ (helper pl)
     | [] -> ""
   in

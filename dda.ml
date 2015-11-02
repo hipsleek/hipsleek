@@ -59,11 +59,12 @@ let has_named_params prog mn =
   with _ -> false
 
 let set_inf_obj_proc itype proc = 
-  let n_static_specs = Cformula.set_inf_obj_struc itype proc.proc_static_specs in
+  (* let n_static_specs = Cformula.set_inf_obj_struc itype proc.proc_static_specs in *)
+  let n_static_specs = Cformula.set_inf_obj_struc itype (proc.proc_stk_of_static_specs # top) in
   let n_dynamic_specs = Cformula.set_inf_obj_struc itype proc.proc_dynamic_specs in
   let () = proc.proc_stk_of_static_specs # push_pr x_loc n_static_specs in
   { proc with 
-    proc_static_specs = n_static_specs;
+    (* proc_static_specs = n_static_specs; *)
     proc_dynamic_specs = n_dynamic_specs; }
 
 let eq_str s1 s2 = String.compare s1 s2 == 0
@@ -489,7 +490,7 @@ let rec collect_should_infer_post_procs_for_output prog inf_post_procs =
 let set_inf_obj_for_tnt_prog prog =
   (* Step 1: Incrementally adding @term into callees of @term or @term_wo_post callers *)
   let inf_term_procs = Hashtbl.fold (fun _ proc acc ->
-      let spec = proc.proc_static_specs in
+      let spec = proc.proc_stk_of_static_specs # top (* proc.proc_static_specs *) in
       if not (Cformula.is_inf_term_struc spec) then acc
       else acc @ [proc]) prog.new_proc_decls [] 
   in

@@ -1751,12 +1751,12 @@ and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
     ) cprog.C.old_proc_decls;}  
 *)
 and add_pre_to_cprog_one cprog c =
-  let ns = x_add add_pre cprog c.C.proc_static_specs in
+  let ns = x_add add_pre cprog (c.C.proc_stk_of_static_specs # top) (* c.C.proc_static_specs *) in
   (*to handle @C. should handle copy on prim types?*)
   let ns_caller = if c.C.proc_by_copy_params = [] then ns else
       x_add trans_copy_spec_4caller c.C.proc_by_copy_params ns
   in
-  let () = c.C.proc_stk_of_static_specs # push_pr "astsimpl:1702" ns_caller in
+  let () = c.C.proc_stk_of_static_specs # push_pr x_loc ns_caller in
   c
 
 and add_pre_to_cprog cprog = 
@@ -3762,7 +3762,7 @@ and trans_loop_proc (prog : I.prog_decl) (proc : I.proc_decl) (addr_vars:ident l
   let pr  x = add_str (x.I.proc_name^" Spec") Iprinter.string_of_struc_formula x.I.proc_static_specs in
   let iproc = Iprinter.string_of_proc_decl in
   let cproc = Cprinter.string_of_proc_decl in
-  let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
+  let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula (x.C.proc_stk_of_static_specs # top) (* x.C.proc_static_specs *) in
   Debug.no_2 "trans_loop_proc" 
     iproc (pr_list pr_id) pr2 
     (fun _ _ -> trans_loop_proc_x prog proc addr_vars) proc addr_vars
@@ -3899,12 +3899,12 @@ and add_perm_proc  p =
   else
     let p_ref = p.C.proc_by_name_params in
     let p_val = p.C.proc_by_value_params @ p.C.proc_by_copy_params in
-    let ss = p.C.proc_static_specs in
+    let ss = p.C.proc_stk_of_static_specs # top (* p.C.proc_static_specs *) in
     let () = Debug.tinfo_hprint (add_str "spec" Cprinter.string_of_struc_formula) ss no_pos in
     let () = Debug.tinfo_hprint (add_str "ref" Cprinter.string_of_spec_var_list) p.C.proc_by_name_params no_pos in
     let () = Debug.tinfo_hprint (add_str "value" Cprinter.string_of_spec_var_list) p.C.proc_by_value_params no_pos in
     let ns = add_perm_to_spec p_ref p_val ss in
-    { p with C.proc_static_specs = ns}
+    p (* { p with C.proc_static_specs = ns} *)
 
 and rgx_prelude = Str.regexp ".*prelude"
 
@@ -4236,7 +4236,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
            else proc.Iast.proc_args_wi
          in
-         let cproc ={
+         let cproc = {
            C.proc_name = proc.I.proc_mingled_name;
            C.proc_source = proc.I.proc_source;
            C.proc_flags = proc.I.proc_flags;
@@ -4246,7 +4246,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_imm_args = List.map (fun (id,_) -> (id,false)) args_wi;
            C.proc_return = x_add trans_type prog proc.I.proc_return proc.I.proc_loc;
            C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
-           C.proc_static_specs = (* if proc.I.proc_is_main then CF.elim_exists_struc_preserve_pre_evars [] final_static_specs_list else *) final_static_specs_list;
+           (* C.proc_static_specs = (* if proc.I.proc_is_main then CF.elim_exists_struc_preserve_pre_evars [] final_static_specs_list else *) final_static_specs_list; *)
            C.proc_dynamic_specs = final_dynamic_specs_list;
            (* C.proc_static_specs_with_pre =  []; *)
            C.proc_stk_of_static_specs = new Gen.stack_pr "static-specs" Cprinter.string_of_struc_formula (==);
@@ -4269,7 +4269,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_file = proc.I.proc_file;
            C.proc_loc = proc.I.proc_loc;
            (* C.proc_while_with_return = None; *)
-           C.proc_test_comps = x_add trans_test_comps prog proc.I.proc_test_comps} in
+           C.proc_test_comps = x_add trans_test_comps prog proc.I.proc_test_comps } in
+         let () = cproc.C.proc_stk_of_static_specs # push_pr (x_loc ^ "init of proc_stk_of_static_specs") final_static_specs_list in
          (E.pop_scope (); cproc)))
   in
   wrap_proving_kind (PK_Trans_Proc (*^proc.I.proc_name*)) trans_proc_x_op ()
@@ -10338,8 +10339,10 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
   let prog_barriers_pruned ={prog_views_pruned with C.prog_barrier_decls = bars} in
   let proc_spec f = 
     let simp_b = not ((String.compare f.C.proc_file "primitives")==0 || (f.C.proc_file="")) in
-    {f with 
-     C.proc_static_specs= x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_static_specs;
+    let sspec = x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b (f.C.proc_stk_of_static_specs # top) in
+    let () = f.C.proc_stk_of_static_specs # push_pr x_loc sspec in
+    { f with 
+     (* C.proc_static_specs= x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_static_specs; *)
      C.proc_dynamic_specs= x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_dynamic_specs;
     } in
   let procs = C.proc_decls_map proc_spec prog_barriers_pruned.C.new_proc_decls in 

@@ -653,7 +653,7 @@ let trans_spec_proc trans_f cprog proc =
   let () = y_tinfo_hp (add_str "nspec" pr_spec) nspec in
   let () = proc.C.proc_stk_of_static_specs # push_pr x_loc nspec in
   let nproc = { proc with
-    C.proc_static_specs = nspec;
+    (* C.proc_static_specs = nspec; *)
     C.proc_dynamic_specs = trans_f proc.C.proc_dynamic_specs; }
   in
   nproc

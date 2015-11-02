@@ -2415,7 +2415,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*=========================*)
           let proc = look_up_proc_def pos prog.new_proc_decls mn in
           let () = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
-          let () = Debug.ninfo_zprint (lazy (("   spec: " ^(Cprinter.string_of_struc_formula proc.Cast.proc_static_specs)))) no_pos in
+          let () = Debug.ninfo_zprint (lazy (("   stk spec: " ^(Cprinter.string_of_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *))))) no_pos in
           let farg_types, farg_names = List.split proc.proc_args in
           let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
@@ -3299,7 +3299,9 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
     | p::ps ->
       let nres =
         try
-          let () =  DD.ninfo_hprint (add_str "proc_mutual_scc: proc_lst" Cprinter.string_of_struc_formula) (p.proc_static_specs) no_pos in
+          let () =  DD.ninfo_hprint 
+            (add_str "proc_mutual_scc: proc_lst" Cprinter.string_of_struc_formula) 
+            (p.proc_stk_of_static_specs # top) (* (p.proc_static_specs) *) no_pos in
           let cur_r = (fn prog p) in
           let () = if not cur_r then
               let () = if not !Globals.web_compile_flag then Debug.ninfo_hprint (add_str "proc.proc_name"  pr_id) (p.proc_name) no_pos in
@@ -3592,7 +3594,9 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
 and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   Debug.vv_debug ("check_proc:"^proc0.proc_name);
   let unmin_name = unmingle_name proc0.proc_name in
-  let () =  Debug.ninfo_hprint (add_str "in check_proc proc0" (Cprinter.string_of_struc_formula_for_spec_inst prog)) proc0.Cast.proc_static_specs  no_pos in
+  let () =  Debug.ninfo_hprint (add_str "in check_proc proc0" 
+    (Cprinter.string_of_struc_formula_for_spec_inst prog)) 
+    (proc0.Cast.proc_stk_of_static_specs # top) (* proc0.Cast.proc_static_specs *) no_pos in
   (* get latest procedure from table *)
   (*Loc: overlap proc is dangerous: mutable info of proc0 is overlapped and lost after this function return.
     (i.e: all inferred info updated into proc is lost.)
@@ -3601,7 +3605,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
   let proc =
     find_proc prog proc0.proc_name
   in
-  let () =  Debug.ninfo_hprint (add_str "in check_proc proc" (Cprinter.string_of_struc_formula_for_spec_inst prog)) proc.Cast.proc_static_specs  no_pos in
+  let () =  Debug.ninfo_hprint (add_str "in check_proc proc" (Cprinter.string_of_struc_formula_for_spec_inst prog)) 
+      (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *) no_pos in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
                    && not (List.mem unmin_name !Inliner.inlined_procs)
   in
@@ -3630,12 +3635,12 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (* print_endline_quiet ("Static spec (stk of proc): " ^ (Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))); flush stdout;   *)
               (* print_endline_quiet ("Static spec (stk of proc0): " ^ (Cprinter.string_of_struc_formula (proc0.proc_stk_of_static_specs # top))); flush stdout; *)
               x_dinfo_zp (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
-              x_dinfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
+              x_dinfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.proc_static_specs *))) proc.proc_loc;
             end;
-          let sel_hps = CF.get_hp_rel_name_struc proc0.Cast.proc_static_specs in
+          let sel_hps = CF.get_hp_rel_name_struc (proc0.Cast.proc_stk_of_static_specs # top) (* proc0.Cast.proc_static_specs *) in
           let () =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
           let () = 
-            if sel_hps = [] then () else
+            (* if sel_hps = [] then () else *)
             begin
               print_endline_quiet "";
               print_endline_quiet "\n\n*******************************";
@@ -4030,7 +4035,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
                       (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
                       (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
-                      Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                      (* Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos; *)
                       let () = if prepost_ctr # get > 0 then
                           Debug.info_ihprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
                       let () = prepost_ctr # reset in
@@ -4040,7 +4045,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                       Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel)) hp_lst_assume no_pos;
                       (* Debug.ninfo_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hprel)) ls_inferred_hps no_pos; *)
                       x_tinfo_hp (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
-                      x_tinfo_hp (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
+                      (* x_tinfo_hp (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos; *)
                       stk_evars # reset;
                       let () = if not (!do_infer_inc) then ()
                         else Infer.print_spec (" " ^ (Infer.get_proc_name proc.proc_name) ^ "\n" ^
@@ -4522,7 +4527,7 @@ let rec check_prog iprog (prog : prog_decl) =
           mutual_grp := List.filter (fun x -> x.proc_name != proc1.proc_name) !mutual_grp;
           Debug.ninfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
           Debug.ninfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
-          let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) proc1.Cast.proc_static_specs  no_pos in
+          (* let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula )) proc1.Cast.proc_static_specs  no_pos in *)
           let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula_for_spec_inst prog)) proc1.Cast.proc_stk_of_static_specs # top  no_pos in
           let r = check_proc_wrapper iprog prog proc1 cout_option !mutual_grp in
           (* add rel_assumption of r to relass_grp *)
@@ -4667,7 +4672,8 @@ let rec check_prog iprog (prog : prog_decl) =
         with _ -> r
       ) [] scc_ids in
     let () = Term.term_res_stk # reset in
-    let () = x_ninfo_hp (add_str "updated_scc" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))) updated_scc no_pos in
+    let () = x_ninfo_hp (add_str "updated_scc" (pr_list (fun p -> 
+        (Cprinter.string_of_struc_formula (p.Cast.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *))))) updated_scc no_pos in
     let n_verified_sccs = verified_sccs@[updated_scc] in
     (prog,n_verified_sccs)
   in
@@ -4680,7 +4686,8 @@ let rec check_prog iprog (prog : prog_decl) =
     | [] -> (prog, verified_sccs)
     | [proc] -> begin
         match proc.proc_body with
-        | Some body -> let sel_hps = CF.get_hp_rel_name_struc proc.Cast.proc_static_specs in
+        | Some body -> 
+          let sel_hps = CF.get_hp_rel_name_struc (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *) in
           if sel_hps = [] then verify_scc_helper prog verified_sccs scc
           else
             (*get case inference*)
@@ -4688,7 +4695,7 @@ let rec check_prog iprog (prog : prog_decl) =
             if List.length pcs < 2 then
               verify_scc_helper prog verified_sccs scc
             else begin
-              let so_spec = proc.Cast.proc_static_specs in
+              let so_spec = proc.Cast.proc_stk_of_static_specs # top (* proc.Cast.proc_static_specs *) in
               let so_spec1 = (* CF.elim_useless_term_struc *) so_spec in
               let () =  Debug.ninfo_hprint (add_str "so_spec1" (Cprinter.string_of_struc_formula)) so_spec1 no_pos in
               let infer_specs = List.map (fun p ->
@@ -4696,7 +4703,8 @@ let rec check_prog iprog (prog : prog_decl) =
                   let so_spec2 = CF.subst_struc (List.combine sel_hps fr_sel_hps) so_spec1 in
                   let pc_spec = CF.mkAnd_pure_pre_struc_formula p so_spec2 in
                   let () =  Debug.ninfo_hprint (add_str "pc_spec" (Cprinter.string_of_struc_formula)) pc_spec no_pos in
-                  let n_proc = {proc with Cast.proc_static_specs = pc_spec} in
+                  (* let n_proc = {proc with Cast.proc_static_specs = pc_spec} in *)
+                  let n_proc = proc in
                   let n_procs = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name pc_spec in
                   let n_prog = {prog with Cast.new_proc_decls = n_procs} in
                   let todo_unk = verify_scc_helper n_prog verified_sccs [n_proc] in

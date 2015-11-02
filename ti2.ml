@@ -801,9 +801,9 @@ let update_spec_proc prog proc =
     let ispec = Hashtbl.find proc_case_specs mn in
     let nspec = tnt_spec_of_proc prog proc ispec in
     let () = proc.Cast.proc_stk_of_static_specs # push_pr x_loc nspec in 
-    let nproc = { proc with Cast.proc_static_specs = nspec; }  in
+    (* let proc = { proc with Cast.proc_static_specs = nspec; }  in *)
     (* let () = Cprinter.string_of_proc_decl_no_body nproc in *)
-    nproc
+    proc
   with _ -> proc
 
 let update_specs_prog prog = 

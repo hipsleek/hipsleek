@@ -385,7 +385,7 @@ let extract_inf_props prog scc=
 let proc_extract_inf_props prog proc_name=
   try
     let proc = Cast.look_up_proc_def_raw prog.Cast.new_proc_decls proc_name in
-    extract_inf_props prog [proc.Cast.proc_static_specs]
+    extract_inf_props prog [proc.Cast.proc_stk_of_static_specs # top] (* [proc.Cast.proc_static_specs] *)
   with _ -> []
 
 
@@ -425,7 +425,8 @@ let extend_inf iprog prog map_views proc=
   let () = proc.Cast.proc_stk_of_static_specs # push new_t_spec in
   let n_static_spec = new_t_spec (* Cfutil.subst_views_struc map_views (\* struc_formula_trans_heap_node [] (formula_map (hview_subst_trans)) *\) proc.Cast.proc_static_specs *) in
   let () =  Debug.ninfo_hprint (add_str "derived static spec" (Cprinter.string_of_struc_formula)) n_static_spec no_pos in
-  let proc0 = {proc with Cast.proc_static_specs = n_static_spec} in
+  (* let proc0 = {proc with Cast.proc_static_specs = n_static_spec} in *)
+  let proc0 = proc in
   let n_dyn_spec = Cfutil.subst_views_struc map_views (* struc_formula_trans_heap_node [] (formula_map (hview_subst_trans)) *) proc0.Cast.proc_dynamic_specs in
   let () =  Debug.ninfo_hprint (add_str "derived dynamic spec" (Cprinter.string_of_struc_formula)) n_dyn_spec no_pos in
   let proc1 = {proc0 with Cast.proc_dynamic_specs = n_dyn_spec} in
@@ -451,7 +452,7 @@ let extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc=
 let extend_pure_props_view iprog cprog rev_formula_fnc trans_view_fnc proc=
   let pr1 = Cprinter.string_of_struc_formula in
   let pr2 p= "top spec:" ^ (pr1 p.Cast.proc_stk_of_static_specs # top) ^ "\n" ^
-    "static spec:"  ^ (pr1 p.Cast.proc_static_specs) ^ "\n" ^
+    (* "static spec:"  ^ (pr1 p.Cast.proc_static_specs) ^ "\n" ^ *)
      "dynamic spec:"  ^ (pr1 p.Cast.proc_dynamic_specs) ^ "\n"
   in
   Debug.no_1 "extend_pure_props_view" pr2 pr2
