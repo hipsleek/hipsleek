@@ -63,6 +63,7 @@ let rec add_post_relation prog proc sf rel_name rel_type rel_vars =
         let n_cont = add_post_relation prog proc cont rel_name rel_type rel_vars in
         let n_eb = { eb with CF.formula_struc_continuation = Some n_cont } in
         try
+          (* Below for testing whether post relation has been added to EAssume or not *)
           let rel_def = look_up_rel_def_raw (prog.prog_rel_decls # get_stk) rel_name in
           let base_all_vars = CF.all_vars eb.formula_struc_base in
           let impl_rel_vars = intersect base_all_vars rel_vars in

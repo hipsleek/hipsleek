@@ -4086,9 +4086,9 @@ and split_components_x ?(rename_flag=false) (f: formula) =
   snd (split_components_exist ~rename_flag:rename_flag f)
 
 and split_components ?(rename_flag=false) (f: formula) =
-  (* let pr1 = !print_formula in                                                               *)
-  (* let pr2 = (fun (h, p, _, _, _, _) -> pr_pair !print_h_formula !MCP.print_mix_f (h, p)) in *)
-  (* Debug.no_1 "split_components" pr1 pr2                                                     *)
+  let pr1 = !print_formula in
+  let pr2 = (fun (h, p, _, _, _, _) -> pr_pair !print_h_formula !MCP.print_mix_f (h, p)) in
+  Debug.no_1 "split_components" pr1 pr2
     (fun _ -> split_components_x ~rename_flag:rename_flag f) f
 
 and split_components_all_exist ?(rename_flag=false) (f : formula) =

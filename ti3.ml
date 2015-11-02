@@ -280,7 +280,8 @@ let collect_prim_args_base_formula ptr_vars h p =
       else Some (h_f, [])
     | _ -> None
   in
-  snd (CF.trans_h_formula h () f_h_f voidf2 (List.concat))
+  let prim_v = snd (CF.trans_h_formula h () f_h_f voidf2 (List.concat)) in
+  remove_dups prim_v
 
 let rec collect_prim_args_formula ptr_vars (f: CF.formula) =
   match f with
@@ -291,8 +292,15 @@ let rec collect_prim_args_formula ptr_vars (f: CF.formula) =
     let prim_v = collect_prim_args_base_formula ptr_vars h p in
     (* prim_v will be moved to formula_struc_implicit_inst  *)
     (* to visible in both pre- and post-condition           *)
-    CF.Exists { fe with CF.formula_exists_qvars = diff fe.CF.formula_exists_qvars prim_v },
-    prim_v
+    (* CF.Exists { fe with CF.formula_exists_qvars = diff fe.CF.formula_exists_qvars prim_v }, *)
+    (* prim_v                                                                                  *)
+    let bnd_prim_v, free_prim_v = List.partition (fun v -> mem v fe.CF.formula_exists_qvars) prim_v in
+    if is_empty bnd_prim_v then f, prim_v
+    else
+      let fresh_bnd_prim_v = CP.fresh_spec_vars bnd_prim_v in
+      let n_f = CF.Exists { fe with CF.formula_exists_qvars = diff fe.CF.formula_exists_qvars bnd_prim_v } in
+      let n_f = CF.subst_avoid_capture bnd_prim_v fresh_bnd_prim_v n_f in
+      n_f, fresh_bnd_prim_v @ free_prim_v
   | CF.Or ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 } as fo ) ->
     let n_f1, prim_v1 = collect_prim_args_formula ptr_vars f1 in
     let n_f2, prim_v2 = collect_prim_args_formula ptr_vars f2 in
@@ -331,6 +339,12 @@ let rec collect_prim_args_struc_formula ptr_vars f =
         CF.formula_struc_implicit_inst = remove_dups (eb.CF.formula_struc_implicit_inst @ prim_v_base);
         CF.formula_struc_exists = diff eb.CF.formula_struc_exists prim_v_base; }, 
     remove_dups (prim_v_base @ prim_v_cont)
+
+let collect_prim_args_struc_formula ptr_vars f =
+  let pr1 = !CF.print_struc_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "collect_prim_args_struc_formula" pr1 pr2 (pr_pair pr1 pr2)
+    (fun _ _ -> collect_prim_args_struc_formula ptr_vars f) f ptr_vars
 
 let add_term_relation_proc prog proc = 
   let is_primitive = not (proc.proc_is_main) in
