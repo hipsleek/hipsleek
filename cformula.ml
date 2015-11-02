@@ -4082,9 +4082,14 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
-and split_components ?(rename_flag=false) (f: formula) =
-  (* Debug.no_1 "split_components" !print_formula (fun _ -> "") *)
+and split_components_x ?(rename_flag=false) (f: formula) =
   snd (split_components_exist ~rename_flag:rename_flag f)
+
+and split_components ?(rename_flag=false) (f: formula) =
+  (* let pr1 = !print_formula in                                                               *)
+  (* let pr2 = (fun (h, p, _, _, _, _) -> pr_pair !print_h_formula !MCP.print_mix_f (h, p)) in *)
+  (* Debug.no_1 "split_components" pr1 pr2                                                     *)
+    (fun _ -> split_components_x ~rename_flag:rename_flag f) f
 
 and split_components_all_exist ?(rename_flag=false) (f : formula) =
   let rec helper f =

@@ -536,17 +536,19 @@ struct
         let pr = pr_list_brk_sep "" "" "\n" (pr_pair pr_id string_of_int) in
         if !dump_calls_all then
           begin
+            print_endline "\nCALL TRACE";
+            print_endline   "==========";
             stk # push (lastline^"\n");
             (summarized_stack stk) # dump_no_ln
           end;
         print_endline "\nDEBUGGED CALLS";
-        print_endline "==============";
+        print_endline   "==============";
         print_endline (string_of_int (List.length cnt));
         print_endline (pr cnt);
         if rcnt!=[] then
           begin
             print_endline "\nDEBUGGED SELF-REC CALLS";
-            print_endline "========================";
+            print_endline   "=======================";
             print_endline (pr rcnt)
           end
       method init =
@@ -644,7 +646,8 @@ struct
     ()
 
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
-    let pre_str = "(=="^(VarGen.last_posn # get_rm)^"==)" in
+    let call_site = VarGen.last_posn # get_rm in
+    let pre_str = "(=="^call_site^"==)" in
     (* if s=="" thenmatch s with  *)
     (*   | None -> "" *)
     (*   | Some s ->  *)
@@ -743,6 +746,7 @@ struct
     (* let ff z =  *)
     (*     let () = VarGen.last_posn # reset in *)
     (*     f z in *)
+    VarGen.last_posn # reset;
     push_no_call ();
     pop_aft_apply_with_exc_no s f last
 
@@ -899,7 +903,10 @@ struct
 
 
   let splitter s f_none f_gen f_norm =
-    let () = if !dump_calls then debug_calls # print_call s in
+    (* VarGen.last_posn # get --> The call site (with x_add) of s *)
+    let x_call_site = VarGen.last_posn # get in
+    let at = if x_call_site = "" then "" else " @" in
+    let () = if !dump_calls then debug_calls # print_call (s ^ at ^ x_call_site) in
     if !z_debug_flag then
       match (in_debug s) with
       | DO_Normal -> f_gen (f_norm false false)

@@ -1741,7 +1741,7 @@ let process_shape_derive_post (ids: regex_id_list) =
 
 let process_shape_derive_view (ids: regex_id_list) =
   let f others hps =
-    let (derived_views, new_hprels) = Syn.derive_view iprog !cprog others hps in
+    let (derived_views, new_hprels) = x_add Syn.derive_view iprog !cprog others hps in
     (* let () = update_sleek_hprel_assumes new_hprels in *)
     new_hprels
   in
@@ -1754,7 +1754,7 @@ let process_data_mark_rec (ids: regex_id_star_list) =
 
 let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
-    let new_hprels = Syn.derive_view_norm !cprog others hps in
+    let new_hprels = x_add Syn.derive_view_norm !cprog others hps in
     new_hprels
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
