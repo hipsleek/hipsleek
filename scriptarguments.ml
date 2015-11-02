@@ -288,8 +288,15 @@ let common_arguments = [
    "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-exc", Arg.Set VarGen.trace_exc,
    "Enable trace of exceptions invoked by methods");
+  ("--trace-log", Arg.Set Gen.debug_trace_log,
+   "Enable trace of method logs during debugging");
+  ("--trace-log-num", Arg.Int (fun i ->
+       Gen.debug_trace_log_num:=i;
+       Gen.debug_trace_log :=true;
+     ),
+   "Enable trace of a specific method call for debugging");
   ("--trace-loop", Arg.Set VarGen.trace_loop,
-   "Enable trace of method header duriong debugging");
+   "Enable trace of method header during debugging");
   ("--trace-loop-all", Arg.Unit (fun _ ->
        VarGen.trace_loop_all :=true;
        VarGen.trace_loop :=true;

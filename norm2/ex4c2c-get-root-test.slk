@@ -2,7 +2,8 @@ data cell {
   int val;
 }.
 
-HeapPred HP(cell a,cell b).
+//HeadPred HP(cell a,cell b).
+relation HP(cell a,cell b).
 infer[HP] a=null  |- HP(a,b).
 print residue.
 
@@ -29,5 +30,17 @@ print residue.
  lhs_rest: emp
  rhs_rest: emp
  alias set: [a]rhs_inst: []]
+
+(==cvutil.ml#1359==)
+infer_collect_rel@1
+infer_collect_rel inp1 :  emp&a=null&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ 
+ es_infer_vars_rel: [HP]
+infer_collect_rel inp2 :[HP]
+infer_collect_rel inp3 :lhs_heap: true
+infer_collect_rel inp4 :lhs: a=null
+infer_collect_rel inp5 :rhs: HP(a,b)
+infer_collect_rel@1 EXIT:( a=null,2: true,3:[RELDEFN HP: ( a=null) -->  HP(a,b)],4:None,5:[])
 
 */
