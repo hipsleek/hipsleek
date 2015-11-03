@@ -640,6 +640,7 @@ let global_extn_name =
         self # logging ("Created "^pname);
         let () = lst <- ((vn, prop_name), pname)::lst in
         pname
+
     method find (vn:string) (prop_name:string): string option =
       try
         let (_,n) = List.find (fun ((v1,v2),_) -> v1=vn && v2=prop_name) lst in
@@ -997,7 +998,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
   let () = y_binfo_hp (add_str "(norm) cviews" (pr_list (fun v -> v.C.view_name))) cviews in
   let view_list = cviews in
   let () = y_binfo_hp (add_str "selected" (pr_opt string_of_regex_id_star_list)) opt in
-  let vd_lst = Cast.get_selected_views (* ~get_trans:true *) opt view_list in
+  let vd_lst = Cast.get_selected_views ~get_trans:true opt view_list in
   let prop_view = 
     try Some (List.find (fun v -> v.C.view_name = property) cviews0)
     with e -> 

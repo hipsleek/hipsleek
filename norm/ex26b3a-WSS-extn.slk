@@ -25,11 +25,11 @@ pred WSS<p> ==
 // if WFSeg_sz not derived, WSS_sz will use not track aux rec..
 //pred WFSeg_size<p,nnn> == extends WFSeg<p> with size[REC]<nnn>.
 
-//pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
+pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
 
 //pred WSS_sz<p,nnn> == extends [*] with size[REC]<nnn>.
 
-pred WSSA_sz<p,nnn> == extends [WSSA] with size[REC]<nnn>.
+//pred WSSA_sz<p,nnn> == extends [WSSA*] with size[REC]<nnn>.
 
 //shape_extends_view [*] with size.
 
