@@ -16,6 +16,8 @@ pred llB<> ==
   self = null 
   or self::node<_, p> * p::llA<>.
   
-pred ll_sz<nnn> == extends [llA*] with size[REC]<nnn>.
+pred llA_sz<nnn> == extends [llA] with size[REC]<nnn>.
+
+//pred ll_sz<nnn> == extends [llA*] with size[REC]<nnn>.
 
 //shape_extends_view [llA*] with size.
