@@ -1056,7 +1056,7 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
   let () = y_tinfo_hp (add_str "extn_cview_lst" 
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
   let () = y_binfo_pp "TODO: hardwired size here" in
-  let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_view_name (* "size" *) (*TODO*) in
+  let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_pred.C.view_name (* "size" *) (*TODO*) in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
   (* let extn_cview = C.rename_view extn_cview equiv_pid in  *)
   let () = x_add (C.update_view_decl ~caller:x_loc) cprog extn_cview in

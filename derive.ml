@@ -582,7 +582,12 @@ let data_decl_obj = CFE.data_decl_obj
 let global_extn_name =
   object (self) 
     val mutable lst = [] 
-    val mutable seg_lst = [] 
+    val mutable seg_lst = []
+    val id = ref 0
+
+    method get_fresh_id = 
+      let () = id := !id + 1 in !id
+    
     method logging (s:string): unit =
       (* let h = "\n**global_extn_name** " in *)
       (* let () = print_endline_quiet (h^s) in *)
@@ -610,7 +615,7 @@ let global_extn_name =
     (*       y_winfo_pp (err_msg ^ "The name has been used for another")                   *)
     (*     else lst <- ((vn, prop_name), given_name)::lst                                  *)
       
-    method mk_name given_name (vn:string) (prop_name:string) : string =
+    method mk_name given_name ?(vn_of_given_name=None) (vn:string) (prop_name:string) : string =
       (* let pname =                                 *)
       (*   if given_name = "" then vn^" "^prop_name  *)
       (*   else given_name in                        *)
@@ -618,7 +623,6 @@ let global_extn_name =
       let mut_r = HipUtil.view_scc_obj # is_mutual_rec vn in 
       let () = y_binfo_hp (add_str "mut_r" (string_of_bool)) mut_r in
       let () = y_binfo_hp (add_str "vn" pr_id) vn in
-      
       let () = y_tinfo_hp (add_str "prop_name" pr_id) prop_name in
       let () = y_tinfo_hp (add_str "n" (pr_option pr_id)) n in
       match n with
@@ -633,8 +637,14 @@ let global_extn_name =
         in pn
       | None ->
         let pname = 
-          if given_name = "" || self # check_dup given_name 
-          then vn^"_"^prop_name
+          let for_vn = match vn_of_given_name with
+            | Some pvn -> eq_str pvn vn 
+            | None -> true (* given_name is not reserved *)
+          in
+          if given_name = "" || self # check_dup given_name || not for_vn then 
+            let pvn = vn^"_"^prop_name in
+            if not (eq_str pvn given_name) then pvn
+            else pvn^"_"^(string_of_int (self # get_fresh_id))
           else given_name
         in
         self # logging ("Created "^pname);
@@ -647,7 +657,7 @@ let global_extn_name =
         let () = self # logging ("Found "^n) in
         Some(n)
       with _ -> None
-    method not_processed (vn:string)  (prop_name:string) =
+    method not_processed (vn:string) (prop_name:string) =
       ((self # find vn prop_name) = None)
     method retr_name (vn:string) (prop_name:string) : string =
       match self # find vn prop_name with
@@ -664,13 +674,13 @@ let global_extn_name =
         ""
   end;;
 
-let mk_extn_pred_name vn pname prop_name =
-  global_extn_name # mk_name pname vn prop_name
+(* let mk_extn_pred_name vn pname prop_name =      *)
+(*   global_extn_name # mk_name pname vn prop_name *)
 
 let retr_extn_pred_name vn pname  =
   global_extn_name # retr_name vn pname 
 
-class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq nnn_s tag_s =
+class prop_table pname (* name of extn *) ?(vn_of_pname=None) (prop_name, pview) (* extension view *) eq nnn_s tag_s =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
     val mutable def_lst = [] (* list of ptr with defined value *)
@@ -700,8 +710,14 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
       (* let h = "\n**prop_table** " in *)
       (* let () =print_endline_quiet (h^s) in *)
       ()
-    method mk_extn_pred_name vn pname =
-      let n = global_extn_name # mk_name pname vn prop_name in
+    method mk_extn_pred_name vn (* pname *) =
+      (* let n_pname =                                         *)
+      (*   match vn_of_pname with                              *)
+      (*   | None -> pname (* pname is not reserved *)         *)
+      (*   | Some pvn -> (* pname has been reserved for pvn *) *)
+      (*     if eq_str pvn vn then pname else ""               *)
+      (* in                                                    *)
+      let n = global_extn_name # mk_name pname ~vn_of_given_name:vn_of_pname vn prop_name in
       (* let () = self # logging ("mk_extn_pred_name:"^n) in *)
       n
     method create_from_prop_name vn =
@@ -787,7 +803,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
       (* ptr=None means header of view vn *)
       let () = self # logging ((add_str "proc_view " (pr_triple (pr_opt !CP.print_sv) pr_id !CP.print_svl)) (ptr,vn,args)) in
       if self # is_mut_view vn then
-        let new_vname = self # mk_extn_pred_name vn pname (* vn^"_"^pname *) in
+        let new_vname = self # mk_extn_pred_name vn (* pname *) (* vn^"_"^pname *) in
         let (root,new_sv) = 
           match ptr with
           | None ->  (self_sv,orig_sv)
@@ -873,13 +889,13 @@ let store_segmented_view x vd =
   let () = global_extn_name # add_segmented x opt in
   (x,opt)
 
-let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name,prop_view) as xx) field_tag_s (* property *) 
+let extend_size pname (* name of extn *) ?(vn_of_pname=None) scc_vdecls (* selected views *) ((prop_name, prop_view) as xx) field_tag_s (* property *) 
     nnn_s (* extended parameter *) =
   (* let nnn_sv = CP.mk_typed_spec_var NUM nnn in (\* an integer *\) *)
   let () = y_tinfo_hp (add_str "prop_name" pr_id) prop_name in
   let seg_lst = List.map (List.map (fun (x,vd) ->  store_segmented_view x vd)) scc_vdecls in
   let () = y_tinfo_hp (add_str "seg_lst" (pr_list (pr_list (pr_pair pr_id (pr_opt !CP.print_sv))))) seg_lst in
-  let p_tab = new prop_table pname xx (CP.eq_spec_var) nnn_s field_tag_s in
+  let p_tab = new prop_table pname ~vn_of_pname:vn_of_pname xx (CP.eq_spec_var) nnn_s field_tag_s in
   let () = y_binfo_hp (add_str "p_tab" pr_id) (p_tab # string_of) in
   let extend_size_disj vns (*mutual call*) f =
     let () = p_tab # reset_disj f in
@@ -972,11 +988,10 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
   let new_vdecls = List.map (extend_size_scc) scc_vdecls in
   new_vdecls
 
-(* let reserve_derv_name_for_first given_name prop_name lst_opt =  *)
-(*   match lst_opt with                                            *)
-(*   | Some (REGEX_LIST ((vn, _)::_)) ->                           *)
-(*     global_extn_name # reserve_name given_name vn prop_name     *)
-(*   | _ -> ()                                                     *)
+let reserve_derv_name_for_first lst_opt =
+  match lst_opt with
+  | Some (REGEX_LIST ((vn, _)::_)) -> Some vn
+  | _ -> None
 
 let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
     (cviews0 (*orig _extn*): C.view_decl list) derv : C.view_decl list =
@@ -993,7 +1008,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
       | (prop, ((_::_) as field_s), ((_::_) as nnn_s))::_ -> prop, field_s, nnn_s
       | _-> failwith (x_loc^" no prop")) in
   let opt = derv.Iast.view_derv_from in
-  (* let () = reserve_derv_name_for_first vname property opt in *)
+  let vn_of_vname = reserve_derv_name_for_first  opt in
   let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews0 in
   let () = y_binfo_hp (add_str "(norm) cviews" (pr_list (fun v -> v.C.view_name))) cviews in
   let view_list = cviews in
@@ -1028,7 +1043,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
           with _ -> failwith (x_loc^" view "^n^" not found!!!")
         ) mr) scc in
   let () = y_binfo_hp (add_str "scc_vdecls" (pr_list (pr_list (fun (vn, vd) -> vn^"+"^vd.C.view_name)))) scc_vdecls in
-  let vdecls = extend_size vname scc_vdecls (property, prop_view) field_s nnn_s in
+  let vdecls = extend_size vname ~vn_of_pname:vn_of_vname scc_vdecls (property, prop_view) field_s nnn_s in
   let vdecls = List.concat vdecls in
   let () = y_binfo_pp "TODO: need to keep entire mutual-rec vdecl generated?" in  
   let () = y_binfo_hp (add_str "vdecls" (pr_list_ln (Cprinter.string_of_view_decl_short ~pr_inv:true))) vdecls in
