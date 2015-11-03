@@ -595,23 +595,37 @@ let global_extn_name =
       try
         Some(snd(List.find (fun (v,_) -> vn=v) seg_lst))
       with _ -> None
-    method mk_name given_name (vn:string)  (prop_name:string) : string =
-      let pname = 
-        if given_name = "" then vn^" "^prop_name 
-        else given_name in
+
+    (* Check whether given_name has been used *)
+    method check_dup given_name = 
+      List.exists (fun (_, n) -> eq_str n given_name) lst
+      
+    method mk_name given_name (vn:string) (prop_name:string) : string =
+      (* let pname =                                 *)
+      (*   if given_name = "" then vn^" "^prop_name  *)
+      (*   else given_name in                        *)
       let n = self # find vn prop_name in
+      let () = y_binfo_hp (add_str "vn" pr_id) vn in
+      let () = y_binfo_hp (add_str "prop_name" pr_id) prop_name in
+      let () = y_binfo_hp (add_str "n" (pr_option pr_id)) n in
       match n with
       | Some pn -> 
-        if given_name="" then pn
-        else if not(given_name=pn) then 
-          let () = y_tinfo_hp (add_str "vn " pr_id) vn in
-          let () = y_tinfo_hp (add_str "prop_name " pr_id) prop_name in
-          let () = y_tinfo_pp (given_name^" diff from existing "^pn) in
-          pn
-        else pn
-      | None -> 
+        (* if given_name="" then pn                                        *)
+        (* else if not(given_name=pn) then                                 *)
+        (*   let () = y_tinfo_pp (given_name^" diff from existing "^pn) in *)
+        (*   pn                                                            *)
+        (* else pn                                                         *)
+        let () = if not (given_name = "") && not (given_name = pn) then
+          y_binfo_pp (given_name^" diff from existing "^pn)
+        in pn
+      | None ->
+        let pname = 
+          if given_name = "" || self # check_dup given_name 
+          then vn^"_"^prop_name
+          else given_name
+        in
         self # logging ("Created "^pname);
-        let () = lst <- ((vn,prop_name),pname)::lst in
+        let () = lst <- ((vn, prop_name), pname)::lst in
         pname
     method find (vn:string) (prop_name:string): string option =
       try
@@ -673,10 +687,7 @@ class prop_table pname (*name of extn*) (prop_name,pview) (*extension view*) eq 
       (* let () =print_endline_quiet (h^s) in *)
       ()
     method mk_extn_pred_name vn pname =
-      (* let () = y_binfo_hp (add_str "vn" pr_id) vn in *)
-      (* let () = y_binfo_hp (add_str "pname" pr_id) pname in *)
-      (* let () = y_binfo_hp (add_str "prop_name" pr_id) prop_name in *)
-      let n =  global_extn_name # mk_name pname vn prop_name in
+      let n = global_extn_name # mk_name pname vn prop_name in
       (* let () = self # logging ("mk_extn_pred_name:"^n) in *)
       n
     method create_from_prop_name vn =
