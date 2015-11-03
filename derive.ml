@@ -1008,7 +1008,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
       | (prop, ((_::_) as field_s), ((_::_) as nnn_s))::_ -> prop, field_s, nnn_s
       | _-> failwith (x_loc^" no prop")) in
   let opt = derv.Iast.view_derv_from in
-  let vn_of_vname = reserve_derv_name_for_first  opt in
+  let vn_of_vname = reserve_derv_name_for_first opt in
   let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews0 in
   let () = y_binfo_hp (add_str "(norm) cviews" (pr_list (fun v -> v.C.view_name))) cviews in
   let view_list = cviews in

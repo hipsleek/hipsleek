@@ -27,7 +27,7 @@ pred WSS<p> ==
 
 //pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
 
-pred WSS_sz<p,nnn> == extends [*] with size[REC]<nnn>.
+pred WFSeg_size<p,nnn> == extends [*] with size[REC]<nnn>. // inv check fail 
 
 //pred WSSA_sz<p,nnn> == extends [WSSA*] with size[REC]<nnn>. // ok
 
@@ -35,7 +35,7 @@ pred WSS_sz<p,nnn> == extends [*] with size[REC]<nnn>.
 
 //pred WFSeg_size<p,nnn> == extends [WSSA*] with size[REC]<nnn>.
 
-//shape_extends_view [*] with size.
+//shape_extends_view [*] with size. // inv check ok
 
 //shape_extends_view [WSSA] with size.
 
@@ -43,6 +43,32 @@ pred WSS_sz<p,nnn> == extends [*] with size[REC]<nnn>.
 # ex26a3.slk
 
 # Why self!=null cannot be proven?
+
+view WSSA_size<p:node,nnn:int>= 
+  EBase 
+    (exists p_116,flted_17_117,q_118,nnn_119,nnn_120,
+    nnn_121: self::WSS_sz<q_118,nnn_121>@M * 
+             q_118::node<flted_17_117,p_116>@M&
+    nnn_119=0 & nnn_120=1+nnn_119 & nnn=nnn_120+nnn_121 & flted_17_117=0 & 
+    p_116=p&{FLOW,(1,26)=__flow#E}[])view WSSA_size{}[]<p:node,nnn:int>= 
+                                     inv: self!=null & nnn>=0
+                                     
+                                     baga over inv: [([], self!=null & nnn>=0)]
+                                     baga over inv (unfolded): [([], self!=null & nnn>=0)]
+                                     
+                                     xform: self!=null & nnn>=0
+                                     ,
+ view WSS_size<p:node,nnn:int>= 
+  EBase 
+    (exists p_147,nnn_148,nnn_149: self::WSSA_size<p_147,nnn_149>@M&
+    nnn_148=0 & nnn=nnn_148+nnn_149 & p_147=p&{FLOW,(1,26)=__flow#E}[])
+  view WSS_size{}[]<p:node,nnn:int>= 
+  inv: self!=null & nnn>=0
+  
+  baga over inv: [([], self!=null & nnn>=0)]
+  baga over inv (unfolded): [([], self!=null & nnn>=0)]
+  
+  xform: self!=null & nnn>=0
 
 
 */
