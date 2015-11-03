@@ -27,7 +27,9 @@ pred WSS<p> ==
 
 //pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
 
-pred WSS_sz<p,nnn> == extends [*] with size[REC]<nnn>.
+//pred WSS_sz<p,nnn> == extends [*] with size[REC]<nnn>.
+
+pred WSSA_sz<p,nnn> == extends [WSSA] with size[REC]<nnn>.
 
 //shape_extends_view [*] with size.
 
