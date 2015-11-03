@@ -2,7 +2,7 @@ data cell {
   int val;
 }.
 
-//HeadPred HP(cell a,cell b).
+//HeapPred HP(cell a,cell b).
 relation HP(cell a,cell b).
 infer[HP] a=null  |- HP(a,b).
 print residue.

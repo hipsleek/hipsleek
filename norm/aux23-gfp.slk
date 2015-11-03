@@ -1,0 +1,30 @@
+relation R(int i).
+relAssume
+  R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0
+        -->  R(v_int_18_1500').
+relAssume
+  R(i) -->  i!=0.
+
+relation_infer [R][].
+
+/*
+# ex23.slk
+
+relAssume
+  R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0
+        -->  R(v_int_18_1500').
+relAssume
+  R(i) -->  i!=0.
+relation_infer [R][].
+
+
+# greatest fix-point needs to be implemented
+
+!!! **sleekengine.ml#1488:WARNING : Spurious RelInferred (not collected):[RELDEFN R: ( R(i) & i=v_int_18_1500'+1 & (1+v_int_18_1500')!=0) -->  R(v_int_18_1500')]
+!!! **sleekengine.ml#1488:WARNING : Spurious RelInferred (not collected):[RELDEFN R: ( R(i)) -->  i!=0]
+!!! **sleekengine.ml#1853:post_rel_constrs:[( R(i), i!=0)]
+Exception processed: Not_found
+error at: 
+SLEEK FAILURE (END)
+
+*/
