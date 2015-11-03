@@ -137,6 +137,10 @@ class graph =
       let r = self # find_rec n in
       List.exists (fun v -> n=v) r
 
+    method is_mutual_rec n  =
+      let r = self # find_rec n in
+      (List.filter (fun v -> not(n=v)) r)!=[]
+
     (* method is_self_rec_only n  = *)
     (*   if grp==None then self # build_scc_void; *)
     (*   List.exists (fun v -> n=v) self_rec_only *)

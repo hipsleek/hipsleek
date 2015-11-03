@@ -615,7 +615,10 @@ let global_extn_name =
       (*   if given_name = "" then vn^" "^prop_name  *)
       (*   else given_name in                        *)
       let n = self # find vn prop_name in
-      let () = y_tinfo_hp (add_str "vn" pr_id) vn in
+      let mut_r = HipUtil.view_scc_obj # is_mutual_rec vn in 
+      let () = y_binfo_hp (add_str "mut_r" (string_of_bool)) mut_r in
+      let () = y_binfo_hp (add_str "vn" pr_id) vn in
+      
       let () = y_tinfo_hp (add_str "prop_name" pr_id) prop_name in
       let () = y_tinfo_hp (add_str "n" (pr_option pr_id)) n in
       match n with
@@ -1162,4 +1165,4 @@ let expose_pure_extn iprog cprog rev_trans_formula trans_view views extn_views=
 
 (*****************************************************************************************)
 (*    END BUILD PURE EXTN MAP  *)
-(*****************************************************************************************)
+(****************hip*************************************************************************)
