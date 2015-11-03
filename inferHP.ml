@@ -1439,7 +1439,7 @@ let do_inst prog estate lhs_b largs rargs extended_hps =
 (* TODO : how about aliases *)
 let set_root_unfold lhs rhs alias_set =
   match lhs with
-  | HRel(hp,args,_) -> 
+  | HRel (hp, args, _) -> 
     begin
       try
         let ptr = CF.get_root_ptr rhs in
@@ -1451,6 +1451,7 @@ let set_root_unfold lhs rhs alias_set =
             if List.exists (CP.eq_spec_var v) (ptr::alias_set) then n
             else aux xs (n+1) in
         let posn = aux args 0 in
+        let () = y_binfo_hp (add_str ("root posn (" ^ (!CP.print_sv hp) ^ ")") string_of_int) posn in
         let () = if posn>=0 then Cast.cprog_obj # set_hp_root hp posn in
         ()
       with _ -> 

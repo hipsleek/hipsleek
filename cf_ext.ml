@@ -44,7 +44,7 @@ let process_heap_prop_extn p_tab (* pname vns *) (* mutual-rec *) (* nnn_sv *) h
         let vs = vl.h_formula_view_arguments in
         let n_hf = 
           try 
-            let (new_vn,new_sv) = p_tab # proc_view (Some ptr) name vs  in
+            let (new_vn, new_sv) = p_tab # proc_view (Some ptr) name vs  in
             (ViewNode {vl with h_formula_view_name = new_vn; 
                                h_formula_view_arguments = vs@[new_sv]})
           with _ -> hf
