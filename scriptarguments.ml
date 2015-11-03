@@ -651,7 +651,7 @@ let common_arguments = [
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
-       let _ = print_endline ("!!!-dre "^s) in
+       (* let _ = print_endline ("!!!-dre "^s) in *)
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
        Debug.read_main ()
      ),

@@ -8716,7 +8716,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   let () = x_tinfo_hp (add_str "NO RHS: lhs_p2 (wo heap)" pr) lhs_p2 no_pos in
   let () = x_tinfo_hp (add_str "conseq1:" !CF.print_formula) conseq no_pos in
   let conseq_flow = CF.flow_formula_of_formula conseq in
-  let (estate,lhs_new,rhs_p,neg_lhs,rel_ass) = Infer.infer_collect_rel
+  let (estate,lhs_new,rhs_p,neg_lhs,rel_ass) = x_add Infer.infer_collect_rel
       (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig conseq_flow xpure_lhs_h1_sym lhs_p2 rhs_p pos in
   let () = match neg_lhs,rel_ass with
     | None,[] -> ()
