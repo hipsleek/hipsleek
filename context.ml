@@ -586,6 +586,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   let hrel_stk = new Gen.stack in
   let aset = posib_r_aliases in
+  let lhs_pure = MCP.pure_of_mix lhs_p in
+  let eqns' = MCP.ptr_equations_without_null lhs_p in
+  let emap = CP.EMapSV.build_eset eqns' in
   match rhs_node with
   | HRel _  
   | ThreadNode _ 
@@ -599,19 +602,38 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       | HVar (v,_) -> (CP.ConstAnn(Mutable), [], v)
       | ThreadNode { h_formula_thread_node=p; } -> (CP.ConstAnn(Mutable), [], p)
       | HRel (hp, e, _) ->
-        let args = CP.diff_svl (get_all_sv rhs_node) [hp] in
+        let args = List.map CP.exp_to_sv e in
+        (* diff_svl (get_all_sv rhs_node) [hp] in *)
         (* let root, _ = Sautil.find_root prog [hp] args [] in *)
-        let root = Cast.cprog_obj # get_hp_root hp args in
-        let () = x_tinfo_hp (add_str "args" !CP.print_svl) args pos in
-        let () = x_tinfo_hp (add_str "hp" !CP.print_sv) hp pos in
-        let () = x_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
-        let () = x_tinfo_hp (add_str "root" !CP.print_sv) root pos in
+        let () = x_binfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h pos in
+        let sel_match_hp_root emap lhs_h args =
+          let (dlst,vlst,hlst) = CF.extract_gen_nodes_ptr lhs_h in
+          let opt_find p xs =
+            try
+              Some (List.find p xs)
+            with _ -> None in
+          let sel_lst lst = 
+            opt_find (fun x -> List.exists (fun v -> CP.EMapSV.is_equiv emap x v) lst) args in
+          let sel = sel_lst dlst in
+          match sel with
+          | Some a -> sel
+          | None -> 
+            begin
+              sel_lst vlst
+            end
+        in
+        let sel_lhs = sel_match_hp_root emap lhs_h args in
+        let root = Cast.cprog_obj # get_hp_root ~chosen:sel_lhs hp args in
+        let () = x_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure pos in
+        let () = x_binfo_hp (add_str "args" !CP.print_svl) args pos in
+        let () = x_binfo_hp (add_str "hp" !CP.print_sv) hp pos in
+        let () = x_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
+        let () = x_binfo_hp (add_str "root" !CP.print_sv) root pos in
         let () = hrel_stk # push root in
         (CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
     in
     let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-    let eqns' = MCP.ptr_equations_without_null lhs_p in
     (* let emap = CP.EMapSV.build_eset eqns' in *)
     let r_eqns =
       let eqns = (MCP.ptr_equations_without_null rhs_p) @ rhs_es in

@@ -573,7 +573,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
-  let res = x_add Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = x_add (Lemproving.verify_lemma ~force_pr:true) 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
 (* CF.residues := (match res with *)
 (*   | None -> None; *)

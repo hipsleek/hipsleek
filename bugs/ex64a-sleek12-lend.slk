@@ -1,0 +1,14 @@
+data node {
+  node f0;
+}.
+
+pred pair<z:node> == self::node<z> * z::node<_>@L.
+
+pred foo<y:node> ==
+  self::node<y> * y::pair<_>@L.
+
+checkentail_exact x::node<a>*a::node<b>*b::node<_>  |- x::foo<a>*a::pair<b>*b::node<_>.
+expect Valid.
+print residue.
+
+

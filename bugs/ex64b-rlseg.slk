@@ -1,0 +1,39 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+//lemma_safe "one" self::rlseg<p> <-> self::rlseg<p1>*p1::rlseg<p>.
+
+//lemma_safe "two" self::rlseg<p1> * p1::node<_,p> -> self::rlseg<p>.
+
+lemma_safe "three" self::node<_,q>*q::rlseg<p>  
+          <-> self::rlseg<p1>* p1::node<_,p>.
+
+/*
+# ex64.b.slk
+
+# problem with complex lemma
+
+Entailing lemma three: Fail. Details below:
+	 "==>" implication: : Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+	 "==>" implication: : Valid.
+
+The first bad revision is:
+changeset:   17436:78bf6a8733c9
+branch:      infer-str
+user:        chinwn@loris-laptop
+date:        Wed Oct 21 04:38:03 2015 +0800
+summary:     need to schedule complex lemma
+
+
+*/
+

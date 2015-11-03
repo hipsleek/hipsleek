@@ -475,7 +475,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
 
 (* interprets the entailment results for proving lemma validity and prints failure cause is case lemma is invalid *)
 let print_lemma_entail_result ?(force_pr=false) (valid: bool) (ctx: CF.list_context) (num_id: string) =
-  let force_print = !Globals.lemma_ep_verbose || (force_pr && !Globals.lemma_ep) in
+  let force_print = force_pr || !Globals.lemma_ep_verbose ||  !Globals.lemma_ep in
   match valid with
   | true -> if force_print then print_string_quiet (num_id ^ ": Valid.\n") else ()
   | false ->

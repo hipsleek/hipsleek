@@ -20404,13 +20404,25 @@ let extract_nodes stk hf =
     Some hf
   | _ -> None
 
-let extract_view_nodes hf =
+let extract_gen_nodes hf =
+  (* 1 - view; 2 -data; 3 - HRel *)
   let stk = new Gen.stack in
   let _ = extract_nodes stk hf in
-  let lst = List.filter (fun (no,_,_,_) -> no==1) (stk # get_stk) in
-  let lst = List.map (fun (no,vn,_,_) -> vn) lst in
-  lst
-   
+  let lst = (* List.map (fun (no,_,ptr,_) -> (no,ptr)) *) (stk # get_stk) in
+  let (data_lst,other_lst) = List.partition (fun (no,_,_,_) -> no=2) lst in
+  let (view_lst,hrel_lst) = List.partition (fun (no,_,_,_) -> no=1) lst in
+  (data_lst,view_lst,hrel_lst)
+
+let extract_gen_nodes_ptr hf =
+  (* 1 - view; 2 -data; 3 - HRel *)
+  let (data_lst,view_lst,hrel_lst) = extract_gen_nodes hf in
+  let map_ptr = List.map (fun (_,_,ptr,_)->ptr) in
+  (map_ptr data_lst,map_ptr view_lst,map_ptr hrel_lst)
+
+let extract_view_nodes_name hf =
+  let (_,vl,_) = extract_gen_nodes hf in
+  List.map (fun (_,v,_,_) -> v) vl
+
 (*   self::P<..p> 
            == self=p
            or self::node<_,p>

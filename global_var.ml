@@ -69,3 +69,5 @@ let var_with_exists =
 let var_with_none =
   let v = new var_types in
   v
+
+let sleek_cnt_timeout_limit = new Gen.counter 5

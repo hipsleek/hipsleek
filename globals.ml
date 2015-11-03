@@ -1096,6 +1096,7 @@ let en_trec_lin = ref false
 let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)
 
+(* turn off printing during lemma proving? *)
 let lemma_ep = ref true
 let lemma_ep_verbose = ref false 
 
@@ -2169,7 +2170,8 @@ let user_sat_timeout = ref false
 let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
-let sleek_timeout_limit = ref 0.
+let sleek_timeout_limit = ref 5.
+
 
 let dis_inv_baga () = 
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 

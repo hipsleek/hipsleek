@@ -2143,7 +2143,38 @@ compute_inv_baga@3 EXIT:[ view WFSeg{}[]<p:node,nnn:int>=
  ]
 
 ===================================================================
+# aux24.slk
+
+# least fix-point
+
+
+!!! **fixcalc.ml#1046:Input of fixcalc: :Q:={[] -> [m,r] -> []: (r=0 && m=0 ||  (exists (r1: (exists (m1:m1=m-(1) && Q(m1,r1)))  && r=r1+2)) )
+};
+bottomupgen([Q], [2], SimHeur);
+!!! **fixcalc.ml#393:svls (orig):[[m:int,Q:RelT([]),r:int]]
+!!! **fixcalc.ml#394:svl1 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#395:svl2 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#1074:Result of fixcalc (parsed): :[ r=2*m & m>=0]
+!!! fixpoint2:[( Q(m,r), r=2*m & m>=0)]
 ===================================================================
+# ex23.slk
+
+relAssume
+  R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0
+        -->  R(v_int_18_1500').
+relAssume
+  R(i) -->  i!=0.
+relation_infer [R][].
+
+
+# greatest fix-point needs to be implemented
+
+!!! **sleekengine.ml#1488:WARNING : Spurious RelInferred (not collected):[RELDEFN R: ( R(i) & i=v_int_18_1500'+1 & (1+v_int_18_1500')!=0) -->  R(v_int_18_1500')]
+!!! **sleekengine.ml#1488:WARNING : Spurious RelInferred (not collected):[RELDEFN R: ( R(i)) -->  i!=0]
+!!! **sleekengine.ml#1853:post_rel_constrs:[( R(i), i!=0)]
+Exception processed: Not_found
+error at: 
+SLEEK FAILURE (END)
 ===================================================================
 ===================================================================
 ===================================================================

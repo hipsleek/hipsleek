@@ -288,8 +288,15 @@ let common_arguments = [
    "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-exc", Arg.Set VarGen.trace_exc,
    "Enable trace of exceptions invoked by methods");
+  ("--trace-log", Arg.Set Gen.debug_trace_log,
+   "Enable trace of method logs during debugging");
+  ("--trace-log-num", Arg.Int (fun i ->
+       Gen.debug_trace_log_num:=i;
+       Gen.debug_trace_log :=true;
+     ),
+   "Enable trace of a specific method call for debugging");
   ("--trace-loop", Arg.Set VarGen.trace_loop,
-   "Enable trace of method header duriong debugging");
+   "Enable trace of method header during debugging");
   ("--trace-loop-all", Arg.Unit (fun _ ->
        VarGen.trace_loop_all :=true;
        VarGen.trace_loop :=true;
@@ -633,7 +640,7 @@ let common_arguments = [
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-infer", Arg.String (fun s ->
-       Globals.infer_const_obj # set_init_arr s), "Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
+       Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
   ("-debug", Arg.String (fun s ->
        Debug.z_debug_file:=s; z_debug_flag:=true),
    "Read from a debug log file");
@@ -644,7 +651,7 @@ let common_arguments = [
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
-       let _ = print_endline ("!!!-dre "^s) in
+       (* let _ = print_endline ("!!!-dre "^s) in *)
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
        Debug.read_main ()
      ),

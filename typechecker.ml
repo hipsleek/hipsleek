@@ -4307,7 +4307,7 @@ let check_coercion (prog : prog_decl) =
         | _ ->  Error.report_error {Err.error_loc = no_pos; Err.error_text = "[typechecker.ml]: Lemma must contain only 1 or 2 coercions."}
       in
       (* Andrea : why is hip not using process_lemma in sleekengine.ml *)
-      let todo_unk = x_add Lemproving.verify_lemma 1 l2r r2l prog coerc_name coerc_type in ()
+      let todo_unk = x_add (Lemproving.verify_lemma ~force_pr:true) 1 l2r r2l prog coerc_name coerc_type in ()
     ) lemmas
 
 let init_files () =

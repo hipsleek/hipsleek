@@ -390,6 +390,8 @@ let add_relation (rname1:string) rargs rform =
       related_axioms = []; (* to be filled up by add_axiom *)
       rel_cache_smt_declare_fun = cache_smt_input;
     } in
+  let () = y_binfo_hp (add_str "rname1" pr_id) rname1 in
+  let () = y_binfo_hp (add_str "rargs" !CP.print_svl) rargs in
     global_rel_defs # push_list_pr x_loc [rdef];
     (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
     match rform with
@@ -409,6 +411,8 @@ let add_hp_relation (rname1:string) rargs rform =
     (* Declare the relation in form of a function --> Bool *)
     "(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n"
   ) in
+  let () = y_binfo_hp (add_str "rname1" pr_id) rname1 in
+  let () = y_binfo_hp (add_str "rargs" !CP.print_svl) rargs in
   let rdef = { rel_name = rname1; 
                rel_vars = rargs;
                related_rels = []; (* to be filled up by add_axiom *)

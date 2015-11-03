@@ -683,25 +683,41 @@ let cprog_obj =
         | None -> () in 
       let () = hp_d.hp_root_pos <- Some posn in
       ()
-    method get_hp_root hp args =
+    method get_hp_root ?(chosen=None) hp args =
       let n = CP.name_of_spec_var hp in
       let hp_d = self # get_hp_one_decl n in
-      let posn = match hp_d.hp_root_pos with
-        | Some i -> i
+      let posn = match chosen with
         | None -> 
-          let f_args = hp_d.hp_vars_inst in
-          let rec aux xs n =
-            match xs with
-            | [] -> failwith (x_loc^"no root position left")
-            | (_,ann)::xs -> 
-              if ann=NI then aux xs (n+1)
-              else n in
-          let posn = aux f_args 0 in
-          let () = hp_d.hp_root_pos <- Some posn in
-          posn in
+          begin
+            match hp_d.hp_root_pos with
+            | Some i -> i
+            | None -> 
+              let f_args = hp_d.hp_vars_inst in
+              let rec aux xs n =
+                match xs with
+                | [] -> failwith (x_loc^"no root position left")
+                | (_,ann)::xs -> 
+                  if ann=NI then aux xs (n+1)
+                  else n in
+              let posn = aux f_args 0 in
+              let () = hp_d.hp_root_pos <- Some posn in
+              posn 
+          end
+        | Some v -> 
+          let rec aux xs n = 
+            match xs with 
+            | [] -> -1
+            | x::xs -> 
+              if CP.eq_spec_var v x then 
+                let () = hp_d.hp_root_pos <- Some n in
+                n 
+              else aux xs (n+1) in
+          aux args 0 
+      in
       let () = self # logging ("get_hp_root "^n^" gives "^(string_of_int posn)) in
       let () = print_endline_quiet (self # show_roots) in
-      List.nth args posn
+      if posn<0 then List.hd args
+      else List.nth args posn
     method get_hp_root_posn hp =
       let n = CP.name_of_spec_var hp in
       let hp_d = self # get_hp_one_decl n in
@@ -1519,7 +1535,7 @@ let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
               pos)
     in
     (* let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in *)
-    let () = x_tinfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
+    let () = x_winfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"

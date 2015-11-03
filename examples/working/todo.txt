@@ -1871,6 +1871,33 @@ Total verification time: 79.60 second
 	Time spent in child processes: 69.92 second
 	Number of false contexts: 104
 ====================================================================
+3Nov15
+
+#nexpected result with : infer/infer1.slk (failed check(s): {E9#Fail}) 
+Unexpected result with : lemmas/rlseg.slk (failed check(s): {L2#Valid},{L3#Valid}) 
+Unexpected result with : lemmas/ll.slk (failed check(s): {L3#Fail},{L9#Valid}) 
+Unexpected result with : lemmas/sll_tailL.slk (failed check(s): {L1#Valid},{L2#Valid}) 
+Unexpected result with : lemmas/dseg-new.slk (failed check(s): {L2#Fail},{L3#Valid}) 
+Checking lemmas/dseg1.slk (runs with extra options:  --elp --dis-lem-gen )
+Unexpected result with : lemmas/dseg1.slk (failed check(s): no result for {L}) 
+Unexpected result with : lemmas/lseg_complex.slk (failed check(s): {E1#Valid},{E2#Valid}) 
+
+# can we time-out for program?
+
+pls2nus@loris-laptop:~/hg/sl_imm$ ./sleek examples/working/sleek/fracperm/split-combine.slk --en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings
+
+Total number of errors: 10 in files:
+  infer/infer1.slk({E9#Fail}) 
+ lemmas/rlseg.slk({L2#Valid},{L3#Valid}) 
+ lemmas/ll.slk({L3#Fail},{L9#Valid}) 
+ lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+ lemmas/dseg1.slk(no result for {L}) 
+ lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+ veribsync/bperm-split-combine.slk({E5#Valid},{E6#Valid}) 
+ veribsync/barrier-static.slk(no result  for {E}) 
+ veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 ====================================================================
 ====================================================================
 ====================================================================

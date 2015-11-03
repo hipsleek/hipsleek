@@ -10,6 +10,8 @@ let silence_output = ref false
 
 (* let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0) *)
 let debug_precise_trace = ref false
+let debug_trace_log = ref false
+let debug_trace_log_num = ref (-2)
 let enable_counters = ref false
 let profiling = ref false
 let profile_threshold = 0.5
@@ -851,8 +853,10 @@ class counter x_init =
   object 
     val mutable ctr = x_init
     method get : int = ctr
+    method get_orig : int = x_init
     method inc = ctr <- ctr + 1
     method inc_and_get = ctr <- ctr + 1; ctr
+    method dec_and_get = ctr <- ctr - 1; ctr
     method diff = ctr - x_init
     method add (i:int) = ctr <- ctr + i
     method reset = ctr <- x_init (* 0x0 *)
@@ -1470,7 +1474,13 @@ struct
 
   (* pop last element from call stack of ho debug *)
   let pop_call () = 
-    if is_same_dd () then dd_stk # pop;
+    let () = match is_same_dd_get () with
+      | None -> ()
+      | Some no -> 
+        let n2 = !debug_trace_log_num in
+        if n2<0 || n2=no then dd_stk # pop
+        else ()
+    in
     let () = debug_stk # pop in
     (* let () = print_string "after pop_call" in *)
     (* let () = force_dd_print() in *)
@@ -1520,7 +1530,9 @@ struct
     (* let () = ctr#inc in *)
     let v = ctr#next_call in
     let () = debug_stk#push v in
-    if flag_detail then dd_stk#push v;
+    if flag_detail || !debug_trace_log then 
+      if !debug_trace_log_num<0 || !debug_trace_log_num=v then
+        dd_stk#push v;
     let lc = ctr # get_last_call in
     let s = os^lc in
     let h = os^"@"^string_of() in
