@@ -207,4 +207,26 @@ let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
   let pr3 = pr_quad pr pr pr2a pr2a in
   Debug.no_2 "compute_baga_invs" pr1 pr2 pr3 (fun _ _ -> compute_baga_invs vbc_i vbc_o vbc_u new_pf pos) (vbc_i,vbc_o,vbc_u) new_pf
 
+module EState =
+  struct
+    type t = CF.entail_state
+    let is_infer_hp_rel es v =
+      List.exists (CP.eq_spec_var v) es.es_infer_vars_hp_rel
+
+    let add_infer_rel es v =
+      { es with es_infer_vars_rel = v::es.es_infer_vars_rel}
+
+    let show_infer_vars es =
+      let () = print_endline_quiet ("\nes_infer_vars ") in
+      let () = print_endline_quiet "========================" in
+      let () = print_endline_quiet ((add_str "es_ivars" !CP.print_svl) es.es_ivars) in
+      let () = print_endline_quiet ((add_str "es_infer_vars" !CP.print_svl) es.es_infer_vars) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_rel" !CP.print_svl) es.es_infer_vars_rel) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_sel_hp_rel" !CP.print_svl) es.es_infer_vars_sel_hp_rel) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_sel_post_hp_rel" !CP.print_svl) es.es_infer_vars_sel_post_hp_rel) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_hp_rel" !CP.print_svl) es.es_infer_vars_hp_rel) in
+      ()
+
+  end
+
 
