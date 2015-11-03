@@ -16,10 +16,12 @@ pred llB<> ==
   self = null 
   or self::node<_, p> * p::llA<>.
   
-//pred llA_sz<nnn> == extends [llA] with size[REC]<nnn>.
+pred llA_sz<nnn> == extends [llA] with size[REC]<nnn>.
 
 //pred ll_sz<nnn> == extends [llA*] with size[REC]<nnn>.
 
-pred ll_sz<nnn> == extends [*] with size[REC]<nnn>.
+//pred llAB_sz<nnn> == extends [llA, llB] with size[REC]<nnn>.
+
+//pred ll_sz<nnn> == extends [*] with size[REC]<nnn>.
 
 //shape_extends_view [llA*] with size.

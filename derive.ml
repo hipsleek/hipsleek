@@ -599,15 +599,25 @@ let global_extn_name =
     (* Check whether given_name has been used *)
     method check_dup given_name = 
       List.exists (fun (_, n) -> eq_str n given_name) lst
+
+    (* method reserve_name given_name vn prop_name =                                       *)
+    (*   let err_msg = "Cannot reserve "^given_name^" for ("^vn^", "^prop_name^")"^": " in *)
+    (*   let n = self # find vn prop_name in                                               *)
+    (*   match n with                                                                      *)
+    (*   | Some pn -> y_winfo_pp (err_msg ^ "It has already named " ^ pn)                  *)
+    (*   | None ->                                                                         *)
+    (*     if self # check_dup given_name then                                             *)
+    (*       y_winfo_pp (err_msg ^ "The name has been used for another")                   *)
+    (*     else lst <- ((vn, prop_name), given_name)::lst                                  *)
       
     method mk_name given_name (vn:string) (prop_name:string) : string =
       (* let pname =                                 *)
       (*   if given_name = "" then vn^" "^prop_name  *)
       (*   else given_name in                        *)
       let n = self # find vn prop_name in
-      let () = y_binfo_hp (add_str "vn" pr_id) vn in
-      let () = y_binfo_hp (add_str "prop_name" pr_id) prop_name in
-      let () = y_binfo_hp (add_str "n" (pr_option pr_id)) n in
+      let () = y_tinfo_hp (add_str "vn" pr_id) vn in
+      let () = y_tinfo_hp (add_str "prop_name" pr_id) prop_name in
+      let () = y_tinfo_hp (add_str "n" (pr_option pr_id)) n in
       match n with
       | Some pn -> 
         (* if given_name="" then pn                                        *)
@@ -958,6 +968,12 @@ let extend_size pname (*name of extn*) scc_vdecls (*selected views*) ((prop_name
   let new_vdecls = List.map (extend_size_scc) scc_vdecls in
   new_vdecls
 
+(* let reserve_derv_name_for_first given_name prop_name lst_opt =  *)
+(*   match lst_opt with                                            *)
+(*   | Some (REGEX_LIST ((vn, _)::_)) ->                           *)
+(*     global_extn_name # reserve_name given_name vn prop_name     *)
+(*   | _ -> ()                                                     *)
+
 let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc lower_map_views
     (cviews0 (*orig _extn*): C.view_decl list) derv : C.view_decl list =
   let () = y_binfo_hp (add_str "view_scc_obj" pr_id) HipUtil.view_scc_obj # string_of in
@@ -973,6 +989,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
       | (prop, ((_::_) as field_s), ((_::_) as nnn_s))::_ -> prop, field_s, nnn_s
       | _-> failwith (x_loc^" no prop")) in
   let opt = derv.Iast.view_derv_from in
+  (* let () = reserve_derv_name_for_first vname property opt in *)
   let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews0 in
   let () = y_binfo_hp (add_str "(norm) cviews" (pr_list (fun v -> v.C.view_name))) cviews in
   let view_list = cviews in
