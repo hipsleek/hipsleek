@@ -2260,7 +2260,7 @@ lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p> & p!=null.
 check_coercion_struc inp1 :Lemma "one_left_right":  self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists p1_53: self::rlseg<p1_53>@M * p1_53::rlseg<p>@M&p!=null&
 
 ===================================================================
-# ex64m.slk --sa-en-sep-pure-fields
+# ex64m.slk --en-sep-pure-fields
 
 // (4)
 infer [H1]  H1(y) |- y::node<a,b> * b::ll<m>.
@@ -2294,6 +2294,35 @@ do_match inp5 :[]
 !!! **inferHP.ml#267:niu_svl_ni_total:[]
 !!! **inferHP.ml#275:is_inf_pure_field:false
 ===================================================================
+# bugs/ex64m1.slk
+
+# Why is do_match not captured in trace and -dd-steps by infer_unfold?
+
+Entail (1) : Valid. 
+Residue:
+ <1>HP_47(flted_14_46,y)&flted_14_46=null & y!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_47(flted_14_46,y@NI)&true --> emp&flted_14_46=null; 
+                  H1(y)&
+                   true --> y::node<a_45,flted_14_46>@M * 
+                            HP_47(flted_14_46,y@NI)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
+(==solver.ml#13577==)
+do_match@1
+do_match inp1 : y::node<a_41,b_42>@M
+do_match inp2 : y::node<a,b>@M
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H1(y) |#|  --> y::node<a_41,b_42>@M]
+ es_gen_impl_vars(E): [a; b; c; d]
+ es_gen_impl_vars: [a; b; c; d]
+ es_trace:  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [H1]
+do_match inp4 : b::node<c,d>@M&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+
+[[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
+ CEX:false
 ===================================================================
 ===================================================================
 ===================================================================
