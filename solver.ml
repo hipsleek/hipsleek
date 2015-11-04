@@ -13571,9 +13571,12 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                     let () = y_tinfo_hp (add_str "rhs_h_matched set" !CP.print_svl) rhs_h_matched_set  in
                     let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) n_lhs  in
                     let () = y_tinfo_hp (add_str "rhs_h" !CF.print_h_formula) rhs  in
+                    let () = y_tinfo_hp (add_str "rhs_rest" !CF.print_h_formula) n_rhs_rest  in
                     if !Globals.warn_do_match_infer_heap then 
                       failwith "do_match during infer_heap"
-                    else 
+                    else
+                      let match_act = Context.M_match (Context.mk_match_res Root n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
+                      let new_estate = { new_estate with es_trace = (Context.string_of_action_name match_act)::new_estate.es_trace } in
                       x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
                   else let new_ctx = Ctx new_estate in
                     x_add heap_entail_conjunct 29 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
