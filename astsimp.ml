@@ -4335,10 +4335,11 @@ and trans_one_coercion (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coer
 
 and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
-  let coer = I.swap_lhs_rhs coer in
+  let coer = I.swap_lhs_rhs coer in (* overlaps with below *)
   if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
     (* complex_lhs <- rhs    ==> rhs    -> complex_lhs                    *)
     (* complex_lhs <-> rhs   ==> complex_lhs -> rhs && rhs -> complex_lhs *)
+    let () = y_binfo_pp "inside lemma switching.." in
     let coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
     let coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in
     if coercion_lhs_type == Complex then 

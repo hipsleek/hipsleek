@@ -9,16 +9,30 @@ pred rlseg<p:node> == self=p
   or self::node<_,q> * q::rlseg<p>.
 
 lemma_safe "three"  
-   self::rlseg<p1>* p1::node<_,p> 
-    <- 
    self::node<_,q>*q::rlseg<p> 
+    ->
+   self::rlseg<p1>* p1::node<_,p> 
 .
 // fail <==
 
 //lemma_safe "three" self::rlseg<p1>* p1::node<_,p> <-> self::node<_,q>*q::rlseg<p> . 
 // fail ==>
 /*
-# ex64k7.slk
+# ex64k8.slk
+
+# why old system  (in default) can prove below?
+
+!!! **solver.ml#13660:lhs contra?:None
+Entailing lemma three: Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+
+lemma_safe "three"  
+   self::node<_,q>*q::rlseg<p> 
+    ->
+   self::rlseg<p1>* p1::node<_,p> 
+.
 
 # new complex lemma
  body_norm:  EBase 

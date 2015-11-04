@@ -2324,7 +2324,39 @@ do_match inp5 :[]
 [[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
  CEX:false
 ===================================================================
-===================================================================
+# ex64k8.slk
+
+# why old system  (in default) can prove below?
+
+!!! **solver.ml#13660:lhs contra?:None
+Entailing lemma three: Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+
+lemma_safe "three"  
+   self::node<_,q>*q::rlseg<p> 
+    ->
+   self::rlseg<p1>* p1::node<_,p> 
+.
+
+# new complex lemma
+ body_norm:  EBase 
+   exists (Impl)[p1; 
+   Anon_12](exists p_40: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_lhs_sig: Some([node,rlseg])
+
+
+# old complex lemma (from default)
+!!! WARNING : changing lemma from <- to -> 
+ body_norm:  EBase 
+   exists (Impl)[p1](exists p_40,
+   Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_fold: None
+
+====================================================================
 ===================================================================
 ===================================================================
 ===================================================================
