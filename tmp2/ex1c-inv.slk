@@ -1,0 +1,22 @@
+
+checkentail emp&((n<=i & 0<=n) 
+  | (
+  //(i+self)!=null & 
+     0<=n & n<=(1+i) & 0<=i & i<n))
+ |-  emp&0<=n & n<=i.
+
+
+checkentail 
+((n<=i & 0<=n) | 
+ ((((n<=(1+i) & 0<=n) | 
+    ((i+self)!=null & (1+i)<n & 0<=(1+i) & i+self=1+i+self))) & 
+  (i+self)>0 & 0<=i & i<n))
+ |-  (exists p: emp & (self=p-i & 0<=i & i<n & p!=null | (0<=n & n<=i))).
+
+
+checkentail 
+((n<=i & 0<=n) | 
+ ((((n<=(1+i) & 0<=n) | 
+    ((i+self)!=null & (1+i)<n & 0<=(1+i) & i+self=1+i+self))) & 
+  (i+self)>0 & 0<=i & i<n))
+ |-  (exists p: emp & (self=p-i & 0<=i & i<n & p!=null | (0<=n & n<=i))).

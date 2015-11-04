@@ -1,0 +1,25 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i>=n & n>=0
+  or p::arr<_> * self::arr_seg<i+1,n> & p=self+i & i>=0 & i<n
+  inv_sat BG([],n>=0 & i>=0).
+
+
+/*
+# ex1a.slk
+
+pred arr_seg<i:int,n:int> ==
+  emp & i>=n & n>=0
+  or p::arr<_> * self::arr_seg<i+1,n> & p=self+i & i>=0 & i<n
+  inv_sat BG([],n>=0 & i>=0).
+
+# This isn't precise. Why?
+
+!!! **WARNING****astsimp.ml#2223:View defn for arr_seg has precise invariant
+
+
+
+*/

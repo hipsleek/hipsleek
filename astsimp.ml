@@ -2105,8 +2105,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
         | Some disj -> true,CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
-      let () = x_tinfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
-      let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let () = x_binfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
+      let () = x_binfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
 
@@ -2481,7 +2481,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             );
             not (is_deref_var)
           ) ffv in
-        if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
+        if (ffv!=[]) then report_warning no_pos (x_loc^"error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
       let mvars =  List.filter 

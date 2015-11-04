@@ -62,11 +62,6 @@ let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
 let is_hole_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n.[0] = '#'
 
-let is_inter_deference_spec_var sv = match sv with
-  | SpecVar (_,n,_) -> (
-      let re = Str.regexp "^deref_f_r_" in
-      Str.string_match re n 0
-    )
 
 (** An Hoa : Array whose elements are all of type typ.
      In principle, this is 1D array. To have higher 
@@ -15659,3 +15654,10 @@ let mkEqVars a1 a2 =
 let mk_is_base_ptr d rhs_ptr =
   BForm ((Gte (Var (d,no_pos),Var(rhs_ptr,no_pos), no_pos),None),None)
 
+let is_inter_deference_spec_var sv = match sv with
+  | SpecVar (_,n,_) -> (
+      let re = Str.regexp "^deref_f_r_" in
+      let flag = Str.string_match re n 0 in
+      let () = if flag then y_binfo_hp (add_str "deref_vars?" !print_sv) sv in
+      flag
+    )

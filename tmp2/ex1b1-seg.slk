@@ -1,0 +1,43 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i>=n & n>=0
+  or p::arr<_> * self::arr_seg<i+1,n> & p=self+i & i>=0 & i<n
+   inv BG([],i>=n & n>=0) | BG([p],i<n & i>=0 & p=self+i).
+
+
+
+/*
+# ex1a.slk
+
+pred arr_seg<i:int,n:int> ==
+  emp & i>=n & n>=0
+  or p::arr<_> * self::arr_seg<i+1,n> & p=self+i & i>=0 & i<n
+  inv_sat BG([],n>=0 & i>=0).
+
+(i>=n & n>=0
+ or p!=null & (..
+
+  baga over inv: [([], 0<=i & 0<=n),([p], i<n & 0<=i & p=i+self)]
+  baga over inv (unfolded): [([], 0<=i & 0<=n),([p], i<n & 0<=i & p=i+self)]
+
+# can we have better invariant?
+   inv BG([],i>=n & n>=0) | BG([p],i<n & i>=0 & p=self+i).
+
+
+
+=====================================
+
+# inv_sat are under-approx..
+
+Exception processed: Failure("\nInv Check: Fail.(View arr_seg:Under)**astsimp.ml#2206:")
+
+!!! **astsimp.ml#2108:baga_over_formula: 
+emp&0<=n & n<=i&{FLOW,(1,26)=__flow#E}[]
+!!! **astsimp.ml#2109:ctx:  
+emp&((n<=i & 0<=n) | ((i+self)!=null & 0<=n & n<=(1+i) & 0<=i & i<n))&
+
+
+*/
