@@ -179,10 +179,11 @@ let sig_of_lem_formula prog case f =
     Some (sig_of_formula prog self_var f)
   | _ -> None 
 
-let is_compatible_sig prog sig1 sig2 = 
+let is_compatible_sig ?(strict=true) prog sig1 sig2 = 
   let rec helper ss1 ss2 =
     match ss1, ss2 with
     | [], [] -> true
+    | [], _ -> not strict
     | s1::ss1, s2::ss2 ->
       if (eq_str s1 s2) || 
          (C.is_hp_name prog s1 && C.is_hp_name prog s2)
@@ -191,18 +192,20 @@ let is_compatible_sig prog sig1 sig2 =
     | _ -> false
   in helper sig1 sig2
 
-let is_compatible_lem prog lhs_sig lem =
-  let lem_f = 
+let is_compatible_lem prog lhs_sig rhs_root_sig lem =
+  let lem_ante, lem_conseq = 
     match lem.C.coercion_type with
-    | Right -> lem.C.coercion_body
-    | _ -> lem.C.coercion_head
+    | Right -> lem.C.coercion_body, lem.C.coercion_head
+    | _ -> lem.C.coercion_head, lem.C.coercion_body
   in
-  let lem_self = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem_f) in 
-  let lem_sig = sig_of_formula prog lem_self lem_f in
-  is_compatible_sig prog lhs_sig lem_sig
+  let lem_self = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem_ante) in 
+  let lem_ante_sig = sig_of_formula prog lem_self lem_ante in
+  let lem_conseq_sig = sig_of_formula prog lem_self lem_conseq in
+  (is_compatible_sig prog lhs_sig lem_ante_sig) &&
+  (is_compatible_sig ~strict:false prog rhs_root_sig lem_conseq_sig)
 
-let find_all_compatible_lem prog lhs_sig lems = 
-  List.find_all (is_compatible_lem prog lhs_sig) lems
+let find_all_compatible_lem prog lhs_sig rhs_root_sig lems = 
+  List.find_all (is_compatible_lem prog lhs_sig rhs_root_sig) lems
 
 (* first_ptr = true: stop at the first *)
 let look_up_reachable_ptrs_f prog f roots ptr_only first_ptr =
