@@ -921,6 +921,7 @@ let allow_lemma_norm = ref false
 let show_push_list = ref (None:string option)
 let show_push_list_rgx = ref (None:Str.regexp option)
 
+let old_unsound_no_progress = ref false
 let old_norm_w_coerc = ref false
 let old_keep_all_matchres = ref false
 
@@ -1307,6 +1308,7 @@ let old_lemma_unfold = ref false (* false *)
 let old_field_tag = ref false (* false *)
 let new_trace_classic = ref false (* false *)
 let old_pred_extn = ref false (* false *)
+let old_free_var_lhs = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)

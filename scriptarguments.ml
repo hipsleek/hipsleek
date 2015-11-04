@@ -345,6 +345,8 @@ let common_arguments = [
   ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
   ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");
   ("--old-pred-extn", Arg.Set Globals.old_pred_extn,"Use new pred extension approach");
+  ("--old-free-var-lhs", Arg.Set Globals.old_free_var_lhs,"Use free vars of LHS for fold lemma proving");
+  ("--new-free-var-lhs", Arg.Clear Globals.old_free_var_lhs,"Use guards/parameter as free vars of LHS in fold lemma proving");
   ("--old-field-tag", Arg.Set Globals.old_field_tag,"Add old field tags VAL_i, REC_i to data fields");
   ("--new-field-tag", Arg.Clear Globals.old_field_tag,"Do not old field tags VAL_i, REC_i to data fields");
   ("--old-lemma-unfold", Arg.Set Globals.old_lemma_unfold,"Do not use lemma single unfold");
@@ -368,6 +370,8 @@ let common_arguments = [
   ("--new-base-case-fold-hprel", Arg.Clear Globals.old_base_case_fold_hprel,"Use new  method of base_case_fold for inferring hprel");
   ("--old-fvars-as-impl-match", Arg.Set Globals.old_fvars_as_impl_match,"Use old method where free var is treated as implicit vars");
   ("--new-fvars-as-impl-match", Arg.Clear Globals.old_fvars_as_impl_match,"New method where free var are not treated as implicit vars");
+  ("--old-unsound-no-progress", Arg.Set Globals.old_unsound_no_progress,"Use old lemma proving without fold progress checking");
+  ("--new-unsound-no-progress", Arg.Clear Globals.old_unsound_no_progress,"Use new lemma proving with fold progress checking");
   ("--old-infer-heap", Arg.Set Globals.old_infer_heap,"Use old method of scheduling Infer_Heap");
   ("--new-infer-heap", Arg.Clear Globals.old_infer_heap,"Use new method of scheduling Infer_Heap");
   ("--old-mater-coercion", Arg.Set Globals.old_mater_coercion,"Use Old Mater Coercion Selection");
@@ -1016,8 +1020,8 @@ let common_arguments = [
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
   ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
-  ("--sa-en-sep-pure-fields", Arg.Set Globals.sep_pure_fields, "separate pure fields in unknown heap predicates");
-  ("--sa-dis-sep-pure-fields", Arg.Clear Globals.sep_pure_fields, "combine pure fields in unknown heap predicates");
+  ("--en-sep-pure-fields", Arg.Set Globals.sep_pure_fields, "separate pure fields in unknown heap predicates");
+  ("--dis-sep-pure-fields", Arg.Clear Globals.sep_pure_fields, "combine pure fields in unknown heap predicates");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
   ("--en-syn-mode", Arg.Set Globals.syntatic_mode, "check two formulas are equivalent syntatically. default is semantic checking via sleek");

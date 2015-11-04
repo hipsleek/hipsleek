@@ -4399,7 +4399,7 @@ let lemma_soundness =
      | Some c2 -> progress || not(coer==c2) in
      if not(flag) then 
        self # logging "Not Safe for Lemma";
-     flag
+     !Globals.old_unsound_no_progress || flag
    method end_lemma_proving loc = 
      self # logging ("End Lemma Proving "^loc);
      lemma <- None;

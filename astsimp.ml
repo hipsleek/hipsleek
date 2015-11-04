@@ -4332,8 +4332,10 @@ and trans_one_coercion (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coer
 (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
 (* Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer *)
 
+
 and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
+  let coer = I.swap_lhs_rhs coer in
   if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
     (* complex_lhs <- rhs    ==> rhs    -> complex_lhs                    *)
     (* complex_lhs <-> rhs   ==> complex_lhs -> rhs && rhs -> complex_lhs *)
@@ -4581,15 +4583,21 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   (*   true (\*check_pre*\) in *)
   (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
   (**********moved END*************)
-  let () = y_tinfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
-  let () = y_tinfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
+  let () = y_binfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
+  let () = y_binfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
+  let () = y_binfo_hp (add_str "fnames" (pr_list pr_id)) fnames in
   let (n_tl,c_head_norm) = x_add trans_head new_head (if false then l_fnames else fnames) quant n_tl in
+  (* below is failing for bugs/ex64d1.slk *)
+  (* !!!:0: 0: **astsimp.ml#4584:l_fnames:[self,nnn] - free var of lhs*)
+  (* !!!:0: 0: **astsimp.ml#4585:rhs_fnames:[self] - free var of rhs *)
+  (* !!!:0: 0: **astsimp.ml#4586:fnames:[self] - guard + free_rhs *)
   let c_head_norm =  CF.add_original c_head_norm false in
   let c_head_norm_rlem = if coer_type = I.Equiv then
       let () = y_tinfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
       let () = y_tinfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
       let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] no_pos in
-      snd (x_add trans_head new_head ((* rhs_fnames *)  l_fnames) quant n_tl)
+      let lhs_vars = if !Globals.old_free_var_lhs then l_fnames else fnames in
+      snd (x_add trans_head new_head (lhs_vars (* rhs_fnames *)  (* l_fnames *)) quant n_tl)
     else c_head_norm in
   (* free vars in RHS but not LHS *)
   let hrels = List.map (fun (a,_) -> a) (CF.get_HRels_f c_rhs ) in

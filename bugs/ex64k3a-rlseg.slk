@@ -1,0 +1,54 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+// fail <==
+
+//lemma_safe "two" self::rlseg<p1> * p1::rlseg<p> <- self::rlseg<p>.
+// fail as rhs is weaker
+
+//lemma_safe "two2" self::rlseg<p> -> self::rlseg<p1> *  p1::rlseg<p>  .
+
+/*
+# ex64k3.slk -dre "trans_head"
+
+check_coercion_struc@1
+check_coercion_struc inp1 :Lemma "one":  self::rlseg<p1>@M * p1::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]==> self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]
+ head match:rlseg
+ body view:rlseg
+ body pred_list:[rlseg]
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head:  self::rlseg<p1>@M * p1::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]
+ head_norm:  (exists p_39,p1: self::rlseg<p1>@M * p1::rlseg<p_39>@M&p_39=p&
+{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   (exists p_35: self::rlseg<p_35>@M&p_35=p&{FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_SAFE
+ coercion_fold: None
+ coercion_lhs_sig: Some([rlseg,rlseg])
+
+check_coercion_struc inp2 : (exists p_39,p1: self::rlseg<p1>@M * p1::rlseg<p_39>@M&p_39=p&
+{FLOW,(20,21)=__norm#E}[])
+check_coercion_struc inp3 : EBase 
+   (exists p_35: self::rlseg<p_35>@M&p_35=p&{FLOW,(20,21)=__norm#E}[])
+check_coercion_struc@1 EXIT:false
+
+
+
+
+*/

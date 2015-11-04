@@ -1887,7 +1887,7 @@ Unexpected result with : lemmas/lseg_complex.slk (failed check(s): {E1#Valid},{E
 pls2nus@loris-laptop:~/hg/sl_imm$ ./sleek examples/working/sleek/fracperm/split-combine.slk --en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings
 
 Total number of errors: 10 in files:
-  infer/infer1.slk({E9#Fail}) 
+  infer/infer1.slk({E9#Fail})  (@pure_field always)
  lemmas/rlseg.slk({L2#Valid},{L3#Valid}) 
  lemmas/ll.slk({L3#Fail},{L9#Valid}) 
  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
@@ -1898,6 +1898,25 @@ Total number of errors: 10 in files:
  veribsync/barrier-static.slk(no result  for {E}) 
  veribsync/barrier-dynamic2.slk(no result  for {E}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+
+ infer/infer1.slk({E9#Fail}) 
+ lemmas/rlseg.slk({L2#Valid},{L3#Valid}) 
+ lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk(no result for {L}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) veribsync/bperm-split-combine.slk({E5#Valid},{E6#Valid}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+!!! WARNING: for "no result" errors please check the script's options, provers' 
+
+infer/infer1.slk({E9#Fail}) 
+lemmas/dseg1.slk({L1#Valid}) 
+
+# complex lhs? 
+lemmas/rlseg.slk(L3 is )
+lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+
+--old-unsound-no-progress
+  infer/infer1.slk({E3#Valid},{E4#Valid}) infer/infer5.slk({E4#Valid}) infer/infer7.slk({E10#Valid}) infer/infer8.slk({E1#Valid},{E29#Valid}) infer/infer13.slk({E3#Valid},{E5#Valid}) lemmas/rlseg.slk({L3#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) veribsync/bperm-split-combine.slk({E5#Valid},{E6#Valid}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+
 ====================================================================
 ====================================================================
 ====================================================================

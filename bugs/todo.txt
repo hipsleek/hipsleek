@@ -2231,7 +2231,34 @@ Entail (2) : Valid.
 [[ InferUnfold  ==>  InferHeap]]
 
 ===================================================================
+# ex64d1.slk (fixed with --new-free-var-lhs)
+
+Wrong
+=====
+Coercion_case: Simple
+ head_norm:  (exists n_43: self::ll_s<n_43>@M&n_43=n&{FLOW,(20,21)=__norm#E}[])
+
+Correct
+=======
+ head_norm:  (exists n: self::ll_s<n>@M&{FLOW,(20,21)=__norm#E}[])
+
 ===================================================================
+# ex64k1b.slk
+
+Is this unsound?
+
+# swap rhs <-> lhs
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p> & p!=null.
+
+!!! **iast.ml#3984:swap_lhs_rhs:rhs_pure:p != null
+!!! **astsimp.ml#4586:l_fnames:[self,p]
+!!! **astsimp.ml#4587:rhs_fnames:[self,p1,p]
+
+# Is this a correct way of handling universal guards?
+
+check_coercion_struc inp1 :Lemma "one_left_right":  self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists p1_53: self::rlseg<p1_53>@M * p1_53::rlseg<p>@M&p!=null&
+
 ===================================================================
 ===================================================================
 ===================================================================

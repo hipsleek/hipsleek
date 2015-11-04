@@ -440,7 +440,7 @@ let check_left_coercion coer (cprog: C.prog_decl) =
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;
-  let (r,ctx) = check_coercion_struc coer ent_lhs ent_rhs cprog in
+  let (r,ctx) = x_add check_coercion_struc coer ent_lhs ent_rhs cprog in
   pr_debug (add_str "Verify Lemma success? :" string_of_bool) r no_pos;
   (r,ctx)
 
@@ -465,7 +465,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;
-  let (r,ctx) = check_coercion_struc coer ent_lhs ent_rhs cprog in
+  let (r,ctx) = x_add check_coercion_struc coer ent_lhs ent_rhs cprog in
   pr_debug (add_str "Verify Lemma success? :" string_of_bool) r no_pos;
   (r,ctx)
 
@@ -539,7 +539,7 @@ let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_
           let () = (
             if valid then print_lemma_entail_result ~force_pr:force_pr valid residue num_id
             else
-              let force_print = (force_pr && !Globals.lemma_ep) || !Globals.lemma_ep_verbose in
+              let force_print = (force_pr ||  !Globals.lemma_ep) || !Globals.lemma_ep_verbose in
               if force_print then Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos;
               let typ1_str = Cprinter.string_of_coercion_type typ1 in
               let typ2_str = Cprinter.string_of_coercion_type typ2 in

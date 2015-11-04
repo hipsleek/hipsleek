@@ -1,0 +1,35 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+HeapPred H2(node x, int n).
+
+// (3)
+infer [H1]  H1(y) |- y::node<a,b> * b::node<c,d>.
+print residue.
+
+
+/*
+# ex64m.slk --sa-en-sep-pure-fields
+
+// (4)
+infer [H1]  H1(y) |- y::node<a,b> * b::ll<m>.
+print residue.
+
+# infer_unfold not working?
+
+!!! **inferHP.ml#1459:root posn (H1):0
+!!! **solver.ml#12061:do_infer_heap:entry:rhs: y::node<a,b>@M
+!!! **inferHP.ml#243:Globals.infer_const_obj # is_pure_field :false
+!!! **inferHP.ml#244: es.CF.es_infer_obj # is_pure_field_all:false
+!!! **inferHP.ml#266:args12:[(b_42,@I)]
+!!! **inferHP.ml#267:niu_svl_ni_total:[]
+!!! **inferHP.ml#275:is_inf_pure_field:false
+!
+*/
