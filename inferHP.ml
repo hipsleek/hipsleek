@@ -271,7 +271,16 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
         (* else *)
-          if !Globals.sep_pure_fields then
+          if check_is_pure_field () && not !Globals.sep_pure_fields then
+            let i_args12, ni_args12 = List.partition (fun (_, k) -> k == NI) args12 in
+            List.map (fun ((arg, knd) as sv) ->
+              let data_ni_svl = 
+                if is_view then []
+                else ni_args12
+              in
+              let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
+              (is_pre, fwd_svl)) i_args12
+          else
             List.map (fun ((arg, knd) as sv) ->
               let data_ni_svl = 
                 if is_view then []
@@ -285,15 +294,6 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
               in
               let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
               (is_pre, fwd_svl)) args12
-          else
-            let i_args12, ni_args12 = List.partition (fun (_, k) -> k == NI) args12 in
-            List.map (fun ((arg, knd) as sv) ->
-              let data_ni_svl = 
-                if is_view then []
-                else ni_args12
-              in
-              let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
-              (is_pre, fwd_svl)) i_args12
       in
       (* str-inf/ex16c5b(8) do not need extra_clls *)
       (*generate extra hp for cll*)
