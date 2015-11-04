@@ -1854,11 +1854,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
           y_tinfo_hp (add_str ("Sig of lem " ^ (lem.C.coercion_name)) (pr_pair pr_id_list pr_id_list)) 
             (CFU.sig_of_lem prog lem)) comp_lems in
       let lhs_root = x_add CFU.get_node_var prog lhs_node in
+      let rhs_root = x_add CFU.get_node_var prog rhs_node in
       let lhs_sig = CFU.sig_of_formula prog lhs_root (CF.mkBase_simp lhs_h lhs_p) in
+      let rhs_root_sig = CFU.sig_of_formula prog rhs_root (CF.formula_of_heap rhs_node no_pos) in
       let () = y_tinfo_hp (add_str "lhs_root" !CP.print_sv) lhs_root in
-      let () = y_tinfo_hp (add_str "lhs_sig" (pr_list idf)) lhs_sig in
-      let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig comp_lems in
-      let () = y_tinfo_hp (add_str "applicable_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
+      let applicable_lems = CFU.find_all_compatible_lem prog lhs_sig rhs_root_sig comp_lems in
+      let () = if not(applicable_lems==[]) then 
+          let () = y_binfo_hp (add_str "lhs_p" !MCP.print_mix_formula) lhs_p in
+          let () = y_binfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
+          let () = y_binfo_hp (add_str "lhs_sig" (pr_list idf)) lhs_sig in
+          let () = y_binfo_hp (add_str "rhs_root_sig" (pr_list idf)) rhs_root_sig in
+          let () = y_binfo_hp (add_str "applicable_complex_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
+          () in
       let lem_act = List.map (fun lem -> (2, M_lemma (m_res, Some lem, 0))) applicable_lems in
       let () = if not (is_empty lem_act) then y_tinfo_hp (add_str "lem_act" (pr_list pr_act)) lem_act in
       let act = (match tup (* lhs_node, rhs_node *) with
