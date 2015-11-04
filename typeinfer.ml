@@ -599,16 +599,16 @@ and gather_type_info_exp_x prog a0 tlist et =
         fst(List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl)
       with _ -> "" in
     (* let (tmp1,tmp2)=nt in            *)
-    let () = x_binfo_hp (add_str "add(et)" string_of_typ) et no_pos in
-    let () = x_binfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
+    let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
+    let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let () = x_binfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
-    let () = x_binfo_hp (add_str "t1" string_of_typ) t1 no_pos in
+    let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
+    let () = x_tinfo_hp (add_str "t1" string_of_typ) t1 no_pos in
     let new_et2 = if is_node_typ t1 && !Globals.ptr_arith_flag 
       then Int else new_et in
     let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et2 in
-    let () = x_binfo_hp (add_str "a1" !IP.print_exp) a2 no_pos in
-    let () = x_binfo_hp (add_str "t2" string_of_typ) t2 no_pos in
+    let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a2 no_pos in
+    let () = x_tinfo_hp (add_str "t2" string_of_typ) t2 no_pos in
     let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
@@ -1420,7 +1420,7 @@ and get_var_type_x fvs v : (typ * bool) =
   let warning_if_non_empty lst tlst =
     if lst != [] then
       let () = x_binfo_pp "WARNING : free_vars_list contains duplicates" no_pos in
-      x_binfo_hp (add_str "fvs" Cprinter.string_of_typed_spec_var_list) tlst no_pos
+      x_tinfo_hp (add_str "fvs" Cprinter.string_of_typed_spec_var_list) tlst no_pos
   in
   (* let () = x_tinfo_hp (add_str "fvs" !CP.print_svl) fvs no_pos in *)
   (* let res_list = *)

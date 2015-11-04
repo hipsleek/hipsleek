@@ -225,6 +225,41 @@ date:        Tue Oct 27 08:24:08 2015 +0800
 summary:     to reduce ptr matching
 
 =================================================================
+# ex1e2 --trace-exc
+
+!!! **context.ml#741:TODO: rename root:x
+Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: matching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Unfold 0 ==>  COND ==>  NothingToDomatching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None]]
+ CEX:false
+
 =================================================================
 =================================================================
 =================================================================

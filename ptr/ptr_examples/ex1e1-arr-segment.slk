@@ -1,0 +1,95 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i>=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=0 & i>=0.
+
+
+checkentail x::arr_seg<i,n> & n<0 |- false.
+expect Valid.
+
+
+checkentail x::arr_seg<i,n> & i<n & y=x+i |- y::arr<_>.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n> & i<n& y=x+i & z=y+1 |- y::arr<_> * z::arr<_>.
+print residue.
+expect Fail.
+
+checkentail x::arr_seg<i,n> & n-i>=2 & y=x+i & z=y+1 
+   |- y::arr<_> * z::arr<_>.
+print residue.
+expect Valid.
+
+/*
+# ex1e1 --trace-exc
+
+(==mcpure.ml#2288==)
+compute_view_x_formula@1
+compute_view_x_formula inp1 : view arr_seg{}[]<i:int,n:int>= 
+  view_domains: 
+   view arr_seg<i:int,n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&n<=i & 0<=n&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[x; Anon_11](* lbl: *){2}->(exists n_14,
+            flted_7_13: (* lbl: *){2}->x::arr<Anon_11>@M * 
+                                       self::arr_seg<flted_7_13,n_14>@M&
+            flted_7_13=1+i & x=i+self & n_14=n&{FLOW,(1,26)=__flow#E}[])
+      
+  view vars: i,n
+  cont vars: n
+  unstructured formula: 
+    (* lbl: *){1}->emp&n<=i & 0<=n&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){2}->(exists n_14,flted_7_13,x,
+       Anon_11: (* lbl: *){2}->x::arr<Anon_11>@M * 
+                               self::arr_seg<flted_7_13,n_14>@M&
+       flted_7_13=1+i & x=i+self & n_14=n&{FLOW,(1,26)=__flow#E}[])
+  inv: 0<=n & 0<=i
+  
+  baga over inv: [([], 0<=n & 0<=i)]
+  baga over inv (unfolded): [([], 0<=n & 0<=i)]
+  
+  xform: 0<=n & 0<=i
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: arr
+  
+  type_of_self: 
+  None
+  actual_root: 
+  Some((x, x=i+self))self preds: [arr_seg]
+  
+  raw base case: 
+  (* lbl: *){1}->emp&n<=i & 0<=n&{FLOW,(1,26)=__flow#E}[]
+  
+compute_view_x_formula inp2 :1
+compute_view_x_formula@1 EXIT ExceptionFailure("\nInv Check: Fail.(View arr_seg:Over)**astsimp.ml#2206:")Occurred!
+
+ERROR: at ex1e1-arr-segment.slk_5:5_5:25
+Message: 
+Inv Check: Fail.(View arr_seg:Over)**astsimp.ml#2206:
+Exception(compute_view_x_formula):Failure("\nInv Check: Fail.(View arr_seg:Over)**astsimp.ml#2206:")
+Exception():Failure("\nInv Check: Fail.(View arr_seg:Over)**astsimp.ml#2206:")
+Exception(norm_cview_decls):Failure("\nInv Check: Fail.(View arr_seg:Over)**astsimp.ml#2206:")
+Exception(convert_data_and_pred_to_cast):Failure("\nInv Check: Fail.(View arr_seg:Over)**astsimp.ml#2206:")
+
+
+--inv-baga
+!!! **WARNING****fixUtil.ml#143:WARNING: TODO fixpt check
+!!! **fixUtil.ml#148:User supplied is unsound: 0<=n & 0<=i
+!!! **fixUtil.ml#149:Using fixcalc version: true
+!!! input = F1:={[n,i]: (0<=n && n<=i || 0<=n && n<=i+2)};
+F2:={[n,i]: (0<=n && n<=i || 0<=n && n<=i+3)};
+F2W:=widen(F1,F2,SimHeur);
+F2W;Exception(parse_fix):Loc.Exc_located(_, _)
+Exception(widen):Loc.Exc_located(_, _)
+
+
+*/
+

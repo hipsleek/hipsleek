@@ -2105,8 +2105,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
         | Some disj -> true,CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
-      let () = x_tinfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
-      let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let () = x_binfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
+      let () = x_binfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
 
