@@ -271,7 +271,9 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
         (* else *)
-          if check_is_pure_field () && not !Globals.sep_pure_fields then
+          let is_inf_pure_field = check_is_pure_field () in
+          let () = y_binfo_hp (add_str "is_inf_pure_field" string_of_bool) is_inf_pure_field in
+          if (* is_inf_pure_field && *) not !Globals.sep_pure_fields then
             let i_args12, ni_args12 = List.partition (fun (_, k) -> k == NI) args12 in
             List.map (fun ((arg, knd) as sv) ->
               let data_ni_svl = 

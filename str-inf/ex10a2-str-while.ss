@@ -9,7 +9,7 @@ WFSegN<p, n> ==
 
 WSS<p> ==
   self::WFSeg<q> * q::char_star<0, p> // * p::MEM<> 
-  inv self!=null;
+  inv true; // self!=null; // Why self!=null cannot be proven?
   
 WFSeg<p> ==
   self = p
@@ -44,17 +44,16 @@ void loop (ref char_star s)
 
   infer [
     //@shape_post,
-    //P
-    Q
+    P
     ,@pure_field,@classic
-    //,@size
+    ,@size
   ]
-  //requires P(s)
+  requires P(s)
   //requires true
-  //ensures true;
+  ensures true;
   
-  requires s::WSS<p>
-  ensures Q(s, s');
+  //requires s::WSS<p>
+  //ensures Q(s, s');
 
   //requires s::WFSegN<q, n> * q::char_star<0, p>
   //requires s::WSSN<p, n> * p::MEM<>
