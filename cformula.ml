@@ -5969,13 +5969,18 @@ and get_ptrs (f: h_formula): CP.spec_var list = match f with
     -> (get_ptrs h1)@(get_ptrs h2)
   | _ -> []
 
-and get_ptrs_w_args_f ?(en_pure_field=false) (f: formula)=
+and get_ptrs_w_args_f_x ?(en_pure_field=false) (f: formula)=
   match f with
   | Base fb ->
     CP.remove_dups_svl (get_ptrs_w_args ~en_pure_field:en_pure_field fb.formula_base_heap)
   | Exists fe ->
     CP.remove_dups_svl (get_ptrs_w_args ~en_pure_field:en_pure_field fe.formula_exists_heap)
   | _ -> report_error no_pos "CF.get_ptrs_w_args_f: not handle yet"
+
+and get_ptrs_w_args_f ?(en_pure_field=false) (f: formula) =
+  let pr = !print_formula in
+  Debug.no_2 "get_ptrs_w_args_f" string_of_bool pr !CP.print_svl 
+    (fun _ _ -> get_ptrs_w_args_f_x ~en_pure_field:en_pure_field f) en_pure_field f
 
 and get_ptrs_w_args ?(en_pure_field=false) (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c;

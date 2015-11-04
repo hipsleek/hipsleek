@@ -15,12 +15,14 @@ infer [H1,@pure_field]  H1(y) |- (exists a: y::node<a,null> & a>0).
 print residue.
 expect Valid.
 
+/*
 // (9)
 infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
 print residue.
 expect Fail.
 // It seems like pure field is always inferred;
 // can we make it selective?
+*/
 
 /*
 # bugs/ex64c.slk

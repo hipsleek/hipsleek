@@ -2674,6 +2674,12 @@ let check_is_classic_local obj =
 
 let check_is_classic () = check_is_classic_local infer_const_obj
 
+let check_is_pure_field_local obj = 
+  let r = obj (* infer_const_obj *) # get INF_PURE_FIELD in
+  r
+
+let check_is_pure_field () = check_is_pure_field_local infer_const_obj
+
 type 'a regex_list = 
   | REGEX_STAR
   | REGEX_LIST of 'a list
