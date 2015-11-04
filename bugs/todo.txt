@@ -2266,7 +2266,7 @@ check_coercion_struc inp1 :Lemma "one_left_right":  self::rlseg<p>@M&{FLOW,(20,2
 infer [H1]  H1(y) |- y::node<a,b> * b::ll<m>.
 print residue.
 
-# infer_unfold not working?
+# infer_unfold not working? (FIXED)
 
 # match not recorded..
 
@@ -2294,7 +2294,7 @@ do_match inp5 :[]
 !!! **inferHP.ml#267:niu_svl_ni_total:[]
 !!! **inferHP.ml#275:is_inf_pure_field:false
 ===================================================================
-# bugs/ex64m1.slk
+# bugs/ex64m1.slk (DONE)
 
 # Why is do_match not captured in trace and -dd-steps by infer_unfold?
 
@@ -2324,7 +2324,7 @@ do_match inp5 :[]
 [[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
  CEX:false
 ===================================================================
-# ex64k8.slk
+# ex64k8.slk (FIXED)
 
 # why old system  (in default) can prove below?
 
@@ -2356,10 +2356,51 @@ lemma_safe "three"
    {FLOW,(20,21)=__norm#E}[])
  coercion_fold: None
 
-====================================================================
 ===================================================================
+# ex64k1d.slk
+
+@ unsound?
+
+# do not move p!=null to opposite site..
+  as this is unsound, esp for free expressions
+
+# swap rhs <-> lhs
+
+ self::rlseg<p> & p!=null
+  <- 
+    self::rlseg<p1>*p1::rlseg<p> 
+
+For:
+ x::lseg<n,p> & a,b>=0 <-- x::lseg<a,q> * q::lseg<b,p>
+we converted to:
+ x::lseg<n,p>  <-- x::lseg<a,q> * q::lseg<b,p> & n=a+b
+which seems OK as a weakening process..
+
+Why are the two different?
+If we do such weakening, we should give a warning as the
+new lemma is weaker than the declared one.
 ===================================================================
+# ex64k9b.slk
+
+lemma_safe "one" 
+  self::node<_,q>*q::rlseg<p>
+  <->
+  self::rlseg<p1>*p1::node<_,p>
+.
+
+# Why so long, and why need breaking lemma?
+
+
+[[ Match(self_one_left_right,self_one_left_right) ==>  SEARCH ==>  (Lemma <== one_left_right(q_679,q_679)) ==>  Match(q_679,q_679) ==>  Fold ==>  Match(p1_680,p1_680) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Match(self_one_left_right,self_one_left_right) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Fold ==>  Match(self_one_left,self_one_left) ==>  SEARCH ==>  (Lemma ==> one_left(q_502,q_505)) ==> (Complex: one_left) ==>  SEARCH ==>  (Lemma <== one_left_right(q_502,q_505)) ==>  Match(q_502,q_505) ==>  Fold ==>  Match(p1_596,p1) ==> ||OR|| ==>  Fold ==>  Match(self_one_left,p1)]]
 ===================================================================
+# ex64k9c.slk
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::node<_,p>
+  <->
+  self::node<_,q>*q::rlseg<p>
+
+// this lemma direction is not as good as the other (see ex64k9b)
 ===================================================================
 ===================================================================
 ===================================================================

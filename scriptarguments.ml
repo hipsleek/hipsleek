@@ -345,6 +345,8 @@ let common_arguments = [
   ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
   ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");
   ("--old-pred-extn", Arg.Set Globals.old_pred_extn,"Use new pred extension approach");
+  ("--old-lemma-switch", Arg.Set Globals.old_lemma_switch,"Use old lemma switching approach");
+  ("--new-lemma-switch", Arg.Clear Globals.old_lemma_switch,"Use new lemma switching approach");
   ("--old-free-var-lhs", Arg.Set Globals.old_free_var_lhs,"Use free vars of LHS for fold lemma proving");
   ("--new-free-var-lhs", Arg.Clear Globals.old_free_var_lhs,"Use guards/parameter as free vars of LHS in fold lemma proving");
   ("--old-field-tag", Arg.Set Globals.old_field_tag,"Add old field tags VAL_i, REC_i to data fields");

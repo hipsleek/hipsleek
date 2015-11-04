@@ -2543,16 +2543,16 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             match n_un_str with
             | [(f,_)] ->
               begin try
-                let (h,p,_,_,_,_) = CF.split_components f in
-                let p = MCP.pure_of_mix p in
-                let emap = Infer.get_eqset p in
-                let (_,l_args,l_node_name,_,_,_,_,_) = x_add_1 CF.get_args_of_node h in
-                y_tinfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
-                y_tinfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
-                y_tinfo_hp (add_str "body" (!CF.print_h_formula)) h;
-                y_tinfo_hp (add_str "pure" (!CP.print_formula)) p;
-                y_tinfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
-              with _ -> () end
+                  let (h,p,_,_,_,_) = CF.split_components f in
+                  let p = MCP.pure_of_mix p in
+                  let emap = Infer.get_eqset p in
+                  let (_,l_args,l_node_name,_,_,_,_,_) = x_add_1 CF.get_args_of_node h in
+                  y_tinfo_hp (add_str "l_args" (!CP.print_svl)) l_args;
+                  y_tinfo_hp (add_str "vars" (!CP.print_svl)) view_sv;
+                  y_tinfo_hp (add_str "body" (!CF.print_h_formula)) h;
+                  y_tinfo_hp (add_str "pure" (!CP.print_formula)) p;
+                  y_tinfo_hp (add_str "view_pt_by_self" (pr_list pr_id)) sf 
+                with _ -> () end
             | _ -> ()
           end
       in
@@ -2651,7 +2651,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_data_name = data_name;
         C.view_formula = cf;
         C.view_fixcalc = None;
- 
+
         C.view_user_inv = user_inv;
         C.view_x_formula = user_x_inv;
         C.view_baga_inv = vbc_i;
@@ -4332,33 +4332,68 @@ and trans_one_coercion (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coer
 (* let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in *)
 (* Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer *)
 
+(*
+     complex <-- simple & true
+     simple & true --> complex (simple lemma)
 
+     complex <-- simple & p
+     simple & p --> complex (complex lemma)
+
+     complex <-- simple & p
+     simple & p --> complex (complex lemma)
+
+     complex --> simple & true  (Left)
+     ===> simple <- complex
+*)
 and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
-  let coer = I.swap_lhs_rhs coer in (* overlaps with below *)
-  if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
+  let change_dir coer head body dir =
+    let new_coer = { coer with I.coercion_head = body; I.coercion_body = head; 
+                               I.coercion_type = I.swap_dir dir;
+                               I.coercion_type_orig = Some dir} in
+    let prf = !IF.print_formula in
+    let pr_dir = Cprinter.string_of_coercion_type in
+    let pr = pr_pair prf pr_dir in
+    let () = y_binfo_hp (add_str "Switching Lemma" pr) (head,dir) in
+    let () = y_binfo_hp (add_str "To" pr) (body,new_coer.I.coercion_type) in
+    new_coer in
+  let swap_lhs_rhs coer =
+    let body = coer.I.coercion_body in
+    let head = coer.I.coercion_head in
+    let dir = coer.I.coercion_type in
+    let (hf,_,_,_,_) = IF.split_components head in
+    let new_coer = match hf with
+      | IF.HeapNode _ | IF.HeapNode2 _ -> coer
+      | _ ->
+        begin
+          let (hf,pf,_,_,_) = IF.split_components body in
+          match hf with
+          | IF.HeapNode _ | IF.HeapNode2 _ -> 
+            if Ipure.isConstTrue pf then
+              (* if dir==I.Right then coer *)
+              (* else *) change_dir coer head body dir
+            else 
+            if dir==I.Right then change_dir coer head body dir
+            else coer
+          | _ -> coer
+        end in 
+    trans_one_coercion_x prog cprog new_coer
+  in
+  let old_switch coer =
     (* complex_lhs <- rhs    ==> rhs    -> complex_lhs                    *)
     (* complex_lhs <-> rhs   ==> complex_lhs -> rhs && rhs -> complex_lhs *)
-    let () = y_binfo_pp "inside lemma switching.." in
-    let coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
-    let coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in
+    let  coercion_lhs_type = (IF.type_of_formula coer.I.coercion_head) in
+    (* let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in *)
     if coercion_lhs_type == Complex then 
       if coer.I.coercion_type == I.Right then
-        let () = Debug.info_pprint ("WARNING: changing lemma " ^ coer.I.coercion_name ^ " from <- to ->") no_pos in
+        let () = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
         let new_coer = {coer with I.coercion_head = coer.I.coercion_body;
                                   I.coercion_body = coer.I.coercion_head;
                                   I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
                                   I.coercion_type = I.Left} in
         trans_one_coercion_x prog cprog new_coer
-      else if coer.I.coercion_type == I.Left && coercion_rhs_type == Simple then
-        let () = Debug.info_pprint ("WARNING: changing lemma " ^ coer.I.coercion_name ^ " from -> to <-") no_pos in
-        let new_coer = {coer with I.coercion_head = coer.I.coercion_body;
-                                  I.coercion_body = coer.I.coercion_head;
-                                  I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
-                                  I.coercion_type = I.Right} in
-        trans_one_coercion_x prog cprog new_coer
       else if (coer.I.coercion_type == I.Equiv) then 
-        let () = Debug.info_pprint ("WARNING: split equiv lemma " ^ coer.I.coercion_name ^ " into two -> lemmas") no_pos in
+        let () = Debug.info_pprint "WARNING : split equiv lemma into two -> lemmas " no_pos in
         let new_coer1 = {coer with I.coercion_head = coer.I.coercion_head;
                                    I.coercion_body = coer.I.coercion_body;
                                    I.coercion_type_orig = Some I.Left; (* store origin coercion type *)
@@ -4372,7 +4407,13 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
         (cdl11@cdl21, cdl12@cdl22)
       else trans_one_coercion_x prog cprog coer
     else trans_one_coercion_x prog cprog coer
-  else trans_one_coercion_x prog cprog coer
+  in
+  if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
+    let () = y_binfo_pp "inside lemma switching.." in
+    if !Globals.old_lemma_switch then old_switch coer
+    else swap_lhs_rhs coer
+  else
+    trans_one_coercion_x prog cprog coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :
@@ -4660,7 +4701,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
                      C.coercion_kind = coer.I.coercion_kind;
                      C.coercion_origin = coer.I.coercion_origin;
                      C.coercion_lhs_sig = lhs_sig;
-                  } in
+                   } in
       let change_univ x = change_univ c_head_norm_rlem x in
       match coer_type with
       | I.Left -> 
@@ -7241,7 +7282,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
             if b.IF.formula_inf_obj # is_size then
               let hpt_inf_vars = List.filter (fun sv -> (CP.is_node_typ sv) || (CP.is_hp_typ sv)) new_ivs in
               List.iter (fun iv -> b.IF.formula_inf_obj # 
-                add_infer_extn_lst (CP.name_of_spec_var iv) ["size"]) hpt_inf_vars
+                                     add_infer_extn_lst (CP.name_of_spec_var iv) ["size"]) hpt_inf_vars
           in
           (n_tl, CF.EInfer {
               (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)
@@ -7905,7 +7946,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   if (vdef.I.view_is_prim) then UNK
                   else if vdef.I.view_data_name = "" then 
                     (fill_view_param_types vdef;
-                    Named vdef.I.view_data_name)
+                     Named vdef.I.view_data_name)
                   else Named vdef.I.view_data_name 
               ) in
               let new_v = CP.SpecVar (typ, v, p) in
@@ -10352,8 +10393,8 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
     let sspec = x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b (f.C.proc_stk_of_static_specs # top) in
     let () = f.C.proc_stk_of_static_specs # push_pr x_loc sspec in
     { f with 
-     (* C.proc_static_specs= x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_static_specs; *)
-     C.proc_dynamic_specs= x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_dynamic_specs;
+      (* C.proc_static_specs= x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_static_specs; *)
+      C.proc_dynamic_specs= x_add Cvutil.prune_pred_struc prog_barriers_pruned simp_b f.C.proc_dynamic_specs;
     } in
   let procs = C.proc_decls_map proc_spec prog_barriers_pruned.C.new_proc_decls in 
   let l_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned ) (Lem_store.all_lemma # get_left_coercion) (*prog_barriers_pruned.C.prog_left_coercions*)) in

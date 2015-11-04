@@ -8,7 +8,11 @@ data node {
 pred rlseg<p:node> == self=p
   or self::node<_,q> * q::rlseg<p>.
 
-lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p> & p!=null.
+//lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <- self::rlseg<p> & p!=null.
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> -> self::rlseg<p> & p!=null.
+
+
 // fail <==
 
 //lemma_safe "one1"  self::rlseg<p> <-> self::rlseg<p1>*p1::rlseg<p>.

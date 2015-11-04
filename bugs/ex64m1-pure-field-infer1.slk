@@ -12,7 +12,7 @@ HeapPred H2(node x, int n).
 HeapPred H3(node x, node@NI z).
 
 // (3)
-infer [H1]  H1(y) |- y::node<a,null>.
+infer [H1]  H1(y) |- y::node<a,q>*q::node<b,null>.
 print residue.
 
 /*

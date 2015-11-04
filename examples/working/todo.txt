@@ -1901,11 +1901,15 @@ Total number of errors: 10 in files:
 
 
 Total number of errors: 8 in files:
-  lemmas/rlseg.slk({L3#Valid}) 
+  //lemmas/rlseg.slk({L3#Valid}) 
   lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
   lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
   lemmas/dseg1.slk({L1#Valid}) 
-  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+
+ lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+ lemmas/dseg1.slk({L1#Valid}) 
+ lemmas/lseg_complex.slk({E2#Valid}) 
 
 ====================================================================
 ====================================================================

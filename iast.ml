@@ -292,9 +292,9 @@ and coercion_decl_list = {
 }
 
 and coercion_type = 
-  | Left
+  | Left (* ==> *)
   | Equiv
-  | Right
+  | Right (* <== *)
 
 
 
@@ -3978,23 +3978,4 @@ let swap_dir ct =
   | Right -> Left
   | Equiv -> Equiv
 
-let swap_lhs_rhs coer =
-  let body = coer.coercion_body in
-  let head = coer.coercion_head in
-  let (hf,_,_,_,_) = F.split_components head in
-  match hf with
-  | HeapNode _ | HeapNode2 _ -> coer
-  | _ ->
-    begin
-      let (hf,pf,_,_,_) = F.split_components body in
- 
-      match hf with
-      | HeapNode _ | HeapNode2 _ -> 
-        if Ipure.isConstTrue pf then
-          { coer with coercion_head = body; coercion_body = head; coercion_type = swap_dir coer.coercion_type}
-        else 
-          let () = y_binfo_hp (add_str "no swap_lhs_rhs:rhs_pure" !Ipure.print_formula) pf in
-          coer
-      | _ -> coer
-    end
 
