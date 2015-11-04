@@ -12517,7 +12517,7 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
 
 and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
     lhs_node lhs_rest rhs_node rhs_rest holes=
-  let () = x_dinfo_zp (lazy ("before_do_match rhs_b" ^ (Cprinter.string_of_formula_base rhs_b))) pos in
+  let () = x_tinfo_zp (lazy ("before_do_match rhs_b" ^ (Cprinter.string_of_formula_base rhs_b))) pos in
   let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
   if not subsumes then 
     let err_msg = "there is a mismatch in branches " in
@@ -12534,7 +12534,7 @@ and process_before_do_match prog estate conseq lhs_b rhs_b rhs_h_matched_set is_
     let rhs_p = match to_be_proven with
       | None -> rhs_b.formula_base_pure
       | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
-    let () = x_dinfo_zp (lazy ("before_do_match rhs_p" ^ (Cprinter.string_of_mix_formula rhs_p))) pos in
+    let () = x_tinfo_zp (lazy ("before_do_match rhs_p" ^ (Cprinter.string_of_mix_formula rhs_p))) pos in
     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
     x_tinfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
     let res_es0, prf0 = x_add do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
@@ -13575,13 +13575,14 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                     if !Globals.warn_do_match_infer_heap then 
                       failwith "do_match during infer_heap"
                     else
-                      let match_act = Context.M_match (Context.mk_match_res Root n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
+                      let match_act = Context.M_match (Context.mk_match_res ~holes:new_estate.es_crt_holes Root n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
                       (* let new_estate = { new_estate with es_trace =  (Context.string_of_action_name match_act)::new_estate.es_trace } in *)
+                      (* x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos                                  *)
+                      (* Below causes a problem with str-inf/ex10a2-str-while.ss *)
                       let () = y_tinfo_pp "call process_act instead call do_match directly" in
-                      let n_lhs_b = {lhs_b with CF.formula_base_heap = n_lhs} in
-                      let n_rhs_b1 = {rhs_b with formula_base_heap = n_rhs_rest} in
+                      let n_lhs_b = { lhs_b with CF.formula_base_heap = n_lhs } in
+                      let n_rhs_b1 = { rhs_b with formula_base_heap = n_rhs_rest } in
                       (process_action ~caller:(x_loc ^ ":" ^ caller)) 2 cont_act prog new_estate conseq n_lhs_b n_rhs_b1 match_act rhs_h_matched_set is_folding pos
-                      (* x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos *)
                   else let new_ctx = Ctx new_estate in
                     x_add heap_entail_conjunct 29 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
                 | Some hf ->
