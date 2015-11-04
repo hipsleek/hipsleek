@@ -13576,8 +13576,12 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                       failwith "do_match during infer_heap"
                     else
                       let match_act = Context.M_match (Context.mk_match_res Root n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
-                      let new_estate = { new_estate with es_trace = (Context.string_of_action_name match_act)::new_estate.es_trace } in
-                      x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos
+                      (* let new_estate = { new_estate with es_trace =  (Context.string_of_action_name match_act)::new_estate.es_trace } in *)
+                      let () = y_tinfo_pp "call process_act instead call do_match directly" in
+                      let n_lhs_b = {lhs_b with CF.formula_base_heap = n_lhs} in
+                      let n_rhs_b1 = {rhs_b with formula_base_heap = n_rhs_rest} in
+                      (process_action ~caller:(x_loc ^ ":" ^ caller)) 2 cont_act prog new_estate conseq n_lhs_b n_rhs_b1 match_act rhs_h_matched_set is_folding pos
+                      (* x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos *)
                   else let new_ctx = Ctx new_estate in
                     x_add heap_entail_conjunct 29 prog is_folding new_ctx n_rhs_b (rhs_h_matched_set) pos
                 | Some hf ->

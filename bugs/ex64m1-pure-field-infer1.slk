@@ -9,11 +9,16 @@ pred ll<n> == self = null & n = 0
 
 HeapPred H1(node x).
 HeapPred H2(node x, int n).
+HeapPred H3(node x, node@NI z).
 
 // (3)
 infer [H1]  H1(y) |- y::node<a,null>.
 print residue.
 
+/*
+infer [H3]  y::node<_,p> * H3(p,y) |- y::node<_,null>.
+print residue.
+*/
 
 /*
 # bugs/ex64m1.slk 
