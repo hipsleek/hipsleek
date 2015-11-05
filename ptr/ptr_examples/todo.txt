@@ -282,6 +282,18 @@ checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
 
 # could we use set of solution? or match with node?
 =================================================================
+# ex1e6d1.slk
+
+checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+# recursive folding appeared to have failed.
+  Can we order the matches?
+
+ <1>y::arr<Anon_13>@M * z::arr<Anon_14>@M&i=2 & y=2+x & z=1+y & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ Fold]]
 =================================================================
 =================================================================
 =================================================================

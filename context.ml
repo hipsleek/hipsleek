@@ -738,10 +738,12 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_tinfo_hp (add_str "rhs_p" !CP.print_formula) rhs_p  in
                   let f = CP.join_conjunctions [lhs_p2;eq;rf;rhs_p] in
                   let r = !CP.tp_is_sat f in
+                  let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in
+                  let () =  y_tinfo_hp (add_str "eq" !CP.print_formula) eq  in
                   let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
                   let rf = CP.apply_subs [(v,d)] rf in
-                  let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
-                  let () =  y_tinfo_hp (add_str "is_sat hs & rhs & root_ptr" string_of_bool) r  in
+                  let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
+                  let () =  y_tinfo_hp (add_str "is_sat [lhs_p2;eq;rf;rhs_p]" string_of_bool) r  in
                   (d,r,Some rf)
                 else (d,r,None)
               | Some ((v,pf)) ->

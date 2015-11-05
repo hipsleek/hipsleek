@@ -1651,12 +1651,21 @@ let is_rec_view_def prog (name : ident) : bool =
   (* let () = collect_rhs_view vdef in *)
   vdef.view_is_rec
 
+let fresh_actual_root ans =
+  map_opt (fun (v,f) -> 
+      let nv = CP.fresh_spec_var v in
+      (nv,CP.apply_subs [(v,nv)] f)
+    ) ans
+
 (* get ptr arithmetic root of view *)
 let get_root_view prog name ptr args =
   let vdef = look_up_view_def_num 2 no_pos prog.prog_view_decls name in
   let para = vdef.view_vars in
   let sst = List.combine (CP.self_sv::para) (ptr::args) in
   let ans = vdef.view_actual_root in
+  let ans = fresh_actual_root ans in
+  let () = y_tinfo_hp (add_str "actual root" (pr_opt (pr_pair !CP.print_sv !CP.print_formula))) ans in
+  let () = y_tinfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
   let ans = map_opt (fun (v,f) -> (v,CP.apply_subs sst f)) ans in
   ans
 
