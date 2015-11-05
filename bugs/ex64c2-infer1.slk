@@ -1,0 +1,49 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+HeapPred H2(node x, int n).
+
+infer [H1,@pure_field]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+expect Valid.
+
+/*
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+expect Fail.
+// It seems like pure field is always inferred;
+// can we make it selective?
+*/
+
+/*
+# bugs/ex64c.slk
+
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+expect Fail.
+// It seems like pure field is always inferred;
+// can we make it selective?
+
+HeapPred HP_69(node flted_19_67, int@NI a_68, node@NI y).
+Entail (2) : Valid. 
+ <1>HP_69(flted_19_67,a_68,y)&1<=a_68 & y!=null & flted_19_67=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_69(flted_19_67,a_68@NI,y@NI)&true --> emp&
+                   1<=a_68 & flted_19_67=null; 
+                  H1(y)&
+                   true --> y::node<a_68,flted_19_67>@M * 
+                            HP_69(flted_19_67,a_68@NI,y@NI)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
+
+
+*/

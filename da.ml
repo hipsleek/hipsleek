@@ -377,7 +377,7 @@ let find_rel_args_groups_x prog proc e0=
     false,[]
   else
     (*look up unknown preds in pre-condition => separation *)
-    let pre_unk_hpargs = CF.get_hp_rel_pre_struc_formula proc.Cast.proc_static_specs in
+    let pre_unk_hpargs = CF.get_hp_rel_pre_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *) in
     if List.length pre_unk_hpargs >= 1 then
       let arg_groups = List.map snd pre_unk_hpargs in
       let grouped_args = List.fold_left (@) [] arg_groups in
@@ -435,7 +435,7 @@ let find_rel_args_groups_scc prog scc0 =
     let ls_inst_args = List.map (fun (i_args, ni_args) ->
         (List.map (fun sv -> (sv,I)) i_args)@(List.map (fun sv -> (sv,NI)) ni_args)) ls_sep_args in
     let n_hf, n_hps = List.fold_left (fun (hf, r) args ->
-        let nhf, nhp = Cast.add_raw_hp_rel prog true false args no_pos in
+        let nhf, nhp = x_add (Cast.add_raw_hp_rel ~caller:x_loc) prog true false args no_pos in
         (CF.mkStarH hf nhf no_pos, r@[nhp])
       ) (CF.HEmp,[]) ls_inst_args in
     let f = CF.formula_of_heap n_hf no_pos in
@@ -478,15 +478,15 @@ let find_rel_args_groups_scc prog scc0 =
                   let hp, def, hf, n_hps =  process_split split in
                   (r1@[hp], r2@[def], r3@[hf], r4@n_hps)
                 ) ([],[],[],[]) splits in
-              let sspec1 = proc.Cast.proc_static_specs in
+              let sspec1 = proc.Cast.proc_stk_of_static_specs # top (* proc.Cast.proc_static_specs *) in
               let () =  Debug.ninfo_hprint (add_str "sspec1" (Cprinter.string_of_struc_formula)) sspec1 no_pos in
               let sspec2 = update_spec  splitted_hps n_hps sspec1 in
               let nf =  CF.formula_of_heap (CF.join_star_conjunctions n_hfs) no_pos in
               let sspec3 = CF.mkAnd_pre_struc_formula sspec2 nf in
               let stk = proc.proc_stk_of_static_specs in
-              let _ = stk # pop in
-              let _ = stk # push sspec3 in
-              let n_proc = {proc with Cast.proc_static_specs = sspec3;
+              let () = stk # pop in
+              let () = stk # push_pr x_loc sspec3 in
+              let n_proc = {proc with (* Cast.proc_static_specs = sspec3; *)
                                       Cast.proc_stk_of_static_specs = stk;
                            } in
               let  ()=  Debug.ninfo_hprint (add_str "sspec3" (Cprinter.string_of_struc_formula)) sspec3 no_pos in

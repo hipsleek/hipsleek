@@ -7,7 +7,8 @@ data node {
 	node next;	
 }.
 
-/*
+HeapPred HP(node x, node y).
+
 pred ll<> == self = null 
 	or self::node<_, q> * q::ll<> 
   inv true.
@@ -15,16 +16,26 @@ pred ll<> == self = null
 pred lseg<p> == self = p 
 	or self::node<v, q> * q::lseg<p> & v!=0
   inv true.
-*/
 
 pred app3<> == self::node<0,null> 
 	or self::node<v, q> * q::app3<> & q!=null & v!=0 
   inv self!=null.
+  
+pred app4<p> == self::node<0,p> 
+	or self::node<v, q> * q::app4<p> & q!=null & v!=0 
+  inv self!=null.
 
+//lemma_safe "app4_lem" self::app4<p> <- self::lseg<q> * q::node<0, p>.
 
-pred_elim_tl_node [*].
+//lemma_infer [HP,@classic] self::app4<p> -> (exists HP,q,p1,v: q::node<v, p1> * HP(self, q) & p1=p & v=0).
 
-print views.
+//lemma_infer [HP,@classic] self::app3<> -> q::node<0, null> * HP(self, q).
+
+print residue.
+
+pred_elim_tl_node [app4].
+
+//print views.
 
 /*
 # ex21t1

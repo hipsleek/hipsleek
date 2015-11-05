@@ -63,7 +63,9 @@ and data_decl = {
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pure_inv : P.formula option;
-  data_methods : proc_decl list; }
+  mutable data_is_rec : bool;
+  data_methods : proc_decl list; (* for OO methods *)
+}
 
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
 
@@ -231,7 +233,7 @@ and proc_decl = {
   proc_flags : (ident*ident*(flags option)) list;
   mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
   (* WN : warning below is being supecedd by proc_stk_of_static_specs *)
-  proc_static_specs : Cformula.struc_formula;
+  (* proc_static_specs : Cformula.struc_formula; *) (* COMPLETELY REMOVED *)
   (* proc_static_specs_with_pre : Cformula.struc_formula; *)
   (* this puts invariant of pre into the post-condition *)
   proc_dynamic_specs : Cformula.struc_formula;
@@ -284,6 +286,7 @@ and coercion_case =
            Otherwise, simple or complex
         *)
 
+
 and coercion_decl = { 
   coercion_type : coercion_type;
   coercion_exact : bool;
@@ -314,6 +317,7 @@ and coercion_decl = {
   coercion_type_orig: coercion_type option; 
   coercion_kind: lemma_kind;
   coercion_origin: lemma_origin;
+  coercion_lhs_sig: F.formula_sig option;
 }
 
 and coercion_type = Iast.coercion_type
@@ -572,7 +576,161 @@ and exp = (* expressions keep their types *)
   | Par of exp_par
 
 
-let global_prog = ref (None : prog_decl option)
+let cprog = ref { 
+    prog_data_decls = [];
+    prog_view_decls = [];
+    prog_logical_vars = [];
+    prog_rel_decls = 
+      (let s = new Gen.stack_pr "prog_rel_decls(CAST)" 
+         (fun x -> "not yet initialized" ) (=) in s);
+    (* Cprinter.string_of_rel_decl (=)          *)
+    prog_templ_decls = [];
+    prog_ui_decls = [];
+    prog_ut_decls = [];
+    prog_hp_decls = [];
+    prog_view_equiv = [];
+    prog_axiom_decls = []; 
+    (* [4/10/2011] An Hoa *)
+    (*old_proc_decls = [];*)
+    new_proc_decls = Hashtbl.create 1; (* no need for proc *)
+    (*prog_left_coercions = [];
+      prog_right_coercions = [];*)
+     prog_barrier_decls = []} ;;
+
+let global_prog = cprog
+(* ref (None : prog_decl option) *)
+
+(* let cprog:(prog_decl option) ref = ref None *)
+let cprog = global_prog
+
+let get_cprog () = !cprog
+
+let set_prog cp = 
+  cprog := cp
+
+let folding_coercion c =
+   (c.coercion_case == Simple) && c.coercion_type=Iast.Right 
+
+let print_program = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
+let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
+let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_view_decl_clean = ref (fun (c:view_decl) -> "cast printer has not been initialized")
+let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
+let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
+let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
+let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
+let print_prog = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
+
+let cprog_obj = 
+  object (self)
+    (* val cprog = cprog *)
+    method logging s =
+      (* let m = "\n*XXcprog** " in *)
+      (* let () = print_endline_quiet (m^s) in *)
+      ()
+    method check_prog_x ?(loc="") flag prg =
+      let store_prg = !cprog in
+      (* match !cprog with *)
+      (* | None ->  *)
+      (*   let () = y_tinfo_pp "cprog still None" in *)
+      (*   let () = cprog := Some prg in *)
+      (*   false *)
+      (* | Some store_prg ->  *)
+      if not(prg==store_prg) then 
+        begin
+          let () = y_winfo_pp (loc ^ "prog and cprog_obj are different") in
+          (* if prg = store_prg then  *)
+          (*   let () = y_tinfo_pp "same content though" in *)
+          (*   () *)
+          (* else *)
+          (*   let () = y_tinfo_hp (add_str "new prog" !print_prog) prg in *)
+          (*   let () = y_tinfo_hp (add_str "old cprog" !print_prog) store_prg in *)
+          (*   (); *)
+          if flag then cprog := prg;
+          false
+        end
+      else true
+    method check_prog_only loc prog = 
+      let r = self # check_prog_x false prog in
+      self # logging ((add_str (loc^"check only (same prog?)") string_of_bool) r)
+    method check_prog_warning loc prog = 
+      let r = self # check_prog_x ~loc:loc false prog in
+      if not r then
+        self # logging ((add_str (loc^"check (same prog?)") string_of_bool) r)
+    method check_prog_upd loc prog = 
+      let r = self # check_prog_x true prog in
+      if not(r) then 
+        let () = y_winfo_pp "updating Cast.cprog" in
+        self # logging ((add_str (loc^"update (same prog?)") string_of_bool) r)
+    method get_hp_decls =
+      (* match !cprog with *)
+      (* | None ->  *)
+      (*   let () = y_winfo_pp "cprog_obj not yet intiliazed" in [] *)
+      (* | Some cp ->  *)
+      !cprog.prog_hp_decls
+    method get_hp_one_decl n =
+      let lst = self # get_hp_decls in
+      try
+        List.find (fun v -> v.hp_name = n) lst
+      with e -> 
+        let () = y_tinfo_hp (add_str "hp_decls: " (pr_list !print_hp_decl)) lst in
+        failwith (x_loc^(" cannot find hp_rel "^n))
+    method set_hp_root hp posn =
+      let n = CP.name_of_spec_var hp in
+      let hp_d = self # get_hp_one_decl n in
+      let () = match hp_d.hp_root_pos with
+        | Some i -> if posn!=i then y_winfo_hp (add_str "root previously set at" string_of_int) i;
+        | None -> () in 
+      let () = hp_d.hp_root_pos <- Some posn in
+      ()
+    method get_hp_root ?(chosen=None) hp args =
+      let n = CP.name_of_spec_var hp in
+      let hp_d = self # get_hp_one_decl n in
+      let posn = match chosen with
+        | None -> 
+          begin
+            match hp_d.hp_root_pos with
+            | Some i -> i
+            | None -> 
+              let f_args = hp_d.hp_vars_inst in
+              let rec aux xs n =
+                match xs with
+                | [] -> failwith (x_loc^"no root position left")
+                | (_,ann)::xs -> 
+                  if ann=NI then aux xs (n+1)
+                  else n in
+              let posn = aux f_args 0 in
+              let () = hp_d.hp_root_pos <- Some posn in
+              posn 
+          end
+        | Some v -> 
+          let rec aux xs n = 
+            match xs with 
+            | [] -> -1
+            | x::xs -> 
+              if CP.eq_spec_var v x then 
+                let () = hp_d.hp_root_pos <- Some n in
+                n 
+              else aux xs (n+1) in
+          aux args 0 
+      in
+      let () = self # logging ("get_hp_root "^n^" gives "^(string_of_int posn)) in
+      let () = print_endline_quiet (self # show_roots) in
+      if posn<0 then List.hd args
+      else List.nth args posn
+    method get_hp_root_posn hp =
+      let n = CP.name_of_spec_var hp in
+      let hp_d = self # get_hp_one_decl n in
+      let posn = match hp_d.hp_root_pos with
+        | Some i -> i
+        | None -> 0
+      in posn
+    method show_roots =
+      let lst = self # get_hp_decls in
+      let str = pr_list (fun vd -> (pr_pair pr_id (pr_opt string_of_int)) (vd.hp_name,vd.hp_root_pos)) lst in
+      str
+  end;;
 
 (* Stack of Template Declarations *)
 let templ_decls: templ_decl Gen.stack = new Gen.stack
@@ -606,15 +764,6 @@ let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer ha
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
 
-let print_program = ref (fun (c:prog_decl) -> "cast printer has not been initialized")
-let print_proc_decl_no_body = ref (fun (c:proc_decl) -> "cast printer has not been initialized")
-let print_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
-let print_view_decl_short = ref (fun (c:view_decl) -> "cast printer has not been initialized")
-let print_view_decl_clean = ref (fun (c:view_decl) -> "cast printer has not been initialized")
-let print_hp_decl = ref (fun (c:hp_decl) -> "cast printer has not been initialized")
-let print_coercion = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
-let print_coerc_decl_list = ref (fun (c:coercion_decl list) -> "cast printer has not been initialized")
-let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
 
 let slk_of_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been initialized")
@@ -1209,19 +1358,23 @@ let unmingle_name (m : ident) =
   with
   | Not_found -> m
 
-let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+let rec look_up_view_def_raw loc (defs : view_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw loc rest name
   | [] ->
     let msg = ("Cannot find definition of cview " ^ name) in 
-    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
+    let () = y_tinfo_pp (loc^msg) in
     raise Not_found
     (* let msg = ("Cannot find definition of view " ^ name) in *)
     (* failwith (x_loc^msg) *)
 
-let look_up_view_def_raw i (defs : view_decl list) (name : ident) = 
+let look_up_view_def_raw loc (defs : view_decl list) (name : ident) = 
   let pr = fun x -> x in
   let pr_out = !print_view_decl in
-  Debug.no_1_num i "look_up_view_def_raw" pr pr_out (fun _ -> look_up_view_def_raw defs name) name
+  Debug.no_1 "look_up_view_def_raw" pr pr_out 
+    (fun _ -> look_up_view_def_raw loc defs name) name
+
+let look_up_view_def_prog prog (name : ident) =
+  look_up_view_def_raw x_loc prog.prog_view_decls name
 
 let look_up_view_def_ext_size (defs : view_decl list) num_rec_br0 num_base0 =
   let ext_views = List.filter (fun v ->
@@ -1251,7 +1404,7 @@ let extract_view_x_invs transed_views=
     ) [] transed_views
 
 let look_up_view_inv defs act_args name inv_compute_fnc =
-  let vdcl = look_up_view_def_raw 46 defs name in
+  let vdcl = look_up_view_def_raw x_loc defs name in
   let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
   let inv =
     let p1 = MP.pure_of_mix vdcl.view_user_inv in
@@ -1304,6 +1457,13 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+let is_hp_name prog id = 
+  let defs = prog.prog_hp_decls in
+  try
+    let def = look_up_hp_def_raw defs id in
+    true
+  with _ -> false
+
 (* let look_up_hp_def_raw defs name= *)
 (*   let pr1 = !print_hp_decl in *)
 (*   Debug.no_1 "look_up_hp_def_raw" pr_id pr1 *)
@@ -1348,14 +1508,17 @@ let generate_pure_rel hprel=
   let _= Z3.add_relation n_p_hprel.rel_name n_p_hprel.rel_vars n_p_hprel.rel_formula in
   n_p_hprel
 
-let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
+let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
     let hp_decl =
       { hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
                    if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
                   ^ (string_of_int (Globals.fresh_int()));
         hp_part_vars = [];
-        hp_root_pos = None; (*default, reset when def is inferred*)
+        hp_root_pos = None (* Some 0 *); 
+        (* Use None since we do not know how it will be instantiated *)
+        (* First ptr is the root of the new HPRel *) 
+        (* None; (* default, reset when def is inferred *) *)
         hp_vars_inst = unknown_ptrs;
         hp_is_pre = is_pre;
         hp_view = None;
@@ -1374,17 +1537,18 @@ let add_raw_hp_rel_x prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    let () = x_tinfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
+    (* let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in *)
+    let () = x_winfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
 
-let add_raw_hp_rel prog is_pre is_unknown unknown_args pos=
+let add_raw_hp_rel ?(caller="") prog is_pre is_unknown unknown_args pos=
   let pr1 = pr_list (pr_pair !P.print_sv print_arg_kind) in
   let pr2 = !F.print_h_formula in
   let pr4 (hf,_) = pr2 hf in
   Debug.no_1 "add_raw_hp_rel" pr1 pr4
-    (fun _ -> add_raw_hp_rel_x prog is_pre is_unknown unknown_args pos) unknown_args
+    (fun _ -> add_raw_hp_rel_x ~caller:caller prog is_pre is_unknown unknown_args pos) unknown_args
 
 let set_proot_hp_def_raw r_pos defs name=
   let hpdclr = look_up_hp_def_raw defs name in
@@ -1400,6 +1564,18 @@ let get_proot_hp_def_raw defs name =
 let get_proot_hp_def_raw defs name =
   let pr = string_of_int in
   Debug.no_1 "get_proot_hp_def_raw" idf pr (get_proot_hp_def_raw defs) name
+
+(* Get root and args of a hrel or hprel *)
+let get_root_args_hp prog id all_args =
+  let root_pos = x_add get_proot_hp_def_raw prog.prog_hp_decls id in
+  let root = List.nth all_args root_pos in
+  let args = Gen.BList.difference_eq CP.eq_spec_var all_args [root] in
+  root, args
+
+let get_root_args_hp prog id all_args =
+  let pr1 = !CP.print_svl in
+  Debug.no_2 "C.get_root_args_hp" idf pr1 (pr_pair !CP.print_sv pr1)
+    (fun _ _ -> get_root_args_hp prog id all_args) id all_args
 
 let get_root_args_hprel hprels hp_name actual_args=
   let rec part_sv_from_pos ls n n_need rem=
@@ -1486,13 +1662,13 @@ let get_root_view prog name ptr args =
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =
-  let vdef = look_up_view_def_raw 1 prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw x_loc prog.prog_view_decls name in
   match vdef.view_inv_lock with
   | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
   | Some f -> (true, f)
 
 let is_lock_inv prog (name : ident) : bool =
-  let vdef = look_up_view_def_raw 2 prog.prog_view_decls name in
+  let vdef = look_up_view_def_raw x_loc prog.prog_view_decls name in
   match vdef.view_inv_lock with
   | None -> false
   | Some f -> true
@@ -1596,9 +1772,9 @@ let look_up_data_def_prog prog (name : string) =
   look_up_data_def_raw ddefs name
 
 let look_up_data_def_imp  (name : string) =
-  match !global_prog with
-    Some prog -> look_up_data_def_prog prog name
-  | None -> failwith "global_prog not initialized"
+  let prog = !global_prog in
+    look_up_data_def_prog prog name
+  (* | None -> failwith "global_prog not initialized" *)
 
 let look_up_extn_info_rec_field_x ddefs dname=
   let rec look_up_helper fields=
@@ -1701,8 +1877,10 @@ let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
 let update_sspec_proc (procs : (ident, proc_decl) Hashtbl.t) pname spec = 
   try
     let proc = Hashtbl.find procs pname in
-    let new_proc = {proc with proc_static_specs = spec} in
-    let () = Hashtbl.replace procs pname new_proc in
+    (* let new_proc = {proc with proc_static_specs = spec} in *)
+    (* let () = Hashtbl.replace procs pname new_proc in       *)
+    let () = proc.proc_stk_of_static_specs # push_pr x_loc spec in
+    let () = Hashtbl.replace procs pname proc in
     procs
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
@@ -2358,13 +2536,13 @@ let check_proper_return cret_type exc_list f =
   Debug.no_2 "check_proper_return" pr1 pr2 pr_no (fun _ _ -> check_proper_return cret_type exc_list f) exc_list f
 (* TODO : res must be consistent with flow outcome *)
 
-let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
-
+let formula_of_unstruc_view_f vd = 
+  F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
 
 let vdef_fold_use_bc prog ln2  = match ln2 with
   | F.ViewNode vn -> 
     (try 
-       let vd = look_up_view_def_raw 3 prog.prog_view_decls vn.F.h_formula_view_name in
+       let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn.F.h_formula_view_name in
        match vd.view_raw_base_case with
        | None -> None
        | Some f-> Some {vd with view_formula = F.formula_to_struc_formula f}
@@ -2404,7 +2582,7 @@ let vdef_lemma_fold prog coer  =
           match bf.F.formula_base_heap with
           | F.ViewNode vn -> 
             (try 
-               let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in
+               let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn.F.h_formula_view_name in
                let to_vars = vd.view_vars in
                let from_vars = vn.F.h_formula_view_arguments in
                let subs = List.combine from_vars to_vars in
@@ -2439,7 +2617,7 @@ let vdef_lemma_fold prog coer  =
 (*               match bf.F.formula_base_heap with *)
 (*                 | F.ViewNode vn ->  *)
 (*                       (try  *)
-(*                         let vd = look_up_view_def_raw 13 prog.prog_view_decls vn.F.h_formula_view_name in *)
+(*                         let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn.F.h_formula_view_name in *)
 (*                         Some {vd with view_formula = rhs} *)
 (*                       with   *)
 (*                         | Not_found -> None *)
@@ -2459,7 +2637,7 @@ let get_xpure_one vdef rm_br  =
   match rm_br with
   | Some l -> let n=(List.length l) in
     if n<(List.length vdef.view_prune_branches) then
-      (* if !force_verbose_xpure then Some vdef.view_x_formula  else *) None
+      (* if !force_verbose_xpure then Some vdef.view_x_formula else *) None
     else (match vdef.view_complex_inv with
         | None -> None
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
@@ -2564,7 +2742,7 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
       | F.ViewNode vn ->
         if ((String.compare vn.F.h_formula_view_name view.view_name)=0) then []
         else
-          let vdef = look_up_view_def_raw 4 cprog.prog_view_decls vn.F.h_formula_view_name in
+          let vdef = look_up_view_def_raw x_loc cprog.prog_view_decls vn.F.h_formula_view_name in
           let vdef = add_uni_vars_to_view_x cprog l2r_coers vdef in
           let vdef_uni_vars = vdef.view_uni_vars in
           let fr = vdef.view_vars in
@@ -2663,7 +2841,7 @@ let callgraph_of_prog prog : IG.t =
 
 let count_term_scc (procs: proc_decl list) : int =
   List.fold_left (fun acc p -> 
-      acc + (F.count_term_struc p.proc_static_specs)) 0 procs
+      acc + (F.count_term_struc (p.proc_stk_of_static_specs # top))) 0 procs
 
 (* Mutual groups with logical phase variables added *)
 (* those with logical variables explicitly added will
@@ -2693,7 +2871,7 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
         let mn = List.hd procs in
         (* TNT Inference: Enable call_num but Disable phase_num *)
         let inf_tnt = (Globals.infer_const_obj # is_term) || (List.exists (fun proc -> 
-            F.is_inf_tnt_struc_formula proc.proc_static_specs) procs) in 
+            F.is_inf_tnt_struc_formula (proc.proc_stk_of_static_specs # top)) procs) in 
         let pv = add_term_nums_proc_scc procs cp.new_proc_decls log_vars
             ((not !dis_call_num) || inf_tnt) ((not !dis_phase_num) && (not inf_tnt) && n>1 && mn.proc_is_recursive) 
         in (match pv with 
@@ -2743,10 +2921,12 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
       if add_call then Some proc.proc_call_order
       else None
     in
-    let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in
+    (* let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in *)
+    let n_ss, pvl1 = F.add_term_nums_struc (proc.proc_stk_of_static_specs # top) log_vars call_num add_phase in
     let n_ds, pvl2 = F.add_term_nums_struc proc.proc_dynamic_specs log_vars call_num add_phase in
+    let () = proc.proc_stk_of_static_specs # push_pr x_loc n_ss in
     ({ proc with
-       proc_static_specs = n_ss; 
+       (* proc_static_specs = n_ss; *)
        proc_dynamic_specs = n_ds; 
      }, pvl1 @ pvl2)
 
@@ -2756,7 +2936,7 @@ let collect_hp_rels prog= Hashtbl.fold (fun i p acc->
     (List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []
 
 let look_up_cont_args_x a_args vname cviews=
-  let vdef = look_up_view_def_raw 5 cviews vname in
+  let vdef = look_up_view_def_raw x_loc cviews vname in
   let pr_args = List.combine vdef.view_vars a_args in
   List.fold_left (fun ls cont_sv -> ls@[List.assoc cont_sv pr_args]) [] vdef.view_cont_vars
 
@@ -2888,7 +3068,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
       (*update hp_decl of precondition*)
       let () = if diff_args_i = [] then () else
           let () = x_tinfo_hp (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
-          let hpargs = Cformula.get_hp_rel_pre_struc_formula proc.proc_static_specs in
+          let hpargs = Cformula.get_hp_rel_pre_struc_formula (proc.proc_stk_of_static_specs # top) in
           let todo_unk = List.map (fun (hp,args) ->
               let s_args = List.map P.name_of_spec_var args in
               let inter = Gen.BList.intersect_eq string_cmp s_args diff_args_i in
@@ -3793,7 +3973,9 @@ let categorize_view (prog: prog_decl) : prog_decl =
       let vd = { vd with view_is_tail_recursive = tail_recursive } in
       vd
     ) vdecls in
-  { prog with prog_view_decls = new_vdecls }
+  (* { prog with prog_view_decls = new_vdecls } *)
+  let () = prog.prog_view_decls <- new_vdecls in
+  prog
 
 
 (*
@@ -3878,7 +4060,7 @@ let add_view_decl prog vdecl =
     let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
 
-let update_view_decl prog vdecl = 
+let update_view_decl ?(caller="") prog vdecl = 
   let vdecl_id = vdecl.view_name in
   let vdecl_args = vdecl.view_vars in
   let vhdr = vdecl_id ^ (!CP.print_svl vdecl_args) in
@@ -3889,13 +4071,20 @@ let update_view_decl prog vdecl =
       y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
+  (* let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in *)
   prog.prog_view_decls <- others @ [vdecl]
+
+let update_view_decl ?(caller="") prog vdecl = 
+  let pr = !print_view_decl_short in
+  let dummy_pr = fun _ -> "" in
+  Debug.no_1 "update_view_decl" pr dummy_pr 
+    (fun _ -> update_view_decl ~caller:caller prog vdecl) vdecl
 
 let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
   (* let frm_name = frm_vdecl.view_name in *)
   (* if HipUtil.view_scc_obj # compare frm_name to_name  < 0 then *)
   (*   begin *)
-  (*   y_binfo_pp "change order of sst"; *)
+  (*   y_tinfo_pp "change order of sst"; *)
   (*   to_vdecl.view_equiv_set # set (keep_sst,frm_name) *)
   (*   end *)
   (* else  *)
@@ -3925,8 +4114,8 @@ let is_finish_equiv_view_decl frm_vdecl to_vdecl =
 let smart_view_name_equiv view_decls vl vr =
   let vl_name = vl.h_formula_view_name in
   let vr_name = vr.h_formula_view_name in
-  let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
-  let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+  let vdef1 = look_up_view_def_raw x_loc view_decls vl_name in
+  let vdef2 = look_up_view_def_raw x_loc view_decls vr_name in
   let ans = try
       if !Globals.old_view_equiv then None
       else 
@@ -3968,15 +4157,15 @@ let smart_view_name_equiv view_decls vl vr =
     | Some (vl,vr) ->
           let vl_name = vl.h_formula_view_name in
           let vr_name = vr.h_formula_view_name in
-          let vdef1 = look_up_view_def_raw 25 view_decls vl_name in
-          let vdef2 = look_up_view_def_raw 25 view_decls vr_name in
+          let vdef1 = look_up_view_def_raw x_loc view_decls vl_name in
+          let vdef2 = look_up_view_def_raw x_loc view_decls vr_name in
           vdef1, vdef2,vl_name,vr_name
   in
   (vdef1,vdef2,vl_name,vr_name,ans)
 
 let get_view_name_equiv view_decls vl =
   let vname = vl.h_formula_view_name in
-  let vdef = look_up_view_def_raw 25 view_decls vname in
+  let vdef = look_up_view_def_raw x_loc view_decls vname in
   (* (vname,vdef) *)
   if vdef.view_equiv_set # is_empty || !Globals.old_view_equiv then (vname,vdef,vl,false)
   else 
@@ -3995,12 +4184,14 @@ let get_view_name_equiv view_decls vl =
     (* let new_vl = {vl with h_formula_view_name = new_name; *)
     (*                       h_formula_view_arguments = new_args; *)
     (*              } in *)
-    (new_name,look_up_view_def_raw 26 view_decls new_name,new_vl,true)
+    (new_name,look_up_view_def_raw x_loc view_decls new_name,new_vl,true)
 
 (* let get_lst_unfold lst = List.map fst lst *)
 
 let get_unfold_set_gen vdefs =  
   let equiv_set = List.fold_left (fun acc vd -> 
+    if vd.view_is_prim then acc
+    else
       let name = vd.view_name in
       let f = vd.view_un_struc_formula in
       (* if HipUtil.view_scc_obj # is_self_rec name then acc  *)
@@ -4015,12 +4206,18 @@ let get_unfold_set_gen vdefs =
   equiv_set
 
 let get_unfold_set_simple vdefs = 
+  let pr = pr_list (pr_triple idf !P.print_svl (pr_list !F.print_formula)) in
   let lst = get_unfold_set_gen vdefs in
+  let () = y_tinfo_hp (add_str "lst" pr) lst in
   let lst = List.filter (fun (_,_,fs) -> (List.length fs) <=1) lst in
   List.map (fun (v,vs,lst) -> match lst with
       | f::_ -> (v,vs,f)
       | _ -> failwith (x_loc^"empty unfold")) lst
 
+let get_unfold_set_simple vdefs = 
+  let pr1 = pr_list !print_view_decl in
+  let pr2 = pr_list (pr_triple idf !P.print_svl !F.print_formula) in
+  Debug.no_1 "get_unfold_set_simple" pr1 pr2 get_unfold_set_simple vdefs
 
 let get_unfold_set vdefs =  
   get_unfold_set_simple vdefs  
@@ -4080,16 +4277,16 @@ let get_sorted_view_decls prog =
 let repl_unfold_lemma u_lst lem =
   let body = lem.coercion_body in
   let body_norm = lem.coercion_body_norm in
-  let () = y_binfo_hp (add_str "body" !F.print_formula) body in
+  let () = y_tinfo_hp (add_str "body" !F.print_formula) body in
   let body = repl_unfold_formula "" u_lst body in
-  let () = y_binfo_hp (add_str "unfolded body" !F.print_formula) body in
+  let () = y_tinfo_hp (add_str "unfolded body" !F.print_formula) body in
   lem.coercion_body <- body;
   lem
   (* failwith x_tbi *)
 
 let get_lemma_cprog cdefs =
   let lst = List.map (fun d -> d.coercion_name) cdefs in
-  let () = y_binfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
+  let () = y_tinfo_hp (add_str "clem_decl" (pr_list pr_id)) lst in
   ()
 
 let  get_selected_scc_gen (opt:((ident * bool) regex_list) (* option *)) get_name sel_fn scc_lst =
@@ -4125,14 +4322,21 @@ let  get_selected_scc_each opt get_name scc_lst =
   in
   get_selected_scc_gen opt get_name sel_f scc_lst
 
-let get_t_v v = HipUtil.view_scc_obj # get_trans v
+(* WN : only need to get mutual-rec rather than transitive set *)
+let get_t_v ?(get_trans=false) v = 
+  let x = 
+    if get_trans then HipUtil.view_scc_obj # get_trans v
+    else HipUtil.view_scc_obj # find_rec v 
+  in
+  if x=[] then [v]
+  else x
 
 (* type: (Globals.ident * bool) Globals.regex_list option *)
-let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
+let  get_selected_views ?(get_trans=false) (opt:((ident * bool) regex_list) option) view_list =
   match opt with
   | None -> view_list
   | Some ans -> 
-    let sel (v,p) = if p then get_t_v v else [v] in
+    let sel (v,p) = if p then get_t_v ~get_trans:get_trans v else [v] in
     let res = match ans with
     | REGEX_STAR -> view_list
     | REGEX_LIST lst ->  
@@ -4154,17 +4358,91 @@ let rename_view vdecl new_name =
     view_un_struc_formula = List.map (fun (f, lbl) -> (F.rename_view_formula sst f, lbl)) vdecl.view_un_struc_formula; }
 
 
-(* let cprog:(prog_decl option) ref = ref None *)
-let cprog = global_prog
+(* && c.coercion_univ_vars=[] *)
 
-let get_cprog () = match !cprog with
-  | Some cp -> cp
-  | None -> failwith ("cprog not yet created " ^x_loc)
+(* 
+   this object is to track progress to prevent
+   a lemma from being folded with itself prior to
+   a folding step on its LHS term 
+*)
+let lemma_soundness =
+  object (self)
+   val mutable lemma = None
+   val mutable lhs = None
+   val mutable progress = false
+   method logging s =
+     (* let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
+     ()
+   method start_lemma_proving loc (coer:coercion_decl)  =
+     self # logging ("Start Lemma Proving "^loc);
+     let h_v = coer.coercion_head_view in
+     let b_v = coer.coercion_body_view in
+     let ty = coer.coercion_type in
+     let () = y_tinfo_hp (add_str "(hd,body)" (pr_pair pr_id pr_id)) (h_v,b_v) in
+     (* let () = y_tinfo_hp (add_str "coer_type" (Cprinter.string_of_coercion_type)) ty in *)
+     if  ty == Iast.Right then
+       begin
+         lemma <- Some coer;
+         lhs <- Some h_v
+       end
+     else
+       begin
+         lemma <- None;
+         lhs <- None
+       end
+   method start_disjunct loc = 
+     (* triggerred by LHS disjunct *)
+     match lemma with
+     | Some _ -> 
+       begin
+        if progress then self # logging ("Start Disjunct"^loc)
+        ;progress <- false
+       end
+     | _ -> ()
+   method make_progress (c1:string) = 
+     (* an folding to trigger progress *)
+     self # logging "Make Progress";
+     match lhs with
+     | None -> ()
+     | Some c2 -> if c1==c2 then progress <- true;
+   method safe_to_apply coer =
+     let flag = match lemma with
+     | None -> true
+     | Some c2 -> progress || not(coer==c2) in
+     if not(flag) then 
+       self # logging "Not Safe for Lemma";
+     !Globals.old_unsound_no_progress || flag
+   method end_lemma_proving loc = 
+     self # logging ("End Lemma Proving "^loc);
+     lemma <- None;
+     lhs <- None;
+  end;;
 
-let set_prog cp = 
-  cprog := Some cp
+let wrapper_lemma_soundness loc coer f x =
+  let () = lemma_soundness # start_lemma_proving loc coer in
+  try 
+    let r = f x in
+    let () = lemma_soundness # end_lemma_proving x_loc in
+    r
+  with e ->
+    let () = lemma_soundness # end_lemma_proving x_loc in
+    raise e
 
-
+let is_segmented_view vd =
+  let () = y_winfo_pp "This is segmented view quick hack" in
+  let self = vd.view_type_of_self in
+  let dn = vd.view_data_name in
+  let self = if dn="" then self
+    else Some(Named dn) in
+  let () = y_tinfo_hp (add_str "data_name" pr_id) dn in
+  match self with 
+  | None -> 
+    let () = y_tinfo_pp "No type for self" in
+    None
+  | Some ty -> 
+    let args = vd.view_vars in
+    let vn = vd.view_name in
+    is_segmented vn ty args (List.map fst vd.view_un_struc_formula)
 (* let get_views_offset prog f = *)
 (*   let stk = new Gen.stack in *)
 (*   let f_h_f hf =  *)

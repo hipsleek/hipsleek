@@ -1,0 +1,18 @@
+data node {
+  int val;
+}.
+
+HeapPred HP_1687(node x, node y).
+HeapPred HP_1695(node x, node@NI y).
+
+relAssume HP_1687(x,y) --> x::node<value_14_1694> * HP_1695(y,x).
+
+relAssume HP_1695(y,x) |#| emp&x!=y --> y::node<value_21_1712>.
+
+relAssume HP_1695(y,x) |#| emp&x=y --> emp.
+
+print relAssumes.
+
+shape_unfold [HP_1687].
+
+print relAssumes.

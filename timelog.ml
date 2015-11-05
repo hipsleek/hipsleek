@@ -153,5 +153,5 @@ let log_wrapper s logger f x  =
     let (pr,no) = logger None tt to_flag in
     logtime # add_proof_info (pr^"*EXC*") no;
     (* if s="sleek-hec" then print_endline ("log_wrapper (exc):"^no); *)
-    let () = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in
+    let () = Debug.info_hprint (add_str ("WARNING logtime exception (" ^ s ^ ")") string_of_float) tt no_pos in
     raise e

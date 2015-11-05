@@ -5,6 +5,8 @@ open Globals
 open VarGen
 open Gen.Basic
 
+module CP = Cpure
+
 let is_prim_proc prog id = 
   try
     let proc = Hashtbl.find prog.new_proc_decls id in
@@ -57,11 +59,12 @@ let has_named_params prog mn =
   with _ -> false
 
 let set_inf_obj_proc itype proc = 
-  let n_static_specs = Cformula.set_inf_obj_struc itype proc.proc_static_specs in
+  (* let n_static_specs = Cformula.set_inf_obj_struc itype proc.proc_static_specs in *)
+  let n_static_specs = Cformula.set_inf_obj_struc itype (proc.proc_stk_of_static_specs # top) in
   let n_dynamic_specs = Cformula.set_inf_obj_struc itype proc.proc_dynamic_specs in
-  let () = proc.proc_stk_of_static_specs # push_pr "dda:59" n_static_specs in
+  let () = proc.proc_stk_of_static_specs # push_pr x_loc n_static_specs in
   { proc with 
-    proc_static_specs = n_static_specs;
+    (* proc_static_specs = n_static_specs; *)
     proc_dynamic_specs = n_dynamic_specs; }
 
 let eq_str s1 s2 = String.compare s1 s2 == 0
@@ -263,7 +266,11 @@ let seq_data_dependency_graph_of_call_exp prog ddg src index mn args =
     let ddg = List.fold_left (fun g i -> CG.add_edge g (mn, index) i) ddg args in
     (* Pass-by-name (ref) parameters depend on their method call *)
     let mn_decl = look_up_proc_def_raw prog.new_proc_decls mn in
-    let by_name_params = mn_decl.proc_by_name_params in
+    let by_name_params = 
+      mn_decl.proc_by_name_params @
+      List.filter CP.is_node_typ mn_decl.proc_by_value_params 
+    in
+    let () = y_tinfo_hp (add_str (mn ^ ":by_name_params") !CP.print_svl) by_name_params in
     let ddg = List.fold_left (fun g (arg, par) ->
         if List.exists (fun sv -> eq_str (P.name_of_spec_var sv) (snd arg)) by_name_params 
         then CG.add_edge g par (mn, index)
@@ -283,9 +290,15 @@ let seq_data_dependency_graph_of_exp prog mn exp : CG.t =
     | Assign e -> helper ddg (e.exp_assign_lhs, var_index) index e.exp_assign_rhs
     | Bind e ->
       let bvar = snd e.exp_bind_bound_var in
-      let ddg = List.fold_left (fun g (_, i) ->
-          CG.add_edge g (bvar, var_index) (i, var_index)) ddg e.exp_bind_fields in
-      helper ddg (bvar, var_index) index e.exp_bind_body
+      if e.exp_bind_read_only then (* READ *)
+        let ddg = List.fold_left (fun g (_, i) ->
+            CG.add_edge g (i, var_index) (bvar, var_index)) ddg e.exp_bind_fields
+        in
+        helper ddg src index e.exp_bind_body
+      else (* WRITE *)
+        let ddg = List.fold_left (fun g (_, i) ->
+            CG.add_edge g (bvar, var_index) (i, var_index)) ddg e.exp_bind_fields in
+        helper ddg (bvar, var_index) index e.exp_bind_body
     | Block e -> helper ddg src index e.exp_block_body
     | Cond e ->
       let ddg = CG.add_edge ddg (mn, root_index) (e.exp_cond_condition, var_index) in
@@ -403,13 +416,14 @@ let collect_infer_post_procs_for_tnt_acc acc prog proc =
       let sdg, trans_sdg = Hashtbl.find sdg_proc_tbl mn in
       CG.fold_vertex (fun (src, index) infer_post_procs ->
           if (index == root_index) then
-            (* Find procs which the conditional conditions depend on *)
-            let cond_depend_procs = collect_cond_depend_procs (src, index) sdg in
-            let () = if not (is_empty cond_depend_procs) then x_binfo_pp (
-                  "@post is added into " ^ (pr_list print_num_ident cond_depend_procs) ^ 
-                  " for conditions in " ^ (print_num_ident (src, index))) no_pos 
-            in
-            infer_post_procs @ (List.map fst cond_depend_procs)
+            (* (* Find procs which the conditional conditions depend on *)                   *)
+            (* let cond_depend_procs = collect_cond_depend_procs (src, index) sdg in         *)
+            (* let () = if not (is_empty cond_depend_procs) then x_binfo_pp (                *)
+            (*       "@post is added into " ^ (pr_list print_num_ident cond_depend_procs) ^  *)
+            (*       " for conditions in " ^ (print_num_ident (src, index))) no_pos          *)
+            (* in                                                                            *)
+            (* infer_post_procs @ (List.map fst cond_depend_procs)                           *)
+            infer_post_procs
           (* If a method has already been marked as @post, we do not need to work on it again *)
           else if (index == var_index) || (List.exists (fun mn -> eq_str mn src) infer_post_procs) 
           then infer_post_procs
@@ -476,7 +490,7 @@ let rec collect_should_infer_post_procs_for_output prog inf_post_procs =
 let set_inf_obj_for_tnt_prog prog =
   (* Step 1: Incrementally adding @term into callees of @term or @term_wo_post callers *)
   let inf_term_procs = Hashtbl.fold (fun _ proc acc ->
-      let spec = proc.proc_static_specs in
+      let spec = proc.proc_stk_of_static_specs # top (* proc.proc_static_specs *) in
       if not (Cformula.is_inf_term_struc spec) then acc
       else acc @ [proc]) prog.new_proc_decls [] 
   in
@@ -484,10 +498,15 @@ let set_inf_obj_for_tnt_prog prog =
   let inc_inf_term_mn = List.map (fun proc -> proc.proc_name) inc_inf_term_procs in
   let prog = { prog with
     new_proc_decls = proc_decls_map (fun proc ->
-        if List.mem proc.proc_name inc_inf_term_mn 
+        if List.mem proc.proc_name inc_inf_term_mn
         then set_inf_obj_proc INF_TERM proc
         else proc) prog.new_proc_decls; }
   in
+  (* let n_tbl = proc_decls_map (fun proc ->        *)
+  (*     if List.mem proc.proc_name inc_inf_term_mn *)
+  (*     then set_inf_obj_proc INF_TERM proc        *)
+  (*     else proc) prog.new_proc_decls             *)
+  (* in                                             *)
   if not !Globals.tnt_add_post then prog
   else
     (* Step 2: Incrementally adding @post into dependent procs of @term procs *)
@@ -507,10 +526,18 @@ let set_inf_obj_for_tnt_prog prog =
     let inf_post_procs = Gen.BList.remove_dups_eq eq_str inf_post_procs in
 
     (* Return values or Ref parameters of proc depends on inf_post_procs *)
-    let inc_inf_post_procs = collect_should_infer_post_procs_for_output prog inf_post_procs in
-    
+    let inc_inf_post_procs = 
+      if !Globals.inc_add_post then
+        collect_should_infer_post_procs_for_output prog inf_post_procs 
+      else inf_post_procs
+    in
     { prog with
       new_proc_decls = proc_decls_map (fun proc ->
-          if List.mem proc.proc_name inc_inf_post_procs 
+          if List.mem proc.proc_name inc_inf_post_procs
           then set_inf_obj_proc INF_POST proc
           else proc) prog.new_proc_decls; }
+    (* let n_tbl = proc_decls_map (fun proc ->         *)
+    (*   if List.mem proc.proc_name inc_inf_post_procs *)
+    (*   then set_inf_obj_proc INF_POST proc           *)
+    (*   else proc) prog.new_proc_decls                *)
+    (* in ()                                           *)

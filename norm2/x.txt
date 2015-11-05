@@ -1,0 +1,21 @@
+norm_unfold_formula inp1 :
+ view GP_2253<x_ref:int_star,y_ref:int_star>= 
+  EBase 
+    exists (Impl)[value_16_2262; value_8_2261; 
+    value_8_2260](* lbl: *){542}->
+                                  self::int_star<value_16_2262>@M * 
+                                  x_ref::int_star<value_8_2261>@M * 
+                                  y_ref::int_star<value_8_2260>@M&
+    {FLOW,(1,30)=__flow#E}[]equiv_set: ([],HP_1643)
+
+norm_unfold_formula inp2 :
+y_ref::GP_2253<x_ref,c>@M&{FLOW,(4,5)=__norm#E}[]
+
+
+norm_unfold_formula@24 EXIT: 
+
+(exists value_16_3723,value_8_3724,
+value_8_3725: c::int_star<value_16_3723>@M * 
+x_ref::int_star<value_8_3724>@M *
+c::int_star<value_8_3725>@M&
+{FLOW,(4,5)=__norm#E}[])

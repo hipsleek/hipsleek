@@ -14,7 +14,7 @@ print residue.
 expect Valid.
 
 /*
-# ex1e2 --trace-exc
+# ex1e2 -dre "process_one_m" --trace-log-num 5
 
 !!! **context.ml#741:TODO: rename root:x
 Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS node  Type: Root
@@ -24,6 +24,7 @@ Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS n
  lhs_rest: x_133::arr<Anon_134>@M
  rhs_rest: y::arr<Anon_15>@M
  rhs_inst: []rhs_infer: None
+
 
 Residue:
 

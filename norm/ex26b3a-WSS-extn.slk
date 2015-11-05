@@ -1,0 +1,74 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::node<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WSSA<p> ==
+  self::WFSeg<q>*q::node<0,p> 
+  //inv true. 
+  inv self!=null.
+  
+pred WSS<p> ==
+  self::WSSA<p>
+  inv self!=null.
+
+// if WFSeg_sz not derived, WSS_sz will use not track aux rec..
+//pred WFSeg_size<p,nnn> == extends WFSeg<p> with size[REC]<nnn>.
+
+//pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
+
+pred WFSeg_size<p,nnn> == extends [*] with size[REC]<nnn>. // inv check fail 
+
+//pred WSSA_sz<p,nnn> == extends [WSSA*] with size[REC]<nnn>. // ok
+
+//pred WSSA_size<p,nnn> == extends [WSSA*] with size[REC]<nnn>. // wrong -- FIXED: reserving WSSA_size for WSSA
+
+//pred WFSeg_size<p,nnn> == extends [WSSA*] with size[REC]<nnn>.
+
+//shape_extends_view [*] with size. // inv check ok
+
+//shape_extends_view [WSSA] with size.
+
+/*
+# ex26a3.slk
+
+# Why self!=null cannot be proven?
+
+view WSSA_size<p:node,nnn:int>= 
+  EBase 
+    (exists p_116,flted_17_117,q_118,nnn_119,nnn_120,
+    nnn_121: self::WSS_sz<q_118,nnn_121>@M * 
+             q_118::node<flted_17_117,p_116>@M&
+    nnn_119=0 & nnn_120=1+nnn_119 & nnn=nnn_120+nnn_121 & flted_17_117=0 & 
+    p_116=p&{FLOW,(1,26)=__flow#E}[])view WSSA_size{}[]<p:node,nnn:int>= 
+                                     inv: self!=null & nnn>=0
+                                     
+                                     baga over inv: [([], self!=null & nnn>=0)]
+                                     baga over inv (unfolded): [([], self!=null & nnn>=0)]
+                                     
+                                     xform: self!=null & nnn>=0
+                                     ,
+ view WSS_size<p:node,nnn:int>= 
+  EBase 
+    (exists p_147,nnn_148,nnn_149: self::WSSA_size<p_147,nnn_149>@M&
+    nnn_148=0 & nnn=nnn_148+nnn_149 & p_147=p&{FLOW,(1,26)=__flow#E}[])
+  view WSS_size{}[]<p:node,nnn:int>= 
+  inv: self!=null & nnn>=0
+  
+  baga over inv: [([], self!=null & nnn>=0)]
+  baga over inv (unfolded): [([], self!=null & nnn>=0)]
+  
+  xform: self!=null & nnn>=0
+
+
+*/

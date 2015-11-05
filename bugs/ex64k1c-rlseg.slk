@@ -1,0 +1,31 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+//lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p> & p!=null.
+// fail <==
+
+lemma_safe "one1"  self::rlseg<p> & p!=null <-> self::rlseg<p1>*p1::rlseg<p>.
+// valid <==>
+
+
+/*
+# ex64k1b.slk
+
+lemma_safe "one1"  self::rlseg<p> & p!=null <-> self::rlseg<p1>*p1::rlseg<p>.
+
+Is this unsound? guard to RHS
+
+check_coercion_struc@2
+check_coercion_struc inp1 :Lemma "one1_left_right":  self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists p1_53: self::rlseg<p1_53>@M * p1_53::rlseg<p>@M&p!=null&
+{FLOW,(20,21)=__norm#E}[])
+
+
+
+*/

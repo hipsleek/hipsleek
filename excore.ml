@@ -817,7 +817,12 @@ module EPURE =
       List.map (subst_epure sst) lst
 
     let simplify_disj (disj : epure_disj) : epure_disj =
-      List.map (fun (baga,pf) -> (baga,simplify_with_label_omega pf)) disj
+      let r =
+        List.map (fun (baga,pf) -> (baga,simplify_with_label_omega pf)) disj in
+      let () = y_binfo_hp (add_str "before" string_of_disj) disj in
+      let () = y_binfo_hp (add_str "after" string_of_disj) r in
+      r
+
 
     let pairwisecheck_disj (disj : epure_disj) : epure_disj =
       List.map (fun (baga,pf) -> (baga,!pairwisecheck pf)) disj

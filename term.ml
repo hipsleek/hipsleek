@@ -403,7 +403,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
       let lhs = MCP.pure_of_mix (MCP.merge_mems lhs_p xpure_lhs_h1 true) in
       x_dinfo_zp (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
       (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check 5 pos & rank_formula(I,O) *)
-      (*let (estate,_,rank_formula,_) = Infer.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
+      (*let (estate,_,rank_formula,_) = x_add Infer.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
         lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
         let rank_formula = MCP.pure_of_mix rank_formula in*)
       let estate, entail_dec_res = 
@@ -538,17 +538,30 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
         | _ -> 0
       in
 
+      let () = y_tinfo_hp (add_str "lhs_p" !MCP.print_mix_formula) lhs_p in
+      let () = y_tinfo_hp (add_str "xpure_lhs_h1" !MCP.print_mix_formula) xpure_lhs_h1 in
+      let turel_ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
       let process_turel is_ret es =
-        let ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in
-        let es = if es.es_infer_obj # is_term (* es.es_infer_tnt *) then
+        (* let turel_ctx = MCP.merge_mems lhs_p xpure_lhs_h1 true in *)
+        let es = 
+          if es.es_infer_obj # is_term (* es.es_infer_tnt *) then
+            let () = y_tinfo_pp ("[process_turel] Adding termAssume into es") in
             if is_ret then 
-              let trel = Ti.add_ret_trel_stk prog ctx es.es_term_res_lhs t_ann_d c_pos in
+              let trel = Ti.add_ret_trel_stk prog turel_ctx es.es_term_res_lhs t_ann_d c_pos in
               { es with es_term_res_rhs = Some t_ann_d; es_infer_term_rel = es.es_infer_term_rel @ [Ret trel]; }
             else
-              let trel = Ti.add_call_trel_stk prog ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
+              let trel = Ti.add_call_trel_stk prog turel_ctx t_ann_s t_ann_d dst_tinfo.lex_fid dst_il c_pos in
               { es with es_term_call_rhs =  Some t_ann_d; es_infer_term_rel = es.es_infer_term_rel @ [Call trel]; }
-          else es 
+          else
+            let () = y_tinfo_pp ("[process_turel] Not adding termAssume into es") in 
+            es 
         in es
+      in
+
+      let process_turel is_ret es =
+        let pr = !print_entail_state in
+        Debug.no_2 "process_turel" string_of_bool pr pr
+          process_turel is_ret es
       in
 
       match (t_ann_s, t_ann_d) with
@@ -669,6 +682,12 @@ let check_term_assume prog lhs rhs =
         end
     end
   | _ -> report_error pos "[term.ml][check_term_assume]: More than one LexVar in RHS." 
+
+let check_term_assume prog lhs rhs =
+  let pr = !print_formula in
+  Debug.no_2 "check_term_assume" 
+    (add_str "lhs" pr) (add_str "rhs" pr) (fun () -> "")
+    (fun _ _ -> check_term_assume prog lhs rhs) lhs rhs
 
 (* HIP: Collecting information for termination proof *)
 let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
@@ -1184,11 +1203,12 @@ let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
 (*   else subst_phase_num_struc subst struc *)
 
 let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
-  let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in
+  (* let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in *)
+  let s_specs = subst_phase_num_struc rp subst (proc.Cast.proc_stk_of_static_specs # top) in
   let d_specs = subst_phase_num_struc rp subst proc.Cast.proc_dynamic_specs in
-  let () = proc.Cast.proc_stk_of_static_specs # push_pr "term:1189" s_specs in 
+  let () = proc.Cast.proc_stk_of_static_specs # push_pr x_loc s_specs in 
   { proc with
-    Cast.proc_static_specs = s_specs;
+    (* Cast.proc_static_specs = s_specs; *)
     Cast.proc_dynamic_specs = d_specs; }
 
 let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
@@ -1255,7 +1275,8 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                 then subst_phase_num_proc rp subst proc
                 else proc
               ) prog.Cast.new_proc_decls in  
-            { prog with Cast.new_proc_decls = n_tbl }
+            (* { prog with Cast.new_proc_decls = n_tbl } *)
+            prog
           end
         else prog
       with Not_found -> prog

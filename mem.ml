@@ -388,7 +388,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
                    CF.h_formula_view_pos = pos;}) -> 
     (*let new_var = CP.Var(CP.SpecVar((BagT (Named name)),"Anon"^(fresh_trailer()),Unprimed),pos) in 
       			 	mk_mem_perm_formula (CP.Bag([new_var],pos)) false []*)
-    let vdef = x_add C.look_up_view_def_raw 20 vl name in
+    let vdef = x_add C.look_up_view_def_raw x_loc vl name in
     let mpf = vdef.C.view_mem in
     (match mpf with
      | Some mpf -> 
@@ -451,11 +451,11 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
         let () = if (CF.is_empty_heap f) then ()
           else mem_guards_checking_reverse me.CF.mem_formula_guards (MCP.pure_of_mix p) pos
         in let fe = MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
-        (*in MCP.memo_pure_push_exists qvars fe*)
+        (*in MCP.mix_push_exists qvars fe*)
         in fe
       else (MCP.mix_of_pure f1)
-      (*MCP.memo_pure_push_exists qvars (MCP.mix_of_pure f1)*)
-    in MCP.memo_pure_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
+      (*MCP.mix_push_exists qvars (MCP.mix_of_pure f1)*)
+    in MCP.mix_push_exists qvars (List.fold_left (fun a b -> MCP.merge_mems a (MCP.mix_of_pure b) true) f disjform)
 
 let xmem_perm (f: CF.formula) (vl:C.view_decl list) : CF.mem_perm_formula * MCP.mix_formula * CP.spec_var list =
   let mix_true = MCP.mix_of_pure (CP.mkTrue no_pos) in 
@@ -482,7 +482,7 @@ let entail_mem_perm_formula (ante: CF.formula) (conseq: CF.formula) (vl: C.view_
   let subset_formula = CP.BForm((CP.BagSub(mfe_conseq,mfe_ante,pos),None),None) in
   let () = fl_subtyping ante_mem.CF.mem_formula_field_layout conseq_mem.CF.mem_formula_field_layout pos in
   let pure_formulas = MCP.merge_mems ante_mem_pure conseq_mem_pure true in
-  MCP.memo_pure_push_exists (ante_qvars@conseq_qvars) (MCP.merge_mems (MCP.mix_of_pure subset_formula) pure_formulas true)
+  MCP.mix_push_exists (ante_qvars@conseq_qvars) (MCP.merge_mems (MCP.mix_of_pure subset_formula) pure_formulas true)
 
 let get_data_fields (ddn : (ident * ((typed_ident * loc * bool) list)) list)  (name : ident) : ((typed_ident * loc * bool) list) = 
   try (snd (List.find (fun c -> (*let () = print_string(" DD: "^(fst c)^ "N: "^name) in  *)
@@ -1314,7 +1314,7 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
       	| _ -> false) (CP.list_of_conjs new_p) in
       	let new_p = CP.conj_of_list p_list f.CF.formula_exists_pos in*)
     let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
-    (*let new_mcp = MCP.memo_pure_push_exists f.CF.formula_exists_qvars new_mcp in*)
+    (*let new_mcp = MCP.mix_push_exists f.CF.formula_exists_qvars new_mcp in*)
     CF.Exists { f with
                 CF.formula_exists_qvars = qevars;
                 CF.formula_exists_heap = new_h;
@@ -1779,7 +1779,7 @@ let ramify_star (p: CF.h_formula) (ql: CF.h_formula list) (vl:C.view_decl list) 
       List.fold_left (fun (h,f) q  -> 
           let q_mpf, q_vars  = 
             if (CF.is_view q) then
-              let q_vdef = x_add C.look_up_view_def_raw 21 vl (x_add CF.get_node_name 9 q) in
+              let q_vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 9 q) in
               let q_viewvars = q_vdef.C.view_vars in
               q_vdef.C.view_mem,q_viewvars 
             else None,[] in
@@ -1792,14 +1792,14 @@ let ramify_star (p: CF.h_formula) (ql: CF.h_formula list) (vl:C.view_decl list) 
                  CF.h_formula_view_imm = imm;
                  CF.h_formula_view_arguments = vargs;
                  CF.h_formula_view_pos = pos} -> 
-    let p_vdef = x_add C.look_up_view_def_raw 22 vl name in
+    let p_vdef = x_add C.look_up_view_def_raw x_loc vl name in
     let p_mpf = p_vdef.C.view_mem in
     let p_vars = p_vdef.C.view_vars in
     if(CP.isMutable imm) then
       List.fold_left (fun (h,f) q -> 
           let q_mpf,q_vars = 
             if (CF.is_view q) then
-              let q_vdef = x_add C.look_up_view_def_raw 23 vl (x_add CF.get_node_name 10 q) in
+              let q_vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 10 q) in
               let q_vars = q_vdef.C.view_vars in
               q_vdef.C.view_mem, q_vars
             else None,[] in  
@@ -1932,7 +1932,7 @@ let get_neq_for_ramify (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) vl pos :
       let p1 = CP.mkNeqVar (CF.get_node_var r) (CF.get_node_var h) pos in
       CP.mkAnd p1 p pos
     else (* r is a view *) 
-      let vdef = x_add C.look_up_view_def_raw 24 vl (x_add CF.get_node_name 11 r) in
+      let vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 11 r) in
       let args = vdef.C.view_vars in
       let rargs = (CF.get_node_args r) in
       let sst = List.combine args rargs in 
@@ -1941,7 +1941,7 @@ let get_neq_for_ramify (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) vl pos :
       let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var h),mexp,pos),None),None) in
       CP.mkAnd p1 p pos
   else if (CF.is_view h) then
-    let vdef = x_add C.look_up_view_def_raw 25 vl (x_add CF.get_node_name 12 h) in
+    let vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 12 h) in
     let mpf = Gen.unsome vdef.C.view_mem in
     let args = vdef.C.view_vars in
     let hargs = (CF.get_node_args h) in
@@ -1951,7 +1951,7 @@ let get_neq_for_ramify (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) vl pos :
       let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var r),mexp,pos),None),None) in
       CP.mkAnd p1 p pos
     else (* r is a view *) 
-      let vdef_r = x_add C.look_up_view_def_raw 26 vl (x_add CF.get_node_name 13 r) in
+      let vdef_r = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 13 r) in
       let mpf_r = Gen.unsome vdef_r.C.view_mem in
       let args_r = vdef_r.C.view_vars in
       let rargs_r = (CF.get_node_args r) in
@@ -2028,7 +2028,7 @@ let rec ramify_complex_heap (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) (vl
                      CF.h_formula_view_imm = rimm;
                      CF.h_formula_view_arguments = rvargs;
                      CF.h_formula_view_pos = rpos} -> 
-       let vdef = x_add C.look_up_view_def_raw 27 vl rname in
+       let vdef = x_add C.look_up_view_def_raw x_loc vl rname in
        let args = vdef.C.view_vars in
        let sst = List.combine args rvargs in 
        let mpf = Gen.unsome vdef.C.view_mem in
@@ -2049,7 +2049,7 @@ let rec ramify_complex_heap (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) (vl
                  CF.h_formula_view_imm = imm;
                  CF.h_formula_view_arguments = vargs;
                  CF.h_formula_view_pos = pos} ->
-    let vdef = x_add C.look_up_view_def_raw 28 vl name in
+    let vdef = x_add C.look_up_view_def_raw x_loc vl name in
     let mpf = Gen.unsome vdef.C.view_mem in
     let args = vdef.C.view_vars in
     let sst = List.combine args vargs in
@@ -2075,7 +2075,7 @@ let rec ramify_complex_heap (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) (vl
                      CF.h_formula_view_imm = rimm;
                      CF.h_formula_view_arguments = rvargs;
                      CF.h_formula_view_pos = rpos} ->
-       let vdef_r = x_add C.look_up_view_def_raw 29 vl name in
+       let vdef_r = x_add C.look_up_view_def_raw x_loc vl name in
        let mpf_r = Gen.unsome vdef_r.C.view_mem in
        let args_r = vdef_r.C.view_vars in
        let sst_r = List.combine args_r rvargs in
@@ -2290,7 +2290,7 @@ let rec infer_mem_from_heap (hf: IF.h_formula) (prog:I.prog_decl)
                   IF.h_formula_heap_imm_param  = annl;
                   IF.h_formula_heap_pos = pos}) -> 
     (try
-       let vdef = I.look_up_view_def_raw 11 prog.I.prog_view_decls c in
+       let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c in
        let view_vars = List.map (fun c ->(c,Unprimed)) vdef.I.view_vars in 
        let new_args = List.map (fun c -> match c with 
            | IP.Var((i,p),_) -> (i,p)

@@ -157,6 +157,10 @@ gsleek.native:
 	@ocamlbuild $(OBG_FLAGS) gsleek.native
 	cp -u _build/gsleek.native gsleek
 
+fact.byte: 
+	@ocamlbuild $(OBB_FLAGS) fact.byte
+	cp -u _build/fact.byte fact
+
 ghip.byte:
 	@ocamlbuild $(OBG_FLAGS) ghip.byte
 	cp -u _build/ghip.byte p-ghip

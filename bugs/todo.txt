@@ -2183,6 +2183,14 @@ Entail 1: Fail.(may) cause:base case unfold failed
 	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
 	 body:(EX v_192 v_191 . (emp ; (emp ; ((self::cell{}()<v_191,>@M[HeapNode1]) * (self::cell{}()<v_192,>@M[HeapNode1]))))*([] & (((v_192:int)) = ((v:int))) & (((v_191:int)) = ((v:int))))( FLOW __norm))lemmas(to be proved and saved)
 ===================================================================
+#ex63d.slk --adhoc-3
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+Entailing lemma lem_11: Fail. Details below:
+         "==>" implication: : Valid.
+         "<==" implication: : Fail. (cex)(must) cause: exception Failure("split_components: don't expect OR") in lemma proving
+===================================================================
 # ex62b.slk 
 
 infer [x] x::ll<n> |- x::node<_,b>.
@@ -2223,8 +2231,56 @@ expect Valid.
 !!! **context.ml#713:lhs_p2: flted_7_46+1=n
 !!! **context.ml#714:rhs: x=x
 ===================================================================
-  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail}) fracperm/split_simple.slk({E4#Fail},{E6#Valid},{E7#Valid},{E8#Valid}).
-!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+# ex64.b.slk
+
+# problem with complex lemma
+
+Entailing lemma three: Fail. Details below:
+	 "==>" implication: : Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+	 "==>" implication: : Valid.
+
+The first bad revision is:
+changeset:   17436:78bf6a8733c9
+branch:      infer-str
+user:        chinwn@loris-laptop
+date:        Wed Oct 21 04:38:03 2015 +0800
+summary:     need to schedule complex lemma
+
+===================================================================
+# bugs/ex64c.slk
+
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+expect Fail.
+// It seems like pure field is always inferred;
+// can we make it selective?
+
+HeapPred HP_69(node flted_19_67, int@NI a_68, node@NI y).
+Entail (2) : Valid. 
+ <1>HP_69(flted_19_67,a_68,y)&1<=a_68 & y!=null & flted_19_67=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_69(flted_19_67,a_68@NI,y@NI)&true --> emp&
+                   1<=a_68 & flted_19_67=null; 
+                  H1(y)&
+                   true --> y::node<a_68,flted_19_67>@M * 
+                            HP_69(flted_19_67,a_68@NI,y@NI)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
+===================================================================
+# ex64d1.slk (fixed with --new-free-var-lhs)
+
+Wrong
+=====
+Coercion_case: Simple
+ head_norm:  (exists n_43: self::ll_s<n_43>@M&n_43=n&{FLOW,(20,21)=__norm#E}[])
+
+Correct
+=======
+ head_norm:  (exists n: self::ll_s<n>@M&{FLOW,(20,21)=__norm#E}[])
 ===================================================================
 # ex62c.slk --dis-mkeqn-opt
 
@@ -2250,13 +2306,164 @@ infer_lhs_contra#1 inp3 :M_infer_heap : x2::node<b,q>@M
 infer_lhs_contra#1@3 EXIT:Some( p!=p)
 
 ===================================================================
+# ex64k1b.slk
+
+Is this unsound?
+
+# swap rhs <-> lhs
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p> & p!=null.
+
+!!! **iast.ml#3984:swap_lhs_rhs:rhs_pure:p != null
+!!! **astsimp.ml#4586:l_fnames:[self,p]
+!!! **astsimp.ml#4587:rhs_fnames:[self,p1,p]
+
+# Is this a correct way of handling universal guards?
+
+check_coercion_struc inp1 :Lemma "one_left_right":  self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists p1_53: self::rlseg<p1_53>@M * p1_53::rlseg<p>@M&p!=null&
+
 ===================================================================
+# ex64m.slk --en-sep-pure-fields
+
+// (4)
+infer [H1]  H1(y) |- y::node<a,b> * b::ll<m>.
+print residue.
+
+# infer_unfold not working? (FIXED)
+
+# match not recorded..
+
+(==solver.ml#13577==)
+do_match@1
+do_match inp1 : y::node<a_41,b_42>@M
+do_match inp2 : y::node<a,b>@M
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H1(y) |#|  --> y::node<a_41,b_42>@M]
+ es_gen_impl_vars(E): [a; b; c; d]
+ es_gen_impl_vars: [a; b; c; d]
+ es_trace:  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [H1]
+do_match inp4 : b::node<c,d>@M&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+
+[[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
+ CEX:false
+
+!!! **inferHP.ml#1459:root posn (H1):0
+!!! **solver.ml#12061:do_infer_heap:entry:rhs: y::node<a,b>@M
+!!! **inferHP.ml#243:Globals.infer_const_obj # is_pure_field :false
+!!! **inferHP.ml#244: es.CF.es_infer_obj # is_pure_field_all:false
+!!! **inferHP.ml#266:args12:[(b_42,@I)]
+!!! **inferHP.ml#267:niu_svl_ni_total:[]
+!!! **inferHP.ml#275:is_inf_pure_field:false
 ===================================================================
+# bugs/ex64m1.slk (DONE)
+
+# Why is do_match not captured in trace and -dd-steps by infer_unfold?
+
+Entail (1) : Valid. 
+Residue:
+ <1>HP_47(flted_14_46,y)&flted_14_46=null & y!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_47(flted_14_46,y@NI)&true --> emp&flted_14_46=null; 
+                  H1(y)&
+                   true --> y::node<a_45,flted_14_46>@M * 
+                            HP_47(flted_14_46,y@NI)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
+(==solver.ml#13577==)
+do_match@1
+do_match inp1 : y::node<a_41,b_42>@M
+do_match inp2 : y::node<a,b>@M
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H1(y) |#|  --> y::node<a_41,b_42>@M]
+ es_gen_impl_vars(E): [a; b; c; d]
+ es_gen_impl_vars: [a; b; c; d]
+ es_trace:  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [H1]
+do_match inp4 : b::node<c,d>@M&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+
+[[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
+ CEX:false
 ===================================================================
+# ex64k8.slk (FIXED)
+
+# why old system  (in default) can prove below?
+
+!!! **solver.ml#13660:lhs contra?:None
+Entailing lemma three: Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+
+lemma_safe "three"  
+   self::node<_,q>*q::rlseg<p> 
+    ->
+   self::rlseg<p1>* p1::node<_,p> 
+.
+
+# new complex lemma
+ body_norm:  EBase 
+   exists (Impl)[p1; 
+   Anon_12](exists p_40: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_lhs_sig: Some([node,rlseg])
+
+
+# old complex lemma (from default)
+!!! WARNING : changing lemma from <- to -> 
+ body_norm:  EBase 
+   exists (Impl)[p1](exists p_40,
+   Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_fold: None
+
 ===================================================================
+# ex64k1d.slk
+
+@ unsound?
+
+# do not move p!=null to opposite site..
+  as this is unsound, esp for free expressions
+
+# swap rhs <-> lhs
+
+ self::rlseg<p> & p!=null
+  <- 
+    self::rlseg<p1>*p1::rlseg<p> 
+
+For:
+ x::lseg<n,p> & a,b>=0 <-- x::lseg<a,q> * q::lseg<b,p>
+we converted to:
+ x::lseg<n,p>  <-- x::lseg<a,q> * q::lseg<b,p> & n=a+b
+which seems OK as a weakening process..
+
+Why are the two different?
+If we do such weakening, we should give a warning as the
+new lemma is weaker than the declared one.
 ===================================================================
+# ex64k9b.slk
+
+lemma_safe "one" 
+  self::node<_,q>*q::rlseg<p>
+  <->
+  self::rlseg<p1>*p1::node<_,p>
+.
+
+# Why so long, and why need breaking lemma?
+
+
+[[ Match(self_one_left_right,self_one_left_right) ==>  SEARCH ==>  (Lemma <== one_left_right(q_679,q_679)) ==>  Match(q_679,q_679) ==>  Fold ==>  Match(p1_680,p1_680) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Match(self_one_left_right,self_one_left_right) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Fold ==>  Match(self_one_left,self_one_left) ==>  SEARCH ==>  (Lemma ==> one_left(q_502,q_505)) ==> (Complex: one_left) ==>  SEARCH ==>  (Lemma <== one_left_right(q_502,q_505)) ==>  Match(q_502,q_505) ==>  Fold ==>  Match(p1_596,p1) ==> ||OR|| ==>  Fold ==>  Match(self_one_left,p1)]]
 ===================================================================
-===================================================================
+# ex64k9c.slk
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::node<_,p>
+  <->
+  self::node<_,q>*q::rlseg<p>
+
+// this lemma direction is not as good as the other (see ex64k9b)
 ===================================================================
 ===================================================================
 ===================================================================

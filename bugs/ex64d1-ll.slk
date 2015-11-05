@@ -1,0 +1,96 @@
+//Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail
+data node { int val ; node next }.
+
+pred ll_s<n> == self = null & n = 0
+	or self::node<next = r> * r::ll_s<n - 1>
+	inv n >= 0.
+
+pred ll<> == self = null 
+	or self::node<next = r> * r::ll<>
+	inv true.
+
+lemma_safe "V3" self::ll_s<nnn> <-> self::ll<>.
+// valid
+// valid
+/*
+# ex64d1.slk
+
+Wrong
+=====
+Coercion_case: Simple
+ head_norm:  (exists n_43: self::ll_s<n_43>@M&n_43=n&{FLOW,(20,21)=__norm#E}[])
+
+Correct
+=======
+ head_norm:  (exists n: self::ll_s<n>@M&{FLOW,(20,21)=__norm#E}[])
+
+
+== cut ==
+!!! **astsimp.ml#4387:cs_head_norm:
+ EBase 
+   exists (Impl)[nnn]self::ll_s<nnn>@M&{FLOW,(20,21)=__norm#E}[]
+!!! **astsimp.ml#4589:qvars in <->:[]
+!!! **cpure.ml#14974:annot: 2
+!!! **cpure.ml#14975:annot: :[0,0]
+!!! **cpure.ml#14976:hargs: :[nnn]
+!!! **cpure.ml#14984:view_args_pos: 1
+!!! **cpure.ml#14988:to_be_updated: :1
+!!! **cpure.ml#14993:new_com:[(((SVArg nnn,0),1),nnn)]
+!!! **astsimp.ml#4590:c_head_norm: (exists nnn: self::ll_s<nnn>@M&{FLOW,(20,21)=__norm#E}[])
+!!! **astsimp.ml#4381:new_head:(EX  . (self::ll_s{}<nnn>[HeapNode1])*([] & true)( FLOW __norm))
+!!!:0: 0: **iformula.ml#1929:ho_na:[]
+!!! **astsimp.ml#8706:labels:[""]
+!!! **astsimp.ml#8730:ty_vars:[(int,n)]
+!!! **astsimp.ml#8731:heap args:[nnn]
+!!! **astsimp.ml#8732:ho_args:[]
+!!! **astsimp.ml#9080:new_expl:[]
+!!! **astsimp.ml#9081:init_expl:[]
+!!! **astsimp.ml#9085:onb_vars:[(self,),(nnn,)]
+!!! **astsimp.ml#9095:all_expl:[]
+!!! **astsimp.ml#9096:possib_impl:[]
+!!! **astsimp.ml#9097:p_vars:[]
+!!! **astsimp.ml#9107:impl_var:[(self,);(nnn,)]
+!!! **astsimp.ml#9109:all_vars:[(self,);(nnn,);(self,');(nnn,')]
+!!! **astsimp.ml#9110:impl_var:[]
+!!! **astsimp.ml#9113:impl_var:[]
+!!! **astsimp.ml#9115:impl_var(after filter_global_rel):[]
+!!! **astsimp.ml#4384:wf:EBase: [][](EX nnn_43 . (self::ll_s{}<nnn_43>[HeapNode1])*([] & nnn_43 = nnn)( FLOW __norm)) 
+!!! **typeinfer.ml#1469:view:self::ll_s{}<nnn_43>[HeapNode1]
+!!! **typeinfer.ml#1470:ies:[nnn_43]
+!!! **astsimp.ml#7480:n_tl:[(nnn:42:int)(TVar__46:46:int)(nnn_43:44:int)(TVar__45:45:int)(self:41:node)]
+!!! **astsimp.ml#7487:n_tl:[(nnn:42:int)(TVar__46:46:int)(nnn_43:44:int)(TVar__45:45:int)(self:41:node)]
+!!! **cpure.ml#14974:annot: 2
+!!! **cpure.ml#14975:annot: :[0,0]
+!!! **cpure.ml#14976:hargs: :[nnn_43]
+!!! **cpure.ml#14984:view_args_pos: 1
+!!! **cpure.ml#14988:to_be_updated: :1
+!!! **cpure.ml#14993:new_com:[(((SVArg nnn_43,0),1),nnn_43)]
+!!! **astsimp.ml#7534:cf: (exists nnn_43: self::ll_s<nnn_43>@M&nnn_43=nnn&{FLOW,(20,21)=__norm#E}[])
+!!! **cpure.ml#14974:annot: 2
+!!! **cpure.ml#14975:annot: :[0,0]
+!!! **cpure.ml#14976:hargs: :[nnn_43]
+!!! **cpure.ml#14984:view_args_pos: 1
+!!! **cpure.ml#14988:to_be_updated: :1
+!!! **cpure.ml#14993:new_com:[(((SVArg nnn_43,0),1),nnn_43)]
+!!! **astsimp.ml#7202:new_base: (exists nnn_43: self::ll_s<nnn_43>@M&nnn_43=nnn&{FLOW,(20,21)=__norm#E}[])
+!!! **astsimp.ml#7203:impl_vars:[]
+!!! **astsimp.ml#7268:fvars:[self,nnn]
+!!! **cpure.ml#14974:annot: 2
+!!! **cpure.ml#14975:annot: :[0,0]
+!!! **cpure.ml#14976:hargs: :[nnn_43]
+!!! **cpure.ml#14984:view_args_pos: 1
+!!! **cpure.ml#14988:to_be_updated: :1
+!!! **cpure.ml#14993:new_com:[(((SVArg nnn_43,0),1),nnn_43)]
+!!! **astsimp.ml#4387:cs_head_norm:
+ EBase 
+   (exists nnn_43: self::ll_s<nnn_43>@M&nnn_43=nnn&{FLOW,(20,21)=__norm#E}[])
+=== cut ===
+
+
+!!! **cpure.ml#14993:new_com:[(((SVArg nnn,0),1),nnn)]
+!!! **lemproving.ml#457:norm rhs:
+ EBase 
+   (exists nnn: self::ll_s<nnn>@M&{FLOW,(20,21)=__norm#E}[])
+
+*/
+

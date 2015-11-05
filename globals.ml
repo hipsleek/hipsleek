@@ -254,6 +254,7 @@ let is_undef_typ t =
   | UNK | RelT _ | HpT | UtT _ -> true
   | _ -> false 
 
+
 let is_ptr_arith t =
   match t with
   | Named id -> true (* String.compare id "" != 0 *)
@@ -628,6 +629,9 @@ let rec string_of_typ (x:typ) : string = match x with
     (string_of_typ et) ^ (repeat r)
 ;;
 
+let string_of_typed_ident (typ,id) =
+  "("^(string_of_typ typ)^","^id^")"
+
 let is_RelT x =
   match x with
   | RelT _ | UtT _  (* | HpT _  *)-> true
@@ -785,7 +789,9 @@ let is_null name =
   name == null_name
 
 let is_null_type t  =
-  t == null_type
+  match t with
+  | Named "" -> true
+  | _ -> false
 
 let inline_field_expand = "_"
 
@@ -914,6 +920,7 @@ let dis_base_case_unfold = ref false
 let enable_split_lemma_gen = ref false
 let enable_lemma_rhs_unfold = ref false
 let enable_lemma_lhs_unfold = ref false
+let enable_lemma_unk_unfold = ref true
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
@@ -928,6 +935,7 @@ let allow_lemma_norm = ref false
 let show_push_list = ref (None:string option)
 let show_push_list_rgx = ref (None:Str.regexp option)
 
+let old_unsound_no_progress = ref false
 let old_norm_w_coerc = ref false
 let old_keep_all_matchres = ref false
 
@@ -1093,6 +1101,8 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
+let sep_pure_fields = ref false
+
 let en_norm_ctx = ref false (* true - not suitable for inference *)
 
 let en_trec_lin = ref false
@@ -1101,8 +1111,9 @@ let en_trec_lin = ref false
 let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)
 
+(* turn off printing during lemma proving? *)
 let lemma_ep = ref true
-let lemma_ep_verbose = ref true
+let lemma_ep_verbose = ref false 
 
 let dis_sem = ref false
 
@@ -1311,6 +1322,8 @@ let old_lemma_unfold = ref false (* false *)
 let old_field_tag = ref false (* false *)
 let new_trace_classic = ref false (* false *)
 let old_pred_extn = ref false (* false *)
+let old_lemma_switch = ref false (* false *)
+let old_free_var_lhs = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
 let mkeqn_opt_flag = ref true (* false *)
 let old_view_equiv = ref false (* false *)
@@ -1345,6 +1358,9 @@ let hrel_as_view_flag = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
+let adhoc_flag_4 = ref false
+let adhoc_flag_5 = ref false
+let adhoc_flag_6 = ref false
 let old_keep_absent = ref false
 let old_empty_to_conseq = ref true (* false *)
 let weaker_pre_flag = ref true
@@ -1394,7 +1410,7 @@ let move_exist_to_LHS = ref false
 let max_renaming = ref false
 
 
-let anon_exist = ref true
+let anon_exist = ref false
 
 let simplify_pure = ref false
 
@@ -1580,13 +1596,14 @@ let infer_const = ref ""
 let tnt_verbosity = ref 1
 let tnt_infer_lex = ref true
 let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
+let inc_add_post = ref false
 let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
 let tnt_infer_nondet = ref true
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
 let nondet_int_rel_name = "nondet_int__"
 
-let hip_sleek_keywords = ["res"]
+let hip_sleek_keywords = ["res"; "max"; "min"]
 
 let rec_field_id = "REC"
 
@@ -1698,6 +1715,39 @@ let string_of_inf_const x =
   | INF_IMM_PRE -> "@imm_pre"
   | INF_IMM_POST -> "@imm_post"
   | INF_EXTN lst -> "@extn" ^ (pr_list string_of_infer_extn lst)
+
+let inf_const_of_string s =
+  match s with
+  | "@term" -> INF_TERM
+  | "@term_wo_post" -> INF_TERM_WO_POST
+  | "@post" -> INF_POST
+  | "@post_n" -> INF_POST
+  | "@pre" -> INF_PRE
+  | "@shape" -> INF_SHAPE
+  | "@shape_pre" -> INF_SHAPE_PRE
+  | "@shape_post" -> INF_SHAPE_POST
+  | "@shape_prepost" -> INF_SHAPE_PRE_POST 
+  | "@error" -> INF_ERROR
+  | "@dis_err" -> INF_DE_EXC
+  | "@err_must" -> INF_ERR_MUST
+  | "@pre_must" -> INF_PRE_MUST
+  | "@err_must_only" -> INF_ERR_MUST_ONLY
+  | "@err_may" -> INF_ERR_MAY
+  | "@size" -> INF_SIZE
+  | "@imm" -> INF_IMM
+  | "@pure_field" -> INF_PURE_FIELD
+  | "@field_imm" -> INF_FIELD_IMM
+  | "@arrvar" -> INF_ARR_AS_VAR
+  | "@efa" -> INF_EFA
+  | "@dfa" -> INF_DFA
+  | "@flow" -> INF_FLOW
+  | "@leak" -> INF_CLASSIC
+  | "@par" -> INF_PAR
+  | "@ver_post" -> INF_VER_POST
+  | "@imm_pre" -> INF_IMM_PRE
+  | "@imm_post" -> INF_IMM_POST
+  | _ -> failwith (s ^ " is not supported in command line.")
+  
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1775,47 +1825,60 @@ class inf_obj  =
       if self # is_field_imm then allow_field_ann:=true;
       if self # get INF_ARR_AS_VAR then array_translate :=true
     method set_init_arr s = 
-      let helper r c =
-        let reg = Str.regexp r in
-        try
-          begin
-            Str.search_forward reg s 0;
-            arr <- c::arr;
-            (* Trung: temporarily disable printing for svcomp15, undo it later *) 
-            (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
-          end
-        with Not_found -> ()
-      in
       begin
-        helper "@term"          INF_TERM;
-        helper "@term_wo_post"  INF_TERM_WO_POST;
-        helper "@pre"           INF_PRE;
-        helper "@post"          INF_POST;
-        helper "@imm"           INF_IMM;
-        helper "@pure_field"    INF_PURE_FIELD;
-        helper "@field_imm"     INF_FIELD_IMM;
-        helper "@arrvar"        INF_ARR_AS_VAR;
-        helper "@shape"         INF_SHAPE;
-        helper "@shape_pre"     INF_SHAPE_PRE;
-        helper "@shape_post"    INF_SHAPE_POST;
-        helper "@shape_prepost" INF_SHAPE_PRE_POST;
-        helper "@error"         INF_ERROR;
-        helper "@dis_err"       INF_DE_EXC;
-        helper "@err_may"       INF_ERR_MAY;
-        helper "@err_must"      INF_ERR_MUST;
-        helper "@err_must_only" INF_ERR_MUST_ONLY;
-        helper "@size"          INF_SIZE;
-        helper "@ana_ni"        INF_ANA_NI;
-        helper "@efa"           INF_EFA;
-        helper "@dfa"           INF_DFA;
-        helper "@flow"          INF_FLOW;
-        helper "@leak"          INF_CLASSIC;
-        helper "@classic"       INF_CLASSIC;
-        helper "@par"           INF_PAR;
-        helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
-        helper "@imm_pre"       INF_IMM_PRE;
-        helper "@imm_post"      INF_IMM_POST;
-        (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
+        let inf_cmds = Str.split (Str.regexp "@") s in
+        let inf_cmds = List.map (fun cmd -> "@" ^ cmd) inf_cmds in
+        (* let () = print_endline_q ("inf cmd: " ^ s) in                                    *)
+        (* let () = print_endline_q ("inf_cmds: " ^ (pr_list (fun cmd -> cmd) inf_cmds)) in *)
+        let inf_const_lst = List.fold_left (fun acc cmd ->
+            try acc @ [(inf_const_of_string cmd)]
+            with _ -> print_endline_q (cmd ^ " is not supported in command line."); acc
+          ) [] inf_cmds
+        in
+        let () = arr <- inf_const_lst @ arr in
+        let () = print_endline_q ("infer option added: " ^ (pr_list string_of_inf_const inf_const_lst)) in
+      
+      (* let helper i r c =                                                                                             *)
+      (*   let reg = Str.regexp r in                                                                                    *)
+      (*   try                                                                                                          *)
+      (*     begin                                                                                                      *)
+      (*       Str.search_forward reg s i; (* This search causes information lost, e.g. "@shape_prepost@post_n@term" *) *)
+      (*       arr <- c::arr;                                                                                           *)
+      (*       (* Trung: temporarily disable printing for svcomp15, undo it later *)                                    *)
+      (*       print_endline_q ("infer option added :"^(string_of_inf_const c));                                        *)
+      (*       i + (String.length (string_of_inf_const c))                                                              *)
+      (*     end                                                                                                        *)
+      (*   with Not_found -> i                                                                                          *)
+      (* in                                                                                                             *)
+      (* begin                                                                                                          *)
+      (*   let i = helper 0 "@term_wo_post"  INF_TERM_WO_POST in (* same prefix with @term *)                           *)
+      (*   let i = helper i "@pure_field"    INF_PURE_FIELD in                                                          *)
+      (*   let i = helper i "@field_imm"     INF_FIELD_IMM in                                                           *)
+      (*   let i = helper i "@arrvar"        INF_ARR_AS_VAR in                                                          *)
+      (*   let i = helper i "@shape_prepost" INF_SHAPE_PRE_POST in (* same prefix with @shape_pre *)                    *)
+      (*   let i = helper i "@shape_pre"     INF_SHAPE_PRE in                                                           *)
+      (*   let i = helper i "@shape_post"    INF_SHAPE_POST in                                                          *)
+      (*   let i = helper i "@shape"         INF_SHAPE in                                                               *)
+      (*   let i = helper i "@term"          INF_TERM in                                                                *)
+      (*   let i = helper i "@pre"           INF_PRE in                                                                 *)
+      (*   let i = helper i "@post"          INF_POST in                                                                *)
+      (*   let i = helper i "@imm"           INF_IMM in                                                                 *)
+      (*   let i = helper i "@error"         INF_ERROR in                                                               *)
+      (*   let i = helper i "@dis_err"       INF_DE_EXC in                                                              *)
+      (*   let i = helper i "@err_may"       INF_ERR_MAY in                                                             *)
+      (*   let i = helper i "@err_must_only" INF_ERR_MUST_ONLY in (* same prefix with @err_must *)                      *)
+      (*   let i = helper i "@err_must"      INF_ERR_MUST in                                                            *)
+      (*   let i = helper i "@size"          INF_SIZE in                                                                *)
+      (*   let i = helper i "@efa"           INF_EFA in                                                                 *)
+      (*   let i = helper i "@dfa"           INF_DFA in                                                                 *)
+      (*   let i = helper i "@flow"          INF_FLOW in                                                                *)
+      (*   let i = helper i "@leak"          INF_CLASSIC in                                                             *)
+      (*   let i = helper i "@classic"       INF_CLASSIC in                                                             *)
+      (*   let i = helper i "@par"           INF_PAR in                                                                 *)
+      (*   let i = helper i "@ver_post"      INF_VER_POST in (* @ato, @arr_to_var *)                                    *)
+      (*   let i = helper i "@imm_pre"       INF_IMM_PRE in                                                             *)
+      (*   let i = helper i "@imm_post"      INF_IMM_POST in                                                            *)
+      (*   (* let x = Array.fold_right (fun x r -> x || r) arr false in *)                                              *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
       end
     method is_empty  = arr==[]
@@ -1911,6 +1974,8 @@ class inf_obj  =
     method set_list l  = List.iter (fun c -> self # set c) l
     method reset c  = arr <- List.filter (fun x -> not (eq_infer_type c x)) arr
     method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
+    method reset_inf_shape = self # reset_list [INF_SHAPE_PRE_POST; INF_SHAPE_PRE; INF_SHAPE_POST; INF_SHAPE]
+    method reset_all = arr <- []
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
     (*   let l = self # get_lst in *)
@@ -2028,6 +2093,7 @@ let tnt_verbose = ref 1
 
 (* String Inference *)
 let new_pred_syn = ref true
+let pred_elim_node = ref false
 
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
@@ -2125,7 +2191,8 @@ let user_sat_timeout = ref false
 let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
-let sleek_timeout_limit = ref 0.
+let sleek_timeout_limit = ref 5.
+
 
 let dis_inv_baga () = 
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
@@ -2627,6 +2694,12 @@ let check_is_classic_local obj =
   r
 
 let check_is_classic () = check_is_classic_local infer_const_obj
+
+let check_is_pure_field_local obj = 
+  let r = obj (* infer_const_obj *) # get INF_PURE_FIELD in
+  r
+
+let check_is_pure_field () = check_is_pure_field_local infer_const_obj
 
 type 'a regex_list = 
   | REGEX_STAR

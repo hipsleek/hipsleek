@@ -1,0 +1,41 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::node<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::node<0,p> 
+  inv self!=null.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+// if WFSeg_sz not derived, WSS_sz will use not track aux rec..
+pred WFSeg_sz<p,nnn> == extends WFSeg<p> with size[REC]<nnn>.
+
+pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
+
+/*
+# ex26a5.slk
+
+# Why self!=null cannot be proven?
+
+
+Last Proving Location: ex26a5-WSS-extn.slk_12:2_12:29
+
+ERROR: at ex26a5-WSS-extn.slk_11:5_11:11
+Message: 
+Inv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:
+
+Exception processed: Failure("\nInv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:")
+error at: 
+
+
+*/

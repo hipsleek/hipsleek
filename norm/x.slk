@@ -1,0 +1,51 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+
+infer [H,H3,@classic]
+    H3(x,y1) * y1::node<_,ss> |- H(x,y) * y::node<_,ss>.
+print residue.
+
+infer [H,H2,@classic]
+    H2(x,y,_) * y::node<_,ss> |- H(x,y) * y::node<_,ss>.
+print residue.
+
+infer [H,H2,@classic]
+    H2(x,z1,z2) * z1::node<_,ss> |- H(x,y1) * y1::node<_,ss>.
+print residue.
+
+// above should succeed with z1=y1 instantiation
+
+infer [H,H2,@classic]
+    H2(x,z1,z2) * z2::node<_,ss> |- H(x,y1) * y1::node<_,ss>.
+print residue.
+
+// above should succeed with z2=y1 instantiation
+
+
+
+/*
+# ex20e9f5c.slk
+
+infer [H,H2,@classic]
+    H2(x,z1,z2) * z1::node<_,ss> |- H(x,y1) * y1::node<_,ss>.
+print residue.
+
+// above should succeed with z1=y1 instantiation
+
+infer [H,H2,@classic]
+    H2(x,z1,z2) * z2::node<_,ss> |- H(x,y1) * y1::node<_,ss>.
+print residue.
+
+// above should succeed with z2=y1 instantiation
+
+
+
+*/

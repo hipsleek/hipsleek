@@ -1,0 +1,35 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a, cell b,cell d).
+infer[HP] HP(x,y,z) |- x::cell<_>.
+print residue.
+
+/*
+# norm/ex4b.slk
+
+
+HeapPred HP(cell a, cell b,node d).
+infer[HP] HP(x,y,z) |- x::cell<_>.
+print residue.
+*/
+/*
+# norm/ex4b.slk
+
+HeapPred HP(cell a, cell b).
+infer[HP] HP(x,y) |- x::cell<_>.
+print residue.
+
+Starting Omega.../usr/local/bin/oc
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP(x,y,z)&true --> x::cell<Anon_25>@M&true]
+[[ SEARCH ==>  InferUnfold  ==>  InferHeap]]
+
+
+# should produce:
+  HP(x,y,z)&true --> x::cell<Anon_22> * HP1(y,z,x@N1)
+# and residue:
+  HP1(y,z,x@NI)
+
+*/
