@@ -115,7 +115,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
     | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
     | ShapeReuseSubs to_view_names -> process_shape_reuse_subs to_view_names
-    | PredUnfold to_view_names -> process_pred_unfold to_view_names
+    | PredUnfold (qual,to_view_names) -> process_pred_unfold qual to_view_names
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
@@ -128,7 +128,9 @@ module M = Lexer.Make(Token.Token)
     | ShapeDerivePre ids -> process_shape_derive_pre ids
     | ShapeDerivePost ids -> process_shape_derive_post ids
     | ShapeDeriveView ids -> process_shape_derive_view ids
+    | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
     | ShapeNormalize ids -> process_shape_normalize ids
+    | DataMarkRec ids -> process_data_mark_rec ids 
     | PredElimHead ids -> process_pred_elim_head ids
     | PredElimTail ids -> process_pred_elim_tail ids
     | PredUnifyDisj ids -> process_pred_unify_disj ids
@@ -382,10 +384,12 @@ let parse_file (parse) (source_file : string) =
   let () = if (!Globals.print_core || !Globals.print_core_all) then
       print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   (*-------------END lemma --------------------*)
+  y_tinfo_pp "sleek : end of lemma " ;
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
+  y_tinfo_pp "sleek : after cviews calling add_uni_vars " ;
   Sleekengine.unexpected_cmd # reset (* := [] *);
   List.iter proc_one_cmd cmds
 

@@ -229,11 +229,14 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_pos = no_pos;
                          I.view_data_name = "";
                          I.view_type_of_self = None;
+                         (* I.view_actual_root = None; *)
                          I.view_vars = vars;
                          I.view_ho_vars = []; (* TODO:HO *)
                          I.view_imm_map = [];
                          I.view_parent_name = None;
                          I.view_derv = false;
+                         I.view_derv_from = None;
+                         I.view_derv_extns = [];
                          I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
                          I.view_modes = List.map (fun _ -> ModeOut) vars ;
                          I.view_typed_vars =  tvars;
@@ -341,6 +344,8 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_typed_vars = List.map (fun sv -> (CP.type_of_spec_var sv, CP.name_of_spec_var sv)) v.C.view_vars;
     I.view_parent_name = v.C.view_parent_name;
     I.view_derv = false; (* TODO *)
+    I.view_derv_from = None;
+    I.view_derv_extns = [];
     I.view_derv_info = []; (* TODO *)
     I.view_type_of_self = v.C.view_type_of_self;
     I.view_kind = v.C.view_kind;
@@ -362,3 +367,14 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
   Debug.no_1 "rev_trans_view_decl" pr1 pr2 rev_trans_view_decl v
 
 let () = CF.rev_trans_formula := rev_trans_formula
+
+(* let rev_trans_data_decl (d: C.data_decl): I.data_decl =                              *)
+(*   let pos = d.C.data_pos in                                                          *)
+(*   { I.data_name = d.C.data_name;                                                     *)
+(*     I.data_fields = List.map (fun (i, ann) -> (i, pos, false, ann)) d.C.data_fields; *)
+(*     I.data_parent_name = d.C.data_parent_name;                                       *)
+(*     I.data_invs = List.map rev_trans_formula d.C.data_invs;                          *)
+(*     I.data_pos = pos;                                                                *)
+(*     I.data_pure_inv = map_opt rev_trans_pure d.C.data_pure_inv;                      *)
+(*     I.data_is_template = false;                                                      *)
+(*     I.data_methods = []; }                                                           *)

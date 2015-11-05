@@ -1,0 +1,18 @@
+
+
+[ // BIND
+(2;0)P(x,p@NI)&
+x!=p --> x::node<val_48_1600,next_48_1601>@M * 
+         HP_1602(val_48_1600@NI,p@NI,x@NI) * HP_1603(next_48_1601,p@NI,x@NI)&
+true,
+ true,
+ // POST
+P(x,p@NI)&true --> htrue&
+x!=p]
+
+HP_1602(val_48_1600@NI,p@NI,x@NI) --> emp
+
+// PRE_REC
+HP_1603(n',p@NI,x@NI)&x!=p * x::node<val_48_1600,n'>@M&
+true --> P(n',p@NI)&
+

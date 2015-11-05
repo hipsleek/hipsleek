@@ -1,0 +1,72 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred ll<n> ==
+   emp & self=null & n=0
+//or self::node<_,p>*p::ll<>.
+or self::node<_,p>*p::node<_,q>*q::ll<n-2>.
+
+
+print views.
+
+
+/*
+# ex25a5c.slk
+
+view ll{}[]<n:int>= 
+  view_domains: 
+   view ll<n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; p; Anon_13; 
+            q](* lbl: *){2}->(exists flted_10_15: (* lbl: *){2}->self::node<Anon_12,p>@M * 
+                                                                 p::node<Anon_13,q>@M * 
+                                                                 q::ll<flted_10_15>@M&
+            flted_10_15+2=n&{FLOW,(1,26)=__flow#E}[])
+      
+  view vars: n
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true),([], self=null & n=0)]
+  
+  unstructured formula: 
+    (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){2}->(exists flted_10_15,Anon_12,p,Anon_13,
+       q: (* lbl: *){2}->self::node<Anon_12,p>@M * p::node<Anon_13,q>@M * 
+                         q::ll<flted_10_15>@M&
+       flted_10_15+2=n&{FLOW,(1,26)=__flow#E}[])
+  xform: (self!=null | (self=null & n=0))
+  is_recursive?: true
+  residents: self
+  forward_fields: node.next
+  same_xpure?: NO
+  view_data_name: node
+  materialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]base case: self=null->self=null & 
+
+---------------------------
+
+
+[ view ll<n:int>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; p; Anon_13; 
+          q](* lbl: *){2}->(exists flted_10_15: (* lbl: *){2}->self::node<Anon_12,p>@M * 
+                                                               p::node<Anon_13,q>@M * 
+                                                               q::ll<flted_10_15>@M&
+          flted_10_15+2=n&{FLOW,(1,26)=__flow#E}[])
+    ]
+
+*/

@@ -246,7 +246,7 @@ let rec fixcalc_of_h_formula f = match f with
     else
       let str =
         try
-          let (svl1,pf) = Hashtbl.find Excore.map_num_invs c in
+          let (svl1,pf) = Excore.map_num_invs # find c in
           let svl2 = sv::svs in
           let svl2 = if (List.length svl1 < List.length svl2) then
               List.rev (List.tl (List.rev svl2)) (* svl2 has idx variable, remove it *)
@@ -471,7 +471,7 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
       "F2W:=widen(F1,F2,SimHeur);\nF2W;"
     with _ -> report_error no_pos "Error in widening with fixcalc"
   in
-  DD.ninfo_pprint ("input = " ^ input_fixcalc) no_pos;
+  DD.binfo_pprint ("input = " ^ input_fixcalc) no_pos;
 
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
@@ -494,6 +494,9 @@ let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
   let () = x_binfo_hp (add_str "result" Cprinter.string_of_pure_formula) inv no_pos in
   inv
 
+let widen (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_2 "widen" pr pr pr widen f1 f2
 (******************************************************************************)
 
 let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
@@ -813,15 +816,12 @@ let compute_inv_mutrec mutrec_vnames views =
         let () = DD.ninfo_hprint (add_str "new_pf" !CP.print_formula) new_pf no_pos in
         let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue no_pos) new_pf in
         (* let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) inv in *)
-        let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) new_pf in
-        let xpure_flag = false (* Tpdispatcher.check_diff memo_pf_N memo_pf_P *) in
+        (* let xpure_flag = Tpdispatcher.check_diff memo_pf_N memo_pf_P in *)
         begin
           x_tinfo_hp (add_str "memo_pf_P" Cprinter.string_of_mix_formula) memo_pf_P no_pos;
           view.Cast.view_fixcalc <- Some memo_pf_P;
-          view.Cast.view_x_formula <- memo_pf_P;
-          view.Cast.view_user_inv <- memo_pf_N;
+          (* view.Cast.view_x_formula <- memo_pf_P; *)
           view.Cast.view_baga_x_over_inv <- Some [([], new_pf)];
-          view.Cast.view_xpure_flag <- xpure_flag;
           view
         end
       else view
@@ -943,7 +943,7 @@ let substitute_args_x a_rel = match a_rel with
       let prog =
         match !Cast.global_prog with
         | Some p -> p
-        | None -> failwith "substitute_args: Initialize globas_prog first!"
+        | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!")
       in
       let typed_args = 
         try
@@ -1057,9 +1057,10 @@ let compute_def (rel_fml, pf, no) ante_vars =
   (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
-  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
-  let post_vars = Trans_arr.expand_array_variable pf post_vars in
-  let pf = Trans_arr.expand_relation pf in
+  let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
+  (* let pre_vars = Trans_arr.expand_array_variable pf pre_vars in *)
+  (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
+  (* let pf = Trans_arr.expand_relation pf in *)
   begin
     print_endline_quiet "\n*************************************";
     print_endline_quiet "****** Before putting into fixcalc*******";
@@ -1070,7 +1071,9 @@ let compute_def (rel_fml, pf, no) ante_vars =
     print_endline_quiet "*************************************";
   end;
   try
-    let rhs = fixcalc_of_pure_formula pf in
+    let (pf2,subs) = x_add_1 CP.extract_mult pf in
+    let pf = x_add_1 CP.drop_nonlinear_formula pf in
+    let rhs = x_add_1 fixcalc_of_pure_formula pf in
     let input_fixcalc =
       name ^ ":={["
       ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> ["
@@ -1078,7 +1081,8 @@ let compute_def (rel_fml, pf, no) ante_vars =
       ^ rhs ^ "\n};"
     in input_fixcalc
   with e ->
-    report_error ~exc:(Some e) no_pos "compute_def:Error in translating the input for fixcalc"
+    let () = y_binfo_pp ("Toan : need to remove * in pf for fixcalc") in
+    report_error ~exc:(Some e) no_pos (x_loc^"compute_def:Error in translating the input for fixcalc")
 ;;
 
 let compute_def (rel_fml, pf, no) ante_vars =

@@ -3786,7 +3786,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
       in
       let orig_pred_name = CP.name_of_spec_var hp in
       let extn_view_name = ext_v.Cast.view_name in
-      let root_pos = Cast.get_proot_hp_def_raw cprog.Cast.prog_hp_decls orig_pred_name in
+      let root_pos = x_add Cast.get_proot_hp_def_raw cprog.Cast.prog_hp_decls orig_pred_name in
       let data_name = Cast.get_root_typ_hprel cprog.Cast.prog_hp_decls orig_pred_name in
       let extn_props = Cast.look_up_extn_info_rec_field cprog.Cast.prog_data_decls data_name in
       (* let extn_props = [("REC")] in *)

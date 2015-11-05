@@ -290,6 +290,11 @@ let verify_one_repo lems cprog =
     ) (None,[]) lems in
   res
 
+let verify_one_repo lems cprog =
+  let pr = pr_list (fun (_, _, _, name) -> name) in
+  Debug.no_1 "verify_one_repo" pr (fun _ -> "") 
+    (fun _ -> verify_one_repo lems cprog) lems
+
 (* update store with given repo without verifying the lemmas *)
 let manage_lemmas_x(* _new *) ?(unfold_flag=true) ?(force_pr=false) ?(vdefs=[]) repo iprog cprog  =
   let lems = process_one_repo unfold_flag repo iprog cprog in
@@ -324,7 +329,7 @@ let update_store_with_repo ?(vdefs=[]) repo iprog cprog =
   (* let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in *)
   (* let () = Lem_store.all_lemma # add_coercion left right in *)
   let lems = manage_lemmas_x ~vdefs:vdefs ~force_pr:false repo iprog cprog in
-  let (invalid_lem, lctx) =  verify_one_repo lems cprog in
+  let (invalid_lem, lctx) = x_add verify_one_repo lems cprog in
   (invalid_lem, lctx)
 
 let update_store_with_repo repo iprog cprog =
@@ -867,6 +872,12 @@ let manage_test_new_lemmas1 repo iprog cprog =
   let () = Lem_store.all_lemma # set_right_coercion right_lems in
   res
 
+let sort_list_lemma iprog = 
+  let lems = iprog.Iast.prog_coercion_decls in
+  let unsafe_lems, others = List.partition (fun lem -> 
+    match lem.Iast.coercion_list_kind with LEM_UNSAFE -> true | _ -> false) lems in
+  iprog.Iast.prog_coercion_decls <- unsafe_lems @ others
+
 (* ==================================== *)
 let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct =
   let lst = ldef_lst.Iast.coercion_list_elems in
@@ -900,7 +911,8 @@ let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct =
         CF.set_residue true c (* !Globals.disable_failure_explaining false false *)
 
 let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct  =
-  Debug.no_1 "process_list_lemma_helper" !I.print_coerc_decl_list pr_none (fun _ -> process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct )  ldef_lst
+  Debug.no_1 "process_list_lemma_helper" !I.print_coerc_decl_list pr_none 
+    (fun _ -> process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct ) ldef_lst
 
 (* ============================ END --- lemma translation and store update================================= *)
 

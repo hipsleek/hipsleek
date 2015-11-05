@@ -1115,14 +1115,16 @@ let is_bool_eq_ctr ?(eq=true)  a1 a2 =
   | _ -> None
 
 let is_ptr_ctr a1 a2 =
-  match a1,a2 with
-  | Var(v,_),_ ->
-    let t=type_of_spec_var v in
-    (is_otype t,is_ann_type t)
-  | _,Var(v,_) ->
-    let t=type_of_spec_var v in
-    (is_otype t,is_ann_type t)
-  | _ -> (false,false)
+  if (Globals.infer_const_obj # is_ana_ni) then (false,false)
+  else
+    match a1,a2 with
+    | Var(v,_),_ ->
+      let t=type_of_spec_var v in
+      (is_otype t,is_ann_type t)
+    | _,Var(v,_) ->
+      let t=type_of_spec_var v in
+      (is_otype t,is_ann_type t)
+    | _ -> (false,false)
 
 let is_ptr_ctr a1 a2 =
   let pr = Cprinter.string_of_formula_exp in
@@ -1350,7 +1352,7 @@ let cnv_int_to_ptr f =
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
-  let f = cnv_int_to_ptr f in
+  let f = x_add_1 cnv_int_to_ptr f in
   let f = if !Globals.allow_inf (*&& not(!Globals.allow_inf_qe_coq)*)
     then let f =  (*CP.arith_simplify 13*) (Infinity.convert_var_to_inf f) in
       let drop_inf_constr f =   
@@ -1875,9 +1877,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 
   (* let () = Gen.Profiling.push_time "tp_is_sat" in *)
   (* let () = print_endline ("tpd 1") in *)
-  let f = if !sat_td then f
-  else
-    x_add_1 Cpure.subs_const_var_formula f in
+  let f = x_add_1 Cpure.subs_const_var_formula f in
   (* let () = print_endline ("tpd 2") in *)
   let res = (
     match !pure_tp with
@@ -2486,7 +2486,7 @@ let rec simplify_raw (f: CP.formula) =
   else
     let is_bag_cnt = is_bag_constraint f in
     if is_bag_cnt then
-      (* let () = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in *)
+      let () = y_tinfo_hp (add_str " xxxx bag: " (pr_id)) "bag" in
       let _,new_f = trans_dnf f in
       let disjs = list_of_disjs new_f in
       let disjs = List.map (fun disj -> 
@@ -2499,6 +2499,7 @@ let rec simplify_raw (f: CP.formula) =
         ) disjs in
       List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
     else
+      (* let () = y_binfo_pp "xxx rel " in *)
       let rels = CP.get_RelForm f in
       let ids = List.concat (List.map get_rel_id_list rels) in
       let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
@@ -4390,9 +4391,11 @@ let check_diff xp0 xp1 =
 let () = 
   CP.simplify := simplify;
   Cast.imply_raw := imply_raw;
+  (* CF.is_unsat_raw  := is_unsat_raw; *)
   CP.tp_imply := (fun l r -> Wrapper.wrap_dis_non_linear (imply_raw l) r);
   Excore.is_sat_raw := is_sat_raw;
-  Excore.simplify_raw := simplify_raw;
+  (* Excore.simplify_raw := simplify_raw; *) (* losing precision for ex25m5d.slk *)
+  Excore.simplify_raw := (fun x -> if !Globals.old_tp_simplify then simplify_raw x else om_simplify x);
   Excore.pairwisecheck := pairwisecheck;
   Cformula.simplify_omega := (x_add_1 simplify_omega);
   Cfout.simplify_raw := simplify_raw;

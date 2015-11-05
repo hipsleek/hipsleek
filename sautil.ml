@@ -1641,7 +1641,7 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
       let drop_unk_hps = List.fold_left (fun r_hps (hp,args) ->
           let () = Debug.ninfo_zprint (lazy (("    hp: " ^ (!CP.print_sv hp) ^ " args: "^ (!CP.print_svl args)))) no_pos in
           if (CP.mem_svl hp tot_unk_hps) then
-            let _, args_ni = partition_hp_args prog hp args in
+            let _, args_ni = x_add partition_hp_args prog hp args in
             if (CP.diff_svl (List.map fst args_ni) svl_wo_args) <> [] then
               r_hps@[hp]
             else
@@ -1686,8 +1686,8 @@ let simp_match_hp_w_unknown_x prog unk_hps link_hps cs=
     let drop_hps = List.fold_left (fun ls (r_hp,r_args) ->
         ls@(List.fold_left (fun ls_inn (l_hp, l_args) ->
             if CP.eq_spec_var l_hp r_hp then
-              let _, l_arg_ni = partition_hp_args prog l_hp l_args in
-              let _, r_arg_ni = partition_hp_args prog r_hp r_args in
+              let _, l_arg_ni = x_add partition_hp_args prog l_hp l_args in
+              let _, r_arg_ni = x_add partition_hp_args prog r_hp r_args in
               let violate_ni = CP.intersect_svl (List.map fst (l_arg_ni@r_arg_ni)) ptrs in
               if order_eq_w_unk l_args r_args unk_svl violate_ni then (ls_inn@[l_hp]) else ls_inn
             else ls_inn
@@ -1876,7 +1876,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     if undef_args<> [] then
       (*not all args are well defined and in HIP. do not split*)
-      let args_inst,args_ni =  partition_hp_args prog hp args in
+      let args_inst,args_ni =  x_add partition_hp_args prog hp args in
       let wdef_svl = CP.diff_svl args undef_args in
       let wdef_ni_svl =  List.filter (fun (sv,_) -> CP.mem_svl sv wdef_svl
                                      ) args_ni in
@@ -2026,7 +2026,7 @@ let detect_link_hp_x prog hds hvs r_hp r_args post_hps lhs_hpargs def_ptrs=
         let closed_args = CF.look_up_reachable_ptr_args prog hds hvs args in
         let undef_args = lookup_undef_args closed_args [] def_ptrs in
         if undef_args <> [] && List.length undef_args < List.length args then
-          let args_inst,_ =  partition_hp_args prog hp args in
+          let args_inst,_ =  x_add partition_hp_args prog hp args in
           let undef_args_inst = List.filter (fun (sv,_) -> CP.mem_svl sv undef_args) args_inst in
           if undef_args_inst<>[] then
             let undef_args1 = List.map fst undef_args_inst in

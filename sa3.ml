@@ -39,7 +39,7 @@ let collect_ho_ass iprog cprog is_pre def_hps unk_hps (acc_constrs, post_no_def)
   (* let tmp = Wrapper.check_is_classic in *)
   (* let () = Wrapper.set_classic  true in *)
   let f = wrap_proving_kind log_str (Sacore.do_entail_check (infer_hps@unk_hps) iprog cprog) in
-  let new_constrs = Wrapper.wrap_classic (Some true) f cs in
+  let new_constrs = Wrapper.wrap_classic x_loc (Some true) f cs in
   (* let () = Wrapper.set_classic  tmp in *)
   (acc_constrs@new_constrs, post_no_def@linfer_hps)
 
@@ -466,7 +466,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
       (*do not split unk_hps and link_hps, all non-ptrs args*)
       let non_split_hps = unk_hps @ link_hps in
       let ls_lhp_args1, ls_lhs_non_node_hpargs = List.fold_left (fun (r1,r2) (hp,args) ->
-          let arg_i,_ = Sautil.partition_hp_args prog hp args in
+          let arg_i,_ = x_add Sautil.partition_hp_args prog hp args in
           if ((List.filter (fun (sv,_) -> CP.is_node_typ sv) arg_i) = []) then
             (r1, r2@[(hp,args)])
           else if not (CP.mem_svl hp non_split_hps) then
@@ -1021,7 +1021,7 @@ let generalize_one_hp_x prog is_pre (hpdefs: (CP.spec_var *Cformula.hp_rel_def) 
       else f2
     in
     (* fresh non-shape values *)
-    let f4 = Cfutil.fresh_data_v(*_no_change*) f3 in
+    let f4 = Cfutil.fresh_data_v_no_change f3 in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
     (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
     (f4,Cformula.subst_opt subst og, unk_args1)
@@ -3277,6 +3277,15 @@ let infer_shapes iprog prog proc_name (constrs0: CF.hprel list)
     let hprels = CF.add_infer_type_to_hprel constrs0 in
     let sel_hprels, others = SynUtils.select_hprel_assume hprels (List.map CP.name_of_spec_var sel_hps) in
     let derived_views, nhprels = Syn.derive_view iprog prog others sel_hprels in (* shape_derive_view [sel_hps] *)
+    let view_aset, derived_views =
+      if !Globals.pred_equiv then
+        let view_aset = Syn.aux_pred_reuse iprog prog derived_views in
+        let derived_views = List.map (fun v -> 
+          try Cast.look_up_view_def_raw 30 prog.Cast.prog_view_decls v.Cast.view_name
+          with _ -> v) derived_views in
+        view_aset, derived_views
+      else [], derived_views
+    in
     let () = y_binfo_hp (add_str "DERIVED VIEWS" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
     (nhprels, [], [])
 

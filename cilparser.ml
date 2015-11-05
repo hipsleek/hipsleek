@@ -1176,7 +1176,27 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                   | Cil.TPtr (ty, _) when (is_cil_struct_pointer lv_ty) -> ty      (* pointer to struct goes down 1 level *)
                   | _ -> lv_ty
                 ) in
-              let deref_ty = translate_typ refined_ty pos in
+              
+              try 
+                let addr_dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
+                let addr_ddecl = Hashtbl.find tbl_data_decl addr_dtyp in
+                let addr_dname = (
+                  match addr_dtyp with
+                  | Globals.Named s -> s
+                  | _ -> report_error pos "gather_addrof_exp: unexpected type!"
+                ) in
+                let addr_vname = str_addr ^ lv_str in
+                let addr_vdecl = (
+                  (* create and temporarily initiate a new object *)
+                  let init_params = [(translate_lval lv)] in
+                  let init_data = Iast.mkNew addr_dname init_params pos in
+                  Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
+                ) in
+                aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
+                Hashtbl.add tbl_addrof_info lv_str addr_vname;
+              with Not_found -> Hashtbl.add tbl_addrof_info lv_str lv_str; (*Muoi: Address of a struct is itself*)
+              
+              (*let deref_ty = translate_typ refined_ty pos in
               let (addr_dtyp, addr_dname, addr_ddecl) = (
                 try 
                   let dtyp = Hashtbl.find tbl_pointer_typ refined_ty in
@@ -1191,8 +1211,8 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                     (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
                     let ftyp = deref_ty in
                     let fname = str_value in
-                    let val_field = ((ftyp, fname), no_pos, false, [gen_field_ann ftyp] (* Iast.F_NO_ANN *)) in
-                    let offset_field = ((Int, str_offset), no_pos, false, [gen_field_ann Int]) in
+                    let val_field = ((ftyp, fname), no_pos, false, (gen_field_ann ftyp) (* Iast.F_NO_ANN *)) in
+                    let offset_field = ((Int, str_offset), no_pos, false, (gen_field_ann Int)) in
                     let dfields = [val_field; offset_field] in
                     let dname = (Globals.string_of_typ ftyp) ^ "_star" in
                     let dtyp = Globals.Named dname in
@@ -1211,7 +1231,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                 Iast.mkVarDecl addr_dtyp [(addr_vname, Some init_data, pos)] pos
               ) in
               aux_local_vardecls := !aux_local_vardecls @ [addr_vdecl];
-              Hashtbl.add tbl_addrof_info lv_str addr_vname;
+              Hashtbl.add tbl_addrof_info lv_str addr_vname;*)
             )
         )
     )
@@ -1291,19 +1311,19 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
           with Not_found -> (
               (* create new Globals.typ and Iast.data_decl update to hash tables *)
               let value_typ = translate_typ core_type pos in
-              let value_field = ((value_typ, str_value), no_pos, false, [gen_field_ann value_typ] (* Iast.F_NO_ANN *)) in
+              let value_field = ((value_typ, str_value), no_pos, false, (gen_field_ann value_typ) (* Iast.F_NO_ANN *)) in
               let dname = match ty with
 		| Cil.TInt(Cil.IChar, _) -> "char_star"
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
-              let offset_field = match ty with
-                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, [gen_field_ann dtype])
-                | _ -> ((Int, str_offset), no_pos, false, [gen_field_ann Int]) (*other types have an integer offset*)
-              in
+(*              let offset_field = match ty with*)
+(*                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, (gen_field_ann dtype))*)
+(*                | _ -> ((Int, str_offset), no_pos, false, (gen_field_ann Int)) (*other types have an integer offset*)*)
+(*              in*)
               let dfields = match ty with
                 | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
-                | _ -> [value_field; offset_field] 
+                | _ -> [value_field(*; offset_field*)] 
               in
               Hashtbl.add tbl_pointer_typ core_type dtype;
               let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
@@ -1400,7 +1420,7 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
   match ftyp with
   | Cil.TComp (comp, _) ->
     let ty = Globals.Named comp.Cil.cname in
-    ((ty, name), pos, true, [gen_field_ann ty] (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
+    ((ty, name), pos, true, (gen_field_ann ty) (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
   | Cil.TPtr (ty, _) ->
     let _ = Debug.ninfo_hprint (add_str "ftyp" string_of_cil_typ) ftyp no_pos in
     let _ = Debug.ninfo_hprint (add_str "ty" string_of_cil_typ) ty no_pos in
@@ -1411,10 +1431,10 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
       else
         translate_typ ftyp pos
     ) in
-    ((new_ty, name), pos, false, [gen_field_ann new_ty] (* Iast.F_NO_ANN *))
+    ((new_ty, name), pos, false, (gen_field_ann new_ty) (* Iast.F_NO_ANN *))
   | _ ->
     let ty = translate_typ ftyp pos in
-    ((ty, name), pos, false, [gen_field_ann ty] (* Iast.F_NO_ANN *))
+    ((ty, name), pos, false, (gen_field_ann ty) (* Iast.F_NO_ANN *))
 
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
@@ -2618,7 +2638,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
 (*                    Iast.data_pure_inv = None;*)
   (*                   Iast.data_methods = []} in *)
   (* update some global settings *)
-  Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) && ((String.compare  data.Iast.data_name "int_star")!=0)  then data_decls := data::!data_decls) tbl_data_decl;
+  Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) (*&& ((String.compare  data.Iast.data_name "int_star")!=0)*)  then data_decls := data::!data_decls) tbl_data_decl;
   (* aux procs *)
   Hashtbl.iter (fun _ p -> if ((String.compare p.Iast.proc_name "__plus_plus_char")!=0) && ((String.compare p.Iast.proc_name "__get_char")!=0) && ((String.compare p.Iast.proc_name "__write_char")!=0) && ((String.compare p.Iast.proc_name "__pointer_add__int_star__int__")!=0) then  proc_decls := p::!proc_decls) tbl_aux_proc;
   (* return *)
