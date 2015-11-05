@@ -12,40 +12,7 @@ print residue.
 expect Valid.
 
 /*
-# norm/ex4b3.slk
 
- infer[HP] b::cell<_>  |- HP(a,b).
-
-# Need to instiate b..
-
-!!! **smtsolver.ml#412:rname1:HP
-!!! **smtsolver.ml#413:rargs:[a,b]
-push_list(global_rel_defs):**smtsolver.ml#419:1[HP[a,b]]
-
-!!! **smtsolver.ml#393:rname1:_pure_of_HP
-!!! **smtsolver.ml#394:rargs:[a,b]
-!!! **smtsolver.ml#414:rname1:HP
-!!! **smtsolver.ml#415:rargs:[a,b]
-!!! **context.ml#608:lhs_h: emp
-*XXcprog** get_hp_root HP gives 0
-[(HP,Some(0))]
-
-!!! **context.ml#627:lhs_p: a=null
-!!! **context.ml#628:args:[a,b]
-!!! **context.ml#629:hp:HP
-!!! **context.ml#630:rhs_node: HP(a,b)
-!!! **context.ml#631:root:a
-!!! **solver.ml#13660:lhs contra?:None
-!!! **solver.ml#13787:TODO: schedule infer_empty_hp_rel?
-
-
-expect Fail.
-
-infer[HP] a=null  |- HP(a,b).
-print residue.
-expect Valid.
-
-/*
 # norm/ex4c2c.slk
 
  infer[HP] b::cell<_>  |- HP(a,b).

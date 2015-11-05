@@ -628,7 +628,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   | DataNode _ 
   | HVar _
   | ViewNode _ ->
-    let view_root_rhs,imm, pimm, p = match rhs_node with
+    let view_root_rhs,imm, pimm, root_ptr = match rhs_node with
       | DataNode { h_formula_data_node=p; h_formula_data_imm=imm; h_formula_data_param_imm=pimm; } -> (None,imm, pimm, p)
       | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name; h_formula_view_imm=imm } -> 
         let vr = get_root_view prog name p args in
@@ -702,7 +702,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let view_root_flag = match view_root_rhs with
       | None -> false
       | Some _ -> true in
-    let rhs_ptr = p in
+    let rhs_ptr = root_ptr in
     (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
     (* let () = y_tinfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
     let enhance_paset impr_stk paset =
@@ -711,7 +711,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
       let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
       let () = y_tinfo_hp (add_str "pasets" !CP.print_svl) paset in
-      let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
+      (* let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in *)
       let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
       (* let diff_ptrs = heap_ptrs in *)
       (* let diff_ptrs = if true (\* not(!Globals.adhoc_flag_2) *\) then *)
