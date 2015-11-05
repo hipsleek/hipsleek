@@ -229,15 +229,15 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
           ) rem,
           (ni_args), CP.diff_svl h_args reachable_args)
     in
-    let res,is_pre, niu_svl_i, niu_svl_ni,h_args_rem = parition_helper h_node lhs_hpargs in
+    let res, is_pre, niu_svl_i, niu_svl_ni, h_args_rem = parition_helper h_node lhs_hpargs in
     if res then
       (*find arg pointers are going to be init in next stmts*)
       let args1 = CP.remove_dups_svl (CP.diff_svl h_args_rem (def_svl)) in
-      let () = y_tinfo_hp (add_str "args1" !CP.print_svl) args1 in
-      let () = y_tinfo_hp (add_str "     def_svl" !CP.print_svl) def_svl in
-      let () = y_tinfo_hp (add_str "     h_args_rem" !CP.print_svl) args1 in
-      let () = y_tinfo_hp (add_str "     niu_svl_i" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_i in
-      let () = y_tinfo_hp (add_str "     niu_svl_ni" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_ni in
+      let () = y_binfo_hp (add_str "args1" !CP.print_svl) args1 in
+      let () = y_binfo_hp (add_str "     def_svl" !CP.print_svl) def_svl in
+      let () = y_binfo_hp (add_str "     h_args_rem" !CP.print_svl) args1 in
+      let () = y_binfo_hp (add_str "     niu_svl_i" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_i in
+      let () = y_binfo_hp (add_str "     niu_svl_ni" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_ni in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
       let () = y_tinfo_hp (add_str "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field in
@@ -258,12 +258,11 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       let niu_svl_i2 = List.map (fun (sv,n) ->
           if List.exists (fun dn -> CP.eq_spec_var dn.CF.h_formula_data_node sv) lhds then
             (sv, NI)
-          else (sv, n)
+          else (sv, n) (* n = I *)
       ) niu_svl_i in
       let niu_svl_ni_total = niu_svl_i2@niu_svl_ni in
-      (*for view, filter i var that is classified as NI in advance*)
+      (* for view, filter I var that is classified as NI in advance *)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
-      let () = y_binfo_hp (add_str "args1" !CP.print_svl) args1 in
       let () = y_binfo_hp (add_str "args11" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args11 in
       let () = y_binfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
       let () = y_binfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
@@ -273,17 +272,25 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
         (* else *)
-          let is_inf_pure_field = es.CF.es_infer_obj # is_pure_field_all in
-          let () = y_binfo_hp (add_str "is_inf_pure_field" string_of_bool) is_inf_pure_field in
+        let is_inf_pure_field = es.CF.es_infer_obj # is_pure_field_all in
+        let () = y_binfo_hp (add_str "is_inf_pure_field" string_of_bool) is_inf_pure_field in
+        let i_svl, ni_svl = List.partition (fun (_, k) -> k = I) niu_svl_ni_total in
+        if is_empty args12 then
+          if is_empty i_svl && not is_inf_pure_field then []
+          else [(is_pre, i_svl @ ni_svl @ [(h_node, NI)])]
+        else
           if (* is_inf_pure_field && *) not !Globals.sep_pure_fields then
-            let i_args12, ni_args12 = List.partition (fun (_, k) -> k == I) args12 in
-            List.map (fun ((arg, knd) as sv) ->
-              let data_ni_svl = 
-                if is_view then []
-                else ni_args12
-              in
-              let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
-              (is_pre, fwd_svl)) i_args12
+            let i_args12, ni_args12 = List.partition (fun (_, k) -> k = I) args12 in
+            (* if not (is_empty i_args12) then *)
+              List.map (fun ((arg, knd) as sv) ->
+                let data_ni_svl = 
+                  if is_view then []
+                  else ni_args12
+                in
+                let fwd_svl = sv::niu_svl_ni_total @ data_ni_svl @ [(h_node, NI)] in
+                (is_pre, fwd_svl)) i_args12
+            (* else if is_empty i_svl && not is_inf_pure_field then []      *)
+            (* else [(is_pre, i_svl @ ni_args12 @ ni_svl @ [(h_node, NI)])] *)
           else
             List.map (fun ((arg, knd) as sv) ->
               let data_ni_svl = 
