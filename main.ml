@@ -567,7 +567,7 @@ let process_source_full source =
     ()
   else
     (* !verify_td *)
-  if !Verify_td then let td_r = Verify_td.verify_as_sat_main intermediate_prog cprog source iprims in
+  if !verify_td then let td_r = Verify_td.verify_as_sat_main intermediate_prog cprog source iprims in
      if td_r != Verify_td.VTD_NotApp then
        (* let () = print_endline_quite ("\n" ^(Verify_td.string_of_assert_err td_r)) in *)
       ()
