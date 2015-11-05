@@ -12603,7 +12603,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
     begin
       if !Debug.devel_debug_on || !Debug.devel_debug_steps then
         begin
-          x_tinfo_zp (lazy ("process_action (steps) :"
+          x_info_zp (lazy ("process_action (steps) :"
                             ^ ((add_str "\n ### action " Context.string_of_action_res) a)
                             ^ ((add_str "\n ### estate " Cprinter.string_of_entail_state_short) estate)
                             ^ ((add_str "\n ### conseq " Cprinter.string_of_formula) conseq)
