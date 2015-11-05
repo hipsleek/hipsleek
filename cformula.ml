@@ -342,6 +342,31 @@ and approx_disj_or = { approx_disj_or_d1 : approx_disj;
 and approx_formula_and = { approx_formula_and_a1 : approx_formula;
                            approx_formula_and_a2 : approx_formula }
 
+(* this will be set to TPdispatcher.simplify_omega later *)
+let simplify_omega = ref(fun (c:Cpure.formula) -> c)
+let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_formula_label = ref(fun (c:formula_label) -> "printer not initialized")
+let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
+let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
+let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
+let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
+let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
+let print_h_formula_for_spec = ref(fun (c:h_formula) -> "printer not initialized")
+let print_t_formula = ref(fun (c:t_formula) -> "printer not initialized")
+let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
+let print_mix_formula = print_mix_f
+let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
+let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
+let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
+let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
+let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
+let print_spec_var = print_sv
+let print_spec_var_list = print_svl
+let print_vperm_sets = ref(fun (c:CVP.vperm_sets) -> "printer not yet initialized")
+let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
+let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
+let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
+
 (* !!! **cformula.ml#335:HPRel(n):H *)
 (* !!! **cformula.ml#336:HPRel(args):[ p, q] *)
 let mk_HRel_as_view n args loc =
@@ -383,30 +408,12 @@ let mk_HRel_as_view n args loc =
 let mk_HRel_as_view_w_root n root args loc =
   mk_HRel_as_view n (root::args) loc
 
-(* this will be set to TPdispatcher.simplify_omega later *)
-let simplify_omega = ref(fun (c:Cpure.formula) -> c)
-let print_formula = ref(fun (c:formula) -> "printer not initialized")
-let print_formula_label = ref(fun (c:formula_label) -> "printer not initialized")
-let print_formula_type = ref(fun (c:formula_type) -> "printer not initialized")
-let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
-let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
-let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
-let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
-let print_h_formula_for_spec = ref(fun (c:h_formula) -> "printer not initialized")
-let print_t_formula = ref(fun (c:t_formula) -> "printer not initialized")
-let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
-let print_mix_formula = print_mix_f
-let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
-let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
-let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
-let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
-let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
-let print_spec_var = print_sv
-let print_spec_var_list = print_svl
-let print_vperm_sets = ref(fun (c:CVP.vperm_sets) -> "printer not yet initialized")
-let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
-let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
-let print_imm = ref (fun (c:ann) -> "printer has not been initialized")
+let mk_HRel_as_view_w_root n root args loc =
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 = !print_h_formula in
+  Debug.no_3 "mk_HRel_as_view_w_root" pr1 pr1 pr2 pr3
+    (fun _ _ _ -> mk_HRel_as_view_w_root n root args loc) n root args
 
 let sat_stk = new Gen.stack_pr "sat-stk"  !print_formula  (=)
 

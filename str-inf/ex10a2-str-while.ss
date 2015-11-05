@@ -47,6 +47,7 @@ void loop (ref char_star s)
     P
     ,@pure_field,@classic
     ,@size
+    //,@term
   ]
   requires P(s)
   //requires true
