@@ -3008,7 +3008,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
       let pr1 = pr_list string_of_match_res in
       let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
       let pr3 = string_of_action_wt_res0 in
-      x_tinfo_zp (lazy ("process_matches (steps) :"
+      x_info_zp (lazy ("process_matches (steps) :"
                         ^ ((add_str "\n ### LHS " pr) lhs_h)
                         ^ ((add_str "\n ### RHS " pr) rhs_node)
                         ^ ((add_str "\n ### matches " pr1) l)
@@ -3389,7 +3389,7 @@ and compute_actions_y prog estate es (* list of right aliases *)
       let pr1 x = pr_list (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) x in
       let pr4 = pr_list Cprinter.string_of_spec_var in
       let pr2 = string_of_action_res_simpl in
-      x_tinfo_zp (lazy ("compute_action (steps) :"
+      x_info_zp (lazy ("compute_action (steps) :"
                         (* ^ ((add_str "\n ### LHS " pr) lhs_h) *)
                         ^ ((add_str "\n ### RHS Cand " pr1) rhs_lst)
                         ^ ((add_str "\n ### action " string_of_action_res_simpl) r)

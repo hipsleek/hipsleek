@@ -8,8 +8,9 @@ pred arr_seg<i:int,n:int> ==
   inv n>=0 & i>=0.
 
 //(4)
-checkentail x::arr_seg<i,n> & n-i>=2 & y=x+i & z=y+1 
-   |- y::arr<_> * z::arr<_>.
+checkentail x::arr_seg<i,n> & n-i>=2 & y=x+i & z=x+i+1 
+   |- y::arr<_> * z::arr<_>
+  .
 print residue.
 expect Valid.
 
