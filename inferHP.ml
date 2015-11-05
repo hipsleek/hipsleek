@@ -263,15 +263,17 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       let niu_svl_ni_total = niu_svl_i2@niu_svl_ni in
       (*for view, filter i var that is classified as NI in advance*)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
-      let () = y_tinfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
-      let () = y_tinfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
+      let () = y_binfo_hp (add_str "args1" !CP.print_svl) args1 in
+      let () = y_binfo_hp (add_str "args11" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args11 in
+      let () = y_binfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
+      let () = y_binfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
       let ls_fwd_svl =(*  if args12 =[] then *)
         (*   if is_view then *)
         (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
         (* else *)
-          let is_inf_pure_field = check_is_pure_field () in
+          let is_inf_pure_field = es.CF.es_infer_obj # is_pure_field_all in
           let () = y_binfo_hp (add_str "is_inf_pure_field" string_of_bool) is_inf_pure_field in
           if (* is_inf_pure_field && *) not !Globals.sep_pure_fields then
             let i_args12, ni_args12 = List.partition (fun (_, k) -> k == I) args12 in
@@ -297,7 +299,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
               let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
               (is_pre, fwd_svl)) args12
       in
-      let () = y_tinfo_hp (add_str "ls_fwd_svl" (pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv string_of_arg_kind))))) ls_fwd_svl in
+      let () = y_binfo_hp (add_str "ls_fwd_svl" (pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv string_of_arg_kind))))) ls_fwd_svl in
       (* str-inf/ex16c5b(8) do not need extra_clls *)
       (*generate extra hp for cll*)
       let extra_clls = [] in
