@@ -3,13 +3,13 @@ data arr {
 }.
 
 pred arr_seg<i:int,n:int> ==
-  emp & i>=n & n>=0
+  emp & i=n & n>=0
   or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
-  inv n>=0 & i>=0.
+  inv n>=i & i>=0.
 
 //(4)
 checkentail x::arr_seg<i,n> & n-i>=2 & y=x+i & z=x+i+1 
-   |- y::arr<_> * z::arr<_>
+   |- y::arr<_> //* z::arr<_>
   .
 print residue.
 expect Valid.
