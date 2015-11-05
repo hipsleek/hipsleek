@@ -965,9 +965,10 @@ let compute_def (rel_fml, pf, no) ante_vars =
   (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
-  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
-  let post_vars = Trans_arr.expand_array_variable pf post_vars in
-  let pf = Trans_arr.expand_relation pf in
+  let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
+  (* let pre_vars = Trans_arr.expand_array_variable pf pre_vars in *)
+  (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
+  (* let pf = Trans_arr.expand_relation pf in *)
   begin
     print_endline_quiet "\n*************************************";
     print_endline_quiet "****** Before putting into fixcalc*******";

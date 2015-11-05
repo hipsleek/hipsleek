@@ -106,6 +106,9 @@ let wrap_gen_local obj attr et f a =
     (toggle_local obj attr old_flag;
      raise e)
 
+let wrap_gen_global attr et f a = 
+  wrap_gen_local Globals.infer_const_obj attr et f a 
+
 let wrap_gen attr et f a = wrap_gen_local infer_const_obj attr et f a
 
 let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
@@ -154,6 +157,8 @@ let wrap_classic str et f a =
   else (wrap_gen INF_CLASSIC et f) a
 
 let wrap_classic_local obj et f a = wrap_gen_local obj INF_CLASSIC et f a
+
+let wrap_ana_ni et f a = wrap_gen_global INF_ANA_NI et f a
 
     (* !do_classic_frame_rule *)
 

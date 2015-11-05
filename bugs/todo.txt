@@ -2191,6 +2191,46 @@ Entailing lemma lem_11: Fail. Details below:
          "==>" implication: : Valid.
          "<==" implication: : Fail. (cex)(must) cause: exception Failure("split_components: don't expect OR") in lemma proving
 ===================================================================
+# ex62b.slk 
+
+infer [x] x::ll<n> |- x::node<_,b>.
+
+# performance problem with --en-ptr-arith
+  scheduling repeated unfolds ..
+
+[ Type: Root
+ LHS: x::node<Anon_47,q_48>@M
+ RHS: x::node<Anon_12,b>@M
+ root_inst: None
+ lhs_rest: q_48::ll<flted_7_46>@M
+ rhs_rest: emp
+ rhs_inst: [], 
+  Type: Root
+ LHS: q_48::ll<flted_7_46>@M
+ RHS: x::node<Anon_12,b>@M
+ root_inst: None
+ lhs_rest: x::node<Anon_47,q_48>@M
+ rhs_rest: emp
+ rhs_inst: []]
+
+
+===================================================================
+# ex62b.slk
+
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+expect Valid.
+
+# why x=x not eliminated earlier?
+
+!!! **context.ml#721:TODO: rename root:self
+!!! **context.ml#722:root_pf: flted_7_46=flted_7_46
+!!! **context.ml#727:rhs(to prove): x>=q_48
+!!! **context.ml#728:rhs_ptr=root:false
+!!! **WARNING****context.ml#712:TODO : check if share same base
+!!! **context.ml#713:lhs_p2: flted_7_46+1=n
+!!! **context.ml#714:rhs: x=x
+===================================================================
 # ex64.b.slk
 
 # problem with complex lemma
@@ -2241,6 +2281,29 @@ Coercion_case: Simple
 Correct
 =======
  head_norm:  (exists n: self::ll_s<n>@M&{FLOW,(20,21)=__norm#E}[])
+===================================================================
+# ex62c.slk --dis-mkeqn-opt
+
+# picking up p=p for inference; need to avoid that
+  in infer_lhs_comtra to avoid inferring p!=p
+
+infer [H1] H1(p)* x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
+print residue.
+
+
+Entail (1) : Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(p)&true --> htrue&p!=p]
+
+(==infer.ml#787==)
+infer_lhs_contra#1@3@2
+infer_lhs_contra#1 inp1 : flted_13_34=1 & x2=p & x2=p
+infer_lhs_contra#1 inp2 :[p]
+infer_lhs_contra#1 inp3 :M_infer_heap : x2::node<b,q>@M
+infer_lhs_contra#1@3 EXIT:Some( p!=p)
 
 ===================================================================
 # ex64k1b.slk

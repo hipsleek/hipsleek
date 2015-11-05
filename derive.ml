@@ -1110,7 +1110,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
     { Iast.view_name = iview_dclr.Iast.view_name ^"_"^extn_view.C.view_name;
           Iast.view_pos = no_pos;
           Iast.view_data_name = "";
-          view_type_of_self = None;
+          Iast.view_type_of_self = None;
           Iast.view_imm_map = [];
           Iast.view_vars = vars;
           Iast.view_ho_vars = []; 

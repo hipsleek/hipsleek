@@ -78,19 +78,19 @@ let scc_rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr "scc_rel_ass_stk"
 (*   DD.info_zprint (lazy  (rel_ass_stk # string_of_reverse_log)); *)
 (*   DD.info_pprint "==========================================" *)
 
-let no_infer_vars estate = (estate.es_infer_vars == []) 
+(* let no_infer_vars estate = (estate.es_infer_vars == [])  *)
 
-let no_infer_rel estate = (estate.es_infer_vars_rel == [])
+(* let no_infer_rel estate = (estate.es_infer_vars_rel == []) *)
 
-let no_infer_templ estate = (estate.es_infer_vars_templ == [])
-let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == []) || is_error_flow estate.es_formula
+(* let no_infer_templ estate = (estate.es_infer_vars_templ == []) *)
+(* let no_infer_hp_rel estate = (estate.es_infer_vars_hp_rel == []) || is_error_flow estate.es_formula *)
 
 
-(* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *)
+(* (\* let no_infer_all estate = (estate.es_infer_vars == [] && estate.es_infer_vars_rel == []) *\) *)
 
-let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == [])
+(* let no_infer_pure estate = (estate.es_infer_vars == []) && (estate.es_infer_vars_rel == []) *)
 
-let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate
+(* let no_infer_all_all estate = no_infer_pure estate && (no_infer_hp_rel estate) && no_infer_templ estate *)
 
 (* WN: Why is there a need to remove vars_rel? *)
 let remove_infer_vars_all estate =
@@ -525,7 +525,9 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
             match_res_type = Root;
             match_res_rhs_node = rhs;
             match_res_rhs_rest = rhs_rest;
+            match_res_root_inst = None;
             match_res_alias_set = rt_al;
+            match_res_infer    = None;
             match_res_compatible = []; } in
           let act = M_match r in
           (
@@ -586,7 +588,7 @@ let simplify_helper f0 =
   (* let ptr_qvars0, non_ptrs0_qvars0 = List.partition CP.is_node_typ qvars0 in *)
   (* let ps = CP.list_of_conjs (CP.remove_redundant bare_f) in *)
   (* let ptrs_ps, non_ptrs_ps = List.partition (fun p -> List.for_all (CP.is_node_typ) (CP.fv p)) ps in *)
-  (* let () = DD.info_hprint (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in *)
+  (* let () e = DD.info_hprint (add_str " ptrs_ps: " (pr_list !print_formula)) ptrs_ps pos in *)
   (* let () = DD.info_hprint (add_str " non_ptrs_ps: " (pr_list !print_formula)) non_ptrs_ps pos in *)
   (* let non_ptr_f = helper (CP.mkExists (non_ptrs0_qvars0) (CP.conj_of_list non_ptrs_ps pos) None pos) in *)
   (* let qvars1, non_ptr_bare_f = split_ex_quantifiers non_ptr_f in *)
@@ -680,6 +682,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
             (CP.mkExists (non_ptrs0_qvars0@exists_var) 
                (CP.conj_of_list non_ptrs_ps pos) None pos) in
         let () = x_tinfo_hp (add_str "evars: " !print_svl) (non_ptrs0_qvars0@exists_var) pos in
+        let non_ptr_f = CP.simplify_eqn non_ptr_f in 
         let () = x_tinfo_hp (add_str "non_ptr_f: " !print_formula) non_ptr_f pos in 
         let qvars1, non_ptr_bare_f = split_ex_quantifiers non_ptr_f in
         let e_ptr_vars = CP.diff_svl (List.concat (List.map CP.fv ptrs_ps)) ivars in

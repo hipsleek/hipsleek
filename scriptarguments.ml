@@ -342,6 +342,8 @@ let common_arguments = [
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
   ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
   ("--new-tp-simplify", Arg.Clear Globals.old_tp_simplify,"Use om_simplify instead of TP.simplify_raw");
+  ("--en-mkeqn-opt", Arg.Set Globals.mkeqn_opt_flag,"Enable mkeqn optimization");
+  ("--dis-mkeqn-opt", Arg.Clear Globals.mkeqn_opt_flag,"Disable mkeqn optimization");
   ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
   ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");
   ("--old-pred-extn", Arg.Set Globals.old_pred_extn,"Use new pred extension approach");
@@ -647,6 +649,10 @@ let common_arguments = [
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-infer", Arg.String (fun s ->
        Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
+  ("--ana-ni",Arg.Unit (fun () -> 
+       Globals.ptr_arith_flag := true;
+       Globals.infer_const_obj # set INF_ANA_NI
+     ),"Enable analysis of @NI");
   ("-debug", Arg.String (fun s ->
        Debug.z_debug_file:=s; z_debug_flag:=true),
    "Read from a debug log file");

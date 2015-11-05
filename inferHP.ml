@@ -1734,7 +1734,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
         | x::_ -> x
       with _ ->
         PK_Unknown in
-    if Infer.no_infer_hp_rel es0 (* || MCP.isTrivMTerm mix_rf *) || ( pk != PK_POST && not (check_is_classic ())) then
+    if no_infer_hp_rel es0 (* || MCP.isTrivMTerm mix_rf *) || ( pk != PK_POST && not (check_is_classic ())) then
       (false, es0, [], lhs_b)
     else
       let ivs = es0.es_infer_vars_hp_rel in
@@ -2029,7 +2029,7 @@ let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0
     let () = Debug.ninfo_hprint (add_str  "es_infer_vars " !CP.print_svl) es0.es_infer_vars no_pos in
     let () = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel " !CP.print_svl) es0.es_infer_vars_sel_hp_rel no_pos in
     (*end for debugging*)
-    if Infer.no_infer_hp_rel es0 then
+    if no_infer_hp_rel es0 then
       constant_checking prog rhs0 lhs_b0 rhs_b0 es0
     else
       let ivs = es0.es_infer_vars_hp_rel in
@@ -2468,7 +2468,7 @@ let infer_collect_hp_rel_classsic prog (es:entail_state) rhs pos =
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars_hp_rel"  !CP.print_svl) es.es_infer_vars_hp_rel no_pos in
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars" !CP.print_svl)  es.es_infer_vars no_pos in
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel" !CP.print_svl)  es.es_infer_vars_sel_hp_rel no_pos in
-  if rhs<>HEmp || Infer.no_infer_hp_rel es then
+  if rhs<>HEmp || no_infer_hp_rel es then
     let () = Debug.ninfo_pprint ("no_infer_hp: " ) no_pos in
     (false, es)
   else

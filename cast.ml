@@ -123,6 +123,7 @@ and view_decl = {
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
   view_modes : mode list;
   view_type_of_self : typ option;
+  view_actual_root : (P.spec_var * P.formula) option;
   view_is_touching : bool;
   view_is_segmented : bool;
   view_is_tail_recursive: bool;        (* true if view is tail-recursively defined *)
@@ -796,6 +797,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_labels = List.map (fun _ -> LO.unlabelled) vs;
     view_modes = [];
     view_type_of_self = None;
+    view_actual_root = None;
     view_is_touching = false;
     view_is_segmented = false;
     view_is_tail_recursive= false;        (* true if view is tail-recursively defined *)
@@ -861,6 +863,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_labels = [];
     view_modes = [];
     view_type_of_self = None;
+    view_actual_root =None;
     view_is_touching = false;
     view_is_segmented = false;
     view_is_tail_recursive = false;
@@ -1361,7 +1364,7 @@ let rec look_up_view_def_raw loc (defs : view_decl list) (name : ident) = match 
     let msg = ("Cannot find definition of cview " ^ name) in 
     let () = y_tinfo_pp (loc^msg) in
     raise Not_found
-    (* let msg = ("Cannot find definition of view " ^ name) in  *)
+    (* let msg = ("Cannot find definition of view " ^ name) in *)
     (* failwith (x_loc^msg) *)
 
 let look_up_view_def_raw loc (defs : view_decl list) (name : ident) = 
@@ -1647,6 +1650,15 @@ let is_rec_view_def prog (name : ident) : bool =
   let vdef = look_up_view_def_num 2 no_pos prog.prog_view_decls name in
   (* let () = collect_rhs_view vdef in *)
   vdef.view_is_rec
+
+(* get ptr arithmetic root of view *)
+let get_root_view prog name ptr args =
+  let vdef = look_up_view_def_num 2 no_pos prog.prog_view_decls name in
+  let para = vdef.view_vars in
+  let sst = List.combine (CP.self_sv::para) (ptr::args) in
+  let ans = vdef.view_actual_root in
+  let ans = map_opt (fun (v,f) -> (v,CP.apply_subs sst f)) ans in
+  ans
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =
@@ -4431,4 +4443,25 @@ let is_segmented_view vd =
     let args = vd.view_vars in
     let vn = vd.view_name in
     is_segmented vn ty args (List.map fst vd.view_un_struc_formula)
+(* let get_views_offset prog f = *)
+(*   let stk = new Gen.stack in *)
+(*   let f_h_f hf =  *)
+(*     match hf with *)
+(*     | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name } ->  *)
+(*       let vr = get_root_view prog name p args in *)
+(*       let () = stk # push (p,Some vr) in Some hf  *)
+(*     | DataNode ({ h_formula_data_node = vsv; } )  *)
+(*     | ThreadNode {h_formula_thread_node=vsv;} *)
+(*     | HVar (vsv,_) -> *)
+(*       let () = stk # push (vsv,None) in Some hf *)
+(*     | HRel (hp, e, _)   -> *)
+(*         let args = CP.diff_svl (get_all_sv hf) [hp] in *)
+(*         (\* let root, _ = Sautil.find_root prog [hp] args [] in *\) *)
+(*         let () = stk # push (root,None) in Some hf *)
+(*     | _ -> None in  *)
+(*   let _ = (map_h_formula f f_h_f) in *)
+(*   let r = stk # get_stk in *)
+(*   let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in *)
+(*   let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in *)
+(*   r *)
 

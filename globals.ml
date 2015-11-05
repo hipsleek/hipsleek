@@ -255,9 +255,23 @@ let is_undef_typ t =
   | _ -> false 
 
 
+let is_ptr_arith t =
+  match t with
+  | Named id -> true (* String.compare id "" != 0 *)
+  | Array _ -> true
+  | _ -> false
+
 let is_node_typ t =
   match t with
-  | Named id -> String.compare id "" != 0
+  | Named id -> true (* String.compare id "" != 0 *)
+  | _ -> false
+
+let is_possible_node_typ t =
+  match t with
+  | Named id -> true (* String.compare id "" != 0 *)
+  | TVar _ -> true
+   (* Unknown can also be a node *)
+  | UNK -> true
   | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
@@ -1311,6 +1325,7 @@ let old_pred_extn = ref false (* false *)
 let old_lemma_switch = ref false (* false *)
 let old_free_var_lhs = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
+let mkeqn_opt_flag = ref true (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false
@@ -1640,6 +1655,7 @@ type infer_type =
   | INF_ERR_MUST_ONLY (* For infer[@err_must_only] *)
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
+  | INF_ANA_NI
   | INF_IMM (* For infer[@imm] *)
   | INF_FIELD_IMM (* For infer[@field_imm] *)
   | INF_ARR_AS_VAR (* For infer[@arrvar] *)
@@ -1685,6 +1701,7 @@ let string_of_inf_const x =
   | INF_ERR_MUST_ONLY -> "@err_must_only"
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
+  | INF_ANA_NI -> "@ana_ni"
   | INF_IMM -> "@imm"
   | INF_PURE_FIELD -> "@pure_field"
   | INF_FIELD_IMM -> "@field_imm"
@@ -1913,6 +1930,7 @@ class inf_obj  =
     method is_err_may  = not(self # get INF_DE_EXC) 
                          && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
+    method is_ana_ni  = self # get INF_ANA_NI
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA
     method is_classic  = self # get INF_CLASSIC

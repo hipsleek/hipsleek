@@ -1871,6 +1871,16 @@ Total verification time: 79.60 second
 	Time spent in child processes: 69.92 second
 	Number of false contexts: 104
 ====================================================================
+21Oct2015
+
+# type error? FIXED by --dis-ptr-arith
+
+Total number of errors: 4 in files:
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/bperm-split-combine.slk(no result  for {E}) 
+  veribsync/barrier-static.slk(no result  for {E}) 
+  veribsync/barrier-dynamic2.slk(no result  for {E}).
+====================================================================
 3Nov15
 
 #nexpected result with : infer/infer1.slk (failed check(s): {E9#Fail}) 

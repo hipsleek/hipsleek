@@ -1112,7 +1112,7 @@ let process_source_full_after_parser source (prog, prims_list) =
                                ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 let main1 () =
-  let () = y_binfo_pp "XXXX main1" in
+  let () = y_tinfo_pp "XXXX main1" in
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
   (* Cprinter.fmt_cut (); *)
@@ -1192,7 +1192,7 @@ let finalize_bug () =
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () =
-  let () = y_binfo_pp "XXXX old_main" in
+  let () = y_tinfo_pp "XXXX old_main" in
   try
     main1 ();
     (* let () =  *)

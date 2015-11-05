@@ -1115,14 +1115,16 @@ let is_bool_eq_ctr ?(eq=true)  a1 a2 =
   | _ -> None
 
 let is_ptr_ctr a1 a2 =
-  match a1,a2 with
-  | Var(v,_),_ ->
-    let t=type_of_spec_var v in
-    (is_otype t,is_ann_type t)
-  | _,Var(v,_) ->
-    let t=type_of_spec_var v in
-    (is_otype t,is_ann_type t)
-  | _ -> (false,false)
+  if (Globals.infer_const_obj # is_ana_ni) then (false,false)
+  else
+    match a1,a2 with
+    | Var(v,_),_ ->
+      let t=type_of_spec_var v in
+      (is_otype t,is_ann_type t)
+    | _,Var(v,_) ->
+      let t=type_of_spec_var v in
+      (is_otype t,is_ann_type t)
+    | _ -> (false,false)
 
 let is_ptr_ctr a1 a2 =
   let pr = Cprinter.string_of_formula_exp in
@@ -1350,7 +1352,7 @@ let cnv_int_to_ptr f =
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
-  let f = cnv_int_to_ptr f in
+  let f = x_add_1 cnv_int_to_ptr f in
   let f = if !Globals.allow_inf (*&& not(!Globals.allow_inf_qe_coq)*)
     then let f =  (*CP.arith_simplify 13*) (Infinity.convert_var_to_inf f) in
       let drop_inf_constr f =   
