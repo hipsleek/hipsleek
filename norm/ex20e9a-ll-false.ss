@@ -8,6 +8,11 @@ data node {
 }
 
 
+HeapPred P(node x).
+HeapPred P2(node x,node y).
+
+/*
+
 /* view for a singly linked list */
 /*
 ll<n> == self = null & n = 0 
@@ -40,10 +45,6 @@ pred_extn size[R]<k> ==
    or R::size<i> & k=1+i // recursive case
    inv k>=0;
 
-HeapPred P(node x).
-HeapPred P2(node x,node y).
-
-
 clist2<> == 
   self::node<_,q>*q::lseg<self>
   or self::lseg<q2>*q2::node<_,self>;
@@ -55,6 +56,8 @@ clist3<> == self::node<_, q> * P2(q, self);
 
 //lemma_safe "cir" self::clist<> -> self::clist2<>.
 
+*/
+
 int len_seg(node x)
   //infer [P,@classic,@pure_field,@size,@term]
   //infer [P#{size,sum},@classic,@pure_field]
@@ -65,8 +68,8 @@ int len_seg(node x)
 */
   //requires x::clist<>  ensures false;
   //requires x::clist2<>  ensures false;
-  infer [P2,@classic]//@pure_field]
-  requires P2(x,p) //x::node<_, q> * P2(q, x)
+  infer [P,@classic]//@pure_field]
+  requires P(x) //x::node<_, q> * P2(q, x)
   ensures false;
 {    
   if (x==null) return 0;
@@ -74,7 +77,7 @@ int len_seg(node x)
     node n = x.next;
     //dprint;
     int r=len_seg(n);
-    //dprint;
+    // dprint;
     return 1+r;
   }
 }

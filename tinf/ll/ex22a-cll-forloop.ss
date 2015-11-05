@@ -1,11 +1,15 @@
+data node {
+  int val;
+  node next;
+}
 
 pred lseg<p> ==
-   self==p
-  or self::node<_,q>*q::lseg<p>.
+   self=p
+  or self::node<_,q>*q::lseg<p>;
 
 
-void forloop(ref int i, int n, ref curr)
-  requires curr::node<_,_>
+void forloop(ref int i, int n, ref node curr)
+  requires curr::node<_,_> & i<=n
   ensures  curr::lseg<curr'>*curr'::node<_,_> & i'=n & i'>=i;
 {
   if (i>=n) return;
@@ -15,7 +19,7 @@ void forloop(ref int i, int n, ref curr)
     curr.next = next_node;
     curr = next_node;
     i = i+1;
-    for_loop(i,n,curr);
+    forloop(i,n,curr);
   }
 }
 

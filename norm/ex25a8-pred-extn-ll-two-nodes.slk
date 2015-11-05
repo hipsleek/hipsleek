@@ -25,6 +25,7 @@ pred_extn size[R]<k> ==
 print views.
 
 //pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+
 pred ss<nnn> == extends ll<> with size[REC]<nnn>.
 
 //pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.

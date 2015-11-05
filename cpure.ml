@@ -4417,11 +4417,13 @@ and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
     subst_avoid_capture_x fr t f
 
 and subst_avoid_capture_x (fr : spec_var list) (t : spec_var list) (f : formula) =
-  let st1 = List.combine fr t in
-  (* let f2 = subst st1 f in *) 
-  (* changing to a parallel substitution below *)
-  let f2 = par_subst st1 f in 
-  f2
+  try 
+    let st1 = List.combine fr t in
+    (* let f2 = subst st1 f in *) 
+    (* changing to a parallel substitution below *)
+    let f2 = par_subst st1 f in 
+    f2
+  with _ -> failwith (x_loc ^ "[subst_avoid_capture]: Cannot combine fr and t")
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_subs sst f
 (* match sst with *)
@@ -8905,9 +8907,6 @@ let is_linear_formula f0 =
 let is_linear_formula f0 =
   Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
 
-let is_linear_formula f0 =
-  Debug.no_1 "is_linear_formula" !print_formula string_of_bool is_linear_formula f0
-
 let is_linear_exp e0 =
   let f e =
     if is_bag e || is_list e then 
@@ -12256,18 +12255,24 @@ let is_term f =
   | BForm ((bf,_),_) -> is_term bf
   | _ -> false
 
-let is_TermR pf =
+let is_TermR ann = 
+  match ann with
+  | TermR _ -> true
+  | _ -> false
+
+let is_TermR_pf pf =
   match pf with
-  | LexVar t_info -> begin 
-      match t_info.lex_ann with
-      | TermR _ -> true
-      | _ -> false 
-    end
+  | LexVar t_info -> is_TermR t_info.lex_ann
+    (* begin                       *)
+    (*   match t_info.lex_ann with *)
+    (*   | TermR _ -> true         *)
+    (*   | _ -> false              *)
+    (* end                         *)
   | _ -> false
 
 let is_TermR_formula f = 
   match f with
-  | BForm ((bf,_),_) -> is_TermR bf
+  | BForm ((bf,_),_) -> is_TermR_pf bf
   | _ -> false
 
 let is_rel_assume rt = match rt with
@@ -15009,10 +15014,10 @@ let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_va
     (* let () = report_warning no_pos (s ^ " at Cpure.create_view_arg_list_from_pos_map") in *)
     List.map fst map
 
-let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) = 
+let create_view_arg_list_from_pos_map (map: (view_arg*int) list) (hargs: spec_var list) (annot: (annot_arg*int) list) =
   let pr1 = pr_list (pr_pair print_view_arg string_of_int) in
   let pr2 = pr_list (pr_pair !print_annot_arg string_of_int) in
-  Debug.no_3 "create_view_arg_list_from_pos_map" pr1 !print_svl pr2 (pr_list print_view_arg) 
+  Debug.no_3 "create_view_arg_list_from_pos_map" pr1 !print_svl pr2 (pr_list print_view_arg)
     create_view_arg_list_from_pos_map map hargs annot
 
 (* Ocaml compiler bug here *)
@@ -15519,14 +15524,31 @@ let mk_eq_zero a1 =
   let a1 = mkVar a1 no_pos in
   mk_bform (Eq (a1, mkIConst 0 no_pos,no_pos))
 
+let mk_eq_null sv = 
+  let v = mkVar sv no_pos in
+  mk_bform (Eq (v, Null no_pos, no_pos))
+
+let mk_eq_vars v1 v2 = 
+  let v1 = mkVar v1 no_pos in
+  let v2 = mkVar v2 no_pos in
+  mk_bform (Eq (v1, v2, no_pos))
+
 let mk_max a a1 a2 = 
   let a = mkVar a no_pos in
   let a1 = mkVar a1 no_pos in
   let a2 = mkVar a2 no_pos in
   mk_bform (mkEqMax a a1 a2 no_pos)
 
+
 let mkEqExp_raw (ae1 : exp) (ae2 : exp) pos :formula =
   mk_bform (Eq (ae1, ae2, pos))
+
+let mk_sum a a1 a2 = 
+  let lhs = mkVar a no_pos in
+  let a1 = mkVar a1 no_pos in
+  let a2 = mkVar a2 no_pos in
+  let rhs = mkAdd a1 a2 no_pos in
+  mkEqExp_raw lhs rhs no_pos
 
 let mk_inc lhs rhs = 
   let lhs = mkVar lhs no_pos in

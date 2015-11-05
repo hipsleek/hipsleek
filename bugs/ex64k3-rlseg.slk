@@ -1,0 +1,47 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+// fail <==
+
+lemma_safe "two" self::rlseg<p1> * p1::rlseg<p> <- self::rlseg<p>.
+// fail as rhs is weaker
+
+lemma_safe "two2" self::rlseg<p> -> self::rlseg<p1> *  p1::rlseg<p>  .
+
+/*
+# ex64k3.slk -dre "trans_head"
+
+(==astsimp.ml#4587==)
+trans_head@1
+trans_head inp1 :(EX  . ((self::rlseg{}<p1>[HeapNode1]) * (p1::rlseg{}<p>[HeapNode1]))*([] & true)( FLOW __norm))
+trans_head inp2 :[self,p]
+trans_head inp3 :quant:true
+trans_head@1 EXIT: (exists p_39,p1: self::rlseg<p1>@M * p1::rlseg<p_39>@M&p_39=p&
+{FLOW,(20,21)=__norm#E}[])
+
+
+(==astsimp.ml#4587==)
+trans_head@3
+trans_head inp1 :(EX  . (self::rlseg{}<p>[HeapNode1])*([] & true)( FLOW __norm))
+trans_head inp2 :[self,p1,p]
+trans_head inp3 :quant:true
+trans_head@3 EXIT: (exists p_395: self::rlseg<p_395>@M&p_395=p&{FLOW,(20,21)=__norm#E}[])
+
+
+trans_head@4
+trans_head inp1 :(EX  . (self::rlseg{}<p>[HeapNode1])*([] & true)( FLOW __norm))
+trans_head inp2 :[self,p1,p]
+trans_head inp3 :quant:true
+trans_head@4 EXIT: (exists p_522: self::rlseg<p_522>@M&p_522=p&{FLOW,(20,21)=__norm#E}[])
+
+
+
+*/

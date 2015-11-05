@@ -26,7 +26,9 @@ pred_extn size[R]<k> ==
 HeapPred P(node x).
 
 int length(node x)
-   infer [P#size
+   infer [
+    //P#size
+    P,@size
     ,@classic
     ,@pure_field,@term]
   //infer [P#{size,sum},@classic,@pure_field]

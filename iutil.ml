@@ -23,7 +23,7 @@ let size_ext_hpdef_x iprog cprog hpdef=
           let _ =  Debug.ninfo_hprint (add_str "  args: " !CP.print_svl) args no_pos in
           (* let n_hp = CP.fresh_spec_var hp in *)
           let n_args = args@[ext_sv] in
-          let n_lhs, n_hp = Sautil.add_raw_hp_rel cprog true false (List.map (fun sv ->
+          let n_lhs, n_hp = x_add (Sautil.add_raw_hp_rel ~caller:x_loc) cprog true false (List.map (fun sv ->
               if CP.is_node_typ sv then (sv,I) else (sv,NI)) n_args) no_pos in
           (*new declaration for cprog*)
           let n_hpcl = Cast.look_up_hp_def_raw cprog.Cast.prog_hp_decls (CP.name_of_spec_var n_hp) in

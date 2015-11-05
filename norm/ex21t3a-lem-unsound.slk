@@ -1,0 +1,104 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+HeapPred HP(node x, node y).
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+/*
+pred lseg<p> == self = p 
+	or self::node<v, q> * q::lseg<p> // & v!=0
+  inv true.
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+  
+pred app4<p> == self::node<0,p> 
+	or self::node<v, q> * q::app4<p> & v!=0 
+  inv self!=null.
+
+pred app4a<> == self::node<_,null> 
+	or self::node<_, q> * q::app4a<> & q!=null
+  inv self!=null.
+*/
+
+pred app4b<> == self::node<0,null> 
+	or self::node<v, q> * q::app4b<> & q!=null & v!=0
+  inv self!=null.
+  
+pred app4c<p> == self::node<_,p> 
+	or self::node<_, q> * q::app4c<p> & q!=null
+  inv self!=null.
+
+//lemma_safe "app4a_lem" self::app4a<> -> self::lseg<q> * q::node<_, null>.
+
+//lemma_safe "app4b_lem" self::app4b<> -> self::lseg<q> * q::node<0, null>.
+
+//lemma_safe "app4a_llem" self::app4a<> -> self::node<_, q> * q::ll<>.
+//lemma_safe "app4a_rlem" self::app4a<> <- self::node<_, q> * q::ll<>.
+
+//lemma_safe "app4b_llem" self::app4b<> -> self::node<_, q> * q::ll<>.
+lemma_infer[@classic] "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>. 
+ // should fail?
+
+print residue.
+
+//lemma_infer [HP,@classic] self::app4<p> -> q::node<v, p1> * HP(self, q) & p1=p & v=0.
+
+//lemma_infer [HP,@classic,@pure_field] self::app4b<> -> self::node<v, q> * HP(q, self).
+
+//lemma_infer [HP,@classic] self::app3<> -> q::node<0, null> * HP(self, q).
+
+//print residue.
+
+//pred_elim_tl_node [app4].
+
+//pred_elim_hd_node [app4b].
+
+//print views.
+
+/*
+# ex21t1q
+
+lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>. 
+
+# should fail ..
+
+ Lemma infer inferred succeeded in current context.
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+[[ SEARCH ==>  
+  (Lemma <== app4b_rlem(self_app4b_rlem,self_app4b_rlem)) 
+  ==>  Match(self_app4b_rlem,self_app4b_rlem) 
+  ==>  Fold ==>  Match(q_148,q_148) ==>  
+  COND ==>  Match(q_146,q_209) ==> 
+||OR|| ==>  
+ SEARCH ==>  
+  (Lemma <== app4b_rlem(self_app4b_rlem,self_app4b_rlem)) ==>  
+   Match(self_app4b_rlem,self_app4b_rlem) ==>  
+   COND ==>  BaseCaseFold]]
+
+
+!!! **solver.ml#12846:M_fold: self_app4b_rlem::app4b<>@M
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#12846:M_fold: self_app4b_rlem::app4b<>@M
+!!! **solver.ml#12846:M_fold: q_152::app4b<>@M
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#12846:M_fold: q_148::ll<>@M
+
+*/

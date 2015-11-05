@@ -184,6 +184,7 @@ let cobj_def = { Cast.data_name = "Object";
                  Cast.data_parent_name = "";
                  Cast.data_invs = [];
                  Cast.data_pure_inv = None;
+                 Cast.data_is_rec = false;
                  Cast.data_methods = [] }
 
 let cprog = Cprog_sleek.cprog
@@ -269,7 +270,7 @@ let clear_all () =
 (*   with *)
 (* 	| Not_found -> begin *)
 (* 		try *)
-(* 		  let _ = I.look_up_view_def_raw 3 iprog.I.prog_view_decls name in *)
+(* 		  let _ = I.look_up_view_def_raw x_loc iprog.I.prog_view_decls name in *)
 (* 			false *)
 (* 		with *)
 (* 		  | Not_found -> (\*true*\) *)
@@ -560,7 +561,7 @@ end
 *)
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
-  let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  let l2r, r2l = Astsimp.trans_one_coercion iprog !cprog ldef in
   let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec !cprog c) l2r) in
   let r2l = List.concat (List.map (fun c-> Astsimp.coerc_spec !cprog c) r2l) in
   (* TODO : WN print input_ast *)
@@ -572,7 +573,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
-  let res = x_add Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = x_add (Lemproving.verify_lemma ~force_pr:true) 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
 (* CF.residues := (match res with *)
 (*   | None -> None; *)
@@ -766,6 +767,8 @@ let convert_data_and_pred_to_cast_x () =
         process_lemma (Iast.gen_normalize_lemma_comb ddef)
       ) (* andreeac: why is process_lemma still called at this point if, subsequentlly (after the call of convert_data_and_pred_to_cast) lemmas are processed again in sleek.ml --- alternatively, remove the call from seek and keep this one *)
     ) iprog.I.prog_data_decls;
+  let d_lst = !cprog.Cast.prog_data_decls in
+  let () = Cf_ext.add_data_tags_to_obj d_lst in
 
   (* convert pred *) 
   (* The below code is moved to SleekUtils.process_iview_decls *)
@@ -1483,7 +1486,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
       let lr = [new_rel_ass] in
       let () = x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr no_pos in
-      let _ = Infer.infer_rel_stk # push_list_pr lr in
+      let _ = Infer.infer_rel_stk # push_list_pr x_loc lr in
       ()
   in
   ()
@@ -1658,7 +1661,7 @@ let print_sleek_hprel_assumes () =
       curr_hprel (* (sleek_hprel_assumes # get) *) no_pos
   else ()
 
-let process_sleek_hprel_assumes_others s (ids: regex_id_list) f_proc = 
+let process_sleek_hprel_assumes_others s ?(combined=false) (ids: regex_id_list) f_proc = 
   (* let () = classify_sleek_hprel_assumes () in                               *)
   (* let () = print_endline_quiet "\n========================" in              *)
   (* let () = print_endline_quiet (" Performing "^s) in                        *)
@@ -1670,7 +1673,7 @@ let process_sleek_hprel_assumes_others s (ids: regex_id_list) f_proc =
   (* in                                                                        *)
   (* let res = f_proc others sel_hprel_assume_list in                          *)
   (* update_sleek_hprel_assumes (res @ others)                                 *)
-  SynUtils.process_hprel_assumes_others s sleek_hprel_assumes ids f_proc
+  SynUtils.process_hprel_assumes_others s ~combined:combined sleek_hprel_assumes ids f_proc
 
 let process_sleek_hprel_assumes s (ids: regex_id_list) f_proc = 
   let f others x = f_proc x in
@@ -1680,7 +1683,7 @@ let process_shape_add_dangling (ids: regex_id_list) =
   process_sleek_hprel_assumes "Adding Dangling" ids (Syn.add_dangling_hprel_list !cprog)
 
 let process_shape_unfold (ids: regex_id_list) =
-  process_sleek_hprel_assumes_others "Unfolding" ids (Syn.selective_unfolding !cprog)
+  process_sleek_hprel_assumes_others "Unfolding" ~combined:true ids (Syn.comb_selective_unfolding !cprog)
 
   (* let sel_hprel_assume_list, others = select_hprel_assume (sleek_hprel_assumes # get) hps in *)
   (* let res = x_add Syn.selective_unfolding !cprog others sel_hprel_assume_list in *)
@@ -1738,7 +1741,7 @@ let process_shape_derive_post (ids: regex_id_list) =
 
 let process_shape_derive_view (ids: regex_id_list) =
   let f others hps =
-    let (derived_views, new_hprels) = Syn.derive_view iprog !cprog others hps in
+    let (derived_views, new_hprels) = x_add Syn.derive_view iprog !cprog others hps in
     (* let () = update_sleek_hprel_assumes new_hprels in *)
     new_hprels
   in
@@ -1751,7 +1754,7 @@ let process_data_mark_rec (ids: regex_id_star_list) =
 
 let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
-    let new_hprels = Syn.derive_view_norm !cprog others hps in
+    let new_hprels = x_add Syn.derive_view_norm !cprog others hps in
     new_hprels
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
@@ -2587,7 +2590,7 @@ let process_pred_unfold qual reg_to_vname =
   (* let equiv_set = C.get_all_view_equiv_set vdefs in *)
   (* let ids = List.map (fun vdcl -> vdcl.Cast.view_name) vdefs in *)
   let to_vns = Norm.regex_search reg_to_vname vdefs in
-  Norm.norm_unfold qual iprog !cprog vdefs to_vns
+  Norm.norm_unfold qual iprog (* !cprog*) vdefs to_vns
 
 let process_shape_reuse_subs reg_to_vname =
   (* failwith (x_loc^"TBI") *)
@@ -3004,7 +3007,8 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
   let is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
   let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
-  let opt_pure_field = if List.mem INF_PURE_FIELD itype 
+  let opt_pure_field = 
+    if List.mem INF_PURE_FIELD itype 
     then Some true else None in
   (* combine local vs. global of failure explaining *)
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
@@ -3035,7 +3039,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
     else run_infer x in
   let run_infer x = 
       wrap_pure_field (opt_pure_field) run_infer x in
-  let r=  try
+  let r =  try
       let (valid, rs, sel_hps),_ = run_infer iconseq0 in
       let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MUST_ONLY itype || List.mem INF_ERR_MAY itype) in
       (* let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) in*)

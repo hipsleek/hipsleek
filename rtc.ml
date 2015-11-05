@@ -171,7 +171,7 @@ and compile_proc_body (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit
   end
 
 and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit = 
-  let r = Cformula.split_struc_formula proc.C.proc_static_specs in
+  let r = Cformula.split_struc_formula (proc.C.proc_stk_of_static_specs # top) (* proc.C.proc_static_specs *) in
   match r with
   | [] -> 
     let pre = CF.mkTrue ( CF.mkNormalFlow ()) no_pos in
@@ -444,7 +444,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
         (*let pdef = C.look_up_proc_def_raw prog.C.old_proc_decls mn0 in*)
         let pdef = C.look_up_proc_def_raw prog.C.new_proc_decls mn0 in
         let pre = 
-          let r = Cformula.split_struc_formula pdef.C.proc_static_specs in 
+          let r = Cformula.split_struc_formula (pdef.C.proc_stk_of_static_specs # top) (* pdef.C.proc_static_specs *) in 
           match r with
           | [(pre, post)] -> pre
           | [] -> CF.mkTrue (CF.mkNormalFlow ()) pos 
