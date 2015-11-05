@@ -47,7 +47,7 @@ void loop (ref char_star s)
     P
     ,@pure_field,@classic
     ,@size
-    //,@term
+    ,@term
   ]
   requires P(s)
   //requires true
@@ -67,18 +67,17 @@ void loop (ref char_star s)
   }
 }
 
-/*
 void main () 
   requires true
   ensures true;
 {
-  int length = 0;
-  //if (length < 1) length = 1;
+  int length;
+  if (length < 1) length = 1;
   char_star str = alloc_str(length);
   dprint;
   finalize_str(str, length-1);
   dprint;
-  loop(str);
+  //loop(str);
   dprint;
 }
-*/
+
