@@ -1,0 +1,16 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+
+
+//(3)
+infer[i,n] base::arr_seg<i,n> & x=base+i |- 
+  x::arr<_> .
+print residue.
+expect Valid.
