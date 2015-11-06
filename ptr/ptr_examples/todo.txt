@@ -271,7 +271,7 @@ checkentail x::arr_seg<i,n> & n-i>=3 & y=x+i & z=y+2
 Entail 2: Fail.(must) cause:infinite unfolding
 
 =================================================================
-# ex1e6d.slk
+# ex1e6d.slk (FIXED)
 
 checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
 
@@ -282,7 +282,7 @@ checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
 
 # could we use set of solution? or match with node?
 =================================================================
-# ex1e6d1.slk
+# ex1e6d1.slk (FIXED)
 
 checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
    |- [n] x::arr_seg<i,n>.

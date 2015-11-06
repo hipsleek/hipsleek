@@ -13,7 +13,18 @@ checkentail y::arr<_> * z::arr<_> & z=x+3 & y=x+2 & i=2
 print residue.
 expect Valid.
 
+checkentail z::arr<_> * y::arr<_> & z=x+3 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+checkentail z::arr<_> * y::arr<_> & z=x+3 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> & n=i+2.
+print residue.
+expect Valid.
+
 /*
+
 # ex1e6d2.slk
 
 checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
