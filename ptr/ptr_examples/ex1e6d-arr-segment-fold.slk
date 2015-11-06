@@ -7,7 +7,7 @@ pred arr_seg<i:int,n:int> ==
   or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
   inv n>=i & i>=0.
 
-//(4)
+//(1)
 checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
 print residue.
 expect Valid.
@@ -21,9 +21,41 @@ Residue:
 [[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
 */
 
+//(2)
+checkentail emp & i=2 |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+/*
+ <1>emp&i=2 & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  BaseCaseFold]]
+*/
+
+
+//(3)
+checkentail r::arr<_>*y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+/*
+Entail 3: Valid. 
+Residue:
+<1>r::arr<Anon_13>@M * y::arr<Anon_14>@M&i=2 & y=2+x & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ Fold]]
+
+<2>r::arr<Anon_13>@M&y=x+2 & n=3 & i=2&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
+*/
+
+//(4)
+checkentail r::arr<_>*y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
+/*
+ <1>r::arr<Anon_15>@M&y=x+2 & n=3 & i=2&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
+*/
 
 checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
-   |- [n] x::arr_seg<i,n>.
+   |- [n] x::arr_seg<i,n> & i<n.
 print residue.
 expect Valid.
 
