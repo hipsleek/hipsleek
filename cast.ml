@@ -625,6 +625,7 @@ let print_prog = ref (fun (c:prog_decl) -> "cast printer has not been initialize
 let cprog_obj = 
   object (self)
     (* val cprog = cprog *)
+    method get = !cprog
     method logging s =
       (* let m = "\n*XXcprog** " in *)
       (* let () = print_endline_quiet (m^s) in *)

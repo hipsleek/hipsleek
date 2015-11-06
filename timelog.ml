@@ -32,7 +32,8 @@ class timelog =
         let r = stk_t # pop_top_no_exc in
         if stk_t # is_empty then 
           (if timer_val==None then timer_val <- Some s)
-        else print_endline_quiet "Nested Timer(stop)"
+        else () (* is it important to output Stop msg? message? *)
+            (* print_endline_quiet "Nested Timer(stop)" *)
       end
     method timer_timeout pno s =
       begin

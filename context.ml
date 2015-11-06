@@ -1947,7 +1947,7 @@ and process_one_match_accfold (prog: C.prog_decl) (mt_res: match_res)
   let pr_h = !CF.print_h_formula in
   let pr_p = !MCP.print_mix_formula in
   let pr_out = pr_list string_of_action_wt_res in
-  Debug.no_4 "process_one_match_accfold" 
+  Debug.no_4 "process_one_accfold_match" 
     (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) 
     (add_str "lhs_p" pr_p) (add_str "rhs_p" pr_p) pr_out
     (fun _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p)
@@ -2132,6 +2132,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let vr_is_rec = vr_vdef.view_is_rec in
             let vl_self_pts = vl_vdef.view_pt_by_self in
             let vr_self_pts = vr_vdef.view_pt_by_self in
+            (* root for array segment *)
+            let vl_actual_root = vl_vdef.view_actual_root in
+            let vr_actual_root = vr_vdef.view_actual_root in
             let vl_view_orig = vl.h_formula_view_original in
             let vr_view_orig = vr.h_formula_view_original in
             let vl_view_origs = vl.h_formula_view_origins in
@@ -2155,14 +2158,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
             (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
             (*let en_num = !num_self_fold_search in*)
-            let en_self_fold = !self_fold_search_flag in
+            (* let en_self_fold = !self_fold_search_flag in *)
             let s_eq = (String.compare vl_name vr_name)==0 in
             let vl_b = vl_view_origs!=[] in
             let vr_b = vr_view_origs!=[] in
             let force_flag = (s_eq && 
                               ((vl_view_orig==false && vl_b) 
                                || ((vr_view_orig==false && vr_b)))) in
-            let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts in
+            let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts in
             let () = Debug.tinfo_hprint (add_str "force_match" string_of_bool) force_flag no_pos in
             let () = Debug.tinfo_hprint (add_str "sf_force_match" string_of_bool) sf_force_match_flag no_pos in
             let () = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
@@ -2171,7 +2174,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
             let () = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
             let () = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-            let () = Debug.ninfo_hprint (add_str "en_self_fold" string_of_bool) en_self_fold no_pos in
+            let () = Debug.ninfo_hprint (add_str "!Globals.self_fold_search_flag" string_of_bool) !Globals.self_fold_search_flag no_pos in
             let flag_lem = (
               if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
               (* else (vl_view_orig || vr_view_orig) *)
@@ -2283,16 +2286,16 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   if a4==None then
                     begin
                       let l1 =
-                        (*Do not fold/unfold LOCKs*)
-                        if (is_l_lock) then [] else 
-                        if (vl_view_orig && vr_view_orig && not(vr_is_prim) && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
+                        (*Do not fold/unfold LOCKs and array segments when view matching*)
+                        if (is_r_lock || not(vr_actual_root==None)) then [] else 
+                        if (vl_view_orig && vr_view_orig && not(vr_is_prim) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                         then
                           [(2,M_fold m_res)] 
                         else [] in
                       let l2 =
                         (*Do not fold/unfold LOCKs*)
-                        if (is_r_lock) then [] else
-                          let uflag = (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) in
+                        if (is_l_lock || not(vl_actual_root==None)) then [] else
+                          let uflag = (vl_view_orig && vr_view_orig && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts) in
                           let () = x_tinfo_hp (add_str "unfold on self-fold defn (rev-seg)" string_of_bool) uflag no_pos in
                           if uflag
                           then

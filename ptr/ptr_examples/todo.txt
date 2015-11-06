@@ -295,7 +295,47 @@ expect Valid.
  <1>y::arr<Anon_13>@M * z::arr<Anon_14>@M&i=2 & y=2+x & z=1+y & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
 [[ Fold]]
 =================================================================
+# bug1b.slk (FIXED)
+
+# explicit instantiation is unsound ..
+
+ Context: [ emp&flted_5_12=5 
+     & n=flted_5_12 & 6<n&{FLOW,(20,21)=__norm#E}[]
+
+# it should not lead to a contradiction like below
+(==solver.ml#7949==)
+move_expl_inst_estate@2
+move_expl_inst_estate inp1 :  emp&flted_5_12=5 & nnn=flted_5_12&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_heap: x::cell<flted_5_12>@M
+ es_gen_expl_vars: [nnn]
+ es_trace:  Match(x,x)
+move_expl_inst_estate inp2 : 6<nnn
+move_expl_inst_estate@2 EXIT:  emp&flted_5_12=5 & nnn=flted_5_12 & 6<nnn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_heap: x::cell<flted_5_12>@M
+ es_gen_expl_vars: [nnn]
+ es_trace:  Match(x,x)
+ es_unsat_flag: false
+
 =================================================================
+# bug1b.slk
+
+# Why are there so many "nested timer(stop)"?
+
+Starting Omega.../usr/local/bin/oc
+Nested Timer(stop)
+Nested Timer(stop)
+
+# error with timer logging ..
+
+!!! log(small):(0.009245,17)
+!!! 
+ log(bigger)(>4s)(2):(10.,[(simplify:6<1:Z3,5.);(simplify:13<3:Z3,5.)])
+Total verification time: 0.05878 second(s)
+	Time spent in main process: 0.04459 second(s)
+	Time spent in child processes: 0.01419 second(s)
+
 =================================================================
 =================================================================
 =================================================================
