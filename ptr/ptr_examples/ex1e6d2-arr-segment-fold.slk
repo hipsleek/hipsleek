@@ -8,8 +8,8 @@ pred arr_seg<i:int,n:int> ==
   inv n>=i & i>=0.
 
 // problem with multiple folding..
-checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
-   |- [n] x::arr_seg<i,n> & i<n.
+checkentail y::arr<_> * z::arr<_> & z=x+3 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> .
 print residue.
 expect Valid.
 
@@ -17,7 +17,7 @@ expect Valid.
 # ex1e6d2.slk
 
 checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
-   |- [n] x::arr_seg<i,n> & i<n.
+   |- [n] x::arr_seg<i,n> .
 
 
 */

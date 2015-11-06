@@ -21,7 +21,22 @@ Residue:
 [[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
 */
 
-//(2)
+// explicit instantiation
+checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n> & n>i.
+print residue.
+expect Valid.
+
+//(3) implicit instantiation
+checkentail y::arr<_> & y=x+2 & i=2 |- x::arr_seg<i,n> & n>i.
+print residue.
+expect Valid.
+
+//(4) existential variable
+checkentail y::arr<_> & y=x+2 & i=2 |- (exists n: x::arr_seg<i,n> & n>i).
+print residue.
+expect Valid.
+
+//(5)
 checkentail emp & i=2 |- [n] x::arr_seg<i,n>.
 print residue.
 expect Valid.
@@ -29,7 +44,13 @@ expect Valid.
  <1>emp&i=2 & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
 [[ COND ==>  BaseCaseFold]]
 */
+//checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
 
+//(6)
+checkentail  y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n> & n=i.
+print residue.
+expect Valid.
+// i=n & i>=0
 
 //(3)
 checkentail r::arr<_>*y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.

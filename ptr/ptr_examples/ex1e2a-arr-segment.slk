@@ -22,7 +22,17 @@ checkentail x::arr_seg<i,n> & n-i>=3 & y=x+i & z=y+2
 
 # why is this called infinite unfold?
 
-Entail 2: Fail.(must) cause:infinite unfolding
+Entail 1: Fail.(may) cause:do_unmatched_rhs : z::arr<Anon_13>@M(may)
+Residue:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : z::arr<Anon_13>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ Unfold 0 ==>  Match(x_76,y) ==>  UnmatchedRHSData]]
+ CEX:false
 
 */
 
