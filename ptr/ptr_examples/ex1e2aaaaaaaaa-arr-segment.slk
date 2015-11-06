@@ -22,6 +22,10 @@ expect Fail.
 /*
 # ex1e2 -dre "process_one_m" --trace-log-num 5
 
+# why is this
+Entail 2: Fail.(must) cause:infinite unfolding
+
+
 !!! **context.ml#741:TODO: rename root:x
 Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS node  Type: Root
  LHS: x::arr_seg<flted_7_132,n_131>@M

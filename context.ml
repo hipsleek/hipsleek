@@ -738,10 +738,12 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_tinfo_hp (add_str "rhs_p" !CP.print_formula) rhs_p  in
                   let f = CP.join_conjunctions [lhs_p2;eq;rf;rhs_p] in
                   let r = !CP.tp_is_sat f in
+                  let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in
+                  let () =  y_tinfo_hp (add_str "eq" !CP.print_formula) eq  in
                   let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
                   let rf = CP.apply_subs [(v,d)] rf in
-                  let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
-                  let () =  y_tinfo_hp (add_str "is_sat hs & rhs & root_ptr" string_of_bool) r  in
+                  let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
+                  let () =  y_tinfo_hp (add_str "is_sat [lhs_p2;eq;rf;rhs_p]" string_of_bool) r  in
                   (d,r,Some rf)
                 else (d,r,None)
               | Some ((v,pf)) ->
@@ -1945,7 +1947,7 @@ and process_one_match_accfold (prog: C.prog_decl) (mt_res: match_res)
   let pr_h = !CF.print_h_formula in
   let pr_p = !MCP.print_mix_formula in
   let pr_out = pr_list string_of_action_wt_res in
-  Debug.no_4 "process_one_match_accfold" 
+  Debug.no_4 "process_one_accfold_match" 
     (add_str "match_res" pr_mr) (add_str "lhs_h" pr_h) 
     (add_str "lhs_p" pr_p) (add_str "rhs_p" pr_p) pr_out
     (fun _ _ _ _ -> process_one_match_accfold_x prog mt_res lhs_h lhs_p rhs_p)
@@ -2130,6 +2132,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let vr_is_rec = vr_vdef.view_is_rec in
             let vl_self_pts = vl_vdef.view_pt_by_self in
             let vr_self_pts = vr_vdef.view_pt_by_self in
+            (* root for array segment *)
+            let vl_actual_root = vl_vdef.view_actual_root in
+            let vr_actual_root = vr_vdef.view_actual_root in
             let vl_view_orig = vl.h_formula_view_original in
             let vr_view_orig = vr.h_formula_view_original in
             let vl_view_origs = vl.h_formula_view_origins in
@@ -2153,14 +2158,14 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
             (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
             (*let en_num = !num_self_fold_search in*)
-            let en_self_fold = !self_fold_search_flag in
+            (* let en_self_fold = !self_fold_search_flag in *)
             let s_eq = (String.compare vl_name vr_name)==0 in
             let vl_b = vl_view_origs!=[] in
             let vr_b = vr_view_origs!=[] in
             let force_flag = (s_eq && 
                               ((vl_view_orig==false && vl_b) 
                                || ((vr_view_orig==false && vr_b)))) in
-            let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts in
+            let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts in
             let () = Debug.tinfo_hprint (add_str "force_match" string_of_bool) force_flag no_pos in
             let () = Debug.tinfo_hprint (add_str "sf_force_match" string_of_bool) sf_force_match_flag no_pos in
             let () = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
@@ -2169,7 +2174,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
             let () = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
             let () = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-            let () = Debug.ninfo_hprint (add_str "en_self_fold" string_of_bool) en_self_fold no_pos in
+            let () = Debug.ninfo_hprint (add_str "!Globals.self_fold_search_flag" string_of_bool) !Globals.self_fold_search_flag no_pos in
             let flag_lem = (
               if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
               (* else (vl_view_orig || vr_view_orig) *)
@@ -2281,16 +2286,16 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   if a4==None then
                     begin
                       let l1 =
-                        (*Do not fold/unfold LOCKs*)
-                        if (is_l_lock) then [] else 
-                        if (vl_view_orig && vr_view_orig && not(vr_is_prim) && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
+                        (*Do not fold/unfold LOCKs and array segments when view matching*)
+                        if (is_r_lock || not(vr_actual_root==None)) then [] else 
+                        if (vl_view_orig && vr_view_orig && not(vr_is_prim) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                         then
                           [(2,M_fold m_res)] 
                         else [] in
                       let l2 =
                         (*Do not fold/unfold LOCKs*)
-                        if (is_r_lock) then [] else
-                          let uflag = (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) in
+                        if (is_l_lock || not(vl_actual_root==None)) then [] else
+                          let uflag = (vl_view_orig && vr_view_orig && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts) in
                           let () = x_tinfo_hp (add_str "unfold on self-fold defn (rev-seg)" string_of_bool) uflag no_pos in
                           if uflag
                           then
@@ -2428,6 +2433,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = y_tinfo_pp "DATA vs VIEW" in
             let vr_name = vr.h_formula_view_name in
             let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in
+            let vr_actual_root =  vr_vdef.view_actual_root in
             let vr_self_pts = vr_vdef.view_pt_by_self in
             let vr_is_prim = vr_vdef.view_is_prim in
             let vr_view_orig = vr.h_formula_view_original in
@@ -2451,18 +2457,19 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               (* else  *)(Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node)  (* true *) in
             (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
             (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold m_res)] else [] in *)
-            let () = Debug.ninfo_hprint (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
-            let () = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-            let () = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
-            let () = Debug.ninfo_hprint (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
+            let () = x_tinfo_hp (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
+            let () = x_tinfo_hp (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+            let () = x_tinfo_hp (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+            let () = x_tinfo_hp (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
+            let () = x_tinfo_hp (add_str "vr_self_pts" (pr_list pr_id)) vr_self_pts no_pos in
             let seg_fold_type = if !Globals.seg_fold then
                 (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset estate.CF.es_folding_conseq_pure)
               else gen_lemma_action_invalid
             in
             let a1 = (
               if is_r_lock then [] else
-              if ((new_orig_r || vr_self_pts==[]) && sub_ann) then
-                let () = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 3" no_pos in
+              if ((new_orig_r || vr_self_pts==[] || not(vr_actual_root==None)) && sub_ann) then
+                let () = x_tinfo_hp (add_str "cyclic " pr_id) " 3" no_pos in
                 let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
                 let syn_lem_typ = if seg_fold_type >= 0 then gen_lemma_action_invalid else
                     CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
@@ -2491,7 +2498,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                           let () = x_binfo_pp "folding..." no_pos in
                           [(1,M_fold m_res)]
                     else
-                      let () = Debug.ninfo_hprint (add_str "cyclic:add_checkpoint" pr_id) "fold 3" no_pos in
+                      let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold 3" no_pos in
                       let cyc_tail_rec_lemmas=
                         if syn_lem_typ=3 then
                           let uf_i = if new_orig_r then 0 else 1 in
@@ -2557,8 +2564,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             (* ) a in                                              *)
             (* try accelerated folding *)
             let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-            Debug.ninfo_hprint (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
-            Debug.ninfo_hprint (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
+            x_tinfo_hp (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+            x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
             (* return *)
             (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
             let () = y_tinfo_hp (add_str "actions" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
@@ -2578,6 +2585,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let vl_name = vl.h_formula_view_name in
             let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
             let vl_self_pts = vl_vdef.view_pt_by_self in
+            let vl_actual_root =  vl_vdef.view_actual_root in
             let vl_view_orig = vl.h_formula_view_original in
             let vl_view_derv = vl.h_formula_view_derv in
             let dr_orig = dr.h_formula_data_original in
@@ -2588,7 +2596,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               | Some _ -> true
               | None -> false
             in
-            let () = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 4" no_pos in
+            let () = x_tinfo_hp (add_str "cyclic " pr_id) " 4" no_pos in
             let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
             let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
             let uf_i = if new_orig_l then 0 else 1 in
@@ -2600,9 +2608,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let r,_,_,_ = x_add Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
                 r
               else true in
+            let unfold_flag = ((new_orig_l (* || new_orig_r *) || (vl_self_pts==[] || not(vl_actual_root==None))) && sub_ann) in
+            let () = x_binfo_hp (add_str "is_l_lock" string_of_bool) is_l_lock no_pos in
+            let () = x_binfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag no_pos in
+            let () = x_binfo_hp (add_str "sub_ann" string_of_bool) sub_ann no_pos in
+            let () = x_binfo_hp (add_str "new_orig_l" string_of_bool) new_orig_l no_pos in
+            let () = x_binfo_hp (add_str "vl_self_pts" (pr_list pr_id)) vl_self_pts no_pos in
             let a1 = 
               if is_l_lock then [] else
-              if ((new_orig_l || vl_self_pts==[]) && sub_ann) then 
+              if unfold_flag then 
                 (*then [(1,M_unfold (m_res,uf_i))] else [] in*)
                 if vl_vdef.view_is_prim then []
                 else
@@ -2939,7 +2953,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
     | WArg -> begin
         (***************************************************)
         let () = pr_debug "WArg  analysis here!\n" in
-        let () = Debug.ninfo_hprint (add_str "xxx" pr_id) "WArg  analysis here" no_pos in
+        let () = x_tinfo_hp (add_str "xxx" pr_id) "WArg  analysis here" no_pos in
         (* let view_decls = prog.prog_view_decls in *)
         (* match lhs_node,rhs_node with *)
         (*   | ViewNode vl, DataNode dr -> *)
@@ -3133,7 +3147,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
       let pr1 = pr_list string_of_match_res in
       let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
       let pr3 = string_of_action_wt_res0 in
-      x_tinfo_zp (lazy ("process_matches (steps) :"
+      x_info_zp (lazy ("process_matches (steps) :"
                         ^ ((add_str "\n ### LHS " pr) lhs_h)
                         ^ ((add_str "\n ### RHS " pr) rhs_node)
                         ^ ((add_str "\n ### matches " pr1) l)
@@ -3514,7 +3528,7 @@ and compute_actions_y prog estate es (* list of right aliases *)
       let pr1 x = pr_list (fun (c1,_,_)-> Cprinter.string_of_h_formula c1) x in
       let pr4 = pr_list Cprinter.string_of_spec_var in
       let pr2 = string_of_action_res_simpl in
-      x_tinfo_zp (lazy ("compute_action (steps) :"
+      x_info_zp (lazy ("compute_action (steps) :"
                         (* ^ ((add_str "\n ### LHS " pr) lhs_h) *)
                         ^ ((add_str "\n ### RHS Cand " pr1) rhs_lst)
                         ^ ((add_str "\n ### action " string_of_action_res_simpl) r)
