@@ -13,8 +13,15 @@ print residue.
 expect Valid.
 
 /*
+# bug5a.slk -dre "copute_act\|process_one_m}
 
-# bug5a.slk
+The first bad revision is:
+changeset:   17709:263163016153
+branch:      infer-str
+user:        chanhle <chanhle@loris82.ddns>
+date:        Mon Nov 02 15:42:55 2015 +0800
+summary:     correct pos of call site
+
 
 # why x_add info lost?
 
