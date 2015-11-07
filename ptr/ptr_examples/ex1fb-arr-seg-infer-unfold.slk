@@ -10,7 +10,21 @@ pred arr_seg<i:int,n:int> ==
 
 
 //(3)
-infer[i,n] base::arr_seg<i,n> & x=base+i |- 
+infer[i,n] base::arr_seg<i,n> & x=base+i & n>=0 & i>=0 |- 
   x::arr<_> .
 print residue.
 expect Valid.
+
+/*
+# ex1fb.slk
+
+Add pure inv of LHS ...
+
+# What is x_58?
+
+@1! **context.ml#783:ante: 0<=i & 0<=n & x=i+base & x_58=i+base
+@1! **context.ml#784:rhs(to prove): x>=base
+@1! **context.ml#785:ante --> rhs:true
+
+
+*/

@@ -777,9 +777,12 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let () = y_tinfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
                 let rhs = if CF.no_infer_all_all estate then CP.mkEqVars rhs_ptr root
                   else CP.mk_is_base_ptr rhs_ptr d in
-                let r = !CP.tp_imply (CP.mkAnd lhs_p2 root_pf no_pos) rhs in
+                (* cannot handle ptr/e/ex1fb.slk *)
+                let lhs = CP.mkAnd lhs_p2 root_pf no_pos in
+                let r = !CP.tp_imply lhs rhs in
+                let () = y_tinfo_hp (add_str "ante" !CP.print_formula) lhs in
                 let () = y_tinfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
-                let () = y_tinfo_hp (add_str "rhs_ptr=root" string_of_bool) r  in
+                let () = y_tinfo_hp (add_str "ante --> rhs" string_of_bool) r  in
                 (d,r,None) (* Some rf *)
                 (* failwith (x_loc^"unfolding") *)
             end
