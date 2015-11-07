@@ -758,7 +758,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* samle_base does not work for ex6a4.slk *)
                 let same_base = CP.EMapSV.is_equiv emap_base d rhs_ptr in  
                 let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-                if true (* same_base *) then
+                (* wrong base being computed based on types *)
+                (* extr_ptr_eqn@3 *)
+                (* extr_ptr_eqn inp1 : 0<=i:NUM & a:arrI=2+i:NUM & x:arrI=2+i:NUM *)
+                (* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
+                if true (* !Globals.adhoc_flag_6 || same_base *)  then
                   let r = !CP.tp_imply lhs_p2 rhs  in
                   if CF.no_infer_all_all estate || r then (d,r,None)
                   else
@@ -774,7 +778,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   (d,false,None)
               | Some ((root,root_pf)) ->
                 let () = y_tinfo_hp (add_str "d" !CP.print_sv) d in
-                let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in
+                (* let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in *)
                 let () = y_tinfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
                 let rhs = if CF.no_infer_all_all estate then CP.mkEqVars rhs_ptr root
                   else CP.mk_is_base_ptr rhs_ptr d in
@@ -2032,7 +2036,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
           let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
           let () = y_tinfo_hp (add_str "lhs_sig" (pr_list idf)) lhs_sig in
           let () = y_tinfo_hp (add_str "rhs_root_sig" (pr_list idf)) rhs_root_sig in
-          let () = y_binfo_hp (add_str "applicable_complex_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
+          let () = y_tinfo_hp (add_str "applicable_complex_lems" (pr_list Cprinter.string_of_coerc_med)) applicable_lems in
           () in
       let lem_act = List.map (fun lem -> (2, M_lemma (m_res, Some lem, 0))) applicable_lems in
       let () = if not (is_empty lem_act) then y_tinfo_hp (add_str "lem_act" (pr_list pr_act)) lem_act in
@@ -2486,7 +2490,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                           (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
                       let uf_i = if new_orig_r then 0 else 1 in
                       if lvs = [] then
-                        let () = x_binfo_pp "folding..." no_pos in
+                        let () = x_info_pp "folding..." no_pos in
                         [(1,M_fold m_res)]
                       else
                         let vl = List.hd lvs in
@@ -2499,7 +2503,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                           in
                           [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, unfold_view_opt))]
                         else
-                          let () = x_binfo_pp "folding..." no_pos in
+                          let () = x_info_pp "folding..." no_pos in
                           [(1,M_fold m_res)]
                     else
                       let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold 3" no_pos in
@@ -2520,7 +2524,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 else
                   begin
                     if !Globals.old_norm_w_coerc 
-                    then x_binfo_pp "folding..." no_pos;
+                    then x_info_pp "folding..." no_pos;
                     [(1,M_fold m_res)]
                   end
               else if not(sub_ann) then [(3,M_base_case_fold m_res)]
@@ -2613,11 +2617,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 r
               else true in
             let unfold_flag = ((new_orig_l (* || new_orig_r *) || (vl_self_pts==[] || not(vl_actual_root==None))) && sub_ann) in
-            let () = x_binfo_hp (add_str "is_l_lock" string_of_bool) is_l_lock no_pos in
-            let () = x_binfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag no_pos in
-            let () = x_binfo_hp (add_str "sub_ann" string_of_bool) sub_ann no_pos in
-            let () = x_binfo_hp (add_str "new_orig_l" string_of_bool) new_orig_l no_pos in
-            let () = x_binfo_hp (add_str "vl_self_pts" (pr_list pr_id)) vl_self_pts no_pos in
+            let () = x_tinfo_hp (add_str "is_l_lock" string_of_bool) is_l_lock no_pos in
+            let () = x_tinfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag no_pos in
+            let () = x_tinfo_hp (add_str "sub_ann" string_of_bool) sub_ann no_pos in
+            let () = x_tinfo_hp (add_str "new_orig_l" string_of_bool) new_orig_l no_pos in
+            let () = x_tinfo_hp (add_str "vl_self_pts" (pr_list pr_id)) vl_self_pts no_pos in
             let a1 = 
               if is_l_lock then [] else
               if unfold_flag then 

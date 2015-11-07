@@ -2108,8 +2108,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
         | Some disj -> true,CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
-      let () = x_binfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
-      let () = x_binfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let () = x_tinfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
+      let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
 
@@ -2201,7 +2201,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 ) ufl
         else under_fail in
       let do_test_inv pos vn msg inv fail_res =
-        let () = y_binfo_pp ("Doing inv test ("^msg^") for "^vn^" ...") in
+        let () = y_tinfo_pp ("Doing inv test ("^msg^") for "^vn^" ...") in
         if !Globals.do_test_inv then
           match inv with
           | Some f ->
@@ -4451,8 +4451,8 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     let prf = !IF.print_formula in
     let pr_dir = Cprinter.string_of_coercion_type in
     let pr = pr_pair prf pr_dir in
-    let () = y_binfo_hp (add_str "Switching Lemma" pr) (head,dir) in
-    let () = y_binfo_hp (add_str "To" pr) (body,new_coer.I.coercion_type) in
+    let () = y_tinfo_hp (add_str "Switching Lemma" pr) (head,dir) in
+    let () = y_tinfo_hp (add_str "To" pr) (body,new_coer.I.coercion_type) in
     new_coer in
   let swap_lhs_rhs coer =
     let body = coer.I.coercion_body in
@@ -4506,7 +4506,7 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     else trans_one_coercion_x prog cprog coer
   in
   if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
-    let () = y_binfo_pp "inside lemma switching.." in
+    let () = y_tinfo_pp "inside lemma switching.." in
     if !Globals.old_lemma_switch then old_switch coer
     else swap_lhs_rhs coer
   else
@@ -4722,9 +4722,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   (*   true (\*check_pre*\) in *)
   (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
   (**********moved END*************)
-  let () = y_binfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
-  let () = y_binfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
-  let () = y_binfo_hp (add_str "fnames" (pr_list pr_id)) fnames in
+  let () = y_tinfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
+  let () = y_tinfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
+  let () = y_tinfo_hp (add_str "fnames" (pr_list pr_id)) fnames in
   let (n_tl,c_head_norm) = x_add trans_head new_head (if false then l_fnames else fnames) quant n_tl in
   (* below is failing for bugs/ex64d1.slk *)
   (* !!!:0: 0: **astsimp.ml#4584:l_fnames:[self,nnn] - free var of lhs*)

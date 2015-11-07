@@ -16,6 +16,10 @@ arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0;
 
+arr_seg0<i,n> == i=n & i>=0
+  or x::arrI<0>*self::arr_seg0<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0;
+
 void upd_arr(arrI a, int v)
   requires a::arrI<_>
   ensures a::arrI<v>;
@@ -28,9 +32,10 @@ int get_arr(arrI a)
   requires a::arrI<v>@L
   ensures res=v;
 
+// can base be monomorphic recursive?
 void init2(arrI a,int i,arrI base)
-  requires base::arr_seg<i,m> & a=base+i & m=11 & 0<=i & i<=m
-  ensures  base::arr_seg<i,m>;
+  requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
+  ensures  base::arr_seg0<i,m>;
 {
   if (i<10) {
     upd_arr(a,0);
@@ -42,7 +47,14 @@ void init2(arrI a,int i,arrI base)
 
 
 /*
-ex6a.ss
+ex6a.ss (due to incomplete same_base computation)
+
+# can base be monomorphic recursive?
+
+void init2(arrI a,int i,arrI base)
+  requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
+  ensures  base::arr_seg0<i,m>;
+{
 
 # pre-cond fail? even after unfold?
 

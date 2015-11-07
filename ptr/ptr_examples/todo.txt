@@ -337,7 +337,7 @@ Total verification time: 0.05878 second(s)
 	Time spent in child processes: 0.01419 second(s)
 
 =================================================================
-ex6a.ss
+ex6a.ss (FIXED due to incomplete same_base computation)
 
 # pre-cond fail? even after unfold?
 
@@ -359,6 +359,14 @@ checkentail base::arr_seg<i,m>
 & a=i+base & 0<=i & i<10 & m=10
 
 =================================================================
+ex6a.ss 
+
+# can base be monomorphic recursive?
+
+void init2(arrI a,int i,arrI base)
+  requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
+  ensures  base::arr_seg0<i,m>;
+{
 =================================================================
 =================================================================
 =================================================================
