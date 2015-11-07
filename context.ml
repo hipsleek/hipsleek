@@ -668,7 +668,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         (None,CP.ConstAnn(Mutable), [], root)
       | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
     in
-    let () = y_tinfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
+    let () = y_binfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
     let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
     (* let emap = CP.EMapSV.build_eset eqns' in *)
     let r_eqns =
@@ -712,7 +712,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
       let () = y_tinfo_hp (add_str "pasets" !CP.print_svl) paset in
       (* let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in *)
-      let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
+      let () = y_binfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
       (* let diff_ptrs = heap_ptrs in *)
       (* let diff_ptrs = if true (\* not(!Globals.adhoc_flag_2) *\) then *)
       (*     Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset  *)
@@ -720,34 +720,42 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* in *)
       (* let () = y_tinfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in *)
       let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in
-      let () = y_tinfo_hp (add_str "lhs_nodes" !CP.print_svl) (List.map fst lhs_nodes) in
+      let () = y_binfo_hp (add_str "lhs_nodes(ptr_arith)" !CP.print_svl) (List.map fst lhs_nodes) in
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
       let lst = List.map (fun (d,root_lhs) -> 
           match view_root_rhs with
           | Some ((v,rf)) -> 
             (* lhs_p2 |- d>=rhs_ptr  *)
             begin
+              let () = y_binfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
+              let rhs = CP.mk_is_base_ptr d rhs_ptr in
+              let r = !CP.tp_imply lhs_p2 rhs in
+              let () =  y_binfo_hp (add_str "lhs>=rhs_ptr" !CP.print_formula) rhs  in
+              let () =  y_binfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
               match root_lhs with
               | None  ->
-                let rhs = CP.mk_is_base_ptr d rhs_ptr in
-                let r = !CP.tp_imply lhs_p2 rhs in
-                let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr" string_of_bool) r  in
+                let eq = CP.mkEqVars v d in
+                let () =  y_binfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
                 if r then 
-                  let eq = CP.mkEqVars v d in
                   let rhs_p = MCP.pure_of_mix rhs_p in
                   let () =  y_tinfo_hp (add_str "rhs_p" !CP.print_formula) rhs_p  in
                   let f = CP.join_conjunctions [lhs_p2;eq;rf;rhs_p] in
                   let r = !CP.tp_is_sat f in
                   let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in
-                  let () =  y_tinfo_hp (add_str "eq" !CP.print_formula) eq  in
                   let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
                   let () =  y_tinfo_hp (add_str "is_sat [lhs_p2;eq;rf;rhs_p]" string_of_bool) r  in
                   (d,r,Some rf)
                 else (d,r,None)
-              | Some ((v,pf)) ->
-                failwith (x_loc^"view matching..")
+              | Some ((v2,pf)) ->
+                let rhs_eq = CP.mkEqVars d rhs_ptr in
+                let () =  y_binfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
+                let () =  y_binfo_hp (add_str "lhs=rhs_ptr(r)" string_of_bool) r  in
+                (* same base, but same start? *)
+                let r = !CP.tp_imply lhs_p2 rhs_eq in
+                (d,r,None)
+                (* failwith (x_loc^"view matching..") *)
             end
           | None   -> 
             begin

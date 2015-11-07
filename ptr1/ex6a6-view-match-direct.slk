@@ -12,11 +12,6 @@ checkentail x::arr_seg<i,n>
 print residue.
 
 
-checkentail x::arr_seg<i+1,n> & r=x+i & r=x1+1 
- |-  [j] x1::arr_seg<j,n> & j=i+1.
-print residue.
-
-
 /*
 # ex6a5.slk -dre "choose_c" -trace-log-num 1
 

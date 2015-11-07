@@ -37,7 +37,10 @@ void init2(arrI a,int i)
 
 
 /*
-ex6a.ss (due to incomplete same_base computation)
+ex6b.ss (due to incomplete same_base computation)
+
+# can we automatically determine ghost parameter 
+  base=a-i, based on the values of the parameters a,i?
 
 # can base be monomorphic recursive?
 
@@ -45,8 +48,8 @@ void init2(arrI a,int i)
   requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
   ensures  base::arr_seg_zero<i,m>;
 {
-
 Exception Failure("**context.ml#750:view matching..") Occurred!
+
 
 
 
