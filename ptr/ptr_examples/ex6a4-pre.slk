@@ -1,0 +1,21 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail x::arrI<_> & x=i+2 & a=i+2 & i>=0 
+ |-  a::arrI<_> .
+print residue.
+
+/*
+# ex6a3.slk
+
+Why first proof fails? What happen to eqset?
+
+
+
+*/

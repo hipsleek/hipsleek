@@ -354,6 +354,10 @@ res:  failctxfe_kind: MAY
     fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
   }
 [[ Unfold 0 ==>  UnmatchedRHSData]]falseStop z3... 92 invocations 
+
+checkentail base::arr_seg<i,m> 
+& a=i+base & 0<=i & i<10 & m=10
+
 =================================================================
 =================================================================
 =================================================================

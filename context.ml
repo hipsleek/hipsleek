@@ -755,9 +755,10 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               | None  ->
                 (* lhs_p2 |- rhs_ptr=d  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
+                (* samle_base does not work for ex6a4.slk *)
                 let same_base = CP.EMapSV.is_equiv emap_base d rhs_ptr in  
                 let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-                if same_base then
+                if true (* same_base *) then
                   let r = !CP.tp_imply lhs_p2 rhs  in
                   if CF.no_infer_all_all estate || r then (d,r,None)
                   else
