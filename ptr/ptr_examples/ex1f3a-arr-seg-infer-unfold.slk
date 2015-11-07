@@ -8,10 +8,23 @@ pred arr_seg<i:int,n:int> ==
   inv n>=i & i>=0.
 
 
-
+relation R(int i,int n).
 //(3)
-infer[i,n] base::arr_seg<i,n> & xxx=base+i & n>=0 & i>=0 |- 
-  xxx::arr<_> .
+infer[i,n] xxx=base+i & n=i & i>=0 |- xxx::arr<_> .
+print residue.
+expect Valid.
+
+
+infer[R] xxx=base+i & n=i & i>=0 & R(n,i) |- false .
+print residue.
+expect Valid.
+
+
+infer[R] xxx=base+i & n=i & i>=0 & R(n,i) & xxx=null |- xxx::arr<_> .
+print residue.
+expect Valid.
+
+infer[R] emp & n=i & R(n,i) |- xxx::arr<_> .
 print residue.
 expect Valid.
 

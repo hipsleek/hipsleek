@@ -370,14 +370,14 @@ let must_action_stk = new Gen.stack(* _noexc (M_Nothing_to_do "empty must_action
 let pr_l_act_wt = pr_list string_of_action_wt_res_simpl
 let pr_act  = string_of_action_res_simpl
 
-let norm_search_action ls =
-  let (_,a) = flatten_search (-1,Search_action ls) in
+let norm_search_action ?(wt=(-1)) ls =
+  let (_,a) = flatten_search (wt,Search_action ls) in
   a
 
-let norm_search_action ls =
-  Debug.no_1 "norm_search_action" (pr_l_act_wt) pr_act  norm_search_action ls
+let norm_search_action ?(wt=(-1)) ls =
+  Debug.no_1 "norm_search_action" (pr_l_act_wt) pr_act  (norm_search_action ~wt:wt) ls
 
-let mk_search_action lst = norm_search_action lst
+let mk_search_action ?(wt=(-1)) lst = norm_search_action ~wt:wt  lst
 
 let flatten_cond ((wt,_) as wa) =
   let f_extr a = match a with
@@ -2629,10 +2629,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     (*find the first viewnode readable from right datanode*)
                     let lvs = CFU.look_up_reachable_first_reachable_view prog
                         rhs [dr.CF.h_formula_data_node] in
-                    if lvs = [] then [(1,M_unfold (m_res,uf_i))] else
-                      [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
+                    if lvs = [] then [(2,M_unfold (m_res,uf_i))] else
+                      [(2,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
                   else
-                    [(1,M_unfold (m_res,uf_i))] 
+                    [(2,M_unfold (m_res,uf_i))] 
               else [] in
             (* let a2_syn = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in *)
 
@@ -2644,8 +2644,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             (* ==================== *)
             (* if (left_ls == [] && (vl_view_orig ) then ua *)
             (* else (1,M_lemma (m_res,Some (List.hd left_ls))) *)
+            let pr = pr_list (pr_pair string_of_int string_of_action_res_simpl) in
+            let () = y_tinfo_hp (add_str "View vs Data (a1)" pr) a1 in
+            let () = y_tinfo_hp (add_str "View vs Data (a2)" pr) a2 in
             let a = a1@a2 in
-            if a!=[] then (-1,mk_search_action a)
+            (* -1 seems to give it high priority *)
+            if a!=[] then (2,mk_search_action ~wt:2 a)
             (* if (vl_view_orig || vl_self_pts==[]) then ua *)
             (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
             else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
@@ -2711,7 +2715,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             orig_act
           | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) ->
             let () = y_tinfo_pp "HREL vs DATA" in
-            (* TODO : check if h_name in the infer_vars *)
+            (* TODO : check if h_name in the infer_vars *)   
             (* TODO: can we have smarter base-case-unfold? *)
             let act1 = M_base_case_unfold (m_res) in (* base-case unfold implemented *)
             let act2 = M_infer_heap (0, lhs_node, rhs,HEmp) in
