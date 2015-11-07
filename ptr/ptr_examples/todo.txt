@@ -337,6 +337,23 @@ Total verification time: 0.05878 second(s)
 	Time spent in child processes: 0.01419 second(s)
 
 =================================================================
+ex6a.ss
+
+# pre-cond fail? even after unfold?
+
+ checkentail base::arr_seg<i_1732,m>@M&
+v_bool_35_1690' & i'<10 & i_1732=i & i<=m & 0<=i & m=10 & a=i+base & 
+base'=base & i'=i & a'=a & v_int_36_1682'=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  a'::arrI<Anon_12>@M&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: do_unmatched_rhs : a'::arrI<Anon_12>@M(may)
+    fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+  }
+[[ Unfold 0 ==>  UnmatchedRHSData]]falseStop z3... 92 invocations 
 =================================================================
 =================================================================
 =================================================================
