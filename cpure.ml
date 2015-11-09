@@ -3733,6 +3733,12 @@ and is_disjunct f : bool =
   | Or(_,_,_,_) -> true
   | _ -> false
 
+and is_conjunct f : bool =
+  match f with
+  | And(_,_,_) -> true
+  | _ -> false
+
+
 and equalFormula_f (eq:spec_var -> spec_var -> bool) (f01:formula)(f02:formula):bool =
   let pr = !print_formula in
   Debug.no_2 "equalFormula_f" pr pr string_of_bool (fun _ _ -> equalFormula_f_x eq f01 f02) f01 f02
