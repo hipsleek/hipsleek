@@ -6,7 +6,7 @@ arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0;
 
-arr_seg_sorted<i,n,mi> == x::arrI<mi> & i=n-1 & i>=0
+arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
   or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
        & i>=0 & i<n-1 & mi<=m2
   inv n>i & i>=0;
@@ -35,6 +35,7 @@ void init3(arrI base,int i,int m)
   }
 {
   if (i<m) {
+    //assume false;
     upd_arr(base,i,i); // base[i]=0
     i=i+1;
     //a = arr_inc(a);

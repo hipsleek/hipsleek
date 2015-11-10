@@ -1,0 +1,20 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0.
+
+checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+print residue.
+
+/*
+# ex6d3f1.sl
+
+# transitive same_base via eq
+
+
+*/

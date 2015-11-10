@@ -109,7 +109,9 @@ checkentail
 ===============================================================
 # ex6d3d.slk
 
-# to improve actual root computation :
+# to improve actual root computation : (DONE)
+
+# folding still not working for arr_seg2 example..
 
 pred arr_seg2<i,n> == x::arrI<_> & i=n-1 & i>=0
   or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
@@ -123,10 +125,20 @@ checkentail
 # why isn't non-empty folding working properly..
   actual root not correctly captured?
 
-!!! **astsimp.ml#2708:lst(choose smallest in each branch):[[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
-!!! **astsimp.ml#2711:TODO: ensuresame root for all branches:[(x, i+1=n & x=i+self)]
-!!! **astsimp.ml#2714:TODO: lst(fresh_name):[(x, i+1=n & x=i+self)]
-!!! **astsimp.ml#2741:Actual roots..:[(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2708:lst(choose smallest in each branch):
+  [[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
+!!! **astsimp.ml#2711:TODO: ensuresame root for all branches:
+  [(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2714:TODO: lst(fresh_name):
+  [(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2741:Actual roots..:
+  [(x, i+1=n & x=i+self)]
+
+!!! **astsimp.ml#2710:lst(choose smallest in each branch):[[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
+(====)
+simplify(TP)@19
+simplify(TP) inp1 : ((i+1=n & x=i+self) | x=i+self)
+simplify(TP)@19 EXIT: ((i+1=n & x=i+self) | x=i+self)
 
 
 Possibly empty
@@ -144,7 +156,45 @@ actual_root:
 Validate 1: Expecting(3)Valid BUT got : Fail_May
 
 ===============================================================
+# ex6d3d2.slk (see ex6d3e.slk for examples) (FIXED)
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+expect Valid.
+
+!!! **context.ml#671:view_root_rhs:None
+!!! **context.ml#692:same_base:[]
+   ---> include also rhs? if existential?
+!!! **context.ml#715:lhs_p: 0<=j & x=j+base
+!!! **context.ml#723:lhs_nodes(ptr_arith):[x]
+!!! **context.ml#736:rhs(eq):[ x2=i_77+base]
+!!! **context.ml#737:sel_rhs: x2=i_77+base
+!!! **context.ml#751:rhs_inst_eq:[ x2=i_77+base]
+!!! **context.ml#752:rhs_ptr:x2
+!!! **context.ml#803:estate:  x::arrI<Anon_13>@M&0<=j & x=j+base&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [i_77]
+ es_gen_impl_vars(E): [x2; Anon_14]
+ es_evars: [i_77]
+
+# same base? existential var?
 ===============================================================
+# ex6d3f1.sl
+
+checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+
+# transitive same_base via eq
+
+!!! **context.ml#739:rhs(eq):[ n_105=m, mi_104=i_89, a=i_88+base, flted_6_106=1+i_88]
+!!! **context.ml#740:sel_rhs: flted_6_106=1+i_88 & a=i_88+base
+!!! **context.ml#754:rhs_inst_eq:[ flted_6_106=1+i_88 & a=i_88+base]
+!!! **context.ml#755:rhs_ptr:a
+!!! **context.ml#671:view_root_rhs:Some((x_107, base=x_107-flted_6_106))
+!!! **context.ml#694:same_base:[(x,base)]
+!!! **context.ml#695:same_base_rhs:[(a,base)]
+!!! **context.ml#718:lhs_p: x=base+i & a=x & 0<=i
+!!! **context.ml#726:lhs_nodes(ptr_arith):[a]
 ===============================================================
 ===============================================================
 ===============================================================

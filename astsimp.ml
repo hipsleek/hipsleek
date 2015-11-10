@@ -2678,9 +2678,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               | [] -> [acc]
               | [(v2,p2)]::xss -> 
                 let rhs = CP.mkEqVars v1 v2 in
-                let lhs = CP.join_conjunctions [p1;p2] in
-                if !CP.tp_imply lhs rhs then aux xss acc
-                else [] 
+                let () = y_binfo_pp "need to rename root var" in
+                let new_p = CP.join_disjunctions [p1;p2] in
+                (* WN : why !CP.simplify did not work even though oc did ? *)
+                let new_p = !CP.oc_hull new_p in
+                  aux xss (v1,new_p)
+                (* if !CP.tp_imply lhs rhs then  *)
+                (* else []  *)
               | _::xss -> [] (* not consistent *) 
             in
             let ans = match xs with 
@@ -2708,7 +2712,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let () = y_binfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
           (* ensure all non-empty branches has same root pointer & merge *)
           let lst = choose_one lst in
-          let () = y_binfo_hp (add_str "TODO: ensuresame root for all branches" pr_3a) lst in
+          let () = y_binfo_hp (add_str "TODO: ensure same root for all branches" pr_3a) lst in
           (* give fresh name for root ptr *)
           let lst = List.map fresh_name lst in
           let () = y_binfo_hp (add_str "TODO: lst(fresh_name)" pr_3a) lst in

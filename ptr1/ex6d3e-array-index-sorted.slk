@@ -11,27 +11,44 @@ pred arr_seg2<i,n> == x::arrI<_> & x=self+i & i=n-1 & i>=0
        & i>=0 & i<n-1 
   inv n>i & i>=0.
 
+/*
 checkentail
-  x::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 //& i<n 
+  a::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 & i<n-1 
   |- base::arr_seg2<i,n>.
+*/
+
+checkentail
+  x::arrI<i> * base::arr_seg<i+1,n> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
 print residue.
 expect Valid.
 
-
 checkentail
-  emp //x::arrI<_> & x=base+i & i>=0 //& i<n 
-  |- base::arr_seg2<i,n>.
+  x::arrI<i> * base::arr_seg<i+1,n> & x=base+i //& i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
 print residue.
 expect Fail.
 
 checkentail
+  x::arrI<i> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  emp //x::arrI<i> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+checkentail
   x::arrI<_> & x=base+j & j>=0 //& i<n 
-  |- base::arr_seg2<i,n>.
+  |- base::arr_seg<i,n>.
 print residue.
 expect Valid.
 
 /*
-# ex6d3d.slk (see ex6d3e.slk for examples)
+# ex6d3d.sl
 
 pred arr_seg2<i,n> == x::arrI<_> & i=n-1 & i>=0
   or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
@@ -43,6 +60,7 @@ checkentail
   |- base::arr_seg2<i,n>.
 
 # why isn't non-empty folding working properly..
+
 
  actual_root: 
   Some((x, i+1=n & x=i+self))

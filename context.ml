@@ -687,9 +687,12 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = CP.extr_ptr_eqn lhs_pp in
+    let rhs_pure = MCP.pure_of_mix rhs_p in
+    let (same_base_rhs,eq_b_rhs) = CP.extr_ptr_eqn rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
-    let emap_base = CP.EMapSV.build_eset same_base in
+    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs) in
     let () = x_binfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
+    let () = x_binfo_hp (add_str "same_base_rhs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base_rhs no_pos in
     let () = x_tinfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in
     let () = x_tinfo_hp (add_str "other_eqn" (pr_list !CP.print_formula)) other_eqn no_pos in
     let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
@@ -722,15 +725,15 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in
       let () = y_binfo_hp (add_str "lhs_nodes(ptr_arith)" !CP.print_svl) (List.map fst lhs_nodes) in
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
-      let rhs_pure = MCP.pure_of_mix rhs_p in
       let get_inst_vars es =
         es.es_gen_impl_vars @ es.es_gen_expl_vars @ es.es_evars 
       in
-      let get_rhs_inst_eq rhs_ptr rhs_pure es =
-        let inst_vars = get_inst_vars es in
-        let f = List.exists (fun v -> CP.eq_spec_var v rhs_ptr) inst_vars in
+      let es_inst_vars = get_inst_vars estate in
+      let is_es_inst_vars x =  List.exists (fun v -> CP.eq_spec_var v x) es_inst_vars in
+      let get_rhs_inst_eq rhs_ptr es =
+        let f = is_es_inst_vars rhs_ptr in
         if f then
-          let (a,eq_b) = CP.extr_ptr_eqn rhs_pure in
+          let eq_b = eq_b_rhs in
           (* filter those connected to rhs_ptr *)
           let sel_rhs = CP.filter_var (CP.join_conjunctions eq_b) [rhs_ptr] in
           let () = y_binfo_hp (add_str "rhs(eq)" (pr_list !CP.print_formula)) eq_b in
@@ -747,7 +750,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* !!! **context.ml#736:rhs(eq):[ n_58=n, a=i+base2] *)
       (* !!! **context.ml#737:sel_rhs: a=i+base2 *)
       (* !!! **context.ml#750:rhs_inst_eq:[ a=1+base2+j & a=j+base2] *)
-      let rhs_inst_eq = get_rhs_inst_eq rhs_ptr rhs_pure estate in
+      let rhs_inst_eq = get_rhs_inst_eq rhs_ptr estate in
       let () = y_binfo_hp (add_str "rhs_inst_eq" (pr_list !CP.print_formula)) rhs_inst_eq in
       let () = y_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
       let lhs_w_rhs_inst = CP.join_conjunctions (lhs_p2::rhs_inst_eq) in
@@ -808,8 +811,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* extr_ptr_eqn@3 *)
                 (* extr_ptr_eqn inp1 : 0<=i:NUM & a:arrI=2+i:NUM & x:arrI=2+i:NUM *)
                 (* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
+                (* if implicit inst, use weaker same_base instead *)
+                let impl_flag = same_base && is_es_inst_vars rhs_ptr  in
                 if true (* !Globals.adhoc_flag_6 || same_base *)  then
-                  let r = !CP.tp_imply lhs_w_rhs_inst rhs  in
+                  let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in
+                  let () =  y_binfo_hp (add_str "same_base" string_of_bool) same_base  in
                   let () =  y_binfo_hp (add_str "r" string_of_bool) r  in
                   if CF.no_infer_all_all estate || r then (d,r,None)
                   else
