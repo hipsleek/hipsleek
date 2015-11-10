@@ -75,8 +75,74 @@ Total verification time: 0.157231 second(s)
 	Time spent in main process: 0.118078 second(s)
 	Time spent in child processes: 0.039153 second(s)
 ===============================================================
+# ex6d3a.ss 
+
+arr_seg_sorted<i,n,mi> == x::arrI<mi> & i=n-1 
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0;
+
+# funny error message
+
+Exception occurred: Failure("predicate arr_seg_sorted does not have the correct number of arguments[flted_10_24,m2] vs [\"\",\"\",\"\"]")
+Error3(s) detected at main 
 ===============================================================
+# ex6d3b.slk
+
+checkentail
+  a::arrI<i> * base::arr_seg_sorted<i+1,n,i+1>
+   & x=base+i & i>=0 & i<n-1 & mi<=m2
+  |- base::arr_seg_sorted<i,n,i>.
+
+# why isn't folding working properly..
+
+ ### LHS : a::arrI<i>@M * base::arr_seg_sorted<flted_15_103,n,flted_15_102>@M
+ ### RHS : base::arr_seg_sorted<i_136,n_137,i_138>@M
+ ### matches :
+[ Type: Root
+ LHS: base::arr_seg_sorted<flted_15_103,n,flted_15_102>@M
+ RHS: base::arr_seg_sorted<i_136,n_137,i_138>@M
+ root_inst: None
+ lhs_rest: a::arrI<i>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
 ===============================================================
+# ex6d3d.slk
+
+# to improve actual root computation :
+
+pred arr_seg2<i,n> == x::arrI<_> & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+checkentail
+  a::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 & i<n-1 
+  |- base::arr_seg2<i,n>.
+
+# why isn't non-empty folding working properly..
+  actual root not correctly captured?
+
+!!! **astsimp.ml#2708:lst(choose smallest in each branch):[[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
+!!! **astsimp.ml#2711:TODO: ensuresame root for all branches:[(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2714:TODO: lst(fresh_name):[(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2741:Actual roots..:[(x, i+1=n & x=i+self)]
+
+
+Possibly empty
+--------------
+ actual_root: 
+  Some((x, x=i+self))
+
+Non-empty
+---------
+actual_root: 
+  None
+
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
 ===============================================================
 ===============================================================
 ===============================================================

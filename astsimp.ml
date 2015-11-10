@@ -2694,14 +2694,25 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               (* let fr_v = CP.fresh_spec_var v in *)
               (* (fr_v,CP.apply_subs [(v,fr_v)] f) in *)
           (* remove base-cases without data and heap nodes *)
+          let pr_f = !CP.print_formula in
+          let pr_lst_f = pr_list pr_f in
+          let pr_sv = !CP.print_sv in
+          let pr_2 = pr_list (pr_pair pr_f (pr_list (pr_triple pr_sv string_of_int pr_lst_f))) in
+          (* let () = y_binfo_hp (add_str "lst" pr_2) lst in *)
           let lst = List.filter (fun (_,x) -> x!=[]) lst in
           (* remove views and choose smallest ptr *)
+          (* let () = y_binfo_hp (add_str "lst(after filter)" pr_2) lst in *)
+          let pr_3a = (pr_list (pr_pair pr_sv pr_f)) in
+          let pr_3 = pr_list pr_3a in
           let lst = List.map choose_smallest lst in
-          (* ensure all non-empty branches has same root pointer *)
+          let () = y_binfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
+          (* ensure all non-empty branches has same root pointer & merge *)
           let lst = choose_one lst in
+          let () = y_binfo_hp (add_str "TODO: ensuresame root for all branches" pr_3a) lst in
           (* give fresh name for root ptr *)
           let lst = List.map fresh_name lst in
-          lst
+          let () = y_binfo_hp (add_str "TODO: lst(fresh_name)" pr_3a) lst in
+           lst
         else []
       in
       let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
@@ -2725,7 +2736,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_type_of_self = vdef.I.view_type_of_self;
         C.view_actual_root = 
           (
-            (* let () = y_tinfo_pp "ZH : need to compute actual root.." in *)
+            let pr_sv = !CP.print_sv in
+            let pr_f = !CP.print_formula in
+            let () = y_binfo_hp (add_str "Actual roots.." (pr_list (pr_pair pr_sv pr_f))) lst_heap_ptrs in
             match lst_heap_ptrs with
             | x::_ -> Some x
             | _ -> None
