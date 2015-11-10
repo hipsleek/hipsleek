@@ -116,6 +116,9 @@ class ['a] store (x_init:'a) (epr:'a->string) =
     method get_rm :'a = match lc with
       | None -> emp_val
       | Some p -> (lc <- None; p)
+    method replace (nl:'a) =
+      if not (self # is_empty) then self # set nl
+      else ()
     method string_of : string = match lc with
       | None -> "Why None?"
       | Some l -> (epr l)
@@ -150,7 +153,7 @@ class prog_loc =
       | Some l -> (string_of_pos l.start_pos)
   end;;
 
-let last_posn = new store(* _debug *) "" (fun x -> "("^x^")")
+let last_posn = new store(* _debug *) ("", "") (fun (x, _) -> "("^x^")")
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
@@ -166,4 +169,4 @@ let build_loc_str s i = "**"^(buildA s i)^":";;
 let store_loc_str s i =
   if !z_debug_flag then
     let n = buildA s i 
-    in last_posn # set n ;;
+    in last_posn # set (n, "");;

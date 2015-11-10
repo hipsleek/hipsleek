@@ -646,7 +646,7 @@ struct
     ()
 
   let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
-    let call_site = VarGen.last_posn # get_rm in
+    let call_site, _ = VarGen.last_posn # get_rm in
     let pre_str = "(=="^call_site^"==)" in
     (* if s=="" thenmatch s with  *)
     (*   | None -> "" *)
@@ -742,11 +742,16 @@ struct
     hp bs xs
 
   let ho_aux_no s (f:'a -> 'z) (last:'a) : 'z =
-    (* WN : why was his clearing done traced debug function? *)                   
+    (* WN : why was this clearing done traced debug function? *)                   
     (* let ff z =  *)
     (*     let () = VarGen.last_posn # reset in *)
     (*     f z in *)
-    VarGen.last_posn # reset;
+    (* print_endline ("ho_aux_no: " ^ s ^ " @" ^ (VarGen.last_posn # get)); *)
+    let () = 
+      let x_call_site, x_call_name = VarGen.last_posn # get in
+      (* let () = print_endline ("ho_aux_no: " ^ s ^ " @" ^ x_call_site ^ ":" ^ x_call_name) in *)
+      if String.compare x_call_name s == 0 then VarGen.last_posn # reset
+    in
     push_no_call ();
     pop_aft_apply_with_exc_no s f last
 
@@ -904,7 +909,8 @@ struct
 
   let splitter s f_none f_gen f_norm =
     (* VarGen.last_posn # get --> The call site (with x_add) of s *)
-    let x_call_site = VarGen.last_posn # get in
+    let x_call_site, x_call_name = VarGen.last_posn # get in
+    let () = if x_call_name = "" then VarGen.last_posn # replace (x_call_site, s) in
     let at = if x_call_site = "" then "" else " @" in
     let () = if !dump_calls then debug_calls # print_call (s ^ at ^ x_call_site) in
     if !z_debug_flag then
