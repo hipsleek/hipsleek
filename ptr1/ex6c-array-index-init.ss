@@ -7,11 +7,11 @@ arr_seg<i,n> == i=n & i>=0
   inv n>=i & i>=0;
 
 arr_seg_zero<i,n> == i=n & i>=0
-  or x::arrI<1>*self::arr_seg_zero<i+1,n> & x=self+i & i>=0
+  or x::arrI<0>*self::arr_seg_zero<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0;
 
-void upd_arr(arrI a, int v)
-  requires a::arrI<_>
+void upd_arr(arrI base, int i, int v)
+  requires a::arrI<_> & a=base+i & i>=0
   ensures a::arrI<v>;
 
 arrI arr_inc(arrI a)
@@ -23,15 +23,15 @@ int get_arr(arrI a)
   ensures res=v;
 
 // can base be monomorphic recursive?
-void init2(arrI a,int i)
-  requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
+void init2(arrI base,int i)
+  requires base::arr_seg<i,m> & m=10 & 0<=i & i<=m
   ensures  base::arr_seg_zero<i,m>;
 {
   if (i<10) {
-    upd_arr(a,0);
+    upd_arr(base,i,0);
     i=i+1;
-    a = arr_inc(a);
-    init2(a,i);
+    //a = arr_inc(a);
+    init2(base,i);
   }
 }
 

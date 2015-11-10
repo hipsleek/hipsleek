@@ -9195,7 +9195,6 @@ let filter_constraint_type (ante: formula) (conseq: formula) : (formula) =
 
 
 
-
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
   let fvar = fv conseq in
   let ante = filter_var ante fvar in
