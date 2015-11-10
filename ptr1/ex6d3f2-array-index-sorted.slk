@@ -7,15 +7,16 @@ pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
        & i>=0 & i<n-1 & mi<=m2
   inv n>i & i>=0.
 
+/*
 checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
  |-  base::arr_seg_sorted<i,m,i> . 
 print residue.
+*/
 
-/*
 checkentail a::arrI<i>@M& x=i+(base:arrI) & a=x & i>=0
  |-  x_91::arrI<mi_103>@M & x_91=i+base .
 print residue.
-*/
+
 
 /*
 # ex6d3f1.sl
@@ -44,6 +45,15 @@ checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
 @1! **context.ml#754:rhs_inst_eq:[ x_91=base+i]
 @1! **context.ml#755:rhs_ptr:x_91
 @1! **context.ml#806:estate:  a::arrI<i>@M&0<=i & a=x & x=base+i&{FLOW,(20,21
+@1! **context.ml#818:same_base:false
+@1! **context.ml#819:r:true  (provable..)
+@1! **context.ml#1381:lhs?: a::arrI<i>@M
+@1! **context.ml#1382:rhs: x_91::arrI<mi_103>@M
+@1! **context.ml#1383:aset:[a,x_91]
+@1! **context.ml#1456:DataNode:a
+@1! **context.ml#1457:view_roots:[]
+@1! **context.ml#1687:l_xxx:[(lhs_rest: emp,lhs_node: a::arrI<i>@M,holes:[],m
+
 
 @2! **context.ml#818:same_base:false
 @2! **context.ml#819:r:false
@@ -60,5 +70,5 @@ choose_context inp2 :RHS node: x_91::arrI<mi_103>@M
 choose_context inp3 :LHS pure: x=base+i & a=x & 0<=i
 choose_context inp4 :RHS pure: x_91=i_88+base & i_88+1=m & 0<=i_88 & mi_103=i_89
 choose_context inp5 :right alias:[(i_88,i),(i_89,i),(mi_103,i_89)]
-c
+
 */

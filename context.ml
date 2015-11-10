@@ -690,7 +690,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let rhs_pure = MCP.pure_of_mix rhs_p in
     let (same_base_rhs,eq_b_rhs) = CP.extr_ptr_eqn rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
-    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs) in
+    (* added eqns' to handle ptr1/ex6d3f1.slk *)
+    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns') in
     let () = x_binfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
     let () = x_binfo_hp (add_str "same_base_rhs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base_rhs no_pos in
     let () = x_tinfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in
@@ -802,7 +803,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               | None  ->
                 (* lhs_p2 |- rhs_ptr=d ?  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
-                (* samle_base does not work for ex6a4.slk *)
+                (* same_base does not work for ex6a4.slk *)
                 let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
                 let same_base = CP.EMapSV.is_equiv emap_base d rhs_ptr in  
                 let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
