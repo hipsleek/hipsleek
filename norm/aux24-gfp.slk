@@ -1,9 +1,6 @@
 relation R(int i).
 relAssume
-  R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0
-        -->  R(v_int_18_1500').
-relAssume
-  R(i) -->  i!=0.
+  R(i) -->  i!=0 & (i=0 | R(i-1)).
 
 relation_infer [R][].
 

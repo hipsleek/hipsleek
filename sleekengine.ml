@@ -1,5 +1,6 @@
 #include "xdebug.cppo"
 open VarGen
+open Printf
 (*
   The frontend engine of SLEEK.
 *)
@@ -1823,6 +1824,57 @@ let relation_pre_process constrs pre_hps post_hps=
     ) ([],[],[]) constrs in
   (pre_invs, pre_constrs, post_constrs,  pre_hp_rels, post_hp_rels)
 
+let is_contain_rel rhs pvars = 
+  let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs rhs)) in
+  if (pvars != []) then List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
+  else false
+
+let is_atomic formula =
+  if (Cpure.is_disjunct formula || Cpure.is_conjunct formula) then false
+  else true
+
+let str_of_atomic formula pvars (str:string) =
+  if (Pi.is_post_rel formula pvars) then str 
+  else !CP.print_formula formula
+
+let rec str_of_formula formula pvars str = 
+  if (is_atomic formula) then str_of_atomic formula pvars str 
+  else if (Cpure.is_disjunct formula) then
+    let str_of_disjs formula pvars str =
+      let disj_list = Cpure.list_of_disjs formula in
+      let hd = List.hd disj_list in 
+      let tl = List.tl disj_list in
+      let tl_formula = Cpure.disj_of_list tl no_pos in
+      let res = "(" ^ (str_of_formula hd pvars str) ^ " | " ^ (str_of_formula tl_formula pvars str) ^ ")" in 
+      res 
+    in str_of_disjs formula pvars str
+  else 
+    let str_of_conjs formula pvars str =
+      let conj_list = Cpure.list_of_conjs formula in
+      let hd = List.hd conj_list in 
+      let tl = List.tl conj_list in
+      let tl_formula = Cpure.conj_of_list tl no_pos in
+      let res = "(" ^ (str_of_formula hd pvars str) ^ " & " ^ (str_of_formula tl_formula pvars str) ^ ")" in 
+      res 
+    in str_of_conjs formula pvars str
+
+let create_omega_input formula_str id args filename =
+  let id_str = Cprinter.string_of_ident id in
+  let args_str =  Cprinter.string_of_spec_var_list args in 
+  let first_str = id_str ^ ":= {" ^ args_str ^ ":" ^ formula_str ^ "};" in
+  let second_str = id_str ^ ";" in
+  let final_str = first_str ^ second_str in
+  let oc = open_out filename in
+  let () = fprintf oc "%s\n" final_str in 
+  let () = close_out oc in
+  ()
+
+let id_of_typed_spec_var x =
+  match x with
+  | P.SpecVar (t, id, p) -> id
+
+let global_oc = "/usr/local/bin/oc "
+
 let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
   (*************INTERNAL*****************)
@@ -1848,10 +1900,28 @@ let process_rel_infer pre_rels post_rels =
   let is_infer_flow = Pi.is_infer_flow reldefns in
   let reldefns = if is_infer_flow then Pi.add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
   let post_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in
+  let pre_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) pre_rels in
+ (* let () = Debug.binfo_hprint (add_str "\npre rels:" (pr_list Cprinter.string_of_typed_spec_var)) pre_rels no_pos in
+  let () = Debug.binfo_hprint (add_str "post rels:" (pr_list Cprinter.string_of_typed_spec_var)) post_rels no_pos in*)
   let _ = Debug.ninfo_hprint (add_str "reldefns" (pr_list (pr_pair pr pr))) reldefns no_pos in
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
   let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   let _ = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
+  let replaced_str = "(1=1)" in
+  let fst = List.hd pre_rel_constrs in
+  let (_, rhs) = fst in
+  let str = str_of_formula rhs pre_rels replaced_str in 
+(*  let () = print_string (!CP.print_formula rhs) in *)
+(*  let () = print_string ("\nstr_of_formula: " ^str) in *)
+  let input_file = "example.txt" in
+  let fst_pre_rels = List.hd pre_rels in
+  let id = id_of_typed_spec_var fst_pre_rels in
+  let args = Cpure.get_rel_args rhs in
+  let () = create_omega_input str id args input_file in
+  let fixcalc_exe = ref (global_oc ^ " ") in
+  let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
+ (* let res = filter_result res in*)
+  let () = print_string ("\nresult of fixcalc: " ^ res) in
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
