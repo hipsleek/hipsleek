@@ -14,7 +14,20 @@ print residue.
 /*
 # ex6d3f1.sl
 
+checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+
 # transitive same_base via eq
+
+!!! **context.ml#739:rhs(eq):[ n_105=m, mi_104=i_89, a=i_88+base, flted_6_106=1+i_88]
+!!! **context.ml#740:sel_rhs: flted_6_106=1+i_88 & a=i_88+base
+!!! **context.ml#754:rhs_inst_eq:[ flted_6_106=1+i_88 & a=i_88+base]
+!!! **context.ml#755:rhs_ptr:a
+!!! **context.ml#671:view_root_rhs:Some((x_107, base=x_107-flted_6_106))
+!!! **context.ml#694:same_base:[(x,base)]
+!!! **context.ml#695:same_base_rhs:[(a,base)]
+!!! **context.ml#718:lhs_p: x=base+i & a=x & 0<=i
+!!! **context.ml#726:lhs_nodes(ptr_arith):[a]
 
 
 */

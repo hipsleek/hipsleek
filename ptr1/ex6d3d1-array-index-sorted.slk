@@ -36,7 +36,7 @@ checkentail
   x::arrI<_> & x=base+j & j>=0 
   |- base::arr_seg2<j-1,n>.
 print residue.
-expect Valid.
+expect Fail.
 
 
 /*
