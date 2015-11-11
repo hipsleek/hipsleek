@@ -548,9 +548,27 @@ data char_star {
   char_star next;
 }
 
+WSSN<p, n> ==
+  self::WFSegN<q, n-1> * q::char_star<0, p> // * p::MEM<>
+  inv self!=null & n>=0;
+  
+WFSegN<p, n> ==
+  self = p & n = 0
+  or self::char_star<v, q> * q::WFSegN<p, n-1> & v!=0
+  inv n>=0;
+
+MEM<> ==
+  self = null or
+  self::char_star<_, p> * p::MEM<>;
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0;
+
 char_star __plus_plus_char(char_star x)
-requires x::char_star<_,q>@L & Term[] 
-ensures  res=q ;
+  requires x::char_star<_,q>@L & Term[] 
+  ensures  res=q ;
 
 int __get_char(char_star x)
   requires x::char_star<v,_>@L & Term[]
@@ -571,3 +589,14 @@ int get_char(char_star x)
 void write_char(char_star x, int v)
   requires x::char_star<_,q> & Term[]
   ensures x::char_star<v,q>;
+  
+char_star alloc_str (int n)
+  requires Term
+  case {
+    n < 0 -> ensures res = null;
+    n >= 0 -> ensures res::WFSegN<p, n>; // * p::MEM<>; 
+  }
+  
+void finalize_str (char_star s, int n)
+  requires s::WFSegN<p, m> & 0 <= n & n < m & Term
+  ensures s::WSSN<q, n+1>;
