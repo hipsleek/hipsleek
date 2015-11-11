@@ -8,12 +8,18 @@ data node {
 pred rlseg<p:node> == self=p
   or self::node<_,q> * q::rlseg<p>.
 
+/*
 lemma_infer [@classic]  
-   self::node<_,q>*q::rlseg<p> 
-    ->
-   self::rlseg<ppp1>* ppp1::node<_,p> 
+   self::node<_,q>*q::rlseg<p> -> self::rlseg<ppp1>* ppp1::node<_,p> 
 .
 print residue.
+*/
+lemma_safe 
+   self::rlseg<q>*q::rlseg<p> <-> self::rlseg<p>.
+
+lemma_safe 
+   self::node<_,q>*q::rlseg<p> <-> self::rlseg<ppp1>* ppp1::node<_,p> .
+
 // fail <==
 
 //lemma_safe "three" self::rlseg<p1>* p1::node<_,p> <-> self::node<_,q>*q::rlseg<p> . 
