@@ -24,6 +24,24 @@ print residue.
 # inferred false cumulatively!
 # to avoid with a shared object?
 
+# why is q_54 paired with x? How did we get q_54=x?
+
+!!! **context.ml#3598:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_12,flted_11_43>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Match =>
+    LHS: x::node<Anon_53,q_54>@M
+    RHS: x::node<Anon_12,flted_11_43>@M;
+  Prio:2
+  Unfold 0 =>
+    LHS: q_54::ll<flted_7_52>@M
+    RHS: x::node<Anon_12,flted_11_43>@M
+  ]
+
+   alias set: [q_54,x]rhs_inst: []rhs_infer: None
+
 <1>emp&n=1&{FLOW,(20,21)=__norm#E}[]
  inferred pure: [x!=null; x=null]
 [[ Unfold 0 ==>  COND ==>  Unfold 0 ==>  Match(x,x)]]
