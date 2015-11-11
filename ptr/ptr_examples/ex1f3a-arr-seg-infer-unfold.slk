@@ -1,0 +1,43 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+
+relation R(int i,int n).
+//(3)
+infer[i,n] xxx=base+i & n=i & i>=0 |- xxx::arr<_> .
+print residue.
+expect Valid.
+
+
+infer[R] xxx=base+i & n=i & i>=0 & R(n,i) |- false .
+print residue.
+expect Valid.
+
+
+infer[R] xxx=base+i & n=i & i>=0 & R(n,i) & xxx=null |- xxx::arr<_> .
+print residue.
+expect Valid.
+
+infer[R] emp & n=i & R(n,i) |- xxx::arr<_> .
+print residue.
+expect Valid.
+
+/*
+# ex1fb.slk
+
+Add pure inv of LHS ...
+
+# What is x_58?
+
+@1! **context.ml#783:ante: 0<=i & 0<=n & x=i+base & x_58=i+base
+@1! **context.ml#784:rhs(to prove): x>=base
+@1! **context.ml#785:ante --> rhs:true
+
+
+*/

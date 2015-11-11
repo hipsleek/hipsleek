@@ -781,6 +781,12 @@ let aux_pred_reuse iprog cprog all_views =
   let () = y_tinfo_hp (add_str "XXX vdefs (after reuse)" 
       (pr_list Cprinter.string_of_view_decl_short)) vdefs in
   lst
+
+let aux_pred_reuse iprog cprog all_views =
+  let pr1 = pr_list (fun v -> v.Cast.view_name) in
+  let pr2 = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_1 "aux_pred_reuse" pr1 pr2 
+    (fun _ -> aux_pred_reuse iprog cprog all_views) all_views
   
 (*************************)
 (***** DERIVING VIEW *****)
@@ -1055,8 +1061,8 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
     cprog.C.prog_view_decls extn_iview in
   let () = y_tinfo_hp (add_str "extn_cview_lst" 
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
-  let () = y_binfo_pp "TODO: hardwired size here" in
-  let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_pred.C.view_name (* "size" *) (*TODO*) in
+  let extn_cview_aset = aux_pred_reuse iprog cprog extn_cview_lst in
+  let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_pred.C.view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
   (* let extn_cview = C.rename_view extn_cview equiv_pid in  *)
   let () = x_add (C.update_view_decl ~caller:x_loc) cprog extn_cview in

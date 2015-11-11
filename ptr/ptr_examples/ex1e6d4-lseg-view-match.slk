@@ -1,0 +1,49 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p:node,n:int> ==
+  self=p & n=0
+  or self::node<_,q> * q::lseg<p,n-1> 
+  inv n>=0.
+
+checkentail x::lseg<p,5>  |- [n] x::lseg<r,n>.
+print residue.
+expect Valid.
+
+/*
+
+# ex1e6d4.slk -dre "process_one_m" --trace-log-num 1
+
+Residue:
+ <1>emp&n=5 & r=p&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Match(x,x)]]
+
+(====)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: x::lseg<p,flted_13_44>@M
+ RHS: x::lseg<r,n>@M
+ root_inst: None
+ lhs_rest: emp
+ rhs_rest: emp
+ alias set: [x]rhs_inst: []rhs_infer: None
+process_one_match inp2 :lhs_h: x::lseg<p,flted_13_44>@M
+process_one_match inp3 :lhs_p: flted_13_44=5
+process_one_match inp4 :rhs_node: x::lseg<r,n>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@1 EXIT: Prio:1
+ COND =>[
+  Prio:3
+  BaseCaseUnfold =>;
+  Prio:1
+  Match =>
+  ]
+
+
+*/
+

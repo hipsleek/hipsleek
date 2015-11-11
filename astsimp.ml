@@ -2108,8 +2108,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
         | Some disj -> true,CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
       in
-      let () = x_binfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
-      let () = x_binfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let () = x_tinfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
+      let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
 
@@ -2201,7 +2201,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
                 ) ufl
         else under_fail in
       let do_test_inv pos vn msg inv fail_res =
-        let () = y_binfo_pp ("Doing inv test ("^msg^") for "^vn^" ...") in
+        let () = y_tinfo_pp ("Doing inv test ("^msg^") for "^vn^" ...") in
         if !Globals.do_test_inv then
           match inv with
           | Some f ->
@@ -2676,11 +2676,21 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let choose_one xs = 
             let rec aux xs ((v1,p1) as acc) = match xs with
               | [] -> [acc]
-              | [(v2,p2)]::xss -> 
+              | [(v2,p2) as tup]::xss -> 
+                let (v2,p2) = if CP.eq_spec_var v1 v2 then tup
+                  else let fvs = CP.fv p2 in
+                    if Gen.BList.mem_eq CP.eq_spec_var v1 fvs then 
+                      y_info_hp (add_str "Var Subs Clash" (pr_triple !CP.print_sv !CP.print_sv !CP.print_formula)) (v2,v1,p2);
+                    let np2 = CP.apply_subs [(v2,v1)] p2 in (v1,np2)
+                in
                 let rhs = CP.mkEqVars v1 v2 in
-                let lhs = CP.join_conjunctions [p1;p2] in
-                if !CP.tp_imply lhs rhs then aux xss acc
-                else [] 
+                (* let () = y_winfo_pp "TODO:need to rename root var" in *)
+                let new_p = CP.join_disjunctions [p1;p2] in
+                (* WN : why !CP.simplify did not work even though oc did ? *)
+                let new_p = !CP.oc_hull new_p in
+                  aux xss (v1,new_p)
+                (* if !CP.tp_imply lhs rhs then  *)
+                (* else []  *)
               | _::xss -> [] (* not consistent *) 
             in
             let ans = match xs with 
@@ -2694,14 +2704,25 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               (* let fr_v = CP.fresh_spec_var v in *)
               (* (fr_v,CP.apply_subs [(v,fr_v)] f) in *)
           (* remove base-cases without data and heap nodes *)
+          let pr_f = !CP.print_formula in
+          let pr_lst_f = pr_list pr_f in
+          let pr_sv = !CP.print_sv in
+          let pr_2 = pr_list (pr_pair pr_f (pr_list (pr_triple pr_sv string_of_int pr_lst_f))) in
+          (* let () = y_tinfo_hp (add_str "lst" pr_2) lst in *)
           let lst = List.filter (fun (_,x) -> x!=[]) lst in
           (* remove views and choose smallest ptr *)
+          (* let () = y_tinfo_hp (add_str "lst(after filter)" pr_2) lst in *)
+          let pr_3a = (pr_list (pr_pair pr_sv pr_f)) in
+          let pr_3 = pr_list pr_3a in
           let lst = List.map choose_smallest lst in
-          (* ensure all non-empty branches has same root pointer *)
+          let () = y_tinfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
+          (* ensure all non-empty branches has same root pointer & merge *)
           let lst = choose_one lst in
+          (* let () = y_winfo_hp (add_str "TODO: ensure same root for all branches" pr_3a) lst in *)
           (* give fresh name for root ptr *)
           let lst = List.map fresh_name lst in
-          lst
+          let () = y_tinfo_hp (add_str "TODO: lst(fresh_name)" pr_3a) lst in
+           lst
         else []
       in
       let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
@@ -2725,7 +2746,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_type_of_self = vdef.I.view_type_of_self;
         C.view_actual_root = 
           (
-            (* let () = y_tinfo_pp "ZH : need to compute actual root.." in *)
+            let pr_sv = !CP.print_sv in
+            let pr_f = !CP.print_formula in
+            let () = y_tinfo_hp (add_str "Actual roots.." (pr_list (pr_pair pr_sv pr_f))) lst_heap_ptrs in
             match lst_heap_ptrs with
             | x::_ -> Some x
             | _ -> None
@@ -4451,8 +4474,8 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     let prf = !IF.print_formula in
     let pr_dir = Cprinter.string_of_coercion_type in
     let pr = pr_pair prf pr_dir in
-    let () = y_binfo_hp (add_str "Switching Lemma" pr) (head,dir) in
-    let () = y_binfo_hp (add_str "To" pr) (body,new_coer.I.coercion_type) in
+    let () = y_tinfo_hp (add_str "Switching Lemma" pr) (head,dir) in
+    let () = y_tinfo_hp (add_str "To" pr) (body,new_coer.I.coercion_type) in
     new_coer in
   let swap_lhs_rhs coer =
     let body = coer.I.coercion_body in
@@ -4506,7 +4529,7 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     else trans_one_coercion_x prog cprog coer
   in
   if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
-    let () = y_binfo_pp "inside lemma switching.." in
+    let () = y_tinfo_pp "inside lemma switching.." in
     if !Globals.old_lemma_switch then old_switch coer
     else swap_lhs_rhs coer
   else
@@ -4722,9 +4745,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   (*   true (\*check_pre*\) in *)
   (* let c_head_norm = CF.struc_to_formula cs_head_norm in *)
   (**********moved END*************)
-  let () = y_binfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
-  let () = y_binfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
-  let () = y_binfo_hp (add_str "fnames" (pr_list pr_id)) fnames in
+  let () = y_tinfo_hp (add_str "l_fnames" (pr_list pr_id)) l_fnames in
+  let () = y_tinfo_hp (add_str "rhs_fnames" (pr_list pr_id)) rhs_fnames in
+  let () = y_tinfo_hp (add_str "fnames" (pr_list pr_id)) fnames in
   let (n_tl,c_head_norm) = x_add trans_head new_head (if false then l_fnames else fnames) quant n_tl in
   (* below is failing for bugs/ex64d1.slk *)
   (* !!!:0: 0: **astsimp.ml#4584:l_fnames:[self,nnn] - free var of lhs*)

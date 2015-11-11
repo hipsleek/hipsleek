@@ -1,0 +1,64 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p:node,n:int> ==
+  self=p & n=0
+  or self::node<_,q> * q::lseg<p,n-1> 
+  inv n>=0.
+
+checkentail x::lseg<p,5>  |- [n] x::lseg<r,n>.
+print residue.
+expect Valid.
+
+/*
+# bug5a.slk
+
+The first bad revision is:
+changeset:   17760:7cf8eceb5173
+branch:      infer-str
+parent:      17759:989a8c1520bf
+parent:      17747:307a15713527
+user:        chinwn@loris-60
+date:        Thu Nov 05 17:15:05 2015 +0800
+summary:     x
+
+# why x_add info lost?
+
+  let actions = x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
+      posib_r_alias rhs_lst  estate.es_is_normalizing rhs no_pos in
+
+(====)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::lseg<p,flted_11_44>@M
+compute_actions inp3 :LHS pure: flted_11_44=5
+compute_actions inp4 :RHS cand:[ x::lseg<r,n>@M]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[r,n]
+compute_actions@1 EXIT: COND =>[
+  Prio:1
+  Match =>
+    Type: Root
+    LHS: x::lseg<p,flted_11_44>@M
+    RHS: x::lseg<r,n>@M
+    root_inst: None
+    lhs_rest: emp
+    rhs_rest: emp
+    alias set: [x]rhs_inst: []rhs_infer: None;
+  Prio:3
+  BaseCaseUnfold =>
+    Type: Root
+    LHS: x::lseg<p,flted_11_44>@M
+    RHS: x::lseg<r,n>@M
+    root_inst: None
+    lhs_rest: emp
+    rhs_rest: emp
+    alias set: [x]rhs_inst: []rhs_infer: None
+  ]
+
+
+
+*/
+

@@ -1,0 +1,258 @@
+ex6b.ss (due to incomplete same_base computation)
+
+# can we automatically determine ghost parameter 
+  base=a-i, based on the values of the parameters a,i?
+
+# can base be monomorphic recursive?
+
+void init2(arrI a,int i)
+  requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
+  ensures  base::arr_seg_zero<i,m>;
+{
+Exception Failure("**context.ml#750:view matching..") Occurred!
+===============================================================
+# ex6a5.slk -dre "choose_c" -trace-log-num 1 (FIXED)
+
+checkentail x::arr_seg<i+1,n> & r=x+i & r=x1+1 
+ |-  [j] x1::arr_seg<j,n> & j=i+1.
+print residue.
+
+# to support view matching with arithmetic ..
+
+Entail 2: EXCast. Failure("**context.ml#750:view matching..")
+: no residue 
+
+===============================================================
+# ex6a5b.slk -dre "choose_c"  (FIXED)
+
+checkentail x::arrI<5> & x=a+1
+ |-  x2::arrI<j> & x2=a+1.
+
+# alias set is coming from the right
+  but does not work with ptr aritmetic
+  (compare ex6a5c.slk)
+
+(==context.ml#3471==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<flted_24_45>@M
+choose_context inp2 :RHS node: x2::arrI<j>@M
+choose_context inp3 :LHS pure: x=1+a & flted_24_45=5
+choose_context inp4 :RHS pure: x2=1+a
+choose_context inp5 :right aliase:[]
+choose_context@1 EXIT:[]
+===============================================================
+# ex6a5d.slk -dre "choose_c" (FIXED)
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base2::arr_seg<j,n> & a=base2+i.
+
+!!! **context.ml#742:rhs_ptr:base2
+!!! **context.ml#736:rhs(eq):[ n_58=n, a=i+base2]
+!!! **context.ml#737:sel_rhs: a=i+base2
+
+# alias set for base_ptr does not work.
+  Is there a notion that two base-ptrs share the same root?
+  This is so if we can prove that 
+     base1-base_2 >= 0
+  They share some ptr vars that can be shown to be equiv.
+
+(====)
+choose_context@2
+choose_context inp1 :LHS node: base::arr_seg<i,n>@M
+choose_context inp2 :RHS node: base2::arr_seg<j,n_73>@M
+choose_context inp3 :LHS pure: a=i+base
+choose_context inp4 :RHS pure: a=i+base2 & n_73=n
+choose_context inp5 :right aliase:[(n_73,n)]
+choose_context@2 EXIT:[]
+===============================================================
+# ex6a5d.slk 
+
+# logging below is wrong
+
+ log(bigger)(>4s)(4):(20.,[(SAT:63<3:Z3,5.);
+ (SAT:69<4:Z3,5.);(SAT:83<6:Z3,5.);(SAT:99<8:Z3,5.)])
+Total verification time: 0.157231 second(s)
+	Time spent in main process: 0.118078 second(s)
+	Time spent in child processes: 0.039153 second(s)
+===============================================================
+# ex6d3a.ss 
+
+arr_seg_sorted<i,n,mi> == x::arrI<mi> & i=n-1 
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0;
+
+# funny error message
+
+Exception occurred: Failure("predicate arr_seg_sorted does not have the correct number of arguments[flted_10_24,m2] vs [\"\",\"\",\"\"]")
+Error3(s) detected at main 
+===============================================================
+# ex6d3b.slk
+
+checkentail
+  a::arrI<i> * base::arr_seg_sorted<i+1,n,i+1>
+   & x=base+i & i>=0 & i<n-1 & mi<=m2
+  |- base::arr_seg_sorted<i,n,i>.
+
+# why isn't folding working properly..
+
+ ### LHS : a::arrI<i>@M * base::arr_seg_sorted<flted_15_103,n,flted_15_102>@M
+ ### RHS : base::arr_seg_sorted<i_136,n_137,i_138>@M
+ ### matches :
+[ Type: Root
+ LHS: base::arr_seg_sorted<flted_15_103,n,flted_15_102>@M
+ RHS: base::arr_seg_sorted<i_136,n_137,i_138>@M
+ root_inst: None
+ lhs_rest: a::arrI<i>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+===============================================================
+# ex6d3d.slk
+
+# to improve actual root computation : (DONE)
+
+# folding still not working for arr_seg2 example..
+
+pred arr_seg2<i,n> == x::arrI<_> & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+checkentail
+  a::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 & i<n-1 
+  |- base::arr_seg2<i,n>.
+
+# why isn't non-empty folding working properly..
+  actual root not correctly captured?
+
+!!! **astsimp.ml#2708:lst(choose smallest in each branch):
+  [[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
+!!! **astsimp.ml#2711:TODO: ensuresame root for all branches:
+  [(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2714:TODO: lst(fresh_name):
+  [(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2741:Actual roots..:
+  [(x, i+1=n & x=i+self)]
+
+!!! **astsimp.ml#2710:lst(choose smallest in each branch):[[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
+(====)
+simplify(TP)@19
+simplify(TP) inp1 : ((i+1=n & x=i+self) | x=i+self)
+simplify(TP)@19 EXIT: ((i+1=n & x=i+self) | x=i+self)
+
+
+Possibly empty
+--------------
+ actual_root: 
+  Some((x, x=i+self))
+
+Non-empty
+---------
+actual_root: 
+  None
+
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+===============================================================
+# ex6d3d2.slk (see ex6d3e.slk for examples) (FIXED)
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+expect Valid.
+
+!!! **context.ml#671:view_root_rhs:None
+!!! **context.ml#692:same_base:[]
+   ---> include also rhs? if existential?
+!!! **context.ml#715:lhs_p: 0<=j & x=j+base
+!!! **context.ml#723:lhs_nodes(ptr_arith):[x]
+!!! **context.ml#736:rhs(eq):[ x2=i_77+base]
+!!! **context.ml#737:sel_rhs: x2=i_77+base
+!!! **context.ml#751:rhs_inst_eq:[ x2=i_77+base]
+!!! **context.ml#752:rhs_ptr:x2
+!!! **context.ml#803:estate:  x::arrI<Anon_13>@M&0<=j & x=j+base&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [i_77]
+ es_gen_impl_vars(E): [x2; Anon_14]
+ es_evars: [i_77]
+
+# same base? existential var?
+===============================================================
+# ex6d3f1.slk (FIXED by adding eqn' into same base)
+
+checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+
+# transitive same_base via eq
+
+!!! **context.ml#739:rhs(eq):[ n_105=m, mi_104=i_89, a=i_88+base, flted_6_106=1+i_88]
+!!! **context.ml#740:sel_rhs: flted_6_106=1+i_88 & a=i_88+base
+!!! **context.ml#754:rhs_inst_eq:[ flted_6_106=1+i_88 & a=i_88+base]
+!!! **context.ml#755:rhs_ptr:a
+!!! **context.ml#671:view_root_rhs:Some((x_107, base=x_107-flted_6_106))
+!!! **context.ml#694:same_base:[(x,base)]
+!!! **context.ml#695:same_base_rhs:[(a,base)]
+!!! **context.ml#718:lhs_p: x=base+i & a=x & 0<=i
+!!! **context.ml#726:lhs_nodes(ptr_arith):[a]
+===============================================================
+# ex6d3f3.sl --pcp (FIXED)
+
+pred arr_seg_sorted<i,n,mi> == x1::arrI<mi> & x1=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+
+   actual_root: 
+  Some((x1, true))
+
+# Need to do consistent renaming for each branch.
+
+!!! **astsimp.ml#2712:lst(choose smallest in each branch):[[(x1, i+1=n & x1=i+se
+lf)],[(x, x=i+self)]]
+!!! **astsimp.ml#2681:need to rename root var
+!!! **astsimp.ml#2715:TODO: ensure same root for all branches:[(x1, true)]
+!!! **astsimp.ml#2718:TODO: lst(fresh_name):[(x1, true)]
+===============================================================
+# ex6d3d4.slk -dre "choose_c" (FIXED with sorting)
+
+  checkentail_exact
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+
+
+<1>x::arrI<Anon_14>@M&j=i-1 & base=(x-i)+1 & y=x+1 & n=i+1 & 1<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(y,x_110)]]
+
+# Sort list of matched item, so that smaller ones come first
+  esp for folding.
+
+--------------------------
+(==context.ml#3523==)
+choose_context@1
+choose_context inp1 :LHS node: y::arrI<Anon_13>@M * x::arrI<Anon_14>@M
+choose_context inp2 :RHS node: base::arr_seg2<i,n>@M
+choose_context inp3 :LHS pure: 0<=j & y=1+x & x=j+base
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[ Type: Root
+ LHS: y::arrI<Anon_13>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(y)
+ lhs_rest: x::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arrI<Anon_14>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(x)
+ lhs_rest: y::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None]
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================

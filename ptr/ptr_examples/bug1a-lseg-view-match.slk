@@ -1,0 +1,49 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p:node,n:int> ==
+  self=p & n=0
+  or self::node<_,q> * q::lseg<p,n-1> 
+  inv n>=0.
+
+checkentail x::arr_seg<1,5>  |- [n] x::arr_seg<1,n> & n>6.
+print residue.
+expect Fail.
+
+checkentail x::lseg<p,5>  |- [n] x::lseg<r,n> & n>5.
+print residue.
+expect Fail.
+
+/*
+
+# ex1e6d3.slk --dd-steps
+
+# view to view matching ..
+
+checkentail x::arr_seg<1,5>  |- [n] x::arr_seg<i,n>.
+
+# not matching directly. Is this base-case fold/unfold?
+
+ <1>x_75::arr<Anon_76>@M * x::arr_seg<flted_7_74,n_73>@M
+  &n_73=5 & x_75=
+                                                         x+1 & 
+                                                         flted_7_74=2 & 
+                                                         i=n & 0<=n&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Unfold 0 ==>  COND ==>  Fold]]
+
+<2>emp&n=5 & i=1&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Unfold 0 ==>  COND ==>  Fold ==>  COND ==>  Match(x_75,x_75) ==>  COND ==>  Match(x,x)]]
+
+*/
+

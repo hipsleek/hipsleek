@@ -3412,7 +3412,7 @@ and subst_x sst (f : formula) =
 and subst_all sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  let loc = VarGen.last_posn # get in
+  let loc = VarGen.last_posn # get "subst_all" in
   let () = y_winfo_pp (loc ^ ": You are using an unsafe substitution; should use subst_avoid_capture instead.") in
   Debug.no_2 "subst_all" pr1 pr2 pr2 
     (fun _ _ -> subst_all_x sst f) sst f 
@@ -9634,6 +9634,34 @@ type formula_trace = string list
 
 type list_formula_trace = formula_trace list
 
+class infer_acc =
+  object (self)
+    val mutable pure = None 
+    (* return false if unsat in inferred pure *)
+    method logging s pr e =
+      let () = y_info_hp (add_str ("*** infer_acc "^s) pr) e in
+      ()
+    method add_pure_list plst  = 
+      if plst==[] then true
+      else self # add_pure (CP.join_conjunctions plst)
+    method add_pure p  = 
+      let () = self # logging "add_pure" !CP.print_formula p in
+      match pure with
+      | None -> 
+        let () = pure <- Some p in
+        true
+      | Some p1 -> 
+        let np = CP.mkAnd p1 p no_pos in
+        let sat_flag = !CP.tp_is_sat np in
+        if sat_flag then 
+        let () = pure <- Some np in
+        true
+        else 
+          let () = y_binfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
+          let () = y_binfo_hp (add_str "false contra with" !CP.print_formula) p in
+          false
+  end;;
+
 type entail_state = {
   es_formula : formula; (* can be any formula ; 
                            !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
@@ -9780,6 +9808,7 @@ type entail_state = {
      a FALSE is being inferred
   *)
   es_infer_pure_thus : CP.formula; (* WN:whay is this needed? docu*)
+  (* es_infer_acc  : infer_acc; (\* outcome of accumulated inference *\) *)
   es_group_lbl: spec_label_def;
 }
 
@@ -10249,6 +10278,7 @@ let empty_es flowt grp_lbl pos =
     es_infer_rel = new Gen.stack_pr "es_infer_rel"  CP.print_lhs_rhs (==);
     es_infer_hp_rel = new Gen.stack_pr "es_infer_hp_rel" !print_hprel_short (==);
     es_infer_pure_thus = CP.mkTrue no_pos ;
+    (* es_infer_acc = new infer_acc; *)
     es_var_zero_perm = [];
     es_group_lbl = grp_lbl;
     es_term_err = None;
@@ -11688,8 +11718,11 @@ let rec add_pre_heap ctx =
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
 let add_infer_pure_thus_estate cp es =
-  {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
-  }
+  let flag = true (* es.es_infer_acc # add_pure cp *) in
+  if flag then
+    {es with es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus cp no_pos;
+    }
+  else failwith (x_loc^"add_infer_pure_thus_estate")
 
 let add_infer_rel_to_estate cp es =
   let new_cp = es.es_infer_rel # clone in
@@ -11712,10 +11745,13 @@ let add_infer_pure_to_estate cp es =
       if List.exists (CP.equalFormula_f CP.eq_spec_var n) a then a else n::a) old_cp new_cp in
   let () = Debug.ninfo_hprint (add_str "cp" (pr_list !print_pure_f)) cp no_pos in
   let () = Debug.ninfo_hprint (add_str "es_infer_pure" (pr_list !print_pure_f)) new_cp no_pos in
-  {es with es_infer_pure = new_cp;
-           (* add inferred pre to pure_this too *)
-           es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
-  }
+  let flag = true (* es.es_infer_acc # add_pure_list cp *) in
+  if flag then
+    {es with es_infer_pure = new_cp;
+             (* add inferred pre to pure_this too *)
+             es_infer_pure_thus = CP.mkAnd es.es_infer_pure_thus (CP.join_conjunctions new_cp) no_pos;
+    }
+  else failwith (x_loc^"add_infer_pure_estate")
 
 let add_infer_rel_to_ctx cp ctx =
   let rec helper ctx =
@@ -11960,6 +11996,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
    es_infer_term_rel = es.es_infer_term_rel;
    es_infer_hp_rel = es.es_infer_hp_rel # clone;
    es_infer_pure_thus = es.es_infer_pure_thus;
+   (* es_infer_acc = new infer_acc; *)
    es_var_measures = es.es_var_measures;
    (* es_infer_tnt = es.es_infer_tnt; *)
    es_infer_obj = es.es_infer_obj;

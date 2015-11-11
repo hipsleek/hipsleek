@@ -1,0 +1,47 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+//lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <- self::rlseg<p> & p!=null.
+
+//lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> -> self::rlseg<p> & p!=null.
+lemma_safe "one" 
+  self::rlseg<p> & p!=null
+  <- 
+    self::rlseg<p1>*p1::rlseg<p> 
+.
+
+
+// fail <==
+
+//lemma_safe "one1"  self::rlseg<p> <-> self::rlseg<p1>*p1::rlseg<p>.
+// valid <==>
+
+
+/*
+# ex64k1b.slk
+
+# do not move p!=null to oppositive site..
+
+# swap rhs <-> lhs
+
+ self::rlseg<p> & p!=null
+  <- 
+    self::rlseg<p1>*p1::rlseg<p> 
+
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p> & p!=null.
+
+head:  self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists p1_46: self::rlseg<p1_46>@M * p1_46::rlseg<p>@M&p!=null&
+{FLOW,(20,21)=__norm#E}[])
+
+
+
+*/

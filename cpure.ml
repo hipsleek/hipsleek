@@ -2808,6 +2808,12 @@ and mkLteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   else
     BForm (((Lte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
 
+and mkLtVar (sv1 : spec_var) (sv2 : spec_var) pos=
+  if eq_spec_var sv1 sv2 then
+    mkFalse pos
+  else
+    BForm (((Lt (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
+
 and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos =
   if eq_spec_var sv1 sv2 then
     mkFalse pos
@@ -2833,6 +2839,8 @@ and mkTrue_b pos = (BConst (true, pos),None)
 and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
 and simplify = ref (fun (c:formula) -> mkTrue no_pos)
+
+and oc_hull = ref (fun (c:formula) -> mkTrue no_pos)
 
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
@@ -9192,7 +9200,6 @@ let filter_constraint_type (ante: formula) (conseq: formula) : (formula) =
 let filter_constraint_type (ante: formula) (conseq: formula) : (formula) = 
   let pr = !print_formula in
   Debug.no_2 "filter_constraint_type" pr pr pr filter_constraint_type ante conseq
-
 
 
 
@@ -15616,17 +15623,23 @@ let extr_eqn (f:formula)  =
   stk # get_stk
 
 let get_ptr e1 e2 =
+  (* let () = y_tinfo_hp (add_str "get_ptr(e1)" !print_exp) e1 in *)
+  (* let () = y_tinfo_hp (add_str "get_ptr(e2)" !print_exp) e2 in *)
   match e1,e2 with
   | Var(v1,_),Var(v2,_) -> 
     if is_ptr_arith (typ_of_sv v1) then Some v1
     else if is_ptr_arith (typ_of_sv v2) then Some v2
     else None
   | Var(v1,_),_ -> 
-    if is_ptr_arith (typ_of_sv v1) then Some v1 else None
+     if is_ptr_arith (typ_of_sv v1) then Some v1 else None
   | _,Var(v1,_) -> 
     if is_ptr_arith (typ_of_sv v1) then Some v1 else None
   | _,_ -> None
 
+(* extraction here is incomplete for base! *)
+(* extr_ptr_eqn@3 *)
+(* extr_ptr_eqn inp1 : 0<=i:NUM & a:arrI=2+i:NUM & x:arrI=2+i:NUM *)
+(* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
 (* to return (ptr,v) from ptr=v+c and eq1=eq2 equations *)
 let extr_ptr_eqn (f:formula)  = 
   let stk = new Gen.stack in
@@ -15636,7 +15649,9 @@ let extr_ptr_eqn (f:formula)  =
     let f_bf bf = 
       let pf = BForm (bf,None) in
       match bf with
-      | (Eq (Var(v1,_),Add(e1,e2,_),_),_) -> 
+      | (Eq (Var(v1,_),Add(e1,e2,_),_),_) 
+      | (Eq (Add(e1,e2,_),Var(v1,_),_),_) 
+        -> 
         begin
          match get_ptr e1 e2 with
            | Some v2 -> stk_ptr # push (v1,v2)
@@ -15655,6 +15670,11 @@ let extr_ptr_eqn (f:formula)  =
   let _ = helper f in
   (stk_ptr # get_stk,stk # get_stk)
  
+let extr_ptr_eqn (f:formula)  = 
+  let pr = !print_formula in
+  let pr_sv = !print_sv in
+  Debug.no_1 "extr_ptr_eqn" pr (pr_pair (pr_list (pr_pair pr_sv pr_sv)) (pr_list pr)) extr_ptr_eqn f
+
 let simplify_eqn (f:formula)  = 
   let rec helper f =
     let f_f f = None in

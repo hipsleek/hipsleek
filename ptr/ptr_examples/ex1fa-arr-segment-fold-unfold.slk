@@ -1,0 +1,44 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+
+//(1)
+checkentail base::arr_seg<i,n> & i<n & x=base+i |- 
+  x::arr<_> .
+print residue.
+expect Valid.
+
+//(2)
+checkentail base::arr_seg<i,n> & i<n & x=base+i |- 
+  x::arr<_> * base::arr_seg<i+1,n> .
+print residue.
+expect Valid.
+
+//(3)
+checkentail base::arr_seg<i,n> & i<n & x=base+i |- 
+  x::arr<_> * base::arr_seg<i+1,m> .
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<i,n> & i<n & x=base+i |- 
+  x::arr<_> * base::arr_seg<r,m> .
+print residue.
+expect Valid.
+
+//(3)
+checkentail base::arr_seg<i,n> & x=base+i |- 
+  x::arr<_> * base::arr_seg<i+1,m> .
+print residue.
+expect Fail.
+
+//(3)
+infer[i,n] base::arr_seg<i,n> & x=base+i |- 
+  x::arr<_> * base::arr_seg<i+1,m> .
+print residue.
+expect Valid.
