@@ -1875,6 +1875,26 @@ let id_of_typed_spec_var x =
 
 let global_oc = "/usr/local/bin/oc "
 
+let filter_result str =
+  let str_list = Str.split (Str.regexp "\n") str in
+  let str_list = List.tl str_list in
+  let not_empty, empty = List.partition (fun x -> x <> "") str_list in
+  let str2 = String.concat "" not_empty in 
+  let str2_list = Str.split (Str.regexp " union ") str2 in
+(*  let str2_list = List.map (fun x -> print_string ("\nstr:" ^x) ) str2_list in*)
+  let str2_list =  List.map (fun str ->
+      let str = Str.string_after str 6 in
+      let str = Str.string_before str (String.length str - 1) in
+      str
+    ) str2_list in
+  String.concat " | " str2_list
+
+let get_replaced_str str args =
+  let arg = List.hd args in
+  let arg_str = Cprinter.string_of_spec_var arg in
+  let str = Str.global_replace (Str.regexp arg_str) ("(" ^ arg_str ^ " -1)")  str in
+  str
+
 let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
   (*************INTERNAL*****************)
@@ -1921,6 +1941,8 @@ let process_rel_infer pre_rels post_rels =
   let fixcalc_exe = ref (global_oc ^ " ") in
   let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
  (* let res = filter_result res in*)
+  let res = filter_result res in
+  let res = get_replaced_str res args in
   let () = print_string ("\nresult of fixcalc: " ^ res) in
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
