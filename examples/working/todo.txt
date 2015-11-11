@@ -1922,6 +1922,20 @@ Total number of errors: 8 in files:
  lemmas/lseg_complex.slk({E2#Valid}) 
 
 ====================================================================
+11Nov2015
+
+# infer13 looping
+
+Total number of errors: 7 in files:
+  infer/infer7.slk({E5#Fail}) 
+  infer/infer8.slk({E17#Fail}) 
+  infer/infer9.slk({E10#Valid},{E8#Fail}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  lemmas/lseg_complex.slk({E2#Valid}).
+
+================
 ====================================================================
 ====================================================================
 ====================================================================

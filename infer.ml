@@ -763,6 +763,8 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
     let lhs_formula = estate.es_formula in
     let () = x_tinfo_hp (add_str "lhs_consume_heap" !print_h_formula) lhs_consume_heap no_pos in
     let () = x_tinfo_hp (add_str "lhs_formula" !CF.print_formula) lhs_formula no_pos in
+    let inf_pure = estate.es_infer_pure_thus in
+    let () = x_binfo_hp (add_str "inf_pure_thus" (!CP.print_formula)) inf_pure no_pos in
     (*
       Unfolded state losed x::ll<nnn> or nnn>=0 info.
       !!! lhs_consume_heap: emp
@@ -828,8 +830,13 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
         (* let prev_inf_p = estate.es_infer_pure in *)
         (* let () = print_endline ("\nprev inf heap:"^(pr_list !print_h_formula prev_inf_h)) in *)
         (* let () = print_endline ("prev inf pure:"^(pr_list !CP.print_formula prev_inf_p)) in *)
+        let flag = estate.es_infer_acc # add_pure pf in
         let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-        (Some (new_estate,pf),[])
+        if flag then
+          (Some (new_estate,pf),[])
+        else if !Globals.adhoc_flag_3 then failwith x_tbi 
+        else (Some (new_estate,pf),[])
+            (* (None,[]) *)
 
 let wrap_check_lhs_contra f a = 
   let pr0 = !print_entail_state_short in

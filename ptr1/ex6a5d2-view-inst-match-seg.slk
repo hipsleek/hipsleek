@@ -1,0 +1,34 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail base::arr_seg<i,n> & i<n 
+ |-  a::arrI<_> & a=base+i .
+print residue.
+expect Valid.
+
+/*
+# ex6a5d2.slk -dre "choose_c" 
+
+checkentail base::arr_seg<i,n> & i<n 
+ |-  a::arrI<_> & a=base+i .
+
+!!! **context.ml#737:sel_rhs: a=i+base
+!!! **context.ml#750:rhs_inst_eq:[ a=i+base]
+!!! **context.ml#751:rhs_ptr:a
+
+choose_context@1
+choose_context inp1 :LHS node: base::arr_seg<i,n>@M
+choose_context inp2 :RHS node: a::arrI<Anon_12>@M
+choose_context inp3 :LHS pure: i<n
+choose_context inp4 :RHS pure: a=i+base
+choose_context inp5 :right aliase:[]
+choose_context@1 EXIT:[]
+
+
+*/
