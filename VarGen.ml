@@ -153,7 +153,34 @@ class prog_loc =
       | Some l -> (string_of_pos l.start_pos)
   end;;
 
-let last_posn = new store(* _debug *) ("", "") (fun (x, _) -> "("^x^")")
+class last_posn_cls =
+  object (self)
+    val last_posn = new store ("", "") (fun (x, _) -> "("^x^")")
+    method reset (s: string): unit =
+      if last_posn # is_avail then
+        let _, last_call_name = last_posn # get in
+        if String.compare last_call_name s = 0 then last_posn # reset
+        else ()
+      else ()
+    method get_rm (s: string) = 
+      let last_call_site, last_call_name = last_posn # get in
+      if String.compare last_call_name s = 0 then
+        let () = last_posn # reset in
+        last_call_site 
+      else ""
+    method get (s: string) = 
+      let last_call_site, last_call_name = last_posn # get in
+      if String.compare last_call_name s = 0 then last_call_site 
+      else ""
+    method set_name (s: string) = 
+      let last_call_site, last_call_name = last_posn # get in
+      if last_call_name = "" then last_posn # replace (last_call_site, s)
+    method set_posn pos = 
+      last_posn # set (pos, "")
+  end;;
+
+let last_posn = new last_posn_cls
+(* let last_posn = new store(* _debug *) ("", "") (fun (x, _) -> "("^x^")") *)
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
@@ -169,4 +196,4 @@ let build_loc_str s i = "**"^(buildA s i)^":";;
 let store_loc_str s i =
   if !z_debug_flag then
     let n = buildA s i 
-    in last_posn # set (n, "");;
+    in last_posn # set_posn n;;

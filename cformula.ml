@@ -3412,7 +3412,7 @@ and subst_x sst (f : formula) =
 and subst_all sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  let loc, _ = VarGen.last_posn # get in
+  let loc = VarGen.last_posn # get "subst_all" in
   let () = y_winfo_pp (loc ^ ": You are using an unsafe substitution; should use subst_avoid_capture instead.") in
   Debug.no_2 "subst_all" pr1 pr2 pr2 
     (fun _ _ -> subst_all_x sst f) sst f 
