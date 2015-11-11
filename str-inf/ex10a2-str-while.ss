@@ -1,5 +1,5 @@
 WSSN<p, n> ==
-  self::WFSegN<q, n-1> * q::char_star<0, p> * p::MEM<>
+  self::WFSegN<q, n-1> * q::char_star<0, p> // * p::MEM<>
   inv self!=null & n>=0;
   
 WFSegN<p, n> ==
@@ -29,13 +29,16 @@ char_star alloc_str (int n)
   requires Term
   case {
     n < 0 -> ensures res = null;
-    n >= 0 -> ensures res::WFSegN<p, n> * p::MEM<>; 
+    n >= 0 -> ensures res::WFSegN<p, n>; // * p::MEM<>; 
   }
   
 void finalize_str (char_star s, int n)
-  requires s::WFSegN<p, m> * p::MEM<> & 0 <= n & n < m & Term
+  //requires s::WFSegN<p, m> * p::MEM<> & 0 <= n & n < m & Term
   //ensures s::WFSegN<q, n> * q::char_star<0, r> * r::MEM<>;
-  ensures s::WSSN<q, n+1> * q::MEM<>;
+  //ensures s::WSSN<q, n+1> * q::MEM<>;
+  
+  requires s::WFSegN<p, m> & 0 <= n & n < m & Term
+  ensures s::WSSN<q, n+1>;
 
 HeapPred P(char_star s).
 HeapPred Q(char_star s, char_star t).
@@ -47,7 +50,7 @@ void loop (ref char_star s)
     P
     ,@pure_field,@classic
     ,@size
-    ,@term
+    //,@term
   ]
   requires P(s)
   //requires true
@@ -74,10 +77,10 @@ void main ()
   int length;
   if (length < 1) length = 1;
   char_star str = alloc_str(length);
-  dprint;
+  //dprint;
   finalize_str(str, length-1);
   dprint;
-  //loop(str);
+  loop(str);
   dprint;
 }
 
