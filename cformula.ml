@@ -9808,7 +9808,7 @@ type entail_state = {
      a FALSE is being inferred
   *)
   es_infer_pure_thus : CP.formula; (* WN:whay is this needed? docu*)
-  es_infer_acc  : infer_acc; (* outcome of accumulated inference *)
+  (* es_infer_acc  : infer_acc; (\* outcome of accumulated inference *\) *)
   es_group_lbl: spec_label_def;
 }
 
@@ -10278,7 +10278,7 @@ let empty_es flowt grp_lbl pos =
     es_infer_rel = new Gen.stack_pr "es_infer_rel"  CP.print_lhs_rhs (==);
     es_infer_hp_rel = new Gen.stack_pr "es_infer_hp_rel" !print_hprel_short (==);
     es_infer_pure_thus = CP.mkTrue no_pos ;
-    es_infer_acc = new infer_acc;
+    (* es_infer_acc = new infer_acc; *)
     es_var_zero_perm = [];
     es_group_lbl = grp_lbl;
     es_term_err = None;
@@ -11996,7 +11996,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
    es_infer_term_rel = es.es_infer_term_rel;
    es_infer_hp_rel = es.es_infer_hp_rel # clone;
    es_infer_pure_thus = es.es_infer_pure_thus;
-   es_infer_acc = new infer_acc;
+   (* es_infer_acc = new infer_acc; *)
    es_var_measures = es.es_var_measures;
    (* es_infer_tnt = es.es_infer_tnt; *)
    es_infer_obj = es.es_infer_obj;

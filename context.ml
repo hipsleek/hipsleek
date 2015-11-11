@@ -825,7 +825,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                       let () = y_winfo_pp "pushing to infer" in
                       let () =  y_tinfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
                       let () = impr_stk # push (d,rhs) in
-                      (d,true,None)   (*can we check if it shares same base *) 
+                      (d,same_base,None)   (*can we check if it shares same base *) 
                     end
                 else 
                   let () = y_tinfo_pp "Not same base" in

@@ -830,12 +830,12 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
         (* let prev_inf_p = estate.es_infer_pure in *)
         (* let () = print_endline ("\nprev inf heap:"^(pr_list !print_h_formula prev_inf_h)) in *)
         (* let () = print_endline ("prev inf pure:"^(pr_list !CP.print_formula prev_inf_p)) in *)
-        let flag = estate.es_infer_acc # add_pure pf in
+        (* let flag = estate.es_infer_acc # add_pure pf in *)
         let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-        if flag then
+        (* if flag then *)
           (Some (new_estate,pf),[])
-        else if !Globals.adhoc_flag_3 then failwith x_tbi 
-        else (Some (new_estate,pf),[])
+        (* else if !Globals.adhoc_flag_3 then failwith x_tbi  *)
+        (* else (Some (new_estate,pf),[]) *)
             (* (None,[]) *)
 
 let wrap_check_lhs_contra f a = 
