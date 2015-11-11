@@ -2676,9 +2676,15 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let choose_one xs = 
             let rec aux xs ((v1,p1) as acc) = match xs with
               | [] -> [acc]
-              | [(v2,p2)]::xss -> 
+              | [(v2,p2) as tup]::xss -> 
+                let (v2,p2) = if CP.eq_spec_var v1 v2 then tup
+                  else let fvs = CP.fv p2 in
+                    if Gen.BList.mem_eq CP.eq_spec_var v1 fvs then 
+                      y_info_hp (add_str "Var Subs Clash" (pr_triple !CP.print_sv !CP.print_sv !CP.print_formula)) (v2,v1,p2);
+                    let np2 = CP.apply_subs [(v2,v1)] p2 in (v1,np2)
+                in
                 let rhs = CP.mkEqVars v1 v2 in
-                let () = y_winfo_pp "TODO:need to rename root var" in
+                (* let () = y_winfo_pp "TODO:need to rename root var" in *)
                 let new_p = CP.join_disjunctions [p1;p2] in
                 (* WN : why !CP.simplify did not work even though oc did ? *)
                 let new_p = !CP.oc_hull new_p in
@@ -2712,7 +2718,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let () = y_tinfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
           (* ensure all non-empty branches has same root pointer & merge *)
           let lst = choose_one lst in
-          let () = y_winfo_hp (add_str "TODO: ensure same root for all branches" pr_3a) lst in
+          (* let () = y_winfo_hp (add_str "TODO: ensure same root for all branches" pr_3a) lst in *)
           (* give fresh name for root ptr *)
           let lst = List.map fresh_name lst in
           let () = y_tinfo_hp (add_str "TODO: lst(fresh_name)" pr_3a) lst in

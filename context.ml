@@ -621,6 +621,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   let aset = posib_r_aliases in
   let lhs_pure = MCP.pure_of_mix lhs_p in
   let eqns' = MCP.ptr_equations_without_null lhs_p in
+  let lhs_pure = lhs_pure in
   let emap = CP.EMapSV.build_eset eqns' in
   match rhs_node with
   | HRel _  
@@ -710,13 +711,12 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
     (* let () = y_tinfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
     let enhance_paset impr_stk paset =
-      let lhs_p2 =MCP.pure_of_mix lhs_p in
       let lhs_nodes = get_views_offset prog lhs_h in
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
       let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
       let () = y_tinfo_hp (add_str "pasets" !CP.print_svl) paset in
       (* let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in *)
-      let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_p2 in
+      let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure in
       (* let diff_ptrs = heap_ptrs in *)
       (* let diff_ptrs = if true (\* not(!Globals.adhoc_flag_2) *\) then *)
       (*     Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset  *)
@@ -754,16 +754,16 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let rhs_inst_eq = get_rhs_inst_eq rhs_ptr estate in
       let () = y_tinfo_hp (add_str "rhs_inst_eq" (pr_list !CP.print_formula)) rhs_inst_eq in
       let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
-      let lhs_w_rhs_inst = CP.join_conjunctions (lhs_p2::rhs_inst_eq) in
+      let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in
       (* this picks existential/instvars in estate *)
       let lst = List.map (fun (d,root_lhs) -> 
           match view_root_rhs with
           | Some ((v,rf)) -> 
-            (* lhs_p2 |- d>=rhs_ptr  *)
+            (* lhs_pure |- d>=rhs_ptr  *)
             begin
               let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
               let rhs = CP.mk_is_base_ptr d rhs_ptr in
-              let r = !CP.tp_imply lhs_p2 rhs in
+              let r = !CP.tp_imply lhs_pure rhs in
               let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr" !CP.print_formula) rhs  in
               let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
               match root_lhs with
@@ -772,13 +772,13 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let () =  y_tinfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
                 if r then 
                   let () =  y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure  in
-                  let f = CP.join_conjunctions [lhs_p2;eq;rf;rhs_pure] in
+                  let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in
                   let r = !CP.tp_is_sat f in
                   let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in
                   let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
-                  let () =  y_tinfo_hp (add_str "is_sat [lhs_p2;eq;rf;rhs_p]" string_of_bool) r  in
+                  let () =  y_tinfo_hp (add_str "is_sat [lhs_pure;eq;rf;rhs_p]" string_of_bool) r  in
                   (d,r,Some rf)
                 else (d,r,None)
               | Some ((v2,pf)) ->
@@ -786,7 +786,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
                 (* same base, but same start? *)
                 (* add the possible RHS inst *)
-                (* let new_lhs = CP.join_conjunctions (lhs_p2::rhs_inst_eq) in *)
+                (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let r = !CP.tp_imply lhs_w_rhs_inst rhs_eq in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr(view matching)" string_of_bool) r  in
                 (d,r,None)
@@ -801,7 +801,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               (*  |-  x2::arrI<j> & x2=a+1. *)
               match root_lhs with
               | None  ->
-                (* lhs_p2 |- rhs_ptr=d ?  *)
+                (* lhs_pure |- rhs_ptr=d ?  *)
                 let rhs = CP.mkEqn d rhs_ptr no_pos in
                 (* same_base does not work for ex6a4.slk *)
                 let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
@@ -823,7 +823,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)
                       let () = y_winfo_pp "pushing to infer" in
-                      let () =  y_tinfo_hp (add_str "lhs_p2" !CP.print_formula) lhs_p2  in
+                      let () =  y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure  in
                       let () = impr_stk # push (d,rhs) in
                       (d,same_base,None)   (*can we check if it shares same base *) 
                     end
@@ -837,7 +837,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let rhs = if CF.no_infer_all_all estate then CP.mkEqVars rhs_ptr root
                   else CP.mk_is_base_ptr rhs_ptr d in
                 (* cannot handle ptr/e/ex1fb.slk *)
-                (* let lhs_w_rhs_inst = CP.join_conjunctions (lhs_p2::rhs_inst_eq) in *)
+                (* let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let lhs = CP.mkAnd lhs_w_rhs_inst root_pf no_pos in
                 let r = !CP.tp_imply lhs rhs in
                 let () = y_tinfo_hp (add_str "ante" !CP.print_formula) lhs in
@@ -899,8 +899,30 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let mt_res = if hrel_stk # is_empty then mt_res 
         else 
           let () = y_tinfo_hp (add_str "paset(b4 filter)" !CP.print_svl) paset in
-          filter_root_hrel paset mt_res 
-      in mt_res
+          filter_root_hrel paset mt_res in
+      let mt_res = if List.length mt_res<=1 then mt_res
+        else 
+          let () = y_tinfo_hp (add_str "TODO: sort selected items (lhs_p)" !CP.print_formula) lhs_pure in
+          let cmp_ptr p1 p2 =
+            let rhs = CP.mkLtVar p1 p2 no_pos in
+            if !CP.tp_imply lhs_pure rhs then -1
+            else let rhs = CP.mkLtVar p2 p1 no_pos in
+              if !CP.tp_imply lhs_pure rhs then 1
+              else 0 in
+          (* let cmp_ptr p1 p2 = *)
+          (*   let pr = !CP.print_sv in *)
+          (*   Debug.no_2 "cmp_ptr" pr pr string_of_int cmp_ptr p1 p2 in *)
+          let cmp_ptr r1 r2 = 
+            let r1 = r1.match_res_root_inst in
+            let r2 = r2.match_res_root_inst in
+            match r1,r2 with
+            | Some p1,Some p2 -> cmp_ptr p1 p2
+            | Some p1,_ -> -1
+            | _,Some p1 -> 1
+            | _ -> 0 in
+          List.sort cmp_ptr mt_res
+      in
+      mt_res
   | HTrue -> (
       if (rhs_rest = HEmp) then (
         (* if entire RHS is HTrue then it matches with the entire LHS*)

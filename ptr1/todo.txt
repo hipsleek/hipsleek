@@ -196,7 +196,7 @@ checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
 !!! **context.ml#718:lhs_p: x=base+i & a=x & 0<=i
 !!! **context.ml#726:lhs_nodes(ptr_arith):[a]
 ===============================================================
-# ex6d3f3.sl --pcp
+# ex6d3f3.sl --pcp (FIXED)
 
 pred arr_seg_sorted<i,n,mi> == x1::arrI<mi> & x1=self+i & i=n-1 & i>=0
   or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
@@ -213,6 +213,40 @@ lf)],[(x, x=i+self)]]
 !!! **astsimp.ml#2715:TODO: ensure same root for all branches:[(x1, true)]
 !!! **astsimp.ml#2718:TODO: lst(fresh_name):[(x1, true)]
 ===============================================================
+# ex6d3d4.slk -dre "choose_c" (FIXED with sorting)
+
+  checkentail_exact
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+
+
+<1>x::arrI<Anon_14>@M&j=i-1 & base=(x-i)+1 & y=x+1 & n=i+1 & 1<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(y,x_110)]]
+
+# Sort list of matched item, so that smaller ones come first
+  esp for folding.
+
+--------------------------
+(==context.ml#3523==)
+choose_context@1
+choose_context inp1 :LHS node: y::arrI<Anon_13>@M * x::arrI<Anon_14>@M
+choose_context inp2 :RHS node: base::arr_seg2<i,n>@M
+choose_context inp3 :LHS pure: 0<=j & y=1+x & x=j+base
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[ Type: Root
+ LHS: y::arrI<Anon_13>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(y)
+ lhs_rest: x::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arrI<Anon_14>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(x)
+ lhs_rest: y::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None]
 ===============================================================
 ===============================================================
 ===============================================================

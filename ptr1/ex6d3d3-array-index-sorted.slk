@@ -1,0 +1,91 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+pred arr_seg2<i,n> == x::arrI<_> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+checkentail
+  x::arrI<_> * y::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> * y::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<j,n>.
+print residue.
+expect Valid.
+
+
+checkentail
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+/*
+# ex6d3d3.slk (see ex6d3e.slk for examples)
+
+checkentail
+  x::arrI<_> * y::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+
+# Can we have one solution instead of two?
+
+ <1>y::arrI<Anon_16>@M&j=i & base=x-i & y=x+1 & n=i+1 & 0<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(x,x_199)]]
+
+<2>emp&j=i & y=i+base+1 & x=i+base & n=i+2 & 0<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  COND ==>  Match(x,x) ==>  Fold ==>  Match(y,x_213)]]
+
+--------------------------
+(==context.ml#884==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: x::arrI<Anon_13>@M * y::arrI<Anon_14>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[y,x,base]
+spatial_ctx_extract inp4 :rhs_node: base::arr_seg2<i,n>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: x::arrI<Anon_13>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(x)
+ lhs_rest: y::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [y,x,base]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: y::arrI<Anon_14>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(y)
+ lhs_rest: x::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [y,x,base]rhs_inst: []rhs_infer: None]
+
+(==context.ml#3523==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<Anon_13>@M * y::arrI<Anon_14>@M
+choose_context inp2 :RHS node: base::arr_seg2<i,n>@M
+choose_context inp3 :LHS pure: 0<=j & y=1+x & x=j+base
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[ Type: Root
+ LHS: x::arrI<Anon_13>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(x)
+ lhs_rest: y::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [y,x,base]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: y::arrI<Anon_14>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(y)
+ lhs_rest: x::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [y,x,base]rhs_inst: []rhs_infer: None]
+
+*/
