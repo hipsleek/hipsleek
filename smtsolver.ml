@@ -390,8 +390,8 @@ let add_relation (rname1:string) rargs rform =
       related_axioms = []; (* to be filled up by add_axiom *)
       rel_cache_smt_declare_fun = cache_smt_input;
     } in
-  let () = y_binfo_hp (add_str "rname1" pr_id) rname1 in
-  let () = y_binfo_hp (add_str "rargs" !CP.print_svl) rargs in
+  let () = y_tinfo_hp (add_str "rname1" pr_id) rname1 in
+  let () = y_tinfo_hp (add_str "rargs" !CP.print_svl) rargs in
     global_rel_defs # push_list_pr x_loc [rdef];
     (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
     match rform with
@@ -411,8 +411,8 @@ let add_hp_relation (rname1:string) rargs rform =
     (* Declare the relation in form of a function --> Bool *)
     "(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n"
   ) in
-  let () = y_binfo_hp (add_str "rname1" pr_id) rname1 in
-  let () = y_binfo_hp (add_str "rargs" !CP.print_svl) rargs in
+  let () = y_tinfo_hp (add_str "rname1" pr_id) rname1 in
+  let () = y_tinfo_hp (add_str "rargs" !CP.print_svl) rargs in
   let rdef = { rel_name = rname1; 
                rel_vars = rargs;
                related_rels = []; (* to be filled up by add_axiom *)
@@ -540,16 +540,16 @@ let parse_model_to_pure_formula model =
       helper new_acc (List.tl (List.tl model))
   in
   let pf = helper (Cpure.mkTrue no_pos) (List.tl model) in
-  let () = x_binfo_pp ("counter example: " ^ (!print_pure pf)) no_pos in
+  let () = x_tinfo_pp ("counter example: " ^ (!print_pure pf)) no_pos in
   pf
 
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
-  let () = x_binfo_pp ("solver_sat_result: " ^ solver_sat_result) no_pos in
+  let () = x_tinfo_pp ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
-  let () = x_binfo_pp "model:" no_pos in
-  let unknown = List.map (fun s -> x_binfo_pp s no_pos) model in
+  let () = x_tinfo_pp "model:" no_pos in
+  let unknown = List.map (fun s -> x_tinfo_pp s no_pos) model in
   let _ =
     if solver_sat_result = "sat" then
       parse_model_to_pure_formula model
@@ -1425,7 +1425,7 @@ let get_unsat_core assertions =
 
   (* let out_str = String.concat "\n" (icollect_output !prover_process.inchannel []) in *)
   (* let lexbuf = Lexing.from_string out_str in                                         *)
-  (* let () = x_binfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
+  (* let () = x_tinfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
   let lexbuf = Lexing.from_channel !prover_process.inchannel in
   let unsat_core =
     try

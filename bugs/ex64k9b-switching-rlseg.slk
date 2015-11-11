@@ -1,0 +1,35 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+
+lemma_infer[@classic] "one" 
+  self::node<_,q>*q::rlseg<p>
+  <->
+  self::rlseg<p1>*p1::node<_,p>
+.
+print residue.
+
+/*
+# ex64k9b.slk
+
+lemma_safe "one" 
+  self::node<_,q>*q::rlseg<p>
+  <->
+  self::rlseg<p1>*p1::node<_,p>
+.
+
+# Why so long, and why need breaking lemma?
+
+
+[[ Match(self_one_left_right,self_one_left_right) ==>  SEARCH ==>  (Lemma <== one_left_right(q_679,q_679)) ==>  Match(q_679,q_679) ==>  Fold ==>  Match(p1_680,p1_680) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Match(self_one_left_right,self_one_left_right) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Fold ==>  Match(self_one_left,self_one_left) ==>  SEARCH ==>  (Lemma ==> one_left(q_502,q_505)) ==> (Complex: one_left) ==>  SEARCH ==>  (Lemma <== one_left_right(q_502,q_505)) ==>  Match(q_502,q_505) ==>  Fold ==>  Match(p1_596,p1) ==> ||OR|| ==>  Fold ==>  Match(self_one_left,p1)]]
+
+
+*/

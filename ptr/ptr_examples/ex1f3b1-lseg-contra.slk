@@ -1,0 +1,72 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H(int n).
+
+//infer[i] x=null & i>0 |- x::node<_,_> .
+infer[H] H(i) & i>0 |- x::node<_,_> .
+print residue.
+expect Valid.
+// expect i<=0 to be inferred
+
+/*
+# ex1f3b1.slk "infer_\|compute_ac\|process_ac" 
+
+infer[i] emp & i>0 |- x::node<_,_> .
+
+// not called if H present
+infer_heap_nodes@1
+infer_heap_nodes inp1 : ex_formula : emp&0<i&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [i]
+infer_heap_nodes inp2 : x::node<Anon_11,Anon_12>@M
+infer_heap_nodes@1 EXIT:None
+
+// called when non-empty RHS
+(==solver.ml#13918==)
+infer_collect_hp_rel#2@2
+infer_collect_hp_rel#2 inp1 :lhs_node: emp
+infer_collect_hp_rel#2 inp2 :rhs_node: x::node<Anon_11,Anon_12>@M
+infer_collect_hp_rel#2 inp3 :lhs: emp&0<i&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#2 inp4 :rhs: x::node<Anon_11,Anon_12>@M&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#2 inp5 :es:
+  emp&0<i&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [x; Anon_11; Anon_12]
+ es_gen_impl_vars: [x; Anon_11; Anon_12]
+ es_trace:  UnmatchedRHSData
+ es_infer_vars: [i]
+infer_collect_hp_rel#2 inp6 :classic:false
+infer_collect_hp_rel#2@2 EXIT:(false,2:  emp&0<i&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [x; Anon_11; Anon_12]
+ es_gen_impl_vars: [x; Anon_11; Anon_12]
+ es_trace:  UnmatchedRHSData
+ es_infer_vars: [i],3:abd heap: x::node<Anon_11,Anon_12>@M,4:None,5:None,6:new rest:None)
+
+
+===========================================================
+
+
+# should we schedule LHS contra for unmatched RHS data?
+
+(==infer.ml#789==)
+infer_lhs_contra#1@2@1
+infer_lhs_contra#1 inp1 : 0<i & x=null
+infer_lhs_contra#1 inp2 :[i]
+infer_lhs_contra#1 inp3 :EARLY CONTRA DETECTION
+infer_lhs_contra#1@2 EXIT:Some( 1>i)
+
+(==solver.ml#12360==)
+infer_lhs_contra_estate#4@1
+infer_lhs_contra_estate#4 inp1 :estate:
+ ex_formula : emp&0<i & x=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [i]
+infer_lhs_contra_estate#4 inp2 :lhs_xpure: 0<i & x=null
+infer_lhs_contra_estate#4 inp3 :EARLY CONTRA DETECTION
+infer_lhs_contra_estate#4@1 EXIT:(Some(( ex_formula : hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [i], 1>i)),[])
+
+*/

@@ -1,0 +1,47 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p 
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+lemma_safe "SPLIT" self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>).
+
+lemma_safe "NON_EMPTY1" self::node<u1>* u1::lseg<p> 
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+/*
+lemma_safe "NON_EMPTY2" self::lseg<p> & self!=p
+       <-> (exists last: self::lseg<last>*last::node<p>).
+*/
+
+//checkentail_exact x::node<u> * u::lseg<p> |- x::lseg<v>*v::node<p>.
+
+
+//checkentail x::node<u> * u::lseg<p> |- x::lseg<v>*v::node<p>*p::node<_>.
+
+checkentail x::lseg<u1> * u1::node<p> * p::node<_>|- x::lseg<v>*v::node<p>.
+//print residue.
+
+//checkentail x::node<u> * u::lseg<p> |- x::lseg<v>*v::node<p>.
+print residue.
+
+
+/*
+# ex64p2.slk
+
+ checkentail x::lseg<u1> * u1::node<p> * p::node<_>|- x::lseg<v>*v::node<p>.
+
+# Why are there two possibilities? why isn't the first taken?
+
+Residue:
+
+ <1>p::node<Anon_11>@M&v=u1&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(x,x) ==>  Match(u1,v)]]
+
+<2>p::node<Anon_11>@M&u1=v&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== SPLIT(x,x)) ==>  Match(x,x) ==>  Fold ==>  Match(u1,v)]]
+
+
+*/

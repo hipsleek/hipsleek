@@ -1,0 +1,69 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+//lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <- self::rlseg<p> & p!=null.
+
+//lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> -> self::rlseg<p> & p!=null.
+lemma_safe "one" 
+  self::rlseg<p> & p!=null
+  <- 
+    self::rlseg<p1>*p1::rlseg<p> 
+.
+// no switch 
+
+lemma_safe "one" 
+  self::rlseg<p> 
+  <- 
+    self::rlseg<p1>*p1::rlseg<p> 
+.
+// no switch (OK)
+
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::rlseg<p> 
+  <-
+  self::rlseg<p> & p!=null
+.
+// switch (OK for complex lemma unfolding?..)
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::rlseg<p> 
+  ->
+  self::rlseg<p> & p!=null
+.
+// no switch (OK)
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::rlseg<p> 
+  <-
+  self::rlseg<p> 
+.
+// switch (OK)
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::rlseg<p> 
+  ->
+  self::rlseg<p> 
+.
+// switch (OK)
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::rlseg<p> 
+  <->
+  self::rlseg<p> 
+.
+
+
+/*
+# ex64k1d.slk
+
+
+
+*/

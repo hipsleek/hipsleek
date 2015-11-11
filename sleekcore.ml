@@ -100,7 +100,7 @@ let sleek_entail prog ante_ctx conseq pos=
 
 (* WN : why isn't itype added to estate? *)
 let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:CF.formula) (conseq:CF.struc_formula) =
-  let () = y_binfo_hp (add_str "is_pure_field" string_of_bool) (check_is_pure_field ()) in
+  let () = y_tinfo_hp (add_str "is_pure_field" string_of_bool) (check_is_pure_field ()) in
   let pos2 = CF.pos_of_formula ante in
   let pos3 = CF.pos_of_struc_formula conseq in
   let () = Hgraph.reset_fress_addr () in

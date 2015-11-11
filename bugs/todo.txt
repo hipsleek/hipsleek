@@ -2465,6 +2465,26 @@ lemma_safe "one"
 
 // this lemma direction is not as good as the other (see ex64k9b)
 ===================================================================
+# ex64o.slk
+
+# inferred false cumulatively!
+# to avoid with a shared object?
+
+# why is q_54 paired with x? How did we get q_54=x?
+
+!!! **context.ml#3598:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_12,flted_11_43>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Match =>
+    LHS: x::node<Anon_53,q_54>@M
+    RHS: x::node<Anon_12,flted_11_43>@M;
+  Prio:2
+  Unfold 0 =>
+    LHS: q_54::ll<flted_7_52>@M
+    RHS: x::node<Anon_12,flted_11_43>@M
+  ]
 ===================================================================
 ===================================================================
 ===================================================================

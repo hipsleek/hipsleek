@@ -1,0 +1,73 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg2<i,n> == x::arrI<_> & x=self+i & i=n-1 & i>=0
+  or x::arrI<_>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+checkentail
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
+  |- x2::arrI<_> & x2=base+(j-1).
+print residue.
+expect Fail.
+
+checkentail
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
+  |- x2::arrI<_> & x2=base+j.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<i> * base::arr_seg2<i+1,n> & x=base+i //& i>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Fail.
+
+checkentail
+  x::arrI<i> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<i> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg2<j,n>.
+print residue.
+expect Valid.
+
+/*
+# ex6d3d2.slk (see ex6d3e.slk for examples)
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+expect Valid.
+
+# same base? existential var?
+
+(==context.ml#3512==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<Anon_13>@M
+choose_context inp2 :RHS node: x2::arrI<Anon_14>@M
+choose_context inp3 :LHS pure: 0<=j & x=j+base
+choose_context inp4 :RHS pure: x2=i_77+base
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[]
+
+# same base by existential i_77 ..
+
+*/

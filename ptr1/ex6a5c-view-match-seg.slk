@@ -1,0 +1,45 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+/*
+checkentail x::arrI<5> 
+ |-  x2::arrI<j> & x=x2.
+print residue.
+expect Valid.
+*/
+
+// root ptr instantiation
+checkentail x::arrI<5> & x=a
+ |-  x2::arrI<j> & x2=a.
+print residue.
+expect Valid.
+
+/*
+# ex6a5c.slk -dre "choose_c" 
+
+checkentail x::arrI<5> & x=a
+ |-  x2::arrI<j> & x2=a.
+
+(==context.ml#3471==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<flted_18_45>@M
+choose_context inp2 :RHS node: x2::arrI<j>@M
+choose_context inp3 :LHS pure: x=a & flted_18_45=5
+choose_context inp4 :RHS pure: x2=a
+choose_context inp5 :right aliase:[(x2,a)]
+choose_context@1 EXIT:[ Type: Root
+ LHS: x::arrI<flted_18_45>@M
+ RHS: x2::arrI<j>@M
+ root_inst: None
+ lhs_rest: emp
+ rhs_rest: emp
+ alias set: [x,a,x2]rhs_inst: []rhs_infer: None]
+
+
+*/
