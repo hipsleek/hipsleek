@@ -182,15 +182,15 @@ let sig_of_lem_formula prog case f =
 let is_compatible_sig ?(strict=true) prog sig1 sig2 = 
   let rec helper ss1 ss2 =
     match ss1, ss2 with
-    (* | _, [] -> true *)
-    | [], [] -> true
+    | _, [] -> true
     | [], _ -> not strict
     | s1::ss1, s2::ss2 ->
       if (eq_str s1 s2) || 
          (C.is_hp_name prog s1 && C.is_hp_name prog s2)
       then helper ss1 ss2
       else false
-    | _ -> false
+    (* | [], [] -> true *)
+    (* | _ -> false     *)
   in helper sig1 sig2
 
 let is_compatible_lem prog lhs_sig rhs_root_sig lem =
