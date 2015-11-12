@@ -65,7 +65,7 @@ choose_context inp4 :RHS pure: a=i+base2 & n_73=n
 choose_context inp5 :right aliase:[(n_73,n)]
 choose_context@2 EXIT:[]
 ===============================================================
-# ex6a5d.slk 
+# ex6a5d1.slk 
 
 # logging below is wrong
 
@@ -87,7 +87,7 @@ arr_seg_sorted<i,n,mi> == x::arrI<mi> & i=n-1
 Exception occurred: Failure("predicate arr_seg_sorted does not have the correct number of arguments[flted_10_24,m2] vs [\"\",\"\",\"\"]")
 Error3(s) detected at main 
 ===============================================================
-# ex6d3b.slk
+# ex6d3b.slk (FIXED x->a)
 
 checkentail
   a::arrI<i> * base::arr_seg_sorted<i+1,n,i+1>
@@ -107,7 +107,7 @@ checkentail
  rhs_rest: emp
  alias set: [base]rhs_inst: []rhs_infer: None]
 ===============================================================
-# ex6d3d.slk
+# ex6d3d.slk (FIXED)
 
 # to improve actual root computation : (DONE)
 

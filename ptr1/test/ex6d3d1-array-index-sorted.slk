@@ -8,7 +8,7 @@ pred arr_seg2<i,n> == x::arrI<_> & x=self+i & i=n-1 & i>=0
   inv n>i & i>=0.
 
 checkentail
-  x::arrI<_> & x=base+j & j>=0 
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
   |- (exists i: x2::arrI<_> & x2=base+i).
 print residue.
 expect Valid.

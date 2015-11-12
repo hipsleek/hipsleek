@@ -28,6 +28,31 @@ checkentail
 print residue.
 expect Valid.
 
+checkentail
+  x::arrI<_> * y::arrI<_>  & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1// & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Fail.
+
+checkentail
+  x::arrI<_> * y::arrI<_> * z::arrI<_> & x=base+j & z=x+2 & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail_exact
+  x::arrI<_> * y::arrI<_> * z::arrI<_> & x=base+j & z=x+2 & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+expect_infer Fail R{false}.
+expect_infer Valid R{n=i+3}.
 
 /*
 # ex6d3d4.slk -dre "choose_c"

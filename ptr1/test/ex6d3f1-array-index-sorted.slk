@@ -10,6 +10,26 @@ pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
 checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
  |-  base::arr_seg_sorted<i,m,i> . 
 print residue.
+expect Valid.
+
+checkentail_exact a::arrI<i>@M * a2::arrI<i>@M& x=i+base & a=x & a2=a+1 & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+print residue.
+expect Valid.
+
+checkentail a::arrI<i>@M * a2::arrI<i>@M& x=i+base & a=x & a2=a+1 & i>=0
+ |-  base::arr_seg_sorted<i,m,k> . 
+print residue.
+expect Valid.
+expect_infer Fail R{false}.
+expect_infer Valid R{m=i+2}.
+expect_infer Valid R{m=i+1}.
+expect_infer Fail R{m=i}.
+expect_infer Valid R{k=i}.
+
+checkentail_exact a::arrI<i>@M * a2::arrI<i-1>@M& x=i+base & a=x & a2=a+1 & i>=0
+ |-  base::arr_seg_sorted<i,m,k> . 
+expect Fail.
 
 /*
 checkentail a::arrI<i>@M& x=i+(base:arrI) & a=x & i>=0
