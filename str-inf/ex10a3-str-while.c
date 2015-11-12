@@ -5,14 +5,14 @@
 void loop (char* s)
 /*@
   infer [
-    //@shape_post,
-    P
+    @shape_pre
+    //P
     ,@pure_field,@classic
     ,@size
-    //,@term
+    ,@term
   ]
-  requires P(s)
-  //requires true
+  //requires P(s)
+  requires true
   ensures true;
   
   //requires s::WSS<p>
