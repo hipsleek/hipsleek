@@ -548,6 +548,15 @@ data char_star {
   char_star next;
 }
 
+WSS<p> ==
+  self::WFSeg<q> * q::char_star<0, p> // * p::MEM<> 
+  inv true;
+  
+WFSeg<p> ==
+  self = p
+  or self::char_star<v, q> * q::WFSeg<p> & v!=0
+  inv true;
+
 WSSN<p, n> ==
   self::WFSegN<q, n-1> * q::char_star<0, p> // * p::MEM<>
   inv self!=null & n>=0;
