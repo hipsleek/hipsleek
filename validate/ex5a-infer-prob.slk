@@ -14,6 +14,7 @@ infer [n] y=null |- y::ll<n>.
 print residue.
 expect_infer Fail I{y=null}.
 expect_infer Valid I{n=0}.
+expect_infer Valid I{n>=0}.
 //expect_infer Valid R{y=null}.
 //expect_infer Valid R{n=0}.
 // why did we get inferred pure: [n=0]
