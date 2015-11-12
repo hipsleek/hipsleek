@@ -41,6 +41,37 @@ checkentail base::arr_seg<i,n> & a=base+i
 print residue.
 expect Valid.
 
+checkentail base::arr_seg<i,n> & i<n 
+ |-  a::arrI<_> & a=base+i .
+print residue.
+expect Valid.
+
+checkentail emp
+  |- base::arr_seg<i,n> & i=n  
+  .
+print residue.
+expect Valid.
+
+
+checkentail emp
+  |- base::arr_seg<i,n> & i<n  
+  .
+print residue.
+expect Fail.
+
+checkentail i=n & i>=0
+  |- base::arr_seg<i,n> 
+  .
+print residue.
+expect Valid.
+
+checkentail i=n //& i>=0
+  |- base::arr_seg<i,n> 
+  .
+print residue.
+expect Fail.
+
+
 /*
 # ex6a5d.slk -dre "choose_c" 
 

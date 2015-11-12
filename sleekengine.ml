@@ -1947,7 +1947,9 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate_infer (vr : validate_result) (validation: validation)  =
+let process_validate_infer (vr : validate_result) (
+
+validation: validation)  =
   (* let hdr = ref "" in *) (* to avoid to use global vars *)
   let nn = (sleek_proof_counter#inc_and_get_aux_str) in
   (*********************************)
@@ -1962,12 +1964,16 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
 
   let pr_validate_outcome b nn res_f_str = 
     let str1 =  "\nExpect_Infer "^nn^": " in
-    let () = x_binfo_hp (add_str "str" pr_id) str1 no_pos in
-    let () = x_binfo_hp (add_str "res_f_str" pr_id) res_f_str no_pos in
+    (* let () = x_binfo_hp (add_str "str" pr_id) str1 no_pos in *)
+    (* let () = x_binfo_hp (add_str "res_f_str" pr_id) res_f_str no_pos in *)
     let str2 = string_of_vres (match vr with | VR_Valid -> VR_Fail 0 | _ -> VR_Valid) in
-    if b then print_endline_quiet (str1^"OK. ")
-    else let () = unexpected_cmd # push nn in
-      print_endline_quiet (str1^"Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str)
+    let str_vr = string_of_vres vr in
+    let () = 
+      if b then print_endline_quiet (str1^"OK. ")
+      else let () = unexpected_cmd # push nn in
+        print_endline_quiet (str1^"FAIL. {Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str^"}") in
+    let () = print_endline_quiet ("  validating.."^str_vr^"#"^(string_of_validation validation)) in
+    ()
   in
 
   let validate_with_residue hdr residue =
@@ -2069,8 +2075,8 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
   match validation with
   | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
   | V_Residue None -> let hdr = "R" in print_endline "No residue."
-  | V_Infer (Some inference) -> let hdr = "I" in validate_with_residue hdr inference 
-  | V_Infer None -> let hdr = "I" in print_endline "No inference."
+  | V_Infer (hdr,Some inference) -> (* let hdr = "I" in *) validate_with_residue hdr inference 
+  | V_Infer (hdr,None) -> (* let hdr = "I" in *) print_endline "No inference."
   | _ -> print_endline "RA etc. not yet implemented"
 
 

@@ -27,6 +27,11 @@ print residue.
 expect Valid.
 
 checkentail x::arrI<5> & x=a+1
+ |-  x2::arrI<j> & x2=a+2.
+print residue.
+expect Fail.
+
+checkentail x::arrI<5> & x=a+1
  |-  (exists c: x2::arrI<j> & x2=a+(1+c) & c=3).
 print residue.
 expect Fail.

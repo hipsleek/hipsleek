@@ -18,6 +18,10 @@ arr_seg_map<i,n,M> == i=n & i>=0
   or x::arrI<v>*self::arr_seg_map<i+1,n,M> & x=self+i & i>=0 & M[i]=v
   inv n>=i & i>=0;
 
+arr_seg_map2<i,n,M> == i=n & i>=0
+  or x::arrI<v>*self::arr_seg_map2<i+1,n,M> & x=self+i & i>=0 & M[i]+1=v
+  inv n>=i & i>=0;
+
 void upd_arr(arrI base, int i, int v)
   requires a::arrI<_> & a=base+i & i>=0
   ensures a::arrI<v>;

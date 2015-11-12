@@ -996,7 +996,8 @@ expect_infer:
     `EXPECT_INFER; ty=validate_result; peek_relassume; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
        (match t with
           | "R" -> ExpectInfer (ty, V_Residue f)
-          | "I" -> ExpectInfer (ty, V_Infer f)
+          | "I" | "IE" | "IU" -> ExpectInfer (ty, V_Infer (t,f))
+          | "RE" -> failwith "parser"
           | _ -> raise Stream.Failure)
   | `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
        (match t with

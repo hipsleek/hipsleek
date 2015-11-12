@@ -42,6 +42,12 @@ checkentail
 print residue.
 expect Valid.
 
+checkentail
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+print residue.
+expect Valid.
+
 /*
 # ex6d3d.slk (see ex6d3e.slk for examples)
 
