@@ -7399,7 +7399,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
                              Err.error_text = ("infer vars with unknown type "^(Cprinter.string_of_spec_var_list ivs_unk)) }
         else
           let () =
-            if b.IF.formula_inf_obj # is_size then
+            if b.IF.formula_inf_obj # is_size && not !Globals.old_pred_extn then
               let hpt_inf_vars = List.filter (fun sv -> (CP.is_node_typ sv) || (CP.is_hp_typ sv)) new_ivs in
               List.iter (fun iv -> b.IF.formula_inf_obj # 
                                      add_infer_extn_lst (CP.name_of_spec_var iv) ["size"]) hpt_inf_vars

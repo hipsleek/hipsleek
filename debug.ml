@@ -645,7 +645,7 @@ struct
         in regexp_line := (re,k)::!regexp_line) !regexp_line_str in
     ()
 
-  let ho_aux ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
+  let ho_aux ?(call_site="") ?(arg_rgx=None) df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) (args:string list) (pr_o:'z->string) (f:'a->'z) (e:'a) :'z =
     (* let call_site, _ = VarGen.last_posn # get_rm in *)
     (* let call_site, call_name = VarGen.last_posn # get in *)
     (* let call_site =                                      *)
@@ -654,7 +654,9 @@ struct
     (*     call_site                                        *)
     (*   else ""                                            *)
     (* in                                                   *)
-    let call_site = VarGen.last_posn # get_rm s in
+    let call_site = 
+      if call_site="" then VarGen.last_posn # get_rm s 
+      else call_site in
     let pre_str = "(=="^call_site^"==)" in
     (* if s=="" thenmatch s with  *)
     (*   | None -> "" *)
@@ -792,6 +794,8 @@ struct
 
   let ho_4_opt_aux df (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
       (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+    let call_site = VarGen.last_posn # get_rm s in
+    (* let () = print_endline_quiet ("*** call_site:"^call_site^s) in *)
     let a1 = pr1 e1 in
     let a2 = pr2 e2 in
     let a3 = pr3 e3 in
@@ -799,7 +803,7 @@ struct
     let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3)); (4,lazy (pr4 e4))] in
     let f  = f e1 e2 e3 in
     let g  = match g with None -> None | Some g -> Some (g e1 e2 e3) in
-    ho_aux df lz loop_d test g s [a1;a2;a3;a4] pr_o f e4
+    ho_aux ~call_site:call_site df lz loop_d test g s [a1;a2;a3;a4] pr_o f e4
 
 
   let ho_5_opt_aux df (flags:bool list) (loop_d:bool) (test:'z -> bool)  g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
@@ -957,8 +961,9 @@ struct
     splitter s code_none code_gen go_3
 
   let no_4 s p1 p2 p3 p4 p0 f e1 e2 e3 =
+    (* let call_site = VarGen.last_posn # get_rm s in *)
     let code_gen fn = fn s p1 p2 p3 p4 p0 f e1 e2 e3 in
-    let code_none = ho_aux_no s (f e1 e2 e3) in
+    let code_none = ho_aux_no (* ~call_site:call_site *) s (f e1 e2 e3) in
     splitter s code_none code_gen go_4
 
   let no_5 s p1 p2 p3 p4 p5 p0 f e1 e2 e3 e4 =

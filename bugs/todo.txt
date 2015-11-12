@@ -2486,6 +2486,24 @@ lemma_safe "one"
     RHS: x::node<Anon_12,flted_11_43>@M
   ]
 ===================================================================
+# bugs/ex64q2a.slk -dre "verify_lemma"
+
+        let res = x_add Lemproving.verify_lemma 3 l2r r2l cprog name typ in 
+
+# Below still loses x_loc even though we have x_add:
+
+(====)
+verify_lemma#3@8@7@6@5
+verify_lemma#3 inp1 :[Lemma "lseg":  self::lseg<n,p>@M&n=a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]==> (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head match:lseg
+ body view:lseg
+ body pred_list:[lseg,lseg]
+ coercion_univ_vars: [a,b]
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::lseg<n,p>@M&n=a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists n_135,p_136: self::lseg<n_135,p_136>@M&
 ===================================================================
 ===================================================================
 ===================================================================

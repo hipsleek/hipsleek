@@ -4759,14 +4759,16 @@ let rec check_prog iprog (prog : prog_decl) =
   let rec process_cmd iprog cprog verified_sccs scc icmd =
     match icmd with
       | Icmd.I_Norm {cmd_res_infs = infs} ->
+            let is_inf_size = List.exists (fun it -> it = INF_SIZE) infs in
             let iscc,_ = List.split (Iincr.set_infer_const_scc infs scc) in
             let () = if List.exists (fun it -> it = INF_SHAPE_PRE) infs then
-              let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation iscc in
+              let () = Iincr.add_prepost_shape_relation_scc cprog 
+                (Iincr.add_pre_shape_relation ~trans_size_to_extn:(is_inf_size && not !Globals.old_pred_extn)) iscc in
               ()
             else if List.exists (fun it -> it = INF_SHAPE_POST) infs then
               let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in
               ()
-            else if List.exists (fun it -> it = INF_SIZE) infs then
+            else if is_inf_size then
               if !Globals.old_pred_extn then
                 let todo_unk = List.map (fun proc ->
                     let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in
