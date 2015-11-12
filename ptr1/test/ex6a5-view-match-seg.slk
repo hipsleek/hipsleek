@@ -57,7 +57,12 @@ expect Valid.
 checkentail x::arrI<5> 
  |-  x2::arrI<j> & x!=x2.
 print residue.
-expect Valid.
+expect Fail.
+
+checkentail x::arrI<5> 
+ |-  (exists x3: x2::arrI<j> & x3=x2).
+print residue.
+expect Fail.
 
 /*
 # ex6a5.slk -dre "choose_c" -trace-log-num 1
