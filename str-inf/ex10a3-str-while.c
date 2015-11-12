@@ -25,8 +25,8 @@ void loop (char* s)
 */
 {
   int x = *s;
-  if (x != '\0') {
-  //if (x != 'a') { // UNSAFE
+  //if (x != '\0') {
+  if (x != 'a') { // UNSAFE
     s++;
     loop(s);
   }
