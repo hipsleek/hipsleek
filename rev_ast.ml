@@ -227,6 +227,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_pos = no_pos;
                          I.view_data_name = "";
                          I.view_type_of_self = None;
+                         (* I.view_actual_root = None; *)
                          I.view_vars = vars;
                          I.view_ho_vars = []; (* TODO:HO *)
                          I.view_imm_map = [];

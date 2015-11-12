@@ -965,9 +965,10 @@ let compute_def (rel_fml, pf, no) ante_vars =
   (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
-  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
-  let post_vars = Trans_arr.expand_array_variable pf post_vars in
-  let pf = Trans_arr.expand_relation pf in
+  let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
+  (* let pre_vars = Trans_arr.expand_array_variable pf pre_vars in *)
+  (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
+  (* let pf = Trans_arr.expand_relation pf in *)
   begin
     print_endline_quiet "\n*************************************";
     print_endline_quiet "****** Before putting into fixcalc*******";
@@ -1329,11 +1330,11 @@ let re_order_para rels pfs ante_vars =
 
 let arrange_para_new input_pairs ante_vars =
   let rels,pfs = List.split input_pairs in
-  let () = Debug.binfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.binfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = x_tinfo_hp (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = x_tinfo_hp (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   let rels,pfs = x_add re_order_para rels pfs ante_vars in
-  let () = Debug.binfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.binfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = x_tinfo_hp (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = x_tinfo_hp (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   try List.combine rels pfs
   with _ -> report_error no_pos "Error in re_order_para"
 

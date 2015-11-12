@@ -123,6 +123,7 @@ and view_decl = {
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
   view_modes : mode list;
   view_type_of_self : typ option;
+  view_actual_root : (P.spec_var * P.formula) option;
   view_is_touching : bool;
   view_is_segmented : bool;
   view_is_tail_recursive: bool;        (* true if view is tail-recursively defined *)
@@ -232,7 +233,7 @@ and proc_decl = {
   proc_flags : (ident*ident*(flags option)) list;
   mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
   (* WN : warning below is being supecedd by proc_stk_of_static_specs *)
-  proc_static_specs : Cformula.struc_formula;
+  (* proc_static_specs : Cformula.struc_formula; *) (* COMPLETELY REMOVED *)
   (* proc_static_specs_with_pre : Cformula.struc_formula; *)
   (* this puts invariant of pre into the post-condition *)
   proc_dynamic_specs : Cformula.struc_formula;
@@ -624,11 +625,12 @@ let print_prog = ref (fun (c:prog_decl) -> "cast printer has not been initialize
 let cprog_obj = 
   object (self)
     (* val cprog = cprog *)
+    method get = !cprog
     method logging s =
-      let m = "\n*XXcprog** " in
-      let () = print_endline_quiet (m^s) in
+      (* let m = "\n*XXcprog** " in *)
+      (* let () = print_endline_quiet (m^s) in *)
       ()
-    method check_prog_x flag prg =
+    method check_prog_x ?(loc="") flag prg =
       let store_prg = !cprog in
       (* match !cprog with *)
       (* | None ->  *)
@@ -638,7 +640,7 @@ let cprog_obj =
       (* | Some store_prg ->  *)
       if not(prg==store_prg) then 
         begin
-          let () = y_winfo_pp "prog and cprog are different" in
+          let () = y_winfo_pp (loc ^ "prog and cprog_obj are different") in
           (* if prg = store_prg then  *)
           (*   let () = y_tinfo_pp "same content though" in *)
           (*   () *)
@@ -653,6 +655,10 @@ let cprog_obj =
     method check_prog_only loc prog = 
       let r = self # check_prog_x false prog in
       self # logging ((add_str (loc^"check only (same prog?)") string_of_bool) r)
+    method check_prog_warning loc prog = 
+      let r = self # check_prog_x ~loc:loc false prog in
+      if not r then
+        self # logging ((add_str (loc^"check (same prog?)") string_of_bool) r)
     method check_prog_upd loc prog = 
       let r = self # check_prog_x true prog in
       if not(r) then 
@@ -792,6 +798,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_labels = List.map (fun _ -> LO.unlabelled) vs;
     view_modes = [];
     view_type_of_self = None;
+    view_actual_root = None;
     view_is_touching = false;
     view_is_segmented = false;
     view_is_tail_recursive= false;        (* true if view is tail-recursively defined *)
@@ -857,6 +864,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_labels = [];
     view_modes = [];
     view_type_of_self = None;
+    view_actual_root =None;
     view_is_touching = false;
     view_is_segmented = false;
     view_is_tail_recursive = false;
@@ -1357,7 +1365,7 @@ let rec look_up_view_def_raw loc (defs : view_decl list) (name : ident) = match 
     let msg = ("Cannot find definition of cview " ^ name) in 
     let () = y_tinfo_pp (loc^msg) in
     raise Not_found
-    (* let msg = ("Cannot find definition of view " ^ name) in  *)
+    (* let msg = ("Cannot find definition of view " ^ name) in *)
     (* failwith (x_loc^msg) *)
 
 let look_up_view_def_raw loc (defs : view_decl list) (name : ident) = 
@@ -1530,7 +1538,7 @@ let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in
+    (* let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in *)
     let () = x_winfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
@@ -1643,6 +1651,24 @@ let is_rec_view_def prog (name : ident) : bool =
   let vdef = look_up_view_def_num 2 no_pos prog.prog_view_decls name in
   (* let () = collect_rhs_view vdef in *)
   vdef.view_is_rec
+
+let fresh_actual_root ans =
+  map_opt (fun (v,f) -> 
+      let nv = CP.fresh_spec_var v in
+      (nv,CP.apply_subs [(v,nv)] f)
+    ) ans
+
+(* get ptr arithmetic root of view *)
+let get_root_view prog name ptr args =
+  let vdef = look_up_view_def_num 2 no_pos prog.prog_view_decls name in
+  let para = vdef.view_vars in
+  let sst = List.combine (CP.self_sv::para) (ptr::args) in
+  let ans = vdef.view_actual_root in
+  let ans = fresh_actual_root ans in
+  let () = y_tinfo_hp (add_str "actual root" (pr_opt (pr_pair !CP.print_sv !CP.print_formula))) ans in
+  let () = y_tinfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
+  let ans = map_opt (fun (v,f) -> (v,CP.apply_subs sst f)) ans in
+  ans
 
 (*check whether a view is a lock invariant*)
 let get_lock_inv prog (name : ident) : (bool * F.formula) =
@@ -1861,8 +1887,10 @@ let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
 let update_sspec_proc (procs : (ident, proc_decl) Hashtbl.t) pname spec = 
   try
     let proc = Hashtbl.find procs pname in
-    let new_proc = {proc with proc_static_specs = spec} in
-    let () = Hashtbl.replace procs pname new_proc in
+    (* let new_proc = {proc with proc_static_specs = spec} in *)
+    (* let () = Hashtbl.replace procs pname new_proc in       *)
+    let () = proc.proc_stk_of_static_specs # push_pr x_loc spec in
+    let () = Hashtbl.replace procs pname proc in
     procs
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
@@ -2823,7 +2851,7 @@ let callgraph_of_prog prog : IG.t =
 
 let count_term_scc (procs: proc_decl list) : int =
   List.fold_left (fun acc p -> 
-      acc + (F.count_term_struc p.proc_static_specs)) 0 procs
+      acc + (F.count_term_struc (p.proc_stk_of_static_specs # top))) 0 procs
 
 (* Mutual groups with logical phase variables added *)
 (* those with logical variables explicitly added will
@@ -2853,7 +2881,7 @@ let rec add_term_nums_prog (cp: prog_decl) : prog_decl =
         let mn = List.hd procs in
         (* TNT Inference: Enable call_num but Disable phase_num *)
         let inf_tnt = (Globals.infer_const_obj # is_term) || (List.exists (fun proc -> 
-            F.is_inf_tnt_struc_formula proc.proc_static_specs) procs) in 
+            F.is_inf_tnt_struc_formula (proc.proc_stk_of_static_specs # top)) procs) in 
         let pv = add_term_nums_proc_scc procs cp.new_proc_decls log_vars
             ((not !dis_call_num) || inf_tnt) ((not !dis_phase_num) && (not inf_tnt) && n>1 && mn.proc_is_recursive) 
         in (match pv with 
@@ -2903,10 +2931,12 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
       if add_call then Some proc.proc_call_order
       else None
     in
-    let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in
+    (* let n_ss, pvl1 = F.add_term_nums_struc proc.proc_static_specs log_vars call_num add_phase in *)
+    let n_ss, pvl1 = F.add_term_nums_struc (proc.proc_stk_of_static_specs # top) log_vars call_num add_phase in
     let n_ds, pvl2 = F.add_term_nums_struc proc.proc_dynamic_specs log_vars call_num add_phase in
+    let () = proc.proc_stk_of_static_specs # push_pr x_loc n_ss in
     ({ proc with
-       proc_static_specs = n_ss; 
+       (* proc_static_specs = n_ss; *)
        proc_dynamic_specs = n_ds; 
      }, pvl1 @ pvl2)
 
@@ -3048,7 +3078,7 @@ let update_mut_vars_bu iprog cprog scc_procs =
       (*update hp_decl of precondition*)
       let () = if diff_args_i = [] then () else
           let () = x_tinfo_hp (add_str "\n update ni:" pr_id) (proc.proc_name ^ ": " ^ (String.concat "," diff_args_i)) no_pos in
-          let hpargs = Cformula.get_hp_rel_pre_struc_formula proc.proc_static_specs in
+          let hpargs = Cformula.get_hp_rel_pre_struc_formula (proc.proc_stk_of_static_specs # top) in
           let todo_unk = List.map (fun (hp,args) ->
               let s_args = List.map P.name_of_spec_var args in
               let inter = Gen.BList.intersect_eq string_cmp s_args diff_args_i in
@@ -4051,7 +4081,7 @@ let update_view_decl ?(caller="") prog vdecl =
       y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
-  let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in
+  (* let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in *)
   prog.prog_view_decls <- others @ [vdecl]
 
 let update_view_decl ?(caller="") prog vdecl = 
@@ -4303,17 +4333,20 @@ let  get_selected_scc_each opt get_name scc_lst =
   get_selected_scc_gen opt get_name sel_f scc_lst
 
 (* WN : only need to get mutual-rec rather than transitive set *)
-let get_t_v v = 
-  let x = HipUtil.view_scc_obj # find_rec (* get_trans *) v in
+let get_t_v ?(get_trans=false) v = 
+  let x = 
+    if get_trans then HipUtil.view_scc_obj # get_trans v
+    else HipUtil.view_scc_obj # find_rec v 
+  in
   if x=[] then [v]
   else x
 
 (* type: (Globals.ident * bool) Globals.regex_list option *)
-let  get_selected_views (opt:((ident * bool) regex_list) option) view_list =
+let  get_selected_views ?(get_trans=false) (opt:((ident * bool) regex_list) option) view_list =
   match opt with
   | None -> view_list
   | Some ans -> 
-    let sel (v,p) = if p then get_t_v v else [v] in
+    let sel (v,p) = if p then get_t_v ~get_trans:get_trans v else [v] in
     let res = match ans with
     | REGEX_STAR -> view_list
     | REGEX_LIST lst ->  
@@ -4388,7 +4421,7 @@ let lemma_soundness =
      | Some c2 -> progress || not(coer==c2) in
      if not(flag) then 
        self # logging "Not Safe for Lemma";
-     flag
+     !Globals.old_unsound_no_progress || flag
    method end_lemma_proving loc = 
      self # logging ("End Lemma Proving "^loc);
      lemma <- None;
@@ -4420,4 +4453,25 @@ let is_segmented_view vd =
     let args = vd.view_vars in
     let vn = vd.view_name in
     is_segmented vn ty args (List.map fst vd.view_un_struc_formula)
+(* let get_views_offset prog f = *)
+(*   let stk = new Gen.stack in *)
+(*   let f_h_f hf =  *)
+(*     match hf with *)
+(*     | ViewNode { h_formula_view_node=p; h_formula_view_arguments=args; h_formula_view_name=name } ->  *)
+(*       let vr = get_root_view prog name p args in *)
+(*       let () = stk # push (p,Some vr) in Some hf  *)
+(*     | DataNode ({ h_formula_data_node = vsv; } )  *)
+(*     | ThreadNode {h_formula_thread_node=vsv;} *)
+(*     | HVar (vsv,_) -> *)
+(*       let () = stk # push (vsv,None) in Some hf *)
+(*     | HRel (hp, e, _)   -> *)
+(*         let args = CP.diff_svl (get_all_sv hf) [hp] in *)
+(*         (\* let root, _ = Sautil.find_root prog [hp] args [] in *\) *)
+(*         let () = stk # push (root,None) in Some hf *)
+(*     | _ -> None in  *)
+(*   let _ = (map_h_formula f f_h_f) in *)
+(*   let r = stk # get_stk in *)
+(*   let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in *)
+(*   let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in *)
+(*   r *)
 

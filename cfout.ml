@@ -370,7 +370,7 @@ let rec shorten_formula f =
       ) vars in
     let new_svl = shorten_svl vars in
     (* subst_avoid_capture vars new_svl f *)
-    let new_f = subst_all (List.combine vars new_svl) f0 in
+    let new_f = x_add subst_all (List.combine vars new_svl) f0 in
     new_f
   in
   match f with

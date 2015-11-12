@@ -706,7 +706,7 @@ let tnt_spec_of_proc prog proc ispec =
       (flatten_case_tnt_spec 
          (norm_nondet_tnt_case_spec ispec)) 
   in
-  let pr = string_of_struc_formula_for_spec in
+  let pr = string_of_struc_formula(*_for_spec*) in
   (* let spec = proc.Cast.proc_static_specs in *)
   let spec = proc.Cast.proc_stk_of_static_specs # top in
   let () = y_tinfo_hp (add_str "original spec" pr) spec in
@@ -714,6 +714,7 @@ let tnt_spec_of_proc prog proc ispec =
       (CF.mkTrue (CF.mkTrueFlow ()) no_pos) ispec spec in
   let () = y_tinfo_hp (add_str "merged spec" pr) spec in
   let spec = flatten_case_struc spec in
+  let spec = CF.flatten_struc_formula spec in
   let () = y_tinfo_hp (add_str "flatten spec" pr) spec in
   let spec = norm_struc spec in
   let () = y_tinfo_hp (add_str "normed spec" pr) spec in
@@ -799,16 +800,19 @@ let update_spec_proc prog proc =
   try
     let ispec = Hashtbl.find proc_case_specs mn in
     let nspec = tnt_spec_of_proc prog proc ispec in
-    let () = proc.Cast.proc_stk_of_static_specs # push_pr "ti2:747" nspec in 
-    let nproc = { proc with Cast.proc_static_specs = nspec; }  in
+    let () = proc.Cast.proc_stk_of_static_specs # push_pr x_loc nspec in 
+    (* let proc = { proc with Cast.proc_static_specs = nspec; }  in *)
     (* let () = Cprinter.string_of_proc_decl_no_body nproc in *)
-    nproc
+    proc
   with _ -> proc
 
 let update_specs_prog prog = 
   let n_tbl = Cast.proc_decls_map (fun proc ->
       update_spec_proc prog proc) prog.Cast.new_proc_decls in
-  { prog with Cast.new_proc_decls = n_tbl }
+  (* Should not create a new prog object *)
+  (* { prog with Cast.new_proc_decls = n_tbl } *)
+  ()
+  
 
 (* TNT Graph *)
 module TNTElem = struct

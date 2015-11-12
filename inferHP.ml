@@ -229,22 +229,21 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
           ) rem,
           (ni_args), CP.diff_svl h_args reachable_args)
     in
-    let res,is_pre, niu_svl_i, niu_svl_ni,h_args_rem = parition_helper h_node lhs_hpargs in
+    let res, is_pre, niu_svl_i, niu_svl_ni, h_args_rem = parition_helper h_node lhs_hpargs in
     if res then
       (*find arg pointers are going to be init in next stmts*)
       let args1 = CP.remove_dups_svl (CP.diff_svl h_args_rem (def_svl)) in
-      let () = y_tinfo_hp (add_str "args1" !CP.print_svl) args1 in
-      let () = y_tinfo_hp (add_str "     def_svl" !CP.print_svl) def_svl in
-      let () = y_tinfo_hp (add_str "     h_args_rem" !CP.print_svl) args1 in
-      let () = y_tinfo_hp (add_str "     niu_svl_i" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_i in
-      let () = y_tinfo_hp (add_str "     niu_svl_ni" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_ni in
+      let () = y_binfo_hp (add_str "args1" !CP.print_svl) args1 in
+      let () = y_binfo_hp (add_str "     def_svl" !CP.print_svl) def_svl in
+      let () = y_binfo_hp (add_str "     h_args_rem" !CP.print_svl) args1 in
+      let () = y_binfo_hp (add_str "     niu_svl_i" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_i in
+      let () = y_binfo_hp (add_str "     niu_svl_ni" (pr_list (pr_pair !CP.print_sv print_arg_kind))) niu_svl_ni in
       (*old: args1@not_in_used_svl*)
       (*not_in_used_svl: NI*)
-      let () = y_tinfo_hp (add_str  "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field in
-      let () = y_tinfo_hp (add_str  " es.CF.es_infer_obj # is_pure_field_all" string_of_bool)  es.CF.es_infer_obj # is_pure_field_all in
+      let () = y_tinfo_hp (add_str "Globals.infer_const_obj # is_pure_field " string_of_bool) Globals.infer_const_obj # is_pure_field in
+      let () = y_tinfo_hp (add_str " es.CF.es_infer_obj # is_pure_field_all" string_of_bool)  es.CF.es_infer_obj # is_pure_field_all in
       let args11 = if (* Globals.infer_const_obj # is_pure_field *)
-        (es.CF.es_infer_obj # is_pure_field_all) &&
-        !Globals.sep_pure_fields
+        es.CF.es_infer_obj # is_pure_field_all
       (* !Globals.sa_pure_field *) then
           let args11 = List.map (fun sv ->
               if CP.is_node_typ sv then (sv, I)
@@ -259,39 +258,55 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
       let niu_svl_i2 = List.map (fun (sv,n) ->
           if List.exists (fun dn -> CP.eq_spec_var dn.CF.h_formula_data_node sv) lhds then
             (sv, NI)
-          else (sv, n)
+          else (sv, n) (* n = I *)
       ) niu_svl_i in
       let niu_svl_ni_total = niu_svl_i2@niu_svl_ni in
-      (*for view, filter i var that is classified as NI in advance*)
+      (* for view, filter I var that is classified as NI in advance *)
       let args12 = List.filter (fun (sv,_) -> List.for_all (fun (sv1,_) -> not(CP.eq_spec_var sv1 sv)) niu_svl_ni_total) args11 in
-      let () = y_tinfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
-      let get_data_ni_svl knd = 
-        if is_view || !Globals.sep_pure_fields then []
-        else 
-          match knd with
-          | NI -> []
-          | I -> 
-            let pure_svl = List.filter (fun a -> 
-              not (CP.is_node_typ a) && not (List.exists (fun (a1, _) -> CP.eq_spec_var a a1) niu_svl_ni_total)) args1
-            in
-            List.map (fun a -> (a, NI)) pure_svl
-      in
-      let ls_fwd_svl = if args12 =[] &&
-        not ((es.CF.es_infer_obj # is_pure_field_all) && !Globals.sep_pure_fields) then
-          let () = y_tinfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
-          (* find @I parameters *)
-          let niu_i = List.filter (fun (_,i) -> i=I) niu_svl_ni_total in
-          if niu_i==[] then []
-          else [(is_pre, niu_svl_ni_total@[(h_node, NI)])]
+      let () = y_binfo_hp (add_str "args11" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args11 in
+      let () = y_binfo_hp (add_str "args12" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) args12 in
+      let () = y_binfo_hp (add_str "niu_svl_ni_total" (pr_list (pr_pair !CP.print_sv string_of_arg_kind))) niu_svl_ni_total in
+      let ls_fwd_svl =(*  if args12 =[] then *)
         (*   if is_view then *)
         (*     (\* if is view, we add root of view as NI to find precise constraints. duplicate with cicular data structure case?*\) *)
         (*     [(is_pre, niu_svl_i@[(h_node, NI)]@niu_svl_ni)] *)
         (*   else [] *)
-      else
-        List.map (fun ((arg, knd) as sv) ->
-            let fwd_svl = sv::niu_svl_ni_total@(get_data_ni_svl knd)@[(h_node, NI)] in
-            (is_pre, fwd_svl)) args12
+        (* else *)
+        let is_inf_pure_field = es.CF.es_infer_obj # is_pure_field_all in
+        let () = y_binfo_hp (add_str "is_inf_pure_field" string_of_bool) is_inf_pure_field in
+        let i_svl, ni_svl = List.partition (fun (_, k) -> k = I) niu_svl_ni_total in
+        if is_empty args12 then
+          if is_empty i_svl && not is_inf_pure_field then []
+          else [(is_pre, i_svl @ ni_svl @ [(h_node, NI)])]
+        else
+          if (* is_inf_pure_field && *) not !Globals.sep_pure_fields then
+            let i_args12, ni_args12 = List.partition (fun (_, k) -> k = I) args12 in
+            (* if not (is_empty i_args12) then *)
+              List.map (fun ((arg, knd) as sv) ->
+                let data_ni_svl = 
+                  if is_view then []
+                  else ni_args12
+                in
+                let fwd_svl = sv::niu_svl_ni_total @ data_ni_svl @ [(h_node, NI)] in
+                (is_pre, fwd_svl)) i_args12
+            (* else if is_empty i_svl && not is_inf_pure_field then []      *)
+            (* else [(is_pre, i_svl @ ni_args12 @ ni_svl @ [(h_node, NI)])] *)
+          else
+            List.map (fun ((arg, knd) as sv) ->
+              let data_ni_svl = 
+                if is_view then []
+                else 
+                  match knd with
+                  | NI -> []
+                  | I ->
+                    if is_empty niu_svl_ni_total then []
+                    else List.filter (fun (a, k) -> 
+                      k == NI && not (List.exists (fun (a1, _) -> CP.eq_spec_var a a1) niu_svl_ni_total)) args12
+              in
+              let fwd_svl = sv::niu_svl_ni_total@data_ni_svl@[(h_node, NI)] in
+              (is_pre, fwd_svl)) args12
       in
+      let () = y_binfo_hp (add_str "ls_fwd_svl" (pr_list (pr_pair string_of_bool (pr_list (pr_pair !CP.print_sv string_of_arg_kind))))) ls_fwd_svl in
       (* str-inf/ex16c5b(8) do not need extra_clls *)
       (*generate extra hp for cll*)
       let extra_clls = [] in
@@ -1439,7 +1454,7 @@ let do_inst prog estate lhs_b largs rargs extended_hps =
 (* TODO : how about aliases *)
 let set_root_unfold lhs rhs alias_set =
   match lhs with
-  | HRel(hp,args,_) -> 
+  | HRel (hp, args, _) -> 
     begin
       try
         let ptr = CF.get_root_ptr rhs in
@@ -1451,6 +1466,7 @@ let set_root_unfold lhs rhs alias_set =
             if List.exists (CP.eq_spec_var v) (ptr::alias_set) then n
             else aux xs (n+1) in
         let posn = aux args 0 in
+        let () = y_binfo_hp (add_str ("root posn (" ^ (!CP.print_sv hp) ^ ")") string_of_int) posn in
         let () = if posn>=0 then Cast.cprog_obj # set_hp_root hp posn in
         ()
       with _ -> 
@@ -1460,6 +1476,13 @@ let set_root_unfold lhs rhs alias_set =
   | _ -> 
     let () = y_winfo_hp (add_str "not a hp_rel?" !CF.print_h_formula) lhs in
     ()
+
+let set_root_unfold lhs rhs alias_set =
+  let pr = !CF.print_h_formula in
+  Debug.no_3 "set_root_unfold" 
+    (add_str "lhs" pr) (add_str "rhs" pr)
+    (add_str "aset" !CP.print_svl) (fun _ -> "")
+    set_root_unfold lhs rhs alias_set
 
 (*
 type: (CF.entail_state ->
@@ -1711,7 +1734,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
         | x::_ -> x
       with _ ->
         PK_Unknown in
-    if Infer.no_infer_hp_rel es0 (* || MCP.isTrivMTerm mix_rf *) || ( pk != PK_POST && not (check_is_classic ())) then
+    if no_infer_hp_rel es0 (* || MCP.isTrivMTerm mix_rf *) || ( pk != PK_POST && not (check_is_classic ())) then
       (false, es0, [], lhs_b)
     else
       let ivs = es0.es_infer_vars_hp_rel in
@@ -2006,7 +2029,7 @@ let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0
     let () = Debug.ninfo_hprint (add_str  "es_infer_vars " !CP.print_svl) es0.es_infer_vars no_pos in
     let () = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel " !CP.print_svl) es0.es_infer_vars_sel_hp_rel no_pos in
     (*end for debugging*)
-    if Infer.no_infer_hp_rel es0 then
+    if no_infer_hp_rel es0 then
       constant_checking prog rhs0 lhs_b0 rhs_b0 es0
     else
       let ivs = es0.es_infer_vars_hp_rel in
@@ -2445,7 +2468,7 @@ let infer_collect_hp_rel_classsic prog (es:entail_state) rhs pos =
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars_hp_rel"  !CP.print_svl) es.es_infer_vars_hp_rel no_pos in
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars" !CP.print_svl)  es.es_infer_vars no_pos in
   let () = Debug.ninfo_hprint (add_str  "es_infer_vars_sel_hp_rel" !CP.print_svl)  es.es_infer_vars_sel_hp_rel no_pos in
-  if rhs<>HEmp || Infer.no_infer_hp_rel es then
+  if rhs<>HEmp || no_infer_hp_rel es then
     let () = Debug.ninfo_pprint ("no_infer_hp: " ) no_pos in
     (false, es)
   else

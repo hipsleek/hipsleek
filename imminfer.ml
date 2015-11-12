@@ -119,7 +119,7 @@ let infer_imm_ann_proc (proc_static_specs: CF.struc_formula) : (CF.struc_formula
        is_infer := true;
        imm_pre_is_set := ff.formula_inf_obj # is_pre_imm && !should_infer_imm_pre;
        should_infer_imm_pre := !imm_pre_is_set;
-       x_binfo_hp (add_str "!should_infer_imm_pre" string_of_bool) !should_infer_imm_pre no_pos;
+       x_tinfo_hp (add_str "!should_infer_imm_pre" string_of_bool) !should_infer_imm_pre no_pos;
        (* has_infer_imm_pre := (!has_infer_imm_pre || !imm_pre_is_set) && !should_infer_imm_pre; *)
        imm_post_is_set := ff.formula_inf_obj # is_post_imm;
        should_infer_imm_post := !imm_post_is_set && (not(!imm_pre_is_set) || !should_infer_imm_post);
@@ -240,20 +240,20 @@ let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.prog_de
         let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc old_specs in
         let pre_rels = map_opt_def []  (fun r -> [r]) pre_rel in
         let post_rels = map_opt_def [] (fun r -> [r]) post_rel in
-        proc.C.proc_stk_of_static_specs # push pss;
+        proc.C.proc_stk_of_static_specs # push_pr x_loc pss;
         (* pss_stk # push pss; *)
         (pre_rels, post_rels, pss)(* ) old_specs ([], []) *)
       in
-      (({proc with C.proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs; C.proc_static_specs = pss })::proc_decls, pre_rels@post_rels@rel_list) in
+      (* (({proc with C.proc_stk_of_static_specs = proc.C.proc_stk_of_static_specs; C.proc_static_specs = pss }) *)
+      (proc::proc_decls, pre_rels@post_rels@rel_list) in
     List.fold_right helper proc_decls ([], []) in
   let prog = update_rel_tables prog rel_list in
   (prog, new_proc_decls)
 
 let infer_imm_ann (prog: C.prog_decl) (proc_decls: C.proc_decl list) : C.prog_decl * C.proc_decl list  =
-  let pr = pr_list (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+  let pr = pr_list (fun p -> Cprinter.string_of_struc_formula (p.C.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *)) in
   let pr_out (_,b) = 
-      (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs))) b
-     
+      (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula (p.C.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *)))) b
   in
   Debug.no_1 "infer_imm" pr pr_out (fun _ -> infer_imm_ann prog proc_decls) proc_decls 
 
@@ -261,16 +261,16 @@ let infer_imm_ann_prog (prog: C.prog_decl) : C.prog_decl =
   let proc_decls = Hashtbl.create (Hashtbl.length prog.C.new_proc_decls) in
   let (new_proc_decls, rel_list) =
     let helper id proc (proc_decls, rel_list) =
-      let pss_stk = new Gen.stack_pr "pss_stk" Cprinter.string_of_struc_formula (==) in 
+      let pss_stk = new Gen.stack_pr "pss_stk" Cprinter.string_of_struc_formula (==) in
       let old_specs = proc.C.proc_stk_of_static_specs # get_stk in
       let (pre_rels, post_rels) = List.fold_right (fun spec (pre_rels, post_rels) ->
         let (pss, pre_rel, post_rel) = x_add_1 infer_imm_ann_proc spec in
         let pre_rels = map_opt_def pre_rels (fun r -> r::pre_rels) pre_rel in
         let post_rels = map_opt_def post_rels (fun r -> r::post_rels) post_rel in
-        pss_stk # push pss;
+        pss_stk # push_pr x_loc pss;
         (pre_rels, post_rels)) old_specs ([], []) in
-      ((id, {proc with C.proc_stk_of_static_specs = pss_stk;
-                       C.proc_static_specs = (pss_stk # top) })::proc_decls, pre_rels@post_rels@rel_list) in
+      ((id, { proc with C.proc_stk_of_static_specs = pss_stk;
+                     (* C.proc_static_specs = (pss_stk # top) *) })::proc_decls, pre_rels@post_rels@rel_list) in
     Hashtbl.fold helper prog.new_proc_decls ([], []) in
   let prog = update_rel_tables prog rel_list in
   List.iter (fun (id, proc_decl) -> Hashtbl.add proc_decls id proc_decl) new_proc_decls;
@@ -334,7 +334,7 @@ let wrapper_infer_imm_pre_post_seq infer_stk verify_scc prog verified_scc scc =
   let prog, scc1 = helper prog scc in
   let res = verify_scc prog verified_scc scc1 in
   let _ = should_infer_imm_post := not(!should_infer_imm_post) in
-  let res = if (!should_infer_imm_pre && !should_infer_imm_post & !is_infer) then 
+  let res = if (!should_infer_imm_pre && !should_infer_imm_post && !is_infer) then 
       (* pre-process for post only *)
       let _ = should_infer_imm_pre := false in
       let prog, vscc = res in
@@ -367,8 +367,8 @@ let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
   else wrapper_infer_imm_pre_post_seq infer_stk verify_scc prog verified_scc scc
 
 let wrapper_infer_imm_pre_post infer_stk verify_scc prog verified_scc scc =
- let pr = pr_list (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
- let pr2 =  (pr_list (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula p.Cast.proc_static_specs)))) in
+ let pr = pr_list (fun p -> Cprinter.string_of_struc_formula (p.C.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *)) in
+ let pr2 =  (pr_list (pr_list (add_str "proc_decls" (fun p -> Cprinter.string_of_struc_formula (p.C.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *))))) in
   let pr_out (a,b) = (pr_pair
     (fun a -> a.Cast.prog_rel_decls # string_of) 
     pr2 )  (a,b)

@@ -129,6 +129,7 @@ let print_formula = ref (fun (c:formula) -> "cpure printer has not been initiali
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_formula_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
+let print_exp = print_formula_exp
 
 module Exp_Pure =
 struct 
@@ -1792,12 +1793,20 @@ let rec typ_of_exp (e: exp) : typ =
                 Gen.Basic.report_error pos "Ununified type in 2 expressions 1"
             | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 2"
           )
-      | _ -> ( match typ2 with
-          | Array (t,_) -> if t== UNK || t=typ1 then typ1 else Gen.Basic.report_error pos "Ununified type in 2 expressions 3"
-          | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 4"
+      | _ -> 
+        (let msg = string_of_typ typ2 in
+         match typ2 with
+          | Array (t,_) -> 
+            if t== UNK || t=typ1 then typ1 
+            else Gen.Basic.report_error pos ("Ununified type in 2 expressions 3"^msg)
+          | _ -> Gen.Basic.report_error pos ("Ununified type in 2 expressions 4"^msg)
         )
     )
   in
+  let arr_typ_check typ1 typ2 =
+    let pr = string_of_typ in
+    Debug.no_2 "arr_typ_check" pr pr pr arr_typ_check typ1 typ2 in
+
   let merge_types typ1 typ2 =
     (* let () = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
     (* let () = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
@@ -1809,9 +1818,23 @@ let rec typ_of_exp (e: exp) : typ =
       | _ -> arr_typ_check typ1 typ2
       (* Gen.Basic.report_error pos "Ununified type in 2 expressions" *)
   in
+  let merge_types typ1 typ2 =
+    let pr = string_of_typ in
+    Debug.no_2 "merge_types" pr pr pr merge_types typ1 typ2 in
+
+  let merge_types_ptr typ1 typ2 =
+    if !Globals.ptr_arith_flag then
+      begin
+        if typ1=Int || typ1=NUM then typ2
+        else if typ2=Int || typ2=NUM then typ1
+        else x_add merge_types typ1 typ2
+      end
+    else x_add merge_types typ1 typ2 
+  in
   match e with
-  | Ann_Exp (ex, ty, _)       -> let ty2 = typ_of_exp ex in
-    merge_types ty2 ty
+  | Ann_Exp (ex, ty, _)       -> 
+    let ty2 = typ_of_exp ex in
+    x_add merge_types ty2 ty
   | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
   | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
   (* Const *)
@@ -1826,53 +1849,61 @@ let rec typ_of_exp (e: exp) : typ =
   | Tup2 ((e1,e2), _)				  -> Globals.Tup2 (typ_of_exp e1,typ_of_exp e2)
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
-  | Subtract (ex1, ex2, _)
+  | Subtract (ex1, ex2, _) -> 
+    let ty1 = typ_of_exp ex1 in
+    let ty2 = typ_of_exp ex2 in
+    merge_types_ptr ty1 ty2
   | Mult (ex1, ex2, _)
   | Div (ex1, ex2, _)
   | Max (ex1, ex2, _)
-  | Min (ex1, ex2, _)         -> let ty1 = typ_of_exp ex1 in
+  | Min (ex1, ex2, _) -> 
+    let ty1 = typ_of_exp ex1 in
     let ty2 = typ_of_exp ex2 in
-    merge_types ty1 ty2
+    x_add merge_types ty1 ty2
   | TypeCast (ty, ex1, _)     -> ty
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)
   | BagIntersect (ex_list, _) -> let ty_list = List.map typ_of_exp ex_list in 
-    let ty = List.fold_left merge_types UNK ty_list in
+    let ty = List.fold_left (x_add merge_types) UNK ty_list in
     Globals.BagT ty
   | BagDiff (ex1, ex2, _)     -> let ty1 = typ_of_exp ex1 in
     let ty2 = typ_of_exp ex2 in
-    let ty = merge_types ty1 ty2 in
+    let ty = x_add merge_types ty1 ty2 in
     Globals.BagT ty
   (* list expressions *)
   | List (ex_list, _)         -> let ty_list = List.map typ_of_exp ex_list in 
-    let ty = List.fold_left merge_types UNK ty_list in
+    let ty = List.fold_left (x_add merge_types) UNK ty_list in
     Globals.List ty
   | ListCons (ex1, ex2, _)    -> let ty1 = typ_of_exp ex1 in
     let ty2 = typ_of_exp ex2 in
-    let ty = merge_types ty1 ty2 in
+    let ty = x_add merge_types ty1 ty2 in
     Globals.List ty
   | ListHead (ex, _)          -> typ_of_exp ex
   | ListTail (ex, _)          -> let ty = typ_of_exp ex in
     Globals.List ty
   | ListLength (ex, _)        -> Globals.Int
   | ListAppend (ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in 
-    let ty = List.fold_left merge_types UNK ty_list in
+    let ty = List.fold_left (x_add merge_types) UNK ty_list in
     Globals.List ty
   | ListReverse (ex, _)       -> let ty = typ_of_exp ex in
     Globals.List ty
   (* Array expressions *)
   | ArrayAt (_, ex_list, _)   -> 
     let ty_list = List.map typ_of_exp ex_list in 
-    let ty = List.fold_left merge_types UNK ty_list in
+    let ty = List.fold_left (x_add merge_types) UNK ty_list in
     let len = List.length ex_list in
     Globals.Array (ty, len)
   | Template t -> 
     let ty_list = List.map typ_of_exp t.templ_args in 
-    List.fold_left merge_types UNK ty_list
+    List.fold_left (x_add merge_types) UNK ty_list
   (* Func expressions *)
   | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func"
   | BExpr _ -> Bool
+
+let typ_of_exp (e: exp) : typ =
+  let pr = !print_formula_exp in
+  Debug.no_1 "typ_of_exp" pr string_of_typ typ_of_exp e
 
 (* Slicing Utils *)
 let rec set_il_formula f il =

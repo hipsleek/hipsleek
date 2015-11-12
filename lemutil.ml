@@ -106,7 +106,7 @@ let checkeq_sem  ?(force_pr=false) iprog cprog f1 f2 ?(lemtyp=I.Equiv) hpdefs to
     (fun _ _ _ _ _ ->  checkeq_sem  ~force_pr:force_pr iprog cprog f1 f2 ~lemtyp:lemtyp hpdefs to_infer_hps12 to_infer_hps21)
     f1 f2 hpdefs to_infer_hps12 to_infer_hps21
 
-let norm_checkeq_views_x iprog cprog cviews0=
+let norm_checkeq_views_x iprog cprog cviews0 =
   (************************************************)
   let gen_view_formula vdcl=
     let self_sv = CP.SpecVar (Named vdcl.Cast.view_data_name ,self, Unprimed) in
@@ -138,7 +138,9 @@ let norm_checkeq_views_x iprog cprog cviews0=
   in
   (************************************************)
   let view_eqs = checkeq_views_loop cviews0 [] in
-  {cprog with Cast.prog_view_equiv = cprog.Cast.prog_view_equiv@view_eqs}
+  (* {cprog with Cast.prog_view_equiv = cprog.Cast.prog_view_equiv@view_eqs} *)
+  let () = cprog.Cast.prog_view_equiv <- cprog.Cast.prog_view_equiv@view_eqs in
+  cprog
 
 let norm_checkeq_views iprog cprog cviews=
   let pr1 = pr_list_ln Cprinter.string_of_view_decl in

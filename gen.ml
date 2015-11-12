@@ -853,8 +853,10 @@ class counter x_init =
   object 
     val mutable ctr = x_init
     method get : int = ctr
+    method get_orig : int = x_init
     method inc = ctr <- ctr + 1
     method inc_and_get = ctr <- ctr + 1; ctr
+    method dec_and_get = ctr <- ctr - 1; ctr
     method diff = ctr - x_init
     method add (i:int) = ctr <- ctr + i
     method reset = ctr <- x_init (* 0x0 *)

@@ -101,6 +101,7 @@ and view_decl =
     view_parent_name: (ident) option;
     mutable view_derv: bool;
     view_type_of_self : typ option;
+    (* view_actual_root : P.exp option; *)
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
@@ -292,9 +293,9 @@ and coercion_decl_list = {
 }
 
 and coercion_type = 
-  | Left
+  | Left (* ==> *)
   | Equiv
-  | Right
+  | Right (* <== *)
 
 
 
@@ -641,6 +642,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_pos = pos;
           view_data_name = dname;
           view_type_of_self = None;
+          (* view_actual_root = None; *)
           view_imm_map = [];
           view_vars = (* List.map fst *) vs;
           view_ho_vars = [];
@@ -685,6 +687,7 @@ let mk_view_header vn opt1 cids mvs modes pos =
     view_pos = pos ;
     view_data_name = "";
     view_type_of_self = None;
+    (* view_actual_root = None; *)
     view_imm_map = [];
     view_vars = (* List.map fst *) cids;
     view_ho_vars = un_option opt1 []; 
@@ -1518,7 +1521,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
           (* hp_view = None *)
         }
         in
-        let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
+        let () = x_binfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
             hp_pre_decl.hp_name no_pos in
         let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
         let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
@@ -1795,7 +1798,10 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 
 let rec look_up_data_def_x pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def_x pos rest name
-  | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
+  | [] -> 
+    let msg = ("Cannot find definition of iview " ^ name) in 
+    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
+    Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
 
 and look_up_data_def i pos (defs : data_decl list) (name : ident) 
   = Debug.no_1_num i "look_up_data_def" pr_id pr_none (look_up_data_def_x pos defs) name 
@@ -2384,9 +2390,9 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
             (* let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in *)
             (* let () = x_tinfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in *)
             v.view_data_name <- (v.view_name)
-        else if String.length v.view_data_name = 0 then
-          (* self has unknown type *)
-          report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined")
+        (* else if String.length v.view_data_name = 0 then *)
+        (*   (\* self has unknown type *\) *)
+        (*   report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
       else 
         let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
@@ -3920,7 +3926,7 @@ let update_view_decl prog vdecl =
   let () = 
     if not (is_empty same_vdecls) then 
       y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog")
-    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.")  
+    else y_binfo_pp ("adding the view " ^ vdecl_id ^ " into iprog.")  
   in
   prog.prog_view_decls <- others @ [vdecl]
 
@@ -3970,3 +3976,12 @@ let gen_name_pairs_struc view_decls0 vname (f:F.struc_formula): (ident * ident) 
     | F.EInfer b -> aux b.F.formula_inf_continuation
     | F.EList b ->  fold_l_snd (aux) b
   in aux f
+
+
+let swap_dir ct = 
+  match ct with
+  | Left -> Right
+  | Right -> Left
+  | Equiv -> Equiv
+
+

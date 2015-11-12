@@ -1,0 +1,53 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+lemma_unsafe "three"  
+   self::node<_,q>*q::rlseg<p> 
+    ->
+   self::rlseg<p1>* p1::node<_,p> 
+.
+// fail <==
+
+
+infer[@classic]
+   self::node<_,q> & p=q
+    |-
+   self::rlseg<p1>* p1::node<_,p> 
+.
+print residue.
+
+
+infer[@classic]
+   self::node<_,q>* q::node<_,q1>*q1::rlseg<p> 
+    |-
+   self::rlseg<p1>* p1::node<_,p> 
+.
+print residue.
+
+infer[@classic]
+   self::node<_,q> & p=q
+    |-
+   p1::node<_,p> & self=p1
+.
+print residue.
+
+infer[@classic]
+   self::node<_,q>*q::rlseg<p> 
+    |-
+   self::node<_,p2>*p2::rlseg<p1>* p1::node<_,p> 
+.
+print residue.
+
+/*
+Entail (4) : Fail.(may) cause:UnionR[base case unfold failed,OrL[
+do_unmatched_rhs : p2::rlseg<p1>@M(must),
+valid
+]]
+*/

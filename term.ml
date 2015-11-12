@@ -407,7 +407,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
         lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
         let rank_formula = MCP.pure_of_mix rank_formula in*)
       let estate, entail_dec_res = 
-        if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+        if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
           let () = Globals.templ_term_inf := true in
           (* let () = print_endline "COLLECT RANK" in *)
           let es = Template.collect_templ_assume_init estate lhs_p rank_formula pos in 
@@ -439,7 +439,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
             let bnd_formula_l = List.map (fun e -> mkPure (mkGte e (mkIConst 0 pos) pos)) m in
             let bnd_formula = join_conjunctions bnd_formula_l in
             let estate, entail_bnd_res = 
-              if not (Infer.no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+              if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
                 (* let () = print_endline "COLLECT BND" in *)
                 let es = Template.collect_templ_assume_init estate lhs_p bnd_formula pos
                 in (match es with Some es -> es | None -> estate), true
@@ -467,7 +467,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
           None, 
           None
         else
-        if Infer.no_infer_pure estate then (* No inference at all *)
+        if no_infer_pure estate then (* No inference at all *)
           Some (Fail TermErr_May, ml, il),
           (term_pos, t_ann_trans, Some orig_ante, MayTerm_S (Not_Decreasing_Measure t_ann_trans)),
           Some (string_of_term_res (term_pos, t_ann_trans, None, MayTerm_S (Not_Decreasing_Measure t_ann_trans))),
@@ -1203,11 +1203,12 @@ let subst_phase_num_struc rp subst (struc: struc_formula) : struc_formula =
 (*   else subst_phase_num_struc subst struc *)
 
 let subst_phase_num_proc rp subst (proc: Cast.proc_decl) : Cast.proc_decl =
-  let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in
+  (* let s_specs = subst_phase_num_struc rp subst proc.Cast.proc_static_specs in *)
+  let s_specs = subst_phase_num_struc rp subst (proc.Cast.proc_stk_of_static_specs # top) in
   let d_specs = subst_phase_num_struc rp subst proc.Cast.proc_dynamic_specs in
-  let () = proc.Cast.proc_stk_of_static_specs # push_pr "term:1189" s_specs in 
+  let () = proc.Cast.proc_stk_of_static_specs # push_pr x_loc s_specs in 
   { proc with
-    Cast.proc_static_specs = s_specs;
+    (* Cast.proc_static_specs = s_specs; *)
     Cast.proc_dynamic_specs = d_specs; }
 
 let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl list) : Cast.prog_decl =
@@ -1274,7 +1275,8 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
                 then subst_phase_num_proc rp subst proc
                 else proc
               ) prog.Cast.new_proc_decls in  
-            { prog with Cast.new_proc_decls = n_tbl }
+            (* { prog with Cast.new_proc_decls = n_tbl } *)
+            prog
           end
         else prog
       with Not_found -> prog

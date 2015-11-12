@@ -57,7 +57,7 @@ let view_pure_ext iprog cprog view_ext extn_sv view=
 
 let extend_specs_views_pure_ext iprog cprog sccs error_traces =
   let specs = List.fold_left (fun r scc ->
-      r@(List.map (fun proc -> proc.Cast.proc_static_specs) scc)
+      r@(List.map (fun proc -> proc.Cast.proc_stk_of_static_specs # top (* proc.Cast.proc_static_specs *)) scc)
     ) [] sccs in
   (*collect rele views in spec of procs*)
   let rele_vnames0 =  collect_rele_views cprog specs in

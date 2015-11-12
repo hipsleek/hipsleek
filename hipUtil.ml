@@ -137,6 +137,10 @@ class graph =
       let r = self # find_rec n in
       List.exists (fun v -> n=v) r
 
+    method is_mutual_rec n  =
+      let r = self # find_rec n in
+      (List.filter (fun v -> not(n=v)) r)!=[]
+
     (* method is_self_rec_only n  = *)
     (*   if grp==None then self # build_scc_void; *)
     (*   List.exists (fun v -> n=v) self_rec_only *)
@@ -285,10 +289,14 @@ class graph =
         let _ = self # build_scc "get_graph" in
         self # get_graph
 
+    method get_graph_lst = 
+      Hashtbl.fold (fun n xs acc-> (n,xs)::acc) nlst []
+
     method string_of  =
       if grp==None then self # build_scc_void "string_of";
       let str = "SCC:"^((pr_list ((pr_list pr_id))) scc) in
-      let lst = (Hashtbl.fold (fun n xs acc-> (n,xs)::acc) nlst []) in
+      (* let lst = (Hashtbl.fold (fun n xs acc-> (n,xs)::acc) nlst []) in *)
+      let lst = self # get_graph_lst in
       let str2 = pr_list (pr_pair pr_id (pr_list pr_id)) lst in
       let str = str^"\nGraph:"^str2 in 
       (* print_endline_quiet *) str

@@ -68,22 +68,31 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
       try List.find (fun svl -> mem arg svl) aliases
       with _ -> [arg]) rhs_args) in
     let lhs_def_vars = remove_dups (List.concat (List.map (fun (a, b) -> [a; b]) lhs_aliases)) in
+    let () = y_tinfo_hp (add_str "lhs_def_vars" !CP.print_svl) lhs_def_vars in
+    let () = y_tinfo_hp (add_str "lhs_args" !CP.print_svl) lhs_args in
+    let () = y_tinfo_hp (add_str "rhs_args_w_aliases" !CP.print_svl) rhs_args_w_aliases in
     let dangling_args = List.filter CP.is_node_typ 
       (diff (* (diff lhs_args lhs_nodes) *) (diff lhs_args lhs_def_vars) rhs_args_w_aliases) in
-    let dangling_args = List.filter (fun dl ->
-      let dl_aliases = CP.EMapSV.find_equiv_all_new dl rhs_aset in
-      not (List.exists (fun dla -> mem dl lhs_args) dl_aliases)) dangling_args in
-    let () = x_tinfo_hp (add_str "Dangling args" !CP.print_svl) dangling_args no_pos in
+    let () = y_tinfo_hp (add_str "dangling_args" !CP.print_svl) dangling_args in
+    let strict_dangling_args = List.filter (fun dl ->
+        let dl_aliases = CP.EMapSV.find_equiv_all_new dl rhs_aset in
+        let dl_aliases = List.filter (fun dla -> not (CP.eq_spec_var dla dl)) dl_aliases in
+        not (overlap dl_aliases lhs_args)
+        (* if is_empty dl_aliases then true                                *)
+        (* else not (List.exists (fun dla -> mem dla lhs_args) dl_aliases) *)
+      ) dangling_args in
+    let () = y_tinfo_hp (add_str "strict_dangling_args" !CP.print_svl) strict_dangling_args in
     let combine_dangling_args f = List.fold_left (fun acc_f dangling_arg ->
         CF.mkStar_combine_heap acc_f (mk_dangling_view_node dangling_arg) CF.Flow_combine no_pos
-      ) f dangling_args in
-    if is_empty dangling_args then hpr, false
+      ) f strict_dangling_args in
+    if is_empty strict_dangling_args then hpr, false
     else
       { hpr with hprel_rhs = combine_dangling_args hpr.hprel_rhs }, true
 
 let add_dangling_hprel prog (hpr: CF.hprel) =
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "Syn.add_dangling_hprel" pr (pr_pair pr string_of_bool) (add_dangling_hprel prog) hpr
+  Debug.no_1 "Syn.add_dangling_hprel" pr (pr_pair pr string_of_bool) 
+    (add_dangling_hprel prog) hpr
 
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   let n_hpr_list, has_dangling_vars = List.split (List.map (x_add add_dangling_hprel prog) hpr_list) in
@@ -96,7 +105,7 @@ let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
   n_hpr_list
 
 let add_dangling_hprel_list prog (hpr_list: CF.hprel list) =
-  let pr = pr_list Cprinter.string_of_hprel_short in
+  let pr = Cprinter.string_of_hprel_list_short in
   Debug.no_1 "Syn.add_dangling_hprel_list" pr pr (add_dangling_hprel_list prog) hpr_list
 
   
@@ -755,10 +764,10 @@ let aux_pred_reuse iprog cprog all_views =
   let ids = List.map (fun x -> x.Cast.view_name) all_views in 
   (* let vdefs = cprog.Cast.prog_view_decls in *)
   let vdefs = C.get_sorted_view_decls cprog in
-  let () = Cast.cprog_obj # check_prog_upd x_loc cprog in
+  (* let () = Cast.cprog_obj # check_prog_upd x_loc cprog in *)
   let () = y_tinfo_pp "XXX Scheduling pred_elim_useless" in
   let vdefs = Norm.norm_elim_useless vdefs ids in
-  let () = Cast.cprog_obj # check_prog_upd x_loc cprog in
+  (* let () = Cast.cprog_obj # check_prog_upd x_loc cprog in *)
   let v_ids = List.map (fun x -> x.Cast.view_name) vdefs in
   let () = y_tinfo_pp "XXX Scheduling pred_reuse" in
   let () = y_tinfo_hp (add_str "XXX derived_view names" (pr_list pr_id)) ids in
@@ -772,6 +781,12 @@ let aux_pred_reuse iprog cprog all_views =
   let () = y_tinfo_hp (add_str "XXX vdefs (after reuse)" 
       (pr_list Cprinter.string_of_view_decl_short)) vdefs in
   lst
+
+let aux_pred_reuse iprog cprog all_views =
+  let pr1 = pr_list (fun v -> v.Cast.view_name) in
+  let pr2 = pr_list (pr_pair pr_id pr_id) in
+  Debug.no_1 "aux_pred_reuse" pr1 pr2 
+    (fun _ -> aux_pred_reuse iprog cprog all_views) all_views
   
 (*************************)
 (***** DERIVING VIEW *****)
@@ -1028,14 +1043,14 @@ let elim_tail_pred_list iprog cprog preds =
 let extn_norm_pred iprog cprog extn_pred norm_pred =
   let equiv_pid = get_equiv_pred cprog norm_pred.C.view_name in 
   let norm_ipred = I.look_up_view_def_raw x_loc iprog.I.prog_view_decls equiv_pid in
-  let extn_view_name = extn_pred.C.view_name (* "extn_" ^ norm_ipred.I.view_name *) in
+  let extn_view_name = norm_ipred.I.view_name ^ "_" ^ extn_pred.C.view_name in
   let extn_view_var = extn_pred.C.view_name ^ "_prop" in
   let extn_iview = I.mk_iview_decl ~v_kind:View_DERV extn_view_name "" 
       (norm_ipred.I.view_vars @ [extn_view_var])
       (IF.mkETrue top_flow no_pos) no_pos
   in
   let orig_info = (norm_ipred.I.view_name, norm_ipred.I.view_vars) in
-  (* DONE: Auto derive REC (Norm.find_rec_data iprog prog REGEX_STAR) *)
+  (* DONE: Auto derive REC in typechecker (Norm.find_rec_data iprog prog REGEX_STAR) *)
   let extn_info = (extn_pred.C.view_name, [rec_field_id], [extn_view_var]) in
   let extn_iview = { extn_iview with 
     I.view_derv_from = Some (REGEX_LIST [(norm_ipred.I.view_name, true)]);
@@ -1046,8 +1061,8 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
     cprog.C.prog_view_decls extn_iview in
   let () = y_tinfo_hp (add_str "extn_cview_lst" 
       (pr_list Cprinter.string_of_view_decl_short)) extn_cview_lst in
-  let () = y_binfo_pp "TODO: hardwired size here" in
-  let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_view_name (* "size" *) (*TODO*) in
+  let extn_cview_aset = aux_pred_reuse iprog cprog extn_cview_lst in
+  let comb_extn_name = Derive.retr_extn_pred_name norm_ipred.I.view_name extn_pred.C.view_name in
   let extn_cview = List.find (fun v -> eq_str v.C.view_name comb_extn_name) extn_cview_lst in
   (* let extn_cview = C.rename_view extn_cview equiv_pid in  *)
   let () = x_add (C.update_view_decl ~caller:x_loc) cprog extn_cview in
@@ -1057,13 +1072,14 @@ let extn_norm_pred iprog cprog extn_pred norm_pred =
 
 let extn_norm_pred iprog cprog extn_pred norm_pred =
   let pr = Cprinter.string_of_view_decl_short in
-  Debug.no_2 "extn_norm_pred" 
+  Debug.no_2 "Syn.extn_norm_pred" 
     (add_str "extn_pred" pr) (add_str "norm_pred" pr) pr
     (fun _ _ -> extn_norm_pred iprog cprog extn_pred norm_pred) extn_pred norm_pred
 
 let extn_norm_pred_list iprog cprog extn_pred norm_preds = 
   List.map (fun pred -> extn_norm_pred iprog cprog extn_pred pred) norm_preds
 
+(* Entry point of SLEEK cmd process_shape_extn_view *)
 let extn_pred_list iprog cprog extn preds =
   try
     let extn_pred = C.look_up_view_def_raw x_loc cprog.C.prog_view_decls extn in

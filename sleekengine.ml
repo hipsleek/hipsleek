@@ -574,7 +574,7 @@ let process_lemma ldef =
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
-  let res = x_add Lemproving.verify_lemma 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
+  let res = x_add (Lemproving.verify_lemma ~force_pr:true) 2 l2r r2l !cprog (ldef.I.coercion_name) ldef.I.coercion_type in
   ()
 (* CF.residues := (match res with *)
 (*   | None -> None; *)
@@ -1742,7 +1742,7 @@ let process_shape_derive_post (ids: regex_id_list) =
 
 let process_shape_derive_view (ids: regex_id_list) =
   let f others hps =
-    let (derived_views, new_hprels) = Syn.derive_view iprog !cprog others hps in
+    let (derived_views, new_hprels) = x_add Syn.derive_view iprog !cprog others hps in
     (* let () = update_sleek_hprel_assumes new_hprels in *)
     new_hprels
   in
@@ -1755,7 +1755,7 @@ let process_data_mark_rec (ids: regex_id_star_list) =
 
 let process_shape_normalize (ids: regex_id_list) =
   let f others hps =
-    let new_hprels = Syn.derive_view_norm !cprog others hps in
+    let new_hprels = x_add Syn.derive_view_norm !cprog others hps in
     new_hprels
   in
   process_sleek_hprel_assumes_others "Normalizing hprels" ids f
@@ -2040,7 +2040,9 @@ let process_shape_rec sel_hps=
   let _ = print_endline_quiet "*************************************" in
   ()
 
-let process_validate_infer (vr : validate_result) (validation: validation)  =
+let process_validate_infer (vr : validate_result) (
+
+validation: validation)  =
   (* let hdr = ref "" in *) (* to avoid to use global vars *)
   let nn = (sleek_proof_counter#inc_and_get_aux_str) in
   (*********************************)
@@ -2055,12 +2057,16 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
 
   let pr_validate_outcome b nn res_f_str = 
     let str1 =  "\nExpect_Infer "^nn^": " in
-    let () = x_binfo_hp (add_str "str" pr_id) str1 no_pos in
-    let () = x_binfo_hp (add_str "res_f_str" pr_id) res_f_str no_pos in
+    (* let () = x_binfo_hp (add_str "str" pr_id) str1 no_pos in *)
+    (* let () = x_binfo_hp (add_str "res_f_str" pr_id) res_f_str no_pos in *)
     let str2 = string_of_vres (match vr with | VR_Valid -> VR_Fail 0 | _ -> VR_Valid) in
-    if b then print_endline_quiet (str1^"OK. ")
-    else let () = unexpected_cmd # push nn in
-      print_endline_quiet (str1^"Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str)
+    let str_vr = string_of_vres vr in
+    let () = 
+      if b then print_endline_quiet (str1^"OK. ")
+      else let () = unexpected_cmd # push nn in
+        print_endline_quiet (str1^"FAIL. {Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str^"}") in
+    let () = print_endline_quiet ("  validating.."^str_vr^"#"^(string_of_validation validation)) in
+    ()
   in
 
   let validate_with_residue hdr residue =
@@ -2162,8 +2168,8 @@ let process_validate_infer (vr : validate_result) (validation: validation)  =
   match validation with
   | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
   | V_Residue None -> let hdr = "R" in print_endline "No residue."
-  | V_Infer (Some inference) -> let hdr = "I" in validate_with_residue hdr inference 
-  | V_Infer None -> let hdr = "I" in print_endline "No inference."
+  | V_Infer (hdr,Some inference) -> (* let hdr = "I" in *) validate_with_residue hdr inference 
+  | V_Infer (hdr,None) -> (* let hdr = "I" in *) print_endline "No inference."
   | _ -> print_endline "RA etc. not yet implemented"
 
 
@@ -3100,7 +3106,8 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
   let is_infer_imm_post_flag = List.mem INF_IMM_POST itype in
   let is_field_imm_flag = List.mem INF_FIELD_IMM itype in
-  let opt_pure_field = if List.mem INF_PURE_FIELD itype 
+  let opt_pure_field = 
+    if List.mem INF_PURE_FIELD itype 
     then Some true else None in
   (* combine local vs. global of failure explaining *)
   let dfailure_anlysis = if List.mem INF_EFA itype then false else
@@ -3131,7 +3138,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
     else run_infer x in
   let run_infer x = 
       wrap_pure_field (opt_pure_field) run_infer x in
-  let r=  try
+  let r =  try
       let (valid, rs, sel_hps),_ = run_infer iconseq0 in
       let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MUST_ONLY itype || List.mem INF_ERR_MAY itype) in
       (* let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) in*)

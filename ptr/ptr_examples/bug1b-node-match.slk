@@ -1,0 +1,44 @@
+data cell {
+  int val;
+}.
+
+checkentail x::cell<5>  |- [nnn] x::cell<nnn> & nnn>6.
+print residue.
+expect Fail.
+
+checkentail x::cell<5>  |- [nnn] x::cell<nnn> & nnn>3.
+print residue.
+expect Valid.
+
+checkentail x::cell<5> & x=null  |- [nnn] x::cell<nnn> & nnn>6.
+print residue.
+expect Valid.
+
+/*
+# bug1b.slk (FIXED)
+
+# explicit instantiation is unsound ..
+
+ Context: [ emp&flted_5_12=5 
+     & n=flted_5_12 & 6<n&{FLOW,(20,21)=__norm#E}[]
+
+# it should not lead to a contradiction like below
+(==solver.ml#7949==)
+move_expl_inst_estate@2
+move_expl_inst_estate inp1 :  emp&flted_5_12=5 & nnn=flted_5_12&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_heap: x::cell<flted_5_12>@M
+ es_gen_expl_vars: [nnn]
+ es_trace:  Match(x,x)
+move_expl_inst_estate inp2 : 6<nnn
+move_expl_inst_estate@2 EXIT:  emp&flted_5_12=5 & nnn=flted_5_12 & 6<nnn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_heap: x::cell<flted_5_12>@M
+ es_gen_expl_vars: [nnn]
+ es_trace:  Match(x,x)
+ es_unsat_flag: false
+
+
+
+*/
+

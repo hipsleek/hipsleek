@@ -17,6 +17,7 @@ let mem = Gen.BList.mem_eq CP.eq_spec_var
 let diff = Gen.BList.difference_eq CP.eq_spec_var
 let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var
 let intersect = Gen.BList.intersect_eq CP.eq_spec_var
+let overlap = Gen.BList.overlap_eq CP.eq_spec_var
 
 let eq_id s1 s2 = String.compare s1 s2 == 0
 
@@ -531,25 +532,27 @@ let trans_hrel_to_view_formula ?(for_spec=false) prog (f: CF.formula) =
     | CF.HRel _ ->
       let hrel_name, hrel_args = sig_of_hrel hf in
       let hrel_id = CP.name_of_spec_var hrel_name in
-      let subs_hrel_name, view_args =
-          try
-            let vdef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls hrel_id in
-            if not !Globals.pred_equiv then hrel_name, vdef.view_vars
-            else if vdef.C.view_equiv_set # is_empty then hrel_name, vdef.view_vars
-            else
-              let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
-              let equiv_pred = match hrel_name with
-                | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p) in
-              let equiv_pred_args = 
-                try 
-                  let edef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls subs_hrel_id in
-                  edef.view_vars
-                with _ ->
-                  let () = x_warn ("Cannot find the definition of the equiv pred " ^ subs_hrel_id) in 
-                  vdef.view_vars
-              in
-              equiv_pred, equiv_pred_args
-          with _ -> hrel_name, []
+      let subs_hrel_name, view_args, is_equiv_view =
+        try
+          let vdef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls hrel_id in
+          let () = y_binfo_hp (add_str "vdef" !C.print_view_decl) vdef in
+          if not !Globals.pred_equiv then hrel_name, vdef.view_vars, false
+          else if vdef.C.view_equiv_set # is_empty then hrel_name, vdef.view_vars, false
+          else
+            let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
+            let () = y_binfo_hp (add_str "subs_hrel_id" pr_id) subs_hrel_id in
+            let equiv_pred = match hrel_name with
+              | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p) in
+            let equiv_pred_args = 
+              try 
+                let edef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls subs_hrel_id in
+                edef.view_vars
+              with _ ->
+                let () = x_warn ("Cannot find the definition of the equiv pred " ^ subs_hrel_id) in 
+                vdef.view_vars
+            in
+            equiv_pred, equiv_pred_args, not (eq_str subs_hrel_id hrel_id)
+        with _ -> hrel_name, [], false
       in
       (begin try
         let hrel_root, hrel_args = C.get_root_args_hp prog hrel_id hrel_args in
@@ -568,15 +571,22 @@ let trans_hrel_to_view_formula ?(for_spec=false) prog (f: CF.formula) =
         | CF.ViewNode v ->
           (* Setting imm is important for lemma proving *)
           let n_hf = CF.ViewNode { v with CF.h_formula_view_imm = CP.ConstAnn(Mutable); } in
-          Some (n_hf, extn_args)
+          Some (n_hf, [(extn_args, is_equiv_view)])
         | _ -> None)
-      with _ -> Some (hf, []) end)
+      with _ -> Some (hf, [([], false)]) end)
     | _ -> None
   in
-  let n_f, svl = CF.trans_heap_formula f_h_f f in
+  let n_f, svl_w_equiv = CF.trans_heap_formula f_h_f f in
+  let svl, is_equiv_view = 
+    let svl_all, is_equiv_view_all = List.split svl_w_equiv in
+    List.concat svl_all, List.exists (fun i -> i) is_equiv_view_all
+  in
   let norm_f =
     (* if not for_spec then n_f *)
     (* else                     *)
+    if is_equiv_view then n_f
+    else
+      (* This unfolding causes failure on str-inf/ex10a2-str-while.ss re-verification *)
       try Norm.norm_unfold_formula prog.C.prog_view_decls n_f
       with _ -> n_f 
   in
@@ -653,7 +663,7 @@ let trans_spec_proc trans_f cprog proc =
   let () = y_tinfo_hp (add_str "nspec" pr_spec) nspec in
   let () = proc.C.proc_stk_of_static_specs # push_pr x_loc nspec in
   let nproc = { proc with
-    C.proc_static_specs = nspec;
+    (* C.proc_static_specs = nspec; *)
     C.proc_dynamic_specs = trans_f proc.C.proc_dynamic_specs; }
   in
   nproc
@@ -728,7 +738,11 @@ let rec find_common_node_chain root (fs: CF.formula list) =
     else
       let root_node, sst_list = norm_node_list root_node_list in
       let root_node = { root_node with CF.h_formula_data_node = root } in
-      let norm_fs = List.map (fun (f, sst) -> CF.subst_all sst f) (List.combine residue_fs sst_list) in
+      let norm_fs = List.map (fun (f, sst) ->
+          let fr, t = List.split sst in
+          CF.subst_avoid_capture fr t f 
+          (* x_add CF.subst_all sst f *)
+        ) (List.combine residue_fs sst_list) in
       List.fold_left (fun (fs, node_chain) arg -> 
           let n_fs, arg_node_chain = find_common_node_chain arg fs in
           n_fs, (node_chain @ arg_node_chain)) 
