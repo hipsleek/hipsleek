@@ -1971,7 +1971,7 @@ validation: validation)  =
     let () = 
       if b then print_endline_quiet (str1^"OK. ")
       else let () = unexpected_cmd # push nn in
-        print_endline_quiet (str1^"Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str) in
+        print_endline_quiet (str1^"FAIL. {Expected "^(string_of_vres vr)^" but got "^str2^" "^res_f_str^"}") in
     let () = print_endline_quiet ("  validating.."^str_vr^"#"^(string_of_validation validation)) in
     ()
   in
@@ -2075,8 +2075,8 @@ validation: validation)  =
   match validation with
   | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
   | V_Residue None -> let hdr = "R" in print_endline "No residue."
-  | V_Infer (Some inference) -> let hdr = "I" in validate_with_residue hdr inference 
-  | V_Infer None -> let hdr = "I" in print_endline "No inference."
+  | V_Infer (hdr,Some inference) -> (* let hdr = "I" in *) validate_with_residue hdr inference 
+  | V_Infer (hdr,None) -> (* let hdr = "I" in *) print_endline "No inference."
   | _ -> print_endline "RA etc. not yet implemented"
 
 
