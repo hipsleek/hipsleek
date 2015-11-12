@@ -7,7 +7,8 @@ void loop (char* s)
   infer [
     @shape_pre
     //P
-    ,@pure_field,@classic
+    ,@pure_field
+    ,@classic
     ,@size
     ,@term
   ]
@@ -24,13 +25,19 @@ void loop (char* s)
 */
 {
   int x = *s;
-  if (x != 0) {
+  if (x != '\0') {
+  //if (x != 'a') {
     s++;
     loop(s);
   }
 }
 
 int main () 
+/*@
+  infer [@term]
+  requires true
+  ensures true;
+*/
 {
   int length = __VERIFIER_nondet_int();
   if (length < 1) { length = 1; }
