@@ -2104,11 +2104,13 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let pr_d = pr_opt Cprinter.string_of_ef_pure_disj in
       let over_f = vdef.C.view_baga_over_inv in
       x_tinfo_hp (add_str "over(baga)" pr_d) over_f no_pos;
+      let ex_vs = vdef.C.view_inv_exists_vars in
       let exist_baga_over,baga_over_formula = match over_f with
         | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
-        | Some disj -> true,CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos
+        | Some disj -> true,CF.formula_of_pure_formula (CP.mkExists ex_vs (Excore.EPureI.ef_conv_disj disj) None no_pos) pos
       in
-      let () = x_tinfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
+      let () = y_binfo_hp (add_str "ex_vs" !CP.print_svl) ex_vs in
+      let () = x_binfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
       let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
@@ -2206,8 +2208,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           match inv with
           | Some f ->
             if fail_res then
-              (* print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")") *)
-              report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc)
+              let () = y_winfo_pp "skip INV Check" in
+              print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")")
+              (* report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc) *)
           (* else *)
           (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
           | None -> ()
@@ -2467,7 +2470,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         if vs!=[] then y_winfo_pp "extr_exists_vars TBI";
         vs
       in
-      let _ =
+      let allow_ex_vs =
         let vs1 = (CF.struc_fv cf) in
         let vs2 = (null_c_var::self_c_var::view_sv_vars) in
         let vs1a = CP.fv inv_pf in
@@ -2488,7 +2491,6 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         (* let ffv = List.filter (fun v -> not (is_FuncT (CP.type_of_spec_var v))) ffv in *)
         let ffv = CP.diff_svl ffv (view_prop_extns@allow_ex_vs) in
         (* filter out intermediate dereference vars and update them to view vars *)
-
         let ffv = List.filter (fun v ->
             let is_deref_var = CP.is_inter_deference_spec_var v in
             if (is_deref_var) then (
@@ -2497,7 +2499,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             );
             not (is_deref_var)
           ) ffv in
-        if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
+        if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") 
+        else allow_ex_vs
+      in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
       let mvars =  List.filter 
@@ -2785,6 +2789,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
 
         C.view_user_inv = user_inv;
         C.view_x_formula = user_x_inv;
+        C.view_inv_exists_vars = allow_ex_vs;
         C.view_baga_inv = vbc_i;
         C.view_baga_over_inv = vboi;
         C.view_baga_x_over_inv = vboi;

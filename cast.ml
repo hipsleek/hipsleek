@@ -157,6 +157,7 @@ and view_decl = {
   mutable view_fixcalc : (MP.mix_formula) option; (*XPURE 1 -> revert to P.formula*)
   mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
   (* exact baga *)
+  view_inv_exists_vars : P.spec_var list;
   mutable view_baga_inv : Excore.ef_pure_disj option;
   (* over-approx baga *)
   mutable view_baga_over_inv : Excore.ef_pure_disj option;
@@ -822,6 +823,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_inv_lock = None;
     view_fixcalc = None;
     view_x_formula = mix_true;
+    view_inv_exists_vars = [];
     (* exact baga *)
     view_baga_inv = None;
     (* over-approx baga *)
@@ -888,6 +890,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_inv_lock = None;
     view_fixcalc = None;
     view_x_formula = mix_true;
+    view_inv_exists_vars = [];
     view_baga_inv = None;
     view_baga_over_inv = None;
     view_baga_x_over_inv = None;
