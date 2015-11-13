@@ -45,7 +45,11 @@ let bnd_vars_of_formula fv f args =
   bnd_vars
 
 let simplify f args = 
-  let simplify_f = Tpdispatcher.simplify_raw in
+  let simplify_f f = 
+    let simpl_f = Tpdispatcher.simplify_raw f in
+    if CP.is_disjunct simpl_f then Tpdispatcher.hull simpl_f
+    else simpl_f
+  in
   let bnd_vars = bnd_vars_of_formula (CP.fv) f args in
   if bnd_vars == [] then simplify_f f 
   else
@@ -116,30 +120,37 @@ let dependent_graph_of_hprel_list hprel_list =
   let dg = CG.empty in
   List.fold_left (fun dg hprel -> dependent_graph_of_hprel dg hprel) dg hprel_list
 
-let compare_hprel dg hpr1 hpr2 = 
-  let _, scc_f = CGC.scc dg in
+let compare_hprel scc_f hpr1 hpr2 = 
   let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in
   let hpr2_name = CP.name_of_spec_var (name_of_hprel hpr2) in
   (scc_f hpr1_name) - (scc_f hpr2_name)
 
+let compare_hprel scc_f hpr1 hpr2 = 
+  let pr = fun hpr -> !CP.print_sv (name_of_hprel hpr) in
+  Debug.no_2 "compare_hprel" pr pr string_of_int
+    (fun _ _ -> compare_hprel scc_f hpr1 hpr2) hpr1 hpr2
+
 let sort_hprel_list hprel_list = 
   let dg = dependent_graph_of_hprel_list hprel_list in
-  (* let _, scc_f = CGC.scc dg in                                   *)
+  let _, scc_f = CGC.scc dg in
   (* let compare_hprel hpr1 hpr2 =                                  *)
   (*   let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in  *)
   (*   let hpr2_name = CP.name_of_spec_var (name_of_hprel hpr2) in  *)
   (*   (scc_f hpr1_name) - (scc_f hpr2_name)                        *)
   (* in                                                             *)
-  List.sort (compare_hprel dg) hprel_list
+  List.sort (compare_hprel scc_f) hprel_list
 
 let sort_dependent_hprel_list all_hprels sel_hprels_id = 
   let dg = dependent_graph_of_hprel_list all_hprels in
-  let rec collect_dep_id acc ws =
+  let rec collect_dep_id dg acc ws =
     match ws with
-    | [] -> remove_dups_id acc
+    | [] -> remove_dups_id acc, dg
     | _ ->
-      let succ_ws = List.fold_left (fun a n -> 
-        let succ_n = CG.succ dg n in a @ succ_n) [] ws in
+      let succ_ws, dg = List.fold_left (fun (a, dg) n -> 
+        let succ_n = CG.succ dg n in
+        let overlap_sel = intersect_id succ_n sel_hprels_id in
+        let n_dg = List.fold_left (fun dg s -> CG.remove_edge dg n s) dg overlap_sel in 
+        a @ succ_n, n_dg) ([], dg) ws in
       let succ_ws = remove_dups_id succ_ws in
       let () =
         let common_ids = intersect_id succ_ws acc in
@@ -149,13 +160,21 @@ let sort_dependent_hprel_list all_hprels sel_hprels_id =
       (* Only add new hprels into the list *)
       let n_ws = diff_id succ_ws acc in
       let n_acc = acc @ succ_ws in
-      collect_dep_id n_acc n_ws
+      collect_dep_id dg n_acc n_ws
   in
-  let dep_sel_hprels_id = collect_dep_id sel_hprels_id sel_hprels_id in
+  let dep_sel_hprels_id, dg = collect_dep_id dg sel_hprels_id sel_hprels_id in
   let dep_sel_hprels, other_hprels = List.partition (fun hpr -> 
     let hpr_id = CP.name_of_spec_var (name_of_hprel hpr) in
     mem_id hpr_id dep_sel_hprels_id) all_hprels in
-  List.sort (compare_hprel dg) dep_sel_hprels, other_hprels
+  let _, scc_f = CGC.scc dg in
+  List.sort (compare_hprel scc_f) dep_sel_hprels, other_hprels
+
+let sort_dependent_hprel_list all_hprels sel_hprels_id = 
+  (* let pr1 = pr_list_ln Cprinter.string_of_hprel_short in *)
+  let pr1 = fun hpr_lst -> !CP.print_svl (List.map name_of_hprel hpr_lst) in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "sort_dependent_hprel_list" pr2 (pr_pair pr1 pr1)
+    (fun _ -> sort_dependent_hprel_list all_hprels sel_hprels_id) sel_hprels_id
 
 module SV = struct
   type t = CP.spec_var

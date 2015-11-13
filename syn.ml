@@ -198,6 +198,7 @@ let merge_pre_hprel_list prog hprels =
       let conds = List.map cond_of_pre_hprel hprels in
       let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
       let unsat_core = Smtsolver.get_unsat_core sub_conds in
+      let () = y_binfo_hp (add_str "unsat_core" (pr_list !CP.print_formula)) unsat_core in
       if is_empty unsat_core then
         let msg = "Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
         let () = y_winfo_hp (add_str msg pr_hprel_list) hprels in
@@ -507,8 +508,9 @@ let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
     
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "Syn.unfolding_hprel" pr (pr_list pr)
-    (fun _ -> unfolding_hprel prog hprel_groups hpr) hpr
+  let pr1 = pr_list (fun (sv, _) -> !CP.print_sv sv) in
+  Debug.no_2 "Syn.unfolding_hprel" pr pr1 (pr_list pr)
+    (fun _ _ -> unfolding_hprel prog hprel_groups hpr) hpr hprel_groups
 
 let rec update_hprel_id_groups hprel_id hprel_sv hprel_id_list hprel_id_groups =
   match hprel_id_groups with
@@ -527,9 +529,11 @@ let rec helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
   match hprel_id_list with
   | [] -> []
   | hpri::hpril ->
-    let hprel_groups = List.map (fun (hprel_sv, hprel_id_list) ->
-        (hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)
-      ) hprel_id_groups in
+    let dep_hprel_id_lst = List.map (fun hpri -> name_of_hprel hpri.hprel_constr) hpril in
+    let hprel_groups = List.fold_left (fun acc (hprel_sv, hprel_id_list) ->
+        if mem hprel_sv dep_hprel_id_lst then acc
+        else acc @ [(hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)]
+      ) [] hprel_id_groups in
     let unfolding_hpr = x_add unfolding_hprel prog hprel_groups hpri.hprel_constr in
     let unfolding_hpri = List.map mk_hprel_id unfolding_hpr in
     let updated_hprel_id_groups = update_hprel_id_groups 
