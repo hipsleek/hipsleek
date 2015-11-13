@@ -2462,11 +2462,22 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let view_prop_extns =  List.map (fun (t,c)-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_prop_extns in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
       let null_c_var = Cpure.null_var in 
+      let extr_exist_vars f vs = 
+        let vs = CP.diff_svl (CP.fv f) vs in
+        if vs!=[] then y_winfo_pp "extr_exists_vars TBI";
+        vs
+      in
       let _ =
         let vs1 = (CF.struc_fv cf) in
         let vs2 = (null_c_var::self_c_var::view_sv_vars) in
         let vs1a = CP.fv inv_pf in
-        x_tinfo_hp (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
+        let pr_svl = !CP.print_svl in
+        (* y_binfo_hp (add_str "cf" !Cast.print_struc_formula) cf; *)
+        y_binfo_hp (add_str "inv_pf" !CP.print_formula) inv_pf;
+        y_binfo_hp (add_str "view_sv_vars" pr_svl) view_sv_vars;
+        y_binfo_hp (add_str "vs1" pr_svl) vs1;
+        y_binfo_hp (add_str "vs1a" pr_svl) vs1a; (* from invariant *)
+        let allow_ex_vs = extr_exist_vars inv_pf vs2 in 
         let vs1 = vs1@vs1a in
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (* filter out holes (#) *)
@@ -2475,7 +2486,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                                   (CP.is_hprel_typ v || CP.is_rel_typ v || CP.is_hole_spec_var v 
                                    || is_FuncT (CP.type_of_spec_var v))) ffv in
         (* let ffv = List.filter (fun v -> not (is_FuncT (CP.type_of_spec_var v))) ffv in *)
-        let ffv = CP.diff_svl ffv view_prop_extns in
+        let ffv = CP.diff_svl ffv (view_prop_extns@allow_ex_vs) in
         (* filter out intermediate dereference vars and update them to view vars *)
 
         let ffv = List.filter (fun v ->

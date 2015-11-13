@@ -22,13 +22,13 @@ lemma_test "lseg" self::lseg<n, p> & n = a + b & a,b>=0
       <->  self::lseg<a, r> * r::lseg<b,p> .
 */
 
-lemma_test "lseg" self::lseg<n, p> & n = a & a,b>=0 
-      ->  self::lseg<a, r> * r::lseg<b,p> .
+lemma_safe "lseg" self::lseg<n, p> & n = aaa & aaa,bbb>=0 
+      ->  self::lseg<aaa, r> * r::lseg<bbb,p> .
 
 /*
 # ex64q2a.slk
 
-lemma_test "lseg" self::lseg<n, p> & n = a & a,b>=0 
+lemma_safe "lseg" self::lseg<n, p> & n = a & a,b>=0 
       ->  self::lseg<a, r> * r::lseg<b,p> .
 
 # above universal lemma should fail
