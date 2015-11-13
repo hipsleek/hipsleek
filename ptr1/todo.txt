@@ -256,6 +256,18 @@ checkentail
 
 Can we infer base:arrI from above?
 ===============================================================
+# ex7a.slk
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv BG([],i=n&i>=0) | BG([x], x=self+i & i<n & i>=0).
+
+!!! **astsimp.ml#2113:baga_over_formula: 
+ emp&(exists(x:i=x-self & self<=x & x!=null & x<(n+self)) 
+     | (i=n & 0<=n))
+
+!!! **WARNING****astsimp.ml#2470:extr_exists_vars TBI
+
 ===============================================================
 ===============================================================
 ===============================================================
