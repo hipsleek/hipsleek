@@ -863,7 +863,7 @@ let norm_one_derived_view iprog cprog derived_view =
     let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
     let iview = Rev_ast.rev_trans_view_decl derived_view in
     let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
-    let cview = SleekUtils.process_selective_iview_decls false iprog [iview] in
+    let cview = x_add SleekUtils.process_selective_iview_decls false iprog [iview] in
     let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
     let norm_cview = match cview with v::[] -> v | _ -> derived_view in
     let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
@@ -880,7 +880,7 @@ let norm_one_derived_view iprog cprog derived_view =
     (norm_one_derived_view iprog cprog) derived_view
 
 let rec norm_derived_views iprog cprog derived_views = 
-  norm_pred_list (fun v -> [norm_one_derived_view iprog cprog v]) derived_views
+  norm_pred_list (fun v -> [x_add norm_one_derived_view iprog cprog v]) derived_views
 
 let norm_derived_views iprog cprog derived_views =
   let pr = pr_list Cprinter.string_of_view_decl in
@@ -888,7 +888,7 @@ let norm_derived_views iprog cprog derived_views =
     (norm_derived_views iprog cprog) derived_views
 
 let norm_single_view iprog cprog view = 
-  norm_one_derived_view iprog cprog view
+  x_add norm_one_derived_view iprog cprog view
   (* let norm_view = norm_derived_views iprog cprog [view] in *)
   (* match norm_view with                                     *)
   (* | v::[] -> v                                             *)
@@ -897,7 +897,7 @@ let norm_single_view iprog cprog view =
 let restore_view iprog cprog view = 
   let iview = Rev_ast.rev_trans_view_decl view in
   let () = x_add (C.update_view_decl ~caller:x_loc) cprog view in
-  let () = I.update_view_decl iprog iview in
+  let () = x_add I.update_view_decl iprog iview in
   ()
   
 let norm_view_formula vname f = 
@@ -965,7 +965,7 @@ let view_decl_of_hprel iprog prog (hprel: CF.hprel) =
   (* let () = Cast.update_view_decl prog vdecl_w_def in *)
   (* let () =  x_add Astsimp.compute_view_x_formula cprog vdecl_w_def !Globals.n_xpure in *)
   (* let () =  Astsimp.set_materialized_prop vdecl_w_def in                               *)
-  update_view_content iprog prog vdecl_w_def vbody
+  x_add update_view_content iprog prog vdecl_w_def vbody
 
 let view_decl_of_hprel iprog prog (hprel: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
@@ -1012,7 +1012,7 @@ let unfolding_view iprog cprog view =
   (*     (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f); *) *)
   (*   view.C.view_un_struc_formula <- v_un_str; (* [(unfold_view_f, (fresh_int (), ""))]; *)                                         *)
   (* in                                                                                                                               *)
-  update_view_content iprog cprog view unfold_view_f
+  x_add update_view_content iprog cprog view unfold_view_f
 
 let unfolding_view iprog cprog view =
   let pr = Cprinter.string_of_view_decl in

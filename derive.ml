@@ -343,7 +343,7 @@ let trans_view_one_derv_wrapper prog rev_form_fnc trans_view_fnc lower_map_views
     let new_vdef = trans_view_one_derv_x prog rev_form_fnc trans_view_fnc lower_map_views cviews derv view_derv in
     let () =  x_tinfo_hp (add_str "   pure extension" pr_id) (derv.Iast.view_name ^ ": extend " ^ orig_view_name ^ " to " ^ extn_view_name ^"\n") no_pos in
     let () = x_tinfo_hp (add_str "(raw) new view (donot have base case, addr, material)" Cprinter.string_of_view_decl_short) new_vdef no_pos in
-    let () = Cprog_sleek.update_view_decl_scc_only new_vdef in
+    let () = x_add_1 Cprog_sleek.update_view_decl_scc_only new_vdef in
     (true,new_vdef)
   else
     let () =  x_dinfo_hp (add_str "   pure extension" pr_id) (orig_view_name ^ " has been extended to " ^ extn_view_name^ " already \n") no_pos in
@@ -955,7 +955,7 @@ let extend_size pname (* name of extn *) ?(vn_of_pname=None) scc_vdecls (* selec
     in
     let vn = new_vd.C.view_name in
     let () = y_tinfo_hp (add_str "b4 update_view" pr_id) vn  in
-    let () = Cprog_sleek.update_view_decl_both ~update_scc:true new_vd in
+    let () = x_add_1 (Cprog_sleek.update_view_decl_both ~update_scc:true) new_vd in
     (* let () = y_tinfo_hp (add_str "new_vd(after update)" Cprinter.string_of_view_decl_short) new_vd in *)
     let () = y_tinfo_hp (add_str "vd(orig)" Cprinter.string_of_view_decl_short) vd in
     let () = y_tinfo_hp (add_str "aft update_view" pr_id) vn  in
