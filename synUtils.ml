@@ -98,6 +98,7 @@ end
 
 module CG = Graph.Persistent.Digraph.Concrete(Ident)
 module CGC = Graph.Components.Make(CG)
+module CGO = Graph.Oper.P(CG)
 
 let rec dependent_graph_of_formula dg hprel_name hprel_f =
   match hprel_f with
@@ -116,9 +117,25 @@ let dependent_graph_of_hprel dg hprel =
   let dg = CG.add_vertex dg hpr_name in
   dependent_graph_of_formula dg hpr_name hpr_f
 
-let dependent_graph_of_hprel_list hprel_list =
-  let dg = CG.empty in
-  List.fold_left (fun dg hprel -> dependent_graph_of_hprel dg hprel) dg hprel_list
+class dep_graph =
+  object (self)
+    val mutable dg = CG.empty
+
+    method build hprel_list =
+      dg <- List.fold_left (fun dg hprel -> dependent_graph_of_hprel dg hprel) dg hprel_list
+      
+    method get_scc_f = snd (CGC.scc dg)
+
+    method get_succ n = CG.succ dg n
+
+    method remove_edge d s = dg <- CG.remove_edge dg d s
+
+    method depend_on n = 
+      let trans_dg = CGO.transitive_closure ~reflexive:true dg in
+      CG.pred trans_dg n
+  end;;
+
+let dg = new dep_graph;;
 
 let compare_hprel scc_f hpr1 hpr2 = 
   let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in
@@ -131,8 +148,8 @@ let compare_hprel scc_f hpr1 hpr2 =
     (fun _ _ -> compare_hprel scc_f hpr1 hpr2) hpr1 hpr2
 
 let sort_hprel_list hprel_list = 
-  let dg = dependent_graph_of_hprel_list hprel_list in
-  let _, scc_f = CGC.scc dg in
+  let () = dg # build hprel_list in
+  let scc_f = dg # get_scc_f in
   (* let compare_hprel hpr1 hpr2 =                                  *)
   (*   let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in  *)
   (*   let hpr2_name = CP.name_of_spec_var (name_of_hprel hpr2) in  *)
@@ -141,16 +158,19 @@ let sort_hprel_list hprel_list =
   List.sort (compare_hprel scc_f) hprel_list
 
 let sort_dependent_hprel_list all_hprels sel_hprels_id = 
-  let dg = dependent_graph_of_hprel_list all_hprels in
-  let rec collect_dep_id dg acc ws =
+  let () = dg # build all_hprels in
+  let rec collect_dep_id acc ws =
     match ws with
-    | [] -> remove_dups_id acc, dg
+    | [] -> remove_dups_id acc
     | _ ->
-      let succ_ws, dg = List.fold_left (fun (a, dg) n -> 
-        let succ_n = CG.succ dg n in
-        let overlap_sel = intersect_id succ_n sel_hprels_id in
-        let n_dg = List.fold_left (fun dg s -> CG.remove_edge dg n s) dg overlap_sel in 
-        a @ succ_n, n_dg) ([], dg) ws in
+      let succ_ws = List.fold_left (fun a n -> 
+        let succ_n = dg # get_succ n in
+        let () =
+          if not (mem_id n sel_hprels_id) then
+            let overlap_sel = intersect_id succ_n sel_hprels_id in
+            List.iter (fun s -> dg # remove_edge n s) overlap_sel
+        in
+        a @ succ_n) [] ws in
       let succ_ws = remove_dups_id succ_ws in
       let () =
         let common_ids = intersect_id succ_ws acc in
@@ -160,13 +180,13 @@ let sort_dependent_hprel_list all_hprels sel_hprels_id =
       (* Only add new hprels into the list *)
       let n_ws = diff_id succ_ws acc in
       let n_acc = acc @ succ_ws in
-      collect_dep_id dg n_acc n_ws
+      collect_dep_id n_acc n_ws
   in
-  let dep_sel_hprels_id, dg = collect_dep_id dg sel_hprels_id sel_hprels_id in
+  let dep_sel_hprels_id = collect_dep_id sel_hprels_id sel_hprels_id in
   let dep_sel_hprels, other_hprels = List.partition (fun hpr -> 
     let hpr_id = CP.name_of_spec_var (name_of_hprel hpr) in
     mem_id hpr_id dep_sel_hprels_id) all_hprels in
-  let _, scc_f = CGC.scc dg in
+  let scc_f = dg # get_scc_f in
   List.sort (compare_hprel scc_f) dep_sel_hprels, other_hprels
 
 let sort_dependent_hprel_list all_hprels sel_hprels_id = 

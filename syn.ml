@@ -529,15 +529,16 @@ let rec helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
   match hprel_id_list with
   | [] -> []
   | hpri::hpril ->
-    let dep_hprel_id_lst = List.map (fun hpri -> name_of_hprel hpri.hprel_constr) hpril in
+    let hpri_name = name_of_hprel hpri.hprel_constr in
+    let dep_on_hpri = dg # depend_on (CP.name_of_spec_var hpri_name) in 
     let hprel_groups = List.fold_left (fun acc (hprel_sv, hprel_id_list) ->
-        if mem hprel_sv dep_hprel_id_lst then acc
+        if mem_id (CP.name_of_spec_var hprel_sv) dep_on_hpri then acc
         else acc @ [(hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)]
       ) [] hprel_id_groups in
     let unfolding_hpr = x_add unfolding_hprel prog hprel_groups hpri.hprel_constr in
     let unfolding_hpri = List.map mk_hprel_id unfolding_hpr in
     let updated_hprel_id_groups = update_hprel_id_groups 
-      hpri.hprel_id (name_of_hprel hpri.hprel_constr) unfolding_hpri hprel_id_groups in
+      hpri.hprel_id hpri_name unfolding_hpri hprel_id_groups in
     unfolding_hpr @ (helper_unfolding_hprel_list prog updated_hprel_id_groups hpril)
 
 let helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
