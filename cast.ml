@@ -1711,6 +1711,7 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         (* if Excore.EPureI.is_false bl then [root,root] *)
         (* else *)
         let sst = List.combine from_svs to_svs in
+        let sst = CP.SV_INTV.from_var_pairs sst in
         List.map (Excore.EPureI.subst_epure sst) bl in
       let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
       let add_epure pf lst =
@@ -1721,8 +1722,9 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
       let baga_sp = (add_epure epure baga_lst) in
       let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
       let r = Excore.EPureI.hull_memset baga_sp in
+      let r = CP.SV_INTV.conv_var r in
       let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
-      if baga_sp==[] then [root;root]
+       if baga_sp==[] then [root;root]
       else r
     end
 
@@ -1746,6 +1748,7 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
     | None -> []
     | Some bl -> 
       let sst = List.combine from_svs to_svs in
+      let sst = CP.SV_INTV.from_var_pairs sst in
       List.map (Excore.EPureI.subst_epure sst) bl in
   let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
   let add_epure pf lst =
@@ -1754,12 +1757,12 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
       Excore.EPureI.elim_unsat_disj false lst
   in
   let baga_sp = match epure with
-    None -> []
+    | None -> []
     | Some pf -> (add_epure pf baga_lst) in
   let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
   (* TODO:merge baga_sp for common memset *)
   match baga_sp with
-  [(ad,_)] -> ad
+  [(ad,_)] ->  CP.SV_INTV.conv_var ad
   | _ ->  P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 

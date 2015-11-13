@@ -5812,6 +5812,69 @@ struct
     |_,_ -> false
 end;;
 
+(* to capture element as (sv, sv option) for both variable and interval *)
+module SV_INTV =
+struct 
+  type t = spec_var * spec_var option
+  let zero = (mk_zero,None)
+  (* "_" to denote null value *)
+  let is_zero x = x==zero
+  let eq (x1,_) (x2,_) = eq_spec_var x1 x2
+  let compare (x1,_) (x2,_) = compare_spec_var x1 x2
+  let string_of = (* "X"^ *) pr_pair string_of_spec_var (pr_opt string_of_spec_var)
+  let conv_var lst = List.map fst lst
+  let conv_var_pairs lst = List.map (fun ((x1,_),(x2,_)) -> (x1,x2)) lst
+  let from_var lst = List.map (fun v -> (v,None)) lst
+  let from_var_pairs lst = List.map (fun (v1,v2) -> ((v1,None),(v2,None))) lst
+  let mk_elem x = (x,None)
+  (* throws exception when duplicate detected during merge *)
+  let rec merge_baga b1 b2 =
+    match b1,b2 with
+    | [],b | b,[] -> b
+    | x1::t1, x2::t2 ->
+      let c = compare_spec_var x1 x2 in
+      if c<0 then x1::(merge_baga t1 b2)
+      else if c>0 then x2::(merge_baga b1 t2)
+      else failwith "detected false"
+
+  let merge_baga (b1:t list) (b2:t list) : t list =
+    let b1 = List.map fst b1 in
+    let b2 = List.map fst b2 in
+    let b3 = merge_baga b1 b2 in
+    List.map (fun v -> (v,None)) b3
+
+  let rec hull_baga b1 b2 =
+    match b1,b2 with
+    | [],b | b,[] -> []
+    | x1::t1, x2::t2 ->
+      let c = compare_spec_var x1 x2 in
+      if c<0 then hull_baga t1 b2
+      else if c>0 then hull_baga b1 t2
+      else x1::(hull_baga t1 t2)
+
+  let hull_baga (b1:t list) (b2:t list) : t list =
+    let b1 = List.map fst b1 in
+    let b2 = List.map fst b2 in
+    let b3 = hull_baga b1 b2 in
+    List.map (fun v -> (v,None)) b3
+
+  let rec is_eq_baga b1 b2 =
+    match b1,b2 with
+    | [],[] -> true
+    | x1::t1, x2::t2 ->
+      let c = compare_spec_var x1 x2 in
+      if c=0 then is_eq_baga t1 t2
+      else false
+    |_,_ -> false
+
+  let is_eq_baga (b1:t list) (b2:t list) : bool =
+    let b1 = List.map fst b1 in
+    let b2 = List.map fst b2 in
+    let b3 = is_eq_baga b1 b2 in
+    (* List.map (fun v -> (v,None)) *) b3
+
+end;;
+
 module Ptr =
   functor (Elt:Gen.EQ_TYPE) ->
   struct

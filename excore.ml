@@ -486,7 +486,7 @@ module EPURE =
   functor (Elt : SV_TYPE)  ->
   struct
     type elem = Elt.t
-    (* type epure = (elem list * (elem * elem) list * (elem * elem) list) *)
+    (* type epure = (elem * elem option list * formula *)
     type epure = (elem list * formula)
     type epure_disj = epure list
     (* let mk_spec_var e = SpecVar (UNK,Elt.string_of e,Unprimed) *)
@@ -542,7 +542,7 @@ module EPURE =
 
     (* ef_conv :  ef_pure -> formula *)
     (* conseq must use this *)
-    (* ([a,a,b],pure)  --> baga[a,ab] & a!=null & a!=null & b!=null1 & pure *)
+    (* ([a,a,b],pure)  --> baga[a,a,b] & a!=null & a!=null & b!=null & pure *)
     let ef_conv_neq ((baga,f)) : formula =
       let bf = baga_conv ~neq_flag:true baga in
       mkAnd bf f no_pos
@@ -560,7 +560,6 @@ module EPURE =
             (mkAnd f (mkEqVarInt sv (* !i *)i no_pos) no_pos, i)
           ) ((mkEqVarInt (List.hd baga) (* !i *)1 no_pos),1) (List.tl baga)
         in f
-
 
     (* ef_conv_enum :  ef_pure -> formula *)
     (* provide an enumeration that can be used by ante *)
@@ -1090,6 +1089,10 @@ module EPUREN =
       let f2 = conv_ineq inq in
       let bf = baga_conv baga in
       mkAnd bf (mkAnd f1 f2 no_pos) no_pos
+
+    let conv ((baga,eq,inq) as x : epure) : formula =
+      let pr = string_of_all in
+      Debug.no_1 "conv_one" pr !Cpure.print_formula conv x
 
     let is_zero b = match b with
       | [] -> false
@@ -1723,7 +1726,8 @@ module EPUREN =
 
   end
 
-module EPureI = EPURE(SV)
+(* module EPureI = EPURE(SV) *)
+module EPureI = EPURE(SV_INTV)
 
 (* module EPureI = EPUREN(SV) *)
 

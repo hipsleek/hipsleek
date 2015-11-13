@@ -352,7 +352,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
               if precise then
                 match cv.Cast.view_baga_inv with
                 | None -> 
-                    let mf = (Excore.EPureI.ef_conv_disj inv) in
+                    let mf = (x_add_1 Excore.EPureI.ef_conv_disj inv) in
                     let () = y_tinfo_hp (add_str "pure inv3" !CP.print_formula) mf in
                     let mf =  Mcpure.mix_of_pure mf  in
                   {cv with
@@ -366,7 +366,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                           }
                 | Some inv0 ->
                   if Excore.EPureI.imply_disj (Excore.EPureI.from_cpure_disj inv) inv0 then 
-                    let mf = (Excore.EPureI.ef_conv_disj inv) in
+                    let mf = (x_add_1 Excore.EPureI.ef_conv_disj inv) in
                     let () = y_tinfo_hp (add_str "pure inv2" !CP.print_formula) mf in
                     let mf =  Mcpure.mix_of_pure mf  in
                     {cv with
@@ -380,9 +380,9 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                     }
                   else cv
               else
-                let inf_inv = Excore.EPureI.ef_conv_disj inv in
+                let inf_inv = x_add_1 Excore.EPureI.ef_conv_disj inv in
                 if (omega_imply_raw inf_inv user_inv) || (not is_sound) then
-                  let mf = (Excore.EPureI.ef_conv_disj inv) in
+                  let mf = (x_add_1 Excore.EPureI.ef_conv_disj inv) in
                   let () = y_tinfo_hp (add_str "pure inv" !CP.print_formula) mf in
                   let mf =  Mcpure.mix_of_pure mf  in
                   {cv with

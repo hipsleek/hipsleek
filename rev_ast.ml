@@ -327,7 +327,9 @@ and rev_trans_spec_var_primed (sv: CP.spec_var): (ident * primed) =
 
 let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
   let rev_trans_baga_inv baga_inv =
-    map_opt (List.map ((fun (svl, f) -> (List.map CP.name_of_spec_var svl, rev_trans_pure f)))) baga_inv
+    map_opt (List.map ((fun (svl, f) -> (
+          List.map (fun sv -> (CP.name_of_spec_var sv,None)) svl, 
+          rev_trans_pure f)))) baga_inv
   in
   { I.view_name = v.C.view_name;
     I.view_vars = List.map CP.name_of_spec_var v.C.view_vars;

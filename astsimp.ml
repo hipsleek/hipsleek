@@ -2016,7 +2016,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let form_body_inv_baga  vdef =
         let uns_view = C.formula_of_unstruc_view_f vdef in
         let ep_disj = x_add Cvutil.xpure_symbolic_baga prog uns_view in
-        let lhs_pure = Excore.EPureI.ef_conv_disj ep_disj in
+        let lhs_pure = x_add_1 Excore.EPureI.ef_conv_disj ep_disj in
         let () = x_tinfo_hp (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
         let () = x_tinfo_hp (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
         let () = x_tinfo_hp (add_str "lhs_pure" Cprinter.string_of_pure_formula) lhs_pure no_pos in
@@ -2085,8 +2085,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in
           (false, f1, f2)
         | Some disj ->
-          let f1 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_disj disj) pos in
-          let f2 = CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos in
+          let f1 = CF.formula_of_pure_formula (x_add_1 Excore.EPureI.ef_conv_disj disj) pos in
+          let f2 = CF.formula_of_pure_formula (x_add_1 Excore.EPureI.ef_conv_enum_disj disj) pos in
           (* let f2 = CF.mkFalse (CF.mkTrueFlow ()) pos in *)
           (true, f1, f2)
       in
@@ -2105,13 +2105,16 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let over_f = vdef.C.view_baga_over_inv in
       x_tinfo_hp (add_str "over(baga)" pr_d) over_f no_pos;
       let ex_vs = vdef.C.view_inv_exists_vars in
-      let exist_baga_over,baga_over_formula = match over_f with
-        | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos
-        | Some disj -> true,CF.formula_of_pure_formula (CP.mkExists ex_vs (Excore.EPureI.ef_conv_disj disj) None no_pos) pos
+      let exist_baga_over,baga_over_formula,baga_pure = match over_f with
+        | None -> false,CF.mkTrue (CF.mkTrueFlow ()) pos,CP.mkTrue no_pos
+        | Some disj -> 
+          let pf = (CP.mkExists ex_vs (x_add_1 Excore.EPureI.ef_conv_disj disj) None no_pos) in 
+          true,CF.formula_of_pure_formula pf pos,pf
       in
       let () = y_binfo_hp (add_str "ex_vs" !CP.print_svl) ex_vs in
-      let () = x_binfo_hp (add_str "baga_over_formula" Cprinter.string_of_formula) baga_over_formula no_pos in
-      let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+      let () = y_binfo_hp (add_str "baga_pure" !CP.print_formula) baga_pure in
+      let () = y_tinfo_hp (add_str "baga_over_formula" !CF.print_formula) baga_over_formula in
+      let () = y_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx  in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
 
@@ -2156,21 +2159,21 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let (ifs,bfs) = List.partition CF.is_inductive fl in
         let bfs = bfs@(helper_unfold no bfs ifs) in
         let rs1 = List.exists (fun f ->
-            let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga prog) f) in
+            let pf = x_add_1 Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga prog) f) in
             let () = Debug.ninfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw upf pf
           ) bfs in
         if rs1 then true
         else
           let rs2 = List.exists (fun f ->
-              let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
+              let pf = x_add_1 Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
               let () = Debug.ninfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in
               TP.imply_raw upf pf
             ) ifs in
           if rs2 then false
           else
             let pf = List.fold_left (fun acc f ->
-                let pf = Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
+                let pf = x_add_1 Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
                 CP.mkOr acc pf None no_pos
               ) (CP.mkFalse no_pos) (bfs@ifs) in
             let () = Debug.ninfo_hprint (add_str "pf all" Cprinter.string_of_pure_formula) pf no_pos in
@@ -2588,7 +2591,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         | None -> None
         | Some lst ->
           let rr = List.map (fun (idl,pf) ->
-              let svl = List.map (fun c -> x_add trans_var (c,Unprimed) n_tl pos) idl in
+              let svl = List.map (fun (c,snd) -> x_add trans_var (c,Unprimed) n_tl pos) idl in
               (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
               let cpf = x_add trans_pure_formula pf n_tl in
               let cpf = x_add Cpure.arith_simplify 1 cpf in

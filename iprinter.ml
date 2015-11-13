@@ -1000,13 +1000,15 @@ let string_of_view_decl v =
     | None -> ""
     | Some regex_ids -> string_of_regex_id_star_list regex_ids
   in
+  let pr_baga = pr_list (pr_pair pr_id (pr_opt pr_id)) in
   v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
   (string_of_struc_formula v.view_formula) 
-  ^ " inv " ^ (string_of_pure_formula v.view_invariant) 
-  ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) 
-  ^ " view_data_name: " ^ v.view_data_name 
-  ^ " view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
-  ^ " extends" ^ extn_str
+  ^ "\ninv " ^ (string_of_pure_formula v.view_invariant) 
+  ^ "\ninv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) 
+  ^ "\nview_data_name: " ^ v.view_data_name 
+  ^ "\nview_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
+  ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
+  ^ "\nextends" ^ extn_str
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
