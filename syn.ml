@@ -180,9 +180,9 @@ let should_merge_pre_hprels prog hprels =
         | _ -> false
       in (equiv_lhs ()) (* && (equiv_guard ()) *)) hprs
 
-let should_pre_merge_hprels prog hprels = 
+let should_merge_pre_hprels prog hprels = 
   let pr = pr_hprel_list in
-  Debug.no_1 "should_pre_merge_hprels" pr string_of_bool
+  Debug.no_1 "should_merge_pre_hprels" pr string_of_bool
     (should_merge_pre_hprels prog) hprels
   
 (* hprels have the same name *)

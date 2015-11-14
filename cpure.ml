@@ -10097,7 +10097,7 @@ let rec is_neq_exp (f:formula) = match f with
      | _ -> false)
   | Exists (_,p1,_,_) -> is_neq_exp p1
   | _ -> false
-
+  
 let get_neqs_new p=
   let get_neq acc p = match p with
     | BForm (bf,_) -> (match bf with

@@ -51,7 +51,10 @@ let simplify f args =
     else simpl_f
   in
   let bnd_vars = bnd_vars_of_formula (CP.fv) f args in
-  if bnd_vars == [] then simplify_f f 
+  let () = y_binfo_hp (add_str "bnd_vars" !CP.print_svl) bnd_vars in
+  if bnd_vars == [] then 
+    if CP.contains_neq f then f
+    else simplify_f f 
   else
     CP.mkExists_with_simpl simplify_f bnd_vars f None (CP.pos_of_formula f)
 

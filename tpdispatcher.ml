@@ -2773,15 +2773,18 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
 
 (* syn gist to remove conj in f1 already in f2 *)
 let syn_gist f1 f2 =
-  let x1=split_conjunctions f1 in
-  let x2=split_conjunctions f2 in
-  let x3=List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in
-  join_conjunctions x3
+  let x1 = split_conjunctions f1 in
+  let x2 = split_conjunctions f2 in
+  (* let x3 = List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in *)
+  let x3 = Gen.BList.difference_eq equalFormula x1 x2 in
+  let x4 = Gen.BList.difference_eq equalFormula x2 x1 in
+  is_empty x4, join_conjunctions x3
 
 let om_gist f1 f2 =
-  let f1 = syn_gist f1 f2 in
-  wrap_pre_post (fun (a,b) -> (norm_pure_input a,norm_pure_input b)) norm_pure_result
-    (fun (f1,f2) -> Omega.gist f1 f2) (f1,f2)
+  let is_done, f1 = syn_gist f1 f2 in
+  if is_done then f1
+  else wrap_pre_post (fun (a, b) -> (norm_pure_input a, norm_pure_input b)) norm_pure_result
+      (fun (f1, f2) -> Omega.gist f1 f2) (f1, f2)
 
 let om_gist f1 f2 =
   let pr = Cprinter.string_of_pure_formula in
