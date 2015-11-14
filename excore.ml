@@ -469,7 +469,7 @@ sig
   val merge_baga : t list -> t list -> t list
   val hull_baga : t list -> t list -> t list
   val is_eq_baga : t list -> t list -> bool
-  val mk_elem : spec_var -> t
+  val mk_elem_from_sv : spec_var -> t
 end;;
 
 module type FORM_TYPE =
@@ -498,7 +498,7 @@ module EPURE =
     let is_false (e:epure) = (e == mk_false)
     let string_of (x:epure) = pr_pair (pr_list Elt.string_of) !print_pure_formula x
     let string_of_disj lst = pr_list (* pr_list_ln *) string_of lst
-    let mk_data sv = let e = Elt.mk_elem sv in
+    let mk_data sv = let e = Elt.mk_elem_from_sv sv in
       [([e], mkTrue no_pos)]
 
     let merge_baga b1 b2 = Elt.merge_baga b1 b2
@@ -798,6 +798,7 @@ module EPURE =
       if c==0 then Elt.compare x2 y2
       else c
 
+    (* TODO : sst should be of type (sv,sv) list  and not (elem,elem) list *)
     let subst_elem sst v =
       if Elt.is_zero v then v
       else try
@@ -805,6 +806,7 @@ module EPURE =
           t
         with _ -> failwith ("subst_elem : cannot find elem "^Elt.string_of v)
 
+    (* TODO : sst should be of type (sv,sv) list  and not (elem,elem) list *)
     let subst_epure sst ((baga,f) as ep) =
       try
         let subs_fn = subst_elem sst in
@@ -813,6 +815,7 @@ module EPURE =
         (new_baga,new_f)
       with _ -> ep
 
+    (* TODO : sst should be of type (sv,sv) list  and not (elem,elem) list *)
     let subst_epure_disj sst (lst:epure_disj) =
       List.map (subst_epure sst) lst
 

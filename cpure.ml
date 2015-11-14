@@ -5784,7 +5784,7 @@ struct
   let conv_var_pairs x = x
   let from_var x = x
   let from_var_pairs x = x
-  let mk_elem x = x
+  let mk_elem_from_sv x = x
   (* throws exception when duplicate detected during merge *)
   let rec merge_baga b1 b2 =
     match b1,b2 with
@@ -5813,6 +5813,9 @@ struct
 end;;
 
 (* to capture element as (sv, sv option) for both variable and interval *)
+(*   (sv,None) denotes an address sv *)
+(*   (sv1,Some(sv2)) denotes an interval sv1..(sv1-1) *)
+(*   (sv1,Some(sv1)) is the same as empty *)
 module SV_INTV =
 struct 
   type t = spec_var * spec_var option
@@ -5821,12 +5824,22 @@ struct
   let is_zero x = x==zero
   let eq (x1,_) (x2,_) = eq_spec_var x1 x2
   let compare (x1,_) (x2,_) = compare_spec_var x1 x2
-  let string_of = (* "X"^ *) pr_pair string_of_spec_var (pr_opt string_of_spec_var)
-  let conv_var lst = List.map fst lst
-  let conv_var_pairs lst = List.map (fun ((x1,_),(x2,_)) -> (x1,x2)) lst
-  let from_var lst = List.map (fun v -> (v,None)) lst
-  let from_var_pairs lst = List.map (fun (v1,v2) -> ((v1,None),(v2,None))) lst
-  let mk_elem x = (x,None)
+  let string_of (sv,sv_opt) = 
+    let pr = string_of_spec_var in
+    match sv_opt with
+    | None ->  pr sv
+    | Some sv2 -> pr_pair pr pr (sv,sv2)
+  let conv_var lst = 
+    let lst = List.filter (fun (_,o) -> o==None) lst in
+    List.map fst lst
+  let conv_var_pairs lst = 
+    List.map (fun ((x1,_),(x2,_)) -> (x1,x2)) lst
+  let from_var lst = 
+    List.map (fun v -> (v,None)) lst
+  let from_var_pairs lst = 
+    List.map (fun (v1,v2) -> ((v1,None),(v2,None))) lst
+  let mk_elem_from_sv x = (x,None)
+  (* let mk_elem x = mk_elem_from_sv (x,None) *)
   (* throws exception when duplicate detected during merge *)
   let rec merge_baga b1 b2 =
     match b1,b2 with
