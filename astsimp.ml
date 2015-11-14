@@ -2586,12 +2586,17 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             | _ -> ()
           end
       in
+      let conv_id c = x_add trans_var (c,Unprimed) n_tl pos in
       let conv_baga_inv baga_inv =
         match baga_inv with
         | None -> None
         | Some lst ->
           let rr = List.map (fun (idl,pf) ->
-              let svl = List.map (fun (c,snd) -> x_add trans_var (c,Unprimed) n_tl pos) idl in
+              let svl = List.map (fun (c,c_o) -> 
+                  let nc = conv_id c in
+                  let nc_o = map_opt conv_id c_o in
+                  (nc,nc_o)
+                  ) idl in
               (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
               let cpf = x_add trans_pure_formula pf n_tl in
               let cpf = x_add Cpure.arith_simplify 1 cpf in

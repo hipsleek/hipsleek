@@ -1668,10 +1668,10 @@ and xpure_symbolic_new_orig (prog : prog_decl) (f0 : formula) =
     (* let () = Debug.ninfo_hprint (add_str "old" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in *)
     (* Long : to perform conversion here *)
     let f = Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj nb) in
-    let addr = Cpure.SV.conv_var (List.fold_left (fun acc (baga,_) -> acc@baga) [] nb) in
+    let addr = Cpure.SV_INTV.conv_var (List.fold_left (fun acc (baga,_) -> acc@baga) [] nb) in
     let mset = formula_2_mem f0 prog in
     let ans = (f, addr, mset) in
-    let () = Debug.ninfo_hprint (add_str "new" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in
+    (* let () = Debug.ninfo_hprint (add_str "new" (pr_triple Cprinter.string_of_mix_formula  Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula)) ans no_pos in *)
     ans
     (* else xpure_symbolic_orig prog f0 *)
   else x_add xpure_symbolic_orig prog f0
