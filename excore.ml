@@ -467,7 +467,7 @@ sig
   val hull_baga : t list -> t list -> t list
   val is_eq_baga : t list -> t list -> bool
   val mk_elem_from_sv : spec_var -> t
-  val get_pure : t list -> Cpure.formula
+  val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
   val conv_var : t list -> spec_var list
   val from_var : spec_var list -> t list
   (* val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list *)
@@ -509,38 +509,40 @@ module EPURE =
 
     let is_eq_baga (b1,_) (b2,_) = Elt.is_eq_baga b1 b2
 
+    let conv_var_sv (lst:elem list) = Elt.conv_var lst
 
     (* convert ptr to integer constraints *)
     (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
     let baga_conv ?(neq_flag=false) baga : formula =
-      let choose hd pos =
-        if neq_flag then mkNeqNull hd pos
-        else mkGtVarInt hd 0 pos in
-      let baga = Elt.conv_var baga in
-      if (List.length baga = 0) then
-        mkTrue no_pos
-      else if (List.length baga = 1) then
-        choose (List.hd baga) no_pos
-      else
-        let rec helper i j baga len =
-          let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
-          if i = len - 2 && j = len - 1 then
-            f1
-          else if j = len - 1 then
-            let f2 = helper (i + 1) (i + 2) baga len in
-            mkAnd f1 f2 no_pos
-          else
-            let f2 = helper i (j + 1) baga len in
-            mkAnd f1 f2 no_pos
-        in
-        let f1 = helper 0 1 baga (List.length baga) in
-        let f2 = List.fold_left (fun f sv -> mkAnd f (choose sv no_pos) no_pos)
-            (choose (List.hd baga) no_pos) (List.tl baga) in
-        mkAnd f1 f2 no_pos
+      Elt.get_pure ~neq_flag:neq_flag baga
+      (* let choose hd pos = *)
+      (*   if neq_flag then mkNeqNull hd pos *)
+      (*   else mkGtVarInt hd 0 pos in *)
+      (* let baga = Elt.conv_var baga in *)
+      (* if (List.length baga = 0) then *)
+      (*   mkTrue no_pos *)
+      (* else if (List.length baga = 1) then *)
+      (*   choose (List.hd baga) no_pos *)
+      (* else *)
+      (*   let rec helper i j baga len = *)
+      (*     let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in *)
+      (*     if i = len - 2 && j = len - 1 then *)
+      (*       f1 *)
+      (*     else if j = len - 1 then *)
+      (*       let f2 = helper (i + 1) (i + 2) baga len in *)
+      (*       mkAnd f1 f2 no_pos *)
+      (*     else *)
+      (*       let f2 = helper i (j + 1) baga len in *)
+      (*       mkAnd f1 f2 no_pos *)
+      (*   in *)
+      (*   let f1 = helper 0 1 baga (List.length baga) in *)
+      (*   let f2 = List.fold_left (fun f sv -> mkAnd f (choose sv no_pos) no_pos) *)
+      (*       (choose (List.hd baga) no_pos) (List.tl baga) in *)
+      (*   mkAnd f1 f2 no_pos *)
 
     (* ef_conv :  ef_pure -> formula *)
     (* conseq must use this *)
-    (* ([a,a,b],pure)  --> baga[a,ab] & a>0 & a>0 & b>01 & pure *)
+    (* ([a,a,b],pure)  --> baga[a,a,b] & a>0 & a>0 & b>0 & pure *)
     let ef_conv ((baga,f)) : formula =
       let bf = baga_conv baga in
       mkAnd bf f no_pos
@@ -554,17 +556,18 @@ module EPURE =
 
     (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
     let baga_enum baga : formula =
-      let baga = Elt.conv_var baga in
-      match baga with
-      | [] -> mkTrue no_pos
-      | h::ts ->
-        (* let i = ref 1 in *)
-        let f,_= List.fold_left (fun (f,i) sv ->
-            (* i := !i + 1; *)
-            let i = i + 1 in
-            (mkAnd f (mkEqVarInt sv (* !i *)i no_pos) no_pos, i)
-          ) ((mkEqVarInt (List.hd baga) (* !i *)1 no_pos),1) (List.tl baga)
-        in f
+      Elt.get_pure ~enum_flag:true baga
+      (* let baga = Elt.conv_var baga in *)
+      (* match baga with *)
+      (* | [] -> mkTrue no_pos *)
+      (* | h::ts -> *)
+      (*   (\* let i = ref 1 in *\) *)
+      (*   let f,_= List.fold_left (fun (f,i) sv -> *)
+      (*       (\* i := !i + 1; *\) *)
+      (*       let i = i + 1 in *)
+      (*       (mkAnd f (mkEqVarInt sv (\* !i *\)i no_pos) no_pos, i) *)
+      (*     ) ((mkEqVarInt (List.hd baga) (\* !i *\)1 no_pos),1) (List.tl baga) *)
+      (*   in f *)
 
     (* ef_conv_enum :  ef_pure -> formula *)
     (* provide an enumeration that can be used by ante *)
@@ -687,6 +690,10 @@ module EPURE =
       in match disj with
         | [] -> []
         | (m,_)::lst -> aux m lst
+
+    let hull_memset_sv disj =
+      let r = hull_memset disj in
+      Elt.conv_var r
 
     let is_false_disj_x is_shape disj =
       let () = x_tinfo_pp ("Omega is_false_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
@@ -857,6 +864,10 @@ module EPURE =
             Gen.BList.intersect_eq Elt.eq acc baga
         ) (fst (List.hd epd)) (List.tl epd)
 
+    let get_baga_sv (epd : epure_disj) =
+      let lst = get_baga epd in
+      Elt.conv_var lst
+
     let mk_epure (pf:formula) =
       [([], (* subs_null *) pf)]
 
@@ -871,7 +882,7 @@ module EPURE =
   end
 
 
-(* module EPureI = EPURE(SV) *)
+module EPureIOld = EPURE(SV)
 module EPureI = EPURE(SV_INTV)
 
 (* module EPureI = EPUREN(SV) *)

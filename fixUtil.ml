@@ -357,8 +357,8 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                   let mf =  Mcpure.mix_of_pure mf  in
                   {cv with
                    C.view_baga = 
-                     (let es = Excore.EPureI.get_baga inv in
-                      CP.SV_INTV.conv_var es);
+                     (let es = Excore.EPureI.get_baga_sv inv in
+                      (* CP.SV_INTV.conv_var *) es);
                    C.view_baga_inv = Some inv;
                    C.view_baga_over_inv = Some inv;
                    C.view_baga_under_inv = Some inv;
@@ -372,8 +372,8 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                     let () = y_tinfo_hp (add_str "pure inv2" !CP.print_formula) mf in
                     let mf =  Mcpure.mix_of_pure mf  in
                     {cv with
-                     C.view_baga = (let es = Excore.EPureI.get_baga inv in
-                                    CP.SV_INTV.conv_var es);
+                     C.view_baga = (let es = Excore.EPureI.get_baga_sv inv in
+                                    (* CP.SV_INTV.conv_var *) es);
                      C.view_baga_inv = Some inv;
                      C.view_baga_over_inv = Some inv;
                      C.view_baga_under_inv = Some inv;
@@ -389,8 +389,8 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                   let () = y_tinfo_hp (add_str "pure inv" !CP.print_formula) mf in
                   let mf =  Mcpure.mix_of_pure mf  in
                   {cv with
-                   C.view_baga = (let es = Excore.EPureI.get_baga inv in
-                                  CP.SV_INTV.conv_var es);
+                   C.view_baga = (let es = Excore.EPureI.get_baga_sv inv in
+                                  (* CP.SV_INTV.conv_var *) es);
                    C.view_baga_over_inv = Some inv;
                    C.view_baga_x_over_inv = Some inv;
                    C.view_user_inv = mf;

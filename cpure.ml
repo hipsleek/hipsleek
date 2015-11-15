@@ -5771,6 +5771,54 @@ let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
       compare_prime p1 p2 
     else c
 
+(* convert ptr to integer constraints *)
+(* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
+let baga_conv ?(neq_flag=false) baga : formula =
+  let choose hd pos =
+    if neq_flag then mkNeqNull hd pos
+    else mkGtVarInt hd 0 pos in
+  let baga = (* Elt.conv_var *) baga in
+  if (List.length baga = 0) then
+    mkTrue no_pos
+  else if (List.length baga = 1) then
+    choose (List.hd baga) no_pos
+  else
+    let rec helper i j baga len =
+      let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
+      if i = len - 2 && j = len - 1 then
+        f1
+      else if j = len - 1 then
+        let f2 = helper (i + 1) (i + 2) baga len in
+        mkAnd f1 f2 no_pos
+      else
+        let f2 = helper i (j + 1) baga len in
+        mkAnd f1 f2 no_pos
+    in
+    let f1 = helper 0 1 baga (List.length baga) in
+    let f2 = List.fold_left (fun f sv -> mkAnd f (choose sv no_pos) no_pos)
+        (choose (List.hd baga) no_pos) (List.tl baga) in
+    mkAnd f1 f2 no_pos
+
+(* ([a,a,b]  --> a=1 & a=2 & b=3 *)
+let baga_enum baga : formula =
+  (* let baga = Elt.conv_var baga in *)
+  match baga with
+  | [] -> mkTrue no_pos
+  | h::ts ->
+    (* let i = ref 1 in *)
+    let f,_= List.fold_left (fun (f,i) sv ->
+        (* i := !i + 1; *)
+        let i = i + 1 in
+        (mkAnd f (mkEqVarInt sv (* !i *)i no_pos) no_pos, i)
+      ) ((mkEqVarInt (List.hd baga) (* !i *)1 no_pos),1) (List.tl baga)
+    in f
+
+(*
+   [a,b,(e,base,offset)]
+    ==> a>0 & b>0 & a!=b  
+        
+   
+*)
 module SV =
 struct 
   type t = spec_var
@@ -5784,9 +5832,14 @@ struct
     try
       snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
     with _ -> x
-  let get_pure (lst:t list) = 
-    let () = y_winfo_pp ("TODO: get_pure"^x_loc) in
-    mkTrue no_pos
+    (* (\* convert ptr to integer constraints *\) *)
+    (* (\* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *\) *)
+    (* let baga_conv ?(neq_flag=false) baga : formula = *)
+    (*   let choose hd pos = *)
+  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
+    (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
+    if enum_flag then baga_enum lst
+    else baga_conv ~neq_flag:neq_flag lst
   let conv_var x = x
   let from_var x = x
   (* let conv_var_pairs x = x *)
@@ -5821,8 +5874,9 @@ end;;
 
 (* to capture element as (sv, sv option) for both variable and interval *)
 (*   (sv,None) denotes an address sv *)
-(*   (sv1,Some(sv2)) denotes an interval sv1..(sv1-1) *)
+(*   (sv1,Some(sv2)) denotes an interval sv1..(sv2-1) *)
 (*   (sv1,Some(sv1)) is the same as empty *)
+(*   Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
 module SV_INTV =
 struct 
   type t = spec_var * spec_var option
@@ -5842,9 +5896,12 @@ struct
         snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
       with _ -> x in
     (repl v,map_opt repl opt)
-  let get_pure (lst:t list) = 
+  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
     let () = y_winfo_pp ("TODO: get_pure"^x_loc) in
-    mkTrue no_pos
+    let lst = List.filter (fun (_,p) -> p==None) lst in
+    let lst = List.map fst lst in
+    if enum_flag then baga_enum lst
+    else baga_conv ~neq_flag:neq_flag lst
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in
     List.map fst lst

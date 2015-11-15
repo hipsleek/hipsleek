@@ -1721,8 +1721,8 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
       in
       let baga_sp = (add_epure epure baga_lst) in
       let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
-      let r = Excore.EPureI.hull_memset baga_sp in
-      let r = CP.SV_INTV.conv_var r in
+      let r = Excore.EPureI.hull_memset_sv baga_sp in
+      (* let r = CP.SV_INTV.conv_var r in *)
       let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
        if baga_sp==[] then [root;root]
       else r
