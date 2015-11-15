@@ -2143,9 +2143,9 @@ validation: validation)  =
                       let lhs_formula = CF.normalize 2 lhs_formula_pure lhs_formula_heap pos in
                       let pos_res = Cformula.pos_of_formula res_f in
                       let empty_es_res = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos_res in
-                      let lhs_ctx = CF.Ctx {empty_es_res with CF.es_formula = res_f } in
-                      let lhs = CF.SuccCtx [lhs_ctx] in
-                      (check_heap_entail lhs lhs_formula) || acc
+                      let res_f_ctx = CF.Ctx {empty_es_res with CF.es_formula = res_f } in
+                      let res_f_lctx = CF.SuccCtx [res_f_ctx] in
+                      (check_heap_entail res_f_lctx lhs_formula) || acc
                     | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
                   in let rr = List.fold_left helper false lctx in
                   begin
@@ -2227,8 +2227,8 @@ validation: validation)  =
   in
   (*********************************)
   match validation with
-  | V_Residue (Some residue) -> let hdr = "R" in validate_with_residue hdr residue
-  | V_Residue None -> let hdr = "R" in print_endline "No residue."
+  | V_Residue (hdr, Some residue) -> validate_with_residue hdr residue
+  | V_Residue (hdr, None) -> let hdr = "R" in print_endline "No residue."
   | V_Infer (hdr,Some inference) -> (* let hdr = "I" in *) validate_with_residue hdr inference 
   | V_Infer (hdr,None) -> (* let hdr = "I" in *) print_endline "No inference."
   | _ -> print_endline "RA etc. not yet implemented"

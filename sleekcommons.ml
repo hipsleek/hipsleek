@@ -128,7 +128,7 @@ and validate_result =
 
 and validation =
   (* R{..} *)
-  | V_Residue of meta_formula option
+  | V_Residue of string * (meta_formula option)
   (* I{..} *)
   | V_Infer   of string * (meta_formula option)
   (* RA{..} *)
@@ -253,7 +253,7 @@ let string_of_validation v=
   let pr_orel = Gen.pr_option (Gen.pr_quad Cprinter.string_of_cond_path
       string_of_meta_formula pr_omf string_of_meta_formula) in
   match v with
-    | V_Residue o_mf -> "R{" ^ (pr_omf o_mf) ^"}"
+    | V_Residue (s, o_mf) -> s^"{" ^ (pr_omf o_mf) ^"}"
     | V_Infer (s,o_mf) -> s^"{" ^ (pr_omf o_mf) ^"}"
     | V_RelAssume o_vrels -> "RA{" ^ (pr_orel o_vrels) ^ "}"
 
