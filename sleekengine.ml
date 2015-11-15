@@ -2081,7 +2081,6 @@ validation: validation)  =
     let () = x_tinfo_hp (add_str "expected residue" pr_f) res_f no_pos in
     let pr_lc = Cprinter.string_of_list_context in
     let pr_r = pr_option (pr_pair pr_lc string_of_bool) in
-    let () = x_tinfo_hp (add_str "current residue" pr_r) !CF.residues no_pos in
     let ss = "Expect_Infer "^nn^" " in
     match !CF.residues with
     | None -> print_endline_quiet ( ss ^"Fail. (empty residue)")
@@ -2091,6 +2090,76 @@ validation: validation)  =
             | (CF.SuccCtx lctx) ->
               begin 
                 match validation with
+                | V_Residue ("RU", _) ->
+                  let rec helper acc ctx =
+                    match ctx with
+                    | CF.Ctx es ->
+                      let lhs_formula = es.CF.es_formula in
+                      let pos_res = Cformula.pos_of_formula res_f in
+                      let empty_es_res = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos_res in
+                      let res_f_ctx = CF.Ctx {empty_es_res with CF.es_formula = res_f } in
+                      let res_f_lctx = CF.SuccCtx [res_f_ctx] in
+                      (check_heap_entail res_f_lctx lhs_formula) || acc
+                    | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                  in let rr = List.fold_left helper false lctx in
+                  begin
+                    match vr with
+                    | VR_Valid -> rr
+                    | _ -> not(rr)
+                  end
+                | V_Residue ("RE", _) ->
+                  let rec helper acc ctx =
+                    match ctx with
+                    | CF.Ctx es ->
+                      let lhs_formula = es.CF.es_formula in
+                      let pos_res = Cformula.pos_of_formula res_f in
+                      let empty_es_res = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos_res in
+                      let res_f_ctx = CF.Ctx {empty_es_res with CF.es_formula = res_f } in
+                      let res_f_lctx = CF.SuccCtx [res_f_ctx] in
+                      (check_heap_entail res_f_lctx lhs_formula) || acc
+                    | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                  in let rr = List.fold_left helper false lctx in
+                  let rr2 = run_heap_entail lc res_f in
+                  let check rr =
+                    begin
+                      match rr with
+                      | (CF.SuccCtx _,_) ->
+                        begin
+                          match vr with
+                          | VR_Fail _ -> false
+                          | _ -> true
+                        end
+                      | (CF.FailCtx _,_) -> 
+                        begin
+                          match vr with
+                          | VR_Fail _ -> true
+                          | _ -> false
+                        end
+                    end
+                  in
+                  let rr3 = check rr2 in
+                  begin
+                    match vr with
+                    | VR_Valid -> (rr && rr3)
+                    | _ -> not(rr && rr3)
+                  end
+                | V_Residue ("R", _) -> 
+                  begin
+                    let rr = run_heap_entail lc res_f in
+                    match rr with
+                    | (CF.SuccCtx _,_) ->
+                      begin
+                        match vr with
+                        | VR_Fail _ -> false
+                        | _ -> true
+                      end
+                    | (CF.FailCtx _,_) -> 
+                      begin
+                        match vr with
+                        | VR_Fail _ -> true
+                        | _ -> false
+                      end
+                  end 
                 | V_Infer ("IE", _) ->
                   let rec helper acc ctx =
                     match ctx with
