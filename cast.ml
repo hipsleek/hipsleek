@@ -1711,7 +1711,7 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         (* if Excore.EPureI.is_false bl then [root,root] *)
         (* else *)
         let sst = List.combine from_svs to_svs in
-        let sst = CP.SV_INTV.from_var_pairs sst in
+        (* let sst = CP.SV_INTV.from_var_pairs sst in *)
         List.map (Excore.EPureI.subst_epure sst) bl in
       let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
       let add_epure pf lst =
@@ -1748,7 +1748,7 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
     | None -> []
     | Some bl -> 
       let sst = List.combine from_svs to_svs in
-      let sst = CP.SV_INTV.from_var_pairs sst in
+      (* let sst = CP.SV_INTV.from_var_pairs sst in *)
       List.map (Excore.EPureI.subst_epure sst) bl in
   let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
   let add_epure pf lst =

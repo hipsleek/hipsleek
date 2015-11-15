@@ -222,7 +222,7 @@ let rec build_ef_heap_formula_x is_shape (cf0 : Cformula.h_formula) (all_views :
     let () = Debug.ninfo_hprint (add_str "svl" (pr_list Cprinter.string_of_typed_spec_var)) svl no_pos in
     let sst = List.combine view_args svl in
     (* TODO : below should be done using EPureI : DONE *)
-    let sst = CP.SV_INTV.from_var_pairs sst in
+    (* let sst = CP.SV_INTV.from_var_pairs sst in *)
     let efpd_h = EPureI.subst_epure_disj sst efpd in
     let efpd_n = if !Globals.delay_eelim_baga_inv then efpd_h else EPureI.norm_disj is_shape efpd_h in
     let () = Debug.ninfo_hprint (add_str "efpd_n" (EPureI.string_of_disj)) efpd_n no_pos in

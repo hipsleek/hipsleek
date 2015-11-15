@@ -5780,10 +5780,17 @@ struct
   let eq = eq_spec_var
   let compare = compare_spec_var
   let string_of x = (* "X"^ *)(string_of_spec_var x)
+  let subst sst x =
+    try
+      snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
+    with _ -> x
+  let get_pure (lst:t list) = 
+    let () = y_winfo_pp ("TODO: get_pure"^x_loc) in
+    mkTrue no_pos
   let conv_var x = x
-  let conv_var_pairs x = x
   let from_var x = x
-  let from_var_pairs x = x
+  (* let conv_var_pairs x = x *)
+  (* let from_var_pairs x = x *)
   let mk_elem_from_sv x = x
   (* throws exception when duplicate detected during merge *)
   let rec merge_baga b1 b2 =
@@ -5829,15 +5836,24 @@ struct
     match sv_opt with
     | None ->  pr sv
     | Some sv2 -> pr_pair pr pr (sv,sv2)
+  let subst sst (v,opt) =
+    let repl x =
+      try
+        snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
+      with _ -> x in
+    (repl v,map_opt repl opt)
+  let get_pure (lst:t list) = 
+    let () = y_winfo_pp ("TODO: get_pure"^x_loc) in
+    mkTrue no_pos
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in
     List.map fst lst
-  let conv_var_pairs lst = 
-    List.map (fun ((x1,_),(x2,_)) -> (x1,x2)) lst
   let from_var lst = 
     List.map (fun v -> (v,None)) lst
-  let from_var_pairs lst = 
-    List.map (fun (v1,v2) -> ((v1,None),(v2,None))) lst
+  (* let conv_var_pairs lst =  *)
+  (*   List.map (fun ((x1,_),(x2,_)) -> (x1,x2)) lst *)
+  (* let from_var_pairs lst =  *)
+  (*   List.map (fun (v1,v2) -> ((v1,None),(v2,None))) lst *)
   let mk_elem_from_sv x = (x,None)
   (* let mk_elem x = mk_elem_from_sv (x,None) *)
   (* throws exception when duplicate detected during merge *)
