@@ -2771,25 +2771,6 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
-(* syn gist to remove conj in f1 already in f2 *)
-let syn_gist f1 f2 =
-  let x1 = split_conjunctions f1 in
-  let x2 = split_conjunctions f2 in
-  (* let x3 = List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in *)
-  let x3 = Gen.BList.difference_eq equalFormula x1 x2 in
-  let x4 = Gen.BList.difference_eq equalFormula x2 x1 in
-  is_empty x4, join_conjunctions x3
-
-let om_gist f1 f2 =
-  let is_done, f1 = syn_gist f1 f2 in
-  if is_done then f1
-  else wrap_pre_post (fun (a, b) -> (norm_pure_input a, norm_pure_input b)) norm_pure_result
-      (fun (f1, f2) -> Omega.gist f1 f2) (f1, f2)
-
-let om_gist f1 f2 =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2 "om_gist" pr pr pr (fun _ _ -> om_gist f1 f2) f1 f2
-
 let should_output () = !print_proof && not !suppress_imply_out
 
 let suppress_imply_output () = suppress_imply_out := true
@@ -4388,6 +4369,38 @@ let check_diff xp0 xp1 =
   let pr1 = Cprinter.string_of_mix_formula in
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
 
+(* syn gist to remove conj in f1 already in f2 *)
+let syn_gist f1 f2 =
+  let x1 = split_conjunctions f1 in
+  let x2 = split_conjunctions f2 in
+  (* let x3 = List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in *)
+  let x3 = Gen.BList.difference_eq equalFormula x1 x2 in
+  let x4 = Gen.BList.difference_eq equalFormula x2 x1 in
+  is_empty x4, join_conjunctions x3
+
+let norm_gist_result a b r = 
+  let r = norm_pure_result r in
+  (* To recover unexpected substition done by gist *)
+  let xa = split_conjunctions a in
+  let xr = split_conjunctions r in
+  let xr = List.map (fun x ->
+      if Gen.BList.mem_eq equalFormula x xa then x
+      else
+        try List.find (fun a -> imply_raw (mkAnd x b no_pos) a) xa
+        with _ -> x
+    ) xr in
+  join_conjunctions xr
+
+let om_gist f1 f2 =
+  let is_done, f1 = syn_gist f1 f2 in
+  if is_done then f1
+  else
+    wrap_pre_post (fun (a, b) -> (norm_pure_input a, norm_pure_input b)) 
+      (norm_gist_result f1 f2) (fun (f1, f2) -> Omega.gist f1 f2) (f1, f2)
+
+let om_gist f1 f2 =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "om_gist" pr pr pr (fun _ _ -> om_gist f1 f2) f1 f2
 
 let () = 
   CP.simplify := simplify;
