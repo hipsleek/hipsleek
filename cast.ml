@@ -1762,7 +1762,7 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
   let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
   (* TODO:merge baga_sp for common memset *)
   match baga_sp with
-  [(ad,_)] ->  CP.SV_INTV.conv_var ad
+  [(ad,_)] ->  Excore.EPureI.conv_var_sv (* CP.SV_INTV.conv_var *) ad
   | _ ->  P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
