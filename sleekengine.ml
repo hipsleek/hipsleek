@@ -2090,9 +2090,70 @@ validation: validation)  =
         let res = (match lc (* run_heap_entail lc res_f *) with
             | (CF.SuccCtx lctx) ->
               begin 
-                (* let () = x_tinfo_hp (add_str "expected vr" string_of_vres) vr no_pos in *)
                 match validation with
-                | V_Infer _ ->
+                | V_Infer ("IE", _) ->
+                  let rec helper acc ctx =
+                    match ctx with
+                    | CF.Ctx es ->
+                      let ps = es.CF.es_infer_pure in
+                      let hs = es.CF.es_infer_heap in
+                      let pos = Cformula.pos_of_formula es.CF.es_formula in
+                      (* Combine inferred formula *)
+                      let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
+                      let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
+                      let h = List.fold_left (fun acc p -> CF.mkStarH acc p pos) CF.HEmp hs in
+                      let mf = match !last_entail_lhs_xpure with 
+                          Some f -> f 
+                        | None -> Mcpure.mix_of_pure (CP.mkTrue no_pos) in
+                      let lhs_formula_pure = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos in
+                      let lhs_formula_pure = CF.mkAnd_pure lhs_formula_pure mf pos in
+                      let lhs_formula_heap = CF.mkAnd_f_hf empty_es.CF.es_formula h pos in
+                      let lhs_formula = CF.normalize 2 lhs_formula_pure lhs_formula_heap pos in
+                      let lhs_ctx = CF.Ctx {empty_es with CF.es_formula = lhs_formula } in
+                      let lhs = CF.SuccCtx [lhs_ctx] in
+                      let pos_res = Cformula.pos_of_formula res_f in
+                      let empty_es_res = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos_res in
+                      let ctx_res = CF.Ctx {empty_es_res with CF.es_formula = res_f } in
+                      let lctx_res = CF.SuccCtx [ctx_res] in
+                      ((check_heap_entail lctx_res lhs_formula) && (check_heap_entail lhs res_f) ) || acc
+                    | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                  in let rr = List.fold_left helper false lctx in
+                  begin
+                    match vr with
+                    | VR_Valid -> rr
+                    | _ -> not(rr)
+                  end
+                | V_Infer ("IU", _) ->
+                  let rec helper acc ctx =
+                    match ctx with
+                    | CF.Ctx es ->
+                      let ps = es.CF.es_infer_pure in
+                      let hs = es.CF.es_infer_heap in
+                      let pos = Cformula.pos_of_formula es.CF.es_formula in
+                      (* Combine inferred formula *)
+                      let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
+                      let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
+                      let h = List.fold_left (fun acc p -> CF.mkStarH acc p pos) CF.HEmp hs in
+                      let mf = match !last_entail_lhs_xpure with 
+                          Some f -> f 
+                        | None -> Mcpure.mix_of_pure (CP.mkTrue no_pos) in
+                      let lhs_formula_pure = CF.mkAnd_pure empty_es.CF.es_formula (Mcpure.mix_of_pure p) pos in
+                      let lhs_formula_pure = CF.mkAnd_pure lhs_formula_pure mf pos in
+                      let lhs_formula_heap = CF.mkAnd_f_hf empty_es.CF.es_formula h pos in
+                      let lhs_formula = CF.normalize 2 lhs_formula_pure lhs_formula_heap pos in
+                      let pos_res = Cformula.pos_of_formula res_f in
+                      let empty_es_res = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos_res in
+                      let lhs_ctx = CF.Ctx {empty_es_res with CF.es_formula = res_f } in
+                      let lhs = CF.SuccCtx [lhs_ctx] in
+                      (check_heap_entail lhs lhs_formula) || acc
+                    | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
+                  in let rr = List.fold_left helper false lctx in
+                  begin
+                    match vr with
+                    | VR_Valid -> rr
+                    | _ -> not(rr)
+                  end
+                |  V_Infer ("I", _) ->
                   let rec helper acc ctx =
                     match ctx with
                     | CF.Ctx es ->
