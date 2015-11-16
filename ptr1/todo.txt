@@ -336,23 +336,30 @@ expect Fail.
 ================================================================
 # ex7a1b.slk -dre "ef_unsat\|.*enum\|get_spec_baga\|is_sat_tp" 
 
-# need fresh existential for one xxx
+# need fresh existential is_sat_tp..
+
 
 (====)
-is_sat_tp@72@71@69@68@67@1
-is_sat_tp inp1 : 
-flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n & xxx_67=flted_7_13+self & 
- y_68=n_14+self & flted_7_13<=n_14 & 0<=flted_7_13
-is_sat_tp@72 EXIT:true
+is_sat_tp@31@25@1
+is_sat_tp inp1 : y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i
+is_sat_tp@31 EXIT:false
 
 (====)
-is_sat_tp@58
-is_sat_tp inp1 : exists(flted_7_13:exists(n_14:
-n_14=n & y=n_14+self & flted_7_13<=n_14) 
-& flted_7_13=1+i & xxx=flted_7_13+self & 0<=flted_7_13) & 
- xxx=i+self & 0<=i & xxx!=null & xxx!=null
-is_sat_tp@58 EXIT:false
-==============================================================
+imply_mix_formula#1@25@1
+imply_mix_formula#1 inp1 : ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i))
+imply_mix_formula#1 inp2 :Some( ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i)))
+imply_mix_formula#1 inp3 : 0<=i & i<=n & y=self+n & xxx=self+i & xxx!=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@25 EXIT:(false,Some(([ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i],[ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i])))
+
+===============================================================
 ===============================================================
 ===============================================================
 ===============================================================

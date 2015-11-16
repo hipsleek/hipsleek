@@ -509,7 +509,7 @@ let sleek_prologue () =
 let sleek_epilogue () =
   let cp = !cprog in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_derived_program cp) else () in
-  if !Debug.dump_calls then Debug.dump_debug_calls ();
+  if !VarGen.z_debug_flag (* dump_calls *) then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump

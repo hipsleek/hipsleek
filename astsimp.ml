@@ -2068,8 +2068,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx0 = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let ctx = CF.add_infer_vars_templ_ctx ctx0 templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) formula1 no_pos in
-      let () = x_tinfo_hp (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
+      let () = x_binfo_hp (add_str "formula1(enum)" Cprinter.string_of_formula) formula1 no_pos in
+      let () = x_binfo_hp (add_str "formula1_under(sym)" Cprinter.string_of_formula) formula1_under no_pos in
       let () = x_tinfo_hp (add_str "templ_vars" !CP.print_svl) templ_vars no_pos in
       let () = x_tinfo_hp (add_str "context0" Cprinter.string_of_context) ctx0 no_pos in
       let () = x_tinfo_hp (add_str "context" Cprinter.string_of_context) ctx no_pos in
