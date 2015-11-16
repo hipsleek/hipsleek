@@ -17,10 +17,30 @@ expect Valid.
 */
 
 /*
-# ex7a1b.slk
+# ex7a1b.slk -dre "ef_unsat\|.*enum\|get_spec_baga\|add_epure" 
+
+# need fresh existential for one xxx
+
+(====)
+is_sat_tp@58
+is_sat_tp inp1 : exists(flted_7_13:exists(n_14:n_14=n & y=n_14+self & flted_7_13<=n_14) & 
+                   flted_7_13=1+i & xxx=flted_7_13+self & 0<=flted_7_13) & 
+ xxx=i+self & 0<=i & xxx!=null & xxx!=null
+is_sat_tp@58 EXIT:false
+
+
 
 xxx (from a node) is not in baga, but 
 xxx_51 (from a view) is in baga
+
+(==cast.ml#1733==)
+add_epure@2@1
+add_epure inp1 : flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n
+add_epure inp2 :[([(xxx_51,y_52)], xxx_51=flted_7_13+self & y_52=n_14+self & flted_7_13<=n_14 & 0<=flted_7_13)]
+add_epure@2 EXIT:[([xxx_51], flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n & xxx_51=flted_7_13+self & 
+ y_52=n_14+self & flted_7_13<=n_14 & 0<=flted_7_13)]
+
+
 
 ef_unsat@3
 ef_unsat inp1 :([xxx_51], flted_7_13=1+i & xxx=i+self & 0<=i 

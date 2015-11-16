@@ -9652,7 +9652,7 @@ class infer_acc =
         true
       | Some p1 -> 
         let np = CP.mkAnd p1 p no_pos in
-        let sat_flag = !CP.tp_is_sat np in
+        let sat_flag = x_add_1 !CP.tp_is_sat np in
         if sat_flag then 
         let () = pure <- Some np in
         true

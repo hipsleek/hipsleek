@@ -5930,8 +5930,8 @@ struct
       else failwith "detected false"
 
   let merge_baga (b1:t list) (b2:t list) : t list =
-    let b1 = List.map fst b1 in
-    let b2 = List.map fst b2 in
+    let b1 = conv_var (* List.map fst *) b1 in
+    let b2 = conv_var (* List.map fst *) b2 in
     let b3 = merge_baga b1 b2 in
     List.map (fun v -> (v,None)) b3
 
@@ -5945,8 +5945,8 @@ struct
       else x1::(hull_baga t1 t2)
 
   let hull_baga (b1:t list) (b2:t list) : t list =
-    let b1 = List.map fst b1 in
-    let b2 = List.map fst b2 in
+    let b1 = conv_var (* List.map fst *) b1 in
+    let b2 = conv_var (* List.map fst *) b2 in
     let b3 = hull_baga b1 b2 in
     List.map (fun v -> (v,None)) b3
 
@@ -5960,9 +5960,10 @@ struct
     |_,_ -> false
 
   let is_eq_baga (b1:t list) (b2:t list) : bool =
-    let b1 = List.map fst b1 in
-    let b2 = List.map fst b2 in
-    let b3 = is_eq_baga b1 b2 in
+    let () = y_winfo_pp "is_eq_baga may be unsound" in
+    let b1 = conv_var (* List.map fst *) b1 in
+    let b2 = conv_var (* List.map fst *) b2 in
+     let b3 = is_eq_baga b1 b2 in
     (* List.map (fun v -> (v,None)) *) b3
 
 end;;
