@@ -1070,8 +1070,16 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
          | 0 -> vdef.view_user_inv
          | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
        in
-       let () = x_tinfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in
-       let () = x_tinfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
+       let ex_vars = vdef.view_inv_exists_vars in
+       let fresh_ex_vars = CP.fresh_spec_vars ex_vars in
+       (* let () = x_binfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in *)
+       let () = x_binfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
+       let from_svs = ex_vars@from_svs in
+       let to_svs = fresh_ex_vars@to_svs in
+       let () = x_binfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+       let () = x_binfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+       let () = x_binfo_hp (add_str "ex_svs" !CP.print_svl) ex_vars no_pos in
+       
        (* let () = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
        (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
        (*LDK: ??? be careful to handle frac var properly. 

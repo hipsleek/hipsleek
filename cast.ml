@@ -1703,7 +1703,7 @@ let add_epure pf lst =
 
 (* get specialized baga form *)
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
-  let () = x_tinfo_hp (add_str "c= " (pr_id)) c no_pos in
+  let () = x_binfo_hp (add_str "c= " (pr_id)) c no_pos in
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   (* let ba = vdef.view_baga in *)
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
@@ -1719,8 +1719,8 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
       let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
       let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in
       let to_svs = root :: ba_exists_fresh@args in
-      let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
-      let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+      let () = x_binfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+      let () = x_binfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
       let baga_lst = (* match ba_oinv with *)
         (* | None -> [] *)
         (* | Some bl -> *)

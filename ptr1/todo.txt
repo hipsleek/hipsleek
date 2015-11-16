@@ -339,9 +339,17 @@ expect Fail.
 # need fresh existential for one xxx
 
 (====)
+is_sat_tp@72@71@69@68@67@1
+is_sat_tp inp1 : 
+flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n & xxx_67=flted_7_13+self & 
+ y_68=n_14+self & flted_7_13<=n_14 & 0<=flted_7_13
+is_sat_tp@72 EXIT:true
+
+(====)
 is_sat_tp@58
-is_sat_tp inp1 : exists(flted_7_13:exists(n_14:n_14=n & y=n_14+self & flted_7_13<=n_14) & 
-                   flted_7_13=1+i & xxx=flted_7_13+self & 0<=flted_7_13) & 
+is_sat_tp inp1 : exists(flted_7_13:exists(n_14:
+n_14=n & y=n_14+self & flted_7_13<=n_14) 
+& flted_7_13=1+i & xxx=flted_7_13+self & 0<=flted_7_13) & 
  xxx=i+self & 0<=i & xxx!=null & xxx!=null
 is_sat_tp@58 EXIT:false
 ==============================================================

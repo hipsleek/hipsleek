@@ -1779,7 +1779,7 @@ and sat_warnings cprog =
       let () = proving_loc #set (CF.pos_of_formula f) in
       if CF.is_trivial_f f then (f,[])
       else 
-        let goods,unsat_list = x_add_1 Solver.find_unsat cprog f in
+        let goods,unsat_list = x_add Solver.find_unsat cprog f in
         let nf = match goods with
           | x::[]-> x
           | _ -> List.fold_left ( fun a c -> CF.mkOr c a no_pos) (CF.mkFalse (CF.mkTrueFlow ()) no_pos) goods in
@@ -1802,7 +1802,7 @@ and sat_warnings cprog =
         let test f = match f with
           | CF.EBase b -> (match b.CF.formula_struc_continuation with
               | None -> 
-                let filtered = fst (Solver.find_unsat cprog b.CF.formula_struc_base) in
+                let filtered = fst (x_add Solver.find_unsat cprog b.CF.formula_struc_base) in
                 List.map (fun d-> 
                     if CF.isAnyConstFalse d then CF.mkEBase d None no_pos
                     else CF.EBase {b with CF.formula_struc_base = d}) filtered 
@@ -1816,7 +1816,7 @@ and sat_warnings cprog =
         (*      List.fold_left (fun a c-> match (snd c) with
                 | CF.EBase b -> if ((List.length b.CF.formula_ext_continuation)>0) then c::a
                 else 
-                let goods, unsat_list = x_add_1 Solver.find_unsat cprog b.CF.formula_ext_base in 
+                let goods, unsat_list = x_add Solver.find_unsat cprog b.CF.formula_ext_base in 
                 (List.map (fun d-> (fst c, CF.EBase {b with CF.formula_ext_base = d})) goods) @ a 
                 |  _ -> c::a) [] c.Cast.view_formula in      *)
         {c with Cast.view_un_struc_formula = nf; Cast.view_formula = ncf; 
