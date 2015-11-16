@@ -1858,23 +1858,6 @@ let rec str_of_formula formula pvars str =
       res 
     in str_of_conjs formula pvars str
 
-let create_omega_input formula_str id args filename =
-  let id_str = Cprinter.string_of_ident id in
-  let args_str =  Cprinter.string_of_spec_var_list args in 
-  let first_str = id_str ^ ":= {" ^ args_str ^ ":" ^ formula_str ^ "};" in
-  let second_str = id_str ^ ";" in
-  let final_str = first_str ^ second_str in
-  let oc = open_out filename in
-  let () = fprintf oc "%s\n" final_str in 
-  let () = close_out oc in
-  ()
-
-let id_of_typed_spec_var x =
-  match x with
-  | P.SpecVar (t, id, p) -> id
-
-let global_oc = "/usr/local/bin/oc "
-
 let filter_result str =
   let str_list = Str.split (Str.regexp "\n") str in
   let str_list = List.tl str_list in
@@ -1889,11 +1872,88 @@ let filter_result str =
     ) str2_list in
   String.concat " | " str2_list
 
+let create_omega_input formula_str id args filename =
+  let id_str = Cprinter.string_of_ident id in
+  let args_str =  Cprinter.string_of_spec_var_list args in 
+  let first_str = id_str ^ ":= {" ^ args_str ^ ":" ^ formula_str ^ "};" in
+  let second_str = id_str ^ ";" in
+  let final_str = first_str ^ second_str in
+  let oc = open_out filename in
+  let () = fprintf oc "%s\n" final_str in 
+  let () = close_out oc in
+  ()
+
+let global_oc = "/usr/local/bin/oc "
+
+let filter_subset_result str =
+  let str_list = Str.split (Str.regexp "\n") str in
+  let str_list = List.tl str_list in
+  let not_empty, empty = List.partition (fun x -> x <> "") str_list in
+  let str2 = String.concat "" not_empty in 
+  str2
+
+let check_subset str1 str2 args =
+  let args_str = Cprinter.string_of_spec_var_list args in
+  let fst_str = "R1:={" ^ args_str ^ ":" ^ str1 ^ "};" in
+  let snd_str = "R2:={" ^ args_str ^ ":" ^ str2 ^ "};" in
+  let third_str = "R1 subset R2;" in
+  let str = fst_str ^ snd_str ^ third_str in
+  let filename = "subset.txt" in
+  let oc = open_out filename in
+  let () = fprintf oc "%s\n" str in
+  let () = close_out oc in
+  let fixcalc_exe = ref (global_oc ^ " ") in
+  let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ filename) in
+  let res = filter_subset_result res in
+  let () = print_string ("\nresult of fixcalc: " ^ res) in
+  if res == "False" then false else true
+
+
+let id_of_typed_spec_var x =
+  match x with
+  | P.SpecVar (t, id, p) -> id
+
+
 let get_replaced_str str args =
   let arg = List.hd args in
   let arg_str = Cprinter.string_of_spec_var arg in
   let str = Str.global_replace (Str.regexp arg_str) ("(" ^ arg_str ^ " -1)")  str in
   str
+
+
+let narrow (str1:string) (str2:string) : string =
+  let str1_list = Str.split (Str.regexp " | ") str1 in
+(*  let str2_list = Str.split (Str.regexp " | ") str2 in*)
+(*  let check str str_list = 
+    let list_bool = List.map (fun a -> (a==str)) str_list in
+    let rec res_bool (lst: bool list): bool = 
+      match List.hd lst with
+      | true -> true
+      | false -> res_bool (List.tl lst)
+      | _ -> false
+    in res_bool list_bool
+  in*)
+
+
+  let contains s1 s2 =
+    let re = Str.regexp_string s2
+    in
+        try ignore (Str.search_forward re s1 0); true
+        with Not_found -> false
+  in
+
+  let check_list list1 str2 = 
+    begin
+    let list_res = List.map (fun a -> 
+                              if (contains str2 a) then a else "") list1 
+    in 
+    let not_empty, empty = List.partition (fun x -> x <> "") list_res in
+    let str2 = String.concat " | " not_empty in 
+    str2
+    end
+  in check_list str1_list str2
+
+
 
 let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
@@ -1927,12 +1987,12 @@ let process_rel_infer pre_rels post_rels =
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
   let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   let _ = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
+
+
   let replaced_str = "(1=1)" in
   let fst = List.hd pre_rel_constrs in
   let (_, rhs) = fst in
   let str = str_of_formula rhs pre_rels replaced_str in 
-(*  let () = print_string (!CP.print_formula rhs) in *)
-(*  let () = print_string ("\nstr_of_formula: " ^str) in *)
   let input_file = "example.txt" in
   let fst_pre_rels = List.hd pre_rels in
   let id = id_of_typed_spec_var fst_pre_rels in
@@ -1940,10 +2000,18 @@ let process_rel_infer pre_rels post_rels =
   let () = create_omega_input str id args input_file in
   let fixcalc_exe = ref (global_oc ^ " ") in
   let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
- (* let res = filter_result res in*)
   let res = filter_result res in
-  let res = get_replaced_str res args in
-  let () = print_string ("\nresult of fixcalc: " ^ res) in
+  let () = print_string ("\nresult of fixcalc res: " ^ res) in
+  let replaced_str = get_replaced_str res args in
+  let str = str_of_formula rhs pre_rels replaced_str in
+  let () = create_omega_input str id args input_file in
+  let res2 = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
+  let res2 = filter_result res2 in
+  let () = print_string ("\nresult of fixcalc res2: " ^ res2) in
+  let check_subset = check_subset res res2 args in
+  let narrow = narrow res res2 in
+  let () = print_string ("\n narrow str: " ^ narrow) in
+
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
