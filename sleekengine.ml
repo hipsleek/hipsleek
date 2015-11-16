@@ -3113,7 +3113,7 @@ let process_print_command pcmd0 =
       let pr (a,f) = if f then a^"*" else a in
       let opt_str = (match opt with None -> ""
                                  | Some lst -> string_of_regex_list pr lst) in
-      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
+      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list_ln Cprinter.string_of_view_decl_short)) lst
     else if pcmd = "data" then
       let data_d_lst = !cprog.Cast.prog_data_decls in
       let () = List.iter (fun d ->
