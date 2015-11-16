@@ -4380,16 +4380,22 @@ let syn_gist f1 f2 =
 
 let norm_gist_result a b r = 
   let r = norm_pure_result r in
-  (* To recover unexpected substition done by gist *)
-  let xa = split_conjunctions a in
-  let xr = split_conjunctions r in
-  let xr = List.map (fun x ->
-      if Gen.BList.mem_eq equalFormula x xa then x
-      else
-        try List.find (fun a -> imply_raw (mkAnd x b no_pos) a) xa
-        with _ -> x
-    ) xr in
-  join_conjunctions xr
+  let is_sat f = is_sat_raw (MCP.mix_of_pure f) in
+  if not (is_sat r) then r
+  else
+    (* To recover unexpected substition done by gist *)
+    let xa = split_conjunctions a in
+    let xr = split_conjunctions r in
+    let xr = List.map (fun x ->
+        if Gen.BList.mem_eq equalFormula x xa then x
+        else
+          let xb = mkAnd x b no_pos in
+          if not (is_sat xb) then x
+          else
+            try List.find (fun a -> imply_raw xb a) xa
+            with _ -> x
+      ) xr in
+    join_conjunctions xr
 
 let om_gist f1 f2 =
   let is_done, f1 = syn_gist f1 f2 in

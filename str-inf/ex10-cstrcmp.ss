@@ -74,5 +74,43 @@ view PQ<s2:char_star,Anon_1815:char_star,s2_1816:char_star,
           Anon_1769](* lbl: *){337}->self::char_star<v_1768,Anon_1769>@M&
           s2_1816=s2 & Anon_1815=Anon_1769 & v_1768=0&
           {FLOW,(1,28)=__flow#E}[]
+========================================================================
+view PQ_size<s2:char_star,s2_1814:char_star,Anon_1815:
+char_star,
+ Anon_1816:char_star,size_prop:int>= 
+  EList
+    :EBase 
+       (* lbl: *){335}->(exists Anon_1975,s2_1976,Anon_1977,Anon_1978,v_1979,
+       v_1980,Anon_1981,Anon_1982,size_1983,size_1984,size_1985,
+       size_1986: (* lbl: *){335}->self::char_star<v_1979,Anon_1981>@M * 
+                                   s2::char_star<v_1980,Anon_1982>@M * 
+                                   Anon_1981::PQ_size<Anon_1975,s2_1976,Anon_1977,Anon_1978,size_1983>@M&
+       size_1984=0 & size_1986=size_1984+size_1983 & size_1985=1+size_1984 & 
+       size_prop=1+size_1986 & v_1979!=0 & v_1980=v_1979 & 
+       Anon_1975=Anon_1982 & s2_1976=s2_1814 & Anon_1977=Anon_1815 & 
+       Anon_1978=Anon_1816&{FLOW,(1,28)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){336}->(exists v_1968,Anon_1969,v_1970,Anon_1971,
+          size_1972,size_1973,
+          size_1974: (* lbl: *){336}->self::char_star<v_1968,Anon_1969>@M * 
+                                      s2::char_star<v_1970,Anon_1971>@M&
+          size_1974=0 & size_1972=0 & size_1973=1+size_1972 & 
+          size_prop=1+size_1974 & Anon_1816=Anon_1969 & 
+          Anon_1815=Anon_1971 & v_1968!=0 & v_1970!=v_1968&
+          {FLOW,(1,28)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){337}->(exists v_1965,Anon_1966,
+          size_1967: (* lbl: *){337}->self::char_star<v_1965,Anon_1966>@M&
+          size_1967=0 & size_prop=1+size_1967 & s2_1814=s2 & 
+          Anon_1816=Anon_1966 & v_1965=0&{FLOW,(1,28)=__flow#E}[])
+    view PQ_size{}[]<s2:char_star,s2_1814:char_star,Anon_1815:char_star,
+    Anon_1816:char_star,size_prop:int>= 
+    inv: size_prop>=0
+    
+    baga over inv: [([], size_prop>=0)]
+    baga over inv (unfolded): [([], size_prop>=0)]
+    
+    xform: size_prop>=0
+    ]
 
 */
