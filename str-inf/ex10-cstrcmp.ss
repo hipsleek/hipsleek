@@ -30,8 +30,8 @@ void while1(char_star s1, char_star s2)
     PQ
     ,@pure_field
     ,@classic
-    //,@size
-    //,@term
+    ,@size
+    ,@term
   ]
   //requires P(s1) * Q(s2)
   //requires s1::WSS<p> * Q(s2)
