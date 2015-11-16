@@ -51,7 +51,7 @@ let simplify f args =
     else simpl_f
   in
   let bnd_vars = bnd_vars_of_formula (CP.fv) f args in
-  let () = y_binfo_hp (add_str "bnd_vars" !CP.print_svl) bnd_vars in
+  let () = y_tinfo_hp (add_str "bnd_vars" !CP.print_svl) bnd_vars in
   if bnd_vars == [] then 
     if CP.contains_neq f then f
     else simplify_f f 
@@ -577,12 +577,12 @@ let trans_hrel_to_view_formula ?(for_spec=false) prog (f: CF.formula) =
       let subs_hrel_name, view_args, is_equiv_view =
         try
           let vdef = C.look_up_view_def_raw x_loc prog.Cast.prog_view_decls hrel_id in
-          let () = y_binfo_hp (add_str "vdef" !C.print_view_decl) vdef in
+          let () = y_tinfo_hp (add_str "vdef" !C.print_view_decl) vdef in
           if not !Globals.pred_equiv then hrel_name, vdef.view_vars, false
           else if vdef.C.view_equiv_set # is_empty then hrel_name, vdef.view_vars, false
           else
             let (_, subs_hrel_id) = vdef.C.view_equiv_set # get in
-            let () = y_binfo_hp (add_str "subs_hrel_id" pr_id) subs_hrel_id in
+            let () = y_tinfo_hp (add_str "subs_hrel_id" pr_id) subs_hrel_id in
             let equiv_pred = match hrel_name with
               | CP.SpecVar (t, n, p) -> CP.SpecVar (t, subs_hrel_id, p) in
             let equiv_pred_args = 

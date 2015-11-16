@@ -198,7 +198,7 @@ let merge_pre_hprel_list prog hprels =
       let conds = List.map cond_of_pre_hprel hprels in
       let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
       let unsat_core = Smtsolver.get_unsat_core sub_conds in
-      let () = y_binfo_hp (add_str "unsat_core" (pr_list !CP.print_formula)) unsat_core in
+      let () = y_tinfo_hp (add_str "unsat_core" (pr_list !CP.print_formula)) unsat_core in
       if is_empty unsat_core then
         let msg = "Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
         let () = y_winfo_hp (add_str msg pr_hprel_list) hprels in
@@ -734,7 +734,7 @@ let trans_one_hprel_to_view iprog prog hv hprels =
     let vdecls =
       if !Globals.new_pred_syn then 
         let vdecl = view_decl_of_hprel iprog prog hpr in
-        let () = y_binfo_hp (add_str ("other hprels of " ^ hid) Cprinter.string_of_hprel_list_short) others in
+        let () = y_tinfo_hp (add_str ("other hprels of " ^ hid) Cprinter.string_of_hprel_list_short) others in
         let others_check = List.for_all (fun hpr ->
           let ante, _ = x_add trans_hrel_to_view_formula prog hpr.CF.hprel_lhs in
           let conseq, _ = x_add trans_hrel_to_view_formula prog hpr.CF.hprel_rhs in
