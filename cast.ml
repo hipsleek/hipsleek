@@ -1696,13 +1696,16 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   (* Excore.ef_pure_disj option *)
   let ba_oinv = vdef.view_baga_x_over_inv in
+  let ba_exists = vdef.view_inv_exists_vars in
   match ba_oinv with
   | None -> []
   | Some bl ->
     begin
       let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
-      let from_svs = (self_param vdef) :: vdef.view_vars in
-      let to_svs = root :: args in
+      let () = x_tinfo_hp (add_str "baga ex vars= " !CP.print_svl) ba_exists no_pos in
+      let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
+      let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in
+      let to_svs = root :: ba_exists_fresh@args in
       let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
       let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
       let baga_lst = (* match ba_oinv with *)

@@ -2319,11 +2319,11 @@ let split_view_args view_args vdef:  CP.spec_var list * 'a list * (CP.annot_arg 
       (* failwith "Immutable.ml, split_view_args: error while combining view args with labels 1"  *)
   in
   let ann_map_pos = vdef.I.view_imm_map in
-  (* let () = x_binfo_hp (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in *)
-  (* let () = x_binfo_hp (add_str " view_arg_lbl:" (pr_list (pr_pair pr_none pr_label))) view_arg_lbl no_pos in *)
+  (* let () = x_tinfo_hp (add_str "imm_map:" (pr_list (pr_pair Iprinter.string_of_imm string_of_int))) ann_map_pos no_pos in *)
+  (* let () = x_tinfo_hp (add_str " view_arg_lbl:" (pr_list (pr_pair pr_none pr_label))) view_arg_lbl no_pos in *)
   (* create list of view_arg*pos  *)
   let vp_pos = CP.initialize_positions_for_view_params view_arg_lbl in
-  (* let () = x_binfo_hp (add_str " vp_pos:" (pr_list (pr_pair (pr_pair pr_none pr_label) string_of_int))) vp_pos no_pos in *)
+  (* let () = x_tinfo_hp (add_str " vp_pos:" (pr_list (pr_pair (pr_pair pr_none pr_label) string_of_int))) vp_pos no_pos in *)
   let view_args_pos = List.map (fun ((va,_),pos) -> (va,pos)) vp_pos in
   let annot_arg, vp_pos = List.partition (fun (vp,pos) -> List.exists (fun (_,p) -> p == pos ) ann_map_pos) vp_pos in
   let vp_lbl, _ = List.split vp_pos in  (* get rid of positions *)
@@ -2689,7 +2689,7 @@ let merge_two_view_nodes prog vn1 vn2 h1 h2 quantif unfold_fun qvars emap =
   let comp, ret_h, _, guards = compatible_nodes prog vn1.h_formula_view_imm vn2.h_formula_view_imm h1 h2 unfold_fun qvars emap in
   let same_view = (String.compare vn1.h_formula_view_name vn2.h_formula_view_name = 0) in
   let comp_view =  same_view &&  not(Cfutil.is_view_node_segmented vn1 prog) in
-  let () = x_binfo_hp (add_str "view_is_segmented" string_of_bool) (Cfutil.is_view_node_segmented vn1 prog)  no_pos in
+  let () = x_tinfo_hp (add_str "view_is_segmented" string_of_bool) (Cfutil.is_view_node_segmented vn1 prog)  no_pos in
   (* comp_view ---> true when views are compatible (same view def + view def is not segmented) *)
   if comp  && comp_view then
     let (eqs, subs) = partition_eqs_subs vn1.h_formula_view_arguments vn2.h_formula_view_arguments quantif in

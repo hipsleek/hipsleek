@@ -5814,7 +5814,7 @@ let baga_enum baga : formula =
     in f
 
 (*
-   [a,b,(e,base,offset)]
+   [a,b]
     ==> a>0 & b>0 & a!=b  
         
    
@@ -5872,6 +5872,12 @@ struct
     |_,_ -> false
 end;;
 
+(*
+   [a,b,(e,base,offset)]
+    ==> a>0 & b>0 & a!=b  
+        
+   
+*)
 (* to capture element as (sv, sv option) for both variable and interval *)
 (*   (sv,None) denotes an address sv *)
 (*   (sv1,Some(sv2)) denotes an interval sv1..(sv2-1) *)
@@ -5897,7 +5903,7 @@ struct
       with _ -> x in
     (repl v,map_opt repl opt)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
-    let () = y_winfo_pp ("TODO: get_pure"^x_loc) in
+    (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     let lst = List.filter (fun (_,p) -> p==None) lst in
     let lst = List.map fst lst in
     if enum_flag then baga_enum lst

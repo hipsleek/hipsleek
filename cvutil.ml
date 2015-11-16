@@ -1344,7 +1344,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     | FrmHole _ -> MCP.mkMTrue no_pos
   in
   (* to build a subs here *)
-  let (h0,pf) = elim_absent_ nodes (x_add aux_xpure_for_view prog (* memset *) {mem_formula_mset = []}) h0 which_xpure in
+  let (h0,pf) = elim_absent_nodes (x_add aux_xpure_for_view prog (* memset *) {mem_formula_mset = []}) h0 which_xpure in
   let pf = CP.join_conjunctions pf in
   (* let p0 = MCP.merge_mix_w_pure p0 pf in *)
   (* let () = x_dinfo_pp "TODO: Need to add pure collected into p0" no_pos in *)
@@ -1354,7 +1354,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
   let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
   (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
-  let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
+  let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
   if (is_sat_mem_formula memset) then 
     let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
     let pure_of_memset = 
