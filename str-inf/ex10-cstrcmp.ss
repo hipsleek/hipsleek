@@ -50,6 +50,24 @@ void while1(char_star s1, char_star s2)
 }
 
 /*
+void main () 
+  requires true
+  ensures true;
+{
+  int length1, length2;
+  if (length1 < 1) length1 = 1;
+  if (length2 < 1) length2 = 1;
+  char_star str1 = alloc_str(length1);
+  char_star str2 = alloc_str(length2);
+  //dprint;
+  finalize_str(str1, length1-1);
+  finalize_str(str2, length2-1);
+  //dprint;
+  while1(str1, str2);
+  //dprint;
+}
+*/
+/*
 view PQ<s2:char_star,Anon_1815:char_star,s2_1816:char_star,
  Anon_1817:char_star,Anon_1818:char_star>= 
   EList

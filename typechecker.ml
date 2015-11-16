@@ -561,7 +561,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let is_ana_ni = List.exists (fun x -> x==Globals.INF_ANA_NI) inf_o_lst in
       let wrap_ana_ni f x = 
         if is_ana_ni then  Wrapper.wrap_ana_ni (Some true) f x else f x in
-      let () = y_binfo_hp (add_str "inf_o_lst" (pr_list string_of_inf_const)) inf_o_lst in
+      let () = y_tinfo_hp (add_str "inf_o_lst" (pr_list string_of_inf_const)) inf_o_lst in
       let postf = b.CF.formula_inf_post in
       let postxf = b.CF.formula_inf_xpost in
       let old_vars = if do_infer then b.CF.formula_inf_vars else [] in

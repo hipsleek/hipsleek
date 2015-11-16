@@ -15099,7 +15099,7 @@ let update_positions_for_imm_view_params (aa: ann list) (old_lst: (annot_arg * i
   with Invalid_argument s -> 
     begin
       let def_aa_pos = List.map (fun a -> (imm_ann_to_annot_arg a,0)) aa in
-      Debug.info_pprint "WARNING: issue with Cpure.update_positions_for_annot_imm_params" no_pos;
+      x_winfo_pp "issue with Cpure.update_positions_for_annot_imm_params" no_pos;
       def_aa_pos
     end
 (* with Invalid_argument s -> raise (Invalid_argument (s ^ "Cpure.update_positions_for_imm_view_params")) *)
@@ -15117,7 +15117,7 @@ let update_positions_for_annot_view_params (aa: annot_arg list) (old_lst: (annot
   with Invalid_argument s -> 
     begin
       (* let def_aa_pos = List.map (fun a -> (a,0)) aa in *)
-      Debug.info_pprint "WARNING: issue with Cpure.update_positions_for_annot_view_params" no_pos;
+      x_winfo_pp "issue with Cpure.update_positions_for_annot_view_params" no_pos;
       old_lst
     end
 (* raise (Invalid_argument (s ^ "Cpure.update_positions_for_annot_view_params")) *)

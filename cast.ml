@@ -717,7 +717,7 @@ let cprog_obj =
           aux args 0 
       in
       let () = self # logging ("get_hp_root "^n^" gives "^(string_of_int posn)) in
-      let () = print_endline_quiet (self # show_roots) in
+      let () = y_binfo_hp (add_str "roots of hprels" pr_id) (self # show_roots) in
       if posn<0 then List.hd args
       else List.nth args posn
     method get_hp_root_posn hp =

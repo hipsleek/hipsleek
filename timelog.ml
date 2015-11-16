@@ -107,10 +107,13 @@ class timelog =
       let bb = List.fold_left (fun c (_,x1) -> c +. x1) 0. bigger in 
       let s = List.fold_left (fun c (_,x1) -> c +. x1)  0. small in 
       (* let (small_mona,small_others) = List.partition (fun (e,x) -> x>=!time_limit_large) ls in *)
-      if (not (!Globals.web_compile_flag || !Globals.print_min)) then Debug.info_hprint (add_str "log(small)" (pr_pair string_of_float string_of_int )) (s,List.length small) no_pos;
+      if (not (!Globals.web_compile_flag || !Globals.print_min)) then 
+        x_binfo_hp (add_str "log(small)" (pr_pair string_of_float string_of_int )) (s, List.length small) no_pos;
       let tl_str = string_of_float (!time_limit_large) in
-      if not(big==[]) then if (not !Globals.web_compile_flag) then Debug.info_hprint (add_str ("log(big)(>"^tl_str^"s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
-      if not(bigger==[]) then if (not !Globals.web_compile_flag) then Debug.info_hprint (add_str ("\n log(bigger)(>4s)("^s_bigger^")") (pr_pair string_of_float prL2)) (bb,bigger) no_pos;
+      if not(big==[]) then if (not !Globals.web_compile_flag) then 
+        x_binfo_hp (add_str ("log(big)(>"^tl_str^"s)("^s_big^")") (pr_pair string_of_float prL)) (b,big) no_pos;
+      if not(bigger==[]) then if (not !Globals.web_compile_flag) then 
+        x_binfo_hp (add_str ("\n log(bigger)(>4s)("^s_bigger^")") (pr_pair string_of_float prL2)) (bb,bigger) no_pos;
       ()
 
     (* method dump =  *)

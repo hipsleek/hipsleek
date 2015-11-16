@@ -20537,7 +20537,7 @@ let extract_view_nodes_name hf =
 let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
   let ty = self_typ in
   let args = List.filter (fun x -> CP.type_of_spec_var x = ty) args in
-  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_tinfo_hp (add_str "args" !CP.print_svl) args in
   match args with
   | [x] -> Some x
   | _ -> None
