@@ -1926,7 +1926,10 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let joiner f = formula_of_disjuncts (fst (List.split f)) in
         let filt s = (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
         let forms = match brs with 
-          | None -> formula_of_unstruc_view_f vdef
+          | None -> 
+            let f = formula_of_unstruc_view_f vdef in
+            let () = y_binfo_hp (add_str "form_unstr_view" !CF.print_formula) f in
+            f
           | Some s -> 
             let ()  = y_binfo_pp "here 1" in
             joiner (filt s) in
@@ -8697,7 +8700,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
       let () = Debug.ninfo_hprint (add_str "t2" (Cprinter.string_of_ef_pure_disj)) t2 no_pos in
       let d = Excore.EPureI.mk_star_disj t1 t2 in
       let () = Debug.ninfo_hprint (add_str "d1" (Cprinter.string_of_ef_pure_disj)) d no_pos in
-      let d = Excore.EPureI.elim_unsat_disj false d in
+      let d = x_add Excore.EPureI.elim_unsat_disj false d in
       let () = Debug.ninfo_hprint (add_str "d2" (Cprinter.string_of_ef_pure_disj)) d no_pos in
       Some d
     else None in
