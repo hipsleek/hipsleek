@@ -3930,6 +3930,12 @@ let update_view_decl prog vdecl =
   in
   prog.prog_view_decls <- others @ [vdecl]
 
+let update_view_decl prog vdecl = 
+  let pr = fun v -> v.view_name in
+  let prr = fun () -> "" in
+  Debug.no_1 "update_view_decl" pr prr 
+    (fun _ -> update_view_decl prog vdecl) vdecl
+
 let case_normalize_formula : (prog_decl -> ((ident*primed) list) ->  Iformula.formula -> Iformula.formula) ref =
   ref (fun p h f -> failwith "TBI")
 

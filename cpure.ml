@@ -2846,17 +2846,6 @@ and mkFalse pos = BForm ((BConst (false, pos), None),None)
 
 and mkFalse_b pos = (BConst (false, pos), None) 
 
-and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
-  Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
-    (fun vs f -> mkExists_with_simpl_x simpl vs f lbl pos) vs f
-
-and mkExists_with_simpl_x simpl (vs : spec_var list) (f : formula) lbl pos = 
-  let r = mkExists vs f lbl pos in
-  if contains_exists r then
-    let r = simpl r in
-    if !perm=Dperm then dperm_subst_simpl r else r
-  else r
-
 and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
   | AndList b ->
     let pusher v lf lrest=
@@ -5670,6 +5659,17 @@ and elim_exists_x (f0 : formula) : formula =
     | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos 
     | BForm _ -> f0 in
   helper f0
+
+let mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
+  let r = elim_exists (mkExists vs f lbl pos) in
+  if contains_exists r then
+    let r = simpl r in
+    if !perm=Dperm then dperm_subst_simpl r else r
+  else r
+
+let mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
+  Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
+    (fun vs f -> mkExists_with_simpl simpl vs f lbl pos) vs f
 
 (*
 and elim_exists (f0 : formula) : formula = 
@@ -9507,6 +9507,10 @@ let remove_redundant (f:formula):formula =
   let prun_l = remove_redundant_helper l_conj [] in
   join_conjunctions prun_l
 
+let remove_redundant (f:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "remove_redundant" pr pr remove_redundant f
+
 let find_all_failures is_sat ante cons =
 
   (* let () = print_string ("find_all_failures: before is_sat" *)
@@ -10254,7 +10258,7 @@ let rec is_neq_exp (f:formula) = match f with
      | _ -> false)
   | Exists (_,p1,_,_) -> is_neq_exp p1
   | _ -> false
-
+  
 let get_neqs_new p=
   let get_neq acc p = match p with
     | BForm (bf,_) -> (match bf with
@@ -14299,7 +14303,7 @@ and find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
     find_closure_pure_formula_x v f
 
 (*s2*)
-let prune_irr_neq_b_form b irr_svl=
+let prune_irr_neq_b_form b irr_svl =
   let (pf,c) = b in
   match pf with
   | Neq (a1, a2, pos)
@@ -14318,8 +14322,21 @@ let prune_irr_neq_b_form b irr_svl=
     end
   | _ -> (false,b)
 
-let prune_irr_neq_x p0 irr_svl=
-  let rec helper p=
+let prune_irr_neq_b_form b irr_svl =
+  let pr = !print_b_formula in
+  let prr = pr_pair string_of_bool pr in
+  Debug.no_2 "prune_irr_neq_b_form" pr !print_svl prr
+    prune_irr_neq_b_form b irr_svl
+
+let prune_irr_neq p0 irr_svl =
+  let aliases = pure_ptr_equations_aux false p0 in
+  let alias_lst = find_all_closures aliases in
+  let irr_svl = List.filter (fun sv ->
+    try
+      let sv_alias = List.find (fun alias -> Gen.BList.mem_eq eq_spec_var sv alias) alias_lst in
+      Gen.BList.subset_eq eq_spec_var sv_alias irr_svl
+    with _ -> true) irr_svl in
+  let rec helper p =
     match p with
     | BForm (bf,a) -> let b,nbf = prune_irr_neq_b_form bf irr_svl in
       if b then b, mkTrue no_pos else
@@ -14356,7 +14373,7 @@ let prune_irr_neq p0 svl=
   let pr1= !print_formula in
   let pr2 = !print_svl in
   Debug.no_2 "prune_irr_neq" pr1 pr2 (pr_pair string_of_bool pr1)
-    (fun _ _ -> prune_irr_neq_x p0 irr_svl ) p0 irr_svl
+    (fun _ _ -> prune_irr_neq p0 irr_svl ) p0 irr_svl
 
 let is_irr_eq_b_form b svl=
   let (pf,c) = b in

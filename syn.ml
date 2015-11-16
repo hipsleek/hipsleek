@@ -180,9 +180,9 @@ let should_merge_pre_hprels prog hprels =
         | _ -> false
       in (equiv_lhs ()) (* && (equiv_guard ()) *)) hprs
 
-let should_pre_merge_hprels prog hprels = 
+let should_merge_pre_hprels prog hprels = 
   let pr = pr_hprel_list in
-  Debug.no_1 "should_pre_merge_hprels" pr string_of_bool
+  Debug.no_1 "should_merge_pre_hprels" pr string_of_bool
     (should_merge_pre_hprels prog) hprels
   
 (* hprels have the same name *)
@@ -198,6 +198,7 @@ let merge_pre_hprel_list prog hprels =
       let conds = List.map cond_of_pre_hprel hprels in
       let sub_conds = List.concat (List.map CP.split_conjunctions conds) in
       let unsat_core = Smtsolver.get_unsat_core sub_conds in
+      let () = y_binfo_hp (add_str "unsat_core" (pr_list !CP.print_formula)) unsat_core in
       if is_empty unsat_core then
         let msg = "Merging is not performed due to the set of pre-hprels does not have disjoint conditions" in
         let () = y_winfo_hp (add_str msg pr_hprel_list) hprels in
@@ -507,8 +508,9 @@ let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
     
 let unfolding_hprel prog hprel_groups (hpr: CF.hprel): CF.hprel list =
   let pr = Cprinter.string_of_hprel_short in
-  Debug.no_1 "Syn.unfolding_hprel" pr (pr_list pr)
-    (fun _ -> unfolding_hprel prog hprel_groups hpr) hpr
+  let pr1 = pr_list (fun (sv, _) -> !CP.print_sv sv) in
+  Debug.no_2 "Syn.unfolding_hprel" pr pr1 (pr_list pr)
+    (fun _ _ -> unfolding_hprel prog hprel_groups hpr) hpr hprel_groups
 
 let rec update_hprel_id_groups hprel_id hprel_sv hprel_id_list hprel_id_groups =
   match hprel_id_groups with
@@ -527,13 +529,16 @@ let rec helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
   match hprel_id_list with
   | [] -> []
   | hpri::hpril ->
-    let hprel_groups = List.map (fun (hprel_sv, hprel_id_list) ->
-        (hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)
-      ) hprel_id_groups in
+    let hpri_name = name_of_hprel hpri.hprel_constr in
+    let dep_on_hpri = dg # depend_on (CP.name_of_spec_var hpri_name) in 
+    let hprel_groups = List.fold_left (fun acc (hprel_sv, hprel_id_list) ->
+        if mem_id (CP.name_of_spec_var hprel_sv) dep_on_hpri then acc
+        else acc @ [(hprel_sv, List.map (fun hpri -> hpri.hprel_constr) hprel_id_list)]
+      ) [] hprel_id_groups in
     let unfolding_hpr = x_add unfolding_hprel prog hprel_groups hpri.hprel_constr in
     let unfolding_hpri = List.map mk_hprel_id unfolding_hpr in
     let updated_hprel_id_groups = update_hprel_id_groups 
-      hpri.hprel_id (name_of_hprel hpri.hprel_constr) unfolding_hpri hprel_id_groups in
+      hpri.hprel_id hpri_name unfolding_hpri hprel_id_groups in
     unfolding_hpr @ (helper_unfolding_hprel_list prog updated_hprel_id_groups hpril)
 
 let helper_unfolding_hprel_list prog hprel_id_groups hprel_id_list =
@@ -837,7 +842,7 @@ let derive_view iprog cprog other_hprels hprels =
   (* let () = y_binfo_hp (add_str "other hprels" pr) other_hprels in *)
   let simplified_selective_hprels = derive_view_norm cprog other_hprels hprels in
   (* DERIVING VIEW *)
-  let derived_views = trans_hprel_to_view iprog cprog simplified_selective_hprels in
+  let derived_views = trans_hprel_to_view iprog cprog (List.rev simplified_selective_hprels) in
   (* let derived_views = List.map (fun view -> unfolding_view iprog cprog view) derived_views in *)
   (derived_views, simplified_selective_hprels)
 
@@ -878,7 +883,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       let () = C.update_un_struc_formula (fun f -> fst (trans_hrel_to_view_formula cprog f)) v in
       let () = C.update_view_formula (x_add_1 trans_hrel_to_view_struc_formula cprog) v in
       let () = x_add (C.update_view_decl ~caller:x_loc) cprog v in
-      let () = I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
+      let () = x_add I.update_view_decl iprog (Rev_ast.rev_trans_view_decl v) in
       ()) tmp_views in
     (* derived_views have been added into prog_view_decls of iprog and cprog *)
     let derived_views, new_hprels = process_hprel_assumes_res "Deriving Segmented Views" 
@@ -928,7 +933,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       (*   view.C.view_raw_base_case <- Cf_ext.compute_raw_base_case false v_un_str;                                              *)
       (*   view.C.view_base_case <- None                                                                                          *)
       (* in                                                                                                                       *)
-      let norm_view = update_view_content iprog cprog view vbody in
+      let norm_view = x_add update_view_content iprog cprog view vbody in
       (* let () = y_tinfo_hp (add_str "view" Cprinter.string_of_view_decl_short) view in *)
       (* let norm_view = norm_single_view iprog cprog view in                            *)
       let () = y_tinfo_hp (add_str "norm_view" Cprinter.string_of_view_decl_short) norm_view in
@@ -1156,7 +1161,7 @@ let unify_disj_pred iprog cprog pred =
         (* C.view_un_struc_formula = tmp_un_str; (* [(vbody, (fresh_int (), ""))]; *)  *)
       }  
     in
-    let norm_tmp_cpred = update_view_content iprog cprog tmp_cpred vbody in
+    let norm_tmp_cpred = x_add update_view_content iprog cprog tmp_cpred vbody in
     (* let tmp_ipred = Rev_ast.rev_trans_view_decl tmp_cpred in *)
     (* let () = C.update_view_decl cprog tmp_cpred in           *)
     (* let () = I.update_view_decl iprog tmp_ipred in           *)

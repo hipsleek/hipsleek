@@ -1619,7 +1619,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
               Err.report_error
                 {
                   Err.error_loc = pos;
-                  Err.error_text = v_name ^ " is neither 2 a data nor view name";
+                  Err.error_text = x_loc ^ v_name ^ " is neither 2 a data nor view name";
                 }))
       in n_tl
   | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)

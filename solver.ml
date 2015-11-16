@@ -1924,10 +1924,14 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let uf = old_uf+uf in
         (*let () = print_string "\n y\n" in*)
         let joiner f = formula_of_disjuncts (fst (List.split f)) in
+        let filt s = (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
         let forms = match brs with 
           | None -> formula_of_unstruc_view_f vdef
-          | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
-        let () = y_tinfo_hp (add_str "forms 1" !CF.print_formula) forms in
+          | Some s -> 
+            let ()  = y_binfo_pp "here 1" in
+            joiner (filt s) in
+        (* (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in *)
+        let () = y_binfo_hp (add_str "forms 1" !CF.print_formula) forms in
         let from_ann = List.map fst vdef.view_ann_params in
         let anns = List.map fst anns in
         let to_ann = anns in 
@@ -1959,12 +1963,13 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
         (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
         (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
-        (* let () = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
-        (*   let () = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
+        let () = y_binfo_pp ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)) in
+        let () = y_binfo_pp (("unfold post subst: "^(Cprinter.string_of_formula res_form))) in
         let res_form = add_origins res_form origs in
         (* let res_form = add_original res_form original in*)
         let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)
         (*let res_form = struc_to_formula res_form in*)
+        let ()  = y_binfo_pp "2" in
         CF.replace_formula_label v_lbl res_form
       | Some (base , (pred_id,to_vars)) -> (* base case unfold *)
         (* ensures that only view with a specific pred and arg are base-case unfolded *)
@@ -1981,11 +1986,13 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
           )
           else false 
         in
+        let () = y_binfo_hp (add_str "base-case-unfold" string_of_bool) flag in
         if flag then  (* perform base-case unfold *)
           CF.replace_formula_label v_lbl  (CF.formula_of_mix_formula_with_fl base fl [] no_pos)
         else formula_of_heap f pos
     )
     else
+      let ()  = y_binfo_pp "3" in
       formula_of_heap_fl f fl pos
   | Star ({h_formula_star_h1 = f1;
            h_formula_star_h2 = f2}) ->

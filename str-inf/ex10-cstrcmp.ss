@@ -16,6 +16,7 @@ BADS<> ==
 
 HeapPred P(char_star s).
 HeapPred Q(char_star s).
+HeapPred PQ(char_star x, char_star y).
 
 void while1(char_star s1, char_star s2)
 /*
@@ -24,15 +25,17 @@ void while1(char_star s1, char_star s2)
           or s1::WFSeg<s1'>*s1'::char_star<c1,q>*q::WFS<>*s2::WFSeg<s2'>*s2'::char_star<c2,qq>*qq::BADS<>;
 */
   infer [
-    P,
-    Q
+    //P,
+    //Q
+    PQ
     ,@pure_field
     ,@classic
     //,@size
     //,@term
   ]
-  requires P(s1) * Q(s2)
+  //requires P(s1) * Q(s2)
   //requires s1::WSS<p> * Q(s2)
+  requires PQ(s1, s2)
   ensures true;
 {
   int x=get_char(s1);
