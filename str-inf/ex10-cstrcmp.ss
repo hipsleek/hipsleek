@@ -48,3 +48,31 @@ void while1(char_star s1, char_star s2)
     }
   }
 }
+
+/*
+view PQ<s2:char_star,Anon_1815:char_star,s2_1816:char_star,
+ Anon_1817:char_star,Anon_1818:char_star>= 
+  EList
+    :EBase 
+       exists (Impl)[v_1768; v_1784; Anon_1769; 
+       Anon_1785](* lbl: *){335}->(exists Anon_1819,Anon_1820,s2_1821,
+       Anon_1822,
+       Anon_1823: (* lbl: *){335}->self::char_star<v_1768,Anon_1769>@M * 
+                                   s2::char_star<v_1784,Anon_1785>@M * 
+                                   Anon_1769::PQ<Anon_1819,Anon_1820,s2_1821,Anon_1822,Anon_1823>@M&
+       v_1768!=0 & v_1784=v_1768 & Anon_1819=Anon_1785 & 
+       Anon_1820=Anon_1815 & s2_1821=s2_1816 & Anon_1822=Anon_1817 & 
+       Anon_1823=Anon_1818&{FLOW,(1,28)=__flow#E}[])
+    || :EBase 
+          exists (Impl)[v_1768; Anon_1769; v_1784; 
+          Anon_1785](* lbl: *){336}->self::char_star<v_1768,Anon_1769>@M * 
+                                     s2::char_star<v_1784,Anon_1785>@M&
+          Anon_1818=Anon_1769 & Anon_1817=Anon_1785 & v_1768!=0 & 
+          v_1784!=v_1768&{FLOW,(1,28)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[v_1768; 
+          Anon_1769](* lbl: *){337}->self::char_star<v_1768,Anon_1769>@M&
+          s2_1816=s2 & Anon_1815=Anon_1769 & v_1768=0&
+          {FLOW,(1,28)=__flow#E}[]
+
+*/

@@ -651,23 +651,30 @@ let dangling_parameterizing_hprel (hpr: CF.hprel) =
     acc @ [(n_disj, dangling_vars)]) [] f_disjs
   in
   let all_dangling_vars = List.concat (List.map snd n_f_disjs_w_dangling_vars) in
+  let all_dangling_vars = remove_dups all_dangling_vars in
+  let all_fresh_dangling_vars = CP.fresh_spec_vars all_dangling_vars in
+  let map_fresh_dangling_vars = List.combine all_dangling_vars all_fresh_dangling_vars in
+  let () = y_tinfo_hp (add_str "all_dangling_vars" !CP.print_svl) all_dangling_vars in
+  let () = y_tinfo_hp (add_str "n_f_disjs_w_dangling_vars" (pr_list_ln (pr_pair !CF.print_formula !CP.print_svl))) n_f_disjs_w_dangling_vars in
   if is_empty all_dangling_vars then hpr, idf
   else
     let n_f_disjs, dangling_params_lists = List.split (List.map (fun (disj, dangling_vars) ->
-      let fresh_dangling_vars = CP.fresh_spec_vars dangling_vars in
-      let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) fresh_dangling_vars in
+      (* let fresh_dangling_vars = CP.fresh_spec_vars dangling_vars in *)
+      let fresh_dangling_vars = List.map (fun dv -> 
+          snd (List.find (fun (adv, _) -> CP.eq_spec_var dv adv) map_fresh_dangling_vars)) dangling_vars in
+      (* let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) fresh_dangling_vars in *)
       (* Adding equality fresh_dangling_var = dangling_vars instead of renaming *)
       (* let n_disj = CF.subst (List.combine dangling_vars fresh_dangling_vars) disj in *)
       let n_disj = List.fold_left (fun f (dv, fdv) ->
           CF.add_pure_formula_to_formula (CP.mkEqVar fdv dv no_pos) f) 
         disj (List.combine dangling_vars fresh_dangling_vars) in
-      (n_disj, dangling_params)) n_f_disjs_w_dangling_vars)
+      (n_disj, fresh_dangling_vars)) n_f_disjs_w_dangling_vars)
     in
     let n_f_opt = CF.join_conjunct_opt n_f_disjs in
     match n_f_opt with
     | None -> hpr, idf
     | Some n_f ->
-      let dangling_params = List.concat dangling_params_lists in
+      let dangling_params = List.map (fun dv -> CP.mkVar dv no_pos) (remove_dups (List.concat dangling_params_lists)) in
       let hpr_name = name_of_hprel hpr in
       let f_update_params_hprel hpr =
         { hpr with
