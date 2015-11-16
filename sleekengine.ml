@@ -1864,7 +1864,6 @@ let filter_result str =
   let not_empty, empty = List.partition (fun x -> x <> "") str_list in
   let str2 = String.concat "" not_empty in 
   let str2_list = Str.split (Str.regexp " union ") str2 in
-(*  let str2_list = List.map (fun x -> print_string ("\nstr:" ^x) ) str2_list in*)
   let str2_list =  List.map (fun str ->
       let str = Str.string_after str 6 in
       let str = Str.string_before str (String.length str - 1) in
@@ -1908,11 +1907,9 @@ let check_subset str1 str2 args =
   let () = print_string ("\nresult of fixcalc: " ^ res) in
   if res == "False" then false else true
 
-
 let id_of_typed_spec_var x =
   match x with
   | P.SpecVar (t, id, p) -> id
-
 
 let get_replaced_str str args =
   let arg = List.hd args in
@@ -1920,28 +1917,14 @@ let get_replaced_str str args =
   let str = Str.global_replace (Str.regexp arg_str) ("(" ^ arg_str ^ " -1)")  str in
   str
 
-
 let narrow (str1:string) (str2:string) : string =
   let str1_list = Str.split (Str.regexp " | ") str1 in
-(*  let str2_list = Str.split (Str.regexp " | ") str2 in*)
-(*  let check str str_list = 
-    let list_bool = List.map (fun a -> (a==str)) str_list in
-    let rec res_bool (lst: bool list): bool = 
-      match List.hd lst with
-      | true -> true
-      | false -> res_bool (List.tl lst)
-      | _ -> false
-    in res_bool list_bool
-  in*)
-
-
   let contains s1 s2 =
     let re = Str.regexp_string s2
     in
         try ignore (Str.search_forward re s1 0); true
         with Not_found -> false
   in
-
   let check_list list1 str2 = 
     begin
     let list_res = List.map (fun a -> 
