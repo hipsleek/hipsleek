@@ -36,11 +36,19 @@ pred Q1<m> ==
   or self::char_star<v, q> * q::Q1<m-1> & v!=0
   inv m>=0.
   
+HeapPred PU(char_star s1, char_star p, int n).
+HeapPred QU(char_star s2, char_star q, int m).
+
+lemma_infer [PU, QU, R, @classic, @pure_field]
+  self::PQ<s2, pd, qd> <- PU(self, pd, n) * QU(s2, qd, m) & R(n, m).
+
+/*  
 lemma_infer [] self::PQ<s2, pd, qd> <- self::P1<n> * s2::Q1<m> & n>m.
 print residue.
 
 lemma_infer [R] self::PQ<s2, pd, qd> <- self::P1<n> * s2::Q1<m> & R(n, m).
 print residue.
+*/
 
 /*  
 lemma_infer [] self::PQ<s2, pd, qd> <- self::P<pd, n> * s2::Q<qd, m> & n=1 & m=0.
