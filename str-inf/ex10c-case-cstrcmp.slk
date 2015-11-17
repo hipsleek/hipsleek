@@ -29,5 +29,8 @@ pred Q<qd, m> ==
 lemma_infer [] self::PQ<s2, pd, qd> <- self::P<pd, n> * s2::Q<qd, m> & n=1 & m=0.
 print residue.
 
+lemma_infer [R] self::PQ<s2, pd, qd> <- self::P<pd, n> * s2::Q<qd, m> & n>m.
+print residue.
+
 lemma_infer [R] self::PQ<s2, pd, qd> <- self::P<pd, n> * s2::Q<qd, m> & R(n, m).
 print residue.
