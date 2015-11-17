@@ -1936,7 +1936,30 @@ let narrow (str1:string) (str2:string) : string =
     end
   in check_list str1_list str2
 
-
+let pre_condition pre_rels pre_rel_constrs =
+  let replaced_str = "(1=1)" in
+  let fst = List.hd pre_rel_constrs in
+  let (_, rhs) = fst in
+  let str = str_of_formula rhs pre_rels replaced_str in 
+  let input_file = "example.txt" in
+  let fst_pre_rels = List.hd pre_rels in
+  let id = id_of_typed_spec_var fst_pre_rels in
+  let args = Cpure.get_rel_args rhs in
+  let () = create_omega_input str id args input_file in
+  let fixcalc_exe = ref (global_oc ^ " ") in
+  let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
+  let res = filter_result res in
+  let () = print_string ("\nresult of fixcalc res: " ^ res) in
+  let replaced_str = get_replaced_str res args in
+  let str = str_of_formula rhs pre_rels replaced_str in
+  let () = create_omega_input str id args input_file in
+  let res2 = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
+  let res2 = filter_result res2 in
+  let () = print_string ("\nresult of fixcalc res2: " ^ res2) in
+  let check_subset = check_subset res res2 args in
+  let narrow = narrow res res2 in
+  let () = print_string ("\n narrow str: " ^ narrow) in
+  ()
 
 let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
@@ -1970,31 +1993,6 @@ let process_rel_infer pre_rels post_rels =
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
   let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   let _ = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
-
-
-  let replaced_str = "(1=1)" in
-  let fst = List.hd pre_rel_constrs in
-  let (_, rhs) = fst in
-  let str = str_of_formula rhs pre_rels replaced_str in 
-  let input_file = "example.txt" in
-  let fst_pre_rels = List.hd pre_rels in
-  let id = id_of_typed_spec_var fst_pre_rels in
-  let args = Cpure.get_rel_args rhs in
-  let () = create_omega_input str id args input_file in
-  let fixcalc_exe = ref (global_oc ^ " ") in
-  let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
-  let res = filter_result res in
-  let () = print_string ("\nresult of fixcalc res: " ^ res) in
-  let replaced_str = get_replaced_str res args in
-  let str = str_of_formula rhs pre_rels replaced_str in
-  let () = create_omega_input str id args input_file in
-  let res2 = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
-  let res2 = filter_result res2 in
-  let () = print_string ("\nresult of fixcalc res2: " ^ res2) in
-  let check_subset = check_subset res res2 args in
-  let narrow = narrow res res2 in
-  let () = print_string ("\n narrow str: " ^ narrow) in
-
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
