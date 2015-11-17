@@ -1,0 +1,82 @@
+data node {
+  int val; 
+  node next; 
+}.
+
+pred zip<ys> == 
+  self=null & ys=null
+ or self::node<_,q>*ys::node<_,q2>*  q::zip<q2>
+.
+  
+relation R(int n, int m).
+
+pred ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+lemma_unsafe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+checkentail self::node<_,q>*q::ll<a-1> * ys::ll<b> & a=b |- self::zip<ys>.
+// fail
+
+
+/*
+# ex11a2.slk
+
+lemma_unsafe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+checkentail self::node<_,q>*q::ll<a-1> * ys::ll<b> & a=b |- self::zip<ys>.
+
+# above should succeed but requires an unfolding of ys..
+
+# why is unfolding of ys::ll<b> not being scheduled?
+
+!!! **context.ml#3217:process_matches (steps) :
+ ### LHS : q::ll<flted_20_78>@M * ys::ll<b>@M
+ ### RHS : ys_95::node<Anon_97,q2_99>@M
+ ### matches :
+[ Type: Root
+ LHS: ys::ll<b>@M
+ RHS: ys_95::node<Anon_97,q2_99>@M
+ root_inst: None
+ lhs_rest: q::ll<flted_20_78>@M
+ rhs_rest: q_98::zip<q2_103>@M
+ alias set: [ys,ys_95]rhs_inst: []rhs_infer: None]
+
+!!! **context.ml#3217:process_matches (steps) :
+ ### LHS : q::ll<flted_20_78>@M * ys::ll<b>@M
+ ### RHS : q_98::zip<q2_103>@M
+ ### matches :
+[ Type: Root
+ LHS: q::ll<flted_20_78>@M
+ RHS: q_98::zip<q2_103>@M
+ root_inst: None
+ lhs_rest: ys::ll<b>@M
+ rhs_rest: ys_95::node<Anon_97,q2_99>@M
+ alias set: [q_98,q]rhs_inst: []rhs_infer: None]
+
+!!! **context.ml#3598:compute_action (steps) :
+ ### RHS Cand :[ ys_95::node<Anon_97,q2_99>@M, q_98::zip<q2_103>@M]
+ ### action :
+ SEARCH =>[
+  Prio:1
+  (Lemma 0<== lem_14) =>
+    LHS: q::ll<flted_20_78>@M
+    RHS: q_98::zip<q2_103>@M;
+  Prio:2
+  COND =>[
+   Prio:2
+   BaseCaseUnfold =>
+     LHS: q::ll<flted_20_78>@M
+     RHS: q_98::zip<q2_103>@M;
+   Prio:3
+   BaseCaseFold =>
+     LHS: q::ll<flted_20_78>@M
+     RHS: q_98::zip<q2_103>@M
+   ]
+   ]
+
+*/
+

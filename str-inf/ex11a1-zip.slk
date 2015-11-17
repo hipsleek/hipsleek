@@ -1,0 +1,46 @@
+data node {
+  int val; 
+  node next; 
+}.
+
+pred zip<ys> == 
+  self=null & ys=null
+ or self::node<_,q>*ys::node<_,q2>*  q::zip<q2>
+.
+  
+relation R(int n, int m).
+
+pred ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+lemma_unsafe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+checkentail self::ll<a> * ys::ll<b> & a=b |- self::zip<ys>.
+
+checkentail ys::ll<b> & a=b & self=null & a=0 |- self::zip<ys>.
+
+checkentail self::node<_,q>*q::ll<a-1> * ys::node<_,q2>*q2::ll<b-1> & a=b 
+      |- self::zip<ys>.
+// valid
+
+
+checkentail self::node<_,q>*q::ll<a-1> * ys::ll<b> & a=b |- self::zip<ys>.
+// fail
+
+
+/*
+# ex11a.slk
+
+lemma_safe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+# Why is this failing?
+
+!!! **astsimp.ml#2715:TODO: ensure same root for all branches:[]
+Entailing lemma lem_14: Fail. (no cex)(may) cause: UnionR[base case unfold failed, (((1<=(flted_14_119+1) & ys!=null) | (ys=null & flted_14_119+1=0))) & 
+ (((1<=flted_14_119 & q_126!=null) | (q_126=null & flted_14_119=0))) |-  q_126=null. LOCS:[14;1;0;7] (may-bug)]
+
+*/
+

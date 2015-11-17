@@ -39,7 +39,7 @@ pred Q1<m> ==
 HeapPred PU(char_star s1, char_star p, int n).
 HeapPred QU(char_star s2, char_star q, int m).
 
-lemma_infer [PU, QU, R, @classic, @pure_field]
+lemma_infer [PU, QU, R, @pure_field]
   self::PQ<s2, pd, qd> <- PU(self, pd, n) * QU(s2, qd, m) & R(n, m).
 
 /*  
