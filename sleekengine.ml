@@ -2180,6 +2180,7 @@ validation: validation)  =
                     | _ -> not(rr)
                   end
                 | V_Residue ("RE", _) ->
+                  let rr_r = run_heap_entail lc res_f in
                   let rec helper acc ctx =
                     match ctx with
                     | CF.Ctx es ->
@@ -2190,48 +2191,39 @@ validation: validation)  =
                       let res_f_lctx = CF.SuccCtx [res_f_ctx] in
                       (check_heap_entail res_f_lctx lhs_formula) || acc
                     | CF.OCtx (ctx1, ctx2) -> helper acc ctx1 || helper acc ctx2
-                  in let rr = List.fold_left helper false lctx in
+                  in let rr_ru = List.fold_left helper false lctx in
+                  let check rr =
+                    begin
+                      match rr with
+                      | (CF.SuccCtx _,_) -> vr = VR_Valid
+                      | (CF.FailCtx _,_) -> 
+                        match vr with
+                        | VR_Fail _ -> true
+                        | _ -> false
+                    end 
+                  in
+                  let check2 rr = 
+                    match vr with
+                    | VR_Valid -> rr
+                    | _ -> not(rr)
+                  in
+                  let check_r = check rr_r in
+                  let check_ru = check2 rr_ru in
+                  (check_r || check_ru)
+                | V_Residue ("R", _) -> 
                   let rr2 = run_heap_entail lc res_f in
                   let check rr =
                     begin
                       match rr with
-                      | (CF.SuccCtx _,_) ->
-                        begin
-                          match vr with
-                          | VR_Fail _ -> false
-                          | _ -> true
-                        end
+                      | (CF.SuccCtx _,_) -> vr = VR_Valid
                       | (CF.FailCtx _,_) -> 
-                        begin
-                          match vr with
-                          | VR_Fail _ -> true
-                          | _ -> false
-                        end
-                    end
-                  in
-                  let rr3 = check rr2 in
-                  begin
-                    match vr with
-                    | VR_Valid -> (rr && rr3)
-                    | _ -> not(rr && rr3)
-                  end
-                | V_Residue ("R", _) -> 
-                  begin
-                    let rr = run_heap_entail lc res_f in
-                    match rr with
-                    | (CF.SuccCtx _,_) ->
-                      begin
-                        match vr with
-                        | VR_Fail _ -> false
-                        | _ -> true
-                      end
-                    | (CF.FailCtx _,_) -> 
-                      begin
                         match vr with
                         | VR_Fail _ -> true
                         | _ -> false
-                      end
-                  end 
+                    end 
+                  in 
+                  let rr3 = check rr2 in
+                  rr3
                 | V_Infer ("IE", _) ->
                   let rec helper acc ctx =
                     match ctx with
