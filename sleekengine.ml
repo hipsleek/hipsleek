@@ -1943,14 +1943,35 @@ let rec mkAnd_rhs formula_lst start =
   | [x] -> CP.mkAnd start x no_pos
   | h::t -> mkAnd_rhs t (CP.mkAnd start h no_pos) 
 
+let atomic_lhs lhs rhs args =
+    if (Pi.is_post_rel lhs args) then rhs
+    else 
+      begin
+        let not_lhs = CP.mkNot lhs None no_pos in
+        CP.mkOr not_lhs rhs None no_pos
+      end 
+
+let filter_lhs lhs rhs args =
+  let rec filter_lhs_aux lhs_list rhs args = 
+    match lhs_list with
+    | [] -> rhs
+    | [x] -> atomic_lhs x rhs args
+    | h::t -> filter_lhs_aux t (atomic_lhs h rhs args) args
+  in 
+  filter_lhs_aux (Cpure.list_of_disjs lhs) rhs args
+
+let combine_rel pre_rel_constrs pre_rels =
+  let list_rhs = List.map (fun (lhs,rhs) -> filter_lhs lhs rhs pre_rels) pre_rel_constrs in
+  let true_rel = CP.mkTrue no_pos in
+  let rhs = mkAnd_rhs list_rhs true_rel in  
+  rhs
 
 let pre_condition pre_rels pre_rel_constrs =
   let replaced_str = "(1=1)" in
-(*  let fst = List.hd pre_rel_constrs in*)
-  let pre_rel_constr_rhs = List.map (fun (_, rhs) -> rhs) pre_rel_constrs in
+ (* let pre_rel_constr_rhs = List.map (fun (_, rhs) -> rhs) pre_rel_constrs in
   let true_rel = CP.mkTrue no_pos in
- (* let (_, rhs) = fst in *)
-  let rhs = mkAnd_rhs pre_rel_constr_rhs true_rel in
+  let rhs = mkAnd_rhs pre_rel_constr_rhs true_rel in*)
+  let rhs = combine_rel pre_rel_constrs pre_rels in
   let str = str_of_formula rhs pre_rels replaced_str in 
   let input_file = "example.txt" in
   let fst_pre_rels = List.hd pre_rels in
@@ -2024,19 +2045,28 @@ let process_rel_infer pre_rels post_rels =
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
   let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   let _ = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
-  let result_pre = pre_condition pre_rels pre_rel_constrs in
-  let () = print_string ("\npre_cond fixpoint: " ^ result_pre) in
+  let () = if (pre_rel_constrs != []) then
+    begin
+      let result_pre = pre_condition pre_rels pre_rel_constrs in
+      let () = print_string ("\npre_cond fixpoint: " ^ result_pre) in
+      ()
+    end  
+  in 
+  let () = if (post_rel_constrs != []) then
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
   (* let _ = Debug.info_hprint (add_str "fixpoint2" *)
   (*     (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_quad pr1 pr1 pr1 pr1))) r no_pos in *)
   (* let _ = print_endline "process_rel_infer" in *)
-  let r = x_add Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
-  let _ = Debug.info_hprint (add_str "fixpoint2"
-                               (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in
-  let _ = print_endline_quiet "" in
-  ()
+    begin
+      let r = x_add Fixcalc.compute_fixpoint 2 post_rel_constrs post_rels proc_spec in
+      let _ = Debug.info_hprint (add_str "fixpoint2"
+                                   (let pr1 = Cprinter.string_of_pure_formula in pr_list_ln (pr_pair pr1 pr1))) r no_pos in
+      let _ = print_endline_quiet "" in
+      ()
+    end 
+  in ()
 
 let process_shape_lfp sel_hps=
   (**********INTERNAL**********)
