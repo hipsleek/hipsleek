@@ -987,9 +987,7 @@ let compute_def (rel_fml, pf, no) ante_vars =
       ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> ["
       ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: "
       ^ rhs ^ "\n};"
-    in
-    let () = print_string ("\ninput_fixcalc: " ^ rhs) in
-    input_fixcalc
+    in input_fixcalc
   with e ->
     let () = y_binfo_pp ("Toan : need to remove * in pf for fixcalc") in
     report_error ~exc:(Some e) no_pos (x_loc^"compute_def:Error in translating the input for fixcalc")
@@ -1036,7 +1034,6 @@ let compute_fixpoint_aux rel_defs ante_vars bottom_up =
   let () = Parse_fix.initialize_tlist_from_fpairlist rel_defs in
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   (* let _ = print_endline ("### compute_fixpoint_aux def:"^def) in *)
-  let () = print_string ("\nref_def: " ^ def) in
   let cmd = compute_cmd rel_defs bottom_up in
   let input_fixcalc =  def ^ cmd  in
   DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
