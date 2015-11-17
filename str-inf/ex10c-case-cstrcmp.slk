@@ -1,0 +1,33 @@
+data char_star {
+  int val; 
+  char_star next; 
+}.
+
+pred PQ<s2, pd, qd> == 
+  [] self::char_star<v1, p>
+  case {
+    v1=0 -> [] emp;
+    v1!=0 -> [] s2::char_star<v2, q>
+    case {
+      v1!=v2 -> [] emp;
+      v1=v2 -> [] p::PQ<q, pd, qd>;
+    }; 
+  }.
+  
+relation R(int n, int m).
+  
+pred P<pd, n> ==
+     self::char_star<v, pd> & v=0 & n=1
+  or self::char_star<v, p> * p::P<pd, n-1> & v!=0
+  inv n>=1.
+  
+pred Q<qd, m> ==
+     emp & m=0
+  or self::char_star<v, q> * q::Q<qd, m-1> & v!=0
+  inv m>=0.
+  
+lemma_infer [] self::PQ<s2, pd, qd> <- self::P<pd, n> * s2::Q<qd, m> & n=1 & m=0.
+print residue.
+
+lemma_infer [R] self::PQ<s2, pd, qd> <- self::P<pd, n> * s2::Q<qd, m> & R(n, m).
+print residue.
