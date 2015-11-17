@@ -11,7 +11,8 @@ pred lseg<p> == self = p
 HeapPred H1(node y).
 
 
-infer [z,x,H1] H1(y)*x::node<z>   |- y::lseg<null> * x::lseg<z> .
+//infer [z,x,H1] H1(y)*x::node<z>   |- y::lseg<null> * x::lseg<z> .
+infer [z]  x::node<z>   |- x::lseg<z> .
 print residue.
 /*
 # ex64r2.slk

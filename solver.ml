@@ -2311,7 +2311,7 @@ and contra_wrapper f rhs_p =
   (rs0, fold_prf)
 
 (*LDK: add rhs_p*)
-and fold_op ?(root_inst=None) p c vd v (rhs_p: MCP.mix_formula) u loc =
+and fold_op_init ?(root_inst=None) p c vd v (rhs_p: MCP.mix_formula) u loc =
   Gen.Profiling.no_2 "fold" (fold_op_x  ~root_inst:root_inst (*debug_2*) p c vd v rhs_p) u loc
 
 (* and fold_op p c vd v u loc = *)
@@ -2339,15 +2339,15 @@ and fold_op_x ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs_
   let pr (x,_) = Cprinter.string_of_list_context x in
   let id x = x in
   let ans = ((* ("use-case : "^string_of_bool use_case) *)
-    (* ^ *)"\n context:"^(Cprinter.string_of_context ctx)
-           ^"\n rhs view :"^(Cprinter.string_of_h_formula view) 
-           ^"\n rhs view annot :"^(Cprinter.string_of_annot_arg_list (CF.get_node_annot_args view)) 
-           ^"\n rhs_p (pure) :"^(Cprinter.string_of_mix_formula rhs_p)) in
+    (* ^ *)"\n ** context:"^(Cprinter.string_of_context ctx)
+           ^"\n ** rhs view:"^(Cprinter.string_of_h_formula view) 
+           ^"\n ** rhs view annot:"^(Cprinter.string_of_annot_arg_list (CF.get_node_annot_args view)) 
+           ^"\n ** rhs_pure:"^(Cprinter.string_of_mix_formula rhs_p)) in
   let pr2 x = match x with
     | None -> "None"
     | Some (f) -> Cprinter.string_of_struc_formula f.view_formula in
-  Debug.no_2 "fold_op" 
-    pr2 id pr
+  Debug.no_2 "fold_op_1" 
+    (add_str "vdef" pr2) id pr
     (fun _ _ -> fold_op_x1 ~root_inst:root_inst prog (ctx : context) (view : h_formula) vd rhs_p (use_case:CP.formula option) (pos : loc)) vd ans
 
 
@@ -2568,7 +2568,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         ) in
         let process_one (ss:CF.steps) fold_rs1 = (
           let pr = Cprinter.string_of_context  in
-          Debug.no_1 "fold_op: process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 
+          Debug.no_1 "fold_op_process_one" pr pr (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 
         ) in
         let res = match rs0 with
           | FailCtx _ -> rs0
@@ -5887,7 +5887,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     (* Collect and sort the data and view predicates *)
     let dv = collect_data_view h in
     let dv = List.sort (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset) dv in
-    let () = y_binfo_hp (add_str "heap for unfold" (pr_list !CF.print_h_formula)) dv in
+    let () = y_tinfo_hp (add_str "heap for unfold" (pr_list !CF.print_h_formula)) dv in
     (* Produce an action to perform *)
     let action = generate_action dv eset in
     (* Process the action to get the new entail state *)
@@ -11678,7 +11678,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
   let () = x_tinfo_hp (add_str "folding_conseq_pure" (pr_option Cprinter.string_of_mix_formula)) folding_conseq_pure pos in
   let () = x_tinfo_hp (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
   let estate =  {estate with es_folding_conseq_pure = folding_conseq_pure} in
-  let fold_rs, fold_prf = x_add (fold_op ~root_inst:root_inst)  prog (Ctx estate) view_to_fold vd rhs_p (* false *) case_inst pos in
+  let fold_rs, fold_prf = x_add (fold_op_init ~root_inst:root_inst)  prog (Ctx estate) view_to_fold vd rhs_p (* false *) case_inst pos in
   let () = Debug.ninfo_hprint (add_str "do_fold_w: rhs_p 3 " (Cprinter.string_of_mix_formula)) rhs_p pos in
   let () = rhs_rest_emp := true in
   if not (CF.isFailCtx fold_rs) then
@@ -13110,7 +13110,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
                          Context.match_res_rhs_node=rhs_node;
                         },unfold_num) -> begin
-        x_binfo_hp (add_str "M_unfold" string_of_int) unfold_num pos;
+        x_tinfo_hp (add_str "M_unfold" string_of_int) unfold_num pos;
         match lhs_node with
         | HRel (hp,args,_) ->
           (* if CF.is_exists_hp_rel hp estate  then *)
@@ -13128,7 +13128,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           (*let estate = x_add Infer.infer_for_unfold prog estate lhs_node pos in*)
           let curr_unfold_num = (get_view_unfold_num lhs_node)+unfold_num in
           if (curr_unfold_num>1) then
-            let () = y_binfo_hp (add_str "curr_unfold_num" string_of_int) curr_unfold_num in
+            let () = y_tinfo_hp (add_str "curr_unfold_num" string_of_int) curr_unfold_num in
             let err_msg = "ensuring finite unfold" in
             (CF.mkFailCtx_in(Basic_Reason(mkFailContext (* "ensuring finite unfold" *) err_msg estate conseq (get_node_label lhs_node) pos,
                                           CF.mk_failure_must "infinite unfolding" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true),NoAlias)
