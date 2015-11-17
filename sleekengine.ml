@@ -1903,7 +1903,7 @@ let check_subset str1 str2 args =
   let snd_str = "R2:={" ^ args_str ^ ":" ^ str2 ^ "};" in
   let third_str = "R1 subset R2;" in
   let str = fst_str ^ snd_str ^ third_str in
-  let () = print_string ("\ncheck subset str: " ^ str) in
+(*  let () = print_string ("\ncheck subset str: " ^ str) in *)
   let filename = "subset.txt" in
   let oc = open_out filename in
   let () = fprintf oc "%s\n" str in
@@ -1911,7 +1911,7 @@ let check_subset str1 str2 args =
   let fixcalc_exe = ref (global_oc ^ " ") in
   let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ filename) in
   let res = filter_subset_result res in
-  let () = print_string ("\nresult of fixcalc: " ^ res) in
+(*  let () = print_string ("\nresult of fixcalc: " ^ res) in*)
   if (contains res "False" ) then false else true
 
 let id_of_typed_spec_var x =
@@ -1937,10 +1937,20 @@ let narrow (str1:string) (str2:string) : string =
     end
   in check_list str1_list str2
 
+let rec mkAnd_rhs formula_lst start = 
+  match formula_lst with
+  | [] -> start
+  | [x] -> CP.mkAnd start x no_pos
+  | h::t -> mkAnd_rhs t (CP.mkAnd start h no_pos) 
+
+
 let pre_condition pre_rels pre_rel_constrs =
   let replaced_str = "(1=1)" in
-  let fst = List.hd pre_rel_constrs in
-  let (_, rhs) = fst in
+(*  let fst = List.hd pre_rel_constrs in*)
+  let pre_rel_constr_rhs = List.map (fun (_, rhs) -> rhs) pre_rel_constrs in
+  let true_rel = CP.mkTrue no_pos in
+ (* let (_, rhs) = fst in *)
+  let rhs = mkAnd_rhs pre_rel_constr_rhs true_rel in
   let str = str_of_formula rhs pre_rels replaced_str in 
   let input_file = "example.txt" in
   let fst_pre_rels = List.hd pre_rels in
@@ -1950,16 +1960,16 @@ let pre_condition pre_rels pre_rel_constrs =
   let fixcalc_exe = ref (global_oc ^ " ") in
   let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
   let res = filter_result res in
-  let () = print_string ("\nresult of fixcalc res: " ^ res) in
+(*  let () = print_string ("\nresult of fixcalc res: " ^ res) in *)
   let replaced_str = get_replaced_str res args in
   let str = str_of_formula rhs pre_rels replaced_str in
   let () = create_omega_input str id args input_file in
   let res2 = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
   let res2 = filter_result res2 in
-  let () = print_string ("\nresult of fixcalc res2: " ^ res2) in
+(*  let () = print_string ("\nresult of fixcalc res2: " ^ res2) in *)
   let check_subset2 = check_subset res res2 args in
   let narrow2 = narrow res res2 in
-  let () = print_string ("\n narrow2 str: " ^ narrow2) in
+ (* let () = print_string ("\n narrow2 str: " ^ narrow2) in *)
   let count = ref 0 in
   let check_count res res2 =
     if (!count >= 4) then (narrow res res2) else res2
@@ -1968,9 +1978,9 @@ let pre_condition pre_rels pre_rel_constrs =
   let ref_res2 = ref res2 in
   while (  not(check_subset !ref_res !ref_res2 args) &&  (!count < 8)) do
     count := !count + 1;
-    let () = print_string ("\nres2: " ^ !ref_res2) in
+(*    let () = print_string ("\nres2: " ^ !ref_res2) in *)
     let replaced_str = get_replaced_str !ref_res2 args in
-    let () = print_string ("\nreplaced_str: " ^ replaced_str) in
+   (* let () = print_string ("\nreplaced_str: " ^ replaced_str) in *)
     let str = str_of_formula rhs pre_rels replaced_str in
     let () = create_omega_input str id args input_file in
     ref_res := !ref_res2;
@@ -1978,9 +1988,9 @@ let pre_condition pre_rels pre_rel_constrs =
     let res2 = filter_result res2 in
     let res2 = check_count res res2 in
     ref_res2 := res2;
-    let () = print_string ("\nresult of fixcalc res2: " ^ res2) in
-    !ref_res2
-  done;;
+(*    let () = print_string ("\nresult of fixcalc res2: " ^ res2) in *)
+  done;
+  !ref_res2
 
 let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
@@ -2015,7 +2025,7 @@ let process_rel_infer pre_rels post_rels =
   let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   let _ = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
   let result_pre = pre_condition pre_rels pre_rel_constrs in
-
+  let () = print_string ("\npre_cond fixpoint: " ^ result_pre) in
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
