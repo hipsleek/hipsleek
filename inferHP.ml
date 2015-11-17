@@ -1192,7 +1192,7 @@ let generate_constraints ?(caller="") prog iact es rhs lhs_b ass_guard rhs_b1 rh
   let hprel_def = List.concat (List.map CF.get_ptrs ((* no_es_history@ *)(CF.get_hnodes lhs_b.CF.formula_base_heap
   (* es.CF.es_heap *))))
   in
-  (*split the constraints relating between pre- andxs post-preds*)
+  (*split the constraints relating between pre- and post-preds*)
   let es_cond_path = CF.get_es_cond_path es in
   let defined_hprels = List.map (x_add Sautil.generate_hp_ass 0 [](* (closed_hprel_args_def@total_unk_svl) *) es_cond_path) defined_hps in
   let m = [] in

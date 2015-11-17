@@ -23,9 +23,9 @@ print residue.
 
 print relAssumes.
 
-shape_derive_view [Q].
+shape_derive_view [P,Q].
 
-print views.
+print views [P,Q].
 
 /*
 emp&true --> Q(s2,Anon_1815)&true; 

@@ -20563,4 +20563,57 @@ let get_root_ptr hf =
   | HVar(pt,_) -> pt
   | _ -> raise Not_found
 
+let convert_rel_to_hprel_es es = 
+  let convert_relform_to_hrel_base (pf: CP.formula): formula * bool = 
+    let f_bf _ bf =
+      let pf, _ = bf in
+      match pf with
+      | CP.RelForm (sv, args, pos) ->
+        if List.exists (CP.eq_spec_var sv) es.es_infer_vars_hp_rel then
+          let hrel = HRel (sv, args, pos) in
+          Some (CP.mkTrue_b pos, [hrel])
+        else Some (bf, [])
+      | _ -> None
+    in
+    let f = (nonef2, f_bf, nonef2) in
+    let f_arg = (voidf2, voidf2, voidf2) in
+    let f_comb = List.concat in
+    let arg = () in
+    let n_pf, hrel_lst = CP.trans_formula pf arg f f_arg f_comb in
+    mkBase_simp (combine_star_h hrel_lst) (MCP.mix_of_pure n_pf),
+    not (is_empty hrel_lst)
+  in
+  let convert_relform_to_hrel_formula (pf: CP.formula): formula * bool =
+    let f_base = convert_relform_to_hrel_base in
+    match pf with
+    | CP.Or (f1, f2, _, pos) -> 
+      let n_f1, f1_trans = f_base f1 in 
+      let n_f2, f2_trans = f_base f2 in
+      mkOr n_f1 n_f2 pos, f1_trans || f2_trans
+    | _ -> f_base pf
+  in
+  let convert_rel_to_hprel rel cond_path = 
+    let (knd, p_lhs, p_rhs) = rel in
+    let lhs, lhs_trans = convert_relform_to_hrel_formula p_lhs in
+    let rhs, rhs_trans = convert_relform_to_hrel_formula p_rhs in
+    if lhs_trans || rhs_trans then
+      Some (mkHprel knd [] [] [] lhs None rhs cond_path)
+    else None
+  in
+  let convert_rel_to_hprel_es rel cond_path = 
+    let pr1 = CP.print_lhs_rhs in
+    let pr2 = !print_hprel_short in
+    Debug.no_1 "convert_rel_to_hprel" pr1 (pr_option pr2)
+      (fun _ -> convert_rel_to_hprel rel cond_path) rel
+  in
+  let es_cond_path = get_es_cond_path es in
+  let hprels = List.fold_left (fun acc rel -> 
+    let hprel_opt = convert_rel_to_hprel rel es_cond_path in
+    match hprel_opt with
+    | Some hprel -> acc @ [hprel]
+    | None -> acc) [] (es.es_infer_rel # get_stk) in
+  let () = es.es_infer_hp_rel # push_list hprels in
+  es
 
+
+  

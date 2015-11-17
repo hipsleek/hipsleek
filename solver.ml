@@ -13880,12 +13880,12 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                         let new_rhs_base = CF.mkBase HEmp irrel_r_p r_vp r_t r_fl r_a pos in
                         x_add heap_entail_conjunct 19 prog is_folding new_ctx new_rhs_base (rhs_h_matched_set @ [v]) pos
                     else
-                      let () = y_winfo_pp "TODO: schedule infer_empty_hp_rel?" in
+                      let () = y_tinfo_pp "TODO: schedule infer_empty_hp_rel?" in
                       let base_lhs = lhs_b in
                       let _, pure_rhs, _, _, _, _ = CF.split_components conseq in
 
                       let outcome = match rhs,rhs_rest with
-                        | HRel (hp,args,_),HEmp -> 
+                        | HRel (hp,args,_), HEmp -> 
                           let add_pr str pr = 
                             fun e ->
                               let () = print_endline_quiet ("Start of "^str) in
@@ -13893,15 +13893,19 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                               ("End of "^str)
                           in
                           if Cf_ext.EState.is_infer_hp_rel estate hp (* check if hp in infer list *) then
-                            let () = y_tinfo_hp (add_str "HRel" !CP.print_sv) hp in
-                            let () = y_tinfo_hp (add_pr "es_infer_vars" Cf_ext.EState.show_infer_vars) estate in
+                            let () = y_binfo_hp (add_str "HRel" !CP.print_sv) hp in
+                            let () = y_binfo_hp (add_pr "es_infer_vars" Cf_ext.EState.show_infer_vars) estate in
                             let rel = CP.mkRel hp args no_pos in
-                            let pure_rhs = MCP.merge_mix_w_pure pure_rhs rel  in (* add a new unknown relation to RHS *)
+                            let pure_rhs = MCP.merge_mix_w_pure pure_rhs rel in (* add a new unknown relation to RHS *)
                             let estate = Cf_ext.EState.add_infer_rel estate hp in
                             let ctx, proof = x_add heap_entail_empty_rhs_heap 8
                                 prog conseq is_folding estate base_lhs pure_rhs rhs_h_matched_set pos in
                             let () = y_winfo_pp "TODO: to convert Rel -> HRel" in
-                            let ctx = ctx (* TODO: transform pure relation to heap relation *) in
+                            let () = y_binfo_hp (add_str "ctx" !CF.print_list_context) ctx in
+                            (* TODO: transform pure relation to heap relation *) 
+                            let f_es es = Ctx (CF.convert_rel_to_hprel_es es) in
+                            let ctx = CF.transform_list_context (f_es, idf) ctx in
+                            let () = y_binfo_hp (add_str "ctx" !CF.print_list_context) ctx in
                             Some (ctx, proof)
                           else None
                         (* failwith x_tbi  *)
