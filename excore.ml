@@ -483,6 +483,26 @@ sig
   val imply : t -> t -> bool
 end;;
 
+(* module type for EPURE, what methods to expose? *)
+module type EPURE_TYPE =
+sig
+  type t
+  val zero : t
+  val is_zero : t -> bool
+  val eq : t -> t -> bool
+  val compare : t -> t -> int
+  val string_of : t -> string
+  val subst : (spec_var * spec_var) list -> t -> t
+  val merge_baga : t list -> t list -> t list
+  val hull_baga : t list -> t list -> t list
+  val is_eq_baga : t list -> t list -> bool
+  val mk_elem_from_sv : spec_var -> t
+  val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
+  val conv_var : t list -> spec_var list
+  val from_var : spec_var list -> t list
+  (* val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list *)
+  (* val from_var_pairs : (spec_var * spec_var) list -> (t*t) list *)
+end;;
 
 module EPURE =
   functor (Elt : SV_TYPE)  ->

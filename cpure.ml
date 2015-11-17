@@ -5875,8 +5875,6 @@ end;;
 (*
    [a,b,(e,base,offset)]
     ==> a>0 & b>0 & a!=b  
-        
-   
 *)
 (* to capture element as (sv, sv option) for both variable and interval *)
 (*   (sv,None) denotes an address sv *)
