@@ -1891,12 +1891,19 @@ let filter_subset_result str =
   let str2 = String.concat "" not_empty in 
   str2
 
+let contains s1 s2 =
+  let re = Str.regexp_string s2
+  in
+  try ignore (Str.search_forward re s1 0); true
+  with Not_found -> false
+
 let check_subset str1 str2 args =
   let args_str = Cprinter.string_of_spec_var_list args in
   let fst_str = "R1:={" ^ args_str ^ ":" ^ str1 ^ "};" in
   let snd_str = "R2:={" ^ args_str ^ ":" ^ str2 ^ "};" in
   let third_str = "R1 subset R2;" in
   let str = fst_str ^ snd_str ^ third_str in
+  let () = print_string ("\ncheck subset str: " ^ str) in
   let filename = "subset.txt" in
   let oc = open_out filename in
   let () = fprintf oc "%s\n" str in
@@ -1905,7 +1912,7 @@ let check_subset str1 str2 args =
   let res = Fixcalc.syscall (!fixcalc_exe ^ " "^ filename) in
   let res = filter_subset_result res in
   let () = print_string ("\nresult of fixcalc: " ^ res) in
-  if res == "False" then false else true
+  if (contains res "False" ) then false else true
 
 let id_of_typed_spec_var x =
   match x with
@@ -1919,12 +1926,6 @@ let get_replaced_str str args =
 
 let narrow (str1:string) (str2:string) : string =
   let str1_list = Str.split (Str.regexp " | ") str1 in
-  let contains s1 s2 =
-    let re = Str.regexp_string s2
-    in
-        try ignore (Str.search_forward re s1 0); true
-        with Not_found -> false
-  in
   let check_list list1 str2 = 
     begin
     let list_res = List.map (fun a -> 
@@ -1956,10 +1957,30 @@ let pre_condition pre_rels pre_rel_constrs =
   let res2 = Fixcalc.syscall (!fixcalc_exe ^ " "^ input_file) in
   let res2 = filter_result res2 in
   let () = print_string ("\nresult of fixcalc res2: " ^ res2) in
-  let check_subset = check_subset res res2 args in
-  let narrow = narrow res res2 in
-  let () = print_string ("\n narrow str: " ^ narrow) in
-  ()
+  let check_subset2 = check_subset res res2 args in
+  let narrow2 = narrow res res2 in
+  let () = print_string ("\n narrow2 str: " ^ narrow2) in
+  let count = ref 0 in
+  let check_count res res2 =
+    if (!count >= 4) then (narrow res res2) else res2
+  in 
+  let ref_res = ref res in
+  let ref_res2 = ref res2 in
+  while (  not(check_subset !ref_res !ref_res2 args) &&  (!count < 8)) do
+    count := !count + 1;
+    let () = print_string ("\nres2: " ^ !ref_res2) in
+    let replaced_str = get_replaced_str !ref_res2 args in
+    let () = print_string ("\nreplaced_str: " ^ replaced_str) in
+    let str = str_of_formula rhs pre_rels replaced_str in
+    let () = create_omega_input str id args input_file in
+    ref_res := !ref_res2;
+    let res2 = Fixcalc.syscall (!fixcalc_exe ^ " " ^ input_file) in
+    let res2 = filter_result res2 in
+    let res2 = check_count res res2 in
+    ref_res2 := res2;
+    let () = print_string ("\nresult of fixcalc res2: " ^ res2) in
+    !ref_res2
+  done;;
 
 let process_rel_infer pre_rels post_rels =
   (* let _ = Debug.info_pprint "process_rel_infer" no_pos in *)
@@ -1993,6 +2014,8 @@ let process_rel_infer pre_rels post_rels =
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
   let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   let _ = x_binfo_hp (add_str "pre_rel_constrs" (pr_list (pr_pair pr pr))) pre_rel_constrs no_pos in
+  let result_pre = pre_condition pre_rels pre_rel_constrs in
+
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
