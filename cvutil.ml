@@ -222,6 +222,13 @@ let compatible_ann (ann1: CP.ann list) (ann2: CP.ann list) emap : bool =
   let pr = pr_list CP.string_of_imm in
   Debug.no_2 "compatible_ann" pr pr string_of_bool (fun _ _  -> compatible_ann ann1 ann2 emap) ann1 ann2
 
+let mk_fresh_inv_ex_vars ex_vars from_svs to_svs =
+  let fresh_ex_vars = CP.fresh_spec_vars ex_vars in
+  let from_svs = ex_vars@from_svs in
+  let to_svs = fresh_ex_vars@to_svs in
+  let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
+  (from_svs,to_svs,subst_m_fun)
+
 (****************************************************************************)
 (****************************************************************************)
 (****************************************************************************)
@@ -1070,17 +1077,21 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
          | 0 -> vdef.view_user_inv
          | _ ->  (* if !force_verbose_xpure &&  not(vdef.view_xpure_flag) then vdef.view_x_formula else *) xp1
        in
+       (* let mk_fresh_inv_ex_vars ex_vars from_svs to_svs = *)
+       (*   let fresh_ex_vars = CP.fresh_spec_vars ex_vars in *)
+       (*   let from_svs = ex_vars@from_svs in *)
+       (*   let to_svs = fresh_ex_vars@to_svs in *)
+       (*   let subst_m_fun = MCP.subst_avoid_capture_memo(\*_debug1*\) from_svs to_svs in *)
+       (*   (from_svs,to_svs,subst_m_fun) *)
+       (* in *)
        let ex_vars = vdef.view_inv_exists_vars in
-       let fresh_ex_vars = CP.fresh_spec_vars ex_vars in
-       (* let () = x_binfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in *)
-       let () = x_binfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
-       let from_svs = ex_vars@from_svs in
-       let to_svs = fresh_ex_vars@to_svs in
-       let () = x_binfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
-       let () = x_binfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
-       let () = x_binfo_hp (add_str "ex_svs" !CP.print_svl) ex_vars no_pos in
-       
-       (* let () = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
+       let (from_svs,to_svs,subst_m_fun) = mk_fresh_inv_ex_vars ex_vars from_svs to_svs in
+       (* let () = x_tinfo_hp (add_str "xp1" Cprinter.string_of_mix_formula) xp1 no_pos in *)
+       let () = x_tinfo_hp (add_str "vinv" Cprinter.string_of_mix_formula) vinv no_pos in
+       let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+       let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+       let () = x_tinfo_hp (add_str "ex_svs" !CP.print_svl) ex_vars no_pos in
+        (* let () = if !smt_compete_mode then xpure_spec_view_inv vdef p vs p0 vinv else vinv in *)
        (* let vinv = if ( which_xpure=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in *)
        (*LDK: ??? be careful to handle frac var properly. 
          Currently, no fracvar in view definition*)
@@ -1088,7 +1099,6 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
        (* let to_svs = p :: vs in *)
        (*add fractional invariant*)
        let frac_inv_mix = MCP.OnePF frac_inv in
-       let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
        subst_m_fun (CF.add_mix_formula_to_mix_formula frac_inv_mix vinv))
   in
   (*res is the view invariant defined by users or
@@ -1710,11 +1720,11 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
                 formula_exists_pure = qp;
                 formula_exists_pos = pos}) ->
       let pqh, addrs', _ = xpure_h prog qh qp 1 in
-      let () = Debug.ninfo_hprint (add_str "pqh" Cprinter.string_of_mix_formula) pqh no_pos in
+      let () = x_tinfo_hp (add_str "pqh" Cprinter.string_of_mix_formula) pqh no_pos in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
       let tmp1 = MCP.merge_mems qp pqh true in
       let res_form = MCP.mix_push_exists qvars tmp1 in
-      let () = Debug.ninfo_hprint (add_str "pure res_form" Cprinter.string_of_mix_formula) res_form no_pos in
+      let () = x_tinfo_hp (add_str "pure res_form" Cprinter.string_of_mix_formula) res_form no_pos in
       (res_form, addrs) in
   let pf, pa = xpure_symbolic_helper prog f0 in
   (* let () = x_tinfo_hp (add_str "pure pf" Cprinter.string_of_mix_formula) pf no_pos in *)
@@ -1879,17 +1889,19 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
         let frac_inv = match perm with
           | None -> CP.mkTrue pos
           | Some f -> mkPermInv () f in
-        let () = Debug.ninfo_hprint (add_str "view_name" (fun x -> x)) vdef.view_name no_pos in
-        let () = Debug.ninfo_hprint (add_str "diff_flag" string_of_bool) diff_flag no_pos in
-        let () = Debug.ninfo_hprint (add_str "xp_no" string_of_int) xp_no no_pos in
+        let () = x_tinfo_hp (add_str "view_name" (fun x -> x)) vdef.view_name no_pos in
+        let () = x_tinfo_hp (add_str "diff_flag" string_of_bool) diff_flag no_pos in
+        let () = x_tinfo_hp (add_str "xp_no" string_of_int) xp_no no_pos in
         let vinv = if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in
-        let () = Debug.ninfo_hprint (add_str "vinv" !Cast.print_mix_formula) vinv no_pos in
+        let () = x_tinfo_hp (add_str "vinv" !Cast.print_mix_formula) vinv no_pos in
+        let () = x_tinfo_hp (add_str "vinv_exists" !P.print_svl) vdef.view_inv_exists_vars no_pos in
+        let (from_svs,to_svs,subst_m_fun) = mk_fresh_inv_ex_vars vdef.view_inv_exists_vars from_svs to_svs in
         (*add fractional invariant*)
         let frac_inv_mix = MCP.OnePF frac_inv in
         let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
-        let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
+        (* let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in *)
         let vinv1 = subst_m_fun vinv in
-        let () = Debug.ninfo_hprint (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
+        let () = x_tinfo_hp (add_str "vinv1" !Cast.print_mix_formula) vinv1 no_pos in
         (vinv1, ba) in
       (match lbl_lst with
        | None -> helper ()
@@ -1905,10 +1917,10 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
       let ph1, addrs1 = helper h1 in
       let ph2, addrs2 = helper h2 in
       let tmp1 = MCP.merge_mems ph1 ph2 true in
-      let () = Debug.ninfo_hprint (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
-      let () = Debug.ninfo_hprint (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
-      let () = Debug.ninfo_hprint (add_str "addrs1" !CP.print_svl) addrs1 no_pos in
-      let () = Debug.ninfo_hprint (add_str "addrs2" !CP.print_svl) addrs2 no_pos in
+      let () = x_tinfo_hp (add_str "ph1" !Cast.print_mix_formula) ph1 no_pos in
+      let () = x_tinfo_hp (add_str "ph2" !Cast.print_mix_formula) ph2 no_pos in
+      let () = x_tinfo_hp (add_str "addrs1" !CP.print_svl) addrs1 no_pos in
+      let () = x_tinfo_hp (add_str "addrs2" !CP.print_svl) addrs2 no_pos in
       (tmp1, addrs1 @ addrs2)
     | StarMinus ({ h_formula_starminus_h1 = h1;
                    h_formula_starminus_h2 = h2;

@@ -52,6 +52,7 @@ let string_of_ann a = CP.string_of_ann a
 let string_of_ann_list xs = pr_list string_of_ann xs
 
 let view_prim_lst = new Gen.stack_pr "view-prim" pr_id (=)
+let view_ptr_arith_lst = new Gen.stack_pr "view-ptr-arith" pr_id (=)
 
 (* moved to globals.ml *)
 (* type typed_ident = (typ * ident) *)
@@ -2017,6 +2018,11 @@ and is_view_primitive (h : h_formula) = match h with
 
 and is_view_user (h : h_formula) = match h with
   | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
+  | _ -> false
+
+and is_view_user_dupl_ptr_unfold (h : h_formula) = match h with
+  | ViewNode v -> let vn = v.h_formula_view_name in
+    not(view_prim_lst # mem vn || view_ptr_arith_lst # mem vn) 
   | _ -> false
 
 and is_data (h : h_formula) = match h with

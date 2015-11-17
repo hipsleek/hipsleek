@@ -360,6 +360,35 @@ imply_mix_formula#1@25 EXIT:(false,Some(([ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=
  (1+i+self)!=null & 0<=i])))
 
 ===============================================================
+# ex7a1c.slk (FIXED by not unfolding ptr view for dupl unfolding)
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  i<=n.
+
+-dre "ef_unsat\|.*enum\|get_spec_baga\|add_epure" 
+
+Entail 5: Fail.(may) cause:OrL[
+infinite unfolding,
+valid
+]
+
+Validate 5: Expecting(3)Valid BUT got : Fail_May
+
+===============================================================
+# ex7a1c.slk 
+
+# for merging @L + @A etc nodes..
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+(====)
+compatible_nodes@2
+compatible_nodes inp1 : base::arr_seg<i,n>@M
+compatible_nodes inp2 : base::arr_seg<j,m>@M
+compatible_nodes@2 EXIT:(false, base::arr_seg<i,n>@M,None,[])
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+
 ===============================================================
 ===============================================================
 ===============================================================

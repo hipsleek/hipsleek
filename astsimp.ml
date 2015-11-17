@@ -2068,8 +2068,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let ctx0 = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
       let ctx = CF.add_infer_vars_templ_ctx ctx0 templ_vars in
       let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-      let () = x_binfo_hp (add_str "formula1(enum)" Cprinter.string_of_formula) formula1 no_pos in
-      let () = x_binfo_hp (add_str "formula1_under(sym)" Cprinter.string_of_formula) formula1_under no_pos in
+      let () = x_tinfo_hp (add_str "formula1(enum)" Cprinter.string_of_formula) formula1 no_pos in
+      let () = x_tinfo_hp (add_str "formula1_under(sym)" Cprinter.string_of_formula) formula1_under no_pos in
       let () = x_tinfo_hp (add_str "templ_vars" !CP.print_svl) templ_vars no_pos in
       let () = x_tinfo_hp (add_str "context0" Cprinter.string_of_context) ctx0 no_pos in
       let () = x_tinfo_hp (add_str "context" Cprinter.string_of_context) ctx no_pos in
@@ -2111,8 +2111,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let pf = (CP.mkExists ex_vs (x_add_1 Excore.EPureI.ef_conv_disj disj) None no_pos) in 
           true,CF.formula_of_pure_formula pf pos,pf
       in
-      let () = y_binfo_hp (add_str "ex_vs" !CP.print_svl) ex_vs in
-      let () = y_binfo_hp (add_str "baga_pure" !CP.print_formula) baga_pure in
+      let () = y_tinfo_hp (add_str "ex_vs" !CP.print_svl) ex_vs in
+      let () = y_tinfo_hp (add_str "baga_pure" !CP.print_formula) baga_pure in
       let () = y_tinfo_hp (add_str "baga_over_formula" !CF.print_formula) baga_over_formula in
       let () = y_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx  in
 
@@ -2478,11 +2478,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let vs2 = (null_c_var::self_c_var::view_sv_vars) in
         let vs1a = CP.fv inv_pf in
         let pr_svl = !CP.print_svl in
-        (* y_binfo_hp (add_str "cf" !Cast.print_struc_formula) cf; *)
-        y_binfo_hp (add_str "inv_pf" !CP.print_formula) inv_pf;
-        y_binfo_hp (add_str "view_sv_vars" pr_svl) view_sv_vars;
-        y_binfo_hp (add_str "vs1" pr_svl) vs1;
-        y_binfo_hp (add_str "vs1a" pr_svl) vs1a; (* from invariant *)
+        (* y_tinfo_hp (add_str "cf" !Cast.print_struc_formula) cf; *)
+        y_tinfo_hp (add_str "inv_pf" !CP.print_formula) inv_pf;
+        y_tinfo_hp (add_str "view_sv_vars" pr_svl) view_sv_vars;
+        y_tinfo_hp (add_str "vs1" pr_svl) vs1;
+        y_tinfo_hp (add_str "vs1a" pr_svl) vs1a; (* from invariant *)
         let allow_ex_vs = extr_exist_vars inv_pf vs2 in 
         let vs1 = vs1@vs1a in
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
@@ -2561,7 +2561,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let xpure_flag = false (* x_add TP.check_diff memo_pf_N memo_pf_P *) in
       let view_kind = trans_view_kind vdef.I.view_kind in
       let vn = vdef.I.view_name in
-      let () = if view_kind = View_PRIM then CF.view_prim_lst # push vn  in
+      let () = if view_kind = View_PRIM then CF.view_prim_lst # push vn
+      in
       (* let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in *)
       (* let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in *)
       (* let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name prog.I.prog_data_decls in *)
@@ -2773,7 +2774,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             let pr_f = !CP.print_formula in
             let () = y_tinfo_hp (add_str "Actual roots.." (pr_list (pr_pair pr_sv pr_f))) lst_heap_ptrs in
             match lst_heap_ptrs with
-            | x::_ -> Some x
+            | x::_ ->  
+              (* adding to ptr_arith_lst *)
+              let () = CF.view_ptr_arith_lst # push vn in Some x
             | _ -> None
           );
         C.view_prop_extns = view_prop_extns;

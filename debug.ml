@@ -611,7 +611,7 @@ struct
           end
       method pop_call =
         begin
-          if !dump_calls (* z_debug_flag *) then
+          if !dump_callers_flag (* z_debug_flag *) then
             (if stk_calls # is_empty then print_endline_quiet "WARNING stk_calls is empty";
             stk_calls # pop_no_exc)
         end
@@ -650,16 +650,20 @@ struct
         begin
           let id_w_dot = id^"." in
           let get_callers_from_stk stk = 
-            if stk # is_empty then 
-              (print_endline_quiet "WARNING: call stk empty"; [])
-            else
-              let s = (stk # pop_top)^id in
-              let lst = stk # get_stk in
-              let () = stk # push s in
-              (s^".")::lst
+            if !dump_callers_flag then
+              begin
+                if stk # is_empty then 
+                  (print_endline_quiet "WARNING: call stk empty")
+                else
+                  let s = (stk # pop_top)^id in
+                  let lst = stk # get_stk in
+                  let () = stk # push s in
+                  let nlst = (s^".")::lst in
+                  let () = stk_callers # push nlst in
+                  ()
+              end
           in
-          let callers = get_callers_from_stk stk_calls in
-          let () = stk_callers # push callers in
+          let () = get_callers_from_stk stk_calls in
           if !dump_calls_all then
             begin
               lastline <- lastline^id_w_dot;
@@ -670,7 +674,7 @@ struct
   let dump_debug_calls () = 
     begin
       if !dump_calls then debug_calls # dump;
-      debug_calls # dump_callers
+      if !dump_callers_flag then debug_calls # dump_callers
     end
 
   let read_main () =
@@ -977,7 +981,7 @@ struct
       if x_call_site = "" then ""
       else " @" ^ x_call_site
     in
-    let () = if !dump_calls (* z_debug_flag *) then debug_calls # push_call s at_call_site in
+    let () = if !dump_callers_flag (* z_debug_flag *) then debug_calls # push_call s at_call_site in
     let () = if !dump_calls then debug_calls # print_call s at_call_site in
     let fn = if !z_debug_flag then
         match (in_debug s) with

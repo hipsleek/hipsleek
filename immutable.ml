@@ -2631,7 +2631,8 @@ let compatible_at_node_lvl prog imm1 imm2 h1 h2 unfold_fun qvars emap =
       (* imm1 & imm2 are imm constants, but none is @A *)
       let pr = Cprinter.string_of_h_formula in
       (* let () = print_endline "*** at overlapping location" in- *)
-      let () = y_winfo_hp (add_str "* between overlapping heaps" (pr_pair pr pr)) (h1, h2) in
+      (* TODO: ptr view and prim_view should be excluded *)
+      let () = y_tinfo_hp (add_str "* between overlapping heaps" (pr_pair pr pr)) (h1, h2) in
       (false, h1, [])
       (* failwith ("* between overlapping heaps: " ^ (pr_pair pr pr (h1,h2))) *)
     else
