@@ -20564,14 +20564,15 @@ let get_root_ptr hf =
   | _ -> raise Not_found
 
 let convert_rel_to_hprel_es es = 
-  let convert_relform_to_hrel_base (pf: CP.formula): formula * bool = 
+  let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var in
+  let convert_relform_to_hrel_base (pf: CP.formula) = 
     let f_bf _ bf =
       let pf, _ = bf in
       match pf with
       | CP.RelForm (sv, args, pos) ->
         if List.exists (CP.eq_spec_var sv) es.es_infer_vars_hp_rel then
           let hrel = HRel (sv, args, pos) in
-          Some (CP.mkTrue_b pos, [hrel])
+          Some (CP.mkTrue_b pos, [(sv, hrel)])
         else Some (bf, [])
       | _ -> None
     in
@@ -20579,28 +20580,30 @@ let convert_rel_to_hprel_es es =
     let f_arg = (voidf2, voidf2, voidf2) in
     let f_comb = List.concat in
     let arg = () in
-    let n_pf, hrel_lst = CP.trans_formula pf arg f f_arg f_comb in
+    let n_pf, sv_hrel_lst = CP.trans_formula pf arg f f_arg f_comb in
+    let unk_svl, hrel_lst = List.split sv_hrel_lst in
     mkBase_simp (combine_star_h hrel_lst) (MCP.mix_of_pure n_pf),
-    not (is_empty hrel_lst)
+    remove_dups unk_svl
   in
-  let convert_relform_to_hrel_formula (pf: CP.formula): formula * bool =
+  let convert_relform_to_hrel_formula (pf: CP.formula) =
     let f_base = convert_relform_to_hrel_base in
     match pf with
     | CP.Or (f1, f2, _, pos) -> 
-      let n_f1, f1_trans = f_base f1 in 
-      let n_f2, f2_trans = f_base f2 in
-      mkOr n_f1 n_f2 pos, f1_trans || f2_trans
+      let n_f1, unk_svl_f1 = f_base f1 in 
+      let n_f2, unk_svl_f2 = f_base f2 in
+      mkOr n_f1 n_f2 pos, remove_dups (unk_svl_f1 @ unk_svl_f2)
     | _ -> f_base pf
   in
   let convert_rel_to_hprel rel cond_path = 
     let (knd, p_lhs, p_rhs) = rel in
-    let lhs, lhs_trans = convert_relform_to_hrel_formula p_lhs in
-    let rhs, rhs_trans = convert_relform_to_hrel_formula p_rhs in
-    if lhs_trans || rhs_trans then
-      Some (mkHprel knd [] [] [] lhs None rhs cond_path)
+    let lhs, unk_svl_lhs = convert_relform_to_hrel_formula p_lhs in
+    let rhs, unk_svl_rhs = convert_relform_to_hrel_formula p_rhs in
+    let unk_svl = remove_dups (unk_svl_lhs @ unk_svl_rhs) in
+    if not (is_empty unk_svl) then
+      Some (mkHprel knd unk_svl [] [] lhs None rhs cond_path)
     else None
   in
-  let convert_rel_to_hprel_es rel cond_path = 
+  let convert_rel_to_hprel rel cond_path = 
     let pr1 = CP.print_lhs_rhs in
     let pr2 = !print_hprel_short in
     Debug.no_1 "convert_rel_to_hprel" pr1 (pr_option pr2)

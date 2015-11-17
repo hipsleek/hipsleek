@@ -2,7 +2,7 @@ data char_star {
   int val; 
   char_star next; 
 }.
-
+/*
 pred PQ<s2:char_star,s2_1814:char_star,Anon_1815:char_star,Anon_1816:char_star> == 
   self::char_star<v_1768,Anon_1769> * s2::char_star<v_1784,Anon_1785> * 
   Anon_1769::PQ<Anon_1817,s2_1818,Anon_1819,Anon_1820> &
@@ -13,12 +13,21 @@ pred PQ<s2:char_star,s2_1814:char_star,Anon_1815:char_star,Anon_1816:char_star> 
   Anon_1816=Anon_1769 & Anon_1815=Anon_1785 & v_1768!=0 & v_1784!=v_1768
   or
   self::char_star<v_1768,Anon_1769> & s2_1814=s2 & Anon_1816=Anon_1769 & v_1768=0.
-  
+*/  
+
+pred PQ<s2, s2d, pd, qd> == 
+  self::char_star<v1, p> * s2::char_star<v2, q> * 
+  p::PQ<q, s2d, pd, qd> & v1!=0 & v1=v2
+  or
+  self::char_star<v1, pd> * s2::char_star<v2, qd> & v1!=0 & v1!=v2
+  or
+  self::char_star<v1, pd> & s2=s2d & v1=0.
+
 HeapPred P(char_star s1, char_star s2, char_star p).
 HeapPred Q(char_star s2, char_star q).
 
 lemma_infer [P, Q, @classic, @pure_field]
-  self::PQ<s2, s2_1814, Anon_1815, Anon_1816> -> P(self, s2_1814, Anon_1816) * Q(s2, Anon_1815).
+  self::PQ<s2, s2d, pd, qd> -> P(self, s2d, pd) * Q(s2, qd).
 print residue.
 
 print relAssumes.
