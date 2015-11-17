@@ -1957,21 +1957,24 @@ let filter_lhs lhs rhs args =
     | [] -> rhs
     | [x] -> atomic_lhs x rhs args
     | h::t -> filter_lhs_aux t (atomic_lhs h rhs args) args
-  in 
-  filter_lhs_aux (Cpure.list_of_disjs lhs) rhs args
+  in
+  let res = filter_lhs_aux (Cpure.list_of_conjs lhs) rhs args in 
+  res 
 
 let combine_rel pre_rel_constrs pre_rels =
   let list_rhs = List.map (fun (lhs,rhs) -> filter_lhs lhs rhs pre_rels) pre_rel_constrs in
   let true_rel = CP.mkTrue no_pos in
   let rhs = mkAnd_rhs list_rhs true_rel in  
-  rhs
+  let () = print_string ("\ncombine rel result: " ^ Cprinter.string_of_pure_formula rhs) in 
+  rhs 
 
 let pre_condition pre_rels pre_rel_constrs =
   let replaced_str = "(1=1)" in
- (* let pre_rel_constr_rhs = List.map (fun (_, rhs) -> rhs) pre_rel_constrs in
+ let pre_rel_constr_rhs = List.map (fun (_, rhs) -> rhs) pre_rel_constrs in
   let true_rel = CP.mkTrue no_pos in
-  let rhs = mkAnd_rhs pre_rel_constr_rhs true_rel in*)
+(*  let rhs = mkAnd_rhs pre_rel_constr_rhs true_rel in *)
   let rhs = combine_rel pre_rel_constrs pre_rels in
+
   let str = str_of_formula rhs pre_rels replaced_str in 
   let input_file = "example.txt" in
   let fst_pre_rels = List.hd pre_rels in

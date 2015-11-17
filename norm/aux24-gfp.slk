@@ -1,7 +1,6 @@
 relation R(int i).
 relAssume
-  R(i) --> i=0 | R(i-1).
-//	R(i) & i!=0 --> R(i-1).
+	R(i) & i!=0 --> R(i-1).
 relAssume
   R(i) --> i!=0.
 relation_infer [R][].
