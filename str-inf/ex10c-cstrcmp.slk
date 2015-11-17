@@ -1,0 +1,48 @@
+data char_star {
+  int val; 
+  char_star next; 
+}.
+
+pred PQ<s2:char_star,s2_1814:char_star,Anon_1815:char_star,Anon_1816:char_star> == 
+  self::char_star<v_1768,Anon_1769> * s2::char_star<v_1784,Anon_1785> * 
+  Anon_1769::PQ<Anon_1817,s2_1818,Anon_1819,Anon_1820> &
+  v_1768!=0 & v_1784=v_1768 & Anon_1817=Anon_1785 & s2_1818=s2_1814 & 
+  Anon_1819=Anon_1815 & Anon_1820=Anon_1816
+  or
+  self::char_star<v_1768,Anon_1769> * s2::char_star<v_1784,Anon_1785> &
+  Anon_1816=Anon_1769 & Anon_1815=Anon_1785 & v_1768!=0 & v_1784!=v_1768
+  or
+  self::char_star<v_1768,Anon_1769> & s2_1814=s2 & Anon_1816=Anon_1769 & v_1768=0.
+  
+HeapPred P(char_star s1, char_star s2, char_star p).
+HeapPred Q(char_star s2, char_star q).
+
+lemma_infer [P, Q, @classic, @pure_field]
+  self::PQ<s2, s2_1814, Anon_1815, Anon_1816> -> P(self, s2_1814, Anon_1816) * Q(s2, Anon_1815).
+print residue.
+
+print relAssumes.
+
+shape_derive_view [Q].
+
+print views.
+
+/*
+emp&true --> Q(s2,Anon_1815)&true; 
+
+s2::char_star<v_144,Anon_1815>@M&v_144!=v_143 & v_143!=0 --> Q(s2,Anon_1815)&true; 
+
+s2::char_star<v_133,Anon_135>@M * GP_142(Anon_135,Anon_1815,s2@NI)&v_133!=0 --> Q(s2,Anon_1815)&true;
+
+Q(Anon_135,Anon_1815)&true --> GP_142(Anon_135,Anon_1815,s2@NI)&true; 
+
+========================================================================
+self_lem_11::char_star<v_146,Anon_1816>@M * GP_147(s2_1814,self_lem_11@NI)&v_146=0 --> P(self_lem_11,s2_1814,Anon_1816)&true; 
+                  
+self_lem_11::char_star<v_143,Anon_1816>@M * GP_145(s2_1814,self_lem_11@NI)&v_143!=0 & v_144!=v_143 --> P(self_lem_11,s2_1814,Anon_1816)&true; 
+
+self_lem_11::char_star<v_133,Anon_134>@M * GP_136(Anon_134,s2_1814,Anon_1816,self_lem_11@NI)&v_133!=0 --> P(self_lem_11,s2_1814,Anon_1816)&true;
+                  
+P(Anon_134,s2_1814,Anon_1816)&true --> GP_136(Anon_134,s2_1814,Anon_1816,self_lem_11@NI)&true; 
+                   
+*/
