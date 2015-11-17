@@ -15,8 +15,13 @@ expect_infer Valid I{x::node<_,q>}.
 expect_infer Fail I{x::node<_,q> & q!=null}.
 expect_infer Fail I{x::node<_,q> * q::node<_,_>}.
 expect_infer Valid I{x::node<_,q>}.
-expect_infer Valid IE{x::node<_,q> & q=null}.
-expect_infer Valid IU{x::node<_,q> & q=null}.
+expect_infer Valid IE{x::node<_,qq> & qq=null}.
+expect_infer Valid IE{x::node<_,null> }.
+expect_infer Fail IE{x::node<4,null> }.
+expect_infer Fail IE{x::node<_,_> }.
+expect_infer Valid IU{x::node<_,qq> & qq=null}.
+expect_infer Valid IU{x::node<5,qq> & qq=null}.
+expect_infer Fail IU{x::node<_,qq> }.
 
 /*
 # ex6a.slk
