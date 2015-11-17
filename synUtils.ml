@@ -45,9 +45,16 @@ let bnd_vars_of_formula fv f args =
   bnd_vars
 
 let simplify f args = 
-  let simplify_f = Tpdispatcher.simplify_raw in
+  let simplify_f f = 
+    let simpl_f = Tpdispatcher.simplify_raw f in
+    if CP.is_disjunct simpl_f then Tpdispatcher.hull simpl_f
+    else simpl_f
+  in
   let bnd_vars = bnd_vars_of_formula (CP.fv) f args in
-  if bnd_vars == [] then simplify_f f 
+  let () = y_binfo_hp (add_str "bnd_vars" !CP.print_svl) bnd_vars in
+  if bnd_vars == [] then 
+    if CP.contains_neq f then f
+    else simplify_f f 
   else
     CP.mkExists_with_simpl simplify_f bnd_vars f None (CP.pos_of_formula f)
 
@@ -94,6 +101,7 @@ end
 
 module CG = Graph.Persistent.Digraph.Concrete(Ident)
 module CGC = Graph.Components.Make(CG)
+module CGO = Graph.Oper.P(CG)
 
 let rec dependent_graph_of_formula dg hprel_name hprel_f =
   match hprel_f with
@@ -112,34 +120,60 @@ let dependent_graph_of_hprel dg hprel =
   let dg = CG.add_vertex dg hpr_name in
   dependent_graph_of_formula dg hpr_name hpr_f
 
-let dependent_graph_of_hprel_list hprel_list =
-  let dg = CG.empty in
-  List.fold_left (fun dg hprel -> dependent_graph_of_hprel dg hprel) dg hprel_list
+class dep_graph =
+  object (self)
+    val mutable dg = CG.empty
 
-let compare_hprel dg hpr1 hpr2 = 
-  let _, scc_f = CGC.scc dg in
+    method build hprel_list =
+      dg <- List.fold_left (fun dg hprel -> dependent_graph_of_hprel dg hprel) dg hprel_list
+      
+    method get_scc_f = snd (CGC.scc dg)
+
+    method get_succ n = CG.succ dg n
+
+    method remove_edge d s = dg <- CG.remove_edge dg d s
+
+    method depend_on n = 
+      let trans_dg = CGO.transitive_closure ~reflexive:true dg in
+      CG.pred trans_dg n
+  end;;
+
+let dg = new dep_graph;;
+
+let compare_hprel scc_f hpr1 hpr2 = 
   let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in
   let hpr2_name = CP.name_of_spec_var (name_of_hprel hpr2) in
   (scc_f hpr1_name) - (scc_f hpr2_name)
 
+let compare_hprel scc_f hpr1 hpr2 = 
+  let pr = fun hpr -> !CP.print_sv (name_of_hprel hpr) in
+  Debug.no_2 "compare_hprel" pr pr string_of_int
+    (fun _ _ -> compare_hprel scc_f hpr1 hpr2) hpr1 hpr2
+
 let sort_hprel_list hprel_list = 
-  let dg = dependent_graph_of_hprel_list hprel_list in
-  (* let _, scc_f = CGC.scc dg in                                   *)
+  let () = dg # build hprel_list in
+  let scc_f = dg # get_scc_f in
   (* let compare_hprel hpr1 hpr2 =                                  *)
   (*   let hpr1_name = CP.name_of_spec_var (name_of_hprel hpr1) in  *)
   (*   let hpr2_name = CP.name_of_spec_var (name_of_hprel hpr2) in  *)
   (*   (scc_f hpr1_name) - (scc_f hpr2_name)                        *)
   (* in                                                             *)
-  List.sort (compare_hprel dg) hprel_list
+  List.sort (compare_hprel scc_f) hprel_list
 
 let sort_dependent_hprel_list all_hprels sel_hprels_id = 
-  let dg = dependent_graph_of_hprel_list all_hprels in
+  let () = dg # build all_hprels in
   let rec collect_dep_id acc ws =
     match ws with
     | [] -> remove_dups_id acc
     | _ ->
       let succ_ws = List.fold_left (fun a n -> 
-        let succ_n = CG.succ dg n in a @ succ_n) [] ws in
+        let succ_n = dg # get_succ n in
+        let () =
+          if not (mem_id n sel_hprels_id) then
+            let overlap_sel = intersect_id succ_n sel_hprels_id in
+            List.iter (fun s -> dg # remove_edge n s) overlap_sel
+        in
+        a @ succ_n) [] ws in
       let succ_ws = remove_dups_id succ_ws in
       let () =
         let common_ids = intersect_id succ_ws acc in
@@ -155,7 +189,15 @@ let sort_dependent_hprel_list all_hprels sel_hprels_id =
   let dep_sel_hprels, other_hprels = List.partition (fun hpr -> 
     let hpr_id = CP.name_of_spec_var (name_of_hprel hpr) in
     mem_id hpr_id dep_sel_hprels_id) all_hprels in
-  List.sort (compare_hprel dg) dep_sel_hprels, other_hprels
+  let scc_f = dg # get_scc_f in
+  List.sort (compare_hprel scc_f) dep_sel_hprels, other_hprels
+
+let sort_dependent_hprel_list all_hprels sel_hprels_id = 
+  (* let pr1 = pr_list_ln Cprinter.string_of_hprel_short in *)
+  let pr1 = fun hpr_lst -> !CP.print_svl (List.map name_of_hprel hpr_lst) in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "sort_dependent_hprel_list" pr2 (pr_pair pr1 pr1)
+    (fun _ -> sort_dependent_hprel_list all_hprels sel_hprels_id) sel_hprels_id
 
 module SV = struct
   type t = CP.spec_var
@@ -824,7 +866,7 @@ let norm_one_derived_view iprog cprog derived_view =
     let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
     let iview = Rev_ast.rev_trans_view_decl derived_view in
     let () = y_tinfo_hp (add_str "iviews" Iprinter.string_of_view_decl) iview in
-    let cview = SleekUtils.process_selective_iview_decls false iprog [iview] in
+    let cview = x_add SleekUtils.process_selective_iview_decls false iprog [iview] in
     let () = y_tinfo_hp (add_str "cviews" Cprinter.string_of_view_decl_list) cview in
     let norm_cview = match cview with v::[] -> v | _ -> derived_view in
     let () = y_tinfo_hp (add_str "norm_cviews" Cprinter.string_of_view_decl) norm_cview in
@@ -841,7 +883,7 @@ let norm_one_derived_view iprog cprog derived_view =
     (norm_one_derived_view iprog cprog) derived_view
 
 let rec norm_derived_views iprog cprog derived_views = 
-  norm_pred_list (fun v -> [norm_one_derived_view iprog cprog v]) derived_views
+  norm_pred_list (fun v -> [x_add norm_one_derived_view iprog cprog v]) derived_views
 
 let norm_derived_views iprog cprog derived_views =
   let pr = pr_list Cprinter.string_of_view_decl in
@@ -849,7 +891,7 @@ let norm_derived_views iprog cprog derived_views =
     (norm_derived_views iprog cprog) derived_views
 
 let norm_single_view iprog cprog view = 
-  norm_one_derived_view iprog cprog view
+  x_add norm_one_derived_view iprog cprog view
   (* let norm_view = norm_derived_views iprog cprog [view] in *)
   (* match norm_view with                                     *)
   (* | v::[] -> v                                             *)
@@ -858,7 +900,7 @@ let norm_single_view iprog cprog view =
 let restore_view iprog cprog view = 
   let iview = Rev_ast.rev_trans_view_decl view in
   let () = x_add (C.update_view_decl ~caller:x_loc) cprog view in
-  let () = I.update_view_decl iprog iview in
+  let () = x_add I.update_view_decl iprog iview in
   ()
   
 let norm_view_formula vname f = 
@@ -926,7 +968,7 @@ let view_decl_of_hprel iprog prog (hprel: CF.hprel) =
   (* let () = Cast.update_view_decl prog vdecl_w_def in *)
   (* let () =  x_add Astsimp.compute_view_x_formula cprog vdecl_w_def !Globals.n_xpure in *)
   (* let () =  Astsimp.set_materialized_prop vdecl_w_def in                               *)
-  update_view_content iprog prog vdecl_w_def vbody
+  x_add update_view_content iprog prog vdecl_w_def vbody
 
 let view_decl_of_hprel iprog prog (hprel: CF.hprel) =
   let pr1 = Cprinter.string_of_hprel_short in
@@ -973,7 +1015,7 @@ let unfolding_view iprog cprog view =
   (*     (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f); *) *)
   (*   view.C.view_un_struc_formula <- v_un_str; (* [(unfold_view_f, (fresh_int (), ""))]; *)                                         *)
   (* in                                                                                                                               *)
-  update_view_content iprog cprog view unfold_view_f
+  x_add update_view_content iprog cprog view unfold_view_f
 
 let unfolding_view iprog cprog view =
   let pr = Cprinter.string_of_view_decl in

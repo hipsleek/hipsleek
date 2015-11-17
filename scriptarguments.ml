@@ -244,7 +244,16 @@ let common_arguments = [
   ("--dd-calls-all", Arg.Unit
      (fun _ -> 
         Debug.dump_calls:=true;
+        Debug.dump_callers_flag:=true;
         Debug.dump_calls_all:=true;
+        Gen.debug_precise_trace:=true;
+     ),
+   "Dump all debugged calls");
+  ("--dd-callers-all", Arg.Unit
+     (fun _ -> 
+        Debug.dump_calls:=true;
+        Debug.dump_callers_flag:=true;
+        (* Debug.dump_calls_all:=true; *)
         Gen.debug_precise_trace:=true;
      ),
    "Dump all debugged calls");

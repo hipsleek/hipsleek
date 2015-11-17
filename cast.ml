@@ -1688,6 +1688,19 @@ let is_lock_inv prog (name : ident) : bool =
 
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
+let add_epure pf lst =
+  let ep = Excore.EPureI.mk_epure pf in
+  let () = x_tinfo_hp (add_str "add_epure(1) = " ( !print_ef_pure_disj)) lst no_pos in
+  let lst = Excore.EPureI.mk_star_disj ep lst in
+  let () = x_tinfo_hp (add_str "add_epure(2) = " ( !print_ef_pure_disj)) lst no_pos in
+  let r = x_add Excore.EPureI.elim_unsat_disj false lst in
+  let () = x_tinfo_hp (add_str "add_epure (res) = " ( !print_ef_pure_disj)) r no_pos in
+  r
+
+let add_epure pf lst =
+  let pr = !print_ef_pure_disj in
+  Debug.no_2 "add_epure" !CP.print_formula pr pr add_epure pf lst
+
 (* get specialized baga form *)
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
   let () = x_tinfo_hp (add_str "c= " (pr_id)) c no_pos in
@@ -1696,13 +1709,16 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   (* Excore.ef_pure_disj option *)
   let ba_oinv = vdef.view_baga_x_over_inv in
+  let ba_exists = vdef.view_inv_exists_vars in
   match ba_oinv with
   | None -> []
   | Some bl ->
     begin
       let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
-      let from_svs = (self_param vdef) :: vdef.view_vars in
-      let to_svs = root :: args in
+      let () = x_tinfo_hp (add_str "baga ex vars= " !CP.print_svl) ba_exists no_pos in
+      let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
+      let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in
+      let to_svs = root :: ba_exists_fresh@args in
       let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
       let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
       let baga_lst = (* match ba_oinv with *)
@@ -1711,18 +1727,15 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         (* if Excore.EPureI.is_false bl then [root,root] *)
         (* else *)
         let sst = List.combine from_svs to_svs in
+        (* let sst = CP.SV_INTV.from_var_pairs sst in *)
         List.map (Excore.EPureI.subst_epure sst) bl in
       let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
-      let add_epure pf lst =
-        let ep = Excore.EPureI.mk_epure pf in
-        let lst = Excore.EPureI.mk_star_disj ep lst in
-        Excore.EPureI.elim_unsat_disj false lst
-      in
-      let baga_sp = (add_epure epure baga_lst) in
+      let baga_sp = (x_add add_epure epure baga_lst) in
       let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
-      let r = Excore.EPureI.hull_memset baga_sp in
+      let r = Excore.EPureI.hull_memset_sv baga_sp in
+      (* let r = CP.SV_INTV.conv_var r in *)
       let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
-      if baga_sp==[] then [root;root]
+       if baga_sp==[] then [root;root]
       else r
     end
 
@@ -1746,20 +1759,21 @@ let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P
     | None -> []
     | Some bl -> 
       let sst = List.combine from_svs to_svs in
+      (* let sst = CP.SV_INTV.from_var_pairs sst in *)
       List.map (Excore.EPureI.subst_epure sst) bl in
   let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
-  let add_epure pf lst =
-      let ep = Excore.EPureI.mk_epure pf in
-      let lst = Excore.EPureI.mk_star_disj ep lst in
-      Excore.EPureI.elim_unsat_disj false lst
-  in
+  (* let add_epure pf lst = *)
+  (*     let ep = Excore.EPureI.mk_epure pf in *)
+  (*     let lst = Excore.EPureI.mk_star_disj ep lst in *)
+  (*     x_add Excore.EPureI.elim_unsat_disj false lst *)
+  (* in *)
   let baga_sp = match epure with
-    None -> []
-    | Some pf -> (add_epure pf baga_lst) in
+    | None -> []
+    | Some pf -> (x_add add_epure pf baga_lst) in
   let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
   (* TODO:merge baga_sp for common memset *)
   match baga_sp with
-  [(ad,_)] -> ad
+  [(ad,_)] ->  Excore.EPureI.conv_var_sv (* CP.SV_INTV.conv_var *) ad
   | _ ->  P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
@@ -4068,9 +4082,9 @@ let add_view_decl prog vdecl =
   let prog_vdecl_ids = List.map (fun v -> v.view_name) prog.prog_view_decls in
   let vdecl_id = vdecl.view_name in
   if Gen.BList.mem_eq eq_str vdecl_id prog_vdecl_ids then
-    y_binfo_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
+    y_info_pp ("WARNING: The view " ^ vdecl_id ^ " has been added into cprog before.")
   else
-    let () = y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
+    let () = y_info_pp ("Adding the view " ^ vdecl_id ^ " into cprog.") in
     prog.prog_view_decls <- prog.prog_view_decls @ [vdecl]
 
 let update_view_decl ?(caller="") prog vdecl = 
@@ -4081,8 +4095,8 @@ let update_view_decl ?(caller="") prog vdecl =
       eq_str v.view_name vdecl_id) prog.prog_view_decls in
   let () = 
     if not (is_empty same_vdecls) then 
-      y_binfo_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
-    else y_binfo_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
+      y_info_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
+    else y_info_pp ("Adding the view " ^ vhdr ^ " into cprog.") 
   in
   (* let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in *)
   prog.prog_view_decls <- others @ [vdecl]
@@ -4475,6 +4489,6 @@ let is_segmented_view vd =
 (*   let _ = (map_h_formula f f_h_f) in *)
 (*   let r = stk # get_stk in *)
 (*   let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in *)
-(*   let () = y_binfo_hp (add_str "get_data_and_views" (pr_list pr)) r in *)
+(*   let () = y_tinfo_hp (add_str "get_data_and_views" (pr_list pr)) r in *)
 (*   r *)
 

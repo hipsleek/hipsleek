@@ -146,9 +146,9 @@ let norm_elim_useless vdefs sel_vns=
         let () = y_tinfo_hp (add_str "new_def" Cprinter.string_of_view_decl(* _short *)) new_def in
         (*update rem_vdefs*)
         let new_def = elim_vdef ss new_def in
-        let () = Cprog_sleek.update_view_decl_both  ~update_scc:true link_view in
+        let () = x_add_1 (Cprog_sleek.update_view_decl_both ~update_scc:true) link_view in
         (* let () = Cprog_sleek.update_view_decl_iprog ~update_scc:true  (Rev_ast.rev_trans_view_decl link_view) in *)
-        let () = Cprog_sleek.update_view_decl_both ~update_scc:true  new_def in
+        let () = x_add_1 (Cprog_sleek.update_view_decl_both ~update_scc:true) new_def in
         (* let () = Cprog_sleek.update_view_decl_iprog ~update_scc:true  (Rev_ast.rev_trans_view_decl new_def) in *)
         (* let () = y_winfo_pp "Need to update iprog views too" in *)
         ([link_view;new_def], List.map (elim_vdef ss) rem_vdefs)

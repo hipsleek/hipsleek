@@ -374,7 +374,7 @@ let parse_file (parse) (source_file : string) =
       Error.report_error { Error.error_loc  = udp;
                            Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
-  convert_data_and_pred_to_cast ();
+  x_add_1 convert_data_and_pred_to_cast ();
   x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
   (* x_tinfo_pp "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
@@ -509,7 +509,7 @@ let sleek_prologue () =
 let sleek_epilogue () =
   let cp = !cprog in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_derived_program cp) else () in
-  if !Debug.dump_calls then Debug.dump_debug_calls ();
+  if !VarGen.z_debug_flag (* dump_calls *) then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump

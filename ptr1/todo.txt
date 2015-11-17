@@ -267,11 +267,128 @@ pred arr_seg<i,n> == i=n & i>=0
      | (i=n & 0<=n))
 
 !!! **WARNING****astsimp.ml#2470:extr_exists_vars TBI
+===============================================================
+# ex7a1.slk -dre "h_formula_2_mem" --trace-log-num 25
+
+# unsound false:
+  baga over inv: [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+  baga over inv (unfolded): [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+
+@25! **cast.ml#1703:look_up_view_baga: baga= :Some([([(xxx,y)], xxx=i+self & y=n+self & i<=n & 0<=i)])
+@25! **cast.ml#1706:from_svs:[self,i,n]
+@25! **cast.ml#1707:to_svs:[base,i,n]
+@25! **cast.ml#1716:baga (subst)= :[([(xxx,y)], xxx=i+base & y=n+base & i<=n & 0<=i)]
+@25! **excore.ml#622:Omega mk_star_disj:start 1 invocations
+@25! **excore.ml#626:Omega mk_star_disj:end 1 invocations
+@25! **WARNING****cpure.ml#5900:TODO: get_pure**cpure.ml#5900:
+@25!:0: 0: **tpdispatcher.ml#2119:SAT #41
+@25!:0: 0: **tpdispatcher.ml#2120: xxx=1 & xxx=i+base & y=n+base & i<=n & 0<=i
+@25! **cast.ml#1723:baga (filtered)= :[([xxx], xxx=i+base & y=n+base & i<=n & 0<=i)]
+@25! **cast.ml#1726:baga (hulled)= :[xxx]
+@25! **cvutil.ml#916:baga(view_node):[xxx]
+
+(==cvutil.ml#1354==)
+h_formula_2_mem@23
+h_formula_2_mem inp1 : xxx::arrI<Anon_11>@M * self::arr_seg<flted_7_13,n_14>@M
+h_formula_2_mem inp2 : flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@23 EXIT: [[xxx,self,self]]
+
+(==cvutil.ml#1740==)
+h_formula_2_mem@24
+h_formula_2_mem inp1 : base::arr_seg<i,n>@M * base::arr_seg<j,m>@M
+h_formula_2_mem inp2 : true
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@24 EXIT: [[xxx,xxx]]
+
+(==cvutil.ml#1354==)
+h_formula_2_mem@25
+h_formula_2_mem inp1 : base::arr_seg<i,n>@M * base::arr_seg<j,m>@M
+h_formula_2_mem inp2 : true
+
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@25 EXIT: [[xxx,xxx]]
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  false.
+expect Fail.
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+===============================================================
+# ex7a1b.slk
+
+# why is there a false..
+
+  view_domains: 
+   view arr_seg<i:int,n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            (* lbl: *){2}->hfalse&false&{FLOW,(1,26)=__flow#E}[]
+      
+  view vars: i,n
+  cont vars: n
+  unstructured formula: 
+    (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){2}->hfalse&false&{FLOW,(1,26)=__flow#E}[]
+
+================================================================
+# ex7a1b.slk -dre "ef_unsat\|.*enum\|get_spec_baga\|is_sat_tp" 
+
+# need fresh existential is_sat_tp..
+
+
+(====)
+is_sat_tp@31@25@1
+is_sat_tp inp1 : y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i
+is_sat_tp@31 EXIT:false
+
+(====)
+imply_mix_formula#1@25@1
+imply_mix_formula#1 inp1 : ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i))
+imply_mix_formula#1 inp2 :Some( ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i)))
+imply_mix_formula#1 inp3 : 0<=i & i<=n & y=self+n & xxx=self+i & xxx!=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@25 EXIT:(false,Some(([ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i],[ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i])))
 
 ===============================================================
+# ex7a1c.slk (FIXED by not unfolding ptr view for dupl unfolding)
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  i<=n.
+
+-dre "ef_unsat\|.*enum\|get_spec_baga\|add_epure" 
+
+Entail 5: Fail.(may) cause:OrL[
+infinite unfolding,
+valid
+]
+
+Validate 5: Expecting(3)Valid BUT got : Fail_May
+
 ===============================================================
-===============================================================
-===============================================================
+# ex7a1c.slk 
+
+# for merging @L + @A etc nodes..
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+(====)
+compatible_nodes@2
+compatible_nodes inp1 : base::arr_seg<i,n>@M
+compatible_nodes inp2 : base::arr_seg<j,m>@M
+compatible_nodes@2 EXIT:(false, base::arr_seg<i,n>@M,None,[])
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+
 ===============================================================
 ===============================================================
 ===============================================================

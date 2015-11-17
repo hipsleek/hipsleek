@@ -773,7 +773,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 if r then 
                   let () =  y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure  in
                   let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in
-                  let r = !CP.tp_is_sat f in
+                  let r = x_add_1 !CP.tp_is_sat f in
                   let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in
                   let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
                   let rf = CP.apply_subs [(v,d)] rf in

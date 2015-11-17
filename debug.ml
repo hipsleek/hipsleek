@@ -13,6 +13,7 @@ let debug_pattern = ref (Str.regexp ".*")
 let trace_on = ref true
 let call_threshold = ref 10
 let dump_calls = ref false
+let dump_callers_flag = ref false
 let dump_calls_all = ref false
 let call_str = ref ""
 
@@ -502,17 +503,17 @@ struct
     let summarized_stack stk =
       let new_stk = new Gen.stack_pr "debug-calls" pr_cnt (==) in
       match (List.rev stk#get_stk) with
-        | [] -> new_stk
-        | hd::tl ->
-            let ctr = ref 1 in
-            let now = ref hd in
-            List.iter (fun y ->
-              if y = !now then incr ctr
-              else 
-                let () = new_stk#push (!now, !ctr) in
-                let () = ctr := 1 in
-                now := y) tl;
-            new_stk
+      | [] -> new_stk
+      | hd::tl ->
+        let ctr = ref 1 in
+        let now = ref hd in
+        List.iter (fun y ->
+            if y = !now then incr ctr
+            else 
+              let () = new_stk#push (!now, !ctr) in
+              let () = ctr := 1 in
+              now := y) tl;
+        new_stk
     in
     object (self)
       val len_act = len -1
@@ -524,9 +525,19 @@ struct
       val overflow = prefix^"****************************************"
       val mutable lastline = "\n"
       val mutable rgx = None
-      val stk = new Gen.stack_pr "debug-calls(2)" pr_id (==)
+      val stk_trace = new Gen.stack_pr "debug-calls(2)" pr_id (==)
+      val stk_calls = new Gen.stack_pr "stk_calls" pr_id (==)
+      val stk_callers = new Gen.stack
       val mutable offset = -1
       val mutable last_matched_len = max_int
+      method dump_callers =
+        let lst = stk_callers # get_stk in
+        let lst = List.rev lst in
+        print_endline "\nCALLERS TRACING";
+        print_endline   "================";
+        List.iter (fun xs ->
+            print_endline_quiet ((pr_list pr_id) xs)
+          ) lst
       method dump =
         let cnt = hash_to_list hcalls in
         let rcnt = hash_to_list rec_calls in
@@ -538,8 +549,8 @@ struct
           begin
             print_endline "\nCALL TRACE";
             print_endline   "==========";
-            stk # push (lastline^"\n");
-            (summarized_stack stk) # dump_no_ln
+            stk_trace # push (lastline^"\n");
+            (summarized_stack stk_trace) # dump_no_ln
           end;
         print_endline "\nDEBUGGED CALLS";
         print_endline   "==============";
@@ -550,12 +561,13 @@ struct
             print_endline "\nDEBUGGED SELF-REC CALLS";
             print_endline   "=======================";
             print_endline (pr rcnt)
-          end
+          end;
+        (* self # dump_callers *)
       method init =
         if (not !debug_pattern_on) then
-            for i = 1 to len_act do
-                arr.(i) <- arr.(i-1)^" "
-            done;
+          for i = 1 to len_act do
+            arr.(i) <- arr.(i-1)^" "
+          done;
         let cs = !call_str in
         if not(cs="") 
         then 
@@ -597,7 +609,15 @@ struct
             self # add_to_hash hcalls s;
             arr.(n)
           end
-      method print_call s =
+      method pop_call =
+        begin
+          if !dump_callers_flag (* z_debug_flag *) then
+            (if stk_calls # is_empty then print_endline_quiet "WARNING stk_calls is empty";
+            stk_calls # pop_no_exc)
+        end
+      method push_call s (call_site:string) =
+          stk_calls # push s;
+      method print_call s call_site =
         let spaces n = String.init n (fun _ -> ' ') in
         let is_match s = Str.string_match !debug_pattern s 0 in
         let matched_call s =
@@ -605,34 +625,57 @@ struct
           let is_match_s = is_match s in
           if is_match_s && !debug_pattern_on then
             (lastline <- (lastline ^ "\n...");
-            last_matched_len <- (debug_stk#len));
+             last_matched_len <- (debug_stk#len));
           is_match_s || is_callee
         in
         begin
+          (* self # push_call s call_site; *)
           try
             if (!debug_pattern_on && not (matched_call s))
             then last_matched_len <- max_int
             else (
               let deb_len = debug_stk # len in
               let len = if !debug_pattern_on then
-                (self#get (deb_len) s) ^ (spaces (deb_len - last_matched_len))
-              else self # get (deb_len) s
+                  (self#get (deb_len) s) ^ (spaces (deb_len - last_matched_len))
+                else self # get (deb_len) s
               in
               if !dump_calls_all then
                 begin
-                  stk # push lastline;
+                  stk_trace # push lastline;
                   lastline <- "\n"^len^s
-              end)
+                end)
           with _ -> ()
         end
       method add_id id =
         begin
+          let id_w_dot = id^"." in
+          let get_callers_from_stk stk = 
+            if !dump_callers_flag then
+              begin
+                if stk # is_empty then 
+                  (print_endline_quiet "WARNING: call stk empty")
+                else
+                  let s = (stk # pop_top)^id in
+                  let lst = stk # get_stk in
+                  let () = stk # push s in
+                  let nlst = (s^".")::lst in
+                  let () = stk_callers # push nlst in
+                  ()
+              end
+          in
+          let () = get_callers_from_stk stk_calls in
           if !dump_calls_all then
-            lastline <- lastline^id^"."
+            begin
+              lastline <- lastline^id_w_dot;
+            end
         end
     end
 
-  let dump_debug_calls () = debug_calls # dump
+  let dump_debug_calls () = 
+    begin
+      if !dump_calls then debug_calls # dump;
+      if !dump_callers_flag then debug_calls # dump_callers
+    end
 
   let read_main () =
     let () = debug_calls # init in
@@ -918,6 +961,14 @@ struct
   (* let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s *)
   (* let ho_7_loop s = ho_7_opt_aux false [] true (fun _ -> true) None s *)
 
+  let wrap_pop_call f x =
+    try
+      let r = f x in
+      let () = debug_calls # pop_call in
+      r
+    with e -> 
+      let () = debug_calls # pop_call in
+      raise e
 
   let splitter s f_none f_gen f_norm =
     (* VarGen.last_posn # get --> The call site (with x_add) of s *)
@@ -930,19 +981,22 @@ struct
       if x_call_site = "" then ""
       else " @" ^ x_call_site
     in
-    let () = if !dump_calls then debug_calls # print_call (s ^ at_call_site) in
-    if !z_debug_flag then
-      match (in_debug s) with
-      | DO_Normal -> f_gen (f_norm false false)
-      | DO_Trace -> f_gen (f_norm true false) 
-      | DO_Loop -> f_gen (f_norm false true)
-      | DO_Both -> f_gen (f_norm true true)
-      | DO_None -> 
+    let () = if !dump_callers_flag (* z_debug_flag *) then debug_calls # push_call s at_call_site in
+    let () = if !dump_calls then debug_calls # print_call s at_call_site in
+    let fn = if !z_debug_flag then
+        match (in_debug s) with
+        | DO_Normal -> f_gen (f_norm false false)
+        | DO_Trace -> f_gen (f_norm true false) 
+        | DO_Loop -> f_gen (f_norm false true)
+        | DO_Both -> f_gen (f_norm true true)
+        | DO_None -> 
+          (* let _ = print_endline ("splitter(none):"^s) in  *)
+          f_none
+      else         
         (* let _ = print_endline ("splitter(none):"^s) in  *)
-        f_none
-    else         
-      (* let _ = print_endline ("splitter(none):"^s) in  *)
-      f_none
+        f_none in 
+    if !dump_calls then wrap_pop_call fn
+    else fn
 
 
   let no_1 s p1 p0 f =
