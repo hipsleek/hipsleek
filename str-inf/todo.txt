@@ -131,6 +131,28 @@ predicate normalization from ex16c.slk
   --> self_lem_12::char_star<v_168,q_169>@M * 
      U(q_169,q_165) & v_168!=0true]
 ===========================================================================
+# ex11a2.slk
+
+lemma_unsafe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+checkentail self::node<_,q>*q::ll<a-1> * ys::ll<b> & a=b |- self::zip<ys>.
+
+# above should succeed but requires an unfolding of ys..
+
+# why is unfolding of ys::ll<b> not being scheduled?
+
+!!! **context.ml#3217:process_matches (steps) :
+ ### LHS : q::ll<flted_20_78>@M * ys::ll<b>@M
+ ### RHS : ys_95::node<Anon_97,q2_99>@M
+ ### matches :
+[ Type: Root
+ LHS: ys::ll<b>@M
+ RHS: ys_95::node<Anon_97,q2_99>@M
+ root_inst: None
+ lhs_rest: q::ll<flted_20_78>@M
+ rhs_rest: q_98::zip<q2_103>@M
+ alias set: [ys,ys_95]rhs_inst: []rhs_infer: None]
 ===========================================================================
 ===========================================================================
 ===========================================================================

@@ -1930,6 +1930,11 @@ Total number of errors: 7 in files:
   lemmas/dseg1.slk({L1#Valid}) 
   lemmas/lseg_complex.slk({E2#Valid}).
 
+17Nov2015
+  infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}).
 ====================================================================
 ====================================================================
 ====================================================================
