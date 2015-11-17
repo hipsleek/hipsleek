@@ -14,6 +14,8 @@ HeapPred H1(node y).
 //infer [zzz,y] x::node<zzz>*H1(y)   |- y::node<_> * x::lseg<zzz> .
 infer [zzz,H1] x::node<zzz>*H1(y)   |- y::node<null>  .
 print residue.
+expect Valid.
+
 /*
 # ex64r6a.slk 
 

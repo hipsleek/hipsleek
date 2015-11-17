@@ -1,0 +1,89 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node y).
+
+
+infer [zzz,y] x::node<zzz>   |- y::node<null> * x::lseg<zzz> .
+//infer [zzz,H1] x::node<zzz>*H1(y)   |- y::node<null>  .
+print residue.
+expect Valid.
+
+/*
+# ex64r6b.slk 
+
+infer [zzz,y] x::node<zzz>   |- y::node<null> * x::lseg<zzz> .
+
+(==solver.ml#11397==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[(zzz_47,zzz)]
+compute_actions inp2 :LHS heap: x::node<zzz>@M
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ y::node<flted_14_48>@M, x::lseg<zzz_47>@M]
+compute_actions inp5 :RHS pure: flted_14_48=null & zzz_47=zzz
+compute_actions inp6 :right alias:[zzz_47,flted_14_48]
+compute_actions@1 EXIT: Fold =>
+   Type: Root
+   LHS: x::node<zzz>@M
+   RHS: x::lseg<zzz_47>@M
+   root_inst: None
+   lhs_rest: emp
+   rhs_rest: y::node<flted_14_48>@M
+   alias set: [x]rhs_inst: []rhs_infer: None
+
+!!! **solver.ml#12665:process_action (steps) :
+ ### action :
+ Fold =>
+   Type: Root
+   LHS: x::node<zzz>@M
+   RHS: x::lseg<zzz_47>@M
+ 
+# Why is x::node<..> still there? if things are sequential.
+
+!!! **context.ml#3239:process_matches (steps) :
+ ### LHS : x::node<zzz>@M * y::node<inf_flted_14_57>@M
+ ### RHS : y::node<flted_14_48>@M
+ ### matches :
+[ Type: Root
+ LHS: y::node<inf_flted_14_57>@M
+ RHS: y::node<flted_14_48>@M
+ root_inst: None
+ lhs_rest: x::node<zzz>@M
+ rhs_rest: emp
+ alias set: [y]rhs_inst: []rhs_infer: None]
+
+[process_matches@14.,compute_actions@13,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,process_one,process_fold_result,do_fold_w_ctx@4,do_fold,do_full_fold,pm_aux,process_action@3,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,heap_entail_struc,heap_entail_struc_init,heap_entail_struc_init_bug_inv,sleek_entail_check,run_infer_one_pass,process_infer]
+
+# Fold below did not focus on the RHS of folding
+
+(==solver.ml#11761==)
+do_fold_w_ctx@4@3
+do_fold_w_ctx inp1 :  x::node<zzz>@M&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [zzz_47; flted_14_48]
+ es_gen_impl_vars(E): []
+ es_rhs_eqset: [zzz_47:zzz]
+ es_trace:  Fold
+ es_infer_vars: [zzz; y]
+ es_unsat_flag: false
+do_fold_w_ctx inp2 :
+ conseq =  y::node<flted_14_48>@M * x::lseg<zzz_47>@M&flted_14_48=null & zzz_47=zzz&
+
+(==solver.ml#11428==)
+process_action#1@3
+process_action#1 inp1 : Fold =>
+   LHS: x::node<zzz>@M
+   RHS: x::lseg<zzz_47>@M
+process_action#1 inp2 :estate:
+  x::node<zzz>@M&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [zzz_47; flted_14_48]
+ es_gen_impl_vars(E): []
+ es_rhs_eqset: [zzz_47:zzz]
+
+*/
