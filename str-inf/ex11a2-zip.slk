@@ -45,6 +45,10 @@ checkentail self::node<_,q>*q::ll<a-1> * ys::ll<b> & a=b |- self::zip<ys>.
  rhs_rest: q_98::zip<q2_103>@M
  alias set: [ys,ys_95]rhs_inst: []rhs_infer: None]
 
+checkentail self::node<_,q>*q::ll<a-1> * ys::ll<b> & a=b 
+    |- self=null
+       or self::node<..> ...::zip<ys>.
+
 !!! **context.ml#3217:process_matches (steps) :
  ### LHS : q::ll<flted_20_78>@M * ys::ll<b>@M
  ### RHS : q_98::zip<q2_103>@M
