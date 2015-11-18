@@ -1,0 +1,60 @@
+data node {
+  int val; 
+  node next; 
+}.
+
+pred zip<ys> == 
+  self=null & ys=null
+  or self::node<_,q> * ys::node<_,q2> * q::zip<q2>
+.
+  
+relation R(int n, int m).
+
+pred ll<n> == 
+  self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0.
+
+/*
+lemma_infer [R]
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & R(a, b).
+print residue.
+*/
+
+relation P(int n).
+
+/*
+infer [@classic] x::ll<n> & P(n) |- emp.
+print residue.
+
+infer [n,@classic] x::ll<n> & n=0  |- emp.
+ <1>x::ll<n>@M&n=0&{FLOW,(20,21)=__norm#E}[]
+*/
+
+infer [n,@classic] x::ll<n>   |- emp.
+print residue.
+
+
+/*
+# ex11a4.slk
+
+lemma_safe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+# Why is this failing?
+
+(====)
+do_unfold_for_classic_reasoning@1
+do_unfold_for_classic_reasoning inp1 : x::ll<n>@M&n=0&{FLOW,(20,21)=__norm#E}[]
+do_unfold_for_classic_reasoning@1 EXIT: emp&x=null & n=0 & n=0&{FLOW,(20,21)=__norm#E}[]
+
+(====)
+do_unfold_for_classic_reasoning@2
+do_unfold_for_classic_reasoning inp1 : x::ll<n>@M&n=0&{FLOW,(20,21)=__norm#E}[]
+do_unfold_for_classic_reasoning@2 EXIT: emp&x=null & n=0 & n=0&{FLOW,(20,21)=__norm#E}[]
+
+
+
+
+*/
+

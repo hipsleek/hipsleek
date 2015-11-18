@@ -19,6 +19,9 @@ lemma_infer [R]
   self::zip<ys> <- self::ll<a> * ys::ll<b> & R(a, b).
 print residue.
 
+infer [@classic] x::ll<n> & R(0,n) |- emp.
+print residue.
+
 /*
 # ex11a.slk
 
