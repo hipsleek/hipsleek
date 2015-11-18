@@ -1,0 +1,26 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 ).
+//  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 & n>2).
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  i<=n.
+expect Valid.
+
+/*
+# ex7a1c.slk -dre "ef_unsat\|.*enum\|get_spec_baga\|add_epure" 
+
+Entail 5: Fail.(may) cause:OrL[
+infinite unfolding,
+valid
+]
+
+Validate 5: Expecting(3)Valid BUT got : Fail_May
+
+*/
+

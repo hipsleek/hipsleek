@@ -154,6 +154,26 @@ checkentail self::node<_,q>*q::ll<a-1> * ys::ll<b> & a=b |- self::zip<ys>.
  rhs_rest: q_98::zip<q2_103>@M
  alias set: [ys,ys_95]rhs_inst: []rhs_infer: None]
 ===========================================================================
+# ex11a4.slk
+
+lemma_safe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+# to schedule an infer to ensure emptiness after unfolding below..
+
+and is_classic_lhs_emp prog h1 ante pos =
+  let h1_unfold =
+  in
+  h1_unfold==HEmp || (is_resourceless_h_formula prog h1_unfold)
+  || (is_classic_lending_hformula h1_unfold)
+
+do_unfold_for_classic_reasoning@1
+do_unfold_for_classic_reasoning inp1 : x::ll<n>@M&{FLOW,(20,21)=__norm#E}[]
+do_unfold_for_classic_reasoning@1 EXIT: emp&x=null & n=0&{FLOW,(20,21)=__norm#E}[]
+ or (exists flted_15_68,Anon_69,
+    q_70: x::node<Anon_69,q_70>@M * q_70::ll<flted_15_68>@M&flted_15_68+1=n&
+    {FLOW,(20,21)=__norm#E}[])
+
 ===========================================================================
 ===========================================================================
 ===========================================================================

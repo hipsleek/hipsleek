@@ -16,7 +16,7 @@ print residue.
 checkentail a::arrI<i>@M& x=i+(base:arrI) & a=x & i>=0
  |-  x_91::arrI<mi_103>@M & x_91=i+base .
 print residue.
-
+expect Valid.
 
 /*
 # ex6d3f1.sl

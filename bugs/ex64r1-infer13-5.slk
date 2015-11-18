@@ -1,0 +1,43 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node y).
+
+
+infer [H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+
+infer [] x::node<z>  |- x::lseg<z>  .
+print residue.
+
+infer [x,z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+
+infer [H1] H1(y)*x::node<z>  |- y::lseg<null> .
+print residue.
+
+
+
+//(5)
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+print residue.
+// expects z=null to be inferred
+
+
+//(5)
+infer [z,x,H1] H1(y)*x::node<z>   |- y::lseg<null> * x::lseg<z> .
+print residue.
+
+
+infer [x,z] x::node<z>  |- x::lseg<z>  .
+print residue.
+
+infer [z] x::node<z>  |- x::lseg<z>  .
+print residue.

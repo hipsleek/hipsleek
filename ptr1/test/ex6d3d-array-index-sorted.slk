@@ -30,6 +30,24 @@ checkentail
 print residue.
 expect Valid.
 
+checkentail
+  x::arrI<_> & x=base+j //& j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Fail.
+
+checkentail
+  x::arrI<_> * y::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+print residue.
+expect Valid.
+
 /*
 # ex6d3d.slk (see ex6d3e.slk for examples)
 

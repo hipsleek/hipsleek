@@ -65,7 +65,7 @@ choose_context inp4 :RHS pure: a=i+base2 & n_73=n
 choose_context inp5 :right aliase:[(n_73,n)]
 choose_context@2 EXIT:[]
 ===============================================================
-# ex6a5d.slk 
+# ex6a5d1.slk 
 
 # logging below is wrong
 
@@ -87,7 +87,7 @@ arr_seg_sorted<i,n,mi> == x::arrI<mi> & i=n-1
 Exception occurred: Failure("predicate arr_seg_sorted does not have the correct number of arguments[flted_10_24,m2] vs [\"\",\"\",\"\"]")
 Error3(s) detected at main 
 ===============================================================
-# ex6d3b.slk
+# ex6d3b.slk (FIXED x->a)
 
 checkentail
   a::arrI<i> * base::arr_seg_sorted<i+1,n,i+1>
@@ -107,7 +107,7 @@ checkentail
  rhs_rest: emp
  alias set: [base]rhs_inst: []rhs_infer: None]
 ===============================================================
-# ex6d3d.slk
+# ex6d3d.slk (FIXED)
 
 # to improve actual root computation : (DONE)
 
@@ -196,7 +196,7 @@ checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
 !!! **context.ml#718:lhs_p: x=base+i & a=x & 0<=i
 !!! **context.ml#726:lhs_nodes(ptr_arith):[a]
 ===============================================================
-# ex6d3f3.sl --pcp
+# ex6d3f3.sl --pcp (FIXED)
 
 pred arr_seg_sorted<i,n,mi> == x1::arrI<mi> & x1=self+i & i=n-1 & i>=0
   or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
@@ -212,6 +212,184 @@ lf)],[(x, x=i+self)]]
 !!! **astsimp.ml#2681:need to rename root var
 !!! **astsimp.ml#2715:TODO: ensure same root for all branches:[(x1, true)]
 !!! **astsimp.ml#2718:TODO: lst(fresh_name):[(x1, true)]
+===============================================================
+# ex6d3d4.slk -dre "choose_c" (FIXED with sorting)
+
+  checkentail_exact
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+
+
+<1>x::arrI<Anon_14>@M&j=i-1 & base=(x-i)+1 & y=x+1 & n=i+1 & 1<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(y,x_110)]]
+
+# Sort list of matched item, so that smaller ones come first
+  esp for folding.
+
+--------------------------
+(==context.ml#3523==)
+choose_context@1
+choose_context inp1 :LHS node: y::arrI<Anon_13>@M * x::arrI<Anon_14>@M
+choose_context inp2 :RHS node: base::arr_seg2<i,n>@M
+choose_context inp3 :LHS pure: 0<=j & y=1+x & x=j+base
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[ Type: Root
+ LHS: y::arrI<Anon_13>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(y)
+ lhs_rest: x::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arrI<Anon_14>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(x)
+ lhs_rest: y::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None]
+===============================================================
+# ex6d3d5.slk
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+
+Can we infer base:arrI from above?
+===============================================================
+# ex7a.slk
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv BG([],i=n&i>=0) | BG([x], x=self+i & i<n & i>=0).
+
+!!! **astsimp.ml#2113:baga_over_formula: 
+ emp&(exists(x:i=x-self & self<=x & x!=null & x<(n+self)) 
+     | (i=n & 0<=n))
+
+!!! **WARNING****astsimp.ml#2470:extr_exists_vars TBI
+===============================================================
+# ex7a1.slk -dre "h_formula_2_mem" --trace-log-num 25
+
+# unsound false:
+  baga over inv: [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+  baga over inv (unfolded): [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+
+@25! **cast.ml#1703:look_up_view_baga: baga= :Some([([(xxx,y)], xxx=i+self & y=n+self & i<=n & 0<=i)])
+@25! **cast.ml#1706:from_svs:[self,i,n]
+@25! **cast.ml#1707:to_svs:[base,i,n]
+@25! **cast.ml#1716:baga (subst)= :[([(xxx,y)], xxx=i+base & y=n+base & i<=n & 0<=i)]
+@25! **excore.ml#622:Omega mk_star_disj:start 1 invocations
+@25! **excore.ml#626:Omega mk_star_disj:end 1 invocations
+@25! **WARNING****cpure.ml#5900:TODO: get_pure**cpure.ml#5900:
+@25!:0: 0: **tpdispatcher.ml#2119:SAT #41
+@25!:0: 0: **tpdispatcher.ml#2120: xxx=1 & xxx=i+base & y=n+base & i<=n & 0<=i
+@25! **cast.ml#1723:baga (filtered)= :[([xxx], xxx=i+base & y=n+base & i<=n & 0<=i)]
+@25! **cast.ml#1726:baga (hulled)= :[xxx]
+@25! **cvutil.ml#916:baga(view_node):[xxx]
+
+(==cvutil.ml#1354==)
+h_formula_2_mem@23
+h_formula_2_mem inp1 : xxx::arrI<Anon_11>@M * self::arr_seg<flted_7_13,n_14>@M
+h_formula_2_mem inp2 : flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@23 EXIT: [[xxx,self,self]]
+
+(==cvutil.ml#1740==)
+h_formula_2_mem@24
+h_formula_2_mem inp1 : base::arr_seg<i,n>@M * base::arr_seg<j,m>@M
+h_formula_2_mem inp2 : true
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@24 EXIT: [[xxx,xxx]]
+
+(==cvutil.ml#1354==)
+h_formula_2_mem@25
+h_formula_2_mem inp1 : base::arr_seg<i,n>@M * base::arr_seg<j,m>@M
+h_formula_2_mem inp2 : true
+
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@25 EXIT: [[xxx,xxx]]
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  false.
+expect Fail.
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+===============================================================
+# ex7a1b.slk
+
+# why is there a false..
+
+  view_domains: 
+   view arr_seg<i:int,n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            (* lbl: *){2}->hfalse&false&{FLOW,(1,26)=__flow#E}[]
+      
+  view vars: i,n
+  cont vars: n
+  unstructured formula: 
+    (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){2}->hfalse&false&{FLOW,(1,26)=__flow#E}[]
+
+================================================================
+# ex7a1b.slk -dre "ef_unsat\|.*enum\|get_spec_baga\|is_sat_tp" 
+
+# need fresh existential is_sat_tp..
+
+
+(====)
+is_sat_tp@31@25@1
+is_sat_tp inp1 : y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i
+is_sat_tp@31 EXIT:false
+
+(====)
+imply_mix_formula#1@25@1
+imply_mix_formula#1 inp1 : ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i))
+imply_mix_formula#1 inp2 :Some( ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i)))
+imply_mix_formula#1 inp3 : 0<=i & i<=n & y=self+n & xxx=self+i & xxx!=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@25 EXIT:(false,Some(([ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i],[ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i])))
+
+===============================================================
+# ex7a1c.slk (FIXED by not unfolding ptr view for dupl unfolding)
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  i<=n.
+
+-dre "ef_unsat\|.*enum\|get_spec_baga\|add_epure" 
+
+Entail 5: Fail.(may) cause:OrL[
+infinite unfolding,
+valid
+]
+
+Validate 5: Expecting(3)Valid BUT got : Fail_May
+
+===============================================================
+# ex7a1c.slk 
+
+# for merging @L + @A etc nodes..
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+(====)
+compatible_nodes@2
+compatible_nodes inp1 : base::arr_seg<i,n>@M
+compatible_nodes inp2 : base::arr_seg<j,m>@M
+compatible_nodes@2 EXIT:(false, base::arr_seg<i,n>@M,None,[])
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+
+===============================================================
 ===============================================================
 ===============================================================
 ===============================================================

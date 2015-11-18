@@ -3507,12 +3507,12 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
   else
     let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
-    let res= sat_label_filter (fun c-> tp_is_sat c old_sat_no) f in
+    let res= sat_label_filter (fun c-> x_add tp_is_sat c old_sat_no) f in
     res
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
-  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
+  Debug.no_1 "is_sat_tp"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
 
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
@@ -4398,9 +4398,9 @@ let norm_gist_result a b r =
     join_conjunctions xr
 
 let om_gist f1 f2 =
-  let is_done, f1 = syn_gist f1 f2 in
-  if is_done then f1
-  else
+  (* let is_done, f1 = syn_gist f1 f2 in *)
+  (* if is_done then f1 *)
+  (* else *)
     wrap_pre_post (fun (a, b) -> (norm_pure_input a, norm_pure_input b)) 
       (norm_gist_result f1 f2) (fun (f1, f2) -> Omega.gist f1 f2) (f1, f2)
 

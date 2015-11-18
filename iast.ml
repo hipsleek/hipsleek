@@ -79,7 +79,7 @@ and data_decl = {
 (*   | View_DERV *)
 (*   | View_SPEC *)
 
-and ibaga_pure = (ident list * P.formula) list
+and ibaga_pure = ((ident * (ident option)) list * P.formula) list
 
 and view_decl = 
   { 

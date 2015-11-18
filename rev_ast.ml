@@ -325,9 +325,15 @@ and rev_trans_struc_base_formula (b: CF.struc_base_formula): IF.struc_base_formu
 and rev_trans_spec_var_primed (sv: CP.spec_var): (ident * primed) =
   (CP.name_of_spec_var sv, CP.primed_of_spec_var sv)
 
+let rev_sv sv = CP.name_of_spec_var sv
+
+let rev_intv (sv,ssv_opt) = (rev_sv sv,map_opt rev_sv ssv_opt)
+
 let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
   let rev_trans_baga_inv baga_inv =
-    map_opt (List.map ((fun (svl, f) -> (List.map CP.name_of_spec_var svl, rev_trans_pure f)))) baga_inv
+    map_opt (List.map ((fun (svl, f) -> (
+          List.map (fun sv -> rev_intv sv) svl, 
+          rev_trans_pure f)))) baga_inv
   in
   { I.view_name = v.C.view_name;
     I.view_vars = List.map CP.name_of_spec_var v.C.view_vars;

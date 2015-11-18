@@ -11,11 +11,20 @@ checkentail base::arr_seg<i,m>
 & a=i+base & 0<=i & i<10 & m=10 & a=aprime
  |-  aprime::arrI<_>@M .
 print residue.
+expect Valid.
 
 checkentail base::arr_seg<i,m> 
 & a=i+base & 0<=i & i<10 & m=10 & a=aprime
  |-  a::arrI<_>@M .
 print residue.
+expect Valid.
+
+checkentail base::arr_seg<i,m> 
+& a=i+base & 0<=i & i<10 & m=10 //& a=aprime
+ |-  aprime::arrI<_>@M .
+print residue.
+expect Fail.
+
 
 /*
 # ex6a1.slk

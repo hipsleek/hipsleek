@@ -200,6 +200,7 @@ let post_pos = new prog_loc
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p
 
+(* what is this flag for? *)
 let z_debug_flag = ref false
 
 let buildA s i = s^"#"^(string_of_int i);;

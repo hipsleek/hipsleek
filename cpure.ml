@@ -2808,6 +2808,12 @@ and mkLteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   else
     BForm (((Lte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
 
+and mkLtVar (sv1 : spec_var) (sv2 : spec_var) pos=
+  if eq_spec_var sv1 sv2 then
+    mkFalse pos
+  else
+    BForm (((Lt (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
+
 and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos =
   if eq_spec_var sv1 sv2 then
     mkFalse pos
@@ -5765,6 +5771,54 @@ let compare_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
       compare_prime p1 p2 
     else c
 
+(* convert ptr to integer constraints *)
+(* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
+let baga_conv ?(neq_flag=false) baga : formula =
+  let choose hd pos =
+    if neq_flag then mkNeqNull hd pos
+    else mkGtVarInt hd 0 pos in
+  let baga = (* Elt.conv_var *) baga in
+  if (List.length baga = 0) then
+    mkTrue no_pos
+  else if (List.length baga = 1) then
+    choose (List.hd baga) no_pos
+  else
+    let rec helper i j baga len =
+      let f1 = mkNeqVar (List.nth baga i) (List.nth baga j) no_pos in
+      if i = len - 2 && j = len - 1 then
+        f1
+      else if j = len - 1 then
+        let f2 = helper (i + 1) (i + 2) baga len in
+        mkAnd f1 f2 no_pos
+      else
+        let f2 = helper i (j + 1) baga len in
+        mkAnd f1 f2 no_pos
+    in
+    let f1 = helper 0 1 baga (List.length baga) in
+    let f2 = List.fold_left (fun f sv -> mkAnd f (choose sv no_pos) no_pos)
+        (choose (List.hd baga) no_pos) (List.tl baga) in
+    mkAnd f1 f2 no_pos
+
+(* ([a,a,b]  --> a=1 & a=2 & b=3 *)
+let baga_enum baga : formula =
+  (* let baga = Elt.conv_var baga in *)
+  match baga with
+  | [] -> mkTrue no_pos
+  | h::ts ->
+    (* let i = ref 1 in *)
+    let f,_= List.fold_left (fun (f,i) sv ->
+        (* i := !i + 1; *)
+        let i = i + 1 in
+        (mkAnd f (mkEqVarInt sv (* !i *)i no_pos) no_pos, i)
+      ) ((mkEqVarInt (List.hd baga) (* !i *)1 no_pos),1) (List.tl baga)
+    in f
+
+(*
+   [a,b]
+    ==> a>0 & b>0 & a!=b  
+        
+   
+*)
 module SV =
 struct 
   type t = spec_var
@@ -5774,11 +5828,23 @@ struct
   let eq = eq_spec_var
   let compare = compare_spec_var
   let string_of x = (* "X"^ *)(string_of_spec_var x)
+  let subst sst x =
+    try
+      snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
+    with _ -> x
+    (* (\* convert ptr to integer constraints *\) *)
+    (* (\* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *\) *)
+    (* let baga_conv ?(neq_flag=false) baga : formula = *)
+    (*   let choose hd pos = *)
+  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
+    (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
+    if enum_flag then baga_enum lst
+    else baga_conv ~neq_flag:neq_flag lst
   let conv_var x = x
-  let conv_var_pairs x = x
   let from_var x = x
-  let from_var_pairs x = x
-  let mk_elem x = x
+  (* let conv_var_pairs x = x *)
+  (* let from_var_pairs x = x *)
+  let mk_elem_from_sv x = x
   (* throws exception when duplicate detected during merge *)
   let rec merge_baga b1 b2 =
     match b1,b2 with
@@ -5804,6 +5870,100 @@ struct
       if c=0 then is_eq_baga t1 t2
       else false
     |_,_ -> false
+end;;
+
+(*
+   [a,b,(e,base,offset)]
+    ==> a>0 & b>0 & a!=b  
+*)
+(* to capture element as (sv, sv option) for both variable and interval *)
+(*   (sv,None) denotes an address sv *)
+(*   (sv1,Some(sv2)) denotes an interval sv1..(sv2-1) *)
+(*   (sv1,Some(sv1)) is the same as empty *)
+(*   Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
+module SV_INTV =
+struct 
+  type t = spec_var * spec_var option
+  let zero = (mk_zero,None)
+  (* "_" to denote null value *)
+  let is_zero x = x==zero
+  let eq (x1,_) (x2,_) = eq_spec_var x1 x2
+  let compare (x1,_) (x2,_) = compare_spec_var x1 x2
+  let string_of (sv,sv_opt) = 
+    let pr = string_of_spec_var in
+    match sv_opt with
+    | None ->  pr sv
+    | Some sv2 -> pr_pair pr pr (sv,sv2)
+  let subst sst (v,opt) =
+    let repl x =
+      try
+        snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
+      with _ -> x in
+    (repl v,map_opt repl opt)
+  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
+    (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
+    let lst = List.filter (fun (_,p) -> p==None) lst in
+    let lst = List.map fst lst in
+    if enum_flag then baga_enum lst
+    else baga_conv ~neq_flag:neq_flag lst
+  let conv_var lst = 
+    let lst = List.filter (fun (_,o) -> o==None) lst in
+    List.map fst lst
+  let from_var lst = 
+    List.map (fun v -> (v,None)) lst
+  (* let conv_var_pairs lst =  *)
+  (*   List.map (fun ((x1,_),(x2,_)) -> (x1,x2)) lst *)
+  (* let from_var_pairs lst =  *)
+  (*   List.map (fun (v1,v2) -> ((v1,None),(v2,None))) lst *)
+  let mk_elem_from_sv x = (x,None)
+  (* let mk_elem x = mk_elem_from_sv (x,None) *)
+  (* throws exception when duplicate detected during merge *)
+  let rec merge_baga b1 b2 =
+    match b1,b2 with
+    | [],b | b,[] -> b
+    | x1::t1, x2::t2 ->
+      let c = compare_spec_var x1 x2 in
+      if c<0 then x1::(merge_baga t1 b2)
+      else if c>0 then x2::(merge_baga b1 t2)
+      else failwith "detected false"
+
+  let merge_baga (b1:t list) (b2:t list) : t list =
+    let b1 = conv_var (* List.map fst *) b1 in
+    let b2 = conv_var (* List.map fst *) b2 in
+    let b3 = merge_baga b1 b2 in
+    List.map (fun v -> (v,None)) b3
+
+  let rec hull_baga b1 b2 =
+    match b1,b2 with
+    | [],b | b,[] -> []
+    | x1::t1, x2::t2 ->
+      let c = compare_spec_var x1 x2 in
+      if c<0 then hull_baga t1 b2
+      else if c>0 then hull_baga b1 t2
+      else x1::(hull_baga t1 t2)
+
+  let hull_baga (b1:t list) (b2:t list) : t list =
+    let b1 = conv_var (* List.map fst *) b1 in
+    let b2 = conv_var (* List.map fst *) b2 in
+    let b3 = hull_baga b1 b2 in
+    List.map (fun v -> (v,None)) b3
+
+  let rec is_eq_baga b1 b2 =
+    match b1,b2 with
+    | [],[] -> true
+    | x1::t1, x2::t2 ->
+      let c = compare_spec_var x1 x2 in
+      if c=0 then is_eq_baga t1 t2
+      else false
+    |_,_ -> false
+
+  let is_eq_baga (b1:t list) (b2:t list) : bool =
+    let () = y_winfo_pp "is_eq_baga may be unsound" in
+    let b1 = conv_var (* List.map fst *) b1 in
+    let b2 = conv_var (* List.map fst *) b2 in
+     let b3 = is_eq_baga b1 b2 in
+    (* List.map (fun v -> (v,None)) *) b3
+
 end;;
 
 module Ptr =

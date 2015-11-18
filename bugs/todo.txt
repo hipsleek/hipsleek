@@ -2486,6 +2486,69 @@ lemma_safe "one"
     RHS: x::node<Anon_12,flted_11_43>@M
   ]
 ===================================================================
+# bugs/ex64q2a.slk -dre "verify_lemma"
+
+        let res = x_add Lemproving.verify_lemma 3 l2r r2l cprog name typ in 
+
+# Below still loses x_loc even though we have x_add:
+
+(====)
+verify_lemma#3@8@7@6@5
+verify_lemma#3 inp1 :[Lemma "lseg":  self::lseg<n,p>@M&n=a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]==> (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head match:lseg
+ body view:lseg
+ body pred_list:[lseg,lseg]
+ coercion_univ_vars: [a,b]
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::lseg<n,p>@M&n=a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists n_135,p_136: self::lseg<n_135,p_136>@M&
+===================================================================
+# ex64r3.slk --dd-callers-all
+
+infer [zzz,H1] H1(y)*x::node<zzz>   |- y::lseg<null> * x::lseg<zzz> .
+
+# How come do_fold_w_ctx recursive here?
+
+[do_fold_w_ctx@11.,do_fold@10,do_base_fold,pm_aux@9,process_action,pm_aux@8,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,do_match,pm_aux@7,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,fold_op_1,do_fold_w_ctx@4,do_fold@3,do_full_fold,pm_aux@2,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,heap_entail_struc,heap_entail_struc_init,heap_entail_struc_init_bug_inv,sleek_entail_check,run_infer_one_pass,process_infer]
+===================================================================
+# ex64r6c.slk 
+
+infer [zzz,H1] x::node<zzz>*H1(y)   |- y::node<null> * x::lseg<zzz> .
+
+# Why is x::node<..> still there? if it is not a search?
+
+!!! **WARNING****context.ml#825:pushing to infer
+!!! **context.ml#3239:process_matches (steps) :
+ ### LHS : x::node<zzz>@M * H1(y)
+ ### RHS : y::node<flted_14_49>@M
+ ### matches :
+[ Type: Root
+ LHS: H1(y)
+ RHS: y::node<flted_14_49>@M
+ root_inst: None
+ lhs_rest: x::node<zzz>@M
+ rhs_rest: emp
+ alias set: [y]rhs_inst: []rhs_infer: None]
+===================================================================
+# ex64r7b.slk -dre "om_gist"
+
+# gist not working properly ..
+
+(====)
+om_gist@29@27@26@25@24@21@20@2
+om_gist inp1 : (z!=null | flted_13_52=null)
+om_gist inp2 : 0+1=a & q_43=z & z=null & y!=null & x!=null & y!=x
+om_gist@29 EXIT: (flted_13_52=null | z!=null)
+
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================
