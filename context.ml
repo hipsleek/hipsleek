@@ -94,6 +94,47 @@ and action =
 
 and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
 
+(* 
+
+  cond/searh or search
+
+   data match  - 0
+   unfold/fold - 1
+   lemma  - 2
+   infer_unfold 
+   infer_fold
+   base-case fold
+   base-case unfold
+   nothing
+   unmatched_rhs
+
+  disjointness consideration ...
+
+ -------------------
+   split_match
+   infer_heap
+   ramify_lemma
+   cyclic
+  | M_seg_fold of (match_res * int)
+  | M_rd_lemma of match_res
+  | M_acc_fold of (match_res * (Acc_fold.fold_type list))
+
+
+  0 - mandatory (drop all the others)
+  1 - conditional search (deterministic unfold/fold)
+  2 - non-det unfold/fold (base-case_
+  3 - lemmas (search)
+  4 - nothing/unmatched rhs
+
+*)
+
+let act_priority =
+  object (self)
+    method mk_priority act =
+      match act with
+      | _ -> (2,act)
+  end;;
+
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
