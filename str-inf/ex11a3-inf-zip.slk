@@ -5,7 +5,7 @@ data node {
 
 pred zip<ys> == 
   self=null & ys=null
-  or self::node<_,q>*ys::node<_,q2>*  q::zip<q2>
+  or self::node<_,q> * ys::node<_,q2> * q::zip<q2>
 .
   
 relation R(int n, int m).
