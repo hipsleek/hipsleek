@@ -1299,20 +1299,28 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               let p_ass,ipures = (match ip2 with
                   | None -> ([],rels),[]
                   | Some a ->
+                    let pre_gist = TP.om_gist a lhs_xpure_orig in
                     let free_vs = CP.fv a in
                     let not_rel_vars = CP.diff_svl not_rel_vars vs_lhs in
                     let overlap_rel = CP.overlap_svl free_vs vs_lhs in
                     let overlap_pure = CP.overlap_svl free_vs not_rel_vars in
+                    let () = x_tinfo_hp (add_str "pre_gist" !CP.print_formula) pre_gist no_pos in
                     let () = x_tinfo_hp (add_str "orig pre" !CP.print_formula) a no_pos in
                     let () = x_tinfo_hp (add_str "free_vs (orig_pre)" !CP.print_svl) free_vs pos in
                     let () = x_tinfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
                     let () = x_tinfo_hp (add_str "not_rel_vars" !CP.print_svl) not_rel_vars no_pos in
                     let () = x_tinfo_hp (add_str "overlap_rel" string_of_bool) overlap_rel no_pos in
                     let () = x_tinfo_hp (add_str "overlap_pure" string_of_bool) overlap_pure no_pos in
+                    let () = x_tinfo_hp (add_str "rels (new)" (pr_list !CP.print_formula)) rels pos in
                     if (free_vs == []) then ([],rels),[]
                     else if not overlap_pure then ([a],rels),[]
                     else if not overlap_rel then  ([],rels),[a]
                     else
+                      let stronger_pre = CP.mkForall not_rel_vars a None no_pos in
+                      let stronger_pre = x_add_1 TP.simplify_raw stronger_pre in
+                      let () = x_tinfo_hp (add_str "stronger_pre" !CP.print_formula) stronger_pre no_pos in
+                      if not(CP.isConstFalse stronger_pre) then ([stronger_pre],rels),[]
+                      else
                       (* WN : to make into a procedure *)
                       (* let conjs_of_a = CP.list_of_conjs a in *)
                       (* let new_conjs_of_a,inferred_pure = List.partition  *)
