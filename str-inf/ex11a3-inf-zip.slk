@@ -1,0 +1,35 @@
+data node {
+  int val; 
+  node next; 
+}.
+
+pred zip<ys> == 
+  self=null & ys=null
+  or self::node<_,q>*ys::node<_,q2>*  q::zip<q2>
+.
+  
+relation R(int n, int m).
+
+pred ll<n> == 
+  self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0.
+
+lemma_infer [R]
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & R(a, b).
+print residue.
+
+/*
+# ex11a.slk
+
+lemma_safe
+  self::zip<ys> <- self::ll<a> * ys::ll<b> & a=b.
+
+# Why is this failing?
+
+!!! **astsimp.ml#2715:TODO: ensure same root for all branches:[]
+Entailing lemma lem_14: Fail. (no cex)(may) cause: UnionR[base case unfold failed, (((1<=(flted_14_119+1) & ys!=null) | (ys=null & flted_14_119+1=0))) & 
+ (((1<=flted_14_119 & q_126!=null) | (q_126=null & flted_14_119=0))) |-  q_126=null. LOCS:[14;1;0;7] (may-bug)]
+
+*/
+
