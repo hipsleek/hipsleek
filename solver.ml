@@ -8954,7 +8954,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
               let lhs_heap_xpure1 = xpure_lhs_h1_sym in
               let res_safe =
                 (* let (split_ante1_sym, _) as xx = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in *)
-                Infer.infer_pure_top_level estate unk_heaps lhs_heap_xpure1 split_ante1_sym split_ante0_sym (*sym?*) m_lhs split_conseq pos
+                x_add Infer.infer_pure_top_level estate unk_heaps lhs_heap_xpure1 split_ante1_sym split_ante0_sym (*sym?*) m_lhs split_conseq pos
               in
               let res = res_safe in
               let or_option (o1,o2) = (match o1,o2 with
@@ -9109,7 +9109,9 @@ type: bool *
       (* let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in *)
       (* ========== end - Immutability normalization ======== *)
       (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
-      if not(stk_estate # is_empty) then
+      let flag = stk_estate # is_empty in
+      let () = y_binfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
+      if not(flag) || !Globals.adhoc_flag_5 then
         let pr = Cprinter.string_of_entail_state_short in
         let () = Debug.ninfo_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
         let new_estate = stk_estate # top in
