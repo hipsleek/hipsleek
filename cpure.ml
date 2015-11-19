@@ -1402,6 +1402,15 @@ let bag_type = BagT Int
 let null_var = mk_zero
 (* SpecVar (Named "", null_name, Unprimed) *)
 
+let sess_op_sv = mk_typed_spec_var Globals.null_type Globals.sess_op_sv_id
+(* TODOSESS: unk or null type *)
+let sess_io_sv = mk_typed_spec_var Globals.UNK Globals.sess_io_sv_id
+
+let dedicated_sv = [null_var;
+                    self_sv;
+                    sess_op_sv;
+                    sess_io_sv ]
+
 let flow_var = SpecVar ((Int), flow , Unprimed)
 
 let full_name_of_spec_var (sv : spec_var) : ident = 

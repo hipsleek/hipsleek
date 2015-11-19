@@ -10902,6 +10902,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let flow_ann = lhs.CF.rflow_kind in
                 let ho_lhs = (CF.struc_to_formula lhs.CF.rflow_base) in
                 let ho_rhs = (CF.struc_to_formula rhs.CF.rflow_base) in
+                let _,ho_lhs =  CF.base_formula_of_struc_formula lhs.CF.rflow_base in
+                let _,ho_rhs =  CF.base_formula_of_struc_formula rhs.CF.rflow_base in
+                let pr = Cprinter.string_of_formula in
+                let () = y_tinfo_hp (add_str "ho_lhs" pr) ho_lhs in
+                let () = y_tinfo_hp (add_str "ho_rhs" pr) ho_rhs in
                 let shvars =  CF.extract_single_hvar_f ho_rhs in
                 let () = x_tinfo_hp (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
                 let hvars = CF.extract_hvar_f ho_rhs in
@@ -11051,6 +11056,70 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* else report_error no_pos ("do_match: unexpected multiple hvars in rhs")                                                                  *)
               in 
               (* End of match_one_ho_arg *)
+              let rec match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) *
+                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
+                match lhs.CF.rflow_base, rhs.CF.rflow_base with
+                | EBase l, EBase r ->
+                  begin
+                    let (fail,res2,res3,res4) as res = match_one_ho_arg_x ((lhs, rhs), k) in
+                    if fail!=None then res (* failure *)
+                    else
+                      match l.CF.formula_struc_continuation, r.CF.formula_struc_continuation with
+                      | Some a, Some b  -> 
+                        let new_lhs = {lhs with CF.rflow_base = a} in
+                        let new_rhs = {rhs with CF.rflow_base = b} in
+                        match_one_ho_arg ((new_lhs, new_rhs), k)
+                        (* failwith x_tbi *)
+                      | Some _, None
+                      | None, None -> res 
+                      | None, Some b -> 
+                        let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in
+                        let err_str = "matching of ho_args failed (cannot entail emp |- "^(Cprinter.string_of_struc_formula b)^")" in
+                        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es (CF.struc_to_formula b) None pos,
+                                                                 CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) ( (convert_to_must_es new_es), err_str, Failure_Must err_str) (mk_cex true), NoAlias) in
+                        (Some rs,res2,res3,res4)
+                        (* failwith x_tbi  *)
+                  end
+                | EList l, _ -> 
+                  begin
+                    (* let new_rhs = {rhs with CF.rflow_base = r} in *)
+                    let res = List.map (fun (_,x) -> let new_lhs = {lhs with CF.rflow_base = x} in
+                                         match_one_ho_arg ((new_lhs,rhs),k)
+                                       ) l in
+                    try
+                      let fail = List.find (fun (r, _, _, _) -> r != None) res in
+                      fail
+                    with Not_found -> (None, None, None, [])
+                  end
+                | EBase l, EList r -> 
+                  begin
+                    let res = List.map (fun (_,x) -> let new_rhs = {rhs with CF.rflow_base = x} in
+                                         match_one_ho_arg ((lhs,new_rhs),k)
+                                       ) r in
+                    try
+                      let succ = List.find (fun (r, _, _, _) -> r = None) res in
+                      succ
+                    with Not_found -> 
+                      let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in
+                      let err_str = "matching of ho_args failed (cannot entail "^(Cprinter.string_of_struc_formula (EBase l))^" |- " ^ (pr_lst " or " (fun (_,x) -> Cprinter.string_of_struc_formula x) r) ^ ")" in
+                      let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es (CF.struc_to_formula (EBase l)) None pos,
+                                                               CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) ( (convert_to_must_es new_es), err_str, Failure_Must err_str) (mk_cex true), NoAlias) in
+                      (Some rs,None,None,[])
+                  end
+                (* | EList l, EList r ->  *)
+                  (* let res = List.map (fun (_,x) -> *)
+                  (*     let new_lhs = {lhs with CF.rflow_base = x} in *)
+                  (*     match_one_ho_arg ((new_lhs,rhs),k) *)
+                  (*   ) l in *)
+                  (*                     try *)
+                  (*     let fail = List.find (fun (r, _, _, _) -> r != None) res in *)
+                  (*     fail *)
+                  (*   with Not_found -> (None, None, None, []) *)
+                  (* failwith x_tbi  *)
+                | _, _ -> failwith x_tbi 
+
+              in
 
               let match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
                 (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
@@ -11061,7 +11130,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let pr4 = pr_option Cprinter.string_of_formula in
                 let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
                 let pr2 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in
-                Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs, rhs), k)
+                Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg ((lhs, rhs), k)
               in
 
               let res = List.map match_one_ho_arg args in
@@ -11461,7 +11530,8 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
       h_formula_view_label = pid;           (*TODO: the other alternative is to use none*)
       h_formula_view_remaining_branches = r_rem_brs;
       h_formula_view_pruning_conditions = r_p_cond;
-      h_formula_view_pos = pos2}) in
+      h_formula_view_pos = pos2;
+      h_formula_view_ann = [];}) in
   (*instantiation before the fold operation,
     for existential vars:
     rho = [b->b1]

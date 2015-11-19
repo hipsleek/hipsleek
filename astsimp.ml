@@ -2382,6 +2382,7 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
+  let view_form = map_opt_def vdef.I.view_formula Session.struc_of_session vdef.I.view_session_formula in
   (*let recs = rec_grp prog in*)
   let data_name = if (String.length vdef.I.view_data_name) = 0  then
       if not(!Globals.adhoc_flag_1) then ""
@@ -2393,7 +2394,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let vtv = vdef.I.view_typed_vars in
     let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
     let tlist = ([(self,{ sv_info_kind = (Named data_name);id = fresh_int () })]@tlist) in
-    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (ann_typs@tlist) false
+    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) view_form (* vdef.I.view_formula *) (ann_typs@tlist) false
         true (*check_pre*) in
     let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
     (* let () = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
@@ -2402,10 +2403,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (match inv_lock with
        | None -> (n_tl, None)
        | Some f ->
-         let (n_tl_tmp,new_f) = x_add trans_formula prog true (self :: vdef.I.view_vars) true f (ann_typs@n_tl) false in
+         let free_vars = Globals.dedicated_ids@ vdef.I.view_vars in
+         let (n_tl_tmp,new_f) = x_add trans_formula prog true free_vars (* (self :: vdef.I.view_vars) *) true f (ann_typs@n_tl) false in
          (*find existential variables*)
          let fvars = CF.fv new_f in
-         let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
+         let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) free_vars (* (self :: vdef.I.view_vars) *))) fvars in
          let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in
          (* let () = print_endline ("new_f = " ^ (Cprinter.string_of_formula new_f)) in *)
          (* let () = print_endline ("new_f2 = " ^ (Cprinter.string_of_formula new_f2)) in *)
@@ -2444,11 +2446,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
       let view_prop_extns =  List.map (fun (t,c)-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_prop_extns in
-      let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
-      let null_c_var = Cpure.null_var in 
+      (* let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in *)
+      (* let null_c_var = Cpure.null_var in  *)
       let _ =
         let vs1 = (CF.struc_fv cf) in
-        let vs2 = (null_c_var::self_c_var::view_sv_vars) in
+        (* let vs2 = (null_c_var::self_c_var::view_sv_vars) in *)
+        let vs2 = (CP.dedicated_sv @ view_sv_vars) in
         let vs1a = CP.fv inv_pf in
         x_tinfo_hp (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
         let vs1 = vs1@vs1a in
@@ -7729,21 +7732,22 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_ho_arguments = ho_exps;
                      IF.h_formula_heap_full = full;
                      IF.h_formula_heap_pos = pos;
+                     IF.h_formula_heap_ann = view_anns;
                      IF.h_formula_heap_label = pi;} ->
         (* expand the dereference heap node first *)
-        let trans_sf tl f = (* x_add  *) trans_I2C_struc_formula
-(* trans_formula *) 0 prog false false [] f tl false false in
-        let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
-            let (ntl, b) = trans_sf tl a.IF.rflow_base in 
-	    let (ntl, b) = Session.struc_of_opt_session a.IF.session_formula (ntl,b) (trans_sf tl) in
-       (*        match a.IF.session_formula with *)
-       (*        | None -> (ntl, b) *)
-       (*        | Some  *)
-       (* map_opt_def b (fun x -> snd trans_sf (Session.struc_of_session x) tl)  *)
-            (ntl, ({ CF.rflow_kind = a.IF.rflow_kind; 
-                     CF.rflow_base = b; })::r)) 
-            (tl, []) ho_exps in
-        let ho_args = List.rev ho_args in
+        let trans_sf1 tl h_vars f = 
+          let f = simpl_case_normalize_struc_formula 0  prog h_vars f in
+          trans_I2C_struc_formula 0 prog false false [] f tl false false
+        in
+        let (tl, ho_args) = Session.trans_flow_list ho_exps tl trans_sf1 in
+        (* let (tl, ho_args) = List.fold_left (fun (tl, r) a ->  *)
+        (*     let  tl,b = trans_sf1 tl a.IF.rflow_base in  *)
+        (*     (\* let  tl,b = trans_sf0 tl b in  *\) *)
+	(*     let (ntl, b) = Session.struc_of_opt_session a.IF.session_formula (tl,b) (trans_sf1 tl) in *)
+        (*     (ntl, ({ CF.rflow_kind = a.IF.rflow_kind;  *)
+        (*              CF.rflow_base = b; })::r))  *)
+        (*     (tl, []) ho_exps in *)
+        (* let ho_args = List.rev ho_args in *)
         if (deref > 0) then (
           let (f1, newvars1) = expand_dereference_node f pos in
           let n_tl = x_add gather_type_info_heap prog f1 tl in
@@ -7919,7 +7923,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_label = pi;
                   CF.h_formula_view_pruning_conditions = [];
                   CF.h_formula_view_remaining_branches = None;
-                  CF.h_formula_view_pos = pos;} in
+                  CF.h_formula_view_pos = pos;
+                  CF.h_formula_view_ann = view_anns; } in
               (new_h, CF.TypeTrue, [], tl)
             )
             with Not_found ->
@@ -11416,6 +11421,7 @@ let plugin_inferred_iviews views iprog cprog=
           IF.h_formula_heap_perm = None;
           IF.h_formula_heap_arguments = tl;
           IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
+          IF.h_formula_heap_ann = [];
           IF.h_formula_heap_pseudo_data = false;
           IF.h_formula_heap_label = None;
           IF.h_formula_heap_pos = pos}

@@ -1413,7 +1413,8 @@ let rec pr_h_formula h =
                h_formula_view_remaining_branches = ann;
                h_formula_view_pruning_conditions = pcond;
                h_formula_view_unfold_num = ufn;
-               h_formula_view_pos =pos}) ->
+               h_formula_view_pos =pos; 
+               h_formula_view_ann = genanns;}) ->
     let perm_str = string_of_cperm perm in
     let ho_arg_str = if ho_svs==[] then "" 
       else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
@@ -2430,8 +2431,15 @@ and pr_formula e =
 and pr_sf = ref (fun _ -> failwith x_tbi) 
 
 and pr_rflow_formula f =
-  fmt_string ((string_of_ho_flow_kind f.rflow_kind) ^ " ");
-  !pr_sf f.rflow_base
+  let detailed_print () = 
+    fmt_string ((string_of_ho_flow_kind f.rflow_kind) ^ " ");
+    !pr_sf f.rflow_base in
+  match f.rflow_kind with
+  | SESSION -> 
+    if !Globals.compact_print then 
+      Session_int.pr_int_session_formula f.rflow_base fmt_string pr_formula pr_list_vbox_wrap
+    else  detailed_print ()
+  | _ -> detailed_print ()
 (* fmt_string "[|"; pr_list_of_spec_var f.rflow_global_vars; fmt_string "|]" *)
 
 and slk_formula e =
@@ -4378,8 +4386,13 @@ let pr_view_decl v =
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   pr_add_str_cut (poly_string_of_pr
     (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl
-       (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
-  pr_struc_formula v.view_formula;
+       (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ());
+  match v.view_kind with
+  | View_SESS -> 
+    if !Globals.compact_print then
+      Session_int.pr_int_session_formula v.view_formula fmt_string pr_formula pr_list_vbox_wrap
+    else pr_struc_formula v.view_formula;
+  | _ -> pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
   pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;

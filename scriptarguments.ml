@@ -62,6 +62,10 @@ let common_arguments = [
    "Categorize view def (fw/bkwpointers, segmented, etc)");
   ("--dis-categ-view", Arg.Clear Globals.categorize_view,
    "Categorize view def (fw/bkwpointers, segmented, etc)");
+  ("--en-compact-print", Arg.Set Globals.compact_print,
+   "Compact printing");
+  ("--dis-compact-print", Arg.Clear Globals.compact_print,
+   "Detailed printing");
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
   ("--sdp", Arg.Set Globals.simplify_dprint,
    "Simplify the entail state before printing the dprint state."); (* An Hoa *)

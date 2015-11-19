@@ -214,6 +214,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_arguments : P.exp list;
                        h_formula_heap_pseudo_data : bool;
                        h_formula_heap_label : formula_label option;
+                       h_formula_heap_ann : gen_ann list;
                        h_formula_heap_pos : loc }
 
 and h_formula_thread = { h_formula_thread_node : (ident * primed);
@@ -237,6 +238,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
                         h_formula_heap2_arguments : (ident * P.exp) list;
                         h_formula_heap2_ho_arguments : rflow_formula list;
+                        h_formula_heap2_ann : gen_ann list;
                         h_formula_heap2_pseudo_data : bool;
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
@@ -253,6 +255,8 @@ let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_rflow_formula = ref(fun (c: rflow_formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
+let print_s_formula = ref(fun (c:s_formula) -> "printer not initialized")
+
 
 (*move to ipure.ml*)
 (* let linking_exp_list = ref (Hashtbl.create 100) *)
@@ -603,7 +607,7 @@ and mkThreadNode c id rsr dl perm ofl l =
                h_formula_thread_label = ofl;
                h_formula_thread_pos = l }
 
-and mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l=
+and mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl ?(gen_anns=[]) l =
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;
              h_formula_heap_deref = deref;
@@ -618,13 +622,14 @@ and mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l=
              h_formula_heap_arguments = hl;
              h_formula_heap_ho_arguments = ho;
              h_formula_heap_label = ofl;
+             h_formula_heap_ann = gen_anns;
              h_formula_heap_pos = l }
 
 and mkHeapNode  c id ho deref dr split i f inv pd perm hl hl_i ofl l=
   Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
     (fun _ -> mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l ) c
 
-and mkHeapNode2 c id ho deref dr split i f inv pd perm ohl hl_i ofl l = 
+and mkHeapNode2 c id ho deref dr split i f inv pd perm ohl hl_i ofl ?(gen_anns=[]) l = 
   HeapNode2 { h_formula_heap2_node = c;
               h_formula_heap2_name = id;
               h_formula_heap2_deref = deref;
@@ -638,6 +643,7 @@ and mkHeapNode2 c id ho deref dr split i f inv pd perm ohl hl_i ofl l =
               h_formula_heap2_perm = perm;
               h_formula_heap2_arguments = ohl;
               h_formula_heap2_ho_arguments = ho;
+              h_formula_heap2_ann = gen_anns;
               h_formula_heap2_label = ofl;
               h_formula_heap2_pos = l }
 
@@ -1425,6 +1431,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_ho_arguments = ho_args;
                h_formula_heap_pseudo_data = ps_data;
                h_formula_heap_label = l;
+               h_formula_heap_ann = anns;
                h_formula_heap_pos = pos}) ->
     let imm = apply_one_imm s imm in
     let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
@@ -1447,6 +1454,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                    {ff with rflow_base = struc_apply_one s ff.rflow_base; }) ho_args;
                h_formula_heap_pseudo_data = ps_data;
                h_formula_heap_label = l;
+               h_formula_heap_ann = anns; (* TODO:HO *)
                h_formula_heap_pos = pos})
   | HeapNode2 ({h_formula_heap2_node = x;
                 h_formula_heap2_name = c;
@@ -1462,6 +1470,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                 h_formula_heap2_perm = perm; (*LDK*)
                 h_formula_heap2_pseudo_data = ps_data;
                 h_formula_heap2_label = l;
+                h_formula_heap2_ann = anns;
                 h_formula_heap2_pos= pos}) -> 
     let imm = apply_one_imm s imm in
     let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
@@ -1483,6 +1492,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                 h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
                 h_formula_heap2_ho_arguments = List.map (fun ff -> 
                     {ff with rflow_base = struc_apply_one s ff.rflow_base; }) ho_args;
+                h_formula_heap2_ann = anns;
                 h_formula_heap2_pseudo_data = ps_data;
                 h_formula_heap2_label = l;
                 h_formula_heap2_pos = pos})
@@ -1738,6 +1748,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_perm = perm; (*LDK*)
                  h_formula_heap_arguments = args;
                  h_formula_heap_ho_arguments = ho_args;
+                 h_formula_heap_ann = anns;
                  h_formula_heap_pseudo_data = ps_data;
                  h_formula_heap_label = l;
                  h_formula_heap_pos = pos}) ->
@@ -1760,6 +1771,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_ho_arguments = List.map (fun ff -> 
                      { ff with rflow_base = struc_apply_one_w_data_name s ff.rflow_base; }) ho_args; 
                  h_formula_heap_pseudo_data = ps_data;
+                 h_formula_heap_ann = anns;
                  h_formula_heap_label = l;
                  h_formula_heap_pos = pos})
     | HeapNode2 ({h_formula_heap2_node = x;
@@ -1773,6 +1785,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                   h_formula_heap2_with_inv = winv;
                   h_formula_heap2_arguments = args;
                   h_formula_heap2_ho_arguments = ho_args;
+                  h_formula_heap2_ann = anns;
                   h_formula_heap2_perm = perm; (*LDK*)
                   h_formula_heap2_pseudo_data = ps_data;
                   h_formula_heap2_label = l;
@@ -1795,6 +1808,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                   h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
                   h_formula_heap2_ho_arguments = List.map (fun ff -> 
                       { ff with rflow_base = struc_apply_one_w_data_name s ff.rflow_base; }) ho_args; 
+                  h_formula_heap2_ann = anns;
                   h_formula_heap2_pseudo_data =ps_data;
                   h_formula_heap2_label = l;
                   h_formula_heap2_pos = pos})
@@ -3351,3 +3365,16 @@ let clear_type_info_formula (f: formula): formula =
 let clear_type_info_formula (f: formula): formula = 
   let pr = !print_formula in
   Debug.no_1 "clear_type_info_formula" pr pr clear_type_info_formula f
+
+let mkEList_no_flatten l =
+  if isEConstFalse (EList l) then mkEFalseF ()
+  else
+    let l = List.filter (fun (c1,c2)-> not (isEConstFalse c2)) l in
+    if l=[] then mkEFalseF () 
+    else EList l
+
+let mkSingle f = (empty_spec_label_def,f)
+
+let mkEList_flatten l =
+  let l = List.map (fun c -> match c with | EList l->l | _ -> [mkSingle c]) l in
+  mkEList_no_flatten (List.concat l)

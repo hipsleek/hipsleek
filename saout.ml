@@ -165,6 +165,7 @@ let hn_trans cprog vnames hn = match hn with
             IF.h_formula_heap_perm = None;
             IF.h_formula_heap_arguments = args;
             IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
+            IF.h_formula_heap_ann = [];
             IF.h_formula_heap_pseudo_data = false;
             IF.h_formula_heap_label = None;
             IF.h_formula_heap_pos = pos}
@@ -396,7 +397,8 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
             CF.h_formula_view_label = None;
             CF.h_formula_view_pruning_conditions = [];
             CF.h_formula_view_remaining_branches = None;
-            CF.h_formula_view_pos = pos}
+            CF.h_formula_view_pos = pos;
+            CF.h_formula_view_ann = [];}
         | None -> hn
       end
     | _ -> hn

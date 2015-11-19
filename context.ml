@@ -1405,7 +1405,7 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
                               ^ (string_of_h_formula f) ^ "\n") in
         failwith("[context.ml]: There should be no conj/phase in the lhs at this level 3\n")
     | _ ->
-      let () = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = "
+      let () = print_endline("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = "
                             ^ (string_of_h_formula f) ^ "\n") in
       failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
   in

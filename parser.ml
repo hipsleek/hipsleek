@@ -740,9 +740,18 @@ let peek_hash_thread =
            match Stream.npeek 5 strm with
              |[NOT,_;IDENTIFIER id,_;COLON,_;_;HASH,_] -> ()
              |[QUERY,_;IDENTIFIER id,_;COLON,_;_;HASH,_] -> ()  
-						 |[AT,_;IDENTIFIER id,_;_;_;_] -> () 
-						 |[NEGAT,_;IDENTIFIER id,_;_;_;_] -> ()
+             |[AT,_;IDENTIFIER id,_;_;_;_] -> () 
+	     |[NEGAT,_;IDENTIFIER id,_;_;_;_] -> ()
              | _ -> raise Stream.Failure)
+
+ let peek_sess_compact = 
+   SHGram.Entry.of_parser "peek_sess"
+       (fun strm ->
+           match Stream.npeek 3 strm with
+             |[NOT,_;THIS t,_;COLONCOLON,_] -> ()
+             |[QUERY,_;THIS t,_;COLONCOLON,_] -> ()  
+             | _ -> raise Stream.Failure)
+
 
  let peek_heap = 
    SHGram.Entry.of_parser "peek_heap"
@@ -775,11 +784,13 @@ let peek_sess_semicolon =
    SHGram.Entry.of_parser "peek_sess_semicolon"
        (fun strm ->
            match Stream.npeek 3 strm with
+             |[SEMICOLONSEMICOLON,_;NOT,_;THIS _,_] -> ()
+             |[SEMICOLONSEMICOLON,_;QUERY,_;THIS _,_] -> ()  
              |[SEMICOLONSEMICOLON,_;NOT,_;IDENTIFIER id,_] -> ()
              |[SEMICOLONSEMICOLON,_;QUERY,_;IDENTIFIER id,_] -> ()  
-						 |[SEMICOLONSEMICOLON,_;AT,_;IDENTIFIER id,_] -> () 
-						 |[SEMICOLONSEMICOLON,_;NEGAT,_;IDENTIFIER id,_] -> () 
-						 |[SEMICOLONSEMICOLON,_;OPAREN,_;_] -> ()  
+	     |[SEMICOLONSEMICOLON,_;AT,_;IDENTIFIER id,_] -> () 
+	     |[SEMICOLONSEMICOLON,_;NEGAT,_;IDENTIFIER id,_] -> () 
+	     |[SEMICOLONSEMICOLON,_;OPAREN,_;_] -> ()  
              | _ -> raise Stream.Failure)
 
 let peek_sess_with = 
@@ -788,9 +799,9 @@ let peek_sess_with =
            match Stream.npeek 3 strm with
              |[WITH,_;NOT,_;IDENTIFIER id,_] -> ()
              |[WITH,_;QUERY,_;IDENTIFIER id,_] -> ()  
-						 |[WITH,_;AT,_;IDENTIFIER id,_] -> () 
-						 |[WITH,_;NEGAT,_;IDENTIFIER id,_] -> () 
-						 |[WITH,_;OPAREN,_;_] -> ()  
+	     |[WITH,_;AT,_;IDENTIFIER id,_] -> () 
+	     |[WITH,_;NEGAT,_;IDENTIFIER id,_] -> () 
+	     |[WITH,_;OPAREN,_;_] -> ()  
              | _ -> raise Stream.Failure)
 let peek_heap_and = 
    SHGram.Entry.of_parser "peek_heap_and"
@@ -1249,7 +1260,7 @@ prop_extn:
 ]];
 
 view_decl: 
-  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
+  [[  vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
           ->  let (oi, oboi) = oi in
               { vh with view_formula = (fst vb);
@@ -1951,31 +1962,37 @@ sess_constr:	[[swr=sess_constr_rec -> swr]];
 
 sess_constr_rec:
   [[   
-      shc = SELF; peek_sess_semicolon; `SEMICOLONSEMICOLON; hw= SELF -> Sess.sessionConnect shc hw
-    | shc = simple_session_constr        -> shc 
+    shc=simple_session_constr; peek_sess_semicolon; `SEMICOLONSEMICOLON; hw= SELF -> Sess.sessionConnect shc hw		
+  | `OPAREN; scc = session_constr_choice; `CPAREN; peek_sess_semicolon; `SEMICOLONSEMICOLON; hw= SELF -> Sess.sessionConnect scc hw				
+    | shc = simple_session_constr        ->  shc 
     | `OPAREN; scc = session_constr_choice; `CPAREN -> scc
   ]];
 
 session_constr_choice:
 	[[
-		shc=SELF; peek_star; `ORWORD; hw = sess_constr_rec -> Sess.mkSessionOr shc hw (get_pos_camlp4 _loc 1)
+	  shc=SELF; peek_star; `ORWORD; hw = sess_constr_rec -> Sess.mkSessionOr shc hw (get_pos_camlp4 _loc 1)
 	| shc=sess_constr_rec   -> shc 
 	]];
 	
 simple_session_constr:
 	[[
-          peek_sess; `NOT; id=cid; `COLON; ty=typ;`HASH; formula = sess_formula ->
-			Sess.mkSessionNode SessionSend id ty formula (get_pos_camlp4 _loc 2)
+          peek_sess_compact; `NOT; formula = sess_formula ->
+          Sess.mkThisSessionNode SessionSend formula (get_pos_camlp4 _loc 2)
+	| peek_sess_compact; `QUERY; formula = sess_formula ->
+	  Sess.mkThisSessionNode SessionRecv formula (get_pos_camlp4 _loc 2)
+        | peek_sess; `NOT; id=cid; `COLON; ty=typ;`HASH; formula = sess_formula ->
+	  Sess.mkSessionNode SessionSend id ty formula (get_pos_camlp4 _loc 2)
 	| peek_sess; `QUERY; id=cid; `COLON; ty=typ;`HASH; formula = sess_formula ->
-			Sess.mkSessionNode SessionRecv id ty formula (get_pos_camlp4 _loc 2)
+	  Sess.mkSessionNode SessionRecv id ty formula (get_pos_camlp4 _loc 2)
 	| peek_sess; `AT; id=cid ->
-			Sess.mkSessionPred id false (get_pos_camlp4 _loc 2)	
+	  Sess.mkSessionPred id false (get_pos_camlp4 _loc 2)
 	| peek_sess; `NEGAT; id=cid ->
-			Sess.mkSessionPred id true (get_pos_camlp4 _loc 2)	
+	  Sess.mkSessionPred id true (get_pos_camlp4 _loc 2)
 	]];
 
 sess_formula: 
-  [[ `OBRACE;dc = disjunctive_constr;`CBRACE -> F.subst_stub_flow n_flow dc  ]];
+  [[ `OBRACE;dc = disjunctive_constr;`CBRACE -> F.subst_stub_flow n_flow dc  
+  |  dc = disjunctive_constr -> F.subst_stub_flow n_flow dc ]];
 
 (*====================session formula end ================================*)
  

@@ -144,6 +144,7 @@ let linking_exp_list = ref (Hashtbl.create 100)
 let () = let zero = IConst (0, no_pos)
   in Hashtbl.add !linking_exp_list zero 0
 
+let dedicated_vars = [(Globals.self, Unprimed); (sess_op_sv_id, Unprimed); (sess_io_sv_id,Unprimed)]
 
 (* free variables *)
 

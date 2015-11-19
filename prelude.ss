@@ -571,3 +571,10 @@ int get_char(char_star x)
 void write_char(char_star x, int v)
   requires x::char_star<_,q> & Term[]
   ensures x::char_star<v,q>;
+
+/* =============== session utils ====================*/
+pred_prim Send{-%P}<>.
+
+pred_prim Recv{+%P}<>.
+
+/* ============= session utils -end +================*/

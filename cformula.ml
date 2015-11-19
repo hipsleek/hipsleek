@@ -322,6 +322,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_view_label : formula_label option;
                         h_formula_view_pos : loc ;
+                        h_formula_view_ann : gen_ann list;
                      }
 and approx_disj =
   | ApproxBase of approx_disj_base
@@ -376,6 +377,8 @@ let mk_HRel_as_view n args loc =
     h_formula_view_origins = [];
     h_formula_view_original = false;
     h_formula_view_lhs_case = false; (* to allow LHS case analysis prior to unfolding and lemma *)
+
+    h_formula_view_ann = [];
 
   }
 
@@ -2157,6 +2160,10 @@ and get_node_label (h : h_formula) = match h with
   | ViewNode ({h_formula_view_label = c})
   | DataNode ({h_formula_data_label = c}) -> c
   | _ -> failwith ("get_node_args: invalid argument"^(!print_h_formula h))
+
+and get_node_gen_ann (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_ann = a}) -> a
+  | _ -> failwith ("get_node_gen_ann: invalid argument"^(!print_h_formula h))
 
 (* TODO:WN:HVar *)
 and get_node_var_x (h : h_formula) = match h with
@@ -16834,7 +16841,8 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
-      h_formula_view_pos = pos })
+      h_formula_view_pos = pos ;
+      h_formula_view_ann = []})
   in
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
@@ -16925,7 +16933,8 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
-      h_formula_view_pos = pos })
+      h_formula_view_pos = pos;
+      h_formula_view_ann = []; })
   in
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
@@ -16998,7 +17007,8 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
-      h_formula_view_pos = pos })
+      h_formula_view_pos = pos;
+      h_formula_view_ann = []; })
   in
   (****waitlevel****)
   let waitlevel_var = CP.mkWaitlevelVar Primed in (*waitlevel'*)
@@ -18039,7 +18049,8 @@ let mkViewNode view_node view_name view_args (* view_args_orig *) pos = ViewNode
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
-      h_formula_view_pos = pos}
+      h_formula_view_pos = pos;
+      h_formula_view_ann = [];}
 
 let rec take_tl lst n = 
   if n=0 then lst

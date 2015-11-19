@@ -183,12 +183,12 @@ type view_kind =
   | View_EXTN
   | View_DERV
   | View_SPEC
-	| View_SESS
+  | View_SESS
 
 
 (* TODO : move typ here in future *)
 type typ =
-	| SESS (* session type*)
+  | SESS (* session type*)
   | FORM (* Type for formula *)
   | UNK
   | TVar of int
@@ -245,14 +245,6 @@ type typ =
 (*     | _, _ -> false *)
 
 type typed_ident = (typ * ident)
-
-(* ===================== session stuff ====================== *)
-let sess_send_pred = "Send"
-let sess_recv_pred = "Recv"
-let sess_op_sv_id = "sn"                (* send/receive operation spec var ? *)
-let sess_io_sv_id = "io"                (* I/O spec var name *)
-(* ===================== session stuff ====================== *)
-
 
 let string_of_view_kind k = match k with
   | View_PRIM -> "View_PRIM"
@@ -812,8 +804,9 @@ let timeout_error = "timeout"
 
 let eres_name = "eres"
 
-
 let self = "self"
+
+let compact_print = ref true
 
 let constinfinity = "ZInfinity"
 let deep_split_disjuncts = ref false
@@ -822,6 +815,16 @@ let check_integer_overflow = ref false
 let preprocess_disjunctive_consequence = ref false
 
 let this = "this"
+
+(* ===================== session stuff ====================== *)
+let sess_send_pred = "Send"
+let sess_recv_pred = "Recv"
+let sess_op_sv_id = "op"                (* send/receive operation spec var ? *)
+let sess_io_sv_id = this (* "io"   *)   (* I/O spec var name *)
+let sees_seq = ";;"
+(* ===================== session stuff ====================== *)
+
+let dedicated_ids = [sess_op_sv_id;sess_io_sv_id;self]
 
 let is_self_ident id = self=id
 
@@ -2661,5 +2664,9 @@ let build_sel_scc scc_lst get_name lst =
 type session_kind = 
 	| SessionSend 
 	| SessionRecv
+
+(* add here node related annotations *)
+type gen_ann = 
+  | Session of bool                     (* false to denote complemet *)
 
 (*==============================session types end =============================*)

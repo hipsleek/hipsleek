@@ -2160,6 +2160,7 @@ let xpure_graph_pto_x prog seg_datas oamap_view_datas f=
       h_formula_view_pruning_conditions = dn.h_formula_data_pruning_conditions;
       h_formula_view_label = None;
       h_formula_view_pos = dn. h_formula_data_pos;
+      h_formula_view_ann = [];
     }
   in
   let rec oa_node2view hf=
