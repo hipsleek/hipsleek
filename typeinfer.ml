@@ -116,7 +116,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
     | [] -> []
   in
   try
-    let vdef = I.look_up_view_def_raw 6 prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
+    let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
     let args = h0.IF.h_formula_heap2_arguments in
     let hargs, hanns =
       if args==[] then ([],[]) (* don't convert if empty *)
@@ -204,7 +204,7 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * 
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
   let pr = string_of_spec_var_kind in
-  let pr2 (_, t) = pr_option pr t in
+  let pr2 = pr_pair string_of_tlist (pr_option pr) in
   Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
@@ -225,9 +225,9 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-    | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) ->   (* k1 is primitive memory predicate *)
+    | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
       (tl, Some (Named n2))
-    | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) ->   (* k2 is primitive memory predicate *)
+    | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
       (tl, Some (Named n1))
     | t1, t2  -> (
         let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
@@ -277,11 +277,14 @@ and must_unify_expect_test k1 k2 tlist pos =
                               ^(string_of_typ (k1))
                               ^" but expecting "^(string_of_typ (k2)))
 
-and must_unify_expect_test_2 k1 k2 k3 tlist pos = 
+and must_unify_expect_test_2_1 k1 k2 k3 tlist pos = 
   let (_, k) = unify_expect_modify false k1 k2 tlist in
   match k with
   | Some r -> r
   | None -> must_unify_expect_test k1 k3 tlist pos 
+
+and must_unify_expect_test_2 k1 k2 k3 tlist pos = 
+  Debug.no_2 "must_unify_expect_test_2" pr_none pr_none pr_none (fun _ _ -> must_unify_expect_test_2_1 k1 k2 k3 tlist pos) k1 k2
 
 and subtype_expect_test _ _ = true
 
@@ -427,6 +430,11 @@ and fresh_tvar tlist =
   let (en, n_tlist) = fresh_tvar_rec tlist in
   (en.sv_info_kind,n_tlist)
 
+and fresh_int_en en = 
+  match en with
+  | TVar i -> i
+  | _ -> fresh_int()
+
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
@@ -437,7 +445,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
      with
      | Not_found ->
        (try
-          let todo_unk = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
+          let todo_unk = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c
           in Named c
         with
         | Not_found ->
@@ -480,7 +488,7 @@ and sub_type (t1 : typ) (t2 : typ) =
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
-  Debug.no_eff_3 "gather_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_tlist pr string_of_tlist_type 
+  Debug.no_3 "gather_type_info_var" (* [false;true] *) (fun x -> ("ident: "^x)) string_of_tlist pr string_of_tlist_type 
     (fun _ _ _ -> gather_type_info_var_x var tlist ex_t pos) var tlist ex_t
 
 and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spec_var_type_list*spec_var_kind) =
@@ -489,7 +497,7 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
   else
     try
       let (ident, k) = List.find (fun (a,b) -> a = var )tlist in
-      let (n_tlist,tmp) = must_unify k.sv_info_kind ex_t tlist pos in 
+      let (n_tlist,tmp) = x_add must_unify k.sv_info_kind ex_t tlist pos in 
       let n_tlist = type_list_add ident {sv_info_kind = tmp;id=k.id} n_tlist in
       (n_tlist, tmp )
     with
@@ -502,12 +510,13 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
 (* raise ex *)
 
 and gather_type_info_exp prog a0 tlist et =  
-  Debug.no_eff_3 "gather_type_info_exp" [false;true] 
+  Debug.no_3 "gather_type_info_exp" (* [false;true] *) 
     Iprinter.string_of_formula_exp string_of_tlist string_of_typ
     string_of_tlist_type 
     (fun _ _ _ -> gather_type_info_exp_x prog a0 tlist et) a0 tlist et
 
 and gather_type_info_exp_x prog a0 tlist et =
+  (* let () = y_tinfo_pp "info_exp" in *)
   match a0 with
   | IP.Null pos -> 
     let (new_et,n_tl) = fresh_tvar tlist in
@@ -517,110 +526,125 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl,n_typ) = gather_type_info_exp_x prog e tlist t in
     (n_tl,n_typ)
   | IP.Var ((sv, sp), pos) ->
+    let () = y_tinfo_pp "here1" in
     let (n_tl,n_typ) = x_add gather_type_info_var sv tlist et pos in      
+    let () = y_tinfo_pp "here2" in
     (n_tl,n_typ)    
   | IP.Level ((sv, sp), pos) ->
     (*sv should be of lock_typ*)
     let (n_tlist,_) = x_add gather_type_info_var sv tlist lock_typ pos in
     (*level(sv) should be of type Int*)
-    let (n_tlist,_)= must_unify_expect Globals.level_data_typ et n_tlist pos in
+    let (n_tlist,_)= x_add must_unify_expect Globals.level_data_typ et n_tlist pos in
     (n_tlist,Globals.level_data_typ)
   | IP.Tsconst (_,pos) ->
     let t = Tree_sh in
-    let (n_tlist,_) = must_unify_expect t et tlist pos in
+    let (n_tlist,_) = x_add must_unify_expect t et tlist pos in
     (n_tlist,t)
   | IP.AConst (_,pos) -> 
     let t = I.ann_type in
-    let (n_tlist,_) = must_unify_expect t et tlist pos in
+    let (n_tlist,_) = x_add must_unify_expect t et tlist pos in
     (n_tlist,t)
   | IP.IConst (_,pos) | IP.InfConst (_,pos) | IP.NegInfConst (_,pos) -> 
     let t = I.int_type in
-    let (n_tl,n_typ) = must_unify_expect t et tlist pos in
+    let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
     (n_tl,n_typ)      
   | IP.FConst (_,pos) -> 
     let t = I.float_type in
-    let (n_tl,n_typ) = must_unify_expect t et tlist pos in
+    let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
     (n_tl,n_typ)
   | IP.Tup2 ((p1,p2), pos) ->
     let (new_et, n_tl) = fresh_tvar tlist in
     let (n_tl1,t1) = x_add gather_type_info_exp prog p1 n_tl new_et in
     let (new_et2, n_tl2) = fresh_tvar n_tl1 in
     let (n_tl3,t2) = gather_type_info_exp_x prog p2 n_tl2 new_et2 in
-    let (n_tl4,t) = must_unify_expect et (Tup2 (t1,t2)) n_tl3 pos in
+    let (n_tl4,t) = x_add must_unify_expect et (Tup2 (t1,t2)) n_tl3 pos in
     (n_tl4,t)
   | IP.Bptriple ((pc,pt,pa), pos) ->
-    let todo_unk:Globals.typ = must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
+    let todo_unk:Globals.typ = x_add must_unify_expect_test_2 et Bptyp Tree_sh tlist pos in 
     let (new_et, n_tl) = fresh_tvar tlist in
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
     let (tmp1,tmp2)=nt in
     let (n_tl1,t1) = x_add gather_type_info_exp prog pc n_tl new_et in (* Int *)
     let (n_tl2,t2) = gather_type_info_exp_x prog pt n_tl1 new_et in (* Int *)
     let (n_tl3,t3) = gather_type_info_exp_x prog pa n_tl2 new_et in (* Int *)
-    let (n_tlist1,_) = must_unify_expect t1 Int n_tl3 pos in
-    let (n_tlist2,_) = must_unify_expect t2 Int n_tlist1 pos in
-    let (n_tlist3,_) = must_unify_expect t3 Int n_tlist2 pos in
+    let (n_tlist1,_) = x_add must_unify_expect t1 Int n_tl3 pos in
+    let (n_tlist2,_) = x_add must_unify_expect t2 Int n_tlist1 pos in
+    let (n_tlist3,_) = x_add must_unify_expect t3 Int n_tlist2 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist3 in
     (n_tl, Bptyp)
   | IP.Add (a1, a2, pos) ->
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
-      if is_node_typ t1 && !Globals.ptr_arith_flag then
-        let (n_tl2,_) = must_unify_expect t1 et n_tl2 pos in
-        let (n_tlist2,t2) = must_unify_expect t2 Int n_tl2 pos in
-        (n_tlist2,t1)        
-      else if is_node_typ t2 && !Globals.ptr_arith_flag then
-        let (n_tl2,_) = must_unify_expect t2 et n_tl2 pos in
-        let (n_tlist2,t2) = must_unify_expect t1 Int n_tl2 pos in
+      if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = x_add must_unify_expect t1 et n_tl2 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
+        (n_tlist2,t1)
+      else if is_possible_node_typ t2 && !Globals.ptr_arith_flag then
+        let (n_tl2,_) = x_add must_unify_expect t2 et n_tl2 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
         (n_tlist2,t2)
       else 
-        let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
-        let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+        let (n_tlist1,t1) = x_add must_unify_expect t1 et n_tl2 pos in
+        let (n_tlist2,t2) = x_add must_unify_expect t2 et n_tlist1 pos in
+        let (n_tlist2,t2) = x_add must_unify t1 t2 n_tlist2 pos in
         (n_tlist2,t2)
     in
-    let todo_unk:Globals.typ = must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
-    let (new_et, n_tl) = fresh_tvar tlist in          
-    let (new_et2, n_tl) = fresh_tvar n_tl in          
-    let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
-    let (tmp1,tmp2)=nt in           
+    let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
+      let pr_t = string_of_typ in
+      Debug.no_4 "unify_ptr_arithmetic" pr_t pr_t pr_t string_of_tlist (pr_pair string_of_tlist string_of_typ)
+        (fun _ _ _ _ -> unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos) t1 t2 et n_tl2 in
+    let todo_unk:Globals.typ = x_add must_unify_expect_test_2 et NUM Tree_sh tlist pos in (* UNK, Int, Float, NUm, Tvar *)
+    let (new_et, n_tl) = 
+      if !Globals.ptr_arith_flag then (UNK,tlist)
+      else fresh_tvar tlist in          
+    (* let (new_et2, n_tl) = fresh_tvar n_tl in           *)
+    let tmp1 = try
+        fst(List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl)
+      with _ -> "" in
+    (* let (tmp1,tmp2)=nt in            *)
     let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
     let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
-    let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let () = x_tinfo_hp (add_str "add(t1)" string_of_typ) t1 no_pos in
-    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et2 in
-    let () = x_tinfo_hp (add_str "add(t2)" string_of_typ) t2 no_pos in
+    let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
+    let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
+    let () = x_tinfo_hp (add_str "t1" string_of_typ) t1 no_pos in
+    let new_et2 = if is_node_typ t1 && !Globals.ptr_arith_flag 
+      then Int else new_et in
+    let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et2 in
+    let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a2 no_pos in
+    let () = x_tinfo_hp (add_str "t2" string_of_typ) t2 no_pos in
     let (n_tlist2,t2) = unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
-    let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
+    let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
   | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
-    let todo_unk:Globals.typ = must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
+    let todo_unk:Globals.typ = x_add must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
     let (tmp1,tmp2)=nt in                   
     let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
     let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
-    let (n_tlist1,t1) = must_unify_expect t1 et n_tl2 pos in
-    let (n_tlist2,t2) = must_unify_expect t2 t1 n_tlist1 pos in
+    let (n_tlist1,t1) = x_add must_unify_expect t1 et n_tl2 pos in
+    let (n_tlist2,t2) = x_add must_unify_expect t2 t1 n_tlist1 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
     (n_tl,t2)
   | IP.TypeCast (ty, a1, pos) ->
-    let todo_unk:Globals.typ = must_unify_expect_test et ty tlist pos in
+    let todo_unk:Globals.typ = x_add must_unify_expect_test et ty tlist pos in
     let (new_et, n_tl) = fresh_tvar tlist in
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
     let (tmp1,tmp2)=nt in
     let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in
-    let (n_tlist1,t1) = must_unify_expect t1 et n_tl1 pos in
+    let (n_tlist1,t1) = x_add must_unify_expect t1 et n_tl1 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tl1 in
     (n_tl,t1)
   | IP.BagDiff (a1,a2,pos) ->
     let (el_t, n_tl) = fresh_tvar tlist in
-    let new_et = must_unify_expect_test (BagT el_t) et n_tl pos in 
+    let new_et = x_add must_unify_expect_test (BagT el_t) et n_tl pos in 
     let (n_tlist,t1) = gather_type_info_exp_x prog a1 tlist new_et in 
     let (n_tlist,t2) = gather_type_info_exp_x prog a2 n_tlist new_et in
-    let (n_tlist,n_typ) = must_unify t1 t2 n_tlist pos in
+    let (n_tlist,n_typ) = x_add must_unify t1 t2 n_tlist pos in
     (n_tlist,n_typ)
   | IP.BagIntersect (es,pos) | IP.BagUnion (es,pos) ->
     let (el_t,n_tl) = fresh_tvar tlist in
-    let new_et = must_unify_expect_test (BagT el_t) et n_tl pos in 
+    let new_et = x_add must_unify_expect_test (BagT el_t) et n_tl pos in 
     let rec aux es_list type_list =
       match es_list with
       | []->([],type_list)
@@ -630,7 +654,7 @@ and gather_type_info_exp_x prog a0 tlist et =
         (_typ::es_type_list, new_type_list) 
     in
     let (es_type_list,new_tl) = aux es n_tl in
-    List.fold_left (fun (tl,e) a -> must_unify a e tl pos) (new_tl,new_et) es_type_list
+    List.fold_left (fun (tl,e) a -> x_add must_unify a e tl pos) (new_tl,new_et) es_type_list
   | IP.Bag (es,pos) ->
     let (el_t,n_tl) = fresh_tvar tlist in
     let (n_tlist,t) = List.fold_left (fun (type_list,et) a -> 
@@ -638,7 +662,7 @@ and gather_type_info_exp_x prog a0 tlist et =
     (n_tlist,BagT t)  
   | IP.Func (id, es, pos) ->
     let t = I.int_type in
-    let (n_tlist,n_typ)= must_unify_expect t et tlist pos in
+    let (n_tlist,n_typ)= x_add must_unify_expect t et tlist pos in
     (n_tlist,n_typ)
   | IP.Template tp -> begin try
         let pos = tp.IP.templ_pos in
@@ -647,7 +671,7 @@ and gather_type_info_exp_x prog a0 tlist et =
         let ret_typ = tdef.I.templ_ret_typ in
         let param_types = List.map (fun (t, n) -> trans_type prog t pos) tdef.I.templ_typed_params in
         let func_typ = mkFuncT (List.map (fun (t, _) -> t) tdef.I.templ_typed_params) ret_typ in 
-        let (n_tl, n_typ) = must_unify_expect ret_typ et tlist pos in
+        let (n_tl, n_typ) = x_add must_unify_expect ret_typ et tlist pos in
         let (n_tl, n_typ) = x_add gather_type_info_var tid n_tl (* ret_typ *) func_typ pos in
         let exp_et_list = List.combine tp.IP.templ_args param_types in
         let n_tlist = List.fold_left (fun tl (arg, et) -> 
@@ -678,13 +702,13 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) ->
     let (fv,n_tl) = fresh_tvar tlist in
     let lt = List fv in
-    let (n_tl,new_et) = must_unify lt et n_tl pos in
+    let (n_tl,new_et) = x_add must_unify lt et n_tl pos in
     let (n_tlist,lt) = gather_type_info_exp_x prog a n_tl new_et in
     (n_tlist,lt)
   | IP.ListAppend (es,pos) ->
     let (fv,n_tl) = fresh_tvar tlist in
     let lt = List fv in
-    let (n_tl,new_et) = must_unify lt et n_tl pos in
+    let (n_tl,new_et) = x_add must_unify lt et n_tl pos in
     let (n_tlist,n_type) = List.fold_left (fun (type_list,et) l -> 
         gather_type_info_exp_x prog l type_list et) (n_tl,new_et) es  in
     (n_tlist,n_type)
@@ -692,7 +716,7 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (fv,n_tl) = fresh_tvar tlist in
     let new_et = List fv in
     let (n_tl,lt) = gather_type_info_exp_x prog a n_tl new_et in
-    let (n_tlist,rs) = must_unify lt (List et) n_tl pos in
+    let (n_tlist,rs) = x_add must_unify lt (List et) n_tl pos in
     (match rs with
      | List r -> (n_tlist, r)
      | _ ->  failwith ("gather_type_info_exp: expecting List type but obtained "^(string_of_typ lt)))
@@ -700,7 +724,7 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (fv,n_tl) = fresh_tvar tlist in
     let (n_tl,e1) = gather_type_info_exp_x prog e n_tl fv in
     let lt = List e1 in
-    let (n_tl,new_et) = must_unify lt et n_tl pos in
+    let (n_tl,new_et) = x_add must_unify lt et n_tl pos in
     let (n_tlist,lt) = gather_type_info_exp_x prog es n_tl new_et in
     (n_tlist,lt)
   | IP.List (es,pos) ->
@@ -708,12 +732,12 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl,r) = List.fold_left (fun (type_list,et) l -> 
         gather_type_info_exp_x prog l type_list et) (n_tl,fv) es  in
     let lt = List r in
-    let (n_tlist,r) = must_unify lt et n_tl pos in
+    let (n_tlist,r) = x_add must_unify lt et n_tl pos in
     (n_tlist,r)
   | IP.ListLength (a, pos) ->
     let (fv,n_tl) = fresh_tvar tlist in
     let new_et = List fv in
-    let (n_tl,r) = must_unify Int et n_tl pos in
+    let (n_tl,r) = x_add must_unify Int et n_tl pos in
     let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
     (n_tlist,r)
   | IP.BExpr f1 -> (x_add gather_type_info_pure prog f1 tlist, Bool)
@@ -751,7 +775,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) 
 
 and gather_type_info_pure prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =
   (* Debug.no_eff_2 "gather_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_tlist string_of_tlist *)
-    (gather_type_info_pure_x prog) p0 tlist
+  (gather_type_info_pure_x prog) p0 tlist
 
 and gather_type_info_p_formula prog pf tlist =  match pf with
   | IP.Frm _ -> tlist
@@ -770,39 +794,54 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     n_tl
   | IP.ImmRel(r, cond, pos) ->  gather_type_info_p_formula prog r tlist
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) | IP.Gte (a1, a2, pos) ->
-    let (new_et,n_tl) = fresh_tvar tlist in
-    let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et in
-    let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in
-    let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in
-    let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *) 
-    n_tl
+    let unify_ptr_cmp t1 t2 n_tl pos =
+      if !Globals.ptr_arith_flag (* Globals.infer_const_obj # is_ana_ni *) then
+        if is_node_typ t1 then
+          let (n_tlist2,_) = x_add must_unify_expect t2 Int n_tl pos in
+          (true,n_tlist2)        
+        else if is_node_typ t2 then
+          let (n_tlist2,_) = x_add must_unify_expect t1 Int n_tl pos in
+          (true,n_tlist2) 
+        else (false,n_tl) 
+      else (false,n_tl) 
+    in
+    let (new_et1,n_tl) = fresh_tvar tlist in
+    let (new_et2,n_tl) = fresh_tvar n_tl in
+    let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et1 in (* tvar, Int, Float *)
+    let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et2 in
+    let (flag,n_tl) = unify_ptr_cmp t1 t2 n_tl pos in
+    if flag then n_tl
+    else 
+      let (n_tl,t1) = x_add must_unify_expect t1 NUM n_tl pos in
+      let (n_tl,t2) = x_add must_unify_expect t2 NUM n_tl pos in
+      let (n_tl,_) = x_add must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *) 
+      n_tl
   | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) ->
     let (new_et,n_tl) = fresh_tvar tlist in
     let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
     let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et in
     let (n_tl,t3) = x_add gather_type_info_exp prog a3 n_tl new_et in (* tvar, Int, Float *)
-    (* let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in *)
-    (* let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in *)
-    (* let (n_tl,t3) = must_unify_expect t3 NUM n_tl pos in *)
+    (* let (n_tl,t1) = x_add must_unify_expect t1 NUM n_tl pos in *)
+    (* let (n_tl,t2) = x_add must_unify_expect t2 NUM n_tl pos in *)
+    (* let (n_tl,t3) = x_add must_unify_expect t3 NUM n_tl pos in *)
     let unif_t = if (t1 == AnnT || t2 == AnnT || t3 == AnnT) then AnnT else NUM in
-    let (n_tl,t1) = must_unify_expect t1 unif_t n_tl pos in
-    let (n_tl,t2) = must_unify_expect t2 unif_t n_tl pos in
-    let (n_tl,t3) = must_unify_expect t3 unif_t n_tl pos in
-    let (n_tl,t) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *) 
-    let (n_tl,t) = must_unify t t3 n_tl pos  in (* UNK, Int, Float, TVar *) 
+    let (n_tl,t1) = x_add must_unify_expect t1 unif_t n_tl pos in
+    let (n_tl,t2) = x_add must_unify_expect t2 unif_t n_tl pos in
+    let (n_tl,t3) = x_add must_unify_expect t3 unif_t n_tl pos in
+    let (n_tl,t) = x_add must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *) 
+    let (n_tl,t) = x_add must_unify t t3 n_tl pos  in (* UNK, Int, Float, TVar *) 
     n_tl
   | IP.BagIn ((v, p), e, pos) | IP.BagNotIn ((v, p), e, pos) ->  (* v in e *)
     let (new_et,n_tl) = fresh_tvar tlist in
     let (n_tl,t1) = x_add gather_type_info_exp prog e n_tl (BagT new_et) in
     let (n_tl,t2) = x_add gather_type_info_var v n_tl new_et pos in
-    let (n_tl,_)= must_unify t1 (BagT t2) n_tl pos in
+    let (n_tl,_)= x_add must_unify t1 (BagT t2) n_tl pos in
     n_tl
   | IP.BagSub (e1, e2, pos) ->
     let (new_et,n_tl) = fresh_tvar tlist in
     let (n_tl,t1) = x_add gather_type_info_exp prog e1 n_tl (BagT new_et) in
     let (n_tl,t2) = x_add gather_type_info_exp prog e2 n_tl (BagT new_et) in
-    let (n_tl,_) = must_unify t1 t2 n_tl pos in
+    let (n_tl,_) = x_add must_unify t1 t2 n_tl pos in
     n_tl
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*) (
       (* allow comparision btw 2 pointers having different types *)
@@ -810,17 +849,21 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       let (n_tl,t1) = x_add gather_type_info_exp prog a1 n_tl new_et1 in (* tvar, Int, Float *)
       let (new_et2,n_tl) = fresh_tvar n_tl in
       let (n_tl,t2) = x_add gather_type_info_exp prog a2 n_tl new_et2 in
-      match t1, t2 with
-      | Named _, Named _ -> n_tl
-      | _ ->
-        let (n_tl,_) = must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
-        n_tl
+      let () = y_tinfo_hp (add_str "Eq:t1" string_of_typ) t1 in
+      let () = y_tinfo_hp (add_str "Eq:t2" string_of_typ) t2 in
+      let ntl = match t1, t2 with
+        (* | Named _, Named _ -> n_tl *)
+        | _ ->
+          let (n_tl,_) =x_add must_unify t1 t2 n_tl pos  in (* UNK, Int, Float, TVar *)
+          n_tl in
+      let () = y_tinfo_hp (add_str "Eq:ntl" string_of_tlist) ntl in
+      ntl
     )
   | IP.BagMax ((v1, p1), (v2, p2), pos) 
   | IP.BagMin ((v1, p1), (v2, p2), pos) -> (* V1=BagMin(V2) *)
     let (et,n_tl) = fresh_tvar tlist in
     let (n_tl,t1) = x_add gather_type_info_var v1 n_tl et pos in
-    let (n_tl,t) = must_unify t1 NUM n_tl pos  in
+    let (n_tl,t) = x_add must_unify t1 NUM n_tl pos  in
     let (n_tl,_) = x_add gather_type_info_var v2 n_tl (BagT t) pos in
     n_tl
   (* | IP.VarPerm _ -> tlist (*TO CHECK: no type info*) *)
@@ -828,14 +871,14 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let (new_et,n_tl) = fresh_tvar tlist in
     let (n_tl,t1) = x_add gather_type_info_exp prog e2 n_tl (List new_et) in
     let (n_tl,t2) = x_add gather_type_info_exp prog e1 n_tl new_et in
-    let (n_tl,_) = must_unify t1 (List t2) n_tl pos in
+    let (n_tl,_) = x_add must_unify t1 (List t2) n_tl pos in
     n_tl
   | IP.ListPerm (e1, e2, pos) ->
     let (el_t,n_tl) = fresh_tvar tlist in
     let new_et = List el_t in
     let (n_tl,t1) = gather_type_info_exp_x prog e1 n_tl new_et in 
     let (n_tl,t2) = gather_type_info_exp_x prog e2 n_tl new_et in
-    let (n_tl,_) = must_unify t1 t2 n_tl pos in
+    let (n_tl,_) = x_add must_unify t1 t2 n_tl pos in
     n_tl
   | IP.RelForm (r, args, pos) -> 
     (
@@ -926,26 +969,26 @@ and gather_type_info_b_formula_x prog b0 tlist =
 (*     let (new_et,n_tl) = fresh_tvar tlist in *)
 (*     let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et in (\* tvar, Int, Float *\) *)
 (*     let (n_tl,t2) = gather_type_info_exp a2 n_tl new_et in *)
-(*     let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in *)
-(*     let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in *)
-(*     let (n_tl,_) = must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
+(*     let (n_tl,t1) = x_add must_unify_expect t1 NUM n_tl pos in *)
+(*     let (n_tl,t2) = x_add must_unify_expect t2 NUM n_tl pos in *)
+(*     let (n_tl,_) = x_add must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
 (*     n_tl *)
 (* | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) -> *)
 (*     let (new_et,n_tl) = fresh_tvar tlist in *)
 (*     let (n_tl,t1) = gather_type_info_exp a1 n_tl new_et in (\* tvar, Int, Float *\) *)
 (*     let (n_tl,t2) = gather_type_info_exp a2 n_tl new_et in *)
 (*     let (n_tl,t3) = gather_type_info_exp a3 n_tl new_et in (\* tvar, Int, Float *\) *)
-(*     let (n_tl,t1) = must_unify_expect t1 NUM n_tl pos in *)
-(*     let (n_tl,t2) = must_unify_expect t2 NUM n_tl pos in *)
-(*     let (n_tl,t3) = must_unify_expect t3 NUM n_tl pos in *)
-(*     let (n_tl,t) = must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
-(*     let (n_tl,t) = must_unify t t3 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
+(*     let (n_tl,t1) = x_add must_unify_expect t1 NUM n_tl pos in *)
+(*     let (n_tl,t2) = x_add must_unify_expect t2 NUM n_tl pos in *)
+(*     let (n_tl,t3) = x_add must_unify_expect t3 NUM n_tl pos in *)
+(*     let (n_tl,t) = x_add must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
+(*     let (n_tl,t) = x_add must_unify t t3 n_tl pos  in (\* UNK, Int, Float, TVar *\)  *)
 (*     n_tl *)
 (* | IP.BagIn ((v, p), e, pos) | IP.BagNotIn ((v, p), e, pos) ->  (\* v in e *\) *)
 (*     let (new_et,n_tl) = fresh_tvar tlist in *)
 (*     let (n_tl,t1) = gather_type_info_exp e n_tl (BagT new_et) in *)
 (*     let (n_tl,t2) = gather_type_info_var v n_tl new_et pos in *)
-(*     let (n_tl,_)= must_unify t1 (BagT t2) n_tl pos in *)
+(*     let (n_tl,_)= x_add must_unify t1 (BagT t2) n_tl pos in *)
 (*     n_tl *)
 (* | IP.BagSub (e1, e2, pos) -> *)
 (*     let (new_et,n_tl) = fresh_tvar tlist in *)
@@ -962,14 +1005,14 @@ and gather_type_info_b_formula_x prog b0 tlist =
 (*     match t1, t2 with *)
 (*     | Named _, Named _ -> n_tl *)
 (*     | _ -> *)
-(*         let (n_tl,_) = must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\) *)
+(*         let (n_tl,_) = x_add must_unify t1 t2 n_tl pos  in (\* UNK, Int, Float, TVar *\) *)
 (*         n_tl *)
 (*   ) *)
 (* | IP.BagMax ((v1, p1), (v2, p2), pos)  *)
 (* | IP.BagMin ((v1, p1), (v2, p2), pos) -> (\* V1=BagMin(V2) *\) *)
 (*     let (et,n_tl) = fresh_tvar tlist in *)
 (*     let (n_tl,t1) = gather_type_info_var v1 n_tl et pos in *)
-(*     let (n_tl,t) = must_unify t1 NUM n_tl pos  in *)
+(*     let (n_tl,t) = x_add must_unify t1 NUM n_tl pos  in *)
 (*     let (n_tl,_) = gather_type_info_var v2 n_tl (BagT t) pos in *)
 (*     n_tl *)
 (* | IP.VarPerm _ -> tlist (\*TO CHECK: no type info*\) *)
@@ -977,14 +1020,14 @@ and gather_type_info_b_formula_x prog b0 tlist =
 (*     let (new_et,n_tl) = fresh_tvar tlist in *)
 (*     let (n_tl,t1) = gather_type_info_exp e2 n_tl (List new_et) in *)
 (*     let (n_tl,t2) = gather_type_info_exp e1 n_tl new_et in *)
-(*     let (n_tl,_) = must_unify t1 (List t2) n_tl pos in *)
+(*     let (n_tl,_) = x_add must_unify t1 (List t2) n_tl pos in *)
 (*     n_tl *)
 (* | IP.ListPerm (e1, e2, pos) -> *)
 (*     let (el_t,n_tl) = fresh_tvar tlist in *)
 (*     let new_et = List el_t in *)
 (*     let (n_tl,t1) = gather_type_info_exp_x e1 n_tl new_et in  *)
 (*     let (n_tl,t2) = gather_type_info_exp_x e2 n_tl new_et in *)
-(*     let (n_tl,_) = must_unify t1 t2 n_tl pos in *)
+(*     let (n_tl,_) = x_add must_unify t1 t2 n_tl pos in *)
 (*     n_tl *)
 (* | IP.RelForm (r, args, pos) ->  *)
 (*     (try *)
@@ -1106,9 +1149,9 @@ and gather_type_info_formula_x prog f0 tlist filter_res =
     n_tl
 
 and gather_type_info_struc_f prog (f0:IF.struc_formula) tlist =
-  (* Debug.no_eff_2 "gather_type_info_struc_f" [false;true] *)
-  (*   Iprinter.string_of_struc_formula string_of_tlist string_of_tlist *)
-    (fun _ _ -> gather_type_info_struc_f_x prog f0 tlist) f0 tlist
+  Debug.no_eff_2 "gather_type_info_struc_f" [false;true]
+    Iprinter.string_of_struc_formula string_of_tlist string_of_tlist
+  (fun _ _ -> gather_type_info_struc_f_x prog f0 tlist) f0 tlist
 
 and gather_type_info_struc_f_x prog (f0:IF.struc_formula) tlist = 
   let rec inner_collector (f0:IF.struc_formula) tl = (
@@ -1379,9 +1422,9 @@ and get_var_type_x fvs v : (typ * bool) =
   let warning_if_non_empty lst tlst =
     if lst != [] then
       let () = x_binfo_pp "WARNING : free_vars_list contains duplicates" no_pos in
-      x_binfo_hp (add_str "fvs" Cprinter.string_of_typed_spec_var_list) tlst no_pos
+      x_tinfo_hp (add_str "fvs" Cprinter.string_of_typed_spec_var_list) tlst no_pos
   in
-  (* let () = x_binfo_hp (add_str "fvs" !CP.print_svl) fvs no_pos in *)
+  (* let () = x_tinfo_hp (add_str "fvs" !CP.print_svl) fvs no_pos in *)
   (* let res_list = *)
   (*   CP.remove_dups_svl (List.filter ( *)
   (*       fun c -> (v = CP.name_of_spec_var c) && (p = CP.primed_of_spec_var c) *)
@@ -1560,7 +1603,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     else (* End dealing with generic ptr, continue what the original system did *)
       let n_tl = 
         (try
-           let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
+           let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
            (* let () = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
            (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
            let () = if not (IF.is_param_ann_list_empty ann_param) then
@@ -1626,24 +1669,30 @@ let trans_view : (I.prog_decl -> ident list -> Cast.view_decl list ->   (ident *
 
 (* and spec_var_type_list = (( ident*spec_var_info)  list) *)
 
-let mk_spec_var_info t = { sv_info_kind =t; id = 0}
+let mk_spec_var_info t = { sv_info_kind =t; id = fresh_int (); }
   
 let sv_to_typ sv = match sv with
   | CP.SpecVar(t,i,p) ->(i, mk_spec_var_info t)
 
-let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula =
   (* cformula --> iformula *)
   (* iformula --> normalize *)
   (* iformula --> cformula *)
+  (* let all_vs = CF.fv ~vartype:Global_var.var_with_exists f in    *)
+  (* let () = y_tinfo_hp (add_str "all_vs" !CP.print_svl) all_vs in *)
   let free_vs = CF.fv f in
   let () = y_tinfo_hp (add_str "free_vs" !CP.print_svl) free_vs in
+  let () = y_tinfo_hp (add_str "f" !CF.print_formula) f in
   let f = !CF.rev_trans_formula f in
+  let () = y_tinfo_hp (add_str "f" Iprinter.string_of_formula) f in
   let fvars = List.map CP.name_of_spec_var avail_vars in
   let tlist = List.map sv_to_typ free_vs  in
   let avail_vars = List.map CP.primed_ident_of_spec_var avail_vars in
   let expl_vars = List.map CP.primed_ident_of_spec_var expl_vars in
   (* let (f,r_avail,r_expl) = !Iast.case_normalize_formula iprog avail_vars expl_vars f in *)
+  let () = y_tinfo_hp (add_str "f" Iprinter.string_of_formula) f in
   let f = !Iast.case_normalize_formula iprog avail_vars f in
+  let () = y_tinfo_hp (add_str "f(norm)" Iprinter.string_of_formula) f in
   let quantify = true in
   let clean_res = false in
   let sep_collect = true in
@@ -1709,3 +1758,10 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
   in
   (* (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
   ()
+
+(* finding the type of self *)
+let get_type_of_self ntl =
+  try
+    let v = snd(List.find (fun (v,_) -> v=self) ntl) in
+    v.sv_info_kind 
+  with _ -> UNK

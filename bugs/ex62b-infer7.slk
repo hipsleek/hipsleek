@@ -1,0 +1,39 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+expect Valid.
+
+
+/*
+# ex62b.slk
+
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+expect Valid.
+
+# to improve printing
+
+  type_of_self: 
+  None
+  actual_root: 
+  []materialized vars: [(self,partial,[])]
+
+# why x=x not eliminated earlier?
+
+!!! **context.ml#721:TODO: rename root:self
+!!! **context.ml#722:root_pf: flted_7_46=flted_7_46
+!!! **context.ml#727:rhs(to prove): x>=q_48
+!!! **context.ml#728:rhs_ptr=root:false
+!!! **WARNING****context.ml#712:TODO : check if share same base
+!!! **context.ml#713:lhs_p2: flted_7_46+1=n
+!!! **context.ml#714:rhs: x=x
+
+*/

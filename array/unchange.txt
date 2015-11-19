@@ -45,8 +45,17 @@ With this:
    (a->b,S1) & (b->c,S2)
           ==> (a->c,S1+S2)
 
+  // S = set of change from a to a'
+
+  Q(a,a',S) where S is from a to a'
+
   Q(a,a',S) = (S=(a->a',{}) & (a[5])<=0) \/ 
                1<=(a[5]) & Q(a1,a',S1) & S=(a->a1,{5})+S1
+
+  Q(a,a',S) = (S={}) & (a[5])<=0) \/ 
+             1<=(a[5]) & Q(a1,a',S1) & S={5}+S1
+
+  Q(a,a',S) = (S={}) \/  Q(a1,a',S1) & S={5}+S1
 
 Fixpoint:
 =========
@@ -194,7 +203,7 @@ S set of index that maybe changed from a->a'
 Q(a,a',res,S) =
     (a'=a & res=a[5] & (a[5])<=0 & S={}) \/
      (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res,S1) &
-     update(a,a_1231,v_int,5) 
+     update(a,a_1231,v_int,5)
      & S#a->a'={5}#a->a_1231 U S1#a_1231->a')
 
 Q(a,a',res,S) =

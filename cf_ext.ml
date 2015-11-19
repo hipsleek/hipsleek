@@ -44,7 +44,7 @@ let process_heap_prop_extn p_tab (* pname vns *) (* mutual-rec *) (* nnn_sv *) h
         let vs = vl.h_formula_view_arguments in
         let n_hf = 
           try 
-            let (new_vn,new_sv) = p_tab # proc_view (Some ptr) name  in
+            let (new_vn, new_sv) = p_tab # proc_view (Some ptr) name vs  in
             (ViewNode {vl with h_formula_view_name = new_vn; 
                                h_formula_view_arguments = vs@[new_sv]})
           with _ -> hf
@@ -56,9 +56,23 @@ let process_heap_prop_extn p_tab (* pname vns *) (* mutual-rec *) (* nnn_sv *) h
 class data_table =
   object (self)
     val mutable lst = [] (* (ptr,value) list *)
-    method add_field_tags dn param = 
+    val mutable flst = [] (* fields *)
+    method logging s =
+      (* let m = "**data_table** " in *)
+      (* let () = print_endline_quiet (m^s) in *)
+      ()
+    method reset =
+      let () = self # logging "reset" in
+      let () = lst <- [] in
+      let () = flst <- [] in
+      ()
+    method add_field_tags dn param =
+      let () = self # logging ((add_str "Add tag of" (pr_pair pr_id (pr_list (pr_list pr_id)))) (dn,param)) in
       lst <- (dn,param)::lst
-    method find_tags dn = 
+    method add_fields dn param =
+      let () = self # logging ((add_str "Add fields of" (pr_pair pr_id (pr_list string_of_typed_ident))) (dn,param)) in
+      flst <- (dn,param)::flst
+    method find_tags dn =
       try
         snd(List.find (fun (n,_) -> n=dn) lst)
       with _ -> failwith (x_loc^"does not exist :"^dn)
@@ -67,20 +81,41 @@ class data_table =
         let tags = self # find_tags dn in
         List.map (fun ls -> List.mem t ls) tags
       with _ -> 
-        if dn="node" then [false;true]
-        else [false;true;true]
+        failwith (x_loc^"tag cannot be found")
+        (*   if dn="node" then [false;true] *)
+        (* else [false;true;true] *)
   end
 
 let data_decl_obj = new data_table
 
 let add_data_tags_to_obj cdata =
-  List.iter (fun cd ->
+  let () = y_tinfo_pp "add_data_tags_to_obj" in
+  data_decl_obj # reset;
+  let () = List.iter (fun cd ->
       let dn = cd.Cast.data_name in
-      let fields = cd.Cast.data_fields_new in
-      let tags = List.map snd fields in
-      data_decl_obj # add_field_tags dn tags
-    ) cdata
+      let fields = cd.Cast.data_fields in
+      let (flds,tags) = List.split fields in
+      let () = data_decl_obj # add_field_tags dn tags in
+      (* let () = data_decl_obj # add_fields dn flds in *)
+      let fields = List.map (fun ((t,id),_) -> t) fields in
+      let fields = List.filter (fun t -> Globals.is_node_typ t ) fields in
+      let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
+      let () = HipUtil.data_scc_obj # replace x_loc dn fields in
+      ()
+    ) cdata in
+  let lst = HipUtil.data_scc_obj # get_scc in
+  let () = y_tinfo_hp (add_str "data table" pr_id) (HipUtil.data_scc_obj # string_of) in
+  let () = List.iter (fun cd ->
+      let dn = cd.Cast.data_name in
+      (* mark a type a recursive if it has mutual-rec fields *)
+      let () = cd.Cast.data_is_rec <- HipUtil.data_scc_obj # is_rec dn in
+      ()
+    ) cdata in
+  ()
   
+let is_data_rec id =
+  HipUtil.data_scc_obj # is_rec id
+
 let compute_raw_base_case is_prim_v n_un_str =
   (* let is_prim_v = vdef.I.view_is_prim in *)
   let rec f_tr_base f = 
@@ -171,5 +206,27 @@ let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
   let pr2a f = pr2 (MCP.pure_of_mix f) in
   let pr3 = pr_quad pr pr pr2a pr2a in
   Debug.no_2 "compute_baga_invs" pr1 pr2 pr3 (fun _ _ -> compute_baga_invs vbc_i vbc_o vbc_u new_pf pos) (vbc_i,vbc_o,vbc_u) new_pf
+
+module EState =
+  struct
+    type t = CF.entail_state
+    let is_infer_hp_rel es v =
+      List.exists (CP.eq_spec_var v) es.es_infer_vars_hp_rel
+
+    let add_infer_rel es v =
+      { es with es_infer_vars_rel = v::es.es_infer_vars_rel}
+
+    let show_infer_vars es =
+      let () = print_endline_quiet ("\nes_infer_vars ") in
+      let () = print_endline_quiet "========================" in
+      let () = print_endline_quiet ((add_str "es_ivars" !CP.print_svl) es.es_ivars) in
+      let () = print_endline_quiet ((add_str "es_infer_vars" !CP.print_svl) es.es_infer_vars) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_rel" !CP.print_svl) es.es_infer_vars_rel) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_sel_hp_rel" !CP.print_svl) es.es_infer_vars_sel_hp_rel) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_sel_post_hp_rel" !CP.print_svl) es.es_infer_vars_sel_post_hp_rel) in
+      let () = print_endline_quiet ((add_str "es_infer_vars_hp_rel" !CP.print_svl) es.es_infer_vars_hp_rel) in
+      ()
+
+  end
 
 

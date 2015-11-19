@@ -1,0 +1,28 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b).
+
+infer[HP]  y::cell<_> * x::cell<_> & z=x |- HP(x,y).
+print residue.
+
+/*
+# norm/ex4b7b.slk
+
+infer[HP]  y::cell<_> * x::cell<_> |- HP(x,y).
+print residue.
+
+
+# Got:
+ inferred hprel: [emp&true |#| x::cell<Anon_12>@M&true --> GP_23(y,x@NI)&true; 
+                  y::cell<Anon_11>@M * GP_23(y,x@NI)&true --> HP(x,y)&true]
+
+Should get:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [y::cell<Anon_14>@M&true --> GP_30(y,x@NI)&true; 
+                  x::cell<Anon_13>@M * GP_30(y,x@NI)&true --> HP(x,y)&true]
+
+
+*/

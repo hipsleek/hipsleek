@@ -55,8 +55,10 @@ and data_field_ann =
 
 and data_decl = { 
   data_name : ident;
-  data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
-  (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+  mutable data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list; 
+  (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. *)
+  (* TODO design revision on how to make this more extensible; for instance:                 *)
+  (* use a record instead of a bool to capture additional information on the field?          *)
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pos : loc;
@@ -99,6 +101,7 @@ and view_decl =
     view_parent_name: (ident) option;
     mutable view_derv: bool;
     view_type_of_self : typ option;
+    (* view_actual_root : P.exp option; *)
     view_kind : view_kind;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
@@ -287,13 +290,13 @@ and coercion_decl = { coercion_type : coercion_type;
 
 and coercion_decl_list = {
   coercion_list_elems : coercion_decl list;
-  coercion_list_kind:   lemma_kind;
+  coercion_list_kind: lemma_kind;
 }
 
 and coercion_type = 
-  | Left
+  | Left (* ==> *)
   | Equiv
-  | Right
+  | Right (* <== *)
 
 
 
@@ -640,6 +643,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_pos = pos;
           view_data_name = dname;
           view_type_of_self = None;
+          (* view_actual_root = None; *)
           view_imm_map = [];
           view_vars = (* List.map fst *) vs;
           view_ho_vars = [];
@@ -685,6 +689,7 @@ let mk_view_header vn opt1 cids mvs modes pos =
     view_pos = pos ;
     view_data_name = "";
     view_type_of_self = None;
+    (* view_actual_root = None; *)
     view_imm_map = [];
     view_vars = (* List.map fst *) cids;
     view_ho_vars = un_option opt1 []; 
@@ -1338,6 +1343,12 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+let get_proot_hp_def_raw defs name =
+  let hpdclr = look_up_hp_def_raw defs name in
+  match hpdclr.hp_root_pos with
+  | None -> failwith ("hp_root_pos has not yet set.")
+  | Some i -> i
+
 let mk_hp_decl_0 ?(is_pre=true) ?(view_d=None) id tl (root_pos:int option) parts body =
      {
         hp_name = id;
@@ -1463,14 +1474,14 @@ let rec get_mut_vars e0 =
 
 let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_lst pos=
   let is_infer_ret r=
-    (((List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_POST) infer_lst ) ||
+    ((Globals.infer_const_obj # is_shape || (List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_POST) infer_lst ) ||
     g_infer_type = INF_SHAPE || g_infer_type = INF_SHAPE_POST ) && is_node_typ r)
   in
-  let is_infer_shape_pre ()=
+  let is_infer_shape_pre ()= Globals.infer_const_obj # is_shape ||
     (* now, consider local spec only *)
     List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_PRE || it = INF_SHAPE_PRE_POST) infer_lst
   in
-  let is_infer_shape_post ()=
+  let is_infer_shape_post ()= Globals.infer_const_obj # is_shape ||
     (* now, consider local spec only *)
     List.exists (fun it -> it = INF_SHAPE || it = INF_SHAPE_POST) infer_lst
   in
@@ -1513,7 +1524,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
           (* hp_view = None *)
         }
         in
-        let () = Debug.info_hprint (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
+        let () = x_binfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
             hp_pre_decl.hp_name no_pos in
         let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
         let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
@@ -1790,7 +1801,10 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 
 let rec look_up_data_def_x pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def_x pos rest name
-  | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
+  | [] -> 
+    let msg = ("Cannot find definition of iview " ^ name) in 
+    let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
+    Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
 
 and look_up_data_def i pos (defs : data_decl list) (name : ident) 
   = Debug.no_1_num i "look_up_data_def" pr_id pr_none (look_up_data_def_x pos defs) name 
@@ -1804,16 +1818,16 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) =
   | d :: rest -> if d.data_name = name then d else look_up_data_def_raw rest name
   | [] -> raise Not_found
 
-and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x rest name
+and look_up_view_def_raw_x loc (defs : view_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x loc rest name
   | [] -> 
     let msg = ("Cannot find definition of iview " ^ name) in 
-    let () = y_tinfo_pp (x_loc^msg) in
+    let () = y_tinfo_pp (loc^msg) in
     raise Not_found
 
-and look_up_view_def_raw i (defs : view_decl list) (name : ident) 
+and look_up_view_def_raw loc (defs : view_decl list) (name : ident) 
   = let pr = pr_list !print_view_decl in
-  Debug.no_2_num i "look_up_view_def_raw" pr pr_id pr_none (look_up_view_def_raw_x) defs name 
+  Debug.no_2 "look_up_view_def_raw" pr pr_id pr_none (look_up_view_def_raw_x loc) defs name 
 
 and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs with
   | d :: rest -> if d.func_name = name then d else look_up_func_def_raw rest name
@@ -2371,7 +2385,7 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
         else if v.view_kind = View_DERV  then
           match v.view_derv_info with
           | ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))::_ ->
-            let orig_vdecl = look_up_view_def_raw 52 iprog.prog_view_decls orig_view_name in
+            let orig_vdecl = look_up_view_def_raw x_loc iprog.prog_view_decls orig_view_name in
             let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
             let () = x_tinfo_hp (add_str "XXX:orig_vdecl" pr_id) orig_vdecl.view_data_name no_pos in
             v.view_data_name <- orig_vdecl.view_data_name
@@ -2379,9 +2393,9 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
             (* let () = report_warning no_pos ("derv view "^(v.view_name)^" does not have derv info") in *)
             (* let () = x_tinfo_hp (add_str "XXX:v.view_name" pr_id) v.view_name no_pos in *)
             v.view_data_name <- (v.view_name)
-        else if String.length v.view_data_name = 0 then
-          (* self has unknown type *)
-          report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined")
+        (* else if String.length v.view_data_name = 0 then *)
+        (*   (\* self has unknown type *\) *)
+        (*   report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined") *)
         else ()
       else 
         let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
@@ -2441,7 +2455,7 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
         (* if c is a view, use the view's data name recursively.
            			   Otherwise (c is data) use c *)
         try
-          let vdef = look_up_view_def_raw 1 view_decls c in
+          let vdef = look_up_view_def_raw x_loc view_decls c in
           if String.length (vdef.view_data_name) > 0 then
             Some vdef.view_data_name
           else
@@ -3675,7 +3689,7 @@ let trans_to_exp_form exp0 =
 
 let lbl_getter prog vn id = 
   try 
-    let vd = look_up_view_def_raw 15 prog.prog_view_decls vn in
+    let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn in
     let vl, v_has_l = vd.view_labels in
     if v_has_l then
       try
@@ -3691,7 +3705,7 @@ let eq_coercion_list = (==)             (* to be modified *)
 
 let annot_args_getter_all prog vn: (P.ann * int) list =
   try 
-    let vd = look_up_view_def_raw 18 prog.prog_view_decls vn in
+    let vd = look_up_view_def_raw x_loc prog.prog_view_decls vn in
     vd.view_imm_map
   with 
   | Not_found -> [] 
@@ -3915,7 +3929,7 @@ let update_view_decl prog vdecl =
   let () = 
     if not (is_empty same_vdecls) then 
       y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog")
-    else y_binfo_pp ("Adding the view " ^ vdecl_id ^ " into iprog.")  
+    else y_binfo_pp ("adding the view " ^ vdecl_id ^ " into iprog.")  
   in
   prog.prog_view_decls <- others @ [vdecl]
 
@@ -3939,7 +3953,7 @@ let gen_name_pairs_struc view_decls0 vname (f:F.struc_formula): (ident * ident) 
       (* then [] *)
       (* else *)
       (try 
-         let todo_unk = look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
+         let todo_unk = look_up_view_def_raw x_loc view_decls0 c in [ (vname, c) ]
        with | Not_found -> 
          if view_scc_obj # in_dom c then [(vname,c)]
          else []
@@ -3965,3 +3979,12 @@ let gen_name_pairs_struc view_decls0 vname (f:F.struc_formula): (ident * ident) 
     | F.EInfer b -> aux b.F.formula_inf_continuation
     | F.EList b ->  fold_l_snd (aux) b
   in aux f
+
+
+let swap_dir ct = 
+  match ct with
+  | Left -> Right
+  | Right -> Left
+  | Equiv -> Equiv
+
+

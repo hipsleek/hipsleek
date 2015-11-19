@@ -1,0 +1,37 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+
+//3
+infer [H,H2,@classic]
+    H2(x,z1,z2) * z1::node<_,ss> |- H(x,y1) * y1::node<_,ss>.
+print residue.
+
+// above should succeed with z1=y1 instantiation
+
+
+
+/*
+# ex20e9f5h.slk
+
+x::H2(),z1::node()
+ |- x::H() * y1::node()
+
+next_77_1552::HP_1553();x::node<>
+ |-  P(next_77_1552).
+
+//3
+infer [H,H2,@classic]
+    H2(x,z1,z2) * z1::node<_,ss> |- H(x,y1) * y1::node<_,ss>.
+print residue.
+
+
+
+*/

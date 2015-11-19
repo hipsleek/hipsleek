@@ -254,7 +254,7 @@ let extract_callee_view_info_x prog f=
     | [] -> res
   in
   let extract_pto vn= [vn.h_formula_view_node]
-  (* let vdcl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vn.h_formula_view_name in *)
+  (* let vdcl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vn.h_formula_view_name in *)
   (* let neqNulls = CP.get_neq_null_svl (Mcpure.pure_of_mix vdcl.Cast.view_x_formula) in *)
   (* let formal_args = CP.SpecVar (Named vdcl.Cast.view_data_name, self, Unprimed):: vdcl.Cast.view_vars in *)
   (* let neqNulls1 = CP.intersect_svl neqNulls formal_args in *)
@@ -446,7 +446,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
         ([],[],new_vis)
   in
   (*********************************)
-  let vdecl = x_add Cast.look_up_view_def_raw 57 prog.Cast.prog_view_decls vname in
+  let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then
       CP.SpecVar (Named vdecl.Cast.view_data_name,self,Unprimed)
     else
@@ -986,7 +986,7 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (mix_formula * CF.mem_f
                 formula_exists_pos = pos}) ->
       let (pqh,_) = x_add xpure_heap_mem_enum 3 prog qh qp 1 in
       let tmp1 = x_add MCP.merge_mems qp pqh true in
-      MCP.memo_pure_push_exists qvars tmp1
+      MCP.mix_push_exists qvars tmp1
   in
   (xpure_helper prog f0, formula_2_mem f0 prog)
 
@@ -1041,6 +1041,7 @@ and conv_from_ef_disj disj =
 
 and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
   let vdef = look_up_view_def pos prog.prog_view_decls c in
+  let () = y_tinfo_hp (add_str "vdecl" !C.print_view_decl) vdef in
   (*add fractional invariant 0<f<=1, if applicable*)
   let frac_inv = match perm with
     | None -> CP.mkTrue pos
@@ -1063,7 +1064,7 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
      (* MCP.memoise_add_pure_N (MCP.mkMTrue pos) frac_inv *)
      | Some xp1 ->
        let () = Debug.ninfo_hprint (add_str "inv_opt" pr_id) "Some" no_pos in
-       let () = Debug.ninfo_hprint (add_str " which_xpure" string_of_int)  which_xpure no_pos in
+       let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int)  which_xpure no_pos in
        let vinv = match which_xpure with
          | -1 -> MCP.mkMTrue no_pos
          | 0 -> vdef.view_user_inv
@@ -1125,7 +1126,8 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
 
 and aux_xpure_for_view prog memset which_xpure c p vs perm rm_br pos =
   let pr = !print_sv in
-  Debug.no_3 "aux_xpure_for_view" pr_id pr !print_svl !Cast.print_mix_formula (fun _ _ _ -> aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos) c p vs
+  Debug.no_3 "aux_xpure_for_view" pr_id pr !print_svl !Cast.print_mix_formula 
+    (fun _ _ _ -> aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos) c p vs
       
 
 and xpure_heap_mem_enum_new
@@ -1702,7 +1704,7 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) :
       let () = Debug.ninfo_hprint (add_str "pqh" Cprinter.string_of_mix_formula) pqh no_pos in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
       let tmp1 = MCP.merge_mems qp pqh true in
-      let res_form = MCP.memo_pure_push_exists qvars tmp1 in
+      let res_form = MCP.mix_push_exists qvars tmp1 in
       let () = Debug.ninfo_hprint (add_str "pure res_form" Cprinter.string_of_mix_formula) res_form no_pos in
       (res_form, addrs) in
   let pf, pa = xpure_symbolic_helper prog f0 in
@@ -2549,7 +2551,7 @@ assumption:
 *)
 let get_oa_node_view_x prog seg_vnames=
   let get_oa res vname=
-    let vdecl = x_add Cast.look_up_view_def_raw 56 prog.Cast.prog_view_decls vname in
+    let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
     let ddecl = Cast.look_up_data_def_raw prog.Cast.prog_data_decls vdecl.Cast.view_data_name in
     if List.length vdecl.Cast.view_cont_vars = 1 &&
        List.length vdecl.Cast.view_vars = List.length (List.filter (fun ((t,_),_) ->

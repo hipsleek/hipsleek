@@ -21,7 +21,7 @@ let print_ty_sv = ref (fun (c:CP.spec_var) -> " printing not initialized")
                   GLOBAL VARIABLES & TYPES
  **************************************************************)
 
-(* Types for relations and ax(ioms*)
+(* Types for relations and axioms*)
 type rel_def = {
   rel_name : ident;
   rel_vars : CP.spec_var list;
@@ -338,7 +338,7 @@ let add_axiom h dir c =
         else x
       ) global_rel_defs # get_stk in
     global_rel_defs # reset_pr;
-    global_rel_defs # push_list_pr new_rel_defs;
+    global_rel_defs # push_list_pr x_loc new_rel_defs;
     (* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
     let params = List.append (CP.fv h) (CP.fv c) in
     (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
@@ -391,7 +391,9 @@ let add_relation (rname1:string) rargs rform =
       related_axioms = []; (* to be filled up by add_axiom *)
       rel_cache_smt_declare_fun = cache_smt_input;
     } in
-    global_rel_defs # push_list_pr [rdef];
+  let () = y_tinfo_hp (add_str "rname1" pr_id) rname1 in
+  let () = y_tinfo_hp (add_str "rargs" !CP.print_svl) rargs in
+    global_rel_defs # push_list_pr x_loc [rdef];
     (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
     match rform with
     | CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
@@ -410,12 +412,14 @@ let add_hp_relation (rname1:string) rargs rform =
     (* Declare the relation in form of a function --> Bool *)
     "(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n"
   ) in
+  let () = y_tinfo_hp (add_str "rname1" pr_id) rname1 in
+  let () = y_tinfo_hp (add_str "rargs" !CP.print_svl) rargs in
   let rdef = { rel_name = rname1; 
                rel_vars = rargs;
                related_rels = []; (* to be filled up by add_axiom *)
                related_axioms = []; (* to be filled up by add_axiom *)
                rel_cache_smt_declare_fun = cache_smt_input; } in
-  global_rel_defs # push_list_pr [rdef];
+  global_rel_defs # push_list_pr x_loc [rdef];
   (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
 
   (***************************************************************
@@ -537,16 +541,16 @@ let parse_model_to_pure_formula model =
       helper new_acc (List.tl (List.tl model))
   in
   let pf = helper (Cpure.mkTrue no_pos) (List.tl model) in
-  let () = x_binfo_pp ("counter example: " ^ (!print_pure pf)) no_pos in
+  let () = x_tinfo_pp ("counter example: " ^ (!print_pure pf)) no_pos in
   pf
 
 let iget_answer2 chn input =
   let output = icollect_output2 chn [] in
   let solver_sat_result = List.hd output (* List.nth output (List.length output - 1) *) in
-  let () = x_binfo_pp ("solver_sat_result: " ^ solver_sat_result) no_pos in
+  let () = x_tinfo_pp ("solver_sat_result: " ^ solver_sat_result) no_pos in
   let model = List.tl output in
-  let () = x_binfo_pp "model:" no_pos in
-  let unknown = List.map (fun s -> x_binfo_pp s no_pos) model in
+  let () = x_tinfo_pp "model:" no_pos in
+  let unknown = List.map (fun s -> x_tinfo_pp s no_pos) model in
   let _ =
     if solver_sat_result = "sat" then
       parse_model_to_pure_formula model
@@ -577,6 +581,10 @@ let iget_answer chn input =
   in
   { original_output_text = output;
     sat_result =  st; }
+
+let iget_answer chn input =
+  Debug.no_1 "Z3.iget_answer" idf (fun o -> pr_list idf o.original_output_text)
+    (fun _ -> iget_answer chn input) input
 
 let get_answer chn input =
   let output = collect_output chn [] in
@@ -805,7 +813,16 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let used_rels = info.relations in
   let rel_decls = String.concat "" (List.map (fun x -> x.rel_cache_smt_declare_fun) global_rel_defs # get_stk) in
   (* let _ = Debug.info_hprint (add_str "rel_decls" (pr_id)) rel_decls no_pos in *)
-  let rel_decls = String.concat "" (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") global_rel_defs # get_stk) in
+  let eq_rel_def r1 r2 = 
+    try
+      let prototype_pair = List.combine (List.map CP.type_of_spec_var r1.rel_vars) (List.map CP.type_of_spec_var r2.rel_vars) in
+      (String.compare r1.rel_name r2.rel_name == 0) &&
+      (List.for_all (fun (t1, t2) -> t1 = t2) prototype_pair)
+    with _ -> false
+  in 
+  let rel_decls = String.concat "" 
+      (List.map (fun x -> if (List.mem x.rel_name used_rels) then x.rel_cache_smt_declare_fun else "") 
+      (Gen.BList.remove_dups_eq eq_rel_def (global_rel_defs # get_stk))) in
   (* Necessary axioms *)
   (* let axiom_asserts = String.concat "" (List.map (fun x -> x.axiom_cache_smt_assert) !global_axiom_defs) in *) (* Add all axioms; in case there are bugs! *)
   let axiom_asserts = String.concat "" (List.map (fun ax_id ->
@@ -1409,7 +1426,7 @@ let get_unsat_core assertions =
 
   (* let out_str = String.concat "\n" (icollect_output !prover_process.inchannel []) in *)
   (* let lexbuf = Lexing.from_string out_str in                                         *)
-  (* let () = x_binfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
+  (* let () = x_tinfo_hp (add_str "SMT output" idf) out_str no_pos in                   *)
   let lexbuf = Lexing.from_channel !prover_process.inchannel in
   let unsat_core =
     try

@@ -1,0 +1,44 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p>.
+// fail <==
+
+lemma_safe "one1"  self::rlseg<p> <-> self::rlseg<p1>*p1::rlseg<p>.
+// valid <==>
+
+//lemma_safe "two" self::rlseg<p1> * p1::node<_,p> -> self::rlseg<p>.
+//Valid
+//lemma_safe "two2" self::rlseg<p> <- self::rlseg<p1> * p1::node<_,p>  .
+//Valid
+
+//lemma_safe "three" self::node<_,q>*q::rlseg<p>  <-> self::rlseg<p1>* p1::node<_,p>.
+// fail <==
+
+/*
+# ex64k1.slk
+
+
+
+!!! **astsimp.ml#4586:fnames:[self,p1,p]	 
+"==>" implication: : Fail. (cex)(may) cause: OrL[
+UnionR[UnionR[residue is forbidden.(1),residue is forbidden.(1)],residue is forbidden.(1)],
+valid
+]
+	 "==>" implication: : Valid.
+
+!!! **solver.ml#13660:lhs contra?:None	 "==>" implication: : Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+	 "==>" implication: : Valid.
+
+
+*/

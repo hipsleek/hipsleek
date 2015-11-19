@@ -3276,17 +3276,22 @@ let infer_shapes iprog prog proc_name (constrs0: CF.hprel list)
   else
     let hprels = CF.add_infer_type_to_hprel constrs0 in
     let sel_hprels, others = SynUtils.select_hprel_assume hprels (List.map CP.name_of_spec_var sel_hps) in
-    let derived_views, nhprels = Syn.derive_view iprog prog others sel_hprels in (* shape_derive_view [sel_hps] *)
+    let derived_views, nhprels = x_add Syn.derive_view iprog prog others sel_hprels in (* shape_derive_view [sel_hps] *)
+    let derived_views = 
+      if not !Globals.pred_elim_node then derived_views
+      else Syn.elim_tail_pred_list iprog prog derived_views
+    in
     let view_aset, derived_views =
       if !Globals.pred_equiv then
         let view_aset = Syn.aux_pred_reuse iprog prog derived_views in
         let derived_views = List.map (fun v -> 
-          try Cast.look_up_view_def_raw 30 prog.Cast.prog_view_decls v.Cast.view_name
+          try Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls v.Cast.view_name
           with _ -> v) derived_views in
         view_aset, derived_views
       else [], derived_views
     in
-    let () = y_binfo_hp (add_str "DERIVED VIEWS" (pr_list Cprinter.string_of_view_decl_short)) derived_views in
+    let () = y_binfo_hp (add_str "\n===== DERIVED VIEWS =====\n" 
+      (pr_list_ln Cprinter.string_of_view_decl_short)) derived_views in
     (nhprels, [], [])
 
 let infer_shapes (iprog: Iast.prog_decl) (prog: Cast.prog_decl) (proc_name:ident)

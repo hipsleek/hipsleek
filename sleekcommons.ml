@@ -130,7 +130,7 @@ and validation =
   (* R{..} *)
   | V_Residue of meta_formula option
   (* I{..} *)
-  | V_Infer   of meta_formula option
+  | V_Infer   of string * (meta_formula option)
   (* RA{..} *)
   | V_RelAssume  of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula) option
 (*
@@ -254,7 +254,7 @@ let string_of_validation v=
       string_of_meta_formula pr_omf string_of_meta_formula) in
   match v with
     | V_Residue o_mf -> "R{" ^ (pr_omf o_mf) ^"}"
-    | V_Infer o_mf -> "I{" ^ (pr_omf o_mf) ^"}"
+    | V_Infer (s,o_mf) -> s^"{" ^ (pr_omf o_mf) ^"}"
     | V_RelAssume o_vrels -> "RA{" ^ (pr_orel o_vrels) ^ "}"
 
 

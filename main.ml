@@ -314,7 +314,7 @@ let print_spec cprog =
     | p :: pl -> (match p.Cast.proc_body with
         | None -> ""
         | Some _ ->
-          let () = print_endline_quiet (Cprinter.string_of_struc_formula p.Cast.proc_static_specs) in
+          let () = print_endline_quiet (Cprinter.string_of_struc_formula (p.Cast.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *)) in
           (* let sf = p.Cast.proc_static_specs in *)
           (* let fvs = List.map (fun (t, id) -> Cpure.SpecVar(t, id, Unprimed)) p.Cast.proc_args in *)
           (* let new_sf = List.fold_left (fun sf fv ->  *)
@@ -322,22 +322,24 @@ let print_spec cprog =
           (*     ) sf fvs in *)
           ("Procedure " ^ p.Cast.proc_name ^ "\n") ^
           (* Cprinter.string_of_struc_formula_for_spec new_sf *) (* (x_add Solver.unfold_struc_nth 1 (cprog, None) sf (List.hd (List.tl fv)) (\* (Cpure.SpecVar (Globals.Named "node", "x", Unprimed)) *\) false 1 no_pos) *)
-          Cprinter.string_of_struc_formula_for_spec (replace_struc_formula p.Cast.proc_static_specs cprog)
+          Cprinter.string_of_struc_formula_for_spec 
+              (replace_struc_formula (p.Cast.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *) cprog)
       ) ^ (helper pl)
     | [] -> ""
   in
   print_endline (helper (Cast.list_of_procs cprog))
 
-let reverify_with_hp_rel old_cprog iprog =
-  (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels old_cprog) in *)
-  (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog old_cprog) in *)
-  let hp_defs, post_hps = Saout.collect_hp_defs old_cprog in
+(* Should use only a unique version of cprog *)
+let reverify_with_hp_rel cprog iprog =
+  (* let new_iviews = Astsimp.transform_hp_rels_to_iviews (Cast.collect_hp_rels cprog) in *)
+  (* let cprog = Astsimp.trans_prog (Astsimp.plugin_inferred_iviews new_iviews iprog cprog) in *)
+  let hp_defs, post_hps = Saout.collect_hp_defs cprog in
   let need_trans_hprels0, unk_hps = List.fold_left (fun (r_hp_defs, r_unk_hps) (hp_def) ->
       let (hp_kind, _,_,f) = Cformula.flatten_hp_rel_def hp_def in
       match hp_kind with
       |  Cpure.HPRelDefn (hp,r,args) -> begin
           try
-            let todo_unk = x_add Cast.look_up_view_def_raw 33 old_cprog.Cast.prog_view_decls
+            let todo_unk = x_add Cast.look_up_view_def_raw x_loc cprog.Cast.prog_view_decls
                 (Cpure.name_of_spec_var hp)
             in
             (r_hp_defs, r_unk_hps)
@@ -367,8 +369,8 @@ let reverify_with_hp_rel old_cprog iprog =
     (* ) *) need_trans_hprels0
   in
   let proc_name = "" in
-  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog old_cprog proc_name need_trans_hprels1 in
-  let cprog = Saout.trans_specs_hprel_2_cview iprog old_cprog proc_name unk_hps []
+  let n_cviews,chprels_decl = Saout.trans_hprel_2_cview iprog cprog proc_name need_trans_hprels1 in
+  let () = Saout.trans_specs_hprel_2_cview iprog cprog proc_name unk_hps []
       [] [] need_trans_hprels1 chprels_decl in
   ignore (Typechecker.check_prog iprog cprog)
 
@@ -560,7 +562,7 @@ let process_source_full source =
   (* let () = I.set_iprog intermediate_prog in *)
   (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-  let () = saved_cprog := Some cprog in
+  let () = saved_cprog := cprog in
   (* let () = if !Globals.sa_pure then *)
   (*   let norm_views, extn_views = List.fold_left (fun (nviews, eviews) v -> *)
   (*       if v.Cast.view_kind = Cast.View_NORM then *)
@@ -573,6 +575,10 @@ let process_source_full source =
   (* else cprog.Cast.prog_view_decls *)
   (* in *)
   (* ========= lemma process (normalize, translate, verify) ========= *)
+  let () = y_tinfo_hp (add_str "lemma list" 
+      (pr_list (fun l -> pr_list (fun lem -> lem.Iast.coercion_name) l.Iast.coercion_list_elems))) 
+      tiprog.Iast.prog_coercion_decls in
+  let () = Lemma.sort_list_lemma tiprog in
   let () = List.iter (fun x -> x_add Lemma.process_list_lemma_helper x tiprog cprog (fun a b -> b)) tiprog.Iast.prog_coercion_decls in
   (* ========= end - lemma process (normalize, translate, verify) ========= *)
   let c = cprog in
@@ -820,7 +826,8 @@ let process_source_full source =
           end);
   if (!Globals.reverify_all_flag || !Globals.reverify_flag)
   then
-    let () =  Debug.info_pprint "re-verify\n" no_pos; in
+    let () = y_binfo_pp "RE-VERIFICATION\n" in
+    let () = Globals.infer_const_obj # reset_all in
     reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
   else ();
 
@@ -1005,7 +1012,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* let () =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
   (* let () = I.set_iprog intermediate_prog in *)
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-  let () = saved_cprog := Some cprog in
+  let () = saved_cprog := cprog in
   (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
@@ -1105,7 +1112,7 @@ let process_source_full_after_parser source (prog, prims_list) =
                                ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 let main1 () =
-  let () = y_binfo_pp "XXXX main1" in
+  let () = y_tinfo_pp "XXXX main1" in
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
   (* Cprinter.fmt_cut (); *)
@@ -1172,17 +1179,20 @@ let loop_cmd parsed_content =
 
 let finalize_bug () =
   let () = Log.last_cmd # dumping "finalize on hip" in
-  (match !saved_cprog,!saved_prim_names with
-   | Some(cprog),Some(prim_names) ->
-     let () = Log.process_proof_logging !Globals.source_files cprog prim_names in ()
-   | Some(cprog),None ->
-     let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
-   | _,_ ->
-     let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in ());
+  let cprog = !saved_cprog in
+  let () =
+    (match !saved_prim_names with
+     | Some(prim_names) ->
+       let () = Log.process_proof_logging !Globals.source_files cprog prim_names in ()
+     | None ->
+       let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
+       (* | _,_ -> *)
+       (*   let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in () *)
+    ) in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main () =
-  let () = y_binfo_pp "XXXX old_main" in
+  let () = y_tinfo_pp "XXXX old_main" in
   try
     main1 ();
     (* let () =  *)

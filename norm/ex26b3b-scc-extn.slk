@@ -1,0 +1,27 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+pred llA<> ==
+  self = null 
+  or self::node<_, p> * p::llB<>.
+  
+pred llB<> ==
+  self = null 
+  or self::node<_, p> * p::llA<>.
+  
+//pred llA_sz<nnn> == extends [llA] with size[REC]<nnn>.
+
+pred ll_sz<nnn> == extends [llA*] with size[REC]<nnn>.
+
+//pred llAB_sz<nnn> == extends [llA, llB] with size[REC]<nnn>.
+
+//pred ll_sz<nnn> == extends [*] with size[REC]<nnn>.
+
+//shape_extends_view [llA*] with size.

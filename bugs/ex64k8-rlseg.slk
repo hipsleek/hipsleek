@@ -1,0 +1,155 @@
+data node {
+     int val;
+     node next;
+}.
+
+// this is unusual predicate definition
+
+pred rlseg<p:node> == self=p
+  or self::node<_,q> * q::rlseg<p>.
+
+/*
+lemma_infer [@classic]  
+   self::node<_,q>*q::rlseg<p> -> self::rlseg<ppp1>* ppp1::node<_,p> 
+.
+print residue.
+*/
+lemma_safe 
+   self::rlseg<q>*q::rlseg<p> <-> self::rlseg<p>.
+
+lemma_safe 
+   self::node<_,q>*q::rlseg<p> <-> self::rlseg<ppp1>* ppp1::node<_,p> .
+
+// fail <==
+
+//lemma_safe "three" self::rlseg<p1>* p1::node<_,p> <-> self::node<_,q>*q::rlseg<p> . 
+// fail ==>
+/*
+# ex64k8.slk
+
+# why old system  (in default) can prove below?
+
+!!! **solver.ml#13660:lhs contra?:None
+Entailing lemma three: Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+
+lemma_safe "three"  
+   self::node<_,q>*q::rlseg<p> 
+    ->
+   self::rlseg<p1>* p1::node<_,p> 
+.
+
+# new complex lemma
+ body_norm:  EBase 
+   exists (Impl)[p1; 
+   Anon_12](exists p_40: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_lhs_sig: Some([node,rlseg])
+
+
+# old complex lemma (from default)
+!!! WARNING : changing lemma from <- to -> 
+ body_norm:  EBase 
+   exists (Impl)[p1](exists p_40,
+   Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_fold: None
+
+=======================================================
+
+!!! WARNING : changing lemma from <- to -> 
+(==lemma.ml#282==)
+check_left_coercion@1
+check_left_coercion inp1 :Lemma "three":  self::node<Anon_13,q>@M * q::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]==> (exists p1,Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head match:node
+ body view:rlseg
+ body pred_list:[rlseg]
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head:  self::node<Anon_13,q>@M * q::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists p1,Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists p_44,Anon_13,q: self::node<Anon_13,q>@M * q::rlseg<p_44>@M&p_44=p&
+{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[p1](exists p_40,
+   Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_SAFE
+ coercion_fold: None
+check_left_coercion@1 EXIT:true
+
+
+(====)
+check_left_coercion@1
+check_left_coercion inp1 :Lemma "three":  self::node<Anon_13,q>@M * q::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]==> (exists p1,Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head match:node
+ body view:rlseg
+ body pred_list:[rlseg]
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head:  self::node<Anon_13,q>@M * q::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists p1,Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists p_44,Anon_13,q: self::node<Anon_13,q>@M * q::rlseg<p_44>@M&p_44=p&
+{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[p1; 
+   Anon_12](exists p_40: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_SAFE
+ coercion_fold: None
+ coercion_lhs_sig: Some([node,rlseg])
+
+check_left_coercion@1 EXIT:(false, MaybeErr Context: 
+    fe_kind: Valid
+    fe_name: 
+    fe_locs: Failure_Valid[[empty]]
+   FAIL_OR 
+     fe_kind: MUST
+     fe_name: 
+     fe_locs: {
+         fc_message: classical separation logic
+         fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+       }
+     [[ Fold ==>  Match(self_three,p1)]]
+    FAIL_UNION 
+      fe_kind: Valid
+      fe_name: 
+      fe_locs: Failure_Valid[[empty]]
+     FAIL_OR 
+      fe_kind: MUST
+      fe_name: 
+      fe_locs: {
+          fc_message: classical separation logic
+          fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+        }
+      [[ Fold ==>  Match(self_three,self_three) ==>  COND ==>  Fold ==>  COND ==>  (Lemma ==> three(q_78,p1)) ==> (Complex: three) ==>  Unfold 0 ==>  Match(q_78,p1)]]
+     
+    FAIL_UNION 
+     fe_kind: MUST
+     fe_name: separation entailment
+     fe_locs: {
+         fc_message: do_unmatched_rhs : p1::node<Anon_12,p_79>@M(must)
+         fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}
+       }
+     [[ Fold ==>  Match(self_three,self_three) ==>  COND ==>  Fold ==>  COND ==>  Match(q_78,q_81) ==>  COND ==>  Match(q_76,q_101) ==>  UnmatchedRHSData]
+
+
+*/

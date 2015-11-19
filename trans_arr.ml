@@ -9,28 +9,49 @@ open VarGen
 let global_unchanged_info = ref [];;
 let string_of_exp = ArithNormalizer.string_of_exp;;
 
+
+
+let plain_string_of_exp e0 =
+  let need_parentheses e = match e with
+    | Add _ | Subtract _ -> true
+    | _ -> false
+  in
+  let wrap e =
+       if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+       else (string_of_exp e)
+  in
+  let tmp_string_of_spec_var ?(print_typ=false) (sv: spec_var) =
+    match sv with
+    | SpecVar (t, v, p) ->
+      if p==Primed
+      then ("PRI"^v)
+      else v
+  in
+  match e0 with
+  | Null _ -> "null"
+  | Var (v, _) -> tmp_string_of_spec_var v
+  | IConst (i, _) -> string_of_int i
+  | FConst (f, _) -> string_of_float f
+  | AConst (f, _) -> string_of_heap_ann f
+  | Tsconst (f,_) -> Tree_shares.Ts.string_of f
+  | Add (e1, e2, _) -> (string_of_exp e1) ^ " + " ^ (string_of_exp e2)
+  | Subtract (e1, e2, _) -> (string_of_exp e1) ^ " - " ^ (string_of_exp e2)
+  | Mult (e1, e2, _) -> (wrap e1) ^ "*" ^ (wrap e2)
+  | Div (e1, e2, _) -> (wrap e1) ^ "/" ^ (wrap e2)
+  | Max (e1, e2, _) -> "max(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
+  | Min (e1, e2, _) -> "min(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
+  | TypeCast (ty, e1, _) -> "(" ^ (Globals.string_of_typ ty) ^ ") " ^ string_of_exp e1
+  | ArrayAt (sv,elst,_)->
+    let string_of_index_list
+        (elst:exp list):string=
+      List.fold_left (fun s e -> s ^"["^(string_of_exp e)^"]") "" elst
+    in
+    (string_of_spec_var sv)^(string_of_index_list elst) 
+  | _ -> "???"
+;;
+
 let print_pure = ref (fun (c:formula) -> "printing not initialized");;
 let print_p_formula = ref (fun (p:p_formula) -> "printing not initialized");;
-
-
-let get_array_name
-    (e:exp):(spec_var)=
-  match e with
-  | ArrayAt (sv,_,_) -> sv
-  | _ -> failwith "get_array_name: Invalid input"
-;;
-
-let get_array_at_index
-    (e:exp):exp=
-  match e with
-  | ArrayAt (sv,elst,_)->
-    begin
-      match elst with
-      | [index] -> index
-      | _ -> failwith "get_array_at_index: Fail to handle multi-dimension array"
-    end
-  | _ -> failwith "get_array_at_index: Invalid input"
-;;
 
 let is_same_sv
     (sv1:spec_var) (sv2:spec_var):bool=
@@ -104,25 +125,21 @@ let rec is_same_exp
   | _ -> false
 ;;
 
-let is_same_array
-    (e1:exp) (e2:exp):bool=
-  match e1,e2 with
-  | ArrayAt (sv1,elst1,_), ArrayAt (sv2,elst2,_) ->
-    if is_same_sv sv1 sv2 then true else false
-  | _,_ -> failwith "is_same_array: Invalid Input"
+(* OrderTyped of expression *)
+module OrderedExp =
+  struct
+    type t = Cpure.exp
+    let compare e1 e2 =
+      if is_same_exp e1 e2
+      then 0
+      else Pervasives.compare e1 e2
+  end
 ;;
 
-(* It may not work properly for not-constant cases because the implementation of is_same_exp *)
-let is_same_array_at
-    (e1:exp) (e2:exp):bool=
-  let is_same_exp_list
-      (elst1:exp list) (elst2:exp list):bool=
-    List.fold_left2 (fun b e1 e2 -> b && (is_same_exp e1 e2)) true elst1 elst2
-  in
-  match e1,e2 with
-  | ArrayAt (sv1,elst1,_), ArrayAt (sv2,elst2,_) ->
-    if (is_same_sv sv1 sv2) && (is_same_exp_list elst1 elst2) then true else false
-  | _,_ -> failwith "is_same_array_at: Invalid Input"
+module ExpSet = Set.Make(OrderedExp);;
+
+let string_of_expset s =
+  "{ "^(ExpSet.fold (fun item r -> ((string_of_exp item)^" "^r)) s "")^"}"
 ;;
 
 let rec remove_dupl_spec_var_list
@@ -147,8 +164,6 @@ let mk_imply
   Or (Not (ante,None,no_pos),conseq,None,no_pos)
 ;;
 
-
-
 let mk_array_new_name_sv
   sv e :spec_var =
   match sv with
@@ -156,16 +171,11 @@ let mk_array_new_name_sv
     begin
       match typ with
       | Array (atyp,_)->
-        begin
-          match primed with
-          | Primed ->
-            (*Var( SpecVar (atyp,(id)^"_"^"primed_"^(string_of_exp e),primed),no_pos)*)
-            SpecVar (atyp,(id)^"__"^(string_of_exp e),primed)
-          | _ -> SpecVar (atyp,(id)^"__"^(string_of_exp e),primed)
-        end
+        SpecVar (atyp,(id)^"__"^(plain_string_of_exp e),primed)
       | _ -> failwith "mk_array_new_name: Not array type"
     end
 ;;
+
 
 let mk_array_new_name
     (sv:spec_var) (e:exp):exp=
@@ -568,8 +578,6 @@ let can_be_simplify
 (* -------------------------------------------------------------------------------------------- *)
 (* apply index replacement to array formula using quantifiers. If fail to replace, return None. *)
 
-
-
 let rec process_quantifier
     (f:formula) :(formula)=
   let  get_array_index_replacement (* The input can be any form *)
@@ -881,15 +889,7 @@ let constantize_ex_q f=
 ;;
 
 (* ---------------------------------------------------------------------------------------------------- *)
-(* Assuming that only one point of the array is accessed *)
-(* And you need to append the result just inside the conjunction. Be careful to A\/B\/C...*)
-(* let instantiate_forall *)
-(*       (f:formula) : formula = *)
-(*   let can_be_instantiated *)
-(*         (f:formula):bool = *)
-(*     true *)
-(*   in *)
-(*   let  *)
+
 
 (* ---------------------------------------------------------------------------------------------------- *)
 
@@ -1509,34 +1509,6 @@ let split_and_combine
   then split_and_combine processor cond f
   else processor f
 ;;
-
-(* let weaken_array_in_imply_LHS *)
-(*       (processor:formula -> formula -> 'a) (ante:formula) (conseq:formula):'a = *)
-(*   let nante = new_translate_out_array_in_one_formula *)
-
-(* ------------------------------------------------------------------- *)
-(* !!!!! let extract_scheme_for_quantifier *)
-(*       (f:formula):(spec_var option) = *)
-(*   if can_be_simplify f *)
-(*   then None *)
-(*   else *)
-(*     match f with *)
-(*       | Forall (sv,f1,fl,l) -> *)
-(*             helper f1 sv *)
-(*       | _ -> *)
-
-
-(* let weaken_quantifier *)
-(*       (f:formula) (scheme: ((spec_var * (exp list)) list)):(formula * (formula option)) = *)
-(*   if can_be_simplify f *)
-(*   then (f,None) *)
-(*   else *)
-(*     match f with *)
-(*       | Forall (sv,f1,fl,l)-> *)
-(*             let  *)
-
-
-
 (* ------------------------------------------------------------------- *)
 
 module Index=
@@ -1556,12 +1528,7 @@ struct
 end
 ;;
 
-
     (* | ImmRel _ *)
-
-module IndexSet = Set.Make(Index);;
-
-
 (* Turn all the array element in f into normal variables *)
 let rec mk_array_free_formula
     (f:formula):formula=
@@ -2315,11 +2282,6 @@ let rec expand_array_variable
     | h::rest -> (expand h replace)@(helper rest replace)
     | [] -> []
   in
-  (* let replace = *)
-  (*   let env = extend_env [] [] f in *)
-  (*   let collect = List.fold_left (fun r (arr,ilst) -> ilst@r) [] env in *)
-  (*   remove_dupl is_same_exp collect *)
-  (* in *)
   let replace = collect_free_array_index f in
   (* let () = x_binfo_pp ("expand_array_variable: replace "^((pr_list string_of_exp) replace)) no_pos in *)
   remove_dupl_spec_var_list (helper svlst replace)
@@ -2338,12 +2300,7 @@ let expand_array_variable
 
 
 let expand_relation f =
-   let string_of_replace replace =
-      (* let string_of_item r = *)
-      (*   match r with *)
-      (*   | (arr,indexlst) -> *)
-      (*     "("^(string_of_spec_var arr)^","^((pr_list string_of_exp) indexlst) *)
-      (* in *)
+  let string_of_replace replace =
       (pr_list string_of_exp) replace
    in
    let find_replace index_exp replace:exp list =
@@ -2422,6 +2379,132 @@ let expand_relation f =
   then expand_relation f
   else f
 ;;
+
+let expand_array rel_def rel_f prevlst postvlst =
+  let construct_replace def_arglst raw_replace =
+    let find_pos def_arglst one =
+      let rec find_pos_helper def_arglst one pos =
+        match def_arglst with
+        | h::rest ->
+          if is_same_exp h one
+          then pos
+          else find_pos_helper rest one (pos+1)
+        | [] -> failwith "find_pos: Not found"
+      in
+      find_pos_helper def_arglst one 0
+    in
+    let rec helper raw_replace =
+      match raw_replace with
+      | (IConst c)::rest -> (Some (IConst c),None)::(helper rest)
+      | (Var v)::rest -> (None,Some (find_pos def_arglst (Var v)))::(helper rest)
+      | [] -> []
+      | _ -> failwith "construct_replace: Invalid input"
+    in
+    helper raw_replace
+  in
+  let match_replace arglst replace =
+    let match_helper one =
+      match one with
+      | (Some (IConst c),None) -> IConst c
+      | (None, Some pos) -> List.nth arglst pos
+      | _ -> failwith "match_helper: Invalid input"
+    in
+    let rec helper replace =
+      match replace with
+      | h::rest -> (match_helper h)::(helper rest)
+      | [] -> []
+    in
+    helper replace
+  in
+  let expand_array_vlst vlst raw_replace =
+    let find_replace index_exp replace:exp list =
+      (* given the name of an array, return the list of the array elements as replacement *)
+      match index_exp with
+      | Var (sv,_)->
+        begin
+          match sv with
+          | SpecVar (Array _,id,_) ->
+            List.map (fun i -> (ArrayAt (sv,[i],no_pos))) replace
+          | _ ->
+            []
+        end
+      | _ -> []
+    in
+    let replace_helper explst replace =
+      (* let () = x_tinfo_pp ("replace: "^(string_of_replace replace)) no_pos in *)
+      List.fold_left (fun nlst exp ->nlst@((find_replace exp replace)@[exp])) [] explst
+    in
+    replace_helper vlst raw_replace
+  in
+  let expand_relation f replace =
+    let rec helper f replace =
+      let helper_b ((p,ba):b_formula) replace =
+        match p with
+        | RelForm (SpecVar (_,id,_) as rel_name,explst,loc) ->
+          if id = "update_array_1d"
+          then
+           (p,ba)
+          else
+            let new_raw_replace = match_replace explst replace in
+            let new_explst = expand_array_vlst explst new_raw_replace in
+            (RelForm (rel_name,new_explst,loc),ba)
+        | _ ->
+          (p,ba)
+      in
+      match f with
+      | BForm (b,fl)->
+        BForm (helper_b b replace,fl)
+      | And (f1,f2,loc)->
+        And (helper f1 replace,helper f2 replace,loc)
+      | AndList lst->
+        AndList (List.map (fun (t,f)-> (t,drop_array_formula f)) lst)
+      | Or (f1,f2,fl,loc)->
+        Or (helper f1 replace,helper f2 replace,fl,loc)
+      | Not (f,fl,loc)->
+        Not (helper f replace,fl,loc)
+      | Forall (sv,nf,fl,loc)->
+        Forall (sv,helper nf replace,fl,loc)
+      | Exists (sv,nf,fl,loc)->
+        Exists (sv,helper nf replace,fl,loc)
+    in
+    helper f replace
+  in
+  let strip_exp_to_sv e =
+    match e with
+    | ArrayAt (arr,[index],loc) ->
+      mk_array_new_name_sv arr index
+    | Var (sv,_) ->
+      sv
+    | _ -> failwith "strip_exp_to_sv: Invalid input"
+  in
+  let raw_replace = collect_free_array_index rel_f in
+  match rel_def with
+  | BForm (((RelForm (_,def_arglst,_)),_),_)->
+    let replace = construct_replace def_arglst raw_replace in
+    let (new_pre_vlst,new_post_vlst) =
+      let new_raw_replace = match_replace def_arglst replace in
+      (List.map strip_exp_to_sv (expand_array_vlst prevlst new_raw_replace),List.map strip_exp_to_sv (expand_array_vlst postvlst new_raw_replace))
+    in
+    let new_f =
+      expand_relation rel_f replace
+    in
+    (new_pre_vlst,new_post_vlst,new_f)
+  | _ ->
+    failwith "expand_array: Invalid expression, expecting RelForm"
+;;
+let expand_array rel_def rel_f prevlst postvlst =
+  let pr (prelst,postlst,newf)=
+    "(prelst: "^((pr_list string_of_spec_var) prelst)^",postlst"^((pr_list string_of_spec_var) postlst)^",newf:"^(!print_pure newf)
+  in
+  Debug.no_4 "expand_array" !print_pure !print_pure (pr_list string_of_exp) (pr_list string_of_exp) pr expand_array rel_def rel_f prevlst postvlst
+;;
+
+let expand_array_sv_wrapper rel_def rel_f pre_svlst post_svlst =
+  let pre_vlst = List.map (fun sv -> Var (sv,no_pos)) pre_svlst in
+  let post_vlst = List.map (fun sv -> Var (sv,no_pos)) post_svlst in
+  expand_array rel_def rel_f pre_vlst post_vlst
+;;
+
 
 (* let expand_for_fixcalc f pre_vars post_vars = *)
 (*   let replace =  *)
@@ -2615,8 +2698,13 @@ let produce_aux_formula_for_exists f env =
 let translate_array_one_formula
       (f:formula):formula =
 
+  (* standarize index format *)
+  let f = standarize_one_formula f in
+  (* translate a=a' *)
   let f = translate_array_equality_to_forall f in
+  (* translate update_array_1d *)
   let f = translate_array_relation f in
+  (* Constantiate existential quantifier *)
   let f = constantize_ex_q f in
 
   let global_env = extend_env [] [] f in
@@ -2647,12 +2735,16 @@ let translate_array_one_formula f=
 let translate_array_one_formula_for_validity
       (f:formula):formula =
   let f = translate_array_equality_to_forall f in
+  let f = standarize_one_formula f in
+  let f = translate_array_equality_to_forall f in
   let f = translate_array_relation f in
   let f = constantize_ex_q f in
-  let f = process_exists_array f in
+
 
   let global_env = extend_env [] [] f in
   let f = instantiate_forall f in
+  let f = process_exists_array f in
+
   let f = produce_aux_formula_for_exists f global_env in
   let array_free_formula = mk_array_free_formula f in
   let aux_formula = produce_aux_formula global_env in
@@ -2665,7 +2757,7 @@ let translate_array_one_formula_for_validity
 ;;
 
 let translate_array_one_formula_for_validity f =
-      Debug.no_1 "#1translate_array_one_formula_for_validity" !print_pure !print_pure translate_array_one_formula_for_validity f
+  Debug.no_1 "#1translate_array_one_formula_for_validity" !print_pure !print_pure translate_array_one_formula_for_validity f
 ;;
 
 let translate_array_one_formula_for_validity f=
@@ -2693,8 +2785,6 @@ let translate_preprocess_helper
 ;;
 
 let translate_preprocess = translate_preprocess_helper true;;
-
-let translate_preprocess_keep_relation = translate_preprocess_helper false;;
 
 let translate_preprocess f =
   Debug.no_1 "translate_preprocess" !print_pure !print_pure translate_preprocess f
@@ -2827,7 +2917,13 @@ let rec translate_back_array_in_one_formula
                 IConst (const,no_pos)
               with
                 Failure "int_of_string" ->
-                Var (SpecVar (Int,index,Unprimed),no_pos)
+                let prefix_regexp = Str.regexp "PRI.*" in
+                if Str.string_match prefix_regexp index 0
+                then
+                  let sv = SpecVar (Int,(List.nth (Str.split (Str.regexp "PRI") index) 0),Primed) in
+                  Var (sv,no_pos)
+                  else
+                    Var (SpecVar (Int,index,Unprimed),no_pos)
             in
             ArrayAt (n_sv,[n_exp],no_pos)
           else
@@ -2929,11 +3025,6 @@ let translate_back_array_in_one_formula
   else f
 ;;
 (* END of translating back the array to a formula *)
-
-
-
-
-
 
 let string_of_unchanged_info (f,t,clst) =
   "("^(string_of_exp f)^","^(string_of_exp t)^","^((pr_list string_of_exp) clst)
@@ -3037,7 +3128,10 @@ let unchanged_fixpoint (rel:formula) (define:formula list) =
             else
             if id = relname
             then
-              [basic uop1 uop2]
+              let basic_result = basic uop1 uop2 in
+              let () = x_tinfo_pp ("basic_result args: "^(string_of_exp uop1)^" "^(string_of_exp uop2)) no_pos in
+              let () = x_tinfo_pp ("basic_result "^((pr_list string_of_unchanged_info) basic_result)) no_pos in
+              [basic_result]
             else
               []
           | BForm (((Eq ((Var (SpecVar (Array _,_,_),_) as v2),(Var (SpecVar (Array _,_,_),_) as v1),loc)),pa),_) ->
@@ -3112,6 +3206,215 @@ let unify_unchanged_fixpoint ulist =
     in
     [result]
 ;;
+
+
+module H_Unchanged =
+  struct
+    type t = (Cpure.exp * Cpure.exp)
+    let equal (f1,t1) (f2,t2) =
+      let result = ((is_same_exp f1 f2)&&(is_same_exp t1 t2))||((is_same_exp f1 t2)&&(is_same_exp t1 f2)) in
+      let () = x_tinfo_pp ("hash equal: f1 "^(string_of_exp f1)^" t1 "^(string_of_exp t1)^" f2 "^(string_of_exp f2)^" t2 "^(string_of_exp t2)^" "^(string_of_bool result)) no_pos in
+      result
+    let hash (f,t)= (String.length (string_of_exp f))+(String.length (string_of_exp t))
+  end
+;;
+
+module Unchanged_Htbl = Hashtbl.Make(H_Unchanged);;
+let string_of_unchanged_tbl tbl=
+  Unchanged_Htbl.fold (fun (f,t) s r -> "("^(string_of_exp f)^","^(string_of_exp t)^","^(string_of_expset s)^")"^r) tbl ""
+;;
+
+let string_of_unchanged ((f,t),s) =
+  "("^(string_of_exp f)^","^(string_of_exp t)^" "^(string_of_expset s)^")"
+;;
+
+let clean_tbl tbl arglst =
+  let merge_tbl tbl =
+    let merge_helper (f,t) item =
+      let itemlst = Unchanged_Htbl.find_all tbl (f,t) in
+      (* let () = x_binfo_pp ("itemlst length: "^(string_of_int (List.length itemlst))) no_pos in *)
+      let new_item = List.fold_left (fun r i -> let () = Unchanged_Htbl.remove tbl (f,t) in ExpSet.union i r) ExpSet.empty itemlst in
+      Unchanged_Htbl.replace tbl (f,t) new_item
+    in
+    Unchanged_Htbl.iter merge_helper tbl
+  in
+  let expand_tbl tbl =
+    let changed = ref false in
+    let expand_helper (f,t) eset =
+      Unchanged_Htbl.iter (
+        fun (nf,nt) neset ->
+          let new_key =
+            if (is_same_exp f nf && (not (is_same_exp nt t)))
+            then
+              Some (nt,t)
+            else
+            if (is_same_exp f nt && (not (is_same_exp nf t)))
+            then
+              Some (nf,t)
+            else
+            if (is_same_exp t nt && (not (is_same_exp f nf)))
+            then Some (f,nf)
+            else
+            if (is_same_exp t nf && (not (is_same_exp f nt)))
+            then Some (f,nt)
+            else
+              None
+          in
+          match new_key with
+          | None -> ()
+          | Some ((kf,kt) as key) ->
+            let () = x_tinfo_pp ("expand_tbl: Find some key!") no_pos in
+            let () = x_tinfo_pp ("key: "^(string_of_exp kf)^" "^(string_of_exp kt)) no_pos in
+            let ()=  x_tinfo_pp ("tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
+            let new_eset = ExpSet.union eset neset in
+            try
+              let exists_set = Unchanged_Htbl.find tbl key in
+              if ExpSet.equal new_eset exists_set
+              then ()
+              else
+                let () = changed := true in
+                Unchanged_Htbl.replace tbl key (ExpSet.union new_eset exists_set)
+            with
+            Not_found ->
+              let () = x_tinfo_pp ("Not_found") no_pos in
+              Unchanged_Htbl.add tbl key new_eset
+      ) tbl
+    in
+    let rec iterator () =
+      let () = Unchanged_Htbl.iter expand_helper tbl in
+      if !changed
+      then
+        let () = changed:=false in
+        iterator ()
+      else
+        ()
+    in
+    iterator ()
+  in
+  let clean_fv tbl arglst =
+    Unchanged_Htbl.iter (
+      fun (f,t) _ ->
+        if not ((List.exists (fun x -> is_same_exp x f) arglst)&&(List.exists (fun x -> is_same_exp x t) arglst))
+        then Unchanged_Htbl.remove tbl (f,t)
+        else ()
+    ) tbl
+  in
+  (
+    merge_tbl tbl;
+    expand_tbl tbl;
+    clean_fv tbl arglst;
+    merge_tbl tbl
+  )
+;;
+
+
+let substitute_unchanged (arglst,infolst) explst =
+  let subs = List.combine arglst explst in
+  let subs_helper ((f,t),s) subs =
+    let nf =
+      try
+        let (_,nf) = List.find (fun (a,s)->is_same_exp a f) subs in
+        nf
+      with
+      | Not_found -> f
+    in
+    let nt =
+      try
+        let (_,nt) = List.find (fun (a,s)->is_same_exp a t) subs in
+        nt
+      with
+      | Not_found -> t
+    in
+    let ns =
+      ExpSet.fold
+        (fun item r ->
+          let nitem =
+            try
+              let (_,nitem) = List.find (fun (a,s) -> is_same_exp a item) subs in
+              nitem
+            with
+            | Not_found ->
+              item
+          in
+          ExpSet.add nitem r) s ExpSet.empty
+    in
+    ((nf,nt),ns)
+  in
+  List.map (fun x -> subs_helper x subs) infolst
+;;
+
+let substitute_unchanged (arglst,infolst) explst :((Cpure.exp * Cpure.exp) * ExpSet.t) list=
+  let pr1 (arglst,infolst)=
+    "["^((pr_list string_of_exp) arglst)^"]::["^((pr_list string_of_unchanged) infolst)^"]"
+  in
+  let basic = (arglst,infolst) in
+  Debug.no_2 "substitute_unchanged" pr1 (pr_list string_of_exp) (pr_list string_of_unchanged) substitute_unchanged basic explst
+;;
+
+let new_unchanged_fixpoint relname arglst definelst basic=
+  let rec helper define =
+    match define with
+    | BForm (((RelForm (SpecVar (_,id,_),explist,loc)),pa),_) ->
+      if id = "update_array_1d"
+      then
+        (* Only one disjunction *)
+        [ ((List.nth explist 0,List.nth explist 1),ExpSet.singleton (List.nth explist 3)) ]
+      else
+      if id = relname
+      then
+        substitute_unchanged basic explist
+      else
+        []
+    | BForm (((Eq ((Var (SpecVar (Array _,_,_),_) as v2),(Var (SpecVar (Array _,_,_),_) as v1),loc)),pa),_) ->
+      [ ((v1,v2),ExpSet.empty) ]
+    | And (f1,f2,loc) ->
+      (helper f1)@(helper f2)
+    | _ -> []
+  in
+  let list = List.flatten (List.map helper definelst) in
+  let tbl = Unchanged_Htbl.create 100000 in
+  let () = List.iter (fun ((f,t),s) -> Unchanged_Htbl.add tbl (f,t) s) list in
+  let () = x_tinfo_pp ("clean_tbl tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
+  let () = x_tinfo_pp ("clean_tbl arglst: "^((pr_list string_of_exp) arglst)) no_pos in
+  let () = clean_tbl tbl arglst in
+  let () = x_tinfo_pp ("clean_tbl new tbl: "^(string_of_unchanged_tbl tbl)) no_pos in
+  Unchanged_Htbl.fold (fun (f,t) item r-> (((f,t),item)::r)) tbl []
+;;
+
+let is_same_unchanged ((f1,t1),s1) ((f2,t2),s2) =
+  (((is_same_exp f1 f2)&&(is_same_exp t1 t2))||((is_same_exp f1 t2)&&(is_same_exp t1 f2))) && (ExpSet.equal s1 s2)
+;;
+
+let new_get_unchanged_fixpoint rel definelst =
+  let (relname,arglst) =
+    match rel with
+    | BForm (((RelForm (SpecVar (_,id,_),explist,loc)),pa),_) ->
+      (id,explist)
+    | _ -> failwith "get_unchanged_fixpoint: Invalid rel"
+  in
+  let basic = ref [] in
+  let rec iterator () =
+    let new_basic = new_unchanged_fixpoint relname arglst definelst (arglst,!basic) in
+    if same_unordered_list is_same_unchanged new_basic !basic
+    then !basic
+    else
+      let () = basic := new_basic in
+      iterator ()
+  in
+  let wrapper ((f,t),s) =
+    let slst = ExpSet.fold (fun item r -> item::r) s [] in
+    (f,t,slst)
+  in
+  let unchange_result = iterator () in
+  let unchange_result_new = List.map wrapper unchange_result in
+  let () = global_unchanged_info:= unchange_result_new in
+  unchange_result
+;;
+
+let new_get_unchanged_fixpoint rel definelst =
+  Debug.no_2 "new_get_unchanged_fixpoint" !print_pure (pr_list !print_pure) (pr_list string_of_unchanged) new_get_unchanged_fixpoint rel definelst
+;;
+
 
 let get_unchanged_fixpoint rel define =
   let (relname,arg1,arg2) =

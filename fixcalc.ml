@@ -848,11 +848,11 @@ let rec is_not_rec pf = match pf with
 let substitute_args_x a_rel = match a_rel with
   | CP.BForm ((CP.RelForm (SpecVar (_,id,_) as name,args,o1),o2),o3) ->
     let new_args, subs =
-      let prog =
-        match !Cast.global_prog with
-        | Some p -> p
-        | None -> failwith "substitute_args: Initialize globas_prog first!"
-      in
+      let prog = !Cast.global_prog in
+      (*   match !Cast.global_prog with *)
+      (*   | Some p -> p *)
+      (*   | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!") *)
+      (* in *)
       let typed_args = 
         try
           List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 
@@ -965,9 +965,10 @@ let compute_def (rel_fml, pf, no) ante_vars =
   (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
-  let pre_vars = Trans_arr.expand_array_variable pf pre_vars in
-  let post_vars = Trans_arr.expand_array_variable pf post_vars in
-  let pf = Trans_arr.expand_relation pf in
+  let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
+  (* let pre_vars = Trans_arr.expand_array_variable pf pre_vars in *)
+  (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
+  (* let pf = Trans_arr.expand_relation pf in *)
   begin
     print_endline_quiet "\n*************************************";
     print_endline_quiet "****** Before putting into fixcalc*******";
@@ -978,7 +979,9 @@ let compute_def (rel_fml, pf, no) ante_vars =
     print_endline_quiet "*************************************";
   end;
   try
-    let rhs = fixcalc_of_pure_formula pf in
+    let (pf2,subs) = x_add_1 CP.extract_mult pf in
+    let pf = x_add_1 CP.drop_nonlinear_formula pf in
+    let rhs = x_add_1 fixcalc_of_pure_formula pf in
     let input_fixcalc =
       name ^ ":={["
       ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> ["
@@ -986,7 +989,8 @@ let compute_def (rel_fml, pf, no) ante_vars =
       ^ rhs ^ "\n};"
     in input_fixcalc
   with e ->
-    report_error ~exc:(Some e) no_pos "compute_def:Error in translating the input for fixcalc"
+    let () = y_binfo_pp ("Toan : need to remove * in pf for fixcalc") in
+    report_error ~exc:(Some e) no_pos (x_loc^"compute_def:Error in translating the input for fixcalc")
 ;;
 
 let compute_def (rel_fml, pf, no) ante_vars =
@@ -1326,11 +1330,11 @@ let re_order_para rels pfs ante_vars =
 
 let arrange_para_new input_pairs ante_vars =
   let rels,pfs = List.split input_pairs in
-  let () = Debug.binfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.binfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = x_tinfo_hp (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = x_tinfo_hp (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   let rels,pfs = x_add re_order_para rels pfs ante_vars in
-  let () = Debug.binfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.binfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = x_tinfo_hp (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = x_tinfo_hp (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   try List.combine rels pfs
   with _ -> report_error no_pos "Error in re_order_para"
 

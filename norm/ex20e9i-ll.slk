@@ -1,0 +1,33 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+/*
+lemma_infer [H,@classic] "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
+print residue.
+*/
+
+lemma_unsafe "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
+
+
+infer [H,@classic] yy::node<_, zz> & self = yy |- (exists v, q: self::node<v, q> * H(q, zz)).
+print residue.
+
+/*
+infer [H,H2,@classic] self::node<_, p> * H2(p,self,yy) * yy::node<_, zz> |- self::node<_, q> * H(q, zz).
+print residue.
+*/
+
+/*
+infer [H,H2,@classic] 
+  yy::node<_, zz> & self = yy or 
+  self::node<v, p> * H2(p,self,yy) * yy::node<_, zz>
+  |- self::node<_, q> * H(q, zz).
+print residue.
+*/

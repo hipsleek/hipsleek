@@ -1,0 +1,47 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+
+/*
+lemma_infer [H,@classic] H(self,y)*y::node<_,self> 
+  -> self::node<_,q>*H(q,self).
+print residue.
+*/
+
+infer [H,@classic] H(self,y) |- self::node<_,q>.
+print residue.
+
+/*
+# ex20e9f.slk
+
+lemma_infer [H,@classic] H(self,y)*y::node<_,self> 
+  -> self::node<_,q>*H(q,self).
+print residue.
+
+# Need to work manually on the steps of this lemma
+  synthesis
+
+Starting Omega.../usr/local/bin/oc
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true --> H(self_lem_13,self_lem_13@NI)&true; 
+                  H(self_lem_13,y_33@NI)&
+                   true |#| y_33::node<Anon_32,self_lem_13>@M&true --> emp&
+                   self_lem_13=y_33]
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(y_33,self_lem_13) ==>  UnmatchedRHSData]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_43(q_42,y_33@NI,self_lem_13@NI)&
+                  true --> H(q_42,self_lem_13@NI)&true; 
+                 H(self_lem_13,y_33@NI) * y_33::node<Anon_32,self_lem_13>@M&
+                  true --> self_lem_13::node<Anon_41,q_42>@M * 
+                           HP_43(q_42,y_33@NI,self_lem_13@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold  ==>  InferUnfold ]]
+
+
+
+*/
