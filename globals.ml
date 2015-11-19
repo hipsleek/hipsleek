@@ -840,7 +840,7 @@ let this = "this"
 let sess_send_pred = "Send"
 let sess_recv_pred = "Recv"
 let sess_op_sv_id = "op"                (* send/receive operation spec var ? *)
-let sess_io_sv_id = this (* "io"   *)   (* I/O spec var name *)
+let sess_io_sv_id = (* self *)this (* "io"   *)   (* I/O spec var name *)
 let sees_seq = ";;"
 (* ===================== session stuff ====================== *)
 

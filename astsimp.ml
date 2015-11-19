@@ -2404,7 +2404,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       else (Named data_name,tlist) in
     let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
     let orig_tl = ann_typs@tlist in
-    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (orig_tl) false
+    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) view_form (* vdef.I.view_formula *) (orig_tl) false
         true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
     let data_name = match self_ty with
