@@ -764,7 +764,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
     let () = x_tinfo_hp (add_str "lhs_consume_heap" !print_h_formula) lhs_consume_heap no_pos in
     let () = x_tinfo_hp (add_str "lhs_formula" !CF.print_formula) lhs_formula no_pos in
     let inf_pure = estate.es_infer_pure_thus in
-    let () = x_binfo_hp (add_str "inf_pure_thus" (!CP.print_formula)) inf_pure no_pos in
+    let () = x_tinfo_hp (add_str "inf_pure_thus" (!CP.print_formula)) inf_pure no_pos in
     (*
       Unfolded state losed x::ll<nnn> or nnn>=0 info.
       !!! lhs_consume_heap: emp
@@ -1264,10 +1264,10 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               (*              else*)
               let not_rel_vars = List.filter 
                   (fun x -> not (CP.is_rel_var x || CP.is_hp_rel_var x)) iv_orig in
-              let () = y_binfo_hp (add_str "not_rel_vars" !CP.print_svl) not_rel_vars in
-              let () = y_binfo_hp (add_str "vs_rel" !CP.print_svl) vs_rel in
-              let () = y_binfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs in
-              let () = y_binfo_hp (add_str "iv_orig" !CP.print_svl) iv_orig in
+              let () = y_tinfo_hp (add_str "not_rel_vars" !CP.print_svl) not_rel_vars in
+              let () = y_tinfo_hp (add_str "vs_rel" !CP.print_svl) vs_rel in
+              let () = y_tinfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs in
+              let () = y_tinfo_hp (add_str "iv_orig" !CP.print_svl) iv_orig in
               let () = y_tinfo_hp (add_str "rhs_xpure_orig" !MCP.print_mix_formula) rhs_xpure_orig in
               let () = y_tinfo_hp (add_str "rhs_xpure" !CP.print_formula) rhs_xpure in
               let rhs_lst = CP.split_conjunctions rhs_xpure in
@@ -1524,7 +1524,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     let () =  x_dinfo_hp (add_str "New estate 1: " !print_entail_state) new_estate pos in
                     if rel_ass == [] 
                     then 
-                      let () = y_binfo_hp (add_str "inferred_pure_opt" (pr_opt !CP.print_formula)) inferred_pure_opt in
+                      let () = y_tinfo_hp (add_str "inferred_pure_opt" (pr_opt !CP.print_formula)) inferred_pure_opt in
                       (Some (new_estate, CP.mkTrue pos),inferred_pure_opt,[]) 
                     else
                       let () = if !Globals.old_infer_collect then 
@@ -1535,7 +1535,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                           end in
                       (* let () = new_estate.es_infer_rel # push_list rel_ass in *)
                       (* let () = x_winfo_pp "To add this to new_estate.es_infer_rel" pos in *)
-                      (* let () = x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in *)
+                      (* let () = x_tinfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos in *)
                       (* let () = infer_rel_stk # push_list rel_ass in *)
                       (* let () = Log.current_infer_rel_stk # push_list rel_ass in *)
                       (None,inferred_pure_opt,[(new_estate,rel_ass,false)])
@@ -1812,16 +1812,30 @@ let infer_pure_m i unk_heaps estate  lhs_heap_xpure1 lhs_xpure lhs_xpure0 lhs_wo
     (fun _ _ _ _ -> infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos) 
     estate lhs_xpure lhs_xpure0 rhs_xpure
 
+let consolidate_infer_pure r1 r2 = match r1 with
+  | Some (es,p1) -> 
+     (match r2 with
+      | None -> r1,r2
+      | Some p2 -> 
+        let () = y_tinfo_hp (add_str "Consolidating infer_pure" !CP.print_formula) p2 in
+        Some(es,CP.mkAnd p1 p2 no_pos),None)
+  | None -> r1,r2
+
 let infer_pure_top_level_aux estate unk_heaps lhs_heap_xpure1 
     ante1 ante0 m_lhs split_conseq pos =
-  let () = DD.ninfo_hprint (add_str "ante1 1" !print_mix_formula) ante1 pos  in
-  let () = DD.ninfo_hprint (add_str "m_lhs 1" !print_mix_formula) m_lhs pos  in
+  let () = x_tinfo_hp (add_str "ante1 1" !print_mix_formula) ante1 pos  in
+  let () = x_tinfo_hp (add_str "m_lhs 1" !print_mix_formula) m_lhs pos  in
   let r1,r2,r3 = x_add infer_pure_m 1 unk_heaps estate lhs_heap_xpure1 ante1 ante0 m_lhs (*m_lhs=lhs_wo_heap*) split_conseq pos in
+  let r1,r2 = consolidate_infer_pure r1 r2 in
   let res = (match r1,r3 with
       | None,[] -> None,r2,[],[],false,ante1
       | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,ante1
-      | Some (es,p),[] -> Some p,r2,[],[es],true,ante1
-      | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,ante1
+      | Some (es,p),[] -> 
+             let () = y_tinfo_hp (add_str "infer_pure1" !CP.print_formula) p in
+             Some p,r2,[],[es],true,ante1
+      | Some (es,p),[(h1,h2,h3)] -> 
+             let () = y_tinfo_hp (add_str "infer_pure1" !CP.print_formula) p in
+             Some p,r2,h2,[es],true,ante1
       | _,_ -> report_error pos "Length of relational assumption list > 1"
     )
   in [res]
@@ -1843,6 +1857,7 @@ let infer_pure_top_level estate unk_heaps lhs_heap_xpure1
                          let rel_vars = List.filter is_rel_typ (CP.fv p) in
                          CP.intersect estate.es_infer_vars_rel rel_vars <> []
                        ) split1 in
+    let () = y_tinfo_pp "need split" in
     if not(need_split) then
       infer_pure_top_level_aux estate unk_heaps  lhs_heap_xpure1 
         ante1 ante0 m_lhs split_conseq pos
@@ -1860,11 +1875,16 @@ let infer_pure_top_level estate unk_heaps lhs_heap_xpure1
                  | Base b -> CF.mkBase_simp b.formula_base_heap lhs_xp
                  | _ -> report_error pos "infer_pure_m: Not supported")} 
           in
+          let r1,r2 = consolidate_infer_pure r1 r2 in
           (match r1,r3 with 
            | None,[] -> None,r2,[],[estate_f],false,lhs_xp
            | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,lhs_xp
-           | Some(es,p),[] -> Some p,r2,[],[es],true,lhs_xp
-           | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,lhs_xp
+           | Some(es,p),[] -> 
+             let () = y_tinfo_hp (add_str "infer_pure1" !CP.print_formula) p in
+             Some p,r2,[],[es],true,lhs_xp
+           | Some(es,p),[(h1,h2,h3)] -> 
+             let () = y_tinfo_hp (add_str "infer_pure1" !CP.print_formula) p in
+             Some p,r2,h2,[es],true,lhs_xp
            | _,_ -> report_error pos "Length of relational assumption list > 1"
           )) split_mix1
       in res
@@ -1873,7 +1893,7 @@ let infer_pure_top_level estate unk_heaps lhs_heap_xpure1
     ante1 ante0 m_lhs split_conseq pos = 
   let pr = !print_mix_formula in
   let pr1 = (pr_option !print_pure_f) in
-  let pr2 = pr_list (fun (a,b,_,d,e,f) -> pr_triple pr1 pr1 pr (a,b,f)) in
+  let pr2 = pr_list (fun (a,b,_,d,e,f) -> pr_quad pr1 pr1 (pr_list Cprinter.string_of_entail_state) pr (a,b,d,f)) in
   Debug.no_1 "infer_pure_top_level" pr pr2 
     (fun _ -> infer_pure_top_level estate unk_heaps  lhs_heap_xpure1 
         ante1 ante0 m_lhs split_conseq pos) ante0
@@ -3264,7 +3284,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
 (*         (\* postpone until heap_entail_after_sat *\) *)
 (*         if !Globals.old_infer_hp_collect then  *)
 (*           begin *)
-(*             x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hp_rel_list pos; *)
+(*             x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) hp_rel_list pos; *)
 (*             let () = rel_ass_stk # push_list hp_rel_list in *)
 (*             let () = Log.current_hprel_ass_stk # push_list (hp_rel_list) in *)
 (*             () *)
@@ -3919,7 +3939,7 @@ let get_eqset puref =
 (*                 (\* postpone until heap_entail_after_sat? *\) *)
 (*                 if !Globals.old_infer_hp_collect then  *)
 (*                   begin *)
-(*                     x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short))  hprel_ass pos; *)
+(*                     x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short))  hprel_ass pos; *)
 (*                     let () = rel_ass_stk # push_list hprel_ass in *)
 (*                     let () = Log.current_hprel_ass_stk # push_list hprel_ass in *)
 (*                     () *)

@@ -2543,7 +2543,16 @@ om_gist inp2 : 0+1=a & q_43=z & z=null & y!=null & x!=null & y!=x
 om_gist@29 EXIT: (flted_13_52=null | z!=null)
 
 ===================================================================
-# ex64s5.slk 
+# ex64s5.slk (OK)
+
+# what is first argument of Some(true) for?
+
+(==solver.ml#8957==)
+infer_pure_top_level@3@2@1
+infer_pure_top_level inp1 : true
+infer_pure_top_level@3 EXIT:[(Some( true),Some( yyyy=6),[  H(fld5)&fld5=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H(fld5) |#|  --> emp&fld5=null]
+ es_gen_impl_vars(E): []
 
 # Why is infer pure missing?
 
@@ -2563,6 +2572,12 @@ q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
  <1>H(fld5)&x!=null & fld5=null & z=q_34 & inf_ann_39=@M & inf_p_40=null&{FLOW,(20,21)=__norm#E}[]
  inferred hprel: [H(fld5)&true --> emp&fld5=null]
 ===================================================================
+# ex64s5.slk 
+
+ dre "infer_pure_top" --trace-log-num 1 
+
+
+# logging lost when --dd-callers-all 
 ===================================================================
 ===================================================================
 ===================================================================

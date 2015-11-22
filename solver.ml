@@ -8786,7 +8786,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
       (* MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix rhs_p) eqs rel_args) *)
     else lhs_p
   in
-  let stk_inf_pure = new Gen.stack in (* of xpure *)
+  let stk_inf_pure = new Gen.stack_pr "stk_inf_pure" (!CP.print_formula) (==) in (* of xpure *)
   let stk_rel_ass = new Gen.stack_pr "stk-rel-ass" (add_str "(stk_rel_ass)" CP.string_of_infer_rel) (==) in (* of rel_ass *)
   let stk_estate = new Gen.stack in (* of estate *)
   (* let () = print_string ("lhs_p2 : " ^ (Cprinter.string_of_mix_formula lhs_p2) ^ "\n\n") in *)
@@ -8807,11 +8807,11 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
        stk_estate # push h1)
     | Some (es,p),[] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (2)" pos in
-      (stk_inf_pure # push p;
+      (stk_inf_pure # push_list_loc x_loc [p];
        stk_estate # push es)
     | Some (es,p),[(h1,h2,_)] ->
       let () = Debug.ninfo_pprint "WARNING : pushing stk_estate (3)" pos in
-      (stk_inf_pure # push p;
+      (stk_inf_pure # push_list_loc x_loc [p];
        stk_rel_ass # push_list h2;
        stk_estate # push es)
     | _,_ -> report_error pos "Length of relational assumption list > 1"
@@ -8987,9 +8987,11 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                 match ip1 with
                 | Some p -> 
                   begin
+                    let () = y_tinfo_pp "here.." in
                     match relass with
                     | [] -> 
-                      (let () = if not (CP.isConstTrue p) then stk_inf_pure # push p in
+                      let () = y_tinfo_hp (add_str "ip1" !CP.print_formula) p in
+                      (let () = if not (CP.isConstTrue p) then stk_inf_pure # push_list_loc x_loc [p] in
                        let () = 
                          if entail_states = [] then 
                            report_error pos "Expecting a non-empty list of entail states"
@@ -9000,7 +9002,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                        in
                        (true,[],None))
                     | _ ->
-                      (stk_inf_pure # push p;
+                      (stk_inf_pure # push_list_loc x_loc [p];
                        stk_rel_ass # push_list_pr x_loc relass;
                        let () = 
                          if entail_states = [] then
@@ -9037,7 +9039,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                       begin
                         match relass with
                         | [] -> 
-                          stk_inf_pure # push pf;
+                          stk_inf_pure # push_list_loc x_loc [pf];
                           let new_pf = MCP.mix_of_pure pf in
                           let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                           let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
@@ -9047,7 +9049,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                           fst (x_add imply_mix_formula 2 split_ante0 split_ante1 split_conseq imp_no memset)
                         | _ ->
                           (* TODO: to check the implication of new ante *)
-                          stk_inf_pure # push pf;
+                          stk_inf_pure # push_list_loc x_loc [pf];
                           stk_rel_ass # push_list relass;
                           let () = 
                             if entail_states = [] then 
@@ -9110,7 +9112,8 @@ type: bool *
       (* ========== end - Immutability normalization ======== *)
       (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
       let flag = stk_estate # is_empty in
-      let () = y_binfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
+      let () = y_tinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
+      let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
       if not(flag) || !Globals.adhoc_flag_5 then
         let pr = Cprinter.string_of_entail_state_short in
         let () = Debug.ninfo_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
@@ -9129,9 +9132,11 @@ type: bool *
         let ctx1 = match ctx1 with
           | Ctx es -> Ctx {es with es_orig_ante = orig_ante}
           | _ -> ctx1 in
-        let () = x_tinfo_hp (add_str "ctx1 1" Cprinter.string_of_context) ctx1 no_pos in
+        let inf_p = stk_inf_pure # get_stk in
+        let () = y_tinfo_hp (add_str "inf_p" (pr_list !CP.print_formula)) inf_p in
         let ctx1 = x_add add_infer_pure_to_ctx (stk_inf_pure # get_stk_and_reset) ctx1 in
         let ctx1 = x_add add_infer_rel_to_ctx (stk_rel_ass # get_stk_and_reset) ctx1 in
+        let () = x_tinfo_hp (add_str "ctx1 1" Cprinter.string_of_context) ctx1 no_pos in
         (SuccCtx[ctx1],UnsatAnte)
       else
         let estate = Gen.unsome_safe !smart_unsat_estate estate in
@@ -9150,6 +9155,8 @@ type: bool *
         let inf_relass = stk_rel_ass # get_stk_and_reset in
         (* let inf_heap_ass = stk_rel_ass # get_stk in *)
         let estate = add_infer_pure_to_estate inf_p estate in
+        let () = y_tinfo_hp (add_str "inf_pure" (pr_list !CP.print_formula)) inf_p in
+        let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
         let estate = x_add add_infer_rel_to_estate inf_relass estate in
         let to_add_rel_ass = 
           (match !Globals.pre_residue_lvl with
