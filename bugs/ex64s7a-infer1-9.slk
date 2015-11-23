@@ -38,8 +38,21 @@ infer [R1] x::ll<n> * y::ll<m> & R1(n) & R1(m)
   |- x::node<_,null>.
 print residue.
 expect Valid.
+
+HeapPred H(int x).
+
+//(6)
+infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
+  |- x::node<_,null>.
+print residue.
+expect Valid.
+
 /*
 # ex64s7a.slk
+
+# -pnum 6
+
+
 
 # -pnum 4
 

@@ -1,0 +1,29 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0.
+
+
+infer[@classic] x::arrI<v> * base::arr_seg_sorted<i+1,n,m> & x=base+i & i>=0
+   |- base::arr_seg_sorted<j,n,u>.
+expect Fail.
+
+
+infer[@classic] x::arrI<v> * base::arr_seg_sorted<i+1,n,m> & x=base+i & i>=0
+& v<=m   |- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+
+infer[@classic] x::arrI<m> * base::arr_seg_sorted<i+1,n,min(v,m2)> & x=base+i & i>=0 & m<=m2
+& v>m   |- base::arr_seg_sorted<j,n,min(v,m)>.
+print residue.
+expect Valid.
+
