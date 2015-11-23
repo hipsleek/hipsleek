@@ -1,0 +1,52 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,d)], xxx=self+i & n>=i & d=n-i & i>=0).
+
+//(1)
+checkentail base::arr_seg<0,1> * base::arr_seg<1,2> |- false.
+expect Fail.
+
+//(2)
+infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+expect Valid.
+
+//(3)
+checkentail yy::arrI<_> * yy::arrI<_> |- false.
+expect Valid.
+
+
+/*
+# ex7a2.slk
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# should be Valid
+
+ Entail (1) : Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+-pnum 3
+
+(==cvutil.ml#1758==)
+h_formula_2_mem@145@144
+h_formula_2_mem inp1 : yy::arrI<Anon_12>@M * yy::arrI<Anon_13>@M
+h_formula_2_mem inp2 : true
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@145 EXIT: [[yy,yy]]
+
+-dre "xpure\|.*_mem" -pnum 2 --trace-log-num 145
+(==cvutil.ml#1758==)
+h_formula_2_mem@145@144
+h_formula_2_mem inp1 : base::arr_seg<flted_15_95,flted_15_94>@M * 
+ base::arr_seg<flted_15_93,flted_15_92>@M
+h_formula_2_mem inp2 : flted_15_95=0 & flted_15_94=1 & flted_15_93=0 & flted_15_92=1
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@145 EXIT: []
+
+
+*/
+

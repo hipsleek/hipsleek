@@ -2885,19 +2885,24 @@ let process_nondet_check (v: ident) (mf: meta_formula) =
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
-  let num_id = "\nEntail "^(string_of_int nn) in
-  try
-    let valid, rs, _(*sel_hps*) =
-      wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
-    print_entail_result [] (*sel_hps*) valid rs num_id false
-  with ex ->
-    let exs = (Printexc.to_string ex) in
-    let _ = print_exception_result exs (*sel_hps*) num_id in
-    let _ = if !VarGen.trace_failure then
-        (print_string "caught\n"; print_backtrace_quiet ()) else () in
-    (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
-    (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
-    false
+  let pnum = !Globals.sleek_num_to_verify in
+  let () = Globals.sleek_print_residue := true in
+  if pnum>0 & pnum!=nn then 
+    (CF.residues:=None; Globals.sleek_print_residue := false; false)
+  else 
+    let num_id = "\nEntail "^(string_of_int nn) in
+    try
+      let valid, rs, _(*sel_hps*) =
+        wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
+      print_entail_result [] (*sel_hps*) valid rs num_id false
+    with ex ->
+      let exs = (Printexc.to_string ex) in
+      let _ = print_exception_result exs (*sel_hps*) num_id in
+      let _ = if !VarGen.trace_failure then
+          (print_string "caught\n"; print_backtrace_quiet ()) else () in
+      (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
+      (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
+      false
 (* with e -> print_exc num_id *)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
