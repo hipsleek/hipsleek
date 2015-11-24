@@ -38,8 +38,29 @@ infer [R1] x::ll<n> * y::ll<m> & R1(n) & R1(m)
   |- x::node<_,null>.
 print residue.
 expect Valid.
+
+HeapPred H(int x).
+
+//(6)
+infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
+  |- x::node<_,null>.
+print residue.
+expect Valid.
+
 /*
 # ex64s7a.slk
+
+# -pnum 6
+
+infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
+  |- x::node<_,null>.
+
+# How about HeapPred?
+
+ inferred rel: [RELASS [R1]: ( R1(m)) -->  0>m]
+ inferred hprel: [H(n@NI)&true --> emp&n<=1]
+
+------------------------------------------------------------------
 
 # -pnum 4
 

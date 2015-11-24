@@ -813,7 +813,8 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                           let lhs_conjs = List.filter (fun y -> 
                               CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f) in
                           let rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
-                          if CP.remove_dups_svl rel_ids = rel_ids then
+                          (* see ex64s7a.slk *)
+                          if true (* CP.remove_dups_svl rel_ids = rel_ids *) then
                             [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
                           else []
                         ) (CP.list_of_conjs neg_lhs)) in

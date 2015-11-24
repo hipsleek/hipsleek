@@ -15793,9 +15793,18 @@ let extr_eqn (f:formula)  =
   let _ = helper f in
   stk # get_stk
 
+let rec get_base e =
+  match e with
+  | Add(IConst _,e2,_) | Add(e2, IConst _,_) -> get_base e2
+  | Add((Var(v,_) as e1),e2,_) | Add(e2,(Var(v,_) as e1),_) 
+    -> if is_ptr_arith (typ_of_sv v) then e1 else get_base e2
+  | _ -> e
+
 let get_ptr e1 e2 =
   (* let () = y_tinfo_hp (add_str "get_ptr(e1)" !print_exp) e1 in *)
   (* let () = y_tinfo_hp (add_str "get_ptr(e2)" !print_exp) e2 in *)
+  let e1 = get_base e1 in
+  let e2 = get_base e2 in
   match e1,e2 with
   | Var(v1,_),Var(v2,_) -> 
     if is_ptr_arith (typ_of_sv v1) then Some v1
