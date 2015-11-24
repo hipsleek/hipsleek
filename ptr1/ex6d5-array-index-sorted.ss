@@ -46,7 +46,7 @@ void insert(arrI base,int i,int m,int v)
   }
 {
   if ((i+1)==m) { 
-    assume false;
+    //assume false;
     upd_arr(base,i,v);
   } else {
     int k = get_arr(base,i+1);
@@ -55,7 +55,7 @@ void insert(arrI base,int i,int m,int v)
         upd_arr(base,i,v);
     }
     else {
-      assume false;
+      //assume false;
       upd_arr(base,i,k);
       insert(base,i+1,m,v);
     }
