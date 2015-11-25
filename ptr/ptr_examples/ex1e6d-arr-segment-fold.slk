@@ -75,6 +75,10 @@ expect Valid.
 [[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
 */
 
+checkentail x::arr_seg<i,n> & i+2<n & y=x+1 & z=y+1 |- y::arr<_> * z::arr<_>.
+print residue.
+expect Valid.
+
 checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
    |- [n] x::arr_seg<i,n> & i<n.
 print residue.
