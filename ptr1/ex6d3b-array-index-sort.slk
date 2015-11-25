@@ -73,7 +73,26 @@ infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1
 .
 print residue.
 
+//(9)
+infer[@classic] x::arrI<v> * x1::arrI<m>*base::arr_seg_sorted<i+2,n,m2> & x1=base+i+1
+       & i+1>=0 & i+1!=n & m<=m2
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+// why false?
 
+infer[@classic] x::arrI<v> * x1::arrI<m> & x1=base+i+1 & i+1=n-1
+       & i+1>=0 & i+1!=n 
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+// why false?
 
 /*
 # ex6d3b --pnum 4

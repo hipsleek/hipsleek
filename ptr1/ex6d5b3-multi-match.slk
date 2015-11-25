@@ -16,12 +16,32 @@ pred arr_seg<i,n> == case{
 
 
 infer [] bbb::arrI<_> * a::arrI<_> 
+  & a=(base:arrI)+i+1 & bbb=base+i & i>=0 |- base::arr_seg<j,n>.
+print residue.
+expect Valid.
+
+infer []  a::arrI<_> * bbb::arrI<_> 
   & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<j,n>.
 print residue.
 expect Valid.
 
 infer [] bbb::arrI<_> * a::arrI<_> 
   & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+infer [] bbb::arrI<_> * a::arrI<_> 
+  & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+infer [] a::arrI<_> 
+  & a=(base:arrI)+i & i>=0 |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+infer [] a::arrI<_> 
+  & a=(base:arrI)+i & i>=0 |- base::arr_seg<j,n>.
 print residue.
 expect Valid.
 

@@ -39,10 +39,10 @@ int get_arr_ptr(arrI a)
 void insert(arrI base,int i,int m,int v)
  requires a::arrI<_> & i>=0 & a=base+i
  case {
-   i+1=m -> ensures  base::arr_seg_sorted<i,m,v>;
+   i+1=m -> ensures_exact  base::arr_seg_sorted<i,m,v>;
    i+1!=m  -> 
         requires base::arr_seg_sorted<i+1,m,mi>  
-        ensures  base::arr_seg_sorted<i,m,min(v,mi)>;
+        ensures_exact  base::arr_seg_sorted<i,m,min(v,mi)>;
   }
 {
   if ((i+1)==m) { 
@@ -51,7 +51,7 @@ void insert(arrI base,int i,int m,int v)
   } else {
     int k = get_arr(base,i+1);
     if (v<=k) {
-      //assume false;
+        //assume false;
         upd_arr(base,i,v);
     }
     else {
