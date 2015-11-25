@@ -1,0 +1,34 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+lemma_safe self::arr_seg<i,n> & i<m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+  /*
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+  */
+
+/*
+# ex6e3c.slk
+
+lemma_safe self::arr_seg<i,n> & i<m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+# Is <-> provable?
+
+Took a long time but proved <-- but not -->
+
+# Why <-> can prove:
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+
+
+*/
+

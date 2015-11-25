@@ -11,9 +11,8 @@ arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
        & i>=0 & i<n-1 & mi<=m2
   inv n>i & i>=0;
 
-
-arr_seg_max<i,n,max_value> == x::arrI<cur> & x=self+i & i=n-1 & i>=0 & cur<=max_value
-  or x::arrI<cur> * self::arr_seg_max<i+1,n,max_value> & x=self+i & i>=0 & i<n-1 & cur<=max_value
+arr_seg_max<i,n,maxv> == x::arrI<maxv> & x=self+i & i=n-1 & i>=0 //& cur<=max_value
+  or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2> & x=self+i & i>=0 & i<n-1 & maxv=max(cur,maxv2)
   inv n>i & i>=0;
 
 void upd_arr(arrI base, int i, int v)
@@ -29,7 +28,7 @@ int get_arr(arrI base, int i)
   ensures res=v;
 
 int get_max(arrI base,int i,int m)
-  requires base::arr_seg<i,m>
+ requires base::arr_seg<i,m> 
  case{
   i>=m -> ensures emp & res=-1;
   i<m -> ensures base::arr_seg_max<i,m,res>;
@@ -41,8 +40,8 @@ int get_max(arrI base,int i,int m)
         return get_arr(base,i);
       }
     else{
-      int tmp = get_max(base,i+1,m);
       int cur = get_arr(base,i);
+      int tmp = get_max(base,i+1,m);
       if(tmp<cur)
         {
           return cur;
