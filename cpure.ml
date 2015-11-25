@@ -37,7 +37,6 @@ let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 
 let get_unprime (SpecVar(_,id,_)) = id
 
-
 let view_args_map:(string,spec_var list) Hashtbl.t 
   = Hashtbl.create 10
 (* immutability annotations *)
@@ -5885,27 +5884,33 @@ end;;
 (*   Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
 module SV_INTV =
 struct 
-  type t = spec_var * spec_var option
+  type intv = (exp * exp) (* start and length *)
+  type t = spec_var * intv (* spec_var *) option
   let zero = (mk_zero,None)
   (* "_" to denote null value *)
   let is_zero x = x==zero
   let eq (x1,_) (x2,_) = eq_spec_var x1 x2
   let compare (x1,_) (x2,_) = compare_spec_var x1 x2
   let mk_addr x = (x,None)
-  let get_interval (x,y) = match y with
+  (* TODO : to change this function *)
+  let get_interval (x,y) = 
+    match y with
     | None -> None
-    | Some id -> Some(x,id)
+    | Some exp -> Some(x,exp)
+                   (* Some(x,id) *)
   let string_of (sv,sv_opt) = 
     let pr = string_of_spec_var in
+    let pr_e = !print_exp in
     match sv_opt with
     | None ->  pr sv
-    | Some sv2 -> pr_pair pr pr (sv,sv2)
+    | Some sv2 -> pr_pair pr (pr_pair pr_e pr_e) (sv,sv2)
   let subst sst (v,opt) =
+    let repl_e (e1,e2) = (e_apply_subs sst e1,e_apply_subs sst e2) in
     let repl x =
       try
         snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
       with _ -> x in
-    (repl v,map_opt repl opt)
+    (repl v,map_opt repl_e opt)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     let lst = List.filter (fun (_,p) -> p==None) lst in
@@ -15719,6 +15724,9 @@ let mk_eq_vars v1 v2 =
   let v2 = mkVar v2 no_pos in
   mk_bform (Eq (v1, v2, no_pos))
 
+let mk_eq_exp v1 v2 = 
+  mk_bform (Eq (v1, v2, no_pos))
+
 let mk_max a a1 a2 = 
   let a = mkVar a no_pos in
   let a1 = mkVar a1 no_pos in
@@ -15744,6 +15752,11 @@ let mk_inc lhs rhs =
 
 let mk_geq v i = 
   let lhs = mkVar v no_pos in
+  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let mk_exp_geq lhs i = 
+  (* let lhs = mkVar v no_pos in *)
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
   mk_bform e
 

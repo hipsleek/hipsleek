@@ -10,7 +10,7 @@ infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1
 print residue.
 
 infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=i+base+1
- |- [f] x_154::arrI<mi_166>@M & x_154=base+f & 0<=f & f+1=n_1  
+ |- [f,n_1] x_154::arrI<mi_166>@M & x_154=base+f & 0<=f & f+1=n_1  
 // & flted_10_150+1=n_149  &  mi_166=m2_137
 .
 print residue.

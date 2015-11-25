@@ -2595,7 +2595,11 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let rr = List.map (fun (idl,pf) ->
               let svl = List.map (fun (c,c_o) -> 
                   let nc = conv_id c in
-                  let nc_o = map_opt conv_id c_o in
+                  let nc_o = map_opt (fun (e1,e2) -> 
+                      let ne1 = x_add trans_pure_exp e1 n_tl in
+                      let ne2 = x_add trans_pure_exp e2 n_tl in
+                      (ne1,ne2)
+                    ) c_o in
                   (nc,nc_o)
                   ) idl in
               (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
@@ -2605,6 +2609,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             ) lst in
           Some rr
       in
+      (* let conv_baga_inv baga_inv =  *)
+      (*   let () = y_winfo_pp "converting baga_inv" in *)
+      (*   None in *)
       let vbi_i = vdef.I.view_baga_inv in
       let vbi_o = vdef.I.view_baga_over_inv in
       let vbi_u = vdef.I.view_baga_under_inv in
@@ -2612,7 +2619,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let vbc_o = conv_baga_inv vbi_o in
       let vbc_u = conv_baga_inv vbi_u in
       (* let vbi = vbc_i in *)
-      let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf pos in
+      let (vboi,vbui,user_inv,user_x_inv) = 
+          x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf pos in
       let () = y_tinfo_hp (add_str "user_inv" !MCP.print_mix_formula) user_inv in
       let () = y_tinfo_hp (add_str "user_x_inv" !MCP.print_mix_formula) user_x_inv in
       (* let unfold_once baga = *)

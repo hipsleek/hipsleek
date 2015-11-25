@@ -1000,7 +1000,9 @@ let string_of_view_decl v =
     | None -> ""
     | Some regex_ids -> string_of_regex_id_star_list regex_ids
   in
-  let pr_baga = pr_list (pr_pair pr_id (pr_opt pr_id)) in
+  (* let pr_baga = pr_list (pr_pair pr_id (pr_opt pr_id)) in *)
+  let pr_exp = string_of_formula_exp in
+  let pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
   v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
   (string_of_struc_formula v.view_formula) 
   ^ "\ninv " ^ (string_of_pure_formula v.view_invariant) 

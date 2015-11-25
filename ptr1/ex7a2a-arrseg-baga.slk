@@ -8,17 +8,24 @@ pred arr_seg<i,n> == i=n & i>=0
   inv BG([(self+i,n-i)], n>=i & i>=0).
 
 //(1)
-checkentail base::arr_seg<0,1> * base::arr_seg<1,2> |- false.
-expect Fail.
-
-//(2)
 infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
 expect Valid.
 
+//(2)
+infer[] base::arr_seg<0,0> * base::arr_seg<0,1> |- false.
+expect Fail.
+
 //(3)
-checkentail yy::arrI<_> * yy::arrI<_> |- false.
+infer[] base::arr_seg<0,1> * base::arr_seg<1,2> |- false.
+expect Fail.
+
+//(4)
+infer[] base::arr_seg<u,v> * base::arr_seg<u,w> & u<v & v<=w |- false.
 expect Valid.
 
+//(6)
+infer[] base::arr_seg<u,v> * base::arr_seg<u,w> & u<v  |- false.
+expect Fail.
 
 /*
 # ex7a2.slk

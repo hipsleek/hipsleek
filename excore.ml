@@ -14,6 +14,8 @@ open Cpure
 open VarGen
 (* open Cprinter *)
 
+module CP = Cpure
+
 module UnCa=
    struct
      let unsat_cache = Hashtbl.create 200
@@ -43,6 +45,32 @@ module UnCa=
            let _ = miss_cache := !miss_cache + 1 in
            res
    end;;
+
+let h_2_mem_obj = object (self)
+  val mutable state = CP.mkTrue no_pos
+  val mutable list = []
+  method init =
+    let () = state <- CP.mkTrue no_pos in
+    let () = list <- [] in
+    ()
+  method add_pure p = 
+    let () = state <- CP.mkAnd state p no_pos in
+    ()
+  method get_id v e = 
+    let eq_v = try
+        fst(List.find (fun (_,e2) ->
+            let rhs = (CP.mk_eq_exp e e2) in
+            let () = y_tinfo_hp (add_str "lhs" !CP.print_formula) state in 
+            let () = y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs in 
+            !CP.tp_imply state rhs
+          ) list)
+      with _ ->  
+        let x = CP.fresh_spec_var v in
+        let () = list <- (x,e)::list in
+        x
+    in eq_v
+
+end;;
 
 let is_sat_raw = Mcpure.is_sat_raw
 (* ref(fun (c:Mcpure.mix_formula) -> true) *)
@@ -469,7 +497,7 @@ sig
   val mk_elem_from_sv : spec_var -> t
   val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
   val conv_var : t list -> spec_var list
-  val get_interval : t -> (spec_var * spec_var) option
+  val get_interval : t -> (spec_var * (Cpure.exp * Cpure.exp)) option
   val from_var : spec_var list -> t list
   (* val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list *)
   (* val from_var_pairs : (spec_var * spec_var) list -> (t*t) list *)
@@ -640,7 +668,8 @@ module EPURE =
       res
 
     let conv_intv_disj (efpd1:epure_disj)  =
-      let proc (baga,f) = 
+      let proc (baga,f) =
+        let () = h_2_mem_obj # add_pure f in
         let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
         let lst2 = List.map (fun e -> 
             let v =  Elt.get_interval e in
@@ -648,10 +677,12 @@ module EPURE =
             | Some (id,d) -> (id,d)
             | _  -> failwith x_tbi
           ) lst2 in
-        let lst2 = List.filter (fun (_,d) -> 
-            let rhs = Cpure.mk_geq d 1 in
+        let lst2 = List.filter (fun (id,(_,d)) -> 
+            let rhs = Cpure.mk_exp_geq d 1 in
             !Cpure.tp_imply f rhs) lst2 in
-        let lst2 = List.concat (List.map (fun (id,_) -> Elt.from_var [id]) lst2) in
+        let lst2 = List.concat (List.map (fun (id,(e_ind,_)) -> 
+            let nid = h_2_mem_obj # get_id id e_ind in
+            Elt.from_var [nid]) lst2) in
         (lst1@lst2,f)
       in
       List.map proc efpd1 

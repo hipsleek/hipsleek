@@ -15,6 +15,15 @@ expect Valid.
 
 # why fail here?
 
+(==context.ml#3545==)
+choose_context@1
+choose_context inp1 :LHS node: a::arrI<Anon_12>@M
+choose_context inp2 :RHS node: base::arr_seg<flted_10_62,n>@M
+choose_context inp3 :LHS pure: 0<=i & bbb=1+base+i & a=i+base
+choose_context inp4 :RHS pure: flted_10_62=1+i
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[]
+
 Entail (2) : Fail.(may) cause:do_unmatched_rhs : base::arr_seg<flted_15_104,n>@M(may)
 
 */

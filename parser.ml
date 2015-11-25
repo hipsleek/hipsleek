@@ -313,6 +313,12 @@ let string_of_pure_double p =
   | Pure_c c -> "Pure_c: " ^ (Iprinter.string_of_formula_exp c) 
   | Pure_t t -> "Pure_t: " ^ (Iprinter.string_of_formula_exp (fst t)) 
   
+let get_pure_exp p pos : P.exp =
+  match p with
+  | Pure_c c -> c
+  | Pure_t t -> (fst t) 
+  | Pure_f f -> report_error pos "pure expression unexpected here"
+
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
   | _ -> report_error (get_pos 1) "with 1 expected pure_form, found cexp"
@@ -1390,13 +1396,14 @@ baga_formula:
 
 baga_inv:
     [[`BG; `OPAREN; `OSQUARE; il = LIST0 cid_or_pair SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN ->
-        let il = List.map (fun ((name,p),s) -> 
+        let il = List.map (fun ((name,p),s)-> 
           let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in
-          match s with
-          | Some(n2,p) -> 
-            let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in
-            (name,Some(n2))
-          | None -> (name,None)
+          (name,s)
+          (* match s with *)
+          (* | Some(n2,p) ->  *)
+          (*   let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in *)
+          (*   (name,Some(n2)) *)
+          (* | None -> (name,None) *)
         ) il in
         (il,p)]];
 
@@ -1579,7 +1586,10 @@ cid:
 
 cid_or_pair:
   [[
-    `OPAREN; v1 = cid; `COMMA;  v2=cid; `CPAREN -> (v1,Some v2)
+    `OPAREN; e1=cexp_w ; `COMMA;  e2= cexp_w; `CPAREN -> 
+    let pe1 = get_pure_exp e1 no_pos in
+    let pe2 = get_pure_exp e2 no_pos in
+    (("_",Unprimed),(Some(pe1,pe2)))
   | i = cid -> (i,None)
   ]];
 
