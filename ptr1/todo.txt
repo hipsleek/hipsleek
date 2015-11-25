@@ -453,6 +453,20 @@ h_formula_2_mem@145 EXIT: []
 Entail (4) : Fail.(may) cause:base case unfold failed
 
 ===============================================================
+# ex7a2d.slk --pcp --print-type
+
+pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg2<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv n>=iii & iii>=0 & self!=null.
+
+# why does adding self!=null caused view_data_name and actual_root information to be
+  lost?
+
+  view_data_name: 
+  type_of_self: 
+  None
+  actual_root: 
+
 ===============================================================
 ===============================================================
 ===============================================================
