@@ -753,7 +753,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                   h_formula_view_remaining_branches = lbl_lst;
                   h_formula_view_perm = perm;
                   h_formula_view_pos = pos}) ->
-      x_tinfo_hp (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
+      x_binfo_hp (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
       let ba = x_add look_up_view_baga prog c p vs in
       let vdef = look_up_view_def pos prog.prog_view_decls c in
       let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in

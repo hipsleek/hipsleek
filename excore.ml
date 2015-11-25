@@ -469,6 +469,7 @@ sig
   val mk_elem_from_sv : spec_var -> t
   val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
   val conv_var : t list -> spec_var list
+  val get_interval : t -> (spec_var * spec_var) option
   val from_var : spec_var list -> t list
   (* val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list *)
   (* val from_var_pairs : (spec_var * spec_var) list -> (t*t) list *)
@@ -637,6 +638,23 @@ module EPURE =
     let mk_star efp1 efp2 =
       let res = mk_star_wrap efp1 efp2 in
       res
+
+    let conv_intv_disj (efpd1:epure_disj)  =
+      let proc (baga,f) = 
+        let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
+        let lst2 = List.map (fun e -> 
+            let v =  Elt.get_interval e in
+            match v with 
+            | Some (id,d) -> (id,d)
+            | _  -> failwith x_tbi
+          ) lst2 in
+        let lst2 = List.filter (fun (_,d) -> 
+            let rhs = Cpure.mk_geq d 1 in
+            !Cpure.tp_imply f rhs) lst2 in
+        let lst2 = List.concat (List.map (fun (id,_) -> Elt.from_var [id]) lst2) in
+        (lst1@lst2,f)
+      in
+      List.map proc efpd1 
 
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
       let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in

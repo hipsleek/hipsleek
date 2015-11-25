@@ -1693,6 +1693,7 @@ let add_epure pf lst =
   let () = x_tinfo_hp (add_str "add_epure(1) = " ( !print_ef_pure_disj)) lst no_pos in
   let lst = Excore.EPureI.mk_star_disj ep lst in
   let () = x_tinfo_hp (add_str "add_epure(2) = " ( !print_ef_pure_disj)) lst no_pos in
+  let lst = Excore.EPureI.conv_intv_disj lst in
   let r = x_add Excore.EPureI.elim_unsat_disj false lst in
   let () = x_tinfo_hp (add_str "add_epure (res) = " ( !print_ef_pure_disj)) r no_pos in
   r

@@ -5840,6 +5840,8 @@ struct
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     if enum_flag then baga_enum lst
     else baga_conv ~neq_flag:neq_flag lst
+
+  let get_interval x = None
   let conv_var x = x
   let from_var x = x
   (* let conv_var_pairs x = x *)
@@ -5889,6 +5891,10 @@ struct
   let is_zero x = x==zero
   let eq (x1,_) (x2,_) = eq_spec_var x1 x2
   let compare (x1,_) (x2,_) = compare_spec_var x1 x2
+  let mk_addr x = (x,None)
+  let get_interval (x,y) = match y with
+    | None -> None
+    | Some id -> Some(x,id)
   let string_of (sv,sv_opt) = 
     let pr = string_of_spec_var in
     match sv_opt with
@@ -5909,6 +5915,8 @@ struct
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in
     List.map fst lst
+  let part_var lst = 
+    List.partition (fun (_,o) -> o==None) lst
   let from_var lst = 
     List.map (fun v -> (v,None)) lst
   (* let conv_var_pairs lst =  *)
@@ -5928,10 +5936,10 @@ struct
       else failwith "detected false"
 
   let merge_baga (b1:t list) (b2:t list) : t list =
-    let b1 = conv_var (* List.map fst *) b1 in
-    let b2 = conv_var (* List.map fst *) b2 in
-    let b3 = merge_baga b1 b2 in
-    List.map (fun v -> (v,None)) b3
+    let b1,r1 = part_var (* List.map fst *) b1 in
+    let b2,r2 = part_var (* List.map fst *) b2 in
+    let b3 = merge_baga (List.map fst b1) (List.map fst b2) in
+    (List.map (fun v -> (v,None)) b3)@(r1@r2)
 
   let rec hull_baga b1 b2 =
     match b1,b2 with
