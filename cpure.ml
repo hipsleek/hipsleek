@@ -5847,6 +5847,8 @@ struct
   (* let from_var_pairs x = x *)
   let mk_elem_from_sv x = x
   (* throws exception when duplicate detected during merge *)
+  let norm_baga (state:formula) (b:t list) = 
+    b
   let rec merge_baga b1 b2 =
     match b1,b2 with
     | [],b | b,[] -> b
@@ -5964,6 +5966,9 @@ struct
   let mk_elem_from_sv x = (x,None)
   (* let mk_elem x = mk_elem_from_sv (x,None) *)
   (* throws exception when duplicate detected during merge *)
+  let norm_baga (state:formula) (b:t list) = 
+    let () = y_binfo_pp x_tbi in
+    b
   let rec merge_baga b1 b2 =
     match b1,b2 with
     | [],b | b,[] -> b

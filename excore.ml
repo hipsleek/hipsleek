@@ -548,6 +548,8 @@ sig
   val hull_baga : t list -> t list -> t list
   val is_eq_baga : t list -> t list -> bool
   val mk_elem_from_sv : spec_var -> t
+  val norm_baga : CP.formula -> t list -> t list
+      (* may throw an exception if false detected *)
   val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
   val conv_var : t list -> spec_var list
   val from_var : spec_var list -> t list

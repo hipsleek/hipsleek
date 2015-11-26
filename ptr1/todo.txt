@@ -548,6 +548,12 @@ expect Valid.
    a>c --> (a,d1) > (c,d2)
    a=c --> (a,d1) = (c,d2)
 
+  (* throws exception when duplicate detected during merge *)
+  let norm_baga (state:formula) (b:t list) = 
+    let () = y_binfo_pp x_tbi in
+    b
+  let rec merge_baga b1 b2 =
+
 ===============================================================
 ===============================================================
 ===============================================================
