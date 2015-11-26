@@ -1709,8 +1709,9 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   (* let ba = vdef.view_baga in *)
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   (* Excore.ef_pure_disj option *)
-  (* let ba_oinv = vdef.view_baga_x_over_inv in *)
-  let ba_oinv = vdef.view_baga_over_inv in
+  (* below requires fix-point over baga to be bettern than beofre *)
+  let ba_oinv = vdef.view_baga_x_over_inv in
+  (* let ba_oinv = vdef.view_baga_over_inv in *)
   let ba_exists = vdef.view_inv_exists_vars in
   match ba_oinv with
   | None -> []

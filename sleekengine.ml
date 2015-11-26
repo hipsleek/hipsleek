@@ -858,8 +858,8 @@ let convert_data_and_pred_to_cast_x () =
   let () = x_tinfo_hp (add_str "view_decls (cviews)" (pr_list (fun v -> v.Cast.view_name))) (cviews) no_pos in
   (* (* The below code is moved to SleekUtils.norm_cview_decls *)                                             *)
   (* let old_view_decls = !cprog.Cast.prog_view_decls in                                                      *)
-  (* let () = y_binfo_hp (add_str "old_view_decls" (pr_list Cprinter.string_of_view_decl)) old_view_decls in  *)
-  (* let () = y_binfo_hp (add_str "cviews" (pr_list Cprinter.string_of_view_decl)) cviews in                  *)
+  (* let () = y_tinfo_hp (add_str "old_view_decls" (pr_list Cprinter.string_of_view_decl)) old_view_decls in  *)
+  (* let () = y_tinfo_hp (add_str "cviews" (pr_list Cprinter.string_of_view_decl)) cviews in                  *)
   (* let _ = !cprog.Cast.prog_view_decls <- old_view_decls@cviews in                                          *)
   (* let cviews1 =                                                                                            *)
   (*   if !Globals.norm_extract then                                                                          *)
@@ -1185,7 +1185,7 @@ let run_simplify (iante0 : meta_formula) =
   let (mf1,_,_) as rr = Cvutil.xpure_heap_sym 11 !cprog heap_f p1 0 in
   let mf1 = MCP.pure_of_mix mf1 in
   let pr_r = fun (p1,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4) in 
-  let () = x_binfo_hp (add_str "simplify:xpure_heap" pr_r) rr no_pos in
+  let () = x_tinfo_hp (add_str "simplify:xpure_heap" pr_r) rr no_pos in
 
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.simplify_tp pf in
@@ -1380,7 +1380,7 @@ let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_form
   let pr1 = pr_list pr_id in
   let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   let nn = (sleek_proof_counter#get) in
-  let () = y_binfo_hp (add_str "inside run_infer_one_pass" string_of_int) nn in
+  let () = y_tinfo_hp (add_str "inside run_infer_one_pass" string_of_int) nn in
   let f x = wrap_proving_kind (PK_Sleek_Entail nn) (run_infer_one_pass itype ivars iante0) x in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr (pr_pair pr_2 pr_none) (fun _ _ _ -> f iconseq0) ivars iante0 iconseq0
 
@@ -1851,7 +1851,7 @@ let process_rel_infer pre_rels post_rels =
   let post_rels = List.map (fun id -> CP.mk_typed_spec_var (RelT []) id) post_rels in
   let _ = Debug.ninfo_hprint (add_str "reldefns" (pr_list (pr_pair pr pr))) reldefns no_pos in
   let post_rel_constrs, pre_rel_constrs = List.partition (fun (_,x) -> Pi.is_post_rel x post_rels) reldefns in
-  let _ = x_binfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
+  let _ = x_tinfo_hp (add_str "post_rel_constrs" (pr_list (pr_pair pr pr))) post_rel_constrs no_pos in
   (* let post_rel_constrs = post_rel_constrs@pre_rel_constrs in *)
   (* let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
   (* let r = Fixpoint.rel_fixpoint_wrapper pre_invs0 [] pre_rel_constrs post_rel_constrs pre_rel_ids post_rels proc_spec 1 in *)
@@ -1965,7 +1965,7 @@ validation: validation)  =
 
   let pr_validate_outcome b nn res_f_str = 
     let str1 =  "\nExpect_Infer "^nn^": " in
-    (* let () = x_binfo_hp (add_str "str" pr_id) str1 no_pos in *)
+    (* let () = x_tinfo_hp (add_str "str" pr_id) str1 no_pos in *)
     (* let () = x_binfo_hp (add_str "res_f_str" pr_id) res_f_str no_pos in *)
     let str2 = string_of_vres (match vr with | VR_Valid -> VR_Fail 0 | _ -> VR_Valid) in
     let str_vr = string_of_vres vr in

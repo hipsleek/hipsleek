@@ -1948,14 +1948,22 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          (* if disj user-supplied inv; just use it *)
          x_dinfo_hp (add_str "xform1" !CP.print_formula) xform1 pos;
          x_dinfo_hp (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+         (* type: Excore.EPureI.epure list option -> *)
+         (*   Cformula.formula -> Excore.EPureI.epure list option *)
          let compute_unfold_baga baga_over body =
            match baga_over with
            | None -> None
            | Some lst ->
-             if List.length lst == 1 then
+             if Excore.EPureI.ef_has_intv_baga_disj lst then baga_over
+             else if List.length lst == 1 then
                let unf_baga = x_add Cvutil.xpure_symbolic_baga prog body in
                Some (Expure.simplify unf_baga)
              else Some (Expure.simplify lst) (* baga_over *)
+         in
+         let compute_unfold_baga baga_over body =
+           let pr = pr_opt Excore.EPureI.string_of_disj in
+           let pr_f = !CF.print_formula in
+           Debug.no_2 "compute_unfold_baga" pr pr_f pr compute_unfold_baga baga_over body
          in
          if do_not_compute_flag then
            vdef.C.view_xpure_flag <- true
@@ -1963,7 +1971,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
            begin
              let baga_over = vdef.C.view_baga_over_inv in
              let body = C.formula_of_unstruc_view_f vdef in
-             let u_b = compute_unfold_baga baga_over body in
+             let u_b = x_add compute_unfold_baga baga_over body in
              (* let xform2 = match u_b with *)
              (*   | None -> xform2 *)
              (*   | Some disj -> Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj disj) *)

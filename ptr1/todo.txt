@@ -489,17 +489,40 @@ can we have expect Fail for baga inv..
 !!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
 !!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
 ===============================================================
-# ex7a3a.slk
+# ex7a3a.slk (to improve)
+
+# -dre "compute_unfold_baga"
 
 # unfolded loses precision ..
 
 baga over inv: [([(_,( self+i, n-i))], i<=n & 0<=i)]
   baga over inv (unfolded): [([], 0<=i & i<=n)]
+
+(==astsimp.ml#1973==)
+compute_unfold_baga@1
+compute_unfold_baga inp1 :Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+compute_unfold_baga inp2 : (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+ or (* lbl: *){2}->(exists n_14,flted_7_13,xxx,
+    Anon_11: (* lbl: *){2}->xxx::arrI<Anon_11>@M * 
+                            self::arr_seg<flted_7_13,n_14>@M&
+    flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n&{FLOW,(1,26)=__flow#E}[])
+ 
+compute_unfold_baga@1 EXIT:Some([([], 0<=i & i<=n)])
+
+# tmp fix below which do not unfold for those with intervals.
+
+(==astsimp.ml#1974==)
+compute_unfold_baga@1
+compute_unfold_baga inp1 :Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+compute_unfold_baga inp2 : (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+ or (* lbl: *){2}->(exists n_14,flted_7_13,xxx,
+    Anon_11: (* lbl: *){2}->xxx::arrI<Anon_11>@M * 
+                            self::arr_seg<flted_7_13,n_14>@M&
+    flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n&{FLOW,(1,26)=__flow#E}[])
+ 
+compute_unfold_baga@1 EXIT:Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+
 ===============================================================
-  baga-test-2.slk({E10#Valid},{E15#Valid},{E3#Valid},{E6#Valid},{E7#Valid})
-  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
-  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
-  lemmas/dseg1.slk({L1#Valid}).
 ===============================================================
 ===============================================================
 ===============================================================

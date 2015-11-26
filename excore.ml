@@ -88,10 +88,10 @@ let wrap_h_2_mem loc f x =
   (* let () = print_endline_quiet ("init h_2_mem "^loc) in *)
   try
     let r = f x in
-    let () = if self # notempty then y_binfo_hp (add_str "\nh_2_mem" pr_id) (self # string_of) in
+    let () = if self # notempty then self # logging ((add_str "\nh_2_mem" pr_id) (self # string_of)) in
     r
   with e ->
-    let () = if self # notempty then y_binfo_hp (add_str "\nh_2_mem" pr_id) (self # string_of) in
+    let () = if self # notempty then self # logging ((add_str "\nh_2_mem" pr_id) (self # string_of)) in
     raise e
 
 let is_sat_raw = Mcpure.is_sat_raw
@@ -640,6 +640,7 @@ module EPURE =
       (*     ) ((mkEqVarInt (List.hd baga) (\* !i *\)1 no_pos),1) (List.tl baga) *)
       (*   in f *)
 
+
     (* ef_conv_enum :  ef_pure -> formula *)
     (* provide an enumeration that can be used by ante *)
     (* ([a,a,b],pure)  --> a=1 & a=2 & a=3 & pure *)
@@ -666,6 +667,12 @@ module EPURE =
 
     let ef_conv_enum_disj disj : formula =
       ef_conv_disj_ho ef_conv_enum disj
+
+    let ef_has_intv_baga ((baga,f)) =
+      List.exists (fun b -> (Elt.get_interval b)!=None) baga
+
+    let ef_has_intv_baga_disj disj =
+      List.exists ef_has_intv_baga disj
 
     (* code has bug for ex25m5d.slk *)
     let ef_conv_enum_disj disj : formula =
