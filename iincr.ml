@@ -179,7 +179,7 @@ let rec htrue2emp hf= match hf with
   | CF.HTrue -> CF.HEmp
   | _ -> hf
 
-let add_pre_shape_relation_x prog proc spec=
+let add_pre_shape_relation ?(trans_size_to_extn=false) prog proc spec=
   let pos = no_pos in
   let rec recf sf rel_name rel_vars=match sf with
     | CF.EList el -> CF.EList (List.map (fun (lbl,sf) ->
@@ -215,6 +215,9 @@ let add_pre_shape_relation_x prog proc spec=
       let () = x_tinfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ proc.Cast.proc_name ^ ": ") pr_id)
         hp_pre_decl.Cast.hp_name no_pos in
       let pre_inf_sv = (CP.SpecVar (HpT, hp_pre_decl.Cast.hp_name, Unprimed)) in
+      let () = if trans_size_to_extn then 
+          ei.CF.formula_inf_obj # add_infer_extn_lst rel_name ["size"]
+      in
       let () = DD.ninfo_hprint (add_str "rel_args" Cprinter.string_of_typed_spec_var_list) rel_vars no_pos in
       let new_cont = recf ei.CF.formula_inf_continuation rel_name rel_vars in
       let () = prog.Cast.prog_hp_decls <- prog.Cast.prog_hp_decls@[hp_pre_decl] in
@@ -231,9 +234,10 @@ let add_pre_shape_relation_x prog proc spec=
   in
   recf spec "" []
 
-let add_pre_shape_relation prog proc sf =
+let add_pre_shape_relation ?(trans_size_to_extn=false) prog proc sf =
   let pr = Cprinter.string_of_struc_formula in
-  Debug.no_1 "add_pre_shape_relation" pr pr (fun _ -> add_pre_shape_relation_x prog proc sf) sf
+  Debug.no_1 "add_pre_shape_relation" pr pr 
+    (fun _ -> add_pre_shape_relation ~trans_size_to_extn:trans_size_to_extn prog proc sf) sf
 
 
 let add_post_shape_relation_x prog proc spec=

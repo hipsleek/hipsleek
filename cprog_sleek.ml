@@ -77,19 +77,43 @@ let update_view_decl_iprog_g update_scc upd_flag vdef =
         let () = y_tinfo_hp (add_str "lst(pairs)" (pr_list (pr_pair pr_id pr_id))) lst in
         HipUtil.view_scc_obj # replace x_loc n fvars2
       end;
-    if upd_flag then Iast.update_view_decl iprog vdef
+    if upd_flag then x_add Iast.update_view_decl iprog vdef
   with _ -> failwith (x_loc^" iprog not found")
 
+let update_view_decl_iprog_g update_scc upd_flag vdef = 
+  let pr = fun v -> v.Iast.view_name in
+  let prr = fun () -> "" in
+  Debug.no_1 "update_view_decl_iprog_g" pr prr
+    (fun _ -> update_view_decl_iprog_g update_scc upd_flag vdef) vdef
+
 let update_view_decl_iprog ?(update_scc=false) vdef =
-  let upd_flag=true in
-  update_view_decl_iprog_g update_scc upd_flag vdef
+  let upd_flag = true in
+  x_add update_view_decl_iprog_g update_scc upd_flag vdef
+
+let update_view_decl_iprog ?(update_scc=false) vdef = 
+  let pr = fun v -> v.Iast.view_name in
+  let prr = fun () -> "" in
+  Debug.no_1 "update_view_decl_iprog" pr prr
+    (fun _ -> update_view_decl_iprog ~update_scc:update_scc vdef) vdef
 
 let update_view_decl_scc_only vdef =
-  let upd_flag=false in
-  update_view_decl_iprog_g true upd_flag (Rev_ast.rev_trans_view_decl vdef)
+  let upd_flag = false in
+  x_add update_view_decl_iprog_g true upd_flag (Rev_ast.rev_trans_view_decl vdef)
+
+let update_view_decl_scc_only vdef =
+  let pr = fun v -> v.Cast.view_name in
+  let prr = fun () -> "" in
+  Debug.no_1 "update_view_decl_scc_only" pr prr update_view_decl_scc_only vdef
 
 let update_view_decl_both ?(update_scc=false) vdef = 
   let () = update_view_decl_cprog vdef in
   let () = update_view_decl_iprog ~update_scc:update_scc  
       (Rev_ast.rev_trans_view_decl vdef) in
   ()
+
+let update_view_decl_both ?(update_scc=false) vdef = 
+  let pr = fun v -> v.Cast.view_name in
+  let prr = fun () -> "" in
+  Debug.no_1 "update_view_decl_both" pr prr
+    (fun _ -> update_view_decl_both ~update_scc:update_scc vdef) vdef
+

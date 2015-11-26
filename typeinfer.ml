@@ -573,11 +573,13 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.Add (a1, a2, pos) ->
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
       if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
-        let (n_tl2,_) = x_add must_unify_expect t1 et n_tl2 pos in
+        let () = y_tinfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
+        let (n_tl2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
         (n_tlist2,t1)
       else if is_possible_node_typ t2 && !Globals.ptr_arith_flag then
-        let (n_tl2,_) = x_add must_unify_expect t2 et n_tl2 pos in
+        let () = y_tinfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
+        let (n_tl2,_) = x_add must_unify_expect t2 new_et2 n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
         (n_tlist2,t2)
       else 
@@ -1619,7 +1621,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
               Err.report_error
                 {
                   Err.error_loc = pos;
-                  Err.error_text = v_name ^ " is neither 2 a data nor view name";
+                  Err.error_text = x_loc ^ v_name ^ " is neither 2 a data nor view name";
                 }))
       in n_tl
   | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)
@@ -1743,7 +1745,8 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
         (* let vbc_o = conv_baga_inv vbi_o in *)
         (* let vbc_u = conv_baga_inv vbi_u in *)
         let new_pf = MCP.pure_of_mix vd.C.view_user_inv in
-        let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos in
+        let (vboi,vbui,user_inv,user_x_inv) = failwith x_tbi
+            (* x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos *) in
         let () = vd.C.view_raw_base_case <- rbc in
         let () = vd.C.view_user_inv <- user_inv in
         let () = vd.C.view_x_formula <- user_x_inv in

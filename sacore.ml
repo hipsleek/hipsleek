@@ -4329,7 +4329,7 @@ let simplify_trim_unsat_view_branches cprog def=
         (* unfold step already does trim. this only works for base case. *)
         let unfolded_vptrs = CF.get_vptrs unfolded_f in
         let nf = if unfolded_vptrs = [] then CF.simplify_pure_f unfolded_f else f
-        (* let goods,unsat_list = x_add_1 Solver.find_unsat cprog unfolded_f in *)
+        (* let goods,unsat_list = x_add Solver.find_unsat cprog unfolded_f in *)
         (* if unsat_list = [] then (f,og) *)
         (* else *)
         (*   let nf = match goods with *)

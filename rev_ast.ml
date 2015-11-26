@@ -325,9 +325,17 @@ and rev_trans_struc_base_formula (b: CF.struc_base_formula): IF.struc_base_formu
 and rev_trans_spec_var_primed (sv: CP.spec_var): (ident * primed) =
   (CP.name_of_spec_var sv, CP.primed_of_spec_var sv)
 
+let rev_sv sv = CP.name_of_spec_var sv
+
+let rev_intv (sv,ssv_opt) = (rev_sv sv,
+                             let () = y_binfo_pp x_tbi in
+                             None (* map_opt rev_sv ssv_opt *))
+
 let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
   let rev_trans_baga_inv baga_inv =
-    map_opt (List.map ((fun (svl, f) -> (List.map CP.name_of_spec_var svl, rev_trans_pure f)))) baga_inv
+    map_opt (List.map ((fun (svl, f) -> (
+          List.map (fun sv -> rev_intv sv) svl, 
+          rev_trans_pure f)))) baga_inv
   in
   { I.view_name = v.C.view_name;
     I.view_vars = List.map CP.name_of_spec_var v.C.view_vars;
@@ -345,10 +353,13 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_derv_from = None;
     I.view_derv_extns = [];
     I.view_derv_info = []; (* TODO *)
-    I.view_type_of_self = v.C.view_type_of_self;
+    I.view_type_of_self = 
+      v.C.view_type_of_self;
     I.view_kind = v.C.view_kind;
     I.view_prop_extns = List.map (fun sv -> (CP.type_of_spec_var sv, CP.name_of_spec_var sv)) v.C.view_prop_extns;
-    I.view_invariant = rev_trans_mix v.C.view_user_inv;
+    I.view_invariant = 
+      (let () = y_binfo_pp "XXX" in
+      rev_trans_mix v.C.view_user_inv);
     I.view_baga_inv = rev_trans_baga_inv v.C.view_baga_inv;
     I.view_baga_over_inv = rev_trans_baga_inv v.C.view_baga_over_inv;
     I.view_baga_under_inv = rev_trans_baga_inv v.C.view_baga_under_inv;

@@ -16,7 +16,7 @@ void upd_arr(arrI a, int v)
 
 arrI arr_inc(arrI a)
   requires true //a::arrI<_>@L
-  ensures res=a+1;
+  ensures  res=a+1;
 
 int get_arr(arrI a)
   requires a::arrI<v>@L

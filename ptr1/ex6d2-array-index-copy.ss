@@ -19,7 +19,7 @@ arr_seg_map<i,n,M> == i=n & i>=0
   inv n>=i & i>=0;
 
 arr_seg_map2<i,n,M> == i=n & i>=0
-  or x::arrI<v>*self::arr_seg_map2<i+1,n,M> & x=self+i & i>=0 & M[i]+1=v
+  or x::arrI<v>*self::arr_seg_map2<i+1,n,M> & x=self+i & i>=0 & M[i]+2=v
   inv n>=i & i>=0;
 
 void upd_arr(arrI base, int i, int v)
@@ -37,11 +37,11 @@ int get_arr(arrI base, int i)
 // can base be monomorphic recursive?
 void copy(arrI base,arrI b2,int i,int m)
   requires base::arr_seg<i,m> * b2::arr_seg_map<i,m,M>@L//& 0<=i & i<=m
-  ensures  base::arr_seg_map<i,m,M>;
+  ensures  base::arr_seg_map2<i,m,M>;
 {
   if (i<m) {
     int v = get_arr(b2,i);
-    upd_arr(base,i,v); // base[i]=0
+    upd_arr(base,i,v+2); // base[i]=0
     i=i+1;
     //a = arr_inc(a);
     copy(base,b2,i,m);

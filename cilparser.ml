@@ -629,7 +629,7 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                       "  case { \n" ^
                       "    p =  null -> ensures res = null; \n" ^
                       "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-                      "                 ensures res::WFSeg<q,s>; \n" ^
+                      "                 ensures res::WFSegN<q,s>; \n" ^
                       "  }\n"
           | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
                  "  case { \n" ^
@@ -1608,8 +1608,9 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
            Hashtbl.find tbl_aux_proc pname
          with Not_found -> (
            let proc_str = typ1_name ^ " " ^ pname ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " n)\n"
-                          ^ "requires x::WFSeg<p,m> & n < m \n"
-                          ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n"
+                          ^ "requires x::WFSegN<p, m> & 0 <= n & n < m & Term \n"
+                          (* ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n" *)
+                          ^ "ensures x::WSSN<q, n+1>;\n"
            in
            let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
            let _ = Debug.binfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
@@ -1663,8 +1664,9 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                                Hashtbl.find tbl_aux_proc pname
                              with Not_found -> (
                                let proc_str = typ1_name ^ " " ^ pname ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " n)\n"
-                                              ^ "requires x::WFSeg<p,m> & n < m & n >= 0\n"
-                                              ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n"
+                                              ^ "requires x::WFSegN<p, m> & 0 <= n & n < m & Term\n"
+                                              (* ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n" *)
+                                              ^ "ensures x::WSSN<q, n+1>;\n"
                                  in
                                let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
                                let _ = Debug.binfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in

@@ -79,7 +79,7 @@ and data_decl = {
 (*   | View_DERV *)
 (*   | View_SPEC *)
 
-and ibaga_pure = (ident list * P.formula) list
+and ibaga_pure = ((ident * ((P.exp * P.exp) option)) list * P.formula) list
 
 and view_decl = 
   { 
@@ -3929,6 +3929,12 @@ let update_view_decl prog vdecl =
     else y_binfo_pp ("adding the view " ^ vdecl_id ^ " into iprog.")  
   in
   prog.prog_view_decls <- others @ [vdecl]
+
+let update_view_decl prog vdecl = 
+  let pr = fun v -> v.view_name in
+  let prr = fun () -> "" in
+  Debug.no_1 "update_view_decl" pr prr 
+    (fun _ -> update_view_decl prog vdecl) vdecl
 
 let case_normalize_formula : (prog_decl -> ((ident*primed) list) ->  Iformula.formula -> Iformula.formula) ref =
   ref (fun p h f -> failwith "TBI")

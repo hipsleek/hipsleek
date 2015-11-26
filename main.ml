@@ -380,7 +380,7 @@ let hip_prologue () =
   Globals.infer_const_obj # init
 
 let hip_epilogue () = 
-  if !Debug.dump_calls then Debug.dump_debug_calls ();
+  if !VarGen.z_debug_flag (* dump_calls *) then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then 
     Lem_store.all_lemma # dump

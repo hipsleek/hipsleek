@@ -4339,7 +4339,8 @@ let pr_view_decl_inv_only v =
   pr_add_str_opt_cut  "baga over inv: " pr_ef_pure_disj v.view_baga_over_inv;
   pr_add_str_opt_cut  "baga over inv (unfolded): " pr_ef_pure_disj v.view_baga_x_over_inv;
   pr_add_str_opt_cut  "baga under inv: " pr_ef_pure_disj v.view_baga_under_inv;
-  pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula
+  pr_add_str_cut "xform: " pr_mix_formula v.view_x_formula;
+  pr_add_str_cut ~emp_test:Gen.is_empty "inv exists vars: " pr_list_of_spec_var v.view_inv_exists_vars
 
 let pr_view_decl_inv v =
   fmt_open_vbox 0;

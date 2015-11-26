@@ -153,24 +153,35 @@ class prog_loc =
       | Some l -> (string_of_pos l.start_pos)
   end;;
 
+let method_name_of s =
+  try 
+    let hashtag_index = String.index s '#' in
+    String.sub s 0 hashtag_index
+  with _ -> s 
+
+let is_equal call_name s =
+  String.compare call_name (method_name_of s) = 0
+
 class last_posn_cls =
   object (self)
     val last_posn = new store ("", "") (fun (x, _) -> "("^x^")")
     method reset (s: string): unit =
       if last_posn # is_avail then
-        let _, last_call_name = last_posn # get in
-        if String.compare last_call_name s = 0 then last_posn # reset
+        let last_call_site, last_call_name = last_posn # get in
+        (* let () = print_endline ("last_posn reset: " ^ s ^ " @" ^ last_call_site ^ ":" ^ last_call_name) in *)
+        if is_equal last_call_name s then last_posn # reset
         else ()
       else ()
     method get_rm (s: string) = 
       let last_call_site, last_call_name = last_posn # get in
-      if String.compare last_call_name s = 0 then
+      (* let () = print_endline ("last_posn get_rm: " ^ s ^ " @" ^ last_call_site ^ ":" ^ last_call_name) in *)
+      if is_equal last_call_name s then
         let () = last_posn # reset in
         last_call_site 
       else ""
     method get (s: string) = 
       let last_call_site, last_call_name = last_posn # get in
-      if String.compare last_call_name s = 0 then last_call_site 
+      if is_equal last_call_name s then last_call_site 
       else ""
     method set_name (s: string) = 
       let last_call_site, last_call_name = last_posn # get in
@@ -189,6 +200,7 @@ let post_pos = new prog_loc
 let entail_pos = ref no_pos
 let set_entail_pos p = entail_pos := p
 
+(* what is this flag for? *)
 let z_debug_flag = ref false
 
 let buildA s i = s^"#"^(string_of_int i);;
