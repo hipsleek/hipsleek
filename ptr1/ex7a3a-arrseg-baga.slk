@@ -25,6 +25,15 @@ expect Valid.
 infer[] base::arr_seg<1,1> * base::arr_seg<1,2>  |- base!=null.
 expect Fail.
 
+infer[] base::arr_seg<c,d> & c<d |- base+c!=null.
+expect Valid.
+
+infer[] base::arr_seg<c,d> & c!=d |- base+c!=null.
+expect Valid.
+
+infer[] base::arr_seg<c,d>  |- base+c!=null.
+expect Fail.
+
 /*
 # ex7a3a.slk
 
