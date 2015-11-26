@@ -353,7 +353,8 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_derv_from = None;
     I.view_derv_extns = [];
     I.view_derv_info = []; (* TODO *)
-    I.view_type_of_self = v.C.view_type_of_self;
+    I.view_type_of_self = 
+      v.C.view_type_of_self;
     I.view_kind = v.C.view_kind;
     I.view_prop_extns = List.map (fun sv -> (CP.type_of_spec_var sv, CP.name_of_spec_var sv)) v.C.view_prop_extns;
     I.view_invariant = rev_trans_mix v.C.view_user_inv;

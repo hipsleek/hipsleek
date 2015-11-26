@@ -1,0 +1,94 @@
+data arrI {
+  int val;
+}.
+
+
+pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0.
+
+
+
+//(9)
+infer[@classic] x::arrI<v> * x1::arrI<m>*base::arr_seg_sorted<i+2,n,m2> & x1=base+i+1
+       & i+1>=0 & i+1!=n & m<=m2
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<i,n,min(v,m)>.
+print residue.
+expect Valid.
+// why false?
+
+infer[@classic] x::arrI<v> * x1::arrI<m> & x1=base+i+1 & i+1=n-1
+       & i+1>=0 & i+1!=n 
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<i,n,min(v,m)>.
+print residue.
+expect Valid.
+// why false?
+
+
+infer[@classic] 
+ a_2220::arrI<v'>@M
+ * x_2205::arrI<mi_2202>@M 
+ * base::arr_seg_sorted<flted_10_2204,n_2203,m2_2206>@M  &
+a!=null & Anon_12=Anon_14 & a_2220=a & v'<=v_2165 & v_2165=mi_2202 & 
+a_2164=x_2205 & flted_10_2204=1+flted_44_2145 & x_2205=base+flted_44_2145 & 
+0<=flted_44_2145 & (flted_44_2145+1)<m_2144 & mi<=m2_2206 & mi_2202=mi & 
+n_2203=m_2144 & !(v_bool_48_2001') & m_2144=m & flted_44_2145=1+i & 
+(1+i)!=m & a=base+i & 0<=i & v'=v & m'=m & i'=i & base'=base & (1+i')!=m' & 
+v_bool_53_2000' 
+ |-  (exists i_121,m_122,
+flted_45_118: base::arr_seg_sorted<i_121,m_122,flted_45_118>@M&
+flted_45_118=min(v,mi) & i_121=i & m_122=m).
+print residue.
+
+infer[@classic] 
+ x_2205::arrI<mi_2202>@M 
+ * a_2220::arrI<v'>@M
+ * base::arr_seg_sorted<flted_10_2204,n_2203,m2_2206>@M  &
+a!=null & Anon_12=Anon_14 & a_2220=a & v'<=v_2165 & v_2165=mi_2202 & 
+a_2164=x_2205 & flted_10_2204=1+flted_44_2145 & x_2205=base+flted_44_2145 & 
+0<=flted_44_2145 & (flted_44_2145+1)<m_2144 & mi<=m2_2206 & mi_2202=mi & 
+n_2203=m_2144 & !(v_bool_48_2001') & m_2144=m & flted_44_2145=1+i & 
+(1+i)!=m & a=base+i & 0<=i & v'=v & m'=m & i'=i & base'=base & (1+i')!=m' & 
+v_bool_53_2000' 
+ |-  (exists i_121,m_122,
+flted_45_118: base::arr_seg_sorted<i_121,m_122,flted_45_118>@M&
+flted_45_118=min(v,mi) & i_121=i & m_122=m).
+print residue.
+
+/*
+# ex6d3e --pnum 4
+
+# re-ordering caused failure..
+
+ x_2205::arrI<mi_2202>@M 
+ * a_2220::arrI<v'>@M
+
+!!! **sleekengine.ml#1383:inside run_infer_one_pass:4
+Entail (4) : Fail.(may) cause:base case unfold failed
+
+# is there a notion of root?
+# should we use SEARCH instead of COND?
+
+!!! **context.ml#3620:compute_action (steps) :
+ ### RHS Cand :[ x_145::arrI<mi_157>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Match =>
+    LHS: x_2205::arrI<mi_2202>@M
+    RHS: x_145::arrI<mi_157>@M;
+  Prio:1
+  Match =>
+    LHS: a_2220::arrI<v'>@M
+    RHS: x_145::arrI<mi_157>@M
+  ]
+
+
+*/

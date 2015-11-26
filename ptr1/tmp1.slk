@@ -1,0 +1,7 @@
+checkentail flted_12_93=0 & flted_12_92=1 & flted_12_91=0 & flted_12_90=1 & 
+ xxx_116=flted_12_93+base & flted_12_93<=flted_12_92 & 
+ d_117+flted_12_93=flted_12_92 & 0<=flted_12_93 |- d_117>0.
+
+checkentail
+ xxx_116=flted_12_93+base & flted_12_93<=flted_12_92 & 
+ d_117+flted_12_93=flted_12_92 & 0<=flted_12_93 |-  d_117>0.

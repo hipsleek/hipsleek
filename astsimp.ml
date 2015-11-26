@@ -2776,7 +2776,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_ptrs = [];
         C.view_backward_fields = [];
         C.view_kind = view_kind;
-        C.view_type_of_self = vdef.I.view_type_of_self;
+        C.view_type_of_self = 
+          (let () = y_binfo_hp (add_str "data name" pr_id) data_name in 
+           let r = vdef.I.view_type_of_self in
+           if r==None && not(data_name="") then Some(Named data_name)
+           else None 
+          );
         C.view_actual_root = 
           (
             let pr_sv = !CP.print_sv in
