@@ -49,20 +49,26 @@ module UnCa=
 let h_2_mem_obj = object (self)
   val mutable state = CP.mkTrue no_pos
   val mutable list = []
+  method logging s =
+    (* let () = print_endline_quiet ("XXXX "^(s)) in *)
+    ()
   method init =
+    self # logging "init" ; 
     let () = state <- CP.mkTrue no_pos in
     let () = list <- [] in
     ()
   method notempty = list!=[]
   method add_pure p = 
+    self # logging ((add_str "add_pure" !CP.print_formula) p); 
     let () = state <- CP.mkAnd state p no_pos in
     ()
   method get_id v e = 
+    self # logging "get_id";
     let eq_v = try
         fst(List.find (fun (_,e2) ->
             let rhs = (CP.mk_eq_exp e e2) in
-            let () = y_tinfo_hp (add_str "lhs" !CP.print_formula) state in 
-            let () = y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs in 
+            let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
+            let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in 
             !CP.tp_imply state rhs
           ) list)
       with _ ->  

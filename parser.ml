@@ -1381,6 +1381,7 @@ inv:
          (f, Some [([], f)])
    |`INV; bil = LIST0 baga_inv SEP `OR ->
         let pf =  List.fold_left (fun pf0 (idl,pf2) ->
+         let idl = List.filter (fun (_,p) -> p==None) idl in
          let idl = List.map fst idl in
          let pf1 = List.fold_left (fun pf0 id ->
              let sv = (id,Unprimed) in

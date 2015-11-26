@@ -2074,11 +2074,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let () = x_tinfo_hp (add_str "context0" Cprinter.string_of_context) ctx0 no_pos in
       let () = x_tinfo_hp (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let () = x_tinfo_hp (add_str "formula" Cprinter.string_of_formula) formula no_pos in
-
-
       let (rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-
-
       let (exist_baga_inv, baga_formula, baga_enum_formula) = match vdef.C.view_baga_inv with
         | None ->
           let f1 = CF.mkTrue (CF.mkTrueFlow ()) pos in
@@ -2111,10 +2107,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let pf = (CP.mkExists ex_vs (x_add_1 Excore.EPureI.ef_conv_disj disj) None no_pos) in 
           true,CF.formula_of_pure_formula pf pos,pf
       in
-      let () = y_binfo_hp (add_str "ex_vs" !CP.print_svl) ex_vs in
-      let () = y_binfo_hp (add_str "baga_pure" !CP.print_formula) baga_pure in
-      let () = y_binfo_hp (add_str "baga_over_formula" !CF.print_formula) baga_over_formula in
-      let () = y_binfo_hp (add_str "ctx" Cprinter.string_of_context) ctx  in
+      let () = y_tinfo_hp (add_str "ex_vs" !CP.print_svl) ex_vs in
+      let () = y_tinfo_hp (add_str "baga_pure" !CP.print_formula) baga_pure in
+      let () = y_tinfo_hp (add_str "baga_over_formula" !CF.print_formula) baga_over_formula in
+      let () = y_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx  in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in
 
@@ -2215,7 +2211,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")")
               (* report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc) *)
           else
-            let () = y_binfo_hp (add_str "inv" Cprinter.string_of_ef_pure_disj) f in
+            let () = y_tinfo_hp (add_str "inv" Cprinter.string_of_ef_pure_disj) f in
             print_endline_quiet ("\nInv Check: Valid.("^msg^")")
           | None -> ()
         else ()
@@ -2440,7 +2436,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     in
     let cf = CF.mark_derv_self vdef.I.view_name cf in 
     let inv = vdef.I.view_invariant in
-    let () = y_binfo_hp (add_str "inv" !IP.print_formula) inv in
+    let () = y_tinfo_hp (add_str "inv" !IP.print_formula) inv in
     let (n_tl,mem_form) = (
       match vdef.I.view_mem with
       | Some a -> 
@@ -2592,7 +2588,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       let conv_id c = x_add trans_var (c,Unprimed) n_tl pos in
       let conv_baga_inv baga_inv =
-        let () = y_binfo_hp (add_str "baga_inv" (Iprinter.string_of_opt_baga)) baga_inv in
+        let () = y_tinfo_hp (add_str "baga_inv" (Iprinter.string_of_opt_baga)) baga_inv in
         match baga_inv with
         | None -> None
         | Some lst ->
@@ -2666,7 +2662,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
       Debug.ninfo_hprint (add_str "vbi" (pr_option pr)) vbc_i no_pos;
       (* let lst_uns = List.map fst n_un_str in *)
-      let () = y_binfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
+      let () = y_tinfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
       let keep_vs = CP.self_sv::view_sv in
       let lst_heap_ptrs = 
         if !Globals.ptr_arith_flag then 
@@ -2677,8 +2673,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               let lst = CF.get_data_and_views h in
               let lst = List.map (fun (v,(no,hf)) ->
                   let keep_vs = v::keep_vs in
-                  let () = y_binfo_hp (add_str "pure" !CP.print_formula)pure in
-                  let () = y_binfo_hp (add_str "keep_vs" !CP.print_svl) keep_vs in
+                  let () = y_tinfo_hp (add_str "pure" !CP.print_formula)pure in
+                  let () = y_tinfo_hp (add_str "keep_vs" !CP.print_svl) keep_vs in
                   let ex_vs = Gen.BList.difference_eq CP.eq_spec_var vs keep_vs in
                   let new_p = CP.mkExists_with_simpl !CP.simplify ex_vs pure None no_pos in
                   (* let vars = CP.fv new_p in *)
@@ -2687,13 +2683,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                   let eq_lst = 
                     if List.exists (CP.eq_spec_var CP.self_sv) base_vars 
                     then eq_lst else [] in
-                  let () = y_binfo_hp (add_str "new_p" !CP.print_formula) new_p in
+                  let () = y_tinfo_hp (add_str "new_p" !CP.print_formula) new_p in
                   (v,no,eq_lst)
                     (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
                     (* else (\* view node*\) []) *)
                 ) lst in
-              (* let () = y_binfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst in *)
-              let () = y_binfo_hp !CP.print_formula pure in
+              (* let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst in *)
+              let () = y_tinfo_hp !CP.print_formula pure in
               (* CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h *)
               (pure,lst)
             ) n_un_str in
@@ -2733,7 +2729,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             | [xs]::xss -> aux xss xs 
             | _ -> [] in
             let () = if xs!=[] && ans==[] then 
-                y_binfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
+                y_winfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
             in ans
           in
           let fresh_name (v,f) = (v,f) in
@@ -2744,14 +2740,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let pr_lst_f = pr_list pr_f in
           let pr_sv = !CP.print_sv in
           let pr_2 = pr_list (pr_pair pr_f (pr_list (pr_triple pr_sv string_of_int pr_lst_f))) in
-          (* let () = y_binfo_hp (add_str "lst" pr_2) lst in *)
+          (* let () = y_tinfo_hp (add_str "lst" pr_2) lst in *)
           let lst = List.filter (fun (_,x) -> x!=[]) lst in
           (* remove views and choose smallest ptr *)
-          (* let () = y_binfo_hp (add_str "lst(after filter)" pr_2) lst in *)
+          (* let () = y_tinfo_hp (add_str "lst(after filter)" pr_2) lst in *)
           let pr_3a = (pr_list (pr_pair pr_sv pr_f)) in
           let pr_3 = pr_list pr_3a in
           let lst = List.map choose_smallest lst in
-          let () = y_binfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
+          let () = y_tinfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
           (* ensure all non-empty branches has same root pointer & merge *)
           let lst = choose_one lst in
           (* let () = y_winfo_hp (add_str "TODO: ensure same root for all branches" pr_3a) lst in *)
@@ -2780,7 +2776,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_fields = [];
         C.view_kind = view_kind;
         C.view_type_of_self = 
-          (let () = y_binfo_hp (add_str "data name" pr_id) data_name in 
+          (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in 
            let r = vdef.I.view_type_of_self in
            if r==None && not(data_name="") then Some(Named data_name)
            else None 

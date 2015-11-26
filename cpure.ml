@@ -5873,6 +5873,28 @@ struct
     |_,_ -> false
 end;;
 
+let mk_bform pf = BForm((pf,None),None) 
+
+let mk_geq v i = 
+  let lhs = mkVar v no_pos in
+  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let mk_exp_geq lhs i = 
+  (* let lhs = mkVar v no_pos in *)
+  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let mk_exp_leq lhs i = 
+  (* let lhs = mkVar v no_pos in *)
+  let e = Lte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let mk_exp_neq_null lhs = 
+  (* let lhs = mkVar v no_pos in *)
+  let e = Neq(lhs,(Null no_pos),no_pos) in
+  mk_bform e
+
 (*
    [a,b,(e,base,offset)]
     ==> a>0 & b>0 & a!=b  
@@ -5911,12 +5933,23 @@ struct
         snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
       with _ -> x in
     (repl v,map_opt repl_e opt)
+  (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
+    let lst_intv = List.fold_left (fun acc (_,s) -> match s with
+        | None -> acc
+        | Some(b,d) -> (b,d)::acc) [] lst in
+    let add_intv_formula f lst = List.fold_left (fun acc (b,d) ->
+        let f1 = mk_exp_leq d 0 in
+        let f2 = mk_exp_neq_null b  in
+        let f = mkOr f1 f2 None no_pos in
+        mkAnd acc f no_pos
+      ) f lst in
     let lst = List.filter (fun (_,p) -> p==None) lst in
     let lst = List.map fst lst in
     if enum_flag then baga_enum lst
-    else baga_conv ~neq_flag:neq_flag lst
+    else let f = baga_conv ~neq_flag:neq_flag lst in
+      add_intv_formula f lst_intv
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in
     List.map fst lst
@@ -15709,7 +15742,6 @@ let rec gen_cl_eqs pos svl p_res=
           ) p_res rest in
           gen_cl_eqs pos rest new_p_res
 
-let mk_bform pf = BForm((pf,None),None) 
 
 let mk_eq_zero a1 = 
   let a1 = mkVar a1 no_pos in
@@ -15750,15 +15782,6 @@ let mk_inc lhs rhs =
   let rhs = mkAdd rhs (mkIConst 1 no_pos) no_pos in
   mkEqExp_raw lhs rhs no_pos
 
-let mk_geq v i = 
-  let lhs = mkVar v no_pos in
-  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
-  mk_bform e
-
-let mk_exp_geq lhs i = 
-  (* let lhs = mkVar v no_pos in *)
-  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
-  mk_bform e
 
 let is_AndList f =
   match f with
