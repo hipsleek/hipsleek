@@ -483,7 +483,7 @@ pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
 
 can we have expect Fail for baga inv..
 
-# Why the warnings below?
+# Why the warnings below? (FIXED)
 
 !!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
 !!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
