@@ -570,7 +570,7 @@ let dlist_2_pure diff =
 
 (* WN : this calculation on mem_formula need to be revamped *) 
 let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
-  let () = Excore.h_2_mem_obj # init in
+  (* let () = Excore.h_2_mem_obj # init in *)
   let pure_f = MCP.pure_of_mix p0 in
   let () = x_tinfo_hp (add_str "pure f" Cprinter.string_of_pure_formula) (pure_f) no_pos in
   let () = x_tinfo_hp (add_str "evars" Cprinter.string_of_spec_var_list) (evars) no_pos in
@@ -935,7 +935,7 @@ let h_formula_2_mem (f : h_formula) (p : mix_formula) (evars : CP.spec_var list)
   (* let pr0 = Cprinter.string_of_spec_var in *)
   (* let pr_subs = pr_list (pr_pair pr0 pr0) in *)
   Debug.no_3 "h_formula_2_mem"  Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula 
-    (fun f p evars -> h_formula_2_mem_x f p evars prog) f p evars
+    (fun f p evars ->  Excore.wrap_h_2_mem x_loc (h_formula_2_mem_x f p evars) prog) f p evars
 
 let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula = 
   (* for formula *)

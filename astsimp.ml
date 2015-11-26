@@ -2440,6 +2440,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     in
     let cf = CF.mark_derv_self vdef.I.view_name cf in 
     let inv = vdef.I.view_invariant in
+    let () = y_binfo_hp (add_str "inv" !IP.print_formula) inv in
     let (n_tl,mem_form) = (
       match vdef.I.view_mem with
       | Some a -> 
@@ -2449,6 +2450,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         (n_tl,x_add trans_view_mem vdef.I.view_mem n_tl)
       | None -> (n_tl,None)
     ) in
+    y_tinfo_hp (add_str "inv" !IP.print_formula) inv;
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in 
     let inv_pf = x_add trans_pure_formula inv n_tl in   
@@ -2590,6 +2592,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       let conv_id c = x_add trans_var (c,Unprimed) n_tl pos in
       let conv_baga_inv baga_inv =
+        let () = y_binfo_hp (add_str "baga_inv" (Iprinter.string_of_opt_baga)) baga_inv in
         match baga_inv with
         | None -> None
         | Some lst ->

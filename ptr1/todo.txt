@@ -453,7 +453,7 @@ h_formula_2_mem@145 EXIT: []
 Entail (4) : Fail.(may) cause:base case unfold failed
 
 ===============================================================
-# ex7a2d.slk --pcp --print-type
+# ex7a2d.slk --pcp --print-type (FIXED)
 
 pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
   or xxx::arrI<_>*self::arr_seg2<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
@@ -468,6 +468,14 @@ pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
   actual_root: 
 
 ===============================================================
+# ex7a3a.slk
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# Where is _!=null introduced?
+
+!!! **astsimp.ml#2443:inv:(_ != null) & ((n >= i) & (i >= 0))
+
 ===============================================================
 ===============================================================
 ===============================================================

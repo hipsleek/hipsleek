@@ -5,11 +5,16 @@ data arrI {
 
 pred arr_seg<i,n> == i=n & i>=0
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
-  inv BG([(xxx,d)], xxx=self+i & n>=i & d=n-i & i>=0).
-
+  inv BG([(self+i,n-i)], n>=i & i>=0).
 
 //(2)
 infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+expect Valid.
+
+infer[] base::arr_seg<0,1> * base::arr_seg<1,2> |- false.
+expect Fail.
+
+infer[] base::arr_seg<0,1>  |- base!=null.
 expect Valid.
 
 /*

@@ -1,0 +1,24 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(self+i,n-i)], n>=i & i>=0).
+
+infer[] base::arr_seg<0,1>  |- base!=null.
+expect Valid.
+
+/*
+# ex7a3a.slk
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# Where is _!=null introduced?
+
+!!! **astsimp.ml#2443:inv:(_ != null) & ((n >= i) & (i >= 0))
+
+
+*/
+

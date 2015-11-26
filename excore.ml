@@ -53,6 +53,7 @@ let h_2_mem_obj = object (self)
     let () = state <- CP.mkTrue no_pos in
     let () = list <- [] in
     ()
+  method notempty = list!=[]
   method add_pure p = 
     let () = state <- CP.mkAnd state p no_pos in
     ()
@@ -69,8 +70,23 @@ let h_2_mem_obj = object (self)
         let () = list <- (x,e)::list in
         x
     in eq_v
-
+  method string_of =
+    let s1 = (add_str "state" !CP.print_formula) state in
+    let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in
+    s1^s2
 end;;
+
+let wrap_h_2_mem loc f x =
+  let self = h_2_mem_obj in
+  let () = self # init in
+  (* let () = print_endline_quiet ("init h_2_mem "^loc) in *)
+  try
+    let r = f x in
+    let () = if self # notempty then y_binfo_hp (add_str "\nh_2_mem" pr_id) (self # string_of) in
+    r
+  with e ->
+    let () = if self # notempty then y_binfo_hp (add_str "\nh_2_mem" pr_id) (self # string_of) in
+    raise e
 
 let is_sat_raw = Mcpure.is_sat_raw
 (* ref(fun (c:Mcpure.mix_formula) -> true) *)
