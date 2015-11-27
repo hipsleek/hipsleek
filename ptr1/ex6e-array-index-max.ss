@@ -28,10 +28,18 @@ int get_arr(arrI base, int i)
   ensures res=v;
 
 int get_max(arrI base,int i,int m)
+/*
  requires base::arr_seg<i,m> 
  case{
   i>=m -> ensures emp & res=-1;
   i<m -> ensures base::arr_seg_max<i,m,res>;
+  }
+*/
+ case{
+  i>=m -> ensures emp & res=-1;
+  i<m -> 
+    requires base::arr_seg_max<i,m,maxv>@L
+    ensures  res=mval;
   }
 {
   if(i<m){
@@ -82,14 +90,17 @@ int get_max(arrI base,int i,int m)
 /* } */
 
 /*
-# ex6d3.ss 
+# ex6e.ss 
 
-# folding fail at post-cond
+# check and elim warnings below..
 
- 
-[[ COND ==>  Fold ==>  UnmatchedRHSData]]falseStop z3... 213 invocations 
-Stop Omega... 47 invocations 
-!!!Number of log entries 536
-!!
+
+ !!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+
 
 */

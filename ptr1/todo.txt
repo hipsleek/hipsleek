@@ -555,6 +555,27 @@ expect Valid.
   let rec merge_baga b1 b2 =
 
 ===============================================================
+# ex6e.ss 
+
+# check and elim warnings below..
+
+
+ !!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+
+# print views checked..
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
 ===============================================================
 ===============================================================
 ===============================================================
