@@ -14,6 +14,8 @@ open Cpure
 open VarGen
 (* open Cprinter *)
 
+module CP = Cpure
+
 module UnCa=
    struct
      let unsat_cache = Hashtbl.create 200
@@ -43,6 +45,54 @@ module UnCa=
            let _ = miss_cache := !miss_cache + 1 in
            res
    end;;
+
+let h_2_mem_obj = object (self)
+  val mutable state = CP.mkTrue no_pos
+  val mutable list = []
+  method logging s =
+    (* let () = print_endline_quiet ("XXXX "^(s)) in *)
+    ()
+  method init =
+    self # logging "init" ; 
+    let () = state <- CP.mkTrue no_pos in
+    let () = list <- [] in
+    ()
+  method notempty = list!=[]
+  method add_pure p = 
+    self # logging ((add_str "add_pure" !CP.print_formula) p); 
+    let () = state <- CP.mkAnd state p no_pos in
+    ()
+  method get_id v e = 
+    self # logging "get_id";
+    let eq_v = try
+        fst(List.find (fun (_,e2) ->
+            let rhs = (CP.mk_eq_exp e e2) in
+            let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
+            let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in 
+            !CP.tp_imply state rhs
+          ) list)
+      with _ ->  
+        let x = CP.fresh_spec_var v in
+        let () = list <- (x,e)::list in
+        x
+    in eq_v
+  method string_of =
+    let s1 = (add_str "state" !CP.print_formula) state in
+    let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in
+    s1^s2
+end;;
+
+let wrap_h_2_mem loc f x =
+  let self = h_2_mem_obj in
+  let () = self # init in
+  (* let () = print_endline_quiet ("init h_2_mem "^loc) in *)
+  try
+    let r = f x in
+    let () = if self # notempty then self # logging ((add_str "\nh_2_mem" pr_id) (self # string_of)) in
+    r
+  with e ->
+    let () = if self # notempty then self # logging ((add_str "\nh_2_mem" pr_id) (self # string_of)) in
+    raise e
 
 let is_sat_raw = Mcpure.is_sat_raw
 (* ref(fun (c:Mcpure.mix_formula) -> true) *)
@@ -469,6 +519,7 @@ sig
   val mk_elem_from_sv : spec_var -> t
   val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
   val conv_var : t list -> spec_var list
+  val get_interval : t -> (spec_var * (Cpure.exp * Cpure.exp)) option
   val from_var : spec_var list -> t list
   (* val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list *)
   (* val from_var_pairs : (spec_var * spec_var) list -> (t*t) list *)
@@ -483,6 +534,28 @@ sig
   val imply : t -> t -> bool
 end;;
 
+(* module type for EPURE, what methods to expose? *)
+module type EPURE_TYPE =
+sig
+  type t
+  val zero : t
+  val is_zero : t -> bool
+  val eq : t -> t -> bool
+  val compare : t -> t -> int
+  val string_of : t -> string
+  val subst : (spec_var * spec_var) list -> t -> t
+  val merge_baga : t list -> t list -> t list
+  val hull_baga : t list -> t list -> t list
+  val is_eq_baga : t list -> t list -> bool
+  val mk_elem_from_sv : spec_var -> t
+  val norm_baga : CP.formula -> t list -> t list
+      (* may throw an exception if false detected *)
+  val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
+  val conv_var : t list -> spec_var list
+  val from_var : spec_var list -> t list
+  (* val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list *)
+  (* val from_var_pairs : (spec_var * spec_var) list -> (t*t) list *)
+end;;
 
 module EPURE =
   functor (Elt : SV_TYPE)  ->
@@ -569,6 +642,7 @@ module EPURE =
       (*     ) ((mkEqVarInt (List.hd baga) (\* !i *\)1 no_pos),1) (List.tl baga) *)
       (*   in f *)
 
+
     (* ef_conv_enum :  ef_pure -> formula *)
     (* provide an enumeration that can be used by ante *)
     (* ([a,a,b],pure)  --> a=1 & a=2 & a=3 & pure *)
@@ -596,6 +670,12 @@ module EPURE =
     let ef_conv_enum_disj disj : formula =
       ef_conv_disj_ho ef_conv_enum disj
 
+    let ef_has_intv_baga ((baga,f)) =
+      List.exists (fun b -> (Elt.get_interval b)!=None) baga
+
+    let ef_has_intv_baga_disj disj =
+      List.exists ef_has_intv_baga disj
+
     (* code has bug for ex25m5d.slk *)
     let ef_conv_enum_disj disj : formula =
       Debug.no_1 "ef_conv_enum_disj" string_of_disj !Cpure.print_formula
@@ -617,6 +697,26 @@ module EPURE =
     let mk_star efp1 efp2 =
       let res = mk_star_wrap efp1 efp2 in
       res
+
+    let conv_intv_disj (efpd1:epure_disj)  =
+      let proc (baga,f) =
+        let () = h_2_mem_obj # add_pure f in
+        let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
+        let lst2 = List.map (fun e -> 
+            let v =  Elt.get_interval e in
+            match v with 
+            | Some (id,d) -> (id,d)
+            | _  -> failwith x_tbi
+          ) lst2 in
+        let lst2 = List.filter (fun (id,(_,d)) -> 
+            let rhs = Cpure.mk_exp_geq d 1 in
+            !Cpure.tp_imply f rhs) lst2 in
+        let lst2 = List.concat (List.map (fun (id,(e_ind,_)) -> 
+            let nid = h_2_mem_obj # get_id id e_ind in
+            Elt.from_var [nid]) lst2) in
+        (lst1@lst2,f)
+      in
+      List.map proc efpd1 
 
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
       let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in

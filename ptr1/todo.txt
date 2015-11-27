@@ -315,7 +315,7 @@ expect Fail.
 
  <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
 ===============================================================
-# ex7a1b.slk
+# ex7a1b.slk (FIXED)
 
 # why is there a false..
 
@@ -389,6 +389,181 @@ compatible_nodes@2 EXIT:(false, base::arr_seg<i,n>@M,None,[])
 !!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
 !!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
 
+===============================================================
+# ex6d5.ss 
+
+# fail in post-cond proving..
+
+id: 64; caller: []; line: 45; classic: false; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@flow,@ver_post]
+ checkentail x_2205::arrI<mi_2202>@M * 
+ base::arr_seg_sorted<flted_10_2204,n_2203,m2_2206>@M * a_2220::arrI<v'>@M&
+a!=null & Anon_12=Anon_14 & a_2220=a & v'<=v_2165 & v_2165=mi_2202 & 
+a_2164=x_2205 & flted_10_2204=1+flted_44_2145 & x_2205=flted_44_2145+base & 
+0<=flted_44_2145 & (flted_44_2145+1)<m_2144 & mi<=m2_2206 & mi_2202=mi & 
+n_2203=m_2144 & !(v_bool_48_2001') & m_2144=m & flted_44_2145=1+i & 
+(1+i)!=m & a=i+base & 0<=i & v'=v & m'=m & i'=i & base'=base & (1+i')!=m' & 
+v_bool_53_2000' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  (exists i_121,m_122,
+flted_45_118: base::arr_seg_sorted<i_121,m_122,flted_45_118>@M&
+flted_45_118=min(v,mi) & i_121=i & m_122=m&{FLOW,(4,5)=__norm#E}[]). 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: base_case_unfold failed
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+
+===============================================================
+# ex7a2.slk
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# should be Valid
+
+ Entail (1) : Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+-pnum 3
+
+(==cvutil.ml#1758==)
+h_formula_2_mem@145@144
+h_formula_2_mem inp1 : yy::arrI<Anon_12>@M * yy::arrI<Anon_13>@M
+h_formula_2_mem inp2 : true
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@145 EXIT: [[yy,yy]]
+
+-dre "xpure\|.*_mem" -pnum 2 --trace-log-num 145
+(==cvutil.ml#1758==)
+h_formula_2_mem@145@144
+h_formula_2_mem inp1 : base::arr_seg<flted_15_95,flted_15_94>@M * 
+ base::arr_seg<flted_15_93,flted_15_92>@M
+h_formula_2_mem inp2 : flted_15_95=0 & flted_15_94=1 & flted_15_93=0 & flted_15_92=1
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@145 EXIT: []
+
+===============================================================
+# ex6d3e --pnum 4
+
+# re-ordering caused failure..
+
+ x_2205::arrI<mi_2202>@M 
+ * a_2220::arrI<v'>@M
+
+!!! **sleekengine.ml#1383:inside run_infer_one_pass:4
+Entail (4) : Fail.(may) cause:base case unfold failed
+
+===============================================================
+# ex7a2d.slk --pcp --print-type (FIXED)
+
+pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg2<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv n>=iii & iii>=0 & self!=null.
+
+# why does adding self!=null caused view_data_name and actual_root information to be
+  lost?
+
+  view_data_name: 
+  type_of_self: 
+  None
+  actual_root: 
+
+===============================================================
+# ex7a3a.slk (FIXED)
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# Where is _!=null introduced?
+
+!!! **astsimp.ml#2443:inv:(_ != null) & ((n >= i) & (i >= 0))
+
+===============================================================
+# ex7a3c.slk
+
+# expect failure of invariant
+
+can we have expect Fail for baga inv..
+
+# Why the warnings below? (FIXED)
+
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+===============================================================
+# ex7a3a.slk (to improve)
+
+# -dre "compute_unfold_baga"
+
+# unfolded loses precision ..
+
+baga over inv: [([(_,( self+i, n-i))], i<=n & 0<=i)]
+  baga over inv (unfolded): [([], 0<=i & i<=n)]
+
+(==astsimp.ml#1973==)
+compute_unfold_baga@1
+compute_unfold_baga inp1 :Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+compute_unfold_baga inp2 : (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+ or (* lbl: *){2}->(exists n_14,flted_7_13,xxx,
+    Anon_11: (* lbl: *){2}->xxx::arrI<Anon_11>@M * 
+                            self::arr_seg<flted_7_13,n_14>@M&
+    flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n&{FLOW,(1,26)=__flow#E}[])
+ 
+compute_unfold_baga@1 EXIT:Some([([], 0<=i & i<=n)])
+
+# tmp fix below which do not unfold for those with intervals.
+
+(==astsimp.ml#1974==)
+compute_unfold_baga@1
+compute_unfold_baga inp1 :Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+compute_unfold_baga inp2 : (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+ or (* lbl: *){2}->(exists n_14,flted_7_13,xxx,
+    Anon_11: (* lbl: *){2}->xxx::arrI<Anon_11>@M * 
+                            self::arr_seg<flted_7_13,n_14>@M&
+    flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n&{FLOW,(1,26)=__flow#E}[])
+ 
+compute_unfold_baga@1 EXIT:Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+
+===============================================================
+# ex9a.slk
+
+# need to use real intervals below to detect overlap..
+
+infer[] base::arr_seg<0,2> * base::arr_seg<1,2>  |- false.
+expect Valid.
+
+  # normalization
+  [(a,d1)],[(c,d2)] & c=a+d1 --> [(a,d1+d2)]
+  [(a,d)] & d<=0  --> []
+  [a] --> [(a,1)]
+
+  [a],[(c,d)] & c=a+1 --> [(a,d+1)]
+  [(c,d)],[a] & a=c+1 --> [(c,d+1)]
+
+  # false detection
+  [(a,d1)],[(b,d2)] &  b<a+d1 & a<b+d2 --> false
+    (a..a+d1 b..b+d2) // 
+  [(a,d1)],[(a,d2)] &  d1!=0 & d2!=0 --> false
+
+   # sorting..
+   a<c --> (a,d1) < (c,d2)
+   a>c --> (a,d1) > (c,d2)
+   a=c --> (a,d1) = (c,d2)
+
+  (* throws exception when duplicate detected during merge *)
+  let norm_baga (state:formula) (b:t list) = 
+    let () = y_binfo_pp x_tbi in
+    b
+  let rec merge_baga b1 b2 =
+
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
 ===============================================================
 ===============================================================
 ===============================================================

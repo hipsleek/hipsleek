@@ -1948,14 +1948,22 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          (* if disj user-supplied inv; just use it *)
          x_dinfo_hp (add_str "xform1" !CP.print_formula) xform1 pos;
          x_dinfo_hp (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+         (* type: Excore.EPureI.epure list option -> *)
+         (*   Cformula.formula -> Excore.EPureI.epure list option *)
          let compute_unfold_baga baga_over body =
            match baga_over with
            | None -> None
            | Some lst ->
-             if List.length lst == 1 then
+             if Excore.EPureI.ef_has_intv_baga_disj lst then baga_over
+             else if List.length lst == 1 then
                let unf_baga = x_add Cvutil.xpure_symbolic_baga prog body in
                Some (Expure.simplify unf_baga)
              else Some (Expure.simplify lst) (* baga_over *)
+         in
+         let compute_unfold_baga baga_over body =
+           let pr = pr_opt Excore.EPureI.string_of_disj in
+           let pr_f = !CF.print_formula in
+           Debug.no_2 "compute_unfold_baga" pr pr_f pr compute_unfold_baga baga_over body
          in
          if do_not_compute_flag then
            vdef.C.view_xpure_flag <- true
@@ -1963,7 +1971,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
            begin
              let baga_over = vdef.C.view_baga_over_inv in
              let body = C.formula_of_unstruc_view_f vdef in
-             let u_b = compute_unfold_baga baga_over body in
+             let u_b = x_add compute_unfold_baga baga_over body in
              (* let xform2 = match u_b with *)
              (*   | None -> xform2 *)
              (*   | Some disj -> Mcpure.mix_of_pure (Excore.EPureI.ef_conv_disj disj) *)
@@ -2074,11 +2082,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let () = x_tinfo_hp (add_str "context0" Cprinter.string_of_context) ctx0 no_pos in
       let () = x_tinfo_hp (add_str "context" Cprinter.string_of_context) ctx no_pos in
       let () = x_tinfo_hp (add_str "formula" Cprinter.string_of_formula) formula no_pos in
-
-
       let (rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-
-
       let (exist_baga_inv, baga_formula, baga_enum_formula) = match vdef.C.view_baga_inv with
         | None ->
           let f1 = CF.mkTrue (CF.mkTrueFlow ()) pos in
@@ -2214,8 +2218,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               let () = y_winfo_pp "skip INV Check" in
               print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")")
               (* report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc) *)
-          (* else *)
-          (*   print_endline_quiet ("\nInv Check: Valid.("^msg^")") *)
+          else
+            let () = y_tinfo_hp (add_str "inv" Cprinter.string_of_ef_pure_disj) f in
+            print_endline_quiet ("\nInv Check: Valid.("^msg^")")
           | None -> ()
         else ()
       in
@@ -2439,6 +2444,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     in
     let cf = CF.mark_derv_self vdef.I.view_name cf in 
     let inv = vdef.I.view_invariant in
+    let () = y_tinfo_hp (add_str "inv" !IP.print_formula) inv in
     let (n_tl,mem_form) = (
       match vdef.I.view_mem with
       | Some a -> 
@@ -2448,6 +2454,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         (n_tl,x_add trans_view_mem vdef.I.view_mem n_tl)
       | None -> (n_tl,None)
     ) in
+    y_tinfo_hp (add_str "inv" !IP.print_formula) inv;
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in 
     let inv_pf = x_add trans_pure_formula inv n_tl in   
@@ -2589,13 +2596,18 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       let conv_id c = x_add trans_var (c,Unprimed) n_tl pos in
       let conv_baga_inv baga_inv =
+        let () = y_tinfo_hp (add_str "baga_inv" (Iprinter.string_of_opt_baga)) baga_inv in
         match baga_inv with
         | None -> None
         | Some lst ->
           let rr = List.map (fun (idl,pf) ->
               let svl = List.map (fun (c,c_o) -> 
                   let nc = conv_id c in
-                  let nc_o = map_opt conv_id c_o in
+                  let nc_o = map_opt (fun (e1,e2) -> 
+                      let ne1 = x_add trans_pure_exp e1 n_tl in
+                      let ne2 = x_add trans_pure_exp e2 n_tl in
+                      (ne1,ne2)
+                    ) c_o in
                   (nc,nc_o)
                   ) idl in
               (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
@@ -2605,6 +2617,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             ) lst in
           Some rr
       in
+      (* let conv_baga_inv baga_inv =  *)
+      (*   let () = y_winfo_pp "converting baga_inv" in *)
+      (*   None in *)
       let vbi_i = vdef.I.view_baga_inv in
       let vbi_o = vdef.I.view_baga_over_inv in
       let vbi_u = vdef.I.view_baga_under_inv in
@@ -2612,7 +2627,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let vbc_o = conv_baga_inv vbi_o in
       let vbc_u = conv_baga_inv vbi_u in
       (* let vbi = vbc_i in *)
-      let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf pos in
+      let (vboi,vbui,user_inv,user_x_inv) = 
+          x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf pos in
       let () = y_tinfo_hp (add_str "user_inv" !MCP.print_mix_formula) user_inv in
       let () = y_tinfo_hp (add_str "user_x_inv" !MCP.print_mix_formula) user_x_inv in
       (* let unfold_once baga = *)
@@ -2721,7 +2737,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             | [xs]::xss -> aux xss xs 
             | _ -> [] in
             let () = if xs!=[] && ans==[] then 
-                y_tinfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
+                y_winfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
             in ans
           in
           let fresh_name (v,f) = (v,f) in
@@ -2767,7 +2783,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_ptrs = [];
         C.view_backward_fields = [];
         C.view_kind = view_kind;
-        C.view_type_of_self = vdef.I.view_type_of_self;
+        C.view_type_of_self = 
+          (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in 
+           let r = vdef.I.view_type_of_self in
+           if r==None && not(data_name="") then Some(Named data_name)
+           else None 
+          );
         C.view_actual_root = 
           (
             let pr_sv = !CP.print_sv in

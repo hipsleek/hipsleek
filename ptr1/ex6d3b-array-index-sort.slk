@@ -1,0 +1,178 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0.
+
+
+infer[@classic] x::arrI<v> * base::arr_seg_sorted<i+1,n,m> & x=base+i & i>=0
+   |- base::arr_seg_sorted<j,n,u>.
+expect Fail.
+
+infer[@classic] x::arrI<m> * base::arr_seg_sorted<i+1,n,min(v,m2)> & x=base+i & i>=0 & m<=m2
+& v>m   |- base::arr_seg_sorted<j,n,min(v,m)>.
+print residue.
+expect Valid.
+
+infer[@classic] x::arrI<v> * base::arr_seg_sorted<i+1,n,m> & x=base+i & i>=0
+& v<=m   |- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+
+//(4)
+infer[@classic] x::arrI<v> * 
+x1::arrI<m> & x1=base+i+1 & i+1=n-1 & i+1>=0
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<i,n,u>.
+print residue.
+expect Valid.
+
+//(5)
+infer[@classic] x::arrI<v> * 
+x1::arrI<m>*base::arr_seg_sorted<i+2,n,m2> & x1=self+i+1
+       & i+1>=0 & i+1<n-1 & m<=m2
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+//Fail.
+// why false?
+
+//(6)
+infer[@classic] x::arrI<v> * 
+x1::arrI<m>*base::arr_seg_sorted<i+2,n,m2> & x1=base+i+1
+       & i+1>=0 & i+1<n-1 & m<=m2
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+// why false?
+
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=base+(i+1)
+ |- [f] x_154::arrI<mi_166>@M & x_154=base+f & 0<=f
+// & flted_10_150+1=n_149  &  mi_166=m2_137
+.
+print residue.
+
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=i+base+1
+ |- [f] x_154::arrI<mi_166>@M & x_154=f+base & 0<=f
+// & flted_10_150+1=n_149  &  mi_166=m2_137
+.
+print residue.
+
+//(9)
+infer[@classic] x::arrI<v> * x1::arrI<m>*base::arr_seg_sorted<i+2,n,m2> & x1=base+i+1
+       & i+1>=0 & i+1!=n & m<=m2
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+// why false?
+
+infer[@classic] x::arrI<v> * x1::arrI<m> & x1=base+i+1 & i+1=n-1
+       & i+1>=0 & i+1!=n 
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+print residue.
+expect Valid.
+// why false?
+
+/*
+# ex6d3b --pnum 4
+
+infer[@classic] x::arrI<v> * 
+x1::arrI<m> & x1=base+i+1 & i+1=n-1 & i+1>=0
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+
+# should be valid..
+
+!!! **sleekengine.ml#1383:inside run_infer_one_pass:4
+Entail (4) : Fail.(must) cause:residue is forbidden.(1)
+
+Residue:
+
+ MustErr Context: 
+   fe_kind: MUST
+   fe_name: 
+   fe_locs: {
+     fc_message: classical separation logic
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  Fold ==>  Match(x,x_201)]]
+ CEX:true
+Validate 4: Expecting(3)Valid BUT got : Fail_Must
+
+!!! **solver.ml#12674:process_action (steps) :
+ ### action :
+ Fold =>
+   Type: Root
+   LHS: x1::arrI<m>@M
+   RHS: base::arr_seg_sorted<flted_10_150,n_149,m2_137>@M
+   root_inst: Some(x1)
+   lhs_rest: emp
+   rhs_rest: emp
+   alias set: [x1,base]rhs_inst: []rhs_infer: None
+ ### estate : ex_formula : x1::arrI<m>@M&x1=1+base+i & 1+i+1=n & 0<=(1+i) & x=i+base & 
+                            0<=i & v<=m&{FLOW,(20,21)=__norm#E}[]
+ es_heap:x::arrI<v>@M
+ ### conseq :
+ base::arr_seg_sorted<flted_10_150,n_149,m2_137>@M&
+flted_10_150=1+i_131 & x=i_131+base & 0<=i_131 & (i_131+1)<n_132 & 
+u<=m2_137 & v=u & n_149=n_132&{FLOW,(1,26)=__flow#E}[]
+
+!!! **context.ml#3239:process_matches (steps) :
+ ### LHS : x1::arrI<m>@M
+ ### RHS : x_154::arrI<mi_166>@M
+ ### matches :[]
+
+# why fail to match in the recursive step?
+
+(==context.ml#3545==)
+choose_context@11
+choose_context inp1 :LHS node: x1::arrI<m>@M
+choose_context inp2 :RHS node: x_154::arrI<mi_166>@M
+choose_context inp3 :LHS pure: v<=m & 0<=i & x=i+base & 0<=(1+i) & 1+i+1=n & x1=1+base+i
+choose_context inp4 :RHS pure: x_154=flted_10_150+base & flted_10_150+1=n_149 & 0<=flted_10_150 & 
+ mi_166=m2_137
+choose_context inp5 :right alias:[(i_131,i),(n_132,n),(v,u),(n_149,n_132),(mi_166,m2_137)]
+choose_context@11 EXIT:[]
+
+==========================================================
+
+# ex6d3b --pnum 5
+
+infer[@classic] x::arrI<v> * 
+x1::arrI<m>*base::arr_seg_sorted<i+2,n,m2> & x1=self+i+1
+       & i+1>=0 & i+1<n-1 & m<=m2
+//base::arr_seg_sorted<i+1,n,m> 
+& x=base+i & i>=0
+& v<=m   
+|- base::arr_seg_sorted<j,n,u>.
+
+# do not expect false to be present
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+
+*/

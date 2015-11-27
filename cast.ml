@@ -1693,6 +1693,7 @@ let add_epure pf lst =
   let () = x_tinfo_hp (add_str "add_epure(1) = " ( !print_ef_pure_disj)) lst no_pos in
   let lst = Excore.EPureI.mk_star_disj ep lst in
   let () = x_tinfo_hp (add_str "add_epure(2) = " ( !print_ef_pure_disj)) lst no_pos in
+  let lst = Excore.EPureI.conv_intv_disj lst in
   let r = x_add Excore.EPureI.elim_unsat_disj false lst in
   let () = x_tinfo_hp (add_str "add_epure (res) = " ( !print_ef_pure_disj)) r no_pos in
   r
@@ -1708,7 +1709,9 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   (* let ba = vdef.view_baga in *)
   (* let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " !print_svl) ba no_pos in *)
   (* Excore.ef_pure_disj option *)
+  (* below requires fix-point over baga to be bettern than beofre *)
   let ba_oinv = vdef.view_baga_x_over_inv in
+  (* let ba_oinv = vdef.view_baga_over_inv in *)
   let ba_exists = vdef.view_inv_exists_vars in
   match ba_oinv with
   | None -> []

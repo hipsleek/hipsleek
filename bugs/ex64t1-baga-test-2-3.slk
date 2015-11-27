@@ -1,0 +1,64 @@
+data node {
+  node next;
+}.
+
+// --eps
+
+//Fail.Fail.Valid.Valid.Fail.Valid.
+//Valid.Fail.Fail.
+//Valid.Fail.Fail.Valid.Valid.Fail.
+
+/*
+!!! baga inv(l7):[([], self=null & q=null),([q,self], true)]
+!!! baga inv(l6):[([q], self=null),([q,self], true)]
+!!! baga inv(l5):[([k,self], self!=k)]
+!!! baga inv(l4):[([q,self], true)]
+!!! baga inv(l3a):[]
+!!! baga inv(l3):[([self], true)]
+*/
+pred l3<> == 
+  self::node<q>*q::node<_> 
+inv self!=null.
+
+pred l3a<> == 
+  self::node<q>*q::node<_>  & self=q
+inv self!=null.
+
+
+//(3) valid
+checkentail x::l3a<> |- false.
+expect Valid.
+
+
+/*
+pred l4<q:node> == 
+  (exists z: self::node<r>*r::node<_> & r=z & z=q)
+inv self!=null.
+// baga {self,q}
+
+
+// (6) valid
+checkentail x::l4<c> * c::node<_> |- false.
+expect Valid.
+
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null.
+
+// (7) valid
+checkentail x::l5<c> * c::node<_> |- false.
+expect Valid.
+*/
+
+/*
+# ex64t1.slk
+
+# why false not captured?
+  should this be in the inv?
+
+type_of_self: 
+  Some()
+
+
+*/

@@ -1142,6 +1142,8 @@ let common_arguments = [
   (*("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");*)
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
+  ("--pnum",Arg.Int (fun n ->
+       Globals.sleek_num_to_verify := n),"Specific sleek number to verify");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--dis-implicit-var",Arg.Set Globals.dis_impl_var, "disable implicit existential");
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");

@@ -1,0 +1,35 @@
+data arrI {
+  int val;
+}.
+
+
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=base+(i+1)
+ |- [f] x_154::arrI<mi_166>@M & x_154=base+f & 0<=f
+// & flted_10_150+1=n_149  &  mi_166=m2_137
+.
+print residue.
+
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=i+base+1
+ |- [f,n_1] x_154::arrI<mi_166>@M & x_154=base+f & 0<=f & f+1=n_1  
+// & flted_10_150+1=n_149  &  mi_166=m2_137
+.
+print residue.
+
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=i+base+1
+ |- [f,n_1] x_154::arrI<mi_166>@M & x_154=f+base & 0<=f & f+1=n_1  
+//&  mi_166=m2_137
+.
+print residue.
+
+/*
+# ex6d3c --pnum 3
+
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=i+base+1
+ |- [f] x_154::arrI<mi_166>@M & x_154=f+base & 0<=f
+
+# why type error?
+
+ERROR: at ex6d3c-array-index-sort.slk_14:38_14:44
+Message: TYPE ERROR 1 : Found arrI but expecting NUM
+
+*/

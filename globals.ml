@@ -5,6 +5,8 @@ open VarGen
 (* module Lb = Label_only *)
 (* circular with Lb *)
 
+let sleek_num_to_verify = ref (-1)
+let sleek_print_residue = ref true
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0

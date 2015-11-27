@@ -37,7 +37,6 @@ let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 
 let get_unprime (SpecVar(_,id,_)) = id
 
-
 let view_args_map:(string,spec_var list) Hashtbl.t 
   = Hashtbl.create 10
 (* immutability annotations *)
@@ -5840,12 +5839,16 @@ struct
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     if enum_flag then baga_enum lst
     else baga_conv ~neq_flag:neq_flag lst
+
+  let get_interval x = None
   let conv_var x = x
   let from_var x = x
   (* let conv_var_pairs x = x *)
   (* let from_var_pairs x = x *)
   let mk_elem_from_sv x = x
   (* throws exception when duplicate detected during merge *)
+  let norm_baga (state:formula) (b:t list) = 
+    b
   let rec merge_baga b1 b2 =
     match b1,b2 with
     | [],b | b,[] -> b
@@ -5872,11 +5875,31 @@ struct
     |_,_ -> false
 end;;
 
+let mk_bform pf = BForm((pf,None),None) 
+
+let mk_geq v i = 
+  let lhs = mkVar v no_pos in
+  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let mk_exp_geq lhs i = 
+  (* let lhs = mkVar v no_pos in *)
+  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let mk_exp_leq lhs i = 
+  (* let lhs = mkVar v no_pos in *)
+  let e = Lte(lhs,(mkIConst i no_pos),no_pos) in
+  mk_bform e
+
+let mk_exp_neq_null lhs = 
+  (* let lhs = mkVar v no_pos in *)
+  let e = Neq(lhs,(Null no_pos),no_pos) in
+  mk_bform e
+
 (*
    [a,b,(e,base,offset)]
     ==> a>0 & b>0 & a!=b  
-        
-   
 *)
 (* to capture element as (sv, sv option) for both variable and interval *)
 (*   (sv,None) denotes an address sv *)
@@ -5885,32 +5908,55 @@ end;;
 (*   Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
 module SV_INTV =
 struct 
-  type t = spec_var * spec_var option
+  type intv = (exp * exp) (* start and length *)
+  type t = spec_var * intv (* spec_var *) option
   let zero = (mk_zero,None)
   (* "_" to denote null value *)
   let is_zero x = x==zero
   let eq (x1,_) (x2,_) = eq_spec_var x1 x2
   let compare (x1,_) (x2,_) = compare_spec_var x1 x2
+  let mk_addr x = (x,None)
+  (* TODO : to change this function *)
+  let get_interval (x,y) = 
+    match y with
+    | None -> None
+    | Some exp -> Some(x,exp)
+                   (* Some(x,id) *)
   let string_of (sv,sv_opt) = 
     let pr = string_of_spec_var in
+    let pr_e = !print_exp in
     match sv_opt with
     | None ->  pr sv
-    | Some sv2 -> pr_pair pr pr (sv,sv2)
+    | Some sv2 -> pr_pair pr (pr_pair pr_e pr_e) (sv,sv2)
   let subst sst (v,opt) =
+    let repl_e (e1,e2) = (e_apply_subs sst e1,e_apply_subs sst e2) in
     let repl x =
       try
         snd(List.find (fun (v1,_) -> eq_spec_var x v1) sst)
       with _ -> x in
-    (repl v,map_opt repl opt)
+    (repl v,map_opt repl_e opt)
+  (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
+    let lst_intv = List.fold_left (fun acc (_,s) -> match s with
+        | None -> acc
+        | Some(b,d) -> (b,d)::acc) [] lst in
+    let add_intv_formula f lst = List.fold_left (fun acc (b,d) ->
+        let f1 = mk_exp_leq d 0 in
+        let f2 = mk_exp_neq_null b  in
+        let f = mkOr f1 f2 None no_pos in
+        mkAnd acc f no_pos
+      ) f lst in
     let lst = List.filter (fun (_,p) -> p==None) lst in
     let lst = List.map fst lst in
     if enum_flag then baga_enum lst
-    else baga_conv ~neq_flag:neq_flag lst
+    else let f = baga_conv ~neq_flag:neq_flag lst in
+      add_intv_formula f lst_intv
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in
     List.map fst lst
+  let part_var lst = 
+    List.partition (fun (_,o) -> o==None) lst
   let from_var lst = 
     List.map (fun v -> (v,None)) lst
   (* let conv_var_pairs lst =  *)
@@ -5920,6 +5966,9 @@ struct
   let mk_elem_from_sv x = (x,None)
   (* let mk_elem x = mk_elem_from_sv (x,None) *)
   (* throws exception when duplicate detected during merge *)
+  let norm_baga (state:formula) (b:t list) = 
+    let () = y_binfo_pp x_tbi in
+    b
   let rec merge_baga b1 b2 =
     match b1,b2 with
     | [],b | b,[] -> b
@@ -5930,10 +5979,10 @@ struct
       else failwith "detected false"
 
   let merge_baga (b1:t list) (b2:t list) : t list =
-    let b1 = conv_var (* List.map fst *) b1 in
-    let b2 = conv_var (* List.map fst *) b2 in
-    let b3 = merge_baga b1 b2 in
-    List.map (fun v -> (v,None)) b3
+    let b1,r1 = part_var (* List.map fst *) b1 in
+    let b2,r2 = part_var (* List.map fst *) b2 in
+    let b3 = merge_baga (List.map fst b1) (List.map fst b2) in
+    (List.map (fun v -> (v,None)) b3)@(r1@r2)
 
   let rec hull_baga b1 b2 =
     match b1,b2 with
@@ -5960,7 +6009,7 @@ struct
     |_,_ -> false
 
   let is_eq_baga (b1:t list) (b2:t list) : bool =
-    let () = y_winfo_pp "is_eq_baga may be unsound" in
+    let () = y_tinfo_pp "is_eq_baga may be unsound" in
     let b1 = conv_var (* List.map fst *) b1 in
     let b2 = conv_var (* List.map fst *) b2 in
      let b3 = is_eq_baga b1 b2 in
@@ -15698,7 +15747,6 @@ let rec gen_cl_eqs pos svl p_res=
           ) p_res rest in
           gen_cl_eqs pos rest new_p_res
 
-let mk_bform pf = BForm((pf,None),None) 
 
 let mk_eq_zero a1 = 
   let a1 = mkVar a1 no_pos in
@@ -15711,6 +15759,9 @@ let mk_eq_null sv =
 let mk_eq_vars v1 v2 = 
   let v1 = mkVar v1 no_pos in
   let v2 = mkVar v2 no_pos in
+  mk_bform (Eq (v1, v2, no_pos))
+
+let mk_eq_exp v1 v2 = 
   mk_bform (Eq (v1, v2, no_pos))
 
 let mk_max a a1 a2 = 
@@ -15736,10 +15787,6 @@ let mk_inc lhs rhs =
   let rhs = mkAdd rhs (mkIConst 1 no_pos) no_pos in
   mkEqExp_raw lhs rhs no_pos
 
-let mk_geq v i = 
-  let lhs = mkVar v no_pos in
-  let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
-  mk_bform e
 
 let is_AndList f =
   match f with
@@ -15795,9 +15842,18 @@ let extr_eqn (f:formula)  =
   let _ = helper f in
   stk # get_stk
 
+let rec get_base e =
+  match e with
+  | Add(IConst _,e2,_) | Add(e2, IConst _,_) -> get_base e2
+  | Add((Var(v,_) as e1),e2,_) | Add(e2,(Var(v,_) as e1),_) 
+    -> if is_ptr_arith (typ_of_sv v) then e1 else get_base e2
+  | _ -> e
+
 let get_ptr e1 e2 =
   (* let () = y_tinfo_hp (add_str "get_ptr(e1)" !print_exp) e1 in *)
   (* let () = y_tinfo_hp (add_str "get_ptr(e2)" !print_exp) e2 in *)
+  let e1 = get_base e1 in
+  let e2 = get_base e2 in
   match e1,e2 with
   | Var(v1,_),Var(v2,_) -> 
     if is_ptr_arith (typ_of_sv v1) then Some v1

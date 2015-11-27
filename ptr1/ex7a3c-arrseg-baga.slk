@@ -1,0 +1,26 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  //inv BG([(self+i,n-i+1)], n>=i & i>=0) //expect fail
+  inv BG([(self+i-1,n-i)], n>=i & i>=0) //expect fail
+.
+
+/*
+# ex7a3c.slk
+
+# expect failure of invariant
+
+can we have expect Fail for baga inv..
+
+# Why the warnings below?
+
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+S
+
+*/
