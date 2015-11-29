@@ -9203,15 +9203,17 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     let need_quant = hack_filter_global_rel prog need_quant in
     let anon_vs,need_quant = List.partition IP.is_anon_ident need_quant in
     let flag = not(need_quant==[]) in
-    let msg = (add_str "Post-condition has existentially quantified free vars" pr_ident_list) need_quant in
+    let msg = (add_str ("Post-condition has existentially quantified free vars"^", error position: "^(VarGen.string_of_loc (IF.pos_of_formula f))) pr_ident_list) need_quant in
     if !Globals.warn_post_free_vars && flag then
-      let () = x_winfo_pp msg no_pos in
+      let () = x_winfo_pp msg (IF.pos_of_formula f) in
       Err.report_error{ 
         Err.error_loc = IF.pos_of_formula f; 
         Err.error_text = msg; } 
     else if !Globals.old_post_impl_to_ex && flag (* need_quant!=[] *) then 
       begin
-        let () = x_winfo_pp msg no_pos in
+        let () = x_winfo_pp msg (IF.pos_of_formula f) in
+(*        let () = print_endline ("!!!"^(VarGen.string_of_loc (IF.pos_of_formula f))) in
+        let () = print_endline ("###"^(proving_loc # string_of)) in*)
         IF.push_exists (need_quant@anon_vs) f
       end
     else IF.push_exists anon_vs f
