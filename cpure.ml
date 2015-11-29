@@ -10833,7 +10833,10 @@ let get_RelForm_arg_list_with_name pf name =
        match rel with
        | BForm ((RelForm (sv,args,_),_),_) ->
          if (get_unprime sv)=name
-         then args
+         then 
+           (List.concat(List.map (fun e -> match e with
+             | Var(sv,_) -> [sv]
+             | _ -> []) args))@r
          else
            r
        | _ -> failwith "get_RelForm_arg_list_with_name: Invalid input"

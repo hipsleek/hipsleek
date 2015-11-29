@@ -3642,14 +3642,24 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 
 
 let imply_timeout ante0 conseq0 imp_no timeout process =
-  let (b,lst,fl) = imply_timeout ante0 conseq0 imp_no timeout process in
-  let () =
-    let target_var = CP.get_RelForm_arg_list_with_name ante0 "Univ" in
-    if (not b) && (List.length target_var = 1)
-    then x_binfo_pp "TO BE IMPLEMENTED: to wrap the formula with existence" no_pos
-    else ()
-  in
-  (b,lst,fl)
+  let (b,lst,fl) as ans = imply_timeout ante0 conseq0 imp_no timeout process in
+    let univ_vars = CP.get_RelForm_arg_list_with_name ante0 "Univ" in
+    if (not b) && (univ_vars!=[])
+    then 
+      let () = y_binfo_pp "Processing univ instantiation" in
+      let () = y_binfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+      let () = y_binfo_hp (add_str "ante0" !CP.print_formula) ante0 in
+      let () = y_binfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
+      let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante0) in
+      let emap = CP.EMapSV.build_eset eqns' in
+      let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars) in
+      let () = y_binfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
+      let ante1 = CP.drop_rel_formula ante0 in
+      let new_conseq = CP.mkAnd conseq0 ante1 no_pos in
+      let new_conseq = CP.mkExists univ_vars2 new_conseq None no_pos in
+      let () = y_binfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
+      imply_timeout ante0 new_conseq imp_no timeout process
+    else ans
 ;;
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process

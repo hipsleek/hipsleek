@@ -577,6 +577,21 @@ Inv Check: Valid.(Over)
 
 Inv Check: Valid.(Over)
 ===============================================================
+# ex6e3e.slk 
+
+-dre ".*univ" --trace-log-num 2
+
+do_universal@2@1
+do_universal inp1 : xx::arr_seg<i,n>@M
+do_universal inp2 : emp&i<n&{FLOW,(20,21)=__norm#E}[]
+do_universal inp3 : xx::arr_seg<flted_12_100,n_99>@M&flted_12_100=1+i & n_99=n&
+{FLOW,(20,21)=__norm#E}[]
+
+!!! **solver.ml#14218:f_univ_vars:[mmm_105]
+!!! **solver.ml#14232:lhs_guard_p: i<mmm_105 & mmm_105<=n
+
+# need to first prove guard existentially satisfiable.
+# after that add i<mmm_105 & mmm_105<=n & Univ(mmm_105) to LHS together with
 ===============================================================
 ===============================================================
 ===============================================================

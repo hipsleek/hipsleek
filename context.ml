@@ -3269,9 +3269,11 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
       let pr1 = pr_list string_of_match_res in
       let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
       let pr3 = string_of_action_wt_res0 in
+      let pr_estate = Cprinter.string_of_entail_state_short in
       x_info_zp (lazy ("process_matches (steps) :"
                        ^ ((add_str "\n ### LHS " pr) lhs_h)
                        ^ ((add_str "\n ### RHS " pr) rhs_node)
+                       ^ ((add_str "\n ### estate " pr_estate) estate)
                        ^ ((add_str "\n ### matches " pr1) l)
                        ^ "\n"))  no_pos 
     end;

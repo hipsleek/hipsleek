@@ -13531,6 +13531,13 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       (*   | None -> () *)
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
       let () = y_tinfo_hp (add_str "M_lemma" (pr_opt Cprinter.string_of_coerc_short)) coerc_opt in
+      let () = match coerc_opt with 
+        | Some coer -> 
+              let vs = coer.coercion_univ_vars in
+              if vs!=[] then 
+                let () = y_binfo_hp (add_str "M_lemma" (Cprinter.string_of_coerc_short)) coer in
+                y_binfo_hp (add_str "to add univ_vars" !CP.print_svl) vs
+        | None -> () in
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
           (estate,conseq,rhs_rest,rhs_node, rhs_b)
@@ -14208,6 +14215,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
       let () = print_string ("univ_vars: "   ^ (String.concat ", "   (List.map CP.name_of_spec_var  coer.coercion_univ_vars)) ^ "\n") in
     *)
     (*let () = print_string ("[do_univ]: rename the univ boudn vars: " ^ (String.concat ", " (List.map CP.name_of_spec_var f_univ_vars)) ^ "\n") in	*)
+    let () = y_binfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
     let coer_lhs = x_add CF.subst tmp_rho coer.coercion_head in
     let coer_rhs = x_add CF.subst tmp_rho coer.coercion_body in
@@ -14220,6 +14228,8 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
     let lhs_heap, lhs_guard, lhs_vperm, lhs_fl, _, lhs_a  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
+    (* let lhs_guard_p = MCP.pure_of_mix lhs_guard in *)
+    let () = y_binfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
     (*node -> current heap node | lhs_heap -> head of the coercion*)
     match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
@@ -14639,7 +14649,7 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
     let estate = CF.moving_ivars_to_evars estate anode in
     let () = x_dinfo_zp (lazy ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos in
     (*do_universal anode f coer*)
-    do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
+    x_add do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
   end
 
 
@@ -14710,7 +14720,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
     x_dinfo_zp (lazy ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos;
     (* universal coercions *)
     let univ_r = if (List.length univ_coers)>0 then
-        let univ_res_tmp = List.map (fun coer -> apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
+        let univ_res_tmp = List.map (fun coer -> x_add apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
         let univ_res, univ_prf = List.split univ_res_tmp in
         Some (univ_res, univ_prf)
       else None in
