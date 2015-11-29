@@ -13,6 +13,8 @@ relation Univ(int m).
 checkentail i<m & m<n & Univ(m) |- m=i+1.
 expect Valid.
 
+
+
 //(2)
 /* ex8b -dre "filter_ante"
 

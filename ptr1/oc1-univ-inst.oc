@@ -1,6 +1,14 @@
 X1:={[i,n]->[m]:i<m & m<=n & 0<=i};
+X1;
+
 Inst:={[i,n]->[m]:m=i+1};
+Inst;
+
 Inst2:={[i,n]->[m]:m=i+2};
+Inst2;
+
+X1 intersection Inst;
+
 domain(X1);
 
 domain(X1) subset domain(X1 intersection Inst);

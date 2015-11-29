@@ -1,0 +1,8 @@
+arr_seg<a,end,n> := a=end & n=0
+   or a::arr_int<_,q> * arr_seg<q,end,n-1>
+
+arr_seg2<a,end,n> := a=end & n=0
+   or a::arr_int<5,q> * arr_seg2<q,end,n-1>
+
+
+

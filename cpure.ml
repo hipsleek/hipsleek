@@ -10826,6 +10826,19 @@ let rec get_RelForm pf = match pf with
   | Forall (_,f,_,_) -> get_RelForm f
   | Exists (_,f,_,_) -> get_RelForm f
 
+let get_RelForm_arg_list_with_name pf name =
+  let rel_form_list = get_RelForm pf in
+  List.fold_left 
+    (fun r rel -> 
+       match rel with
+       | BForm ((RelForm (sv,args,_),_),_) ->
+         if (get_unprime sv)=name
+         then args
+         else
+           r
+       | _ -> failwith "get_RelForm_arg_list_with_name: Invalid input"
+    ) [] (get_RelForm pf)
+;;
 let rec get_Neg_RelForm pf = match pf with
   | BForm (bf,_) -> []
   | And (f1,f2,_) -> get_Neg_RelForm f1 @ get_Neg_RelForm f2
@@ -14117,21 +14130,47 @@ and has_waitS_rel_pure f0 =
   Debug.no_1 "has_waitS_rel_pure" !print_formula string_of_bool
     has_waitS_rel_pure_x f0
 
-and has_concrete_rel_pure_x f0 =
+and has_rel_pure_x_with_name_x f0 name=
   let f_bf bf = 
     let pf,_ = bf in
     (match pf with
      | RelForm (SpecVar (_,id,_),_,pos) ->
-       if (id = Globals.concrete_name) then Some true
+       if (id = name) then Some true
        else None
      | _ -> None)
   in
   fold_formula f0 (nonef, f_bf, nonef) or_list
 
+and has_rel_pure_x_with_name f0 name =
+  Debug.no_2 "has_rel_pure_x_with_name" !print_formula (fun x -> x) string_of_bool
+    has_rel_pure_x_with_name_x f0 name
+
+
+and has_concrete_rel_pure_x f0 =
+  has_rel_pure_x_with_name f0 Globals.concrete_name
+  (* let f_bf bf =  *)
+  (*   let pf,_ = bf in *)
+  (*   (match pf with *)
+  (*    | RelForm (SpecVar (_,id,_),_,pos) -> *)
+  (*      if (id = Globals.concrete_name) then Some true *)
+  (*      else None *)
+  (*    | _ -> None) *)
+  (* in *)
+  (* fold_formula f0 (nonef, f_bf, nonef) or_list *)
+
 (* Whether fo includes a relation concrete(S)*)
 and has_concrete_rel_pure f0 =
   Debug.no_1 "has_concrete_rel_pure" !print_formula string_of_bool
     has_concrete_rel_pure_x f0
+
+and has_univ_rel_pure_x f0 =
+  has_rel_pure_x_with_name f0 "Univ"
+
+and has_univ_rel_pure f0 =
+  Debug.no_1 "has_univ_rel_pure" !print_formula string_of_bool
+    has_univ_rel_pure_x f0
+
+
 
 (*
   Expect: waitS(G,S,d)

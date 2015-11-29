@@ -61,7 +61,7 @@ int get_max(arrI base,int i,int m)
     }
   }
   else{
-    return true;
+    return -1;
   }
 
 }

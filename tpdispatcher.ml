@@ -3640,6 +3640,18 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   final_res
 ;;
 
+
+let imply_timeout ante0 conseq0 imp_no timeout process =
+  let (b,lst,fl) = imply_timeout ante0 conseq0 imp_no timeout process in
+  let () =
+    let target_var = CP.get_RelForm_arg_list_with_name ante0 "Univ" in
+    if (not b) && (List.length target_var = 1)
+    then x_binfo_pp "TO BE IMPLEMENTED: to wrap the formula with existence" no_pos
+    else ()
+  in
+  (b,lst,fl)
+;;
+
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
   : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
