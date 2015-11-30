@@ -989,6 +989,7 @@ let common_arguments = [
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--old-lemma-settings", Arg.Unit (fun _ ->
        Globals.old_norm_w_coerc := true;
+       Globals.old_univ_lemma := true;
        Globals.old_search_always := true;
      ), "Allow old lemma settings");
   ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");

@@ -3121,18 +3121,18 @@ and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (evars : CP
         (* WN: below cause a problem for ptr1/ex6e3f2.slk expl inst *)
         let is_expl = (CP.mem fr expl_inst) (* || not(is_free) *) in
         if (is_expl) then
-          let () = y_binfo_pp "expl branch" in
+          let () = y_tinfo_pp "expl branch" in
           let res = CP.mkAnd tmp rest_right_eqns pos in
           (rest_left_eqns,res,s_list)
         else 
           let is_impl = (CP.mem fr impl_inst) || not(is_free) in
           if (is_impl) then
-            let () = y_binfo_pp "impl branch" in
-            let () = y_binfo_hp (add_str "fvars_rhs" !CP.print_svl) fvars_rhs in
+            let () = y_tinfo_pp "impl branch" in
+            let () = y_tinfo_hp (add_str "fvars_rhs" !CP.print_svl) fvars_rhs in
             let res = CP.mkAnd tmp rest_left_eqns pos in
             (res,rest_right_eqns,s_list)
           else (* free *)
-            let () = y_binfo_pp "free branch?" in
+            let () = y_tinfo_pp "free branch?" in
             let () = if not(CP.mem fr expl_inst) then
               let msg = "free var to_conseq" in
               if !Globals.warn_fvars_rhs_match then
@@ -10987,7 +10987,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* for the free vars from the RHS to the LHS                            *)
           (************************************************************************)
           let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs) in
-          let () = x_binfo_hp (add_str "to_rhs, before adding" (Cprinter.string_of_pure_formula)) to_rhs pos in
+          let () = x_tinfo_hp (add_str "to_rhs, before adding" (Cprinter.string_of_pure_formula)) to_rhs pos in
           let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs) in
           (* let () = print_endline ("new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p)) in     *)
           (* let () = print_endline ("new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p)) in *)
@@ -13542,8 +13542,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         | Some coer -> 
               let vs = coer.coercion_univ_vars in
               if vs!=[] then 
-                let () = y_binfo_hp (add_str "M_lemma" (Cprinter.string_of_coerc_short)) coer in
-                y_binfo_hp (add_str "to add univ_vars" !CP.print_svl) vs
+                let () = y_tinfo_hp (add_str "M_lemma" (Cprinter.string_of_coerc_short)) coer in
+                y_tinfo_hp (add_str "to add univ_vars" !CP.print_svl) vs
         | None -> () in
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
@@ -14222,11 +14222,11 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
       let () = print_string ("univ_vars: "   ^ (String.concat ", "   (List.map CP.name_of_spec_var  coer.coercion_univ_vars)) ^ "\n") in
     *)
     (*let () = print_string ("[do_univ]: rename the univ boudn vars: " ^ (String.concat ", " (List.map CP.name_of_spec_var f_univ_vars)) ^ "\n") in	*)
-    let () = y_binfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
+    let () = y_tinfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
     let coer_lhs = x_add CF.subst tmp_rho coer.coercion_head in
     let coer_rhs = x_add CF.subst tmp_rho coer.coercion_body in
-    let () = y_binfo_hp (add_str "coer_rhs_0" !CF.print_formula) coer_rhs in
+    let () = y_tinfo_hp (add_str "coer_rhs_0" !CF.print_formula) coer_rhs in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)
     let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
@@ -14234,17 +14234,16 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
     let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
     let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
-    let () = y_binfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
+    let () = y_tinfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
     let lhs_heap, lhs_guard, lhs_vperm, lhs_fl, _, lhs_a  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     (* let lhs_guard_p = MCP.pure_of_mix lhs_guard in *)
-    let () = y_binfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
+    let () = y_tinfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
     let univ_rel v = CP.mkRel_sv v in
     let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
     let lhs_w_univ_rel = List.fold_left (fun g v ->
         CP.mkAnd g (mk_Univ_rel v) no_pos
     ) lhs_guard f_univ_vars in
-    let () = y_binfo_hp (add_str "lhs_w_univ" !CP.print_formula) lhs_w_univ_rel in
     (*node -> current heap node | lhs_heap -> head of the coercion*)
     match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
@@ -14307,10 +14306,14 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let to_vars = perms1@(p1 :: ps1)in
           let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
           let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
-          let () = y_binfo_hp (add_str "need to prove:lhs_guard_new" !CP.print_formula) lhs_guard_new in
-          let coer_rhs_new1 = if !Globals.old_univ_lemma then coer_rhs_new1 else
-            CF.combine_star_pure coer_rhs_new1 lhs_w_univ_rel in
-          let () = y_binfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
+          let () = y_winfo_hp (add_str "TBI:prove separately:lhs_guard_new" !CP.print_formula) lhs_guard_new in
+          let coer_rhs_new1 = 
+            if !Globals.old_univ_lemma then coer_rhs_new1 
+            else
+              let lhs_w_univ_rel = CP.subst_avoid_capture fr_vars to_vars lhs_w_univ_rel in
+              let () = y_binfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
+              CF.combine_star_pure coer_rhs_new1 lhs_w_univ_rel in
+          let () = y_tinfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
           let coer_rhs_new1 =
             if (Perm.allow_perm ()) then
               match perm1,perm2 with

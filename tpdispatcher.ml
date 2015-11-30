@@ -3281,12 +3281,12 @@ let tp_imply ante conseq imp_no timeout process =
   (* let ante = CP.elim_idents ante in *)
   (* let conseq = CP.elim_idents conseq in *)
   let fn_imply a c = x_add_3 tp_imply_perm a c imp_no timeout process in
-  (* let () = x_binfo_hp (add_str "no-cache" string_of_bool) !Globals.no_cache_formula no_pos in *)
+  (* let () = x_tinfo_hp (add_str "no-cache" string_of_bool) !Globals.no_cache_formula no_pos in *)
   if !Globals.no_cache_formula then
     fn_imply ante conseq
   else
     begin
-      (* let () = x_binfo_pp "prior to imply_cache"  no_pos in *)
+      (* let () = x_tinfo_pp "prior to imply_cache"  no_pos in *)
       x_add_3 imply_cache fn_imply ante conseq
     end
 
@@ -3651,21 +3651,21 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = imply_timeout ante0 conseq0 imp_no timeout process in
   let univ_vars = CP.get_RelForm_arg_list_with_name ante0 "Univ" in
-  let () = y_binfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+  let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
   if (not b) && (univ_vars!=[])
   then 
-    let () = y_binfo_pp "Processing univ instantiation" in
-    let () = y_binfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-    let () = y_binfo_hp (add_str "ante0" !CP.print_formula) ante0 in
-    let () = y_binfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
+    let () = y_tinfo_pp "Processing univ instantiation" in
+    let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+    let () = y_tinfo_hp (add_str "ante0" !CP.print_formula) ante0 in
+    let () = y_tinfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
     let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante0) in
     let emap = CP.EMapSV.build_eset eqns' in
     let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
-    let () = y_binfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
+    let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
     let ante1 = CP.drop_rel_formula ante0 in
     let new_conseq = CP.mkAnd conseq0 ante1 no_pos in
     let new_conseq = CP.mkExists univ_vars2 new_conseq None no_pos in
-    let () = y_binfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
+    let () = y_tinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
     imply_timeout ante0 new_conseq imp_no timeout process
     else ans
 ;;

@@ -1,5 +1,5 @@
 data node { int val ; node next }.
-relation Univ(int x).
+//relation Univ(int x).
 
 /*
 pred lseg<n, p> == self = p & n = 0

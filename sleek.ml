@@ -484,7 +484,8 @@ let main () =
       begin
         (* let () = print_endline "Prior to parse_file" in *)
         x_tinfo_pp "sleek : batch processing" no_pos;
-        let todo_unk = List.map (parse_file NF.list_parse) !Globals.source_files in ()
+        let all_files = ("prelude.slk")::!Globals.source_files in
+        let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
       end
   with
   | End_of_file ->
