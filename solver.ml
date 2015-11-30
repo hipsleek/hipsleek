@@ -3114,26 +3114,32 @@ and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (evars : CP
       if (CP.mem fr evars) (* || (CP.mem fr expl_inst) *)  (*TODO: should this be uncommented? || List.mem t evars *) then
         (rest_left_eqns,rest_right_eqns,(fr, t)::s_list)
       else 
+        let tmp = if (LO.is_unlabelled br_label) 
+        then CP.mkEqVar fr t pos 
+        else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
         let is_free = (CP.mem fr fvars_rhs) in (* from HRel *)
-        let is_impl = (CP.mem fr impl_inst) || not(is_free) in
-        if (is_impl) then
-          let tmp = if (LO.is_unlabelled br_label) 
-            then CP.mkEqVar fr t pos 
-            else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
-          let res = CP.mkAnd tmp rest_left_eqns pos in
-          (res,rest_right_eqns,s_list)
-        else (* explicit or free *)
-          let () = if not(CP.mem fr expl_inst) then
+        (* WN: below cause a problem for ptr1/ex6e3f2.slk expl inst *)
+        let is_expl = (CP.mem fr expl_inst) (* || not(is_free) *) in
+        if (is_expl) then
+          let () = y_binfo_pp "expl branch" in
+          let res = CP.mkAnd tmp rest_right_eqns pos in
+          (rest_left_eqns,res,s_list)
+        else 
+          let is_impl = (CP.mem fr impl_inst) || not(is_free) in
+          if (is_impl) then
+            let () = y_binfo_pp "impl branch" in
+            let () = y_binfo_hp (add_str "fvars_rhs" !CP.print_svl) fvars_rhs in
+            let res = CP.mkAnd tmp rest_left_eqns pos in
+            (res,rest_right_eqns,s_list)
+          else (* free *)
+            let () = y_binfo_pp "free branch?" in
+            let () = if not(CP.mem fr expl_inst) then
               let msg = "free var to_conseq" in
               if !Globals.warn_fvars_rhs_match then
                 failwith msg
               else 
                 y_winfo_hp (add_str msg !CP.print_sv) fr
-
           in
-          let tmp = if (LO.is_unlabelled br_label) 
-            then CP.mkEqVar fr t pos 
-            else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
           let res = CP.mkAnd tmp rest_right_eqns pos in
           (rest_left_eqns,res,s_list)
     | [] -> (CP.mkTrue pos,CP.mkTrue pos,[])
@@ -10982,7 +10988,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (************************************************************************)
           let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs) in
           let () = x_binfo_hp (add_str "to_rhs, before adding" (Cprinter.string_of_pure_formula)) to_rhs pos in
-          let new_conseq_p = (MCP.memoise_add_pure_N r_p to_lhs) in
+          let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs) in
           (* let () = print_endline ("new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p)) in     *)
           (* let () = print_endline ("new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p)) in *)
           (* Add instantiation for perm vars *)
