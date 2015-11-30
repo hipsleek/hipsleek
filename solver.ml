@@ -10981,7 +10981,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* for the free vars from the RHS to the LHS                            *)
           (************************************************************************)
           let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs) in
-          let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs) in
+          let () = x_binfo_hp (add_str "to_rhs, before adding" (Cprinter.string_of_pure_formula)) to_rhs pos in
+          let new_conseq_p = (MCP.memoise_add_pure_N r_p to_lhs) in
           (* let () = print_endline ("new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p)) in     *)
           (* let () = print_endline ("new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p)) in *)
           (* Add instantiation for perm vars *)
@@ -14219,6 +14220,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
     let coer_lhs = x_add CF.subst tmp_rho coer.coercion_head in
     let coer_rhs = x_add CF.subst tmp_rho coer.coercion_body in
+    let () = y_binfo_hp (add_str "coer_rhs_0" !CF.print_formula) coer_rhs in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)
     let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
@@ -14226,6 +14228,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
     let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
     let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
+    let () = y_binfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
     let lhs_heap, lhs_guard, lhs_vperm, lhs_fl, _, lhs_a  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     (* let lhs_guard_p = MCP.pure_of_mix lhs_guard in *)

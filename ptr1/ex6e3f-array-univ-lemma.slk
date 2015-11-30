@@ -24,6 +24,7 @@ print residue.
 expect Fail.
 // isn't this unsound?
 
+/*
 //(5)
 checkentail xx::arr_seg<i,n> & i<n |- [mm]  xx::arr_seg<mm,n> & mm=i+2 & mm<=n.
 print residue.
@@ -31,7 +32,7 @@ print residue.
 //(6)
 checkentail xx::arr_seg<i,n> & i<n & mm=i+2 |- xx::arr_seg<mm,n>.
 print residue.
-
+*/
 
 /*
 # ex6e3f.slk 
