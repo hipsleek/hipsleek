@@ -5882,6 +5882,11 @@ let mk_geq v i =
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
   mk_bform e
 
+let mk_exp_var v = 
+  (* let lhs = mkVar v no_pos in *)
+  let e = mkVar v no_pos in
+  e
+
 let mk_exp_geq lhs i = 
   (* let lhs = mkVar v no_pos in *)
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in

@@ -20569,4 +20569,8 @@ let get_root_ptr hf =
   | HVar(pt,_) -> pt
   | _ -> raise Not_found
 
+let combine_star_pure f1 p =
+  let f2 = formula_of_pure_formula p no_pos in
+  let f = normalize_combine_star f1 f2 no_pos in
+  f
 

@@ -14230,6 +14230,12 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     (* let lhs_guard_p = MCP.pure_of_mix lhs_guard in *)
     let () = y_binfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
+    let univ_rel v = CP.mkRel_sv v in
+    let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
+    let lhs_w_univ_rel = List.fold_left (fun g v ->
+        CP.mkAnd g (mk_Univ_rel v) no_pos
+    ) lhs_guard f_univ_vars in
+    let () = y_binfo_hp (add_str "lhs_w_univ" !CP.print_formula) lhs_w_univ_rel in
     (*node -> current heap node | lhs_heap -> head of the coercion*)
     match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
@@ -14292,6 +14298,10 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let to_vars = perms1@(p1 :: ps1)in
           let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
           let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+          let () = y_binfo_hp (add_str "need to prove:lhs_guard_new" !CP.print_formula) lhs_guard_new in
+          let coer_rhs_new1 = if !Globals.old_univ_lemma then coer_rhs_new1 else
+            CF.combine_star_pure coer_rhs_new1 lhs_w_univ_rel in
+          let () = y_binfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
           let coer_rhs_new1 =
             if (Perm.allow_perm ()) then
               match perm1,perm2 with

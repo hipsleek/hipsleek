@@ -37,6 +37,13 @@ expect Fail.
 /*
 # ex6e3e.slk -dd-steps
 
+//(4)
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+2.
+print residue.
+expect Fail.
+// isn't this unsound?
+
+
 -dre ".*univ" --trace-log-num 2
 
 !!! **solver.ml#14218:f_univ_vars:[mmm_105]

@@ -577,7 +577,7 @@ Inv Check: Valid.(Over)
 
 Inv Check: Valid.(Over)
 ===============================================================
-# ex6e3e.slk 
+# ex6e3e.slk (FIXED)
 
 -dre ".*univ" --trace-log-num 2
 
@@ -592,7 +592,14 @@ do_universal inp3 : xx::arr_seg<flted_12_100,n_99>@M&flted_12_100=1+i & n_99=n&
 
 # need to first prove guard existentially satisfiable.
 # after that add i<mmm_105 & mmm_105<=n & Univ(mmm_105) to LHS together with
-===============================================================
+==============================================================
+# ex6e3f.slk 
+
+//(4)
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+2.
+print residue.
+expect Fail.
+// isn't this unsound?
 ===============================================================
 ===============================================================
 ===============================================================
