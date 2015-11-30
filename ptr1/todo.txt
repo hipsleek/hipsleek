@@ -620,7 +620,7 @@ Total verification time: 275.29 second
 	Time spent in child processes: 121.40 second
 	Number of false contexts: 98
 ===============================================================
-ex6e3f3.slk 
+ex6e3f3.slk  (below is OK)
 
 # expl inst may go to LHS if Univ not present in LHS
   since we may allowed it to strengthen formula on LHS?
@@ -636,6 +636,53 @@ expect Valid.
 // fail but expect Valid when m=mm move to RHS?
 
 ===============================================================
+# ex6e3f4.slk 
+
+checkentail  i<m & m<=n & mm=m & Univ(m) |- mm=i+1 .
+
+ <1>emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+
+# can we add the instantiation m=i+1 after the proving?
+  so that its universal instantiation value can be fixed
+  by such proving. need to add mm=i+1 to LHS after proving
+  to support universal instantiation
+
+# the inst probably done at heap_empty_rhs, and could be signalled
+  by some univ_flag from @4 or @2.
+
+(====)
+imply_timeout 1@5@3@2@1
+imply_timeout 1 inp1 : Univ(m) & mm=m & m<=n & i<m
+imply_timeout 1 inp2 : exists(m:exists(mm:mm=i+1 & mm=m) & m<=n & i<m)
+imply_timeout 1@5 EXIT:true
+
+(==tpdispatcher.ml#3804==)
+imply_timeout 2@3@2@1
+imply_timeout 2 inp1 : Univ(m) & mm=m & m<=n & i<m
+imply_timeout 2 inp2 : mm=i+1
+imply_timeout 2@3 EXIT:true
+
+(==tpdispatcher.ml#3818==)
+imply_timeout 3@2@1
+imply_timeout 3 inp1 : Univ(m) & mm=m & m<=n & i<m
+imply_timeout 3 inp2 : mm=i+1
+imply_timeout 3 inp3 :timeout:10.
+imply_timeout 3 inp4 :2
+imply_timeout 3@2 EXIT:true
+
+(==solver.ml#7980==)
+heap_entail_empty_rhs_heap#1@1
+heap_entail_empty_rhs_heap#1 inp1 :es:
+  emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ 
+heap_entail_empty_rhs_heap#1 inp2 :lhs-base-f: emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 :rhs-mix: mm=1+i
+heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
+heap_entail_empty_rhs_heap#1@1 EXIT: [ emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  ]
+
 ===============================================================
 ===============================================================
 ===============================================================
