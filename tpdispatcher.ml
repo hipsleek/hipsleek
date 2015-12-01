@@ -3647,6 +3647,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   Debug.no_2 "imply_timeout 1" pf pf (fun (b,_,_) -> string_of_bool b)
     (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
+let univ_rhs_store = new store (CP.mkTrue no_pos) !CP.print_formula 
 
 let imply_timeout ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = imply_timeout ante0 conseq0 imp_no timeout process in
@@ -3658,6 +3659,7 @@ let imply_timeout ante0 conseq0 imp_no timeout process =
     let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
     let () = y_tinfo_hp (add_str "ante0" !CP.print_formula) ante0 in
     let () = y_tinfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
+    let () = univ_rhs_store # set conseq0 in
     let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante0) in
     let emap = CP.EMapSV.build_eset eqns' in
     let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in

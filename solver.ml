@@ -9117,12 +9117,20 @@ type: bool *
       (* let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in *)
       (* ========== end - Immutability normalization ======== *)
       (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
+      let add_univ_pure es =
+        let obj = TP.univ_rhs_store in
+        if obj # is_empty then es
+        else 
+          let nf = obj # get_rm in
+          let () = y_binfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
+          CF.add_pure_estate es nf 
+      in
       let flag = stk_estate # is_empty in
       let () = y_tinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
       let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
       if not(flag) || !Globals.adhoc_flag_5 then
         let pr = Cprinter.string_of_entail_state_short in
-        let () = Debug.ninfo_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
+        let () = x_info_hp (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
         let new_estate = stk_estate # top in
         let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
         let new_estate = {new_estate with es_formula = disj_of_list_pure new_ante_fmls pos} in
@@ -9161,6 +9169,7 @@ type: bool *
         let inf_relass = stk_rel_ass # get_stk_and_reset in
         (* let inf_heap_ass = stk_rel_ass # get_stk in *)
         let estate = add_infer_pure_to_estate inf_p estate in
+        let () = y_binfo_pp "to add univ inst" in
         let () = y_tinfo_hp (add_str "inf_pure" (pr_list !CP.print_formula)) inf_p in
         let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
         let estate = x_add add_infer_rel_to_estate inf_relass estate in
@@ -9177,6 +9186,7 @@ type: bool *
         let res_delta = mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in (* TODO: res_vp *)
         let res_delta = x_add_1 CF.simplify_pure_f_old res_delta in
         let estate = { estate with es_formula = res_delta; } in
+        let estate = add_univ_pure estate in
 
         (* Termination *)
         (* let pr = Cprinter.string_of_formula in *)

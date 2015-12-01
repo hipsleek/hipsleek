@@ -11723,6 +11723,7 @@ let rec add_pre_heap ctx =
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
 
+
 let add_infer_pure_thus_estate cp es =
   let flag = true (* es.es_infer_acc # add_pure cp *) in
   if flag then
@@ -20574,3 +20575,9 @@ let combine_star_pure f1 p =
   let f = normalize_combine_star f1 f2 no_pos in
   f
 
+let add_pure_estate es cp =
+  let flag = true (* es.es_infer_acc # add_pure cp *) in
+  if flag then
+    {es with es_formula = combine_star_pure es.es_formula cp;
+    }
+  else failwith (x_loc^"add_infer_pure_thus_estate")
