@@ -2220,7 +2220,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               (* report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc) *)
           else
             let () = y_tinfo_hp (add_str "inv" Cprinter.string_of_ef_pure_disj) f in
-            print_endline_quiet ("\nInv Check: Valid.("^msg^")")
+            y_tinfo_pp ("Inv Check: Valid.("^msg^")")
           | None -> ()
         else ()
       in

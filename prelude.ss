@@ -1,3 +1,5 @@
+relation Univ(int x).
+
 //class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}
 class __ArrBoundErr extends __Error {}

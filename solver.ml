@@ -9122,7 +9122,7 @@ type: bool *
         if obj # is_empty then es
         else 
           let nf = obj # get_rm in
-          let () = y_binfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
+          let () = y_tinfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
           CF.add_pure_estate es nf 
       in
       let flag = stk_estate # is_empty in
@@ -9169,7 +9169,7 @@ type: bool *
         let inf_relass = stk_rel_ass # get_stk_and_reset in
         (* let inf_heap_ass = stk_rel_ass # get_stk in *)
         let estate = add_infer_pure_to_estate inf_p estate in
-        let () = y_binfo_pp "to add univ inst" in
+        let () = y_tinfo_pp "to add univ inst" in
         let () = y_tinfo_hp (add_str "inf_pure" (pr_list !CP.print_formula)) inf_p in
         let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
         let estate = x_add add_infer_rel_to_estate inf_relass estate in
@@ -14321,7 +14321,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
             if !Globals.old_univ_lemma then coer_rhs_new1 
             else
               let lhs_w_univ_rel = CP.subst_avoid_capture fr_vars to_vars lhs_w_univ_rel in
-              let () = y_binfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
+              let () = y_tinfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
               CF.combine_star_pure coer_rhs_new1 lhs_w_univ_rel in
           let () = y_tinfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
           let coer_rhs_new1 =

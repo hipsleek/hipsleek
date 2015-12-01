@@ -4,11 +4,9 @@ data arrI {
 
 relation Univ(int x).
 
-/*
 checkentail x::arrI<m> & i<m & m<=n & Univ(m) |- x::arrI<mm> & mm=i+1 .
 expect Valid.
 print residue.
-*/
 
 checkentail  i<m & m<=n & mm=m & Univ(m) |- mm=i+1 .
 expect Valid.
