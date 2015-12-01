@@ -2,7 +2,7 @@ data arrI {
   int val;
 }.
 
-relation Univ(int x).
+//relation Univ(int x).
 
 
 checkentail i<m & m<=n & Univ(m) |- [mm] mm=m & mm=i+2 .
