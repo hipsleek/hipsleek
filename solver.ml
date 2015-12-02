@@ -8476,7 +8476,7 @@ and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
     (add_str "lhs-base-f" (fun c-> Cprinter.string_of_formula(Base c)))
     (add_str "rhs-mix" Cprinter.string_of_mix_formula)
     (add_str "is_folding" string_of_bool) pr
-    (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
+    (fun _ _ _ _ -> TP.wrap_remove_univ_rhs (heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set) pos) es lhs rhs i_f
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (**** INTERNAL****)
@@ -9135,6 +9135,8 @@ type: bool *
           let () = y_tinfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
           CF.add_pure_estate es nf 
       in
+      let add_univ_pure es =
+        Debug.no_1 "add_univ_pure" pr_none pr_none add_univ_pure es in
       let flag = stk_estate # is_empty in
       let () = y_tinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
       let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in

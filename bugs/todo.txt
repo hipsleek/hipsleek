@@ -2648,7 +2648,21 @@ Unexpected result with : sleek7.slk (failed check(s): {E1#Valid},{E10#Valid},{E2
  sleek7.slk({E10#Valid}) sleek8.slk({E16#Valid}) sleek8.slk({E16#Valid}) 
  sleek9.slk({E3#Valid},{E4#Valid}) 
   lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+odd-lseg.slk taking very long to compute..
 ===================================================================
+3Dec
+
+Total number of errors: 6 in files:
+  label-dll.slk(no result  for {E}) 
+
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+
+  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
 ===================================================================
 ===================================================================
 ===================================================================

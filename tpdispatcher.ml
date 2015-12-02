@@ -3659,7 +3659,18 @@ object (self)
   method is_empty = super # is_empty
   method get_rm = super # get_rm
   method get = super # get
+  method reset = super # get_rm
 end
+
+(* this help remove univ_rhs at the end of method *)
+let wrap_remove_univ_rhs f x =
+  try
+    let r = f x in
+    let _ = univ_rhs_store # reset in
+    r
+  with e ->
+    let _ = univ_rhs_store # reset in
+    raise e
 
 let get_univs_from_ante ante =
   let univ_vars = CP.get_RelForm_arg_list_with_name ante "Univ" in
