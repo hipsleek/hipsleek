@@ -1,0 +1,73 @@
+data node { int val ; node next }.
+//relation Univ(int x).
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+//   n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+
+lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma self::lseg<n, p> & n>=a & a>=0  -> self::lseg<a, r> * r::lseg<b, p> & n=a+b.
+//above cannot work!
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- x::lseg<n1, r1> & n1>=12.
+expect Fail.
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- x::lseg<n1, r1> & n1>=4.
+expect Valid.
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 9 & n2 >= 2.
+expect Fail.
+print residue.
+// invalid-exception
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 4 & n2 >1.
+expect Valid.
+print residue.
+// invalid-exception
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- x::lseg<n1, r1> * r1::lseg<n2, r> & n1 >= 4 & n2 >1.
+expect Valid.
+print residue.
+
+/*
+# ex64u3.slk
+
+# why (exists n1: n1>=12) in RHS..
+
+@28!:0: 0: **solver.ml#8897:rhs_p : : 12<=n1
+@28!:0: 0: **solver.ml#8898:conseq0 : : exists(n1:12<=n1)
+@28!:0: 0: **solver.ml#8899:conseq1-1 : : exists(n1:12<=n1)
+
+@28! **solver.ml#8875:es_ivars:[b_100]
+@28! **solver.ml#8876:es_gen_expl_vars:[n1]
+@28! **solver.ml#8877:es_evars:[]
+@28! **solver.ml#8878:exist_vars:[n1,b_100]
+
+!!! **solver.ml#8880:split_ante1_sym : nnn=b_100+a_99 & 0<=a_99 & 0<=b_100 & Univ(a_99) & Univ(b_100) & 9<nnn & 
+ r1=r_106 & n1=a_99 & r1=r_106 & 
+ (((1<=b_100 & r_106!=null) | (p=r_106 & b_100=0))) & 
+ (((1<=a_99 & x!=null) | (r_106=x & a_99=0)))
+!!! **solver.ml#8881:exist_vars:[n1,b_100]
+
+(====)
+imply_timeout 1@52@51@50
+imply_timeout 1 inp1 : nnn=b_100+a_99 & 0<=a_99 & 0<=b_100 & Univ(a_99) & Univ(b_100) & 9<nnn & 
+ r1=r_106 & n1=a_99 & r1=r_106 & 
+ (((1<=b_100 & r_106!=null) | (p=r_106 & b_100=0))) & 
+ (((1<=a_99 & x!=null) | (r_106=x & a_99=0)))
+imply_timeout 1 inp2 : exists(n1:12<=n1)
+imply_timeout 1@52 EXIT:true
+
+[imply_timeout 3@17.,imply_one,imply_disj_orig,imply_one_conj_orig,imply_conj_orig,imply_mix_formula,fold_fun_impt,heap_entail_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,do_match,pm_aux,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,heap_entail,do_universal,apply_universal,do_coercion,pm_aux,process_action,pm_aux,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,heap_entail_struc,heap_entail_struc_init,heap_entail_struc_init_bug_inv,sleek_entail_check,run_infer_one_pass,run_entail_check]
+
+*/

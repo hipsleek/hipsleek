@@ -559,7 +559,6 @@ expect Valid.
 
 # check and elim warnings below..
 
-
  !!! **astsimp.ml#2740:inconsistent roots:[[]]
 !!! **astsimp.ml#2740:inconsistent roots:[[]]
 !!! **astsimp.ml#2740:inconsistent roots:[[]]
@@ -593,7 +592,9 @@ do_universal inp3 : xx::arr_seg<flted_12_100,n_99>@M&flted_12_100=1+i & n_99=n&
 # need to first prove guard existentially satisfiable.
 # after that add i<mmm_105 & mmm_105<=n & Univ(mmm_105) to LHS together with
 ==============================================================
-# ex6e3f.slk 
+# ex6e3f.slk (DONE:guard proven separately)
+
+!!! **solver.ml#14319:TBI:prove separately:lhs_guard_new: i<mmm_102 & mmm_102<=n
 
 //(4)
 checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+2.
@@ -636,7 +637,7 @@ expect Valid.
 // fail but expect Valid when m=mm move to RHS?
 
 ===============================================================
-# ex6e3f4.slk 
+# ex6e3f4.slk (FIXED)
 
 checkentail  i<m & m<=n & mm=m & Univ(m) |- mm=i+1 .
 
@@ -670,6 +671,10 @@ imply_timeout 3 inp3 :timeout:10.
 imply_timeout 3 inp4 :2
 imply_timeout 3@2 EXIT:true
 
+@1! **solver.ml#9121:stk_estate # is_empty:true
+@1! **solver.ml#9122:estate:
+  emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+
 (==solver.ml#7980==)
 heap_entail_empty_rhs_heap#1@1
 heap_entail_empty_rhs_heap#1 inp1 :es:
@@ -682,8 +687,15 @@ heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
 heap_entail_empty_rhs_heap#1@1 EXIT: [ emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
   es_gen_impl_vars(E): []
   ]
-
 ===============================================================
+  sleek7.slk({E4#Fail}) 
+ sleek8.slk({E10#Fail}) 
+  sleek8.slk({E10#Fail}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
 ===============================================================
 ===============================================================
 ===============================================================

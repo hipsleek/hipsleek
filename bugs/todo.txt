@@ -2631,8 +2631,23 @@ infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
  inferred rel: [RELASS [R1]: ( R1(m)) -->  0>m]
  inferred hprel: [H(n@NI)&true --> emp&n<=1]
 ===================================================================
+# ex64u2.slk
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- [n1,n2] x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 9 & n2 >= 2.
+
+# simplify for Z3? large proof
+
+ log(bigger)(>4s)(3):(15.,[(simplify:171<9:Z3,5.);(simplify:272<17:Z3,5.);(simplify:371<25:Z3,5.)])
 ===================================================================
+# sleek7.slk
+
+Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
+Unexpected result with : sleek7.slk (failed check(s): {E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
 ===================================================================
+  label-dll.slk(no result  for {E})
+ sleek7.slk({E10#Valid}) sleek8.slk({E16#Valid}) sleek8.slk({E16#Valid}) 
+ sleek9.slk({E3#Valid},{E4#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
 ===================================================================
 ===================================================================
 ===================================================================

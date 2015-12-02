@@ -3647,29 +3647,70 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   Debug.no_2 "imply_timeout 1" pf pf (fun (b,_,_) -> string_of_bool b)
     (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
-let univ_rhs_store = new store (CP.mkTrue no_pos) !CP.print_formula 
+let univ_rhs_store = 
+object (self)
+  val super = new store (CP.mkTrue no_pos) !CP.print_formula
+  method set a =
+    if super # is_empty then super # set a
+    else
+      let old = super # get in
+      super # set (CP.mkAnd a old no_pos)
+      (* failwith (x_loc^"over-writing "^old) *)
+  method is_empty = super # is_empty
+  method get_rm = super # get_rm
+  method get = super # get
+end
+
+let get_univs_from_ante ante =
+  let univ_vars = CP.get_RelForm_arg_list_with_name ante "Univ" in
+  if univ_vars==[] then []
+  else
+    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in
+    let emap = CP.EMapSV.build_eset eqns' in
+    let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
+    univ_vars2
+
+let connected_rhs univ_vars rhs =
+  if univ_vars==[] then false
+  else
+    let vs= CP.fv rhs in
+    (CP.intersect_svl univ_vars vs)!=[]
+
+let filter_inv ante =
+  let conjs = CP.split_conjunctions ante in
+  let conjs = List.filter (fun f -> not(CP.is_Or f)) conjs in
+  CP.join_conjunctions conjs
+
+let filter_inv ante =
+  let pr = !CP.print_formula in
+  Debug.no_1 "filter_inv" pr pr filter_inv ante
 
 let imply_timeout ante0 conseq0 imp_no timeout process =
-  let (b,lst,fl) as ans = imply_timeout ante0 conseq0 imp_no timeout process in
-  let univ_vars = CP.get_RelForm_arg_list_with_name ante0 "Univ" in
+  let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
+  let univ_vars = get_univs_from_ante ante0 in
   let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-  if (not b) && (univ_vars!=[])
+  if (not b) && (connected_rhs univ_vars conseq0
+)
   then 
     let () = y_tinfo_pp "Processing univ instantiation" in
     let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-    let () = y_tinfo_hp (add_str "ante0" !CP.print_formula) ante0 in
+    let () = y_binfo_hp (add_str "ante0" !CP.print_formula) ante0 in
     let () = y_tinfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
-    let () = univ_rhs_store # set conseq0 in
-    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante0) in
-    let emap = CP.EMapSV.build_eset eqns' in
-    let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
-    let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
-    let ante1 = CP.drop_rel_formula ante0 in
-    let new_conseq = CP.mkAnd conseq0 ante1 no_pos in
-    let new_conseq = CP.mkExists univ_vars2 new_conseq None no_pos in
-    let () = y_tinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
-    imply_timeout ante0 new_conseq imp_no timeout process
-    else ans
+    let prev_inst = univ_rhs_store # get in
+    let () = y_binfo_hp (add_str "prev_inst" !CP.print_formula) prev_inst in
+    let ante0 = CP.drop_rel_formula ante0 in
+    let ante1 = filter_inv ante0 in
+    let () = y_binfo_hp (add_str "ante1 (aftre filter inv)" !CP.print_formula) ante1 in
+    let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
+    (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
+    let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
+    let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
+    let () = y_binfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
+    let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
+    if b then
+      let () = univ_rhs_store # set conseq0 in r
+    else r
+  else ans
 ;;
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process

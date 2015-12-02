@@ -12,17 +12,22 @@ lemma_unsafe self::arr_seg<i,n> & i<mmm & mmm<=n
    -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
 
 //(1)
-/*
 checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
 print residue.
 expect Fail.
-*/
 
 //(4)
-checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+2.
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n> & i!=n |- [mm] xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n>  |- [mm] xx::arr_seg<mm,n> & mm=i+1.
 print residue.
 expect Fail.
-// isn't this unsound?
 
 /*
 //(5)

@@ -2915,11 +2915,20 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
     in join_conjunctions (snd (List.split
                                  ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
+and mkExists_naive (vs : spec_var list) (f : formula) lbl pos = match vs with
+  | [] -> f
+  | v :: rest ->
+    let ef = mkExists_naive rest f lbl pos in
+    if mem v (fv ef) then
+      Exists (v, ef, lbl, pos)
+    else
+      ef
+
 and mkExists vs f lbel pos =
   let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
   let () = x_tinfo_hp (add_str "vs(mkExists)" !print_svl) vs no_pos in
   let () = x_tinfo_hp (add_str "vs(filtered rel type)" !print_svl) vs1 no_pos in
-  Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_x vs1 f lbel pos) vs1 f
+  Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> mkExists_naive vs1 f lbel pos) vs1 f
 
 (*and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos =  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f*)
 
@@ -15977,3 +15986,6 @@ let mkEqVars a1 a2 =
 let mk_is_base_ptr d rhs_ptr =
   BForm ((Gte (Var (d,no_pos),Var(rhs_ptr,no_pos), no_pos),None),None)
 
+let is_Or f = match f with
+  | Or _ -> true
+  | _ -> false
