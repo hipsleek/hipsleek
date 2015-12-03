@@ -1410,6 +1410,8 @@ let wrap_exist = ref false
 
 let move_exist_to_LHS = ref false
 
+let push_exist_deep = ref false
+
 let max_renaming = ref false
 
 

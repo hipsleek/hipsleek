@@ -688,15 +688,27 @@ heap_entail_empty_rhs_heap#1@1 EXIT: [ emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20
   es_gen_impl_vars(E): []
   ]
 ===============================================================
-  sleek7.slk({E4#Fail}) 
- sleek8.slk({E10#Fail}) 
-  sleek8.slk({E10#Fail}) 
-  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
- lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
-  lemmas/dseg1.slk({L1#Valid}) 
-  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
-  veribsync/barrier-dynamic2.slk({E2#Fail}).
-===============================================================
+# ex6e3f6.slk
+
+# lemma and @L not working properly as hole is refilled
+  with original predicate.
+
+# why hole added by spatial_ctx_extract?
+
+(==context.ml#907==)
+spatial_ctx_extract@1
+spatial_ctx_extract inp1 :h_formula: xx::arr_seg<i,n>@M
+spatial_ctx_extract inp2 :imm:@L
+spatial_ctx_extract inp3 :aset:[xx]
+spatial_ctx_extract inp4 :rhs_node: xx::arr_seg<mm,n_98>@L
+spatial_ctx_extract@1 EXIT:list of match_res:
+[ Type: Root
+ LHS: xx::arr_seg<i,n>@M
+ RHS: xx::arr_seg<mm,n_98>@L
+ root_inst: None
+ lhs_rest: Hole[101]
+ rhs_rest: emp
+ alias set: [xx]rhs_inst: []rhs_infer: None]
 ===============================================================
 ===============================================================
 ===============================================================

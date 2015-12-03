@@ -2654,8 +2654,7 @@ odd-lseg.slk taking very long to compute..
 3Dec
 
 Total number of errors: 6 in files:
-  label-dll.slk(no result  for {E}) 
-
+ 
   lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
   lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
   lemmas/dseg1.slk({L1#Valid}) 

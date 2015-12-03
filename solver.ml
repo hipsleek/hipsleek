@@ -8873,19 +8873,19 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         let remove_univ_vars f vs = 
           let f = MCP.pure_of_mix f in
           let univ_vs = TP.get_univs_from_ante f in
-          let () = x_binfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+          let () = x_tinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
           CP.diff_svl vs univ_vs
         in
         let exist_vars = remove_univ_vars tmp3_sym exist_vars in
-        let () = x_binfo_hp (add_str "exist_vars" Cprinter.string_of_spec_var_list) exist_vars no_pos in
+        let () = x_tinfo_hp (add_str "exist_vars" Cprinter.string_of_spec_var_list) exist_vars no_pos in
         let (split_ante1, new_conseq1) as xx = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
         let (split_ante1_sym, _) as xx1 = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in
-        let () = y_binfo_hp (add_str "es_ivars" Cprinter.string_of_spec_var_list) estate.es_ivars  in
-        let () = y_binfo_hp (add_str "es_gen_expl_vars" Cprinter.string_of_spec_var_list) estate.es_gen_expl_vars  in
-        let () = y_binfo_hp (add_str "es_evars" Cprinter.string_of_spec_var_list) estate.es_evars  in
+        let () = y_tinfo_hp (add_str "es_ivars" Cprinter.string_of_spec_var_list) estate.es_ivars  in
+        let () = y_tinfo_hp (add_str "es_gen_expl_vars" Cprinter.string_of_spec_var_list) estate.es_gen_expl_vars  in
+        let () = y_tinfo_hp (add_str "es_evars" Cprinter.string_of_spec_var_list) estate.es_evars  in
         let () = x_tinfo_hp (add_str "rhs_p " Cprinter.string_of_mix_formula) rhs_p no_pos in
         let () = x_tinfo_hp (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
-        let () = x_binfo_hp (add_str "split_ante1_sym " Cprinter.string_of_mix_formula) split_ante1_sym no_pos in
+        let () = x_tinfo_hp (add_str "split_ante1_sym " Cprinter.string_of_mix_formula) split_ante1_sym no_pos in
         let (split_ante0_sym, _) as xx = 
           if tmp3_sym==tmp0_sym then xx1
           else x_add heap_entail_build_mix_formula_check 2 exist_vars tmp0_sym rhs_p pos in
@@ -8901,9 +8901,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
         (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
         (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
-        x_binfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
-        x_binfo_hp (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
-        x_binfo_hp (add_str "conseq1-1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
+        x_tinfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
+        x_tinfo_hp (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
+        x_tinfo_hp (add_str "conseq1-1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
         let split_conseq =
           if !omega_simpl && not(TP.is_mix_bag_constraint new_conseq0)&& not(TP.is_mix_list_constraint new_conseq0) 
           then memo_normalize_to_CNF_new (MCP.memo_arith_simplify new_conseq0) pos

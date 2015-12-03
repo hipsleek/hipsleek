@@ -2340,7 +2340,7 @@ let om_pairwisecheck f =
 
 (* ZH: Take out the array part *)
 (* let om_pairwisecheck f = *)
-(*   (\* let () = x_binfo_pp "take out array part" no_pos in *\) *)
+(*   (\* let () = x_tinfo_pp "take out array part" no_pos in *\) *)
 (*   Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f *)
 (* ;; *)
 
@@ -2497,7 +2497,7 @@ let rec simplify_raw (f: CP.formula) =
         ) disjs in
       List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
     else
-      (* let () = y_binfo_pp "xxx rel " in *)
+      (* let () = y_tinfo_pp "xxx rel " in *)
       let rels = CP.get_RelForm f in
       let ids = List.concat (List.map get_rel_id_list rels) in
       let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
@@ -3705,18 +3705,18 @@ let imply_timeout ante0 conseq0 imp_no timeout process =
   then 
     let () = y_tinfo_pp "Processing univ instantiation" in
     let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-    let () = y_binfo_hp (add_str "ante0" !CP.print_formula) ante0 in
+    let () = y_tinfo_hp (add_str "ante0" !CP.print_formula) ante0 in
     let () = y_tinfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
     let prev_inst = univ_rhs_store # get in
-    let () = y_binfo_hp (add_str "prev_inst" !CP.print_formula) prev_inst in
+    let () = y_tinfo_hp (add_str "prev_inst" !CP.print_formula) prev_inst in
     let ante0 = CP.drop_rel_formula ante0 in
     let ante1 = filter_inv ante0 in
-    let () = y_binfo_hp (add_str "ante1 (aftre filter inv)" !CP.print_formula) ante1 in
+    let () = y_tinfo_hp (add_str "ante1 (aftre filter inv)" !CP.print_formula) ante1 in
     let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
     (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
     let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
     let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
-    let () = y_binfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
+    let () = y_tinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
     let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
     if b then
       let () = univ_rhs_store # set conseq0 in r

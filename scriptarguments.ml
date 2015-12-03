@@ -142,6 +142,8 @@ let common_arguments = [
    "Simplify the pure part of the formulas");
   (* ("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic, *)
   (* "Use the combined coerce&match + history heuristic for lemma application"); *)
+  ("--push-exist-deep", Arg.Set Globals.push_exist_deep,
+   "Push exist as deep as possible");
   ("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
    "Move instantiation (containing existential vars) to the LHS at the end of the folding process");
   ("--max-renaming", Arg.Set Globals.max_renaming,

@@ -2915,15 +2915,26 @@ and mkExists_x (vs : spec_var list) (f : formula) lbel pos = match f with
     in join_conjunctions (snd (List.split
                                  ((List.fold_left (fun a v -> push_v v a) f_with_fv vs))))
 
-and mkExists_naive (vs : spec_var list) (f : formula) lbl pos = 
-  match vs with
-  | [] -> f
-  | v :: rest ->
-    let ef = mkExists_naive rest f lbl pos in
-    if mem v (fv ef) then
-      Exists (v, ef, lbl, pos)
-    else
-      ef
+and mkExists_naive (vs : spec_var list) (f : formula) lbl pos =
+  let rec aux vs f lbl pos = 
+    match vs with
+    | [] -> f
+    | v :: rest ->
+      let ef = aux rest f lbl pos in
+      if mem v (fv ef) then
+        Exists (v, ef, lbl, pos)
+      else
+        ef 
+  in
+  if vs==[] then f 
+  else 
+    match f with
+    | AndList lst ->
+      let lst = List.map (fun (l,f) -> (l,aux vs f lbl pos)) lst in
+        AndList lst
+    | Or(f1,f2,l,p) ->
+      Or(aux vs f1 l pos,aux vs f2 l pos, l,p)
+    | _ -> aux vs f lbl pos
 
 and mkExists vs f lbel pos =
   let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
