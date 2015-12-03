@@ -12724,10 +12724,14 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_infer = infer_opt;
         Context.match_res_holes = holes;
       } as m_res)->
-      x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
+      x_binfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
-      x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
+      x_binfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
+      x_binfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
+        ) lhs_rest holes
+      in
       let pure_to_add = match infer_opt with
         | Some f ->
           let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
@@ -12879,7 +12883,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-        Context.match_res_holes = holes;
+        (* Context.match_res_holes = holes; *)
       } as m_res, unfold_num, unfold_or_fold, lem_type, unfold_opt)->
       x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;

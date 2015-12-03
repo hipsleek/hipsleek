@@ -710,8 +710,88 @@ spatial_ctx_extract@1 EXIT:list of match_res:
  rhs_rest: emp
  alias set: [xx]rhs_inst: []rhs_infer: None]
 ===============================================================
+# ex6e3f6.slk
+
+# LHS of entailment can be simplified by replacing them by other vars
+  es_ivars: [mmm_163]
+  es_ante_evars: [mmm_169; n_158]
+
+Lemma "lem_13":  
+  self::arr_seg<i,n>@M&i<mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[]
+  ==> (exists mmm_48: self::arr_seg<i,mmm>@M 
+      * self::arr_seg<mmm_48,n>@M & mmm_48=mmm&{FLOW,(20,21)=__norm#E}[])
+
+#  why are there two new existential mmm_ vars on LHS.
+   can it be removed?
+
+<1>xx::arr_seg<i,mmm_105>@M * xx::arr_seg<mmm_111,n>@M&mm=i+1 & 
+      mmm_111=mmm_105 & 
+      i<mmm_105 & 
+      mmm_105<=n & 
+      Univ(mmm_105) & 
+      i<n & mm=mmm_111&{FLOW,(20,2)
+
+!!! **sleekengine.ml#609: [ xx::arr_seg<i,mmm_163>@M * xx::arr_seg<mmm_169,n>@M&
+mm=i+1 & mmm_169=mmm_163 & i<mmm_163 & mmm_163<=n & Univ(mmm_163) & i<n & 
+mm=mmm_169&{FLOW,(20,21)=__norm#E}[]
+  es_evars: [n_158]
+  es_gen_impl_vars(E): []
+  es_ivars: [mmm_163]
+  es_ante_evars: [mmm_169; n_158]
+  es_rhs_eqset: [n:n; n:n; n:n]
+  es_subst (from): [n_158]
+  es_subst (to): [n]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_13(xx,xx)) ==>  COND ==>  Match(xx,xx)]
 ===============================================================
+# rft (FIXED by replacing Hole n --> HEmp
+
+# Extra examples failing from holes in materialized vars 
+
+ lemmas/nlseg3.slk({E1#Valid}) 
+ lemmas/nlseg4e.slk({L2#Valid}) 
+ lemmas/nlseg4e1.slk({E1#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+ lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+ lemmas/dseg1.slk({L1#Valid}) 
+ fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail})
+ veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+Total number of errors: 5 in files:
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
 ===============================================================
+# ex6e3f9.slk -dre "process_act"
+
+infer[a] x::lseg<a, p>  |- x::node<_,p>.
+
+# why can't infer work here for list segment?
+
+!!! **WARNING****solver.ml#13958:TODO: schedule infer_empty_hp_rel?
+(==solver.ml#11466==)
+process_action#1@4@2
+process_action#1 inp1 : UnmatchedRHSData =>  x::node<Anon_12,q>@M
+process_action#1 inp2 :estate:
+  emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [Anon_12; q]
+ es_trace:  Unfold 0
+ es_infer_vars: [a]
+process_action#1 inp3 :conseq: x::node<Anon_12,q>@M&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: x::node<Anon_12,q>@M&{FLOW,(20,21)=__norm#E}[]
+process_action#1@4 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Unfold 0 ==>  UnmatchedRHSData]]
+ CEX:false
 ===============================================================
 ===============================================================
 ===============================================================

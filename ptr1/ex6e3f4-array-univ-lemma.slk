@@ -12,6 +12,28 @@ checkentail  i<m & m<=n & mm=m & Univ(m) |- mm=i+1 .
 expect Valid.
 print residue.
 
+checkentail  i<m & m<=n //& Univ(m) 
+             |- m=i+1 .
+expect Fail.
+print residue.
+
+checkentail  i<m & m<=n & Univ(m) 
+             |- m=i+2.
+expect Fail.
+print residue.
+
+checkentail  i<m & m<=n & Univ(m) & i+1<n
+             |- m=i+2 .
+expect Valid.
+print residue.
+
+
+checkentail  i<m & m<=n 
+             |- (exists m: i<m & m<=n & m=i+2).
+
+checkentail  i<m & m<=n & i+1<n
+             |- (exists m: i<m & m<=n & m=i+2 &   i+1<n).
+
 /*
 ex6e3f4.slk 
 

@@ -1,0 +1,36 @@
+data node { int val ; node next }.
+//relation Univ(int x).
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+/*
+checkentail x::lseg<a, p> & Univ(a) & a<=10  |- x::node<_,p>.
+print residue.
+expect Valid.
+
+infer[a] x::lseg<a, p> & x!=p  |- x::node<_,p>.
+print residue.
+expect Valid.
+
+infer[a] x::lseg<a, pp>  |- x=pp.
+print residue.
+expect Valid.
+
+*/
+
+
+infer[a] x::lseg<a, pp>  |- x::node<_,q>.
+print residue.
+expect Valid.
+
+/*
+# ex6e3f9.slk --pnum 2
+
+infer[a] x::lseg<a, p>  |- x::node<_,p>.
+
+# why can't infer work?
+
+*/

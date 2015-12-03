@@ -3,17 +3,25 @@ data arrI {
   int val;
 }.
 
+/*
 pred arr_seg<i,n> == i=n & i>=0
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
   inv BG([(self+i,n-i)], n>=i & i>=0).
+*/
+
+pred two_seg<i> == 
+  or xxx::arrI<_>*y::arrI<_> & xxx=self+i & i>=0 & y=xxx+1
+  inv BG([(self+i,2)], i>=0).
 
 /*
 infer[] base::arr_seg<0,1> * base::arr_seg<1,2>  |- false.
 expect Fail.
-*/
 
 infer[] base::arr_seg<0,2> * base::arr_seg<1,2>  |- false.
 expect Valid.
+
+*/
+
 
 /*
 # ex9a.slk

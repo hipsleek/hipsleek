@@ -1016,8 +1016,9 @@ and view_mater_match_x prog c vs1 aset imm f anns =
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
     if  (produces_hole imm) && not(!Globals.allow_field_ann) then
       let hole_no = Globals.fresh_int() in
-      [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
-    else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
+      let () = if false (* !Globals.adhoc_flag_6 *) then failwith (x_tbi^" add materialized holes?") in
+      [(HEmp (* Hole hole_no *), f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
+    else [(HEmp (* HTrue *), f, [], MaterializedArg (mv,View_mater))]
   with 
     _ ->  
     if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
@@ -1025,7 +1026,8 @@ and view_mater_match_x prog c vs1 aset imm f anns =
     if List.exists (fun v -> CP.mem v aset) vs1 then
       if (produces_hole imm) && not(!Globals.allow_field_ann) then
         let hole_no = Globals.fresh_int() in 
-        [(Hole hole_no, f, [(f, hole_no)], WArg)]
+        let () = if false (* !Globals.adhoc_flag_6 *) then failwith (x_tbi^" add materialized holes?") in
+        [(HEmp (* Hole hole_no *), f, [(f, hole_no)], WArg)]
       else [(HEmp, f, [], WArg)]
     else []
 
@@ -1463,23 +1465,26 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
        (* URGENT:TODO:WN:HVar *)
        | HVar (vr,_) -> if CP.eq_spec_var v vr then [(HEmp, f, [], Root)] else []
        | _ -> [])
-    | ThreadNode ({h_formula_thread_node = p1;}) -> (
+    | ThreadNode ({h_formula_thread_node = p1;
+                   h_formula_thread_name = c;
+                  }) -> (
         match rhs_node with
         | HRel _ -> []
         | ThreadNode _ -> (*TOCHECK*)
           [(HEmp, f, [], Root)]
         | _      ->
           if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-            if (not !Globals.allow_field_ann) then
+            if (not !Globals.allow_field_ann && (CF.same_node_name c rhs_node)) then
               (* not consuming the node *)
               let hole_no = Globals.fresh_int() in 
-              [((Hole hole_no), f, [(f, hole_no)], Root)]
+              [(HEmp (* (Hole hole_no) *), f, [(f, hole_no)], Root)]
             else
               [(HEmp, f, [], Root)]
           else []
       )
     | DataNode ({h_formula_data_node = p1; 
                  h_formula_data_imm = imm1;
+                 h_formula_data_name = c;
                  h_formula_data_param_imm = pimm1}) -> (
         match rhs_node with
         | HRel (h,args,_) -> 
@@ -1508,10 +1513,10 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
             with _ -> () in
           let () = add_roots stk p1 view_roots in
           if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-            if ( (not !Globals.allow_field_ann) && produces_hole imm) then
+            if ( (not !Globals.allow_field_ann) && produces_hole imm && CF.same_node_name c rhs_node) then
               (* not consuming the node *)
               let hole_no = Globals.fresh_int() in 
-              [((Hole hole_no), f, [(f, hole_no)], Root)]
+              [((HEmp (* Hole hole_no *)), f, [(f, hole_no)], Root)]
             else
               (*if (!Globals.allow_field_ann) then
                 let new_f = update_ann f pimm1 pimm in
@@ -1546,11 +1551,11 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
           (* if (subtype_ann imm1 imm) then *)
           if (CP.mem p1 aset) then
             (* let () = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-            if produces_hole imm && not(!Globals.allow_field_ann) then
+            if (CF.same_node_name c rhs_node) && produces_hole imm && not(!Globals.allow_field_ann) then
               (* let () = print_string("imm = Lend " ^ "\n") in *)
               let hole_no = Globals.fresh_int() in
               (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
-              [(Hole hole_no, f, [(f, hole_no)], Root)]
+              [(HEmp (* Hole hole_no *), f, [(f, hole_no)], Root)]
             else
               [(HEmp, f, [], Root)]
               (********** Loc: TODO multiple matching, the former is empty*********)
@@ -1724,13 +1729,13 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   in
   (* todo:Long *)
   (* why is l empty? *)
-  let l = helper f0 in
+  let l_x = helper f0 in
   let pr1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
   let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
   let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
-  let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l no_pos in
+  let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l_x no_pos in
   let lst = stk # get_stk in
   let find r = try
       Some (fst (snd (List.find (fun (hf,_) -> hf==r) lst)))
@@ -1747,7 +1752,7 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
       mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node)
         ~imprecise:(is_imprecise lhs_node)
         mt lhs_node lhs_rest rhs_node rhs_rest
-    ) l
+    ) l_x
 
 
 (* spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in *)

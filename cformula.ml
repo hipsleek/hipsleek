@@ -20581,3 +20581,8 @@ let add_pure_estate es cp =
     {es with es_formula = combine_star_pure es.es_formula cp;
     }
   else failwith (x_loc^"add_infer_pure_thus_estate")
+
+let same_node_name c rhs_node = 
+  try 
+    (get_node_name_x rhs_node)=c
+  with _ -> false
