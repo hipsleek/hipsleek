@@ -763,7 +763,7 @@ Total number of errors: 5 in files:
   fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
   veribsync/barrier-dynamic2.slk({E2#Fail}).
 ===============================================================
-# ex6e3f9.slk -dre "process_act"
+# ex6e3f9.slk -dre "process_act" (OK)
 
 infer[a] x::lseg<a, p>  |- x::node<_,p>.
 
@@ -791,8 +791,36 @@ ctx length:0
      fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
    }
  [[ Unfold 0 ==>  UnmatchedRHSData]]
- CEX:false
+e ex CEX:false
+============================
+(====)
+solver_detect_lhs_rhs_contra_all#1@10@9@8@7
+solver_detect_lhs_rhs_contra_all#1 inp1 : ex_formula : emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [a]
+solver_detect_lhs_rhs_contra_all#1 inp2 : (exists pp_52: x::node<Anon_14,pp_52>@M&pp_52=pp&{FLOW,(20,21)=__norm#E}[])
+solver_detect_lhs_rhs_contra_all#1 inp3 :EARLY CONTRA DETECTION
+solver_detect_lhs_rhs_contra_all#1@10 EXIT:(([],real_contra:true),[])
+
+
 ===============================================================
+# ex6e3f9.slk --pnum 6
+
+infer[a] emp & x=pp & a=0  |- x::lseg<n,p> & n>1.
+
+# why was there an unfold? how did it infer?
+
+!!! **solver.ml#12409:detect_lhs_rhs_contr:true
+!!! **solver.ml#12380:detect_heap_contra
+!!! **solver.ml#12381:lhs: emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12382:conseq: : x::lseg<n,p>@M&1<n&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12383:contra_if_false:true
+!!! **solver.ml#12409:detect_lhs_rhs_contr:true
+!!! **solver.ml#12380:detect_heap_contra
+!!! **solver.ml#12381:lhs: emp&x=pp & a=0&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12382:conseq: : (* lbl: *){1}->emp&x=p & n=0&{FLOW,(1,26)=__flow#E}[]
+!!! **solver.ml#12383:contra_if_false:true
+!!! **solver.ml#12409:detect_lhs_rhs_contr:false
 ===============================================================
 ===============================================================
 ===============================================================

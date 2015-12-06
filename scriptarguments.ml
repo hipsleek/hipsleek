@@ -356,6 +356,8 @@ let common_arguments = [
   ("--en-mkeqn-opt", Arg.Set Globals.mkeqn_opt_flag,"Enable mkeqn optimization");
   ("--dis-mkeqn-opt", Arg.Clear Globals.mkeqn_opt_flag,"Disable mkeqn optimization");
   ("--old-univ-lemma", Arg.Set Globals.old_univ_lemma,"Use old univ lemma technique (bug with ex6e3e.slk)");
+  ("--old-heap-contra", Arg.Clear Globals.new_heap_contra,"Do not use heap contra (bug with ex6e3f9.slk --pnum 4)");
+  ("--new-heap-contra", Arg.Set Globals.new_heap_contra,"Use heap contra for inference (bug with ex6e3f9.slk --pnum 4)");
   ("--new-univ-lemma", Arg.Clear Globals.old_univ_lemma,"Use new univ lemma technique (bug with ex6e3e.slk)");
   ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
   ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");

@@ -12370,6 +12370,19 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
   | _ -> []
 
 and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
+  let detect_heap_contra lhs rhs = 
+    let (lhs_h,_,_,_,_,_) = CF.split_components lhs in
+    let (rhs_h,_,_,_,_,_) = CF.split_components rhs in
+    let flag = match lhs_h,rhs_h with
+      | HEmp,hf | hf,HEmp -> not(CF.is_non_emp hf)
+      | _ -> true
+    in
+    let () = y_binfo_pp "detect_heap_contra" in
+    let () = y_binfo_hp (add_str "lhs" !CF.print_formula) lhs in
+    let () = y_binfo_hp (add_str "conseq: "!CF.print_formula) rhs in
+    let () = y_binfo_hp (add_str "contra_if_false" string_of_bool) flag in
+    flag
+   in
   (* ======================================================= *)
   let (qvars, new_f) = match estate.es_formula with
     | Exists f ->  split_quantifiers estate.es_formula
@@ -12384,7 +12397,6 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let old_imm_flag = !Globals.allow_imm in
     let () = Globals.allow_imm := true in
-    let () = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]:: conseq: " Cprinter.string_of_formula) conseq no_pos in
     let rhs_xpure,_,_ = x_add xpure 9 prog conseq in
     let () = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]::  p_rhs_xpure 0: " Cprinter.string_of_mix_formula) rhs_xpure no_pos in
     let () = Globals.allow_imm := old_imm_flag in
@@ -12394,7 +12406,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
       (* else  *)
       p_lhs_xpure in  
     let contr, _ = x_add Infer.detect_lhs_rhs_contra p_lhs_xpure p_rhs_xpure pos in
-    contr in
+    let () = y_binfo_hp (add_str "detect_lhs_rhs_contr" string_of_bool) contr in
+    let heap_contra_false = if contr && !Globals.new_heap_contra then detect_heap_contra new_f conseq else true in
+    contr && heap_contra_false  in
   let r_inf_contr,relass = 
     if lhs_rhs_contra_flag then
       ([],[])
