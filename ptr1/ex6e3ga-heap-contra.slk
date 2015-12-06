@@ -1,0 +1,60 @@
+data node { int val ; node next }.
+//relation Univ(int x).
+
+pred ll<n> == self = null & n = 0
+         or self::node<next = r> * r::ll<n - 1>
+         inv n >= 0.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+//(6)
+infer[a] emp & a=0  |- x::ll<n> & n>1
+.
+// FAIL fc_message:  true |-  x=null. LOCS:[0;4] (may-bug)
+
+
+infer[a] emp & a=0  |- x::lseg<nn,p> & nn>1
+.
+print residue.
+
+infer[a] emp & a=0  |- (exists nn,p: x::lseg<nn,p> & nn>1)
+.
+print residue.
+
+
+infer[a] emp & a=0  |- false
+.
+print residue.
+
+infer[] x=null  |- x::ll<n>.
+print residue. 
+
+infer[] x=null  |- x::ll<n> & n>1.
+print residue. 
+
+
+infer[a] a=0  |- x=null & n=0 & n>1.
+print residue. 
+
+infer[a] a=0  |- x=null & n=0 & n>1
+             or  x::node<_,_> & n>1.
+print residue. 
+
+infer[a] htrue & a=0  |- x::node<_,_> & n>1.
+print residue. 
+
+/*
+# ex6e3ga.slk
+
+# base case fold fail for x=null
+infer[a] a=0  |- x::ll<n> & n>1.
+print residue. 
+
+# base case fold succeeded (ex nn, p : xp & nn=0)
+infer[a] emp & a=0  |- x::lseg<nn,p> & nn>1
+.
+
+*/

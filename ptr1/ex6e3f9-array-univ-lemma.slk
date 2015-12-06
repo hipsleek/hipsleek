@@ -9,7 +9,7 @@ pred lseg<n, p> == self = p & n = 0
 
 checkentail x::lseg<a, p> & Univ(a) & a<=10  |- x::node<_,p>.
 print residue.
-expect Valid.
+expect Fail.
 
 //(2)
 infer[a] x::lseg<a, p> //& x!=p

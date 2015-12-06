@@ -822,6 +822,17 @@ infer[a] emp & x=pp & a=0  |- x::lseg<n,p> & n>1.
 !!! **solver.ml#12383:contra_if_false:true
 !!! **solver.ml#12409:detect_lhs_rhs_contr:false
 ===============================================================
+# ex6e3g9.slk
+
+slk_simplify (exists mm: i<mm & mm<=n & mm=i+2).
+
+# why is mm_91 not removed?
+
+!!! **sleekengine.ml#1180:simplify:ante: emp&i<mm_91 & mm_91<=n & mm_91=2+i&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1181:simplify:heap: emp
+!!! **sleekengine.ml#1182:simplify:pure: i<mm_91 & mm_91<=n & mm_91=2+i
+!!! **sleekengine.ml#1184:Andreea: heap need to be normalized before xpure_heap_sym
+!!! **sleekengine.ml#1192:Andreea: gist need to detect true modulo variable renamingSimplify  (4): mm_91=i+2 & mm_91<=n
 ===============================================================
 ===============================================================
 ===============================================================
