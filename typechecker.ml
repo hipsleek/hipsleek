@@ -3641,7 +3641,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;
-          let () = x_tinfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
+          let () = x_binfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
           let pr_flag = not(!phase_infer_ind) in
           if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then 
             print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
@@ -4120,6 +4120,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
 
 let check_proc iprog (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   let pr p = pr_id (name_of_proc p)  in
+  let pr p = !Cast.print_proc_decl_no_body p in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
     "check_proc" pr string_of_bool (fun _ -> check_proc iprog prog proc cout_option mutual_grp) proc
 
