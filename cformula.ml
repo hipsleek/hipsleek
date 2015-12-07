@@ -20586,3 +20586,12 @@ let same_node_name c rhs_node =
   try 
     (get_node_name_x rhs_node)=c
   with _ -> false
+
+let is_non_emp f =
+  let flag = ref false in
+  let f_h_f hf = 
+    match hf with
+     | DataNode _ -> let () = flag := true in Some hf
+     | _ -> None in 
+  let _ = (map_h_formula f f_h_f) in
+  !flag
