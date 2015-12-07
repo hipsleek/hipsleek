@@ -64,12 +64,11 @@ PairWiseCheck (Fix intersection Inv);
 P2f:={[a,b]: 2 <= a && 2 <= b | (0 <= a <= 1, b)};
 P3f:={[a,b]: 3 <= a && 3 <= b | (0 <= a <= 2, b)}; 
 
-P3n:={[a,b]:0<=a<=b};
-
-P3n:={[a,b]:0<=a<=2,b};
+P3n:={[a,b]: 0 <= a <= b};
 
 P3n subset P2f;
 P3n subset P3f;
+
 
 P4:= B intersection {[a,b]: not (0<=a-1 & 0<=b) |
 #(a-1 <= 0 | b-1 <= -1 | 3 <= b-1 | a-1 <= b-1, 2 && 1 <= b-1)
@@ -83,3 +82,13 @@ PairWiseCheck (Fix intersection Inv);
 
 P:={[a,b]:0<=a<=b};
 P subset P4;
+
+
+P3z:={[a,b]: 0 <= a <= b & a<=2 | a>2};
+P3z subset P3n;
+P3n subset P3z;
+
+P3y:={[a,b]: 0 <= a <= b | a>2};
+P3y subset P3z;
+P3z subset P3y;
+
