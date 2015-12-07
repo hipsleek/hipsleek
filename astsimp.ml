@@ -2733,10 +2733,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 (* else []  *)
               | _::xss -> [] (* not consistent *) 
             in
+            let rec is_empty xs = match xs with
+              | [] -> true
+              | []::xs -> is_empty xs
+              | _ -> false in
             let ans = match xs with 
             | [xs]::xss -> aux xss xs 
             | _ -> [] in
-            let () = if xs!=[] && ans==[] then 
+            let () = if not (is_empty xs) && ans==[] then 
                 y_winfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
             in ans
           in

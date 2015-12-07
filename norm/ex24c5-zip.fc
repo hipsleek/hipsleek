@@ -1,0 +1,20 @@
+zip:={[a,b] -> [] -> []: 
+ (a<=0 || (1<=a && not(b=0))) &&
+   forall (v,w:  
+     not(y=w+1 && x=v+1 && 0<=(1+w) && 0<=v) || zip(v,w)
+  )
+};
+
+# Expected result:
+# {[n,res]:((n<=100 && res=91) || (n>=101 && n=res+10))};
+
+# Step-by-step procedure with two applications of the widening operator:
+F0:={[]: 1=1};
+F1:=zip(F0); F1;
+F2:=zip(F1); F2;
+F3:=zip(F2); F3; 
+F4:=zip(F3); F4; 
+F1;F2;F3;F4;
+#F4N:=narrow(F3,F4,SimHeur);
+#F4N;
+
