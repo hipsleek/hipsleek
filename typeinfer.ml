@@ -298,7 +298,7 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     match k1,k2 with
     | UNK, _ -> (tl ,Some k2)
     | _, UNK -> (tl,Some k1)
-    | Int, NUM | Float, NUM -> (tl,Some k1) (* give refined type *)
+    | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
     | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
     | Int , Float -> (tl,Some Float) (*LDK*)
     | Float , Int -> (tl,Some Float) (*LDK*)

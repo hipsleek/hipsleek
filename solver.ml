@@ -11016,8 +11016,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* Add instantiation for perm vars *)
           let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante) in
           let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq) in
-          let () = x_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos in
-          let () = x_tinfo_hp (add_str "new_conseq_p" (Cprinter.string_of_mix_formula)) new_conseq_p pos in
+          (* (i) find Univ in LHS (2) find univ inst in conseq (3) perform univ inst proving *)
+          let () = y_binfo_pp "TODO: schedule earlier univ instantiation" in
+          let () = y_binfo_pp "=========================================" in
+          let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
+          let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+          let () = y_binfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p in
+          let () = y_binfo_hp (add_str "new_conseq_p" (Cprinter.string_of_mix_formula)) new_conseq_p in
           (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
           (* let () = print_string("\nl_h : "^(Cprinter.string_of_h_formula l_h)^"\n") in             *)
           (* let () = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in *)
@@ -14416,6 +14421,8 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
             let new_estate = {estate with (* the new universal vars to be instantiated *)
                 es_ivars = f_univ_vars @ estate.es_ivars;
                 es_formula = new_f;} in
+            let () = y_binfo_hp (add_str "LHS" !CF.print_formula) new_f in
+            let () = y_binfo_hp (add_str "conseq" !CF.print_formula) conseq in
             let new_ctx = Ctx new_estate in
             let res, prf = x_add heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
             let () = y_tinfo_hp (add_str "new_conseq" !CF.print_formula) new_conseq in

@@ -14,7 +14,7 @@ lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n
 
 checkentail base::arr_seg<mm,end> &
     start!=end & start+1>=end  & start<=end & Univ(mm)
-       //& mm=end-1 //& start+1=end
+       & mm=end-1 //& start+1=end
    |- r::arrI<_> & r=base+start &
   mm=end-1.
 print residue.
@@ -28,7 +28,6 @@ checkentail x::arrI<_>*base::arr_seg<mm+1,n> & x=base+mm & mm>=0 &
    |- r::arrI<_> & r=base+start & mm=end-1.
 print residue.
 expect Valid.
-
 
 checkentail x=base+mm & mm>=0 & x=r & Univ(r) & mm=end-1 &
     start!=end & start+1>=end  & start<=end & Univ(mm)
