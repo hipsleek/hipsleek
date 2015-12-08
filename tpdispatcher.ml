@@ -3700,12 +3700,7 @@ let filter_inv ante =
   let pr = !CP.print_formula in
   Debug.no_1 "filter_inv" pr pr filter_inv ante
 
-let imply_timeout ante0 conseq0 imp_no timeout process =
-  let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
-  let univ_vars = get_univs_from_ante ante0 in
-  let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-  if (not b) && (connected_rhs univ_vars conseq0)
-  then 
+let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
     let () = y_tinfo_pp "Processing univ instantiation" in
     let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
     let () = y_tinfo_hp (add_str "ante0" !CP.print_formula) ante0 in
@@ -3724,6 +3719,14 @@ let imply_timeout ante0 conseq0 imp_no timeout process =
     if b then
       let () = univ_rhs_store # set conseq0 in r
     else r
+
+
+let imply_timeout ante0 conseq0 imp_no timeout process =
+  let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
+  let univ_vars = get_univs_from_ante ante0 in
+  let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+  if (not b) && (connected_rhs univ_vars conseq0)
+  then imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process
   else ans
 ;;
 

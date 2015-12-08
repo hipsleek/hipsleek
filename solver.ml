@@ -11022,7 +11022,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
           let univ_vs = TP.get_univs_from_ante pure_new_ante_p in
           (* eqlst is a list of pair. In each pair, two expressions are equal and one of them contains Univ vars *)
-          let (conseq_lst_univ,new_conseq_p) =
+          let (conseq_lst_univ,new_conseq_p2) =
             let no_chx = ([],new_conseq_p)in
             if TP.connected_rhs univ_vs pure_new_conseq_p
             then
@@ -11055,28 +11055,38 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           in
           (* x_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos; *)
           x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
-          let new_ante = mkBase l_h new_ante_p l_vp l_t l_fl l_a pos in
-          let process_early univ_vs lhs rhs =  
-              failwith ("early univ inst proc here"^x_tbi)
+          let process_early univ_vs new_ante_p conseq_univ  =
+            let () = y_binfo_pp "TODO: process early univ instantiation" in
+            let () = y_binfo_pp "=========================================" in
+            let () = x_binfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+            let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
+            let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+            let () = y_binfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p in
+            let () = y_binfo_hp (add_str "new_conseq_p2" (Cprinter.string_of_mix_formula)) new_conseq_p2 in
+            let () = y_binfo_hp (add_str "conseq_univ" (!CP.print_formula)) conseq_univ in
+            let lhs1 = MCP.pure_of_mix new_ante_p in
+            let (b,_,_) = TP.imply_timeout_univ univ_vs lhs1 conseq_univ "666" 0.0 None in
+            let () = y_binfo_hp (add_str "outcome" string_of_bool) b in
+            if b then 
+              let r = TP.univ_rhs_store # get_rm in
+              let new_ante = CP.mkAnd lhs1 r no_pos in
+              (b,MCP.mix_of_pure new_ante)
+            else (b,new_ante_p)
+            (* failwith ("early univ inst proc here"^x_tbi) *)
           in
-          let new_conseq_p,new_ante = 
+          let new_conseq_p,new_ante_p = 
             if conseq_lst_univ!=[] then
-              let () = y_binfo_pp "TODO: schedule earlier univ instantiation" in
-              let () = y_binfo_pp "=========================================" in
-              let () = x_binfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
-              let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
-              let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
-              let () = y_binfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p in
-              let () = y_binfo_hp (add_str "new_conseq_p" (Cprinter.string_of_mix_formula)) new_conseq_p in
               let conseq_univ = CP.join_conjunctions conseq_lst_univ in
-              let () = y_binfo_hp (add_str "conseq_univ" (!CP.print_formula)) conseq_univ in
-              (new_conseq_p,process_early univ_vs new_ante conseq_univ)
-            else new_conseq_p,new_ante in
+              let (flag,ante) = process_early univ_vs new_ante_p conseq_univ in
+              if flag then (new_conseq_p2,ante)
+              else (new_conseq_p,new_ante_p)
+            else new_conseq_p,new_ante_p in
           (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
           (* let () = print_string("\nl_h : "^(Cprinter.string_of_h_formula l_h)^"\n") in             *)
           (* let () = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in *)
           (* let () = print_string("l_node : "^(Cprinter.string_of_h_formula l_node)^"\n") in         *)
           (* An Hoa : fix new_ante *)
+          let new_ante = mkBase l_h new_ante_p l_vp l_t l_fl l_a pos in
           let tmp_conseq = mkBase r_h new_conseq_p r_vp r_t r_fl r_a pos  in
           let () = x_tinfo_hp (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
           let () = x_tinfo_hp (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in

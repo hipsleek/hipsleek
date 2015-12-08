@@ -8,7 +8,7 @@ arr_seg<i,n> == i=n & i>=0
 
 
 lemma_unsafe self::arr_seg<i,n> & i<m & m<=n 
-   -> self::arr_seg<i,m>*self::arr_seg<m,n>.
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
 
 arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
   or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
