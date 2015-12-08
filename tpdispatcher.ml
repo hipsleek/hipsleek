@@ -3700,8 +3700,7 @@ let imply_timeout ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
   let univ_vars = get_univs_from_ante ante0 in
   let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-  if (not b) && (connected_rhs univ_vars conseq0
-)
+  if (not b) && (connected_rhs univ_vars conseq0)
   then 
     let () = y_tinfo_pp "Processing univ instantiation" in
     let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in

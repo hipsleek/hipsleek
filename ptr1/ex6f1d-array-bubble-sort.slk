@@ -1,0 +1,83 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end 
+   |- (exists mm: base::arr_seg<start,mm> & mm=end-1).
+print residue.
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end 
+   |- base::arr_seg<start,mm> & mm=end-1.
+print residue.
+
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end & mm=end-1
+   |- r::arrI<_> & r=base+start.
+print residue.
+
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end & mm=end-1  & start+1=end
+   |- mm=start.
+print residue.
+
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end |- start+1=end.
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end & mm=end-1  & start+1=end
+   |- base+mm=base+start.
+print residue.
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end & mm=end-1  //& start+1=end
+   |- base+mm=base+start.
+print residue.
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end & mm=end-1  & start+1=end
+   |- r::arrI<_> & r=base+start.
+print residue.
+
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end & mm=end-1 & start<=end
+   |- start+1=end.
+print residue.
+
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end & mm=end-1  & start<=end //& start+1=end
+   |- r::arrI<_> & r=base+start.
+print residue.
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> * r::arrI<_> & r=base+start & mm=end-1.
+print residue.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> * r::arrI<_> & r=base+start & mm=end-1.
+print residue.
+
+checkentail base::arr_seg<mm,end> &
+    start!=end & start+1>=end  & start<=end & Univ(mm)
+       //& mm=end-1 //& start+1=end
+   |- r::arrI<_> & r=base+start & mm=end-1.
+print residue.

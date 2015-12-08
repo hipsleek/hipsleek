@@ -16,6 +16,31 @@ print resideue.
   */
 checkentail base::arr_seg<start,end> &
     start!=end & start+1>=end 
-   |- base::arr_seg<start,end-1>*r::arrI<m>&r=base+(end-1).
+   |- base::arr_seg<start,end-1>*r::arrI<m>
+//      &  r=base+x & x=end-1.
+      &  r=base+(end-1).
 print residue.
 
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end |- end-start=1.
+
+
+
+/*
+
+ <1>base::arr_seg<m_226,end>@M&m_226=m_220 
+  & start<=m_220 & m_220<=end & 
+    Univ(m_220) & end<=(1+start) & start!=end&{FLOW,(20,21)=__norm#E}[]
+
+*/
+
+
+checkentail start!=end & start+1>=end & start<=end &
+   start<=m & m<=end & Univ(m) & m2=m |- m2=end-1.
+print residue.
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end 
+   |- base::arr_seg<start,end-1>.
+print residue.
