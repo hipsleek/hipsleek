@@ -17,6 +17,31 @@ checkentail base::arr_seg<start,end> &
        // * r::arrI<_> & r=base+start 
        & mm=end-1.
 print residue.
+expect Valid.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       // * r::arrI<_> & r=base+start 
+       & mm=end.
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       // * r::arrI<_> & r=base+start 
+       & mm=end+1.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       // * r::arrI<_> & r=base+start 
+       & mm=end-2.
+print residue.
+expect Fail.
 
 checkentail base::arr_seg<start,end> &
     start!=end & start+1>=end & start<=end
@@ -24,6 +49,23 @@ checkentail base::arr_seg<start,end> &
        * r::arrI<_> & r=base+start 
        & mm=end-1.
 print residue.
+expect Valid.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       * r::arrI<_> & r=base+start 
+       & mm=end-2.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       * r::arrI<_> & r=base+start 
+       & mm=end.
+print residue.
+expect Fail.
 
 /*
 # ex6f1d1.slk --pnum 2
@@ -35,32 +77,10 @@ checkentail base::arr_seg<start,end> &
        & mm=end-1.
 print residue.
 
-# where did below come from? -dd-steps
+ <1>base::arr_seg<flted_6_151,end>@M&flted_6_151=end & mm=end-1 & 
+                                     base=(r-end)+1 & start=end-1 & 1<=end & 
+                                     Univ(mm)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> lem_13_left(base,base)) ==>  COND ==>  Match(base,base) ==>  Unfold 1 ==>  Match(x_152,r)]]
 
-# where is mm+1=end?
-
-!!! **solver.ml#12770:process_action (steps) :
- ### action : UnmatchedRHSData =>  r::arrI<Anon_14>@M
- ### estate : ex_formula : base::arr_seg<m_130,end>@M&m_130=m_124 & start<=m_124 & 
-                                         m_124<=end & Univ(m_124) & 
-                                         start<=end & end<=(1+start) & 
-                                         start!=end & mm=m_124&{FLOW,(20,21)=__norm#E}[]
- es_heap:base::arr_seg<start,m_124>@M
- ### conseq : r::arrI<Anon_14>@M&r=start+base & start=start&{FLOW,(20,21)=__norm#E}[]
-
-
-
-!!! **solver.ml#11060:TODO: process early univ instantiation
-!!! **solver.ml#11061:=========================================
-!!! **solver.ml#11062:univ_vs:[n_211,m_189,m_183,m_183]
-!!! **solver.ml#11063:to_lhs: r=x_213 & Anon_14=Anon_214
-!!! **solver.ml#11064:p_ante: r=x_213 & Anon_14=Anon_214
-!!! **solver.ml#11065:new_ante_p: mm=end & start!=end & end<=(1+start) & start<=end & Univ(m_183) & 
- m_183<=end & start<=m_183 & m_189=m_183 & n_211=m_183 & 0<=start & 
- x_213=start+base & flted_6_212=1+start & r=x_213 & Anon_14=Anon_214 & 
- r=x_213 & Anon_14=Anon_214
-!!! **solver.ml#11066:new_conseq_p2: r=start+base & mm+1=end
-!!! **solver.ml#11067:conseq_univ: m_189=start
-!!! **solver.ml#11070:outcome:true
 
 */

@@ -10964,7 +10964,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* Adding pure formula for relational args of view *)
           let to_lhs = CP.mkAnd to_lhs lp_rels no_pos in
           let to_rhs = CP.mkAnd to_rhs rp_rels no_pos in
-          let () = x_tinfo_hp (add_str "ext_subst(bef filter out ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
           let () = x_tinfo_hp (add_str "to_rhs(bef ann)" (Cprinter.string_of_pure_formula)) to_rhs pos in
           let () = x_tinfo_hp (add_str "to_lhs(bef ann)" (Cprinter.string_of_pure_formula)) to_lhs pos in
           let () = x_tinfo_hp (add_str "ext_subst(bef ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
@@ -11022,6 +11021,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
           let univ_vs = TP.get_univs_from_ante pure_new_ante_p in
           (* eqlst is a list of pair. In each pair, two expressions are equal and one of them contains Univ vars *)
+          let () = x_binfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+          let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
+          let () = y_binfo_hp (add_str "to_rhs" !CP.print_formula) to_rhs in
+          let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+          let () = y_binfo_hp (add_str "ext_subst" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst in
           let (conseq_lst_univ,new_conseq_p2) =
             let no_chx = ([],new_conseq_p)in
             if TP.connected_rhs univ_vs pure_new_conseq_p

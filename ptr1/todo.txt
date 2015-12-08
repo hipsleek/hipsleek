@@ -875,6 +875,35 @@ Updated lemma store with unsafe repo::[lem_13]
 !!! WARNING logtime exception (sleek-hec):0.014679
 Entail 1: EXCast. Failure("early univ inst proc here**solver.ml#11060:TBI")
 ===============================================================
+# ex6f1d2.slk --pnum 2
+
+# should we support univ inst of existential variable too?
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,end-1> 
+       .
+
+# why isn't field=mm below?
+
+!!! **solver.ml#11028:ext_subst:[(start_116,start),(flted_24_117,end)]
+!!! **solver.ml#11024:univ_vs:[m_128,m_122,m_122]
+!!! **solver.ml#11025:to_lhs: true
+!!! **solver.ml#11026:to_rhs: true
+!!! **solver.ml#11027:p_ante: true
+!!! **solver.ml#11028:ext_subst:[(start_116,start)]
+!!! **solver.ml#11028:ext_subst:[(start_116,start),(m_141,end)]
+!!! **solver.ml#11028:ext_subst:[(m_140,start),(flted_24_117,end)]
+
+# Can we instantiate m_181+1=end (instead of mm+1=end)
+
+Entail 2: Valid. 
+Residue:
+<1>base::arr_seg<m_187,end>@M&m_187=m_181 & start<=m_181 & m_181<=end & 
+                               Univ(m_181) & start<=end & end<=(1+start) & 
+                               start!=end&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> lem_13_left(base,base)) ==>  COND ==>  Match(base,base)]]
+Validate 2: OK
 ===============================================================
 ===============================================================
 ===============================================================
