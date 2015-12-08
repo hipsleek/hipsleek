@@ -11019,6 +11019,24 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* (i) find Univ in LHS (2) find univ inst in conseq (3) perform univ inst proving *)
           let () = y_binfo_pp "TODO: schedule earlier univ instantiation" in
           let () = y_binfo_pp "=========================================" in
+          (* ==================== Extract equation expression related to Univ vars ==================== *)
+          let pure_new_ante_p = MCP.pure_of_mix new_ante_p in
+          let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
+          let univ_vs = TP.get_univs_from_ante pure_new_ante_p in
+          let () = x_binfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+          (* eqlst is a list of pair. In each pair, two expressions are equal and one of them contains Univ vars *)
+          let eqlst =
+            if TP.connected_rhs univ_vs pure_new_conseq_p
+            then
+              let () = y_binfo_pp "do_match: Processing univ instantiation" in
+              let eqlst = CP.find_eq_at_toplevel pure_new_conseq_p in
+              let () = y_binfo_hp (add_str "elst: " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in
+              let eqlst = List.filter (fun (e1,e2) -> (List.length (CP.intersect_svl ((CP.afv e1)@(CP.afv e2)) univ_vs))>0) eqlst in
+              let () = y_binfo_hp (add_str "elst (filter out): " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in
+              eqlst
+            else
+              []
+          in
           let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
           let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
           let () = y_binfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p in

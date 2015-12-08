@@ -944,6 +944,8 @@ let rec exp_contains_spec_var (e : exp) : bool =
 
 
 
+
+
 let eq_spec_var_rec (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.

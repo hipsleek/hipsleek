@@ -38,7 +38,7 @@ int get_arr(arrI base, int i)
   ensures res=v;
   //
 int partition(arrI base,int start,int end,int pivot)
-     requires base::arr_seg<start,end> & start<=end
+     requires base::arr_seg<start,end> & start<=end & start>=0
      ensures base::arr_seg_max<start,res,maxv> * base::arr_seg_min<res+1,end,pivot> & maxv<pivot ;
 {
 
@@ -64,53 +64,14 @@ int partition(arrI base,int start,int end,int pivot)
   }
 }
 
-/* int get_max(arrI base,int i,int m) */
-/* /\* */
-/*  requires base::arr_seg<i,m>  */
-/*  case{ */
-/*   i>=m -> ensures emp & res=-1; */
-/*   i<m -> ensures base::arr_seg_max<i,m,res>; */
-/*   } */
-/* *\/ */
-/*  case{ */
-/*   i>=m -> ensures emp & res=-1; */
-/*   i<m ->  */
-/*     requires base::arr_seg_max<i,m,maxv>@L */
-/*     ensures  res=mval; */
-/*   } */
-/* { */
-/*   if(i<m){ */
-/*     if(i==m-1) */
-/*       { */
-/*         return get_arr(base,i); */
-/*       } */
-/*     else{ */
-/*       int cur = get_arr(base,i); */
-/*       int tmp = get_max(base,i+1,m); */
-/*       if(tmp<cur) */
-/*         { */
-/*           return cur; */
-/*         } */
-/*       else */
-/*         { */
-/*           return tmp; */
-/*         } */
-/*     } */
+/* void quick_sort(arrI base, int start, int end){ */
+/*   if(start>=end){ */
+/*     return; */
 /*   } */
 /*   else{ */
-/*     return -1; */
+/*     int pivot = get_arr(base,start); */
+/*     int p = partition(base,start,end,pivot); */
+/*     quick_sort(base,start,p); */
+/*     quick_sort(base,p,end); */
 /*   } */
-
 /* } */
-
-/*
-# ex6e1.slk
-
-# Add source line number to messages below ..
-
-!!! **WARNING****astsimp.ml#9214:Post-condition has existentially quantified free vars:[(q,)]
-!!! **WARNING****astsimp.ml#9214:Post-condition has existentially quantified free vars:[(p,)]
-!!! **WARNING****astsimp.ml#9214:Post-condition has existentially quantified free vars:[(mval,)]
-
-
- */

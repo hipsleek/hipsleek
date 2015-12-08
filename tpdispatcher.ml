@@ -3687,6 +3687,10 @@ let connected_rhs univ_vars rhs =
     let vs= CP.fv rhs in
     (CP.intersect_svl univ_vars vs)!=[]
 
+let connected_rhs univ_vars rhs =
+  Debug.no_2 "connected_rhs" (pr_list !CP.print_sv) !CP.print_formula string_of_bool connected_rhs univ_vars rhs
+;;
+
 let filter_inv ante =
   let conjs = CP.split_conjunctions ante in
   let conjs = List.filter (fun f -> not(CP.is_Or f)) conjs in
