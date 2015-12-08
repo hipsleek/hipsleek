@@ -12377,10 +12377,10 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
       | HEmp,hf | hf,HEmp -> not(CF.is_non_emp hf)
       | _ -> true
     in
-    let () = y_binfo_pp "detect_heap_contra" in
-    let () = y_binfo_hp (add_str "lhs" !CF.print_formula) lhs in
-    let () = y_binfo_hp (add_str "conseq: "!CF.print_formula) rhs in
-    let () = y_binfo_hp (add_str "contra_if_false" string_of_bool) flag in
+    let () = y_tinfo_pp "detect_heap_contra" in
+    let () = y_tinfo_hp (add_str "lhs" !CF.print_formula) lhs in
+    let () = y_tinfo_hp (add_str "conseq: "!CF.print_formula) rhs in
+    let () = y_tinfo_hp (add_str "contra_if_false" string_of_bool) flag in
     flag
    in
   (* ======================================================= *)
@@ -12406,7 +12406,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
       (* else  *)
       p_lhs_xpure in  
     let contr, _ = x_add Infer.detect_lhs_rhs_contra p_lhs_xpure p_rhs_xpure pos in
-    let () = y_binfo_hp (add_str "detect_lhs_rhs_contr" string_of_bool) contr in
+    let () = y_tinfo_hp (add_str "detect_lhs_rhs_contr" string_of_bool) contr in
     let heap_contra_false = if contr && !Globals.new_heap_contra then detect_heap_contra new_f conseq else true in
     contr && heap_contra_false  in
   let r_inf_contr,relass = 
@@ -12738,11 +12738,11 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_infer = infer_opt;
         Context.match_res_holes = holes;
       } as m_res)->
-      x_binfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
+      x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
-      x_binfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
+      x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
-      x_binfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      x_tinfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
       let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
         ) lhs_rest holes
       in

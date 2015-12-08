@@ -834,6 +834,30 @@ slk_simplify (exists mm: i<mm & mm<=n & mm=i+2).
 !!! **sleekengine.ml#1184:Andreea: heap need to be normalized before xpure_heap_sym
 !!! **sleekengine.ml#1192:Andreea: gist need to detect true modulo variable renamingSimplify  (4): mm_91=i+2 & mm_91<=n
 ===============================================================
+# ex6f1c.slk
+
+checkentail base::arr_seg<start,end> & start!=end & start+1>=end 
+   |- base::arr_seg<start,end-1>*r::arrI<m>&r=base+(end-1).
+print residue.
+
+Entail 1: EXCast. Failure("TYPE ERROR 1 : Found NUM but expecting int")
+: no residue 
+
+(==typeinfer.ml#625==)
+must_unify_expect@315@311@306@302@282@281
+must_unify_expect inp1 :NUM
+must_unify_expect inp2 :int
+must_unify_expect inp3 :[(end:98:NUM)(TVar__116:116:int)(base:96:arrI)(TVar__115:115:TVar[115])(r:109:arrI)(TVar__114:114:arrI)(TVar__112:112:NUM)(flted_19_105:108:NUM)(TVar__111:111:NUM)(m:110:int)(start_106:107:NUM)(Anon_full_perm:103:float)(start:97:NUM)(TVar__102:102:NUM)(TVar__101:101:int)(TVar__100:100:NUM)(TVar__99:99:NUM)]
+must_unify_expect@315 EXIT ExceptionFailure("TYPE ERROR 1 : Found NUM but expecting int")Occurred!
+Exception(gather_type_info_exp@311):Failure("TYPE ERROR 1 : Found NUM but expecting int")
+
+(====)
+gather_type_info_exp@311@306@302@282@281
+gather_type_info_exp inp1 :end-1
+gather_type_info_exp inp2 :[(base:96:arrI)(TVar__115:115:TVar[115])(r:109:arrI)(TVar__114:114:arrI)(end:98:NUM)(TVar__112:112:NUM)(flted_19_105:108:NUM)(TVar__111:111:NUM)(m:110:int)(start_106:107:NUM)(Anon_full_perm:103:float)(start:97:NUM)(TVar__102:102:NUM)(TVar__101:101:int)(TVar__100:100:NUM)(TVar__99:99:NUM)]
+gather_type_info_exp inp3 :int
+gather_type_info_exp@311 EXIT ExceptionFailure("TYPE ERROR 1 : Found NUM but expecting int")Occurred!
+Exception(gather_type_info_exp@306):Failure("TYPE ERROR 1 : Found NUM but expecting int")
 ===============================================================
 ===============================================================
 ===============================================================
