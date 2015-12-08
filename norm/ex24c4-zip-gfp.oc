@@ -84,11 +84,22 @@ P:={[a,b]:0<=a<=b};
 P subset P4;
 
 
+P2z:={[a,b]: 0 <= a <= b & a<=1 | a>1};
 P3z:={[a,b]: 0 <= a <= b & a<=2 | a>2};
 P3z subset P3n;
 P3n subset P3z;
 
+P2y:={[a,b]: 0 <= a <= b | a>1};
 P3y:={[a,b]: 0 <= a <= b | a>2};
 P3y subset P3z;
-P3z subset P3y;
+P3y subset P3z;
+P2y subset P2z;
 
+P3z subset P3y;
+P2z subset P2y;
+PairWiseCheck P2z;
+PairWiseCheck P3z;
+
+R := {[b,a]:((0 >= 1 + b && a >= 1) || (b >= 1 && a >= 1) || 0 >= a)};
+R;
+PairWiseCheck R;
