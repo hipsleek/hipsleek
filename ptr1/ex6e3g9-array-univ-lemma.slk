@@ -28,6 +28,9 @@ slk_simplify true & exists(mm: i<mm & mm<=n & mm=i+2).
 slk_simplify (exists mm: i<mm & mm<=n & mm=i+2).
 
 /*
+# ex6e3g9.slk
+
+slk_simplify (exists mm: i<mm & mm<=n & mm=i+2).
 
 # why is mm_91 not removed?
 

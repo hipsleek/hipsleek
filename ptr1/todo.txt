@@ -834,7 +834,7 @@ slk_simplify (exists mm: i<mm & mm<=n & mm=i+2).
 !!! **sleekengine.ml#1184:Andreea: heap need to be normalized before xpure_heap_sym
 !!! **sleekengine.ml#1192:Andreea: gist need to detect true modulo variable renamingSimplify  (4): mm_91=i+2 & mm_91<=n
 ===============================================================
-# ex6f1c.slk
+# ex6f1c.slk (FIXED)
 
 checkentail base::arr_seg<start,end> & start!=end & start+1>=end 
    |- base::arr_seg<start,end-1>*r::arrI<m>&r=base+(end-1).
@@ -858,6 +858,31 @@ gather_type_info_exp inp2 :[(base:96:arrI)(TVar__115:115:TVar[115])(r:109:arrI)(
 gather_type_info_exp inp3 :int
 gather_type_info_exp@311 EXIT ExceptionFailure("TYPE ERROR 1 : Found NUM but expecting int")Occurred!
 Exception(gather_type_info_exp@306):Failure("TYPE ERROR 1 : Found NUM but expecting int")
+===============================================================
+# ex6f1d1.slk
+
+Updated lemma store with unsafe repo::[lem_13]
+!!! **solver.ml#11064:TODO: schedule earlier univ instantiation
+!!! **solver.ml#11065:=========================================
+!!! **solver.ml#11066:univ_vs:[mm,m_124,m_118,m_118]
+!!! **solver.ml#11067:to_lhs: true
+!!! **solver.ml#11068:p_ante: mm=m_118
+!!! **solver.ml#11069:new_ante_p: m_124=m_118 & start<=m_118 & m_118<=end & Univ(m_118) & start<=end & 
+ end<=(1+start) & start!=end & mm=m_118
+!!! **solver.ml#11070:new_conseq_p: start_114=start
+!!! **solver.ml#11072:conseq_univ: mm+1=end
+!!! WARNING logtime exception (sleek-hec):0.00082
+!!! WARNING logtime exception (sleek-hec):0.014679
+Entail 1: EXCast. Failure("early univ inst proc here**solver.ml#11060:TBI")
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
 ===============================================================
 ===============================================================
 ===============================================================
