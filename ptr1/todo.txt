@@ -895,6 +895,11 @@ checkentail base::arr_seg<start,end> &
 !!! **solver.ml#11028:ext_subst:[(start_116,start),(m_141,end)]
 !!! **solver.ml#11028:ext_subst:[(m_140,start),(flted_24_117,end)]
 
+--pnum 2 -dre "do_m\|move_impl" --trace-log-num 4
+
+@4! **solver.ml#10145:ex_subs:[(start_116,start),(flted_24_117,m_122)]
+@4! **solver.ml#10227:rho_0:[(start_116,start),(flted_24_117,m_122)]
+
 # Can we instantiate m_181+1=end (instead of mm+1=end)
 
 Entail 2: Valid. 

@@ -7998,7 +7998,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                                               let l_inst = get_expl_inst es p2 in
                                               x_tinfo_hp (add_str "l_inst" Cprinter.string_of_mix_formula) l_inst no_pos;
                                               x_tinfo_hp (add_str "p2" Cprinter.string_of_mix_formula) p2 no_pos;
-                                              let es = move_impl_inst_estate es p2 in
+                                              let es = x_add move_impl_inst_estate es p2 in
                                               Ctx (if (es.es_imm_last_phase) then
                                                      x_add move_expl_inst_estate es p2
                                                    else begin
@@ -11025,6 +11025,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
           let () = y_binfo_hp (add_str "to_rhs" !CP.print_formula) to_rhs in
           let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+          let () = y_binfo_hp (add_str "pure_new_ante_p" !CP.print_formula) pure_new_ante_p in
+          let () = y_binfo_hp (add_str "pure_new_conseq_p" !CP.print_formula) pure_new_conseq_p in
           let () = y_binfo_hp (add_str "ext_subst" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst in
           let (conseq_lst_univ,new_conseq_p2) =
             let no_chx = ([],new_conseq_p)in
