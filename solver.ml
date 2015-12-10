@@ -10894,6 +10894,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         (* (ivar, impl_var) belongs to ivar_subs_to_conseq              *)
         let () =  x_tinfo_hp  (add_str   (" impl_vars: ")  !CP.print_svl )impl_vars no_pos in
         (* WN: what are impl_tvars ? *)
+        (* subs_to_inst_vars@2 *)
+        (* subs_to_inst_vars inp1 :subs:[(start_114,start),(mm_115,m_120)] *)
+        (* subs_to_inst_vars inp2 :ivars:[m_120] *)
+        (* subs_to_inst_vars inp3 :impl:[] *)
+        (* subs_to_inst_vars@2 EXIT:(([],[m_120],ivars_to_conseq:[(m_120,mm_115)]),other_subs:[(start_114,start)]) *)
         let ((impl_tvars, tmp_ivars, ivar_subs_to_conseq), other_subs) = 
           x_add subs_to_inst_vars rho ivars impl_vars pos 
         in
@@ -10945,6 +10950,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* Note: other_subs will never contain any impl_tvars          *)
           (*       because of the pre-processed subs_to_inst_vars        *)
           (* An Hoa : strip all the pair of equality involving # *)
+          let () = x_tinfo_hp (add_str "other_subs(b4 filter)" (pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) pr_none) )) other_subs pos in
           let other_subs = List.filter (fun ((x, y), _) -> 
               not (CP.is_hole_spec_var x || CP.is_hole_spec_var y) && not (CP.is_rel_typ x) 
               (* && not((CP.is_ann_typ y) && (Gen.BList.mem_eq CP.eq_spec_var y estate.es_ante_evars)) *)
@@ -10952,7 +10958,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           in
           (* let pr1 (a,b) = let pr = (pr_pair !CP.print_sv !CP.print_sv) in pr a in *)
           (* let () =  Debug.ninfo_zprint  (lazy  ("other_subs: " ^ (pr_list pr1 other_subs))) no_pos in *)
-          let () = x_tinfo_hp (add_str "other subs" (pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) pr_none) )) other_subs pos in
+          let () = x_tinfo_hp (add_str "other_subs" (pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) pr_none) )) other_subs pos in
           (* let () =  Debug.info_zprint  (lazy  ("new_exist_vars: " ^ (!CP.print_svl new_exist_vars))) no_pos in *)
           (* let () =  Debug.info_zprint  (lazy  ("impl_tvars: " ^ (!CP.print_svl impl_tvars))) no_pos in *)
           (* let () =  Debug.info_zprint  (lazy  ("estate.es_gen_expl_vars: " ^ (!CP.print_svl estate.es_gen_expl_vars))) no_pos in *)
@@ -11021,13 +11027,19 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
           let univ_vs = TP.get_univs_from_ante pure_new_ante_p in
           (* eqlst is a list of pair. In each pair, two expressions are equal and one of them contains Univ vars *)
-          let () = x_binfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
-          let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
-          let () = y_binfo_hp (add_str "to_rhs" !CP.print_formula) to_rhs in
-          let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
-          let () = y_binfo_hp (add_str "pure_new_ante_p" !CP.print_formula) pure_new_ante_p in
-          let () = y_binfo_hp (add_str "pure_new_conseq_p" !CP.print_formula) pure_new_conseq_p in
-          let () = y_binfo_hp (add_str "ext_subst" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst in
+          let () = x_tinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+          let () = y_tinfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
+          let () = y_tinfo_hp (add_str "to_rhs" !CP.print_formula) to_rhs in
+          let () = y_tinfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+          let () = y_tinfo_hp (add_str "pure_new_ante_p" !CP.print_formula) pure_new_ante_p in
+          let () = y_tinfo_hp (add_str "pure_new_conseq_p" !CP.print_formula) pure_new_conseq_p in
+          let (to_lst,fr_lst) = List.split ivar_subs_to_conseq in
+          let pure_new_conseq_p = CP.subst_avoid_capture fr_lst to_lst pure_new_conseq_p in
+          let () = y_tinfo_hp (add_str "pure_new_conseq_p (after univ subs)" !CP.print_formula) pure_new_conseq_p in
+          let () = y_tinfo_hp (add_str "ext_subst" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst in
+          let e_subs = ivar_subs_to_conseq @ ext_subst in
+          let () = y_tinfo_hp (add_str "e_subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) e_subs in
+          (* let () = y_tinfo_hp (add_str "to_bound" (!CP.print_svl)) to_bound in *)
           let (conseq_lst_univ,new_conseq_p2) =
             let no_chx = ([],new_conseq_p)in
             if TP.connected_rhs univ_vs pure_new_conseq_p
@@ -11041,12 +11053,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               if conseq_lst_univ==[] then no_chx
               else (conseq_lst_univ,MCP.mix_of_pure (CP.join_conjunctions conseq_lst_others))
               (* let eqlst = CP.find_eq_at_toplevel pure_new_conseq_p in *)
-              (* let () = y_binfo_hp (add_str "conseq_lst: " (pr_list !CP.print_formula)) conseq_lst in *)
-              (* let () = y_binfo_hp (add_str "conseq_lst_univ: " (pr_list !CP.print_formula)) conseq_lst_univ in *)
-              (* let () = y_binfo_hp (add_str "conseq_lst_others: " (pr_list !CP.print_formula)) conseq_lst_others in *)
-              (* let () = y_binfo_hp (add_str "elst: " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in *)
+              (* let () = y_tinfo_hp (add_str "conseq_lst: " (pr_list !CP.print_formula)) conseq_lst in *)
+              (* let () = y_tinfo_hp (add_str "conseq_lst_univ: " (pr_list !CP.print_formula)) conseq_lst_univ in *)
+              (* let () = y_tinfo_hp (add_str "conseq_lst_others: " (pr_list !CP.print_formula)) conseq_lst_others in *)
+              (* let () = y_tinfo_hp (add_str "elst: " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in *)
               (* let eqlst = List.filter (fun (e1,e2) -> (List.length (CP.intersect_svl ((CP.afv e1)@(CP.afv e2)) univ_vs))>0) eqlst in *)
-              (* let () = y_binfo_hp (add_str "elst (filter out): " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in *)
+              (* let () = y_tinfo_hp (add_str "elst (filter out): " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in *)
               (* eqlst *)
             else
               no_chx
@@ -11062,17 +11074,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* x_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos; *)
           x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
           let process_early univ_vs new_ante_p conseq_univ  =
-            let () = y_binfo_pp "TODO: process early univ instantiation" in
-            let () = y_binfo_pp "=========================================" in
-            let () = x_binfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
-            let () = y_binfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
-            let () = y_binfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
-            let () = y_binfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p in
-            let () = y_binfo_hp (add_str "new_conseq_p2" (Cprinter.string_of_mix_formula)) new_conseq_p2 in
-            let () = y_binfo_hp (add_str "conseq_univ" (!CP.print_formula)) conseq_univ in
+            let () = y_tinfo_pp "TODO: process early univ instantiation" in
+            let () = y_tinfo_pp "=========================================" in
+            let () = x_tinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+            let () = y_tinfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
+            let () = y_tinfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+            let () = y_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p in
+            let () = y_tinfo_hp (add_str "new_conseq_p2" (Cprinter.string_of_mix_formula)) new_conseq_p2 in
+            let () = y_tinfo_hp (add_str "conseq_univ" (!CP.print_formula)) conseq_univ in
             let lhs1 = MCP.pure_of_mix new_ante_p in
             let (b,_,_) = TP.imply_timeout_univ univ_vs lhs1 conseq_univ "666" 0.0 None in
-            let () = y_binfo_hp (add_str "outcome" string_of_bool) b in
+            let () = y_tinfo_hp (add_str "outcome" string_of_bool) b in
             if b then 
               let r = TP.univ_rhs_store # get_rm in
               let new_ante = CP.mkAnd lhs1 r no_pos in
@@ -11098,7 +11110,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let () = x_tinfo_hp (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
           let lhs_vars = CP.fv to_lhs in
           (* Apply the new bindings to the consequent *)
-          let e_subs = ivar_subs_to_conseq @ ext_subst in
+          (* let e_subs = ivar_subs_to_conseq @ ext_subst in *)
           (* Do not subst heap relation*)
           let e_subs = List.filter (fun (sv1, sv2) -> (not (CP.is_rel_typ sv1)) && (not(CP.is_rel_typ sv2))) e_subs in
           let () = Debug.ninfo_hprint (add_str "e_subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) e_subs pos in

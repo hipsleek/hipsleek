@@ -10,7 +10,6 @@ pred arr_seg<i,n> == i=n & i>=0
 lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
    <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
 
-
 checkentail base::arr_seg<start,end> &
     start!=end & start+1>=end & start<=end
    |- base::arr_seg<start,mm> 
@@ -25,6 +24,43 @@ checkentail base::arr_seg<start,end> &
        .
 print residue.
 expect Valid.
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start>=end-1 
+   |- base::arr_seg<start,mm> & mm=end-1.
+print residue.
+expect Valid. 
+
+
+infer[@classic] emp & start=end & start>=end-1 
+   |- emp.
+print residue.
+expect Valid. 
+
+infer[@classic] base::arr_seg<start,end> &
+    start!=end & start>=(end-1) 
+   |- base::arr_seg<start,mm> * r::arrI<_> & r=base+(end-1) & mm=end-1.
+print residue.
+expect Valid. 
+
+infer[@classic] base::arr_seg<start,end> &
+    start!=end & start>=(end-1) 
+   |- base::arr_seg<start,end-1> * r::arrI<_> & r=base+(end-1).
+print residue.
+expect Valid. 
+
+infer[] base::arr_seg<start,end> &
+    start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> & mm=end-1).
+print residue.
+expect Valid. 
+
+infer[] base::arr_seg<start,end> &
+    start!=end & start>=(end-1) 
+   |- base::arr_seg<start,mm> & mm=end-1.
+print residue.
+expect Valid. 
 
 
 /*

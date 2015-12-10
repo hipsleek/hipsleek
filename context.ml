@@ -862,11 +862,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* cannot handle ptr/e/ex1fb.slk *)
                 (* let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let lhs = CP.mkAnd lhs_w_rhs_inst root_pf no_pos in
-                let () = y_binfo_hp (add_str "ante" !CP.print_formula) lhs in
-                let () = y_binfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure in
-                let () = y_binfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
+                let () = y_tinfo_hp (add_str "ante" !CP.print_formula) lhs in
+                let () = y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure in
+                let () = y_tinfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
                 let r = !CP.tp_imply lhs rhs in
-                let () = y_binfo_hp (add_str "ante --> rhs" string_of_bool) r  in
+                let () = y_tinfo_hp (add_str "ante --> rhs" string_of_bool) r  in
                 (d,r,None) (* Some rf *)
                 (* failwith (x_loc^"unfolding") *)
             end

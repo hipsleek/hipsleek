@@ -859,7 +859,7 @@ gather_type_info_exp inp3 :int
 gather_type_info_exp@311 EXIT ExceptionFailure("TYPE ERROR 1 : Found NUM but expecting int")Occurred!
 Exception(gather_type_info_exp@306):Failure("TYPE ERROR 1 : Found NUM but expecting int")
 ===============================================================
-# ex6f1d1.slk
+# ex6f1d1.slk  (FIXED)
 
 Updated lemma store with unsafe repo::[lem_13]
 !!! **solver.ml#11064:TODO: schedule earlier univ instantiation
@@ -875,7 +875,7 @@ Updated lemma store with unsafe repo::[lem_13]
 !!! WARNING logtime exception (sleek-hec):0.014679
 Entail 1: EXCast. Failure("early univ inst proc here**solver.ml#11060:TBI")
 ===============================================================
-# ex6f1d2.slk --pnum 2
+# ex6f1d2.slk --pnum 2 (FIXED)
 
 # should we support univ inst of existential variable too?
 
@@ -910,7 +910,38 @@ Residue:
 [[ SEARCH ==>  (Lemma ==> lem_13_left(base,base)) ==>  COND ==>  Match(base,base)]]
 Validate 2: OK
 ===============================================================
+# ex6f1d3.slk --pcp (FIXED by applying ivars_to_conseq subs)
+
+infer[] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> & mm=end-1).
+
+# need to support univ inst m_120+1=end for existential var m_115
+
+ <1>base::arr_seg<m_126,end>@M&m_126=m_120 & start<=m_120 & m_120<=end & 
+                               Univ(m_120) & end<=(start+1) & start!=end&{FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#10898==)
+subs_to_inst_vars@2
+subs_to_inst_vars inp1 :subs:[(start_114,start),(mm_115,m_120)]
+subs_to_inst_vars inp2 :ivars:[m_120]
+subs_to_inst_vars inp3 :impl:[]
+subs_to_inst_vars@2 EXIT:(([],[m_120],ivars_to_conseq:[(m_120,mm_115)]),other_subs:[(start_114,start)])
 ===============================================================
+# ex6f1d4.slk
+
+lemma_safe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+# Failing in <-- direction with big timeouts.
+
+Entailing lemma lem_13: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (cex)(may) cause: UnionR[base case unfold failed,base case unfold failed]
+
+!!! log(small):(22.688382,3026)
+!!! log(big)(>0.5s)(27):(38.138126,[(sleek-hec,0.51152);(sleek-hec,2.117039);(sleek-hec,2.176022);(sleek-hec,1.997992);(sleek-hec,0.698678);(sleek-hec,0.703553);(sleek-hec,0.752598);(sleek-hec,1.921881);(sleek-hec,2.324819);(sleek-hec,0.97209);(sleek-hec,0.566322);(sleek-hec,2.047108);(sleek-hec,2.101213);(sleek-hec,0.537939);(sleek-hec,0.507525);(sleek-hec,2.164727);(sleek-hec,2.149721);(sleek-hec,0.746848);(sleek-hec,0.82261);(sleek-hec,0.780771);(sleek-hec,2.356478);(sleek-hec,2.40919);(sleek-hec,2.043739);(sleek-hec,2.386038);(sleek-hec,0.998967);(sleek-hec,0.648725);(sleek-hec,0.694013)])
+!!! 
+ log(bigger)(>4s)(10):(133.984808,[(sleek-hec:59<65:sleek,7.718411);(sleek-hec:58<65:sleek,7.778323);(sleek-hec:53<66:sleek,10.72429);(sleek-hec:67<92:sleek,5.716403);(sleek-hec:39<94:sleek,19.723777);(sleek-hec:121<129:sleek,9.746302);(sleek-hec:120<129:sleek,9.811396);(sleek-hec:115<130:sleek,12.847147);(sleek-hec:107<140:sleek,14.612539);(sleek-hec:33<151:sleek,35.30622)])
 ===============================================================
 ===============================================================
 ===============================================================
