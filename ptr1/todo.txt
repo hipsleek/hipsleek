@@ -943,6 +943,57 @@ Entailing lemma lem_13: Fail. Details below:
 !!! 
  log(bigger)(>4s)(10):(133.984808,[(sleek-hec:59<65:sleek,7.718411);(sleek-hec:58<65:sleek,7.778323);(sleek-hec:53<66:sleek,10.72429);(sleek-hec:67<92:sleek,5.716403);(sleek-hec:39<94:sleek,19.723777);(sleek-hec:121<129:sleek,9.746302);(sleek-hec:120<129:sleek,9.811396);(sleek-hec:115<130:sleek,12.847147);(sleek-hec:107<140:sleek,14.612539);(sleek-hec:33<151:sleek,35.30622)])
 ===============================================================
+# ex6f1c4.slk --pnum 2
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i,n-1> & x=self+(n-1) & i>=0 
+  inv n>=i & i>=0.
+
+# why does pred vs pred give a FOLD?
+  why isn't it data vs pred?
+
+# this is diff from ex61c2.slk --pnum 8
+
+!!! **context.ml#3661:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<i_76,n_77>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Unfold 0 =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:1
+  Match =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:2
+  Fold =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M
+  ]
+
+# ex6f1c2.slk
+
+ ### RHS Cand :[ base::arr_seg<flted_42_87,n_86>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Fold =>
+    LHS: y::arrI<Anon_22>@M
+    RHS: base::arr_seg<flted_42_87,n_86>@M;
+  Prio:1
+  Match =>
+    LHS: base::arr_seg<flted_40_59,n>@M
+    RHS: base::arr_seg<flted_42_87,n_86>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: base::arr_seg<flted_40_59,n>@M
+    RHS: base::arr_seg<flted_42_87,n_86>@M
+  ]
 ===============================================================
 ===============================================================
 ===============================================================

@@ -6,10 +6,12 @@ bool rand()
   ensures res or !res;
 
 int bsearch(int x,int y)
- infer [P] 
+  infer [P,@classic] 
+ requires P(x,y) & x<=y
+ ensures true;
+/*
  requires P(x,y) 
  ensures false;
-/*
  requires x>y
  ensures false;
  // verifies
@@ -42,6 +44,22 @@ int bsearch(int x,int y)
     else return bsearch(m+1,y);
   }
 }
+
+ requires P(x,y) & x<=y
+ ensures true;
+
+[RELDEFN P: 
+( 0<=m' & m'<y & (2*m')<=(x'+y) & (x'+y)<=(1+(2*m')) & P(x',y)) 
+  -->  P(x',m'),
+RELDEFN P: 
+( m'<=(0-1) & m'<=(y-1) & (2*m')<=(x'+y) & (x'+y)<=(1+(2*m')) & P(x',y)) -->  P(x',m'),
+RELDEFN P: 
+( 1<=v_int_24_1763' & v_int_24_1763'<=y' & (2*v_int_24_1763')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_24_1763') & P(x,y')) -->  P(v_int_24_1763',y'),
+RELDEFN P: 
+( v_int_24_1763'<=0 & v_int_24_1763'<=y' & (2*v_int_24_1763')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_24_1763') & P(x,y')) -->  P(v_int_24_1763',y')]
+
 
 # why are there so many reldefns? can gfp derive x>y
 
