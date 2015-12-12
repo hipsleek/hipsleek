@@ -949,6 +949,16 @@ pred arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i,n-1> & x=self+(n-1) & i>=0 
   inv n>=i & i>=0.
 
+# ex6f1c4.slk (should be x=self+n-1)
+
+actual_root: 
+  Noneself preds: [arr_seg]
+
+# ex6f1c2.slk
+
+  actual_root: 
+  Some((x, x=i+self))self preds: [arr_seg]
+
 # why does pred vs pred give a FOLD?
   why isn't it data vs pred?
 
