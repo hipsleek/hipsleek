@@ -710,9 +710,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let eqns2 =  eqns' in
     let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
     let lhs_pp = MCP.pure_of_mix lhs_p in
-    let (same_base,other_eqn) = CP.extr_ptr_eqn lhs_pp in
+    let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
-    let (same_base_rhs,eq_b_rhs) = CP.extr_ptr_eqn rhs_pure in
+    let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
     let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns') in

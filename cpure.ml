@@ -15921,6 +15921,10 @@ let rec get_base e =
     -> if is_ptr_arith (typ_of_sv v) then e1 else get_base e2
   | _ -> e
 
+let get_base e =
+  let pr_exp = !print_exp in
+  Debug.no_1 "get_base" pr_exp pr_exp get_base e
+
 let get_ptr e1 e2 =
   (* let () = y_tinfo_hp (add_str "get_ptr(e1)" !print_exp) e1 in *)
   (* let () = y_tinfo_hp (add_str "get_ptr(e2)" !print_exp) e2 in *)
@@ -15949,6 +15953,10 @@ let extr_ptr_eqn (f:formula)  =
     let f_f f = None in
     let f_bf bf = 
       let pf = BForm (bf,None) in
+      (* what about Sub(e1,e2) *)
+      (* extr_ptr_eqn@7 *)
+      (* extr_ptr_eqn inp1 : x=(self+n)-1 & 0<=i *)
+      (* extr_ptr_eqn@7 EXIT:([],[ x=(self+n)-1]) *)
       match bf with
       | (Eq (Var(v1,_),Add(e1,e2,_),_),_) 
       | (Eq (Add(e1,e2,_),Var(v1,_),_),_) 
@@ -15962,9 +15970,10 @@ let extr_ptr_eqn (f:formula)  =
         let () = stk # push pf in
         Some bf
       | (Eq _,_) -> 
-         let () = stk # push pf in
-         let () = y_tinfo_hp (add_str "other" !print_formula) pf in
-         Some bf
+            let () = y_winfo_hp (add_str "cannot handle ptr" !print_formula) pf in
+            let () = stk # push pf in
+            let () = y_tinfo_hp (add_str "other" !print_formula) pf in
+            Some bf
       | _ -> None in
     let f_e e = Some e in
     map_formula f (f_f,f_bf,f_e) in

@@ -1005,6 +1005,20 @@ actual_root:
     RHS: base::arr_seg<flted_42_87,n_86>@M
   ]
 ===============================================================
+# ex6f1c4.slk -dre "extr_ptr_eqn"
+
+(====)
+extr_ptr_eqn@5@3@2
+extr_ptr_eqn inp1 : x=(self+n)-1 & 0<=i
+extr_ptr_eqn@5 EXIT:([],[ x=(self+n)-1])
+
+!!! **astsimp.ml#2699:lst(root):[(self,1,[]),(x,0,[])]
+(====)
+choose_smallest@6@3@2
+choose_smallest inp1 : flted_6_18+1=n & x+1=n+self & 0<=i & i_19=i
+choose_smallest inp2 :[(self,1,[]),(x,0,[])]
+choose_smallest@6 EXIT:[]
+
 ===============================================================
 ===============================================================
 ===============================================================

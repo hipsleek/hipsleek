@@ -2686,7 +2686,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                   let ex_vs = Gen.BList.difference_eq CP.eq_spec_var vs keep_vs in
                   let new_p = CP.mkExists_with_simpl !CP.simplify ex_vs pure None no_pos in
                   (* let vars = CP.fv new_p in *)
-                  let (ptrs,eq_lst) = CP.extr_ptr_eqn new_p in
+                  let (ptrs,eq_lst) = x_add_1 CP.extr_ptr_eqn new_p in
                   let base_vars = List.map snd ptrs in
                   let eq_lst = 
                     if List.exists (CP.eq_spec_var CP.self_sv) base_vars 
@@ -2696,7 +2696,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                     (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
                     (* else (\* view node*\) []) *)
                 ) lst in
-              (* let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst in *)
+              let () = y_binfo_hp (add_str "lst(root)" (pr_list (pr_triple !CP.print_sv string_of_int (pr_list !CP.print_formula)))) lst in
               let () = y_tinfo_hp !CP.print_formula pure in
               (* CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h *)
               (pure,lst)
@@ -2713,6 +2713,15 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             let xs = match xs with [] -> []
                                  | x::xs -> aux xs x in
             xs in
+          (* type: IastUtil.CP.formula * *)
+          (*   (IastUtil.CP.spec_var * int * IastUtil.CP.formula list) list -> *)
+          (*   (IastUtil.CP.spec_var * IastUtil.CP.formula) list *)
+          let choose_smallest (pure,xs) =
+            let pr_sv = !CP.print_sv in
+            let pr1 = !CP.print_formula in
+            let pr2 = pr_list (pr_triple pr_sv string_of_int (pr_list pr1)) in
+            let pr3 = pr_list (pr_pair pr_sv pr1)  in
+            Debug.no_2 "choose_smallest" pr1  pr2 pr3 (fun _ _ -> choose_smallest (pure,xs)) pure xs in
           let choose_one xs = 
             let rec aux xs ((v1,p1) as acc) = match xs with
               | [] -> [acc]
