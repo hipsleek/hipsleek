@@ -15941,12 +15941,63 @@ let get_ptr e1 e2 =
     if is_ptr_arith (typ_of_sv v1) then Some v1 else None
   | _,_ -> None
 
+let to_sub e1 e2 p =
+  match e1,e2 with
+    | IConst (i1,_),IConst(i2,_) -> IConst(i1-i2,p)
+    | e,IConst (i,_) -> if i==0 then e else Subtract(e1,e2,p)
+    | _,_ -> Subtract(e1,e2,p)
+
+let to_add e1 e2 p =
+  match e1,e2 with
+    | IConst (i1,_),IConst(i2,_) -> IConst(i1+i2,p)
+    | IConst (i,_),e | e,IConst (i,_) -> if i==0 then e else Add(e1,e2,p)
+    | _,_ -> Add(e1,e2,p)
+
+(* this gets base+offset, throws exception otherwise  *)
+let rec get_base2 e =
+  match e with
+  | Var(v,p) -> 
+        if is_ptr_arith (typ_of_sv v) then (v,IConst(0,no_pos))
+        else failwith "get_base2 failed 1"
+  | Add(e1,e2,p) ->
+        (try
+          let (v1,e1) = get_base2 e1 
+          in (v1,to_add e1 e2 p)
+        with _ -> 
+            let (v2,e2) = get_base2 e2 
+            in (v2, to_add e1 e2 p))
+  | Subtract(e1,e2,p) ->
+        let (v1,e1) = get_base2 e1 
+        in (v1,to_sub e1 e2 p)
+  | _ -> failwith "get_base2 failed 2"
+
+let norm_base lhs rhs =
+  try
+    match lhs,rhs with
+      | Var(v,_),e | e,Var(v,_) ->
+            let (v2,a2) = get_base2 e in
+            Some (v,v2,a2)
+      | e1,e2 -> 
+            let (v1,a1) = get_base2 e1 in
+            let (v2,a2) = get_base2 e2 in
+            Some (v1,v2,to_sub a2 a1 no_pos)
+  with _ -> None
+
+let norm_base lhs rhs =
+  let r = norm_base lhs rhs in
+  match r with
+    | Some(v1,v2,IConst(i,_))
+            -> if i==0 then None
+            else r
+    | _ -> r
+
 (* extraction here is incomplete for base! *)
 (* extr_ptr_eqn@3 *)
 (* extr_ptr_eqn inp1 : 0<=i:NUM & a:arrI=2+i:NUM & x:arrI=2+i:NUM *)
 (* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
 (* to return (ptr,v) from ptr=v+c and eq1=eq2 equations *)
-let extr_ptr_eqn (f:formula)  = 
+
+let extr_ptr_eqn_old (f:formula)  = 
   let stk = new Gen.stack in
   let stk_ptr = new Gen.stack in
   let rec helper f =
@@ -15957,30 +16008,59 @@ let extr_ptr_eqn (f:formula)  =
       (* extr_ptr_eqn@7 *)
       (* extr_ptr_eqn inp1 : x=(self+n)-1 & 0<=i *)
       (* extr_ptr_eqn@7 EXIT:([],[ x=(self+n)-1]) *)
+      (* !!! **cpure.ml#15973:cannot handle ptr: x+1=n+base *)
+      (* !!! **cpure.ml#15973:cannot handle ptr: i_137=i *)
+      (* !!! **cpure.ml#15973:cannot handle ptr: x_139+1=flted_13_85+base *)
+      (* !!! **cpure.ml#15973:cannot handle ptr: x=(self+n)-1 *)
       match bf with
-      | (Eq (Var(v1,_),Add(e1,e2,_),_),_) 
-      | (Eq (Add(e1,e2,_),Var(v1,_),_),_) 
-        -> 
-        begin
-         match get_ptr e1 e2 with
-           | Some v2 -> stk_ptr # push (v1,v2)
-           | _ -> ()
-        end;
-        (* let () = y_tinfo_hp (add_str "branch1" !print_formula) pf in *)
-        let () = stk # push pf in
-        Some bf
-      | (Eq _,_) -> 
-            let () = y_winfo_hp (add_str "cannot handle ptr" !print_formula) pf in
-            let () = stk # push pf in
-            let () = y_tinfo_hp (add_str "other" !print_formula) pf in
-            Some bf
-      | _ -> None in
+        | (Eq (Var(v1,_),Add(e1,e2,_),_),_)
+        | (Eq (Add(e1,e2,_),Var(v1,_),_),_)
+            ->
+              begin
+                match get_ptr e1 e2 with
+                  | Some v2 -> stk_ptr # push (v1,v2)
+                  | _ -> ()
+              end;
+                (* let () = y_tinfo_hp (add_str "branch1" !print_formula) pf in *)
+                let () = stk # push pf in
+                Some bf
+        | (Eq _,_) ->
+              let () = y_winfo_hp (add_str "cannot handle ptr" !print_formula) pf in
+              let () = stk # push pf in
+              let () = y_tinfo_hp (add_str "other" !print_formula) pf in
+              Some bf
+        | _ -> None in
     let f_e e = Some e in
     map_formula f (f_f,f_bf,f_e) in
   let _ = helper f in
   (stk_ptr # get_stk,stk # get_stk)
  
 let extr_ptr_eqn (f:formula)  = 
+  let stk = new Gen.stack in
+  let stk_ptr = new Gen.stack in
+  let rec helper f =
+    let f_f f = None in
+    let f_bf bf = 
+      let pf = BForm (bf,None) in
+      match bf with
+        | (Eq(e1,e2,_),_) -> 
+              let r = norm_base e1 e2 in
+              (match r with
+                | Some(v1,v2,e) -> stk_ptr # push (v1,v2)
+                | None -> ()); stk # push pf; Some bf
+        | _ -> None in
+    let f_e e = Some e in
+    map_formula f (f_f,f_bf,f_e) in
+  let _ = helper f in
+  (stk_ptr # get_stk,stk # get_stk)
+
+let extr_ptr_eqn_old (f:formula)  = 
+  let pr = !print_formula in
+  let pr_sv = !print_sv in
+  Debug.no_1 "extr_ptr_eqn_old" pr (pr_pair (pr_list (pr_pair pr_sv pr_sv)) (pr_list pr)) extr_ptr_eqn_old f
+
+let extr_ptr_eqn (f:formula)  =
+  let _ = extr_ptr_eqn_old f in
   let pr = !print_formula in
   let pr_sv = !print_sv in
   Debug.no_1 "extr_ptr_eqn" pr (pr_pair (pr_list (pr_pair pr_sv pr_sv)) (pr_list pr)) extr_ptr_eqn f

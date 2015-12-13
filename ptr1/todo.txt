@@ -1005,19 +1005,60 @@ actual_root:
     RHS: base::arr_seg<flted_42_87,n_86>@M
   ]
 ===============================================================
-# ex6f1c4.slk -dre "extr_ptr_eqn"
+# ex6f1c4.slk --pnum 2
 
-(====)
-extr_ptr_eqn@5@3@2
-extr_ptr_eqn inp1 : x=(self+n)-1 & 0<=i
-extr_ptr_eqn@5 EXIT:([],[ x=(self+n)-1])
+# Why is folding not scheduled for rightwards arr_seg?
 
-!!! **astsimp.ml#2699:lst(root):[(self,1,[]),(x,0,[])]
-(====)
-choose_smallest@6@3@2
-choose_smallest inp1 : flted_6_18+1=n & x+1=n+self & 0<=i & i_19=i
-choose_smallest inp2 :[(self,1,[]),(x,0,[])]
-choose_smallest@6 EXIT:[]
+(==context.ml#908==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: x::arrI<Anon_16>@M * base::arr_seg<i,flted_18_85>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[base]
+spatial_ctx_extract inp4 :rhs_node: base::arr_seg<i_110,n_111>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: base::arr_seg<i,flted_18_85>@M
+ RHS: base::arr_seg<i_110,n_111>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_16>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+
+(==context.ml#3586==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<Anon_16>@M * base::arr_seg<i,flted_18_85>@M
+choose_context inp2 :RHS node: base::arr_seg<i_110,n_111>@M
+choose_context inp3 :LHS pure: y=1+x & 0<=i & x+1=n+base & flted_18_85+1=n
+choose_context inp4 :RHS pure: i_110=i & n_111=n
+choose_context inp5 :right alias:[(i_110,i),(n_111,n)]
+choose_context@1 EXIT:[ Type: Root
+ LHS: base::arr_seg<i,flted_18_85>@M
+ RHS: base::arr_seg<i_110,n_111>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_16>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+
+(==context.ml#3599==)
+process_matches@3
+process_matches inp1 :lhs_h: x::arrI<Anon_16>@M * base::arr_seg<i,flted_18_85>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: base::arr_seg<i,flted_18_85>@M
+ RHS: base::arr_seg<i_110,n_111>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_16>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+process_matches inp3 :rhs_node: base::arr_seg<i_110,n_111>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@3 EXIT: Prio:1
+ COND =>[
+  Prio:3
+  BaseCaseUnfold =>;
+  Prio:1
+  Match =>
+  ]
 
 ===============================================================
 ===============================================================
