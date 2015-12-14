@@ -11,12 +11,12 @@ pred arr_seg2<i,n> == i=n & i>=0
   inv n>=i & i>=0.
 
 infer[@classic] x::arrI<_> * base::arr_seg<i,n-1> * y::arrI<_>
-  & x=base+(n-1) & i>=0 & y=x+1
+  & x=base+(n-1) & i>=0 & y=x+1 & n-1>=i
   |- base::arr_seg<i,n+1>.
 expect Valid.
 
 infer[@classic] x::arrI<_> * base::arr_seg<i,n-1> 
-  & x=base+(n-1) & i>=0 & y=x+1
+  & x=base+(n-1) & i>=0 & y=x+1 //& n-1>=1
   |- base::arr_seg<i,n>.
 expect Valid.
 

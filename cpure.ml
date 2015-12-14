@@ -16060,7 +16060,7 @@ let extr_ptr_eqn_old (f:formula)  =
   Debug.no_1 "extr_ptr_eqn_old" pr (pr_pair (pr_list (pr_pair pr_sv pr_sv)) (pr_list pr)) extr_ptr_eqn_old f
 
 let extr_ptr_eqn (f:formula)  =
-  let _ = extr_ptr_eqn_old f in
+  (* let _ = extr_ptr_eqn_old f in *)
   let pr = !print_formula in
   let pr_sv = !print_sv in
   Debug.no_1 "extr_ptr_eqn" pr (pr_pair (pr_list (pr_pair pr_sv pr_sv)) (pr_list pr)) extr_ptr_eqn f

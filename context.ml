@@ -638,6 +638,8 @@ let get_views_offset prog f =
 
 (* let adhoc_stk = new Gen.stack *)
 
+let xpure_sym = ref ((fun p h mf xp -> failwith x_tbi):prog_decl -> h_formula -> MCP.mix_formula -> int -> (MCP.mix_formula * CP.spec_var list * mem_formula))
+
 let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   let hrel_stk = new Gen.stack in
@@ -645,6 +647,13 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   let lhs_pure = MCP.pure_of_mix lhs_p in
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let lhs_pure = lhs_pure in
+  (* add xpure0 of lhs_h to lhs_pure *)
+  let mf,svl,ba = x_add !xpure_sym prog lhs_h lhs_p 0 in
+  let mf = MCP.pure_of_mix mf in
+  let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
+  let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure in
+  let () = y_tinfo_hp (add_str "mf" !CP.print_formula) mf in
+  let lhs_pure = CP.mkAnd lhs_pure mf no_pos in
   let emap = CP.EMapSV.build_eset eqns' in
   match rhs_node with
   | HRel _  
@@ -739,7 +748,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
       let () = y_tinfo_hp (add_str "pasets" !CP.print_svl) paset in
       (* let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in *)
-      let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure in
       (* let diff_ptrs = heap_ptrs in *)
       (* let diff_ptrs = if true (\* not(!Globals.adhoc_flag_2) *\) then *)
       (*     Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset  *)

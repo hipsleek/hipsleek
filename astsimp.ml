@@ -2696,7 +2696,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                     (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
                     (* else (\* view node*\) []) *)
                 ) lst in
-              let () = y_binfo_hp (add_str "lst(root)" (pr_list (pr_triple !CP.print_sv string_of_int (pr_list !CP.print_formula)))) lst in
+              let () = y_tinfo_hp (add_str "lst(root)" (pr_list (pr_triple !CP.print_sv string_of_int (pr_list !CP.print_formula)))) lst in
               let () = y_tinfo_hp !CP.print_formula pure in
               (* CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h *)
               (pure,lst)
