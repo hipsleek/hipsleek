@@ -15,9 +15,10 @@ infer[@classic] x::arrI<_> * base::arr_seg<i,n-1> * y::arrI<_>
   |- base::arr_seg<i,n+1>.
 expect Valid.
 
+//2
 infer[@classic] x::arrI<_> * base::arr_seg<i,n-1> 
   & x=base+(n-1) & i>=0 & y=x+1 //& n-1>=1
-  |- base::arr_seg<i,n>.
+  |- base::arr_seg<i,n> .
 expect Valid.
 
 infer[@classic] x::arrI<_> & x=base+i & i>=0 

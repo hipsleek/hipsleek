@@ -63,10 +63,10 @@ arr_bseg<i,n> == i=n & i>=0
 void bubble_push(arrI base, int start, int end)
  case {
   start=end -> ensures emp;
-  start!=end -> 
+  start!=end ->
     requires base::arr_seg<start,end>
-    ensures  base::arr_seg_bounded<start,end-1,m>*r::arrI<m>&r=base+(end-1) ;       
- }                                     
+    ensures  base::arr_seg_bounded<start,end-1,m>*r::arrI<m>&r=base+(end-1) ;
+ }
  //ensures base::arr_seg_min_head<start,end>;
 {
   if(start>=end-1){

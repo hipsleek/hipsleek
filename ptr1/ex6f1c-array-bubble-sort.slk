@@ -10,20 +10,19 @@ pred arr_seg<i,n> == i=n & i>=0
 lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
    <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
 
-  /*
-checkentail start=end |- emp.
-print resideue.
-  */
-checkentail base::arr_seg<start,end> &
-    start!=end & start+1>=end 
-   |- base::arr_seg<start,end-1>*r::arrI<m>
+
+checkentail base::arr_seg<start,end> & start!=end & start+1>=end
+   |- base::arr_seg<start,end-1>*r::arrI<m> & r = base + (end - 1).
 //      &  r=base+x & x=end-1.
-      &  r=base+(end-1).
+//      &  r=base+(end-1).
 print residue.
+
+
+
 
 checkentail base::arr_seg<start,end> &
     start!=end & start+1>=end |- end-start=1.
-
+print residue.
 
 
 /*

@@ -736,6 +736,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* let paset = p::paset in *)
     let asets = Csvutil.alias_nth 3 ((root_ptr, root_ptr) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets root_ptr in (* find the alias set containing p *)
+    let () = y_tinfo_hp (add_str "paset:1" (pr_list (!CP.print_sv))) paset in
     let view_root_flag = match view_root_rhs with
       | None -> false
       | Some _ -> true in
@@ -896,6 +897,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         if lst==[] then paset
         else (List.map fst lst)@paset
       else paset in
+    let () = y_tinfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
     (* view with root ptrs *)
     let root_lst = List.fold_left (fun acc (d,r) ->
         match r with 

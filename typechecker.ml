@@ -944,7 +944,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 let res_ctx = CF.map_list_partial_context res_ctx elim_unsat  in
                 let new_false_cnt = tmp_false_cnt # get in
                 let () = x_tinfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
-                let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
+                let tmp_ctx = x_add_1 check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
+                let () = x_tinfo_pp "After check_post. It fail, will not show this" no_pos in
                 let () = 
                   if not(!Globals.old_infer_hp_collect) then
                     begin
@@ -3763,6 +3764,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               (* Evan: we use proc0 instead of proc here because the inference result
                   may not be reflected on the prog *)
               let spec = proc0.proc_stk_of_static_specs # top in
+              let () =  Debug.ninfo_hprint (add_str "in check_proc proc spec:" (Cprinter.string_of_struc_formula_for_spec_inst prog)) spec no_pos in
+
               (* let new_spec = if Pi.is_infer_post spec then Pi.add_post_relation prog proc spec "" UNK else spec in *)
               (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
               let (new_spec,fm,rels,hprels,sel_hp_rels,sel_post_hp_rels,hp_rel_unkmap,f) = check_specs_infer prog proc init_ctx spec body true in

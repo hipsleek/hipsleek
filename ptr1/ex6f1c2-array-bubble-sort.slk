@@ -7,6 +7,7 @@ pred arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0 
   inv n>=i & i>=0.
 
+
 checkentail x::arrI<_> * base::arr_seg<i+1,n> 
   & x=base+i & i>=0 
   |- base::arr_seg<i,n>.
