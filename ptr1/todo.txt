@@ -1094,7 +1094,60 @@ Lemma "lem_13":  self::arr_seg<i,n>@M&{FLOW,(20,21)=__norm#E}[]
  body_norm:  EBase 
    (exists m_86,m_87: self::arr_seg<i,m_87>@M * self::arr_seg<m_86,n>@M&
    i<=m_87 & m_87<=n & m_86=m_87&{FLOW,(20,21)=__norm#E}[])
+
+# FIXED? ..
+
+ body_norm:  EBase 
+   (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M&
+   mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[])
+
 ===============================================================
+# ex6f1c6.slk  vs ex6f1c6a.slk
+
+# problem with base_case_fold?
+
+!!! **solver.ml#12788:process_action (steps) :
+ ### action :
+ BaseCaseFold =>
+   Type: Root
+   LHS: emp
+   RHS: base::arr_seg<mmm_212,end_188>@M
+   root_inst: None
+   lhs_rest: emp
+   rhs_rest: emp
+   alias set: []rhs_inst: []rhs_infer: None
+ ### estate :
+ ex_formula : emp&v=start+1&{FLOW,(20,21)=__norm#E}[]
+ es_heap:base::arr_seg<v,end>@M
+ ### conseq :
+ base::arr_seg<mmm_212,end_188>@M&
+end_188=end & mmm_212=end & v<=end & end<=end_188&{FLOW,(20,21)=__norm#E}[]
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>emp&end<=end & v=start+1 & 0<=end&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_14_left_right(base,base)) ==>  COND ==>  Match(base,base) ==>  COND ==>  BaseCaseFold]]
+
+!!! **solver.ml#12788:process_action (steps) :
+ ### action :
+ BaseCaseFold =>
+   Type: Root
+   LHS: emp
+   RHS: base::arr_seg<start_103,m_115>@M
+   root_inst: None
+   lhs_rest: emp
+   rhs_rest: emp
+   alias set: []rhs_inst: []rhs_infer: None
+ ### estate :
+ ex_formula : emp&v=start+1&{FLOW,(20,21)=__norm#E}[]
+ es_heap:base::arr_seg<v,end>@M
+ ### conseq : base::arr_seg<start_103,m_115>@M&start_103<=m_115 & m_115<=end & v=m_115&
+{FLOW,(20,21)=__norm#E}[]
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
 ===============================================================
 ===============================================================
 ===============================================================

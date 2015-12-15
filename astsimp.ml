@@ -4632,10 +4632,22 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
       let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
       let () = x_tinfo_hp (add_str "new_body (after push exists)" Cprinter.string_of_formula) new_body no_pos in
       (* let new_body_norm =  c.C.coercion_body_norm in *)
-      let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
-      let new_body_norm = CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
-      let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
-      let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in
+      let new_body_norm = x_add_1 CF.struc_formula_of_formula new_body no_pos in
+      let () = x_binfo_hp (add_str "new_body_norm (b4 norm)" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+      let () = x_binfo_hp (add_str "c_guard" Cprinter.string_of_mix_formula) c_guard no_pos in
+      (* c_guard is already added! see ex6f1c6.slk *)
+      (* !!! **astsimp.ml#4636:new_body_norm (b4 norm): *)
+      (*     EBase  *)
+      (*     (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M& *)
+      (*         mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[]) *)
+      (* !!! **astsimp.ml#4637:c_guard: i<=mmm & mmm<=n *)
+
+      (* let new_body_norm = x_add CF.normalize_struc new_body_norm (\* c.C.coercion_body_norm *\) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
+      let true_f = CP.mkTrue no_pos in
+      let new_body_norm = x_add CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula (MCP.mix_of_pure true_f) no_pos) None no_pos) in
+      (* let () = x_binfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in *)
+      (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
+      let new_body_norm = CF.push_struc_exists [] new_body_norm in
       (*                 let new_body_norm = CF.push_exists c.C.coercion_univ_vars new_body_norm in *)
       let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
       let () = x_tinfo_hp (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in

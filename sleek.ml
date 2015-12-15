@@ -485,7 +485,7 @@ let main () =
         (* let () = print_endline "Prior to parse_file" in *)
         x_tinfo_pp "sleek : batch processing" no_pos;
         let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
-        let () = x_binfo_pp slk_prelude_path no_pos in
+        (* let () = x_binfo_pp slk_prelude_path no_pos in *)
         let all_files = slk_prelude_path::!Globals.source_files in
         let () = x_binfo_pp ((pr_list (fun x -> x)) all_files) no_pos in
         let todo_unk = List.map (parse_file NF.list_parse) all_files in ()

@@ -20595,3 +20595,13 @@ let is_non_emp f =
      | _ -> None in 
   let _ = (map_h_formula f f_h_f) in
   !flag
+
+let struc_formula_of_formula f pos =
+  let pr_f = !print_formula in
+  let pr_sf = !print_struc_formula in
+  Debug.no_1 "struc_formula_of_formula" pr_f pr_sf (fun _ -> struc_formula_of_formula f pos) f
+
+let normalize_struc nb b =
+  let pr_f = !print_formula in
+  let pr_sf = !print_struc_formula in
+  Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b

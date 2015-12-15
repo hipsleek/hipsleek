@@ -14,8 +14,8 @@ pred arr_bnd<i,n,m> == i=n & i>=0
   or x::arrI<v>*self::arr_bnd<i+1,n,m> & x=self+i & i>=0 & v<=m 
   inv n>=i & i>=0.
 
-lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
-   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+lemma_unsafe self::arr_seg<i,n> & i<=mmm & mmm<=n 
+   <-> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
 
 checkentail  base::arr_seg<v,end>@M & v=1+start 
      |- base::arr_seg<start,end>.
@@ -58,5 +58,35 @@ Lemma "lem_13":  self::arr_seg<i,n>@M&{FLOW,(20,21)=__norm#E}[]
    (exists m_86,m_87: self::arr_seg<i,m_87>@M * self::arr_seg<m_86,n>@M&
    i<=m_87 & m_87<=n & m_86=m_87&{FLOW,(20,21)=__norm#E}[])
 
+!!! **astsimp.ml#4636:new_body_norm (b4 norm):
+ EBase 
+   (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M&
+   mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[])
+
+!!! **astsimp.ml#4636:new_body_norm (b4 norm):
+ EBase 
+   (exists m_84,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<m_84,n>@M&
+   i<=mmm & mmm<=n & m_84=mmm&{FLOW,(20,21)=__norm#E}[])
+
+!!! **astsimp.ml#4637:c_guard: i<=mmm & mmm<=n
+!!! **lemma.ml#312:
+
+# why still VALID when below seems correct and similar to ex6f1c6a.slk
+
+!!! **astsimp.ml#4636:new_body_norm (b4 norm):
+ EBase 
+   (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M&
+   mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[])
+
+ body_norm:  EBase 
+   (exists mmm_170,
+   mmm_171: self::arr_seg<i,mmm_171>@M * self::arr_seg<mmm_170,n>@M&
+   mmm_170=mmm_171 & i<=mmm_171 & mmm_171<=n&{FLOW,(20,21)=__norm#E}[])
+
+===================
+ 
+ body_norm:  EBase 
+   (exists m_86,m_87: self::arr_seg<i,m_87>@M * self::arr_seg<m_86,n>@M&
+   i<=m_87 & m_87<=n & m_86=m_87&{FLOW,(20,21)=__norm#E}[])
 
 */
