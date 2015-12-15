@@ -88,10 +88,10 @@ void bubble_push(arrI base, int start, int end)
   }
 }
 
-/*
+
 void bubble_sort(arrI base, int start, int end)
   requires base::arr_seg<start,end> & start<end
-  ensures base::arr_sorted<start,end>;
+  ensures base::arr_seg<start,end>;
 {
   if(start>=end-1){
     return;
@@ -102,4 +102,4 @@ void bubble_sort(arrI base, int start, int end)
     return;
   }
 }
-*/
+
