@@ -35,10 +35,23 @@ infer[@classic] x::arrI<_> & x=base+i & i>=0
   |- base::arr_seg<i,i+1>.
 expect Valid.
 
-infer[@classic] x::arrI<v> & x=base+i & i>=0 
-  |- base::arr_bnd<i,i+1,m>.
+infer[@classic] x::arrI<u> * y::arrI<v> & y=x+1 & x=base+i & i>=0 
+  |- base::arr_bnd<i,n,m>.
 expect Valid.
 print residue.
+
+infer[@classic] x::arrI<u> * y::arrI<v> & y=x+1 & x=base+i & i>=0 & m<v
+  |- base::arr_bnd<i,n,m>.
+expect Fail.
+print residue.
+
+infer[@classic] x::arrI<u> * base::arr_bnd<i+1,n,m> & x=base+i & i>=0 & u<=m
+  |- base::arr_bnd<i,n,m>.
+expect Valid.
+
+infer[@classic] x::arrI<u> * base::arr_bnd<i+1,n,m2> & x=base+i & i>=0 
+  |- base::arr_bnd<i,n,m>.
+expect Valid.
 
 /*
 # ex6f1c4.slk --pnum 2

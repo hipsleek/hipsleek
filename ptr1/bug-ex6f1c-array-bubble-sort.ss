@@ -57,7 +57,11 @@ arr_bseg<i,n> == i=n & i>=0
   inv n>=i & i>=0;
 
                                                                               arr_seg_bounded<i,n,m> == i=n & i>=0
-  or x::arrI<m0>*self::arr_seg_bounded<i,n-1,m> & x=self+(n-1) & i>=0 & m0>=m
+  or x::arrI<v>*self::arr_seg_bounded<i,n-1,m> & x=self+(n-1) & i>=0 & v<=m
+  inv n>=i & i>=0;
+
+ arr_seg_l_bnd<i,n,m> == i=n & i>=0
+  or x::arrI<v>*self::arr_seg_l_bnd<i,n-1,m> & x=self+(n-1) & i>=0 & v>m
   inv n>=i & i>=0;
 
 void bubble_push(arrI base, int start, int end)
@@ -65,7 +69,7 @@ void bubble_push(arrI base, int start, int end)
   start=end -> ensures emp;
   start!=end ->
     requires base::arr_seg<start,end>
-    ensures  base::arr_seg<start,end-1>*r::arrI<m> &r=base+(end-1) 
+    ensures  base::arr_seg_l_bnd<start,end-1,m>*r::arrI<m> &r=base+(end-1) 
     ;
  }
  //ensures base::arr_seg_min_head<start,end>;
