@@ -1149,6 +1149,17 @@ Residue:
 Entail 1: Fail.(may) cause:base case unfold failed
 
 ===============================================================
+# ex6f1c6.slk  
+
+# missing start_187=start  after lemma application
+
+ ### estate : ex_formula : base::arr_seg<v,end>@M&v=start+1&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : base::arr_seg<start_187,end_188>@M&start_187=start & end_188=end&
+
+ ### conseq : base::arr_seg<start_187,mmm_213>@M * base::arr_seg<mmm_212,end_188>@M&
+end_188=end & mmm_212=mmm_213 & start_187<=mmm_213 & mmm_213<=end_188&
+{FLOW,(20,21)=__norm#E}[]
 ===============================================================
 ===============================================================
 ===============================================================

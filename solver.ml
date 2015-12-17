@@ -2302,6 +2302,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 and contra_wrapper f rhs_p =
   let rs0, fold_prf =
     (*Loc: why smart_lem_search?? append_sll_cll_slk-15.smt2.slk from must failure to may failure?? *)
+    (* TODO:WN need to to capture for exception *)
     if (!Globals.smart_lem_search) then
       let () = rhs_pure_stk # push rhs_p in
       let rs0, fold_prf = f None in 
@@ -2397,8 +2398,8 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
                 with _ -> None
             end in
         (* let () = y_tinfo_hp (add_str "new_inst" (pr_option !CP.print_formula)) new_inst in *)
-        let () = y_tinfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv ))) sst in
-        let () = y_tinfo_hp (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula in
+        let () = y_binfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv ))) sst in
+        let () = y_binfo_hp (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula in
         (****)  
         (* let renamed_view_formula =  propagate_imm_struc_formula renamed_view_formula imm anns in *)
         (*   if ((CP.isImm imm) || (CP.isLend imm) || (CP.isAccs imm)) (\*&& not(!Globals.allow_field_ann)*\) then  *)
@@ -2428,7 +2429,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         let () = y_tinfo_hp (add_str "fr_vars" !CP.print_svl) fr_vars in 
         let () = y_tinfo_hp (add_str "to_vars" !CP.print_svl) to_vars in 
         let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
-        let () = Debug.ninfo_hprint (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form no_pos in
+        let () = y_binfo_hp (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form  in
         let anns = List.map fst anns in
         let fr_ann = List.map fst vdef.view_ann_params in
         let to_ann = anns in
@@ -2509,8 +2510,9 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
                            (fun x -> Some (CP.join_conjunctions [rhs_p;x])) 
                            es.es_rhs_pure   }
             ) new_ctx in 
+        let () = x_binfo_hp (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos in
+        let () = x_binfo_hp (add_str "new_ctx" Cprinter.string_of_context) new_ctx no_pos in
         let heap_enatil = heap_entail_one_context_struc_nth 99 prog true false new_ctx view_form None None None pos (* None *) in
-        x_tinfo_hp (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
 
         let rels = Infer.collect_rel_list_context rs0 in
@@ -8901,9 +8903,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
         (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
         (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
-        x_tinfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
-        x_tinfo_hp (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
-        x_tinfo_hp (add_str "conseq1-1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
+        x_binfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
+        x_binfo_hp (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
+        x_binfo_hp (add_str "conseq1-1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
         let split_conseq =
           if !omega_simpl && not(TP.is_mix_bag_constraint new_conseq0)&& not(TP.is_mix_list_constraint new_conseq0) 
           then memo_normalize_to_CNF_new (MCP.memo_arith_simplify new_conseq0) pos
@@ -11843,11 +11845,13 @@ and combine_results ((res_es1,prf1): list_context * Prooftracer.proof)
   Debug.no_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
 
 and do_fold ?(root_inst=None) prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
-  let pr1 = pr_option (pr_triple  !CP.print_svl !CP.print_svl Cprinter.string_of_view_decl) in
+  let pr1 = pr_option (pr_triple  !CP.print_svl !CP.print_svl Cprinter.string_of_view_decl_short) in
   let pr2 (cl,_) = Cprinter.string_of_list_context cl in
+  let pr3 = add_str "conseq" !CF.print_formula in
+  let pr4 = (add_str "rhs_b" Cprinter.string_of_formula_base) in
   let pr_es = Cprinter.string_of_entail_state(* _short *) in
-  Debug.no_2 "do_fold" pr_es pr1 pr2
-    (fun _ _ -> do_fold_x ~root_inst:root_inst prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate vd
+  Debug.no_4 "do_fold" pr_es pr1 pr3 pr4 pr2 
+    (fun _ _ _ _ -> do_fold_x ~root_inst:root_inst prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate vd conseq rhs_b
 
 and do_fold_x ?(root_inst=None) prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let fold_ctx = Ctx { estate with
@@ -11917,7 +11921,7 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
                                   Cast.view_un_struc_formula = [(lhs, (fresh_int (),""))];
                       } in
     let rhs_node1 = CF.mkViewNode (List.hd vs) (CP.name_of_spec_var hp) (List.tl vs) pos in
-    do_fold prog (Some (iv,ivr,vdecl_w_def)) estate conseq rhs_node1 rhs_rest rhs_b is_folding pos
+    x_add do_fold prog (Some (iv,ivr,vdecl_w_def)) estate conseq rhs_node1 rhs_rest rhs_b is_folding pos
 (* let vd = Some ([],[],vdecl_w_def) in *)
 (* let rhs_p = MCP.pure_of_mix (rhs_b.CF.formula_base_pure) in *)
 (* let fold_ctx = Ctx { estate with *)
@@ -11978,7 +11982,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
         (* WN->Loc : this caused failure for cll-d.slk *)
         (* let old_classic_flag = !do_classic_frame_rule in *)
         (* let () = do_classic_frame_rule := (is_empty_heap rhs_rest) in *)
-        let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+        let r = x_add do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
         (* let () = do_classic_frame_rule := old_classic_flag in *)
         r
     in  ((* Infer.restore_infer_vars iv  *)cl,prf)
@@ -16274,9 +16278,11 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
       let (_ (* estate *),iv,ivr) = Infer.remove_infer_vars_all estate (* rt *)in
       let rhs_node = ln2 in
       let rhs_rest = resth2 in
-      let () = x_tinfo_hp (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
+      let () = x_binfo_hp (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
+      let () = x_binfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos in
+      let () = x_binfo_hp (add_str "vd(for lemma folding)" Cprinter.string_of_view_decl_short) vd no_pos in
       let () = x_tinfo_hp (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
-      let (a,b) = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+      let (a,b) = x_add do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
       (a,[b])
 (* why do_fold use proof & apply_right_coercion is proof list *)
 
