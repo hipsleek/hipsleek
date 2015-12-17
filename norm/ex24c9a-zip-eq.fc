@@ -1,15 +1,15 @@
-zip:={[n] -> [] -> []: 
- !(n=0) &&
-   exists (v: n=v+1 &&
-#     ((n=0) || zip(v))
-      zip(v)
+zip:={[a,b] -> [] -> []: 
+ ((!(a=0) || b<1) && (!(b=0) || a<1)) &&
+   exists (v,w:  b=w+1 && a=v+1 &&
+     (v>=0 && w>=0 && zip(v,w))
   )
 };
+# above is still incorrect..
 
-I:={[]: 1=1};
+I:={[]: a>=0 && b>=0};
 
-#{[n]:(0 >= 1 + n || n >= 2)};
-
+# Expected result:
+# {[n,res]:((n<=100 && res=91) || (n>=101 && n=res+10))};
 
 # Step-by-step procedure with two applications of the widening operator:
 F0:={[]: 1=1};
@@ -32,3 +32,7 @@ PairwiseCheck F4;
 F4N:=narrow(F3,F4,SimHeur);
 F4N;
 
+Exp:={[]:a>=0 && a=b};
+
+F4N subset Exp;
+Exp subset F4N;
