@@ -22,6 +22,6 @@ F4:=zip(F3); F4;
 F4:=F4 intersection I;
 F4:= PairwiseCheck F4;
 F1;F2;F3;F4;
-#F4N:=narrow(F3,F4,SimHeur);
-#F4N;
+F4N:=narrow(F3,F4,SimHeur);
+F4N;
 

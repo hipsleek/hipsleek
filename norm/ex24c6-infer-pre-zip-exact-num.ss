@@ -5,7 +5,7 @@ int zip(int x,int y)
 //  requires x>=0 & y>=0 & x<=y
  infer [P] 
  requires P(x,y) & x>=0 & y>=0 
- ensures false;
+ ensures true;
 {
   if (x==0 && y==0) return x;
   else {
@@ -23,6 +23,13 @@ void non_null(int x)
 /*
 # ex24c6.ss
 
+
+!!! **typechecker.ml#845:WARNING : Spurious RelInferred (not collected):
+[RELDEFN P: ( P(x,y) & x=v_int_14_1771'+1 & y=v_int_14_1770'+1 & 0<=v_int_14_1771' & 
+ 0<=v_int_14_1770') -->  P(v_int_14_1771',v_int_14_1770'),
+RELASS [P]: ( P(x,y)) -->  (y!=0 | 1>x),
+RELASS [P]: ( P(x,y)) -->  (x!=0 | 1>y),
+RELASS [P]: ( P(x,y)) -->  (x!=0 | 1>y)]
 
 !!! **typechecker.ml#845:WARNING : Spurious RelInferred (not collected):
 [RELASS [P]: 

@@ -1,0 +1,34 @@
+relation P(int x, int y).
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) |- x>0 & y>0.
+print residue.
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) |- x>0 .
+print residue.
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) |- y>0 .
+print residue.
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) & v+1=x & w+1=y |- P(v,w).
+print residue.
+
+/*
+# ex24c6b.slk
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) & v+1=x & w+1=y |- P(v,w).
+print residue.
+
+
+# missing out on disj (x!=0 | y!=0)
+
+ <1>emp&1+w=y & 1+v=x & ((x!=0 | y!=0)) & 0<=y & 0<=x & P(x,y)&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: 
+[RELDEFN P: ( P(x,y) & 0<=y & 0<=x & 1<=(x+y) & v=x-1 & w=y-1) -->  P(v,w)]
+
+
+*/
