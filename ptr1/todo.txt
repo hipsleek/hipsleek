@@ -1160,7 +1160,46 @@ Entail 1: Fail.(may) cause:base case unfold failed
  ### conseq : base::arr_seg<start_187,mmm_213>@M * base::arr_seg<mmm_212,end_188>@M&
 end_188=end & mmm_212=mmm_213 & start_187<=mmm_213 & mmm_213<=end_188&
 {FLOW,(20,21)=__norm#E}[]
-===============================================================
+
+# why did match succeed. What happen to start_113=start?
+
+!!! **solver.ml#12792:process_action (steps) :
+ ### action :
+ Match =>
+   Type: Root
+   LHS: base::arr_seg<v,mmm_119>@M
+   RHS: base::arr_seg<start_113,end_114>@M
+   root_inst: None
+   lhs_rest: base::arr_seg<mmm_125,end>@M
+   rhs_rest: emp
+   alias set: [base]rhs_inst: []rhs_infer: None
+ ### estate : ex_formula : base::arr_seg<v,mmm_119>@M * base::arr_seg<mmm_125,end>@M&mmm_125=mmm_119 & 
+
+# why compute_action is different below:
+
+# ex6f1c6.slk  
+!!! **context.ml#3671:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<start_113,end_114>@M]
+ ### action :
+ COND =>[
+  Prio:0
+  Match =>
+    LHS: base::arr_seg<v,mmm_119>@M
+    RHS: base::arr_seg<start_113,end_114>@M;
+  Prio:0
+  Match =>
+    LHS: base::arr_seg<mmm_125,end>@M
+    RHS: base::arr_seg<start_113,end_114>@M
+  ]
+
+# ex6f1c6a.slk  
+!!! **context.ml#3671:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<start_103,m_115>@M, base::arr_seg<m_114,end_104>@M]
+ ### action :
+ Match =>
+   LHS: base::arr_seg<v,end>@M
+   RHS: base::arr_seg<m_114,end_104>@M
+
 ===============================================================
 ===============================================================
 ===============================================================

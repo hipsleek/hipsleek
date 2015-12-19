@@ -48,7 +48,7 @@ let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unpri
 (*used for classic*)
 let rhs_rest_emp = ref true
 
-let rhs_pure_stk = new Gen.stack            (* used for detecting pure contra inside folding *)
+let rhs_pure_stk = new Gen.stack_pr "rhs_pure" (Cprinter.string_of_mix_formula) (==)         (* used for detecting pure contra inside folding *)
 
 (*cyclic: should improve the design. why AS call solver??*)
 (* let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos ) *)
@@ -2303,8 +2303,8 @@ and contra_wrapper f rhs_p =
   let rs0, fold_prf =
     (*Loc: why smart_lem_search?? append_sll_cll_slk-15.smt2.slk from must failure to may failure?? *)
     (* TODO:WN need to to capture for exception *)
-    if (!Globals.smart_lem_search) then
-      let () = rhs_pure_stk # push rhs_p in
+    if (true || !Globals.smart_lem_search) then
+      let () = rhs_pure_stk # push_list [rhs_p] in
       let rs0, fold_prf = f None in 
       let () = rhs_pure_stk # pop in
       (rs0, fold_prf)
@@ -11850,7 +11850,7 @@ and do_fold ?(root_inst=None) prog vd estate conseq rhs_node rhs_rest rhs_b is_f
   let pr3 = add_str "conseq" !CF.print_formula in
   let pr4 = (add_str "rhs_b" Cprinter.string_of_formula_base) in
   let pr_es = Cprinter.string_of_entail_state(* _short *) in
-  Debug.no_4 "do_fold" pr_es pr1 pr3 pr4 pr2 
+  Debug.no_4 "do_fold0" pr_es pr1 pr3 pr4 pr2 
     (fun _ _ _ _ -> do_fold_x ~root_inst:root_inst prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate vd conseq rhs_b
 
 and do_fold_x ?(root_inst=None) prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =

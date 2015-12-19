@@ -1,0 +1,34 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i,n-1> & x=self+(n-1) & i>=0 
+  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<=mmm & mmm<=n 
+   <-> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
+
+checkentail  base::arr_seg<start,end>@M
+     |- base::arr_seg<start,end>.
+print residue.
+expect Valid.
+
+/*
+# ex6f1c6d.slk
+
+# 3 similar answers; can lemma not be triggered?
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(base,base)]]
+
+<2>base::arr_seg<mmm_122,end>@M&mmm_122=mmm_116 & start<=mmm_116 & 
+                                mmm_116<=end & Univ(mmm_116) & mmm_116=end&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> lem_13_left(base,base)) ==>  COND ==>  Match(base,base)]]
+
+<3>emp&end<=end & 0<=end&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_13_left_right(base,base)) ==>  COND ==>  Match(base,base) ==>  COND ==>  BaseCaseFold]]
+
+
+*/
