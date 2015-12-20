@@ -386,7 +386,9 @@ let parse_file (parse) (source_file : string) =
   (*-------------END lemma --------------------*)
   y_tinfo_pp "sleek : end of lemma " ;
   let cviews = !cprog.C.prog_view_decls in
-  let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
+  let cviews = 
+    if !Globals.old_univ_vars then List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews 
+    else cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
   y_tinfo_pp "sleek : after cviews calling add_uni_vars " ;

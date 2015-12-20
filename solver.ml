@@ -2381,7 +2381,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         (*let form = x_add_1 Cformula.case_to_disjunct brs in *)
         let () = y_tinfo_hp (add_str "actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) root_inst2 in
         (* let () = y_tinfo_hp (add_str "root_inst" (pr_option !CP.print_sv )) root_inst in *)
-        let () = y_tinfo_hp (add_str "do_fold: form" Cprinter.string_of_struc_formula) form in
+        let () = y_binfo_hp (add_str "do_fold: form" Cprinter.string_of_struc_formula) form in
         let stk = new Gen.stack in
         let renamed_view_formula = rename_struc_bound_vars ~stk:(Some stk) form in
         let sst = stk # get_stk in
@@ -2438,7 +2438,11 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         let uni_vars = vdef.view_uni_vars in
         let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
         let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
-        let view_form = add_mix_formula_to_struc_formula to_fold_view view_form in
+        x_binfo_zp (lazy ("new_univ_vars" ^ (!CP.print_svl new_uni_vars))) pos;
+        x_binfo_zp (lazy ("to_fold_view" ^ (Cprinter.string_of_mix_formula to_fold_view))) pos;
+        let view_form = 
+          if not(!Globals.old_univ_vars) then view_form 
+          else add_mix_formula_to_struc_formula to_fold_view view_form in
         (*propagate*)
         let view_form = 
           if (Perm.allow_perm ()) then (
@@ -2450,12 +2454,15 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
           )
           else view_form
         in
+        x_binfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let view_form = add_struc_origins (get_view_origins view) view_form  in
         let view_form = CF.replace_struc_formula_label pid view_form in
         (* let view_form =  Immutable.propagate_imm_struc_formula view_form imm anns in *)
+        x_binfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let view_form = match use_case with 
           | None -> view_form 
           | Some f -> push_case_f f view_form in
+        x_binfo_zp (lazy ("view_form(b4 prog_imm): " ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let view_form =
           try
             let mpa = List.combine fr_ann to_ann in
@@ -2466,7 +2473,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         x_dinfo_zp (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
         x_dinfo_zp (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
         x_dinfo_zp (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
-        x_dinfo_zp (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
+        x_binfo_zp (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let estate = estate_of_context ctx pos in
         (*LDK: propagate es_vars from the estate to FOLD context
           to avoid proving es_vars as universal vars when finishing FOLDING*)

@@ -1366,6 +1366,7 @@ let adhoc_flag_4 = ref false
 let adhoc_flag_5 = ref false
 let adhoc_flag_6 = ref false
 let old_keep_absent = ref false
+let old_univ_vars = ref false
 let old_empty_to_conseq = ref true (* false *)
 let weaker_pre_flag = ref true
 
