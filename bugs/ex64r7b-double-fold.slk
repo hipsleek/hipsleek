@@ -25,24 +25,15 @@ print residue.
 expect Valid.
 
 /*
-# ex64r7a.slk 
+# ex64r7b.slk -dre "om_gist"
 
-infer [zzz,H1] x::node<zzz>*H1(y)   |- y::node<null> * x::lseg<zzz> .
+# gist not working properly ..
 
-# Why is x::node<..> still there? if it is not a search?
-
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **context.ml#3239:process_matches (steps) :
- ### LHS : x::node<zzz>@M * H1(y)
- ### RHS : y::node<flted_14_49>@M
- ### matches :
-[ Type: Root
- LHS: H1(y)
- RHS: y::node<flted_14_49>@M
- root_inst: None
- lhs_rest: x::node<zzz>@M
- rhs_rest: emp
- alias set: [y]rhs_inst: []rhs_infer: None]
+(====)
+om_gist@29@27@26@25@24@21@20@2
+om_gist inp1 : (z!=null | flted_13_52=null)
+om_gist inp2 : 0+1=a & q_43=z & z=null & y!=null & x!=null & y!=x
+om_gist@29 EXIT: (flted_13_52=null | z!=null)
 
 
 */
