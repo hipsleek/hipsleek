@@ -2674,6 +2674,22 @@ print residue.
 
 # why infer [H1] triggers failure in the above?
 ===================================================================
+# ex64r3d.slk 
+
+infer [@classic,H1] 
+    H1(y) * y::node<null>  & x=null  |- x=null
+     .
+
+# GOT
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(y)&y=null --> emp&true]
+
+# expects:
+
+ inferred hprel: [H1(y) --> y=null]
+
+ above seems too weak fo conclude false??
 ===================================================================
 ===================================================================
 ===================================================================

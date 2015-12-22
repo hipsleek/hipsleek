@@ -12452,11 +12452,14 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
   | _ -> []
 
 and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
+  (* TODO: classic reasoning requires hf,HEmp case to be considered *)
   let detect_heap_contra lhs rhs = 
     let (lhs_h,_,_,_,_,_) = CF.split_components lhs in
     let (rhs_h,_,_,_,_,_) = CF.split_components rhs in
+
     let flag = match lhs_h,rhs_h with
-      | HEmp,hf | hf,HEmp -> not(CF.is_non_emp hf)
+      | HEmp,hf (* | hf,HEmp *) -> not(CF.is_non_emp hf)
+      | hf,HEmp -> not(check_is_classic_local estate.CF.es_infer_obj) || not(CF.is_non_emp hf)
       | _ -> true
     in
     let () = y_tinfo_pp "detect_heap_contra" in

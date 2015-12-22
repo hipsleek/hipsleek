@@ -1998,6 +1998,24 @@ Total number of errors: 6 in files:
   fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
   veribsync/barrier-dynamic2.slk({E2#Fail}).
 
+========================================
+# after partial fix for --new-heap-contra
+
+# ignore concurrent examples for time being
+
+Total number of errors: 5 in files:
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+# default branch
+
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}).
+
 ====================================================================
 ====================================================================
 ====================================================================

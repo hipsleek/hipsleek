@@ -18,15 +18,16 @@ infer [H1] H1(y)*x::node<null>*z::node<null>  |-
 print residue.
 expect Valid.
 
-/*
-infer [H1] H1(y)*x::node<null>*z::node<null>  |- y::ll<m>.
+infer [] H1(y)
+    *z::node<null> 
+    & x=null  |- 
+    x=null
+   //x::ll<n> 
+   //* y::ll<m>
+    .
 print residue.
 expect Valid.
 
-infer [] H1(y)*x::node<null>*z::node<null>  |- x::ll<n>.
-print residue.
-expect Valid.
-*/
 
 /*
 # ex64r3.slk --dd-callers-all
