@@ -5566,19 +5566,19 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   (* in *)
   (*11/02/2014: not sure what it supposed to do.
     Temporarily always returns (true,false, None) for permissions*)
-  let pr_hdebug = x_tinfo_hp in
+  (* let pr_hdebug = x_tinfo_hp in *)
   if (Perm.allow_perm ()) then (true,false, None) else
     (* if there is no hp inf, post pone contra detection *)
     (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
   if (no_infer_all_all estate) || not (!Globals.early_contra_flag) || x_add_1 is_error_flow estate.es_formula
   then
-    let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "1" pos in
+    let () = x_tinfo_hp (* pr_hdebug *) (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
   else
   if (* (isEmpFormula estate.es_formula) && *) (* is_trivial_heap_formula conseq *)
     (is_trivial_formula conseq)
   then
-    let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "3" pos in
+    let () = x_tinfo_hp (add_str "early_hp_contra_detection : " pr_id) "3" pos in
     (true, false, None)
   else
     begin
@@ -5595,7 +5595,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
       x_tinfo_hp (add_str "orig_inf_vars" pr_svls) orig_inf_vars no_pos;
       match r_inf_contr with
       | Some (new_estate, pf) ->
-        let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
+        let () = x_tinfo_hp (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
         let () = x_tinfo_hp (add_str "real_contra" string_of_bool) real_c no_pos in
         let () = x_tinfo_hp (add_str "infer pure?" !print_pure_f) pf no_pos in
         let new_estate = if pure_only_flag then 
@@ -5613,8 +5613,8 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
         let p_rhs_xpure0 = MCP.pure_of_mix rhs_xpure in
         let p_rhs_xpure = x_add_1 Cputil.hloc_enum_to_symb p_rhs_xpure0 in
         (*check the contra is in LHS or between LHS and RHS*)
-        let () = pr_hdebug (add_str "pf : " ( (!CP.print_formula))) pf pos in
-        let () = pr_hdebug (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
+        let () = x_tinfo_hp (add_str "pf : " ( (!CP.print_formula))) pf pos in
+        let () = x_tinfo_hp (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
         (* let () = Debug.info_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in *)
         let pf,rele_p_rhs_xpure =
           if (CP.isConstFalse p_rhs_xpure) ||
@@ -5622,9 +5622,9 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
             (pf,p_rhs_xpure)
           else
             (* let rele_rhs_xpure = CP.filter_var p_rhs_xpure  orig_inf_vars in *)
-            let () = pr_hdebug (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in
-            let () = pr_hdebug (add_str "orig_inf_vars : " ( (!CP.print_svl))) orig_inf_vars pos in
-            (* let () = pr_hdebug (add_str "rele_rhs_xpure : " ( (!CP.print_formula))) rele_rhs_xpure pos in *)
+            let () = x_tinfo_hp (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in
+            let () = x_tinfo_hp (add_str "orig_inf_vars : " ( (!CP.print_svl))) orig_inf_vars pos in
+            (* let () = x_tinfo_hp (add_str "rele_rhs_xpure : " ( (!CP.print_formula))) rele_rhs_xpure pos in *)
             (* if CP.isConstTrue rele_rhs_xpure then (pf,rele_rhs_xpure) else *)
             let rele_svl = CP.fv pf in
             let sst = (MCP.ptr_equations_without_null lhs_xpure) in
@@ -5639,7 +5639,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
               ) [] sst in
             let l_ps = CP.remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
             let l_ps1 = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl != []) l_ps in
-            let () = pr_hdebug (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
+            let () = x_tinfo_hp (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
             let rele_rhs_xpure = CP.subst rele_sst p_rhs_xpure in
             (CP.join_conjunctions l_ps1, rele_rhs_xpure)
         in
@@ -5652,7 +5652,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
           let () = Debug.ninfo_hprint (add_str "p_contr_lhs"  (!CP.print_formula)) p_contr_lhs pos in
           let () = Debug.ninfo_hprint (add_str "rele_p_rhs_xpure"  (!CP.print_formula)) rele_p_rhs_xpure pos in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map pos in
-          let () = pr_hdebug (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
+          let () = x_tinfo_hp (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
           let hinf_args_map0 = if Gen.BList.overlap_eq CP.eq_spec_var (CP.fv lhs_p) (CP.fv pf) then
               hinf_args_map
             else
@@ -5665,10 +5665,10 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                   let () = Debug.ninfo_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
                   TP.is_sat_raw (MCP.mix_of_pure rele_p)
                 ) hinf_args_map in
-          let () = Debug.ninfo_hprint (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
-          Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
+          let () = x_tinfo_hp (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
+          x_add Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
         let () = x_tinfo_hp (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
-        let () = pr_hdebug (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+        let () = x_tinfo_hp (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
         let es = 
           if pure_only_flag then new_estate
           else
@@ -5717,7 +5717,7 @@ and early_hp_contra_detection hec_num prog estate conseq pos =
     (fun _ _ -> f pos) estate conseq
 
 and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos = 
-  let real_c,contra, es = early_hp_contra_detection 1 prog estate conseq pos in
+  let real_c,contra, es = x_add early_hp_contra_detection 1 prog estate conseq pos in
   if contra then
     match es with
     | Some es -> (real_c,contra, Some (CF.SuccCtx[CF.Ctx es]), Some UnsatAnte)

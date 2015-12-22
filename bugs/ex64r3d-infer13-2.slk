@@ -6,6 +6,7 @@ data node {
 
 HeapPred H1(node y).
 relation R(node y).
+HeapPred H2(node y,node x).
 
 
 infer [@classic,R] 
@@ -14,12 +15,27 @@ infer [@classic,R]
 print residue.
 expect Valid.
 
+//(2)
 infer [@classic,H1] 
-//    H1(yyy) * yyy::node<null>  & x=null  |- x=null
     H1(yyy) * y::node<null>  & x=null & yyy=null |- x=null
      .
 print residue.
 expect Valid.
+//inferred hprel: [H1(yyy)&true --> emp&yyy!=null]
+
+//(3)
+infer [@classic,H2] 
+    H2(yyy,x) * y::node<null>  & x=null & yyy=null |- x=null
+     .
+print residue.
+expect Valid.
+//inferred hprel: [H2(yyy,x)&true --> emp&(yyy!=null | x!=null)]
+
+infer [@classic,x,yyy] y::node<null>  & x=null & yyy=null |- x=null
+     .
+print residue.
+expect Valid.
+// inferred pure: [(yyy!=null | x!=null)]
 
 
 /*

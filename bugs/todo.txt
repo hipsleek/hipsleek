@@ -2663,7 +2663,7 @@ Total number of errors: 6 in files:
   veribsync/barrier-dynamic2.slk({E2#Fail}).
 
 ===================================================================
-# ex64r3a.slk 
+# ex64r3a.slk (FIXED on --new-heap-contra)
 
 infer [
   H1
@@ -2674,7 +2674,10 @@ print residue.
 
 # why infer [H1] triggers failure in the above?
 ===================================================================
-# ex64r3d.slk 
+# ex64r3d.slk (FIXED)
+
+  --pnum 2 -dre "infer_\|early_hp_" --trace-log-num 2  
+   -show-push-list "es_infer" >1
 
 infer [@classic,H1] 
     H1(y) * y::node<null>  & x=null  |- x=null
@@ -2689,7 +2692,15 @@ infer [@classic,H1]
 
  inferred hprel: [H1(y) --> y=null]
 
- above seems too weak fo conclude false??
+ above seems too weak to conclude false??
+
+FIXED inside:
+
+(==solver.ml#5669==)
+add_infer_hp_contr_to_list_context@6@2@1
+add_infer_hp_contr_to_list_context inp1 :[((H1, H1(yyy)),[yyy])]
+add_infer_hp_contr_to_list_context inp2 :[ yyy!=null]
+add_infer_hp_contr_to_list_context inp3 : [ hfalse&false&{FLOW,(20,21)=__norm
 ===================================================================
 ===================================================================
 ===================================================================
