@@ -1,13 +1,16 @@
 zip:={[a,b] -> [] -> []: 
-  (!(a>=0 && b>=0 
-    && (!(a=0)||!(b=0))) 
+  (!(#a>=0 && b>=0 && 
+    (!(a=0)||!(b=0))) 
     || (a>0 && b>0)) &&
    exists (v,w:  a=v+1 && b=w+1 &&
-     (!((v>=0 && w>=0) && (!(a=0) || !(b=0))) || zip(v,w))
+     (!(#(v>=0 && w>=0) && 
+        (!(a=0) || !(b=0))) || zip(v,w))
   )
 };
 
-I:={[]: a>=0 && b>=0};
+I:={[]: 1=1
+  # && a>=0 && b>=0
+ };
 
 #{[a,b]:((a >= 3 && b >= 3) || ((b >= 1 && 2 >= b) && b = a))};
 
@@ -50,9 +53,10 @@ ExpN subset F5;
 #Exp subset F4N;
 
 CF4:=complement F4;
-#CF4:=PairwiseCheck CF4;
+CF4:=PairwiseCheck CF4;
 
 CF5:=complement F5;
-#CF5:=PairwiseCheck CF5;
+CF5:=PairwiseCheck CF5;
 CFW:=widen(CF4,CF5,SimHeur);
+CFW;
 complement CFW;
