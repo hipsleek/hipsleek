@@ -7,7 +7,7 @@ pred arr_seg<i,n> == i=n & i>=0
   inv n>=i & i>=0.
 
 lemma_unsafe self::arr_seg<i,n> & i<=mmm & mmm<=n 
-   <-> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
+   <- self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
 
 checkentail  base::arr_seg<v,end>@M & v=1+start 
      |- base::arr_seg<start,end>.

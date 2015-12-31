@@ -1200,6 +1200,21 @@ end_188=end & mmm_212=mmm_213 & start_187<=mmm_213 & mmm_213<=end_188&
    LHS: base::arr_seg<v,end>@M
    RHS: base::arr_seg<m_114,end_104>@M
 
+----------------------------------------
+# ex6f1c6.slk  
+
+# missing do_match substitution!
+
+do_match@17@16@15@14@13@12@1
+do_match inp1 : base::arr_seg<v,end>@M
+do_match inp2 : base::arr_seg<start_113,mmm_139>@M
+
+  es_subst (from): [start_113; mmm_139]
+  es_subst (to): [v; end]
+
+# what happen to the subst v=start_113
+
+@14! **solver.ml#8920:rhs_p : : end_114=end & 0<=end_114 & end<=end_114 & end_114=end & start_113=start
 ===============================================================
 ===============================================================
 ===============================================================
