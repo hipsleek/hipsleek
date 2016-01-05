@@ -1201,7 +1201,7 @@ end_188=end & mmm_212=mmm_213 & start_187<=mmm_213 & mmm_213<=end_188&
    RHS: base::arr_seg<m_114,end_104>@M
 
 ----------------------------------------
-# ex6f1c6.slk  
+# ex6f1c6.slk  (FIXED)
 
 # missing do_match substitution!
 

@@ -309,7 +309,7 @@ let manage_lemmas_x(* _new *) ?(unfold_flag=true) ?(force_pr=false) ?(vdefs=[]) 
   if force_pr (*&& !Globals.dump_lem_proc *) then
     begin
       let lnames = (List.map (fun (_,_,_,n)-> n) lems) in
-      let () = x_binfo_hp (add_str "\nUpdated lemma store with unsafe repo:" ( pr_list pr_id)) lnames no_pos (* else () *) in
+      let () = x_binfo_hp (add_str "Updated lemma store with unsafe repo:" ( pr_list pr_id)) lnames no_pos (* else () *) in
       ()
     end;
   lems
