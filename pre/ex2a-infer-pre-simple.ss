@@ -3,7 +3,7 @@ relation R(int i, int j,int k).
 void loop(ref int i,int n, int s)
   infer[R]
   requires R(i,n,s)
-  ensures  false;
+  ensures  true;
 {    
   if (i<n) {
     assert 0<=i & i<s assume true;
