@@ -49,7 +49,7 @@ arr_sorted<start,end> == start = end & start >=0
 lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
    <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
 
-  lemma_unsafe self::arr_seg_bounded<i,n,mi> & i<=m & m<=n 
+lemma_unsafe self::arr_seg_bounded<i,n,mi> & i<=m & m<=n 
   <-> self::arr_seg_bounded<i,m,mi>*self::arr_seg_bounded<m,n,mi>.
 
 arr_bseg<i,n> == i=n & i>=0
@@ -78,7 +78,7 @@ void bubble_push(arrI base, int start, int end)
     //assume false;
     int e1 = get_arr(base,start);
     int e2 = get_arr(base,start+1);
-    if(e1<=e2){
+    if(e1>e2){
       upd_arr(base,start,e2);
       upd_arr(base,start+1,e1);
       bubble_push(base, start+1, end);
@@ -98,8 +98,9 @@ void bubble_sort(arrI base, int start, int end)
     return;
   }
   else{
+    //assume false;
     bubble_push(base,start,end);
-    bubble_sort(base,start+1,end);
+    bubble_sort(base,start,end-1);
     return;
   }
 }

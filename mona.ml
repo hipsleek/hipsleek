@@ -1369,8 +1369,8 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
     | "Formula is too large" -> 
       begin
         if !log_all_flag == true then
-          output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large - not sent to mona)\n");
-        print_endline_quiet ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not sent to mona)\n");
+          output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large - not processed by mona)\n");
+        print_endline_quiet ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not processed by mona)\n");
         is_sat_b;
       end
     | "" ->
@@ -1492,7 +1492,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
     let () = x_binfo_hp (add_str "mona_answ" pr_id) mona_answ no_pos  in
-    let res = check_answer file_content mona_answ is_sat_b in
+    let res = x_add check_answer file_content mona_answ is_sat_b in
     res
   in
   (* let res = Procutils.PrvComms.maybe_raise_timeout_num 2 fnc () !mona_timeout in  *)
@@ -1541,7 +1541,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
       (* let _  = print_endline "sending to mona prover.." in *)
       let answer = send_cmd_with_answer !cmd_to_send in
       let () = x_tinfo_hp (add_str "answer" pr_id) answer no_pos  in
-      check_answer content answer is_sat_b
+      x_add check_answer content answer is_sat_b
     end
   with
   |Procutils.PrvComms.Timeout ->

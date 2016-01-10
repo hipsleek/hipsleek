@@ -565,6 +565,7 @@ let common_arguments = [
        Globals.allow_inf_qe := true;
        Globals.allow_qe_fix := true;),
    "use the quantifier elimination procedure for inference ");
+  ("--dis-dsd", Arg.Clear Globals.deep_split_disjuncts,"disable deep splitting of disjunctions");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
