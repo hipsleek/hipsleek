@@ -6383,23 +6383,26 @@ let rec break_implication (ante : formula) (conseq : formula) : ((formula * form
 (**************************************************************)
 (**************************************************************)
 
+let find_rel_constraints_list lf desired =
+  let lf_pair = List.map (fun c-> ((fv c),c)) lf in
+  let var_list = fst (List.split lf_pair) in
+  (*LDK: repeatedly collect vars that relate to desired vars*)
+  let rec helper (fl:spec_var list) : spec_var list = 
+    let nl = List.filter (fun c-> (Gen.BList.intersect_eq (eq_spec_var) c fl)!=[]) var_list in
+    let nl = List.concat nl in
+    let nl = Gen.BList.remove_dups_eq (eq_spec_var) (nl@fl) in
+    if (List.length fl)=(List.length nl) then fl
+    else helper nl in
+  let fixp = helper desired in
+  let pairs = List.filter (fun (c,_) -> (List.length (Gen.BList.intersect_eq (eq_spec_var) c fixp))>0) lf_pair in
+  join_conjunctions (snd (List.split pairs))
+
 (*find constraints in f that related to specvar in v_l*)  
 let find_rel_constraints_x (f:formula) desired :formula = 
   if desired=[] then (mkTrue no_pos)
   else 
     let lf = split_conjunctions f in
-    let lf_pair = List.map (fun c-> ((fv c),c)) lf in
-    let var_list = fst (List.split lf_pair) in
-    (*LDK: repeatedly collect vars that relate to desired vars*)
-    let rec helper (fl:spec_var list) : spec_var list = 
-      let nl = List.filter (fun c-> (Gen.BList.intersect_eq (eq_spec_var) c fl)!=[]) var_list in
-      let nl = List.concat nl in
-      let nl = Gen.BList.remove_dups_eq (eq_spec_var) (nl@fl) in
-      if (List.length fl)=(List.length nl) then fl
-      else helper nl in
-    let fixp = helper desired in
-    let pairs = List.filter (fun (c,_) -> (List.length (Gen.BList.intersect_eq (eq_spec_var) c fixp))>0) lf_pair in
-    join_conjunctions (snd (List.split pairs))
+    find_rel_constraints_list lf desired
 
 let find_rel_constraints (f:formula) desired :formula = 
   Debug.no_2 "find_rel_constraints_x"

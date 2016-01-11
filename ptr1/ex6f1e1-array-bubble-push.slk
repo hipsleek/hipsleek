@@ -1,4 +1,4 @@
-/*
+/* 
 checkentail
  n_2376=end_2249 & x_6448!=r_5822 & x_6276!=x_6448 & x_6276!=r_5822 & 
  x_2378!=x_6276 & x_2378!=x_6448 & x_2378!=r_5822 & r_5822!=null & 
@@ -26,8 +26,8 @@ checkentail
 */
 
 checkentail 
-((S ={aaa} & x>n+m+k & n>2) & k>=0 | (S={b} & b=aaa
-                                      & x=n+m & m>0)) & n>=0 |- S= {aaa} .
+((SSS ={aaa} & x>n+m+k & n>2) & k>=0 | (SSS={b} & b=aaa & b=c & c=1 & aaa>2
+                                      & x=n+m & m>0)) & n>=0 |- SSS= {aaa} .
 
 /*
 # fixed by --dsd (deep split disjunct)

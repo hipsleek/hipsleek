@@ -2113,7 +2113,6 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-
   let sat_num = next_proof_no () in
   let sat_no = (string_of_int sat_num) in
   x_dinfo_zp (lazy ("SAT #" ^ sat_no)) no_pos;
@@ -2140,6 +2139,29 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
 let tp_is_sat f sat_no =
   Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat f sat_no) f
+
+let sel_related p_other p_bag =
+  if p_other==[] then p_bag
+  else
+    let v_lst = List.concat (List.map (CP.fv) p_bag) in
+    let nf = CP.find_rel_constraints_list p_other v_lst in
+    nf::p_bag
+
+let tp_conj_bag_sat f sat_no =
+  let cl = CP.split_conjunctions f in
+  let (sb,sp) = List.partition (CP.is_bag_constraint) cl in
+  if sb==[] then tp_is_sat f sat_no
+  else 
+    let sb =  sel_related sp sb in
+    let p1 (*bag*) = CP.join_conjunctions sb in
+    let p2 (*pure*) = CP.join_conjunctions sp in
+    (tp_is_sat p1 sat_no) && (tp_is_sat p2 sat_no) 
+
+let tp_is_sat (f:CP.formula) (old_sat_no :string) =
+  let fl = CP.split_disjunctions_deep f in
+  let f_or a b = a || b in
+  List.fold_left (fun k f ->  k || (tp_conj_bag_sat f old_sat_no)) false fl
+  (* List.fold_left (fun k f -> f_or k (tp_conj_bag_sat f old_sat_no)) false fl *)
 
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
