@@ -1,5 +1,5 @@
 data arrI {
-  int val;
+  int val;xf
 }
 
 arr_seg<i,n,S> == i=n & i>=0 & S={}

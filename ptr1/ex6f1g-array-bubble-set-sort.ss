@@ -42,6 +42,7 @@ lemma_unsafe self::arr_sorted<i,n,S> & i<n & b=n-1 <->
 
 lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1)
       <-> self::arr_sorted<i,n,S>.
+  // does folding use i>=n-1 on RHS too?
 
 void bubble_push(arrI base, int start, int end)
  case {
