@@ -2158,10 +2158,13 @@ let tp_conj_bag_sat f sat_no =
     (tp_is_sat p1 sat_no) && (tp_is_sat p2 sat_no) 
 
 let tp_is_sat (f:CP.formula) (old_sat_no :string) =
-  let fl = CP.split_disjunctions_deep f in
-  let f_or a b = a || b in
-  List.fold_left (fun k f ->  k || (tp_conj_bag_sat f old_sat_no)) false fl
-  (* List.fold_left (fun k f -> f_or k (tp_conj_bag_sat f old_sat_no)) false fl *)
+  if !Globals.auto_eps_flag then
+    (* this is mainly for mono prover *)
+    let fl = CP.split_disjunctions_deep f in
+    let f_or a b = a || b in
+    List.fold_left (fun k f ->  k || (tp_conj_bag_sat f old_sat_no)) false fl
+    (* List.fold_left (fun k f -> f_or k (tp_conj_bag_sat f old_sat_no)) false fl *)
+  else tp_is_sat f old_sat_no
 
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
