@@ -674,7 +674,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[(* x_add_1 CF.simplify_ann *) (proc.proc_stk_of_static_specs # top)]) [] scc in
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
-  (* let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in *)
+ (* let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in *)
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
 
@@ -719,6 +719,12 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* let rels = Gen.Basic.remove_dups rels in *)
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in           
             (* The place to get the array unchanged part *)
+         (*   let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in *)
+
+            let rels = List.filter (fun (rel_cat,_,_) -> match rel_cat with
+                | CP.RelDefn (_,_) -> true
+                | _ -> false
+              ) rels in
             let target_rel =
               let one = List.hd rels in
               match one with
@@ -726,6 +732,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             in
             let target_define =
               List.map (fun (r,pf,rel) -> pf) rels in
+          (*  let () = print_string ("\ntarget_rel: " ^ (!CP.print_formula target_rel)^"\n") in *)
             let unchanged_result =
               (Trans_arr.new_get_unchanged_fixpoint target_rel target_define) in
             (* let unchanged_result = *)
