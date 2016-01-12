@@ -7,7 +7,8 @@ arr_seg<i,n,S> == i=n & i>=0 & S={}
   inv n>=i & i>=0;
 
 arr_sorted<i,n,S> == i=n & i>=0 & S={}
-  or x::arrI<v>*self::arr_sorted<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2) & forall(a:a notin S2 | v<=a)
+  or x::arrI<v>*self::arr_sorted<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2) 
+     & forall(a:a notin S2 | v<=a)
   inv n>=i & i>=0;
 
 
@@ -41,8 +42,11 @@ lemma_unsafe self::arr_sorted<i,n,S> & i<n & b=n-1 <->
   & forall(a: a notin S1 |  a<=m).
 
 lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1)
-      <-> self::arr_sorted<i,n,S>.
+      -> self::arr_sorted<i,n,S>.
   // does folding use i>=n-1 on RHS too?
+
+lemma_unsafe self::arr_seg<i,n,S>
+      <- self::arr_sorted<i,n,S>.
 
 void bubble_push(arrI base, int start, int end)
  case {
