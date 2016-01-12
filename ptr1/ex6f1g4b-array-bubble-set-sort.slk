@@ -1,0 +1,26 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == 
+ case {
+   i=n -> [] i=n & i>=0 ;
+   i!=n -> []  x::arrI<v>*self::arr_seg<i+1,n> & x=self+i & i>=0 ;
+ }  inv n>=i & i>=0.
+
+pred arr_sorted<i,n,S> == i=n & i>=0 & S={}
+  or x::arrI<v>*self::arr_sorted<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2) & forall(a:a notin S2 | v<=a)
+  inv n>=i & i>=0.
+
+/*
+lemma_safe self::arr_seg<i,n,S> & i<=m & m<=n -> 
+  self::arr_seg<i,m,S1>*self::arr_seg<m,n,S2> & S=union(S1,S2).
+*/
+
+lemma_safe self::arr_seg<i,n> <- 
+  self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
+
+//lemma_safe  self::arr_sorted<i,n,S> <- self::arr_seg<i,n,S> & (i>=n-1).
+
+//lemma_safe self::arr_seg<i,n,S> <- self::arr_sorted<i,n,S>.
+

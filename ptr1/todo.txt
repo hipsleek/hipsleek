@@ -1264,6 +1264,53 @@ tarting MONA.../usr/local/bin/mona_inter
 [mona] Warning: imply --> false(formula too large  - not processed by mona)
 
 ===============================================================
+# ex6f1g4c.slk
+
+# inductive proof by hand failed..
+
+# need to improve pairing and lemma trigger ..
+
+!!! **context.ml#3671:compute_action (steps) :
+ ### RHS Cand :[ x::arr_seg<flted_47_134,n_133>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  SEARCH =>[
+   Prio:1
+   COND =>[
+    Prio:1
+    Match =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M;
+    Prio:3
+    BaseCaseUnfold =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M
+    ];
+    Prio:1
+    (Lemma 0<== lem_12) =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M
+    ];
+   Prio:1
+   SEARCH =>[
+    Prio:1
+    COND =>[
+     Prio:1
+     Match =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M;
+     Prio:3
+     BaseCaseUnfold =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M
+     ];
+     Prio:1
+     (Lemma 0<== lem_12) =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M
+     ]
+    ]
 ===============================================================
 ===============================================================
 ===============================================================
