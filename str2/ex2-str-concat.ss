@@ -1,8 +1,10 @@
+checksat x="se"@y@"st"@z.
+expect Valid.
 
-// immutable string
-str join(str x,str y) 
-   requires true
-   ensures res=x^y;
-{
-  return x^x;
-}
+checkentail res=x@x |- res=x@y.
+expect Fail.
+
+checkentail res=x@x & x=y |- res=x@y.
+expect Valiod.
+
+
