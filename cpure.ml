@@ -338,6 +338,8 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
+  (* | StrConst of (string * loc) *)
+  (* | StrAppend of (exp list * loc) *)
   | ArrayAt of (spec_var * (exp list) * loc)      (* An Hoa : array access *)
   | Func of (spec_var * (exp list) * loc)
   (* Template exp *)
