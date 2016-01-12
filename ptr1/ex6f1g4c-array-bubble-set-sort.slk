@@ -42,9 +42,11 @@ checkentail_exact x1::arrI<v>*x::arr_seg<i+1,m> *x::arr_seg<m,n>
 print residue.
 */
 
-checkentail_exact x1::arrI<v>*x::arr_seg<i+1,m> *x::arr_seg<m,n> 
+checkentail_exact //x1::arrI<v>*
+     x::arr_seg<i+1,m> *x::arr_seg<m,n> 
                      & i<=m & m<=n & x1=x+i & i>=0 & i!=n
-  |- x2::arrI<_> * x::arr_seg<i+1,n> & x2=x+1 .
+  |- //x2::arrI<_> * 
+     x::arr_seg<i+1,n> & x2=x+1 .
 print residue.
 
 /*

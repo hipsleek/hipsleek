@@ -1560,6 +1560,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
           else (HEmp (* lhs_rest? *),f (* lhs? *),[],Root)::cmm
         | _ -> 
           (* if (subtype_ann imm1 imm) then *)
+          let () = y_tinfo_hp (add_str "view |- view" !CF.print_h_formula) rhs_node in
           if (CP.mem p1 aset) then
             (* let () = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
             if (CF.same_node_name c rhs_node) && produces_hole imm && not(!Globals.allow_field_ann) then
