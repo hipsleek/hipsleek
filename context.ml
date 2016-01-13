@@ -652,6 +652,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   let mf = MCP.pure_of_mix mf in
   let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
   let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure in
+  let () = y_tinfo_hp (add_str "rhs_p" !MCP.print_mix_formula) rhs_p in
   let () = y_tinfo_hp (add_str "mf" !CP.print_formula) mf in
   let lhs_pure = CP.mkAnd lhs_pure mf no_pos in
   let emap = CP.EMapSV.build_eset eqns' in
@@ -892,6 +893,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         let lst = List.map (fun (d,_,r) -> (d,r)) lst in
         lst 
       else [] in
+    let () = y_binfo_hp (add_str "paset" !CP.print_svl) paset in
+    let () = y_binfo_hp (add_str "lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) lst in
     let paset = 
       if !Globals.ptr_arith_flag then 
         if lst==[] then paset
@@ -899,6 +902,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       else paset in
     let () = y_tinfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
     (* view with root ptrs *)
+    (* what is this root_lst, should it not be for the rhs_node? *)
     let root_lst = List.fold_left (fun acc (d,r) ->
         match r with 
         | None -> acc
@@ -1433,6 +1437,7 @@ and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_
   Debug.no_4 "coerc_mater_match_gen" pr_id pr_svl pr_svl (add_str "lhs" !CF.print_h_formula) pr2
     (fun _ _ _ _ -> coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset lhs_f
 
+(* view_roots seem to capture x=p+d where p is the base address *)
 and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_formula)
     aset (imm : CP.ann) (pimm : CP.ann list)
     rhs_node rhs_rest emap
@@ -1447,6 +1452,8 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
   let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
   let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pr4 = (add_str "match_type" string_of_match_type) in
+  let () = x_tinfo_hp (add_str "rhs_rest" !CF.print_h_formula) rhs_rest no_pos in
+  let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
   let pr_helper_res = pr_quad pr1 pr2 pr3 pr4 in
   (* let un_opt e = match (CP.conv_exp_to_var e) with *)
   (*   | Some (sv,_) -> sv *)
@@ -1562,6 +1569,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
           (* if (subtype_ann imm1 imm) then *)
           let () = y_tinfo_hp (add_str "view |- view" !CF.print_h_formula) rhs_node in
           if (CP.mem p1 aset) then
+            let () = y_tinfo_hp (add_str "mem p1 aset" !CF.print_svl) aset in
             (* let () = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
             if (CF.same_node_name c rhs_node) && produces_hole imm && not(!Globals.allow_field_ann) then
               (* let () = print_string("imm = Lend " ^ "\n") in *)
