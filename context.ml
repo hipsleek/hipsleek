@@ -3368,14 +3368,14 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
     let rs = x_add_1 sort_wt rs in
     let res = 
       if !Globals.old_search_always then 
-        let () = y_tinfo_pp "old_searc_always" in
+        let () = y_binfo_pp "old_searc_always" in
         mk_search_action rs 
       else if !Globals.cond_action_always then  
-        let () = y_tinfo_pp "cond_action_always" in
+        let () = y_binfo_pp "cond_action_always" in
         mk_cond_action rs 
       (* else if !Globals.rev_priority then mk_smart_rev_action rs  *)
       else 
-        let () = y_tinfo_pp "smart_action" in
+        let () = y_binfo_pp "smart_action" in
         mk_smart_action rs in
     let () = x_tinfo_hp (string_of_action_res_simpl) res no_pos in
     (-1, res)
@@ -3646,7 +3646,28 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   let r = if !Globals.old_keep_all_matchres then r else new_r in
   let () = x_tinfo_hp (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (x_add process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
-  let () = x_tinfo_hp (add_str "weighted action"
+  let is_complex x = match x with
+    Search_action _ | Cond_action _ | Seq_action _ -> true
+    | _ -> false in
+  let choose ((w1,x1) as p1) ((w2,x2) as p2) =
+    (* assumes w1,w2 not negative *)
+    let f1 = is_complex x1 in
+    let f2 = is_complex x2 in
+    if f1==f2 then
+      if w1<w2 then p1 else p2
+    else if f1 then p2 else p1 in
+  let choose x y = 
+    let pr = string_of_action_wt_res in
+    Debug.no_2 "choose_act_wt" pr pr pr choose x y in
+  let sel_simpler r = 
+    let rec aux r ans = match r with
+      [] -> ans 
+      | x::xs -> aux xs (choose x ans) in
+    match r with
+    | [] -> []
+    | x::xs -> [aux xs x] in
+  let r = sel_simpler r in
+  let () = x_binfo_hp (add_str "weighted action"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with
   | [] -> M_Nothing_to_do "no nodes on RHS"
@@ -3655,7 +3676,9 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
     let ys = x_add_1 sort_wt_match opt r in
     let () = x_tinfo_hp (add_str "sorted action"
                            (pr_list_num_vert string_of_action_wt_res_simpl)) ys no_pos in
-    let ys2 = drop_low ys in
+    let ys2 = List.map snd (* drop_low *) ys in
+    let () = x_tinfo_hp (add_str "after drop low"
+                           (pr_list_num_vert string_of_action_res_simpl)) ys2 no_pos in
     (* let ys2 = snd (List.split ys) in *)
     (*Cond_action  ys *)
     (*above would be required for entailments in which an available match has no solution unless another one is performed first*)
@@ -3666,7 +3689,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
             different orderings of heap nodes in the entailments.
             What if ys=[-1,Search1) ; (-1,Search2)]
           *)
-    List.hd (ys2)
+    Search_action (* List.hd *) ys
 (*  match ys with
     | [(_, act)] -> act
     | ys -> (Cond_action ys) *)
