@@ -3666,7 +3666,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
     match r with
     | [] -> []
     | x::xs -> [aux xs x] in
-  let r = sel_simpler r in
+  let r = if !Globals.adhoc_flag_3 then r else sel_simpler r in
   let () = x_binfo_hp (add_str "weighted action"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with
