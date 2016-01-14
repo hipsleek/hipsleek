@@ -20,7 +20,7 @@ lemma_safe self::arr_seg<i,n,S> & i<=m & m<=n ->
 */
 
 lemma_unsafe self::arr_seg<i,n> <- 
-  self::arr_seg<i,m>*self::arr_seg<m,n> & i<m & m<=n.
+  self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
 
 //lemma_safe  self::arr_sorted<i,n,S> <- self::arr_seg<i,n,S> & (i>=n-1).
 
@@ -62,8 +62,7 @@ print residue.
 /*
 # ex6f1g4c.slk -de "spatial_c\|compute_a"
 
-# why this fails?
-
+# why so many choices?
 
 (==solver.ml#11528==)
 compute_actions@1

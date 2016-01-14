@@ -884,7 +884,7 @@ let common_arguments = [
    "maximum number of iteration on TNT algorithm");
 
   (* Slicing *)
-  ("--auto-eps", Arg.Set Globals.auto_eps_flag, "Enable automatic proog slicing for mona");
+  ("--auto-eps", Arg.Set Globals.auto_eps_flag, "Enable automatic proof slicing for mona");
   ("--dis-auto-eps", Arg.Clear Globals.auto_eps_flag, "Disable automatic proog slicing for mona");
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
   ("--dis-eps", Arg.Clear Globals.en_slc_ps, "Disable slicing with predicate specialization");
