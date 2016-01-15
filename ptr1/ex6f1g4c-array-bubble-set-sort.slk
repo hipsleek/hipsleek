@@ -2,11 +2,14 @@ data arrI {
   int val;
 }.
 
-pred arr_seg<i,n> == 
+pred arr_seg<i,n> ==
  case {
    i=n -> [] i=n & i>=0 ;
    i!=n -> []  x::arrI<v>*self::arr_seg<i+1,n> & x=self+i & i>=0 ;
  }  inv n>=i & i>=0.
+
+pred arr_I<i> ==
+     self::arrI<1>.
 
 /*
 pred arr_sorted<i,n,S> == i=n & i>=0 & S={}
@@ -15,12 +18,18 @@ pred arr_sorted<i,n,S> == i=n & i>=0 & S={}
 */
 
 /*
-lemma_safe self::arr_seg<i,n,S> & i<=m & m<=n -> 
+lemma_safe self::arr_seg<i,n,S> & i<=m & m<=n ->
   self::arr_seg<i,m,S1>*self::arr_seg<m,n,S2> & S=union(S1,S2).
 */
 
-lemma_unsafe self::arr_seg<i,n> <- 
-  self::arr_seg<i,m>*self::arr_seg<m,n> & i<m & m<=n.
+// lemma_safe self::arr_seg<i,n> <-
+//   self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
+
+checkentail x::arr_seg<i,m> * x::arr_seg<m,n> & i<=m & m<=n |- x::arr_seg<i,n>.
+print residue.
+
+checkentail  i!=n |- x1::arr_seg<i,n>.
+print residue.
 
 //lemma_safe  self::arr_sorted<i,n,S> <- self::arr_seg<i,n,S> & (i>=n-1).
 
@@ -51,6 +60,7 @@ checkentail_exact x1::arrI<v>*
 print residue.
 */
 
+/*
 checkentail_exact //x1::arrI<v>*
      x::arr_seg<i,m> *x::arr_seg<m,n> 
                      & i<m & m<=n & x1=x+i & i>=0 & i!=n
@@ -58,6 +68,14 @@ checkentail_exact //x1::arrI<v>*
      x::arr_seg<i,n> //& x2=x+i 
     .
 print residue.
+
+
+// The correct version
+checkentail_exact x1::arrI<v> * x::arr_seg<i+1,m> * x::arr_seg<m,n>
+                     & i<=m & m<=n & x1 = x+i
+  |- x2::arrI<_> * x::arr_seg<i+1,n> & x2 = x+i.
+print residue.
+*/
 
 /*
 # ex6f1g4c.slk -de "spatial_c\|compute_a"

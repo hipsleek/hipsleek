@@ -3361,7 +3361,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
   (* else (-1, Cond_action (rs@[r0])) *)
   (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
   | x::[] -> x_add process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p) reqset
-  | _ ->  
+  | _ ->
     let rs = List.map (fun l -> x_add process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p) reqset) l in
     let () = x_tinfo_pp "process many matches" no_pos in
     (* WN : TODO use cond_action if of different priorities *)
@@ -3432,7 +3432,7 @@ and recalibrate_wt (w,a) =
       let h = (List.hd sl) in
       let rw = (fst h) in
       (* WHY did we pick only ONE when rw==0?*)
-      (*Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
+      (* Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
       if (rw==0) then h 
       else (rw,mk_search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
@@ -3648,6 +3648,35 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   let r = if !Globals.old_keep_all_matchres then r else new_r in
   let () = x_tinfo_hp (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (x_add process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
+  (* recalibrate the weight, without dropping any items *)
+  let recalibrate_wt (w,a) =
+    let pick a b = if a<b then a else b in
+    match a with
+    | Search_action l ->
+      let l = List.map recalibrate_wt l in
+      let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+      let h = (List.hd sl) in
+      let rw = (fst h) in
+      (rw,mk_search_action sl)
+    | Cond_action l (* TOCHECK : is recalibrate correct? *)
+      ->
+      (*drop ummatched actions if possible*)
+      (* let l = drop_unmatched_action l in *)
+      if l==[] then (9,M_Nothing_to_do "Cond_action []")
+      else
+        let l = List.map recalibrate_wt l in
+        let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
+    | Seq_action l ->
+      if l==[] then (9,M_Nothing_to_do "Seq_action []")
+      (* (0,Seq_action l) *)
+      else
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
+    | _ -> if (w == -1) then (0,a) else (w,a)
+  in
   let is_complex x = match x with
     Search_action _ | Cond_action _ | Seq_action _ -> true
     | _ -> false in

@@ -2,7 +2,7 @@ data arrI {
   int val;
 }.
 
-pred arr_seg<i,n> == 
+pred arr_seg<i,n> ==
  case {
    i=n -> [] i=n & i>=0 ;
    i!=n -> []  x::arrI<v>*self::arr_seg<i+1,n> & x=self+i & i>=0 ;

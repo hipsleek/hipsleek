@@ -2048,6 +2048,16 @@ Total verification time: 149.02 second
 	Number of false contexts: 98
 
 ====================================================================
+After fixed recalibrate
+
+Total number of errors: 6 in files:
+  lemmas/nlseg4e1.slk({E8#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 155.71 second
+	Time spent in main process: 26.62 second
+	Time spent in child processes: 129.09 second
+	Number of false contexts: 98
+
 ====================================================================
 ====================================================================
 ====================================================================
