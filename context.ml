@@ -3423,33 +3423,7 @@ and sort_wt (ys: action_wt list) : action_wt list =
   (* let pr2 = pr_list string_of_action_res in *)
   Debug.no_1 "sort_wt" pr pr sort_wt_x ys
 
-and sort_wt_x (ys: action_wt list) : action_wt list =
-  let rec uncertain (_,a) = match a with 
-    | M_infer_heap _
-    | M_infer_unfold _
-    | M_infer_fold _
-    | M_base_case_fold _
-    | M_rd_lemma _
-    | M_lemma  _
-    | M_ramify_lemma _
-    | M_base_case_unfold _ 
-    | M_unfold _
-    | M_fold _
-    | M_seg_fold _
-    | M_acc_fold _
-    | M_split_match _ 
-    | M_match _ 
-    | M_cyclic _
-    | M_lhs_case _ -> false
-    | M_Nothing_to_do _ 
-    | Undefined_action _ 
-    | M_unmatched_rhs_data_node _ -> true
-    | Search_action l
-    | Seq_action l
-    | Cond_action l ->
-      List.exists uncertain l  in	
-
-  let rec recalibrate_wt (w,a) = 
+and recalibrate_wt (w,a) = 
     let pick a b = if a<b then a else b in
     match a with
     | Search_action l ->
@@ -3478,7 +3452,33 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
         let l = List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Seq_action l)
-    | _ -> if (w == -1) then (0,a) else (w,a) in
+    | _ -> if (w == -1) then (0,a) else (w,a) 
+
+and sort_wt_x (ys: action_wt list) : action_wt list =
+  let rec uncertain (_,a) = match a with 
+    | M_infer_heap _
+    | M_infer_unfold _
+    | M_infer_fold _
+    | M_base_case_fold _
+    | M_rd_lemma _
+    | M_lemma  _
+    | M_ramify_lemma _
+    | M_base_case_unfold _ 
+    | M_unfold _
+    | M_fold _
+    | M_seg_fold _
+    | M_acc_fold _
+    | M_split_match _ 
+    | M_match _ 
+    | M_cyclic _
+    | M_lhs_case _ -> false
+    | M_Nothing_to_do _ 
+    | Undefined_action _ 
+    | M_unmatched_rhs_data_node _ -> true
+    | Search_action l
+    | Seq_action l
+    | Cond_action l ->
+      List.exists uncertain l  in	
   let ls = List.map recalibrate_wt ys in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
   let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
@@ -3502,6 +3502,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
   in
   sl
 (* (snd (List.split res)) *)
+
 
 and drop_unmatched_action l=
   let rec helper acs rs=
@@ -3570,6 +3571,7 @@ and sort_wt_new_x (ys: action_wt list) : action_wt list =
      rs: return list, init = []
   *)
 
+  (* below is duplicated *)
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
       let l = List.map recalibrate_wt l in
@@ -3662,10 +3664,14 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   let sel_simpler r = 
     let rec aux r ans = match r with
       [] -> ans 
-      | x::xs -> aux xs (choose x ans) in
+      | x::xs -> 
+        let x = recalibrate_wt x in
+        aux xs (choose x ans) in
     match r with
     | [] -> []
-    | x::xs -> [aux xs x] in
+    | x::xs -> 
+      let x = recalibrate_wt x in
+      [aux xs x] in
   let r = if !Globals.adhoc_flag_3 then r else sel_simpler r in
   let () = x_binfo_hp (add_str "weighted action"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
