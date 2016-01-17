@@ -495,11 +495,12 @@ let filter_infer_pure_scc scc =
   List.map (fun proc -> filter_infer_pure_proc proc) scc
 
 let is_post_rel fml pvars =
-  let () = Debug.ninfo_hprint (add_str "fml" Cprinter.string_of_pure_formula) fml no_pos in
-  let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
-  let () = Debug.ninfo_hprint (add_str "rhs_rel_defn" (pr_list Cprinter.string_of_typed_spec_var)) rhs_rel_defn no_pos in
-  let () = Debug.ninfo_hprint (add_str "pvars" (pr_list Cprinter.string_of_typed_spec_var)) pvars no_pos in
-  List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
+  if pvars==[] then false else 
+    let () = Debug.ninfo_hprint (add_str "fml" Cprinter.string_of_pure_formula) fml no_pos in
+    let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
+    let () = Debug.ninfo_hprint (add_str "rhs_rel_defn" (pr_list Cprinter.string_of_typed_spec_var)) rhs_rel_defn no_pos in
+    let () = Debug.ninfo_hprint (add_str "pvars" (pr_list Cprinter.string_of_typed_spec_var)) pvars no_pos in
+    List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
 
 let is_infer_flow reldefns =
   List.exists (fun (cat,_,_) ->
