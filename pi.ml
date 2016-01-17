@@ -728,7 +728,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let target_rel =
               let one = List.hd rels in
               match one with
-              | (_,_,rel) -> rel
+              | (rel_cat,rel1,rel2) -> match rel_cat with
+                | RelAssume _ -> rel1
+                | _ -> rel2
             in
             let target_define =
               List.map (fun (r,pf,rel) -> pf) rels in
