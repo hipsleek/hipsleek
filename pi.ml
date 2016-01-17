@@ -720,11 +720,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in           
             (* The place to get the array unchanged part *)
          (*   let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in *)
-
-            let rels = List.filter (fun (rel_cat,_,_) -> match rel_cat with
-                | CP.RelDefn (_,_) -> true
-                | _ -> false
-              ) rels in
             let target_rel =
               let one = List.hd rels in
               match one with
