@@ -135,6 +135,10 @@ let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) mt 
     match_res_infer = imprecise;
   }
 
+let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) mt lhs_node lhs_rest rhs_node rhs_rest =
+  let pr = pr_option pr_none in
+  Debug.no_2 "mk_match_res" pr pr_none pr_none (fun _ _ -> mk_match_res ~holes:holes ~alias:alias ~root_inst:root_inst ~imprecise:imprecise mt lhs_node lhs_rest rhs_node rhs_rest) root_inst 1
+
 (*
 (* return a list of nodes from heap f that appears in *)
 (* alias set aset. The flag associated with each node *)
@@ -968,7 +972,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   | HTrue -> (
       if (rhs_rest = HEmp) then (
         (* if entire RHS is HTrue then it matches with the entire LHS*)
-        let mres = mk_match_res (* ~alias:aset *) Root lhs_h HEmp HTrue HEmp in
+        let mres = x_add mk_match_res (* ~alias:aset *) Root lhs_h HEmp HTrue HEmp in
         (* { match_res_lhs_node = lhs_h; *)
         (*          match_res_lhs_rest = HEmp; *)
         (*          match_res_holes = []; *)
@@ -1792,9 +1796,9 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
     with _ -> None 
   in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
-      mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node)
+      x_add (mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node)
         ~imprecise:(is_imprecise lhs_node)
-        mt lhs_node lhs_rest rhs_node rhs_rest
+        mt) lhs_node lhs_rest rhs_node rhs_rest
     ) l_x
 
 
@@ -2746,12 +2750,19 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               ) a in
             let () = y_tinfo_hp (add_str "actions(filtered unsoundness)" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
             (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
-          | ViewNode vl, DataNode dr -> 
+          | ViewNode ({h_formula_view_node=ptr} as vl), DataNode ({h_formula_data_node=ptr_rhs} as dr) -> 
             let () = y_tinfo_pp "VIEW vs DATA" in
             let vl_name = vl.h_formula_view_name in
             let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
             let vl_self_pts = vl_vdef.view_pt_by_self in
             let vl_actual_root =  vl_vdef.view_actual_root in
+            let () = y_binfo_hp (add_str "vl_actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) vl_actual_root in
+            let lhs_node =ViewNode vl in
+            let () = y_binfo_hp (add_str "lhs_node" (!CF.print_h_formula)) lhs_node in
+            let () = y_binfo_hp (add_str "ptr" (!CP.print_sv)) ptr in
+            let () = y_binfo_hp (add_str "ptr_rhs" (!CP.print_sv)) ptr_rhs in
+            let () = y_binfo_hp (add_str "lhs_p" (!MCP.print_mix_formula)) lhs_p in
+            let () = y_binfo_hp (add_str "rhs_p" (!MCP.print_mix_formula)) rhs_p in
             let vl_view_orig = vl.h_formula_view_original in
             let vl_view_derv = vl.h_formula_view_derv in
             let dr_orig = dr.h_formula_data_original in
@@ -3193,7 +3204,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
   (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
   (* does removing original cause loop? should we use counting? *)
   if (is_view rhs_node) (* && (get_view_original rhs_node) *) then
-    let mr = mk_match_res (* aset *) Root HEmp lhs_h rhs_node rhs_rest in
+    let mr = x_add mk_match_res (* aset *) Root HEmp lhs_h rhs_node rhs_rest in
     let r = (2, M_base_case_fold mr) in
     (* { match_res_lhs_node = HEmp; *)
     (*   match_res_lhs_rest = lhs_h; *)
@@ -3233,7 +3244,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         let vl_view_derv =  vl.h_formula_view_derv in
         let vr_view_derv = vr.h_formula_view_derv in
         let vr_view_split = vr.h_formula_view_split in
-        let m_res = mk_match_res (* aset *) Root (ViewNode vl) lhs_rest rhs_node rhs_rest in
+        let m_res = x_add mk_match_res (* aset *) Root (ViewNode vl) lhs_rest rhs_node rhs_rest in
         (* let m_res = { match_res_lhs_node = ViewNode vl; *)
         (*               match_res_lhs_rest = lhs_rest; *)
         (*               match_res_holes = []; *)
@@ -3701,7 +3712,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
     | x::xs -> 
       let x = recalibrate_wt x in
       [aux xs x] in
-  let r = if !Globals.adhoc_flag_3 then r else sel_simpler r in
+  let r = if !Globals.old_compute_act then r else sel_simpler r in
   let () = x_binfo_hp (add_str "weighted action"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with

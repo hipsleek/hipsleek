@@ -355,7 +355,9 @@ let common_arguments = [
   ("--new-tp-simplify", Arg.Clear Globals.old_tp_simplify,"Use om_simplify instead of TP.simplify_raw");
   ("--en-mkeqn-opt", Arg.Set Globals.mkeqn_opt_flag,"Enable mkeqn optimization");
   ("--dis-mkeqn-opt", Arg.Clear Globals.mkeqn_opt_flag,"Disable mkeqn optimization");
-  ("--old-univ-lemma", Arg.Set Globals.old_univ_lemma,"Use old univ lemma technique (bug with ex6e3e.slk)");
+  ("--old-univ-lemma", Arg.Set Globals.old_univ_lemma,"Use old univ lemma technique (bug with ex6e3e.slk)");  
+  ("--old-compute-act", Arg.Set Globals.old_compute_act,"Use old method of filtering actions");
+  ("--new-compute-act", Arg.Clear Globals.old_compute_act,"Use new (better) method of filtering actions");
   ("--old-heap-contra", Arg.Clear Globals.new_heap_contra,"Do not use heap contra (bug with ex6e3f9.slk --pnum 4)");
   ("--new-heap-contra", Arg.Set Globals.new_heap_contra,"Use heap contra for inference (bug with ex6e3f9.slk --pnum 4)");
   ("--new-univ-lemma", Arg.Clear Globals.old_univ_lemma,"Use new univ lemma technique (bug with ex6e3e.slk)");

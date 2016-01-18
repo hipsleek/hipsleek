@@ -1328,6 +1328,7 @@ let old_lemma_switch = ref false (* false *)
 let old_free_var_lhs = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
 let old_univ_lemma = ref false (* false *)
+let old_compute_act = ref false (* false *)
 let new_heap_contra = ref true 
 let mkeqn_opt_flag = ref true (* false *)
 let old_view_equiv = ref false (* false *)

@@ -5839,7 +5839,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             && (is_view_user_dupl_ptr_unfold x || is_view_user_dupl_ptr_unfold e)) t in
         x_tinfo_hp (add_str "y" Cprinter.string_of_h_formula) y no_pos;
         let xy = if (is_view_user_dupl_ptr_unfold x) then x else y in
-        let mr = Context.mk_match_res (* aset *) Context.Root xy x x x in
+        let mr = x_add Context.mk_match_res (* aset *) Context.Root xy x x x in
         (* let mr = { Context.match_res_lhs_node = xy; *)
         (*            Context.match_res_lhs_rest = x; (\* ??? why*\) *)
         (*            Context.match_res_holes = [] ; *)
@@ -13850,7 +13850,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                     if !Globals.warn_do_match_infer_heap then 
                       failwith "do_match during infer_heap"
                     else
-                      let match_act = Context.M_match (Context.mk_match_res ~holes:new_estate.es_crt_holes Root n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
+                      let match_act = Context.M_match (x_add (Context.mk_match_res ~holes:new_estate.es_crt_holes Root) n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
                       (* let new_estate = { new_estate with es_trace =  (Context.string_of_action_name match_act)::new_estate.es_trace } in *)
                       (* x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos                                  *)
                       (* Below causes a problem with str-inf/ex10a2-str-while.ss *)
