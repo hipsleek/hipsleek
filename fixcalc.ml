@@ -1864,6 +1864,29 @@ let extract_inv_helper_gfp (rel, pfs) ante_vars specs =
       (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) pfs in
   [(rel, def, no)]
 
+let rec fixcalc_of_gfp_formula f = match f with
+  | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
+  | CP.BForm (b,_) -> fixcalc_of_b_formula b
+  | CP.And (p1, p2, _) ->
+    "" ^ fixcalc_of_gfp_formula p1 ^ op_and ^ fixcalc_of_gfp_formula p2 ^ "" (* baga/infer/btree.slk *)
+  | CP.AndList b ->
+    (match b with 
+     | [] -> fixcalc_of_gfp_formula (CP.mkFalse no_pos) 
+     | (_,x)::t -> fixcalc_of_gfp_formula 
+                     (List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) x t)
+    )
+  | CP.Or (p1, p2,_ , _) ->
+    "(" ^ fixcalc_of_gfp_formula p1 ^ op_or ^ fixcalc_of_gfp_formula p2 ^ ")"
+  | CP.Not (p,_ , _) ->
+    "!" ^ "(" ^ fixcalc_of_gfp_formula p ^ ")"
+  | CP.Forall (sv, p,_ , _) ->
+    " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^
+    fixcalc_of_gfp_formula p ^ ")) "
+  | CP.Exists (sv, p,_ , _) ->
+    " (exists (" ^ fixcalc_of_spec_var sv ^ ":" ^
+    fixcalc_of_gfp_formula p ^ ")) "
+;;
+
 let compute_def_gfp (rel_fml, pf, no) ante_vars =
   let (name,vars) = match rel_fml with
     | CP.BForm ((CP.RelForm (name,args,_),_),_) ->
@@ -1872,7 +1895,7 @@ let compute_def_gfp (rel_fml, pf, no) ante_vars =
     | _ -> report_error no_pos
              ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
   in
-  (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
+  let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in
   let pre_vars, post_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
   let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
@@ -1889,9 +1912,7 @@ let compute_def_gfp (rel_fml, pf, no) ante_vars =
     print_endline_quiet "*************************************";
   end;
   try
-    let (pf2,subs) = x_add_1 CP.extract_mult pf in
-    let pf = x_add_1 CP.drop_nonlinear_formula pf in
-    let rhs = x_add_1 fixcalc_of_pure_formula pf in
+    let rhs = x_add_1 fixcalc_of_gfp_formula pf in
     let input_fixcalc =
       name ^ ":={["
       ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> ["
