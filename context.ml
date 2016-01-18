@@ -2750,13 +2750,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               ) a in
             let () = y_tinfo_hp (add_str "actions(filtered unsoundness)" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
             (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
-          | ViewNode ({h_formula_view_node=ptr} as vl), DataNode ({h_formula_data_node=ptr_rhs} as dr) -> 
+          | ViewNode ({h_formula_view_node=ptr;h_formula_view_imm=_;h_formula_view_perm=_;h_formula_view_arguments=vs1;h_formula_view_name=c} as vl), DataNode ({h_formula_data_node=ptr_rhs} as dr) -> 
             let () = y_tinfo_pp "VIEW vs DATA" in
+            let view_root_lhs = get_root_view prog c ptr vs1 in
             let vl_name = vl.h_formula_view_name in
             let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
             let vl_self_pts = vl_vdef.view_pt_by_self in
             let vl_actual_root =  vl_vdef.view_actual_root in
             let () = y_binfo_hp (add_str "vl_actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) vl_actual_root in
+            let () = y_binfo_hp (add_str "another actual root, why they are different?" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) view_root_lhs in
             let lhs_node =ViewNode vl in
             let () = y_binfo_hp (add_str "lhs_node" (!CF.print_h_formula)) lhs_node in
             let () = y_binfo_hp (add_str "ptr" (!CP.print_sv)) ptr in
