@@ -1864,9 +1864,47 @@ let extract_inv_helper_gfp (rel, pfs) ante_vars specs =
       (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) pfs in
   [(rel, def, no)]
 
+let compute_def_gfp (rel_fml, pf, no) ante_vars =
+  let (name,vars) = match rel_fml with
+    | CP.BForm ((CP.RelForm (name,args,_),_),_) ->
+      (* let _ = print_endline ("### args:"^((pr_list !CP.print_exp) args)) in *)
+      (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
+    | _ -> report_error no_pos
+             ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
+  in
+  (* let _ = print_endline ("compute_def vars: "^(Cprinter.string_of_typed_spec_var_list vars)) in *)
+  let pre_vars, post_vars =
+    List.partition (fun v -> List.mem v ante_vars) vars in
+  let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
+  (* let pre_vars = Trans_arr.expand_array_variable pf pre_vars in *)
+  (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
+  (* let pf = Trans_arr.expand_relation pf in *)
+  begin
+    print_endline_quiet "\n*************************************";
+    print_endline_quiet "****** Before putting into fixcalc*******";
+    print_endline_quiet ("pre_vars: "^(string_of_spec_var_list pre_vars));
+    print_endline_quiet ("post_vars: "^(string_of_spec_var_list post_vars));
+    print_endline_quiet "*************************************";
+    print_endline_quiet ("formula: "^(!CP.print_formula pf));
+    print_endline_quiet "*************************************";
+  end;
+  try
+    let (pf2,subs) = x_add_1 CP.extract_mult pf in
+    let pf = x_add_1 CP.drop_nonlinear_formula pf in
+    let rhs = x_add_1 fixcalc_of_pure_formula pf in
+    let input_fixcalc =
+      name ^ ":={["
+      ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> ["
+      ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: "
+      ^ rhs ^ "\n};"
+    in input_fixcalc
+  with e ->
+    report_error ~exc:(Some e) no_pos (x_loc^"compute_def:Error in translating the input for fixcalc")
+;;
+
 let compute_gfp_aux rel_defs ante_vars=
   let () = Parse_fix.initialize_tlist_from_fpairlist rel_defs in
-  let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
+  let def = List.fold_left (fun x y -> x ^ (compute_def_gfp y ante_vars)) "" rel_defs in
   let cmd = compute_gfp_cmd rel_defs in
   let input_fixcalc =  def ^ cmd  in
   DD.ninfo_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
