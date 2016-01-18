@@ -2940,6 +2940,21 @@ and mkExists_naive (vs : spec_var list) (f : formula) lbl pos =
       Or(aux vs f1 l pos,aux vs f2 l pos, l,p)
     | _ -> aux vs f lbl pos
 
+and mkExists_gfp (vs : spec_var list) (f : formula) lbl pos =
+  let rec aux vs f lbl pos = 
+    match vs with
+    | [] -> f
+    | v :: rest ->
+      let ef = aux rest f lbl pos in
+      if mem v (fv ef) then
+        Exists (v, ef, lbl, pos)
+      else
+        ef 
+  in
+  if vs==[] then f 
+  else 
+    aux vs f lbl pos
+
 and mkExists vs f lbel pos =
   let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
   let () = x_tinfo_hp (add_str "vs(mkExists)" !print_svl) vs no_pos in

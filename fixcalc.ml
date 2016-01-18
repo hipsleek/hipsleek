@@ -1854,14 +1854,14 @@ let extract_inv_helper_gfp (rel, pfs) ante_vars specs =
   (* Make existence *)
   let pfs = List.concat (List.map (fun p ->
       let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
-      let res = CP.mkExists_naive exists_vars p None no_pos in
+      let res = CP.mkExists_gfp exists_vars p None no_pos in
     (*  if CP.isConstTrue (x_add_1 TP.simplify_raw res) then [CP.mkTrue no_pos]
       else*) [res]) pfs)
   in
   let () = x_binfo_hp (add_str "pfs(after existential):" (pr_list !CP.print_formula)) pfs no_pos in
   (* Disjunctive defintion for each relation *)
   let def = List.fold_left
-      (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in
+      (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) pfs in
   [(rel, def, no)]
 
 let compute_gfp_aux rel_defs ante_vars=
