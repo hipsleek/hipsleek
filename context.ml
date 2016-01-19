@@ -2845,6 +2845,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = y_tinfo_hp (add_str "View vs Data (a2)" pr) a2 in
             let a = a1@a2 in
             (* -1 seems to give it high priority *)
+            if direct_match_flag && a!=[] then (0, mk_search_action ~wt:0 a)
+            else
             if a!=[] then (2,mk_search_action ~wt:2 a)
             (* if (vl_view_orig || vl_self_pts==[]) then ua *)
             (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
