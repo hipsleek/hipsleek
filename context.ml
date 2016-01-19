@@ -2750,7 +2750,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               ) a in
             let () = y_tinfo_hp (add_str "actions(filtered unsoundness)" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
             (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
-          | ViewNode ({h_formula_view_node=ptr;h_formula_view_imm=_;h_formula_view_perm=_;h_formula_view_arguments=vs1;h_formula_view_name=c} as vl), DataNode ({h_formula_data_node=ptr_rhs} as dr) -> 
+          | ViewNode ({h_formula_view_node=ptr;
+                       h_formula_view_imm=_;
+                       h_formula_view_perm=_;
+                       h_formula_view_arguments=vs1;
+                       h_formula_view_name=c} as vl),
+            DataNode ({h_formula_data_node=ptr_rhs} as dr) ->
             let () = y_tinfo_pp "VIEW vs DATA" in
             let view_root_lhs = get_root_view prog c ptr vs1 in
             let vl_name = vl.h_formula_view_name in
@@ -2758,13 +2763,28 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let vl_self_pts = vl_vdef.view_pt_by_self in
             let vl_actual_root =  vl_vdef.view_actual_root in
             let () = y_binfo_hp (add_str "vl_actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) vl_actual_root in
-            let () = y_binfo_hp (add_str "another actual root, why they are different?" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) view_root_lhs in
+            let () = y_binfo_hp (add_str "different way to get actual root, why they are different?" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) view_root_lhs in
             let lhs_node =ViewNode vl in
             let () = y_binfo_hp (add_str "lhs_node" (!CF.print_h_formula)) lhs_node in
             let () = y_binfo_hp (add_str "ptr" (!CP.print_sv)) ptr in
             let () = y_binfo_hp (add_str "ptr_rhs" (!CP.print_sv)) ptr_rhs in
             let () = y_binfo_hp (add_str "lhs_p" (!MCP.print_mix_formula)) lhs_p in
             let () = y_binfo_hp (add_str "rhs_p" (!MCP.print_mix_formula)) rhs_p in
+            (* calculating possible direct match *)
+            let direct_match_flag =
+              match view_root_lhs with
+              | Some (lhs_root_name,lhs_root_formula) ->
+                let counter_formula = CP.mkNot (CP.mkEqn lhs_root_name ptr_rhs no_pos) None no_pos in
+                let root_formula = CP.mkAnd (CP.mkAnd (CP.mkAnd counter_formula lhs_root_formula no_pos) (MCP.pure_of_mix rhs_p) no_pos) (MCP.pure_of_mix lhs_p) no_pos in
+                let () = y_binfo_hp (add_str "root_formula" (!CP.print_formula)) root_formula in
+                not (!CP.tp_is_sat root_formula)
+              | None -> false
+            in
+            let () =
+              if direct_match_flag
+              then y_binfo_pp "FOUND DIRECT MATCH"
+              else y_binfo_pp "NOT FOUND DIRECT MATCH"
+            in
             let vl_view_orig = vl.h_formula_view_original in
             let vl_view_derv = vl.h_formula_view_derv in
             let dr_orig = dr.h_formula_data_original in
