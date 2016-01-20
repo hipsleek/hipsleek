@@ -591,7 +591,7 @@ let pre_rel_fixpoint pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_sp
     List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
   let () = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
   let pr = Cprinter.string_of_pure_formula in
-  let () = Debug.binfo_hprint (add_str "pre_rel_df: " (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
+  let () = Debug.ninfo_hprint (add_str "pre_rel_df: " (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
   let checkpoint1 = check_oblg pre_rel constTrue pure_oblg_to_check pre_rel_df in
   if checkpoint1 (* && false *) then [(constTrue,constTrue,pre_rel,constTrue)]
   else

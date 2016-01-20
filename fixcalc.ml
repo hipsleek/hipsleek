@@ -1957,6 +1957,21 @@ let compute_gfp_aux rel_defs ante_vars=
 let compute_gfp (i:int) input_pairs_num ante_vars specs=
   let () = x_binfo_pp ("input_pairs_num: " ^ (pr_list
                                                 (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos in
+  let input_pairs_num = List.map (fun lhs_conj ->
+      let (lhs,rhs) = lhs_conj in
+      let lhs_conj_list = CP.list_of_conjs lhs in
+      let rel, non_rel = List.partition (fun lhs_conj ->
+          let conj_rel_id_list = CP.get_rel_id_list lhs_conj in
+          conj_rel_id_list != []
+        ) lhs_conj_list in
+      if (non_rel == []) then (lhs,rhs) else
+        let non_rels = CP.conj_of_list non_rel no_pos in
+        let rels = CP.conj_of_list rel no_pos in
+        let not_non_rels = CP.mkNot non_rels None no_pos in
+        let rhs = CP.mkOr not_non_rels rhs None no_pos in
+        (rels,rhs)
+    ) input_pairs_num in
+
   let pairs = gfp_preprocess input_pairs_num in
   let () = x_binfo_hp (add_str "input_pairs(b4): " (pr_list
                                                   (pr_pair !CP.print_formula (pr_list !CP.print_formula)) )) pairs no_pos in
@@ -1976,7 +1991,7 @@ let compute_gfp (i:int) input_pairs_num ante_vars specs=
   let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
   if rec_rel_defs==[] then
-    let () = x_binfo_pp ("compute_fixpoint_xx:then branch") no_pos in
+    let () = x_binfo_pp ("compute_gfp:then branch") no_pos in
     true_const @ non_rec_defs
   else
     true_const @ (x_add compute_gfp_aux rel_defs ante_vars)
