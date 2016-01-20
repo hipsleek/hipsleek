@@ -905,7 +905,7 @@ let substitute_args rcase =
     let res = [rcase_wo_rel]@rels@(List.concat subs) in
     CP.conj_of_list res no_pos
   with Invalid_argument _ -> rcase
-  
+
 let substitute_args rcase =
   let pr = !CP.print_formula in
   Debug.no_1 "substitute_args" pr pr substitute_args rcase
@@ -1798,6 +1798,40 @@ let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
     (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs false)
     input_pairs ante_vars
 
+let process_base_rec_gfp pfs rel specs =
+  match x_add_1 CP.get_rel_id rel with
+  | None -> report_error no_pos "process_base_rec: Expected a relation"
+  | Some ivs ->
+    let (rcases, bcases) = List.partition is_rec pfs in
+    let or_post = get_or_post specs (CP.get_rel_id_list rel) in
+    let bcases =
+      begin
+        match or_post with
+        | [] -> bcases
+        | [or_fml] ->
+          let other_branches = get_other_branches or_fml (CP.get_rel_args rel) in
+          let other_branches = List.map (fun p -> CP.mkNot_s p) other_branches in
+          let pure_other_branches = CP.conj_of_list other_branches no_pos in
+          List.filter (fun b -> TP.is_sat_raw (MCP.mix_of_pure 
+                                                 (CP.mkAnd b pure_other_branches no_pos))) bcases
+        | _ -> bcases
+      end
+    in
+    let () = x_ninfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in 
+    let no_of_disjs = 
+      List.map (fun b -> 
+          let disjs = CP.list_of_disjs b in 
+          let cond = List.exists (fun d -> 
+              let conjs = CP.list_of_conjs d in 
+              List.exists (fun c -> CP.is_eq_const c) conjs
+            ) disjs 
+          in 
+          if cond then 1 else List.length disjs
+        ) bcases in
+    let no_of_disjs = List.fold_left (fun a b -> max a b) 1 no_of_disjs in 
+    let () = x_tinfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in
+    bcases @ rcases, no_of_disjs
+
 let extract_inv_helper_gfp (rel, pfs) ante_vars specs =
   let () = x_ninfo_hp (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos in
   let pfs = List.map (fun p ->
@@ -1808,7 +1842,7 @@ let extract_inv_helper_gfp (rel, pfs) ante_vars specs =
     ) pfs
   in
   let () = x_ninfo_hp (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos in
-  let pfs,no = process_base_rec pfs rel specs in
+  let pfs,no = process_base_rec_gfp pfs rel specs in
   Debug.ninfo_hprint (add_str "pfs(before forall):" (pr_list !CP.print_formula)) pfs no_pos;
   let pfs = List.concat (List.map (fun p ->
       let forall_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
