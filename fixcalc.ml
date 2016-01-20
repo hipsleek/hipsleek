@@ -1954,7 +1954,7 @@ let compute_gfp_aux rel_defs ante_vars=
   in
   res
 
-let compute_gfp_xx input_pairs_num ante_vars specs=
+let compute_gfp (i:int) input_pairs_num ante_vars specs=
   let () = x_binfo_pp ("input_pairs_num: " ^ (pr_list
                                                 (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos in
   let pairs = gfp_preprocess input_pairs_num in
@@ -1981,13 +1981,5 @@ let compute_gfp_xx input_pairs_num ante_vars specs=
   else
     true_const @ (x_add compute_gfp_aux rel_defs ante_vars)
 
-let compute_gfp (i:int) input_pairs ante_vars specs =
-  let pr0 = !CP.print_formula in
-  let pr1 = pr_list_ln (pr_pair pr0 pr0) in
-  let pr2 = !CP.print_svl in
-  let pr_res = pr_list (pr_pair pr0 pr0) in
-  DD.no_2_num i "compute_gfp" pr1 pr2 pr_res
-    (fun _ _ -> compute_gfp_xx input_pairs ante_vars specs)
-    input_pairs ante_vars
 
 
