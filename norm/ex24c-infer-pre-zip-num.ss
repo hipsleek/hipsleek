@@ -4,7 +4,7 @@ relation P(int x, int y).
 int zip(int x,int y)
  infer[P]
  requires P(x,y) & x>=0 & y>=0
- ensures P(x,y);
+ ensures true;
 {
   if (x==0) return x;
   else {
