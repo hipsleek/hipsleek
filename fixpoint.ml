@@ -457,38 +457,10 @@ let calculate_gfp fp_func input_fml pre_vars proc_spec
 
   match top_down_fp with
   | [(_,rec_inv)] ->
-    let args = List.map (fun a -> (a,CP.add_prefix_to_spec_var "REC" a)) pre_rel_vars in
-    let to_check = CP.subst args pure_oblg_to_check in
-    let fml = CP.mkOr (CP.mkNot_s rec_inv) to_check None no_pos in
-    let quan_vars = CP.diff_svl (CP.fv fml) pre_rel_vars in
-    (* let quan_vars = CP.diff_svl (CP.fv fml) (pre_rel_vars@(List.map (fun (_,x) -> x) args)) in *) (*TODOIMM remove this line*)
-    let fml = CP.mkForall quan_vars fml None no_pos in
-    let () =  x_binfo_hp (add_str "to check" !CP.print_formula) to_check no_pos in
-    let () =  x_binfo_hp (add_str "rec_inv" !CP.print_formula) rec_inv no_pos in
-    let () =  x_binfo_hp (add_str "pre_rec_raw (fml) " !CP.print_formula) fml no_pos in
-    let pre_rec = x_add_1 TP.simplify fml in
-    let () = x_binfo_hp (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
-    let list_pre = [pre_rec;pure_oblg_to_check] in
-    let final_pre0 = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue list_pre in
-    let final_pre1 = x_add_1 TP.simplify final_pre0 in
-    let final_pre2 = filter_disj final_pre1 (pre_fmls) in
-    let final_pre3 = x_add TP.om_gist final_pre2 pre in
-    let final_pre3a = CP.mkAnd final_pre3 pre no_pos in
-    let final_pre4b = TP.pairwisecheck_raw final_pre3a in
-    let final_pre = x_add TP.om_gist final_pre4b pre in
-    let () = x_dinfo_hp (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
-    let () = x_dinfo_hp (add_str "final_pre1" !CP.print_formula) final_pre1 no_pos in
-    let () = x_dinfo_hp (add_str "final_pre2" !CP.print_formula) final_pre2 no_pos in
-    let () = x_dinfo_hp (add_str "final_pre3" !CP.print_formula) final_pre3 no_pos in
-    let () = x_dinfo_hp (add_str "final_pre3a" !CP.print_formula) final_pre3a no_pos in
-    (* let () = x_dinfo_hp (add_str "final_pre4a" !CP.print_formula) final_pre4a no_pos in *)
-    let () = x_dinfo_hp (add_str "final_pre4b" !CP.print_formula) final_pre4b no_pos in
-    (* let () = x_dinfo_hp (add_str "final_pre" !CP.print_formula) final_pre no_pos in *)
-    let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
+    let checkpoint2 = check_defn pre_rel rec_inv pre_rel_df in
     if checkpoint2 then
-      List.map (fun (rel,post) -> (rel,post,pre_rel,final_pre)) rel_posts
+      List.map (fun (rel,post) -> (rel,post,pre_rel,rec_inv)) rel_posts
     else List.map (fun (rel,post) -> (rel,post,pre_rel,constTrue)) rel_posts 
-
   | [] -> List.map (fun (rel,post) -> (rel,post,constTrue,constTrue)) rel_posts
   | _ -> report_error no_pos "Error in top-down fixpoint calculation"
 

@@ -1829,7 +1829,7 @@ let process_base_rec_gfp pfs rel specs =
       end
     in
     (* let () = x_binfo_pp ("bcases:"^((pr_list !CP.print_formula) bcases)) no_pos in *)
-    let () = x_binfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in 
+    let () = x_ninfo_pp ("rcases:"^((pr_list !CP.print_formula) rcases)) no_pos in 
     let no_of_disjs = 
       List.map (fun b -> 
           let disjs = CP.list_of_disjs b in 
