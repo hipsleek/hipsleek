@@ -778,6 +778,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let pr_def = pr_list (pr_pair pr pr) in
             let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
             let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
+
+(*
             let pre_rel_df = List.map (fun lhs_conj ->
                 let (lhs,rhs) = lhs_conj in
                 let lhs_conj_list = CP.list_of_conjs lhs in
@@ -793,7 +795,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                   let rhs = CP.mkOr not_non_rels rhs None no_pos in
                   (rels,rhs)
               ) pre_rel_df in
-            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
+            let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in  *)
             (* let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in *)
             (* let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in *)
             (* let () = x_binfo_hp (add_str "reldefns_from_oblgs" pr_def) reldefns_from_oblgs no_pos in *)
@@ -861,8 +863,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* let () = DD.binfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
             let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in
             (* let () = x_binfo_hp (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in *)
+            let fp_func = if (bottom_up_fp == []) then Fixcalc.compute_gfp else Fixcalc.compute_fixpoint_td in
             let res = wrap (x_add Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs
-                              (x_add Fixcalc.compute_gfp)
+                              (x_add fp_func)
                               Fixcalc.fixc_preprocess reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec) grp_post_rel_flag
             in
             let () = x_tinfo_hp (add_str "fixpoint" (pr_list (pr_quad pr pr pr pr))) res no_pos in
