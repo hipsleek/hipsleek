@@ -453,8 +453,7 @@ let calculate_gfp fp_func input_fml pre_vars proc_spec
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let () = Debug.binfo_hprint (add_str "gfp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
-
+  let () = Debug.ninfo_hprint (add_str "gfp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
   match top_down_fp with
   | [(_,rec_inv)] ->
     let checkpoint2 = check_defn pre_rel rec_inv pre_rel_df in
