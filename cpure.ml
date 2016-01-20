@@ -2940,14 +2940,14 @@ and mkExists_naive (vs : spec_var list) (f : formula) lbl pos =
       Or(aux vs f1 l pos,aux vs f2 l pos, l,p)
     | _ -> aux vs f lbl pos
 
-and mkExists_gfp (vs : spec_var list) (f : formula) lbl pos =
+and mkForall_gfp (vs : spec_var list) (f : formula) lbl pos =
   let rec aux vs f lbl pos = 
     match vs with
     | [] -> f
     | v :: rest ->
       let ef = aux rest f lbl pos in
       if mem v (fv ef) then
-        Exists (v, ef, lbl, pos)
+        Forall (v, ef, lbl, pos)
       else
         ef 
   in
