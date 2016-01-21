@@ -1250,7 +1250,6 @@ lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1)
       <-> self::arr_sorted<i,n,S>.
 
 ---------------------------------
-
 verified though with some large formula problem..
 
 
