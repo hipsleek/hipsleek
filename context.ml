@@ -3468,8 +3468,9 @@ and recalibrate_wt (w,a) =
       let rw = (fst h) in
       (* WHY did we pick only ONE when rw==0?*)
       (* Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
-      if (rw==0) then h 
-      else (rw,mk_search_action sl)
+      (* if (rw==0) then h  *)
+      (* else (rw,mk_search_action sl) *)
+      (rw,mk_search_action sl)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
       ->
       (*drop ummatched actions if possible*)
@@ -3513,8 +3514,9 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | Search_action l
     | Seq_action l
     | Cond_action l ->
-      List.exists uncertain l  in	
+      List.exists uncertain l  in
   let ls = List.map recalibrate_wt ys in
+  let () = y_binfo_hp (add_str "ls, after recalibrate weight: " (pr_list string_of_action_wt_res_simpl)) ls in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
   let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
   let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
@@ -3528,6 +3530,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
   let eq_ls, neq_ls = List.partition (fun (w,_) -> w==head_w) (List.tl sl) in
   let sl =
     if (eq_ls == []) then
+      let () = y_binfo_pp "eq_lst == []" in
       sl
     else
       (*Use Cond_action to avoid explosion*)
