@@ -1930,7 +1930,7 @@ let compute_gfp_aux rel_defs ante_vars=
   let _ =
     if !Globals.gen_fixcalc then gen_fixcalc_file input_fixcalc else ()
   in
-  let output_of_sleek = "fixcalc.gfp" in
+  let output_of_sleek = "logs/fixcalc.gfp" in
   let () = x_ninfo_pp ("fixcalc file name: " ^ output_of_sleek) no_pos in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
