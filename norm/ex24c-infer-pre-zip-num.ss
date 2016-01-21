@@ -6,7 +6,7 @@ int zip(int x,int y)
  requires P(x,y) & x>=0 & y>=0
  ensures true;
 {
-  if (x==0) return x;
+  if (x==0) return y;
   else {
     int r=zip(x-1,y-1);
     return 1+r;
