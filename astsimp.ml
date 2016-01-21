@@ -2737,7 +2737,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             | [xs]::xss -> aux xss xs 
             | _ -> [] in
             let () = if xs!=[] && ans==[] then 
-                y_winfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
+                y_tinfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
             in ans
           in
           let fresh_name (v,f) = (v,f) in

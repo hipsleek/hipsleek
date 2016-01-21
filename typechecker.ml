@@ -1967,9 +1967,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let vheap = 
               if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
 
-          let () = x_binfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
-          let () = x_binfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
-          let () = x_binfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
+          let () = x_tinfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
+          let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
+          let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
           (*Test whether fresh_perm_exp is full permission or not
             writable -> fresh_perm_exp = full_perm => normally
             read-only -> fresh_perm_exp != full_perm => in order to 
@@ -2007,7 +2007,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           x_tinfo_pp to_print pos;
 
           if (Gen.is_empty unfolded) then 
-            let () = y_binfo_pp "unfolded body is empty" in
+            let () = y_tinfo_pp "unfolded body is empty" in
             unfolded
           else
             let () = consume_all := true in
@@ -2015,10 +2015,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let () = Log.update_sleek_proving_kind Log.BINDING in *)
             (* let () = x_tinfo_pp ("Andreea : we need to normalise struc_vheap") no_pos in *)
             (* let () = x_tinfo_pp ("==========================================") no_pos in *)
-            let () = y_binfo_pp "need to use local version of infer_const_obj" in
+            let () = y_tinfo_pp "need to use local version of infer_const_obj" in
             (* let struc_vheap =  *)
             (*   if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_struc bind_ptr else struc_vheap in *)
-            let () = x_binfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
+            let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
             (* let do_classic_frame = (check_is_classic ()) in *)
@@ -2186,7 +2186,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               exp_cond_else_arm = e2;
               exp_cond_path_id = pid;
               exp_cond_pos = pos}) ->
-      (* let () = x_binfo_hp (add_str "cond_path_id"  *)
+      (* let () = x_tinfo_hp (add_str "cond_path_id"  *)
       (*     (fun s -> Cprinter.pr_control_path_id_opt s)) pid pos in *)
       let cond_op () =
         begin
@@ -3175,7 +3175,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
         (* WN: do not existentially quantify by-value parameters *)
         let w=[] in
-        let () = x_binfo_hp (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
+        let () = x_tinfo_hp (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
         (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
         let final_state_prim = CF.push_exists_list_partial_context w ctx in
         x_tinfo_hp  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
