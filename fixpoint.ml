@@ -240,7 +240,8 @@ let simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_
   Debug.no_2 "simplify_post" pr pr2 (pr_pair pr (pr_list !CP.print_formula))
     (fun _ _ -> simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars ref_vars) post_fml post_vars
 
-let rec simplify_pre pre_fml lst_assume = match pre_fml with
+let rec simplify_pre pre_fml lst_assume = 
+  match pre_fml with
   | CF.Or _ ->
     let disjs = CF.list_of_disjs pre_fml in
     let res = List.map (fun f -> simplify_pre f lst_assume) disjs in
@@ -252,20 +253,26 @@ let rec simplify_pre pre_fml lst_assume = match pre_fml with
   (*    else Or {formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}*)
   | _ ->
     let h, p, vp, fl, t, a = CF.split_components pre_fml in
-    let p1,p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
-    let p = if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
+    let p1, p2 = List.partition CP.is_lexvar (CP.list_of_conjs (CP.remove_dup_constraints (MCP.pure_of_mix p))) in
+    let p = 
+      if !do_infer_inc then TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))
       else CP.mkAnd (TP.pairwisecheck_raw (Infer.simplify_helper (CP.conj_of_list p2 no_pos))) (CP.conj_of_list p1 no_pos) no_pos
     in
-    let p = if lst_assume = [] then x_add_1 CP.drop_rel_formula p (* need to recheck *)
+    let p = 
+      if lst_assume = [] then x_add_1 CP.drop_rel_formula p (* need to recheck *)
       else
         let rels = CP.get_RelForm p in
         let p = x_add_1 CP.drop_rel_formula p in
         let ps = List.filter (fun x -> not (CP.isConstTrue x)) (CP.list_of_conjs p) in
-        let pres = List.concat (List.map (fun (a1,a2,a3) ->
-            if Gen.BList.mem_eq CP.equalFormula a2 rels then [a3] else []) lst_assume) in
-        let pfl = ps@pres in
+        let pres = List.concat (List.map (fun (a1, a2, a3) ->
+            if (Gen.BList.mem_eq CP.equalFormula a2 rels) &&
+               not (TP.imply_raw p a3) then [a3] else []) lst_assume) in
+        let lexvar_lst, pfl = List.partition CP.is_lexvar (ps@pres) in
+        let () = y_tinfo_hp (add_str "pfl" (pr_list !CP.print_formula)) pfl in
         let pre = CP.conj_of_list pfl no_pos in
         let pre = Wrapper.wrap_exception pre CF.simplify_aux pre in
+        let pre = TP.pairwisecheck_raw pre in
+        let pre = CP.conj_of_list (pre::lexvar_lst) no_pos in
         pre
     in
     CF.mkBase h (MCP.mix_of_pure p) vp t fl a no_pos
@@ -296,13 +303,13 @@ let rec simplify_relation (sp:CF.struc_formula) subst_fml pre_vars post_vars pro
         in (Some r1, r2)
     in
     let base =
-      if pres = [] then simplify_pre b.CF.formula_struc_base lst_assume
+      if pres = [] then x_add simplify_pre b.CF.formula_struc_base lst_assume
       else
         let pre = CP.conj_of_list pres no_pos in
         let xpure_base,_,_ = x_add Cvutil.xpure 16 prog b.CF.formula_struc_base in
         let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
         if TP.is_sat_raw check_fml then
-          simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
+          x_add simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
         else b.CF.formula_struc_base in
     (CF.EBase {b with CF.formula_struc_base = base; CF.formula_struc_continuation = r}, [])
   | CF.EAssume b ->
@@ -400,7 +407,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   let constTrue = CP.mkTrue no_pos in
 
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let () = Debug.binfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
+  let () = x_binfo_hp (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   match top_down_fp with
   | [(_,rec_inv)] ->
@@ -413,13 +420,13 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
     let () =  x_dinfo_hp (add_str "to check" !CP.print_formula) to_check no_pos in
     let () =  x_dinfo_hp (add_str "rec_inv" !CP.print_formula) rec_inv no_pos in
     let () =  x_dinfo_hp (add_str "pre_rec_raw (fml) " !CP.print_formula) fml no_pos in
-    let pre_rec = x_add_1 TP.simplify fml in
+    let pre_rec = x_add_1 TP.simplify_raw fml in
     let () = x_dinfo_hp (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
 
     (*NEW procedure: not add pre_inv at the begining*)
     let list_pre = [pre_rec;pure_oblg_to_check] in
     let final_pre0 = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue list_pre in
-    let final_pre1 = x_add_1 TP.simplify final_pre0 in
+    let final_pre1 = x_add_1 TP.simplify_raw final_pre0 in
     let final_pre2 = filter_disj final_pre1 (pre_fmls) in
     (* NEW procedure# Form pre-condition given invariant:  D:=gist Pre given Inv;*)
     (* let final_pre2 = pure_oblg_to_check in  *)(* TODOIMM to remove this line *)
@@ -429,8 +436,8 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
     let final_pre3a = CP.mkAnd final_pre3 pre no_pos in
     (* let final_pre4a = TP.pairwisecheck_raw final_pre3 in *)
     let final_pre4b = TP.pairwisecheck_raw final_pre3a in
-    let final_pre = x_add TP.om_gist final_pre4b pre in
-    (* let final_pre = final_pre4b in (\* TODOIMM to remove this line *\) *)
+    (* let final_pre = x_add TP.om_gist final_pre4b pre in *)
+    let final_pre = final_pre4b in (* TODOIMM to remove this line *)
 
     let () = x_dinfo_hp (add_str "final_pre0" !CP.print_formula) final_pre0 no_pos in
     let () = x_dinfo_hp (add_str "final_pre1" !CP.print_formula) final_pre1 no_pos in
@@ -608,7 +615,8 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
       let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
       let exist_vars = CP.diff_svl (CP.fv_wo_rel rel) pre_rel_vars in
       let pre = TP.simplify_exists_raw exist_vars post in
-      let () = Debug.ninfo_hprint (add_str "pure pre" !CP.print_formula) pre no_pos in
+      let () = x_tinfo_hp (add_str "pre" !CP.print_formula) pre no_pos in
+      let () = x_tinfo_hp (add_str "post" !CP.print_formula) post no_pos in
 
       let rel_oblg_to_check = List.filter (fun (_,lhs,_) -> CP.equalFormula lhs pre_rel) reloblgs in (* TODOIMM uncomment this line *)
       (* let rel_oblg_to_check = reloblgs in *) (* TODOIMM this is just temp - TO REMOVE *)
