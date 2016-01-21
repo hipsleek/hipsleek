@@ -694,7 +694,9 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
   let pr3 = CP.print_rel_cat in
   let pr3a = pr_list_ln (pr_triple pr3 pr1 pr1) in
   let pr4 = pr_list_ln (pr_quad pr1 pr1 pr1 pr1) in
-  Debug.no_7 "update_with_td_fp" (pr_pair pr2a (pr_list_ln pr1)) (pr_pair (pr_list_ln pr1) (pr_list_ln pr1))
+  Debug.no_7 "update_with_td_fp" 
+    (pr_pair (add_str "bottom_up_fp" pr2a) (add_str "pre_rel_fmls" (pr_list_ln pr1))) 
+    (pr_pair (pr_list_ln pr1) (pr_list_ln pr1))
     pr3a pr2a pr2a pr2a (pr_pair !CP.print_svl string_of_int) pr4
     (fun _ _ _ _ _ _ _ -> update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
         preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df
