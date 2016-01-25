@@ -1,0 +1,38 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+
+checkentail x::arr_seg<i,n> & n-i>=3 & y=x+i & z=y+2
+   |- y::arr<_> * z::arr<_>.
+print residue.
+expect Fail.
+// weak
+
+/*
+# ex1e2a -dre "process_one_m" --trace-log-num 5
+
+checkentail x::arr_seg<i,n> & n-i>=3 & y=x+i & z=y+2
+   |- y::arr<_> * z::arr<_>.
+
+# why is this called infinite unfold?
+
+Entail 1: Fail.(may) cause:do_unmatched_rhs : z::arr<Anon_13>@M(may)
+Residue:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : z::arr<Anon_13>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ Unfold 0 ==>  Match(x_76,y) ==>  UnmatchedRHSData]]
+ CEX:false
+
+*/
+

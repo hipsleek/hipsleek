@@ -42,7 +42,7 @@ let process_selective_iview_decls is_all iprog iviews =
     if is_all then iprog.I.prog_view_decls <- tmp_views
     else 
       (* iprog.I.prog_view_decls <- (iprog.I.prog_view_decls @ iviews) *)
-      List.iter (Cprog_sleek.update_view_decl_iprog ~update_scc:true) iviews
+      List.iter (x_add_1 (Cprog_sleek.update_view_decl_iprog ~update_scc:true)) iviews
   in
   (* collect immutable info for splitting view params *)
   let _ = List.map (fun v -> 

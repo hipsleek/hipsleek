@@ -33,12 +33,12 @@ let infer_shapes = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) (proc_name
                          (a, b, c)
                        )
 
-let generate_lemma_helper iprog lemma_name coer_type ihps ihead ibody=
+let generate_lemma_helper iprog cprog lemma_name coer_type ihps ihead ibody=
   (*generate ilemma*)
   let ilemma = I.mk_lemma (fresh_any_name lemma_name) LEM_UNSAFE LEM_GEN coer_type ihps ihead ibody in
   (*transfrom ilemma to clemma*)
   let ldef = Astsimp.case_normalize_coerc iprog ilemma in
-  let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  let l2r, r2l = Astsimp.trans_one_coercion iprog cprog ldef in
   l2r, r2l
 
 let generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbody
@@ -50,7 +50,7 @@ let generate_lemma_x iprog cprog lemma_n coer_type lhs rhs ihead chead ibody cbo
     else Sleekcore.sleek_entail_check 5 [] [] cprog [(cbody,chead)] rhs (CF.struc_formula_of_formula lhs no_pos)
   ) in
   if res then
-    let l2r, r2l = generate_lemma_helper iprog lemma_n coer_type [] ihead ibody in
+    let l2r, r2l = generate_lemma_helper iprog cprog lemma_n coer_type [] ihead ibody in
     l2r, r2l
   else [],[]
 
@@ -248,7 +248,7 @@ let process_one_lemma unfold_flag iprog cprog ldef =
   let vdefs = Cprog_sleek.get_sorted_view_decls () in
   let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
   (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
-  let ldef = if unfold_flag then unfold_body_lemma iprog ldef ulst else ldef in
+  let ldef = if unfold_flag then x_add unfold_body_lemma iprog ldef ulst else ldef in
   let () = y_tinfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in
   let () = y_tinfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag in
   let () = y_tinfo_hp (add_str "lemma(after unfold)" Iprinter.string_of_coerc_decl) ldef in
@@ -256,7 +256,7 @@ let process_one_lemma unfold_flag iprog cprog ldef =
   (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let pr = Cprinter.string_of_coerc_decl_list in
-  let l2r, r2l = Astsimp.trans_one_coercion iprog ldef in
+  let l2r, r2l = Astsimp.trans_one_coercion iprog cprog ldef in
   (* let () = y_tinfo_hp (add_str "l2r" pr) l2r in *)
   (* let () = y_tinfo_hp (add_str "r2l" pr) r2l in *)
   let l2r = List.concat (List.map (fun c-> Astsimp.coerc_spec cprog c) l2r) in
@@ -292,7 +292,8 @@ let verify_one_repo lems cprog =
 
 let verify_one_repo lems cprog =
   let pr = pr_list (fun (_, _, _, name) -> name) in
-  Debug.no_1 "verify_one_repo" pr (fun _ -> "") 
+  let pr_out = pr_pair (pr_opt pr_id) (pr_list Cprinter.string_of_list_context) in 
+  Debug.no_1 "verify_one_repo" pr pr_out
     (fun _ -> verify_one_repo lems cprog) lems
 
 (* update store with given repo without verifying the lemmas *)
@@ -323,25 +324,25 @@ let manage_unsafe_lemmas ?(force_pr=false) repo iprog cprog: (CF.list_context li
     (fun _ -> manage_unsafe_lemmas ~force_pr:force_pr repo iprog cprog) repo
 
 (* update the lemma store with the lemmas in repo and check for their validity *)
-let update_store_with_repo ?(vdefs=[]) repo iprog cprog =
+let update_store_with_repo ?(force_pr=false) ?(vdefs=[]) repo iprog cprog =
   (* let lems = process_one_repo repo iprog cprog in *)
   (* let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in *)
   (* let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in *)
   (* let () = Lem_store.all_lemma # add_coercion left right in *)
-  let lems = manage_lemmas_x ~vdefs:vdefs ~force_pr:false repo iprog cprog in
+  let lems = manage_lemmas_x ~vdefs:vdefs ~force_pr:force_pr repo iprog cprog in
   let (invalid_lem, lctx) = x_add verify_one_repo lems cprog in
   (invalid_lem, lctx)
 
-let update_store_with_repo repo iprog cprog =
+let update_store_with_repo ?(force_pr=false) repo iprog cprog =
   let pr1 = pr_list Iprinter.string_of_coerc_decl in
   let pr_out = pr_pair (pr_opt pr_id) (pr_list Cprinter.string_of_list_context) in 
-  Debug.no_1 "update_store_with_repo"  pr1 pr_out (fun _ -> update_store_with_repo repo iprog cprog) repo
+  Debug.no_1 "update_store_with_repo"  pr1 pr_out (fun _ -> update_store_with_repo ~force_pr:force_pr repo iprog cprog) repo
 
 (* pop only if repo is invalid *)
 (* return None if all succeed, and result of first failure otherwise *)
 let manage_safe_lemmas ?(force_pr=false) repo iprog cprog = 
   let force_pr = !Globals.lemma_ep && !Globals.lemma_ep_verbose && force_pr in
-  let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
+  let (invalid_lem, nctx) = update_store_with_repo ~force_pr:force_pr repo iprog cprog in
   match invalid_lem with
   | Some name -> 
     let () = Log.last_cmd # dumping (name) in
@@ -405,9 +406,9 @@ let manage_lemmas ?(force_pr=false) repo iprog cprog =
 
 (* update store with given repo, but pop it out in the end regardless of the result of lemma verification *)
 (* return None if all succeed, return first failed ctx otherwise *)
-let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog = 
-  let (invalid_lem, nctx) = update_store_with_repo repo iprog cprog in
-  let res_print = !Globals.lemma_ep_verbose && res_print in
+let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog = 
+  let (invalid_lem, nctx) = update_store_with_repo ~force_pr:force_pr repo iprog cprog in
+  let res_print = !Globals.lemma_ep_verbose && not(force_pr) in
   let () = if pop_all then
     Lem_store.all_lemma # pop_coercion
   else ()
@@ -434,23 +435,24 @@ let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog
       | _ -> () in
     true,Some nctx
 
-let manage_infer_lemmas_x ?(res_print=true) ?(pop_all=true) str repo iprog cprog = 
+let manage_infer_lemmas_x ?(force_pr=false) ?(pop_all=true) str repo iprog cprog = 
   let pr1 = pr_list Iprinter.string_of_coerc_decl in
   let pr2 = pr_list !CF.print_list_context in
   let pr3 = Iprinter.string_of_program in
   let pr4 = Cprinter.string_of_program in
   (* Debug.no_3 "manage_infer_lemmas_x" pr3 pr4 pr1 (pr_pair string_of_bool (pr_opt pr2))               *)
-  (*   (fun _ _ _ -> manage_infer_lemmas_x ~res_print:res_print ~pop_all:pop_all str repo iprog cprog)  *)
+  (*   (fun _ _ _ -> manage_infer_lemmas_x ~force_pr:force_pr ~pop_all:pop_all str repo iprog cprog)  *)
   (*   iprog cprog repo                                                                                 *)
-  Debug.no_1 "manage_infer_lemmas_x" pr1 (pr_pair string_of_bool (pr_opt pr2))
-    (fun _ -> manage_infer_lemmas_x ~res_print:res_print ~pop_all:pop_all str repo iprog cprog) repo
+  Debug.no_2 "manage_infer_lemmas_x" pr1 (add_str "is_classic" string_of_bool) (pr_pair string_of_bool (pr_opt pr2))
+    (fun _ _ -> manage_infer_lemmas_x ~force_pr:force_pr ~pop_all:pop_all str repo iprog cprog) 
+    repo (check_is_classic ())
 
 (* for lemma_test, we do not return outcome of lemma proving *)
 let manage_test_lemmas repo iprog cprog = 
   manage_infer_lemmas_x "proved" repo iprog cprog; None (*Loc: while return None? instead full result*)
 
-let manage_test_lemmas1 ?(res_print=true) repo iprog cprog = 
-  manage_infer_lemmas_x ~res_print:res_print "proved" repo iprog cprog
+let manage_test_lemmas1 ?(force_pr=false) repo iprog cprog = 
+  manage_infer_lemmas_x ~force_pr:force_pr "proved" repo iprog cprog
 
 let manage_infer_lemmas ?(pop_all=true) repo iprog cprog = 
   (manage_infer_lemmas_x ~pop_all:pop_all "inferred" repo iprog cprog)
@@ -1000,7 +1002,7 @@ let do_unfold_view_hf cprog hf0 =
       fold_fnc ls_hf_p1 ls_hf_p2 conj_fnc
     | CF.ViewNode hv -> begin
         try
-          let vdcl = x_add C.look_up_view_def_raw 40 cprog.C.prog_view_decls hv.CF.h_formula_view_name in
+          let vdcl = x_add C.look_up_view_def_raw x_loc cprog.C.prog_view_decls hv.CF.h_formula_view_name in
           let fs = List.map (* Gen.fst3 *) fst vdcl.C.view_un_struc_formula in
           let f_args = (CP.SpecVar (Named vdcl.C.view_name,self, Unprimed))::vdcl.C.view_vars in
           let a_args = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in

@@ -1849,15 +1849,332 @@ infer [HP,P2,@classic]
                   HP(n',p,x@NI) * x::node<val_74_1706,n'>@M&
                    true --> P2(n',p_1711) * HP_33(p)&true]
 ===================================================================
+# ex20e9f.slk
+
+lemma_infer [H,@classic] H(self,y)*y::node<_,self> 
+  -> self::node<_,q>*H(q,self).
+print residue.
+
+# Need to work manually on the steps of this lemma
+  synthesis
+
+Starting Omega.../usr/local/bin/oc
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true --> H(self_lem_13,self_lem_13@NI)&true; 
+                  H(self_lem_13,y_33@NI)&
+                   true |#| y_33::node<Anon_32,self_lem_13>@M&true --> emp&
+                   self_lem_13=y_33]
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(y_33,self_lem_13) ==>  UnmatchedRHSData]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_43(q_42,y_33@NI,self_lem_13@NI)&
+                  true --> H(q_42,self_lem_13@NI)&true; 
+                 H(self_lem_13,y_33@NI) * y_33::node<Anon_32,self_lem_13>@M&
+                  true --> self_lem_13::node<Anon_41,q_42>@M * 
+                           HP_43(q_42,y_33@NI,self_lem_13@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold  ==>  InferUnfold ]]
+
 ===================================================================
+# ex20e9g5.slk --dump-lemmas
+
+# need to add LHS signature to complex lemma
+
+[Lemma "compl":  self::foo<y>@M * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]==> (exists Anon_12,q: self::node<Anon_12,q>@M * q::foo<ss>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head match:foo
+ body view:node
+ body pred_list:[foo]
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head:  self::foo<y>@M * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists Anon_12,q: self::node<Anon_12,q>@M * q::foo<ss>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists ss_28,Anon_11,y: self::foo<y>@M * y::node<Anon_11,ss_28>@M&ss_28=ss&
+{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[q](exists ss_24,
+   Anon_12: self::node<Anon_12,q>@M * q::foo<ss_24>@M&ss_24=ss&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_UNSAFE
+ coercion_fold: None
 ===================================================================
+# ex20e9f5a.slk
+
+infer [H,H3,@classic]
+    H3(x,y1)  |-  H(x,y) .
+print residue.
+
+<1>emp&y1=y&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H3(x,y@NI)&true --> H(x,y@NI)&true]
+
+# Why below fails to instantiate?
+
+infer [H,H3,@classic]
+    H3(x,y1) * y1::node<_,ss> |- [y] H(x,y) * y::node<_,ss>.
+print residue.
 ===================================================================
+# ex32a,ss
+
+void append3(node x, node y)
+  infer [H,@classic]
+  requires H(x,y)
+  ensures true;
+
+{    
+	if (x.next == null) 
+           x.next = y;
+	else
+           append3(x.next, y);
+}
+
+[ // BIND
+(0)H(x,y@NI)&
+true --> x::node<val_36_1569,next_36_1570>@M * 
+         HP_1571(next_36_1570,y@NI,x@NI)&
+true,
+ // PRE_REC
+(2;0)HP_1571(next_36_1570,y@NI,x@NI)&
+next_36_1570!=null |#| x::node<val_36_1569,next_36_1570>@M&
+true --> H(next_36_1570,y@NI)&
+true,
+ // POST
+(1;0)HP_1571(next_36_1570,y@NI,x@NI)&
+y'=y & x'=x & next_36_1570=null & next_37_1580=next_36_1570 --> emp&
+true]
+
+--new-pred-synthesis  (default)
+
+# Why can't we infer:
+
+   requires x::lseg<null> & x!=null
+   ensures true;
+
+!!! **WARNING****syn.ml#188:Merging is not performed due to the set of pre-hprels does not have identical LHS and/or guards
+!!! **iast.ml#3923:Adding the view H into iprog.
+Context of Verification Failure: ex32a-app-lseg-pre.ss_34:10_34:14
+
+Last Proving Location: ex32a-app-lseg-pre.ss_39:11_39:29
+
+ERROR: at _0:0_0:0
+Message: HP_1571 is neither 2 a data nor view name
+
+!!! **synUtils.ml#792:Failure("HP_1571 is neither 2 a data nor view name")
+!!! **synUtils.ml#793:WARNING: Cannot normalize the view H
+!!! **syn.ml#686:XXX Scheduling pred_elim_useless
+!!! **norm.ml#165:USELESS Parameters eliminated:[]
+!!! **syn.ml#689:XXX Scheduling pred_reuse
+!!! **syn.ml#690:XXX derived_view names:[]
+!!! **syn.ml#693:XXX existing view names:[memLoc,H,ll]
+!!! **syn.ml#695:XXX reuse found ...:[]
+!!! **syn.ml#696:XXX Scheduling pred_reuse_subs
+!!! **sa3.ml#3289:DERIVED VIEWS:[]
+!!! **cf_ext.ml#81:add_data_tags_to_obj
+
+--ops (wrong..)
+
+[ H(x_1600,y_1601) ::= x_1600::node<val_36_1569,next_36_1570>@M&next_36_1570=null(4,5)]
+
 ===================================================================
+# ex21t3a.slk -dre ".*coercion" --dd-calls-all
+
+(==solver.ml#14468==)
+apply_left_coercion@14@13@6@5@4
+apply_left_coercion inp1 :  q_131::app4b<>@M&v_130!=0 & q_131!=null&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [Anon_132; q_133]
+ es_gen_impl_vars(E): [q]
+ es_heap: self_app4b_llem::node<v_130,q_131>@M
+
+%%%                                apply_left_coercion
+%%%                                create_view_arg_list_from_pos_map (8)
+%%%                                create_view_arg_list_from_pos_map@14.
+
+--adhoc-3
+
+Total number of errors: 21 in files:
+  sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
+ sleek8.slk({E1#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
+ sleek12-lend.slk({E1#Valid},{E2#Fail},{E3#Valid}) 
+ infer/infer1.slk({E9#Fail}) infer/infer8.slk({E26#Fail}) imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) lemmas/lseg.slk({L3#Valid},{L4#Valid}) lemmas/lseg1.slk({L1#Valid}) lemmas/rlseg.slk({L1#Valid},{L3#Valid}) lemmas/app-tail.slk({E1#Valid}) lemmas/lseg_case.slk({L2#Valid},{L3#Valid},{L4#Valid},{L6#Valid}) lemmas/nlseg4e.slk({L2#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L3#Valid}) lemmas/dseg1.slk({L1#Valid}) lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) veribsync/barrier-static.slk(no result  for {E}) veribsync/barrier-dynamic2.slk(no result  for {E}).
+
+  sleek12-lend.slk({E1#Valid},{E2#Fail},{E3#Valid}) 
+  infer/infer1.slk({E9#Fail}) 
+  infer/infer8.slk({E26#Fail}) 
+  imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+  lemmas/rlseg.slk({L1#Valid},{L3#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+  fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) 
+  fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
+  veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) 
+  veribsync/barrier-static.slk(no result  for {E}) 
+  veribsync/barrier-dynamic2.slk(no result  for {E}).
+
+29Oct
+
+  sleek12-lend.slk({E1#Valid},{E2#Fail},{E3#Valid}) 
+  infer/infer1.slk({E9#Fail}) 
+  infer/infer8.slk({E26#Fail}) 
+  imm/imm1.slk({E3#Valid},{E4#Valid},{E5#Valid}) 
+  lemmas/rlseg.slk({L1#Valid},{L3#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid})
+   lemmas/dseg1.slk({L1#Valid}) 
+  lemmas/lseg_complex.slk({E1#Valid},{E2#Valid}) 
+  fracperm/split_simple.slk({E1#Valid},{E2#Fail},{E3#Valid},{E5#Fail}) 
+  fracperm/split-combine.slk({E11#Valid},{E12#Valid},{E13#Valid},{E14#Valid},{E15#Valid},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid},{E9#Valid}) 
+  veribsync/bperm-split-combine.slk({E4#Valid},{E5#Valid},{E6#Valid}) 
+  veribsync/barrier-static.slk(no result  for {E}) 
+  veribsync/barrier-dynamic2.slk(no result  for {E}).
+
 ===================================================================
+# ex21t3a
+
+lemma_safe "app4b_rlem" self::app4b<> <- self::node<_, q> * q::ll<>. 
+
+# should fail ..
+
+ Lemma infer inferred succeeded in current context.
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+[[ SEARCH ==>  
+  (Lemma <== app4b_rlem(self_app4b_rlem,self_app4b_rlem)) 
+  ==>  Match(self_app4b_rlem,self_app4b_rlem) 
+  ==>  Fold ==>  Match(q_148,q_148) ==>  
+  COND ==>  Match(q_146,q_209) ==> 
+||OR|| ==>  
+ SEARCH ==>  
+  (Lemma <== app4b_rlem(self_app4b_rlem,self_app4b_rlem)) ==>  
+   Match(self_app4b_rlem,self_app4b_rlem) ==>  
+   COND ==>  BaseCaseFold]]
+
+
+!!! **solver.ml#12846:M_fold: self_app4b_rlem::app4b<>@M
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#12846:M_fold: self_app4b_rlem::app4b<>@M
+!!! **solver.ml#12846:M_fold: q_152::app4b<>@M
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#13377:M_lemma:Some(Lemma "app4b_rlem":  self::app4b<>@M&{FLOW,(20,21)=__norm#E}[]<==)
+!!! **solver.ml#12846:M_fold: q_148::ll<>@M
 ===================================================================
+# norm/ex26a3.slk
+
+# need to write recognize pred segment
+(*   self::P<..p> 
+           == self=p
+           or self::node<_,p>
+           or self::node<_,q>*q::P<..,p>
+*)
+let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
+  let ty = self_typ in
+
+without --inv-baga
+
+ERROR: at ex26a3-WSS-extn.slk_11:5_11:11
+Message: 
+Inv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:
+Exception processed: Failure("\nInv Check: Fail.(View WSS_sz:Over)**astsimp.ml#2208:")
+error at: 
+SLEEK FAILURE (END)
+
+--inv-baga
+
+!!! **WARNING****derive.ml#707:TODO : need to build functions of views here
+!!! **cast.ml#3903:Adding the view WSS_sz[p,nnn] into cprog.
+!!! **WARNING****iast.ml#3922:Updating an available view decl (WSS_sz) in iprog
+Exception processed: Not_found
+error at: 
+SLEEK FAILURE (END)
 ===================================================================
+# ex26a4.slk --pcp
+
+  baga inv: [([self], n=1),([self], 2<=n)]
+ 
+# how come inv-baga gives complex unsimplified outcome
+
+--inv-baga
+
+ inv: self!=null & ((2<=n | n=1))
+  baga inv: [([self], n=1),([self], 2<=n)]
+  baga over inv: [([self], n=1),([self], 2<=n)]
+  baga over inv (unfolded): [([self], n=1),([self], 2<=n)]
+  baga under inv: [([self], n=1),([self], 2<=n)]
+  xform: self!=null & 0<=n & self!=null & ((2<=n | n=1))
+
+-wo inv-baga
+
+  inv: self!=null & 0<=n
+  
+  baga over inv: [([], self!=null & 0<=n)]
+  baga over inv (unfolded): [([self], 1<=n)]
+  
+  xform: self!=null & 1<=n
+
+(==astsimp.ml#2745==)
+compute_inv_baga@3
+compute_inv_baga inp1 :[WFSeg,WSS]
+compute_inv_baga@3 EXIT:[ view WFSeg{}[]<p:node,nnn:int>= 
+ inv: ((self!=null & 1<=nnn) | (self=p & nnn=0))
+ baga inv: [([], self=p & nnn=0),([self], 1<=nnn)]
+ baga over inv: [([], self=p & nnn=0),([self], 1<=nnn)]
+ baga over inv (unfolded): [([], self=p & nnn=0),([self], 1<=nnn)]
+ baga under inv: [([], self=p & nnn=0),([self], 1<=nnn)]
+ xform: 0<=nnn & (((self!=null & 1<=nnn) | (self=p & nnn=0)))
+ ,
+ view WSS{}[]<p:node,bbb:int>= 
+ inv: self!=null & ((2<=bbb | bbb=1))
+ baga inv: [([self], bbb=1),([self], 2<=bbb)]
+ baga over inv: [([self], bbb=1),([self], 2<=bbb)]
+ baga over inv (unfolded): [([self], bbb=1),([self], 2<=bbb)]
+ baga under inv: [([self], bbb=1),([self], 2<=bbb)]
+ xform: self!=null & 0<=bbb & self!=null & ((2<=bbb | bbb=1))
+ ]
+
 ===================================================================
+# aux24.slk
+
+# least fix-point
+
+
+!!! **fixcalc.ml#1046:Input of fixcalc: :Q:={[] -> [m,r] -> []: (r=0 && m=0 ||  (exists (r1: (exists (m1:m1=m-(1) && Q(m1,r1)))  && r=r1+2)) )
+};
+bottomupgen([Q], [2], SimHeur);
+!!! **fixcalc.ml#393:svls (orig):[[m:int,Q:RelT([]),r:int]]
+!!! **fixcalc.ml#394:svl1 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#395:svl2 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#1074:Result of fixcalc (parsed): :[ r=2*m & m>=0]
+!!! fixpoint2:[( Q(m,r), r=2*m & m>=0)]
 ===================================================================
+# ex23.slk
+
+relAssume
+  R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0
+        -->  R(v_int_18_1500').
+relAssume
+  R(i) -->  i!=0.
+relation_infer [R][].
+
+
+# greatest fix-point needs to be implemented
+
+!!! **sleekengine.ml#1488:WARNING : Spurious RelInferred (not collected):[RELDEFN R: ( R(i) & i=v_int_18_1500'+1 & (1+v_int_18_1500')!=0) -->  R(v_int_18_1500')]
+!!! **sleekengine.ml#1488:WARNING : Spurious RelInferred (not collected):[RELDEFN R: ( R(i)) -->  i!=0]
+!!! **sleekengine.ml#1853:post_rel_constrs:[( R(i), i!=0)]
+Exception processed: Not_found
+error at: 
+SLEEK FAILURE (END)
 ===================================================================
 ===================================================================
 ===================================================================

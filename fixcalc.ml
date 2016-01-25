@@ -940,11 +940,11 @@ let rec is_not_rec pf = match pf with
 let substitute_args_x a_rel = match a_rel with
   | CP.BForm ((CP.RelForm (SpecVar (_,id,_) as name,args,o1),o2),o3) ->
     let new_args, subs =
-      let prog =
-        match !Cast.global_prog with
-        | Some p -> p
-        | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!")
-      in
+      let prog = !Cast.global_prog in
+      (*   match !Cast.global_prog with *)
+      (*   | Some p -> p *)
+      (*   | None -> failwith (x_loc^"substitute_args: Initialize global_prog first!") *)
+      (* in *)
       let typed_args = 
         try
           List.combine (x_add_1 Cast.look_up_rel_args_type_from_prog prog id) args 
@@ -1422,11 +1422,11 @@ let re_order_para rels pfs ante_vars =
 
 let arrange_para_new input_pairs ante_vars =
   let rels,pfs = List.split input_pairs in
-  let () = Debug.binfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.binfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = x_tinfo_hp (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = x_tinfo_hp (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   let rels,pfs = x_add re_order_para rels pfs ante_vars in
-  let () = Debug.binfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
-  let () = Debug.binfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
+  let () = x_tinfo_hp (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
+  let () = x_tinfo_hp (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   try List.combine rels pfs
   with _ -> report_error no_pos "Error in re_order_para"
 

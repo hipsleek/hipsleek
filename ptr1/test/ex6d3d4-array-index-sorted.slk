@@ -1,0 +1,94 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+pred arr_seg2<i,n> == x::arrI<_> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+
+/*
+  checkentail_exact
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+
+ <1>emp&j=i & y=i+base+1 & x=i+base & n=i+2 & 0<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  COND ==>  Match(x,x) ==>  Fold ==>  Match(y,x_140)]]
+*/
+
+
+checkentail
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> * y::arrI<_>  & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1// & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Fail.
+
+checkentail
+  x::arrI<_> * y::arrI<_> * z::arrI<_> & x=base+j & z=x+2 & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+
+checkentail_exact
+  x::arrI<_> * y::arrI<_> * z::arrI<_> & x=base+j & z=x+2 & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+print residue.
+expect Valid.
+expect_infer Fail R{false}.
+expect_infer Valid R{n=i+3}.
+
+/*
+# ex6d3d4.slk -dre "choose_c"
+
+  checkentail_exact
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+
+
+<1>x::arrI<Anon_14>@M&j=i-1 & base=(x-i)+1 & y=x+1 & n=i+1 & 1<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(y,x_110)]]
+
+# Sort list of matched item, so that smaller ones come first
+  esp for folding.
+
+--------------------------
+(==context.ml#3523==)
+choose_context@1
+choose_context inp1 :LHS node: y::arrI<Anon_13>@M * x::arrI<Anon_14>@M
+choose_context inp2 :RHS node: base::arr_seg2<i,n>@M
+choose_context inp3 :LHS pure: 0<=j & y=1+x & x=j+base
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[ Type: Root
+ LHS: y::arrI<Anon_13>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(y)
+ lhs_rest: x::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arrI<Anon_14>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(x)
+ lhs_rest: y::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None]
+
+
+*/

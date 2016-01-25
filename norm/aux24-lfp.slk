@@ -1,0 +1,23 @@
+relation Q(int a, int b).
+relAssume
+  nnnn=0 & m=0 -->  Q(m,nnnn).
+relAssume
+  m1=m-1 & r=r1+2 & Q(m1,r1) -->  Q(m,r).
+relation_infer [][Q].
+
+/*
+# aux24.slk
+
+# least fix-point
+
+
+!!! **fixcalc.ml#1046:Input of fixcalc: :Q:={[] -> [m,r] -> []: (r=0 && m=0 ||  (exists (r1: (exists (m1:m1=m-(1) && Q(m1,r1)))  && r=r1+2)) )
+};
+bottomupgen([Q], [2], SimHeur);
+!!! **fixcalc.ml#393:svls (orig):[[m:int,Q:RelT([]),r:int]]
+!!! **fixcalc.ml#394:svl1 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#395:svl2 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#1074:Result of fixcalc (parsed): :[ r=2*m & m>=0]
+!!! fixpoint2:[( Q(m,r), r=2*m & m>=0)]
+
+*/

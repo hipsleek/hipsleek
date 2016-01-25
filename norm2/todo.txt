@@ -1,0 +1,467 @@
+# ex1b.c (FIXED)
+
+C_INCLUDE_PATH=.. ../hip ex1b-simple-a.01-alloca.c -infer "@shape_prepost" 
+
+Proving binding in method foo$int_star for spec  EAssume 
+   emp&{FLOW,(4,5)=__norm#E}[]
+   struct:EBase 
+            emp&{FLOW,(4,5)=__norm#E}[], Line 5
+
+( []) bind: node  x'::int_star<value_13_1633'>@M cannot be derived from conte
+
+==========================================================================
+# ex1a3.ss
+
+It seems we need to use IMPLICIT instead EXIST here for
+precondition; and maybe also postcondition.
+
+We probably also need to schedule @post to infer
+some relations..
+
+ infer[@shape_post GP_1629]requires EXISTS(value_15_1628: y::int_star<value_15_1628>@M&
+true&[]requires emp&MayLoop[]
+ ensures GP_1629(y)&true{,(4,5)=__norm#E};
+
+ es_gen_impl_vars(E): []]
+!!! **solver.ml#3087:free var to_conseq:y
+********************************************
+******* shape relational assumptions *******
+********************************************
+[ // POST
+(2;1;0)y::int_star<value_15_1634>@M&true --> GP_1629(y)&
+true]
+==========================================================================
+# ex1a4.c (FIXED)
+
+void loop (int* y)
+/*@
+  infer[@shape_prepost,@term]
+  requires true
+  ensures true;
+*/
+{
+    while (*y > 0) 
+  /*@
+    infer[@shape_prepost,@term]
+    requires true
+    ensures true;
+   */
+   {
+      *y = *y - 1;
+    }
+}
+
+# Why do we have split components problem here..
+ Why was post-shape scheduled so late?
+
+Context of Verification Failure: _0:0_0:0
+
+Last Proving Location: ex1a4-alloca-nested-while.c_14:4_22:5
+
+ERROR: at _0:0_0:0
+Message: split_components: don't expect OR
+
+ExceptionFailure("split_components: don't expect OR")Occurred!
+
+Error1(s) detected at main 
+Stop z3... 113 invocations 
+Stop Omega... 133 invocations caught
+
+Exception occurred: Failure("split_components: don't expect OR")
+Error3(s) detected at main 
+
+==========================================================================
+# ex1a3.c --trace-exc (QUICK-FIX)
+
+Exception(look_up_view_def_raw):Not_found
+Exception(sig_of_formula):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
+Exception(process_one_match):Failure("**cfutil.ml#138:Found duplicate star nodes in [ x::int_star<value_14_1694>@M, HP_1713(x,y), y'::int_star<value_21_1723>@M]")
+
+==========================================================================
+# ex1a3.c --trace-exc
+
+Exception(get_proot_hp_def_raw):Failure("hp_root_pos has not yet set.")
+Exception(C.get_root_args_hp):Failure("hp_root_pos has not yet set.")
+
+# Why was dangling introduced below?
+
+!!! **syn.ml#183:Merging is not performed due to the set of pre-hprels does not have disjoint conditions:
+ 
+  [(1;1;0)unfold HP_1695(y,x) |#|  --> y::int_star<value_21_1712>@M * 
+                                       HP_1713(x,y); 
+   (1;1;0)unfold HP_1695(y,x) |#|  --> y::Dangling<>@M&y=x]
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y::Dangling<>@M)
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::int_star<value_14_1694>@M, y::Dangling<>@M)
+
+==========================================================================
+# ex1a3.c --trace-exc -show-push-list ".*_hp_rel" ( FIXED by considering only rec type *)
+
+(==solver.ml#11313==)
+compute_actions@18
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: HP_1687(x,y)
+compute_actions inp3 :LHS pure: x'=x & y'=y & v_bool_14_1583'
+compute_actions inp4 :RHS cand:[ x'::int_star<value_14_1529'>@L]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[value_14_1529']
+compute_actions@18 EXIT: SEARCH =>[
+  Prio:2
+  BaseCaseUnfold =>
+    LHS: HP_1687(x,y)
+    RHS: x'::int_star<value_14_1529'>@L;
+  Prio:2
+  InferUnfold =>
+    LHS: HP_1687(x,y)
+    RHS: x'::int_star<value_14_1529'>@L
+  ]
+
+# Why such a push? Where did HP_1695(y,x) came from? 
+  base-case-fold for HP
+
+push_list(es_infer_hp_rel):1[ (1;1;0)unknown HP_1695(y,x) |#|  --> emp&y=x]
+
+!!! **inferHP.ml#267:args12:[]
+!!! **inferHP.ml#281:niu_svl_ni_total:[(x,@NI)]
+push_list(es_infer_hp_rel):1[ (1;1;0)unknown HP_1695(y,x) |#|  --> y::int_star<value_21_1712>@M]
+
+(==solver.ml#13547==)
+infer_collect_hp_rel#1@21@20
+infer_collect_hp_rel#1 inp1 :lhs_node: HP_1695(y,x)
+infer_collect_hp_rel#1 inp2 :rhs_node: y'::int_star<value_21_1707>@M
+infer_collect_hp_rel#1 inp3 :lhs:
+ HP_1695(y,x) * x::int_star<value_14_1694>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1694&
+{FLOW,(4,5)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: y'::int_star<value_21_1707>@M&{FLOW,(4,5)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es:
+  HP_1695(y,x) * x::int_star<value_14_1694>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1694&
+{FLOW,(4,5)=__norm#E}[]
+ es_infer_hp_rel: [(1;0)unknown HP_1687(x,y) |#|  --> x::int_star<value_14_1694>@M * 
+                                                      HP_1695(y,x)]
+ es_evars: [value_21_1707]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@shape_pre]
+ es_evars: [value_21_1707]
+ es_cond_path: [1; 1; 0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [HP_1687; HP_1695]
+infer_collect_hp_rel#1 inp6 :classic:false
+infer_collect_hp_rel#1@21 EXIT:(true,2:  x::int_star<value_14_1694>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1694&
+{FLOW,(4,5)=__norm#E}[]
+ es_infer_hp_rel: [(1;1;0)unknown HP_1695(y,x) |#|  --> y::int_star<value_21_1712>@M; 
+                   (1;0)unknown HP_1687(x,y) |#|  --> x::int_star<value_14_1694>@M * 
+                                                      HP_1695(y,x)]
+ es_evars: [value_21_1707]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@shape_pre]
+ es_evars: [value_21_1707]
+ es_cond_path: [1; 1; 0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [HP_1687; HP_1695],3:abd heap: y::int_star<value_21_1712>@M,4:None,5:None,6:new rest:None)
+==========================================================================
+# norm2/ex1a3.c --pcp 
+
+# Why isn't char_star printed by --pcp
+
+data __Exc {
+;
+}is_rec:false
+
+data __Error {
+;
+}is_rec:false
+
+data __MayError {
+;
+}is_rec:false
+
+data __Fail {
+;
+}is_rec:false
+
+data int_star {
+  int value@;
+}is_rec:false
+
+**data_table** reset
+**data_table** Add tag of:(__Exc,[])
+**data_table** Add fields of:(__Exc,[])
+**data_table** Add tag of:(__Error,[])
+**data_table** Add fields of:(__Error,[])
+**data_table** Add tag of:(__MayError,[])
+**data_table** Add fields of:(__MayError,[])
+**data_table** Add tag of:(__Fail,[])
+**data_table** Add fields of:(__Fail,[])
+**data_table** Add tag of:(Object,[])
+**data_table** Add fields of:(Object,[])
+**data_table** Add tag of:(String,[])
+**data_table** Add fields of:(String,[])
+**data_table** Add tag of:(char_star,[[],[]])
+**data_table** Add fields of:(char_star,[(int,val),(char_star,next)])
+**data_table** Add tag of:(int_ptr_ptr,[[]])
+**data_table** Add fields of:(int_ptr_ptr,[(int_ptr,val)])
+**data_table** Add tag of:(int_ptr,[[]])
+**data_table** Add fields of:(int_ptr,[(int,val)])
+**data_table** Add tag of:(lock,[])
+**data_table** Add fields of:(lock,[])
+**data_table** Add tag of:(barrier,[[]])
+**data_table** Add fields of:(barrier,[(int,phase)])
+**data_table** Add tag of:(thrd,[])
+**data_table** Add fields of:(thrd,[])
+**data_table** Add tag of:(__RET,[])
+**data_table** Add fields of:(__RET,[])
+**data_table** Add tag of:(__ArrBoundErr,[])
+**data_table** Add fields of:(__ArrBoundErr,[])
+**data_table** Add tag of:(__DivByZeroErr,[])
+**data_table** Add fields of:(__DivByZeroErr,[])
+**data_table** Add tag of:(int_star,[[]])
+**data_table** Add fields of:(int_star,[(int,value)])
+
+==========================================================================
+# norm/ex4b4.slk
+
+HeapPred HP(cell a,cell@NI b).
+infer[HP,@classic] HP(x,y) |- x::cell<_>.
+print residue.
+
+ infer[HP,@classic] HP(x,y) |- x::cell<_>.
+
+# Can this be improved?
+
+(==solver.ml#11313==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: HP(x,y)
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ x::cell<Anon_11>@M]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[Anon_11]
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:2
+  BaseCaseUnfold =>
+    LHS: HP(x,y)
+    RHS: x::cell<Anon_11>@M;
+  Prio:2
+  InferUnfold =>
+    LHS: HP(x,y)
+    RHS: x::cell<Anon_11>@M
+  ]
+
+*/
+==========================================================================
+# ex1a3.c (FIXED)
+
+[ // BIND
+(1;0)
+HP_1687(x,y)&true --> x::int_star<value_14_1691>@M * HP_1692(y,x@NI)&true,
+ // PRE
+(1;1;0)
+HP_1692(y,x@NI)&true --> y::int_star<value_21_1705>@M&true,
+ // PRE_REC
+(1;1;0)
+y'::int_star<value_21_1711>@M * GP_1728(y',x'@NI)& y'!=null --> HP_1687(x',y')&true,
+ // PRE_REC
+1a3(1;1;0)
+emp&y'!=null |#| x'::int_star<v_int_30_1727>@M& true --> GP_1728(y',x'@NI)& true]
+
+!!! **syn.ml#671:other hprels of HP_1687: [(1;1;0)fold y'::int_star<value_21_1711>@M&y'!=null |#|  --> HP_1687(x',y')]
+ExceptionFailure("**syn.ml#678:Cannot transform the hprels of HP_1687 into view declarations.")Occurred!
+
+Error1(s) detected at main 
+Stop z3... 110 invocations 
+Stop Omega... 99 invocations caught
+
+Exception occurred: Failure("**syn.ml#678:Cannot transform the hprels of HP_1687 into view declarations.")
+==========================================================================
+# norm/ex4b7b.slk (FIXED)
+
+infer[HP]  y::cell<_> * x::cell<_> |- HP(x,y).
+print residue.
+
+# Got:
+ inferred hprel: [emp&true |#| x::cell<Anon_12>@M&true --> GP_23(y,x@NI)&true; 
+                  y::cell<Anon_11>@M * GP_23(y,x@NI)&true --> HP(x,y)&true]
+
+Should get:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [y::cell<Anon_14>@M&true --> GP_30(y,x@NI)&true; 
+                  x::cell<Anon_13>@M * GP_30(y,x@NI)&true --> HP(x,y)&true]
+
+(==solver.ml#11313==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: y::cell<Anon_11>@M * x::cell<Anon_12>@M
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ HP(x,y)]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[]
+compute_actions@1 EXIT: COND =>[
+  Prio:2
+  InferFold 0=>
+    LHS: y::cell<Anon_11>@M
+    RHS: HP(x,y);
+  Prio:2
+  InferFold 0=>
+    LHS: x::cell<Anon_12>@M
+    RHS: HP(x,y)
+  ]
+
+==========================================================================
+# norm2/ex5a.c
+
+# Why are there sometimes different copies of programs?
+
+!!! **syn.ml#704:other hprels of GP_1699: 
+!!! **cast.ml#3988:Adding the view HP_1654[y_ref,x_ref] into cprog.
+!!! **cast.ml#621:prog and cprog are different
+**cprog** check_prog_only:false
+
+!!! **WARNING****iast.ml#3922:Updating an available view decl (HP_1654) in iprog
+!!! **cast.ml#3988:Adding the view HP_1755[] into cprog.
+!!! **cast.ml#621:prog and cprog are different
+**cprog** check_prog_only:false
+
+!!! **iast.ml#3923:Adding the view HP_1755 into iprog.
+!!! **cast.ml#3988:Adding the view HP_1648[x_ref,y_ref] into cprog.
+!!! **cast.ml#621:prog and cprog are different
+**cprog** check_prog_only:false
+
+!!! **WARNING****iast.ml#3922:Updating an available view decl (HP_1648) in iprog
+!!! **cast.ml#3988:Adding the view HP_1756[x_ref] into cprog.
+!!! **cast.ml#621:prog and cprog are different
+**cprog** check_prog_only:false
+==========================================================================
+# norm2/ex5a.c (DONE)
+
+# Need to mark root for unfolding too:
+
+push_list(es_infer_hp_rel):**inferHP.ml#1324:1[ (1;0)unknown HP_1648(c,x_ref,y_ref) |#|  --> x_ref::int_star<value_8_1653>@M * 
+                                              HP_1654(c,y_ref,x_ref)]
+
+==========================================================================
+# ex5a.c
+
+GOT below:
+
+Can we later derive:
+
+  HP_1643(c,x_ref,y_ref) = c::int_star<_>*x_ref::int_star<_>*y_ref::int_star<_>*
+
+Maybe, we can do so by ignoring the post-relation generated:
+  GP_1699(c',x_ref,y_ref'@NI)&
+  GP_1700(x_ref,c'@NI,y_ref'@NI)&
+
+
+[ // BIND
+(1;0)HP_1643(c,x_ref,y_ref)&
+true --> y_ref::int_star<value_8_1647>@M * HP_1648(c,x_ref,y_ref@NI)&
+true,
+ // BIND
+(1;0)HP_1648(c,x_ref,y_ref@NI)&
+true --> x_ref::int_star<value_8_1653>@M * HP_1654(c,y_ref@NI,x_ref@NI)&
+true,
+ // BIND
+(1;1;0)HP_1654(c,y_ref@NI,x_ref@NI)&true --> c::int_star<value_16_1680>@M&
+true,
+ // PRE_REC
+(1;1;0)y_ref'::int_star<v_int_15_1679>@M * GP_1699(c',x_ref,y_ref'@NI)&
+true --> HP_1643(c',x_ref,y_ref')&
+true,
+ // PRE_REC
+(1;1;0)c'::int_star<v_int_16_1698>@M * GP_1700(x_ref,c'@NI,y_ref'@NI)&
+true --> GP_1699(c',x_ref,y_ref'@NI)&
+true,
+ // PRE_REC
+(1;1;0)x_ref::int_star<value_8_1653>@M&
+true --> GP_1700(x_ref,c'@NI,y_ref'@NI)&
+true]
+
+==========================================================================
+# ex1a3.c
+
+!!! **WARNING****cast.ml#659:updating Cast.cprog
+*XXcprog** **cast.ml#1517::**inferHP.ml#1125::**inferHP.ml#2215::**solver.ml#13547::**solver.ml#11344::**solver.ml#7962::**solver.ml#7474:update (same prog?):false
+
+!!! **WARNING****cast.ml#659:updating Cast.cprog
+*XXcprog** **cast.ml#1517::**inferHP.ml#1125::**inferHP.ml#2215::**solver.ml#13547::**solver.ml#13872::**solver.ml#11344::**solver.ml#7962::**solver.ml#7474:update (same prog?):false
+==========================================================================
+# norm2/ex5b.ss
+
+# Why are there two c::cell<..> nodes in pre-spec?
+
+ infer[@shape_post GP_3872]requires EXISTS(val_16_3869,val_10_3870,
+val_10_3871: c::cell<val_16_3869>@M * x::cell<val_10_3870>@M * 
+             c::cell<val_10_3871>@M
+
+!!! INFERRED SHAPE SPEC:
+ EInfer @shape_pre[]
+   EBase 
+     (exists val_16_3869,val_10_3870,
+     val_10_3871: c::cell<val_16_3869>@M * x::cell<val_10_3870>@M * 
+                  c::cell<val_10_3871>@M&
+     {FLOW,(4,5)=__norm#E}[])
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+
+[ view HP_2910<y:cell,x:cell>= 
+  EBase 
+    (exists y_3854,x_3855: self::HP_1587<y_3854,x_3855>@M&
+    y_3854=y & x_3855=x&{FLOW,(1,28)=__flow#E}[])equiv_set: ([],HP_1587)
+  ,
+ view HP_2905<c:cell,y:cell>= 
+  EBase 
+    self::HP_2950<c>@M&{FLOW,(1,28)=__flow#E}[],
+ view HP_2892<x:cell,c:cell>= 
+  EBase 
+    exists (Impl)[val_10_2902; val_10_2908; 
+    val_16_2914](* lbl: *){678}->self::cell<val_10_2902>@M * 
+                                 x::cell<val_10_2908>@M * 
+                                 c::cell<val_16_2914>@M&
+    {FLOW,(1,28)=__flow#E}[]equiv_set: ([],GP_2191)
+  ]
+==========================================================================
+# norm/ex4c2c.slk
+
+ infer[HP] b::cell<_>  |- HP(a,b).
+
+# need to convert Rel--> HRel
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&a=null&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN HP: ( a=null) -->  HP(a,b)]
+[[ UnmatchedRHSData]]
+
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================

@@ -1,0 +1,37 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b, cell c).
+
+infer[HP] HP(a,b,c) & c=z |- z::cell<_>. 
+print residue.
+
+infer[HP] a::cell<_>*c::cell<_> & c=z |- HP(a,b,z) .
+print residue.
+
+/*
+# norm/ex4b8e.slk
+
+infer[HP] a::cell<_>*c::cell<_> & c=z |- HP(a,b,z) .
+
+ <1>emp&c=z&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true --> GP_37(b,a@NI,c@NI)&true; 
+                  a::cell<Anon_12>@M * GP_37(b,a@NI,c@NI)&
+                   true --> GP_36(a,b,c@NI)&true; 
+                  c::cell<Anon_13>@M * GP_36(a,b,c@NI)&true --> HP(a,b,c)&
+                   true]
+
+infer[HP] a::cell<_>*c::cell<_>  |- HP(a,b,c).
+
+!!! **inferHP.ml#1579:infer_fold(lhs): c::cell<Anon_13>@M
+!!! **inferHP.ml#1580:infer_fold(rhs): HP(a,b,z)
+!!! **inferHP.ml#1581:alias_set:[c,z]
+
+# expects c:: to be picked
+# should form GP_34(a,b,c@NI) instead of GP_34(cell b, cell c, cell@NI a).
+
+  c::cell<Anon_13>@M * GP_36(b,c,a) |#|  --> HP(a,b,c)]
+
+
+*/

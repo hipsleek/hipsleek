@@ -313,6 +313,12 @@ let string_of_pure_double p =
   | Pure_c c -> "Pure_c: " ^ (Iprinter.string_of_formula_exp c) 
   | Pure_t t -> "Pure_t: " ^ (Iprinter.string_of_formula_exp (fst t)) 
   
+let get_pure_exp p pos : P.exp =
+  match p with
+  | Pure_c c -> c
+  | Pure_t t -> (fst t) 
+  | Pure_f f -> report_error pos "pure expression unexpected here"
+
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
   | _ -> report_error (get_pos 1) "with 1 expected pure_form, found cexp"
@@ -996,7 +1002,8 @@ expect_infer:
     `EXPECT_INFER; ty=validate_result; peek_relassume; t=id; `OBRACE; f = OPT expect_infer_term; `CBRACE ->
        (match t with
           | "R" -> ExpectInfer (ty, V_Residue f)
-          | "I" -> ExpectInfer (ty, V_Infer f)
+          | "I" | "IE" | "IU" -> ExpectInfer (ty, V_Infer (t,f))
+          | "RE" -> failwith "parser"
           | _ -> raise Stream.Failure)
   | `EXPECT_INFER; ty=validate_result; t=id; `OBRACE; f = OPT expect_infer_relassume; `CBRACE ->
        (match t with
@@ -1374,21 +1381,31 @@ inv:
          (f, Some [([], f)])
    |`INV; bil = LIST0 baga_inv SEP `OR ->
         let pf =  List.fold_left (fun pf0 (idl,pf2) ->
-             let pf1 = List.fold_left (fun pf0 id ->
-                 let sv = (id,Unprimed) in
-                 P.mkAnd pf0 (P.mkNeqExp (P.Var (sv,no_pos)) (P.Null no_pos) no_pos) no_pos
-             ) (P.mkTrue no_pos) idl in
-             P.mkOr pf0 (P.mkAnd pf1 pf2 no_pos) None no_pos
-         ) (P.mkFalse no_pos) bil in
-         (pf, Some bil)]];
+         let idl = List.filter (fun (_,p) -> p==None) idl in
+         let idl = List.map fst idl in
+         let pf1 = List.fold_left (fun pf0 id ->
+             let sv = (id,Unprimed) in
+             P.mkAnd pf0 (P.mkNeqExp (P.Var (sv,no_pos)) (P.Null no_pos) no_pos) no_pos
+           ) (P.mkTrue no_pos) idl in
+         P.mkOr pf0 (P.mkAnd pf1 pf2 no_pos) None no_pos
+       ) (P.mkFalse no_pos) bil in
+        (pf, Some bil)]];
 
 baga_formula:
     [[pc=pure_constr; ob=opt_branches -> (P.mkAnd pc ob (get_pos_camlp4 _loc 1))
       | h=ho_fct_header -> (P.mkTrue no_pos)]];
 
 baga_inv:
-    [[`BG; `OPAREN; `OSQUARE; il = LIST0 cid SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN ->
-        let il = List.map (fun (name,_) -> name) il in
+    [[`BG; `OPAREN; `OSQUARE; il = LIST0 cid_or_pair SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN ->
+        let il = List.map (fun ((name,p),s)-> 
+          let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in
+          (name,s)
+          (* match s with *)
+          (* | Some(n2,p) ->  *)
+          (*   let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in *)
+          (*   (name,Some(n2)) *)
+          (* | None -> (name,None) *)
+        ) il in
         (il,p)]];
 
 opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
@@ -1567,6 +1584,15 @@ cid:
     | `NULL                     ->  (null_name, Unprimed)
     | `THIS _         		->  (this, Unprimed)]];
 
+
+cid_or_pair:
+  [[
+    `OPAREN; e1=cexp_w ; `COMMA;  e2= cexp_w; `CPAREN -> 
+    let pe1 = get_pure_exp e1 no_pos in
+    let pe2 = get_pure_exp e2 no_pos in
+    (("_",Unprimed),(Some(pe1,pe2)))
+  | i = cid -> (i,None)
+  ]];
 
 
 (** An Hoa : Access extension. For example: in "x.node.value", ".node.value" is the idext **)

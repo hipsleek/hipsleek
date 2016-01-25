@@ -188,736 +188,736 @@ let main_result = Var ({exp_var_name = "main_result";
                         exp_var_pos = no_pos})
 
 (**********************************************************************************)
-(* First attempt.
+(* (* First attempt.                                                                                                                                                                                                                *)
 
-   (*
-   Each formula is compiled into a class. Predicate definitions
-   are put to class with name c_checker where c is the name of
-   the predicate.
- *)
-   let rec compile_view (prog : C.prog_decl) (vdef : C.view_decl) : data_decl =
-   let pos = pos_of_formula vdef.C.view_formula in
-   let fields = ((Named vdef.C.view_data_name, self), pos) :: (gen_fields vdef pos) intype filter text
-   let in_params, out_params = split_params_mode vdef.C.view_vars vdef.C.view_modes in
-   let in_names = List.map CP.name_of_spec_var in_params in
-   let out_names = List.map CP.name_of_spec_var out_params in
-   let combined_exp = compile_formula prog vdef.C.view_formula (self :: in_names) out_names in
-   let check_proc = { proc_name = "traverse";
-   					 proc_mingled_name = "traverse";
-   					 proc_data_decl = None;
-   					 proc_constructor = false;
-   					 proc_args = [];
-   					 proc_return = Named "Set";
-   					 proc_static_specs = [];
-   					 proc_dynamic_specs = [];
-   					 proc_body = Some combined_exp;
-   					 proc_loc = no_pos } in
-   let ddef = { data_name = class_name_of_view vdef.C.view_name;
-   			   data_fields = fields;
-   			   data_parent_name = "Object";
-   			   data_invs = [];
-   			   data_methods = [check_proc] } 
-   in
-   	check_proc.proc_data_decl <- Some ddef;
-   	ddef
+(*    (*                                                                                                                                                                                                                            *)
+(*    Each formula is compiled into a class. Predicate definitions                                                                                                                                                                  *)
+(*    are put to class with name c_checker where c is the name of                                                                                                                                                                   *)
+(*    the predicate.                                                                                                                                                                                                                *)
+(*  *)                                                                                                                                                                                                                              *)
+(*    let rec compile_view (prog : C.prog_decl) (vdef : C.view_decl) : data_decl =                                                                                                                                                  *)
+(*    let pos = pos_of_formula vdef.C.view_formula in                                                                                                                                                                               *)
+(*    let fields = ((Named vdef.C.view_data_name, self), pos) :: (gen_fields vdef pos) intype filter text                                                                                                                           *)
+(*    let in_params, out_params = split_params_mode vdef.C.view_vars vdef.C.view_modes in                                                                                                                                           *)
+(*    let in_names = List.map CP.name_of_spec_var in_params in                                                                                                                                                                      *)
+(*    let out_names = List.map CP.name_of_spec_var out_params in                                                                                                                                                                    *)
+(*    let combined_exp = compile_formula prog vdef.C.view_formula (self :: in_names) out_names in                                                                                                                                   *)
+(*    let check_proc = { proc_name = "traverse";                                                                                                                                                                                    *)
+(*    					 proc_mingled_name = "traverse";                                                                                                                                                                                    *)
+(*    					 proc_data_decl = None;                                                                                                                                                                                             *)
+(*    					 proc_constructor = false;                                                                                                                                                                                          *)
+(*    					 proc_args = [];                                                                                                                                                                                                    *)
+(*    					 proc_return = Named "Set";                                                                                                                                                                                         *)
+(*    					 proc_static_specs = [];                                                                                                                                                                                            *)
+(*    					 proc_dynamic_specs = [];                                                                                                                                                                                           *)
+(*    					 proc_body = Some combined_exp;                                                                                                                                                                                     *)
+(*    					 proc_loc = no_pos } in                                                                                                                                                                                             *)
+(*    let ddef = { data_name = class_name_of_view vdef.C.view_name;                                                                                                                                                                 *)
+(*    			   data_fields = fields;                                                                                                                                                                                                *)
+(*    			   data_parent_name = "Object";                                                                                                                                                                                         *)
+(*    			   data_invs = [];                                                                                                                                                                                                      *)
+(*    			   data_methods = [check_proc] }                                                                                                                                                                                        *)
+(*    in                                                                                                                                                                                                                            *)
+(*    	check_proc.proc_data_decl <- Some ddef;                                                                                                                                                                                     *)
+(*    	ddef                                                                                                                                                                                                                        *)
 
-   and compile_formula (prog : C.prog_decl) (f0 : formula) (input_vars : ident list) (output_vars : ident list) : exp =
-   let disjs = formula_to_disjuncts f0 in
-   let pos = pos_of_formula f0 in
-   let disj_results = List.map (fun disj -> compile_disjunct prog disj input_vars output_vars) disjs in
-   let combined_exp = combine_disjuncts disj_results pos in
-   let ret_null = Return ({exp_return_val = Some (Null pos);
-   						  exp_return_pos = pos}) in
-   let seq = Seq ({exp_seq_exp1 = combined_exp;
-   				  exp_seq_exp2 = ret_null;
-   				  exp_seq_pos = pos}) in
-   	seq
+(*    and compile_formula (prog : C.prog_decl) (f0 : formula) (input_vars : ident list) (output_vars : ident list) : exp =                                                                                                          *)
+(*    let disjs = formula_to_disjuncts f0 in                                                                                                                                                                                        *)
+(*    let pos = pos_of_formula f0 in                                                                                                                                                                                                *)
+(*    let disj_results = List.map (fun disj -> compile_disjunct prog disj input_vars output_vars) disjs in                                                                                                                          *)
+(*    let combined_exp = combine_disjuncts disj_results pos in                                                                                                                                                                      *)
+(*    let ret_null = Return ({exp_return_val = Some (Null pos);                                                                                                                                                                     *)
+(*    						  exp_return_pos = pos}) in                                                                                                                                                                                       *)
+(*    let seq = Seq ({exp_seq_exp1 = combined_exp;                                                                                                                                                                                  *)
+(*    				  exp_seq_exp2 = ret_null;                                                                                                                                                                                            *)
+(*    				  exp_seq_pos = pos}) in                                                                                                                                                                                              *)
+(*    	seq                                                                                                                                                                                                                         *)
 
-   (*
-   If a disjunct returns a non-null result set, add it to the
-   main result.
+(*    (*                                                                                                                                                                                                                            *)
+(*    If a disjunct returns a non-null result set, add it to the                                                                                                                                                                    *)
+(*    main result.                                                                                                                                                                                                                  *)
 
-   Deterministic case (disjunctions return only one address set):
-   In case more than one disjunct succeeds, choose the first one.
+(*    Deterministic case (disjunctions return only one address set):                                                                                                                                                                *)
+(*    In case more than one disjunct succeeds, choose the first one.                                                                                                                                                                *)
 
-   result_i = <compile_disjunct i>;
-   if (result_i != null) return result_i;
- *)
-   and combine_disjuncts disj_results pos : exp = match disj_results with
-   | (e, output) :: rest -> begin
-   	  let outputexp = Var ({exp_var_name = output;
-   							exp_var_pos = pos}) in
-   	  let test = Binary ({exp_binary_op = OpIsNotNull;
-   						  exp_binary_oper1 = outputexp;
-   						  exp_binary_oper2 = Null pos;
-   						  exp_binary_pos = pos}) in
-   	  let ret = Return ({exp_return_val = Some outputexp;
-   						 exp_return_pos = pos}) in
-   	  let cond = Cond ({exp_cond_condition = test;
-   						exp_cond_then_arm = ret;
-   						exp_cond_else_arm = Empty pos;
-   						exp_cond_pos = pos}) in
-   	  let seq1 = Seq ({exp_seq_exp1 = e;
-   					   exp_seq_exp2 = cond;
-   					   exp_seq_pos = pos}) in
-   	  let rest_e = combine_disjuncts rest pos in
-   	  let seq2 = Seq ({exp_seq_exp1 = seq1;
-   					   exp_seq_exp2 = rest_e;
-   					   exp_seq_pos = pos}) in
-   		seq2
-   	end
-   | [] -> Empty pos
+(*    result_i = <compile_disjunct i>;                                                                                                                                                                                              *)
+(*    if (result_i != null) return result_i;                                                                                                                                                                                        *)
+(*  *)                                                                                                                                                                                                                              *)
+(*    and combine_disjuncts disj_results pos : exp = match disj_results with                                                                                                                                                        *)
+(*    | (e, output) :: rest -> begin                                                                                                                                                                                                *)
+(*    	  let outputexp = Var ({exp_var_name = output;                                                                                                                                                                              *)
+(*    							exp_var_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let test = Binary ({exp_binary_op = OpIsNotNull;                                                                                                                                                                          *)
+(*    						  exp_binary_oper1 = outputexp;                                                                                                                                                                                   *)
+(*    						  exp_binary_oper2 = Null pos;                                                                                                                                                                                    *)
+(*    						  exp_binary_pos = pos}) in                                                                                                                                                                                       *)
+(*    	  let ret = Return ({exp_return_val = Some outputexp;                                                                                                                                                                       *)
+(*    						 exp_return_pos = pos}) in                                                                                                                                                                                        *)
+(*    	  let cond = Cond ({exp_cond_condition = test;                                                                                                                                                                              *)
+(*    						exp_cond_then_arm = ret;                                                                                                                                                                                          *)
+(*    						exp_cond_else_arm = Empty pos;                                                                                                                                                                                    *)
+(*    						exp_cond_pos = pos}) in                                                                                                                                                                                           *)
+(*    	  let seq1 = Seq ({exp_seq_exp1 = e;                                                                                                                                                                                        *)
+(*    					   exp_seq_exp2 = cond;                                                                                                                                                                                             *)
+(*    					   exp_seq_pos = pos}) in                                                                                                                                                                                           *)
+(*    	  let rest_e = combine_disjuncts rest pos in                                                                                                                                                                                *)
+(*    	  let seq2 = Seq ({exp_seq_exp1 = seq1;                                                                                                                                                                                     *)
+(*    					   exp_seq_exp2 = rest_e;                                                                                                                                                                                           *)
+(*    					   exp_seq_pos = pos}) in                                                                                                                                                                                           *)
+(*    		seq2                                                                                                                                                                                                                      *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | [] -> Empty pos                                                                                                                                                                                                             *)
 
-   and compile_disjunct (prog : C.prog_decl) (f0 : formula) (input_vars : ident list) (output_vars : ident list) : (exp * pred_output) = match f0 with
-   | Base ({formula_base_heap = h;
-   		   formula_base_pure = pure;
-   		   formula_base_pos = pos})
-   | Exists ({formula_exists_heap = h;
-   			 formula_exists_pure = pure;
-   			 formula_exists_pos = pos}) -> begin
-   	  let () = print_string ("\n\tCompiling disjunct: " ^ (Cprinter.string_of_formula f0) ^ "\n") in
-   		(* Compile heap for now *)
-   	  let h_exp, h_out, h_map = compile_heap prog f0 input_vars h in
-   	  let evars_sv, _ = split_quantifiers f0 in
-   	  let evars = List.map CP.name_of_spec_var evars_sv in
-   	  let gvars = (List.map fst h_map) @ input_vars in
-   	  let hvars = List.map CP.name_of_spec_var (h_fv h) in
-   	  let pure', pmap = gen_exists_subst pure evars gvars hvars in
-   	  let o_assignments, o_tests = 
-   		compile_pure prog f0 input_vars output_vars h_map pmap pure' in
-   	  let assign = match o_assignments with
-   		| Some e -> e
-   		| None -> Empty pos in
-   	  let test = match o_tests with
-   		| Some e -> e
-   		| None -> BoolLit ({exp_bool_lit_val = true;
-   							exp_bool_lit_pos = pos}) in
-   	  let reset = Assign ({exp_assign_op = OpAssign;
-   						   exp_assign_lhs = Var ({exp_var_name = h_out;
-   												  exp_var_pos = pos});
-   						   exp_assign_rhs = Null pos;
-   						   exp_assign_pos = pos}) in
-   	  let cond = Cond ({exp_cond_condition = test;
-   						exp_cond_then_arm = assign;
-   						exp_cond_else_arm = reset;
-   						exp_cond_pos = pos}) in
-   	  let seq = Seq ({exp_seq_exp1 = h_exp;
-   					  exp_seq_exp2 = cond;
-   					  exp_seq_pos = pos}) in
-   		(seq, h_out)
-   	end
-   | _ -> failwith ("compile_disjunct: disjunctive formula")
+(*    and compile_disjunct (prog : C.prog_decl) (f0 : formula) (input_vars : ident list) (output_vars : ident list) : (exp * pred_output) = match f0 with                                                                           *)
+(*    | Base ({formula_base_heap = h;                                                                                                                                                                                               *)
+(*    		   formula_base_pure = pure;                                                                                                                                                                                              *)
+(*    		   formula_base_pos = pos})                                                                                                                                                                                               *)
+(*    | Exists ({formula_exists_heap = h;                                                                                                                                                                                           *)
+(*    			 formula_exists_pure = pure;                                                                                                                                                                                            *)
+(*    			 formula_exists_pos = pos}) -> begin                                                                                                                                                                                    *)
+(*    	  let () = print_string ("\n\tCompiling disjunct: " ^ (Cprinter.string_of_formula f0) ^ "\n") in                                                                                                                            *)
+(*    		(* Compile heap for now *)                                                                                                                                                                                                *)
+(*    	  let h_exp, h_out, h_map = compile_heap prog f0 input_vars h in                                                                                                                                                            *)
+(*    	  let evars_sv, _ = split_quantifiers f0 in                                                                                                                                                                                 *)
+(*    	  let evars = List.map CP.name_of_spec_var evars_sv in                                                                                                                                                                      *)
+(*    	  let gvars = (List.map fst h_map) @ input_vars in                                                                                                                                                                          *)
+(*    	  let hvars = List.map CP.name_of_spec_var (h_fv h) in                                                                                                                                                                      *)
+(*    	  let pure', pmap = gen_exists_subst pure evars gvars hvars in                                                                                                                                                              *)
+(*    	  let o_assignments, o_tests =                                                                                                                                                                                              *)
+(*    		compile_pure prog f0 input_vars output_vars h_map pmap pure' in                                                                                                                                                           *)
+(*    	  let assign = match o_assignments with                                                                                                                                                                                     *)
+(*    		| Some e -> e                                                                                                                                                                                                             *)
+(*    		| None -> Empty pos in                                                                                                                                                                                                    *)
+(*    	  let test = match o_tests with                                                                                                                                                                                             *)
+(*    		| Some e -> e                                                                                                                                                                                                             *)
+(*    		| None -> BoolLit ({exp_bool_lit_val = true;                                                                                                                                                                              *)
+(*    							exp_bool_lit_pos = pos}) in                                                                                                                                                                                     *)
+(*    	  let reset = Assign ({exp_assign_op = OpAssign;                                                                                                                                                                            *)
+(*    						   exp_assign_lhs = Var ({exp_var_name = h_out;                                                                                                                                                                   *)
+(*    												  exp_var_pos = pos});                                                                                                                                                                                *)
+(*    						   exp_assign_rhs = Null pos;                                                                                                                                                                                     *)
+(*    						   exp_assign_pos = pos}) in                                                                                                                                                                                      *)
+(*    	  let cond = Cond ({exp_cond_condition = test;                                                                                                                                                                              *)
+(*    						exp_cond_then_arm = assign;                                                                                                                                                                                       *)
+(*    						exp_cond_else_arm = reset;                                                                                                                                                                                        *)
+(*    						exp_cond_pos = pos}) in                                                                                                                                                                                           *)
+(*    	  let seq = Seq ({exp_seq_exp1 = h_exp;                                                                                                                                                                                     *)
+(*    					  exp_seq_exp2 = cond;                                                                                                                                                                                              *)
+(*    					  exp_seq_pos = pos}) in                                                                                                                                                                                            *)
+(*    		(seq, h_out)                                                                                                                                                                                                              *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | _ -> failwith ("compile_disjunct: disjunctive formula")                                                                                                                                                                     *)
 
-   (*
-   compile_heap generates code that traverses the heap and computes
-   output parameter values.
+(*    (*                                                                                                                                                                                                                            *)
+(*    compile_heap generates code that traverses the heap and computes                                                                                                                                                              *)
+(*    output parameter values.                                                                                                                                                                                                      *)
 
-   Consider the following example:
+(*    Consider the following example:                                                                                                                                                                                               *)
 
-   root::node<l, r> * l::tree<n1> * r::tree<n2> & 0 <= n1 - n2 <= 1
+(*    root::node<l, r> * l::tree<n1> * r::tree<n2> & 0 <= n1 - n2 <= 1                                                                                                                                                              *)
 
-   What should output be like?
-   Output should be a map from variables to (object name, field name)
+(*    What should output be like?                                                                                                                                                                                                   *)
+(*    Output should be a map from variables to (object name, field name)                                                                                                                                                            *)
 
-   So checking the heap part of the above formula will generate the 
-   following map:
-   [n1 -> (lout, n), n2 -> (rout, n)]
-   where lout and rout are outputs of checking l::tree<n1> and r::tree<n2>,
-   respectively.
+(*    So checking the heap part of the above formula will generate the                                                                                                                                                              *)
+(*    following map:                                                                                                                                                                                                                *)
+(*    [n1 -> (lout, n), n2 -> (rout, n)]                                                                                                                                                                                            *)
+(*    where lout and rout are outputs of checking l::tree<n1> and r::tree<n2>,                                                                                                                                                      *)
+(*    respectively.                                                                                                                                                                                                                 *)
 
-   Note that the "exp" component of the returned result is actually
-   a set of pairs, each pair consists of a set of references, and a
-   mapping of type heap_output. The compilation of * needs to generate
-   Java code to traverse the set and combine the results.
+(*    Note that the "exp" component of the returned result is actually                                                                                                                                                              *)
+(*    a set of pairs, each pair consists of a set of references, and a                                                                                                                                                              *)
+(*    mapping of type heap_output. The compilation of * needs to generate                                                                                                                                                           *)
+(*    Java code to traverse the set and combine the results.                                                                                                                                                                        *)
 
-   For now: exp only return (at most) one pair
- *)
-   and compile_heap (prog : C.prog_decl) disj (input_vars : ident list) (h0 : h_formula) : (exp * ident * heap_output) = match h0 with
-   | Star ({h_formula_star_h1 = h1;
-   		   h_formula_star_h2 = h2;
-   		   h_formula_star_pos = pos}) -> begin
-   	  (*
-   		id1 == <output of h1>
-   		id2 == <output of h2>
-   		Set output;
-   		if (id1 == null) output = null;
-   		else if (id2 == null) output = null;
-   		else if (rtc.Slrc.intersect(id1, id2)) output = null;
-   		else {
-   		output = id1; any problem with this aliasing? x::node<> * x::node<> shouldn't be a problem
-   		output.addAll(id2);
-   		}
-   	  *)
-   	  let e1, id1, o1 = compile_heap prog disj input_vars h1 in
-   	  let e2, id2, o2 = compile_heap prog disj input_vars h2 in
-   	  let id1_var = Var ({exp_var_name = id1;
-   						  exp_var_pos = pos}) in
-   	  let id2_var = Var ({exp_var_name = id2;
-   						  exp_var_pos = pos}) in
-   	  let id1_is_null = Binary ({exp_binary_op = OpIsNull;
-   								 exp_binary_oper1 = id1_var;
-   								 exp_binary_oper2 = Null pos;
-   								 exp_binary_pos = pos}) in
-   	  let id2_is_null = Binary ({exp_binary_op = OpIsNull;
-   								 exp_binary_oper1 = id2_var;
-   								 exp_binary_oper2 = Null pos;
-   								 exp_binary_pos = pos}) in
-   	  let out_name = fresh_name () in
-   	  let out_var = Var ({exp_var_name = out_name;
-   						  exp_var_pos = pos}) in
-   	  let var_decl = VarDecl ({ exp_var_decl_type = Named "Set";
-   								exp_var_decl_decls = [(out_name, None, pos)];
-   								exp_var_decl_pos = pos}) in
-   	  let output_null = Assign ({exp_assign_op = OpAssign;
-   								 exp_assign_lhs = out_var;
-   								 exp_assign_rhs = Null pos;
-   								 exp_assign_pos = pos}) in
-   		(* both results are nonnull, and disjoint *)
-   	  let tmp1 = Assign ({exp_assign_op = OpAssign;
-   						  exp_assign_lhs = out_var;
-   						  exp_assign_rhs = id1_var;
-   						  exp_assign_pos = pos}) in
-   	  let tmp2 = CallRecv ({exp_call_recv_receiver = out_var;
-   							exp_call_recv_method = "add";
-   							exp_call_recv_arguments = [id2_var];
-   							exp_call_recv_pos = pos}) in
-   	  let seq1 = Seq ({exp_seq_exp1 = tmp1;
-   					   exp_seq_exp2 = tmp2;
-   					   exp_seq_pos = pos}) in
-   		(* null tests *)
-   	  let intersect_test = CallNRecv ({exp_call_nrecv_method = "intersect";
-   									   exp_call_nrecv_arguments = [id1_var; id2_var];
-   									   exp_call_nrecv_pos = pos}) in
-   	  let cond1 = Cond ({exp_cond_condition = intersect_test;
-   						 exp_cond_then_arm = output_null;
-   						 exp_cond_else_arm = seq1;
-   						 exp_cond_pos = pos}) in
-   	  let cond2 = Cond ({exp_cond_condition = id2_is_null;
-   						 exp_cond_then_arm = output_null;
-   						 exp_cond_else_arm = cond1;
-   						 exp_cond_pos = pos}) in
-   	  let cond3 = Cond ({exp_cond_condition = id1_is_null;
-   						exp_cond_then_arm = output_null;
-   						exp_cond_else_arm = cond2;
-   						exp_cond_pos = pos}) in
-   		(* Combine all results *)
-   	  let seq2 = Seq ({exp_seq_exp1 = var_decl;
-   					   exp_seq_exp2 = cond3;
-   					   exp_seq_pos = pos}) in
-   	  let seq3 = Seq ({exp_seq_exp1 = e2;
-   					   exp_seq_exp2 = seq2;
-   					   exp_seq_pos = pos}) in
-   	  let seq4 = Seq ({exp_seq_exp1 = e1;
-   					   exp_seq_exp2 = seq3;
-   					   exp_seq_pos = pos}) in
-   		(seq4, out_name, o1 @ o2)
-   	end
-   | DataNode ({h_formula_data_node = p;
-   			   h_formula_data_name = c;
-   			   h_formula_data_arguments = vs;
-   			   h_formula_data_pos = pos}) -> begin
-   	  (*
-   		p::c<vs>
+(*    For now: exp only return (at most) one pair                                                                                                                                                                                   *)
+(*  *)                                                                                                                                                                                                                              *)
+(*    and compile_heap (prog : C.prog_decl) disj (input_vars : ident list) (h0 : h_formula) : (exp * ident * heap_output) = match h0 with                                                                                           *)
+(*    | Star ({h_formula_star_h1 = h1;                                                                                                                                                                                              *)
+(*    		   h_formula_star_h2 = h2;                                                                                                                                                                                                *)
+(*    		   h_formula_star_pos = pos}) -> begin                                                                                                                                                                                    *)
+(*    	  (*                                                                                                                                                                                                                        *)
+(*    		id1 == <output of h1>                                                                                                                                                                                                     *)
+(*    		id2 == <output of h2>                                                                                                                                                                                                     *)
+(*    		Set output;                                                                                                                                                                                                               *)
+(*    		if (id1 == null) output = null;                                                                                                                                                                                           *)
+(*    		else if (id2 == null) output = null;                                                                                                                                                                                      *)
+(*    		else if (rtc.Slrc.intersect(id1, id2)) output = null;                                                                                                                                                                     *)
+(*    		else {                                                                                                                                                                                                                    *)
+(*    		output = id1; any problem with this aliasing? x::node<> * x::node<> shouldn't be a problem                                                                                                                                *)
+(*    		output.addAll(id2);                                                                                                                                                                                                       *)
+(*    		}                                                                                                                                                                                                                         *)
+(*    	  *)                                                                                                                                                                                                                        *)
+(*    	  let e1, id1, o1 = compile_heap prog disj input_vars h1 in                                                                                                                                                                 *)
+(*    	  let e2, id2, o2 = compile_heap prog disj input_vars h2 in                                                                                                                                                                 *)
+(*    	  let id1_var = Var ({exp_var_name = id1;                                                                                                                                                                                   *)
+(*    						  exp_var_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let id2_var = Var ({exp_var_name = id2;                                                                                                                                                                                   *)
+(*    						  exp_var_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let id1_is_null = Binary ({exp_binary_op = OpIsNull;                                                                                                                                                                      *)
+(*    								 exp_binary_oper1 = id1_var;                                                                                                                                                                                  *)
+(*    								 exp_binary_oper2 = Null pos;                                                                                                                                                                                 *)
+(*    								 exp_binary_pos = pos}) in                                                                                                                                                                                    *)
+(*    	  let id2_is_null = Binary ({exp_binary_op = OpIsNull;                                                                                                                                                                      *)
+(*    								 exp_binary_oper1 = id2_var;                                                                                                                                                                                  *)
+(*    								 exp_binary_oper2 = Null pos;                                                                                                                                                                                 *)
+(*    								 exp_binary_pos = pos}) in                                                                                                                                                                                    *)
+(*    	  let out_name = fresh_name () in                                                                                                                                                                                           *)
+(*    	  let out_var = Var ({exp_var_name = out_name;                                                                                                                                                                              *)
+(*    						  exp_var_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let var_decl = VarDecl ({ exp_var_decl_type = Named "Set";                                                                                                                                                                *)
+(*    								exp_var_decl_decls = [(out_name, None, pos)];                                                                                                                                                                 *)
+(*    								exp_var_decl_pos = pos}) in                                                                                                                                                                                   *)
+(*    	  let output_null = Assign ({exp_assign_op = OpAssign;                                                                                                                                                                      *)
+(*    								 exp_assign_lhs = out_var;                                                                                                                                                                                    *)
+(*    								 exp_assign_rhs = Null pos;                                                                                                                                                                                   *)
+(*    								 exp_assign_pos = pos}) in                                                                                                                                                                                    *)
+(*    		(* both results are nonnull, and disjoint *)                                                                                                                                                                              *)
+(*    	  let tmp1 = Assign ({exp_assign_op = OpAssign;                                                                                                                                                                             *)
+(*    						  exp_assign_lhs = out_var;                                                                                                                                                                                       *)
+(*    						  exp_assign_rhs = id1_var;                                                                                                                                                                                       *)
+(*    						  exp_assign_pos = pos}) in                                                                                                                                                                                       *)
+(*    	  let tmp2 = CallRecv ({exp_call_recv_receiver = out_var;                                                                                                                                                                   *)
+(*    							exp_call_recv_method = "add";                                                                                                                                                                                   *)
+(*    							exp_call_recv_arguments = [id2_var];                                                                                                                                                                            *)
+(*    							exp_call_recv_pos = pos}) in                                                                                                                                                                                    *)
+(*    	  let seq1 = Seq ({exp_seq_exp1 = tmp1;                                                                                                                                                                                     *)
+(*    					   exp_seq_exp2 = tmp2;                                                                                                                                                                                             *)
+(*    					   exp_seq_pos = pos}) in                                                                                                                                                                                           *)
+(*    		(* null tests *)                                                                                                                                                                                                          *)
+(*    	  let intersect_test = CallNRecv ({exp_call_nrecv_method = "intersect";                                                                                                                                                     *)
+(*    									   exp_call_nrecv_arguments = [id1_var; id2_var];                                                                                                                                                           *)
+(*    									   exp_call_nrecv_pos = pos}) in                                                                                                                                                                            *)
+(*    	  let cond1 = Cond ({exp_cond_condition = intersect_test;                                                                                                                                                                   *)
+(*    						 exp_cond_then_arm = output_null;                                                                                                                                                                                 *)
+(*    						 exp_cond_else_arm = seq1;                                                                                                                                                                                        *)
+(*    						 exp_cond_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let cond2 = Cond ({exp_cond_condition = id2_is_null;                                                                                                                                                                      *)
+(*    						 exp_cond_then_arm = output_null;                                                                                                                                                                                 *)
+(*    						 exp_cond_else_arm = cond1;                                                                                                                                                                                       *)
+(*    						 exp_cond_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let cond3 = Cond ({exp_cond_condition = id1_is_null;                                                                                                                                                                      *)
+(*    						exp_cond_then_arm = output_null;                                                                                                                                                                                  *)
+(*    						exp_cond_else_arm = cond2;                                                                                                                                                                                        *)
+(*    						exp_cond_pos = pos}) in                                                                                                                                                                                           *)
+(*    		(* Combine all results *)                                                                                                                                                                                                 *)
+(*    	  let seq2 = Seq ({exp_seq_exp1 = var_decl;                                                                                                                                                                                 *)
+(*    					   exp_seq_exp2 = cond3;                                                                                                                                                                                            *)
+(*    					   exp_seq_pos = pos}) in                                                                                                                                                                                           *)
+(*    	  let seq3 = Seq ({exp_seq_exp1 = e2;                                                                                                                                                                                       *)
+(*    					   exp_seq_exp2 = seq2;                                                                                                                                                                                             *)
+(*    					   exp_seq_pos = pos}) in                                                                                                                                                                                           *)
+(*    	  let seq4 = Seq ({exp_seq_exp1 = e1;                                                                                                                                                                                       *)
+(*    					   exp_seq_exp2 = seq3;                                                                                                                                                                                             *)
+(*    					   exp_seq_pos = pos}) in                                                                                                                                                                                           *)
+(*    		(seq4, out_name, o1 @ o2)                                                                                                                                                                                                 *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | DataNode ({h_formula_data_node = p;                                                                                                                                                                                         *)
+(*    			   h_formula_data_name = c;                                                                                                                                                                                             *)
+(*    			   h_formula_data_arguments = vs;                                                                                                                                                                                       *)
+(*    			   h_formula_data_pos = pos}) -> begin                                                                                                                                                                                  *)
+(*    	  (*                                                                                                                                                                                                                        *)
+(*    		p::c<vs>                                                                                                                                                                                                                  *)
 
-   		Set output = new HashSet();
-   		output.add(p);
-   	  *)
-   	  let new_exp = New ({exp_new_class_name = "HashSet";
-   						  exp_new_arguments = [];
-   						  exp_new_pos = pos}) in
-   	  let out_ident = fresh_name () in
-   	  let out_var = Var ({exp_var_name = out_ident;
-   						  exp_var_pos = pos}) in
-   	  let res_var = VarDecl ({exp_var_decl_type = Named "Set";
-   							  exp_var_decl_decls = 
-   								 [(out_ident, Some new_exp, pos)];
-   							  exp_var_decl_pos = pos }) in
-   	  let add_exp = CallRecv ({exp_call_recv_receiver = out_var;
-   							   exp_call_recv_method = "add";
-   							   exp_call_recv_arguments = 
-   								  [Var ({exp_var_name = CP.name_of_spec_var p;
-   										 exp_var_pos = pos})];
-   							   exp_call_recv_pos = pos}) in
-   	  let seq = Seq ({exp_seq_exp1 = res_var;
-   					  exp_seq_exp2 = add_exp;
-   					  exp_seq_pos = pos}) in
-   		(seq, out_ident, [])
-   	end
-   | ViewNode ({h_formula_view_node = p;
-   			   h_formula_view_name = c;
-   			   h_formula_view_arguments = vs;
-   			   h_formula_view_modes = modes;
-   			   h_formula_view_pos = pos}) -> begin
-   	  (*
-   		Make a call. Set up inputs and all that.
-   		Now how to do that?
+(*    		Set output = new HashSet();                                                                                                                                                                                               *)
+(*    		output.add(p);                                                                                                                                                                                                            *)
+(*    	  *)                                                                                                                                                                                                                        *)
+(*    	  let new_exp = New ({exp_new_class_name = "HashSet";                                                                                                                                                                       *)
+(*    						  exp_new_arguments = [];                                                                                                                                                                                         *)
+(*    						  exp_new_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let out_ident = fresh_name () in                                                                                                                                                                                          *)
+(*    	  let out_var = Var ({exp_var_name = out_ident;                                                                                                                                                                             *)
+(*    						  exp_var_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  let res_var = VarDecl ({exp_var_decl_type = Named "Set";                                                                                                                                                                  *)
+(*    							  exp_var_decl_decls =                                                                                                                                                                                          *)
+(*    								 [(out_ident, Some new_exp, pos)];                                                                                                                                                                            *)
+(*    							  exp_var_decl_pos = pos }) in                                                                                                                                                                                  *)
+(*    	  let add_exp = CallRecv ({exp_call_recv_receiver = out_var;                                                                                                                                                                *)
+(*    							   exp_call_recv_method = "add";                                                                                                                                                                                *)
+(*    							   exp_call_recv_arguments =                                                                                                                                                                                    *)
+(*    								  [Var ({exp_var_name = CP.name_of_spec_var p;                                                                                                                                                                *)
+(*    										 exp_var_pos = pos})];                                                                                                                                                                                    *)
+(*    							   exp_call_recv_pos = pos}) in                                                                                                                                                                                 *)
+(*    	  let seq = Seq ({exp_seq_exp1 = res_var;                                                                                                                                                                                   *)
+(*    					  exp_seq_exp2 = add_exp;                                                                                                                                                                                           *)
+(*    					  exp_seq_pos = pos}) in                                                                                                                                                                                            *)
+(*    		(seq, out_ident, [])                                                                                                                                                                                                      *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | ViewNode ({h_formula_view_node = p;                                                                                                                                                                                         *)
+(*    			   h_formula_view_name = c;                                                                                                                                                                                             *)
+(*    			   h_formula_view_arguments = vs;                                                                                                                                                                                       *)
+(*    			   h_formula_view_modes = modes;                                                                                                                                                                                        *)
+(*    			   h_formula_view_pos = pos}) -> begin                                                                                                                                                                                  *)
+(*    	  (*                                                                                                                                                                                                                        *)
+(*    		Make a call. Set up inputs and all that.                                                                                                                                                                                  *)
+(*    		Now how to do that?                                                                                                                                                                                                       *)
 
-   		c_checker ckr = new c_checker();
-   		ckr.root = p;
-   		Set< Pair<Set<Object>, c_output> > poutput = ckr.traverse();
-   		return <poutput, map>;
+(*    		c_checker ckr = new c_checker();                                                                                                                                                                                          *)
+(*    		ckr.root = p;                                                                                                                                                                                                             *)
+(*    		Set< Pair<Set<Object>, c_output> > poutput = ckr.traverse();                                                                                                                                                              *)
+(*    		return <poutput, map>;                                                                                                                                                                                                    *)
 
-   		What's the problem here? 
-   		poutput is a set of pairs, but it is in a Java's Set.
-   		How can we break it up here?
-   	  *)
-   	  let vdef = x_add C.look_up_view_def_raw prog.C.prog_view_decls c in
-   	  let cls = class_name_of_view c in
-   	  let new_checker = New ({exp_new_class_name = cls;
-   							  exp_new_arguments = [];
-   							  exp_new_pos = pos}) in
-   	  let new_checker_name = fresh_name () in
-   	  let new_checker_var = Var ({exp_var_name = new_checker_name;
-   								  exp_var_pos = pos}) in
-   	  let new_checker_decl = VarDecl ({exp_var_decl_type = Named cls;
-   									   exp_var_decl_decls = 
-   										  [(new_checker_name, Some new_checker, pos)];
-   									   exp_var_decl_pos = no_pos}) in		
-   		(* Call checker *)
-   	  let call_checker = CallRecv ({exp_call_recv_receiver = new_checker_var;
-   									exp_call_recv_method = "traverse";
-   									exp_call_recv_arguments = [];
-   									exp_call_recv_pos = pos}) in
-   	  let out_name = fresh_name () in
-   	  let out_decl = VarDecl ({exp_var_decl_type = Named "Set";
-   							   exp_var_decl_decls = [(out_name, Some call_checker, pos)];
-   							   exp_var_decl_pos = no_pos}) in
-   		(* Set up inputs *)
-   		(* helper: Constructs a list of assignments to set up inputs *)
-   	  let rec helper params modes : exp list = match params, modes with
-   		| (param :: rest1, m :: rest2) -> begin
-   			let rest = helper rest1 rest2 in
-   			  if m = ModeIn then
-   				let e = gen_input_exp prog disj input_vars [] (CP.name_of_spec_var p) pos in
-   				let lhs = Member ({exp_member_base = new_checker_var;
-   								   exp_member_fields = [CP.name_of_spec_var param];
-   								   exp_member_pos = pos}) in
-   				let assignment = Assign ({exp_assign_op = OpAssign;
-   										  exp_assign_lhs = lhs;
-   										  exp_assign_rhs = e;
-   										  exp_assign_pos = pos}) in
-   				  assignment :: rest
-   			  else rest
-   		  end
-   		| [], [] -> [] 
-   		| _ -> failwith ("compile_heap: params and modes are supposed to be lists with the same length.") in
-   	  let self_var = CP.SpecVar (CP.OType vdef.C.view_data_name, self, Unprimed) in
-   	  let tmp1 = helper (self_var :: vdef.C.view_vars) (ModeIn :: vdef.C.view_modes) in
-   	  let helper2 e1 e2 = mkSeq e2 e1 pos in
-   	  let init_inputs = List.fold_left helper2 out_decl tmp1 in
-   		(* compute the heap_output map *)
-   	  let args = List.map CP.name_of_spec_var vs in
-   	  let out_map = gen_output_map vdef.C.view_vars vdef.C.view_modes new_checker_name args in
-   	  let seq1 = Seq ({exp_seq_exp1 = new_checker_decl;
-   					   exp_seq_exp2 = init_inputs;
-   					   exp_seq_pos = pos}) in
-   		(seq1, out_name, out_map)
-   	end
-   | HTrue ->
-   	  let fname = fresh_name () in
-   	  let new_exp = New ({exp_new_class_name = "HashSet";
-   						  exp_new_arguments = [];
-   						  exp_new_pos = no_pos}) in
-   	  let var = VarDecl ({exp_var_decl_type = Named "Set";
-   						  exp_var_decl_decls = [(fname, Some new_exp, no_pos)];
-   						  exp_var_decl_pos = no_pos}) 
-   	  in
-   		(var, fname, [])
-   | HFalse -> 
-   	  let fname = fresh_name () in
-   	  let var = VarDecl ({exp_var_decl_type = Named "Set";
-   						  exp_var_decl_decls = [(fname, Some (Null no_pos), no_pos)];
-   						  exp_var_decl_pos = no_pos}) 
-   	  in
-   		(var, fname, [])
+(*    		What's the problem here?                                                                                                                                                                                                  *)
+(*    		poutput is a set of pairs, but it is in a Java's Set.                                                                                                                                                                     *)
+(*    		How can we break it up here?                                                                                                                                                                                              *)
+(*    	  *)                                                                                                                                                                                                                        *)
+(*    	  let vdef = x_add C.look_up_view_def_raw prog.C.prog_view_decls c in                                                                                                                                                       *)
+(*    	  let cls = class_name_of_view c in                                                                                                                                                                                         *)
+(*    	  let new_checker = New ({exp_new_class_name = cls;                                                                                                                                                                         *)
+(*    							  exp_new_arguments = [];                                                                                                                                                                                       *)
+(*    							  exp_new_pos = pos}) in                                                                                                                                                                                        *)
+(*    	  let new_checker_name = fresh_name () in                                                                                                                                                                                   *)
+(*    	  let new_checker_var = Var ({exp_var_name = new_checker_name;                                                                                                                                                              *)
+(*    								  exp_var_pos = pos}) in                                                                                                                                                                                      *)
+(*    	  let new_checker_decl = VarDecl ({exp_var_decl_type = Named cls;                                                                                                                                                           *)
+(*    									   exp_var_decl_decls =                                                                                                                                                                                     *)
+(*    										  [(new_checker_name, Some new_checker, pos)];                                                                                                                                                            *)
+(*    									   exp_var_decl_pos = no_pos}) in		                                                                                                                                                                       *)
+(*    		(* Call checker *)                                                                                                                                                                                                        *)
+(*    	  let call_checker = CallRecv ({exp_call_recv_receiver = new_checker_var;                                                                                                                                                   *)
+(*    									exp_call_recv_method = "traverse";                                                                                                                                                                          *)
+(*    									exp_call_recv_arguments = [];                                                                                                                                                                               *)
+(*    									exp_call_recv_pos = pos}) in                                                                                                                                                                                *)
+(*    	  let out_name = fresh_name () in                                                                                                                                                                                           *)
+(*    	  let out_decl = VarDecl ({exp_var_decl_type = Named "Set";                                                                                                                                                                 *)
+(*    							   exp_var_decl_decls = [(out_name, Some call_checker, pos)];                                                                                                                                                   *)
+(*    							   exp_var_decl_pos = no_pos}) in                                                                                                                                                                               *)
+(*    		(* Set up inputs *)                                                                                                                                                                                                       *)
+(*    		(* helper: Constructs a list of assignments to set up inputs *)                                                                                                                                                           *)
+(*    	  let rec helper params modes : exp list = match params, modes with                                                                                                                                                         *)
+(*    		| (param :: rest1, m :: rest2) -> begin                                                                                                                                                                                   *)
+(*    			let rest = helper rest1 rest2 in                                                                                                                                                                                        *)
+(*    			  if m = ModeIn then                                                                                                                                                                                                    *)
+(*    				let e = gen_input_exp prog disj input_vars [] (CP.name_of_spec_var p) pos in                                                                                                                                          *)
+(*    				let lhs = Member ({exp_member_base = new_checker_var;                                                                                                                                                                 *)
+(*    								   exp_member_fields = [CP.name_of_spec_var param];                                                                                                                                                           *)
+(*    								   exp_member_pos = pos}) in                                                                                                                                                                                  *)
+(*    				let assignment = Assign ({exp_assign_op = OpAssign;                                                                                                                                                                   *)
+(*    										  exp_assign_lhs = lhs;                                                                                                                                                                                   *)
+(*    										  exp_assign_rhs = e;                                                                                                                                                                                     *)
+(*    										  exp_assign_pos = pos}) in                                                                                                                                                                               *)
+(*    				  assignment :: rest                                                                                                                                                                                                  *)
+(*    			  else rest                                                                                                                                                                                                             *)
+(*    		  end                                                                                                                                                                                                                     *)
+(*    		| [], [] -> []                                                                                                                                                                                                            *)
+(*    		| _ -> failwith ("compile_heap: params and modes are supposed to be lists with the same length.") in                                                                                                                      *)
+(*    	  let self_var = CP.SpecVar (CP.OType vdef.C.view_data_name, self, Unprimed) in                                                                                                                                             *)
+(*    	  let tmp1 = helper (self_var :: vdef.C.view_vars) (ModeIn :: vdef.C.view_modes) in                                                                                                                                         *)
+(*    	  let helper2 e1 e2 = mkSeq e2 e1 pos in                                                                                                                                                                                    *)
+(*    	  let init_inputs = List.fold_left helper2 out_decl tmp1 in                                                                                                                                                                 *)
+(*    		(* compute the heap_output map *)                                                                                                                                                                                         *)
+(*    	  let args = List.map CP.name_of_spec_var vs in                                                                                                                                                                             *)
+(*    	  let out_map = gen_output_map vdef.C.view_vars vdef.C.view_modes new_checker_name args in                                                                                                                                  *)
+(*    	  let seq1 = Seq ({exp_seq_exp1 = new_checker_decl;                                                                                                                                                                         *)
+(*    					   exp_seq_exp2 = init_inputs;                                                                                                                                                                                      *)
+(*    					   exp_seq_pos = pos}) in                                                                                                                                                                                           *)
+(*    		(seq1, out_name, out_map)                                                                                                                                                                                                 *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | HTrue ->                                                                                                                                                                                                                    *)
+(*    	  let fname = fresh_name () in                                                                                                                                                                                              *)
+(*    	  let new_exp = New ({exp_new_class_name = "HashSet";                                                                                                                                                                       *)
+(*    						  exp_new_arguments = [];                                                                                                                                                                                         *)
+(*    						  exp_new_pos = no_pos}) in                                                                                                                                                                                       *)
+(*    	  let var = VarDecl ({exp_var_decl_type = Named "Set";                                                                                                                                                                      *)
+(*    						  exp_var_decl_decls = [(fname, Some new_exp, no_pos)];                                                                                                                                                           *)
+(*    						  exp_var_decl_pos = no_pos})                                                                                                                                                                                     *)
+(*    	  in                                                                                                                                                                                                                        *)
+(*    		(var, fname, [])                                                                                                                                                                                                          *)
+(*    | HFalse ->                                                                                                                                                                                                                   *)
+(*    	  let fname = fresh_name () in                                                                                                                                                                                              *)
+(*    	  let var = VarDecl ({exp_var_decl_type = Named "Set";                                                                                                                                                                      *)
+(*    						  exp_var_decl_decls = [(fname, Some (Null no_pos), no_pos)];                                                                                                                                                     *)
+(*    						  exp_var_decl_pos = no_pos})                                                                                                                                                                                     *)
+(*    	  in                                                                                                                                                                                                                        *)
+(*    		(var, fname, [])                                                                                                                                                                                                          *)
 
-   and gen_output_map (fargs : CP.spec_var list) (modes : mode list) pout (args : ident list) : heap_output = 
-   match (fargs, modes, args) with
-   	| ((f :: rest1), (m :: rest2), (a :: rest3)) -> begin
-   		let tmp1 = 
-   		  if m = ModeIn then []
-   		  else [(a, (pout, CP.name_of_spec_var f))] in
-   		let tmp2 = gen_output_map rest1 rest2 pout rest3 in
-   		  tmp1 @ tmp2
-   	  end
-   	| ([], [], []) -> []
-   	| _ -> failwith ("gen_output_map: the three input lists are supposed to be of the same length")
+(*    and gen_output_map (fargs : CP.spec_var list) (modes : mode list) pout (args : ident list) : heap_output =                                                                                                                    *)
+(*    match (fargs, modes, args) with                                                                                                                                                                                               *)
+(*    	| ((f :: rest1), (m :: rest2), (a :: rest3)) -> begin                                                                                                                                                                       *)
+(*    		let tmp1 =                                                                                                                                                                                                                *)
+(*    		  if m = ModeIn then []                                                                                                                                                                                                   *)
+(*    		  else [(a, (pout, CP.name_of_spec_var f))] in                                                                                                                                                                            *)
+(*    		let tmp2 = gen_output_map rest1 rest2 pout rest3 in                                                                                                                                                                       *)
+(*    		  tmp1 @ tmp2                                                                                                                                                                                                             *)
+(*    	  end                                                                                                                                                                                                                       *)
+(*    	| ([], [], []) -> []                                                                                                                                                                                                        *)
+(*    	| _ -> failwith ("gen_output_map: the three input lists are supposed to be of the same length")                                                                                                                             *)
 
-   (*
-   For formula F = root::node<l, r> * l::tree<n1> * r::tree<n2>
+(*    (*                                                                                                                                                                                                                            *)
+(*    For formula F = root::node<l, r> * l::tree<n1> * r::tree<n2>                                                                                                                                                                  *)
 
-   gen_input_exp F "l" = "root.left"
-   gen_input_exp F "r" = "root.right"
+(*    gen_input_exp F "l" = "root.left"                                                                                                                                                                                             *)
+(*    gen_input_exp F "r" = "root.right"                                                                                                                                                                                            *)
 
-   How to do that?
+(*    How to do that?                                                                                                                                                                                                               *)
 
-   See if below works well enough
+(*    See if below works well enough                                                                                                                                                                                                *)
 
-   Just one level for now.
- *)
+(*    Just one level for now.                                                                                                                                                                                                       *)
+(*  *)                                                                                                                                                                                                                              *)
 
-   (*
-   input_vars0 : set of program-visible variables
-   var0 : the (existentially quantified) variable that
-         we are searching for
- *)
-   and gen_input_exp (prog : C.prog_decl) (disj : formula) (input_vars0 : ident list) (hmap : heap_output) (var0 : ident) pos : exp =
-   if List.mem var0 input_vars0 then 
-   	(*
-   	  A more complete version should consider equalities in disj.
-   	*)
-   	Var ({exp_var_name = var0;
-   		  exp_var_pos = pos})
-   else
-   	match disj with
-   	  | Base ({formula_base_heap = h;
-   			   formula_base_pure = pure})
-   	  | Exists ({formula_exists_heap = h;
-   				 formula_exists_pure = pure}) ->
-   			(* find the alias set containing var0 *)
-   		  let eqns = Solver.ptr_equations pure in
-   		  let asets = Solver.alias eqns in
-   		  let aset = Solver.get_aset asets (CP.SpecVar (CP.OType "", var0, Unprimed)) in 
-   		  let var0_alias = var0 :: (List.map CP.name_of_spec_var aset) in
-   		  let rec helper1 input_vars : exp option = match input_vars with
-   			| (input_var :: rest) -> begin
-   				let s = gen_input_object prog h input_var var0_alias in
-   				  match s with
-   					| Some e -> s
-   					| None -> helper1 rest
-   			  end
-   			| [] -> None
-   		  in
-   		  let oe = helper1 input_vars0 in
-   			begin
-   			  match oe with 
-   				| Some e -> e
-   				| None ->
-   					let oe2 = gen_input_view hmap var0 pos in
-   					  match oe2 with
-   						| Some e2 -> e2
-   						| None -> (* Out of luck *)
-   							let msg = "\nFile \"" ^ pos.Lexing.pos_fname 
-   							  ^ "\", line " ^ (string_of_int pos.Lexing.pos_lnum) ^ ": "
-   							  ^ "gen_input_exp: cannot generate input expression for variable " 
-   							  ^ var0 
-   							in
-   							  failwith msg
-   			end
-   	  | _ -> failwith ("gen_input_exp: disjunctive formula is not expected here.")
+(*    (*                                                                                                                                                                                                                            *)
+(*    input_vars0 : set of program-visible variables                                                                                                                                                                                *)
+(*    var0 : the (existentially quantified) variable that                                                                                                                                                                           *)
+(*          we are searching for                                                                                                                                                                                                    *)
+(*  *)                                                                                                                                                                                                                              *)
+(*    and gen_input_exp (prog : C.prog_decl) (disj : formula) (input_vars0 : ident list) (hmap : heap_output) (var0 : ident) pos : exp =                                                                                            *)
+(*    if List.mem var0 input_vars0 then                                                                                                                                                                                             *)
+(*    	(*                                                                                                                                                                                                                          *)
+(*    	  A more complete version should consider equalities in disj.                                                                                                                                                               *)
+(*    	*)                                                                                                                                                                                                                          *)
+(*    	Var ({exp_var_name = var0;                                                                                                                                                                                                  *)
+(*    		  exp_var_pos = pos})                                                                                                                                                                                                     *)
+(*    else                                                                                                                                                                                                                          *)
+(*    	match disj with                                                                                                                                                                                                             *)
+(*    	  | Base ({formula_base_heap = h;                                                                                                                                                                                           *)
+(*    			   formula_base_pure = pure})                                                                                                                                                                                           *)
+(*    	  | Exists ({formula_exists_heap = h;                                                                                                                                                                                       *)
+(*    				 formula_exists_pure = pure}) ->                                                                                                                                                                                      *)
+(*    			(* find the alias set containing var0 *)                                                                                                                                                                                *)
+(*    		  let eqns = Solver.ptr_equations pure in                                                                                                                                                                                 *)
+(*    		  let asets = Solver.alias eqns in                                                                                                                                                                                        *)
+(*    		  let aset = Solver.get_aset asets (CP.SpecVar (CP.OType "", var0, Unprimed)) in                                                                                                                                          *)
+(*    		  let var0_alias = var0 :: (List.map CP.name_of_spec_var aset) in                                                                                                                                                         *)
+(*    		  let rec helper1 input_vars : exp option = match input_vars with                                                                                                                                                         *)
+(*    			| (input_var :: rest) -> begin                                                                                                                                                                                          *)
+(*    				let s = gen_input_object prog h input_var var0_alias in                                                                                                                                                               *)
+(*    				  match s with                                                                                                                                                                                                        *)
+(*    					| Some e -> s                                                                                                                                                                                                       *)
+(*    					| None -> helper1 rest                                                                                                                                                                                              *)
+(*    			  end                                                                                                                                                                                                                   *)
+(*    			| [] -> None                                                                                                                                                                                                            *)
+(*    		  in                                                                                                                                                                                                                      *)
+(*    		  let oe = helper1 input_vars0 in                                                                                                                                                                                         *)
+(*    			begin                                                                                                                                                                                                                   *)
+(*    			  match oe with                                                                                                                                                                                                         *)
+(*    				| Some e -> e                                                                                                                                                                                                         *)
+(*    				| None ->                                                                                                                                                                                                             *)
+(*    					let oe2 = gen_input_view hmap var0 pos in                                                                                                                                                                           *)
+(*    					  match oe2 with                                                                                                                                                                                                    *)
+(*    						| Some e2 -> e2                                                                                                                                                                                                   *)
+(*    						| None -> (* Out of luck *)                                                                                                                                                                                       *)
+(*    							let msg = "\nFile \"" ^ pos.Lexing.pos_fname                                                                                                                                                                    *)
+(*    							  ^ "\", line " ^ (string_of_int pos.Lexing.pos_lnum) ^ ": "                                                                                                                                                    *)
+(*    							  ^ "gen_input_exp: cannot generate input expression for variable "                                                                                                                                             *)
+(*    							  ^ var0                                                                                                                                                                                                        *)
+(*    							in                                                                                                                                                                                                              *)
+(*    							  failwith msg                                                                                                                                                                                                  *)
+(*    			end                                                                                                                                                                                                                     *)
+(*    	  | _ -> failwith ("gen_input_exp: disjunctive formula is not expected here.")                                                                                                                                              *)
 
-   and gen_input_view (hmap : heap_output) (var : ident) pos : exp option =
-   try
-   	let b, f = List.assoc var hmap in
-   	let e = Member ({exp_member_base = Var ({exp_var_name = b;
-   											 exp_var_pos = pos});
-   					 exp_member_fields = [f];
-   					 exp_member_pos = pos}) in
-   	  Some e
-   with
-   	| Not_found -> None
+(*    and gen_input_view (hmap : heap_output) (var : ident) pos : exp option =                                                                                                                                                      *)
+(*    try                                                                                                                                                                                                                           *)
+(*    	let b, f = List.assoc var hmap in                                                                                                                                                                                           *)
+(*    	let e = Member ({exp_member_base = Var ({exp_var_name = b;                                                                                                                                                                  *)
+(*    											 exp_var_pos = pos});                                                                                                                                                                                   *)
+(*    					 exp_member_fields = [f];                                                                                                                                                                                           *)
+(*    					 exp_member_pos = pos}) in                                                                                                                                                                                          *)
+(*    	  Some e                                                                                                                                                                                                                    *)
+(*    with                                                                                                                                                                                                                          *)
+(*    	| Not_found -> None                                                                                                                                                                                                         *)
 
-   and gen_input_object (prog : C.prog_decl) (h0 : h_formula) (ivar : ident) (var_alias : ident list) : exp option = match h0 with
-   | Star ({h_formula_star_h1 = h1;
-   		   h_formula_star_h2 = h2;
-   		   h_formula_star_pos = pos}) ->
-   	  let s1 = gen_input_object prog h1 ivar var_alias in
-   		if Gen.is_some s1 then s1
-   		else gen_input_object prog h2 ivar var_alias
-   | DataNode ({h_formula_data_node = p;
-   			   h_formula_data_name = c;
-   			   h_formula_data_arguments = vs;
-   			   h_formula_data_pos = pos}) -> begin
-   	  if CP.name_of_spec_var p = ivar then
-   		try
-   		  let i = Gen.BList.find_index (fun v -> List.mem (CP.name_of_spec_var v) var_alias) vs in
-   		  let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in
-   		  let fname = snd (List.nth ddef.C.data_fields ((fst i) - 2)) in (* minus the first two parameters *)
-   		  let base = Var ({exp_var_name = ivar;
-   						   exp_var_pos = pos}) in
-   		  let e = Member ({exp_member_base = base;
-   						   exp_member_fields = [fname];
-   						   exp_member_pos = pos}) in
-   			Some e
-   		with
-   		  | Not_found -> None
-   	  else None
-   	end
-   | ViewNode _ -> None
-   | HTrue | HFalse -> None
+(*    and gen_input_object (prog : C.prog_decl) (h0 : h_formula) (ivar : ident) (var_alias : ident list) : exp option = match h0 with                                                                                               *)
+(*    | Star ({h_formula_star_h1 = h1;                                                                                                                                                                                              *)
+(*    		   h_formula_star_h2 = h2;                                                                                                                                                                                                *)
+(*    		   h_formula_star_pos = pos}) ->                                                                                                                                                                                          *)
+(*    	  let s1 = gen_input_object prog h1 ivar var_alias in                                                                                                                                                                       *)
+(*    		if Gen.is_some s1 then s1                                                                                                                                                                                                 *)
+(*    		else gen_input_object prog h2 ivar var_alias                                                                                                                                                                              *)
+(*    | DataNode ({h_formula_data_node = p;                                                                                                                                                                                         *)
+(*    			   h_formula_data_name = c;                                                                                                                                                                                             *)
+(*    			   h_formula_data_arguments = vs;                                                                                                                                                                                       *)
+(*    			   h_formula_data_pos = pos}) -> begin                                                                                                                                                                                  *)
+(*    	  if CP.name_of_spec_var p = ivar then                                                                                                                                                                                      *)
+(*    		try                                                                                                                                                                                                                       *)
+(*    		  let i = Gen.BList.find_index (fun v -> List.mem (CP.name_of_spec_var v) var_alias) vs in                                                                                                                                *)
+(*    		  let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in                                                                                                                                                           *)
+(*    		  let fname = snd (List.nth ddef.C.data_fields ((fst i) - 2)) in (* minus the first two parameters *)                                                                                                                     *)
+(*    		  let base = Var ({exp_var_name = ivar;                                                                                                                                                                                   *)
+(*    						   exp_var_pos = pos}) in                                                                                                                                                                                         *)
+(*    		  let e = Member ({exp_member_base = base;                                                                                                                                                                                *)
+(*    						   exp_member_fields = [fname];                                                                                                                                                                                   *)
+(*    						   exp_member_pos = pos}) in                                                                                                                                                                                      *)
+(*    			Some e                                                                                                                                                                                                                  *)
+(*    		with                                                                                                                                                                                                                      *)
+(*    		  | Not_found -> None                                                                                                                                                                                                     *)
+(*    	  else None                                                                                                                                                                                                                 *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | ViewNode _ -> None                                                                                                                                                                                                          *)
+(*    | HTrue | HFalse -> None                                                                                                                                                                                                      *)
 
-   (*
-   pure : input pure formula
-   evars : existentially quantified variables
-   gvars : groundable variables
-   hvars : variables appearing in the heap part. 
-   Formulas mentioninng hvars can't be considered for substitution
+(*    (*                                                                                                                                                                                                                            *)
+(*    pure : input pure formula                                                                                                                                                                                                     *)
+(*    evars : existentially quantified variables                                                                                                                                                                                    *)
+(*    gvars : groundable variables                                                                                                                                                                                                  *)
+(*    hvars : variables appearing in the heap part.                                                                                                                                                                                 *)
+(*    Formulas mentioninng hvars can't be considered for substitution                                                                                                                                                               *)
 
-   return value:
-   - substitution of existential variables of form v = f(...)
-   - the remaining part of pure after removing all formulas making substitutions
- *)
-   and gen_exists_subst (pure : CP.formula) (evars : ident list) (gvars : ident list) (hvars : ident list) : (CP.formula * (ident * CP.exp) list) = match pure with
-   | CP.And (p1, p2, pos) ->
-   	  let tmp1, subst1 = gen_exists_subst p1 evars gvars hvars in
-   	  let tmp2, subst2 = gen_exists_subst p2 evars gvars hvars in
-   	  let tmp3 = CP.mkAnd tmp1 tmp2 pos in
-   	  let subst = subst1 @ subst2 in
-   		(tmp3, subst)
-   | CP.BForm bf -> 
-   	  let bf1, subst = gen_exists_subst_bform bf evars gvars hvars in
-   		(CP.BForm bf1, subst)
-   | _ -> (pure, [])
+(*    return value:                                                                                                                                                                                                                 *)
+(*    - substitution of existential variables of form v = f(...)                                                                                                                                                                    *)
+(*    - the remaining part of pure after removing all formulas making substitutions                                                                                                                                                 *)
+(*  *)                                                                                                                                                                                                                              *)
+(*    and gen_exists_subst (pure : CP.formula) (evars : ident list) (gvars : ident list) (hvars : ident list) : (CP.formula * (ident * CP.exp) list) = match pure with                                                              *)
+(*    | CP.And (p1, p2, pos) ->                                                                                                                                                                                                     *)
+(*    	  let tmp1, subst1 = gen_exists_subst p1 evars gvars hvars in                                                                                                                                                               *)
+(*    	  let tmp2, subst2 = gen_exists_subst p2 evars gvars hvars in                                                                                                                                                               *)
+(*    	  let tmp3 = CP.mkAnd tmp1 tmp2 pos in                                                                                                                                                                                      *)
+(*    	  let subst = subst1 @ subst2 in                                                                                                                                                                                            *)
+(*    		(tmp3, subst)                                                                                                                                                                                                             *)
+(*    | CP.BForm bf ->                                                                                                                                                                                                              *)
+(*    	  let bf1, subst = gen_exists_subst_bform bf evars gvars hvars in                                                                                                                                                           *)
+(*    		(CP.BForm bf1, subst)                                                                                                                                                                                                     *)
+(*    | _ -> (pure, [])                                                                                                                                                                                                             *)
 
-   and gen_exists_subst_bform (bf : CP.b_formula) (evars : ident list) (gvars : ident list) (hvars : ident list) : (CP.b_formula * (ident * CP.exp) list) = match bf with
-   | CP.EqMax (em, e1, e2, pos) -> begin
-   	  if CP.is_var em then
-   		let sv = CP.to_var em in
-   		let tmp = CP.name_of_spec_var sv in
-   		  if List.mem tmp evars then
-   			let fvars = List.map CP.name_of_spec_var ((CP.afv e1) @ (CP.afv e2)) in
-   			  if List.for_all (fun v -> List.mem v gvars) fvars 
-   				&& (not (List.exists (fun v -> List.mem v hvars) (tmp :: fvars)))
-   			  then
-   				(CP.BConst (true, pos), [(tmp, CP.Max (e1, e2, pos))])
-   			  else
-   				(bf, [])
-   		  else
-   			(bf, [])
-   	  else
-   		(bf, [])
-   	end
-   | CP.EqMin (em, e1, e2, pos) -> begin
-   	  if CP.is_var em then
-   		let sv = CP.to_var em in
-   		let tmp = CP.name_of_spec_var sv in
-   		  if List.mem tmp evars then
-   			let fvars = List.map CP.name_of_spec_var ((CP.afv e1) @ (CP.afv e2)) in
-   			  if List.for_all (fun v -> List.mem v gvars) fvars 
-   				&& (not (List.exists (fun v -> List.mem v hvars) (tmp :: fvars)))
-   			  then
-   				(CP.BConst (true, pos), [(tmp, CP.Min (e1, e2, pos))])
-   			  else
-   				(bf, [])
-   		  else
-   			(bf, [])
-   	  else
-   		(bf, [])
-   	end
-   | CP.Eq (e1, e2, pos) -> begin
-   	  if is_in_vars e1 evars then
-   		let tmp = CP.name_of_spec_var (CP.to_var e1) in
-   		let fvars = List.map CP.name_of_spec_var (CP.afv e2) in
-   		  if List.for_all (fun v -> List.mem v gvars) fvars 
-   			&& (not (List.exists (fun v -> List.mem v hvars) (tmp :: fvars)))
-   		  then
-   			(CP.BConst (true, pos), [(tmp, e2)])
-   		  else
-   			(bf, [])
-   	  else if is_in_vars e2 evars then
-   		gen_exists_subst_bform (CP.Eq (e2, e1, pos)) evars gvars hvars
-   	  else (bf, [])
-   	end
-   | _ -> (bf, [])
+(*    and gen_exists_subst_bform (bf : CP.b_formula) (evars : ident list) (gvars : ident list) (hvars : ident list) : (CP.b_formula * (ident * CP.exp) list) = match bf with                                                        *)
+(*    | CP.EqMax (em, e1, e2, pos) -> begin                                                                                                                                                                                         *)
+(*    	  if CP.is_var em then                                                                                                                                                                                                      *)
+(*    		let sv = CP.to_var em in                                                                                                                                                                                                  *)
+(*    		let tmp = CP.name_of_spec_var sv in                                                                                                                                                                                       *)
+(*    		  if List.mem tmp evars then                                                                                                                                                                                              *)
+(*    			let fvars = List.map CP.name_of_spec_var ((CP.afv e1) @ (CP.afv e2)) in                                                                                                                                                 *)
+(*    			  if List.for_all (fun v -> List.mem v gvars) fvars                                                                                                                                                                     *)
+(*    				&& (not (List.exists (fun v -> List.mem v hvars) (tmp :: fvars)))                                                                                                                                                     *)
+(*    			  then                                                                                                                                                                                                                  *)
+(*    				(CP.BConst (true, pos), [(tmp, CP.Max (e1, e2, pos))])                                                                                                                                                                *)
+(*    			  else                                                                                                                                                                                                                  *)
+(*    				(bf, [])                                                                                                                                                                                                              *)
+(*    		  else                                                                                                                                                                                                                    *)
+(*    			(bf, [])                                                                                                                                                                                                                *)
+(*    	  else                                                                                                                                                                                                                      *)
+(*    		(bf, [])                                                                                                                                                                                                                  *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.EqMin (em, e1, e2, pos) -> begin                                                                                                                                                                                         *)
+(*    	  if CP.is_var em then                                                                                                                                                                                                      *)
+(*    		let sv = CP.to_var em in                                                                                                                                                                                                  *)
+(*    		let tmp = CP.name_of_spec_var sv in                                                                                                                                                                                       *)
+(*    		  if List.mem tmp evars then                                                                                                                                                                                              *)
+(*    			let fvars = List.map CP.name_of_spec_var ((CP.afv e1) @ (CP.afv e2)) in                                                                                                                                                 *)
+(*    			  if List.for_all (fun v -> List.mem v gvars) fvars                                                                                                                                                                     *)
+(*    				&& (not (List.exists (fun v -> List.mem v hvars) (tmp :: fvars)))                                                                                                                                                     *)
+(*    			  then                                                                                                                                                                                                                  *)
+(*    				(CP.BConst (true, pos), [(tmp, CP.Min (e1, e2, pos))])                                                                                                                                                                *)
+(*    			  else                                                                                                                                                                                                                  *)
+(*    				(bf, [])                                                                                                                                                                                                              *)
+(*    		  else                                                                                                                                                                                                                    *)
+(*    			(bf, [])                                                                                                                                                                                                                *)
+(*    	  else                                                                                                                                                                                                                      *)
+(*    		(bf, [])                                                                                                                                                                                                                  *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Eq (e1, e2, pos) -> begin                                                                                                                                                                                                *)
+(*    	  if is_in_vars e1 evars then                                                                                                                                                                                               *)
+(*    		let tmp = CP.name_of_spec_var (CP.to_var e1) in                                                                                                                                                                           *)
+(*    		let fvars = List.map CP.name_of_spec_var (CP.afv e2) in                                                                                                                                                                   *)
+(*    		  if List.for_all (fun v -> List.mem v gvars) fvars                                                                                                                                                                       *)
+(*    			&& (not (List.exists (fun v -> List.mem v hvars) (tmp :: fvars)))                                                                                                                                                       *)
+(*    		  then                                                                                                                                                                                                                    *)
+(*    			(CP.BConst (true, pos), [(tmp, e2)])                                                                                                                                                                                    *)
+(*    		  else                                                                                                                                                                                                                    *)
+(*    			(bf, [])                                                                                                                                                                                                                *)
+(*    	  else if is_in_vars e2 evars then                                                                                                                                                                                          *)
+(*    		gen_exists_subst_bform (CP.Eq (e2, e1, pos)) evars gvars hvars                                                                                                                                                            *)
+(*    	  else (bf, [])                                                                                                                                                                                                             *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | _ -> (bf, [])                                                                                                                                                                                                               *)
 
-   (*
-   Pure formula compilation.
- *)
-   and compile_pure (prog : C.prog_decl) (disj : formula) (input_vars : ident list) (output_vars : ident list) (hmap : heap_output) (pmap : (ident * CP.exp) list) (p0 : CP.formula) : (exp option * exp option) = match p0 with
-   | CP.And (p1, p2, pos) ->  begin
-   	  let oa1, ot1 = compile_pure prog disj input_vars output_vars hmap pmap p1 in
-   	  let oa2, ot2 = compile_pure prog disj input_vars output_vars hmap pmap p2 in
-   	  let oa = match oa1, oa2 with
-   		| None, None -> None
-   		| None, Some a 
-   		| Some a, None -> Some a
-   		| Some a1, Some a2 ->
-   			let a = mkSeq a1 a2 pos in
-   			  Some a in
-   	  let ot = match ot1, ot2 with
-   		| None, None -> None
-   		| None, Some t
-   		| Some t, None -> Some t
-   		| Some t1, Some t2 -> 
-   			let t = Binary ({exp_binary_op = OpLogicalAnd;
-   							 exp_binary_oper1 = t1;
-   							 exp_binary_oper2 = t2;
-   							 exp_binary_pos = pos}) in
-   			  Some t
-   	  in
-   		(oa, ot)
-   	end
-   | CP.BForm bf -> begin
-   	  compile_bform prog disj hmap pmap input_vars output_vars bf
-   	end
-   | _ -> failwith ((Cprinter.string_of_pure_formula p0) ^ " is not supported")
+(*    (*                                                                                                                                                                                                                            *)
+(*    Pure formula compilation.                                                                                                                                                                                                     *)
+(*  *)                                                                                                                                                                                                                              *)
+(*    and compile_pure (prog : C.prog_decl) (disj : formula) (input_vars : ident list) (output_vars : ident list) (hmap : heap_output) (pmap : (ident * CP.exp) list) (p0 : CP.formula) : (exp option * exp option) = match p0 with *)
+(*    | CP.And (p1, p2, pos) ->  begin                                                                                                                                                                                              *)
+(*    	  let oa1, ot1 = compile_pure prog disj input_vars output_vars hmap pmap p1 in                                                                                                                                              *)
+(*    	  let oa2, ot2 = compile_pure prog disj input_vars output_vars hmap pmap p2 in                                                                                                                                              *)
+(*    	  let oa = match oa1, oa2 with                                                                                                                                                                                              *)
+(*    		| None, None -> None                                                                                                                                                                                                      *)
+(*    		| None, Some a                                                                                                                                                                                                            *)
+(*    		| Some a, None -> Some a                                                                                                                                                                                                  *)
+(*    		| Some a1, Some a2 ->                                                                                                                                                                                                     *)
+(*    			let a = mkSeq a1 a2 pos in                                                                                                                                                                                              *)
+(*    			  Some a in                                                                                                                                                                                                             *)
+(*    	  let ot = match ot1, ot2 with                                                                                                                                                                                              *)
+(*    		| None, None -> None                                                                                                                                                                                                      *)
+(*    		| None, Some t                                                                                                                                                                                                            *)
+(*    		| Some t, None -> Some t                                                                                                                                                                                                  *)
+(*    		| Some t1, Some t2 ->                                                                                                                                                                                                     *)
+(*    			let t = Binary ({exp_binary_op = OpLogicalAnd;                                                                                                                                                                          *)
+(*    							 exp_binary_oper1 = t1;                                                                                                                                                                                         *)
+(*    							 exp_binary_oper2 = t2;                                                                                                                                                                                         *)
+(*    							 exp_binary_pos = pos}) in                                                                                                                                                                                      *)
+(*    			  Some t                                                                                                                                                                                                                *)
+(*    	  in                                                                                                                                                                                                                        *)
+(*    		(oa, ot)                                                                                                                                                                                                                  *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.BForm bf -> begin                                                                                                                                                                                                        *)
+(*    	  compile_bform prog disj hmap pmap input_vars output_vars bf                                                                                                                                                               *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | _ -> failwith ((Cprinter.string_of_pure_formula p0) ^ " is not supported")                                                                                                                                                  *)
 
-   (*
-   The first component consists of assignments to output parameters.
-   The second component consists of tests of input parameters.
- *)
-   and compile_bform prog disj hmap pmap input_vars output_vars bf0 : (exp option * exp option) = match bf0 with
-   | CP.Eq (e1, e2, pos) -> begin
-   	  if is_in_vars e1 output_vars then
-   		(* sv is an output parameters, generate assignments *)
-   		let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   		let lhs = Var ({exp_var_name = (CP.name_of_spec_var (CP.to_var e1));
-   						exp_var_pos = pos}) in
-   		let ce = Assign ({exp_assign_op = OpAssign;
-   						  exp_assign_lhs = lhs;
-   						  exp_assign_rhs = ce2;
-   						  exp_assign_pos = pos}) in
-   		  (Some ce, None)
-   	  else if is_in_vars e2 output_vars then
-   		compile_bform prog disj hmap pmap input_vars output_vars (CP.Eq (e2, e1, pos))
-   	  else
-   		(None, Some (gen_pure_test prog disj hmap pmap input_vars bf0))
-   	end
-   | CP.EqMin (em, e1, e2, pos) when is_in_vars em output_vars -> begin
-   	  let tmp1 = CP.Min (e1, e2, pos) in
-   	  let tmp2 = CP.Eq (em, tmp1, pos) in
-   		compile_bform prog disj hmap pmap input_vars output_vars tmp2
-   	end
-   | CP.EqMax (em, e1, e2, pos) when is_in_vars em output_vars -> begin
-   	  let tmp1 = CP.Max (e1, e2, pos) in
-   	  let tmp2 = CP.Eq (em, tmp1, pos) in
-   		compile_bform prog disj hmap pmap input_vars output_vars tmp2
-   	end
-   | _ -> (None, Some (gen_pure_test prog disj hmap pmap input_vars bf0))
+(*    (*                                                                                                                                                                                                                            *)
+(*    The first component consists of assignments to output parameters.                                                                                                                                                             *)
+(*    The second component consists of tests of input parameters.                                                                                                                                                                   *)
+(*  *)                                                                                                                                                                                                                              *)
+(*    and compile_bform prog disj hmap pmap input_vars output_vars bf0 : (exp option * exp option) = match bf0 with                                                                                                                 *)
+(*    | CP.Eq (e1, e2, pos) -> begin                                                                                                                                                                                                *)
+(*    	  if is_in_vars e1 output_vars then                                                                                                                                                                                         *)
+(*    		(* sv is an output parameters, generate assignments *)                                                                                                                                                                    *)
+(*    		let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    		let lhs = Var ({exp_var_name = (CP.name_of_spec_var (CP.to_var e1));                                                                                                                                                      *)
+(*    						exp_var_pos = pos}) in                                                                                                                                                                                            *)
+(*    		let ce = Assign ({exp_assign_op = OpAssign;                                                                                                                                                                               *)
+(*    						  exp_assign_lhs = lhs;                                                                                                                                                                                           *)
+(*    						  exp_assign_rhs = ce2;                                                                                                                                                                                           *)
+(*    						  exp_assign_pos = pos}) in                                                                                                                                                                                       *)
+(*    		  (Some ce, None)                                                                                                                                                                                                         *)
+(*    	  else if is_in_vars e2 output_vars then                                                                                                                                                                                    *)
+(*    		compile_bform prog disj hmap pmap input_vars output_vars (CP.Eq (e2, e1, pos))                                                                                                                                            *)
+(*    	  else                                                                                                                                                                                                                      *)
+(*    		(None, Some (gen_pure_test prog disj hmap pmap input_vars bf0))                                                                                                                                                           *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.EqMin (em, e1, e2, pos) when is_in_vars em output_vars -> begin                                                                                                                                                          *)
+(*    	  let tmp1 = CP.Min (e1, e2, pos) in                                                                                                                                                                                        *)
+(*    	  let tmp2 = CP.Eq (em, tmp1, pos) in                                                                                                                                                                                       *)
+(*    		compile_bform prog disj hmap pmap input_vars output_vars tmp2                                                                                                                                                             *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.EqMax (em, e1, e2, pos) when is_in_vars em output_vars -> begin                                                                                                                                                          *)
+(*    	  let tmp1 = CP.Max (e1, e2, pos) in                                                                                                                                                                                        *)
+(*    	  let tmp2 = CP.Eq (em, tmp1, pos) in                                                                                                                                                                                       *)
+(*    		compile_bform prog disj hmap pmap input_vars output_vars tmp2                                                                                                                                                             *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | _ -> (None, Some (gen_pure_test prog disj hmap pmap input_vars bf0))                                                                                                                                                        *)
 
-   and gen_pure_test prog disj hmap pmap input_vars (bf0 : CP.b_formula) : exp = match bf0 with
-   | CP.Eq (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = Binary ({exp_binary_op = OpEq;
-   						exp_binary_oper1 = ce1;
-   						exp_binary_oper2 = ce2;
-   						exp_binary_pos = pos}) in
-   		ce
-   	end
-   | CP.Lte (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = Binary ({exp_binary_op = OpLte;
-   						exp_binary_oper1 = ce1;
-   						exp_binary_oper2 = ce2;
-   						exp_binary_pos = pos}) in
-   		ce	  
-   	end
-   | CP.Lt (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = Binary ({exp_binary_op = OpLt;
-   						exp_binary_oper1 = ce1;
-   						exp_binary_oper2 = ce2;
-   						exp_binary_pos = pos}) in
-   		ce	  
-   	end
-   | CP.Gte (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = Binary ({exp_binary_op = OpGte;
-   						exp_binary_oper1 = ce1;
-   						exp_binary_oper2 = ce2;
-   						exp_binary_pos = pos}) in
-   		ce	  
-   	end
-   | CP.Gt (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = Binary ({exp_binary_op = OpGt;
-   						exp_binary_oper1 = ce1;
-   						exp_binary_oper2 = ce2;
-   						exp_binary_pos = pos}) in
-   		ce	  
-   	end
-   | CP.EqMax (emax, e1, e2, pos) -> begin
-   	  let cem = compile_pure_exp prog disj hmap pmap input_vars emax in
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let maxe = CallNRecv ({exp_call_nrecv_method = "Math.max";
-   							 exp_call_nrecv_arguments = [ce1; ce2];
-   							 exp_call_nrecv_pos = pos}) in
-   	  let ce = Binary ({exp_binary_op = OpEq;
-   						exp_binary_oper1 = cem;
-   						exp_binary_oper2 = maxe;
-   						exp_binary_pos = pos}) in
-   		ce
-   	end
-   | CP.EqMin (emax, e1, e2, pos) -> begin
-   	  let cem = compile_pure_exp prog disj hmap pmap input_vars emax in
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let maxe = CallNRecv ({exp_call_nrecv_method = "Math.min";
-   							 exp_call_nrecv_arguments = [ce1; ce2];
-   							 exp_call_nrecv_pos = pos}) in
-   	  let ce = Binary ({exp_binary_op = OpEq;
-   						exp_binary_oper1 = cem;
-   						exp_binary_oper2 = maxe;
-   						exp_binary_pos = pos}) in
-   		ce
-   	end
-   | _ -> failwith ("gen_pure_test: " ^ (Cprinter.string_of_b_formula bf0) ^ " is not supported")
+(*    and gen_pure_test prog disj hmap pmap input_vars (bf0 : CP.b_formula) : exp = match bf0 with                                                                                                                                  *)
+(*    | CP.Eq (e1, e2, pos) -> begin                                                                                                                                                                                                *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = Binary ({exp_binary_op = OpEq;                                                                                                                                                                                   *)
+(*    						exp_binary_oper1 = ce1;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = ce2;                                                                                                                                                                                           *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce                                                                                                                                                                                                                        *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Lte (e1, e2, pos) -> begin                                                                                                                                                                                               *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = Binary ({exp_binary_op = OpLte;                                                                                                                                                                                  *)
+(*    						exp_binary_oper1 = ce1;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = ce2;                                                                                                                                                                                           *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce	                                                                                                                                                                                                                      *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Lt (e1, e2, pos) -> begin                                                                                                                                                                                                *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = Binary ({exp_binary_op = OpLt;                                                                                                                                                                                   *)
+(*    						exp_binary_oper1 = ce1;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = ce2;                                                                                                                                                                                           *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce	                                                                                                                                                                                                                      *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Gte (e1, e2, pos) -> begin                                                                                                                                                                                               *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = Binary ({exp_binary_op = OpGte;                                                                                                                                                                                  *)
+(*    						exp_binary_oper1 = ce1;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = ce2;                                                                                                                                                                                           *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce	                                                                                                                                                                                                                      *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Gt (e1, e2, pos) -> begin                                                                                                                                                                                                *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = Binary ({exp_binary_op = OpGt;                                                                                                                                                                                   *)
+(*    						exp_binary_oper1 = ce1;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = ce2;                                                                                                                                                                                           *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce	                                                                                                                                                                                                                      *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.EqMax (emax, e1, e2, pos) -> begin                                                                                                                                                                                       *)
+(*    	  let cem = compile_pure_exp prog disj hmap pmap input_vars emax in                                                                                                                                                         *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let maxe = CallNRecv ({exp_call_nrecv_method = "Math.max";                                                                                                                                                                *)
+(*    							 exp_call_nrecv_arguments = [ce1; ce2];                                                                                                                                                                         *)
+(*    							 exp_call_nrecv_pos = pos}) in                                                                                                                                                                                  *)
+(*    	  let ce = Binary ({exp_binary_op = OpEq;                                                                                                                                                                                   *)
+(*    						exp_binary_oper1 = cem;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = maxe;                                                                                                                                                                                          *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce                                                                                                                                                                                                                        *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.EqMin (emax, e1, e2, pos) -> begin                                                                                                                                                                                       *)
+(*    	  let cem = compile_pure_exp prog disj hmap pmap input_vars emax in                                                                                                                                                         *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let maxe = CallNRecv ({exp_call_nrecv_method = "Math.min";                                                                                                                                                                *)
+(*    							 exp_call_nrecv_arguments = [ce1; ce2];                                                                                                                                                                         *)
+(*    							 exp_call_nrecv_pos = pos}) in                                                                                                                                                                                  *)
+(*    	  let ce = Binary ({exp_binary_op = OpEq;                                                                                                                                                                                   *)
+(*    						exp_binary_oper1 = cem;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = maxe;                                                                                                                                                                                          *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce                                                                                                                                                                                                                        *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | _ -> failwith ("gen_pure_test: " ^ (Cprinter.string_of_b_formula bf0) ^ " is not supported")                                                                                                                                *)
 
-   and compile_pure_exp prog disj hmap pmap input_vars e0 : exp = match e0 with
-   | CP.Add (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = Binary ({exp_binary_op = OpPlus;
-   						exp_binary_oper1 = ce1;
-   						exp_binary_oper2 = ce2;
-   						exp_binary_pos = pos}) in
-   		ce
-   	end
-   | CP.Subtract (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = Binary ({exp_binary_op = OpMinus;
-   						exp_binary_oper1 = ce1;
-   						exp_binary_oper2 = ce2;
-   						exp_binary_pos = pos}) in
-   		ce
-   	end
-   | CP.Max (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = CallNRecv ({exp_call_nrecv_method = "Math.max";
-   						   exp_call_nrecv_arguments = [ce1; ce2];
-   						   exp_call_nrecv_pos = pos}) in
-   		ce
-   	end
-   | CP.Min (e1, e2, pos) -> begin
-   	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in
-   	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in
-   	  let ce = CallNRecv ({exp_call_nrecv_method = "Math.min";
-   						   exp_call_nrecv_arguments = [ce1; ce2];
-   						   exp_call_nrecv_pos = pos}) in
-   		ce
-   	end
-   | CP.Var (sv, pos) -> begin
-   	  let var = CP.name_of_spec_var sv in
-   		try
-   		  let e = gen_input_exp prog disj input_vars hmap var pos in
-   			e
-   		with
-   		  | _ -> 
-   			  try
-   				let subst_e = List.assoc var pmap in
-   				  compile_pure_exp prog disj hmap pmap input_vars subst_e
-   			  with
-   				| _ -> 
-   					Err.report_error {Err.error_loc = pos;
-   									  Err.error_text = "compile_pure_exp: cannot compile " 
-   						^ (Cprinter.string_of_formula_exp e0)}
-   	end
-   | CP.IConst (i, pos) ->
-   	  IntLit ({exp_int_lit_val = i;
-   			   exp_int_lit_pos = pos})
-   | CP.Null pos ->
-   	  Null pos
-   | _ -> failwith ((Cprinter.string_of_formula_exp e0) ^ " is not supported")
+(*    and compile_pure_exp prog disj hmap pmap input_vars e0 : exp = match e0 with                                                                                                                                                  *)
+(*    | CP.Add (e1, e2, pos) -> begin                                                                                                                                                                                               *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = Binary ({exp_binary_op = OpPlus;                                                                                                                                                                                 *)
+(*    						exp_binary_oper1 = ce1;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = ce2;                                                                                                                                                                                           *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce                                                                                                                                                                                                                        *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Subtract (e1, e2, pos) -> begin                                                                                                                                                                                          *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = Binary ({exp_binary_op = OpMinus;                                                                                                                                                                                *)
+(*    						exp_binary_oper1 = ce1;                                                                                                                                                                                           *)
+(*    						exp_binary_oper2 = ce2;                                                                                                                                                                                           *)
+(*    						exp_binary_pos = pos}) in                                                                                                                                                                                         *)
+(*    		ce                                                                                                                                                                                                                        *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Max (e1, e2, pos) -> begin                                                                                                                                                                                               *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = CallNRecv ({exp_call_nrecv_method = "Math.max";                                                                                                                                                                  *)
+(*    						   exp_call_nrecv_arguments = [ce1; ce2];                                                                                                                                                                         *)
+(*    						   exp_call_nrecv_pos = pos}) in                                                                                                                                                                                  *)
+(*    		ce                                                                                                                                                                                                                        *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Min (e1, e2, pos) -> begin                                                                                                                                                                                               *)
+(*    	  let ce1 = compile_pure_exp prog disj hmap pmap input_vars e1 in                                                                                                                                                           *)
+(*    	  let ce2 = compile_pure_exp prog disj hmap pmap input_vars e2 in                                                                                                                                                           *)
+(*    	  let ce = CallNRecv ({exp_call_nrecv_method = "Math.min";                                                                                                                                                                  *)
+(*    						   exp_call_nrecv_arguments = [ce1; ce2];                                                                                                                                                                         *)
+(*    						   exp_call_nrecv_pos = pos}) in                                                                                                                                                                                  *)
+(*    		ce                                                                                                                                                                                                                        *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.Var (sv, pos) -> begin                                                                                                                                                                                                   *)
+(*    	  let var = CP.name_of_spec_var sv in                                                                                                                                                                                       *)
+(*    		try                                                                                                                                                                                                                       *)
+(*    		  let e = gen_input_exp prog disj input_vars hmap var pos in                                                                                                                                                              *)
+(*    			e                                                                                                                                                                                                                       *)
+(*    		with                                                                                                                                                                                                                      *)
+(*    		  | _ ->                                                                                                                                                                                                                  *)
+(*    			  try                                                                                                                                                                                                                   *)
+(*    				let subst_e = List.assoc var pmap in                                                                                                                                                                                  *)
+(*    				  compile_pure_exp prog disj hmap pmap input_vars subst_e                                                                                                                                                             *)
+(*    			  with                                                                                                                                                                                                                  *)
+(*    				| _ ->                                                                                                                                                                                                                *)
+(*    					Err.report_error {Err.error_loc = pos;                                                                                                                                                                              *)
+(*    									  Err.error_text = "compile_pure_exp: cannot compile "                                                                                                                                                      *)
+(*    						^ (Cprinter.string_of_formula_exp e0)}                                                                                                                                                                            *)
+(*    	end                                                                                                                                                                                                                         *)
+(*    | CP.IConst (i, pos) ->                                                                                                                                                                                                       *)
+(*    	  IntLit ({exp_int_lit_val = i;                                                                                                                                                                                             *)
+(*    			   exp_int_lit_pos = pos})                                                                                                                                                                                              *)
+(*    | CP.Null pos ->                                                                                                                                                                                                              *)
+(*    	  Null pos                                                                                                                                                                                                                  *)
+(*    | _ -> failwith ((Cprinter.string_of_formula_exp e0) ^ " is not supported")                                                                                                                                                   *)
 
-   End of first attempt *)
+(*    End of first attempt *)                                                                                                                                                                                                       *)
 
 (**********************************************************************************)
 
@@ -1100,7 +1100,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
 	 corresponding positionally to v.
       *)
       let pname = CP.name_of_spec_var p in
-      let vdef = x_add C.look_up_view_def_raw 30 prog.C.prog_view_decls c in
+      let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls c in
       let helper v vp m pb =
         if m = ModeOut then
           let vname = CP.name_of_spec_var v in
@@ -1562,7 +1562,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 	ckr.root = p;
 	if (!ckr.traverse(curColor, newColor)) return false;
       *)
-      let vdef = x_add C.look_up_view_def_raw 31 prog.C.prog_view_decls c in
+      let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls c in
       let cls = class_name_of_view c in
       let new_checker = New ({exp_new_class_name = cls;
                               exp_new_arguments = [];
@@ -1920,7 +1920,7 @@ and get_partially_bound_vars_heap prog (h0 : h_formula) : CP.spec_var list = mat
     vars1 @ vars2
   | ViewNode ({h_formula_view_arguments = args0;
                h_formula_view_name = c}) ->
-    let vdef = x_add C.look_up_view_def_raw 32 prog.C.prog_view_decls c in
+    let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls c in
     let rec helper flags args = match flags, args with
       | (flag :: rest1, arg :: rest2) ->
         let tmp = helper rest1 rest2 in

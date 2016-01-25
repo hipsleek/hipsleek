@@ -1,0 +1,45 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::node<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WSS<p> ==
+  self::node<_,q>* q::WFSeg<p> 
+  inv self!=null.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+// if WFSeg_sz not derived, WSS_sz will use not track aux rec..
+pred WFSeg_sz<p,nnn> == extends WFSeg<p> with size[REC]<nnn>.
+
+pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
+
+/*
+# ex26a1.slk
+
+# One copy only ..
+
+[ view WFSeg_WFSeg_sz<p:node,nnn:int>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&nnn=0 & self=p&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){4}->(exists p_45,v_46,q_47,
+          nnn_48: (* lbl: *){4}->self::node<v_46,q_47>@M * 
+                                 q_47::WFSeg_WFSeg_sz<p_45,nnn_48>@M&
+          nnn=1+nnn_48 & v_46!=0 & p_45=p&{FLOW,(1,26)=__flow#E}[])
+    
+  
+  inv: 
+  nnn>=0]
+
+
+*/

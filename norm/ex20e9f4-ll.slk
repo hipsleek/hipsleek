@@ -1,0 +1,39 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y,node@NI z).
+
+lemma_unsafe "compl" H(self,y) * y::node<_,ss> -> self::node<_,q>*H(q,ss).
+
+infer [H,H2,@classic] H2(q1,y,_) * y::node<_,ss> 
+    |- H(q1,ss).
+print residue.
+
+/*
+# ex20e9f4.slk
+
+Given:
+
+ lemma_unsafe H(self,y)*y::node<_,self> -> self::node<_,q>*H(q,self).
+
+It seems we may need to generalize to:
+
+ lemma_unsafe H(self,y)*y::node<_,ss> -> self::node<_,q>*H(q,ss).
+
+
+# GOT, can we schedule "compl" lemma?
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H2(q1,y@NI,Anon_14@NI) * y::node<Anon_15,ss>@M&
+                   true --> H(q1,ss@NI)&true]
+[[ InferUnfold ]]
+
+
+
+
+*/

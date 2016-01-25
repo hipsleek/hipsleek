@@ -1,0 +1,43 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+/*
+HeapPred P(char_star x).
+HeapPred HP_1502(char_star x, int@NI y, char_star@NI z).
+
+relAssume P(s)&true --> s::char_star<v_1500,Anon_1501> * HP_1502(Anon_1501,v_1500,s)&true.
+
+relAssume HP_1502(Anon_1501,v_1500,s)& s'=s & v=v_1500 & Anon_18=Anon_1501 & v=0 --> emp&true.
+
+relAssume HP_1502(Anon_1501,v_1500,s)& v_1500!=0 |#| s::char_star<v_1500,Anon_1501>&true 
+  --> P(Anon_1501)&true.
+  
+shape_derive_view [P].
+print views.
+
+pred_elim_tl_node [P].
+print views.
+*/
+/*
+pred APP<Anon_49> == 
+  self::char_star<v_1500,Anon_1501> * Anon_1501::APP<Anon_50> &
+    v_1500!=0 & Anon_50=Anon_49
+  or
+  self::char_star<v_1500,Anon_1501> & Anon_49=Anon_1501 & v_1500=0.
+*/
+
+
+pred APP<Anon_49> == 
+  self::char_star<v_1500,Anon_49> & v_1500=0 or
+  self::char_star<v_1500,Anon_1501> * Anon_1501::APP<Anon_49> & v_1500!=0 & Anon_1501!=null.
+
+/*
+pred APP<non_49> == 
+  self::char_star<v_1500,non_49> & v_1500=0 or
+  self::char_star<v_1500,non_1501> * non_1501::APP<non_49> & v_1500!=0 & non_1501!=null.
+*/
+  
+pred_elim_tl_node [APP].
+print views.
+

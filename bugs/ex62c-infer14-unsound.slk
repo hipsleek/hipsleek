@@ -13,3 +13,4 @@ HeapPred H1(node x).
 infer [H1] H1(p)* x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
 print residue.
 
+

@@ -1,0 +1,54 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+HeapPred H2(node x, int n).
+HeapPred H3(node x, node@NI z).
+
+// (3)
+infer [H1]  H1(y) |- y::node<a,q>*q::node<b,null>.
+print residue.
+
+/*
+infer [H3]  y::node<_,p> * H3(p,y) |- y::node<_,null>.
+print residue.
+*/
+
+/*
+# bugs/ex64m1.slk 
+
+# Why is match not captured in trace and -dd-steps by infer_unfold?
+
+Entail (1) : Valid. 
+Residue:
+ <1>HP_47(flted_14_46,y)&flted_14_46=null & y!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_47(flted_14_46,y@NI)&true --> emp&flted_14_46=null; 
+                  H1(y)&
+                   true --> y::node<a_45,flted_14_46>@M * 
+                            HP_47(flted_14_46,y@NI)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
+(==solver.ml#13577==)
+do_match@1
+do_match inp1 : y::node<a_41,b_42>@M
+do_match inp2 : y::node<a,b>@M
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H1(y) |#|  --> y::node<a_41,b_42>@M]
+ es_gen_impl_vars(E): [a; b; c; d]
+ es_gen_impl_vars: [a; b; c; d]
+ es_trace:  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [H1]
+do_match inp4 : b::node<c,d>@M&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+
+[[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
+ CEX:false
+
+*/

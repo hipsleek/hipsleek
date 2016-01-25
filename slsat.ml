@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 open Globals
 open Others
 open Gen
@@ -104,7 +105,7 @@ let unfold_one_view_x prog form_red_fnc (vnode:h_formula_view)=
   let vname = vnode.h_formula_view_name in
   let act_args = vnode.h_formula_view_node::vnode.h_formula_view_arguments in
   let caller_eqs, act_args1 = Satutil.fresh_dupl_svl act_args [] [] in
-  let vdecl = Cast.look_up_view_def_raw 63 prog.Cast.prog_view_decls vname in
+  let vdecl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then
      CP.SpecVar (Named vdecl.Cast.view_data_name,self,Unprimed)
   else
@@ -549,7 +550,7 @@ let check_sat_heap prog p hf0=
   (*all args are pointers*)
   let is_pointer_pred vname=
     try
-      let vdef = Cast.look_up_view_def_raw 61 prog.Cast.prog_view_decls vname in
+      let vdef = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
       List.for_all CP.is_node_typ vdef.Cast.view_vars
     with _ -> false
   in

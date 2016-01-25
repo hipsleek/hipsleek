@@ -196,8 +196,10 @@ let common_arguments = [
    "Move instantiation (containing existential vars) to the LHS at the end of the folding process");
   ("--max-renaming", Arg.Set Globals.max_renaming,
    "Always rename the bound variables");
-  ("--no-anon-exist", Arg.Clear Globals.anon_exist,
+  ("--dis-anon-exist", Arg.Clear Globals.anon_exist,
    "Disallow anonymous variables in the precondition to be existential");
+  ("--en-anon-exist", Arg.Set Globals.anon_exist,
+   "Allow anonymous variables in the precondition to be existential");
   ("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
    "Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
   ("-noee", Arg.Clear Globals.elim_exists_flag,
@@ -292,7 +294,16 @@ let common_arguments = [
   ("--dd-calls-all", Arg.Unit
      (fun _ -> 
         Debug.dump_calls:=true;
+        Debug.dump_callers_flag:=true;
         Debug.dump_calls_all:=true;
+        Gen.debug_precise_trace:=true;
+     ),
+   "Dump all debugged calls");
+  ("--dd-callers-all", Arg.Unit
+     (fun _ -> 
+        Debug.dump_calls:=true;
+        Debug.dump_callers_flag:=true;
+        (* Debug.dump_calls_all:=true; *)
         Gen.debug_precise_trace:=true;
      ),
    "Dump all debugged calls");
@@ -336,8 +347,15 @@ let common_arguments = [
    "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-exc", Arg.Set VarGen.trace_exc,
    "Enable trace of exceptions invoked by methods");
+  ("--trace-log", Arg.Set Gen.debug_trace_log,
+   "Enable trace of method logs during debugging");
+  ("--trace-log-num", Arg.Int (fun i ->
+       Gen.debug_trace_log_num:=i;
+       Gen.debug_trace_log :=true;
+     ),
+   "Enable trace of a specific method call for debugging");
   ("--trace-loop", Arg.Set VarGen.trace_loop,
-   "Enable trace of method header duriong debugging");
+   "Enable trace of method header during debugging");
   ("--trace-loop-all", Arg.Unit (fun _ ->
        VarGen.trace_loop_all :=true;
        VarGen.trace_loop :=true;
@@ -388,6 +406,10 @@ let common_arguments = [
   ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
   ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");
   ("--old-pred-extn", Arg.Set Globals.old_pred_extn,"Use new pred extension approach");
+  ("--old-lemma-switch", Arg.Set Globals.old_lemma_switch,"Use old lemma switching approach");
+  ("--new-lemma-switch", Arg.Clear Globals.old_lemma_switch,"Use new lemma switching approach");
+  ("--old-free-var-lhs", Arg.Set Globals.old_free_var_lhs,"Use free vars of LHS for fold lemma proving");
+  ("--new-free-var-lhs", Arg.Clear Globals.old_free_var_lhs,"Use guards/parameter as free vars of LHS in fold lemma proving");
   ("--old-field-tag", Arg.Set Globals.old_field_tag,"Add old field tags VAL_i, REC_i to data fields");
   ("--new-field-tag", Arg.Clear Globals.old_field_tag,"Do not old field tags VAL_i, REC_i to data fields");
   ("--old-lemma-unfold", Arg.Set Globals.old_lemma_unfold,"Do not use lemma single unfold");
@@ -411,6 +433,8 @@ let common_arguments = [
   ("--new-base-case-fold-hprel", Arg.Clear Globals.old_base_case_fold_hprel,"Use new  method of base_case_fold for inferring hprel");
   ("--old-fvars-as-impl-match", Arg.Set Globals.old_fvars_as_impl_match,"Use old method where free var is treated as implicit vars");
   ("--new-fvars-as-impl-match", Arg.Clear Globals.old_fvars_as_impl_match,"New method where free var are not treated as implicit vars");
+  ("--old-unsound-no-progress", Arg.Set Globals.old_unsound_no_progress,"Use old lemma proving without fold progress checking");
+  ("--new-unsound-no-progress", Arg.Clear Globals.old_unsound_no_progress,"Use new lemma proving with fold progress checking");
   ("--old-infer-heap", Arg.Set Globals.old_infer_heap,"Use old method of scheduling Infer_Heap");
   ("--new-infer-heap", Arg.Clear Globals.old_infer_heap,"Use new method of scheduling Infer_Heap");
   ("--old-mater-coercion", Arg.Set Globals.old_mater_coercion,"Use Old Mater Coercion Selection");
@@ -441,6 +465,9 @@ let common_arguments = [
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
+  ("--adhoc-4", Arg.Set Globals.adhoc_flag_4,"Enable Adhoc Flag 4");
+  ("--adhoc-5", Arg.Set Globals.adhoc_flag_5,"Enable Adhoc Flag 5");
+  ("--adhoc-6", Arg.Set Globals.adhoc_flag_6,"Enable Adhoc Flag 6");
   ("--old-keep-absent", Arg.Set Globals.old_keep_absent,"Keep absent nodes during expure - unsound");
   ("--old-empty-to-conseq", Arg.Set Globals.old_empty_to_conseq,"Keep to_conseq empty");
   ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Flag unsound false");
@@ -695,7 +722,7 @@ let common_arguments = [
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
-       let _ = print_endline ("!!!-dre "^s) in
+       (* let _ = print_endline ("!!!-dre "^s) in *)
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
        Debug.read_main ()
      ),
@@ -840,6 +867,8 @@ let common_arguments = [
   ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--ops", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
   ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
+  ("--en-pred-elim-node", Arg.Set Globals.pred_elim_node, "Eliminate common nodes in derived predicates");
+  ("--dis-pred-elim-node", Arg.Clear Globals.pred_elim_node, "Disable common nodes elimination in derived predicates");
   ("--witness-gen", Arg.String parse_call_stack, "call stack for witness generation");
    ("--dis-witness-orig", Arg.Clear Witness.witness_from_orig, "disable witness from original source file");
   (* Template *)
@@ -1032,6 +1061,8 @@ let common_arguments = [
   ("--lem-dis-residue", Arg.Clear Globals.allow_lemma_residue, "Disallow residue for Lemma Proving");
   ("--lem-dis-lhs-unfold", Arg.Clear Globals.enable_lemma_lhs_unfold, "Disable LHS unfold for Lemma Proving");
   ("--lem-en-lhs-unfold", Arg.Set Globals.enable_lemma_lhs_unfold, "Enable LHS unfold for Lemma Proving");
+  ("--lem-dis-unk-unfold", Arg.Clear Globals.enable_lemma_unk_unfold, "Disable unknown heap unfold for Lemma Proving");
+  ("--lem-en-unk-unfold", Arg.Set Globals.enable_lemma_unk_unfold, "Enable unknown heap unfold for Lemma Proving");
   ("--ulhs", Arg.Set Globals.enable_lemma_lhs_unfold, "Shortcut for --lem-en-lhs-unfold");
   ("--urhs", Arg.Set Globals.enable_lemma_rhs_unfold, "Shortcut for --lem-en-rhs-unfold");
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
@@ -1064,6 +1095,8 @@ let common_arguments = [
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
   ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
+  ("--en-sep-pure-fields", Arg.Set Globals.sep_pure_fields, "separate pure fields in unknown heap predicates");
+  ("--dis-sep-pure-fields", Arg.Clear Globals.sep_pure_fields, "combine pure fields in unknown heap predicates");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
   ("--en-syn-mode", Arg.Set Globals.syntatic_mode, "check two formulas are equivalent syntatically. default is semantic checking via sleek");
@@ -1167,6 +1200,8 @@ let common_arguments = [
   (*("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");*)
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
+  ("--pnum",Arg.Int (fun n ->
+       Globals.sleek_num_to_verify := n),"Specific sleek number to verify");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--dis-implicit-var",Arg.Set Globals.dis_impl_var, "disable implicit existential");
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");

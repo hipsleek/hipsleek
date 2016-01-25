@@ -1,0 +1,70 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+/*
+checkentail x::arrI<5> 
+ |-  x2::arrI<j> & x=x2.
+print residue.
+expect Valid.
+
+// root ptr instantiation
+checkentail x::arrI<5> & x=a
+ |-  x2::arrI<j> & x2=a.
+print residue.
+expect Valid.
+*/
+
+// root ptr instantiation with arithmetic
+checkentail x::arrI<5> & x=a+1
+ |-  x2::arrI<j> & x2=a+1.
+print residue.
+expect Valid.
+
+checkentail x::arrI<5> & x=a+1
+ |-  x2::arrI<j> & x2=a+2.
+print residue.
+expect Fail.
+
+checkentail x::arrI<5> & x=a+1
+ |-  (exists c: x2::arrI<j> & x2=a+(1+c) & c=3).
+print residue.
+expect Fail.
+
+checkentail x::arrI<5> & x=a+1
+ |-  [x2] x2::arrI<j> & x2=a+1.
+print residue.
+expect Valid.
+
+checkentail x::arrI<5> & x=a+1
+ |-  (exists x2: x2::arrI<j> & x2=a+1).
+print residue.
+expect Valid.
+
+
+/*
+# ex6a5b.slk -dre "choose_c" 
+
+checkentail x::arrI<5> & x=a+1
+ |-  x2::arrI<j> & x2=a+1.
+
+# alias set is coming from the right
+  but does not work with ptr aritmetic
+  (compare ex6a5c.slk)
+
+(==context.ml#3471==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<flted_24_45>@M
+choose_context inp2 :RHS node: x2::arrI<j>@M
+choose_context inp3 :LHS pure: x=1+a & flted_24_45=5
+choose_context inp4 :RHS pure: x2=1+a
+choose_context inp5 :right aliase:[]
+choose_context@1 EXIT:[]
+
+
+*/

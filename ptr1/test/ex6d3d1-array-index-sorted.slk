@@ -1,0 +1,72 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg2<i,n> == x::arrI<_> & x=self+i & i=n-1 & i>=0
+  or x::arrI<_>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+checkentail
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> & x=base+j //& j>=0 
+  |-  x2::arrI<_> & x2=base+j.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- base::arr_seg2<k,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- base::arr_seg2<j,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- base::arr_seg2<j-1,n>.
+print residue.
+expect Fail.
+
+
+/*
+# ex6d3d1.slk (see ex6d3e.slk for examples)
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- base::arr_seg2<j,n>.
+print residue.
+expect Valid.
+
+# same base but diff j_75 that is eventually equated to j
+
+(==context.ml#3512==)
+choose_context@2
+choose_context inp1 :LHS node: x::arrI<Anon_13>@M
+choose_context inp2 :RHS node: x_77::arrI<Anon_78>@M
+choose_context inp3 :LHS pure: x=j+base & 0<=j
+choose_context inp4 :RHS pure: x_77=j_75+base & j_75+1=n & 0<=j_75
+choose_context inp5 :right alias:[(j_75,j)]
+choose_context@2 EXIT:[]
+
+MaybeErr Context: 
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: do_unmatched_rhs : x_106::arrI<Anon_107>@M(may)
+        fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+      }
+    [[ Fold ==>  UnmatchedRHSData]]
+ 
+
+
+*/

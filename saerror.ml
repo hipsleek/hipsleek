@@ -365,7 +365,7 @@ let create_specs hprel_defs prog proc_name =
     (* in *)
     (* let substed_grouped_hprel_defs = List.map (fun hprel_defs -> subst_hprel_defs hprel_defs) grouped_hprel_defs in *)
     (* let todo_unk = List.map (fun hprel_defs -> List.map (fun hprel_def -> print_endline (Cprinter.string_of_hprel_def_short hprel_def)) hprel_defs) substed_grouped_hprel_defs in *)
-    let proc_static_specs = proc.Cast.proc_static_specs in
+    let proc_static_specs = proc.Cast.proc_stk_of_static_specs # top (* proc.Cast.proc_static_specs *) in
     let specs = List.map (fun hprel_defs -> List.fold_left (fun new_spec hprel_def -> subst_struc new_spec hprel_def) proc_static_specs hprel_defs) grouped_hprel_defs (* substed_grouped_hprel_defs *) in
     let args = Cformula.h_fv (List.hd (List.hd grouped_hprel_defs (* substed_grouped_hprel_defs *))).Cformula.hprel_def_hrel in
     let cases = List.map (fun struc_formula -> get_case struc_formula prog args hprel_defs) specs in

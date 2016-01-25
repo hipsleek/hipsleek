@@ -1,0 +1,26 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+
+lemma_infer[H,@classic]
+ H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
+
+/*
+
+!!! **lemproving.ml#323:lhs_unfold_ptrs0:[]
+!!! **lemproving.ml#324:rhs_unfold_ptrs10:[]
+!!! **lemproving.ml#343:LP.lhs(unfolded): (exists zz_28,Anon_11,yy: H(self,yy) * yy::node<Anon_11,zz_28>@M&zz_28=zz&
+
+H(self,yy) --> self=yy
+    \/ self::node<_,q>*G(q,yy,self) & self!=yy
+
+H(self,yy) --> self=yy \/ self::node<_,q>*G(q,yy,self)
+
+*/

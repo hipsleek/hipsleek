@@ -1,0 +1,48 @@
+data arr {
+  int val;
+  arr next;
+}.
+
+pred arr_seg<p:arr,n:int> ==
+  self=p & n=0
+  or self::arr<_,q> * q::arr_seg<p,n-1> 
+  inv n>=0.
+
+//(4)
+checkentail emp |- x::arr_seg<p,n>.
+print residue.
+expect Valid.
+// i=n
+
+/*
+# ex1e6b.slk
+
+checkentail emp |- x::arr_seg<p,n>.
+
+ <1>emp&x=p & n=0 & x=p&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  BaseCaseFold]]
+
+(====)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: emp
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ x::arr_seg<p,n>@M]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[x,p,n]
+compute_actions@1 EXIT: COND =>[
+  Prio:2
+  BaseCaseFold =>
+    Type: Root
+    LHS: emp
+    RHS: x::arr_seg<p,n>@M
+    root_inst: None
+    lhs_rest: emp
+    rhs_rest: emp
+    alias set: []rhs_inst: []rhs_infer: None;
+  Prio:5
+  UnmatchedRHSData =>  x::arr_seg<p,n>@M
+  ]
+
+*/
+

@@ -10,6 +10,8 @@ let silence_output = ref false
 
 (* let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0) *)
 let debug_precise_trace = ref false
+let debug_trace_log = ref false
+let debug_trace_log_num = ref (-2)
 let enable_counters = ref false
 let profiling = ref false
 let profile_threshold = 0.5
@@ -170,6 +172,10 @@ struct
   let pr_list_brk_sep open_b close_b sep f xs  = open_b ^(pr_lst sep f xs)^close_b
   let pr_list_brk open_b close_b f xs  = pr_list_brk_sep open_b close_b "," f xs
   let pr_list f xs = pr_list_brk "[" "]" f xs
+  let pr_list_n f xs = 
+    let n = List.length xs in
+    if n>1 then (string_of_int n)^(pr_list f xs)
+    else pr_list f xs
   let pr_list_semi f xs = pr_list_brk_sep "[" "]" ";" f xs
   let pr_list_no_brk f xs = pr_list_brk "" "" f xs
   let pr_list_angle f xs = pr_list_brk "<" ">" f xs
@@ -728,7 +734,7 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     (*   let s = self # get_stk_no_dupl in *)
     (*   print_endline ("\nget_stk("^name^"):"^((Basic.pr_list epr) s));  *)
     (*   s *)
-    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
+    method push_list_x f loc (* ?(pr_flag=false) *) (ls:'a list) =  
       (* WN : below is to be removed later *)
       (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
       let n = List.length ls in
@@ -741,12 +747,16 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
           let flag = match !Globals.show_push_list_rgx with
             | None -> true
             | Some rgx -> Str.string_match rgx name 0 in
-          if flag (* s=name || s="" *) then
-            print_endline ("\npush_list("^name^"):"^(string_of_int n)^((Basic.pr_list epr) ls)) 
+          if flag || f (* s=name || s="" *) then
+            print_endline ("\npush_list("^name^"):"^loc^(string_of_int n)^((Basic.pr_list epr) ls)) 
           else () in
       super # push_list ls 
-    method push_list_pr (ls:'a list) =  
-      self # push_list (* ~pr_flag:true *) ls
+    method push_list_loc s (ls:'a list) =  
+      self # push_list_x false s ls
+    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
+      self # push_list_x false "" ls
+    method push_list_pr loc (ls:'a list) =  
+      self # push_list_x true  loc (* ~pr_flag:true *) ls
     method reset_pr  =  
         (* let () = print_endline ("\nXXXX reset("^name) in *)
         super # reset 
@@ -845,8 +855,10 @@ class counter x_init =
   object 
     val mutable ctr = x_init
     method get : int = ctr
+    method get_orig : int = x_init
     method inc = ctr <- ctr + 1
     method inc_and_get = ctr <- ctr + 1; ctr
+    method dec_and_get = ctr <- ctr - 1; ctr
     method diff = ctr - x_init
     method add (i:int) = ctr <- ctr + i
     method reset = ctr <- x_init (* 0x0 *)
@@ -1464,7 +1476,13 @@ struct
 
   (* pop last element from call stack of ho debug *)
   let pop_call () = 
-    if is_same_dd () then dd_stk # pop;
+    let () = match is_same_dd_get () with
+      | None -> ()
+      | Some no -> 
+        let n2 = !debug_trace_log_num in
+        if n2<0 || n2=no then dd_stk # pop
+        else ()
+    in
     let () = debug_stk # pop in
     (* let () = print_string "after pop_call" in *)
     (* let () = force_dd_print() in *)
@@ -1514,7 +1532,9 @@ struct
     (* let () = ctr#inc in *)
     let v = ctr#next_call in
     let () = debug_stk#push v in
-    if flag_detail then dd_stk#push v;
+    if flag_detail || !debug_trace_log then 
+      if !debug_trace_log_num<0 || !debug_trace_log_num=v then
+        dd_stk#push v;
     let lc = ctr # get_last_call in
     let s = os^lc in
     let h = os^"@"^string_of() in

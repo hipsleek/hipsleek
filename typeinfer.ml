@@ -116,7 +116,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
     | [] -> []
   in
   try
-    let vdef = I.look_up_view_def_raw 6 prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
+    let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls h0.IF.h_formula_heap2_name in
     let args = h0.IF.h_formula_heap2_arguments in
     let hargs, hanns =
       if args==[] then ([],[]) (* don't convert if empty *)
@@ -443,7 +443,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
      with
      | Not_found ->
        (try
-          let todo_unk = I.look_up_view_def_raw 6 prog.I.prog_view_decls c
+          let todo_unk = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c
           in Named c
         with
         | Not_found ->
@@ -573,11 +573,13 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.Add (a1, a2, pos) ->
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
       if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
-        let (n_tl2,_) = x_add must_unify_expect t1 et n_tl2 pos in
+        let () = y_tinfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
+        let (n_tl2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
         (n_tlist2,t1)
       else if is_possible_node_typ t2 && !Globals.ptr_arith_flag then
-        let (n_tl2,_) = x_add must_unify_expect t2 et n_tl2 pos in
+        let () = y_tinfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
+        let (n_tl2,_) = x_add must_unify_expect t2 new_et2 n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
         (n_tlist2,t2)
       else 
@@ -1601,7 +1603,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     else (* End dealing with generic ptr, continue what the original system did *)
       let n_tl = 
         (try
-           let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls v_name in
+           let vdef = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
            (* let () = if vdef.I.view_is_prim then Debug.ninfo_pprint ("type_gather: prim_pred "^v_name) no_pos in *)
            (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
            let () = if not (IF.is_param_ann_list_empty ann_param) then
@@ -1619,7 +1621,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
               Err.report_error
                 {
                   Err.error_loc = pos;
-                  Err.error_text = v_name ^ " is neither 2 a data nor view name";
+                  Err.error_text = x_loc ^ v_name ^ " is neither 2 a data nor view name";
                 }))
       in n_tl
   | IF.ThreadNode { IF.h_formula_thread_node = (v, p); (* ident, primed *)
@@ -1667,24 +1669,30 @@ let trans_view : (I.prog_decl -> ident list -> Cast.view_decl list ->   (ident *
 
 (* and spec_var_type_list = (( ident*spec_var_info)  list) *)
 
-let mk_spec_var_info t = { sv_info_kind =t; id = 0}
+let mk_spec_var_info t = { sv_info_kind =t; id = fresh_int (); }
   
 let sv_to_typ sv = match sv with
   | CP.SpecVar(t,i,p) ->(i, mk_spec_var_info t)
 
-let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
+let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula =
   (* cformula --> iformula *)
   (* iformula --> normalize *)
   (* iformula --> cformula *)
+  (* let all_vs = CF.fv ~vartype:Global_var.var_with_exists f in    *)
+  (* let () = y_tinfo_hp (add_str "all_vs" !CP.print_svl) all_vs in *)
   let free_vs = CF.fv f in
   let () = y_tinfo_hp (add_str "free_vs" !CP.print_svl) free_vs in
+  let () = y_tinfo_hp (add_str "f" !CF.print_formula) f in
   let f = !CF.rev_trans_formula f in
+  let () = y_tinfo_hp (add_str "f" Iprinter.string_of_formula) f in
   let fvars = List.map CP.name_of_spec_var avail_vars in
   let tlist = List.map sv_to_typ free_vs  in
   let avail_vars = List.map CP.primed_ident_of_spec_var avail_vars in
   let expl_vars = List.map CP.primed_ident_of_spec_var expl_vars in
   (* let (f,r_avail,r_expl) = !Iast.case_normalize_formula iprog avail_vars expl_vars f in *)
+  let () = y_tinfo_hp (add_str "f" Iprinter.string_of_formula) f in
   let f = !Iast.case_normalize_formula iprog avail_vars f in
+  let () = y_tinfo_hp (add_str "f(norm)" Iprinter.string_of_formula) f in
   let quantify = true in
   let clean_res = false in
   let sep_collect = true in
@@ -1737,7 +1745,8 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
         (* let vbc_o = conv_baga_inv vbi_o in *)
         (* let vbc_u = conv_baga_inv vbi_u in *)
         let new_pf = MCP.pure_of_mix vd.C.view_user_inv in
-        let (vboi,vbui,user_inv,user_x_inv) = x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos in
+        let (vboi,vbui,user_inv,user_x_inv) = failwith x_tbi
+            (* x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf no_pos *) in
         let () = vd.C.view_raw_base_case <- rbc in
         let () = vd.C.view_user_inv <- user_inv in
         let () = vd.C.view_x_formula <- user_x_inv in

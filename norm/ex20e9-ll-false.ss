@@ -55,7 +55,7 @@ clist3<> == self::node<_, q> * P2(q, self);
 
 //lemma_safe "cir" self::clist<> -> self::clist2<>.
 
-int len_seg(node x)
+int len_seg(node x, node p)
   //infer [P,@classic,@pure_field,@size,@term]
   //infer [P#{size,sum},@classic,@pure_field]
   //infer [P#size,P#sum,@classic,@pure_field]
@@ -69,11 +69,11 @@ int len_seg(node x)
   requires P2(x,p) //x::node<_, q> * P2(q, x)
   ensures false;
 {    
-  if (x==null) return 0;
+  if (x==p) return 0;
   else { 
     node n = x.next;
     //dprint;
-    int r=len_seg(n);
+    int r=len_seg(n, p);
     //dprint;
     return 1+r;
   }

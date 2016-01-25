@@ -3,18 +3,25 @@ data arr {
 }.
 
 pred arr_seg<i:int,n:int> ==
-  emp & i>=n & n>=0
+  emp & i=n & n>=0
   or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
-  inv n>=0 & i>=0.
+  inv n>=i & i>=0.
 
 //(4)
-checkentail x::arr_seg<i,n> & n-i>=2 & y=x+i & z=y+1 
-   |- y::arr<_> * z::arr<_>.
+checkentail x::arr_seg<i,n> & n-i>=2 & y=x+i & z=x+i+1 
+   |- y::arr<_> //* z::arr<_>
+  .
 print residue.
 expect Valid.
 
+checkentail x::arr_seg<i,n> & n-i>=3 & y=x+i & z=y+2
+   |- y::arr<_> * z::arr<_>.
+print residue.
+expect Fail.
+// weak
+
 /*
-# ex1e2 --trace-exc
+# ex1e2 -dre "process_one_m" --trace-log-num 5
 
 !!! **context.ml#741:TODO: rename root:x
 Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS node  Type: Root
@@ -24,6 +31,7 @@ Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS n
  lhs_rest: x_133::arr<Anon_134>@M
  rhs_rest: y::arr<Anon_15>@M
  rhs_inst: []rhs_infer: None
+
 
 Residue:
 

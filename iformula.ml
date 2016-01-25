@@ -3306,3 +3306,4 @@ let clear_type_info_formula (f: formula): formula =
 let clear_type_info_formula (f: formula): formula = 
   let pr = !print_formula in
   Debug.no_1 "clear_type_info_formula" pr pr clear_type_info_formula f
+

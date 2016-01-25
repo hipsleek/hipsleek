@@ -1,0 +1,48 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n=0 
+	or self::node<q> * q::ll<n-1> 
+  inv n>=0.
+
+HeapPred H(node y).
+
+infer [z,H] x::node<z>*H(y)    |- y::node<null> * x::ll<a>.
+// fail
+/*
+infer [H] H(y)    |- y::node<null>.
+print residue.
+infer [z] x::node<z>    |- x::ll<a>.
+*/
+//infer [H] x::node<null>*H(y)    |- y::node<null> * x::ll<a>.
+//infer [n] x::node<null>*y::ll<n>    |- y::node<null> * x::ll<a>.
+//infer [n] x::node<null>*y::ll<n> & n=1   |- y::node<null> * x::ll<a>.
+//infer [zzz,H1] x::node<zzz>*H1(y)   |- y::node<null>  .
+print residue.
+expect Valid.
+
+/*
+# ex64r7a.slk 
+
+infer [zzz,H1] x::node<zzz>*H1(y)   |- y::node<null> * x::lseg<zzz> .
+
+# Why is x::node<..> still there? if it is not a search?
+
+!!! **WARNING****context.ml#825:pushing to infer
+!!! **context.ml#3239:process_matches (steps) :
+ ### LHS : x::node<zzz>@M * H1(y)
+ ### RHS : y::node<flted_14_49>@M
+ ### matches :
+[ Type: Root
+ LHS: H1(y)
+ RHS: y::node<flted_14_49>@M
+ root_inst: None
+ lhs_rest: x::node<zzz>@M
+ rhs_rest: emp
+ alias set: [y]rhs_inst: []rhs_infer: None]
+
+
+*/
