@@ -171,7 +171,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                 let body = CP.wrap_exists_svl body (* [root] *) ptrs_vars in
                 let () = x_tinfo_hp (add_str "body" Cprinter.string_of_pure_formula) body no_pos in
                 let () = x_tinfo_hp (add_str "num_inv" Cprinter.string_of_pure_formula) fixc no_pos in
-                let is_precise_num = if check_under_num_inv fixc body then
+                let is_precise_num = if x_add check_under_num_inv fixc body then
                     let () = x_binfo_pp ("Predicate " ^ vd.Cast.view_name ^ " has precise invariant\n") no_pos in
                     (true,fixc)
                   else

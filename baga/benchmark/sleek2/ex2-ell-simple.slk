@@ -1,0 +1,46 @@
+data node {
+  int valVAL_11;
+  node nextREC_24;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_18_26: self::node<Anon_14,q1> * 
+  q1::node<Anon_15,q2> * q2::ll<flted_18_26>&flted_18_26+2=n)
+  inv 0<=n
+  inv_sat BG([],self=null&n=0) | BG([self],n=1)
+.
+
+//checksat x::ll<n>.
+
+//checksat x::ll<7>.
+
+//checksat x::ll<4>.
+
+
+checksat x::ll<0>. // SAT
+
+checksat x::ll<1>.
+
+checksat x::ll<2>. // UNK
+
+//checksat x::ll<0> & x=null.
+
+/*
+# ex2.slk
+
+# why is it precise?
+
+  baga over inv: [([], 0<=n)]
+  baga over inv (unfolded): [([self], 2<=n),([], self=null & n=0)]
+  baga under inv: [([], self=null & n=0)]
+  xform: ((self=null & n=0) | (self!=null & 2<=n))
+
+!!! **WARNING****astsimp.ml#2030:TODO: fix replacement of rec view with inv
+!!! **astsimp.ml#2110:baga_over_formula: emp&0<=n&{FLOW,(1,26)=__flow#E}[]
+!!! **astsimp.ml#2111:ctx:  emp&((self=1 & 2<=n) | (self=null & n=0))&{FLOW,(1,26)=__flow#E}[]
+ es_gen_impl_vars(E): []
+!!! **astsimp.ml#2126:baga_under: ((self=1 & n=2) | (self=null & n=0))
+!!! **WARNING****astsimp.ml#2227:View defn for ll has precise invariant
+
+*/
+

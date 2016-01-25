@@ -2121,8 +2121,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let under_f = vdef.C.view_baga_under_inv in *)
       let baga_under_formula = match under_f with
         | None -> CP.mkFalse pos
-        | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
+        (* | Some disj -> Excore.EPureI.ef_conv_enum_disj disj *)
+        | Some disj -> Excore.EPureI.ef_conv_disj disj
       in
+      let () = y_binfo_hp (add_str "baga_under" !CP.print_formula) baga_under_formula in
       (* let baga_under_formula = match under_f with *)
       (*   | None -> CF.mkFalse (CF.mkTrueFlow ()) pos *)
       (*   | Some disj -> CF.formula_of_pure_formula (Excore.EPureI.ef_conv_enum_disj disj) pos *)
@@ -2176,13 +2178,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* type: int -> Excore.EPureI.epure -> CF.formula list -> string -> bool *)
       let check_under no uf fl vn =
         Debug.no_3 "check_under" Cprinter.string_of_ef_pure (pr_list Cprinter.string_of_formula) pr_id string_of_bool (fun _ _ _ -> check_under  no uf fl vn) uf fl vn  in
-      (* let _ = x_tinfo_hp (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in *)
+      let _ = x_binfo_hp (add_str "formula1_under" Cprinter.string_of_formula) formula1_under no_pos in
       let body_under = [formula1_under] in
       let under_fail = match under_f with
         | None -> false
         | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
             List.exists (fun uf ->
-                not(check_under 3 uf body_under vdef.view_name)
+                let () = y_binfo_pp "tracing check_under" in
+                not(x_add check_under 3 uf body_under vdef.view_name)
               ) ufl
             (* let baga_under_formula_list = CP.split_disjunctions baga_under_formula in *)
             (* List.exists (fun baga_under_formula -> *)
@@ -2192,12 +2195,14 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let under_fail = if under_fail then
           let body_under = fst (List.split vdef.view_un_struc_formula) in
+          let _ = x_binfo_hp (add_str "body_under (un_struc)" (pr_list Cprinter.string_of_formula)) body_under no_pos in
         (* let body_under = (List.map (fun (f,_) -> f) vdef.view_un_struc_formula) in *)
           match under_f with
           | None -> false
           | Some ufl -> if (CP.is_False baga_under_formula) then (* false *) true else
               List.exists (fun uf ->
-                  not(check_under 3 uf body_under vdef.view_name)
+                let () = y_binfo_pp "tracing check_under (2)" in
+                  not(x_add check_under 3 uf body_under vdef.view_name)
                 ) ufl
         else under_fail in
       let do_test_inv pos vn msg inv fail_res =
