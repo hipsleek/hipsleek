@@ -2177,6 +2177,7 @@ let dis_baga_inv_check = ref false
 
 let is_inferring = ref false
 let use_baga = ref false
+let use_dynamic_sat = ref false
 
 (* let unsat_count_syn = ref (0:int) *)
 (* let unsat_count_sem = ref (0:int) *)

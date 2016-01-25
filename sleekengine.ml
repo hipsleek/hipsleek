@@ -2855,7 +2855,8 @@ let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
   let res =
     if unsat then let () = num_unsat := !num_unsat + 1 in "UNSAT\n\n"
     else if sat then let () = num_sat := !num_sat + 1 in "SAT\n\n"
-    else let () = num_unknown := !num_unknown + 1 in "UNKNOWN\n\n"
+    else
+      let () = num_unknown := !num_unknown + 1 in "UNKNOWN\n\n"
   in silenced_print print_string (num_id^": "^res); flush stdout
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) lerr_exc:bool =
@@ -2883,6 +2884,11 @@ let process_sat_check_x (f : meta_formula) =
   let sat_res =
     if res then false
     else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
+  in
+  let sat_res = if !Globals.use_dynamic_sat && not res && not sat_res then
+    let res,_ = Slsat.check_sat_topdown !cprog false f in
+    if res = 1 then true else false
+  else sat_res
   in
   let _ = CF.residues := (Some (CF.SuccCtx [], sat_res)) in
   print_sat_result res sat_res num_id
