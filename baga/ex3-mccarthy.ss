@@ -11,5 +11,5 @@ int mc(int n)
 
 /*
      EAssume 
-       emp&((res>=91 & res+10=n) | (res>=91 & (res+8)>=n & 92>=res))&
+       emp&((n>=101 & n=res+10) | (100>=n & 91=res))&{FLOW,(4,5)=__norm#E}[]
 */
