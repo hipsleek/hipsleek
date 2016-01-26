@@ -1021,7 +1021,7 @@ let common_arguments = [
   ("--double-check",Arg.Set Globals.double_check,"double checking new syn baga");
   ("--dis-double-check",Arg.Clear Globals.double_check,"disable double-checking new syn baga");
   ("--use-baga",Arg.Set Globals.use_baga,"use baga only (no inv infer)");
-  ("--use-dynamic-sat",Arg.Set Globals.use_dynamic_sat,"use baga only (no inv infer)");
+  ("--dyn-sat-bound", Arg.Int (fun i -> Globals.dynamic_sat_bound := i),"use baga only (no inv infer)");
   ("--dis-use-baga",Arg.Clear Globals.use_baga,"disable use baga only (no inv infer)");
   (* ("--inv-baga",Arg.Set Globals.gen_baga_inv,"generate baga inv from view"); *)
   ("--inv-baga",Arg.Unit (fun _ ->  Globals.use_baga := true; Globals.gen_baga_inv := true),"generate baga inv from view");
