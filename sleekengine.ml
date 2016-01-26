@@ -2887,7 +2887,7 @@ let process_sat_check_x (f : meta_formula) =
   in
   let sat_res = if !Globals.use_dynamic_sat && not res && not sat_res then
     let res,_ = Slsat.check_sat_topdown !cprog false f in
-    if res = 1 then true else false
+    if res = 1 then true else sat_res
   else sat_res
   in
   let _ = CF.residues := (Some (CF.SuccCtx [], sat_res)) in
