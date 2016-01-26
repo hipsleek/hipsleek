@@ -2885,7 +2885,7 @@ let process_sat_check_x (f : meta_formula) =
     if res then false
     else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
   in
-  let sat_res = if !Globals.use_dynamic_sat && not res && not sat_res then
+  let sat_res = if !Globals.dynamic_sat_bound >=0 && not res && not sat_res then
     let res,_ = Slsat.check_sat_topdown !cprog false f in
     if res = 1 then true else sat_res
   else sat_res

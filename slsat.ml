@@ -11,6 +11,7 @@ module CP = Cpure
 module CF = Cformula
 
 let timeout = (10.0 : float)
+let skip_unsat = ref true
 
 let is_sat_pure_fnc_cex f = (let r = Tpdispatcher.is_sat_sub_no 21 f (ref 0) in (r,f))
 
@@ -183,7 +184,9 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
         combine_formula_abs is_shape_only (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1)
             (ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2)
       in
-      let is_unsat = is_inconsistent_fnc ptos eqs neqs null_svl neqNull_svl hvs mf in
+      let is_unsat = if !skip_unsat then
+        false
+      else is_inconsistent_fnc ptos eqs neqs null_svl neqNull_svl hvs mf in
       if is_unsat then ([],unsat_caches)
       else
         (* [(new_f)],unsat_caches *)
@@ -446,7 +449,7 @@ and check_sat_topdown_iter prog is_shape_only form_red_fnc is_inconsistent_fnc d
 let check_sat_topdown_x prog need_slice f0=
   (* print_endline_quiet "\n***slsat****"; *)
   let _ = DD.ninfo_hprint (add_str "f0" Cprinter.prtt_string_of_formula) f0 no_pos in
-  let bound = 5 in
+  let bound = if !Globals.dynamic_sat_bound >=0 then !Globals.dynamic_sat_bound + 1 else 5 in
   let is_shape_only,form_red_fnc, is_inconsistent_fnc =
     if not (!Globals.pred_has_pure_props) then
       true,form_red_eq, (is_inconsistent prog.Cast.prog_view_decls)
