@@ -2163,7 +2163,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           let pr = pr_list Cprinter.string_of_formula in
           Debug.no_2 "helper_unfold" pr pr pr (fun _ _ -> helper_unfold no bfs ifs) bfs ifs in
         let upf = Excore.EPureI.ef_conv_enum_disj [uf] in
-        let () = Debug.ninfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) upf no_pos in
+        let () = Debug.binfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) upf no_pos in
         let (ifs,bfs) = List.partition CF.is_inductive fl in
         let bfs = bfs@(helper_unfold no bfs ifs) in
         let rs1 = List.exists (fun f ->
@@ -2171,8 +2171,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
             let () = Debug.ninfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
             TP.imply_raw upf pf
           ) bfs in
-        if rs1 then true
-        else
+        (* if rs1 then true *)
+        (* else *)
           let rs2 = List.exists (fun f ->
               let pf = x_add_1 Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga2 prog vn uf) f) in
               let () = Debug.ninfo_hprint (add_str "pf indu" Cprinter.string_of_pure_formula) pf no_pos in

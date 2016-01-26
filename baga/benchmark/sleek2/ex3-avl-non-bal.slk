@@ -1,0 +1,13 @@
+data node {
+  int val;
+  int height;
+  node left;
+  node right;
+}.
+ pred avl<size:int,height:int> == 
+  emp&self=null & size=0 & height=0
+   or
+self::node<Anon_14,height,l,r> * 
+  l::avl<size1,height1> * q::avl<size2,height2>&size=size2+1+size1 & 
+  height2<=(1+height1) & height1<=(1+height2) & height=max(height1,height2)+1
+.
