@@ -449,7 +449,7 @@ and check_sat_topdown_iter prog is_shape_only form_red_fnc is_inconsistent_fnc d
 let check_sat_topdown_x prog need_slice f0=
   (* print_endline_quiet "\n***slsat****"; *)
   let _ = DD.ninfo_hprint (add_str "f0" Cprinter.prtt_string_of_formula) f0 no_pos in
-  let bound = if !Globals.dynamic_sat_bound >=0 then !Globals.dynamic_sat_bound + 1 else 5 in
+  let bound = if !Globals.dynamic_sat_bound >=0 then !Globals.dynamic_sat_bound else 5 in
   let is_shape_only,form_red_fnc, is_inconsistent_fnc =
     if not (!Globals.pred_has_pure_props) then
       true,form_red_eq, (is_inconsistent prog.Cast.prog_view_decls)
