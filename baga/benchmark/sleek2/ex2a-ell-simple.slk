@@ -7,9 +7,9 @@ data node {
 (exists flted_18_26: self::node<Anon_14,q1> * 
   q1::node<Anon_15,q2> * q2::ll<flted_18_26>&flted_18_26+2=n)
   inv 0<=n
-  //inv_sat BG([],self=null&n=0) | BG([self],n=3) // fail
+  //inv_sat BG([],self=null&n=0) | BG([self],n=2) // fail
   //inv_sat BG([],self=null&n=0) // OK
-  inv_sat BG([],self=null&n=0) | BG([self],n=3 | n=5) // fail
+  inv_sat BG([],self=null&n=0) | BG([self],n=2 | n=4) // fail
 .
 
 //checksat x::ll<n>.
@@ -34,9 +34,22 @@ checksat x::ll<4>. // UNK
 checksat x::ll<0> & x=null.
 
 /*
-# ex2.slk
+# ex2a.slk (FIXED)
 
-# why is it precise?
+  inv_sat BG([],self=null&n=0) | BG([self],n=2) // fail
+
+Inv Check: Valid.(Under)
+
+# why has precise invariant message?
+
+!!! **WARNING****astsimp.ml#2246:View defn for ll has precise invariant
+
+
+!! **astsimp.ml#2139:baga_under: ((n=2 & self!=null) | (n=4 & self!=null) | (self=null & n=0))
+
+-----------------------------------------------------
+
+ it precise?
 
   baga over inv: [([], 0<=n)]
   baga over inv (unfolded): [([self], 2<=n),([], self=null & n=0)]

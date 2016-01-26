@@ -1,0 +1,31 @@
+data node {
+  int valVAL_11;
+  node nextREC_24;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_18_26: self::node<Anon_14,q1> * 
+  q1::node<Anon_15,q2> * q2::ll<flted_18_26>&flted_18_26+2=n)
+  //inv 0<=n
+  inv BG([],n>=0) 
+.
+
+/*
+# ex2d.slk
+
+# compute BAGA under-approx by unfolindg
+
+  ([],self=null,n=0)
+
+  ([],self=null,n=0) | ([self],true,n=2)
+
+  ([],self=null,n=0) | ([self],true,n=2 | n=4)
+
+  ([],self=null,n=0) | ([self],true,n=2 | n=4 |6 )
+
+
+!!! **fixUtil.ml#218:precise_invs:[true]
+!!! **fixUtil.ml#219:baga_invs:[[([], self=null),([self], true)]]
+!!! **fixUtil.ml#229:combined_invs:[[([], exists(alpha:2*alpha=n) & 0<=n & self=null),([self], exists(alpha:2*alpha=n) & 0<=n)]]
+
+*/

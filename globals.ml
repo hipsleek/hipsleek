@@ -45,6 +45,8 @@ exception SA_HP_NOT_PRED
 
 exception NOT_HANDLE_YET
 
+let under_infer_limit = ref (-1)
+
 let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false

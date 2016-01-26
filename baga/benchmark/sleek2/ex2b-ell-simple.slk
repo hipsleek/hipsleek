@@ -1,0 +1,64 @@
+data node {
+  int valVAL_11;
+  node nextREC_24;
+}.
+ pred ll<n:int> == 
+  emp&self=null & n=0 or
+(exists flted_18_26: self::node<Anon_14,q1> * 
+  q1::node<Anon_15,q2> * q2::ll<flted_18_26>&flted_18_26+2=n)
+  //inv 0<=n
+  //inv BG([],n>=0) 
+  //inv BG([self],n>=0) // should fail
+  //inv BG([],n>=1) // should fail
+  //inv BG([],n=0) | BG([self],n>=1) // should OK
+  //inv BG([],n=0) | BG([self],n>=2) // should OK
+  //inv BG([],n=0) | BG([self],n>2) // should fail
+  //inv_sat BG([],self=null&n=0) | BG([self],n=4) // ok
+  inv_sat BG([],self=null&n=0) | BG([self],n=3) // fail
+  //inv_sat BG([],self=null&n=0) | BG([self],n=4) // 
+  //inv_sat BG([],self=null&n=0) // OK
+  //inv_sat BG([],self=null&n=0) | BG([self],n=2 | n=4) // fail
+.
+
+//checksat x::ll<n>.
+
+//checksat x::ll<7>.
+
+//checksat x::ll<4>.
+
+
+checksat x::ll<0>. // SAT
+
+checksat x::ll<1>.
+
+checksat x::ll<3>.
+
+checksat x::ll<2>. // UNK
+
+checksat x::ll<5>. // SAT
+
+checksat x::ll<4>. // UNK
+
+checksat x::ll<0> & x=null.
+
+/*
+# ex2b.slk
+
+  inv_sat BG([],self=null&n=0) | BG([self],n=3) // ok
+
+# why check under twice?
+
+!!! **WARNING****astsimp.ml#2041:TODO: fix replacement of rec view with inv
+!!! **astsimp.ml#2139:baga_under: ((n=3 & self!=null) | (self=null & n=0))
+!!! **astsimp.ml#2193:formula1_under: emp&((n=2 & self!=null) | (n=5 & self!=null) | (self=null & n=0))&
+{FLOW,(1,26)=__flow#E}[]
+!!! **astsimp.ml#2199:tracing check_under
+!!! **astsimp.ml#2199:tracing check_under
+!!! **astsimp.ml#2210:body_under (un_struc):[ (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[], (* lbl: *){2}->(exists flted_18_11,Anon_14,q1,Anon_15,
+q2: (* lbl: *){2}->self::node<Anon_14,q1>@M * q1::node<Anon_15,q2>@M * 
+                   q2::ll<flted_18_11>@M&
+2+flted_18_11=n&{FLOW,(1,26)=__flow#E}[])]
+
+
+*/
+

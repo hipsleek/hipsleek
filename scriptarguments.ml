@@ -349,6 +349,10 @@ let common_arguments = [
    "Enable trace of exceptions invoked by methods");
   ("--trace-log", Arg.Set Gen.debug_trace_log,
    "Enable trace of method logs during debugging");
+  ("--under-infer-limit", Arg.Int (fun i ->
+       Globals.under_infer_limit :=i;
+     ),
+   "Number of unfolds to apply to derive under-approximation");
   ("--trace-log-num", Arg.Int (fun i ->
        Gen.debug_trace_log_num:=i;
        Gen.debug_trace_log :=true;

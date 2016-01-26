@@ -2242,8 +2242,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
            not(over_fail) && not(under_fail) then
           begin
             let () = match under_f with
-              | None -> ()
-              | _ -> x_winfo_pp ("View defn for " ^ vn ^ " has precise invariant\n") no_pos
+              | None -> x_winfo_pp ("View defn for " ^ vn ^ " has precise invariant(1)\n") no_pos
+              | _ -> x_winfo_pp ("View defn for " ^ vn ^ " has not precise invariant(2)\n") no_pos
             in
             let pf = pure_of_mix vdef.C.view_user_inv in
             let (disj_form,disj_f) = CP.split_disjunctions_deep_sp pf in

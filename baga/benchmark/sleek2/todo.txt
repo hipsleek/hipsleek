@@ -2,6 +2,47 @@ dll: htrue
 heap, sll, trees: NUM
 
 ===============================================
+# ex2a.slk (FIXED)
+
+  inv_sat BG([],self=null&n=0) | BG([self],n=2) // fail
+
+
+Inv Check: Valid.(Under)
+
+# why has precise invariant message?
+
+!!! **WARNING****astsimp.ml#2246:View defn for ll has precise invariant
+
+
+!! **astsimp.ml#2139:baga_under: ((n=2 & self!=null) | (n=4 & self!=null) | (self=null & n=0))
+===============================================
+# ex2b.slk
+
+  inv_sat BG([],self=null&n=0) | BG([self],n=3) // ok
+
+# why check under twice?
+
+!!! **WARNING****astsimp.ml#2041:TODO: fix replacement of rec view with inv
+!!! **astsimp.ml#2139:baga_under: ((n=3 & self!=null) | (self=null & n=0))
+!!! **astsimp.ml#2193:formula1_under: emp&((n=2 & self!=null) | (n=5 & self!=null) | (self=null & n=0))&
+{FLOW,(1,26)=__flow#E}[]
+!!! **astsimp.ml#2199:tracing check_under
+!!! **astsimp.ml#2199:tracing check_under
+!!! **astsimp.ml#2210:body_under (un_struc):[ (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[], (* lbl: *){2}->(exists flted_18_11,Anon_14,q1,Anon_15,
+q2: (* lbl: *){2}->self::node<Anon_14,q1>@M * q1::node<Anon_15,q2>@M * 
+                   q2::ll<flted_18_11>@M&
+2+flted_18_11=n&{FLOW,(1,26)=__flow#E}[])]
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
+===============================================
 ===============================================
 ===============================================
 ===============================================
