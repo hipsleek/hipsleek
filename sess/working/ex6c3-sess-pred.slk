@@ -1,0 +1,26 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+pred_prim Send{+%P}<>.
+pred_prim Recv{-%P}<>.
+
+pred_sess buyer_ch2<> == !this::String<a> & a>0.//;;@buyer_ch2.
+
+pred_sess buyer_ch3<> == ?this::String<a> & a>0;;@buyer_ch2.
+
+pred buyer_ch4<> == self::Chan{!this::String<a> & a>0;;?this::String<b> & b>0;;@buyer_ch3}<>.
+
+//pred buyer_ch4<> == self::Chan{!this::String<a> & a>0;;?this::String<b> & b>0}<>.
+
+
+//checkentail x::Chan{@buyer_ch2}<> |- x::Chan{@buyer_ch3}<>.
+
+//checkentail x::Chan{@buyer_ch2}<> |- x::Chan{@buyer_ch3}<>.
+
+//checkentail x::Chan{op::buyer_ch2<>}<> |- x::Chan{op::buyer_ch3<>}<>.

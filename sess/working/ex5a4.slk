@@ -1,0 +1,36 @@
+/*
+The session or operation tests 
+*/
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+
+pred buyer_ch1<> == self::Chan{!xx:int#{xx::String<a> & a>0};;?xx:int#{xx::String<a> & a>1};;(!xx:int#{xx::String<a> & a>0} or !xx:int#{xx::String<a> & a<0});;!xx:int#{xx::String<a> & a>0}}<>.
+pred buyer_ch2<> == self::Chan{!xx:int#{xx::String<a> & a>1};;?xx:int#{xx::String<a> & a>2};;(!xx:int#{xx::String<a> & a>0} or !xx:int#{xx::String<a> & a<0});;!xx:int#{xx::String<a> & a>0}}<>.
+
+checkentail zz::buyer_ch1<>|- zz::buyer_ch2<>.
+
+expect Valid.
+print residue.
+
+pred buyer_ch3<> == self::Chan{!xx:int#{xx::String<a> & a>0};;?xx:int#{xx::String<a> & a>1};;(!xx:int#{xx::String<a> & a>0} or !xx:int#{xx::String<a> & a<0});;!xx:int#{xx::String<a> & a>0}}<>.
+pred buyer_ch4<> == self::Chan{!xx:int#{xx::String<a> & a>1};;?xx:int#{xx::String<a> & a>2};;(!xx:int#{xx::String<a> & a>0} or !xx:int#{xx::String<a> & a<0});;!xx:int#{xx::String<a> & a>1}}<>.
+
+checkentail zz::buyer_ch3<>|- zz::buyer_ch4<>.
+
+expect Valid.
+print residue.
+
+pred buyer_ch5<> == self::Chan{!xx:int#{xx::String<a> & a>0};;?xx:int#{xx::String<a> & a>1};;(!xx:int#{xx::String<a> & a>0} or !xx:int#{xx::String<a> & a<0});;!xx:int#{xx::String<a> & a>2}}<>.
+pred buyer_ch6<> == self::Chan{!xx:int#{xx::String<a> & a>1};;?xx:int#{xx::String<a> & a>2};;(!xx:int#{xx::String<a> & a>0} or !xx:int#{xx::String<a> & a<0});;!xx:int#{xx::String<a> & a>1}}<>.
+
+checkentail zz::buyer_ch5<>|- zz::buyer_ch6<>.
+
+expect Fail.
+print residue.

@@ -1,0 +1,46 @@
+/*
+diferent variable name 
+*/
+
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+
+
+pred buyer_ch1<> == self::Chan{!xx:String#{xx::String<a> & a>0}}<>.
+pred buyer_ch2<> == self::Chan{!gg:String#{gg::String<a> & a>1}}<>.
+
+checkentail zz::buyer_ch1<>|- zz::buyer_ch2<>.
+
+expect Valid.
+print residue.
+
+pred buyer_ch3<> == self::Chan{!xx:String#{xx::String<a> & a>2}}<>.
+pred buyer_ch4<> == self::Chan{!gg:String#{gg::String<a> & a>1}}<>.
+
+checkentail zz::buyer_ch3<>|- zz::buyer_ch4<>.
+
+expect Fail.
+print residue.
+
+pred buyer_ch5<> == self::Chan{?xx:String#{xx::String<a> & a>1}}<>.
+pred buyer_ch6<> == self::Chan{?gg:String#{gg::String<a> & a>0}}<>.
+
+checkentail zz::buyer_ch5<>|- zz::buyer_ch6<>.
+
+expect Valid.
+print residue.
+
+pred buyer_ch7<> == self::Chan{!xx:int#{xx::String<a> & a>0};;?xx:int#{xx::String<a> & a>1};;(!xx:int#{xx::String<a> & a=1} or !xx:int#{xx::String<a> & a=2} or !xx:int#{xx::String<a> & a=3})}<>.
+pred buyer_ch8<> == self::Chan{!rr:int#{rr::String<a> & a>1};;?hh:int#{hh::String<a> & a>2};;(!vv:int#{vv::String<a> & a=3} or !xx:int#{xx::String<a> & a=2} or !xx:int#{xx::String<a> & a=1})}<>.
+
+checkentail zz::buyer_ch7<>|- zz::buyer_ch8<>.
+
+expect Valid.
+print residue.

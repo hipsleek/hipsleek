@@ -11074,8 +11074,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (* We use flow_ann to decide                     *)
                 (* contravariant (-) or covariant (+) entailment *)
                 let flow_ann = lhs.CF.rflow_kind in
-                let ho_lhs = (CF.struc_to_formula lhs.CF.rflow_base) in
-                let ho_rhs = (CF.struc_to_formula rhs.CF.rflow_base) in
+                (* let ho_lhs = (CF.struc_to_formula lhs.CF.rflow_base) in *)
+                (* let ho_rhs = (CF.struc_to_formula rhs.CF.rflow_base) in *)
                 let _,ho_lhs =  CF.base_formula_of_struc_formula lhs.CF.rflow_base in
                 let _,ho_rhs =  CF.base_formula_of_struc_formula rhs.CF.rflow_base in
                 let pr = Cprinter.string_of_formula in
@@ -11089,6 +11089,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 | Some v -> (None,None,None,[(v,ho_lhs)])
                 | None ->
                   let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
+                  let evars = subtract evars (CF.fv ho_lhs) in
                   let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in
                   let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in
                   let new_es = { new_es with 

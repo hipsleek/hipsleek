@@ -19,7 +19,7 @@ let process_selective_iview_decls is_all iprog iviews =
   let tmp_views = List.map (fun pdef ->
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
       let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-      let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
+      let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula ~sess:pdef.Iast.view_session_formula false false false [] in
       let inv_lock = pdef.I.view_inv_lock in
       let inv_lock = (
         match inv_lock with

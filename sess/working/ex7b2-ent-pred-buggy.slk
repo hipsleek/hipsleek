@@ -1,0 +1,47 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+pred_prim Send{-%P}<>.
+pred_prim Recv{+%P}<>.
+
+pred_sess p1<> == ?this::String<a> & a>0.
+pred_sess p2<> == ?this::String<a> & a>=0.
+pred p3<> == self::String<a> & a>0.
+pred p4<> == self::String<a> & a>=0.
+
+
+//1
+checkentail x::Chan{@p1}<> |- x::Chan{@p2}<>.
+print residue.
+expect Valid.
+
+
+checkentail x::p3<> |- x::p4<>.
+print residue.
+expect Valid.
+
+
+/*
+
+pred p11<> == self::String<a> & a>0.
+pred p22<> == self::String<a> & a>=0.
+
+//2
+checkentail x::p11<> |- x::p22<>.
+print residue.
+expect Valid.
+
+
+pred p33<y> == self::Chan{y::String<a>}<>.
+pred p44<y> == self::Chan{y::String<a>}<>.
+
+checkentail x::p44<y> |- x::p33<y>. 
+expect Valid.
+
+*/

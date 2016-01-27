@@ -1,0 +1,62 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+pred_prim Send{-%P}<>.
+pred_prim Recv{+%P}<>.
+
+//1
+checkentail a>=0 |- a>0.
+print residue.
+expect Fail.
+
+//2
+checkentail a>0 |- a>=0.
+print residue.
+expect Valid.
+
+//3
+checkentail x::Recv{+ a>=0}<> |- x::Recv{+ a>0}<>.
+print residue.
+expect Fail.
+
+//4
+checkentail x::Recv{+ a>0}<> |- x::Recv{+ a>=0}<>.
+print residue.
+expect Valid.
+
+//5
+checkentail x::Send{- a>=0}<> |- x::Send{- a>0}<>.
+print residue.
+expect Valid.
+
+//6
+checkentail x::Send{- a>0}<> |- x::Send{- a>=0}<>.
+print residue.
+expect Fail.
+
+//7
+checkentail x::Recv{+ y::String<a> & a>=0}<> |- x::Recv{+ y::String<a> & a>0}<>.
+print residue.
+expect Fail.
+
+//8
+checkentail x::Recv{+ y::String<a> & a>0}<> |- x::Recv{+ y::String<a> & a>=0}<>.
+print residue.
+expect Valid.
+
+//9
+checkentail x::Send{- y::String<a> & a>=0}<> |- x::Send{- y::String<a> & a>0}<>.
+print residue.
+expect Valid.
+
+//10
+checkentail x::Send{- y::String<a> & a>0}<> |- x::Send{- y::String<a> & a>=0}<>.
+print residue.
+expect Fail.
+

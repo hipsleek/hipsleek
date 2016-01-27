@@ -1,0 +1,59 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+//{!x:int;;!y:string}
+
+pred_prim Chan{%P}<>.
+pred_prim Send{-%P}<>.
+pred_prim Recv{+%P}<>.
+
+//pred buyer_ch1<> == self::Chan{!this::String<a> & a>0;;!yy:String#{yy::String<bb> & bb>1}}<>.
+pred buyer_ch1<> == self::Chan{!xx:String#{xx::String<a> & a>0};;!yy:String#{yy::String<bb> & bb>1}}<>.
+//pred buyer_ch10<> == !xx:String#{xx::String<a> & a>0};;!yy:String#{yy::String<bb> & bb>1}.
+pred buyer_ch11<> == self::Chan{!this::String<a> & a>0;;!this::String<bb> & bb>1}<>.
+
+//pred or1<> == !this::String<bb> & bb>1 or !this::String<cc>
+//pred buyer_ch11<> == !this::String<a> & a>0;;!this::String<bb> & bb>1 or !this::String<cc>
+
+
+
+pred buyer_ch3<> == self::Chan{!xx:String#{xx::String<a> & a>0};;!yy:String#{yy::String<bb> & bb>1}}<>.
+
+pred buyer_ch2<> == self::Chan{!xx:String#{xx::String<a> & a>1};;!yy:String#{yy::String<bb> & bb>0}}<>.
+
+checkentail zz::buyer_ch1<>|- zz::buyer_ch2<>.
+expect Fail.
+print residue.
+
+checkentail zz::buyer_ch2<>|- zz::buyer_ch1<>.
+expect Fail.
+print residue.
+
+checkentail zz::buyer_ch1<>|- zz::buyer_ch3<>@L.
+expect Valid.
+print residue.
+
+
+
+/**
+
+pred or1 =  A or B
+pred s01 = a;;@or1;;b 
+pred s02 = c;;d;;e;;b
+
+
+@or1 |- d;;e;;b
+
+-----------------------------------
+@or1;;b |- d;;e;;b
+------------------------
+a;;@or1;;b |- a;;d;;e;;b
+------------------------
+        s01 |- s02 
+
+*/

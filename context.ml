@@ -2232,6 +2232,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = x_tinfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
             let () = x_tinfo_hp (add_str "vr_kind: " string_of_view_kind) vr_kind no_pos in
             let () = x_tinfo_hp (add_str "vr_name: " pr_id) vr_name no_pos in
+            let () = x_tinfo_hp (add_str "vl_self_pts: " (pr_list pr_id)) vl_self_pts no_pos in
+            let () = x_tinfo_hp (add_str "vr_self_pts: " (pr_list pr_id)) vr_self_pts no_pos in
             let is_l_lock = match vl_vdef.view_inv_lock with
               | Some _ -> true
               | None -> false
@@ -2372,6 +2374,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     begin
                       let l1 =
                         (*Do not fold/unfold LOCKs and array segments when view matching*)
+                        let () = Debug.tinfo_hprint (add_str "self_fold_search_flag" string_of_bool) !Globals.self_fold_search_flag no_pos in
+                        let () = Debug.tinfo_hprint (add_str "self_pts" string_of_bool) (Gen.BList.mem_eq (=) vl_name vr_self_pts) no_pos in
                         if (is_r_lock || not(vr_actual_root==None)) then [] else 
                         if (vl_view_orig && vr_view_orig && not(vr_is_prim) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                         then

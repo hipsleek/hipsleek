@@ -573,8 +573,10 @@ void write_char(char_star x, int v)
   ensures x::char_star<v,q>;
 
 /* =============== session utils ====================*/
-pred_prim Send{-%P}<>.
+pred_prim Chan{%P}<>;
 
-pred_prim Recv{+%P}<>.
+pred_prim Send{-%P}<>;
+
+pred_prim Recv{+%P}<>;
 
 /* ============= session utils -end +================*/

@@ -1,0 +1,10 @@
+data node{ 
+     int val; 
+     node next 
+}.
+
+checkentail x::node<a,b> & b=null |- x::node<d,null>  or x::node<e,b> & b!=null.
+print residue.
+
+checkentail x::node<a,c> |- x::node<d,null>  or x::node<e,b> & b!=null.
+print residue.

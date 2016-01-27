@@ -1,0 +1,46 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+pred_prim Send{-%P}<>.
+pred_prim Recv{+%P}<>.
+
+pred_sess p1<> == ?this::String<a> & a>0.
+pred_sess p2<> == ?this::String<a> & a>=0.
+
+//1
+checkentail x::Chan{@p1}<> |- x::Chan{@p2}<>.
+print residue.
+expect Valid.
+
+//2
+checkentail x::Chan{@p2}<> |- x::Chan{@p1}<>.
+print residue.
+expect Fail.
+
+//3
+checkentail x::Recv{+ y::String<a> & a>0}<> |- x::Recv{+ y::String<a> & a>=0}<>.
+print residue.
+expect Valid.
+
+//4
+checkentail x::Recv{+ y::String<a> & a>=0}<> |- x::Recv{+ y::String<a> & a>0}<>.
+print residue.
+expect Fail.
+
+//5
+checkentail x::Chan{?this::String<a> & a>0}<> |- x::Chan{?this::String<a> & a>=0}<>.
+print residue.
+expect Valid.
+
+//6
+checkentail x::Chan{?this::String<a> & a>=0}<> |- x::Chan{?this::String<a> & a>0}<>.
+print residue.
+expect Fail.
+
+

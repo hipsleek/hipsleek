@@ -1,0 +1,16 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+pred_prim Send{-%P}<>.
+pred_prim Recv{+%P}<>.
+
+pred_sess buyer_ch1<> == (!xx:int#{xx::String<a> & a>0} or !xx:int#{xx::String<a> & a=0}).
+
+pred_sess buyer_ch2<> == !xx:int#{xx::String<a> & a>0}.
+

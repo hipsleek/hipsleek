@@ -2387,8 +2387,10 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
-  let view_form = map_opt_def vdef.I.view_formula Session.struc_of_session vdef.I.view_session_formula in
+  (* let if_sess () = I.set_check_fixpt prog prog.I.prog_data_decls [vdef] in  *)
+  (* let view_form = map_opt_def vdef.I.view_formula Session.view_of_session_view  vdef.I.view_session_formula in *)
   (*let recs = rec_grp prog in*)
+  let view_form = vdef.I.view_formula in
   let data_name = if (String.length vdef.I.view_data_name) = 0  then
       if not(!Globals.adhoc_flag_1) then ""
       else I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
@@ -9390,15 +9392,24 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
     Debug.no_2(* _loop *) "case_normalize_helper" pr pr2 pr2 helper_x h_vars  nf in
   helper h_vars nf
 
-and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars  (lax_implicit:bool) strad_vs :IF.struc_formula= 
+and case_normalize_struc_formula_view_x i prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) ?sess:(sf=None) allow_primes allow_post_vars  (lax_implicit:bool) strad_vs :IF.struc_formula= 
+  let f, dedicated_vars = map_opt_def (f,[]) Session.view_of_session_view sf in
+  let h = h@(List.map (fun id -> (id, Unprimed)) dedicated_vars ) in
+  let p = p@(List.map (fun id -> (id, Primed)) dedicated_vars ) in
   if (!Globals.simplified_case_normalize) then 
-    let r2 = simpl_case_normalize_struc_formula i prog h f in
+    let r2 = x_add simpl_case_normalize_struc_formula i prog h f in
     (*let r1 = fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs) in
       let () = print_string ("\n simpl: "^(Iprinter.string_of_struc_formula r2)^"\n prev: "^ 
       (Iprinter.string_of_struc_formula r1)^"\n") in
     *) 
     r2
   else fst (case_normalize_struc_formula i prog h p f allow_primes allow_post_vars lax_implicit strad_vs)
+
+and case_normalize_struc_formula_view i prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) ?sess:(sf=None) allow_primes allow_post_vars  (lax_implicit:bool) strad_vs :IF.struc_formula= 
+  let pr1 = pr_list !IP.print_id in
+  let pr = Iprinter.string_of_struc_formula in
+  Debug.no_3 "case_normalize_struc_formula_view" (add_str "h_vars" pr1) (add_str "p_vars" pr1) pr pr (fun _ _ _ -> case_normalize_struc_formula_view_x i prog h p f ~sess:sf allow_primes allow_post_vars lax_implicit strad_vs) h p f
+
 
 and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
@@ -10033,7 +10044,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = List.map (fun c-> 
       let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
       let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
-      let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula false 
+      let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula ~sess:c.Iast.view_session_formula false 
           false (*allow_post_vars*) false [] in
       let inv_lock = c.Iast.view_inv_lock in
       let inv_lock =

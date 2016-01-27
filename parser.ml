@@ -1313,13 +1313,18 @@ prim_view_decl:
 (*====================session formula begin ================================*)
 
 sess_view_decl:
-  [[ vh= view_header; `EQEQ; sc = OPT sess_constr -> 
-          { vh with
-          (* view_formula = None; *)
-          view_kind = View_SESS;
-	  view_session_formula = sc;
-          view_is_prim = true;
-          view_is_hrel = None;} ]];
+  [[ vh= view_header; `EQEQ; sc = OPT sess_constr; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock -> 
+     let (oi, oboi) = oi in
+     { vh with
+       (* view_formula = None; *)
+       view_kind = View_SESS;
+       view_session_formula = sc;
+       view_is_prim = false;
+       view_invariant = oi;
+       view_baga_inv = obi;
+       view_baga_over_inv = oboi;
+       view_baga_under_inv = obui;
+       view_is_hrel = None;} ]];
 
 (*====================session formula end ==================================*)
 
@@ -1963,12 +1968,12 @@ non_thread_args2:
 sess_constr:	[[swr=sess_constr_rec -> swr]];
 
 sess_constr_rec:
-  [[   
+ [[   
     shc=simple_session_constr; peek_sess_semicolon; `SEMICOLONSEMICOLON; hw= SELF -> Sess.sessionConnect shc hw		
   | `OPAREN; scc = session_constr_choice; `CPAREN; peek_sess_semicolon; `SEMICOLONSEMICOLON; hw= SELF -> Sess.sessionConnect scc hw				
-    | shc = simple_session_constr        ->  shc 
-    | `OPAREN; scc = session_constr_choice; `CPAREN -> scc
-  ]];
+  | shc = simple_session_constr        ->  shc 
+  | `OPAREN; scc = session_constr_choice; `CPAREN -> scc
+ ]];
 
 session_constr_choice:
 	[[
@@ -1978,10 +1983,11 @@ session_constr_choice:
 	
 simple_session_constr:
 	[[
+        (* | formula = sess_formula ->  *)
           peek_sess_compact; `NOT; formula = sess_formula ->
-          Sess.mkThisSessionNode SessionSend formula (get_pos_camlp4 _loc 2)
+          Sess.mkDefSessionNode SessionSend formula (get_pos_camlp4 _loc 2)
 	| peek_sess_compact; `QUERY; formula = sess_formula ->
-	  Sess.mkThisSessionNode SessionRecv formula (get_pos_camlp4 _loc 2)
+	  Sess.mkDefSessionNode SessionRecv formula (get_pos_camlp4 _loc 2)
         | peek_sess; `NOT; id=cid; `COLON; ty=typ;`HASH; formula = sess_formula ->
 	  Sess.mkSessionNode SessionSend id ty formula (get_pos_camlp4 _loc 2)
 	| peek_sess; `QUERY; id=cid; `COLON; ty=typ;`HASH; formula = sess_formula ->
@@ -3525,7 +3531,7 @@ type_decl:
    | peek_view_decl; o = opt_pred; v=view_decl; `SEMICOLON -> View v
    | peek_view_decl; o = opt_pred; v=view_decl; `DOT -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
-	 | `PRED_SESS; v = sess_view_decl; `SEMICOLON    -> View v
+   | `PRED_SESS; v = sess_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];

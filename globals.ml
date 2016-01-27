@@ -839,9 +839,11 @@ let this = "this"
 (* ===================== session stuff ====================== *)
 let sess_send_pred = "Send"
 let sess_recv_pred = "Recv"
-let sess_op_sv_id = "op"                (* send/receive operation spec var ? *)
+let sess_op_sv_id = (* "op"  *) self              (* send/receive operation spec var ? *)
 let sess_io_sv_id = (* self *)this (* "io"   *)   (* I/O spec var name *)
 let sees_seq = ";;"
+let sess_send_flow = INFLOW
+let sess_recv_flow = OUTFLOW
 (* ===================== session stuff ====================== *)
 
 let dedicated_ids = [sess_op_sv_id;sess_io_sv_id;self]

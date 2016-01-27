@@ -1,0 +1,29 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+
+pred test1<> == self::String<a> & a>0.
+
+pred buyer_ch1<> == self::Chan{!xx:int#{xx::test1<>}}<>.
+pred buyer_ch2<> == self::Chan{!xx:int#{xx::String<a> & a>1}}<>.
+
+checkentail zz::buyer_ch1<>|- zz::buyer_ch2<>.
+
+expect Valid.
+print residue.
+
+pred test2<> == self::String<a> & a>1.
+
+pred buyer_ch3<> == self::Chan{!xx:int#{xx::test1<>}}<>.
+pred buyer_ch4<> == self::Chan{!xx:int#{xx::test2<>}}<>.
+
+checkentail zz::buyer_ch3<>|- zz::buyer_ch4<>.
+
+expect Valid.
+print residue.

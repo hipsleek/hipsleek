@@ -1,0 +1,40 @@
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+
+pred_sess semp<> ==. 
+
+/*
+
+pred_sess prot2<> == n::Send{- var::String<a> & a>1}. */
+pred_sess prot2<> == !gg:String#{gg::String<a> & a>1}.
+pred_sess prot3<> == !aa:String#{aa::String<b> & b>1};;~@prot2.
+
+pred buyer_ch3<> == self::Chan{!xx:String#{xx::String<t> & t>0};;~@prot2}<>.
+pred buyer_ch4<> == self::Chan{@prot3}<>.
+
+checkentail zz::buyer_ch3<>|- zz::buyer_ch4<>.
+
+expect Valid.
+print residue.
+
+pred buyer_ch5<> == self::Chan{!xx:String#{xx::String<t> & t>0};;@prot2}<>.
+pred buyer_ch6<> == self::Chan{@prot3}<>.
+
+checkentail zz::buyer_ch5<>|- zz::buyer_ch6<>.
+
+expect Fail.
+print residue.
+
+pred_sess prot4<> == !gg:String#{gg::String<a> & a>1};;@prot4.
+pred_sess prot5<> == !aa:String#{aa::String<b> & b>1};;~@prot4.
+
+pred buyer_ch7<> == self::Chan{!xx:String#{xx::String<t> & t>0};;~@prot4}<>.
+pred buyer_ch8<> == self::Chan{@prot5}<>.
+
+checkentail zz::buyer_ch7<>|- zz::buyer_ch8<>.
+
+expect Valid.
+print residue.

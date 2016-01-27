@@ -1,0 +1,51 @@
+data node{
+     int id;
+}.
+
+data String{
+     int id;
+}.
+
+pred_prim Chan{%P}<>.
+pred_prim Send{-%P}<>.
+pred_prim Recv{+%P}<>.
+
+
+//1
+checkentail x::Recv{+ a>=0}<> |- x::Recv{+ a>0}<>.
+print residue.
+expect Fail.
+
+//2
+checkentail x::Recv{+ y::String<a> & a>=0}<> |- x::Recv{+ y::String<a> & a>0}<>.
+print residue.
+expect Fail.
+
+//3
+checkentail x::Recv{+ y::String<a> & a>0}<> |- x::Recv{+ y::String<a> & a>=0}<>.
+print residue.
+expect Valid.
+
+//4
+checkentail y::String<a> & a>=0 |- y::String<a> & a>0.
+print residue.
+expect Fail.
+
+//5
+checkentail x::Chan{?this::String<a> & a>=0 & b>=0}<> & b=0 |- x::Chan{?this::String<a> & a>0 & b>=0}<> & b=0.
+print residue.
+expect Fail.
+
+
+
+/*
+
+
+globals: x, y, this
+checkentail x::Recv{+ this::String<a> & a>=0}<> * y::Recv{+ this::Int<a> & a>=0}<> |- x::Recv{+ this::String<a> & a>0}<> * y::Recv{+ this::Int<a> & a>=0}<> .
+print residue.
+expect Fail.
+
+
+
+*/
