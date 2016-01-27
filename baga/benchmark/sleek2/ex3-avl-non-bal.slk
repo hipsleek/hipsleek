@@ -11,3 +11,28 @@ self::node<Anon_14,height,l,r> *
   l::avl<size1,height1> * q::avl<size2,height2>&size=size2+1+size1 & 
   height2<=(1+height1) & height1<=(1+height2) & height=max(height1,height2)+1
 .
+
+
+/*
+# ex3.slk
+
+--under-infer-limit -1
+([],false)
+
+# --under-infer-limit 0
+([],self=null & s=0 & h=0)
+
+# --under-infer-limit 1
+([],self=null & s=0 & h=0) | ([self], s=1 & h=1)
+
+# --under-infer-limit 2
+([],self=null & s=0 & h=0) | ([self], s=1 & h=1 | s=2 & h=2 | s=3 & h=2)
+
+
+# which has been pruned below?
+# --under-infer-limit 3
+([],self=null & s=0 & h=0) | ([self], s=1 & h=1 | s=2 & h=2 | s=3 & h=2
+   | s=7 & h=3 | s=6 & h=3 | s=5 & h=3 | s=4 & h=3 | s=3 & h=3)
+
+
+*/
