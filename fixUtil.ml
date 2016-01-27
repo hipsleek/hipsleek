@@ -341,7 +341,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                   acc@(List.map (fun f -> (b,f)) fl)
                 ) [] inv in
               let precise = Excore.map_precise_invs # find cv.C.view_name in
-              let () = x_tinfo_hp (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv (* (Excore.EPureI.pairwisecheck_disj inv) *) no_pos in
+              let () = x_binfo_hp (add_str ("infered baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) inv (* (Excore.EPureI.pairwisecheck_disj inv) *) no_pos in
               let () = print_string_quiet "\n" in
               let user_inv = MCP.pure_of_mix cv.Cast.view_user_inv in
               let body = CF.project_body_num cv.Cast.view_un_struc_formula user_inv cv.Cast.view_vars in
@@ -365,24 +365,17 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                       new_bfs@(helper_unfold (no - 1) new_bfs ifs)
                   in
                   let (ifs,bfs) = List.partition CF.is_inductive body_under in
-                  let () = Debug.binfo_hprint (add_str "base case" (pr_list Cprinter.string_of_formula)) bfs no_pos in
-                  let () = Debug.binfo_hprint (add_str "inductive" (pr_list Cprinter.string_of_formula)) ifs no_pos in
+                  let () = Debug.ninfo_hprint (add_str "base case" (pr_list Cprinter.string_of_formula)) bfs no_pos in
+                  let () = Debug.ninfo_hprint (add_str "inductive" (pr_list Cprinter.string_of_formula)) ifs no_pos in
                   let bfs =
                     bfs@(helper_unfold !Globals.under_infer_limit bfs ifs) in
-                  let new_invs = List.map (fun f ->
-                      let pf = x_add_1 Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f) in
-                      let () = Debug.binfo_hprint (add_str "pf base" Cprinter.string_of_pure_formula) pf no_pos in
-                      pf
-                    )bfs
+                  let under_inv = List.fold_left (fun acc f ->
+                      let pf = (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f) in
+                      let () = Debug.ninfo_hprint (add_str "unfold base" Cprinter.string_of_ef_pure_disj) pf no_pos in
+                      acc@(wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f)
+                    ) [] bfs
                   in
-                  let pf_all = List.fold_left (fun acc f ->
-                      let pf = x_add_1 Excore.EPureI.ef_conv_disj (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f) in
-                      CP.mkOr acc pf None no_pos
-                    ) (CP.mkFalse no_pos) (bfs) in
-                  let () = Debug.binfo_hprint (add_str "under invs" Cprinter.string_of_pure_formula) pf_all no_pos in
-                  let under_inv = List.fold_left (fun acc (b,f) ->
-                      acc@(List.map (fun f -> (b,f)) new_invs)
-                    ) [] inv in
+                  let () = x_binfo_hp (add_str ("unfolded baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) under_inv no_pos in
                   under_inv
               in
               if precise then
@@ -428,7 +421,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                    C.view_baga = (let es = Excore.EPureI.get_baga_sv inv in
                                   (* CP.SV_INTV.conv_var *) es);
                    C.view_baga_over_inv = Some inv;
-                   C.view_baga_under_inv = Some inv;
+                   C.view_baga_under_inv = Some under_inv;
                    C.view_baga_x_over_inv = Some inv;
                    C.view_user_inv = mf;
                    C.view_x_formula = Mcpure.merge_mems cv.C.view_x_formula mf true;

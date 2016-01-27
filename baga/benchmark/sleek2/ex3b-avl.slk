@@ -1,0 +1,46 @@
+data node {
+  int valVAL_13;
+  int heightVAL_12;
+  node leftREC_11;
+  node rightREC_31;
+}.
+ pred avl<size:int,height:int> == 
+  emp&self=null & size=0 & height=0
+   or
+(exists height_34: self::node<Anon_14,height_34,p,q> * 
+  p::avl<size1,height1> * q::avl<size2,height2>&size=size2+1+size1 & 
+  height2<=(1+height1) & height1<=(1+height2) & exists(max_32:height=1+
+  max_32 & max_32=max(height1,height2)) & height_34=height)
+  inv 
+  0<=size & 0<=height.
+
+// id 2
+checksat  (exists flted_455_7054,Anon_7055,tmp',
+tmp1': t1'::node<Anon_6994,height_6993,p_6995,q_6998> * 
+v_node_469_1386'::avl<flted_455_7054,Anon_7055>&tmp1'!=null & 0<=h2_7024 & 
+0<=s2_7023 & 0<=h1_7022 & 0<=s1_7021 & tmp'!=null & flted_455_7038=s2_7023+
+s1_7021 & 0<=Anon_7016 & 0<=flted_161_7015 & 0<=height1_6997 & 
+0<=size1_6996 & h2_7024=height1_6997 & s2_7023=size1_6996 & 
+h1_7022=Anon_7016 & s1_7021=flted_161_7015 & s1=size2_6999+1+size1_6996 & 
+height2_7000<=(1+height1_6997) & height1_6997<=(1+height2_7000) & 
+exists(max_32:h1=1+max_32 & max_32=max(height1_6997,height2_7000)) & 
+height_6993=h1 & !(v_bool_465_1387') & t1'!=null & t1!=null & t2'=t2 & 
+t1'=t1 & m=s2 & n=h2 & 0<=s2 & 0<=h2 & flted_161_7015=1+m & 0<=m & 0<=n & 
+s1_7044=flted_455_7038 & h1_7045=Anon_7039 & s2_7046=size2_6999 & 
+h2_7047=height2_7000 & 0<=size2_6999 & 0<=height2_7000 & 0<=flted_455_7038 & 
+0<=Anon_7039 & flted_455_7054=s2_7046+s1_7044 & tmp1'!=null & 0<=s1_7044 & 
+0<=h1_7045 & 0<=s2_7046 & 0<=h2_7047 & res=v_node_469_1386').
+
+
+
+/*
+#ex3b-avl.slk
+expect UNKNOWN
+../../../sleek ex3a-avl.slk -under-infer-limit -1 --inv-baga
+
+Why self=1?
+!!! **astsimp.ml#2199:tracing check_under
+!!! baga_under: self=null & size=0 & height=0
+!!! **astsimp.ml#2199:tracing check_under
+!!! baga_under: self=1 & 1<=size & 1<=height
+*/
