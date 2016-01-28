@@ -33,6 +33,35 @@ q2: (* lbl: *){2}->self::node<Anon_14,q1>@M * q1::node<Anon_15,q2>@M *
                    q2::ll<flted_18_11>@M&
 2+flted_18_11=n&{FLOW,(1,26)=__flow#E}[])]
 ===============================================
+# ex3a.slk
+
+../../../sleek ex3a-avl.slk --inv-baga --use-baga -
+
+  baga over inv: [([], self=null & size=0 & height=0),([self], 1<=size & 1<=height)]
+  baga over inv (unfolded): [([], self=null & size=0 & height=0),([self], 1<=size & 1<=height)]
+  baga under inv: [([], self=null & size=0 & height=0),([self], 1<=size & 1<=height)]
+
+# --inv-baga --use-baga --under-infer-limit 0
+  baga under inv: [([], self=null & size=0 & height=0)]
+
+# --inv-baga --use-baga --under-infer-limit 1
+  baga under inv: [([], self=null & size=0 & height=0),([self], height=1 & size=1)]
+
+# --inv-baga --use-baga --under-infer-limit 2 (should also have size=2 & height=2)
+  baga under inv: [([], self=null & size=0 & height=0),([self], height=1 & size=1),([self], height=2 & size=3)]
+
+ s=0 & h=0
+
+      hl=0 & sl=0        hr=0 & sr=0
+      hl=0 & sl=0        hr=0 & sr=0
+
+ s=0 & h=0  | s=1 & h=1
+
+
+     (ls=0 & lh=0  | ls=1 & lh=1)   (rs=0 & rh=0  | rs=1 & rh=1)
+
+  s=0 & h=0  | s=1 & h=1  | s=2 & h=2 | s=3 & h=2
+
 ===============================================
 ===============================================
 ===============================================
