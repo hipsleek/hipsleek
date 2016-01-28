@@ -350,7 +350,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                   x_winfo_pp ((add_str "User supplied inv is not sound: " !CP.print_formula) user_inv) no_pos
                 else () in
               let under_inv = if !Globals.under_infer_limit = -1 then
-                  inv
+                  []
                 else
                   let body_under = fst (List.split cv.Cast.view_un_struc_formula) in
                   let rec helper_unfold no bfs ifs =
@@ -417,13 +417,15 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                   let mf = (x_add_1 Excore.EPureI.ef_conv_disj inv) in
                   let () = y_tinfo_hp (add_str "pure inv" !CP.print_formula) mf in
                   let mf =  Mcpure.mix_of_pure mf  in
+                  let vu = match under_inv with
+                    | [] -> None
+                    | _ -> Some under_inv
+                  in
                   {cv with
                    C.view_baga = (let es = Excore.EPureI.get_baga_sv inv in
                                   (* CP.SV_INTV.conv_var *) es);
                    C.view_baga_over_inv = Some inv;
-                   C.view_baga_under_inv = Some under_inv;
-                   C.view_baga_x_over_inv = Some inv;
-                   C.view_user_inv = mf;
+                   C.view_baga_under_inv = vu;
                    C.view_x_formula = Mcpure.merge_mems cv.C.view_x_formula mf true;
                   }
                 else cv

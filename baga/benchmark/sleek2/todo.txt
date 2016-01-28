@@ -35,7 +35,7 @@ q2: (* lbl: *){2}->self::node<Anon_14,q1>@M * q1::node<Anon_15,q2>@M *
 ===============================================
 # ex3a.slk
 
-../../../sleek ex3a-avl.slk --inv-baga --use-baga -
+../../../sleek ex3a-avl.slk --inv-baga --use-baga  (FIXED)
 
   baga over inv: [([], self=null & size=0 & height=0),([self], 1<=size & 1<=height)]
   baga over inv (unfolded): [([], self=null & size=0 & height=0),([self], 1<=size & 1<=height)]
