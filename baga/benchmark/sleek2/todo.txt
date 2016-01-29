@@ -41,13 +41,13 @@ q2: (* lbl: *){2}->self::node<Anon_14,q1>@M * q1::node<Anon_15,q2>@M *
   baga over inv (unfolded): [([], self=null & size=0 & height=0),([self], 1<=size & 1<=height)]
   baga under inv: [([], self=null & size=0 & height=0),([self], 1<=size & 1<=height)]
 
-# --inv-baga --use-baga --under-infer-limit 0
+# --inv-baga --use-baga --under-infer-limit 0 (FIXED)
   baga under inv: [([], self=null & size=0 & height=0)]
 
-# --inv-baga --use-baga --under-infer-limit 1
+# --inv-baga --use-baga --under-infer-limit 1 (FIXED)
   baga under inv: [([], self=null & size=0 & height=0),([self], height=1 & size=1)]
 
-# --inv-baga --use-baga --under-infer-limit 2 (should also have size=2 & height=2)
+# --inv-baga --use-baga --under-infer-limit 2 (should also have size=2 & height=2) (FIXED)
   baga under inv: [([], self=null & size=0 & height=0),([self], height=1 & size=1),([self], height=2 & size=3)]
 
  s=0 & h=0
