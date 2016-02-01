@@ -63,6 +63,39 @@ q2: (* lbl: *){2}->self::node<Anon_14,q1>@M * q1::node<Anon_15,q2>@M *
   s=0 & h=0  | s=1 & h=1  | s=2 & h=2 | s=3 & h=2
 
 ===============================================
+# ex3.slk
+
+# What happen to size>=height>0 for [self]?
+
+  baga over inv: [([], self=null & size=0 & height=0),([self], true)]
+  baga over inv (unfolded): [([self], true),([], self=null & size=0 & height=0)]
+  
+  xform: ((size=0 & height=0 & self=null) | self!=null)
+
+# fixcalc.inp ? where is rec predicate? why is this diff
+  from logs/fixcal.inp
+
+chinwn@loris-60:~/hg/sl_def/baga/benchmark/sleek2$ more fixcalc.inp 
+F1:={[size,height]: (size=0 && height=0 || height<=size && size<=height+height-(1) && height<=
+2)};
+F2:={[size,height]: (size=0 && height=0 || (height=size && 1<=size && size<=2 || height+1<=siz
+e && size<=height+height+height+height-(5) && height<=3))};
+F2W:=widen(F1,F2,SimHeur);
+F2W;
+
+# logs/fixcalc.inp:
+
+avl:={[self,size_54,height_55,idx_56] -> [] -> []:  
+exists (self: 0=0 && self<=0 && size_54=0 
+&& height_55=0 && idx_56=0) ||  exists (self,height_13,Anon_14,r,l,size1,height1,q,size2,heigh
+t2,idx_53,idx_52: ((self>0 && avl(l,size1,height1,idx_53)) && avl(q,size2,height2,idx_52)) && 
+size_54=size1+size2+1 && height2<=height1+1 && height1<=height2+1 &&  (exists (max_11:height_5
+5=1+max_11 && ((height1 >= height2 && max_11 = height1) || (height2 > height1 && max_11 = heig
+ht2))))  && height_13=height_55 && idx_56=idx_53+1)
+};
+bottomupgen([avl], [3], SimHeur);
+
+
 ===============================================
 ===============================================
 ===============================================
