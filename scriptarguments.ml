@@ -108,8 +108,10 @@ let parse_call_stack s=
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-   ("--not-idx-baga", Arg.Set Globals.idx_baga_flag,
-   "NOT generate idx for baga over-approx");
+   ("--dis-idx-baga", Arg.Clear Globals.idx_baga_flag,
+   "Disable the generation idx for baga over-approx");
+   ("--idx-baga", Arg.Set Globals.idx_baga_flag,
+   "Enable the generation idx for baga over-approx");
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
   ("--sdp", Arg.Set Globals.simplify_dprint,
    "Simplify the entail state before printing the dprint state."); (* An Hoa *)

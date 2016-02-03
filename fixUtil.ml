@@ -119,9 +119,9 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
           (* Hashtbl.add *) Excore.map_precise_invs # replace x_loc cv.C.view_name true
         ) cviews0 in
       let cviews0_with_index = if !Globals.idx_baga_flag then
-          cviews0
-        else
           Expure.add_index_to_views cviews0 
+        else
+          cviews0
       in
       let ls_mut_rec_views1 = List.fold_left (fun ls cv ->
           if List.mem cv.C.view_name (List.flatten ls) then

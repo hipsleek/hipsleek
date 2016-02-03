@@ -1000,7 +1000,7 @@ let simpl_unfold2 = ref false
 let simpl_unfold1 = ref false
 let simpl_memset = ref false
 
-let idx_baga_flag = ref false
+let idx_baga_flag = ref true
 
 let simplify_dprint = ref true
 

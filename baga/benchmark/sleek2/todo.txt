@@ -97,6 +97,48 @@ bottomupgen([avl], [3], SimHeur);
 
 
 ===============================================
+# ex3b.slk --inv-baga --pcp --dis-idx-baga --under-infer-limit 2 > 1
+
+# can we normalize to:
+
+  baga under inv: [([self], height=1 & size=1 | height=2 & size=3 
+   | height=2 & size=2),([], self=null & size=0 & height=0)]
+
+ --under-infer-limit 2
+  baga under inv: [([self], height=1 & size=1),([self], height=2 & size=3),
+  ([self], height=2 & size=2),([], self=null & size=0 & height=0)]
+
+
+# is below correct?
+
+--under-infer-limit 2
+
+CheckSat 1: SAT
+
+
+# can we check what caused warning below?
+
+pls2nus@loris-laptop:~/hg/sl_dd/baga/benchmark/sleek2$ 
+fixcalc: Argument of widen is not a formula
+
+# can we check if under-approx is correct for 3? seems correct
+
+ --under-infer-limit 1
+
+  baga under inv: [([self], height=1 & size=1),([], self=null & size=0 & height=0)]
+
+ --under-infer-limit 2
+
+  baga under inv: [([self], height=1 & size=1),([self], height=2 & size=3),
+  ([self], height=2 & size=2),([], self=null & size=0 & height=0)]
+
+ --under-infer-limit 3
+
+  baga under inv: [([self], height=1 & size=1),([self], height=2 & size=3),
+  ([self], height=2 & size=2),([self], height=3 & size=5),
+  ([self], height=3 & size=4),([self], height=3 & size=7),
+  ([self], height=3 & size=6),([], self=null & size=0 & height=0)]
+
 ===============================================
 ===============================================
 ===============================================
