@@ -93,6 +93,9 @@ let rec add_index_to_heap_formula hf =
   | _ -> hf
 
 let rec add_index_to_formula (cf : Cformula.formula) : Cformula.formula =
+  (* if !Globals.idx_baga_flag then *)
+  (*   cf *)
+  (* else *)
   match cf with
   | Cformula.Base bf ->
     let bp = (Mcpure.pure_of_mix bf.Cformula.formula_base_pure) in
