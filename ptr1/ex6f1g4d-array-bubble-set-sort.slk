@@ -17,8 +17,8 @@ lemma_safe self::arr_seg<i,n,S> & i<=m & m<=n ->
   self::arr_seg<i,m,S1>*self::arr_seg<m,n,S2> & S=union(S1,S2).
 */
 
-lemma_safe self::arr_seg<i,n> <- 
-  self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
+lemma_safe self::arr_seg<i,n> & i<=m & m<=n <- 
+  self::arr_seg<i,m>*self::arr_seg<m,n>.
 
 //lemma_safe  self::arr_sorted<i,n,S> <- self::arr_seg<i,n,S> & (i>=n-1).
 

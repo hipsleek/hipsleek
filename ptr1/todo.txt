@@ -1336,6 +1336,17 @@ spatial_ctx_extract@2 EXIT:list of match_res:
      ]
     ]
 ===============================================================
+# ex6f3a1.slk
+
+# Why isn't lemma triggered?
+
+lemma_safe self::arr_seg<i,n> & i<m & m<n ->
+  self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+checkentail
+ base::arr_seg<start,cur_pos> & start+1<cur_pos
+  |- x::arrI<_> & x=base+start+1.
+expect Valid.
 ===============================================================
 ===============================================================
 ===============================================================
