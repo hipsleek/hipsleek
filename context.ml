@@ -3458,19 +3458,45 @@ and sort_wt (ys: action_wt list) : action_wt list =
   (* let pr2 = pr_list string_of_action_res in *)
   Debug.no_1 "sort_wt" pr pr sort_wt_x ys
 
-and recalibrate_wt (w,a) = 
+and is_match_lemma_combination_x action =
+  let rec helper lst flag =
+    match lst with
+    | (_,(M_match _))::tail ->
+      if flag=0
+      then helper tail 1
+      else helper tail flag
+    | (_,(M_lemma _))::tail ->
+      if flag=1
+      then true
+      else helper tail flag
+    | _::tail -> helper tail flag
+    | [] -> false
+  in
+  match action  with
+  | Search_action l -> helper l 0
+  | _ -> false
+
+and is_match_lemma_combination action =
+  let pr = string_of_action_res in
+  Debug.no_1 "is_match_lemma_combination" pr string_of_bool (fun a -> is_match_lemma_combination_x a) action
+
+and recalibrate_wt (w,a) =
     let pick a b = if a<b then a else b in
+    let is_match_lemma = is_match_lemma_combination a in
     match a with
     | Search_action l ->
       let l = List.map recalibrate_wt l in
       let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
       let h = (List.hd sl) in
+      
       let rw = (fst h) in
       (* WHY did we pick only ONE when rw==0?*)
       (* Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
-      (* if (rw==0) then h  *)
-      (* else (rw,mk_search_action sl) *)
-      (rw,mk_search_action sl)
+      if (rw==0) && (not is_match_lemma) then h
+      else
+      if is_match_lemma then (rw, Cond_action l)
+      else (rw,mk_search_action sl)
+      (* (rw,mk_search_action sl) *)
     | Cond_action l (* TOCHECK : is recalibrate correct? *)
       ->
       (*drop ummatched actions if possible*)
