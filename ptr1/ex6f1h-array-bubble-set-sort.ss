@@ -120,7 +120,7 @@ void bubble_sort(arrI base, int start, int end)
   else{
     //assume false;
     bubble_push(base,start,end);
-    bubble_sort(base,start,end-1);2
+    bubble_sort(base,start,end-1);
     return;
   }
 }
