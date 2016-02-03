@@ -63,7 +63,7 @@ q2: (* lbl: *){2}->self::node<Anon_14,q1>@M * q1::node<Anon_15,q2>@M *
   s=0 & h=0  | s=1 & h=1  | s=2 & h=2 | s=3 & h=2
 
 ===============================================
-# ex3.slk
+# ex3.slk (FIXED with flag --not-idx-baga)
 
 # What happen to size>=height>0 for [self]?
 
