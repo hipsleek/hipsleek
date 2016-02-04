@@ -1578,7 +1578,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
           else (HEmp (* lhs_rest? *),f (* lhs? *),[],Root)::cmm
         | _ -> 
           (* if (subtype_ann imm1 imm) then *)
-          let () = y_tinfo_hp (add_str "view |- view" !CF.print_h_formula) rhs_node in
+          let () = y_tinfo_hp (add_str "view |- view/data " !CF.print_h_formula) rhs_node in
           let () = y_binfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
           let () = y_binfo_hp (add_str "view_root_lhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_lhs in
           let conflict_flag = match view_root_lhs,rhs_root,r_vargs with
@@ -1593,10 +1593,17 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
                   ()
               in
               (flag)
-            | _,_,_ -> false in
+            | Some (v1,pure1),None,rhs_ptr::_ -> 
+              let () = y_binfo_hp (add_str "view |- data " !CF.print_h_formula) rhs_node in
+              let () = y_binfo_pp "consider for folding?" in
+              false
+            | _,_,_ -> 
+              false in
           if conflict_flag then [] 
-          else if (CP.mem p1 aset) then
-            let () = y_tinfo_hp (add_str "mem p1 aset" !CF.print_svl) aset in
+          else 
+           let () = y_tinfo_hp (add_str "p1" !CF.print_sv) p1 in
+           let () = y_tinfo_hp (add_str "mem p1 aset" !CF.print_svl) aset in
+           if (CP.mem p1 aset) then
             (* let () = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
             if (CF.same_node_name c rhs_node) && produces_hole imm && not(!Globals.allow_field_ann) then
               (* let () = print_string("imm = Lend " ^ "\n") in *)
