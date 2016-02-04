@@ -751,6 +751,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let rhs_ptr = root_ptr in
     (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
     (* let () = y_tinfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
+    (* type: < push : CP.spec_var * CP.formula -> unit; .. > -> *)
+    (*   CP.spec_var list -> (CP.spec_var * bool * CP.formula option) list *)
     let enhance_paset impr_stk paset =
       let lhs_nodes = get_views_offset prog lhs_h in
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
@@ -894,12 +896,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       lst in
     (* let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in *)
     let impr_stk = new Gen.stack in
+    let paset_old = paset in
     let lst = if !Globals.ptr_arith_flag then
         let lst = enhance_paset impr_stk paset in
         let lst = List.filter (fun (_,f,_) -> f) lst in
         let lst = List.map (fun (d,_,r) -> (d,r)) lst in
         lst 
       else [] in
+    let () = y_binfo_hp (add_str "paset_old" !CP.print_svl) paset_old in
     let () = y_binfo_hp (add_str "paset" !CP.print_svl) paset in
     let () = y_binfo_hp (add_str "lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) lst in
     let () = y_binfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
@@ -908,7 +912,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         if lst==[] then paset
         else (List.map fst lst)@paset
       else paset in
-    let () = y_tinfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
+    let () = y_binfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
     (* view with root ptrs *)
     (* what is this root_lst, should it not be for the rhs_node? *)
     let root_lst = List.fold_left (fun acc (d,r) ->
@@ -1109,7 +1113,8 @@ and choose_full_mater_coercion_x estate l_vname l_vargs r_vname r_aset (c:coerci
         else
           let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
           let () = x_tinfo_hp (add_str "lmv" Cprinter.string_of_mater_prop_list) lmv no_pos in
-          try
+          let () = x_tinfo_hp (add_str "r_aset" !CP.print_svl) r_aset no_pos in
+           try
             let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in 
             (* above goes awry when we're using self var in the entailment! andreea *)
             let () = x_tinfo_hp (add_str "mv" Cprinter.string_of_mater_prop_list) [mv] no_pos in
@@ -1427,6 +1432,7 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
   let () = x_tinfo_hp (add_str "r_aset" !CP.print_svl) r_aset no_pos in
   if overlap_flag || !Globals.adhoc_flag_1 then
     let coerc_left = Lem_store.all_lemma # get_left_coercion in
+    let () = y_tinfo_hp (add_str "coerc_left" (pr_list pr_none)) coerc_left in
     let cmml = x_add coerc_mater_match estate coerc_left l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in
     let coerc_right = Lem_store.all_lemma # get_right_coercion in
     (* let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in *)

@@ -1334,9 +1334,9 @@ spatial_ctx_extract@2 EXIT:list of match_res:
        LHS: x::arr_seg<m_96,n>@M
        RHS: x::arr_seg<flted_47_134,n_133>@M
      ]
-    ]
+    
 ===============================================================
-# ex6f3a1.slk
+# ex6f3a3.slk
 
 # Why isn't lemma triggered?
 
