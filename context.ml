@@ -42,6 +42,7 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  match_res_exact : bool;
   match_res_alias_set : CP.spec_var list;
   match_res_infer : CP.formula option;
   match_res_root_inst : (CP.spec_var (* * CP.formula *)) option;
@@ -127,6 +128,7 @@ let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) mt 
     match_res_lhs_rest = lhs_rest;
     match_res_holes = holes;
     match_res_type = mt;
+    match_res_exact = true;
     match_res_compatible = [];
     match_res_rhs_node = rhs_node;
     match_res_rhs_rest = rhs_rest;
@@ -797,6 +799,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let () = y_tinfo_hp (add_str "rhs_inst_eq" (pr_list !CP.print_formula)) rhs_inst_eq in
       let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
       let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in
+      let map_r r =
+        if r then 1 else 0
+      in
       (* this picks existential/instvars in estate *)
       let lst = List.map (fun (d,root_lhs) -> 
           match view_root_rhs with
@@ -821,8 +826,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
                   let () =  y_tinfo_hp (add_str "is_sat [lhs_pure;eq;rf;rhs_p]" string_of_bool) r  in
-                  (d,r,Some rf)
-                else (d,r,None)
+                  (d,map_r r,Some rf)
+                else (d,map_r r,None)
               | Some ((v2,pf)) ->
                 let rhs_eq = CP.mkEqVars d rhs_ptr in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
@@ -831,7 +836,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let r = !CP.tp_imply lhs_w_rhs_inst rhs_eq in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr(view matching)" string_of_bool) r  in
-                (d,r,None)
+                (d,map_r r,None)
                 (* failwith (x_loc^"view matching..") *)
             end
           | None   -> 
@@ -860,23 +865,27 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in
                   let () =  y_tinfo_hp (add_str "same_base" string_of_bool) same_base  in
                   let () =  y_tinfo_hp (add_str "r" string_of_bool) r  in
-                  if CF.no_infer_all_all estate || r then (d,r,None)
+                  if CF.no_infer_all_all estate || r then (d,map_r r,None)
                   else
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)
                       let () = y_winfo_pp "pushing to infer" in
                       let () =  y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure  in
                       let () = impr_stk # push (d,rhs) in
-                      (d,same_base,None)   (*can we check if it shares same base *) 
+                      (d,map_r same_base,None)
                     end
                 else 
                   let () = y_tinfo_pp "Not same base" in
-                  (d,false,None)
+                  (* (d,false,None) *)
+                  (* 0=false, 1=true, 2=same base *)
+                  (d,0,None)
               | Some ((root,root_pf)) ->
                 let () = y_tinfo_hp (add_str "d" !CP.print_sv) d in
                 (* let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in *)
                 let () = y_tinfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
-                let rhs = if CF.no_infer_all_all estate then CP.mkEqVars rhs_ptr root
+                let rhs =
+                  if CF.no_infer_all_all estate
+                  then CP.mkEqVars rhs_ptr root
                   else CP.mk_is_base_ptr rhs_ptr d in
                 (* cannot handle ptr/e/ex1fb.slk *)
                 (* let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
@@ -886,7 +895,15 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let () = y_tinfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
                 let r = !CP.tp_imply lhs rhs in
                 let () = y_tinfo_hp (add_str "ante --> rhs" string_of_bool) r  in
-                (d,r,None) (* Some rf *)
+                if r then
+                  (d,map_r r,None)
+                else
+                  let rhs_for_base = CP.mk_is_base_ptr rhs_ptr d in
+                  let r = !CP.tp_imply lhs rhs_for_base in
+                  if r then
+                    (d,2,None)
+                  else
+                    (d,0,None)
                 (* failwith (x_loc^"unfolding") *)
             end
             (*   | _ -> (d,false,None) *)
@@ -897,7 +914,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let enhance_paset impr_stk paset =
       let pr2 = !CP.print_svl in
       let pr_item =function
-        | (sv,b,fo) -> "("^(!CP.print_sv sv)^","^(string_of_bool b)^","^((pr_option !CP.print_formula) fo)^")"
+        | (sv,b,fo) -> "("^(!CP.print_sv sv)^","^(string_of_int b)^","^((pr_option !CP.print_formula) fo)^")"
       in
       let pr1 impr=
         let stk = impr_stk # get_stk in
@@ -909,26 +926,37 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in *)
     let impr_stk = new Gen.stack in
     let paset_old = paset in
-    let lst = if !Globals.ptr_arith_flag then
-        let lst = x_add_1 enhance_paset impr_stk paset in
-        let lst = List.filter (fun (_,f,_) -> f) lst in
+    let (lst,same_base_lst) = 
+      if !Globals.ptr_arith_flag then
+        let enlst = x_add_1 enhance_paset impr_stk paset in
+        let lst = List.filter (fun (_,f,_) -> f==1) enlst in
+        let same_base_lst = List.filter (fun (_,f,_) -> f==2) enlst in
         let lst = List.map (fun (d,_,r) -> (d,r)) lst in
-        lst 
-      else [] in
+        let same_base_lst = List.map (fun (d,_,r) -> (d,r)) same_base_lst in
+        (lst, same_base_lst)
+      else ([],[]) in
     let () = y_binfo_hp (add_str "paset_old" !CP.print_svl) paset_old in
     let () = y_binfo_hp (add_str "paset" !CP.print_svl) paset in
     let () = y_binfo_hp (add_str "lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) lst in
+    let () = y_binfo_hp (add_str "same_base_lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) same_base_lst in
     let () = y_binfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
-    let paset = 
-      if !Globals.ptr_arith_flag then 
+    let same_base_aset =
+      if !Globals.ptr_arith_flag then
+        (List.map fst same_base_lst)@paset
+      else
+        []
+    in
+    let paset =
+      if !Globals.ptr_arith_flag then
         if lst==[] then paset
         else (List.map fst lst)@paset
       else paset in
     let () = y_binfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
+    let () = y_binfo_hp (add_str "same_base_aset:2" (pr_list (!CP.print_sv))) same_base_aset in
     (* view with root ptrs *)
     (* what is this root_lst, should it not be for the rhs_node? *)
     let root_lst = List.fold_left (fun acc (d,r) ->
-        match r with 
+        match r with
         | None -> acc
         | Some r -> (d,r)::acc
       ) [] lst in

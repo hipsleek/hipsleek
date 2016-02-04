@@ -10,6 +10,6 @@ lemma_unsafe self::arr_seg<i,n> & i<m & m<n -> self::arr_seg<i,m>*self::arr_seg<
 
 checkentail
  base::arr_seg<start,cur_pos> & start+1<cur_pos
-  |- x::arrI<_> & x=base+start//+1
+  |- x::arrI<_> & x=base+start+1
   .
 expect Valid.
