@@ -742,7 +742,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
     (* let paset = p::paset in *)
-    let asets = Csvutil.alias_nth 3 ((root_ptr, root_ptr) ::eqns2@r_eqns) in
+    let asets = x_add_1 Csvutil.alias_nth 3 ((root_ptr, root_ptr) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets root_ptr in (* find the alias set containing p *)
     let () = y_tinfo_hp (add_str "paset:1" (pr_list (!CP.print_sv))) paset in
     let view_root_flag = match view_root_rhs with
@@ -894,11 +894,23 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         ) lhs_nodes (* diff_ptrs *) in
       (* let () = y_tinfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in *)
       lst in
+    let enhance_paset impr_stk paset =
+      let pr2 = !CP.print_svl in
+      let pr_item =function
+        | (sv,b,fo) -> "("^(!CP.print_sv sv)^","^(string_of_bool b)^","^((pr_option !CP.print_formula) fo)^")"
+      in
+      let pr1 impr=
+        let stk = impr_stk # get_stk in
+        ((pr_list (pr_pair !CP.print_sv !CP.print_formula)) stk)
+      in
+      let pr_res = pr_list pr_item in
+      Debug.no_2 "enhance_paset" pr1 pr2 pr_res (fun _ _ -> enhance_paset impr_stk paset) impr_stk paset
+    in
     (* let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in *)
     let impr_stk = new Gen.stack in
     let paset_old = paset in
     let lst = if !Globals.ptr_arith_flag then
-        let lst = enhance_paset impr_stk paset in
+        let lst = x_add_1 enhance_paset impr_stk paset in
         let lst = List.filter (fun (_,f,_) -> f) lst in
         let lst = List.map (fun (d,_,r) -> (d,r)) lst in
         lst 
