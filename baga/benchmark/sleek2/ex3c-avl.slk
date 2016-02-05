@@ -31,6 +31,33 @@ h2_7047=height2_7000 & 0<=size2_6999 & 0<=height2_7000 & 0<=flted_455_7038 &
 0<=Anon_7039 & flted_455_7054=s2_7046+s1_7044 & tmp1'!=null & 0<=s1_7044 & 
 0<=h1_7045 & 0<=s2_7046 & 0<=h2_7047 & res=v_node_469_1386').
 
+// id 489
+checksat  (exists flted_34_5094,
+flted_34_5095: x'::node<Anon_4545,height_4544,p_4546,v_node_195_4936> * 
+v_node_195_4936::node<Anon_5013,height_5012,p_5014,q_5017> * 
+res::avl<flted_34_5095,flted_34_5094>&v_bool_198_2891' & n_5040<n_5023 & 
+m_4939=size2_5018+1+size1_5015 & height2_5019<=(1+height1_5016) & 
+height1_5016<=(1+height2_5019) & exists(max_32:n_4940=1+max_32 & 
+max_32=max(height1_5016,height2_5019)) & height_5012=n_4940 & 
+v_bool_196_2897' & !(v_bool_170_2898') & Anon_4545<a' & m=size2_4550+1+
+size1_4547 & height2_4551<=(1+height1_4548) & height1_4548<=(1+
+height2_4551) & exists(max_32:n=1+max_32 & max_32=max(height1_4548,
+height2_4551)) & height_4544=n & !(v_bool_166_2899') & x'!=null & 
+tmp_null'=null & a'=a & x'=x & tmp'=q_4549 & m_4916=size2_4550 & 
+n_4917=height2_4551 & 0<=size2_4550 & 0<=height2_4551 & flted_161_4930=1+
+m_4916 & 0<=m_4916 & 0<=n_4917 & right_195_4932=q_4549 & 
+m_4939=flted_161_4930 & n_4940=Anon_4931 & 0<=flted_161_4930 & 
+0<=Anon_4931 & 0<=m_4939 & 0<=n_4940 & m_4951=size1_4547 & 
+n_4952=height1_4548 & 0<=size1_4547 & 0<=height1_4548 & 0<=m_4951 & 
+0<=n_4952 & 2+n_4952=n_4940 & m_5022=size2_5018 & n_5023=height2_5019 & 
+0<=size2_5018 & 0<=height2_5019 & 0<=m_5022 & 0<=n_5023 & 
+m_5039=size1_5015 & n_5040=height1_5016 & 0<=size1_5015 & 0<=height1_5016 & 
+0<=m_5039 & 0<=n_5040 & v_node_200_2790'=p_4546 & v_node_200_2789'=p_5014 & 
+v_node_200_2788'=q_5017 & lm=m_4951 & ln=n_4952 & rlm=m_5039 & rrm=m_5022 & 
+0<=m_5022 & 0<=n_5023 & 0<=m_5039 & 0<=n_5040 & 0<=m_4951 & 0<=n_4952 & 
+flted_34_5095=rrm+lm+2+rlm & flted_34_5094=ln+2 & 
+exists(flted_33_134:0<=flted_33_134) & exists(ln_135:0<=ln_135) & 0<=lm & 
+0<=ln & 0<=rlm & 0<=rrm).
 
 
 /*

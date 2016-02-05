@@ -438,13 +438,14 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
                   let () = Debug.ninfo_hprint (add_str "inductive" (pr_list Cprinter.string_of_formula)) ifs no_pos in
                   let bfs = (* bfs@ *)(helper_unfold !Globals.under_infer_limit bfs ifs) in
                   let under_inv = List.fold_left (fun acc f ->
-                      let pf = (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f) in
-                      let () = Debug.ninfo_hprint (add_str "unfold base" Cprinter.string_of_ef_pure_disj) pf no_pos in
+                      (* let pf = (wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f) in *)
+                      (* let () = Debug.ninfo_hprint (add_str "unfold base" Cprinter.string_of_ef_pure_disj) pf no_pos in *)
+                      let acc = acc@(wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f) in
                       let acc = uniq acc in
-                      acc@(wrap_under_baga (x_add Cvutil.xpure_symbolic_baga3) cviews0 f)
+                      acc
                     ) [] bfs
                   in
-                  (* let under_inv = uniq under_inv in *)
+                  let under_inv = Excore.EPureI.norm_disj_list under_inv in
                   let () = x_binfo_hp (add_str ("unfolded baga inv("^cv.C.view_name^")") (Cprinter.string_of_ef_pure_disj)) under_inv no_pos in
                   under_inv
               in

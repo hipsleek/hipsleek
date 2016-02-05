@@ -867,6 +867,26 @@ module EPURE =
         Cpure.equalFormula f1 f2
       else false
 
+    let norm_disj_list (disj:epure_disj):epure_disj = 
+      List.fold_left(fun acc f ->
+          if List.exists (fun a ->
+              let (b1,_) = a in
+              let (b2,_) = f in
+              Elt.is_eq_baga b1 b2
+            )acc then
+            let acc = List.map(fun a ->
+                let (b1,f1) = a in
+                let (b2,f2) = f in
+                if Elt.is_eq_baga b1 b2 then
+                  (b1, mkOr f1 f2 None no_pos)
+                else
+                  a
+              )acc in
+            acc
+          else
+            acc@[f]
+        )[] disj
+
     (* reducing duplicate? *)
     let norm_disj is_shape disj =
       let pure_cmp_fnc = (* if syn then is_eq_epure_syn else *) is_eq_epure in
@@ -881,6 +901,8 @@ module EPURE =
       let () = x_tinfo_pp ("Omega call norm_disj-before: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let sat_disj = (* if syn then disj else *) (List.filter (fun v -> not(is_false v)) (List.map (norm is_shape) disj)) in
       let res = remove_duplicate sat_disj (* (List.filter (fun v -> not(is_false v)) (List.map norm disj)) *) in
+      (* let () = x_binfo_pp ("xxxnorm_input" ^ (pr_list string_of disj)) no_pos in *)
+      (* let () = x_binfo_pp ("xxxnorm_output" ^ (string_of_disj res)) no_pos in *)
       let () = x_tinfo_pp ("Omega call norm_disj-after: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res
 
