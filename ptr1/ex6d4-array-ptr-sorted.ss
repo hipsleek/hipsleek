@@ -55,15 +55,3 @@ void init3(arrI a,int i,int m)
   }
 }
 
-/*
-# ex6d3.ss 
-
-# folding fail at post-cond
-
- 
-[[ COND ==>  Fold ==>  UnmatchedRHSData]]falseStop z3... 213 invocations 
-Stop Omega... 47 invocations 
-!!!Number of log entries 536
-!!
-
-*/
