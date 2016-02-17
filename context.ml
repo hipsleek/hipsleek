@@ -659,8 +659,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   let mf,svl,ba = x_add !xpure_sym prog lhs_h lhs_p 0 in
   let mf = MCP.pure_of_mix mf in
   let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
-  let () = y_binfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure in
-  let () = y_binfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure in
+  let () = y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure in
+  let () = y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure in
   let lhs_rhs_pure = CP.mkAnd lhs_pure rhs_pure no_pos in
   let () = y_tinfo_hp (add_str "mf" !CP.print_formula) mf in
   let lhs_pure = CP.mkAnd lhs_pure mf no_pos in
@@ -810,7 +810,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
             begin
               let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
               let rhs = CP.mk_is_base_ptr d rhs_ptr in
-              let r = !CP.tp_imply lhs_pure rhs in
+              (* let r = !CP.tp_imply lhs_pure rhs in *)
+              let r = !CP.tp_imply lhs_w_rhs_inst rhs in
               let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr" !CP.print_formula) rhs  in
               let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
               match root_lhs with
@@ -935,11 +936,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         let same_base_lst = List.map (fun (d,_,r) -> (d,r)) same_base_lst in
         (lst, same_base_lst)
       else ([],[]) in
-    let () = y_binfo_hp (add_str "paset_old" !CP.print_svl) paset_old in
-    let () = y_binfo_hp (add_str "paset" !CP.print_svl) paset in
-    let () = y_binfo_hp (add_str "lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) lst in
-    let () = y_binfo_hp (add_str "same_base_lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) same_base_lst in
-    let () = y_binfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
+    let () = y_tinfo_hp (add_str "paset_old" !CP.print_svl) paset_old in
+    let () = y_tinfo_hp (add_str "paset" !CP.print_svl) paset in
+    let () = y_tinfo_hp (add_str "lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) lst in
+    let () = y_tinfo_hp (add_str "same_base_lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) same_base_lst in
+    let () = y_tinfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
     let same_base_aset =
       if !Globals.ptr_arith_flag then
         (List.map fst same_base_lst)@paset
@@ -951,8 +952,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         if lst==[] then paset
         else (List.map fst lst)@paset
       else paset in
-    let () = y_binfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
-    let () = y_binfo_hp (add_str "same_base_aset:2" (pr_list (!CP.print_sv))) same_base_aset in
+    let () = y_tinfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
+    let () = y_tinfo_hp (add_str "same_base_aset:2" (pr_list (!CP.print_sv))) same_base_aset in
     (* view with root ptrs *)
     (* what is this root_lst, should it not be for the rhs_node? *)
     let root_lst = List.fold_left (fun acc (d,r) ->
@@ -1497,10 +1498,10 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
     rhs_node rhs_rest emap
   : match_res list  =
   let () = x_tinfo_hp (add_str "lhs?" !CF.print_h_formula) f0 no_pos in
-  let () = x_binfo_hp (add_str "rhs" !CF.print_h_formula) rhs_node no_pos in
+  let () = x_tinfo_hp (add_str "rhs" !CF.print_h_formula) rhs_node no_pos in
   let () = x_tinfo_hp (add_str "aset" !CP.print_svl) aset no_pos in
-  let () = y_binfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
-  let () = x_binfo_hp (add_str "lhs_rhs_pure" !CP.print_formula) lhs_rhs_pure no_pos in
+  let () = y_tinfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
+  let () = x_tinfo_hp (add_str "lhs_rhs_pure" !CP.print_formula) lhs_rhs_pure no_pos in
   (* type: CF.h_formula -> *)
   (*   (CF.h_formula * CF.h_formula * (CF.h_formula * int) list * match_type) list *)
   (* type: (CF.h_formula * CF.h_formula * (CF.h_formula * int) list * match_type) list *)
@@ -1625,8 +1626,8 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
         | _ -> 
           (* if (subtype_ann imm1 imm) then *)
           let () = y_tinfo_hp (add_str "view |- view/data " !CF.print_h_formula) rhs_node in
-          let () = y_binfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
-          let () = y_binfo_hp (add_str "view_root_lhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_lhs in
+          let () = y_tinfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
+          let () = y_tinfo_hp (add_str "view_root_lhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_lhs in
           let conflict_flag = match view_root_lhs,rhs_root,r_vargs with
             | Some (v1,pure1),Some(v2,pure2),rhs_ptr::_ -> 
               let w1 = CP.mk_eq_vars v1 v2 in
@@ -1635,13 +1636,13 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
               let comb = CP.join_conjunctions lst  in
               let flag = not(TP.tp_is_sat comb "111") in
               let () = if flag then
-                  let () = y_binfo_hp (add_str "conflict detected" (pr_list !CP.print_formula)) lst in
+                  let () = y_tinfo_hp (add_str "conflict detected" (pr_list !CP.print_formula)) lst in
                   ()
               in
               (flag)
             | Some (v1,pure1),None,rhs_ptr::_ -> 
-              let () = y_binfo_hp (add_str "view |- data " !CF.print_h_formula) rhs_node in
-              let () = y_binfo_pp "consider for folding?" in
+              let () = y_tinfo_hp (add_str "view |- data " !CF.print_h_formula) rhs_node in
+              let () = y_tinfo_pp "consider for folding?" in
               false
             | _,_,_ -> 
               false in
@@ -2815,28 +2816,28 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
             let vl_self_pts = vl_vdef.view_pt_by_self in
             let vl_actual_root =  vl_vdef.view_actual_root in
-            let () = y_binfo_hp (add_str "vl_actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) vl_actual_root in
-            let () = y_binfo_hp (add_str "different way to get actual root, why they are different?" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) view_root_lhs in
+            let () = y_tinfo_hp (add_str "vl_actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) vl_actual_root in
+            let () = y_tinfo_hp (add_str "different way to get actual root, why they are different?" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) view_root_lhs in
             let lhs_node =ViewNode vl in
-            let () = y_binfo_hp (add_str "lhs_node" (!CF.print_h_formula)) lhs_node in
-            let () = y_binfo_hp (add_str "ptr" (!CP.print_sv)) ptr in
-            let () = y_binfo_hp (add_str "ptr_rhs" (!CP.print_sv)) ptr_rhs in
-            let () = y_binfo_hp (add_str "lhs_p" (!MCP.print_mix_formula)) lhs_p in
-            let () = y_binfo_hp (add_str "rhs_p" (!MCP.print_mix_formula)) rhs_p in
+            let () = y_tinfo_hp (add_str "lhs_node" (!CF.print_h_formula)) lhs_node in
+            let () = y_tinfo_hp (add_str "ptr" (!CP.print_sv)) ptr in
+            let () = y_tinfo_hp (add_str "ptr_rhs" (!CP.print_sv)) ptr_rhs in
+            let () = y_tinfo_hp (add_str "lhs_p" (!MCP.print_mix_formula)) lhs_p in
+            let () = y_tinfo_hp (add_str "rhs_p" (!MCP.print_mix_formula)) rhs_p in
             (* calculating possible direct match *)
             let direct_match_flag =
               match view_root_lhs with
               | Some (lhs_root_name,lhs_root_formula) ->
                 let counter_formula = CP.mkNot (CP.mkEqn lhs_root_name ptr_rhs no_pos) None no_pos in
                 let root_formula = CP.mkAnd (CP.mkAnd (CP.mkAnd counter_formula lhs_root_formula no_pos) (MCP.pure_of_mix rhs_p) no_pos) (MCP.pure_of_mix lhs_p) no_pos in
-                let () = y_binfo_hp (add_str "root_formula" (!CP.print_formula)) root_formula in
+                let () = y_tinfo_hp (add_str "root_formula" (!CP.print_formula)) root_formula in
                 not (!CP.tp_is_sat root_formula)
               | None -> false
             in
             let () =
               if direct_match_flag
-              then y_binfo_pp "FOUND DIRECT MATCH"
-              else y_binfo_pp "NOT FOUND DIRECT MATCH"
+              then y_tinfo_pp "FOUND DIRECT MATCH"
+              else y_tinfo_pp "NOT FOUND DIRECT MATCH"
             in
             let vl_view_orig = vl.h_formula_view_original in
             let vl_view_derv = vl.h_formula_view_derv in
@@ -3456,14 +3457,14 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
     let rs = x_add_1 sort_wt rs in
     let res = 
       if !Globals.old_search_always then 
-        let () = y_binfo_pp "old_searc_always" in
+        let () = y_tinfo_pp "old_searc_always" in
         mk_search_action rs 
       else if !Globals.cond_action_always then  
-        let () = y_binfo_pp "cond_action_always" in
+        let () = y_tinfo_pp "cond_action_always" in
         mk_cond_action rs 
       (* else if !Globals.rev_priority then mk_smart_rev_action rs  *)
       else 
-        let () = y_binfo_pp "smart_action" in
+        let () = y_tinfo_pp "smart_action" in
         mk_smart_action rs in
     let () = x_tinfo_hp (string_of_action_res_simpl) res no_pos in
     (-1, res)
@@ -3595,7 +3596,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | Cond_action l ->
       List.exists uncertain l  in
   let ls = List.map recalibrate_wt ys in
-  let () = y_binfo_hp (add_str "ls, after recalibrate weight: " (pr_list string_of_action_wt_res_simpl)) ls in
+  let () = y_tinfo_hp (add_str "ls, after recalibrate weight: " (pr_list string_of_action_wt_res_simpl)) ls in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
   let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
   let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
@@ -3609,7 +3610,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
   let eq_ls, neq_ls = List.partition (fun (w,_) -> w==head_w) (List.tl sl) in
   let sl =
     if (eq_ls == []) then
-      let () = y_binfo_pp "eq_lst == []" in
+      let () = y_tinfo_pp "eq_lst == []" in
       sl
     else
       (*Use Cond_action to avoid explosion*)
@@ -3819,7 +3820,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
       let x = recalibrate_wt x in
       [aux xs x] in
   let r = if !Globals.old_compute_act then r else sel_simpler r in
-  let () = x_binfo_hp (add_str "weighted action"
+  let () = x_tinfo_hp (add_str "weighted action"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with
   | [] -> M_Nothing_to_do "no nodes on RHS"

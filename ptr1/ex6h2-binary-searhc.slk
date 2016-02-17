@@ -1,0 +1,17 @@
+data arrI{
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+lemma_unsafe self::arr_seg<i,n> & i<n & b=n-1 <->
+  self::arr_seg<i,b> * r::arrI<m> & r=self+(n-1).
+
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+
+// process_match give nothing, lemmas have no chance to be applied.
+checkentail a::arr_seg<1,10> & b = a+2 |- b::arrI<_>.

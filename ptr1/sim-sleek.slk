@@ -1,0 +1,5 @@
+data node{
+     int val;
+}.
+
+checkentail x::node<1>  & m=x|- m::node<_> .
