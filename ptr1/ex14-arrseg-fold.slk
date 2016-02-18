@@ -6,6 +6,10 @@ pred arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0.
 
+pred arr_test<i,n> == i=n & i>=0
+     or self::arrI<_>*x::arr_test<i+1,n> & x=self+1 & i>=0
+     inv n>=i & i>=0.
+
 // checkentail x::arrI<_> |- x::arr_seg<i,n> & i<n.
 // print residue.
 // expect Valid.
@@ -37,13 +41,28 @@ pred arr_seg<i,n> == i=n & i>=0
 // print residue.
 // expect Valid.
 
-checkentail x::arrI<_> |- y::arr_seg<1,2> & x=y+1.
+ 
+// checkentail a::arrI<_>  & a=c+1 & b=c |- b::arr_seg<1,2> & a=b+1.
+
+// checkentail a::arrI<_>  |- (exists b:b::arr_seg<1,2> & a=b+1).
+// print residue.
+// expect Valid.
+
+checkentail a::arrI<_>  |- b::arr_seg<1,2> & a=b+1.
 print residue.
 expect Valid.
 
-checkentail x::arrI<_> |- x::arrI<_> * y::arr_seg<2,2> & x=y+1.
-print residue.
-expect Valid.
+
+// checkentail a::arrI<_> & a=b+1|- b::arr_seg<1,2>.
+// print residue.
+// expect Valid.
+
+
+//checkentail b>0 |- (exists c:b=c).
+
+// checkentail x::arrI<_> |- x::arrI<_> * y::arr_seg<2,2> & x=y+1.
+// print residue.
+// expect Valid.
 
 
 // checkentail x::arrI<_> & x=y+1 |- y::arr_seg<1,2>.
