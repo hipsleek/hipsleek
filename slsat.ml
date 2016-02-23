@@ -185,7 +185,7 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
         combine_formula_abs is_shape_only (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1)
             (ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2)
       in
-      let is_unsat = if !skip_unsat then
+      let is_unsat = if !skip_unsat && hvs!=[] then
         false
       else is_inconsistent_fnc ptos eqs neqs null_svl neqNull_svl hvs mf in
       if is_unsat then ([],unsat_caches)
