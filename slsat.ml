@@ -184,7 +184,7 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
         combine_formula_abs is_shape_only (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1)
             (ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2)
       in
-      let is_unsat = if !skip_unsat && hvs!=[] then
+      let is_unsat = if !skip_unsat (* && hvs!=[] *) then
         false
       else is_inconsistent_fnc ptos eqs neqs null_svl neqNull_svl hvs mf in
       if is_unsat then ([],unsat_caches)
@@ -223,6 +223,13 @@ let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0
             let is_sat,fs_br,new_unc2 = combine_eager_return cur_disjs vn_br [] [] in
             let new_res= (res@fs_br) in
             if is_sat then
+              let pr1 = Cprinter.string_of_formula in
+              let pr1a vn = Cprinter.prtt_string_of_h_formula (ViewNode vn) in
+              let pr1b = Cprinter.string_of_mix_formula in
+              let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+              let pr3 (a1,a2,a3,a4,a5,a6,a7,a8) = (pr_hepta !CP.print_svl pr2 pr2 !CP.print_svl !CP.print_svl (pr_list pr1a) (pr_pair pr1b (pr_list string_of_call_stk)))
+                  (a1,a2,a3,a4,a5,a6,(a7,a8)) in
+              let _ = DD.binfo_hprint (add_str "sat view name"  pr3) vn_br  no_pos in
               true,new_res
             else
               unfold_one_view_under_helper cur_disjs rest new_res
