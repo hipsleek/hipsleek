@@ -179,7 +179,6 @@ let unfold_one_view prog form_red_fnc (vnode:h_formula_view)=
 let unfold_bfs_x prog is_shape_only form_red_fnc is_inconsistent_fnc (ptos, eqs0, neqs0, null_svl0, neqNull_svl0, _, mf0, pt0) vns0=
   let combine_and_unsat_check unsat_caches (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1,pt1) (ptos2, eqs2, neqs2, null_svl2, neqNull_svl2, hvs2, mf2,pt2)=
     (* is conflict * on ptos *)
-    print_endline_quiet "\n unsat_check";
     if CP.intersect_svl ptos1 ptos2 != [] then [],unsat_caches else
       let ((ptos, eqs, neqs, null_svl, neqNull_svl, hvs,mf) (* as new_f *)) =
         combine_formula_abs is_shape_only (ptos1, eqs1, neqs1, null_svl1, neqNull_svl1, hvs1, mf1)
