@@ -2851,13 +2851,13 @@ let print_sat_result_three res (num_id: string) =
     else "unknown\n\n"
   in silenced_print print_string (num_id^": "^res); flush stdout
 
-let print_sat_result (unsat: bool) (sat:bool) (num_id: string) =
+let print_sat_result (unsat: bool) (sat:bool) (num_id: string) (tsec:string) =
   let res =
-    if unsat then let () = num_unsat := !num_unsat + 1 in "UNSAT\n\n"
-    else if sat then let () = num_sat := !num_sat + 1 in "SAT\n\n"
+    if unsat then let () = num_unsat := !num_unsat + 1 in "UNSAT\n"
+    else if sat then let () = num_sat := !num_sat + 1 in "SAT\n"
     else
-      let () = num_unknown := !num_unknown + 1 in "UNKNOWN\n\n"
-  in silenced_print print_string (num_id^": "^res); flush stdout
+      let () = num_unknown := !num_unknown + 1 in "UNKNOWN\n"
+  in silenced_print print_string (num_id^": "^res^"Times: "^ tsec ^ "\n\n"); flush stdout
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) lerr_exc:bool =
   let pr0 = string_of_bool in
@@ -2872,29 +2872,40 @@ let print_exc (check_id: string) =
 
 
 let process_sat_check_x (f : meta_formula) =
-  let nn = (sleek_proof_counter#inc_and_get) in
-  let num_id = "\nCheckSat "^(string_of_int nn) in
-  let (_,f) = x_add meta_to_formula f false [] [] in
-  let f = Cvutil.prune_preds !cprog true f in
-  let unsat_command f =
-    let r = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
-    r
+  let sat_check_fnc f = 
+    let nn = (sleek_proof_counter#inc_and_get) in
+    let num_id = "\nCheckSat "^(string_of_int nn) in
+    let time_start = Gen.Profiling.get_all_time() in
+    let (_,f) = x_add meta_to_formula f false [] [] in
+    let f = Cvutil.prune_preds !cprog true f in
+    let unsat_command f =
+      let r = not(x_add Solver.unsat_base_nth 7 !cprog (ref 0) f) in
+      r
+    in
+    let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
+    let _ = Debug.ninfo_hprint (add_str "res" string_of_bool) res no_pos in
+    let sat_res =
+      if res then false
+      else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
+    in
+    let _ = Debug.ninfo_hprint (add_str "sat_res" string_of_bool) sat_res no_pos in
+    let sat_res = if !Globals.dynamic_sat_bound >=0 && not res && not sat_res then
+        let _ = Debug.info_hprint (add_str "to call" pr_id) "slsat" no_pos in
+        let res,_ = Slsat.check_sat_topdown !cprog false f in
+        if res = 1 then true else sat_res
+      else sat_res
+    in
+    let _ = CF.residues := (Some (CF.SuccCtx [], sat_res)) in
+    let time_stop = Gen.Profiling.get_all_time() in
+    let res, sat_res = 
+      if !Globals.sat_timeout_limit < 0. then (* Muoi: Time out *)
+        false,false
+      else
+        res,sat_res
+    in
+    print_sat_result res sat_res num_id (string_of_float (time_stop -. time_start))
   in
-  let res = x_add Solver.unsat_base_nth 1 !cprog (ref 0) f in
-  let sat_res =
-    if res then false
-    else wrap_under_baga unsat_command f (* WN: invoke SAT checking *)
-  in
-  let _ = Debug.info_hprint (add_str "res" string_of_bool) res no_pos in
-  let _ = Debug.info_hprint (add_str "sat_res" string_of_bool) sat_res no_pos in
-  let sat_res = if !Globals.dynamic_sat_bound >=0 && not res && not sat_res then
-    let _ = Debug.info_hprint (add_str "to call" pr_id) "slsat" no_pos in
-    let res,_ = Slsat.check_sat_topdown !cprog false f in
-    if res = 1 then true else sat_res
-  else sat_res
-  in
-  let _ = CF.residues := (Some (CF.SuccCtx [], sat_res)) in
-  print_sat_result res sat_res num_id
+  wrap_within_timeout sat_check_fnc f 
 
 let process_sat_check (f : meta_formula) =
   let pr = string_of_meta_formula in

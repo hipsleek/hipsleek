@@ -2920,6 +2920,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let t2 = Expure.build_ef_pure_formula ~shape:is_shape1 p1 in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     (* let d = Excore.EPureI.elim_unsat_disj d in *)
+    let d = Excore.EPureI.norm_disj (is_shape1 && is_shape2) d in
     let res = (Excore.EPureI.is_false_disj (is_shape1 && is_shape2) d) in
     let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res

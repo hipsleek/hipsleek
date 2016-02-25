@@ -1,0 +1,21 @@
+data node {
+  tree childREC_14;
+  node nextREC_13;
+  tree parentREC_29;
+}.
+data tree {
+  int valVAL_12;
+  node childrenREC_30;
+}.
+ pred treep<n:int> == 
+  (exists self_35,flted_13_34: self::tree<Anon_15,c> * 
+  c::sll<self_35,flted_13_34>&flted_13_34+1=n & self_35=self)
+  inv 
+  true.
+ pred sll<parent:tree,s:int> == 
+  emp&self=null & s=0 or
+(exists parent_31,
+  parent_32: self::node<c,n,parent_31> * c::treep<s1> * n::sll<parent_32,s2>&
+  s=1+s1+s2 & parent_31=parent & parent_32=parent)
+  inv 
+  true.

@@ -748,7 +748,15 @@ module EPURE =
     (* remove unsat terms *)
     (* convert unsat with ef_conv_enum *)
     let unsat_call p=
-      not (!is_sat_raw (Mcpure.mix_of_pure p))
+      if !Globals.sat_timeout_limit > 0. then
+        let time_start = Gen.Profiling.get_all_time () in
+        let res = not (!is_sat_raw (Mcpure.mix_of_pure p)) in
+        let time_stop = Gen.Profiling.get_all_time () in
+        Globals.sat_timeout_limit := !Globals.sat_timeout_limit +. time_start -. time_stop;
+        let _ = Debug.ninfo_hprint (add_str "time per unsat call" string_of_float) !Globals.sat_timeout_limit no_pos in
+        res
+      else
+        false
 
     let ef_unsat_0 ?(shape=false) ((b,p) as f : epure) : bool =
       (* use ef_conv_enum *)
@@ -795,7 +803,17 @@ module EPURE =
 
     let is_false_disj_x is_shape disj =
       let () = x_tinfo_pp ("Omega is_false_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-      let res = List.for_all (fun epf -> unsat is_shape epf) disj in
+      (* let res = List.for_all (fun epf -> unsat is_shape epf) disj in *)
+      let res = 
+        try
+          let sat_disj = List.find (fun epf -> 
+              let ef_unsat = unsat is_shape epf in
+              not (ef_unsat && !Globals.sat_timeout_limit > 0.)
+            ) disj in
+          false
+        with
+        | Not_found -> true
+      in
       (* disj==[] *)
       let () = x_tinfo_pp ("Omega is_false_disj:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       res

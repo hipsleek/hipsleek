@@ -1,0 +1,85 @@
+data node {
+  int valVAL_13;
+  int colorVAL_12;
+  node leftREC_11;
+  node rightREC_33;
+}.
+ pred rb<n:int,cl:int,bh:int> == 
+  emp&self=null & n=0 & bh=1 & cl=0 or
+(exists flted_12_38,flted_12_39,
+  flted_12_40: self::node<v,flted_12_40,l,r> * l::rb<nl,flted_12_39,bhl> * 
+  r::rb<nr,flted_12_38,bhr>&flted_12_40=1 & flted_12_39=0 & flted_12_38=0 & 
+  cl=1 & n=nr+1+nl & bhl=bh & bhr=bh)
+   or
+(exists flted_13_41: self::node<v,flted_130_41,l,r> * 
+  l::rb<nl,Anon_14,bhl> * r::rb<nr,Anon_15,bhr>&flted_13_41=0 & cl=0 & n=nr+
+  1+nl & bhl=bhr & bh=bhl+1)
+  inv 
+  0<=n & 1<=bh & 0<=cl & cl<=1.
+
+
+// id 1027
+checksat  a::rb<na,flted_262_11755,flted_262_11754> * 
+b'::node<v_11742,flted_13_11741,l_11743,r_11747> * 
+c::rb<nc,flted_262_11751,h> * l_11743::rb<n,cl,bh> * 
+r_11747::node<v_11893,flted_12_11892,l_11894,r_11897> * 
+l_11894::rb<nl_11895,flted_12_11891,bhl_11896> * 
+r_11897::rb<nr_11898,flted_12_11890,bhr_11899>&right_273_3664'=r_11897 & 
+left_273_3663'=l_11894 & color_273_3662'=flted_12_11892 & 
+val_273_3661'=v_11893 & v_node_273_3660'=r_11747 & 
+v_node_273_3672'=l_11894 & v_node_273_3673'=l_11743 & v_bool_268_3691' & 
+cl<=1 & 0<=cl & 1<=bh & 0<=n & cl=0 & Anon_11745<=1 & 0<=Anon_11745 & 
+1<=bhl_11746 & 0<=nl_11744 & bh=bhl_11746 & cl=Anon_11745 & n=nl_11744 & 
+flted_13_11741=0 & flted_262_11753=0 & nb=nr_11748+1+nl_11744 & 
+bhl_11746=bhr_11750 & flted_262_11752=bhl_11746+1 & a'=a & b'=b & c'=c & 
+flted_262_11755=0 & flted_262_11754=1+h & flted_262_11752=1+h & 
+flted_262_11751=0 & b!=null & n_11772=nr_11748 & cl_11773=Anon_11749 & 
+bh_11774=bhr_11750 & 0<=nr_11748 & 1<=bhr_11750 & 0<=Anon_11749 & 
+Anon_11749<=1 & cl_11773=1 & 0<=n_11772 & 1<=bh_11774 & 0<=cl_11773 & 
+cl_11773<=1 & !(v_bool_270_3674') & bhr_11899=bh_11774 & 
+bhl_11896=bh_11774 & n_11772=nr_11898+1+nl_11895 & flted_12_11890=0 & 
+flted_12_11891=0 & flted_12_11892=1.
+
+
+/*---------------------------------------------
+
+This ef_unsat check takes too much time
+(====)
+ef_unsat@545
+ef_unsat inp1 :([b',c,l_11894,r_11747,r_11897], a=null & na=0 & flted_262_11754=1 & flted_262_11755=0 & 
+ (((flted_262_11751=1 & h=1 & nc=1) | (flted_262_11751=0 & nc=1 & h=2) | 
+   (flted_262_11751=0 & h=2 & nc=2) | (flted_262_11751=1 & h=2 & nc=3) | 
+   (Anon_15=1 & flted_262_11751=0 & h=2 & nc=3) | 
+   (Anon_15=0 & flted_262_11751=0 & h=2 & nc=2) | 
+   (Anon_15=0 & flted_262_11751=0 & h=3 & nc=3))) & 
+ l_11743=null & n=0 & bh=1 & cl=0 & 
+ (((flted_12_11891=1 & bhl_11896=1 & nl_11895=1) | 
+   (flted_12_11891=0 & nl_11895=1 & bhl_11896=2) | 
+   (flted_12_11891=0 & bhl_11896=2 & nl_11895=2) | 
+   (flted_12_11891=1 & bhl_11896=2 & nl_11895=3) | 
+   (Anon_15=1 & flted_12_11891=0 & bhl_11896=2 & nl_11895=3) | 
+   (Anon_15=0 & flted_12_11891=0 & bhl_11896=2 & nl_11895=2) | 
+   (Anon_15=0 & flted_12_11891=0 & bhl_11896=3 & nl_11895=3))) & 
+ (((flted_12_11890=1 & bhr_11899=1 & nr_11898=1) | 
+   (flted_12_11890=0 & nr_11898=1 & bhr_11899=2) | 
+   (flted_12_11890=0 & bhr_11899=2 & nr_11898=2) | 
+   (flted_12_11890=1 & bhr_11899=2 & nr_11898=3) | 
+   (Anon_15=1 & flted_12_11890=0 & bhr_11899=2 & nr_11898=3) | 
+   (Anon_15=0 & flted_12_11890=0 & bhr_11899=2 & nr_11898=2) | 
+   (Anon_15=0 & flted_12_11890=0 & bhr_11899=3 & nr_11898=3))) & 
+ right_273_3664'=r_11897 & left_273_3663'=l_11894 & 
+ color_273_3662'=flted_12_11892 & val_273_3661'=v_11893 & 
+ v_node_273_3660'=r_11747 & v_node_273_3672'=l_11894 & 
+ v_node_273_3673'=l_11743 & v_bool_268_3691' & cl<=1 & 0<=cl & 1<=bh & 
+ 0<=n & cl=0 & Anon_11745<=1 & 0<=Anon_11745 & 1<=bhl_11746 & 0<=nl_11744 & 
+ bh=bhl_11746 & cl=Anon_11745 & n=nl_11744 & flted_13_11741=0 & 
+ flted_262_11753=0 & nb=nl_11744+nr_11748+1 & bhl_11746=bhr_11750 & 
+ flted_262_11752=1+bhl_11746 & a'=a & b'=b & c'=c & flted_262_11755=0 & 
+ flted_262_11754=h+1 & flted_262_11752=h+1 & flted_262_11751=0 & b!=null & 
+ n_11772=nr_11748 & cl_11773=Anon_11749 & bh_11774=bhr_11750 & 0<=nr_11748 & 
+ 1<=bhr_11750 & 0<=Anon_11749 & Anon_11749<=1 & cl_11773=1 & 0<=n_11772 & 
+ 1<=bh_11774 & 0<=cl_11773 & cl_11773<=1 & !(v_bool_270_3674') & 
+ bhr_11899=bh_11774 & bhl_11896=bh_11774 & n_11772=nl_11895+nr_11898+1 & 
+ flted_12_11890=0 & flted_12_11891=0 & flted_12_11892=1)
+ef_unsat@545 EXIT:true
+*/

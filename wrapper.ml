@@ -48,6 +48,16 @@ let wrap_under_baga f a =
     (do_under_baga_approx := flag;
      raise e)
 
+let wrap_within_timeout f a = 
+  let flag = !sat_timeout_limit in
+  try
+    let res = f a in
+    sat_timeout_limit := flag;
+    res
+  with _ as e ->
+    (sat_timeout_limit := flag;
+     raise e)
+
 let wrap_reverify_scc f a b c =
   let flag = !reverify_flag in
   reverify_flag := true;
