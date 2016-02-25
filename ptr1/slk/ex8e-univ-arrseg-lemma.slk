@@ -1,0 +1,51 @@
+
+/*
+data arrI {
+  int val;
+}.
+
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,d)], xxx=self+i & n>=i & d=n-i & i>=0).
+*/
+
+relation Univ(int m).
+
+checkentail i<m & m<n |- m=i+1.
+expect Fail.
+
+//(1)
+checkentail i<m & m<n & Univ(m) |- m=i+1.
+expect Valid.
+
+checkentail i<m & m<n & Univ(m) |- m=i+2.
+expect Fail.
+
+
+checkentail c<m<c+4 & Univ(m) & y=x+c+1 |- x+m=y. // expect m=c+1
+expect Valid.
+print residue.
+
+checkentail c<m<c+4 & Univ(m) & y=x+c+3 |- x+m=y. // expect m=c+1
+expect Valid.
+print residue.
+
+checkentail c<m<c+4 & Univ(m) & y=x+c+4 |- x+m=y. // expect m=c+1
+expect Fail.
+
+checkentail c<m<c+4 & Univ(m) & y=(x:int)+c |- x+m=y. // expect m=c+1
+expect Fail.
+
+checkentail c<m<c+4 & Univ(m) & y=(x:arrI)+c |- x+m=y. // expect m=c+1
+expect Fail.
+
+/*
+# ex8e.slk
+
+Why is x undefined?
+
+ERROR: at _0:0_0:0
+Message: x is undefined (7)
+
+*/

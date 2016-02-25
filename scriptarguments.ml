@@ -312,7 +312,7 @@ let common_arguments = [
        VarGen.trace_loop_all :=true;
        VarGen.trace_loop :=true;
      ),
-   "Enable trace of method header duriong debugging (with details on arg)");
+   "Enable trace of method header during debugging (with details on arg)");
   (* Exception(fixcalc_of_pure_formula):Stack overflow *)
   (* Exception(compute_def@6):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
