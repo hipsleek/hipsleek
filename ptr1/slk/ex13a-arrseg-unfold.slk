@@ -52,3 +52,6 @@ expect Valid.
 
 
 
+checkentail x::arr_seg<2,n> & n>=2   |- x::arr_seg<2,2> .
+print residue.
+expect Valid.

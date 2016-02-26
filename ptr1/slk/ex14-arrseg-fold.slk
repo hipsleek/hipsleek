@@ -75,3 +75,6 @@ expect Valid.
 // expect Valid.
 
 
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
