@@ -13111,12 +13111,13 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_root_inst = root_inst;
         Context.match_res_rhs_rest = rhs_rest;
+        (* match_res_reason is used only in folding *)
         Context.match_res_reason = match_reason;
       } ->
-          let () = y_binfo_hp (add_str "FOLD: match_reason:" (pr_option !CP.print_formula)) match_reason in
-          let () = y_binfo_hp (add_str "xxxM_fold" (Cprinter.string_of_formula_base)) rhs_b in
-          let () = y_binfo_hp (add_str "root_inst" (pr_option !CP.print_sv )) root_inst in
-      let () = y_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+          let () = y_tinfo_hp (add_str "FOLD: match_reason:" (pr_option !CP.print_formula)) match_reason in
+          let () = y_tinfo_hp (add_str "xxxM_fold" (Cprinter.string_of_formula_base)) rhs_b in
+          let () = y_tinfo_hp (add_str "root_inst" (pr_option !CP.print_sv )) root_inst in
+          let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
       let wrap_fn = match root_inst with
         | Some id -> 
           let () = y_binfo_hp (add_str "fold_matching_stk (lhs_node)" !CF.print_h_formula) lhs_node in

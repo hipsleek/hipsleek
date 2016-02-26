@@ -10,9 +10,9 @@ pred arr_seg<i,n> == i=n & i>=0
 // can we scedule a base-case-fold after view match failure?
 // match and base-case-fold need to be both scheduled..
 
-checkentail x::arr_seg<2,n> & n>=2  |- x::arr_seg<2,2> .
-print residue.
-expect Valid.
+// checkentail x::arr_seg<2,n> & n>=2  |- x::arr_seg<2,2> .
+// print residue.
+// expect Valid.
 
 /*
 # ex13a.slk -dre "compute_action"
@@ -45,10 +45,10 @@ expect Valid.
 
 
 //(16)
-/*
+
 checkentail x::arr_seg<1,n> & n>=2   |- x::arr_seg<2,2> * y1::arrI<_> & y1=x+1.
 print residue.
 expect Valid.
-*/
+
 
 

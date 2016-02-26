@@ -958,7 +958,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       if !Globals.ptr_arith_flag then
         if lst==[] then paset
         else (List.map fst lst)@paset
-      else paset in
+       else paset in
     let paset_with_reason =
       let orgin_set = List.map (fun v -> (v,None)) paset in
       (orgin_set)@(List.map (fun (f,s,t) -> (f,s))lst_with_reason)
@@ -1863,20 +1863,20 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   let find r = try
       Some (fst (snd (List.find (fun (hf,_) -> hf==r) lst)))
     with _ -> None in
-  let find_reason r =
-    try
-      Some (snd (snd (List.find
-          (
-              fun (hf,(v,f))->
-                  match hf,r with
-                    | DataNode df,DataNode rdf ->
-                          if (CP.compare_sv df.h_formula_data_node rdf.h_formula_data_node)=0
-                          then true
-                          else false
-                    | _ -> false
-          ) lst)))
-    with _ -> None
-  in
+  (* let find_reason r = *)
+  (*   try *)
+  (*     Some (snd (snd (List.find *)
+  (*         ( *)
+  (*             fun (hf,(v,f))-> *)
+  (*                 match hf,r with *)
+  (*                   | DataNode df,DataNode rdf -> *)
+  (*                         if (CP.compare_sv df.h_formula_data_node rdf.h_formula_data_node)=0 *)
+  (*                         then true *)
+  (*                         else false *)
+  (*                   | _ -> false *)
+  (*         ) lst))) *)
+  (*   with _ -> None *)
+  (* in *)
   let is_imprecise n =
     try
       Some (snd(List.find (fun (v,pf) -> 
@@ -1886,9 +1886,9 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
     with _ -> None 
   in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
-      let () = x_binfo_hp (pr_option !CP.print_formula) (find_reason lhs_node) no_pos
-      in
-      x_add (mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node) ~match_res_reason:(find_reason lhs_node)
+      (* let () = x_binfo_hp (pr_option !CP.print_formula) (find_reason lhs_node) no_pos *)
+      (* in *)
+      x_add (mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node)
         ~imprecise:(is_imprecise lhs_node)
         mt) lhs_node lhs_rest rhs_node rhs_rest
     ) l_x
@@ -2466,15 +2466,19 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
               if force_flag || sf_force_match_flag then
                 let () = x_tinfo_pp "choosing forced matching" no_pos in
-                [(0,M_match m_res)],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
+                let base_case_prio = 3 in
+                [(0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_fold m_res);(base_case_prio,M_base_case_unfold m_res)])],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
               else
                 let base_case_prio = 3 in
                 let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))  
                   then (-1,M_Nothing_to_do "base_case_unfold not selected")
                   else (base_case_prio,M_base_case_unfold m_res) in
-                let a1 =  
+                let a1 =
                   (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
-                  if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))  
+                  let ()= y_tinfo_hp (add_str "imm_subtype_flag" string_of_bool) imm_subtype_flag in
+                  let ()= y_tinfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
+                  (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))   *)
+                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))
                   then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                   else a1 in
                 let () = y_tinfo_hp (add_str "a1" pr_act) a1 in

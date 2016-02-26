@@ -2,7 +2,7 @@ data arrI {
   int val;
 }.
 
-checkentail x::arrI<1> & y=x|- y::arrI<1> .
+checkentail x::arrI<1> & y=x |- y::arrI<1>.
 expect Valid.
 
 checkentail x::arrI<1> |- y::arrI<1> & y=x.
