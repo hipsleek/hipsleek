@@ -1,3 +1,38 @@
 checkentail x>0 |-  x=-2.
 print residue.
 
+checkentail x>0 & flow __Error |- true & flow __Error.
+print residue.
+expect Valid.
+
+checkentail x>0 & flow __Error |- true & flow __MayError.
+print residue.
+expect Valid.
+
+checkentail x>0 & flow __Error |- true.
+print residue.
+expect Fail.
+
+checkentail x>0 |- true & flow __Error.
+print residue.
+expect Fail.
+
+checkentail x>0 |- true & flow __MayError.
+print residue.
+expect Valid.
+
+checkentail x>0 |- true.
+print residue.
+expect Valid.
+
+checkentail x>0 & flow __MayError |- true & flow __Error.
+print residue.
+expect Fail.
+
+checkentail x>0 & flow __MayError |- true & flow __MayError.
+print residue.
+expect Valid.
+
+checkentail x>0 & flow __MayError |- true.
+print residue.
+expect Fail.
