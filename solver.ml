@@ -2454,6 +2454,10 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
           )
           else view_form
         in
+        let view_form =
+          let pure_related_to_folded_pred = MCP.find_rel_constraints rhs_p vs in
+          add_mix_formula_to_struc_formula pure_related_to_folded_pred view_form
+        in
         x_tinfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let view_form = add_struc_origins (get_view_origins view) view_form  in
         let view_form = CF.replace_struc_formula_label pid view_form in
@@ -2503,10 +2507,10 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         let new_es = {estate with es_evars = (*estate.es_evars@impl_vars*)Gen.BList.remove_dups_eq (=) (new_es_evars @ estate.es_evars);
                      } in
         (* let new_es = estate in *)
-        let () = Debug.ninfo_hprint (add_str "fold_op: estate" Cprinter.string_of_entail_state) estate no_pos in
-        let () = Debug.ninfo_hprint (add_str "fold_op: new_es" Cprinter.string_of_entail_state) new_es no_pos in
+        let () = Debug.tinfo_hprint (add_str "fold_op: estate" Cprinter.string_of_entail_state) estate no_pos in
+        let () = Debug.tinfo_hprint (add_str "fold_op: new_es" Cprinter.string_of_entail_state) new_es no_pos in
         let new_ctx = Ctx new_es in
-        let () = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
+        let () = Debug.tinfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
         let new_ctx =
@@ -2553,6 +2557,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
             let tmp3 = (mkOCtx tmp1 tmp2 pos) in
             tmp3
           | Ctx es ->
+                let () = x_tinfo_zp (lazy ("begin es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos in
             (* let es = estate_of_context rs pos in *)
             let es = CF.overwrite_estate_with_steps es ss in
             let w = Gen.BList.difference_eq CP.eq_spec_var  es.es_evars tmp_vars in
@@ -2572,7 +2577,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
                              } in
             x_dinfo_zp (lazy ("fold: context at beginning of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context ctx))) pos;
             x_dinfo_zp (lazy ("fold: context at end of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context res_rs))) pos;
-            x_dinfo_zp (lazy ("fold: es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos;
+            x_tinfo_zp (lazy ("fold: es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos;
             res_rs 
         ) in
         let process_one (ss:CF.steps) fold_rs1 = (
@@ -11760,7 +11765,8 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
     | None -> Some (rhs_p)
   in
   let estate = estate_of_context fold_ctx pos2 in
-  let () = Debug.ninfo_hprint (add_str "estate (from fctx):" (Cprinter.string_of_entail_state)) estate pos in
+  let () = x_tinfo_zp (lazy ("estate_of_context fold_ctx: es_pure: " ^(Cprinter.string_of_mix_formula estate.es_pure))) pos in
+  let () = Debug.tinfo_hprint (add_str "estate (from fctx):" (Cprinter.string_of_entail_state)) estate pos in
   (*TO CHECK: what for ??? instantiate before folding*)
   (*  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in*)
   let (new_v2,case_inst) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
@@ -11809,6 +11815,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
   let () = x_tinfo_hp (add_str "folding_conseq_pure" (pr_option Cprinter.string_of_mix_formula)) folding_conseq_pure pos in
   let () = x_tinfo_hp (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
   let estate =  {estate with es_folding_conseq_pure = folding_conseq_pure} in
+  let () = x_tinfo_zp (lazy ("before fold_op_init: es.es_pure: " ^(Cprinter.string_of_mix_formula estate.es_pure))) pos in
   let fold_rs, fold_prf = x_add (fold_op_init ~root_inst:root_inst)  prog (Ctx estate) view_to_fold vd rhs_p (* false *) case_inst pos in
   let () = Debug.ninfo_hprint (add_str "do_fold_w: rhs_p 3 " (Cprinter.string_of_mix_formula)) rhs_p pos in
   let () = rhs_rest_emp := true in
@@ -13131,11 +13138,11 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       (*     let () = y_tinfo_hp (add_str "estate(& root_inst)" !CF.print_formula) nf in *)
       (*     {estate with es_formula = nf} *)
       (* in *)
-      let estate =
-        match match_reason with
-          | None -> estate
-          | Some reason_f -> {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula reason_f pos) pos}
-      in
+      (* let estate = *)
+      (*   match match_reason with *)
+      (*     | None -> estate *)
+      (*     | Some reason_f -> {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula reason_f pos) pos} *)
+      (* in *)
       let estate =
         if no_infer_rel estate then estate
         else
@@ -13159,7 +13166,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         | n::_ -> Cast.lemma_soundness # make_progress n
         | _ -> ()
       in
-      
+      let () = x_tinfo_zp (lazy ("before do_full_fold: estate.es_pure: " ^(Cprinter.string_of_mix_formula estate.es_pure))) pos in
       wrap_fn (fun () -> do_full_fold ~root_inst:root_inst prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) ()
 
     | (Context.M_infer_unfold (r,_,_))->

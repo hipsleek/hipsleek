@@ -13,9 +13,20 @@ print residue.
 expect Valid.
 */
 
-checkentail  x::arrI<_> |- x::arr_seg<i,n> & i=1.
+checkentail  x::arrI<_>  |- x::arr_seg<0,1>.
 print residue.
 expect Valid.
+
+//checkentail x::arr_seg<1,2> |- x::arr_seg<i,n> & i<n.
+
+
+// checkentail  x::arrI<1>  |- x::arrI<1>.
+// print residue.
+// expect Valid.
+
+// checkentail  x::arrI<_> & y=x|- y::arr_seg<0,1>.
+// print residue.
+// expect Valid.
 
 /*
 # ex14b1.slk

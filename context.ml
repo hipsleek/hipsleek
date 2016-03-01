@@ -832,7 +832,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 else (d,(map_r r,None),None)
               | Some ((v2,pf)) ->
                 let rhs_eq = CP.mkEqVars d rhs_ptr in
-                let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
+                let () =  y_binfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
                 (* same base, but same start? *)
                 (* add the possible RHS inst *)
                 (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
@@ -864,7 +864,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* if implicit inst, use weaker same_base instead *)
                 let impl_flag = same_base && is_es_inst_vars rhs_ptr  in
                 if true (* !Globals.adhoc_flag_6 || same_base *)  then
-                  let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in
+                  (* let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in *)
+                  let r = !CP.tp_imply lhs_w_rhs_inst rhs  in
                   let () =  y_tinfo_hp (add_str "same_base" string_of_bool) same_base  in
                   let () =  y_tinfo_hp (add_str "r" string_of_bool) r  in
                   if CF.no_infer_all_all estate || r then (d,(map_r r,None),None)
@@ -906,7 +907,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   (* r==2 means that it is NOT exact match but they have the same base, ex. a=b+1 *)
                   (* r==0 means that it is nether exact match nor same base *)
                   if r then
-                    (d,(2,Some lhs),None)
+                    (d,(0,Some lhs),None)
                   else
                     (d,(0,None),None)
                 (* failwith (x_loc^"unfolding") *)
@@ -984,16 +985,16 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*   else []                                                          *)
       (* ) in                                                               *)
       let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in
-      let mt_res =
-        match rhs_inst_eq with
-          |[] -> mt_res
-          | h::tail ->
-                List.map
-                    (fun mtitem ->
-                        {mtitem with match_res_reason = Some (List.fold_left (fun res sf -> CP.mkAnd sf res no_pos) h tail)}
-                    )
-                    mt_res
-      in
+      (* let mt_res = *)
+      (*   match rhs_inst_eq with *)
+      (*     |[] -> mt_res *)
+      (*     | h::tail -> *)
+      (*           List.map *)
+      (*               (fun mtitem -> *)
+      (*                   {mtitem with match_res_reason = Some (List.fold_left (fun res sf -> CP.mkAnd sf res no_pos) h tail)} *)
+      (*               ) *)
+      (*               mt_res *)
+      (* in *)
       (* WN: why is there a need to filter out root parameters? *)
       (*  affects str-inf/ex14b[23].slk *)
       (* let mt_res = x_add filter_match_res_list mt_res rhs_node in *)
@@ -1578,7 +1579,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
               [(HEmp, f, [], Root)]
           else []
       )
-    | DataNode ({h_formula_data_node = p1; 
+    | DataNode ({h_formula_data_node = p1;
                  h_formula_data_imm = imm1;
                  h_formula_data_name = c;
                  h_formula_data_param_imm = pimm1}) -> (
@@ -1600,26 +1601,45 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
             (* failwith "TBI" *)
           else []
         | _      ->
-          let () = y_tinfo_hp (add_str "DataNode" !CP.print_sv) p1 in
-          let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
-          let add_roots stk p1 lst =
-            try
-              let (r,rt) = List.find (fun (v,_) -> CP.eq_spec_var p1 v) lst in
-              stk # push (f,(r,rt))
-            with _ -> () in
-          let () = add_roots stk p1 view_roots in
-          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-            if ( (not !Globals.allow_field_ann) && produces_hole imm && CF.same_node_name c rhs_node) then
-              (* not consuming the node *)
-              let hole_no = Globals.fresh_int() in 
-              [((HEmp (* Hole hole_no *)), f, [(f, hole_no)], Root)]
-            else
-              (*if (!Globals.allow_field_ann) then
-                let new_f = update_ann f pimm1 pimm in
-                [(new_f,f,[],Root)]
-                else*)
-              [(HEmp, f, [], Root)]
-          else []
+              let conflict_flag =
+                match rhs_root with
+                  | Some (v1,pure1) ->
+                        let w1 = CP.mk_eq_vars v1 p1 in
+                        (* let w2 = CP.mk_eq_vars v2 rhs_ptr in *)
+                        let lst = [w1;pure1;lhs_rhs_pure] in
+                        let comb = CP.join_conjunctions lst  in
+                        let flag = not(TP.tp_is_sat comb "111") in
+                        let () = if flag then
+                          let () = y_tinfo_hp (add_str "DataNode v.s. View, conflict detected" (pr_list !CP.print_formula)) lst in
+                          ()
+                        in
+                        (flag)
+                  | None ->
+                        false
+              in
+              if conflict_flag
+              then []
+              else
+                let () = y_tinfo_hp (add_str "DataNode" !CP.print_sv) p1 in
+                let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
+                let add_roots stk p1 lst =
+                  try
+                    let (r,rt) = List.find (fun (v,_) -> CP.eq_spec_var p1 v) lst in
+                    stk # push (f,(r,rt))
+                  with _ -> () in
+                let () = add_roots stk p1 view_roots in
+                if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+                  if ( (not !Globals.allow_field_ann) && produces_hole imm && CF.same_node_name c rhs_node) then
+                    (* not consuming the node *)
+                    let hole_no = Globals.fresh_int() in 
+                    [((HEmp (* Hole hole_no *)), f, [(f, hole_no)], Root)]
+                  else
+                    (*if (!Globals.allow_field_ann) then
+                      let new_f = update_ann f pimm1 pimm in
+                      [(new_f,f,[],Root)]
+                      else*)
+                    [(HEmp, f, [], Root)]
+                else []
       )
     | ViewNode ({h_formula_view_node = p1;
                  h_formula_view_imm = imm1;
@@ -1649,24 +1669,26 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
           let () = y_tinfo_hp (add_str "view |- view/data " !CF.print_h_formula) rhs_node in
           let () = y_tinfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
           let () = y_tinfo_hp (add_str "view_root_lhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_lhs in
-          let conflict_flag = match view_root_lhs,rhs_root,r_vargs with
-            | Some (v1,pure1),Some(v2,pure2),rhs_ptr::_ -> 
-              let w1 = CP.mk_eq_vars v1 v2 in
-              (* let w2 = CP.mk_eq_vars v2 rhs_ptr in *)
-              let lst = [w1;pure1;pure2;lhs_rhs_pure] in
-              let comb = CP.join_conjunctions lst  in
-              let flag = not(TP.tp_is_sat comb "111") in
-              let () = if flag then
-                  let () = y_tinfo_hp (add_str "conflict detected" (pr_list !CP.print_formula)) lst in
-                  ()
-              in
-              (flag)
-            | Some (v1,pure1),None,rhs_ptr::_ -> 
-              let () = y_tinfo_hp (add_str "view |- data " !CF.print_h_formula) rhs_node in
-              let () = y_tinfo_pp "consider for folding?" in
-              false
-            | _,_,_ -> 
-              false in
+          let conflict_flag =
+            match view_root_lhs,rhs_root,r_vargs with
+              | Some (v1,pure1),Some(v2,pure2),rhs_ptr::_ ->
+                    let w1 = CP.mk_eq_vars v1 v2 in
+                    (* let w2 = CP.mk_eq_vars v2 rhs_ptr in *)
+                    let lst = [w1;pure1;pure2;lhs_rhs_pure] in
+                    let comb = CP.join_conjunctions lst  in
+                    let flag = not(TP.tp_is_sat comb "111") in
+                    let () = if flag then
+                      let () = y_tinfo_hp (add_str "conflict detected" (pr_list !CP.print_formula)) lst in
+                      ()
+                    in
+                    (flag)
+              | Some (v1,pure1),None,rhs_ptr::_ ->
+                    let () = y_tinfo_hp (add_str "view |- data " !CF.print_h_formula) rhs_node in
+                    let () = y_tinfo_pp "consider for folding?" in
+                    false
+              | _,_,_ ->
+                    false
+          in
           if conflict_flag then [] 
           else 
            let () = y_tinfo_hp (add_str "p1" !CF.print_sv) p1 in

@@ -6,11 +6,25 @@ pred arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0.
 
-//checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
-
-checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- z::arrI<_> & z=x+1.
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
 print residue.
-expect Valid.
+
+// checkentail x::arrI<_> |- x::arr_seg<1,n> .
+// print residue.
+
+
+// checkentail x::arrI<_>  |- y::arrI<_>.
+// print residue.
+// expect Valid.
+
+
+// checkentail x::arr_seg<i,n> & i<n & y=x+i+1|- y::arrI<_>.
+// print residue.
+// expect Valid.
+
+// checkentail x::arrI<_> & y+2=x |- y::arr_seg<1,n>.
+// print residue.
+// expect Valid.
 
 /*
 # ex14c.slk
