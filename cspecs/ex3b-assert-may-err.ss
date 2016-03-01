@@ -3,6 +3,6 @@ void foo (int x)
   ensures true; // SHOULD FAIL
 {
   if (x < 0)
-    assert(x >= -1); // MAY ERR
+    assert(x >= -1) assume true; // MAY ERR
   else return;
 }
