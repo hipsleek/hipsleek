@@ -12,7 +12,7 @@ pred arr_seg<i,n> == i=n & i>=0
 //  <1>y::arrI<Anon_13>@M&i=n & 0<=i & y=x&{FLOW,(20,21)=__norm#E}[]
 
 //checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> .
-checkentail  y::arrI<_> & y=x |- [i,n] x::arr_seg<i,n> & i<n .
+checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> & i<n .
 print residue.
 expect Valid.
 
