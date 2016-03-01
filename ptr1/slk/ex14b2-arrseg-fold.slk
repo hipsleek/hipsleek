@@ -16,7 +16,14 @@ expect Valid.
 // checkentail  x::arrI<_> |- x::arr_seg<i,n> & i=1.
 // checkentail  x::arrI<_>  |- x::arr_seg<0,1>.
 //checkentail  y::arrI<_> & y=x+2 |- x::arr_seg<i,n>.
-checkentail  y::arrI<_> & y=x+i |- x::arr_seg<i,n>.
+//checkentail  y::arrI<_> & y=x+i+1|- x::arr_seg<i,n>. // fail
+//checkentail  y::arrI<_> & y=x+2 |- x::arr_seg<i,n>. // OK
+
+//checkentail  y::arrI<_> & y=x+i|- x::arr_seg<i,n>. //tofix
+
+//checkentail  y::arrI<_> & y=x|- x::arr_seg<i,n> & i<n.
+
+checkentail  y::arrI<_> & y=x|- x::arr_seg<i,n> .
 print residue.
 expect Valid.
 
@@ -24,7 +31,7 @@ expect Valid.
 
 
 // checkentail  x::arrI<1>  |- x::arrI<1>.
-// print residue.
+// print residuhg ine.
 // expect Valid.
 
 // checkentail  x::arrI<_> & y=x|- y::arr_seg<0,1>.

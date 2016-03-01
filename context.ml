@@ -809,11 +809,13 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
           | Some ((v,rf)) -> 
             (* lhs_pure |- d>=rhs_ptr  *)
             begin
+              let () = y_tinfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
               let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
               let rhs = CP.mk_is_base_ptr d rhs_ptr in
               (* let r = !CP.tp_imply lhs_pure rhs in *)
-              let r = !CP.tp_imply lhs_w_rhs_inst rhs in
-              let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr" !CP.print_formula) rhs  in
+              let r = true (* !CP.tp_imply lhs_w_rhs_inst rhs *) in
+              let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+              let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
               let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
               match root_lhs with
               | None  ->
@@ -824,7 +826,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in
                   let r = x_add_1 !CP.tp_is_sat f in
                   let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in
-                  let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
                   let () =  y_tinfo_hp (add_str "is_sat [lhs_pure;eq;rf;rhs_p]" string_of_bool) r  in
