@@ -5,3 +5,6 @@ print residue.
 
 infer[P2] P2(n) & n=0 |- false.
 print residue.
+
+infer[P2] P2(n) & n=0 |- !(n+5>=0).
+print residue.
