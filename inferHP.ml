@@ -408,6 +408,7 @@ let find_undefined_selective_pointers prog es lfb lmix_f lhs_node unmatched rhs_
     if r_hps = [] || CP.diff_svl r_hps post_hps <> [] then (lfb, [], ls_lhp_args, []) else
       List.fold_left (fun (lfb0,ls_defined,ls_rem, ls_new_hps) hpargs ->
           let lfb1, r_def,r_mem, new_hps = Sautil.find_well_defined_hp prog lhds lhvs r_hps
+              (List.map (fun dn -> dn.CF.h_formula_data_node) rhds)
               prog_vars post_hps hpargs l_def_vs lfb0
               true  pos
           in
@@ -2442,7 +2443,7 @@ let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
   let _, defined_preds,rems_hpargs,link_hps =
     List.fold_left (fun (lfb1, r_defined_preds, r_rems, r_link_hps) hpargs ->
         let n_lfb,def_hps, rem_hps, ls_link_hps=
-          Sautil.find_well_defined_hp prog lhds lhvs []
+          Sautil.find_well_defined_hp prog lhds lhvs [] []
             infer_vars [] hpargs (l_def_vs) lfb1 true pos
         in
         (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))

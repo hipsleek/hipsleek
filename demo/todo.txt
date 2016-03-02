@@ -1367,7 +1367,7 @@ res:  1[
    es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
    ]
 ==========================================================================
-# ex21a10a.slk
+# ex21a10a.slk: FIXED
 
 infer[@err_must] x!=null & x'=x & flow __MayError 
   or x=null & x'=x & x'=null & !res & flow __norm 
@@ -1385,7 +1385,7 @@ Residue:
     or emp&!(res) & x'=null & x'=x & x=null&{FLOW,(18,19)=__Error#E}[]
 
 ==========================================================================
-# ex21a10b.slk
+# ex21a10b.slk: FIXED
 
 infer[@err_must] x>0 & flow __MayError 
   or x<0 & r=0 & flow __norm 
@@ -1406,6 +1406,17 @@ Entail (1) : Fail.(may)
    r=0 |- r!=0 (must failure)
   ]
 
+
+May or Must --> May
+
+Or or Must --> May
+Or or May  --> May
+
+ requires true
+ ensures  x>0 & __norm \/ x<=0 & __Error;
+
+ if x>0 then Ok
+ else assert false;
 ==========================================================================
 # ex23-infer1.slk -dre "simplify"
 
@@ -1489,8 +1500,59 @@ push_pr(ti3:288): EInfer @term[]
 
 
 ==========================================================================
+# ex23a.slk: FIXED
+
+checkentail x<0 & flow __MayError |- x=3 & flow __Error.
+expect Fail_Must.
+
+Validate 8: ExpectingFail_Must BUT got : Fail_May
+Unexpected: 8 
+
+ This should be a must error as the state
+ are in must contradiction.
+
+Thus flow and error must both be checked if flow is just a may error
+to determine if must error is caused by the heap state itself.
 ==========================================================================
+#ex23b.slk: FIXED
+
+/*
+why x!=null in rhs??
+
+
+Entail (1) : Fail.(must) cause: x<0 |-  x!=null. LOCS:[4] (must-bug)
+*/
+
 ==========================================================================
+# ex23c.slk: FIXED
+
+infer [@err_must] x<0 & flow __MayError |- x=3 & flow __Error.
+
+# Why a must-bug still have  MayError flow?
+# what did "expect" check?
+
+Entail (3) : Fail.(must) cause:AND[
+1.2b: ante flow:__MayError#E conseq flow: __Error#E are incompatible flow types, x<0 |-  x=3. LOCS:[9] (must-bug)
+]
+
+Validate 3: OK
+Residue:
+ <1>emp&x<0&{FLOW,(4,8)=__MayError#E}[]
+
+
+# below is supposed to be a MayError. Why is it a MustError?
+  This is unsound
+
+infer [@err_must] true & flow __MayError |- x=3 & flow __Error.
+expect Fail_May.
+
+Entail (4) : Fail.(must) cause:AND[
+1.2b: ante flow:__MayError#E conseq flow: __Error#E are incompatible flow
+ types,
+ true |-  x=3. LOCS:[0;20] (may-bug)
+]
+
+Validate 4: ExpectingFail_May BUT got : Fail_Must
 ==========================================================================
 ==========================================================================
 ==========================================================================

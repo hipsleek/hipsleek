@@ -826,7 +826,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               let () = x_ninfo_zp (lazy (("res_ctx 0: " ^ (Cprinter.string_of_list_failesc_context_short res_ctx) ^ "\n"))) no_pos in
               (*Clear es_pure before check_post*)
               let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
-              let res_ctx = CF.list_failesc_to_partial res_ctx in
+              let res_ctx = CF.list_failesc_to_partial res_ctx post_cond in
               (* let () = Gen.Profiling.pop_time "typechecker : check_exp" in *)
               (* let () = print_string_quiet ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
               let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
@@ -1533,7 +1533,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     end;
                   if CF.isSuccessListFailescCtx_new rs then 
                     begin
-                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+                      let rels = Infer.collect_rel_list_failesc_context rs in
+                      Infer.infer_rel_stk # push_list rels;
+                      Log.current_infer_rel_stk # push_list rels;
+                      let hp_rels = Infer.collect_hp_rel_list_failesc_context rs in
+                      let cond_msg = if (hp_rels=[]) && (rels)=[] then "" else " (conditional)" in
+                      Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok" ^ cond_msg ^ "\n" else ": unreachable\n")) pos;
                       x_dinfo_pp (*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos; 
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
                       let xp = get_xpure_of_formula c_assert_opt in
@@ -2228,7 +2233,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                exp_dprint_visible_names = visib_names;
                exp_dprint_pos = pos}) -> begin
         let curr_svl = stk_vars # get_stk in
-        let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
+        let () = x_ninfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
         (* let () = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
         (* let ctx0 = ctx in *)
         (* let ctx1 = prune_ctx_failesc_list prog ctx in *)
@@ -3526,9 +3531,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
               if (CP.mem_svl hp scc_sel_hps) then (r1@[d],r2,r3) else (r1,r2,r3@[d])
             | _ -> (r1,r2,r3@[d]) ) ([],[],[]) defs0 in
         let defs1 = pre_preds@post_pred@rem in
-        (* let () = Debug.info_hprint (add_str " LOng: sort defs" pr_id) "" no_pos in *)
         let defs = if !Globals.print_en_tidy then List.map Cfout.rearrange_def defs1 else defs1 in
-        (* let () = Debug.info_hprint (add_str " LOng: sort defs. END" pr_id) "" no_pos in *)
         print_endline_quiet "\n*************************************";
         print_endline_quiet "*******relational definition ********";
         print_endline_quiet "*************************************";
@@ -3814,9 +3817,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     let pr = pr_list_ln (fun x -> Cprinter.string_of_hprel_short_inst prog sel_post_hp_rels x) in
                     (* let pr = if !Globals.print_html then pr_list_ln (fun x -> Cprinter.string_of_html_hprel_short_inst prog x) else pr in *)
                     let pr_len x = string_of_int (List.length x) in
-                    (* print_endline (pr (Infer.rel_ass_stk # get_stk)); *)
-                    (* DD.info_hprint (add_str "len(rel_ass_stk)" pr_len) ras no_pos; *)
-                    (* DD.info_hprint (add_str "hp_lst_assume" pr) ras no_pos; *)
                     let old_print_imm = !print_ann in
                     let _= if !print_html then let () = print_ann:= false in () else () in
                     let _  = print_endline_quiet (pr (ras1)) in

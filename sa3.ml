@@ -418,6 +418,31 @@ let unfold_def_LHS prog link_hps constrs hps hp_defs=
 (*split constrs like H(x) & x = null --> G(x): separate into 2 constraints*)
 let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map unk_hps link_hps=
   (*internal method*)
+  (* when we drop all heap of a fomula, the remaining is htrue, not emp*)
+  let convert_emp2htrue hf=
+    match hf with
+      | CF.HEmp -> CF.HTrue
+      | _ -> hf
+  in
+  let emp2htrue_x f0 rhs_args =
+    let rec recf f= match f with
+    | CF.Base fb -> let nulls = CP.remove_dups_svl (MCP.get_null_ptrs fb.CF.formula_base_pure)  in
+      if CP.intersect nulls rhs_args != [] then f
+      else
+        CF.formula_map convert_emp2htrue f
+    | CF.Exists _ ->
+          let quans, base1 = CF.split_quantifiers f in
+          CF.add_quantifiers quans (recf base1)
+    | CF.Or orf -> CF.Or {orf with CF.formula_or_f1 = recf orf.CF.formula_or_f1;
+          CF.formula_or_f2 = recf orf.CF.formula_or_f2;
+      }
+    in
+    recf f0
+  in
+  let emp2htrue f0 rhs_args =
+    let pr = !CF.print_formula in
+    Debug.no_2 "emp2htrue" pr !CP.print_svl pr (fun _ _ -> emp2htrue_x f0 rhs_args) f0 rhs_args
+  in
   let split_one cs total_unk_map=
     let () = Debug.ninfo_zprint (lazy (("  cs: " ^ (Cprinter.string_of_hprel_short cs)))) no_pos in
     let (_ ,mix_lf,_,_,_,_) = Cformula.split_components cs.Cformula.hprel_lhs in
@@ -450,6 +475,7 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
       let leqNulls = MCP.get_null_ptrs mix_lf in
       let leqs = (MCP.ptr_equations_without_null mix_lf) in
       let ls_rhp_args = Cformula.get_HRels_f (Cformula.Base rhs_b1) in
+      let rhds, _, _ = Cformula.get_hp_rel_bformula rhs_b1 in
       let r_hps = List.map fst ls_rhp_args in
       let l_def_vs = leqNulls @ (List.map (fun hd -> hd.Cformula.h_formula_data_node) lhds)
                      @ (List.map (fun hv -> hv.Cformula.h_formula_view_node) lhvs) in
@@ -481,8 +507,8 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
       let lfb2, defined_preds,rems_hpargs,link_hps =
         List.fold_left (fun (lfb, r_defined_preds, r_rems, r_link_hps) hpargs ->
             let n_lfb,def_hps, rem_hps, ls_link_hps=
-              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
-                prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb true no_pos
+              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps (List.map (fun dn -> dn.CF.h_formula_data_node) rhds)
+                prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb true ~split_nemp:true no_pos
             in
             (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))
           ) (lfb1, [], [], []) ls_lhp_args1
@@ -519,7 +545,8 @@ let split_base_constr prog cond_path constrs post_hps sel_hps prog_vars unk_map 
           let () = Debug.ninfo_zprint (lazy (("  unused ptrs: " ^ (!CP.print_svl unk_svl)))) no_pos in
           (*prune defined hps in lhs*)
           let new_lhs, _ = Cformula.drop_hrel_f new_cs.Cformula.hprel_lhs (List.map (fun (a, _, _,_) -> a) defined_preds0) in
-          let new_lhs1 = Cformula.add_quantifiers l_qvars new_lhs in
+          let new_lhs0 = emp2htrue new_lhs (List.fold_left (fun acc (_,args) -> acc@args) [] ls_rhp_args) in
+          let new_lhs1 = Cformula.add_quantifiers l_qvars new_lhs0 in
           let new_lhs2 = Cformula.elim_unused_pure new_lhs1 new_cs.Cformula.hprel_rhs in
           let new_cs = {new_cs with Cformula.hprel_lhs = new_lhs2;} in
           let () = Debug.ninfo_zprint (lazy (("  refined cs: " ^ (Cprinter.string_of_hprel_short new_cs)))) no_pos in

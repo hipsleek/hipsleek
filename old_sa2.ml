@@ -301,6 +301,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
     let (_ ,mix_lf,_,_,_,_) = CF.split_components cs.CF.hprel_lhs in
     let l_qvars, lhs = CF.split_quantifiers cs.CF.hprel_lhs in
     let r_qvars, rhs = CF.split_quantifiers cs.CF.hprel_rhs in
+     let leqNulls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_lf) ) in
     let l_hpargs = CF.get_HRels_f lhs in
     let r_hpargs = CF.get_HRels_f rhs in
     if (List.exists (fun (hp,_) -> CP.mem_svl hp post_hps) r_hpargs) &&
@@ -328,6 +329,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       let leqNulls = MCP.get_null_ptrs mix_lf in
       let leqs = (MCP.ptr_equations_without_null mix_lf) in
       let ls_rhp_args = CF.get_HRels_f (CF.Base rhs_b1) in
+      let rhds, rhvs, rhrs = CF.get_hp_rel_bformula rhs_b1 in
       let r_hps = List.map fst ls_rhp_args in
       let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
                      @ (List.map (fun hv -> hv.CF.h_formula_view_node) lhvs) in
@@ -358,7 +360,7 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       let lfb2, defined_preds,rems_hpargs,link_hps =
         List.fold_left (fun (lfb, r_defined_preds, r_rems, r_link_hps) hpargs ->
             let n_lfb,def_hps, rem_hps, ls_link_hps=
-              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps
+              Sautil.find_well_defined_hp (* split_base *) prog lhds lhvs r_hps (List.map (fun dn -> dn.CF.h_formula_data_node) rhds)
                 prog_vars post_hps hpargs (l_def_vs@unk_svl1) lfb true no_pos
             in
             (n_lfb, r_defined_preds@def_hps, r_rems@rem_hps, r_link_hps@(snd (List.split ls_link_hps)))
@@ -366,10 +368,10 @@ let split_constr prog cond_path constrs post_hps prog_vars unk_map unk_hps link_
       in
       (* let defined_preds = List.concat ls_defined_hps in *)
       (* let () = if defined_preds!=[] then step_change # i else () in *)
-      let rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
+      let emp_rf = CF.mkTrue (CF.mkTrueFlow()) no_pos in
       let defined_preds0 = List.fold_left (fun (defined_preds) hpargs ->
           let def_hps, _ = (Sautil.find_well_eq_defined_hp prog lhds lhvs lfb2 leqs hpargs) in
-          (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,rf)) def_hps))
+          (defined_preds@(List.map (fun (a,b,c) -> (a,b,c,emp_rf)) def_hps))
         ) (defined_preds) (rems_hpargs@ls_lhs_non_node_hpargs) in
       let new_cs = {cs with CF.hprel_lhs = CF.add_quantifiers l_qvars (CF.Base lfb2);
                             CF.unk_svl = unk_svl1;
@@ -1985,7 +1987,7 @@ and infer_shapes_core iprog prog proc_name cond_path (constrs0: CF.hprel list) c
 
 and infer_shapes_divide iprog prog proc_name (constrs0: CF.hprel list) callee_hps sel_hps sel_post_hps
     hp_rel_unkmap unk_hpargs0 link_hpargs0 need_preprocess detect_dang:
-  ((CF.cond_path_type * CF.hp_rel_def list *
+  ((cond_path_type * CF.hp_rel_def list *
     (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var list) list * (CP.spec_var * CP.spec_var) list ) list) =
   let process_one_path (cond_path, link_hpargs, constrs1)=
     let constr, hp_defs, unk_hpargs2, link_hpargs2, equivs = infer_shapes_core iprog prog proc_name cond_path constrs1

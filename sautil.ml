@@ -1845,7 +1845,17 @@ let simplify_constrs prog unk_hps constrs=
 (*
 TODO: should remove split_spatial, now it always be true
 *)
-let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos=
+(*
+  split_nemp:
+ -  only true during base_split. do not use during constrainst generating since this step does not capture danling infor properly
+ - for testing --sa-en-sp-split
+*)
+let find_well_defined_hp_x prog hds hvs r_hps r_dptrs prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial ?(split_nemp=false) pos=
+  let gen_rhs_base null_ptrs args=
+    if CP.intersect_svl args null_ptrs = [] then (CF.mkHTrue (CF.mkTrueFlow()) pos)
+    else
+      (CF.mkTrue (CF.mkTrueFlow()) pos)
+  in
   let do_spit fb rhs new_hps=
     let f = keep_data_view_hrel_nodes_fb prog fb hds hvs args [(hp,args)] in
     (*we do NOT want to keep heap in LHS*)
@@ -1872,7 +1882,8 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
       (fb, [(hp,args,f3, rhs)],[], new_hps)
   in
   (* check hp is recursive or post_hp? elim below check for x::node<_,p> * H(p) & p=null ==> H(x) *)
-  (* if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) then (lhsb, [], [(hp,args)], []) else *)
+  (* if (CP.mem_svl hp r_hps || CP.mem_svl hp post_hps) || CP.intersect_svl r_dptrs args != [] then (lhsb, [], [(hp,args)], []) else *)
+    let leqNulls = CP.remove_dups_svl (MCP.get_null_ptrs lhsb.CF.formula_base_pure) in
     let closed_args = CF.look_up_reachable_ptr_args prog hds hvs args in
     let undef_args = lookup_undef_args closed_args [] def_ptrs in
     if undef_args<> [] then
@@ -1885,6 +1896,10 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
         wdef_ni_svl: if not empty, do not split.
         TODO: forward hp defs to post-preds
       *)
+      (* let wdef_ni_svl0 = if !Globals.sa_pure_field then *)
+      (*   List.filter (fun (sv,_) -> (CP.is_node_typ sv)) wdef_ni_svl *)
+      (* else wdef_ni_svl in *)
+      (* if wdef_ni_svl0 <> [] then *)
       if wdef_ni_svl <> [] then
         (lhsb, [],[(hp,args)], [])
       else begin
@@ -1894,13 +1909,13 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
           (*hip or shape infer*)
           if not split_spatial then (lhsb, [],[(hp,args)], []) else
             let n_lhsb, new_ass, wdf_hpargs, ls_rhs=
-              if !Globals.sa_sp_split_base then
+              if !Globals.sa_sp_split_base || (split_nemp && hds<> []) then
                 (*generate new hp decl for pre-preds*)
                 let new_hf, new_hp = x_add (add_raw_hp_rel ~caller:x_loc) prog true true undef_args_inst pos in
                 let nlhsb = CF.mkAnd_fb_hf lhsb new_hf pos in
                 do_spit nlhsb (CF.formula_of_heap new_hf pos) [(new_hf,(new_hp, List.map fst undef_args_inst))]
               else
-                do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+                do_spit lhsb (gen_rhs_base leqNulls closed_args) []
             in
             match new_ass with
             | [(hp1,args1,n_lhsb1, rhs)] -> begin
@@ -1920,18 +1935,18 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
             | [] -> (lhsb, [],[(hp,args)], [])
             | _ -> report_error no_pos "sau.find_well_defined_hp"
         else
-          do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+          do_spit lhsb (gen_rhs_base leqNulls closed_args) []
       end
     else
       (*all args are well defined*)
-      do_spit lhsb (CF.mkTrue (CF.mkTrueFlow()) pos) []
+      do_spit lhsb (gen_rhs_base leqNulls closed_args) []
 
 (*
   split_spatial: during assumption generating,
  do not do split_spatial, we need capture link_hps
 *)
-let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps 
-    (hp,args) def_ptrs lhsb split_spatial pos=
+let find_well_defined_hp prog hds hvs ls_r_hpargs r_dptrs prog_vars post_hps 
+    (hp,args) def_ptrs lhsb split_spatial ?(split_nemp=false) pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
   let pr3 = pr_quad pr1 pr2 Cprinter.string_of_formula_base  Cprinter.prtt_string_of_formula in
@@ -1939,8 +1954,8 @@ let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
   let pr5 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula pr4) in
   Debug.no_4 "find_well_defined_hp" Cprinter.string_of_formula_base pr4 pr2 pr2
     (pr_quad Cprinter.string_of_formula_base (pr_list_ln pr3) (pr_list pr4) pr5)
-    (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs
-        prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial pos)
+    (fun _ _  _ _ -> find_well_defined_hp_x prog hds hvs ls_r_hpargs r_dptrs
+        prog_vars post_hps (hp,args) def_ptrs lhsb split_spatial ~split_nemp:split_nemp pos)
     lhsb (hp,args) def_ptrs prog_vars
 
 (*
@@ -5718,6 +5733,36 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
       (pure_f1, CF.formula_of_disjuncts fs1)
     else (pure_f1, f2)
   in
+  let rec hf_strengthen_conj hn=
+    match hn with
+      | CF.Star hfs -> CF.Star {hfs with CF.h_formula_star_h1 = hf_strengthen_conj hfs.CF.h_formula_star_h1;
+            CF.h_formula_star_h2 = hf_strengthen_conj hfs.CF.h_formula_star_h2;}
+      | CF.ConjStar{h_formula_conjstar_h1 = hf1;
+        h_formula_conjstar_h2 = hf2;
+        h_formula_conjstar_pos = p;
+        } -> CF.ConjStar {h_formula_conjstar_h1 = hf_strengthen_conj hf1;
+        h_formula_conjstar_h2 = hf_strengthen_conj hf2;
+        h_formula_conjstar_pos = p;
+        }
+      | CF.ConjConj {h_formula_conjconj_h1 = hf1;
+        h_formula_conjconj_h2 = hf2;
+        h_formula_conjconj_pos = p;
+        } -> CF.ConjConj {h_formula_conjconj_h1 = hf_strengthen_conj hf1;
+        h_formula_conjconj_h2 = hf_strengthen_conj hf2;
+        h_formula_conjconj_pos = p;
+        }
+      | CF.Conj {h_formula_conj_h1 = hf1;
+        h_formula_conj_h2 = hf2;
+        h_formula_conj_pos = p;
+        } -> begin
+        match hf2 with
+          | HRel (hp,_,_) -> if CP.mem_svl hp unk_hps then
+              hf1
+            else hn
+          | _ -> hn
+        end
+      | _ -> hn
+  in
   let is_unsat f=
     CF.isAnyConstFalse f1 || is_unsat f
   in
@@ -5736,7 +5781,8 @@ let mkConjH_and_norm_x prog hp args unk_hps unk_svl f1 f2 pos=
         | false,true -> try_unfold_view f2 f1
         | true,false -> try_unfold_view f1 f2
       in
-      (CF.mkConj_combine nf1 nf2 CF.Flow_combine pos)
+      let f = (CF.mkConj_combine nf1 nf2 CF.Flow_combine pos) in
+      CF.formula_map hf_strengthen_conj f
     else
       match n_fs with
       | [] -> CF.mkFalse_nf pos

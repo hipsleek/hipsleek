@@ -2,14 +2,32 @@ data cell {
  int val;
 }.
 
+
+//1
 infer[@err_must] x!=null & x'=x & flow __MayError 
   or x=null & x'=x & (x'!=null & res | x'=null & !res) & flow __norm 
  |- res & flow __norm.
 print residue.
 
+
+//2
 infer[@err_must] x!=null & x'=x & flow __MayError 
   or x=null & x'=x & x'=null & !res & flow __norm 
  |- res & flow __norm.
+print residue.
+
+
+//3
+infer[@err_must] x!=null & x'=x & flow __Error 
+  or x=null & x'=x & (x'!=null & res | x'=null & !res) & flow __norm 
+ |- res & flow __norm.
+print residue.
+
+
+//4
+infer[@err_must] x!=null & x'=x & flow __Error 
+  or x=null & x'=x & (x'!=null & res | x'=null & !res) & flow __norm 
+ |- res & flow __norm or !res & flow __norm .
 print residue.
 
 /*
