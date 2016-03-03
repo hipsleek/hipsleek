@@ -13,6 +13,7 @@ pred arr_seg<i,n> == i=n & i>=0
 
 //checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> .
 checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> & i<n .
+//checkentail  y::arrI<_>  |- x::arrI<_> .
 print residue.
 expect Valid.
 

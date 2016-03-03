@@ -864,7 +864,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
                 (* if implicit inst, use weaker same_base instead *)
                 let impl_flag = same_base && is_es_inst_vars rhs_ptr  in
-                if true (* !Globals.adhoc_flag_6 || same_base *)  then
+                let () =  y_binfo_hp (add_str "same_base" string_of_bool) same_base  in
+                if same_base (* !Globals.adhoc_flag_6 || same_base *)  then
                   (* let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in *)
                   let neg_rhs = CP.mkNot_s rhs in
                   let r = not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  in
@@ -872,7 +873,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
                   let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
                   let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-                  let () =  y_tinfo_hp (add_str "same_base" string_of_bool) same_base  in
                   let () =  y_tinfo_hp (add_str "r" string_of_bool) r  in
                   if CF.no_infer_all_all estate || r then (d,(map_r r,None),None)
                   else

@@ -117,7 +117,28 @@ Last Proving Location: ex14b2c-arrseg-fold.slk_6:5_6:54
 
 ERROR: at _0:0_0:0
 Message: ii is undefined (7)
+
+(==typeinfer.ml#614==)
+unify_ptr_arithmetic@12@7@4@2
+unify_ptr_arithmetic inp1 :Unknown
+unify_ptr_arithmetic inp2 :Unknown
+unify_ptr_arithmetic inp3 :TVar[13]
+unify_ptr_arithmetic inp4 :[(ii:15:Unknown)(y:14:Unknown)(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])]
+unify_ptr_arithmetic@12 EXIT:([(ii:15:Unknown)(y:14:Unknown)(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])],Unknown)
+
+(==typeinfer.ml#851==)
+gather_type_info_exp@7@4@2
+gather_type_info_exp inp1 :y+ii
+gather_type_info_exp inp2 :[(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])]
+gather_type_info_exp inp3 :TVar[13]
+gather_type_info_exp@7 EXIT:[(ii:15:Unknown)(y:14:Unknown)(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])], Unknown
+
 =================================================================
+# Non-termination for sleek8.slk
+
+Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
+Checking sleek8.slk (runs with extra options:  --dis-lem-gen )
+
 =================================================================
 =================================================================
 =================================================================
