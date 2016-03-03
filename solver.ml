@@ -7757,100 +7757,106 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                 (* && not !Globals.enable_error_as_exc  *)
                 (* && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2))  *)
                 then (
-                  x_tinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
-                                    ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-                  (* TODO : change to meaningful msg *)
-                  (* what if must failure on the ante -> conseq *)
-                  let f1_exc = (exlist # get_closest fl1.CF.formula_flow_interval) in
-                  let f2_exc = (exlist # get_closest fl2.CF.formula_flow_interval) in
-                  let () = x_tinfo_hp (add_str "fl1_exc" pr_id) f1_exc no_pos in
-                  let () = x_tinfo_hp (add_str "fl2_exc" pr_id) f2_exc no_pos in
-                  if (CF.overlap_flow_ff fl2 fl1) then (
-                    let () = x_tinfo_pp "(overlap_flow):then" no_pos in
-
-                    let is_must,err_msg =
-                      if (CF.subsume_flow_f !error_flow_int fl1) then
-                        false,("1.2a: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
-                      else
-                        (* demo/ex23: Thus flow and error must both be checked if flow is just a may error
-                           to determine if must error is caused by the heap state itself. *)
-                        let is_must, extr_msg =
-                          let n_safe_ctx = Ctx {estate with es_formula = CF.substitute_flow_into_f !norm_flow_int estate.es_formula} in
-                          let n_conseq = CF.substitute_flow_into_f !norm_flow_int conseq in
-                          let lc, _ = heap_entail_conjunct_helper_x prog is_folding n_safe_ctx n_conseq rhs_h_matched_set pos in
-                          let final_error_opt = CF.get_final_error lc in
-                          match final_error_opt with
-                            | Some (s, _, fk) -> begin
-                                match fk with
-                                  | CF.Failure_May _ -> false,s
-                                  | CF.Failure_Must _ -> true,s
-                                  | _ -> false,""
-                              end
-                            | None -> false,""
-                        in
-                        let msg = "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
-                        let ext_msg = if is_must then ("AND[\n" ^ msg ^ ",\n" ^ extr_msg^"\n]") else msg in
-                        is_must, x_add repl_msg_final_error ext_msg estate
-                        (* match (List.rev estate.es_final_error) with *)
-                        (* | (s,_,_)::_ -> s *)
-                        (* | [] -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" *)
-                    in
-                    let () = x_tinfo_pp ("is_must: " ^ (string_of_bool is_must)) no_pos in
-                    if is_must then
-                      let fe = mk_failure_must err_msg undefined_error in
-                      let must_flow_failure =
-                        let must_estate = convert_to_must_es estate in
-                        FailCtx ((Basic_Reason ({fc_message = err_msg;
-                                               fc_current_lhs = must_estate;
-                                               fc_orig_conseq = struc_formula_of_formula conseq pos;
-                                               fc_prior_steps = estate.es_prior_steps;
-                                               fc_current_conseq = CF.formula_of_heap HFalse pos;
-                                               fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (must_estate), mk_cex true) in
-                      (must_flow_failure, UnsatConseq)
-                    else
-                      let fe = mk_failure_may err_msg undefined_error in
-                      let may_flow_failure =
-                        FailCtx ((Basic_Reason ({fc_message = err_msg;
-                                               fc_current_lhs = estate;
-                                               fc_orig_conseq = struc_formula_of_formula conseq pos;
-                                               fc_prior_steps = estate.es_prior_steps;
-                                               fc_current_conseq = CF.formula_of_heap HFalse pos;
-                                               fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (convert_to_may_es estate), mk_cex true) in
-                      (*set conseq with top flow, top flow is the highest flow.*)
-                      (* L2: demo/ex22g13.slk: The 2nd message is unnecessary on flow conflicts *)
-                      (* let new_conseq = CF.substitute_flow_into_f !top_flow_int conseq in *)
-                      (* let res,prf = x_add heap_entail_conjunct 10 prog is_folding ctx0 new_conseq rhs_h_matched_set pos in *)
-                      (* ( and_list_context may_flow_failure res, prf) *)
-                      (may_flow_failure, UnsatConseq)
-                  )
+                  let () = y_ninfo_hp (add_str "estate" !CF.print_entail_state) estate in
+                  if not (is_infer_none_es estate) then
+                    let false_conseq = CF.mkFalse fl1 pos in
+                    heap_entail_conjunct_helper ~caller:(x_loc^":"^caller) 12 prog is_folding ctx0 false_conseq rhs_h_matched_set pos
                   else (
-                    let () = x_tinfo_pp "not(overlap_flow)_ff:else" no_pos in
-                    let err_msg= 
-                      let msg = "1.2c: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
-                      x_add repl_msg_final_error msg estate in
-                    (* match (List.rev estate.es_final_error) with *)
-                    (*   | (s,_,_)::_ -> s *)
-                    (*   | [] -> "1.2c: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in *)
-                    let fe = mk_failure_must err_msg "incompatible types" in
-                    (* if CF.subsume_flow_f !error_flow_int fl1 then *)
-                    (*   (\* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*\) *)
-                    (*   let () = x_tinfo_pp "subsume_flow_ff(!err<:fl1):then" no_pos in *)
-                    (*   let err_name = (f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\)) in *)
-                    (*   let err_msg = "1.1: " ^ err_name in *)
-                    (*   (err_msg, mk_failure_must err_msg err_name) *)
-                    (* else *)
-                    (*   let () = x_tinfo_pp "subsume_flow_ff:else" no_pos in *)
-                    (*   let err_name = "conseq has an incompatible flow type: got "^(f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\))^" expecting error" in *)
-                    (*   let err_msg = "1.1: " ^ err_name in *)
-                    (*   (err_msg, mk_failure_must err_msg undefined_error) in *)
-                    let err_f = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula in
-                    (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
-                                                     fc_current_lhs = if !Globals.temp_opt_flag then
-                                                         { estate with CF.es_formula = err_f} else estate;
-                                                     fc_orig_conseq = struc_formula_of_formula conseq pos;
-                                                     fc_prior_steps = estate.es_prior_steps;
-                                                     fc_current_conseq = CF.formula_of_heap HFalse pos;
-                                                     fc_failure_pts =[];}, fe, estate.es_trace)) ({estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}, err_msg, Failure_Must err_msg) (mk_cex true), UnsatConseq)
+                    x_tinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
+                                      ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+                    (* TODO : change to meaningful msg *)
+                    (* what if must failure on the ante -> conseq *)
+                    let f1_exc = (exlist # get_closest fl1.CF.formula_flow_interval) in
+                    let f2_exc = (exlist # get_closest fl2.CF.formula_flow_interval) in
+                    let () = x_tinfo_hp (add_str "fl1_exc" pr_id) f1_exc no_pos in
+                    let () = x_tinfo_hp (add_str "fl2_exc" pr_id) f2_exc no_pos in
+                    if (CF.overlap_flow_ff fl2 fl1) then (
+                      let () = x_tinfo_pp "(overlap_flow):then" no_pos in
+  
+                      let is_must,err_msg =
+                        if (CF.subsume_flow_f !error_flow_int fl1) then
+                          false,("1.2a: " ^ (f1_exc (* exlist # get_closest fl1.CF.formula_flow_interval *)))
+                        else
+                          (* demo/ex23: Thus flow and error must both be checked if flow is just a may error
+                             to determine if must error is caused by the heap state itself. *)
+                          let is_must, extr_msg =
+                            let n_safe_ctx = Ctx {estate with es_formula = CF.substitute_flow_into_f !norm_flow_int estate.es_formula} in
+                            let n_conseq = CF.substitute_flow_into_f !norm_flow_int conseq in
+                            let lc, _ = heap_entail_conjunct_helper_x prog is_folding n_safe_ctx n_conseq rhs_h_matched_set pos in
+                            let final_error_opt = CF.get_final_error lc in
+                            match final_error_opt with
+                              | Some (s, _, fk) -> begin
+                                  match fk with
+                                    | CF.Failure_May _ -> false,s
+                                    | CF.Failure_Must _ -> true,s
+                                    | _ -> false,""
+                                end
+                              | None -> false,""
+                          in
+                          let msg = "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                          let ext_msg = if is_must then ("AND[\n" ^ msg ^ ",\n" ^ extr_msg^"\n]") else msg in
+                          is_must, x_add repl_msg_final_error ext_msg estate
+                          (* match (List.rev estate.es_final_error) with *)
+                          (* | (s,_,_)::_ -> s *)
+                          (* | [] -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" *)
+                      in
+                      let () = x_tinfo_pp ("is_must: " ^ (string_of_bool is_must)) no_pos in
+                      if is_must then
+                        let fe = mk_failure_must err_msg undefined_error in
+                        let must_flow_failure =
+                          let must_estate = convert_to_must_es estate in
+                          FailCtx ((Basic_Reason ({fc_message = err_msg;
+                                                 fc_current_lhs = must_estate;
+                                                 fc_orig_conseq = struc_formula_of_formula conseq pos;
+                                                 fc_prior_steps = estate.es_prior_steps;
+                                                 fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                                 fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (must_estate), mk_cex true) in
+                        (must_flow_failure, UnsatConseq)
+                      else
+                        let fe = mk_failure_may err_msg undefined_error in
+                        let may_flow_failure =
+                          FailCtx ((Basic_Reason ({fc_message = err_msg;
+                                                 fc_current_lhs = estate;
+                                                 fc_orig_conseq = struc_formula_of_formula conseq pos;
+                                                 fc_prior_steps = estate.es_prior_steps;
+                                                 fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                                 fc_failure_pts =[];}, fe, estate.es_trace)), Ctx (convert_to_may_es estate), mk_cex true) in
+                        (*set conseq with top flow, top flow is the highest flow.*)
+                        (* L2: demo/ex22g13.slk: The 2nd message is unnecessary on flow conflicts *)
+                        (* let new_conseq = CF.substitute_flow_into_f !top_flow_int conseq in *)
+                        (* let res,prf = x_add heap_entail_conjunct 10 prog is_folding ctx0 new_conseq rhs_h_matched_set pos in *)
+                        (* ( and_list_context may_flow_failure res, prf) *)
+                        (may_flow_failure, UnsatConseq)
+                    )
+                    else (
+                      let () = x_tinfo_pp "not(overlap_flow)_ff:else" no_pos in
+                      let err_msg= 
+                        let msg = "1.2c: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in
+                        x_add repl_msg_final_error msg estate in
+                      (* match (List.rev estate.es_final_error) with *)
+                      (*   | (s,_,_)::_ -> s *)
+                      (*   | [] -> "1.2c: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" in *)
+                      let fe = mk_failure_must err_msg "incompatible types" in
+                      (* if CF.subsume_flow_f !error_flow_int fl1 then *)
+                      (*   (\* let () = print_endline ("\ntodo:" ^ (Cprinter.string_of_flow_formula "" fl1)) in*\) *)
+                      (*   let () = x_tinfo_pp "subsume_flow_ff(!err<:fl1):then" no_pos in *)
+                      (*   let err_name = (f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\)) in *)
+                      (*   let err_msg = "1.1: " ^ err_name in *)
+                      (*   (err_msg, mk_failure_must err_msg err_name) *)
+                      (* else *)
+                      (*   let () = x_tinfo_pp "subsume_flow_ff:else" no_pos in *)
+                      (*   let err_name = "conseq has an incompatible flow type: got "^(f1_exc (\* exlist # get_closest fl1.CF.formula_flow_interval *\))^" expecting error" in *)
+                      (*   let err_msg = "1.1: " ^ err_name in *)
+                      (*   (err_msg, mk_failure_must err_msg undefined_error) in *)
+                      let err_f = CF.substitute_flow_into_f !error_flow_int estate.CF.es_formula in
+                      (CF.mkFailCtx_in (Basic_Reason ({fc_message =err_msg;
+                                                       fc_current_lhs = if !Globals.temp_opt_flag then
+                                                           { estate with CF.es_formula = err_f} else estate;
+                                                       fc_orig_conseq = struc_formula_of_formula conseq pos;
+                                                       fc_prior_steps = estate.es_prior_steps;
+                                                       fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                                       fc_failure_pts =[];}, fe, estate.es_trace)) ({estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}, err_msg, Failure_Must err_msg) (mk_cex true), UnsatConseq)
+                    )
                   )
                 )
                 else (

@@ -9982,7 +9982,8 @@ let is_dfa_ctx_list lc=
   | SuccCtx cs -> List.exists is_dfa_ctx cs
 
 let is_infer_none_es es =
-  (es.es_infer_heap==[] && es.es_infer_templ_assume==[] && es.es_infer_pure==[] && es.es_infer_rel # is_empty_recent && es.es_infer_hp_rel # is_empty_recent)
+  (es.es_infer_heap==[] && es.es_infer_templ_assume==[] && es.es_infer_pure==[] && es.es_infer_vars_rel==[] &&
+   es.es_infer_rel # is_empty_recent && es.es_infer_hp_rel # is_empty_recent)
 
 let is_infer_none_ctx c =
   let rec aux c =
