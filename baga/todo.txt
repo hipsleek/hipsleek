@@ -24,6 +24,21 @@ IMPLY Count : 20
 IMPLY % Hit : 35.%
 Time(cache overhead) : 0.018248 (seconds)
 ===========================================================
+# ex3c.slk
+
+--inv-baga
+
+  baga inv: [([], self=null & y=0),([], self!=null & y=1)]
+  baga over inv: [([], self=null & y=0),([], self!=null & y=1)]
+  baga over inv (unfolded): [([], self=null & y=0),([], self!=null & y=1)]
+  baga under inv: [([], self=null & y=0),([], self!=null & y=1)]
+
+
+# why is below precise?
+
+!!! **fixUtil.ml#225:num_inv: (y>=2 | 0>=(1+y) | (y>=0 & 1>=y))
+!!! **fixUtil.ml#227:Predicate Q has precise invariant
+
 ===========================================================
 ===========================================================
 ===========================================================

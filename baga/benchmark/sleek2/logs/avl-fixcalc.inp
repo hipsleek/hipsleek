@@ -1,0 +1,8 @@
+
+avl:={[self,size_54,height_55,idx_56] -> [] -> []:  exists (self: 0=0 && self<=0 && size_54=0 && height_55=0 && idx_56=0) ||  exists (self,height_13,Anon_14,r,l,size1,height1,q,size2,height2,idx_53,idx_52: ((self>0 && avl(l,size1,height1,idx_53)) && avl(q,size2,height2,idx_52)) && size_54=size1+size2+1 && height2<=height1+1 && height1<=height2+1 &&  (exists (max_11:height_55=1+max_11 && ((height1 >= height2 && max_11 = height1) || (height2 > height1 && max_11 = height2))))  && height_13=height_55 && idx_56=idx_53+1)
+};
+avl:={[self,size_54,height_55] -> [] -> []:  exists (self: 0=0 && self<=0 && size_54=0 && height_55=0) ||  
+exists (self,height_13,Anon_14,r,l,size1,height1,q,size2,height2,idx_53,idx_52: ((self>0 && avl(l,size1,height1)) && avl(q,size2,height2)) && size_54=size1+size2+1 && height2<=height1+1 && height1<=height2+1 &&  (exists (max_11:height_55=1+max_11 && ((height1 >= height2 && max_11 = height1) || (height2 > height1 && max_11 = height2))))  && height_13=height_55)
+};
+bottomupgen([avl], [1], SimHeur);
+bottomupgen([avl], [2], SimHeur);
