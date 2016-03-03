@@ -3820,7 +3820,7 @@ and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_
 
 (*this does not have thread id -> None*)
 and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  x_dinfo_zp (lazy ("heap_entail_struc_init:"^ "\nctx:\n" ^ (Cprinter.string_of_list_context cl)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
+  x_binfo_zp (lazy ("heap_entail_struc_init:"^ "\nctx:\n" ^ (Cprinter.string_of_list_context cl)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
   match cl with
   | FailCtx fr -> (cl,Failure)
   | SuccCtx _ ->
@@ -7056,7 +7056,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
               (x_winfo_zp (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_split_lhs_phase for the continuation\n")) pos;
                x_add heap_entail_split_lhs_phases prog is_folding  cont_ctx conseq drop_read_phase pos)
             else
-              (x_winfo_zp (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n")) pos;
+              (x_binfo_zp (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n")) pos;
                x_add heap_entail_conjunct 9 prog is_folding  cont_ctx conseq [] pos)
           in
           (match after_wr_ctx with
@@ -7594,12 +7594,12 @@ and heap_entail_conjunct_helper ?(caller="") i (prog : prog_decl) (is_folding : 
 
 and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
     (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  x_dinfo_zp (lazy ("heap_entail_conjunct_helper:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+  x_binfo_zp (lazy ("heap_entail_conjunct_helper:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
   (* let () = print_endline ("locle cons: " ^ (Cprinter.string_of_formula conseq)) in *)
   match ctx0 with
   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
   | Ctx estate -> 
-    x_tinfo_hp (add_str "ctx0.es_heap bef" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
+    x_binfo_hp (add_str "ctx0.es_heap bef" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
     let ante0 = estate.es_formula in
     (* let () = y_tinfo_pp "==================================================" in *)
     (* let () = y_tinfo_hp (add_str "LHS " Cprinter.string_of_formula) ante0 in *)
@@ -7608,7 +7608,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
     (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
     let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
     (*let ante = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula ante else ante in *)
-    x_tinfo_hp (add_str "heap_entail_conjunct_helper conseq" (Cprinter.string_of_formula)) conseq no_pos;
+    x_binfo_hp (add_str "heap_entail_conjunct_helper conseq" (Cprinter.string_of_formula)) conseq no_pos;
     let conseq = if(!Globals.allow_mem) then Mem.remove_accs_from_formula conseq else conseq in (* Make x::node<_,_>@A to x!= null on RHS *)
     (*let conseq  = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula conseq else conseq in *)
     let ctx0 = Ctx{estate with es_formula = ante;} in
@@ -7757,7 +7757,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                 (* && not !Globals.enable_error_as_exc  *)
                 (* && (h1 = HEmp || not (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) fl2))  *)
                 then (
-                  x_tinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
+                  x_binfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                                     ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
                   (* TODO : change to meaningful msg *)
                   (* what if must failure on the ante -> conseq *)
@@ -7795,7 +7795,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                         (* | (s,_,_)::_ -> s *)
                         (* | [] -> "1.2b: ante flow:"^f1_exc^" conseq flow: "^f2_exc^" are incompatible flow types" *)
                     in
-                    let () = x_tinfo_pp ("is_must: " ^ (string_of_bool is_must)) no_pos in
+                    let () = x_binfo_pp ("is_must: " ^ (string_of_bool is_must)) no_pos in
                     if is_must then
                       let fe = mk_failure_must err_msg undefined_error in
                       let must_flow_failure =

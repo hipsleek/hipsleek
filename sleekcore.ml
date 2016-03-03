@@ -100,28 +100,28 @@ let sleek_entail prog ante_ctx conseq pos=
 
 (* WN : why isn't itype added to estate? *)
 let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:CF.formula) (conseq:CF.struc_formula) =
-  let () = y_tinfo_hp (add_str "is_pure_field" string_of_bool) (check_is_pure_field ()) in
+  let () = y_binfo_hp (add_str "is_pure_field" string_of_bool) (check_is_pure_field ()) in
   let pos2 = CF.pos_of_formula ante in
   let pos3 = CF.pos_of_struc_formula conseq in
   let () = Hgraph.reset_fress_addr () in
   let pr = Cprinter.string_of_struc_formula in
-  let () = Debug.ninfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
+  let () = Debug.binfo_hprint (add_str "ante(before rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let ante = if (!Globals.remove_abs && not((* !Globals.allow_field_ann *) !Globals.imm_merge)) then 
       Cvutil.remove_imm_from_formula cprog ante (CP.ConstAnn(Accs)) else ante in
-  let () = x_tinfo_hp (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
+  let () = x_binfo_hp (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let ante = Norm.imm_abs_norm_formula ante cprog  (Solver.unfold_for_abs_merge cprog no_pos) in
   let conseq = if ((!Globals.remove_abs)  && not((* !Globals.allow_field_ann *) !Globals.imm_merge)) then Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) else conseq in
-  let () = x_tinfo_hp (add_str "conseq(after rem @A)" pr) conseq no_pos in 
+  let () = x_binfo_hp (add_str "conseq(after rem @A)" pr) conseq no_pos in 
   (* Immutable.restore_tmp_ann_formula ante in *)
   (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
   let conseq = Cvutil.prune_pred_struc cprog true conseq in
-  let () = x_tinfo_hp (add_str "conseq(after prune)" pr) conseq no_pos in 
+  let () = x_binfo_hp (add_str "conseq(after prune)" pr) conseq no_pos in 
   (* let () = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
   (* let () = Debug.info_pprint "=============================================================" no_pos in *)
   let conseq = Astsimp.add_param_ann_constraints_struc conseq in
-  let () = x_tinfo_hp (add_str "conseq(after add param)" pr) conseq no_pos in 
+  let () = x_binfo_hp (add_str "conseq(after add param)" pr) conseq no_pos in 
   (* let conseq = Astsimp.add_param_ann_constraints_struc conseq in  *)
-  let () = x_dinfo_zp (lazy ("\nrun_entail_check 2:"
+  let () = x_binfo_zp (lazy ("\nrun_entail_check 2:"
                              ^"\n ### ivars = "^(pr_list !CP.print_sv isvl)
                              ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                              ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
@@ -132,12 +132,12 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
   let ante = x_add Solver.normalize_formula_w_coers 11 cprog es ante lem (* cprog.C.prog_left_coercions *) in
   let inf_str = (pr_list string_of_inf_const itype)^(Cprinter.string_of_spec_var_list isvl) in
   let fvs = CF.struc_fv conseq in
-  let () = x_tinfo_hp (add_str "conseq" (Cprinter.string_of_struc_formula)) conseq no_pos in
-  let () = x_tinfo_hp (add_str "fvs(conseq)" (Cprinter.string_of_spec_var_list)) fvs no_pos in
-  let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
-  let () = x_tinfo_hp (add_str "isvl" (Cprinter.string_of_spec_var_list)) isvl no_pos in
+  let () = x_binfo_hp (add_str "conseq" (Cprinter.string_of_struc_formula)) conseq no_pos in
+  let () = x_binfo_hp (add_str "fvs(conseq)" (Cprinter.string_of_spec_var_list)) fvs no_pos in
+  let () = x_binfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+  let () = x_binfo_hp (add_str "isvl" (Cprinter.string_of_spec_var_list)) isvl no_pos in
   let () = if (!Globals.print_core || !Globals.print_core_all) then print_endline_quiet ("\nINPUT 0: "^inf_str^" \n ### ante = " ^ (Cprinter.string_of_formula ante) ^"\n ### conseq = " ^ (Cprinter.string_of_struc_formula conseq)) else () in
-  let () = x_dinfo_zp (lazy ("\nrun_entail_check 3: after normalization"
+  let () = x_binfo_zp (lazy ("\nrun_entail_check 3: after normalization"
                              ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
                              ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq)
                              ^"\n\n")) no_pos in
@@ -176,15 +176,15 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     else ()
   in
   let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
-  let () = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
-  let () = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
-  let () = Debug.ninfo_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
-  let () = Debug.ninfo_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
+  let () = Debug.binfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
+  let () = Debug.binfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
+  let () = Debug.binfo_hprint (add_str "is_base_conseq" string_of_bool) is_base_conseq no_pos in
+  let () = Debug.binfo_hprint (add_str "isvl" !CP.print_svl) isvl no_pos in
 
   if isvl = [] && !Globals.graph_norm && !Frame.seg_opz  && is_base_conseq &&
      Cast.is_complex_entailment_4graph cprog ante conseq
   then
-    let () = Debug.ninfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
+    let () = Debug.binfo_hprint (add_str "graph optimization" pr_id) "" no_pos in
     let () = Globals.disable_failure_explaining := true in
     let () = Globals.smt_is_must_failure := None in
 
@@ -225,8 +225,8 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
         (* Why is pos of ante 0.0 ? *)
         (* !!! **sleekcore.ml#222:pos of ante: 0:0 *)
         (* !!! **sleekcore.ml#223:pos of conseq: 24:41[Warning] False ctx *)
-        let () = x_dinfo_hp (add_str "pos of ante" Cprinter.string_of_pos) pos2 no_pos in
-        let () = x_dinfo_hp (add_str "pos of conseq" Cprinter.string_of_pos) pos3 no_pos in
+        let () = x_binfo_hp (add_str "pos of ante" Cprinter.string_of_pos) pos2 no_pos in
+        let () = x_binfo_hp (add_str "pos of conseq" Cprinter.string_of_pos) pos3 no_pos in
         let () = add_false_ctx pos3 in
         print_endline_quiet ("[Warning] False ctx")
       else last_sat_ctx # set (Some pos3)
@@ -270,7 +270,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
             else ()
       | None -> () 
     in
-    let () = x_tinfo_pp ("WN# 2:"^(Cprinter.string_of_list_context rs)) no_pos in
+    let () = x_binfo_pp ("WN# 2:"^(Cprinter.string_of_list_context rs)) no_pos in
     (* flush stdout; *)
     let res =
       if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))

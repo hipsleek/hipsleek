@@ -615,21 +615,25 @@ let print_residue residue =
           (* let bool_vs = List.map (fun sv -> check_is_field (CP.name_of_spec_var sv)) curr_vs in *)
           (* let () = x_tinfo_hp (add_str "fields" (pr_list string_of_bool)) bool_vs no_pos in *)
           let f_vs,curr_vs = List.partition (CP.check_is_field_sv) curr_vs in
-          let () = x_dinfo_hp (add_str "fields (elim)" !CP.print_svl) f_vs no_pos in
+          let () = x_tinfo_hp (add_str "fields (elim)" !CP.print_svl) f_vs no_pos in
           let () = print_endline_quiet "" in
           let ls_ctx = 
             if !Globals.simplify_dprint then x_add_1 (Cfout.simplify_list_context ~prog_vs:(Some curr_vs)) ls_ctx 
             else ls_ctx 
           in
           let () = if print then
+              let () = print_string_quiet "branch 1 \n" in
               print_string_quiet ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
             else if dis_lerr_exc then
+              let () = print_string_quiet "branch 2 \n" in
               print_endline (Cprinter.string_of_list_context ls_ctx)
             else
             if not !Globals.enable_error_as_exc && not en_lerr_exc then
+              let () = print_string_quiet "branch 3\n" in
               print_endline (Cprinter.string_of_list_context ls_ctx)
             else
+              let () = print_string_quiet "branch 4\n" in
               print_string ((Cprinter.string_of_numbered_list_formula_trace_inst !cprog
                                (CF.list_formula_trace_of_list_context ls_ctx))^"\n" )
           in
@@ -1241,7 +1245,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let _ = CF.rel_def_stk # reset in
   (* let _ = Iast.set_iprog iprog in *)
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline_quiet ("INPUT 6: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
-  let _ = x_dinfo_pp ("\nrun_entail_check 1:"
+  let _ = x_binfo_pp ("\nrun_entail_check 1:"
                       ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                       ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)
                       ^"\n\n") no_pos in
@@ -1307,7 +1311,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* need to make ivars be global *)
   (* let conseq = if (!Globals.allow_field_ann) then x_add meta_to_struc_formula iconseq0 false fv_idents None stab  *)
   let (n_tl,conseq) = x_add meta_to_struc_formula iconseq0 false fv_idents_new  n_tl in
-  (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
+  let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in 
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = x_add meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq_fvs = CF.struc_fv ~vartype:Global_var.var_with_implicit_explicit conseq in
@@ -1317,7 +1321,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let conseq_all_fvs = CF.struc_all_vars conseq in *)
   (* let conseq_infer_fvs = CF.struc_fv_infer conseq in *)
   let () = x_tinfo_hp (add_str "ante_fvs" !CP.print_svl) fvs no_pos in
-  let () = x_tinfo_hp (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
+  let () = x_binfo_hp (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
   let () = x_tinfo_hp (add_str "conseq_fvs" !CP.print_svl) conseq_fvs no_pos in
   (* let () = x_tinfo_hp (add_str "conseq_infer_fvs" !CP.print_svl) conseq_infer_fvs no_pos in *)
   (* let () = x_tinfo_hp (add_str "conseq_all_fvs" !CP.print_svl) conseq_all_fvs no_pos in *)
@@ -1352,7 +1356,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let ante = Cfutil.transform_bexpr ante1 in
   let conseq = CF.struc_formula_trans_heap_node [] Cfutil.transform_bexpr conseq in
   let pr = Cprinter.string_of_struc_formula in
-  let _ = x_tinfo_hp (add_str "conseq(after meta-)" pr) conseq no_pos in
+  let _ = x_binfo_hp (add_str "conseq(after meta-)" pr) conseq no_pos in
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   (* WN:TODO isn't code below already present elsewhere ? try reuse *)
@@ -1407,7 +1411,7 @@ let run_infer_one_pass_set_states itype (ivars: ident list) (iante0s : meta_form
         ) (r0, [rs0]) rest
     in
     let comb_rs = CF.union_context_left list_rs in
-    (* let _ = print_endline ("comb_rs: "^(Cprinter.string_of_list_context comb_rs)) in *)
+    let _ = print_endline ("\ncomb_rsxxxxxxxxxxxxxx: "^(Cprinter.string_of_list_context comb_rs)) in 
     let _ = CF.residues := Some (comb_rs, r(* , !Globals.disable_failure_explaining, List.mem INF_DE_EXC itype, (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MAY itype) *)) in
     ((r, comb_rs, v0), pr0)
 
@@ -2691,8 +2695,8 @@ let run_entail_check (iante : meta_formula list) (iconseq : meta_formula) (etype
   Debug.no_2 "run_entail_check" (pr_list pr) pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
 let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) lerr_exc:bool =
-  Debug.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
-  Debug.ninfo_hprint (add_str "valid: " string_of_bool) valid no_pos;
+  Debug.binfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
+  Debug.binfo_hprint (add_str "valid: " string_of_bool) valid no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
   let t_valid = not (List.for_all (fun (b,_) -> b) term_res) in
@@ -3034,15 +3038,17 @@ let process_pairwise (f : meta_formula) =
 
 
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
-  let () = x_tinfo_pp "inside process_infer" no_pos in
-  let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
-  let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
+  let () = x_binfo_pp "inside process_infer" no_pos in
+  let () = x_binfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+  let () = x_binfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
   let pn = sleek_proof_counter#inc_and_get in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
   if pnum>0 & pnum!=pn then 
+    let () = x_binfo_pp "if branch" no_pos in
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else 
+    let () = x_binfo_pp "else branch" no_pos in
     let nn = "("^(string_of_int (pn))^") " in
     let is_tnt_flag = List.mem INF_TERM itype in
     let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
