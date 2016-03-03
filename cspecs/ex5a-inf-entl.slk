@@ -9,8 +9,11 @@ print residue.
 //checkentail P2(n) & n=0 |- false.
 //print residue.
 
-infer[P2] P2(n) & n>0 |- n>2.
-print residue.
+//infer[P2] P2(n) & n>0 |- n>2.
+//print residue.
+
+//infer[P2] P2(n) & n>0 |- n<=0.
+//print residue.
 
 //infer[P2] P2(n) & n>=0 & flow __Error |- n=0 & flow __MayError.
 //print residue.

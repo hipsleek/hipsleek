@@ -1834,7 +1834,7 @@ class inf_obj  =
   object (self)
     val mutable arr = []
     method init =
-      if !enable_error_as_exc then self # set INF_ERR_MUST;
+      (* if !enable_error_as_exc then self # set INF_ERR_MUST; *)
       if self # is_field_imm then allow_field_ann:=true;
       if self # get INF_ARR_AS_VAR then array_translate :=true
     method set_init_arr s = 

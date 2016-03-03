@@ -8562,7 +8562,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
     match f with
     | CF.Base fb -> if CF.is_empty_heap fb.CF.formula_base_heap then
         let neg_mf = neg_mcp fb.CF.formula_base_pure in
-        CF.Base {fb with CF.formula_base_pure = neg_mf; }
+        CF.Base { fb with CF.formula_base_pure = neg_mf; }
       else report_error pos "heap_entail_empty_rhs_heap: conseq must have empty heap"
     | CF.Exists _ -> let quans, base_f = CF.split_quantifiers f in
       let neg_f = neg_empty_heap_formula base_f in
@@ -8644,7 +8644,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         else 
           let () = x_tinfo_pp "not HTrue branch?" no_pos in
           estate_orig1,lhs1 in
-      let ctx, proof = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding estate_orig1 lhs1 rhs_p rhs_matched_set pos in
+      let ctx, proof = x_add heap_entail_empty_rhs_heap_one_flow prog conseq is_folding estate_orig1 lhs1 rhs_p rhs_matched_set pos in
       let new_ctx =
         match ctx with
         | FailCtx _ -> ctx
@@ -8669,16 +8669,22 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
 
   (* if must_error, and need to infer *)
   let res = 
-    if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) && not (no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
+    if (CF.is_en_error_exc estate_orig || CF.is_err_must_only_exc estate_orig) 
+       && not (no_infer_pure estate_orig) && not (CF.is_emp_term conseq) then
       (* negation of rhs *)
       let () = x_tinfo_pp "first if-then" no_pos in
       let neg_conseq = neg_empty_heap_formula conseq in
-      let err_conseq = if CF.is_err_must_exc estate_orig || CF.is_err_must_only_exc  estate_orig then
+      let err_conseq = if CF.is_err_must_exc estate_orig || CF.is_err_must_only_exc estate_orig then
           CF.substitute_flow_into_f !error_flow_int neg_conseq
         else neg_conseq
       in
       let neg_rhs_p = neg_mcp rhs_p in
-      let error_lc, error_prf = heap_entail_empty_rhs_heap_one_flow prog err_conseq is_folding  estate_orig lhs neg_rhs_p rhs_matched_set pos in
+      let () = y_binfo_hp (add_str "conseq" !CF.print_formula) conseq in
+      let () = y_binfo_hp (add_str "neg_conseq" !CF.print_formula) neg_conseq in
+      let () = y_binfo_hp (add_str "err_conseq" !CF.print_formula) err_conseq in
+      let () = y_binfo_hp (add_str "neg_rhs_p" !print_mix_formula) neg_rhs_p in
+      let error_lc, error_prf = x_add heap_entail_empty_rhs_heap_one_flow prog err_conseq is_folding estate_orig lhs neg_rhs_p rhs_matched_set pos in
+      let () = y_binfo_hp (add_str "error_lc" Cprinter.string_of_list_context) error_lc in
       (* to add proof for error-infer *)
       if CF.is_err_must_only_exc estate_orig 
       then 
@@ -8686,13 +8692,23 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
         (error_lc, error_prf) 
       else
         let safe_lc, safe_prf = (safe_exc ()) in
+        let () = y_binfo_hp (add_str "safe_lc" Cprinter.string_of_list_context) safe_lc in
         (list_context_union safe_lc error_lc, safe_prf)
     else 
       let () = x_tinfo_pp "first if-else" no_pos in
       (safe_exc ())
-  in res
+  in
+  let () = y_binfo_hp (add_str "res_lc" (fun (lc, _) -> Cprinter.string_of_list_context lc)) res in
+  res
 
-and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool) estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
+  let pr (e,_) = Cprinter.string_of_list_context e in
+  Debug.no_2 "heap_entail_empty_rhs_heap_one_flow" 
+    (add_str "es" Cprinter.string_of_entail_state)
+    (add_str "conseq" Cprinter.string_of_formula) pr
+    (fun _ _ -> heap_entail_empty_rhs_heap_one_flow_x prog conseq is_folding estate_orig lhs rhs_p rhs_matched_set pos) estate_orig conseq
+
+and heap_entail_empty_rhs_heap_one_flow_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
   let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) (prog.Cast.prog_rel_decls # get_stk) in
   (* Changed for merge.ss on 9/3/2013 *)
@@ -9073,7 +9089,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                 match ip1 with
                 | Some p -> 
                   begin
-                    let () = y_tinfo_pp "here.." in
+                    let () = y_binfo_pp "here.." in
                     match relass with
                     | [] -> 
                       let () = y_tinfo_hp (add_str "ip1" !CP.print_formula) p in
@@ -9105,6 +9121,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                     match ip2 with
                     | None -> 
                       begin
+                        let () = y_binfo_pp "here.." in
                         match relass with
                         | [] -> 
                           i_res1,i_res2,i_res3
@@ -9123,6 +9140,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                       end
                     | Some pf ->
                       begin
+                        let () = y_binfo_pp "here.." in
                         match relass with
                         | [] -> 
                           stk_inf_pure # push_list_loc x_loc [pf];
