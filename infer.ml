@@ -1809,7 +1809,7 @@ let infer_pure_m i unk_heaps estate  lhs_heap_xpure1 lhs_xpure lhs_xpure0 lhs_wo
   let pr2 = !print_entail_state(* _short *) in 
   (* let pr2a = !print_entail_state in  *)
   let pr_p = !CP.print_formula in
-  let pr_res_lst = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
+  let pr_res_lst = pr_list (fun (es,r,b) -> pr_pair pr2 (add_str "rel_cat" (pr_list CP.print_lhs_rhs)) (es,r)) in
   (* let pr_len = fun l -> (string_of_int (List.length l)) in *)
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
@@ -1849,6 +1849,15 @@ let infer_pure_top_level_aux estate unk_heaps lhs_heap_xpure1
       | _,_ -> report_error pos "Length of relational assumption list > 1"
     )
   in [res]
+
+let infer_pure_top_level_aux estate unk_heaps lhs_heap_xpure1 
+    ante1 ante0 m_lhs split_conseq pos = 
+  let pr = !print_mix_formula in
+  let pr1 = (pr_option !print_pure_f) in
+  let pr2 = pr_list (fun (a,b,_,d,e,f) -> pr_quad pr1 pr1 (pr_list Cprinter.string_of_entail_state) pr (a,b,d,f)) in
+  Debug.no_2 "infer_pure_top_level_aux" pr pr pr2 
+    (fun _ _ -> infer_pure_top_level_aux estate unk_heaps lhs_heap_xpure1 
+        ante1 ante0 m_lhs split_conseq pos) ante0 split_conseq
 
 let infer_pure_top_level estate unk_heaps lhs_heap_xpure1 
     ante1 ante0 m_lhs split_conseq pos = 

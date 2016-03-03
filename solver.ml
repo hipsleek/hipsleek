@@ -8550,7 +8550,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
   let neg_mcp_x mf=
     let p = MCP.pure_of_mix mf in
     match p with
-    | CP.BForm (pf,lbl) -> MCP.mix_of_pure (CP.BForm (MCP.memo_f_neg1 pf, lbl))
+    | CP.BForm (pf,lbl) -> MCP.mix_of_pure (CP.BForm (MCP.memo_f_neg pf, lbl))
     | _ -> report_error pos "heap_entail_empty_rhs_heap: to handle"
   in
   let neg_mcp mf=
@@ -9041,6 +9041,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                 x_add Infer.infer_pure_top_level estate unk_heaps lhs_heap_xpure1 split_ante1_sym split_ante0_sym (*sym?*) m_lhs split_conseq pos
               in
               let res = res_safe in
+              let () = y_tinfo_hp (add_str "inferred relass in res" (pr_list (fun (_, _, relass, _, _, _) -> pr_list CP.print_lhs_rhs relass))) res in 
               let or_option (o1,o2) = (match o1,o2 with
                   | None,_ -> o2
                   | _,None -> o1
@@ -9067,6 +9068,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                       (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
                     (None,None,[],[],false) res
               in
+              let () = y_binfo_hp (add_str "merged relass" (pr_list CP.print_lhs_rhs)) relass in 
               begin
                 match ip1 with
                 | Some p -> 
@@ -9210,7 +9212,7 @@ type: bool *
       let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
       if not(flag) || !Globals.adhoc_flag_5 then
         let pr = Cprinter.string_of_entail_state_short in
-        let () = x_info_hp (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
+        let () = x_ninfo_hp (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
         let new_estate = stk_estate # top in
         let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
         let new_estate = {new_estate with es_formula = disj_of_list_pure new_ante_fmls pos} in
