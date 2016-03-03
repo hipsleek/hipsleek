@@ -10,7 +10,18 @@ RELASS [P2]: ( n!=0 & P2(n)) -->  true,
 RELASS [P2]: ( P2(n)) -->  n!=0]
 
 Why are there duplicate relational assumptions?
-
+Anser:
+pi.ml #677
+let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
+!!! **pi.ml#678:[RELASS [P2]: ( P2(n) & n=0) -->  false,
+RELASS [P2]: ( P2(n)) -->  n!=0,
+RELASS [P2]: ( n!=0 & P2(n)) -->  true,
+RELASS [P2]: ( n!=0 & P2(n)) -->  true,
+RELASS [P2]: ( P2(n)) -->  n!=0]
+------------------
+gen.ml #720
+get_stk_no_dupl did not remove duplicate for stack properly
+===========================================================
 RELASS [P2]: ( P2(n) & n=0) -->  false,
 RELASS [P2]: ( P2(n)) -->  n!=0,
 RELASS [P2]: ( P2(n)) -->  n!=0
