@@ -561,7 +561,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let is_ana_ni = List.exists (fun x -> x==Globals.INF_ANA_NI) inf_o_lst in
       let wrap_ana_ni f x = 
         if is_ana_ni then  Wrapper.wrap_ana_ni (Some true) f x else f x in
-      let () = y_binfo_hp (add_str "inf_o_lst" (pr_list string_of_inf_const)) inf_o_lst in
+      let () = y_tinfo_hp (add_str "inf_o_lst" (pr_list string_of_inf_const)) inf_o_lst in
       let postf = b.CF.formula_inf_post in
       let postxf = b.CF.formula_inf_xpost in
       let old_vars = if do_infer then b.CF.formula_inf_vars else [] in
@@ -827,7 +827,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               (*Clear es_pure before check_post*)
               let res_ctx =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) res_ctx in
               let res_ctx = CF.list_failesc_to_partial res_ctx post_cond in
-              let () = y_binfo_hp (add_str "res_ctx" Cprinter.string_of_list_partial_context) res_ctx in 
+              let () = y_tinfo_hp (add_str "res_ctx" Cprinter.string_of_list_partial_context) res_ctx in 
               (* let () = Gen.Profiling.pop_time "typechecker : check_exp" in *)
               (* let () = print_string_quiet ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
               let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
@@ -3646,7 +3646,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;
-          let () = x_binfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
+          let () = x_tinfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
           let pr_flag = not(!phase_infer_ind) in
           if !Globals.print_proc && pr_flag && (not !Globals.web_compile_flag) then 
             print_string_quiet ("Procedure " ^ proc.proc_name ^ ":\n" ^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");

@@ -372,10 +372,10 @@ let check_defn pre_rel pre rel_dfn =
   List.for_all (fun (lhs,rhs) ->
       let lhs = subst_fml pre_rel pre lhs in
       (* let lhs = subst_fml pre_rel rhs0 pre in *)
-      let () = Debug.info_hprint (add_str "lhs" !CP.print_formula) lhs no_pos in
+      let () = x_tinfo_hp (add_str "lhs" !CP.print_formula) lhs no_pos in
       let rhs = subst_fml pre_rel pre rhs in
       (* let rhs = subst_fml pre_rel rhs0 lhs0 in *)
-      let () = Debug.info_hprint (add_str "rhs" !CP.print_formula) rhs no_pos in
+      let () = x_tinfo_hp (add_str "rhs" !CP.print_formula) rhs no_pos in
       TP.imply_raw lhs rhs
     ) rel_dfn
 

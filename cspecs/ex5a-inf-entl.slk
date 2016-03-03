@@ -6,8 +6,8 @@ print residue.
 //checkentail P2(n) & n=0 |- n+5>=0 & flow __Error.
 //print residue.
 
-//checkentail P2(n) & n=0 |- false.
-//print residue.
+infer[P2] P2(n) & n=0 & flow __Error |- false & flow __Error.
+print residue.
 
 //infer[P2] P2(n) & n>0 |- n>2.
 //print residue.

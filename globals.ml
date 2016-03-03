@@ -2023,7 +2023,7 @@ class inf_obj  =
 
 let infer_const_obj = new inf_obj;;
 
-let global_efa_exc ()  = not(infer_const_obj # is_dis_err)
+let global_efa_exc ()  = not (infer_const_obj # is_dis_err) || !enable_error_as_exc
 
 let is_en_efa_exc ()=
   infer_const_obj # is_err_must || infer_const_obj # is_err_may

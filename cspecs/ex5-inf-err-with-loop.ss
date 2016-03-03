@@ -14,8 +14,8 @@ void foo (int n)
 */
   infer [P2]
   requires P2(n)
-  //ensures n+5>=0 & flow __Error;
-  ensures true & flow __Error;
+  ensures n+5>=0 & flow __Error;
+  //ensures true & flow __Error;
 {
   if (n == 0) return;
   else if (n == -5) error();
