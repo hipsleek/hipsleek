@@ -10,7 +10,11 @@ RELASS [P2]: ( n!=0 & P2(n)) -->  true,
 RELASS [P2]: ( P2(n)) -->  n!=0]
 
 Why are there duplicate relational assumptions?
-
+Answer:
+Fault: (==) cannot to be used to remove duplicate:
+Solution: 
+let infer_rel_eq (rel_cat1,lhs1,rhs1) (rel_cat2,lhs2,rhs2) = (rel_cat1 == rel_cat2) && (CP.equalFormula lhs1 lhs2) && (CP.equalFormula rhs1 rhs2)
+===========================================================
 RELASS [P2]: ( P2(n) & n=0) -->  false,
 RELASS [P2]: ( P2(n)) -->  n!=0,
 RELASS [P2]: ( P2(n)) -->  n!=0
@@ -21,6 +25,13 @@ RELASS [P2]: ( n!=0 & P2(n)) -->  true,
 Why are trivial relational assumptions collected?
 RELASS [P2]: ( n!=0 & P2(n)) -->  true
 ========================================================================
+# ex5-inf-err-with-loop.ss
+
+Segmentation fault (core dumped)
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("tl")Occurred!
+
 ========================================================================
 ========================================================================
 ========================================================================

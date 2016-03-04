@@ -496,11 +496,12 @@ let filter_infer_pure_scc scc =
 
 let is_post_rel fml pvars =
   if pvars==[] then false else 
-    let () = Debug.ninfo_hprint (add_str "fml" Cprinter.string_of_pure_formula) fml no_pos in
+    let () = Debug.dinfo_hprint (add_str "fml" Cprinter.string_of_pure_formula) fml no_pos in
     let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
-    let () = Debug.ninfo_hprint (add_str "rhs_rel_defn" (pr_list Cprinter.string_of_typed_spec_var)) rhs_rel_defn no_pos in
-    let () = Debug.ninfo_hprint (add_str "pvars" (pr_list Cprinter.string_of_typed_spec_var)) pvars no_pos in
-    List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
+    let () = Debug.dinfo_hprint (add_str "rhs_rel_defn" (pr_list Cprinter.string_of_typed_spec_var)) rhs_rel_defn no_pos in
+    let () = Debug.dinfo_hprint (add_str "pvars" (pr_list Cprinter.string_of_typed_spec_var)) pvars no_pos in
+    if rhs_rel_defn == [] then false else
+      List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
 
 let is_infer_flow reldefns =
   List.exists (fun (cat,_,_) ->
@@ -675,7 +676,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[(* x_add_1 CF.simplify_ann *) (proc.proc_stk_of_static_specs # top)]) [] scc in
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
- (* let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in *)
+  let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in 
+  (* let rels_orig = List.filter (fun (_,_,rhs) -> not(CP.equalFormula rhs (CP.mkTrue no_pos)) ) rels_orig in *)
+  let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in 
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
 
@@ -684,7 +687,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
   let pr = Cprinter.string_of_pure_formula in
   let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-  let () = x_binfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
+  let () = x_dinfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
   (* =============== END imm rel norm ================== *)
   (* let lst_assume = Gen.Basic.remove_dups lst_assume in *)
   (* let rels = Immutable.norm_rel_list rels in *)
@@ -753,12 +756,17 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 with _ -> ()
               else ()
             in
+            let post_vars = List.filter (CP.is_rel_var) post_vars in
             let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let reldefns = if post_vars == [] then rels else reldefns in
+            (* let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in           *)
+            (* let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reldefns)) no_pos in       *)
+            (* let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reloblgs_init)) no_pos in  *)
+            (* let () = x_dinfo_hp (add_str "post_rel_ids" CP.string_of_spec_var_list) post_vars no_pos in             *)
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
             let reloblgs = x_add_1 Immutable.norm_rel_oblgs reloblgs_init in
-            if rels !=[] then
+            if rels != [] then
               begin
                 print_endline_quiet "\n*****************************************";
                 print_endline_quiet   "** relation obligations after imm norm **";
@@ -768,6 +776,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               end;
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
+            let () = Debug.dinfo_hprint (add_str "rel_dfs: " (pr_list (pr_pair pr pr))) reldefns no_pos in
+            let () = Debug.dinfo_hprint (add_str "post_rel_df: " (pr_list (pr_pair pr pr))) post_rel_df no_pos in
+            let () = Debug.dinfo_hprint (add_str "pre_rel_df: " (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
             (* let pre_rel_df = List.map (fun (x,y) -> (Immutable.postprocess_pre x,y)) pre_rel_df*)
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
                                                     && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
@@ -842,9 +853,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (* ) bottom_up_fp0 in *)
             let bottom_up_fp = bottom_up_fp0 in
             (* let () = x_binfo_hp (add_str "bottom_up_fp(after gist)" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in *)
-            (* let () = DD.binfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
-(*            let () = x_binfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in *)
-            (* let () = x_binfo_hp (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in *)
+            let () = DD.tinfo_hprint (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in 
+            let () = x_tinfo_hp (add_str "pre_rel_fmls" (pr_list pr)) pre_rel_fmls no_pos in 
+            let () = x_tinfo_hp (add_str "pre_fmls" (pr_list pr)) pre_fmls no_pos in 
+            let () = Debug.dinfo_hprint (add_str "pre_rel_df: " (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
             let is_post_inf = not (is_empty bottom_up_fp) in
             let fp_func = if not is_post_inf then Fixcalc.compute_gfp else Fixcalc.compute_fixpoint_td in
             let res = wrap (x_add Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs

@@ -4901,4 +4901,3 @@ let add_infer_hp_contr_to_list_context h_arg_map cp (l:list_context) conseq : li
   let pr3 = !print_list_context in
   Debug.no_4 "add_infer_hp_contr_to_list_context" pr1 pr2 pr3 !CP.print_formula (pr_option pr3)
     (fun _ _ _ _ -> add_infer_hp_contr_to_list_context h_arg_map cp l conseq) h_arg_map cp l conseq
-

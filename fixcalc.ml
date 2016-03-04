@@ -1952,7 +1952,7 @@ let compute_gfp_aux rel_defs ante_vars=
   res
 
 let compute_gfp (i:int) input_pairs_num ante_vars specs=
-  let () = x_ninfo_pp ("input_pairs_num: " ^ (pr_list
+  let () = x_dinfo_pp ("input_pairs_num: " ^ (pr_list
                                                 (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos in
   let input_pairs_num = List.map (fun lhs_conj ->
       let (lhs,rhs) = lhs_conj in
