@@ -4037,6 +4037,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let () = Debug.ninfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
     let result, prf = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
     let inf_rels = Infer.norm_rel_disj result in
+    let inf_rels = List.filter (fun (_,_,rhs) -> not(CP.equalFormula rhs (CP.mkTrue no_pos))) inf_rels in
     if inf_rels != [] then
       begin
         Infer.infer_rel_stk # push_list inf_rels;

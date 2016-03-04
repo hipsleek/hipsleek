@@ -676,6 +676,8 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
   let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in 
+  let rels_orig = List.filter (fun (_,_,rhs) -> not(CP.equalFormula rhs (CP.mkTrue no_pos)) ) rels_orig in
+  let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in 
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
 
