@@ -33,6 +33,31 @@ Segmentation fault (core dumped)
 ExceptionFailure("tl")Occurred!
 
 ========================================================================
+# ex6-inf-err-with-loop.ss
+
+!!! **pi.ml#894:>>REL POST :  true
+!!! **pi.ml#895:>>POST:  true
+!!! **pi.ml#896:>>REL PRE :  P2(n)
+!!! **pi.ml#897:>>PRE :  0>=(1+n)
+!!! proc_specs:
+[ EInfer [P2]
+   EBase 
+     emp&P2(n) & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       emp&0<=n&{FLOW,(6,10)=__Error#E}[]
+       struct:EBase 
+                emp&0<=n&{FLOW,(6,10)=__Error#E}[]]
+Pre/Post Inference result:
+foo$int
+ EInfer [P2]
+   EBase 
+     emp&n!=0 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         ^^^^ Why n!=0 is substituted in the result spec?
+     EAssume 
+       emp&{FLOW,(6,10)=__Error#E}[]
+       ^^^ Why the given postcondition n>=0 disappears?
+       struct:EBase 
+                emp&{FLOW,(6,10)=__Error#E}[]
 ========================================================================
 ========================================================================
 ========================================================================

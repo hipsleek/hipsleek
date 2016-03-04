@@ -500,7 +500,7 @@ let is_post_rel fml pvars =
     let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
     let () = Debug.dinfo_hprint (add_str "rhs_rel_defn" (pr_list Cprinter.string_of_typed_spec_var)) rhs_rel_defn no_pos in
     let () = Debug.dinfo_hprint (add_str "pvars" (pr_list Cprinter.string_of_typed_spec_var)) pvars no_pos in
-    if rhs_rel_defn== [] then false else
+    if rhs_rel_defn == [] then false else
       List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
 
 let is_infer_flow reldefns =
@@ -677,7 +677,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
   let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in 
-  let rels_orig = List.filter (fun (_,_,rhs) -> not(CP.equalFormula rhs (CP.mkTrue no_pos)) ) rels_orig in
+  (* let rels_orig = List.filter (fun (_,_,rhs) -> not(CP.equalFormula rhs (CP.mkTrue no_pos)) ) rels_orig in *)
   let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in 
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
@@ -759,14 +759,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let post_vars = List.filter (CP.is_rel_var) post_vars in
             let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let reldefns = if post_vars == [] then rels else reldefns in
-       (*     let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in 
-            let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reldefns)) no_pos in 
-            let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reloblgs_init)) no_pos in 
-            let () = x_dinfo_hp (add_str "post_rel_ids" CP.string_of_spec_var_list) post_vars no_pos in *)
+            (* let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in           *)
+            (* let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reldefns)) no_pos in       *)
+            (* let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reloblgs_init)) no_pos in  *)
+            (* let () = x_dinfo_hp (add_str "post_rel_ids" CP.string_of_spec_var_list) post_vars no_pos in             *)
             let is_infer_flow = is_infer_flow reldefns in
             let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
             let reloblgs = x_add_1 Immutable.norm_rel_oblgs reloblgs_init in
-            if rels !=[] then
+            if rels != [] then
               begin
                 print_endline_quiet "\n*****************************************";
                 print_endline_quiet   "** relation obligations after imm norm **";
