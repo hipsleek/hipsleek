@@ -15,19 +15,38 @@ pred arr_seg<i,n> == i=n & i>=0
 //checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> & i<n .
 //checkentail  y::arrI<_> & y=x |- [i] x1::arrI<_> & x1=y+i .
 
-checkentail  y::arrI<_>  |- [i] x1::arrI<_> & x1=y+i .
 
-print residue.
-expect Valid.
 
 infer [i] y!=null & x1=i+y |- y=x1.
 print residue.
+expect Valid.
 
 checkentail  x=y  |- [i] x=y+i .
 print residue.
 
+
+checkentail  y::arrI<_>  |- [i] x1::arrI<_> & x1=y+i .
+expect Valid.
+
+checkentail  y::arrI<_>  |- x1::arrI<_> & x1=y+i .
+print residue.
+expect Fail.
+
+checkentail  y::arrI<_>  |- (exists i: x1::arrI<_> & x1=y+i).
+print residue.
+expect Valid. // without inst on i
+
+
+checkentail  y::arrI<_>  |- x1::arrI<_>.
+print residue.
+expect Fail.
+
+checkentail  y::arrI<_>  |- x1::arrI<_> & y=x1+2.
+print residue.
+expect Fail.
+
 /*
-# ex14b2c.slk -dre "process_m\|choose_c\|enhance_pa" --trace-log-num 2 
+ # ex14b2c.slk -dre "process_m\|choose_c\|enhance_pa" --trace-log-num 2 
 
 # why not inst i=0 to allow match to succeed?
 

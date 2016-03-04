@@ -833,7 +833,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 else (d,(map_r r,None),None)
               | Some ((v2,pf)) ->
                 let rhs_eq = CP.mkEqVars d rhs_ptr in
-                let () =  y_binfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
+                let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
                 (* same base, but same start? *)
                 (* add the possible RHS inst *)
                 (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
@@ -864,11 +864,16 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
                 (* if implicit inst, use weaker same_base instead *)
                 let impl_flag = same_base && is_es_inst_vars rhs_ptr  in
-                let () =  y_binfo_hp (add_str "same_base" string_of_bool) same_base  in
-                if same_base (* !Globals.adhoc_flag_6 || same_base *)  then
+                let () =  y_tinfo_hp (add_str "same_base" string_of_bool) same_base  in
+                if true (* same_base *) (* !Globals.adhoc_flag_6 || same_base *)  then
                   (* let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in *)
-                  let neg_rhs = CP.mkNot_s rhs in
-                  let r = not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  in
+                  let r =
+                    if same_base then
+                      let neg_rhs = CP.mkNot_s rhs in
+                      not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  
+                    else 
+                      (!CP.tp_imply lhs_w_rhs_inst rhs)  
+                  in
                   (* let r = !CP.tp_imply lhs_w_rhs_inst rhs  in *)
                   let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
                   let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
@@ -1914,7 +1919,7 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
     with _ -> None 
   in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
-      (* let () = x_binfo_hp (pr_option !CP.print_formula) (find_reason lhs_node) no_pos *)
+      (* let () = x_tinfo_hp (pr_option !CP.print_formula) (find_reason lhs_node) no_pos *)
       (* in *)
       x_add (mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node)
         ~imprecise:(is_imprecise lhs_node)
