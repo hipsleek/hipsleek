@@ -36,7 +36,7 @@ void foo (int n)
   */
 {
   if (n == 0) return;
-  //else if (n == -5) error();
+  else if (n == -5) error();
   else foo(n - 1); 
 }
 
