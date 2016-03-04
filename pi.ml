@@ -675,6 +675,27 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let proc_specs = List.fold_left (fun acc proc -> acc@[(* x_add_1 CF.simplify_ann *) (proc.proc_stk_of_static_specs # top)]) [] scc in
   (* let _ = print_endline_quiet ("proc_specs: " ^ (pr_list Cprinter.string_of_struc_formula proc_specs)) in *)
   let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
+  let first = List.hd rels_orig in
+  let second = List.hd (List.tl rels_orig) in
+  let third = List.hd (List.tl (List.tl rels_orig)) in
+  let () = x_binfo_pp (CP.string_of_infer_rel second) no_pos in 
+  let () = x_binfo_pp (CP.string_of_infer_rel third) no_pos in 
+  let bool1 = (second == third) in
+  let bool2 = (CP.string_of_infer_rel second) == (CP.string_of_infer_rel third) in
+  let () = x_binfo_pp (string_of_bool bool1) no_pos in
+  let () = x_binfo_pp (string_of_bool bool2) no_pos in
+  let (rel_cat1,lhs1,rhs1) = second in
+  let (rel_cat2,lhs2,rhs2) = third in
+  let () = x_binfo_pp (CP.print_rel_cat rel_cat1) no_pos in
+  let () = x_binfo_pp (CP.print_rel_cat rel_cat2) no_pos in
+  let bool3 = rel_cat1 == rel_cat2 in
+  let bool4 = lhs1 == lhs2 in
+  let bool5 = rhs1 == rhs2 in
+  let () = x_binfo_pp (string_of_bool bool3) no_pos in
+  let () = x_binfo_pp (string_of_bool bool4) no_pos in
+  let () = x_binfo_pp (string_of_bool bool5) no_pos in
+  let bool6 = CP.equalFormula lhs1 lhs2 in
+  let () = x_binfo_pp (string_of_bool bool6)  no_pos in
   let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels_orig)) no_pos in 
   let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels_orig) in
   let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in

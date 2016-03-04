@@ -4610,7 +4610,7 @@ let rec check_prog iprog (prog : prog_decl) =
       if (has_infer_shape_proc && (has_infer_pre_proc || has_infer_post_proc)) 
       then wrap_reverify_scc (x_add reverify_scc) prog scc true in
     let () = if (has_infer_pre_proc || has_infer_post_proc) then Pi.infer_pure prog scc in
-    let () = x_tinfo_hp (add_str "stk_of_static_specs (pure)" 
+    let () = x_binfo_hp (add_str "stk_of_static_specs (pure)" 
         (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) 
         scc no_pos in
     (* let () = List.iter (fun proc -> *)

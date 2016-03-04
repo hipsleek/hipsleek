@@ -62,8 +62,9 @@ let simp_lhs_rhs vars (c,lhs,rhs) =
 let pr = !CP.print_formula
 let pr_ty = !CP.Label_Pure.ref_string_of_exp
 (* let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr "fixcalc_rel-stk" (pr_quad pr pr pr pr) (==) *)
+let infer_rel_eq (rel_cat1,lhs1,rhs1) (rel_cat2,lhs2,rhs2) = (rel_cat1 == rel_cat2) && (CP.equalFormula lhs1 lhs2) && (CP.equalFormula rhs1 rhs2)
 
-let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr "infer_rel_stk" CP.string_of_infer_rel (==)
+let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr "infer_rel_stk" CP.string_of_infer_rel infer_rel_eq
 
 let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr "rel_ass_stk"
   Cprinter.string_of_hprel_short (==)
