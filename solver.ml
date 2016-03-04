@@ -7759,10 +7759,11 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                 then (
                   let () = y_ninfo_hp (add_str "estate" !CF.print_entail_state) estate in
                   if not (is_infer_none_es estate) then
-                    (* Inferring the condition so that the incompatible LHS flow is unreachable *)
+                    (* PreInfer: Inferring the condition so that the incompatible LHS flow is unreachable *)
                     let false_conseq = CF.mkFalse fl2 pos in
                     let fl2_ctx = CF.set_flow_in_context_override fl2 ctx0 in
-                    heap_entail_conjunct_helper ~caller:(x_loc^":"^caller) 12 prog is_folding fl2_ctx false_conseq rhs_h_matched_set pos
+                    wrap_proving_kind PK_Infer_Unreach_Flow 
+                      (x_add (heap_entail_conjunct_helper ~caller:(x_loc^":"^caller) 12) prog is_folding fl2_ctx false_conseq rhs_h_matched_set) pos
                   else (
                     x_tinfo_zp (lazy ("heap_entail_conjunct_helper: conseq has an incompatible flow type\ncontext:\n"
                                       ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;

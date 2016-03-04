@@ -36,6 +36,7 @@ type proving_kind =
   | PK_Assert
   | PK_Assert_Assume
   | PK_Infer_Assume
+  | PK_Infer_Unreach_Flow
   | PK_BIND
   | PK_PRE
   | PK_PRE_REC
@@ -67,6 +68,7 @@ let string_of_proving_kind pk =
   | PK_Assert -> "Assert"
   | PK_Assert_Assume -> "Assert/Assume"
   | PK_Infer_Assume -> "Infer_Assume"
+  | PK_Infer_Unreach_Flow -> "PK_Infer_Unreach_Flow"
   | PK_BIND -> "BIND"
   | PK_PRE -> "PRE"
   | PK_PRE_REC -> "PRE_REC"

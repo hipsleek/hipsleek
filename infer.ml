@@ -2204,8 +2204,8 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
     let rel_rhs = List.concat rel_rhs_ls in
     let other_rhs = List.concat other_rhs_ls in
     let pr = Cprinter.string_of_pure_formula_list in
-  x_ninfo_hp (add_str "rel_rhs" pr) rel_rhs pos;
-  x_ninfo_hp (add_str "other_rhs" pr) other_rhs pos;
+    x_ninfo_hp (add_str "rel_rhs" pr) rel_rhs pos;
+    x_ninfo_hp (add_str "other_rhs" pr) other_rhs pos;
     if rel_rhs==[] then (
       x_tinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
       x_tinfo_pp "no relation in rhs" pos;
@@ -2213,46 +2213,48 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
       (* let _ = print_endline("output 3 rhs_mix_new "^(Cprinter.string_of_mix_formula rhs_mix)) in *)
       (* let _ = print_endline("output  3 lhs_mix "^(Cprinter.string_of_mix_formula lhs_mix)) in *)
 
-    (* \pure_l /\ rel(v) |- emp & true *)
-    (* filter (\pure_l, v) ==> rel(v) *)
-    let pk = try if proving_kind # is_empty then PK_Unknown else proving_kind#top with _ -> PK_Unknown in
-    if CP.isTrivTerm rhs_p || pk != PK_POST then  (estate,lhs_mix,rhs_mix,None,[])
-    else
-      let _ = DD.ninfo_hprint (add_str "todo" pr_id) "add constraint" pos in
-      let lhs_p0 = MCP.pure_of_mix lhs_mix in
-      let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p0 in
-      let _,rel_lhs = List.split subs in
-      let rel_lhs_n, rel_args = List.fold_left (fun (r1,r2) rel ->
-          let rel_args = CP.get_list_rel_args rel in
-          List.fold_left (fun (l_r1,l_r2) (rel, args) -> l_r1@[rel], l_r2@args) (r1,r2) rel_args
-      ) ([],[]) rel_lhs
-      in
-      let rel_cat =  (CP.RelAssume rel_lhs_n) in
-      let leqs = (MCP.ptr_equations_without_null lhs_mix) in
-      let lhs_p = CP.filter_var lhs_p0 rel_args in
-      let may_drop_svl = CP.diff_svl (CP.fv lhs_p) rel_args in
-      let () = Debug.ninfo_hprint (add_str "rel_args" Cprinter.string_of_spec_var_list) rel_args no_pos in
-      let filter_lhs_p = Cputil.sel_subst lhs_p leqs may_drop_svl in
-      let ex_vars = CP.diff_svl (CP.fv filter_lhs_p) rel_args in
-      let lhs_p_better = x_add_1 TP.simplify_raw
-        (CP.mkExists ex_vars filter_lhs_p None pos) in
-      let _ = DD.ninfo_hprint (add_str "lhs_p_better" !CP.print_formula) lhs_p_better pos in
-      let l1 = (rel_cat, CP.remove_redundant lhs_p_better,rhs_p) in
-      (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
-      let inf_rel_ls = [l1] in
-      (* infer_rel_stk # push_list inf_rel_ls; *)
-      (* Log.current_infer_rel_stk # push_list inf_rel_ls; *)
-      let () = estate.es_infer_rel # push_list inf_rel_ls in
-      if inf_rel_ls != [] then
-        begin
-          x_dinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
-          x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos;
-          x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
-          x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
-          x_dinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
-          x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
-        end;
-      (estate,lhs_mix,rhs_mix,None,[])
+      (* \pure_l /\ rel(v) |- emp & true *)
+      (* filter (\pure_l, v) ==> rel(v) *)
+      let pk = try if proving_kind # is_empty then PK_Unknown else proving_kind#top with _ -> PK_Unknown in
+      let () = y_tinfo_hp (add_str "pk" string_of_proving_kind) pk in
+      let () = y_tinfo_hp (add_str "rhs_p" !CP.print_formula) rhs_p in
+      if CP.is_True rhs_p || CP.isTrivTerm rhs_p || pk != PK_POST then (estate,lhs_mix,rhs_mix,None,[])
+      else
+        let _ = DD.ninfo_hprint (add_str "todo" pr_id) "add constraint" pos in
+        let lhs_p0 = MCP.pure_of_mix lhs_mix in
+        let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p0 in
+        let _,rel_lhs = List.split subs in
+        let rel_lhs_n, rel_args = List.fold_left (fun (r1,r2) rel ->
+            let rel_args = CP.get_list_rel_args rel in
+            List.fold_left (fun (l_r1,l_r2) (rel, args) -> l_r1@[rel], l_r2@args) (r1,r2) rel_args
+        ) ([],[]) rel_lhs
+        in
+        let rel_cat =  (CP.RelAssume rel_lhs_n) in
+        let leqs = (MCP.ptr_equations_without_null lhs_mix) in
+        let lhs_p = CP.filter_var lhs_p0 rel_args in
+        let may_drop_svl = CP.diff_svl (CP.fv lhs_p) rel_args in
+        let () = Debug.ninfo_hprint (add_str "rel_args" Cprinter.string_of_spec_var_list) rel_args no_pos in
+        let filter_lhs_p = Cputil.sel_subst lhs_p leqs may_drop_svl in
+        let ex_vars = CP.diff_svl (CP.fv filter_lhs_p) rel_args in
+        let lhs_p_better = x_add_1 TP.simplify_raw
+          (CP.mkExists ex_vars filter_lhs_p None pos) in
+        let () = DD.ninfo_hprint (add_str "lhs_p_better" !CP.print_formula) lhs_p_better pos in
+        let l1 = (rel_cat, CP.remove_redundant lhs_p_better,rhs_p) in
+        (* DD.info_hprint (add_str "todo: Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
+        let inf_rel_ls = [l1] in
+        (* infer_rel_stk # push_list inf_rel_ls; *)
+        (* Log.current_infer_rel_stk # push_list inf_rel_ls; *)
+        let () = estate.es_infer_rel # push_list inf_rel_ls in
+        if inf_rel_ls != [] then
+          begin
+            x_dinfo_pp ">>>>>> infer_collect_rel <<<<<<" pos;
+            x_tinfo_hp (add_str "Infer Rel Ids" !print_svl) ivs pos;
+            x_tinfo_hp (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+            x_tinfo_hp (add_str "RHS pure" !CP.print_formula) rhs_p pos;
+            x_tinfo_hp (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+            x_tinfo_hp (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
+          end;
+        (estate,lhs_mix,rhs_mix,None,[])
     )
     else
       (* let rhs_p_new = CP.disj_of_list  *)
