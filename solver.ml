@@ -3855,7 +3855,7 @@ and wrap_collect_rel_lpc f a =
     let inf_lst = CF.collect_infer_rel_list_partial_context lc in
     let () = Infer.infer_rel_stk # push_list inf_lst in
     let () =  if inf_lst!=[] then if inf_lst!=[] then x_tinfo_hp (add_str "collect_rel (HIP)" (pr_list CP.print_lhs_rhs)) inf_lst no_pos in
-    let () = x_binfo_hp (add_str "XXXX lpc" Cprinter.string_of_list_partial_context_short) lc no_pos in
+    let () = x_tinfo_hp (add_str "XXXX lpc" Cprinter.string_of_list_partial_context_short) lc no_pos in
     ans
 
 and wrap_collect_rel_lfc f a =
@@ -3890,7 +3890,7 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
   | FailCtx _ -> (cl,Failure)
   | SuccCtx cl ->
     (* Do compaction for field annotations *)
-    let () = print_string("\ncl:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in 
+   (* let () = print_string("\ncl:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
     let conseq = Norm.imm_norm_struc prog conseq true unfold_for_abs_merge  pos in
     let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
     let cl = List.map (fun c -> CF.transform_context (fun es ->
@@ -4041,7 +4041,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
       begin
         Infer.infer_rel_stk # push_list inf_rels;
         Log.current_infer_rel_stk # push_list inf_rels;
-        x_binfo_pp ">>>>>> norm disj rels <<<<<<" pos;
+        x_dinfo_pp ">>>>>> norm disj rels <<<<<<" pos;
         x_binfo_hp (add_str "Rel Inferred:" (pr_list CP.print_lhs_rhs)) inf_rels pos;
       end;
     let result = subs_crt_holes_list_ctx result in
