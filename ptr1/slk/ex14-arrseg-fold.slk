@@ -36,7 +36,7 @@ print residue.
 expect Valid.
 
 // //This will go infinitely since the matching is not quite right
-checkentail x::arrI<_> |- y::arr_seg<i,n> & x=y & i<n.
+checkentail x::arrI<_> |- y::arr_seg<i,n> & y=x & i<n. //????? 
 print residue.
 expect Valid.
 

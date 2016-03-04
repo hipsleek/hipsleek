@@ -25,6 +25,8 @@ checkentail x::arr_seg<i,n> & x=y |- y::arr_seg<i1,n1>.
 print residue.
 expect Valid.
 
+
+
 checkentail x::arr_seg<i,n> & x=y & i1=2|- y::arr_seg<i1,n1>.
 print residue.
 expect Fail.

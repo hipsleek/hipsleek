@@ -2727,6 +2727,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
             (* return *)
             (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
+            (* (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)])) *)
             (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
           | DataNode dl, ViewNode vr -> 
             let () = y_tinfo_pp "DATA vs VIEW" in
