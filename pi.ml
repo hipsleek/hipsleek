@@ -756,8 +756,9 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                 with _ -> ()
               else ()
             in
+            let post_vars = List.filter (CP.is_rel_var) post_vars in
             let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
-            let reldefns = rels in
+            let reldefns = if post_vars == [] then rels else reldefns in
        (*     let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in 
             let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reldefns)) no_pos in 
             let () = x_dinfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev reloblgs_init)) no_pos in 
@@ -777,7 +778,6 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
             let () = Debug.dinfo_hprint (add_str "rel_dfs: " (pr_list (pr_pair pr pr))) reldefns no_pos in
             let () = Debug.dinfo_hprint (add_str "post_rel_df: " (pr_list (pr_pair pr pr))) post_rel_df no_pos in
-
             let () = Debug.dinfo_hprint (add_str "pre_rel_df: " (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
             (* let pre_rel_df = List.map (fun (x,y) -> (Immutable.postprocess_pre x,y)) pre_rel_df*)
             let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x
