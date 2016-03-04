@@ -10,20 +10,10 @@ RELASS [P2]: ( n!=0 & P2(n)) -->  true,
 RELASS [P2]: ( P2(n)) -->  n!=0]
 
 Why are there duplicate relational assumptions?
-Anser:
-pi.ml #677
-let rels_orig = Infer.infer_rel_stk # get_stk_no_dupl in
-!!! **pi.ml#678:[RELASS [P2]: ( P2(n) & n=0) -->  false,
-RELASS [P2]: ( P2(n)) -->  n!=0,
-RELASS [P2]: ( n!=0 & P2(n)) -->  true,
-RELASS [P2]: ( n!=0 & P2(n)) -->  true,
-RELASS [P2]: ( P2(n)) -->  n!=0]
-------------------
-gen.ml #720
-get_stk_no_dupl did not remove duplicate for stack properly
-
-Why get_stk_no_dupl cannot remove those duplicate relational assumptions? PLEASE FIX IT!
-When, where and why those relational assumptions are added?
+Answer:
+Fault: (==) cannot to be used to remove duplicate:
+Solution: 
+let infer_rel_eq (rel_cat1,lhs1,rhs1) (rel_cat2,lhs2,rhs2) = (rel_cat1 == rel_cat2) && (CP.equalFormula lhs1 lhs2) && (CP.equalFormula rhs1 rhs2)
 ===========================================================
 RELASS [P2]: ( P2(n) & n=0) -->  false,
 RELASS [P2]: ( P2(n)) -->  n!=0,
