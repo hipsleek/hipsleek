@@ -1535,7 +1535,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   if CF.isSuccessListFailescCtx_new rs then 
                     begin
                       let rels = Infer.collect_rel_list_failesc_context rs in
-                      Infer.infer_rel_stk # push_list rels;
+                      Infer.infer_rel_stk # push_list_pr x_loc rels;
                       Log.current_infer_rel_stk # push_list rels;
                       let hp_rels = Infer.collect_hp_rel_list_failesc_context rs in
                       let cond_msg = if (hp_rels=[]) && (rels)=[] then "" else " (conditional)" in
