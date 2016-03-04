@@ -13,8 +13,8 @@ void foo (int n)
   }
 */
   infer [P2]
-  //requires P2(n)
-  //ensures n+5>=0 & flow __Error; // Segmentation fault (core dumped)
+  requires P2(n)
+  ensures n+5>=0 & flow __Error; // Segmentation fault (core dumped)
   
   //(1)
   //requires P2(n)
@@ -25,8 +25,8 @@ void foo (int n)
   //ensures true & flow __Error;
   
   //(3)
-  requires P2(n) & n+5>=0 & !(n<0)
-  ensures true;
+  //requires P2(n) & n+5>=0 & !(n<0)
+  //ensures true;
   
   /*
   case {
@@ -36,7 +36,7 @@ void foo (int n)
   */
 {
   if (n == 0) return;
-  //else if (n == -5) error();
+  else if (n == -5) error();
   else foo(n - 1); 
 }
 
