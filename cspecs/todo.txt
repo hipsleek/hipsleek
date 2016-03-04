@@ -25,6 +25,13 @@ RELASS [P2]: ( n!=0 & P2(n)) -->  true,
 Why are trivial relational assumptions collected?
 RELASS [P2]: ( n!=0 & P2(n)) -->  true
 ========================================================================
+# ex5-inf-err-with-loop.ss
+
+Segmentation fault (core dumped)
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("tl")Occurred!
+
 ========================================================================
 ========================================================================
 ========================================================================
