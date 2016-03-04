@@ -978,13 +978,13 @@ let compute_def (rel_fml, pf, no) ante_vars =
   (* let post_vars = Trans_arr.expand_array_variable pf post_vars in *)
   (* let pf = Trans_arr.expand_relation pf in *)
   begin
-    print_endline_quiet "\n*************************************";
-    print_endline_quiet "****** Before putting into fixcalc*******";
+    print_endline_quiet "\n*****************************************";
+    print_endline_quiet   "****** Before putting into fixcalc ******";
     print_endline_quiet ("pre_vars: "^(string_of_spec_var_list pre_vars));
     print_endline_quiet ("post_vars: "^(string_of_spec_var_list post_vars));
-    print_endline_quiet "*************************************";
+    print_endline_quiet   "*****************************************";
     print_endline_quiet ("formula: "^(!CP.print_formula pf));
-    print_endline_quiet "*************************************";
+    print_endline_quiet   "*****************************************";
   end;
   try
     let (pf2,subs) = x_add_1 CP.extract_mult pf in
@@ -1888,13 +1888,13 @@ let compute_def_gfp (rel_fml, pf, no) ante_vars =
     List.partition (fun v -> List.mem v ante_vars) vars in
   let (pre_vars,post_vars,pf) = Trans_arr.expand_array_sv_wrapper rel_fml pf pre_vars post_vars in
   begin
-    print_endline_quiet "\n*************************************";
-    print_endline_quiet "****** Before putting into fixcalc*******";
+    print_endline_quiet "\n*****************************************";
+    print_endline_quiet   "****** Before putting into fixcalc ******";
+    print_endline_quiet   "*****************************************";
     print_endline_quiet ("pre_vars: "^(string_of_spec_var_list pre_vars));
     print_endline_quiet ("post_vars: "^(string_of_spec_var_list post_vars));
-    print_endline_quiet "*************************************";
     print_endline_quiet ("formula: "^(!CP.print_formula pf));
-    print_endline_quiet "*************************************";
+    print_endline_quiet   "*****************************************";
   end;
   try
     let rhs = x_add_1 fixcalc_of_gfp_formula pf in

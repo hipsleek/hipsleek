@@ -760,11 +760,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let reloblgs = x_add_1 Immutable.norm_rel_oblgs reloblgs_init in
             if rels !=[] then
               begin
-                print_endline_quiet "\n***************************************";
-                print_endline_quiet "** relation obligations after imm norm **";
-                print_endline_quiet "*****************************************";
+                print_endline_quiet "\n*****************************************";
+                print_endline_quiet   "** relation obligations after imm norm **";
+                print_endline_quiet   "*****************************************";
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel)  reloblgs);
-                print_endline_quiet "*****************************************";
+                print_endline_quiet   "*****************************************";
               end;
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
