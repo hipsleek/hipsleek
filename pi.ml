@@ -721,7 +721,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           let tuples =
             (* let rels = Immutable.norm_rel_list rels in *)
             (* let rels = Gen.Basic.remove_dups rels in *)
-            let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in           
+            let rels = List.filter (fun (_,pf,_) -> not(CP.is_False pf)) rels in
             (* The place to get the array unchanged part *)
             (* let () = x_binfo_pp (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)) no_pos in *)
             let target_rel =
@@ -740,11 +740,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             (*   (Trans_arr.get_unchanged_fixpoint target_rel target_define) in *)
             if rels !=[] then
               begin
-                print_endline_quiet "\n*************************************";
-                print_endline_quiet "******pure relation assumption 1 *******";
-                print_endline_quiet "*************************************";
+                print_endline_quiet "\n****************************************";
+                print_endline_quiet   "****** pure relation assumption 1 ******";
+                print_endline_quiet   "****************************************";
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels));
-                print_endline_quiet "*************************************";
+                print_endline_quiet   "****************************************";
               end;
             let () = if !Globals.sa_gen_slk then
                 try
@@ -768,11 +768,11 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             let reloblgs = x_add_1 Immutable.norm_rel_oblgs reloblgs_init in
             if rels !=[] then
               begin
-                print_endline_quiet "\n***************************************";
-                print_endline_quiet "** relation obligations after imm norm **";
-                print_endline_quiet "*****************************************";
+                print_endline_quiet "\n*****************************************";
+                print_endline_quiet   "** relation obligations after imm norm **";
+                print_endline_quiet   "*****************************************";
                 print_endline_quiet (Gen.Basic.pr_list_ln (CP.string_of_infer_rel)  reloblgs);
-                print_endline_quiet "*****************************************";
+                print_endline_quiet   "*****************************************";
               end;
             (* let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
             let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
