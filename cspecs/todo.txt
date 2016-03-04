@@ -21,6 +21,9 @@ RELASS [P2]: ( P2(n)) -->  n!=0]
 ------------------
 gen.ml #720
 get_stk_no_dupl did not remove duplicate for stack properly
+
+Why get_stk_no_dupl cannot remove those duplicate relational assumptions? PLEASE FIX IT!
+When, where and why those relational assumptions are added?
 ===========================================================
 RELASS [P2]: ( P2(n) & n=0) -->  false,
 RELASS [P2]: ( P2(n)) -->  n!=0,
