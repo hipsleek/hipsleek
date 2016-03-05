@@ -3205,11 +3205,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         ctx
     in
     (* let () = DD.info_zprint (lazy (("       sleek-logging (POST): "  ^ "\n" ^ (to_print)))) pos in *)
-    let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
+    let is_post_err_flow = CF.formula_is_eq_flow (fst posts) !error_flow_int in
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
     (* let () = print_string_quiet ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
-      if not(Globals.global_efa_exc ()) && f1 then
+      if not(Globals.global_efa_exc ()) && is_post_err_flow then
         begin
           let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
           let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
@@ -3244,14 +3244,16 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (* print_endline "DONE!" *)
         end in
     let is_succ = CF.isSuccessListPartialCtx_new rs in
-    let is_reachable_succ = if not f1 then
-        is_succ
+    let is_reachable_succ = 
+      if not is_post_err_flow then is_succ
       else
         (*if error post, check reachable *)
-        is_succ && (CF.exist_reachable_states rs)
+        let r = is_succ && (CF.exist_reachable_states rs) in
+        let () = if not r then x_winfo_pp "Error post states (if any) is unreachable" no_pos in
+        r
     in
-    let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
-    let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
+    let () = x_tinfo_hp (add_str "is_succ" string_of_bool) is_succ no_pos in
+    let () = x_tinfo_hp (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
     if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs
     else begin
@@ -3262,7 +3264,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
       (*let string_of_loc_list locs =
         List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
         in*)
-      let _ =
+      let () =
         if not !Globals.disable_failure_explaining then
           let rs = if Globals.global_efa_exc () then
               (* convert brs with error flow -> Fail *)
