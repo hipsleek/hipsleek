@@ -5,6 +5,9 @@ void error ()
   ensures true & flow __Error;
 
 void foo (int n)
+  requires n<0
+  ensures n>=0 & flow __Error;
+/*
   infer [P2]
   
   //(1)
@@ -16,6 +19,7 @@ void foo (int n)
   //ensures true & flow __Error;
   requires P2(n)
   ensures n>=0 & flow __Error;
+*/
 {
   if (n == 0) return;
   else foo(n - 1); 
