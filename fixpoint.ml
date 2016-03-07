@@ -336,8 +336,10 @@ let simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_as
   let pr_f = !CP.print_formula in
   let pr1 = pr_option (pr_list (pr_triple pr_f pr_f pr_f)) in
   let pr2 = pr_list (fun (_,f1,f2) -> (pr_pair pr_f pr_f) (f1,f2)) in
-  Debug.no_3 "simplify_relation" pr pr1 (add_str "lst_assume" pr2) (pr_pair pr (pr_list pr_f))
-    (fun _ _ _ -> simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp subst_fml lst_assume
+  Debug.no_4 "simplify_relation" 
+    (add_str "spec" pr) (add_str "subst_fml" pr1) (add_str "lst_assume" pr2) 
+    (add_str "inf_post" string_of_bool) (pr_pair pr (pr_list pr_f))
+    (fun _ _ _ _ -> simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp subst_fml lst_assume inf_post
 
 (*let deep_split f1 f2 =*)
 (*  let f1 = TP.simplify_raw f1 in*)
