@@ -2454,7 +2454,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
           )
           else view_form
         in
-        let view_form =
+        let view_form_new =
           let pure_related_to_folded_pred = MCP.find_rel_constraints rhs_p vs in
           add_mix_formula_to_struc_formula pure_related_to_folded_pred view_form
         in
