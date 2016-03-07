@@ -6,10 +6,11 @@ pred arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0.
 
-checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
-print residue.
+//checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
+//print residue.
 
-checkentail x::arrI<_>  |- y::arr_seg<0,2> & y=x .
+//checkentail x::arrI<_>  & x=y|- y::arr_seg<0,2> & y=x . // ok(fail)
+checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x .
 print residue.
 expect Valid.
 

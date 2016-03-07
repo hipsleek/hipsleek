@@ -10,6 +10,10 @@ checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
 print residue.
 expect Valid.
 
+checkentail x::arrI<_>  |- x::arr_seg<0,n> .
+print residue.
+expect Valid.
+
 /*
 
    //C |- x=root(y::aseg<c,d>)
