@@ -6,25 +6,16 @@ pred arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0.
 
-//checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
-//print residue.
-
-//checkentail x::arrI<_>  & x=y|- y::arr_seg<0,2> & y=x . // ok(fail)
-//checkentail x::arrI<_> & x=y  |- y::arr_seg<0,1> . // ok(valid)
-//checkentail x::arrI<_>  |- y::arr_seg<i,m> & y=x . // fail?
-//checkentail x::arrI<_>  |- y::arr_seg<1,2> & y=x . // ok (fail)
-//checkentail emp  |- y::arr_seg<1,1> . ok(valid)
-//checkentail emp  |- y::arr_seg<1,1> & y=x. //correct to fail?
-//checkentail x::arrI<_>  |- [y] y::arr_seg<0,1> & y=x . // ok(valid)
-//checkentail emp  |- [y] y::arr_seg<1,1> & y=x. //ok(valid)
-//checkentail emp  |- y::arr_seg<1,1> & y=x. //fail due to y not being existential
-//checkentail x=y  |- y::arr_seg<1,1> . //ok(valid)
-checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is not existential
+checkentail x::arrI<_>  |- y::arrI<_> & x=y.
 print residue.
 expect Valid.
 
 /*
-# ex14c1.slk
+# ex14c2.slk
+
+checkentail x::arrI<_>  |- y::arrI<_> & x=y.
+
+# why above succeed but not below?
 
 checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is not existential
 
