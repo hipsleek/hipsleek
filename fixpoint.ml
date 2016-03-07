@@ -314,7 +314,10 @@ let rec simplify_relation (sp:CF.struc_formula) subst_fml pre_vars post_vars pro
         let check_fml = MCP.merge_mems xpure_base (MCP.mix_of_pure pre) true in
         if TP.is_sat_raw check_fml then
           x_add simplify_pre (x_add CF.normalize 1 b.CF.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
-        else b.CF.formula_struc_base in
+        else 
+          let () = x_winfo_pp "The inferred precondition is UNSAT" no_pos in
+          b.CF.formula_struc_base 
+    in
     (CF.EBase {b with CF.formula_struc_base = base; CF.formula_struc_continuation = r}, [])
   | CF.EAssume b ->
     let pvars = CP.remove_dups_svl (CP.diff_svl (CF.fv b.CF.formula_assume_simpl) post_vars) in

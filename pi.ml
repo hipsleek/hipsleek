@@ -917,10 +917,10 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
           (*   ) tuples in *)
 
           let inf_post_vars = List.filter (fun v -> Gen.BList.mem_eq CP.eq_spec_var v inf_vars) post_vars in
-          let () = y_binfo_hp (add_str "post_vars" !CP.print_svl) post_vars in
-          let () = y_binfo_hp (add_str "post_vars_wo_rel" !CP.print_svl) post_vars_wo_rel in
-          let () = y_binfo_hp (add_str "inf_vars" !CP.print_svl) inf_vars in
-          let () = y_binfo_hp (add_str "inf_post_vars" !CP.print_svl) inf_post_vars in
+          let () = y_tinfo_hp (add_str "post_vars" !CP.print_svl) post_vars in
+          let () = y_tinfo_hp (add_str "post_vars_wo_rel" !CP.print_svl) post_vars_wo_rel in
+          let () = y_tinfo_hp (add_str "inf_vars" !CP.print_svl) inf_vars in
+          let () = y_tinfo_hp (add_str "inf_post_vars" !CP.print_svl) inf_post_vars in
           
           let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
           let proc_specs = List.map (fun new_spec -> CF.flatten_struc_formula new_spec) proc_specs in
