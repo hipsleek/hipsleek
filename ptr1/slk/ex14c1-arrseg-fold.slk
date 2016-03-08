@@ -19,7 +19,11 @@ pred arr_seg<i,n> == i=n & i>=0
 //checkentail emp  |- [y] y::arr_seg<1,1> & y=x. //ok(valid)
 //checkentail emp  |- y::arr_seg<1,1> & y=x. //fail due to y not being existential
 //checkentail x=y  |- y::arr_seg<1,1> . //ok(valid)
-checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is not existential
+//checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is not existential
+//checkentail x::arrI<_>  |- (exists y,i,j: y::arr_seg<i,j> & y=x & i=0 & j=2). // fail cos y is not existential
+//checkentail x::arrI<_>  |- (exists y,i,j: y::arr_seg<i,j> & y=x & i=0 & j=1). // fail cos y is not existential
+//checkentail x::arrI<_>  |- [y] (exists i,j: y::arr_seg<i,j> & y=x & i=0 & j=1). // fail cos y is not existential
+checkentail x::arrI<_>  |- [y] y::arr_seg<0,1> & x=y. // valid but too many possibilities
 print residue.
 expect Valid.
 
