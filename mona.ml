@@ -53,6 +53,9 @@ let rec mona_of_typ t = match t with
     (* "float"	(\* Can I really receive float? What do I do then? I don't have float in Mona. *\) *)
     Error.report_error {Error.error_loc = no_pos; 
                         Error.error_text = "float type not supported for mona"}
+  | String        -> 
+    Error.report_error {Error.error_loc = no_pos; 
+                        Error.error_text = "string type not supported for mona"}
   | Int           -> "int"
   | INFInt        -> "int"
   | AnnT          -> "AnnT"

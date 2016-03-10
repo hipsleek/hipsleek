@@ -608,6 +608,8 @@ let float_type = Float
 
 let bool_type = Bool
 
+let string_type = String
+
 let bag_type = BagT Int
 
 (* utility functions *)

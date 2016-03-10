@@ -862,6 +862,7 @@ let rec pr_formula_exp (e:P.exp) =
   | P.Var (x, l) -> fmt_string (string_of_spec_var x) (* fmt_string (string_of_typed_spec_var x) *)
   | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
   | P.IConst (i, l) -> fmt_int i
+  | P.SConst (s, l) -> fmt_string s
   | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
   | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
   | P.NegInfConst (i,l) -> let r = "~\\inf" in fmt_string r
@@ -5239,6 +5240,7 @@ let rec html_of_formula_exp e =
   | P.Level (x, l) -> "<level>" ^ html_of_spec_var x ^ "</level>"
   | P.IConst (i, l) -> string_of_int i
   | P.FConst (f, l) -> string_of_float f
+  | P.SConst (s, l) -> s
   | P.AConst (f, l) -> string_of_heap_ann f
   | P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
   | P.InfConst(f,l) -> f

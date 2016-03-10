@@ -550,6 +550,11 @@ and gather_type_info_exp_x prog a0 tlist et =
     let t = I.float_type in
     let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
     (n_tl,n_typ)
+  | IP.SConst (_,pos) -> 
+    let t = I.string_type in
+    let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
+    (n_tl,n_typ)
+  (* | IP.SConst _ -> failwith x_tbi *)
   | IP.Tup2 ((p1,p2), pos) ->
     let (new_et, n_tl) = fresh_tvar tlist in
     let (n_tl1,t1) = x_add gather_type_info_exp prog p1 n_tl new_et in

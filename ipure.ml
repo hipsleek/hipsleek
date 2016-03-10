@@ -248,7 +248,8 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Tsconst _ 
   | InfConst _
   | NegInfConst _
-  | FConst _ -> []
+  | FConst _
+  | SConst _ -> []
   | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
   | Tup2 ((e1,e2),_) -> Gen.BList.remove_dups_eq (=) ((afv e1) @ (afv e2))
   | Ann_Exp (e,_,_) -> afv e
@@ -607,6 +608,7 @@ and pos_of_exp (e : exp) = match e with
   | Level (_, p) 
   | IConst (_, p) 
   | FConst (_, p) 
+  | SConst (_,p)
   | Tsconst (_, p)
   | Bptriple (_, p)
   | Tup2 (_, p)
@@ -839,6 +841,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Null _ 
   | IConst _ 
   | FConst _ 
+  | SConst _
   | Tsconst _
   | InfConst _
   | NegInfConst _
@@ -1056,6 +1059,7 @@ and find_lexp_exp (e: exp) ls =
     | AConst _
     | Tsconst _
     | InfConst _
+    | SConst _
     | NegInfConst _ 
     | FConst _ -> []
     | Ann_Exp(e,_,_) -> find_lexp_exp e ls
@@ -1130,7 +1134,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Tup2 _ (* TOCHECK *)
   | InfConst _ 
   | NegInfConst _
-  | FConst _ -> false
+  | FConst _ 
+  | SConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -1204,7 +1209,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | Tsconst _
   | InfConst _ 
   | NegInfConst _
-  | FConst _ -> (e, None)
+  | FConst _ 
+  | SConst _ -> (e, None)
   | Ann_Exp (e, t, l) -> 
     let ne, np = float_out_exp_min_max e in
     (Ann_Exp (ne, t, l), np) 
@@ -1841,6 +1847,7 @@ let rec typ_of_exp (e: exp) : typ =
   | Level _                   -> Globals.level_data_typ
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
+  | SConst _                  -> Globals.String
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
   | NegInfConst _               -> Globals.INFInt (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
@@ -2070,7 +2077,7 @@ let rec transform_exp_x f (e : exp) : exp =
   | Some ne -> ne
   | None -> (match e with
       | Null _  | Var _ | Level _ | IConst _ | AConst _ 
-      | Tsconst _ | Bptriple _ | FConst _ | Tup2 _ -> e
+      | Tsconst _ | Bptriple _ | FConst _ | Tup2 _ | SConst _ -> e
       | Ann_Exp (e,t,l) ->
         let ne = transform_exp f e in
         Ann_Exp (ne,t,l)

@@ -92,6 +92,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | Bool          -> "bool"
   | Float         -> "float"
   | Int           -> "int"
+  | String        -> "string"
   | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
@@ -6798,6 +6799,9 @@ and default_value (t :typ) pos : C.exp =
     C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
   | Float ->
     C.FConst { C.exp_fconst_val = 0.0; C.exp_fconst_pos = pos; }
+  | String ->
+    failwith
+      "default_value: string in variable declaration should have been rejected"
   | (TVar _) ->
     failwith
       "default_value: typevar in variable declaration should have been rejected"
@@ -8668,6 +8672,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   | IP.Ann_Exp (e, t, pos) -> trans_pure_exp_x e tlist
   | IP.IConst (c, pos) -> CP.IConst (c, pos)
   | IP.FConst (c, pos) -> CP.FConst (c, pos)
+  | IP.SConst (c, pos) -> CP.SConst (c, pos)
   | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
   | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
   | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)

@@ -193,6 +193,7 @@ type typ =
   | Bool
   | Float
   | Int
+  | String
   | INFInt
   | Tup2 of typ * typ
   | NUM
@@ -609,6 +610,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | String        -> "string"
   | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
@@ -663,6 +665,7 @@ let rec string_of_typ_alpha = function
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | String        -> "string"
   | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"

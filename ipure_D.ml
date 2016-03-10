@@ -124,6 +124,7 @@ and exp =
   (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   | FConst of (float * loc)
+  | SConst of (string * loc)
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc) (* Constant for Infinity  *)
   | NegInfConst of (ident * loc) (* Constant for Negative Infinity *)

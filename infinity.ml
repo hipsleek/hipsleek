@@ -880,7 +880,8 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
   | CP.Tsconst _
   | CP.Tup2 _
   | CP.Bptriple _
-  | CP.FConst _ -> exp
+  | CP.FConst _ 
+  | CP.SConst _ -> exp
   | CP.Var (sv,pos) -> 
     if BList.mem_eq eq_spec_var sv vars 
     then if is_neg then (*CP.Var(CP.SpecVar(Int,constinfinity,Primed),pos) *)

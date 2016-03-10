@@ -18559,6 +18559,7 @@ let elim_prm e =
     | CP.AConst _
     | CP.Tsconst _
     | CP.FConst _ 
+    | CP.SConst _
     | CP.Func _
     | CP.InfConst _
     | CP.Template _

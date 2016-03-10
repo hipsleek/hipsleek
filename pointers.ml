@@ -79,6 +79,9 @@ let default_value (t :typ) pos : exp =
     BoolLit {exp_bool_lit_val = true;  exp_bool_lit_pos = pos;}
   | Float ->
     FloatLit {exp_float_lit_val = 0.0; exp_float_lit_pos = pos;}
+  | String ->
+    failwith
+      "default_value: String in variable declaration should have been rejected"
   | (TVar _) ->
     failwith
       "default_value: typevar in variable declaration should have been rejected"

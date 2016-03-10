@@ -207,6 +207,7 @@ let rec string_of_formula_exp = function
   | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
   | P.Tup2 (t,l) -> pr_pair string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
+  | P.SConst (s, _) -> s
   | P.Add (e1, e2, l)	      -> (match e1 with
       | P.Null _
       | P.Var _
