@@ -2702,6 +2702,17 @@ add_infer_hp_contr_to_list_context inp1 :[((H1, H1(yyy)),[yyy])]
 add_infer_hp_contr_to_list_context inp2 :[ yyy!=null]
 add_infer_hp_contr_to_list_context inp3 : [ hfalse&false&{FLOW,(20,21)=__norm
 ===================================================================
+# ex63e1.slk
+
+# why loop for lemma? derived must not fire lemma..
+
+
+lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+
+// 1
+// going into a loop here..
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 
 ===================================================================
 ===================================================================
 ===================================================================

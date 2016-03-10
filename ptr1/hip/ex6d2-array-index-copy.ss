@@ -37,7 +37,7 @@ int get_arr(arrI base, int i)
 // can base be monomorphic recursive?
 void copy(arrI base,arrI b2,int i,int m)
   requires base::arr_seg<i,m> * b2::arr_seg_map<i,m,M>@L//& 0<=i & i<=m
-  ensures  base::arr_seg_map<i,m,M>;
+  ensures  base::arr_seg_map2<i,m,M>;
 {
   if (i<m) {
     int v = get_arr(b2,i);

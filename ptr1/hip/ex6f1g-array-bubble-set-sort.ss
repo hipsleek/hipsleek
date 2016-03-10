@@ -41,8 +41,7 @@ lemma_unsafe self::arr_sorted<i,n,S> & i<n & b=n-1 <->
   self::arr_sorted<i,b,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m})
   & forall(a: a notin S1 |  a<=m).
 
-lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1)
-      -> self::arr_sorted<i,n,S>.
+lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1) -> self::arr_sorted<i,n,S>.
   // does folding use i>=n-1 on RHS too?
 
 lemma_unsafe self::arr_seg<i,n,S>
@@ -115,7 +114,7 @@ arr_sorted<i,n,S> == i=n & i>=0 & S={}
 
 lemma_unsafe self::arr_seg<i,n,S> & i<n & b=n-1 <-> 
   self::arr_seg<i,b,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m}).
-  
+
 lemma_unsafe self::arr_sorted<i,n,S> & i<n & b=n-1 <-> 
   self::arr_sorted<i,b,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m})
   & forall(a: a notin S1 |  a<=m).

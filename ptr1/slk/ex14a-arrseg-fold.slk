@@ -1,0 +1,24 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail y::arrI<_> & y=x+1 |- x::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
+
+
+checkentail y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> * y::arrI<_> |- x::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
+print residue.
+expect Valid.

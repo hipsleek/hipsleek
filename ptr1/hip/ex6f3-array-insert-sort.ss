@@ -2,7 +2,7 @@ data arrI {
   int val;
 }
 
-arr_seg<i,n> == i=n & i>=0
+arr_seg<i,n> == emp & i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0;
 
@@ -31,8 +31,8 @@ int get_arr(arrI base, int i)
   ensures res=v;
 
 arr_index_value<start,end,index,m> == start = end & start>=0
-  or x::arrI<m> * arr_seg<start+1,end> & start=index & start<end
-  or x::arrI<_> * arr_index_value<start+1,end,index,m> & start<index & index<end;
+  or x::arrI<m> * self::arr_seg<start+1,end> & start=index & start<end
+  or x::arrI<_> * self::arr_index_value<start+1,end,index,m> & start<index & index<end;
 
 /*
 arr_min_index_value<start,end,index,value> == start = end & start >= 0
@@ -40,7 +40,7 @@ arr_min_index_value<start,end,index,value> == start = end & start >= 0
   or x::arrI<value> * arr_seg_min<start+1,end,value> & start = index & start<end & start>=0;
 */
 arr_min_index<start,end,index> == start = end & start>=0
-  or arr_seg_min<start,index,m> * x::arrI<m> * arr_seg_min<index+1,end,m> & x=self+index & start<end & start>=0;
+  or self::arr_seg_min<start,index,m> * x::arrI<m> * self::arr_seg_min<index+1,end,m> & x=self+index & start<end & start>=0;
 
 /*arr_min_index<start,end,index> == start = end & start >=0
   or x::arrI<m> * arr_min_index_value<start+1,end,index,m> & start<index & index<end & start>=0;*/
@@ -86,8 +86,8 @@ void insert(arrI base, int start, int cur_pos)
 
 
 void insert_sort(arrI base, int start, int end)
-  requires base:arr_seg<start,end> & start<end
-  ensures base:arr_sorted<start,end>;
+  requires base::arr_seg<start,end> & start<end
+  ensures  base::arr_sorted<start,end>;
 {
   if(start>=end){
     return;

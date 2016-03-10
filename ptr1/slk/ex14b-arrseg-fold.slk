@@ -1,0 +1,27 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+checkentail x::arrI<_>  |- x::arr_seg<0,n> .
+print residue.
+expect Valid.
+
+/*
+
+   //C |- x=root(y::aseg<c,d>)
+   C |- OPT(c,root(y::aseg<c,d>)=x)
+ ------------------------------------ fold
+      x::arr<_> |- y::aseg<c,d>
+
+*/
+
+
+

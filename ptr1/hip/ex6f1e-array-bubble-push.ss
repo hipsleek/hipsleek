@@ -1,5 +1,5 @@
 data arrI {
-  int val;xf
+  int val;
 }
 
 arr_seg<i,n,S> == i=n & i>=0 & S={}
@@ -32,10 +32,10 @@ lemma_unsafe self::arr_seg<i,n,S> & i<=m & m<n
 lemma_unsafe self::arr_seg<i,n,S> & i<n <-> 
   self::arr_seg<i,n-1,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m}).
 */
-  
+
 lemma_unsafe self::arr_seg<i,n,S> & i<n & b=n-1 <-> 
   self::arr_seg<i,b,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m}).
-  
+
 
 void bubble_push(arrI base, int start, int end)
  case {

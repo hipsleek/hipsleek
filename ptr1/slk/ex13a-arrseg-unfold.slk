@@ -1,0 +1,57 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+// can we scedule a base-case-fold after view match failure?
+// match and base-case-fold need to be both scheduled..
+
+// checkentail x::arr_seg<2,n> & n>=2  |- x::arr_seg<2,2> .
+// print residue.
+// expect Valid.
+
+/*
+# ex13a.slk -dre "compute_action"
+
+# schedule a base-case-fold instead of base-case-unfold ..
+
+  COND =>[
+   Prio:1
+   Match =>
+     Type: Root
+     LHS: x::arr_seg<flted_13_47,n>@M
+     RHS: x::arr_seg<flted_13_67,flted_13_66>@M
+     root_inst: None
+     lhs_rest: emp
+     rhs_rest: emp
+     alias set: [x]rhs_inst: []rhs_infer: None;
+   Prio:3
+   BaseCaseUnfold =>
+     Type: Root
+     LHS: x::arr_seg<flted_13_47,n>@M
+     RHS: x::arr_seg<flted_13_67,flted_13_66>@M
+     root_inst: None
+     lhs_rest: emp
+     rhs_rest: emp
+     alias set: [x]rhs_inst: []rhs_infer: None
+   ]
+   ]
+
+*/
+
+
+//(16)
+
+checkentail x::arr_seg<1,n> & n>=2   |- x::arr_seg<2,2> * y1::arrI<_> & y1=x+1.
+print residue.
+expect Valid.
+
+
+
+checkentail x::arr_seg<2,n> & n>=2   |- x::arr_seg<2,2> .
+print residue.
+expect Valid.

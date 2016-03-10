@@ -1250,7 +1250,6 @@ lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1)
       <-> self::arr_sorted<i,n,S>.
 
 ---------------------------------
-
 verified though with some large formula problem..
 
 
@@ -1264,7 +1263,90 @@ tarting MONA.../usr/local/bin/mona_inter
 [mona] Warning: imply --> false(formula too large  - not processed by mona)
 
 ===============================================================
+# ex6f1g4c.slk
+
+# inductive proof by hand failed..
+
+# -dre "spatial_\|choose_c" --trace-log-num 2 
+
+# can minimise to direct matches?
+
+(==context.ml#918==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: x::arr_seg<flted_46_94,m>@M * x::arr_seg<m_95,n>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[x]
+spatial_ctx_extract inp4 :rhs_node: x::arr_seg<flted_49_129,n_128>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: x::arr_seg<flted_46_94,m>@M
+ RHS: x::arr_seg<flted_49_129,n_128>@M
+ root_inst: None
+ lhs_rest: x::arr_seg<m_95,n>@M
+ rhs_rest: emp
+ alias set: [x]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arr_seg<m_95,n>@M
+ RHS: x::arr_seg<flted_49_129,n_128>@M
+ root_inst: None
+ lhs_rest: x::arr_seg<flted_46_94,m>@M
+ rhs_rest: emp
+ alias set: [x]rhs_inst: []rhs_infer: None]
+
+# need to improve pairing and lemma trigger ..
+
+!!! **context.ml#3671:compute_action (steps) :
+ ### RHS Cand :[ x::arr_seg<flted_47_134,n_133>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  SEARCH =>[
+   Prio:1
+   COND =>[
+    Prio:1
+    Match =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M;
+    Prio:3
+    BaseCaseUnfold =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M
+    ];
+    Prio:1
+    (Lemma 0<== lem_12) =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M
+    ];
+   Prio:1
+   SEARCH =>[
+    Prio:1
+    COND =>[
+     Prio:1
+     Match =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M;
+     Prio:3
+     BaseCaseUnfold =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M
+     ];
+     Prio:1
+     (Lemma 0<== lem_12) =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M
+     ]
+    
 ===============================================================
+# ex6f3a3.slk
+
+# Why isn't lemma triggered?
+
+lemma_safe self::arr_seg<i,n> & i<m & m<n ->
+  self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+checkentail
+ base::arr_seg<start,cur_pos> & start+1<cur_pos
+  |- x::arrI<_> & x=base+start+1.
+expect Valid.
 ===============================================================
 ===============================================================
 ===============================================================

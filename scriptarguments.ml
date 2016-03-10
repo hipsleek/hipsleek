@@ -312,7 +312,7 @@ let common_arguments = [
        VarGen.trace_loop_all :=true;
        VarGen.trace_loop :=true;
      ),
-   "Enable trace of method header duriong debugging (with details on arg)");
+   "Enable trace of method header during debugging (with details on arg)");
   (* Exception(fixcalc_of_pure_formula):Stack overflow *)
   (* Exception(compute_def@6):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
@@ -355,7 +355,9 @@ let common_arguments = [
   ("--new-tp-simplify", Arg.Clear Globals.old_tp_simplify,"Use om_simplify instead of TP.simplify_raw");
   ("--en-mkeqn-opt", Arg.Set Globals.mkeqn_opt_flag,"Enable mkeqn optimization");
   ("--dis-mkeqn-opt", Arg.Clear Globals.mkeqn_opt_flag,"Disable mkeqn optimization");
-  ("--old-univ-lemma", Arg.Set Globals.old_univ_lemma,"Use old univ lemma technique (bug with ex6e3e.slk)");
+  ("--old-univ-lemma", Arg.Set Globals.old_univ_lemma,"Use old univ lemma technique (bug with ex6e3e.slk)");  
+  ("--old-compute-act", Arg.Set Globals.old_compute_act,"Use old method of filtering actions");
+  ("--new-compute-act", Arg.Clear Globals.old_compute_act,"Use new (better) method of filtering actions");
   ("--old-heap-contra", Arg.Clear Globals.new_heap_contra,"Do not use heap contra (bug with ex6e3f9.slk --pnum 4)");
   ("--new-heap-contra", Arg.Set Globals.new_heap_contra,"Use heap contra for inference (bug with ex6e3f9.slk --pnum 4)");
   ("--new-univ-lemma", Arg.Clear Globals.old_univ_lemma,"Use new univ lemma technique (bug with ex6e3e.slk)");
@@ -884,7 +886,7 @@ let common_arguments = [
    "maximum number of iteration on TNT algorithm");
 
   (* Slicing *)
-  ("--auto-eps", Arg.Set Globals.auto_eps_flag, "Enable automatic proog slicing for mona");
+  ("--auto-eps", Arg.Set Globals.auto_eps_flag, "Enable automatic proof slicing for mona");
   ("--dis-auto-eps", Arg.Clear Globals.auto_eps_flag, "Disable automatic proog slicing for mona");
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
   ("--dis-eps", Arg.Clear Globals.en_slc_ps, "Disable slicing with predicate specialization");
