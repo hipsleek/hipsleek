@@ -1,5 +1,5 @@
 <{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>: pp(camlp4of)
-not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>): pp(cppo -I ../ -D TRACE)
+not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil/errormsg.ml>):  package(ppx_polyprint), ppx($(ocamlfind query ppx_polyprint)/ppx_polyprint.native), pp(cppo -I ../ -D TRACE)
 "joust": include
 "ints": include
 <xml/*.*>: not_hygienic
