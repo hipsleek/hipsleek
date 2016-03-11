@@ -16004,12 +16004,23 @@ let norm_base lhs rhs =
   with _ -> None
 
 let norm_base lhs rhs =
+  let pr_3 (a,b,c) = "(,"^(!print_sv a)^","^(!print_sv b)^","^(!print_exp c)^")" in
+  let pr = pr_option pr_3 in
+  Debug.no_2 "norm_base_helper" !print_exp !print_exp pr norm_base lhs rhs
+
+let norm_base lhs rhs =
   let r = norm_base lhs rhs in
   match r with
     | Some(v1,v2,IConst(i,_))
             -> if i==0 then None
             else r
     | _ -> r
+
+let norm_base lhs rhs =
+  let pr_3 (a,b,c) = "(,"^(!print_sv a)^","^(!print_sv b)^","^(!print_exp c)^")" in
+  let pr = pr_option pr_3 in
+  Debug.no_2 "norm_base" !print_exp !print_exp pr norm_base lhs rhs
+
 
 (* extraction here is incomplete for base! *)
 (* extr_ptr_eqn@3 *)

@@ -19,6 +19,9 @@ pred arr_seg<i,n> == i=n & i>=0
 //checkentail emp  |- [y] y::arr_seg<1,1> & y=x. //ok(valid)
 //checkentail emp  |- y::arr_seg<1,1> & y=x. //fail due to y not being existential
 //checkentail x=y  |- y::arr_seg<1,1> . //ok(valid)
+
+
+
 checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is not existential
 print residue.
 expect Valid.

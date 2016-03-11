@@ -13380,7 +13380,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_rhs_rest = rhs_rest;} ->
       let estate =
         if no_infer_rel estate then estate
-        else 
+        else
           (* WN : what is the purpose of this normalization? *)
           let lhs_h, lhs_p, _, _, _, lhs_a = CF.split_components estate.es_formula in
           let lhs_alias = MCP.ptr_equations_without_null lhs_p in

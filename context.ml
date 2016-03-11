@@ -660,7 +660,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   let mf = MCP.pure_of_mix mf in
   let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
   let () = y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure in
-  let () = y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure in
   let lhs_rhs_pure = CP.mkAnd lhs_pure rhs_pure no_pos in
   let () = y_tinfo_hp (add_str "mf" !CP.print_formula) mf in
   let lhs_pure = CP.mkAnd lhs_pure mf no_pos in
@@ -727,19 +726,20 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     in
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
-    let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let () = y_binfo_hp (add_str "r_eqns" (pr_list (pr_pair pr_sv pr_sv))) r_eqns in
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
+    let () = y_tinfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
     let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
-    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns') in
+    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns'@r_eqns) in
     let () = x_tinfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
     let () = x_tinfo_hp (add_str "same_base_rhs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base_rhs no_pos in
     let () = x_tinfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in
     let () = x_tinfo_hp (add_str "other_eqn" (pr_list !CP.print_formula)) other_eqn no_pos in
-    let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
     let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
@@ -785,9 +785,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*   else heap_ptrs *)
       (* in *)
       (* let () = y_tinfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in *)
-      let () = y_binfo_hp (add_str "lhs_nodes(b4)" !CP.print_svl) (List.map fst lhs_nodes) in
+      let () = y_tinfo_hp (add_str "lhs_nodes(b4)" !CP.print_svl) (List.map fst lhs_nodes) in
       (* let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in *)
-      let () = y_binfo_hp (add_str "lhs_nodes(ptr_arith)" !CP.print_svl) (List.map fst lhs_nodes) in
+      let () = y_tinfo_hp (add_str "lhs_nodes(ptr_arith)" !CP.print_svl) (List.map fst lhs_nodes) in
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
       (* what exactly is this rhs_ptr, is it exact ptr? *)
       (*   ptr1/ex6a5d.slk   *)
@@ -804,10 +804,10 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       let map_r r =
         if r then 1 else 0
       in
-       let () = y_binfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
+       let () = y_tinfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
       (* this picks existential/instvars in estate *)
       let lst = List.map (fun (d,root_lhs) -> 
-          let () = y_binfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
+          let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
          match view_root_rhs with
           | Some ((v,rf)) -> 
             (* lhs_pure |- d>=rhs_ptr  *)
@@ -823,28 +823,31 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               match root_lhs with
               | None  ->
                 let eq = CP.mkEqVars v d in
-                let () =  y_binfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
-                let () =  y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
+                let () =  y_tinfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
+                let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
                 let lhs_w_rhs_inst = CP.join_conjunctions [lhs_pure;rf;rhs_pure] in
                 let rhs = eq in
                 let r = x_add_1 !CP.tp_is_sat lhs_w_rhs_inst in
-                if r then 
+                if r then
                   let () =  y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure  in
                   (* let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in *)
                   (* let r = x_add_1 !CP.tp_is_sat f in *)
-                  let same_base_flag = CP.EMapSV.is_equiv emap_base d rhs_ptr in  
+                  let () = x_binfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
+                  let () = x_binfo_hp (add_str "d" !CP.print_sv) d no_pos in
+                  let () = x_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr no_pos in
+                  let same_base_flag = CP.EMapSV.is_equiv emap_base d rhs_ptr in
                   (* let rhs = CP.mkEqn d rhs_ptr no_pos in *)
                   let r=
-                    if true (* same_base_flag *) then
+                    if same_base_flag then
                       let neg_rhs = CP.mkNot_s rhs in
                       not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  
-                    else 
+                    else
                       false
                   in
-                  let () =  y_binfo_hp (add_str "r1" string_of_bool) r  in
+                  let () =  y_tinfo_hp (add_str "r1" string_of_bool) r  in
                   let () =  y_binfo_hp (add_str "same_base_flag" string_of_bool) same_base_flag  in
-                  let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
-                  let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                  let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+                  let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
                   (* let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in *)
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
