@@ -2458,7 +2458,10 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
           let pure_related_to_folded_pred = MCP.find_rel_constraints rhs_p vs in
           add_mix_formula_to_struc_formula pure_related_to_folded_pred view_form
         in
-        x_tinfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
+        let view_form = if !Globals.adhoc_flag_6 then view_form_new else view_form in
+        (* adding _new caused loop *)
+        x_binfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
+        x_binfo_zp (lazy ("view_form_new:" ^ (Cprinter.string_of_struc_formula view_form_new))) pos;
         let view_form = add_struc_origins (get_view_origins view) view_form  in
         let view_form = CF.replace_struc_formula_label pid view_form in
         (* let view_form =  Immutable.propagate_imm_struc_formula view_form imm anns in *)
@@ -2557,7 +2560,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
             let tmp3 = (mkOCtx tmp1 tmp2 pos) in
             tmp3
           | Ctx es ->
-                let () = x_tinfo_zp (lazy ("begin es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos in
+            let () = x_tinfo_zp (lazy ("begin es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos in
             (* let es = estate_of_context rs pos in *)
             let es = CF.overwrite_estate_with_steps es ss in
             let w = Gen.BList.difference_eq CP.eq_spec_var  es.es_evars tmp_vars in
@@ -8905,7 +8908,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         let () = y_tinfo_hp (add_str "es_ivars" Cprinter.string_of_spec_var_list) estate.es_ivars  in
         let () = y_tinfo_hp (add_str "es_gen_expl_vars" Cprinter.string_of_spec_var_list) estate.es_gen_expl_vars  in
         let () = y_tinfo_hp (add_str "es_evars" Cprinter.string_of_spec_var_list) estate.es_evars  in
-         let () = x_tinfo_hp (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
+        let () = x_tinfo_hp (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
         let () = x_tinfo_hp (add_str "split_ante1_sym " Cprinter.string_of_mix_formula) split_ante1_sym no_pos in
         let flag1=(tmp3_sym==tmp0_sym) in
         let () = y_tinfo_hp (add_str "heap_entail_build (flag1)" string_of_bool) flag1 in
@@ -13121,10 +13124,10 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         (* match_res_reason is used only in folding *)
         Context.match_res_reason = match_reason;
       } ->
-          let () = y_tinfo_hp (add_str "FOLD: match_reason:" (pr_option !CP.print_formula)) match_reason in
-          let () = y_tinfo_hp (add_str "xxxM_fold" (Cprinter.string_of_formula_base)) rhs_b in
-          let () = y_tinfo_hp (add_str "root_inst" (pr_option !CP.print_sv )) root_inst in
-          let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+      let () = y_tinfo_hp (add_str "FOLD: match_reason:" (pr_option !CP.print_formula)) match_reason in
+      let () = y_tinfo_hp (add_str "xxxM_fold" (Cprinter.string_of_formula_base)) rhs_b in
+      let () = y_tinfo_hp (add_str "root_inst" (pr_option !CP.print_sv )) root_inst in
+      let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
       let wrap_fn = match root_inst with
         | Some id -> 
           let () = y_binfo_hp (add_str "fold_matching_stk (lhs_node)" !CF.print_h_formula) lhs_node in
@@ -13949,7 +13952,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           let () = x_tinfo_hp (add_str "rhs_als" Cprinter.string_of_spec_var_list) rhs_als no_pos in
           let r, relass = 
             if CP.intersect rhs_als estate.es_infer_vars = []
-               && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
+            && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
             else if (!Globals.pa) then None,[]  
             else 
               let lhs_rhs_contra_flag = 
@@ -14911,7 +14914,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
-     || not(is_original_match anode ln2)
+  || not(is_original_match anode ln2)
   then
     let msg = "no lemma found in both LHS and RHS nodes (do coercion)" in
     (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must (* "no lemma found in both LHS and RHS nodes (do coercion)" *) msg

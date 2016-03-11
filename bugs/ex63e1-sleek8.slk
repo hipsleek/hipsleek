@@ -19,7 +19,11 @@ lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::ls
 // 1
 // going into a loop here..
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
+//checkentail x::lseg<n, p> & n = 6 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4. // fail
+//checkentail x::lseg<n, p> & n = 8 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4. // one residue
+//checkentail x::lseg<n, p> & n = 8 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3=1. // still 3 answers
 print residue.
+
 // valid
 
 
