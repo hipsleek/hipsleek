@@ -2460,8 +2460,8 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         in
         let view_form = if !Globals.adhoc_flag_6 then view_form_new else view_form in
         (* adding _new caused loop *)
-        x_binfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
-        x_binfo_zp (lazy ("view_form_new:" ^ (Cprinter.string_of_struc_formula view_form_new))) pos;
+        x_tinfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
+        x_tinfo_zp (lazy ("view_form_new:" ^ (Cprinter.string_of_struc_formula view_form_new))) pos;
         let view_form = add_struc_origins (get_view_origins view) view_form  in
         let view_form = CF.replace_struc_formula_label pid view_form in
         (* let view_form =  Immutable.propagate_imm_struc_formula view_form imm anns in *)
@@ -13130,7 +13130,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
       let wrap_fn = match root_inst with
         | Some id -> 
-          let () = y_binfo_hp (add_str "fold_matching_stk (lhs_node)" !CF.print_h_formula) lhs_node in
+          let () = y_tinfo_hp (add_str "fold_matching_stk (lhs_node)" !CF.print_h_formula) lhs_node in
           Context.wrap_fold_matching (id,lhs_node) 
         | None -> fun x -> x in
       (* xxx::arr<flted_21_31>@M&xxx=2+y & flted_21_31=5 & xxx=flted_22_46+y& *)

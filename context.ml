@@ -726,8 +726,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     in
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
-    let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
-    let () = y_binfo_hp (add_str "r_eqns" (pr_list (pr_pair pr_sv pr_sv))) r_eqns in
+    let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let () = y_tinfo_hp (add_str "r_eqns" (pr_list (pr_pair pr_sv pr_sv))) r_eqns in
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
@@ -832,9 +832,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure  in
                   (* let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in *)
                   (* let r = x_add_1 !CP.tp_is_sat f in *)
-                  let () = x_binfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
-                  let () = x_binfo_hp (add_str "d" !CP.print_sv) d no_pos in
-                  let () = x_binfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr no_pos in
+                  let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
+                  let () = x_tinfo_hp (add_str "d" !CP.print_sv) d no_pos in
+                  let () = x_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr no_pos in
                   let same_base_flag = CP.EMapSV.is_equiv emap_base d rhs_ptr in
                   (* let rhs = CP.mkEqn d rhs_ptr no_pos in *)
                   let r=
@@ -845,7 +845,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                       false
                   in
                   let () =  y_tinfo_hp (add_str "r1" string_of_bool) r  in
-                  let () =  y_binfo_hp (add_str "same_base_flag" string_of_bool) same_base_flag  in
+                  let () =  y_tinfo_hp (add_str "same_base_flag" string_of_bool) same_base_flag  in
                   let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
                   let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
                   (* let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in *)
