@@ -466,7 +466,7 @@ let rec icollect_output chn accumulated_output : string list =
   let output =
     try
       let line = input_line chn in
-      (* let () = print_endline ("locle2" ^ line) in *)
+      let () = print_endline ("locle2" ^ line^"x") in
       if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
         icollect_output chn (accumulated_output @ [line])
       else accumulated_output @ [line]
@@ -519,7 +519,8 @@ let sat_type_from_string r input =
          Error.error_loc = no_pos; 
          Error.error_text =("Z3 translation failure!!\n"^r^"\n input: "^input)})
     with
-    | Not_found -> Unknown
+    | Not_found ->
+      Unknown
 
 let parse_model_to_pure_formula model =
   let rec helper acc model =
@@ -589,6 +590,7 @@ let iget_answer chn input =
 
 let get_answer chn input =
   let output = collect_output chn [] in
+  (* let () = List.iter(fun a -> x_binfo_zp (lazy ("xxxxxx"^a^"\n")) no_pos) output in *)
   let solver_sat_result = List.nth output (List.length output - 1) in
   { original_output_text = output;
     sat_result = sat_type_from_string solver_sat_result input; }
@@ -609,7 +611,7 @@ let z3_call_count: int ref = ref 0
 let is_z3_running = ref false
 let is_local_solver = ref (false: bool)
 
-let smtsolver_name = ref ("z3": string)
+let smtsolver_name = ref ("z3-str": string)
 
 let prover_process = ref {
     name = !smtsolver_name;
@@ -655,6 +657,7 @@ let command_for prover = (
   | "z3-2.19" -> ("z3-2.19", [| !smtsolver_name; "-smt2"; infile; ("> " ^ outfile) |])
   | "z3-4.2" -> ("z3-4.2", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
   | "z3-4.3.1" -> ("./z3-4.3.1", [|!smtsolver_name; "-smt2"; infile; ("> "^ outfile) |] )
+  | "z3-str" -> ("./Z3-str.py",[| !smtsolver_name; "-f"; infile; ("> "^ outfile) |] )
   | _ -> illegal_format ("z3.command_for: ERROR, unexpected solver name")
 )
 
@@ -699,6 +702,8 @@ and start() =
       let () = (
         if !smtsolver_name = "z3-2.19" then
           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, !smtsolver_name, [|!smtsolver_name; "-smt2"|]) set_process (fun () -> ())
+        else if !smtsolver_name = "z3-str" then
+          Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "/Z3-str.py", [|"-f"|]) set_process (fun () -> ())
         else if !smtsolver_name = "z3-4.2" then
           Procutils.PrvComms.start !log_all_flag log_all (!smtsolver_name, "z3-4.2", [|!smtsolver_name; "-smt2"; "-in"|]) set_process prelude
         else if !smtsolver_name = "z3-4.3.1" then
@@ -781,7 +786,7 @@ let check_formula f timeout =
 
 
 (**
- * Logic types for smt solvers
+ * Logic types for smt solvers(* let () = print_endline ("locle2" ^ line) in *)
  * based on smt-lib benchmark specs
 *)
 type smtlogic =
@@ -1125,7 +1130,7 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
     (* let input = if (Cpure.contains_exists conseq) then ("(set-option :mbqi true)\n" ^ input) else input in *)
     let () = !set_generated_prover_input input in
     let output = 
-      if !smtsolver_name = "z3-2.19" then
+      if (!smtsolver_name = "z3-2.19" || !smtsolver_name = "z3-str") then
         run "is_imply" prover input timeout
       else
         check_formula input timeout
@@ -1233,7 +1238,8 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     let input = to_smt pr_weak pr_strong f None prover in
     (* let input = if (Cpure.contains_exists f) then ("(set-option :mbqi true)\n" ^ input) else input in *)
     let output = (
-      if !smtsolver_name = "z3-2.19" then run "is_unsat" prover input timeout
+      if (!smtsolver_name = "z3-2.19" || !smtsolver_name = "z3-str") then 
+        run "is_unsat" prover input timeout
       else check_formula input timeout
     ) in
     let res = match output.sat_result with
