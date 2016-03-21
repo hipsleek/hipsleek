@@ -2193,6 +2193,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Ipure.Bptriple ((helper_exp e1, helper_exp e2, helper_exp e3), pos)
     | Ipure.Add (e1, e2, pos) ->
       Ipure.Add (helper_exp e1, helper_exp e2, pos)
+    | Ipure.Concat (e1, e2, pos) ->
+      Ipure.Concat (helper_exp e1, helper_exp e2, pos)
     | Ipure.Subtract (e1, e2, pos) ->
       Ipure.Subtract (helper_exp e1, helper_exp e2, pos)
     | Ipure.Mult (e1, e2, pos) ->

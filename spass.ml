@@ -53,6 +53,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
   | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
+  | Cpure.Concat _ -> illegal_format "SPASS don't support Concat expression"
   | Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
@@ -203,6 +204,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
   | Cpure.Tup2 _   -> illegal_format "SPASS don't support Tup2 expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
+  | Cpure.Concat _       -> illegal_format "SPASS don't support Concat expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
@@ -292,6 +294,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.InfConst _ -> false
   (* arithmetic expressions *)
   | Cpure.Add _
+  | Cpure.Concat _
   | Cpure.Subtract _
   | Cpure.Mult _
   | Cpure.Div _

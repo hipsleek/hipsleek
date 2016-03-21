@@ -295,6 +295,10 @@ let rec math_of_exp e0 : string=
     let se1 = math_of_exp e1 in
     let se2 = math_of_exp e2 in
     "(" ^ se1 ^ " + " ^ se2 ^ ")"
+  | CP.Concat (e1, e2, _) ->
+    let se1 = math_of_exp e1 in
+    let se2 = math_of_exp e2 in
+    se1 ^ " ^ " ^ se2
   | CP.Subtract (e1, e2, _) ->
     let se1 = math_of_exp e1 in
     let se2 = math_of_exp e2 in

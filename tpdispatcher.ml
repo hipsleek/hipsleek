@@ -714,6 +714,7 @@ let rec is_array_exp e = match e with
   | CP.ListReverse _ ->
     Some false
   | CP.Add (e1,e2,_)
+  | CP.Concat (e1,e2,_)
   | CP.Subtract (e1,e2,_)
   | CP.Mult (e1,e2,_)
   | CP.Div (e1,e2,_)
@@ -752,6 +753,7 @@ let rec is_list_exp e = match e with
   | CP.ListAppend _
   | CP.ListReverse _ -> Some true
   | CP.Add (e1,e2,_)
+  | CP.Concat (e1,e2,_)
   | CP.Subtract (e1,e2,_)
   | CP.Mult (e1,e2,_)
   | CP.Div (e1,e2,_)

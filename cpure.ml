@@ -312,7 +312,6 @@ and exp =
   | Level of (spec_var * loc) (*represent locklevel of a lock spec_var*)
   | IConst of (int * loc)
   | FConst of (float * loc)
-  | SConst of (string * loc)
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc)
   | NegInfConst of (ident * loc)
@@ -339,12 +338,13 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
-  (* | StrConst of (string * loc) *)
-  (* | StrAppend of (exp list * loc) *)
   | ArrayAt of (spec_var * (exp list) * loc)      (* An Hoa : array access *)
   | Func of (spec_var * (exp list) * loc)
   (* Template exp *)
   | Template of template
+  (* String expression *)
+  | Concat of (exp * exp *loc)
+  | SConst of (string * loc)
 
 and template = {
   (* a + bx + cy + dz *)
@@ -1329,11 +1329,12 @@ let rec get_exp_type (e : exp) : typ =
   | Tup2  ((e1,e2),_) -> Globals.Tup2 (get_exp_type e1,get_exp_type e2)
   | Bptriple  _ -> Bptyp
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
-  | Max (e1, e2, _) | Min (e1, e2, _) ->
+  | Max (e1, e2, _) | Min (e1, e2, _) | Concat (e1, e2, _) ->
     begin
       match get_exp_type e1, get_exp_type e2 with
       | Int, Int -> Int
       | AnnT, AnnT -> AnnT
+      | String, String -> String
       | _ -> Float
     end
   | Div _ -> Float
@@ -1577,6 +1578,7 @@ and afv (af : exp) : spec_var list =
   | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
   | Level (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
   | Add (a1, a2, _) -> combine_avars a1 a2
+  | Concat (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
   | Max (a1, a2, _) -> combine_avars a1 a2
@@ -2345,6 +2347,7 @@ and is_exp_arith (e:exp) : bool=
   | SConst _ -> false
   | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
   | Template _ -> true
+  | Concat _ -> false
 
 and is_formula_arith_x (f:formula) :bool = match f with
   | BForm (b,_) -> is_b_form_arith b
@@ -3279,6 +3282,10 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
         let il = List.map (fun c-> helper new_arg c) i in
         let (il, rl) = List.split il in 
         (ArrayAt (a,il,l), f_comb rl)
+      | Concat (e1,e2,l) ->
+        let (ne1,r1) = helper new_arg e1 in
+        let (ne2,r2) = helper new_arg e2 in
+        (Concat (ne1,ne2,l),f_comb[r1;r2])
   in helper arg e
 
 let trans_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option) 
@@ -3381,6 +3388,10 @@ let rec transform_exp f e  =
                                templ_args = List.map (transform_exp f) t.templ_args; 
                                templ_body = map_opt (transform_exp f) t.templ_body; }
     | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
+    | Concat (e1,e2,l) ->
+      let ne1 = transform_exp f e1 in
+      let ne2 = transform_exp f e2 in
+      Concat (ne1,ne2,l)
 
 let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 (*(f_comb:'b list -> 'b)*) :(b_formula * 'b) =
@@ -4062,7 +4073,8 @@ and pos_of_exp (e : exp) = match e with
   | ListLength (_, p) 
   | ListReverse (_, p) 
   | Func (_,_,p)
-  | ArrayAt (_, _, p) -> p (* An Hoa *)
+  | ArrayAt (_, _, p) 
+  | Concat (_, _, p) -> p (* An Hoa *)
   | Template t -> t.templ_pos
 
 and pos_of_b_formula (b: b_formula) = 
@@ -4682,6 +4694,7 @@ and e_apply_subs sst e = match e with
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Level (sv, pos) -> Level (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_subs sst a1, e_apply_subs sst a2, pos))
+  | Concat (a1, a2, pos) -> Concat((e_apply_subs sst a1, e_apply_subs sst a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (e_apply_subs sst  a1, e_apply_subs sst a2, pos)
   | Mult (a1, a2, pos) -> Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Div (a1, a2, pos) -> Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -4741,6 +4754,7 @@ and e_apply_one (fr, t) e = match e with
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Level (sv, pos) -> Level ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos))
+  | Concat (a1, a2, pos) -> Concat (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Mult (a1, a2, pos) -> Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Div (a1, a2, pos) -> Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -4873,6 +4887,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e =
   | Tsconst _ -> e
   | Tup2 ((a1,a2),pos) -> Tup2 ((a_apply_par_term sst a1,a_apply_par_term sst a2),pos)
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos))
+  | Concat (a1, a2, pos) -> Concat (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Mult (a1, a2, pos) -> Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Div (a1, a2, pos) -> Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -4997,6 +5012,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Tsconst _ -> e
   | Tup2 ((a1,a2),pos) -> Tup2 ((a_apply_one_term (fr,t) a1,a_apply_one_term (fr,t) a2),pos)
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos))
+  | Concat (a1, a2, pos) -> Concat (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Mult (a1, a2, pos) -> Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Div (a1, a2, pos) -> Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -5060,6 +5076,10 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
       let b1, r1 = helper crt_var a1 in
       let b2, r2 = helper crt_var a2 in
       ((b1||b2), Add (r1, r2, pos))
+    | Concat (a1, a2, pos) -> (* TOCHECK *)
+      let b1, r1 = helper crt_var a1 in
+      let b2, r2 = helper crt_var a2 in
+      ((b1||b2), Concat (r1, r2, pos))
     | Subtract (a1, a2, pos) -> 
       let b1 , r1 = helper crt_var a1 in
       let b2 , r2 = helper (not crt_var) a2 in
@@ -6603,6 +6623,7 @@ and e_apply_one_exp (fr, t) e = match e with
   | Level (sv, pos) -> if eq_spec_var sv fr then t else e
   | Tup2 ((a1, a2), pos) -> Tup2 ((e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Concat (a1, a2, pos) -> Concat (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Mult (a1, a2, pos) -> Mult (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Div (a1, a2, pos) -> Div (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
@@ -6853,6 +6874,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | Bptriple _ -> false (*TOCHECK*)
     | Tup2 ((e1,e2),_)
     | Add (e1,e2,_)
+    | Concat (e1, e2, _) 
     | Subtract (e1,e2,_) -> false
     | Mult _
     | Div _
@@ -7021,6 +7043,7 @@ and simp_mult_x (e : exp) :  exp =
     | SConst _ -> e0
     |  Add (e1, e2, l) ->
       normalize_add None l ( Add (acc_mult m e1, acc_mult m e2, l))
+    | Concat (e1, e2, l) -> Concat (acc_mult m e1, acc_mult m e2, l)
     |  Subtract (e1, e2, l) ->
       normalize_add None l
         ( Add (acc_mult m e1,
@@ -7108,6 +7131,22 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
        | (None, Some r1) -> tm2
        | (Some r1, None) -> tm1
        | (Some r1, Some r2) -> Some ( Add (r1, r2, l)))
+    in (tsr, tmr)
+  |  Concat (e1, e2, l) ->
+    let (ts1, tm1) = split_sums e1 in
+    let (ts2, tm2) = split_sums e2 in
+    let tsr =
+      (match (ts1, ts2) with
+       | (None, None) -> None
+       | (None, Some r1) -> ts2
+       | (Some r1, None) -> ts1
+       | (Some r1, Some r2) -> Some ( Concat (r1, r2, l))) in
+    let tmr =
+      (match (tm1, tm2) with
+       | (None, None) -> None
+       | (None, Some r1) -> tm2
+       | (Some r1, None) -> tm1
+       | (Some r1, Some r2) -> Some ( Concat (r1, r2, l)))
     in (tsr, tmr)
   |  Subtract (e1, e2, l) ->
     Error.report_error
@@ -7234,8 +7273,9 @@ and purge_mult_x (e :  exp):  exp = match e with
   | Tup2 _
   | FConst _ 
   | SConst _ -> e
-  |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
-  |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
+  | Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
+  | Concat (e1, e2, l) ->  Concat((purge_mult e1), (purge_mult e2), l)
+  | Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
   | Mult (e1, e2, l) ->
     let t1 = purge_mult e1 in
     let t2 = purge_mult e2 in
@@ -7600,6 +7640,7 @@ let rec get_head e = match e with
   | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | TypeCast (_, e, _)
   | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
   | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
+  | Concat(e,_,_) -> get_head e
   | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
     if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
   | Func _ -> ""
@@ -7656,6 +7697,7 @@ and norm_exp (e:exp) =
     | Level _ -> e
     | Tup2 ((e1,e2),l) -> Tup2 ((helper e1,helper e2),l) 
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
+    | Concat (e1,e2,l) -> failwith x_tbi
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
       let e1=helper e1 in 
@@ -10182,8 +10224,9 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
       | Bptriple _ -> failwith ("not expecting Bptriple, expecting var"^ (!print_sv v) )
       | Tup2 ((e1,e2),p) -> Tup2 ((helper e1 rhs_e,helper e2 rhs_e),p)
-      | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
-      | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
+      | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p)) (* TOCHECK *)
+      | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p)) (* TOCHECK *)
+      | Concat (e1,e2,p) -> failwith x_tbi
       | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))
       | Div (e1,e2,p) -> check_in_one e1 e2 (Mult (rhs_e,e2,p)) (Mult (rhs_e,e1,p))
       (* expressions that can not be transformed *)

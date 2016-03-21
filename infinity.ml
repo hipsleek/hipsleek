@@ -892,6 +892,10 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     let a1_conv = sub_inf_list_exp a1 vars is_neg in
     let a2_conv = sub_inf_list_exp a2 vars is_neg in
     CP.Add(a1_conv,a2_conv,pos)
+  | CP.Concat (a1, a2, pos) -> 
+    let a1_conv = sub_inf_list_exp a1 vars is_neg in
+    let a2_conv = sub_inf_list_exp a2 vars is_neg in
+    CP.Concat(a1_conv,a2_conv,pos)
   | CP.Subtract (a1, a2, pos) -> 
     let a1_conv = sub_inf_list_exp a1 vars is_neg in
     let a2_conv = sub_inf_list_exp a2 vars is_neg in

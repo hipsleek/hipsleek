@@ -208,6 +208,7 @@ let rec string_of_formula_exp = function
   | P.Tup2 (t,l) -> pr_pair string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
   | P.SConst (s, _) -> s
+  | P.Concat (s1, s2, _) -> (string_of_formula_exp s1) ^ "^" ^ (string_of_formula_exp s2)
   | P.Add (e1, e2, l)	      -> (match e1 with
       | P.Null _
       | P.Var _

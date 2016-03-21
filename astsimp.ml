@@ -8674,6 +8674,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   | IP.FConst (c, pos) -> CP.FConst (c, pos)
   | IP.SConst (c, pos) -> CP.SConst (c, pos)
   | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
+  | IP.Concat (e1, e2, pos) -> CP.Concat (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
   | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
   | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
   | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)

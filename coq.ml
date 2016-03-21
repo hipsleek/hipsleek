@@ -92,6 +92,7 @@ and coq_of_exp e0 =
   | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
   | CP.SConst (s, _) -> s
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
+  | CP.Concat (s1, s2, _) -> (coq_of_exp s1) ^ " ^ " ^ (coq_of_exp s2)
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"

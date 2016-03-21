@@ -125,6 +125,7 @@ let rec smt_of_exp a =
   | CP.FConst (f, _) -> string_of_float f 
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
+  | CP.Concat (s1, s2, _) -> "(Concat " ^ (smt_of_exp s1)^ " " ^(smt_of_exp s2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(/ " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -633,7 +634,7 @@ let global_oc = "/usr/bin/z3-4.3.2"
 let smtsolver_path = 
   if (Sys.file_exists local_oc) then ref local_oc
   else if (Sys.file_exists global_oc)  then ref global_oc
-  else ref "z3"
+  else ref "z3-str"
 (* begin *)
 (*   print_endline_quiet ("ERROR : "^global_oc^" cannot be found!!"); ref (global_oc^"_cannot_be_found":string) *)
 (* end *)
@@ -665,7 +666,7 @@ let command_for prover = (
 let run st prover input timeout =
   (*let () = print_endline "z3-2.19" in*)
   let out_stream = open_out infile in
-  (* let () = print_endline ("input: " ^ input) in *)
+  let () = print_endline ("input:\n" ^ input) in
   output_string out_stream input;
   close_out out_stream;
   let (cmd, cmd_arg) = command_for prover in
@@ -805,8 +806,8 @@ let string_of_logic logic =
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   (* Variable declarations *)
-  (*let _ = List.map (fun c -> print_string(" "^(!print_ty_sv c))) fvars in*)
   let fvars = List.filter (fun sv -> not (Cpure.is_rel_typ sv)) (Cpure.remove_dups_svl fvars0) in
+  (* let _ = List.map (fun c -> print_string("xxx "^(!print_ty_sv c)^"\n")) fvars in *)
   let smt_var_decls = List.map (fun v ->
       let tp = (CP.type_of_spec_var v)in
       let t = smt_of_typ tp in
@@ -841,15 +842,16 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
   let ante_str = String.concat "" ante_strs in
   let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
-    ";Variables declarations\n" ^ 
+    (* ";Variables declarations\n" ^  *)
     smt_var_decls ^
-    ";Relations declarations\n" ^ 
+    (* ";Relations declarations\n" ^  *)
     rel_decls ^
-    ";Axioms assertions\n" ^ 
+    (* ";Axioms assertions\n" ^  *)
     axiom_asserts ^
-    ";Antecedent\n" ^ 
+    (* ";Antecedent\n" ^  *)
     ante_str ^
-    ";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
+    (* ";Negation of Consequence\n" ^  *)
+    "(assert (not " ^ conseq_str ^ "))\n" ^
     "(check-sat)" ^
     (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")
   )

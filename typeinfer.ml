@@ -549,7 +549,8 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.FConst (_,pos) -> 
     let t = I.float_type in
     let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
-    (n_tl,n_typ)
+    (n_tl,n_typ) 
+  (* | IP.Concat (_,_,pos)  *)
   | IP.SConst (_,pos) -> 
     let t = I.string_type in
     let (n_tl,n_typ) = x_add must_unify_expect t et tlist pos in
@@ -620,7 +621,7 @@ and gather_type_info_exp_x prog a0 tlist et =
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
-  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
+  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) | IP.Concat (a1, a2, pos) ->
     let todo_unk:Globals.typ = x_add must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 

@@ -254,6 +254,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Tup2 ((e1,e2),_) -> Gen.BList.remove_dups_eq (=) ((afv e1) @ (afv e2))
   | Ann_Exp (e,_,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
+  | Concat (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
   | Max (a1, a2, _) -> combine_avars a1 a2
@@ -342,6 +343,8 @@ and mkXPure id cl pos =
   }
 
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
+
+and mkConcat a1 a2 pos = Concat(a1, a2, pos)
 
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
@@ -617,6 +620,7 @@ and pos_of_exp (e : exp) = match e with
   | AConst (_, p) -> p
   | Ann_Exp (e,_,p) -> p
   | Add (_, _, p) -> p
+  | Concat (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
   | Div (_, _, p) -> p
@@ -857,6 +861,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Var (sv, pos) -> Var (v_apply_one p sv, pos)
   | Level (sv, pos) -> Level (v_apply_one p sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_one p a1, e_apply_one p a2, pos)
+  | Concat (a1, a2, pos) -> Concat (e_apply_one p a1, e_apply_one p a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one p a1, e_apply_one p a2, pos)
   | Mult (a1, a2, pos) -> Mult (e_apply_one p a1, e_apply_one p a2, pos)
   | Div (a1, a2, pos) -> Div (e_apply_one p a1, e_apply_one p a2, pos)
@@ -1066,6 +1071,7 @@ and find_lexp_exp (e: exp) ls =
     | Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
     | Tup2 ((e1, e2), _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
+    | Concat (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Div (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1138,6 +1144,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | SConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
+  | Concat (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Subtract (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Mult (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Div (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -1246,9 +1253,19 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | None, None -> None
       | Some p, None -> Some p
       | None, Some p -> Some p
-      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
-
+      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+    in
     (Add (ne1, ne2, l), r) 
+  | Concat (e1, e2, l) ->
+    let ne1, np1 = float_out_exp_min_max e1 in
+    let ne2, np2 = float_out_exp_min_max e2 in
+    let r = match (np1, np2) with
+      | None, None -> None
+      | Some p, None -> Some p
+      | None, Some p -> Some p
+      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+    in
+    (Concat (ne1, ne2, l), r) 
   | Subtract (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
     let ne2, np2 = float_out_exp_min_max e2 in
@@ -1256,7 +1273,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | None, None -> None
       | Some p, None -> Some p
       | None, Some p -> Some p
-      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))in
+      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+    in
     (Subtract (ne1, ne2, l), r) 
   | Mult (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
@@ -1847,7 +1865,6 @@ let rec typ_of_exp (e: exp) : typ =
   | Level _                   -> Globals.level_data_typ
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
-  | SConst _                  -> Globals.String
   | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
   | NegInfConst _               -> Globals.INFInt (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
@@ -1907,6 +1924,9 @@ let rec typ_of_exp (e: exp) : typ =
   (* Func expressions *)
   | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func"
   | BExpr _ -> Bool
+  (* String expressions *)
+  | Concat _
+  | SConst _ -> Globals.String
 
 let typ_of_exp (e: exp) : typ =
   let pr = !print_formula_exp in
@@ -2085,6 +2105,10 @@ let rec transform_exp_x f (e : exp) : exp =
         let ne1 = transform_exp f e1 in
         let ne2 = transform_exp f e2 in
         Add (ne1,ne2,l)
+      | Concat (e1,e2,l) ->
+        let ne1 = transform_exp f e1 in
+        let ne2 = transform_exp f e2 in
+        Concat (ne1,ne2,l)
       | Subtract (e1,e2,l) ->
         let ne1 = transform_exp f e1 in
         let ne2 = transform_exp f e2 in

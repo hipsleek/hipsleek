@@ -45,6 +45,7 @@ let rec rev_trans_exp e = match e with
   | CP.AConst b -> IP.AConst b
   | CP.Tsconst b -> IP.Tsconst b
   | CP.Add (e1,e2,p)      -> IP.Add (rev_trans_exp e1, rev_trans_exp e2, p)
+  | CP.Concat (e1,e2,p)   -> IP.Concat (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.Subtract (e1,e2,p) -> IP.Subtract (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.Mult (e1,e2,p)     -> IP.Mult (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.Div (e1,e2,p)      -> IP.Div (rev_trans_exp e1, rev_trans_exp e2, p)

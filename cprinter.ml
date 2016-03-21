@@ -873,6 +873,7 @@ let rec pr_formula_exp (e:P.exp) =
   | P.Add (e1, e2, l) ->
     let args = bin_op_to_list op_add_short exp_assoc_op e in
     pr_list_op op_add f_b args; (*fmt_string (string_of_pos l.start_pos);*)
+  | P.Concat (e1, e2, l) -> (pr_formula_exp e1); fmt_string "^"; (pr_formula_exp e2);
   | P.Mult (e1, e2, l) ->
     let args = bin_op_to_list op_mult_short exp_assoc_op e in
     pr_list_op op_mult f_b  args
@@ -5250,6 +5251,7 @@ let rec html_of_formula_exp e =
   | P.Add (e1, e2, l) ->
     let args = bin_op_to_list op_add_short exp_assoc_op e in
     String.concat html_op_add (List.map html_of_formula_exp args)
+  | P.Concat (e1, e2, l) -> failwith x_tbi
   | P.Mult (e1, e2, l) ->
     let args = bin_op_to_list op_mult_short exp_assoc_op e in
     String.concat html_op_mult (List.map html_of_formula_exp args)

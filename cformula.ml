@@ -18569,6 +18569,7 @@ let elim_prm e =
     | CP.Bptriple ((c,t,a),p) -> Some (CP.Bptriple ((nv c,nv t,nv a),p))
     | CP.Tup2 _ 
     | CP.Add _ 
+    | CP.Concat _
     | CP.Subtract _ 
     | CP.Mult _
     | CP.Div _

@@ -2261,6 +2261,9 @@ cexp_w:
     [ c1=SELF ; `PLUS; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos_camlp4 _loc 2)) c1 c2  
     | c1=SELF ; `MINUS; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos_camlp4 _loc 2)) c1 c2
     ]
+  | "string"
+    [ c1=SELF ; `CARET; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.mkConcat c1 c2 (get_pos_camlp4 _loc 2)) c1 c2  
+    ]
   | "mul"
     [ t1=SELF ; `STAR; t2=SELF ->
         apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos_camlp4 _loc 2)) t1 t2

@@ -386,7 +386,6 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Var _          -> false
   | Cpure.IConst _       -> false
   | Cpure.FConst _       -> false
-  | Cpure.SConst _       -> false
   | Cpure.AConst _       -> false
   | Cpure.NegInfConst _ 
   | Cpure.InfConst _  -> false
@@ -419,6 +418,9 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Tsconst _ -> Error.report_no_pattern()
   | Cpure.Tup2 _ -> Error.report_no_pattern()
   | Cpure.Bptriple _ -> Error.report_no_pattern()
+  (* string expression *)
+  | Cpure.Concat _ -> false
+  | Cpure.SConst _ -> false
 
 
 and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =

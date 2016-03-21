@@ -119,7 +119,8 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Var (sv, _) -> isabelle_of_spec_var sv
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
-  | CP.SConst _ -> failwith x_tbi
+  | CP.SConst _ 
+  | CP.Concat _ -> failwith (" [isabelle.ml] String are not supported in isabelle")
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")
   | CP.Tup2 _ -> failwith ("[isabelle.ml]: ERROR in constraints (Tup2 should not appear here)")
