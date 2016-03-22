@@ -302,6 +302,7 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
     | Int , Float -> (tl,Some Float) (*LDK*)
     | Float , Int -> (tl,Some Float) (*LDK*)
+    | String, String -> (tl, Some String)
     | t1, t2  -> 
       if sub_type t1 t2 then (tl,Some k2)  (* found t1, but expecting t2 *)
       (* else if sub_type t2 t1 then Some k1 *)
@@ -415,6 +416,14 @@ and fresh_proc_var_kind tlist et =
   match et with
   | TVar i -> { sv_info_kind = et; id = i}
   | _ -> { sv_info_kind = et; id = fresh_int ()}
+
+and fresh_string tlist =
+  let i = fresh_int() in
+  let key = "TVar__"^(string_of_int i) in
+  let t2 = String in
+  let en={ sv_info_kind = t2; id = i} in
+  let (en,n_tlist) = (en, (key,en)::tlist) in
+  (en.sv_info_kind,n_tlist)
 
 (* should create entry in tlist *)
 and fresh_tvar_rec tlist = 
@@ -621,7 +630,7 @@ and gather_type_info_exp_x prog a0 tlist et =
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
-  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) | IP.Concat (a1, a2, pos) ->
+  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
     let todo_unk:Globals.typ = x_add must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in
     let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
@@ -632,6 +641,17 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tlist2,t2) = x_add must_unify_expect t2 t1 n_tlist1 pos in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
     (n_tl,t2)
+  | IP.Concat (a1, a2, pos) -> 
+    let todo_unk:Globals.typ = x_add must_unify_expect_test et String tlist pos in (* UNK, Int, Float, NUm, Tvar *)
+    let (new_et, n_tl) = fresh_string tlist in
+    let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl in 
+    let (tmp1,tmp2)=nt in
+    let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
+    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
+    let (n_tlist1,t1) = x_add must_unify_expect t1 et n_tl2 pos in
+    let (n_tlist2,t2) = x_add must_unify_expect t2 t1 n_tlist1 pos in
+    let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
+    (n_tl,String)
   | IP.TypeCast (ty, a1, pos) ->
     let todo_unk:Globals.typ = x_add must_unify_expect_test et ty tlist pos in
     let (new_et, n_tl) = fresh_tvar tlist in
