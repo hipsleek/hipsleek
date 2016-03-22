@@ -807,7 +807,7 @@ let string_of_logic logic =
 let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   (* Variable declarations *)
   let fvars = List.filter (fun sv -> not (Cpure.is_rel_typ sv)) (Cpure.remove_dups_svl fvars0) in
-  (* let _ = List.map (fun c -> print_string("xxx "^(!print_ty_sv c)^"\n")) fvars in *)
+  let _ = List.map (fun c -> print_string("xxx "^(!print_ty_sv c)^"\n")) fvars in
   let smt_var_decls = List.map (fun v ->
       let tp = (CP.type_of_spec_var v)in
       let t = smt_of_typ tp in

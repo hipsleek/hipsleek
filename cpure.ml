@@ -7697,7 +7697,7 @@ and norm_exp (e:exp) =
     | Level _ -> e
     | Tup2 ((e1,e2),l) -> Tup2 ((helper e1,helper e2),l) 
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
-    | Concat (e1,e2,l) -> failwith x_tbi
+    | Concat (e1,e2,l) -> e
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
       let e1=helper e1 in 
