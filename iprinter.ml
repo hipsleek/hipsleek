@@ -711,7 +711,7 @@ let rec string_of_form_list l = match l with
 
 (* function used to decide if parentrhesis are needed or not *)
 let need_parenthesis2 = function 
-  | Var _ | BoolLit _ | IntLit _ | FloatLit _ | Member _ -> false
+  | Var _ | BoolLit _ | IntLit _ | StringLit _ | FloatLit _ | Member _ -> false
   | _  -> true
 ;; 
 
@@ -830,6 +830,7 @@ let rec string_of_exp = function
   | BoolLit ({exp_bool_lit_val = b})
       -> string_of_bool b 
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
+  | StringLit ({exp_string_lit_val = s}) -> s
   | FloatLit ({exp_float_lit_val = f})
       -> string_of_float f
   | Null l                         -> "null"

@@ -4718,6 +4718,7 @@ let rec string_of_exp = function
   (*| FieldRead (_, (v, _), (f, _), _) -> v ^ "." ^ f*)
   (*| FieldWrite ((v, _), (f, _), r, _) -> v ^ "." ^ f ^ " = " ^ r*)
   | IConst ({exp_iconst_val = i; exp_iconst_pos = l}) -> string_of_int i
+  | SConst ({exp_sconst_val = s; exp_sconst_pos = l}) -> s
   | New ({exp_new_class_name = id;
           exp_new_arguments = idl;
           exp_new_pos = l}) ->

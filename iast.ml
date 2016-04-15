@@ -464,6 +464,9 @@ and exp_float_lit = { exp_float_lit_val : float;
 and exp_int_lit = { exp_int_lit_val : int;
                     exp_int_lit_pos : loc }
 
+and exp_string_lit = { exp_string_lit_val : string;
+                    exp_string_lit_pos : loc }
+
 and exp_java = { exp_java_code : string;
                  exp_java_pos : loc }
 
@@ -576,6 +579,7 @@ and exp =
   | FloatLit of exp_float_lit
   | Finally of exp_finally
   | IntLit of exp_int_lit
+  | StringLit of exp_string_lit
   | Java of exp_java
   | Label of ((control_path_id * path_label) * exp)
   | Member of exp_member
@@ -849,6 +853,7 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
       | Empty _ 
       | FloatLit _ 
       | IntLit _
+      | StringLit _
       | Java _ 
       | Null _ 
       | This _ 
@@ -1003,6 +1008,7 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
       | Empty _ 
       | FloatLit _ 
       | IntLit _
+      | StringLit _
       | Java _ 
       | Null _ 
       | This _ 
@@ -1215,6 +1221,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | FloatLit e -> e.exp_float_lit_pos
   | Finally e -> e.exp_finally_pos
   | IntLit e -> e.exp_int_lit_pos
+  | StringLit e -> e.exp_string_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
   | ArrayAlloc e -> e.exp_aalloc_pos (* An Hoa *)
@@ -2618,6 +2625,10 @@ and mkIntLit i pos =
   IntLit { exp_int_lit_val = i;
            exp_int_lit_pos = pos }
 
+and mkStringLit s pos =
+  StringLit { exp_string_lit_val = s;
+           exp_string_lit_pos = pos }
+
 and mkFloatLit f pos =
   FloatLit { exp_float_lit_val = f;
              exp_float_lit_pos = pos}
@@ -2806,6 +2817,7 @@ let rec label_e e =
     | Empty _ 
     | FloatLit _ 
     | IntLit _
+    | StringLit _
     | Java _ 
     | Unfold _ 
     | Var _ 
@@ -3670,6 +3682,7 @@ let trans_to_exp_form exp0 =
     match exp with
     | Var v -> P.Var ((v.exp_var_name, Primed), v.exp_var_pos)
     | IntLit i -> P.IConst (i.exp_int_lit_val, i.exp_int_lit_pos)
+    | StringLit s -> P.SConst (s.exp_string_lit_val, s.exp_string_lit_pos)
     | Binary b -> 
       (begin
         let oper1 = b.exp_binary_oper1 in
@@ -3827,6 +3840,7 @@ let find_all_num_trailer_exp e =
     | CallRecv b -> Some ac
     | CallNRecv b -> Some ac
     | IntLit _ -> Some ac
+    | StringLit _ -> Some ac
     | New b -> Some ac
     | Null _ -> Some ac
     | Empty _ -> Some ac

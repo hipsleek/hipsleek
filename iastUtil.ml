@@ -36,6 +36,7 @@ let transform_exp
       | Empty _ 
       | FloatLit _ 
       | IntLit _
+      | StringLit _
       | Java _ 
       | Null _ 
       | This _ 

@@ -80,8 +80,9 @@ let default_value (t :typ) pos : exp =
   | Float ->
     FloatLit {exp_float_lit_val = 0.0; exp_float_lit_pos = pos;}
   | String ->
-    failwith
-      "default_value: String in variable declaration should have been rejected"
+    StringLit {exp_string_lit_val = ""; exp_string_lit_pos = pos;}
+    (* failwith *)
+    (*   "default_value: String in variable declaration should have been rejected" *)
   | (TVar _) ->
     failwith
       "default_value: typevar in variable declaration should have been rejected"
@@ -332,6 +333,7 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -531,6 +533,7 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -788,6 +791,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -1610,6 +1614,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -1747,6 +1752,7 @@ and find_addr (e:exp) : ident list =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _
@@ -2346,6 +2352,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
     | Empty _
     | FloatLit _
     | IntLit _
+    | StringLit _
     | Java _
     | Null _
     | Time _

@@ -148,6 +148,7 @@ let rec loc_of_iast_exp (e: Iast.exp) : VarGen.loc =
   | Iast.FloatLit e -> e.Iast.exp_float_lit_pos
   | Iast.Finally e -> e.Iast.exp_finally_pos
   | Iast.IntLit e -> e.Iast.exp_int_lit_pos
+  | Iast.StringLit e -> e.Iast.exp_string_lit_pos
   | Iast.Java e -> e.Iast.exp_java_pos
   | Iast.Label (_, e1) -> loc_of_iast_exp e1
   | Iast.Member e -> e.Iast.exp_member_pos
@@ -1174,6 +1175,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
     (*| Cil.TInt (Cil.IChar, _) -> Globals.Named "char"*)
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
+    | Cil.TPtr (Cil.TInt(Cil.IChar,_), _) -> Globals.String
     | Cil.TPtr (ty, _) -> (
         let core_type = get_core_cil_typ ty in
         (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
@@ -1186,7 +1188,7 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
               let value_typ = translate_typ core_type pos in
               let value_field = ((value_typ, str_value), no_pos, false, (gen_field_ann value_typ) (* Iast.F_NO_ANN *)) in
               let dname = match ty with
-		| Cil.TInt(Cil.IChar, _) -> "char_star"
+		(* | Cil.TInt(Cil.IChar, _) -> "char_star" *)
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
@@ -1258,6 +1260,7 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
     | Globals.Bool
     | Globals.Float
     | Globals.Array _
+    | Globals.String
     | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
     | Globals.Named typ_name -> (
         if (need_init) then (
@@ -1275,7 +1278,7 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
   | Cil.CInt64 (i, _, _) -> Iast.mkIntLit (Int64.to_int i) pos
-  | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
+  | Cil.CStr s -> Iast.mkStringLit s pos
   | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
   (*| Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"*)
   | Cil.CChr c -> Iast.mkIntLit (Char.code c) pos
