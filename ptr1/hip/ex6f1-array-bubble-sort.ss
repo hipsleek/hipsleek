@@ -38,47 +38,52 @@ arr_seg_min_head<start,end> == start = end & start >= 0
   or x::arrI<m> * self::arr_seg_min<start+1,end,m> & x=self+start & start<end & start>=0
   inv end>=start & start>=0;
 
-arr_sorted_with_min<start,end,m> == start=end & start>=0
-  or x::arrI<m> * self::arr_sorted_with_min<start+1,end,m2> & x=self+start & m<m2 & start>=0 & start<end
+arr_seg_min_tail<start,end> == start = end & start >= 0
+  or self::arrI<_> & start = end-1
+  or x1::arrI<m1> * self::arr_seg_min<start+1,end-1,m2> * x2::arrI<m2> & x=self+end & start<end-1 & start>=0
   inv end>=start & start>=0;
 
-arr_sorted<start,end> == start = end & start >=0
-  or x::arrI<m> * self::arr_sorted_with_min<start+1,end,m> & start<end & start>=0
-  inv start<=end & start>=0;
+/* arr_sorted_with_min<start,end,m> == start=end & start>=0 */
+/*   or x::arrI<m> * self::arr_sorted_with_min<start+1,end,m2> & x=self+start & m<m2 & start>=0 & start<end */
+/*   inv end>=start & start>=0; */
+
+/* arr_sorted<start,end> == start = end & start >=0 */
+/*   or x::arrI<m> * self::arr_sorted_with_min<start+1,end,m> & start<end & start>=0 */
+/*   inv start<=end & start>=0; */
 
 
 void bubble_push(arrI base, int start, int end)
-     requires base::arr_seg<start,end> & start<end
-     ensures base::arr_seg_min_head<start,end>;
+  requires base::arr_seg<start,end>
+  ensures base::arr_seg_min_head<start,end>;
 {
   if(start>=end-1){
     return;
   }
   else{
-    int e1 = get_arr(base,end);
-    int e2 = get_arr(base,end-1);
+    int e1 = get_arr(base,start);
+    int e2 = get_arr(base,start+1);
     if(e1<e2){
-      upd_arr(base,end,e2);
-      upd_arr(base,end-1,e1);
-      bubble_push(base, start, end-1);
+      upd_arr(base,start,e2);
+      upd_arr(base,start+1,e1);
+      bubble_push(base, start+1, end);
     }
     else{
-      bubble_push(base,start,end-1);
+      bubble_push(base,start+1,end);
     }
   }
 }
 
-void bubble_sort(arrI base, int start, int end)
-  requires base::arr_seg<start,end> & start<end
-  ensures base::arr_sorted<start,end>;
-{
-  if(start>=end-1){
-    return;
-  }
-  else{
-    bubble_push(base,start,end);
-    bubble_sort(base,start+1,end);
-    return;
-  }
-}
+/* void bubble_sort(arrI base, int start, int end) */
+/*   requires base::arr_seg<start,end> & start<end */
+/*   ensures base::arr_sorted<start,end>; */
+/* { */
+/*   if(start>=end-1){ */
+/*     return; */
+/*   } */
+/*   else{ */
+/*     bubble_push(base,start,end); */
+/*     bubble_sort(base,start+1,end); */
+/*     return; */
+/*   } */
+/* } */
 

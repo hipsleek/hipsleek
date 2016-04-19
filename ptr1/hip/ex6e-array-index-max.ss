@@ -37,9 +37,9 @@ int get_max(arrI base,int i,int m)
 */
  case{
   i>=m -> ensures emp & res=-1;
-  i<m -> 
-    requires base::arr_seg_max<i,m,maxv>@L
-    ensures  res=mval;
+  i<m ->
+    requires base::arr_seg_max<i,m,maxv>
+    ensures  base::arr_seg_max<i,m,res>;
   }
 {
   if(i<m){

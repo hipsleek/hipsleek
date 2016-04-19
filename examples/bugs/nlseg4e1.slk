@@ -21,7 +21,7 @@ checkentail_exact
 print residue.
 expect Valid.
 // valid with @L residue
-/*
+
 // (2)
 checkentail_exact
     (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
@@ -92,4 +92,3 @@ expect Valid.
 checkentail x::nlseg<y> * y::nlseg<z> * z::node<a>
          |- x::nlseg<z> * z::node<a>.
 expect Valid.
-*/
