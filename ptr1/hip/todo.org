@@ -8,9 +8,17 @@
   - find max element. ex6e. Is the specification for get_arr correct?
   - array write in arbitrary position, use split_arr to guide the split of array,
     and merge_arr can be used to merge two array segments
-  - array linear search: working. Need 'operational lemma'
+  - ex6i array linear search: working. Need 'operational lemma'
   - array binary search: working, but it may be hard to verify with other parts of the array
     ex6j1 can deal with other parts of the array. But the specification is not quite strong.
+  - ex6l2 get_max returns the index for the max value.
+    In this example, only the shape property is verified.
+  - ex6l3
+    arr_seg_max<i,n,maxv,pos> == i=n & i>=0
+     or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv,pos> & x=self+i & i>=0 & i<n-1 & ((!(i=pos))|(cur=maxv))
+    inv n>i & i>=0;
+    either without max or the ((!i=pos)|...) this works
+  - real sorting...?
 
 * Interesting problems
   - array initialization
@@ -19,3 +27,5 @@
   - find max
   - linear search
 
+
+* next: Use set properties, use a general predicate structrue

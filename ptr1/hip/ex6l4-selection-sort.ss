@@ -6,14 +6,13 @@ arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0;
 
-/* arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0 */
-/*   or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i  */
-/*        & i>=0 & i<n-1 & mi<=m2 */
-/*   inv n>i & i>=0; */
-
-arr_seg_max<i,n,maxv> == x::arrI<maxv> & x=self+i & i=n-1 & i>=0 //& cur<=max_value
-  or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2> & x=self+i & i>=0 & i<n-1 & maxv=max(cur,maxv2)
+arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i & i>=0 & i<n-1 & mi>=m2
   inv n>i & i>=0;
+
+/* arr_seg_max<i,n,maxv> == x::arrI<maxv> & x=self+i & i=n-1 & i>=0 //& cur<=max_value */
+/*   or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2> & x=self+i & i>=0 & i<n-1 & maxv=max(cur,maxv2) */
+/*   inv n>i & i>=0; */
 
 /* arr_seg_max_1<i,n,maxv> == i=n & i>=0 //& cur<=max_value */
 /*   or x::arrI<maxv> & x=self+i & i=n-1 & i>=0 */
@@ -63,47 +62,54 @@ int get_arr(arrI base, int i)
 int get_max(arrI base,int i,int m)
   requires base::arr_seg_max_2<i,m,_> & i<m // generalization
   ensures  base::arr_seg_max_2<i,res,v1> * x::arrI<v> * base::arr_seg_max_2<res+1,m,v2> & v>=v1 & v>=v2 & x=base+res;
-{
-  if(i==m-1)
-    {
-      return i;
-    }
-  else{
-    int cur = get_arr(base,i);
-    int tmp_index = get_max(base,i+1,m);
-    int tmp = get_arr(base,tmp_index);
-    if(tmp<cur)
-      {
-        merge_max(base,i+1,tmp_index,m,tmp);
-        return i;
-      }
-    else
-      {
-        reverse_unfold(base,i,tmp_index,tmp);
-        return tmp_index;
-      }
-  }
-}
-
-/* void selection_sort(arrI base, int i, int m) */
-/*   requires base::arr_seg_max_1<i,m,_> */
-/*   ensures base::arr_seg_sorted<i,m,_,_>; */
 /* { */
-/*   if(i<m){ */
-/*     int tmp_index = get_max(base,i,m); */
-/*     int tmp = get_arr(base,tmp_index); */
-/*     //reverse_unfold(base,tmp_index,m,tmp); */
-/*     int val = get_arr(base,i); */
-/*     /\* upd_arr(base,tmp_index,val); *\/ */
-/*     /\* upd_arr(base,i,tmp); *\/ */
-
-/*     //reverse_unfold(base,tmp_index,m,tmp); */
-/*     merge_max_simp(base,i+1,tmp_index,m,tmp); */
-
-/*     return;// selection_sort(base,i+1,m); */
-/*   } */
+/*   if(i==m-1) */
+/*     { */
+/*       return i; */
+/*     } */
 /*   else{ */
-/*     // assume false; */
-/*     return; */
+/*     int cur = get_arr(base,i); */
+/*     int tmp_index = get_max(base,i+1,m); */
+/*     int tmp = get_arr(base,tmp_index); */
+/*     if(tmp<cur) */
+/*       { */
+/*         merge_max(base,i+1,tmp_index,m,tmp); */
+/*         return i; */
+/*       } */
+/*     else */
+/*       { */
+/*         reverse_unfold(base,i,tmp_index,tmp); */
+/*         return tmp_index; */
+/*       } */
 /*   } */
 /* } */
+
+int selection_sort(arrI base, int i, int m, int ma)
+  requires base::arr_seg_max_2<i,m,ma> & i<m
+  ensures base::arr_seg_sorted<i,m,res>;
+{
+  if(i==m-1){
+    return get_arr(base,i);
+  }
+  else{
+    //assume false;
+    // dprint;
+    int val = get_arr(base,i);
+    int tmp_index = get_max(base,i+1,m);
+    int tmp = get_arr(base,tmp_index);
+    //reverse_unfold(base,tmp_index,m,tmp);
+    if(tmp>val){
+      upd_arr(base,tmp_index,val);
+      upd_arr(base,i,tmp);
+    }
+    //    dprint;
+    reverse_unfold(base,tmp_index,m,tmp);
+    //    dprint;
+    merge_max(base,i+1,tmp_index,m,tmp);
+    //    dprint;
+    int ma = get_arr(base,i);
+    selection_sort(base,i+1,m);
+    dprint;
+    return ma;
+  }
+}
