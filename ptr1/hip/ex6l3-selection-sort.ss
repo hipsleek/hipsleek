@@ -12,42 +12,8 @@ arr_seg<i,n> == i=n & i>=0
 /*   inv n>i & i>=0; */
 
 arr_seg_max<i,n,maxv,pos> == x::arrI<maxv> & x=self+i & i=n-1 & i>=0 & i=pos //& cur<=max_value
-  or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2,_> & x=self+i & i>=0 & i<n-1 & i=pos & maxv=cur & cur>=maxv2
-  or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2,pos> & x=self+i & i>=0 & i<n-1 & !(i=pos) & maxv=max(cur,maxv2)
-  inv n>i & i>=0;
-
-/* arr_seg_max_1<i,n,maxv> == i=n & i>=0 //& cur<=max_value */
-/*   or x::arrI<maxv> & x=self+i & i=n-1 & i>=0 */
-/*   or x::arrI<cur> * self::arr_seg_max_1<i+1,n,maxv2> & x=self+i & i>=0 & i<n & maxv=max(cur,maxv2) & maxv>=cur & maxv>=maxv2 */
-/*   inv n>i & i>=0; */
-
-/* arr_seg_max_2<i,n,maxv> == i=n & i>=0 //& cur<=max_value */
-/*   or x::arrI<cur> * self::arr_seg_max_2<i+1,n,maxv2> & x=self+i & i>=0 & i<n & maxv=max(cur,maxv2) */
-/*   inv n>i & i>=0; */
-
-
-
-/* arr_seg_sorted<i,n,ma,mi> == i=n & i>=0 */
-/*   or x::arrI<m1> * self::arr_seg_sorted<i+1,n,m2,mi> &  m1>m2 */
-/*   or self::arr_seg_sorted<i,n-1,ma,m1> * x::arrI<m2> & m1>m2 */
-/*   inv n>i & i>=0; */
-
-
-/* void merge_max(arrI base,int i, int k, int n, int m) */
-/*   requires base::arr_seg_max_2<i,k,m1> * base::arr_seg_max_2<k,n,m2> & m1<=m & m2<=m */
-/*   ensures base::arr_seg_max_2<i,n,m>; */
-
-/* void merge_max_simp(arrI base,int i, int k, int n, int m) */
-/*   requires base::arr_seg_max_1<i,k,_> * base::arr_seg_max_1<k,n,_> */
-/*   ensures base::arr_seg_max_1<i,n,m>; */
-
-/* void reverse_unfold(arrI base, int i,int n,int m) */
-/*   requires x::arrI<m1>*base::arr_seg_max_2<i+1,n,m2> & x=base+i & m1<=m & m2<=m */
-/*   ensures base::arr_seg_max_2<i,n,m>; */
-
-/* void reverse_unfold_simp(arrI base, int i,int n,int m) */
-/*   requires x::arrI<m1>*base::arr_seg_max_2<i+1,n,m2> & x=base+i */
-/*   ensures base::arr_seg_max_2<i,n,m>; */
+  or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2,pos> & x=self+i & i>=0 & i<n-1 & pos>=i & pos<=n-1 & ((!(i=pos))|(maxv=cur)) & maxv=max(cur,maxv2)
+  inv n>i & i>=0 & pos>=i & pos<=n-1;
 
 void split_arr(arrI base,int i,int m,int k)
   requires base::arr_seg_max<i,m,v,p> & i<=k & k<m & p=k
@@ -83,7 +49,7 @@ int get_arr(arrI base, int i)
 
 int get_max(arrI base,int i,int m)
   requires base::arr_seg<i,m>&i<m // generalization
-  ensures  base::arr_seg_max<i,m,_,res>&res>=i&res<m;
+  ensures  base::arr_seg_max<i,m,_,res>;
 {
   if(i==m-1)
     {
@@ -91,28 +57,17 @@ int get_max(arrI base,int i,int m)
     }
   else{
     int cur = get_arr(base,i);
-    dprint;
+
     int tmp_index = get_max(base,i+1,m);
-    dprint;
-    split_arr(base,i+1,m,tmp_index);
-    unfold_arr(base,tmp_index,m);
-    dprint;
+
     int tmp = get_arr(base,tmp_index);
-    ///   dprint;
+
     if(tmp<cur)
       {
-        assume false;
-        reverse_unfold(base,tmp_index,m);
-        merge_arr(base,i+1,m,tmp_index);
         return i;
       }
     else
       {
-        reverse_unfold(base,tmp_index,m);
-        dprint;
-        merge_arr(base,i+1,m,tmp_index);
-        reverse_unfold(base,i,tmp_index);
-        //dprint;
         return tmp_index;
       }
   }
