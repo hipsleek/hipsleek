@@ -221,6 +221,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | NUM, Float -> (tl,Some Float)
     | NUM, AnnT -> (tl,Some AnnT)
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
+    | String, String -> (tl, Some String)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
     | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
@@ -445,6 +446,8 @@ and fresh_int_en en =
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
+  | Named c when c = "string" ->
+       String
   | Named c ->
     (try
        let todo_unk = x_add I.look_up_data_def_raw prog.I.prog_data_decls c

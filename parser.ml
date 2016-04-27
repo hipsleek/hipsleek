@@ -4278,6 +4278,7 @@ qualified_identifier: [[peek_try_st_qi; t=primary_expression; `DOT; `IDENTIFIER 
 literal:
  [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos_camlp4 _loc 1 }
   | t=integer_literal -> IntLit { exp_int_lit_val = t;exp_int_lit_pos = get_pos_camlp4 _loc 1 }
+  | t=string_literal -> StringLit { exp_string_lit_val = t;exp_string_lit_pos = get_pos_camlp4 _loc 1 }
   | t=real_literal -> FloatLit { exp_float_lit_val = t; exp_float_lit_pos = get_pos_camlp4 _loc 1 }
   | `NULL -> Null (get_pos_camlp4 _loc 1) 
   (* | `IMM -> P.AConst (Imm, (get_pos_camlp4 _loc 1))  *)
@@ -4288,6 +4289,8 @@ literal:
 real_literal:[[ `FLOAT_LIT (t,_) -> t]];
 
 integer_literal: [[`INT_LITER (t,_) -> t]];
+
+string_literal: [[`STRING (t,_) -> t]];
 
 boolean_literal : 
   [[ `TRUE -> true
