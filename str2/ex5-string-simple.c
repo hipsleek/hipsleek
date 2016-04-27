@@ -1,11 +1,12 @@
 #include <string.h>
 
-void a (char *s)
+char* a (char *s)
   /*@
     requires true
-    ensures s="abc";
+    ensures s="abc" & res="abc";
   */
 {
   s = "abc";
+  return s;
 }
 
