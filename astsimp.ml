@@ -7050,9 +7050,12 @@ and trans_args_gen (args : ((C.exp option) * typ * loc) list) :
 and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =
   match t with
   | Named c ->
-    (try let todo_unk = I.look_up_enum_def_raw prog.I.prog_enum_decls c in "int"
+    (try 
+         let todo_unk = I.look_up_enum_def_raw prog.I.prog_enum_decls c in
+         let () = print_endline ("here"^(string_of_typ t)) in
+         "int"
      with | Not_found -> c)
-  |t -> string_of_typ t
+  | t -> string_of_typ t
 
 and mingle_name_enum prog (m : ident) (targs : typ list) =
   let param_tnames =
