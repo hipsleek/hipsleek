@@ -57,6 +57,7 @@ let string_of_binary_op = function
   | OpLogicalOr    -> " || "
   | OpIsNull       -> " == "
   | OpIsNotNull    -> " != "
+  | OpConcat       -> " ^ "
 ;;
 
 (* pretty printing for assign operators *)
@@ -123,6 +124,7 @@ let string_of_binary_op = function
   | OpLogicalOr    -> " || "
   | OpIsNull       -> " == "
   | OpIsNotNull    -> " != "
+  | OpConcat       -> " ^ "
 ;;
 
 (* pretty printing for assign operators *)

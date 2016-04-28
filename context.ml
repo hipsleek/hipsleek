@@ -2124,7 +2124,7 @@ and search_lemma_candidates prog flag_lem ann_derv vr_view_split (vl_view_origs,
     match hnode with
     | ViewNode vn -> (vn.h_formula_view_node, vn.h_formula_view_arguments)
     | DataNode dn -> (dn.h_formula_data_node, dn.h_formula_data_arguments)
-    | _ -> raise Not_found
+    | _ ->raise Not_found
   in
   if flag_lem then
     let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name vr_name) in

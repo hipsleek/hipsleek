@@ -122,7 +122,7 @@ let is_view_recursive (n:ident) =
   if (!view_scc)==[] then (
     (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
     (* false *)
-      raise Not_found
+    raise Not_found
   )
   else List.mem n !view_rec 
 
@@ -222,7 +222,7 @@ let _ =
       (I.OpNeq, "neq___"); (I.OpLt, "lt___"); (I.OpLte, "lte___");
       (I.OpGt, "gt___"); (I.OpGte, "gte___"); (I.OpLogicalAnd, "land___");
       (I.OpLogicalOr, "lor___"); (I.OpIsNull, "is_null___");
-      (I.OpIsNotNull, "is_not_null___");
+      (I.OpIsNotNull, "is_not_null___");(I.OpConcat, "concat___");
     ]
 
 (**
@@ -1169,7 +1169,7 @@ let line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_
                   | Some true -> raise Not_found end
               | Cpure.Contradicting -> begin match a1 with
                   | None -> (Some true,Some con) 
-                  | Some false ->  raise Not_found 
+                  | Some false -> raise Not_found 
                   | Some true -> match a2 with
                     | None -> raise Not_found 
                     | Some s-> if (Cpure.equalBFormula con s) then (a1,a2)
@@ -1182,7 +1182,7 @@ let line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_
           | Some true -> 
             match (n,con_f) with
             | None, Some s -> (l1,br_index::l2, Some s)
-            | _, None ->  raise Not_found
+            | _, None -> raise Not_found
             | Some s1, Some s2 -> if (Cpure.equalBFormula s1 s2) then  (l1,br_index::l2, n)
               else raise Not_found
       ) ([],[],None) branches in	

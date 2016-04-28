@@ -2826,7 +2826,7 @@ let subst_views_form_x map_views is_pre f=
   in
   let rec lookup_map map vn v_args=
     match map with
-      | [] -> raise Not_found
+      | [] ->raise Not_found
       | ((orig_vn,orig_v_args),(der_vn,der_v_args))::rest ->
             if string_eq vn orig_vn then
               let sst = List.combine orig_v_args v_args in

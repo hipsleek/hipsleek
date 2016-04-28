@@ -4156,6 +4156,8 @@ additive_expression:
  [[ t=multiplicative_expression                   -> t
   | t1=SELF; `PLUS; t2=multiplicative_expression  ->
       mkBinary OpPlus t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
+  | t1=SELF; `CARET; t2=multiplicative_expression  ->
+      mkBinary OpConcat t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)
   | t1=SELF; `MINUS; t2=multiplicative_expression ->
       mkBinary OpMinus t1 t2 (fresh_branch_point_id "") (get_pos_camlp4 _loc 2)]];
 

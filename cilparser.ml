@@ -1352,6 +1352,7 @@ and translate_binary_operator (op : Cil.binop) pos : Iast.bin_op =
   | Cil.BOr -> report_error pos "Error!!! Iast doesn't support Cil.BOr operator!"
   | Cil.LAnd -> Iast.OpLogicalAnd
   | Cil.LOr -> Iast.OpLogicalOr
+  (* | -> Iast.OpConcat *) (* Muoi: to add OpConcat in cil *)
 
 
 and translate_lval_x (lv: Cil.lval) : Iast.exp =

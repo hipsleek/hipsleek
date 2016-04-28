@@ -421,7 +421,7 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
           self_sv
         with _ -> find_self_sv rest
       end
-    | [] -> raise Not_found
+    | [] ->raise Not_found
   in
   let process_one_f fr_args arg_sst f=
     (* local info *)

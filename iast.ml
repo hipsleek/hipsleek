@@ -346,6 +346,7 @@ and bin_op =
   | OpLogicalOr
   | OpIsNull
   | OpIsNotNull
+  | OpConcat
 
 and assign_op =
   | OpAssign
@@ -1864,7 +1865,7 @@ and look_up_enum_def pos (defs : enum_decl list) (name : ident) = match defs wit
 
 and look_up_enum_def_raw (defs : enum_decl list) (name : ident) = match defs with
   | d :: rest -> if d.enum_name = name then d else look_up_enum_def_raw rest name
-  | [] -> raise Not_found
+  | [] -> failwith x_tbi (* raise Not_found *)
 
 and look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs with
   | p :: rest ->
@@ -3693,6 +3694,7 @@ let trans_to_exp_form exp0 =
         | OpMinus -> P.mkSubtract (helper oper1) (helper oper2) pos
         | OpMult -> P.mkMult (helper oper1) (helper oper2) pos
         | OpDiv -> P.mkDiv (helper oper1) (helper oper2) pos
+        | OpConcat -> P.mkConcat (helper oper1) (helper oper2) pos
         | _ -> report_error no_pos "iast.trans_exp_to_form: unexpected exp"
       end)
     | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
