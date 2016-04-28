@@ -666,7 +666,7 @@ let command_for prover = (
 let run st prover input timeout =
   (*let () = print_endline "z3-2.19" in*)
   let out_stream = open_out infile in
-  let () = print_endline ("input:\n" ^ input) in
+  (* let () = print_endline ("input:\n" ^ input) in *)
   output_string out_stream input;
   close_out out_stream;
   let (cmd, cmd_arg) = command_for prover in
