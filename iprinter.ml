@@ -209,7 +209,7 @@ let rec string_of_formula_exp = function
   | P.Bptriple (t,l) -> pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
   | P.Tup2 (t,l) -> pr_pair string_of_formula_exp string_of_formula_exp t
   | P.FConst (f, _) -> string_of_float f
-  | P.SConst (s, _) -> s
+  | P.SConst (s, _) -> "\""^ s ^"\""
   | P.Concat (s1, s2, _) -> (string_of_formula_exp s1) ^ "^" ^ (string_of_formula_exp s2)
   | P.Add (e1, e2, l)	      -> (match e1 with
       | P.Null _
@@ -832,7 +832,7 @@ let rec string_of_exp = function
   | BoolLit ({exp_bool_lit_val = b})
       -> string_of_bool b 
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
-  | StringLit ({exp_string_lit_val = s}) -> s
+  | StringLit ({exp_string_lit_val = s}) -> "\"" ^ s ^ "\""
   | FloatLit ({exp_float_lit_val = f})
       -> string_of_float f
   | Null l                         -> "null"

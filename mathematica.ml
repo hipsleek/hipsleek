@@ -289,7 +289,7 @@ let rec math_of_exp e0 : string=
   | CP.IConst (i, _) -> string_of_int i
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> math_of_float f
-  | CP.SConst (s, _) -> s
+  | CP.SConst (s, _) -> "\""^ s ^ "\""
   | CP.Tsconst _ -> failwith ("mathematica.math_of_exp: Tsconst can't appear here")
   | CP.Add (e1, e2, _) ->
     let se1 = math_of_exp e1 in

@@ -7632,7 +7632,7 @@ let rec get_head e = match e with
   | InfConst(i,_) -> i
   | NegInfConst(i,_) -> i
   | FConst (f,_) -> string_of_float f
-  | SConst (s,_) -> s
+  | SConst (s,_) -> "\""^ s ^"\""
   | AConst (f,_) -> string_of_heap_ann f
   | Tsconst (f,_) -> Tree_shares.Ts.string_of f
   | Bptriple _ -> "Bptriple"
