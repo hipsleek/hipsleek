@@ -71,7 +71,7 @@ int partition(arrI base, int i, int m, int pivot)
         dprint;
       }
       else{
-        dprint;
+
         if(i<m-1){
           reverse_unfold(base,i,m-1);
         }
@@ -89,13 +89,3 @@ int partition(arrI base, int i, int m, int pivot)
     return tmp2;
   }
 }
-
-/* void quicksort(arrI base, int i, int m) */
-/* { */
-/*   if(i==m-1){ */
-/*     return; */
-/*   } */
-/*   else{ */
-/*     int pivot = get_arr(base,i); */
-/*     int index = partition(base,i+1,m,pivot); */
-/*     int tmp1 = get_ */
