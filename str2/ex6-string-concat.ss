@@ -1,8 +1,11 @@
 void c(ref string x, string y)
-  requires true
-  ensures x' = "ab"^y;
+  case {
+	y = "" -> ensures x' = "ab"^"c";
+	y != "" -> ensures x' = "ab"^y^"c";
+	}	
 {
-  string s = "a"^"b"^y^"c";
-  x = s;
+  string z = "abc";
+  string s = "a"^"b"^y^"d";
+  x = z;
   int i = 1+2;
 }

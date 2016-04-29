@@ -1,0 +1,20 @@
+//1
+checksat slen ("x") = 2. //UNSAT
+
+//2
+checksat slen ("x"^"y") = slen (s) & s = "ab". //SAT
+
+//3
+checksat (z = x1 ^ "abc" ^ x2) & (z = y1 ^ "ef" ^ y2) & (z = m1 ^ "ce" ^ m2) & (slen (z) < 9). //SAT
+
+//4
+checksat (z = x1 ^ "abc" ^ x2) & (z = y1 ^ "ef" ^ y2) & (z = m1 ^ "ce" ^ m2) & (slen (z) < 8). // expect SAT, solver return unknown.
+
+//5
+checksat (x ^ y = "abc" ^ z) & (slen(x) = 6). //SAT
+
+//6
+checksat (x ^ y = "abc" ^ z) & (slen(x) < 3).// SAT
+
+//7
+checksat (x ^ y = "abc" ^ z) & (slen(x^y) < 3).// UNSAT

@@ -769,6 +769,13 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl,r) = x_add must_unify Int et n_tl pos in
     let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
     (n_tlist,r)
+  | IP.SLen (a, pos) ->
+    let (fv,n_tl) = fresh_string tlist in
+    let new_et = fv in
+    let (n_tl,r) = x_add must_unify Int et n_tl pos in
+    let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
+    (n_tlist,r)
+  (* | IP.SLen _ -> failwith x_tbi *)
   | IP.BExpr f1 -> (x_add gather_type_info_pure prog f1 tlist, Bool)
 
 and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =

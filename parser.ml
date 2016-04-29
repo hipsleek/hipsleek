@@ -323,7 +323,8 @@ let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
   | _ -> report_error (get_pos 1) "with 1 expected pure_form, found cexp"
 
-let apply_cexp_form1 fct form = match form with
+let apply_cexp_form1 fct form = 
+  match form with
   | Pure_c f 
   | Pure_t (f, _) -> Pure_c (fct f)
   | _ -> report_error (get_pos 1) "with 1 expected cexp, found pure_form"
@@ -2255,6 +2256,7 @@ cexp_w:
     | `APPEND; `OPAREN; c1= opt_cexp_list; `CPAREN -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
     | `HEAD; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
     | `LENGTH; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
+    | `SLEN; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.SLen (c, get_pos_camlp4 _loc 1)) c
     | `REVERSE; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1
     ] 
   | "addit"
@@ -2287,7 +2289,8 @@ cexp_w:
           Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
       else
         begin
-          if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+          if not(rel_names # mem id) then print_endline_quiet
+  ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
           else  print_endline_quiet ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
           Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
         end

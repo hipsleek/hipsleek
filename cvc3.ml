@@ -76,6 +76,7 @@ and cvc3_of_exp a = match a with
     failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");
   | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
     failwith ("Lists are not supported in cvc3")
+  | CP.SLen (s, _) -> "slen (" ^ (cvc3_of_exp s) ^ ")"
   | CP.Func _ -> failwith ("Functions are not supported in cvc3")
   | CP.ArrayAt _ -> (* An Hoa *)
     failwith ("Arrays are not supported in cvc3")
@@ -85,7 +86,7 @@ and cvc3_of_exp a = match a with
   | CP.Bptriple _ -> failwith ("cvc3.cvc3_of_exp: Bptriple should not appear here")
   | CP.Tup2 _ -> failwith ("cvc3.cvc3_of_exp: Tup2 should not appear here")
   | CP.InfConst _ 
-  |CP.NegInfConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (\inf should not appear here)")
+  | CP.NegInfConst _ -> failwith ("[cvc3ite.ml]: ERROR in constraints (inf should not appear here)")
   | CP.Template t -> cvc3_of_exp (CP.exp_of_template t)
 
 and cvc3_of_b_formula b =

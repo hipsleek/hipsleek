@@ -238,6 +238,7 @@ module Make (Token : SleekTokenS)
    ("lemma_infer_pred", LEMMA TLEM_INFER_PRED);
    (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
+   ("slen", SLEN);
    ("let", LET);
    ("max", MAX);
    ("min", MIN);
