@@ -12,6 +12,7 @@
   - array binary search: working, but it may be hard to verify with other parts of the array
     ex6j1 can deal with other parts of the array. But the specification is not quite strong.
   - ex6l get_max returns the index for the max value. This one is complete.
+  - ex6l1 not working, just a draft
   - ex6l2 get_max returns the index for the max value.
     In this example, only the shape property is verified.
   - ex6l3
@@ -22,11 +23,14 @@
     A failure attempt to include global information in local reasoning.
     How to handle when an array is broken into 2? With exploring.
   - ex6l4 a real selection sorting with max value of an array
+  - ex6l5 draft, using set property
+  - ex6l6 draft
+  - ex6l7 draft
   - ex6m1 swap and bubble sort
   - ex6n1 verify the shape for partition. But this one takes very long time.
   - ex6n2 verify the shape and content property for partition, this one quite fast. Why ex6n1 takes so long?
-  - 
-
+  - ex6n3 verify a more general property for partition, making it suitable to be called inside quick sort
+  - ex6n4 verify quick sort.
 
 * Interesting problems
   - array initialization
@@ -34,6 +38,12 @@
   - binary search, requires lemma
   - find max
   - linear search
+  - selection sort
+  - bubble sort
+  - quick sort
 
-
-* next: Use set properties, use a general predicate structrue
+* Contributions
+  - A systematic way to write specifications for array programs
+    - provide base case, inductive case
+  - A verification system for array programs with pointers or index
+  - Automatically prove

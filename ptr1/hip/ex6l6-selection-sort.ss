@@ -64,8 +64,8 @@ int get_arr(arrI base, int i)
   ensures res=v;
 
 int get_max(arrI base,int i,int m)
-  requires base::arr_seg_max_2<i,m,_> & i<m // generalization
-  ensures  base::arr_seg_max_2<i,res,v1> * x::arrI<v> * base::arr_seg_max_2<res+1,m,v2> & v>=v1 & v>=v2 & x=base+res;
+  requires base::arr_seg_max_3<i,m,_> & i<m // generalization
+  ensures  (base::arr_seg_max_3<i,(base::arr_seg_max_3<i,res,v1> * x::arrI<v> * base::arr_seg_max_3<res+1,m,v2> & v>=v1 & v>=v2 & x=base+res);
 {
   if(i==m-1)
     {

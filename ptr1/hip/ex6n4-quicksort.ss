@@ -7,65 +7,27 @@ arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0;
 
-/* arr_seg_sorted<i,n,mi> == x::arrI<v> & x=self+i & i=n-1 & i>=0 & v<=mi */
-/*   or x::arrI<v>*self::arr_seg_sorted<i+1,n,m2> & x=self+i & i>=0 & i<n-1 & v<=mi & mi>=m2 & v>=m2 */
-/*   inv n>i & i>=0; */
-
 arr_seg_sorted<i,n,ma,mi> == x::arrI<v> & x=self+i & i=n-1 & i>=0
   or x::arrI<mi> * self::arr_seg_sorted<i+1,n,ma,mi1> & x=self+i & mi<=mi1 & i<n-1 & i>=0
   or self::arr_seg_sorted<i,n-1,ma1,mi> * x::arrI<ma> & x+1=self+n & ma>=ma1 & i<n-1 & i>=0
   inv n>i & i>=0;
-
-/* arr_seg_max_2<i,n,maxv> == i=n & i>=0 //& cur<=max_value */
-/*   or x::arrI<cur> * self::arr_seg_max_2<i+1,n,maxv2> & x=self+i & i>=0 & i<n & ((!(i=n-1))|maxv=cur) & maxv=max(cur,maxv2) */
-/*   inv n>=i & i>=0; */
-
-/* arr_seg_max_min<i,n,ma,mi> == i=n & i>=0 */
-/*   or x::arrI<cur> * self::arr_seg_max_min<i+1,n,ma1,mi1> & x=self+i & i>=0 & i<n & ((!(i=n-1))|(ma=cur&mi=cur)) & ma=max(cur,ma1) & mi=min(cur,mi1) */
-/*   inv n>=i & i>=0; */
 
 arr_seg_max_min<i,n,ma,mi> == i=n & i>=0
   or x::arrI<cur> * self::arr_seg_max_min<i+1,n,ma,mi> & x=self+i & i>=0 & i<n & cur<=ma & cur>mi &((!(i=n-1))|(cur=ma & cur=mi))
   inv n>=i & i>=0;
 
 // Primitive operations
-
-void split_arr(arrI base, int i, int n, int k)
-  requires base::arr_seg<i,n> & k>=i & k<=n
-  ensures base::arr_seg<i,k> * base::arr_seg<k,n>;
-
 void merge_sort(arrI base, int i, int k, int n)
   requires base::arr_seg_sorted<i,k,ma,mi> * base::arr_seg_sorted<k,n,ma1,mi1> & ma<=mi1
   ensures base::arr_seg_sorted<i,n,ma1,mi>;
-
-void unfold_tail(arrI base, int i, int n)
-  requires base::arr_seg<i,n> & i<n
-  ensures base::arr_seg<i,n-1> * x::arrI<v> & x+1= base+n;
 
 void unfold_tail_2(arrI base, int i, int n)
   requires base::arr_seg_max_min<i,n,ma,mi> & i<n
   ensures base::arr_seg_max_min<i,n-1,ma,mi> * x::arrI<v> & x+1= base+n & v<=ma & v>=mi; 
 
-
-void reverse_unfold(arrI base, int i,int n)
- case{
-  i<n -> requires x::arrI<v>*base::arr_seg<i+1,n> & x=base+i
-    ensures base::arr_seg<i,n>;
-  i>=n -> requires true
-    ensures true;
-}
-
 void reverse_unfold_2(arrI base, int i,int n)
   requires x::arrI<v>*base::arr_seg_max_min<i+1,n,ma,mi> & x=base+i
   ensures base::arr_seg_max_min<i,n,max(v,ma),min(v,mi)>;
-
-void reverse_unfold_tail(arrI base, int i,int n)
- case{
-  i<n -> requires x::arrI<v>*base::arr_seg<i,n-1> & x+1=base+n
-    ensures base::arr_seg<i,n>;
-  i>=n -> requires true
-    ensures true;
-}
 
 void reverse_unfold_tail_2(arrI base, int i,int n)
  case{
@@ -79,7 +41,6 @@ void reverse_unfold_sort(arrI base, int i, int n)
   requires x::arrI<v> * base::arr_seg_sorted<i+1,n,ma,mi> & x=base+i & v<=mi
   ensures base::arr_seg_sorted<i,n,ma,v>;
 
-
 void upd_arr(arrI base, int i, int v)
   requires a::arrI<_> & a=base+i & i>=0
   ensures a::arrI<v> & a=base+i;
@@ -91,10 +52,6 @@ arrI arr_inc(arrI a)
 int get_arr(arrI base, int i)
   requires a::arrI<v>@L & a=base+i
   ensures res=v;
-
-void weaken(arrI base, int i, int m)
-  requires base::arr_seg_max_min<i,m,_,_>
-  ensures base::arr_seg<i,m>;
 
 // Verification with a better specification
 int partition(arrI base, int i, int m, int pivot)
@@ -169,9 +126,9 @@ void quicksort(arrI base, int i, int m)
       reverse_unfold_2(base,i,index-1);
       quicksort(base,i,index-1);
       quicksort(base,index,m);
-      dprint;
+      //      dprint;
       merge_sort(base,i,index-1,m);
-      dprint;
+      //      dprint;
       return;
     }
     else{

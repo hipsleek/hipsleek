@@ -65,10 +65,8 @@ int partition(arrI base, int i, int m, int pivot)
     int tmpm=get_arr(base,m-1);
     if(tmpi>pivot){
       if(tmpm<=pivot){
-        dprint;
         upd_arr(base,i,tmpm);
         upd_arr(base,m-1,tmpi);
-        dprint;
       }
       else{
 

@@ -38,43 +38,54 @@ int get_arr(arrI base, int i)
 
 
 
-void swap(arrI base,int i,int m)
+int get_max(arrI base,int i,int m)
   requires base::arr_seg_max_2<i,m,v> & i<m // generalization
-  ensures  x::arrI<v> * base::arr_seg_max_2<i+1,m,v1> & x=base+i & v>=v1;
+  ensures  base::arr_seg_max_2<i,res,v1> * x::arrI<v> * base::arr_seg_max_2<res+1,m,v2> & v>=v1 & v>=v2 & x=base+res;
 {
   if(i==m-1)
     {
-      return;
+      get_arr(base,i);
+      return i;
     }
   else{
-
     int cur = get_arr(base,i);
-    swap(base,i+1,m);
-    int tmp = get_arr(base,i+1);
-    if(tmp>cur)
+    int tmp_index = get_max(base,i+1,m);
+    int tmp = get_arr(base,tmp_index);
+    if(tmp<cur)
       {
-        upd_arr(base,i,tmp);
-        upd_arr(base,i+1,cur);
+        merge_max(base,i+1,tmp_index,m);
+        return i;
       }
-    // (i) (i+1) [i+2...m) |- [i...m)
-    reverse_unfold(base,i+1,m);
-    return;
+    else
+      {
+        reverse_unfold(base,i,tmp_index);
+        return tmp_index;
+      }
   }
 }
 
-
-void bubble_sort(arrI base, int i, int m)
+void selection_sort(arrI base, int i, int m)
   requires base::arr_seg_max_2<i,m,maxv> & i<m
   ensures base::arr_seg_sorted<i,m,maxv>;
 {
   if(i==m-1){
-    get_arr(base,i);
+
+    get_arr(base,i); // Just to enforce the unfolding
     return;
   }
   else{
 
-    swap(base,i,m);
-    bubble_sort(base,i+1,m);
+    int val = get_arr(base,i);
+    int tmp_index = get_max(base,i+1,m);
+    int tmp = get_arr(base,tmp_index);
+
+    if(tmp>val){
+      upd_arr(base,tmp_index,val);
+      upd_arr(base,i,tmp);
+    }
+    reverse_unfold(base,tmp_index,m);
+    merge_max(base,i+1,tmp_index,m);
+    selection_sort(base,i+1,m);
     return;
   }
 }
