@@ -615,3 +615,4 @@ pred_extn size[R]<k> ==
 /* void finalize_str (char_star s, int n) */
 /*   requires s::WFSegN<p, m> & 0 <= n & n < m & Term */
 /*   ensures s::WSSN<q, n+1>; */
+
