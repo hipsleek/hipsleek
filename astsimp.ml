@@ -7053,7 +7053,6 @@ and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =
   | Named c ->
     (try 
          let todo_unk = I.look_up_enum_def_raw prog.I.prog_enum_decls c in
-         let () = print_endline ("here"^(string_of_typ t)) in
          "int"
      with | Not_found -> c)
   | t -> string_of_typ t
@@ -7886,7 +7885,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               if vdef.I.view_data_name = "" then 
                 (fill_view_param_types vdef; vdef.I.view_data_name)
               else vdef.I.view_data_name
-            with _ -> c
+            with Not_found -> failwith x_tbi
           ) in
           let expanded_heap, newvars = (
             match base_heap_id with

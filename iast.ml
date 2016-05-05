@@ -1829,7 +1829,7 @@ and look_up_view_def_raw_x loc (defs : view_decl list) (name : ident) = match de
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x loc rest name
   | [] -> 
     let msg = ("Cannot find definition of iview " ^ name) in 
-    let () = y_tinfo_pp (loc^msg) in
+    let () = y_tinfo_pp (loc^msg^"\n") in
     raise Not_found
 
 and look_up_view_def_raw loc (defs : view_decl list) (name : ident) 

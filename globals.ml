@@ -627,7 +627,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
-  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else "Named_" ^ ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
