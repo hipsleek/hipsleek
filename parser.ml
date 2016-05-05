@@ -2980,12 +2980,13 @@ typ:
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
-   | `ANN_KEY           -> ann_type
+   | `STRING_TYPE        -> string_type
+   | `ANN_KEY            -> ann_type
    | `FLOAT              -> float_type 
    | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
-   | `BAG               -> bag_type
-   | `ABSTRACT          -> void_type
+   | `BAG                -> bag_type
+   | `ABSTRACT           -> void_type
    | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
    | `OPAREN; t1=non_array_type; `COMMA; t2=non_array_type; `CPAREN -> Tup2 (t1,t2)

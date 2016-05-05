@@ -218,6 +218,7 @@ module Make (Token : SleekTokenS)
    ("inlist", INLIST);
    ("int", INT);
    ("char", INT);
+   ("string", STRING_TYPE);
    ("INFint", INFINT_TYPE);
    ("intersect", INTERSECT);
    ("inv", INV);
