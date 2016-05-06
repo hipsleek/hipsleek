@@ -1,6 +1,31 @@
 #bug-report
 Not_found exception: to give better error message
+
 ==========================================
+#ex7a.ss
+Post condition cannot be derived:
+  (may) cause:  (offset_16_1649+1)<length_1630 & 
+ exists(s1:s_1629=s1^"0" & (slen(s_1629))<=length_1630 & 0<=offset_16_1649 & 
+           (offset_16_1649+1)<=length_1630) & 
+ v_int_16_1650=1+offset_16_1649 |-  exists(s1:s_1629=s1^"0" & (slen(s_1629))<=length_1630 & 0<=v_int_16_1650 & 
+           (v_int_16_1650+1)<=length_1630). LOCS:[13;0;16;8] (may-bug)
+
+
+#check if this subs is correct
+!!! ante (before subs)::
+ (offset+1)<length & offset_1628=offset & 
+ exists(s1:str=s1^"0" & (slen(str))<=length & 0<=offset & (offset+1)<=length) & 
+ offset_16_1649=offset_1628 & length_1630=length & s_1629=str & 
+ v_int_16_1650=1+offset_1628 & 
+ !(exists(s1:s_1629=s1^"0" & (slen(s_1629))<=length_1630 & 
+             0<=v_int_16_1650 & (v_int_16_1650+1)<=length_1630))
+!!! ante (after subs)::
+ (offset+1)<length & offset_1628=offset & str=s1_1682^"0" & 
+ (slen(str))<=length & 0<=offset & (offset+1)<=length & 
+ offset_16_1649=offset_1628 & length_1630=length & s_1629=str & 
+ v_int_16_1650=1+offset_1628 & 
+ !((s_1629=s1_1681^"0" & (slen(s_1629))<=length_1630 & 0<=v_int_16_1650 & 
+    (v_int_16_1650+1)<=length_1630))
 ==========================================
 ==========================================
 ==========================================

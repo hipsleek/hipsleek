@@ -289,7 +289,31 @@ and collect_formula_info_raw f = match f with
     collect_combine_formula_info_raw f1 f2
   | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
   | CP.Not (f1,_,_) -> collect_formula_info_raw f1
-  | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> collect_formula_info_raw f1
+  | CP.Forall (svs,f1,_,_) -> collect_formula_info_raw f1
+  | CP.Exists (svs,f1,_,_) -> 
+       let new_sv = CP.fresh_spec_var svs in
+       let new_f = CP.apply_subs [(svs,new_sv)] f1 in
+       collect_formula_info_raw new_f
+
+and subs_formula_vars f = match f with
+  | CP.BForm _ -> f
+  | CP.AndList _ -> f
+  | CP.And (f1,f2,l) ->
+       CP.mkAnd (subs_formula_vars f1) (subs_formula_vars f2) l
+  | CP.Or (f1,f2,l,pos) ->
+       CP.mkOr (subs_formula_vars f1) (subs_formula_vars f2) l pos
+  | CP.Not (f1,l,pos) -> 
+       CP.mkNot (subs_formula_vars f1) l pos
+  | CP.Forall (svs,f1,l,pos) -> 
+       let new_sv = CP.fresh_spec_var svs in
+       let new_f = CP.apply_subs [(svs,new_sv)] f1 in
+       (* CP.mkForall [new_sv] (subs_formula_vars new_f) l pos *)
+       subs_formula_vars new_f
+  | CP.Exists (svs,f1,l,pos) -> 
+       let new_sv = CP.fresh_spec_var svs in
+       let new_f = CP.apply_subs [(svs,new_sv)] f1 in
+       (* CP.mkExists [new_sv] (subs_formula_vars new_f) l pos *)
+       subs_formula_vars new_f
 
 and collect_combine_formula_info_raw f1 f2 = 
   combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
@@ -843,15 +867,15 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
   let ante_str = String.concat "" ante_strs in
   let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
-    (* ";Variables declarations\n" ^  *)
+    ";Variables declarations\n" ^
     smt_var_decls ^
-    (* ";Relations declarations\n" ^  *)
+    ";Relations declarations\n" ^
     rel_decls ^
-    (* ";Axioms assertions\n" ^  *)
+    ";Axioms assertions\n" ^
     axiom_asserts ^
-    (* ";Antecedent\n" ^  *)
+    ";Antecedent\n" ^
     ante_str ^
-    (* ";Negation of Consequence\n" ^  *)
+    ";Negation of Consequence\n" ^
     "(assert (not " ^ conseq_str ^ "))\n" ^
     "(check-sat)" ^
     (if (!Globals.get_model && !smtsolver_name="z3-4.2") then "\n(get-model)" else "")
@@ -907,7 +931,9 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
           | _ -> false
         ) ante 
     else ante in
-  let _ = Debug.ninfo_hprint (add_str "ante" !CP.print_formula) ante no_pos in
+  let _ = Debug.binfo_hprint (add_str "ante (before subs):" !CP.print_formula) ante no_pos in
+  let ante = subs_formula_vars ante in
+  let _ = Debug.binfo_hprint (add_str "ante (after subs):" !CP.print_formula) ante no_pos in
   let ante_info = collect_formula_info ante in
   let info = combine_formula_info ante_info conseq_info in
   let ante_fv = CP.fv ante in
