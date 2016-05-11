@@ -1,0 +1,9 @@
+//1
+checksat (exists s1: s1^"0" = s & s = "a0").
+
+//2
+checksat !(str = s1^"0" & slen(str)<=length & offset >=0 & offset < length + 1).
+
+checkentail
+(offset+1)<length & exists(s1:s=s1^"0" & (slen(s))<=length & 0<=offset & (offset+1)<=length) & v=1+offset 
+|-  exists s1:(s=s1^"0" & (slen(s))<=length & 0<=v & (v+1)<=length) .
