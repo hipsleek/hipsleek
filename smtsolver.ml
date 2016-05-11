@@ -290,10 +290,10 @@ and collect_formula_info_raw f = match f with
   | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
   | CP.Not (f1,_,_) -> collect_formula_info_raw f1
   | CP.Forall (svs,f1,_,_) -> collect_formula_info_raw f1
-  | CP.Exists (svs,f1,_,_) -> 
-       let new_sv = CP.fresh_spec_var svs in
-       let new_f = CP.apply_subs [(svs,new_sv)] f1 in
-       collect_formula_info_raw new_f
+  | CP.Exists (svs,f1,_,_) -> collect_formula_info_raw f1
+       (* let new_sv = CP.fresh_spec_var svs in *)
+       (* let new_f = CP.apply_subs [(svs,new_sv)] f1 in *)
+       (* collect_formula_info_raw new_f *)
 
 and subs_formula_vars f = match f with
   | CP.BForm _ -> f
@@ -931,9 +931,9 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
           | _ -> false
         ) ante 
     else ante in
-  let _ = Debug.binfo_hprint (add_str "ante (before subs):" !CP.print_formula) ante no_pos in
-  let ante = subs_formula_vars ante in
-  let _ = Debug.binfo_hprint (add_str "ante (after subs):" !CP.print_formula) ante no_pos in
+  (* let _ = Debug.binfo_hprint (add_str "ante (before subs):" !CP.print_formula) ante no_pos in *)
+  (* let ante = subs_formula_vars ante in *)
+  (* let _ = Debug.binfo_hprint (add_str "ante (after subs):" !CP.print_formula) ante no_pos in *)
   let ante_info = collect_formula_info ante in
   let info = combine_formula_info ante_info conseq_info in
   let ante_fv = CP.fv ante in
