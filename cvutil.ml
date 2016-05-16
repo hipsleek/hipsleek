@@ -1106,7 +1106,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
                      CP.mkAnd non_zero pfrsv no_pos in
                  let sbargs = if rel.rel_name = "cons" 
                    then [r_sv]@((List.hd args)::[r_sv2])
-                   else [r_sv]@p::args@[r_sv2] in
+                   else [r_sv]@[p]@[List.hd args]@[r_sv2] in
                  (*let () = print_endline ("RelVargs : "^string_of_spec_var_list rel_vars) in
                  let () = print_endline ("SBArgs : " ^string_of_spec_var_list sbargs) in*)
                  let st = List.combine rel_vars sbargs in
