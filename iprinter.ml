@@ -243,6 +243,8 @@ let rec string_of_formula_exp = function
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
   | P.SLen (e, l)		-> "slen(" ^ (string_of_formula_exp e) ^ ")"
+  | P.NonZero (e, l)		-> "nonzero(" ^ (string_of_formula_exp e) ^ ")"
+  | P.EndZero (e, l)		-> "endzero(" ^ (string_of_formula_exp e) ^ ")"  
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
   | P.Func (a, i, _)     ->  
     a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"

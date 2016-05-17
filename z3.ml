@@ -119,6 +119,12 @@ let rec smt_of_exp a =
   | CP.FConst (f, _) -> string_of_float f 
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
   | CP.SLen (s, _) -> "(Length " ^ (smt_of_exp s) ^ ")"
+  | CP.NonZero (s, _) -> "(not (Contains " ^ (smt_of_exp s) ^  "\"0\"))"
+
+  (* EZ(s) = (substring(s,n-1,1) = "0") /\ (n = slen(s)) /\ (NZ(substring(s,0,n-1)) *)
+  | CP.EndZero (s, _) ->
+    "(and (= (Substring " ^ (smt_of_exp s) ^ "(-(Length " ^ (smt_of_exp s) ^ ") 1) \"0\"))
+          (not (Contains (Substring " ^ (smt_of_exp s) ^ " 0 (-(Length s) 1) \"0\"))))"
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Concat (s1, s2, _) -> "(Concat " ^ (smt_of_exp s1)^ " " ^(smt_of_exp s2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
