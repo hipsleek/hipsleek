@@ -99,6 +99,8 @@ let rec process_p_formula pre_fix_var pf =
     ";bagmax"
   (* | Ipure.VarPerm _ -> *)
   (*       ";varperm"     *)
+  | Ipure.NonZero _ ->
+    ";nonzero"
   | Ipure.ListIn _ ->
     ";listin"
   | Ipure.ListNotIn _ ->

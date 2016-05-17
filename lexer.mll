@@ -319,6 +319,7 @@ module Make (Token : SleekTokenS)
    (flow, FLOW flow);
    ("par", PAR);
    (* ("skip", SKIP) *)
+   ("nonzero", NONZERO);
   ]
 }
   

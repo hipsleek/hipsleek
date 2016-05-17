@@ -2148,6 +2148,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       p (* TODO *)
     (* | Ipure.VarPerm (va, ipl, pos) -> *)
     (*       p (* TODO *)                *)
+    | Ipure.NonZero (e, pos) ->
+      Ipure.NonZero (helper_exp e, pos)
     | Ipure.ListIn (e1, e2, pos) ->
       Ipure.ListIn (helper_exp e1, helper_exp e2, pos)
     | Ipure.ListNotIn (e1, e2, pos) ->

@@ -1024,7 +1024,8 @@ let rec standarize_array_formula
     | BagIn _
     | BagNotIn _
     | BagMin _
-    | BagMax _ ->
+    | BagMax _ 
+    | NonZero _ ->
       (*| VarPerm _ ->*)
       failwith ("standarize_p_formula 1: "^(!print_p_formula p)^" To Be Implemented")
       (* | RelForm _ -> *)
@@ -1600,7 +1601,8 @@ let rec mk_array_free_formula
       | RelForm (sv,elst,loc) ->
         RelForm (sv, List.map (fun re -> mk_array_free_exp re) elst,loc)
       | BagMin _
-      | BagMax _->
+      | BagMax _
+      | NonZero _ ->
         (*| VarPerm _->*)
         failwith ("mk_array_free_p_formula: 2"^(!print_p_formula p)^" To Be Implemented")
     in
@@ -1718,7 +1720,8 @@ let rec get_array_element_in_f
     | BagIn _
     | BagNotIn _
     | BagMin _
-    | BagMax _ ->
+    | BagMax _ 
+    | NonZero _ ->
       (* | VarPerm _ -> *)
       failwith ("get_array_element_in_exp: "^(!print_p_formula p)^" To Be Implemented")
   in

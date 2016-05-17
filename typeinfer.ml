@@ -879,6 +879,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let (n_tl,t2) = x_add gather_type_info_exp prog e2 n_tl (BagT new_et) in
     let (n_tl,_) = x_add must_unify t1 t2 n_tl pos in
     n_tl
+  | IP.NonZero (e, pos) -> failwith x_tbi
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*) (
       (* allow comparision btw 2 pointers having different types *)
       let (new_et1,n_tl) = fresh_tvar tlist in

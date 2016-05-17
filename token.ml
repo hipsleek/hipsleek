@@ -124,6 +124,7 @@ type sleek_token =
   | XPURE
   | PAR
   | ARGOPTION of string
+  | NONZERO
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -282,6 +283,7 @@ module Token = struct
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
+    | NONZERO -> "nonzero"
 
   let print ppf x = pp_print_string ppf (to_string x)
 

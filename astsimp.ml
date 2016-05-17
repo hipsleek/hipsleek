@@ -8587,6 +8587,9 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                (*       in                                                    *)
                (*       let ls1 = List.map func ls in                         *)
                (*       CP.VarPerm (ct,ls1,pos)                               *)
+               | IP.NonZero (e, pos) ->
+                    let pe = x_add trans_pure_exp e tlist in
+                    CP.NonZero (pe, pos)
                | IP.ListIn (e1, e2, pos) ->
                  let pe1 = x_add trans_pure_exp e1 tlist in
                  let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
@@ -10193,7 +10196,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         match pf with 
         | CP.Lt _ | CP.Lte _ | CP.Gt _ | CP.Gte _ | CP.Eq _ 
         | CP.Neq _ | CP.BagIn _ | CP.BagNotIn _ | CP.ListIn _ 
-        | CP.ListNotIn _ | CP.EqMax _ | CP.EqMin _-> c1 
+        | CP.ListNotIn _ | CP.EqMax _ | CP.EqMin _ -> c1 
         | _ -> false ) pc in
     let r = List.map (fun (c1,c2) ->
         let (pf,il) = c2 in

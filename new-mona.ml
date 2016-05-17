@@ -640,6 +640,7 @@ and mona_of_b_formula_x b f vs =
     | CP.ListAllN _
     | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
     | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
+    | CP.NonZero _ -> failwith ("String are not suppored in Mona")
   in
   ret
 
@@ -738,6 +739,7 @@ and print_b_formula b f = match b with
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
+  | CP.NonZero _ -> failwith ("String are not suppored in Mona")
 
 let rec get_answer chn : string =
   let chr = input_char chn in

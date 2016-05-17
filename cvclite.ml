@@ -169,6 +169,7 @@ and cvcl_of_b_formula b =
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvcl_of_exp e1 ^ ", " ^ cvcl_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvcl_of_b_formula: BagMax/BagMin should not appear here.\n")
   (* | CP.VarPerm _ -> failwith ("cvcl_of_b_formula: VarPerm should not appear here.\n") *)
+  | CP.NonZero _ -> failwith ("String are not supported in cvclite")
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _

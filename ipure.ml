@@ -207,6 +207,9 @@ and pfv (pf: p_formula)=
   (*     ls                                           *)
   (* let ls1 = List.map (fun v -> (v,Unprimed)) ls in *)
   (* ls1                                              *)
+  | NonZero (e, _) ->
+    let fv = afv e in
+    Gen.BList.remove_dups_eq (=) fv
   | ListIn (a1, a2, _) -> 
     let fv1 = afv a1 in
     let fv2 = afv a2 in
@@ -604,6 +607,7 @@ and pos_of_pf pf=
     | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) -> p
     (* | VarPerm (_,_,p) -> p *)
     | XPure xp ->  xp.xpure_view_pos
+    | NonZero (_,p) -> p
   end
 
 and pos_of_exp (e : exp) = match e with
@@ -823,6 +827,7 @@ and p_apply_one ((fr, t) as p) pf =
   (*     let func v = v_apply_one p v in   *)
   (*     let ls1 = List.map func ls in     *)
   (*     VarPerm (ct,ls1,pos)              *)
+  | NonZero (e, pos) -> NonZero (e_apply_one (fr, t) e, pos)
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -970,6 +975,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | BagMin (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
   | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)	
   (* | VarPerm _ -> [] (*can not have anon_var*) *)
+  | NonZero (b, _) -> (look_for_anonymous_exp b)
   | ListIn (b1, b2,  _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -1049,6 +1055,7 @@ and find_lexp_p_formula (pf: p_formula) ls =
   | BagSub (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | BagMin _ | BagMax _ -> []
   (* | VarPerm _ -> [] *)
+  | NonZero (e, _) -> find_lexp_exp e ls
   | ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | ListNotIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1206,6 +1213,7 @@ and p_contain_vars_exp (pf) : bool = match pf with
   | BagSub (exp1, exp2,_) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | BagMin _
   | BagMax _ -> false
+  | NonZero (e, _) -> (contain_vars_exp e)
   | ListIn (exp1, exp2,_) 
   | ListNotIn (exp1, exp2,_) 
   | ListAllN (exp1, exp2,_) 
@@ -1734,6 +1742,7 @@ and float_out_pure_min_max (p : formula) : formula =
     (* | VarPerm _ *)
     | BagMin _
     | BagMax _ -> BForm (b,lbl)
+    | NonZero (e, _) -> failwith x_tbi
     | ListIn (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -2231,6 +2240,9 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
                       let ne1 = transform_exp f_exp e1 in
                       let ne2 = transform_exp f_exp e2 in
                       BagSub (ne1,ne2,l)
+                    | NonZero (e, l) ->
+                      let ne = transform_exp f_exp e in
+                      NonZero (ne, l)
                     | ListIn (e1,e2,l) ->
                       let ne1 = transform_exp f_exp e1 in
                       let ne2 = transform_exp f_exp e2 in

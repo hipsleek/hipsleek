@@ -2819,6 +2819,10 @@ let remove_level_mix_formula_x (mf : mix_formula) : mix_formula =
       | RelForm (r, args, l) -> pf (*TOCHECK*)
       | ImmRel (r, args, l) -> pf (*TOCHECK*)
       | LexVar t_info -> pf (*TOCHECK*)
+      | NonZero (e, l) ->
+        if (has_level_constraint_exp e) then
+          mkTrue_p no_pos
+        else pf
     in Some (npf,il)
   in
   let f_e e = None in
