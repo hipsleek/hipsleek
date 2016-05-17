@@ -77,6 +77,8 @@ and cvc3_of_exp a = match a with
   | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
     failwith ("Lists are not supported in cvc3")
   | CP.SLen (s, _) -> "slen (" ^ (cvc3_of_exp s) ^ ")"
+  | CP.NonZero (s, _) -> "nonzero (" ^ (cvc3_of_exp s) ^ ")"
+  | CP.EndZero (s, _) -> "endzero (" ^ (cvc3_of_exp s) ^ ")"
   | CP.Func _ -> failwith ("Functions are not supported in cvc3")
   | CP.ArrayAt _ -> (* An Hoa *)
     failwith ("Arrays are not supported in cvc3")

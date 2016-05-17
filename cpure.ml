@@ -303,7 +303,8 @@ and p_formula =
   | ListPerm of (exp * exp * loc)
   | RelForm of (spec_var * (exp list) * loc)
   | ImmRel of (p_formula * imm_ann * loc) (* RelForm * cond * pos *)
-(* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
+(* An Hoa: Relational formula to capture relations, for instance, *)
+(* s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
 and exp =
@@ -346,6 +347,8 @@ and exp =
   | Concat of (exp * exp *loc)
   | SConst of (string * loc)
   | SLen of (exp * loc)
+  | NonZero of (exp * loc)
+  | EndZero of (exp * loc)
 
 and template = {
   (* a + bx + cy + dz *)
@@ -891,6 +894,8 @@ let rec contains_inf (f:exp) = match f with
   | ListHead (e, _)
   | ListLength (e, _)
   | SLen (e, _)
+  | NonZero (e, _)
+  | EndZero (e, _)
   | ListTail (e, _)
   | ListReverse (e, _) -> (contains_inf  e)
   | _ -> false
@@ -938,6 +943,8 @@ let rec exp_contains_spec_var (e : exp) : bool =
   | ListHead (e, _)
   | ListLength (e, _)
   | SLen (e, _)
+  | NonZero (e, _)
+  | EndZero (e, _)
   | ListTail (e, _)
   | ListReverse (e, _) -> (exp_contains_spec_var e)
   | List (el, _)
@@ -1343,6 +1350,7 @@ let rec get_exp_type (e : exp) : typ =
   | Div _ -> Float
   | TypeCast (t, _, _) -> t
   | ListHead _ | ListLength _ | SLen _ -> Int
+  | NonZero _ | EndZero _ -> Bool
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
   | Func _ -> Int
@@ -1606,6 +1614,8 @@ and afv (af : exp) : spec_var list =
   | ListTail (a, _)
   | ListLength (a, _)
   | SLen (a, _)
+  | NonZero (a, _)
+  | EndZero (a, _)
   | ListReverse (a, _) -> afv a
   | Func (a, i, _) -> 
     let ifv = List.concat (List.map afv i) in
@@ -2345,7 +2355,9 @@ and is_exp_arith (e:exp) : bool=
   (* list expressions *)
   | List _ | ListCons _ | ListHead _ | ListTail _
   | ListLength _ | ListAppend _ | ListReverse _ -> false
-  | SLen _ -> false
+  | SLen _ 
+  | NonZero _
+  | EndZero _ -> false
   | Tsconst _ -> false
   | Tup2  _ -> false
   | Bptriple _ -> false
@@ -3271,7 +3283,13 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
         (ListLength (ne1,l),f_comb [r1])
       | SLen (e1,l) -> 
         let (ne1,r1) = helper new_arg e1 in
-        (SLen (ne1,l),f_comb [r1])      
+        (SLen (ne1,l),f_comb [r1])
+      | NonZero (e1,l) -> 
+        let (ne1,r1) = helper new_arg e1 in
+        (NonZero (ne1,l),f_comb [r1])
+      | EndZero (e1,l) -> 
+        let (ne1,r1) = helper new_arg e1 in
+        (NonZero (ne1,l),f_comb [r1])
       | ListAppend (e1,l) ->  
         let el=List.map (fun c-> helper new_arg c) e1 in
         let (el,rl)=List.split el in 
@@ -3391,6 +3409,8 @@ let rec transform_exp f e  =
     | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
     | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
     | SLen (e1,l) -> SLen ((transform_exp f e1),l)
+    | NonZero (e1,l) -> NonZero ((transform_exp f e1),l)
+    | EndZero (e1,l) -> EndZero ((transform_exp f e1),l)
     | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l)
     | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
     | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
@@ -3943,6 +3963,8 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (ListLength (e1, _), ListLength (e2, _))
     | (ListReverse (e1, _), ListReverse (e2, _)) -> (helper e1 e2)
     | (SLen (e1, _), SLen (e2, _)) -> (helper e1 e2)
+    | (NonZero (e1, _), NonZero (e2, _)) -> (helper e1 e2)
+    | (EndZero (e1, _), EndZero (e2, _)) -> (helper e1 e2)
     | (ArrayAt (a1, i1, _), ArrayAt (a2, i2, _)) -> (eq a1 a2) && (eqExp_list_f eq i1 i2)
     | _ -> false
   in helper e1 e2
@@ -4083,6 +4105,8 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) 
   | ListLength (_, p) 
   | SLen (_, p)
+  | NonZero (_, p)
+  | EndZero (_, p)
   | ListReverse (_, p) 
   | Func (_,_,p)
   | ArrayAt (_, _, p) 
@@ -4724,6 +4748,8 @@ and e_apply_subs sst e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
   | SLen (a, pos) -> SLen (e_apply_subs sst a, pos)
+  | NonZero (a, pos) -> NonZero (e_apply_subs sst a, pos)
+  | EndZero (a, pos) -> EndZero (e_apply_subs sst a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_subs sst a, pos)
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
@@ -4784,7 +4810,9 @@ and e_apply_one (fr, t) e = match e with
   | ListHead (a, pos) -> ListHead (e_apply_one (fr, t) a, pos)
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
-  | SLen (a, pos) -> SLen (e_apply_one (fr, t) a, pos)  
+  | SLen (a, pos) -> SLen (e_apply_one (fr, t) a, pos)
+  | NonZero (a, pos) -> NonZero (e_apply_one (fr, t) a, pos)
+  | EndZero (a, pos) -> EndZero (e_apply_one (fr, t) a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
   | Func (a, i, pos) -> Func ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt ((if eq_spec_var a fr then t else a), e_apply_one_list (fr, t) i, pos) (* An Hoa CHECK: BUG DETECTED must compare fr and a, in case we want to replace a[i] by a'[i] *)
@@ -4921,6 +4949,8 @@ and a_apply_par_term (sst : (spec_var * exp) list) e =
   | ListTail (a1, pos) -> ListTail (a_apply_par_term sst a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
   | SLen (a1, pos) -> SLen (a_apply_par_term sst a1, pos)
+  | NonZero (a1, pos) -> NonZero (a_apply_par_term sst a1, pos)
+  | EndZero (a1, pos) -> EndZero (a_apply_par_term sst a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_par_term sst a1, pos)
   | Func (a, i, pos) ->
     let a1 = subs_one_term sst a (Var (a,pos)) in
@@ -5047,6 +5077,8 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | ListTail (a1, pos) -> ListTail (a_apply_one_term (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_one_term (fr, t) a1, pos)
   | SLen (a1, pos) -> SLen (a_apply_one_term (fr, t) a1, pos)
+  | NonZero (a1, pos) -> NonZero (a_apply_one_term (fr, t) a1, pos)
+  | EndZero (a1, pos) -> EndZero (a_apply_one_term (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_one_term (fr, t) a1, pos)
   | Func (a, i, pos) ->
     let a1 = if eq_spec_var a fr then 
@@ -5157,6 +5189,12 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | SLen (a1, pos) -> 
       let b1,r1 = (helper crt_var a1) in
       (b1,SLen (r1, pos))
+    | NonZero (a1, pos) -> 
+      let b1,r1 = (helper crt_var a1) in
+      (b1,NonZero (r1, pos))
+    | EndZero (a1, pos) -> 
+      let b1,r1 = (helper crt_var a1) in
+      (b1,EndZero (r1, pos))
     | ListReverse (a1, pos) -> 
       let b1,r1 = (helper crt_var a1) in
       (b1,ListReverse (r1, pos))
@@ -6660,6 +6698,8 @@ and e_apply_one_exp (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
   | SLen (a1, pos) -> SLen (e_apply_one_exp (fr, t) a1, pos)
+  | NonZero (a1, pos) -> NonZero (e_apply_one_exp (fr, t) a1, pos)
+  | EndZero (a1, pos) -> EndZero (e_apply_one_exp (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one_exp (fr, t) a1, pos)
   | Func (a, i, pos) -> 
     let a1 = 
@@ -6913,6 +6953,8 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | ListHead _
     | ListLength _ 
     | SLen _
+    | NonZero _
+    | EndZero _
     | Func _
     | Template _ 
     | ArrayAt _ -> false (* An Hoa *) in
@@ -7061,7 +7103,9 @@ and simp_mult_x (e : exp) :  exp =
       (match m with
        | None -> e0
        | Some c -> FConst (v *. (float_of_int c), l))
-    | SConst _ -> e0
+    | SConst _ 
+    | NonZero _
+    | EndZero _ -> e0
     |  Add (e1, e2, l) ->
       normalize_add None l ( Add (acc_mult m e1, acc_mult m e2, l))
     | Concat (e1, e2, l) -> Concat (acc_mult m e1, acc_mult m e2, l)
@@ -7229,7 +7273,9 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
   |  ListHead (e1, l) -> ((Some e), None)
   |  ListTail (e1, l) -> ((Some e), None)
   |  ListLength (e1, l) -> ((Some e), None)
-  |  SLen (e1, l) -> ((Some e), None)
+  |  SLen (e1, l) 
+  |  NonZero (e1, l)
+  |  EndZero (e1, l) -> ((Some e), None)
   |  ListReverse (e1, l) -> ((Some e), None)
   |  Func (id, es, l) -> ((Some e), None)
   | Template _ -> ((Some e), None)
@@ -7419,6 +7465,8 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  SLen (e, l) -> SLen (purge_mult e, l)
+  |  NonZero (e, l) -> NonZero (purge_mult e, l)
+  |  EndZero (e, l) -> EndZero (purge_mult e, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
   |  Func (id, es, l) -> Func (id, List.map purge_mult es, l)
   | Template t -> Template { t with 
@@ -7663,7 +7711,8 @@ let rec get_head e = match e with
   | Tup2 ((e,_),_)
   | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | TypeCast (_, e, _)
   | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
-  | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_) | SLen (e, _) -> get_head e
+  | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_) -> get_head e
+  | SLen (e, _) | NonZero (e, _) | EndZero (e, _) -> get_head e
   | Concat(e,_,_) -> get_head e
   | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
     if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
@@ -7743,6 +7792,8 @@ and norm_exp (e:exp) =
     | ListTail (e,l)-> ListTail(helper e, l)      
     | ListLength (e,l)-> ListLength(helper e, l)
     | SLen (e,l) -> SLen(helper e, l)
+    | NonZero (e,l) -> NonZero(helper e, l)
+    | EndZero (e,l) -> EndZero(helper e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map helper e), l)    
     | ListReverse (e,l)-> ListReverse(helper e, l) 
     | ArrayAt (a, i, l) -> ArrayAt (a, List.map helper i, l) (* An Hoa *) 
@@ -9351,6 +9402,8 @@ and has_level_constraint_x (f: formula) : bool =
       | ListTail (e,_) 
       | ListLength (e,_)
       | SLen (e, _)
+      | NonZero (e, _)
+      | EndZero (e, _)
       | ListReverse (e,_) ->
         helper e
       | _ -> false
@@ -9391,6 +9444,8 @@ and has_level_constraint_exp (e: exp) : bool =
     | ListTail (e,_) 
     | ListLength (e,_)
     | SLen (e, _)
+    | NonZero (e, _)
+    | EndZero (e, _)
     | ListReverse (e,_) ->
       helper e
     | _ -> false
@@ -10260,7 +10315,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | TypeCast _
       | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _
       | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _ 
-      | SLen _ 
+      | SLen _ | NonZero _ | EndZero _
       | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ | Template _ -> raise Not_found in
     helper e rhs_e in
 

@@ -243,16 +243,18 @@ and to_fo (svs : spec_var list) var_map : bool =
   e0 is a bag, so terms inside e0 must be FO, unless e0 itself is a SO var.
 *)
 and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
-  | Null _ 
+  | Null _
   | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
-  | SConst _ 
+  | SConst _
   | SLen _
+  | NonZero _
+  | EndZero _
   | Concat _ -> failwith (" [setmona.ml] String are not supported in mona")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Bptriple _ -> failwith ("[setmona.ml]: ERROR in constraints (Bptriple should not appear here)")
   | Tup2 _ -> failwith ("[setmona.ml]: ERROR in constraints (Tup2 should not appear here)")
-  | NegInfConst _ 
+  | NegInfConst _
   | InfConst _ -> failwith ("[setmona.ml]: ERROR in constraints (infconst should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Level _ -> failwith "[setmona.ml]: level should not appear here"

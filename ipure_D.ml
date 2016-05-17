@@ -159,6 +159,8 @@ and exp =
   | Concat of (exp * exp *loc)
   | SConst of (string * loc)
   | SLen of (exp * loc)
+  | NonZero of (exp * loc)
+  | EndZero of (exp * loc)
 
 and template = {
   (* ax + by + cz + d *)

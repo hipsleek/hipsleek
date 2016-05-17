@@ -909,6 +909,8 @@ let rec pr_formula_exp (e:P.exp) =
   | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
   | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
   | P.SLen (e, l)   -> fmt_string ("slen("); pr_formula_exp e; fmt_string  (")")  
+  | P.NonZero (e, l)   -> fmt_string ("nonzero("); pr_formula_exp e; fmt_string  (")")  
+  | P.EndZero (e, l)   -> fmt_string ("endzero("); pr_formula_exp e; fmt_string  (")")  
   | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
   | P.Func (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("(");
     (match i with
@@ -5285,6 +5287,8 @@ let rec html_of_formula_exp e =
   | P.ListTail (e, l) -> "<b>tail</b>(" ^ (html_of_formula_exp e) ^ ")"
   | P.ListLength (e, l) -> "<b>len</b>(" ^ (html_of_formula_exp e) ^ ")"
   | P.SLen (e, l) -> "<b>slen</b>(" ^ (html_of_formula_exp e) ^ ")"
+  | P.NonZero (e, l) -> "<b>nonzero</b>(" ^ (html_of_formula_exp e) ^ ")"
+  | P.EndZero (e, l) -> "<b>endzero</b>(" ^ (html_of_formula_exp e) ^ ")"
   | P.ListReverse (e, l)  -> "<b>rev</b>(" ^ (html_of_formula_exp e) ^ ")"
   | P.Func (a, i, l) -> (html_of_spec_var a) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ ")"
   | P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"

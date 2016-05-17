@@ -421,7 +421,9 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   (* string expression *)
   | Cpure.Concat _ -> false
   | Cpure.SConst _ -> false
-  | Cpure.SLen _ -> false
+  | Cpure.SLen _ 
+  | Cpure.NonZero _ 
+  | Cpure.EndZero _ -> false
 
 
 and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =

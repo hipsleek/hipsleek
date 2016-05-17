@@ -8701,7 +8701,9 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp_x e tlist, pos)
   | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp_x e tlist, pos)
   | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp_x e tlist, pos)
-  | IP.SLen (e, pos) -> CP.SLen (trans_pure_exp_x e tlist, pos)
+  | IP.SLen (e, pos) 
+  | IP.NonZero (e, pos)
+  | IP.EndZero (e, pos) -> CP.SLen (trans_pure_exp_x e tlist, pos)
   | IP.Func (id, es, pos) ->
     let es = List.map (fun e -> trans_pure_exp_x e tlist) es in
     CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
