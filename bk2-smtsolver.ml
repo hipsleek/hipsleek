@@ -312,7 +312,8 @@ let rec smt_of_b_formula b qvars =
   | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> 
     failwith ("smt_of_b_formula: BagMax/BagMin should not appear here.\n")
-  | CP.NonZero -> failwith ("smt_of_b_formula: NonZero/EndZero should not appear here.\n")
+  | CP.NonZero _
+  | CP.EndZero _ -> failwith ("smt_of_b_formula: NonZero/EndZero should not appear here.\n")
   | CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
     failwith ("smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.RelForm (r, args, l) ->

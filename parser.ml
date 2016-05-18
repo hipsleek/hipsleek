@@ -2215,6 +2215,9 @@ cexp_w:
     | `NONZERO; `OPAREN; c = SELF; `CPAREN ->
        let f = cexp_to_pure1 (fun c-> P.NonZero(c,(get_pos_camlp4 _loc 1))) c in
        set_slicing_utils_pure_double f false
+    | `ENDZERO; `OPAREN; c = SELF; `CPAREN ->
+       let f = cexp_to_pure1 (fun c-> P.EndZero(c,(get_pos_camlp4 _loc 1))) c in
+       set_slicing_utils_pure_double f false
     | lc=SELF; `INLIST; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
         set_slicing_utils_pure_double f false

@@ -884,6 +884,11 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     (* let (n_tl,r) = x_add must_unify Bool new_et n_tl pos in *)
     let (n_tl,_) = gather_type_info_exp_x prog e n_tl new_et in
     n_tl
+  | IP.EndZero (e, pos) ->
+    let (new_et,n_tl) = fresh_string tlist in
+    (* let (n_tl,r) = x_add must_unify Bool new_et n_tl pos in *)
+    let (n_tl,_) = gather_type_info_exp_x prog e n_tl new_et in
+    n_tl
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*) (
       (* allow comparision btw 2 pointers having different types *)
       let (new_et1,n_tl) = fresh_tvar tlist in

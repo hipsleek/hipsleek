@@ -137,7 +137,8 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
   | ImmRel _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
   | XPure _ -> Error.report_no_pattern()
-  | NonZero _ -> illegal_format "SPASS doesn't support String p_formula"
+  | NonZero _ 
+  | EndZero _ -> illegal_format "SPASS doesn't support String p_formula"
 
 (* return formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_formula f : (string * string list * string list) =
@@ -268,7 +269,8 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   | ImmRel _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
   | XPure _ -> Error.report_no_pattern()
-  | NonZero _ -> illegal_format "SPASS doesn't support String p_formula"
+  | NonZero _ 
+  | EndZero _ -> illegal_format "SPASS doesn't support String p_formula"
 
 and spass_tptp_of_formula f =
   match f with
@@ -358,7 +360,8 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ImmRel _
   | RelForm _            -> false
   | XPure _ -> Error.report_no_pattern()
-  | NonZero _ -> illegal_format "SPASS doesn't support String p_formula"
+  | NonZero _ 
+  | EndZero _ -> illegal_format "SPASS doesn't support String p_formula"
 
 and can_spass_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with

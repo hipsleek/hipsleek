@@ -104,6 +104,7 @@ let rec rev_trans_pf f = match f with
   (* | CP.VarPerm _ -> failwith "rev_trans_pure: unexpected VarPerm, if you want support for it , implement this case\n"  *)
   | CP.RelForm (v,el,p)-> IP.RelForm (sv_n v, List.map rev_trans_exp el, p)
   | CP.NonZero (e, p) -> IP.NonZero (rev_trans_exp e, p)
+  | CP.EndZero (e, p) -> IP.EndZero (rev_trans_exp e, p)
   | CP.ListIn (e1,e2,p) -> IP.ListIn (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.ListNotIn (e1,e2,p) -> IP.ListNotIn (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.ListAllN (e1,e2,p) -> IP.ListAllN (rev_trans_exp e1, rev_trans_exp e2, p)

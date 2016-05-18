@@ -158,7 +158,8 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   | BagSub _
   | BagMin _
   | BagMax _        -> ""
-  | NonZero _ -> ""
+  | NonZero _ 
+  | EndZero _ -> ""
   (* list formulas *)
   | ListIn _
   | ListNotIn _
@@ -228,7 +229,8 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
   | BagSub _
   | BagMin _
   | BagMax _        -> ""
-  | NonZero _ -> ""
+  | NonZero _ 
+  | EndZero _ -> ""
   (* list formulas *)
   | ListIn _
   | ListNotIn _
@@ -258,7 +260,8 @@ let return_pure bf f= match bf with
 (* VarPerm _ *) 
     | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ 
     | RelForm _ | ImmRel _
-    | NonZero _ -> Error.report_no_pattern ()
+    | NonZero _ 
+    | EndZero _ -> Error.report_no_pattern ()
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
@@ -451,7 +454,8 @@ and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
   | BagSub _
   | BagMin _
   | BagMax _             -> false
-  | NonZero _ -> false
+  | NonZero _ 
+  | EndZero _            -> false
   (* list formulas *)
   | ListIn _
   | ListNotIn _

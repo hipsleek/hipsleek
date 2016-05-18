@@ -90,6 +90,7 @@ and p_formula =
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
   | ImmRel of (p_formula * imm_ann * loc)
   | NonZero of (exp * loc)
+  | EndZero of (exp * loc)
 
 and term_ann = 
   | Term    (* definite termination *)

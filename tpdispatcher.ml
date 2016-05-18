@@ -824,6 +824,7 @@ let is_array_b_formula (pf,_) = match pf with
     -> Some false
   | CP.RelForm _ -> Some true
   | CP.NonZero _ -> Some true
+  | CP.EndZero _ -> Some true
 (* | CP.VarPerm _ -> Some false *)
 
 let is_list_b_formula (pf,_) = match pf with

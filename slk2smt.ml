@@ -101,6 +101,8 @@ let rec process_p_formula pre_fix_var pf =
   (*       ";varperm"     *)
   | Ipure.NonZero _ ->
     ";nonzero"
+  | Ipure.EndZero _ ->
+    ";endzero"
   | Ipure.ListIn _ ->
     ";listin"
   | Ipure.ListNotIn _ ->

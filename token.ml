@@ -125,6 +125,7 @@ type sleek_token =
   | PAR
   | ARGOPTION of string
   | NONZERO
+  | ENDZERO
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -284,6 +285,7 @@ module Token = struct
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
     | NONZERO -> "nonzero"
+    | ENDZERO -> "endzero"
 
   let print ppf x = pp_print_string ppf (to_string x)
 

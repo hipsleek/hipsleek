@@ -320,6 +320,7 @@ module Make (Token : SleekTokenS)
    ("par", PAR);
    (* ("skip", SKIP) *)
    ("nonzero", NONZERO);
+   ("endzero", ENDZERO);
   ]
 }
   

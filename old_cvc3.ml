@@ -94,8 +94,9 @@ and cvc3_of_b_formula b = match b with
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
-  | CP.NonZero _ -> failwith ("String are not supported in cvc3")
-	  
+  | CP.NonZero _ 
+  | CP.EndZero _ -> failwith ("String are not supported in cvc3")
+
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar (CP.Prim Bag, _, _) -> "SET"
   | CP.SpecVar (CP.Prim Bool, _, _) -> "INT" (* "BOOLEAN" *)
