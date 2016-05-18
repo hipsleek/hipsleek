@@ -1742,7 +1742,7 @@ and float_out_pure_min_max (p : formula) : formula =
     (* | VarPerm _ *)
     | BagMin _
     | BagMax _ -> BForm (b,lbl)
-    | NonZero (e, _) -> failwith x_tbi
+    | NonZero (e, _) -> BForm (b, lbl)
     | ListIn (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in

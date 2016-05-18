@@ -1,0 +1,7 @@
+checksat nonzero("abc0").
+
+checkentail nonzero(s1) & s = s1^s2 |- nonzero(s).
+
+checkentail nonzero(s1) & !(nonzero(s2)) & s = s1^s2 |- !(nonzero(s)).
+
+checkentail !(nonzero(s2)) & s = s1^s2 |- !(nonzero(s)).
