@@ -35,6 +35,7 @@ let set_parser name =
 
 let pred_root_id = ref ""
 
+
 (* type definitions *)
 
 type type_decl =
@@ -693,6 +694,13 @@ let peek_dc =
              (* | [IDENTIFIER n,_;OBRACE,_] ->  () (\*This is for prim_view_decl*\) *)
              | _ -> raise Stream.Failure)
 
+ let peek_session_disj = 
+   SHGram.Entry.of_parser "peek_session_disj"
+       (fun strm -> 
+           match Stream.npeek 3 strm with
+             | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_] -> ()
+             | _ -> raise Stream.Failure)
+
  let peek_heap_args = 
    SHGram.Entry.of_parser "peek_heap_args"
        (fun strm -> 
@@ -1216,7 +1224,9 @@ prop_extn:
 ]];
 
 view_decl: 
-  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
+   [[ vh = view_header; `EQEQ; peek_session_disj; LIST1 session_disj SEP `SEMICOLONSEMICOLON
+          -> failwith "Session logic not implemented"
+    | vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
           ->  let (oi, oboi) = oi in
               { vh with view_formula = (fst vb);
@@ -1250,6 +1260,12 @@ view_decl:
                view_derv_extns = [extn]; (* features of expension *)
            }
  ]];
+
+session_disj: [[ LIST1 session_formula SEP `SOR
+          -> failwith "Session logic not implemented" ]];
+
+session_formula: [[ `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; vb=view_body (*dc = disjunctive_constr*)
+          -> failwith "Session logic not implemented" ]];
 
 prim_view_decl:
   [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock

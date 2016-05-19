@@ -316,6 +316,8 @@ module Make (Token : SleekTokenS)
    ("template_solve", TEMPL_SOLVE);
    (flow, FLOW flow);
    ("par", PAR);
+   ("sor", SOR);
+   (";;", SEMICOLONSEMICOLON);
    (* ("skip", SKIP) *)
   ]
 }
@@ -510,6 +512,7 @@ rule tokenizer file_name = parse
   | '+' { PLUS }
   | '\'' { PRIME }
   | ';' { SEMICOLON }
+  | ";;" { SEMICOLONSEMICOLON }
   | '*' { STAR }
   | "<:" { SUBANN }
   | '/' { DIV }
