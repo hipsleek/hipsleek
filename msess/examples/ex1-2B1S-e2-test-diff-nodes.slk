@@ -1,0 +1,8 @@
+data node1{int a}.
+data node2{int a}.
+
+lemma self::node1<a> <-> self::node2<a>.
+
+checkentail x::node1<_> |- x::node1<_>.
+
+checkentail x::node1<_> |- x::node2<_>.

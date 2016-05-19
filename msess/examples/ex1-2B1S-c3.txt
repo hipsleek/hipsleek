@@ -1,0 +1,75 @@
+
+multi_buy(B1,S,B2) ==
+   B1 -> S : string ;
+   (S  -> B1 : int ; B1 -> B2 : int) 
+   * S  -> B2 : int ;
+   (B2 -> S : 1 ; B2 -> S : Addr ; S -> B2 : Date 
+    \/ B2 -> S : 0)
+
+===============================================
+
+pred_prim Sess <id: string, prot: formula>
+// pred_prim Sess <id: string, name: string, prot: formula>
+pred_prim Chan <id: string, sess: formula>
+
+msg has form k /\ \pi
+1   ~  emp /\ r:int /\ r=1
+int ~  emp /\ r:int 
+ 
+ 
+  pred_msess sell = B1?String;B1!Int;B2!Int;(B2?1;B2?Addr;B2!Date \/ B2?0)
+  pred_msess buy1 = S!String;S?Int;B2!Int
+  pred_msess buy2 = B1?int * S?int ; (S!1; S!Addr ; S?Date \/ S!0).
+      
+  
+  /** anonymous values which will be instantiated during verification)*/
+  pred_msess sella = s1?String;s2!Int;s3!Int;(s4?1;s5?Addr;s6!Date \/ s4?0)
+  pred_msess buy1a = b11!String;b12?Int;b13!Int
+  /** should b21 != b22? */
+  pred_msess buy2a = b21?int * b22?int ; (b23!1; b24!Addr ; b25?Date \/ b23!0) 
+       inv b21!=b22. //??? how to add this cond
+
+  /** consecutive receivings of same type, but from different roles, should 
+      be constrained to use distinct channels? */
+  
+void Buyer1(Chan s, Chan b1, Chan b2')
+// usable spec
+	requires Chan(s, multi-s) * Chan(b1, multi-s) * Chan(b2', multi-s) * Sess<multi-s,buy1>
+	requires Chan(s, multi-s) * Chan(b1, multi-s) * Chan(b2', multi-s) * Sess<multi-s,emp>
+{
+	// Chan(s, multi-s) * Chan(b1, multi-s) * Chan(b2', multi-s) * 
+	//    Sess<multi-s,b11!String;b12?Int;b13!Int>	
+	string book = getTitle();
+	
+	// Chan(s, multi-s) * Chan(b1, multi-s) * Chan(b2', multi-s) * 
+	//    Sess<multi-s,b11!String;b12?Int;b13!Int> * book::String()
+	// check below (i)
+	send(s, book);
+	
+	// Chan(s, multi-s) * Chan(b1, multi-s) * Chan(b2', multi-s) * 
+	//    Sess<multi-s,b11!String;b12?Int;b13!Int> * book::String()
+	
+	int y1 = receive(b1);
+	send(b2', contrib(y1));
+}
+
+/** (i) pre-cond check for send(s,book); **/
+Chan(s, multi-s) * Chan(b1, multi-s) * Chan(b2', multi-s) * 
+  Sess<multi-s,b11!String;b12?Int;b13!Int> * book::String()
+	|- Chan<s, multi-sess> * Sess<multi-sess, s!L(msg);rest> * L(msg)
+	
+//1. match on chan s ((inst multi-sess))
+ Chan(b1, multi-s) * Chan(b2', multi-s) * 
+  Sess<multi-s,b11!String;b12?Int;b13!Int> * book::String()
+  multi-s = multi-sess //1.
+	|- Sess<multi-sess, s!L(msg);rest> * L(msg)
+	
+//2. match on sess s, should:
+(1) identify who is b11 (namely b11=s) and add potential conditions?
+(2) infer rest, where rest is a special pred (rest == b12?Int;b13!Int)
+(3) infer L(msg) (L(msg) == book::String() )
+Chan(b1, multi-s) * Chan(b2', multi-s) * 
+  Sess<multi-s,b11!String;b12?Int;b13!Int> * book::String()
+  multi-s = multi-sess //1.
+	|- Sess<multi-sess, s!L(msg);rest> * L(msg)
+

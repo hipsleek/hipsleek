@@ -1,0 +1,25 @@
+
+
+pred_prim stream <S,C> ==
+   S -> C : byte;
+   (S -> C : 1; stream<S,C>. \/ S -> C : 0.).
+   
+pred_prim avp <F,A,V,S> ==
+	F -> A : byte *	F -> V : byte;
+	A -> S : byte * V -> S : byte;
+	F -> A : 1; A -> V : 1; V -> S : 1; avp<F,A,V,S> \/
+	F -> A : 0; A -> V : 0; V -> S : 0
+	
+pred_prim avp' <F,A,V,S,C> ==
+	F -> A : byte *	F -> V : byte;
+	A -> S : byte * V -> S : byte;
+	S -> C : byte;
+	(F -> A : 1; A -> V : 1; V -> S : 1; S -> C : 1; avp'<F,A,V,S>. \/
+	F -> A : 0; A -> V : 0; V -> S : 0; S -> C : 0.)
+
+pred_prim avp <F,A,V,S> ==
+	F -> A : byte *	F -> V : byte;
+	A -> S : byte * V -> S : byte;
+	???????? pred_prim(S,C)
+	F -> A : 1; A -> V : 1; V -> S : 1; ????? avp<F,A,V,S> \/
+	F -> A : 0; A -> V : 0; V -> S : 0; ?????
