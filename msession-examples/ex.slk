@@ -1,0 +1,13 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll2<n> == A -> B : self = null & n = 0. 
+
+pred ll3<n> == A -> B : self = null & n = 0 ;; A -> B : self = null & n = 0. 
+
+pred ll4<n> == A -> B : self = null & n = 0 sor C -> D : self = null ;; A -> B : self = null. 
+
+checkentail x=null |- x::ll<0>.
