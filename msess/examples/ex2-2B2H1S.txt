@@ -1,0 +1,100 @@
+pred_prim buyer_seller <B,S> ==
+ B -> S : 1 ; B -> S : Addr ; S -> B : Date 
+ \/ B -> S : 0
+ 
+pred_prim buyer_helper <B,H,S> ==
+   B -> H : int; 
+   (B -> H : 0 \/ B -> H : 1; B -> H : int; B -> H : Chan(r,buyer_seller(H,S)))
+ 
+pred_prim multi_buy <B1,S,B2,H1,H2> ==
+   B1 -> S : string ;
+   S  -> B1 : int ; 
+   S  -> B2 : int ;
+   B1 -> B2 : int;   
+   buyer_helper(B1,H1,S);
+   buyer_helper(B2,H2,S).
+ 
+----------------------------------------------------------------- 
+msg has form k /\ \pi
+1   ~  emp /\ r:int /\ r=1
+int ~  emp /\ r:int 
+ 
+
+pred_prim buyer_seller <B,S> ==
+   B -> S : 1 ; B -> S : Addr ; S -> B : Date 
+   \/ B -> S : 0
+
+pred_prim buyer_helper <B,H,S> ==
+   B -> H : int; 
+   B -> H : 0 \/ (B -> H : 1; B -> H : int; B -> H : Chan(r,buyer_seller(H,S))
+
+pred_prim multi_buy <B1,S,B2,H1,H2> ==
+   B1 -> S : string ;
+   (S  -> B1 : int ; B1 -> B2 : int.)
+   * ( S  -> B2 : int.) ;
+   buyer_helper(B1,H1,S);
+   buyer_helper(B2,H2,S).
+ 
+ 
+   
+void Buyer1(Chan h, Chan s, Chan b1, Chan b2')
+{
+	string book = getTitle();
+	send(s, book);
+	int y1 = receive(b1); //quote from seller
+	send(b2', contrib(y1));
+	send(h, contrib(y1)/2);
+	send(h, done); //send(h,0);
+}
+
+void Buyer2(Chan h, Chan b2, Chan b2')
+{
+	int z1 = receive(b2); //from seller
+	int z2 = receive(b2'); //from b1
+	
+	send(h,(z1-z2)/2);
+	send(h, del); //send(h,1);
+	
+	send(h, z1);
+	send(h, b2);
+}
+
+void Helper(Chan h, Chan s)
+{   
+	int y = receive(h);
+    int act = receive(h);
+	if (act == del){
+		int z' = receive(h);
+		Chan b = receive(h);
+		if (y/z' <= 30%){
+			send (s,ok);
+			send(s, address);
+			receive(b, date);
+		} else {
+			send (s,quit);
+		}
+	}
+}
+
+
+void Seller(Chan s, Chan b1, Chan b2)
+{
+	string x1 = receive(s);
+	send(b1,quote(x1));
+	send(b2,quote(x1))
+	int answer = receive(s);
+	if (s == ok) {
+		string x2 = receive(s);
+		send(b2, getDate(x2,x1)); 
+	}
+}
+
+void main (Chan s, Chan b1, Chan b2, Chan b2')
+{
+	Channel s,b1,b2,b2',h1,h2;
+	s = new Channel(); b1 = new Channel(); 
+	b2 = new Channel(); b2' = new Channel();
+	h1 = new Channel(); h2 = new Channel();
+	Buyer1(h1,s,b1,b2') | Helper(h1,s) | Buyer2(h2,s,b2,b2') | Helper(h2,s) | Seller(s,b1,b2) 
+	
+}

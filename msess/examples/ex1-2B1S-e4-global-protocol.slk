@@ -1,0 +1,73 @@
+/* model the communication instrument as a unique channel between one pair of processes */
+/*  B1<->B2
+    B1<->S
+    B2<->S  */
+/*
+multi_buy(B1,S,B2) ==
+   B1 -> S : string ;
+   (S  -> B1 : int ; B1 -> B2 : int
+   * S  -> B2 : int) ;
+   (B2 -> S : 1 ; B2 -> S : Addr ; S -> B2 : Date 
+    \/ B2 -> S : 0)
+
+P = P ;; P | (P \/ P) | (P * P) | F
+F = A->B : k & \phi
+
+*/
+// ===============================================
+
+pred_prim Trans{%P}<sender,receiver>.
+
+pred multi_buy_or<B1,S,B2> == self::Trans{emp}<B2,S> * self::Trans{emp}<B2,S> * self::Trans{emp}<S,B2> or self::Trans{emp}<B2,S>.
+pred multi_buy<B1,S,B2> == self::Trans{emp}<B1,S> * (self::Trans{emp}<S,B1> * self::Trans{emp}<B1,B2>) * self::Trans{emp}<S,B2> * self::multi_buy_or<B1,S,B2>.
+  
+pred_prim Sess{%P}<>.
+pred_prim Chan<sess:Sess>.
+pred_prim S{-%P}<>.
+pred_prim R{+%P}<>.
+
+  /* //S_role */
+  /* pred_msess sell(a,b) = a?String;a!Int;b!Int;(b?1;b?Addr;b!Date \/ b?0) */
+pred sellor<a> == a::R{+ (exists r: r=1)}<> * a::R{+ emp}<> * a::S{- emp}<> or a::R{+ (exists r: r=0)}<>.
+pred sell<a,b> == a::R{+ emp}<> * a::S{- emp}<> * b::S{- emp}<> * self::sellor<b>.
+  /* //B1_role */
+  /* pred_msess buy1(a,b) = a!String;a?Int;b!Int */
+pred buy1<a,b> == a::S{- emp}<> * a::R{+ emp}<> * b::S{- emp}<>.
+  /* //B2_role */
+  /* pred_msess buy2(a,b) = a?int * b?int ; (b!1; b!Addr ; b?Date \/ b!0). */
+pred buy2or<a> == a::S{- (exists r: r=1)}<> * a::S{- emp}<> * a::R{+ emp}<> or a::S{- (exists r: r=0)}<>.
+pred buy2<a,b> == a::R{+ emp}<> * a::R{+ emp}<> * self::buy2or<b>. 
+
+ /* pred_msess buy2(a,b) = (a?int;a?int * b?int) ; (b!1; b!Addr ; b?Date \/ b!0). */
+
+
+checkentail x::S{- a>0 }<> |- x::S{- a>=0 }<>.
+expect Fail.
+
+checkentail x::S{- a>=0 }<> |- x::S{- a>0 }<>.
+expect Valid.
+
+checkentail x::R{+ a>0 }<> |- x::R{+ a>=0 }<>.
+expect Valid.
+
+checkentail x::R{+ a>0 }<> |- x::S{- a>0 }<>.
+expect Fail.
+
+checkentail x::Chan<ms> * y::Chan<ms> * ms::Sess{self::sell<x,y>}<> |- x::Chan<ms>.
+                                        /* ms::sell<x,y> |- x::Chan<ms>. */
+expect Valid.
+print residue.
+
+checkentail x::Chan<ms> * y::Chan<ms> * ms::Sess{self::sell<x,y>}<> |- x::Chan<ms> * ms::Sess{self::sell<x,y>}<>.
+expect Valid.
+print residue.
+
+checkentail x::Chan<ms> * y::Chan<ms> * ms::Sess{self::sell<x,y>}<> |- x::Chan<ms> * ms::Sess{self::sell<x,x>}<>.
+expect Fail.
+print residue.
+
+checkentail x::Chan<ms> * y::Chan<ms> * ms::Sess{self::sell<x,y>}<> |- x::Chan<ms> * ms::Sess{self::sellor<y>}<>.
+expect Fail.
+print residue.
+
+
