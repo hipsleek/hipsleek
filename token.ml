@@ -122,7 +122,6 @@ type sleek_token =
   | FAIL_MAY
   | XPURE
   | PAR
-  | SOR
   | SEMICOLONSEMICOLON
   | ARGOPTION of string
   (* | SKIP - should be an identifier! *)
@@ -277,7 +276,6 @@ module Token = struct
     (* | "<#" { TOPAREN } *) (* replaced by `LT;`HASH. inline\data-holes.lsk. examples/fracperm/thread/thrd1.slk*)
     (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
-    | SOR -> "sor"
     | SEMICOLONSEMICOLON -> ";;"
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)

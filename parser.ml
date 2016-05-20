@@ -1261,11 +1261,27 @@ view_decl:
            }
  ]];
 
-session_disj: [[ LIST1 session_formula SEP `SOR
-          -> failwith "Session logic not implemented" ]];
+session_disj: [[ LIST1 session_formula SEP `ORWORD ->
+        failwith "Session logic not implemented"
+]];
 
-session_formula: [[ `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; vb=view_body (*dc = disjunctive_constr*)
-          -> failwith "Session logic not implemented" ]];
+session_formula: [[ `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message -> 
+        failwith "Session logic not implemented"
+]];
+
+session_message: [[
+      cc = core_constr -> cc
+    | `EXISTS; ocl = cid_list; `COLON; cc = core_constr -> 
+	  (match cc with
+      | F.Base ({
+          F.formula_base_heap = h;
+          F.formula_base_pure = p;
+          F.formula_base_vperm = vp;
+          F.formula_base_flow = fl;
+          F.formula_base_and = a; }) -> 
+        F.mkExists ocl h p vp fl a (get_pos_camlp4 _loc 1)
+      | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
+]];
 
 prim_view_decl:
   [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock

@@ -316,7 +316,6 @@ module Make (Token : SleekTokenS)
    ("template_solve", TEMPL_SOLVE);
    (flow, FLOW flow);
    ("par", PAR);
-   ("sor", SOR);
    (";;", SEMICOLONSEMICOLON);
    (* ("skip", SKIP) *)
   ]
