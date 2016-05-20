@@ -55,7 +55,7 @@ pred p1<> == self::Chan{emp}<>;
 
 /*
 void Buyer2(Channel sb2, Channel b1b2)
-  requires Chan(sb2, multi-s) * Chan(b1b2, multi-s) * Sess<multi-s,buy2>
+  requires Chan(sb2, multi-s) * b1b2::Chan<multi-s> * multi-s::Sess{buy2}<buy2>
   ensures  Chan(sb2, multi-s) * Chan(b1b2, multi-s) * Sess<multi-s,emp>
 {
   int budget = getBudget();

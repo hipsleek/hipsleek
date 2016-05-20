@@ -4,14 +4,34 @@
     B2<->S  */
 /*
 multi_buy(B1,S,B2) ==
-   B1 -> S : string ;
-   (S  -> B1 : int ; B1 -> B2 : int
-   * S  -> B2 : int) ;
-   (B2 -> S : 1 ; B2 -> S : Addr ; S -> B2 : Date 
-    \/ B2 -> S : 0)
+   B1->S: string ;
+   (S->B1 : int ;; B1->B2 : int)
+   * (S->B2 : int) ;;
+   (B2 -> S : 1 ;; B2 -> S : Addr ;; S -> B2 : Date 
+    \/ B2 -> S : 0) .
 
-P = P ;; P | (P \/ P) | (P * P) | F
+P = P ;; P | (P \/ P) | (P) * (P) | F
 F = A->B : k & \phi
+
+ A->B : string or int
+ ----->
+ A->B : 0 \/  A->B : 1 
+
+string =~ emp & msg:string 
+---------------------------------------
+ A->B : ObjA or ObjB
+
+ ObjA <: ObjB
+
+sender:
+if cond then send(ObjA)
+else send(ObjB)
+
+receiver:
+obj = receive(..)
+// 
+if (type(obj)=ClsA) ...
+else if pe(obj)=ClsB ...
 
 */
 // ===============================================
@@ -25,6 +45,7 @@ pred_prim Sess{%P}<>.
 pred_prim Chan<sess:Sess>.
 pred_prim S{-%P}<>.
 pred_prim R{+%P}<>.
+pred_prim Seq{%P,%P}<>
 
   /* //S_role */
   /* pred_msess sell(a,b) = a?String;a!Int;b!Int;(b?1;b?Addr;b!Date \/ b?0) */
@@ -35,12 +56,31 @@ pred sell<a,b> == a::R{+ emp}<> * a::S{- emp}<> * b::S{- emp}<> * self::sellor<b
 pred buy1<a,b> == a::S{- emp}<> * a::R{+ emp}<> * b::S{- emp}<>.
   /* //B2_role */
   /* pred_msess buy2(a,b) = a?int * b?int ; (b!1; b!Addr ; b?Date \/ b!0). */
-pred buy2or<a> == a::S{- (exists r: r=1)}<> * a::S{- emp}<> * a::R{+ emp}<> or a::S{- (exists r: r=0)}<>.
-pred buy2<a,b> == a::R{+ emp}<> * a::R{+ emp}<> * self::buy2or<b>. 
+pred buy2or<a> == a::S{- (exists r: r=1)}<> ;; a::S{- emp}<> ;; a::R{+ emp}<> or a::S{- (exists r: r=0)}<>.
+pred buy2<a,b> == a::R{+ emp}<> * b::R{+ emp}<> ;; self::buy2or<b>.
 
- /* pred_msess buy2(a,b) = (a?int;a?int * b?int) ; (b!1; b!Addr ; b?Date \/ b!0). */
+/* pred_msess buy2(a,b) = a?int * b?int ;; (b!1;; b!Addr ;; b?Date \/ b!0). */
+pred buy2or<a> == self::Seq{a::S{- (exists r: r=1)}<>, self::Seq{ a::S{- emp}<>,  a::R{+ emp}<>}}
+                  or self::Seq{a::S{- (exists r: r=0)}<>, emp}.
+pred buy2<a,b> == self::Seq{a::R{+ emp}<> * b::R{+ emp}<> , self::buy2or<b>}. 
 
 
+void send(Channel c, Dyn t msg)
+     requires c::Chan<s> * s::Sess{c!L(msg);rest} * L(msg)
+     ensures  c::Chan<s> * s::Sess{rest}
+
+Dyn t receive(Channel c)
+     requires c::Chan<s> * s::Sess{c?L(msg);rest}
+     ensures  c::Chan<s> * s::Sess{rest}  * L(msg)
+
+//call to send
+
+// x::Chan<s> * y::Chan<s> * s::Sess{self::buy2<x,y>}
+// x::Chan<s> * y::Chan<s> * s::Sess{self::Seq{a::R{+ emp}<> * b::R{+ emp}<> , self::buy2or<b>}} 
+int m = receive(x);
+
+
+================================================================
 checkentail x::S{- a>0 }<> |- x::S{- a>=0 }<>.
 expect Fail.
 
