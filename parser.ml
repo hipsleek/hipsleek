@@ -699,6 +699,7 @@ let peek_dc =
        (fun strm -> 
            match Stream.npeek 3 strm with
              | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_] -> ()
+             | [OPAREN,_; IDENTIFIER first,_; LEFTARROW,_] -> ()
              | _ -> raise Stream.Failure)
 
  let peek_heap_args = 
@@ -1224,7 +1225,7 @@ prop_extn:
 ]];
 
 view_decl: 
-   [[ vh = view_header; `EQEQ; peek_session_disj; LIST1 session_disj SEP `SEMICOLONSEMICOLON
+   [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
           -> failwith "Session logic not implemented"
     | vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
@@ -1261,13 +1262,23 @@ view_decl:
            }
  ]];
 
-session_disj: [[ LIST1 session_formula SEP `ORWORD ->
-        failwith "Session logic not implemented"
-]];
-
-session_formula: [[ `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message -> 
-        failwith "Session logic not implemented"
-]];
+session_formula: [
+    [
+        session_formula; `SEMICOLONSEMICOLON; session_formula ->
+               ()
+    ]
+    | [ session_formula; `STAR; session_formula ->
+               ()
+      | session_formula; `ORWORD; session_formula ->
+               ()
+    ]
+    | [ `OPAREN; session_formula; `CPAREN ->
+               ()
+    ]
+    | [ `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message -> 
+               ()
+    ]
+];
 
 session_message: [[
       cc = core_constr -> cc
