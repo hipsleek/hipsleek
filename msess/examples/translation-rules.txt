@@ -1,0 +1,35 @@
+
+=============== Protocol ===============
+========================================
+S = S;;S | (S or S) | (S) * (S) | F
+F = A->B: k & \phi
+  |
+  |
+  V
+S = self::Seq{S,S}<> | S or S | S * S | F
+F = msg::Trans{k & \phi}<A,B>
+where
+msg - dedicated variable for denoting the transmitted message
+
+============== Projection ==============
+========================================
+S = S;;S | (S or S) | (S) * (S) | f
+f = c \op (k&\phi) | c \op (k&\phi) | c \op t | c \op C
+op = ! | ?
+where
+c - channel
+t - type
+C - constant
+  |
+  |
+  V
+S = self::Seq{S,S}<> | (S or S) | (S) * (S) | f
+f = c::T(k&\phi)| c::T(k&\phi) | c::T(emp & msg:t) | c::T(emp & msg = C)
+T(p) = S{- p}<> | R{+ p}<>
+where
+c - channel
+t - type
+C - constant
+msg - dedicated variable for denoting the transmitted message
+
+
