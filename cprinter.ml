@@ -908,7 +908,7 @@ let rec pr_formula_exp (e:P.exp) =
   | P.ListHead (e, l)     -> fmt_string ("head("); pr_formula_exp e; fmt_string  (")")
   | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
   | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
-  | P.SLen (e, l)   -> fmt_string ("slen("); pr_formula_exp e; fmt_string  (")")  
+  | P.SLen (e, l)   -> fmt_string ("slen("); pr_formula_exp e; fmt_string  (")")
   | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
   | P.Func (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("(");
     (match i with

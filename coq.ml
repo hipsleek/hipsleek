@@ -114,7 +114,7 @@ and coq_of_exp e0 =
   | CP.ListCons (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
   | CP.ListHead (a, _) -> " ( hd 0 " ^ (coq_of_exp a) ^ ")"
   | CP.ListLength (a, _) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
-  | CP.SLen (a, _) -> "( slen " ^ (coq_of_exp a) ^ ")"  
+  | CP.SLen (a, _) -> "( slen " ^ (coq_of_exp a) ^ ")"
   | CP.ListTail (a, _) -> " ( tail " ^ (coq_of_exp a) ^ ")"
   | CP.ListReverse (a, _) -> " ( rev " ^ (coq_of_exp a) ^ ")"
   (* bags *)

@@ -338,7 +338,7 @@ let rec math_of_exp e0 : string=
   | CP.NegInfConst _ 
   | CP.InfConst _  -> failwith ("mathematica.math_of_exp: cannot handle InfConst operator")
   | CP.Template t -> math_of_exp (CP.exp_of_template t)
-  | CP.SLen _ -> failwith ("mathematica.math_of_exp: cannot handle length operator")
+  | CP.SLen _ -> failwith ("mathematica.math_of_exp: cannot handle string operator")
 
 let rec math_of_b_formula b : string =
   let (pf,_) = b in
