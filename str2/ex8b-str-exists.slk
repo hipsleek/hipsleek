@@ -1,5 +1,5 @@
 //1
-checksat endzero("abc0").
+checksat endzero("abc\\1").
 
 //2
 checksat endzero("abc").
@@ -14,7 +14,7 @@ checksat endzero(s) & nonzero(s).
 checkentail endzero(s) |- !(nonzero(s)).
 
 //6
-checkentail endzero(s) |- !(nonzero(s)).
+checkentail nonzero(s) |- !(endzero(s)).
 
 //7
 checkentail nonzero(s1) & nonzero(s2) & s = s1^s2 |- nonzero(s).
