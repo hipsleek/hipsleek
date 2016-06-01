@@ -47,6 +47,7 @@ type command =
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
+  | IncludeDef of ident
   | EntailCheck of (meta_formula list * meta_formula * entail_type)
   | SatCheck of (meta_formula)
   | NonDetCheck of (ident * meta_formula)
@@ -158,6 +159,7 @@ let string_of_command c = match c with
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
+  | IncludeDef  _ -> "IncludeDef"
   | EntailCheck _ -> "EntailCheck"
   | SatCheck _ -> "SatCheck"
   | NonDetCheck _ -> "NonDetCheck"

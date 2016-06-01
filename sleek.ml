@@ -163,6 +163,7 @@ module M = Lexer.Make(Token.Token)
       process_print_command pcmd
     | CmpCmd ccmd -> process_cmp_command ccmd
     | LetDef (lvar, lbody) -> put_var lvar lbody
+    | IncludeDef inc -> ()
     | BarrierCheck bdef -> process_barrier_def bdef
     | Time (b,s,_) -> 
       if b then Gen.Profiling.push_time s 
@@ -235,7 +236,7 @@ let proc_gen_cmd cmd = proc_one_cmd cmd
   (* | TermAssume (iante, iconseq) -> process_term_assume iante iconseq *)
   (* | EmptyCmd  -> () *)
 
-let parse_file (parse) (source_file : string) =
+let rec parse_file (parse) (source_file : string) =
   let rec parse_first (cmds:command list) : (command list)  =
     try 
       parse source_file 
@@ -261,6 +262,7 @@ let parse_file (parse) (source_file : string) =
     | UiDef uidef -> process_ui_def uidef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
+    | IncludeDef inc -> parse_file NF.list_parse inc
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
     | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
     | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _

@@ -1032,6 +1032,7 @@ non_empty_command:
       | t = hp_decl          -> HpDef t
       | l = coerc_decl_aux -> LemmaDef l
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+      | `SLEEK_INCLUDE; `PRIME; t = dir_path; `PRIME -> IncludeDef t
       | t=let_decl            -> t
       | t= checknorm_cmd         -> CheckNorm t
       | t= checkeq_cmd         -> EqCheck t

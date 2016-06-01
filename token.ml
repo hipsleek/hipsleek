@@ -68,7 +68,7 @@ type sleek_token =
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
   | PRED | PRED_PRIM | DPRINT | PRED_EXT 
-  | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
+  | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE | SLEEK_INCLUDE
   (* | PRINT_VIEW *)
   (* | PRINT_VIEW_LONG *)
   | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
@@ -193,7 +193,9 @@ module Token = struct
     | LEMMA TLEM_SPLIT ->"lemma_split"
     | LEMMA TLEM_PROP ->"lemma_prop"
     | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer" | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" 
+    | SLEEK_INCLUDE -> "sleek_include"
+    | DPRINT ->"dprint"
     | PRINT -> "print" 
     | PRINT_LEMMAS -> "print_lemmas" 
     (* | PRINT_VIEW -> "print_view"  *)
