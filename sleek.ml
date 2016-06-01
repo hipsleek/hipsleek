@@ -250,6 +250,12 @@ let rec parse_file (parse) (source_file : string) =
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
+
+  let process_include inc source_file =
+    let (curdir,_) = BatString.rsplit source_file "/" in
+    let header_path = curdir^"/"^inc in
+    if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path in
+
   let proc_one_def c = 
     match c with
     | DataDef ddef -> process_data_def ddef
@@ -262,7 +268,7 @@ let rec parse_file (parse) (source_file : string) =
     | UiDef uidef -> process_ui_def uidef
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
-    | IncludeDef inc -> parse_file NF.list_parse inc
+    | IncludeDef inc -> process_include inc source_file
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
     | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
     | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
