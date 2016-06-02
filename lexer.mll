@@ -254,6 +254,7 @@ module Make (Token : SleekTokenS)
    ("pred", PRED);
    ("spec", SPEC);
    ("pred_prim", PRED_PRIM);
+   ("pred_sess", PRED_SESS);
    ("pred_extn", PRED_EXT);
    ("hip_include", HIP_INCLUDE);
    ("sleek_include", SLEEK_INCLUDE);

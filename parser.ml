@@ -1026,6 +1026,7 @@ non_empty_command:
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
+      | `PRED_SESS; t = sess_view_decl -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -1263,6 +1264,25 @@ view_decl:
            }
  ]];
 
+prim_view_decl:
+  [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
+      -> let (oi, oboi) = oi in
+          { vh with
+          (* view_formula = None; *)
+          view_invariant = oi;
+          view_baga_inv = obi;
+          view_baga_over_inv = oboi;
+          view_baga_under_inv = obui;
+          view_kind = View_PRIM;
+          view_is_prim = true;
+          view_is_hrel = None;
+          view_inv_lock = li} ]];
+
+sess_view_decl:
+  [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
+          -> vh
+  ]];
+
 session_formula: [
     [
         session_formula; `SEMICOLONSEMICOLON; session_formula ->
@@ -1294,20 +1314,6 @@ session_message: [[
         F.mkExists ocl h p vp fl a (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
 ]];
-
-prim_view_decl:
-  [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
-      -> let (oi, oboi) = oi in
-          { vh with
-          (* view_formula = None; *)
-          view_invariant = oi;
-          view_baga_inv = obi;
-          view_baga_over_inv = oboi;
-          view_baga_under_inv = obui;
-          view_kind = View_PRIM;
-          view_is_prim = true;
-          view_is_hrel = None;
-          view_inv_lock = li} ]];
 
 view_decl_ext:
   [[ vh= view_header_ext; `EQEQ; vb= view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
@@ -3481,6 +3487,7 @@ type_decl:
    | peek_view_decl; o = opt_pred; v=view_decl; `SEMICOLON -> View v
    | peek_view_decl; o = opt_pred; v=view_decl; `DOT -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
+   | `PRED_SESS; v = sess_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];

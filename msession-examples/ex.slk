@@ -1,21 +1,17 @@
 sleek_include 'node.slk'.
 
-pred ll<n> == self = null & n = 0
-	or self::node<next = r> * r::ll<n - 1>
-	inv n >= 0.
+pred_sess ll2<n> == A -> B : self = null & n = 0. 
 
-pred ll2<n> == A -> B : self = null & n = 0. 
+pred_sess ll3<n> == A -> B : self = null & n = 0 ;; A -> B : self = null & n = 0. 
 
-pred ll3<n> == A -> B : self = null & n = 0 ;; A -> B : self = null & n = 0. 
+pred_sess ll4<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; E -> F : self = null. 
 
-pred ll4<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; E -> F : self = null. 
+pred_sess ll5<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; (A -> B : self = null). 
 
-pred ll5<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; (A -> B : self = null). 
+pred_sess ll6<n> == (A -> B : self = null & n = 0) or (C -> D : self = null) ;; (A -> B : self = null). 
 
-pred ll6<n> == (A -> B : self = null & n = 0) or (C -> D : self = null) ;; (A -> B : self = null). 
-
-pred ll7<n> == (A -> B : self = null & n = 0) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
-pred ll8<n> == (A -> B : self::node<_,_> * x::node<_,_>) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
-pred ll9<n> == A -> B : self::node<_,_> * x::node<_,_> or (C -> D : self = null * self = null) ;; (E -> F : self = null). 
+pred_sess ll7<n> == (A -> B : self = null & n = 0) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
+pred_sess ll8<n> == (A -> B : self::node<_,_> * x::node<_,_>) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
+pred_sess ll9<n> == A -> B : self::node<_,_> * x::node<_,_> or (C -> D : self = null * self = null) ;; (E -> F : self = null). 
 
 checkentail x=null |- x::ll<0>.
