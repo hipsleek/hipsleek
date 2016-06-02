@@ -702,6 +702,20 @@ let peek_dc =
              | [OPAREN,_; IDENTIFIER first,_; LEFTARROW,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_projection_send = 
+   SHGram.Entry.of_parser "peek_projection_send"
+       (fun strm -> 
+           match Stream.npeek 2 strm with
+             | [IDENTIFIER first,_; NOT,_] -> ()
+             | _ -> raise Stream.Failure)
+
+ let peek_projection_receive = 
+   SHGram.Entry.of_parser "peek_projection_receive"
+       (fun strm -> 
+           match Stream.npeek 2 strm with
+             | [IDENTIFIER first,_; QUERY,_] -> ()
+             | _ -> raise Stream.Failure)
+
  let peek_heap_args = 
    SHGram.Entry.of_parser "peek_heap_args"
        (fun strm -> 
@@ -1227,9 +1241,7 @@ prop_extn:
 ]];
 
 view_decl: 
-   [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
-          -> vh
-    | vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
+   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
           ->  let (oi, oboi) = oi in
               { vh with view_formula = (fst vb);
@@ -1279,7 +1291,7 @@ prim_view_decl:
           view_inv_lock = li} ]];
 
 sess_view_decl:
-  [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
+  [[ vh = view_header; `EQEQ; session_formula
           -> vh
   ]];
 
@@ -1296,7 +1308,11 @@ session_formula: [
     | [ `OPAREN; session_formula; `CPAREN ->
                ()
     ]
-    | [ `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message -> 
+    | [ peek_session_disj; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message -> 
+               ()
+      | peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message -> 
+               ()
+      | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
                ()
     ]
 ];
