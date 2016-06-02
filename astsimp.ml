@@ -2395,6 +2395,8 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
   Debug.no_2 "compute_fixpt" pr1 pr2 pr2 (fun _ _ -> compute_fixpt_x mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf) vn inv_pf
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
+  (* !!!!!!!!!!! SESSION *)
+  let () = Session.foo in
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
