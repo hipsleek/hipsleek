@@ -1227,7 +1227,7 @@ prop_extn:
 
 view_decl: 
    [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
-          -> failwith "Session logic not implemented"
+          -> vh
     | vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock; mpb = opt_mem_perm_set
           (* let f = (fst vb) in *)
           ->  let (oi, oboi) = oi in

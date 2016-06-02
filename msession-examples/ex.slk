@@ -1,4 +1,4 @@
-data node { int val ; node next }.
+sleek_include 'node.slk'.
 
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
