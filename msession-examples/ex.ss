@@ -1,7 +1,4 @@
-data node {
-    int val;
-    node next;
-}
+hip_include 'node.ss'
 
 ll<n> == self=null & n=0
     or self::node<_, q> * q::ll<n-1>
