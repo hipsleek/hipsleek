@@ -775,6 +775,20 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl,r) = x_add must_unify Int et n_tl pos in
     let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
     (n_tlist,r)
+  (* | IP.CharAt _ -> failwith x_tbi *)
+  | IP.CharAt (a1, a2, pos) -> 
+    let (fv1,n_tl1) = fresh_string tlist in
+    let (fv2,n_tl2) = fresh_tvar tlist in
+    let new_et1 = fv1 in
+    let new_et2 = fv2 in
+    let (n_tl1, r1) = x_add must_unify String et n_tl1 pos in
+    let (n_tl2, r2) = x_add must_unify Int et n_tl2 pos in
+    let (n_tlist1,_) = gather_type_info_exp_x prog a1 n_tl1 new_et1 in
+    let (n_tlist2,_) = gather_type_info_exp_x prog a2 n_tl2 new_et2 in
+    let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et1) n_tl1 in 
+    let (tmp1,tmp2)=nt in
+    let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
+    (n_tl,String)
   | IP.BExpr f1 -> (x_add gather_type_info_pure prog f1 tlist, Bool)
 
 and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =

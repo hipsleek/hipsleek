@@ -1,0 +1,14 @@
+//1
+checksat charAt("abc", 1) = "b".
+
+//2
+checksat charAt("abc\\0", 2) = "\\0".
+
+//3
+checksat charAt(s, (slen(s)-1)) = "\\0" & s = "abc\\0".
+
+//4
+checkentail charAt(s, (slen(s)-1)) = "\\0" |- !(nonzero(s)).
+
+//4
+checkentail charAt(s, (slen(s)-1)) = "\\0" |- endzero(s).

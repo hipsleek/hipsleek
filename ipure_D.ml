@@ -161,6 +161,7 @@ and exp =
   | Concat of (exp * exp *loc)
   | SConst of (string * loc)
   | SLen of (exp * loc)
+  | CharAt of (exp * exp * loc)
 
 and template = {
   (* ax + by + cz + d *)

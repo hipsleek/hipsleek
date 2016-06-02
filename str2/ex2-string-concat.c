@@ -6,7 +6,7 @@ char* a (char *s)
     ensures slen(res)=3 ;
   */
 {
-  s = "abc";
+  s = "abc0";
   return s;
 }
 

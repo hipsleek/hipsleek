@@ -2245,6 +2245,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
     | Ipure.BExpr _ -> e
     | Ipure.SLen (e, pos) -> 
       Ipure.SLen (helper_exp e, pos)
+    | Ipure.CharAt (e1, e2, pos) ->
+      Ipure.CharAt (helper_exp e1, helper_exp e2, pos)
   ) in
   match exp with
   | Iast.Assert a -> (

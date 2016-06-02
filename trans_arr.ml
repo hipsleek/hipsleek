@@ -105,6 +105,8 @@ let rec is_same_exp
   | SLen (e1,_),SLen (e2,_)
   | ListReverse (e1,_),ListReverse (e2,_) ->
     is_same_exp e1 e2
+  | CharAt (e11,e12,_), CharAt (e21,e22,_) ->
+    (is_same_exp e11 e21) && (is_same_exp e12 e22)
   | Tup2 ((e11,e12),_),Tup2((e21,e22),_)
   | Add (e11,e12,_),Add (e21,e22,_)
   | Subtract (e11,e12,_), Subtract (e21,e22,_)
@@ -222,7 +224,8 @@ let rec contain_array
     | Max (e1,e2,loc)
     | Min (e1,e2,loc)
     | BagDiff (e1,e2,loc)
-    | ListCons (e1,e2,loc)->
+    | ListCons (e1,e2,loc)
+    | CharAt (e1,e2,loc) ->
       ((contain_array_exp e1) or (contain_array_exp e2))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)
@@ -1884,7 +1887,8 @@ let rec drop_array_formula
     | Max (e1,e2,loc)
     | Min (e1,e2,loc)
     | BagDiff (e1,e2,loc)
-    | ListCons (e1,e2,loc)->
+    | ListCons (e1,e2,loc)
+    | CharAt (e1,e2,loc)->
       ((contain_array_exp e1) or (contain_array_exp e2))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)

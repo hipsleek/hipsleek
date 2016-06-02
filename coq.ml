@@ -92,7 +92,6 @@ and coq_of_exp e0 =
   | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
-  | CP.Concat (s1, s2, _) -> (coq_of_exp s1) ^ " ^ " ^ (coq_of_exp s2)
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
@@ -114,7 +113,6 @@ and coq_of_exp e0 =
   | CP.ListCons (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
   | CP.ListHead (a, _) -> " ( hd 0 " ^ (coq_of_exp a) ^ ")"
   | CP.ListLength (a, _) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
-  | CP.SLen (a, _) -> "( slen " ^ (coq_of_exp a) ^ ")"
   | CP.ListTail (a, _) -> " ( tail " ^ (coq_of_exp a) ^ ")"
   | CP.ListReverse (a, _) -> " ( rev " ^ (coq_of_exp a) ^ ")"
   (* bags *)
@@ -146,6 +144,10 @@ and coq_of_exp e0 =
   | CP.NegInfConst _
   | CP.InfConst _ -> illegal_format "coq_of_exp : \inf cannot be handled"
   | CP.Template t -> coq_of_exp (CP.exp_of_template t)
+  (* string *)
+  | CP.SLen (a, _) -> "( slen " ^ (coq_of_exp a) ^ ")"
+  | CP.Concat (s1, s2, _) -> (coq_of_exp s1) ^ " ^ " ^ (coq_of_exp s2)
+  | CP.CharAt (a1, a2, _) -> " ( CharAt " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with

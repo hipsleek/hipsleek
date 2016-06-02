@@ -127,6 +127,7 @@ let rec smt_of_exp a =
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Concat (s1, s2, _) -> "(Concat " ^ (smt_of_exp s1)^ " " ^(smt_of_exp s2)^")"
   | CP.SLen (s, _) -> "(Length " ^ (smt_of_exp s) ^ ")"
+  | CP.CharAt (s, i, _) -> "(CharAt " ^ (smt_of_exp s) ^ " " ^ (smt_of_exp i) ^ ")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(/ " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
@@ -223,10 +224,10 @@ let rec smt_of_b_formula b =
     else
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
-  | CP.NonZero (e, l) -> " (not (Contains " ^ (smt_of_exp e) ^ " \"\\1\"))"
+  | CP.NonZero (e, l) -> " (not (Contains " ^ (smt_of_exp e) ^ " \"\\0\"))"
 (* EZ(s) = (substring(s,n-1,1) = "0") /\ (n = slen(s)) /\ (NZ(substring(s,0,n-1)) *)
-  | CP.EndZero (e, l) -> "(and (= (Substring " ^ (smt_of_exp e) ^ "(-(Length " ^ (smt_of_exp e) ^ ") 1) 1)\"\\1\") 
-                               (not (Contains (Substring " ^ (smt_of_exp e) ^ " 0 (-(Length " ^ (smt_of_exp e) ^ ") 1)) \"\\1\")))"
+  | CP.EndZero (e, l) -> "(and (= (Substring " ^ (smt_of_exp e) ^ " (-(Length " ^ (smt_of_exp e) ^ ") 1) 1)\"\\0\") 
+                               (not (Contains (Substring " ^ (smt_of_exp e) ^ " 0 (-(Length " ^ (smt_of_exp e) ^ ") 1)) \"\\0\")))"
 
 let rec smt_of_formula pr_w pr_s f =
   let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in

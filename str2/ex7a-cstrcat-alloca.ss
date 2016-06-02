@@ -5,12 +5,12 @@ data str_buf{
 }
 
 pred str_obj<offset,s,length> ==
-  self::str_buf<offset,s,length> & endzero(s) &  slen(s)<=length
-           & 0<=offset<=length-1
-  inv endzero(s) & slen(s)<=length & 0<=offset<=length-1.
+  self::str_buf<offset,s,length> & endzero(s) & slen(s)<=length+1
+           & 0<=offset<=length
+  inv endzero(s) & slen(s)<=length+1 & 0<=offset<=length.
 
 void plus_plus(str_buf s)
-  requires s::str_obj<offset,str,length> & offset<length-1
+  requires s::str_obj<offset,str,length> & offset<length
   ensures s::str_obj<offset+1,str,length>;
 {
   s.offset = s.offset+1;

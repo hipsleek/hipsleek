@@ -102,6 +102,7 @@ and cvcl_of_exp a = match a with
   | CP.Add (a1, a2, _) ->  (cvcl_of_exp a1) ^ " + " ^ (cvcl_of_exp a2)
   | CP.SLen (a1, _) -> failwith (" String are not supported in cvclite")
   | CP.Concat (a1, a2, _) ->  failwith (" String are not supported in cvclite")
+  | CP.CharAt (a1, a2, _) ->  failwith (" String are not supported in cvclite")
   | CP.Subtract (a1, a2, _) ->  (cvcl_of_exp a1) ^ " - " ^ (cvcl_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvcl_of_exp a1) ^ " * " ^ (cvcl_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvclite.ml]: divide is not supported.")

@@ -281,6 +281,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListLength (a, _)
   | SLen (a, _)
   | ListReverse (a, _) -> afv a
+  | CharAt (a1, a2, _) ->  combine_avars a1 a2
   | Func (a, i, _) -> 
     let ifv = List.flatten (List.map afv i) in
     Gen.BList.remove_dups_eq (=) ((a,Unprimed) :: ifv)
@@ -646,6 +647,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
   | SLen (_, p) -> p
+  | CharAt (_, _, p) -> p
   | ListReverse (_, p) -> p
   | Func (_, _, p) -> p
   | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
@@ -890,6 +892,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one p a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one p a1, pos)
   | SLen (a1, pos) -> SLen (e_apply_one p a1, pos)
+  | CharAt (a1, a2, pos) -> CharAt (e_apply_one p a1, e_apply_one p a2, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one p a1, pos)
   | Func (a, ind, pos) -> Func (a, (e_apply_one_list p ind), pos)
   | ArrayAt (a, ind, pos) -> ArrayAt (v_apply_one p a, (e_apply_one_list p ind), pos) (* An Hoa *)
@@ -1105,6 +1108,7 @@ and find_lexp_exp (e: exp) ls =
     | ListTail (e, _) -> find_lexp_exp e ls
     | ListLength (e, _) -> find_lexp_exp e ls
     | SLen (e, _) -> find_lexp_exp e ls
+    | CharAt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | ListAppend (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | ListReverse (e, _) -> find_lexp_exp e ls
     | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
@@ -1179,6 +1183,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListTail (exp, _) -> contain_vars_exp exp
   | ListLength (exp, _) -> contain_vars_exp exp
   | SLen (exp, _) -> contain_vars_exp exp
+  | CharAt (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | ListAppend (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
@@ -1417,6 +1422,16 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | SLen (e, l) -> 
     let ne1, np1 = float_out_exp_min_max e in
     (SLen (ne1, l), np1)
+  | CharAt (e1, e2, l) ->
+    let ne1, np1 = float_out_exp_min_max e1 in
+    let ne2, np2 = float_out_exp_min_max e2 in
+    let r = match (np1, np2) with
+      | None, None -> None
+      | Some p, None -> Some p
+      | None, Some p -> Some p
+      | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
+    in
+    (CharAt (ne1, ne2, l), r) 
   | ListReverse (e, l) -> 
     let ne1, np1 = float_out_exp_min_max e in
     (ListReverse (ne1, l), np1)
@@ -1953,7 +1968,8 @@ let rec typ_of_exp (e: exp) : typ =
   | BExpr _ -> Bool
   (* String expressions *)
   | Concat _
-  | SConst _ -> Globals.String
+  | SConst _ 
+  | CharAt _ -> Globals.String
 
 let typ_of_exp (e: exp) : typ =
   let pr = !print_formula_exp in
@@ -2178,6 +2194,10 @@ let rec transform_exp_x f (e : exp) : exp =
       | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
       | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
       | SLen (e1,l) -> SLen ((transform_exp f e1),l)
+      | CharAt (e1,e2,l) ->
+        let ne1 = transform_exp f e1 in
+        let ne2 = transform_exp f e2 in
+        CharAt (ne1,ne2,l)
       | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
       | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
       | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)

@@ -100,6 +100,7 @@ type sleek_token =
   | NI | RO
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE |
           HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | SLEN | LENGTH
+  | CHARAT
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
   (* | TOPAREN | TCPAREN *)
@@ -218,7 +219,7 @@ module Token = struct
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" |
   TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | SLEN
-  -> "slen" | INLIST -> "inlist" | HEAD -> "head"
+  -> "slen" | CHARAT -> "charat" | INLIST -> "inlist" | HEAD -> "head"
     | MEM -> "mem" | MEME -> "memE"
     | INFER -> "infer" | INFER_EXACT -> "infer_exact" | INFER_INEXACT -> "infer_inexact"
     | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:" | SAT -> "@S"

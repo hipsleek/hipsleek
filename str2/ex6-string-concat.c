@@ -3,7 +3,7 @@
 char* a (char *s)
   /*@
     requires true
-    ensures s="abc" & res="abc";
+    ensures slen(res)=3 & res="abc";
   */
 {
   s = "abc";
