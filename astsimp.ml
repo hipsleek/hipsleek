@@ -2746,6 +2746,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               | [] -> true
               | []::xs -> is_empty xs
               | _ -> false in
+            let xs = List.filter (fun x -> not(x==[])) xs in
             let ans = match xs with 
             | [xs]::xss -> aux xss xs 
             | _ -> [] in
@@ -2753,6 +2754,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 y_winfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
             in ans
           in
+          let choose_one xs = 
+            let pr_sv = !CP.print_sv in
+            let pr1 = !CP.print_formula in
+            let pr2 = pr_list (pr_triple pr_sv string_of_int (pr_list pr1)) in
+            let pr3 = pr_list (pr_pair pr_sv pr1)  in
+            Debug.no_1 "choose_one" (pr_list pr3) pr3 choose_one xs in
           let fresh_name (v,f) = (v,f) in
               (* let fr_v = CP.fresh_spec_var v in *)
               (* (fr_v,CP.apply_subs [(v,fr_v)] f) in *)
@@ -2767,10 +2774,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           (* let () = y_tinfo_hp (add_str "lst(after filter)" pr_2) lst in *)
           let pr_3a = (pr_list (pr_pair pr_sv pr_f)) in
           let pr_3 = pr_list pr_3a in
-          let lst = List.map choose_smallest lst in
+          let lst = List.map (x_add_1 choose_smallest) lst in
           let () = y_tinfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
           (* ensure all non-empty branches has same root pointer & merge *)
-          let lst = choose_one lst in
+          let lst = (x_add_1 choose_one) lst in
           (* let () = y_winfo_hp (add_str "TODO: ensure same root for all branches" pr_3a) lst in *)
           (* give fresh name for root ptr *)
           let lst = List.map fresh_name lst in
