@@ -12,7 +12,7 @@ relation Rec(int n).
 
 
 pred arrsegHO<i,m> ==
-   x::arrI<v> & x=self+i & i=m-1 // Rec(v) & i=m-1
+   x::arrI<v> & x=self+i & i=m-1 & Rec(v) 
    or x::arrI<v> * self::arrsegHO<i+1,m> & x = self+i & i<m-1 // & Rec(v) 
  inv i<m.
 
@@ -21,3 +21,10 @@ infer [@classic,Rec
  ] x::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & x=arr+i & i<m-1 |- arr::arrsegHO<i,m>.
 print residue.
 
+
+/*
+# working
+infer [@classic,Rec
+ ] x::arrI<v> & v=5 & x=arr+i & i=m-1 |- arr::arrsegHO<i,m>.
+print residue.
+*/
