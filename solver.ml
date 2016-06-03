@@ -2397,7 +2397,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
                   Some (np,xxx)
                 with _ -> None
             end in
-        (* let () = y_tinfo_hp (add_str "new_inst" (pr_option !CP.print_formula)) new_inst in *)
+        let () = y_binfo_hp (add_str "new_inst" (pr_option (pr_pair !CP.print_sv pr_sv))) new_inst in
         let () = y_tinfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv ))) sst in
         let () = y_tinfo_hp (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula in
         (****)  
