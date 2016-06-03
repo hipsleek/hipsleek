@@ -2080,6 +2080,17 @@ Total verification time: 274.01 second
 	Number of false contexts: 98
 
 ====================================================================
+# arr_infer branch ..
+
+        # below loops in arr_infer branch ... (to fix)
+        # ["lemmas/nlseg4e1.slk", "--old-compute-act", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+# possible looping ..
+  fracperm/split_simple.slk
+
+Unexpected result with : lemmas/sll_tailL.slk (failed check(s): {L1#Valid},{L2#Valid}) 
+Unexpected result with : lemmas/dseg-new.slk (failed check(s): {L2#Fail},{L3#Valid}) 
+Unexpected result with : lemmas/dseg1.slk (failed check(s): {L1#Valid}) 
+
 ====================================================================
 ====================================================================
 ====================================================================
