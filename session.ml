@@ -68,9 +68,17 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_pos:  loc;
   }
 
-  let print_session_base = Base.print_session_base
+  let rec print_session = function
+    | SSeq s -> print_session_seq s
+    | SOr s -> print_session_or s
+    | SStar s -> print_session_star s
+    | SBase s -> print_session_base s
 
-  let print_session_star f = "to be implemented"
+  and print_session_base = Base.print_session_base
+
+  and print_session_seq f = "to be implemented"
+  and print_session_or f = "to be implemented"
+  and print_session_star f = "to be implemented"
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -78,7 +86,7 @@ end;;
 module Protocol = Make_Session(Protocol_base);;
 module Projection = Make_Session(Projection_base);;
 
-type session_test = Protocol.session (* | Projection.session *)
+type session_type = ProtocolSession of Protocol.session | ProjectionSession of Projection.session
 
 let foo =
   let () = print_endline "!!!!! SESSION!!!!!!!" in

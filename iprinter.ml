@@ -642,6 +642,10 @@ and string_of_formula = function
             ^ ")"
     in rs^sa
 
+and string_of_session = function
+  | Session.ProtocolSession s -> Session.Protocol.print_session s
+  | Session.ProjectionSession s -> Session.Projection.print_session s
+
 and  string_of_struc_formula c = match c with 
   | F.ECase {
       F.formula_case_branches  =  case_list ;
