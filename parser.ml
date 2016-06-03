@@ -1291,7 +1291,9 @@ prim_view_decl:
           view_inv_lock = li} ]];
 
 sess_view_decl:
-  [[ vh = view_header; `EQEQ; session_formula
+  [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
+          -> vh
+   | vh = view_header; `EQEQ; projection_formula
           -> vh
   ]];
 
@@ -1308,9 +1310,26 @@ session_formula: [
     | [ `OPAREN; session_formula; `CPAREN ->
                ()
     ]
-    | [ peek_session_disj; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message -> 
+    | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
                ()
-      | peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message -> 
+    ]
+];
+
+projection_formula: [
+    [
+        projection_formula; `SEMICOLONSEMICOLON; projection_formula ->
+               ()
+    ]
+    | [ projection_formula; `STAR; projection_formula ->
+               ()
+      | projection_formula; `ORWORD; projection_formula ->
+               ()
+    ]
+    | [ `OPAREN; projection_formula; `CPAREN ->
+               ()
+    ]
+    |
+      [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
                ()
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
                ()
@@ -1623,6 +1642,7 @@ view_header_ext:
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
+          view_session_formula = None;
           view_inv_lock = None;
           view_is_prim = false;
           view_is_hrel = None;
