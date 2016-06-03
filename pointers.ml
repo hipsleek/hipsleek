@@ -83,6 +83,7 @@ let default_value (t :typ) pos : exp =
     StringLit {exp_string_lit_val = ""; exp_string_lit_pos = pos;}
     (* failwith *)
     (*   "default_value: String in variable declaration should have been rejected" *)
+  | Char -> failwith x_tbi
   | (TVar _) ->
     failwith
       "default_value: typevar in variable declaration should have been rejected"

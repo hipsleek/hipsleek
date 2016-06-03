@@ -115,6 +115,7 @@ and aug_class_name (t : typ) = match t with
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
   | String -> "StringAug"
+  | Char -> "CharAug"
   | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
   | RelT _ -> "RelAug"

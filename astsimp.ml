@@ -93,6 +93,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | Float         -> "float"
   | Int           -> "int"
   | String        -> "string"
+  | Char          -> "char"
   | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
@@ -6808,7 +6809,9 @@ and default_value (t :typ) pos : C.exp =
   | String ->
     C.SConst { C.exp_sconst_val = ""; C.exp_sconst_pos = pos; }
     (* failwith *)
-    (*   "default_value: string in variable declaration should have been rejected" *)
+    (*   "default_value: string in variable declaration should have
+  been rejected" *)
+  | Char -> failwith x_tbi
   | (TVar _) ->
     failwith
       "default_value: typevar in variable declaration should have been rejected"

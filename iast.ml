@@ -615,6 +615,8 @@ let bool_type = Bool
 
 let string_type = String
 
+let char_type = Char
+
 let bag_type = BagT Int
 
 (* utility functions *)

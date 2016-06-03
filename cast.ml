@@ -1224,6 +1224,8 @@ let int_type = Int
 
 let string_type = String
 
+let char_type = Char
+
 let infint_type = INFInt
 
 let float_type = Float

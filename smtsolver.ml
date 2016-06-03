@@ -82,6 +82,7 @@ let rec smt_of_typ t =
   | Tree_sh -> "Int"
   | Int -> "Int"
   | String -> "String"
+  | Char -> "String" (* Z3 does not support Char type *)
   | AnnT -> "Int"
   | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)

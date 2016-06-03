@@ -194,6 +194,7 @@ type typ =
   | Float
   | Int
   | String
+  | Char
   | INFInt
   | Tup2 of typ * typ
   | NUM
@@ -300,6 +301,8 @@ let rec cmp_typ t1 t2=
   | Bool, Bool
   | Float, Float
   | Int, Int
+  | String, String
+  | Char, Char
   | INFInt, INFInt
   | NUM, NUM
   | Void, Void -> true
@@ -611,6 +614,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Float         -> "float"
   | Int           -> "int"
   | String        -> "string"
+  | Char          -> "char"
   | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
@@ -666,6 +670,7 @@ let rec string_of_typ_alpha = function
   | Float         -> "float"
   | Int           -> "int"
   | String        -> "string"
+  | Char          -> "char"
   | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"

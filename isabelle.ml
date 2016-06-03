@@ -34,7 +34,9 @@ let rec isabelle_of_typ = function
   | Tree_sh 	  -> "int"
   | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
-  | String        -> "string"
+  | String
+  | Char          -> Error.report_error {Error.error_loc = no_pos; 
+                        Error.error_text = "String/Char not supported for Isabelle"}
   | Void          -> "void" 	(* same as for float *)
   | BagT	t	  ->
     if !bag_flag then "("^(isabelle_of_typ t) ^") multiset"

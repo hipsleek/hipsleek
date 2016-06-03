@@ -76,7 +76,8 @@ let rec smt_of_typ t =
   | Float -> "Int" (* Currently, do not support real arithmetic! *)
   | Tree_sh -> "Int"
   | Int -> "Int"
-  | String -> "Int" (*Muoi : For temp compiling, TO-DO fix *)
+  | String -> "String" 
+  | Char -> "String"  (* Z3 solver does not support Char type *)
   | AnnT -> "Int"
   | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
   | NUM -> "Int" (* Use default Int for NUM *)
