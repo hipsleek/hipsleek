@@ -57,6 +57,7 @@ void swap(arrI base,int i,int m)
         upd_arr(base,i+1,cur);
       }
     // (i) (i+1) [i+2...m) |- [i...m)
+    // The existing matching mechanism will match i first.
     reverse_unfold(base,i+1,m);
     return;
   }

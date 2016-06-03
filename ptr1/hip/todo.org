@@ -44,6 +44,17 @@
 
 * Contributions
   - A systematic way to write specifications for array programs
-    - provide base case, inductive case
+    arrI<v> as an array element, arrseg<i,n,max,min,f> as an array segment
+
+    Automated entailment checking...
+
+    self+i::arrI<v> * self+i+1::arrI<v> * self::arrseg<i+2,n,_,_,_> |- self::arrseg<i,n,_,_,_>
+
+    We need some new mechanism to combine segments...
+
+    Inference
+
+    self+i::arrI<> * self+i+1::arrseg<> |- self+i::arrseg<>
+
   - A verification system for array programs with pointers or index
   - Automatically prove
