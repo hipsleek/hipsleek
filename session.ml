@@ -23,15 +23,20 @@ type protocol_base_formula = {
   protocol_base_formula_message  : F.formula;
 } ;;
 
-type projection_base_bormula = {
-  projection_base_bormula_op      : transmission;
-  projection_base_bormula_channel : ident;
-  projection_base_bormula_message : F.formula;
+type projection_base_formula = {
+  projection_base_formula_op      : transmission;
+  projection_base_formula_channel : ident;
+  projection_base_formula_message : F.formula;
 } ;;
 
 module Protocol_base : Session_base = struct
   type t = protocol_base_formula
   let print_session_base f = "Protocol_base: to be implemented"
+end;;
+
+module Projection_base : Session_base = struct
+  type t = projection_base_formula
+  let print_session_base f = "Projection_base: to be implemented"
 end;;
 
 (* ============== session type ================ *)
@@ -71,6 +76,7 @@ end;;
 (* =========== Protocol / Projection ========== *)
 (* ============================================ *)
 module Protocol = Make_Session(Protocol_base);;
+module Projection = Make_Session(Projection_base);;
 
 type session_test = Protocol.session (* | Projection.session *)
 

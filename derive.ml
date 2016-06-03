@@ -1123,6 +1123,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
           Iast.view_typed_vars = iview_dclr.Iast.view_typed_vars@extn_targs;
           Iast.view_pt_by_self  = [];
           Iast.view_formula = Iformula.mkETrue top_flow no_pos;
+          Iast.view_session_formula = None;
           Iast.view_inv_lock = None;
           Iast.view_is_prim = false;
           Iast.view_is_hrel = None;
