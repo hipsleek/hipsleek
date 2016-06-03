@@ -5,7 +5,7 @@ open VarGen
 
   Each predicate c is associated with a class c_checker that
   has a "traverse" method that traverses the heap covered by
-  c. c_checker has fields for all input parameters of c. 
+  c. c_checker has fields for all input parameters of c.
 
   "traverse" returns set of pairs, where each pair consists
   of a set of references (a footprint) and an output parameter
@@ -18,8 +18,8 @@ open VarGen
   - how to handle existential variables: ex v. H & v = f(...) & F(t)
 
   - insert check for accessibility when traversing p::c<> where c is
-  object type: 
-    + add field named "accessor", add asignment 
+  object type:
+    + add field named "accessor", add asignment
     + <new_checker>.accessor = accessor when setting up new checker
 *)
 
@@ -35,9 +35,9 @@ module H = Hashtbl
 type pred_output = ident (* name of the variable containing the result *)
 
 and heap_output = (ident * (ident * ident)) list
-(* 
+(*
    and entry [v -> (e, f)] in heap_output means
-   variable v should be replaced by field access e.f 
+   variable v should be replaced by field access e.f
    where e is the output of a predicate that has been
    evaluated and f is an output parameter thereof.
 *)
@@ -46,10 +46,10 @@ and heap_output = (ident * (ident * ident)) list
 exception Unbound_var of string
 
 type var_map_entry =
-  (* 
+  (*
 	   bindings from pure part. It can contain unbound subexpressions.
 	*)
-  | PExp of CP.exp 
+  | PExp of CP.exp
    (*
 		bindings from heap part, basically field accesses, either from
 		objects, or from recursive checker.
@@ -60,7 +60,7 @@ type var_map_entry =
 
 and var_map = (ident, var_map_entry) H.t
 
-(* 
+(*
    if there is a constraint, for example, x::node<next = r> * r::node<val = v>, then
    output [(x, r), (r, v)]. The idea is to perform a topological sort, and assign
    variables in the sequence x (not assigned), r, v.
@@ -100,7 +100,7 @@ and is_in_vars (e : CP.exp) (vars : ident list) : bool =
     List.mem sv vars
   else false
 
-and is_in_svars (e : CP.exp) (svars : CP.spec_var list) : bool = 
+and is_in_svars (e : CP.exp) (svars : CP.spec_var list) : bool =
   if CP.is_var e then
     let tmp = CP.to_var e in
     CP.mem tmp svars
@@ -108,8 +108,8 @@ and is_in_svars (e : CP.exp) (svars : CP.spec_var list) : bool =
     false
 
 and aug_class_name (t : typ) = match t with
-  | UNK  -> 	
-    Error.report_error {Error.error_loc = no_pos; 
+  | UNK  ->
+    Error.report_error {Error.error_loc = no_pos;
                         Error.error_text = "unexpected UNKNOWN type"}
   | Pointer _ -> "Pointer"
   | Named c -> c ^ "Aug"
@@ -149,7 +149,7 @@ and split_params_mode (view_vars : CP.spec_var list) (modes : mode list) : (CP.s
   | ([], []) -> ([], [])
   | _ -> failwith ("split_params_mode: two input lists must be of the same length.")
 
-(* 
+(*
    generate fields from a set of spec_vars
 
    field_vars : spec vars to be converted to fields
@@ -163,7 +163,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
         (* An Hoa MARKED *)
         let rec ityp_of_ctyp ct = match ct with
           | Named c -> Named c
-          | Array (et, _) -> ityp_of_ctyp et 
+          | Array (et, _) -> ityp_of_ctyp et
           | p -> p in
         let t = ityp_of_ctyp (CP.type_of_spec_var var) in
         (* An Hoa END *)
@@ -175,7 +175,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
   let rec helper2 (CP.SpecVar (t, v, p)) =
     let cls_name = aug_class_name t in
     let atype = Named cls_name in
-    ((atype, v), pos, false,(gen_field_ann atype) (* F_NO_ANN *))  (* An Hoa : Add [false] for inline record. TODO revise *) in 
+    ((atype, v), pos, false,(gen_field_ann atype) (* F_NO_ANN *))  (* An Hoa : Add [false] for inline record. TODO revise *) in
   let pb_fields = List.map helper2 pbvars in
   let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
@@ -925,7 +925,7 @@ let main_result = Var ({exp_var_name = "main_result";
 
 
 (*
-  Generate bindings for existential variables 
+  Generate bindings for existential variables
   based on the pure part.
 
   ex v, v1 . H[v] & v = v1 & v = a & v = p
@@ -939,8 +939,8 @@ let main_result = Var ({exp_var_name = "main_result";
   input, iii) output.
 
   var_map maps existentially quantified and output variables
-  to groudable terms, maps input vars to themselves. After 
-  building the map, if there is a variable not present in 
+  to groudable terms, maps input vars to themselves. After
+  building the map, if there is a variable not present in
   the map, the formula is rejected.
 
   v1 = v2
@@ -958,7 +958,7 @@ let main_result = Var ({exp_var_name = "main_result";
 *)
 
 let disj_count = ref 1
-let stub_branch_point_id s = Some (-1,s) 
+let stub_branch_point_id s = Some (-1,s)
 
 let return_true pos = Return ({exp_return_val = Some
                                    (BoolLit ({exp_bool_lit_val = true;
@@ -998,7 +998,7 @@ let precond_output = ref ([] : CP.spec_var list)
   to go to vmap, and test (return value).
 *)
 let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) (vmap : var_map) : CP.formula = match pure with
-  | CP.And (p1, p2, pos) -> 
+  | CP.And (p1, p2, pos) ->
     let p1' = gen_bindings_pure p1 unbound_vars vmap in
     let p2' = gen_bindings_pure p2 unbound_vars vmap in
     let p = CP.mkAnd p1' p2' pos in
@@ -1010,9 +1010,9 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
         try
           let be1 = H.find vmap tmp in
           if is_in_svars e2 unbound_vars then
-            (* 
+            (*
 	       to handle cases like ex v. x::node<val = v> & v = s,
-	       where s is output parameters. 
+	       where s is output parameters.
 	    *)
      (*
 	      gen_bindings_pure (CP.BForm (CP.Eq (e2, e1, pos))) unbound_vars vmap
@@ -1056,7 +1056,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
            h_formula_star_pos = pos})
   | StarMinus ({h_formula_starminus_h1 = h1;
                 h_formula_starminus_h2 = h2;
-                h_formula_starminus_pos = pos})	   
+                h_formula_starminus_pos = pos})
   | Conj ({h_formula_conj_h1 = h1;
            h_formula_conj_h2 = h2;
            h_formula_conj_pos = pos})
@@ -1082,9 +1082,9 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
       let pname = CP.name_of_spec_var p in
       let vnames = List.map CP.name_of_spec_var (List.tl (List.tl vs)) in
       let field_names = List.map C.get_field_name ddef.C.data_fields in
-      let helper v f = 
-        (* 
-	   v : exists. var, f: corresponding field, 
+      let helper v f =
+        (*
+	   v : exists. var, f: corresponding field,
 	   object fields can never be partially bound
 	*)
         H.add vmap v (HExp (pname, f, false))
@@ -1097,7 +1097,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
                h_formula_view_arguments = vs;
                h_formula_view_modes = modes;
                h_formula_view_pos = pos}) -> begin
-      (* 
+      (*
 	 map each variable v in vs to p.f where f is the view parameter
 	 corresponding positionally to v.
       *)
@@ -1109,7 +1109,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
           let vpname = CP.name_of_spec_var vp in
           H.add vmap vname (HExp (pname, vpname, pb));
           [(pname, vname)]
-        else 
+        else
           [] in
       let tmp1 = Gen.map4 helper vs vdef.C.view_vars modes vdef.C.view_partially_bound_vars in
       let tmp2 = List.concat tmp1 in
@@ -1121,7 +1121,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
   | HEmp | HVar _-> []
   | HFalse -> [] (* what to do here? *)
 
-(* 
+(*
    compiling logical constructs to executable code based on the generated bindings.
 
    All variables take their values form vmap. An input var x is mapped to this.x.
@@ -1179,7 +1179,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
       try
         let tmp = H.find vmap var in
         match tmp with
-        | HExp (v, f, p) -> 
+        | HExp (v, f, p) ->
   (*
 		  For simplicity, suppose v is a bound variable.
 		  If v is not, perform a recursive look-up.
@@ -1191,7 +1191,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
                             exp_member_path_id = (fresh_branch_point_id "");
                             exp_member_pos = pos}) in
           (ce, p)
-        | PExp me -> 
+        | PExp me ->
           if CP.is_var me then
             let lsvar = CP.to_var me in
             if not (CP.mem lsvar unbound_vars) then
@@ -1205,7 +1205,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
       (* if me is still unbound, this recursive invocation
          			 will chase it up *)
       with
-      | Not_found -> 
+      | Not_found ->
         raise (Unbound_var ((Debug.string_of_pos pos) ^ var ^ " is unbound"))
     (*
 		    Debug.print_info "gen_pure_exp" (var ^ " is unbound") pos;
@@ -1218,6 +1218,9 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
   | CP.SConst (s, pos) ->
        (StringLit ({exp_string_lit_val = s;
                  exp_string_lit_pos = pos}), false)
+  | CP.CConst (c, pos) ->
+       (CharLit ({exp_char_lit_val = c;
+                 exp_char_lit_pos = pos}), false)
   | CP.Null pos ->
     (Null pos, false)
   | _ -> failwith ("gen_pure_exp: " ^ (Cprinter.string_of_formula_exp pe) ^ " is not supported")
@@ -1235,7 +1238,7 @@ and gen_pure_formula (pure : CP.formula) (vmap : var_map) (unbound_vars : CP.spe
                         exp_binary_oper1 = pe1;
                         exp_binary_oper2 = pe2;
                         exp_binary_path_id = None;
-                        exp_binary_pos = pos}) 
+                        exp_binary_pos = pos})
       in
       pe
     end
@@ -1289,7 +1292,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
                             exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
                             exp_call_recv_pos = pos}) in
         ce
-      else 
+      else
         let ce = Binary ({exp_binary_op = OpEq;
                           exp_binary_oper1 = ce1;
                           exp_binary_oper2 = ce2;
@@ -1321,7 +1324,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
                             exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
                             exp_call_recv_pos = pos}) in
         ce
-      else 
+      else
         let ce = Binary ({exp_binary_op = OpNeq;
                           exp_binary_oper1 = ce1;
                           exp_binary_oper2 = ce2;
@@ -1365,7 +1368,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
       let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
       let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
       if pb1 && pb2 then
-        failwith ("gen_pure_bform: both sides of <= is partially bound: " 
+        failwith ("gen_pure_bform: both sides of <= is partially bound: "
                   ^ (Cprinter.string_of_b_formula bf0))
       else if pb1 then
         let ce = CallRecv ({exp_call_recv_receiver = ce1;
@@ -1393,7 +1396,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
       let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
       let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
       if pb1 && pb2 then
-        failwith ("gen_pure_bform: both sides of >= is partially bound: " 
+        failwith ("gen_pure_bform: both sides of >= is partially bound: "
                   ^ (Cprinter.string_of_b_formula bf0))
       else if pb1 then
         let ce = CallRecv ({exp_call_recv_receiver = ce1;
@@ -1421,7 +1424,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
       let ce1, pb1 = gen_pure_exp e1 vmap unbound_vars in
       let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
       if pb1 && pb2 then
-        failwith ("gen_pure_bform: both sides of > is partially bound: " 
+        failwith ("gen_pure_bform: both sides of > is partially bound: "
                   ^ (Cprinter.string_of_b_formula bf0))
       else if pb1 then
         let ce = CallRecv ({exp_call_recv_receiver = ce1;
@@ -1484,7 +1487,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
   | CP.BConst (b, pos) ->
     BoolLit ({exp_bool_lit_val = b;
               exp_bool_lit_pos = pos})
-  | _ -> failwith ("gen_pure_bform: " ^ (Cprinter.string_of_b_formula bf0) 
+  | _ -> failwith ("gen_pure_bform: " ^ (Cprinter.string_of_b_formula bf0)
                    ^ " is not supported")
 
 (*
@@ -1496,7 +1499,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
            h_formula_star_pos = pos})
   | StarMinus ({h_formula_starminus_h1 = h1;
                 h_formula_starminus_h2 = h2;
-                h_formula_starminus_pos = pos})	   
+                h_formula_starminus_pos = pos})
   | Conj ({h_formula_conj_h1 = h1;
            h_formula_conj_h2 = h2;
            h_formula_conj_pos = pos})
@@ -1505,7 +1508,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
                h_formula_conjstar_pos = pos})
   | ConjConj ({h_formula_conjconj_h1 = h1;
                h_formula_conjconj_h2 = h2;
-               h_formula_conjconj_pos = pos})	   	   
+               h_formula_conjconj_pos = pos})
   | Phase ({h_formula_phase_rd = h1;
             h_formula_phase_rw = h2;
             h_formula_phase_pos = pos}) -> begin
@@ -1550,7 +1553,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
                         exp_cond_then_arm = pnewcolor;
                         exp_cond_else_arm = return_false pos;
                         exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
-                        exp_cond_pos = pos}) 
+                        exp_cond_pos = pos})
       in
       cond
     end
@@ -1576,13 +1579,13 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
       let new_checker_var = Var ({exp_var_name = new_checker_name;
                                   exp_var_pos = pos}) in
       let new_checker_decl = VarDecl ({exp_var_decl_type = Named cls;
-                                       exp_var_decl_decls = 
+                                       exp_var_decl_decls =
                                          [(new_checker_name, Some new_checker, pos)];
-                                       exp_var_decl_pos = no_pos}) in		
+                                       exp_var_decl_pos = no_pos}) in
       (* Call checker and test for result *)
       let call_checker = CallRecv ({exp_call_recv_receiver = new_checker_var;
                                     exp_call_recv_method = "traverse";
-                                    exp_call_recv_arguments = 
+                                    exp_call_recv_arguments =
                                       [cur_color_exp pos; new_color_exp pos];
                                     exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
                                     exp_call_recv_pos = pos}) in
@@ -1615,7 +1618,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
               assignment :: rest
             else rest
           end
-        | [], [], [] -> [] 
+        | [], [], [] -> []
         | _ -> failwith ("gen_heap: params and modes are supposed to be lists with the same length.") in
       (* gen inputs *)
       let self_var = CP.SpecVar (Named vdef.C.view_data_name, self, Unprimed) in
@@ -1630,13 +1633,13 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
     end
   | Hole _ | FrmHole _ | HTrue | HEmp | HVar _ | HRel _ ->
     Empty no_pos
-  | HFalse -> 
+  | HFalse ->
     return_false no_pos
 
 (*
   Compiling disjunct:
   - rename bound variables
-  - generate unbound variables: 
+  - generate unbound variables:
   they include output parameters and existential variables. Note that inputs
   for recursive predicate invocations are included in existentially quantified
   variables.
@@ -1646,7 +1649,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
   - disjunct procedure
 *)
 and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec_var list) (pbound_vars : CP.spec_var list) : proc_decl =
-  (* 
+  (*
      rename bound vars to avoid name clashes between disjuncts, since
      checkers for predicate invocations will use the same name as the
      root pointer for the predicate instance.
@@ -1684,18 +1687,18 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
         let rest_e = gen_assignment_output rest in
         let v = Var ({exp_var_name = ovar;
                       exp_var_pos = pos}) in
-        let rhs = 
+        let rhs =
           try
             fst (gen_pure_exp (CP.Var (sovar, pos)) vmap unbound_vars)
           with
-          | Unbound_var msg -> 
+          | Unbound_var msg ->
             (* bind to a "unbound" boxed object *)
             New ({exp_new_class_name = aug_class_name ovar_t;
                   exp_new_arguments = [];
                   exp_new_pos = pos})
         in
         let tmp = List.filter (fun pv -> CP.name_of_spec_var pv = ovar) pbound_vars in
-        let assign = 
+        let assign =
           match tmp with
           | (CP.SpecVar (t, _, _)) :: _ ->
             let new_e = New ({exp_new_class_name = aug_class_name t;
@@ -1733,7 +1736,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
                    exp_seq_pos = pos}) in
   (* now make the disjunct procedure *)
   let dproc_name = "disj_" ^ (string_of_int (next_disj_count())) in
-  let disj_proc = 
+  let disj_proc =
     { proc_name = dproc_name;
       proc_source = "source_file";
       proc_flags = [];
@@ -1757,16 +1760,16 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
       proc_verified_domains = [];
       proc_file = "";
       proc_loc = pos ;
-      proc_test_comps = None} 
+      proc_test_comps = None}
   in
   disj_proc
 
 
 and combine_disj_results disj_results pos : exp = match disj_results with
   | disj_proc :: rest -> begin
-      (* 
-	 call the disjunct procedure, assign the returned 
-	 value to bvar_name 
+      (*
+	 call the disjunct procedure, assign the returned
+	 value to bvar_name
       *)
       let bvar_name = fresh_var_name "xxx" pos.start_pos.Lexing.pos_lnum in
       let disj_res = Var ({exp_var_name = bvar_name;
@@ -1810,7 +1813,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
     end
   | [] -> Empty pos
 
-(* 
+(*
    Generate checking function for a DNF formula.
 
    A DNF formula is compiled to a set of procedures, one for each
@@ -1834,7 +1837,7 @@ and gen_formula (prog : C.prog_decl) (f0 : formula) (vmap : var_map) (output_var
   let pos = pos_of_formula f0 in
   let disj_results = List.map (fun disj -> gen_disjunct prog disj vmap output_vars pbvars) disjs in
   let combined_exp = combine_disj_results disj_results pos in
-  let ret_false = Return ({exp_return_val = Some 
+  let ret_false = Return ({exp_return_val = Some
                                (BoolLit ({exp_bool_lit_val = false;
                                           exp_bool_lit_pos = pos}));
                            exp_return_path_id = stub_branch_point_id "pred_comp_generated";
@@ -1846,26 +1849,26 @@ and gen_formula (prog : C.prog_decl) (f0 : formula) (vmap : var_map) (output_var
 
 and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_var list)  =
   let pos = pos_of_struc_formula vdef.C.view_formula in
-  let in_params, out_params = 
+  let in_params, out_params =
     split_params_mode vdef.C.view_vars vdef.C.view_modes in
-  (* 
+  (*
      build mapping for input parameters.
      Input param v is mapped to this.v
   *)
   let in_names = List.map CP.name_of_spec_var in_params in
   let vmap = H.create 103 in
-  let () = List.iter 
+  let () = List.iter
       (fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
   let pbvars0 = gen_partially_bound_params out_params (C.formula_of_unstruc_view_f vdef) in
   (* update partially bound vars for vdef *)
   let () = update_partially_bound vdef pbvars0 in
-  let combined_exp, disj_procs, pbvars = 
+  let combined_exp, disj_procs, pbvars =
     gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
   (* generate fields *)
-  let fields = ((Named vdef.C.view_data_name, self), pos, false, (gen_field_ann (Named vdef.C.view_data_name))(* F_NO_ANN *)) (* An Hoa : add [false] for inline record. TODO revise *) 
+  let fields = ((Named vdef.C.view_data_name, self), pos, false, (gen_field_ann (Named vdef.C.view_data_name))(* F_NO_ANN *)) (* An Hoa : add [false] for inline record. TODO revise *)
                :: (gen_fields vdef.C.view_vars pbvars pos) in
   (* parameters for traverse *)
-  let check_proc = 
+  let check_proc =
     { proc_name = "traverse";
       proc_source = "source_file";
       proc_flags = [];
@@ -1900,9 +1903,9 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   check_proc.proc_data_decl <- Some ddef;
   ddef, pbvars
 
-and update_partially_bound (vdef : C.view_decl) (pbvars : CP.spec_var list) : unit = 
+and update_partially_bound (vdef : C.view_decl) (pbvars : CP.spec_var list) : unit =
   let rec helper vvars : bool list = match vvars with
-    | v :: rest -> 
+    | v :: rest ->
       let tmp = helper rest in
       if CP.mem v pbvars then
         true :: tmp
@@ -1948,11 +1951,11 @@ and get_partially_bound_vars prog (f0 : formula) : CP.spec_var list = match f0 w
   by a pure formula.
 *)
 and gen_bound_params (output_vars : CP.spec_var list) (p0 : CP.formula) : CP.spec_var list = match p0 with
-  | CP.And (p1, p2, pos) -> 
+  | CP.And (p1, p2, pos) ->
     let b1 = gen_bound_params output_vars p1 in
     let b2 = gen_bound_params output_vars p2 in
     b1 @ b2
-  | CP.BForm ((CP.Eq (e1, e2, pos), _), _) -> 
+  | CP.BForm ((CP.Eq (e1, e2, pos), _), _) ->
     if is_in_svars e1 output_vars && (not (is_in_svars e2 output_vars)) then
       [CP.to_var e1]
     else if is_in_svars e2 output_vars && (not (is_in_svars e1 output_vars))  then

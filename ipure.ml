@@ -132,14 +132,14 @@ let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initia
 let print_exp = print_formula_exp
 
 module Exp_Pure =
-struct 
+struct
   type e = formula
   let comb x y = And (x,y,no_pos)
   let string_of = !print_formula
   let ref_string_of = print_formula
 end;;
 
-module Label_Pure = LabelExpr(LO)(Exp_Pure);; 
+module Label_Pure = LabelExpr(LO)(Exp_Pure);;
 
 let linking_exp_list = ref (Hashtbl.create 100)
 let () = let zero = IConst (0, no_pos)
@@ -148,7 +148,7 @@ let () = let zero = IConst (0, no_pos)
 
 (* free variables *)
 
-let rec fv (f : formula) : (ident * primed) list = match f with 
+let rec fv (f : formula) : (ident * primed) list = match f with
   | BForm (b,_) -> bfv b
   | And (p1, p2, _) -> combine_pvars p1 p2
   | AndList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd fv b)
@@ -157,7 +157,7 @@ let rec fv (f : formula) : (ident * primed) list = match f with
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
   | Exists (qid, qf, _,_) -> remove_qvar qid qf
 
-and combine_pvars p1 p2 = 
+and combine_pvars p1 p2 =
   let fv1 = fv p1 in
   let fv2 = fv p2 in
   Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
@@ -179,12 +179,12 @@ and pfv (pf: p_formula)=
   | Frm (sv,p) -> [sv]
   | BConst _ -> []
   | BVar (bv, _) -> [bv]
-  | Lt (a1, a2, _) | Lte (a1, a2, _) 
-  | Gt (a1, a2, _) | Gte (a1, a2, _) 
-  | SubAnn (a1, a2, _) 
-  | Eq (a1, a2, _) 
+  | Lt (a1, a2, _) | Lte (a1, a2, _)
+  | Gt (a1, a2, _) | Gte (a1, a2, _)
+  | SubAnn (a1, a2, _)
+  | Eq (a1, a2, _)
   | Neq (a1, a2, _) -> combine_avars a1 a2
-  | EqMax (a1, a2, a3, _) -> 
+  | EqMax (a1, a2, a3, _) ->
     let fv1 = afv a1 in
     let fv2 = afv a2 in
     let fv3 = afv a3 in
@@ -194,12 +194,12 @@ and pfv (pf: p_formula)=
     let fv2 = afv a2 in
     let fv3 = afv a3 in
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2 @ fv3)
-  | BagIn (v, a, _) -> 
+  | BagIn (v, a, _) ->
     let fv = afv a in
     Gen.BList.remove_dups_eq (=) ([v] @ fv)
-  | BagNotIn (v, a, _) -> 
+  | BagNotIn (v, a, _) ->
     let fv = afv a in
-    Gen.BList.remove_dups_eq (=) ([v] @ fv)	
+    Gen.BList.remove_dups_eq (=) ([v] @ fv)
   | BagSub (a1, a2, _) -> combine_avars a1 a2
   | BagMax (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
   | BagMin (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
@@ -213,11 +213,11 @@ and pfv (pf: p_formula)=
   | EndZero (e, _) ->
     let fv = afv e in
     Gen.BList.remove_dups_eq (=) fv
-  | ListIn (a1, a2, _) -> 
+  | ListIn (a1, a2, _) ->
     let fv1 = afv a1 in
     let fv2 = afv a2 in
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
-  | ListNotIn (a1, a2, _) -> 
+  | ListNotIn (a1, a2, _) ->
     let fv1 = afv a1 in
     let fv2 = afv a2 in
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
@@ -238,7 +238,7 @@ and pfv (pf: p_formula)=
     Gen.BList.remove_dups_eq (=) args_fv
 
 
-and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
+and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
   let fv1 = afv a1 in
   let fv2 = afv a2 in
   Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
@@ -248,14 +248,15 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Var (sv, _) ->
     let id = fst sv in
     if (id.[0] = '#') then [] else [sv]
-  | Null _ 
-  | AConst _ 
-  | IConst _ 
-  | Tsconst _ 
+  | Null _
+  | AConst _
+  | IConst _
+  | Tsconst _
   | InfConst _
   | NegInfConst _
   | FConst _
-  | SConst _ -> []
+  | SConst _
+  | CConst _ -> []
   | Bptriple ((ec,et,ea),_) -> Gen.BList.remove_dups_eq (=) ((afv ec) @ (afv et) @ (afv ea))
   | Tup2 ((e1,e2),_) -> Gen.BList.remove_dups_eq (=) ((afv e1) @ (afv e2))
   | Ann_Exp (e,_,_) -> afv e
@@ -275,22 +276,22 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListCons (a1, a2, _) ->
     let fv1 = afv a1 in
     let fv2 = afv a2 in
-    Gen.BList.remove_dups_eq (=) (fv1 @ fv2)  
+    Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
   | SLen (a, _)
   | ListReverse (a, _) -> afv a
   | CharAt (a1, a2, _) ->  combine_avars a1 a2
-  | Func (a, i, _) -> 
+  | Func (a, i, _) ->
     let ifv = List.flatten (List.map afv i) in
     Gen.BList.remove_dups_eq (=) ((a,Unprimed) :: ifv)
-  | ArrayAt (a, i, _) -> 
+  | ArrayAt (a, i, _) ->
     let ifv = List.flatten (List.map afv i) in
     Gen.BList.remove_dups_eq (=) (a :: ifv) (* An Hoa *)
   | BExpr f1 -> fv f1
-  | Template t -> 
-    (List.concat (List.map afv t.templ_args)) 
+  | Template t ->
+    (List.concat (List.map afv t.templ_args))
 (* @ (List.concat (List.map afv t.templ_unks)) *)
 
 and is_max_min a = match a with
@@ -341,7 +342,7 @@ and isConstFalse p = match p with
   | _ -> false
 
 (* smart constructor *)
-and mkXPure id cl pos = 
+and mkXPure id cl pos =
   XPure {
     xpure_view_node = None;
     xpure_view_name = id;
@@ -376,7 +377,7 @@ and mkTemplate id args pos = Template {
     templ_pos = pos;
   }
 
-and mkUtAnn nid sid is_pre fname cond args pos = 
+and mkUtAnn nid sid is_pre fname cond args pos =
   let uid = {
     tu_id = nid;
     tu_sid = sid;
@@ -386,51 +387,51 @@ and mkUtAnn nid sid is_pre fname cond args pos =
     tu_pos = pos;
   } in
   if is_pre then TermU uid
-  else TermR uid 
+  else TermR uid
 
-and mkUimmAnn is_pre cond = 
+and mkUimmAnn is_pre cond =
   if is_pre then PreImm cond
   else PostImm cond
 
 and mkBVar (v, p) pos = BVar ((v, p), pos)
 
-and mkLt a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
-    failwith ("max/min can only be used in equality")  
-  else 
+and mkLt a1 a2 pos =
+  if is_max_min a1 || is_max_min a2 then
+    failwith ("max/min can only be used in equality")
+  else
     Lt (a1, a2, pos)
 
-and mkLte a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
-    failwith ("max/min can only be used in equality")  
-  else 
+and mkLte a1 a2 pos =
+  if is_max_min a1 || is_max_min a2 then
+    failwith ("max/min can only be used in equality")
+  else
     Lte (a1, a2, pos)
 
-and mkGt a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
-    failwith ("max/min can only be used in equality")  
-  else 
+and mkGt a1 a2 pos =
+  if is_max_min a1 || is_max_min a2 then
+    failwith ("max/min can only be used in equality")
+  else
     Gt (a1, a2, pos)
 
-and mkGte a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
-    failwith ("max/min can only be used in equality")  
-  else 
+and mkGte a1 a2 pos =
+  if is_max_min a1 || is_max_min a2 then
+    failwith ("max/min can only be used in equality")
+  else
     Gte (a1, a2, pos)
 
-and mkSubAnn a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
-    failwith ("max/min can only be used in equality")  
-  else 
+and mkSubAnn a1 a2 pos =
+  if is_max_min a1 || is_max_min a2 then
+    failwith ("max/min can only be used in equality")
+  else
     SubAnn (a1, a2, pos)
 
-and mkNeq a1 a2 pos = 
-  if is_max_min a1 || is_max_min a2 then 
-    failwith ("max/min can only be used in equality")  
-  else 
+and mkNeq a1 a2 pos =
+  if is_max_min a1 || is_max_min a2 then
+    failwith ("max/min can only be used in equality")
+  else
     Neq (a1, a2, pos)
 
-and mkEq a1 a2 pos = 
+and mkEq a1 a2 pos =
   if is_max_min a1 && is_max_min a2 then
     failwith ("max/min can only appear in one side of an equation")
   else if is_max_min a1 then
@@ -438,12 +439,12 @@ and mkEq a1 a2 pos =
     | Min (a11, a12, _) -> EqMin (a2, a11, a12, pos)
     | Max (a11, a12, _) -> EqMax (a2, a11, a12, pos)
     | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
-  else if is_max_min a2 then 
+  else if is_max_min a2 then
     match a2 with
     | Min (a21, a22, _) -> EqMin (a1, a21, a22, pos)
     | Max (a21, a22, _) -> EqMax (a1, a21, a22, pos)
     | _ -> failwith ("Presburger.mkAEq: something really bad has happened")
-  else 
+  else
     Eq (a1, a2, pos)
 
 (* and mkBExpr e f= *)
@@ -456,7 +457,7 @@ and mkAnd_x f1 f2 pos = match f1 with
     | BForm ((BConst (false, _), _), _) -> f2
     | BForm ((BConst (true, _), _), _) -> f1
     | _ ->
-      match f1,f2 with 
+      match f1,f2 with
       | AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
       | AndList b, f -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
       | f, AndList b -> mkAndList (Label_Pure.merge b [(LO.unlabelled,f)])
@@ -464,7 +465,7 @@ and mkAnd_x f1 f2 pos = match f1 with
 (* if no_andl f1 && no_andl f2 then And (f1, f2, pos)  *)
 (*      else report_error no_pos "Ipure: unhandled/unexpected mkAnd with andList case" *)
 
-and mkAnd f1 f2 pos = 
+and mkAnd f1 f2 pos =
   let pr = !print_formula in
   (* Debug.no_2 "mkAnd" pr pr pr *) (fun _ _ -> mkAnd_x f1 f2 pos) f1 f2
 
@@ -473,7 +474,7 @@ and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
   | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
-  | AndList _ -> false 
+  | AndList _ -> false
 
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2
@@ -510,7 +511,7 @@ and mkNot f lbl pos = Not (f, lbl, pos)
 and mkEqualVar (sv1 : spec_var) (sv2 : spec_var) =
   if sv1 = sv2 then
 	mkTrue
-  else 
+  else
 	BForm (Eq (Var (force_to_svar sv1), AVar (force_to_svar sv2)))
 
 and mkEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
@@ -529,7 +530,7 @@ and mkNEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
 		BForm (ANeq (ae1, ae2))
   | _ ->  BForm (ANeq (ae1, ae2))
 
-and mkNEqualVar (sv1 : spec_var) (sv2 : spec_var) = 
+and mkNEqualVar (sv1 : spec_var) (sv2 : spec_var) =
   if sv1 = sv2 then
 	mkFalse
   else
@@ -538,7 +539,7 @@ and mkNEqualVar (sv1 : spec_var) (sv2 : spec_var) =
 and mkEqualVarInt (sv : spec_var) (i : int) =
   BForm (AEq (AVar (force_to_svar sv), IConst i))
 
-and mkNEqualVarInt (sv : spec_var) (i : int) = 
+and mkNEqualVarInt (sv : spec_var) (i : int) =
   BForm (ANeq (AVar (force_to_svar sv), IConst i))
 *)
 
@@ -548,7 +549,7 @@ and mkFalse pos = BForm ((BConst (false, pos), None) , None)
 
 and mkExists (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
   | [] -> f
-  | v :: rest -> 
+  | v :: rest ->
     let ef = mkExists rest f lbl pos in
     if List.mem v (fv ef) then
       Exists (v, ef,lbl,  pos)
@@ -557,7 +558,7 @@ and mkExists (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
 
 and mkForall (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
   | [] -> f
-  | v :: rest -> 
+  | v :: rest ->
     let ef = mkForall rest f lbl pos in
     if List.mem v (fv ef) then
       Forall (v, ef, lbl, pos)
@@ -565,8 +566,8 @@ and mkForall (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
       ef
 
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
-and build_relation relop alist10 alist20 pos = 
-  let rec helper1 ae alist = 
+and build_relation relop alist10 alist20 pos =
+  let rec helper1 ae alist =
     let a = List.hd alist in
     let rest = List.tl alist in
     let tmp = BForm ((relop ae a pos),None) in
@@ -593,7 +594,7 @@ and build_relation relop alist10 alist20 pos =
   end
 
 (* An Hoa *)
-and pos_of_formula (f : formula) = match f with 
+and pos_of_formula (f : formula) = match f with
   | BForm ((pf,_),_) -> pos_of_pf pf
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
@@ -605,8 +606,8 @@ and pos_of_pf pf=
     | Frm (_, p) -> p
     | BConst (_,p) | BVar (_,p)
     | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | SubAnn (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
-    | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
-    | BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
+    | EqMax (_,_,_,p) | EqMin (_,_,_,p)
+    | BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)
     | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
     | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) -> p
     (* | VarPerm (_,_,p) -> p *)
@@ -615,12 +616,13 @@ and pos_of_pf pf=
   end
 
 and pos_of_exp (e : exp) = match e with
-  | Null p 
-  | Var (_, p) 
-  | Level (_, p) 
-  | IConst (_, p) 
-  | FConst (_, p) 
+  | Null p
+  | Var (_, p)
+  | Level (_, p)
+  | IConst (_, p)
+  | FConst (_, p)
   | SConst (_,p)
+  | CConst (_,p)
   | Tsconst (_, p)
   | Bptriple (_, p)
   | Tup2 (_, p)
@@ -656,9 +658,9 @@ and pos_of_exp (e : exp) = match e with
 
 
 and fresh_old_name (s: string):string =
-  let fn s = 
+  let fn s =
     let l = String.length s in
-    try  
+    try
       let c = (String.rindex s '_') in
       (* let () = x_ninfo_hp (add_str "string" pr_id) s no_pos in *)
       (* let () = x_binfo_hp (add_str "pos _ " string_of_int) c no_pos in *)
@@ -667,7 +669,7 @@ and fresh_old_name (s: string):string =
       (* let () = x_binfo_hp (add_str "trail" pr_id) trail no_pos in *)
       let (_:int64) = Int64.of_string trail in
       c
-    with  _ -> l 
+    with  _ -> l
   in
   let ri = fn s in
   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
@@ -681,8 +683,8 @@ and fresh_var (sv : (ident*primed)):(ident*primed) =
 
 and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_var svs
 
-and eq_var (f: (ident*primed))(t:(ident*primed)):bool = 
-  ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
+and eq_var (f: (ident*primed))(t:(ident*primed)):bool =
+  ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t)
 
 and eq_ann (a1 :  ann) (a2 : ann) : bool =
   match a1, a2 with
@@ -696,7 +698,7 @@ and eq_ann_list (a1 :  ann list) (a2 : ann list) : bool =
 
 and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
-  | [] -> f 
+  | [] -> f
 
 and apply_one (fr, t) f = match f with
   | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf, lbl)
@@ -786,7 +788,7 @@ and b_apply_one ((fr, t) as p) bf =
 and p_apply_one ((fr, t) as p) pf =
   match pf with
   | XPure ({xpure_view_node = vn ;
-            xpure_view_arguments = args} as xp)  -> 
+            xpure_view_arguments = args} as xp)  ->
     let fr,_ = fr in
     let t,_ = t in
     let new_vn =
@@ -838,13 +840,13 @@ and p_apply_one ((fr, t) as p) pf =
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
-  | RelForm (r, args, pos) -> 
+  | RelForm (r, args, pos) ->
     (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
     RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos)
-  | ImmRel (r, cond, pos) -> 
+  | ImmRel (r, cond, pos) ->
     (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
     ImmRel (p_apply_one p r, cond, pos)
-  | LexVar (t_ann, args1, args2, pos) -> 
+  | LexVar (t_ann, args1, args2, pos) ->
     let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
     let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
     LexVar (t_ann, args1,args2,pos)
@@ -852,13 +854,14 @@ and p_apply_one ((fr, t) as p) pf =
 and subst_exp sst (e: exp) : exp =
   match sst with
   | s :: rest -> subst_exp rest (e_apply_one s e)
-  | [] -> e 
+  | [] -> e
 
 and e_apply_one ((fr, t) as p) e = match e with
-  | Null _ 
-  | IConst _ 
-  | FConst _ 
+  | Null _
+  | IConst _
+  | FConst _
   | SConst _
+  | CConst _
   | Tsconst _
   | InfConst _
   | NegInfConst _
@@ -928,7 +931,7 @@ and look_for_anonymous_exp_list (args : exp list) :
       (look_for_anonymous_exp_list rest)
   | _ -> []
 
-and anon_var (id, p) = 
+and anon_var (id, p) =
   if ((String.length id) > 5) &&
      ((String.compare (String.sub id 0 5) "Anon_") == 0)
   then [ (id, p) ]
@@ -944,7 +947,7 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
     List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | Bag (e1, _) | BagUnion (e1, _) | BagIntersect (e1, _) ->  look_for_anonymous_exp_list e1
 
-  | ListHead (e1, _) | ListTail (e1, _) | ListLength (e1, _) | ListReverse (e1, _) 
+  | ListHead (e1, _) | ListTail (e1, _) | ListLength (e1, _) | ListReverse (e1, _)
   | SLen (e1, _) -> look_for_anonymous_exp e1
   | List (e1, _) | ListAppend (e1, _) -> look_for_anonymous_exp_list e1
   | ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
@@ -953,7 +956,7 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
   | BForm (b,_) -> look_for_anonymous_b_formula b
   | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
-  | AndList b -> Gen.fold_l_snd look_for_anonymous_pure_formula b 
+  | AndList b -> Gen.fold_l_snd look_for_anonymous_pure_formula b
   | Or  (b1,b2,_,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
   | Not (b1,_,_) -> (look_for_anonymous_pure_formula b1)
   | Forall (_,b1,_,_)-> (look_for_anonymous_pure_formula b1)
@@ -980,7 +983,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | BagNotIn (b1, b2, _) -> (anon_var b1) @ (look_for_anonymous_exp b2)
   | BagSub (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | BagMin (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
-  | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)	
+  | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
   (* | VarPerm _ -> [] (*can not have anon_var*) *)
   | NonZero (b, _) -> (look_for_anonymous_exp b)
   | EndZero (b, _) -> (look_for_anonymous_exp b)
@@ -988,7 +991,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
-  | LexVar (_,args1, args2, _) -> 
+  | LexVar (_,args1, args2, _) ->
     let vs = List.concat (List.map look_for_anonymous_exp (args1@args2)) in
     vs
   | RelForm (_,args,_) ->
@@ -999,7 +1002,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
 let merge_branches l1 l2 =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
-    try 
+    try
       let l1 = List.assoc branch l1 in
       try
         let l2 = List.assoc branch l2 in
@@ -1070,7 +1073,7 @@ and find_lexp_p_formula (pf: p_formula) ls =
   | ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | ListPerm (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
-  | ImmRel (r, _, _) -> find_lexp_p_formula r ls 
+  | ImmRel (r, _, _) -> find_lexp_p_formula r ls
   | LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
 
 (* WN : what does this method do? *)
@@ -1085,7 +1088,8 @@ and find_lexp_exp (e: exp) ls =
     | Tsconst _
     | InfConst _
     | SConst _
-    | NegInfConst _ 
+    | CConst _
+    | NegInfConst _
     | FConst _ -> []
     | Ann_Exp(e,_,_) -> find_lexp_exp e ls
     | Bptriple ((ec, et, ea), _) -> find_lexp_exp ec ls @ find_lexp_exp et ls @ find_lexp_exp ea ls
@@ -1114,7 +1118,7 @@ and find_lexp_exp (e: exp) ls =
     | Func (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | ArrayAt (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | BExpr f1 -> find_lexp_formula (f1: formula) ls
-    | Template { templ_args = t_args; } -> 
+    | Template { templ_args = t_args; } ->
       List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] t_args
 
 and list_of_conjs (f: formula) : formula list =
@@ -1152,18 +1156,19 @@ let rec break_pure_formula (f: formula) : b_formula list =
 
 let rec contain_vars_exp (expr : exp) : bool =
   match expr with
-  | Null _ 
-  | Var _ 
-  | Level _ 
-  | IConst _ 
-  | AConst _ 
+  | Null _
+  | Var _
+  | Level _
+  | IConst _
+  | AConst _
   | Tsconst _
   | Bptriple _ (* TOCHECK *)
   | Tup2 _ (* TOCHECK *)
-  | InfConst _ 
+  | InfConst _
   | NegInfConst _
-  | FConst _ 
-  | SConst _ -> false
+  | FConst _
+  | SConst _
+  | CConst _ -> false
   | Ann_Exp (exp,_,_) -> (contain_vars_exp exp)
   | Add (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Concat (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
@@ -1204,16 +1209,16 @@ and f_contain_vars_exp f=
   | Exists (_,f1,_,_) -> recf f1
 
 and p_contain_vars_exp (pf) : bool = match pf with
-  | Frm _ 
+  | Frm _
   | XPure _
   | BConst _
   | BVar _ -> false
-  | SubAnn (exp1, exp2,_) 
-  | Lt (exp1, exp2,_) 
-  | Lte (exp1, exp2,_) 
-  | Gt (exp1, exp2,_) 
-  | Gte (exp1, exp2,_) 
-  | Eq (exp1, exp2,_) 
+  | SubAnn (exp1, exp2,_)
+  | Lt (exp1, exp2,_)
+  | Lte (exp1, exp2,_)
+  | Gt (exp1, exp2,_)
+  | Gte (exp1, exp2,_)
+  | Eq (exp1, exp2,_)
   | Neq (exp1, exp2,_) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | EqMax (exp1, exp2,exp3,_)
   | EqMin (exp1, exp2,exp3,_) -> (contain_vars_exp exp1) || (contain_vars_exp exp2) || (contain_vars_exp exp3)
@@ -1226,28 +1231,29 @@ and p_contain_vars_exp (pf) : bool = match pf with
   | BagMax _ -> false
   | NonZero (e, _) -> (contain_vars_exp e)
   | EndZero (e, _) -> (contain_vars_exp e)
-  | ListIn (exp1, exp2,_) 
-  | ListNotIn (exp1, exp2,_) 
-  | ListAllN (exp1, exp2,_) 
+  | ListIn (exp1, exp2,_)
+  | ListNotIn (exp1, exp2,_)
+  | ListAllN (exp1, exp2,_)
   | ListPerm (exp1, exp2,_)  -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
-  | RelForm _ 
+  | RelForm _
   | ImmRel  _ -> false
 
-and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
-  | Null _ 
-  | Var _ 
-  | Level _ 
-  | IConst _ 
-  | AConst _ 
+and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with
+  | Null _
+  | Var _
+  | Level _
+  | IConst _
+  | AConst _
   | Tsconst _
-  | InfConst _ 
+  | InfConst _
   | NegInfConst _
-  | FConst _ 
-  | SConst _ -> (e, None)
-  | Ann_Exp (e, t, l) -> 
+  | FConst _
+  | SConst _
+  | CConst _ -> (e, None)
+  | Ann_Exp (e, t, l) ->
     let ne, np = float_out_exp_min_max e in
-    (Ann_Exp (ne, t, l), np) 
-  | Bptriple ((ec,et,ea),l) -> 
+    (Ann_Exp (ne, t, l), np)
+  | Bptriple ((ec,et,ea),l) ->
     let ec1,ec_r = float_out_exp_min_max ec in
     let et1,et_r = float_out_exp_min_max et in
     let ea1,ea_r = float_out_exp_min_max ea in
@@ -1260,7 +1266,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
         in res) ec_r [et_r;ea_r]
     in
     (Bptriple ((ec1,et1,ea1),l),r)
-  | Tup2 ((e1,e2),l) -> 
+  | Tup2 ((e1,e2),l) ->
     let e1,e1_r = float_out_exp_min_max e1 in
     let e2,e2_r = float_out_exp_min_max e2 in
     let r = List.fold_left ( fun np1 np2 ->
@@ -1281,7 +1287,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | None, Some p -> Some p
       | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
     in
-    (Add (ne1, ne2, l), r) 
+    (Add (ne1, ne2, l), r)
   | Concat (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
     let ne2, np2 = float_out_exp_min_max e2 in
@@ -1291,7 +1297,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | None, Some p -> Some p
       | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
     in
-    (Concat (ne1, ne2, l), r) 
+    (Concat (ne1, ne2, l), r)
   | Subtract (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
     let ne2, np2 = float_out_exp_min_max e2 in
@@ -1301,7 +1307,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | None, Some p -> Some p
       | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
     in
-    (Subtract (ne1, ne2, l), r) 
+    (Subtract (ne1, ne2, l), r)
   | Mult (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
     let ne2, np2 = float_out_exp_min_max e2 in
@@ -1333,14 +1339,14 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | Some (p1, l1), None -> Some ((And(p1, t, l)), (new_name:: l1))
       | None, Some (p1, l1) -> Some ((And(p1, t, l)), (new_name:: l1))
       | Some (p1, l1), Some (p2, l2) -> Some ((And ((And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
-    (nv, r) 
+    (nv, r)
   | Min (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
     let ne2, np2 = float_out_exp_min_max e2 in
     let new_name = ("min"^(fresh_trailer())) in
     let nv = Var((new_name, Unprimed), l) in
     let lexp = find_lexp_exp e !linking_exp_list in (* find the linking exp inside Min *)
-    let t = BForm ((EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in 
+    let t = BForm ((EqMin(nv, ne1, ne2, l), Some(false, Globals.fresh_int(), lexp)), None) in
     let r = match (np1, np2) with
       | None, None -> Some (t,[new_name])
       | Some (p1, l1), None -> Some ((And(p1, t, l)), (new_name:: l1))
@@ -1383,7 +1389,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | Some p, None -> Some p
       | None, Some p -> Some p
       | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
-    (BagDiff (ne1, ne2, l), r) 
+    (BagDiff (ne1, ne2, l), r)
   (* list expressions *)
   | List (le, l) ->
     let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
@@ -1401,7 +1407,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
         | None, Some p -> Some p
         | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
     (ListAppend (ne1, l), r)
-  | ListCons (e1, e2, l) -> 
+  | ListCons (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
     let ne2, np2 = float_out_exp_min_max e2 in
     let r = match (np1, np2) with
@@ -1409,17 +1415,17 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | Some p, None -> Some p
       | None, Some p -> Some p
       | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2)) in
-    (ListCons (ne1, ne2, l), r) 
-  | ListHead (e, l) -> 
+    (ListCons (ne1, ne2, l), r)
+  | ListHead (e, l) ->
     let ne1, np1 = float_out_exp_min_max e in
     (ListHead (ne1, l), np1)
-  | ListTail (e, l) -> 
+  | ListTail (e, l) ->
     let ne1, np1 = float_out_exp_min_max e in
     (ListTail (ne1, l), np1)
-  | ListLength (e, l) -> 
+  | ListLength (e, l) ->
     let ne1, np1 = float_out_exp_min_max e in
     (ListLength (ne1, l), np1)
-  | SLen (e, l) -> 
+  | SLen (e, l) ->
     let ne1, np1 = float_out_exp_min_max e in
     (SLen (ne1, l), np1)
   | CharAt (e1, e2, l) ->
@@ -1431,8 +1437,8 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
       | None, Some p -> Some p
       | Some (p1, l1), Some (p2, l2) -> Some ((And (p1, p2, l)), (List.rev_append l1 l2))
     in
-    (CharAt (ne1, ne2, l), r) 
-  | ListReverse (e, l) -> 
+    (CharAt (ne1, ne2, l), r)
+  | ListReverse (e, l) ->
     let ne1, np1 = float_out_exp_min_max e in
     (ListReverse (ne1, l), np1)
   | Func (a, i, l) ->
@@ -1625,13 +1631,13 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
 
 and float_out_pure_min_max (p : formula) : formula =
 
-  let add_exists (t: formula)(np1: (formula * (string list))option)(np2: (formula * (string list))option) l: formula = 
+  let add_exists (t: formula)(np1: (formula * (string list))option)(np2: (formula * (string list))option) l: formula =
     let r, ev = match np1 with
       | None -> (t,[])
       | Some (p1, ev1) -> (And (t, p1, l), ev1) in
-    let r, ev2 = match np2 with 
+    let r, ev2 = match np2 with
       | None -> (r, ev)
-      | Some (p1, ev1) -> (And(r, p1, l), (List.rev_append ev1 ev)) in 
+      | Some (p1, ev1) -> (And(r, p1, l), (List.rev_append ev1 ev)) in
     List.fold_left (fun a c -> (Exists ((c, Unprimed), a, None,l))) r ev2 in
 
   let rec float_out_b_formula_min_max (b: b_formula) lbl: formula =
@@ -1819,14 +1825,14 @@ let find_equal_var (p:formula) : ((ident*primed) * (ident*primed)) list =
    | _ -> []
   )
 
-let find_closure (v:(ident*primed)) (vv:((ident*primed) * (ident*primed)) list) : (ident*primed) list = 
+let find_closure (v:(ident*primed)) (vv:((ident*primed) * (ident*primed)) list) : (ident*primed) list =
   let rec helper (vs: (ident*primed) list) (vv:((ident*primed) * (ident*primed)) list) =
     match vv with
-    | (v1,v2)::xs -> 
+    | (v1,v2)::xs ->
       let v3 = if (List.exists (fun v -> eq_var v v1) vs) then Some v2
         else if (List.exists (fun v -> eq_var v v2) vs) then Some v1
-        else 
-          None 
+        else
+          None
       in
       (match v3 with
        | None -> helper vs xs
@@ -1835,14 +1841,14 @@ let find_closure (v:(ident*primed)) (vv:((ident*primed) * (ident*primed)) list) 
   in
   helper [v] vv
 
-let rec find_p_val x v p = match p with 
-  | BForm (((Eq (Var (a,_),IConst (b,_),_)),_),_) 
+let rec find_p_val x v p = match p with
+  | BForm (((Eq (Var (a,_),IConst (b,_),_)),_),_)
   | BForm (((Eq (IConst (b,_),Var (a,_),_)),_),_) -> a=v && b=x
   | BForm _ -> false
   | And (f1,f2,_) -> (find_p_val x v f1) || (find_p_val x v f2)
-  | AndList l -> Gen.Basic.exists_l_snd (find_p_val x v) l 
+  | AndList l -> Gen.Basic.exists_l_snd (find_p_val x v) l
   | Or (f1,f2,_,_) -> (find_p_val x v f1) && (find_p_val x v f2)
-  | Not (f,_,_) 
+  | Not (f,_,_)
   | Forall (_,f,_,_)
   | Exists (_,f,_,_)-> find_p_val x v f
 
@@ -1858,11 +1864,11 @@ let rec typ_of_exp (e: exp) : typ =
                 Gen.Basic.report_error pos "Ununified type in 2 expressions 1"
             | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 2"
           )
-      | _ -> 
+      | _ ->
         (let msg = string_of_typ typ2 in
          match typ2 with
-          | Array (t,_) -> 
-            if t== UNK || t=typ1 then typ1 
+          | Array (t,_) ->
+            if t== UNK || t=typ1 then typ1
             else Gen.Basic.report_error pos ("Ununified type in 2 expressions 3"^msg)
           | _ -> Gen.Basic.report_error pos ("Ununified type in 2 expressions 4"^msg)
         )
@@ -1894,13 +1900,13 @@ let rec typ_of_exp (e: exp) : typ =
         else if typ2=Int || typ2=NUM then typ1
         else x_add merge_types typ1 typ2
       end
-    else x_add merge_types typ1 typ2 
+    else x_add merge_types typ1 typ2
   in
   match e with
-  | Ann_Exp (ex, ty, _)       -> 
+  | Ann_Exp (ex, ty, _)       ->
     let ty2 = typ_of_exp ex in
     x_add merge_types ty2 ty
-  | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
+  | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *)
   | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
   (* Const *)
   | Level _                   -> Globals.level_data_typ
@@ -1914,14 +1920,14 @@ let rec typ_of_exp (e: exp) : typ =
   | Tup2 ((e1,e2), _)				  -> Globals.Tup2 (typ_of_exp e1,typ_of_exp e2)
   (* Arithmetic expressions *)
   | Add (ex1, ex2, _)
-  | Subtract (ex1, ex2, _) -> 
+  | Subtract (ex1, ex2, _) ->
     let ty1 = typ_of_exp ex1 in
     let ty2 = typ_of_exp ex2 in
     merge_types_ptr ty1 ty2
   | Mult (ex1, ex2, _)
   | Div (ex1, ex2, _)
   | Max (ex1, ex2, _)
-  | Min (ex1, ex2, _) -> 
+  | Min (ex1, ex2, _) ->
     let ty1 = typ_of_exp ex1 in
     let ty2 = typ_of_exp ex2 in
     x_add merge_types ty1 ty2
@@ -1929,7 +1935,7 @@ let rec typ_of_exp (e: exp) : typ =
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)
-  | BagIntersect (ex_list, _) -> let ty_list = List.map typ_of_exp ex_list in 
+  | BagIntersect (ex_list, _) -> let ty_list = List.map typ_of_exp ex_list in
     let ty = List.fold_left (x_add merge_types) UNK ty_list in
     Globals.BagT ty
   | BagDiff (ex1, ex2, _)     -> let ty1 = typ_of_exp ex1 in
@@ -1937,7 +1943,7 @@ let rec typ_of_exp (e: exp) : typ =
     let ty = x_add merge_types ty1 ty2 in
     Globals.BagT ty
   (* list expressions *)
-  | List (ex_list, _)         -> let ty_list = List.map typ_of_exp ex_list in 
+  | List (ex_list, _)         -> let ty_list = List.map typ_of_exp ex_list in
     let ty = List.fold_left (x_add merge_types) UNK ty_list in
     Globals.List ty
   | ListCons (ex1, ex2, _)    -> let ty1 = typ_of_exp ex1 in
@@ -1949,27 +1955,28 @@ let rec typ_of_exp (e: exp) : typ =
     Globals.List ty
   | SLen (ex, _)
   | ListLength (ex, _)        -> Globals.Int
-  | ListAppend (ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in 
+  | ListAppend (ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in
     let ty = List.fold_left (x_add merge_types) UNK ty_list in
     Globals.List ty
   | ListReverse (ex, _)       -> let ty = typ_of_exp ex in
     Globals.List ty
   (* Array expressions *)
-  | ArrayAt (_, ex_list, _)   -> 
-    let ty_list = List.map typ_of_exp ex_list in 
+  | ArrayAt (_, ex_list, _)   ->
+    let ty_list = List.map typ_of_exp ex_list in
     let ty = List.fold_left (x_add merge_types) UNK ty_list in
     let len = List.length ex_list in
     Globals.Array (ty, len)
-  | Template t -> 
-    let ty_list = List.map typ_of_exp t.templ_args in 
+  | Template t ->
+    let ty_list = List.map typ_of_exp t.templ_args in
     List.fold_left (x_add merge_types) UNK ty_list
   (* Func expressions *)
   | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func"
   | BExpr _ -> Bool
   (* String expressions *)
   | Concat _
-  | SConst _ 
-  | CharAt _ -> Globals.String
+  | SConst _
+  | CharAt _ -> Globals.Char
+  | CConst _ -> Globals.Char
 
 let typ_of_exp (e: exp) : typ =
   let pr = !print_formula_exp in
@@ -2068,9 +2075,9 @@ let trans_special_formula s (p:formula) vars =
 
 
 
-(* 
+(*
    Make a formula from a list of conjuncts, namely
-   [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
+   [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn
 *)
 (* let conj_of_list (fs : formula list) pos : formula = *)
 (*   match fs with *)
@@ -2082,14 +2089,14 @@ let join_conjunctions fl = conj_of_list fl
 (* let join_disjunctions fl = disj_of_list fl *)
 
 let mkAndList_opt f =
-  if !Globals.remove_label_flag then 
+  if !Globals.remove_label_flag then
     join_conjunctions (List.map snd f)
   else mkAndList f
 
 let mkAndList_opt f =
   let pr = pr_list (pr_pair pr_none !print_formula) in
   let pr2 = !print_formula in
-  Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f 
+  Debug.no_1 "mkAndList_opt" pr pr2 mkAndList_opt f
 
 let args_of_term_ann ann =
   match ann with
@@ -2134,13 +2141,14 @@ let args_of_term_ann ann =
 (*   | ArrayAt of ((ident * primed) * (exp list) * loc)      (* An Hoa : array access, extend the index to a list of indices for multi-dimensional array *) *)
 (*   | Func of (ident * (exp list) * loc)                                                                                                                   *)
 
-let rec transform_exp_x f (e : exp) : exp = 
-  let r =  f e in 
+let rec transform_exp_x f (e : exp) : exp =
+  let r =  f e in
   match r with
   | Some ne -> ne
   | None -> (match e with
-      | Null _  | Var _ | Level _ | IConst _ | AConst _ 
-      | Tsconst _ | Bptriple _ | FConst _ | Tup2 _ | SConst _ -> e
+      | Null _  | Var _ | Level _ | IConst _ | AConst _
+      | Tsconst _ | Bptriple _ | FConst _ | Tup2 _
+      | SConst _ | CConst _ -> e
       | Ann_Exp (e,t,l) ->
         let ne = transform_exp f e in
         Ann_Exp (ne,t,l)
@@ -2175,18 +2183,18 @@ let rec transform_exp_x f (e : exp) : exp =
       | TypeCast (ty, e1, l) ->
         let ne1 = transform_exp f e1 in
         TypeCast (ty, ne1, l)
-      | Bag (le,l) -> 
-        Bag (List.map (fun c-> transform_exp f c) le, l) 
-      | BagUnion (le,l) -> 
+      | Bag (le,l) ->
+        Bag (List.map (fun c-> transform_exp f c) le, l)
+      | BagUnion (le,l) ->
         BagUnion (List.map (fun c-> transform_exp f c) le, l)
-      | BagIntersect (le,l) -> 
+      | BagIntersect (le,l) ->
         BagIntersect (List.map (fun c-> transform_exp f c) le, l)
       | BagDiff (e1,e2,l) ->
         let ne1 = transform_exp f e1 in
         let ne2 = transform_exp f e2 in
         BagDiff (ne1,ne2,l)
-      | List (e1,l) -> List (( List.map (transform_exp f) e1), l) 
-      | ListCons (e1,e2,l) -> 
+      | List (e1,l) -> List (( List.map (transform_exp f) e1), l)
+      | ListCons (e1,e2,l) ->
         let ne1 = transform_exp f e1 in
         let ne2 = transform_exp f e2 in
         ListCons (ne1,ne2,l)
@@ -2198,7 +2206,7 @@ let rec transform_exp_x f (e : exp) : exp =
         let ne1 = transform_exp f e1 in
         let ne2 = transform_exp f e2 in
         CharAt (ne1,ne2,l)
-      | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
+      | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l)
       | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
       | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
       | ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
@@ -2212,14 +2220,14 @@ and transform_exp f (e : exp) : exp =
   let pr = !print_formula_exp in
   Debug.no_1 "transform_exp" pr pr (fun _ -> transform_exp_x f e) e
 
-let transform_b_formula_x f (e : b_formula) : b_formula = 
+let transform_b_formula_x f (e : b_formula) : b_formula =
   let (f_b_formula, f_exp) = f in
-  let r =  f_b_formula e in 
+  let r =  f_b_formula e in
   match r with
   | Some e1 -> e1
   | None -> (
       let (pf,il) = e in
-      let npf = ( let rec helper pf = 
+      let npf = ( let rec helper pf =
                     match pf with
                     | Frm _ | BConst _ | XPure _
                     (* | VarPerm _ *)
@@ -2252,7 +2260,7 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
                       let ne1 = transform_exp f_exp e1 in
                       let ne2 = transform_exp f_exp e2 in
                       let ne3 = transform_exp f_exp e3 in
-                      EqMax (ne1,ne2,ne3,l)   
+                      EqMax (ne1,ne2,ne3,l)
                     | EqMin (e1,e2,e3,l) ->
                       let ne1 = transform_exp f_exp e1 in
                       let ne2 = transform_exp f_exp e2 in
@@ -2296,7 +2304,7 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
                     | ImmRel (r, cond, l) ->
                       let r = helper r in
                       ImmRel (r,cond,l)
-                    | LexVar (t,es1,es2,l) -> 
+                    | LexVar (t,es1,es2,l) ->
                       let nes1 = List.map (transform_exp f_exp) es1 in
                       let nes2 = List.map (transform_exp f_exp) es2 in
                       LexVar (t,nes1,nes2,l)
@@ -2309,9 +2317,9 @@ let transform_b_formula f (e : b_formula) : b_formula =
   Debug.no_1 "transform_b_formula" pr pr
     (fun _ -> transform_b_formula_x f e) e
 
-let rec transform_formula_x f (e : formula) : formula = 
+let rec transform_formula_x f (e : formula) : formula =
   let (_ , _, f_formula, f_b_formula, f_exp) = f in
-  let r = f_formula e in 
+  let r = f_formula e in
   match r with
   | Some e1 -> e1
   | None -> (
@@ -2319,12 +2327,12 @@ let rec transform_formula_x f (e : formula) : formula =
       | BForm (b1,b2) ->
         let new_b1 = transform_b_formula (f_b_formula, f_exp) b1 in
         BForm (new_b1, b2)
-      | And (e1,e2,l) -> 
+      | And (e1,e2,l) ->
         let ne1 = transform_formula f e1 in
         let ne2 = transform_formula f e2 in
         mkAnd ne1 ne2 l
-      | AndList b -> AndList (map_l_snd (transform_formula f) b) 
-      | Or (e1,e2,fl, l) -> 
+      | AndList b -> AndList (map_l_snd (transform_formula f) b)
+      | Or (e1,e2,fl, l) ->
         let ne1 = transform_formula f e1 in
         let ne2 = transform_formula f e2 in
         Or (ne1,ne2,fl,l)
@@ -2350,9 +2358,9 @@ let is_esv e= match e with
 let is_bexp_p pf= match pf with
   | BVar _
   | Lt _
-  | Gt _ 
-  | Lte _ 
-  | Gte _ 
+  | Gt _
+  | Lte _
+  | Gte _
   | Eq _
   | Neq _ -> true
   | _ -> false

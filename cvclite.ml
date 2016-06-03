@@ -24,21 +24,21 @@ let set_log_file fn =
   else
     cvcl_log := open_out fn
 
-(* 
+(*
    Call start at beginning of method, stop at end of method
    to avoid variables clashes (variables with same name but
    different types).
 *)
 
 (*
-let start () = 
+let start () =
   let tmp_in, tmp_out = Unix.open_process "cvcl +int" in
 	cvcl_in := tmp_in;
 	cvcl_out := tmp_out
 
 let stop () = Unix.close_process (!cvcl_in, !cvcl_out)
 
-let send_to_cvcl (fstr : string)  = 
+let send_to_cvcl (fstr : string)  =
   if !log_cvcl_formula then begin
 	output_string !cvcl_log fstr;
 	flush !cvcl_log
@@ -71,8 +71,8 @@ singleton: (INT, SET) -> BOOLEAN = LAMBDA(v:INT, S:SET):
 empty: (SET) -> BOOLEAN = LAMBDA(S:SET):
     FORALL(x:INT): (NOT(member_uninterpreted(x, S)));
 
-ASSERT(EXISTS(A: SET): empty(A)); 
-ASSERT(FORALL(x: INT): EXISTS(A: SET): singleton(x, A));\n" 
+ASSERT(EXISTS(A: SET): empty(A));
+ASSERT(FORALL(x: INT): EXISTS(A: SET): singleton(x, A));\n"
 
 let infilename = !tmp_files_path ^ "input.cvcl." ^ (string_of_int (Unix.getpid ()))
 
@@ -99,6 +99,7 @@ and cvcl_of_exp a = match a with
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst _ -> failwith ("[cvclite.ml]: ERROR in constraints (float should not appear here)")
   | CP.SConst (s, _) -> failwith (" String are not supported in cvclite")
+  | CP.CConst (c, _) -> failwith (" String are not supported in cvclite")
   | CP.Add (a1, a2, _) ->  (cvcl_of_exp a1) ^ " + " ^ (cvcl_of_exp a2)
   | CP.SLen (a1, _) -> failwith (" String are not supported in cvclite")
   | CP.Concat (a1, a2, _) ->  failwith (" String are not supported in cvclite")
@@ -106,7 +107,7 @@ and cvcl_of_exp a = match a with
   | CP.Subtract (a1, a2, _) ->  (cvcl_of_exp a1) ^ " - " ^ (cvcl_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvcl_of_exp a1) ^ " * " ^ (cvcl_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvclite.ml]: divide is not supported.")
-  | CP.Max _ 
+  | CP.Max _
   | CP.Min _ -> failwith ("Cvclite.cvcl_of_exp: min/max should not appear here")
   | CP.TypeCast _ -> failwith ("Cvclite.cvcl_of_exp: TypeCast should not appear here")
   | CP.Bag ([], _) -> ""
@@ -146,10 +147,10 @@ and cvcl_of_b_formula b =
   | CP.Gt (a1, a2, _) -> (cvcl_of_exp a1) ^ " > " ^ (cvcl_of_exp a2)
   | CP.Gte (a1, a2, _) -> (cvcl_of_exp a1) ^ " >= " ^ (cvcl_of_exp a2)
   | CP.Eq (a1, a2, _) -> (cvcl_of_exp a1) ^ " = " ^ (cvcl_of_exp a2)
-  | CP.Neq (a1, a2, _) -> 
-    if CP.is_null a2 then 
+  | CP.Neq (a1, a2, _) ->
+    if CP.is_null a2 then
       (cvcl_of_exp a1) ^ " > 0"
-    else if CP.is_null a1 then 
+    else if CP.is_null a1 then
       (cvcl_of_exp a2) ^ " > 0"
     else
       (cvcl_of_exp a1) ^ " /= " ^ (cvcl_of_exp a2)
@@ -157,29 +158,29 @@ and cvcl_of_b_formula b =
     let a1str = cvcl_of_exp a1 in
     let a2str = cvcl_of_exp a2 in
     let a3str = cvcl_of_exp a3 in
-    "((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a2str ^ ") OR (" 
+    "((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a2str ^ ") OR ("
     ^ a3str ^ " > " ^ a2str ^ " AND " ^ a1str ^ " = " ^ a3str ^ "))"
   | CP.EqMin (a1, a2, a3, _) ->
     let a1str = cvcl_of_exp a1 in
     let a2str = cvcl_of_exp a2 in
     let a3str = cvcl_of_exp a3 in
-    "((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a3str ^ ") OR (" 
+    "((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a3str ^ ") OR ("
     ^ a3str ^ " > " ^ a2str ^ " AND " ^ a1str ^ " = " ^ a2str ^ "))"
   | CP.BagIn (v, e, l)			-> " in(" ^ (cvcl_of_spec_var v) ^ ", " ^ (cvcl_of_exp e) ^ ")"
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvcl_of_spec_var v) ^ ", " ^ (cvcl_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvcl_of_exp e1 ^ ", " ^ cvcl_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvcl_of_b_formula: BagMax/BagMin should not appear here.\n")
   (* | CP.VarPerm _ -> failwith ("cvcl_of_b_formula: VarPerm should not appear here.\n") *)
-  | CP.NonZero _ 
+  | CP.NonZero _
   | CP.EndZero _ -> failwith ("String are not supported in cvclite")
   | CP.ListIn _
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvclite")
   | CP.ImmRel _
-  | CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
-  | CP.LexVar _ -> failwith ("LexVar are not supported in cvclite") 
-  | CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite") 
+  | CP.RelForm _ -> failwith ("Relations are not supported in cvclite")
+  | CP.LexVar _ -> failwith ("LexVar are not supported in cvclite")
+  | CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite")
 
 and cvcl_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
@@ -187,7 +188,7 @@ and cvcl_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvcl_of_formula f = match f with
-  | CP.BForm (b,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")" 
+  | CP.BForm (b,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")"
   | CP.And (p1, p2, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " AND " ^ (cvcl_of_formula p2 ) ^ ")"
   | CP.AndList _ -> Gen.report_error no_pos "cvclite.ml: encountered AndList, should have been already handled"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " OR " ^ (cvcl_of_formula p2 ) ^ ")"
@@ -195,13 +196,13 @@ and cvcl_of_formula f = match f with
     (*	  "(NOT (" ^ (cvcl_of_formula p) ^ "))" *)
     begin
       match p with
-      | CP.BForm ((CP.BVar (bv, _), _),_) -> (cvcl_of_spec_var bv) ^ " = 0" 
+      | CP.BForm ((CP.BVar (bv, _), _),_) -> (cvcl_of_spec_var bv) ^ " = 0"
       | _ -> "(NOT (" ^ (cvcl_of_formula p ) ^ "))"
     end
   | CP.Forall (sv, p,_, _) ->
     let typ_str = cvcl_of_sv_type sv in
     "(FORALL (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p ) ^ ")"
-  | CP.Exists (sv, p, _,_) -> 
+  | CP.Exists (sv, p, _,_) ->
     let typ_str = cvcl_of_sv_type sv in
     "(EXISTS (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p ) ^ ")"
 
@@ -216,7 +217,7 @@ and split_vars (vars : CP.spec_var list) = (vars, [], [])
 and split_vars (vars : CP.spec_var list) = match vars with
   | v :: rest -> begin
 	  let ivars, bvars, svars = split_vars rest in
-		match v with 
+		match v with
 		  | CP.SpecVar (CP.Prim Bool, _, _) -> (ivars, v :: bvars, svars)
 		  | CP.SpecVar (CP.Prim Bag, _, _) -> (ivars, bvars, v :: svars)
 		  | _ -> (v :: ivars, bvars, svars)
@@ -229,11 +230,11 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let conseq_fv = CP.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq CP.eq_spec_var (ante_fv @ conseq_fv) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
-  let bag_var_decls = 
-    if Gen.is_empty bag_vars then "" 
+  let bag_var_decls =
+    if Gen.is_empty bag_vars then ""
     else (String.concat ", " (List.map cvcl_of_spec_var bag_vars)) ^ ": SET;\n" in
-  let int_var_decls = 
-    if Gen.is_empty int_vars then "" 
+  let int_var_decls =
+    if Gen.is_empty int_vars then ""
     else (String.concat ", " (List.map cvcl_of_spec_var int_vars)) ^ ": INT;\n" in
   let bool_var_decls =
     if Gen.is_empty bool_vars then ""
@@ -241,7 +242,7 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
   let ante_str = (* (cvcl_of_formula_decl ante) ^ (cvcl_of_formula_decl conseq) ^ *)
     "ASSERT (" ^ (cvcl_of_formula ante ) ^ ");\n" in
-  (*  let conseq_str =  "QUERY (FORALL (S1: SET): FORALL (S2: SET): EXISTS (S3: SET): union(S1, S2, S3)) 
+  (*  let conseq_str =  "QUERY (FORALL (S1: SET): FORALL (S2: SET): EXISTS (S3: SET): union(S1, S2, S3))
       		=> (" ^ (cvcl_of_formula conseq) ^ ");\n" in *)
   let conseq_str =  "QUERY (" ^ (cvcl_of_formula conseq ) ^ ");\n" in
   (* talk to CVC Lite *)
@@ -258,7 +259,7 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let l = String.length res_str in
   if l >= n then
     let tmp = String.sub res_str 0 n in
-    if tmp = "Valid." then 
+    if tmp = "Valid." then
       (close_in chn; Some true)
     else
       let n1 = String.length "Invalid." in
@@ -268,23 +269,23 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
           begin
        (*
 						if Omega.imply ante conseq then
-						print_string ("\nimply_raw:inconsistent result for:\n" ^ f_cvcl ^ "\n\n"); 
+						print_string ("\nimply_raw:inconsistent result for:\n" ^ f_cvcl ^ "\n\n");
 					  *)
-            (close_in chn; 
+            (close_in chn;
              Some false)
           end
         else
           ((*print_string "imply_raw:Unknown 1";
              					   print_string ("\n\n" ^ f_cvcl ^ "\n\n");*)
-            close_in chn; 
+            close_in chn;
             None)
       else
-        ((*print_string "imply_raw:Unknown 2";*) 
-          close_in chn; 
+        ((*print_string "imply_raw:Unknown 2";*)
+          close_in chn;
           None)
-  else 
-    ((*print_string "imply_raw:Unknown 3";*) 
-      close_in chn; 
+  else
+    ((*print_string "imply_raw:Unknown 3";*)
+      close_in chn;
       None)
 
 and imply (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -308,18 +309,18 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
   let all_fv = Gen.BList.remove_dups_eq CP.eq_spec_var (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
-  let bag_var_decls = 
-    if Gen.is_empty bag_vars then "" 
+  let bag_var_decls =
+    if Gen.is_empty bag_vars then ""
     else (String.concat ", " (List.map cvcl_of_spec_var bag_vars)) ^ ": SET;\n" in
-  let int_var_decls = 
-    if Gen.is_empty int_vars then "" 
+  let int_var_decls =
+    if Gen.is_empty int_vars then ""
     else (String.concat ", " (List.map cvcl_of_spec_var int_vars)) ^ ": INT;\n" in
   let bool_var_decls =
     if Gen.is_empty bool_vars then ""
     else (String.concat ", " (List.map cvcl_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
 (*
-  let f_str = (* (cvcl_of_formula_decl f)  ^ *) 
+  let f_str = (* (cvcl_of_formula_decl f)  ^ *)
 	"ASSERT (" ^ (cvcl_of_formula f) ^ ");\n" in
   let query_str = "QUERY (1<0);\n" in
 *)
@@ -340,7 +341,7 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
     let l = String.length res_str in
     if l >= n then
       let tmp = String.sub res_str 0 n in
-      if tmp = "Satisfiable." then 
+      if tmp = "Satisfiable." then
         begin
       (*
 					if not (Omega.is_sat f) then
@@ -354,22 +355,22 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
         if l >= n1 then
           let tmp1 = String.sub res_str 0 n1 in
           if tmp1 = "Unsatisfiable." then
-            (close_in chn; 
+            (close_in chn;
              Some false)
           else begin
             (* print_string ("is_sat_raw: Unknown 1\n"); *)
-            (close_in chn; 
+            (close_in chn;
              None)
           end
         else begin
           (* print_string ("is_sat_raw: Unknown 2\n"); *)
-          (close_in chn; 
+          (close_in chn;
            None)
         end
     else begin
       (* print_string ("is_sat_raw: Unknown 3\n");
          			   print_string ("\n\n" ^ f_cvcl ^ "\n\n"); *)
-      (close_in chn; 
+      (close_in chn;
        None)
     end
   end
@@ -405,7 +406,7 @@ and cvcl_of_formula f =
 	else
 	  "QUERY (" ^ body ^ ");\n"
 
-let write_CVCLite (f : Presburger.pConstr) = 
+let write_CVCLite (f : Presburger.pConstr) =
   let str = cvcl_of_formula f in
 	output_string cvcl_log str;
 	flush cvcl_log

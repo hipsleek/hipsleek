@@ -45,7 +45,7 @@ type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc) | NoAnn
 let imm_ann_top = ConstAnn imm_top
 let imm_ann_bot = ConstAnn imm_bot
 
-type formula = 
+type formula =
   | BForm of (b_formula*(formula_label option))
   | And of (formula * formula * loc)
   | AndList of (LO.t * formula) list
@@ -58,13 +58,13 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
-and p_formula = 
+and p_formula =
   | Frm of ((ident * primed) * loc)
   | XPure of xpure_view
   | BConst of (bool * loc)
   | BVar of ((ident * primed) * loc)
   (* Ann Subtyping v1 <: v2 *)
-  | SubAnn of (exp * exp * loc) 
+  | SubAnn of (exp * exp * loc)
   | Lt of (exp * exp * loc)
   | Lte of (exp * exp * loc)
   | Gt of (exp * exp * loc)
@@ -92,7 +92,7 @@ and p_formula =
   | NonZero of (exp * loc)
   | EndZero of (exp * loc)
 
-and term_ann = 
+and term_ann =
   | Term    (* definite termination *)
   | Loop    (* definite non-termination *)
   | MayLoop (* possible non-termination *)
@@ -105,7 +105,7 @@ and uid = {
   tu_sid: ident;
   tu_fname: ident;
   tu_args: exp list;
-  tu_cond: formula; 
+  tu_cond: formula;
   tu_pos: loc;
 }
 
@@ -113,12 +113,12 @@ and term_fail =
   | TermErr_May
   | TermErr_Must
 
-and imm_ann = 
+and imm_ann =
   | PreImm of p_formula
   | PostImm of p_formula
 
 (* Expression *)
-and exp = 
+and exp =
   | Ann_Exp of (exp * typ * loc)
   | Null of loc
   | Level of ((ident * primed) * loc)
@@ -160,6 +160,7 @@ and exp =
   (* String expressions *)
   | Concat of (exp * exp *loc)
   | SConst of (string * loc)
+  | CConst of (char * loc)
   | SLen of (exp * loc)
   | CharAt of (exp * exp * loc)
 

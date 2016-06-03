@@ -23,7 +23,7 @@ let coq_running = ref false
 let coq_timeout = ref 5.0
 let coq_channels = ref (stdin, stdout)
 
-let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")  
+let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")
 
 let rec coq_of_typ = function
   | Bool          -> "int"
@@ -41,7 +41,7 @@ let rec coq_of_typ = function
   | FORM -> illegal_format ("coq_of_typ: FORMULA type not supported for Coq")
   | Bptyp -> failwith ("coq_of_typ: Bptyp type not supported for Coq")
   | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | FuncT _ | UtT _ | HpT (* | SLTyp *) ->
-    Error.report_error {Err.error_loc = no_pos; 
+    Error.report_error {Err.error_loc = no_pos;
                         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
 
@@ -92,6 +92,7 @@ and coq_of_exp e0 =
   | CP.AConst (i, _) -> string_of_heap_ann i
   | CP.FConst (f, _) -> illegal_format "coq_of_exp : float cannot be handled"
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
+  | CP.CConst (c, _) -> "\'" ^ (Char.escaped c) ^ "\'"
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
@@ -100,7 +101,7 @@ and coq_of_exp e0 =
   | CP.Min _ -> illegal_format "coq_of_exp : min/max cannot be handled"
   | CP.TypeCast _ -> illegal_format "coq_of_exp : TypeCast cannot be handled"
   (* lists *)
-  | CP.List (alist, pos) -> 
+  | CP.List (alist, pos) ->
     begin match alist with
       | [] -> "(@nil Z)"
       | a::t -> "(" ^ (coq_of_exp a) ^ " :: " ^ (coq_of_exp (CP.List (t, pos))) ^ ")"
@@ -117,7 +118,7 @@ and coq_of_exp e0 =
   | CP.ListTail (a, _) -> " ( tail " ^ (coq_of_exp a) ^ ")"
   | CP.ListReverse (a, _) -> " ( rev " ^ (coq_of_exp a) ^ ")"
   (* bags *)
-  | CP.Bag (alist, pos) -> 
+  | CP.Bag (alist, pos) ->
     begin match alist with
       | [] -> "ZSets.empty"
       | a::t -> "( ZSets.add " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.Bag (t, pos))) ^ ")"
@@ -135,11 +136,11 @@ and coq_of_exp e0 =
       | a::t -> "( ZSets.inter " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagIntersect (t, pos))) ^ ")"
     end
   | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
-  | CP.Func _ -> 
+  | CP.Func _ ->
     illegal_format "coq_of_exp : function cannot be handled"
-  | CP.Level _ -> 
+  | CP.Level _ ->
     illegal_format "coq_of_exp : level should not be here"
-  | CP.ArrayAt _ -> 
+  | CP.ArrayAt _ ->
     illegal_format "coq_of_exp : array cannot be handled"
   (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
   | CP.NegInfConst _
@@ -193,12 +194,12 @@ and coq_of_b_formula b =
   | CP.BagNotIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
   | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
   | CP.BagMin _
-  | CP.BagMax _ -> 
+  | CP.BagMax _ ->
     illegal_format "coq_of_exp : bags cannot be handled"
   (* failwith ("No bags in Coq yet") *)
   | CP.NonZero (a, _) -> " nonzero (" ^ (coq_of_exp a) ^ ")"
   | CP.EndZero (a, _) -> " endzero (" ^ (coq_of_exp a) ^ ")"
-  | CP.RelForm _ -> 
+  | CP.RelForm _ ->
     (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
     illegal_format "coq_of_exp : relation cannot be handled"
   | CP.ImmRel _ -> illegal_format "coq_of_exp : ImmRel cannot be handled"
@@ -208,9 +209,9 @@ and coq_of_b_formula b =
 
 (* pretty printing for formulas *)
 and coq_of_formula pr_w pr_s f =
-  let rec helper f = 
+  let rec helper f =
     match f with
-    | CP.BForm ((b,_) as bf,_) -> 		
+    | CP.BForm ((b,_) as bf,_) ->
       begin
         match (pr_w b) with
         | None -> "(" ^ (coq_of_b_formula bf) ^ ")"
@@ -238,7 +239,7 @@ let coq_of_formula pr_w pr_s f =
   let () = set_prover_type () in
   coq_of_formula pr_w pr_s f
 
-let coq_of_formula pr_w pr_s f = 
+let coq_of_formula pr_w pr_s f =
   Debug.no_1 "coq_of_formula" (fun _ -> "Input") (fun c -> c)
     (fun _ -> coq_of_formula pr_w pr_s f) pr_w
 
@@ -248,7 +249,7 @@ let rec check fd coq_file_name : bool=
       let line = input_line fd in
       if line = "No subgoals!" then raise Exit else ()
     done; false
-  with Exit -> 
+  with Exit ->
     if !log_all_flag==true then
       output_string log_file ("[coq.ml]: --> SUCCESS\n");
     (*ignore (Sys.remove coq_file_name);*)
@@ -284,19 +285,19 @@ let stop () =
   end
 
 let stop_prover_debug () =
-  print_string "stop coq prover"; 
+  print_string "stop coq prover";
   Debug.no_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =
   try
-    let fnc () = 
+    let fnc () =
       output_string (snd !coq_channels) f;
       output_string (snd !coq_channels) ("decidez.\nQed.\n");
       flush (snd !coq_channels);
       let result = ref false in
-      let finished = ref false in  
-      while not !finished do 
+      let finished = ref false in
+      while not !finished do
         let line = input_line (fst !coq_channels) in
         if !log_all_flag==true then output_string log_file ("[coq.ml]: >>"^line^"\n");
         if line = "test" ^ string_of_int !coq_file_number ^ " is defined" then begin
@@ -313,11 +314,11 @@ let rec send_formula (f : string) (nr : int) : bool =
       done;
       !result
     in
-    try  
+    try
       let answ = Procutils.PrvComms.maybe_raise_timeout_num 11 fnc () !coq_timeout in
       answ
-    with 
-    | Procutils.PrvComms.Timeout -> 
+    with
+    | Procutils.PrvComms.Timeout ->
       begin
         print_string("\n[coq.ml]:Timeout exception\n");flush stdout;
         false;
@@ -360,9 +361,9 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
     output_string log_file "\n[coq.ml]: #imply\n";
   max_flag := false;
   choice := 1;
-  try 
+  try
     write pr_w pr_s ante conseq;
-  with Illegal_Prover_Format s -> 
+  with Illegal_Prover_Format s ->
     begin
       print_endline_quiet ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
       print_endline_quiet ("ante:"^(!print_p_f_f ante));
@@ -393,8 +394,8 @@ let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no : string) : bool =
     if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> true\n";
     true
 
-let is_sat_ops pr_w pr_s (f:CP.formula) (sat_no :string) : bool = 
-  Debug.no_2 "coqsimplops" !print_p_f_f (fun x -> x) 
+let is_sat_ops pr_w pr_s (f:CP.formula) (sat_no :string) : bool =
+  Debug.no_2 "coqsimplops" !print_p_f_f (fun x -> x)
     string_of_bool (is_sat_ops pr_w pr_s) f sat_no
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =

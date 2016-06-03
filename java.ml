@@ -339,6 +339,7 @@ and java_of_exp = function
     -> string_of_bool b 
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
   | StringLit ({exp_string_lit_val = s}) -> s
+  | CharLit ({exp_char_lit_val = c}) -> Char.escaped c
   | FloatLit ({exp_float_lit_val = f}) -> string_of_float f
   | Null l                         -> "null"
   | Assert _                       -> ""

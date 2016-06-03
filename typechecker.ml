@@ -2304,14 +2304,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let c_e = CP.SConst (s, pos) in
       let res_v = CP.Var (CP.mkRes string_type, pos) in
       let c = CP.mkEqExp res_v c_e pos in
-      (* let c =  *)
-      (*   if !Globals.infer_lvar_slicing then  *)
-      (*     CP.set_il_formula c (Some (false, fresh_string(), [res_v])) *)
-      (*   else c  *)
-      (* in *)
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       Gen.Profiling.pop_time "[check_exp] SConst";
+      res_ctx
+    | CConst ({exp_cconst_val = s;
+               exp_cconst_pos = pos}) ->
+      Gen.Profiling.push_time "[check_exp] SConst";
+      let c_e = CP.CConst (s, pos) in
+      let res_v = CP.Var (CP.mkRes char_type, pos) in
+      let c = CP.mkEqExp res_v c_e pos in
+      let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
+      let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
+      Gen.Profiling.pop_time "[check_exp] CConst";
       res_ctx
     | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
       let c_e = CP.FConst (f, pos) in

@@ -46,10 +46,10 @@ let g = NG.create ()
 (* let h = Hashtbl.create 200 *)
 
 class ['k,'e] get_table (pr:'k -> string) (pr_elem:'e->string)  =
-  object 
+  object
     val tab:('k,'e) Hashtbl.t  = Hashtbl.create 10
     method get n = Hashtbl.find tab n
-    method replace n e = 
+    method replace n e =
       (* let () = x_tinfo_hp pr n no_pos in *)
       (* let () = x_tinfo_hp pr_elem e no_pos in *)
       Hashtbl.replace tab n e
@@ -61,8 +61,8 @@ let curr_proc = ref ""
 
 (* Utility functions *)
 
-(** Convert a list of identifiers into a set of identifiers 
-    	@param l list of identifiers 
+(** Convert a list of identifiers into a set of identifiers
+    	@param l list of identifiers
     	@return the set of identifiers in l *)
 let rec to_IdentSet (l : ident list) : IdentSet.t =
   match l with
@@ -80,7 +80,7 @@ let string_of_IdentSet (s : IdentSet.t) : string =
   "{"^(IdentSet.fold (fun e a -> e^" "^a) s "}")
 
 
-(** Union a list of identifier sets into a unique identifier set 
+(** Union a list of identifier sets into a unique identifier set
     	@param l list of identifier sets
     	@return the union of all the sets in l *)
 let rec union_all (l : IdentSet.t list) : IdentSet.t =
@@ -92,13 +92,13 @@ let rec union_all (l : IdentSet.t list) : IdentSet.t =
 (** Get the variable expression in a variable declaration expression.
     	Inputs are of type (ident * exp option * loc)
     	@return the variable expression *)
-let get_exp_var (_, exp_op, l)  = 
+let get_exp_var (_, exp_op, l)  =
   match exp_op with
     Some e -> e
   | None -> I.Empty l
 
-(** Get the set of global identifiers in a global variable declaration expression 
-    	@param decl variable declaration expression 
+(** Get the set of global identifiers in a global variable declaration expression
+    	@param decl variable declaration expression
     	@return the set of identifiers in the declaration *)
 let get_global_id (decl : I.exp_var_decl) : IdentSet.t =
   let ident_list = List.map fst3 decl.I.exp_var_decl_decls in
@@ -106,31 +106,31 @@ let get_global_id (decl : I.exp_var_decl) : IdentSet.t =
 
 let string_of_global_vars (gv) : string =
   let global_id_set = union_all (List.map get_global_id gv) in
-  string_of_IdentSet global_id_set 
+  string_of_IdentSet global_id_set
 
 (** Get the identifier name of a parameter
-    	@param parameter the parameter of a method 
+    	@param parameter the parameter of a method
     	@return the identifier name of the input parameter *)
 let get_local_id (parameter : I.param) : ident =
-  parameter.I.param_name 
+  parameter.I.param_name
 
-(** Check whether an identifier in a variable declaration belongs to an identifier set 
+(** Check whether an identifier in a variable declaration belongs to an identifier set
     	@param set a set of identifiers
     	@param decl a variable declaration
     	@return true if the identifier in decl is inside set, false otherwise *)
 let inIdentSet (set : IdentSet.t) (decl : ident * I.exp option * loc) : bool =
   IdentSet.mem (fst3 decl) set
 
-(** Construct a variable declaration expression from its contents 
+(** Construct a variable declaration expression from its contents
     	@param t type of the variables
-    	@param pos position of the variables in the program 
-    	@param decl an identifier declaration 
+    	@param pos position of the variables in the program
+    	@param decl an identifier declaration
     	@return the variable declaration expression constructed from the inputs *)
 let to_var_decl (t : typ) (pos : loc) (decl : ident * I.exp option * loc) : I.exp_var_decl =
   { I.exp_var_decl_type = t; I.exp_var_decl_decls = [decl]; I.exp_var_decl_pos = pos }
 
 
-(** Get the procedure name from a procedure declaration 
+(** Get the procedure name from a procedure declaration
     	@param proc procedure declaration
     	@return the procedure name *)
 let get_proc_name (proc : I.proc_decl) : ident =
@@ -149,7 +149,7 @@ let addp (p : primed) ((id1,id2) : ident*ident) : (ident*primed)*(ident*primed) 
     	@param local_vars set of local variables
     	@param block the input block of codes
     	@return a pair of read/write global variables *)
-let rec find_read_write_global_var 
+let rec find_read_write_global_var
       (global_vars : IdentSet.t) (local_vars : IdentSet.t) (block : I.exp) : (IdentSet.t * IdentSet.t) =
   let process_call e =
     if (e.I.exp_call_nrecv_method=Globals.fork_name) then
@@ -196,27 +196,28 @@ let rec find_read_write_global_var
   let process_call e =
     let pr e = Iprinter.string_of_exp (I.CallNRecv e) in
     (* let () = x_tinfo_hp (add_str "XXcallNR" pr_id) e.I.exp_call_nrecv_method no_pos in *)
-    Debug.no_1 "global:process_call" pr (pr_pair print_set print_set) process_call e 
+    Debug.no_1 "global:process_call" pr (pr_pair print_set print_set) process_call e
   in
   match block with
     | I.ArrayAlloc _ (*LDK: to eliminate compilation warnings*)
     | I.ArrayAt _ (*to be modified*)
             (* |I.ArrayAlloc _ (\*TODO WN : correct? *\) *)
-    |I.Assert _ 
-    | I.BoolLit _ 
-    | I.Break _ 
-    | I.Continue _ 
+    |I.Assert _
+    | I.BoolLit _
+    | I.Break _
+    | I.Continue _
     | I.Debug _
-    | I.Dprint _ 
-    | I.Empty _ 
-    | I.FloatLit _ 
-    | I.IntLit _ 
+    | I.Dprint _
+    | I.Empty _
+    | I.FloatLit _
+    | I.IntLit _
     | I.StringLit _
+    | I.CharLit _
     | I.Java _
-    | I.Null _ 
-    | I.This _ 
-    | I.Time _ 
-    | I.Unfold _ -> 
+    | I.Null _
+    | I.This _
+    | I.Time _
+    | I.Unfold _ ->
           (IdentSet.empty, IdentSet.empty)
     | I.Label (_,b)-> find_read_write_global_var global_vars local_vars b
     | I.Assign e ->
@@ -257,7 +258,7 @@ let rec find_read_write_global_var
             (r,w)
           end
     | I.Block e -> find_read_write_global_var global_vars local_vars e.I.exp_block_body
-    | I.Barrier e -> 
+    | I.Barrier e ->
           if (IdentSet.mem e.I.exp_barrier_recv global_vars) then
             (IdentSet.diff (IdentSet.singleton e.I.exp_barrier_recv) local_vars, IdentSet.empty)
           else (IdentSet.empty, IdentSet.empty)
@@ -283,14 +284,14 @@ let rec find_read_write_global_var
                     (r,w)
           end
     | I.CallNRecv e ->
-          process_call e 
+          process_call e
     | I.Cast e -> find_read_write_global_var global_vars local_vars e.I.exp_cast_body
-    | I.Catch b -> 
+    | I.Catch b ->
           let ident_list = match (b.I.exp_catch_var, b.I.exp_catch_flow_var) with
             | None, None -> []
             | None, Some v -> [v]
             | Some v, None -> [v]
-            | Some v1, Some v2 -> v1::[v2] in			
+            | Some v1, Some v2 -> v1::[v2] in
           let ident_set = to_IdentSet ident_list in
           let new_global = IdentSet.diff global_vars ident_set in
           let new_local = IdentSet.union local_vars ident_set in
@@ -319,7 +320,7 @@ let rec find_read_write_global_var
             let read_write_list =  List.map (find_read_write_global_var global_vars local_vars) e.I.exp_new_arguments in
             let r = union_all (List.map fst read_write_list) in
             let w = union_all (List.map snd read_write_list) in
-            (r,w)		
+            (r,w)
           end
     | I.Return e ->
           begin
@@ -331,7 +332,7 @@ let rec find_read_write_global_var
     | I.Seq e ->
           begin
             match e.I.exp_seq_exp1 with
-                I.VarDecl e1 -> 
+                I.VarDecl e1 ->
                     let ident_list = List.map fst3 e1.I.exp_var_decl_decls in
                     let ident_set = to_IdentSet ident_list in
                     let new_global = IdentSet.diff global_vars ident_set in
@@ -343,8 +344,8 @@ let rec find_read_write_global_var
                     let w2 = union_all (List.map snd read_write_list) in
                     let r = IdentSet.union r1 r2 in
                     let w = IdentSet.union w1 w2 in
-                    (r,w)			
-              | I.ConstDecl e1 -> 
+                    (r,w)
+              | I.ConstDecl e1 ->
                     let ident_list = List.map fst3 e1.I.exp_const_decl_decls in
                     let ident_set = to_IdentSet ident_list in
                     let new_global = IdentSet.diff global_vars ident_set in
@@ -409,20 +410,20 @@ let rec find_read_write_global_var
             let w = IdentSet.union wc wb in
             (r,w)
           end
-    | I.Try e ->	
+    | I.Try e ->
           let (rb,wb) = find_read_write_global_var global_vars local_vars e.I.exp_try_block in
           let l_catch = List.map (find_read_write_global_var global_vars local_vars) e.I.exp_catch_clauses  in
           let l_final = List.map (find_read_write_global_var global_vars local_vars) e.I.exp_finally_clause  in
           let all_r, all_w = List.split ((rb,wb)::(l_catch @ l_final)) in
           ((union_all all_r),(union_all all_w))
-    | I.Raise e -> 
-          begin 
-            match e.I.exp_raise_val with 
+    | I.Raise e ->
+          begin
+            match e.I.exp_raise_val with
               | None  -> (IdentSet.empty, IdentSet.empty)
               | Some e -> find_read_write_global_var global_vars local_vars e
-          end 
+          end
     | I.Par e ->
-          let (rl, wl) = List.split (List.map (fun c -> 
+          let (rl, wl) = List.split (List.map (fun c ->
               find_read_write_global_var global_vars local_vars c.I.exp_par_case_body
           ) e.I.exp_par_cases)
           in (union_all rl, union_all wl)
@@ -437,16 +438,16 @@ let find_read_write_global_var
     (global_vars : IdentSet.t) (local_vars : IdentSet.t) (block : I.exp) : (IdentSet.t * IdentSet.t) =
   let pr0 s = (pr_list pr_id) (IdentSet.elements s) in
   let pr_r = pr_pair pr0 pr0 in
-  Debug.no_2 "find_read_write_global_var" (add_str "globalset" pr0) 
-    (add_str "localset" pr0) pr_r 
+  Debug.no_2 "find_read_write_global_var" (add_str "globalset" pr0)
+    (add_str "localset" pr0) pr_r
     (fun _ _ -> find_read_write_global_var
     (global_vars : IdentSet.t) (local_vars : IdentSet.t) (block : I.exp))
     global_vars local_vars
 
-(** Construct the read/write variable declarations from the read/write sets 
-    	@param global_var_decls list of global variable declarations 
+(** Construct the read/write variable declarations from the read/write sets
+    	@param global_var_decls list of global variable declarations
     	@param readSet the set of read-only global variables
-    	@param writeSet the set of read/write global variables 
+    	@param writeSet the set of read/write global variables
     	@return a pair of read and write variable declaration lists *)
 let to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSet.t) (writeSet : IdentSet.t) :
   (I.exp_var_decl list * I.exp_var_decl list) =
@@ -470,18 +471,18 @@ let to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSe
 let to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSet.t) (writeSet : IdentSet.t) :
   (I.exp_var_decl list * I.exp_var_decl list) =
   let pr_l = pr_list Iprinter.string_of_exp_var_decl in
-  Debug.no_3 "global:to_var_decl_list" pr_l 
+  Debug.no_3 "global:to_var_decl_list" pr_l
       (add_str "read" print_set)
       (add_str "write" print_set)
  (pr_pair pr_l pr_l) to_var_decl_list global_var_decls readSet writeSet
 
-(** Find read/write global variables in a procedure. 
+(** Find read/write global variables in a procedure.
     	The method put the pair of read/write sets into the global hash table h
     	@param global_id_set set of global identifiers
-    	@param proc input procedure declaration 
+    	@param proc input procedure declaration
     	@return unit *)
 let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_decl) : unit =
-  (ignore 
+  (ignore
      (curr_proc := proc.I.proc_name;
       NG.add_vertex g (NG.V.create !curr_proc))
   );
@@ -501,22 +502,22 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
         let () = x_tinfo_hp (add_str "proc(writeSet)" print_set) writeSet no_pos in
         (readSet,writeSet)
       end
-  in 
+  in
   let find_in_specs global_vars= (*Find read/write global vars in specification*)
-    let st=proc.I.proc_static_specs in 
+    let st=proc.I.proc_static_specs in
     let list_fv=
-      let pr,pst = Iformula.struc_split_fv st false in  
+      let pr,pst = Iformula.struc_split_fv st false in
       (* Gen.BList.remove_dups_eq (=) pr@pst  *)
-      pr@pst 
+      pr@pst
     in
-    let (rl,wl)= List.fold_left (fun (readl,writel) (id,pr) -> 
+    let (rl,wl)= List.fold_left (fun (readl,writel) (id,pr) ->
         if(IdentSet.mem id global_vars) then match pr with
           |Primed -> (readl,writel@[id])
           | Unprimed -> (readl@[id],writel)
         else
           (readl,writel)
-      ) ([],[]) (list_fv) 
-    in 
+      ) ([],[]) (list_fv)
+    in
     let readSet=to_IdentSet rl in
     let writeSet= to_IdentSet wl in
     (*(IdentSet.empty,IdentSet.empty) *)
@@ -539,14 +540,14 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
   let pr0 s = (pr_list pr_id) (IdentSet.elements s) in
   let pr1 proc = proc.I.proc_name in
   let pr2 _ = "" in
-  Debug.no_2 "find_read_write_global_var_proc" (add_str "globalset" pr0) pr1 pr2 
+  Debug.no_2 "find_read_write_global_var_proc" (add_str "globalset" pr0) pr1 pr2
     find_read_write_global_var_proc global_id_set proc
 
-(** Get the read/write global variables of a procedure from the hash table 
+(** Get the read/write global variables of a procedure from the hash table
     	@param global_var_decls list of global variable declarations
     	@param proc input procedure declaration
     	@return a pair of read and write variable declaration lists *)
-let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : 
+let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) :
   (I.exp_var_decl list * I.exp_var_decl list) =
   let (reads,writes) = call_global_param # get proc.I.proc_name in
   let () = x_tinfo_hp (add_str "get_read_write_global_var: proc_name" pr_id) proc.I.proc_name no_pos in
@@ -556,14 +557,14 @@ let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I
   let writeSet = writes in
   x_add to_var_decl_list global_var_decls readSet writeSet
 
-let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : 
+let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) :
   (I.exp_var_decl list * I.exp_var_decl list) =
   let pr = pr_exp_var_decl_list in
   let pr_proc_name x = x.I.proc_name in
-  Debug.no_2 "get_read_write_global_var" pr pr_proc_name (pr_pair pr pr) get_read_write_global_var global_var_decls proc 
+  Debug.no_2 "get_read_write_global_var" pr pr_proc_name (pr_pair pr pr) get_read_write_global_var global_var_decls proc
 
 (** Set the read/write sets for one vertex. The method changes the global hash table h.
-    	@param readSet set of read-only identifiers 
+    	@param readSet set of read-only identifiers
     	@param writeSet set of read/write identifiers
     	@param vertex a procedure name
     	@return unit *)
@@ -588,7 +589,7 @@ let merge_scc (scc : NG.V.t list ) : unit =
     if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)
         || (func_id = Globals.acquire_name) || (func_id = Globals.release_name)
         || (func_id = Globals.init_name) || (func_id = Globals.finalize_name)
-        || (Globals.is_prim_method func_id)) 
+        || (Globals.is_prim_method func_id))
     then
       let () = print_endline_quiet ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
       ()
@@ -598,7 +599,7 @@ let merge_scc (scc : NG.V.t list ) : unit =
 (** Check the connection and merge two strongly connected components
     	@param scc1 the first strongly connected component
     	@param scc2 the second strongly connected component
-    	@return unit *)		
+    	@return unit *)
 let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
   let pc = NGPathCheck.create g in
   let v1 = List.hd scc1 in
@@ -611,7 +612,7 @@ let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
     let () = call_global_param # replace v1 (r,w) in
     merge_scc scc1
 
-(** Find read write global variables for all procedures using graph data structure 
+(** Find read write global variables for all procedures using graph data structure
     	@param prog program declaration
     	@return unit *)
 let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
@@ -635,8 +636,8 @@ let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
 
 (* Extend body of procedures *)
 
-(** Find a method declaration with a given identifier 
-    	@param temp_procs list of temporary procedure declarations 
+(** Find a method declaration with a given identifier
+    	@param temp_procs list of temporary procedure declarations
     	@param id an identifier
     	@return the procedure declaration that has name id *)
 let rec find_method (temp_procs : I.proc_decl list) (id : ident) : I.proc_decl =
@@ -644,8 +645,8 @@ let rec find_method (temp_procs : I.proc_decl list) (id : ident) : I.proc_decl =
   if head.I.proc_name = id then head
   else find_method (List.tl temp_procs) id
 
-(** Change the expression in a constant declaration 
-    	@param temp_procs list of temporary procedure declaration 
+(** Change the expression in a constant declaration
+    	@param temp_procs list of temporary procedure declaration
     	@param i an identifier
     	@param e the expression in the constant declaration
     	@param l location of the declaration
@@ -654,7 +655,7 @@ let rec change_decl (temp_procs : I.proc_decl list) ((i,e,l) : ident * I.exp * l
   let new_exp = extend_body temp_procs e in
   (i,new_exp,l)
 
-(** Change the expression in a variable declaration 
+(** Change the expression in a variable declaration
     	@param temp_procs list of temporary procedure declaration
     	@param i an identifier
     	@param e_opt the expression in the variable declaration
@@ -667,10 +668,10 @@ and change_opt_decl (temp_procs : I.proc_decl list) ((i,e_opt,l) : ident * I.exp
     let new_exp = extend_body temp_procs e in
     (i, Some new_exp, l)
 
-(** Extend the arguments of a function call 
+(** Extend the arguments of a function call
     	@param temp_procs list of temporary procedure declaration
-    	@param params list of additional parameters 
-    	@param args list of arguments 
+    	@param params list of additional parameters
+    	@param args list of arguments
     	@return new list of arguments *)
 and change_args (temp_procs : I.proc_decl list) (params : I.param list) (args : I.exp list) : I.exp list =
   match params with
@@ -683,15 +684,15 @@ and change_args (temp_procs : I.proc_decl list) (params : I.param list) (args : 
         let var_exp = { I.exp_var_name = hp.I.param_name; I.exp_var_pos = hp.I.param_loc } in
         let new_ha = I.Var var_exp in
         new_ha::new_ta
-      | ha::ta -> 
+      | ha::ta ->
         let new_ta = change_args temp_procs tp ta in
         let new_ha = extend_body temp_procs ha in
         new_ha::new_ta
     end
 
-(** Extend the body of the procedure to the new one 
+(** Extend the body of the procedure to the new one
     	@param temp_procs list of temporary procedure declaration
-    	@param exp current body of a procedure 
+    	@param exp current body of a procedure
     	@return new body of the procedure *)
 and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   match exp with
@@ -707,16 +708,17 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.FloatLit _
   | I.IntLit _
   | I.StringLit _
+  | I.CharLit _
   | I.Java _
   | I.Null _
   | I.This _
-  | I.Time _ 
+  | I.Time _
   | I.Unfold _
   | I.Barrier _
-  | I.Var _ -> 
+  | I.Var _ ->
     exp
   | I.Label (p,b)-> I.Label (p, extend_body temp_procs b)
-  | I.Assign e -> 
+  | I.Assign e ->
     begin
       let new_lhs = extend_body temp_procs e.I.exp_assign_lhs in
       let new_rhs = extend_body temp_procs e.I.exp_assign_rhs in
@@ -757,7 +759,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         let fn = match fn_exp with
           | I.Var v ->
             v.I.exp_var_name
-          | _ -> 
+          | _ ->
             Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting a method name as the first parameter of a fork")}
         in
         let args = List.tl e.I.exp_call_nrecv_arguments in
@@ -773,7 +775,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         match new_e1 with
         | I.CallNRecv e1 ->
           let fn1 = I.Var { I.exp_var_name = e1.I.exp_call_nrecv_method;
-                            I.exp_var_pos = e1.I.exp_call_nrecv_pos} 
+                            I.exp_var_pos = e1.I.exp_call_nrecv_pos}
           in
           let new_fork_exp = I.CallNRecv {
               I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
@@ -781,14 +783,14 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
               I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
               I.exp_call_nrecv_ho_arg = None;
               I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
-              I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
+              I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos}
           in
           new_fork_exp
         | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting forked method to be a I.CallNRecv")}
       (* ================== *)
       with _ ->
         Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
-    else if (e.I.exp_call_nrecv_method=Globals.join_name 
+    else if (e.I.exp_call_nrecv_method=Globals.join_name
              || e.I.exp_call_nrecv_method=Globals.init_name
              || e.I.exp_call_nrecv_method=Globals.finalize_name
              || e.I.exp_call_nrecv_method=Globals.acquire_name
@@ -846,20 +848,20 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
         let new_exp = {e with I.exp_return_val = Some new_e1 } in
         I.Return new_exp
     end
-  | I.Seq e -> 
+  | I.Seq e ->
     begin
       let new_exp1 = extend_body temp_procs e.I.exp_seq_exp1 in
       let new_exp2 = extend_body temp_procs e.I.exp_seq_exp2 in
       let new_exp = { e with I.exp_seq_exp1 = new_exp1; I.exp_seq_exp2 = new_exp2 } in
       I.Seq new_exp
     end
-  | I.Unary e -> 
+  | I.Unary e ->
     begin
       let new_subexp = extend_body temp_procs e.I.exp_unary_exp in
       let new_exp = { e with I.exp_unary_exp = new_subexp } in
       I.Unary new_exp
     end
-  | I.VarDecl e -> 
+  | I.VarDecl e ->
     begin
       let new_decls = List.map (change_opt_decl temp_procs) e.I.exp_var_decl_decls in
       let new_exp = {e with I.exp_var_decl_decls = new_decls } in
@@ -873,35 +875,35 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
       I.While new_exp
     end
   | I.Try e ->
-    I.Try {e with 
+    I.Try {e with
            I.exp_try_block = extend_body temp_procs e.I.exp_try_block;
            I.exp_catch_clauses = List.map (extend_body temp_procs) e.I.exp_catch_clauses;
            I.exp_finally_clause = List.map (extend_body temp_procs) e.I.exp_finally_clause;
           }
-  | I.Raise e -> I.Raise {e with 
-                          I.exp_raise_val = match e.I.exp_raise_val with 
+  | I.Raise e -> I.Raise {e with
+                          I.exp_raise_val = match e.I.exp_raise_val with
                             | None -> None
                             | Some e -> Some (extend_body temp_procs e)}
   | I.Par e ->
-    let cl = List.map (fun c -> { c with 
+    let cl = List.map (fun c -> { c with
                                   I.exp_par_case_body = extend_body temp_procs c.I.exp_par_case_body }) e.I.exp_par_cases in
     I.Par { e with I.exp_par_cases = cl; }
 
 (* Rename local variables when there is conflict *)
 
-(** Create a new identifier if there is conflict 
-    	@param global_vars set of global variable identifiers 
+(** Create a new identifier if there is conflict
+    	@param global_vars set of global variable identifiers
     	@param id an identifier
     	@return id if id is not in global_vars, otherwise return a new name *)
 let create_new_ids (global_vars : IdentSet.t) (id : ident) : ident =
   if (IdentSet.mem id global_vars) then
     fresh_local_var_name id
-  else 
+  else
     id
 
-(** Create a new parameter name if there is conflict 
+(** Create a new parameter name if there is conflict
     	@param global_vars set of global variable identifiers
-    	@param p a parameter 
+    	@param p a parameter
     	@return p if p is not in global_vars, otherwise return a new name *)
 let create_new_params (global_vars : IdentSet.t) (p : I.param) : I.param =
   if (IdentSet.mem p.I.param_name global_vars) then
@@ -909,8 +911,8 @@ let create_new_params (global_vars : IdentSet.t) (p : I.param) : I.param =
   else
     p
 
-(** Check the local variables name and change them if necessary 
-    	@param global_vars set of global variable identifiers 
+(** Check the local variables name and change them if necessary
+    	@param global_vars set of global variable identifiers
     	@param exp an expression
     	@return a new expression *)
 let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
@@ -928,14 +930,15 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   | I.FloatLit _
   | I.IntLit _
   | I.StringLit _
+  | I.CharLit _
   | I.Java _
   | I.Null _
   | I.This _
-  | I.Time _ 
+  | I.Time _
   | I.Unfold _
   | I.Var _
   | I.Barrier _
-  | I.VarDecl _ -> 
+  | I.VarDecl _ ->
     exp
   | I.Label (p,b) -> I.Label (p, check_and_change global_vars b)
   | I.Assign e ->
@@ -945,7 +948,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
       let new_exp = { e with I.exp_assign_lhs = new_lhs; I.exp_assign_rhs = new_rhs } in
       I.Assign new_exp
     end
-  | I.Binary e -> 
+  | I.Binary e ->
     begin
       let new_oper1 = check_and_change global_vars e.I.exp_binary_oper1 in
       let new_oper2 = check_and_change global_vars e.I.exp_binary_oper2 in
@@ -973,7 +976,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
       let new_exp = { e with I.exp_block_body = new_body } in
       I.Block new_exp
     end
-  | I.CallRecv e -> 
+  | I.CallRecv e ->
     begin
       let new_args = List.map (check_and_change global_vars) e.I.exp_call_recv_arguments in
       let new_exp = { e with I.exp_call_recv_arguments = new_args } in
@@ -991,7 +994,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
       let new_exp = { e with I.exp_cast_body = new_body } in
       I.Cast new_exp
     end
-  | I.Catch e -> 
+  | I.Catch e ->
     let (f_catch_var, int_catch_var ) = match e.I.exp_catch_var with
       | None -> (None , [])
       | Some v ->
@@ -1001,12 +1004,12 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
       | None -> (None , [])
       | Some v ->
         let s = (create_new_ids global_vars v) in
-        (Some s, [s]) in				
+        (Some s, [s]) in
     let ident_list = int_catch_var @ int_flow_var in
     let new_ident_list = List.map (create_new_ids global_vars) ident_list in
     let renlist = List.combine ident_list new_ident_list in
     let new_exp2 = x_add Astsimp.rename_exp renlist e.I.exp_catch_body in
-    I.Catch {e with 
+    I.Catch {e with
              I.exp_catch_var = f_catch_var;
              I.exp_catch_flow_var = f_flow_var;
              I.exp_catch_body = (check_and_change global_vars new_exp2);}
@@ -1040,12 +1043,12 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
         let new_exp = {e with I.exp_return_val = Some new_e1 } in
         I.Return new_exp
     end
-  | I.Seq e -> 
+  | I.Seq e ->
     begin
       match e.I.exp_seq_exp1 with
-        I.VarDecl e1 -> 
+        I.VarDecl e1 ->
         let ident_list = List.map fst3 e1.I.exp_var_decl_decls in
-        let new_ident_list = List.map (create_new_ids global_vars) ident_list in 
+        let new_ident_list = List.map (create_new_ids global_vars) ident_list in
         let renlist = List.map2 join2 ident_list new_ident_list in
         let new_exp2 = x_add Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
         let new_exp2 = check_and_change global_vars new_exp2 in
@@ -1053,7 +1056,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
         let new_exp1 = I.VarDecl { e1 with I.exp_var_decl_decls = new_var_decls } in
         let new_exp = { e with I.exp_seq_exp1 = new_exp1; I.exp_seq_exp2 = new_exp2 } in
         I.Seq new_exp
-      | I.ConstDecl e1 -> 
+      | I.ConstDecl e1 ->
         let ident_list = List.map fst3 e1.I.exp_const_decl_decls in
         let new_ident_list = List.map (create_new_ids global_vars) ident_list in
         let renlist = List.map2 join2 ident_list new_ident_list in
@@ -1069,7 +1072,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
         let new_exp = { e with I.exp_seq_exp1 = new_exp1; I.exp_seq_exp2 = new_exp2 } in
         I.Seq new_exp
     end
-  | I.Unary e -> 
+  | I.Unary e ->
     begin
       let new_subexp = check_and_change global_vars e.I.exp_unary_exp in
       let new_exp = { e with I.exp_unary_exp = new_subexp } in
@@ -1083,21 +1086,21 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
       I.While new_exp
     end
   | I.Try e ->
-    I.Try {e with 
+    I.Try {e with
            I.exp_try_block = check_and_change global_vars e.I.exp_try_block;
            I.exp_catch_clauses = List.map (check_and_change global_vars) e.I.exp_catch_clauses;
            I.exp_finally_clause = List.map (check_and_change global_vars) e.I.exp_finally_clause;
           }
-  | I.Raise e -> I.Raise {e with 
-                          I.exp_raise_val = match e.I.exp_raise_val with 
+  | I.Raise e -> I.Raise {e with
+                          I.exp_raise_val = match e.I.exp_raise_val with
                             | None -> None
                             | Some e -> Some (check_and_change global_vars e)}
   | I.Par e ->
-    let cl = List.map (fun c -> { c with 
+    let cl = List.map (fun c -> { c with
                                   I.exp_par_case_body = check_and_change global_vars c.I.exp_par_case_body }) e.I.exp_par_cases in
     I.Par { e with I.exp_par_cases = cl; }
 
-(** Rename the parameters and local variables if there is conflict with global variables 
+(** Rename the parameters and local variables if there is conflict with global variables
     	@param proc procedure declaration
     	@return the new procedure declaration without name conflict *)
 let resolve_name_conflict (proc : I.proc_decl) : I.proc_decl =
@@ -1124,9 +1127,9 @@ let resolve_name_conflict (proc : I.proc_decl) : I.proc_decl =
 
 (* Functions to translate the program *)
 
-(** Convert a global variable into a parameter 
+(** Convert a global variable into a parameter
     	@param modifier the modifier of the new parameter
-    	@param var_decl the variable declaration 
+    	@param var_decl the variable declaration
     	@return the new parameter *)
 let global_to_param (modifier : I.param_modifier) (var_decl : I.exp_var_decl) : I.param =
   let (id, exp, loc) = List.hd var_decl.I.exp_var_decl_decls in
@@ -1135,17 +1138,17 @@ let global_to_param (modifier : I.param_modifier) (var_decl : I.exp_var_decl) : 
     I.param_mod = modifier;
     I.param_loc = loc; }
 
-(** Add the global variables into the parameter list 
+(** Add the global variables into the parameter list
     	@param read_global_var list of read-only global variable declaration
     	@param write_global_var list of read/write global variable declaration
     	@param args list of current parameters
     	@return new list of parameters *)
 let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_var : I.exp_var_decl list) (args : I.param list) : I.param list =
-  let read_param_ext = 
+  let read_param_ext =
     if (!Globals.pass_global_by_value) then
       List.map (global_to_param I.NoMod) read_global_var
     else
-      List.map (global_to_param I.RefMod) read_global_var 
+      List.map (global_to_param I.RefMod) read_global_var
   in
   let write_param_ext = List.map (global_to_param I.RefMod) write_global_var in
   let param_ext = read_param_ext @ write_param_ext in
@@ -1154,25 +1157,25 @@ let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_va
 let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_var : I.exp_var_decl list) (args : I.param list) : I.param list =
   let pr = pr_exp_var_decl_list in
   let pr2 = pr_param_list in
-  Debug.no_3 "add_global_as_param" (add_str "read" pr) 
+  Debug.no_3 "add_global_as_param" (add_str "read" pr)
       (add_str "write" pr) pr2 pr2 (fun _ _ _ -> add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_var : I.exp_var_decl list) (args : I.param list)) read_global_var write_global_var args
 
-(** Extend the parameter list of a procedure with global variables 
-    	@param global_var_decls list of global variable declaration 
+(** Extend the parameter list of a procedure with global variables
+    	@param global_var_decls list of global variable declaration
     	@param proc current procedure declaration
     	@return new procedure declaration *)
 let extend_args (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : I.proc_decl =
-  let (read_global_var, write_global_var) = 
+  let (read_global_var, write_global_var) =
     get_read_write_global_var global_var_decls proc in
   let new_param_list = add_global_as_param read_global_var write_global_var proc.I.proc_args in
   { proc with I.proc_args = new_param_list }
 
-(** Extend the old procedure declaration to the new one 
+(** Extend the old procedure declaration to the new one
     	@param temp_procs list of temporary procedure declarations
     	@param decl current procedure declaration
     	@return new procedure declaration *)
 let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_decl =
-  let new_body = 
+  let new_body =
     match decl.I.proc_body with
       None -> None
     | Some e -> Some (extend_body temp_procs e)
@@ -1199,5 +1202,5 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
 
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   let pr = Iprinter.string_of_program in
-  Debug.no_1 "trans_global_to_param" pr pr 
+  Debug.no_1 "trans_global_to_param" pr pr
     trans_global_to_param prog

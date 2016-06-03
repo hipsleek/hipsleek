@@ -1,0 +1,17 @@
+//1
+checksat charAt("abc", 1) = 'b'.
+
+//2
+checksat charAt("abc", 3) = '\x00'.
+
+//3
+checksat charAt("abc\\0", 3) = '\000'.
+
+//4
+checksat charAt(s, (slen(s)-1)) = '\x00' & s = "abc\\0".
+
+//5
+checkentail charAt(s, (slen(s)-1)) = '\000' |- !(nonzero(s)).
+
+//6
+checkentail charAt(s, (slen(s)-1)) = '\000' |- endzero(s).

@@ -122,6 +122,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
   | CP.SConst _
+  | CP.CConst _
   | CP.SLen _
   | CP.CharAt _
   | CP.Concat _ -> failwith (" [isabelle.ml] String are not supported in isabelle")
