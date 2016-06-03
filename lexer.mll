@@ -217,7 +217,7 @@ module Make (Token : SleekTokenS)
    ("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
    ("int", INT);
-   ("char", INT);
+   ("char", CHAR_TYPE);
    ("string", STRING_TYPE);
    ("INFint", INFINT_TYPE);
    ("intersect", INTERSECT);

@@ -2989,6 +2989,7 @@ non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
    | `STRING_TYPE        -> string_type
+   | `CHAR_TYPE          -> char_type
    | `ANN_KEY            -> ann_type
    | `FLOAT              -> float_type
    | `INFINT_TYPE        -> infint_type
