@@ -1,6 +1,34 @@
 ======================================================================================
 # ex3b.slk
 
+
+Why did we not have x=i+self in inp2 below?
+
+(==astsimp.ml#2777==)
+choose_smallest@1
+choose_smallest inp1 : x=i+self & i+1=m & Rec(v)
+choose_smallest inp2 :[(x,0,[])]
+choose_smallest@1 EXIT:[(x, true)]
+
+
+# why did we have [] for the base case equation?
+
+(==astsimp.ml#2777==)
+choose_smallest@1
+choose_smallest inp1 : x=i+self & i+1=m & Rec(v)
+choose_smallest inp2 :[(x,0,[])]
+   // why isn't this (x,0,[x=i+self])? why []?
+choose_smallest@1 EXIT:[]
+
+(==astsimp.ml#2777==)
+choose_smallest@2
+choose_smallest inp1 : flted_16_16=1+i & x=i+self & (i+1)<m & m_17=m
+choose_smallest inp2 :[(self,1,[]),(x,0,[ x=i+self])]
+               // can did we use self here, which is later dropped?
+choose_smallest@2 EXIT:[(x, x=i+self)]
+
+# FIXED
+
 # why inconsistent roots?
 
 !!! **astsimp.ml#2753:inconsistent roots:[[],[(x, x=i+self)]]

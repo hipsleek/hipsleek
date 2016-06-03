@@ -2709,7 +2709,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 if !CP.tp_imply pure rhs then aux xs acc
                 else aux xs x in
             (* remove views, keep data nodes only *)
-            let xs = List.filter (fun (v,no,eq_lst) -> no=0 && eq_lst!=[]) xs in
+            let xs = List.filter (fun (v,no,eq_lst) -> no=0 (* && eq_lst!=[] *)) xs in
             let xs = match xs with [] -> []
                                  | x::xs -> aux xs x in
             xs in
