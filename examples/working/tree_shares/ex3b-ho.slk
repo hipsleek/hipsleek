@@ -17,8 +17,9 @@ pred arrsegHO<i,m> ==
  inv i<m.
 
 // 3
-infer [@classic,Rec
- ] x::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & x=arr+i & i<m-1 |- arr::arrsegHO<i,m>.
+infer [@classic//,Rec
+ ] x::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & x=arr+i & i<m-1
+      |- arr::arrsegHO<i,m>.
 print residue.
 
 /*

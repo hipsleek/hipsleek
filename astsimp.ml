@@ -2674,7 +2674,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let keep_vs = CP.self_sv::view_sv in
       let lst_heap_ptrs = 
         if !Globals.ptr_arith_flag then 
-          let lst = List.map (fun (f,_) -> 
+          let lst_ptr = List.map (fun (f,_) -> 
               let (h,pure,_,_,_,_) = CF.split_components f in
               let pure = MCP.pure_of_mix pure in
               let vs = CP.fv pure in
@@ -2686,6 +2686,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                   let ex_vs = Gen.BList.difference_eq CP.eq_spec_var vs keep_vs in
                   let new_p = CP.mkExists_with_simpl !CP.simplify ex_vs pure None no_pos in
                   (* let vars = CP.fv new_p in *)
+                  let new_p = Cpure.arith_simplify 89 new_p in
                   let (ptrs,eq_lst) = x_add_1 CP.extr_ptr_eqn new_p in
                   let base_vars = List.map snd ptrs in
                   let eq_lst = 
@@ -2769,7 +2770,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let pr_sv = !CP.print_sv in
           let pr_2 = pr_list (pr_pair pr_f (pr_list (pr_triple pr_sv string_of_int pr_lst_f))) in
           (* let () = y_tinfo_hp (add_str "lst" pr_2) lst in *)
-          let lst = List.filter (fun (_,x) -> x!=[]) lst in
+          let lst = List.filter (fun (_,x) -> x!=[]) lst_ptr in
           (* remove views and choose smallest ptr *)
           (* let () = y_tinfo_hp (add_str "lst(after filter)" pr_2) lst in *)
           let pr_3a = (pr_list (pr_pair pr_sv pr_f)) in
