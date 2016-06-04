@@ -76,9 +76,24 @@ module Make_Session (Base: Session_base) = struct
 
   and print_session_base = Base.print_session_base
 
-  and print_session_seq f = "to be implemented"
-  and print_session_or f = "to be implemented"
-  and print_session_star f = "to be implemented"
+  and print_session_seq s = begin
+          print_session s.session_seq_formula_head;
+          Printf.printf " %s " ";;";
+          print_session s.session_seq_formula_tail;
+  end
+
+  and print_session_or s = begin
+          print_session s.session_seq_formula_or1;
+          Printf.printf " %s " "or";
+          print_session s.session_seq_formula_or2;
+  end
+
+  and print_session_star s = begin
+          print_session s.session_seq_formula_star1;
+          Printf.printf " %s " "*";
+          print_session s.session_seq_formula_star2;
+  end
+
 end;;
 
 (* =========== Protocol / Projection ========== *)
