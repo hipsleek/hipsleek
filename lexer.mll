@@ -241,6 +241,7 @@ module Make (Token : SleekTokenS)
    ("len", LENGTH);
    ("slen", SLEN);
    ("charAt", CHARAT);
+   ("charUp", CHARUP);
    ("nonzero", NONZERO);
    ("endzero", ENDZERO);
    ("let", LET);

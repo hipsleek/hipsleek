@@ -712,6 +712,7 @@ let rec is_array_exp e = match e with
   | CP.ListLength _
   | CP.SLen _
   | CP.CharAt _
+  | CP.CharUp _
   | CP.ListAppend _
   | CP.ListReverse _ ->
     Some false
@@ -784,7 +785,8 @@ let rec is_list_exp e = match e with
   | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
   | CP.SLen _
   | CP.CConst _
-  | CP.CharAt _-> Some false
+  | CP.CharAt _
+  | CP.CharUp _ -> Some false
 
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
   	| Some ss -> string_of_bool ss

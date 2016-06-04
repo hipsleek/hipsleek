@@ -23,7 +23,7 @@ void minus_minus(str_buf s)
   s.offset = s.offset-1;
 }
 
-char xxx(int offset, string s)
+char char_at(int offset, string s)
   requires 0<=offset<=slen(s)
   ensures res = charAt(s, offset);
 
@@ -31,5 +31,8 @@ char rhs_deref (str_buf s)
   requires s::str_obj<offset,str,length> & 0<=offset<=slen(str)
   ensures s::str_obj<offset,str, length> & res = charAt(str, offset);
 {
-  return xxx(s.offset, s.s);
+  return char_at(s.offset, s.s);
 }
+
+void lhs_deref (str_buf s, char c)
+  requires s::str_obj<offset,str,length

@@ -11670,7 +11670,7 @@ and inst_before_fold_x estate rhs_p case_vars =
           | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _
           | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _
           | CP.ListReverse _ | CP.ArrayAt _ | CP.Func _
-          | CP.SLen _ | CP.CharAt _
+          | CP.SLen _ | CP.CharAt _ | CP.CharUp _
           | CP.Template _ -> false in
         ((List.length v_l)=1) && (Gen.BList.disjoint_eq CP.eq_spec_var lfv rfv)&&
         ((Gen.BList.list_subset_eq CP.eq_spec_var lfv lhs_fv && List.length r_inter == 1 && Gen.BList.list_subset_eq CP.eq_spec_var rfv (r_inter@lhs_fv) && prop_e rhs_e)||

@@ -122,6 +122,7 @@ let rec smt_of_exp a =
   | CP.CConst (c, _) -> "\"" ^ (Char.escaped c) ^ "\""
   | CP.SLen (s, _) -> "(Length " ^ (smt_of_exp s) ^ ")"
   | CP.CharAt (s, i, _) -> "(CharAt " ^ (smt_of_exp s) ^ " " ^ (smt_of_exp i) ^ ")"
+  | CP.CharUp (s,i,c,_) -> ""
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Concat (s1, s2, _) -> "(Concat " ^ (smt_of_exp s1)^ " " ^(smt_of_exp s2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"

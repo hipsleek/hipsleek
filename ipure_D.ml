@@ -163,6 +163,7 @@ and exp =
   | CConst of (char * loc)
   | SLen of (exp * loc)
   | CharAt of (exp * exp * loc)
+  | CharUp of (exp * exp * exp * loc)
 
 and template = {
   (* ax + by + cz + d *)

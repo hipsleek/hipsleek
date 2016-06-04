@@ -125,6 +125,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.CConst _
   | CP.SLen _
   | CP.CharAt _
+  | CP.CharUp _
   | CP.Concat _ -> failwith (" [isabelle.ml] String are not supported in isabelle")
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")

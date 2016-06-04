@@ -362,6 +362,18 @@ let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
       -> Pure_c (fct f1 f2)
   | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
+let apply_cexp_form3 fct form1 form2 form3 = match (form1,form2,form3) with
+  | Pure_c f1, Pure_c f2, Pure_c f3
+  | Pure_c f1, Pure_c f2, Pure_t (f3, _)
+  | Pure_c f1, Pure_t (f2, _), Pure_c f3
+  | Pure_t (f1, _), Pure_c f2, Pure_c f3
+  | Pure_c f1, Pure_t (f2, _) , Pure_t (f3, _)
+  | Pure_t (f1,_) , Pure_c f2, Pure_t (f3, _)
+  | Pure_t (f1,_) , Pure_t (f2, _), Pure_c f3
+  | Pure_t (f1,_) , Pure_t (f2, _), Pure_t (f3, _)
+      -> Pure_c (fct f1 f2 f3)
+  | _ -> report_error (get_pos 1) "with 3 expected cexp, found pure_form"
+
 let apply_cexp_form2 fct form1 form2 =
   DD.no_2 "Parser.apply_cexp_form2: " string_of_pure_double string_of_pure_double
           (fun _ -> "") (apply_cexp_form2 fct) form1 form2
@@ -2263,7 +2275,10 @@ cexp_w:
     | `HEAD; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
     | `LENGTH; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
     | `SLEN; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c ->  P.SLen (c, get_pos_camlp4 _loc 1)) c
-    | `CHARAT; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN -> apply_cexp_form2 (fun c1 c2-> P.CharAt (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
+    | `CHARAT; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
+    apply_cexp_form2 (fun c1 c2-> P.CharAt (c1, c2, get_pos_camlp4 _loc  1) ) c1 c2
+    | `CHARUP; `OPAREN; c1=SELF; `COMMA; c2=SELF; `COMMA; c3=SELF; `CPAREN -> 
+    apply_cexp_form3 (fun c1 c2 c3-> P.CharUp (c1, c2, c3, get_pos_camlp4 _loc 1) ) c1 c2 c3
     | `REVERSE; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1
     ]
   | "addit"

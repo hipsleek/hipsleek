@@ -65,7 +65,6 @@ and cvc3_of_exp a = match a with
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
   | CP.CConst (c, _) -> "\'" ^ (Char.escaped c) ^ "\'"
   | CP.Add (a1, a2, _) ->  (cvc3_of_exp a1) ^ " + " ^ (cvc3_of_exp a2)
-  | CP.Concat (s1, s2, _) -> (cvc3_of_exp s1) ^ " ^ " ^ (cvc3_of_exp s2)
   | CP.Subtract (a1, a2, _) ->  (cvc3_of_exp a1) ^ " - " ^ (cvc3_of_exp a2)
   | CP.Mult (a1, a2, _) -> (cvc3_of_exp a1) ^ " * " ^ (cvc3_of_exp a2)
   | CP.Div (a1, a2, _) -> failwith ("[cvc3.ml]: divide is not supported.")
@@ -77,8 +76,10 @@ and cvc3_of_exp a = match a with
     failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");
   | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
     failwith ("Lists are not supported in cvc3")
-  | CP.SLen (s, _) -> "slen (" ^ (cvc3_of_exp s) ^ ")"
-  | CP.CharAt (s1, s2, _) -> "charAt (" ^ (cvc3_of_exp s1) ^ ", " ^ (cvc3_of_exp s2) ^ ")"
+  | CP.SLen _
+  | CP.Concat _
+  | CP.CharAt _
+  | CP.CharUp _ -> failwith ("Functions are not supported in cvc3")
   | CP.Func _ -> failwith ("Functions are not supported in cvc3")
   | CP.ArrayAt _ -> (* An Hoa *)
     failwith ("Arrays are not supported in cvc3")

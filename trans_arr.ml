@@ -107,6 +107,8 @@ let rec is_same_exp
     is_same_exp e1 e2
   | CharAt (e11,e12,_), CharAt (e21,e22,_) ->
     (is_same_exp e11 e21) && (is_same_exp e12 e22)
+  | CharUp (e11,e12,e13, _), CharUp (e21,e22,e23, _) ->
+    (is_same_exp e11 e21) && (is_same_exp e12 e22) && (is_same_exp e13 e23)
   | Tup2 ((e11,e12),_),Tup2((e21,e22),_)
   | Add (e11,e12,_),Add (e21,e22,_)
   | Subtract (e11,e12,_), Subtract (e21,e22,_)
@@ -227,6 +229,8 @@ let rec contain_array
     | ListCons (e1,e2,loc)
     | CharAt (e1,e2,loc) ->
       ((contain_array_exp e1) or (contain_array_exp e2))
+    | CharUp (e1,e2,e3,loc) ->
+      ((contain_array_exp e1) or (contain_array_exp e2) or (contain_array_exp e3))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)
     | ListTail (e1,loc)
@@ -1890,6 +1894,8 @@ let rec drop_array_formula
     | ListCons (e1,e2,loc)
     | CharAt (e1,e2,loc)->
       ((contain_array_exp e1) or (contain_array_exp e2))
+    | CharUp (e1,e2,e3,loc) ->
+      ((contain_array_exp e1) or (contain_array_exp e2) or (contain_array_exp e3))
     | TypeCast (_,e1,loc)
     | ListHead (e1,loc)
     | ListTail (e1,loc)

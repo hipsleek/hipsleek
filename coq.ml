@@ -149,7 +149,10 @@ and coq_of_exp e0 =
   (* string *)
   | CP.SLen (a, _) -> "( slen " ^ (coq_of_exp a) ^ ")"
   | CP.Concat (s1, s2, _) -> (coq_of_exp s1) ^ " ^ " ^ (coq_of_exp s2)
-  | CP.CharAt (a1, a2, _) -> " ( CharAt " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.CharAt (a1, a2, _) -> " ( CharAt " ^ (coq_of_exp a1) ^ " " ^
+       (coq_of_exp a2) ^ ")"
+  | CP.CharUp (a1, a2, a3, _) -> " ( CharUp " ^ (coq_of_exp a1) ^ " "
+       ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a2) ^ ")"
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
