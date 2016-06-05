@@ -426,6 +426,14 @@ and fresh_string tlist =
   let (en,n_tlist) = (en, (key,en)::tlist) in
   (en.sv_info_kind,n_tlist)
 
+and fresh_char tlist =
+  let i = fresh_int() in
+  let key = "TVar__"^(string_of_int i) in
+  let t2 = Char in
+  let en={ sv_info_kind = t2; id = i} in
+  let (en,n_tlist) = (en, (key,en)::tlist) in
+  (en.sv_info_kind,n_tlist)
+
 (* should create entry in tlist *)
 and fresh_tvar_rec tlist =
   let i = fresh_int() in
@@ -792,7 +800,24 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (tmp1,tmp2)=nt in
     let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
     (n_tl,Char)
-  | IP.CharUp (a1, a2, a3, pos) -> failwith x_tbi
+  (* | IP.CharUp (a1, a2, a3, pos) -> failwith x_tbi *)
+  | IP.CharUp (a1, a2, a3, pos) ->
+    let (fv1,n_tl1) = fresh_string tlist in
+    let (fv2,n_tl2) = fresh_tvar tlist in
+    let (fv3,n_tl3) = fresh_char tlist in
+    let new_et1 = fv1 in
+    let new_et2 = fv2 in
+    let new_et3 = fv3 in
+    let (n_tl1, r1) = x_add must_unify String et n_tl1 pos in
+    let (n_tl2, r2) = x_add must_unify Int et n_tl2 pos in
+    let (n_tl3, r3) = x_add must_unify Char et n_tl3 pos in
+    let (n_tlist1,_) = gather_type_info_exp_x prog a1 n_tl1 new_et1 in
+    let (n_tlist2,_) = gather_type_info_exp_x prog a2 n_tl2 new_et2 in
+    let (n_tlist3,_) = gather_type_info_exp_x prog a3 n_tl3 new_et3 in
+    let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et1) n_tl1 in
+    let (tmp1,tmp2)=nt in
+    let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
+    (n_tl,String)
   | IP.BExpr f1 -> (x_add gather_type_info_pure prog f1 tlist, Bool)
 
 and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =
