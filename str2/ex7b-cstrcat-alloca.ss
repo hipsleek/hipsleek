@@ -34,5 +34,13 @@ char rhs_deref (str_buf s)
   return char_at(s.offset, s.s);
 }
 
+string char_up(string s, int offset, char c)
+  requires 0<=offset<=slen(s)
+  ensures res = charUp(s,offset,c) & slen(res) = slen(s);
+
 void lhs_deref (str_buf s, char c)
-  requires s::str_obj<offset,str,length
+  requires s::str_obj<offset,str,length> & 0<=offset<=slen(str)
+  ensures s::str_obj<offset,charUp(str, offset, c),length>;
+{
+  s.s = char_up(s.s, s.offset, c);
+}

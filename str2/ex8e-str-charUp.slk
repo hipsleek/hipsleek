@@ -18,3 +18,6 @@ checkentail s = charUp(s, (slen(s)-1), '\x00') |- !(nonzero(s)).
 
 //7
 checkentail s = charUp(s, (slen(s)-1), '\x00') |- endzero(s).
+
+//8
+checkentail endzero(s) & s = charUp(s,offset,c) & offset <= slen(s) |- endzero(s).
