@@ -9,16 +9,16 @@ pred str_obj<offset,s,length> ==
            & 0<=offset<=length
   inv endzero(s) & slen(s)<=length & 0<=offset<=length.
 
-void plus_plus(str_buf s)
+void plus_plus(ref str_buf s)
   requires s::str_obj<offset,str,length> & offset<length
-  ensures s::str_obj<offset+1,str,length>;
+  ensures s'::str_obj<offset+1,str,length>;
 {
   s.offset = s.offset+1;
 }
 
-void minus_minus(str_buf s)
+void minus_minus(ref str_buf s)
   requires s::str_obj<offset,str,length> & offset>0
-  ensures s::str_obj<offset-1,str,length>;
+  ensures s'::str_obj<offset-1,str,length>;
 {
   s.offset = s.offset-1;
 }
@@ -44,7 +44,3 @@ void lhs_deref (str_buf s, char c)
 {
   s.s = char_up(s.s, s.offset, c);
 }
-
-int char_code(char c)
-  requires true
-  ensures res = c - '//0';
