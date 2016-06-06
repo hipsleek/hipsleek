@@ -9,10 +9,10 @@ extern int __VERIFIER_nondet_int(void);
      while (*s != '\0')
          s++;
      /* Do the copying in a loop.  */
-     while ((*s++ = *s2++) != '\0')
-         ;               /* The body of this loop is left empty. */
-     /* Return the destination string.  */
-     return s1;
+     /* while ((*s++ = *s2++) != '\0') */
+     /*     ;               /\* The body of this loop is left empty. *\/ */
+     /* /\* Return the destination string.  *\/ */
+     /* return s1; */
  }
 
 /* int main() { */

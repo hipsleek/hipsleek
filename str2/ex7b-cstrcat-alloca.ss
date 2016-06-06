@@ -44,3 +44,7 @@ void lhs_deref (str_buf s, char c)
 {
   s.s = char_up(s.s, s.offset, c);
 }
+
+int char_code(char c)
+  requires true
+  ensures res = c - '//0';
