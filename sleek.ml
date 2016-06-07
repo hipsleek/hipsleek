@@ -252,9 +252,13 @@ let rec parse_file (parse) (source_file : string) =
     Debug.no_1 "parse_first" pr pr parse_first cmds in
 
   let process_include inc source_file =
-    let (curdir,_) = BatString.rsplit source_file "/" in
-    let header_path = curdir^"/"^inc in
-    if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path in
+    try
+        let (curdir,_) = BatString.rsplit source_file "/" in
+        let header_path = curdir^"/"^inc in
+        if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path
+    with Not_found ->
+        let header_path = inc in
+        if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path in
 
   let proc_one_def c = 
     match c with
