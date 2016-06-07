@@ -605,11 +605,15 @@ let peek_try =
           | [CONST,_;_] -> ()
           | [INT,_;IDENTIFIER n,_] -> ()
           | [FLOAT,_;IDENTIFIER n,_] -> ()
+          | [CHAR_TYPE,_;IDENTIFIER n,_] -> ()
+          | [STRING_TYPE,_;IDENTIFIER n,_] -> ()
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> ()
           | [INT,_;OSQUARE,_] -> ()
           (* | [INFINT_TYPE,_;OSQUARE,_] -> () *)
           | [FLOAT,_;OSQUARE,_] -> ()
+          | [CHAR_TYPE,_;OSQUARE,_] -> ()
+          | [STRING_TYPE,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
           (* For pointer*)
           | [INT,_;STAR,_] -> ()
@@ -672,6 +676,8 @@ SHGram.Entry.of_parser "peek_print"
              | [OPAREN,_;VOID,_;CPAREN, _] -> ()
              | [OPAREN,_;INT,_;CPAREN, _] -> ()
              | [OPAREN,_;FLOAT,_;CPAREN, _] -> ()
+             (* | [OPAREN,_;CHAR_TYPE,_;CPAREN, _] -> () *)
+             (* | [OPAREN,_;STRING_TYPE,_;CPAREN, _] -> () *)
              | [OPAREN,_;INFINT_TYPE,_;CPAREN, _] -> ()
              | [OPAREN,_;BOOL,_;CPAREN, _] -> ()
              | [OPAREN,_;BAG,_;CPAREN, _] -> ()
@@ -2430,6 +2436,7 @@ opt_comma_list:[[t = LIST0 opt_comma SEP `COMMA -> t
 opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
   | `INT_LITER (i,_) ->  P.IConst (i, get_pos_camlp4 _loc 1)
   | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos_camlp4 _loc 1)
+  | `CHAR_LIT (f,_)  -> P.CConst (f, get_pos_camlp4 _loc 1)
    ]];
 
 opt_measures_seq: [[ il = OPT measures_seq -> un_option il [] ]];
@@ -4254,6 +4261,10 @@ cast_expression:
       Cast { exp_cast_target_type = Int;
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }
+  | `OPAREN; `CHAR_TYPE; `CPAREN; t=unary_expression ->
+      Cast { exp_cast_target_type = Char;
+             exp_cast_body = t;
+             exp_cast_pos = get_pos_camlp4 _loc 1 }
   | `OPAREN; `BOOL; `CPAREN; t=unary_expression ->
       Cast { exp_cast_target_type = Bool;
              exp_cast_body = t;
@@ -4309,6 +4320,7 @@ literal:
  [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos_camlp4 _loc 1 }
   | t=integer_literal -> IntLit { exp_int_lit_val = t;exp_int_lit_pos = get_pos_camlp4 _loc 1 }
   | t=string_literal -> StringLit { exp_string_lit_val = t;exp_string_lit_pos = get_pos_camlp4 _loc 1 }
+  | t=char_literal -> CharLit { exp_char_lit_val = t;exp_char_lit_pos = get_pos_camlp4 _loc 1 }
   | t=real_literal -> FloatLit { exp_float_lit_val = t; exp_float_lit_pos = get_pos_camlp4 _loc 1 }
   | `NULL -> Null (get_pos_camlp4 _loc 1)
   (* | `IMM -> P.AConst (Imm, (get_pos_camlp4 _loc 1))  *)
@@ -4321,6 +4333,8 @@ real_literal:[[ `FLOAT_LIT (t,_) -> t]];
 integer_literal: [[`INT_LITER (t,_) -> t]];
 
 string_literal: [[`STRING (t,_) -> t]];
+
+char_literal: [[`CHAR_LIT(t,_) -> t]];
 
 boolean_literal :
   [[ `TRUE -> true

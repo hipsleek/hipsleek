@@ -203,6 +203,11 @@ bool eq___(char a, char b)
   case {
     a = b -> ensures res;
     a != b -> ensures !res;}
+
+bool eq___(string a, string b)
+  case {
+    a = b -> ensures res;
+    a != b -> ensures !res;}
 /*
 bool eq___(float a, float b)
   case {
@@ -215,6 +220,11 @@ bool neq___(int a, int b)
     a != b -> ensures res;}
 
 bool neq___(char a, char b)
+  case {
+    a = b -> ensures !res;
+    a != b -> ensures res;}
+
+bool neq___(string a, string b)
   case {
     a = b -> ensures !res;
     a != b -> ensures res;}
@@ -626,50 +636,50 @@ ensures res or !res;
 /*   ensures s::WSSN<q, n+1>; */
 
 
-data str_buf{
-   int offset;
-   string s;
-   int size;
-}
+/* data str_buf{ */
+/*    int offset; */
+/*    string s; */
+/*    int size; */
+/* } */
 
-pred str_obj<offset,s,length> ==
-  self::str_buf<offset,s,length> & endzero(s) & slen(s)<=length
-           & 0<=offset<=length
-  inv endzero(s) & slen(s)<=length & 0<=offset<=length.
+/* pred str_obj<offset,s,length> == */
+/*   self::str_buf<offset,s,length> & endzero(s) & slen(s)<=length */
+/*            & 0<=offset<=length */
+/*   inv endzero(s) & slen(s)<=length & 0<=offset<=length. */
 
-str_buf plus_plus(ref str_buf s)
-  requires s::str_obj<offset,str,length> & offset<length
-  ensures s'::str_obj<offset+1,str,length> & res = s';
-{
-  s.offset = s.offset+1;
-  return s;
-}
+/* str_buf plus_plus(ref str_buf s) */
+/*   requires s::str_obj<offset,str,length> & offset<length */
+/*   ensures s'::str_obj<offset+1,str,length> & res = s'; */
+/* { */
+/*   s.offset = s.offset+1; */
+/*   return s; */
+/* } */
 
-void minus_minus(ref str_buf s)
-  requires s::str_obj<offset,str,length> & offset>0
-  ensures s'::str_obj<offset-1,str,length>;
-{
-  s.offset = s.offset-1;
-}
+/* void minus_minus(ref str_buf s) */
+/*   requires s::str_obj<offset,str,length> & offset>0 */
+/*   ensures s'::str_obj<offset-1,str,length>; */
+/* { */
+/*   s.offset = s.offset-1; */
+/* } */
 
-char chrAt(int offset, string s)
-  requires 0<=offset<=slen(s)
-  ensures res = charAt(s, offset);
+/* char chrAt(int offset, string s) */
+/*   requires 0<=offset<=slen(s) */
+/*   ensures res = charAt(s, offset); */
 
-char char_at (str_buf s)
-  requires s::str_obj<offset,str,length> & 0<=offset<=slen(str)
-  ensures s::str_obj<offset,str, length> & res = charAt(str, offset);
-{
-  return chrAt(s.offset,s.s);
-}
+/* char char_at (str_buf s) */
+/*   requires s::str_obj<offset,str,length> & 0<=offset<=slen(str) */
+/*   ensures s::str_obj<offset,str, length> & res = charAt(str, offset); */
+/* { */
+/*   return chrAt(s.offset,s.s); */
+/* } */
 
-string chrUp(string s, int offset, char c)
-  requires 0<=offset<=slen(s)
-  ensures res = charUp(s,offset,c) & slen(res) = slen(s);
+/* string chrUp(string s, int offset, char c) */
+/*   requires 0<=offset<=slen(s) */
+/*   ensures res = charUp(s,offset,c) & slen(res) = slen(s); */
 
-void char_up (str_buf s, char c)
-  requires s::str_obj<offset,str,length> & 0<=offset<=slen(str)
-  ensures s::str_obj<offset,charUp(str, offset, c),length>;
-{
-  s.s = chrUp(s.s, s.offset, c);
-}
+/* void char_up (str_buf s, char c) */
+/*   requires s::str_obj<offset,str,length> & 0<=offset<=slen(str) */
+/*   ensures s::str_obj<offset,charUp(str, offset, c),length>; */
+/* { */
+/*   s.s = chrUp(s.s, s.offset, c); */
+/* } */
