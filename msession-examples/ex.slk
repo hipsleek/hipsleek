@@ -1,23 +1,27 @@
 sleek_include 'node.slk'.
 
-pred_sess ll2<n> == A -> B : self = null & n = 0. 
+//pred_sess ll2<n> == A -> B : self = null & n = 0. 
+//
+//pred_sess ll3<n> == A -> B : self = null & n = 0 ;; A -> B : self = null & n = 0. 
+//
+//pred_sess ll4<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; E -> F : self = null. 
+//
+//pred_sess ll5<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; (A -> B : self = null). 
+//
+//pred_sess ll6<n> == (A -> B : self = null & n = 0) or (C -> D : self = null) ;; (A -> B : self = null). 
+//
+//pred_sess ll7<n> == (A -> B : self = null & n = 0) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
+//pred_sess ll8<n> == (A -> B : self::node<_,_> * x::node<_,_>) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
+//pred_sess ll9<n> == A -> B : self::node<_,_> * x::node<_,_> or (C -> D : self = null * self = null) ;; (E -> F : self = null). 
+//
+//pred_sess ll10<n> == d!self = null.
+//
+//pred_sess ll11<n> == d?self = null.
+//
+//pred_sess ll12<n> == (c!self = null & n = 0) or (d?self = null).
+//
+//pred_sess ll13<n> == A?self::node<_,_> * x::node<_,_> or (C!self = null & self = null) * (E?self = null). 
 
-pred_sess ll3<n> == A -> B : self = null & n = 0 ;; A -> B : self = null & n = 0. 
-
-pred_sess ll4<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; E -> F : self = null. 
-
-pred_sess ll5<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; (A -> B : self = null). 
-
-pred_sess ll6<n> == (A -> B : self = null & n = 0) or (C -> D : self = null) ;; (A -> B : self = null). 
-
-pred_sess ll7<n> == (A -> B : self = null & n = 0) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
-pred_sess ll8<n> == (A -> B : self::node<_,_> * x::node<_,_>) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
-pred_sess ll9<n> == A -> B : self::node<_,_> * x::node<_,_> or (C -> D : self = null * self = null) ;; (E -> F : self = null). 
-
-pred_sess ll10<n> == d!self = null.
-
-pred_sess ll11<n> == d?self = null.
-
-pred_sess ll12<n> == (c!self = null & n = 0) or (d?self = null).
+pred_sess ll14<n> == A?1.
 
 checkentail x=null |- x::ll<0>.

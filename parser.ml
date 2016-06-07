@@ -716,6 +716,18 @@ let peek_dc =
              | [IDENTIFIER first,_; QUERY,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_short_form = 
+   SHGram.Entry.of_parser "peek_short_form"
+       (fun strm -> 
+           match Stream.npeek 1 strm with
+             | [INT_LITER (msg,_),_] -> ()
+             | _ -> raise Stream.Failure)
+
+let cast_that_crap t = 
+        match t with
+         | Pure_f f -> f
+         | _ -> failwith "MATA"
+
  let peek_heap_args = 
    SHGram.Entry.of_parser "peek_heap_args"
        (fun strm -> 
@@ -1293,8 +1305,9 @@ prim_view_decl:
 sess_view_decl:
   [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
           -> vh
-   | vh = view_header; `EQEQ; projection_formula
-          -> vh
+   | vh = view_header; `EQEQ; projection_formula ->
+             let () = print_endline "projection_formula" in
+             vh
   ]];
 
 session_formula: [
@@ -1332,12 +1345,22 @@ projection_formula: [
       [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
                ()
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
+                let () = print_endline "receive" in
                ()
     ]
 ];
 
 session_message: [[
-      cc = core_constr -> cc
+       peek_short_form; `INT_LITER (i, _) ->
+         let pos = (get_pos_camlp4 _loc 1) in
+         let const_form = Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) in
+         let var = ("msg", Unprimed) in
+         let var_form = Pure_c (P.Var (var, get_pos_camlp4 _loc 1)) in
+         let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) var_form const_form in
+         let pure_formula = set_slicing_utils_pure_double f false in 
+         let pure_good_formula = cast_that_crap pure_formula in
+         F.formula_of_pure_with_flow_htrue (P.mkAnd pure_good_formula (P.mkTrue no_pos) pos) stub_flow [] pos
+    |  cc = core_constr -> cc
     | `EXISTS; ocl = cid_list; `COLON; cc = core_constr -> 
 	  (match cc with
       | F.Base ({
@@ -1848,13 +1871,16 @@ core_constr:
   [
     [ pc= pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in
+      let () = print_endline "pure_constr" in
       F.formula_of_pure_with_flow_htrue (P.mkAnd pc fb pos) fc [] pos
     | vp= vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in
+      let () = print_endline "vperm_constr" in
       F.formula_of_vperm_pure_with_flow_emp (*
 emp|htrue?*) (P.mkAnd pc fb pos) vp fc [] pos
     | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in 
+      let () = print_endline "opt_heap_constr" in
       F.mkBase hc (P.mkAnd pc fb pos) vp fc [] pos
     ]
   ];
@@ -2173,7 +2199,7 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 pure_constr: 
   [[ peek_pure_out; t= cexp_w ->
        match t with
-       | Pure_f f -> f
+       | Pure_f f -> let () = print_endline "just pure" in f
        | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | Pure_c (P.Ann_Exp (P.Var (v,_), Bool, _)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
@@ -2254,6 +2280,7 @@ cexp_w:
           (* let () = print_endline "xxxx" in *)
           (* let () = DD.info_hprint (add_str "lc" string_of_pure_double) lc no_pos in *)
           (* let () = DD.info_hprint (add_str "cl" string_of_pure_double) cl no_pos in *)
+          let () = print_endline "equal" in
           let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
           set_slicing_utils_pure_double f false
     end
@@ -2411,6 +2438,7 @@ cexp_w:
         Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
     | t = cid ->
         let id,p = t in
+        let () = Printf.printf "ident: %s\n" (fst t) in
         if String.contains id '.' then
           let strs = Gen.split_by "." id in
           let lock = List.hd strs in
@@ -2438,7 +2466,7 @@ cexp_w:
         Pure_c (P.NegInfConst(constinfinity,get_pos_camlp4 _loc 1))
     | `FLOAT_LIT (f,_) ; ann0 = LIST1 ann_heap ->
         Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
-    | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
+    | `INT_LITER (i,_) -> let () = Printf.printf "ident: %d\n" i in Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
     | `FLOAT_LIT (f,_) -> Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
     | `TUP2; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
           apply_cexp_form2 (fun c1 c2-> (P.Tup2 ((c1,c2), get_pos_camlp4 _loc 1))) c1 c2
