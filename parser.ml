@@ -723,11 +723,6 @@ let peek_dc =
              | [INT_LITER (msg,_),_] -> ()
              | _ -> raise Stream.Failure)
 
-let cast_that_crap t = 
-        match t with
-         | Pure_f f -> f
-         | _ -> failwith "MATA"
-
  let peek_heap_args = 
    SHGram.Entry.of_parser "peek_heap_args"
        (fun strm -> 
@@ -1351,15 +1346,12 @@ projection_formula: [
 ];
 
 session_message: [[
-       peek_short_form; `INT_LITER (i, _) ->
-         let pos = (get_pos_camlp4 _loc 1) in
-         let const_form = Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) in
-         let var = ("msg", Unprimed) in
-         let var_form = Pure_c (P.Var (var, get_pos_camlp4 _loc 1)) in
-         let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) var_form const_form in
-         let pure_formula = set_slicing_utils_pure_double f false in 
-         let pure_good_formula = cast_that_crap pure_formula in
-         F.formula_of_pure_with_flow_htrue (P.mkAnd pure_good_formula (P.mkTrue no_pos) pos) stub_flow [] pos
+    peek_short_form; `INT_LITER (i, _) ->
+      let pos = (get_pos_camlp4 _loc 1) in
+      let const_form = P.IConst (i, get_pos_camlp4 _loc 1) in
+      let var_form = P.Var (session_msg, get_pos_camlp4 _loc 1) in
+      let pure_good_formula = P.BForm ((P.mkEq var_form const_form (get_pos_camlp4 _loc 2), None), None) in
+      F.formula_of_pure_with_flow_emp pure_good_formula stub_flow [] pos
     |  cc = core_constr -> cc
     | `EXISTS; ocl = cid_list; `COLON; cc = core_constr -> 
 	  (match cc with

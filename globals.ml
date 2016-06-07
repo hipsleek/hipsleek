@@ -864,6 +864,9 @@ let lsmu_typ = BagT (Int)
 let thrd_name = "thrd"
 let thrd_typ = Named "thrd"
 
+(* ============== session ============= *)
+let session_msg_id = "msg"
+let session_msg = (session_msg_id, Unprimed)
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
