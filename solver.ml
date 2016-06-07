@@ -11116,7 +11116,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   let new_es = { new_es with 
                                  es_evars = evars;
                                  es_gen_impl_vars = new_impl_vars @ hvars;
-                                 es_unsat_flag = false; } 
+                                 es_unsat_flag = false;
+                                 es_rhs_eqset = estate.es_rhs_eqset;
+                               }
                   in
                   (* let lhs_lhs = { new_es with es_formula = ho_lhs; } in *)
                   (* let pr = Cprinter.string_of_formula in *)
