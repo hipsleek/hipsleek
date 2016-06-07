@@ -199,6 +199,10 @@ bool eq___(int a, int b)
     a = b -> ensures res;
     a != b -> ensures !res;}
 
+bool eq___(char a, char b)
+  case {
+    a = b -> ensures res;
+    a != b -> ensures !res;}
 /*
 bool eq___(float a, float b)
   case {
@@ -206,6 +210,11 @@ bool eq___(float a, float b)
     a != b -> ensures !res;}
 */
 bool neq___(int a, int b)
+  case {
+    a = b -> ensures !res;
+    a != b -> ensures res;}
+
+bool neq___(char a, int b)
   case {
     a = b -> ensures !res;
     a != b -> ensures res;}
@@ -549,69 +558,118 @@ ensures res or !res;
 /* ********>>>*************/
 /* String translation  */
 /* ************************/
-data char_star {
-  int val;
-  char_star next;
+/* data char_star { */
+/*   int val; */
+/*   char_star next; */
+/* } */
+
+/* WSS<p> == */
+/*   self::WFSeg<q> * q::char_star<0, p> // * p::MEM<> */
+/*   inv true; */
+
+/* WFSeg<p> == */
+/*   self = p */
+/*   or self::char_star<v, q> * q::WFSeg<p> & v!=0 */
+/*   inv true; */
+
+/* WSSN<p, n> == */
+/*   self::WFSegN<q, n-1> * q::char_star<0, p> // * p::MEM<> */
+/*   inv self!=null & n>=0; */
+
+/* WFSegN<p, n> == */
+/*   self = p & n = 0 */
+/*   or self::char_star<v, q> * q::WFSegN<p, n-1> & v!=0 */
+/*   inv n>=0; */
+
+/* MEM<> == */
+/*   self = null or */
+/*   self::char_star<_, p> * p::MEM<>; */
+
+/* pred_extn size[R]<k> == */
+/*    k=0 // base case */
+/*    or R::size<i> & k=1+i // recursive case */
+/*    inv k>=0; */
+
+/* char_star __plus_plus_char(char_star x) */
+/*   requires x::char_star<_,q>@L & Term[] */
+/*   ensures  res=q ; */
+
+/* int __get_char(char_star x) */
+/*   requires x::char_star<v,_>@L & Term[] */
+/*   ensures res=v; */
+
+/* void __write_char(char_star x, int v) */
+/*   requires x::char_star<_,q> & Term[] */
+/*   ensures x::char_star<v,q>; */
+
+/* char_star plus_plus_char(char_star x) */
+/* requires x::char_star<_,q>@L & Term[] */
+/* ensures  res=q ; */
+
+/* int get_char(char_star x) */
+/*   requires x::char_star<v,_>@L & Term[] */
+/*   ensures res=v; */
+
+/* void write_char(char_star x, int v) */
+/*   requires x::char_star<_,q> & Term[] */
+/*   ensures x::char_star<v,q>; */
+
+/* char_star alloc_str (int n) */
+/*   requires Term */
+/*   case { */
+/*     n < 0 -> ensures res = null; */
+/*     n >= 0 -> ensures res::WFSegN<p, n>; // * p::MEM<>; */
+/*   } */
+
+/* void finalize_str (char_star s, int n) */
+/*   requires s::WFSegN<p, m> & 0 <= n & n < m & Term */
+/*   ensures s::WSSN<q, n+1>; */
+
+
+data str_buf{
+   int offset;
+   string s;
+   int size;
 }
 
-WSS<p> ==
-  self::WFSeg<q> * q::char_star<0, p> // * p::MEM<>
-  inv true;
+pred str_obj<offset,s,length> ==
+  self::str_buf<offset,s,length> & endzero(s) & slen(s)<=length
+           & 0<=offset<=length
+  inv endzero(s) & slen(s)<=length & 0<=offset<=length.
 
-WFSeg<p> ==
-  self = p
-  or self::char_star<v, q> * q::WFSeg<p> & v!=0
-  inv true;
+str_buf plus_plus(ref str_buf s)
+  requires s::str_obj<offset,str,length> & offset<length
+  ensures s'::str_obj<offset+1,str,length> & res = s';
+{
+  s.offset = s.offset+1;
+  return s;
+}
 
-WSSN<p, n> ==
-  self::WFSegN<q, n-1> * q::char_star<0, p> // * p::MEM<>
-  inv self!=null & n>=0;
+void minus_minus(ref str_buf s)
+  requires s::str_obj<offset,str,length> & offset>0
+  ensures s'::str_obj<offset-1,str,length>;
+{
+  s.offset = s.offset-1;
+}
 
-WFSegN<p, n> ==
-  self = p & n = 0
-  or self::char_star<v, q> * q::WFSegN<p, n-1> & v!=0
-  inv n>=0;
+char chrAt(int offset, string s)
+  requires 0<=offset<=slen(s)
+  ensures res = charAt(s, offset);
 
-MEM<> ==
-  self = null or
-  self::char_star<_, p> * p::MEM<>;
+char char_at (str_buf s)
+  requires s::str_obj<offset,str,length> & 0<=offset<=slen(str)
+  ensures s::str_obj<offset,str, length> & res = charAt(str, offset);
+{
+  return chrAt(s.offset,s.s);
+}
 
-pred_extn size[R]<k> ==
-   k=0 // base case
-   or R::size<i> & k=1+i // recursive case
-   inv k>=0;
+string chrUp(string s, int offset, char c)
+  requires 0<=offset<=slen(s)
+  ensures res = charUp(s,offset,c) & slen(res) = slen(s);
 
-char_star __plus_plus_char(char_star x)
-  requires x::char_star<_,q>@L & Term[]
-  ensures  res=q ;
-
-int __get_char(char_star x)
-  requires x::char_star<v,_>@L & Term[]
-  ensures res=v;
-
-void __write_char(char_star x, int v)
-  requires x::char_star<_,q> & Term[]
-  ensures x::char_star<v,q>;
-
-char_star plus_plus_char(char_star x)
-requires x::char_star<_,q>@L & Term[]
-ensures  res=q ;
-
-int get_char(char_star x)
-  requires x::char_star<v,_>@L & Term[]
-  ensures res=v;
-
-void write_char(char_star x, int v)
-  requires x::char_star<_,q> & Term[]
-  ensures x::char_star<v,q>;
-
-char_star alloc_str (int n)
-  requires Term
-  case {
-    n < 0 -> ensures res = null;
-    n >= 0 -> ensures res::WFSegN<p, n>; // * p::MEM<>;
-  }
-
-void finalize_str (char_star s, int n)
-  requires s::WFSegN<p, m> & 0 <= n & n < m & Term
-  ensures s::WSSN<q, n+1>;
+void char_up (str_buf s, char c)
+  requires s::str_obj<offset,str,length> & 0<=offset<=slen(str)
+  ensures s::str_obj<offset,charUp(str, offset, c),length>;
+{
+  s.s = chrUp(s.s, s.offset, c);
+}

@@ -222,6 +222,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | NUM, AnnT -> (tl,Some AnnT)
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | String, String -> (tl, Some String)
+    (* | Char, Int -> (tl, Some Char) *)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
     | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
