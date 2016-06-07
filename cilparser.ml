@@ -1665,6 +1665,18 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
           (*   when (t1 = t2) && ((op = Cil.Eq) || (op = Cil.Ne)) ->                   *)
           | Cil.BinOp (op, exp1, exp2, ty, l)
             when (is_arith_comparison_op op) ->
+               let exp2 =
+                 match exp1, exp2 with
+                   | Cil.CastE(ty, e, l1), Cil.Const(Cil.CInt64(i,_,_), l2) ->(
+                        let inp_typ = translate_typ (typ_of_cil_exp e) no_pos in
+                        let out_typ = translate_typ ty no_pos in
+                        if (inp_typ == Globals.Char && out_typ == Globals.Int) then
+                          let ch = Char.chr (Int64.to_int i) in
+                          Cil.Const(Cil.CChr ch, l2)
+                        else
+                          exp2)
+                   | _, _ -> exp2
+               in
             let e1 = translate_exp exp1 in
             let e2 = translate_exp exp2 in
             let o = translate_binary_operator op pos in

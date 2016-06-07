@@ -214,7 +214,7 @@ bool neq___(int a, int b)
     a = b -> ensures !res;
     a != b -> ensures res;}
 
-bool neq___(char a, int b)
+bool neq___(char a, char b)
   case {
     a = b -> ensures !res;
     a != b -> ensures res;}
