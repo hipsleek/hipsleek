@@ -1306,19 +1306,22 @@ sess_view_decl:
 
 session_formula: [
     [
-        session_formula; `SEMICOLONSEMICOLON; session_formula ->
-               ()
+        s1 = session_formula; `SEMICOLONSEMICOLON; s2 = session_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.Protocol.mk_session_seq_formula s1 s2 loc
     ]
-    | [ session_formula; `STAR; session_formula ->
-               ()
-      | session_formula; `ORWORD; session_formula ->
-               ()
+    | [ s1 = session_formula; `STAR; s2 = session_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.Protocol.mk_session_star_formula s1 s2 loc
+      | s1 = session_formula; `ORWORD; s2 = session_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.Protocol.mk_session_or_formula s1 s2 loc
     ]
-    | [ `OPAREN; session_formula; `CPAREN ->
-               ()
+    | [ `OPAREN; s = session_formula; `CPAREN ->
+            s
     ]
     | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
-               ()
+            Session.Protocol.mk_base first second c
     ]
 ];
 

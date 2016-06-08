@@ -114,7 +114,7 @@ and view_decl =
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
-    view_session_formula : Session.Protocol.session option;
+    view_session_formula : Session.session_type option;
     view_inv_lock : F.formula option;
     mutable view_pt_by_self : ident list; (* list of views pointed by self *)
     (* view_targets : ident list;  *)(* list of views pointed within declaration *)

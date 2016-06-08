@@ -182,6 +182,7 @@ type view_kind =
   | View_EXTN
   | View_DERV
   | View_SPEC
+  | View_SESS
 
 
 (* TODO : move typ here in future *)
@@ -250,6 +251,7 @@ let string_of_view_kind k = match k with
   | View_EXTN -> "View_EXTN"
   | View_DERV -> "View_DERV"
   | View_SPEC -> "View_SPEC"
+  | View_SESS -> "View_SESS"
 
 let is_undef_typ t =
   match t with

@@ -14,7 +14,12 @@ type transmission = Send | Receive
 (* ============================================ *)
 module type Session_base = sig
   type t
+  type a
+  type b
+  type c
+
   val print_session_base : t -> string
+  val mk_base : a -> b -> c -> t
 end;;
 
 type protocol_base_formula = {
@@ -31,12 +36,34 @@ type projection_base_formula = {
 
 module Protocol_base : Session_base = struct
   type t = protocol_base_formula
+  type a = string
+  type b = ident
+  type c = F.formula
+
   let print_session_base f = "Protocol_base: to be implemented"
+
+  let mk_base sender receiver formula = { 
+    protocol_base_formula_sender    = sender;
+    protocol_base_formula_receiver  = receiver;
+    protocol_base_formula_message   = formula;
+  }
+
 end;;
 
 module Projection_base : Session_base = struct
   type t = projection_base_formula
+  type a = transmission
+  type b = ident
+  type c = F.formula
+
   let print_session_base f = "Projection_base: to be implemented"
+
+  let mk_base transmission channel formula = { 
+    projection_base_formula_op      = transmission;
+    projection_base_formula_channel = channel;
+    projection_base_formula_message = formula;
+  }
+
 end;;
 
 (* ============== session type ================ *)
@@ -94,6 +121,23 @@ module Make_Session (Base: Session_base) = struct
           print_session s.session_seq_formula_star2;
   end
 
+  let mk_base f d e = SBase (Base.mk_base f d e)
+
+  and mk_session_seq_formula session1 session2 loc = SSeq {
+    session_seq_formula_head = session1;
+    session_seq_formula_tail = session2;
+    session_seq_formula_pos  = loc;
+  }
+  and mk_session_or_formula session1 session2 loc = SOr {
+    session_seq_formula_or1 = session1;
+    session_seq_formula_or2 = session2;
+    session_seq_formula_pos = loc;
+  }
+  and mk_session_star_formula session1 session2 loc = SStar {
+    session_seq_formula_star1 = session1;
+    session_seq_formula_star2 = session2;
+    session_seq_formula_pos   = loc;
+  }
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -102,6 +146,11 @@ module Protocol = Make_Session(Protocol_base);;
 module Projection = Make_Session(Projection_base);;
 
 type session_type = ProtocolSession of Protocol.session | ProjectionSession of Projection.session
+
+(* =========== Make Methods ========== *)
+(* ============================================ *)
+
+
 
 let foo =
   let () = print_endline "!!!!! SESSION!!!!!!!" in
