@@ -6,7 +6,7 @@ open Gen.Basic
 open Printf
 open Gen.BList
 
-module F =Iformula
+module F = Iformula
 
 type transmission = Send | Receive
 
@@ -34,9 +34,9 @@ type projection_base_formula = {
   projection_base_formula_message : F.formula;
 } ;;
 
-module Protocol_base : Session_base = struct
+module Protocol_base (* : Session_base *) = struct
   type t = protocol_base_formula
-  type a = string
+  type a = ident
   type b = ident
   type c = F.formula
 
@@ -44,13 +44,13 @@ module Protocol_base : Session_base = struct
 
   let mk_base sender receiver formula = { 
     protocol_base_formula_sender    = sender;
-    protocol_base_formula_receiver  = receiver;
+    protocol_base_formula_receiver  = receiver; 
     protocol_base_formula_message   = formula;
   }
 
 end;;
 
-module Projection_base : Session_base = struct
+module Projection_base (* : Session_base *) = struct
   type t = projection_base_formula
   type a = transmission
   type b = ident
@@ -58,7 +58,7 @@ module Projection_base : Session_base = struct
 
   let print_session_base f = "Projection_base: to be implemented"
 
-  let mk_base transmission channel formula = { 
+  let mk_base transmission channel formula = {
     projection_base_formula_op      = transmission;
     projection_base_formula_channel = channel;
     projection_base_formula_message = formula;
@@ -70,7 +70,7 @@ end;;
 (* ============================================ *)
 module Make_Session (Base: Session_base) = struct
   type t = Base.t
-
+  
   type session =
     | SSeq  of session_seq_formula
     | SOr   of session_or_formula
@@ -121,23 +121,26 @@ module Make_Session (Base: Session_base) = struct
           print_session s.session_seq_formula_star2;
   end
 
-  let mk_base f d e = SBase (Base.mk_base f d e)
+  let mk_base a b c = SBase (Base.mk_base a b c)
 
   and mk_session_seq_formula session1 session2 loc = SSeq {
-    session_seq_formula_head = session1;
-    session_seq_formula_tail = session2;
-    session_seq_formula_pos  = loc;
-  }
+      session_seq_formula_head = session1;
+      session_seq_formula_tail = session2;
+      session_seq_formula_pos  = loc;
+    }
+
   and mk_session_or_formula session1 session2 loc = SOr {
     session_seq_formula_or1 = session1;
     session_seq_formula_or2 = session2;
     session_seq_formula_pos = loc;
-  }
+    }
+
   and mk_session_star_formula session1 session2 loc = SStar {
     session_seq_formula_star1 = session1;
     session_seq_formula_star2 = session2;
     session_seq_formula_pos   = loc;
-  }
+    }
+      
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -150,6 +153,11 @@ type session_type = ProtocolSession of Protocol.session | ProjectionSession of P
 (* =========== Make Methods ========== *)
 (* ============================================ *)
 
+
+let boo () =
+  let prot = Protocol.mk_base "" "" (F.mkTrue_nf no_pos) in
+  Protocol.print_session prot
+  ;;
 
 
 let foo =

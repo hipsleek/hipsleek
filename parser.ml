@@ -1321,7 +1321,9 @@ session_formula: [
             s
     ]
     | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
-            Session.Protocol.mk_base first second c
+       Session.Protocol.mk_base first second c
+       (* Session.boo (); *)
+       (* failwith "tbi" *)
     ]
 ];
 

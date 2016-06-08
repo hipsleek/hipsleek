@@ -40,104 +40,54 @@ pred buy1<a,b> == a::S{- emp}<> * a::R{+ emp}<> * b::S{- emp}<>.
 pred buy2or<a> == self::Seq{a::S{- (exists r: r=1)}<>, self::Seq{ a::S{- emp}<>,  a::R{+ emp}<>}<>}<>
                   or a::S{- (exists r: r=0)}<>.
 */
-/*
+
 pred buy2or<a> == self::Seq{a::S{- (exists r: r=1)}<>, self::Seq{ a::S{- emp}<>,  a::R{+ emp}<>}<>}<>
                   or self::Seq{a::S{- (exists r: r=0)}<>, emp}<>.
 
 pred buy2<a,b> == self::Seq{a::R{+ emp}<> * b::R{+ emp}<> , emp}<>. //self::buy2or<b>}<>.
 pred buy2p<a,b> == self::Seq{a::R{+ emp}<> * b::R{+ emp}<> , emp}<>. //self::buy2or<b>}<>.
 
+data node {node next; int val;}.
+data node2 {node2 next;}.
 
 checkentail a::Chan<x> * b::Chan<x> * x::buy2<a,b> |- x::buy2<a,b>.
 expect Valid.
 
 
 checkentail a::Chan<x> * b::Chan<x> * x::buy2<a,b> |- x::buy2p<a,b>.
+print residue.
 expect Valid.
 
-*/
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ emp}<>, b::R{+ emp}<>}<> |- x::Seq{a::R{+ emp}<>, b::R{+ emp}<>}<> .
+print residue.
+expect Valid.
+
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ emp}<>}<> |- x::Seq{a::R{+ emp}<>, b::R{+ emp}<>}<> .
+print residue.
+expect Fail.
+
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ emp}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ emp}<>}<> .
+print residue.
+expect Valid.
+
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> .
+print residue.
+expect Valid.
+
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, y::Seq{b::R{+ msg::node2<_>}, emp}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> .
+print residue.
+expect Fail.
+
+
+/*
 data node {node next; int val;}.
 
 pred_prim Boo{%P}<>.
 pred p1<a> == self::Boo{a::node<null,1>}<>.
 pred p2<b> == self::Boo{b::node<null,1>}<>.
-pred p3<>  == self::node<null,1>.
-pred p4<>  == self::node<null,1>.
  
 checkentail x::p1<c> |- x::p2<c>.
 expect Valid.
-
-checkentail x::p3<> |- (exists x1: x1::p4<> & x1=x).
-expect Valid.
-
-
-
-/**
-
-
-id: 7; caller: []; line: 0; classic: false; kind: Sleek_Entail(3); hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: []
- checkentail x::p1<c>@M&{FLOW,(20,21)=__norm#E}[]
- |-  (exists c_134: x::p2<c_134>@M&c_134=c&{FLOW,(20,21)=__norm#E}[]). 
-ho_vars: nothing?
-res:  failctxfe_kind: MUST
-        fe_name: separation entailment
-        fe_locs: {
-    fc_message: matching of ho_args failed (do_unmatched_rhs : c_138::node<flted_63_146,flted_63_145>@M(may))
-    fc_current_lhs_flow: {FLOW,(1,26)=__flow#E}
-  }
-[[empty]]true
-
-
-
-
-(==solver.ml#11770==)
-do_fold_w_ctx@4@3
-do_fold_w_ctx inp1 :  x::Boo{ . (exists flted_62_14,flted_62_13: c::node<flted_62_13,flted_62_14>@M&
-flted_62_13=null & flted_62_14=1&{FLOW,(20,21)=__norm#E}[])}<>@M&
-{FLOW,(20,21)=__norm#E}[]
- es_evars: [c_138]
- es_gen_impl_vars(E): []
- es_rhs_eqset: [c_138:c; c_138:c]
- es_trace:  Unfold 0 ==>  Fold
- es_unsat_flag: false
-do_fold_w_ctx inp2 :
- conseq =  x::p2<c_138>@M&c_138=c&{FLOW,(20,21)=__norm#E}[]
- rhs_node =  x::p2<c_138>@M
- vd = None
- rhs_rest =  emp
- rhs_b =  x::p2<c_138>@M&c_138=c&{FLOW,(20,21)=__norm#E}[]
-do_fold_w_ctx inp3 :false
-do_fold_w_ctx@4 EXIT: MustErr Context: 
-   fe_kind: MUST
-   fe_name: separation entailment
-   fe_locs: {
-     fc_message: matching of ho_args failed (do_unmatched_rhs : c_138::node<flted_63_146,flted_63_145>@M(may))
-     fc_current_lhs_flow: {FLOW,(1,26)=__flow#E}
-   }
- [[empty]]
- CEX:true
-
-
-
-!!!! to check if teh alias set is properly updated!
-
-!!! **solver.ml#12674:process_action (steps) :
- ### action :
- Match =>
-   Type: Root
-   LHS: x::Boo{ . (exists flted_62_22,flted_62_21: c::node<flted_62_21,flted_62_22>@M&
-flted_62_21=null & flted_62_22=1&{FLOW,(20,21)=__norm#E}[])}<>@M
-   RHS: x::Boo{ . (exists flted_63_20,flted_63_19: c_109::node<flted_63_19,flted_63_20>@M&
-flted_63_19=null & flted_63_20=1&{FLOW,(20,21)=__norm#E}[])}<>@M
-   root_inst: None
-   lhs_rest: emp
-   rhs_rest: emp
-   alias set: [x]rhs_inst: []rhs_infer: None
- ### estate : ex_formula : x::Boo{ . (exists flted_62_22,flted_62_21: c::node<flted_62_21,flted_62_22>@M&
-flted_62_21=null & flted_62_22=1&{FLOW,(20,21)=__norm#E}[])}<>@M&{FLOW,(20,21)=__norm#E}[]
- es_heap:emp
- ### conseq : (* lbl: *){8}->x::Boo{ . (exists flted_63_20,flted_63_19: c_109::node<flted_63_19,flted_63_20>@M&
-flted_63_19=null & flted_63_20=1&{FLOW,(20,21)=__norm#E}[])}<>@M&
-{FLOW,(1,26)=__flow#E}[]
-
 */
+
+
