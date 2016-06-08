@@ -15,3 +15,6 @@ checkentail charAt(s, (slen(s)-1)) = '\000' |- !(nonzero(s)).
 
 //6
 checkentail charAt(s, (slen(s)-1)) = '\000' |- endzero(s).
+
+//7
+checkentail charAt(s, o) = '\000' & endzero(s) |- o = (slen(s)-1).
