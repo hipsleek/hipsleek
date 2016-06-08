@@ -119,7 +119,7 @@ let rec smt_of_exp a =
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
   | CP.FConst (f, _) -> string_of_float f
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
-  | CP.CConst (c, _) -> "\"" ^ (Char.escaped c) ^ "\""
+  | CP.CConst (c, _) -> "(Substring \"" ^ (Char.escaped c) ^ "\" 0 1)"
   | CP.SLen (s, _) -> "(Length " ^ (smt_of_exp s) ^ ")"
   | CP.CharAt (s, i, _) -> "(CharAt " ^ (smt_of_exp s) ^ " " ^ (smt_of_exp i) ^ ")"
   | CP.CharUp (s,i,c,_) -> "(Concat (Concat((Substring " ^ (smt_of_exp s) ^ " 0 "

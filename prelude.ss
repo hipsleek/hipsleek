@@ -635,7 +635,6 @@ ensures res or !res;
 /*   requires s::WFSegN<p, m> & 0 <= n & n < m & Term */
 /*   ensures s::WSSN<q, n+1>; */
 
-
 /* data str_buf{ */
 /*    int offset; */
 /*    string s; */
@@ -644,30 +643,31 @@ ensures res or !res;
 
 /* pred str_obj<offset,s,length> == */
 /*   self::str_buf<offset,s,length> & endzero(s) & slen(s)<=length */
-/*            & 0<=offset<=length */
-/*   inv endzero(s) & slen(s)<=length & 0<=offset<=length. */
+/*            & 0<=offset<length */
+/*   inv endzero(s) & slen(s)<=length & 0<=offset<length. */
 
 /* str_buf plus_plus(ref str_buf s) */
-/*   requires s::str_obj<offset,str,length> & offset<length */
-/*   ensures s'::str_obj<offset+1,str,length> & res = s'; */
+/*   requires s::str_obj<offset,str,length> & offset<length-1 */
+/*   ensures s'::str_obj<offset+1,str,length> & offset<=length-1 & res = s'; */
 /* { */
 /*   s.offset = s.offset+1; */
 /*   return s; */
 /* } */
 
-/* void minus_minus(ref str_buf s) */
+/* str_buf minus_minus(ref str_buf s) */
 /*   requires s::str_obj<offset,str,length> & offset>0 */
-/*   ensures s'::str_obj<offset-1,str,length>; */
+/*   ensures s'::str_obj<offset-1,str,length> & offset>=0 & res = s'; */
 /* { */
 /*   s.offset = s.offset-1; */
+/*   return s; */
 /* } */
 
 /* char chrAt(int offset, string s) */
-/*   requires 0<=offset<=slen(s) */
+/*   requires 0<=offset<slen(s) */
 /*   ensures res = charAt(s, offset); */
 
 /* char char_at (str_buf s) */
-/*   requires s::str_obj<offset,str,length> & 0<=offset<=slen(str) */
+/*   requires s::str_obj<offset,str,length> & 0<=offset<slen(str) */
 /*   ensures s::str_obj<offset,str, length> & res = charAt(str, offset); */
 /* { */
 /*   return chrAt(s.offset,s.s); */

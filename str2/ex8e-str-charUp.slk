@@ -17,7 +17,13 @@ checksat s = charUp(s, (slen(s)-1), '\x00') & endzero(s) & s = "a\\0c".
 checkentail s = charUp(s, (slen(s)-1), '\x00') |- !(nonzero(s)).
 
 //7
-checkentail s = charUp(s, (slen(s)-1), '\x00') |- endzero(s).
+checkentail s = charUp(s1, (slen(s)-1), '\x00') & nonzero(s1) |- endzero(s).
 
 //8
-checkentail endzero(s) & s = charUp(s,offset,c) & offset <= slen(s) |- endzero(s).
+checkentail endzero(s) & s = charUp(s,offset,c) & offset < slen(s) |- endzero(s).
+
+//9
+checkentail endzero(s) & s = charUp(s,offset,c) & offset < slen(s) & c != '\x00' |- endzero(s).
+
+//10
+checkentail s = charUp(s1,offset,c) & offset < slen(s1) |- slen(s) = slen(s1).

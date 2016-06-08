@@ -9,6 +9,8 @@ module StringSet = Set.Make(String)
 
 let set_prover_type () = Others.last_tp_used # set Others.Z3
 
+let addition_length_exps: CP.exp list ref = ref []
+
 let set_generated_prover_input = ref (fun _ -> ())
 let set_prover_original_output = ref (fun _ -> ())
 
@@ -125,12 +127,16 @@ let rec smt_of_exp a =
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
   | CP.FConst (f, _) -> string_of_float f
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
-  | CP.CConst (c, _) -> "\"" ^ (Char.escaped c) ^ "\""
+  | CP.CConst (c, _) -> "(Substring \"" ^ (Char.escaped c) ^ "\" 0 1)"
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Concat (s1, s2, _) -> "(Concat " ^ (smt_of_exp s1)^ " " ^(smt_of_exp s2)^")"
   | CP.SLen (s, _) -> "(Length " ^ (smt_of_exp s) ^ ")"
   | CP.CharAt (s, i,_) -> "(CharAt " ^ (smt_of_exp s) ^ " " ^ (smt_of_exp i) ^ ")"
-  | CP.CharUp (s,i,c,_) -> "(Concat (Concat (Substring " ^ (smt_of_exp s) ^ " 0 "
+  | CP.CharUp (s,i,c,_) ->
+       let () = if not (List.mem c !addition_length_exps) then
+          addition_length_exps := !addition_length_exps @ [c]
+       in
+       "(Concat (Concat (Substring " ^ (smt_of_exp s) ^ " 0 "
        ^ (smt_of_exp i) ^ " ) " ^ (smt_of_exp c) ^ " ) (Substring " ^ (smt_of_exp s) ^
          " (+ 1 " ^ (smt_of_exp i) ^ ") (- (Length " ^ (smt_of_exp s) ^ ") (+ 1 " ^ (smt_of_exp i) ^"))))"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
@@ -876,6 +882,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
   let ante_str = String.concat "" ante_strs in
+  let addition_length_strs = List.map (fun x -> "(assert (= (Length "
+      ^ (smt_of_exp x) ^ ") 1))\n") !addition_length_exps in
+  let addition_length_str = String.concat "" addition_length_strs in
   let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
     ";Variables declarations\n" ^
     smt_var_decls ^
@@ -885,6 +894,8 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
     axiom_asserts ^
     ";Antecedent\n" ^
     ante_str ^
+    ";Addition length assertion\n" ^
+    addition_length_str ^
     ";Negation of Consequence\n" ^
     "(assert (not " ^ conseq_str ^ "))\n" ^
     "(check-sat)" ^

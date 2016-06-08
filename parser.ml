@@ -2283,7 +2283,7 @@ cexp_w:
     | `SLEN; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c ->  P.SLen (c, get_pos_camlp4 _loc 1)) c
     | `CHARAT; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
     apply_cexp_form2 (fun c1 c2-> P.CharAt (c1, c2, get_pos_camlp4 _loc  1) ) c1 c2
-    | `CHARUP; `OPAREN; c1=SELF; `COMMA; c2=SELF; `COMMA; c3=SELF; `CPAREN -> 
+    | `CHARUP; `OPAREN; c1=SELF; `COMMA; c2=SELF; `COMMA; c3=SELF; `CPAREN ->
     apply_cexp_form3 (fun c1 c2 c3-> P.CharUp (c1, c2, c3, get_pos_camlp4 _loc 1) ) c1 c2 c3
     | `REVERSE; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1
     ]

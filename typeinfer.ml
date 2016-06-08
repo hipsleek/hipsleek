@@ -222,7 +222,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | NUM, AnnT -> (tl,Some AnnT)
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | String, String -> (tl, Some String)
-    (* | Char, Int -> (tl, Some Char) *)
+    | Char, Char -> (tl, Some Char)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
     | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
@@ -815,9 +815,11 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tlist1,_) = gather_type_info_exp_x prog a1 n_tl1 new_et1 in
     let (n_tlist2,_) = gather_type_info_exp_x prog a2 n_tl2 new_et2 in
     let (n_tlist3,_) = gather_type_info_exp_x prog a3 n_tl3 new_et3 in
-    let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et1) n_tl1 in
-    let (tmp1,tmp2)=nt in
-    let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
+    let nt1 = List.find (fun (v,en) -> en.sv_info_kind = new_et1) n_tl1 in
+    let nt2 = List.find (fun (v,en) -> en.sv_info_kind = new_et2) n_tl2 in
+    let (tmp11,tmp12)= nt1 in
+    let (tmp21,tmp22)= nt2 in
+    let n_tl = List.filter (fun (v,en) -> v<>tmp11 && v<>tmp21) n_tlist3 in
     (n_tl,String)
   | IP.BExpr f1 -> (x_add gather_type_info_pure prog f1 tlist, Bool)
 

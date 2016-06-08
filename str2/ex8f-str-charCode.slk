@@ -1,0 +1,23 @@
+//1
+checksat charCode('d') = 100.
+
+//2
+checksat charCode('d') = 99.
+
+//3
+checksat charCode('\x00') = 0.
+
+//4
+checksat c = charAt(s, (slen(s)-1)) & charCode(c) = 0.
+
+//5
+//checksat s = charUp(s, (slen(s)-1), '\x00') & endzero(s) & s = "a\\0c".
+
+//6
+//checkentail s = charUp(s, (slen(s)-1), '\x00') |- !(nonzero(s)).
+
+//7
+//checkentail s = charUp(s, (slen(s)-1), '\x00') |- endzero(s).
+
+//8
+//checkentail endzero(s) & s = charUp(s,offset,c) & offset <= slen(s) |- endzero(s).
