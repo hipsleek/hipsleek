@@ -13147,8 +13147,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       (*     | Some reason_f -> {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula reason_f pos) pos} *)
       (* in *)
       let estate =
-        if no_infer_rel estate then estate
+        if no_infer_rel estate || not(!init_para_flag) then estate
         else
+          let () = y_binfo_pp "WARN: fold with init_para, unsound?" in
           let lhs_h, lhs_p, _, _, _, lhs_a  = CF.split_components estate.es_formula in
           let lhs_alias = MCP.ptr_equations_without_null lhs_p in
           let lhs_aset = CP.EMapSV.build_eset lhs_alias in

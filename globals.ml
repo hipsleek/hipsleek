@@ -1360,6 +1360,7 @@ let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
 let hrel_as_view_flag = ref false
+let init_para_flag = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
