@@ -1321,7 +1321,7 @@ session_formula: [
             s
     ]
     | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
-       Session.Protocol.mk_base first second c
+            Session.Protocol.mk_base first second c
        (* Session.boo (); *)
        (* failwith "tbi" *)
     ]
@@ -1329,22 +1329,25 @@ session_formula: [
 
 projection_formula: [
     [
-        projection_formula; `SEMICOLONSEMICOLON; projection_formula ->
-               ()
+        p1 = projection_formula; `SEMICOLONSEMICOLON; p2 = projection_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.Projection.mk_session_seq_formula p1 p2 loc
     ]
-    | [ projection_formula; `STAR; projection_formula ->
-               ()
-      | projection_formula; `ORWORD; projection_formula ->
-               ()
+    | [ p1 = projection_formula; `STAR; p2 = projection_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.Projection.mk_session_star_formula p1 p2 loc
+      | p1 = projection_formula; `ORWORD; p2 = projection_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.Projection.mk_session_or_formula p1 p2 loc
     ]
-    | [ `OPAREN; projection_formula; `CPAREN ->
-               ()
+    | [ `OPAREN; p = projection_formula; `CPAREN ->
+            p
     ]
     |
       [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
-               ()
+            Session.Projection.mk_base Session.Send channel c
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
-               ()
+            Session.Projection.mk_base Session.Receive channel c
     ]
 ];
 

@@ -59,8 +59,9 @@ module Projection_base (* : Session_base *) = struct
   type b = ident
   type c = F.formula
 
-  let print_session_base f = begin
-  end
+  let print_session_base f = match f.projection_base_formula_op with
+    | Send -> let () = Printf.printf "%s!(%s)" f.projection_base_formula_channel (!F.print_formula f.projection_base_formula_message) in ()
+    | Receive -> let () = Printf.printf "%s?(%s)" f.projection_base_formula_channel (!F.print_formula f.projection_base_formula_message) in ()
 
   let mk_base transmission channel formula = {
     projection_base_formula_op      = transmission;
