@@ -15,11 +15,9 @@ type transmission = Send | Receive
 module type Session_base = sig
   type t
   type a
-  type b
-  type c
 
   val print_session_base : t -> unit
-  val mk_base : a -> b -> c -> t
+  val mk_base : a -> t
 end;;
 
 type protocol_base_formula = {
@@ -36,16 +34,14 @@ type projection_base_formula = {
 
 module Protocol_base (* : Session_base *) = struct
   type t = protocol_base_formula
-  type a = ident
-  type b = ident
-  type c = F.formula
+  type a = ident * ident * F.formula
 
   let print_session_base f = begin
           Printf.printf "%s -> %s : " f.protocol_base_formula_sender f.protocol_base_formula_receiver;
           Printf.printf "%s" (!F.print_formula f.protocol_base_formula_message);
   end
 
-  let mk_base sender receiver formula = { 
+  let mk_base (sender, receiver, formula) = {
     protocol_base_formula_sender    = sender;
     protocol_base_formula_receiver  = receiver; 
     protocol_base_formula_message   = formula;
@@ -55,15 +51,13 @@ end;;
 
 module Projection_base (* : Session_base *) = struct
   type t = projection_base_formula
-  type a = transmission
-  type b = ident
-  type c = F.formula
+  type a = transmission * ident * F.formula
 
   let print_session_base f = match f.projection_base_formula_op with
     | Send -> let () = Printf.printf "%s!(%s)" f.projection_base_formula_channel (!F.print_formula f.projection_base_formula_message) in ()
     | Receive -> let () = Printf.printf "%s?(%s)" f.projection_base_formula_channel (!F.print_formula f.projection_base_formula_message) in ()
 
-  let mk_base transmission channel formula = {
+  let mk_base (transmission, channel, formula) = {
     projection_base_formula_op      = transmission;
     projection_base_formula_channel = channel;
     projection_base_formula_message = formula;
@@ -137,7 +131,7 @@ module Make_Session (Base: Session_base) = struct
           Printf.printf ")";
   end
 
-  let mk_base a b c = SBase (Base.mk_base a b c)
+  let mk_base a = SBase (Base.mk_base a)
 
   and mk_session_seq_formula session1 session2 loc = SSeq {
       session_seq_formula_head = session1;
@@ -171,7 +165,7 @@ type session_type = ProtocolSession of Protocol.session | ProjectionSession of P
 
 
 let boo () =
-  let prot = Protocol.mk_base "" "" (F.mkTrue_nf no_pos) in
+  let prot = Protocol.mk_base ("", "", (F.mkTrue_nf no_pos)) in
   Protocol.print_session prot
   ;;
 
