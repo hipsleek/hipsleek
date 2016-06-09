@@ -18,7 +18,7 @@ module type Session_base = sig
   type b
   type c
 
-  val print_session_base : t -> string
+  val print_session_base : t -> unit
   val mk_base : a -> b -> c -> t
 end;;
 
@@ -40,7 +40,10 @@ module Protocol_base (* : Session_base *) = struct
   type b = ident
   type c = F.formula
 
-  let print_session_base f = "Protocol_base: to be implemented"
+  let print_session_base f = begin
+          Printf.printf "%s -> %s : " f.protocol_base_formula_sender f.protocol_base_formula_receiver;
+          Printf.printf "%s" (!F.print_formula f.protocol_base_formula_message);
+  end
 
   let mk_base sender receiver formula = { 
     protocol_base_formula_sender    = sender;
@@ -56,7 +59,8 @@ module Projection_base (* : Session_base *) = struct
   type b = ident
   type c = F.formula
 
-  let print_session_base f = "Projection_base: to be implemented"
+  let print_session_base f = begin
+  end
 
   let mk_base transmission channel formula = {
     projection_base_formula_op      = transmission;
@@ -95,7 +99,12 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_pos:  loc;
   }
 
-  let rec print_session = function
+  let rec print_session s = begin
+          print_one_session s;
+          print_newline ();
+  end
+
+  and print_one_session s = match s with
     | SSeq s -> print_session_seq s
     | SOr s -> print_session_or s
     | SStar s -> print_session_star s
@@ -104,21 +113,27 @@ module Make_Session (Base: Session_base) = struct
   and print_session_base = Base.print_session_base
 
   and print_session_seq s = begin
-          print_session s.session_seq_formula_head;
-          Printf.printf " %s " ";;";
-          print_session s.session_seq_formula_tail;
+          Printf.printf "(";
+          print_one_session s.session_seq_formula_head;
+          Printf.printf ") %s (" ";;";
+          print_one_session s.session_seq_formula_tail;
+          Printf.printf ")";
   end
 
   and print_session_or s = begin
-          print_session s.session_seq_formula_or1;
-          Printf.printf " %s " "or";
-          print_session s.session_seq_formula_or2;
+          Printf.printf "(";
+          print_one_session s.session_seq_formula_or1;
+          Printf.printf ") %s (" "or";
+          print_one_session s.session_seq_formula_or2;
+          Printf.printf ")";
   end
 
   and print_session_star s = begin
-          print_session s.session_seq_formula_star1;
-          Printf.printf " %s " "*";
-          print_session s.session_seq_formula_star2;
+          Printf.printf "(";
+          print_one_session s.session_seq_formula_star1;
+          Printf.printf ") %s (" "*";
+          print_one_session s.session_seq_formula_star2;
+          Printf.printf ")";
   end
 
   let mk_base a b c = SBase (Base.mk_base a b c)
