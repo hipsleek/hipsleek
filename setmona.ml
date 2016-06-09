@@ -251,6 +251,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | SConst _
   | CConst _
   | SLen _
+  | CLen _
   | CharAt _
   | CharUp _
   | Concat _ -> failwith (" [setmona.ml] String are not supported in mona")

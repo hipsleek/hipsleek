@@ -18589,6 +18589,7 @@ let elim_prm e =
     | CP.ListAppend _
     | CP.ListReverse _ -> None
     | CP.SLen _
+    | CP.CLen _
     | CP.CharAt _
     | CP.CharUp _
     | CP.Level _ -> report_error no_pos "CF.elim_prm: not handle yet"

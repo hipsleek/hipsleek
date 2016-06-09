@@ -10,13 +10,13 @@ pred str_obj<offset,s,length> ==
            & 0<=offset<length
   inv endzero(s) & slen(s)<=length & 0<=offset<length.
 
-str_buf plus_plus(ref str_buf s)
-  requires s::str_obj<offset,str,length> & offset < length-1
-  ensures s'::str_obj<offset+1,str,length> & offset <= length-1 & res = s';
-{
-  s.offset = s.offset+1;
-  return s;
-}
+/* str_buf plus_plus(ref str_buf s) */
+/*   requires s::str_obj<offset,str,length> & offset < length-1 */
+/*   ensures s'::str_obj<offset+1,str,length> & offset <= length-1 & res = s'; */
+/* { */
+/*   s.offset = s.offset+1; */
+/*   return s; */
+/* } */
 
 char chrAt(int offset, string s)
   requires 0<=offset<slen(s)
@@ -30,12 +30,12 @@ char char_at (str_buf s)
 }
 
 string chrUp(string s, int offset, char c)
-  requires 0<=offset<=slen(s)
-  ensures res = charUp(s,offset,c) & slen(res) = slen(s);
+  requires 0<=offset<slen(s)
+  ensures res = charUp(s,offset,c);
 
 void char_up (ref str_buf s, char c)
-  requires s::str_obj<offset,str,length> & 0<=offset<=slen(str)
-  ensures s'::str_obj<offset,charUp(str, offset, c),length>;
+  requires s::str_obj<offset,str,length> & offset < slen(str)-1
+  ensures s'::str_obj<offset,charUp(str,offset,c),length>;
 {
   s.s = chrUp(s.s, s.offset, c);
 }

@@ -281,6 +281,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | SLen (a, _)
+  | CLen (a, _)
   | ListReverse (a, _) -> afv a
   | CharAt (a1, a2, _) ->  combine_avars a1 a2
   | CharUp (a1, a2, a3, _) ->
@@ -654,6 +655,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
   | SLen (_, p) -> p
+  | CLen (_, p) -> p
   | CharAt (_, _, p) -> p
   | CharUp (_, _, _, p) -> p
   | ListReverse (_, p) -> p
@@ -901,6 +903,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one p a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one p a1, pos)
   | SLen (a1, pos) -> SLen (e_apply_one p a1, pos)
+  | CLen (a1, pos) -> CLen (e_apply_one p a1, pos)
   | CharAt (a1, a2, pos) -> CharAt (e_apply_one p a1, e_apply_one p a2, pos)
   | CharUp (a1, a2, a3, pos) -> CharUp (e_apply_one p a1,
                                         e_apply_one p a2,
@@ -958,6 +961,7 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
 
   | ListHead (e1, _) | ListTail (e1, _) | ListLength (e1, _) | ListReverse (e1, _)
   | SLen (e1, _) -> look_for_anonymous_exp e1
+  | CLen (e1, _) -> look_for_anonymous_exp e1
   | List (e1, _) | ListAppend (e1, _) -> look_for_anonymous_exp_list e1
   | ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
   | _ -> []
@@ -1121,6 +1125,7 @@ and find_lexp_exp (e: exp) ls =
     | ListTail (e, _) -> find_lexp_exp e ls
     | ListLength (e, _) -> find_lexp_exp e ls
     | SLen (e, _) -> find_lexp_exp e ls
+    | CLen (e, _) -> find_lexp_exp e ls
     | CharAt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | CharUp (e1, e2, e3,  _) -> find_lexp_exp e1 ls
          @ find_lexp_exp e2 ls 
@@ -1200,6 +1205,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListTail (exp, _) -> contain_vars_exp exp
   | ListLength (exp, _) -> contain_vars_exp exp
   | SLen (exp, _) -> contain_vars_exp exp
+  | CLen (exp, _) -> contain_vars_exp exp
   | CharAt (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | CharUp (exp1, exp2, exp3, _) -> (contain_vars_exp exp1) ||
        (contain_vars_exp exp2) || (contain_vars_exp exp3)
@@ -1442,6 +1448,9 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | SLen (e, l) ->
     let ne1, np1 = float_out_exp_min_max e in
     (SLen (ne1, l), np1)
+  | CLen (e, l) ->
+    let ne1, np1 = float_out_exp_min_max e in
+    (CLen (ne1, l), np1)
   | CharAt (e1, e2, l) ->
     let ne1, np1 = float_out_exp_min_max e1 in
     let ne2, np2 = float_out_exp_min_max e2 in
@@ -1979,6 +1988,7 @@ let rec typ_of_exp (e: exp) : typ =
   | ListTail (ex, _)          -> let ty = typ_of_exp ex in
     Globals.List ty
   | SLen (ex, _)
+  | CLen (ex, _)
   | ListLength (ex, _)        -> Globals.Int
   | ListAppend (ex_list, _)   -> let ty_list = List.map typ_of_exp ex_list in
     let ty = List.fold_left (x_add merge_types) UNK ty_list in
@@ -2228,6 +2238,7 @@ let rec transform_exp_x f (e : exp) : exp =
       | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
       | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
       | SLen (e1,l) -> SLen ((transform_exp f e1),l)
+      | CLen (e1,l) -> CLen ((transform_exp f e1),l)
       | CharAt (e1,e2,l) ->
         let ne1 = transform_exp f e1 in
         let ne2 = transform_exp f e2 in

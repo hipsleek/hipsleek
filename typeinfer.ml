@@ -788,6 +788,12 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl,r) = x_add must_unify Int et n_tl pos in
     let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
     (n_tlist,r)
+  | IP.CLen (a, pos) ->
+    let (fv,n_tl) = fresh_string tlist in
+    let new_et = fv in
+    let (n_tl,r) = x_add must_unify Int et n_tl pos in
+    let (n_tlist,_) = gather_type_info_exp_x prog a n_tl new_et in
+    (n_tlist,r)
   | IP.CharAt (a1, a2, pos) ->
     let (fv1,n_tl1) = fresh_string tlist in
     let (fv2,n_tl2) = fresh_tvar tlist in

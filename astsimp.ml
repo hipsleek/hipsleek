@@ -332,6 +332,7 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   | IP.List (e1, _) | IP.ListAppend (e1, _) -> look_for_anonymous_exp_list e1
   | IP.ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
   | IP.SLen (e1,_) -> look_for_anonymous_exp e1
+  | IP.CLen (e1,_) -> look_for_anonymous_exp e1
   | _ -> []
 
 and convert_anonym_to_exist_one_formula (f0 : IF.one_formula) : ( ((ident * primed) list) * IF.one_formula) =
@@ -8716,6 +8717,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp_x e tlist, pos)
   | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp_x e tlist, pos)
   | IP.SLen (e, pos) -> CP.SLen (trans_pure_exp_x e tlist, pos)
+  | IP.CLen (e, pos) -> CP.CLen (trans_pure_exp_x e tlist, pos)
   | IP.CharAt (e1, e2, pos) -> CP.CharAt (trans_pure_exp_x e1 tlist,
                                           trans_pure_exp_x e2 tlist, pos)
   | IP.CharUp (e1, e2, e3, pos) -> CP.CharUp (trans_pure_exp_x e1 tlist,

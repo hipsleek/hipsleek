@@ -148,6 +148,7 @@ and coq_of_exp e0 =
   | CP.Template t -> coq_of_exp (CP.exp_of_template t)
   (* string *)
   | CP.SLen (a, _) -> "( slen " ^ (coq_of_exp a) ^ ")"
+  | CP.CLen (a, _) -> "( clen " ^ (coq_of_exp a) ^ ")"
   | CP.Concat (s1, s2, _) -> (coq_of_exp s1) ^ " ^ " ^ (coq_of_exp s2)
   | CP.CharAt (a1, a2, _) -> " ( CharAt " ^ (coq_of_exp a1) ^ " " ^
        (coq_of_exp a2) ^ ")"

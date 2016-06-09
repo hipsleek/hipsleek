@@ -21,3 +21,6 @@ checksat (x ^ y = "abc" ^ z) & (slen(x^y) < 3).// UNSAT
 
 //8
 checksat (x = y ^ "a") & (slen(x)-1 = slen(y)). //SAT
+
+//9
+checkentail (x = "a\\0b\\0c") |- slen(x) = 5.

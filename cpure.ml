@@ -350,6 +350,7 @@ and exp =
   | SConst of (string * loc)
   | CConst of (char * loc)
   | SLen of (exp * loc)
+  | CLen of (exp * loc)
   | CharAt of (exp * exp * loc)
   | CharUp of (exp * exp * exp * loc)
 
@@ -897,6 +898,7 @@ let rec contains_inf (f:exp) = match f with
   | ListHead (e, _)
   | ListLength (e, _)
   | SLen (e, _)
+  | CLen (e, _)
   | ListTail (e, _)
   | ListReverse (e, _) -> (contains_inf  e)
   | CharAt (e1, e2, _) -> (contains_inf e1) || (contains_inf e2)
@@ -946,6 +948,7 @@ let rec exp_contains_spec_var (e : exp) : bool =
   | ListHead (e, _)
   | ListLength (e, _)
   | SLen (e, _)
+  | CLen (e, _)
   | ListTail (e, _)
   | ListReverse (e, _) -> (exp_contains_spec_var e)
   | List (el, _)
@@ -1357,7 +1360,7 @@ let rec get_exp_type (e : exp) : typ =
   | Concat _ -> String
   | Div _ -> Float
   | TypeCast (t, _, _) -> t
-  | ListHead _ | ListLength _ | SLen _ -> Int
+  | ListHead _ | ListLength _ | SLen _ | CLen _ -> Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
   | Func _ -> Int
@@ -1628,6 +1631,7 @@ and afv (af : exp) : spec_var list =
   | ListTail (a, _)
   | ListLength (a, _)
   | SLen (a, _) -> afv a
+  | CLen (a, _) -> afv a
   | CharAt(a1, a2, _) -> combine_avars a1 a2
   | CharUp(a1, a2, a3, _ ) ->
     let fv1 = afv a1 in
@@ -2098,6 +2102,7 @@ and is_arith (e : exp) : bool =
   | ListHead _
   | ListLength _
   | SLen _ -> true
+  | CLen _ -> true
   | _ -> false
 
 and is_bag_type (t : typ) = match t with
@@ -2377,6 +2382,7 @@ and is_exp_arith (e:exp) : bool=
   | List _ | ListCons _ | ListHead _ | ListTail _
   | ListLength _ | ListAppend _ | ListReverse _ -> false
   | SLen _ -> false
+  | CLen _ -> false
   | Tsconst _ -> false
   | Tup2  _ -> false
   | Bptriple _ -> false
@@ -3313,6 +3319,9 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
       | SLen (e1,l) ->
         let (ne1,r1) = helper new_arg e1 in
         (SLen (ne1,l),f_comb [r1])
+      | CLen (e1,l) ->
+        let (ne1,r1) = helper new_arg e1 in
+        (CLen (ne1,l),f_comb [r1])
       | CharAt (e1,e2,l) ->
         let (ne1,r1) = helper new_arg e1 in
         let (ne2,r2) = helper new_arg e2 in
@@ -3442,6 +3451,7 @@ let rec transform_exp f e  =
     | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
     | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
     | SLen (e1,l) -> SLen ((transform_exp f e1),l)
+    | CLen (e1,l) -> CLen ((transform_exp f e1),l)
     | CharAt (e1,e2,l) ->
       let ne1 = transform_exp f e1 in
       let ne2 = transform_exp f e2 in
@@ -4019,6 +4029,7 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (ListLength (e1, _), ListLength (e2, _))
     | (ListReverse (e1, _), ListReverse (e2, _)) -> (helper e1 e2)
     | (SLen (e1, _), SLen (e2, _)) -> (helper e1 e2)
+    | (CLen (e1, _), CLen (e2, _)) -> (helper e1 e2)
     | (ArrayAt (a1, i1, _), ArrayAt (a2, i2, _)) -> (eq a1 a2) && (eqExp_list_f eq i1 i2)
     | (CharAt(e1, e2, _), CharAt(e3, e4, _)) -> (helper e1 e3) && (helper e2 e4)
     | (CharUp(e1, e2, e3, _), CharUp(e4, e5, e6, _)) -> (helper e1 e4)
@@ -4163,6 +4174,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p)
   | ListLength (_, p)
   | SLen (_, p)
+  | CLen (_, p)
   | CharAt (_, _, p)
   | CharUp (_, _, _, p)
   | ListReverse (_, p)
@@ -4814,6 +4826,7 @@ and e_apply_subs sst e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
   | SLen (a, pos) -> SLen (e_apply_subs sst a, pos)
+  | CLen (a, pos) -> CLen (e_apply_subs sst a, pos)
   | CharAt (a1, a2, pos) -> CharAt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | CharUp (a1, a2, a3, pos) -> CharUp (e_apply_subs sst a1,
                                         e_apply_subs sst a2,
@@ -4881,6 +4894,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
   | SLen (a, pos) -> SLen (e_apply_one (fr, t) a, pos)
+  | CLen (a, pos) -> CLen (e_apply_one (fr, t) a, pos)
   | CharAt (a1, a2, pos) -> CharAt (e_apply_one (fr, t) a1,
                                     e_apply_one (fr, t) a2, pos)
   | CharUp (a1, a2, a3, pos) -> CharUp (e_apply_one (fr, t) a1,
@@ -5025,6 +5039,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e =
   | ListTail (a1, pos) -> ListTail (a_apply_par_term sst a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
   | SLen (a1, pos) -> SLen (a_apply_par_term sst a1, pos)
+  | CLen (a1, pos) -> CLen (a_apply_par_term sst a1, pos)
   | CharAt (a1, a2, pos) -> CharAt (a_apply_par_term sst a1,
                                     a_apply_par_term sst a2, pos)
   | CharUp (a1, a2, a3, pos) -> CharUp (a_apply_par_term sst a1,
@@ -5159,6 +5174,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | ListTail (a1, pos) -> ListTail (a_apply_one_term (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_one_term (fr, t) a1, pos)
   | SLen (a1, pos) -> SLen (a_apply_one_term (fr, t) a1, pos)
+  | CLen (a1, pos) -> CLen (a_apply_one_term (fr, t) a1, pos)
   | CharAt (a1, a2, pos) -> CharAt (a_apply_one_term (fr, t) a1,
                                     a_apply_one_term (fr, t) a2, pos)
   | CharUp (a1, a2, a3, pos) -> CharUp (a_apply_one_term (fr, t) a1, 
@@ -5275,6 +5291,9 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | SLen (a1, pos) ->
       let b1,r1 = (helper crt_var a1) in
       (b1,SLen (r1, pos))
+    | CLen (a1, pos) ->
+      let b1,r1 = (helper crt_var a1) in
+      (b1,CLen (r1, pos))
     | CharAt (a1, a2, pos) ->
       let b1 , r1 = helper crt_var a1 in
       let b2 , r2 = helper crt_var a2 in
@@ -6791,6 +6810,7 @@ and e_apply_one_exp (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
   | SLen (a1, pos) -> SLen (e_apply_one_exp (fr, t) a1, pos)
+  | CLen (a1, pos) -> CLen (e_apply_one_exp (fr, t) a1, pos)
   | CharAt (a1, a2, pos) -> CharAt (e_apply_one_exp (fr, t) a1,
                                     e_apply_one_exp (fr, t) a2, pos)
   | CharUp (a1, a2, a3, pos) -> CharUp (e_apply_one_exp (fr, t) a1,
@@ -7050,6 +7070,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
     | ListHead _
     | ListLength _
     | SLen _
+    | CLen _
     | CharAt _
     | CharUp _
     | Func _
@@ -7242,6 +7263,7 @@ and simp_mult_x (e : exp) :  exp =
     |  ListHead (_, l)
     |  ListLength (_, l)
     |  SLen (_, l)
+    |  CLen (_, l)
     |  Func (_, _, l)
     | Template { templ_pos = l; }
     |  ArrayAt (_, _, l) ->
@@ -7373,6 +7395,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
   |  ListTail (e1, l) -> ((Some e), None)
   |  ListLength (e1, l) -> ((Some e), None)
   |  SLen (e1, l) -> ((Some e), None)
+  |  CLen (e1, l) -> ((Some e), None)
   |  CharAt (e1, e2, l) -> ((Some e), None)
   |  CharUp (e1, e2, e3, l) -> ((Some e), None)
   |  ListReverse (e1, l) -> ((Some e), None)
@@ -7565,6 +7588,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  SLen (e, l) -> SLen (purge_mult e, l)
+  |  CLen (e, l) -> CLen (purge_mult e, l)
   |  CharAt (e1, e2, l) ->  CharAt ((purge_mult e1), (purge_mult e2), l)
   |  CharUp (e1, e2, e3, l) ->  CharUp ((purge_mult e1), 
                                     (purge_mult e2),
@@ -7817,7 +7841,8 @@ let rec get_head e = match e with
   | Tup2 ((e,_),_)
   | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_) | TypeCast (_, e, _)
   | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_)
-  | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_) | SLen (e, _)
+  | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_) 
+  | SLen (e, _) | CLen (e, _)
   | CharAt (e,_,_) -> get_head e
   | CharUp (e,_,_,_) -> get_head e
   | Concat(e,_,_) -> get_head e
@@ -7901,6 +7926,7 @@ and norm_exp (e:exp) =
     | ListTail (e,l)-> ListTail(helper e, l)
     | ListLength (e,l)-> ListLength(helper e, l)
     | SLen (e,l) -> SLen(helper e, l)
+    | CLen (e,l) -> CLen(helper e, l)
     | CharAt (e1,e2,l) -> CharAt (helper e1, helper e2, l)
     | CharUp (e1,e2,e3,l) -> CharUp (helper e1, helper e2, helper e3, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map helper e), l)
@@ -9515,6 +9541,7 @@ and has_level_constraint_x (f: formula) : bool =
       | ListTail (e,_)
       | ListLength (e,_)
       | SLen (e, _)
+      | CLen (e, _)
       | CharAt (e, _, _)
       | CharUp (e, _, _, _)
       | ListReverse (e,_) ->
@@ -9563,6 +9590,7 @@ and has_level_constraint_exp (e: exp) : bool =
     | ListTail (e,_)
     | ListLength (e,_)
     | SLen (e, _)
+    | CLen (e, _)
     | ListReverse (e,_) ->
       helper e
     | _ -> false
@@ -10433,7 +10461,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | TypeCast _
       | Min _ | Max _ | List _ | ListCons _ | ListHead _ | ListTail _
       | ListLength _ | ListAppend _ | ListReverse _ |ArrayAt _
-      | SLen _ | CharAt _ | CharUp _
+      | SLen _ | CLen _ | CharAt _ | CharUp _
       | BagDiff _ | BagIntersect _ | Bag _ | BagUnion _ | Func _ | Template _ -> raise Not_found in
     helper e rhs_e in
 

@@ -240,6 +240,7 @@ module Make (Token : SleekTokenS)
    (* ("lemma_exact", LEMMA (\* true *\)); *)
    ("len", LENGTH);
    ("slen", SLEN);
+   ("clen", CLEN);
    ("charAt", CHARAT);
    ("charUp", CHARUP);
    ("nonzero", NONZERO);

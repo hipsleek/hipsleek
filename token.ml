@@ -11,27 +11,27 @@ type sleek_token =
   | CHAR_LIT      of char * string
   | STRING        of string * string
   (*| COMMENT       of string*)
-  | EOF 
+  | EOF
   | JAVA          of string
   | LEMMA         of lemma_kind_t
   | RLEMMA
   (*keywords*)
   | ANDLIST| ABSTRACT
   | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | INFER_ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
-  | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
+  | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER
   | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
   | CASE | SIMPLIFY | CAPTURERESIDUE | CLASS | COMPOSE | CONST | CONTINUE
-  | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET 
+  | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET
   | CHECKENTAIL |  CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT
-  | DATA | DDEBUG | DIFF | DYNAMIC 
-  | RELASSUME | RELDEFN 
-  | SHAPE_INFER | SHAPE_INFER_PROP 
+  | DATA | DDEBUG | DIFF | DYNAMIC
+  | RELASSUME | RELDEFN
+  | SHAPE_INFER | SHAPE_INFER_PROP
   | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
-  | SHAPE_SPLIT_BASE 
+  | SHAPE_SPLIT_BASE
   | SHAPE_EXTRACT | SHAPE_DECL_DANG | SHAPE_DECL_UNKNOWN
   | SHAPE_STRENGTHEN_CONSEQ | SHAPE_WEAKEN_ANTE
-  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING 
+  | SHAPE_ADD_DANGLING | SHAPE_UNFOLD | SHAPE_PARAM_DANGLING
   | SHAPE_SIMPLIFY | SHAPE_MERGE | SHAPE_TRANS_TO_VIEW
   | SHAPE_DERIVE_PRE (* to derive pre-predicate into view *)
   | SHAPE_DERIVE_POST (* to derive post-predicate into view *)
@@ -42,10 +42,10 @@ type sleek_token =
   | PRED_ELIM_HEAD
   | PRED_ELIM_TAIL
   | PRED_UNIFY_DISJ
-  | PRED_SPEC 
-  | PRED_SPLIT  
+  | PRED_SPEC
+  | PRED_SPLIT
   | PRED_NORM_SEG | PRED_NORM_DISJ
-  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *) 
+  | PRED_ELIM_USELESS (* should be PRED_ELIM_USELESS *)
   | PRED_REUSE
   | PRED_REUSE_SUBS
   | PRED_UNFOLD
@@ -54,29 +54,29 @@ type sleek_token =
   | ELSE_TT
   | EMPTY
   | ENSURES | ENSURES_EXACT | ENSURES_INEXACT | ENUM | EXISTS | EXPECT_INFER
-  | EXTENDS 
+  | EXTENDS
   (* | EXTENDS_REC *)
   | FALSE | FLOAT | FORALL | FUNC
   | HP | HPPOST
   | HTRUE
-  | IF 
-  | IN_T | INT | INFINT_TYPE | INTERSECT | INV | INLINE 
+  | IF
+  | IN_T | INT | INFINT_TYPE | INTERSECT | INV | INLINE
   | STRING_TYPE | CHAR_TYPE
   | INV_EXACT | INV_SAT | BG
   | ANN_KEY
   | LET
-  | MAX | MIN 
+  | MAX | MIN
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
-  | PRED | PRED_PRIM | DPRINT | PRED_EXT 
+  | PRED | PRED_PRIM | DPRINT | PRED_EXT
   | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
   (* | PRINT_VIEW *)
   (* | PRINT_VIEW_LONG *)
   | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
-  | TEMPL | TERM | LOOP | MAYLOOP (* | TERMU | TERMR *) 
-  | TERM_INFER 
+  | TEMPL | TERM | LOOP | MAYLOOP (* | TERMU | TERMR *)
+  | TERM_INFER
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
   | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMUST_ONLY | INFER_AT_ERRMAY | INFER_AT_DE_EXC | INFER_AT_PREMUST
@@ -85,36 +85,37 @@ type sleek_token =
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_SHAPE_PRE | INFER_AT_SHAPE_POST | INFER_AT_SHAPE_PRE_POST
   | INFER_AT_ERROR | INFER_AT_FLOW | INFER_AT_PURE_FIELD
   | INFER_AT_SIZE | INFER_ANA_NI
-  | INFER_AT_ARR_AS_VAR 
+  | INFER_AT_ARR_AS_VAR
   | INFER_IMM_PRE | INFER_IMM_POST
   | UTPRE | UTPOST
   | UIPRE | UIPOST
   | UNFOLD | UNION
-  | VOID 
+  | VOID
   | WHILE | FLOW of string
-  (*operators*)  
-  | CARET 
+  (*operators*)
+  | CARET
   | DOTDOT | ATPOS
   | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | SPLIT1Ann | SPLIT2Ann | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  (* | VAL | REC *)
   (* TermInf: Token for Termination Inference *)
   | TEMPLATE | TEMPL_SOLVE
   | NI | RO
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE |
-          HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | SLEN | LENGTH
+          HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
   | CHARAT | CHARUP
-  | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
-  | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
+  | SLEN | CLEN
+  | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN
+  | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL
   (* | TOPAREN | TCPAREN *)
-  | PERCENT | PMACRO 
+  | PERCENT | PMACRO
   | PZERO | PFULL | PVALUE | PLEND | PCONST of Frac.frac |PFRAC (* | PREF *)
   | SPLITANN
   | TUP2
-  | PLUS | PRIME 
+  | PLUS | PRIME
   | SEMICOLON | SAT | SPEC
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
   | INFER | INFER_EXACT | INFER_INEXACT | SUBANN | XPRE | PRE | XPOST | POST
-  | INVLOCK 
+  | INVLOCK
   | LOGICAL
   | INFINITY
   | NEGINFINITY
@@ -142,7 +143,7 @@ module Token = struct
 
   let sf = Printf.sprintf
 
-  let to_string k = match k with 
+  let to_string k = match k with
     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s | FRAC_LIT (_, s) -> s
     (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
@@ -156,7 +157,7 @@ module Token = struct
     | CHECK_NONDET -> "check_nondet"
     | CHECKSAT -> "checksat"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
-    | SHAPE_SPLIT_BASE -> "shape_split_base" 
+    | SHAPE_SPLIT_BASE -> "shape_split_base"
     | SHAPE_EXTRACT -> "shape_extract"
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
     | SHAPE_STRENGTHEN_CONSEQ -> "shape_strengthen_conseq"
@@ -176,11 +177,11 @@ module Token = struct
     | PRED_ELIM_HEAD -> "pred_elim_hd_node"
     | PRED_ELIM_TAIL -> "pred_elim_tl_node"
     | PRED_UNIFY_DISJ -> "pred_unify_disj"
-    | PRED_ELIM_USELESS -> "pred_elim_useless" 
-    | PRED_REUSE -> "pred_reuse" 
-    | PRED_REUSE_SUBS -> "pred_reuse_subs" 
-    | PRED_UNFOLD -> "pred_unfold" 
-    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj" 
+    | PRED_ELIM_USELESS -> "pred_elim_useless"
+    | PRED_REUSE -> "pred_reuse"
+    | PRED_REUSE_SUBS -> "pred_reuse_subs"
+    | PRED_UNFOLD -> "pred_unfold"
+    | PRED_SPLIT -> "pred_split" | PRED_NORM_DISJ ->  "pred_norm_disj"
     | PRED_SPEC ->"pred_spec" | PRED_NORM_SEG -> "pred_norm_seg"
     | REL_INFER -> "relation_infer" | SPEC -> "spec"
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"
@@ -199,12 +200,12 @@ module Token = struct
     | LEMMA TLEM_SPLIT ->"lemma_split"
     | LEMMA TLEM_PROP ->"lemma_prop"
     | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer" | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" 
-    | PRINT -> "print" 
-    | PRINT_LEMMAS -> "print_lemmas" 
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint"
+    | PRINT -> "print"
+    | PRINT_LEMMAS -> "print_lemmas"
     (* | PRINT_VIEW -> "print_view"  *)
     (* | PRINT_VIEW_LONG -> "print_view_long"  *)
-    |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
+    |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
@@ -215,13 +216,14 @@ module Token = struct
     | TEMPLATE -> "template" | TEMPL_SOLVE -> "template_solve"
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#" | REL_GUARD -> "|#|"
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
-    | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||" 
+    | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||"
     | DERIVE -> "|-" | EQV -> "-|-" | CONSTR -> "-->" |  OSQUARE -> "[" | PERCENT ->"%" | PMACRO -> "PMACRO" | PLUS -> "+" | PRIME -> "'" | SEMICOLON -> ";" | STAR -> "*"
     | RAISE -> "raise" | THROWS -> "throws" | FINALLY -> "finally" | COMBINE -> "combine" | WITH -> "with" | JOIN -> "joinpred" | REFINES -> "refines"
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" |
-  TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | SLEN
-  -> "slen" | CHARAT -> "charat" | CHARUP -> "charup" | INLIST -> "inlist" | HEAD -> "head"
+  TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len"
+    | SLEN -> "slen" | CLEN -> "clen" | CHARAT -> "charat" | CHARUP -> "charup"
+    | INLIST -> "inlist" | HEAD -> "head"
     | MEM -> "mem" | MEME -> "memE"
     | INFER -> "infer" | INFER_EXACT -> "infer_exact" | INFER_INEXACT -> "infer_inexact"
     | PRE -> "@pre" | XPRE -> "@xpre" | MUT -> "@M" | MAT -> "@R" | POST -> "@post" | XPOST -> "@xpost" | SUBANN -> "<:" | SAT -> "@S"
@@ -292,10 +294,10 @@ module Token = struct
 
   let print ppf x = pp_print_string ppf (to_string x)
 
-  let match_keyword kwd _ = false 
+  let match_keyword kwd _ = false
 
   let extract_string t = match t with
-    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s) | FRAC_LIT (_, s) 
+    | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s) | FRAC_LIT (_, s)
     | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
     | _ -> ""
 

@@ -27,3 +27,6 @@ checkentail endzero(s) & s = charUp(s,offset,c) & offset < slen(s) & c != '\x00'
 
 //10
 checkentail s = charUp(s1,offset,c) & offset < slen(s1) |- slen(s) = slen(s1).
+
+//11
+checkentail endzero(s1) & s = charUp(s1,offset,c) & 0<= offset < slen(s) & c != '\x00' |- endzero(s).

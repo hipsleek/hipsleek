@@ -910,6 +910,7 @@ let rec pr_formula_exp (e:P.exp) =
   | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
   | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
   | P.SLen (e, l)   -> fmt_string ("slen("); pr_formula_exp e; fmt_string  (")")
+  | P.CLen (e, l)   -> fmt_string ("clen("); pr_formula_exp e; fmt_string  (")")
   | P.CharAt (e1, e2, l) -> fmt_string ("charAt("); pr_formula_exp e1;
       fmt_string (", "); pr_formula_exp e2; fmt_string  (")") (* To be considered *)
   | P.CharUp (e1, e2, e3, l) -> fmt_string ("charUp("); pr_formula_exp e1;
@@ -5296,6 +5297,7 @@ let rec html_of_formula_exp e =
   | P.ListTail (e, l) -> "<b>tail</b>(" ^ (html_of_formula_exp e) ^ ")"
   | P.ListLength (e, l) -> "<b>len</b>(" ^ (html_of_formula_exp e) ^ ")"
   | P.SLen (e, l) -> "<b>slen</b>(" ^ (html_of_formula_exp e) ^ ")"
+  | P.CLen (e, l) -> "<b>clen</b>(" ^ (html_of_formula_exp e) ^ ")"
   | P.CharAt (e1, e2, l) -> "<b>charAt</b>" ^ (html_of_formula_exp e1)
        ^ "  " ^ (html_of_formula_exp e2)
   | P.CharUp (e1, e2, e3, l) -> "<b>charUp</b>" ^ (html_of_formula_exp e1)

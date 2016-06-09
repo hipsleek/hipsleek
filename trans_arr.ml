@@ -103,6 +103,7 @@ let rec is_same_exp
   | ListTail (e1,_), ListTail (e2,_)
   | ListLength (e1,_),ListLength (e2,_)
   | SLen (e1,_),SLen (e2,_)
+  | CLen (e1,_),CLen (e2,_)
   | ListReverse (e1,_),ListReverse (e2,_) ->
     is_same_exp e1 e2
   | CharAt (e11,e12,_), CharAt (e21,e22,_) ->
@@ -236,6 +237,7 @@ let rec contain_array
     | ListTail (e1,loc)
     | ListLength (e1,loc)
     | SLen (e1,loc)
+    | CLen (e1,loc)
     | ListReverse (e1,loc)->
       contain_array_exp e1
     | Null _|Var _|Level _|IConst _|FConst _|AConst _|InfConst _|Tsconst _|Bptriple _|ListAppend _|Template _
@@ -1901,6 +1903,7 @@ let rec drop_array_formula
     | ListTail (e1,loc)
     | ListLength (e1,loc)
     | SLen (e1,loc)
+    | CLen (e1,loc)
     | ListReverse (e1,loc)->
       contain_array_exp e1
     | Null _|Var _|Level _|IConst _|FConst _|AConst _|InfConst _|Tsconst _|Bptriple _|ListAppend _|Template _

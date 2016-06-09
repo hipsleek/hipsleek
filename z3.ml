@@ -121,6 +121,7 @@ let rec smt_of_exp a =
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
   | CP.CConst (c, _) -> "(Substring \"" ^ (Char.escaped c) ^ "\" 0 1)"
   | CP.SLen (s, _) -> "(Length " ^ (smt_of_exp s) ^ ")"
+  | CP.CLen (s, _) -> "(Indexof " ^ (smt_of_exp s) ^ " \"\\0\")"
   | CP.CharAt (s, i, _) -> "(CharAt " ^ (smt_of_exp s) ^ " " ^ (smt_of_exp i) ^ ")"
   | CP.CharUp (s,i,c,_) -> "(Concat (Concat((Substring " ^ (smt_of_exp s) ^ " 0 "
        ^ (smt_of_exp i) ^ " ) " ^ (smt_of_exp c) ^ " ) (Substring " ^ (smt_of_exp s) ^
@@ -226,8 +227,9 @@ let rec smt_of_b_formula b =
 (* | CP.XPure _ -> Error.report_no_pattern () *)
   | CP.NonZero (e, l) -> " (not (Contains " ^ (smt_of_exp e) ^ "
   \"0\"))"
-  | CP.EndZero (e, l) -> "(and (= (Substring " ^ (smt_of_exp e) ^ "(-(Length " ^ (smt_of_exp e) ^ ") 1) 1)\"0\")
-                               (not (Contains (Substring " ^ (smt_of_exp e) ^ "0 (-(Length " ^ (smt_of_exp e) ^ ")) 1) \"0\")))"
+  | CP.EndZero (e, l) -> " (Contains " ^ (smt_of_exp e) ^ " \"\\0\")"
+  (* | CP.EndZero (e, l) -> "(and (= (Substring " ^ (smt_of_exp e) ^ "(-(Length " ^ (smt_of_exp e) ^ ") 1) 1)\"0\") *)
+  (*                              (not (Contains (Substring " ^ (smt_of_exp e) ^ "0 (-(Length " ^ (smt_of_exp e) ^ ")) 1) \"0\")))" *)
 
 let rec smt_of_formula pr_w pr_s f =
   let () = x_dinfo_hp (add_str "f(z3)" !CP.print_formula) f no_pos in

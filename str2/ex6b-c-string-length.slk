@@ -1,0 +1,29 @@
+//1
+checksat clen ("x") = 2.
+
+//2
+checksat clen ("x"^"y"^"\x00") = 2.
+
+//3
+checksat clen ("a\x00a") = 1.
+
+//4
+checksat clen ("a\x00a") = 3.
+
+//5
+checksat slen(s) = clen(s).
+
+//6
+checksat s = "abc\x00" & slen(s) = clen(s).
+
+//7
+checksat s = "abc\x00" & slen(s) = clen(s)+1.
+
+//8
+checksat clen ("abc") = -1.
+
+//9
+checkentail nonzero(s) |- clen(s) = -1.
+
+//10
+checkentail clen(s) = -1 |- nonzero(s).

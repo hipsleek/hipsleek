@@ -63,6 +63,7 @@ let rec rev_trans_exp e = match e with
   | CP.ListTail (e,p)     -> IP.ListTail (rev_trans_exp e, p)
   | CP.ListLength (e,p)   -> IP.ListLength (rev_trans_exp e, p)
   | CP.SLen (e,p)         -> IP.SLen (rev_trans_exp e, p)
+  | CP.CLen (e,p)         -> IP.CLen (rev_trans_exp e, p)
   | CP.CharAt (e1,e2,p)   -> IP.CharAt (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.CharUp (e1,e2,e3,p)-> IP.CharUp (rev_trans_exp e1,
                                         rev_trans_exp e2,

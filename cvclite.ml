@@ -102,6 +102,7 @@ and cvcl_of_exp a = match a with
   | CP.CConst (c, _) -> failwith (" String are not supported in cvclite")
   | CP.Add (a1, a2, _) ->  (cvcl_of_exp a1) ^ " + " ^ (cvcl_of_exp a2)
   | CP.SLen _
+  | CP.CLen _
   | CP.Concat _
   | CP.CharAt _
   | CP.CharUp _ -> failwith (" String are not supported in cvclite")

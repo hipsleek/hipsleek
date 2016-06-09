@@ -2280,7 +2280,10 @@ cexp_w:
     | `APPEND; `OPAREN; c1= opt_cexp_list; `CPAREN -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
     | `HEAD; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
     | `LENGTH; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c
-    | `SLEN; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c ->  P.SLen (c, get_pos_camlp4 _loc 1)) c
+    | `SLEN; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c ->
+  P.SLen (c, get_pos_camlp4 _loc 1)) c
+    | `CLEN; `OPAREN; c=SELF; `CPAREN -> apply_cexp_form1 (fun c ->
+  P.CLen (c, get_pos_camlp4 _loc 1)) c
     | `CHARAT; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
     apply_cexp_form2 (fun c1 c2-> P.CharAt (c1, c2, get_pos_camlp4 _loc  1) ) c1 c2
     | `CHARUP; `OPAREN; c1=SELF; `COMMA; c2=SELF; `COMMA; c3=SELF; `CPAREN ->

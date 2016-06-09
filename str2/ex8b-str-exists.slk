@@ -1,5 +1,5 @@
 //1
-checksat endzero("abc\\1").
+checksat endzero("abc\x00a").
 
 //2
 checksat endzero("abc").

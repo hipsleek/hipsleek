@@ -124,6 +124,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.SConst _
   | CP.CConst _
   | CP.SLen _
+  | CP.CLen _
   | CP.CharAt _
   | CP.CharUp _
   | CP.Concat _ -> failwith (" [isabelle.ml] String are not supported in isabelle")

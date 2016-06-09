@@ -432,6 +432,7 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.SConst _ -> false
   | Cpure.CConst _ -> false
   | Cpure.SLen _ -> false
+  | Cpure.CLen _ -> false
   | Cpure.CharAt _ -> false
   | Cpure.CharUp _ -> false
 

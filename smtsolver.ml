@@ -127,10 +127,11 @@ let rec smt_of_exp a =
   | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
   | CP.FConst (f, _) -> string_of_float f
   | CP.SConst (s, _) -> "\"" ^ s ^ "\""
-  | CP.CConst (c, _) -> "(Substring \"" ^ (Char.escaped c) ^ "\" 0 1)"
+  | CP.CConst (c, _) -> "\"" ^ (Char.escaped c) ^ "\""
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Concat (s1, s2, _) -> "(Concat " ^ (smt_of_exp s1)^ " " ^(smt_of_exp s2)^")"
   | CP.SLen (s, _) -> "(Length " ^ (smt_of_exp s) ^ ")"
+  | CP.CLen (s, _) -> "(Indexof " ^ (smt_of_exp s) ^ " \"\\0\")"
   | CP.CharAt (s, i,_) -> "(CharAt " ^ (smt_of_exp s) ^ " " ^ (smt_of_exp i) ^ ")"
   | CP.CharUp (s,i,c,_) ->
        let () = if not (List.mem c !addition_length_exps) then
@@ -236,10 +237,9 @@ let rec smt_of_b_formula b =
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
   | CP.NonZero (e, l) -> " (not (Contains " ^ (smt_of_exp e) ^ " \"\\0\"))"
-(* EZ(s) = (substring(s,n-1,1) = "0") /\ (n = slen(s)) /\ (NZ(substring(s,0,n-1)) *)
-  | CP.EndZero (e, l) -> "(and (= (Substring " ^ (smt_of_exp e) ^ " (-(Length " ^ (smt_of_exp e) ^ ") 1) 1)\"\\0\")
-                               (not (Contains (Substring " ^ (smt_of_exp e) ^ " 0 (-(Length " ^ (smt_of_exp e) ^ ") 1)) \"\\0\")))"
-
+  (* | CP.EndZero (e, l) -> "(and (= (Substring " ^ (smt_of_exp e) ^ " (-(Length " ^ (smt_of_exp e) ^ ") 1) 1)\"\\0\") *)
+  (*                              (not (Contains (Substring " ^ (smt_of_exp e) ^ " 0 (-(Length " ^ (smt_of_exp e) ^ ") 1)) \"\\0\")))" *)
+  | CP.EndZero (e, l) -> " (Contains " ^ (smt_of_exp e) ^ " \"\\0\")"
 let rec smt_of_formula pr_w pr_s f =
   let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
   let rec helper f= (
