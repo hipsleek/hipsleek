@@ -1,4 +1,4 @@
-checkentail endzero (s_40_1821) & offset+1=slen(s_40_1821) & offset<length & 
- 0<=offset & (slen(s_40_1821))<=length & 
- v_string_40_1822=charUp(s_40_1821, offset, '\000') & 
- slen(v_string_40_1822)=slen(s_40_1821) |-  endzero (v_string_40_1822).
+checkentail endzero (s_40_1832) & offset_1814!=(clen(s_40_1832)) & 
+ offset_1814<(slen(s_40_1832)) & offset_1814<length & 0<=offset_1814 & 
+ (slen(s_40_1832))<=length & 
+ v_string_40_1833=charUp(s_40_1832, offset_1814, c) |-  endzero (v_string_40_1833).

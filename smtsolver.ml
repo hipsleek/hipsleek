@@ -928,6 +928,7 @@ and to_smt_v1 ante conseq logic fvars =
 
 (* Converts a core pure formula into SMT-LIB format which can be run through various SMT provers. *)
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) : string =
+  let () = addition_length_exps := [] in
   let conseq = match conseq with
     (* We don't have conseq part in is_sat checking *)
     | None -> CP.mkFalse no_pos
