@@ -75,7 +75,11 @@ print residue.
 expect Valid.
 
 /**
-(i) normalize Seq{P,emp}<> ---> P
+(i) normalize
+
+Seq{P,emp}<> ---> P
+Seq{emp,P}<> ---> P
+
 */
 
 checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, x::Seq{b::R{+ msg::node2<_>}<>, emp}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> .
