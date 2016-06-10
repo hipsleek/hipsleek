@@ -9,8 +9,6 @@ open Gen.BList
 module F = Iformula
 module CF = Cformula 
 
-
-
 type transmission = Send | Receive
 
 let string_of_seq  = ";;"
@@ -18,7 +16,13 @@ let string_of_transmission t =
   match t with
   | Send    -> "!"
   | Receive -> "?"
-    
+
+let chan_id:  string option ref = ref None
+let seq_id :  string option ref = ref None 
+let trans_id: string option ref = ref None
+let sess_id:  string option ref = ref None
+let send_id:  string option ref = ref None
+let recv_id:  string option ref = ref None
 
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
