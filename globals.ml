@@ -266,7 +266,7 @@ let string_of_view_kind k = match k with
   | View_EXTN -> "View_EXTN"
   | View_DERV -> "View_DERV"
   | View_SPEC -> "View_SPEC"
-  | View_SESS kind -> string_of_session_kind kind
+  | View_SESS kind -> "View_SESS(" ^ (string_of_session_kind kind) ^")"
 
 let is_undef_typ t =
   match t with
