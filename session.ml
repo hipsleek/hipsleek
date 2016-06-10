@@ -24,6 +24,14 @@ let sess_id:  string option ref = ref None
 let send_id:  string option ref = ref None
 let recv_id:  string option ref = ref None
 
+let set_prim_pred_id kind id = match kind with
+    | Transmission -> trans_id := Some id
+    | Session      -> sess_id := Some id
+    | Channel      -> chan_id := Some id
+    | Send         -> send_id := Some id
+    | Receive      -> recv_id := Some id
+    | Sequence     -> seq_id := Some id
+
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
 module type Message_type = sig

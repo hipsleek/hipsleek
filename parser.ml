@@ -1608,6 +1608,7 @@ view_header:
       Iast.mk_view_header vn opt1 cids mvs modes pos
    | `IDENTIFIER vn; `AT; kind = session_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
       let () = view_names # push vn in
+      let () = Session.set_prim_pred_id kind vn in
       let mvs = get_mater_vars l in
       let cids, anns = List.split l in
       let modes = get_modes anns in
