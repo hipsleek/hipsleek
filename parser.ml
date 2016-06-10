@@ -1321,7 +1321,7 @@ session_formula: [
             s
     ]
     | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
-            Session.Protocol.mk_base (first, second, c)
+            Session.Protocol.mk_base (first, second) c
        (* Session.boo (); *)
        (* failwith "tbi" *)
     ]
@@ -1345,9 +1345,9 @@ projection_formula: [
     ]
     |
       [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
-            Session.Projection.mk_base (Session.Send, channel, c)
+            Session.Projection.mk_base (Session.Send, channel) c
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
-            Session.Projection.mk_base (Session.Receive, channel, c)
+            Session.Projection.mk_base (Session.Receive, channel) c
     ]
 ];
 

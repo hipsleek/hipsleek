@@ -8,6 +8,8 @@ open Gen.BList
 
 module F = Iformula
 
+
+
 type transmission = Send | Receive
 
 (* ======= base formula for session type ====== *)
@@ -15,9 +17,12 @@ type transmission = Send | Receive
 module type Session_base = sig
   type t
   type a
+  type base_formula
 
   val print_session_base : t -> unit
-  val mk_base : a -> t
+  val mk_base : a -> base_formula -> t
+  val trans_session_base_2_iformula : t -> base_formula
+
 end;;
 
 type protocol_base_formula = {
@@ -34,34 +39,40 @@ type projection_base_formula = {
 
 module Protocol_base (* : Session_base *) = struct
   type t = protocol_base_formula
-  type a = ident * ident * F.formula
+  type a = ident * ident
+  type base_formula = F.formula
 
   let print_session_base f = begin
           Printf.printf "%s -> %s : " f.protocol_base_formula_sender f.protocol_base_formula_receiver;
           Printf.printf "%s" (!F.print_formula f.protocol_base_formula_message);
   end
 
-  let mk_base (sender, receiver, formula) = {
+  let mk_base (sender, receiver) formula = {
     protocol_base_formula_sender    = sender;
     protocol_base_formula_receiver  = receiver; 
     protocol_base_formula_message   = formula;
   }
 
+  let trans_session_base_2_iformula (sf: t): base_formula =  failwith x_tbi
+
 end;;
 
 module Projection_base (* : Session_base *) = struct
   type t = projection_base_formula
-  type a = transmission * ident * F.formula
+  type a = transmission * ident 
+  type base_formula = F.formula
 
   let print_session_base f = match f.projection_base_formula_op with
     | Send -> let () = Printf.printf "%s!(%s)" f.projection_base_formula_channel (!F.print_formula f.projection_base_formula_message) in ()
     | Receive -> let () = Printf.printf "%s?(%s)" f.projection_base_formula_channel (!F.print_formula f.projection_base_formula_message) in ()
 
-  let mk_base (transmission, channel, formula) = {
+  let mk_base (transmission, channel) formula = {
     projection_base_formula_op      = transmission;
     projection_base_formula_channel = channel;
     projection_base_formula_message = formula;
   }
+
+  let trans_session_base_2_iformula (sf: t): base_formula =  failwith x_tbi
 
 end;;
 
@@ -131,7 +142,7 @@ module Make_Session (Base: Session_base) = struct
           Printf.printf ")";
   end
 
-  let mk_base a = SBase (Base.mk_base a)
+  let mk_base a b = SBase (Base.mk_base a b)
 
   and mk_session_seq_formula session1 session2 loc = SSeq {
       session_seq_formula_head = session1;
@@ -150,7 +161,8 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_star2 = session2;
     session_seq_formula_pos   = loc;
     }
-      
+
+ 
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -165,7 +177,7 @@ type session_type = ProtocolSession of Protocol.session | ProjectionSession of P
 
 
 let boo () =
-  let prot = Protocol.mk_base ("", "", (F.mkTrue_nf no_pos)) in
+  let prot = Protocol.mk_base ("", "") (F.mkTrue_nf no_pos) in
   Protocol.print_session prot
   ;;
 

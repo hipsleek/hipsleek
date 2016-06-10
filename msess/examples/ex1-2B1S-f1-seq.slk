@@ -74,13 +74,37 @@ checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ ms
 print residue.
 expect Valid.
 
-checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, y::Seq{b::R{+ msg::node2<_>}, emp}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> .
+/**
+(i) normalize Seq{P,emp}<> ---> P
+*/
+
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, x::Seq{b::R{+ msg::node2<_>}<>, emp}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> .
 print residue.
-expect Fail.
+expect Valid.
+
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<> .
+print residue.
+expect Valid.
+
+/**
+(ii) how to tackle associativity ?
+(A;B);C ~= A;(B;C)
+
+always normalize to 
+*/
+//9
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{x::Seq{a::R{+ msg::node<_,_>}<>, b::R{+ msg::node2<_>}<>}<>, b::S{- msg::node2<_>}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>,x::Seq{b::R{+ msg::node2<_>}<>, b::S{- msg::node2<_>}<>}<>}<> .
+print residue.
+expect Valid.
+
+//10
+checkentail a::Chan<x> * b::Chan<x> * x::Seq{a::R{+ msg::node<_,_>}<>, x::Seq{b::R{+ msg::node2<_>}<>, b::S{- msg::node2<_>}<>}<>}<> |- x::Seq{a::R{+ msg::node<_,_>}<>,x::Seq{b::R{+ msg::node2<_>}<>, b::S{- msg::node2<_>}<>}<>}<> .
+print residue.
+expect Valid.
 
 
 /*
-data node {node next; int val;}.
+data node {node next; int val;  }.
 
 pred_prim Boo{%P}<>.
 pred p1<a> == self::Boo{a::node<null,1>}<>.
@@ -91,3 +115,13 @@ expect Valid.
 */
 
 
+/*
+
+((lhs: : . b::S{ - msg::node2<Anon_38>@M&{FLOW,(4,5)=__norm#E}[]}<>@M&
+{FLOW,(4,5)=__norm#E}[],
+rhs: : . x::Seq{ . b::R{ + msg::node2<Anon_41>@M&{FLOW,(4,5)=__norm#E}[]}<>@M&
+{FLOW,(4,5)=__norm#E}[], . b::S{ - msg::node2<Anon_42>@M&{FLOW,(4,5)=__norm#E}[]}<>@M&
+{FLOW,(4,5)=__norm#E}[]}<>@M&
+{FLOW,(4,5)=__norm#E}[]),)
+
+*/

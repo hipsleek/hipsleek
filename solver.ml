@@ -11255,11 +11255,22 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               in 
               (* End of match_one_ho_arg *)
 
+
+              let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) *
+                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
+                let () = y_binfo_pp "to implement session normalization" in
+                match_one_ho_arg_x ((lhs, rhs), k)
+                in
+
               let match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
                 (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
                  (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
                 let pr_rflow = Cprinter.string_of_rflow_formula in
-                let pr1 = pr_pair (pr_pair pr_rflow pr_rflow) string_of_ho_split_kind in
+                let pr1 = pr_pair (pr_pair
+                                     (add_str "lhs: " pr_rflow)
+                                     (add_str "rhs: " pr_rflow)) string_of_ho_split_kind in
+                (* ====== output helper printers: ====== *)
                 let pr3 = pr_option !MCP.print_mix_formula in
                 let pr4 = pr_option Cprinter.string_of_formula in
                 let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
