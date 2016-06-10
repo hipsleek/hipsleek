@@ -4324,7 +4324,7 @@ let pr_view_hdr v =
     | View_EXTN -> "_extn "
     | View_SPEC -> "_spec "
     | View_DERV -> "_derv "
-    | View_SESS -> "_sess "
+    | View_SESS kind -> (string_of_session_kind kind)^"_sess "
   in
   let ho_str = match v.view_ho_vars with
     (* | [] -> "" *)

@@ -175,6 +175,14 @@ let string_of_arg_kind i= match i with
 (*   | BagT of prim_type *)
 (*   | List *)
 
+type session_kind =
+  | Transmission
+  | Session
+  | Channel
+  | Send
+  | Receive
+  | Sequence
+
 type view_kind =
   | View_PRIM
   | View_HREL
@@ -182,8 +190,7 @@ type view_kind =
   | View_EXTN
   | View_DERV
   | View_SPEC
-  | View_SESS
-
+  | View_SESS of session_kind
 
 (* TODO : move typ here in future *)
 type typ =
@@ -244,6 +251,14 @@ type typ =
 
 type typed_ident = (typ * ident)
 
+let string_of_session_kind k = match k with
+  | Transmission -> "Transmission"
+  | Session -> "Session"
+  | Channel -> "Channel"
+  | Send -> "Send"
+  | Receive -> "Receive"
+  | Sequence -> "Sequence"
+
 let string_of_view_kind k = match k with
   | View_PRIM -> "View_PRIM"
   | View_HREL -> "View_HREL"
@@ -251,7 +266,7 @@ let string_of_view_kind k = match k with
   | View_EXTN -> "View_EXTN"
   | View_DERV -> "View_DERV"
   | View_SPEC -> "View_SPEC"
-  | View_SESS -> "View_SESS"
+  | View_SESS kind -> string_of_session_kind kind
 
 let is_undef_typ t =
   match t with

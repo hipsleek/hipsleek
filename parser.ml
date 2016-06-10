@@ -1285,14 +1285,17 @@ view_decl:
 
 prim_view_decl:
   [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
-      -> let (oi, oboi) = oi in
+      ->  let kind = match vh.view_kind with
+            | View_SESS k -> vh.view_kind
+            | _ -> View_PRIM in
+          let (oi, oboi) = oi in
           { vh with
           (* view_formula = None; *)
           view_invariant = oi;
           view_baga_inv = obi;
           view_baga_over_inv = oboi;
           view_baga_under_inv = obui;
-          view_kind = View_PRIM;
+          view_kind = kind;
           view_is_prim = true;
           view_is_hrel = None;
           view_inv_lock = li} ]];
@@ -1584,6 +1587,17 @@ branch: [[ `STRING (_,id);`COLON ->
     if !Globals.remove_label_flag then  LO.unlabelled
     else LO.singleton id ]];
 
+session_type: [[ `IDENTIFIER anno ->
+                    (match anno with
+                     | "trans" -> Transmission
+                     | "session" -> Session
+                     | "channel" -> Channel
+                     | "send" -> Send
+                     | "receive" -> Receive
+                     | "sequence" -> Sequence
+                     | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
+]];
+
 view_header:
   [[ `IDENTIFIER vn; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
       let () = view_names # push vn in
@@ -1592,6 +1606,14 @@ view_header:
       let modes = get_modes anns in
       let pos = get_pos_camlp4 _loc 1 in
       Iast.mk_view_header vn opt1 cids mvs modes pos
+   | `IDENTIFIER vn; `AT; kind = session_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
+      let () = view_names # push vn in
+      let mvs = get_mater_vars l in
+      let cids, anns = List.split l in
+      let modes = get_modes anns in
+      let pos = get_pos_camlp4 _loc 1 in
+      let vh = Iast.mk_view_header vn opt1 cids mvs modes pos in
+      {vh with view_kind = View_SESS kind}
 ]];
                                           
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
