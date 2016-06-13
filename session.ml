@@ -42,12 +42,14 @@ module type Message_type = sig
   type formula
   type pure_formula
   type h_formula
-  type arg
+  type ho_param_formula
+  type ('a,'b, 'c, 'd, 'e) arg = 'a * 'b * 'c * 'd * 'e
 
   val is_emp : formula -> bool
   val print  : formula -> string
   val mk_node: arg -> h_formula
-  val mk_formula_heap_only:  arg -> formula
+  val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
+  val mk_rflow_formula:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> formula
 end;;
 
@@ -55,22 +57,33 @@ module IForm = struct
   type formula = F.formula
   type pure_formula = P.formula
   type h_formula = F.h_formula
+  type ho_param_formula = F.rflow_formula
   type arg =  (Globals.ident * VarGen.primed) *
-    ident *
-    (F.rflow_formula list) *
-    (Ipure.exp list) *
-    VarGen.loc
+              ident *
+              (ho_param_formula list) *
+              (Ipure.exp list) *
+              VarGen.loc
 
   let is_emp f = failwith x_tbi
   let print    = !F.print_formula
+  (* ptr - pointer to heap, 
+     name - name of heap struct
+     ho - HO param 
+  *)
   let mk_node (ptr, name, ho, params, pos)  =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
     h
 
-  let mk_formula_heap_only (ptr, name, ho, params, pos)  =
-    let h = mk_node (ptr, name, ho, params, pos) in
+  let mk_formula_heap_only h pos =
+    (* let h = mk_node (ptr, name, ho, params, pos) in *)
     F.formula_of_heap_1 h pos
+
+  let mk_rflow_formula h ?kind:(k=NEUTRAL) pos =
+    let f =  mk_formula_heap_only h pos in
+    {  F.rflow_kind = k;
+       F.rflow_base = f;
+    }
 
   let mk_formula pure (ptr, name, ho, params, pos)  =
     let h = mk_node (ptr, name, ho, params, pos) in
@@ -82,13 +95,19 @@ module CForm = struct
   type formula = CF.formula
   type pure_formula = CP.formula
   type h_formula = CF.h_formula
-  type arg = int                (* to be changed *)
+  type ho_param_formula = CF.rflow_formula
+  type arg = (Globals.ident * VarGen.primed) *
+            ident *
+            (ho_param_formula list) *
+            (CP.spec_var list) *
+            VarGen.loc
 
   let is_emp f = failwith x_tbi
   let print    = !CF.print_formula
-  let mk_node (a:int) (* ptr name ho params pos *) = failwith x_tbi
-  let mk_formula_heap_only (a:int) (* ptr name ho params pos *) = failwith x_tbi
-  let mk_formula pure (a:int)  (* (ptr, name, ho, params, pos) *)  = failwith x_tbi
+  let mk_node (ptr, name, ho, params, pos)  = failwith x_tbi
+  let mk_formula_heap_only a pos (* ptr name ho params pos *) = failwith x_tbi
+  let mk_rflow_formula h ?kind:(k=NEUTRAL) pos = failwith x_tbi
+  let mk_formula pure a  (* (ptr, name, ho, params, pos) *)  = failwith x_tbi
     
 end;;
 
@@ -96,6 +115,7 @@ end;;
 module Protocol_base_formula =
   functor  (Msg: Message_type) ->
   struct
+    include Msg
     type t = Msg.formula
     type a = ident * ident
     type base = {
@@ -116,13 +136,14 @@ module Protocol_base_formula =
       protocol_base_formula_receiver  = receiver;
       protocol_base_formula_message   = formula;
     }
-    
+
   end;;
 
 (* inst for iformula & cformula *)
 module Projection_base_formula =
   functor  (Msg: Message_type) ->
   struct
+    include Msg
     type t = Msg.formula
     type a = transmission * ident
     type base = {
@@ -148,14 +169,15 @@ module Projection_base_formula =
   end;;
 
 module type Session_base =
-  sig
-    type t
-    type a
-    type base
+sig
+  include Message_type
+  type t
+  type a
+  type base
 
-    val print_session_base : base -> unit
-    val mk_base : a -> t -> base
-  end;;
+  val print_session_base : base -> unit
+  val mk_base : a -> t -> base
+end;;
 
 (* ============== session type ================ *)
 (* ============================================ *)
@@ -247,18 +269,26 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_pos   = loc;
     }
 
-  let mkSeq    = failwith x_tbi
-  let mkStar   = failwith x_tbi
-  let mkOr     = failwith x_tbi
+  let mk_seq_node args params pos  =
+    let sv = session_seq in
+    let name = !seq_id in
+    let args = List.map (fun a -> Base.mk_rflow_formula a pos) args in
+    let a = (sv, name, args, params, pos) in
+    Base.mk_node a
+    (* failwith x_tbi *)
+   
+  let mk_star_node = (* Base.mk_formula_heap_only *) failwith x_tbi
+  let mk_or_node   = (* Base.mk_formula_heap_only *) failwith x_tbi
       
   let rec trans_from_session s =
     match s with
     | SSeq s  ->
-      (* let arg1 = trans_from_session s.session_seq_formula_head in *)
-      (* let arg2 = trans_from_session s.session_seq_formula_tail in *)
+      let arg1 = trans_from_session s.session_seq_formula_head in
+      let arg2 = trans_from_session s.session_seq_formula_tail in
+      mk_seq_node [arg1;arg2] [] s.session_seq_formula_pos
       (* (\* node, view-name, ho-args, args *\) *)
       (* Base.mkFNode sv !seq_id [arg1;arg2] [] *)
-      failwith x_tbi
+      (* failwith x_tbi *)
     | SOr s   -> failwith x_tbi
     | SStar s -> failwith x_tbi
     | SBase s -> failwith x_tbi
