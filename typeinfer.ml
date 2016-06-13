@@ -930,19 +930,15 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let (n_tl,t2) = x_add gather_type_info_exp prog e2 n_tl (BagT new_et) in
     let (n_tl,_) = x_add must_unify t1 t2 n_tl pos in
     n_tl
-  | IP.NonZero (e1, e2, pos) ->
-    let (new_et1,n_tl) = fresh_string tlist in
-    let (new_et2,n_tl) = fresh_tvar tlist in
+  | IP.NonZero (e, pos) ->
+    let (new_et,n_tl) = fresh_string tlist in
     (* let (n_tl,r) = x_add must_unify Bool new_et n_tl pos in *)
-    let (n_tl,_) = gather_type_info_exp_x prog e1 n_tl new_et1 in
-    let (n_tl,_) = gather_type_info_exp_x prog e2 n_tl new_et2 in
+    let (n_tl,_) = gather_type_info_exp_x prog e n_tl new_et in
     n_tl
-  | IP.EndZero (e1, e2, pos) ->
-    let (new_et1,n_tl) = fresh_string tlist in
-    let (new_et2,n_tl) = fresh_tvar tlist in
+  | IP.EndZero (e, pos) ->
+    let (new_et,n_tl) = fresh_string tlist in
     (* let (n_tl,r) = x_add must_unify Bool new_et n_tl pos in *)
-    let (n_tl,_) = gather_type_info_exp_x prog e1 n_tl new_et1 in
-    let (n_tl,_) = gather_type_info_exp_x prog e2 n_tl new_et2 in
+    let (n_tl,_) = gather_type_info_exp_x prog e n_tl new_et in
     n_tl
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) -> (*Need consider*) (
       (* allow comparision btw 2 pointers having different types *)

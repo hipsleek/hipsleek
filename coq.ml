@@ -201,10 +201,8 @@ and coq_of_b_formula b =
   | CP.BagMax _ ->
     illegal_format "coq_of_exp : bags cannot be handled"
   (* failwith ("No bags in Coq yet") *)
-  | CP.NonZero (a1, a2, _) -> " nonzero (" ^ (coq_of_exp a1) ^ " " ^
-       (coq_of_exp a2) ^ ")"
-  | CP.EndZero (a1, a2, _) -> " endzero (" ^ (coq_of_exp a1) ^ " " ^
-       (coq_of_exp a2) ^ ")"
+  | CP.NonZero (a, _) -> " nonzero (" ^ (coq_of_exp a) ^ ")"
+  | CP.EndZero (a, _) -> " endzero (" ^ (coq_of_exp a) ^ ")"
   | CP.RelForm _ ->
     (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
     illegal_format "coq_of_exp : relation cannot be handled"

@@ -305,8 +305,8 @@ and p_formula =
   | ImmRel of (p_formula * imm_ann * loc) (* RelForm * cond * pos *)
 (* An Hoa: Relational formula to capture relations, for instance, *)
 (* s(a,b,c) or t(x+1,y+2,z+3), etc. *)
-  | NonZero of (exp * exp * loc)
-  | EndZero of (exp * exp * loc)
+  | NonZero of (exp * loc)
+  | EndZero of (exp * loc)
 
 (* Expression *)
 and exp =
@@ -1552,14 +1552,12 @@ and bfv (bf : b_formula) =
   | BagSub (a1, a2, _) -> combine_avars a1 a2
   | BagMax (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
   | BagMin (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
-  | NonZero (a1, a2,  _) ->
-    let fv1 = afv a1 in
-    let fv2 = afv a2 in
-    remove_dups_svl (fv1 @ fv2)
-  | EndZero (a1, a2,  _) ->
-    let fv1 = afv a1 in
-    let fv2 = afv a2 in
-    remove_dups_svl (fv1 @ fv2)
+  | NonZero (a, _) ->
+    let fv = afv a in
+    fv
+  | EndZero (a, _) ->
+    let fv = afv a in
+    fv
   | ListIn (a1, a2, _) ->
     let fv1 = afv a1 in
     let fv2 = afv a2 in
@@ -2459,9 +2457,9 @@ and mkBagSubExp e1 e2 pos =
 
 (******************************************)
 
-and mkNonZero s i pos = NonZero (s , i, pos)
+and mkNonZero s pos = NonZero (s , pos)
 
-and mkEndZero s i pos = EndZero (s , i, pos)
+and mkEndZero s pos = EndZero (s , pos)
 
 (******************************************)
 
@@ -3553,14 +3551,12 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
                             let (ne2,r2) = helper new_arg e2 in
                             (BagSub (ne1,ne2,l),f_comb[r1;r2])
                           (* string formulas *)
-                          | NonZero (e1, e2, l) ->
-                            let (ne1,r1) = helper new_arg e1 in
-                            let (ne2,r2) = helper new_arg e2 in
-                            (NonZero (ne1,ne2,l), f_comb[r1;r2])
-                          | EndZero (e1, e2, l) ->
-                            let (ne1,r1) = helper new_arg e1 in
-                            let (ne2,r2) = helper new_arg e2 in
-                            (EndZero (ne1,ne2,l), f_comb[r1;r2])
+                          | NonZero (e, l) ->
+                            let (ne,r) = helper new_arg e in
+                            (NonZero (ne,l), f_comb[r])
+                          | EndZero (e, l) ->
+                            let (ne,r) = helper new_arg e in
+                            (EndZero (ne,l), f_comb[r])
                           | ListIn (e1,e2,l) ->
                             let (ne1,r1) = helper new_arg e1 in
                             let (ne2,r2) = helper new_arg e2 in
@@ -3680,14 +3676,12 @@ let transform_b_formula f (e:b_formula) :b_formula =
                   let ne2 = transform_exp f_exp e2 in
                   BagSub (ne1,ne2,l)
                 (* string formulas *)
-                | NonZero (e1,e2,l) ->
-                  let ne1 = transform_exp f_exp e1 in
-                  let ne2 = transform_exp f_exp e2 in
-                  NonZero (ne1,ne2,l)
-                | EndZero (e1,e2,l) ->
-                  let ne1 = transform_exp f_exp e1 in
-                  let ne2 = transform_exp f_exp e2 in
-                  EndZero (ne1,ne2,l)
+                | NonZero (e,l) ->
+                  let ne = transform_exp f_exp e in
+                  NonZero (ne,l)
+                | EndZero (e,l) ->
+                  let ne = transform_exp f_exp e in
+                  EndZero (ne,l)
                 | ListIn (e1,e2,l) ->
                   let ne1 = transform_exp f_exp e1 in
                   let ne2 = transform_exp f_exp e2 in
@@ -3971,8 +3965,8 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
   | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eqExp_f eq e1 e4) && ((eqExp_f eq e2 e5) && (eqExp_f eq e3 e6)) || ((eqExp_f eq e2 e6) && (eqExp_f eq e3 e5))
   | (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
   | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq sv1 sv2) && (eqExp_f eq e1 e2)
-  | (NonZero(e1, e2, _), NonZero(e3, e4, _)) -> (eqExp_f eq e1 e3) && (eqExp_f eq e2 e4)
-  | (EndZero(e1, e2, _), EndZero(e3, e4, _)) -> (eqExp_f eq e1 e3) && (eqExp_f eq e2 e4)
+  | (NonZero(e1, _), NonZero(e2, _)) -> (eqExp_f eq e1 e2)
+  | (EndZero(e1, _), EndZero(e2, _)) -> (eqExp_f eq e1 e2)
   | (ListIn(e1, e2, _), ListIn(d1, d2, _))
   | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
   | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
@@ -4213,8 +4207,8 @@ and pos_of_b_formula (b: b_formula) =
   | BagMin (_, _, p) -> p
   | BagMax (_, _, p) -> p
   (* string formulas *)
-  | NonZero (_, _, p) -> p
-  | EndZero (_, _, p) -> p
+  | NonZero (_, p) -> p
+  | EndZero (_, p) -> p
   (* list formulas *)
   | ListIn (_, _, p) -> p
   | ListNotIn (_, _, p) -> p
@@ -4266,8 +4260,8 @@ and subst_pos_pformula p pf= match pf with
   | BagSub(e1, e2, _) -> BagSub (e1, e2, p)
   | BagMin (sv1, sv2, _) -> BagMin (sv1, sv2, p)
   | BagMax (sv1, sv2, _) -> BagMax (sv1, sv2, p)
-  | NonZero (e1, e2, _) -> NonZero (e1, e2, p)
-  | EndZero (e1, e2, _) -> EndZero (e1, e2, p)
+  | NonZero (e, _) -> NonZero (e, p)
+  | EndZero (e, _) -> EndZero (e, p)
   | ListIn (e1, e2, _) -> ListIn (e1, e2, p)
   | ListNotIn (e1, e2, _) -> ListNotIn (e1, e2, p)
   | ListAllN (e1, e2, _) -> ListAllN (e1, e2, p)
@@ -4703,10 +4697,8 @@ and b_apply_subs_x sst bf =
               (* | VarPerm (ct,ls,pos) ->                    *)
               (*     let ls1 = List.map (subs_one sst) ls in *)
               (*     VarPerm (ct,ls1,pos)                    *)
-              | NonZero (e1, e2, pos) -> NonZero (e_apply_subs sst e1,
-                                                  e_apply_subs sst e2, pos)
-              | EndZero (e1, e2, pos) -> EndZero (e_apply_subs sst e1,
-                                                  e_apply_subs sst e2, pos)
+              | NonZero (e, pos) -> NonZero (e_apply_subs sst e, pos)
+              | EndZero (e, pos) -> EndZero (e_apply_subs sst e, pos)
               | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
               | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
               | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -4995,10 +4987,8 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
               | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
               | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
               (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*Do not substitute*) *)
-              | NonZero (e1, e2, pos) -> NonZero (a_apply_par_term sst e1,
-                                                  a_apply_par_term sst e2, pos)
-              | EndZero (e1, e2, pos) -> EndZero (a_apply_par_term sst e1,
-                                                  a_apply_par_term sst e2, pos)
+              | NonZero (e, pos) -> NonZero (a_apply_par_term sst e, pos)
+              | EndZero (e, pos) -> EndZero (a_apply_par_term sst e, pos)
               | ListIn (a1, a2, pos) -> ListIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
               | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
               | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -5135,10 +5125,8 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
               | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
               | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
               (* | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (* Do  not substitute, is is the list of variable names*) *)
-              | NonZero (e1, e2, pos) -> NonZero (a_apply_one_term (fr, t) e1,
-                                                  a_apply_one_term (fr, t) e2, pos)
-              | EndZero (e1, e2, pos) -> EndZero (a_apply_one_term (fr, t) e1,
-                                                  a_apply_one_term (fr, t) e2, pos)
+              | NonZero (e, pos) -> NonZero (a_apply_one_term (fr, t) e, pos)
+              | EndZero (e, pos) -> EndZero (a_apply_one_term (fr, t) e, pos)
               | ListIn (a1, a2, pos) -> ListIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
               | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
               | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -6780,10 +6768,8 @@ and b_apply_one_exp (fr, t) bf =
               | BagMin (v1, v2, pos) -> pf
               (* | VarPerm (ct,ls,pos) -> pf (*Do not substitute, ls
   is the list of variable names*) *)
-              | NonZero (e1, e2, pos) -> NonZero (e_apply_one_exp (fr, t) e1,
-                                                  e_apply_one_exp (fr, t) e2, pos)
-              | EndZero (e1, e2, pos) -> EndZero (e_apply_one_exp (fr, t) e1,
-                                                  e_apply_one_exp (fr, t) e2, pos)
+              | NonZero (e, pos) -> NonZero ( e_apply_one_exp (fr, t) e, pos)
+              | EndZero (e, pos) -> EndZero ( e_apply_one_exp (fr, t) e, pos)
               | ListIn (a1, a2, pos) -> pf
               | ListNotIn (a1, a2, pos) -> pf
               | ListAllN (a1, a2, pos) -> pf
@@ -7758,10 +7744,8 @@ and b_form_simplify_x (b:b_formula) :b_formula =
               |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
               |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult
   (simp_mult e1), l)
-              |  NonZero (e1, e2, l) -> NonZero (purge_mult (simp_mult e1),
-                                                 purge_mult (simp_mult e2), l)
-              |  EndZero (e1, e2, l) -> EndZero (purge_mult (simp_mult e1),
-                                                 purge_mult (simp_mult e2), l)
+              |  NonZero (e, l) -> NonZero (purge_mult (simp_mult e), l)
+              |  EndZero (e, l) -> EndZero (purge_mult (simp_mult e), l)
               |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
               |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
               |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
@@ -8024,8 +8008,8 @@ let norm_bform_a (bf:b_formula) : b_formula =
                   | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l
                   | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
                   | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
-                  | NonZero (e1, e2, l) -> NonZero(norm_exp e1, norm_exp e2, l)
-                  | EndZero (e1, e2, l) -> EndZero(norm_exp e1, norm_exp e2, l)
+                  | NonZero (e, l) -> NonZero(norm_exp e, l)
+                  | EndZero (e, l) -> EndZero(norm_exp e, l)
                   | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
                   | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
                   | Frm _ | BConst _ | BVar _ | EqMax _  | XPure _
@@ -9065,8 +9049,8 @@ let norm_bform_b (bf:b_formula) : b_formula =
                 norm_bform_neq e1 e2 l
               | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
               | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
-              | NonZero (e1, e2, l) -> NonZero (norm_exp e1, norm_exp e2, l)
-              | EndZero (e1, e2, l) -> EndZero (norm_exp e1, norm_exp e2, l)
+              | NonZero (e, l) -> NonZero (norm_exp e, l)
+              | EndZero (e, l) -> EndZero (norm_exp e, l)
               | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
               | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
               | RelForm (v,es,l) -> RelForm (v, List.map norm_exp es, l)

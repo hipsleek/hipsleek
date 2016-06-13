@@ -1,13 +1,7 @@
-checksat nonzero("abc\\0",2).
+checksat nonzero("abc0").
 
-checkentail nonzero(s1,n) & s = s1^s2 |- nonzero(s,n).
+checkentail nonzero(s1) & s = s1^s2 |- nonzero(s).
 
-checkentail nonzero(s,n1) & n2 < n1 |- nonzero(s,n2).
+checkentail nonzero(s1) & !(nonzero(s2)) & s = s1^s2 |- !(nonzero(s)).
 
-checkentail nonzero(s1,n) & s = s1 ^ s2 |- nonzero(s,n).
-
-checkentail nonzero(s1,slen(s1)-1) & nonzero(s2,slen(s2)-1) & s = s1^s2 |- nonzero(s,slen(s)-1).
-
-checkentail nonzero(s1,slen(s1)-1) & !(nonzero(s2,i)) & s = s1^s2 |- !(nonzero(s,slen(s)-1)).
-
-checkentail !(nonzero(s2,i)) & s = s1^s2 |- !(nonzero(s,slen(s)-1)).
+checkentail !(nonzero(s2)) & s = s1^s2 |- !(nonzero(s)).

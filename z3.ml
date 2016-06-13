@@ -225,10 +225,11 @@ let rec smt_of_b_formula b =
     else
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
-  | CP.NonZero (s, n, l) -> " (not (Contains (Substring " ^
-       (smt_of_exp s) ^ " 0 " ^ (smt_of_exp n) ^ " ) \"\\0\"))"
-  | CP.EndZero (s, n, l) -> " (= (Indexof " ^ (smt_of_exp s) ^ "
-  \"\\0\") " ^ (smt_of_exp n) ^")"
+  | CP.NonZero (e, l) -> " (not (Contains " ^ (smt_of_exp e) ^ "
+  \"0\"))"
+  | CP.EndZero (e, l) -> " (Contains " ^ (smt_of_exp e) ^ " \"\\0\")"
+  (* | CP.EndZero (e, l) -> "(and (= (Substring " ^ (smt_of_exp e) ^ "(-(Length " ^ (smt_of_exp e) ^ ") 1) 1)\"0\") *)
+  (*                              (not (Contains (Substring " ^ (smt_of_exp e) ^ "0 (-(Length " ^ (smt_of_exp e) ^ ")) 1) \"0\")))" *)
 
 let rec smt_of_formula pr_w pr_s f =
   let () = x_dinfo_hp (add_str "f(z3)" !CP.print_formula) f no_pos in
