@@ -1595,6 +1595,7 @@ session_type: [[ `IDENTIFIER anno ->
                      | "send" -> Send
                      | "receive" -> Receive
                      | "sequence" -> Sequence
+                     | "disjunction" -> SOr
                      | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
 ]];
 

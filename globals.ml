@@ -182,6 +182,7 @@ type session_kind =
   | Send
   | Receive
   | Sequence
+  | SOr
 
 type view_kind =
   | View_PRIM
@@ -258,6 +259,7 @@ let string_of_session_kind k = match k with
   | Send -> "Send"
   | Receive -> "Receive"
   | Sequence -> "Sequence"
+  | SOr -> "SessionOr"
 
 let string_of_view_kind k = match k with
   | View_PRIM -> "View_PRIM"
