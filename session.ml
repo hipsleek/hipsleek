@@ -7,7 +7,9 @@ open Printf
 open Gen.BList
 
 module F = Iformula
-module CF = Cformula 
+module P = Ipure_D
+module CF = Cformula
+module CP = Cpure
 
 type transmission = Send | Receive
 
@@ -35,17 +37,64 @@ let set_prim_pred_id kind id = match kind with
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
 module type Message_type = sig
-  type t
+  type formula
+  type pure_formula
+  type h_formula
+  type arg
 
-  val is_emp : t -> bool
-  val print  : t -> string
+  val is_emp : formula -> bool
+  val print  : formula -> string
+  val mk_node: arg -> h_formula
+  val mk_formula_heap_only:  arg -> formula
+  val mk_formula: pure_formula -> arg -> formula
+end;;
+
+module IForm = struct
+  type formula = F.formula
+  type pure_formula = P.formula
+  type h_formula = F.h_formula
+  type arg =  (Globals.ident * VarGen.primed) *
+    ident *
+    (F.rflow_formula list) *
+    (Ipure.exp list) *
+    VarGen.loc
+
+  let is_emp f = failwith x_tbi
+  let print    = !F.print_formula
+  let mk_node (ptr, name, ho, params, pos)  =
+    let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
+               (P.ConstAnn(Mutable)) false false false None params [] None pos) in
+    h
+
+  let mk_formula_heap_only (ptr, name, ho, params, pos)  =
+    let h = mk_node (ptr, name, ho, params, pos) in
+    F.formula_of_heap_1 h pos
+
+  let mk_formula pure (ptr, name, ho, params, pos)  =
+    let h = mk_node (ptr, name, ho, params, pos) in
+    F.mkBase_wo_flow h pure [] pos
+
+end;;
+
+module CForm = struct
+  type formula = CF.formula
+  type pure_formula = CP.formula
+  type h_formula = CF.h_formula
+  type arg = int                (* to be changed *)
+
+  let is_emp f = failwith x_tbi
+  let print    = !CF.print_formula
+  let mk_node (a:int) (* ptr name ho params pos *) = failwith x_tbi
+  let mk_formula_heap_only (a:int) (* ptr name ho params pos *) = failwith x_tbi
+  let mk_formula pure (a:int)  (* (ptr, name, ho, params, pos) *)  = failwith x_tbi
+    
 end;;
 
 (* inst for iformula & cformula *)
 module Protocol_base_formula =
   functor  (Msg: Message_type) ->
   struct
-    type t = Msg.t
+    type t = Msg.formula
     type a = ident * ident
     type base = {
       protocol_base_formula_sender   : ident;
@@ -65,14 +114,14 @@ module Protocol_base_formula =
       protocol_base_formula_receiver  = receiver;
       protocol_base_formula_message   = formula;
     }
-
+    
   end;;
 
 (* inst for iformula & cformula *)
 module Projection_base_formula =
   functor  (Msg: Message_type) ->
   struct
-    type t = Msg.t
+    type t = Msg.formula
     type a = transmission * ident
     type base = {
       projection_base_formula_op      : transmission;
@@ -105,19 +154,6 @@ module type Session_base =
     val print_session_base : base -> unit
     val mk_base : a -> t -> base
   end;;
-
-module IForm = struct
-  type t = F.formula
-  let is_emp f = failwith x_tbi
-  let print    = !F.print_formula
-end;;
-
-module CForm = struct
-  type t = CF.formula
-  let is_emp f = failwith x_tbi
-  let print    = !CF.print_formula
-end;;
-
 
 (* ============== session type ================ *)
 (* ============================================ *)
@@ -209,6 +245,23 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_pos   = loc;
     }
 
+  let mkSeq    = failwith x_tbi
+  let mkStar   = failwith x_tbi
+  let mkOr     = failwith x_tbi
+      
+  let rec trans_from_session s =
+    match s with
+    | SSeq s  ->
+      (* let arg1 = trans_from_session s.session_seq_formula_head in *)
+      (* let arg2 = trans_from_session s.session_seq_formula_tail in *)
+      (* (\* node, view-name, ho-args, args *\) *)
+      (* Base.mkFNode sv !seq_id [arg1;arg2] [] *)
+      failwith x_tbi
+    | SOr s   -> failwith x_tbi
+    | SStar s -> failwith x_tbi
+    | SBase s -> failwith x_tbi
+    | SEmp    -> failwith x_tbi
+    
   (* let is_emp f = *)
   (*   match f with *)
   (*   | SSeq  _ *)
@@ -247,7 +300,8 @@ module CProtocol = Make_Session(CProtocol_base);;
 module IProjection = Make_Session(IProjection_base);;
 module CProjection = Make_Session(CProjection_base);;
 
-type session_type = ProtocolSession of IProtocol.session | ProjectionSession of IProjection.session
+type session_type = ProtocolSession of IProtocol.session
+                  | ProjectionSession of IProjection.session
 
 (* =========== Make Methods ========== *)
 (* ============================================ *)

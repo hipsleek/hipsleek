@@ -464,7 +464,8 @@ and disj_of_list l default pos = match l with
   | [] -> if default then mkTrue n_flow pos else mkFalse false_flow pos
   | h::t -> List.fold_left (fun c1 c2-> mkOr c1 c2 pos) h t
 
-and mkBase_wo_flow (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) (a: one_formula list) pos =
+and mkBase_wo_flow (h : h_formula) (p : P.formula) ?vperm:(vp=IvpermUtils.empty_vperm_sets)
+    (a: one_formula list) pos =
   mkBase h p vp top_flow a pos
 
 and mkBase (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) flow (a: one_formula list) pos = 

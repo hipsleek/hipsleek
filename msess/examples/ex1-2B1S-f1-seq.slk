@@ -107,6 +107,15 @@ print residue.
 expect Valid.
 
 
+//10
+checkentail a::Chan<x> * b::Chan<x> *
+            x::Seq{a::R{+ msg::node<_,_>}<>, x::Seq{b::R{+ msg::node2<_>}<>, b::S{- msg::node2<_>}<>}<>}<>
+            |- x::Seq{a::R{+ msg::node<_,_>}<>,x::Seq{b::R{+ msg::node2<_>}<>, b::S{- msg::node2<_>}<>}<>}<> .
+print residue.
+expect Valid.
+
+
+
 /*
 data node {node next; int val;  }.
 
