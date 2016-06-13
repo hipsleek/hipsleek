@@ -350,7 +350,8 @@ and string_of_p_formula pf =
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
   | P.XPure _ -> Error.report_no_pattern()
-  | P.NonZero(e,l) -> "NonZero(" ^ (string_of_formula_exp e) ^ ")"
+  | P.NonZero(e1, e2, l) -> "NonZero(" ^ (string_of_formula_exp e1) ^
+       "," ^ (string_of_formula_exp e2) ^ ")"
   | P.EndZero(e,l) -> "EndZero(" ^ (string_of_formula_exp e) ^ ")"
 
 and string_of_vperm_sets vps =

@@ -441,7 +441,8 @@ let cexp_to_pure2 fct f01 f02 =
                     | _ -> false
                   )
               ) in
-              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then
+              if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) ||
+                (arr_typ_check typ1 typ2) || (typ1 == String) then
                 Pure_f (P.BForm(((fct f1 f2), None), None))
               else
                 report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
@@ -2230,8 +2231,9 @@ cexp_w:
     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN ->
         let f = Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None))  in
         set_slicing_utils_pure_double f false
-    | `NONZERO; `OPAREN; c = SELF; `CPAREN ->
-       let f = cexp_to_pure1 (fun c-> P.NonZero(c,(get_pos_camlp4 _loc 1))) c in
+    | `NONZERO; `OPAREN; c1 = SELF; `COMMA; c2 = SELF; `CPAREN ->
+       let f = cexp_to_pure2 (fun c1 c2->
+           P.NonZero(c1,c2,(get_pos_camlp4 _loc 2))) c1 c2 in
        set_slicing_utils_pure_double f false
     | `ENDZERO; `OPAREN; c = SELF; `CPAREN ->
        let f = cexp_to_pure1 (fun c-> P.EndZero(c,(get_pos_camlp4 _loc 1))) c in

@@ -2028,8 +2028,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Ipure.ImmRel (helper_p_formula an, cond, pos)
     | Ipure.RelForm (id, el, pos) ->
       Ipure.RelForm (id, List.map (fun e -> helper_exp e) el, pos) (* TODO *)
-    | Ipure.NonZero (e, pos) ->
-      Ipure.NonZero (helper_exp e, pos)
+    | Ipure.NonZero (e1, e2, pos) ->
+      Ipure.NonZero (helper_exp e1, helper_exp e2, pos)
     | Ipure.EndZero (e, pos) ->
       Ipure.EndZero (helper_exp e, pos)
   )
