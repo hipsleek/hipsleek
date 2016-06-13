@@ -2235,8 +2235,9 @@ cexp_w:
        let f = cexp_to_pure2 (fun c1 c2->
            P.NonZero(c1,c2,(get_pos_camlp4 _loc 2))) c1 c2 in
        set_slicing_utils_pure_double f false
-    | `ENDZERO; `OPAREN; c = SELF; `CPAREN ->
-       let f = cexp_to_pure1 (fun c-> P.EndZero(c,(get_pos_camlp4 _loc 1))) c in
+    | `ENDZERO; `OPAREN; c1 = SELF; `COMMA; c2 = SELF; `CPAREN ->
+       let f = cexp_to_pure2 (fun c1 c2->
+           P.EndZero(c1,c2,(get_pos_camlp4 _loc 2))) c1 c2 in
        set_slicing_utils_pure_double f false
     | lc=SELF; `INLIST; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in

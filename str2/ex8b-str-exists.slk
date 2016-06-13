@@ -1,29 +1,23 @@
 //1
-checksat endzero("abc\x00a").
+checksat endzero("abc\x00a",3).
 
 //2
-checksat endzero("abc").
+checksat endzero("abc",n).
 
 //3
-checksat endzero("abc") & nonzero("abc").
+checksat endzero("abc\x00a",n).
 
 //4
-checksat endzero(s) & nonzero(s).
+checksat endzero(s,n) & nonzero(s,n).
 
 //5
-checkentail endzero(s) |- !(nonzero(s)).
+checkentail endzero(s,n) |- !(nonzero(s,n)).
 
 //6
-checkentail nonzero(s) |- !(endzero(s)).
+checkentail endzero(s,n) |- nonzero(s,n-1).
 
 //7
-checkentail nonzero(s1) & nonzero(s2) & s = s1^s2 |- nonzero(s).
+checkentail endzero(s2,n2) & s = s1^s2 |- endzero(s,n).
 
-//8
-checkentail (!(nonzero(s1)) | !(nonzero(s2))) & s = s1^s2 |- !(nonzero(s)).
-
-//9
-checkentail endzero(s2) & s = s1^s2 |- endzero(s).
-
-//10
-checkentail endzero(s2) & s = s1^s2 & nonzero(s1) |- endzero(s).
+// //10
+checkentail endzero(s2,n2) & s = s1^s2 & nonzero(s1,slen(s1)-1) |- endzero(s,slen(s1) + n2).

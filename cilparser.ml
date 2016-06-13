@@ -2030,8 +2030,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Ipure.RelForm (id, List.map (fun e -> helper_exp e) el, pos) (* TODO *)
     | Ipure.NonZero (e1, e2, pos) ->
       Ipure.NonZero (helper_exp e1, helper_exp e2, pos)
-    | Ipure.EndZero (e, pos) ->
-      Ipure.EndZero (helper_exp e, pos)
+    | Ipure.EndZero (e1, e2, pos) ->
+      Ipure.EndZero (helper_exp e1, helper_exp e2, pos)
   )
   and helper_exp (e : Ipure.exp) : Ipure.exp = (
     match e with

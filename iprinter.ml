@@ -352,7 +352,8 @@ and string_of_p_formula pf =
   | P.XPure _ -> Error.report_no_pattern()
   | P.NonZero(e1, e2, l) -> "NonZero(" ^ (string_of_formula_exp e1) ^
        "," ^ (string_of_formula_exp e2) ^ ")"
-  | P.EndZero(e,l) -> "EndZero(" ^ (string_of_formula_exp e) ^ ")"
+  | P.EndZero(e1, e2, l) -> "EndZero(" ^ (string_of_formula_exp e1) ^
+       "," ^ (string_of_formula_exp e2) ^ ")"
 
 and string_of_vperm_sets vps =
   let pr_elem vpa svl =

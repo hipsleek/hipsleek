@@ -8599,9 +8599,10 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                     let pe1 = x_add trans_pure_exp e1 tlist in
                     let pe2 = x_add trans_pure_exp e2 tlist in
                     CP.NonZero (pe1, pe2, pos)
-               | IP.EndZero (e, pos) ->
-                    let pe = x_add trans_pure_exp e tlist in
-                    CP.EndZero (pe, pos)
+               | IP.EndZero (e1, e2, pos) ->
+                    let pe1 = x_add trans_pure_exp e1 tlist in
+                    let pe2 = x_add trans_pure_exp e2 tlist in
+                    CP.EndZero (pe1, pe2, pos)
                | IP.ListIn (e1, e2, pos) ->
                  let pe1 = x_add trans_pure_exp e1 tlist in
                  let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)

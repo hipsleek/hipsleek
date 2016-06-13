@@ -211,9 +211,10 @@ and pfv (pf: p_formula)=
     let fv1 = afv e1 in
     let fv2 = afv e2 in
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
-  | EndZero (e, _) ->
-    let fv = afv e in
-    Gen.BList.remove_dups_eq (=) fv
+  | EndZero (e1, e2, _) ->
+    let fv1 = afv e1 in
+    let fv2 = afv e2 in
+    Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
   | ListIn (a1, a2, _) ->
     let fv1 = afv a1 in
     let fv2 = afv a2 in
@@ -619,7 +620,7 @@ and pos_of_pf pf=
     | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) -> p
     (* | VarPerm (_,_,p) -> p *)
     | XPure xp ->  xp.xpure_view_pos
-    | NonZero (_,_,p) | EndZero(_,p) -> p
+    | NonZero (_,_,p) | EndZero(_,_,p) -> p
   end
 
 and pos_of_exp (e : exp) = match e with
@@ -845,7 +846,8 @@ and p_apply_one ((fr, t) as p) pf =
   (*     VarPerm (ct,ls1,pos)              *)
   | NonZero (e1, e2, pos) -> NonZero (e_apply_one (fr, t) e1,
                                       e_apply_one (fr, t) e2, pos)
-  | EndZero (e, pos) -> EndZero (e_apply_one (fr, t) e, pos)
+  | EndZero (e1, e2, pos) -> EndZero (e_apply_one (fr, t) e1,
+                                      e_apply_one (fr, t) e2, pos)
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -1001,7 +1003,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   | BagMax (b1, b2, _) -> (anon_var b1) @ (anon_var b2)
   (* | VarPerm _ -> [] (*can not have anon_var*) *)
   | NonZero (b,_, _) -> (look_for_anonymous_exp b)
-  | EndZero (b, _) -> (look_for_anonymous_exp b)
+  | EndZero (b,_, _) -> (look_for_anonymous_exp b)
   | ListIn (b1, b2,  _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -1082,7 +1084,7 @@ and find_lexp_p_formula (pf: p_formula) ls =
   | BagMin _ | BagMax _ -> []
   (* | VarPerm _ -> [] *)
   | NonZero (e1,e2,_) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-  | EndZero (e, _) -> find_lexp_exp e ls
+  | EndZero (e1,e2,_) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | ListIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | ListNotIn (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
   | ListAllN (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1252,7 +1254,7 @@ and p_contain_vars_exp (pf) : bool = match pf with
   | BagMin _
   | BagMax _ -> false
   | NonZero (e1, e2, _) -> (contain_vars_exp e1) || (contain_vars_exp e2)
-  | EndZero (e, _) -> (contain_vars_exp e)
+  | EndZero (e1, e2, _) -> (contain_vars_exp e1) || (contain_vars_exp e2)
   | ListIn (exp1, exp2,_)
   | ListNotIn (exp1, exp2,_)
   | ListAllN (exp1, exp2,_)
@@ -1811,7 +1813,11 @@ and float_out_pure_min_max (p : formula) : formula =
       let ne2, np2 = float_out_exp_min_max e2 in
       let t = BForm ((NonZero (ne1, ne2, l), il),lbl) in
       add_exists t np1 np2 l
-    | EndZero (e, _) -> BForm (b, lbl)
+    | EndZero (e1, e2, l) ->
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let t = BForm ((EndZero (ne1, ne2, l), il),lbl) in
+      add_exists t np1 np2 l
     | ListIn (e1, e2, l) ->
       let ne1, np1 = float_out_exp_min_max e1 in
       let ne2, np2 = float_out_exp_min_max e2 in
@@ -2328,9 +2334,10 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
                       let ne1 = transform_exp f_exp e1 in
                       let ne2 = transform_exp f_exp e2 in
                       NonZero (ne1, ne2, l)
-                    | EndZero (e, l) ->
-                      let ne = transform_exp f_exp e in
-                      EndZero (ne, l)
+                    | EndZero (e1,e2,l) ->
+                      let ne1 = transform_exp f_exp e1 in
+                      let ne2 = transform_exp f_exp e2 in
+                      EndZero (ne1, ne2, l)
                     | ListIn (e1,e2,l) ->
                       let ne1 = transform_exp f_exp e1 in
                       let ne2 = transform_exp f_exp e2 in
