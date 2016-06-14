@@ -1,0 +1,11 @@
+//1
+checksat substr("abcd",0,1) = "ab".
+
+//2
+checkentail substr(s,0,slen(s)-1) = s1 & endzero(s) |- nonzero(s1).
+
+//3
+checkentail substr(s,slen(s)-1,1) = s1 & endzero(s) |- s1 = "\\0".
+
+//4
+checkentail substr(s,slen(s)-1,1) = s1 |- s1 = "\\0".
