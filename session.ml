@@ -10,6 +10,7 @@ module F = Iformula
 module P = Ipure_D
 module CF = Cformula
 module CP = Cpure
+module MCP = Mcpure
 
 type transmission = Send | Receive
 
@@ -112,10 +113,25 @@ module CForm = struct
 
   let is_emp f = failwith x_tbi
   let print    = !CF.print_formula
-  let mk_node (ptr, name, ho, params, pos)  = failwith x_tbi
-  let mk_formula_heap_only a pos (* ptr name ho params pos *) = failwith x_tbi
-  let mk_rflow_formula h ?kind:(k=NEUTRAL) pos = failwith x_tbi
-  let mk_formula pure a  (* (ptr, name, ho, params, pos) *)  = failwith x_tbi
+  let mk_node (ptr, name, ho, params, pos) =
+    let h = CF.mkViewNode ptr name params pos in
+    match h with
+      | CF.ViewNode node -> CF.ViewNode {node with h_formula_view_ho_arguments = ho}
+      | _ -> failwith "Not a ViewNode."
+
+  let mk_formula_heap_only h pos =
+    CF.formula_of_heap h pos
+
+  let mk_rflow_formula h ?kind:(k=NEUTRAL) pos =
+    let f = mk_formula_heap_only h pos in
+    { CF.rflow_kind = k;
+      CF.rflow_base = f;
+    }
+
+  let mk_formula pure (ptr, name, ho, params, pos) =
+    let h = mk_node (ptr, name, ho, params, pos) in
+    let mix_formula = MCP.OnePF pure in
+    CF.mkBase_simp h mix_formula
 
   let choose_ptr ?ptr:(str="self") () =
     CP.SpecVar(UNK,str,Unprimed)
