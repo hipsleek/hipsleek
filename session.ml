@@ -53,7 +53,8 @@ module type Message_type = sig
   val print  : formula -> string
   val mk_node: arg -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
-  val mk_rflow_formula:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
+  val mk_rflow_formula:  formula -> ?kind:ho_flow_kind -> ho_param_formula
+  val mk_rflow_formula_from_heap:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> formula
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
@@ -85,7 +86,12 @@ module IForm = struct
     (* let h = mk_node (ptr, name, ho, params, pos) in *)
     F.formula_of_heap_1 h pos
 
-  let mk_rflow_formula h ?kind:(k=NEUTRAL) pos =
+  let mk_rflow_formula f ?kind:(k=NEUTRAL) =
+    {  F.rflow_kind = k;
+       F.rflow_base = f;
+    }
+
+  let mk_rflow_formula_from_heap h ?kind:(k=NEUTRAL) pos =
     let f =  mk_formula_heap_only h pos in
     {  F.rflow_kind = k;
        F.rflow_base = f;
@@ -126,7 +132,12 @@ module CForm = struct
   let mk_formula_heap_only h pos =
     CF.formula_of_heap h pos
 
-  let mk_rflow_formula h ?kind:(k=NEUTRAL) pos =
+  let mk_rflow_formula f ?kind:(k=NEUTRAL) =
+    { CF.rflow_kind = k;
+      CF.rflow_base = f;
+    }
+
+  let mk_rflow_formula_from_heap h ?kind:(k=NEUTRAL) pos =
     let f = mk_formula_heap_only h pos in
     { CF.rflow_kind = k;
       CF.rflow_base = f;
@@ -308,7 +319,7 @@ module Make_Session (Base: Session_base) = struct
   let mk_seq_node args params pos  =
     let arg1 = Base.choose_ptr () in (* decide which name should be given here *)
     let name = Gen.map_opt_def (failwith "SESSION: op id not set") idf !seq_id in
-    let args = List.map (fun a -> Base.mk_rflow_formula a pos) args in
+    let args = List.map (fun a -> Base.mk_rflow_formula_from_heap a pos) args in
     let params = List.map (fun a -> Base.set_param a pos) params in
     (* let a = (sv, name, args, params, pos) in *)
     Base.mk_node (arg1, name, args, params, pos)
