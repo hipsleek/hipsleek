@@ -386,16 +386,22 @@ module Make_Session (Base: Session_base) = struct
   let rec trans_from_session s =
     match s with
     | SSeq s  ->
-      let arg1 = trans_from_session s.session_seq_formula_head in
-      let arg2 = trans_from_session s.session_seq_formula_tail in
-      (* mk_seq_node [arg1;arg2] [] s.session_seq_formula_pos *)
+        let arg1 = trans_from_session s.session_seq_formula_head in
+        let arg2 = trans_from_session s.session_seq_formula_tail in
+        mk_seq_node [arg1;arg2] [] s.session_seq_formula_pos
       (* (\* node, view-name, ho-args, args *\) *)
-      (* Base.mkFNode sv !seq_id [arg1;arg2] [] *)
-      failwith x_tbi
-    | SOr s   -> failwith x_tbi
-    | SStar s -> failwith x_tbi
-    | SBase s -> failwith x_tbi
-    | SEmp    -> failwith x_tbi
+      (* Base.mkFNode sv !seq_id [arg1;arg2] []
+      failwith x_tbi *)
+    | SOr s   ->
+        let arg1 = trans_from_session s.session_seq_formula_or1 in
+        let arg2 = trans_from_session s.session_seq_formula_or2 in
+        mk_or_node arg1 arg2 s.session_seq_formula_pos
+    | SStar s ->
+        let arg1 = trans_from_session s.session_seq_formula_star1 in
+        let arg2 = trans_from_session s.session_seq_formula_star2 in
+        mk_star_node arg1 arg2 s.session_seq_formula_pos
+    | SBase s -> Base.trans_base s
+    | SEmp    -> Base.mk_empty ()
 
 end;;
 
