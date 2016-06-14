@@ -63,6 +63,7 @@ module type Message_type = sig
   val mk_formula: pure_formula -> arg -> formula
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
+  val mk_empty: unit -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
 end;;
@@ -116,6 +117,8 @@ module IForm = struct
   let mk_or f1 f2 pos =
     F.mkOr f1 f2 pos
 
+  let mk_empty () = F.HEmp
+
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos) 
 
 end;;
@@ -165,6 +168,8 @@ module CForm = struct
 
   let mk_or f1 f2 pos =
     CF.mkOr f1 f2 pos
+
+  let mk_empty () = CF.HEmp
 
   let set_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
