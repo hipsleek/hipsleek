@@ -17,13 +17,18 @@ pred arrsegHO<i,m> ==
  inv i<m.
 
 // 3
-infer [@classic//,Rec
- ] x::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & x=arr+i & i<m-1
+infer [@classic,Rec
+ ] xxx::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & xxx=arr+i & i<m-1
       |- arr::arrsegHO<i,m>.
 print residue.
 
 /*
 # ex3b.slk
+
+// fold substitution..
+
+!!! **solver.ml#2429:fr_vars:[x_88,self,i,m]
+!!! **solver.ml#2430:to_vars:[xxx,arr,i_81,m_82]
 
 # why inconsistent roots?
 
