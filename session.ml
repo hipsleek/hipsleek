@@ -37,6 +37,11 @@ let set_prim_pred_id kind id = match kind with
     | Sequence     -> seq_id := Some id
     | SOr          -> sor_id := Some id
 
+let get_prim_pred_id pred_ref =
+  match !pred_ref with
+    | Some str -> str
+    | None -> ""
+
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
 module type Message_type = sig
@@ -193,6 +198,14 @@ module Protocol_base_formula =
       protocol_base_formula_pos       = pos;
     }
 
+    let trans_base base =
+      let ptr = Msg.choose_ptr ~ptr:session_msg_id () in
+      let name = get_prim_pred_id trans_id in
+      let args = [Msg.mk_rflow_formula base.protocol_base_formula_message ~kind:NEUTRAL] in
+      let params = [base.protocol_base_formula_sender; base.protocol_base_formula_receiver] in
+      let params = List.map (fun a -> Msg.set_param a base.protocol_base_formula_pos) params in
+      Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos)
+
   end;;
 
 (* inst for iformula & cformula *)
@@ -224,6 +237,17 @@ module Projection_base_formula =
       projection_base_formula_pos     = pos;
     }
 
+    let trans_base base =
+      let ptr = Msg.choose_ptr ~ptr:base.projection_base_formula_channel () in
+      let name = match base.projection_base_formula_op with
+                   | Send -> get_prim_pred_id send_id
+                   | Receive -> get_prim_pred_id recv_id in
+      let args = match base.projection_base_formula_op with
+                   | Send -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:OUTFLOW]
+                   | Receive -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:INFLOW] in
+      let params = [] in
+      Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos)
+
   end;;
 
 module type Session_base =
@@ -235,6 +259,7 @@ sig
 
   val print_session_base : base -> unit
   val mk_base : a -> t -> base
+  val trans_base : base -> h_formula
 end;;
 
 (* ============== session type ================ *)
