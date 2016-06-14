@@ -254,6 +254,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | CLen _
   | CharAt _
   | CharUp _
+  | Substr _
   | Concat _ -> failwith (" [setmona.ml] String are not supported in mona")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Bptriple _ -> failwith ("[setmona.ml]: ERROR in constraints (Bptriple should not appear here)")

@@ -250,6 +250,9 @@ let rec string_of_formula_exp = function
   | P.CharUp (e1, e2, e3, _) -> "charAt(" ^ (string_of_formula_exp e1)
        ^ ", " ^ (string_of_formula_exp e2)
        ^ ", " ^ (string_of_formula_exp e3) ^ ")"
+  | P.Substr (e1, e2, e3, _) -> "substr(" ^ (string_of_formula_exp e1)
+       ^ ", " ^ (string_of_formula_exp e2)
+       ^ ", " ^ (string_of_formula_exp e3) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
   | P.Func (a, i, _)     ->
     a ^ "(" ^ (string_of_formula_exp_list i) ^ ")"

@@ -2288,6 +2288,8 @@ cexp_w:
     apply_cexp_form2 (fun c1 c2-> P.CharAt (c1, c2, get_pos_camlp4 _loc  1) ) c1 c2
     | `CHARUP; `OPAREN; c1=SELF; `COMMA; c2=SELF; `COMMA; c3=SELF; `CPAREN ->
     apply_cexp_form3 (fun c1 c2 c3-> P.CharUp (c1, c2, c3, get_pos_camlp4 _loc 1) ) c1 c2 c3
+    | `SUBSTR; `OPAREN; c1=SELF; `COMMA; c2=SELF; `COMMA; c3=SELF; `CPAREN ->
+    apply_cexp_form3 (fun c1 c2 c3-> P.Substr (c1, c2, c3, get_pos_camlp4 _loc 1) ) c1 c2 c3
     | `REVERSE; `OPAREN; c1=SELF; `CPAREN -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1
     ]
   | "addit"

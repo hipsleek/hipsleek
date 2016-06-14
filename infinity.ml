@@ -936,6 +936,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
   | CP.CLen _
   | CP.CharAt _
   | CP.CharUp _
+  | CP.Substr _
   | CP.ListReverse _
   | CP.Func _
   | CP.Template _

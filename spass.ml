@@ -78,6 +78,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.SLen _
   | Cpure.CLen _
   | Cpure.CharAt _
+  | Cpure.Substr _
   | Cpure.CharUp _ -> illegal_format "SPASS don't support String expression"
   (* array expressions *)
   | Cpure.ArrayAt _   -> illegal_format "SPASS don't support Array expresion"
@@ -235,6 +236,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.SLen _
   | Cpure.CLen _
   | Cpure.CharAt _
+  | Cpure.Substr _
   | Cpure.CharUp _ -> illegal_format "SPASS don't support String expression"
   (* array expressions *)
   | Cpure.ArrayAt _    -> illegal_format "SPASS don't support Array expresion"
@@ -331,6 +333,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.CLen _
   | Cpure.CharAt _
   | Cpure.CharUp _
+  | Cpure.Substr _
   | Cpure.ListAppend _
   | Cpure.ListReverse _  -> false
   (* array expressions *)

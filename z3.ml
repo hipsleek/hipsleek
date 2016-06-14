@@ -126,6 +126,8 @@ let rec smt_of_exp a =
   | CP.CharUp (s,i,c,_) -> "(Concat (Concat((Substring " ^ (smt_of_exp s) ^ " 0 "
        ^ (smt_of_exp i) ^ " ) " ^ (smt_of_exp c) ^ " ) (Substring " ^ (smt_of_exp s) ^
          " (+ 1 " ^ (smt_of_exp i) ^ ") (- (Length " ^ (smt_of_exp s) ^ ") 1))))"
+  | CP.Substr (s, a1, a2, _) -> "(Substring " ^ (smt_of_exp s) ^ " " ^
+       (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Concat (s1, s2, _) -> "(Concat " ^ (smt_of_exp s1)^ " " ^(smt_of_exp s2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"

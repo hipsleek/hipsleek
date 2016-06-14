@@ -714,6 +714,7 @@ let rec is_array_exp e = match e with
   | CP.CLen _
   | CP.CharAt _
   | CP.CharUp _
+  | CP.Substr _
   | CP.ListAppend _
   | CP.ListReverse _ ->
     Some false
@@ -785,6 +786,7 @@ let rec is_list_exp e = match e with
   | CP.FConst _ | CP.IConst _ | CP.SConst _ -> Some false
   | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
   | CP.SLen _
+  | CP.Substr _
   | CP.CLen _
   | CP.CConst _
   | CP.CharAt _

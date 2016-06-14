@@ -1,8 +1,8 @@
-// //1
-// checksat charUp("abc", 1, 'd') = "adc".
+//1
+checksat charUp("abc", 1, 'd') = "adc".
 
-// //2
-// checksat charUp("abc", 1, 'd') = "aec".
+//2
+checksat charUp("abc", 3, 'd') = "abcd".
 
 // //3
 // checksat charUp("abc", 0, 'd') = "dbc".
@@ -29,7 +29,7 @@
 // checkentail s = charUp(s1,offset,c) & offset < slen(s1) |- slen(s) = slen(s1).
 
 //11
-checkentail endzero(s1) & s = charUp(s1,offset,c) & 0<= offset < slen(s1) & c = '\x00' |- endzero(s).
+//checkentail endzero(s1) & s = charUp(s1,offset,c) & 0<= offset < slen(s1) & c = '\x00' |- endzero(s).
 
 //12
-checkentail endzero(s1) & s = charUp(s1,offset,c) & clen(s1) != offset & offset < slen(s1) & c != '\x00' |- endzero(s).
+//checkentail endzero(s1) & s = charUp(s1,offset,c) & clen(s1) != offset & offset < slen(s1) & c != '\x00' |- endzero(s).

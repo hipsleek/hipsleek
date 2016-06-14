@@ -8723,6 +8723,9 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   | IP.CharUp (e1, e2, e3, pos) -> CP.CharUp (trans_pure_exp_x e1 tlist,
                                               trans_pure_exp_x e2 tlist,
                                               trans_pure_exp_x e3 tlist, pos)
+  | IP.Substr (e1, e2, e3, pos) -> CP.Substr (trans_pure_exp_x e1 tlist,
+                                              trans_pure_exp_x e2 tlist,
+                                              trans_pure_exp_x e3 tlist, pos)
   | IP.Func (id, es, pos) ->
     let es = List.map (fun e -> trans_pure_exp_x e tlist) es in
     CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)

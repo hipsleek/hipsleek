@@ -79,6 +79,7 @@ and cvc3_of_exp a = match a with
   | CP.SLen _
   | CP.CLen _
   | CP.Concat _
+  | CP.Substr _
   | CP.CharAt _
   | CP.CharUp _ -> failwith ("Functions are not supported in cvc3")
   | CP.Func _ -> failwith ("Functions are not supported in cvc3")

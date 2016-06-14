@@ -18592,6 +18592,7 @@ let elim_prm e =
     | CP.CLen _
     | CP.CharAt _
     | CP.CharUp _
+    | CP.Substr _
     | CP.Level _ -> report_error no_pos "CF.elim_prm: not handle yet"
   in
   let rec f_h_f e = match e with

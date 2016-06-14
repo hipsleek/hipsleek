@@ -341,7 +341,8 @@ let rec math_of_exp e0 : string=
   | CP.Template t -> math_of_exp (CP.exp_of_template t)
   | CP.SLen _
   | CP.CLen _
-  | CP.CharAt _ 
+  | CP.CharAt _
+  | CP.Substr _
   | CP.CharUp _ -> failwith ("mathematica.math_of_exp: cannot handle string operator")
 
 let rec math_of_b_formula b : string =

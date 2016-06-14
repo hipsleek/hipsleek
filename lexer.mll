@@ -243,6 +243,7 @@ module Make (Token : SleekTokenS)
    ("clen", CLEN);
    ("charAt", CHARAT);
    ("charUp", CHARUP);
+   ("substr", SUBSTR);
    ("nonzero", NONZERO);
    ("endzero", ENDZERO);
    ("let", LET);

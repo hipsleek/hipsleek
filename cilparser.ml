@@ -2117,6 +2117,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Ipure.CharAt (helper_exp e1, helper_exp e2, pos)
     | Ipure.CharUp (e1, e2, e3, pos) ->
       Ipure.CharUp (helper_exp e1, helper_exp e2, helper_exp e3, pos)
+    | Ipure.Substr (e1, e2, e3, pos) ->
+      Ipure.Substr (helper_exp e1, helper_exp e2, helper_exp e3, pos)
     | Ipure.SConst (s, pos) ->
       Ipure.SConst (s, pos)
     | Ipure.CConst (c, pos) ->

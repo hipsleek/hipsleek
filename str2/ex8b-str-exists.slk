@@ -1,29 +1,32 @@
-//1
-checksat endzero("abc\x00a").
+// //1
+// checksat endzero("abc\x00a").
 
-//2
-checksat endzero("abc").
+// //2
+// checksat endzero("abc").
 
-//3
-checksat endzero("abc") & nonzero("abc").
+// //3
+// checksat endzero("abc") & nonzero("abc").
 
-//4
-checksat endzero(s) & nonzero(s).
+// //4
+// checksat endzero(s) & nonzero(s).
 
-//5
-checkentail endzero(s) |- !(nonzero(s)).
+// //5
+// checkentail endzero(s) |- !(nonzero(s)).
 
-//6
-checkentail nonzero(s) |- !(endzero(s)).
+// //6
+// checkentail nonzero(s) |- !(endzero(s)).
 
-//7
-checkentail nonzero(s1) & nonzero(s2) & s = s1^s2 |- nonzero(s).
+// //7
+// checkentail nonzero(s1) & nonzero(s2) & s = s1^s2 |- nonzero(s).
 
-//8
-checkentail (!(nonzero(s1)) | !(nonzero(s2))) & s = s1^s2 |- !(nonzero(s)).
+// //8
+// checkentail (!(nonzero(s1)) | !(nonzero(s2))) & s = s1^s2 |- !(nonzero(s)).
 
-//9
-checkentail endzero(s2) & s = s1^s2 |- endzero(s).
+// //9
+// checkentail endzero(s2) & s = s1^s2 |- endzero(s).
 
-//10
-checkentail endzero(s2) & s = s1^s2 & nonzero(s1) |- endzero(s).
+// //10
+// checkentail endzero(s2) & s = s1^s2 & nonzero(s1) |- endzero(s).
+
+
+checkentail s = s1^"\\0" & s = s2^"\\0" |- s1=s2.

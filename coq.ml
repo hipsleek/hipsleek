@@ -154,6 +154,8 @@ and coq_of_exp e0 =
        (coq_of_exp a2) ^ ")"
   | CP.CharUp (a1, a2, a3, _) -> " ( CharUp " ^ (coq_of_exp a1) ^ " "
        ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.Substr (a1, a2, a3, _) -> " ( Subtr " ^ (coq_of_exp a1) ^ " "
+       ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a2) ^ ")"
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with

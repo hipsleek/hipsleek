@@ -435,6 +435,7 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.CLen _ -> false
   | Cpure.CharAt _ -> false
   | Cpure.CharUp _ -> false
+  | Cpure.Substr _ -> false
 
 
 and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =

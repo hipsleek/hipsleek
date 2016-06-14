@@ -101,7 +101,7 @@ type sleek_token =
   | NI | RO
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE |
           HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
-  | CHARAT | CHARUP
+  | CHARAT | CHARUP | SUBSTR
   | SLEN | CLEN
   | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL
@@ -223,6 +223,7 @@ module Token = struct
     | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" |
   TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len"
     | SLEN -> "slen" | CLEN -> "clen" | CHARAT -> "charat" | CHARUP -> "charup"
+    | SUBSTR -> "substr"
     | INLIST -> "inlist" | HEAD -> "head"
     | MEM -> "mem" | MEME -> "memE"
     | INFER -> "infer" | INFER_EXACT -> "infer_exact" | INFER_INEXACT -> "infer_inexact"
