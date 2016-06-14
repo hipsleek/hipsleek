@@ -57,6 +57,7 @@ module type Message_type = sig
   val mk_rflow_formula_from_heap:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> formula
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
+  val mk_or: formula -> formula -> VarGen.loc -> formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
 end;;
@@ -107,6 +108,9 @@ module IForm = struct
   let choose_ptr ?ptr:(str="self") () =
     (str,Unprimed)
 
+  let mk_or f1 f2 pos =
+    F.mkOr f1 f2 pos
+
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos) 
 
 end;;
@@ -153,6 +157,9 @@ module CForm = struct
 
   let choose_ptr ?ptr:(str="self") () =
     CP.SpecVar(UNK,str,Unprimed)
+
+  let mk_or f1 f2 pos =
+    CF.mkOr f1 f2 pos
 
   let set_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
@@ -328,7 +335,19 @@ module Make_Session (Base: Session_base) = struct
   and mk_star_node h1 h2 pos =
     Base.mk_star h1 h2 pos
 
-  and mk_or_node   () = (* Base.mk_formula_heap_only *) failwith x_tbi
+  and mk_or_node h1 h2 pos =
+    let f1 = Base.mk_formula_heap_only h1 pos in
+    let f2 = Base.mk_formula_heap_only h2 pos in
+    let or_node = Base.mk_or f1 f2 pos in
+    (* why doesn't it work without ~kind, which is optional? *)
+    let rflow_form = (Base.mk_rflow_formula or_node ~kind:NEUTRAL) in
+    let ptr = Base.choose_ptr () in
+    let name =  match !sor_id with
+                  | Some str -> str
+                  | None -> "" in
+    let args = [rflow_form] in
+    let params = [] in
+    Base.mk_node (ptr, name, args, params, pos)
 
   let rec trans_from_session s =
     match s with
