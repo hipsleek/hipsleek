@@ -171,11 +171,12 @@ module Protocol_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = ident * ident
+    type a = ident * ident * VarGen.loc
     type base = {
       protocol_base_formula_sender   : ident;
       protocol_base_formula_receiver : ident;
       protocol_base_formula_message  : t;
+      protocol_base_formula_pos      : VarGen.loc;
     }
 
     let print_message f = Msg.print f.protocol_base_formula_message
@@ -185,10 +186,11 @@ module Protocol_base_formula =
       Printf.printf "%s" (print_message f);
     end
 
-    let mk_base (sender, receiver) formula = {
+    let mk_base (sender, receiver, pos) formula = {
       protocol_base_formula_sender    = sender;
       protocol_base_formula_receiver  = receiver;
       protocol_base_formula_message   = formula;
+      protocol_base_formula_pos       = pos;
     }
 
   end;;
@@ -199,11 +201,12 @@ module Projection_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = transmission * ident
+    type a = transmission * ident * VarGen.loc
     type base = {
       projection_base_formula_op      : transmission;
       projection_base_formula_channel : ident;
       projection_base_formula_message : t;
+      projection_base_formula_pos     : VarGen.loc;
     }
 
     let print_message f = Msg.print f.projection_base_formula_message
@@ -214,10 +217,11 @@ module Projection_base_formula =
         (string_of_transmission f.projection_base_formula_op )
         (print_message f)
 
-    let mk_base (transmission, channel) formula = {
+    let mk_base (transmission, channel, pos) formula = {
       projection_base_formula_op      = transmission;
       projection_base_formula_channel = channel;
       projection_base_formula_message = formula;
+      projection_base_formula_pos     = pos;
     }
 
   end;;
@@ -387,6 +391,6 @@ type session_type = ProtocolSession of IProtocol.session
 
 
 let boo () =
-  let prot = IProtocol.mk_base ("", "") (F.mkTrue_nf no_pos) in
+  let prot = IProtocol.mk_base ("", "", no_pos) (F.mkTrue_nf no_pos) in
   IProtocol.print_session prot
   ;;

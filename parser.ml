@@ -1324,7 +1324,8 @@ session_formula: [
             s
     ]
     | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
-            Session.IProtocol.mk_base (first, second) c
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProtocol.mk_base (first, second, loc) c
        (* Session.boo (); *)
        (* failwith "tbi" *)
     ]
@@ -1348,9 +1349,11 @@ projection_formula: [
     ]
     |
       [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
-            Session.IProjection.mk_base (Session.Send, channel) c
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProjection.mk_base (Session.Send, channel, loc) c
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
-            Session.IProjection.mk_base (Session.Receive, channel) c
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProjection.mk_base (Session.Receive, channel, loc) c
     ]
 ];
 
