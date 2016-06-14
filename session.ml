@@ -55,6 +55,7 @@ module type Message_type = sig
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
   val mk_rflow_formula:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> formula
+  val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
 end;;
@@ -94,6 +95,9 @@ module IForm = struct
     let h = mk_node (ptr, name, ho, params, pos) in
     F.mkBase_wo_flow h pure [] pos
 
+  let mk_star h1 h2 pos =
+    F.mkStar h1 h2 pos
+
   let choose_ptr ?ptr:(str="self") () =
     (str,Unprimed)
 
@@ -132,6 +136,9 @@ module CForm = struct
     let h = mk_node (ptr, name, ho, params, pos) in
     let mix_formula = MCP.OnePF pure in
     CF.mkBase_simp h mix_formula
+
+  let mk_star h1 h2 pos =
+    CF.mkStarH h1 h2 pos
 
   let choose_ptr ?ptr:(str="self") () =
     CP.SpecVar(UNK,str,Unprimed)
@@ -307,8 +314,10 @@ module Make_Session (Base: Session_base) = struct
     Base.mk_node (arg1, name, args, params, pos)
     (* failwith x_tbi *)
 
-  let mk_star_node () = (* Base.mk_formula_heap_only *) failwith x_tbi
-  let mk_or_node   () = (* Base.mk_formula_heap_only *) failwith x_tbi
+  and mk_star_node h1 h2 pos =
+    Base.mk_star h1 h2 pos
+
+  and mk_or_node   () = (* Base.mk_formula_heap_only *) failwith x_tbi
 
   let rec trans_from_session s =
     match s with
