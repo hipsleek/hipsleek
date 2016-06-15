@@ -36,6 +36,8 @@ let set_prim_pred_id kind id = match kind with
     | Receive      -> recv_id := Some id
     | Sequence     -> seq_id := Some id
     | SOr          -> sor_id := Some id
+    | Protocol     -> ()
+    | Projection   -> ()
 
 let get_prim_pred_id pred_ref =
   match !pred_ref with

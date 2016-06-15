@@ -1301,10 +1301,14 @@ prim_view_decl:
           view_inv_lock = li} ]];
 
 sess_view_decl:
-  [[ vh = view_header; `EQEQ; peek_session_disj; session_formula
-          -> vh
-   | vh = view_header; `EQEQ; projection_formula
-          ->  vh
+  [[ vh = view_header; `EQEQ; peek_session_disj; s = session_formula
+          -> { vh with
+               view_kind = View_SESS Protocol;
+               view_session_formula = Some (Session.ProtocolSession s)}
+   | vh = view_header; `EQEQ; p = projection_formula
+          -> { vh with
+               view_kind = View_SESS Projection;
+               view_session_formula = Some (Session.ProjectionSession p)}
   ]];
 
 session_formula: [
