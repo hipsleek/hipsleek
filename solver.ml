@@ -2886,7 +2886,7 @@ and find_unsat prog f =
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
-    (* let () = x_tinfo_hp (add_str "npf" Cprinter.string_of_mix_formula) npf no_pos in *)
+    let () = x_binfo_hp (add_str "npf" Cprinter.string_of_mix_formula) npf no_pos in 
     (* if !Globals.gen_baga_inv then *)
     (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
     (* else  *)if !Globals.simpl_unfold2 then
@@ -2901,7 +2901,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
         else () in*)
       r
     else
-      let () = Debug.ninfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
+      let () = Debug.binfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
       not (TP.is_sat_mix_sub_no npf sat_subno true true)
   in
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
@@ -3038,6 +3038,9 @@ and elim_unsat_estate ?(sat_subno=vv_ref) prog es =
 
 and elim_unsat_es_now_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : entail_state =
   let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in
+  x_binfo_hp (add_str "boolean value:" string_of_bool) b no_pos;
+  x_binfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_entail_state es))) no_pos;
+  x_binfo_zp (lazy ("res_ctx f:\n" ^ (Cprinter.string_of_formula f))) no_pos;
   if not b then es else
     false_es_with_orig_ante es f no_pos
 
@@ -9299,9 +9302,28 @@ type: bool *
                                      | Some s1,Some s2 -> (s1,s2)::a
                                      | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
               (* TODO-WN why is there another elim_unsat_ctx? *)
-              let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+              let r_h, r_p, r_vp, r_fl, r_t, r_a = CF.split_components conseq in
+              x_binfo_hp (add_str "r_h" (Cprinter.string_of_h_formula)) r_h pos;
+              x_binfo_hp (add_str "r_p" (Cprinter.string_of_mix_formula)) r_p pos;
+              let elim_unsat_es_now_es_helper (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : entail_state =
+                let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in
+                if not b then es else
+                  {es with es_formula = conseq} 
+              in
+              let elim_unsat_es_x_helper (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+                if (es.es_unsat_flag) then Ctx es
+                else Ctx (elim_unsat_es_now_es_helper prog sat_subno es)
+              in
+              let elim_unsat_ctx_helper (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
+                let rec helper c = match c with
+                  | Ctx es -> let exec ()= elim_unsat_es_x_helper prog sat_subno es in wrap_trace es.es_path_label exec ()
+                  | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
+                in helper ctx
+              in
+              x_binfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+              x_binfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
+              let res_ctx = elim_unsat_ctx_helper prog (ref 1) res_ctx in
               x_dinfo_zp (lazy ("heap_entail_empty_heap: formula is valid")) pos;
-              x_dinfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
               (SuccCtx[res_ctx], prf)
             end
     end
