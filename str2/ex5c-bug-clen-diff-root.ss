@@ -2,10 +2,15 @@ pred_prim strbuf<hd,sl:int,length:int>
   inv hd<=self & self<=hd+sl & sl<=length & self<hd+length;
   //iroot cptr;
 
-strbuf plus_plus(ref strbuf cptr)
+strbuf plus_plus(strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
              & cptr+1<=x+sl & cptr+1<x+ln
-  ensures  cptr'::strbuf<x,sl,ln> & cptr'=cptr+1;
+  ensures  res::strbuf<x,sl,ln> & res=cptr+1;
+
+strbuf minus_minus(strbuf cptr)
+  requires cptr::strbuf<x,sl,ln> 
+             & cptr+1<=x+sl & cptr+1<x+ln
+  ensures  res::strbuf<x,sl,ln> & res=cptr-1;
 
 
 int char_at (strbuf cptr)
@@ -16,18 +21,21 @@ int char_at (strbuf cptr)
  }
 
 
-int clen(ref strbuf cptr)
+int clen(strbuf cptr)
   requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
-  ensures cptr'::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
-              //& cptr'-xxx=sl-1;
-              & cptr'=xxx+sl-1;
+  ensures  cptr::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
+              & cptr-xxx=sl-1
+              //& cptr'=xxx+sl-1
+              ;
  {
      int c = char_at(cptr);
      if (c==0) return 0;
      else {
        dprint;
-        plus_plus(cptr);
-        return 1+clen(cptr);
+        cptr = plus_plus(cptr);
+        int r = clen(cptr);
+        cptr = minus_minus(cptr);
+        return 1+r;
     }
  }
 
