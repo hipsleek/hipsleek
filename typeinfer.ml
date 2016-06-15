@@ -624,12 +624,26 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (tmp1,tmp2)=nt in
     let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et in (* tvar, Int, Float *)
     let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et in
-
-    if (is_possible_node_typ t1) && (is_possible_node_typ t2) then
-      let (n_tl2,_) = x_add must_unify_expect t2 new_et n_tl2 pos in
-      let (n_tlist2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
-      (n_tlist2,Int)
+    let () = y_ninfo_hp (add_str "(t1,t2)" (pr_pair string_of_typ string_of_typ)) (t1,t2) in
+    if is_possible_node_typ t1 then (
+      if is_possible_node_typ t2 then
+         let (n_tl2,_) = x_add must_unify_expect t2 new_et n_tl2 pos in
+         let (n_tlist2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
+         (n_tlist2,Int)
+      else
+        let (n_tl2,_) = x_add must_unify_expect t1 new_et n_tl1 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
+        (n_tlist2,t1))
+    else if is_possible_node_typ t2 then
+        let (n_tl2,_) = x_add must_unify_expect t2 new_et n_tl2 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
+        (n_tlist2,t2)
     else
+    (* if (is_possible_node_typ t1) && (is_possible_node_typ t2) then *)
+    (*   let (n_tl2,_) = x_add must_unify_expect t2 new_et n_tl2 pos in *)
+    (*   let (n_tlist2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in *)
+    (*   (n_tlist2,Int) *)
+    (* else *)
       (* let (n_tlist1,t1) = x_add must_unify_expect t1 et n_tl2 pos in *)
       (* let (n_tlist2,t2) = x_add must_unify_expect t2 et n_tlist1 pos in *)
       (* let (n_tlist2,t2) = x_add must_unify t1 t2 n_tlist2 pos in *)

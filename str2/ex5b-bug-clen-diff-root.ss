@@ -19,8 +19,8 @@ int char_at (strbuf cptr)
 int clen(ref strbuf cptr)
   requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
   ensures  cptr'::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
-              & cptr'-xxx=sl-1
-              //& cptr'=xxx+sl-1
+              //& cptr'-xxx=sl-1
+              & cptr'=xxx+sl-1
               ;
  {
      int c = char_at(cptr);
