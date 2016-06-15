@@ -58,7 +58,7 @@ module type Message_type = sig
              (param list) * VarGen.loc
 
   val is_emp : formula -> bool
-  val print  : formula -> string
+  val print  : (formula -> string) ref
   val mk_node: arg -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
   val mk_rflow_formula:  formula -> ?kind:ho_flow_kind -> ho_param_formula
@@ -84,7 +84,7 @@ module IForm = struct
              (param list) * VarGen.loc
 
   let is_emp f = failwith x_tbi
-  let print    = !F.print_formula
+  let print    = F.print_formula
   (* ptr - pointer to heap, 
      name - name of heap struct
      ho - HO param 
@@ -143,7 +143,7 @@ module CForm = struct
              (param list) * VarGen.loc
 
   let is_emp f = failwith x_tbi
-  let print    = !CF.print_formula
+  let print    = CF.print_formula
   let mk_node (ptr, name, ho, params, pos) =
     let h = CF.mkViewNode ptr name params pos in
     match h with
@@ -201,12 +201,10 @@ module Protocol_base_formula =
       protocol_base_formula_pos      : VarGen.loc;
     }
 
-    let print_message f = Msg.print f.protocol_base_formula_message
+    let print_message f = !Msg.print f.protocol_base_formula_message
 
-    let print_session_base f = begin
-      Printf.printf "%s -> %s : " f.protocol_base_formula_sender f.protocol_base_formula_receiver;
-      Printf.printf "%s" (print_message f);
-    end
+    let string_of_session_base f =
+      f.protocol_base_formula_sender ^ " -> " ^ f.protocol_base_formula_receiver ^ " : " ^ (print_message f)
 
     let mk_base (sender, receiver, pos) formula = {
       protocol_base_formula_sender    = sender;
@@ -241,13 +239,12 @@ module Projection_base_formula =
       projection_base_formula_pos     : VarGen.loc;
     }
 
-    let print_message f = Msg.print f.projection_base_formula_message
+    let print_message f = !Msg.print f.projection_base_formula_message
 
-    let print_session_base f =
-      Printf.printf "%s%s(%s)"
-        f.projection_base_formula_channel
-        (string_of_transmission f.projection_base_formula_op )
-        (print_message f)
+    let string_of_session_base f =
+      (f.projection_base_formula_channel) ^
+      (string_of_transmission f.projection_base_formula_op) ^
+      "(" ^ (print_message f) ^ ")"
 
     let mk_base (transmission, channel, pos) formula = {
       projection_base_formula_op      = transmission;
@@ -278,7 +275,7 @@ sig
   type a
   type base
 
-  val print_session_base : base -> unit
+  val string_of_session_base : base -> string
   val mk_base : a -> t -> base
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
@@ -314,45 +311,34 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_pos:  loc;
   }
 
-  let rec print_session s = begin
-          print_one_session s;
-          print_newline ();
-  end
+  let rec string_of_session s =
+    (string_of_one_session s) ^ "\n"
 
-  and print_one_session s = match s with
-    | SSeq s  -> print_session_seq s
-    | SOr s   -> print_session_or s
-    | SStar s -> print_session_star s
-    | SBase s -> print_session_base s
-    | SEmp    -> print_session_emp ()
+  and string_of_one_session s = match s with
+    | SSeq s  -> string_of_session_seq s
+    | SOr s   -> string_of_session_or s
+    | SStar s -> string_of_session_star s
+    | SBase s -> string_of_session_base s
+    | SEmp    -> string_of_session_emp ()
 
-  and print_session_base = Base.print_session_base
+  and string_of_session_base = Base.string_of_session_base
 
-  and print_session_emp () = print_string "emp"
-  
-  and print_session_seq s = begin
-          Printf.printf "(";
-          print_one_session s.session_seq_formula_head;
-          Printf.printf ") %s (" string_of_seq;
-          print_one_session s.session_seq_formula_tail;
-          Printf.printf ")";
-  end
+  and string_of_session_emp () = "emp"
 
-  and print_session_or s = begin
-          Printf.printf "(";
-          print_one_session s.session_seq_formula_or1;
-          Printf.printf ") %s (" "or";
-          print_one_session s.session_seq_formula_or2;
-          Printf.printf ")";
-  end
+  and string_of_session_seq s =
+    "(" ^ string_of_one_session s.session_seq_formula_head ^ ") " ^
+    string_of_seq ^
+    " (" ^ string_of_one_session s.session_seq_formula_tail ^ ")"
 
-  and print_session_star s = begin
-          Printf.printf "(";
-          print_one_session s.session_seq_formula_star1;
-          Printf.printf ") %s (" "*";
-          print_one_session s.session_seq_formula_star2;
-          Printf.printf ")";
-  end
+  and string_of_session_or s =
+    "(" ^ string_of_one_session s.session_seq_formula_or1 ^ ") " ^
+    "or" ^
+    " (" ^ string_of_one_session s.session_seq_formula_or2
+
+  and string_of_session_star s =
+    "(" ^ string_of_one_session s.session_seq_formula_star1 ^ ") " ^
+    "*" ^
+    " (" ^ string_of_one_session s.session_seq_formula_star2
 
   let mk_base a b = SBase (Base.mk_base a b)
 
@@ -458,5 +444,5 @@ type session_type = ProtocolSession of IProtocol.session
 
 let boo () =
   let prot = IProtocol.mk_base ("", "", no_pos) (F.mkTrue_nf no_pos) in
-  IProtocol.print_session prot
+  print_endline (IProtocol.string_of_session prot)
   ;;
