@@ -49,6 +49,7 @@ module type Message_type = sig
   type pure_formula
   type h_formula
   type ho_param_formula
+  type struc_formula
   type node
   type param
   type arg = node * ident * (ho_param_formula list) *
@@ -61,6 +62,7 @@ module type Message_type = sig
   val mk_rflow_formula:  formula -> ?kind:ho_flow_kind -> ho_param_formula
   val mk_rflow_formula_from_heap:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> formula
+  val mk_struc_formula: formula -> VarGen.loc -> struc_formula
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
   val mk_empty: unit -> h_formula
@@ -73,6 +75,7 @@ module IForm = struct
   type pure_formula = P.formula
   type h_formula = F.h_formula
   type ho_param_formula = F.rflow_formula
+  type struc_formula = F.struc_formula
   type node = Globals.ident * VarGen.primed
   type param = Ipure.exp
   type arg = node * ident * (ho_param_formula list) *
@@ -108,6 +111,9 @@ module IForm = struct
     let h = mk_node (ptr, name, ho, params, pos) in
     F.mkBase_wo_flow h pure [] pos
 
+  let mk_struc_formula formula pos =
+    F.mkEBase [] [] [] formula None pos
+
   let mk_star h1 h2 pos =
     F.mkStar h1 h2 pos
 
@@ -128,6 +134,7 @@ module CForm = struct
   type pure_formula = CP.formula
   type h_formula = CF.h_formula
   type ho_param_formula = CF.rflow_formula
+  type struc_formula = CF.struc_formula
   type node = CP.spec_var
   type param = CP.spec_var
   type arg = node * ident * (ho_param_formula list) *
@@ -159,6 +166,9 @@ module CForm = struct
     let h = mk_node (ptr, name, ho, params, pos) in
     let mix_formula = MCP.OnePF pure in
     CF.mkBase_simp h mix_formula
+
+  let mk_struc_formula formula pos =
+    CF.mkEBase formula None pos
 
   let mk_star h1 h2 pos =
     CF.mkStarH h1 h2 pos
@@ -211,6 +221,8 @@ module Protocol_base_formula =
       let params = List.map (fun a -> Msg.set_param a base.protocol_base_formula_pos) params in
       Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos)
 
+    let get_base_pos base = base.protocol_base_formula_pos
+
   end;;
 
 (* inst for iformula & cformula *)
@@ -253,6 +265,8 @@ module Projection_base_formula =
       let params = [] in
       Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos)
 
+    let get_base_pos base = base.projection_base_formula_pos
+
   end;;
 
 module type Session_base =
@@ -265,6 +279,7 @@ sig
   val print_session_base : base -> unit
   val mk_base : a -> t -> base
   val trans_base : base -> h_formula
+  val get_base_pos : base -> VarGen.loc
 end;;
 
 (* ============== session type ================ *)
@@ -402,6 +417,19 @@ module Make_Session (Base: Session_base) = struct
         mk_star_node arg1 arg2 s.session_seq_formula_pos
     | SBase s -> Base.trans_base s
     | SEmp    -> Base.mk_empty ()
+
+  let get_pos s = match s with
+    | SSeq s  -> s.session_seq_formula_pos
+    | SOr s   -> s.session_seq_formula_pos
+    | SStar s -> s.session_seq_formula_pos
+    | SBase s -> Base.get_base_pos s
+    | SEmp    -> no_pos
+
+  let mk_struc_formula_from_session s =
+    let h_form = trans_from_session s in
+    let pos = get_pos s in
+    let f = Base.mk_formula_heap_only h_form pos in
+    Base.mk_struc_formula f pos
 
 end;;
 
