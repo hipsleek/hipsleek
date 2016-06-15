@@ -4,27 +4,27 @@ pred_prim strbuf<hd,sl:int,length:int>
 
 strbuf plus_plus(ref strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
-            & cptr+1<=x+sl 
-            & cptr+1<x+ln
+             & cptr+1<=x+sl & cptr+1<x+ln
   ensures  cptr'::strbuf<x,sl,ln> & cptr'=cptr+1;
 
 
 int char_at (strbuf cptr)
  requires cptr::strbuf<xx,sl,length>@L & cptr<xx+sl
-  case { 
+ case { 
     cptr+1=xx+sl -> ensures res=0;
     (cptr+1)!=(xx+sl) -> ensures res>0 ;
  }
 
 
- int clen(strbuf cptr)
-  requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl
-  ensures cptr::strbuf<xxx,sl,length> & res = sl-1;
+int clen(strbuf cptr)
+  requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
+  ensures cptr::strbuf<xxx,sl,length> & res = sl-1-(xxx-cptr);
  {
      int c = char_at(cptr);
      if (c==0) return 0;
      else {
-       plus_plus(cptr);
+       dprint;
+        plus_plus(cptr);
         return 1+clen(cptr);
     }
  }
