@@ -2,23 +2,17 @@ pred_prim strbuf<hd,sl:int,length:int>
   inv hd<=self & self<=hd+sl & sl<=length & self<hd+length;
   //iroot cptr;
 
-lemma self::strbuf<hd,sl,ln> --> self::strbuf<hd,sl,ln>.
-
 strbuf plus_plus(strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
-             & cptr+1<=x+sl & cptr+1<x+ln
+             & x<=cptr+1 & cptr+1<=x+sl & cptr+1<x+ln
   ensures  res::strbuf<x,sl,ln> & res=cptr+1;
 
-/*
-  requires cptr::strbuf<x,sl,ln>@L
-             & cptr+1<=x+sl & cptr+1<x+ln
-  ensures  res=cptr+1;
-*/
 
 strbuf minus_minus(strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
-             & cptr-1<=x+sl & cptr-1<x+ln
+  & x<=cptr-1 & cptr-1<=x+sl & cptr-1<x+ln
   ensures  res::strbuf<x,sl,ln> & res=cptr-1;
+
 
 
 int char_at (strbuf cptr)
@@ -28,15 +22,13 @@ int char_at (strbuf cptr)
     (cptr+1)!=(xx+sl) -> ensures res>0 ;
  }
 
-
-// To verify clen, we need the following lemma
-// ptr::stfbuf<hd,sl,size> &  hd<=ptr2 & ptr2<=hd+sl & ptr2<hd+length
-//    --> ptr2::stfbuf<hd,sl,size>
+lemma self::strbuf<hd,sl,ln> & hd<=self2 & self2<=hd+sl & self2<hd+ln
+  -> self2::strbuf<hd,sl,ln>.
 
 int clen(strbuf cptr)
   requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
   ensures  cptr::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
-              & cptr-xxx=sl-1
+              //& cptr'-xxx=sl-1
               //& cptr'=xxx+sl-1
               ;
  {
@@ -46,10 +38,11 @@ int clen(strbuf cptr)
        dprint;
         cptr = plus_plus(cptr);
         int r = clen(cptr);
-        cptr = minus_minus(cptr);
+        //cptr = minus_minus(cptr);
         return 1+r;
     }
  }
+
 
 /*
 

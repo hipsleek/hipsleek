@@ -2,23 +2,38 @@ pred_prim strbuf<hd,sl:int,length:int>
   inv hd<=self & self<=hd+sl & sl<=length & self<hd+length;
   //iroot cptr;
 
-lemma self::strbuf<hd,sl,ln> --> self::strbuf<hd,sl,ln>.
-
 strbuf plus_plus(strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
-             & cptr+1<=x+sl & cptr+1<x+ln
+             & x<=cptr+1 & cptr+1<=x+sl & cptr+1<x+ln
   ensures  res::strbuf<x,sl,ln> & res=cptr+1;
 
-/*
-  requires cptr::strbuf<x,sl,ln>@L
-             & cptr+1<=x+sl & cptr+1<x+ln
-  ensures  res=cptr+1;
-*/
 
 strbuf minus_minus(strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
-             & cptr-1<=x+sl & cptr-1<x+ln
+  & x<=cptr-1 & cptr-1<=x+sl & cptr-1<x+ln
   ensures  res::strbuf<x,sl,ln> & res=cptr-1;
+
+
+/*
+#ex6a.ss
+
+# typeinfer error 
+
+ERROR: at ex6a-plus-minus-clen-diff-root.ss_13:12_13:13
+Message: TYPE ERROR 1 : Found int but expecting strbuf
+Stop z3... 48 invocations 
+Stop Omega... 14 invocations caught
+
+Exception occurred: Failure("TYPE ERROR 1 : Found int but expecting strbuf")
+Error3(s) detected at main 
+
+TODO: why do I get an type error with cptr-1?
+
+strbuf minus_minus(strbuf cptr)
+  requires cptr::strbuf<x,sl,ln> 
+  & x<=cptr-1 //& cptr-1<=x+sl & cptr-1<x+ln
+  ensures  res::strbuf<x,sl,ln> & res=cptr-1;
+*/
 
 
 int char_at (strbuf cptr)
@@ -29,14 +44,10 @@ int char_at (strbuf cptr)
  }
 
 
-// To verify clen, we need the following lemma
-// ptr::stfbuf<hd,sl,size> &  hd<=ptr2 & ptr2<=hd+sl & ptr2<hd+length
-//    --> ptr2::stfbuf<hd,sl,size>
-
 int clen(strbuf cptr)
   requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
   ensures  cptr::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
-              & cptr-xxx=sl-1
+              //& cptr'-xxx=sl-1
               //& cptr'=xxx+sl-1
               ;
  {
@@ -50,6 +61,7 @@ int clen(strbuf cptr)
         return 1+r;
     }
  }
+
 
 /*
 
