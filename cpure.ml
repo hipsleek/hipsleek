@@ -25,6 +25,8 @@ let sp_add_prime v p = match v with
 
 let mk_spec_var id = SpecVar (UNK,id,Unprimed)
 
+let dedicated_sv = List.map (fun x -> mk_spec_var x) Globals.dedicated_ids
+
 let unknown_spec_var = mk_spec_var "__UNKNOWN"
 
 let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)

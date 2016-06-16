@@ -2413,7 +2413,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       else (Named data_name,tlist) in
     let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
     let orig_tl = ann_typs@tlist in
-    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (self :: vdef.I.view_vars) vdef.I.view_formula (orig_tl) false
+    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (dedicated_ids @ vdef.I.view_vars) vdef.I.view_formula (orig_tl) false
         true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
     let data_name = match self_ty with
@@ -2429,10 +2429,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (match inv_lock with
        | None -> (n_tl, None)
        | Some f ->
-         let (n_tl_tmp,new_f) = x_add trans_formula prog true (self :: vdef.I.view_vars) true f (ann_typs@n_tl) false in
+         let (n_tl_tmp,new_f) = x_add trans_formula prog true (dedicated_ids @ vdef.I.view_vars) true f (ann_typs@n_tl) false in
          (*find existential variables*)
          let fvars = CF.fv new_f in
-         let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
+         let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (dedicated_ids @ vdef.I.view_vars))) fvars in
          let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in
          (* let () = print_endline ("new_f = " ^ (Cprinter.string_of_formula new_f)) in *)
          (* let () = print_endline ("new_f2 = " ^ (Cprinter.string_of_formula new_f2)) in *)
@@ -2482,7 +2482,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       in
       let allow_ex_vs =
         let vs1 = (CF.struc_fv cf) in
-        let vs2 = (null_c_var::self_c_var::view_sv_vars) in
+        let vs2 = (null_c_var::self_c_var::view_sv_vars @ CP.dedicated_sv) in
         let vs1a = CP.fv inv_pf in
         let pr_svl = !CP.print_svl in
         (* y_tinfo_hp (add_str "cf" !Cast.print_struc_formula) cf; *)

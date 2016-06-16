@@ -894,6 +894,8 @@ let session_msg = (session_msg_id, Unprimed)
 let session_seq_id = "self"
 let session_seq = (session_seq_id, Unprimed)
 
+let dedicated_ids = [self; session_msg_id; session_seq_id; null_name]
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
