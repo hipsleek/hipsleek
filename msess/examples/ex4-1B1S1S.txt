@@ -1,0 +1,133 @@
+
+============== 2-party session ================
+==============================================
+buy == !int; ?r:Double;((!1; !Addr; ?Date) ∨ !0)
+seller == ~buy
+
+ship == (?1; ?Prod; ?r:Chan · C(r, ?Addr; !Date);!r:Chan · C(r, emp)) ∨ ?0
+seller == ~ship
+
+============= multi-party session ============
+==============================================
+
+
+=========== The goal: =============
+pred buyer_seller<B,S> ==
+   B->S: int;    //prod id
+   S->B: double; //price
+   (B->S: 1; B->S: Addr; S->B: Date;
+    \/ B->S: 0)
+
+=========== Reality (no delegation): =============
+G1<B,S,H> ==
+   B->S: int;    //prod id
+   S->B: double; //price
+   (  B->S: 1;
+      S->H: 1;
+      S->H: int    //prod id
+      B->S: Addr;
+      S->H: Addr;
+      H->S: Date;
+      S->B: Date;
+   \/ B->S: 0; S->H: 0)
+
+=========== Reality (with delegation): =============
+G2<B,S,H> ==
+   B->S: int;    //prod id
+   S->B: double; //price
+   (  B->S: 1;
+      S->H: 1;
+      S->H: int    //prod id
+      S->H: B->S: Addr; S->B:Date; //delegating to H the role of S
+   \/ B->S: 0; S->H: 0)
+
+
+G3<B,S,H> ==
+   B->S: int;    //prod id
+   S->B: double; //price
+   (B->S: 1;
+       S->H: B,int    //prod id
+       B->H(S): Addr;
+       H(S)->B: Date;
+    \/ B->S: 0)
+
+G4<B,S,H> ==
+   B->S: int;    //prod id
+   S->B: double; //price
+   (B->S: 1;
+       S->H: int    //prod id
+       B->H: Addr;
+       H->B: Date;
+    \/ B->S: 0)
+    
+
+=========== projections ================
+considering communication implementation
+with bidirectional channels shared among
+exactly two parties
+========================================
+
+G2<B,S,H> ==
+   B->S: int;    //prod id
+   S->B: double; //price
+   (  B->S: 1;
+      S->H: 1;
+      S->H: int    //prod id
+      S->H: B->S: Addr; S->B:Date; //delegating to H the role of S
+   \/ B->S: 0; S->H: 0)
+
+========================================
+// projection of G2 on B:
+pred G2@B<a> ==
+     a!int;a?double;(a!1;a!Addr;a?Date \/ a!0)
+
+// projection of G2 on S
+pred G2@S<a,b> ==
+     a?int;a!double;(a?1;b!1;b!int;b!(Chan(a,ms) * Sess(ms,a?Addr;a!Date)) \/ a?0)
+
+// projection of G2 on H
+pred G2@H<a> ==
+     (a?1;a?int;a?(Chan(b,ms) * Sess(ms,b?Addr;b!Date));b?Addr;b!Date \/ a?0)
+
+
+=========== projections ================
+considering communication implementation
+with bidirectional channels shared among
+exactly two parties
+========================================
+
+G2<B,S,H> ==
+   B->S: int;    //prod id
+   S->B: double; //price
+   (  B->S: 1;
+      //S->H: 1;
+      S->H: int    //prod id
+      S->H: (B->S: Addr; S->B:Date); //delegating to H the role of S
+   \/ B->S: 0; //S->H: 0)
+
+========================================
+// projection of G2 on B:
+pred G2@B<a> ==
+     a!int;a?double;(a!1;a!Addr;a?Date \/ a!0)
+
+// projection of G2 on B:
+pred G2@B<bs> ==
+     Chan(bs,ms) * Sess(ms,bs!int;bs?double;(bs!1;bs!Addr;bs?Date \/ bs!0))
+     
+
+// projection of G2 on S
+pred G2@S<a,b> ==
+     a?int;a!double;(a?1;b!1;b!int;b!(Chan(a,ms) * Sess(ms,a?Addr;a!Date)) \/ a?0)
+
+Pr(S->H: B->S: Addr; S->B:Date;){S} =
+ = Pr(S->H){S} ! Pr( B->S: Addr; S->B:Date){S}
+ = sh! Chan(bs,ms) * Sess(ms, bs?Addr;bs!Date)
+
+Pr(S->H: B->S: Addr; S->B:Date;){H} =
+ = Pr(S->H){H} ? Pr( B->S: Addr; S->B:Date){H}
+ = sh? Chan(bs,ms) * Sess(ms, bs?Addr;bs!Date)
+
+
+// projection of G2 on H
+pred G2@H<a> ==
+     (a?1;a?int;a?(Chan(b,ms) * Sess(ms,b?Addr;b!Date));b?Addr;b!Date \/ a?0)
