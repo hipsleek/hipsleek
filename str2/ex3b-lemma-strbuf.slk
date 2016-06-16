@@ -12,6 +12,22 @@ checkentail x::strbuf<hd,sl,ln> & hd<=x2 & x2<=hd+sl & x2<hd+ln
 expect Valid.
 
 /*
+-dre "process_match\|choose_\|process_one" --trace-log-num 2 > 1
+
+@2! **cpure.ml#15321:new_com:[(((SVArg hd_75,0),1),hd_87),(((SVArg sl_76,0),2),sl_88),(((SVArg ln_77,0),3),ln_89)]
+@2! **context.ml#1703:view |- view/data : x2::strbuf<hd_87,sl_88,ln_89>@M
+@2! **context.ml#1704:rhs_root:None
+@2! **context.ml#1705:view_root_lhs:None
+@2! **context.ml#1728:p1:x
+@2! **context.ml#1729:mem p1 aset:[x2]
+@2! **context.ml#1138:vars:[hd,sl,length]
+@2! **context.ml#1758:view_mater_match:[]
+@2! **context.ml#1526:l_vname:strbuf
+@2! **context.ml#1527:r_vname:strbuf
+@2! **context.ml#1528:l_vargs:[x,hd,sl,ln]
+@2! **context.ml#1529:r_aset:[x2]
+@2! **context.ml#1760:coerc_mater_match:[]
+@2! **context.ml#1916:l_xxx:[]
 
 !!! **lemma.ml#312:Updated lemma store with unsafe repo::[lem_12]
 left:
