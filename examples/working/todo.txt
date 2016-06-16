@@ -1,3 +1,11 @@
+=================================================
+16June (arr_infer)
+
+Starting hip-sleek tests:
+Total number of errors: 5 in files:
+  imm/norm/norm10.slk({E4#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
 ==============================================
 15Dec
 
