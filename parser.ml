@@ -1329,6 +1329,7 @@ session_formula: [
     ]
     | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
+            let c = F.subst_stub_flow top_flow c in
             Session.IProtocol.mk_base (first, second, loc) c
        (* Session.boo (); *)
        (* failwith "tbi" *)
@@ -1354,9 +1355,11 @@ projection_formula: [
     |
       [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
+            let c = F.subst_stub_flow top_flow c in
             Session.IProjection.mk_base (Session.Send, channel, loc) c
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
             let loc = (get_pos_camlp4 _loc 1) in
+            let c = F.subst_stub_flow top_flow c in
             Session.IProjection.mk_base (Session.Receive, channel, loc) c
     ]
 ];
@@ -1367,7 +1370,7 @@ session_message: [[
       let const_form = P.IConst (i, get_pos_camlp4 _loc 1) in
       let var_form = P.Var (session_msg, get_pos_camlp4 _loc 1) in
       let pure_good_formula = P.BForm ((P.mkEq var_form const_form (get_pos_camlp4 _loc 2), None), None) in
-      F.formula_of_pure_with_flow_emp pure_good_formula stub_flow [] pos
+      F.formula_of_pure_1 pure_good_formula pos
     |  cc = core_constr -> cc
     | `EXISTS; ocl = cid_list; `COLON; cc = core_constr -> 
 	  (match cc with
