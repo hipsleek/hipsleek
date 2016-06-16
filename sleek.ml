@@ -256,6 +256,9 @@ let rec parse_file (parse) (source_file : string) =
         let (curdir,_) = BatString.rsplit source_file "/" in
         let header_path = curdir^"/"^inc in
         if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path
+        else
+          let sleek_dir_header_path = (Gen.get_path Sys.executable_name) ^ inc in
+          if (Sys.file_exists (sleek_dir_header_path)) then parse_file NF.list_parse sleek_dir_header_path
     with Not_found ->
         let header_path = inc in
         if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path in
