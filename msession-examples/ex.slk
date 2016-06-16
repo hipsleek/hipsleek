@@ -1,7 +1,8 @@
 sleek_include 'node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
 
-//pred_sess ll2<n> == A -> B : self = null & n = 0. 
-//
+pred_sess ll2<n,A,B> == A -> B : self = null & n = 0. 
+
 //pred_sess ll3<n> == A -> B : self = null & n = 0 ;; A -> B : self = null & n = 0. 
 //
 //pred_sess ll4<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; E -> F : self = null. 
