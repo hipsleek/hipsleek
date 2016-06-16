@@ -42,7 +42,7 @@ let set_prim_pred_id kind id = match kind with
 let get_prim_pred_id pred_ref =
   match !pred_ref with
     | Some str -> str
-    | None -> ""
+    | None -> let () = report_warning no_pos "Session predicate not set" in ""
 
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
