@@ -25,6 +25,9 @@ int char_at (strbuf cptr)
 lemma self::strbuf<hd,sl,ln> & hd<=self2 & self2<=hd+sl & self2<hd+ln
   -> self2::strbuf<hd,sl,ln>.
 
+// universal lemma for ls splitting
+// self::ls<n,p> & n1+n2=n & n1,n2>=0 => self::ls<n1,q>*q::ls<n2,p>
+
 int clen(strbuf cptr)
   requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
   ensures  cptr::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
@@ -45,6 +48,24 @@ int clen(strbuf cptr)
 
 
 /*
+
+
+Lemma "lem_11":  self::strbuf<hd,sl,ln>@M&hd<=self2 & self2<=(sl+hd) & self2<(ln+hd)&
+{FLOW,(4,5)=__norm#E}[]==> self2::strbuf<hd,sl,ln>@M&{FLOW,(4,5)=__norm#E}[]
+ head match:strbuf
+ body view:
+ body pred_list:[strbuf]
+ coercion_univ_vars: [self2]
+ materialized vars:  []
+ coercion_case: Simple
+ head:  self::strbuf<hd,sl,ln>@M&hd<=self2 & self2<=(sl+hd) & self2<(ln+hd)&
+{FLOW,(4,5)=__norm#E}[]
+ body:  self2::strbuf<hd,sl,ln>@M&{FLOW,(4,5)=__norm#E}[]
+ head_norm:  (exists hd_2063,sl_2064,ln_2065,
+self: self::strbuf<hd_2063,sl_2064,ln_2065>@M&
+hd<=self2 & self2<=(sl+hd) & self2<(ln+hd) & hd_2063=hd & sl_2064=sl & 
+ln_2065=ln&{FLOW,(4,5)=__norm#E}[])
+ body_norm:  EBase 
 
 
  view_prim strbuf{}[]<cptr:int,sl:int,length:int>= 

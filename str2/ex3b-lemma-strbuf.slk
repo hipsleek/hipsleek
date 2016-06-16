@@ -12,7 +12,31 @@ checkentail x::strbuf<hd,sl,ln> & hd<=x2 & x2<=hd+sl & x2<hd+ln
 expect Valid.
 
 /*
--dre "process_match\|choose_\|process_one" --trace-log-num 2 > 1
+
+# ex3b.slk
+
+# ./sleek ex3b-lemma-strbuf.slk -dre "view_mater\|coerc_mat" --trace-log-num 2 --adhoc-1 > 1
+@2! **context.ml#1527:r_vname:strbuf
+@2! **context.ml#1528:l_vargs:[x,hd,sl,ln]
+@2! **context.ml#1529:r_aset:[x2]
+## no overlap here .. but x2 is universal coercion
+@2! **context.ml#1532:coerc_left:[?]
+@2! **cpure.ml#15302:annot: 0
+@2! **cpure.ml#15303:annot: :[]
+@2! **cpure.ml#15304:hargs: :[hd,sl,ln]
+@2! **cpure.ml#15312:view_args_pos: 3
+@2! **cpure.ml#15316:to_be_updated: :3
+@2! **cpure.ml#15321:new_com:[(((SVArg hd,0),1),hd),(((SVArg sl,0),2),sl),(((SVArg ln,0),3),ln)]
+@2! **cpure.ml#15302:annot: 0
+@2! **cpure.ml#15303:annot: :[]
+@2! **cpure.ml#15304:hargs: :[hd,sl,ln]
+@2! **cpure.ml#15312:view_args_pos: 3
+@2! **cpure.ml#15316:to_be_updated: :3
+@2! **cpure.ml#15321:new_com:[(((SVArg hd,0),1),hd),(((SVArg sl,0),2),sl),(((SVArg ln,0),3),ln)]
+## coerc_mater_match invoked, but did not find any match
+@(==context.ml#1533==)
+coerc_mater_match@3@2
+
 
 @2! **cpure.ml#15321:new_com:[(((SVArg hd_75,0),1),hd_87),(((SVArg sl_76,0),2),sl_88),(((SVArg ln_77,0),3),ln_89)]
 @2! **context.ml#1703:view |- view/data : x2::strbuf<hd_87,sl_88,ln_89>@M
