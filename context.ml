@@ -1519,15 +1519,28 @@ and spatial_ctx_extract_hrel_on_lhs prog estate hp e rhs_node aset (lhs_node: Cf
       cmm
   | _ -> []
 
+and is_original lhs_h =
+      let store = ref false in
+      let f hf = match hf with
+        | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf
+        | ViewNode vl -> store := vl.h_formula_view_original; Some hf
+        | _ -> None in 
+      let _ = map_h_formula lhs_h f
+      in !store
+
+  
 (* WN : to check if this optimization misses anything *)
 (* Materialized match for lemma requires an overlap with parameters of views *)
 and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_vargs:P.spec_var list)  (*l_asset*) r_aset (lhs_f:Cformula.h_formula) =
   let overlap_flag = CP.overlap_svl r_aset l_vargs in 
-  let () = x_binfo_hp (add_str "l_vname" pr_id) l_vname no_pos in
-  let () = x_binfo_hp (add_str "r_vname" pr_id) r_vname no_pos in
+  let () = x_tinfo_hp (add_str "l_vname" pr_id) l_vname no_pos in
+  let () = x_tinfo_hp (add_str "r_vname" pr_id) r_vname no_pos in
   let () = x_tinfo_hp (add_str "l_vargs" !CP.print_svl) l_vargs no_pos in
   let () = x_tinfo_hp (add_str "r_aset" !CP.print_svl) r_aset no_pos in
-  if overlap_flag (* || !Globals.adhoc_flag_1 *) then
+  let () = y_tinfo_hp (add_str "lhs_f" !CF.print_h_formula) lhs_f in
+  let is_original_lhs = is_original lhs_f in
+  let () = y_tinfo_hp (add_str "is_original_lhs" string_of_bool) is_original_lhs in
+    if overlap_flag (* || !Globals.adhoc_flag_1 *) then
     let coerc_left = Lem_store.all_lemma # get_left_coercion in
     let () = y_tinfo_hp (add_str "coerc_left" (pr_list pr_none)) coerc_left in
     let cmml = x_add coerc_mater_match estate coerc_left l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in
@@ -1537,7 +1550,6 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
     let cmmr = if !Globals.old_mater_coercion then x_add coerc_mater_match estate coerc_right l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) 
       else x_add coerc_mater_match estate coerc_right r_vname (r_vargs:P.spec_var list) l_vname r_aset (lhs_f:Cformula.h_formula)
     in
-
     cmml@cmmr
   else
     let res = ref [] in
@@ -1554,17 +1566,17 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
     (* no overlap, how about unv root? *)
     let coerc_left = Lem_store.all_lemma # get_left_coercion in
     let sel_lem = List.map (fun coerc -> 
-        let () = y_binfo_hp (add_str "coerc_left" (string_of_coercion)) coerc in
-        let () = y_binfo_hp (add_str "body_pred_view" (pr_list pr_id)) coerc.coercion_body_pred_list in
-        let () = y_binfo_hp (add_str "head_view" (pr_id)) coerc.coercion_head_view in
-        let () = y_binfo_hp (add_str "univ_vars" (pr_svl)) coerc.coercion_univ_vars in
-        let flag = (coerc.coercion_univ_vars!=[]) && (coerc.coercion_head_view = l_vname) &&
+        let () = y_tinfo_hp (add_str "coerc_left" (string_of_coercion)) coerc in
+        let () = y_tinfo_hp (add_str "body_pred_view" (pr_list pr_id)) coerc.coercion_body_pred_list in
+        let () = y_tinfo_hp (add_str "head_view" (pr_id)) coerc.coercion_head_view in
+        let () = y_tinfo_hp (add_str "univ_vars" (pr_svl)) coerc.coercion_univ_vars in
+        let flag = is_original_lhs && (coerc.coercion_univ_vars!=[]) && (coerc.coercion_head_view = l_vname) &&
                    (List.exists (fun v -> v=r_vname) coerc.coercion_body_pred_list) in
-        let () = y_binfo_hp (add_str "trigger lemma" (string_of_bool)) flag in
-        let () = y_binfo_hp (add_str "coercion rhs" (string_of_formula)) coerc.coercion_body in
-        let roots = extract_root r_vname coerc.coercion_body in
+        let () = y_tinfo_hp (add_str "trigger lemma" (string_of_bool)) flag in
+        let () = y_tinfo_hp (add_str "coercion rhs" (string_of_formula)) coerc.coercion_body in
+        let roots = if flag then extract_root r_vname coerc.coercion_body else [] in
         let coerc_root = List.filter (fun (v,_) -> List.exists (CP.eq_spec_var v) coerc.coercion_univ_vars) roots in
-        (* let () = y_binfo_hp (add_str "rhs root" (pr_svl)) roots in *)
+        (* let () = y_tinfo_hp (add_str "rhs root" (pr_svl)) roots in *)
         match coerc_root with
         | [] -> None
         | (vn,vname)::_ -> Some ({ coerc with coercion_body_view = vname} )
