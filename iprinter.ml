@@ -643,10 +643,10 @@ and string_of_formula = function
     in rs^sa
 
 and string_of_session session_formula =
-  Gen.map_opt_def "No session set.\n"
+  Gen.map_opt_def "\n"
     (fun x ->  match x with
-                 | Session.ProtocolSession s -> Session.IProtocol.string_of_session s
-                 | Session.ProjectionSession s -> Session.IProjection.string_of_session s)
+                 | Session.ProtocolSession s -> "\nsession: " ^ Session.IProtocol.string_of_session s
+                 | Session.ProjectionSession s -> "\nsession: " ^ Session.IProjection.string_of_session s)
     session_formula
 
 and  string_of_struc_formula c = match c with 
@@ -1026,7 +1026,7 @@ let string_of_view_decl v =
   ^ "\nview_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
   ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
   ^ "\nextends" ^ extn_str
-  ^ "\nsession: " ^ (string_of_session v.view_session_formula)
+  ^ (string_of_session v.view_session_formula)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
