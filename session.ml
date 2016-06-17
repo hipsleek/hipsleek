@@ -142,7 +142,9 @@ module IForm = struct
       | _ -> failwith "Should be a HeapNode"
 
   let struc_formula_trans_heap_node fct struc_form =
-    F.struc_formula_trans_heap_node_x fct struc_form
+    let fct_h = (fun x -> Some (fct x)) in
+    let fct = (nonef, nonef, fct_h, (somef, somef, somef, somef, somef)) in
+    F.transform_struc_formula fct struc_form
 
 end;;
 
@@ -423,25 +425,31 @@ module Make_Session (Base: Session_base) = struct
     let params = [] in
     Base.mk_node (ptr, name, args, params, pos)
 
-  let rec trans_from_session s =
-    match s with
+  let trans_from_session s =
+    let rec helper s = match s with
     | SSeq s  ->
-        let arg1 = trans_from_session s.session_seq_formula_head in
-        let arg2 = trans_from_session s.session_seq_formula_tail in
+        let arg1 = helper s.session_seq_formula_head in
+        let arg2 = helper s.session_seq_formula_tail in
         mk_seq_node [arg1;arg2] [] s.session_seq_formula_pos
       (* (\* node, view-name, ho-args, args *\) *)
       (* Base.mkFNode sv !seq_id [arg1;arg2] []
       failwith x_tbi *)
     | SOr s   ->
-        let arg1 = trans_from_session s.session_seq_formula_or1 in
-        let arg2 = trans_from_session s.session_seq_formula_or2 in
+        let arg1 = helper s.session_seq_formula_or1 in
+        let arg2 = helper s.session_seq_formula_or2 in
         mk_or_node arg1 arg2 s.session_seq_formula_pos
     | SStar s ->
-        let arg1 = trans_from_session s.session_seq_formula_star1 in
-        let arg2 = trans_from_session s.session_seq_formula_star2 in
+        let arg1 = helper s.session_seq_formula_star1 in
+        let arg2 = helper s.session_seq_formula_star2 in
         mk_star_node arg1 arg2 s.session_seq_formula_pos
     | SBase s -> Base.trans_base s
-    | SEmp    -> Base.mk_empty ()
+    | SEmp    -> Base.mk_empty () in
+    helper s
+
+  let trans_from_session s =
+    let pr = string_of_session in
+    let pr2 = !Base.print_h_formula in
+    Debug.no_1 "trans_from_session" pr pr2 trans_from_session s
 
   let get_pos s = match s with
     | SSeq s  -> s.session_seq_formula_pos
@@ -450,11 +458,21 @@ module Make_Session (Base: Session_base) = struct
     | SBase s -> Base.get_base_pos s
     | SEmp    -> no_pos
 
+  let mk_sess_h_formula h_form pos =
+    let f = Base.mk_formula_heap_only h_form pos in
+    let rflow_form = (Base.mk_rflow_formula f ~kind:NEUTRAL) in
+    let ptr = Base.choose_ptr () in
+    let name = get_prim_pred_id sess_id in
+    let args = [rflow_form] in
+    let params = [] in
+    Base.mk_node (ptr, name, args, params, pos)
+
   let mk_struc_formula_from_session_and_formula s form_orig =
     let h_form = trans_from_session s in
     let pos = get_pos s in
+    let h_form = mk_sess_h_formula h_form pos in
     let fct h = Base.mk_star h h_form pos in
-    Base.struc_formula_trans_heap_node fct form_orig 
+    Base.struc_formula_trans_heap_node fct form_orig
 
 end;;
 
