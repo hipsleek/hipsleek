@@ -23,6 +23,6 @@ pred_sess ll2<n,A,B> == A -> B : self = null & n = 0.
 //
 //pred_sess ll13<n> == A?self::node<_,_> * x::node<_,_> or (C!self = null & self = null) * (E?self = null). 
 
-pred_sess ll14<n> == A?1.
+//pred_sess ll14<n> == A?1.
 
-checkentail x=null |- x::ll<0>.
+//checkentail x=null |- x::ll<0>.
