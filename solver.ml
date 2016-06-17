@@ -9357,31 +9357,32 @@ type: bool *
                                      | Some s1,Some s2 -> (s1,s2)::a
                                      | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
               (* TODO-WN why is there another elim_unsat_ctx? *)
-              let r_h, r_p, r_vp, r_fl, r_t, r_a = CF.split_components conseq in
-              x_dinfo_hp (add_str "r_h" (Cprinter.string_of_h_formula)) r_h pos;
-              x_dinfo_hp (add_str "r_p" (Cprinter.string_of_mix_formula)) r_p pos;
-              let elim_unsat_es_now_es_helper (prog : prog_decl) conseq2 (sat_subno:  int ref) (es : entail_state) : entail_state =
-                let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in
-                let es_f = es.es_evars in
-                let f = List.hd es_f in
-                x_binfo_zp (lazy ("spec_var list: \n" ^ (Cprinter.string_of_spec_var_list es_f))) pos;
-                if not b then es else
-                  {es with es_formula = conseq2} 
-              in
-              let elim_unsat_es_x_helper (prog : prog_decl) conseq (sat_subno:  int ref) (es : entail_state) : context =
-                if (es.es_unsat_flag) then Ctx es
-                else Ctx (elim_unsat_es_now_es_helper prog conseq sat_subno es)
-              in
-              let elim_unsat_ctx_helper (prog : prog_decl) conseq (sat_subno:  int ref) (ctx : context) : context =
-                let rec helper c = match c with
-                  | Ctx es -> let exec ()= elim_unsat_es_x_helper prog conseq sat_subno es in wrap_trace es.es_path_label exec ()
-                  | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
-                in helper ctx
-              in
-              x_binfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-              x_binfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
-              let res_ctx = elim_unsat_ctx_helper prog conseq (ref 1) res_ctx in
-              x_dinfo_zp (lazy ("heap_entail_empty_heap: formula is valid")) pos;
+              let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+              (* let r_h, r_p, r_vp, r_fl, r_t, r_a = CF.split_components conseq in *)
+              (* x_dinfo_hp (add_str "r_h" (Cprinter.string_of_h_formula)) r_h pos; *)
+              (* x_dinfo_hp (add_str "r_p" (Cprinter.string_of_mix_formula)) r_p pos; *)
+              (* let elim_unsat_es_now_es_helper (prog : prog_decl) conseq2 (sat_subno:  int ref) (es : entail_state) : entail_state = *)
+              (*   let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in *)
+              (*   let es_f = es.es_evars in *)
+              (*   let f = List.hd es_f in *)
+              (*   x_binfo_zp (lazy ("spec_var list: \n" ^ (Cprinter.string_of_spec_var_list es_f))) pos; *)
+              (*   if not b then es else *)
+              (*     {es with es_formula = conseq2}  *)
+              (* in *)
+              (* let elim_unsat_es_x_helper (prog : prog_decl) conseq (sat_subno:  int ref) (es : entail_state) : context = *)
+              (*   if (es.es_unsat_flag) then Ctx es *)
+              (*   else Ctx (elim_unsat_es_now_es_helper prog conseq sat_subno es) *)
+              (* in *)
+              (* let elim_unsat_ctx_helper (prog : prog_decl) conseq (sat_subno:  int ref) (ctx : context) : context = *)
+              (*   let rec helper c = match c with *)
+              (*     | Ctx es -> let exec ()= elim_unsat_es_x_helper prog conseq sat_subno es in wrap_trace es.es_path_label exec () *)
+              (*     | OCtx(c1,c2) -> OCtx(helper c1,helper c2) *)
+              (*   in helper ctx *)
+              (* in *)
+              (* x_binfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_formula conseq))) pos; *)
+              (* x_binfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos; *)
+              (* let res_ctx = elim_unsat_ctx_helper prog conseq (ref 1) res_ctx in *)
+              (* x_dinfo_zp (lazy ("heap_entail_empty_heap: formula is valid")) pos; *)
               (SuccCtx[res_ctx], prf)
             end
     end
