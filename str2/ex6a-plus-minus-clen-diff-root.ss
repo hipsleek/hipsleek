@@ -44,9 +44,9 @@ int char_at (strbuf cptr)
  }
 
 
-int clen(strbuf cptr)
+int clent(strbuf cptr)
   requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
-  ensures  cptr::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
+  ensures  cptr::strbuf<xxx,sl,length> & res = sl-1//-(cptr-xxx) 
               //& cptr'-xxx=sl-1
               //& cptr'=xxx+sl-1
               ;
@@ -56,7 +56,7 @@ int clen(strbuf cptr)
      else {
        dprint;
         cptr = plus_plus(cptr);
-        int r = clen(cptr);
+        int r = clent(cptr);
         cptr = minus_minus(cptr);
         return 1+r;
     }

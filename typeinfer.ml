@@ -643,7 +643,10 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et2 in
     let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a2 no_pos in
     let () = x_tinfo_hp (add_str "t2" string_of_typ) t2 no_pos in
-    let (n_tlist2,t2) = x_add unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
+
+    let (n_tlist2,t2) = x_add unify_ptr_arithmetic (t1,new_et)
+    (t2,new_et2) et n_tl2 pos in
+
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
   | IP.Subtract (a1, a2, pos) ->
@@ -944,10 +947,10 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let unify_ptr_cmp t1 t2 n_tl pos =
       if !Globals.ptr_arith_flag (* Globals.infer_const_obj # is_ana_ni *) then
         if is_node_typ t1 then
-          let (n_tlist2,_) = x_add must_unify_expect t2 Int n_tl pos in
+          let (n_tlist2,_) = x_add must_unify_expect t2 t1 (* Int *) n_tl pos in
           (true,n_tlist2)
         else if is_node_typ t2 then
-          let (n_tlist2,_) = x_add must_unify_expect t1 Int n_tl pos in
+          let (n_tlist2,_) = x_add must_unify_expect t1 t2 (* Int *) n_tl pos in
           (true,n_tlist2)
         else (false,n_tl)
       else (false,n_tl)
