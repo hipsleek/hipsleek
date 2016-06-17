@@ -2404,7 +2404,8 @@ and translate_session (view:I.view_decl) =
                                   match session with
                                     | Session.ProtocolSession s -> s
                                     | _ -> failwith "not" in
-                                let transf_session = Session.IProtocol.mk_struc_formula_from_session proto_session in
+                                let transf_session = Session.IProtocol.mk_struc_formula_from_session_and_formula
+                                                     proto_session view.I.view_formula in
                                 {view with I.view_formula = transf_session}
         | View_SESS Projection -> let session =
                                   match view.I.view_session_formula with
@@ -2414,7 +2415,11 @@ and translate_session (view:I.view_decl) =
                                   match session with
                                     | Session.ProjectionSession s -> s
                                     | _ -> failwith "not" in
-                                let transf_session = Session.IProjection.mk_struc_formula_from_session proj_session in
+                                let formula_orig = match view.I.view_formula with
+                                                     | F.EBase base -> base.F.formula_struc_base
+                                                     | _ -> failwith "Formula should be EBase." in
+                                let transf_session = Session.IProjection.mk_struc_formula_from_session_and_formula
+                                                     proj_session view.I.view_formula in
                                 {view with I.view_formula = transf_session}
         | _ -> view
 

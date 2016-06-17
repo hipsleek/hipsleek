@@ -50,6 +50,7 @@ module type Message_type = sig
   type formula
   type pure_formula
   type h_formula
+  type h_formula_heap
   type ho_param_formula
   type struc_formula
   type node
@@ -59,6 +60,7 @@ module type Message_type = sig
 
   val is_emp : formula -> bool
   val print  : (formula -> string) ref
+  val print_h_formula  : (h_formula -> string) ref
   val mk_node: arg -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
   val mk_rflow_formula:  formula -> ?kind:ho_flow_kind -> ho_param_formula
@@ -70,12 +72,16 @@ module type Message_type = sig
   val mk_empty: unit -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
+  val get_h_formula_heap: h_formula -> h_formula_heap
+  val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula
+
 end;;
 
 module IForm = struct
   type formula = F.formula
   type pure_formula = P.formula
   type h_formula = F.h_formula
+  type h_formula_heap = F.h_formula_heap
   type ho_param_formula = F.rflow_formula
   type struc_formula = F.struc_formula
   type node = Globals.ident * VarGen.primed
@@ -89,6 +95,7 @@ module IForm = struct
      name - name of heap struct
      ho - HO param 
   *)
+  let print_h_formula = F.print_h_formula
   let mk_node (ptr, name, ho, params, pos)  =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
@@ -129,12 +136,21 @@ module IForm = struct
 
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos) 
 
+  let get_h_formula_heap h_formula =
+    match h_formula with
+      | F.HeapNode n -> n
+      | _ -> failwith "Should be a HeapNode"
+
+  let struc_formula_trans_heap_node fct struc_form =
+    F.struc_formula_trans_heap_node_x fct struc_form
+
 end;;
 
 module CForm = struct
   type formula = CF.formula
   type pure_formula = CP.formula
   type h_formula = CF.h_formula
+  type h_formula_heap = CF.h_formula_view
   type ho_param_formula = CF.rflow_formula
   type struc_formula = CF.struc_formula
   type node = CP.spec_var
@@ -144,6 +160,7 @@ module CForm = struct
 
   let is_emp f = failwith x_tbi
   let print    = CF.print_formula
+  let print_h_formula = CF.print_h_formula
   let mk_node (ptr, name, ho, params, pos) =
     let h = CF.mkViewNode ptr name params pos in
     match h with
@@ -185,6 +202,13 @@ module CForm = struct
 
   let set_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
+  let get_h_formula_heap h_formula = failwith x_tbi
+
+  let struc_formula_trans_heap_node fct_h struc_form =
+    let fct_h = (fun x -> Some (fct_h x)) in
+    let fct = nonef, nonef, fct_h, (somef, somef, somef, somef, somef) in
+    CF.transform_struc_formula fct struc_form
+
 end;;
 
 (* inst for iformula & cformula *)
@@ -222,6 +246,16 @@ module Protocol_base_formula =
       Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos)
 
     let get_base_pos base = base.protocol_base_formula_pos
+
+    let trans_h_formula_to_session h_formula = failwith x_tbi
+(*      let node = match h_formula with
+        | F.HeapNode n -> n
+        | _ -> failwith "Should be a HeapNode" in
+      if (List.length node.h_formula_heap_arguments <> 2)
+      then
+        failwith "Should have two heap arguments";
+      let sender = fst (fst (List.nth node.h_formula_heap_arguments 0)) in
+      sender*)
 
   end;;
 
@@ -266,6 +300,8 @@ module Projection_base_formula =
 
     let get_base_pos base = base.projection_base_formula_pos
 
+    let trans_h_formula_to_session h_formula = failwith x_tbi
+
   end;;
 
 module type Session_base =
@@ -279,6 +315,7 @@ sig
   val mk_base : a -> t -> base
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
+  val trans_h_formula_to_session : h_formula -> base
 end;;
 
 (* ============== session type ================ *)
@@ -413,11 +450,11 @@ module Make_Session (Base: Session_base) = struct
     | SBase s -> Base.get_base_pos s
     | SEmp    -> no_pos
 
-  let mk_struc_formula_from_session s =
+  let mk_struc_formula_from_session_and_formula s form_orig =
     let h_form = trans_from_session s in
     let pos = get_pos s in
-    let f = Base.mk_formula_heap_only h_form pos in
-    Base.mk_struc_formula f pos
+    let fct h = Base.mk_star h h_form pos in
+    Base.struc_formula_trans_heap_node fct form_orig 
 
 end;;
 
