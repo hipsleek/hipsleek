@@ -223,6 +223,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | String, String -> (tl, Some String)
     | Char, String -> (tl, Some String)
+    | String, Char -> (tl, Some String)
     | Char, Char -> (tl, Some Char)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)

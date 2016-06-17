@@ -4,32 +4,32 @@ checksat charUp("abc", 1, 'd') = "adc".
 //2
 checksat charUp("abc", 3, 'd') = "abcd".
 
-// //3
-// checksat charUp("abc", 0, 'd') = "dbc".
+//3
+checksat charUp("abc", 0, 'd') = "dbc".
 
-// //4
-// checksat s = charUp(s, (slen(s)-1), '\x00') & endzero(s).
+//4
+checksat s = charUp(s, (slen(s)-1), '\x00') & endzero(s).
 
-// //5
-// checksat s = charUp(s, (slen(s)-1), '\x00') & endzero(s) & s = "a\\0c".
+//5
+checksat s = charUp(s, (slen(s)-1), '\x00') & endzero(s) & s = "a\\0c".
 
-// //6
-// checkentail s = charUp(s, (slen(s)-1), '\x00') |- !(nonzero(s)).
+//6
+checkentail s = charUp(s, (slen(s)-1), '\x00') |- !(nonzero(s)).
 
-// //7
-// checkentail s = charUp(s1, (slen(s)-1), '\x00') & nonzero(s1) |- endzero(s).
+//7
+checkentail s = charUp(s1, (slen(s)-1), '\x00') & nonzero(s1) |- endzero(s).
 
-// //8
-// checkentail endzero(s) & s = charUp(s,offset,c) & offset < slen(s) |- endzero(s).
+//8
+checkentail endzero(s) & s = charUp(s,offset,c) & offset < slen(s) |- endzero(s).
 
-// //9
-// checkentail endzero(s) & s = charUp(s,offset,c) & offset < slen(s) & c != '\x00' |- endzero(s).
+//9
+checkentail endzero(s) & s = charUp(s,offset,c) & offset < slen(s) & c != '\x00' |- endzero(s).
 
-// //10
-// checkentail s = charUp(s1,offset,c) & offset < slen(s1) |- slen(s) = slen(s1).
+//10
+checkentail s = charUp(s1,offset,c) & offset < slen(s1) |- slen(s) = slen(s1).
 
 //11
-//checkentail endzero(s1) & s = charUp(s1,offset,c) & 0<= offset < slen(s1) & c = '\x00' |- endzero(s).
+checkentail endzero(s1) & s = charUp(s1,offset,c) & 0<= offset < slen(s1) & c = '\x00' |- endzero(s).
 
 //12
-//checkentail endzero(s1) & s = charUp(s1,offset,c) & clen(s1) != offset & offset < slen(s1) & c != '\x00' |- endzero(s).
+checkentail endzero(s1) & s = charUp(s1,offset,c) & clen(s1) != offset & offset < slen(s1) & c != '\x00' |- endzero(s).
