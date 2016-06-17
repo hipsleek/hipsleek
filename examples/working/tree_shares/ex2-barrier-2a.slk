@@ -1,0 +1,14 @@
+data cell {int val;}.
+macro L == (#,) .
+macro R == (,#) .
+
+//(5)
+// expect x::cell(@@R)<q>
+checkentail   x::cell<q> |- x::cell(@@L)<p> .
+expect Valid.
+print residue.
+// expect @@R residue  x::cell(@@R)<p>
+// Why false <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+

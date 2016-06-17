@@ -1,0 +1,29 @@
+relation B(int n).
+infer [B] v=5 |- B(v).
+print residue.
+
+//<1>emp&v=5&{FLOW,(4,5)=__norm#E}[]
+// inferred rel: [RELDEFN B: ( v=5) -->  B(v)]
+
+data arrI
+{
+  int value;
+}.
+
+
+relation Base(int n).
+relation Rec(int n).
+
+
+pred arrsegHO<i,m> ==
+   x::arrI<v> & x=self+i & Base(v)
+   or x::arrI<v> * self::arrsegHO<i+1,m> & Rec(v) & x = self+i.
+
+pred arrseg<i,m> ==
+   x::arrI<v> & x=self+i 
+   or x::arrI<v> * self::arrseg<i+1,m> & x = self+i.
+
+//infer [Rec] arr::arrI<v> * arr::arrsegHO<i+1,m> & v=5 |- arr::arrsegHO<i,m>.
+
+
+infer [] arr::arrI<v> * arr::arrseg<i+1,m> |- arr::arrseg<i,m>.
