@@ -1,0 +1,15 @@
+data node {
+  node next;
+}.
+
+pred ls<n,p> ==
+   self=p & n=0
+ or self::node<q>*q::ls<n-1,p>
+ inv n>=0.
+
+lemma self::ls<n,p> & a+b=n & a>=0 & b>=0
+  -> self::ls<a,q>*q::ls<b,p>.
+
+
+checkentail x::ls<8,p> |- x::ls<4,r>.
+print residue.

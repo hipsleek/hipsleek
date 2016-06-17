@@ -15,6 +15,20 @@ arr_seg_max<i,n,maxv> == x::arrI<maxv> & x=self+i & i=n-1 & i>=0 //& cur<=max_va
   or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2> & x=self+i & i>=0 & i<n-1 & maxv=max(cur,maxv2)
   inv n>i & i>=0;
 
+arr_seg_max_1<i,n,maxv> == i=n & i>=0 //& cur<=max_value
+  or x::arrI<maxv> & x=self+i & i=n-1 & i>=0
+  or x::arrI<cur> * self::arr_seg_max_1<i+1,n,maxv2> & x=self+i & i>=0 & i<n & maxv=max(cur,maxv2)
+  inv n>i & i>=0;
+
+void merge_max(arrI base,int i, int k, int n, int m)
+  requires base::arr_seg_max_1<i,k,m1> * base::arr_seg_max_1<k,n,m2> & m1<=m & m2<=m
+  ensures base::arr_seg_max_1<i,n,m>;
+
+void reverse_unfold(arrI base, int i,int n,int m)
+  requires x::arrI<m1>*base::arr_seg_max_1<i+1,n,m2> & x=base+i & m1<=m & m2<=m
+  ensures base::arr_seg_max_1<i,n,m>;
+
+
 void upd_arr(arrI base, int i, int v)
   requires a::arrI<_> & a=base+i & i>=0
   ensures a::arrI<v>;
@@ -38,25 +52,29 @@ int get_max(arrI base,int i,int m)
  case{
   i>=m -> ensures emp & res=-1;
   i<m ->
-    requires base::arr_seg_max<i,m,maxv>
-    ensures  base::arr_seg_max<i,m,res>;
+    requires base::arr_seg<i,m>
+    ensures  base::arr_seg_max_1<i,res,v1> * x::arrI<v> * base::arr_seg_max_1<res+1,m,v2> & v1<=v & v2<=v & x=base+res;
   }
 {
   if(i<m){
     if(i==m-1)
       {
-        return get_arr(base,i);
+        return i;
       }
     else{
       int cur = get_arr(base,i);
-      int tmp = get_max(base,i+1,m);
+      int tmp_index = get_max(base,i+1,m);
+      int tmp = get_arr(base,tmp_index);
       if(tmp<cur)
         {
-          return cur;
+          //          reverse_unfold(base,tmp_index,m,tmp);
+          merge_max(base,i+1,tmp_index,m,tmp);
+          return i;
         }
       else
         {
-          return tmp;
+          reverse_unfold(base,i,tmp_index,tmp);
+          return tmp_index;
         }
     }
   }

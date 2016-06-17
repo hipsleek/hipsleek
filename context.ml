@@ -660,7 +660,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   let mf = MCP.pure_of_mix mf in
   let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
   let () = y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure in
-  let () = y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure in
   let lhs_rhs_pure = CP.mkAnd lhs_pure rhs_pure no_pos in
   let () = y_tinfo_hp (add_str "mf" !CP.print_formula) mf in
   let lhs_pure = CP.mkAnd lhs_pure mf no_pos in
@@ -728,18 +727,19 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
     let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let () = y_tinfo_hp (add_str "r_eqns" (pr_list (pr_pair pr_sv pr_sv))) r_eqns in
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
+    let () = y_tinfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
     let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
-    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns') in
+    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns'@r_eqns) in
     let () = x_tinfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
     let () = x_tinfo_hp (add_str "same_base_rhs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base_rhs no_pos in
     let () = x_tinfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in
     let () = x_tinfo_hp (add_str "other_eqn" (pr_list !CP.print_formula)) other_eqn no_pos in
-    let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
     let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
@@ -823,28 +823,31 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               match root_lhs with
               | None  ->
                 let eq = CP.mkEqVars v d in
-                let () =  y_binfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
-                let () =  y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
+                let () =  y_tinfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
+                let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
                 let lhs_w_rhs_inst = CP.join_conjunctions [lhs_pure;rf;rhs_pure] in
                 let rhs = eq in
                 let r = x_add_1 !CP.tp_is_sat lhs_w_rhs_inst in
-                if r then 
+                if r then
                   let () =  y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure  in
                   (* let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in *)
                   (* let r = x_add_1 !CP.tp_is_sat f in *)
-                  let same_base_flag = CP.EMapSV.is_equiv emap_base d rhs_ptr in  
+                  let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
+                  let () = x_tinfo_hp (add_str "d" !CP.print_sv) d no_pos in
+                  let () = x_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr no_pos in
+                  let same_base_flag = CP.EMapSV.is_equiv emap_base d rhs_ptr in
                   (* let rhs = CP.mkEqn d rhs_ptr no_pos in *)
                   let r=
-                    if true (* same_base_flag *) then
+                    if same_base_flag then
                       let neg_rhs = CP.mkNot_s rhs in
                       not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  
-                    else 
+                    else
                       false
                   in
-                  let () =  y_binfo_hp (add_str "r1" string_of_bool) r  in
-                  let () =  y_binfo_hp (add_str "same_base_flag" string_of_bool) same_base_flag  in
-                  let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
-                  let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                  let () =  y_tinfo_hp (add_str "r1" string_of_bool) r  in
+                  let () =  y_tinfo_hp (add_str "same_base_flag" string_of_bool) same_base_flag  in
+                  let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+                  let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
                   (* let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in *)
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
@@ -899,7 +902,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
                   let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
                   let () =  y_tinfo_hp (add_str "r" string_of_bool) r  in
-                  if CF.no_infer_all_all estate || r then (d,(map_r r,None),None)
+                  if CF.no_infer_all_all estate || r || !Globals.adhoc_flag_6 then (d,(map_r r,None),None)
                   else
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)
@@ -1516,6 +1519,16 @@ and spatial_ctx_extract_hrel_on_lhs prog estate hp e rhs_node aset (lhs_node: Cf
       cmm
   | _ -> []
 
+and is_original lhs_h =
+      let store = ref false in
+      let f hf = match hf with
+        | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf
+        | ViewNode vl -> store := vl.h_formula_view_original; Some hf
+        | _ -> None in 
+      let _ = map_h_formula lhs_h f
+      in !store
+
+  
 (* WN : to check if this optimization misses anything *)
 (* Materialized match for lemma requires an overlap with parameters of views *)
 and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_vargs:P.spec_var list)  (*l_asset*) r_aset (lhs_f:Cformula.h_formula) =
@@ -1524,7 +1537,10 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
   let () = x_tinfo_hp (add_str "r_vname" pr_id) r_vname no_pos in
   let () = x_tinfo_hp (add_str "l_vargs" !CP.print_svl) l_vargs no_pos in
   let () = x_tinfo_hp (add_str "r_aset" !CP.print_svl) r_aset no_pos in
-  if overlap_flag || !Globals.adhoc_flag_1 then
+  let () = y_tinfo_hp (add_str "lhs_f" !CF.print_h_formula) lhs_f in
+  let is_original_lhs = is_original lhs_f in
+  let () = y_tinfo_hp (add_str "is_original_lhs" string_of_bool) is_original_lhs in
+    if overlap_flag (* || !Globals.adhoc_flag_1 *) then
     let coerc_left = Lem_store.all_lemma # get_left_coercion in
     let () = y_tinfo_hp (add_str "coerc_left" (pr_list pr_none)) coerc_left in
     let cmml = x_add coerc_mater_match estate coerc_left l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in
@@ -1535,7 +1551,41 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
       else x_add coerc_mater_match estate coerc_right r_vname (r_vargs:P.spec_var list) l_vname r_aset (lhs_f:Cformula.h_formula)
     in
     cmml@cmmr
-  else []
+  else
+    let res = ref [] in
+    let extract_root pred_id (f: CF.formula)  =
+      let heap_f, _, _, _, _, _ = CF.split_components f in
+      (* let res = ref [] in *)
+      let f hf = match hf with
+        | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf
+        | ViewNode vl -> 
+          let name = vl.h_formula_view_name in
+          (if name=pred_id then res := (vl.h_formula_view_node,name)::!res; Some hf)
+        | _ -> None in 
+      let _ = map_h_formula heap_f f in !res in
+    (* no overlap, how about unv root? *)
+    let coerc_left = Lem_store.all_lemma # get_left_coercion in
+    let sel_lem = List.map (fun coerc -> 
+        let () = y_tinfo_hp (add_str "coerc_left" (string_of_coercion)) coerc in
+        let () = y_tinfo_hp (add_str "body_pred_view" (pr_list pr_id)) coerc.coercion_body_pred_list in
+        let () = y_tinfo_hp (add_str "head_view" (pr_id)) coerc.coercion_head_view in
+        let () = y_tinfo_hp (add_str "univ_vars" (pr_svl)) coerc.coercion_univ_vars in
+        let flag = is_original_lhs && (coerc.coercion_univ_vars!=[]) && (coerc.coercion_head_view = l_vname) &&
+                   (List.exists (fun v -> v=r_vname) coerc.coercion_body_pred_list) in
+        let () = y_tinfo_hp (add_str "trigger lemma" (string_of_bool)) flag in
+        let () = y_tinfo_hp (add_str "coercion rhs" (string_of_formula)) coerc.coercion_body in
+        let roots = if flag then extract_root r_vname coerc.coercion_body else [] in
+        let coerc_root = List.filter (fun (v,_) -> List.exists (CP.eq_spec_var v) coerc.coercion_univ_vars) roots in
+        (* let () = y_tinfo_hp (add_str "rhs root" (pr_svl)) roots in *)
+        match coerc_root with
+        | [] -> None
+        | (vn,vname)::_ -> Some ({ coerc with coercion_body_view = vname} )
+        (* CP.overlap_svl coerc.coercion_univ_vars roots *)
+        ) coerc_left in
+    let sel_lem = List.fold_left (fun acc c -> match c with None -> acc | Some x -> x::acc) [] sel_lem in
+    (* let sel_lem = [] in *)
+    let cmml = x_add coerc_mater_match estate sel_lem l_vname (l_vargs:P.spec_var list) r_vname (r_aset) (lhs_f:Cformula.h_formula) in
+    cmml
 
 and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in

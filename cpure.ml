@@ -14843,7 +14843,7 @@ let prune_irr_neq p0 irr_svl =
         | _, true -> false,np1
         | _ -> (false,mkAnd np1 np2 pos)
       end
-    | AndList b-> false,p(* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
+    | AndList b-> false,p (* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
     (*     let nb1,svl1 = helper b1 in *)
     (*     if svl1 = [] then ls1@[(sl,b1)],svl0 else *)
     (*       ls1,svl0@svl1 *)
@@ -16355,12 +16355,23 @@ let norm_base lhs rhs =
   with _ -> None
 
 let norm_base lhs rhs =
+  let pr_3 (a,b,c) = "(,"^(!print_sv a)^","^(!print_sv b)^","^(!print_exp c)^")" in
+  let pr = pr_option pr_3 in
+  Debug.no_2 "norm_base_helper" !print_exp !print_exp pr norm_base lhs rhs
+
+let norm_base lhs rhs =
   let r = norm_base lhs rhs in
   match r with
     | Some(v1,v2,IConst(i,_))
             -> if i==0 then None
             else r
     | _ -> r
+
+let norm_base lhs rhs =
+  let pr_3 (a,b,c) = "(,"^(!print_sv a)^","^(!print_sv b)^","^(!print_exp c)^")" in
+  let pr = pr_option pr_3 in
+  Debug.no_2 "norm_base" !print_exp !print_exp pr norm_base lhs rhs
+
 
 (* extraction here is incomplete for base! *)
 (* extr_ptr_eqn@3 *)

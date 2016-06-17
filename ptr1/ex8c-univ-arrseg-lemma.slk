@@ -1,0 +1,57 @@
+
+/*
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,d)], xxx=self+i & n>=i & d=n-i & i>=0).
+*/
+relation Univ(int m).
+
+checkentail i<m & m<n |- m=i+1.
+expect Fail.
+
+//(1)
+checkentail i<m & m<n & Univ(m) |- m=i+1.
+expect Valid.
+print residue.
+
+checkentail i<m & m<n & Univ(m) |- m=i+2.
+expect Fail.
+
+checkentail i<m & m<=4 & Univ(m) & y=x+i+1 |- x+m=y.
+expect Valid.
+print residue.
+
+checkentail i<m & m<=4 & Univ(m) & y=x+i |- x+m=y.
+expect Fail.
+
+checkentail i<m & m<=i+4 & Univ(m) & y=x+i+2 |- x+m=y.
+expect Valid.
+print residue.
+
+checkentail i<m & m<=i+4 & Univ(m) & y=x+i+3 |- x+m=y.
+expect Valid.
+print residue.
+
+checkentail i<m & m<=i+4 & Univ(m) & y=x+i+4 |- x+m=y.
+expect Valid.
+print residue.
+
+checkentail i<m & m<=i+4 & Univ(m) & y=x+i+5 |- x+m=y.
+expect Fail.
+
+
+/* ex8c -dre "filter_ante"
+
+# why is there such a message?
+
+ERROR: at _0:0_0:0
+Message: x is undefined (7)
+
+
+
+*/
+

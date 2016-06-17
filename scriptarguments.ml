@@ -420,6 +420,7 @@ let common_arguments = [
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
   ("--en-hrel-as-view", Arg.Set Globals.hrel_as_view_flag,"Enable HRel as view");
   ("--dis-hrel-as-view", Arg.Clear Globals.hrel_as_view_flag,"Disable HRel as view");
+  ("--en-init-para", Arg.Set Globals.init_para_flag,"Enable init_para for infer relation ");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");

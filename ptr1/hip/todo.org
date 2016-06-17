@@ -1,0 +1,60 @@
+* running examples
+  - array initialization using pointer. ex6a (with base), ex6b (without base)
+  - array initialization using index. ex6c (fixed length), ex6c1 (length as parameters)
+  - array copy ex6d, but all elements in the array are the same.
+  - array copy ex6d2, with a mapping, a general one
+  - array sorting. Very naive sorting, just show specifying the sorting property. ex6d3. with pointer
+  - array sorting, same as above. With index.
+  - find max element. ex6e. Is the specification for get_arr correct?
+  - array write in arbitrary position, use split_arr to guide the split of array,
+    and merge_arr can be used to merge two array segments
+  - ex6i array linear search: working. Need 'operational lemma'
+  - array binary search: working, but it may be hard to verify with other parts of the array
+    ex6j1 can deal with other parts of the array. But the specification is not quite strong.
+  - ex6l get_max returns the index for the max value. This one is complete.
+  - ex6l1 not working, just a draft
+  - ex6l2 get_max returns the index for the max value.
+    In this example, only the shape property is verified.
+  - ex6l3
+    arr_seg_max<i,n,maxv,pos> == i=n & i>=0
+     or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv,pos> & x=self+i & i>=0 & i<n-1 & ((!(i=pos))|(cur=maxv))
+    inv n>i & i>=0;
+    either without max or the ((!i=pos)|...) this works
+    A failure attempt to include global information in local reasoning.
+    How to handle when an array is broken into 2? With exploring.
+  - ex6l4 a real selection sorting with max value of an array
+  - ex6l5 draft, using set property
+  - ex6l6 draft
+  - ex6l7 draft
+  - ex6m1 swap and bubble sort
+  - ex6n1 verify the shape for partition. But this one takes very long time.
+  - ex6n2 verify the shape and content property for partition, this one quite fast. Why ex6n1 takes so long?
+  - ex6n3 verify a more general property for partition, making it suitable to be called inside quick sort
+  - ex6n4 verify quick sort.
+
+* Interesting problems
+  - array initialization
+  - array copy
+  - binary search, requires lemma
+  - find max
+  - linear search
+  - selection sort
+  - bubble sort
+  - quick sort
+
+* Contributions
+  - A systematic way to write specifications for array programs
+    arrI<v> as an array element, arrseg<i,n,max,min,f> as an array segment
+
+    Automated entailment checking...
+
+    self+i::arrI<v> * self+i+1::arrI<v> * self::arrseg<i+2,n,_,_,_> |- self::arrseg<i,n,_,_,_>
+
+    We need some new mechanism to combine segments...
+
+    Inference
+
+    self+i::arrI<> * self+i+1::arrseg<> |- self+i::arrseg<>
+
+  - A verification system for array programs with pointers or index
+  - Automatically prove
