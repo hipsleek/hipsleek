@@ -28,9 +28,9 @@ lemma self::strbuf<hd,sl,ln> & hd<=self2 & self2<=hd+sl & self2<hd+ln
 // universal lemma for ls splitting
 // self::ls<n,p> & n1+n2=n & n1,n2>=0 => self::ls<n1,q>*q::ls<n2,p>
 
-int clen(strbuf cptr)
+int clent(strbuf cptr)
   requires cptr::strbuf<xxx,sl,length> & cptr<xxx+sl & cptr<xxx+length
-  ensures  cptr::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx) 
+  ensures  cptr::strbuf<xxx,sl,length> & res = sl-1-(cptr-xxx)
               //& cptr'-xxx=sl-1
               //& cptr'=xxx+sl-1
               ;
@@ -40,7 +40,7 @@ int clen(strbuf cptr)
      else {
        dprint;
         cptr = plus_plus(cptr);
-        int r = clen(cptr);
+        int r = clent(cptr);
         //cptr = minus_minus(cptr);
         return 1+r;
     }

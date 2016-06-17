@@ -646,7 +646,47 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tlist2,t2) = x_add unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)
-  | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos)
+  | IP.Subtract (a1, a2, pos) ->
+    let todo_unk:Globals.typ = x_add must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
+    let () = y_tinfo_pp "here in subtract" in
+    let (new_et1, n_tl) = fresh_tvar tlist in
+    let (new_et2, n_tl) = fresh_tvar n_tl in
+    let nt = List.find (fun (v,en) -> en.sv_info_kind = new_et1) n_tl in
+    let (tmp1,tmp2)=nt in
+    let () = y_tinfo_hp (add_str "new_et1" string_of_typ) new_et1 in
+    let (n_tl1,t1) = gather_type_info_exp_x prog a1 n_tl new_et1 in (* tvar, Int, Float *)
+    let (n_tl2,t2) = gather_type_info_exp_x prog a2 n_tl1 new_et2 in (* tvar, Int, Float *)
+    let () = y_tinfo_hp (add_str "(t1,t2)" (pr_pair string_of_typ string_of_typ)) (t1,t2) in
+    if is_possible_node_typ t1 then (
+      if is_possible_node_typ t2 then
+        (* let () = y_tinfo_hp (add_str "t2" string_of_typ) t2 in *)
+         let (n_tl2,_) = x_add must_unify_expect t2 new_et1 n_tl2 pos in
+         let (n_tlist2,_) = x_add must_unify_expect t1 new_et2 n_tl2 pos in
+         (n_tlist2,Int)
+      else
+        (* let () = y_tinfo_hp (add_str "t2" string_of_typ) t2 in *)
+        let (n_tl2,_) = x_add must_unify_expect t1 new_et1 n_tl1 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
+        (n_tlist2,t1))
+    else if is_possible_node_typ t2 then
+        let (n_tl2,_) = x_add must_unify_expect t2 new_et2 n_tl2 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
+        (n_tlist2,t2)
+    else
+    (* if (is_possible_node_typ t1) && (is_possible_node_typ t2) then *)
+    (*   let (n_tl2,_) = x_add must_unify_expect t2 new_et n_tl2 pos in *)
+    (*   let (n_tlist2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in *)
+    (*   (n_tlist2,Int) *)
+    (* else *)
+      (* let (n_tlist1,t1) = x_add must_unify_expect t1 et n_tl2 pos in *)
+      (* let (n_tlist2,t2) = x_add must_unify_expect t2 et n_tlist1 pos in *)
+      (* let (n_tlist2,t2) = x_add must_unify t1 t2 n_tlist2 pos in *)
+      (* (n_tlist2,t2) *)
+      let (n_tlist1,t1) = x_add must_unify_expect t1 et n_tl2 pos in
+      let (n_tlist2,t2) = x_add must_unify_expect t2 t1 n_tlist1 pos in
+      let n_tl = List.filter (fun (v,en) -> v<>tmp1) n_tlist2 in
+      (n_tl,t2)
+  | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos)
   | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
     let todo_unk:Globals.typ = x_add must_unify_expect_test et NUM tlist pos in (* UNK, Int, Float, NUm, Tvar *)
     let (new_et, n_tl) = fresh_tvar tlist in
