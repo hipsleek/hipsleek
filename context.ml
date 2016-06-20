@@ -2265,6 +2265,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               let () = x_tinfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
               let () = x_tinfo_hp (add_str "vr_kind: " string_of_view_kind) vr_kind no_pos in
               let () = x_tinfo_hp (add_str "vr_name: " pr_id) vr_name no_pos in
+              let () = x_tinfo_hp (add_str " vl_name in vr_self_pts " string_of_bool) (Gen.BList.mem_eq (=) vl_name vr_self_pts) no_pos in
+              let () = x_tinfo_hp (add_str "vr_self_pts: " (pr_list pr_id)) vr_self_pts no_pos in
               let is_l_lock = match vl_vdef.view_inv_lock with
                 | Some _ -> true
                 | None -> false
@@ -2289,10 +2291,10 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               let () = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
               let () = Debug.ninfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
               let () = Debug.ninfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
-              let () = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
-              let () = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
-              let () = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-              let () = Debug.ninfo_hprint (add_str "!Globals.self_fold_search_flag" string_of_bool) !Globals.self_fold_search_flag no_pos in
+              let () = Debug.tinfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
+              let () = Debug.tinfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+              let () = Debug.tinfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+              let () = Debug.tinfo_hprint (add_str "!Globals.self_fold_search_flag" string_of_bool) !Globals.self_fold_search_flag no_pos in
               let flag_lem = (
                 if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
                 (* else (vl_view_orig || vr_view_orig) *)
@@ -2325,12 +2327,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   [(0,M_match m_res)],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
                 else
                   let base_case_prio = 3 in
-                  let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))  
+                  let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || (is_view_PRIM vl_kind)))  
                     then (-1,M_Nothing_to_do "base_case_unfold not selected")
                     else (base_case_prio,M_base_case_unfold m_res) in
                   let a1 =  
                     (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
-                    if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))  
+                    if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && not(is_view_PRIM vr_kind)))  
                     then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                     else a1 in
                   let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
@@ -2405,7 +2407,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                       begin
                         let l1 =
                           (*Do not fold/unfold LOCKs and array segments when view matching*)
-                          if (is_r_lock || not(vr_actual_root==None)) then [] else 
+                          if (is_r_lock || not(vr_actual_root==None)) then [] else
                           if (vl_view_orig && vr_view_orig && not(vr_is_prim) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                           then
                             [(2,M_fold m_res)] 

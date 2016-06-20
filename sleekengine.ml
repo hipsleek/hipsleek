@@ -3131,7 +3131,7 @@ let process_print_command pcmd0 =
       let () = HipUtil.view_scc_obj # build_scc_void x_loc in
       let view_list =  get_sorted_view_decls () (* !cprog.prog_view_decls *) in
       let view_list = Cast.get_selected_views opt view_list in
-      let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
+      let lst = List.filter (fun v -> not(is_view_PRIM v.Cast.view_kind)) view_list in
       let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
       let pr (a,f) = if f then a^"*" else a in
       let opt_str = (match opt with None -> ""

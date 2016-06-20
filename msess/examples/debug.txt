@@ -1,7 +1,8 @@
-do_fold_w_ctx
-do_fold
-process_action,Trace
-choose_context,Trace
-match_one_ho_arg
-do_match,Trace
-heap_entail_conjunct,Trace
+#do_fold_w_ctx
+#do_fold
+#process_action,Trace
+#choose_context,Trace
+#match_one_ho_arg
+#do_match,Trace
+#heap_entail_conjunct,Trace
+process_one_match,Trace

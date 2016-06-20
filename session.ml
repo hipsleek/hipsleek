@@ -295,8 +295,8 @@ module Projection_base_formula =
                    | Send -> get_prim_pred_id send_id
                    | Receive -> get_prim_pred_id recv_id in
       let args = match base.projection_base_formula_op with
-                   | Send -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:OUTFLOW]
-                   | Receive -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:INFLOW] in
+                   | Send -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:INFLOW]
+                   | Receive -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:OUTFLOW] in
       let params = [] in
       Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos)
 

@@ -2599,7 +2599,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let xpure_flag = false (* x_add TP.check_diff memo_pf_N memo_pf_P *) in
       let view_kind = trans_view_kind vdef.I.view_kind in
       let vn = vdef.I.view_name in
-      let () = if view_kind = View_PRIM then CF.view_prim_lst # push vn
+      let () = if is_view_PRIM view_kind then CF.view_prim_lst # push vn
       in
       (* let view_vars_gen = CP.sv_to_view_arg_list view_sv_vars in *)
       (* let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in *)

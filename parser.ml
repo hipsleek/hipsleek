@@ -1286,8 +1286,8 @@ view_decl:
 prim_view_decl:
   [[ vh= view_header; oi= opt_inv; obi = opt_baga_inv; obui = opt_baga_under_inv; li= opt_inv_lock
       ->  let kind = match vh.view_kind with
-            | View_SESS k -> vh.view_kind
-            | _ -> View_PRIM in
+            | View_SESS k -> View_PRIM (Some vh.view_kind)
+            | _ -> View_PRIM None in
           let (oi, oboi) = oi in
           { vh with
           (* view_formula = None; *)
