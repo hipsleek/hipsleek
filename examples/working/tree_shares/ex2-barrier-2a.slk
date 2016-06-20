@@ -2,13 +2,43 @@ data cell {int val;}.
 macro L == (#,) .
 macro R == (,#) .
 
+//(1)
+checkentail x::cell<q> |-  x::cell(v)<q>.
+print residue.
+//(1) valid v = full or v<full x(1-v) q (1-v) ll 
+//-> missing?
+expect Valid.
+
+ 
+//(2)
+checkentail x::cell<q> |- false.
+print residue.
+expect Fail.
+
+//(3)
+checkentail x::cell(@@L)<q> |-  x::cell<q>.
+print residue.
+expect Fail.
+
+
+//(4)
+// expect emp
+checkentail   x::cell<q> |- x::cell<q> .
+expect Valid.
+print residue.
+
+
 //(5)
 // expect x::cell(@@R)<q>
 checkentail   x::cell<q> |- x::cell(@@L)<p> .
 expect Valid.
 print residue.
+
 // expect @@R residue  x::cell(@@R)<p>
 // Why false <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
-
-
-
+ 
+//(6)
+checkentail   x::cell<q> |- x::cell<p> .
+expect Valid.
+print residue.
+// expect @@R residue  x::cell(@@R)<p>
