@@ -308,7 +308,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_labels = List.map (fun _ ->  Label_only.LOne.unlabelled) vars, false;
                   Iast.view_modes = List.map (fun _ -> ModeOut) vars ;
                   Iast.view_typed_vars =  tvars;
-                  Iast.view_kind = View_NORM;
+                  Iast.view_kind = View_NORM None;
                   Iast.view_derv = false;
                   Iast.view_parent_name = None;
                   Iast.view_prop_extns = [];
@@ -1009,7 +1009,7 @@ let trans_view_dervs_new (prog : Iast.prog_decl) rev_form_fnc trans_view_fnc low
       | _-> failwith (x_loc^" no prop")) in
   let opt = derv.Iast.view_derv_from in
   let vn_of_vname = reserve_derv_name_for_first opt in
-  let cviews = List.filter (fun v -> v.C.view_kind = View_NORM) cviews0 in
+  let cviews = List.filter (fun v -> is_view_NORM v.C.view_kind) cviews0 in
   let () = y_binfo_hp (add_str "(norm) cviews" (pr_list (fun v -> v.C.view_name))) cviews in
   let view_list = cviews in
   let () = y_binfo_hp (add_str "selected" (pr_opt string_of_regex_id_star_list)) opt in

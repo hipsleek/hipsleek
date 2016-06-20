@@ -2395,37 +2395,43 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
   Debug.no_2 "compute_fixpt" pr1 pr2 pr2 (fun _ _ -> compute_fixpt_x mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf) vn inv_pf
 
 and translate_session (view:I.view_decl) =
-      match view.I.view_kind with
-        | View_SESS Protocol -> let session =
-                                  match view.I.view_session_formula with
-                                    | Some s -> s
-                                    | None -> failwith "should be session" in
-                                let proto_session =
-                                  match session with
-                                    | Session.ProtocolSession s -> s
-                                    | _ -> failwith "not" in
-                                let transf_session = Session.IProtocol.mk_struc_formula_from_session_and_formula
-                                                     proto_session view.I.view_formula in
-                                {view with I.view_formula = transf_session}
-        | View_SESS Projection -> let session =
-                                  match view.I.view_session_formula with
-                                    | Some s -> s
-                                    | None -> failwith "should be session" in
-                                let proj_session =
-                                  match session with
-                                    | Session.ProjectionSession s -> s
-                                    | _ -> failwith "not" in
-                                let formula_orig = match view.I.view_formula with
-                                                     | F.EBase base -> base.F.formula_struc_base
-                                                     | _ -> failwith "Formula should be EBase." in
-                                let transf_session = Session.IProjection.mk_struc_formula_from_session_and_formula
-                                                     proj_session view.I.view_formula in
-                                {view with I.view_formula = transf_session}
-        | _ -> view
+  let sess_kind = match view.I.view_kind with
+    | View_PRIM (Some k)
+    | View_NORM (Some k) -> k
+    | _ -> view.I.view_kind in
+  match sess_kind with
+  | View_SESS Protocol ->
+    let session =
+      match view.I.view_session_formula with
+      | Some s -> s
+      | None -> failwith "should be session" in
+    let proto_session =
+      match session with
+      | Session.ProtocolSession s -> s
+      | _ -> failwith "not" in
+    let transf_session = Session.IProtocol.mk_struc_formula_from_session_and_formula
+        proto_session view.I.view_formula in
+    {view with I.view_formula = transf_session}
+  | View_SESS Projection ->
+    let session =
+      match view.I.view_session_formula with
+      | Some s -> s
+      | None -> failwith "should be session" in
+    let proj_session =
+      match session with
+      | Session.ProjectionSession s -> s
+      | _ -> failwith "not" in
+    let formula_orig = match view.I.view_formula with
+      | F.EBase base -> base.F.formula_struc_base
+      | _ -> failwith "Formula should be EBase." in
+    let transf_session = Session.IProjection.mk_struc_formula_from_session_and_formula
+        proj_session view.I.view_formula in
+    {view with I.view_formula = transf_session}
+  | _ -> view
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
-  let () = print_endline "starting translation" in
-  let vdef = translate_session vdef in
+  (* let () = print_endline "starting translation" in *)
+  (* let vdef = translate_session vdef in *)
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
@@ -10090,7 +10096,9 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
   Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
 
 and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
-  let tmp_views = (* order_views *) prog.I.prog_view_decls in
+  let () = print_endline "starting translation" in
+  let iviews = List.map translate_session prog.I.prog_view_decls in
+  let tmp_views = (* order_views *) (* prog.I.prog_view_decls *) iviews in
   x_tinfo_hp (add_str "case_normalize_prog(views)" pr_v_decls) tmp_views no_pos;
   (* let () = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let tmp_views = List.map (fun c-> 

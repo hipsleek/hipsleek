@@ -3124,7 +3124,7 @@ let infer_shapes_conquer_x iprog prog proc_name ls_is sel_hps iflow=
   (*reuse with lib*)
   let n_cmb_defs2 = if !Globals.pred_equiv then
       let lib_matching = match_hps_views iprog prog cl_sel_hps1 n_all_hp_defs2
-          (List.filter (fun vdcl -> vdcl.Cast.view_kind == View_NORM) prog.Cast.prog_view_decls) in
+          (List.filter (fun vdcl -> is_view_NORM vdcl.Cast.view_kind) prog.Cast.prog_view_decls) in
       (* let () = DD.info_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hps)) no_pos in *)
       (* let () =  DD.info_pprint (" matching: " ^ *)
       (*     (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " :== " ^ *)

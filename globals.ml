@@ -189,7 +189,7 @@ type session_kind =
 type view_kind =
   | View_PRIM of view_kind option
   | View_HREL
-  | View_NORM
+  | View_NORM of view_kind option
   | View_EXTN
   | View_DERV
   | View_SPEC
@@ -265,19 +265,32 @@ let string_of_session_kind k = match k with
   | Protocol -> "Protocol"
   | Projection -> "Projection"
 
-let string_of_view_kind k = match k with
-  | View_PRIM _ -> "View_PRIM"
-  | View_HREL -> "View_HREL"
-  | View_NORM -> "View_NORM"
-  | View_EXTN -> "View_EXTN"
-  | View_DERV -> "View_DERV"
-  | View_SPEC -> "View_SPEC"
-  | View_SESS kind -> "View_SESS " ^ (string_of_session_kind kind)
-
+let string_of_view_kind k =
+  let rec helper k = 
+    match k with
+    | View_PRIM k -> begin match k with
+        | None -> "View_PRIM"
+        | Some k -> helper k
+      end
+    | View_HREL -> "View_HREL"
+    | View_NORM k -> begin match k with
+        | None -> "View_NORM"
+        | Some k -> helper k
+      end
+    | View_EXTN -> "View_EXTN"
+    | View_DERV -> "View_DERV"
+    | View_SPEC -> "View_SPEC"
+    | View_SESS kind -> ("View_SESS " ^ (string_of_session_kind kind))
+  in helper k
 
 let is_view_PRIM k =
   match k with
   | View_PRIM _ -> true
+  | _ -> false
+
+let is_view_NORM k =
+  match k with
+  | View_NORM _ -> true
   | _ -> false
 
 let is_undef_typ t =

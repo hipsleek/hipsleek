@@ -16,6 +16,7 @@ open Label_only
 
 let process_selective_iview_decls is_all iprog iviews =
   let iviews = if is_all then iprog.I.prog_view_decls else iviews in
+  let iviews = List.map Astsimp.translate_session iviews in
   let tmp_views = List.map (fun pdef ->
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
       let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
@@ -36,7 +37,7 @@ let process_selective_iview_decls is_all iprog iviews =
   let () = y_tinfo_hp (add_str "tmp_views" (pr_list Iprinter.string_of_view_decl)) tmp_views in
   let tmp_views,ls_mut_rec_views = (x_add_1 Astsimp.order_views (List.rev tmp_views)) in
   let () = x_tinfo_pp "after order_views" no_pos in
-  let _ = Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
+  let _ = x_add Iast.set_check_fixpt iprog iprog.I.prog_data_decls tmp_views in
   let () = x_tinfo_pp "after check_fixpt" no_pos in
   let () = 
     if is_all then iprog.I.prog_view_decls <- tmp_views

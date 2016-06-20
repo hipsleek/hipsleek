@@ -6,3 +6,7 @@
 #do_match,Trace
 #heap_entail_conjunct,Trace
 process_one_match,Trace
+#update_fixpt,Trace
+set_check_fixpt
+case_normalize_proc
+case_normalize_prqogram
