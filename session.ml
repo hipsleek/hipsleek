@@ -493,11 +493,12 @@ module CProjection = Make_Session(CProjection_base);;
 type session_type = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session
 
-(* =========== Make Methods ========== *)
-(* ============================================ *)
+let get_protocol session = 
+  match session with
+  | ProtocolSession s -> s
+  | _ -> failwith "not a protocol formula"
 
-
-let boo () =
-  let prot = IProtocol.mk_base ("", "", no_pos) (F.mkTrue_nf no_pos) in
-  print_endline (IProtocol.string_of_session prot)
-  ;;
+let get_projection session =
+  match session with
+  | ProjectionSession s -> s
+  | _ -> failwith "not a projection formula" 

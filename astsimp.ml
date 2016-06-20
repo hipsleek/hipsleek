@@ -2395,43 +2395,30 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
   Debug.no_2 "compute_fixpt" pr1 pr2 pr2 (fun _ _ -> compute_fixpt_x mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf) vn inv_pf
 
 and translate_session (view:I.view_decl) =
+  let get_session_formula view =
+    match view.I.view_session_formula with
+    | Some s -> s
+    | None -> failwith "view_session_formula not set"
+  in
+  let helper view transf getter =
+    let session = get_session_formula view in
+    let sessf = getter session in
+    let transf_session = transf sessf view.I.view_formula in
+    {view with I.view_formula = transf_session} in
   let sess_kind = match view.I.view_kind with
     | View_PRIM (Some k)
     | View_NORM (Some k) -> k
     | _ -> view.I.view_kind in
   match sess_kind with
   | View_SESS Protocol ->
-    let session =
-      match view.I.view_session_formula with
-      | Some s -> s
-      | None -> failwith "should be session" in
-    let proto_session =
-      match session with
-      | Session.ProtocolSession s -> s
-      | _ -> failwith "not" in
-    let transf_session = Session.IProtocol.mk_struc_formula_from_session_and_formula
-        proto_session view.I.view_formula in
-    {view with I.view_formula = transf_session}
+    let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
+    helper view transf Session.get_protocol
   | View_SESS Projection ->
-    let session =
-      match view.I.view_session_formula with
-      | Some s -> s
-      | None -> failwith "should be session" in
-    let proj_session =
-      match session with
-      | Session.ProjectionSession s -> s
-      | _ -> failwith "not" in
-    let formula_orig = match view.I.view_formula with
-      | F.EBase base -> base.F.formula_struc_base
-      | _ -> failwith "Formula should be EBase." in
-    let transf_session = Session.IProjection.mk_struc_formula_from_session_and_formula
-        proj_session view.I.view_formula in
-    {view with I.view_formula = transf_session}
+    let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
+    helper view transf Session.get_projection
   | _ -> view
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
-  (* let () = print_endline "starting translation" in *)
-  (* let vdef = translate_session vdef in *)
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
