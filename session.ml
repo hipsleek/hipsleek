@@ -42,7 +42,7 @@ let set_prim_pred_id kind id = match kind with
 let get_prim_pred_id pred_ref =
   match !pred_ref with
     | Some str -> str
-    | None -> let () = report_warning no_pos "Session predicate not set" in ""
+    | None -> failwith "Session predicate not set"
 
 let rec string_of_param_list l = match l with
   | []        -> ""
@@ -429,7 +429,7 @@ module Make_Session (Base: Session_base) = struct
 
   let mk_seq_node args params pos  =
     let arg1 = Base.choose_ptr () in (* decide which name should be given here *)
-    let name = Gen.map_opt_def (failwith "SESSION: op id not set") idf !seq_id in
+    let name = get_prim_pred_id seq_id in
     let args = List.map (fun a -> Base.mk_rflow_formula_from_heap a pos) args in
     let params = List.map (fun a -> Base.set_param a pos) params in
     (* let a = (sv, name, args, params, pos) in *)
