@@ -113,12 +113,14 @@ module IForm = struct
   let mk_rflow_formula f ?kind:(k=NEUTRAL) =
     {  F.rflow_kind = k;
        F.rflow_base = f;
+       F.rflow_session_kind = None;
     }
 
   let mk_rflow_formula_from_heap h ?kind:(k=NEUTRAL) pos =
     let f =  mk_formula_heap_only h pos in
     {  F.rflow_kind = k;
        F.rflow_base = f;
+       F.rflow_session_kind = None;
     }
 
   let mk_formula pure (ptr, name, ho, params, pos)  =
@@ -498,6 +500,8 @@ module Make_Session (Base: Session_base) = struct
         | Base b -> Base.get_base_pos b
         | Predicate p -> p.session_predicate_pos)
     | SEmp    -> no_pos
+
+  let mk_formula_heap_only = Base.mk_formula_heap_only
 
   let mk_sess_h_formula h_form pos =
     let f = Base.mk_formula_heap_only h_form pos in

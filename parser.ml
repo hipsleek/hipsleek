@@ -1650,15 +1650,26 @@ rflow_kind:
   ]];
 
 rflow_form: 
-  [[ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
+  [
+  [ `AT; p = projection_formula ->
+       let loc = (get_pos_camlp4 _loc 1) in
+       let h_form = Session.IProjection.trans_from_session p in
+       let form = Session.IProjection.mk_formula_heap_only h_form loc in
+     { F.rflow_kind = NEUTRAL;
+       F.rflow_base = form;
+       F.rflow_session_kind = Some Projection; }
+  ]
+  | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
-       F.rflow_base = F.subst_stub_flow n_flow dc; }
+       F.rflow_base = F.subst_stub_flow n_flow dc;
+       F.rflow_session_kind = None; }
       (* match cc with                                                                                  *)
       (* | F.Base f -> {                                                                                *)
       (*   F.rflow_kind = un_option k NEUTRAL;                                                          *)
       (*   F.rflow_base = cc; }                                                                         *)
       (* | _ -> report_error (get_pos_camlp4 _loc 2) ("Non-Base formula is disalowed in resource flow") *)
-  ]];
+  ]
+  ];
 
 formula_ann: [[ `SPLITANN -> HO_SPLIT ]];
 
