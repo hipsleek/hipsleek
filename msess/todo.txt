@@ -1,0 +1,36 @@
+=============================================
+=============================================
+msess/examples$ ../../sleek ex4-1B1S1S-a1.slk
+==============================================
+
+it's now parsing, but fails at type check as below:
+
+------------------------------------------------
+!!! **astsimp.ml#9170:@TINA: update_temp_heap_name
+Last Proving Location: hodef.slk_1:10_1:42
+
+ERROR: at ex4-1B1S1S-a1.slk_5:22_5:26
+Message: **typeinfer.ml#1626: is neither 2 a data nor view name
+
+Entail 1: EXCast. Failure("**typeinfer.ml#1626: is neither 2 a data nor view name")
+Validate 1: Expecting1 FailBUT got no residue
+------------------------------------------------
+
+Sol:
+(i)  unk preds are set to a dedicated view name: SESS_TEMP
+(ii) while creating a heap node, set a proper session kind flag
+(iii) use the session flag during iformula normalization
+      to update the heap name approriately
+(i) & (ii) are already implemented
+(iii) partially implemented. To continue as below:
+      call a transform for formula which in turn
+      calls Session.IProjection.update_temp_heap_name
+      to update the heap. 
+
+=============================================
+=============================================
+change @ --> @s to flag a session formula inside
+the HO arg list.
+
+=============================================
+=============================================

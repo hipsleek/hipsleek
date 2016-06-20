@@ -15,6 +15,8 @@ module MCP = Mcpure
 type transmission = TSend | TReceive
 
 let string_of_seq  = ";;"
+let unk_view_id = "SESS_TEMP"
+
 let string_of_transmission t =
   match t with
   | TSend    -> "!"
@@ -44,7 +46,7 @@ let get_prim_pred_id pred_ref =
     | Some str -> str
     | None ->
       let () = report_warning no_pos "Session predicate not set" in
-      "SESS_TEMP"
+      unk_view_id
 
 let get_prim_pred_id_by_kind kind = match kind with
   | Transmission -> !trans_id

@@ -1,0 +1,22 @@
+sleek_include 'hodef.slk'. 
+
+
+//1
+checkentail x::Sess{@ aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@ aa!emp & 0<=msg;;aa?0}<>.
+expect Fail.
+
+//2
+checkentail x::Sess{@ aa!emp & 0<=msg;;aa?0}<>|- x::Sess{@ aa!0;;aa?emp & 0<=msg}<> .
+expect Valid.
+
+
+pred_sess_proj pp17<aa> == aa!0;;aa?emp & 0<=msg.
+pred_sess_proj pp18<aa> == aa!emp & 0<=msg;;aa?0.
+//12
+checkentail x::pp17<b> |- x::pp18<b>.
+expect Fail.
+
+//13
+checkentail x::pp18<b> |- x::pp17<b>.
+expect Valid.
+
