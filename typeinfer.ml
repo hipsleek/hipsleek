@@ -1706,7 +1706,7 @@ let create_view (iprog:I.prog_decl) (id:ident) (vs:CP.spec_var list) (f:CF.formu
   let f = !CF.rev_trans_formula f in
   let f = Iformula.formula_to_struc_formula f in
   let vs_ident = List.map CP.name_of_spec_var vs in
-  let iview = Iast.mk_iview_decl ~v_kind:(View_NORM None) id "" vs_ident f no_pos in
+  let iview = Iast.mk_iview_decl ~v_kind:(View_NORM) id "" vs_ident f no_pos in
   let cview = !trans_view iprog [] [] [] iview in
   cview
 

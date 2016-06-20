@@ -4318,13 +4318,12 @@ let pr_list_id b = fmt_string (pr_list pr_id b)
 
 let pr_view_hdr v =
   let s = match v.view_kind with
-    | View_NORM _ -> " "
+    | View_NORM -> " "
     | View_HREL -> "_hrel "
-    | View_PRIM _ -> "_prim "
+    | View_PRIM -> "_prim "
     | View_EXTN -> "_extn "
     | View_SPEC -> "_spec "
     | View_DERV -> "_derv "
-    | View_SESS kind -> (string_of_session_kind kind)^"_sess "
   in
   let ho_str = match v.view_ho_vars with
     (* | [] -> "" *)

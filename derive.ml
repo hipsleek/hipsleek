@@ -308,7 +308,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
                   Iast.view_labels = List.map (fun _ ->  Label_only.LOne.unlabelled) vars, false;
                   Iast.view_modes = List.map (fun _ -> ModeOut) vars ;
                   Iast.view_typed_vars =  tvars;
-                  Iast.view_kind = View_NORM None;
+                  Iast.view_kind = View_NORM;
                   Iast.view_derv = false;
                   Iast.view_parent_name = None;
                   Iast.view_prop_extns = [];
@@ -1124,6 +1124,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
           Iast.view_pt_by_self  = [];
           Iast.view_formula = Iformula.mkETrue top_flow no_pos;
           Iast.view_session_formula = None;
+          Iast.view_session_kind = None;
           Iast.view_inv_lock = None;
           Iast.view_is_prim = false;
           Iast.view_is_hrel = None;
