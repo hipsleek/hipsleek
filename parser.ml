@@ -694,12 +694,11 @@ let peek_dc =
              (* | [IDENTIFIER n,_;OBRACE,_] ->  () (\*This is for prim_view_decl*\) *)
              | _ -> raise Stream.Failure)
 
- let peek_session_disj = 
-   SHGram.Entry.of_parser "peek_session_disj"
-       (fun strm -> 
+ let peek_protocol_base =
+   SHGram.Entry.of_parser "peek_protocol_base"
+       (fun strm ->
            match Stream.npeek 3 strm with
              | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_] -> ()
-             | [OPAREN,_; IDENTIFIER first,_; LEFTARROW,_] -> ()
              | _ -> raise Stream.Failure)
 
  let peek_projection_send = 
@@ -1047,7 +1046,8 @@ non_empty_command:
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
-      | `PRED_SESS; t = sess_view_decl -> PredDef t
+      | `PRED_SESS_PROT; t = prot_view_decl -> PredDef t
+      | `PRED_SESS_PROJ; t = proj_view_decl -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -1300,41 +1300,48 @@ prim_view_decl:
           view_is_hrel = None;
           view_inv_lock = li} ]];
 
-sess_view_decl:
-  [[ vh = view_header; `EQEQ; peek_session_disj; s = session_formula
+prot_view_decl:
+  [[ vh = view_header; `EQEQ; s = protocol_formula
           -> { vh with
                view_kind = View_SESS Protocol;
                view_session_formula = Some (Session.ProtocolSession s)}
-   | vh = view_header; `EQEQ; p = projection_formula
+  ]];
+
+protocol_formula: [
+    [
+        s1 = protocol_formula; `SEMICOLONSEMICOLON; s2 = protocol_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProtocol.mk_session_seq_formula s1 s2 loc
+    ]
+    | [ s1 = protocol_formula; `STAR; s2 = protocol_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProtocol.mk_session_star_formula s1 s2 loc
+      | s1 = protocol_formula; `ORWORD; s2 = protocol_formula ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProtocol.mk_session_or_formula s1 s2 loc
+    ]
+    | [ `OPAREN; s = protocol_formula; `CPAREN ->
+            s
+    ]
+    | [ peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
+            let loc = (get_pos_camlp4 _loc 1) in
+            let c = F.subst_stub_flow top_flow c in
+            Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, loc) c)
+      | vh = view_header ->
+            let name = vh.Iast.view_name in
+            let ho_vars = vh.Iast.view_ho_vars in
+            let params = vh.Iast.view_vars in
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProtocol.SBase (Session.IProtocol.mk_session_predicate name ho_vars params loc)
+    ]
+];
+
+proj_view_decl:
+  [[ vh = view_header; `EQEQ; p = projection_formula
           -> { vh with
                view_kind = View_SESS Projection;
                view_session_formula = Some (Session.ProjectionSession p)}
   ]];
-
-session_formula: [
-    [
-        s1 = session_formula; `SEMICOLONSEMICOLON; s2 = session_formula ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProtocol.mk_session_seq_formula s1 s2 loc
-    ]
-    | [ s1 = session_formula; `STAR; s2 = session_formula ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProtocol.mk_session_star_formula s1 s2 loc
-      | s1 = session_formula; `ORWORD; s2 = session_formula ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProtocol.mk_session_or_formula s1 s2 loc
-    ]
-    | [ `OPAREN; s = session_formula; `CPAREN ->
-            s
-    ]
-    | [`IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            let c = F.subst_stub_flow top_flow c in
-            Session.IProtocol.mk_base (first, second, loc) c
-       (* Session.boo (); *)
-       (* failwith "tbi" *)
-    ]
-];
 
 projection_formula: [
     [
@@ -1356,11 +1363,17 @@ projection_formula: [
       [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in
-            Session.IProjection.mk_base (Session.Send, channel, loc) c
-      | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message -> 
+            Session.IProjection.SBase (Session.IProjection.mk_base (Session.Send, channel, loc) c)
+      | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in
-            Session.IProjection.mk_base (Session.Receive, channel, loc) c
+            Session.IProjection.SBase (Session.IProjection.mk_base (Session.Receive, channel, loc) c)
+      | vh = view_header ->
+            let name = vh.Iast.view_name in
+            let ho_vars = vh.Iast.view_ho_vars in
+            let params = vh.Iast.view_vars in
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProjection.SBase (Session.IProjection.mk_session_predicate name ho_vars params loc)
     ]
 ];
 
@@ -3578,7 +3591,8 @@ type_decl:
    | peek_view_decl; o = opt_pred; v=view_decl; `SEMICOLON -> View v
    | peek_view_decl; o = opt_pred; v=view_decl; `DOT -> View v
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
-   | `PRED_SESS; v = sess_view_decl; `SEMICOLON    -> View v
+   | `PRED_SESS_PROT; v = prot_view_decl; `SEMICOLON    -> View v
+   | `PRED_SESS_PROJ; v = proj_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];

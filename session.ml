@@ -44,6 +44,11 @@ let get_prim_pred_id pred_ref =
     | Some str -> str
     | None -> let () = report_warning no_pos "Session predicate not set" in ""
 
+let rec string_of_param_list l = match l with
+  | []        -> ""
+  | h::[]     -> h
+  | h::t      -> h ^ ", " ^ (string_of_param_list t)
+
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
 module type Message_type = sig
@@ -329,8 +334,12 @@ module Make_Session (Base: Session_base) = struct
     | SSeq  of session_seq_formula
     | SOr   of session_or_formula
     | SStar of session_star_formula
-    | SBase of t
+    | SBase of session_base
     | SEmp
+
+  and session_base =
+    | Base of t
+    | Predicate of session_predicate
 
   and session_seq_formula = {
     session_seq_formula_head: session;
@@ -350,6 +359,13 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_pos:  loc;
   }
 
+  and session_predicate = {
+    session_predicate_name: ident;
+    session_predicate_ho_vars: (ho_flow_kind * ident * ho_split_kind) list;
+    session_predicate_params: ident list;
+    session_predicate_pos: loc;
+  }
+
   let rec string_of_session s =
     (string_of_one_session s) ^ "\n"
 
@@ -360,7 +376,9 @@ module Make_Session (Base: Session_base) = struct
     | SBase s -> string_of_session_base s
     | SEmp    -> string_of_session_emp ()
 
-  and string_of_session_base = Base.string_of_session_base
+  and string_of_session_base s = match s with
+    | Base b -> Base.string_of_session_base b
+    | Predicate p -> string_of_session_predicate p
 
   and string_of_session_emp () = "emp"
 
@@ -379,7 +397,10 @@ module Make_Session (Base: Session_base) = struct
     "*" ^
     " (" ^ string_of_one_session s.session_seq_formula_star2
 
-  let mk_base a b = SBase (Base.mk_base a b)
+  and string_of_session_predicate s =
+    s.session_predicate_name ^ "{}" ^ "<" ^ (string_of_param_list s.session_predicate_params) ^ ">"
+
+  let mk_base a b = Base (Base.mk_base a b)
 
   and mk_session_seq_formula session1 session2 loc = SSeq {
       session_seq_formula_head = session1;
@@ -398,6 +419,13 @@ module Make_Session (Base: Session_base) = struct
     session_seq_formula_star2 = session2;
     session_seq_formula_pos   = loc;
     }
+
+  and mk_session_predicate name ho_vars params loc = Predicate {
+    session_predicate_name = name;
+    session_predicate_ho_vars = ho_vars;
+    session_predicate_params = params;
+    session_predicate_pos = loc;
+  }
 
   let mk_seq_node args params pos  =
     let arg1 = Base.choose_ptr () in (* decide which name should be given here *)
@@ -425,6 +453,15 @@ module Make_Session (Base: Session_base) = struct
     let params = [] in
     Base.mk_node (ptr, name, args, params, pos)
 
+  and mk_predicate_node p =
+    let ptr = Base.choose_ptr () in
+    let name = p.session_predicate_name in
+    let args = [] in (* not using HO preds here *)
+    let pos = p.session_predicate_pos in
+    let params = p.session_predicate_params in
+    let params = List.map (fun a -> Base.set_param a pos) params in
+    Base.mk_node (ptr, name, args, params, pos)
+
   let trans_from_session s =
     let rec helper s = match s with
     | SSeq s  ->
@@ -442,7 +479,9 @@ module Make_Session (Base: Session_base) = struct
         let arg1 = helper s.session_seq_formula_star1 in
         let arg2 = helper s.session_seq_formula_star2 in
         mk_star_node arg1 arg2 s.session_seq_formula_pos
-    | SBase s -> Base.trans_base s
+    | SBase s -> (match s with
+        | Base b -> Base.trans_base b
+        | Predicate p -> mk_predicate_node p)
     | SEmp    -> Base.mk_empty () in
     helper s
 
@@ -455,7 +494,9 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  -> s.session_seq_formula_pos
     | SOr s   -> s.session_seq_formula_pos
     | SStar s -> s.session_seq_formula_pos
-    | SBase s -> Base.get_base_pos s
+    | SBase s -> (match s with
+        | Base b -> Base.get_base_pos b
+        | Predicate p -> p.session_predicate_pos)
     | SEmp    -> no_pos
 
   let mk_sess_h_formula h_form pos =
@@ -498,6 +539,6 @@ type session_type = ProtocolSession of IProtocol.session
 
 
 let boo () =
-  let prot = IProtocol.mk_base ("", "", no_pos) (F.mkTrue_nf no_pos) in
+  let prot = IProtocol.SBase (IProtocol.mk_base ("", "", no_pos) (F.mkTrue_nf no_pos)) in
   print_endline (IProtocol.string_of_session prot)
   ;;
