@@ -168,6 +168,7 @@ let hn_trans cprog vnames hn = match hn with
             IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
             IF.h_formula_heap_pseudo_data = false;
             IF.h_formula_heap_label = None;
+            IF.h_formula_heap_session_kind = None;
             IF.h_formula_heap_pos = pos}
         else hn
       with _ -> hn

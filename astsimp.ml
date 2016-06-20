@@ -9167,6 +9167,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
+  let () = y_binfo_pp "@TINA: update_temp_heap_name" in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
   let () = x_dinfo_hp (fun f -> ("case_normalize_formula :: CHECK POINT 1a ==> f = " ^ Iprinter.string_of_formula f ^ "\n")) f no_pos in
@@ -11683,6 +11684,7 @@ let plugin_inferred_iviews views iprog cprog=
           IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
           IF.h_formula_heap_pseudo_data = false;
           IF.h_formula_heap_label = None;
+          IF.h_formula_heap_session_kind = None;
           IF.h_formula_heap_pos = pos}
       else hn
     | _ -> hn

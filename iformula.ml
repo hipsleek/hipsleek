@@ -80,6 +80,7 @@ and formula =
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
   rflow_base: formula;
+  (* rflow_session_formula: 'a option; *)
   rflow_session_kind: session_kind option;
 }
 
@@ -180,6 +181,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_arguments : P.exp list;
                        h_formula_heap_pseudo_data : bool;
                        h_formula_heap_label : formula_label option;
+                       h_formula_heap_session_kind : session_kind option;
                        h_formula_heap_pos : loc }
 
 and h_formula_thread = { h_formula_thread_node : (ident * primed);
@@ -585,6 +587,7 @@ and mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l=
              h_formula_heap_arguments = hl;
              h_formula_heap_ho_arguments = ho;
              h_formula_heap_label = ofl;
+             h_formula_heap_session_kind = None;
              h_formula_heap_pos = l }
 
 and mkHeapNode  c id ho deref dr split i f inv pd perm hl hl_i ofl l=
@@ -1378,6 +1381,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_ho_arguments = List.map (fun ff -> 
                    {ff with rflow_base = apply_one s ff.rflow_base; }) ho_args;
                h_formula_heap_pseudo_data = ps_data;
+               h_formula_heap_session_kind = None;
                h_formula_heap_label = l;
                h_formula_heap_pos = pos})
   | HeapNode2 ({h_formula_heap2_node = x;
@@ -1692,6 +1696,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_ho_arguments = List.map (fun ff -> 
                      { ff with rflow_base = apply_one_w_data_name s ff.rflow_base; }) ho_args; 
                  h_formula_heap_pseudo_data = ps_data;
+                 h_formula_heap_session_kind = None;
                  h_formula_heap_label = l;
                  h_formula_heap_pos = pos})
     | HeapNode2 ({h_formula_heap2_node = x;
@@ -3281,3 +3286,9 @@ let clear_type_info_formula (f: formula): formula =
   let pr = !print_formula in
   Debug.no_1 "clear_type_info_formula" pr pr clear_type_info_formula f
 
+let set_session_kind_h_formula hform kind =
+  let f_h h =
+    match h with
+    | HeapNode h -> Some (HeapNode {h with h_formula_heap_session_kind = kind })
+    | _ -> Some h in
+  transform_h_formula f_h hform

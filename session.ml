@@ -12,13 +12,13 @@ module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
 
-type transmission = Send | Receive
+type transmission = TSend | TReceive
 
 let string_of_seq  = ";;"
 let string_of_transmission t =
   match t with
-  | Send    -> "!"
-  | Receive -> "?"
+  | TSend    -> "!"
+  | TReceive -> "?"
 
 let chan_id:  string option ref = ref None
 let seq_id :  string option ref = ref None 
@@ -42,7 +42,25 @@ let set_prim_pred_id kind id = match kind with
 let get_prim_pred_id pred_ref =
   match !pred_ref with
     | Some str -> str
-    | None -> failwith "Session predicate not set"
+    | None ->
+      let () = report_warning no_pos "Session predicate not set" in
+      "SESS_TEMP"
+
+let get_prim_pred_id_by_kind kind = match kind with
+  | Transmission -> !trans_id
+  | Session      -> !sess_id
+  | Channel      -> !chan_id
+  | Send         -> !send_id
+  | Receive      -> !recv_id
+  | Sequence     -> !seq_id
+  | SOr          -> !sor_id
+  | Protocol     -> None
+  | Projection   -> None
+
+let get_session_kind_of_transmission t =
+  match t with
+  | TSend    -> Send
+  | TReceive -> Receive
 
 let rec string_of_param_list l = match l with
   | []        -> ""
@@ -66,7 +84,7 @@ module type Message_type = sig
   val is_emp : formula -> bool
   val print  : (formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
-  val mk_node: arg -> h_formula
+  val mk_node: ?kind:session_kind option -> arg -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
   val mk_rflow_formula:  formula -> ?kind:ho_flow_kind -> ho_param_formula
   val mk_rflow_formula_from_heap:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
@@ -79,6 +97,8 @@ module type Message_type = sig
   val set_param:  ident ->  VarGen.loc -> param
   val get_h_formula_heap: h_formula -> h_formula_heap
   val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula
+  val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
+  val update_temp_heap_name: h_formula -> h_formula
 
 end;;
 
@@ -101,10 +121,11 @@ module IForm = struct
      ho - HO param 
   *)
   let print_h_formula = F.print_h_formula
-  let mk_node (ptr, name, ho, params, pos)  =
+  let mk_node ?kind:(skind = None) (ptr, name, ho, params, pos)  =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
-    h
+    F.set_session_kind_h_formula h skind
+    (* h *)
 
   let mk_formula_heap_only h pos =
     (* let h = mk_node (ptr, name, ho, params, pos) in *)
@@ -153,6 +174,21 @@ module IForm = struct
     let fct = (nonef, nonef, fct_h, (somef, somef, somef, somef, somef)) in
     F.transform_struc_formula fct struc_form
 
+  let transform_h_formula f_h h = F.transform_h_formula f_h h
+
+  let update_temp_heap_name hform =
+    let f_h hform = match hform with
+      | F.HeapNode node ->
+        begin
+          match node.F.h_formula_heap_session_kind with
+          | None -> Some hform
+          | Some k ->
+            let new_name = map_opt_def node.F.h_formula_heap_name idf (get_prim_pred_id_by_kind k) in
+            Some (F.HeapNode {node with F.h_formula_heap_name = new_name})
+        end
+      | _ -> None in
+    transform_h_formula f_h hform
+
 end;;
 
 module CForm = struct
@@ -170,7 +206,7 @@ module CForm = struct
   let is_emp f = failwith x_tbi
   let print    = CF.print_formula
   let print_h_formula = CF.print_h_formula
-  let mk_node (ptr, name, ho, params, pos) =
+  let mk_node ?kind:(skind = None) (ptr, name, ho, params, pos) =
     let h = CF.mkViewNode ptr name params pos in
     match h with
       | CF.ViewNode node -> CF.ViewNode {node with h_formula_view_ho_arguments = ho}
@@ -217,6 +253,10 @@ module CForm = struct
     let fct_h = (fun x -> Some (fct_h x)) in
     let fct = nonef, nonef, fct_h, (somef, somef, somef, somef, somef) in
     CF.transform_struc_formula fct struc_form
+
+  let transform_h_formula f_h h = CF.transform_h_formula f_h h
+
+  let update_temp_heap_name hform = hform
 
 end;;
 
@@ -298,14 +338,13 @@ module Projection_base_formula =
 
     let trans_base base =
       let ptr = Msg.choose_ptr ~ptr:base.projection_base_formula_channel () in
-      let name = match base.projection_base_formula_op with
-                   | Send -> get_prim_pred_id send_id
-                   | Receive -> get_prim_pred_id recv_id in
+      let tkind = get_session_kind_of_transmission base.projection_base_formula_op in
+      let name = map_opt_def "" idf (get_prim_pred_id_by_kind tkind) in
       let args = match base.projection_base_formula_op with
-                   | Send -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:INFLOW]
-                   | Receive -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:OUTFLOW] in
+        | TSend -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:INFLOW]
+        | TReceive -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:OUTFLOW] in
       let params = [] in
-      Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos)
+      Msg.mk_node ~kind:(Some tkind) (ptr, name, args, params, base.projection_base_formula_pos)
 
     let get_base_pos base = base.projection_base_formula_pos
 
@@ -435,7 +474,7 @@ module Make_Session (Base: Session_base) = struct
     let args = List.map (fun a -> Base.mk_rflow_formula_from_heap a pos) args in
     let params = List.map (fun a -> Base.set_param a pos) params in
     (* let a = (sv, name, args, params, pos) in *)
-    Base.mk_node (arg1, name, args, params, pos)
+    Base.mk_node ~kind:(Some Sequence) (arg1, name, args, params, pos)
     (* failwith x_tbi *)
 
   and mk_star_node h1 h2 pos =
@@ -453,7 +492,7 @@ module Make_Session (Base: Session_base) = struct
                   | None -> "" in
     let args = [rflow_form] in
     let params = [] in
-    Base.mk_node (ptr, name, args, params, pos)
+    Base.mk_node ~kind:(Some SOr) (ptr, name, args, params, pos)
 
   and mk_predicate_node p =
     let ptr = Base.choose_ptr () in
@@ -510,7 +549,7 @@ module Make_Session (Base: Session_base) = struct
     let name = get_prim_pred_id sess_id in
     let args = [rflow_form] in
     let params = [] in
-    Base.mk_node (ptr, name, args, params, pos)
+    Base.mk_node  ~kind:(Some Session) (ptr, name, args, params, pos)
 
   let mk_struc_formula_from_session_and_formula s form_orig =
     let h_form = trans_from_session s in
