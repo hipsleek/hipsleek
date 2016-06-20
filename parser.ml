@@ -1259,7 +1259,7 @@ view_decl:
               view_mem = mpb;
               view_is_prim = false;
               view_is_hrel = None;
-              view_kind = View_NORM; (* TODO : *)
+              view_kind = View_NORM None; (* TODO : *)
               view_inv_lock = li;
               try_case_inference = (snd vb) }
     |  vh = view_header; `EQEQ; `EXTENDS; orig_v = derv_view; `WITH ; extn = prop_extn ->
@@ -1303,7 +1303,7 @@ prim_view_decl:
 prot_view_decl:
   [[ vh = view_header; `EQEQ; s = protocol_formula
           -> { vh with
-               view_kind = View_SESS Protocol;
+               view_kind = View_NORM (Some (View_SESS Protocol));
                view_session_formula = Some (Session.ProtocolSession s)}
   ]];
 
@@ -1339,7 +1339,7 @@ protocol_formula: [
 proj_view_decl:
   [[ vh = view_header; `EQEQ; p = projection_formula
           -> { vh with
-               view_kind = View_SESS Projection;
+               view_kind = View_NORM (Some(View_SESS Projection));
                view_session_formula = Some (Session.ProjectionSession p)}
   ]];
 
@@ -1638,7 +1638,7 @@ view_header:
       let modes = get_modes anns in
       let pos = get_pos_camlp4 _loc 1 in
       let vh = Iast.mk_view_header vn opt1 cids mvs modes pos in
-      {vh with view_kind = View_SESS kind}
+      {vh with view_kind = View_PRIM (Some (View_SESS kind))}
 ]];
                                           
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];

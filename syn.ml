@@ -1092,7 +1092,7 @@ let extn_pred_list iprog cprog extn preds =
     | View_EXTN -> 
       let norm_preds = List.fold_left (fun acc pred ->
         match pred.C.view_kind with
-        | View_NORM -> acc @ [pred]
+        | View_NORM _ -> acc @ [pred]
         | k -> 
           let () = x_warn ("Cannot extend the " ^ (string_of_view_kind k) ^ " " ^ pred.C.view_name)
           in acc) [] preds 

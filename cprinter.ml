@@ -4318,7 +4318,7 @@ let pr_list_id b = fmt_string (pr_list pr_id b)
 
 let pr_view_hdr v =
   let s = match v.view_kind with
-    | View_NORM -> " "
+    | View_NORM _ -> " "
     | View_HREL -> "_hrel "
     | View_PRIM _ -> "_prim "
     | View_EXTN -> "_extn "
