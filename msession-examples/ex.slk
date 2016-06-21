@@ -1,7 +1,7 @@
 sleek_include 'node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
-pred_sess_prot ll<n,A,B> == A -> B : self = null & n = 0.
+//pred_sess_prot ll<n,A,B> == A -> B : self = null & n = 0.
 
 //pred_sess_prot ll2<n,A,B> == ll<n,A,B>.
 
@@ -17,7 +17,7 @@ pred_sess_prot ll<n,A,B> == A -> B : self = null & n = 0.
 //pred_sess_prot ll8<n> == (A -> B : self::node<_,_> * x::node<_,_>) * (C -> D : self = null * self = null) ;; (E -> F : self = null). 
 //pred_sess_prot ll9<n> == A -> B : self::node<_,_> * x::node<_,_> or (C -> D : self = null * self = null) ;; (E -> F : self = null). 
 //
-pred_sess_proj ll10<n,d> == d!self = null.
+//pred_sess_proj ll10<n,d> == d!self = null.
 //
 //pred_sess_proj ll11<n> == d?self = null.
 //
@@ -27,4 +27,4 @@ pred_sess_proj ll10<n,d> == d!self = null.
 
 //pred_sess_proj ll14<n> == A?1.
 
-//checkentail x=null |- x::ll<0>.
+checkentail ll::Sess{@S a?0}<> |- x=null.

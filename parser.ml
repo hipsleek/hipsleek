@@ -1651,7 +1651,7 @@ rflow_kind:
 
 rflow_form: 
   [
-  [ `AT; p = projection_formula ->
+    [ `SAT; p = projection_formula ->
      let loc = (get_pos_camlp4 _loc 1) in
      let h_form = Session.IProjection.trans_from_session p in
      let form = Session.IProjection.mk_formula_heap_only h_form loc in
