@@ -31,7 +31,6 @@ let recv_id:  string option ref = ref None
 let sor_id:   string option ref = ref None
 
 let set_prim_pred_id kind id =
-  let () = y_binfo_pp "!!!! setting trans_id" in
   match kind with
     | Transmission -> trans_id := Some id
     | Session      -> sess_id := Some id

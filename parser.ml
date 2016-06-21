@@ -1054,15 +1054,11 @@ non_empty_command:
       | t = hp_decl          -> HpDef t
       | l = coerc_decl_aux -> LemmaDef l
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
-      | `SLEEK_INCLUDE; `PRIME; t = dir_path; `PRIME ->
-            let () = print_endline "!!!!! SLEEK incl" in
-            IncludeDef t
+      | `SLEEK_INCLUDE; `PRIME; t = dir_path; `PRIME -> IncludeDef t
       | t=let_decl            -> t
       | t= checknorm_cmd         -> CheckNorm t
       | t= checkeq_cmd         -> EqCheck t
-      | t= checkentail_cmd     ->
-                    let () = print_endline "!!!!! ENT check" in
-        EntailCheck t
+      | t= checkentail_cmd     -> EntailCheck t
       | t= checksat_cmd     -> SatCheck t
       | t= checknondet_cmd     -> NonDetCheck t
       | t= validate_cmd     -> Validate t
@@ -1632,8 +1628,7 @@ view_header:
       let pos = get_pos_camlp4 _loc 1 in
       Iast.mk_view_header vn opt1 cids mvs modes pos
    | `IDENTIFIER vn; `AT; kind = session_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
-     let () = view_names # push vn in
-     let () = print_endline ("!!!! prim pred? " ^ vn) in 
+      let () = view_names # push vn in
       let () = Session.set_prim_pred_id kind vn in
       let mvs = get_mater_vars l in
       let cids, anns = List.split l in
@@ -1657,10 +1652,9 @@ rflow_kind:
 rflow_form: 
   [
   [ `AT; p = projection_formula ->
-    let loc = (get_pos_camlp4 _loc 1) in
-    let () = print_endline "!!!!!!! parse ent w sess" in
-       let h_form = Session.IProjection.trans_from_session p in
-       let form = Session.IProjection.mk_formula_heap_only h_form loc in
+     let loc = (get_pos_camlp4 _loc 1) in
+     let h_form = Session.IProjection.trans_from_session p in
+     let form = Session.IProjection.mk_formula_heap_only h_form loc in
      { F.rflow_kind = NEUTRAL;
        F.rflow_base = form;
        F.rflow_session_kind = Some Projection; }
