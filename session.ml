@@ -188,42 +188,24 @@ module IForm = struct
     let helper f =
       let pr = !print in
       Debug.no_1 "update_formula" pr pr helper f in
-    helper f 
+    helper f
 
   and update_temp_heap_name hform =
-    let helper hform = 
-      let () = print_endline "updating heap name" in
+    let helper hform =
       let f_h hform = match hform with
         | F.HeapNode node ->
-          let () = print_endline "HeapNode" in
-          let hn = begin
-            match node.F.h_formula_heap_session_kind with
-            | None ->
-              let () = print_endline "None Session Kind" in
-              node
+            (match node.F.h_formula_heap_session_kind with
+            | None -> Some (F.HeapNode node)
             | Some k ->
-              let new_name = get_prim_pred_id_by_kind k in
-              let () = print_endline ("new name: " ^ new_name) in
-              let () = print_endline ("seq: " ^ (get_prim_pred_id seq_id)) in
-              let () = print_endline ("session kind: " ^(string_of_session_kind k)) in
-              {node with F.h_formula_heap_name = new_name}
-          end in
-          let ho_args = List.map update_ho_arg hn.F.h_formula_heap_ho_arguments in
-          Some (F.HeapNode {hn with F.h_formula_heap_ho_arguments = ho_args})
-        | _ ->
-          let () = print_endline "None" in
-          None in
+                let new_name = get_prim_pred_id_by_kind k in
+                Some (F.HeapNode {node with F.h_formula_heap_name = new_name}))
+        | _ -> None in
       transform_h_formula f_h hform
     in
     let helper hform =
       let pr = !print_h_formula in
       Debug.no_1 "update_temp_heap_name" pr pr helper hform in
-    helper hform 
-
-    and update_ho_arg ho_arg =
-      let f = ho_arg.F.rflow_base in
-      let f = update_formula f in
-      {ho_arg with F.rflow_base = f}
+    helper hform
 
 end;;
 

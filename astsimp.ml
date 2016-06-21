@@ -8779,6 +8779,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   IF.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
+  let f = Session.IProjection.update_formula f in
   let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
     ((ident*primed) list) * (IP.exp list) * ((ident*primed) list) * IP.formula =
 
@@ -9167,8 +9168,6 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
-  let () = y_binfo_pp "@TINA: update_temp_heap_name" in
-  let f = Session.IProjection.update_formula f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
   let () = x_dinfo_hp (fun f -> ("case_normalize_formula :: CHECK POINT 1a ==> f = " ^ Iprinter.string_of_formula f ^ "\n")) f no_pos in
