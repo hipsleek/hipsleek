@@ -101,6 +101,7 @@ module type Message_type = sig
   val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val update_temp_heap_name: h_formula -> h_formula
+  val update_formula: formula -> formula
 
 end;;
 
@@ -176,20 +177,41 @@ module IForm = struct
     let fct = (nonef, nonef, fct_h, (somef, somef, somef, somef, somef)) in
     F.transform_struc_formula fct struc_form
 
+  let transform_formula fct f = F.transform_formula_simp fct f
+
   let transform_h_formula f_h h = F.transform_h_formula f_h h
 
-  let update_temp_heap_name hform =
+  let rec update_formula f =
+     transform_formula update_temp_heap_name f
+
+  and update_temp_heap_name hform =
+    let () = print_endline "updating heap name" in
     let f_h hform = match hform with
       | F.HeapNode node ->
-        begin
+        let () = print_endline "HeapNode" in
+        let hn = begin
           match node.F.h_formula_heap_session_kind with
-          | None -> Some hform
+          | None ->
+            let () = print_endline "None Session Kind" in
+            node
           | Some k ->
             let new_name = map_opt_def node.F.h_formula_heap_name idf (get_prim_pred_id_by_kind k) in
-            Some (F.HeapNode {node with F.h_formula_heap_name = new_name})
-        end
-      | _ -> None in
+            let () = print_endline ("new name: " ^ new_name) in
+            let () = print_endline ("seq: " ^ (get_prim_pred_id seq_id)) in
+            let () = print_endline ("session kind: " ^(string_of_session_kind k)) in
+            {node with F.h_formula_heap_name = new_name}
+        end in
+        let ho_args = List.map update_ho_arg hn.F.h_formula_heap_ho_arguments in
+        Some (F.HeapNode {hn with F.h_formula_heap_ho_arguments = ho_args})
+      | _ ->
+        let () = print_endline "None" in
+        None in
     transform_h_formula f_h hform
+
+    and update_ho_arg ho_arg =
+      let f = ho_arg.F.rflow_base in
+      let f = update_formula f in
+      mk_rflow_formula f ~kind:NEUTRAL
 
 end;;
 
@@ -259,6 +281,8 @@ module CForm = struct
   let transform_h_formula f_h h = CF.transform_h_formula f_h h
 
   let update_temp_heap_name hform = hform
+
+  let update_formula f = f
 
 end;;
 
@@ -559,6 +583,8 @@ module Make_Session (Base: Session_base) = struct
     let h_form = mk_sess_h_formula h_form pos in
     let fct h = Base.mk_star h h_form pos in
     Base.struc_formula_trans_heap_node fct form_orig
+
+  let update_formula = Base.update_formula
 
 end;;
 

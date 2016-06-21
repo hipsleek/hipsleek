@@ -3289,6 +3289,8 @@ let clear_type_info_formula (f: formula): formula =
 let set_session_kind_h_formula hform kind =
   let f_h h =
     match h with
-    | HeapNode h -> Some (HeapNode {h with h_formula_heap_session_kind = kind })
+    | HeapNode h ->
+      let () = print_endline "setting kind as: " in
+                    Some (HeapNode {h with h_formula_heap_session_kind = kind })
     | _ -> Some h in
   transform_h_formula f_h hform
