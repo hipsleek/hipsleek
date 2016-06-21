@@ -251,17 +251,25 @@ let rec parse_file (parse) (source_file : string) =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
 
+  let process_include_dirs header_path source_dir =
+    let file_header_path = source_dir ^ "/" ^ header_path in
+    let sleek_header_path = (Gen.get_path Sys.executable_name) ^ header_path in
+    if (Sys.file_exists (file_header_path))
+    then
+      parse_file NF.list_parse file_header_path
+    else
+      if (Sys.file_exists (sleek_header_path))
+      then
+        parse_file NF.list_parse sleek_header_path
+      else
+        report_warning no_pos ("Couldn't find header " ^ header_path) in
+
   let process_include inc source_file =
     try
         let (curdir,_) = BatString.rsplit source_file "/" in
-        let header_path = curdir^"/"^inc in
-        if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path
-        else
-          let sleek_dir_header_path = (Gen.get_path Sys.executable_name) ^ inc in
-          if (Sys.file_exists (sleek_dir_header_path)) then parse_file NF.list_parse sleek_dir_header_path
+        process_include_dirs inc curdir
     with Not_found ->
-        let header_path = inc in
-        if (Sys.file_exists (header_path)) then parse_file NF.list_parse header_path in
+        process_include_dirs inc "." in
 
   let proc_one_def c = 
     match c with
