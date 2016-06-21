@@ -65,11 +65,19 @@ Validate 1: Expecting1 FailBUT got no residue
 =============================================
 =============================================
 
+to normalize seq such that head is base/or/*/pred:
 
+self::Seq{self::Seq{a.b}, self::Seq{c,d}}
+ |
+ |
+ V
+self::Seq{a, self::Seq{b, self::Seq{c,d}}} 
 
 =============================================
 =============================================
 
+create a wrapper to disable classic ent chek for
+HO args when not base.
 
 
 =============================================

@@ -1,16 +1,24 @@
-sleek_include 'hodef.slk'. 
+sleek_include 'msess/notes/hodef.slk'. 
 
 
 //1
-checkentail x::Sess{@ aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@ aa!emp & 0<=msg;;aa?0}<>.
+checkentail x::Sess{@S aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@S aa!emp & 0<=msg;;aa?0}<>.
 expect Fail.
 
-/*
+
 //2
-checkentail x::Sess{@ aa!emp & 0<=msg;;aa?0}<>|- x::Sess{@ aa!0;;aa?emp & 0<=msg}<> .
+checkentail x::Sess{@S aa!emp & 0<=msg;;aa?0;;aa!0}<>|- x::Sess{@S aa!0;;aa?emp & 0<=msg;;aa!0}<> .
 expect Valid.
 
+//3
+checkentail x::Sess{@S aa!emp & 0<=msg;;aa?0;;bb!0}<>|- x::Sess{@S aa!0;;aa?emp & 0<=msg}<> .
+expect Valid.
 
+//4
+checkentail x::Sess{@S aa!0 or aa!1}<>|- x::Sess{@S aa!0 or aa!1}<>.
+expect Valid.
+
+/*
 pred_sess_proj pp17<aa> == aa!0;;aa?emp & 0<=msg.
 pred_sess_proj pp18<aa> == aa!emp & 0<=msg;;aa?0.
 //12

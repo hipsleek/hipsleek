@@ -11,3 +11,7 @@
 #case_normalize_proc
 #case_normalize_program
 case_normalize_formula
+case_normalize_renamed_struc_formula
+case_normalize_struc_formula
+case_normalize_renamed_formula
+
