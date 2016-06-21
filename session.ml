@@ -51,15 +51,15 @@ let get_prim_pred_id pred_ref =
       unk_view_id
 
 let get_prim_pred_id_by_kind kind = match kind with
-  | Transmission -> !trans_id
-  | Session      -> !sess_id
-  | Channel      -> !chan_id
-  | Send         -> !send_id
-  | Receive      -> !recv_id
-  | Sequence     -> !seq_id
-  | SOr          -> !sor_id
-  | Protocol     -> None
-  | Projection   -> None
+  | Transmission -> get_prim_pred_id trans_id
+  | Session      -> get_prim_pred_id sess_id
+  | Channel      -> get_prim_pred_id chan_id
+  | Send         -> get_prim_pred_id send_id
+  | Receive      -> get_prim_pred_id recv_id
+  | Sequence     -> get_prim_pred_id seq_id
+  | SOr          -> get_prim_pred_id sor_id
+  | Protocol     -> ""
+  | Projection   -> ""
 
 let get_session_kind_of_transmission t =
   match t with
@@ -202,7 +202,7 @@ module IForm = struct
               let () = print_endline "None Session Kind" in
               node
             | Some k ->
-              let new_name = map_opt_def node.F.h_formula_heap_name idf (get_prim_pred_id_by_kind k) in
+              let new_name = get_prim_pred_id_by_kind k in
               let () = print_endline ("new name: " ^ new_name) in
               let () = print_endline ("seq: " ^ (get_prim_pred_id seq_id)) in
               let () = print_endline ("session kind: " ^(string_of_session_kind k)) in
@@ -377,7 +377,7 @@ module Projection_base_formula =
     let trans_base base =
       let ptr = Msg.choose_ptr ~ptr:base.projection_base_formula_channel () in
       let tkind = get_session_kind_of_transmission base.projection_base_formula_op in
-      let name = map_opt_def "" idf (get_prim_pred_id_by_kind tkind) in
+      let name = get_prim_pred_id_by_kind tkind in
       let args = match base.projection_base_formula_op with
         | TSend -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:INFLOW]
         | TReceive -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:OUTFLOW] in
@@ -525,9 +525,7 @@ module Make_Session (Base: Session_base) = struct
     (* why doesn't it work without ~kind, which is optional? *)
     let rflow_form = (Base.mk_rflow_formula or_node ~kind:NEUTRAL) in
     let ptr = Base.choose_ptr () in
-    let name =  match !sor_id with
-                  | Some str -> str
-                  | None -> "" in
+    let name = get_prim_pred_id sor_id in
     let args = [rflow_form] in
     let params = [] in
     Base.mk_node ~kind:(Some SOr) (ptr, name, args, params, pos)
