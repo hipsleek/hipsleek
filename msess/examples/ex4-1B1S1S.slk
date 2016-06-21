@@ -1,5 +1,5 @@
-sleek_include 'hodef.slk'. 
-/* sleek_include 'msess/notes/hodef.slk'.  */
+//sleek_include 'hodef.slk'. 
+sleek_include 'msess/notes/hodef.slk'.  
 
 data Channel{int info;}.
 data node{int info; node next;}.
@@ -77,12 +77,12 @@ checkentail x::pp18<b> |- x::pp17<b>.
 expect Valid.
 
 //14
-checkentail x::Sess{@ aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@ aa!emp & 0<=msg;;aa?0}<>.
-expect Fail.
+//checkentail x::Sess{@ aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@ aa!emp & 0<=msg;;aa?0}<>.
+//expect Fail.
 
 //15
-checkentail x::pp18<b> |- x::pp17<b>.
-expect Valid.
+//checkentail x::pp18<b> |- x::pp17<b>.
+//expect Valid.
 
 /*
 pred_sess_proj pp19<aa> == (aa?emp & 0<msg) or (aa?0).

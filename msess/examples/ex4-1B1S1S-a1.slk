@@ -5,6 +5,7 @@ sleek_include 'hodef.slk'.
 checkentail x::Sess{@ aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@ aa!emp & 0<=msg;;aa?0}<>.
 expect Fail.
 
+/*
 //2
 checkentail x::Sess{@ aa!emp & 0<=msg;;aa?0}<>|- x::Sess{@ aa!0;;aa?emp & 0<=msg}<> .
 expect Valid.
@@ -20,3 +21,4 @@ expect Fail.
 checkentail x::pp18<b> |- x::pp17<b>.
 expect Valid.
 
+*/

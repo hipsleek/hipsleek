@@ -5,8 +5,9 @@
 #match_one_ho_arg
 #do_match,Trace
 #heap_entail_conjunct,Trace
-process_one_match,Trace
+#process_one_match,Trace
 #update_fixpt,Trace
-set_check_fixpt
-case_normalize_proc
-case_normalize_prqogram
+#set_check_fixpt
+#case_normalize_proc
+#case_normalize_program
+case_normalize_formula

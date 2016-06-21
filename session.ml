@@ -30,7 +30,9 @@ let send_id:  string option ref = ref None
 let recv_id:  string option ref = ref None
 let sor_id:   string option ref = ref None
 
-let set_prim_pred_id kind id = match kind with
+let set_prim_pred_id kind id =
+  let () = y_binfo_pp "!!!! setting trans_id" in
+  match kind with
     | Transmission -> trans_id := Some id
     | Session      -> sess_id := Some id
     | Channel      -> chan_id := Some id
@@ -182,36 +184,46 @@ module IForm = struct
   let transform_h_formula f_h h = F.transform_h_formula f_h h
 
   let rec update_formula f =
-     transform_formula update_temp_heap_name f
+    let helper f = transform_formula update_temp_heap_name f in
+    let helper f =
+      let pr = !print in
+      Debug.no_1 "update_formula" pr pr helper f in
+    helper f 
 
   and update_temp_heap_name hform =
-    let () = print_endline "updating heap name" in
-    let f_h hform = match hform with
-      | F.HeapNode node ->
-        let () = print_endline "HeapNode" in
-        let hn = begin
-          match node.F.h_formula_heap_session_kind with
-          | None ->
-            let () = print_endline "None Session Kind" in
-            node
-          | Some k ->
-            let new_name = map_opt_def node.F.h_formula_heap_name idf (get_prim_pred_id_by_kind k) in
-            let () = print_endline ("new name: " ^ new_name) in
-            let () = print_endline ("seq: " ^ (get_prim_pred_id seq_id)) in
-            let () = print_endline ("session kind: " ^(string_of_session_kind k)) in
-            {node with F.h_formula_heap_name = new_name}
-        end in
-        let ho_args = List.map update_ho_arg hn.F.h_formula_heap_ho_arguments in
-        Some (F.HeapNode {hn with F.h_formula_heap_ho_arguments = ho_args})
-      | _ ->
-        let () = print_endline "None" in
-        None in
-    transform_h_formula f_h hform
+    let helper hform = 
+      let () = print_endline "updating heap name" in
+      let f_h hform = match hform with
+        | F.HeapNode node ->
+          let () = print_endline "HeapNode" in
+          let hn = begin
+            match node.F.h_formula_heap_session_kind with
+            | None ->
+              let () = print_endline "None Session Kind" in
+              node
+            | Some k ->
+              let new_name = map_opt_def node.F.h_formula_heap_name idf (get_prim_pred_id_by_kind k) in
+              let () = print_endline ("new name: " ^ new_name) in
+              let () = print_endline ("seq: " ^ (get_prim_pred_id seq_id)) in
+              let () = print_endline ("session kind: " ^(string_of_session_kind k)) in
+              {node with F.h_formula_heap_name = new_name}
+          end in
+          let ho_args = List.map update_ho_arg hn.F.h_formula_heap_ho_arguments in
+          Some (F.HeapNode {hn with F.h_formula_heap_ho_arguments = ho_args})
+        | _ ->
+          let () = print_endline "None" in
+          None in
+      transform_h_formula f_h hform
+    in
+    let helper hform =
+      let pr = !print_h_formula in
+      Debug.no_1 "update_temp_heap_name" pr pr helper hform in
+    helper hform 
 
     and update_ho_arg ho_arg =
       let f = ho_arg.F.rflow_base in
       let f = update_formula f in
-      mk_rflow_formula f ~kind:NEUTRAL
+      {ho_arg with F.rflow_base = f}
 
 end;;
 
