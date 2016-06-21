@@ -27,10 +27,50 @@ Sol:
       calls Session.IProjection.update_temp_heap_name
       to update the heap. 
 
+
 =============================================
 =============================================
 change @ --> @s to flag a session formula inside
 the HO arg list.
+
+
+=============================================
+=============================================
+./sleek msess/examples/ex4-1B1S1S-a1.slk -dre "update_formula"
+=============================================
+(i) to check why temp pred name for R is empty instead of SESS_TEMP
+(ii) to check why typeinfer still complains about not finding view name:
+
+(====)
+update_formula@5@2@1
+update_formula inp1 :(aa::{+ (emp ; (emp ; emp)) * ([] & 0 <= msg)( FLOW __flow)}<>@M[HeapNode1]) * ([] & true)( FLOW __flow)
+update_formula@5 EXIT:(aa::R{+ (emp ; (emp ; emp)) * ([] & 0 <= msg)( FLOW __flow)}<>@M[HeapNode1]) * ([] & true)( FLOW __flow)
+
+Last Proving Location: msess/examples/hodef.slk_1:10_1:42
+
+ERROR: at msess/examples/ex4-1B1S1S-a1.slk_5:60_5:75
+Message: **typeinfer.ml#1626: is neither 2 a data nor view name
+
+Entail 1: EXCast. Failure("**typeinfer.ml#1626: is neither 2 a data nor view name")
+Validate 1: Expecting1 FailBUT got no residue
+
+
+
+
+=============================================
+=============================================
+
+
+
+=============================================
+=============================================
+
+
+
+=============================================
+=============================================
+
+
 
 =============================================
 =============================================
