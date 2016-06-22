@@ -96,6 +96,7 @@ module type Message_type = sig
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
   val mk_empty: unit -> h_formula
+  val mk_seq_wrapper: h_formula -> VarGen.loc -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
   val get_h_formula_heap: h_formula -> h_formula_heap
@@ -165,6 +166,28 @@ module IForm = struct
     F.mkOr f1 f2 pos
 
   let mk_empty () = F.HEmp
+
+  let mk_seq_wrapper_node hform pos =
+    let ptr = choose_ptr() in
+    let name = get_prim_pred_id seq_id in
+    let hemp = mk_empty () in
+    let args = [hform; hemp] in
+    let args = List.map (fun a -> mk_rflow_formula_from_heap a pos) args in
+    let params = [] in
+    mk_node ~kind:(Some Sequence) (ptr, name, args, params, pos)
+
+  let mk_seq_wrapper hform pos =
+    match hform with
+      | F.HeapNode node ->
+        (match node.F.h_formula_heap_session_kind with
+          | Some k ->
+            if (k <> Sequence)
+            then
+              mk_seq_wrapper_node hform pos
+            else
+              hform
+          | None -> mk_seq_wrapper_node hform pos)
+      | _ -> hform
 
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos) 
 
@@ -261,6 +284,8 @@ module CForm = struct
     CF.mkOr f1 f2 pos
 
   let mk_empty () = CF.HEmp
+
+  let mk_seq_wrapper hform pos = hform
 
   let set_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
@@ -487,13 +512,15 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_pos = loc;
   }
 
-  let mk_seq_node args params pos  =
-    let arg1 = Base.choose_ptr () in (* decide which name should be given here *)
+  let mk_seq_node h1 h2 pos  =
+    let ptr = Base.choose_ptr () in (* decide which name should be given here *)
     let name = get_prim_pred_id seq_id in
+    let h2 = Base.mk_seq_wrapper h2 pos in
+    let args = [h1; h2] in
     let args = List.map (fun a -> Base.mk_rflow_formula_from_heap a pos) args in
-    let params = List.map (fun a -> Base.set_param a pos) params in
+    let params = [] in
     (* let a = (sv, name, args, params, pos) in *)
-    Base.mk_node ~kind:(Some Sequence) (arg1, name, args, params, pos)
+    Base.mk_node ~kind:(Some Sequence) (ptr, name, args, params, pos)
     (* failwith x_tbi *)
 
   and mk_star_node h1 h2 pos =
@@ -525,7 +552,7 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  ->
         let arg1 = helper s.session_seq_formula_head in
         let arg2 = helper s.session_seq_formula_tail in
-        mk_seq_node [arg1;arg2] [] s.session_seq_formula_pos
+        mk_seq_node arg1 arg2 s.session_seq_formula_pos
       (* (\* node, view-name, ho-args, args *\) *)
       (* Base.mkFNode sv !seq_id [arg1;arg2] []
       failwith x_tbi *)

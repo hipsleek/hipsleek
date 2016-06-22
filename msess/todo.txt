@@ -64,6 +64,9 @@ Validate 1: Expecting1 FailBUT got no residue
 
 =============================================
 =============================================
+
+Status: Solved, done in parser by applying right associativity to sequence
+
 (1) NORM1
 to normalize seq such that head is base/or/*/pred:
 
@@ -75,6 +78,9 @@ self::Seq{a, self::Seq{b, self::Seq{c,d}}}
 
 =============================================
 =============================================
+
+Status: Solved
+
 (2) NORM2
 to normalize second HO arg of seq such that
 it contains no base/or/*/pred unless they are
