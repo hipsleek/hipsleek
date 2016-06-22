@@ -64,7 +64,7 @@ Validate 1: Expecting1 FailBUT got no residue
 
 =============================================
 =============================================
-
+(1) NORM1
 to normalize seq such that head is base/or/*/pred:
 
 self::Seq{self::Seq{a.b}, self::Seq{c,d}}
@@ -72,6 +72,26 @@ self::Seq{self::Seq{a.b}, self::Seq{c,d}}
  |
  V
 self::Seq{a, self::Seq{b, self::Seq{c,d}}} 
+
+=============================================
+=============================================
+(2) NORM2
+to normalize second HO arg of seq such that
+it contains no base/or/*/pred unless they are
+part of a seq:
+
+self::Seq{a,c}}
+ |
+ |
+ V
+self::Seq{a, self::Seq{c, emp}} 
+
+
+self::Seq{a, c or/* b}}
+ |
+ |
+ V
+self::Seq{a, self::Seq{c or/* b, emp}}
 
 =============================================
 =============================================
@@ -83,6 +103,7 @@ HO args when not base.
 =============================================
 =============================================
 
+!!!disjunction
 
 
 =============================================

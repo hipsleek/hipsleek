@@ -1,0 +1,20 @@
+sleek_include 'msess/notes/hodef.slk'. 
+
+checkentail
+ x::Sess{@S a!0 or a!msg>0}<>
+|-  x::Sess{@S a!msg>=0}<>.
+
+expect Valid.
+
+
+/**
+//emp
+if(con)
+        //cond
+        ...
+else
+        // not(cond)
+        ...
+//cond or not(cond)
+foo();
+*/

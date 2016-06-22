@@ -30,3 +30,35 @@ checkentail x::pp18<b> |- x::pp17<b>.
 expect Valid.
 
 */
+
+
+//5
+checkentail
+ x::Sess{ self::Seq{ aa::S{ - emp&0<=msg}<>,
+          self::Seq{ aa::R{ + emp&msg=0}<>, bb::S{ - emp&msg=0}<>}<>}<>}<>
+|- x::Sess{ self::Seq{ aa::S{ - emp&msg=0}<>, self::Seq{aa::R{ + emp&0<=msg}<>, emp}<>}<>}<>.
+
+//6
+checkentail
+ x::Sess{ self::Seq{ aa::S{ - emp&0<=msg}<>,
+          self::Seq{ aa::R{ + emp&msg=0}<>, bb::S{ - emp&msg=0}<>}<>}<>}<>
+|- x::Sess{ self::Seq{ aa::S{ - emp&msg=0}<>, self::Seq{aa::R{ + emp&0<=msg}<> or aa::R{+ mgs=0}<>, emp}<>}<>}<>.
+
+expect Fail. //because of classical reasoning
+
+//7
+checkentail
+ x::Sess{ self::Seq{ aa::S{ - emp&0<=msg}<>,
+          self::Seq{ aa::R{ + emp&msg=0}<>, emp}<>}<>}<>
+|- x::Sess{ self::Seq{ aa::S{ - emp&msg=0}<>, self::Seq{aa::R{ + emp&0<=msg}<> or aa::R{+ mgs=0}<>, emp}<>}<>}<>.
+
+expect Valid.
+
+
+//8
+checkentail bb::S{ - emp&msg=0}<> |- emp.
+expect Valid.
+
+//9
+checkentail_exact bb::S{ - emp&msg=0}<> |- emp.
+expect Fail.
