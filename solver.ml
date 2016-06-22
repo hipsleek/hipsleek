@@ -6263,6 +6263,21 @@ and move_impl_inst_estate_x es (f:MCP.mix_formula) =
   x_tinfo_hp (add_str "move_impl(inst_to_keep)" !CP.print_svl) inst_to_keep no_pos;
   x_tinfo_hp (add_str "move_impl(f)" !print_mix_formula) f no_pos;
   x_tinfo_hp (add_str "move_impl(new_to_elim)" !CP.print_svl) new_to_elim no_pos;
+  let f = match f with
+    | OnePF conseq1 ->
+      let conjuncts = CP.list_of_conjs conseq1 in
+      if (List.length conjuncts > 1 && List.length l_inst > 0)  then
+        let conj = List.hd conjuncts in
+        match conj with
+        | BForm (( Eq (Var(a,l), Tsconst (b, c), d), e), f) ->
+          let new_tree = Tree_shares.Ts.neg_tree b in
+          let var = List.hd l_inst in
+          let new_f = OnePF (BForm (( Eq (Var(var,l), Tsconst (new_tree, c), d), e), f)) in
+          new_f
+        | _ -> f
+      else f
+    | MemoF _ -> f
+  in
   let nf,nflg = 
     let f2 = if ( to_elim_vars = []) then f else 
         (elim_exists_mix_formula to_elim_vars f no_pos) in
