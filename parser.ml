@@ -1304,7 +1304,8 @@ prot_view_decl:
                view_session_formula = Some (Session.ProtocolSession s)}
   ]];
 
-protocol_formula: [
+protocol_formula:
+  [ "semicolon" RIGHTA
     [
         s1 = protocol_formula; `SEMICOLONSEMICOLON; s2 = protocol_formula ->
             let loc = (get_pos_camlp4 _loc 1) in
@@ -1340,7 +1341,8 @@ proj_view_decl:
                view_session_formula = Some (Session.ProjectionSession p)}
   ]];
 
-projection_formula: [
+projection_formula:
+  [ "semicolon" RIGHTA
     [
         p1 = projection_formula; `SEMICOLONSEMICOLON; p2 = projection_formula ->
             let loc = (get_pos_camlp4 _loc 1) in
