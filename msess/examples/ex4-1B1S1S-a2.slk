@@ -3,7 +3,6 @@ sleek_include 'msess/notes/hodef.slk'.
 checkentail
  x::Sess{@S a!0 or a!msg>0}<>
 |-  x::Sess{@S a!msg>=0}<>.
-
 expect Valid.
 
 
@@ -18,3 +17,7 @@ else
 //cond or not(cond)
 foo();
 */
+
+
+checkentail x::Sess{ self::SOr{a::S{ - emp&msg=0}<> or a::S{ - emp&0<msg}<>}<> }<>
+ |- x::Sess{ a::S{ - emp&0<=msg}<> }<>.

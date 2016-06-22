@@ -2405,17 +2405,19 @@ and translate_session (view:I.view_decl) =
     let sessf = getter session in
     let transf_session = transf sessf view.I.view_formula in
     {view with I.view_formula = transf_session} in
-  let sess_kind = match view.I.view_session_kind with
-    | Some k -> k
-    | None -> failwith "view_session_kind not set" in
-  match sess_kind with
-  | Protocol ->
-    let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
-    helper view transf Session.get_protocol
-  | Projection ->
-    let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
-    helper view transf Session.get_projection
-  | _ -> view
+  match view.I.view_session_kind with
+  | Some k -> begin
+      match k with
+      | Protocol ->
+        let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
+        helper view transf Session.get_protocol
+      | Projection ->
+        let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
+        helper view transf Session.get_projection
+      | _ -> view
+    end
+  | None -> view
+
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in

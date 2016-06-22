@@ -1,0 +1,12 @@
+pred_prim P{- %P}<>.
+
+checkentail x::P{- a=1}<> * x::P{- a=2}<> * y::P{- a=1}<> |- x::P{- a=2}<> .
+print residue.
+
+checkentail x::P{- a=1}<> * x::P{- a=2}<> * y::P{- a=1}<> |- x::P{- a=2}<> *  y::P{- a=1}<> .
+print residue.
+/*
+!!! **WARNING****cfutil.ml#142:Found duplicate star nodes in [ x::P{ - emp&a=1&{FLOW,(4,5)=__norm#E}[]}<>@M, x::P{ - emp&a=2&{FLOW,(4,5)=__norm#E}[]}<>@M]
+!!! **WARNING****cfutil.ml#142:Found duplicate star nodes in [ x::P{ - emp&a=1&{FLOW,(4,5)=__norm#E}[]}<>@M, x::P{ - emp&a=2&{FLOW,(4,5)=__norm#E}[]}<>@M]
+[UNSOUNDNESS] WARNING : satisfiable state at 1 File "ex4-1B1S1S-a3.slk",Line:6,Col:61 became hfalse
+*/
