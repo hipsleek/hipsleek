@@ -5,3 +5,22 @@ macro R == (,#) .
 checkentail   x::cell(@@L)<q> |- x::cell(@((,#),))<p> .
 expect Valid.
 print residue.
+
+
+checkentail   x::cell(@@R)<q> |- x::cell(@((,#),))<p> .
+expect Fail.
+print residue.
+
+
+checkentail   x::cell(@@R)<q> |- x::cell(@((,#),(,#)))<p> .
+expect Fail.
+print residue.
+
+
+checkentail   x::cell(@@R)<q> |- x::cell(@(,(,#)))<p> .
+expect Valid.
+print residue.
+
+checkentail   x::cell(@@R)<q> |- x::cell(@(,#))<p> .
+expect Valid.
+print residue.
