@@ -1,0 +1,7 @@
+checkentail (slen(str))<=size2 & ((slen(str1))+hd)<(size1+hd) & (slen(str1))<=size1 & 
+ ((slen(str1))+hd)<=((slen(str1))+hd) & hd<=((slen(str1))+hd) & 
+ ((slen(str))+(slen(str1))+hd)<(size1+hd) & cptr2'<(size2+hd_1921) & 
+ cptr2'<=((slen(str))+hd_1921) & hd_1921<=cptr2' & hd_1921=cptr2' |-  cptr2'<(hd_1921+(slen(str))).
+
+checkentail (slen(str))<=size & cptr<=((slen(str))+hd) & hd<=cptr & 
+ res="" & cptr<((slen(str))+hd) & 1+cptr=(slen(str))+hd |-  cptr+(slen(res))=(slen(str))+hd.

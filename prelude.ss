@@ -27,6 +27,14 @@ int mults___(int a, int b)
 string concat___(string a, string b)
   requires true
   ensures res = a ^ b;
+
+string concat___(char a, string b)
+  requires true
+  ensures res = a ^ b;
+
+string concat___(string a, char b)
+  requires true
+  ensures res = a ^ b;
 /*
   case {
     a = 0 -> ensures res = 0;
