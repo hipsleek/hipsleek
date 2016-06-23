@@ -114,3 +114,19 @@ HO args when not base.
 
 =============================================
 =============================================
+./../sleek ex4-1B1S1S-a1.slk --pcp
+=============================================
+
+fail reason should have involved classical reason,
+but instead:
+
+Entail 15: Fail.(must) cause:matching of ho_args failed (matching of ho_args failed (matching of ho_args failed (do_unmatched_rhs : a::S{ - emp&msg=1&{FLOW,(1,26)=__flow#E}[]}<>@M(may))))
+
+
+=============================================
+=============================================
+
+
+
+=============================================
+=============================================
