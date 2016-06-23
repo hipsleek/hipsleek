@@ -27,6 +27,15 @@ Post condition cannot be derived:
  !((s_1629=s1_1681^"0" & (slen(s_1629))<=length_1630 & 0<=v_int_16_1650 & 
     (v_int_16_1650+1)<=length_1630))
 ==========================================
+# smtsolver.ml
+cd str2
+../hip ex1a-string_ptr_model.ss
+Starting z3... 
+WARNING for is_unsat : Restarting prover due to timeout
+in the context : true
+ the guards  a=nulland a!=null are not disjoint
+
+z3-str solver needs to be properly configured
 ==========================================
 ==========================================
 ==========================================
