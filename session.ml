@@ -99,7 +99,12 @@ module type Message_type = sig
   val mk_seq_wrapper: h_formula -> VarGen.loc -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
+  val get_heap_ho_args: h_formula_heap -> ho_param_formula list
+  val get_heap_pos: h_formula_heap -> VarGen.loc
+  val get_heap_params: h_formula_heap -> param list
+  val get_ident_from_params: param list -> ident list
   val get_h_formula_heap: h_formula -> h_formula_heap
+  val get_formulae_from_ho_args: ho_param_formula list -> formula list
   val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val update_temp_heap_name: h_formula -> h_formula
@@ -191,10 +196,28 @@ module IForm = struct
 
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos) 
 
+  let get_heap_ho_args node =
+    node.F.h_formula_heap_ho_arguments
+
+  let get_heap_pos node =
+    node.F.h_formula_heap_pos
+
+  let get_heap_params node =
+    node.F.h_formula_heap_arguments
+
+  let get_ident_from_params params =
+    let fct p = match p with
+      | Ipure.Var e -> fst (fst e)
+      | _ -> failwith "Should be an Ipure.Var." in
+    List.map fct params
+
   let get_h_formula_heap h_formula =
     match h_formula with
       | F.HeapNode n -> n
       | _ -> failwith "Should be a HeapNode"
+
+  let get_formulae_from_ho_args ho_args =
+    List.map (fun a -> a.F.rflow_base) ho_args
 
   let struc_formula_trans_heap_node fct struc_form =
     let fct_h = (fun x -> Some (fct x)) in
@@ -289,7 +312,20 @@ module CForm = struct
 
   let set_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
+  let get_heap_ho_args node =
+    node.CF.h_formula_view_ho_arguments
+
+  let get_heap_pos node =
+    node.CF.h_formula_view_pos
+
+  let get_heap_params node =
+    node.CF.h_formula_view_arguments
+
+  let get_ident_from_params params = failwith x_tbi
+
   let get_h_formula_heap h_formula = failwith x_tbi
+
+  let get_formulae_from_ho_args ho_args = failwith x_tbi
 
   let struc_formula_trans_heap_node fct_h struc_form =
     let fct_h = (fun x -> Some (fct_h x)) in
@@ -340,15 +376,15 @@ module Protocol_base_formula =
 
     let get_base_pos base = base.protocol_base_formula_pos
 
-    let trans_h_formula_to_session h_formula = failwith x_tbi
-(*      let node = match h_formula with
-        | F.HeapNode n -> n
-        | _ -> failwith "Should be a HeapNode" in
-      if (List.length node.h_formula_heap_arguments <> 2)
-      then
-        failwith "Should have two heap arguments";
-      let sender = fst (fst (List.nth node.h_formula_heap_arguments 0)) in
-      sender*)
+    let trans_h_formula_to_session_base h_formula =
+      let node = Msg.get_h_formula_heap h_formula in
+      let participants = Msg.get_ident_from_params (Msg.get_heap_params node) in
+      let sender = List.nth participants 0 in
+      let receiver = List.nth participants 1 in
+      let pos = Msg.get_heap_pos node in
+      let f = let form_list = Msg.get_formulae_from_ho_args (Msg.get_heap_ho_args node) in
+              List.nth form_list 0 in
+      mk_base (sender, receiver, pos) f
 
   end;;
 
@@ -392,7 +428,7 @@ module Projection_base_formula =
 
     let get_base_pos base = base.projection_base_formula_pos
 
-    let trans_h_formula_to_session h_formula = failwith x_tbi
+    let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
   end;;
 
@@ -407,7 +443,7 @@ sig
   val mk_base : a -> t -> base
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
-  val trans_h_formula_to_session : h_formula -> base
+  val trans_h_formula_to_session_base : h_formula -> base
 end;;
 
 (* ============== session type ================ *)
