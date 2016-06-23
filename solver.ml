@@ -11289,12 +11289,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (* TODO: Check consistency in mappings *)
                 let new_maps = List.concat (List.map (fun (_, _, _, m) -> m) res) in
                 let residues = List.map (fun (_, m, _, _) -> m) res in
+                let () = y_tinfo_hp (add_str "residue after ho match" (pr_list (pr_option Cprinter.string_of_formula))) residues in
                 let pure_residues = List.map (fun (_, _, m, _) -> m) res in
+                let () = y_tinfo_hp (add_str "pure residue after ho match" (pr_list (pr_option !MCP.print_mix_formula))) pure_residues in
                 let new_ante = CF.subst_hvar new_ante new_maps in
-                let new_ante = List.fold_left (fun ante pr ->
-                    match pr with
-                    | None -> ante
-                    | Some p -> CF.mkAnd_pure ante p pos) new_ante pure_residues in
+                (* why do we need to add the residue from checking HO args back to ante? *)
+                let new_ante = if not (!add_ho_residue_to_es) then new_ante
+                  else
+                    List.fold_left (fun ante pr ->
+                        match pr with
+                        | None -> ante
+                        | Some p -> CF.mkAnd_pure ante p pos) new_ante pure_residues in 
                 (* Update conseq and evars *)
                 let new_conseq = CF.subst_hvar new_conseq new_maps in
                 let qvars, new_conseq = CF.split_quantifiers new_conseq in
