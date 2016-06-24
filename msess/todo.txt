@@ -131,14 +131,13 @@ Entail 15: Fail.(must) cause:matching of ho_args failed (matching of ho_args fai
 
 Status: In Progress
 
-Transform from struc_formula to session.
+Transform from struc_formula to session for
+Projection only.
 
 =============================================
 =============================================
 
-Print compact form in struc_formula.
-Need to transform from struc_formula to
-formula first (IF -> IS).
+Print compact form in view_decl for Protocol only.
 Also add a flag to disable/enable compact
 printing.
 
