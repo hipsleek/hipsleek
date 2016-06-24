@@ -102,6 +102,8 @@ module type Message_type = sig
   val get_heap_ho_args: h_formula_heap -> ho_param_formula list
   val get_heap_pos: h_formula_heap -> VarGen.loc
   val get_heap_params: h_formula_heap -> param list
+  val get_heap_session_kind: h_formula_heap -> session_kind option
+  val get_ident_from_heap_node: h_formula_heap -> ident
   val get_ident_from_params: param list -> ident list
   val get_h_formula_heap: h_formula -> h_formula_heap
   val get_formulae_from_ho_args: ho_param_formula list -> formula list
@@ -223,6 +225,12 @@ module IForm = struct
   let get_heap_params node =
     node.F.h_formula_heap_arguments
 
+  let get_heap_session_kind node =
+    node.F.h_formula_heap_session_kind
+
+  let get_ident_from_heap_node node =
+    fst node.F.h_formula_heap_node
+
   let get_ident_from_params params =
     let fct p = match p with
       | Ipure.Var e -> fst (fst e)
@@ -339,6 +347,10 @@ module CForm = struct
   let get_heap_params node =
     node.CF.h_formula_view_arguments
 
+  let get_heap_session_kind node = failwith x_tbi
+
+  let get_ident_from_heap_node node = failwith x_tbi
+
   let get_ident_from_params params = failwith x_tbi
 
   let get_h_formula_heap h_formula = failwith x_tbi
@@ -446,7 +458,17 @@ module Projection_base_formula =
 
     let get_base_pos base = base.projection_base_formula_pos
 
-    let trans_h_formula_to_session_base h_formula = failwith x_tbi
+    let trans_h_formula_to_session_base h_formula =
+      let node = Msg.get_h_formula_heap h_formula in
+      let channel = Msg.get_ident_from_heap_node node in
+      let pos = Msg.get_heap_pos node in
+      let ho_args = Msg.get_formulae_from_ho_args (Msg.get_heap_ho_args node) in
+      let f = List.nth ho_args 0 in
+      let transmission = match (Msg.get_heap_session_kind node) with
+        | Some Send -> TSend
+        | Some Receive -> TReceive
+        | _ -> failwith "Not a valid transmission type." in
+      mk_base (transmission, channel, pos) f
 
   end;;
 
