@@ -1,0 +1,8 @@
+ checkentail (charAt(str_2079, (-1*hd_2089)+cptr))!=('\000') & (charAt(str_2079, (-1*hd_2089)+cptr))!=('\000') & 
+ ((slen(s))+cptr)<(size_2091+hd_2089) & i<(slen(s)) & cptr<((slen(str_2079))+hd_2089) & (1+cptr)!=((slen(str_2079))+hd_2089) & 
+ (1+i)<(slen(s)) &
+(slen (s))<=size_2091 & s=(charUp(str_2079, cptr-hd_2089, '\000'))&
+//<=size_2091 & 
+ cptr<(size_2091+hd_2089) & (slen(str_2079))<=size_2091 &  cptr<=((slen(str_2079))+hd_2089) & hd_2089<=cptr & 
+ newptr'<(size_2091+hd_2089) &  newptr'<=((slen(charUp(str_2079, (-1*hd_2089)+cptr, charAt(s, i))))+hd_2089) & 
+ hd_2089<=newptr' & newptr'<((slen(str_2079))+hd_2089) |-  (newptr'+1)<(hd_2089+size_2091).
