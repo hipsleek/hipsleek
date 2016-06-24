@@ -114,6 +114,10 @@ HO args when not base.
 
 =============================================
 =============================================
+
+Status: Solved; Star node wasn't wrapped in
+a Sequence.
+
 ./../sleek ex4-1B1S1S-a1.slk --pcp
 =============================================
 
@@ -122,11 +126,29 @@ but instead:
 
 Entail 15: Fail.(must) cause:matching of ho_args failed (matching of ho_args failed (matching of ho_args failed (do_unmatched_rhs : a::S{ - emp&msg=1&{FLOW,(1,26)=__flow#E}[]}<>@M(may))))
 
+=============================================
+=============================================
+
+Status: In Progress
+
+Transform from struc_formula to session.
 
 =============================================
 =============================================
 
+Print compact form in struc_formula.
+Need to transform from struc_formula to
+formula first (IF -> IS).
+Also add a flag to disable/enable compact
+printing.
 
+=============================================
+=============================================
+
+Should predicate nodes have Projection/Protocol
+types in h_formula_heap_session_kind? Right now
+it's None, which is not consistent with the
+other types of nodes.
 
 =============================================
 =============================================

@@ -181,6 +181,23 @@ module IForm = struct
     let params = [] in
     mk_node ~kind:(Some Sequence) (ptr, name, args, params, pos)
 
+  (* Normalize second HO argument of Sequence such that
+     it contains no base/or/*/pred unless they are
+     part of a Sequence:
+
+     self::Seq{a, c}}
+      |
+      |
+      V
+     self::Seq{a, self::Seq{c, emp}}
+
+
+     self::Seq{a, c or/* b}}
+      |
+      |
+      V
+     self::Seq{a, self::Seq{c or/* b, emp}}
+  *)
   let mk_seq_wrapper hform pos =
     match hform with
       | F.HeapNode node ->
@@ -192,6 +209,7 @@ module IForm = struct
             else
               hform
           | None -> mk_seq_wrapper_node hform pos)
+      | F.Star node -> mk_seq_wrapper_node hform pos
       | _ -> hform
 
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos) 
