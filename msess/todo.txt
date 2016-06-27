@@ -102,6 +102,8 @@ self::Seq{a, self::Seq{c or/* b, emp}}
 =============================================
 =============================================
 
+Status: solved
+
 create a wrapper to disable classic ent chek for
 HO args when not base.
 
