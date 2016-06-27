@@ -2279,6 +2279,8 @@ and trans_view_kind vk= vk
 (* | Iast.View_DERV -> Cast.View_DERV *)
 (* | Iast.View_SPEC -> Cast.View_SPEC *)
 
+and trans_view_session_kind sk = sk
+
 and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_f: MCP.mix_formula option) : MCP.mix_formula =
   let p1 = add_param_ann_constraints_to_pure h1 None in
   let p2 = add_param_ann_constraints_to_pure h2 None in
@@ -2592,6 +2594,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let () = x_tinfo_hp (add_str "should elim this check diff. the result always overwritten by line 1908" (pr_id)) "" pos in *)
       let xpure_flag = false (* x_add TP.check_diff memo_pf_N memo_pf_P *) in
       let view_kind = trans_view_kind vdef.I.view_kind in
+      let view_session_kind = trans_view_session_kind vdef.I.view_session_kind in
       let vn = vdef.I.view_name in
       let () = if is_view_PRIM view_kind then CF.view_prim_lst # push vn
       in
@@ -2808,6 +2811,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_ptrs = [];
         C.view_backward_fields = [];
         C.view_kind = view_kind;
+        C.view_session_kind = view_session_kind;
         C.view_type_of_self = 
           (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in 
            let r = vdef.I.view_type_of_self in

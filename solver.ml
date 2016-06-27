@@ -10499,6 +10499,8 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
      report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
 (***********END-of do_match_thread_nodes*****************)
 
+and process_session_base = ref false
+
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -11094,6 +11096,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (*  - ho_arg match, otherwise                                             *)
               (*  Expected return value: A list of                                      *)
               (* (fail_ctx option, ho residue option, pure residue option mapping list) *)
+
+              let is_base (f : CF.formula) =
+                (*let f = rf.CF.rflow_base in*)
+                match f with
+                  | CF.Base base -> (match base.formula_base_heap with
+                                      | CF.ViewNode node -> let name = node.CF.h_formula_view_name in
+                                                            let view = look_up_view_def no_pos prog.prog_view_decls name in
+                                                            (match view.view_session_kind with
+                                                              | Some Send -> true
+                                                              | Some Receive -> true
+                                                              | _ -> false)
+                                      | _ -> false)
+                  | _ -> false in
+
               let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
                 (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
                  (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
@@ -11162,9 +11178,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
                   let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
                   let f_ctx = x_add elim_unsat_es_now 13 prog (ref 1) f_es in
+                  let entail_fct v = x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos in
                   let res_ctx, res_prf =
-                    Wrapper.wrap_classic x_loc (Some true) (* exact *)
-                      (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true 
+                    if (not !process_session_base)
+                    then
+                      if (is_base f_rhs)
+                      then
+                          let () = process_session_base := true in
+                          let res = Wrapper.wrap_classic x_loc (Some true) entail_fct true in
+                          let () = process_session_base := false in
+                          res
+                      else
+                        Wrapper.wrap_classic x_loc (Some false) entail_fct true
+                    else
+                      Wrapper.wrap_classic x_loc (Some true) entail_fct true
                   in
                   begin match res_ctx with
                     | FailCtx (ft,_,_) ->
