@@ -21,10 +21,10 @@ sleek_include 'msess/notes/hodef.slk'.
 //
 //pred_sess_proj ll11<n> == d?self = null.
 //
-//pred_sess_proj ll12<n> == (c!self = null & n = 0) or (d?self = null).
+pred_sess_proj ll12<n> == (c!self = null & n = 0) or (d?self = null).
 //
 //pred_sess_proj ll13<n> == A?self::node<_,_> * x::node<_,_> or (C!self = null & self = null) * (E?self = null). 
 
-//pred_sess_proj ll14<n> == A?1.
+//pred_sess_proj ll14<n,A> == A?1.
 
-checkentail ll::Sess{@S a?0}<> |- x=null.
+//checkentail ll::Sess{@S a?0}<> |- x=null.

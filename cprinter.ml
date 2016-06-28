@@ -4312,6 +4312,8 @@ let pr_barrier_decl v =
 
 let pr_bool b = fmt_string (string_of_bool b)
 
+let pr_session_kind sk = fmt_string (map_opt_def "" string_of_session_kind sk)
+
 let pr_list_id b = fmt_string (pr_list pr_id b)
 
 (* pretty printing for invariants of a view *)
@@ -4381,6 +4383,7 @@ let pr_view_decl v =
        (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
+  pr_add_str_cut ~emp_test:(fun x -> false) "session kind: "  pr_session_kind v.view_session_kind;
   pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)

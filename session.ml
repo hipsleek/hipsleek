@@ -103,8 +103,6 @@ module type Message_type = sig
   val get_heap_pos: h_formula_heap -> VarGen.loc
   val get_heap_params: h_formula_heap -> param list
   val get_heap_session_kind: h_formula_heap -> session_kind option
-  val get_ident_from_heap_node: h_formula_heap -> ident
-  val get_ident_from_params: param list -> ident list
   val get_h_formula_heap: h_formula -> h_formula_heap
   val get_formulae_from_ho_args: ho_param_formula list -> formula list
   val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula
@@ -112,16 +110,22 @@ module type Message_type = sig
   val update_temp_heap_name: h_formula -> h_formula
   val update_formula: formula -> formula
 
-  (*val is_base_formula: formula -> bool*)
+  val is_base_formula: formula -> bool
   val get_h_formula: formula -> h_formula
   val get_h_formula_from_ho_param_formula: ho_param_formula -> h_formula
   val get_formula_from_ho_param_formula: ho_param_formula -> formula
   val is_seq_node: h_formula -> bool
   val is_or_node: h_formula -> bool
   val is_star_node: h_formula -> bool
+  val is_empty_node: h_formula -> bool
   val get_node: h_formula -> arg
   val get_or_formulae: formula -> formula list
   val get_star_formulae: h_formula -> h_formula list
+  val get_star_pos: h_formula -> VarGen.loc
+  val get_session_kind: h_formula -> session_kind option
+  val get_param_id: param -> ident
+  val get_node_id: node -> ident
+  val get_formula_from_struc_formula: struc_formula -> formula
 
 end;;
 
@@ -239,15 +243,6 @@ module IForm = struct
   let get_heap_session_kind node =
     node.F.h_formula_heap_session_kind
 
-  let get_ident_from_heap_node node =
-    fst node.F.h_formula_heap_node
-
-  let get_ident_from_params params =
-    let fct p = match p with
-      | Ipure.Var e -> fst (fst e)
-      | _ -> failwith "Should be an Ipure.Var." in
-    List.map fct params
-
   let get_h_formula_heap h_formula =
     match h_formula with
       | F.HeapNode n -> n
@@ -325,12 +320,23 @@ module IForm = struct
       | F.Star node -> true
       | _ -> false
 
+  let is_empty_node h_formula = failwith x_tbi
 
   let get_node h_formula = failwith x_tbi
 
   let get_or_formulae formula = failwith x_tbi
 
   let get_star_formulae formula = failwith x_tbi
+
+  let get_star_pos h_formula = failwith x_tbi
+
+  let get_session_kind h_formula = failwith x_tbi
+
+  let get_param_id param = failwith x_tbi
+
+  let get_node_id node = failwith x_tbi
+
+  let get_formula_from_struc_formula struc_formula = failwith x_tbi
 
 end;;
 
@@ -404,11 +410,10 @@ module CForm = struct
 
   let get_heap_session_kind node = failwith x_tbi
 
-  let get_ident_from_heap_node node = failwith x_tbi
-
-  let get_ident_from_params params = failwith x_tbi
-
-  let get_h_formula_heap h_formula = failwith x_tbi
+  let get_h_formula_heap h_formula =
+    match h_formula with
+      | CF.ViewNode n -> n
+      | _ -> failwith "CF.ViewNode expected."
 
   let get_formulae_from_ho_args ho_args = failwith x_tbi
 
@@ -437,10 +442,32 @@ module CForm = struct
       | CF.Or f -> [f.CF.formula_or_f1; f.CF.formula_or_f2]
       | _ -> failwith "CF.Or expected."
 
-  let get_star_formulae formula =
-    match formula with
-      | CF.Star f -> [f.CF.h_formula_star_h1; f.CF.h_formula_star_h1]
+  let get_star_formulae h_formula =
+    match h_formula with
+      | CF.Star hf -> [hf.CF.h_formula_star_h1; hf.CF.h_formula_star_h2]
       | _ -> failwith "CF.Star expected."
+
+  let get_star_pos h_formula =
+    match h_formula with
+      | CF.Star hf -> hf.CF.h_formula_star_pos
+      | _ -> failwith "CF.Star expected."
+
+  let get_session_kind h_formula =
+    match h_formula with
+      | CF.ViewNode node -> node.CF.h_formula_view_session_kind
+      | _ -> failwith "CF.ViewNode expected."
+
+  let get_param_id param =
+    match param with
+      | CP.SpecVar sv -> let (t, n, p) = sv in
+                         n
+
+  let get_node_id node = get_param_id node
+
+  let get_formula_from_struc_formula struc_formula =
+    match struc_formula with
+      | CF.EBase base -> base.CF.formula_struc_base
+      | _ -> failwith "CF.EBase expected."
 
   let is_base_formula formula =
     match formula with
@@ -476,6 +503,11 @@ module CForm = struct
   let is_star_node h_formula =
     match h_formula with
       | CF.Star node -> true
+      | _ -> false
+
+  let is_empty_node h_formula =
+    match h_formula with
+      | CF.HEmp -> true
       | _ -> false
 
 end;;
@@ -518,9 +550,11 @@ module Protocol_base_formula =
 
     let get_base_pos base = base.protocol_base_formula_pos
 
+    let is_session_base h_formula = failwith x_tbi
+
     let trans_h_formula_to_session_base h_formula =
       let node = Msg.get_h_formula_heap h_formula in
-      let participants = Msg.get_ident_from_params (Msg.get_heap_params node) in
+      let participants = List.map (fun a -> Msg.get_param_id a) (Msg.get_heap_params node) in
       let sender = List.nth participants 0 in
       let receiver = List.nth participants 1 in
       let pos = Msg.get_heap_pos node in
@@ -572,20 +606,27 @@ module Projection_base_formula =
 
     let get_base_pos base = base.projection_base_formula_pos
 
+    let is_session_base h_formula =
+      match Msg.get_session_kind h_formula with
+        | Some Send -> true
+        | Some Receive -> true
+        | _ -> false
+
     let trans_h_formula_to_session_base h_formula =
-      let node = Msg.get_h_formula_heap h_formula in
-      let channel = Msg.get_ident_from_heap_node node in
-      let pos = Msg.get_heap_pos node in
-      let ho_args = Msg.get_formulae_from_ho_args (Msg.get_heap_ho_args node) in
-      let f = List.nth ho_args 0 in
-      let transmission = match (Msg.get_heap_session_kind node) with
+      let () = print_endline "in session base transf" in
+      let (ptr, name, args, params, pos) = Msg.get_node h_formula in
+      let () = print_endline "after get_node" in
+      let channel = Msg.get_node_id ptr in
+      let () = print_endline "after get_node_id" in
+      let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
+      let () = print_endline "after get_form" in
+      let transmission = match (Msg.get_session_kind h_formula) with
         | Some Send -> TSend
         | Some Receive -> TReceive
         | _ -> failwith "Not a valid transmission type." in
       mk_base (transmission, channel, pos) f
 
     let trans_h_formula_to_session_seq h_formula = failwith x_tbi
-     (* let node = Msg.get_h_formula_heap h_formula in*)
 
   end;;
 
@@ -601,6 +642,7 @@ sig
   val mk_base : a -> t -> base
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
+  val is_session_base : h_formula -> bool
   val trans_h_formula_to_session_base : h_formula -> base
 end;;
 
@@ -798,48 +840,83 @@ module Make_Session (Base: Session_base) = struct
 
   let update_formula = Base.update_formula
 
-  let test_if_is s =
-    let h_form = trans_from_session s in
-    let new_s = SBase (Base (Base.trans_h_formula_to_session_base h_form)) in
-    print_endline ("transformed: " ^ (string_of_session new_s))
-
   (* Get clean formula, without Sess{}. *)
-  let rec trans_h_formula_to_session h_formula =
-    if (Base.is_seq_node h_formula)
-    then
-      let (ptr, name, args, params, pos) = Base.get_node h_formula in
-      let h1 = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
-      let h2 = Base.get_h_formula_from_ho_param_formula (List.nth args 1) in
-      mk_session_seq_formula (trans_h_formula_to_session h1) (trans_h_formula_to_session h2) pos
-    else
-    if (Base.is_or_node h_formula)
-    then
-      let (ptr, name, args, params, pos) = Base.get_node h_formula in
-      let or_node = Base.get_formula_from_ho_param_formula (List.nth args 0) in
-      let or_formulae = Base.get_or_formulae or_node in
-      let h1 = Base.get_h_formula (List.nth or_formulae 0) in
-      let h2 = Base.get_h_formula (List.nth or_formulae 1) in
-      mk_session_or_formula (trans_h_formula_to_session h1) (trans_h_formula_to_session h2) pos
-    else
-    if (Base.is_star_node h_formula)
-    then
-      let (ptr, name, args, params, pos) = Base.get_node h_formula in
-      let star_formulae = Base.get_star_formulae h_formula in
-      let h1 = List.nth star_formulae 0 in
-      let h2 = List.nth star_formulae 1 in
-      mk_session_star_formula (trans_h_formula_to_session h1) (trans_h_formula_to_session h2) pos
-    else SEmp
+  let trans_h_formula_to_session h_formula =
+    let rec helper h_formula =
+      if (Base.is_seq_node h_formula)
+      then
+        let () = print_endline "detected seq" in
+        let (ptr, name, args, params, pos) = Base.get_node h_formula in
+        let h1 = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
+        let h2 = Base.get_h_formula_from_ho_param_formula (List.nth args 1) in
+        mk_session_seq_formula (helper h1) (helper h2) pos
+      else
+      if (Base.is_or_node h_formula)
+      then
+        let () = print_endline "detected or" in
+        let (ptr, name, args, params, pos) = Base.get_node h_formula in
+        let or_node = Base.get_formula_from_ho_param_formula (List.nth args 0) in
+        let or_formulae = Base.get_or_formulae or_node in
+        let h1 = Base.get_h_formula (List.nth or_formulae 0) in
+        let h2 = Base.get_h_formula (List.nth or_formulae 1) in
+        mk_session_or_formula (helper h1) (helper h2) pos
+      else
+      if (Base.is_star_node h_formula)
+      then
+        let () = print_endline "detected star" in
+        let pos = Base.get_star_pos h_formula in
+        let star_formulae = Base.get_star_formulae h_formula in
+        let h1 = List.nth star_formulae 0 in
+        let h2 = List.nth star_formulae 1 in
+        mk_session_star_formula (helper h1) (helper h2) pos
+      else
+      if (Base.is_session_base h_formula)
+      then
+        let () = print_endline "detected base" in
+        SBase (Base (Base.trans_h_formula_to_session_base h_formula))
+      (* Can only be Predicate or empty heap at this point. *)
+      else
+      if (not (Base.is_empty_node h_formula))
+      then
+        let () = print_endline "detected pred" in
+        let (ptr, name, args, params, pos) = Base.get_node h_formula in
+        let params = List.map (fun a -> Base.get_param_id a) params in 
+        SBase (mk_session_predicate name [] params pos)
+      else
+        let () = print_endline "detected empty?!" in
+        SEmp in
+    helper h_formula
 
+  let trans_h_formula_to_session h_formula =
+    let pr1 = !Base.print_h_formula in
+    let pr2 = string_of_session in
+    Debug.no_1 "trans_h_formula_to_session" pr1 pr2 trans_h_formula_to_session h_formula
 
   (* Session will look like Sess{...}. *)
   (* Strip the STAR with original formula and
    * strip Sess{} *)
-  let trans_formula_to_session formula = failwith x_tbi
- (*   if (Base.is_base_formula formula)
+  let trans_formula_to_session formula =
+    if (Base.is_base_formula formula)
     then
-      trans_h_formula_to_session (Base.get_h_formula formula)       
+      let h_formula = Base.get_h_formula formula in
+      let (ptr, name, args, params, pos) = Base.get_node h_formula in
+      (* Extract h_formula from Sess node. *)
+      let h_formula = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
+      (* Extract h_formula from STAR with original formula.
+       * Should be second branch of star. *)
+      (*let star_formulae = Base.get_star_formulae h_formula in
+      let h_formula = List.nth star_formulae 1 in*)
+      trans_h_formula_to_session h_formula
     else
-      failwith "Formula Base expected."*)
+      failwith "Formula Base expected."
+
+  let trans_struc_formula_to_session struc_formula =
+    let f = Base.get_formula_from_struc_formula struc_formula in
+    trans_formula_to_session f
+
+  let test_if_is struc_formula =
+    let s = trans_struc_formula_to_session struc_formula in
+    print_endline ("transformed: " ^ (string_of_session s))
 
 end;;
 

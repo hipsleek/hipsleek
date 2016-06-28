@@ -2913,6 +2913,9 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       else cur_mutrec_views
     in
     let nview = x_add trans_view iprog mutrec_views transed_views typ_infos view in
+    let () = match nview.view_session_kind with
+               | Some Projection -> Session.CProjection.test_if_is nview.view_formula
+               | _ -> () in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)
     let transed_views2,mutrec_views = if mutrec_views!=[] &&
@@ -7996,6 +7999,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_arguments = exps;
                      IF.h_formula_heap_ho_arguments = ho_exps;
                      IF.h_formula_heap_full = full;
+                     IF.h_formula_heap_session_kind = session_kind;
                      IF.h_formula_heap_pos = pos;
                      IF.h_formula_heap_label = pi;} ->
         (* expand the dereference heap node first *)
@@ -8184,7 +8188,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_lhs_case = true;
                   CF.h_formula_view_unfold_num = 0;
                   CF.h_formula_view_label = pi;
-                  CF.h_formula_view_session_kind = None;
+                  CF.h_formula_view_session_kind = session_kind;
                   CF.h_formula_view_pruning_conditions = [];
                   CF.h_formula_view_remaining_branches = None;
                   CF.h_formula_view_pos = pos;} in
