@@ -396,6 +396,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
             CF.h_formula_view_lhs_case = true;
             CF.h_formula_view_unfold_num = 0;
             CF.h_formula_view_label = None;
+            CF.h_formula_view_session_kind = None;
             CF.h_formula_view_pruning_conditions = [];
             CF.h_formula_view_remaining_branches = None;
             CF.h_formula_view_pos = pos}

@@ -11705,6 +11705,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
       h_formula_view_lhs_case = false;
       h_formula_view_origins = get_view_origins ln2;
       h_formula_view_label = pid;           (*TODO: the other alternative is to use none*)
+      h_formula_view_session_kind = None;
       h_formula_view_remaining_branches = r_rem_brs;
       h_formula_view_pruning_conditions = r_p_cond;
       h_formula_view_pos = pos2}) in

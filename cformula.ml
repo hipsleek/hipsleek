@@ -322,6 +322,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_remaining_branches :  (formula_label list) option;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_view_label : formula_label option;
+                        h_formula_view_session_kind : session_kind option;
                         h_formula_view_pos : loc ;
                      }
 and approx_disj =
@@ -383,6 +384,7 @@ let mk_HRel_as_view n args loc =
     h_formula_view_arguments = tails; (* rest of argument *) (* 220 *)
     h_formula_view_pos = loc; (* 57 *)
     h_formula_view_label = None; (* 29*)
+    h_formula_view_session_kind = None;
 
     (* prim_view *)
     h_formula_view_split = SPLIT0; (*21*)
@@ -16950,6 +16952,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
+      h_formula_view_session_kind = None;
       h_formula_view_pos = pos })
   in
   (****LOCKSET****)
@@ -17041,6 +17044,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
+      h_formula_view_session_kind = None;
       h_formula_view_pos = pos })
   in
   (****LOCKSET****)
@@ -17114,6 +17118,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
+      h_formula_view_session_kind = None;
       h_formula_view_pos = pos })
   in
   (****waitlevel****)
@@ -18156,6 +18161,7 @@ let mkViewNode view_node view_name view_args (* view_args_orig *) pos =
       h_formula_view_remaining_branches = None;
       h_formula_view_pruning_conditions = [];
       h_formula_view_label = None;
+      h_formula_view_session_kind = None;
       h_formula_view_pos = pos; }
 
 let mkDataNode data_node data_name data_args pos =

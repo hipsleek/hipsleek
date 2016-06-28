@@ -8184,6 +8184,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_lhs_case = true;
                   CF.h_formula_view_unfold_num = 0;
                   CF.h_formula_view_label = pi;
+                  CF.h_formula_view_session_kind = None;
                   CF.h_formula_view_pruning_conditions = [];
                   CF.h_formula_view_remaining_branches = None;
                   CF.h_formula_view_pos = pos;} in
