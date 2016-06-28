@@ -1,32 +1,38 @@
-// //1
-// checksat endzero("abc\x00a").
+//1
+checksat endzero("abc\x00a").
 
-// //2
-// checksat endzero("abc").
+//2
+checksat endzero("abc\x00\x00").
 
-// //3
-// checksat endzero("abc") & nonzero("abc").
+//3
+checksat endzero("abc") & nonzero("abc").
 
-// //4
-// checksat endzero(s) & nonzero(s).
+//4
+checksat endzero(s) & nonzero(s).
 
-// //5
-// checkentail endzero(s) |- !(nonzero(s)).
+//5
+checkentail endzero(s) |- !(nonzero(s)).
 
-// //6
-// checkentail nonzero(s) |- !(endzero(s)).
+//6
+checkentail nonzero(s) |- !(endzero(s)).
 
-// //7
-// checkentail nonzero(s1) & nonzero(s2) & s = s1^s2 |- nonzero(s).
+//7
+checkentail nonzero(s1) & nonzero(s2) & s = s1^s2 |- nonzero(s).
 
-// //8
-// checkentail (!(nonzero(s1)) | !(nonzero(s2))) & s = s1^s2 |- !(nonzero(s)).
+//8
+checkentail (!(nonzero(s1)) | !(nonzero(s2))) & s = s1^s2 |- !(nonzero(s)).
 
-// //9
-// checkentail endzero(s2) & s = s1^s2 |- endzero(s).
+//9
+checkentail endzero(s2) & s = s1^s2 |- endzero(s).
 
-// //10
-// checkentail endzero(s2) & s = s1^s2 & nonzero(s1) |- endzero(s).
+//10
+checkentail endzero(s2) & s = s1^s2 & nonzero(s1) |- endzero(s).
 
-
+//11
 checkentail s = s1^"\\0" & s = s2^"\\0" |- s1=s2.
+
+//12
+checkentail endzero(s) & charAt(s,i) = '\x00' |- i = slen(s)-1.
+
+//13
+checkentail endzero(s) |- endzero (s^"c").
