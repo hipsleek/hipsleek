@@ -6288,6 +6288,11 @@ and move_impl_inst_estate_x es (f:MCP.mix_formula) =
           let var = List.hd l_inst in
           let new_f = OnePF (BForm (( Eq (Var(var,l1), Tsconst (new_tree, c1), d1), e1), f1)) in
           new_f
+        | (BForm (( Eq (Var(a1,l1), Tsconst (b1, c1), d1), e1), f1), _)  ->
+          let new_tree = Tree_shares.Ts.neg_tree b1 in
+          let var = List.hd l_inst in
+          let new_f = OnePF (BForm (( Eq (Var(var,l1), Tsconst (new_tree, c1), d1), e1), f1)) in
+          new_f  
         | _ -> f
       else f
     | _ -> f
