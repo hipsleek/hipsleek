@@ -10,7 +10,7 @@ strbuf plus_plus(strbuf cptr)
 
 strbuf minus_minus(strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
-  & x<=cptr-1 & cptr-1<=x+sl & cptr-1<x+ln
+              & x<=cptr-1 & cptr-1<=x+sl & cptr-1<x+ln
   ensures  res::strbuf<x,sl,ln> & res=cptr-1;
 
 
@@ -55,9 +55,9 @@ int clen(strbuf cptr)
      if (c==0) return 0;
      else {
        dprint;
-        cptr = plus_plus(cptr);
-        int r = clen(cptr);
-        cptr = minus_minus(cptr);
+        strbuf cr = plus_plus(cptr);
+        int r = clen(cr);
+        cptr = minus_minus(cr);
         return 1+r;
     }
  }

@@ -10,7 +10,7 @@ strbuf plus_plus(strbuf cptr)
 
 strbuf minus_minus(strbuf cptr)
   requires cptr::strbuf<x,sl,ln> 
-  & x<=cptr-1 & cptr-1<=x+sl & cptr-1<x+ln
+        & x<=cptr-1 & cptr-1<=x+sl & cptr-1<x+ln
   ensures  res::strbuf<x,sl,ln> & res=cptr-1;
 
 

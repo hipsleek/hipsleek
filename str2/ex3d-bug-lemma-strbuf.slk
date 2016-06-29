@@ -7,7 +7,7 @@ lemma self::strbuf<hd,sl,ln> & hd<=self2 & self2<=hd+sl & self2<hd+ln
 
 //why isn't above "universal lemma" triggered? ..
 
-checkentail x::strbuf<hd,sl,ln> & hd<=x2 //& x2<=hd+sl & x2<hd+ln
+checkentail x::strbuf<hd,sl,ln> & hd<=x2// & x2<=hd+sl & x2<hd+ln
   |- x2::strbuf<hd,sl,ln>.
 expect Fail.
 
