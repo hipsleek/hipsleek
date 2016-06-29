@@ -9166,7 +9166,8 @@ type: bool *
           CF.add_pure_estate es nf 
       in
       let add_univ_pure es =
-        Debug.no_1 "add_univ_pure" pr_none pr_none add_univ_pure es in
+        let pr =  Cprinter.string_of_entail_state_short in 
+        Debug.no_1 "add_univ_pure" pr pr add_univ_pure es in
       let flag = stk_estate # is_empty in
       let () = y_tinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
       let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
@@ -9228,7 +9229,7 @@ type: bool *
         let res_delta = mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in (* TODO: res_vp *)
         let res_delta = x_add_1 CF.simplify_pure_f_old res_delta in
         let estate = { estate with es_formula = res_delta; } in
-        let estate = add_univ_pure estate in
+        let estate = x_add_1 add_univ_pure estate in
 
         (* Termination *)
         (* let pr = Cprinter.string_of_formula in *)
