@@ -89,7 +89,7 @@ module type Message_type = sig
   val print_h_formula  : (h_formula -> string) ref
   val mk_node: ?kind:session_kind option -> arg -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
-  val mk_rflow_formula:  formula -> ?kind:ho_flow_kind -> ho_param_formula
+  val mk_rflow_formula: ?kind:ho_flow_kind -> formula -> ho_param_formula
   val mk_rflow_formula_from_heap:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> formula
   val mk_struc_formula: formula -> VarGen.loc -> struc_formula
@@ -153,7 +153,7 @@ module IForm = struct
     (* let h = mk_node (ptr, name, ho, params, pos) in *)
     F.formula_of_heap_1 h pos
 
-  let mk_rflow_formula f ?kind:(k=NEUTRAL) =
+  let mk_rflow_formula ?kind:(k=NEUTRAL) f =
     {  F.rflow_kind = k;
        F.rflow_base = f;
        F.rflow_session_kind = None;
@@ -340,7 +340,7 @@ module CForm = struct
   let mk_formula_heap_only h pos =
     CF.formula_of_heap h pos
 
-  let mk_rflow_formula f ?kind:(k=NEUTRAL) =
+  let mk_rflow_formula ?kind:(k=NEUTRAL) f =
     { CF.rflow_kind = k;
       CF.rflow_base = f;
     }
@@ -500,7 +500,7 @@ module Protocol_base_formula =
     let trans_base base =
       let ptr = Msg.choose_ptr ~ptr:session_msg_id () in
       let name = get_prim_pred_id trans_id in
-      let args = [Msg.mk_rflow_formula base.protocol_base_formula_message ~kind:NEUTRAL] in
+      let args = [Msg.mk_rflow_formula base.protocol_base_formula_message] in
       let params = [base.protocol_base_formula_sender; base.protocol_base_formula_receiver] in
       let params = List.map (fun a -> Msg.set_param a base.protocol_base_formula_pos) params in
       Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos)
@@ -548,8 +548,8 @@ module Projection_base_formula =
       let tkind = get_session_kind_of_transmission base.projection_base_formula_op in
       let name = get_prim_pred_id_by_kind tkind in
       let args = match base.projection_base_formula_op with
-        | TSend -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:INFLOW]
-        | TReceive -> [Msg.mk_rflow_formula base.projection_base_formula_message ~kind:OUTFLOW] in
+        | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.projection_base_formula_message]
+        | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.projection_base_formula_message] in
       let params = [] in
       Msg.mk_node ~kind:(Some tkind) (ptr, name, args, params, base.projection_base_formula_pos)
 
@@ -709,8 +709,7 @@ module Make_Session (Base: Session_base) = struct
     let f1 = Base.mk_formula_heap_only h1 pos in
     let f2 = Base.mk_formula_heap_only h2 pos in
     let or_node = Base.mk_or f1 f2 pos in
-    (* why doesn't it work without ~kind, which is optional? *)
-    let rflow_form = (Base.mk_rflow_formula or_node ~kind:NEUTRAL) in
+    let rflow_form = (Base.mk_rflow_formula or_node) in
     let ptr = Base.choose_ptr () in
     let name = get_prim_pred_id sor_id in
     let args = [rflow_form] in
@@ -767,7 +766,7 @@ module Make_Session (Base: Session_base) = struct
 
   let mk_sess_h_formula h_form pos =
     let f = Base.mk_formula_heap_only h_form pos in
-    let rflow_form = (Base.mk_rflow_formula f ~kind:NEUTRAL) in
+    let rflow_form = (Base.mk_rflow_formula f) in
     let ptr = Base.choose_ptr () in
     let name = get_prim_pred_id sess_id in
     let args = [rflow_form] in
