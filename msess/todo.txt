@@ -131,7 +131,7 @@ Entail 15: Fail.(must) cause:matching of ho_args failed (matching of ho_args fai
 =============================================
 =============================================
 
-Status: In Progress
+Status: Solved
 
 Transform from struc_formula to session for
 Projection only.
@@ -142,6 +142,15 @@ Projection only.
 Print compact form in view_decl for Protocol only.
 Also add a flag to disable/enable compact
 printing.
+
+=============================================
+=============================================
+
+Status: solved
+
+Print compact Projection in cprinter, for h_formula.
+Also add a flag to disable/enable compact
+printing. By default, compact.
 
 =============================================
 =============================================

@@ -1133,6 +1133,7 @@ let common_arguments = [
   ("--sa-dis-print-decl" , Arg.Clear Globals.print_heap_pred_decl, "disable predicates declaration printing");
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-clean", Arg.Clear Globals.print_clean_flag, "disable cleaner printing");
+  ("--dis-print-compact-projection-formula", Arg.Clear Globals.print_compact_projection_formula, "disable compact printing of projection formulae in core structures");
   ("--print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (not default)");
   ("--print-derv" , Arg.Set Globals.print_derv, "enable [derv,orig] annotation printing");
   ("--dis-print-derv" , Arg.Clear Globals.print_derv, "disable [derv,orig] annotation printing (default)");

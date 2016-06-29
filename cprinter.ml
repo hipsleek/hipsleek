@@ -712,6 +712,11 @@ let smart_string_of_spec_var x =
 
 let pr_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (smart_string_of_spec_var x)
 
+let pr_session_projection ?(lvl=(!glob_lvl)) vn =
+  let node = ViewNode vn in
+  let session = Session.CProjection.trans_h_formula_to_session (Session.CProjection.get_original_h_formula node) in
+  wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session)
+
 let pr_view_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_view_arg x)
 
 let pr_annot_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_annot_arg x)
@@ -1417,40 +1422,50 @@ let rec pr_h_formula h =
                h_formula_view_remaining_branches = ann;
                h_formula_view_pruning_conditions = pcond;
                h_formula_view_unfold_num = ufn;
-               h_formula_view_pos =pos}) ->
+               h_formula_view_session_kind = sk;
+               h_formula_view_pos = pos} as vn) ->
     let perm_str = string_of_cperm perm in
     let ho_arg_str = if ho_svs==[] then "" 
       else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
     let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
     fmt_open_hbox ();
-    if (!Globals.texify) then
+    let is_session = match sk with
+      | Some Session -> true
+      | _ -> false in
+    if (is_session && !Globals.print_compact_projection_formula)
+    then
       begin
-        (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}"; *)
-        fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg params; fmt_string "}";
+        pr_session_projection vn
       end
     else
-      begin
-        (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
-        (* pr_formula_label_opt pid;  *)
-        pr_spec_var sv;
-        fmt_string "::"; (* to distinguish pred from data *)
-        pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
-        pr_imm imm;
-        if (!Globals.allow_field_ann) then begin fmt_string "@IFP["; pr_list_of_imm (get_node_param_imm h); fmt_string "]"; end;
-        pr_derv dr;
-        pr_split split;
-        (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
-        if (!Globals.print_derv) then
-          begin
-            if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-            fmt_string ("["^(string_of_int ufn)^"]");
-            if original then fmt_string "[Orig]"
-            else fmt_string "[Derv]";
-            if lhs_case then fmt_string "[LHSCase]"
-          end;
-        pr_remaining_branches ann;
-        pr_prunning_conditions ann pcond;
-      end;
+      if (!Globals.texify) then
+        begin
+          (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}"; *)
+          fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_view_arg params; fmt_string "}";
+        end
+      else
+        begin
+          (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+          (* pr_formula_label_opt pid;  *)
+          pr_spec_var sv;
+          fmt_string "::"; (* to distinguish pred from data *)
+          pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
+          pr_imm imm;
+          if (!Globals.allow_field_ann) then begin fmt_string "@IFP["; pr_list_of_imm (get_node_param_imm h); fmt_string "]"; end;
+          pr_derv dr;
+          pr_split split;
+          (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
+          if (!Globals.print_derv) then
+            begin
+              if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
+              fmt_string ("["^(string_of_int ufn)^"]");
+              if original then fmt_string "[Orig]"
+              else fmt_string "[Derv]";
+              if lhs_case then fmt_string "[LHSCase]"
+            end;
+          pr_remaining_branches ann;
+          pr_prunning_conditions ann pcond;
+        end;
     fmt_close()
   | ThreadNode ({h_formula_thread_node =sv;
                  h_formula_thread_name = c;

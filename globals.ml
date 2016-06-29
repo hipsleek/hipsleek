@@ -903,6 +903,8 @@ let session_msg = (session_msg_id, Unprimed)
 let session_seq_id = "self"
 let session_seq = (session_seq_id, Unprimed)
 
+let print_compact_projection_formula = ref true
+
 let dedicated_ids = [self; session_msg_id; session_seq_id; null_name]
 
 (*precluded files*)
