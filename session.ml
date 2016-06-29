@@ -835,13 +835,22 @@ module Make_Session (Base: Session_base) = struct
     if (Base.is_base_formula formula)
     then
       let h_formula = Base.get_h_formula formula in
-      let (ptr, name, args, params, pos) = Base.get_node h_formula in
-      (* Extract h_formula from Sess node. *)
-      let h_formula = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
       (* Extract h_formula from STAR with original formula.
-       * Should be second branch of star. *)
-      (*let star_formulae = Base.get_star_formulae h_formula in
-      let h_formula = List.nth star_formulae 1 in*)
+       * If the original formula was empty, the star node
+       * was not created and the session formula is preserved
+       * as it was.
+       * Otherwise, split STAR node and get second branch.*)
+      let h_formula = if (Base.is_star_node h_formula)
+                      then
+                        let star_formulae = Base.get_star_formulae h_formula in
+                        List.nth star_formulae 1
+                      else
+                        h_formula in
+
+      (* Extract h_formula from Sess node. *)
+      let (ptr, name, args, params, pos) = Base.get_node h_formula in
+      let h_formula = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
+
       trans_h_formula_to_session h_formula
     else
       failwith "Formula Base expected."
