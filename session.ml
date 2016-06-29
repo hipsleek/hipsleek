@@ -823,10 +823,8 @@ module Make_Session (Base: Session_base) = struct
   (* Session will look like Sess{...}. *)
   (* Strip the STAR with original formula and
    * strip Sess{} *)
-  let trans_formula_to_session formula =
-    if (Base.is_base_formula formula)
-    then
-      let h_formula = Base.get_h_formula formula in
+
+  let get_original_h_formula h_formula =
       (* Extract h_formula from STAR with original formula.
        * If the original formula was empty, the star node
        * was not created and the session formula is preserved
@@ -838,11 +836,16 @@ module Make_Session (Base: Session_base) = struct
                         List.nth star_formulae 1
                       else
                         h_formula in
-
       (* Extract h_formula from Sess node. *)
       let (ptr, name, args, params, pos) = Base.get_node h_formula in
       let h_formula = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
+      h_formula
 
+  let trans_formula_to_session formula =
+    if (Base.is_base_formula formula)
+    then
+      let h_formula = Base.get_h_formula formula in
+      let h_formula = get_original_h_formula h_formula in
       trans_h_formula_to_session h_formula
     else
       failwith (x_loc ^ ": Formula Base expected.")
