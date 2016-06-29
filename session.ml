@@ -267,7 +267,7 @@ module IForm = struct
   let get_h_formula formula =
     match formula with
       | F.Base f -> f.F.formula_base_heap
-      | _ -> failwith "Formula Base expected."
+      | _ -> failwith (x_loc ^ ": Formula Base expected.")
 
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.F.rflow_base in
@@ -335,7 +335,7 @@ module CForm = struct
     match h with
       | CF.ViewNode node -> CF.ViewNode {node with h_formula_view_ho_arguments = ho;
                                                    h_formula_view_session_kind = skind}
-      | _ -> failwith "Not a ViewNode."
+      | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let mk_formula_heap_only h pos =
     CF.formula_of_heap h pos
@@ -392,27 +392,27 @@ module CForm = struct
                              node.CF.h_formula_view_ho_arguments,
                              node.CF.h_formula_view_arguments,
                              node.CF.h_formula_view_pos)
-      | _ -> failwith "CF.ViewNode expected."
+      | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let get_or_formulae formula =
     match formula with
       | CF.Or f -> [f.CF.formula_or_f1; f.CF.formula_or_f2]
-      | _ -> failwith "CF.Or expected."
+      | _ -> failwith (x_loc ^ ": CF.Or expected.")
 
   let get_star_formulae h_formula =
     match h_formula with
       | CF.Star hf -> [hf.CF.h_formula_star_h1; hf.CF.h_formula_star_h2]
-      | _ -> failwith "CF.Star expected."
+      | _ -> failwith (x_loc ^ ": CF.Star expected.")
 
   let get_star_pos h_formula =
     match h_formula with
       | CF.Star hf -> hf.CF.h_formula_star_pos
-      | _ -> failwith "CF.Star expected."
+      | _ -> failwith (x_loc ^ ": CF.Star expected.")
 
   let get_session_kind h_formula =
     match h_formula with
       | CF.ViewNode node -> node.CF.h_formula_view_session_kind
-      | _ -> failwith "CF.ViewNode expected."
+      | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let get_param_id param =
     match param with
@@ -424,7 +424,7 @@ module CForm = struct
   let get_formula_from_struc_formula struc_formula =
     match struc_formula with
       | CF.EBase base -> base.CF.formula_struc_base
-      | _ -> failwith "CF.EBase expected."
+      | _ -> failwith (x_loc ^ ": CF.EBase expected.")
 
   let is_base_formula formula =
     match formula with
@@ -434,7 +434,7 @@ module CForm = struct
   let get_h_formula formula =
     match formula with
       | CF.Base f -> f.CF.formula_base_heap
-      | _ -> failwith "Formula Base expected."
+      | _ -> failwith (x_loc ^ ": Formula Base expected.")
 
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.CF.rflow_base in
@@ -853,7 +853,7 @@ module Make_Session (Base: Session_base) = struct
 
       trans_h_formula_to_session h_formula
     else
-      failwith "Formula Base expected."
+      failwith (x_loc ^ ": Formula Base expected.")
 
   let trans_struc_formula_to_session struc_formula =
     let f = Base.get_formula_from_struc_formula struc_formula in
