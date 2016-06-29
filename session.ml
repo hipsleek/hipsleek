@@ -333,8 +333,8 @@ module CForm = struct
   let mk_node ?kind:(skind = None) (ptr, name, ho, params, pos) =
     let h = CF.mkViewNode ptr name params pos in
     match h with
-      | CF.ViewNode node -> CF.ViewNode {node with h_formula_view_ho_arguments = ho;
-                                                   h_formula_view_session_kind = skind}
+      | CF.ViewNode node -> CF.ViewNode {node with CF.h_formula_view_ho_arguments = ho;
+                                                   CF.h_formula_view_session_kind = skind}
       | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let mk_formula_heap_only h pos =
