@@ -562,20 +562,14 @@ module Projection_base_formula =
         | _ -> false
 
     let trans_h_formula_to_session_base h_formula =
-      let () = print_endline "in session base transf" in
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
-      let () = print_endline "after get_node" in
       let channel = Msg.get_node_id ptr in
-      let () = print_endline "after get_node_id" in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
-      let () = print_endline "after get_form" in
       let transmission = match (Msg.get_session_kind h_formula) with
         | Some Send -> TSend
         | Some Receive -> TReceive
         | _ -> failwith "Not a valid transmission type." in
       mk_base (transmission, channel, pos) f
-
-    let trans_h_formula_to_session_seq h_formula = failwith x_tbi
 
   end;;
 
@@ -789,12 +783,10 @@ module Make_Session (Base: Session_base) = struct
 
   let update_formula = Base.update_formula
 
-  (* Get clean formula, without Sess{}. *)
   let trans_h_formula_to_session h_formula =
     let rec helper h_formula =
       if (Base.is_seq_node h_formula)
       then
-        let () = print_endline "detected seq" in
         let (ptr, name, args, params, pos) = Base.get_node h_formula in
         let h1 = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
         let h2 = Base.get_h_formula_from_ho_param_formula (List.nth args 1) in
@@ -802,7 +794,6 @@ module Make_Session (Base: Session_base) = struct
       else
       if (Base.is_or_node h_formula)
       then
-        let () = print_endline "detected or" in
         let (ptr, name, args, params, pos) = Base.get_node h_formula in
         let or_node = Base.get_formula_from_ho_param_formula (List.nth args 0) in
         let or_formulae = Base.get_or_formulae or_node in
@@ -812,7 +803,6 @@ module Make_Session (Base: Session_base) = struct
       else
       if (Base.is_star_node h_formula)
       then
-        let () = print_endline "detected star" in
         let pos = Base.get_star_pos h_formula in
         let star_formulae = Base.get_star_formulae h_formula in
         let h1 = List.nth star_formulae 0 in
@@ -821,18 +811,15 @@ module Make_Session (Base: Session_base) = struct
       else
       if (Base.is_session_base h_formula)
       then
-        let () = print_endline "detected base" in
         SBase (Base (Base.trans_h_formula_to_session_base h_formula))
       (* Can only be Predicate or empty heap at this point. *)
       else
       if (not (Base.is_empty_node h_formula))
       then
-        let () = print_endline "detected pred" in
         let (ptr, name, args, params, pos) = Base.get_node h_formula in
         let params = List.map (fun a -> Base.get_param_id a) params in 
         SBase (mk_session_predicate name [] params pos)
       else
-        let () = print_endline "detected empty?!" in
         SEmp in
     helper h_formula
 
