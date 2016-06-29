@@ -147,10 +147,8 @@ module IForm = struct
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
     F.set_session_kind_h_formula h skind
-    (* h *)
 
   let mk_formula_heap_only h pos =
-    (* let h = mk_node (ptr, name, ho, params, pos) in *)
     F.formula_of_heap_1 h pos
 
   let mk_rflow_formula ?kind:(k=NEUTRAL) f =
@@ -698,9 +696,7 @@ module Make_Session (Base: Session_base) = struct
     let args = [h1; h2] in
     let args = List.map (fun a -> Base.mk_rflow_formula_from_heap a pos) args in
     let params = [] in
-    (* let a = (sv, name, args, params, pos) in *)
     Base.mk_node ~kind:(Some Sequence) (ptr, name, args, params, pos)
-    (* failwith x_tbi *)
 
   and mk_star_node h1 h2 pos =
     Base.mk_star h1 h2 pos
@@ -731,9 +727,6 @@ module Make_Session (Base: Session_base) = struct
         let arg1 = helper s.session_seq_formula_head in
         let arg2 = helper s.session_seq_formula_tail in
         mk_seq_node arg1 arg2 s.session_seq_formula_pos
-      (* (\* node, view-name, ho-args, args *\) *)
-      (* Base.mkFNode sv !seq_id [arg1;arg2] []
-      failwith x_tbi *)
     | SOr s   ->
         let arg1 = helper s.session_seq_formula_or1 in
         let arg2 = helper s.session_seq_formula_or2 in
