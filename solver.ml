@@ -15611,23 +15611,25 @@ and normalize_base_perm_x prog (f:formula) =
           Perm.get_cperm perm) l) in
       let perm_var_list = List.concat (List.map (fun c -> Cpure.afv c) perm_var_list) in
       let tree = Tree_shares.Ts.bot in
-      let tree = match p with
+      let can_join = true in
+      let (tree,can_join) = match p with
         | OnePF pf ->
           let pf_conjs = CP.list_of_conjs pf in
-          List.fold_left ( fun tree (conj:CP.formula) -> match conj with
+          List.fold_left ( fun (tree,can_join) (conj:CP.formula) -> match conj with
               | BForm (( Eq (Var (var,l), Tsconst (b,g), d), e), f) ->
                 if (List.mem var perm_var_list) then
                   if (Tree_shares.Ts.can_join tree b) then
-                    Tree_shares.Ts.join tree b
-                  else Tree_shares.Ts.top
-                else tree
-              | _ -> tree
-          ) tree pf_conjs
-        | _ -> tree
+                    (Tree_shares.Ts.join tree b, can_join)
+                  else
+                    (tree, false)
+                else (tree, can_join)
+              | _ -> (tree, can_join)
+          ) (tree,can_join) pf_conjs
+        | _ -> (tree, can_join)
       in
       let () = x_tinfo_hp (add_str "tree " Tree_shares.Ts.string_of_tree_share) tree no_pos in
       let get_l_perm h = match get_node_perm h with | None -> [] | Some v-> [v] in
-      if (List.exists (fun c->get_node_perm c = None) l || Tree_shares.Ts.full tree) then (HFalse,ip,iqv)
+      if (List.exists (fun c->get_node_perm c = None) l || not can_join) then (HFalse,ip,iqv)
       else 
         let n_p_v = CP.fresh_perm_var () in
         let n_h = set_node_perm h (Some (Cpure.Var (n_p_v,no_pos))) in
