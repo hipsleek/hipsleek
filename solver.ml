@@ -15602,12 +15602,29 @@ and normalize_base_perm_x prog (f:formula) =
       let join_fact = CP.mkEqExp (CP.mkAdd (CP.mkVar v1 no_pos) (CP.mkVar n_e no_pos) no_pos) (CP.mkVar h no_pos) no_pos in
       (CP.mkAnd rf join_fact no_pos, n_e::rev)
     | _-> report_error no_pos ("perm_folder: must have at least two nodes to merge")	in
-  let comb_hlp pos (ih,ip,iqv) l= match l with
+  let comb_hlp pos p (ih,ip,iqv) l= match l with
     | [] -> report_error no_pos ("normalize_frac_heap: must have at least one node in the aliased list")
     | h::[] -> (mkStarH h ih pos,ip,iqv)
-    | h::dups -> 
+    | h::dups ->
+      let perm_var_list = List.concat (List.map (fun c ->
+          let perm = get_node_perm c in
+          Perm.get_cperm perm) l) in
+      let perm_var_list = List.concat (List.map (fun c -> Cpure.afv c) perm_var_list) in
+      let tree = Tree_shares.Ts.bot in
+      let tree = match p with
+        | OnePF pf ->
+          let pf_conjs = CP.list_of_conjs pf in
+          List.fold_left ( fun tree (conj:CP.formula) -> match conj with
+              | BForm (( Eq (Var (var,l), Tsconst (b,g), d), e), f) ->
+                if (List.mem var perm_var_list && Tree_shares.Ts.can_join tree b) then
+                  Tree_shares.Ts.join tree b
+                else Tree_shares.Ts.top 
+              | _ -> tree
+          ) tree pf_conjs
+        | _ -> tree
+      in
       let get_l_perm h = match get_node_perm h with | None -> [] | Some v-> [v] in
-      if (List.exists (fun c->get_node_perm c = None)l) then (HFalse,ip,iqv)
+      if (List.exists (fun c->get_node_perm c = None) l || Tree_shares.Ts.full tree) then (HFalse,ip,iqv)
       else 
         let n_p_v = CP.fresh_perm_var () in
         let n_h = set_node_perm h (Some (Cpure.Var (n_p_v,no_pos))) in
@@ -15623,7 +15640,7 @@ and normalize_base_perm_x prog (f:formula) =
         (n_h, npr, n_p_v::n_e@iqv) in 
   let comb_hlp_l l f n_simpl_h :formula= 
     let (qv, h, p, vp, t, fl, lbl, a, pos) = all_components f in	 
-    let nh,np,qv = List.fold_left (comb_hlp pos) (n_simpl_h,CP.mkTrue pos,qv) l in
+    let nh,np,qv = List.fold_left (comb_hlp pos p) (n_simpl_h,CP.mkTrue pos,qv) l in
     let np =  MCP.memoise_add_pure_N p np in
     mkExists_w_lbl qv nh np vp t fl a pos lbl in
 
