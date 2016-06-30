@@ -60,6 +60,24 @@ checkentail  Univ(mmm) & mmm<=n
  & i<n & i<mmm & 
  (1+i)<n |-  mmm=i+1.
 
+checkentail  Univ(mmm) & mmm<=n & i+1>0
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<n & i<mmm
+  |-  mmm=i+1.
+
+// // Why n is collected as univ vars?
+// checkentail  Univ(mmm) & mmm<=n & i+1>0
+//  & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+//  & i+1<n & i<mmm
+//   |-  mmm=i+1.
+
+
+// checkentail  Univ(mmm) & mmm<=n 
+//  & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+//  & i<n & i<mmm
+//   |-  mmm=i+1.
+
+
 /*
 checkentail xx::arr_seg<i,n> //& i<n 
   |- xx::arr_seg<i+1,n>.
@@ -83,5 +101,25 @@ expect Fail.
 
 checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n
     |- xx::arr_seg<i+1,n>.
+
+
+
+
+imply_timeout 2@113@112@111@110@109@108@107
+imply_timeout 2 inp1 : Univ(mmm) & mmm<=n & i<mmm & (1+i)<n & 0<=mmm & mmm<n
+imply_timeout 2 inp2 : mmm=i+1
+imply_timeout 2@113 EXIT:false
+
+imply_timeout 2@98@97@96@85@84@83@82
+imply_timeout 2 inp1 : Univ(mmm) & mmm<=n & (i+1)<n & i<mmm & i<n & mmm_71=n & 0<=n
+imply_timeout 2 inp2 : mmm=i+1
+imply_timeout 2@98 EXIT:true
+
+imply_timeout 2@88@87@86@85@84@83@82
+imply_timeout 2 inp1 : Univ(mmm) & mmm<=n & (i+1)<n & i<mmm & i<n & 0<=mmm_70 & 
+ (1+0)<=(mmm_70+xx) & mmm_70<n
+imply_timeout 2 inp2 : mmm=i+1
+imply_timeout 2@88 EXIT:true
+
 
 */

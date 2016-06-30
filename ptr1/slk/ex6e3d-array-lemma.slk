@@ -15,20 +15,24 @@ print residue.
 expect Valid.
 */
 
+//1
 checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m & m<=n &i<n
    & m=i+1 |- xx::arr_seg<i+1,n>.
 print residue.
 expect Valid.
 
-
+//2
+// No lemma here...
 checkentail xx::arr_seg<m,n> & i<m & m<=n &i<n
    // & m=i+1 
    & i>=0
    |- xx::arr_seg<i+1,n>.
 
+//3 
 infer[m] i<m & m<=n & 0<=i |- m=i+1.
 print residue.
 
+//4
 infer[m,i,n] i<m & m<=n & 0<=i |- m=i+2.
 print residue.
 

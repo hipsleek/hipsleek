@@ -102,56 +102,56 @@ int partition(arrI base, int i, int m, int pivot)
 }
 
 
-void quicksort(arrI base, int i, int m)
-  requires base::arr_seg_max_min<i,m,ma,mi> & i<m
-  ensures base::arr_seg_sorted<i,m,ma1,mi1> & ma1<=ma & mi1>=mi;
-{
-  if(i>=m-1){
-    //    assume false;
-    get_arr(base,i); // Different predicate names
-    return;
-  }
-  else{
-    // i<m-1
-    // assume false;
-    int pivot = get_arr(base,i); // (i)[i+1...m)
+// void quicksort(arrI base, int i, int m)
+//   requires base::arr_seg_max_min<i,m,ma,mi> & i<m
+//   ensures base::arr_seg_sorted<i,m,ma1,mi1> & ma1<=ma & mi1>=mi;
+// {
+//   if(i>=m-1){
+//     //    assume false;
+//     get_arr(base,i); // Different predicate names
+//     return;
+//   }
+//   else{
+//     // i<m-1
+//     // assume false;
+//     int pivot = get_arr(base,i); // (i)[i+1...m)
 
-    int index = partition(base,i+1,m,pivot); // (i)[i+1...index)[index...m)
-    if(index>i+1 && index<m){
-      //      assume false;
-      unfold_tail_2(base,i+1,index); // (i)[i+1...index-1)(index-1)[index...m)
-      int tmp = get_arr(base,index-1); //
-      upd_arr(base,index-1,pivot);
-      upd_arr(base,i,tmp);
-      reverse_unfold_2(base,i,index-1);
-      quicksort(base,i,index-1);
-      quicksort(base,index,m);
-      //      dprint;
-      merge_sort(base,i,index-1,m);
-      //      dprint;
-      return;
-    }
-    else{
-      //assume false;
-      if(index==i+1){
-        //        assume false;
-        quicksort(base,index,m);// (base+index-1)::arrI<pivot> * base::arr_seg_sorted<index,m,ma,pivot2> & pivot2>=pivot
-        reverse_unfold_sort(base,i,m);
-        //dprint;
-        return;
-      }
-      else{
-        if(index==m){
-          unfold_tail_2(base,i+1,index); // (i)[i+1...index-1)(index-1)[index...m)
-          int tmp = get_arr(base,index-1);
-          upd_arr(base,index-1,pivot);
-          upd_arr(base,i,tmp);
-          reverse_unfold_2(base,i,index-1);
-          quicksort(base,i,index-1);
-          return;
-        }
-      }
-    }
-  }
-}
+//     int index = partition(base,i+1,m,pivot); // (i)[i+1...index)[index...m)
+//     if(index>i+1 && index<m){
+//       //      assume false;
+//       unfold_tail_2(base,i+1,index); // (i)[i+1...index-1)(index-1)[index...m)
+//       int tmp = get_arr(base,index-1); //
+//       upd_arr(base,index-1,pivot);
+//       upd_arr(base,i,tmp);
+//       reverse_unfold_2(base,i,index-1);
+//       quicksort(base,i,index-1);
+//       quicksort(base,index,m);
+//       //      dprint;
+//       merge_sort(base,i,index-1,m);
+//       //      dprint;
+//       return;
+//     }
+//     else{
+//       //assume false;
+//       if(index==i+1){
+//         //        assume false;
+//         quicksort(base,index,m);// (base+index-1)::arrI<pivot> * base::arr_seg_sorted<index,m,ma,pivot2> & pivot2>=pivot
+//         reverse_unfold_sort(base,i,m);
+//         //dprint;
+//         return;
+//       }
+//       else{
+// 	   if(index==m){	       
+// 	  unfold_tail_2(base,i+1,index); // (i)[i+1...index-1)(index-1)[index...m)
+// 	  int tmp = get_arr(base,index-1);
+//           upd_arr(base,index-1,pivot);
+//           upd_arr(base,i,tmp);
+//           reverse_unfold_2(base,i,index-1);
+//           quicksort(base,i,index-1);
+//           return;
+//         }
+//       }
+//     }
+//   }
+// }
 

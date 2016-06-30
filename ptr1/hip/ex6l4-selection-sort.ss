@@ -41,28 +41,28 @@ int get_arr(arrI base, int i)
 int get_max(arrI base,int i,int m)
   requires base::arr_seg_max_2<i,m,v> & i<m // generalization
   ensures  base::arr_seg_max_2<i,res,v1> * x::arrI<v> * base::arr_seg_max_2<res+1,m,v2> & v>=v1 & v>=v2 & x=base+res;
-{
-  if(i==m-1)
-    {
-      get_arr(base,i);
-      return i;
-    }
-  else{
-    int cur = get_arr(base,i);
-    int tmp_index = get_max(base,i+1,m);
-    int tmp = get_arr(base,tmp_index);
-    if(tmp<cur)
-      {
-        merge_max(base,i+1,tmp_index,m);
-        return i;
-      }
-    else
-      {
-        reverse_unfold(base,i,tmp_index);
-        return tmp_index;
-      }
-  }
-}
+// {
+//   if(i==m-1)
+//     {
+//       get_arr(base,i);
+//       return i;
+//     }
+//   else{
+//     int cur = get_arr(base,i);
+//     int tmp_index = get_max(base,i+1,m);
+//     int tmp = get_arr(base,tmp_index);
+//     if(tmp<cur)
+//       {
+//         merge_max(base,i+1,tmp_index,m);
+//         return i;
+//       }
+//     else
+//       {
+//         reverse_unfold(base,i,tmp_index);
+//         return tmp_index;
+//       }
+//   }
+// }
 
 void selection_sort(arrI base, int i, int m)
   requires base::arr_seg_max_2<i,m,maxv> & i<m

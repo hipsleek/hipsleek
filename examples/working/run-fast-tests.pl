@@ -1978,7 +1978,7 @@ my $dis = '--dis-inv-baga';
         ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
   # --old-norm-w-coerc causes infinite loop for some examples
               # loop without old-search-always
-              # loop also with old-search-always
+              #["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               # ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings --old-search-always", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               # loop
               # ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],

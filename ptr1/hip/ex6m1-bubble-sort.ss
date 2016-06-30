@@ -64,18 +64,18 @@ void swap(arrI base,int i,int m)
 }
 
 
-void bubble_sort(arrI base, int i, int m)
-  requires base::arr_seg_max_2<i,m,maxv> & i<m
-  ensures base::arr_seg_sorted<i,m,maxv>;
-{
-  if(i==m-1){
-    get_arr(base,i);
-    return;
-  }
-  else{
+// void bubble_sort(arrI base, int i, int m)
+//   requires base::arr_seg_max_2<i,m,maxv> & i<m
+//   ensures base::arr_seg_sorted<i,m,maxv>;
+// {
+//   if(i==m-1){
+//     get_arr(base,i);
+//     return;
+//   }
+//   else{
 
-    swap(base,i,m);
-    bubble_sort(base,i+1,m);
-    return;
-  }
-}
+//     swap(base,i,m);
+//     bubble_sort(base,i+1,m);
+//     return;
+//   }
+// }

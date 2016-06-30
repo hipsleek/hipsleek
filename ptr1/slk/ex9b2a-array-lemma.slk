@@ -34,7 +34,15 @@ expect Valid.
 checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> 
     & i<n 
     & i<m<=n & Univ(m)
-    //& i+1<n 
+    & i+1<=n 
+   |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> 
+    & i<n 
+    & i<m<n & Univ(m)
+    & i+1<n 
    |- xx::arr_seg<i+1,n>.
 print residue.
 expect Valid.
