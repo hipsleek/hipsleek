@@ -15616,13 +15616,16 @@ and normalize_base_perm_x prog (f:formula) =
           let pf_conjs = CP.list_of_conjs pf in
           List.fold_left ( fun tree (conj:CP.formula) -> match conj with
               | BForm (( Eq (Var (var,l), Tsconst (b,g), d), e), f) ->
-                if (List.mem var perm_var_list && Tree_shares.Ts.can_join tree b) then
-                  Tree_shares.Ts.join tree b
-                else Tree_shares.Ts.top 
+                if (List.mem var perm_var_list) then
+                  if (Tree_shares.Ts.can_join tree b) then
+                    Tree_shares.Ts.join tree b
+                  else Tree_shares.Ts.top
+                else tree
               | _ -> tree
           ) tree pf_conjs
         | _ -> tree
       in
+      let () = x_tinfo_hp (add_str "tree " Tree_shares.Ts.string_of_tree_share) tree no_pos in
       let get_l_perm h = match get_node_perm h with | None -> [] | Some v-> [v] in
       if (List.exists (fun c->get_node_perm c = None) l || Tree_shares.Ts.full tree) then (HFalse,ip,iqv)
       else 

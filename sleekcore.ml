@@ -265,7 +265,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
           let () = add_false_ctx p in
           if contra_flag then ()
           else
-            let () = print_endline_quiet ("[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse") in
+            let () = print_endline_quiet ("\n[UNSOUNDNESS] WARNING : satisfiable state at "^(string_of_loc p)^" became hfalse") in
             if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
             else ()
       | None -> () 
