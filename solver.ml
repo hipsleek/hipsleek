@@ -9162,7 +9162,7 @@ type: bool *
         if univ_rhs_store # is_empty then es
         else 
           let nf = univ_rhs_store # get_rm in
-          let () = y_tinfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
+          let () = y_binfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
           CF.add_pure_estate es nf 
       in
       let add_univ_pure es =
@@ -9673,6 +9673,28 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           let a0l = if !label_split_ante then CP.split_disjunctions a0 else [a0] in
           let a0l = List.filter is_sat a0l in a0l
       in
+      let process_univ univ_vars ante0 conseq0 =
+        let prev_inst = TP.univ_rhs_store # get in
+        let ante0 = CP.drop_rel_formula ante0 in
+        let ante1 =TP.filter_inv ante0 in
+        let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
+        let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
+        let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
+        let b = x_add !CP.tp_imply ante0 new_conseq in
+        if b then
+          TP.univ_rhs_store # set conseq0
+        else
+          ()
+      in
+      let univ_vars = TP.get_univs_from_ante a0 in
+      let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
+      let () = List.iter (process_univ univ_vars a0) new_rhs in
+      let a0 =
+        if TP.univ_rhs_store # is_empty
+        then a0
+        else
+          CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos
+      in
       let a0l = f a0 in
       let a1l = match ante_m1 with
         | Some (MCP.OnePF a1) -> f a1
@@ -9689,7 +9711,6 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       x_tinfo_hp (add_str "a0" pr) a0 no_pos;
       x_tinfo_hp (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
       x_tinfo_hp (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
-      let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
       let () = CP.store_tp_is_sat := (fun f -> TP.is_sat 77 f "store_tp_is_sat" true) in
       (x_add CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (x_add TP.imply_one 29) imp_no, extra_step)
       (* original code	        
