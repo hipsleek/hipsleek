@@ -19883,7 +19883,9 @@ let name_of_h_formula x =
   | ViewNode {h_formula_view_name = n;
               h_formula_view_node = p1;
               h_formula_view_arguments = vs1} -> (n,(p1::vs1))
-  | _ -> failwith "Failure of name_of_h_formula"
+  | _ -> 
+        let () = y_binfo_hp (add_str "problem with name_of_h_formula:" !print_h_formula) x in
+        ("no_name here", [])
 
 let name_of_formula x =
   let (h,_,_,_,_,_) = split_components x in
