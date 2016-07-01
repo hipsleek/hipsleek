@@ -154,6 +154,18 @@ INPUT 0: [][]
    flted_22_52: y::arr_seg<flted_22_52,flted_22_51>@M&
    flted_22_52=0 & flted_22_51=1 & y=x&{FLOW,(20,21)=__norm#E}[])
 =================================================================
+# ex9b.slk
+
+# below fail but got Valid..
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+4,n>.
+print residue.
+expect Fail.
 =================================================================
 =================================================================
 =================================================================

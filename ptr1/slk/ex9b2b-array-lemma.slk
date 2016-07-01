@@ -64,6 +64,27 @@ checkentail  Univ(mmm) & mmm<=n
  & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
  & i+1<=n & i<mmm
   |-  mmm=i+1.
+expect Valid.
+
+
+checkentail  Univ(mmm) & mmm<=n
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<n & i<mmm
+  |-  mmm=i+2.
+expect Valid.
+
+checkentail  Univ(mmm) & mmm<=n
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<=n & i<mmm
+  |-  mmm=i+3.
+expect Fail.
+
+checkentail  Univ(mmm) & mmm<=n
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<n & i<mmm
+  |-  mmm=i.
+expect Fail.
+
 
 // // Why n is collected as univ vars?
 // checkentail  Univ(mmm) & mmm<=n & i+1>0
