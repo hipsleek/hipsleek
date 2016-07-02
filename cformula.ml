@@ -19884,12 +19884,16 @@ let name_of_h_formula x =
               h_formula_view_node = p1;
               h_formula_view_arguments = vs1} -> (n,(p1::vs1))
   | _ -> 
-        let () = y_binfo_hp (add_str "problem with name_of_h_formula:" !print_h_formula) x in
-        ("no_name here", [])
+        let () = y_ninfo_hp (add_str "problem with name_of_h_formula:" !print_h_formula) x in
+        let s = "name_of_h_formula: "^(!print_h_formula x) in
+        (s, [])
 
 let name_of_formula x =
   let (h,_,_,_,_,_) = split_components x in
   name_of_h_formula h
+
+let name_of_h_formula x =
+  Debug.no_1 "name_of_h_formula" pr_none pr_none name_of_h_formula x
 
 let is_exists_hp_rel v es =
   let vs = es.es_infer_vars_hp_rel in

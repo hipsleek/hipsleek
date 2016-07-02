@@ -1630,7 +1630,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
   (*               h_formula_view_arguments = vs1} -> (n,(p1::vs1)) *)
   (*   | _ -> failwith "Failure of name_of_h_formula" *)
   (* in *)
-  let right_name,r_vargs =  CF.name_of_h_formula rhs_node in
+  let right_name,r_vargs =  x_add_1 CF.name_of_h_formula rhs_node in
   let stk = new Gen.stack in
   let rec helper f =
     match f with    (* f is formula in LHS *)
@@ -1666,7 +1666,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
                  h_formula_data_param_imm = pimm1}) -> (
         match rhs_node with
         | HRel (h,args,_) -> 
-          let n,vs = CF.name_of_h_formula rhs_node in
+          let n,vs = x_add_1 CF.name_of_h_formula rhs_node in
           let vs = Cast.rm_NI_from_hp_rel prog h vs in
           let pr = !CF.print_h_formula in
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
