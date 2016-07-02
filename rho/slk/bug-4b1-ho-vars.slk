@@ -1,5 +1,6 @@
 data cell{ int v; }.
 
+/*
 checkentail_exact %P |- %Q.
 expect Valid.
 print residue.
@@ -10,19 +11,45 @@ checkentail_exact %P * %R |- %Q.
 expect Valid.
 print residue.
 // expect match to go thru with substitution Q --> %P * %R
+*/
 
+/*
 checkentail_exact %P * %Q |- %Q.
 expect Fail.
 print residue.
 // expect match to go Fail due to infinite Q --> %P * %R
+*/
 
+//(1)
 checkentail_exact %P |- %P.
+expect Valid.
+print residue.
+// expect match to go thru without any HO substitution
+
+
+//(1)
+checkentail_exact %P |- %Q.
 expect Valid.
 print residue.
 // expect match to go thru without any HO substitution
 
 /*
 # bug-4b
+
+# try fix below.. 
+
+!!! **sleek.ml#492:[../../prelude.slk,bug-4b1-ho-vars.slk]
+!!! **WARNING****solver.ml#4420:FREE VAR IN HEAP RHS :[P]
+impl/expl/evars vars:[]
+LHS:
+  HVar P[]&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+RHS:
+ EBase 
+   HVar P[]&{FLOW,(20,21)=__norm#E}[]
+
+
+###  FIXED
 
 # this match should be allowed..
 

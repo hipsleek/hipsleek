@@ -10606,6 +10606,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     | HRel (hp1,_,_), HRel(hp2,_,_)
       -> let () = y_tinfo_pp ("HRel matching :"^m_str) in
       (hp1,hp2)
+    | HVar (hp1,_), HVar(hp2,_)
+      -> let () = y_tinfo_pp ("HVar matching :"^m_str) in
+      if (CP.eq_spec_var hp1 hp2) then 
+        (hp1,hp2)
+      else failwith ("no direct HVar matching: "^m_str)
     | _, _ -> failwith ("do match failure: "^m_str)
   in
   let () = x_tinfo_hp (add_str "[LHS,RHS]" !print_svl) [lhs_self;rhs_self] no_pos in
