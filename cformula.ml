@@ -3049,8 +3049,8 @@ and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
   let vs = vs@pvars in
   let other_vs = avars@hvars in
   (* WN : is_heap_only excludes ann_vars and higher-order vars for now *)
-  let () = y_ninfo_hp (add_str "vv" !CP.print_sv) vv in
-  let () = y_ninfo_hp (add_str "vs" !CP.print_svl) vs in
+  let () = y_dinfo_hp (add_str "vv" !CP.print_sv) vv in
+  let () = y_dinfo_hp (add_str "vs" !CP.print_svl) vs in
   if vartype # is_heap_only then
     begin
       (* if other_vs!=[] then x_winfo_pp ((add_str "other free vars?" !CP.print_svl) other_vs) no_pos; *)
@@ -3078,7 +3078,7 @@ and f_h_fv (f : formula) : CP.spec_var list =
   | Exists b -> Gen.BList.difference_eq CP.eq_spec_var (h_fv b.formula_exists_heap) b.formula_exists_qvars
 
 and h_fv ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list =
-  (* Debug.no_1 "h_fv" !print_h_formula !print_svl *) (h_fv_x ~vartype:vartype) h
+  Debug.no_1 "h_fv" !print_h_formula !print_svl (h_fv_x ~vartype:vartype) h
 
 and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var list = 
   let rec aux h =
@@ -3135,7 +3135,9 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
       if vartype # is_heap_only || vartype # is_heap_ptr_only  then []
       else old_vs
     | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
-    | HVar (v,ls) -> v::ls
+    | HVar (v,ls) -> 
+      if vartype # is_heap_only || vartype # is_heap_ptr_only  then []
+      else v::ls
   in aux h
 
 (*and br_fv br init_l: CP.spec_var list =

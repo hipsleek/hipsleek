@@ -23,25 +23,12 @@ lemma "ERR-1" self::LatchIn{- %P * %Q}<> * self::CNT<a> & a<0 -> emp & flow __Fa
 
 lemma "ERR-2" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
 
-// (1)
-checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- %P}<>.
-expect Valid.
-print residue.
 
-// (2) [P --> y::cell<m>]
-checkentail c::LatchIn{- x::cell<n> * y::cell<m>}<> |- c::LatchIn{- x::cell<n> * %P}<>.
-expect Valid.
-print residue.
 
-// (3)
-checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> |- c::LatchOut{+ %P}<>.
-print residue.
-expect Valid.
-
-// (4) [P --> y::cell<m>]
-checkentail c::LatchOut{+ x::cell<n> * y::cell<m>}<> |- c::LatchOut{+ x::cell<n> * %P}<>.
-expect Valid.
-print residue.
+//(6)
+//checkentail c::LatchOut{+ x::cell<n>}<> |- c::LatchOut{+ x::cell<b> }<>.
+//expect Valid.
+//print residue.
 
 
 //(5)
@@ -49,7 +36,21 @@ checkentail c::LatchIn{- x::cell<n>}<> |- c::LatchIn{- x::cell<_> }<>.
 expect Valid.
 print residue.
 
-//(6)
-checkentail c::LatchOut{+ x::cell<n>}<> |- c::LatchOut{+ x::cell<b> }<>.
-expect Valid.
-print residue.
+/*
+# but6a.slk
+
+# why did we have ho_args failure?
+
+ MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: matching of ho_args failed (classical separation logic)
+     fc_current_lhs_flow: {FLOW,(1,26)=__flow#E}
+   }
+ [[empty]]
+ CEX:true
+
+
+
+*/

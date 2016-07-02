@@ -6,7 +6,9 @@ pred_prim LatchIn{-%P@Split}<>.
 pred_prim LatchOut{+%P@Split}<>.
 
 checkentail c::LatchOut{+ x::cell<_> * y::cell<m>}<> & m > 0 |- c::LatchOut{+ x::cell<_>}<>.
+expect Valid.
 print residue.
 
 checkentail c::LatchIn{- x::cell<_> * y::cell<m>}<> & m > 0 |- c::LatchIn{- x::cell<_>}<>.
+expect Valid.
 print residue.

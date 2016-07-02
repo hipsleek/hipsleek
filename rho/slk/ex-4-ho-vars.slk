@@ -1,7 +1,9 @@
 data cell{ int v; }.
 
-//checkentail_exact x::cell<_> |- %P * %Q.
-//print residue.
+//(1)
+checkentail_exact x::cell<_> |- %P * %Q.
+expect Fail.
+print residue.
 
 /* 
 # ex-4
@@ -16,13 +18,23 @@ Residue:
 
 */
 
+//(2)
+checkentail_exact x::cell<_> |- %P .
+expect Valid.
+print residue.
+
+//(3)
 checkentail_exact x::cell<_> * %P |- %P * %Q.
+expect Valid.
 print residue.
 
 checkentail_exact x::cell<_> * y::cell<_> |- x::cell<_> * %P.
+expect Valid.
 print residue.
 
+//(5)
 checkentail_exact x::cell<_> * %P |- x::cell<_> * y::cell<_>.
+expect Fail.
 print residue.
 
 /*

@@ -4412,7 +4412,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
   (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
   let fv_s = CF.struc_fv ~vartype:Global_var.var_with_heap_only conseq in
   let impl_expl_vs = CF.collect_impl_expl_evars_context ctx_00 in
-  (* let evars_rhs = CF.collect_evars_context ctx_00 in *)
+  let () = y_dinfo_hp (add_str "impl_expls_vs" !CP.print_svl) impl_expl_vs in
+  let () = y_dinfo_hp (add_str "fv_s" !CP.print_svl) fv_s in
+   (* let evars_rhs = CF.collect_evars_context ctx_00 in *)
   let fv_s = CP.diff_svl fv_s (impl_expl_vs(* @evars_rhs *)) in
   if fv_s!=[]  then
     begin

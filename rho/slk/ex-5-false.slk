@@ -1,6 +1,7 @@
 data cell{ int v; }.
 
 checkentail_exact false |- %P.
+expect Valid.
 print residue.
 
 /*
@@ -10,6 +11,7 @@ Guess valid is OK here
 */
 
 checkentail_exact false |- %P * %Q.
+expect Valid.
 print residue.
 
 /*
@@ -20,4 +22,5 @@ Guess valid is OK here
 
 
 checkentail_exact x::cell<_> |- %P & 1=2.
+expect Fail.
 print residue.
