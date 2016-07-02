@@ -813,7 +813,7 @@ let find_common_node_chain_branches root (fs: CF.formula list) =
 let get_all_node_name (h_f: CF.h_formula): ident list =
   let f_h_f _ h_f =
     try
-      let name = CF.get_node_name 20 h_f in
+      let name = x_add_1 CF.get_node_name h_f in
       Some (h_f, [name])
     with _ -> None
   in

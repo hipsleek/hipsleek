@@ -1734,7 +1734,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
    | None , None -> 
      (match h1 with
       | CF.DataNode {CF.h_formula_data_param_imm = paimm;} -> 
-        if String.compare (x_add CF.get_node_name 7 h1) (x_add CF.get_node_name 8 h2) == 0 then
+        if String.compare (x_add_1 CF.get_node_name h1) (x_add_1 CF.get_node_name h2) == 0 then
           let old_args = CF.get_node_args h1 in
           let new_args = CF.get_node_args h2 in
           let h1_var = CF.get_node_var h1 in
@@ -1779,7 +1779,7 @@ let ramify_star (p: CF.h_formula) (ql: CF.h_formula list) (vl:C.view_decl list) 
       List.fold_left (fun (h,f) q  -> 
           let q_mpf, q_vars  = 
             if (CF.is_view q) then
-              let q_vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 9 q) in
+              let q_vdef = x_add C.look_up_view_def_raw x_loc vl (x_add_1 CF.get_node_name q) in
               let q_viewvars = q_vdef.C.view_vars in
               q_vdef.C.view_mem,q_viewvars 
             else None,[] in
@@ -1799,7 +1799,7 @@ let ramify_star (p: CF.h_formula) (ql: CF.h_formula list) (vl:C.view_decl list) 
       List.fold_left (fun (h,f) q -> 
           let q_mpf,q_vars = 
             if (CF.is_view q) then
-              let q_vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 10 q) in
+              let q_vdef = x_add C.look_up_view_def_raw x_loc vl (x_add_1 CF.get_node_name q) in
               let q_vars = q_vdef.C.view_vars in
               q_vdef.C.view_mem, q_vars
             else None,[] in  
@@ -1932,7 +1932,7 @@ let get_neq_for_ramify (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) vl pos :
       let p1 = CP.mkNeqVar (CF.get_node_var r) (CF.get_node_var h) pos in
       CP.mkAnd p1 p pos
     else (* r is a view *) 
-      let vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 11 r) in
+      let vdef = x_add C.look_up_view_def_raw x_loc vl (x_add_1 CF.get_node_name r) in
       let args = vdef.C.view_vars in
       let rargs = (CF.get_node_args r) in
       let sst = List.combine args rargs in 
@@ -1941,7 +1941,7 @@ let get_neq_for_ramify (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) vl pos :
       let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var h),mexp,pos),None),None) in
       CP.mkAnd p1 p pos
   else if (CF.is_view h) then
-    let vdef = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 12 h) in
+    let vdef = x_add C.look_up_view_def_raw x_loc vl (x_add_1 CF.get_node_name h) in
     let mpf = Gen.unsome vdef.C.view_mem in
     let args = vdef.C.view_vars in
     let hargs = (CF.get_node_args h) in
@@ -1951,7 +1951,7 @@ let get_neq_for_ramify (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) vl pos :
       let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var r),mexp,pos),None),None) in
       CP.mkAnd p1 p pos
     else (* r is a view *) 
-      let vdef_r = x_add C.look_up_view_def_raw x_loc vl (x_add CF.get_node_name 13 r) in
+      let vdef_r = x_add C.look_up_view_def_raw x_loc vl (x_add_1 CF.get_node_name r) in
       let mpf_r = Gen.unsome vdef_r.C.view_mem in
       let args_r = vdef_r.C.view_vars in
       let rargs_r = (CF.get_node_args r) in

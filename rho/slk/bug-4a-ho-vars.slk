@@ -1,0 +1,39 @@
+data cell{ int v; }.
+
+
+
+
+
+checkentail_exact %P |- %P.
+print residue.
+
+/*
+# bug-4a
+
+# this match should be allowed..
+
+Entail 1: EXCast. Failure("do match failure:  HVar P[] to prove  HVar P[]")
+: no residue 
+
+!!! **sleek.ml#492:[../../prelude.slk,bug-4a-ho-vars.slk]
+!!! **WARNING****solver.ml#4420:FREE VAR IN HEAP RHS :[P]
+impl/expl/evars vars:[]
+LHS:
+  HVar P[]&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+RHS:
+ EBase 
+   HVar P[]&{FLOW,(20,21)=__norm#E}[]
+
+*/
+
+
+/*
+# bug4a
+
+# expect %P to match with %P
+
+checkentail_exact x::cell<_> * %P |- %P * %Q.
+print residue.
+
+*/

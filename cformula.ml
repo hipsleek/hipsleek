@@ -2099,12 +2099,13 @@ and get_node_name_x (h : h_formula) = match h with
   | DataNode ({h_formula_data_name = c}) -> c
   | HRel (hp, _, _) -> CP.name_of_spec_var hp
   | Hole i -> "Hole_"^(string_of_int i)
+  | HVar (sv,lst) -> "HVar:"^(CP.name_of_spec_var sv)
   | _ ->
     let pr = !print_h_formula in 
     failwith ("get_node_name: invalid argument: " ^ (pr h))
 
-and get_node_name i (h : h_formula) =
-  Debug.no_1_num i "get_node_name" !print_h_formula idf get_node_name_x h
+and get_node_name (h : h_formula) =
+  Debug.no_1 "get_node_name" !print_h_formula idf get_node_name_x h
 
 and get_node_perm (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_perm = c}) 
@@ -2321,7 +2322,7 @@ and h_set_lhs_case_of_a_view (h : h_formula) (v_name:ident) flag: h_formula =
              h_formula_star_h2 = helper h2;
              h_formula_star_pos = pos})
     | ViewNode vn -> 
-      let name = get_node_name 5 h in
+      let name = x_add_1 get_node_name h in
       if (name=v_name) then
         ViewNode {vn with h_formula_view_lhs_case = flag}
       else h
@@ -17920,7 +17921,7 @@ let collect_heap_args_formula_x (f:formula) (sv:CP.spec_var) : (CP.spec_var list
       let args_list = List.map (fun h ->
           let c = get_node_var h in
           let b = ((CP.eq_spec_var c sv) || (List.exists (fun v -> CP.eq_spec_var c v) vars)) in
-          if (b) then [(get_node_args h, get_node_name 6 h)] else []
+          if (b) then [(get_node_args h, x_add_1 get_node_name h)] else []
         ) heaps in
       let args_list = List.concat args_list in
       if args_list = [] then ([], "")

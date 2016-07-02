@@ -3741,7 +3741,7 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
     let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
     let () = y_tinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
     let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
-    let () = y_binfo_hp (add_str "imply_timeout_univ: b " string_of_bool) b in
+    let () = y_dinfo_hp (add_str "imply_timeout_univ: b " string_of_bool) b in
     if b then
       let () = univ_rhs_store # set conseq0 in r
     else r
@@ -3750,7 +3750,7 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
 let imply_timeout ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
   let univ_vars = get_univs_from_ante ante0 in
-  let () = y_binfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+  let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
   if (not b) && (connected_rhs univ_vars conseq0)
   then imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process
   else ans

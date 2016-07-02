@@ -251,6 +251,27 @@ CheckNorm (6) :  c1::CNT{}<flted_37_135> * c2::CNT{}<flted_37_134> * x::cell<n>&
 
 */
 =================================================================
+# bug-4a
+
+checkentail_exact %P |- %P.
+print residue.
+
+
+# this match should be allowed..
+
+Entail 1: EXCast. Failure("do match failure:  HVar P[] to prove  HVar P[]")
+: no residue 
+
+!!! **sleek.ml#492:[../../prelude.slk,bug-4a-ho-vars.slk]
+!!! **WARNING****solver.ml#4420:FREE VAR IN HEAP RHS :[P]
+impl/expl/evars vars:[]
+LHS:
+  HVar P[]&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+RHS:
+ EBase 
+   HVar P[]&{FLOW,(20,21)=__norm#E}[]
+
 =================================================================
 =================================================================
 =================================================================
