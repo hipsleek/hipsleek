@@ -1,14 +1,29 @@
 data cell{ int v; }.
 
+checkentail_exact %P |- %Q.
+expect Valid.
+print residue.
+// expect match to go thru with substitution Q --> P
 
 
+checkentail_exact %P * %R |- %Q.
+expect Valid.
+print residue.
+// expect match to go thru with substitution Q --> %P * %R
 
+
+checkentail_exact %P * %Q |- %Q.
+expect Fail.
+print residue.
+// expect match to go Fail due to infinite Q --> %P * %R
 
 checkentail_exact %P |- %P.
+expect Valid.
 print residue.
+// expect match to go thru without any HO substitution
 
 /*
-# bug-4a
+# bug-4b
 
 # this match should be allowed..
 
