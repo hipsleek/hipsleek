@@ -1,0 +1,31 @@
+checkentail true & ["":x=0; "x":x>0] |- true & ["x":x>1].
+expect Fail.
+
+checkentail true & ["":x=0; "x","":x>0] |- true & ["x":x>1].
+expect Valid.
+print residue.
+
+
+checkentail true & ["":x=7; "x":x>0] |- true & ["","x":x>1].
+expect Valid.
+
+checkentail true & ["":x=7; "x":x>0] |- true & ["x":x>1].
+expect Fail.
+
+
+/*
+
+Normal Labelling
+  UNSAT(fc&f1) | UNSAT(fc&f2)
+--------------------------------
+ UNSAT("":fc, "a":f1, "b":f2)
+
+Aggressive Labelling (with equality propagated)
+
+  UNSAT(fc) | UNSAT(e2&f1) | UNSAT(e3&f2)
+----------------------------------------------
+          UNSAT("":fc, "a":f1, "b":f2)
+
+
+
+*/
