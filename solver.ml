@@ -9169,8 +9169,8 @@ type: bool *
         let pr =  Cprinter.string_of_entail_state_short in 
         Debug.no_1 "add_univ_pure" pr pr add_univ_pure es in
       let flag = stk_estate # is_empty in
-      let () = y_tinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
-      let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
+      let () = y_binfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
+      let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
       if not(flag) || !Globals.adhoc_flag_5 then
         let pr = Cprinter.string_of_entail_state_short in
         let () = x_info_hp (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
@@ -9674,17 +9674,23 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           let a0l = List.filter is_sat a0l in a0l
       in
       let process_univ univ_vars ante0 conseq0 =
-        let prev_inst = TP.univ_rhs_store # get in
-        let ante0 = CP.drop_rel_formula ante0 in
-        let ante1 =TP.filter_inv ante0 in
-        let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
-        let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
-        let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
-        let b = x_add !CP.tp_imply ante0 new_conseq in
-        if b then
-          TP.univ_rhs_store # set conseq0
+        if not (TP.connected_rhs univ_vars conseq0) then ()
         else
-          ()
+          let prev_inst = TP.univ_rhs_store # get in
+          let ante0 = CP.drop_rel_formula ante0 in
+          let ante1 =TP.filter_inv ante0 in
+          let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
+          let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
+          let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
+          let b = x_add !CP.tp_imply ante0 new_conseq in
+          if b then
+            let () = y_binfo_hp (add_str "process_univ added!" Cprinter.string_of_pure_formula) conseq0 in
+            TP.univ_rhs_store # set conseq0
+          else
+            ()
+      in
+      let process_univ univ_vars ante0 conseq0 =
+        Debug.no_3 "process_univ" !CP.print_svl Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun x -> "()") process_univ univ_vars ante0 conseq0
       in
       let univ_vars = TP.get_univs_from_ante a0 in
       let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
@@ -9693,7 +9699,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
         if TP.univ_rhs_store # is_empty
         then a0
         else
-          CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos
+          let a01 = CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos in
+          a0
       in
       let a0l = f a0 in
       let a1l = match ante_m1 with

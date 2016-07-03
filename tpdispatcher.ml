@@ -3701,7 +3701,7 @@ let get_univs_from_ante ante =
   let univ_vars = CP.get_RelForm_arg_list_with_name ante "Univ" in
   if univ_vars==[] then []
   else
-    (* Is it correct to make all the variables equal to m universal? *)g
+    (* Is it correct to make all the variables equal to m universal? *)
     (* let () = y_binfo_hp (add_str "get_univs_from_ante" (pr_list !CP.print_sv)) univ_vars in *)
     (* let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in *)
     (* let emap = CP.EMapSV.build_eset eqns' in *)
@@ -3752,13 +3752,15 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
 
 let imply_timeout ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
-  let univ_vars = get_univs_from_ante ante0 in
-  let () = y_binfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-  if (not b) && (connected_rhs univ_vars conseq0)
-  then imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process
-  else ans
+  ans
+(*   let univ_vars = get_univs_from_ante ante0 in *)
+(*   let () = y_binfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in *)
+(*   if (not b) && (connected_rhs univ_vars conseq0) *)
+(*   then imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process *)
+(*   else ans *)
+(* ;; *)
 ;;
-
+  
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
   : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
