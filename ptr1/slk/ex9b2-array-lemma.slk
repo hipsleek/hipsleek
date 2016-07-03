@@ -13,10 +13,10 @@ lemma_unsafe self::arr_seg<i,n> & i<m & m<=n
 
 */
 
-/*
+
 lemma_unsafe self::arr_seg<i,n> & i<n & i<m<=n
   -> self::arr_seg<i,m>*self::arr_seg<m,n> .
-*/
+
 
 /*
 checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.

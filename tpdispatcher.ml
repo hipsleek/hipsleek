@@ -3701,10 +3701,13 @@ let get_univs_from_ante ante =
   let univ_vars = CP.get_RelForm_arg_list_with_name ante "Univ" in
   if univ_vars==[] then []
   else
-    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in
-    let emap = CP.EMapSV.build_eset eqns' in
-    let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
-    univ_vars2
+    (* Is it correct to make all the variables equal to m universal? *)g
+    (* let () = y_binfo_hp (add_str "get_univs_from_ante" (pr_list !CP.print_sv)) univ_vars in *)
+    (* let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in *)
+    (* let emap = CP.EMapSV.build_eset eqns' in *)
+    (* let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in *)
+    (* univ_vars2 *)
+    univ_vars
 
 let connected_rhs univ_vars rhs =
   if univ_vars==[] then false

@@ -16,11 +16,12 @@ lemma_unsafe self::arr_seg<i,n> & i<m & m<=n
 //lemma_unsafe self::arr_seg<i,n> & i<m<=n -> self::arr_seg<i,m>*self::arr_seg<m,n> .
 
 
+
+// These three cases are working correctly
+
 checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
 print residue.
 expect Fail.
-
-
 
 checkentail //xx::arr_seg<i,m> * 
    xx::arr_seg<m,n> & i<m<=n & Univ(m)
@@ -28,21 +29,18 @@ checkentail //xx::arr_seg<i,m> *
 expect Valid.
 print residue.
 
-
 checkentail //xx::arr_seg<i,m> * 
    xx::arr_seg<m,n> & i<m<=n & Univ(m)
    & i<n |- xx::arr_seg<i+2,n>.
 expect Fail.
 print residue.
 
-checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m)
-   & i<n |- xx::arr_seg<i+2,n>.
+// Is it correct the instantiate n together?
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m) & i<n |- xx::arr_seg<i+2,n>.
 expect Fail.
 print residue.
 
 /*
-
-
 
 // i<n
 
