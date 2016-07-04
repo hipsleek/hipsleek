@@ -1,0 +1,14 @@
+P:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0)};
+Q:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0 & n1>=9)};
+
+P;Q;
+P subset Q;
+Q subset P;
+
+
+P:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0)};
+Q:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0 & n1>=9 & n2>=2)};
+
+P;Q;
+P subset Q;
+Q subset P;
