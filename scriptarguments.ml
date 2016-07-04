@@ -65,8 +65,8 @@ let common_arguments = [
    "Disable Simplify the entail state before printing the dprint state."); (* An Hoa *)
   ("-wpf", Arg.Set Globals.print_proof,
    "Print all the verification conditions, the input to external prover and its output.");
-  (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
-  (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
+  ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
+  "Do unfolding of predicates with duplicated pointers."); (* An Hoa *)
   (* Labelling Options *)
   ("--temp-opt", Arg.Set Globals.temp_opt_flag,
    "Temporary option flag.");
