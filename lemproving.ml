@@ -215,7 +215,7 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 
 
 let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : CF.struc_formula * (CP.spec_var list) =
-  let e_implicit_vars = CF.struc_implicit_vars e in
+  let e_implicit_vars = (* CF.struc_implicit_vars e *) [] in
   let f_none _ _ = None in
   let c_h_formula qvs fv_lhs x =  
     let vs = CF.h_fv x in
