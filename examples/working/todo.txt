@@ -3,11 +3,26 @@
 =================================================
 =================================================
 =================================================
+Total number of errors: 8 in files:
+  sleek7.slk({E7#Valid},{E8#Valid}) 
+  sleek8.slk({E13#Valid},{E14#Valid}) 
+  sleek8.slk({E13#Valid},{E14#Valid}) 
+  imm/norm/norm10.slk({E4#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid})
+   veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 189.66 second
+	Time spent in main process: 104.94 second
+	Time spent in child processes: 84.72 second
+	Number of false contexts: 98
 =================================================
 4Jul16 (arr_infer)
 Total number of errors: 8 in files:
   sleek7.slk({E4#Fail}) 
-  sleek8.slk({E10#Fail}) sleek8.slk({E10#Fail}) 
+  sleek8.slk({E10#Fail}) 
+  sleek8.slk({E10#Fail}) 
   imm/norm/norm10.slk({E4#Valid}) 
   lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
   lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
