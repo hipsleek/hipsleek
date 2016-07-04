@@ -9695,13 +9695,13 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       let univ_vars = TP.get_univs_from_ante a0 in
       let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
       let () = List.iter (process_univ univ_vars a0) new_rhs in
-      let a0 =
-        if TP.univ_rhs_store # is_empty
-        then a0
-        else
-          let a01 = CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos in
-          a0
-      in
+      (* let a0 = *)
+      (*   if TP.univ_rhs_store # is_empty *)
+      (*   then a0 *)
+      (*   else *)
+      (*     let a01 = CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos in *)
+      (*     a0 *)
+      (* in *)
       let a0l = f a0 in
       let a1l = match ante_m1 with
         | Some (MCP.OnePF a1) -> f a1

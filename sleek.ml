@@ -283,9 +283,10 @@ let parse_file (parse) (source_file : string) =
   *)
   let proc_one_lemma c =
     match c with
-    | LemmaDef ldef -> 
-      if I.is_lemma_decl_ahead ldef then x_add_1 process_list_lemma ldef
-      else ()
+    | LemmaDef ldef ->
+       let () = x_tinfo_pp "sleek : proc_one_lemma called" no_pos in
+       if I.is_lemma_decl_ahead ldef then x_add_1 process_list_lemma ldef
+       else ()
     | _             -> () in
   (* | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (\* An Hoa *\) *)
   (* | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ *)
@@ -375,10 +376,11 @@ let parse_file (parse) (source_file : string) =
                            Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   x_add_1 convert_data_and_pred_to_cast ();
-  x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
+  x_binfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
   (* x_tinfo_pp "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
   List.iter proc_one_lemma cmds;
+  x_binfo_pp "sleek : after proc_one_lemma" no_pos;
   let l2r = Lem_store.all_lemma # get_left_coercion in
   let r2l = Lem_store.all_lemma # get_right_coercion in
   let () = if (!Globals.print_core || !Globals.print_core_all) then

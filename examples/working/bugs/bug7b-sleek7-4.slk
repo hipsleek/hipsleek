@@ -19,7 +19,7 @@ lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lse
 //above cannot work!
 
 
-checkentail x::lseg<n, p> & n > 9 |- x::lseg<nn1, r1> * r1::lseg<n2, r2> & nn1 >= 9 & n2 >= 3.
+checkentail x::lseg<n, p> & n > 9 |- x::lseg<nn1, r1> * r1::lseg<n2, r2> & nn1 >= 9 & n2 >= 2.
 expect Fail.
 print residue.
 //print residue.

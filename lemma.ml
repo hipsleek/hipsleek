@@ -249,9 +249,9 @@ let process_one_lemma unfold_flag iprog cprog ldef =
   let ulst = Cast.get_unfold_set vdefs (* set of unfoldable views *) in
   (* type: (Globals.ident * Cast.P.spec_var list * Cformula.formula) list *)
   let ldef = if unfold_flag then x_add unfold_body_lemma iprog ldef ulst else ldef in
-  let () = y_tinfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in
-  let () = y_tinfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag in
-  let () = y_tinfo_hp (add_str "lemma(after unfold)" Iprinter.string_of_coerc_decl) ldef in
+  let () = y_binfo_hp (add_str "unfold_lst" (pr_list (pr_triple pr_id !CP.print_svl !CF.print_formula))) ulst in
+  let () = y_binfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag in
+  let () = y_binfo_hp (add_str "lemma(after unfold)" Iprinter.string_of_coerc_decl) ldef in
 
   (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
@@ -265,6 +265,7 @@ let process_one_lemma unfold_flag iprog cprog ldef =
       let () = print_string (Iprinter.string_of_coerc_decl ldef) in 
       let () = print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") in
       () else () in
+  let () = x_binfo_pp "lemma : end of process_one_lemma" no_pos in
   (l2r,r2l,ldef.I.coercion_type)
 
 
@@ -299,6 +300,7 @@ let verify_one_repo lems cprog =
 (* update store with given repo without verifying the lemmas *)
 let manage_lemmas_x(* _new *) ?(unfold_flag=true) ?(force_pr=false) ?(vdefs=[]) repo iprog cprog  =
   let lems = process_one_repo unfold_flag repo iprog cprog in
+  let () = x_binfo_pp "sleek : after process_one_repo" no_pos in
   let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
   let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
   (* let vdefs = Cprinter.get_sorted_view_decls () in *)
@@ -330,6 +332,7 @@ let update_store_with_repo ?(force_pr=false) ?(vdefs=[]) repo iprog cprog =
   (* let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in *)
   (* let () = Lem_store.all_lemma # add_coercion left right in *)
   let lems = manage_lemmas_x ~vdefs:vdefs ~force_pr:force_pr repo iprog cprog in
+  let () = x_binfo_pp "lemma : after manage_lemmas_x" no_pos in
   let (invalid_lem, lctx) = x_add verify_one_repo lems cprog in
   (invalid_lem, lctx)
 
