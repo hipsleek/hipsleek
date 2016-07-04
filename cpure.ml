@@ -8336,13 +8336,13 @@ let store_tp_is_sat : (formula -> bool) ref = ref (fun _ -> true)
 let tp_is_sat = store_tp_is_sat
 
 let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
-  x_binfo_hp (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
-  x_binfo_hp (add_str "coseq : " ( !print_formula)) conseq no_pos;
+  x_dinfo_hp (add_str "ante: " (pr_list !print_formula)) ante_disj no_pos;
+  x_dinfo_hp (add_str "coseq : " ( !print_formula)) conseq no_pos;
   match ante_disj with
   | h :: rest ->
-    x_binfo_hp (add_str "h : " ( !print_formula)) h no_pos;
+    x_dinfo_hp (add_str "h : " ( !print_formula)) h no_pos;
     let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
-    x_binfo_hp (add_str "res : " (string_of_bool)) r1 no_pos;
+    x_dinfo_hp (add_str "res : " (string_of_bool)) r1 no_pos;
     if r1 then
       let r1,r22,r23 = (imply_disj_orig_x rest conseq t_imply imp_no) in
       (r1,r2@r22,r23)
@@ -11507,9 +11507,9 @@ let enhance_eq_list eq_list =
     let () = if !Globals.assert_nonlinear then 
         let b = !tp_imply orig_pure new_pure in
         if not(b) then 
-          let () = x_binfo_hp (add_str "XXX:orig_eqn" !print_formula) orig_pure no_pos in
-          let () = x_binfo_hp (add_str "XXX:new_eqn" !print_formula) new_pure no_pos in
-          let () = x_binfo_pp "XXX:UNSOUND enhance_eq_list" no_pos in
+          let () = x_dinfo_hp (add_str "XXX:orig_eqn" !print_formula) orig_pure no_pos in
+          let () = x_dinfo_hp (add_str "XXX:new_eqn" !print_formula) new_pure no_pos in
+          let () = x_dinfo_pp "XXX:UNSOUND enhance_eq_list" no_pos in
           failwith "UNSOUND enhance_eq_list"
         else  () (* failwith "SOUND enhance_eq_list" *)
             (* () *) (* x_tinfo_pp "XXX:OK enhance_eq_list" no_pos *)  
@@ -15825,7 +15825,7 @@ let exp_to_sv e = match (conv_exp_to_var e) with
   | Some (sv,_) -> sv
   | None -> 
     let () = y_winfo_pp " UNKNOWN spec_var used " in
-    let () = y_binfo_hp (add_str "exp is var?" !print_exp) e in
+    let () = y_dinfo_hp (add_str "exp is var?" !print_exp) e in
     unknown_spec_var
 
 

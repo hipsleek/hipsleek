@@ -1,3 +1,26 @@
+================================================================
+# bug5a-norm10-4.slk
+
+Why does ll has actual root?
+This isn't with ptr arithmetic.
+Can we fix it as None instead..
+
+ view ll{}[]<n:int>= 
+  view_domains: 
+   view ll<n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; 
+            q](* lbl: *){2}->(exists flted_6_14: (* lbl: *){2}->self::node<Anon_12,q>@M * 
+                                                                q::ll<flted_6_14>@M&
+            flted_6_14+1=n & 0<n&{FLOW,(1,26)=__flow#E}[])
+
+
+  actual_root: 
+  Some((self, true))
+================================================================
 # test3.slk # DONE 
 
 Inference has three basic problems in above file/

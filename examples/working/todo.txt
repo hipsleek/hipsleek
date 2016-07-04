@@ -2,6 +2,23 @@
 =================================================
 =================================================
 =================================================
+5Jul16
+Starting hip-sleek tests:
+Total number of errors: 4 in files:
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 232.13 second
+
+Total number of errors: 5 in files:
+  imm/norm/norm10.slk({E4#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 200.27 second
+	Time spent in main process: 109.74 second
+	Time spent in child processes: 90.53 second
+	Number of false contexts: 98
 =================================================
 Total number of errors: 8 in files:
   sleek7.slk({E7#Valid},{E8#Valid}) 

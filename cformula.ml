@@ -2020,10 +2020,18 @@ and is_view_user (h : h_formula) = match h with
   | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
   | _ -> false
 
-and is_view_user_dupl_ptr_unfold (h : h_formula) = match h with
+and is_view_user_dupl_ptr_unfold_x (h : h_formula) = match h with
   | ViewNode v -> let vn = v.h_formula_view_name in
-    not(view_prim_lst # mem vn || view_ptr_arith_lst # mem vn) 
+    let b1 = view_prim_lst # mem vn in
+    let b2 = view_ptr_arith_lst # mem vn in 
+    let () = y_dinfo_hp (add_str "b1" string_of_bool) b1 in
+    let () = y_dinfo_hp (add_str "b2" string_of_bool) b2 in
+    not( b1 || b2)
   | _ -> false
+
+and is_view_user_dupl_ptr_unfold (h : h_formula) =
+  let pr = !print_h_formula in
+  Debug.no_1 "is_view_user_dupl_ptr_unfold" pr string_of_bool is_view_user_dupl_ptr_unfold_x h
 
 and is_data (h : h_formula) = match h with
   | DataNode _ -> true
@@ -9663,8 +9671,8 @@ class infer_acc =
         let () = pure <- Some np in
         true
         else 
-          let () = y_binfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
-          let () = y_binfo_hp (add_str "false contra with" !CP.print_formula) p in
+          let () = y_dinfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
+          let () = y_dinfo_hp (add_str "false contra with" !CP.print_formula) p in
           false
   end;;
 
@@ -11495,7 +11503,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(x_add_1 is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    x_binfo_hp (add_str "false ctx removed" pr) fl no_pos; 
+    x_dinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]
@@ -20550,7 +20558,7 @@ let extract_view_nodes_name hf =
 let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
   let ty = self_typ in
   let args = List.filter (fun x -> CP.type_of_spec_var x = ty) args in
-  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_dinfo_hp (add_str "args" !CP.print_svl) args in
   match args with
   | [x] -> Some x
   | _ -> None

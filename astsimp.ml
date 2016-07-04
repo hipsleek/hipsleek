@@ -2786,7 +2786,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
            lst
         else []
       in
-      let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
+      let () = y_binfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
+      (* removing non-ptr arithmetic *)
+      let lst_heap_ptrs = List.filter (fun (sv,f) -> not(CP.isConstTrue f)) lst_heap_ptrs in
       (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
       (* let () = y_tinfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in *)
       let cvdef = {
@@ -2814,7 +2816,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           (
             let pr_sv = !CP.print_sv in
             let pr_f = !CP.print_formula in
-            let () = y_tinfo_hp (add_str "Actual roots.." (pr_list (pr_pair pr_sv pr_f))) lst_heap_ptrs in
+            let () = y_binfo_hp (add_str "Actual roots.." (pr_list (pr_pair pr_sv pr_f))) lst_heap_ptrs in
             match lst_heap_ptrs with
             | x::_ ->  
               (* adding to ptr_arith_lst *)
