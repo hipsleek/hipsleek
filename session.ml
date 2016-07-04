@@ -41,6 +41,7 @@ let set_prim_pred_id kind id =
     | SOr          -> sor_id := Some id
     | Protocol     -> ()
     | Projection   -> ()
+    | TPProjection   -> ()
 
 let get_prim_pred_id pred_ref =
   match !pred_ref with
@@ -59,6 +60,7 @@ let get_prim_pred_id_by_kind kind = match kind with
   | SOr          -> get_prim_pred_id sor_id
   | Protocol     -> ""
   | Projection   -> ""
+  | TPProjection   -> ""
 
 let get_session_kind_of_transmission t =
   match t with
@@ -530,7 +532,12 @@ module Projection_base_formula =
     let print_message f = !Msg.print f.projection_base_formula_message
 
     let string_of_session_base f =
-      (f.projection_base_formula_channel) ^
+      let chan = if (f.projection_base_formula_channel <> session_chan_id)
+                 then
+                   f.projection_base_formula_channel
+                 else
+                   "" in
+      chan ^
       (string_of_transmission f.projection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 

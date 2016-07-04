@@ -186,6 +186,7 @@ type session_kind =
   | SOr
   | Protocol
   | Projection
+  | TPProjection
 
 type view_kind =
   | View_PRIM
@@ -264,6 +265,7 @@ let string_of_session_kind k = match k with
   | SOr -> "SessionOr"
   | Protocol -> "Protocol"
   | Projection -> "Projection"
+  | TPProjection -> "TPProjection"
 
 let string_of_view_kind k = match k with
   | View_PRIM -> "View_PRIM"
@@ -903,9 +905,11 @@ let session_msg = (session_msg_id, Unprimed)
 let session_seq_id = "self"
 let session_seq = (session_seq_id, Unprimed)
 
+let session_chan_id = "chan"
+
 let print_compact_projection_formula = ref true
 
-let dedicated_ids = [self; session_msg_id; session_seq_id; null_name]
+let dedicated_ids = [self; session_msg_id; session_seq_id; session_chan_id; null_name]
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
