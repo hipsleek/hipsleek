@@ -87,25 +87,7 @@ checkentail x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1)}<>|- x::Sess{@S (bb!
 expect Valid.
 print residue.
 
-//14
+//15
 checkentail x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1);;aaa!0}<>|- x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
 expect Valid.
 print residue.
-
-/*
-Entail 15: Fail.(must) cause:matching of ho_args failed (matching of ho_args failed (matching of ho_args failed (do_unmatched_rhs : a::S{ - emp&msg=1&{FLOW,(1,26)=__flow#E}[]}<>@M(may))))
-
-Validate 15: Expecting(3)Valid BUT got : Fail_Must
-
-Residue:
-
- MustErr Context: 
-   fe_kind: MUST
-   fe_name: separation entailment
-   fe_locs: {
-     fc_message: matching of ho_args failed (matching of ho_args failed (matching of ho_args failed (do_unmatched_rhs : a::S{ - emp&msg=1&{FLOW,(1,26)=__flow#E}[]}<>@M(may))))
-     fc_current_lhs_flow: {FLOW,(1,26)=__flow#E}
-   }
- [[empty]]
- CEX:true
-*/
