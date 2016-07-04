@@ -2,13 +2,13 @@ data arrI {
   int val;
 }.
 
-pred arr_seg<i,n> == i=n & i>=0
-  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0 & x>0
-  inv n>=i & i>=0.
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
 
 
 /*
-lemma_unsafe self::arr_seg<i,n> & i<m & m<=n 
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n
   <- self::arr_seg<i,m>*self::arr_seg<m,n>.
 
 */
@@ -38,6 +38,11 @@ checkentail 0<=m & m<n & i<m & m<=n & Univ(m) & i<n & i>=0 |- m=i+1.
 checkentail 0<=n & m=n & i<m & m<=n & Univ(m) & i<n & i>=0 |- m=i+1.
 
 checkentail (((0<=m & ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m) & i<n & 0<=i |-  m=i+1.
+
+
+
+
+
 
 // checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n  & i<n & m=i+1|-  m=i+1.
 // expect Valid.

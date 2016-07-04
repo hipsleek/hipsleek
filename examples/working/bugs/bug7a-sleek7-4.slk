@@ -33,11 +33,37 @@ expect Valid.
 print residue.
 
 
+/*
 checkentail x::lseg<n, p> & n > 9 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >= 9 & n2 >= 3.
 expect Fail.
 print residue.
+*/
 //print residue.
 // invalid-exception
+
+
+checkentail n>9 & nnn1+n2+n3=n & nnn1>=0 & n2>=0 & n3>=0
+   & Univ(nnn1) & Univ(n2) & Univ(n3) & k=n2 |- nnn1>=9 & k>=1.
+expect Valid.
+print residue.
+
+
+checkentail i<m<=n & Univ(m) & i<n & i>=0 
+        |- m=i+1.
+expect Valid.
+print residue.
+
+
+checkentail i<m<=n & Univ(m) & i<n & i>=0 
+        |- m=i+1.
+expect Valid.
+print residue.
+
+checkentail (((0<=m & 
+    ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+    & Univ(m) & i<n & 0<=i |-  m=i+1.
+expect Valid.
+print residue.
 
 
 /*
