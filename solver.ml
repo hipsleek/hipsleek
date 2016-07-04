@@ -3039,7 +3039,6 @@ and elim_unsat_estate ?(sat_subno=vv_ref) prog es =
 and elim_unsat_es_now_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : entail_state =
   let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in
   if not b then es
-  else if (Perm.allow_perm()) then {es with es_formula = f}
   else false_es_with_orig_ante es f no_pos
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
