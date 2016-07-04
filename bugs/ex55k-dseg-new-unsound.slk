@@ -17,6 +17,19 @@ lemma_safe "2" self::rlseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
 /*
 ex55k-dseg-new-unsound.slk --lem-en-lhs-unfold --old-empty-to-conseq --dis-lem-gen
 
+ self::dseg<lm,rm,last> |- self::rlseg<rm>
+
+
+ self=rm & lm=last  |- self::rlseg<rm>
+
+ self::node<_,lm,p>*p::dseg<self,rm,last> 
+     |- self::dseg<_,q,_> * q::node<_,_,rm>
+
+ self::node<_,lm,p>*p::dseg<self,rm,last> |- self::rlseg<q> * q::node<_,_,rm>
+
+ self::node<_,lm,p>*p::dseg<self,rm,last> |- self::rlseg<rm>
+
+
 pred dseg<lm, rm:node,last> == self=rm & lm=last
   or self::node<_,lm, p> * p::dseg<self,rm,last>.
 

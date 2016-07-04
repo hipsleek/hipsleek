@@ -104,9 +104,9 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   (*   else ((not (CF.isFailCtx_gen rs))) *)
   (* in *)
   let _ = Debug.ninfo_hprint (add_str "inf_vars" !CP.print_svl) inf_vars  no_pos in
-  let () = x_binfo_pp "lemproving: mytag1" no_pos in
+  let () = x_tinfo_pp "lemproving: mytag1" no_pos in
   let (res, rs,_) = !sleek_entail 7 [] inf_vars  cprog [] ante conseq in
-  let () = x_binfo_pp "lemproving: mytag2" no_pos in
+  let () = x_tinfo_pp "lemproving: mytag2" no_pos in
   (res, rs)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -146,10 +146,10 @@ let print_exc (check_id: string) =
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check coerc iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
   let () = if  (!Globals.dump_lem_proc)||true then  
-      let () = x_binfo_pp "process_coercion_check" no_pos in
-      let () = x_binfo_pp "======================" no_pos in
-      let () = x_binfo_hp (add_str "i-ante" string_of_lem_formula) iante no_pos in
-      let () = x_binfo_hp (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in ()
+      let () = x_tinfo_pp "process_coercion_check" no_pos in
+      let () = x_tinfo_pp "======================" no_pos in
+      let () = x_tinfo_hp (add_str "i-ante" string_of_lem_formula) iante no_pos in
+      let () = x_tinfo_hp (add_str "i-conseq" string_of_lem_formula) iconseq no_pos in ()
     else () in
   let inf_obj = coerc.Cast.coercion_infer_obj in
   let () = y_tinfo_hp (add_str "coerc:infer_obj" (fun e -> e # string_of)) inf_obj in
@@ -218,7 +218,7 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 
 
 let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : CF.struc_formula * (CP.spec_var list) =
-  let e_implicit_vars = CF.struc_implicit_vars e in
+  let e_implicit_vars = (* CF.struc_implicit_vars e *) [] in
   let f_none _ _ = None in
   let c_h_formula qvs fv_lhs x =  
     let vs = CF.h_fv x in
@@ -277,8 +277,8 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
   (* let is_folding_flag = Cast.is_folding_coercion coer (\* && !Globals.adhoc_flag_3 *\) in *)
   (* let () = y_tinfo_hp (add_str "is_folding_coerc" string_of_bool) is_folding_flag in *)
   let () = y_tinfo_hp (add_str "coerc" Cprinter.string_of_coerc) coer in
-  let () = y_binfo_hp (add_str "LP.lhs" Cprinter.string_of_formula) lhs in
-  let () = y_binfo_hp (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs in
+  let () = y_tinfo_hp (add_str "LP.lhs" Cprinter.string_of_formula) lhs in
+  let () = y_tinfo_hp (add_str "LP.fv_lhs" Cprinter.string_of_spec_var_list) fv_lhs in
   let fv_rhs = CF.struc_fv rhs in
   let () = y_tinfo_hp (add_str "rhs" Cprinter.string_of_struc_formula) rhs in
   (* WN : fv_rhs2 seems incorrect as it does not pick free vars of rhs *)
@@ -439,7 +439,7 @@ let check_left_coercion coer (cprog: C.prog_decl) =
   let ent_rhs =  coer.C.coercion_body_norm in
   (* let ent_lhs = coer.C.coercion_head in                                    *)
   (* let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_body no_pos in *)
-  x_binfo_pp "Verify Left Coercion" no_pos;
+  x_tinfo_pp "Verify Left Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;
@@ -464,7 +464,7 @@ let check_right_coercion coer (cprog: C.prog_decl) =
   let ent_rhs = CF.struc_formula_of_formula coer.C.coercion_head_norm no_pos in
   let ent_lhs = CF.struc_to_formula coer.C.coercion_body_norm in
   (* let ent_lhs = Cvutil.remove_imm_from_formula cprog ent_lhs (CP.ConstAnn(Lend)) in *) (* actually this removes @L nodes from the body of right lemma for proving sake *)
-  x_binfo_pp "Verify Right Coercion" no_pos;
+  x_tinfo_pp "Verify Right Coercion" no_pos;
   pr_debug (add_str "lemma(med)" pr) coer no_pos;
   pr_debug (add_str "norm lhs" pr3) ent_lhs no_pos;
   pr_debug (add_str "norm rhs" pr2) ent_rhs no_pos;
@@ -512,7 +512,7 @@ let print_lemma_entail_result ?(force_pr=false) (valid: bool) (ctx: CF.list_cont
    coerc_type: lemma type (Right, Left or Equiv)
 *)
 let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  lemma_name lemma_type =
-  let () = x_binfo_pp "lemproving : verify_lemma called" no_pos in
+  let () = x_tinfo_pp "lemproving : verify_lemma called" no_pos in
   let coercs = l2r @ r2l in
   let coercs_info = List.map (fun c ->
       let typ_orig = (match c.C.coercion_type_orig with
@@ -541,7 +541,7 @@ let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_
           let residue = CF.and_list_context rs1 rs2 in
           let valid = valid1 && valid2 in
           let () = (
-              let () = x_binfo_pp "lemproving: before print_lemma_entail_result" no_pos in
+              let () = x_tinfo_pp "lemproving: before print_lemma_entail_result" no_pos in
               if valid then print_lemma_entail_result ~force_pr:force_pr valid residue num_id
               else
                 let force_print = (force_pr ||  !Globals.lemma_ep) || !Globals.lemma_ep_verbose in
@@ -550,14 +550,14 @@ let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_
                 let typ2_str = Cprinter.string_of_coercion_type typ2 in
                 let () = print_lemma_entail_result ~force_pr:force_pr valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
                 let () = print_lemma_entail_result ~force_pr:force_pr valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
-                let () = x_binfo_pp "lemproving: after print_lemma_entail_result" no_pos in
+                let () = x_tinfo_pp "lemproving: after print_lemma_entail_result" no_pos in
                 ()
                   
             ) in
           residue
       )
       | I.Left | I.Right -> (
-        let () = x_binfo_pp "lemproving: before print_lemma_entail_result" no_pos in
+        let () = x_tinfo_pp "lemproving: before print_lemma_entail_result" no_pos in
         let valid, rs, typ = (match coercs_info with
                               | c::[] -> c
                               | _ -> Error.report_error_msg "verify_lemma: Left- or Right-lemma expects 1 coercion" 

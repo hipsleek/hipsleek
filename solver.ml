@@ -2905,7 +2905,7 @@ and find_unsat prog f =
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
-    (* let () = x_tinfo_hp (add_str "npf" Cprinter.string_of_mix_formula) npf no_pos in *)
+    (*    let () = x_tinfo_hp (add_str "npf" Cprinter.string_of_mix_formula) npf no_pos in *)
     (* if !Globals.gen_baga_inv then *)
     (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
     (* else  *)if !Globals.simpl_unfold2 then
@@ -6291,6 +6291,41 @@ and move_impl_inst_estate_x es (f:MCP.mix_formula) =
   x_tinfo_hp (add_str "move_impl(inst_to_keep)" !CP.print_svl) inst_to_keep no_pos;
   x_tinfo_hp (add_str "move_impl(f)" !print_mix_formula) f no_pos;
   x_tinfo_hp (add_str "move_impl(new_to_elim)" !CP.print_svl) new_to_elim no_pos;
+  let _, mix_f, _, _, _, _  = CF.split_components es.es_formula in
+  let mix_f = match (mix_f,f) with
+    | (OnePF rhs,OnePF pure_f) ->
+      let pure_f_conjuncts = CP.list_of_conjs rhs in
+      let pure_f_conjuncts = List.filter (fun (a:CP.formula) -> match a with
+          | BForm (( Eq (Var(a,l), Tsconst (b, c), d), e), f) -> CP.mem a (CP.fv pure_f)
+          | _ ->false
+        ) pure_f_conjuncts in
+      OnePF (CP.conj_of_list pure_f_conjuncts no_pos)
+    | _ -> mix_f
+  in
+  x_tinfo_hp (add_str "f(before):" !print_mix_formula) f no_pos;
+  let f = match (f,mix_f) with
+    | OnePF conseq1, OnePF pure_f ->
+      let conjuncts = CP.list_of_conjs conseq1 in
+      let lhs_perms = CP.list_of_conjs pure_f in
+      if (List.length conjuncts > 1 && List.length l_inst > 0 && List.length lhs_perms > 0)  then
+        let conj = List.hd conjuncts in
+        let lhs_perm = List.hd lhs_perms in
+        match conj,lhs_perm with
+        | (BForm (( Eq (Var(a1,l1), Tsconst (b1, c1), d1), e1), f1), BForm (( Eq (Var(a2,l2), Tsconst (b2, c2), d2), e2), f2))  ->
+          let new_tree = Tree_shares.Ts.subtract b2 b1 in
+          let var = List.hd l_inst in
+          let new_f = OnePF (BForm (( Eq (Var(var,l1), Tsconst (new_tree, c1), d1), e1), f1)) in
+          new_f
+        | (BForm (( Eq (Var(a1,l1), Tsconst (b1, c1), d1), e1), f1), _)  ->
+          let new_tree = Tree_shares.Ts.neg_tree b1 in
+          let var = List.hd l_inst in
+          let new_f = OnePF (BForm (( Eq (Var(var,l1), Tsconst (new_tree, c1), d1), e1), f1)) in
+          new_f  
+        | _ -> f
+      else f
+    | _ -> f
+  in
+  x_tinfo_hp (add_str "f(after):" !print_mix_formula) f no_pos;
   let nf,nflg = 
     let f2 = if ( to_elim_vars = []) then f else 
         (elim_exists_mix_formula to_elim_vars f no_pos) in

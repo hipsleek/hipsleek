@@ -1,0 +1,22 @@
+data cell {int val;}.
+macro L == (#,) .
+macro R == (,#) .
+
+
+//(1)
+checkentail x::cell<q> |-  x::cell<q>.
+print residue.
+ //(1) valid v = full or v<full x(1-v) q (1-v) ll 
+ //-> missing?
+expect Valid.
+
+checkentail x::cell(@@R)<q> |-  x::cell(@@L)<q>.
+print residue.
+
+checkentail x::cell(@@R)<q> |-  x::cell(@@R)<q>.
+print residue.
+
+checkentail x::cell<q> |-  x::cell(@@L)<q>.
+print residue.
+//<1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+

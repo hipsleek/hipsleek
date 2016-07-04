@@ -63,7 +63,7 @@ struct
 
   let rec string_of_tree_share ts = match ts with
     | Leaf true -> "T"
-    | Leaf false -> ""
+    | Leaf false -> "F"
     | Node (t1,t2) -> "("^(string_of_tree_share t1)^","^(string_of_tree_share t2)^")"
 
   let string_of = string_of_tree_share

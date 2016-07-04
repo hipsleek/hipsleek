@@ -11503,7 +11503,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(x_add_1 is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    x_dinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
+    x_binfo_hp (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]
@@ -11993,7 +11993,7 @@ let empty_ctx flowt lbl pos = Ctx (empty_es flowt lbl(*Lab2_List.unlabelled*) po
 let false_es_with_flow_and_orig_ante es flowt f pos =
   let new_f = mkFalse flowt pos in
   {(empty_es flowt Lab2_List.unlabelled pos) with 
-   es_formula = new_f ;
+   es_formula = new_f;
    es_orig_ante = Some f;
    es_infer_vars = es.es_infer_vars;
    es_infer_vars_rel = es.es_infer_vars_rel;
