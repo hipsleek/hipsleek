@@ -9684,7 +9684,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
           let b = x_add !CP.tp_imply ante0 new_conseq in
           if b then
-            let () = y_binfo_hp (add_str "process_univ added!" Cprinter.string_of_pure_formula) conseq0 in
+            let () = y_tinfo_hp (add_str "process_univ added!" Cprinter.string_of_pure_formula) conseq0 in
             TP.univ_rhs_store # set conseq0
           else
             ()
