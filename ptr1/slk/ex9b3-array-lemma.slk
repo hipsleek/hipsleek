@@ -3,7 +3,7 @@ data arrI {
 }.
 
 pred arr_seg<i,n> == i=n & i>=0
-  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0 & x>0
   inv n>=i & i>=0.
 
 
@@ -19,27 +19,54 @@ lemma_unsafe self::arr_seg<i,n> & i<m & m<=n
 
 // These three cases are working correctly
 
+/*
 checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
 print residue.
 expect Fail.
+*/
 
-checkentail //xx::arr_seg<i,m> * 
-   xx::arr_seg<m,n> & i<m<=n & Univ(m)
-   & i<n |- xx::arr_seg<i+1,n>.
+
+checkentail xx::arr_seg<m,n> & i<m<=n & Univ(m) & i<n & i>=0 |- xx::arr_seg<i+1,n>.
 expect Valid.
 print residue.
 
-checkentail //xx::arr_seg<i,m> * 
+checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m) & i<n & i>=0 |-  m=i+1.
+expect Valid.
+
+checkentail 0<=m & m<n & i<m & m<=n & Univ(m) & i<n & i>=0 |- m=i+1.
+
+checkentail 0<=n & m=n & i<m & m<=n & Univ(m) & i<n & i>=0 |- m=i+1.
+
+checkentail (((0<=m & ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m) & i<n & 0<=i |-  m=i+1.
+
+// checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n  & i<n & m=i+1|-  m=i+1.
+// expect Valid.
+
+// checkentail xx::arr_seg<m,n> & i<m<=n & m=i+1 & i<n |- xx::arr_seg<i+1,n>.
+// expect Valid.
+// print residue.
+
+
+// This one fails since m=i+1 will make the LHS stronger
+// checkentail (((0<=m & m<n))) & i<m & m<=n & Univ(m)
+// 	    |-  m=i+1.
+
+
+// checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m)
+// 	    |-  m=i+1.
+
+/*
+checkentail //xx::arr_seg<i,m> *
    xx::arr_seg<m,n> & i<m<=n & Univ(m)
    & i<n |- xx::arr_seg<i+2,n>.
 expect Fail.
 print residue.
 
 // Is it correct the instantiate n together?
-checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m) & i<n |- xx::arr_seg<i+2,n>.
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m) & i+2<n |- xx::arr_seg<i+2,n>.
 expect Fail.
 print residue.
-
+*/
 /*
 
 // i<n
