@@ -87,6 +87,8 @@ module type Message_type = sig
              (param list) * VarGen.loc
 
   val is_emp : formula -> bool
+  val is_hvar_node : h_formula -> bool
+  val is_node : h_formula -> bool
   val print  : (formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
   val mk_node: ?kind:session_kind option -> arg -> h_formula
@@ -98,6 +100,7 @@ module type Message_type = sig
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
   val mk_empty: unit -> h_formula
+  val mk_hvar: ident -> ident list -> h_formula
   val mk_seq_wrapper: h_formula -> VarGen.loc -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
@@ -123,6 +126,7 @@ module type Message_type = sig
   val get_param_id: param -> ident
   val get_node_id: node -> ident
   val get_formula_from_struc_formula: struc_formula -> formula
+  val get_hvar: h_formula -> ident * ident list
 
 end;;
 
@@ -183,6 +187,8 @@ module IForm = struct
     F.mkOr f1 f2 pos
 
   let mk_empty () = F.HEmp
+
+  let mk_hvar id ls = F.HVar(id, ls)
 
   let mk_seq_wrapper_node hform pos =
     let ptr = choose_ptr() in
@@ -297,6 +303,10 @@ module IForm = struct
 
   let is_empty_node h_formula = failwith x_tbi
 
+  let is_hvar_node h_formula = failwith x_tbi
+
+  let is_node h_formula = failwith x_tbi
+
   let get_node h_formula = failwith x_tbi
 
   let get_or_formulae formula = failwith x_tbi
@@ -312,6 +322,8 @@ module IForm = struct
   let get_node_id node = failwith x_tbi
 
   let get_formula_from_struc_formula struc_formula = failwith x_tbi
+
+  let get_hvar node = failwith x_tbi
 
 end;;
 
@@ -369,6 +381,11 @@ module CForm = struct
     CF.mkOr f1 f2 pos
 
   let mk_empty () = CF.HEmp
+
+  let mk_hvar id ls =
+    let id = CP.SpecVar(UNK, id, Unprimed) in
+    let ls = List.map (fun x -> CP.SpecVar(UNK, x, Unprimed)) ls in
+    CF.HVar(id, ls)
 
   let mk_seq_wrapper hform pos = hform
 
@@ -443,6 +460,13 @@ module CForm = struct
   let get_formula_from_ho_param_formula rflow_formula =
     rflow_formula.CF.rflow_base
 
+  let get_hvar node =
+    match node with
+      | CF.HVar (id, ls) -> let id = get_param_id id in
+                            let ls = List.map (fun x -> get_param_id x) ls in
+                            (id, ls)
+      | _ -> failwith (x_loc ^ ": CF.HVar expected.")
+
   let is_seq_node h_formula =
     match h_formula with
       | CF.ViewNode node -> (match node.CF.h_formula_view_session_kind with
@@ -465,6 +489,16 @@ module CForm = struct
   let is_empty_node h_formula =
     match h_formula with
       | CF.HEmp -> true
+      | _ -> false
+
+  let is_hvar_node h_formula =
+    match h_formula with
+      | CF.HVar (id, ls) -> true
+      | _ -> false
+
+  let is_node h_formula =
+    match h_formula with
+      | CF.ViewNode node -> true
       | _ -> false
 
 end;;
@@ -561,10 +595,14 @@ module Projection_base_formula =
     let get_base_pos base = base.projection_base_formula_pos
 
     let is_session_base h_formula =
-      match Msg.get_session_kind h_formula with
-        | Some Send -> true
-        | Some Receive -> true
-        | _ -> false
+      if (Msg.is_node h_formula)
+      then
+        match Msg.get_session_kind h_formula with
+          | Some Send -> true
+          | Some Receive -> true
+          | _ -> false
+      else
+        false
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
@@ -609,6 +647,7 @@ module Make_Session (Base: Session_base) = struct
   and session_base =
     | Base of t
     | Predicate of session_predicate
+    | HVar of session_hvar
 
   and session_seq_formula = {
     session_seq_formula_head: session;
@@ -635,6 +674,11 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_pos: loc;
   }
 
+  and session_hvar = {
+    session_hvar_id: ident;
+    session_hvar_list: ident list;
+  }
+
   let rec string_of_session s =
     (string_of_one_session s) ^ "\n"
 
@@ -648,6 +692,7 @@ module Make_Session (Base: Session_base) = struct
   and string_of_session_base s = match s with
     | Base b -> Base.string_of_session_base b
     | Predicate p -> string_of_session_predicate p
+    | HVar h -> string_of_session_hvar h
 
   and string_of_session_emp () = "emp"
 
@@ -668,6 +713,9 @@ module Make_Session (Base: Session_base) = struct
 
   and string_of_session_predicate s =
     s.session_predicate_name ^ "{}" ^ "<" ^ (string_of_param_list s.session_predicate_params) ^ ">"
+
+  and string_of_session_hvar s =
+    "%" ^ s.session_hvar_id
 
   let mk_base a b = Base (Base.mk_base a b)
 
@@ -694,6 +742,11 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_ho_vars = ho_vars;
     session_predicate_params = params;
     session_predicate_pos = loc;
+  }
+
+  and mk_session_hvar id ls = HVar {
+    session_hvar_id = id;
+    session_hvar_list = ls;
   }
 
   let mk_seq_node h1 h2 pos  =
@@ -728,6 +781,11 @@ module Make_Session (Base: Session_base) = struct
     let params = List.map (fun a -> Base.set_param a pos) params in
     Base.mk_node (ptr, name, args, params, pos)
 
+  and mk_hvar_node h =
+    let id = h.session_hvar_id in
+    let ls = h.session_hvar_list in
+    Base.mk_hvar id ls
+
   let trans_from_session s =
     let rec helper s = match s with
     | SSeq s  ->
@@ -744,7 +802,8 @@ module Make_Session (Base: Session_base) = struct
         mk_star_node arg1 arg2 s.session_seq_formula_pos
     | SBase s -> (match s with
         | Base b -> Base.trans_base b
-        | Predicate p -> mk_predicate_node p)
+        | Predicate p -> mk_predicate_node p
+        | HVar h -> mk_hvar_node h)
     | SEmp    -> Base.mk_empty () in
     helper s
 
@@ -759,7 +818,8 @@ module Make_Session (Base: Session_base) = struct
     | SStar s -> s.session_seq_formula_pos
     | SBase s -> (match s with
         | Base b -> Base.get_base_pos b
-        | Predicate p -> p.session_predicate_pos)
+        | Predicate p -> p.session_predicate_pos
+        | HVar h -> no_pos)
     | SEmp    -> no_pos
 
   let mk_formula_heap_only = Base.mk_formula_heap_only
@@ -811,6 +871,11 @@ module Make_Session (Base: Session_base) = struct
       if (Base.is_session_base h_formula)
       then
         SBase (Base (Base.trans_h_formula_to_session_base h_formula))
+      else
+      if (Base.is_hvar_node h_formula)
+      then
+        let (id, ls) = Base.get_hvar h_formula in
+        SBase (mk_session_hvar id ls)
       (* Can only be Predicate or empty heap at this point. *)
       else
       if (not (Base.is_empty_node h_formula))

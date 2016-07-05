@@ -731,6 +731,13 @@ let peek_dc =
              | [QUERY,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_hvar =
+   SHGram.Entry.of_parser "peek_hvar"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             | [PERCENT,_; IDENTIFIER id,_] -> ()
+             | _ -> raise Stream.Failure)
+
  let peek_short_form = 
    SHGram.Entry.of_parser "peek_short_form"
        (fun strm -> 
@@ -1337,7 +1344,10 @@ protocol_formula:
     | [ `OPAREN; s = protocol_formula; `CPAREN ->
             s
     ]
-    | [ peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
+    |
+      [ peek_hvar; `PERCENT; `IDENTIFIER id ->
+            Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [])
+      | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in
             Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, loc) c)
@@ -1375,7 +1385,10 @@ projection_formula:
             p
     ]
     |
-      [ peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
+      [ peek_hvar; `PERCENT; `IDENTIFIER id ->
+            let () = projection_kind := Projection in
+            Session.IProjection.SBase (Session.IProjection.mk_session_hvar id [])
+      | peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in
             let () = projection_kind := Projection in
