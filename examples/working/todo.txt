@@ -3,6 +3,62 @@
 =================================================
 =================================================
 5Jul16
+
+# default
+
+Starting hip-sleek tests:
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 95.61 second
+	Time spent in main process: 15.88 second
+	Time spent in child processes: 79.73 second
+	Number of false contexts: 98
+
+# arr_infer (merged with default)
+
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 115.33 second
+	Time spent in main process: 25.75 second
+	Time spent in child processes: 89.58 second
+	Number of false contexts: 98
+
+Total number of errors: 25 in files:
+ error at: vperm/task_decompose.ss inc
+error at: veribsync/hip-bperm1.ss readCell
+error at: veribsync/hip-bperm1.ss updateCell
+error at: veribsync/barrier-static-consistency.ss main_fail
+error at: veribsync/barrier-dynamic-exp3.ss main
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.
+Total verification time: 342.63 second
+	Time spent in main process: 279.89 second
+	Time spent in child processes: 62.74 second
+	Number of false contexts: 422
+
 Total number of errors: 2 in files:
   lemmas/dseg-new.slk({L2#Fail}) 
   veribsync/barrier-dynamic2.slk({E2#Fail}).
