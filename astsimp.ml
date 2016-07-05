@@ -2220,7 +2220,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               (* report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc) *)
           else
             let () = y_tinfo_hp (add_str "inv" Cprinter.string_of_ef_pure_disj) f in
-            print_endline_quiet ("\nInv Check: Valid.("^msg^")")
+            y_tinfo_pp ("Inv Check: Valid.("^msg^")")
           | None -> ()
         else ()
       in
@@ -2705,7 +2705,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let keep_vs = CP.self_sv::view_sv in
       let lst_heap_ptrs = 
         if !Globals.ptr_arith_flag then 
-          let lst = List.map (fun (f,_) -> 
+          let lst_ptr = List.map (fun (f,_) -> 
               let (h,pure,_,_,_,_) = CF.split_components f in
               let pure = MCP.pure_of_mix pure in
               let vs = CP.fv pure in
@@ -2717,7 +2717,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                   let ex_vs = Gen.BList.difference_eq CP.eq_spec_var vs keep_vs in
                   let new_p = CP.mkExists_with_simpl !CP.simplify ex_vs pure None no_pos in
                   (* let vars = CP.fv new_p in *)
-                  let (ptrs,eq_lst) = CP.extr_ptr_eqn new_p in
+                  let new_p = Cpure.arith_simplify 89 new_p in
+                  let (ptrs,eq_lst) = x_add_1 CP.extr_ptr_eqn new_p in
                   let base_vars = List.map snd ptrs in
                   let eq_lst = 
                     if List.exists (CP.eq_spec_var CP.self_sv) base_vars 
@@ -2727,7 +2728,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                     (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
                     (* else (\* view node*\) []) *)
                 ) lst in
-              (* let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst in *)
+              let () = y_tinfo_hp (add_str "lst(root)" (pr_list (pr_triple !CP.print_sv string_of_int (pr_list !CP.print_formula)))) lst in
               let () = y_tinfo_hp !CP.print_formula pure in
               (* CF.h_fv ~vartype:Global_var.var_with_heap_ptr_only h *)
               (pure,lst)
@@ -2740,10 +2741,19 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 if !CP.tp_imply pure rhs then aux xs acc
                 else aux xs x in
             (* remove views, keep data nodes only *)
-            let xs = List.filter (fun (v,no,eq_lst) -> no=0 && eq_lst!=[]) xs in
+            let xs = List.filter (fun (v,no,eq_lst) -> no=0 (* && eq_lst!=[] *)) xs in
             let xs = match xs with [] -> []
                                  | x::xs -> aux xs x in
             xs in
+          (* type: IastUtil.CP.formula * *)
+          (*   (IastUtil.CP.spec_var * int * IastUtil.CP.formula list) list -> *)
+          (*   (IastUtil.CP.spec_var * IastUtil.CP.formula) list *)
+          let choose_smallest (pure,xs) =
+            let pr_sv = !CP.print_sv in
+            let pr1 = !CP.print_formula in
+            let pr2 = pr_list (pr_triple pr_sv string_of_int (pr_list pr1)) in
+            let pr3 = pr_list (pr_pair pr_sv pr1)  in
+            Debug.no_2 "choose_smallest" pr1  pr2 pr3 (fun _ _ -> choose_smallest (pure,xs)) pure xs in
           let choose_one xs = 
             let rec aux xs ((v1,p1) as acc) = match xs with
               | [] -> [acc]
@@ -2764,13 +2774,24 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 (* else []  *)
               | _::xss -> [] (* not consistent *) 
             in
+            let rec is_empty xs = match xs with
+              | [] -> true
+              | []::xs -> is_empty xs
+              | _ -> false in
+            let xs = List.filter (fun x -> not(x==[])) xs in
             let ans = match xs with 
             | [xs]::xss -> aux xss xs 
             | _ -> [] in
-            let () = if xs!=[] && ans==[] then 
+            let () = if not (is_empty xs) && ans==[] then 
                 y_tinfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
             in ans
           in
+          let choose_one xs = 
+            let pr_sv = !CP.print_sv in
+            let pr1 = !CP.print_formula in
+            let pr2 = pr_list (pr_triple pr_sv string_of_int (pr_list pr1)) in
+            let pr3 = pr_list (pr_pair pr_sv pr1)  in
+            Debug.no_1 "choose_one" (pr_list pr3) pr3 choose_one xs in
           let fresh_name (v,f) = (v,f) in
               (* let fr_v = CP.fresh_spec_var v in *)
               (* (fr_v,CP.apply_subs [(v,fr_v)] f) in *)
@@ -2780,15 +2801,15 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           let pr_sv = !CP.print_sv in
           let pr_2 = pr_list (pr_pair pr_f (pr_list (pr_triple pr_sv string_of_int pr_lst_f))) in
           (* let () = y_tinfo_hp (add_str "lst" pr_2) lst in *)
-          let lst = List.filter (fun (_,x) -> x!=[]) lst in
+          let lst = List.filter (fun (_,x) -> x!=[]) lst_ptr in
           (* remove views and choose smallest ptr *)
           (* let () = y_tinfo_hp (add_str "lst(after filter)" pr_2) lst in *)
           let pr_3a = (pr_list (pr_pair pr_sv pr_f)) in
           let pr_3 = pr_list pr_3a in
-          let lst = List.map choose_smallest lst in
+          let lst = List.map (x_add_1 choose_smallest) lst in
           let () = y_tinfo_hp (add_str "lst(choose smallest in each branch)" pr_3) lst in
           (* ensure all non-empty branches has same root pointer & merge *)
-          let lst = choose_one lst in
+          let lst = (x_add_1 choose_one) lst in
           (* let () = y_winfo_hp (add_str "TODO: ensure same root for all branches" pr_3a) lst in *)
           (* give fresh name for root ptr *)
           let lst = List.map fresh_name lst in
@@ -2797,6 +2818,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         else []
       in
       let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
+      (* removing non-ptr arithmetic *)
+      let lst_heap_ptrs = List.filter (fun (sv,f) -> not(CP.isConstTrue f)) lst_heap_ptrs in
       (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
       (* let () = y_tinfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in *)
       let cvdef = {
@@ -4655,10 +4678,22 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
       let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
       let () = x_tinfo_hp (add_str "new_body (after push exists)" Cprinter.string_of_formula) new_body no_pos in
       (* let new_body_norm =  c.C.coercion_body_norm in *)
-      let new_body_norm = CF.struc_formula_of_formula new_body no_pos in
-      let new_body_norm = CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in
-      let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
-      let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in
+      let new_body_norm = x_add_1 CF.struc_formula_of_formula new_body no_pos in
+      let () = x_tinfo_hp (add_str "new_body_norm (b4 norm)" Cprinter.string_of_struc_formula) new_body_norm no_pos in
+      let () = x_tinfo_hp (add_str "c_guard" Cprinter.string_of_mix_formula) c_guard no_pos in
+      (* c_guard is already added! see ex6f1c6.slk *)
+      (* !!! **astsimp.ml#4636:new_body_norm (b4 norm): *)
+      (*     EBase  *)
+      (*     (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M& *)
+      (*         mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[]) *)
+      (* !!! **astsimp.ml#4637:c_guard: i<=mmm & mmm<=n *)
+
+      (* let new_body_norm = x_add CF.normalize_struc new_body_norm (\* c.C.coercion_body_norm *\) (CF.mkBase_rec (CF.formula_of_mix_formula c_guard no_pos) None no_pos) in *)
+      let true_f = CP.mkTrue no_pos in
+      let new_body_norm = x_add CF.normalize_struc new_body_norm (* c.C.coercion_body_norm *) (CF.mkBase_rec (CF.formula_of_mix_formula (MCP.mix_of_pure true_f) no_pos) None no_pos) in
+      (* let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in *)
+      (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
+      let new_body_norm = CF.push_struc_exists [] new_body_norm in
       (*                 let new_body_norm = CF.push_exists c.C.coercion_univ_vars new_body_norm in *)
       let () = x_tinfo_hp (add_str "new_body_norm" Cprinter.string_of_struc_formula) new_body_norm no_pos in
       let () = x_tinfo_hp (add_str "old_body_norm" Cprinter.string_of_struc_formula) c.C.coercion_body_norm no_pos in
@@ -9242,15 +9277,17 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     let need_quant = hack_filter_global_rel prog need_quant in
     let anon_vs,need_quant = List.partition IP.is_anon_ident need_quant in
     let flag = not(need_quant==[]) in
-    let msg = (add_str "Post-condition has existentially quantified free vars" pr_ident_list) need_quant in
+    let msg = (add_str ("Post-condition has existentially quantified free vars"^", error position: "^(VarGen.string_of_loc (IF.pos_of_formula f))) pr_ident_list) need_quant in
     if !Globals.warn_post_free_vars && flag then
-      let () = x_winfo_pp msg no_pos in
+      let () = x_winfo_pp msg (IF.pos_of_formula f) in
       Err.report_error{ 
         Err.error_loc = IF.pos_of_formula f; 
         Err.error_text = msg; } 
     else if !Globals.old_post_impl_to_ex && flag (* need_quant!=[] *) then 
       begin
-        let () = x_winfo_pp msg no_pos in
+        let () = x_winfo_pp msg (IF.pos_of_formula f) in
+(*        let () = print_endline ("!!!"^(VarGen.string_of_loc (IF.pos_of_formula f))) in
+        let () = print_endline ("###"^(proving_loc # string_of)) in*)
         IF.push_exists (need_quant@anon_vs) f
       end
     else IF.push_exists anon_vs f

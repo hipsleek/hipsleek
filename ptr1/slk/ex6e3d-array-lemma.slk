@@ -1,0 +1,63 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n 
+   -> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+*/
+
+//1
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m & m<=n &i<n
+   & m=i+1 |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+//2
+// No lemma here...
+checkentail xx::arr_seg<m,n> & i<m & m<=n &i<n
+   // & m=i+1 
+   & i>=0
+   |- xx::arr_seg<i+1,n>.
+
+//3 
+infer[m] i<m & m<=n & 0<=i |- m=i+1.
+print residue.
+
+//4
+infer[m,i,n] i<m & m<=n & 0<=i |- m=i+2.
+print residue.
+
+relation Univ(int m).
+infer[] i<m & m<=n & 0<=i & Univ(m) |- m=i+2.
+expect Fail.
+
+infer[] i<m & m<=n & 0<=i & Univ(m) |- m=i+1.
+expect Valid.
+
+infer[] i<m & m<=n & 0<=i & Univ(m) & m=k |- k=i+1.
+expect Valid.
+
+/*
+# ex6e3d.slk
+
+# see oc1.oc
+
+X1:={[i,n]->[m]:i<m & m<=n & 0<=i};
+Inst:={[i,n]->[m]:m=i+1};
+Inst2:={[i,n]->[m]:m=i+2};
+domain(X1);
+
+domain(X1 intersection Inst);
+domain(X1 intersection Inst2);
+
+*/
+

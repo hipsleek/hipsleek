@@ -1,0 +1,51 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+//checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> & i<n & i>=0.
+//checkentail  y::arrI<_> & y=x |- [i,n] x::arr_seg<i,n> .
+//  <1>y::arrI<Anon_13>@M&i=n & 0<=i & y=x&{FLOW,(20,21)=__norm#E}[]
+
+//checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> .
+checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> & i<n .
+//checkentail  y::arrI<_>  |- x::arrI<_> .
+print residue.
+expect Valid.
+
+/*
+# ex14b2a.slk
+
+
+# why inslt i>=0 inst?
+
+
+Residue:
+ <1>y::arrI<Anon_13>@M&i=n & 0<=i & y=x&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Fold]]
+
+# fold succeed on the base case only..
+
+# TODO : fix recursive appln op folding ..
+
+(==context.ml#3833==)
+process_matches@1
+process_matches inp1 :lhs_h: y::arrI<Anon_13>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: y::arrI<Anon_13>@M
+ RHS: x::arr_seg<i,n>@M
+ root_inst: None
+ lhs_rest: emp
+ rhs_rest: emp
+ alias set: [y,x]rhs_inst: []rhs_infer: None]
+process_matches inp3 :rhs_node: x::arr_seg<i,n>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@1 EXIT: Prio:1
+ Fold =>
+
+*/

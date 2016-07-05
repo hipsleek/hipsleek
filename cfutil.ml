@@ -139,7 +139,8 @@ let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
         (* NOTE: Adding dupl_rest into rem_nodes might cause helper going into a loop *)
         root_node::sig_of_root_args, (* dupl_rest @ *) rem_nodes
       | root_node::_ -> 
-        let () = y_winfo_pp ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes)) in
+            (* need to account for vector with same bases *)
+        let () = y_tinfo_pp ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes)) in
         [root_node], rest_nodes
   in 
   let sig_hs, rem_nodes = helper root hs in

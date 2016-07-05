@@ -306,9 +306,10 @@ let rec parse_file (parse) (source_file : string) =
   *)
   let proc_one_lemma c =
     match c with
-    | LemmaDef ldef -> 
-      if I.is_lemma_decl_ahead ldef then x_add_1 process_list_lemma ldef
-      else ()
+    | LemmaDef ldef ->
+       let () = x_tinfo_pp "sleek : proc_one_lemma called" no_pos in
+       if I.is_lemma_decl_ahead ldef then x_add_1 process_list_lemma ldef
+       else ()
     | _             -> () in
   (* | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (\* An Hoa *\) *)
   (* | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ *)
@@ -398,10 +399,11 @@ let rec parse_file (parse) (source_file : string) =
                            Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
   x_add_1 convert_data_and_pred_to_cast ();
-  x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
+  x_dinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
   (* x_tinfo_pp "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
   List.iter proc_one_lemma cmds;
+  x_dinfo_pp "sleek : after proc_one_lemma" no_pos;
   let l2r = Lem_store.all_lemma # get_left_coercion in
   let r2l = Lem_store.all_lemma # get_right_coercion in
   let () = if (!Globals.print_core || !Globals.print_core_all) then
@@ -409,7 +411,9 @@ let rec parse_file (parse) (source_file : string) =
   (*-------------END lemma --------------------*)
   y_tinfo_pp "sleek : end of lemma " ;
   let cviews = !cprog.C.prog_view_decls in
-  let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
+  let cviews = 
+    if !Globals.old_univ_vars then List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews 
+    else cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
   y_tinfo_pp "sleek : after cviews calling add_uni_vars " ;
@@ -507,7 +511,11 @@ let main () =
       begin
         (* let () = print_endline "Prior to parse_file" in *)
         x_tinfo_pp "sleek : batch processing" no_pos;
-        let todo_unk = List.map (parse_file NF.list_parse) !Globals.source_files in ()
+        let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
+        (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
+        let all_files = slk_prelude_path::!Globals.source_files in
+        let () = x_winfo_pp ((pr_list (fun x -> x)) all_files) no_pos in
+        let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
       end
   with
   | End_of_file ->

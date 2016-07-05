@@ -1,0 +1,21 @@
+H(y) --> y=null
+
+H(y) & y=null --> true
+
+
+A -> B -> C
+
+A & B -> C
+
+A -> B = not(A) | B
+
+A & B -> true  
+ = not(A & B) | true
+ = not(A) | not(B) | true
+
+
+H(y) & y!=null -> y=null
+
+ not(H(y) & y!=null) | y=null
+
+ not(H(y) & y!=null) | y=null

@@ -854,7 +854,7 @@ let eres_name = "eres"
 let self = "self"
 
 let constinfinity = "ZInfinity"
-let deep_split_disjuncts = ref false
+let deep_split_disjuncts = ref true (* false *)
 let check_integer_overflow = ref false
 
 let preprocess_disjunctive_consequence = ref false
@@ -1373,6 +1373,9 @@ let old_pred_extn = ref false (* false *)
 let old_lemma_switch = ref false (* false *)
 let old_free_var_lhs = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
+let old_univ_lemma = ref false (* false *)
+let old_compute_act = ref false (* false *)
+let new_heap_contra = ref true 
 let mkeqn_opt_flag = ref true (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
@@ -1403,6 +1406,7 @@ let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
 let hrel_as_view_flag = ref false
+let init_para_flag = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
@@ -1410,6 +1414,7 @@ let adhoc_flag_4 = ref false
 let adhoc_flag_5 = ref false
 let adhoc_flag_6 = ref false
 let old_keep_absent = ref false
+let old_univ_vars = ref false
 let old_empty_to_conseq = ref true (* false *)
 let weaker_pre_flag = ref true
 
@@ -1454,6 +1459,8 @@ let consistency_checking = ref false
 let wrap_exist = ref false
 
 let move_exist_to_LHS = ref false
+
+let push_exist_deep = ref false
 
 let max_renaming = ref false
 
@@ -2150,6 +2157,7 @@ let templ_piecewise = ref false
 
 (* Options for slicing *)
 let en_slc_ps = ref false
+let auto_eps_flag = ref true
 let override_slc_ps = ref false (*used to force disabling of en_slc_ps, for run-fast-tests testing of modular examples*)
 let dis_ps = ref false
 let dis_slc_ann = ref false

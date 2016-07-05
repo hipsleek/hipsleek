@@ -1,0 +1,29 @@
+data arrI {
+  int val;
+}.
+
+relation Univ(int x).
+
+
+// 4 (sleek7.slk)
+// checkentail x::lseg<n, p> & n > 9 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >= 9 & n2 >= 2.
+//print residue.
+// invalid-exception
+
+checkentail  n>9 & a+b+c=9 & a>=0 & b>=0 & c>=0 & Univ(a) & Univ(b) & Univ(c) |-  a>=9 .
+expect Valid.
+print residue.
+
+checkentail  n>9 & a+b+c=9 & a>=0 & b>=0 & c>=0 & Univ(a) & Univ(b) & Univ(c) & a>=9 |-  b>=8 .
+expect Valid.
+print residue.
+
+checkentail  n>9 & a+b+c=9 & a>=0 & b>=0 & c>=0 & Univ(a) & Univ(b) & Univ(c)  |-  a>=9 & b>=8 .
+expect Fail.
+print residue.
+
+/*
+ex6e3f5.slk 
+
+
+*/

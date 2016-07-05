@@ -2700,6 +2700,9 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
   let pr = !print_h_formula in
   Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
 
+(* WN : this method seems wrong as it adds univ_var info 
+   to each view whether the univ lemma is applied or not 
+*)
 (*find and add uni_vars to view*)
 (*if the view is recursive, only consider its view_vars
   otherwise, go into its heap node and 
@@ -2769,7 +2772,9 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
   (*                       ^"\n ### res1 = " ^ (Cprinter.string_of_spec_var_list res1) *)
   (*                       ^ "\n\n") in *)
   let uni_vars = P.remove_dups_svl res1 in
-  if (view.view_is_rec) then {view with view_uni_vars = uni_vars}
+  if (view.view_is_rec) then 
+    let () = if uni_vars!=[] then y_winfo_hp (add_str "add univ vars to view(rec)" !CP.print_svl) uni_vars in
+    {view with view_uni_vars = uni_vars}
   else
     let rec process_h_formula (h_f:F.h_formula):P.spec_var list = match h_f with
       | F.ViewNode vn ->
@@ -2813,15 +2818,16 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
     let vars = process_struc_formula view.view_formula in
     let vars = vars@uni_vars in
     let vars = P.remove_dups_svl vars in
+    let () = if vars!=[] then y_winfo_hp (add_str "add univ vars to view" !CP.print_svl) vars in
     {view with view_uni_vars = vars}
 
 (*find and add uni_vars to view*)
 let add_uni_vars_to_view cprog (l2r_coers:coercion_decl list) (view:view_decl) : view_decl =
-  Debug.no_2 "add_uni_vars_to_view"
-    !print_coerc_decl_list
-    !print_view_decl
-    !print_view_decl
-    (fun _ _ -> add_uni_vars_to_view_x cprog l2r_coers view) l2r_coers view
+    Debug.no_2 "add_uni_vars_to_view"
+        !print_coerc_decl_list
+        !print_view_decl
+        !print_view_decl
+        (fun _ _ -> add_uni_vars_to_view_x cprog l2r_coers view) l2r_coers view
 
 (************************************************************
    Building the call graph for procedure hierarchy based on Cast

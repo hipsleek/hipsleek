@@ -1,3 +1,26 @@
+================================================================
+# bug5a-norm10-4.slk
+
+Why does ll has actual root?
+This isn't with ptr arithmetic.
+Can we fix it as None instead..
+
+ view ll{}[]<n:int>= 
+  view_domains: 
+   view ll<n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; 
+            q](* lbl: *){2}->(exists flted_6_14: (* lbl: *){2}->self::node<Anon_12,q>@M * 
+                                                                q::ll<flted_6_14>@M&
+            flted_6_14+1=n & 0<n&{FLOW,(1,26)=__flow#E}[])
+
+
+  actual_root: 
+  Some((self, true))
+================================================================
 # test3.slk # DONE 
 
 Inference has three basic problems in above file/
@@ -2630,6 +2653,98 @@ infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
 
  inferred rel: [RELASS [R1]: ( R1(m)) -->  0>m]
  inferred hprel: [H(n@NI)&true --> emp&n<=1]
+===================================================================
+# ex64u2.slk
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- [n1,n2] x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 9 & n2 >= 2.
+
+# simplify for Z3? large proof
+
+ log(bigger)(>4s)(3):(15.,[(simplify:171<9:Z3,5.);(simplify:272<17:Z3,5.);(simplify:371<25:Z3,5.)])
+===================================================================
+# sleek7.slk
+
+Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
+Unexpected result with : sleek7.slk (failed check(s): {E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+===================================================================
+  label-dll.slk(no result  for {E})
+ sleek7.slk({E10#Valid}) sleek8.slk({E16#Valid}) sleek8.slk({E16#Valid}) 
+ sleek9.slk({E3#Valid},{E4#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+odd-lseg.slk taking very long to compute..
+===================================================================
+3Dec
+
+Total number of errors: 6 in files:
+ 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+
+  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+===================================================================
+# ex64r3a.slk (FIXED on --new-heap-contra)
+
+infer [
+  H1
+  ] H1(y)*x::node<null>*z::node<null>  |- 
+    x::ll<n> 
+    .
+print residue.
+
+# why infer [H1] triggers failure in the above?
+===================================================================
+# ex64r3d.slk (FIXED)
+
+  --pnum 2 -dre "infer_\|early_hp_" --trace-log-num 2  
+   -show-push-list "es_infer" >1
+
+infer [@classic,H1] 
+    H1(y) * y::node<null>  & x=null  |- x=null
+     .
+
+# GOT
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(y)&y=null --> emp&true]
+
+# expects:
+
+ inferred hprel: [H1(y) --> y=null]
+
+ above seems too weak to conclude false??
+
+FIXED inside:
+
+(==solver.ml#5669==)
+add_infer_hp_contr_to_list_context@6@2@1
+add_infer_hp_contr_to_list_context inp1 :[((H1, H1(yyy)),[yyy])]
+add_infer_hp_contr_to_list_context inp2 :[ yyy!=null]
+add_infer_hp_contr_to_list_context inp3 : [ hfalse&false&{FLOW,(20,21)=__norm
+===================================================================
+# ex63e1.slk
+
+# why loop for lemma? derived must not fire lemma..
+
+
+lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+
+// 1
+// going into a loop here..
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================

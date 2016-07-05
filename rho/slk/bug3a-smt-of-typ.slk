@@ -1,0 +1,20 @@
+data cell{ int v; }.
+
+checkentail_exact x::cell<_> |- %P.
+print residue.
+
+/*
+# rho/slk/bug3a.slk
+
+!!! **cformula.ml#19887:problem with name_of_h_formula:: HVar P[]
+!!! **tpdispatcher.ml#3753:univ var:[]
+!!! **solver.ml#7747:p1(after xpure_perm): x!=null
+Entail 1: Valid. 
+
+Residue:
+
+ <1>emp&x!=null&{FLOW,(20,21)=__norm#E}[]
+ ho_vars: [P --> x::cell<Anon_12>@M&{FLOW,(20,21)=__norm#E}[]]
+[[ SEARCH ==>  UnmatchedRHSData]]
+
+*/

@@ -1,0 +1,56 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n,S> == i=n & i>=0 & S={}
+  or x::arrI<v>*self::arr_seg<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2)
+  inv n>=i & i>=0.
+
+pred arr_sorted<i,n,S> == i=n & i>=0 & S={}
+  or x::arrI<v>*self::arr_sorted<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2) & forall(a:a notin S2 | v<=a)
+  inv n>=i & i>=0.
+
+
+  /*
+lemma_unsafe self::arr_seg<i,n,S> & i<n & b=n-1 <-> 
+  self::arr_seg<i,b,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m}).
+  
+lemma_unsafe self::arr_sorted<i,n,S> & i<n & b=n-1 <-> 
+  self::arr_sorted<i,b,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m})
+  & forall(a: a notin S1 |  a<=m).
+  */
+
+  //lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1) -> self::arr_sorted<i,n,S>.
+  // does folding use i>=n-1 on RHS too?
+
+lemma_unsafe  self::arr_sorted<i,n,S> <- self::arr_seg<i,n,S> & (i>=n-1).
+
+//lemma_unsafe self::arr_seg<i,n,S> <- self::arr_sorted<i,n,S>.
+lemma_unsafe  self::arr_sorted<i,n,S> -> self::arr_seg<i,n,S>.
+
+checkentail x::arr_sorted<i,n,S> |- x::arr_seg<i,m,S>.
+print residue.
+expect Valid.
+// should succeed
+
+checkentail x::arr_seg<i,n,S> & i>=n-1 |- x::arr_sorted<i,m,S>.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n,S> & i>n-1 |- x::arr_sorted<i,m,S>.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n,S> & i>=n-2 |- x::arr_sorted<i,m,S>.
+  //print residue.
+expect Fail.
+
+
+
+checkentail x::arr_seg<i,n,S> & i>n-1 |- x::arr_sorted<i,m,S> & i>=m-1.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n,S> & i>=n-1 |- x::arr_sorted<i,m,S> & i>m-1.
+print residue.
+expect Fail.

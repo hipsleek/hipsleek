@@ -1,0 +1,74 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+infer[] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> & mm=end-1).
+print residue.
+expect Valid. 
+
+infer[@classic] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> * r::arrI<_> & r=base+(end-1) & mm=end-1).
+print residue.
+expect Valid. 
+
+infer[] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> * r::arrI<_> & r=base+(end-1) & mm=end-2).
+print residue.
+expect Fail. 
+
+infer[] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> * r::arrI<_> & r=base+(end-1) & mm=end).
+print residue.
+expect Fail. 
+
+infer[] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- base::arr_seg<start,end> * r::arrI<_> & r=base+(end-1).
+print residue.
+expect Fail. 
+
+infer[@classic] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- base::arr_seg<start,end-1> * r::arrI<_> & r=base+(end-1).
+print residue.
+expect Valid. 
+
+infer[@classic] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- [mm] base::arr_seg<start,mm> * r::arrI<_> & r=base+(end-1) & mm=end-1.
+print residue.
+expect Valid. 
+
+/*
+infer[] base::arr_seg<start,end> &
+    start!=end & start>=(end-1) 
+   |- base::arr_seg<start,mm> & mm=end-1.
+print residue.
+expect Valid. 
+*/
+
+/*
+# ex6f1d3.slk --pcp
+
+infer[] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> & mm=end-1).
+
+# need to support univ inst m_120+1=end for existential var m_115
+
+ <1>base::arr_seg<m_126,end>@M&m_126=m_120 & start<=m_120 & m_120<=end & 
+                               Univ(m_120) & end<=(start+1) & start!=end&{FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#10898==)
+subs_to_inst_vars@2
+subs_to_inst_vars inp1 :subs:[(start_114,start),(mm_115,m_120)]
+subs_to_inst_vars inp2 :ivars:[m_120]
+subs_to_inst_vars inp3 :impl:[]
+subs_to_inst_vars@2 EXIT:(([],[m_120],ivars_to_conseq:[(m_120,mm_115)]),other_subs:[(start_114,start)])
+
+*/

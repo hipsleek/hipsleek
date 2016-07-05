@@ -1,0 +1,74 @@
+/* 
+checkentail
+ n_2376=end_2249 & x_6448!=r_5822 & x_6276!=x_6448 & x_6276!=r_5822 & 
+ x_2378!=x_6276 & x_2378!=x_6448 & x_2378!=r_5822 & r_5822!=null & 
+ x_6448!=null & x_6276!=null & x_2378!=null & 1<=flted_6_2586 & 
+ v_int_54_5825!=end' & v_int_54_5825=1+start' & n_2585=n_2376 & 
+ start'<v_int_38_2339 & v_int_38_2339+1=end' & start'=start & end'=end & 
+ start!=end & start_2248=start & end_2249=end & 0<=start_2248 & 
+ flted_31_5821+1=end' & 0<=v_int_54_5825 & flted_6_6275=1+v_int_54_5825 & 
+ x_6276=v_int_54_5825+base' & n_6274=flted_31_5821 & r_5822+1=end'+base' & 
+ x_2587!=null & 0<=flted_6_2586 & flted_6_2586<=n_2585 & a=x_2378 & 
+ flted_6_2377=1+start_2248 & x_2378=start_2248+base & base'=base & 
+ 0<=flted_6_2377 & x_2587=flted_6_2377+base & flted_6_2586=1+flted_6_2377 & 
+ a_2495=x_2587 & flted_6_2586=(x_2587-base')+1 & base'<=x_2587 & 
+ x_2587=(flted_6_2586+base')-1 & n_6446=n_6274 & 0<=flted_6_6275 & 
+ x_6448=flted_6_6275+base' & flted_6_6447=1+flted_6_6275 & 
+ (((0<=flted_6_6447 & ((0-base')+1)<=flted_6_6447 & flted_6_6447<n_6446 & 
+    SS2_6450=union({v_2017},SS2_2018)) | 
+   (n_6446=flted_6_6447 & 0<=flted_6_6447 & SS2_6450={}) )) & 
+ SS2_6278=union({v_6449},SS2_6450) & SS_3664=union({v_3746},SS2_3747) & 
+ SS2_3747=SS2_2589 & v_3746=v_2588 & v<=v_2496 & v_2496=v_2588 & 
+ SS2_2380=union({v_2588},SS2_2589) & v=v_2379 & SS1_5823=union({v_6277},
+ SS2_6278) & forall(a_6805:(a_6805 notin SS_3664  | a_6805<=m_5824)) & 
+ SS_3664=union(SS1_5823,{m_5824}) & SS=union({v_2379},SS2_2380)
+ |-  SS=union({},{m_5824}).
+*/
+
+checkentail 
+((SSS ={aaa} & x>n+m+k & n>2) & k>=0 | (SSS={b} & b=aaa & b=c & c=1 & aaa>2
+                                      & x=n+m & m>0)) & n>=0 |- SSS= {aaa} .
+
+/*
+# fixed by --dsd (deep split disjunct)
+
+(==solver.ml#9685==)
+imply_conj_orig@4@3
+imply_conj_orig inp1 :[ 0<=n & 
+ (((S={aaa} & (k+n+m)<x & 2<n & 0<=k) | (S={b} & b=aaa & x=m+n & 0<m)))]
+imply_conj_orig inp2 :[ 0<=n & 
+ (((S={aaa} & (k+n+m)<x & 2<n & 0<=k) | (S={b} & b=aaa & x=m+n & 0<m)))]
+imply_conj_orig inp3 :[ S={aaa}]
+imply_conj_orig@4 EXIT:true
+
+(==solver.ml#8964==)
+imply_mix_formula#1@3
+imply_mix_formula#1 inp1 : 0<=n & 
+ (((S={aaa} & (k+n+m)<x & 2<n & 0<=k) | (S={b} & b=aaa & x=m+n & 0<m)))
+imply_mix_formula#1 inp2 :Some( 0<=n & 
+ (((S={aaa} & (k+n+m)<x & 2<n & 0<=k) | (S={b} & b=aaa & x=m+n & 0<m))))
+imply_mix_formula#1 inp3 : S={aaa}
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@3 EXIT:(true,None)
+*/
+
+checkentail 
+((S ={aaa} & x>n+m+k & n>2) & k>=0 | (S={b} & b=aaa
+                                      & x=n+m & m>0)) |- S= {aaa} .
+
+/*
+(==solver.ml#9685==)
+imply_conj_orig@23@22
+imply_conj_orig inp1 :[ S={aaa} & (k+n+m)<x & 2<n & 0<=k, S={b} & b=aaa & x=m+n & 0<m]
+imply_conj_orig inp2 :[ S={aaa} & (k+n+m)<x & 2<n & 0<=k, S={b} & b=aaa & x=m+n & 0<m]
+imply_conj_orig inp3 :[ S={aaa}]
+imply_conj_orig@23 EXIT:true
+
+(==solver.ml#8964==)
+imply_mix_formula#1@22
+imply_mix_formula#1 inp1 : ((S={aaa} & (k+n+m)<x & 2<n & 0<=k) | (S={b} & b=aaa & x=m+n & 0<m))
+imply_mix_formula#1 inp2 :Some( ((S={aaa} & (k+n+m)<x & 2<n & 0<=k) | (S={b} & b=aaa & x=m+n & 0<m)))
+imply_mix_formula#1 inp3 : S={aaa}
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@22 EXIT:(true,Some(([ S={aaa} & (k+n+m)<x & 2<n & 0<=k, S={b} & b=aaa & x=m+n & 0<m],[ S={aaa} & (k+n+m)<x & 2<n & 0<=k, S={b} & b=aaa & x=m+n & 0<m])))
+*/

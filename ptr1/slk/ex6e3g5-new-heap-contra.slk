@@ -1,0 +1,33 @@
+data node { int val ; node next }.
+//relation Univ(int x).
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+
+//(2)
+infer[a] emp & a=1  |- x::node<_,p>.
+print residue.
+expect Valid.
+
+infer[a] htrue & a=1  |- x::node<_,p>.
+print residue.
+expect Fail.
+
+
+infer[a] x=p & a=0  |- x::lseg<n,p>.
+print residue.
+expect Valid.
+
+HeapPred H1(node y).
+
+infer[a] x=p & a=0  |- x::lseg<n,p>.
+print residue.
+expect Valid.
+
+
+infer[H1] H1(y) & x=p   |- x::lseg<n,p>.
+print residue.
+expect Valid.

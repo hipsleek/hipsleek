@@ -1,0 +1,66 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail x::arr_seg<i,n> |- x::arr_seg<i,n>.
+expect Valid.
+
+checkentail x::arr_seg<i,n> |- y::arr_seg<i,n>.
+print residue.
+expect Fail.
+
+checkentail x::arr_seg<i,n> |- y::arr_seg<i,n> & x=y.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n> & x=y |- y::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n> & x=y |- y::arr_seg<i1,n1>.
+print residue.
+expect Valid.
+
+
+
+checkentail x::arr_seg<i,n> & x=y & i1=2|- y::arr_seg<i1,n1>.
+print residue.
+expect Fail.
+
+checkentail x::arr_seg<2,n> & x=y |- y::arr_seg<i1,n1>.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n> & x=y |- y::arr_seg<2,n1>.
+print residue.
+expect Fail.
+
+
+checkentail x::arr_seg<i,n> & x=y |- y::arr_seg<i1,n1> & i1<=n1.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<2,n> & x=y |- y::arr_seg<i1,n1> & i1<=n1.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<2,n> & x=y |- y::arr_seg<i1,n1> & i1<n1.
+print residue.
+expect Fail.
+
+checkentail x::arr_seg<2,5> & x=y |- y::arr_seg<i1,n1> & i1<n1.
+print residue.
+expect Valid.
+
+
+checkentail x::arr_seg<2,5> & x=y |- y::arr_seg<i1,3> .
+print residue.
+expect Fail.
+
+checkentail x::arr_seg<2,5> & x=y |- y::arr_seg<i1,n1> & n1>3.
+print residue.
+expect Valid.

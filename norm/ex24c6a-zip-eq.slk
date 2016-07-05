@@ -1,0 +1,13 @@
+relation P(int x, int y).
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) |- x>0 & y>0.
+print residue.
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) |- x>0 .
+print residue.
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) |- y>0 .
+print residue.

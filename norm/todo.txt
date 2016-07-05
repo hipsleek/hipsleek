@@ -2176,6 +2176,157 @@ Exception processed: Not_found
 error at: 
 SLEEK FAILURE (END)
 ===================================================================
+# ex24c.ss
+
+!!! **typechecker.ml#845:WARNING : Spurious RelInferred (not collected):[RELASS [P]: ( P(x,y)) -->  (x<=0 | (1<=x & y!=0)),RELDEFN P: ( P(x,y) & y=v_int_11_1754'+1 & x=v_int_11_1755'+1 & 0<=(1+v_int_11_1754') & 
+ 0<=v_int_11_1755') -->  P(v_int_11_1755',v_int_11_1754')]
+
+  P(x,y)) -->  (x<=0 | (1<=x & y!=0)),
+  P(x,y) & y=w+1 & x=v+1 & 0<=(1+w) & 0<=v) -->  P(v,w)]
+
+
+  P(x,y) -> y=w+1 & x=v+1 & 0<=(1+w) & 0<=v) -->  P(v,w)
+  P(x,y) -> y=w+1 & x=v+1 & 0<=(1+w) & 0<=v) -->  P(v,w)
+  P(x,y) -> y=w+1 & x=v+1 & 0<=(1+w) & 0<=v) -->  P(v,w)
+  P(x,y) -> y=w+1 & x=v+1 & 0<=(1+w) & 0<=v) -->  P(v,w)
+  P(x,y) -> not(0<=(y) & 0<=x-1) | P(x-1,y-1)
+
+  P(x,y) -> (x<=0 | (1<=x & y!=0)) /\ 
+           (not(0<=(y) & 0<=x-1) | P(x-1,y-1))
+===================================================================
+# ex24c6.ss
+
+ infer [P] 
+ requires P(x,y) & x>=0 & y>=0 
+ ensures true;
+{
+  if (x==0 && y==0) return x;
+  else {
+    int r=zip(x-1,y-1);
+    return 1+r;
+  }
+}
+
+# can hip be fixed with new gfp procedure?
+
+!!! **typechecker.ml#845:WARNING : Spurious RelInferred (not collected):[RELASS [P]: ( P(x,y)) -->  (x!=0 | 1>y),RELASS [P]: ( P(x,y)) -->  (y!=0 | 1>x),RELDEFN P: ( P(x,y) & x=v_int_12_1762'+1 & y=v_int_12_1761'+1 & 0<=v_int_12_1762' & 
+ 0<=v_int_12_1761') -->  P(v_int_12_1762',v_int_12_1761')]
+Procedure zip$int~int SUCCESS.
+
+
+!!! **pi.ml#686:lst_assume (after norm and postprocess):[( P(x,y), ((x!=0 & y!=0) | (x!=0 & 1>x) | (1>y & y!=0) | (1>y & 1>x)))]
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("get_unchanged_fixpoint: Invalid rel")Occurred!
+===================================================================
+# ex24c7a.ss
+
+ infer [P] 
+ requires P(x,y) 
+ ensures true;
+{
+  if (x==y) return 1;
+  else {
+    int m=(x+y)/2;
+    if (rand()) return bsearch(x,m);
+    else return bsearch(m+1,y);
+  }
+}
+
+# is it possible to get x<=y as the latter cond x>y may loop?
+
+!!! **typechecker.ml#845:WARNING : Spurious RelInferred (not collected):[RELDEFN P: ( P(x',y) & 0<=m' & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<y) -->  P(x',m'),RELDEFN P: ( P(x',y) & 0<=m' & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<x') -->  P(x',m'),RELDEFN P: ( P(x',y) & m'<=(0-1) & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<y) -->  P(x',m'),RELDEFN P: ( P(x',y) & m'<=(0-1) & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<x') -->  P(x',m'),RELDEFN P: ( P(x,y') & 1<=v_int_18_1761' & (2*v_int_18_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_18_1761') & v_int_18_1761'<=y') -->  P(v_int_18_1761',y'),RELDEFN P: ( P(x,y') & 1<=v_int_18_1761' & (2*v_int_18_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_18_1761') & v_int_18_1761'<=x) -->  P(v_int_18_1761',y'),RELDEFN P: ( P(x,y') & v_int_18_1761'<=0 & (2*v_int_18_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_18_1761') & v_int_18_1761'<=y') -->  P(v_int_18_1761',y'),RELDEFN P: ( P(x,y') & v_int_18_1761'<=0 & (2*v_int_18_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_18_1761') & v_int_18_1761'<=x) -->  P(v_int_18_1761',y')]
+===================================================================
+# ex24c7b.ss
+
+ infer [P,@classic] 
+ requires P(x,y) 
+ ensures false;
+/*
+ requires x>y
+ ensures false;
+ // verifies
+*/
+{
+  if (x==y) return 1;
+  else {
+    int m=(x+y)/2;
+    if (rand()) return bsearch(x,m);
+    else return bsearch(m+1,y);
+}
+
+# why are there so many duplicated reldefns? can gfp derive x>y
+
+!!! **typechecker.ml#845:WARNING : Spurious RelInferred (not collected):
+[RELDEFN P: ( P(x',y) & 0<=m' & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<y) -->  P(x',m'),
+RELDEFN P: ( P(x',y) & 0<=m' & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<x') -->  P(x',m'),
+RELDEFN P: ( P(x',y) & m'<=(0-1) & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<y) -->  P(x',m'),
+RELDEFN P: ( P(x',y) & m'<=(0-1) & (x'+y)<=(1+(2*m')) & (2*m')<=(x'+y) & m'<x') -->  P(x',m'),
+RELDEFN P: ( P(x,y') & 1<=v_int_22_1761' & (2*v_int_22_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_22_1761') & v_int_22_1761'<=y') -->  P(v_int_22_1761',y'),RELDEFN P: ( P(x,y') & 1<=v_int_22_1761' & (2*v_int_22_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_22_1761') & v_int_22_1761'<=x) -->  P(v_int_22_1761',y'),RELDEFN P: ( P(x,y') & v_int_22_1761'<=0 & (2*v_int_22_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_22_1761') & v_int_22_1761'<=y') -->  P(v_int_22_1761',y'),RELDEFN P: ( P(x,y') & v_int_22_1761'<=0 & (2*v_int_22_1761')<=(2+y'+x) & 
+ (y'+x)<(2*v_int_22_1761') & v_int_22_1761'<=x) -->  P(v_int_22_1761',y')]
+
+# why collected differently?
+
+!!! **pi.ml#686:lst_assume (after norm and postprocess):[( P(x,y), x!=y)]
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("get_unchanged_fixpoint: Invalid rel")Occurred!
+===================================================================
+# ex24c6a.slk
+
+infer[P] P(x,y) & x>=0 & y>=0
+ & (x!=0 | y!=0) |- x>0 & y>0.
+print residue.
+
+# Why some asymmetry?
+
+ <1>emp&((x!=0 | y!=0)) & 0<=y & 0<=x & P(x,y)&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELASS [P]: ( P(x,y)) -->  (x!=0 | (0<=x & y<=0))]
+
+ <1>emp&((x!=0 | y!=0)) & 0<=y & 0<=x & P(x,y)&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELASS [P]: ( P(x,y)) -->  (x<=0 | (y<=(0-1) & 1<=x) | 1<=y)
+
+===================================================================
+# ex24c9d.fc
+
+# over-narrowing below
+
+zip:={[a,b] -> [] -> []: 
+  (!(a>=0 && b>=0 
+    && (!(a=0)||!(b=0))) 
+    || (a>0 && b>0)) &&
+   exists (v,w:  a=v+1 && b=w+1 &&
+     (!((v>=0 && w>=0) && (!(a=0) || !(b=0))) || zip(v,w))
+  )
+};
+
+{[a,b]:((a >= 4 && b >= 4) || ((b >= 0 && 3 >= b) && b = a))};
+{[a,b]:((a >= 5 && b >= 5) || ((b >= 0 && 4 >= b) && b = a))};
+
+# F4N:=narrow(F4,F5,SimHeur);
+# F4N;
+1 = 0
+
+Exp:={[]:a>=0 && a=b};
+# ExpN subset F4;
+# True
+# ExpN subset F5;
+# True
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
 ===================================================================
 ===================================================================
 ===================================================================
