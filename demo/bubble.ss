@@ -66,7 +66,7 @@ bool bubble(node xs)
 		tmp = bubble(xs.next);
     int xv = xs.val;
     int xnv = xs.next.val;
-		if (xv <= xnv) 
+		if (xv >= xnv) 
 			flag = false;
 		else {
 			xs.val = xnv;

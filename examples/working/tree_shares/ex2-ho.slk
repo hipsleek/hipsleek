@@ -1,4 +1,6 @@
 relation B(int n).
+
+// 1
 infer [B] v=5 |- B(v).
 print residue.
 
@@ -15,15 +17,49 @@ relation Base(int n).
 relation Rec(int n).
 
 
-pred arrsegHO<i,m> ==
-   x::arrI<v> & x=self+i & Base(v)
-   or x::arrI<v> * self::arrsegHO<i+1,m> & Rec(v) & x = self+i.
 
 pred arrseg<i,m> ==
-   x::arrI<v> & x=self+i 
-   or x::arrI<v> * self::arrseg<i+1,m> & x = self+i.
+   x::arrI<v> & x=self+i & i=m-1
+   or x::arrI<v> * self::arrseg<i+1,m> & x = self+i & i<m-1
+inv i<m.
 
-//infer [Rec] arr::arrI<v> * arr::arrsegHO<i+1,m> & v=5 |- arr::arrsegHO<i,m>.
+// 2
+infer [@classic] x::arrI<v> * arr::arrseg<i+1,m> & x=arr+i |- arr::arrseg<i,m>.
+print residue.
+
+pred arrsegHO<i,m> ==
+   x::arrI<v> & x=self+i & i=m-1 // Rec(v) & i=m-1
+   or x::arrI<v> * self::arrsegHO<i+1,m> & x = self+i & i<m-1 // & Rec(v) 
+ inv i<m.
+
+// 3
+infer [@classic,Rec] x::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & x=arr+i & i<m-1 |- arr::arrsegHO<i,m>.
+print residue.
+
+// 4
+infer [Rec] x::arrI<v> * arr::arrsegHO<i+1,m> & Rec(v) & x=arr+i & i<m-1 |- arr::arrsegHO<i,m> & Rec(v).
+//print residue.
+
+// 5
+infer [Base,Rec] x::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & x=arr+i & i<m-1|- x::arrI<v> * arr::arrsegHO<i+1,m> & Rec(v).
+//print residue.
 
 
-infer [] arr::arrI<v> * arr::arrseg<i+1,m> |- arr::arrseg<i,m>.
+
+pred arrsegHO2<i,m> ==
+   i=m
+   or x::arrI<v> * self::arrsegHO2<i+1,m> & Rec(v) & x = self+i & i<m.
+
+// 6
+infer [Rec] x::arrI<v> * arr::arrsegHO2<i+1,m> & v=5 & x=arr+i & i<m |- arr::arrsegHO2<i,m>.
+
+
+
+
+pred cell<i> ==
+   x::arrI<v> & x=self+i & Rec(v).
+
+infer[Base,Rec] x::arrI<v> & v=5 & x=arr+i |- arr::cell<i>.
+print residue.
+
+//inferred rel: [RELDEFN Rec: ( v_342=5) -->  Rec(v_342)]

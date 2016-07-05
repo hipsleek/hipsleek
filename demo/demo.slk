@@ -7,6 +7,18 @@ pred ll<n> == self = null & n = 0
     or self::node<_, q> * q::ll<n-1> 
   inv n >= 0.
 
+checkentail x=null |- x::ll<n>.
+print residue.
+
+checkentail x::node<_,null> |- x::ll<n>.
+print residue.
+
+infer[n] x::ll<n> |- x::node<_,q> .
+print residue.
+
+checkentail x::ll<3> |- x::node<_,q>.
+print residue.
+
 checkentail x::ll<n> |- n>=-1.
 print residue.
 

@@ -115,7 +115,8 @@ let prune_irr_neq_x p0 irr_svl comps=
         | _, true -> false,np1
         | _ -> (false,mkAnd np1 np2 pos)
       end
-    | AndList b-> false,p(* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
+    | AndList b-> false,p
+    (* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
     (*     let nb1,svl1 = helper b1 in *)
     (*     if svl1 = [] then ls1@[(sl,b1)],svl0 else *)
     (*       ls1,svl0@svl1 *)
@@ -187,7 +188,8 @@ let prune_irr_neq_ll_x p0 irr_svl comps=
         | _, true -> false,np1
         | _ -> (false,mkAnd np1 np2 pos)
       end
-    | AndList b-> false,p(* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
+    | AndList b-> false,p
+    (* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
     (*     let nb1,svl1 = helper b1 in *)
     (*     if svl1 = [] then ls1@[(sl,b1)],svl0 else *)
     (*       ls1,svl0@svl1 *)
@@ -243,7 +245,8 @@ let prune_irr_neq_new_x p0 irr_svl=
         | _, true -> false,np1
         | _ -> (false,mkAnd np1 np2 pos)
       end
-    | AndList b-> false,p(* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
+    | AndList b-> false,p
+    (* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
     (*     let nb1,svl1 = helper b1 in *)
     (*     if svl1 = [] then ls1@[(sl,b1)],svl0 else *)
     (*       ls1,svl0@svl1 *)

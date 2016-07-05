@@ -1,0 +1,69 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+HeapPred H1(node y).
+relation R(node y).
+HeapPred H2(node y,node x).
+
+
+infer [@classic,R] 
+    y::node<null>  & x=null  & R(y)  |- x=null
+     .
+print residue.
+expect Valid.
+
+//(2)
+infer [@classic,H1] 
+    H1(yyy) * y::node<null>  & x=null & yyy=null |- x=null
+     .
+print residue.
+expect Valid.
+//inferred hprel: [H1(yyy)&true --> emp&yyy!=null]
+
+//(3)
+infer [@classic,H2] 
+    H2(yyy,x) * y::node<null>  & x=null & yyy=null |- x=null
+     .
+print residue.
+expect Valid.
+//inferred hprel: [H2(yyy,x)&true --> emp&(yyy!=null | x!=null)]
+
+infer [@classic,x,yyy] y::node<null>  & x=null & yyy=null |- x=null
+     .
+print residue.
+expect Valid.
+// inferred pure: [(yyy!=null | x!=null)]
+
+
+/*
+# ex64r3d.slk 
+--pnum 2 -dre "infer_\|early_hp_" --trace-log-num 2  
+   -show-push-list "es_infer" >1
+
+infer [@classic,H1] 
+    H1(y) * y::node<null>  & x=null  |- x=null
+     .
+
+# GOT
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(y)&y=null --> emp&true]
+
+# expects:
+
+ inferred hprel: [H1(y) --> y=null]
+
+ above seems too weak fo conclude false??
+
+====
+@2!:0: 0: **smtsolver.ml#229:NONE #
+push_list(es_infer_hp_rel):**infer.ml#4730:1[ unknown H1(yyy)&yyy!=null |#|  --> emp]
+
+@2! **solver.ml#5670:res_ctx opt:
+Some( [ hfalse&false&{FLOW,(20,21)=__norm#E}[]
+  es_infer_hp_rel: [unknown H1(yyy)&yyy!=null |#|  --> emp]
+
+*/

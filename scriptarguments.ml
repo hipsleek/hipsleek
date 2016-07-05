@@ -65,8 +65,8 @@ let common_arguments = [
    "Disable Simplify the entail state before printing the dprint state."); (* An Hoa *)
   ("-wpf", Arg.Set Globals.print_proof,
    "Print all the verification conditions, the input to external prover and its output.");
-  (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
-  (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
+  ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
+  "Do unfolding of predicates with duplicated pointers."); (* An Hoa *)
   (* Labelling Options *)
   ("--temp-opt", Arg.Set Globals.temp_opt_flag,
    "Temporary option flag.");
@@ -142,6 +142,8 @@ let common_arguments = [
    "Simplify the pure part of the formulas");
   (* ("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic, *)
   (* "Use the combined coerce&match + history heuristic for lemma application"); *)
+  ("--push-exist-deep", Arg.Set Globals.push_exist_deep,
+   "Push exist as deep as possible");
   ("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
    "Move instantiation (containing existential vars) to the LHS at the end of the folding process");
   ("--max-renaming", Arg.Set Globals.max_renaming,
@@ -310,7 +312,7 @@ let common_arguments = [
        VarGen.trace_loop_all :=true;
        VarGen.trace_loop :=true;
      ),
-   "Enable trace of method header duriong debugging (with details on arg)");
+   "Enable trace of method header during debugging (with details on arg)");
   (* Exception(fixcalc_of_pure_formula):Stack overflow *)
   (* Exception(compute_def@6):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
@@ -353,6 +355,12 @@ let common_arguments = [
   ("--new-tp-simplify", Arg.Clear Globals.old_tp_simplify,"Use om_simplify instead of TP.simplify_raw");
   ("--en-mkeqn-opt", Arg.Set Globals.mkeqn_opt_flag,"Enable mkeqn optimization");
   ("--dis-mkeqn-opt", Arg.Clear Globals.mkeqn_opt_flag,"Disable mkeqn optimization");
+  ("--old-univ-lemma", Arg.Set Globals.old_univ_lemma,"Use old univ lemma technique (bug with ex6e3e.slk)");  
+  ("--old-compute-act", Arg.Set Globals.old_compute_act,"Use old method of filtering actions");
+  ("--new-compute-act", Arg.Clear Globals.old_compute_act,"Use new (better) method of filtering actions");
+  ("--old-heap-contra", Arg.Clear Globals.new_heap_contra,"Do not use heap contra (bug with ex6e3f9.slk --pnum 4)");
+  ("--new-heap-contra", Arg.Set Globals.new_heap_contra,"Use heap contra for inference (bug with ex6e3f9.slk --pnum 4)");
+  ("--new-univ-lemma", Arg.Clear Globals.old_univ_lemma,"Use new univ lemma technique (bug with ex6e3e.slk)");
   ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
   ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");
   ("--old-pred-extn", Arg.Set Globals.old_pred_extn,"Use new pred extension approach");
@@ -412,12 +420,15 @@ let common_arguments = [
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
   ("--en-hrel-as-view", Arg.Set Globals.hrel_as_view_flag,"Enable HRel as view");
   ("--dis-hrel-as-view", Arg.Clear Globals.hrel_as_view_flag,"Disable HRel as view");
+  ("--en-init-para", Arg.Set Globals.init_para_flag,"Enable init_para for infer relation ");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
   ("--adhoc-4", Arg.Set Globals.adhoc_flag_4,"Enable Adhoc Flag 4");
   ("--adhoc-5", Arg.Set Globals.adhoc_flag_5,"Enable Adhoc Flag 5");
   ("--adhoc-6", Arg.Set Globals.adhoc_flag_6,"Enable Adhoc Flag 6");
+  ("--old-univ-vars", Arg.Set Globals.old_univ_vars,"Old method of using univ vars");
+  ("--new-univ-vars", Arg.Clear Globals.old_univ_vars,"New method of using univ vars");
   ("--old-keep-absent", Arg.Set Globals.old_keep_absent,"Keep absent nodes during expure - unsound");
   ("--old-empty-to-conseq", Arg.Set Globals.old_empty_to_conseq,"Keep to_conseq empty");
   ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Flag unsound false");
@@ -557,6 +568,7 @@ let common_arguments = [
        Globals.allow_inf_qe := true;
        Globals.allow_qe_fix := true;),
    "use the quantifier elimination procedure for inference ");
+  ("--dis-dsd", Arg.Clear Globals.deep_split_disjuncts,"disable deep splitting of disjunctions");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -875,6 +887,8 @@ let common_arguments = [
    "maximum number of iteration on TNT algorithm");
 
   (* Slicing *)
+  ("--auto-eps", Arg.Set Globals.auto_eps_flag, "Enable automatic proof slicing for mona");
+  ("--dis-auto-eps", Arg.Clear Globals.auto_eps_flag, "Disable automatic proog slicing for mona");
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
   ("--dis-eps", Arg.Clear Globals.en_slc_ps, "Disable slicing with predicate specialization");
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
@@ -987,6 +1001,7 @@ let common_arguments = [
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--old-lemma-settings", Arg.Unit (fun _ ->
        Globals.old_norm_w_coerc := true;
+       Globals.old_univ_lemma := true;
        Globals.old_search_always := true;
      ), "Allow old lemma settings");
   ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");

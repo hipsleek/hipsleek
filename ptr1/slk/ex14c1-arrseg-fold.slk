@@ -1,0 +1,123 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+//checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
+//print residue.
+
+//checkentail x::arrI<_>  & x=y|- y::arr_seg<0,2> & y=x . // ok(fail)
+//checkentail x::arrI<_> & x=y  |- y::arr_seg<0,1> . // ok(valid)
+//checkentail x::arrI<_>  |- y::arr_seg<i,m> & y=x . // fail?
+//checkentail x::arrI<_>  |- y::arr_seg<1,2> & y=x . // ok (fail)
+//checkentail emp  |- y::arr_seg<1,1> . ok(valid)
+//checkentail emp  |- y::arr_seg<1,1> & y=x. //correct to fail?
+//checkentail emp  |- [y] y::arr_seg<1,1> & y=x. //ok(valid)
+//checkentail emp  |- y::arr_seg<1,1> & y=x. //fail due to y not being existential
+//checkentail x=y  |- y::arr_seg<1,1> . //ok(valid)
+//checkentail x::arrI<_>*x1::arrI<_> & x1=x+1  |- [y] y::arr_seg<0,1> & y=x . // ok(valid with residue)
+//checkentail x1::arrI<_>*x::arrI<_> & x1=x+1  |- [y] y::arr_seg<0,1> & y=x . // ok(valid with residue)
+//checkentail x1::arrI<_>*x::arrI<_> & x1=x+1  |- [y] y::arr_seg<0,2> & y=x . // ok(valid with residue)
+//checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is implicit existential
+checkentail x::arrI<_>  |- [y] y::arr_seg<i,1> & y=x . // fail?
+//checkentail x::arrI<_>  |- x::arr_seg<i,1> . // ok(valid with i=0)
+//checkentail x::arrI<_>  |- [y,i] y::arr_seg<i,1> & y=x . // ok(valid)
+print residue.
+expect Valid.
+
+/*
+# ex14c1.slk
+
+!!!:0: 0: **solver.ml#2400:new_inst:Some((x_65,x))
+!!! **solver.ml#2402:do_fold: renamed_view_formula:
+ EList
+   :EBase 
+      (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+   || :EBase 
+         exists (Impl)[xx_65; Anon_66](* lbl: *){2}->(exists n_67,
+         flted_6_68: (* lbl: *){2}->xx_65::arrI<Anon_66>@M * 
+                                    self::arr_seg<flted_6_68,n_67>@M&
+         flted_6_68=1+i & xx_65=i+self & 0<=i & n_67=n&
+         {FLOW,(1,26)=__flow#E}[])
+   
+!!! **solver.ml#2429:fr_vars:[xx_65,self,i,n]
+!!! **solver.ml#2430:to_vars:[x,y,flted_24_63,flted_24_62]
+
+checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is impl existential rather than explicitly so..
+
+# why impl existential not helping here.
+  why we did not inst impl for ptr arithmetic?
+
+INPUT 0: [][] 
+ ### ante =  x::arrI<Anon_13>@M&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Impl)[y](exists flted_22_51,
+   flted_22_52: y::arr_seg<flted_22_52,flted_22_51>@M&
+   flted_22_52=0 & flted_22_51=1 & y=x&{FLOW,(20,21)=__norm#E}[])
+*/
+
+// checkentail x::arrI<_> |- x::arr_seg<1,n> .
+// print residue.
+
+
+// checkentail x::arrI<_>  |- y::arrI<_>.
+// print residue.
+// expect Valid.
+
+
+// checkentail x::arr_seg<i,n> & i<n & y=x+i+1|- y::arrI<_>.
+// print residue.
+// expect Valid.
+
+// checkentail x::arrI<_> & y+2=x |- y::arr_seg<1,n>.
+// print residue.
+// expect Valid.
+
+/*
+# ex14c.slk
+
+Did we not use LHS /\ RHS |- x=y? where C= LHS & RHS?
+
+       C |- x=y
+  -------------------------------------match node
+      x::arr<v1> |- y::arr<v2>
+
+Can we prune out match of x,z and it is unlikely..
+
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- z::arrI<_> & z=x+1.
+print residue.
+expect Valid.
+
+
+(==context.ml#3810==)
+process_matches@1
+process_matches inp1 :lhs_h: x::arrI<Anon_13>@M * y::arrI<Anon_14>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: x::arrI<Anon_13>@M
+ RHS: z::arrI<Anon_15>@M
+ root_inst: None
+ lhs_rest: y::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [y,x,z]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: y::arrI<Anon_14>@M
+ RHS: z::arrI<Anon_15>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [y,x,z]rhs_inst: []rhs_infer: None]
+process_matches inp3 :rhs_node: z::arrI<Anon_15>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@1 EXIT: Prio:-1
+ SEARCH =>[
+  Prio:1
+  Match =>;
+  Prio:1
+  Match =>
+  ]
+
+
+*/

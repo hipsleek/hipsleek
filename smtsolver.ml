@@ -88,7 +88,7 @@ let rec smt_of_typ t =
   | Tup2 _ -> "Int" (*TODO: handle this*)
   | TVar _ -> "Int"
   | Void -> "Int"
-  | List _ | FORM -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+  | List _ -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
@@ -96,6 +96,7 @@ let rec smt_of_typ t =
   | RelT _ -> "Int"
   | UtT _ -> "Int"
   | HpT -> "Int"
+  | FORM -> "Int" (* is this correct? *)
   (* | SLTyp *)
   | INFInt 
   | Pointer _ -> Error.report_no_pattern ()
@@ -109,7 +110,7 @@ let smt_of_spec_var sv =
 
 let smt_of_typed_spec_var sv =
   try
-    "(" ^ (smt_of_spec_var sv) ^ " " ^ (smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
+    "(" ^ (smt_of_spec_var sv) ^ " " ^ (x_add_1 smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
@@ -379,7 +380,7 @@ let add_relation (rname1:string) rargs rform =
     (* Cache the declaration for this relation *)
     let cache_smt_input = (
       let signature = List.map CP.type_of_spec_var rargs in
-      let smt_signature = String.concat " " (List.map smt_of_typ signature) in
+      let smt_signature = String.concat " " (List.map (x_add_1 smt_of_typ) signature) in
       (* Declare the relation in form of a function --> Bool *)
       "(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n"
     ) in
@@ -407,7 +408,7 @@ let add_hp_relation (rname1:string) rargs rform =
   (* Cache the declaration for this relation *)
   let cache_smt_input = (
     let signature = List.map CP.type_of_spec_var rargs in
-    let smt_signature = String.concat " " (List.map smt_of_typ signature) in
+    let smt_signature = String.concat " " (List.map (x_add_1 smt_of_typ) signature) in
     (* Declare the relation in form of a function --> Bool *)
     "(declare-fun " ^ rname1 ^ " (" ^ smt_signature ^ ") Bool)\n"
   ) in
@@ -802,7 +803,7 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let fvars = List.filter (fun sv -> not (Cpure.is_rel_typ sv)) (Cpure.remove_dups_svl fvars0) in
   let smt_var_decls = List.map (fun v ->
       let tp = (CP.type_of_spec_var v)in
-      let t = smt_of_typ tp in
+      let t = x_add_1 smt_of_typ tp in
       match tp with
       | FuncT _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
       | _ -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
@@ -1322,7 +1323,7 @@ let get_model is_linear vars assertions =
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
       let typ = (CP.type_of_spec_var v)in
-      let t = smt_of_typ typ in
+      let t = x_add_1 smt_of_typ typ in
       "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
     ) vars in
   let smt_var_decls = String.concat "" smt_var_decls in
@@ -1393,7 +1394,7 @@ let get_unsat_core assertions =
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
       let typ = (CP.type_of_spec_var v)in
-      let t = smt_of_typ typ in
+      let t = x_add_1 smt_of_typ typ in
       "(declare-const " ^ (smt_of_spec_var v) ^ " " ^ t ^ ")\n"
     ) vars in
   let smt_var_decls = String.concat "" smt_var_decls in

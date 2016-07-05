@@ -1,0 +1,73 @@
+/*
+checkentail 
+b_107=b_128+a_127 & 0<=a_127 & 0<=b_128 & Univ(a_127) & Univ(b_128) & 
+ nnn=b_107+a_106 & 0<=a_106 & 0<=b_107 & Univ(a_106) & Univ(b_107) & 
+ 19<nnn & r1=r_113 & nn1=a_106 & r1=r_113 & r=r_134 & nn2=a_127 & r=r_134 & 
+ (((1<=b_128 & r_134!=null) | (p=r_134 & b_128=0))) & 
+ (((1<=a_127 & r_113!=null) | (r_134=r_113 & a_127=0))) & 
+ (((1<=a_106 & x!=null) | (r_113=x & a_106=0)))
+|- 5<nn2.
+*/
+
+/*
+checkentail 
+//b_107=b_128+a_127 & 
+0<=a_127 & 0<=b_128 & Univ(a_127) & Univ(b_128) & 
+ nnn=b_128+a_127+a_106 & 0<=a_106 
+//& 0<=b_107 
+& Univ(a_106) 
+// & Univ(b_107) 
+ & 19<nnn //& nn1=a_106 & nn2=a_127  
+|- 5<a_127.
+*/
+
+checkentail 
+n=a+r & r=b+c
+& a>=0 & b>=0 & c>=0 & r>=0
+& n>19
+& Univ(a) & Univ(b) & Univ(c) 
+& Univ(r) 
+|- a>5.
+
+/*
+checkentail 
+n=a+r & a>=0 & b>=0 & c>=0 & r=b+c
+& Univ(a) & Univ(b) & Univ(c) 
+& Univ(r) & r>=0
+& n>19
+|- (exists a,b,c,r:
+      a>5 & n>19 & n=a+r & r=b+c & r>=0 & a>=0 & b>=0 & c>=0
+  )
+.
+
+checkentail 
+n=a+r & a>=0 & b>=0 & c>=0 & r=b+c
+//& Univ(a) & Univ(b) & Univ(c) & Univ(r) 
+& r>=0 & n>19 |-
+exists(r:exists(c:exists(b:0<=b & r=c+b) & 0<=c) & 
+          exists(a:5<a & 0<=a & n=r+a) & 0<=r) & 
+ 19<n
+.
+*/
+
+
+
+checkentail 
+n=a+r & a>=0 & b>=0 & c>=0 & r=b+c
+//& Univ(a) & Univ(b) & Univ(c) & Univ(r) 
+& r>=0 & n>19 
+|-(exists r,c,b:0<=b & r=c+b & 0<=c).
+ 
+checkentail 
+n=a+r & a>=0 & b>=0 & c>=0 & r=b+c
+//& Univ(a) & Univ(b) & Univ(c) & Univ(r) 
+& r>=0 & n>19 
+|- (exists a,r:5<a & 0<=a & n=r+a & 0<=r) 
+.
+
+checkentail 
+n=a+r & a>=0 & b>=0 & c>=0 & r=b+c
+//& Univ(a) & Univ(b) & Univ(c) & Univ(r) 
+& r>=0 & n>19 
+|- (exists a,r:5<a & 0<=a & n=r+a & 0<=r) 
+.

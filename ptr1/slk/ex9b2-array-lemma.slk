@@ -1,0 +1,70 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n 
+  <- self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+*/
+
+
+lemma_unsafe self::arr_seg<i,n> & i<n & i<m<=n
+  -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+
+/*
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+*/
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<n & i<m<=n & Univ(m)
+    //& i+1<n 
+   |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> //& i<n 
+    & i<m<=n & Univ(m)
+    & i+1<n 
+   |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+
+/*
+checkentail xx::arr_seg<i,n> //& i<n 
+  |- xx::arr_seg<i+1,n>.
+print residue.
+expect Fail.
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+1,n>.
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n |- xx::arr_seg<i+1,n>.
+
+print residue.
+expect Fail.
+
+
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n
+    |- xx::arr_seg<i+1,n>.
+
+*/

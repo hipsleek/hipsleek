@@ -2020,10 +2020,18 @@ and is_view_user (h : h_formula) = match h with
   | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
   | _ -> false
 
-and is_view_user_dupl_ptr_unfold (h : h_formula) = match h with
+and is_view_user_dupl_ptr_unfold_x (h : h_formula) = match h with
   | ViewNode v -> let vn = v.h_formula_view_name in
-    not(view_prim_lst # mem vn || view_ptr_arith_lst # mem vn) 
+    let b1 = view_prim_lst # mem vn in
+    let b2 = view_ptr_arith_lst # mem vn in 
+    let () = y_dinfo_hp (add_str "b1" string_of_bool) b1 in
+    let () = y_dinfo_hp (add_str "b2" string_of_bool) b2 in
+    not( b1 || b2)
   | _ -> false
+
+and is_view_user_dupl_ptr_unfold (h : h_formula) =
+  let pr = !print_h_formula in
+  Debug.no_1 "is_view_user_dupl_ptr_unfold" pr string_of_bool is_view_user_dupl_ptr_unfold_x h
 
 and is_data (h : h_formula) = match h with
   | DataNode _ -> true
@@ -9663,8 +9671,8 @@ class infer_acc =
         let () = pure <- Some np in
         true
         else 
-          let () = y_binfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
-          let () = y_binfo_hp (add_str "false contra with" !CP.print_formula) p in
+          let () = y_dinfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
+          let () = y_dinfo_hp (add_str "false contra with" !CP.print_formula) p in
           false
   end;;
 
@@ -11495,7 +11503,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(x_add_1 is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    x_tinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
+    x_binfo_hp (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]
@@ -11722,6 +11730,7 @@ let rec add_pre_heap ctx =
   match ctx with
   | Ctx estate -> estate.es_infer_heap 
   | OCtx (ctx1, ctx2) -> (collect_pre_heap ctx1) @ (collect_pre_heap ctx2) 
+
 
 let add_infer_pure_thus_estate cp es =
   let flag = true (* es.es_infer_acc # add_pure cp *) in
@@ -19882,11 +19891,17 @@ let name_of_h_formula x =
   | ViewNode {h_formula_view_name = n;
               h_formula_view_node = p1;
               h_formula_view_arguments = vs1} -> (n,(p1::vs1))
-  | _ -> failwith "Failure of name_of_h_formula"
+  | _ -> 
+        let () = y_ninfo_hp (add_str "problem with name_of_h_formula:" !print_h_formula) x in
+        let s = "name_of_h_formula: "^(!print_h_formula x) in
+        (s, [])
 
 let name_of_formula x =
   let (h,_,_,_,_,_) = split_components x in
   name_of_h_formula h
+
+let name_of_h_formula x =
+  Debug.no_1 "name_of_h_formula" pr_none pr_none name_of_h_formula x
 
 let is_exists_hp_rel v es =
   let vs = es.es_infer_vars_hp_rel in
@@ -20543,7 +20558,7 @@ let extract_view_nodes_name hf =
 let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
   let ty = self_typ in
   let args = List.filter (fun x -> CP.type_of_spec_var x = ty) args in
-  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_dinfo_hp (add_str "args" !CP.print_svl) args in
   match args with
   | [x] -> Some x
   | _ -> None
@@ -20569,4 +20584,38 @@ let get_root_ptr hf =
   | HVar(pt,_) -> pt
   | _ -> raise Not_found
 
+let combine_star_pure f1 p =
+  let f2 = formula_of_pure_formula p no_pos in
+  let f = normalize_combine_star f1 f2 no_pos in
+  f
 
+let add_pure_estate es cp =
+  let flag = true (* es.es_infer_acc # add_pure cp *) in
+  if flag then
+    {es with es_formula = combine_star_pure es.es_formula cp;
+    }
+  else failwith (x_loc^"add_infer_pure_thus_estate")
+
+let same_node_name c rhs_node = 
+  try 
+    (get_node_name_x rhs_node)=c
+  with _ -> false
+
+let is_non_emp f =
+  let flag = ref false in
+  let f_h_f hf = 
+    match hf with
+     | DataNode _ -> let () = flag := true in Some hf
+     | _ -> None in 
+  let _ = (map_h_formula f f_h_f) in
+  !flag
+
+let struc_formula_of_formula f pos =
+  let pr_f = !print_formula in
+  let pr_sf = !print_struc_formula in
+  Debug.no_1 "struc_formula_of_formula" pr_f pr_sf (fun _ -> struc_formula_of_formula f pos) f
+
+let normalize_struc nb b =
+  let pr_f = !print_formula in
+  let pr_sf = !print_struc_formula in
+  Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b

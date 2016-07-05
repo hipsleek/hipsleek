@@ -1,0 +1,32 @@
+data cell {
+  int val;
+}.
+
+pred box<n> == self::cell<n> & n>=0.
+
+checkentail x::cell<3> |- x::box<a>.
+print residue.
+
+checkentail x::cell<(-3)> |- x::box<a>.
+print residue.
+
+infer[a] x::cell<(-3)> |- x::box<a>.
+print residue.
+
+
+infer[a] x::cell<4> |- x::box<a>.
+print residue.
+
+relation R(int a).
+
+infer[R] x::cell<4> & R(a) |- x::box<a>.
+print residue.
+
+infer[] x::cell<a>  |- x::box<b>.
+print residue.
+
+infer[a] x::cell<a>  |- x::box<b>.
+print residue.
+
+infer[R] x::cell<a> & R(a)  |- x::box<b>.
+print residue.

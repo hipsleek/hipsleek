@@ -1,0 +1,12 @@
+pred_prim strbuf<cptr,sl:int,length>
+ inv self<=cptr<=(self+sl) & sl<=length & cptr<self+length.
+
+checkentail x::strbuf<cp,sl,l> |- cp>=x.
+expect Valid.
+
+checkentail x::strbuf<cp,sl,l> |- cp>x.
+expect Fail_May.
+
+checkentail x::strbuf<cp,sl,l> |- cp<x.
+expect Fail_Must.
+

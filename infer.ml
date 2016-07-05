@@ -523,6 +523,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
             match_res_lhs_rest = lhs_h;
             match_res_holes = [];
             match_res_type = Root;
+            match_res_reason = None;
             match_res_rhs_node = rhs;
             match_res_rhs_rest = rhs_rest;
             match_res_root_inst = None;
@@ -4626,8 +4627,19 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
   (*******************INTERNAL******************************)
   (* let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] []  (formula_of_heap hf pos) None (formula_of_pure_N p pos) es_cond_path *)
   (* in *)
-  let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] []
-      (CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos) None (CF.mkTrue (mkNormalFlow ()) pos) es_cond_path
+  (* let mkRel h hf h_args p pos= mkHprel (CP.RelAssume [h]) [] [] [] *)
+  (*     (CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos) None (CF.mkTrue (mkNormalFlow ()) pos) es_cond_path *)
+  (* in *)
+  let mkRel h hf h_args p pos= 
+    let lhs = 
+      if !Globals.adhoc_flag_6 then
+        CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos 
+      else formula_of_heap hf pos
+    in
+    let rhs = 
+      if !Globals.adhoc_flag_6 then CF.mkTrue (mkNormalFlow ()) pos
+      else formula_of_pure_N p pos in
+    mkHprel (CP.RelAssume [h]) [] [] [] lhs None rhs  es_cond_path
   in
   let mkTupleRel ls_w_cans=
     let (hp0, hf0, _, p, _, pos) = List.hd ls_w_cans in
@@ -4694,23 +4706,28 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
               let () = x_tinfo_hp (add_str "n_p : " ( (!CP.print_formula))) n_p pos in
               let () = x_tinfo_hp (add_str "rhs_p : " ( (!CP.print_formula))) rhs_p pos in
               if not (TP.is_sat_raw (MCP.mix_of_pure (CP.join_conjunctions [rhs_p;n_p]))) then
+                let () = y_tinfo_pp "1 (not is_sat)" in
                 let new_rel = mkHprel (CP.RelAssume [h]) [] [] []
                     (CF.formula_of_heap hf (* (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow () ) [] *) pos)
                     None (CF.mkBase CF.HTrue  (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow () ) [] pos) (* (CF.mkFalse_nf pos ) *) es_cond_path in
                 r@[new_rel]
-              else r
+              else 
+               let () = y_tinfo_pp "2" in
+                r
             ) [] rel_cands in
           if rhs_contras <> [] then res_rels@rhs_contras
           else
             let strong_cands, weak_cands = List.partition (fun (b,_) -> b) rel_cands in
             if strong_cands <> [] then
               (*return the first one*)
+              let () = y_tinfo_pp "strong cands" in
               let _, (h,hf,h_args, _, n_p, pos) = List.hd strong_cands in
               let new_rel = mkRel h hf h_args n_p pos in
               (res_rels@[new_rel])
             else
               (*dont have a strong cands, we combine multiple weak candidates*)
               (*remove the flag at the first component*)
+              let () = y_tinfo_pp "multiple weak?" in
               let weak_cands1 = List.map snd weak_cands in
               let succ_w_cands = do_combine weak_cands1 fv [] in
               if succ_w_cands = [] then raise Not_found else

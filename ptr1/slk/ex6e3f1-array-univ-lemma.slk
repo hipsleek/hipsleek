@@ -1,0 +1,18 @@
+data arrI {
+  int val;
+}.
+
+//relation Univ(int x).
+
+
+checkentail i<m & m<=n & Univ(m) |- [mm] mm=m & mm=i+2 .
+expect Fail.
+
+checkentail i<m & m<=n & Univ(m) |- [mm] mm=m & mm=i+1 .
+expect Valid.
+
+checkentail i<m & m<=n |- [mm] mm=m & mm=i+2 .
+expect Fail.
+
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+2 .
+expect Fail.

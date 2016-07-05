@@ -48,7 +48,7 @@ let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unpri
 (*used for classic*)
 let rhs_rest_emp = ref true
 
-let rhs_pure_stk = new Gen.stack            (* used for detecting pure contra inside folding *)
+let rhs_pure_stk = new Gen.stack_pr "rhs_pure" (Cprinter.string_of_mix_formula) (==)         (* used for detecting pure contra inside folding *)
 
 (*cyclic: should improve the design. why AS call solver??*)
 (* let rev_trans_formula = ref (fun (f:CF.formula) -> Iformula.mkTrue n_flow no_pos ) *)
@@ -2105,14 +2105,14 @@ and split_universal_a (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_va
                                           from the set of variables of interest *)
       else
             (*
-- 23.05.2008 -
-Current actions are:
-(i) discard E2(g) which has already been proven
-(ii) move E1(f.g) to LHS for implicit instantiation
-(iii) leave E3(e,f,g) to RHS for linking existential var e
+              - 23.05.2008 -
+              Current actions are:
+              (i) discard E2(g) which has already been proven
+              (ii) move E1(f.g) to LHS for implicit instantiation
+              (iii) leave E3(e,f,g) to RHS for linking existential var e
 
-What we added here: -->Step (iii) can be also improved by additionally moving (exists e : E3(e,f,g)) to the LHS.
-*)
+              What we added here: -->Step (iii) can be also improved by additionally moving (exists e : E3(e,f,g)) to the LHS.
+            *)
       if not (CP.disjoint (evars@expl_inst_vars@impl_inst_vars) fvars) then (* to conseq *)
         (CP.mkTrue pos, f)
       else (* to ante *)
@@ -2302,8 +2302,9 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 and contra_wrapper f rhs_p =
   let rs0, fold_prf =
     (*Loc: why smart_lem_search?? append_sll_cll_slk-15.smt2.slk from must failure to may failure?? *)
-    if (!Globals.smart_lem_search) then
-      let () = rhs_pure_stk # push rhs_p in
+    (* TODO:WN need to to capture for exception *)
+    if (true || !Globals.smart_lem_search) then
+      let () = rhs_pure_stk # push_list [rhs_p] in
       let rs0, fold_prf = f None in 
       let () = rhs_pure_stk # pop in
       (rs0, fold_prf)
@@ -2396,7 +2397,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
                   Some (np,xxx)
                 with _ -> None
             end in
-        (* let () = y_tinfo_hp (add_str "new_inst" (pr_option !CP.print_formula)) new_inst in *)
+        let () = y_dinfo_hp (add_str "new_inst" (pr_option (pr_pair !CP.print_sv pr_sv))) new_inst in
         let () = y_tinfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv ))) sst in
         let () = y_tinfo_hp (add_str "do_fold: renamed_view_formula" Cprinter.string_of_struc_formula) renamed_view_formula in
         (****)  
@@ -2428,7 +2429,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         let () = y_tinfo_hp (add_str "fr_vars" !CP.print_svl) fr_vars in 
         let () = y_tinfo_hp (add_str "to_vars" !CP.print_svl) to_vars in 
         let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
-        let () = Debug.ninfo_hprint (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form no_pos in
+        let () = y_tinfo_hp (add_str "do_fold: view_form 2" Cprinter.string_of_struc_formula) view_form  in
         let anns = List.map fst anns in
         let fr_ann = List.map fst vdef.view_ann_params in
         let to_ann = anns in
@@ -2437,7 +2438,11 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         let uni_vars = vdef.view_uni_vars in
         let new_uni_vars = CP.subst_var_list_avoid_capture fr_vars to_vars uni_vars in
         let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
-        let view_form = add_mix_formula_to_struc_formula to_fold_view view_form in
+        x_tinfo_zp (lazy ("new_univ_vars" ^ (!CP.print_svl new_uni_vars))) pos;
+        x_tinfo_zp (lazy ("to_fold_view" ^ (Cprinter.string_of_mix_formula to_fold_view))) pos;
+        let view_form = 
+          if not(!Globals.old_univ_vars) then view_form 
+          else add_mix_formula_to_struc_formula to_fold_view view_form in
         (*propagate*)
         let view_form = 
           if (Perm.allow_perm ()) then (
@@ -2449,12 +2454,22 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
           )
           else view_form
         in
+        let view_form_new =
+          let pure_related_to_folded_pred = MCP.find_rel_constraints rhs_p vs in
+          add_mix_formula_to_struc_formula pure_related_to_folded_pred view_form
+        in
+        let view_form = if !Globals.adhoc_flag_6 then view_form_new else view_form in
+        (* adding _new caused loop *)
+        x_tinfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
+        x_tinfo_zp (lazy ("view_form_new:" ^ (Cprinter.string_of_struc_formula view_form_new))) pos;
         let view_form = add_struc_origins (get_view_origins view) view_form  in
         let view_form = CF.replace_struc_formula_label pid view_form in
         (* let view_form =  Immutable.propagate_imm_struc_formula view_form imm anns in *)
+        x_tinfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let view_form = match use_case with 
           | None -> view_form 
           | Some f -> push_case_f f view_form in
+        x_tinfo_zp (lazy ("view_form(b4 prog_imm): " ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let view_form =
           try
             let mpa = List.combine fr_ann to_ann in
@@ -2465,7 +2480,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         x_dinfo_zp (lazy ("do_fold: anns:" ^ (Cprinter.string_of_annot_arg_list anns))) pos;
         x_dinfo_zp (lazy ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx))) pos;
         x_dinfo_zp (lazy ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view))) pos;
-        x_dinfo_zp (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
+        x_tinfo_zp (lazy ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form))) pos;
         let estate = estate_of_context ctx pos in
         (*LDK: propagate es_vars from the estate to FOLD context
           to avoid proving es_vars as universal vars when finishing FOLDING*)
@@ -2495,10 +2510,10 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
         let new_es = {estate with es_evars = (*estate.es_evars@impl_vars*)Gen.BList.remove_dups_eq (=) (new_es_evars @ estate.es_evars);
                      } in
         (* let new_es = estate in *)
-        let () = Debug.ninfo_hprint (add_str "fold_op: estate" Cprinter.string_of_entail_state) estate no_pos in
-        let () = Debug.ninfo_hprint (add_str "fold_op: new_es" Cprinter.string_of_entail_state) new_es no_pos in
+        let () = Debug.tinfo_hprint (add_str "fold_op: estate" Cprinter.string_of_entail_state) estate no_pos in
+        let () = Debug.tinfo_hprint (add_str "fold_op: new_es" Cprinter.string_of_entail_state) new_es no_pos in
         let new_ctx = Ctx new_es in
-        let () = Debug.ninfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
+        let () = Debug.tinfo_hprint (add_str "do_fold: view_form 4" Cprinter.string_of_struc_formula) view_form no_pos in
         (*let new_ctx = set_es_evars ctx vs in*)
         (* andreeac - to add the pure of rhs which shall be used for contra detection inside the fold *)
         let new_ctx =
@@ -2509,8 +2524,9 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
                            (fun x -> Some (CP.join_conjunctions [rhs_p;x])) 
                            es.es_rhs_pure   }
             ) new_ctx in 
+        let () = x_tinfo_hp (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos in
+        let () = x_tinfo_hp (add_str "new_ctx" Cprinter.string_of_context) new_ctx no_pos in
         let heap_enatil = heap_entail_one_context_struc_nth 99 prog true false new_ctx view_form None None None pos (* None *) in
-        x_tinfo_hp (add_str "fold_op, rhs_p" !MCP.print_mix_formula) rhs_p no_pos;
         let rs0, fold_prf = contra_wrapper heap_enatil rhs_p in
 
         let rels = Infer.collect_rel_list_context rs0 in
@@ -2544,6 +2560,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
             let tmp3 = (mkOCtx tmp1 tmp2 pos) in
             tmp3
           | Ctx es ->
+            let () = x_tinfo_zp (lazy ("begin es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos in
             (* let es = estate_of_context rs pos in *)
             let es = CF.overwrite_estate_with_steps es ss in
             let w = Gen.BList.difference_eq CP.eq_spec_var  es.es_evars tmp_vars in
@@ -2563,7 +2580,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
                              } in
             x_dinfo_zp (lazy ("fold: context at beginning of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context ctx))) pos;
             x_dinfo_zp (lazy ("fold: context at end of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context res_rs))) pos;
-            x_dinfo_zp (lazy ("fold: es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos;
+            x_tinfo_zp (lazy ("fold: es.es_pure: " ^(Cprinter.string_of_mix_formula es.es_pure))) pos;
             res_rs 
         ) in
         let process_one (ss:CF.steps) fold_rs1 = (
@@ -2652,18 +2669,20 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
                                  es_infer_term_rel = fold_es.es_infer_term_rel;
                                  es_infer_rel = fold_es.es_infer_rel # clone;
                                  es_infer_hp_rel = fold_es.es_infer_hp_rel # clone;
+                                 (* captures existential subst, see ptr1/ex6f1c6.slk *)
+                                 es_subst = fold_es.es_subst;
                                  es_imm_last_phase = fold_es.es_imm_last_phase;
                                  es_group_lbl = fold_es.es_group_lbl;
                                  es_term_err = fold_es.es_term_err;
                                  es_conc_err = fold_es.es_conc_err;
                                  (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
       let new_ctx = (Ctx new_es) in
-      x_dinfo_zp (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
-      x_dinfo_zp (lazy ("process_fold_result: new_ctx after folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx))) pos;
-      x_dinfo_zp (lazy ("process_fold_result: vs2: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vs2)))) pos;
-      x_dinfo_zp (lazy ("process_fold_result: to_ante: "^ (Cprinter.string_of_pure_formula to_ante))) pos;
-      x_dinfo_zp (lazy ("process_fold_result: to_conseq: "^ (Cprinter.string_of_pure_formula to_conseq))) pos;
-      x_dinfo_zp (lazy ("process_fold_result: new_conseq:\n"^ (Cprinter.string_of_formula new_conseq))) pos;
+      x_tinfo_zp (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
+      x_tinfo_zp (lazy ("process_fold_result: new_ctx after folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx))) pos;
+      x_tinfo_zp (lazy ("process_fold_result: vs2: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vs2)))) pos;
+      x_tinfo_zp (lazy ("process_fold_result: to_ante: "^ (Cprinter.string_of_pure_formula to_ante))) pos;
+      x_tinfo_zp (lazy ("process_fold_result: to_conseq: "^ (Cprinter.string_of_pure_formula to_conseq))) pos;
+      x_tinfo_zp (lazy ("process_fold_result: new_conseq:\n"^ (Cprinter.string_of_formula new_conseq))) pos;
       (* WN : we need to restore es_infer_vars here *)
       let new_ctx = Infer.restore_infer_vars_ctx ivars ivars_rel new_ctx in
       let rest_rs, prf = x_add heap_entail_one_context 1 prog is_folding new_ctx new_conseq None None None pos in
@@ -3114,28 +3133,34 @@ and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * LO.t) list) (evars : CP
       if (CP.mem fr evars) (* || (CP.mem fr expl_inst) *)  (*TODO: should this be uncommented? || List.mem t evars *) then
         (rest_left_eqns,rest_right_eqns,(fr, t)::s_list)
       else 
+        let tmp = if (LO.is_unlabelled br_label) 
+          then CP.mkEqVar fr t pos 
+          else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
         let is_free = (CP.mem fr fvars_rhs) in (* from HRel *)
-        let is_impl = (CP.mem fr impl_inst) || not(is_free) in
-        if (is_impl) then
-          let tmp = if (LO.is_unlabelled br_label) 
-            then CP.mkEqVar fr t pos 
-            else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
-          let res = CP.mkAnd tmp rest_left_eqns pos in
-          (res,rest_right_eqns,s_list)
-        else (* explicit or free *)
-          let () = if not(CP.mem fr expl_inst) then
-              let msg = "free var to_conseq" in
-              if !Globals.warn_fvars_rhs_match then
-                failwith msg
-              else 
-                y_winfo_hp (add_str msg !CP.print_sv) fr
-
-          in
-          let tmp = if (LO.is_unlabelled br_label) 
-            then CP.mkEqVar fr t pos 
-            else CP.mkAndList [(br_label,CP.mkEqVar fr t pos)] in
+        (* WN: below cause a problem for ptr1/ex6e3f2.slk expl inst *)
+        let is_expl = (CP.mem fr expl_inst) (* || not(is_free) *) in
+        if (is_expl) then
+          let () = y_tinfo_pp "expl branch" in
           let res = CP.mkAnd tmp rest_right_eqns pos in
           (rest_left_eqns,res,s_list)
+        else 
+          let is_impl = (CP.mem fr impl_inst) || not(is_free) in
+          if (is_impl) then
+            let () = y_tinfo_pp "impl branch" in
+            let () = y_tinfo_hp (add_str "fvars_rhs" !CP.print_svl) fvars_rhs in
+            let res = CP.mkAnd tmp rest_left_eqns pos in
+            (res,rest_right_eqns,s_list)
+          else (* free *)
+            let () = y_tinfo_pp "free branch?" in
+            let () = if not(CP.mem fr expl_inst) then
+                let msg = "free var to_conseq" in
+                if !Globals.warn_fvars_rhs_match then
+                  failwith msg
+                else 
+                  y_winfo_hp (add_str msg !CP.print_sv) fr
+            in
+            let res = CP.mkAnd tmp rest_right_eqns pos in
+            (rest_left_eqns,res,s_list)
     | [] -> (CP.mkTrue pos,CP.mkTrue pos,[])
   in aux st
 
@@ -3496,7 +3521,7 @@ and check_barrier_inconsistency_list_failesc_context prog lcl (sv:CP.spec_var) p
 
 (*
   Return: None -> consistent
-          Some res -> inconsistent with FailCtx "res"
+  Some res -> inconsistent with FailCtx "res"
 
 *)
 and check_consistency_context_x prog ctx pos =
@@ -5551,19 +5576,19 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
   (* in *)
   (*11/02/2014: not sure what it supposed to do.
     Temporarily always returns (true,false, None) for permissions*)
-  let pr_hdebug = x_tinfo_hp in
+  (* let pr_hdebug = x_tinfo_hp in *)
   if (Perm.allow_perm ()) then (true,false, None) else
     (* if there is no hp inf, post pone contra detection *)
     (* if (List.length estate.es_infer_vars_hp_rel == 0 ) then  (false, None) *)
   if (no_infer_all_all estate) || not (!Globals.early_contra_flag) || x_add_1 is_error_flow estate.es_formula
   then
-    let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "1" pos in
+    let () = x_tinfo_hp (* pr_hdebug *) (add_str "early_hp_contra_detection : " pr_id) "1" pos in
     (true,false, None)
   else
   if (* (isEmpFormula estate.es_formula) && *) (* is_trivial_heap_formula conseq *)
     (is_trivial_formula conseq)
   then
-    let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "3" pos in
+    let () = x_tinfo_hp (add_str "early_hp_contra_detection : " pr_id) "3" pos in
     (true, false, None)
   else
     begin
@@ -5580,7 +5605,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
       x_tinfo_hp (add_str "orig_inf_vars" pr_svls) orig_inf_vars no_pos;
       match r_inf_contr with
       | Some (new_estate, pf) ->
-        let () = pr_hdebug (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
+        let () = x_tinfo_hp (add_str "early_hp_contra_detection : " pr_id) "..in Some" pos in
         let () = x_tinfo_hp (add_str "real_contra" string_of_bool) real_c no_pos in
         let () = x_tinfo_hp (add_str "infer pure?" !print_pure_f) pf no_pos in
         let new_estate = if pure_only_flag then 
@@ -5598,8 +5623,8 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
         let p_rhs_xpure0 = MCP.pure_of_mix rhs_xpure in
         let p_rhs_xpure = x_add_1 Cputil.hloc_enum_to_symb p_rhs_xpure0 in
         (*check the contra is in LHS or between LHS and RHS*)
-        let () = pr_hdebug (add_str "pf : " ( (!CP.print_formula))) pf pos in
-        let () = pr_hdebug (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
+        let () = x_tinfo_hp (add_str "pf : " ( (!CP.print_formula))) pf pos in
+        let () = x_tinfo_hp (add_str "lhs_p : " ( (!CP.print_formula))) lhs_p pos in
         (* let () = Debug.info_hprint (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in *)
         let pf,rele_p_rhs_xpure =
           if (CP.isConstFalse p_rhs_xpure) ||
@@ -5607,9 +5632,9 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
             (pf,p_rhs_xpure)
           else
             (* let rele_rhs_xpure = CP.filter_var p_rhs_xpure  orig_inf_vars in *)
-            let () = pr_hdebug (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in
-            let () = pr_hdebug (add_str "orig_inf_vars : " ( (!CP.print_svl))) orig_inf_vars pos in
-            (* let () = pr_hdebug (add_str "rele_rhs_xpure : " ( (!CP.print_formula))) rele_rhs_xpure pos in *)
+            let () = x_tinfo_hp (add_str "p_rhs_xpure : " ( (!CP.print_formula))) p_rhs_xpure pos in
+            let () = x_tinfo_hp (add_str "orig_inf_vars : " ( (!CP.print_svl))) orig_inf_vars pos in
+            (* let () = x_tinfo_hp (add_str "rele_rhs_xpure : " ( (!CP.print_formula))) rele_rhs_xpure pos in *)
             (* if CP.isConstTrue rele_rhs_xpure then (pf,rele_rhs_xpure) else *)
             let rele_svl = CP.fv pf in
             let sst = (MCP.ptr_equations_without_null lhs_xpure) in
@@ -5624,7 +5649,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
               ) [] sst in
             let l_ps = CP.remove_redundant_helper (CP.split_conjunctions (CP.subst rele_sst lhs_p)) [] in
             let l_ps1 = List.filter (fun p -> CP.intersect_svl (CP.fv p) rele_svl != []) l_ps in
-            let () = pr_hdebug (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
+            let () = x_tinfo_hp (add_str "l_ps1 : " (pr_list (!CP.print_formula))) l_ps1 pos in
             let rele_rhs_xpure = CP.subst rele_sst p_rhs_xpure in
             (CP.join_conjunctions l_ps1, rele_rhs_xpure)
         in
@@ -5637,7 +5662,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
           let () = Debug.ninfo_hprint (add_str "p_contr_lhs"  (!CP.print_formula)) p_contr_lhs pos in
           let () = Debug.ninfo_hprint (add_str "rele_p_rhs_xpure"  (!CP.print_formula)) rele_p_rhs_xpure pos in
           let () = Debug.ninfo_hprint (add_str "hinf_args_map"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map pos in
-          let () = pr_hdebug (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
+          let () = x_tinfo_hp (add_str "p_contr_lhs : " ( (!CP.print_formula))) p_contr_lhs pos in
           let hinf_args_map0 = if Gen.BList.overlap_eq CP.eq_spec_var (CP.fv lhs_p) (CP.fv pf) then
               hinf_args_map
             else
@@ -5650,10 +5675,10 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
                   let () = Debug.ninfo_hprint (add_str "rele_p"  (!CP.print_formula)) rele_p pos in
                   TP.is_sat_raw (MCP.mix_of_pure rele_p)
                 ) hinf_args_map in
-          let () = Debug.ninfo_hprint (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
-          Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
+          let () = x_tinfo_hp (add_str "hinf_args_map0"  (pr_list (pr_pair pr_none !CP.print_svl))) hinf_args_map0 pos in
+          x_add Infer.add_infer_hp_contr_to_list_context hinf_args_map0 [pf] temp_ctx rele_p_rhs_xpure in
         let () = x_tinfo_hp (add_str "res_ctx opt"  (pr_option Cprinter.string_of_list_context)) res_ctx_opt pos in
-        let () = pr_hdebug (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
+        let () = x_tinfo_hp (add_str "inferred contradiction : " Cprinter.string_of_pure_formula) pf pos in
         let es = 
           if pure_only_flag then new_estate
           else
@@ -5702,7 +5727,7 @@ and early_hp_contra_detection hec_num prog estate conseq pos =
     (fun _ _ -> f pos) estate conseq
 
 and early_hp_contra_detection_add_to_list_context_x hec_num prog estate conseq pos = 
-  let real_c,contra, es = early_hp_contra_detection 1 prog estate conseq pos in
+  let real_c,contra, es = x_add early_hp_contra_detection 1 prog estate conseq pos in
   if contra then
     match es with
     | Some es -> (real_c,contra, Some (CF.SuccCtx[CF.Ctx es]), Some UnsatAnte)
@@ -5822,7 +5847,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             && (is_view_user_dupl_ptr_unfold x || is_view_user_dupl_ptr_unfold e)) t in
         x_tinfo_hp (add_str "y" Cprinter.string_of_h_formula) y no_pos;
         let xy = if (is_view_user_dupl_ptr_unfold x) then x else y in
-        let mr = Context.mk_match_res (* aset *) Context.Root xy x x x in
+        let mr = x_add Context.mk_match_res (* aset *) Context.Root xy x x x in
         (* let mr = { Context.match_res_lhs_node = xy; *)
         (*            Context.match_res_lhs_rest = x; (\* ??? why*\) *)
         (*            Context.match_res_holes = [] ; *)
@@ -5833,7 +5858,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
         Context.M_unfold (mr,1)
       with
       (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
-      | Not_found -> generate_action t eset
+      | Not_found -> generate_action_x t eset
 
   and generate_action nodes eset = 
     let pr = pr_list Cprinter.string_of_h_formula in
@@ -5886,10 +5911,13 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     let eset = CP.EMapSV.build_eset eqns in
     (* Collect and sort the data and view predicates *)
     let dv = collect_data_view h in
+    let pr = pr_list Cprinter.string_of_h_formula in
+    let () = y_dinfo_hp (add_str "data view" pr) dv in
     let dv = List.sort (fun x y -> compare_sv (get_node_var x) (get_node_var y) eset) dv in
+    let () = y_dinfo_hp (add_str "data view (after sort)" pr) dv in
     let () = y_tinfo_hp (add_str "heap for unfold" (pr_list !CF.print_h_formula)) dv in
     (* Produce an action to perform *)
-    let action = generate_action dv eset in
+    let action = x_add generate_action dv eset in
     (* Process the action to get the new entail state *)
     let b = {(CF.mkTrue_b_nf no_pos) with formula_base_and = formula_and_of_formula f} in 
     (*TO CHECK: ignore formula_*_and *)
@@ -7754,7 +7782,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                     p1
                   else p1
                 in
-                let () = x_tinfo_hp (add_str "p1(after xpure_perm)" Cprinter.string_of_mix_formula) p1 no_pos in
+                let () = x_dinfo_hp (add_str "p1(after xpure_perm)" Cprinter.string_of_mix_formula) p1 no_pos in
                 (*******************)
                 (* WN : another false to remove *)
                 (* if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then *)
@@ -8027,7 +8055,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                                               let l_inst = get_expl_inst es p2 in
                                               x_tinfo_hp (add_str "l_inst" Cprinter.string_of_mix_formula) l_inst no_pos;
                                               x_tinfo_hp (add_str "p2" Cprinter.string_of_mix_formula) p2 no_pos;
-                                              let es = move_impl_inst_estate es p2 in
+                                              let es = x_add move_impl_inst_estate es p2 in
                                               Ctx (if (es.es_imm_last_phase) then
                                                      x_add move_expl_inst_estate es p2
                                                    else begin
@@ -8505,7 +8533,7 @@ and heap_entail_empty_rhs_heap i p conseq i_f es lhs rhs rhs_matched_set pos =
     (add_str "lhs-base-f" (fun c-> Cprinter.string_of_formula(Base c)))
     (add_str "rhs-mix" Cprinter.string_of_mix_formula)
     (add_str "is_folding" string_of_bool) pr
-    (fun _ _ _ _ -> heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set pos) es lhs rhs i_f
+    (fun _ _ _ _ -> TP.wrap_remove_univ_rhs (heap_entail_empty_rhs_heap_x p conseq i_f es lhs rhs rhs_matched_set) pos) es lhs rhs i_f
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (**** INTERNAL****)
@@ -8867,6 +8895,11 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   *) 
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) (rhs_p:MCP.mix_formula) =
     begin
+      x_tinfo_hp (add_str "estate_orig : " Cprinter.string_of_entail_state) estate_orig pos;
+      (* adding back existential substitution to resolve ex6f1c6.slk *)
+      let subst_fr,subst_to = estate_orig.es_subst in 
+      let rhs_p = MCP.subst_avoid_capture_memo subst_fr subst_to rhs_p in
+      let () = x_tinfo_hp (add_str "rhs_p " Cprinter.string_of_mix_formula) rhs_p no_pos in
       let m_lhs = lhs_new in
       x_tinfo_hp (add_str "m_lhs" (Cprinter.string_of_mix_formula)) m_lhs pos;
       let tmp3 = MCP.merge_mems m_lhs xpure_lhs_h1 true in
@@ -8899,17 +8932,33 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
       else
         let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
         (* TODO-EXPURE : need to build new expure stuff *)
-        let (split_ante1, new_conseq1) as xx = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
-        let (split_ante1_sym, _) as xx1 = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in
+        let remove_univ_vars f vs = 
+          let f = MCP.pure_of_mix f in
+          let univ_vs = TP.get_univs_from_ante f in
+          let () = x_tinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+          CP.diff_svl vs univ_vs
+        in
+        let exist_vars = remove_univ_vars tmp3_sym exist_vars in
         let () = x_tinfo_hp (add_str "exist_vars" Cprinter.string_of_spec_var_list) exist_vars no_pos in
         let () = x_tinfo_hp (add_str "rhs_p " Cprinter.string_of_mix_formula) rhs_p no_pos in
+        let (split_ante1, new_conseq1) as xx = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in
+        let (split_ante1_sym, _) as xx1 = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3_sym rhs_p pos in
+        let () = y_tinfo_hp (add_str "es_ivars" Cprinter.string_of_spec_var_list) estate.es_ivars  in
+        let () = y_tinfo_hp (add_str "es_gen_expl_vars" Cprinter.string_of_spec_var_list) estate.es_gen_expl_vars  in
+        let () = y_tinfo_hp (add_str "es_evars" Cprinter.string_of_spec_var_list) estate.es_evars  in
         let () = x_tinfo_hp (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
         let () = x_tinfo_hp (add_str "split_ante1_sym " Cprinter.string_of_mix_formula) split_ante1_sym no_pos in
+        let flag1=(tmp3_sym==tmp0_sym) in
+        let () = y_tinfo_hp (add_str "heap_entail_build (flag1)" string_of_bool) flag1 in
         let (split_ante0_sym, _) as xx = 
-          if tmp3_sym==tmp0_sym then xx1
-          else x_add heap_entail_build_mix_formula_check 2 exist_vars tmp0_sym rhs_p pos in
+          if flag1 then xx1
+          else 
+            x_add heap_entail_build_mix_formula_check 2 exist_vars tmp0_sym rhs_p pos in
+        let () = y_tinfo_hp (add_str "heap_entail_build (super_smart_xpure" string_of_bool) !Globals.super_smart_xpure in
         let split_ante0, new_conseq0 = 
-          if (!Globals.super_smart_xpure) then x_add heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
+          if (* true || *) (!Globals.super_smart_xpure) then 
+            let () = y_tinfo_pp "heap_entail_build (after super_smart_xpure)" in
+            x_add heap_entail_build_mix_formula_check 3 exist_vars tmp2 rhs_p pos
           else xx
         in
         let () = x_tinfo_hp (add_str "split_ante0 " Cprinter.string_of_mix_formula) split_ante0 no_pos in
@@ -8920,9 +8969,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
         (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
         (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
-        x_dinfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
-        x_dinfo_hp (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
-        x_dinfo_hp (add_str "conseq1-1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
+        x_tinfo_hp (add_str "rhs_p : " Cprinter.string_of_mix_formula) rhs_p pos;
+        x_tinfo_hp (add_str "conseq0 : " Cprinter.string_of_mix_formula) new_conseq0 pos;
+        x_tinfo_hp (add_str "conseq1-1 : " Cprinter.string_of_mix_formula) new_conseq1 pos;
         let split_conseq =
           if !omega_simpl && not(TP.is_mix_bag_constraint new_conseq0)&& not(TP.is_mix_list_constraint new_conseq0) 
           then memo_normalize_to_CNF_new (MCP.memo_arith_simplify new_conseq0) pos
@@ -9146,12 +9195,23 @@ type: bool *
       (* let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in *)
       (* ========== end - Immutability normalization ======== *)
       (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
+      let add_univ_pure es =
+        let univ_rhs_store = TP.univ_rhs_store in
+        if univ_rhs_store # is_empty then es
+        else 
+          let nf = univ_rhs_store # get_rm in
+          let () = y_dinfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
+          CF.add_pure_estate es nf 
+      in
+      let add_univ_pure es =
+        let pr =  Cprinter.string_of_entail_state_short in 
+        Debug.no_1 "add_univ_pure" pr pr add_univ_pure es in
       let flag = stk_estate # is_empty in
-      let () = y_tinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
-      let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
+      let () = y_dinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
+      let () = y_dinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
       if not(flag) || !Globals.adhoc_flag_5 then
         let pr = Cprinter.string_of_entail_state_short in
-        let () = Debug.ninfo_hprint (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
+        let () = x_info_hp (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
         let new_estate = stk_estate # top in
         let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
         let new_estate = {new_estate with es_formula = disj_of_list_pure new_ante_fmls pos} in
@@ -9190,6 +9250,7 @@ type: bool *
         let inf_relass = stk_rel_ass # get_stk_and_reset in
         (* let inf_heap_ass = stk_rel_ass # get_stk in *)
         let estate = add_infer_pure_to_estate inf_p estate in
+        let () = y_tinfo_pp "to add univ inst" in
         let () = y_tinfo_hp (add_str "inf_pure" (pr_list !CP.print_formula)) inf_p in
         let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
         let estate = x_add add_infer_rel_to_estate inf_relass estate in
@@ -9206,6 +9267,7 @@ type: bool *
         let res_delta = mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in (* TODO: res_vp *)
         let res_delta = x_add_1 CF.simplify_pure_f_old res_delta in
         let estate = { estate with es_formula = res_delta; } in
+        let estate = x_add_1 add_univ_pure estate in
 
         (* Termination *)
         (* let pr = Cprinter.string_of_formula in *)
@@ -9649,6 +9711,35 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           let a0l = if !label_split_ante then CP.split_disjunctions a0 else [a0] in
           let a0l = List.filter is_sat a0l in a0l
       in
+      let process_univ univ_vars ante0 conseq0 =
+        if not (TP.connected_rhs univ_vars conseq0) then ()
+        else
+          let prev_inst = TP.univ_rhs_store # get in
+          let ante0 = CP.drop_rel_formula ante0 in
+          let ante1 =TP.filter_inv ante0 in
+          let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
+          let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
+          let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
+          let b = x_add !CP.tp_imply ante0 new_conseq in
+          if b then
+            let () = y_tinfo_hp (add_str "process_univ added!" Cprinter.string_of_pure_formula) conseq0 in
+            TP.univ_rhs_store # set conseq0
+          else
+            ()
+      in
+      let process_univ univ_vars ante0 conseq0 =
+        Debug.no_3 "process_univ" !CP.print_svl Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun x -> "()") process_univ univ_vars ante0 conseq0
+      in
+      let univ_vars = TP.get_univs_from_ante a0 in
+      let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
+      (* let () = List.iter (process_univ univ_vars a0) new_rhs in *)
+      (* let a0 = *)
+      (*   if TP.univ_rhs_store # is_empty *)
+      (*   then a0 *)
+      (*   else *)
+      (*     let a01 = CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos in *)
+      (*     a0 *)
+      (* in *)
       let a0l = f a0 in
       let a1l = match ante_m1 with
         | Some (MCP.OnePF a1) -> f a1
@@ -9665,7 +9756,6 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       x_tinfo_hp (add_str "a0" pr) a0 no_pos;
       x_tinfo_hp (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
       x_tinfo_hp (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
-      let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
       let () = CP.store_tp_is_sat := (fun f -> TP.is_sat 77 f "store_tp_is_sat" true) in
       (x_add CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (x_add TP.imply_one 29) imp_no, extra_step)
       (* original code	        
@@ -10901,6 +10991,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         (* (ivar, impl_var) belongs to ivar_subs_to_conseq              *)
         let () =  x_tinfo_hp  (add_str   (" impl_vars: ")  !CP.print_svl )impl_vars no_pos in
         (* WN: what are impl_tvars ? *)
+        (* subs_to_inst_vars@2 *)
+        (* subs_to_inst_vars inp1 :subs:[(start_114,start),(mm_115,m_120)] *)
+        (* subs_to_inst_vars inp2 :ivars:[m_120] *)
+        (* subs_to_inst_vars inp3 :impl:[] *)
+        (* subs_to_inst_vars@2 EXIT:(([],[m_120],ivars_to_conseq:[(m_120,mm_115)]),other_subs:[(start_114,start)]) *)
         let ((impl_tvars, tmp_ivars, ivar_subs_to_conseq), other_subs) = 
           x_add subs_to_inst_vars rho ivars impl_vars pos 
         in
@@ -10952,6 +11047,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* Note: other_subs will never contain any impl_tvars          *)
           (*       because of the pre-processed subs_to_inst_vars        *)
           (* An Hoa : strip all the pair of equality involving # *)
+          let () = x_tinfo_hp (add_str "other_subs(b4 filter)" (pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) pr_none) )) other_subs pos in
           let other_subs = List.filter (fun ((x, y), _) -> 
               not (CP.is_hole_spec_var x || CP.is_hole_spec_var y) && not (CP.is_rel_typ x) 
               (* && not((CP.is_ann_typ y) && (Gen.BList.mem_eq CP.eq_spec_var y estate.es_ante_evars)) *)
@@ -10959,7 +11055,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           in
           (* let pr1 (a,b) = let pr = (pr_pair !CP.print_sv !CP.print_sv) in pr a in *)
           (* let () =  Debug.ninfo_zprint  (lazy  ("other_subs: " ^ (pr_list pr1 other_subs))) no_pos in *)
-          let () = x_tinfo_hp (add_str "other subs" (pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) pr_none) )) other_subs pos in
+          let () = x_tinfo_hp (add_str "other_subs" (pr_list (pr_pair (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) pr_none) )) other_subs pos in
           (* let () =  Debug.info_zprint  (lazy  ("new_exist_vars: " ^ (!CP.print_svl new_exist_vars))) no_pos in *)
           (* let () =  Debug.info_zprint  (lazy  ("impl_tvars: " ^ (!CP.print_svl impl_tvars))) no_pos in *)
           (* let () =  Debug.info_zprint  (lazy  ("estate.es_gen_expl_vars: " ^ (!CP.print_svl estate.es_gen_expl_vars))) no_pos in *)
@@ -10971,7 +11067,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* Adding pure formula for relational args of view *)
           let to_lhs = CP.mkAnd to_lhs lp_rels no_pos in
           let to_rhs = CP.mkAnd to_rhs rp_rels no_pos in
-          let () = x_tinfo_hp (add_str "ext_subst(bef filter out ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
           let () = x_tinfo_hp (add_str "to_rhs(bef ann)" (Cprinter.string_of_pure_formula)) to_rhs pos in
           let () = x_tinfo_hp (add_str "to_lhs(bef ann)" (Cprinter.string_of_pure_formula)) to_lhs pos in
           let () = x_tinfo_hp (add_str "ext_subst(bef ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
@@ -11016,18 +11111,55 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* for the free vars from the RHS to the LHS                            *)
           (************************************************************************)
           let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs) in
+          let () = x_tinfo_hp (add_str "to_rhs, before adding" (Cprinter.string_of_pure_formula)) to_rhs pos in
           let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs) in
           (* let () = print_endline ("new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p)) in     *)
           (* let () = print_endline ("new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p)) in *)
           (* Add instantiation for perm vars *)
           let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante) in
           let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq) in
-          let () = x_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos in
-          let () = x_tinfo_hp (add_str "new_conseq_p" (Cprinter.string_of_mix_formula)) new_conseq_p pos in
-          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
-          (* let () = print_string("\nl_h : "^(Cprinter.string_of_h_formula l_h)^"\n") in             *)
-          (* let () = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in *)
-          (* let () = print_string("l_node : "^(Cprinter.string_of_h_formula l_node)^"\n") in         *)
+          (* (i) find Univ in LHS (2) find univ inst in conseq (3) perform univ inst proving *)
+          (* ==================== Extract equation expression related to Univ vars ==================== *)
+          let pure_new_ante_p = MCP.pure_of_mix new_ante_p in
+          let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
+          let univ_vs = TP.get_univs_from_ante pure_new_ante_p in
+          (* eqlst is a list of pair. In each pair, two expressions are equal and one of them contains Univ vars *)
+          let () = x_dinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+          let () = y_dinfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
+          let () = y_dinfo_hp (add_str "to_rhs" !CP.print_formula) to_rhs in
+          let () = y_dinfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+          let () = y_dinfo_hp (add_str "pure_new_ante_p" !CP.print_formula) pure_new_ante_p in
+          let () = y_dinfo_hp (add_str "pure_new_conseq_p" !CP.print_formula) pure_new_conseq_p in
+          let (to_lst,fr_lst) = List.split ivar_subs_to_conseq in
+          let pure_new_conseq_p = CP.subst_avoid_capture fr_lst to_lst pure_new_conseq_p in
+          let () = y_dinfo_hp (add_str "pure_new_conseq_p (after univ subs)" !CP.print_formula) pure_new_conseq_p in
+          let () = y_dinfo_hp (add_str "ext_subst" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst in
+          let e_subs = ivar_subs_to_conseq @ ext_subst in
+          let () = y_tinfo_hp (add_str "e_subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) e_subs in
+          (* let () = y_tinfo_hp (add_str "to_bound" (!CP.print_svl)) to_bound in *)
+          let (conseq_lst_univ,new_conseq_p2) =
+            let no_chx = ([],new_conseq_p)in
+            if TP.connected_rhs univ_vs pure_new_conseq_p
+            then
+              let () = y_dinfo_pp "do_match: Processing univ instantiation" in
+              let conseq_lst = CP.split_conjunctions pure_new_conseq_p in
+              let (conseq_lst_univ,conseq_lst_others) = List.partition (fun f ->
+                  let vs = CP.fv f in
+                  (CP.intersect_svl vs univ_vs)!=[]
+                ) conseq_lst in
+              if conseq_lst_univ==[] then no_chx
+              else (conseq_lst_univ,MCP.mix_of_pure (CP.join_conjunctions conseq_lst_others))
+              (* let eqlst = CP.find_eq_at_toplevel pure_new_conseq_p in *)
+              (* let () = y_tinfo_hp (add_str "conseq_lst: " (pr_list !CP.print_formula)) conseq_lst in *)
+              (* let () = y_tinfo_hp (add_str "conseq_lst_univ: " (pr_list !CP.print_formula)) conseq_lst_univ in *)
+              (* let () = y_tinfo_hp (add_str "conseq_lst_others: " (pr_list !CP.print_formula)) conseq_lst_others in *)
+              (* let () = y_tinfo_hp (add_str "elst: " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in *)
+              (* let eqlst = List.filter (fun (e1,e2) -> (List.length (CP.intersect_svl ((CP.afv e1)@(CP.afv e2)) univ_vs))>0) eqlst in *)
+              (* let () = y_tinfo_hp (add_str "elst (filter out): " (pr_list (pr_pair !CP.print_exp !CP.print_exp))) eqlst in *)
+              (* eqlst *)
+            else
+              no_chx
+          in
           let l_h = match rem_l_node with
             | HRel _ | HTrue | HFalse | HEmp -> l_h
             | _ -> mkStarH rem_l_node l_h pos in
@@ -11038,14 +11170,44 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           in
           (* x_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos; *)
           x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
-          let new_ante = mkBase l_h new_ante_p l_vp l_t l_fl l_a pos in
+          let process_early univ_vs new_ante_p conseq_univ  =
+            let () = y_dinfo_pp "TODO: process early univ instantiation" in
+            let () = y_dinfo_pp "=========================================" in
+            let () = x_dinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
+            let () = y_dinfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in
+            let () = y_dinfo_hp (add_str "p_ante" !CP.print_formula) p_ante in
+            let () = y_dinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p in
+            let () = y_dinfo_hp (add_str "new_conseq_p2" (Cprinter.string_of_mix_formula)) new_conseq_p2 in
+            let () = y_dinfo_hp (add_str "conseq_univ" (!CP.print_formula)) conseq_univ in
+            let lhs1 = MCP.pure_of_mix new_ante_p in
+            let (b,_,_) = TP.imply_timeout_univ univ_vs lhs1 conseq_univ "666" 0.0 None in
+            let () = y_dinfo_hp (add_str "outcome" string_of_bool) b in
+            if b then 
+              let r = TP.univ_rhs_store # get_rm in
+              let new_ante = CP.mkAnd lhs1 r no_pos in
+              (b,MCP.mix_of_pure new_ante)
+            else (b,new_ante_p)
+            (* failwith ("early univ inst proc here"^x_tbi) *)
+          in
+          let new_conseq_p,new_ante_p = 
+            if conseq_lst_univ!=[] then
+              let conseq_univ = CP.join_conjunctions conseq_lst_univ in
+              let (flag,ante) = process_early univ_vs new_ante_p conseq_univ in
+              if flag then (new_conseq_p2,ante)
+              else (new_conseq_p,new_ante_p)
+            else new_conseq_p,new_ante_p in
+          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
+          (* let () = print_string("\nl_h : "^(Cprinter.string_of_h_formula l_h)^"\n") in             *)
+          (* let () = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in *)
+          (* let () = print_string("l_node : "^(Cprinter.string_of_h_formula l_node)^"\n") in         *)
           (* An Hoa : fix new_ante *)
+          let new_ante = mkBase l_h new_ante_p l_vp l_t l_fl l_a pos in
           let tmp_conseq = mkBase r_h new_conseq_p r_vp r_t r_fl r_a pos  in
-          let () = x_tinfo_hp (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
-          let () = x_tinfo_hp (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
+          let () = x_dinfo_hp (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
+          let () = x_dinfo_hp (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
           let lhs_vars = CP.fv to_lhs in
           (* Apply the new bindings to the consequent *)
-          let e_subs = ivar_subs_to_conseq @ ext_subst in
+          (* let e_subs = ivar_subs_to_conseq @ ext_subst in *)
           (* Do not subst heap relation*)
           let e_subs = List.filter (fun (sv1, sv2) -> (not (CP.is_rel_typ sv1)) && (not(CP.is_rel_typ sv2))) e_subs in
           let () = Debug.ninfo_hprint (add_str "e_subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) e_subs pos in
@@ -11673,7 +11835,8 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
     | None -> Some (rhs_p)
   in
   let estate = estate_of_context fold_ctx pos2 in
-  let () = Debug.ninfo_hprint (add_str "estate (from fctx):" (Cprinter.string_of_entail_state)) estate pos in
+  let () = x_tinfo_zp (lazy ("estate_of_context fold_ctx: es_pure: " ^(Cprinter.string_of_mix_formula estate.es_pure))) pos in
+  let () = Debug.tinfo_hprint (add_str "estate (from fctx):" (Cprinter.string_of_entail_state)) estate pos in
   (*TO CHECK: what for ??? instantiate before folding*)
   (*  let estate,rhs_p,rho = inst_before_fold estate rhs_p [] in*)
   let (new_v2,case_inst) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
@@ -11722,6 +11885,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
   let () = x_tinfo_hp (add_str "folding_conseq_pure" (pr_option Cprinter.string_of_mix_formula)) folding_conseq_pure pos in
   let () = x_tinfo_hp (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
   let estate =  {estate with es_folding_conseq_pure = folding_conseq_pure} in
+  let () = x_tinfo_zp (lazy ("before fold_op_init: es.es_pure: " ^(Cprinter.string_of_mix_formula estate.es_pure))) pos in
   let fold_rs, fold_prf = x_add (fold_op_init ~root_inst:root_inst)  prog (Ctx estate) view_to_fold vd rhs_p (* false *) case_inst pos in
   let () = Debug.ninfo_hprint (add_str "do_fold_w: rhs_p 3 " (Cprinter.string_of_mix_formula)) rhs_p pos in
   let () = rhs_rest_emp := true in
@@ -11778,11 +11942,13 @@ and combine_results ((res_es1,prf1): list_context * Prooftracer.proof)
   Debug.no_2 "combine_results" pr pr pr (fun _ _ -> combine_results_x (res_es1,prf1) (res_es2,prf2)) (res_es1,prf1) (res_es2,prf2)
 
 and do_fold ?(root_inst=None) prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
-  let pr1 = pr_option (pr_triple  !CP.print_svl !CP.print_svl Cprinter.string_of_view_decl) in
+  let pr1 = pr_option (pr_triple  !CP.print_svl !CP.print_svl Cprinter.string_of_view_decl_short) in
   let pr2 (cl,_) = Cprinter.string_of_list_context cl in
+  let pr3 = add_str "conseq" !CF.print_formula in
+  let pr4 = (add_str "rhs_b" Cprinter.string_of_formula_base) in
   let pr_es = Cprinter.string_of_entail_state(* _short *) in
-  Debug.no_2 "do_fold" pr_es pr1 pr2
-    (fun _ _ -> do_fold_x ~root_inst:root_inst prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate vd
+  Debug.no_4 "do_fold0" pr_es pr1 pr3 pr4 pr2 
+    (fun _ _ _ _ -> do_fold_x ~root_inst:root_inst prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos) estate vd conseq rhs_b
 
 and do_fold_x ?(root_inst=None) prog vd estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let fold_ctx = Ctx { estate with
@@ -11852,7 +12018,7 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
                                   Cast.view_un_struc_formula = [(lhs, (fresh_int (),""))];
                       } in
     let rhs_node1 = CF.mkViewNode (List.hd vs) (CP.name_of_spec_var hp) (List.tl vs) pos in
-    do_fold prog (Some (iv,ivr,vdecl_w_def)) estate conseq rhs_node1 rhs_rest rhs_b is_folding pos
+    x_add do_fold prog (Some (iv,ivr,vdecl_w_def)) estate conseq rhs_node1 rhs_rest rhs_b is_folding pos
 (* let vd = Some ([],[],vdecl_w_def) in *)
 (* let rhs_p = MCP.pure_of_mix (rhs_b.CF.formula_base_pure) in *)
 (* let fold_ctx = Ctx { estate with *)
@@ -11913,7 +12079,7 @@ and do_base_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos=
         (* WN->Loc : this caused failure for cll-d.slk *)
         (* let old_classic_flag = !do_classic_frame_rule in *)
         (* let () = do_classic_frame_rule := (is_empty_heap rhs_rest) in *)
-        let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+        let r = x_add do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
         (* let () = do_classic_frame_rule := old_classic_flag in *)
         r
     in  ((* Infer.restore_infer_vars iv  *)cl,prf)
@@ -12376,6 +12542,22 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
   | _ -> []
 
 and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
+  (* TODO: classic reasoning requires hf,HEmp case to be considered *)
+  let detect_heap_contra lhs rhs = 
+    let (lhs_h,_,_,_,_,_) = CF.split_components lhs in
+    let (rhs_h,_,_,_,_,_) = CF.split_components rhs in
+
+    let flag = match lhs_h,rhs_h with
+      | HEmp,hf (* | hf,HEmp *) -> not(CF.is_non_emp hf)
+      | hf,HEmp -> not(check_is_classic_local estate.CF.es_infer_obj) || not(CF.is_non_emp hf)
+      | _ -> true
+    in
+    let () = y_tinfo_pp "detect_heap_contra" in
+    let () = y_tinfo_hp (add_str "lhs" !CF.print_formula) lhs in
+    let () = y_tinfo_hp (add_str "conseq: "!CF.print_formula) rhs in
+    let () = y_tinfo_hp (add_str "contra_if_false" string_of_bool) flag in
+    flag
+  in
   (* ======================================================= *)
   let (qvars, new_f) = match estate.es_formula with
     | Exists f ->  split_quantifiers estate.es_formula
@@ -12390,7 +12572,6 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
     let p_lhs_xpure = MCP.pure_of_mix lhs_xpure in
     let old_imm_flag = !Globals.allow_imm in
     let () = Globals.allow_imm := true in
-    let () = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]:: conseq: " Cprinter.string_of_formula) conseq no_pos in
     let rhs_xpure,_,_ = x_add xpure 9 prog conseq in
     let () = Debug.ninfo_hprint (add_str "[solver_detect_lhs_rhs_contra_all]::  p_rhs_xpure 0: " Cprinter.string_of_mix_formula) rhs_xpure no_pos in
     let () = Globals.allow_imm := old_imm_flag in
@@ -12400,7 +12581,9 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
       (* else  *)
       p_lhs_xpure in  
     let contr, _ = x_add Infer.detect_lhs_rhs_contra p_lhs_xpure p_rhs_xpure pos in
-    contr in
+    let () = y_tinfo_hp (add_str "detect_lhs_rhs_contr" string_of_bool) contr in
+    let heap_contra_false = if contr && !Globals.new_heap_contra then detect_heap_contra new_f conseq else true in
+    contr && heap_contra_false  in
   let r_inf_contr,relass = 
     if lhs_rhs_contra_flag then
       ([],[])
@@ -12734,11 +12917,15 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
+      x_tinfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
+                                    ) lhs_rest holes
+      in
       let pure_to_add = match infer_opt with
         | Some f ->
           let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
-          let () = x_tinfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
-          let () = x_tinfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
+          let () = x_dinfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
+          let () = x_dinfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
           [f]
         | _ -> [] in
       (*******SPLIT/COMBINE permissions********>>
@@ -12856,10 +13043,10 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
          r
        | None  -> begin
            (*<<***END SPLIT/COMBINE permissions*******************)
-           y_tinfo_pp ("Match action, do process_before_do_match r");
+           y_dinfo_pp ("Match action, do process_before_do_match r");
            let r = process_before_do_match pure_to_add prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
                lhs_node lhs_rest rhs_node rhs_rest holes in
-           Debug.ninfo_hprint (add_str "Match action, context r" (fun x -> Cprinter.string_of_list_context (fst x))) r no_pos;
+           Debug.dinfo_hprint (add_str "Match action, context r" (fun x -> Cprinter.string_of_list_context (fst x))) r no_pos;
            r
            (* let subsumes, to_be_proven = prune_branches_subsume(\*_debug*\) prog lhs_node rhs_node in *)
            (* if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias) *)
@@ -12885,7 +13072,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-        Context.match_res_holes = holes;
+        (* Context.match_res_holes = holes; *)
       } as m_res, unfold_num, unfold_or_fold, lem_type, unfold_opt)->
       x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
@@ -13000,10 +13187,14 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_root_inst = root_inst;
-        Context.match_res_rhs_rest = rhs_rest;} ->
+        Context.match_res_rhs_rest = rhs_rest;
+        (* match_res_reason is used only in folding *)
+        Context.match_res_reason = match_reason;
+      } ->
+      let () = y_tinfo_hp (add_str "FOLD: match_reason:" (pr_option !CP.print_formula)) match_reason in
       let () = y_tinfo_hp (add_str "xxxM_fold" (Cprinter.string_of_formula_base)) rhs_b in
       let () = y_tinfo_hp (add_str "root_inst" (pr_option !CP.print_sv )) root_inst in
-      let () = y_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
+      let () = y_dinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node in
       let wrap_fn = match root_inst with
         | Some id -> 
           let () = y_tinfo_hp (add_str "fold_matching_stk (lhs_node)" !CF.print_h_formula) lhs_node in
@@ -13017,23 +13208,39 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       (*     let () = y_tinfo_hp (add_str "estate(& root_inst)" !CF.print_formula) nf in *)
       (*     {estate with es_formula = nf} *)
       (* in *)
+      (* let estate = *)
+      (*   match match_reason with *)
+      (*     | None -> estate *)
+      (*     | Some reason_f -> {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula reason_f pos) pos} *)
+      (* in *)
       let estate =
-        if no_infer_rel estate then estate
+        if no_infer_rel estate || not(!init_para_flag) then estate
         else
+          let () = y_winfo_pp "WARN: fold with init_para, unsound?" in
           let lhs_h, lhs_p, _, _, _, lhs_a  = CF.split_components estate.es_formula in
           let lhs_alias = MCP.ptr_equations_without_null lhs_p in
           let lhs_aset = CP.EMapSV.build_eset lhs_alias in
+          let () = y_dinfo_pp ("lhs_aset "^((CP.EMapSV.string_of) lhs_aset)) in
           (* Assumed lhs_h to be star or view_node or data_node *)
           let lhs_h_list = split_star_conjunctions lhs_h in
+          let () = y_dinfo_pp ("lhs_h_list"^((pr_list Cprinter.string_of_h_formula) lhs_h_list)) in
           let init_pures = List.concat (List.map (fun l -> init_para l rhs_node lhs_aset prog pos) lhs_h_list) in
+          (* let init_pures = *)
+          (*   match match_reason with *)
+          (*     | None -> init_pures *)
+          (*     | Some reason_f -> reason_f::init_pures *)
+          (* in *)
           let init_pure = CP.conj_of_list init_pures pos in
+          let () = y_dinfo_pp ("init_pure"^(!CP.print_formula init_pure)) in
           {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
       in
       let () = y_tinfo_hp (add_str "M_fold (to make progress)" (Cprinter.string_of_h_formula)) rhs_node in
       let lst = CF.extract_view_nodes_name rhs_node in
       let () = match lst with
         | n::_ -> Cast.lemma_soundness # make_progress n
-        | _ -> () in
+        | _ -> ()
+      in
+      let () = x_tinfo_zp (lazy ("before do_full_fold: estate.es_pure: " ^(Cprinter.string_of_mix_formula estate.es_pure))) pos in
       wrap_fn (fun () -> do_full_fold ~root_inst:root_inst prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) ()
 
     | (Context.M_infer_unfold (r,_,_))->
@@ -13247,7 +13454,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_rhs_rest = rhs_rest;} ->
       let estate =
         if no_infer_rel estate then estate
-        else 
+        else
           (* WN : what is the purpose of this normalization? *)
           let lhs_h, lhs_p, _, _, _, lhs_a = CF.split_components estate.es_formula in
           let lhs_alias = MCP.ptr_equations_without_null lhs_p in
@@ -13344,7 +13551,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-      } -> 
+} -> 
       (* let () = print_string ("xxxx do_coercion: M_rd_lemma \n") in *)
       let r1,r2 = x_add do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
@@ -13353,7 +13560,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-      } -> 
+} ->
       (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
       let ctx0 = Ctx estate in
       (* let ((coer_l,coer_r),univ_coers) = 
@@ -13565,10 +13772,17 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       (* let () = match coerc_opt with *)
       (*   | None -> () *)
       (*   | Some c -> print_string ("!!! do_coercion should try directly lemma: "^c.coercion_name^"\n") in *)
-      let () = y_tinfo_hp (add_str "M_lemma" (pr_opt Cprinter.string_of_coerc_short)) coerc_opt in
+      let () = y_dinfo_hp (add_str "M_lemma" (pr_opt Cprinter.string_of_coerc_short)) coerc_opt in
+      let () = match coerc_opt with 
+        | Some coer -> 
+          let vs = coer.coercion_univ_vars in
+          if vs!=[] then 
+            let () = y_tinfo_hp (add_str "M_lemma" (Cprinter.string_of_coerc_short)) coer in
+            y_tinfo_hp (add_str "to add univ_vars" !CP.print_svl) vs
+        | None -> () in
       let (estate,conseq,rhs_rest,rhs_node,rhs_b) =
         if do_infer==0 then
-          (estate,conseq,rhs_rest,rhs_node, rhs_b)
+          (estate,conseq,rhs_rest,rhs_node,rhs_b)
         else if do_infer==1 then
           let n_estate = InferHP.infer_collect_hp_rel_unfold_lemma_guided prog do_infer estate lhs_node rhs_node rhs_rest rhs_h_matched_set
               lhs_b rhs_b conseq coerc_opt pos in
@@ -13582,11 +13796,11 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           (n_estate,n_conseq,n_rhs_rest,n_rhs_node, rhs_b)
           (* failwith "need to perform infer_fold first"  *)
       in
-      let () = x_tinfo_hp (add_str  "rhs_node" Cprinter.string_of_h_formula) rhs_node pos in
-      let () = x_tinfo_hp (add_str  "rhs_rest" Cprinter.string_of_h_formula) rhs_rest pos in
-      let () = x_tinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
-      let () = x_tinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
-      let () = x_tinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
+      let () = x_dinfo_hp (add_str  "rhs_node" Cprinter.string_of_h_formula) rhs_node pos in
+      let () = x_dinfo_hp (add_str  "rhs_rest" Cprinter.string_of_h_formula) rhs_rest pos in
+      let () = x_dinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
+      let () = x_dinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
+      let () = x_dinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
       let r1,r2 = x_add do_coercion prog coerc_opt estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
     | Context.Undefined_action mr ->
@@ -13733,7 +13947,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                     if !Globals.warn_do_match_infer_heap then 
                       failwith "do_match during infer_heap"
                     else
-                      let match_act = Context.M_match (Context.mk_match_res ~holes:new_estate.es_crt_holes Root n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
+                      let match_act = Context.M_match (x_add (Context.mk_match_res ~holes:new_estate.es_crt_holes Root) n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
                       (* let new_estate = { new_estate with es_trace =  (Context.string_of_action_name match_act)::new_estate.es_trace } in *)
                       (* x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos                                  *)
                       (* Below causes a problem with str-inf/ex10a2-str-while.ss *)
@@ -13809,7 +14023,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           let () = x_tinfo_hp (add_str "rhs_als" Cprinter.string_of_spec_var_list) rhs_als no_pos in
           let r, relass = 
             if CP.intersect rhs_als estate.es_infer_vars = []
-               && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
+            && List.exists CP.is_node_typ estate.es_infer_vars then None,[]
             else if (!Globals.pa) then None,[]  
             else 
               let lhs_rhs_contra_flag = 
@@ -14246,6 +14460,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
     let coer_lhs = x_add CF.subst tmp_rho coer.coercion_head in
     let coer_rhs = x_add CF.subst tmp_rho coer.coercion_body in
+    let () = y_tinfo_hp (add_str "coer_rhs_0" !CF.print_formula) coer_rhs in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)
     let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
@@ -14253,8 +14468,16 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
     let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
     let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
+    let () = y_tinfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
     let lhs_heap, lhs_guard, lhs_vperm, lhs_fl, _, lhs_a  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
+    (* let lhs_guard_p = MCP.pure_of_mix lhs_guard in *)
+    let () = y_tinfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
+    let univ_rel v = CP.mkRel_sv v in
+    let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
+    let lhs_w_univ_rel = List.fold_left (fun g v ->
+        CP.mkAnd g (mk_Univ_rel v) no_pos
+      ) lhs_guard f_univ_vars in
     (*node -> current heap node | lhs_heap -> head of the coercion*)
     match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
@@ -14317,6 +14540,13 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let to_vars = perms1@(p1 :: ps1)in
           let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
           let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+          let coer_rhs_new1 = 
+            if !Globals.old_univ_lemma then coer_rhs_new1 
+            else
+              let lhs_w_univ_rel = CP.subst_avoid_capture fr_vars to_vars lhs_w_univ_rel in
+              let () = y_tinfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
+              CF.combine_star_pure coer_rhs_new1 lhs_w_univ_rel in
+          let () = y_tinfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
           let coer_rhs_new1 =
             if (Perm.allow_perm ()) then
               match perm1,perm2 with
@@ -14349,25 +14579,45 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           (* let () = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
           (* let () = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
           let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
+          let () = y_tinfo_hp (add_str "rest_of_lhs" !CF.print_formula) rest_of_lhs in
           let new_f = x_add_1 Cformula.translate_set_comp_rel new_f in
           (* add the guard to the consequent  - however, the guard check is delayed *)
           (* ?? *)
-          let formula,to_aux_conseq = 
-            (* if !allow_imm || (!Globals.allow_field_ann) then (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) *)
-            (* else (formula_of_pure_N lhs_guard_new pos, CP.mkTrue pos)  *)
-            (formula_of_pure_N lhs_guard_new pos,lhs_guard_new) (* TODOIMM andreeac to check if this is enough for imm *)
-          in 
-          (* let () = print_endline ("do_universal:"  *)
-          (*                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq) *)
-          (*                        ^ "\n ### formula = " ^ (Cprinter.string_of_formula formula) *)
-          (*                        ^ "\n ### to_aux_conseq = " ^ (Cprinter.string_of_pure_formula to_aux_conseq)) in *)
-          let new_conseq = normalize 9 conseq formula pos in
-          let new_estate = {estate with (* the new universal vars to be instantiated *)
-                            es_ivars = f_univ_vars @ estate.es_ivars;
-                            es_formula = new_f;} in
-          let new_ctx = Ctx new_estate in
-          let res, prf = x_add heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
-          (add_to_aux_conseq res to_aux_conseq pos, prf)
+          let () = y_tinfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
+          let () = y_tinfo_hp (add_str "lhs_guard_new" !CP.print_formula) lhs_guard_new in
+          let guard_conseq = CP.mkExists f_univ_vars lhs_guard_new None no_pos in
+          let () = y_tinfo_hp (add_str "guard_conseq" !CP.print_formula) guard_conseq in
+          let guard_flag = xpure_imply prog is_folding estate guard_conseq !Globals.imply_timeout_limit in
+          if not(guard_flag) then 
+            let msg = "univ guard not satisfied" in
+            (CF.mkFailCtx_in(Basic_Reason ( { 
+                 fc_message = msg;
+                 fc_current_lhs = estate;
+                 fc_prior_steps = estate.es_prior_steps;
+                 fc_orig_conseq = estate.es_orig_conseq;
+                 fc_current_conseq = CF.formula_of_heap HFalse pos; (* guard_conseq *)
+                 fc_failure_pts = [];}, CF.mk_failure_may msg Globals.sl_error, estate.es_trace)) ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex true), Failure)
+          else
+            let formula_x,to_aux_conseq = 
+              (* if !allow_imm || (!Globals.allow_field_ann) then (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) *)
+              (* else (formula_of_pure_N lhs_guard_new pos, CP.mkTrue pos)  *)
+              (formula_of_pure_N lhs_guard_new pos,lhs_guard_new) (* TODOIMM andreeac to check if this is enough for imm *)
+            in 
+            (* let () = print_endline ("do_universal:"  *)
+            (*                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq) *)
+            (*                        ^ "\n ### formula = " ^ (Cprinter.string_of_formula formula) *)
+            (*                        ^ "\n ### to_aux_conseq = " ^ (Cprinter.string_of_pure_formula to_aux_conseq)) in *)
+            let new_conseq = conseq (* normalize 9 conseq formula_x pos *) in
+            let new_estate = {estate with (* the new universal vars to be instantiated *)
+                              es_ivars = f_univ_vars @ estate.es_ivars;
+                              es_formula = new_f;} in
+            let () = y_tinfo_hp (add_str "LHS" !CF.print_formula) new_f in
+            let () = y_tinfo_hp (add_str "conseq" !CF.print_formula) conseq in
+            let new_ctx = Ctx new_estate in
+            let res, prf = x_add heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
+            let () = y_tinfo_hp (add_str "new_conseq" !CF.print_formula) new_conseq in
+            (* let () = y_tinfo_hp (add_str "to_aux_conseq" !CP.print_formula) to_aux_conseq in *)
+            (res (* add_to_aux_conseq res to_aux_conseq pos *), prf)
         end
     | _ -> let msg = "failed coercion application, found data but expected view" in
       (CF.mkFailCtx_in(Basic_Reason ( { 
@@ -14674,7 +14924,7 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
     let estate = CF.moving_ivars_to_evars estate anode in
     let () = x_dinfo_zp (lazy ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos in
     (*do_universal anode f coer*)
-    do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
+    x_add do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
   end
 
 
@@ -14735,7 +14985,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
-     || not(is_original_match anode ln2)
+  || not(is_original_match anode ln2)
   then
     let msg = "no lemma found in both LHS and RHS nodes (do coercion)" in
     (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must (* "no lemma found in both LHS and RHS nodes (do coercion)" *) msg
@@ -14745,7 +14995,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
     x_dinfo_zp (lazy ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos;
     (* universal coercions *)
     let univ_r = if (List.length univ_coers)>0 then
-        let univ_res_tmp = List.map (fun coer -> apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
+        let univ_res_tmp = List.map (fun coer -> x_add apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
         let univ_res, univ_prf = List.split univ_res_tmp in
         Some (univ_res, univ_prf)
       else None in
@@ -16149,8 +16399,10 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
       let rhs_node = ln2 in
       let rhs_rest = resth2 in
       let () = x_tinfo_hp (add_str "rhs_node" Cprinter.string_of_h_formula) rhs_node no_pos in
+      let () = x_tinfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos in
+      let () = x_tinfo_hp (add_str "vd(for lemma folding)" Cprinter.string_of_view_decl_short) vd no_pos in
       let () = x_tinfo_hp (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
-      let (a,b) = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+      let (a,b) = x_add do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
       (a,[b])
 (* why do_fold use proof & apply_right_coercion is proof list *)
 

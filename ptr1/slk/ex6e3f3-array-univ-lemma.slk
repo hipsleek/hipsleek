@@ -1,0 +1,35 @@
+data arrI {
+  int val;
+}.
+
+relation Univ(int x).
+
+//(6)
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+1 .
+expect Valid.
+// fails when mm=m move to RHS ..
+// unsound if Univ(m) is present on LHS ..
+
+//(7)
+checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=4.
+expect Valid.
+// fail but expect Valid?
+
+/*
+ex6e3f3.slk 
+
+# expl inst may go to LHS if Univ not present in LHS
+  since we may allowed it to strengthen formula on LHS?
+# alternative is to add Univ(m) on LHS?
+
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+1 .
+expect Valid.
+// fails when mm=m move to RHS ..
+// unsound if Univ(m) is present to move to LHS..
+
+checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=4.
+expect Valid.
+// fail but expect Valid when m=mm move to RHS?
+
+
+*/

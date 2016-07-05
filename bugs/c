@@ -1,359 +1,1268 @@
 
 !!! **tpdispatcher.ml#492:init_tp by default: 
 !!! **tpdispatcher.ml#391:set_tp z3Starting z3... 
-H1 is defined.
 
 Starting Omega.../usr/local/bin/oc
 
-!!! **WARNING****cpure.ml#5961:is_eq_baga may be unsound
-!!! **WARNING****cpure.ml#5961:is_eq_baga may be unsound
-!!! **WARNING****cpure.ml#5961:is_eq_baga may be unsound
-!!! **WARNING****cpure.ml#5961:is_eq_baga may be unsound
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **context.ml#3239:process_matches (steps) :
- ### LHS : x::node<zzz>@M * H1(y)
- ### RHS : y::node<flted_14_49>@M
- ### matches :
-[ Type: Root
- LHS: H1(y)
- RHS: y::node<flted_14_49>@M
- root_inst: None
- lhs_rest: x::node<zzz>@M
- rhs_rest: x::lseg<zzz_48>@M
- alias set: [y]rhs_inst: []rhs_infer: None]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+Inv Check: Valid.(Over)
 
-!!! **context.ml#3239:process_matches (steps) :
- ### LHS : x::node<zzz>@M * H1(y)
- ### RHS : x::lseg<zzz_48>@M
- ### matches :
-[ Type: Root
- LHS: x::node<zzz>@M
- RHS: x::lseg<zzz_48>@M
- root_inst: None
- lhs_rest: H1(y)
- rhs_rest: y::node<flted_14_49>@M
- alias set: [x]rhs_inst: []rhs_infer: None]
-
-!!! **context.ml#3620:compute_action (steps) :
- ### RHS Cand :[ y::node<flted_14_49>@M, x::lseg<zzz_48>@M]
- ### action :
- Fold =>
-   LHS: x::node<zzz>@M
-   RHS: x::lseg<zzz_48>@M
-
-!!! **solver.ml#12665:process_action (steps) :
- ### action :
- Fold =>
-   Type: Root
-   LHS: x::node<zzz>@M
-   RHS: x::lseg<zzz_48>@M
-   root_inst: None
-   lhs_rest: H1(y)
-   rhs_rest: y::node<flted_14_49>@M
-   alias set: [x]rhs_inst: []rhs_infer: None
- ### estate : ex_formula : x::node<zzz>@M * H1(y)&{FLOW,(20,21)=__norm#E}[]
- es_heap:emp
- es_infer_vars: [zzz]
- ### conseq : y::node<flted_14_49>@M * x::lseg<zzz_48>@M&flted_14_49=null & zzz_48=zzz&
+!!! **lemma.ml#312:
+Updated lemma store with unsafe repo::[lem_12]
+(==solver.ml#14049==)
+process_action#3@6@5@4@3@2@1
+process_action#3 inp1 : BaseCaseFold =>
+   LHS: emp
+   RHS: r1::lseg<n2,r2>@M
+process_action#3 inp2 :estate:  emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<nn,p>@M
+ es_trace:  SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND
+process_action#3 inp3 :conseq: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
 {FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b: emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3@6 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  2<=0. LOCS:[0;23] (RHS: contradiction)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  BaseCaseFold]]
+ CEX:false
 
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **context.ml#3239:process_matches (steps) :
- ### LHS : x::node<zzz>@M * H1(y)
- ### RHS : x::node<q_50>@M
- ### matches :
-[ Type: Root
- LHS: x::node<zzz>@M
- RHS: x::node<q_50>@M
- root_inst: None
- lhs_rest: H1(y)
- rhs_rest: q_50::lseg<p_54>@M
- alias set: [x]rhs_inst: []rhs_infer: None]
+(==solver.ml#14044==)
+process_action#2@7@5@4@3@2@1
+process_action#2 inp1 : UnmatchedRHSData =>  r1::lseg<n2,r2>@M
+process_action#2 inp2 :estate:  emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<nn,p>@M
+ es_trace:  SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND
+process_action#2 inp3 :conseq: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp4 :lhs_b: emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp5 :rhs_b: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2@7 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r1::lseg<n2,r2>@M(must)
+     fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  UnmatchedRHSData]]
+ CEX:true
 
-!!! **context.ml#3620:compute_action (steps) :
- ### RHS Cand :[ x::node<q_50>@M, q_50::lseg<p_54>@M]
- ### action :
- Match =>
-   LHS: x::node<zzz>@M
-   RHS: x::node<q_50>@M
-
-!!! **solver.ml#12665:process_action (steps) :
- ### action :
- Match =>
-   Type: Root
-   LHS: x::node<zzz>@M
-   RHS: x::node<q_50>@M
-   root_inst: None
-   lhs_rest: H1(y)
-   rhs_rest: q_50::lseg<p_54>@M
-   alias set: [x]rhs_inst: []rhs_infer: None
- ### estate : ex_formula : x::node<zzz>@M * H1(y)&{FLOW,(20,21)=__norm#E}[]
- es_heap:emp
- es_infer_vars: [zzz]
- ### conseq : x::node<q_50>@M * q_50::lseg<p_54>@M&x!=zzz_48 & p_54=zzz_48&
-{FLOW,(1,26)=__flow#E}[]
-
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **context.ml#3239:process_matches (steps) :
- ### LHS : H1(y)
- ### RHS : q_50::lseg<p_54>@M
- ### matches :[]
-
-!!! **context.ml#3620:compute_action (steps) :
- ### RHS Cand :[ q_50::lseg<p_54>@M]
- ### action :
- COND =>[
+(==solver.ml#14049==)
+process_action#3@5@4@3@2@1
+process_action#3 inp1 : COND =>[
   Prio:2
   BaseCaseFold =>
     LHS: emp
-    RHS: q_50::lseg<p_54>@M;
+    RHS: r1::lseg<n2,r2>@M;
   Prio:5
-  UnmatchedRHSData =>  q_50::lseg<p_54>@M
+  UnmatchedRHSData =>  r1::lseg<n2,r2>@M
   ]
+process_action#3 inp2 :estate:  emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<nn,p>@M
+ es_trace:  SEARCH ==>  COND ==>  Match(x,x) ==>  COND
+process_action#3 inp3 :conseq: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b: emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3@5 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r1::lseg<n2,r2>@M(must)
+     fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  UnmatchedRHSData]]
+ CEX:true
 
-!!! **solver.ml#12665:process_action (steps) :
- ### action :
- BaseCaseFold =>
-   Type: Root
+(==solver.ml#14049==)
+process_action#3@9@8@4@3@2@1
+process_action#3 inp1 : BaseCaseFold =>
    LHS: emp
-   RHS: q_50::lseg<p_54>@M
-   root_inst: None
-   lhs_rest: H1(y)
-   rhs_rest: emp
-   alias set: []rhs_inst: []rhs_infer: None
- ### estate : ex_formula : H1(y)&q_50=zzz & q_50=zzz&{FLOW,(20,21)=__norm#E}[]
- es_heap:x::node<zzz>@M
- es_infer_vars: [zzz]
- ### conseq : q_50::lseg<p_54>@M&x!=zzz_48 & p_54=zzz_48&{FLOW,(1,26)=__flow#E}[]
+   RHS: r2::lseg<n3,r3>@M
+process_action#3 inp2 :estate:  emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<nn,p>@M
+ es_trace:  SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND
+process_action#3 inp3 :conseq: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b: emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3@9 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  5<=0. LOCS:[0;23] (RHS: contradiction)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  BaseCaseFold]]
+ CEX:false
 
-(==solver.ml#11761==)
-do_fold_w_ctx@2@1
-do_fold_w_ctx inp1 :  H1(y)&q_50=zzz & q_50=zzz&{FLOW,(20,21)=__norm#E}[]
- es_evars: [p_54; zzz_48; flted_14_49]
- es_gen_impl_vars(E): []
- es_heap: x::node<zzz>@M
- es_rhs_eqset: [zzz_48:zzz; p_54:zzz_48; p_54:zzz_48]
- es_trace:  Fold ==>  Match(x,x) ==>  COND ==>  BaseCaseFold
- es_infer_vars: [zzz]
- es_infer_vars_hp_rel: [H1]
- es_unsat_flag: false
-do_fold_w_ctx inp2 :
- conseq =  q_50::lseg<p_54>@M&x!=zzz_48 & p_54=zzz_48&{FLOW,(1,26)=__flow#E}[]
- rhs_node =  q_50::lseg<p_54>@M
- vd =  EBase 
-   (* lbl: *){1}->emp&self=p&{FLOW,(1,26)=__flow#E}[]
- rhs_rest =  emp
- rhs_b =  q_50::lseg<p_54>@M&x!=zzz_48 & p_54=zzz_48&{FLOW,(1,26)=__flow#E}[]
-do_fold_w_ctx inp3 :true
-do_fold_w_ctx@2 EXIT: [ H1(y)&q_50=zzz & zzz=null&{FLOW,(20,21)=__norm#E}[]
-  es_evars: [p_54; zzz_48; flted_14_49]
+(==solver.ml#14044==)
+process_action#2@10@8@4@3@2@1
+process_action#2 inp1 : UnmatchedRHSData =>  r2::lseg<n3,r3>@M
+process_action#2 inp2 :estate:  emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<nn,p>@M
+ es_trace:  SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND
+process_action#2 inp3 :conseq: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp4 :lhs_b: emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp5 :rhs_b: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2@10 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r2::lseg<n3,r3>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  UnmatchedRHSData]]
+ CEX:false
+
+(==solver.ml#14044==)
+process_action#2@8@4@3@2@1
+process_action#2 inp1 : COND =>[
+  Prio:2
+  BaseCaseFold =>
+    LHS: emp
+    RHS: r2::lseg<n3,r3>@M;
+  Prio:5
+  UnmatchedRHSData =>  r2::lseg<n3,r3>@M
+  ]
+process_action#2 inp2 :estate:  emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<nn,p>@M
+ es_trace:  SEARCH ==>  COND ==>  Match(x,x) ==>  COND
+process_action#2 inp3 :conseq: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp4 :lhs_b: emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp5 :rhs_b: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2@8 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r2::lseg<n3,r3>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  UnmatchedRHSData]]
+ CEX:false
+
+(==solver.ml#11444==)
+process_action#1@4@3@2@1
+process_action#1 inp1 : COND =>[
+  Prio:2
+  COND =>[
+   Prio:2
+   BaseCaseFold =>
+     LHS: emp
+     RHS: r1::lseg<n2,r2>@M;
+   Prio:5
+   UnmatchedRHSData =>  r1::lseg<n2,r2>@M
+   ];
+   Prio:2
+   COND =>[
+    Prio:2
+    BaseCaseFold =>
+      LHS: emp
+      RHS: r2::lseg<n3,r3>@M;
+    Prio:5
+    UnmatchedRHSData =>  r2::lseg<n3,r3>@M
+    ]
+    ]
+process_action#1 inp2 :estate:  emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<nn,p>@M
+ es_trace:  SEARCH ==>  COND ==>  Match(x,x)
+process_action#1 inp3 :conseq: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: emp&10<nn & n1=nn & r1=p & n1=nn & r1=p&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1@4 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r2::lseg<n3,r3>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  UnmatchedRHSData]]
+ CEX:false
+
+(==solver.ml#14049==)
+process_action#3@3@2@1
+process_action#3 inp1 : Match =>
+   LHS: x::lseg<nn,p>@M
+   RHS: x::lseg<n1,r1>@M
+process_action#3 inp2 :estate:
+  x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n1; r1; n2; r2; n3; r3]
+ es_trace:  SEARCH ==>  COND
+process_action#3 inp3 :conseq:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b: x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#3@3 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r2::lseg<n3,r3>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(x,x) ==>  COND ==>  COND ==>  UnmatchedRHSData]]
+ CEX:false
+
+(==solver.ml#14044==)
+process_action#2@11@2@1
+process_action#2 inp1 : BaseCaseUnfold =>
+   LHS: x::lseg<nn,p>@M
+   RHS: x::lseg<n1,r1>@M
+process_action#2 inp2 :estate:
+  x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n1; r1; n2; r2; n3; r3]
+ es_trace:  SEARCH ==>  COND
+process_action#2 inp3 :conseq:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp4 :lhs_b: x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp5 :rhs_b:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#2@11 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false
+
+(==solver.ml#14091==)
+process_action#4@2@1
+process_action#4 inp1 : COND =>[
+  Prio:1
+  Match =>
+    LHS: x::lseg<nn,p>@M
+    RHS: x::lseg<n1,r1>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: x::lseg<nn,p>@M
+    RHS: x::lseg<n1,r1>@M
+  ]
+process_action#4 inp2 :estate:
+  x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n1; r1; n2; r2; n3; r3]
+ es_trace:  SEARCH
+process_action#4 inp3 :conseq:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b: x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#4@2 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false
+
+!!! **solver.ml#14310:need to prove:lhs_guard_new: nn=b_114+a_113 & 0<=a_113 & 0<=b_114
+(==solver.ml#14049==)
+process_action#3@18@17@16@15@14@13@12@1
+process_action#3 inp1 : BaseCaseFold =>
+   LHS: emp
+   RHS: r2::lseg<n3,r3>@M
+process_action#3 inp2 :estate:
+  emp&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=p & n2=b_114 & r2=p&
+{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<b_114,p>@M * x::lseg<a_113,r_120>@M
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(r_120,r1) ==>  COND
+process_action#3 inp3 :conseq: r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3 & nn=n2+n1 & 0<=n1 & 0<=n2&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b:
+ emp&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=p & n2=b_114 & r2=p&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b: r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3 & nn=n2+n1 & 0<=n1 & 0<=n2&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3@18 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  5<=0. LOCS:[0;23] (RHS: contradiction)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(r_120,r1) ==>  COND ==>  BaseCaseFold]]
+ CEX:false
+
+(==solver.ml#14044==)
+process_action#2@19@17@16@15@14@13@12@1
+process_action#2 inp1 : UnmatchedRHSData =>  r2::lseg<n3,r3>@M
+process_action#2 inp2 :estate:
+  emp&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=p & n2=b_114 & r2=p&
+{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<b_114,p>@M * x::lseg<a_113,r_120>@M
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(r_120,r1) ==>  COND
+process_action#2 inp3 :conseq: r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3 & nn=n2+n1 & 0<=n1 & 0<=n2&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp4 :lhs_b:
+ emp&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=p & n2=b_114 & r2=p&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp5 :rhs_b: r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3 & nn=n2+n1 & 0<=n1 & 0<=n2&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2@19 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r2::lseg<n3,r3>@M(must)
+     fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}
+   }
+ [[ SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(r_120,r1) ==>  COND ==>  UnmatchedRHSData]]
+ CEX:true
+
+(==solver.ml#11444==)
+process_action#1@17@16@15@14@13@12@1
+process_action#1 inp1 : COND =>[
+  Prio:2
+  BaseCaseFold =>
+    LHS: emp
+    RHS: r2::lseg<n3,r3>@M;
+  Prio:5
+  UnmatchedRHSData =>  r2::lseg<n3,r3>@M
+  ]
+process_action#1 inp2 :estate:
+  emp&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=p & n2=b_114 & r2=p&
+{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<b_114,p>@M * x::lseg<a_113,r_120>@M
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(r_120,r1)
+process_action#1 inp3 :conseq: r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3 & nn=n2+n1 & 0<=n1 & 0<=n2&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b:
+ emp&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=p & n2=b_114 & r2=p&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: r2::lseg<n3,r3>@M&1<=n1 & 2<=n2 & 5<=n3 & nn=n2+n1 & 0<=n1 & 0<=n2&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1@17 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r2::lseg<n3,r3>@M(must)
+     fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}
+   }
+ [[ SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(r_120,r1) ==>  COND ==>  UnmatchedRHSData]]
+ CEX:true
+
+(==solver.ml#14049==)
+process_action#3@16@15@14@13@12@1
+process_action#3 inp1 : Match =>
+   LHS: r_120::lseg<b_114,p>@M
+   RHS: r1::lseg<n2,r2>@M
+process_action#3 inp2 :estate:
+  r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<a_113,r_120>@M
+ es_ivars: [b_114]
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND
+process_action#3 inp3 :conseq:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b:
+ r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3@16 EXIT:
+ctx length:0 
+ Context: MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : r2::lseg<n3,r3>@M(must)
+     fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}
+   }
+ [[ SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(r_120,r1) ==>  COND ==>  UnmatchedRHSData]]
+ CEX:true
+
+(==solver.ml#14044==)
+process_action#2@20@15@14@13@12@1
+process_action#2 inp1 : BaseCaseUnfold =>
+   LHS: r_120::lseg<b_114,p>@M
+   RHS: r1::lseg<n2,r2>@M
+process_action#2 inp2 :estate:
+  r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<a_113,r_120>@M
+ es_ivars: [b_114]
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND
+process_action#2 inp3 :conseq:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp4 :lhs_b:
+ r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+process_action#2 inp5 :rhs_b:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#2@20 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false
+
+(==solver.ml#14091==)
+process_action#4@15@14@13@12@1
+process_action#4 inp1 : COND =>[
+  Prio:1
+  Match =>
+    LHS: r_120::lseg<b_114,p>@M
+    RHS: r1::lseg<n2,r2>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: r_120::lseg<b_114,p>@M
+    RHS: r1::lseg<n2,r2>@M
+  ]
+process_action#4 inp2 :estate:
+  r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<a_113,r_120>@M
+ es_ivars: [b_114]
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH
+process_action#4 inp3 :conseq:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b:
+ r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4@15 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false
+
+!!! **solver.ml#14310:need to prove:lhs_guard_new: b_114=b_154+a_153 & 0<=a_153 & 0<=b_154
+(==solver.ml#14049==)
+process_action#3@25@24@23@22@21@14@13@12@1
+process_action#3 inp1 : Match =>
+   LHS: r_160::lseg<b_154,p>@M
+   RHS: r2::lseg<n3,r3>@M
+process_action#3 inp2 :estate:
+  r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [b_114]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<a_153,r_160>@M * x::lseg<a_113,r_120>@M
+ es_ivars: [b_154]
+ es_ante_evars: [r_160; r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND
+process_action#3 inp3 :conseq:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b:
+ r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
+{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#3@25 EXIT:
+ctx length:1 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
   es_gen_impl_vars(E): []
-  es_pure: q_50=p_54 & p_54=zzz_48 & x!=zzz_48
-  es_heap: x::node<zzz>@M
-  es_ante_evars: [p_54; zzz_48; flted_14_49]
-  es_rhs_eqset: [zzz_48:zzz; p_54:zzz_48; p_54:zzz_48; p_54:zzz_48; 
-                 q_50:p_54]
-  es_aux_conseq: q_50=p_54
-  es_trace:  Fold ==>  Match(x,x) ==>  COND ==>  BaseCaseFold
-  es_infer_vars: [zzz]
-  es_infer_vars_hp_rel: [H1]
-  es_infer_pure: [zzz=null]]
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154]
+  es_subst (to): [n3]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2)]
 
-!!! **WARNING****context.ml#825:pushing to infer
-!!! **context.ml#3239:process_matches (steps) :
- ### LHS : x::node<zzz>@M * H1(y)
- ### RHS : y::node<flted_14_49>@M
- ### matches :
-[ Type: Root
- LHS: H1(y)
- RHS: y::node<flted_14_49>@M
- root_inst: None
- lhs_rest: x::node<zzz>@M
- rhs_rest: emp
- alias set: [y]rhs_inst: []rhs_infer: None]
-
-!!! **context.ml#3620:compute_action (steps) :
- ### RHS Cand :[ y::node<flted_14_49>@M]
- ### action :
- InferUnfold =>
-   LHS: H1(y)
-   RHS: y::node<flted_14_49>@M
-
-!!! **solver.ml#12665:process_action (steps) :
- ### action :
- InferUnfold =>
-   Type: Root
-   LHS: H1(y)
-   RHS: y::node<flted_14_49>@M
-   root_inst: None
-   lhs_rest: x::node<zzz>@M
-   rhs_rest: emp
-   alias set: [y]rhs_inst: []rhs_infer: None
- ### estate : ex_formula : x::node<zzz>@M * H1(y)&{FLOW,(20,21)=__norm#E}[]
- es_heap:emp
- es_infer_vars: [zzz]
- ### conseq : y::node<flted_14_49>@M&flted_14_49=null & zzz_48=zzz & x=zzz_48&
+(==solver.ml#14091==)
+process_action#4@24@23@22@21@14@13@12@1
+process_action#4 inp1 : COND =>[
+  Prio:1
+  Match =>
+    LHS: r_160::lseg<b_154,p>@M
+    RHS: r2::lseg<n3,r3>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: r_160::lseg<b_154,p>@M
+    RHS: r2::lseg<n3,r3>@M
+  ]
+process_action#4 inp2 :estate:
+  r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
 {FLOW,(20,21)=__norm#E}[]
-
-!!! **cast.ml#1545:define: :
-HeapPred HP_60(node flted_14_59, node@NI y).
-
-!!! **solver.ml#12665:process_action (steps) :
- ### action :
- Match =>
-   Type: Root
-   LHS: y::node<flted_14_59>@M
-   RHS: y::node<flted_14_49>@M
-   root_inst: None
-   lhs_rest: x::node<zzz>@M * HP_60(flted_14_59,y)
-   rhs_rest: emp
-   alias set: []rhs_inst: []rhs_infer: None
- ### estate : ex_formula : x::node<zzz>@M * HP_60(flted_14_59,y)&{FLOW,(20,21)=__norm#E}[]
- es_heap:emp
- es_infer_vars: [zzz]
- ### conseq : y::node<flted_14_49>@M&flted_14_49=null & zzz_48=zzz & x=zzz_48&
+ es_evars: [b_114]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<a_153,r_160>@M * x::lseg<a_113,r_120>@M
+ es_ivars: [b_154]
+ es_ante_evars: [r_160; r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH
+process_action#4 inp3 :conseq:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b:
+ r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
 {FLOW,(20,21)=__norm#E}[]
-
-!!! **context.ml#3239:process_matches (steps) :
- ### LHS : H1(y)
- ### RHS : y::node<flted_14_49>@M
- ### matches :
-[ Type: Root
- LHS: H1(y)
- RHS: y::node<flted_14_49>@M
- root_inst: None
- lhs_rest: emp
- rhs_rest: emp
- alias set: [y]rhs_inst: []rhs_infer: None]
-
-!!! **context.ml#3620:compute_action (steps) :
- ### RHS Cand :[ y::node<flted_14_49>@M]
- ### action :
- InferUnfold =>
-   LHS: H1(y)
-   RHS: y::node<flted_14_49>@M
-
-!!! **solver.ml#12665:process_action (steps) :
- ### action :
- InferUnfold =>
-   Type: Root
-   LHS: H1(y)
-   RHS: y::node<flted_14_49>@M
-   root_inst: None
-   lhs_rest: emp
-   rhs_rest: emp
-   alias set: [y]rhs_inst: []rhs_infer: None
- ### estate : ex_formula : H1(y)&x!=q_50 & zzz=null & q_50=zzz&{FLOW,(20,21)=__norm#E}[]
- es_heap:x::node<zzz>@M
- es_infer_vars: [zzz]
- es_infer_pure: [zzz=null]
- ### conseq :
- y::node<flted_14_49>@M&
-flted_14_49=null & zzz_48=zzz & x!=zzz_48 & q_50=zzz_48&
+process_action#4 inp5 :rhs_b:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#4@24 EXIT:
+ctx length:1 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
 {FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154]
+  es_subst (to): [n3]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2)]
 
-!!! **cast.ml#1545:define: :
-HeapPred HP_65(node flted_14_64, node@NI y).
-
-!!! **solver.ml#12665:process_action (steps) :
- ### action :
- Match =>
-   Type: Root
-   LHS: y::node<flted_14_64>@M
-   RHS: y::node<flted_14_49>@M
-   root_inst: None
-   lhs_rest: HP_65(flted_14_64,y)
-   rhs_rest: emp
-   alias set: []rhs_inst: []rhs_infer: None
- ### estate : ex_formula : HP_65(flted_14_64,y)&x!=q_50 & zzz=null & q_50=zzz&{FLOW,(20,21)=__norm#E}[]
- es_heap:x::node<zzz>@M
- es_infer_vars: [zzz]
- es_infer_pure: [zzz=null]
- ### conseq :
- y::node<flted_14_49>@M&
-flted_14_49=null & zzz_48=zzz & x!=zzz_48 & q_50=zzz_48&
+!!! **solver.ml#14310:need to prove:lhs_guard_new: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176
+(==solver.ml#11444==)
+process_action#1@27@26@23@22@21@14@13@12@1
+process_action#1 inp1 : Match =>
+   LHS: r_160::lseg<a_175,r_182>@M
+   RHS: r2::lseg<n3,r3>@M
+process_action#1 inp2 :estate:
+  r_160::lseg<a_175,r_182>@M * r_182::lseg<b_176,p>@M&
+n=b_176+a_175 & 0<=a_175 & 0<=b_176 & Univ(a_175) & Univ(b_176) & 
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
 {FLOW,(20,21)=__norm#E}[]
-
-(==solver.ml#11761==)
-do_fold_w_ctx@1
-do_fold_w_ctx inp1 :  x::node<zzz>@M * H1(y)&{FLOW,(20,21)=__norm#E}[]
- es_evars: [zzz_48; flted_14_49]
- es_gen_impl_vars(E): []
- es_rhs_eqset: [zzz_48:zzz]
- es_trace:  Fold
- es_infer_vars: [zzz]
- es_infer_vars_hp_rel: [H1]
- es_unsat_flag: false
-do_fold_w_ctx inp2 :
- conseq =  y::node<flted_14_49>@M * x::lseg<zzz_48>@M&flted_14_49=null & zzz_48=zzz&
+ es_evars: [b_114; b_154]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<a_153,r_160>@M * x::lseg<a_113,r_120>@M
+ es_ivars: [a_175; b_176]
+ es_ante_evars: [r_182; r_160; r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2))
+process_action#1 inp3 :conseq:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154 & b_154=b_176+a_175 & 0<=a_175 & 0<=b_176&
 {FLOW,(20,21)=__norm#E}[]
- rhs_node =  x::lseg<zzz_48>@M
- vd = None
- rhs_rest =  y::node<flted_14_49>@M
- rhs_b =  y::node<flted_14_49>@M * x::lseg<zzz_48>@M&flted_14_49=null & zzz_48=zzz&
+process_action#1 inp4 :lhs_b:
+ r_160::lseg<a_175,r_182>@M * r_182::lseg<b_176,p>@M&
+n=b_176+a_175 & 0<=a_175 & 0<=b_176 & Univ(a_175) & Univ(b_176) & 
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
 {FLOW,(20,21)=__norm#E}[]
-do_fold_w_ctx inp3 :false
-do_fold_w_ctx@1 EXIT: MaybeErr Context: 
-    fe_kind: MAY
-    fe_name: logical bug
-    fe_locs: {
-        fc_message: AndR[ y!=null & x!=y & x!=null |-  x=zzz. LOCS:[0;14];  true |-  flted_14_59=null. LOCS:[0;14] (may-bug).]
-        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-      }
-    [[ Fold ==>  InferUnfold  ==>  InferHeap ==>  Match(y,y)]]
-   FAIL_UNION 
-    fe_kind: MAY
-    fe_name: logical bug
-    fe_locs: {
-        fc_message:  true |-  flted_14_64=null. LOCS:[0;14] (may-bug)
-        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-      }
-    [[ Fold ==>  Match(x,x) ==>  COND ==>  BaseCaseFold ==>  InferUnfold  ==>  InferHeap ==>  Match(y,y)]]
-   
- CEX:false
+process_action#1 inp5 :rhs_b:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154 & b_154=b_176+a_175 & 0<=a_175 & 0<=b_176&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1@27 EXIT:
+ctx length:1 
+ Context: [ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114; b_154]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ivars: [b_176]
+  es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [a_175]
+  es_subst (to): [n3]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
 
-Entail (1) : Fail.(may) cause:UnionR[AndR[ y!=null & x!=y & x!=null |-  x=zzz. LOCS:[0;14];  true |-  flted_14_59=null. LOCS:[0;14] (may-bug).], true |-  flted_14_64=null. LOCS:[0;14] (may-bug)]
+(==solver.ml#14091==)
+process_action#4@26@23@22@21@14@13@12@1
+process_action#4 inp1 : (Lemma 0==> lem_12) =>
+   LHS: r_160::lseg<b_154,p>@M
+   RHS: r2::lseg<n3,r3>@M
+process_action#4 inp2 :estate:
+  r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [b_114]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<a_153,r_160>@M * x::lseg<a_113,r_120>@M
+ es_ivars: [b_154]
+ es_ante_evars: [r_160; r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH
+process_action#4 inp3 :conseq:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b:
+ r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#4@26 EXIT:
+ctx length:1 
+ Context: [ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114; b_154]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ivars: [b_176]
+  es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [a_175]
+  es_subst (to): [n3]
+  es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
 
-Residue:
+(==solver.ml#11444==)
+process_action#1@23@22@21@14@13@12@1
+process_action#1 inp1 : SEARCH =>[
+  Prio:1
+  COND =>[
+   Prio:1
+   Match =>
+     LHS: r_160::lseg<b_154,p>@M
+     RHS: r2::lseg<n3,r3>@M;
+   Prio:3
+   BaseCaseUnfold =>
+     LHS: r_160::lseg<b_154,p>@M
+     RHS: r2::lseg<n3,r3>@M
+   ];
+   Prio:1
+   (Lemma 0==> lem_12) =>
+     LHS: r_160::lseg<b_154,p>@M
+     RHS: r2::lseg<n3,r3>@M
+   ]
+process_action#1 inp2 :estate:
+  r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [b_114]
+ es_gen_impl_vars(E): [n3; r3]
+ es_heap: r_120::lseg<a_153,r_160>@M * x::lseg<a_113,r_120>@M
+ es_ivars: [b_154]
+ es_ante_evars: [r_160; r_120]
+ es_gen_expl_vars: [n1; n2]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1)
+process_action#1 inp3 :conseq:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b:
+ r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120 & r2=r_160 & n2=a_153 & r2=r_160&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b:
+ r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+n2 & 
+0<=n2 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#1@23 EXIT:
+ctx length:2 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154]
+  es_subst (to): [n3]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2); 
+ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+es_evars: [b_114; b_154]
+es_gen_impl_vars(E): []
+es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+         x::lseg<a_113,r_120>@M
+es_ivars: [b_176]
+es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+es_gen_expl_vars: [n1; n2; n3]
+es_subst (from): [a_175]
+es_subst (to): [n3]
+es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176
+es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
 
- MaybeErr Context: 
-    fe_kind: MAY
-    fe_name: logical bug
-    fe_locs: {
-        fc_message: AndR[ y!=null & x!=y & x!=null |-  x=zzz. LOCS:[0;14];  true |-  flted_14_59=null. LOCS:[0;14] (may-bug).]
-        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-      }
-    [[ Fold ==>  InferUnfold  ==>  InferHeap ==>  Match(y,y)]]
-   FAIL_UNION 
-    fe_kind: MAY
-    fe_name: logical bug
-    fe_locs: {
-        fc_message:  true |-  flted_14_64=null. LOCS:[0;14] (may-bug)
-        fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
-      }
-    [[ Fold ==>  Match(x,x) ==>  COND ==>  BaseCaseFold ==>  InferUnfold  ==>  InferHeap ==>  Match(y,y)]]
-   
- CEX:false
-Validate 1: Expecting(3)Valid BUT got : Fail_May
+(==solver.ml#11444==)
+process_action#1@22@21@14@13@12@1
+process_action#1 inp1 : Match =>
+   LHS: r_120::lseg<a_153,r_160>@M
+   RHS: r1::lseg<n2,r2>@M
+process_action#1 inp2 :estate:
+  r_120::lseg<a_153,r_160>@M * r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [b_114]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<a_113,r_120>@M
+ es_ivars: [a_153; b_154]
+ es_ante_evars: [r_160; r_120]
+ es_gen_expl_vars: [n1]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1))
+process_action#1 inp3 :conseq:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+a_153 & 
+0<=a_153 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b:
+ r_120::lseg<a_153,r_160>@M * r_160::lseg<b_154,p>@M&
+n=b_154+a_153 & 0<=a_153 & 0<=b_154 & Univ(a_153) & Univ(b_154) & 
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114 & b_114=b_154+a_153 & 
+0<=a_153 & 0<=b_154&{FLOW,(20,21)=__norm#E}[]
+process_action#1@22 EXIT:
+ctx length:2 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154; a_153]
+  es_subst (to): [n3; n2]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2); 
+ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+es_evars: [b_114; b_154]
+es_gen_impl_vars(E): []
+es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+         x::lseg<a_113,r_120>@M
+es_ivars: [b_176]
+es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+es_gen_expl_vars: [n1; n2; n3]
+es_subst (from): [a_175; a_153]
+es_subst (to): [n3; n2]
+es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176
+es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
+
+(==solver.ml#14091==)
+process_action#4@21@14@13@12@1
+process_action#4 inp1 : (Lemma 0==> lem_12) =>
+   LHS: r_120::lseg<b_114,p>@M
+   RHS: r1::lseg<n2,r2>@M
+process_action#4 inp2 :estate:
+  r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<a_113,r_120>@M
+ es_ivars: [b_114]
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH
+process_action#4 inp3 :conseq:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b:
+ r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4@21 EXIT:
+ctx length:2 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154; a_153]
+  es_subst (to): [n3; n2]
+  es_aux_conseq: b_114=b_154+a_153 & 0<=a_153 & 0<=b_154
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2); 
+ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+es_evars: [b_114; b_154]
+es_gen_impl_vars(E): []
+es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+         x::lseg<a_113,r_120>@M
+es_ivars: [b_176]
+es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+es_gen_expl_vars: [n1; n2; n3]
+es_subst (from): [a_175; a_153]
+es_subst (to): [n3; n2]
+es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176 & b_114=b_154+a_153 & 
+               0<=a_153 & 0<=b_154
+es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
+
+(==solver.ml#11444==)
+process_action#1@14@13@12@1
+process_action#1 inp1 : SEARCH =>[
+  Prio:1
+  COND =>[
+   Prio:1
+   Match =>
+     LHS: r_120::lseg<b_114,p>@M
+     RHS: r1::lseg<n2,r2>@M;
+   Prio:3
+   BaseCaseUnfold =>
+     LHS: r_120::lseg<b_114,p>@M
+     RHS: r1::lseg<n2,r2>@M
+   ];
+   Prio:1
+   (Lemma 0==> lem_12) =>
+     LHS: r_120::lseg<b_114,p>@M
+     RHS: r1::lseg<n2,r2>@M
+   ]
+process_action#1 inp2 :estate:
+  r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n2; r2; n3; r3]
+ es_heap: x::lseg<a_113,r_120>@M
+ es_ivars: [b_114]
+ es_ante_evars: [r_120]
+ es_gen_expl_vars: [n1]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x)
+process_action#1 inp3 :conseq:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b:
+ r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn & 
+r1=r_120 & n1=a_113 & r1=r_120&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b:
+ r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+n1 & 0<=n1 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1@14 EXIT:
+ctx length:2 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154; a_153]
+  es_subst (to): [n3; n2]
+  es_aux_conseq: b_114=b_154+a_153 & 0<=a_153 & 0<=b_154
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2); 
+ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+es_evars: [b_114; b_154]
+es_gen_impl_vars(E): []
+es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+         x::lseg<a_113,r_120>@M
+es_ivars: [b_176]
+es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+es_gen_expl_vars: [n1; n2; n3]
+es_subst (from): [a_175; a_153]
+es_subst (to): [n3; n2]
+es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176 & b_114=b_154+a_153 & 
+               0<=a_153 & 0<=b_154
+es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
+
+(==solver.ml#11444==)
+process_action#1@13@12@1
+process_action#1 inp1 : Match =>
+   LHS: x::lseg<a_113,r_120>@M
+   RHS: x::lseg<n1,r1>@M
+process_action#1 inp2 :estate:
+  x::lseg<a_113,r_120>@M * r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn&
+{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n1; r1; n2; r2; n3; r3]
+ es_ivars: [a_113; b_114]
+ es_ante_evars: [r_120]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x))
+process_action#1 inp3 :conseq:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+a_113 & 0<=a_113 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b:
+ x::lseg<a_113,r_120>@M * r_120::lseg<b_114,p>@M&
+n=b_114+a_113 & 0<=a_113 & 0<=b_114 & Univ(a_113) & Univ(b_114) & 10<nn&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3 & nn=b_114+a_113 & 0<=a_113 & 0<=b_114&
+{FLOW,(20,21)=__norm#E}[]
+process_action#1@13 EXIT:
+ctx length:2 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154; a_153; a_113]
+  es_subst (to): [n3; n2; n1]
+  es_aux_conseq: b_114=b_154+a_153 & 0<=a_153 & 0<=b_154
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2); 
+ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+es_evars: [b_114; b_154]
+es_gen_impl_vars(E): []
+es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+         x::lseg<a_113,r_120>@M
+es_ivars: [b_176]
+es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+es_gen_expl_vars: [n1; n2; n3]
+es_subst (from): [a_175; a_153; a_113]
+es_subst (to): [n3; n2; n1]
+es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176 & b_114=b_154+a_153 & 
+               0<=a_153 & 0<=b_154
+es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
+
+(==solver.ml#14091==)
+process_action#4@12@1
+process_action#4 inp1 : (Lemma 0==> lem_12) =>
+   LHS: x::lseg<nn,p>@M
+   RHS: x::lseg<n1,r1>@M
+process_action#4 inp2 :estate:
+  x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n1; r1; n2; r2; n3; r3]
+ es_trace:  SEARCH
+process_action#4 inp3 :conseq:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b: x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#4@12 EXIT:
+ctx length:2 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154; a_153; a_113]
+  es_subst (to): [n3; n2; n1]
+  es_aux_conseq: b_114=b_154+a_153 & 0<=a_153 & 0<=b_154 & nn=b_114+a_113 & 
+                 0<=a_113 & 0<=b_114
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2); 
+ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+es_evars: [b_114; b_154]
+es_gen_impl_vars(E): []
+es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+         x::lseg<a_113,r_120>@M
+es_ivars: [b_176]
+es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+es_gen_expl_vars: [n1; n2; n3]
+es_subst (from): [a_175; a_153; a_113]
+es_subst (to): [n3; n2; n1]
+es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176 & b_114=b_154+a_153 & 
+               0<=a_153 & 0<=b_154 & nn=b_114+a_113 & 0<=a_113 & 0<=b_114
+es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
+
+(==solver.ml#11444==)
+process_action#1@1
+process_action#1 inp1 : SEARCH =>[
+  Prio:1
+  COND =>[
+   Prio:1
+   Match =>
+     LHS: x::lseg<nn,p>@M
+     RHS: x::lseg<n1,r1>@M;
+   Prio:3
+   BaseCaseUnfold =>
+     LHS: x::lseg<nn,p>@M
+     RHS: x::lseg<n1,r1>@M
+   ];
+   Prio:1
+   (Lemma 0==> lem_12) =>
+     LHS: x::lseg<nn,p>@M
+     RHS: x::lseg<n1,r1>@M
+   ]
+process_action#1 inp2 :estate:
+  x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [n1; r1; n2; r2; n3; r3]
+ 
+process_action#1 inp3 :conseq:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: x::lseg<nn,p>@M&10<nn&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b:
+ x::lseg<n1,r1>@M * r1::lseg<n2,r2>@M * r2::lseg<n3,r3>@M&
+1<=n1 & 2<=n2 & 5<=n3&{FLOW,(20,21)=__norm#E}[]
+process_action#1@1 EXIT:
+ctx length:2 
+ Context: [ emp&
+0<=(n3+n2) & nn=n3+n2+n1 & 1<=n1 & 2<=n2 & 5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 
+r3=p & n3=b_154 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153&
+{FLOW,(20,21)=__norm#E}[]
+  es_evars: [b_114]
+  es_gen_impl_vars(E): []
+  es_heap: r_160::lseg<b_154,p>@M * r_120::lseg<a_153,r_160>@M * 
+           x::lseg<a_113,r_120>@M
+  es_ante_evars: [r_160; r_120; b_114]
+  es_gen_expl_vars: [n1; n2; n3]
+  es_subst (from): [b_154; a_153; a_113]
+  es_subst (to): [n3; n2; n1]
+  es_aux_conseq: b_114=b_154+a_153 & 0<=a_153 & 0<=b_154 & nn=b_114+a_113 & 
+                 0<=a_113 & 0<=b_114
+  es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  COND ==>  Match(r_160,r2); 
+ r_182::lseg<b_176,p>@M&
+0<=(b_176+n3) & 0<=(b_176+n3+n2) & nn=b_176+n3+n2+n1 & 1<=n1 & 2<=n2 & 
+5<=n3 & 0<=n1 & 0<=n2 & 0<=n3 & 0<=b_176 & 3<=nn & b_176<=(nn-8) & 
+r3=r_182 & n3=a_175 & r2=r_160 & n2=a_153 & r1=r_120 & n1=a_113 & 10<nn & 
+Univ(b_114) & Univ(a_113) & 0<=b_114 & 0<=a_113 & n=b_114+a_113 & 
+Univ(b_154) & Univ(a_153) & 0<=b_154 & 0<=a_153 & n=b_154+a_153 & 
+Univ(b_176) & Univ(a_175) & 0<=a_175 & n=b_176+a_175&
+{FLOW,(20,21)=__norm#E}[]
+es_evars: [b_114; b_154]
+es_gen_impl_vars(E): []
+es_heap: r_160::lseg<a_175,r_182>@M * r_120::lseg<a_153,r_160>@M * 
+         x::lseg<a_113,r_120>@M
+es_ivars: [b_176]
+es_ante_evars: [r_182; r_160; r_120; b_114; b_154]
+es_gen_expl_vars: [n1; n2; n3]
+es_subst (from): [a_175; a_153; a_113]
+es_subst (to): [n3; n2; n1]
+es_aux_conseq: b_154=b_176+a_175 & 0<=a_175 & 0<=b_176 & b_114=b_154+a_153 & 
+               0<=a_153 & 0<=b_154 & nn=b_114+a_113 & 0<=a_113 & 0<=b_114
+es_trace:  SEARCH ==>  (Lemma ==> lem_12(x,x)) ==>  Match(x,x) ==>  SEARCH ==>  (Lemma ==> lem_12(r_120,r1)) ==>  Match(r_120,r1) ==>  SEARCH ==>  (Lemma ==> lem_12(r_160,r2)) ==>  Match(r_160,r2)]
+
+Entail 1: Valid. 
 
 
-Unexpected List: [1]
-
-Stop z3... 71 invocations 
-Stop Omega... 80 invocations 
-SAT Count   : 102
-SAT % Hit   : 58.82%
-IMPLY Count : 71
-IMPLY % Hit : 59.15%
-Time(cache overhead) : 0.024785 (seconds)
+Stop z3... 107 invocations 
+Stop Omega... 26 invocations 
+SAT Count   : 114
+SAT % Hit   : 44.73%
+IMPLY Count : 106
+IMPLY % Hit : 58.49%
+Time(cache overhead) : 0.159576 (seconds)
 
 0 false contexts at: ()
 
-!!! log(small):(0.306198,260)
-Total verification time: 0.191811 second(s)
-	Time spent in main process: 0.14102 second(s)
-	Time spent in child processes: 0.050791 second(s)
+!!! log(small):(2.379452,258)
+!!! log(big)(>0.5s)(1):(0.530631,[(sleek-hec,0.530631)])
+Total verification time: 0.733732 second(s)
+	Time spent in main process: 0.662295 second(s)
+	Time spent in child processes: 0.071437 second(s)
 

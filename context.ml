@@ -42,6 +42,7 @@ type match_res = {
   match_res_type : match_type; (* indicator of what type of matching *)
   match_res_rhs_node : h_formula;
   match_res_rhs_rest : h_formula;
+  match_res_reason : CP.formula option;
   match_res_alias_set : CP.spec_var list;
   match_res_infer : CP.formula option;
   match_res_root_inst : (CP.spec_var (* * CP.formula *)) option;
@@ -121,12 +122,13 @@ let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
 
-let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) mt lhs_node lhs_rest rhs_node rhs_rest =
+let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(match_res_reason=None) mt lhs_node lhs_rest rhs_node rhs_rest =
   {
     match_res_lhs_node = lhs_node;
     match_res_lhs_rest = lhs_rest;
     match_res_holes = holes;
     match_res_type = mt;
+    match_res_reason = match_res_reason;
     match_res_compatible = [];
     match_res_rhs_node = rhs_node;
     match_res_rhs_rest = rhs_rest;
@@ -134,6 +136,10 @@ let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) mt 
     match_res_root_inst = root_inst;
     match_res_infer = imprecise;
   }
+
+let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(match_res_reason=None) mt lhs_node lhs_rest rhs_node rhs_rest =
+  let pr = pr_option pr_none in
+  Debug.no_2 "mk_match_res" pr pr_none pr_none (fun _ _ -> mk_match_res ~holes:holes ~alias:alias ~root_inst:root_inst ~imprecise:imprecise ~match_res_reason:match_res_reason mt lhs_node lhs_rest rhs_node rhs_rest) root_inst 1
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -439,7 +445,8 @@ let check_same lst =
   | (w,_)::xs -> aux xs w
 
 let norm_smart_action ls =
-  if check_same ls then norm_search_action ls
+  (* this fails for ptr1/ex6f1g4e.slk  *)
+  if true (* check_same ls *) then norm_search_action ls
   else norm_cond_action ls
 
 let mk_smart_action lst = norm_smart_action lst
@@ -638,13 +645,24 @@ let get_views_offset prog f =
 
 (* let adhoc_stk = new Gen.stack *)
 
+let xpure_sym = ref ((fun p h mf xp -> failwith x_tbi):prog_decl -> h_formula -> MCP.mix_formula -> int -> (MCP.mix_formula * CP.spec_var list * mem_formula))
+
 let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos : match_res list =
   (* let () = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   let hrel_stk = new Gen.stack in
   let aset = posib_r_aliases in
   let lhs_pure = MCP.pure_of_mix lhs_p in
+  let rhs_pure = MCP.pure_of_mix rhs_p in
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let lhs_pure = lhs_pure in
+  (* add xpure0 of lhs_h to lhs_pure *)
+  let mf,svl,ba = x_add !xpure_sym prog lhs_h lhs_p 0 in
+  let mf = MCP.pure_of_mix mf in
+  let () = y_tinfo_hp (add_str "lhs_h" !CF.print_h_formula) lhs_h in
+  let () = y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure in
+  let lhs_rhs_pure = CP.mkAnd lhs_pure rhs_pure no_pos in
+  let () = y_tinfo_hp (add_str "mf" !CP.print_formula) mf in
+  let lhs_pure = CP.mkAnd lhs_pure mf no_pos in
   let emap = CP.EMapSV.build_eset eqns' in
   match rhs_node with
   | HRel _  
@@ -709,63 +727,68 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     (* what is the purpose of p=p? *)
     let eqns2 =  eqns' in
     let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr_sv pr_sv))) eqns2 in
+    let () = y_tinfo_hp (add_str "r_eqns" (pr_list (pr_pair pr_sv pr_sv))) r_eqns in
     let lhs_pp = MCP.pure_of_mix lhs_p in
-    let (same_base,other_eqn) = CP.extr_ptr_eqn lhs_pp in
+    let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
-    let (same_base_rhs,eq_b_rhs) = CP.extr_ptr_eqn rhs_pure in
+    let () = y_tinfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
+    let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
-    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns') in
+    let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns'@r_eqns) in
     let () = x_tinfo_hp (add_str "same_base" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base no_pos in
     let () = x_tinfo_hp (add_str "same_base_rhs" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) same_base_rhs no_pos in
     let () = x_tinfo_hp (add_str "lhs_pp" !CP.print_formula) lhs_pp no_pos in
     let () = x_tinfo_hp (add_str "other_eqn" (pr_list !CP.print_formula)) other_eqn no_pos in
-    let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
     let () = x_tinfo_hp (add_str "emap" CP.EMapSV.string_of) emap no_pos in
     (* let emap = CP.EMapSV.build_eset eqns in *)
     (* let paset = CP.EMapSV.find_equiv_all p emap in *)
     (* let paset = p::paset in *)
-    let asets = Csvutil.alias_nth 3 ((root_ptr, root_ptr) ::eqns2@r_eqns) in
+    let asets = x_add_1 Csvutil.alias_nth 3 ((root_ptr, root_ptr) ::eqns2@r_eqns) in
     let paset = Csvutil.get_aset asets root_ptr in (* find the alias set containing p *)
+    let () = y_tinfo_hp (add_str "paset:1" (pr_list (!CP.print_sv))) paset in
     let view_root_flag = match view_root_rhs with
       | None -> false
       | Some _ -> true in
     let rhs_ptr = root_ptr in
     (* let view_root_flag = !Globals.ptr_arith_flag && view_root_flag in *)
     (* let () = y_tinfo_hp (add_str "view_root_flag" string_of_bool) view_root_flag in *)
+    (* type: < push : CP.spec_var * CP.formula -> unit; .. > -> *)
+    (*   CP.spec_var list -> (CP.spec_var * bool * CP.formula option) list *)
+    let get_inst_vars es =
+      es.es_gen_impl_vars @ es.es_gen_expl_vars @ es.es_evars 
+    in
+    let es_inst_vars = get_inst_vars estate in
+    let is_es_inst_vars x =  List.exists (fun v -> CP.eq_spec_var v x) es_inst_vars in
+    let get_rhs_inst_eq rhs_ptr es =
+      let f = is_es_inst_vars rhs_ptr in
+      if f then
+        let eq_b = eq_b_rhs in
+        (* filter those connected to rhs_ptr *)
+        let sel_rhs = CP.filter_var (CP.join_conjunctions eq_b) [rhs_ptr] in
+        let () = y_tinfo_hp (add_str "rhs(eq)" (pr_list !CP.print_formula)) eq_b in
+        let () = y_tinfo_hp (add_str "sel_rhs" (!CP.print_formula)) sel_rhs in
+        if CP.isConstTrue sel_rhs || CP.isConstFalse sel_rhs  then []
+        else [sel_rhs]
+      else []
+    in
+    let rhs_inst_eq = get_rhs_inst_eq rhs_ptr estate in
     let enhance_paset impr_stk paset =
       let lhs_nodes = get_views_offset prog lhs_h in
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
       let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
       let () = y_tinfo_hp (add_str "pasets" !CP.print_svl) paset in
       (* let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in *)
-      let () = y_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure in
       (* let diff_ptrs = heap_ptrs in *)
       (* let diff_ptrs = if true (\* not(!Globals.adhoc_flag_2) *\) then *)
       (*     Gen.BList.difference_eq CP.eq_spec_var heap_ptrs paset  *)
       (*   else heap_ptrs *)
       (* in *)
       (* let () = y_tinfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in *)
-      let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in
+      let () = y_tinfo_hp (add_str "lhs_nodes(b4)" !CP.print_svl) (List.map fst lhs_nodes) in
+      (* let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in *)
       let () = y_tinfo_hp (add_str "lhs_nodes(ptr_arith)" !CP.print_svl) (List.map fst lhs_nodes) in
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
-      let get_inst_vars es =
-        es.es_gen_impl_vars @ es.es_gen_expl_vars @ es.es_evars 
-      in
-      let es_inst_vars = get_inst_vars estate in
-      let is_es_inst_vars x =  List.exists (fun v -> CP.eq_spec_var v x) es_inst_vars in
-      let get_rhs_inst_eq rhs_ptr es =
-        let f = is_es_inst_vars rhs_ptr in
-        if f then
-          let eq_b = eq_b_rhs in
-          (* filter those connected to rhs_ptr *)
-          let sel_rhs = CP.filter_var (CP.join_conjunctions eq_b) [rhs_ptr] in
-          let () = y_tinfo_hp (add_str "rhs(eq)" (pr_list !CP.print_formula)) eq_b in
-          let () = y_tinfo_hp (add_str "sel_rhs" (!CP.print_formula)) sel_rhs in
-          if CP.isConstTrue sel_rhs || CP.isConstFalse sel_rhs  then []
-          else [sel_rhs]
-        else []
-      in
       (* what exactly is this rhs_ptr, is it exact ptr? *)
       (*   ptr1/ex6a5d.slk   *)
       (* checkentail base::arr_seg<i,n> & a=base+i  *)
@@ -774,36 +797,63 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* !!! **context.ml#736:rhs(eq):[ n_58=n, a=i+base2] *)
       (* !!! **context.ml#737:sel_rhs: a=i+base2 *)
       (* !!! **context.ml#750:rhs_inst_eq:[ a=1+base2+j & a=j+base2] *)
-      let rhs_inst_eq = get_rhs_inst_eq rhs_ptr estate in
+
       let () = y_tinfo_hp (add_str "rhs_inst_eq" (pr_list !CP.print_formula)) rhs_inst_eq in
       let () = y_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr in
       let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in
+      let map_r r =
+        if r then 1 else 0
+      in
+       let () = y_tinfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
       (* this picks existential/instvars in estate *)
       let lst = List.map (fun (d,root_lhs) -> 
-          match view_root_rhs with
+          let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
+         match view_root_rhs with
           | Some ((v,rf)) -> 
             (* lhs_pure |- d>=rhs_ptr  *)
             begin
+              let () = y_tinfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
               let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
               let rhs = CP.mk_is_base_ptr d rhs_ptr in
-              let r = !CP.tp_imply lhs_pure rhs in
-              let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr" !CP.print_formula) rhs  in
+              (* let r = !CP.tp_imply lhs_pure rhs in *)
+              let r = true (* !CP.tp_imply lhs_w_rhs_inst rhs *) in
+              let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+              let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
               let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
               match root_lhs with
               | None  ->
                 let eq = CP.mkEqVars v d in
                 let () =  y_tinfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
-                if r then 
+                let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
+                let lhs_w_rhs_inst = CP.join_conjunctions [lhs_pure;rf;rhs_pure] in
+                let rhs = eq in
+                let r = x_add_1 !CP.tp_is_sat lhs_w_rhs_inst in
+                if r then
                   let () =  y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure  in
-                  let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in
-                  let r = x_add_1 !CP.tp_is_sat f in
-                  let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in
-                  let () =  y_tinfo_hp (add_str "rf" !CP.print_formula) rf  in
+                  (* let f = CP.join_conjunctions [lhs_pure;eq;rf;rhs_pure] in *)
+                  (* let r = x_add_1 !CP.tp_is_sat f in *)
+                  let () = x_tinfo_hp (add_str "emap_ptr" CP.EMapSV.string_of) emap_base no_pos in
+                  let () = x_tinfo_hp (add_str "d" !CP.print_sv) d no_pos in
+                  let () = x_tinfo_hp (add_str "rhs_ptr" !CP.print_sv) rhs_ptr no_pos in
+                  let same_base_flag = CP.EMapSV.is_equiv emap_base d rhs_ptr in
+                  (* let rhs = CP.mkEqn d rhs_ptr no_pos in *)
+                  let r=
+                    if same_base_flag then
+                      let neg_rhs = CP.mkNot_s rhs in
+                      not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  
+                    else
+                      false
+                  in
+                  let () =  y_tinfo_hp (add_str "r1" string_of_bool) r  in
+                  let () =  y_tinfo_hp (add_str "same_base_flag" string_of_bool) same_base_flag  in
+                  let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+                  let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+                  (* let () =  y_tinfo_hp (add_str "f" !CP.print_formula) f  in *)
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
                   let () =  y_tinfo_hp (add_str "is_sat [lhs_pure;eq;rf;rhs_p]" string_of_bool) r  in
-                  (d,r,Some rf)
-                else (d,r,None)
+                  (d,(map_r r,None),Some rf)
+                else (d,(map_r r,None),None)
               | Some ((v2,pf)) ->
                 let rhs_eq = CP.mkEqVars d rhs_ptr in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
@@ -812,7 +862,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let r = !CP.tp_imply lhs_w_rhs_inst rhs_eq in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr(view matching)" string_of_bool) r  in
-                (d,r,None)
+                (d,(map_r r,None),None)
                 (* failwith (x_loc^"view matching..") *)
             end
           | None   -> 
@@ -837,36 +887,63 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM]) *)
                 (* if implicit inst, use weaker same_base instead *)
                 let impl_flag = same_base && is_es_inst_vars rhs_ptr  in
-                if true (* !Globals.adhoc_flag_6 || same_base *)  then
-                  let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in
-                  let () =  y_tinfo_hp (add_str "same_base" string_of_bool) same_base  in
+                let () =  y_tinfo_hp (add_str "same_base" string_of_bool) same_base  in
+                if true (* same_base *) (* !Globals.adhoc_flag_6 || same_base *)  then
+                  (* let r = impl_flag || !CP.tp_imply lhs_w_rhs_inst rhs  in *)
+                  let r =
+                    if same_base then
+                      let neg_rhs = CP.mkNot_s rhs in
+                      not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  
+                    else 
+                      (!CP.tp_imply lhs_w_rhs_inst rhs)  
+                  in
+                  (* let r = !CP.tp_imply lhs_w_rhs_inst rhs  in *)
+                  let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
+                  let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+                  let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
                   let () =  y_tinfo_hp (add_str "r" string_of_bool) r  in
-                  if CF.no_infer_all_all estate || r then (d,r,None)
+                  if CF.no_infer_all_all estate || r || !Globals.adhoc_flag_6 then (d,(map_r r,None),None)
                   else
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)
                       let () = y_winfo_pp "pushing to infer" in
                       let () =  y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure  in
                       let () = impr_stk # push (d,rhs) in
-                      (d,same_base,None)   (*can we check if it shares same base *) 
+                      (d,(map_r same_base,None),None)
                     end
                 else 
                   let () = y_tinfo_pp "Not same base" in
-                  (d,false,None)
+                  (* (d,false,None) *)
+                  (* 0=false, 1=true, 2=same base *)
+                  (d,(0,None),None)
               | Some ((root,root_pf)) ->
                 let () = y_tinfo_hp (add_str "d" !CP.print_sv) d in
                 (* let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in *)
                 let () = y_tinfo_hp (add_str "root_pf" !CP.print_formula) root_pf in
-                let rhs = if CF.no_infer_all_all estate then CP.mkEqVars rhs_ptr root
+                let rhs =
+                  if CF.no_infer_all_all estate
+                  then CP.mkEqVars rhs_ptr root
                   else CP.mk_is_base_ptr rhs_ptr d in
                 (* cannot handle ptr/e/ex1fb.slk *)
                 (* let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let lhs = CP.mkAnd lhs_w_rhs_inst root_pf no_pos in
-                let r = !CP.tp_imply lhs rhs in
                 let () = y_tinfo_hp (add_str "ante" !CP.print_formula) lhs in
+                let () = y_tinfo_hp (add_str "rhs_pure" !CP.print_formula) rhs_pure in
                 let () = y_tinfo_hp (add_str "rhs(to prove)" !CP.print_formula) rhs in
+                let r = !CP.tp_imply lhs rhs in
                 let () = y_tinfo_hp (add_str "ante --> rhs" string_of_bool) r  in
-                (d,r,None) (* Some rf *)
+                if r then
+                  (d,(map_r r,None),None)
+                else
+                  let rhs_for_base = CP.mk_is_base_ptr rhs_ptr d in
+                  let r = !CP.tp_imply lhs rhs_for_base in
+                  (* r==1 means that it is an exact match*)
+                  (* r==2 means that it is NOT exact match but they have the same base, ex. a=b+1 *)
+                  (* r==0 means that it is nether exact match nor same base *)
+                  if r then
+                    (d,(0,Some lhs),None)
+                  else
+                    (d,(0,None),None)
                 (* failwith (x_loc^"unfolding") *)
             end
             (*   | _ -> (d,false,None) *)
@@ -874,22 +951,59 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         ) lhs_nodes (* diff_ptrs *) in
       (* let () = y_tinfo_hp (add_str "lst(=rhs_ptr)" !CP.print_svl) lst in *)
       lst in
+    let enhance_paset impr_stk paset =
+      let pr2 = !CP.print_svl in
+      let pr_item =function
+        | (sv,(b,r),fo) -> "("^(!CP.print_sv sv)^",("^(string_of_int b)^","^(pr_option (!CP.print_formula) r)^"),"^((pr_option !CP.print_formula) fo)^")"
+      in
+      let pr1 impr=
+        let stk = impr_stk # get_stk in
+        ((pr_list (pr_pair !CP.print_sv !CP.print_formula)) stk)
+      in
+      let pr_res = pr_list pr_item in
+      Debug.no_2 "enhance_paset" pr1 pr2 pr_res (fun _ _ -> enhance_paset impr_stk paset) impr_stk paset
+    in
     (* let () = x_tinfo_hp (add_str "paset" !CP.print_svl) paset no_pos in *)
     let impr_stk = new Gen.stack in
-    let lst = if !Globals.ptr_arith_flag then
-        let lst = enhance_paset impr_stk paset in
-        let lst = List.filter (fun (_,f,_) -> f) lst in
+    let paset_old = paset in
+    let (lst,same_base_lst,lst_with_reason) =
+      if !Globals.ptr_arith_flag then
+        let enlst = x_add_1 enhance_paset impr_stk paset in
+        let lst = List.filter (fun (_,(f,_),_) -> f==1) enlst in
+        let same_base_lst = List.filter (fun (_,(f,_),_) -> f==2) enlst in
+        let lst_with_reason = List.filter (fun (_,(f,_),_) -> f>0) enlst in
         let lst = List.map (fun (d,_,r) -> (d,r)) lst in
-        lst 
-      else [] in
-    let paset = 
-      if !Globals.ptr_arith_flag then 
+        let same_base_lst = List.map (fun (d,_,r) -> (d,r)) same_base_lst in
+        let lst_with_reason = List.map (fun (d,(_,reason),r) -> (d,reason,r)) lst_with_reason in
+        (lst, same_base_lst,lst_with_reason)
+      else ([],[],[])
+    in
+    let () = y_tinfo_hp (add_str "paset_old" !CP.print_svl) paset_old in
+    let () = y_tinfo_hp (add_str "paset" !CP.print_svl) paset in
+    let () = y_tinfo_hp (add_str "lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) lst in
+    let () = y_tinfo_hp (add_str "same_base_lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) same_base_lst in
+    let () = y_tinfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
+    let same_base_aset =
+      if !Globals.ptr_arith_flag then
+        (List.map fst same_base_lst)@paset
+      else
+        []
+    in
+    let paset =
+      if !Globals.ptr_arith_flag then
         if lst==[] then paset
         else (List.map fst lst)@paset
-      else paset in
+       else paset in
+    let paset_with_reason =
+      let orgin_set = List.map (fun v -> (v,None)) paset in
+      (orgin_set)@(List.map (fun (f,s,t) -> (f,s))lst_with_reason)
+    in
+    let () = y_tinfo_hp (add_str "paset:2" (pr_list (!CP.print_sv))) paset in
+    let () = y_tinfo_hp (add_str "same_base_aset:2" (pr_list (!CP.print_sv))) same_base_aset in
     (* view with root ptrs *)
+    (* what is this root_lst, should it not be for the rhs_node? *)
     let root_lst = List.fold_left (fun acc (d,r) ->
-        match r with 
+        match r with
         | None -> acc
         | Some r -> (d,r)::acc
       ) [] lst in
@@ -904,7 +1018,17 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
-      let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst) prog estate lhs_h paset imm pimm rhs_node rhs_rest emap in
+      let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in
+      (* let mt_res = *)
+      (*   match rhs_inst_eq with *)
+      (*     |[] -> mt_res *)
+      (*     | h::tail -> *)
+      (*           List.map *)
+      (*               (fun mtitem -> *)
+      (*                   {mtitem with match_res_reason = Some (List.fold_left (fun res sf -> CP.mkAnd sf res no_pos) h tail)} *)
+      (*               ) *)
+      (*               mt_res *)
+      (* in *)
       (* WN: why is there a need to filter out root parameters? *)
       (*  affects str-inf/ex14b[23].slk *)
       (* let mt_res = x_add filter_match_res_list mt_res rhs_node in *)
@@ -949,7 +1073,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
   | HTrue -> (
       if (rhs_rest = HEmp) then (
         (* if entire RHS is HTrue then it matches with the entire LHS*)
-        let mres = mk_match_res (* ~alias:aset *) Root lhs_h HEmp HTrue HEmp in
+        let mres = x_add mk_match_res (* ~alias:aset *) Root lhs_h HEmp HTrue HEmp in
         (* { match_res_lhs_node = lhs_h; *)
         (*          match_res_lhs_rest = HEmp; *)
         (*          match_res_holes = []; *)
@@ -1016,8 +1140,9 @@ and view_mater_match_x prog c vs1 aset imm f anns =
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
     if  (produces_hole imm) && not(!Globals.allow_field_ann) then
       let hole_no = Globals.fresh_int() in
-      [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
-    else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
+      let () = if false (* !Globals.adhoc_flag_6 *) then failwith (x_tbi^" add materialized holes?") in
+      [(HEmp (* Hole hole_no *), f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
+    else [(HEmp (* HTrue *), f, [], MaterializedArg (mv,View_mater))]
   with 
     _ ->  
     if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
@@ -1025,7 +1150,8 @@ and view_mater_match_x prog c vs1 aset imm f anns =
     if List.exists (fun v -> CP.mem v aset) vs1 then
       if (produces_hole imm) && not(!Globals.allow_field_ann) then
         let hole_no = Globals.fresh_int() in 
-        [(Hole hole_no, f, [(f, hole_no)], WArg)]
+        let () = if false (* !Globals.adhoc_flag_6 *) then failwith (x_tbi^" add materialized holes?") in
+        [(HEmp (* Hole hole_no *), f, [(f, hole_no)], WArg)]
       else [(HEmp, f, [], WArg)]
     else []
 
@@ -1084,7 +1210,8 @@ and choose_full_mater_coercion_x estate l_vname l_vargs r_vname r_aset (c:coerci
         else
           let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
           let () = x_tinfo_hp (add_str "lmv" Cprinter.string_of_mater_prop_list) lmv no_pos in
-          try
+          let () = x_tinfo_hp (add_str "r_aset" !CP.print_svl) r_aset no_pos in
+           try
             let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in 
             (* above goes awry when we're using self var in the entailment! andreea *)
             let () = x_tinfo_hp (add_str "mv" Cprinter.string_of_mater_prop_list) [mv] no_pos in
@@ -1146,7 +1273,7 @@ and coerc_mater_match estate coercs l_vname (l_vargs:P.spec_var list) r_vname r_
   rr - right rest
 *)
 (* Trung, delete later: extract node in LHS (f) to match with node in RHS *)
-and spatial_ctx_extract ?(impr_lst=[]) ?(view_roots=[]) p estate f a i pi rn rr emap = 
+and spatial_ctx_extract ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) p lhs_rhs_pure estate f a i pi rn rr emap = 
   let pr = pr_list string_of_match_res in
   let pr_svl = !CP.print_svl in
   (*let pr_aset = pr_list (pr_list Cprinter.string_of_spec_var) in*)
@@ -1154,7 +1281,7 @@ and spatial_ctx_extract ?(impr_lst=[]) ?(view_roots=[]) p estate f a i pi rn rr 
   Debug.no_4 "spatial_ctx_extract" (add_str "h_formula" string_of_h_formula) 
     (add_str "imm" Cprinter.string_of_imm) (add_str "aset" pr_svl) 
     (add_str "rhs_node" string_of_h_formula) (add_str "list of match_res" pr) 
-    (fun _ _ _ _-> spatial_ctx_extract_x ~impr_lst:impr_lst ~view_roots:view_roots p estate f a i pi rn rr emap) f i a rn 
+    (fun _ _ _ _-> spatial_ctx_extract_x ~impr_lst:impr_lst ~view_roots:view_roots ~rhs_root:rhs_root p lhs_rhs_pure estate f a i pi rn rr emap) f i a rn 
 
 and update_field_imm (f : h_formula) (pimm1 : CP.ann list) (consumed_ann: CP.ann list) (residue: bool): h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
@@ -1392,6 +1519,16 @@ and spatial_ctx_extract_hrel_on_lhs prog estate hp e rhs_node aset (lhs_node: Cf
       cmm
   | _ -> []
 
+and is_original lhs_h =
+      let store = ref false in
+      let f hf = match hf with
+        | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf
+        | ViewNode vl -> store := vl.h_formula_view_original; Some hf
+        | _ -> None in 
+      let _ = map_h_formula lhs_h f
+      in !store
+
+  
 (* WN : to check if this optimization misses anything *)
 (* Materialized match for lemma requires an overlap with parameters of views *)
 and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_vargs:P.spec_var list)  (*l_asset*) r_aset (lhs_f:Cformula.h_formula) =
@@ -1400,8 +1537,12 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
   let () = x_tinfo_hp (add_str "r_vname" pr_id) r_vname no_pos in
   let () = x_tinfo_hp (add_str "l_vargs" !CP.print_svl) l_vargs no_pos in
   let () = x_tinfo_hp (add_str "r_aset" !CP.print_svl) r_aset no_pos in
-  if overlap_flag || !Globals.adhoc_flag_1 then
+  let () = y_tinfo_hp (add_str "lhs_f" !CF.print_h_formula) lhs_f in
+  let is_original_lhs = is_original lhs_f in
+  let () = y_tinfo_hp (add_str "is_original_lhs" string_of_bool) is_original_lhs in
+    if overlap_flag (* || !Globals.adhoc_flag_1 *) then
     let coerc_left = Lem_store.all_lemma # get_left_coercion in
+    let () = y_tinfo_hp (add_str "coerc_left" (pr_list pr_none)) coerc_left in
     let cmml = x_add coerc_mater_match estate coerc_left l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in
     let coerc_right = Lem_store.all_lemma # get_right_coercion in
     (* let cmmr = coerc_mater_match coerc_right l_vname (l_vargs:P.spec_var list) r_vname r_aset (lhs_f:Cformula.h_formula) in *)
@@ -1410,7 +1551,41 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
       else x_add coerc_mater_match estate coerc_right r_vname (r_vargs:P.spec_var list) l_vname r_aset (lhs_f:Cformula.h_formula)
     in
     cmml@cmmr
-  else []
+  else
+    let res = ref [] in
+    let extract_root pred_id (f: CF.formula)  =
+      let heap_f, _, _, _, _, _ = CF.split_components f in
+      (* let res = ref [] in *)
+      let f hf = match hf with
+        | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf
+        | ViewNode vl -> 
+          let name = vl.h_formula_view_name in
+          (if name=pred_id then res := (vl.h_formula_view_node,name)::!res; Some hf)
+        | _ -> None in 
+      let _ = map_h_formula heap_f f in !res in
+    (* no overlap, how about unv root? *)
+    let coerc_left = Lem_store.all_lemma # get_left_coercion in
+    let sel_lem = List.map (fun coerc -> 
+        let () = y_tinfo_hp (add_str "coerc_left" (string_of_coercion)) coerc in
+        let () = y_tinfo_hp (add_str "body_pred_view" (pr_list pr_id)) coerc.coercion_body_pred_list in
+        let () = y_tinfo_hp (add_str "head_view" (pr_id)) coerc.coercion_head_view in
+        let () = y_tinfo_hp (add_str "univ_vars" (pr_svl)) coerc.coercion_univ_vars in
+        let flag = is_original_lhs && (coerc.coercion_univ_vars!=[]) && (coerc.coercion_head_view = l_vname) &&
+                   (List.exists (fun v -> v=r_vname) coerc.coercion_body_pred_list) in
+        let () = y_tinfo_hp (add_str "trigger lemma" (string_of_bool)) flag in
+        let () = y_tinfo_hp (add_str "coercion rhs" (string_of_formula)) coerc.coercion_body in
+        let roots = if flag then extract_root r_vname coerc.coercion_body else [] in
+        let coerc_root = List.filter (fun (v,_) -> List.exists (CP.eq_spec_var v) coerc.coercion_univ_vars) roots in
+        (* let () = y_tinfo_hp (add_str "rhs root" (pr_svl)) roots in *)
+        match coerc_root with
+        | [] -> None
+        | (vn,vname)::_ -> Some ({ coerc with coercion_body_view = vname} )
+        (* CP.overlap_svl coerc.coercion_univ_vars roots *)
+        ) coerc_left in
+    let sel_lem = List.fold_left (fun acc c -> match c with None -> acc | Some x -> x::acc) [] sel_lem in
+    (* let sel_lem = [] in *)
+    let cmml = x_add coerc_mater_match estate sel_lem l_vname (l_vargs:P.spec_var list) r_vname (r_aset) (lhs_f:Cformula.h_formula) in
+    cmml
 
 and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in
@@ -1420,13 +1595,16 @@ and coerc_mater_match_gen estate l_vname (l_vargs:P.spec_var list) right_name r_
   Debug.no_4 "coerc_mater_match_gen" pr_id pr_svl pr_svl (add_str "lhs" !CF.print_h_formula) pr2
     (fun _ _ _ _ -> coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) right_name r_vargs r_aset (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset lhs_f
 
-and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_formula)
+(* view_roots seem to capture x=p+d where p is the base address *)
+and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog lhs_rhs_pure  estate (f0 : h_formula)
     aset (imm : CP.ann) (pimm : CP.ann list)
     rhs_node rhs_rest emap
   : match_res list  =
   let () = x_tinfo_hp (add_str "lhs?" !CF.print_h_formula) f0 no_pos in
   let () = x_tinfo_hp (add_str "rhs" !CF.print_h_formula) rhs_node no_pos in
   let () = x_tinfo_hp (add_str "aset" !CP.print_svl) aset no_pos in
+  let () = y_tinfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
+  let () = x_tinfo_hp (add_str "lhs_rhs_pure" !CP.print_formula) lhs_rhs_pure no_pos in
   (* type: CF.h_formula -> *)
   (*   (CF.h_formula * CF.h_formula * (CF.h_formula * int) list * match_type) list *)
   (* type: (CF.h_formula * CF.h_formula * (CF.h_formula * int) list * match_type) list *)
@@ -1434,6 +1612,8 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
   let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
   let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pr4 = (add_str "match_type" string_of_match_type) in
+  let () = x_tinfo_hp (add_str "rhs_rest" !CF.print_h_formula) rhs_rest no_pos in
+  let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
   let pr_helper_res = pr_quad pr1 pr2 pr3 pr4 in
   (* let un_opt e = match (CP.conv_exp_to_var e) with *)
   (*   | Some (sv,_) -> sv *)
@@ -1450,40 +1630,43 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
   (*               h_formula_view_arguments = vs1} -> (n,(p1::vs1)) *)
   (*   | _ -> failwith "Failure of name_of_h_formula" *)
   (* in *)
-  let right_name,r_vargs =  CF.name_of_h_formula rhs_node in
+  let right_name,r_vargs =  x_add_1 CF.name_of_h_formula rhs_node in
   let stk = new Gen.stack in
-  let rec helper f = 
+  let rec helper f =
     match f with    (* f is formula in LHS *)
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
     | Hole _ -> []
-    | HVar (v,_) -> 
+    | HVar (v,_) ->
       (match rhs_node with
        (* URGENT:TODO:WN:HVar *)
        | HVar (vr,_) -> if CP.eq_spec_var v vr then [(HEmp, f, [], Root)] else []
        | _ -> [])
-    | ThreadNode ({h_formula_thread_node = p1;}) -> (
+    | ThreadNode ({h_formula_thread_node = p1;
+                   h_formula_thread_name = c;
+                  }) -> (
         match rhs_node with
         | HRel _ -> []
         | ThreadNode _ -> (*TOCHECK*)
           [(HEmp, f, [], Root)]
         | _      ->
           if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-            if (not !Globals.allow_field_ann) then
+            if (not !Globals.allow_field_ann && (CF.same_node_name c rhs_node)) then
               (* not consuming the node *)
               let hole_no = Globals.fresh_int() in 
-              [((Hole hole_no), f, [(f, hole_no)], Root)]
+              [(HEmp (* (Hole hole_no) *), f, [(f, hole_no)], Root)]
             else
               [(HEmp, f, [], Root)]
           else []
       )
-    | DataNode ({h_formula_data_node = p1; 
+    | DataNode ({h_formula_data_node = p1;
                  h_formula_data_imm = imm1;
+                 h_formula_data_name = c;
                  h_formula_data_param_imm = pimm1}) -> (
         match rhs_node with
         | HRel (h,args,_) -> 
-          let n,vs = CF.name_of_h_formula rhs_node in
+          let n,vs = x_add_1 CF.name_of_h_formula rhs_node in
           let vs = Cast.rm_NI_from_hp_rel prog h vs in
           let pr = !CF.print_h_formula in
           let p1_eq = CP.EMapSV.find_equiv_all p1 emap in
@@ -1499,32 +1682,52 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
             (* failwith "TBI" *)
           else []
         | _      ->
-          let () = y_tinfo_hp (add_str "DataNode" !CP.print_sv) p1 in
-          let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
-          let add_roots stk p1 lst =
-            try
-              let (r,rt) = List.find (fun (v,_) -> CP.eq_spec_var p1 v) lst in
-              stk # push (f,(r,rt))
-            with _ -> () in
-          let () = add_roots stk p1 view_roots in
-          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-            if ( (not !Globals.allow_field_ann) && produces_hole imm) then
-              (* not consuming the node *)
-              let hole_no = Globals.fresh_int() in 
-              [((Hole hole_no), f, [(f, hole_no)], Root)]
-            else
-              (*if (!Globals.allow_field_ann) then
-                let new_f = update_ann f pimm1 pimm in
-                [(new_f,f,[],Root)]
-                else*)
-              [(HEmp, f, [], Root)]
-          else []
+              let conflict_flag =
+                match rhs_root with
+                  | Some (v1,pure1) ->
+                        let w1 = CP.mk_eq_vars v1 p1 in
+                        (* let w2 = CP.mk_eq_vars v2 rhs_ptr in *)
+                        let lst = [w1;pure1;lhs_rhs_pure] in
+                        let comb = CP.join_conjunctions lst  in
+                        let flag = not(TP.tp_is_sat comb "111") in
+                        let () = if flag then
+                          let () = y_tinfo_hp (add_str "DataNode v.s. View, conflict detected" (pr_list !CP.print_formula)) lst in
+                          ()
+                        in
+                        (flag)
+                  | None ->
+                        false
+              in
+              if conflict_flag
+              then []
+              else
+                let () = y_tinfo_hp (add_str "DataNode" !CP.print_sv) p1 in
+                let () = y_tinfo_hp (add_str "view_roots" (pr_list (pr_pair !CP.print_sv !CP.print_formula))) view_roots in
+                let add_roots stk p1 lst =
+                  try
+                    let (r,rt) = List.find (fun (v,_) -> CP.eq_spec_var p1 v) lst in
+                    stk # push (f,(r,rt))
+                  with _ -> () in
+                let () = add_roots stk p1 view_roots in
+                if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+                  if ( (not !Globals.allow_field_ann) && produces_hole imm && CF.same_node_name c rhs_node) then
+                    (* not consuming the node *)
+                    let hole_no = Globals.fresh_int() in 
+                    [((HEmp (* Hole hole_no *)), f, [(f, hole_no)], Root)]
+                  else
+                    (*if (!Globals.allow_field_ann) then
+                      let new_f = update_ann f pimm1 pimm in
+                      [(new_f,f,[],Root)]
+                      else*)
+                    [(HEmp, f, [], Root)]
+                else []
       )
     | ViewNode ({h_formula_view_node = p1;
                  h_formula_view_imm = imm1;
                  h_formula_view_perm = perm1;
                  h_formula_view_arguments = vs1;
                  h_formula_view_name = c}) as v -> (
+        let view_root_lhs = get_root_view prog c p1 vs1 in
         let anns = get_node_annot_args f in
         match rhs_node with
         | HRel (hp,args,_) ->
@@ -1544,13 +1747,40 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) prog estate (f0 : h_fo
           else (HEmp (* lhs_rest? *),f (* lhs? *),[],Root)::cmm
         | _ -> 
           (* if (subtype_ann imm1 imm) then *)
-          if (CP.mem p1 aset) then
+          let () = y_tinfo_hp (add_str "view |- view/data " !CF.print_h_formula) rhs_node in
+          let () = y_tinfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
+          let () = y_tinfo_hp (add_str "view_root_lhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_lhs in
+          let conflict_flag =
+            match view_root_lhs,rhs_root,r_vargs with
+              | Some (v1,pure1),Some(v2,pure2),rhs_ptr::_ ->
+                    let w1 = CP.mk_eq_vars v1 v2 in
+                    (* let w2 = CP.mk_eq_vars v2 rhs_ptr in *)
+                    let lst = [w1;pure1;pure2;lhs_rhs_pure] in
+                    let comb = CP.join_conjunctions lst  in
+                    let flag = not(TP.tp_is_sat comb "111") in
+                    let () = if flag then
+                      let () = y_tinfo_hp (add_str "conflict detected" (pr_list !CP.print_formula)) lst in
+                      ()
+                    in
+                    (flag)
+              | Some (v1,pure1),None,rhs_ptr::_ ->
+                    let () = y_tinfo_hp (add_str "view |- data " !CF.print_h_formula) rhs_node in
+                    let () = y_tinfo_pp "consider for folding?" in
+                    false
+              | _,_,_ ->
+                    false
+          in
+          if conflict_flag then [] 
+          else 
+           let () = y_tinfo_hp (add_str "p1" !CF.print_sv) p1 in
+           let () = y_tinfo_hp (add_str "mem p1 aset" !CF.print_svl) aset in
+           if (CP.mem p1 aset) then
             (* let () = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-            if produces_hole imm && not(!Globals.allow_field_ann) then
+            if (CF.same_node_name c rhs_node) && produces_hole imm && not(!Globals.allow_field_ann) then
               (* let () = print_string("imm = Lend " ^ "\n") in *)
               let hole_no = Globals.fresh_int() in
               (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
-              [(Hole hole_no, f, [(f, hole_no)], Root)]
+              [(HEmp (* Hole hole_no *), f, [(f, hole_no)], Root)]
             else
               [(HEmp, f, [], Root)]
               (********** Loc: TODO multiple matching, the former is empty*********)
@@ -1724,30 +1954,55 @@ let _ = print_string("[context.ml]:Use ramification lemma, lhs = " ^ (string_of_
   in
   (* todo:Long *)
   (* why is l empty? *)
-  let l = helper f0 in
+  let l_x = helper f0 in
   let pr1 = (add_str "lhs_rest" Cprinter.string_of_h_formula) in
   let pr2 = (add_str "lhs_node" Cprinter.string_of_h_formula) in
   let pr3 = (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
   let pr4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_quad pr1 pr2 pr3 pr4 in
-  let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l no_pos in
+  let () = x_tinfo_hp (add_str "l_xxx" (pr_list pr)) l_x no_pos in
+  let pr_stack = (add_str "stack" (pr_list (pr_pair Cprinter.string_of_h_formula (pr_pair !CP.print_sv !CP.print_formula)))) in
   let lst = stk # get_stk in
   let find r = try
       Some (fst (snd (List.find (fun (hf,_) -> hf==r) lst)))
     with _ -> None in
-  let is_imprecise n = 
+  (* let find_reason r = *)
+  (*   try *)
+  (*     Some (snd (snd (List.find *)
+  (*         ( *)
+  (*             fun (hf,(v,f))-> *)
+  (*                 match hf,r with *)
+  (*                   | DataNode df,DataNode rdf -> *)
+  (*                         if (CP.compare_sv df.h_formula_data_node rdf.h_formula_data_node)=0 *)
+  (*                         then true *)
+  (*                         else false *)
+  (*                   | _ -> false *)
+  (*         ) lst))) *)
+  (*   with _ -> None *)
+  (* in *)
+  let is_imprecise n =
     try
-      Some (snd(List.find (fun (v,pf) -> 
-          match n with
-          | DataNode f -> CP.eq_spec_var f.h_formula_data_node v 
-          | _ -> false) impr_lst))
+      Some (snd
+              (List.find (fun (v,pf) -> 
+                   match n with
+                   | DataNode f -> CP.eq_spec_var f.h_formula_data_node v 
+                   | _ -> false) impr_lst)
+           )
     with _ -> None 
   in
+  let is_imprecise n =
+    Debug.no_1 "is_imprecise"
+               (Cprinter.string_of_h_formula)
+               (pr_option !CP.print_formula)
+               (is_imprecise) n
+  in
   List.map (fun (lhs_rest,lhs_node,holes,mt) ->
-      mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node)
-        ~imprecise:(is_imprecise lhs_node)
-        mt lhs_node lhs_rest rhs_node rhs_rest
-    ) l
+      (* let () = x_tinfo_hp (pr_option !CP.print_formula) (find_reason lhs_node) no_pos *)
+      (* in *)
+      x_add (mk_match_res ~holes:holes ~alias:aset  ~root_inst:(find lhs_node)
+        ~imprecise:(x_add_1 is_imprecise lhs_node)
+        mt) lhs_node lhs_rest rhs_node rhs_rest
+    ) l_x
 
 
 (* spatial_ctx_extract prog lhs_h paset imm pimm rhs_node rhs_rest emap in *)
@@ -2168,737 +2423,773 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let () = y_tinfo_pp "DATA vs DATA" in
             let opt = force_fold_matching lhs_node in
             begin
-            match opt with
-            | Some flag -> 
-              if flag then (0,M_match m_res) (* mandatory matching *)
-              else  (5,M_match m_res) (* low priority matching *)
-            | None ->
-              begin
-                let dl_flag, dr_flag = 
-                  if !ann_derv then
-                    (not(dl_derv)),(not(dr_derv))
-                  else
-                    dl_orig,dr_orig
-                in
-                let wt = 1 in
-                let l2 =
-                  if ((String.compare dl_name dr_name)==0 && 
-                      ((dl_flag==false && (dl_origins!=[])) 
-                       || ((dr_flag==false && dr_origins!=[])))) then [(0,M_match m_res)] (*force a MATCH after each lemma*)
-                  else 
-                  if (String.compare dl_name dr_name)==0 
-                  then 
-                    (* temp change to 0 to give fold higher priority *)
-                    [(wt,M_match m_res)]
-                  else [(wt,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
-                in
-                let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in
-                (*apply lemmas on data nodes*)
-                (* using || results in some repeated answers but still terminates *)
-                (*let dl_new_orig = if !ann_derv then not(dl_derv) else dl_orig in*)
-                let flag = 
-                  if !ann_derv 
-                  then (not(dl_derv) && not(dr_derv)) 
-                  else (dl_orig || dr_orig)
-                in
-                let l3 = if flag
-                  then 
-                    begin
-                      (* WN_all_lemma - is this overriding of lemmas? *)
-                      let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) dl_name dr_name) in
-                      let left_ls =
-                        if (dr_split = SPLIT0) then
-                          (*do not split --> not apply lemma_split *)
-                          List.filter (fun c -> c.coercion_kind != LEM_SPLIT) left_ls
-                        else left_ls
-                      in
-                      let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) dr_name dl_name) in
-                      let left_act = List.map (fun l -> (wt,M_lemma (m_res,Some l,0))) left_ls in
-                      let right_act = List.map (fun l -> (wt,M_lemma (m_res,Some l,0))) right_ls in
-                      if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
-                      else left_act@right_act
-                    end
-                  else [] in
-                let src = (wt,mk_search_action (l2@l3)) in
-                src
-              end
-              end
-            | HVar _, HVar _ -> let () = y_tinfo_pp "HVAR vs HVAR" in (1, M_match m_res)
-            | ViewNode vl, ViewNode vr -> 
-              let pr v = v.h_formula_view_name in
-              let () = y_tinfo_hp (add_str "VIEW vs VIEW" (pr_pair pr pr)) (vl,vr) in
-              (* let l1 = [(1,M_base_case_unfold m_res)] in *)
-              let (vl_vdef,vr_vdef,vl_name,vr_name,ans) = Cast.smart_view_name_equiv view_decls vl vr in
-              (* let (vl_name,vl_vdef,vl,flag1) = Cast.get_view_name_equiv view_decls vl in *)
-              (* let (vr_name,vr_vdef,vr,flag2) = Cast.get_view_name_equiv view_decls vr in *)
-              (* WN : changing m_res to use view_equiv_set *)
-              let m_res,vl,vr = match ans with
-                | None -> m_res,vl,vr
-                | Some (vl,vr) -> 
-                  {m_res with match_res_lhs_node = ViewNode vl;
-                              match_res_rhs_node = ViewNode vr},vl,vr 
-              in
-              let () = y_tinfo_hp (add_str "VIEW vs VIEW (after view_equiv)" (pr_pair pr pr)) (vl,vr) in
-              (* let vr_name = vr.h_formula_view_name in *)
-              (* let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in *)
-              (* let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in *)
-              let vl_is_rec = vl_vdef.view_is_rec in
-              let vl_is_prim = vl_vdef.view_is_prim in
-              let vr_is_prim = vr_vdef.view_is_prim in
-              let vl_kind = vl_vdef.view_kind in
-              let vr_kind = vr_vdef.view_kind in
-              let vr_is_rec = vr_vdef.view_is_rec in
-              let vl_self_pts = vl_vdef.view_pt_by_self in
-              let vr_self_pts = vr_vdef.view_pt_by_self in
-              (* root for array segment *)
-              let vl_actual_root = vl_vdef.view_actual_root in
-              let vr_actual_root = vr_vdef.view_actual_root in
-              let vl_view_orig = vl.h_formula_view_original in
-              let vr_view_orig = vr.h_formula_view_original in
-              let vl_view_origs = vl.h_formula_view_origins in
-              let vr_view_origs = vr.h_formula_view_origins in
-              let vl_view_derv =  vl.h_formula_view_derv in
-              let vr_view_derv = vr.h_formula_view_derv in
-              let vr_view_split = vr.h_formula_view_split in
-              let () = x_ninfo_hp (add_str "cyclic " pr_id) " 1" no_pos in
-              let () = x_tinfo_hp (add_str "vl_name: " pr_id) vl_name no_pos in
-              let () = x_tinfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
-              let () = x_tinfo_hp (add_str "vr_kind: " string_of_view_kind) vr_kind no_pos in
-              let () = x_tinfo_hp (add_str "vr_name: " pr_id) vr_name no_pos in
-              let is_l_lock = match vl_vdef.view_inv_lock with
-                | Some _ -> true
-                | None -> false
-              in
-              let is_r_lock = match vr_vdef.view_inv_lock with
-                | Some _ -> true
-                | None -> false
-              in
-              (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
-              (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
-              (*let en_num = !num_self_fold_search in*)
-              (* let en_self_fold = !self_fold_search_flag in *)
-              let s_eq = (String.compare vl_name vr_name)==0 in
-              let vl_b = vl_view_origs!=[] in
-              let vr_b = vr_view_origs!=[] in
-              let force_flag = (s_eq && 
-                                ((vl_view_orig==false && vl_b) 
-                                 || ((vr_view_orig==false && vr_b)))) in
-              let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts in
-              let () = Debug.tinfo_hprint (add_str "force_match" string_of_bool) force_flag no_pos in
-              let () = Debug.tinfo_hprint (add_str "sf_force_match" string_of_bool) sf_force_match_flag no_pos in
-              let () = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
-              let () = Debug.ninfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
-              let () = Debug.ninfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
-              let () = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
-              let () = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
-              let () = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-              let () = Debug.ninfo_hprint (add_str "!Globals.self_fold_search_flag" string_of_bool) !Globals.self_fold_search_flag no_pos in
-              let flag_lem = (
-                if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
-                (* else (vl_view_orig || vr_view_orig) *)
-                else
-                  (*only apply a SPLIT lemma to a lock
-                    if both sides are original*)
-                  (* if (is_l_lock) then *)
-                  (*   (vl_view_orig && vr_view_orig) *)
-                  (*if RHS is original --> SPLIT*)
-                if (is_l_lock && is_r_lock && vr_view_orig) then true
-                else if (is_l_lock && is_r_lock && not vr_view_orig) then false
-                else (vl_view_orig || vr_view_orig)
-              ) in
-              let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
-              let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-              let () = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
-              let () = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
-              let imm_subtype_flag = (Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node) in
-              let seg_fold_type = 
-                if !Globals.seg_fold then 
-                  (Cfutil.is_seg_view2_fold_form prog vl estate.CF.es_formula vr rhs reqset estate.es_folding_conseq_pure) 
-                else -1
-              in
-              let l2, syn_lem_typ = (
-                let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                let uf_i = if new_orig then 0 else 1 in
-                let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-                if force_flag || sf_force_match_flag then
-                  let () = x_tinfo_pp "choosing forced matching" no_pos in
-                  [(0,M_match m_res)],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
-                else
-                  let base_case_prio = 3 in
-                  let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))  
-                    then (-1,M_Nothing_to_do "base_case_unfold not selected")
-                    else (base_case_prio,M_base_case_unfold m_res) in
-                  let a1 =  
-                    (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
-                    if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))  
-                    then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
-                    else a1 in
-                  let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
-                  (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
-                  (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
-                  let a2 = (
-                    if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
-                       (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
-                      let a21 = (1,M_match m_res) in
-                      let () = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
-                      let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
-                      (* (1,Cond_action [a21;a22]) *) a22
+              match opt with
+              | Some flag -> 
+                if flag then (0,M_match m_res) (* mandatory matching *)
+                else  (5,M_match m_res) (* low priority matching *)
+              | None ->
+                begin
+                  let dl_flag, dr_flag = 
+                    if !ann_derv then
+                      (not(dl_derv)),(not(dr_derv))
                     else
-                      let split_act = 
-                        if (vr_view_split=SPLIT1) || !Globals.ho_always_split then
-                          (* SPLIT only, no match *)
-                          let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split
-                              (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) 
-                              m_res estate.CF.es_formula rhs reqset 
-                          in
-                          if lem_split = [] then None
-                          else Some (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
-                        else None
-                      in
-                      match split_act with
-                      | Some a -> a
-                      | None ->
-                        (* allow matching only if (lhs_imm <: rhs_imm) *)
-                        let () = x_tinfo_pp "choosing matching" no_pos in
-                        let m_act = if (imm_subtype_flag) then (1,M_match m_res) 
-                          else (base_case_prio, M_Nothing_to_do ("not(lhs_imm <: rhs_imm)")) in
-                        (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
-                        if !Globals.seg_fold then (
-                          let seg_acts = if seg_fold_type>= 0 then
-                              [(1, M_seg_fold (m_res, seg_fold_type))]
-                            else
-                              (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
-                              []
-                          in
-                          (1,Cond_action ([m_act]@seg_acts))
-                        )
-                        else
-                          m_act
-                  ) in
-                  let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
-                  let () = y_tinfo_hp (add_str "a2" pr_act) a2 in
-                  let a3 = (
-                    (*Do not fold/unfold LOCKs, only match*)
-                    if (is_l_lock || is_r_lock) then Some a2 else 
-                    if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2]) (* if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]) *)
-                    else None
-                  ) in
-                  let () = y_tinfo_hp (add_str "a3" (pr_option pr_act)) a3 in
-                  let a4 = (
-                    (*Do not fold/unfold LOCKs*)
-                    if (is_l_lock || is_r_lock) then None else
-                      let () = Debug.tinfo_hprint (add_str " vl_is_rec" string_of_bool) vl_is_rec no_pos in
-                      let () = Debug.tinfo_hprint (add_str " vl_is_prim" string_of_bool) vl_is_prim no_pos in
-                      let () = Debug.tinfo_hprint (add_str " vr_is_rec" string_of_bool) vr_is_rec no_pos in
-                      let () = Debug.tinfo_hprint (add_str " vr_is_prim" string_of_bool) vr_is_prim no_pos in
-                      if not(vl_is_rec) && not(vl_is_prim) then
-                        let () = Debug.tinfo_hprint (add_str "unfold vl_is_rec" string_of_bool) vl_is_rec no_pos in
-                        Some (2,M_unfold (m_res,0))
-                      else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then
-                        let () = Debug.ninfo_hprint (add_str "fold vr_is_rec" string_of_bool) vr_is_rec no_pos in
-                        Some (2,M_fold m_res) 
-                      else None
-                  ) in
-                  let () = y_tinfo_hp (add_str "a4" (pr_option pr_act)) a4 in
-                  let a5 = (
-                    if a4==None then
-                      begin
-                        let l1 =
-                          (*Do not fold/unfold LOCKs and array segments when view matching*)
-                          if (is_r_lock || not(vr_actual_root==None)) then [] else 
-                          if (vl_view_orig && vr_view_orig && not(vr_is_prim) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
-                          then
-                            [(2,M_fold m_res)] 
-                          else [] in
-                        let l2 =
-                          (*Do not fold/unfold LOCKs*)
-                          if (is_l_lock || not(vl_actual_root==None)) then [] else
-                            let uflag = (vl_view_orig && vr_view_orig && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts) in
-                            let () = x_tinfo_hp (add_str "unfold on self-fold defn (rev-seg)" string_of_bool) uflag no_pos in
-                            if uflag
-                            then
-                              (* how to force a match after an unfold on self-rec *)
-                              if false (* !Globals.adhoc_flag_3 *) then
-                                let () = x_winfo_pp "unfold on self-rec" no_pos in
-                                failwith "unfold on self-rec"
-                              else [(1,M_unfold (m_res,0))]
-                            else [] in
-                        let l = l1@l2 in
-                        if l=[] then None
-                        else Some (2,Cond_action l) 
-                      end
-                    else a4 
-                  ) in
-                  let () = y_tinfo_hp (add_str "a5" (pr_option pr_act)) a5 in
-                  let a6 = (
-                    match a3 with 
-                    | None -> a5
-                    | Some a1 -> 
-                      if not(a4==None) then a3
-                      else 
-                        match a5 with
-                        | None -> a3
-                        | Some a2 -> Some (1,Cond_action [a2; a1]) 
-                  ) in
-                  let () = y_tinfo_hp (add_str "a6" (pr_option pr_act)) a6 in
-                  let a7 =
-                    if (!Globals.smart_lem_search ) then
-                      let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split 
-                          (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
-                      if lem_act = [] then a6 else
-                        match a6 with
-                        | Some a ->  Some (1, Cond_action ([a]@lem_act))
-                        | None   -> if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None
-                    else a6
+                      dl_orig,dr_orig
                   in
-                  let () = y_tinfo_hp (add_str "a7" (pr_option pr_act)) a7 in
-                  match a6 with
-                  | Some a -> [a],syn_lem_typ
-                  | None -> let () = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
-                    (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
-                    (* let () = Debug.ninfo_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
-                    (* let lst=[(1,M_base_case_unfold m_res);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
-                    (*cyclic: add lemma_unsafe then unfold lhs*)
-                    (*L2: change here for cyclic*)
-                    let lst=
-                      let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-                      if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
-                        let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                        let uf_i = if new_orig then 0 else 1 in
-                        [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
-                      else
-                        let acts = [(2,M_base_case_unfold m_res);
-                                    (3,M_base_case_fold m_res)
-                                    (* ;(1,M_cyclic_res) *)] in
-                        (* TODO:WN Is infinite unfolding possible? *)
-                        let acts2 = if vl_view_orig && vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in
-                        let flag = !dis_base_case_unfold || vl_vdef.view_base_case==None in
-                        let () = if flag then 
-                            begin
-                              x_dinfo_pp "Base-Case Unfold Problem" no_pos;
-                              x_dinfo_pp "========================" no_pos;
-                              x_dinfo_hp (add_str "LHS pred" pr_id) vl_name no_pos;
-                              x_dinfo_hp (add_str "RHS pred" pr_id) vr_name no_pos;
-                            end
+                  let wt = 1 in
+                  let l2 =
+                    if ((String.compare dl_name dr_name)==0 && 
+                        ((dl_flag==false && (dl_origins!=[])) 
+                         || ((dr_flag==false && dr_origins!=[])))) then [(0,M_match m_res)] (*force a MATCH after each lemma*)
+                    else 
+                    if (String.compare dl_name dr_name)==0 
+                    then 
+                      (* temp change to 0 to give fold higher priority *)
+                      [(wt,M_match m_res)]
+                    else [(wt,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
+                  in
+                  let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in
+                  (*apply lemmas on data nodes*)
+                  (* using || results in some repeated answers but still terminates *)
+                  (*let dl_new_orig = if !ann_derv then not(dl_derv) else dl_orig in*)
+                  let flag = 
+                    if !ann_derv 
+                    then (not(dl_derv) && not(dr_derv)) 
+                    else (dl_orig || dr_orig)
+                  in
+                  let l3 = if flag
+                    then 
+                      begin
+                        (* WN_all_lemma - is this overriding of lemmas? *)
+                        let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) dl_name dr_name) in
+                        let left_ls =
+                          if (dr_split = SPLIT0) then
+                            (*do not split --> not apply lemma_split *)
+                            List.filter (fun c -> c.coercion_kind != LEM_SPLIT) left_ls
+                          else left_ls
                         in
-                        (* let acts1= *)
-                        (*   if check_is_classic () && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
-                        (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
-                        (*   else *)
-                        (*     acts *)
-                        (* in *)
-                        if flag (* & !Globals.adhoc_flag_1 *) then  
-                          if acts2==[] then 
-                            if true (* !Globals.adhoc_flag_1 *) then []
-                            else [(9,M_Nothing_to_do "no base case nor unfold here")]
-                          else acts2
-                        else acts2@acts
+                        let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) dr_name dl_name) in
+                        let left_act = List.map (fun l -> (wt,M_lemma (m_res,Some l,0))) left_ls in
+                        let right_act = List.map (fun l -> (wt,M_lemma (m_res,Some l,0))) right_ls in
+                        if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
+                        else left_act@right_act
+                      end
+                    else [] in
+                  let src = (wt,mk_search_action (l2@l3)) in
+                  src
+                end
+            end
+          | HVar _, HVar _ -> let () = y_tinfo_pp "HVAR vs HVAR" in (1, M_match m_res)
+          | ViewNode vl, ViewNode vr -> 
+            let pr v = v.h_formula_view_name in
+            let () = y_tinfo_hp (add_str "VIEW vs VIEW" (pr_pair pr pr)) (vl,vr) in
+            (* let l1 = [(1,M_base_case_unfold m_res)] in *)
+            let (vl_vdef,vr_vdef,vl_name,vr_name,ans) = Cast.smart_view_name_equiv view_decls vl vr in
+            (* let (vl_name,vl_vdef,vl,flag1) = Cast.get_view_name_equiv view_decls vl in *)
+            (* let (vr_name,vr_vdef,vr,flag2) = Cast.get_view_name_equiv view_decls vr in *)
+            (* WN : changing m_res to use view_equiv_set *)
+            let m_res,vl,vr = match ans with
+              | None -> m_res,vl,vr
+              | Some (vl,vr) -> 
+                {m_res with match_res_lhs_node = ViewNode vl;
+                            match_res_rhs_node = ViewNode vr},vl,vr 
+            in
+            let () = y_tinfo_hp (add_str "VIEW vs VIEW (after view_equiv)" (pr_pair pr pr)) (vl,vr) in
+            (* let vr_name = vr.h_formula_view_name in *)
+            (* let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in *)
+            (* let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in *)
+            let vl_is_rec = vl_vdef.view_is_rec in
+            let vl_is_prim = vl_vdef.view_is_prim in
+            let vr_is_prim = vr_vdef.view_is_prim in
+            let vl_kind = vl_vdef.view_kind in
+            let vr_kind = vr_vdef.view_kind in
+            let vr_is_rec = vr_vdef.view_is_rec in
+            let vl_self_pts = vl_vdef.view_pt_by_self in
+            let vr_self_pts = vr_vdef.view_pt_by_self in
+            (* root for array segment *)
+            let vl_actual_root = vl_vdef.view_actual_root in
+            let vr_actual_root = vr_vdef.view_actual_root in
+            let vl_view_orig = vl.h_formula_view_original in
+            let vr_view_orig = vr.h_formula_view_original in
+            let vl_view_origs = vl.h_formula_view_origins in
+            let vr_view_origs = vr.h_formula_view_origins in
+            let vl_view_derv =  vl.h_formula_view_derv in
+            let vr_view_derv = vr.h_formula_view_derv in
+            let vr_view_split = vr.h_formula_view_split in
+            let () = x_ninfo_hp (add_str "cyclic " pr_id) " 1" no_pos in
+            let () = x_tinfo_hp (add_str "vl_name: " pr_id) vl_name no_pos in
+            let () = x_tinfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
+            let () = x_tinfo_hp (add_str "vr_kind: " string_of_view_kind) vr_kind no_pos in
+            let () = x_tinfo_hp (add_str "vr_name: " pr_id) vr_name no_pos in
+            let is_l_lock = match vl_vdef.view_inv_lock with
+              | Some _ -> true
+              | None -> false
+            in
+            let is_r_lock = match vr_vdef.view_inv_lock with
+              | Some _ -> true
+              | None -> false
+            in
+            (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
+            (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
+            (*let en_num = !num_self_fold_search in*)
+            (* let en_self_fold = !self_fold_search_flag in *)
+            let s_eq = (String.compare vl_name vr_name)==0 in
+            let vl_b = vl_view_origs!=[] in
+            let vr_b = vr_view_origs!=[] in
+            let force_flag = (s_eq && 
+                              ((vl_view_orig==false && vl_b) 
+                               || ((vr_view_orig==false && vr_b)))) in
+            let sf_force_match_flag = (vl_view_orig && not(vr_view_orig) || vr_view_orig && not(vl_view_orig)) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts in
+            let () = Debug.tinfo_hprint (add_str "force_match" string_of_bool) force_flag no_pos in
+            let () = Debug.tinfo_hprint (add_str "sf_force_match" string_of_bool) sf_force_match_flag no_pos in
+            let () = Debug.ninfo_hprint (add_str "s_eq" string_of_bool) s_eq no_pos in
+            let () = Debug.ninfo_hprint (add_str "vl_b" string_of_bool) vl_b no_pos in
+            let () = Debug.ninfo_hprint (add_str "vr_b" string_of_bool) vr_b no_pos in
+            let () = Debug.ninfo_hprint (add_str "vl_view_orig" string_of_bool) vl_view_orig no_pos in
+            let () = Debug.ninfo_hprint (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+            let () = Debug.ninfo_hprint (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+            let () = Debug.ninfo_hprint (add_str "!Globals.self_fold_search_flag" string_of_bool) !Globals.self_fold_search_flag no_pos in
+            let flag_lem = (
+              if !ann_derv then (not(vl_view_derv) && not(vr_view_derv)) 
+              (* else (vl_view_orig || vr_view_orig) *)
+              else
+                (*only apply a SPLIT lemma to a lock
+                  if both sides are original*)
+                (* if (is_l_lock) then *)
+                (*   (vl_view_orig && vr_view_orig) *)
+                (*if RHS is original --> SPLIT*)
+              if (is_l_lock && is_r_lock && vr_view_orig) then true
+              else if (is_l_lock && is_r_lock && not vr_view_orig) then false
+              else (vl_view_orig || vr_view_orig)
+            ) in
+            let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+            let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+            let () = Debug.ninfo_hprint (add_str "vl_new_orig" string_of_bool) vl_new_orig no_pos in
+            let () = Debug.ninfo_hprint (add_str "vr_new_orig" string_of_bool) vr_new_orig no_pos in
+            let imm_subtype_flag = (Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node) in
+            let seg_fold_type = 
+              if !Globals.seg_fold then 
+                (Cfutil.is_seg_view2_fold_form prog vl estate.CF.es_formula vr rhs reqset estate.es_folding_conseq_pure) 
+              else -1
+            in
+            let l2, syn_lem_typ = (
+              let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+              let uf_i = if new_orig then 0 else 1 in
+              let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+              if force_flag || sf_force_match_flag then
+                let () = x_tinfo_pp "choosing forced matching" no_pos in
+                let base_case_prio = 3 in
+                [(0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_fold m_res);(base_case_prio,M_base_case_unfold m_res)])],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
+              else
+                let base_case_prio = 3 in
+                let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))  
+                  then (-1,M_Nothing_to_do "base_case_unfold not selected")
+                  else (base_case_prio,M_base_case_unfold m_res) in
+                let a1 =
+                  (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
+                  let ()= y_tinfo_hp (add_str "imm_subtype_flag" string_of_bool) imm_subtype_flag in
+                  let ()= y_tinfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
+                  (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))   *)
+                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))
+                  then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
+                  else a1 in
+                let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
+                (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
+                (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
+                let a2 = (
+                  if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
+                     (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
+                    let a21 = (1,M_match m_res) in
+                    let () = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
+                    let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
+                    (* (1,Cond_action [a21;a22]) *) a22
+                  else
+                    let split_act = 
+                      if (vr_view_split=SPLIT1) || !Globals.ho_always_split then
+                        (* SPLIT only, no match *)
+                        let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split
+                            (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) 
+                            m_res estate.CF.es_formula rhs reqset 
+                        in
+                        if lem_split = [] then None
+                        else Some (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
+                      else None
                     in
-                    (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
-                    (*L2: change here for cyclic*)
-                    [(1,Cond_action lst)],syn_lem_typ
-              ) in
-              (* using || results in some repeated answers but still terminates *)
-              (* let l3 = ( *)
-              (*   if flag then  *)
-              (*     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (\*prog.prog_left_coercions*\) vl_name vr_name) in *)
-              (*     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (\*prog.prog_right_coercions*\) vr_name vl_name) in *)
-              (*     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l ->  *)
-              (*         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l,0)) *)
-              (*         else (1,M_lemma (m_res,Some l))) left_ls else [] in *)
-              (*     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in *)
-              (*     let right_act =   *)
-              (*       List.fold_left (fun acc l ->  *)
-              (*           if  (vr_new_orig || (non_loop_candidate l)) then *)
-              (*             let prio = (\* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*\) 1 in  *)
-              (*             acc@[(prio,M_lemma (m_res,Some l))] *)
-              (*           else acc) [] right_ls *)
-              (*     in *)
-              (*     left_act@right_act *)
-              (*   else  [] *)
-              (* ) in *)
-              let () = y_tinfo_hp (add_str "l2" (pr_list pr_act)) l2 in
-              let l3 = 
-                if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
-                  search_lemma_candidates prog flag_lem ann_derv vr_view_split 
-                    (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset 
-                else [] in
-              let () = y_tinfo_hp (add_str "l3" (pr_list pr_act)) l3 in
-              (*let l4 = 
-                (* TODO WN : what is original?? *)
-                (* Without it, run-fast-test of big imm runs faster while
-                * still accurate. However, it fails with
-                * imm/imm1.slk imm/imm3.slk *)
-                if get_view_original rhs_node then 
-                [(2,M_base_case_fold m_res)] 
-                else [] in*)
-              (* [] in *)
-              (* try accelerated folding *)
-              let a = l2@l3 in
-              (* let a_fold, a_rest = List.partition (fun (_,act) -> *)
-              (*   match act with                                    *)
-              (*   | M_fold _ -> true                                *)
-              (*   | _ -> false                                      *)
-              (* ) a in                                              *)
-              (* try accelerated folding *)
-              let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-              x_tinfo_hp (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
-              x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
-              (* return *)
-              (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-              (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
-            | DataNode dl, ViewNode vr -> 
-              let () = y_tinfo_pp "DATA vs VIEW" in
-              let vr_name = vr.h_formula_view_name in
-              let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in
-              let vr_actual_root =  vr_vdef.view_actual_root in
-              let vr_self_pts = vr_vdef.view_pt_by_self in
-              let vr_is_prim = vr_vdef.view_is_prim in
-              let vr_view_orig = vr.h_formula_view_original in
-              let vr_view_derv = vr.h_formula_view_derv in
-              let dl_orig = dl.h_formula_data_original in
-              let dl_derv = dl.h_formula_data_derv in
-              (* CF.h_formula_data_origins = dr_origins; *)
-              (*Is it LOCKED state*)
-              let is_r_lock = match vr_vdef.view_inv_lock with
-                | Some _ -> true
-                | None -> false
-              in
-              let new_orig_r = if !ann_derv then not(vr_view_derv) else vr_view_orig in
-              let new_orig_l = if !ann_derv then not(dl_derv) else dl_orig in
-              let sub_ann  =(*  if (!Globals.allow_field_ann) then  *)
-                (*   let rhs_no_h = CF.add_mix_formula_to_formula rhs_p (CF.mkTrue_nf no_pos) in *)
-                (*   let rhs_for_imm_inst = map_opt_def rhs_no_h (fun x ->  CF.add_pure_formula_to_formula x rhs) estate.es_rhs_pure in *)
-                (*   let r,_,_,_ = x_add (Immutable.subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in *)
-                (*   (\* let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in *\) *)
-                (*   r (\* && not(isAccs) *\) *)
-                (* else  *)(Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node)  (* true *) in
-              (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
-              (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold m_res)] else [] in *)
-              let () = x_tinfo_hp (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
-              let () = x_tinfo_hp (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
-              let () = x_tinfo_hp (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
-              let () = x_tinfo_hp (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
-              let () = x_tinfo_hp (add_str "vr_self_pts" (pr_list pr_id)) vr_self_pts no_pos in
-              let seg_fold_type = if !Globals.seg_fold then
-                  (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset estate.CF.es_folding_conseq_pure)
-                else gen_lemma_action_invalid
-              in
-              let a1 = (
-                if is_r_lock then [] else
-                if ((new_orig_r || vr_self_pts==[] || not(vr_actual_root==None)) && sub_ann) then
-                  let () = x_tinfo_hp (add_str "cyclic " pr_id) " 3" no_pos in
-                  let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
-                  let syn_lem_typ = if seg_fold_type >= 0 then gen_lemma_action_invalid else
-                      CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
-                  if (syn_lem_typ != gen_lemma_action_invalid) then
-                    let acts =
-                      if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
-                            vr_name) >0 then
-                        (*find the first viewnode readable from left datanode*)
-                        let lvs = CFU.look_up_reachable_first_reachable_view prog
-                            (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
-                        let uf_i = if new_orig_r then 0 else 1 in
-                        if lvs = [] then
+                    match split_act with
+                    | Some a -> a
+                    | None ->
+                      (* allow matching only if (lhs_imm <: rhs_imm) *)
+                      let () = x_tinfo_pp "choosing matching" no_pos in
+                      let m_act = if (imm_subtype_flag) then (1,M_match m_res) 
+                        else (base_case_prio, M_Nothing_to_do ("not(lhs_imm <: rhs_imm)")) in
+                      (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
+                      if !Globals.seg_fold then (
+                        let seg_acts = if seg_fold_type>= 0 then
+                            [(1, M_seg_fold (m_res, seg_fold_type))]
+                          else
+                            (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
+                            []
+                        in
+                        (1,Cond_action ([m_act]@seg_acts))
+                      )
+                      else
+                        m_act
+                ) in
+                let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
+                let () = y_tinfo_hp (add_str "a2" pr_act) a2 in
+                let a3 = (
+                  (*Do not fold/unfold LOCKs, only match*)
+                  if (is_l_lock || is_r_lock) then Some a2 else 
+                  if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2]) (* if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]) *)
+                  else None
+                ) in
+                let () = y_tinfo_hp (add_str "a3" (pr_option pr_act)) a3 in
+                let a4 = (
+                  (*Do not fold/unfold LOCKs*)
+                  if (is_l_lock || is_r_lock) then None else
+                    let () = Debug.tinfo_hprint (add_str " vl_is_rec" string_of_bool) vl_is_rec no_pos in
+                    let () = Debug.tinfo_hprint (add_str " vl_is_prim" string_of_bool) vl_is_prim no_pos in
+                    let () = Debug.tinfo_hprint (add_str " vr_is_rec" string_of_bool) vr_is_rec no_pos in
+                    let () = Debug.tinfo_hprint (add_str " vr_is_prim" string_of_bool) vr_is_prim no_pos in
+                    if not(vl_is_rec) && not(vl_is_prim) then
+                      let () = Debug.tinfo_hprint (add_str "unfold vl_is_rec" string_of_bool) vl_is_rec no_pos in
+                      Some (2,M_unfold (m_res,0))
+                    else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then
+                      let () = Debug.ninfo_hprint (add_str "fold vr_is_rec" string_of_bool) vr_is_rec no_pos in
+                      Some (2,M_fold m_res) 
+                    else None
+                ) in
+                let () = y_tinfo_hp (add_str "a4" (pr_option pr_act)) a4 in
+                let a5 = (
+                  if a4==None then
+                    begin
+                      let l1 =
+                        (*Do not fold/unfold LOCKs and array segments when view matching*)
+                        if (is_r_lock || not(vr_actual_root==None)) then [] else 
+                        if (vl_view_orig && vr_view_orig && not(vr_is_prim) && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
+                        then
+                          [(2,M_fold m_res)] 
+                        else [] in
+                      let l2 =
+                        (*Do not fold/unfold LOCKs*)
+                        if (is_l_lock || not(vl_actual_root==None)) then [] else
+                          let uflag = (vl_view_orig && vr_view_orig && !Globals.self_fold_search_flag && Gen.BList.mem_eq (=) vr_name vl_self_pts) in
+                          let () = x_tinfo_hp (add_str "unfold on self-fold defn (rev-seg)" string_of_bool) uflag no_pos in
+                          if uflag
+                          then
+                            (* how to force a match after an unfold on self-rec *)
+                            if false (* !Globals.adhoc_flag_3 *) then
+                              let () = x_winfo_pp "unfold on self-rec" no_pos in
+                              failwith "unfold on self-rec"
+                            else [(1,M_unfold (m_res,0))]
+                          else [] in
+                      let l = l1@l2 in
+                      if l=[] then None
+                      else Some (2,Cond_action l) 
+                    end
+                  else a4 
+                ) in
+                let () = y_tinfo_hp (add_str "a5" (pr_option pr_act)) a5 in
+                let a6 = (
+                  match a3 with 
+                  | None -> a5
+                  | Some a1 -> 
+                    if not(a4==None) then a3
+                    else 
+                      match a5 with
+                      | None -> a3
+                      | Some a2 -> Some (1,Cond_action [a2; a1]) 
+                ) in
+                let () = y_tinfo_hp (add_str "a6" (pr_option pr_act)) a6 in
+                let a7 =
+                  if (!Globals.smart_lem_search ) then
+                    let lem_act = search_lemma_candidates prog flag_lem ann_derv vr_view_split 
+                        (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset in
+                    if lem_act = [] then a6 else
+                      match a6 with
+                      | Some a ->  Some (1, Cond_action ([a]@lem_act))
+                      | None   -> if List.length lem_act > 0 then Some (1, Cond_action (lem_act)) else None
+                  else a6
+                in
+                let () = y_tinfo_hp (add_str "a7" (pr_option pr_act)) a7 in
+                match a6 with
+                | Some a -> [a],syn_lem_typ
+                | None -> let () = Debug.ninfo_hprint (add_str "cyclic " pr_id) " 2" no_pos in
+                  (* TO m_resHECK : MUST ensure not fold/unfold LOCKs*)
+                  (* let () = Debug.ninfo_hprint (add_str "xxxx" pr_id) "4"  no_pos in *)
+                  (* let lst=[(1,M_base_case_unfold m_res);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in *)
+                  (*cyclic: add lemma_unsafe then unfold lhs*)
+                  (*L2: change here for cyclic*)
+                  let lst=
+                    let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                    if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
+                      let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                      let uf_i = if new_orig then 0 else 1 in
+                      [(1,M_cyclic (m_res,uf_i,0, syn_lem_typ, None))(* ;(1,M_unfold (m_res, uf_i)) *)]
+                    else
+                      let acts = [(2,M_base_case_unfold m_res);
+                                  (3,M_base_case_fold m_res)
+                                  (* ;(1,M_cyclic_res) *)] in
+                      (* TODO:WN Is infinite unfolding possible? *)
+                      let acts2 = if vl_view_orig && vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in
+                      let flag = !dis_base_case_unfold || vl_vdef.view_base_case==None in
+                      let () = if flag then 
+                          begin
+                            x_dinfo_pp "Base-Case Unfold Problem" no_pos;
+                            x_dinfo_pp "========================" no_pos;
+                            x_dinfo_hp (add_str "LHS pred" pr_id) vl_name no_pos;
+                            x_dinfo_hp (add_str "RHS pred" pr_id) vr_name no_pos;
+                          end
+                      in
+                      (* let acts1= *)
+                      (*   if check_is_classic () && (Cfutil.is_fold_form  prog vl estate.CF.es_formula vr rhs reqset) then *)
+                      (*     acts@[(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
+                      (*   else *)
+                      (*     acts *)
+                      (* in *)
+                      if flag (* & !Globals.adhoc_flag_1 *) then  
+                        if acts2==[] then 
+                          if true (* !Globals.adhoc_flag_1 *) then []
+                          else [(9,M_Nothing_to_do "no base case nor unfold here")]
+                        else acts2
+                      else acts2@acts
+                  in
+                  (*let lst = [(1,M_base_case_unfold m_res);(1,M_unmatched_rhs_data_node (rhs_node,m_res.match_res_rhs_rest))] in*)
+                  (*L2: change here for cyclic*)
+                  [(1,Cond_action lst)],syn_lem_typ
+            ) in
+            (* using || results in some repeated answers but still terminates *)
+            (* let l3 = ( *)
+            (*   if flag then  *)
+            (*     let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) vl_name vr_name) in *)
+            (*     let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) (*prog.prog_right_coercions*) vr_name vl_name) in *)
+            (*     let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l ->  *)
+            (*         if (Immutable.is_lend l.Cast.coercion_body) then (1,M_lemma (m_res,Some l,0)) *)
+            (*         else (1,M_lemma (m_res,Some l))) left_ls else [] in *)
+            (*     let non_loop_candidate l = not (Gen.BList.mem_eq (fun s1 s2 -> (String.compare s1 s2 = 0)) l.Cast.coercion_name vr_view_origs)in *)
+            (*     let right_act =   *)
+            (*       List.fold_left (fun acc l ->  *)
+            (*           if  (vr_new_orig || (non_loop_candidate l)) then *)
+            (*             let prio = (* if ((Immutable.is_lend l.Cast.coercion_body) && vr_view_orig ) then 1 else*) 1 in  *)
+            (*             acc@[(prio,M_lemma (m_res,Some l))] *)
+            (*           else acc) [] right_ls *)
+            (*     in *)
+            (*     left_act@right_act *)
+            (*   else  [] *)
+            (* ) in *)
+            let () = y_tinfo_hp (add_str "l2" (pr_list pr_act)) l2 in
+            let l3 = 
+              if seg_fold_type<0 then(* if not (!Globals.smart_lem_search) then  *)
+                search_lemma_candidates prog flag_lem ann_derv vr_view_split 
+                  (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) m_res estate.CF.es_formula rhs reqset 
+              else [] in
+            let () = y_tinfo_hp (add_str "l3" (pr_list pr_act)) l3 in
+            (*let l4 = 
+              (* TODO WN : what is original?? *)
+              (* Without it, run-fast-test of big imm runs faster while
+              * still accurate. However, it fails with
+              * imm/imm1.slk imm/imm3.slk *)
+              if get_view_original rhs_node then 
+              [(2,M_base_case_fold m_res)] 
+              else [] in*)
+            (* [] in *)
+            (* try accelerated folding *)
+            let a = l2@l3 in
+            (* let a_fold, a_rest = List.partition (fun (_,act) -> *)
+            (*   match act with                                    *)
+            (*   | M_fold _ -> true                                *)
+            (*   | _ -> false                                      *)
+            (* ) a in                                              *)
+            (* try accelerated folding *)
+            let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+            x_tinfo_hp (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+            x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
+            (* return *)
+            (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
+            (* (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)])) *)
+            (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
+          | DataNode dl, ViewNode vr -> 
+            let () = y_tinfo_pp "DATA vs VIEW" in
+            let vr_name = vr.h_formula_view_name in
+            let vr_vdef = look_up_view_def_raw x_loc view_decls vr_name in
+            let vr_actual_root =  vr_vdef.view_actual_root in
+            let vr_self_pts = vr_vdef.view_pt_by_self in
+            let vr_is_prim = vr_vdef.view_is_prim in
+            let vr_view_orig = vr.h_formula_view_original in
+            let vr_view_derv = vr.h_formula_view_derv in
+            let dl_orig = dl.h_formula_data_original in
+            let dl_derv = dl.h_formula_data_derv in
+            (* CF.h_formula_data_origins = dr_origins; *)
+            (*Is it LOCKED state*)
+            let is_r_lock = match vr_vdef.view_inv_lock with
+              | Some _ -> true
+              | None -> false
+            in
+            let new_orig_r = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+            let new_orig_l = if !ann_derv then not(dl_derv) else dl_orig in
+            let sub_ann  =(*  if (!Globals.allow_field_ann) then  *)
+              (*   let rhs_no_h = CF.add_mix_formula_to_formula rhs_p (CF.mkTrue_nf no_pos) in *)
+              (*   let rhs_for_imm_inst = map_opt_def rhs_no_h (fun x ->  CF.add_pure_formula_to_formula x rhs) estate.es_rhs_pure in *)
+              (*   let r,_,_,_ = x_add (Immutable.subtype_ann_list ~rhs:rhs_for_imm_inst ~lhs:estate.es_formula) [] [] dl.h_formula_data_param_imm (CP.annot_arg_to_imm_ann_list (get_node_annot_args rhs_node)) in *)
+              (*   (* let isAccs  = Immutable.isAccsList dl.h_formula_data_param_imm in *) *)
+              (*   r (* && not(isAccs) *) *)
+              (* else  *)(Cfimmutils.is_imm_subtype ~pure:(MCP.pure_of_mix lhs_p) lhs_node rhs_node)  (* true *) in
+            (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
+            (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold m_res)] else [] in *)
+            let () = x_tinfo_hp (add_str "new_orig_r" string_of_bool) new_orig_r no_pos in
+            let () = x_tinfo_hp (add_str "vr_view_derv" string_of_bool) vr_view_derv no_pos in
+            let () = x_tinfo_hp (add_str "vr_view_orig" string_of_bool) vr_view_orig no_pos in
+            let () = x_tinfo_hp (add_str "!ann_derv" string_of_bool) !ann_derv no_pos in
+            let () = x_tinfo_hp (add_str "vr_self_pts" (pr_list pr_id)) vr_self_pts no_pos in
+            let seg_fold_type = if !Globals.seg_fold then
+                (Cfutil.is_seg_view_br_fold_form prog dl estate.CF.es_formula vr rhs reqset estate.CF.es_folding_conseq_pure)
+              else gen_lemma_action_invalid
+            in
+            let a1 = (
+              if is_r_lock then [] else
+              if ((new_orig_r || vr_self_pts==[] || not(vr_actual_root==None)) && sub_ann) then
+                let () = x_tinfo_hp (add_str "cyclic " pr_id) " 3" no_pos in
+                let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
+                let syn_lem_typ = if seg_fold_type >= 0 then gen_lemma_action_invalid else
+                    CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
+                if (syn_lem_typ != gen_lemma_action_invalid) then
+                  let acts =
+                    if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
+                          vr_name) >0 then
+                      (*find the first viewnode readable from left datanode*)
+                      let lvs = CFU.look_up_reachable_first_reachable_view prog
+                          (CF.formula_of_heap lhs_h no_pos) [dl.CF.h_formula_data_node] in
+                      let uf_i = if new_orig_r then 0 else 1 in
+                      if lvs = [] then
+                        let () = x_info_pp "folding..." no_pos in
+                        [(1,M_fold m_res)]
+                      else
+                        let vl = List.hd lvs in
+                        if syn_lem_typ=3 || (syn_lem_typ=1 && check_lemma_not_exist vl vr) then
+                          let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                          (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
+                          let unfold_view_opt = if syn_lem_typ = 3 then
+                              None
+                            else Some (CF.ViewNode vl)
+                          in
+                          [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, unfold_view_opt))]
+                        else
                           let () = x_info_pp "folding..." no_pos in
                           [(1,M_fold m_res)]
-                        else
-                          let vl = List.hd lvs in
-                          if syn_lem_typ=3 || (syn_lem_typ=1 && check_lemma_not_exist vl vr) then
-                            let new_orig_r = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-                            (* let new_c = {c with match_res_lhs_node = CF.ViewNode vl} in *)
-                            let unfold_view_opt = if syn_lem_typ = 3 then
-                                None
-                              else Some (CF.ViewNode vl)
-                            in
-                            [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, unfold_view_opt))]
-                          else
-                            let () = x_info_pp "folding..." no_pos in
-                            [(1,M_fold m_res)]
-                      else
-                        let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold 3" no_pos in
-                        let cyc_tail_rec_lemmas=
-                          if syn_lem_typ=3 then
-                            let uf_i = if new_orig_r then 0 else 1 in
-                            [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
-                          else []
-                        in
-                        (* let () = if !Globals.x_tinfo_pp "folding..." no_pos in *)
-                        cyc_tail_rec_lemmas@[(1,M_fold m_res)]
-                    in
-                    acts
-                  else
-                    (* fold to activate/change  *)
-                  if (vr_is_prim) 
-                  then [] 
-                  else
-                    begin
-                      if !Globals.old_norm_w_coerc 
-                      then x_info_pp "folding..." no_pos;
-                      [(1,M_fold m_res)]
-                    end
-                else if not(sub_ann) then [(3,M_base_case_fold m_res)]
-                else []
-              ) in
-              (* WN : what is M_rd_lemma for?? *)
-              (* WN : why do we apply lemma blindly here!! *)
-              (* leads to unsoundness of sh-rev3a.slk *)
-              (* ==========andreea: a naive fix for left compelx lemma -- to be refined ========== *)
-              let a3 = (
-                let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)
-                                                     vr_name dl.h_formula_data_name) in
-                let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
-                                                    dl.h_formula_data_name vr_name) in
-                (* for left lemmas, only a complex one might trigger a match data --> view *)
-                let left_ls = filter_lemmas_by_kind left_ls Complex in 
-                (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
-                let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls else [] in
-                let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) right_ls else [] in
-                left_act@right_act 
-              ) in
-              (* ==================== *)
-              let r_lem =
-                if (Lem_store.all_lemma # any_coercion
-                    && !Globals.allow_rd_lemma)
-                then
-                  [
-                    (1,M_rd_lemma m_res)
-                  ]
-                else [] in
-              let a2 = if (new_orig_r) then r_lem else [] in
-              (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
-              let seg_acts = 
-                if !Globals.seg_fold then
-                  if seg_fold_type>= 0 then
-                    [(1, M_seg_fold (m_res, seg_fold_type))]
-                  else []
-                else []
-              in
-              let a = a1@seg_acts@a2@a3 in
-              (* let a_fold, a_rest = List.partition (fun (_,act) -> *)
-              (*   match act with                                    *)
-              (*   | M_fold _ -> true                                *)
-              (*   | _ -> false                                      *)
-              (* ) a in                                              *)
-              (* try accelerated folding *)
-              let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
-              x_tinfo_hp (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
-              x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
-              (* return *)
-              (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
-              let () = y_tinfo_hp (add_str "actions" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
-              let a = List.filter (fun (_,x) -> match x with
-                  | M_lemma (_,opt,_) ->
-                    begin
-                      match opt with 
-                        None -> true
-                      | Some c -> Cast.lemma_soundness # safe_to_apply c
-                    end
-                  | _ -> true
-                ) a in
-              let () = y_tinfo_hp (add_str "actions(filtered unsoundness)" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
-              (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
-            | ViewNode vl, DataNode dr -> 
-              let () = y_tinfo_pp "VIEW vs DATA" in
-              let vl_name = vl.h_formula_view_name in
-              let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
-              let vl_self_pts = vl_vdef.view_pt_by_self in
-              let vl_actual_root =  vl_vdef.view_actual_root in
-              let vl_view_orig = vl.h_formula_view_original in
-              let vl_view_derv = vl.h_formula_view_derv in
-              let dr_orig = dr.h_formula_data_original in
-              let dr_derv = dr.h_formula_data_derv in
-              let () = pr_debug "pred<..> |- node<..>" in
-              (*Is it LOCKED state*)
-              let is_l_lock = match vl_vdef.view_inv_lock with
-                | Some _ -> true
-                | None -> false
-              in
-              let () = x_tinfo_hp (add_str "cyclic " pr_id) " 4" no_pos in
-              let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
-              let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
-              let uf_i = if new_orig_l then 0 else 1 in
-              (* WN_all_lemma - is this overriding of lemmas? *)
-              (* let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(\*prog.prog_left_coercions*\) vl_name dr.h_formula_data_name) in *)
-              (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (m_res,uf_i))] else [] in *)
-              (* let () = pr_hdebug (add_str "left_ls" (pr_list pr_none)) left_ls in *)
-              let sub_ann  = if (!Globals.allow_field_ann) then 
-                  let r,_,_,_ = x_add Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
-                  r
-                else true in
-              let unfold_flag = ((new_orig_l (* || new_orig_r *) || (vl_self_pts==[] || not(vl_actual_root==None))) && sub_ann) in
-              let () = x_tinfo_hp (add_str "is_l_lock" string_of_bool) is_l_lock no_pos in
-              let () = x_tinfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag no_pos in
-              let () = x_tinfo_hp (add_str "sub_ann" string_of_bool) sub_ann no_pos in
-              let () = x_tinfo_hp (add_str "new_orig_l" string_of_bool) new_orig_l no_pos in
-              let () = x_tinfo_hp (add_str "vl_self_pts" (pr_list pr_id)) vl_self_pts no_pos in
-              let a1 = 
-                if is_l_lock then [] else
-                if unfold_flag then 
-                  (*then [(1,M_unfold (m_res,uf_i))] else [] in*)
-                  if vl_vdef.view_is_prim then []
-                  else
-                    (*cyclic checkpoint here*)
-                    let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs reqset in
-                    if syn_lem_typ =3 || (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
-                      (*find the first viewnode readable from right datanode*)
-                      let lvs = CFU.look_up_reachable_first_reachable_view prog
-                          rhs [dr.CF.h_formula_data_node] in
-                      if lvs = [] then [(2,M_unfold (m_res,uf_i))] else
-                        [(2,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
                     else
-                      [(2,M_unfold (m_res,uf_i))] 
-                else [] in
-              (* let a2_syn = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in *)
-
-              let a2 =
-                let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
-                                                    vl_name dr.h_formula_data_name) in
-                let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls else [] in
-                left_act in
-              (* ==================== *)
-              (* if (left_ls == [] && (vl_view_orig ) then ua *)
-              (* else (1,M_lemma (m_res,Some (List.hd left_ls))) *)
-              let pr = pr_list (pr_pair string_of_int string_of_action_res_simpl) in
-              let () = y_tinfo_hp (add_str "View vs Data (a1)" pr) a1 in
-              let () = y_tinfo_hp (add_str "View vs Data (a2)" pr) a2 in
-              let a = a1@a2 in
-              (* -1 seems to give it high priority *)
-              if a!=[] then (2,mk_search_action ~wt:2 a)
-              (* if (vl_view_orig || vl_self_pts==[]) then ua *)
-              (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
-              else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
-            | ViewNode vl, HRel (h_name_sv, args, _) -> (* can  it reach this branch? *)
-              let () = y_tinfo_pp "VIEW vs HREL" in
-              let h_name = Cpure.name_of_spec_var h_name_sv in
-              let vl_name = vl.h_formula_view_name in
-
-              let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name h_name) in
-              (* let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) h_name vl_name) in *)
-              let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls in
-              (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) right_ls in *)
-              (* already handled by MaterializedArg (see ex16d2a.slk) *)
-              let right_act = [] in 
-              let left_act = [] in
-              let l = left_act@right_act in
-              let f_act = 
-                if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold (0,m_res))
-                else (5,M_Nothing_to_do ("Mis-matched View of "^(pr_id vl_name)^" and HRel of "^(pr_sv h_name_sv))) in
-              let l = f_act::l in
-              let () = y_tinfo_hp (add_str "lst" (pr_list pr_none)) l in
-              let res = 
-                match l with
-                | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
-                | l1::[] -> l1
-                | _      -> (-1, x_add_1 norm_cond_action l)
-              in res
-            (* TODO:old_infer_heap *)
-            | HRel (hn1, args1, _) as lhs, (HRel (hn2, args2, _) as rhs) -> 
-              let () = y_tinfo_pp "HREL vs HREL" in
-              let pr_sv = Cprinter.string_of_spec_var in
-              let pr_res = add_str "act" pr_act in
-              let eq_fst_ptr ls1 ls2= match ls1,ls2 with
-                | sv1::_,sv2::_ -> CP.eq_spec_var sv1 sv2
-                | _ -> false
-              in
-              let orig_act = 
-                (* let () = y_winfo_pp "the second condition is heur" in *)
-                (* WN : this heuristic caused problem for str-inf/ex16c4.slk *)
-                if CP.eq_spec_var hn1 hn2
-                (* L2: huer here *)
-                (* || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2)) *)
-                then (1,M_match m_res)
+                      let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold 3" no_pos in
+                      let cyc_tail_rec_lemmas=
+                        if syn_lem_typ=3 then
+                          let uf_i = if new_orig_r then 0 else 1 in
+                          [(1,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
+                        else []
+                      in
+                      (* let () = if !Globals.x_tinfo_pp "folding..." no_pos in *)
+                      cyc_tail_rec_lemmas@[(1,M_fold m_res)]
+                  in
+                  acts
                 else
-                  let lhs_b_wo_pure = CF.formula_base_of_heap lhs_h no_pos in
-                  let lhs_b = {lhs_b_wo_pure with CF.formula_base_pure = lhs_p } in
-                  let rhs_b_wo_pure = CF.formula_base_of_heap (CF.mkStarH rhs_node rhs_rest no_pos) no_pos in
-                  let rhs_b = {rhs_b_wo_pure with CF.formula_base_pure = rhs_p } in
-                  let rhs_inst = Cfutil.compute_eager_inst prog lhs_b rhs_b hn1 hn2 args1 args2 in
-                  let l_vs = List.concat (List.map CP.afv args1) in
-                  let r_vs = List.concat (List.map CP.afv args2) in
-                  let flag = CF.is_exists_hp_rel hn1 estate in
-                  let new_rhs_inst = check_compatible_eb ~inst_rhs:true emap l_vs r_vs lhs_b (* () *) rhs_b (* () *) in
-                  if flag then
-                    let m_res_w_inst = {m_res with match_res_compatible = m_res.match_res_compatible@rhs_inst;} in
-                    (2,M_infer_unfold (m_res_w_inst,rhs,HEmp))
-                  else if CF.is_exists_hp_rel hn2 estate  then 
-                    (2,M_infer_fold (0,m_res))
-                  else 
-                    (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
-              in 
-              let () = y_tinfo_hp (add_str "orig_act" pr_act) orig_act in
-              orig_act
-            | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) ->
-              let () = y_tinfo_pp "HREL vs DATA" in
-              (* TODO : check if h_name in the infer_vars *)   
-              (* TODO: can we have smarter base-case-unfold? *)
-              let act1 = M_base_case_unfold (m_res) in (* base-case unfold implemented *)
-              let act2 = M_infer_heap (0, lhs_node, rhs,HEmp) in
-              let act3 = M_infer_unfold (m_res,rhs,HEmp) in
-              let wt = 2 in
-              (* old method do not use base_case_unfold *)
-              (* r_ags stands for recursive arguments *)
-              let (r_args,_) = List.fold_left (fun ((acc,prev_nm) as arg) e ->
-                  match CP.get_var_opt e with
-                  | Some v ->
-                    let t = CP.type_of_spec_var v in
-                    begin
-                      match t with
-                      | Named n -> 
-                        if Cf_ext.is_data_rec n then 
-                          if prev_nm="" then (n::acc,n)
-                          else arg
-                        else arg
-                      | _ -> arg
-                    end
-                  | None -> arg
-                ) ([],"") args in
-              let () = y_tinfo_hp (add_str "TODO:triger base-case-unfold? rargs" (pr_list pr_id)) r_args in
-              if !Globals.old_base_case_unfold_hprel then (wt,act2)
-              (* (2,M_infer_heap (rhs,HEmp)) *)
-              else if List.length r_args<2 then (wt,act3)
-              else 
-                (wt,mk_search_action [(wt,act1);(wt,act3)])
-            (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
-            | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
-              let () = y_tinfo_pp "HREL vs VIEW" in
-              (* TODO:WN : how about base-case unfold for views? *)
-              (* TODO : check if h_esname in the infer_vars *)
-              (* let act1 = M_unfold (m_res, 1) in *)
-              let act2 = M_infer_unfold (m_res,rhs,HEmp) in
-              let act3 = M_fold (m_res) in
-              let wt = 2 in 
-              (* (wt,Search_action [(wt,act3);(wt,act2)]) *)
-              (wt,act2)
-            | DataNode dn,  HRel (hp,args,_)  -> 
-              let () = y_tinfo_pp "DATA vs HREL" in
-              (* failwith "TBI"  *)
-              (* useful for base-case fold x::node<_,_> |- U(x,y) *)
-              let pr_hf = !CF.print_h_formula in
-              let () = y_tinfo_hp (add_str "(LHS,RHS)" (pr_pair pr_hf pr_hf)) (lhs_node,rhs_node) in
-              let () = y_tinfo_hp (add_str "rhs_rest" (pr_hf)) rhs_rest in
-              let pt = dn.h_formula_data_node in
-              let r_vs = List.concat (List.map CP.afv args) in
-              let r = CF.check_exists_node emap rhs_rest pt in
-              let pr_sv = !CP.print_sv in
-              let lhs_p1 = MCP.pure_of_mix lhs_p in
-              let rhs_p1 = MCP.pure_of_mix rhs_p in
-              let r_lst = CF.check_compatible emap [pt] r_vs lhs_node lhs_p1 rhs_rest rhs_p1 in
-              let () = y_tinfo_hp (add_str "exists" (pr_pair pr_sv string_of_bool)) (pt,r) in
-              let () = y_tinfo_hp (add_str "compatible" (pr_list (pr_pair pr_sv pr_sv))) r_lst in
-              let wt = 2 in
-              let act1 = if (r_lst == []) || (List.length args <=1) then [] else
-                  let m_res_bf = { m_res with match_res_compatible = r_lst} in 
-                  [(wt,M_base_case_fold m_res_bf)] 
-              in
-              let m_res_bf = { m_res with match_res_compatible = r_lst} in 
-              let act2 = [(wt,M_infer_fold (0,m_res_bf))] (* (rhs_node,rhs_rest) *) in
-              (* old method do not use base_case_fold *)
-              let lst = if !Globals.old_base_case_fold_hprel then act2 else act1@act2
-              in (wt,mk_search_action lst)
+                  (* fold to activate/change  *)
+                if (vr_is_prim) 
+                then [] 
+                else
+                  begin
+                    if !Globals.old_norm_w_coerc 
+                    then x_info_pp "folding..." no_pos;
+                    [(1,M_fold m_res)]
+                  end
+              else if not(sub_ann) then [(3,M_base_case_fold m_res)]
+              else []
+            ) in
+            (* WN : what is M_rd_lemma for?? *)
+            (* WN : why do we apply lemma blindly here!! *)
+            (* leads to unsoundness of sh-rev3a.slk *)
+            (* ==========andreea: a naive fix for left compelx lemma -- to be refined ========== *)
+            let a3 = (
+              let right_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion)
+                                                   vr_name dl.h_formula_data_name) in
+              let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
+                                                  dl.h_formula_data_name vr_name) in
+              (* for left lemmas, only a complex one might trigger a match data --> view *)
+              let left_ls = filter_lemmas_by_kind left_ls Complex in 
+              (* let right_act = if (not(!ann_derv) || dl.h_formula_data_original) then  *)
+              let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls else [] in
+              let right_act = if (not(!ann_derv) || new_orig_r) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) right_ls else [] in
+              left_act@right_act 
+            ) in
+            (* ==================== *)
+            let r_lem =
+              if (Lem_store.all_lemma # any_coercion
+                  && !Globals.allow_rd_lemma)
+              then
+                [
+                  (1,M_rd_lemma m_res)
+                ]
+              else [] in
+            let a2 = if (new_orig_r) then r_lem else [] in
+            (* let a2 = if (new_orig) then [(1,M_rd_lemma m_res)] else [] in *)
+            let seg_acts = 
+              if !Globals.seg_fold then
+                if seg_fold_type>= 0 then
+                  [(1, M_seg_fold (m_res, seg_fold_type))]
+                else []
+              else []
+            in
+            let a = a1@seg_acts@a2@a3 in
+            (* let a_fold, a_rest = List.partition (fun (_,act) -> *)
+            (*   match act with                                    *)
+            (*   | M_fold _ -> true                                *)
+            (*   | _ -> false                                      *)
+            (* ) a in                                              *)
+            (* try accelerated folding *)
+            let a_accfold = x_add process_one_match_accfold prog m_res lhs_h lhs_p rhs_p in
+            x_tinfo_hp (add_str "a_accfold length" (fun x -> string_of_int (List.length x))) a_accfold no_pos;
+            x_tinfo_hp (add_str "a normal length" (fun x -> string_of_int (List.length x))) a no_pos;
+            (* return *)
+            (* (1, norm_search_action (a_accfold@a_fold@a_rest)) *)
+            let () = y_tinfo_hp (add_str "actions" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
+            let a = List.filter (fun (_,x) -> match x with
+                | M_lemma (_,opt,_) ->
+                  begin
+                    match opt with 
+                      None -> true
+                    | Some c -> Cast.lemma_soundness # safe_to_apply c
+                  end
+                | _ -> true
+              ) a in
+            let () = y_tinfo_hp (add_str "actions(filtered unsoundness)" (pr_list (pr_pair string_of_int string_of_action_res_simpl))) a in
+            (1, x_add_1 norm_cond_action (a_accfold@ [(1,x_add_1 norm_search_action a)]))
+          | ViewNode ({h_formula_view_node=ptr;
+                       h_formula_view_imm=_;
+                       h_formula_view_perm=_;
+                       h_formula_view_arguments=vs1;
+                       h_formula_view_name=c} as vl),
+            DataNode ({h_formula_data_node=ptr_rhs} as dr) ->
+            let () = y_tinfo_pp "VIEW vs DATA" in
+            let view_root_lhs = get_root_view prog c ptr vs1 in
+            let vl_name = vl.h_formula_view_name in
+            let vl_vdef = look_up_view_def_raw x_loc view_decls vl_name in
+            let vl_self_pts = vl_vdef.view_pt_by_self in
+            let vl_actual_root =  vl_vdef.view_actual_root in
+            let () = y_tinfo_hp (add_str "vl_actual_root" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) vl_actual_root in
+            let () = y_tinfo_hp (add_str "different way to get actual root, why they are different?" (pr_option (pr_pair !CP.print_sv !CP.print_formula))) view_root_lhs in
+            let lhs_node =ViewNode vl in
+            let () = y_tinfo_hp (add_str "lhs_node" (!CF.print_h_formula)) lhs_node in
+            let () = y_tinfo_hp (add_str "ptr" (!CP.print_sv)) ptr in
+            let () = y_tinfo_hp (add_str "ptr_rhs" (!CP.print_sv)) ptr_rhs in
+            let () = y_tinfo_hp (add_str "lhs_p" (!MCP.print_mix_formula)) lhs_p in
+            let () = y_tinfo_hp (add_str "rhs_p" (!MCP.print_mix_formula)) rhs_p in
+            (* calculating possible direct match *)
+            let direct_match_flag =
+              match view_root_lhs with
+              | Some (lhs_root_name,lhs_root_formula) ->
+                let counter_formula = CP.mkNot (CP.mkEqn lhs_root_name ptr_rhs no_pos) None no_pos in
+                let root_formula = CP.mkAnd (CP.mkAnd (CP.mkAnd counter_formula lhs_root_formula no_pos) (MCP.pure_of_mix rhs_p) no_pos) (MCP.pure_of_mix lhs_p) no_pos in
+                let () = y_tinfo_hp (add_str "root_formula" (!CP.print_formula)) root_formula in
+                not (!CP.tp_is_sat root_formula)
+              | None -> false
+            in
+            let () =
+              if direct_match_flag
+              then y_tinfo_pp "FOUND DIRECT MATCH"
+              else y_tinfo_pp "NOT FOUND DIRECT MATCH"
+            in
+            let vl_view_orig = vl.h_formula_view_original in
+            let vl_view_derv = vl.h_formula_view_derv in
+            let dr_orig = dr.h_formula_data_original in
+            let dr_derv = dr.h_formula_data_derv in
+            let () = pr_debug "pred<..> |- node<..>" in
+            (*Is it LOCKED state*)
+            let is_l_lock = match vl_vdef.view_inv_lock with
+              | Some _ -> true
+              | None -> false
+            in
+            let () = x_tinfo_hp (add_str "cyclic " pr_id) " 4" no_pos in
+            let new_orig_l = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+            let new_orig_r = if !ann_derv then not(dr_derv) else dr_orig in
+            let uf_i = if new_orig_l then 0 else 1 in
+            (* WN_all_lemma - is this overriding of lemmas? *)
+            (* let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)(*prog.prog_left_coercions*) vl_name dr.h_formula_data_name) in *)
+            (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (m_res,uf_i))] else [] in *)
+            (* let () = pr_hdebug (add_str "left_ls" (pr_list pr_none)) left_ls in *)
+            let sub_ann  = if (!Globals.allow_field_ann) then 
+                let r,_,_,_ = x_add Immutable.subtype_ann_list [] []  (CP.annot_arg_to_imm_ann_list (get_node_annot_args lhs_node)) dr.h_formula_data_param_imm in
+                r
+              else true in
+            let unfold_flag = ((new_orig_l (* || new_orig_r *) || (vl_self_pts==[] || not(vl_actual_root==None))) && sub_ann) in
+            let () = x_tinfo_hp (add_str "is_l_lock" string_of_bool) is_l_lock no_pos in
+            let () = x_tinfo_hp (add_str "unfold_flag" string_of_bool) unfold_flag no_pos in
+            let () = x_tinfo_hp (add_str "sub_ann" string_of_bool) sub_ann no_pos in
+            let () = x_tinfo_hp (add_str "new_orig_l" string_of_bool) new_orig_l no_pos in
+            let () = x_tinfo_hp (add_str "vl_self_pts" (pr_list pr_id)) vl_self_pts no_pos in
+            let a1 = 
+              if is_l_lock then [] else
+              if unfold_flag then 
+                (*then [(1,M_unfold (m_res,uf_i))] else [] in*)
+                if vl_vdef.view_is_prim then []
+                else
+                  (*cyclic checkpoint here*)
+                  let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs reqset in
+                  if syn_lem_typ =3 || (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
+                    (*find the first viewnode readable from right datanode*)
+                    let lvs = CFU.look_up_reachable_first_reachable_view prog
+                        rhs [dr.CF.h_formula_data_node] in
+                    if lvs = [] then [(2,M_unfold (m_res,uf_i))] else
+                      [(2,M_cyclic( m_res, uf_i, 0, syn_lem_typ, None))]
+                  else
+                    [(2,M_unfold (m_res,uf_i))] 
+              else [] in
+            (* let a2_syn = if (new_orig_l & left_ls!=[]) then [(1,M_lemma (m_res,Some (List.hd left_ls)))] else [] in *)
 
-            (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
-            | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
+            let a2 =
+              let left_ls = filter_norm_lemmas (look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
+                                                  vl_name dr.h_formula_data_name) in
+              let left_act  = if (not(!ann_derv) || new_orig_l) then List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls else [] in
+              left_act in
+            (* ==================== *)
+            (* if (left_ls == [] && (vl_view_orig ) then ua *)
+            (* else (1,M_lemma (m_res,Some (List.hd left_ls))) *)
+            let pr = pr_list (pr_pair string_of_int string_of_action_res_simpl) in
+            let () = y_tinfo_hp (add_str "View vs Data (a1)" pr) a1 in
+            let () = y_tinfo_hp (add_str "View vs Data (a2)" pr) a2 in
+            let a = a1@a2 in
+            (* -1 seems to give it high priority *)
+            if direct_match_flag && a!=[] then (0, mk_search_action ~wt:0 a)
+            else
+            if a!=[] then (2,mk_search_action ~wt:2 a)
+            (* if (vl_view_orig || vl_self_pts==[]) then ua *)
+            (* else if (left_ls != []) then (1,M_lemma (m_res,Some (List.hd left_ls))) *)
+            else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res m_res)))
+          | ViewNode vl, HRel (h_name_sv, args, _) -> (* can  it reach this branch? *)
+            let () = y_tinfo_pp "VIEW vs HREL" in
+            let h_name = Cpure.name_of_spec_var h_name_sv in
+            let vl_name = vl.h_formula_view_name in
+
+            let left_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion) vl_name h_name) in
+            (* let right_ls = filter_norm_lemmas(look_up_coercion_with_target (Lem_store.all_lemma # get_right_coercion) h_name vl_name) in *)
+            let left_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) left_ls in
+            (* let right_act = List.map (fun l -> (1,M_lemma (m_res,Some l,0))) right_ls in *)
+            (* already handled by MaterializedArg (see ex16d2a.slk) *)
+            let right_act = [] in 
+            let left_act = [] in
+            let l = left_act@right_act in
+            let f_act = 
+              if CF.is_exists_hp_rel h_name_sv estate then (2,M_infer_fold (0,m_res))
+              else (5,M_Nothing_to_do ("Mis-matched View of "^(pr_id vl_name)^" and HRel of "^(pr_sv h_name_sv))) in
+            let l = f_act::l in
+            let () = y_tinfo_hp (add_str "lst" (pr_list pr_none)) l in
+            let res = 
+              match l with
+              | []     -> (1, M_Nothing_to_do ("8:"^(string_of_match_res m_res))) (* nothing to do or infer? *)
+              | l1::[] -> l1
+              | _      -> (-1, x_add_1 norm_cond_action l)
+            in res
+          (* TODO:old_infer_heap *)
+          | HRel (hn1, args1, _) as lhs, (HRel (hn2, args2, _) as rhs) -> 
+            let () = y_tinfo_pp "HREL vs HREL" in
+            let pr_sv = Cprinter.string_of_spec_var in
+            let pr_res = add_str "act" pr_act in
+            let eq_fst_ptr ls1 ls2= match ls1,ls2 with
+              | sv1::_,sv2::_ -> CP.eq_spec_var sv1 sv2
+              | _ -> false
+            in
+            let orig_act = 
+              (* let () = y_winfo_pp "the second condition is heur" in *)
+              (* WN : this heuristic caused problem for str-inf/ex16c4.slk *)
+              if CP.eq_spec_var hn1 hn2
+              (* L2: huer here *)
+              (* || (CF.is_exists_hp_rel hn1 estate && eq_fst_ptr (List.map CP.exp_to_sv args1) (List.map CP.exp_to_sv args2)) *)
+              then (1,M_match m_res)
+              else
+                let lhs_b_wo_pure = CF.formula_base_of_heap lhs_h no_pos in
+                let lhs_b = {lhs_b_wo_pure with CF.formula_base_pure = lhs_p } in
+                let rhs_b_wo_pure = CF.formula_base_of_heap (CF.mkStarH rhs_node rhs_rest no_pos) no_pos in
+                let rhs_b = {rhs_b_wo_pure with CF.formula_base_pure = rhs_p } in
+                let rhs_inst = Cfutil.compute_eager_inst prog lhs_b rhs_b hn1 hn2 args1 args2 in
+                let l_vs = List.concat (List.map CP.afv args1) in
+                let r_vs = List.concat (List.map CP.afv args2) in
+                let flag = CF.is_exists_hp_rel hn1 estate in
+                let new_rhs_inst = check_compatible_eb ~inst_rhs:true emap l_vs r_vs lhs_b (* () *) rhs_b (* () *) in
+                if flag then
+                  let m_res_w_inst = {m_res with match_res_compatible = m_res.match_res_compatible@rhs_inst;} in
+                  (2,M_infer_unfold (m_res_w_inst,rhs,HEmp))
+                else if CF.is_exists_hp_rel hn2 estate  then 
+                  (2,M_infer_fold (0,m_res))
+                else 
+                  (2,M_Nothing_to_do ("Mis-matched HRel from "^(pr_sv hn1)^","^(pr_sv hn2)))
+            in 
+            let () = y_tinfo_hp (add_str "orig_act" pr_act) orig_act in
+            orig_act
+          | (HRel (h_name, args, _) as lhs_node), (DataNode _ as rhs) ->
+            let () = y_tinfo_pp "HREL vs DATA" in
+            (* TODO : check if h_name in the infer_vars *)   
+            (* TODO: can we have smarter base-case-unfold? *)
+            let act1 = M_base_case_unfold (m_res) in (* base-case unfold implemented *)
+            let act2 = M_infer_heap (0, lhs_node, rhs,HEmp) in
+            let act3 = M_infer_unfold (m_res,rhs,HEmp) in
+            let wt = 2 in
+            (* old method do not use base_case_unfold *)
+            (* r_ags stands for recursive arguments *)
+            let (r_args,_) = List.fold_left (fun ((acc,prev_nm) as arg) e ->
+                match CP.get_var_opt e with
+                | Some v ->
+                  let t = CP.type_of_spec_var v in
+                  begin
+                    match t with
+                    | Named n -> 
+                      if Cf_ext.is_data_rec n then 
+                        if prev_nm="" then (n::acc,n)
+                        else arg
+                      else arg
+                    | _ -> arg
+                  end
+                | None -> arg
+              ) ([],"") args in
+            let () = y_tinfo_hp (add_str "TODO:triger base-case-unfold? rargs" (pr_list pr_id)) r_args in
+            if !Globals.old_base_case_unfold_hprel then (wt,act2)
+            (* (2,M_infer_heap (rhs,HEmp)) *)
+            else if List.length r_args<2 then (wt,act3)
+            else 
+              (wt,mk_search_action [(wt,act1);(wt,act3)])
+          (* (wt,Search_action [(wt,act1);(wt,act2)]) *)
+          | HRel (h_name, args, _), (ViewNode _  as rhs) -> 
+            let () = y_tinfo_pp "HREL vs VIEW" in
+            (* TODO:WN : how about base-case unfold for views? *)
+            (* TODO : check if h_esname in the infer_vars *)
+            (* let act1 = M_unfold (m_res, 1) in *)
+            let act2 = M_infer_unfold (m_res,rhs,HEmp) in
+            let act3 = M_fold (m_res) in
+            let wt = 2 in 
+            (* (wt,Search_action [(wt,act3);(wt,act2)]) *)
+            (wt,act2)
+          | DataNode dn,  HRel (hp,args,_)  -> 
+            let () = y_tinfo_pp "DATA vs HREL" in
+            (* failwith "TBI"  *)
+            (* useful for base-case fold x::node<_,_> |- U(x,y) *)
+            let pr_hf = !CF.print_h_formula in
+            let () = y_tinfo_hp (add_str "(LHS,RHS)" (pr_pair pr_hf pr_hf)) (lhs_node,rhs_node) in
+            let () = y_tinfo_hp (add_str "rhs_rest" (pr_hf)) rhs_rest in
+            let pt = dn.h_formula_data_node in
+            let r_vs = List.concat (List.map CP.afv args) in
+            let r = CF.check_exists_node emap rhs_rest pt in
+            let pr_sv = !CP.print_sv in
+            let lhs_p1 = MCP.pure_of_mix lhs_p in
+            let rhs_p1 = MCP.pure_of_mix rhs_p in
+            let r_lst = CF.check_compatible emap [pt] r_vs lhs_node lhs_p1 rhs_rest rhs_p1 in
+            let () = y_tinfo_hp (add_str "exists" (pr_pair pr_sv string_of_bool)) (pt,r) in
+            let () = y_tinfo_hp (add_str "compatible" (pr_list (pr_pair pr_sv pr_sv))) r_lst in
+            let wt = 2 in
+            let act1 = if (r_lst == []) || (List.length args <=1) then [] else
+                let m_res_bf = { m_res with match_res_compatible = r_lst} in 
+                [(wt,M_base_case_fold m_res_bf)] 
+            in
+            let m_res_bf = { m_res with match_res_compatible = r_lst} in 
+            let act2 = [(wt,M_infer_fold (0,m_res_bf))] (* (rhs_node,rhs_rest) *) in
+            (* old method do not use base_case_fold *)
+            let lst = if !Globals.old_base_case_fold_hprel then act2 else act1@act2
+            in (wt,mk_search_action lst)
+
+          (* M_Nothing_to_do ("9:"^(string_of_match_res m_res)) *)
+          | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
         )
       in
       if is_empty lem_act then act
@@ -3145,7 +3436,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
   (* WN : we need base-case fold after lemma see incr/ex17b1.slk *)
   (* does removing original cause loop? should we use counting? *)
   if (is_view rhs_node) (* && (get_view_original rhs_node) *) then
-    let mr = mk_match_res (* aset *) Root HEmp lhs_h rhs_node rhs_rest in
+    let mr = x_add mk_match_res (* aset *) Root HEmp lhs_h rhs_node rhs_rest in
     let r = (2, M_base_case_fold mr) in
     (* { match_res_lhs_node = HEmp; *)
     (*   match_res_lhs_rest = lhs_h; *)
@@ -3185,7 +3476,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
         let vl_view_derv =  vl.h_formula_view_derv in
         let vr_view_derv = vr.h_formula_view_derv in
         let vr_view_split = vr.h_formula_view_split in
-        let m_res = mk_match_res (* aset *) Root (ViewNode vl) lhs_rest rhs_node rhs_rest in
+        let m_res = x_add mk_match_res (* aset *) Root (ViewNode vl) lhs_rest rhs_node rhs_rest in
         (* let m_res = { match_res_lhs_node = ViewNode vl; *)
         (*               match_res_lhs_rest = lhs_rest; *)
         (*               match_res_holes = []; *)
@@ -3269,9 +3560,11 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
       let pr1 = pr_list string_of_match_res in
       let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
       let pr3 = string_of_action_wt_res0 in
+      let pr_estate = Cprinter.string_of_entail_state_short in
       x_info_zp (lazy ("process_matches (steps) :"
                        ^ ((add_str "\n ### LHS " pr) lhs_h)
                        ^ ((add_str "\n ### RHS " pr) rhs_node)
+                       ^ ((add_str "\n ### estate " pr_estate) estate)
                        ^ ((add_str "\n ### matches " pr1) l)
                        ^ "\n"))  no_pos 
     end;
@@ -3295,32 +3588,38 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
   (*   match_res_type = Root; *)
   (*   match_res_rhs_node = rhs_node; *)
   (*   match_res_rhs_rest = rhs_rest; }) in  *)
-  (*   (\* WN : why do we need to have a fold following a base-case fold?*\) *)
-  (*   (\* changing to no_match found *\) *)
-  (*   (\*(-1, Search_action [r])*\) *)
-  (*   (\* let r1 = (2, M_fold { *\) *)
-  (*   (\*     match_res_lhs_node = HTrue;  *\) *)
-  (*   (\*     match_res_lhs_rest = lhs_h;  *\) *)
-  (*   (\*     match_res_holes = []; *\) *)
-  (*   (\*     match_res_type = Root; *\) *)
-  (*   (\*     match_res_rhs_node = rhs_node; *\) *)
-  (*   (\*     match_res_rhs_rest = rhs_rest; *\) *)
-  (*   (\* }) in *\) *)
-  (*   (\* temp removal of infer-heap and base-case fold *\) *)
+  (*   (* WN : why do we need to have a fold following a base-case fold?*) *)
+  (*   (* changing to no_match found *) *)
+  (*   (*(-1, Search_action [r])*) *)
+  (*   (* let r1 = (2, M_fold { *) *)
+  (*   (*     match_res_lhs_node = HTrue;  *) *)
+  (*   (*     match_res_lhs_rest = lhs_h;  *) *)
+  (*   (*     match_res_holes = []; *) *)
+  (*   (*     match_res_type = Root; *) *)
+  (*   (*     match_res_rhs_node = rhs_node; *) *)
+  (*   (*     match_res_rhs_rest = rhs_rest; *) *)
+  (*   (* }) in *) *)
+  (*   (* temp removal of infer-heap and base-case fold *) *)
   (*   (-1, (Cond_action (rs@[r;r0]))) *)
   (* else (-1, Cond_action (rs@[r0])) *)
   (* M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)) *)
   | x::[] -> x_add process_one_match prog estate lhs_h lhs_p conseq is_normalizing x (rhs_node,rhs_rest,rhs_p) reqset
-  | _ ->  
+  | _ ->
     let rs = List.map (fun l -> x_add process_one_match prog estate lhs_h lhs_p conseq is_normalizing l (rhs_node,rhs_rest,rhs_p) reqset) l in
     let () = x_tinfo_pp "process many matches" no_pos in
     (* WN : TODO use cond_action if of different priorities *)
-    let rs = sort_wt rs in
+    let rs = x_add_1 sort_wt rs in
     let res = 
-      if !Globals.old_search_always then mk_search_action rs 
-      else if !Globals.cond_action_always then  mk_cond_action rs 
+      if !Globals.old_search_always then 
+        let () = y_tinfo_pp "old_searc_always" in
+        mk_search_action rs 
+      else if !Globals.cond_action_always then  
+        let () = y_tinfo_pp "cond_action_always" in
+        mk_cond_action rs 
       (* else if !Globals.rev_priority then mk_smart_rev_action rs  *)
-      else mk_smart_action rs in
+      else 
+        let () = y_tinfo_pp "smart_action" in
+        mk_smart_action rs in
     let () = x_tinfo_hp (string_of_action_res_simpl) res no_pos in
     (-1, res)
 
@@ -3367,6 +3666,64 @@ and sort_wt (ys: action_wt list) : action_wt list =
   (* let pr2 = pr_list string_of_action_res in *)
   Debug.no_1 "sort_wt" pr pr sort_wt_x ys
 
+and is_match_lemma_combination_x action =
+  let rec helper lst flag =
+    match lst with
+    | (_,(M_match _))::tail ->
+      if flag=0
+      then helper tail 1
+      else helper tail flag
+    | (_,(M_lemma _))::tail ->
+      if flag=1
+      then true
+      else helper tail flag
+    | _::tail -> helper tail flag
+    | [] -> false
+  in
+  match action  with
+  | Search_action l -> helper l 0
+  | _ -> false
+
+and is_match_lemma_combination action =
+  let pr = string_of_action_res in
+  Debug.no_1 "is_match_lemma_combination" pr string_of_bool (fun a -> is_match_lemma_combination_x a) action
+
+and recalibrate_wt (w,a) =
+    let pick a b = if a<b then a else b in
+    let is_match_lemma = is_match_lemma_combination a in
+    match a with
+    | Search_action l ->
+      let l = List.map recalibrate_wt l in
+      let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+      let h = (List.hd sl) in
+      
+      let rw = (fst h) in
+      (* WHY did we pick only ONE when rw==0?*)
+      (* Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
+      if (rw==0) && (not is_match_lemma) then h
+      else
+      if is_match_lemma then (rw, Cond_action l)
+      else (rw,mk_search_action sl)
+      (* (rw,mk_search_action sl) *)
+    | Cond_action l (* TOCHECK : is recalibrate correct? *)
+      ->
+      (*drop ummatched actions if possible*)
+      (* let l = drop_unmatched_action l in *)
+      if l==[] then (9,M_Nothing_to_do "Cond_action []")
+      else
+        let l = List.map recalibrate_wt l in
+        let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
+    | Seq_action l ->
+      if l==[] then (9,M_Nothing_to_do "Seq_action []")
+      (* (0,Seq_action l) *)
+      else
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
+    | _ -> if (w == -1) then (0,a) else (w,a) 
+
 and sort_wt_x (ys: action_wt list) : action_wt list =
   let rec uncertain (_,a) = match a with 
     | M_infer_heap _
@@ -3391,44 +3748,14 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | Search_action l
     | Seq_action l
     | Cond_action l ->
-      List.exists uncertain l  in	
-
-  let rec recalibrate_wt (w,a) = 
-    let pick a b = if a<b then a else b in
-    match a with
-    | Search_action l ->
-      let l = List.map recalibrate_wt l in
-      let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
-      let h = (List.hd sl) in
-      let rw = (fst h) in
-      (* WHY did we pick only ONE when rw==0?*)
-      (*Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
-      if (rw==0) then h 
-      else (rw,mk_search_action sl)
-    | Cond_action l (* TOCHECK : is recalibrate correct? *)
-      ->
-      (*drop ummatched actions if possible*)
-      (* let l = drop_unmatched_action l in *)
-      if l==[] then (9,M_Nothing_to_do "Cond_action []")
-      else
-        let l = List.map recalibrate_wt l in
-        let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
-        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
-        (rw,Cond_action l)
-    | Seq_action l ->
-      if l==[] then (9,M_Nothing_to_do "Seq_action []")
-      (* (0,Seq_action l) *)
-      else
-        let l = List.map recalibrate_wt l in
-        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
-        (rw,Seq_action l)
-    | _ -> if (w == -1) then (0,a) else (w,a) in
+      List.exists uncertain l  in
   let ls = List.map recalibrate_wt ys in
+  let () = y_tinfo_hp (add_str "ls, after recalibrate weight: " (pr_list string_of_action_wt_res_simpl)) ls in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
   let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
   let sl = List.sort (if !Globals.rev_priority then comp_rev else comp) ls in
   (* WN : is below critical? why do we need them? *)
-  (* let ucert, cert = List.partition uncertain sl in (\*delay uncertain*\) *)
+  (* let ucert, cert = List.partition uncertain sl in (*delay uncertain*) *)
   (* let sl = cert@ucert in *)
   (* what if after sorted, there are elements with the same priority ??? *)
   (* LDK: temporarily combine them into a Cond_action to ensure that
@@ -3437,14 +3764,17 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
   let eq_ls, neq_ls = List.partition (fun (w,_) -> w==head_w) (List.tl sl) in
   let sl =
     if (eq_ls == []) then
+      let () = y_tinfo_pp "eq_lst == []" in
       sl
     else
       (*Use Cond_action to avoid explosion*)
-      let new_head = (head_w,Cond_action ((head_w,head_a)::eq_ls)) in
+      (* Cond_action lead to incomplete ex6f1g4e.slk *)
+      let new_head = (head_w,Search_action ((head_w,head_a)::eq_ls)) in
       (new_head::neq_ls)
   in
   sl
 (* (snd (List.split res)) *)
+
 
 and drop_unmatched_action l=
   let rec helper acs rs=
@@ -3464,7 +3794,7 @@ and drop_unmatched_action l=
 
 and sort_wt_match opt (ys: action_wt list) : action_wt list =
   match (x_add choose_match opt ys) with
-  | None -> sort_wt ys
+  | None -> x_add_1 sort_wt ys
   | Some a -> 
     (* let () = print_endline "WN : Found a must_action_stk match" in  *)
     [(0,a)]
@@ -3513,6 +3843,7 @@ and sort_wt_new_x (ys: action_wt list) : action_wt list =
      rs: return list, init = []
   *)
 
+  (* below is duplicated *)
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
       let l = List.map recalibrate_wt l in
@@ -3580,7 +3911,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   (* match r with  *)
   (*   | [] -> M_Nothing_to_do "no nodes to match" *)
   (*   | x::[]-> process_matches lhs_h x *)
-  (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
+  (*   | _ ->  List.hd r (*Search_action (None,r)*) *)
   (* let () = print_string (" compute_actions: before process_matches") in *)
   (* type: (match_res list * (Cformula.h_formula * Cformula.h_formula)) list *)
   (* Todo:Long *)
@@ -3589,16 +3920,72 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
   let r = if !Globals.old_keep_all_matchres then r else new_r in
   let () = x_tinfo_hp (add_str "r_xxx" (pr_list (pr_pair (pr_list string_of_match_res) pr_none))) r no_pos in 
   let r = List.map (x_add process_matches prog estate lhs_h lhs_p conseq is_normalizing es) r in
+  (* recalibrate the weight, without dropping any items *)
+  let recalibrate_wt (w,a) =
+    let pick a b = if a<b then a else b in
+    match a with
+    | Search_action l ->
+      let l = List.map recalibrate_wt l in
+      let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+      let h = (List.hd sl) in
+      let rw = (fst h) in
+      (rw,mk_search_action sl)
+    | Cond_action l (* TOCHECK : is recalibrate correct? *)
+      ->
+      (*drop ummatched actions if possible*)
+      (* let l = drop_unmatched_action l in *)
+      if l==[] then (9,M_Nothing_to_do "Cond_action []")
+      else
+        let l = List.map recalibrate_wt l in
+        let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Cond_action l)
+    | Seq_action l ->
+      if l==[] then (9,M_Nothing_to_do "Seq_action []")
+      (* (0,Seq_action l) *)
+      else
+        let l = List.map recalibrate_wt l in
+        let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
+        (rw,Seq_action l)
+    | _ -> if (w == -1) then (0,a) else (w,a)
+  in
+  let is_complex x = match x with
+    Search_action _ | Cond_action _ | Seq_action _ -> true
+    | _ -> false in
+  let choose ((w1,x1) as p1) ((w2,x2) as p2) =
+    (* assumes w1,w2 not negative *)
+    let f1 = is_complex x1 in
+    let f2 = is_complex x2 in
+    if f1==f2 then
+      if w1<w2 then p1 else p2
+    else if f1 then p2 else p1 in
+  let choose x y = 
+    let pr = string_of_action_wt_res in
+    Debug.no_2 "choose_act_wt" pr pr pr choose x y in
+  let sel_simpler r = 
+    let rec aux r ans = match r with
+      [] -> ans 
+      | x::xs -> 
+        let x = recalibrate_wt x in
+        aux xs (choose x ans) in
+    match r with
+    | [] -> []
+    | x::xs -> 
+      let x = recalibrate_wt x in
+      [aux xs x] in
+  let r = if !Globals.old_compute_act then r else sel_simpler r in
   let () = x_tinfo_hp (add_str "weighted action"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with
   | [] -> M_Nothing_to_do "no nodes on RHS"
   | xs -> 
     (*  imm/imm1.slk imm/imm3.slk fails if sort_wt not done *)
-    let ys = sort_wt_match opt r in
+    let ys = x_add_1 sort_wt_match opt r in
     let () = x_tinfo_hp (add_str "sorted action"
                            (pr_list_num_vert string_of_action_wt_res_simpl)) ys no_pos in
-    let ys2 = drop_low ys in
+    let ys2 = List.map snd (* drop_low *) ys in
+    let () = x_tinfo_hp (add_str "after drop low"
+                           (pr_list_num_vert string_of_action_res_simpl)) ys2 no_pos in
     (* let ys2 = snd (List.split ys) in *)
     (*Cond_action  ys *)
     (*above would be required for entailments in which an available match has no solution unless another one is performed first*)
@@ -3609,7 +3996,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
             different orderings of heap nodes in the entailments.
             What if ys=[-1,Search1) ; (-1,Search2)]
           *)
-    List.hd (ys2)
+    Search_action (* List.hd *) ys
 (*  match ys with
     | [(_, act)] -> act
     | ys -> (Cond_action ys) *)

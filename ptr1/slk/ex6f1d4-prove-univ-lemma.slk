@@ -1,0 +1,32 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == 
+  case {
+    i=n -> [] i>=0;
+    i!=n  -> [] x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0;
+  } inv n>=i & i>=0.
+
+lemma_safe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+
+/*
+# ex6f1d4.slk
+
+lemma_safe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+# Failing in <-- direction with big timeouts.
+
+Entailing lemma lem_13: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (cex)(may) cause: UnionR[base case unfold failed,base case unfold failed]
+
+!!! log(small):(22.688382,3026)
+!!! log(big)(>0.5s)(27):(38.138126,[(sleek-hec,0.51152);(sleek-hec,2.117039);(sleek-hec,2.176022);(sleek-hec,1.997992);(sleek-hec,0.698678);(sleek-hec,0.703553);(sleek-hec,0.752598);(sleek-hec,1.921881);(sleek-hec,2.324819);(sleek-hec,0.97209);(sleek-hec,0.566322);(sleek-hec,2.047108);(sleek-hec,2.101213);(sleek-hec,0.537939);(sleek-hec,0.507525);(sleek-hec,2.164727);(sleek-hec,2.149721);(sleek-hec,0.746848);(sleek-hec,0.82261);(sleek-hec,0.780771);(sleek-hec,2.356478);(sleek-hec,2.40919);(sleek-hec,2.043739);(sleek-hec,2.386038);(sleek-hec,0.998967);(sleek-hec,0.648725);(sleek-hec,0.694013)])
+!!! 
+ log(bigger)(>4s)(10):(133.984808,[(sleek-hec:59<65:sleek,7.718411);(sleek-hec:58<65:sleek,7.778323);(sleek-hec:53<66:sleek,10.72429);(sleek-hec:67<92:sleek,5.716403);(sleek-hec:39<94:sleek,19.723777);(sleek-hec:121<129:sleek,9.746302);(sleek-hec:120<129:sleek,9.811396);(sleek-hec:115<130:sleek,12.847147);(sleek-hec:107<140:sleek,14.612539);(sleek-hec:33<151:sleek,35.30622)])
+To
+*/

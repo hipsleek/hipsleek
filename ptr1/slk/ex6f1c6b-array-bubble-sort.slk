@@ -1,0 +1,81 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i,n-1> & x=self+(n-1) & i>=0 
+  inv n>=i & i>=0.
+
+checkentail  x::arrI<_> & x=base+i+1 & i>=0
+     |- base::arr_seg<i,i+2>.
+print residue.
+expect Valid.
+
+/*
+# ex6f1c6.slk
+
+# why did right lemma trigger a base-case-fold? How did base-case-fold
+  succeeded?
+
+ <1>emp&0<=end & v<=end & end<=end & v=start+1&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_14_left_right(base,base)) ==>  COND ==>  Match(base,base) ==>  COND ==>  BaseCaseFold]]
+
+lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+Lemma "lem_14_left_right":  self::arr_seg<i,n>@M&{FLOW,(20,21)=__norm#E}[]
+  <== (exists m_169,m: self::arr_seg<i,m>@M * self::arr_seg<m_169,n>@M
+   & m_169=m & i<=m & m<=n&{FLOW,(20,21)=__norm#E}[])
+
+# wrong body_norm ..
+
+ body_norm:  EBase 
+   (exists m_170,m_171,
+   m: self::arr_seg<i,m_171>@M * self::arr_seg<m_170,n>@M&
+   i<=m & m<=n & m_170=m_171 & i<=m_171 & m_171<=n&{FLOW,(20,21)=__norm#E}[])
+
+# compare with ex6f1c6a.slk
+
+lemma_unsafe self::arr_seg<i,n>  
+   <- self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
+
+Lemma "lem_13":  self::arr_seg<i,n>@M&{FLOW,(20,21)=__norm#E}[]
+  <== (exists m_84,m_85: self::arr_seg<i,m_85>@M * self::arr_seg<m_84,n>@M
+   & i<=m_85 & m_85<=n & m_84=m_85&{FLOW,(20,21)=__norm#E}[])
+
+ body_norm:  EBase 
+   (exists m_86,m_87: self::arr_seg<i,m_87>@M * self::arr_seg<m_86,n>@M&
+   i<=m_87 & m_87<=n & m_86=m_87&{FLOW,(20,21)=__norm#E}[])
+
+!!! **astsimp.ml#4636:new_body_norm (b4 norm):
+ EBase 
+   (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M&
+   mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[])
+
+!!! **astsimp.ml#4636:new_body_norm (b4 norm):
+ EBase 
+   (exists m_84,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<m_84,n>@M&
+   i<=mmm & mmm<=n & m_84=mmm&{FLOW,(20,21)=__norm#E}[])
+
+!!! **astsimp.ml#4637:c_guard: i<=mmm & mmm<=n
+!!! **lemma.ml#312:
+
+# why still VALID when below seems correct and similar to ex6f1c6a.slk
+
+!!! **astsimp.ml#4636:new_body_norm (b4 norm):
+ EBase 
+   (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M&
+   mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[])
+
+ body_norm:  EBase 
+   (exists mmm_170,
+   mmm_171: self::arr_seg<i,mmm_171>@M * self::arr_seg<mmm_170,n>@M&
+   mmm_170=mmm_171 & i<=mmm_171 & mmm_171<=n&{FLOW,(20,21)=__norm#E}[])
+
+===================
+ 
+ body_norm:  EBase 
+   (exists m_86,m_87: self::arr_seg<i,m_87>@M * self::arr_seg<m_86,n>@M&
+   i<=m_87 & m_87<=n & m_86=m_87&{FLOW,(20,21)=__norm#E}[])
+
+*/

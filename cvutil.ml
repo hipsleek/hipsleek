@@ -2637,3 +2637,4 @@ let crop_h_formula (f: h_formula) (svl: CP.spec_var list):
 
 (* =========== end- remove the node specified by sv and return the removed node  ==========*)
 
+let () = Context.xpure_sym := xpure_heap_symbolic 88

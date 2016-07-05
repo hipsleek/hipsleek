@@ -1,0 +1,38 @@
+zip:={[a,b] -> [] -> []: 
+ ((!(a=0) || b<1) && (!(b=0) || a<1)) &&
+   exists (v,w:  b=w+1 && a=v+1 &&
+     (v>=0 && w>=0 && zip(v,w))
+  )
+};
+# above is still incorrect..
+
+I:={[]: a>=0 && b>=0};
+
+# Expected result:
+# {[n,res]:((n<=100 && res=91) || (n>=101 && n=res+10))};
+
+# Step-by-step procedure with two applications of the widening operator:
+F0:={[]: 1=1};
+F1:=zip(F0); 
+F1:=F1 intersection I;
+F2:=zip(F1); F2;
+F2:=F2 intersection I;
+F3:=zip(F2); F3; 
+F3:=F3 intersection I;
+F4:=zip(F3); F4; 
+F4:=F4 intersection I;
+F1;F2;F3;F4;
+F4; PairwiseCheck F4;
+F2; PairwiseCheck F2;
+F1; PairwiseCheck F1;
+PairwiseCheck F1;
+PairwiseCheck F2;
+PairwiseCheck F3;
+PairwiseCheck F4;
+F4N:=narrow(F3,F4,SimHeur);
+F4N;
+
+Exp:={[]:a>=0 && a=b};
+
+F4N subset Exp;
+Exp subset F4N;

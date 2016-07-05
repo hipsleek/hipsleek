@@ -1,0 +1,86 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       // * r::arrI<_> & r=base+start 
+       & mm=end-1.
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       // * r::arrI<_> & r=base+start 
+       & mm=end.
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       // * r::arrI<_> & r=base+start 
+       & mm=end+1.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       // * r::arrI<_> & r=base+start 
+       & mm=end-2.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       * r::arrI<_> & r=base+start 
+       & mm=end-1.
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       * r::arrI<_> & r=base+start 
+       & mm=end-2.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       * r::arrI<_> & r=base+start 
+       & mm=end.
+print residue.
+expect Fail.
+
+/*
+# ex6f1d1.slk --pnum 2
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,mm> 
+       * r::arrI<_> & r=base+start 
+       & mm=end-1.
+print residue.
+
+ <1>base::arr_seg<flted_6_151,end>@M&flted_6_151=end & mm=end-1 & 
+                                     base=(r-end)+1 & start=end-1 & 1<=end & 
+                                     Univ(mm)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> lem_13_left(base,base)) ==>  COND ==>  Match(base,base) ==>  Unfold 1 ==>  Match(x_152,r)]]
+
+
+*/

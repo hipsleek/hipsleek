@@ -1,0 +1,69 @@
+data cell {
+ int val;
+}.
+
+//(1)
+checkentail x=1 |- x>2.
+print residue.
+expect Fail_Must.
+
+checkentail x>5 |- x>6.
+print residue.
+expect Fail_May.
+
+checkentail x=null |- x::cell<_>.
+print residue.
+expect Fail_Must.
+
+//(4)
+checkentail emp & x!=null |- x::cell<_>.
+print residue.
+expect Fail_Must.
+
+//(5)
+checkentail emp |- x::cell<_>.
+print residue.
+expect Fail_Must.
+// should be must not may
+
+
+checkentail htrue |- x::cell<_>.
+print residue.
+expect Fail_May.
+
+checkentail htrue & x=null |- x::cell<_>.
+print residue.
+expect Fail_Must.
+
+
+checkentail true |- x::cell<_>.
+print residue.
+expect Fail_May.
+// [ htrue&{FLOW,(18,22)=__MayError#E}[]
+
+
+checkentail true & x=null |- x::cell<_>.
+print residue.
+expect Fail_Must.
+
+
+// true should be htrue
+
+
+// x=null
+
+checkentail true |- emp.
+print residue.
+
+checkentail true & x=1 |- emp.
+print residue.
+
+checkentail htrue & x=1 |- emp.
+print residue.
+
+// true means htrue
+
+// emp  --> emp & true
+// true --> htrue & true
+// x=1 -->  emp & x=1
+// x!=null -->  emp & x!=null
