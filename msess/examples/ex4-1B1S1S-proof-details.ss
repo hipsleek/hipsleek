@@ -28,6 +28,7 @@ void buyer(Channel c, int id, Double budget, Addr a)
   Double price = receive(c);
   // c::Chan<ms> * ms::Sess{c!1;;c!Addr;;c?Date or c!0)}<>
   if(price <= budget) {
+    // c::Chan<ms> * ms::Sess{c!1;;c!Addr;;c?Date or c!0)}<>
     send(c, 1);
     send(c, a);
     Date sd = receive(c);
@@ -48,9 +49,14 @@ void seller(Channel cb, Channel cs)
   //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cb!double;(cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date \/ cb?0)}<>
   send(cb; getPrice(id));
   //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{(cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date \/ cb?0)}<>
-  if(receive(cb) == 1){
-    /* not sure how solve the disj issue at this point - assume we have a sol for it */
-    //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date}<>
+  
+  //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{(cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date )}<> \/
+  //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cb?0}<>
+  let answ = receive(cb);
+  //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date}<> & answ = 1 \/
+  //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{emp}<> & answ =0
+  if(answ == 1){
+    //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date}<> & answ = 1
     send(cs; 1);
     //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date}<>
     Prod p = getProd(id); 

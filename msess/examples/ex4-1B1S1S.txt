@@ -117,7 +117,7 @@ pred G2@B<bs> ==
 
 // projection of G2 on S
 pred G2@S<a,b> ==
-     a?int;a!double;(a?1;b!1;b!int;b!(Chan(a,ms) * Sess(ms,a?Addr;a!Date)) \/ a?0)
+     a?int;a!double;(a?1;b!1;b!int;b!(Chan(a,ms) * Sess(ms,a?Addr;a!Date));a?Addr;a!Date \/ a?0)
 
 Pr(S->H: B->S: Addr; S->B:Date;){S} =
  = Pr(S->H){S} ! Pr( B->S: Addr; S->B:Date){S}
