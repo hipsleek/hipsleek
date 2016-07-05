@@ -1,0 +1,91 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+HeapPred P(node a).
+
+infer [H,P] H(p) * x::node<1,a> & a=p & p=null |- P(p).
+print residue.
+/*
+(==infer.ml#2606==)
+find_guard@2@1
+find_guard inp1 :left heap:[ x::node<flted_12_16,a>@M]
+find_guard inp2 :[]
+find_guard inp3 :[(H,[a])]
+find_guard inp4 :[a]
+find_guard@2 EXIT:NONE
+
+(==solver.ml#12871==)
+
+infer_collect_hp_rel#1@1
+infer_collect_hp_rel#1 inp1 : H(p) * x::node<flted_12_16,a>@M&p=null & a=p & flted_12_16=
+1
+infer_collect_hp_rel#1 inp2 : H(p) * x::node<flted_12_16,a>@M&p=null & a=p & flted_12_16=
+1&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 : P(p)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1@1 EXIT:(true,2: es_formula: 
+ x::node<flted_12_16,a>@M&p=null & a=p & flted_12_16=1&
+ {FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H; P]
+ es_infer_hp_rel: [H(a)&a=null |#|  --> P(a)],3: P(a),4:Some( H(a)),5:None)
+*/
+
+infer [H,P] H(p) * x::node<1,p> & a=p & a=null |- P(p).
+print residue.
+/*
+(==infer.ml#2606==)
+find_guard@4@3
+find_guard inp1 :left heap:[ x::node<flted_32_32,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :[(H,[p])]
+find_guard inp4 :[p]
+find_guard@4 EXIT:NONE
+
+(==solver.ml#12871==)
+infer_collect_hp_rel#1@3
+infer_collect_hp_rel#1 inp1 : H(p) * x::node<flted_32_32,p>@M&a=null & a=p & flted_32_32=1
+infer_collect_hp_rel#1 inp2 : H(p) * x::node<flted_32_32,p>@M&a=null & a=p & flted_32_32=1&
+{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 : P(p)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1@3 EXIT:(true,2: es_formula: 
+ x::node<flted_32_32,p>@M&a=null & a=p & flted_32_32=1&
+ {FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H; P]
+ es_infer_hp_rel: [H(p)&p=null |#|  --> P(p)],3: P(p),4:Some( H(p)),5:None)
+
+
+
+*/
+
+
+/*
+# ex15a1.slk 
+
+infer [H,P] H(p) * x::node<1,p> & p=null |- P(p).
+
+ <1>x::node<Anon_12,p>@M&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> P(p)&true]
+[[ COND ==>  InferHeap]]
+
+EXPECTS:
+  H(p)&p=null | x::node<_,p> --> P(p)
+which shows the heap context of p..
+
+# need to fix find_guard
+
+(==infer.ml#2606==)
+find_guard@2@1
+find_guard inp1 :left heap:[ x::node<flted_12_16,p>@M]
+find_guard inp2 :[]
+find_guard inp3 :[(H,[p])]
+find_guard inp4 :[p]
+find_guard@2 EXIT:NONE
+
+
+*/

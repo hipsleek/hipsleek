@@ -1,0 +1,20 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(may) cause:do_unmatched_rhs : t::cell<flted_4_37>
+
+Residue:
+ <1>x::cell<flted_4_15> * y::cell<flted_4_14>&flted_4_14=2 & flted_4_15=1&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Entail 2: Fail.(may) cause:do_unmatched_rhs : HVar P[]
+
+Residue:
+ <1>x::cell<flted_10_42> * y::cell<flted_10_41>&flted_10_41=2 & flted_10_42=1&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+

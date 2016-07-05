@@ -1,0 +1,66 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+//(4)
+checkentail x::arr_seg<i,n> & n-i>=2 & y=x+i & z=y+1 
+   |- y::arr<_> * z::arr<_>.
+print residue.
+expect Valid.
+
+checkentail x::arr_seg<i,n> & n-i>=3 & y=x+i & z=y+2
+   |- y::arr<_> * z::arr<_>.
+print residue.
+expect Fail.
+// weak
+
+/*
+# ex1e2 -dre "process_one_m" --trace-log-num 5
+
+# why is this
+Entail 2: Fail.(must) cause:infinite unfolding
+
+
+!!! **context.ml#741:TODO: rename root:x
+Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None
+
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: matching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Unfold 0 ==>  COND ==>  NothingToDomatching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None]]
+ CEX:false
+
+
+
+*/
+

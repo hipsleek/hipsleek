@@ -1,0 +1,47 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+
+
+// (1) Valid & inferred n=0
+infer [n] y=null |- y::ll<n>.  
+print residue.
+expect_infer Fail I{y=null}.
+expect_infer Valid I{n=0}.
+expect_infer Valid I{n>=0}.
+//expect_infer Valid R{y=null}.
+//expect_infer Valid R{n=0}.
+// why did we get inferred pure: [n=0]
+// this is due to n being treated as global
+
+/*
+# ex5a.slk
+
+Residue:
+ <1>emp&y=null & n=0&{FLOW,(20,21)=__norm#E}[]
+
+ inferred pure: [n=0]
+
+# We need to form 
+
+   emp & n=0 (from es_infer_pure; collect from list_context) 
+   |- emp & n=0 (from expected_infer I(..))
+
+
+!!! **sleekengine.ml#1605:current residue:
+Some(( [
+   emp&y=null & n=0&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed): emp
+  es_evars: [n_41]
+  es_ante_evars: [n_41]
+  es_infer_pure: [n=0]
+  ],true))
+Expect_Infer 1.1: Valid. ( emp&n=0&{FLOW,(20,21)=__norm#E}[])
+
+*/

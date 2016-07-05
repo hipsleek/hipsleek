@@ -1,5 +1,6 @@
 %{
   open Globals
+  open VarGen
   module CP = Cpure
   
   let is_prmd id = 

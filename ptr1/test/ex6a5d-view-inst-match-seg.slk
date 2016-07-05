@@ -1,0 +1,97 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+// root ptr instantiation with arithmetic
+/*
+checkentail base::arr_seg<i,n> & a=base+i
+ |-  base::arr_seg<j,n> .
+print residue.
+expect Valid.
+*/
+
+//(1)
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base::arr_seg<j,n> & a=base+j.
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base::arr_seg<j,n> & a=base+j & false.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base::arr_seg<j,n> & a=base2+j & a=base2+j+1.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base2::arr_seg<j,n> & a=base2+j & a=base2+j+1.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base2::arr_seg<j,n> & a=base2+i .
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<i,n> & i<n 
+ |-  a::arrI<_> & a=base+i .
+print residue.
+expect Valid.
+
+checkentail emp
+  |- base::arr_seg<i,n> & i=n  
+  .
+print residue.
+expect Valid.
+
+
+checkentail emp
+  |- base::arr_seg<i,n> & i<n  
+  .
+print residue.
+expect Fail.
+
+checkentail i=n & i>=0
+  |- base::arr_seg<i,n> 
+  .
+print residue.
+expect Valid.
+
+checkentail i=n //& i>=0
+  |- base::arr_seg<i,n> 
+  .
+print residue.
+expect Fail.
+
+
+/*
+# ex6a5d.slk -dre "choose_c" 
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base2::arr_seg<j,n> & a=base2+i.
+
+# alias set for base_ptr does not work.
+  Is there a notion that two base-ptrs share the same root?
+  This is so if we can prove that 
+     base1-base_2 >= 0
+  They share some ptr vars that can be shown to be equiv.
+
+(====)
+choose_context@2
+choose_context inp1 :LHS node: base::arr_seg<i,n>@M
+choose_context inp2 :RHS node: base2::arr_seg<j,n_73>@M
+choose_context inp3 :LHS pure: a=i+base
+choose_context inp4 :RHS pure: a=i+base2 & n_73=n
+choose_context inp5 :right aliase:[(n_73,n)]
+choose_context@2 EXIT:[]
+
+
+*/

@@ -1,0 +1,124 @@
+data arrI {
+  int val;
+}.
+
+relation Univ(int x).
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+lemma_unsafe self::arr_seg<i,n> & i<mmm & mmm<=n 
+   -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
+
+//(1)
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
+print residue.
+expect Fail.
+
+
+//(2)
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n> .
+print residue.
+expect Valid.
+
+//(3)
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+//(4)
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+2.
+print residue.
+expect Fail.
+// isn't this unsound?
+
+
+/*
+# ex6e3e.slk -dd-steps
+
+-dre ".*univ" --trace-log-num 2
+
+!!! **solver.ml#14218:f_univ_vars:[mmm_105]
+!!! **solver.ml#14232:lhs_guard_p: i<mmm_105 & mmm_105<=n
+
+do_universal@2@1
+do_universal inp1 : xx::arr_seg<i,n>@M
+do_universal inp2 : emp&i<n&{FLOW,(20,21)=__norm#E}[]
+do_universal inp3 : xx::arr_seg<flted_12_100,n_99>@M&flted_12_100=1+i & n_99=n&
+{FLOW,(20,21)=__norm#E}[]
+
+!!! **solver.ml#14218:f_univ_vars:[mmm_105]
+!!! **solver.ml#14232:lhs_guard_p: i<mmm_105 & mmm_105<=n
+
+# need to first prove guard existentially satisfiable.
+# after that add i<mmm_105 & mmm_105<=n & Univ(mmm_105) to LHS together with
+
+# inst expression should be in LHS .. i<mmm_105 & mmm_105<=n
+
+@2!ex6e3e-array-univ-lemma.slk:12: 38: **solver.ml#7570:heap_entail_conjunct_helper:
+context:
+  (exists mmm_109: xx::arr_seg<i,mmm_105>@M * xx::arr_seg<mmm_109,n>@M&
+mmm_109=mmm_105 & i<n&{FLOW,(20,21)=__norm#E}[])
+ es_evars: [n_99; flted_12_100]
+ es_gen_impl_vars(E): []
+ es_ivars: [mmm_105]
+ es_rhs_eqset: [n_99:n]
+ es_trace:  SEARCH ==>  (Lemma ==> lem_12(xx,xx))
+conseq:
+ xx::arr_seg<flted_12_100,n_99>@M&
+flted_12_100=1+i & n_99=n & i<mmm_105 & mmm_105<=n&{FLOW,(20,21)=__norm#E}[]
+
+# Just after lemma:
+
+ ### estate : ex_formula : xx::arr_seg<i,m_105>@M 
+   * xx::arr_seg<m_110,n>@M&m_110=m_105 &  i<n&{FLOW,(20,21)=__norm#E}[]
+
+--pcp
+ coercion_univ_vars: [m]
+ materialized vars:  [(self,full,[arr_seg])]
+ coercion_case: Normalize false
+ head:  self::arr_seg<i,n>@M&i<m & m<=n&{FLOW,(20,21)=__norm#E}[]
+
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m & m<=n &i<n
+   & m=i+1 |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+
+checkentail xx::arr_seg<m,n> & i<m & m<=n &i<n
+   // & m=i+1 
+   & i>=0
+   |- xx::arr_seg<i+1,n>.
+
+infer[m] i<m & m<=n & 0<=i |- m=i+1.
+print residue.
+
+infer[m,i,n] i<m & m<=n & 0<=i |- m=i+2.
+print residue.
+
+relation Univ(int m).
+infer[] i<m & m<=n & 0<=i & Univ(m) |- m=i+2.
+expect Fail.
+
+infer[] i<m & m<=n & 0<=i & Univ(m) |- m=i+1.
+expect Valid.
+
+infer[] i<m & m<=n & 0<=i & Univ(m) & m=k |- k=i+1.
+expect Valid.
+*/
+/*
+# ex6e3d.slk
+
+# see oc1.oc
+
+X1:={[i,n]->[m]:i<m & m<=n & 0<=i};
+Inst:={[i,n]->[m]:m=i+1};
+Inst2:={[i,n]->[m]:m=i+2};
+domain(X1);
+
+domain(X1 intersection Inst);
+domain(X1 intersection Inst2);
+
+*/
+

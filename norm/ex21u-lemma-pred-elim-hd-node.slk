@@ -1,0 +1,89 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+/*
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+*/
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+/*
+pred app4<> == self=null
+        or self::node<_,q> * q::app4a<>
+  inv true.
+
+pred app4a<> == self=null 
+	or q::app4<> & q!=null
+  inv true.
+*/
+
+pred_unify_disj [app4].
+
+print views.
+
+//pred_reuse [*][*].
+
+/*
+# ex21u.slk
+
+We need to unify common disjunct by combining similar
+disjunct into intermediate predicate.
+
+pred app4<> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+# above can be unified into:
+
+pred app4<> == self=null
+        or self::node<_,q> * q::app4a<>
+  inv true.
+pred app4a<> == self=null 
+	or q::app4<> & q!=null
+  inv true.
+
+However, we may suffer from a weakening effect if we had:
+
+ pred app4<> == self=null
+        or self::node<1,null> 
+	or self::node<2, q> * q::app4<> & q!=null 
+  inv true.
+
+# which should not be unified to:
+
+ pred app4<> == self=null
+        or self::node<n,q> * q::app4a<> & (n=1 | n=2)
+  inv true.
+
+ as this results in a weaker predicate
+
+Question : how can we ensure equivalence here?
+
+
+P(..) -> A or B
+
+P(..) <- A or B
+
+  x::node<a,b>&P1 or x::node<a,b>&P2
+  ==> x::node<a,b>&Q(..)
+  Q(..) = P1 or P2
+
+
+
+*/

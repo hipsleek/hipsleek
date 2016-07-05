@@ -1,0 +1,58 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-fgen.ss"
+Parsing file "t/rec-fgen.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f91$int] for f91$int
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1325: ( n=res & 91<=res) -->  post_1325(n,res,flow),
+RELDEFN post_1325: ( n<=90 & post_1325(v_int_32_1345,res,flow) & post_1325(1+
+n,v_int_32_1345,flow)) -->  post_1325(n,res,flow)]
+*************************************
+
+Post Inference result:
+f91$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&((90>=n & 91=res) | (n>=89 & 91>=n & 91=res) | (res>=91 & 
+           res=n))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure f91$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume (((90>=v_int_32_1370 & 91=v_int_32_1372) | (v_int_32_1370>=89 & 
+91>=v_int_32_1370 & 91=v_int_32_1372) | (v_int_32_1372>=91 & 
+v_int_32_1372=v_int_32_1370))) & v_int_32_1370=1+n' & n'=n & n'<91 & 
+!(v_bool_31_1308') & (((90>=v_int_32_1372 & 91=v_int_32_1307') | 
+(v_int_32_1372>=89 & 91>=v_int_32_1372 & 91=v_int_32_1307') | 
+(v_int_32_1307'>=91 & v_int_32_1307'=v_int_32_1372))) & 
+res=v_int_32_1307' & f91post_1351(v_int_32_1370) & f91post_1351(v_int_32_1372) --> f91post_1351(n).
+
+ termAssume v_bool_31_1308' & 91<=n' & n'=n & res=n' --> f91post_1351(n).
+
+ termAssume (((90>=v_int_32_1370 & 91=v_int_32_1306') | (v_int_32_1370>=89 & 
+91>=v_int_32_1370 & 91=v_int_32_1306') | (v_int_32_1306'>=91 & 
+v_int_32_1306'=v_int_32_1370))) & v_int_32_1370=1+n' & n'=n & n'<91 & 
+!(v_bool_31_1308') & f91pre_0(n) --> f91pre_0(v_int_32_1306').
+
+ termAssume !(v_bool_31_1308') & n'<91 & n'=n & v_int_32_1304'=1+
+n' & f91pre_0(n) --> f91pre_0(v_int_32_1304').
+
+
+Base/Rec Case Splitting:
+[	f91: [[3] 91<=n@B,[4] n<=90@R]
+]
+Starting z3... 

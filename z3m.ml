@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Gen
 
@@ -10,13 +12,13 @@ let string_of_z3m_val = function
   | Frac (f1, f2) -> (string_of_float f1) ^ "/" ^ (string_of_float f2)
 
 type z3m_res =
-  | Unsat
+  | Unsat of ident list
   | Sat_or_Unk of (string * z3m_val) list 
 
 let string_of_z3m_res = function
-  | Unsat -> "Unsat"
+  | Unsat unsat_core -> "Unsat" ^ (pr_list idf unsat_core)
   | Sat_or_Unk m -> "Sat or Unk: " ^
-    (pr_list (pr_pair (fun s -> s) string_of_z3m_val) m)
+                    (pr_list (pr_pair (fun s -> s) string_of_z3m_val) m)
 
 let z3m_val_mult v1 v2 = 
   match v1, v2 with
@@ -39,12 +41,12 @@ let z3m_val_to_int (vl: z3m_val list): int list =
     else raise Invalid_Z3m_val 
   in
   let den_l = List.fold_left (fun a v -> match v with
-    | Int _ -> a | Frac (_, d) -> a @ [int_of_float d]) [] vl in
+      | Int _ -> a | Frac (_, d) -> a @ [int_of_float d]) [] vl in
   let den_lcm = lcm_l den_l in
   List.map (fun v -> match v with
-    | Int i -> i * den_lcm
-    | Frac (n, d) -> (int_of_float n) * den_lcm / (int_of_float d) 
-  ) vl
+      | Int i -> i * den_lcm
+      | Frac (n, d) -> (int_of_float n) * den_lcm / (int_of_float d) 
+    ) vl
 
 let z3m_val_to_int (vl: z3m_val list): int list =
   let pr1 = pr_list string_of_z3m_val in

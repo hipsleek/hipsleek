@@ -1,0 +1,52 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ack3.ss"
+Parsing file "t/ack3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [Ack$int~int] for Ack$int~int
+
+Checking procedure Ack$int~int... 
+Procedure Ack$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1372_1373: ( (m1_1436+2)<=0 & n=0 & m=1+m1_1436 & post_1372_1373(m1_1436,1,res,flow)) -->  post_1372_1373(m,n,res,flow),
+RELDEFN post_1372_1373: ( (v_int_25_1438+2)<=0 & m=1+v_int_25_1438 & m'=1+v_int_25_1438 & n1_1441+
+1=n & n!=0 & post_1372_1373(v_int_25_1438,r_1439,res,flow) & 
+post_1372_1373(m',n1_1441,r_1439,flow)) -->  post_1372_1373(m,n,res,flow),
+RELDEFN post_1372_1374_1375: ( m=0 & res=1+n & (n+1)<=0) -->  post_1372_1374_1375(m,n,res,flow),
+RELDEFN post_1372_1374_1375: ( (r_1505+1)<=0 & n1_1507+1=n & v_int_25_1504+1=m & (n+1)<=0 & 1<=m & 
+post_1372_1374_1375(v_int_25_1504,r_1505,res,flow) & 
+post_1372_1374_1375(m,n1_1507,r_1505,flow)) -->  post_1372_1374_1375(m,n,res,flow),
+RELDEFN post_1372_1374_1375: ( 0<=r_1511 & n1_1513+1=n & v_int_25_1510+1=m & (n+1)<=0 & 1<=m & 
+post_1372_1374_1376(v_int_25_1510,r_1511,res,flow) & 
+post_1372_1374_1375(m,n1_1513,r_1511,flow)) -->  post_1372_1374_1375(m,n,res,flow),
+RELDEFN post_1372_1374_1376: ( m=0 & res=1+n & 0<=n) -->  post_1372_1374_1376(m,n,res,flow),
+RELDEFN post_1372_1374_1376: ( m1_1577+1=m & n=0 & 1<=m & post_1372_1374_1376(m1_1577,1,res,flow)) -->  post_1372_1374_1376(m,n,res,flow),
+RELDEFN post_1372_1374_1376: ( (r_1580+1)<=0 & n1_1582+1=n & v_int_25_1579+1=m & 1<=n & 1<=m & 
+post_1372_1374_1375(v_int_25_1579,r_1580,res,flow) & 
+post_1372_1374_1376(m,n1_1582,r_1580,flow)) -->  post_1372_1374_1376(m,n,res,flow),
+RELDEFN post_1372_1374_1376: ( 0<=r_1586 & n1_1588+1=n & v_int_25_1585+1=m & 1<=n & 1<=m & 
+post_1372_1374_1376(v_int_25_1585,r_1586,res,flow) & 
+post_1372_1374_1376(m,n1_1588,r_1586,flow)) -->  post_1372_1374_1376(m,n,res,flow)]
+*************************************
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/ack3.ss",Line:25,Col:11
+
+ERROR: at _0:0_0:0
+Message: Error in compute_fixpoint_aux
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("Error in compute_fixpoint_aux")Occurred!
+
+Error1(s) detected at main 
+caught
+
+Exception occurred: Failure("Error in compute_fixpoint_aux")
+Error3(s) detected at main 

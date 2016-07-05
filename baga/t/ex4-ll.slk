@@ -1,0 +1,76 @@
+/* avl trees */
+
+/* representation of a node in an avl tree */
+data node {
+  int val;
+  node next;
+}.
+
+
+pred ll<size> == self = null & size = 0
+  or self::node<_, q> * q::ll<size2> & size = 1+size2 
+  /* inv size >= 0 & height >= 0 */
+  inv_sat BG([],self=null & size=0 ) | BG([self],size>0)
+  /* inv_sat BG([],self=null & size=0 & height=0) | BG([self],size>0 & height>0) */
+  .
+
+/*
+# baga/t/ex4-ll3 -dre "form_body_inv" --inv-baga
+
+# Did we re-generate precise invariant?
+# Why is there a disabling of baga inv?
+# Is it OK to use self>0 rather than self!=null?
+
+!!! Predicate ll has precise invariant
+
+!!! infered baga inv(ll):[([], self=null & size=0),
+([self], 1<=size)]
+
+!!! end gen baga
+Disabling baga inv gen ..
+
+form_body_inv_baga_enum@1
+form_body_inv_baga_enum inp1 :ll
+form_body_inv_baga_enum@1 EXIT: emp&((self=null & size=0) | (self=1 & size=1) | (self=1 & 2<=size))&
+{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv_baga@2
+form_body_inv_baga inp1 :ll
+form_body_inv_baga@2 EXIT: emp&((self=null & size=0) | (self>0 & size=1) | (self>0 & 2<=size))&
+{FLOW,(1,26)=__flow#E}[]
+
+self=null & n=0
+\/ self::node<_,q>*q::ll<n-1>
+
+self=null & n=0
+\/ self::node<_,q>*(q=null & n-1=0 \/ {q},n-1>0)
+
+self=null & n=0
+\/ ({self},n-1=0 \/ {self},n-1>0)
+
+
+----------------------------------
+# baga/t/ex4-ll3 -dre "form_body_inv" --inv-baga
+
+form_body_inv#1@1
+form_body_inv#1 inp1 :ll
+form_body_inv#1@1 EXIT: emp&((self=null & size=0) | self!=null)&{FLOW,(1,26)=__flow#E}[]
+
+# It seems no need to form inv if xform being made.
+
+@1! xform': ((self=null & size=0) | (exists(size2:size=size2+1) & self!=null))
+@1! view_name:ll
+@1! (1) view_x_formula: trueStarting Omega.../usr/local/bin/oc
+@1! xform: ((self=null & size=0) | self!=null)
+form_body_inv#1@1
+form_body_inv#1 inp1 :ll
+form_body_inv#1@1 EXIT: emp&((self=null & size=0) | self!=null)&{FLOW,(1,26)=__flow#E}[]
+
+
+form_body_inv#2@2
+form_body_inv#2 inp1 :ll
+form_body_inv#2@2 EXIT: emp&((self=null & size=0) | (self>0 & size=1) | (self>0 & 2<=size))&
+{FLOW,(1,26)=__flow#E}[]
+
+
+*/

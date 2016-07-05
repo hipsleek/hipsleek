@@ -1,0 +1,4 @@
+int test(){
+  String s;
+  return 0;
+}

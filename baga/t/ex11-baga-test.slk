@@ -1,0 +1,34 @@
+data node {
+  node next;
+}.
+
+pred l6<q:node> == 
+  q::node<_> & self=null
+  or self::node<r>*r::node<_> & r=q
+.
+//inv q!=null.
+// baga {q}
+
+// (9) Fail
+checkentail x::l6<_> * y::l6<_> & y=x|- false.
+expect Fail.
+
+//checkentail x::l6<_> * x::l6<_>  * x::l6<_> |- false.
+//expect Fail.
+
+/*
+# baga/t/ex11.slk (smt2014)
+
+Why did we get failure message and also a disabling
+of inv gen? Why did we not use the precise inv?
+
+!!! Predicate l6 has precise invariant
+
+!!! infered baga inv(l6):[([q,self], true),([q], self=null)]
+
+!!! end gen baga
+Disabling baga inv gen ..
+
+Inv Check: Fail.(Over)
+
+*/

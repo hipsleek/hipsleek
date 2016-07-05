@@ -1,0 +1,114 @@
+data arrI {
+  int val;
+}.
+
+relation Univ(int x).
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+lemma_unsafe self::arr_seg<i,n> & i<mmm & mmm<=n 
+   -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
+
+/*
+checkentail xx::arr_seg<i,n>  & i<n  
+  |- (exists mm: xx::arr_seg<mm,n>@L & mm=i+1).
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n>  & i<n  
+  |- xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+*/
+
+checkentail xx::arr_seg<i,i+3>    
+  |- x::arrI<_>@L * y::arrI<_> & x=xx+i & y=x+1.
+print residue.
+expect Valid.
+
+
+checkentail xx::arr_seg<i,n>  & i<n  
+  |- xx::arr_seg<mm,n>@L & mm=i+1.
+print residue.
+expect Valid.
+
+/*
+# ex6e3f6.slk
+
+# LHS of entailment can be simplified by replacing them by other vars
+  es_ivars: [mmm_163]
+  es_ante_evars: [mmm_169; n_158]
+
+Lemma "lem_13":  
+  self::arr_seg<i,n>@M&i<mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[]
+  ==> (exists mmm_48: self::arr_seg<i,mmm>@M 
+      * self::arr_seg<mmm_48,n>@M & mmm_48=mmm&{FLOW,(20,21)=__norm#E}[])
+
+#  why are there two new existential mmm_ vars on LHS.
+   can it be removed?
+
+<1>xx::arr_seg<i,mmm_105>@M * xx::arr_seg<mmm_111,n>@M&mm=i+1 & 
+      mmm_111=mmm_105 & 
+      i<mmm_105 & 
+      mmm_105<=n & 
+      Univ(mmm_105) & 
+      i<n & mm=mmm_111&{FLOW,(20,2)
+
+!!! **sleekengine.ml#609: [ xx::arr_seg<i,mmm_163>@M * xx::arr_seg<mmm_169,n>@M&
+mm=i+1 & mmm_169=mmm_163 & i<mmm_163 & mmm_163<=n & Univ(mmm_163) & i<n & 
+mm=mmm_169&{FLOW,(20,21)=__norm#E}[]
+  es_evars: [n_158]
+  es_gen_impl_vars(E): []
+  es_ivars: [mmm_163]
+  es_ante_evars: [mmm_169; n_158]
+  es_rhs_eqset: [n:n; n:n; n:n]
+  es_subst (from): [n_158]
+  es_subst (to): [n]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_13(xx,xx)) ==>  COND ==>  Match(xx,xx)]
+
+--------
+
+# lemma and @L not working properly as hole is refilled
+  with original predicate.
+
+# why hole added by spatial_ctx_extract?
+
+(==context.ml#907==)
+spatial_ctx_extract@1
+spatial_ctx_extract inp1 :h_formula: xx::arr_seg<i,n>@M
+spatial_ctx_extract inp2 :imm:@L
+spatial_ctx_extract inp3 :aset:[xx]
+spatial_ctx_extract inp4 :rhs_node: xx::arr_seg<mm,n_98>@L
+spatial_ctx_extract@1 EXIT:list of match_res:
+[ Type: Root
+ LHS: xx::arr_seg<i,n>@M
+ RHS: xx::arr_seg<mm,n_98>@L
+ root_inst: None
+ lhs_rest: Hole[101]
+ rhs_rest: emp
+ alias set: [xx]rhs_inst: []rhs_infer: None]
+
+# why residue duplicated?
+
+### estate : ex_formula : xx::arr_seg<i,mmm_103>@M * xx::arr_seg<mmm_109,n>@M * 
+              (Hole[101])&mmm_109=mmm_103 & i<mmm_103 & mmm_103<=n & 
+                          Univ(mmm_103) & i<n&{FLOW,(20,21)=__norm#E}[]
+
+
+
+ <1>xx::arr_seg<i,mmm_103>@M * xx::arr_seg<mmm_109,n>@M * xx::arr_seg<i,n>@M&mm=
+                                                                    i+1 & 
+                                                                    mmm_109=mmm_103 & 
+                                                                    i<mmm_103 & 
+                                                                    mmm_103<=n & 
+                                                                    Univ(mmm_103) & 
+                                                                    i<n & 
+                                                                    mm=mmm_109&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> lem_13(xx,xx)) ==>  COND ==>  Match(xx,xx)]]
+
+
+*/
+

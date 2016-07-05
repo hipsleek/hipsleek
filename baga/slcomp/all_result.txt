@@ -1,0 +1,203 @@
+./test.plx --all --timeout=10
+
+Total number of unexpected results: 31 in files:
+ latest/UDB_entl/02.tst.smt2
+ latest/UDB_entl/03.tst.smt2
+ latest/UDB_entl/04.tst.smt2
+ latest/UDB_entl/05.tst.smt2
+ latest/UDB_entl/06.tst.smt2
+ latest/UDB_entl/08.tst.smt2
+ latest/UDB_entl/13.tst.smt2
+ latest/UDB_entl/14.tst.smt2
+ latest/UDB_entl/17.tst.smt2
+ latest/UDB_entl/dll-entails-dll0+.smt2
+ latest/UDB_entl/dll-rev-entails-dll-mid.smt2
+ latest/UDB_entl/dll-rev-entails-dll.smt2
+ latest/UDB_entl/dll-vc07.smt2
+ latest/UDB_entl/dll-vc10.smt2
+ latest/UDB_entl/dll-vc11.smt2
+ latest/UDB_entl/elseg4_slk-5.smt2
+ latest/UDB_entl/lss-vc03.smt2
+ latest/UDB_entl/nll-vc03.smt2
+ latest/UDB_entl/nll-vc04.smt2
+ latest/UDB_entl/nll-vc14.smt2
+ latest/UDB_entl/skl2-vc04.smt2
+ latest/UDB_entl/tree-pp-entails-tree-pp-rev.smt2
+ latest/UDB_entl/tree-pp-rev-entails-tree-pp.smt2
+ latest/sll0a_entl/smallfoot-vc70.tptp.smt2
+ latest/FDB_entl/dll-vc07.smt2
+ latest/FDB_entl/dll-vc10.smt2
+ latest/FDB_entl/dll-vc11.smt2
+ latest/FDB_entl/nll-vc03.smt2
+ latest/FDB_entl/nll-vc04.smt2
+ latest/FDB_entl/nll-vc14.smt2
+ latest/FDB_entl/skl2-vc04.smt2
+
+
+Total number of unsound results: 1 in files:
+ latest/sll0a_entl/smallfoot-vc70.tptp.smt2
+
+
+Total number of timeout files: 70 in:
+ latest/UDB_sat/succ-circuit03.defs.smt2
+ latest/UDB_sat/succ-circuit04.defs.smt2
+ latest/UDB_sat/succ-circuit05.defs.smt2
+ latest/UDB_sat/succ-circuit06.defs.smt2
+ latest/UDB_sat/succ-circuit07.defs.smt2
+ latest/UDB_sat/succ-circuit08.defs.smt2
+ latest/UDB_sat/succ-circuit09.defs.smt2
+ latest/UDB_sat/succ-circuit10.defs.smt2
+ latest/UDB_sat/succ-circuit11.defs.smt2
+ latest/UDB_sat/succ-circuit12.defs.smt2
+ latest/UDB_sat/succ-circuit13.defs.smt2
+ latest/UDB_sat/succ-circuit14.defs.smt2
+ latest/UDB_sat/succ-circuit15.defs.smt2
+ latest/UDB_sat/succ-circuit16.defs.smt2
+ latest/UDB_sat/succ-circuit17.defs.smt2
+ latest/UDB_sat/succ-circuit18.defs.smt2
+ latest/UDB_sat/succ-circuit19.defs.smt2
+ latest/UDB_sat/succ-circuit20.defs.smt2
+ latest/UDB_sat/succ-rec06.defs.smt2
+ latest/UDB_sat/succ-rec07.defs.smt2
+ latest/UDB_sat/succ-rec08.defs.smt2
+ latest/UDB_sat/succ-rec09.defs.smt2
+ latest/UDB_sat/succ-rec10.defs.smt2
+ latest/UDB_sat/succ-rec11.defs.smt2
+ latest/UDB_sat/succ-rec12.defs.smt2
+ latest/UDB_sat/succ-rec13.defs.smt2
+ latest/UDB_sat/succ-rec14.defs.smt2
+ latest/UDB_sat/succ-rec15.defs.smt2
+ latest/UDB_sat/succ-rec16.defs.smt2
+ latest/UDB_sat/succ-rec17.defs.smt2
+ latest/UDB_sat/succ-rec18.defs.smt2
+ latest/UDB_sat/succ-rec19.defs.smt2
+ latest/UDB_sat/succ-rec20.defs.smt2
+ latest/UDB_entl/11.tst.smt2
+ latest/UDB_entl/dll-entails-dll-rev.smt2
+ latest/UDB_entl/dll-spaghetti-existential.smt2
+ latest/UDB_entl/dll-spaghetti.smt2
+ latest/UDB_entl/dll-vc05.smt2
+ latest/UDB_entl/dll-vc06.smt2
+ latest/UDB_entl/dll-vc12.smt2
+ latest/UDB_entl/dll2-entails-dll2-rev.smt2
+ latest/UDB_entl/dll2-rev-entails-dll2.smt2
+ latest/UDB_entl/dll2-spaghetti-existential.smt2
+ latest/UDB_entl/dll2-spaghetti.smt2
+ latest/UDB_entl/nll-vc15.smt2
+ latest/UDB_entl/nll-vc16.smt2
+ latest/UDB_entl/skl2-vc03.smt2
+ latest/UDB_entl/skl3-vc02.smt2
+ latest/UDB_entl/skl3-vc04.smt2
+ latest/UDB_entl/skl3-vc05.smt2
+ latest/UDB_entl/skl3-vc06.smt2
+ latest/UDB_entl/skl3-vc07.smt2
+ latest/UDB_entl/skl3-vc08.smt2
+ latest/UDB_entl/skl3-vc09.smt2
+ latest/UDB_entl/skl3-vc10.smt2
+ latest/sll0a_entl/ls-vc02.smt2
+ latest/FDB_entl/dll-vc05.smt2
+ latest/FDB_entl/dll-vc06.smt2
+ latest/FDB_entl/dll-vc12.smt2
+ latest/FDB_entl/nll-vc15.smt2
+ latest/FDB_entl/nll-vc16.smt2
+ latest/FDB_entl/skl2-vc03.smt2
+ latest/FDB_entl/skl3-vc02.smt2
+ latest/FDB_entl/skl3-vc04.smt2
+ latest/FDB_entl/skl3-vc05.smt2
+ latest/FDB_entl/skl3-vc06.smt2
+ latest/FDB_entl/skl3-vc07.smt2
+ latest/FDB_entl/skl3-vc08.smt2
+ latest/FDB_entl/skl3-vc09.smt2
+ latest/FDB_entl/skl3-vc10.smt2
+
+
+Total number of unknown results: 4 in files:
+ latest/UDB_entl/dll-mid-entails-dll-rev.smt2
+ latest/UDB_entl/dll-vc08.smt2
+ latest/UDB_entl/node-dll-rev-dll-entails-dll.smt2
+ latest/FDB_entl/dll-vc08.smt2
+
+=======================================================================
+
+./test.plx --all --timeout=10 --flags="--inv-baga --en-delay-eelim --dis-inv-check"
+
+Total number of unexpected results: 32 in files:
+ latest/UDB_sat/succ-circuit01.defs.smt2
+ latest/UDB_entl/02.tst.smt2
+ latest/UDB_entl/03.tst.smt2
+ latest/UDB_entl/04.tst.smt2
+ latest/UDB_entl/05.tst.smt2
+ latest/UDB_entl/06.tst.smt2
+ latest/UDB_entl/08.tst.smt2
+ latest/UDB_entl/13.tst.smt2
+ latest/UDB_entl/14.tst.smt2
+ latest/UDB_entl/17.tst.smt2
+ latest/UDB_entl/dll-entails-dll0+.smt2
+ latest/UDB_entl/dll-rev-entails-dll-mid.smt2
+ latest/UDB_entl/dll-rev-entails-dll.smt2
+ latest/UDB_entl/dll-vc07.smt2
+ latest/UDB_entl/dll-vc10.smt2
+ latest/UDB_entl/dll-vc11.smt2
+ latest/UDB_entl/elseg4_slk-5.smt2
+ latest/UDB_entl/lss-vc03.smt2
+ latest/UDB_entl/nll-vc03.smt2
+ latest/UDB_entl/nll-vc04.smt2
+ latest/UDB_entl/nll-vc14.smt2
+ latest/UDB_entl/skl2-vc04.smt2
+ latest/UDB_entl/tree-pp-entails-tree-pp-rev.smt2
+ latest/UDB_entl/tree-pp-rev-entails-tree-pp.smt2
+ latest/sll0a_entl/smallfoot-vc70.tptp.smt2
+ latest/FDB_entl/dll-vc07.smt2
+ latest/FDB_entl/dll-vc10.smt2
+ latest/FDB_entl/dll-vc11.smt2
+ latest/FDB_entl/nll-vc03.smt2
+ latest/FDB_entl/nll-vc04.smt2
+ latest/FDB_entl/nll-vc14.smt2
+ latest/FDB_entl/skl2-vc04.smt2
+
+
+Total number of unsound results: 2 in files:
+ latest/UDB_sat/succ-circuit01.defs.smt2
+ latest/sll0a_entl/smallfoot-vc70.tptp.smt2
+
+
+Total number of timeout files: 30 in:
+ latest/UDB_entl/dll-entails-dll-rev.smt2
+ latest/UDB_entl/dll-vc05.smt2
+ latest/UDB_entl/dll-vc06.smt2
+ latest/UDB_entl/dll-vc12.smt2
+ latest/UDB_entl/dll2-entails-dll2-rev.smt2
+ latest/UDB_entl/dll2-rev-entails-dll2.smt2
+ latest/UDB_entl/nll-vc15.smt2
+ latest/UDB_entl/nll-vc16.smt2
+ latest/UDB_entl/skl2-vc03.smt2
+ latest/UDB_entl/skl3-vc02.smt2
+ latest/UDB_entl/skl3-vc04.smt2
+ latest/UDB_entl/skl3-vc05.smt2
+ latest/UDB_entl/skl3-vc06.smt2
+ latest/UDB_entl/skl3-vc07.smt2
+ latest/UDB_entl/skl3-vc08.smt2
+ latest/UDB_entl/skl3-vc09.smt2
+ latest/sll0a_entl/ls-vc02.smt2
+ latest/FDB_entl/dll-vc05.smt2
+ latest/FDB_entl/dll-vc06.smt2
+ latest/FDB_entl/dll-vc12.smt2
+ latest/FDB_entl/nll-vc15.smt2
+ latest/FDB_entl/nll-vc16.smt2
+ latest/FDB_entl/skl2-vc03.smt2
+ latest/FDB_entl/skl3-vc02.smt2
+ latest/FDB_entl/skl3-vc04.smt2
+ latest/FDB_entl/skl3-vc05.smt2
+ latest/FDB_entl/skl3-vc06.smt2
+ latest/FDB_entl/skl3-vc07.smt2
+ latest/FDB_entl/skl3-vc08.smt2
+ latest/FDB_entl/skl3-vc09.smt2
+
+
+Total number of unknown results: 6 in files:
+ latest/UDB_entl/dll-mid-entails-dll-rev.smt2
+ latest/UDB_entl/dll-vc08.smt2
+ latest/UDB_entl/dll2-spaghetti-existential.smt2
+ latest/UDB_entl/dll2-spaghetti.smt2
+ latest/UDB_entl/node-dll-rev-dll-entails-dll.smt2
+ latest/FDB_entl/dll-vc08.smt2

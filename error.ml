@@ -1,10 +1,12 @@
+#include "xdebug.cppo"
 (*
   Created 22-Feb-2006
 
   For error handling
 *)
 
-open Globals
+(* open Globals *)
+open VarGen
 
 type error = {
   error_loc : loc;
@@ -12,13 +14,14 @@ type error = {
 }
 
 (*exception Theorem_prover of (string * string) *)
- exception Ppf of (error * int * int) (*Proving_pre_fails*)
+exception Ppf of (error * int * int) (*Proving_pre_fails*)
 
- let get_error_type_str ie=
-   match ie with
-     | 0 -> "bind failure exception"
-     | 1 -> "Proving precond failed"
-     | _ -> ""
+let get_error_type_str ie=
+  match ie with
+  | 0 -> "bind failure exception"
+  | 1 -> "Proving precond failed"
+  | 2 -> "Proving assert/assume failed"
+  | _ -> ""
 
 (*
 let all_errors : error list ref = ref []
@@ -71,8 +74,8 @@ let report_error1 e s=
   failwith s
 
 let report_warning e =
-  if (!suppress_warning_msg) then ()
-  else if (not !en_warning_msg) then report_error1 e "Warning->ERROR"
+  if (!VarGen.suppress_warning_msg) then ()
+  else if (not !VarGen.en_warning_msg) then report_error1 e "Warning->ERROR"
   else (
     print_endline_q ("\nWARNING: "
                      ^  (string_of_loc e.error_loc) ^ ":"
@@ -81,22 +84,21 @@ let report_warning e =
   )
 
 exception Malformed_barrier of string
-(*
-let process_exct e=
-  begin
-      (match !proving_loc with
-        | Some p ->
-            Printf.printf "\nLast Proving Location: File \"%s\", line %d, col %d "
-                p.start_pos.Lexing.pos_fname
-                p.start_pos.Lexing.pos_lnum
-                (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol)
-        | None -> ());
-      (match e with
-        | Theorem_prover (prover_name, msg) ->
-            Printf.printf "\nException:\"%s\",\n message: \"%s\" \n"
-                ("theorem prover: " ^ prover_name) msg
-        | _ -> print_endline (Printexc.to_string e)
-      );
-      dummy_exception() ;
-  end
-*)
+
+(* let process_exct e= *)
+(*   begin *)
+(*       (match !proving_loc with *)
+(*         | Some p -> *)
+(*             Printf.printf "\nLast Proving Location: File \"%s\", line %d, col %d " *)
+(*                 p.start_pos.Lexing.pos_fname *)
+(*                 p.start_pos.Lexing.pos_lnum *)
+(*                 (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol) *)
+(*         | None -> ()); *)
+(*       (match e with *)
+(*         | Theorem_prover (prover_name, msg) -> *)
+(*             Printf.printf "\nException:\"%s\",\n message: \"%s\" \n" *)
+(*                 ("theorem prover: " ^ prover_name) msg *)
+(*         | _ -> print_endline (Printexc.to_string e) *)
+(*       ); *)
+(*       dummy_exception() ; *)
+(*   end *)

@@ -1,0 +1,9 @@
+
+!!!Full processing file "hip/ex12c2-varperm-simple.ss"
+Parsing file "hip/ex12c2-varperm-simple.ss" by default parser...
+File "hip/ex12c2-varperm-simple.ss", line 6, characters 15-16
+ --error: Stream.Error("SEMICOLON expected after [expression_statement] (in [valid_declaration_statement])")
+ at:caught
+
+Exception occurred: Stream.Error("SEMICOLON expected after [expression_statement] (in [valid_declaration_statement])")
+Error3(s) detected at main 

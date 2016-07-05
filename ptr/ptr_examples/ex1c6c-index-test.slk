@@ -1,0 +1,30 @@
+data arr {
+  int val;
+}.
+
+pred arr_int<o:int,v:int> ==
+    p1::arr<v> & p1=self+o & o>=0
+//  p1::arr<v> * q::arr<v> & p1=self+o & q=p1+1 & o>=0
+//or  q::arr<v> * p::arr<v>  & p=self+o+1 & q=p+1 & o>=0
+inv o>=0.
+// root=Some(self+o)
+// add this @ trans_view
+
+
+infer[ii] p=y:arr+ii & xxx=y:arr+3 
+     |- p=xxx.
+print residue.
+expect Valid. //k=2 
+
+/*
+# ex1c6c.slk
+
+infer[i] p=y:arr+i & xxx=y:arr+3 
+     |- p=xxx.
+
+# why is i undefined? 
+ERROR: at _0:0_0:0
+Message: i is undefined (7)
+Exception(get_spec_var_type_list):Failure("i is undefined (7)")
+
+*/

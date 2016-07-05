@@ -1,0 +1,28 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(may) cause: flted_4_16=1 |-  flted_4_16=Anon_11. LOCS:[4] (may-bug)
+
+Residue:
+ <1>x::cell<flted_4_16>&flted_4_16=1&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Fail.(must) cause:mismatched imm annotation for data cell
+
+Residue:
+ <1>emp&flted_7_30=1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 3: Fail.(may) cause: flted_10_42=1 |-  flted_10_42=Anon_13. LOCS:[10] (may-bug)
+
+Residue:
+ <1>Hole[53]&flted_10_42=1&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

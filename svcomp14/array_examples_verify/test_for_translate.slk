@@ -1,0 +1,241 @@
+checkentail
+   x'=x
+   & a[5] = x
+   & res=1+x'
+   |- a[5]=x & res=1+x.
+
+//(2)
+checkentail
+  a[i] = x
+  & i=5
+  |- a[5] = x.
+
+checkentail
+  a[i] = 3
+  & i=5
+  |- a[5]>2.
+
+//(4)
+checkentail
+  a[i] = 3
+  & i=5
+  & a[j] = 5
+  & j=3
+  |- a[5]=3 & a[3]=5.
+
+checkentail
+  a[i] = 3
+  & i=5
+  & b[j] = 5
+  & j=3
+  |- a[5]=3 & b[3]=5.
+
+
+//(6)
+checkentail
+  a[i] = b[j]
+  & i=5
+  & b[j] = 5
+  & j=3
+  |- a[5]=5.
+
+checkentail
+  a[5] = 3
+  & i=5
+  & a[i] > 2
+  & b[i] = 5
+  |- a[5]=3 & b[5]=5.
+
+
+checkentail
+  a[i] = 3
+  & i>5
+    |- a[6]=3 .
+
+checkentail
+   a[2+5]=5
+   |-a[1+6]=5.
+
+
+//(8)
+checkentail
+   a[t1]=5 & t1=2+5 & t2=1+6
+   |-a[t2]=5.
+
+
+//(9)
+checkentail
+  a[a[1]]=5 & a[1]=5
+  |- a[5]=5.
+// --ato cannot handle..
+
+checkentail
+  a[t1]=6 & t1=a[1] & a[1]=5
+  |-  a[5]=6.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+/*
+
+/* 1: Valid */
+checkentail
+   x'=x
+   & a[5] = x
+   & res=1+x'
+  |-  emp& a[5]=x & res=1+x.
+
+/* 2: Valid */
+checkentail
+   x'=x
+   & res = 1+x
+   & ((!(5=5)| a_5=x))
+   |- a_5=x & res = 1+x'.
+
+
+/* 3: Valid */
+checkentail
+  a[i] = x
+  |- a[i] = x.
+
+/* 4: This sentence seems not to make any sense without a universial quantifiers. */
+checkentail
+  a[i] = x
+  |- a[j] = x.
+
+
+/* 5: Same as above. i is free. */
+checkentail
+  a[i] = x
+  |- a[5] = x.
+
+/* 6: valid */
+checkentail
+  a[i] = x
+  & i=5
+  |- a[5] = x.
+
+
+/* 7: Same reason with 4 & 5 */
+checkentail
+  a[i] = x
+  & i>3
+  |- a[5] = x.
+
+/* 8: Valid */
+checkentail
+  a[5]=x
+  |-a[5]=x.
+
+
+/* 9: Valid */
+checkentail
+  (!(5=5)|a_5=x)
+  |-a_5=x.
+
+/* 10: Valid */
+checkentail
+  a[i] = 3
+  & i=5
+  |- a[5]>2.
+
+/* 11: Valid */
+checkentail
+  a[i]=a[i]
+  & i=5
+  |- a[5]=a[5].
+
+/* 12: Valid */
+checkentail
+  a = c
+  & a[i]=b[i]
+  & i=5
+  |- a[5]=b[5] & a[5] = c[5].
+
+/* 13: Valid */
+checkentail
+  a[i]=a[i-1]
+  & i=5
+  |- a[5]=a[4].
+
+/* 14: Valid */
+checkentail
+   i=5 & j=0 & a[i] = a[j+5]
+   |- a[5] = a[i].
+
+*/
+/* 15: Valid */
+checkentail
+   a[5]=3 & a[3]=6
+   |- a[a[5]+0]=6.
+/*
+/* 16: Invalid */
+checkentail
+   a[5]=3 & a[2+6]=8
+   |- a[7+1]=5.
+
+/* 17: Valid */
+checkentail
+  a[i]=5 & i=3
+  |- a[3]=5.
+print residue.
+
+/* 18: Invalid */
+checkentail
+  a[i]=5 & i=3
+  |- a[5]=5.
+
+/* 19: Valid */
+checkentail
+  a[i]=5 & i>2
+  |- a[3]=5.
+
+/* 20: Invalid */
+checkentail
+  a[i]=5 & i>2
+  |- a[1]=5.
+
+/* 21: Valid */
+checkentail
+   a[i]=5 & (i=2 | i=3)
+   |- a[3]=5.
+*/
+/* 22: Invalid */
+checkentail
+   a[i]=5 & (i=2 | i=3)
+   |- a[2+1]=5.
+
+/* 23: Test for existential quantifier */
+checkentail
+   a[2+5]=5
+   |-a[1+6]=5.
+
+
+
+
+
+/* 24: Test for existential quantifier */
+/* To Be Implemented */
+/*
+checkentail
+   a[a[1]]=5 & a[1]=5
+   |- a[5]=5.
+*/
+*/

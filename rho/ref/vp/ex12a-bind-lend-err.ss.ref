@@ -1,0 +1,42 @@
+
+!!!Full processing file "vp/ex12a-bind-lend-err.ss"
+Parsing file "vp/ex12a-bind-lend-err.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$cell... 
+( []) :vp/ex12a-bind-lend-err.ss:13: 9: h does not have @full permission to write.
+
+(Cause of ParCase Failure):vp/ex12a-bind-lend-err.ss:13: 9:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: (h,@lend) cannot satisfy (h,@full)
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex12a-bind-lend-err.ss",Line:13,Col:9
+
+ERROR: at vp/ex12a-bind-lend-err.ss_13:9_13:10
+Message: h does not have @full permission to write.
+
+Procedure foo$cell FAIL.(2)
+
+Exception Failure("h does not have @full permission to write.") Occurred!
+
+Error(s) detected when checking procedure foo$cell
+
+0 false contexts at: ()
+
+Total verification time: 0.400023 second(s)
+	Time spent in main process: 0.380023 second(s)
+	Time spent in child processes: 0.02 second(s)
+

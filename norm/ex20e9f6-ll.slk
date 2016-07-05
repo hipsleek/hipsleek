@@ -1,0 +1,16 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+pred lseg<q> == self = q or
+  self::node<_, p> * p::lseg<q>.
+
+//lemma_safe "compl1" self::lseg<ss> <- self::lseg<y> * y::node<_,ss>.
+
+lemma_safe "compl2" self::lseg<y> * y::node<_,ss> -> self::lseg<ss>.
+
+//lemma_safe "compl3" self::node<_,y> * y::node<_,ss> -> self::node<_, p> * p::lseg<ss>.
+
+checkentail q1::lseg<y> * y::node<_,ss>  |- q1::lseg<ss>.
+print residue.

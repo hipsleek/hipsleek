@@ -1,0 +1,93 @@
+# 1 "ex22a-cll-forloop.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3 4
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+
+
+
+/* This header is separate from features.h so that the compiler can
+   include it implicitly at the start of every compilation.  It must
+   not itself include <features.h> or any other header that includes
+   <features.h> because the implicit include comes before any feature
+   test macros that may be defined in a source file before it first
+   explicitly includes a system header.  GCC knows the name of this
+   header in order to preinclude it.  */
+
+/* glibc's intent is to support the IEC 559 math functionality, real
+   and complex.  If the GCC (4.9 and later) predefined macros
+   specifying compiler intent are available, use them to determine
+   whether the overall intent is to support these features; otherwise,
+   presume an older compiler has intent to support these features and
+   define these macros by default.  */
+# 52 "/usr/include/stdc-predef.h" 3 4
+/* wchar_t uses ISO/IEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.  */
+
+
+/* We do not support C11 <threads.h>.  */
+# 1 "<command-line>" 2
+# 1 "ex22a-cll-forloop.c"
+
+pred lseg<p> ==
+   self==p
+  or self::node<_,q>*q::lseg<p>.
+
+
+void forloop(ref int i, int n, ref curr)
+  requires curr::node<_,_>
+  ensures curr::lseg<curr'>*curr'::node<_,_> & i'=n & i'>=i;
+{
+  if (i>=n) return;
+  else {
+    node next_node = new node();
+    next_node.val = i;
+    curr.next = next_node;
+    curr = next_node;
+    i = i+1;
+    for_loop(i,n,curr);
+  }
+}
+
+/*
+//Initialize a circular linked list with length n
+node_t* init_cll (int n)
+// requires emp
+// ensures res::clist<>
+{
+  node_t* head;
+  node_t* curr = alloca(sizeof(node_t));
+  
+  curr->val = 0;
+  head = curr;
+  // head::node<0,null> & curr=head
+
+  for (int i = 1; i < n; i++) 
+    // requires curr::node<_,null>
+    // ensures  curr::lseg<curr'>*curr'::node<_,null>
+  {
+    node_t* next_node = alloca(sizeof(node_t));
+    next_node->val = i;
+    curr->next = next_node;
+    curr = next_node;
+  }
+  
+  curr->next = head;
+}
+*/

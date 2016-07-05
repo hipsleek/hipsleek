@@ -1,0 +1,52 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x, node y).
+
+lemma_infer [U,@classic] 
+  self::app2<y> -> self::node<_,q>*U(q,y).
+print residue.
+
+lemma_infer [U,@classic] 
+  self::app2<y> <- self::node<_,q>*U(q,y).
+print residue.
+
+
+lemma_infer [U,@classic] 
+  self::app2<y> <- U(self,q)*q::node<_,null>.
+print residue.
+
+lemma_infer [U,@classic] 
+  self::app2<y> -> U(self,q)*q::node<_,null>.
+print residue.
+
+
+/*
+# ex21b1.ss
+
+
+lemma_infer [U,@classic] 
+  self::app2<y> -> self::node<_,q>*U(q,y).
+print residue.
+
+    
+ inferred hprel: [emp&flted_11_81=null --> U(flted_11_81,y)&true; 
+                  q_88::app2<y>@M&true --> U(q_88,y)&true; 
+                  emp&flted_11_81=null --> U(flted_11_81,y)&true]
+[[ Match(self_lem_15,self_lem_15) ==>  SEARCH ==>  COND ==>  UnmatchedRHSData ==> ||OR|| ==>  Match(self_lem_15,self_lem_15) ==>  COND ==>  UnmatchedRHSData]]
+
+
+
+
+*/

@@ -1,0 +1,71 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+//checkentail y::arrI<_> & y=x+1 |- x::arr_seg<i,n> & i=2.
+/*
+checkentail  x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> & i=1.
+print residue.
+expect Valid.
+*/
+
+// checkentail  x::arrI<_> |- x::arr_seg<i,n> & i=1.
+// checkentail  x::arrI<_>  |- x::arr_seg<0,1>.
+//checkentail  y::arrI<_> & y=x+2 |- x::arr_seg<i,n>.
+//checkentail  y::arrI<_> & y=x+i+1|- x::arr_seg<i,n>. // fail
+//checkentail  y::arrI<_> & y=x+2 |- x::arr_seg<i,n>. // OK
+
+//checkentail  y::arrI<_> & y=x+i|- x::arr_seg<i,n>. //tofix
+
+//checkentail  y::arrI<_> & y=x|- x::arr_seg<i,n> & i<n.
+
+checkentail  y::arrI<_> & y=x|- x::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+//checkentail x::arr_seg<1,2> |- x::arr_seg<i,n> & i<n.
+
+
+// checkentail  x::arrI<1>  |- x::arrI<1>.
+// print residuhg ine.
+// expect Valid.
+
+// checkentail  x::arrI<_> & y=x|- y::arr_seg<0,1>.
+// print residue.
+// expect Valid.
+
+/*
+# ex14b1.slk
+
+# wrong pairing as did not take LHS & RHS when doing a
+  fold where c has been instantiated.
+
+!!! **context.ml#3928:compute_action (steps) :
+ ### RHS Cand :[ x::arr_seg<i,n>@M]
+ ### action :
+ SEARCH =>[
+  Prio:1
+  Fold =>
+    LHS: x::arrI<Anon_13>@M
+    RHS: x::arr_seg<i,n>@M
+  ]
+
+      SAT(C) not(C |- not(f)) 
+      //&& inst(c,C) && C |- f
+  ------------------------------------------
+            C |- OPT(c,f)
+
+   //C |- x=root(y::aseg<c,d>)
+
+   C |- OPT(c,root(y::aseg<c,d>)=x)
+ ------------------------------------ fold
+      x::arr<_> |- y::aseg<c,d>
+
+*/
+
+
+

@@ -1,0 +1,16 @@
+data node {
+  node next;
+}.
+
+// --eps
+
+pred l4<q:node> == 
+  (exists z: self::node<r>*r::node<_> & r=z & z=q)
+inv self!=null
+//inv false
+// baga {self,q}
+.
+
+// (6) valid
+//checkentail x::l4<c> * c::node<_> |- false.
+//expect Valid.

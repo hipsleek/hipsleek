@@ -7,6 +7,8 @@ BATLIB = batteries/batteries
 ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
 OLIBS = $(OPREP)/$(GRLIB),
+#CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
+CPPO_FLAGS = 
 
 #CFLAGS1='-Wl,--rpath=/usr/lib-2.12'
 #CFLAGS2='-Wl,--dynamic-linker=/usr/lib-2.12/ld-linux.so.2'
@@ -34,7 +36,8 @@ LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBG
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
@@ -50,15 +53,16 @@ SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-static,-ccopt,-fopenmp #,-cco
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
-OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)  $(CPPO_FLAGS)
+OBB_NGFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
  
-OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
-OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
+OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 
 #static - incl C libs
-OBNS_FLAGS = -no-links -libs $(LIBSN) -cflags $(SCFLAGS) -lflags $(SLFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OBNS_FLAGS = -no-links -libs $(LIBSN) -cflags $(SCFLAGS) -lflags $(SLFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 
-OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) $(CPPO_FLAGS)
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
@@ -66,7 +70,11 @@ all: byte # decidez.vo
 # gui
 byte: sleek.byte hip.byte # decidez.vo
 
+sh_proc: sh_proc.byte
+
 gbyte: sleek.gbyte hip.gbyte
+
+test: dtest.byte
  
 # hsprinter.byte
 native: hip.native sleek.native
@@ -84,15 +92,29 @@ xml: xml/xml-light.cma
 xml/xml-light.cma:
 	$(XML)
 
-hip.gbyte: xml
+ppx: ppx
+	@ocamlbuild $(OBB_NGFLAGS) ppx/ex1.byte
+
+parser.cmo:
+	@ocamlbuild $(OBB_NGFLAGS) parser.cmo
+
+dtest.byte: xdebug.cppo
+	@ocamlbuild $(OBB_GFLAGS) dtest.byte
+	cp -u _build/dtest.byte dtest
+
+hip.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) main.byte
 	cp -u _build/main.byte hip
 	cp -u _build/main.byte g-hip
 
-sleek.gbyte: xml
+sleek.gbyte: xml parser.cmo
 	@ocamlbuild $(OBB_GFLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte g-sleek
+
+sh_proc.byte: 
+	@ocamlbuild -cflags -annot $(OBB_GFLAGS) sh_proc.byte
+	cp -u _build/sh_proc.byte sh_proc
 
 hip.byte: xml
 	@ocamlbuild $(OBB_FLAGS) main.byte
@@ -135,6 +157,10 @@ gsleek.native:
 	@ocamlbuild $(OBG_FLAGS) gsleek.native
 	cp -u _build/gsleek.native gsleek
 
+fact.byte: 
+	@ocamlbuild $(OBB_FLAGS) fact.byte
+	cp -u _build/fact.byte fact
+
 ghip.byte:
 	@ocamlbuild $(OBG_FLAGS) ghip.byte
 	cp -u _build/ghip.byte p-ghip
@@ -147,7 +173,7 @@ ghip.native:
 clean:
 	$(OCAMLBUILD) -quiet -clean 
 	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
-	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
+	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.depends
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
 
 decidez.vo:
@@ -164,7 +190,7 @@ install-native: hip.native sleek.native
 	cp -u _build/main.native /usr/local/bin/hip
 	cp -u _build/sleek.native /usr/local/bin/sleek
 
-FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer 
+FILES := globals tree_shares rtc_algorithm net machdep globProver error gen others ipure_D debug timelog procutils label_only label exc ipure iformula cpure smtsolver setmona omega redlog wrapper mcpure_D slicing mcpure perm mathematica label_aggr isabelle cvclite cvc3 coq iast inliner checks cformula cleanUp cprinter stat_global spass prooftracer predcomp minisat log mona iprinter java infinity immutable fixcalc dp cast cfutil sleekcommons rtc mem lem_store env auxnorm context share_prover share_prover_w tpdispatcher typeinfer imminfer
 
 init: clean_mli all create_mli
 

@@ -1,0 +1,13 @@
+
+!!!Full processing file "inf/lend-3a.ss"
+Parsing file "inf/lend-3a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+0 false contexts at: ()
+
+Total verification time: 0.309548 second(s)
+	Time spent in main process: 0.286093 second(s)
+	Time spent in child processes: 0.023455 second(s)
+

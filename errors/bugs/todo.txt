@@ -1,0 +1,17 @@
+
+Total number of errors: 5 in files:
+ err2.slk({E13#may},{E15#may},{E16#must},{E17#may},{E23#must},{E31#may})
+ err4.slk({E11#may},{E12#must},{E14#may},{E15#may},{E16#must},{E17#must},{E4#may},{E5#Valid},{E8#may},{E9#may})
+ err6.slk({E6#Valid})
+ err7.slk({E11#Valid},{E7#may},{E9#must})
+ err9.slk({E1#Valid},{E5#Valid}).
+
+----------------------------------------
+#err4.slk: E11: FIXED
+
+//11. may failure but detected as must-fail
+checkentail x::pos_ll<n> & n>0  |- x::neg_ll<n> & flow __Error.
+print residue.
+
+----------------------------------------
+

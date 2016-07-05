@@ -33,6 +33,4 @@ Entail (1) : Valid.
  inferred pure: [v:AnnT<:@M]
 [[ SEARCH ==>  Match(p:pair,p:pair) ==> ]]
 
-
-
 */

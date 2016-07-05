@@ -1,0 +1,52 @@
+/*
+id: 4; caller: []; line: 21; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@dis_err]
+ checkentail c::cell<v>@a&v_bool_19_1449' & x'!=1 & a<:@L & c'=c & x'=v & 
+v_int_21_1447'=2 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  c'::cell<v_1483>@a_1482&a_1482<:@L&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   c::cell<v>@[@a, @a_1482]&v_bool_19_1449' & x'!=1 & a<:@L & c'=c & x'=v & 
+     v_int_21_1447'=2 & a_1482<:@L & v_1483=v&{FLOW,(4,5)=__norm#E}[]
+   ]
+*/
+data cell{
+ int fst;
+}.
+
+
+//(1)
+checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@M.
+print residue.
+expect Fail.
+
+//(2)
+checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@L.
+print residue.
+expect Valid. // with b inst to @L
+
+//(3)
+checkentail c::cell<v>@a & a=@L |-  c::cell<_>@b &b<:@L.
+print residue.
+expect Valid. // with b inst to @L
+
+//(3)
+checkentail c::cell<v>@a & a<:@M |-  c::cell<_>@b & b<:@M.
+print residue.
+expect Valid. // with b inst to @L
+
+
+/*
+# ex8e2g.slk
+
+
+//(2)
+checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@L.
+
+# expects Valid with b=@L inst
+
+GOT inst b<:@L. Can we change to b=@L
+
+Entail 2: Fail.(may) cause: b<:@L & a<:@L |-  a<:b. LOCS:[23;0] (may-bug)
+
+
+*/

@@ -1,0 +1,35 @@
+checkentail
+  forall(i: !(2<=i<=5) | a[i]=3)
+   |- a[5]=3.
+
+checkentail a[2]=3 & a[3]=3 & a[4]=3 & a[5]=3 
+            |- a[5]=3.
+
+/*
+# test_forall2.slk
+
+with oc
+ a[2]=3 & a[3]=3 & a[4]=3 & a[5]=3 |- a[5]=3
+
+
+checkentail
+  forall(i: !(2<=i<=5) | a[i]=3)
+   |- a[5]=3.
+
+Why was Omega called?
+--ato -tp oc does not work with this example?
+
+(==solver.ml#2748==)
+simplify_with_label_omega@7
+simplify_with_label_omega inp1 : exists(i:!((2<=i & i<=5)))
+simplify_with_label_omega@7 EXIT: true
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
+ Formula: exists(i:a[i]=3)
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
+ Formula: exists(i:a[i]=3)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
+ Formula: exists(i:a[i]=3)
+
+
+*/

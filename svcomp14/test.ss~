@@ -1,0 +1,4 @@
+int test(){
+  char c;
+  return 0;
+}

@@ -112,10 +112,13 @@ module Make (Token : SleekTokenS)
    ("at", ATPOS);
    ("assert_inexact", ASSERT_INEXACT);
    ("assume", ASSUME);
+   ("infer_assume", INFER_ASSUME);
    ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
+   ("ann", ANN_KEY);
    ("AndList", ANDLIST);
+   ("abstract", ABSTRACT);
    ("bagmax", BAGMAX);
    ("bagmin", BAGMIN);
    ("bag", BAG);
@@ -135,18 +138,37 @@ module Make (Token : SleekTokenS)
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
    ("slk_simplify", SIMPLIFY);
+   (* ("slk_elim_exists", SLK_ELIM_EXISTS); (\* may weaken *\) *)
    ("relAssume", RELASSUME);
    ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );
    ("shape_infer_proper", SHAPE_INFER_PROP );
-   ( "shape_post_obligation", SHAPE_POST_OBL);
+   ("shape_post_obligation", SHAPE_POST_OBL);
    ("shape_divide" , SHAPE_DIVIDE);
    ("shape_conquer" , SHAPE_CONQUER);
    ("shape_lfp" , SHAPE_LFP);
    ("shape_rec" , SHAPE_REC);
-   ( "shape_split_base", SHAPE_SPLIT_BASE);
-   ("shape_elim_useless", SHAPE_ELIM_USELESS );
-   ("shape_extract", SHAPE_EXTRACT );
+   ("shape_split_base", SHAPE_SPLIT_BASE);
+   ("pred_elim_hd_node", PRED_ELIM_HEAD);
+   ("pred_elim_tl_node", PRED_ELIM_TAIL);
+   ("pred_unify_disj", PRED_UNIFY_DISJ);
+   ("pred_elim_useless", PRED_ELIM_USELESS);
+   ("pred_reuse", PRED_REUSE);
+   ("pred_unfold", PRED_UNFOLD);
+   ("pred_reuse_subs", PRED_REUSE_SUBS);
+   ("shape_extract", SHAPE_EXTRACT);
+   ("shape_add_dangling", SHAPE_ADD_DANGLING);
+   ("shape_unfold", SHAPE_UNFOLD);
+   ("shape_param_dangling", SHAPE_PARAM_DANGLING);
+   ("shape_simplify", SHAPE_SIMPLIFY);
+   ("shape_merge", SHAPE_MERGE);
+   ("shape_trans_to_view", SHAPE_TRANS_TO_VIEW);
+   ("shape_derive_pre", SHAPE_DERIVE_PRE);
+   ("shape_derive_post", SHAPE_DERIVE_POST);
+   ("shape_derive_view", SHAPE_DERIVE_VIEW);
+   ("shape_extends_view", SHAPE_EXTN_VIEW);
+   ("shape_normalize", SHAPE_NORMALIZE);
+   ("data_mark_rec", DATA_MARK_REC);
    ("Declare_Dangling", SHAPE_DECL_DANG);
    ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
    ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
@@ -174,6 +196,8 @@ module Make (Token : SleekTokenS)
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
    ("extends", EXTENDS);
+   (* ("extends_rec", EXTENDS_REC); *)
+   ("expect_infer", EXPECT_INFER);
    ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
@@ -202,6 +226,7 @@ module Make (Token : SleekTokenS)
    ("BG", BG);
    ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
+   ( "rlemma",RLEMMA);
    ("lemma", LEMMA TLEM);
    ("lemma_prop", LEMMA TLEM_PROP);
    ("lemma_split", LEMMA TLEM_SPLIT);
@@ -253,6 +278,8 @@ module Make (Token : SleekTokenS)
    ("split", SPLIT);
    ("LexVar", LEXVAR);
    ("template", TEMPL);
+   ("UIPre", UIPRE);
+   ("UIPost", UIPOST);
    ("UTPre", UTPRE);
    ("UTPost", UTPOST);
    ("Term", TERM);
@@ -274,6 +301,8 @@ module Make (Token : SleekTokenS)
    ("union", UNION);
    ("expect", VALIDATE);
    ("Valid", VALID);
+   ("Sat", SSAT);
+   ("Unsat", SUNSAT);
    ("Fail", FAIL);
    ("Fail_Must", FAIL_MUST);
    ("Fail_May", FAIL_MAY);
@@ -287,7 +316,7 @@ module Make (Token : SleekTokenS)
    ("template_solve", TEMPL_SOLVE);
    (flow, FLOW flow);
    ("par", PAR);
-   ("skip", SKIP)
+   (* ("skip", SKIP) *)
   ]
 }
   
@@ -297,7 +326,7 @@ module Make (Token : SleekTokenS)
   let alpha = ['a'-'z' 'A'-'Z' '\223'-'\246' '\248'-'\255' '_']
   let identchar = ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '0'-'9']
   let identseq = alpha identchar* (* An Hoa : a single identifier *)
-    let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
+  let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
   let locname = ident
   let not_star_symbolchar = ['$' '!' '%' '&' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~' '\\']
   let symbolchar = '*' | not_star_symbolchar
@@ -309,7 +338,7 @@ module Make (Token : SleekTokenS)
   let bin_literal = '0' ['b' 'B'] ['0'-'1'] ['0'-'1' '_']*
   let int_literal = decimal_literal | hex_literal | oct_literal | bin_literal
   let float_literal = ['0'-'9'] ['0'-'9' '_']* ('.') ['0'-'9' '_']+  (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
-  (* let frac_literal = int_literal ('/') int_literal *)
+  let frac_literal = int_literal ('/') int_literal
   
 rule tokenizer file_name = parse
   | newline                            { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
@@ -320,12 +349,12 @@ rule tokenizer file_name = parse
   | float_literal as f
         { try  FLOAT_LIT(float_of_string f, f)
           with Failure _ -> err (Literal_overflow "float") (Loc.of_lexbuf lexbuf) }
-  (* | frac_literal as f  *)
+  (* | frac_literal as f *)
   (*   { try *)
   (*       let div_index = String.index f '/' in *)
   (*       let num = int_of_string (String.sub f 0 div_index) in *)
   (*       let den = int_of_string (String.sub f (div_index + 1) ((String.length f) - (div_index + 1))) in *)
-  (*       FRAC_LIT ((num, den), f) *)
+  (*       FRAC_LIT (Frac.make num den, f) *)
   (*     with _ -> err (Literal_overflow "frac") (Loc.of_lexbuf lexbuf) *)
   (*   } *)
   | (int_literal as i) "l"
@@ -358,12 +387,14 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
-  | "@A" { ACCS }  
+  | "##OPTION " (['0'-'9' 'A'-'Z' 'a'-'z' '-' ' ' '.' '_' '"' ]* as x) {ARGOPTION (Camlp4.Struct.Token.Eval.string x)}
+  | "@frac" { PFRAC }
+  | "@A" { ACCS }
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
   | "U*" { UNIONSTAR }
-  | "-*" { STARMINUS }
+  | "--@" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
@@ -386,16 +417,32 @@ rule tokenizer file_name = parse
   | "@xpre" { XPRE } (* WN : what is this? *)
   | "@post" { POST } (* to be changed *)
   | "@leak" { INFER_AT_CLASSIC }
+  | "@classic" { INFER_AT_CLASSIC }
   | "@par" { INFER_AT_PAR }
   | "@term" { INFER_AT_TERM }
   | "@term_wo_post" { INFER_AT_TERM_WO_POST }
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }
+  | "@ver_post" { INFER_AT_VER_POST }
+  | "@imm_pre" { INFER_IMM_PRE }
+  | "@pure_field" { INFER_AT_PURE_FIELD }
+  | "@imm_post" { INFER_IMM_POST }
   | "@imm" { INFER_AT_IMM }
+  | "@field_imm" { INFER_AT_FIELD_IMM }
+  | "@arrvar" { INFER_AT_ARR_AS_VAR }
   | "@shape" { INFER_AT_SHAPE }
+  | "@shape_pre" { INFER_AT_SHAPE_PRE }
+  | "@shape_post" { INFER_AT_SHAPE_POST }
+  | "@shape_prepost" { INFER_AT_SHAPE_PRE_POST }
   | "@error" { INFER_AT_ERROR }
+  | "@dis_err" { INFER_AT_DE_EXC }
+  | "@err_must" { INFER_AT_ERRMUST }
+  | "@pre_must" { INFER_AT_PREMUST }
+  | "@err_must_only" { INFER_AT_ERRMUST_ONLY }
+  | "@err_may" { INFER_AT_ERRMAY }
   | "@flow" { INFER_AT_FLOW }
   | "@size" { INFER_AT_SIZE }
+  | "@ana_ni" { INFER_ANA_NI }
   | "@efa" { INFER_AT_EFA }
   | "@dfa" { INFER_AT_DFA }
   | "termAssume" { TREL_ASSUME }
@@ -423,6 +470,7 @@ rule tokenizer file_name = parse
   | ".." { DOTDOT }
   | "\"" { DOUBLEQUOTE }
   | "\\inf" {INFINITY}
+  | "~\\inf" {NEGINFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }
@@ -453,8 +501,8 @@ rule tokenizer file_name = parse
   | "|-" { (* (print_string "der\n"; *)DERIVE }
   | "-|-" { EQV }
   | "-->" { CONSTR }
-  | "<#" { TOPAREN }
-  | "#>" { TCPAREN } (*Open and close paren for thread heap*)
+  (* | "<#" { TOPAREN } *) (* replaced by `LT;`HASH. inline\data-holes.lsk. examples/fracperm/thread/thrd1.slk*)
+  (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
   (* | "-%" { IN_RFLOW }  *)
   (* | "+%" { OUT_RFLOW } *)
   | '[' { OSQUARE }
@@ -480,7 +528,7 @@ rule tokenizer file_name = parse
       { let pos = lexbuf.lex_curr_p in
         lexbuf.lex_curr_p <- { pos with pos_bol  = pos.pos_bol  + 1 ;
                                         pos_cnum = pos.pos_cnum + 1 }; EOF      }
-    | _ as c                 { err (Illegal_character c) (Loc.of_lexbuf lexbuf) }
+  | _ as c                 { err (Illegal_character c) (Loc.of_lexbuf lexbuf) }
 
 (* search for the first open brace following java keyword *)
 and java file_name = parse 
@@ -506,7 +554,8 @@ and comment file_name = parse
   | _  { comment file_name lexbuf }
 
 and line_comment file_name = parse
-  | newline { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
+  | newline 
+  | eof { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
   | _ { line_comment file_name lexbuf }
   
 

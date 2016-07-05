@@ -1,0 +1,31 @@
+X:= {[z,fld5,inf_p]:   
+   ((z=0 & fld5=0) 
+   | (fld5!=0 & inf_p!=0) 
+   | (fld5=0 & inf_p!=0 & z!=0))};
+
+Y:= {[z,fld5,inf_p]:   
+   fld5=0 &
+   (z=0 | (z!=0 & inf_p!=0))};
+
+R:= {[z,fld5,inf_p]:   
+   fld5=0};
+
+X subset Y;
+Y subset X;
+
+G := gist X given R;
+
+X2:= {[z,fld5,inf_p]:   
+   ((z=0 ) 
+   | (inf_p!=0 & z!=0))};
+
+X2;
+
+G subset X2;
+X2 subset G;
+
+X2:= {[z,fld5,inf_p]:   
+   forall(z,inf_p:((z=0 & fld5=0) 
+#| (fld5!=0 & inf_p!=0) 
+   | (fld5=0 & inf_p!=0 & z!=0)))};
+X2;

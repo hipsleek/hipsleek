@@ -1,0 +1,9 @@
+
+!!!Full processing file "ho/lock-exp.ss"
+Parsing file "ho/lock-exp.ss" by default parser...
+File "ho/lock-exp.ss", line 8, characters 14-15
+ --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:caught
+
+Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+Error3(s) detected at main 

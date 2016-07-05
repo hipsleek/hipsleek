@@ -1,0 +1,31 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node x).
+HeapPred H2(node x, int n).
+
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+
+/*
+# ex64s7.slk
+
+(==infer.ml#1738==)
+infer_pure_m_1@2@1
+infer_pure_m_1 inp1 :estate :( ex_formula : HP_52(flted_14_50,y)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:y::node<a_51,flted_14_50>@M,[])
+infer_pure_m_1 inp2 :lhs xpure : y!=null
+infer_pure_m_1 inp3 :lhs xpure0 : y!=null
+infer_pure_m_1 inp4 :rhs xpure : 0<a_51 & flted_14_50=null
+infer_pure_m_1 inp5 :inf vars :[H1,HP_52]
+infer_pure_m_1@2 EXIT:(new es,inf pure,rel_ass) :(Some(( ex_formula : HP_52(flted_14_50,y)&flted_14_50=null & y!=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:y::node<a_51,flted_14_50>@M, true)),None,[])
+
+*/

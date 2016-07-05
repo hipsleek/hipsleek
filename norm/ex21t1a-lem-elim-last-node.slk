@@ -1,0 +1,73 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+/*
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p 
+	or self::node<v, q> * q::lseg<p> & v!=0
+  inv true.
+*/
+/*
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+*/  
+
+pred app3a<> == self::node<0,null> 
+	or self::node<v, q> * q::app3a<> & q!=null & v!=0 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred UA(node x, int y).
+HeapPred UB(node x).
+relation R(int v).
+
+/*
+lemma_infer [U,@pure_field] "L21t1"
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+lemma_infer [UA,@classic] "L21t1a"
+  self::app3a<> -> self::node<v,q>*UA(q,v).
+*/
+
+lemma_infer [UA,@classic] "L21t1a"
+  self::app3a<> -> self::node<v,q>*UA(q,v).
+print residue.
+
+
+//shape_derive_view [UA].
+
+//pred_elim_hd_node [*].
+
+//print views.
+
+/*
+# ex21t1a.slk
+
+lemma_infer [UA,@classic] "L21t1a"
+  self::app3a<> -> self::node<v,q>*UA(q,v).
+print residue.
+
+# deemed a failure due to presence of app3a in inference outcome.
+  can detect and/or prevent?
+
+
+ inferred hprel: [q_79::app3a<>@M&q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  q_79::node<v_84,q_85>@M * GP_86(q_85,q_79@NI)&
+                   q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  emp&
+                   flted_25_72=null & flted_25_73=0 --> UA(flted_25_72,flted_25_73@NI)&
+
+
+
+*/

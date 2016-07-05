@@ -1,0 +1,109 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Fail.(must) cause:mismatched imm annotation for view ll
+
+Residue:
+ <1>emp&flted_22_51=@A&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>x::ll{}<n,flted_28_70,>&flted_28_70=@A&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>q::ll{}<n,flted_32_95,@L>@L * x::node<p@L,q>&q_120=q & a_119=p & 2<n & flted_32_95=@L&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_120) ==> ]]
+
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>x::node<p@A,q>&q_158=q & a_157=p & 2<n & flted_36_133=@L&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_158) ==> ]]
+
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>q::ll{}<n,flted_40_171,@A>@L * x::node<p@A,q>&q_199=q & a_198=p & v=@A & 2<n & flted_40_171=@L&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_199) ==> ]]
+
+
+
+Entail 6: Valid. 
+
+Residue:
+ <1>q::ll{}<n,flted_44_212,v>@L * x::node<p@v,q>&q_238=q & a_237=p & @L<:v & 2<n & flted_44_212=@L&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_238) ==> ]]
+
+
+
+Entail 7: Fail.(must) cause:UnionR[ 1<n & x!=null & 0<=n |-  flted_48_275=0 & x=null. LOCS:[48;18;15] (RHS: contradiction), false |-  flted_17_282+1=flted_48_275. LOCS:[0;17] (RHS: contradiction)]
+
+Residue:
+ <1>x::node<p,q> * q::ll{}<n,Anon_12,Anon_13>&1<n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Entail 8: Fail.(must) cause: x!=null & 0<=Anon_17 |-  m_312=0 & x=null. LOCS:[52;18;15] (RHS: contradiction)
+
+Residue:
+ <1>x::node<Anon_16,flted_52_286> * y::ll{}<Anon_17,Anon_18,Anon_19>&flted_52_286=null&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Entail 9: Fail.(may) cause:do_unmatched_rhs : q::ll{}<n_354,v1,v2>@v1
+
+Residue:
+ <1>x::node<a@[, @ann_f_r_355],r_356@A> * r::ll{}<n,flted_56_328,>&flted_56_328=@M & ann_f_r_355=v2 & @M<:ann_f_r_355&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Entail 10: Valid. 
+
+Residue:
+ <1>emp&q_388=r & a_387=a & flted_61_363=@M & a_394=b & q_395=r2&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(r,q_388) ==>  COND ==>  Match(r2,q_395) ==> ]]
+
+
+
+Entail 11: Fail.(must) cause:UnionR[ x!=null & r!=null & 0<=n & x!=r |-  flted_69_432=0 & x=null. LOCS:[69;18;0;15] (RHS: contradiction),UnionR[ false |-  flted_17_439=0 & q_434=null & @M<:v2_419. LOCS:[15;0] (RHS: contradiction), false |-  v2<:v2_419 & @M<:v1 & @M<:v2_419 & @M<:v2_419. LOCS:[0] (RHS: contradiction)]]
+
+Residue:
+ <1>x::node<a,r> * r::node<b,r2> * r2::ll{}<n,v1,v2>&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Entail 12: Fail.(must) cause:UnionR[ x!=null & r!=null & 0<=n & x!=r |-  flted_73_482=0 & x=null. LOCS:[73;18;0;15] (RHS: contradiction),UnionR[ false |-  flted_17_489=0 & q_484=null & @M<:Anon_469. LOCS:[15;0] (RHS: contradiction), false |-  Anon_25<:Anon_469 & @M<:Anon_24 & @M<:Anon_469 & @M<:Anon_469. LOCS:[0] (RHS: contradiction)]]
+
+Residue:
+ <1>x::node<Anon_22,r> * r::node<Anon_23,r2> * r2::ll{}<n,Anon_24,Anon_25>&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Entail 13: Fail.(must) cause:mismatched imm annotation for view ll
+
+Residue:
+ <1>emp&flted_77_508=@A&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+

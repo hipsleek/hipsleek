@@ -1,0 +1,37 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Fail.(may) cause:UnionR[do_unmatched_rhs : y::ll{}<m_55>@L,do_unmatched_rhs : y::ll{}<m_55>@L]
+
+
+Entail 2: Fail.(must) cause:mismatched imm annotation for view ll
+
+
+Entail 3: Fail.(may) cause: ((1<=n & y!=null) | (n=0 & y=null)) |-  n=n1. LOCS:[1;0;16] (may-bug)
+
+
+Entail 4: Fail.(may) cause: (((1<=m_82 & x!=null) | (m_82=0 & x=null))) & (((1<=m_82 & z!=null) | 
+(m_82=0 & z=null))) |-  m_82=n1. LOCS:[1;0;22] (may-bug)
+
+Residue:
+ <1>x::ll{}<m>&m_82=m & 0<n & 0<=a & 0<=n&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  Match(z,z) ==> ]]
+
+
+
+Entail 5: Fail.(may) cause:UnionR[UnionR[ true |-  0=m2. LOCS:[0;28] (may-bug), true |-  0=m2. LOCS:[0;28] (may-bug)], true |-  0=m2. LOCS:[0;28] (may-bug)]
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail 6: Fail.(may) cause:do_unmatched_rhs : t::ll{}<a2_153>@L
+
+Residue:
+ <1>x::ll{}<n>@L&m_131=m & 0<n&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+

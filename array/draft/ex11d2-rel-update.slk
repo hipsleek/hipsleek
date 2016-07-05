@@ -1,0 +1,53 @@
+//hip_include '../prelude_aux.ss'
+//#option --ato
+relation P(int a).
+relation Q(int a,int b,int r).
+relation R(int a,int[] b,int r).
+
+infer [P,Q]  res=k & k=a' & P(a) |-  emp&Q(a,a',res) . 
+print residue.
+
+infer [P,R]  res=k & k=aa[4] & P(a) |-  emp&R(a,aa,res) . 
+print residue.
+
+/*
+# ex11d2.slk
+
+infer [P,Q]  res=k & k=a' & P(a) |-  emp&Q(a,a',res) . 
+Residue:
+ <1>emp&P(a) & k=a' & res=k&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN Q: ( a'=res & P(a)) -->  Q(a,a',res)]
+
+(==cvutil.ml#1513==)
+infer_collect_rel@1
+infer_collect_rel inp1 : es_formula: emp&P(a) & k=a' & res=k&{FLOW,(4,5)=__norm#E}[]
+ es_infer_vars_rel: [P; Q]
+ es_final_error: None
+infer_collect_rel inp2 :[P,Q]
+infer_collect_rel inp3 : true
+infer_collect_rel inp4 : P(a) & k=a' & res=k
+infer_collect_rel inp5 : Q(a,a',res)
+infer_collect_rel@1 EXIT:( P(a) & k=a' & res=k,2: true,3:[RELDEFN Q: ( a'=res & P(a)) -->  Q(a,a',res)],4:None,5:[])
+
+
+intermediate k not being picked up for aa[4]?
+
+(==cvutil.ml#1513==)
+infer_collect_rel@2
+infer_collect_rel inp1 : es_formula: emp&P(a) & k=aa[4] & res=k&{FLOW,(4,5)=__norm#E}[]
+ es_infer_vars_rel: [P; R]
+ es_final_error: None
+infer_collect_rel inp2 :[P,R]
+infer_collect_rel inp3 : true
+infer_collect_rel inp4 : P(a) & k=aa[4] & res=k
+infer_collect_rel inp5 : R(a,aa,res)
+infer_collect_rel@2 EXIT:( P(a) & k=aa[4] & res=k,2: true,3:[RELDEFN R: ( true & P(a)) -->  R(a,aa,res)],4:None,5:[])
+
+infer [P,R]  res=k & k=aa[4] & P(a) |-  emp&R(a,aa,res) . 
+Residue:
+ <1>emp&P(a) & k=aa[4] & res=k&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN R: ( true & P(a)) -->  R(a,aa,res)]
+
+
+
+*/

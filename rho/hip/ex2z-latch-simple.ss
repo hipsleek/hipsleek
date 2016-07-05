@@ -10,9 +10,9 @@ data cell{
   int v;
 }
 
-pred_prim LatchIn{-%P@Split}<x:cell>;
+pred_prim LatchIn{-%P@Split}<>;
 
-pred_prim LatchOut{+%P@Split}<x:cell>;
+pred_prim LatchOut{+%P@Split}<>;
 pred_prim CNT<n:int>
 inv n>=(-1);
 
@@ -21,18 +21,20 @@ inv n>=(-1);
 lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>;
 
 /********************************************/
-CDL create_latch(int n) // with %P
+CDL create_latch(int n) with %P
   requires n>0
-  ensures (exists x: res::LatchIn{-x::cell<10>}<x> * res::LatchOut{+x::cell<10>}<x> * res::CNT<n>);
+  ensures res::LatchIn{-%P}<> * res::LatchOut{+%P}<> * res::CNT<n>;
+  requires n=0
+  ensures res::CNT<(-1)>;
 
-void countDown(CDL c,cell x)
-  requires c::LatchIn{-%P}<x> * %P * c::CNT<n> & n>0
+void countDown(CDL c)
+  requires c::LatchIn{-%P}<> * %P * c::CNT<n> & n>0
   ensures c::CNT<n-1>;
   requires c::CNT<(-1)> 
   ensures c::CNT<(-1)>;
 
-void await(CDL c,cell x)
-  requires c::LatchOut{+%P}<x> * c::CNT<0>
+void await(CDL c)
+  requires c::LatchOut{+%P}<> * c::CNT<0>
   ensures c::CNT<(-1)> * %P;
   requires c::CNT<(-1)>
   ensures c::CNT<(-1)> * %P;
@@ -46,15 +48,14 @@ void main()
   requires emp ensures emp;
 {
   cell x = new cell(10);
-  CDL c 
-   = create_latch(1);
+  CDL c = create_latch(1) with x'::cell<_>;
   dprint;
-  countDown(c,x);
+  countDown(c);
 
 
-  await(c,x);
+  await(c);
 
-  //assert x'::cell<10>;
+  assert x'::cell<10>;
 
   //destroyCell(x);
 }

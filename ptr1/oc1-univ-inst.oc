@@ -1,0 +1,27 @@
+X1:={[i,n]->[m]:i<m & m<=n & 0<=i};
+X1;
+
+Inst:={[i,n]->[m]:m=i+1};
+Inst;
+
+Inst2:={[i,n]->[m]:m=i+2};
+Inst2;
+
+X1 intersection Inst;
+
+domain(X1);
+
+domain(X1) subset domain(X1 intersection Inst);
+domain(X1) subset domain(X1 intersection Inst2);
+
+X2:={[n]->[a,b]:n=7 & 0<=a,b & n=a+b};
+Inst:={[n]->[a,b]:a=5};
+domain(X2) subset domain(X2 intersection Inst);
+
+Inst:={[n]->[a,b]:a>7};
+domain(X2) subset domain(X2 intersection Inst);
+
+Inst:={[n]->[a,b]:a=3 & b>2};
+domain(X2) subset domain(X2 intersection Inst);
+
+X2 intersection Inst;

@@ -1,0 +1,36 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "bugs/ll-append1.ss"
+Parsing file "bugs/ll-append1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure append$node~node... 
+Procedure append$node~node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1390: ( pre_1390(n,m_1422) & n=1+n_1421 & 1<=n_1421 & 0<=m_1422) -->  pre_1390(n_1421,m_1422),
+RELASS [pre_1390]: ( pre_1390(n,m)) -->  (n!=0 | 0>m),
+RELDEFN post_1391: ( n=1 & r_1373=m+1 & 0<=m & pre_1390(n,m)) -->  post_1391(r_1373,n,m,flow),
+RELDEFN post_1391: ( r_1437+1=r_1373 & n_1421+1=n & 2<=r_1373 & 1<=n & 0<=m & 
+post_1391(r_1437,n_1421,m,flow) & pre_1390(n,m)) -->  post_1391(r_1373,n,m,flow)]
+*************************************
+
+Post Inference result:
+append$node~node
+ EBase exists (Expl)[](Impl)[n; m](ex)[]x::ll{}<n> * y::ll{}<m>&((n!=0 | 
+       m<=(0-1))) & 1<=n & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists r_1373: x::ll{}<r_1373>&0<=n & 0<=m & n>=1 & r_1373>=n & 
+           r_1373=m+n&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 1.048064 second(s)
+	Time spent in main process: 0.872054 second(s)
+	Time spent in child processes: 0.17601 second(s)
+

@@ -1,0 +1,20 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "slk/bug-8a2-lemma-norm.slk",Line:4,Col:10
+
+ERROR: at slk/bug-8a2-lemma-norm.slk_4:10_4:20
+Message: compute_view_fw_bw: data not found: CNT
+
+CheckNorm (1) :  x::cell<n> * c2::CNT{}<flted_12_34>&flted_12_34+1=0 & flted_12_33=1 & 
+c2<=c1 & c1<=c2 & 0<n & c1=c2&{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (2) :  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (3) :  x::cell<n> * c2::CNT{}<flted_33_72>&flted_33_72+1=0 & flted_33_71=1 & 
+exists(z:c1=z & c2=z) & 0<n & c1=c2&{FLOW,(4,5)=__norm#E}[]
+
+

@@ -1,0 +1,53 @@
+data arr {
+  int val;
+  arr next;
+}.
+
+pred arr_seg<p,n:int> ==
+  self=p & n=0
+  or self::arr<_,q> * q::arr_seg<p,n-1> 
+  inv n>=0 .
+
+//(4)
+checkentail x::arr_seg<p,n> & n>=2
+   |- x::arr<_,q1> * q1::arr<_,q2>.
+print residue.
+expect Valid.
+
+/*
+# ex1e3
+
+# why are there nested timer stop?
+
+Nested Timer(stop)
+Nested Timer(stop)
+
+
+# what are vl_self_pts?
+
+
+!!! **context.ml#2605:unfold_flag:false
+!!! **context.ml#2606:sub_ann:true
+!!! **context.ml#2607:new_orig_l:false
+!!! **context.ml#2608:vl_self_pts:[arr_seg]
+
+# Why is it important to find predicates where self
+pt to. Does it cause problem for unfolding?
+However, ptr arithmetic works differently..
+
+  view_pt_by_self : ident list;
+
+!!! **context.ml#2604:is_l_lock:false
+!!! **context.ml#2605:unfold_flag:true
+!!! **context.ml#2606:sub_ann:true
+!!! **context.ml#2607:new_orig_l:true
+!!! **context.ml#2608:vl_self_pts:[]Nested Timer(stop)
+
+
+# why are there nested timer stop?
+
+Nested Timer(stop)
+Nested Timer(stop)
+
+*/
+

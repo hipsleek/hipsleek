@@ -1,0 +1,60 @@
+data arrI {
+  int val;
+}.
+
+relation Univ(int x).
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<mmm & mmm<=n 
+   -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
+
+checkentail xx::arr_seg<i,n>  & i<n  
+  |- (exists mm: xx::arr_seg<mm,n>@L & mm=i+1).
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n>  & i<n  
+  |- xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+*/
+
+checkentail xx::arr_seg<i,i+3>    
+  |- x::arrI<_>@L * y::arrI<_> & x=xx+i & y=x+1.
+print residue.
+expect Valid.
+
+
+/*
+# ex6e3f7.slk
+
+# lemma and @L not working properly as hole is refilled
+  with original predicate.
+
+# why residue duplicated?
+
+### estate : ex_formula : xx::arr_seg<i,mmm_103>@M * xx::arr_seg<mmm_109,n>@M * 
+              (Hole[101])&mmm_109=mmm_103 & i<mmm_103 & mmm_103<=n & 
+                          Univ(mmm_103) & i<n&{FLOW,(20,21)=__norm#E}[]
+
+
+
+ <1>xx::arr_seg<i,mmm_103>@M * xx::arr_seg<mmm_109,n>@M * xx::arr_seg<i,n>@M&mm=
+                                                                    i+1 & 
+                                                                    mmm_109=mmm_103 & 
+                                                                    i<mmm_103 & 
+                                                                    mmm_103<=n & 
+                                                                    Univ(mmm_103) & 
+                                                                    i<n & 
+                                                                    mm=mmm_109&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> lem_13(xx,xx)) ==>  COND ==>  Match(xx,xx)]]
+
+
+*/
+

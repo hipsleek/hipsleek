@@ -1,0 +1,1695 @@
+data node2 {
+  int val;
+  node2 left;
+  node2 right;
+}.
+ pred complete<n:int,nmin:int> == 
+  emp&self=null & n=0 & nmin=0 or
+(exists flted_25_33,
+  flted_25_34: self::node2<Anon_13,l,r> * l::complete{}<flted_25_34,nmin1> * 
+  r::complete{}<flted_25_33,nmin2>&flted_25_34+1=n & flted_25_33+2=n & 
+  exists(min_29:nmin=1+min_29 & min_29=min(nmin1,nmin2)))
+   or
+(exists flted_26_35,flted_26_36: self::node2<Anon_14,l,r> * 
+  l::complete{}<flted_26_36,nmin1> * r::complete{}<flted_26_35,nmin2>&
+  flted_26_36+1=n & flted_26_35+1=n & exists(min_31:nmin=1+min_31 & 
+  min_31=min(nmin1,nmin2)))
+  inv 0<=nmin & nmin<=n.
+
+/*
+// id: 0; line: 24; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0 & nmin=0) | (1<=nmin & nmin<n & self!=null) | 
+(1<=nmin & nmin<=n & self!=null))
+ |-  emp&nmin<=n & 0<=nmin.
+expect Valid.
+
+// id: 1; line: 24; kind: Pred_Check_Inv
+ checkentail emp&((self=null & n=0 & nmin=0) | (1<=nmin & nmin<n & self!=null) | 
+(1<=nmin & nmin<=n & self!=null))
+ |-  emp&nmin<=n & 0<=nmin.
+expect Valid.
+
+// id: 2; line: 41; kind: PRE
+ checkentail htrue & b'<=a' & b'=b & a'=a
+ |-  emp.
+expect Valid.
+
+// id: 3; line: 41; kind: PRE
+ checkentail htrue & a'<b' & b'=b & a'=a
+ |-  emp.
+expect Valid.
+
+// id: 4; line: 0; kind: POST
+ checkentail htrue & res=a' & a'=a & b'=b & b'<=a' & v'
+ |-  emp&((b<=a | res=b)) & ((a<b | res=a)).
+expect Valid.
+
+// id: 5; line: 0; kind: POST
+ checkentail htrue & res=b' & a'=a & b'=b & a'<b' & !(v')
+ |-  emp&((b<=a | res=b)) & ((a<b | res=a)).
+expect Valid.
+*/
+
+// id: 6; line: 61; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'=null & t'=t
+ |-  htrue.
+expect Valid.
+
+// id: 7; line: 61; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'=null & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 8; line: 61; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 9; line: 61; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 10; line: 62; kind: BIND
+ checkentail (exists flted,flted1,Anon,l,nmin1,r,nmin2: t'::node2<Anon,l,r> * 
+l::complete{}<flted1,nmin1> * r::complete{}<flted,nmin2> & t'=t & 
+t'!=null & v1' & exists(min_29:nmin=1+min_29 & min_29=min(nmin1,nmin2)) & 
+flted+2=n & flted1+1=n)
+ |-  t'::node2<val',left',right'>@L.
+expect Valid.
+ 
+// id: 12; line: 62; kind: BIND
+ checkentail (exists flted2,flted3,Anon1,l1,nmin3,r1,nmin4: t'::node2<Anon1,l1,r1> * 
+l1::complete{}<flted3,nmin3> * r1::complete{}<flted2,nmin4> & 
+t'=t & t'!=null & v1' & exists(min_31:nmin=1+min_31 & min_31=min(nmin3,
+nmin4)) & flted2+1=n & flted3+1=n)
+ |-  t'::node2<val',left',right'>@L.
+expect Valid.
+ 
+// id: 14; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon2,l2,r2> * l2::complete{}<flted5,nmin5> * 
+r2::complete{}<flted4,nmin6> & v2'=l2 & t'=t & t'!=null & v1' & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & flted4+2=n & flted5+
+1=n
+ |-  v2'::complete{}<n1,nmin7>.
+expect Valid.
+ 
+// id: 16; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon2,l2,r2> * r2::complete{}<flted4,nmin6> & 
+nmin7=nmin5 & n1=flted5 & v2'=l2 & t'=t & t'!=null & v1' & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & flted4+2=n & flted5+
+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 17; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon3,l3,r3> * l3::complete{}<flted7,nmin8> * 
+r3::complete{}<flted6,nmin9> & v2'=l3 & t'=t & t'!=null & v1' & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & flted6+1=n & flted7+
+1=n
+ |-  v2'::complete{}<n1,nmin7>.
+expect Valid.
+ 
+// id: 19; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon3,l3,r3> * r3::complete{}<flted6,nmin9> & 
+nmin7=nmin8 & n1=flted7 & v2'=l3 & t'=t & t'!=null & v1' & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & flted6+1=n & flted7+
+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 20; line: 62; kind: BIND
+ checkentail t'::node2<Anon2,l2,r2> * r2::complete{}<flted4,nmin6> * 
+l2::complete{}<n1,nmin7> & nmin7<=n1 & 0<=nmin7 & v3'=n1 & 
+nmin5<=flted5 & 0<=nmin5 & nmin7=nmin5 & n1=flted5 & t'=t & t'!=null & v1' & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & flted4+2=n & flted5+
+1=n
+ |-  t'::node2<val1',left1',right1'>@L.
+expect Valid.
+ 
+// id: 22; line: 62; kind: BIND
+ checkentail t'::node2<Anon3,l3,r3> * r3::complete{}<flted6,nmin9> * 
+l3::complete{}<n1,nmin7> & nmin7<=n1 & 0<=nmin7 & v3'=n1 & 
+nmin8<=flted7 & 0<=nmin8 & nmin7=nmin8 & n1=flted7 & t'=t & t'!=null & v1' & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & flted6+1=n & flted7+
+1=n
+ |-  t'::node2<val1',left1',right1'>@L.
+expect Valid.
+ 
+// id: 24; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon2,l2,r2> * r2::complete{}<flted4,nmin6> * 
+l2::complete{}<n1,nmin7> & v4'=r2 & nmin7<=n1 & 0<=nmin7 & 
+v3'=n1 & nmin5<=flted5 & 0<=nmin5 & nmin7=nmin5 & n1=flted5 & t'=t & 
+t'!=null & v1' & exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & 
+flted4+2=n & flted5+1=n
+ |-  v4'::complete{}<n2,nmin10>.
+expect Valid.
+ 
+// id: 26; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon2,l2,r2> * l2::complete{}<n1,nmin7> & 
+nmin10=nmin6 & n2=flted4 & v4'=r2 & nmin7<=n1 & 0<=nmin7 & v3'=n1 & 
+nmin5<=flted5 & 0<=nmin5 & nmin7=nmin5 & n1=flted5 & t'=t & t'!=null & v1' & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & flted4+2=n & flted5+
+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 27; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon3,l3,r3> * r3::complete{}<flted6,nmin9> * 
+l3::complete{}<n1,nmin7> & v4'=r3 & nmin7<=n1 & 0<=nmin7 & 
+v3'=n1 & nmin8<=flted7 & 0<=nmin8 & nmin7=nmin8 & n1=flted7 & t'=t & 
+t'!=null & v1' & exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & 
+flted6+1=n & flted7+1=n
+ |-  v4'::complete{}<n2,nmin10>.
+expect Valid.
+ 
+// id: 29; line: 62; kind: PRE_REC
+ checkentail t'::node2<Anon3,l3,r3> * l3::complete{}<n1,nmin7> & 
+nmin10=nmin9 & n2=flted6 & v4'=r3 & nmin7<=n1 & 0<=nmin7 & v3'=n1 & 
+nmin8<=flted7 & 0<=nmin8 & nmin7=nmin8 & n1=flted7 & t'=t & t'!=null & v1' & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & flted6+1=n & flted7+
+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 30; line: 62; kind: PRE
+ checkentail t'::node2<Anon2,l2,r2> * l2::complete{}<n1,nmin7> * 
+r2::complete{}<n2,nmin10> & nmin10<=n2 & 0<=nmin10 & v5'=n2 & 
+nmin6<=flted4 & 0<=nmin6 & nmin10=nmin6 & n2=flted4 & nmin7<=n1 & 0<=nmin7 & 
+v3'=n1 & nmin5<=flted5 & 0<=nmin5 & nmin7=nmin5 & n1=flted5 & t'=t & 
+t'!=null & v1' & exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & 
+flted4+2=n & flted5+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 31; line: 62; kind: PRE
+ checkentail t'::node2<Anon2,l2,r2> * l2::complete{}<n1,nmin7> * 
+r2::complete{}<n2,nmin10> & nmin10<=n2 & 0<=nmin10 & v5'=n2 & 
+nmin6<=flted4 & 0<=nmin6 & nmin10=nmin6 & n2=flted4 & nmin7<=n1 & 0<=nmin7 & 
+v3'=n1 & nmin5<=flted5 & 0<=nmin5 & nmin7=nmin5 & n1=flted5 & t'=t & 
+t'!=null & v1' & exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & 
+flted4+2=n & flted5+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 32; line: 62; kind: PRE
+ checkentail t'::node2<Anon3,l3,r3> * l3::complete{}<n1,nmin7> * 
+r3::complete{}<n2,nmin10> & nmin10<=n2 & 0<=nmin10 & v5'=n2 & 
+nmin9<=flted6 & 0<=nmin9 & nmin10=nmin9 & n2=flted6 & nmin7<=n1 & 0<=nmin7 & 
+v3'=n1 & nmin8<=flted7 & 0<=nmin8 & nmin7=nmin8 & n1=flted7 & t'=t & 
+t'!=null & v1' & exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & 
+flted6+1=n & flted7+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 33; line: 62; kind: PRE
+ checkentail t'::node2<Anon3,l3,r3> * l3::complete{}<n1,nmin7> * 
+r3::complete{}<n2,nmin10> & nmin10<=n2 & 0<=nmin10 & v5'=n2 & 
+nmin9<=flted6 & 0<=nmin9 & nmin10=nmin9 & n2=flted6 & nmin7<=n1 & 0<=nmin7 & 
+v3'=n1 & nmin8<=flted7 & 0<=nmin8 & nmin7=nmin8 & n1=flted7 & t'=t & 
+t'!=null & v1' & exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & 
+flted6+1=n & flted7+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 34; line: 62; kind: PRE
+ checkentail t'::node2<Anon2,l2,r2> * l2::complete{}<n1,nmin7> * 
+r2::complete{}<n2,nmin10> & v6'=1 & ((n2<=n1 | v7'=n2)) & 
+((n1<n2 | v7'=n1)) & nmin10<=n2 & 0<=nmin10 & nmin6<=flted4 & 0<=nmin6 & 
+nmin10=nmin6 & n2=flted4 & nmin7<=n1 & 0<=nmin7 & nmin5<=flted5 & 0<=nmin5 & 
+nmin7=nmin5 & n1=flted5 & t'=t & t'!=null & v1' & exists(min_29:nmin=1+
+min_29 & min_29=min(nmin5,nmin6)) & flted4+2=n & flted5+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 35; line: 62; kind: PRE
+ checkentail t'::node2<Anon2,l2,r2> * l2::complete{}<n1,nmin7> * 
+r2::complete{}<n2,nmin10> & v6'=1 & ((n2<=n1 | v7'=n2)) & 
+((n1<n2 | v7'=n1)) & nmin10<=n2 & 0<=nmin10 & nmin6<=flted4 & 0<=nmin6 & 
+nmin10=nmin6 & n2=flted4 & nmin7<=n1 & 0<=nmin7 & nmin5<=flted5 & 0<=nmin5 & 
+nmin7=nmin5 & n1=flted5 & t'=t & t'!=null & v1' & exists(min_29:nmin=1+
+min_29 & min_29=min(nmin5,nmin6)) & flted4+2=n & flted5+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 36; line: 62; kind: PRE
+ checkentail t'::node2<Anon3,l3,r3> * l3::complete{}<n1,nmin7> * 
+r3::complete{}<n2,nmin10> & v6'=1 & ((n2<=n1 | v7'=n2)) & 
+((n1<n2 | v7'=n1)) & nmin10<=n2 & 0<=nmin10 & nmin9<=flted6 & 0<=nmin9 & 
+nmin10=nmin9 & n2=flted6 & nmin7<=n1 & 0<=nmin7 & nmin8<=flted7 & 0<=nmin8 & 
+nmin7=nmin8 & n1=flted7 & t'=t & t'!=null & v1' & exists(min_31:nmin=1+
+min_31 & min_31=min(nmin8,nmin9)) & flted6+1=n & flted7+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 37; line: 62; kind: PRE
+ checkentail t'::node2<Anon3,l3,r3> * l3::complete{}<n1,nmin7> * 
+r3::complete{}<n2,nmin10> & v6'=1 & ((n2<=n1 | v7'=n2)) & 
+((n1<n2 | v7'=n1)) & nmin10<=n2 & 0<=nmin10 & nmin9<=flted6 & 0<=nmin9 & 
+nmin10=nmin9 & n2=flted6 & nmin7<=n1 & 0<=nmin7 & nmin8<=flted7 & 0<=nmin8 & 
+nmin7=nmin8 & n1=flted7 & t'=t & t'!=null & v1' & exists(min_31:nmin=1+
+min_31 & min_31=min(nmin8,nmin9)) & flted6+1=n & flted7+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 38; line: 0; kind: POST
+ checkentail (exists v7': t'::node2<Anon2,l2,r2> * l2::complete{}<n1,nmin7> * 
+r2::complete{}<n2,nmin10> & flted5+1=n & flted4+2=n & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin5,nmin6)) & v1' & t'!=null & 
+t'=t & n1=flted5 & nmin7=nmin5 & 0<=nmin5 & nmin5<=flted5 & 0<=nmin7 & 
+nmin7<=n1 & n2=flted4 & nmin10=nmin6 & 0<=nmin6 & nmin6<=flted4 & 
+0<=nmin10 & nmin10<=n2 & ((n1<n2 | v7'=n1)) & ((n2<=n1 | v7'=n2)) & v8'=1+
+v7' & res=v8')
+ |-  (exists n3,nmin11: t::complete{}<n3,nmin11>&nmin11=nmin & n3=n & res=n & 
+nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 51; line: 0; kind: POST
+ checkentail (exists v7': t'::node2<Anon3,l3,r3> * l3::complete{}<n1,nmin7> * 
+r3::complete{}<n2,nmin10> & flted7+1=n & flted6+1=n & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin8,nmin9)) & v1' & t'!=null & 
+t'=t & n1=flted7 & nmin7=nmin8 & 0<=nmin8 & nmin8<=flted7 & 0<=nmin7 & 
+nmin7<=n1 & n2=flted6 & nmin10=nmin9 & 0<=nmin9 & nmin9<=flted6 & 
+0<=nmin10 & nmin10<=n2 & ((n1<n2 | v7'=n1)) & ((n2<=n1 | v7'=n2)) & v8'=1+
+v7' & res=v8')
+ |-  (exists n3,nmin11: t::complete{}<n3,nmin11>&nmin11=nmin & n3=n & res=n & 
+nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 64; line: 0; kind: POST
+ checkentail t::complete{}<n,nmin> & res=v9' & v9'=0 & t'=t & t'=null & !(v1')
+ |-  (exists n3,nmin11: t::complete{}<n3,nmin11>&nmin11=nmin & n3=n & res=n & 
+nmin<=n & 0<=nmin).
+expect Valid.
+
+/*
+// id: 68; line: 51; kind: PRE
+ checkentail htrue & b'<=a' & b'=b & a'=a
+ |-  emp.
+expect Valid.
+
+// id: 69; line: 51; kind: PRE
+ checkentail htrue & a'<b' & b'=b & a'=a
+ |-  emp.
+expect Valid.
+
+// id: 70; line: 0; kind: POST
+ checkentail htrue & res=b' & a'=a & b'=b & b'<=a' & v10'
+ |-  emp&((b<=a | res=a)) & ((a<b | res=b)).
+expect Valid.
+
+// id: 71; line: 0; kind: POST
+ checkentail htrue & res=a' & a'=a & b'=b & a'<b' & !(v10')
+ |-  emp&((b<=a | res=a)) & ((a<b | res=b)).
+expect Valid.
+*/
+
+// id: 72; line: 70; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'=null & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 73; line: 70; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'=null & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 74; line: 70; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 75; line: 70; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 76; line: 71; kind: BIND
+ checkentail (exists flted8,flted9,Anon4,l4,nmin12,r4,nmin13: t'::node2<Anon4,l4,r4> * 
+l4::complete{}<flted9,nmin12> * r4::complete{}<flted8,nmin13> & 
+t'=t & t'!=null & v11' & exists(min_29:nmin=1+min_29 & min_29=min(nmin12,
+nmin13)) & flted8+2=n & flted9+1=n)
+ |-  t'::node2<val2',left2',right2'>@L.
+expect Valid.
+ 
+// id: 78; line: 71; kind: BIND
+ checkentail (exists flted10,flted11,Anon5,l5,nmin14,r5,nmin15: t'::node2<Anon5,l5,r5> * 
+l5::complete{}<flted11,nmin14> * r5::complete{}<flted10,nmin15> & 
+t'=t & t'!=null & v11' & exists(min_31:nmin=1+min_31 & min_31=min(nmin14,
+nmin15)) & flted10+1=n & flted11+1=n)
+ |-  t'::node2<val2',left2',right2'>@L.
+expect Valid.
+ 
+// id: 80; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon6,l6,r6> * l6::complete{}<flted13,nmin16> * 
+r6::complete{}<flted12,nmin17> & v12'=l6 & t'=t & t'!=null & 
+v11' & exists(min_29:nmin=1+min_29 & min_29=min(nmin16,nmin17)) & flted12+
+2=n & flted13+1=n
+ |-  v12'::complete{}<n4,nmin18>.
+expect Valid.
+ 
+// id: 82; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon6,l6,r6> * r6::complete{}<flted12,nmin17> & 
+nmin18=nmin16 & n4=flted13 & v12'=l6 & t'=t & t'!=null & v11' & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin16,nmin17)) & flted12+2=n & 
+flted13+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 83; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon7,l7,r7> * l7::complete{}<flted15,nmin19> * 
+r7::complete{}<flted14,nmin20> & v12'=l7 & t'=t & t'!=null & 
+v11' & exists(min_31:nmin=1+min_31 & min_31=min(nmin19,nmin20)) & flted14+
+1=n & flted15+1=n
+ |-  v12'::complete{}<n4,nmin18>.
+expect Valid.
+ 
+// id: 85; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon7,l7,r7> * r7::complete{}<flted14,nmin20> & 
+nmin18=nmin19 & n4=flted15 & v12'=l7 & t'=t & t'!=null & v11' & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin19,nmin20)) & flted14+1=n & 
+flted15+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 86; line: 71; kind: BIND
+ checkentail t'::node2<Anon6,l6,r6> * r6::complete{}<flted12,nmin17> * 
+l6::complete{}<n4,nmin18> & nmin18<=n4 & 0<=nmin18 & v13'=nmin18 & 
+nmin16<=flted13 & 0<=nmin16 & nmin18=nmin16 & n4=flted13 & t'=t & t'!=null & 
+v11' & exists(min_29:nmin=1+min_29 & min_29=min(nmin16,nmin17)) & flted12+
+2=n & flted13+1=n
+ |-  t'::node2<val3',left3',right3'>@L.
+expect Valid.
+ 
+// id: 88; line: 71; kind: BIND
+ checkentail t'::node2<Anon7,l7,r7> * r7::complete{}<flted14,nmin20> * 
+l7::complete{}<n4,nmin18> & nmin18<=n4 & 0<=nmin18 & v13'=nmin18 & 
+nmin19<=flted15 & 0<=nmin19 & nmin18=nmin19 & n4=flted15 & t'=t & t'!=null & 
+v11' & exists(min_31:nmin=1+min_31 & min_31=min(nmin19,nmin20)) & flted14+
+1=n & flted15+1=n
+ |-  t'::node2<val3',left3',right3'>@L.
+expect Valid.
+ 
+// id: 90; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon6,l6,r6> * r6::complete{}<flted12,nmin17> * 
+l6::complete{}<n4,nmin18> & v14'=r6 & nmin18<=n4 & 0<=nmin18 & 
+v13'=nmin18 & nmin16<=flted13 & 0<=nmin16 & nmin18=nmin16 & n4=flted13 & 
+t'=t & t'!=null & v11' & exists(min_29:nmin=1+min_29 & min_29=min(nmin16,
+nmin17)) & flted12+2=n & flted13+1=n
+ |-  v14'::complete{}<n5,nmin21>.
+expect Valid.
+ 
+// id: 92; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon6,l6,r6> * l6::complete{}<n4,nmin18> & 
+nmin21=nmin17 & n5=flted12 & v14'=r6 & nmin18<=n4 & 0<=nmin18 & 
+v13'=nmin18 & nmin16<=flted13 & 0<=nmin16 & nmin18=nmin16 & n4=flted13 & 
+t'=t & t'!=null & v11' & exists(min_29:nmin=1+min_29 & min_29=min(nmin16,
+nmin17)) & flted12+2=n & flted13+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 93; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon7,l7,r7> * r7::complete{}<flted14,nmin20> * 
+l7::complete{}<n4,nmin18> & v14'=r7 & nmin18<=n4 & 0<=nmin18 & 
+v13'=nmin18 & nmin19<=flted15 & 0<=nmin19 & nmin18=nmin19 & n4=flted15 & 
+t'=t & t'!=null & v11' & exists(min_31:nmin=1+min_31 & min_31=min(nmin19,
+nmin20)) & flted14+1=n & flted15+1=n
+ |-  v14'::complete{}<n5,nmin21>.
+expect Valid.
+ 
+// id: 95; line: 71; kind: PRE_REC
+ checkentail t'::node2<Anon7,l7,r7> * l7::complete{}<n4,nmin18> & 
+nmin21=nmin20 & n5=flted14 & v14'=r7 & nmin18<=n4 & 0<=nmin18 & 
+v13'=nmin18 & nmin19<=flted15 & 0<=nmin19 & nmin18=nmin19 & n4=flted15 & 
+t'=t & t'!=null & v11' & exists(min_31:nmin=1+min_31 & min_31=min(nmin19,
+nmin20)) & flted14+1=n & flted15+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 96; line: 71; kind: PRE
+ checkentail t'::node2<Anon6,l6,r6> * l6::complete{}<n4,nmin18> * 
+r6::complete{}<n5,nmin21> & nmin21<=n5 & 0<=nmin21 & v15'=nmin21 & 
+nmin17<=flted12 & 0<=nmin17 & nmin21=nmin17 & n5=flted12 & nmin18<=n4 & 
+0<=nmin18 & v13'=nmin18 & nmin16<=flted13 & 0<=nmin16 & nmin18=nmin16 & 
+n4=flted13 & t'=t & t'!=null & v11' & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin16,nmin17)) & flted12+2=n & flted13+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 97; line: 71; kind: PRE
+ checkentail t'::node2<Anon6,l6,r6> * l6::complete{}<n4,nmin18> * 
+r6::complete{}<n5,nmin21> & nmin21<=n5 & 0<=nmin21 & v15'=nmin21 & 
+nmin17<=flted12 & 0<=nmin17 & nmin21=nmin17 & n5=flted12 & nmin18<=n4 & 
+0<=nmin18 & v13'=nmin18 & nmin16<=flted13 & 0<=nmin16 & nmin18=nmin16 & 
+n4=flted13 & t'=t & t'!=null & v11' & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin16,nmin17)) & flted12+2=n & flted13+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 98; line: 71; kind: PRE
+ checkentail t'::node2<Anon7,l7,r7> * l7::complete{}<n4,nmin18> * 
+r7::complete{}<n5,nmin21> & nmin21<=n5 & 0<=nmin21 & v15'=nmin21 & 
+nmin20<=flted14 & 0<=nmin20 & nmin21=nmin20 & n5=flted14 & nmin18<=n4 & 
+0<=nmin18 & v13'=nmin18 & nmin19<=flted15 & 0<=nmin19 & nmin18=nmin19 & 
+n4=flted15 & t'=t & t'!=null & v11' & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin19,nmin20)) & flted14+1=n & flted15+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 99; line: 71; kind: PRE
+ checkentail t'::node2<Anon7,l7,r7> * l7::complete{}<n4,nmin18> * 
+r7::complete{}<n5,nmin21> & nmin21<=n5 & 0<=nmin21 & v15'=nmin21 & 
+nmin20<=flted14 & 0<=nmin20 & nmin21=nmin20 & n5=flted14 & nmin18<=n4 & 
+0<=nmin18 & v13'=nmin18 & nmin19<=flted15 & 0<=nmin19 & nmin18=nmin19 & 
+n4=flted15 & t'=t & t'!=null & v11' & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin19,nmin20)) & flted14+1=n & flted15+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 100; line: 71; kind: PRE
+ checkentail t'::node2<Anon6,l6,r6> * l6::complete{}<n4,nmin18> * 
+r6::complete{}<n5,nmin21> & v16'=1 & ((nmin21<=nmin18 | 
+v17'=nmin18)) & ((nmin18<nmin21 | v17'=nmin21)) & nmin21<=n5 & 0<=nmin21 & 
+nmin17<=flted12 & 0<=nmin17 & nmin21=nmin17 & n5=flted12 & nmin18<=n4 & 
+0<=nmin18 & nmin16<=flted13 & 0<=nmin16 & nmin18=nmin16 & n4=flted13 & 
+t'=t & t'!=null & v11' & exists(min_29:nmin=1+min_29 & min_29=min(nmin16,
+nmin17)) & flted12+2=n & flted13+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 101; line: 71; kind: PRE
+ checkentail t'::node2<Anon6,l6,r6> * l6::complete{}<n4,nmin18> * 
+r6::complete{}<n5,nmin21> & v16'=1 & ((nmin21<=nmin18 | 
+v17'=nmin18)) & ((nmin18<nmin21 | v17'=nmin21)) & nmin21<=n5 & 0<=nmin21 & 
+nmin17<=flted12 & 0<=nmin17 & nmin21=nmin17 & n5=flted12 & nmin18<=n4 & 
+0<=nmin18 & nmin16<=flted13 & 0<=nmin16 & nmin18=nmin16 & n4=flted13 & 
+t'=t & t'!=null & v11' & exists(min_29:nmin=1+min_29 & min_29=min(nmin16,
+nmin17)) & flted12+2=n & flted13+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 102; line: 71; kind: PRE
+ checkentail t'::node2<Anon7,l7,r7> * l7::complete{}<n4,nmin18> * 
+r7::complete{}<n5,nmin21> & v16'=1 & ((nmin21<=nmin18 | 
+v17'=nmin18)) & ((nmin18<nmin21 | v17'=nmin21)) & nmin21<=n5 & 0<=nmin21 & 
+nmin20<=flted14 & 0<=nmin20 & nmin21=nmin20 & n5=flted14 & nmin18<=n4 & 
+0<=nmin18 & nmin19<=flted15 & 0<=nmin19 & nmin18=nmin19 & n4=flted15 & 
+t'=t & t'!=null & v11' & exists(min_31:nmin=1+min_31 & min_31=min(nmin19,
+nmin20)) & flted14+1=n & flted15+1=n
+ |-  htrue.
+expect Valid.
+ 
+// id: 103; line: 71; kind: PRE
+ checkentail t'::node2<Anon7,l7,r7> * l7::complete{}<n4,nmin18> * 
+r7::complete{}<n5,nmin21> & v16'=1 & ((nmin21<=nmin18 | 
+v17'=nmin18)) & ((nmin18<nmin21 | v17'=nmin21)) & nmin21<=n5 & 0<=nmin21 & 
+nmin20<=flted14 & 0<=nmin20 & nmin21=nmin20 & n5=flted14 & nmin18<=n4 & 
+0<=nmin18 & nmin19<=flted15 & 0<=nmin19 & nmin18=nmin19 & n4=flted15 & 
+t'=t & t'!=null & v11' & exists(min_31:nmin=1+min_31 & min_31=min(nmin19,
+nmin20)) & flted14+1=n & flted15+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 104; line: 0; kind: POST
+ checkentail (exists v17': t'::node2<Anon6,l6,r6> * l6::complete{}<n4,nmin18> * 
+r6::complete{}<n5,nmin21> & flted13+1=n & flted12+2=n & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin16,nmin17)) & v11' & t'!=null & 
+t'=t & n4=flted13 & nmin18=nmin16 & 0<=nmin16 & nmin16<=flted13 & 
+0<=nmin18 & nmin18<=n4 & n5=flted12 & nmin21=nmin17 & 0<=nmin17 & 
+nmin17<=flted12 & 0<=nmin21 & nmin21<=n5 & ((nmin18<nmin21 | v17'=nmin21)) & 
+((nmin21<=nmin18 | v17'=nmin18)) & v18'=1+v17' & res=v18')
+ |-  (exists n6,nmin22: t::complete{}<n6,nmin22>&nmin22=nmin & n6=n & res=nmin & 
+nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 117; line: 0; kind: POST
+ checkentail (exists v17': t'::node2<Anon7,l7,r7> * l7::complete{}<n4,nmin18> * 
+r7::complete{}<n5,nmin21> & flted15+1=n & flted14+1=n & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin19,nmin20)) & v11' & t'!=null & 
+t'=t & n4=flted15 & nmin18=nmin19 & 0<=nmin19 & nmin19<=flted15 & 
+0<=nmin18 & nmin18<=n4 & n5=flted14 & nmin21=nmin20 & 0<=nmin20 & 
+nmin20<=flted14 & 0<=nmin21 & nmin21<=n5 & ((nmin18<nmin21 | v17'=nmin21)) & 
+((nmin21<=nmin18 | v17'=nmin18)) & v18'=1+v17' & res=v18')
+ |-  (exists n6,nmin22: t::complete{}<n6,nmin22>&nmin22=nmin & n6=n & res=nmin & 
+nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 130; line: 0; kind: POST
+ checkentail t::complete{}<n,nmin> & res=v19' & v19'=0 & t'=t & t'=null & 
+!(v11')
+ |-  (exists n6,nmin22: t::complete{}<n6,nmin22>&nmin22=nmin & n6=n & res=nmin & 
+nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 134; line: 83; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & nmin<n & v20'=v & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 135; line: 83; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & nmin<n & v20'=v & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 136; line: 88; kind: BIND
+ checkentail (exists flted16,flted17,Anon8,l8,nmin23,r8,nmin24: t'::node2<Anon8,l8,r8> * 
+l8::complete{}<flted17,nmin23> * r8::complete{}<flted16,nmin24> & 
+t'=t & v20'=v & nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin23,nmin24)) & flted16+2=n & flted17+1=n)
+ |-  t'::node2<val4',left4',right4'>@L.
+expect Valid.
+ 
+// id: 138; line: 88; kind: BIND
+ checkentail (exists flted18,flted19,Anon9,l9,nmin25,r9,nmin26: t'::node2<Anon9,l9,r9> * 
+l9::complete{}<flted19,nmin25> * r9::complete{}<flted18,nmin26> & 
+t'=t & v20'=v & nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin25,nmin26)) & flted18+1=n & flted19+1=n)
+ |-  t'::node2<val4',left4',right4'>@L.
+expect Valid.
+ 
+// id: 140; line: 88; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<flted21,nmin27> * 
+r10::complete{}<flted20,nmin28> & v22'=l10 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n
+ |-  v22'::complete{}<n7,nmin29>.
+expect Valid.
+ 
+// id: 142; line: 88; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> & 
+nmin29=nmin27 & n7=flted21 & v22'=l10 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 143; line: 88; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<flted23,nmin30> * 
+r11::complete{}<flted22,nmin31> & v22'=l11 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n
+ |-  v22'::complete{}<n7,nmin29>.
+expect Valid.
+ 
+// id: 145; line: 88; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> & 
+nmin29=nmin30 & n7=flted23 & v22'=l11 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 146; line: 88; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n7,nmin29> & nmin29<=n7 & 0<=nmin29 & 
+v23'=nmin29 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & 
+t'=t & v20'=v & nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n
+ |-  t'::node2<val5',left5',right5'>@L.
+expect Valid.
+ 
+// id: 148; line: 88; kind: BIND
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n7,nmin29> & nmin29<=n7 & 0<=nmin29 & 
+v23'=nmin29 & nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & 
+t'=t & v20'=v & nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n
+ |-  t'::node2<val5',left5',right5'>@L.
+expect Valid.
+ 
+// id: 150; line: 88; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n7,nmin29> & v24'=l10 & nmin29<=n7 & 0<=nmin29 & 
+v23'=nmin29 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & 
+t'=t & v20'=v & nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n
+ |-  v24'::complete{}<n8,nmin32>.
+expect Valid.
+ 
+// id: 152; line: 88; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> & 
+nmin32=nmin29 & n8=n7 & v24'=l10 & nmin29<=n7 & 0<=nmin29 & v23'=nmin29 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 153; line: 88; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n7,nmin29> & v24'=l11 & nmin29<=n7 & 0<=nmin29 & 
+v23'=nmin29 & nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & 
+t'=t & v20'=v & nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n
+ |-  v24'::complete{}<n8,nmin32>.
+expect Valid.
+ 
+// id: 155; line: 88; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> & 
+nmin32=nmin29 & n8=n7 & v24'=l11 & nmin29<=n7 & 0<=nmin29 & v23'=nmin29 & 
+nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 156; line: 88; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n8,nmin32> & flted21+1=n & flted20+2=n & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & !(v21') & 
+t'!=null & nmin<n & v20'=v & t'=t & n7=flted21 & nmin29=nmin27 & 0<=nmin27 & 
+nmin27<=flted21 & v23'=nmin29 & n8=n7 & nmin32=nmin29 & 0<=nmin29 & 
+nmin29<=n7 & v25'=n8 & 0<=nmin32 & nmin32<=n8 & v23'<v25'
+ |-  emp.
+expect Valid.
+ 
+// id: 157; line: 88; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n8,nmin32> & flted21+1=n & flted20+2=n & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & !(v21') & 
+t'!=null & nmin<n & v20'=v & t'=t & n7=flted21 & nmin29=nmin27 & 0<=nmin27 & 
+nmin27<=flted21 & v23'=nmin29 & n8=n7 & nmin32=nmin29 & 0<=nmin29 & 
+nmin29<=n7 & v25'=n8 & 0<=nmin32 & nmin32<=n8 & v25'<=v23'
+ |-  emp.
+expect Valid.
+ 
+// id: 158; line: 88; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n8,nmin32> & flted23+1=n & flted22+1=n & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & !(v21') & 
+t'!=null & nmin<n & v20'=v & t'=t & n7=flted23 & nmin29=nmin30 & 0<=nmin30 & 
+nmin30<=flted23 & v23'=nmin29 & n8=n7 & nmin32=nmin29 & 0<=nmin29 & 
+nmin29<=n7 & v25'=n8 & 0<=nmin32 & nmin32<=n8 & v23'<v25'
+ |-  emp.
+expect Valid.
+ 
+// id: 159; line: 88; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n8,nmin32> & flted23+1=n & flted22+1=n & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & !(v21') & 
+t'!=null & nmin<n & v20'=v & t'=t & n7=flted23 & nmin29=nmin30 & 0<=nmin30 & 
+nmin30<=flted23 & v23'=nmin29 & n8=n7 & nmin32=nmin29 & 0<=nmin29 & 
+nmin29<=n7 & v25'=n8 & 0<=nmin32 & nmin32<=n8 & v25'<=v23'
+ |-  emp.
+expect Valid.
+ 
+// id: 160; line: 89; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n8,nmin32> & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & 
+nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & nmin29<n8 & v26'
+ |-  t'::node2<val6',left6',right6'>@L.
+expect Valid.
+ 
+// id: 162; line: 89; kind: BIND
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n8,nmin32> & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 0<=nmin30 & 
+nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+1=n & 
+flted23+1=n & nmin29<n8 & v26'
+ |-  t'::node2<val6',left6',right6'>@L.
+expect Valid.
+ 
+// id: 164; line: 90; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n8,nmin32> & aux'=l10 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & nmin29<n8 & v26'
+ |-  aux'::complete{}<n9,nmin33>&nmin33<n9.
+expect Valid.
+ 
+// id: 166; line: 90; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> & 
+nmin33=nmin32 & n9=n8 & aux'=l10 & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & 
+nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & nmin29<n8 & v26'
+ |-  emp.
+expect Valid.
+ 
+// id: 167; line: 90; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n8,nmin32> & aux'=l10 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & nmin29<n8 & v26'
+ |-  aux'::complete{}<n10,nmin34>&nmin34=n10.
+expect Fail.
+ 
+// id: 169; line: 90; kind: PRE_REC
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n8,nmin32> & aux'=l11 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 
+0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n & nmin29<n8 & v26'
+ |-  aux'::complete{}<n9,nmin33>&nmin33<n9.
+expect Valid.
+ 
+// id: 171; line: 90; kind: PRE_REC
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> & 
+nmin33=nmin32 & n9=n8 & aux'=l11 & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 0<=nmin30 & 
+nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+1=n & 
+flted23+1=n & nmin29<n8 & v26'
+ |-  emp.
+expect Valid.
+ 
+// id: 172; line: 90; kind: PRE_REC
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n8,nmin32> & aux'=l11 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 
+0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n & nmin29<n8 & v26'
+ |-  aux'::complete{}<n10,nmin34>&nmin34=n10.
+expect Fail.
+ 
+// id: 174; line: 91; kind: BIND
+ checkentail (exists nmin35: t'::node2<Anon10,l10,r10> * 
+r10::complete{}<flted20,nmin28> * aux'::complete{}<n9,nmin35> & 
+nmin33<=n9 & 0<=nmin33 & ((nmin35=nmin33 | nmin35=1+nmin33)) & nmin32<=n8 & 
+0<=nmin32 & nmin33=nmin32 & n9=n8 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & 
+n8=n7 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & 
+v20'=v & nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & nmin29<n8 & v26')
+ |-  t'::node2<val7',left7',right7'>.
+expect Valid.
+ 
+// id: 176; line: 91; kind: BIND
+ checkentail (exists nmin36: t'::node2<Anon11,l11,r11> * 
+r11::complete{}<flted22,nmin31> * aux'::complete{}<n9,nmin36> & 
+nmin33<=n9 & 0<=nmin33 & ((nmin36=nmin33 | nmin36=1+nmin33)) & nmin32<=n8 & 
+0<=nmin32 & nmin33=nmin32 & n9=n8 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & 
+n8=n7 & nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & 
+v20'=v & nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n & nmin29<n8 & v26')
+ |-  t'::node2<val7',left7',right7'>.
+expect Valid.
+ 
+// id: 178; line: 95; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n8,nmin32> & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & 
+nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & n8<=nmin29 & !(v26')
+ |-  t'::node2<val8',left8',right8'>@L.
+expect Valid.
+ 
+// id: 180; line: 95; kind: BIND
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n8,nmin32> & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 0<=nmin30 & 
+nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+1=n & 
+flted23+1=n & n8<=nmin29 & !(v26')
+ |-  t'::node2<val8',left8',right8'>@L.
+expect Valid.
+ 
+// id: 182; line: 95; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<flted20,nmin28> * 
+l10::complete{}<n8,nmin32> & v27'=r10 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26')
+ |-  v27'::complete{}<n11,nmin37>.
+expect Valid.
+ 
+// id: 184; line: 95; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> & 
+nmin37=nmin28 & n11=flted20 & v27'=r10 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26')
+ |-  emp.
+expect Valid.
+ 
+// id: 185; line: 95; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * r11::complete{}<flted22,nmin31> * 
+l11::complete{}<n8,nmin32> & v27'=r11 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 
+0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n & n8<=nmin29 & !(v26')
+ |-  v27'::complete{}<n11,nmin37>.
+expect Valid.
+ 
+// id: 187; line: 95; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> & 
+nmin37=nmin31 & n11=flted22 & v27'=r11 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 
+0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n & n8<=nmin29 & !(v26')
+ |-  emp.
+expect Valid.
+ 
+// id: 188; line: 95; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n11,nmin37> & nmin37<=n11 & 0<=nmin37 & 
+v28'=nmin37 & nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & !(v26')
+ |-  t'::node2<val9',left9',right9'>@L.
+expect Valid.
+ 
+// id: 190; line: 95; kind: BIND
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> * 
+r11::complete{}<n11,nmin37> & nmin37<=n11 & 0<=nmin37 & 
+v28'=nmin37 & nmin31<=flted22 & 0<=nmin31 & nmin37=nmin31 & n11=flted22 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n & n8<=nmin29 & !(v26')
+ |-  t'::node2<val9',left9',right9'>@L.
+expect Valid.
+ 
+// id: 192; line: 95; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n11,nmin37> & v29'=r10 & nmin37<=n11 & 0<=nmin37 & 
+v28'=nmin37 & nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & !(v26')
+ |-  v29'::complete{}<n12,nmin38>.
+expect Valid.
+ 
+// id: 194; line: 95; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> & 
+nmin38=nmin37 & n12=n11 & v29'=r10 & nmin37<=n11 & 0<=nmin37 & v28'=nmin37 & 
+nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 
+0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & !(v26')
+ |-  emp.
+expect Valid.
+ 
+// id: 195; line: 95; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> * 
+r11::complete{}<n11,nmin37> & v29'=r11 & nmin37<=n11 & 0<=nmin37 & 
+v28'=nmin37 & nmin31<=flted22 & 0<=nmin31 & nmin37=nmin31 & n11=flted22 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n & n8<=nmin29 & !(v26')
+ |-  v29'::complete{}<n12,nmin38>.
+expect Valid.
+ 
+// id: 197; line: 95; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> & 
+nmin38=nmin37 & n12=n11 & v29'=r11 & nmin37<=n11 & 0<=nmin37 & v28'=nmin37 & 
+nmin31<=flted22 & 0<=nmin31 & nmin37=nmin31 & n11=flted22 & nmin32<=n8 & 
+0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n & n8<=nmin29 & !(v26')
+ |-  emp.
+expect Valid.
+ 
+// id: 198; line: 95; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & !(v26') & n8<=nmin29 & flted21+1=n & 
+flted20+2=n & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & 
+!(v21') & t'!=null & nmin<n & v20'=v & t'=t & n7=flted21 & nmin29=nmin27 & 
+0<=nmin27 & nmin27<=flted21 & n8=n7 & nmin32=nmin29 & 0<=nmin29 & 
+nmin29<=n7 & 0<=nmin32 & nmin32<=n8 & n11=flted20 & nmin37=nmin28 & 
+0<=nmin28 & nmin28<=flted20 & v28'=nmin37 & n12=n11 & nmin38=nmin37 & 
+0<=nmin37 & nmin37<=n11 & v30'=n12 & 0<=nmin38 & nmin38<=n12 & v28'<v30'
+ |-  emp.
+expect Valid.
+ 
+// id: 199; line: 95; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & !(v26') & n8<=nmin29 & flted21+1=n & 
+flted20+2=n & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & 
+!(v21') & t'!=null & nmin<n & v20'=v & t'=t & n7=flted21 & nmin29=nmin27 & 
+0<=nmin27 & nmin27<=flted21 & n8=n7 & nmin32=nmin29 & 0<=nmin29 & 
+nmin29<=n7 & 0<=nmin32 & nmin32<=n8 & n11=flted20 & nmin37=nmin28 & 
+0<=nmin28 & nmin28<=flted20 & v28'=nmin37 & n12=n11 & nmin38=nmin37 & 
+0<=nmin37 & nmin37<=n11 & v30'=n12 & 0<=nmin38 & nmin38<=n12 & v30'<=v28'
+ |-  emp.
+expect Valid.
+ 
+// id: 200; line: 95; kind: PRE
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> * 
+r11::complete{}<n12,nmin38> & !(v26') & n8<=nmin29 & flted23+1=n & 
+flted22+1=n & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & 
+!(v21') & t'!=null & nmin<n & v20'=v & t'=t & n7=flted23 & nmin29=nmin30 & 
+0<=nmin30 & nmin30<=flted23 & n8=n7 & nmin32=nmin29 & 0<=nmin29 & 
+nmin29<=n7 & 0<=nmin32 & nmin32<=n8 & n11=flted22 & nmin37=nmin31 & 
+0<=nmin31 & nmin31<=flted22 & v28'=nmin37 & n12=n11 & nmin38=nmin37 & 
+0<=nmin37 & nmin37<=n11 & v30'=n12 & 0<=nmin38 & nmin38<=n12 & v28'<v30'
+ |-  emp.
+expect Valid.
+ 
+// id: 201; line: 96; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  t'::node2<val10',left10',right10'>@L.
+expect Valid.
+ 
+// id: 203; line: 96; kind: BIND
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> * 
+r11::complete{}<n12,nmin38> & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin31<=flted22 & 
+0<=nmin31 & nmin37=nmin31 & n11=flted22 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 
+0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  t'::node2<val10',left10',right10'>@L.
+expect Valid.
+ 
+// id: 205; line: 97; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & aux'=r10 & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  aux'::complete{}<n13,nmin39>&nmin39<n13.
+expect Valid.
+ 
+// id: 207; line: 97; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> & 
+nmin39=nmin38 & n13=n12 & aux'=r10 & nmin38<=n12 & 0<=nmin38 & nmin37<=n11 & 
+0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 0<=nmin28 & 
+nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & 
+nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  emp.
+expect Valid.
+ 
+// id: 208; line: 97; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & aux'=r10 & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  aux'::complete{}<n14,nmin40>&nmin40=n14.
+expect Fail.
+ 
+// id: 210; line: 97; kind: PRE_REC
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> * 
+r11::complete{}<n12,nmin38> & aux'=r11 & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin31<=flted22 & 
+0<=nmin31 & nmin37=nmin31 & n11=flted22 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 
+0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  aux'::complete{}<n13,nmin39>&nmin39<n13.
+expect Valid.
+ 
+// id: 212; line: 97; kind: PRE_REC
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> & 
+nmin39=nmin38 & n13=n12 & aux'=r11 & nmin38<=n12 & 0<=nmin38 & nmin37<=n11 & 
+0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin31<=flted22 & 0<=nmin31 & 
+nmin37=nmin31 & n11=flted22 & nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 0<=nmin30 & 
+nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+1=n & 
+flted23+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  emp.
+expect Valid.
+ 
+// id: 213; line: 97; kind: PRE_REC
+ checkentail t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> * 
+r11::complete{}<n12,nmin38> & aux'=r11 & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin31<=flted22 & 
+0<=nmin31 & nmin37=nmin31 & n11=flted22 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 
+0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+
+1=n & flted23+1=n & n8<=nmin29 & !(v26') & nmin37<n12 & v31'
+ |-  aux'::complete{}<n14,nmin40>&nmin40=n14.
+expect Fail.
+ 
+// id: 215; line: 98; kind: BIND
+ checkentail (exists nmin41: t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+aux'::complete{}<n13,nmin41> & nmin39<=n13 & 0<=nmin39 & 
+((nmin41=nmin39 | nmin41=1+nmin39)) & nmin38<=n12 & 0<=nmin38 & 
+nmin39=nmin38 & n13=n12 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & 
+n12=n11 & nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & 
+!(v26') & nmin37<n12 & v31')
+ |-  t'::node2<val11',left11',right11'>.
+expect Valid.
+ 
+// id: 217; line: 98; kind: BIND
+ checkentail (exists nmin42: t'::node2<Anon11,l11,r11> * l11::complete{}<n8,nmin32> * 
+aux'::complete{}<n13,nmin42> & nmin39<=n13 & 0<=nmin39 & 
+((nmin42=nmin39 | nmin42=1+nmin39)) & nmin38<=n12 & 0<=nmin38 & 
+nmin39=nmin38 & n13=n12 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & 
+n12=n11 & nmin31<=flted22 & 0<=nmin31 & nmin37=nmin31 & n11=flted22 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n & n8<=nmin29 & 
+!(v26') & nmin37<n12 & v31')
+ |-  t'::node2<val11',left11',right11'>.
+expect Valid.
+ 
+// id: 219; line: 102; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31')
+ |-  t'::node2<val12',left12',right12'>@L.
+expect Valid.
+ 
+// id: 221; line: 103; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & tmp'=r10 & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31')
+ |-  t'::node2<val13',left13',right13'>@L.
+expect Valid.
+ 
+// id: 223; line: 103; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n8,nmin32> * 
+r10::complete{}<n12,nmin38> & v32'=l10 & tmp'=r10 & nmin38<=n12 & 
+0<=nmin38 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & 
+nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 
+0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & 
+!(v26') & n12<=nmin37 & !(v31')
+ |-  v32'::complete{}<n15,nmin43>.
+expect Valid.
+ 
+// id: 225; line: 103; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<n12,nmin38> & 
+nmin43=nmin32 & n15=n8 & v32'=l10 & tmp'=r10 & nmin38<=n12 & 0<=nmin38 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin32<=n8 & 0<=nmin32 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31')
+ |-  emp.
+expect Valid.
+ 
+// id: 226; line: 103; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<n12,nmin38> * 
+l10::complete{}<n15,nmin43> & nmin43<=n15 & 0<=nmin43 & v33'=n15 & 
+nmin32<=n8 & 0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & nmin38<=n12 & 
+0<=nmin38 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & 
+nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & 
+nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31')
+ |-  t'::node2<val14',left14',right14'>@L.
+expect Valid.
+ 
+// id: 228; line: 103; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * r10::complete{}<n12,nmin38> * 
+l10::complete{}<n15,nmin43> & v34'=r10 & nmin43<=n15 & 0<=nmin43 & 
+v33'=n15 & nmin32<=n8 & 0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & 
+nmin38<=n12 & 0<=nmin38 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & 
+n12=n11 & nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & 
+nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 
+0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & 
+!(v21') & exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+
+2=n & flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31')
+ |-  v34'::complete{}<n16,nmin44>.
+expect Valid.
+ 
+// id: 230; line: 103; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n15,nmin43> & 
+nmin44=nmin38 & n16=n12 & v34'=r10 & nmin43<=n15 & 0<=nmin43 & v33'=n15 & 
+nmin32<=n8 & 0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & nmin38<=n12 & 
+0<=nmin38 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & 
+nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin29<=n7 & 
+0<=nmin29 & nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & 
+nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31')
+ |-  emp.
+expect Valid.
+ 
+// id: 231; line: 103; kind: PRE
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n15,nmin43> * 
+r10::complete{}<n16,nmin44> & !(v31') & n12<=nmin37 & !(v26') & 
+n8<=nmin29 & flted21+1=n & flted20+2=n & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & !(v21') & t'!=null & nmin<n & v20'=v & t'=t & 
+n7=flted21 & nmin29=nmin27 & 0<=nmin27 & nmin27<=flted21 & n8=n7 & 
+nmin32=nmin29 & 0<=nmin29 & nmin29<=n7 & n11=flted20 & nmin37=nmin28 & 
+0<=nmin28 & nmin28<=flted20 & n12=n11 & nmin38=nmin37 & 0<=nmin37 & 
+nmin37<=n11 & tmp'=r10 & n15=n8 & nmin43=nmin32 & 0<=nmin32 & nmin32<=n8 & 
+v33'=n15 & 0<=nmin43 & nmin43<=n15 & n16=n12 & nmin44=nmin38 & 0<=nmin38 & 
+nmin38<=n12 & v35'=n16 & 0<=nmin44 & nmin44<=n16 & v33'!=v35'
+ |-  emp.
+expect Valid.
+ 
+// id: 232; line: 110; kind: BIND
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n15,nmin43> * 
+r10::complete{}<n16,nmin44> & nmin44<=n16 & 0<=nmin44 & 
+nmin38<=n12 & 0<=nmin38 & nmin44=nmin38 & n16=n12 & nmin43<=n15 & 
+0<=nmin43 & nmin32<=n8 & 0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin29<=n7 & 0<=nmin29 & 
+nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & 
+n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31') & n15!=n16 & 
+!(v36')
+ |-  t'::node2<val15',left15',right15'>@L.
+expect Valid.
+ 
+// id: 234; line: 111; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n15,nmin43> * 
+r10::complete{}<n16,nmin44> & aux'=r10 & nmin44<=n16 & 0<=nmin44 & 
+nmin38<=n12 & 0<=nmin38 & nmin44=nmin38 & n16=n12 & nmin43<=n15 & 
+0<=nmin43 & nmin32<=n8 & 0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin29<=n7 & 0<=nmin29 & 
+nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & 
+n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31') & n15!=n16 & 
+!(v36')
+ |-  aux'::complete{}<n17,nmin45>&nmin45<n17.
+expect Fail.
+ 
+// id: 236; line: 111; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n15,nmin43> * 
+r10::complete{}<n16,nmin44> & aux'=r10 & nmin44<=n16 & 0<=nmin44 & 
+nmin38<=n12 & 0<=nmin38 & nmin44=nmin38 & n16=n12 & nmin43<=n15 & 
+0<=nmin43 & nmin32<=n8 & 0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & 
+nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 
+0<=nmin28 & nmin37=nmin28 & n11=flted20 & nmin29<=n7 & 0<=nmin29 & 
+nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & 
+n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & n8<=nmin29 & !(v26') & n12<=nmin37 & !(v31') & n15!=n16 & 
+!(v36')
+ |-  aux'::complete{}<n18,nmin46>&nmin46=n18.
+expect Valid.
+ 
+// id: 238; line: 111; kind: PRE_REC
+ checkentail t'::node2<Anon10,l10,r10> * l10::complete{}<n15,nmin43> & 
+nmin46=nmin44 & n18=n16 & aux'=r10 & nmin44<=n16 & 0<=nmin44 & nmin38<=n12 & 
+0<=nmin38 & nmin44=nmin38 & n16=n12 & nmin43<=n15 & 0<=nmin43 & nmin32<=n8 & 
+0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & nmin37<=n11 & 0<=nmin37 & 
+nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & 
+n11=flted20 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & 
+!(v26') & n12<=nmin37 & !(v31') & n15!=n16 & !(v36')
+ |-  emp.
+expect Valid.
+ 
+// id: 239; line: 112; kind: BIND
+ checkentail (exists flted24,nmin47: t'::node2<Anon10,l10,r10> * 
+l10::complete{}<n15,nmin43> * aux'::complete{}<flted24,nmin47> & 
+nmin46<=n18 & 0<=nmin46 & ((nmin47=nmin46 | nmin47=1+nmin46)) & flted24=1+
+n18 & nmin44<=n16 & 0<=nmin44 & nmin46=nmin44 & n18=n16 & nmin38<=n12 & 
+0<=nmin38 & nmin44=nmin38 & n16=n12 & nmin43<=n15 & 0<=nmin43 & nmin32<=n8 & 
+0<=nmin32 & nmin43=nmin32 & n15=n8 & tmp'=r10 & nmin37<=n11 & 0<=nmin37 & 
+nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & 
+n11=flted20 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & 
+!(v26') & n12<=nmin37 & !(v31') & n15!=n16 & !(v36'))
+ |-  t'::node2<val16',left16',right16'>.
+expect Valid.
+ 
+// id: 241; line: 0; kind: POST
+ checkentail (exists aux': r10::complete{}<flted20,nmin28> * 
+aux'::complete{}<n9,nmin48> * t'::node2<Anon10,aux',r10> & 
+left=l10 & nmin33<=n9 & 0<=nmin33 & ((nmin48=nmin33 | nmin48=1+nmin33)) & 
+nmin32<=n8 & 0<=nmin32 & nmin33=nmin32 & n9=n8 & nmin29<=n7 & 0<=nmin29 & 
+nmin32=nmin29 & n8=n7 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & 
+n7=flted21 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_29:nmin=1+min_29 & min_29=min(nmin27,nmin28)) & flted20+2=n & 
+flted21+1=n & nmin29<n8 & v26')
+ |-  (exists n19,nmin49: t'::complete{}<n19,nmin49>&n19=n & ((nmin49=nmin | 
+nmin49=1+nmin)) & nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 254; line: 0; kind: POST
+ checkentail (exists aux': r11::complete{}<flted22,nmin31> * 
+aux'::complete{}<n9,nmin50> * t'::node2<Anon11,aux',r11> & 
+left1=l11 & nmin33<=n9 & 0<=nmin33 & ((nmin50=nmin33 | nmin50=1+nmin33)) & 
+nmin32<=n8 & 0<=nmin32 & nmin33=nmin32 & n9=n8 & nmin29<=n7 & 0<=nmin29 & 
+nmin32=nmin29 & n8=n7 & nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & 
+n7=flted23 & t'=t & v20'=v & nmin<n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin30,nmin31)) & flted22+1=n & 
+flted23+1=n & nmin29<n8 & v26')
+ |-  (exists n19,nmin49: t'::complete{}<n19,nmin49>&n19=n & ((nmin49=nmin | 
+nmin49=1+nmin)) & nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 267; line: 0; kind: POST
+ checkentail (exists aux': l10::complete{}<n8,nmin32> * aux'::complete{}<n13,nmin51> * 
+t'::node2<Anon10,l10,aux'> & right=r10 & nmin39<=n13 & 0<=nmin39 & 
+((nmin51=nmin39 | nmin51=1+nmin39)) & nmin38<=n12 & 0<=nmin38 & 
+nmin39=nmin38 & n13=n12 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & 
+n12=n11 & nmin28<=flted20 & 0<=nmin28 & nmin37=nmin28 & n11=flted20 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & 
+!(v26') & nmin37<n12 & v31')
+ |-  (exists n19,nmin49: t'::complete{}<n19,nmin49>&n19=n & ((nmin49=nmin | 
+nmin49=1+nmin)) & nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 280; line: 0; kind: POST
+ checkentail (exists aux': l11::complete{}<n8,nmin32> * aux'::complete{}<n13,nmin52> * 
+t'::node2<Anon11,l11,aux'> & right1=r11 & nmin39<=n13 & 
+0<=nmin39 & ((nmin52=nmin39 | nmin52=1+nmin39)) & nmin38<=n12 & 0<=nmin38 & 
+nmin39=nmin38 & n13=n12 & nmin37<=n11 & 0<=nmin37 & nmin38=nmin37 & 
+n12=n11 & nmin31<=flted22 & 0<=nmin31 & nmin37=nmin31 & n11=flted22 & 
+nmin32<=n8 & 0<=nmin32 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & n8=n7 & 
+nmin30<=flted23 & 0<=nmin30 & nmin29=nmin30 & n7=flted23 & t'=t & v20'=v & 
+nmin<n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin30,nmin31)) & flted22+1=n & flted23+1=n & n8<=nmin29 & 
+!(v26') & nmin37<n12 & v31')
+ |-  (exists n19,nmin49: t'::complete{}<n19,nmin49>&n19=n & ((nmin49=nmin | 
+nmin49=1+nmin)) & nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 293; line: 0; kind: POST
+ checkentail (exists aux': l10::complete{}<n15,nmin43> * 
+aux'::complete{}<flted25,nmin53> * t'::node2<Anon10,l10,aux'> & 
+right2=r10 & nmin46<=n18 & 0<=nmin46 & ((nmin53=nmin46 | nmin53=1+nmin46)) & 
+flted25=1+n18 & nmin44<=n16 & 0<=nmin44 & nmin46=nmin44 & n18=n16 & 
+nmin38<=n12 & 0<=nmin38 & nmin44=nmin38 & n16=n12 & nmin43<=n15 & 
+0<=nmin43 & nmin32<=n8 & 0<=nmin32 & nmin43=nmin32 & n15=n8 & nmin37<=n11 & 
+0<=nmin37 & nmin38=nmin37 & n12=n11 & nmin28<=flted20 & 0<=nmin28 & 
+nmin37=nmin28 & n11=flted20 & nmin29<=n7 & 0<=nmin29 & nmin32=nmin29 & 
+n8=n7 & nmin27<=flted21 & 0<=nmin27 & nmin29=nmin27 & n7=flted21 & t'=t & 
+v20'=v & nmin<n & t'!=null & !(v21') & exists(min_29:nmin=1+min_29 & 
+min_29=min(nmin27,nmin28)) & flted20+2=n & flted21+1=n & n8<=nmin29 & 
+!(v26') & n12<=nmin37 & !(v31') & n15!=n16 & !(v36'))
+ |-  (exists n19,nmin49: t'::complete{}<n19,nmin49>&n19=n & ((nmin49=nmin | 
+nmin49=1+nmin)) & nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 306; line: 83; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'=null & nmin=n & v20'=v & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 307; line: 83; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'=null & nmin=n & v20'=v & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 308; line: 83; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & nmin=n & v20'=v & t'=t
+ |-  htrue.
+expect Valid.
+ 
+// id: 309; line: 83; kind: PRE
+ checkentail t::complete{}<n,nmin> & t'!=null & nmin=n & v20'=v & t'=t
+ |-  emp.
+expect Valid.
+ 
+// id: 310; line: 88; kind: BIND
+ checkentail (exists flted26,flted27,Anon12,l12,nmin54,r12,
+nmin55: t'::node2<Anon12,l12,r12> * l12::complete{}<flted27,nmin54> * 
+r12::complete{}<flted26,nmin55> & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin54,
+nmin55)) & flted26+1=n & flted27+1=n)
+ |-  t'::node2<val4',left4',right4'>@L.
+expect Valid.
+ 
+// id: 312; line: 88; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<flted29,nmin56> * 
+r13::complete{}<flted28,nmin57> & v22'=l13 & t'=t & v20'=v & 
+nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n
+ |-  v22'::complete{}<n20,nmin58>.
+expect Valid.
+ 
+// id: 314; line: 88; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<flted28,nmin57> & 
+nmin58=nmin56 & n20=flted29 & v22'=l13 & t'=t & v20'=v & nmin=n & t'!=null & 
+!(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & flted28+
+1=n & flted29+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 315; line: 88; kind: BIND
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<flted28,nmin57> * 
+l13::complete{}<n20,nmin58> & nmin58<=n20 & 0<=nmin58 & 
+v23'=nmin58 & nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & 
+t'=t & v20'=v & nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n
+ |-  t'::node2<val5',left5',right5'>@L.
+expect Valid.
+ 
+// id: 317; line: 88; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<flted28,nmin57> * 
+l13::complete{}<n20,nmin58> & v24'=l13 & nmin58<=n20 & 0<=nmin58 & 
+v23'=nmin58 & nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & 
+t'=t & v20'=v & nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n
+ |-  v24'::complete{}<n21,nmin59>.
+expect Valid.
+ 
+// id: 319; line: 88; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<flted28,nmin57> & 
+nmin59=nmin58 & n21=n20 & v24'=l13 & nmin58<=n20 & 0<=nmin58 & v23'=nmin58 & 
+nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & 
+nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n
+ |-  emp.
+expect Valid.
+ 
+// id: 320; line: 88; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<flted28,nmin57> * 
+l13::complete{}<n21,nmin59> & flted29+1=n & flted28+1=n & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & !(v21') & 
+t'!=null & nmin=n & v20'=v & t'=t & n20=flted29 & nmin58=nmin56 & 
+0<=nmin56 & nmin56<=flted29 & v23'=nmin58 & n21=n20 & nmin59=nmin58 & 
+0<=nmin58 & nmin58<=n20 & v25'=n21 & 0<=nmin59 & nmin59<=n21 & v25'<=v23'
+ |-  emp.
+expect Valid.
+ 
+// id: 321; line: 95; kind: BIND
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<flted28,nmin57> * 
+l13::complete{}<n21,nmin59> & nmin59<=n21 & 0<=nmin59 & 
+nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 
+0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & !(v26')
+ |-  t'::node2<val8',left8',right8'>@L.
+expect Valid.
+ 
+// id: 323; line: 95; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<flted28,nmin57> * 
+l13::complete{}<n21,nmin59> & v27'=r13 & nmin59<=n21 & 0<=nmin59 & 
+nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 
+0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & !(v26')
+ |-  v27'::complete{}<n22,nmin60>.
+expect Valid.
+ 
+// id: 325; line: 95; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> & 
+nmin60=nmin57 & n22=flted28 & v27'=r13 & nmin59<=n21 & 0<=nmin59 & 
+nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 
+0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & !(v26')
+ |-  emp.
+expect Valid.
+ 
+// id: 326; line: 95; kind: BIND
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> * 
+r13::complete{}<n22,nmin60> & nmin60<=n22 & 0<=nmin60 & 
+v28'=nmin60 & nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & 
+nmin59<=n21 & 0<=nmin59 & nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & 
+n21=n20 & nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & 
+v20'=v & nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & 
+!(v26')
+ |-  t'::node2<val9',left9',right9'>@L.
+expect Valid.
+ 
+// id: 328; line: 95; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> * 
+r13::complete{}<n22,nmin60> & v29'=r13 & nmin60<=n22 & 0<=nmin60 & 
+v28'=nmin60 & nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & 
+nmin59<=n21 & 0<=nmin59 & nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & 
+n21=n20 & nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & 
+v20'=v & nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & 
+!(v26')
+ |-  v29'::complete{}<n23,nmin61>.
+expect Valid.
+ 
+// id: 330; line: 95; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> & 
+nmin61=nmin60 & n23=n22 & v29'=r13 & nmin60<=n22 & 0<=nmin60 & v28'=nmin60 & 
+nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin59<=n21 & 
+0<=nmin59 & nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & 
+nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & 
+nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & 
+!(v26')
+ |-  emp.
+expect Valid.
+ 
+// id: 331; line: 95; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> * 
+r13::complete{}<n23,nmin61> & !(v26') & n21<=nmin58 & flted29+
+1=n & flted28+1=n & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & !(v21') & t'!=null & nmin=n & v20'=v & t'=t & n20=flted29 & 
+nmin58=nmin56 & 0<=nmin56 & nmin56<=flted29 & n21=n20 & nmin59=nmin58 & 
+0<=nmin58 & nmin58<=n20 & 0<=nmin59 & nmin59<=n21 & n22=flted28 & 
+nmin60=nmin57 & 0<=nmin57 & nmin57<=flted28 & v28'=nmin60 & n23=n22 & 
+nmin61=nmin60 & 0<=nmin60 & nmin60<=n22 & v30'=n23 & 0<=nmin61 & 
+nmin61<=n23 & v30'<=v28'
+ |-  emp.
+expect Valid.
+ 
+// id: 332; line: 102; kind: BIND
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> * 
+r13::complete{}<n23,nmin61> & nmin61<=n23 & 0<=nmin61 & 
+nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & nmin57<=flted28 & 
+0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin59<=n21 & 0<=nmin59 & 
+nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 
+0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & 
+!(v31')
+ |-  t'::node2<val12',left12',right12'>@L.
+expect Valid.
+ 
+// id: 334; line: 103; kind: BIND
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> * 
+r13::complete{}<n23,nmin61> & tmp'=r13 & nmin61<=n23 & 0<=nmin61 & 
+nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & nmin57<=flted28 & 
+0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin59<=n21 & 0<=nmin59 & 
+nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 
+0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & 
+!(v31')
+ |-  t'::node2<val13',left13',right13'>@L.
+expect Valid.
+ 
+// id: 336; line: 103; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n21,nmin59> * 
+r13::complete{}<n23,nmin61> & v32'=l13 & tmp'=r13 & nmin61<=n23 & 
+0<=nmin61 & nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & 
+nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin59<=n21 & 
+0<=nmin59 & nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & 
+nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & 
+nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & 
+!(v26') & n23<=nmin60 & !(v31')
+ |-  v32'::complete{}<n24,nmin62>.
+expect Valid.
+ 
+// id: 338; line: 103; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<n23,nmin61> & 
+nmin62=nmin59 & n24=n21 & v32'=l13 & tmp'=r13 & nmin61<=n23 & 0<=nmin61 & 
+nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & nmin57<=flted28 & 
+0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin59<=n21 & 0<=nmin59 & 
+nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 
+0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & 
+!(v31')
+ |-  emp.
+expect Valid.
+ 
+// id: 339; line: 103; kind: BIND
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<n23,nmin61> * 
+l13::complete{}<n24,nmin62> & nmin62<=n24 & 0<=nmin62 & v33'=n24 & 
+nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & tmp'=r13 & nmin61<=n23 & 
+0<=nmin61 & nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & 
+nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 
+0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 0<=nmin56 & 
+nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & flted28+1=n & 
+flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & !(v31')
+ |-  t'::node2<val14',left14',right14'>@L.
+expect Valid.
+ 
+// id: 341; line: 103; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<n23,nmin61> * 
+l13::complete{}<n24,nmin62> & v34'=r13 & nmin62<=n24 & 0<=nmin62 & 
+v33'=n24 & nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & tmp'=r13 & 
+nmin61<=n23 & 0<=nmin61 & nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & 
+n23=n22 & nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & 
+nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 
+0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & 
+t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & min_31=min(nmin56,
+nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & 
+!(v31')
+ |-  v34'::complete{}<n25,nmin63>.
+expect Valid.
+ 
+// id: 343; line: 103; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n24,nmin62> & 
+nmin63=nmin61 & n25=n23 & v34'=r13 & nmin62<=n24 & 0<=nmin62 & v33'=n24 & 
+nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & tmp'=r13 & nmin61<=n23 & 
+0<=nmin61 & nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & 
+nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 
+0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 0<=nmin56 & 
+nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & flted28+1=n & 
+flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & !(v31')
+ |-  emp.
+expect Valid.
+ 
+// id: 344; line: 103; kind: PRE
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n24,nmin62> * 
+r13::complete{}<n25,nmin63> & !(v31') & n23<=nmin60 & !(v26') & 
+n21<=nmin58 & flted29+1=n & flted28+1=n & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & !(v21') & t'!=null & nmin=n & v20'=v & t'=t & 
+n20=flted29 & nmin58=nmin56 & 0<=nmin56 & nmin56<=flted29 & n21=n20 & 
+nmin59=nmin58 & 0<=nmin58 & nmin58<=n20 & n22=flted28 & nmin60=nmin57 & 
+0<=nmin57 & nmin57<=flted28 & n23=n22 & nmin61=nmin60 & 0<=nmin60 & 
+nmin60<=n22 & tmp'=r13 & n24=n21 & nmin62=nmin59 & 0<=nmin59 & nmin59<=n21 & 
+v33'=n24 & 0<=nmin62 & nmin62<=n24 & n25=n23 & nmin63=nmin61 & 0<=nmin61 & 
+nmin61<=n23 & v35'=n25 & 0<=nmin63 & nmin63<=n25 & v33'=v35'
+ |-  emp.
+expect Valid.
+ 
+// id: 345; line: 104; kind: BIND
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n24,nmin62> * 
+r13::complete{}<n25,nmin63> & nmin63<=n25 & 0<=nmin63 & 
+nmin61<=n23 & 0<=nmin61 & nmin63=nmin61 & n25=n23 & nmin62<=n24 & 
+0<=nmin62 & n25=n24 & nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & 
+tmp'=r13 & nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & 
+nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 
+0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 0<=nmin56 & 
+nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & flted28+1=n & 
+flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & !(v31') & v36'
+ |-  t'::node2<val17',left17',right17'>@L.
+expect Valid.
+ 
+// id: 347; line: 105; kind: PRE_REC
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n24,nmin62> * 
+r13::complete{}<n25,nmin63> & aux'=l13 & nmin63<=n25 & 0<=nmin63 & 
+nmin61<=n23 & 0<=nmin61 & nmin63=nmin61 & n25=n23 & nmin62<=n24 & 
+0<=nmin62 & n25=n24 & nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & 
+tmp'=r13 & nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & 
+nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 
+0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 0<=nmin56 & 
+nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & flted28+1=n & 
+flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & !(v31') & v36'
+ |-  aux'::complete{}<n26,nmin64>&nmin64<n26.
+expect Fail.
+ 
+// id: 349; line: 105; kind: PRE_REC
+ checkentail t'::node2<Anon13,l13,r13> * l13::complete{}<n24,nmin62> * 
+r13::complete{}<n25,nmin63> & aux'=l13 & nmin63<=n25 & 0<=nmin63 & 
+nmin61<=n23 & 0<=nmin61 & nmin63=nmin61 & n25=n23 & nmin62<=n24 & 
+0<=nmin62 & n25=n24 & nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & 
+tmp'=r13 & nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & 
+nmin57<=flted28 & 0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 
+0<=nmin58 & nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 0<=nmin56 & 
+nmin58=nmin56 & n20=flted29 & t'=t & v20'=v & nmin=n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & flted28+1=n & 
+flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & !(v31') & v36'
+ |-  aux'::complete{}<n27,nmin65>&nmin65=n27.
+expect Valid.
+ 
+// id: 351; line: 105; kind: PRE_REC
+ checkentail t'::node2<Anon13,l13,r13> * r13::complete{}<n25,nmin63> & 
+nmin65=nmin62 & n27=n24 & aux'=l13 & nmin63<=n25 & 0<=nmin63 & nmin61<=n23 & 
+0<=nmin61 & nmin63=nmin61 & n25=n23 & nmin62<=n24 & 0<=nmin62 & n25=n24 & 
+nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & tmp'=r13 & nmin60<=n22 & 
+0<=nmin60 & nmin61=nmin60 & n23=n22 & nmin57<=flted28 & 0<=nmin57 & 
+nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & 
+n21=n20 & nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & 
+v20'=v & nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & 
+!(v26') & n23<=nmin60 & !(v31') & v36'
+ |-  emp.
+expect Valid.
+ 
+// id: 352; line: 106; kind: BIND
+ checkentail (exists flted30,nmin66: t'::node2<Anon13,l13,r13> * 
+r13::complete{}<n25,nmin63> * aux'::complete{}<flted30,nmin66> & 
+nmin65<=n27 & 0<=nmin65 & ((nmin66=nmin65 | nmin66=1+nmin65)) & flted30=1+
+n27 & nmin62<=n24 & 0<=nmin62 & nmin65=nmin62 & n27=n24 & nmin63<=n25 & 
+0<=nmin63 & nmin61<=n23 & 0<=nmin61 & nmin63=nmin61 & n25=n23 & n25=n24 & 
+nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & tmp'=r13 & nmin60<=n22 & 
+0<=nmin60 & nmin61=nmin60 & n23=n22 & nmin57<=flted28 & 0<=nmin57 & 
+nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 0<=nmin58 & nmin59=nmin58 & 
+n21=n20 & nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & n20=flted29 & t'=t & 
+v20'=v & nmin=n & t'!=null & !(v21') & exists(min_31:nmin=1+min_31 & 
+min_31=min(nmin56,nmin57)) & flted28+1=n & flted29+1=n & n21<=nmin58 & 
+!(v26') & n23<=nmin60 & !(v31') & v36')
+ |-  t'::node2<val18',left18',right18'>.
+expect Valid.
+ 
+// id: 354; line: 0; kind: POST
+ checkentail (exists v37',v38': t'::node2<v20',v37',v38'> * t::complete{}<n,nmin>&
+MayLoop[] & v38'=null & v37'=null & t1=t & v20'=v & nmin=n & t1=null & v21')
+ |-  (exists flted31,nmin67: t'::complete{}<flted31,nmin67>&((nmin67=nmin | 
+nmin67=1+nmin)) & flted31=1+n & nmin<=n & 0<=nmin).
+expect Valid.
+ 
+// id: 373; line: 0; kind: POST
+ checkentail (exists aux': r13::complete{}<n25,nmin63> * 
+aux'::complete{}<flted32,nmin68> * t'::node2<Anon13,aux',r13> & 
+left2=l13 & nmin65<=n27 & 0<=nmin65 & ((nmin68=nmin65 | nmin68=1+nmin65)) & 
+flted32=1+n27 & nmin62<=n24 & 0<=nmin62 & nmin65=nmin62 & n27=n24 & 
+nmin63<=n25 & 0<=nmin63 & nmin61<=n23 & 0<=nmin61 & nmin63=nmin61 & 
+n25=n23 & n25=n24 & nmin59<=n21 & 0<=nmin59 & nmin62=nmin59 & n24=n21 & 
+nmin60<=n22 & 0<=nmin60 & nmin61=nmin60 & n23=n22 & nmin57<=flted28 & 
+0<=nmin57 & nmin60=nmin57 & n22=flted28 & nmin58<=n20 & 0<=nmin58 & 
+nmin59=nmin58 & n21=n20 & nmin56<=flted29 & 0<=nmin56 & nmin58=nmin56 & 
+n20=flted29 & t'=t & v20'=v & nmin=n & t'!=null & !(v21') & 
+exists(min_31:nmin=1+min_31 & min_31=min(nmin56,nmin57)) & flted28+1=n & 
+flted29+1=n & n21<=nmin58 & !(v26') & n23<=nmin60 & !(v31') & v36')
+ |-  (exists flted31,nmin67: t'::complete{}<flted31,nmin67>&((nmin67=nmin | 
+nmin67=1+nmin)) & flted31=1+n & nmin<=n & 0<=nmin).
+expect Valid.

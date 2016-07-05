@@ -1,0 +1,32 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+infer_exact [] H(p) & p=null |- htrue.
+print residue.
+expect Valid.
+
+infer [] H(p) & p=null |- htrue.
+print residue.
+expect Valid.
+/*
+# ex10d.alk
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+Entail (2) : Valid. 
+
+Residue:
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+
+*/
+

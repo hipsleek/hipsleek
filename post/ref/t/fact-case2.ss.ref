@@ -1,0 +1,51 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/fact-case2.ss"
+Parsing file "t/fact-case2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure fact$int... 
+
+Warning: False precondition detected in procedure fact$int
+ with context:  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Procedure fact$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1340_1341: ( x=0 & res=1) -->  post_1340_1341(x,res,flow),
+RELDEFN post_1340_1342: ( res=2 & x=1 & post_1340_1341(0,1,flow)) -->  post_1340_1342(x,res,flow),
+RELDEFN post_1340_1342: ( 1<=v_int_10_1392 & 1<=v_int_10_1388 & x=1+v_int_10_1388 & res=1+
+v_int_10_1392 & post_1340_1342(v_int_10_1388,v_int_10_1392,flow)) -->  post_1340_1342(x,res,flow)]
+*************************************
+
+Post Inference result:
+fact$int
+ ECase case {
+        x=0 -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                       EAssume 
+                         emp&res=1 & x=0 & 0=x & 1=res&
+                         {FLOW,(4,5)=__norm#E}[]
+                          ;
+        0<x -> EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                       EAssume 
+                         emp&1<=res & 0<x & x>=1 & x+1=res&
+                         {FLOW,(4,5)=__norm#E}[]
+                          ;
+        x<0 -> EBase hfalse&false&{FLOW,(4,5)=__norm#E}[]
+                       EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                               EAssume 
+                                 hfalse&false&{FLOW,(4,5)=__norm#E}[]
+                                  
+        }
+
+8 false contexts at: ( (9,12)  (9,19)  (10,7)  (10,27)  (10,23)  (10,18)  (10,14)  (10,14) )
+
+Total verification time: 0.484028 second(s)
+	Time spent in main process: 0.420025 second(s)
+	Time spent in child processes: 0.064003 second(s)
+

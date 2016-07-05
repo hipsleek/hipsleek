@@ -1,0 +1,33 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p:node,n:int> ==
+  self=p & n=0
+  or self::node<_,q> * q::lseg<p,n-1> 
+  inv n>=0.
+
+infer[i] emp & i>0 |- xxx::node<_,_> .
+print residue.
+expect Valid.
+// expect i<=0 to be inferred
+
+infer[i] htrue & i>0 |- xxx::node<_,_> .
+print residue.
+expect Valid.
+// expect to fail since no heap is being inferred?
+
+infer[n] xxx::lseg<p,n> |- xxx::node<_,_> .
+print residue.
+expect Valid.
+// expect i<=0 to be inferred
+
+/*
+# ex1f3b.slk
+
+# should we schedule LHS contra?
+
+
+
+*/

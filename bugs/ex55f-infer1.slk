@@ -1,0 +1,15 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred H1(node x).
+
+// (9)
+infer [H1]  H1(y) |- y::node<a,null> .
+print residue.
+
+// (9)
+//infer [H1]  H1(y) |- y=null.
+//inferred hprel: [H1(y)&true |#|3  --> emp&y=null]
+//print residue.

@@ -1,0 +1,49 @@
+data node {
+  int val;
+  node next;
+}.
+
+checkentail x::node<v,_>@A * x::node<w,_>@A  |- false.
+print residue. // fail as expected
+
+checkentail x::node<v,_>@A * x::node<w,_>@A  |- v=w.
+print residue. // should succeed
+
+/*
+# field2.slk
+
+checkentail x::node<v,_>@A * x::node<w,_>@A  |- v=w.
+print residue. // should succeed
+
+Unsound!
+
+Entail 1: Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm}[]
+
+
+
+*/
+
+/**
+merge:
+=====
+DN with DN:
+ x::node<v>@A * a::node<w>@A & a=x ---> x::node<v>@A & a=x  & v=w
+
+===========================================
+VN with VN (same view def):
+ x::pred<v>@A * a::pred<w>@A & a=x ---> x::pred<v>@A & a=x  & v=w
+ (ok because @A propagates inside the view def)
+
+===========================================
+VN with VN (dif view def): 
+ x::pred1<v>@A * a::pred2<w>@A & a=x ---> ?
+
+===========================================
+DN with VN (works only for normal recursion):
+   x::node<v>@A * a::pred<w>@A & a=x 
+     ---> x::node<v>@A * unfold(a::pred<w>@A) & a=x 
+     ---> x::node<v>@A * a::node<w0>@A * tail(a::pred<w>@A) & a=x 
+     ---> x::node<v>@A * tail(a::pred<w>@A) & a=x & v=w0
+*/

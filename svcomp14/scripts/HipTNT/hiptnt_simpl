@@ -1,0 +1,1 @@
+C_INCLUDE_PATH=. timeout 60 ./hip --svcomp-compete -infer "@shape,@term" $1

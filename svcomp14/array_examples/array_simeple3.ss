@@ -1,10 +1,9 @@
+##OPTION -- -dre translate
+
 void foo2(ref int[] a)
   requires true
-  ensures (a[5]>0 & a'[5]=0) | (a[5]<=0 & a'[5]=a[5]);
+ensures true;
 { 
-  if (a[5]>0) {
-    //a = update_arr(a,5,0);
-    a[5] = 0;
-    foo2(a);
-  }
+  a[5] = 1;
+  return;
 }

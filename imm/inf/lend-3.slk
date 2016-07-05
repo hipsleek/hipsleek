@@ -5,7 +5,7 @@ data cell{
 relation R(int v,int w).
 //relation R(ann v,ann w).
 
-infer [@imm] p::cell<f>@v * q::cell<2>@w & R(v,w) 
+infer [R] p::cell<f>@v * q::cell<2>@w & R(v,w) 
   |- p::cell<a> * q::cell<_>@L.
 print residue.
 

@@ -1,0 +1,32 @@
+// x' is same as x for variables
+checkentail @full[x] |- @full[x'].
+print residue.
+
+/*
+# ex35c --ann-vp
+
+// x' is same as x for variables
+checkentail @full[x] |- @full[x'].
+print residue.
+
+// norm of prime need only occur once!
+// can be optimized
+
+norm_vperm_sets@2@1
+norm_vperm_sets inp1 : @full[x]
+norm_vperm_sets@2 EXIT: @full[x]
+
+norm_vperm_sets@3@1
+norm_vperm_sets inp1 : @full[x']
+norm_vperm_sets@3 EXIT: @full[x]
+
+norm_vperm_sets@4@1
+norm_vperm_sets inp1 : @zero[x]
+norm_vperm_sets@4 EXIT: @zero[x]
+
+
+Entail 1: Fail.(may) cause:Mismatch non-zero variable permission in consequent [(x',@full)]
+
+Residue:
+ <1>htrue*@full[x]&{FLOW,(1,26)=__flow#E}[]
+*/

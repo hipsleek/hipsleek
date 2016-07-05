@@ -8,6 +8,7 @@ int test_fun(int a[], int N)
     int res = 0;
     for (i = 0; i < N; i++) {
         while (a[i] > 0) {
+            //@ dprint;
             a[i]--;
             res++;
         }

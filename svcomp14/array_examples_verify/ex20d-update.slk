@@ -1,0 +1,25 @@
+relation update_array_1d(int[] aa, int[] rr, int vval, int kkk).
+relation postA(int x, int r).
+
+
+infer [postA] (exists a: htrue&res=a[5] & y=x & update_array_1d(b,a,1+y,5))
+     |- postA(x,res).
+print residue.
+
+/*
+ <1>htrue&update_array_1d(a_1187,a_17,x'+1,5) & x'=x & res=a_17[5] &{FLOW,(4,5)=__norm#E}[]
+ 
+inferred rel: [RELDEFN postA: ( a_17[i]=a_1187[i] & x=res-1 & a_17[5]=res) -->  postA(x,res)]
+*/
+
+/*
+infer [postA] (exists a_37': htrue&res=a_37'[5] & x'=x & a_17[5]=x'+1 & forall(i:i=5 | a_17[i]=a_1187[i]))
+     |- postA(x,res).
+print residue.
+*/
+
+/*
+infer [postA] htrue&res=a_37'[5] & x'=x & a_17[5]=x'+1 & forall(i:i=5 | a_17[i]=a_1187[i])
+     |- postA(x,res).
+print residue.
+*/

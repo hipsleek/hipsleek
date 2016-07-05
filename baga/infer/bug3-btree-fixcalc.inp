@@ -1,0 +1,8 @@
+
+btree:={[self,n_33,idx_34] -> [] -> []:  
+exists (self: self<=0 && n_33=0 && idx_34=0) ||  
+exists (self,NODl,n1,NODr,n2,idx_32,idx_31: 
+self>0 && btree(NODl,n1,idx_32) 
+   && btree(NODr,n2,idx_31) && (n_33=1+n1+n2 && idx_34=idx_32+1))
+};
+bottomupgen([btree], [1], SimHeur);

@@ -1,0 +1,31 @@
+data str {
+  int val;
+  str next;
+}.
+
+pred tt<> == self=null
+ or self::str<_,q>
+inv true.
+
+pred tt2<> == self=null
+ or self::str<_,q> * q::tt2<>
+inv true.
+
+pred tt3<> == self::str<_,null>
+ or self::str<_,q> * q::tt3<>
+inv self!=null.
+
+pred tt4<> ==  self::str<_,q> * q::tt4<>
+inv self!=null.
+
+pred tt5<> == self=null 
+ or self::str<_,null>
+ or self::str<_,q> * q::tt5<>
+inv true.
+
+/*
+# strings/ex8d7.slk -dre "compute_base"
+
+
+
+*/

@@ -1,0 +1,83 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred ll<> ==
+   emp & self=null
+//or self::node<_,p>*p::ll<>.
+or self::node<_,p>*p::node<_,q>*q::ll<>.
+
+pred ll1<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll1<>.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+print views.
+
+//pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+
+pred ss<nnn> == extends ll<> with size[REC]<nnn>.
+
+//pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+//shape_extends_view [*] with size.
+
+//shape_extends_view [ll] with size.
+
+print views.
+
+/*
+# ex25a5a.slk
+
+!!! **astsimp.ml#7453:var not in type table:nnn
+Exception(trans_formula):Not_found
+Exception(Norm:case_norm):Not_found
+Exception(process_selective_iview_decls):Not_found
+Exception(convert_data_and_pred_to_cast):Not_found
+
+Exception processed: Not_found
+
+ view ll_ss{}[]<nnn:NUM>= 
+  view_domains: 
+   view ll_ss<>= 
+    EList
+      :EBase 
+         (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; p; Anon_13; 
+            q](* lbl: *){8}->self::node<Anon_12,p>@M * 
+                             p::node<Anon_13,q>@M * q::ll<>@M&
+            {FLOW,(1,26)=__flow#E}[]
+      
+  view vars: nnn
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  
+  unstructured formula: 
+    (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){8}->(exists Anon_12,p,Anon_13,
+       q: (* lbl: *){8}->self::node<Anon_12,p>@M * p::node<Anon_13,q>@M * 
+                         q::ll_ss<nnn_61>@M&
+       {FLOW,(1,26)=__flow#E}[])
+  xform: true
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: node
+  
+  raw base case: 
+  (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+  
+*/

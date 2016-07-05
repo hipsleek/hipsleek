@@ -1,0 +1,59 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp*N@value[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp*N@1/2[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>emp*N@lend[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>emp*N@V1/2[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 6: Valid. 
+
+Residue:
+ <1>emp*N@F1/2[x]&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 7: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 8: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 9: Valid. 
+
+Residue:
+ <1>emp*N@lend[x]@1/3[x]&{FLOW,(4,5)=__norm#E}[]
+
+

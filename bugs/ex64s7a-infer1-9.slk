@@ -1,0 +1,95 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+relation R1(int x).
+relation R2(int x).
+
+infer [R1] x::node<_,p> * q::ll<n> & R1(n) |- x=null.
+print residue.
+
+
+
+infer [R1] x::ll<n> & R1(n) |- x::node<_,null>.
+print residue.
+
+/*
+ <1>q_67::ll<flted_7_65>@M&flted_7_65=n-1 & n<=1 & R1(n)&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [R1]: ( R1(n)) -->  n!=0; 
+                RELASS [R1]: ( R1(n)) -->  n<=1]
+[[ Unfold 0 ==>  Match(x,x)]]
+*/
+
+
+infer [R1] x::ll<n> * y::ll<m> & R1(n) |- x::node<_,null>.
+print residue.
+
+//(4)
+infer [R1,R2] x::ll<n> * y::ll<m> & R1(n) & R2(m) |- x::node<_,null>.
+print residue.
+
+//(5)
+infer [R1] x::ll<n> * y::ll<m> & R1(n) & R1(m) 
+  |- x::node<_,null>.
+print residue.
+expect Valid.
+
+HeapPred H(int x).
+
+//(6)
+infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
+  |- x::node<_,null>.
+print residue.
+expect Valid.
+
+/*
+# ex64s7a.slk
+
+# -pnum 6
+
+infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
+  |- x::node<_,null>.
+
+# How about HeapPred?
+
+ inferred rel: [RELASS [R1]: ( R1(m)) -->  0>m]
+ inferred hprel: [H(n@NI)&true --> emp&n<=1]
+
+------------------------------------------------------------------
+
+# -pnum 4
+
+infer [R1,R2] x::ll<n> * y::ll<m> & R1(n) & R2(m) |- x::node<_,null>.
+
+Entail (5) : Fail.(may) cause:OrL[
+ x=null |-  x!=null. LOCS:[6;38] (must-bug),
+valid
+]
+
+(====)
+early_hp_contra_detection_add_to_list_context#1@7
+early_hp_contra_detection_add_to_list_context#1 inp1 : ex_formula : y::ll<m>@M&R1(n) & R1(m) & n=0 & x=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [R1]
+early_hp_contra_detection_add_to_list_context#1 inp2 : x::node<Anon_16,flted_38_52>@M&flted_38_52=null&{FLOW,(20,21)=__norm#E}[]
+early_hp_contra_detection_add_to_list_context#1@7 EXIT:(real_c:false,false,None,?)
+
+# Why isn't contra detected?
+
+# -pnum 5
+
+infer [R1] x::ll<n> * y::ll<m> & R1(n) & R1(m) |- x::node<_,null>.
+
+ <1>q_67::ll<flted_7_65>@M * y::ll<m>@M&flted_7_65=n-1 & n<=1 & R1(n) & R2(m)&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [R1,R2]: ( R1(n) & R2(m)) -->  (n!=0 | 0>m); 
+                RELASS [R1]: ( R1(n)) -->  n<=1]
+[[ Unfold 0 ==>  Match(x,x)]]
+
+# Why use ( R1(n) & R2(m)) --> 
+
+*/

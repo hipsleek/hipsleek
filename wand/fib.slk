@@ -1,0 +1,11 @@
+relation fib(int n, int f).
+
+axiom n<=0 ==> fib(n,0).
+axiom 1<=n<=2 ==> fib(n,1).
+axiom n>0 & fib(n,f1) & fib(n+1,f2) ==> fib(n+2,f1+f2).
+
+//1
+checkentail fib(1,n) & fib(2,m) |- n = m.
+
+//2
+checkentail fib(n,p) & fib(n+1,m) & n = 1 |- m = p.

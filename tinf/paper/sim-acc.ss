@@ -19,10 +19,11 @@ infer [@term] requires true ensures true;
  	else {
 		int mmm1=mmm-1;
                 int n1=n-1;
+                // dprint;
                 //int p = ranPos();
                 int r = Ack(mmm, n1);
                 int rr = Ack(mmm-1, r); 
-                dprint;
+                 dprint;
                 return rr;
  	}
 }

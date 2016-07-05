@@ -1,0 +1,35 @@
+data node {
+  int val;
+  node nxt;
+}.
+
+pred lseg<l,y,p> == emp & self=y & l=p
+  or (exists q: self::node<_,q> * q::lseg<l-1,y,p>)
+inv l>=p.
+
+checkentail x::node<_,q>*q::lseg<l,y,p> |- x::lseg<m,y,z>.
+print residue.
+
+// <1>emp&p=z & l+1=m & exists(y_60:y=y_60) & Anon_61=Anon_13&{FLOW,(4,5)=__norm#E}[]
+
+
+pred sortll<m:int> == self::node<m,null>
+  or (exists q,m1: self::node<m,q>*q::sortll<m1> & m<=m1)
+inv self!=null.
+
+checkentail_exact x::node<2,q1>*q1::node<4,null> |- x::sortll<m>.
+print residue.
+
+/*
+#ex1.slk
+
+ ending with eof on // comment seems to cause the following error.
+ fix this with a search for eof or eoln
+
+error at: 
+SLEEK FAILURE (END)
+
+
+*/
+
+//<1>emp&m<=flted_19_111 & flted_19_112=m & flted_19_112<=flted_19_111 & flted_19_110=null & flted_19_111=4 & flted_19_112=2&{FLOW,(4,5)=__norm#E}[]

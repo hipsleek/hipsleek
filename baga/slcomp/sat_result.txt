@@ -1,0 +1,47 @@
+./test.plx --all --timeout=10
+
+Total number of timeout files: 33 in:
+ latest/UDB_sat/succ-circuit03.defs.smt2: OK (15306)
+ latest/UDB_sat/succ-circuit04.defs.smt2: OK (15306) (15360 - 66s) (15391-  4s)
+ latest/UDB_sat/succ-circuit05.defs.smt2 OK (15352- 17s) (15360 - 387s) (15391-  66s)
+ latest/UDB_sat/succ-circuit06.defs.smt2 
+ latest/UDB_sat/succ-circuit07.defs.smt2
+ latest/UDB_sat/succ-circuit08.defs.smt2
+ latest/UDB_sat/succ-circuit09.defs.smt2
+ latest/UDB_sat/succ-circuit10.defs.smt2
+ latest/UDB_sat/succ-circuit11.defs.smt2
+ latest/UDB_sat/succ-circuit12.defs.smt2
+ latest/UDB_sat/succ-circuit13.defs.smt2
+ latest/UDB_sat/succ-circuit14.defs.smt2
+ latest/UDB_sat/succ-circuit15.defs.smt2
+ latest/UDB_sat/succ-circuit16.defs.smt2
+ latest/UDB_sat/succ-circuit17.defs.smt2
+ latest/UDB_sat/succ-circuit18.defs.smt2
+ latest/UDB_sat/succ-circuit19.defs.smt2
+ latest/UDB_sat/succ-circuit20.defs.smt2
+ latest/UDB_sat/succ-rec06.defs.smt2 OK
+ latest/UDB_sat/succ-rec07.defs.smt2 OK
+ latest/UDB_sat/succ-rec08.defs.smt2 OK
+ latest/UDB_sat/succ-rec09.defs.smt2 OK
+ latest/UDB_sat/succ-rec10.defs.smt2 OK
+ latest/UDB_sat/succ-rec11.defs.smt2 OK
+ latest/UDB_sat/succ-rec12.defs.smt2 OK
+ latest/UDB_sat/succ-rec13.defs.smt2 OK
+ latest/UDB_sat/succ-rec14.defs.smt2 OK
+ latest/UDB_sat/succ-rec15.defs.smt2 OK
+ latest/UDB_sat/succ-rec16.defs.smt2 OK
+ latest/UDB_sat/succ-rec17.defs.smt2 OK
+ latest/UDB_sat/succ-rec18.defs.smt2 OK
+ latest/UDB_sat/succ-rec19.defs.smt2 OK
+ latest/UDB_sat/succ-rec20.defs.smt2 OK
+
+=======================================================================
+
+./test.plx --all --timeout=10 --flags="--inv-baga --en-delay-eelim --dis-inv-check"
+
+Total number of unexpected results: 1 in files:
+ latest/UDB_sat/succ-circuit01.defs.smt2
+
+
+Total number of unsound results: 1 in files:
+ latest/UDB_sat/succ-circuit01.defs.smt2

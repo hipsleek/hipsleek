@@ -1,0 +1,83 @@
+data arrI {
+  int val;
+}.
+
+relation Univ(int x).
+
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+2 .
+expect Fail.
+
+
+checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=2.
+expect Fail.
+
+checkentail x::arrI<m> & i<m & m<=n |- x::arrI<mm> & mm=i+1 .
+expect Fail.
+
+checkentail x::arrI<m> & i<m & m<=n & Univ(m) |- [mm] x::arrI<mm> & mm=i+1 .
+expect Valid.
+
+checkentail x::arrI<m> & i<m & m<=n & Univ(m) |- [mm] x::arrI<mm> & mm=i+2 .
+expect Fail.
+
+//(6)
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+1 .
+expect Fail.
+// fails when mm=m move to RHS ..
+// unsound if Univ(m) is present on LHS ..
+
+//(7)
+checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=4.
+expect Fail.
+// fail but expect Valid?
+
+checkentail x::arrI<m> & i<m & m<=n |- (exists mm: x::arrI<mm> & mm=i+1) .
+expect Fail.
+
+checkentail x::arrI<m> & i<m & m<=n |- x::arrI<mm> & mm=i+1 .
+expect Fail.
+print residue.
+
+
+checkentail x::arrI<m> & i<m & m<=n & Univ(m) |- (exists mm: x::arrI<mm> & mm=i+1) .
+expect Valid.
+print residue.
+
+checkentail x::arrI<m> & i<m & m<=n & Univ(m) |- x::arrI<mm> & mm=i+1 .
+expect Valid.
+print residue.
+
+/*
+ex6e3f2.slk -dre "process_ac" -trace-log-num 1
+
+# expl inst may go to LHS if Univ not present in LHS
+  since we may allowed it to strengthen formula on LHS?
+# alternative is to add Univ(m) on LHS?
+
+//(6)
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+1 .
+expect Valid.
+// fails when mm=m move to RHS ..
+// unsound if Univ(m) is present to move to LHS..
+
+//(7)
+checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=4.
+expect Valid.
+// fail but expect Valid when m=mm move to RHS?
+
+
+======================================================
+
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+2 .
+
+# explicit inst mm=m should go to RHS, not LHS..
+
+@1! **solver.ml#10927:other subs:[((mm,m),?)]
+@1! **solver.ml#10939:ext_subst(bef filter out ann):[]
+@1! **solver.ml#10940:to_rhs(bef ann): true
+@1! **solver.ml#10941:to_lhs(bef ann): mm=m
+
+imply_timeout 2 inp1 : m<=n & i<m & mm=m & x!=null
+imply_timeout 2 inp2 : exists(mm:mm=i+2)
+
+*/

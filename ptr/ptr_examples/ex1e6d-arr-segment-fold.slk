@@ -1,0 +1,136 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+//(1)
+checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+// with instantiation n=3
+/*
+Residue:
+ <1>y::arr<Anon_12>@M&i=2 & y=2+x & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ Fold]]
+
+<2>emp&y=x+2 & n=3 & i=2&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
+*/
+
+// explicit instantiation
+checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n> & n>i.
+print residue.
+expect Valid.
+
+//(3) implicit instantiation
+checkentail y::arr<_> & y=x+2 & i=2 |- x::arr_seg<i,n> & n>i.
+print residue.
+expect Valid.
+
+//(4) existential variable
+checkentail y::arr<_> & y=x+2 & i=2 |- (exists n: x::arr_seg<i,n> & n>i).
+print residue.
+expect Valid.
+
+//(5)
+checkentail emp & i=2 |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+/*
+ <1>emp&i=2 & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  BaseCaseFold]]
+*/
+//checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
+
+//(6)
+checkentail  y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n> & n=i.
+print residue.
+expect Valid.
+// i=n & i>=0
+
+//(3)
+checkentail r::arr<_>*y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+/*
+Entail 3: Valid. 
+Residue:
+<1>r::arr<Anon_13>@M * y::arr<Anon_14>@M&i=2 & y=2+x & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ Fold]]
+
+<2>r::arr<Anon_13>@M&y=x+2 & n=3 & i=2&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
+*/
+
+//(4)
+checkentail r::arr<_>*y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
+/*
+ <1>r::arr<Anon_15>@M&y=x+2 & n=3 & i=2&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
+*/
+
+checkentail x::arr_seg<i,n> & i+2<n & y=x+1 & z=y+1 |- y::arr<_> * z::arr<_>.
+print residue.
+expect Valid.
+
+checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
+
+/*
+# ex1e6d.slk
+
+checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>y::arr<Anon_12>@M&i=2 & y=2+x & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ Fold]]
+
+<2>emp&y=x+2 & n=3 & i=2&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  Match(y,y) ==>  COND ==>  BaseCaseFold]]
+
+==================================================================
+
+# seems to use base-case fold. how about normal fold?
+
+# need Some((x, x=i+self)) --> (x_3,x_3=i+self)
+
+
+!!! **cast.ml#1660:actual root:Some((x, x=i+self))
+!!! **cast.ml#1661:actual root:[(self,x),(i,i_60),(n,n)]
+
+@2! **context.ml#741:f: i=2 & y=2+x & x=y & x=i_60+x & i_60=i
+@2! **context.ml#742:eq: x=y
+@2! **context.ml#743:rf: x=i_60+x
+@2! **context.ml#745:rf(subs): y=i_60+y
+@2! **context.ml#746:is_sat hs & rhs & root_ptr:false
+@2! **context.ml#1319:lhs?: y::arr<Anon_12>@M
+@2! **cpure.ml#14981:annot: 0
+@2! **cpure.ml#14982:annot: :[]
+@2! **cpure.ml#14983:hargs: :[i_60,n]
+@2! **cpure.ml#14991:view_args_pos: 2
+@2! **cpure.ml#14995:to_be_updated: :2
+@2! **cpure.ml#15000:new_com:[(((SVArg i_55,0),1),i_60),(((SVArg n,0),2),n)]
+@2! **context.ml#1320:rhs: x::arr_seg<i_60,n>@M
+@2! **context.ml#1321:aset:[x]
+@2! **context.ml#1394:DataNode:y
+@2! **context.ml#1395:view_roots:[]
+@2! **context.ml#1625:l_xxx:[]
+
+ <1>y::arr<Anon_12>@M&i=2 & y=2+x & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  BaseCaseFold]]
+
+# could we use set of solution? or match with node?
+
+*/
+

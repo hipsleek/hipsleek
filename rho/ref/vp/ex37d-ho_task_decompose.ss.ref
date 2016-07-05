@@ -1,0 +1,9 @@
+
+!!!Full processing file "vp/ex37d-ho_task_decompose.ss"
+Parsing file "vp/ex37d-ho_task_decompose.ss" by default parser...
+File "vp/ex37d-ho_task_decompose.ss", line 40, characters 32-33
+ --error: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+ at:caught
+
+Exception occurred: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+Error3(s) detected at main 

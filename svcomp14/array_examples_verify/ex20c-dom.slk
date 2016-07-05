@@ -1,0 +1,28 @@
+
+relation dom(int[] a, int low, int high).
+
+
+checkentail true |- dom(a,l,u).
+
+/*
+# ex20c.slk -tp oc
+
+# unsafe oc proving
+
+!!! init_tp : Using Z3 by default
+Starting Omega...oc
+Entail 1: Valid. 
+
+
+Entail 1: Fail.(may) cause: true |-  dom(a,l,u). LOCS:[0;5] (may-bug)
+
+update_array_1d(a_old,a_new,val,i)
+<-> a_new[i]=val & (forall j. i!=j ->  a_new[j]=a_old[j])
+
+
+
+-> update_array()
+
+
+*/
+

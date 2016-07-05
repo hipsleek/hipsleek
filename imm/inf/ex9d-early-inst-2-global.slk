@@ -1,0 +1,81 @@
+data cell{
+ int fst;
+}.
+
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:@L.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v=@L.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v=@A.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:@A.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & @A<:v.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v .
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u  |- x::cell<_>@v & v=@L.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v=@M.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:@M.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & @M<:v.
+print residue.
+expect Valid.
+
+/*
+# ex9d.slk
+
+checkentail x::cell<_>@u  |- x::cell<_>@v & v=@L.
+
+Entail 7: Valid. 
+Residue:
+ <1>x::cell<Anon_23>@u&v=@L & Anon_24=Anon_23&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+This is unsound, as we have not yet proven u<:v. I think
+after instantiation, we need to add u<:v to the RHS for it to
+be proven.
+
+*/
+
+/*
+checkentail x::cell<_>@u & u=@M  |- (exists w: x::cell<_>@v & v<:w & w=@L).
+print residue.
+expect Valid.
+
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:w & w=@M.
+print residue.
+expect Fail.
+
+checkentail x::cell<_>@u & u=@L  |- x::cell<_>@v & v<:u.
+print residue.
+expect Valid.
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v & v<:u.
+print residue.
+expect Valid.
+*/
+
+

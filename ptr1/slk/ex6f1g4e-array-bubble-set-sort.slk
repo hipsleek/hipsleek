@@ -1,0 +1,79 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> ==
+ case {
+   i=n -> [] i=n & i>=0 ;
+   i!=n -> []  x::arrI<v>*self::arr_seg<i+1,n> & x=self+i & i>=0 ;
+ }  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> <- 
+  self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
+/*
+checkentail_exact
+     x::arr_seg<i,m> *x::arr_seg<m,n> 
+                     & i<=m & m<=n 
+  |-  x::arr_seg<i,n> //& x2=x+i 
+    .
+print residue.
+
+checkentail_exact
+     x::arr_seg<i,m> *x::arr_seg<m,n> 
+                     & i<=m & m<=n & i=n
+  |-  emp & i=n & i>=0
+    .
+print residue.
+*/
+
+
+checkentail_exact
+     x::arr_seg<i,m> *x::arr_seg<m,n> 
+                     & i<=m & m<=n & i!=n
+  |-  x2::arrI<_> * 
+     x::arr_seg<i+1,n> & x2=x+i & i>=0 
+    .
+print residue.
+
+/*
+checkentail_exact //x1::arrI<v>*
+     x::arr_seg<i+1,m> *x::arr_seg<m,n> 
+                     & i<m & m<=n & x1=x+i & i>=0 & i!=n
+  |- //x2::arrI<_> * 
+     x::arr_seg<i+1,n> //& x2=x+i 
+    .
+print residue.
+*/
+
+
+/*
+# ex6f1g4e.slk -de "spatial_c\|compute_a"
+
+# why 0 and 1 below?
+  did we drop correct rhs_node?
+
+compute_actions@8 EXIT: SEARCH =>[
+  Prio:0
+  Match =>
+    Type: Root
+    LHS: x::arr_seg<i,m>@M
+    RHS: x::arr_seg<m_145,n>@M
+    root_inst: None
+    lhs_rest: x::arr_seg<m_93,n>@M
+    rhs_rest: x::arr_seg<i,m_146>@M
+    alias set: [x]rhs_inst: []rhs_infer: None;
+  Prio:1
+  Match =>
+    Type: Root
+    LHS: x::arr_seg<i,m>@M
+    RHS: x::arr_seg<i,m_146>@M
+    root_inst: None
+    lhs_rest: x::arr_seg<m_93,n>@M
+    rhs_rest: x::arr_seg<m_145,n>@M
+    alias set: [x]rhs_inst: []rhs_infer: None
+  ]
+
+
+
+*/

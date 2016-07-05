@@ -1,0 +1,31 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "flow/flow2a.ss"
+Parsing file "flow/flow2a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+Procedure loop$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1356: ( x_1373+1=x & 1<=x & post_1356(x_1373,x',flow)) -->  post_1356(x,x',flow),
+RELDEFN post_1356: ( x'=x & x<=0) -->  post_1356(x,x',flow)]
+*************************************
+
+Post Inference result:
+loop$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+           htrue&((x>=1 & 0=x') | (0>=x' & x'=x))&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.408023 second(s)
+	Time spent in main process: 0.34002 second(s)
+	Time spent in child processes: 0.068003 second(s)
+

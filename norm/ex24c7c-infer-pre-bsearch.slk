@@ -1,0 +1,9 @@
+
+relation P(int x, int y).
+
+infer[P,@classic] x=y & P(x,y) |- false.
+print residue.
+expect Valid.
+
+     infer[P,@classic] P(x,y) & (x!=0 | y!=0) |- x-1>=0 & y-1>=0.
+print residue.

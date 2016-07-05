@@ -1,0 +1,28 @@
+checkentail @value[x] |- @value[x].
+print residue.
+
+checkentail @value[x] |- @full[x].
+print residue.
+
+checkentail @full[x] |- @full[x].
+print residue.
+
+checkentail @full[x] |- @value[x].
+print residue.
+
+// x' is same as x for variables
+checkentail @full[x] |- @full[x'].
+print residue.
+
+/*
+# ex35b
+
+// x' and x are the same variable
+checkentail @full[x] |- @full[x'].
+print residue.
+
+Entail 5: Fail.(may) cause:Mismatch non-zero variable permission in consequent [(x',@full)]
+
+Residue:
+ <1>htrue*@full[x]&{FLOW,(1,26)=__flow#E}[]
+*/

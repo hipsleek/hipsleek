@@ -1,0 +1,41 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// satisfiable LHS
+checkentail x::ll<n> |- n>=-1.
+print residue.
+
+// false LHS
+checkentail x::ll<n> & n<0 |- n>=-1.
+print residue.
+
+
+// false LHS
+checkentail x::ll<n> & n>0 & x=null |- n>=-1.
+print residue.
+
+// false LHS
+checkentail x::ll<n> & n<=0 & x!=null |- false.
+print residue.
+
+
+
+/*
+# ex2.slk
+
+# Warning issued but not the location, nor 
+  counting.
+
+[Warning] False ctx
+
+Entail 2: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+*/

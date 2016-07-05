@@ -1,0 +1,10 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-f91.ss"
+Parsing file "t/rec-f91.ss" by default parser...
+File "t/rec-f91.ss", line 4, characters 8-9
+ --error: Stream.Error("[infer_type_list] expected after OSQUARE (in [cid_list_w_itype])")
+ at:caught
+
+Exception occurred: Stream.Error("[infer_type_list] expected after OSQUARE (in [cid_list_w_itype])")
+Error3(s) detected at main 

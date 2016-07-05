@@ -1,0 +1,48 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/exc6d.ss"
+Parsing file "t/exc6d.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+dprint: t/exc6d.ss:15: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue&x'+1=x_1360 & x_1360=x&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: t/exc6d.ss:17: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_14_1337': htrue&post_1354(x',v_int_14_1337',flow) & x_1360=x & x'+1=x_1360&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure loop$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1354: ( x=1+res & post_1354(res,v_int_14_1364,flow)) -->  post_1354(x,res,flow)]
+*************************************
+
+Post Inference result:
+loop$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&false&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.372022 second(s)
+	Time spent in main process: 0.33202 second(s)
+	Time spent in child processes: 0.040002 second(s)
+

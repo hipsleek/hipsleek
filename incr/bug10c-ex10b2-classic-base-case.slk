@@ -1,0 +1,37 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b).
+
+/*
+checkentail H(p,q) |- H(p,p) .
+print residue.
+*/
+
+checkentail H(p,q) |- H(p,p) .
+print residue.
+
+
+/*
+# bug10c.slk
+
+# why did we have p=null?
+
+!!! **sleekengine.ml#834:view_decls (pre):[]
+!!! **solver.ml#7471:p1(after xpure_perm): p=null
+!!! **solver.ml#8290:lhs_p: p=null
+
+Entail (1) : Valid. 
+Residue:
+
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+# Why aen't there two arguments for H?
+
+*/
+

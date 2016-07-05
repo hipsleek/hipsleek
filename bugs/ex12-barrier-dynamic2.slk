@@ -1,0 +1,24 @@
+/*
+  For static barriers, a=0 always.
+  Do dynamic barriers, a!=0 possibly (both negative and positive)
+
+--en-para -perm bperm -tp redlog
+*/
+
+//********************************************
+//********************************************
+
+//********************************************
+//********************************************
+
+
+//(26)
+//Example of D-SEP, which is done automatically in xpure_perm
+checkentail b1::barrier(c1,t1,a1)<p1> * b2::barrier(c2,t2,a2)<p2> & t1!=t2 |- b1!=b2.
+print residue. //VALID, D-SEP
+
+//(27)
+//Example of D-SEP, which is done automatically in xpure_perm
+checkentail b1::barrier(c1,t1,a1)<p1> * b2::barrier(c2,t2,a2)<p2> & c1+c2>t1+a1+a2 |- b1!=b2.
+print residue. //VALID, D-SEP
+

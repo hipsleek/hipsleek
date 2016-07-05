@@ -1,0 +1,22 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell@NI b).
+infer[HP,@classic] HP(x,y) |- x::cell<_>.
+print residue.
+
+/*
+# norm/ex4b3.slk
+
+HeapPred HP(cell a,cell@NI b).
+infer[HP,@classic] HP(x,b) |- emp.
+print residue.
+
+infer[HP] HP(x) |- x::cell<_>.
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP(x,b@NI)&true --> emp&true]
+
+
+*/

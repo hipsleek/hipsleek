@@ -1,0 +1,36 @@
+
+!!!Full processing file "hip/ex4a-latch-par.ss"
+Parsing file "hip/ex4a-latch-par.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex4a-latch-par.ss:61: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_58_1444',b_1705,flted_56_1699,v_int_60_1445': c_39'::LatchIn{ - (exists flted_56_47,flted_56_46: x_37'::cell<flted_56_46> * 
+y_38'::cell<flted_56_47>*U@full[x_37,y_38]&flted_56_46=1 & flted_56_47=2&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_56_1699> * x_37'::cell<v_int_58_1444'> * y_38'::cell<v_int_60_1445'>*U@full[x_37,y_38]@lend[c_39]&0<1 & 0<1 & 0<=b_1705 & 0<=1 & 1=b_1705+1 & flted_56_1699=1 & v_int_58_1444'=1 & v_int_60_1445'=2&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex4a-latch-par.ss:77: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists r1_2153,r2_2151: c_39'::LatchIn{ - emp*N@zero[y_38,x_37]&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchOut{ + emp*N@zero[x_37,y_38]&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_41_1956> * x_37'::cell<flted_67_1955> * c_39'::CNT{}<flted_41_2130> * y_38'::cell<flted_73_2129> * c_39'::CNT{}<flted_22_2215>*N@full[c_39,r1_40,r2_41,val_70_1461,val_75_1472,x_37,y_38]&b_1689=b_1812+0 & 0<=b_1812 & flted_49_1809=1 & 0<v_int_49_1675 & v_int_49_1675=1 & r1_2153=0 & r2_2151=0 & flted_56_1683=2 & flted_56_1684=1 & 0<=b_1689 & v_int_49_1675=b_1689+1 & 2=flted_49_1808 & 0<=b_1984 & b_1812=b_1984+0 & 0<1 & 0<=b_1759 & 1=b_1759+1 & flted_56_1760=1 & v_int_58_1758=1 & v_int_60_1761=2 & b_1764<flted_56_1760 & 0<n & 0<=n & 0<=b_1764 & flted_56_1760=b_1764+n & y_38'!=null & x_37'!=null & 0<=(a_1765+1) & b_1776+1=n & 0<=(n+1) & flted_22_1781=b_1776+b_1764 & flted_67_1835=b_1849+flted_40_1848 & 0<=flted_40_1848 & flted_40_1848=0 & 0<v_int_49_1846 & v_int_49_1846=1 & r2_1847=0 & v_int_49_1839=b_1842+1 & 0<=b_1842 & flted_56_1836=1 & flted_56_1837=2 & r2_1838=0 & r1_1974=0 & v_int_49_1839=1 & 0<v_int_49_1839 & flted_49_1840=2 & flted_49_1841=1 & y_1844!=null & 0<=b_1843 & b_1842=b_1843+0 & flted_67_1835=0 & 0<=b_1849 & flted_67_1835=b_1849+0 & 0<=(a_1850+1) & flted_41_1956+1=0 & flted_67_1955=1 & r1_40'=flted_67_1955 & flted_73_2007=b_2022+flted_40_2021 & 0<=flted_40_2021 & flted_40_2021=0 & 0<v_int_49_2019 & v_int_49_2019=1 & r1_2020=0 & b_2013=b_2014+0 & 0<=b_2014 & y_2016!=null & flted_49_2008=1 & 0<v_int_49_2012 & v_int_49_2012=1 & r1_2009=0 & r2_2148=0 & flted_56_2010=2 & flted_56_2011=1 & 0<=b_2013 & 0<=1 & v_int_49_2012=b_2013+1 & 2=flted_49_2017 & 0<=b_2015 & b_2014=b_2015+0 & flted_73_2007=0 & 0<=b_2022 & flted_73_2007=b_2022+0 & 0<=(a_2023+1) & flted_41_2130+1=0 & exists(flted_40_64:0<=(flted_40_64+1)) & flted_73_2129=2 & r2_41'=flted_73_2129 & b_2154=flted_22_1781 & flted_22_2163=b_2154+b_1984 & b_2164=b_2022 & flted_22_2173=b_2164+b_1849 & b_2204=flted_22_2173 & flted_22_2215=b_2204+flted_22_2163&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 2.488153 second(s)
+	Time spent in main process: 2.388148 second(s)
+	Time spent in child processes: 0.100005 second(s)
+

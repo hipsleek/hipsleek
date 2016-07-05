@@ -1,0 +1,101 @@
+
+!!!Full processing file "hip/sll.ss"
+Parsing file "hip/sll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure delete$node~int... 
+Post condition cannot be derived:
+(may) cause: [  (must) cause: UnionR[ res!=null & v_bool_71_1498' & xs<=qmin_1668 & ql_1667<=xl & 
+qmin_1668<=qs_1666 & v<qmin_1668 & v_bool_72_1496' & res!=null & 
+0<=flted_16_1665 & qs_1666<=ql_1667 |-  sres_1717<=lres_1718 & nres_1719=0 & res=null. LOCS:[73;63;71;72;16;17;15] (RHS: contradiction), false |-  true. LOCS:[0] (RHS: contradiction)]
+OrL
+  (must) cause: UnionR[ qs_1666<=ql_1667 & 0<=flted_16_1665 & nres_1713<=flted_16_1665 & 
+flted_16_1665<=(nres_1713+1) & lres_1712<=ql_1667 & qs_1666<=sres_1711 & 
+qs_1666<=ql_1667 & 0<=flted_16_1665 & res!=null & v_bool_71_1498' & 
+xs<=qmin_1668 & ql_1667<=xl & qmin_1668<=qs_1666 & qmin_1668<=v & 
+!(v_bool_72_1496') & v!=qmin_1668 & !(v_bool_75_1495') & res!=null & 
+0<=flted_16_1665 & qs_1666<=ql_1667 & 0<=nres_1713 & sres_1711<=lres_1712 |-  sres_1752<=lres_1753 & nres_1754=0 & res=null. LOCS:[81;66;80;63;71;72;75;16;17;15] (RHS: contradiction), false |-  true. LOCS:[0] (RHS: contradiction)],valid]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/sll.ss",Line:84,Col:9
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure delete$node~int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure delete$node~int
+
+Checking procedure get_tail$node... 
+Procedure get_tail$node SUCCESS.
+
+Checking procedure id$int... 
+Procedure id$int SUCCESS.
+
+Checking procedure insert$node~int... 
+Post condition cannot be derived:
+  (must) cause:  v_bool_28_1599' & 0<=n & sm<=lg & res!=null |-  mi_1908<=ma_1909 & flted_23_1907=0 & res=null. LOCS:[20;28;17;29;15] (RHS: contradiction)
+OrL
+  (must) cause: UnionR[ x!=null & !(v_bool_28_1599') & sm<=qmin_1868 & ql_1867<=lg & 
+qmin_1868<=qs_1866 & v<=qmin_1868 & v_bool_32_1598' & x!=null & 
+0<=flted_16_1865 & qs_1866<=ql_1867 & res!=null & x!=res |-  mi_1928<=ma_1929 & flted_23_1927=0 & res=null. LOCS:[20;28;32;16;17;33;0;15] (RHS: contradiction),UnionR[ false |-  qs_1940<=ql_1941 & flted_16_1939=0 & q_1931=null. LOCS:[0;15] (RHS: contradiction), false |-  true. LOCS:[0] (RHS: contradiction)]]
+OrL
+  (must) cause: UnionR[ qs_1866<=ql_1867 & 0<=flted_16_1865 & ma_1902=max(v,ql_1867) & 
+mi_1901=min(v,qs_1866) & qs_1866<=ql_1867 & 0<=flted_16_1865 & res!=null & 
+!(v_bool_28_1599') & sm<=qmin_1868 & ql_1867<=lg & qmin_1868<=qs_1866 & 
+qmin_1868<v & !(v_bool_32_1598') & res!=null & 0<=flted_16_1865 & 
+qs_1866<=ql_1867 & 0<=(1+flted_16_1865) & mi_1901<=ma_1902 |-  mi_1964<=ma_1965 & flted_23_1963=0 & res=null. LOCS:[38;23;37;20;28;32;16;17;15] (RHS: contradiction), false |-  mi_1964<=qmin_1966 & ql_1977<=ma_1965 & qmin_1966<=qs_1976 & flted_16_1975+
+1=flted_23_1963. LOCS:[0;16] (RHS: contradiction)]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/sll.ss",Line:37,Col:3
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure insert$node~int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure insert$node~int
+
+Checking procedure insert2$node~node... 
+Post condition cannot be derived:
+  (must) cause:  v_bool_48_1551' & res!=null & 0<=n & sm<=lg |-  mi_2063<=ma_2064 & flted_46_2062=0 & res=null. LOCS:[50;49;44;48;45;17;15] (RHS: contradiction)
+OrL
+  (must) cause: UnionR[ x!=null & !(v_bool_48_1551') & sm<=qmin_2020 & ql_2019<=lg & 
+qmin_2020<=qs_2018 & v<=qmin_2020 & v_bool_52_1550' & res!=null & x!=null & 
+0<=flted_16_2017 & qs_2018<=ql_2019 & res!=x |-  mi_2083<=ma_2084 & flted_46_2082=0 & res=null. LOCS:[54;53;44;48;52;45;16;17;0;15] (RHS: contradiction),UnionR[ false |-  qs_2095<=ql_2096 & flted_16_2094=0 & q_2086=null. LOCS:[0;15] (RHS: contradiction), false |-  true. LOCS:[0] (RHS: contradiction)]]
+OrL
+  (must) cause: UnionR[ qs_2018<=ql_2019 & 0<=flted_16_2017 & ma_2059=max(v,ql_2019) & 
+mi_2058=min(v,qs_2018) & qs_2018<=ql_2019 & 0<=flted_16_2017 & vn'!=null & 
+res!=null & !(v_bool_48_1551') & sm<=qmin_2020 & ql_2019<=lg & 
+qmin_2020<=qs_2018 & qmin_2020<v & !(v_bool_52_1550') & res!=null & 
+0<=flted_16_2017 & qs_2018<=ql_2019 & 0<=(1+flted_16_2017) & mi_2058<=ma_2059 |-  mi_2119<=ma_2120 & flted_46_2118=0 & res=null. LOCS:[58;46;45;57;44;48;52;16;17;15] (RHS: contradiction), false |-  mi_2119<=qmin_2121 & ql_2132<=ma_2120 & qmin_2121<=qs_2131 & flted_16_2130+
+1=flted_46_2118. LOCS:[0;16] (RHS: contradiction)]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/sll.ss",Line:57,Col:2
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure insert2$node~node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure insert2$node~node
+
+0 false contexts at: ()
+
+Total verification time: 1.470504 second(s)
+	Time spent in main process: 1.307697 second(s)
+	Time spent in child processes: 0.162807 second(s)
+

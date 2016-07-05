@@ -1,0 +1,33 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&1<=x & res=2222&{FLOW,(22,23)=__Exc#E}[]
+ inferred rel: [RELDEFN post2: ( res=2222 & 1<=x) -->  post2(x,res)]
+
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&1<=x & res=2222&{FLOW,(22,23)=__Exc#E}[]
+ inferred rel: [RELDEFN post2(__Exc#E): ( res=2222 & 1<=x) -->  post2(x,res)]
+
+
+Entail (3) : Valid. 
+
+Residue:
+ <1>emp&1<=x & res=2222&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN post2(__norm#E): ( res=2222 & 1<=x) -->  post2(x,res)]
+
+
+Entail (4) : Valid. 
+
+Residue:
+ <1>emp&1<=x & res=2222&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN post2: ( res=2222 & 1<=x) -->  post2(x,res)]
+
+

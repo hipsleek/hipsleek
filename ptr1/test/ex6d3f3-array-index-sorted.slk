@@ -1,0 +1,45 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg_sorted<i,n,mi> == x1::arrI<mi> & x1=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0.
+
+checkentail x::arr_seg_sorted<i,n,mi>
+  |- 0<=i<n.
+expect Valid.
+
+checkentail base::arr_seg_sorted<i,n,mi> & n=i+1
+  |- x::arrI<mi> & x=base+i.
+print residue.
+expect Valid.
+expect_infer Valid R{emp}.
+
+checkentail base::arr_seg_sorted<i,n,mi> & n=i+2
+  |- x::arrI<mi> * y::arrI<m2>& x=base+i & y=x+1 & mi<=m2.
+print residue.
+expect Valid.
+expect_infer Valid R{emp}.
+
+/*
+# ex6d3f3.sl --pcp
+
+pred arr_seg_sorted<i,n,mi> == x1::arrI<mi> & x1=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+
+   actual_root: 
+  Some((x1, true))
+
+# Need to do consistent renaming for each branch.
+
+!!! **astsimp.ml#2712:lst(choose smallest in each branch):[[(x1, i+1=n & x1=i+se
+lf)],[(x, x=i+self)]]
+!!! **astsimp.ml#2681:need to rename root var
+!!! **astsimp.ml#2715:TODO: ensure same root for all branches:[(x1, true)]
+!!! **astsimp.ml#2718:TODO: lst(fresh_name):[(x1, true)]
+
+
+*/

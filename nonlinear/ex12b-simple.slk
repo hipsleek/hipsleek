@@ -1,0 +1,7 @@
+checkentail r=2*x |- r=2*x.
+
+checkentail r=b*x & b=2 |- r=2*x.
+
+checkentail r=b*x & c=2 |- c>0.
+
+checkentail r=b*x & b>0 |- r=b*x.

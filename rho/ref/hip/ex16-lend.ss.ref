@@ -1,0 +1,42 @@
+
+!!!Full processing file "hip/ex16-lend.ss"
+Parsing file "hip/ex16-lend.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure f$cell... 
+( []) :hip/ex16-lend.ss:7: 10: x does not have @lend/@full permission to read (inside bind)
+
+(Cause of ParCase Failure):hip/ex16-lend.ss:7: 10:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: Mismatch non-zero variable permission in consequent [(x,@lend)]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/ex16-lend.ss",Line:7,Col:10
+
+ERROR: at hip/ex16-lend.ss_7:10_7:15
+Message: x does not have @lend/@full permission to read (inside bind)
+
+Procedure f$cell FAIL.(2)
+
+Exception Failure("x does not have @lend/@full permission to read (inside bind)") Occurred!
+
+Error(s) detected when checking procedure f$cell
+
+0 false contexts at: ()
+
+Total verification time: 0.396023 second(s)
+	Time spent in main process: 0.376023 second(s)
+	Time spent in child processes: 0.02 second(s)
+

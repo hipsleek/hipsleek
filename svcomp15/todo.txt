@@ -1,0 +1,545 @@
+Heap Manipulation / Dynamic Data Structures
+Descriptions: heap-manipulation, list-properties, ldv-regression, ddv-machzwd
+
+heap-manipulation/*_false-unreach-call*.i
+heap-manipulation/*_true-unreach-call*.i
+============================================
+note: shapes
+
+bubble_sort_linux.c - Bubble-Sort implementation operating on native Linux lists
+bubble_sort_linux_BUG.c - bubble_sort_linux.c with an injected bug
+
+dll_of_dll.c - NULL-terminated doubly-linked list of doubly-linked lists
+dll_of_dll_BUG.c - dll_of_dll.c with an injected bug
+  The program creates a doubly-linked list of doubly-linked lists, 
+  then destroys the shape in several phases.
+
+merge_sort.c - Merge-Sort algorithm operating on two level singly-linked lists
+merge_sort_BUG.c - merge_sort.c with an injected bug
+
+sll_to_dll_rev.c - conversion of singly-linked list to doubly-linked list
+sll_to_dll_rev_BUG.c - sll_to_dll_rev.c with an injected bug
+  The program converts a singly-linked list to a doubly-linked list, 
+  reverses the list, and then coverts it back to a singly-linked list.
+
+
+
+==============
+list-properties/*_false-unreach-call*.i
+list-properties/*_true-unreach-call*.i
+
+1.
+/* Build a list of the form (1->2)*->3
+   * with 1,2 depending on some flag
+*/
+
+alternating_list*.c
+list_flag*.c
+splice_*.c
+
+2.
+/* Build a list of the form 1->...->1->2->....->2->3 */
+list_false*.c
+list_true*.c
+
+3. build-list-search (e.g. /* Build a list of the form 1->...->1->0 */)
+list_search_*.c
+simple_built*
+simple_true
+
+==============
+ldv-regression/*_false-unreach-call*.i
+ldv-regression/*_true-unreach-call*.i
+
+==============
+ddv-machzwd/*_false-unreach-call*.i
+ddv-machzwd/*_true-unreach-call*.i
+
+============================
+ Memory Safety
+Descriptions: memsafety, memsafety-ext
+
+memsafety/*_false-valid-deref*.i
+memsafety/*_false-valid-free*.i
+memsafety/*_false-valid-memtrack*.i
+memsafety/*_true-valid-memsafety*.i
+
+
+
+
+==============
+memsafety-ext/*_true-valid-memsafety*.i
+
+note: shapes: dll, skiplist, tree_cnstr, tree_dsw, tree_of_cslls, tree_parent_ptr, tree_stack
+
+==============
+list-ext-properties/*_false-valid-deref*.i
+list-ext-properties/*_false-valid-free*.i
+list-ext-properties/*_false-valid-memtrack*.i
+list-ext-properties/*_true-valid-memsafety*.i
+
+note: shape + pure field + size
+
+array:
+960521-1_1_-*.c
+
+ /* Build a list of the form 1->...->1->2->....->2->3 */
+list-ext*.c
+
+/* Build a list of the form 1->2->2->...->1->3
+   * with 1,2 depending on some flag
+*/
+list-ext_flag*.c
+
+ /* Build a list of the form 0->1->...->29->30 */
+simple-ext*.c
+
+field values of 1 node (bag of val/addr)
+test-0019*.c
+
+OK:  test-0019_1_true-valid-memsafety.c
+
+field + array
+test-0158
+test-0214
+
+
+list+length
+ test-0232
+
+dll
+ test-0504_
+
+==============
+memory-alloca/*_false-valid-deref*.i
+memory-alloca/*_false-valid-free*.i
+memory-alloca/*_false-valid-memtrack*.i
+memory-alloca/*_true-valid-memsafety*.i
+
+
+1. one node + pure field (fix point) (__VERIFIER_nondet_int)
+a.*.c
+add_last-*
+Avery-2006FLOPS-Tabel1_true-alloca_true-valid-memsafety.c
+b.*.c
+Ben-Amram-2010LMCS-Ex2.3-alloca_true-valid-memsafety.c
+BradleyMannaSipma-2005CAV-Fig1-modified-alloca_unknown-valid-memsafety.c
+BradleyMannaSipma-2005ICALP-Fig1-alloca_unknown-valid-memsafety.c 
+BrockschmidtCookFuhs-2013CAV-*.c
+ChenFlurMukhopadhyay-2012SAS-Fig1-alloca_true-valid-memsafety.c
+CookSee*.c (if-while)
+easySum-alloca_true-valid-memsafety.c
+flag-alloca_true-valid-memsafety.c
+gcd1-alloca_true-valid-memsafety.c
+genady-alloca_true-valid-memsafety.c
+GulwaniJainKoskinen-2009PLDI-Fig1-alloca_true-valid-memsafety.c
+HarrisLalNoriRajamani-2010SAS-Fig2-alloca_unknown-valid-memsafety.c
+HarrisLalNoriRajamani-2010SAS-Fig3-alloca_true-valid-memsafety.c
+java_AG313-alloca_true-valid-memsafety.c
+java_Break-alloca_true-valid-memsafety.c
+java_Continue1-alloca_true-valid-memsafety.c
+java_Nested-alloca_true-valid-memsafety.c
+java_Sequence-alloca_true-valid-memsafety.c
+min_rf-alloca_true-valid-memsafety.c
+NoriSharma-2013FSE*.c
+openbsd_*.c
+TelAviv-Amir-Minimum-alloca_true-valid-memsafety.c
+Toulouse-*.c
+Urban-2013*.c
+ Velroyen-alloca_false-valid-memsafety.c
+
+2. array:
+array0*.c
+bubblesort-alloca_true-valid-memsafety.c
+bubble_sort_unsafe_false-valid-deref.c
+bubblesort_unsafe_false-valid-deref.c
+count_down-alloca_true-valid-memsafety.c
+count_down_unsafe_false-valid-deref.c
+diff-alloca_true-valid-memsafety.c
+diff_usafe_false-valid-deref.c
+insertionsort-alloca_true-valid-memsafety.c
+insertion_sort_unsafe_false-valid-deref.c
+insertionsort_unsafe_false-valid-deref.c 
+java_BubbleSort-alloca_true-valid-memsafety.c
+java_BubbleSort_unsafe_false-valid-deref.c
+knapsack_alloca_unsafe_false-valid-deref.c
+knapsack_unsafe_false-valid-deref.c
+LarrazOliverasRodriguez-CarbonellRubio-2013FMCAD-Fig1-alloca_unknown-valid-memsafety.c
+lis-alloca_true-valid-memsafety.c
+lis_unsafe_false-valid-deref.c
+mult_array-*.c
+rec_strlen-alloca_true-valid-memsafety.c
+reverse_array*.c
+selection*.c
+
+
+3a. div
+aviad_true-alloca_true-valid-memsafety.c
+java_LogBuiltIn-alloca_true-valid-memsafety.c (var/cons)
+KroeningSharyginaTsitovichWintersteiger-2010CAV-Fig1-alloca_true-valid-memsafety.c (var/cons)
+twisted-alloca_true-valid-memsafety.c
+
+
+3b. *
+BradleyMannaSipma-2005CAV-Fig1-alloca_unknown-valid-memsafety.c 
+c.* (const * var)
+ex*.c (var * var)
+fermat-alloca_true-valid-memsafety.c (var * var)
+HarrisLalNoriRajamani-2010SAS-Fig1-alloca_true-valid-memsafety.c (const * var)
+Masse-alloca_unknown-valid-memsafety.c (const * var)
+PodelskiRybalchenko-2004VMCAI-Ex2-alloca_false-valid-memsafety.c (const * var)
+
+
+string
+cstr*:
+str
+subseq-alloca_true-valid-memsafety.c
+substring-alloca_true-valid-memsafety.c
+
+==============
+memory-unsafe/*_false-valid-deref*.i
+memory-unsafe/*_false-valid-free*.i
+memory-unsafe/*_false-valid-memtrack*.i
+memory-unsafe/*_true-valid-memsafety*.i
+
+========================================================
+========================================================
+========================================================
+========================================================
+
+#ex1-200204.c (false-memtrack)
+
+
+ERROR: at _0:0_0:0
+Message: Function "calloc" is not defined within program
+
+
+gcc -C -E ex1-200204.c -o ex1-200204.c.prep
+old type = TFun(TPtr(TVoid(), ), size: TInt(int, ), )
+new type = TFun(TPtr(TVoid(), ),
+                __size: TNamed(size_t___0, TInt(unsigned long, ), ),
+                 __attribute__((__leaf__)) )
+caught
+
+Exception occurred: Errormsg.Error
+Error3(s) detected at main
+466:1-466:108: Error: Declaration of malloc does not match previous declaration from 9:1-15:4 (different integer types).
+
+------------------------------------
+#ex1a-calloc.c: DONE
+
+to support calloc
+------------------------------------
+@ex1-b.c FIXED
+
+------------------------------------
+@ex1-c.c: FIXED. added offset into defer data node.
+
+Exception Invalid_argument("List.combine") Occurred!
+
+------------------------------------
+@ex1-d.c: FIXED
+
+------------------------------------
+@ex1-e.c: FIXED
+
+ERROR: at ex1-e.c_74:6_74:18
+Message: trans_exp :: case CallNRecv :: procedure call __pointer_add__int_star__int__$int~int has invalid argument types
+
+------------------------------------
+#ex1-f:
+
+!!!>>>>>> mismatch ptr value_32_1895::DUPFFstruct<maxdeg_32_1896,deg_32_1897,DP_DP_HP_1826> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr value_32_1898::DUPFFstruct<maxdeg_32_1899,deg_32_1900,DP_DP_HP_1826> is not found (or inst) in the lhs <<<<<<
+
+------------------------------------
+ERROR: at ex1-200204.c_40:19_-1:-1: FIXED
+Message: lhs and rhs do not match 1
+
+------------------------------------
+#ex1-h1: FIXED
+
+Checking procedure main$... Proving binding in method main$ for spec  EAssume
+   htrue&{FLOW,(4,5)=__norm#E}[]
+   , Line 0
+
+( []) bind: node  f_87'::DUPFFstruct_star<value_54_1826',offset_54_1827'>@L cannot be derived from context
+ex1-h1.c_54:19_-1:-1
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message:
+                   do_unmatched_rhs : f_87'::DUPFFstruct_star<value_54_1826',offset_54_1827'>@L
+                  fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]ex1-h1.c_54:19_-1:-1
+
+
+------------------------------------
+#ex1-h2: now use EList
+
+to infer case shape spec
+
+
+/*
+*********************************************************
+GOT
+*********************************************************
+[ GP_25(res_2136) ::=
+ res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+ deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>&
+ v_int_star_42_2110=null
+ or res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+    v_int_star_42_2110::int_star<Anon_2139,o_2140> *
+    deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>
+ (4,5)]
+*************************************
+
+
+!!!  post_2174(maxdeg,flow) = ( (maxdeg+1)<=0) \/ ( 0<=maxdeg)
+!!! n_base:3
+!!! bottom_up_fp:[( post_2174(maxdeg,flow), ((maxdeg+1)<=0 | 0<=maxdeg))]
+!!! fixpoint:[( post_2174(maxdeg,flow), ((maxdeg+1)<=0 | 0<=maxdeg), true, true)]
+!!! REL POST :  post_2174(maxdeg,flow)
+!!! POST:  ((maxdeg+1)<=0 | 0<=maxdeg)
+!!! REL PRE :  true
+!!! PRE :  true
+
+EXPECTED:?
+ GP_25(res_2136, maxdeg) ::=
+ res_2136::DUPFFstruct_star<deref_f_r_2055,o_2141> *
+ deref_f_r_2055::DUPFFstruct<maxdeg_2137,v_int_44_2138,v_int_star_42_2110>
+  case {
+   maxdeg<0 -> v_int_star_42_2110=null;
+   maxdeg>=0
+     v_int_star_42_2110::int_star<Anon_2139,o_2140> *
+    deref_f_r_2055::DUPFFstruct<maxdeg,v_int_44_2138,v_int_star_42_2110>;
+  }
+ */
+
+------------------------------------
+#ex1-h2a: FIXED
+
+GOT
+----
+G(res_1409,a_1410) ::=
+ res_1409::node<v_int_20_1411,v_null_type_20_1408>&0<=a_1410 &
+ v_null_type_20_1408=null
+ or emp&a_1410<0 & res_1409=null
+
+EXPECTED:
+G(res,m) ::=
+case { m>=0 -> [] res::node<0,null>;
+        m<0 -> [] res = null;
+};
+
+------------------------------------
+#ex1-ia:
+
+*********************************************************
+*******relational definition ********
+*********************************************************
+[ HP_12(x_1399,a_1400) ::= emp&0<=a_1400(4,5),
+                           ^^^^
+ GP_13(x_1401,a_1402) ::= x_1401::node<val_22_1403,DP_DP_HP_1396>&0<=a_1402(4,5)]
+
+==============================================================
+
+#ex2-2005.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: __anonstruct_Struct3_24 & void_star
+caught
+
+
+==============================================================
+#ex3-9605-1.c (false-free)
+
+------------------------------------
+ERROR: at _0:0_0:0
+Message: scc = [free]not found
+
+#ex3-a.c: OK
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: node & void_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: node & void_star")
+
+------------------------------
+Checking procedure while_16_2$int~int~int_star...
+Proving precondition in method __pointer_add__int_star__int__$int_star~int Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex3-9605-1.c",Line:17,Col:4
+
+Procedure while_16_2$int~int~int_star FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+
+
+
+==============================================================
+#ex3-9605-2.c (false-defer)
+
+ERROR: at _0:0_0:0
+Message: scc = [free]not found
+
+
+==============================================================
+#ex3-9605-3.c (true-memsafe)
+
+ERROR: at _0:0_0:0
+Message: scc = [free]not found
+
+==============================================================
+#ex4-lockfree0.c (true-memsafe)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+
+==============================================================
+# ex5-lockfree1.c (false-memsafe)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+
+==============================================================
+# ex6-lockfree2.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+==============================================================
+# ex7-lockfree3.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: create_pointer_casting_proc: expect pointer types but found: cell & void_star
+caught
+
+
+==============================================================
+# ex8-t19.c (false-memtrack)
+
+ERROR: at _0:0_0:0
+Message: Function "malloc" is not defined within program
+
+
+==============================================================
+# ex9-t19.c (true-memtrack)
+
+ERROR: at _0:0_0:0
+Message: Function "malloc" is not defined within program
+
+==============================================================
+# ex10-t0102.c (false-memtrack)
+
+Message: create_pointer_casting_proc: expect pointer types but found: list_head & int_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: list_head & int_star")
+
+
+==============================================================
+# ex11-t0102.c (true-memtrack)
+
+Message: create_pointer_casting_proc: expect pointer types but found: list_head & int_star
+caught
+
+Exception occurred: Failure("create_pointer_casting_proc: expect pointer types but found: list_head & int_star")
+
+
+
+==============================================================
+#todo/ex12-bug-assert.ss
+
+To implement binding for assert
+
+
+(==typechecker.ml#1401==)
+heap_entail_struc_list_failesc_context_init#4@3
+heap_entail_struc_list_failesc_context_init#4 inp1 : List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:x'::node<d_1515,r_1516> * r_1516::ll{}<flted_9_1514>&flted_9_1514+1=n & 0<=d_1515 & v_bool_15_1475' & x'!=null & x'=x & d'=d_1515&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+heap_entail_struc_list_failesc_context_init#4 inp2 : EBase emp&0<=x.val&{FLOW,(4,5)=__norm#E}[]
+heap_entail_struc_list_failesc_context_init#4@3 EXIT: List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message:  true |-  0<=x.val. LOCS:[0;18] (may-bug)
+                  fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+ ]
+
+assert/assume:ex1-check.ss:18: 4:  : failed
+
+
+==============================================================
+#todo/ex1b1
+
+ERROR: at ../todo/ex1b-free.c_26:4_26:12
+Message: trans_exp :: case CallNRecv :: procedure call free$int_star has invalid argument types (exc)
+
+note: remove free_data in main: OK
+
+==============================================================
+#todo/ex1b2
+
+duplicated top-level name(s): free$__anonstruct_TData_1_star, __anonstruct_TData_1_star
+
+==============================================================
+
+list-ext
+todo/#ex12-test19
+
+
+todo/#ex13-test158
+CIL: needs handle union
+
+union {
+        void *p0;
+
+        struct {
+            char c[2];
+            int p1;
+            int p2;
+        } str;
+    } data;
+
+array
+
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================
+==============================================================

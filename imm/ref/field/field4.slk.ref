@@ -1,0 +1,25 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Fail.(may) cause:AndR[ 1<(flted_7_64+1) & (((1<=flted_7_64 & q_66!=null) | (flted_7_64=0 & 
+q_66=null))) |-  q!=null. LOCS:[7;1;0;18];  1<(flted_7_64+1) & (((1<=flted_7_64 & q_66!=null) | (flted_7_64=0 & 
+q_66=null))) |-  q_66=q. LOCS:[7;1;0;18];  true |-  Anon_65=Anon_13. LOCS:[0;18] (may-bug).]
+
+Residue:
+ <1>x::node<Anon_65,q_66> * q_66::ll{}<flted_7_64>&1<n & flted_7_64+1=n&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Fail.(may) cause:AndR[ 1<(flted_22_78+1) & (((1<=flted_22_78 & r!=null) | (flted_22_78=0 & 
+r=null))) |-  q!=null. LOCS:[1;0;22];  1<(flted_22_78+1) & (((1<=flted_22_78 & r!=null) | (flted_22_78=0 & 
+r=null))) |-  r=q. LOCS:[1;0;22];  true |-  Anon_14=Anon_15. LOCS:[0;22] (may-bug).]
+
+Residue:
+ <1>x::node<Anon_14,r> * r::ll{}<flted_22_78>&1<n & flted_22_78+1=n&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

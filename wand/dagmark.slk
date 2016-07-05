@@ -1,0 +1,44 @@
+//============== dag.v ==================//
+data node{
+int val;
+node left;
+node right
+}.
+
+relation update(abstract G, node x, int d, node l, node r, abstract G1).
+relation lookup(abstract G, node x, int d, node l, node r).
+
+pred dag<G> == self = null
+       or self::node<v,l,r> * (l::dag<G> U* r::dag<G>)
+	& lookup(G,self,v,l,r).
+
+relation sub(abstract R, abstract R1, abstract G, abstract G1).
+relation reach(abstract G, node x, abstract R).
+relation notreach(abstract G, node x, abstract NR).
+
+relation mark(abstract G,node x,abstract G1).
+
+axiom true ==> mark(G,null,G).
+axiom lookup(G,x,1,l,r) ==> mark(G,x,G).
+
+axiom mark(G,x,G1) ==> exists(R,R1: reach(G,x,R) & reach(G1,x,R1) & sub(R,R1,G,G1)).
+axiom mark(G,x,G1) ==> exists(NR: notreach(G,x,NR) & notreach(G1,x,NR)).
+
+axiom lookup(G,x,v,l,r) & update(G,x,1,l,r,G1) & v != 1 & //v is unmarked skipped in paper
+mark(G1,l,G2) & mark(G2,r,G3) ==> mark(G,x,G3) & lookup(G3,x,1,l,r).
+
+
+/*
+checkentail  G_1108=G_1134 & v_1110=val_61_1133 & r_1112=r_50' & v_1110!=1 & x'!=null & 
+x=x' & lookup(G,x',v_1110,l_1111,r_1112) & G=G_1108 & G=G_1109 & 
+l_1111=l_49' & mark(G_1134,l_49',G1_1144)
+|- reach(G,l_49',R) & reach(G1_1144,l_49',R1) & sub(R,R1,G,G1_1144) & 
+notreach(G,l_49',NR) & notreach(G1_1144,l_49',NR).
+*/
+
+checkentail G_1092=G_1171 & v_1094=val_49_1170 & r_1096=r_45' & v_1094!=1 & x'!=null & 
+x=x' & lookup(G,x',v_1094,l_1095,r_1096) & G=G_1092 & G=G_1093 & 
+l_1095=l_44' & mark(G_1171,l_44',G1_1193)
+	     |-  reach(G,l_44',R) & reach(G1_1193,l_44',R1) & sub(R,R1,G,G1_1193) & 
+notreach(G,l_44',NR) & notreach(G1_1193,l_44',NR).
+

@@ -2,45 +2,16 @@ data node {
   node next;
 }.
 
-// --eps
-
-//Fail.Fail.Valid.Valid.Fail.Valid.
-//Valid.Fail.Fail.
-//Valid.Fail.Fail.Valid.Valid.Fail.
-
-/*
-!!! baga inv(l7):[([], self=null & q=null),([q,self], true)]
-!!! baga inv(l6):[([q], self=null),([q,self], true)]
-!!! baga inv(l5):[([k,self], self!=k)]
-!!! baga inv(l4):[([q,self], true)]
-!!! baga inv(l3a):[]
-!!! baga inv(l3):[([self], true)]
-*/
-
-pred l3a<> == 
-  self::node<q>*q::node<_>  & self=q
-inv self!=null.
-
-//(1) valid
-checkentail x::l3a<> |- false.
-expect Valid.
-
-pred l5<k> == 
-  self::node<q>*q::node<_> & k=q & self!=q
-inv self!=null.
-
-// (7) valid
-checkentail x::l5<c> * c::node<_> |- false.
-expect Valid.
-
-pred l7<q:node> == 
-  self=null & q=null
+pred l6<q:node> == 
+  q::node<_> & self=null
   or self::node<r>*r::node<_> & r=q
-inv true.
+.
+//inv q!=null.
+// baga {q}
 
-// should be valid with --eps
-// approx by non-eps cause failure. expected: VALID, not FAIL
-// (15) Fail
-checkentail x::l7<q> * y::l7<q> & x!=null & y!=null |- false.
-print residue.
-expect Valid.
+// (9) Fail
+checkentail x::l6<_> * y::l6<_> & y=x|- false.
+expect Fail.
+
+checkentail x::l6<_> * x::l6<_>  * x::l6<_> |- false.
+expect Fail.

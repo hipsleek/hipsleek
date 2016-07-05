@@ -1,0 +1,44 @@
+data arrI {
+  int val;
+}.
+
+pred foo<i> == self::arrI<v> & i<v
+  inv true.
+
+checkentail  x::arrI<5> |- x::foo<i> & i<5.
+print residue.
+expect Valid.
+
+checkentail  x::arrI<5> |- x::foo<i> & i<4.
+print residue.
+expect Fail.
+
+checkentail  x::arrI<5> |- [i] x::foo<i> & i<5.
+print residue.
+expect Valid.
+
+checkentail  x::arrI<5> |- [i] x::foo<i> & i<4.
+print residue.
+expect Valid.
+
+checkentail  x::arrI<5> |- [i] x::foo<i> & i>=5.
+print residue.
+expect Fail.
+
+checkentail  x::arrI<5> |- (exists i: x::foo<i> & i<5).
+print residue.
+expect Valid.
+
+checkentail  x::arrI<5> |- (exists i: x::foo<i> & i<4).
+print residue.
+expect Valid.
+
+checkentail  x::arrI<5> |- (exists i: x::foo<i> & i>=5).
+print residue.
+expect Fail.
+
+/*
+# ex6g2.slk
+
+
+*/

@@ -1,0 +1,9 @@
+data node {
+int val;
+node next
+}.
+
+relation test(int v).
+
+/* view for a singly linked list */
+pred ll<L> == self=null or self::node<v, p> * p::ll<Lp> & test(v).

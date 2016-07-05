@@ -1,0 +1,53 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self=p
+  or self::node<_, q> * q::lseg<p>
+  inv true.
+
+HeapPred P(node x,node y).
+HeapPred HP_1645(node x,node y,node@NI z).
+
+relAssume//(1)
+P(x,y)& x!=null --> x::node<val_33_1643,next_33_1644>@M * 
+            HP_1645(next_33_1644,y,x).
+
+relAssume//(2)
+HP_1645(next_33_1644,y,x)&
+  true |#| x::node<val_33_1643,next_33_1644>@M&true --> P(next_33_1644,y).
+
+relAssume//(3)
+P(x,y)&y'=y & x'=x & res=y' & x'=null --> emp.
+
+
+print relAssumes.
+
+shape_add_dangling [P,HP_1645].
+
+/*
+  [P(x,y)&
+    x!=null |#|  --> x::node<val_33_1643,next_33_1644>@M * 
+                     HP_1645(next_33_1644,y,x); 
+   HP_1645(next_33_1644,y,x) |#| x::node<val_33_1643,next_33_1644>@M&
+    next_33_1644=next_33_1644 --> P(next_33_1644,y); 
+   P(x,y)&y'=y & x'=x & res=y' & x'=null |#|  --> x::Dangling<>@M]
+!!! **sleekengine.ml#1613:Current list of heap relational assumptions:
+*/
+
+print relAssumes.
+
+shape_unfold [P].
+//shape_unfold [HP_1645].
+//shape_unfold [P,HP_1645].
+
+print relAssumes.
+
+shape_param_dangling [P,HP_1645].
+
+print relAssumes.

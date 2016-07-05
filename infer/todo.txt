@@ -1,0 +1,141 @@
+# infer/ex6.slk  --smtinp: FIXED
+
+Why is this z3 problem still there?
+
+(declare-fun Q (Int Int) Bool)
+(declare-fun Q (Int Int) Bool)
+
+WARNING: _0:0_0:0:Z3 error message: (error "line 83 column 29: invalid declaration, function 'Q' (whith the given signature) already declared")
+WARNING: _0:0_0:0:Z3 error message: (error "line 100 column 29: invalid declaration, function 'Q' (whith the given signature) already declared")
+
+=========================================================================
+# ex5.slk: FIXED
+
+test
+
+!Why relAssume do't work? Is it because it
+is not being pushed into stack?
+
+relation Q(int a, int b).
+relAssume
+  n=0 & m=0 -->  Q(m,n).
+relAssume
+  m1=m-1 & r=r1+2 & Q(m1,r1) -->  Q(m,r).
+relation_infer [][Q].
+
+# RelAssume seems to be part of shape inference.
+  Can we convert them to pure form too and add to infer_rel_stk?
+
+let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formula option) (irhs: meta_formula)=
+
+!!! **sleekengine.ml#1257: emp&nnnn=0 & m=0 --> emp&Q(m,nnnn)
+!!! **sleekengine.ml#1257: emp&m1+1=m & r=2+r1 & Q(m1,r1) --> emp&Q(m,r)
+!!! fixpoint2:[]
+=========================================================================
+# ex1a.slk --esl
+
+# sleekengine.ml to fix later
+
+  let () = x_binfo_hp (add_str "ivars" (pr_list pr_id)) ivars no_pos in
+  (* WN : ivars - these are idents rather than spec_var *)
+  (* TODO : shouldn't we be transforming to spec_vars instead ?? *)
+  let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
+  let fv_idents =
+    if !Globals.dis_impl_var then
+      let conseq_idents = List.map (fun (v, _) -> v) (fv_meta_formula iconseq0) in
+      Gen.BList.remove_dups_eq (fun v1 v2 -> String.compare v1 v2 == 0) (fv_idents @ conseq_idents)
+    else fv_idents
+
+infer [aaa,aaa'] true |- aaa=aaa'.
+print residue.
+
+(==infer.ml#1570==)
+infer_pure_m_1@4@3@2
+infer_pure_m_1 inp1 :estate :( pr_entail_state_shorthtrue&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [aaa; aaa'],[aaa,aaa'])
+infer_pure_m_1 inp2 :lhs xpure : true
+infer_pure_m_1 inp3 :lhs xpure0 : true
+infer_pure_m_1 inp4 :rhs xpure : aaa=aaa'
+infer_pure_m_1 inp5 :inf vars :[aaa,aaa']
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,None,[])
+
+
+# above is wrong; the correct answer can be seen
+in ex1b.slk
+
+infer [bbb,bbbp] true |- bbb=bbbp.
+print residue.
+
+(==infer.ml#1570==)
+infer_pure_m_1@4@3@2
+infer_pure_m_1 inp1 :estate :( pr_entail_state_shorthtrue&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [bbb; bbbp],[bbb,bbbp])
+infer_pure_m_1 inp2 :lhs xpure : true
+infer_pure_m_1 inp3 :lhs xpure0 : true
+infer_pure_m_1 inp4 :rhs xpure : bbb=bbbp
+infer_pure_m_1 inp5 :inf vars :[bbb,bbbp]
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( bbbp=bbb),[])
+
+=========================================================================
+# ex6a.slk
+
+infer [P,Q]   n=0 & m=0 & P(m) |-  Q(m,n).
+infer [P,Q]   m!=0 & m1=m-1 & P(m)  |-  P(m1).
+infer [P,Q]   m!=0 & m1=m-1 & r=r1+2 & P(m) & Q(m1,r1) |-  Q(m,r).
+relation_infer [P][Q].
+
+pre-relation not handled by sleek
+
+!!! **fixcalc.ml#896:bottom up
+!!! fixcalc file name: logs/fixcalc.inffixcalc: bad mutual recursion detected :"P"
+error at: 
+SLEEK FAILURE (END)
+
+hip works properly, as shown in ex6b.ss
+
+!!! fixcalc file name: logs/fixcalc.inf
+!!! **pi.ml#619:bottom_up_fp0:[( Q(m,res), m>=0 & 2*m=res)]
+!!! **pi.ml#636:fixpoint:[( Q(m,res), m>=0 & 2*m=res, P(m), 0<=m)]
+!!! **pi.ml#650:>>REL POST :  Q(m,res)
+!!! **pi.ml#651:>>POST:  m>=0 & 2*m=res
+!!! **pi.ml#652:>>REL PRE :  P(m)
+!!! **pi.ml#653:>>PRE :  0<=m
+=========================================================================
+# infer/ex5.slk
+
+The above command is for post-cond pure inference.
+I wonder if we can test out pre-cond inference,
+and also top-down fix-point process here.
+
+!!! **fixcalc.ml#1043:Input of fixcalc: :Q:={[] -> [m,r] -> []: (r=0 && m=0 ||  (exists (r1: (exists (m1:m1=m-(1) && Q(m1,r1)))  && r=r1+2)) )
+};
+bottomupgen([Q], [2], SimHeur);
+!!! **fixcalc.ml#393:svls (orig):[[m:int,Q:RelT([]),r:int]]
+!!! **fixcalc.ml#394:svl1 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#395:svl2 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#1071:Result of fixcalc (parsed): :[ r=2*m & m>=0]
+!!! fixpoint2:[( Q(m,r), r=2*m & m>=0)]
+
+Would be good to give output similar to hip:
+!!! fixcalc file name: logs/fixcalc.inf
+!!! **pi.ml#619:bottom_up_fp0:[( Q(m,res), m>=0 & 2*m=res)]
+!!! **pi.ml#636:fixpoint:[( Q(m,res), m>=0 & 2*m=res, P(m), 0<=m)]
+!!! **pi.ml#650:>>REL POST :  Q(m,res)
+!!! **pi.ml#651:>>POST:  m>=0 & 2*m=res
+!!! **pi.ml#652:>>REL PRE :  P(m)
+!!! **pi.ml#653:>>PRE :  0<=m
+
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================
+=========================================================================

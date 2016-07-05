@@ -1,0 +1,41 @@
+
+
+infer [x] true |- x>0.
+print residue.
+// x>0
+
+infer [@err_must] true |- x>0.
+// return & __ErrorMay
+print residue.
+
+
+infer [x,@err_must] true |- x>0.
+print residue.
+
+/* 
+# ex11-infer.slk
+
+infer [x,@err_must] true |- x>0.
+
+Got:
+Residue:
+ <1>htrue&1<=x&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [1<=x]
+
+I believe we should get also:
+
+Residue:
+ <2>htrue&x<=0&{FLOW,(4,5)=__Error#E}[]
+ inferred pure: [x<=0]
+
+Please implement this at heap_entail_empty_rhs.
+
+*/
+
+infer [@err_must] x<=0 |- x>0.
+print residue.
+expect Fail_Must.
+
+
+//Residue:
+// <1>emp&x<=0&{FLOW,(6,7)=__Error#E}[]

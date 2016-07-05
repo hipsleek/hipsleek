@@ -1,0 +1,13 @@
+A := { [xp,res,x]: not(xp=x & res=1+xp) | res>x};
+
+A;
+PairWiseCheck A;
+
+complement A;
+
+
+B := { [xp,res,x]: not(1=1) | 1>0};
+B;
+
+complement B;
+

@@ -1,0 +1,15 @@
+checkentail @value[x] |- @value[x].
+print residue.
+
+checkentail @value[x] |- @full[x].
+print residue.
+
+checkentail @full[x] |- @full[x].
+print residue.
+
+checkentail @full[x] |- @value[x].
+print residue.
+
+// x' is same as x for variables
+checkentail @full[x] |- @full[x'].
+print residue.

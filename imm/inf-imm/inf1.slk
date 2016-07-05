@@ -1,0 +1,34 @@
+infer [v] v<:@M |- v=@M.
+expect Valid.
+print residue.
+
+infer [v] v<:@A |- v=@M.
+expect Valid.
+print residue.
+// inferred pure: [v=@M]
+
+infer [v] @L<:v |- v=@M.
+expect Valid.
+print residue.
+// bef merge with def: inferred pure: [!(@L<:v)] OK
+// after merge with def: inferred pure: [v<=1]   NOT OK
+
+infer [v] v<:@L |- v=@M.
+expect Valid.
+print residue.
+//  inferred pure: [v=@M]
+
+infer [v] v<:@L |- v=@L.
+expect Valid.
+print residue.
+// inferred pure: [v=@L]
+
+infer [v] v=@A |- v<:@L.
+expect Valid.
+print residue.
+// inferred pure: [v!=@A]
+
+infer [v] v<:@A |- true.
+expect Valid.
+print residue.
+

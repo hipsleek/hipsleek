@@ -1,0 +1,50 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/wloop1.ss"
+Parsing file "t/wloop1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure while_6_2$int~int... 
+Procedure while_6_2$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1340: ( y<x & post_1340(x,1+y,y',flow)) -->  post_1340(x,y,y',flow),
+RELDEFN post_1340: ( y'=y & x<=y) -->  post_1340(x,y,y',flow)]
+*************************************
+
+Post Inference result:
+while_6_2$int~int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [y]
+           htrue&((y'>=(1+y) & y'=x) | (y'>=x & y'=y))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure main$int~int... 
+Procedure main$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1363: ( x=x' & y=y' & x'<=y') -->  post_1363(x,y,x',y',flow),
+RELDEFN post_1363: ( x=x' & y'=x' & y<x') -->  post_1363(x,y,x',y',flow)]
+*************************************
+
+Post Inference result:
+main$int~int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x;y]
+           htrue&((x=x' & y'=x' & y<x') | (x=x' & y=y' & x'<=y'))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.448026 second(s)
+	Time spent in main process: 0.372022 second(s)
+	Time spent in child processes: 0.076004 second(s)
+

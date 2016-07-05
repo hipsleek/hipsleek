@@ -1,0 +1,64 @@
+
+//checkentail a*b>=1 |- a>=0.
+checkentail a*b>=1 & a>6 |- a>=0.
+print residue.
+
+
+/*
+# ex2a.slk -tp oc --esl -dre ".*nonlinear"
+
+(==omega.ml#634==)
+drop_nonlinear_formula_rev@11
+drop_nonlinear_formula_rev inp1 : (not((6<a & 1<=(a*b))) | 0<=a)
+drop_nonlinear_formula_rev@11 EXIT: (not((6<a & true)) | 0<=a)
+
+-----
+
+At worst, we should replace a*b>=1 by true
+as a weakening measure.
+
+However, I like to suggest the following algorithm, we do this:
+
+(1)  subs all constants (maybe use eqmap)
+
+  checkentail b=1  & a*b>=1 |- a>=0
+  ==>
+  checkentail b=1  & a*1>=1 |- a>=0
+
+
+(2)  extract non-linear term to place on LHS, if possible.
+
+   checkentail a*b>=1 |- a>=0.
+   ==>
+   checkentail z=a*b & z>=1 |- a>=0.
+
+(3)  weaken LHS & strengthen RHS
+
+
+   checkentail z=a*b & z>=1 |- a>=0.
+   ==>
+   checkentail true & z>=1 |- a>=0.
+
+Examples
+========
+Using the above algorithm, we can support the following examples:
+
+   checkentail a*b>=1 |- b*a>=0.
+   ==> Step 2 (z is a fresh var)
+   checkentail z=a*b & z>=1 |- z>=0.
+   ==> Step 3
+   checkentail true & z>=1 |- z>=0.
+
+   checkentail true |- b*a>=0.
+   ==> Step 2
+   checkentail z=b*a & true |- z>=0.
+   ==> Step 3
+   checkentail true & true |- z>=0.
+
+   checkentail true |- (exists b: b*a>=0).
+   ==> Step 2 // fail to linearize as b is not free
+   checkentail true |- (exists b: b*a>=0).
+   ==> Step 3
+   checkentail true |- (exists b: false).
+
+*/

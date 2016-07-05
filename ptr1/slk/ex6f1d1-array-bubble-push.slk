@@ -1,0 +1,30 @@
+data arrI {
+  int val;
+}.
+
+/*
+lemma_unsafe self::arr_bnd<i,n,mi> & i<=m & m<=n 
+  <-> self::arr_bnd<i,m,mi>*self::arr_bnd<m,n,mi>.
+*/
+
+pred arr_bnd<i,n,m> == i=n & i>=0
+  or x::arrI<m0>*self::arr_bnd<i+1,n,m> & x=self+i & i>=0 & m0<=m
+  inv n>=i & i>=0.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0 
+  inv n>=i & i>=0.
+
+checkentail x::arrI<m0>*base::arr_bnd<i+1,n,m> & m0<=m & x=base+i & i>=0
+  |- base::arr_bnd<i,n,mm>.
+print residue.
+
+checkentail x::arrI<_>*base::arr_seg<i+1,n> & x=base+i & i>=0
+  |- base::arr_seg<i,n>.
+print residue.
+
+  /*
+x::arrI<m0>* x1::arrI<m1>* base::arr_bnd<i+1,n,m> 
+    & m0<=m & m1<=m & x=base+i & i>=0 & m0<=m1
+
+   */

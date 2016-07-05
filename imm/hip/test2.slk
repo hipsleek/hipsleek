@@ -1,0 +1,30 @@
+data node{
+ int val;
+ node next;
+}.
+
+pred ls<p> == self=p or
+  self::node<_,q>*q::ls<p> & self!=p
+  inv true.
+
+  /*
+checkentail s::ls<p> * s'::node<x,s> & s!=null & & res=s' 
+            |-  (exists p_1383,q_1384: q_1384::ls{}<p_1383>&res=q_1384 & p_1383=p).
+  */
+
+/*
+ checkentail s_1912::node<y',s_1575> * s_1575::ls{}<p_1537> * s'::node<z',s_1912>&
+i2_2351=p_1673 & s_1521=s & z'=z & y'=y & x'=x & p_1512=p & Anon_1526=x' & 
+q_1527=s_1521 & p_1512=p_1522 & i1_37=s_1575 & Anon_1557=x' & 
+q_1558=s_1521 & p_1512=p_1537 & s_1575!=null & Anon_1654=y' & 
+q_1655=s_1575 & p_1537=p_1576 & i2_2351=s_1912 & s_1912=p_1673 & 
+i2_38=s_1575
+ |-  emp & i1_37=i2_38. 
+*/
+
+checkentail s_1572::node<x',s_1521> * s_1521::ls{}<p_1512> * s_1888::node<y',s_1572> 
+            * s'::node<z',s_1888> * s_1888::ls{}<p_1673>&s_1572=p_1537 & s_1521=s & 
+            z'=z & y'=y & x'=x & p_1512=p & s_1572=p_1522 & i1_37'=s_1572 & s_1572=p_1537 
+            & s_1888=p_1576 & i2_38'=s_1888 & s_1888=p_1673
+            |- s'::ls<w>.
+print residue.

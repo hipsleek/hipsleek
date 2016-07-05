@@ -1,0 +1,21 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+ERROR: at inf/lend-3.slk_8:42_8:43
+Message: UNIFICATION ERROR : at location {(8,42),(8,43)} types AnnT and int are inconsistent
+
+ERROR: at inf/lend-3.slk_8:42_8:43
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(8,42),(8,43)} types AnnT and int are inconsistent")
+gather_type_info_b_formula: relation R
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Fail.(may) cause:AndR[ true |-  f=a. LOCS:[0;9];  flted_8_16=2 |-  flted_8_16=Anon_11. LOCS:[8;9] (may-bug).]
+
+Residue:
+ <1>q::cell<flted_8_16@w>&R(v,w) & flted_8_16=2 & v=@M & w<:@L&{FLOW,(4,8)=__MayError#E}[]
+ inferred rel: [RELASS [R]: ( R(v,w)) -->  v=@M & w<:@L]
+[[ COND ==>  SEARCH ==>  Match(p,p) ==>  SEARCH ==>  Match(q,q) ==> ]]
+
+
+

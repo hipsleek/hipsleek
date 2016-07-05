@@ -1,0 +1,60 @@
+
+!!!Full processing file "hip/getset.ss"
+Parsing file "hip/getset.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure get$node... 
+dprint: hip/getset.ss:15: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:x::node<v,q>&MayLoop[] & x'=x&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/getset.ss:19: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: []
+  State:x::node<v,q>&x'=x & v_int_17_1486'=v & res=v_int_17_1486'&{FLOW,(20,21)=__Return#E}[]
+
+  ]
+ ]
+
+Procedure get$node SUCCESS.
+
+Checking procedure getA$node... 
+Procedure getA$node SUCCESS.
+
+Checking procedure setA$node~int... 
+Procedure setA$node~int SUCCESS.
+
+Checking procedure non_negative$node... 
+Proving precondition in method setA$node~int Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/getset.ss",Line:52,Col:14
+
+Procedure non_negative$node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure non_negative$node
+
+Checking procedure sset$node~int... 
+Procedure sset$node~int SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.469674 second(s)
+	Time spent in main process: 0.428683 second(s)
+	Time spent in child processes: 0.040991 second(s)
+

@@ -1,0 +1,46 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+HeapPred H2(node y,node x).
+HeapPred H3(node y,node@NI x).
+HeapPred H4(node@NI y,node@NI x).
+
+infer_exact [H2] H2(z,x) & x!=null  |- x!=z .
+print residue.
+
+infer_exact [H3] H3(z,x) & x!=null  |- x!=z .
+print residue.
+
+infer_exact [H4] H4(z,x) & x!=null  |- x!=z .
+print residue.
+
+/*
+# ex42b.slk
+
+Above the above succeeded! 
+
+Entail (1) : Valid. 
+Residue:
+ <1>H2(z,x)&x!=null & z!=x&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(z,x)&true --> emp&(z!=x | x=null)]
+
+Entail (2) : Valid. 
+Residue:
+ <1>H3(z,x)&x!=null & z!=x&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H3(z,x@NI)&true --> emp&(z!=x | x=null)]
+
+
+Entail (3) : Valid. 
+Residue:
+ <1>H4(z,x)&x!=null & z!=x&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H4(z@NI,x@NI)&true --> emp&(z!=x | x=null)]
+*/
+

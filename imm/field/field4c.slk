@@ -1,0 +1,73 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0.
+
+
+//OK
+
+//1
+checkentail x::node<3,q> * q::ll<n>  
+   |- x::node<a,_>@A * x::node<b,_> & b>2.
+print residue.
+expect Valid.
+
+//2
+checkentail x::node<3,q> * q::ll<n>  
+      |- x::node<a,_> & a>2.
+
+//3
+checkentail x::node<b,q> * q::ll<n>  
+   |- x::node<a,_>@A *x::node<b,_>.
+print residue.
+expect Valid.
+
+//4
+// can remove instantiable variable but not global ones
+checkentail x::node<b,q> * q::ll<n>  
+   |- x::node<b,_>.
+print residue.
+expect Valid.
+
+//5
+checkentail x::node<b,q> * q::ll<n>  
+   |- x::node<a,_>.
+print residue.
+expect Valid.
+
+//6
+checkentail x::node<b,q> * q::ll<n>  & a>0
+   |- x::node<a,_>@A *x::node<b,_>.
+print residue.
+expect Valid.
+
+//7
+checkentail x::node<b,q> * q::ll<n>  & a>0
+   |- x::node<b,_> & a=b.
+
+//8
+checkentail x::node<b,q>  & a>0
+   |- x::node<a,_> .
+
+/*
+#field4.slk
+
+Why did these two examples
+fail with @A at RHS?
+
+Residue:
+{ }
+Validate 1: Expecting Valid BUT got : Fail_May
+
+
+*/
+
+//9
+checkentail x::node<3,q> * q::ll<n>  
+   |- x::node<b,_> & b>2.
+print residue.
+expect Valid.

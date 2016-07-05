@@ -1,0 +1,44 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base::arr_seg<j,n> & a=base+j & false.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base::arr_seg<j,n> & a=base2+j & a=base2+j+1.
+print residue.
+expect Fail.
+
+
+/*
+# ex6a5d1.slk -dre "choose_c" 
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base::arr_seg<j,n> & a=base+j & false.
+print residue.
+expect Fail.
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base::arr_seg<j,n> & a=base2+j & a=base2+j+1.
+print residue.
+expect Fail.
+
+# Why is there a spurious time-out?
+
+!!! log(small):(0.151934,79)
+!!! 
+ log(bigger)(>4s)(1):(5.,[(SAT:62<2:Z3,5.)])
+Total verification time: 0.170323 second(s)
+	Time spent in main process: 0.094581 second(s)
+	Time spent in child processes: 0.075742 second(s)
+
+
+*/

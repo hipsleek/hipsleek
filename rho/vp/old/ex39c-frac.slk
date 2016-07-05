@@ -1,0 +1,31 @@
+
+infer[] @frac(1/1)[x] |- @full[x].
+print residue.
+expect Valid. //zero
+
+infer[] @full[x] |- @frac(2/2)[x].
+print residue.
+expect Valid. //zero
+
+infer[] @value[x] |- @frac(1/2)[x].
+print residue.
+expect Valid. //zero
+
+infer[] @frac(1/2)[x] |- @value[x].
+print residue.
+expect Valid.
+
+infer[] @frac(1/2)[x] |- @full[x].
+print residue.
+expect Fail.
+
+infer[] @frac(7/12)[x] |- @frac(1/12)[x].
+print residue.
+expect Valid.
+
+// how about fraction?
+
+/*
+# ex38 --ann-vp
+
+*/

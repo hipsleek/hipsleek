@@ -1,0 +1,39 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>x::node<p,q>&q=q_34 & p=p_33&{FLOW,(4,5)=__norm#E}[]
+
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+[Warning] False ctx
+
+Entail 2: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+[Warning] False ctx
+
+Entail 3: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>x::node<p_69@[, @ann_f_r_92],q>&q=q_70 & p=p_69 & ann_f_r_92=v & @M<:ann_f_r_92&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

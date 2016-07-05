@@ -1,0 +1,40 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&v1=v2 & v1=(1,2)&{FLOW,(4,5)=__norm#E}[]
+
+
+!!! WARNING logtime exception:0.
+Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_1_2})")
+: no residue 
+
+!!! WARNING logtime exception:0.
+Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
+: no residue 
+
+!!! WARNING logtime exception:0.
+Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_a1_a2})")
+: no residue 
+
+!!! WARNING logtime exception:0.
+Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
+: no residue 
+[Warning] False ctx
+
+Entail 6: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 7: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+

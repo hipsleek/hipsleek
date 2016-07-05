@@ -1,0 +1,62 @@
+
+!!!Full processing file "vp/ex11-cdl.ss"
+Parsing file "vp/ex11-cdl.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: vp/ex11-cdl.ss:61: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_60_2044,Anon_2045,Anon_2046,v_int_47_2047,b_2048,Anon_2049,Anon_2050,b_2051,b_2052,Anon_2054,Anon_2056,h_43',Anon_15,r_44',Anon_16,v_int_47_1751: c_46'::LatchOut{ + h_43'::cell<Anon_15> * r_44'::cell<Anon_16>&{FLOW,(4,5)=__norm#E}[]}<> * c_46'::CNT{}<flted_60_2044>*U@full[v_45]@lend[c_46]&0<v_int_47_1751 & v_int_47_1751=2 & b_2048=b_2051+1 & 0<=1 & 0<=b_2051 & Anon_2056=Anon_2045 & 0<v_int_47_2047 & v_int_47_2047=2 & Anon_2054=Anon_2046 & 0<=b_2048 & v_int_47_2047=b_2048+1 & Anon_2049=Anon_2054 & Anon_2050=Anon_2056 & 0<=b_2052 & 0<=0 & b_2051=b_2052+0 & flted_60_2044=0&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: vp/ex11-cdl.ss:63: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_37_2085: h_43'::cell<Anon_15> * r_44'::cell<Anon_16> * c_46'::CNT{}<flted_18_2089>*N@full[v_45]@lend[c_46]&flted_18_2089+1=0 & exists(flted_36_77:0<=(flted_36_77+1)) & flted_37_2085+1=0 & 0<=(a_2077+1) & flted_60_2059=b_2076+0 & 0<=b_2076 & flted_60_2059=0 & b_2066=b_2067+0 & 0<=b_2067 & Anon_2065=Anon_2069 & Anon_2064=Anon_2068 & v_int_47_2062=b_2063+1 & 0<=b_2063 & Anon_2068=Anon_2061 & v_int_47_2062=2 & 0<v_int_47_2062 & Anon_2069=Anon_2060 & 0<=b_2066 & 0<=1 & b_2063=b_2066+1 & v_int_47_2074=2 & 0<v_int_47_2074 & flted_36_2075=0 & 0<=flted_36_2075 & flted_60_2059=b_2076+flted_36_2075&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> h_43'::cell<Anon_15> * r_44'::cell<Anon_16>&
+                        {FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+( []) :vp/ex11-cdl.ss:64: 10: h_43 does not have @lend/@full permission to read (inside bind)
+
+(Cause of ParCase Failure):vp/ex11-cdl.ss:64: 10:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: Mismatch non-zero variable permission in consequent [(h_43,@lend)]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex11-cdl.ss",Line:64,Col:10
+
+ERROR: at vp/ex11-cdl.ss_64:10_64:15
+Message: h_43 does not have @lend/@full permission to read (inside bind)
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("h_43 does not have @lend/@full permission to read (inside bind)") Occurred!
+
+Error(s) detected when checking procedure main$
+
+0 false contexts at: ()
+
+Total verification time: 0.916056 second(s)
+	Time spent in main process: 0.864054 second(s)
+	Time spent in child processes: 0.052002 second(s)
+

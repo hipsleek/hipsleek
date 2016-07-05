@@ -1,0 +1,57 @@
+data arrI {
+  int val;
+}.
+
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0 
+  inv n>=i & i>=0.
+
+
+checkentail x::arrI<_> * base::arr_seg<i+1,n> 
+  & x=base+i & i>=0 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+infer[@classic] x::arrI<_> * base::arr_seg<i+2,n> * y::arrI<_>
+  & x=base+i & i>=0 & y=x+1
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+infer[@classic] x::arrI<_> * base::arr_seg<i+1,n> * y::arrI<_>
+  & x=base+i & i>=0 & y=x+1
+  |- base::arr_seg<i,n>.
+print residue.
+expect Fail.
+
+infer[@classic] y::arrI<_> * base::arr_seg<i+2,n> * x::arrI<_>
+  & x=base+i & i>=0 & y=x+1
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+infer[@classic] base::arr_seg<i+2,n> * y::arrI<_> *  x::arrI<_>
+  & x=base+i & i>=0 & y=x+1
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+infer[] base::arr_seg<i+2,n> * y::arrI<_> *  x::arrI<_>
+  & x=base+i & i>=0 & y=x+1
+  |- base::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+infer[@classic] x::arrI<_>
+  & x=base+i & i>=0 & y=x+1
+  |- base::arr_seg<i,i>.
+print residue.
+expect Fail.
+
+infer[@classic] x::arrI<_>
+  & x=base+i & i>=0 & y=x+1
+  |- base::arr_seg<i,i+1>.
+print residue.
+expect Valid.

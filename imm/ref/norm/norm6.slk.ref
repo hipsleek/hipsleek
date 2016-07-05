@@ -1,0 +1,23 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>x::node<Anon_15,t> * y::node<Anon_16,u>&z=u & Anon_14=Anon_16 & y=t & Anon_13=Anon_15&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>y::node<Anon_19,u> * x::node<Anon_20,t>&z=u & Anon_17=Anon_19 & y=t & Anon_18=Anon_20&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 3: Fail.(may) cause: t!=null & t!=x & x!=null |-  z=x. LOCS:[0;16] (may-bug)
+
+Residue:
+ <1>y::node<Anon_23,u> * x::node<Anon_24,t>&z=u & Anon_21=Anon_23 & y=t & Anon_22=Anon_24&{FLOW,(4,8)=__MayError#E}[]
+
+

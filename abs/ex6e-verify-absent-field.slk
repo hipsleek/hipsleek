@@ -1,0 +1,33 @@
+data node {
+ int val;
+ node next;
+}.
+
+pred ll<n> == self=null & n=0 or self::node<_,q>*q::ll<n-1> 
+  inv n>=0.
+
+checkentail x::ll<n>@A*y::ll<3>@A |- y!=null.
+expect Valid.
+print residue.
+
+
+/*
+# ex6d.slk
+
+(==cvutil.ml#1534==)
+xpure_heap_symbolic_i@2@1
+xpure_heap_symbolic_i inp1 :0
+xpure_heap_symbolic_i inp2 : x::node<v,Anon_12>@A * y::node<flted_6_16,Anon_13>@A
+xpure_heap_symbolic_i@2 EXIT:( x!=null & y!=null,[x,y],true)
+
+remove --> x::node<_>@A --> x!=null
+remove --> x::ll<n>@A --> x=null & n=0 | x!=null & n>0
+
+
+(==cvutil.ml#1735==)
+xpure_heap_mem_enum#6@7@6
+xpure_heap_mem_enum#6 inp1 : x::node<v,Anon_12>@A * y::node<flted_6_16,Anon_13>@A
+xpure_heap_mem_enum#6 inp2 : flted_6_16=3
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@7 EXIT: x=1 & y=2 #  [[x,y]]
+*/

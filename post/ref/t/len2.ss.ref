@@ -1,0 +1,57 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/len2.ss"
+Parsing file "t/len2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+!!!WARNING : uninterpreted free variables [m] in specification.
+Checking procedure length3$node... 
+Procedure length3$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN R1: ( 1<=n & n_1436=n-1 & R1(n,m)) -->  R1(n_1436,m),
+RELDEFN R2: ( m=0 & res=0 & n=0 & R1(n,m)) -->  R2(n,m,res),
+RELASS [R1,R2]: ( R1(n,m) & R2(n_1436,m,v_int_48_1449)) -->  (n_1436!=(n-1) | 1>n | 0>m)]
+*************************************
+
+Post Inference result:
+length3$node
+ EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&m=0 & n=0 & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           x::ll{}<m>&0<=n & m=0 & res=0 & n=0&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure length4$node... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[R1,R2] pre_post_vars:[m_1398,n,R2,res,x]
+
+Procedure length4$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN R2: ( m_1398=0 & res=0 & n=0) -->  R2(n,m_1398,res),
+RELDEFN R2: ( R2(n_1479,m_1488,v_int_57_1492) & 0<=m_1488 & res=1+v_int_57_1492 & n_1479+
+1=n & 1<=n & m_1398=m_1488+1) -->  R2(n,m_1398,res)]
+*************************************
+
+Post Inference result:
+length4$node
+ EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists m_1398: x::ll{}<m_1398>&0<=n & res>=0 & res=n & 
+           res=m_1398&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 1.028063 second(s)
+	Time spent in main process: 0.836051 second(s)
+	Time spent in child processes: 0.192012 second(s)
+

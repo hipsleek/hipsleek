@@ -1,0 +1,17 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b).
+infer[HP] a::cell<_> * b::cell<_>  |- HP(a,b).
+print residue.
+
+/*
+# norm/ex4b3.slk
+
+ infer[HP] y::cell<_> |- HP(a,b,c).
+
+# How to inst root?
+
+
+*/

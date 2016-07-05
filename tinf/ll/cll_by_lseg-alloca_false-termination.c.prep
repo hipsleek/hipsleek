@@ -1,0 +1,148 @@
+# 1 "cll_by_lseg-alloca_false-termination.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3 4
+/* Copyright (C) 1991-2014 Free Software Foundation, Inc.
+   This file is part of the GNU C Library.
+
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; if not, see
+   <http://www.gnu.org/licenses/>.  */
+
+
+
+
+/* This header is separate from features.h so that the compiler can
+   include it implicitly at the start of every compilation.  It must
+   not itself include <features.h> or any other header that includes
+   <features.h> because the implicit include comes before any feature
+   test macros that may be defined in a source file before it first
+   explicitly includes a system header.  GCC knows the name of this
+   header in order to preinclude it.  */
+
+/* glibc's intent is to support the IEC 559 math functionality, real
+   and complex.  If the GCC (4.9 and later) predefined macros
+   specifying compiler intent are available, use them to determine
+   whether the overall intent is to support these features; otherwise,
+   presume an older compiler has intent to support these features and
+   define these macros by default.  */
+# 52 "/usr/include/stdc-predef.h" 3 4
+/* wchar_t uses ISO/IEC 10646 (2nd ed., published 2011-03-15) /
+   Unicode 6.0.  */
+
+
+/* We do not support C11 <threads.h>.  */
+# 1 "<command-line>" 2
+# 1 "cll_by_lseg-alloca_false-termination.c"
+/*
+ * Date: 30/09/2015
+ * Created by: 
+ *   Ton Chanh Le (chanhle@comp.nus.edu.sg) and
+ *   Duc Muoi Tran (muoitranduc@gmail.com)
+ */
+
+# 1 "/home/tranmuoi/sleekex/stdlib.h" 1 3
+/*
+ * HIP/SLEEK standard library for C program
+ * 
+ * Created: Oct. 31, 2013.
+ */
+
+typedef unsigned int size_t;
+
+void* malloc(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
+  }
+*/;
+
+void* alloca(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h;
+  }
+*/;
+
+/**************************/
+/*** Pointer Arithmetic ***/
+/**************************/
+int lt___(int* p, int* q)
+/*@
+  requires p::int*<vp>@L * q::int*<vq>@L
+  ensures emp;
+*/
+
+/*
+  case {
+    p <  q -> ensures p::int*<vp> * q::int*<vq> & res > 0;
+    p >= q -> ensures p::int*<vp> * q::int*<vq> & res <= 0; }
+  requires p::int*<vp, op> * q::int*<vq, oq>
+  case {
+    op <  oq -> ensures p::int*<vp, op> * q::int*<vq, oq> & res > 0;
+    op >= oq -> ensures p::int*<vp, op> * q::int*<vq, oq> & res <= 0; }
+*/
+
+;
+
+
+int abs (int x)
+/*@
+  case{
+    x <  0 -> requires true ensures res = -x;
+    x >= 0 -> requires true ensures res = x;
+  }
+*/
+;
+# 9 "cll_by_lseg-alloca_false-termination.c" 2
+
+extern int __VERIFIER_nondet_int();
+
+typedef struct {
+  int val;
+  int* next;
+} node_t;
+
+node_t* new_lseg(node_t* p, int n)
+{
+  if (n==0)
+    return p;
+  node_t* x;// = malloc(sizeof(node_t));
+  x->val = n;
+  x->next = new_lseg(p, n-1);
+  return x;
+}
+
+// Create a circular linked list with length n via new_lseg
+node_t* new_cll(int n)
+{
+  node_t* x = malloc(sizeof(node_t));
+  x->val = n;
+  x->next = new_lseg(x,n-1);
+  return x;
+}
+
+void traverse (node_t* head)
+{
+  node_t* curr = head;
+  while (curr != NULL) {
+    curr = curr->next ;
+  }
+}
+
+void main ()
+{
+  node_t* x = new_cll(0);
+}

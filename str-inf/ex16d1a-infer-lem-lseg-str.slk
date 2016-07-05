@@ -1,0 +1,40 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+ lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+
+ infer [U,@pure_field,@classic] 
+   self::char_star<0,p> |-  U(self,q)*q::char_star<0,p>.
+ print residue.
+
+/*
+# ex16d1a.slk
+
+ <1>emp&self=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&self=q |#|3  --> U(self,q)&true]
+[[ SEARCH ==>  BaseCaseFold ==>  SEARCH ==>  Match(self,q)]]
+
+
+*/

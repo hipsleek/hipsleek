@@ -1,0 +1,53 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//(1)
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
+//expect_infer Valid R{emp}.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null --> emp&true]
+
+//(2)
+infer [H] H(p) & p=null |- emp.
+print residue.
+// expect H(p) as residue
+// expect_infer Valid R{H(p) & p=null}.
+// <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+//(3)
+infer [] H(p) & p=null |- emp.
+print residue.
+// expect H(p) as residue
+//expect_infer Valid R{H(p) & p=null}.
+// <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+infer_exact [] H(p) & p=null |- emp.
+print residue.
+// expect H(p) as residue
+expect Fail.
+
+
+/*
+# ex10b2.alk
+
+# Why did 3.1 fail?
+
+Residue:
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+
+!!! **sleekengine.ml#1741:str:
+Expect_Infer 3.1: 
+!!! **sleekengine.ml#1742:res_f_str:( H(p)&p=null&{FLOW,(20,21)=__norm#E}[])
+Expect_Infer 3.1: Expected Valid but got Fail ( H(p)&p=null&{FLOW,(20,21)=__norm#E}[])
+
+*/
+

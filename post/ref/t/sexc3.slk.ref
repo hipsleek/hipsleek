@@ -1,0 +1,16 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(must) cause:empty states
+
+Residue:
+ { }
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>v_Exp_12_1214'::Exp<v_24>&v_24=res & eres=v_Exp_12_1214' & v_24=2 & 0<x&{FLOW,(4,5)=__norm#E}[]
+
+

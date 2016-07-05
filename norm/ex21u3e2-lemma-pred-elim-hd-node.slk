@@ -1,0 +1,122 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self=null
+ 	or self::node<_, q> * q::ll<> 
+  inv true.
+
+
+pred app4<> == self::node<_,null>
+ 	or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred_unify_disj[app4].
+
+print views.
+//pred_reuse[*][*].
+//print views.
+
+/*
+# ex21u3e2.slk -dre "lemma_unfold" (FIXED)
+
+PRED REUSE FOUND:[(ll,ll),(DP_60,ll),(tmp_app4,tmp_app4),
+   (app4,tmp_app4)]
+
+# can we have a better reuse algo? where the equi 
+  views are not re-checked? and ordering takes that 
+  into account.
+
+
+ pred_unify_disj[app4].
+
+# why wasn't lemma unfold done?
+
+# DP_60(flted_31_59) is still a HREL and need to be converted to flted_31_109::DP_60<>@M&
+
+[ view tmp_app4<>= 
+  EBase 
+    exists (Impl)[flted_31_59](* lbl: *){13}->(exists Anon_58: (* lbl: *){13}->
+    self::node<Anon_58,flted_31_59>@M * DP_60(flted_31_59)&
+    {FLOW,(1,26)=__flow#E}[]), 
+  view DP_60<>= 
+  EList
+    :EBase 
+       exists (Impl)[flted_31_109](* lbl: *){21}->(exists Anon_108: (* lbl: *){21}->
+       self::node<Anon_108,flted_31_109>@M * flted_31_109::DP_60<>@M&
+       self!=null&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    equiv_set: ([],ll)
+  ]
+!!! **syn.ml#820:XXX fail <--- 
+!!! **syn.ml#821:<=coerc lem_inf_app4_rev
+	 kind: LEM_TEST
+	 origin: generated
+	 head: (self::app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+
+# Why is target of tmp_app4 and DP_60 empty?
+
+SCC:[[ll];[app4]]
+Graph:[(DP_60,[]);(tmp_app4,[]);(ll,[ll]);(app4,[app4])]
+(==astsimp.ml#8756==)
+order_views@3
+order_views inp1 :[DP_60]
+order_views@3 EXIT:([DP_60],[])
+
+
+[ view tmp_app4<>= 
+  EBase 
+    exists (Impl)[flted_31_59](* lbl: *){13}->(exists Anon_58: (* lbl: *){13}->
+    self::node<Anon_58,flted_31_59>@M * DP_60(flted_31_59)&
+    {FLOW,(1,26)=__flow#E}[])]
+
+view DP_60<>= 
+  EList
+    :EBase 
+       (* lbl: *){21}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+------------------------------------------
+
+pred app4<> == self::node<_,null>
+ 	or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred_unify_disj[app4].
+
+# The derived DP_60<> need to unfold tmp_app4<>
+
+!!! **syn.ml#796:=>coerc lem_inf_app4
+	 kind: LEM_INFER
+	 origin: generated
+	 head: (self::app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+	 body:(self::tmp_app4{}<>@M[HeapNode1]) * ([] & true)( FLOW __norm)
+
+========================
+ Performing Deriving Segmented Views
+========================
+
+[ view tmp_app4<>= 
+  EBase 
+    self::node<Anon_58,flted_14_59>@M * DP_60(flted_14_59)&
+    {FLOW,(1,26)=__flow#E}[], 
+ view DP_60<>= 
+  EList
+    :EBase 
+       (* lbl: *){21}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+
+          (* lbl: *){22}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+
+*/

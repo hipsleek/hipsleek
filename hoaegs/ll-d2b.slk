@@ -1,0 +1,16 @@
+data node {
+	int val;
+	node next
+}.
+
+pred ll2<n> == self = null & n=0 
+  or self::node<v, r> * r::ll2<n-1>
+     inv n>=0.
+
+checkentail x::ll2<n>@M&res=null & x=null  |-  res::ll2<n>. 
+// valid
+
+checkentail x::ll2<n>@M&res=v & v=null & x=null |-  res::ll2<n>. 
+// fail for -tp z3
+
+

@@ -1,0 +1,19 @@
+pred_prim Thrd{+%Q@Split}<>.
+pred_prim dead<>.
+
+checkentail x::Thrd{+@full[a,b]}<> |- x::Thrd{+@full[a]}<>.
+
+print residue.
+
+/*
+#ex41a.slk
+
+Why is there a node expected?
+Entail 1: EXCast. Failure("Expect a node")
+
+checkentail x::Thrd{+@full[a,b]}<> |- x::Thrd{+@full[a]}<>.
+
+Last Proving Location: 1 File "ex41a-frac-Thrd.slk",Line:1,Col:10
+
+
+*/

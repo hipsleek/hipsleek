@@ -1,0 +1,87 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred U(node x).
+
+pred app4<> == 
+  self::node<_,null>
+  or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+
+pred tmp_app4<> ==
+  self::node<_, p> * p::dp<>
+  inv self!=null.
+  
+pred dp<> ==
+  self = null 
+  //or self::node<_, p> * p::tmp_app4<>
+  or self::tmp_app4<>
+  inv true.
+
+pred tmp_app4a<> ==
+  self::node<_, p> * p::dp1<>
+  inv self!=null.
+  
+pred dp1<> ==
+  self = null 
+  or self::node<_, p> * p::dp1<>
+  inv true.
+
+pred_unfold[*].
+
+pred_reuse[*][*].
+
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+// fails cos tmp_app4 not unfolded
+
+lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
+// fails because dp not normalized
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+// fails cos tmp_app4a not unfolded
+
+lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
+
+print views.
+
+//pred_reuse[*][*].
+
+// valid
+
+
+/*
+# ex21u3e7.slk
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+
+# Why app4 <-> tmp_app4 fails, when L3 succeeded?
+
+PRED REUSE FOUND:[(dp,dp),(dp1,dp),(tmp_app4a,tmp_app4a),
+   (app4,app4),(tmp_app4,tmp_app4a)]
+
+!!! **lemma.ml#226:unfold RHS of lemma
+!!! **hipUtil.ml#79:unfold tmp_app4a in 
+!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
+!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
+!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
+!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
+!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
+!!! **WARNING****cast.ml#3875:Using equiv dp1 <-> ([],dp)
+!!! 
+Entailing lemma tmp_941: Fail. Details below:
+
+!!! **norm.ml#192:
+ Failed : self::app4<>@M&{FLOW,(1,26)=__flow#E}[] <->  self::tmp_app4a<>@M&{FLOW,(1,26)=__flow#E}[]
+
+
+
+//PRED REUSE FOUND:[(tmp_app4,tmp_app4),(dp,dp),(app4,tmp_app4)]
+
+
+*/

@@ -1,0 +1,68 @@
+[ // BIND
+(1;0)HP_1643(c,x_ref,y_ref)&
+true --> y_ref::int_star<value_8_1647>@M * HP_1648(c,x_ref,y_ref@NI)&
+true,
+ // BIND
+(1;0)HP_1648(c,x_ref,y_ref@NI)&
+true --> x_ref::int_star<value_8_1653>@M * HP_1654(c,y_ref@NI,x_ref@NI)&
+true,
+ // BIND
+(1;1;0)HP_1654(c,y_ref@NI,x_ref@NI)&true --> c::int_star<value_16_1680>@M&
+true,
+ // PRE_REC
+(1;1;0)y_ref'::int_star<v_int_15_1679>@M * GP_1699(c',x_ref,y_ref'@NI)&
+true --> HP_1643(c',x_ref,y_ref')&
+true,
+ // PRE_REC
+(1;1;0)c'::int_star<v_int_16_1698>@M * GP_1700(x_ref,c'@NI,y_ref'@NI)&
+true --> GP_1699(c',x_ref,y_ref'@NI)&
+true,
+ // PRE_REC
+(1;1;0)x_ref::int_star<value_8_1653>@M&
+true --> GP_1700(x_ref,c'@NI,y_ref'@NI)&
+true]
+
+We got above where HP_1648,HP_1654 pre-relation 
+are defined once:
+
+ HP_1643(c,x_ref,y_ref)&true --> 
+   y_ref::int_star<value_8_1647>@M * HP_1648(c,x_ref,y_ref@NI)
+
+
+ HP_1654(c,y_ref@NI,x_ref@NI)&true --> c::int_star<value_16_1680>@M&true,
+
+Can we unfold them to get:
+
+ HP_1648(c,x_ref,y_ref@NI)&true --> 
+   x_ref::int_star<value_8_1653>@M * c::int_star<value_16_1680>@M
+
+ HP_1643(c,x_ref,y_ref)&true --> 
+   y_ref::int_star<value_8_1647>@M * 
+   x_ref::int_star<value_8_1653>@M * c::int_star<value_16_1680>@M
+
+
+Also, post-relations GP_1699,GP_1700 are also defined once:
+
+ y_ref'::int_star<v_int_15_1679>@M * GP_1699(c',x_ref,y_ref'@NI)&
+  --> HP_1643(c',x_ref,y_ref')&
+
+ c'::int_star<v_int_16_1698>@M * GP_1700(x_ref,c'@NI,y_ref'@NI)&
+   --> GP_1699(c',x_ref,y_ref'@NI)&
+
+ x_ref::int_star<value_8_1653>@M&true 
+   --> GP_1700(x_ref,c'@NI,y_ref'@NI)&true]
+
+We can unfold them to get:
+
+ c'::int_star<v_int_16_1698>@M * x_ref::int_star<value_8_1653>@M&true
+   --> GP_1699(c',x_ref,y_ref'@NI)
+
+ y_ref'::int_star<v_int_15_1679>@M * 
+ c'::int_star<v_int_16_1698>@M * x_ref::int_star<value_8_1653>@M&true
+  --> HP_1643(c',x_ref,y_ref')
+
+With this, we will get:
+
+ HP_1643(c',x_ref,y_ref')
+   <-->  y_ref'::int_star<v_int_15_1679>@M * 
+    c'::int_star<v_int_16_1698>@M * x_ref::int_star<value_8_1653>@M&true

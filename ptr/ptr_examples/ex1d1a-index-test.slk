@@ -1,0 +1,36 @@
+data arr {
+  int val;
+}.
+
+pred arr_int<o:int,v:int> ==
+    p1::arr<v> & p1=self+o & o>=0 //& self!=null
+   inv //self!=null & 
+    o>=0.
+
+
+infer [o] y::arr_int<o,5> & x=y+2 |- x::arr<v>.
+print residue.
+expect Valid.
+
+
+/*
+# ex1d1a.ss
+
+infer [o] y::arr_int<o,5> & x=y+2 |- x::arr<v>.
+print residue.
+expect Valid.
+
+Why is above not inferring o?
+
+ <1>emp&y=y & v=5 & x=y+2 & o=o & 0<=(1+y) & 0<=o&{FLOW,(20,21)=__norm#E}[]
+[[ Unfold 0 ==>  Match(p1_199,x)]]
+
+# match is not a definite match but a possible one ..
+
+!!! **context.ml#677:lhs_nodes:[p1_54]
+!!! **WARNING****context.ml#714:TODO : check if share same base
+!!! **context.ml#715:lhs_p2: flted_10_36=5 & x=2+y & v_53=flted_10_36 & y!=null & 0<=o & p1_54=o+y
+!!! **context.ml#716:rhs: p1_54=x
+
+
+ */

@@ -1,0 +1,100 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+//checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> & i<n & i>=0.
+//checkentail  y::arrI<_> & y=x |- [i,n] x::arr_seg<i,n> .
+//  <1>y::arrI<Anon_13>@M&i=n & 0<=i & y=x&{FLOW,(20,21)=__norm#E}[]
+
+//checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> . // i=0 inst?
+//checkentail  y::arrI<_> & y=x |- x::arr_seg<i,n> & i<n .
+//checkentail  y::arrI<_> & y=x |- [i] x1::arrI<_> & x1=y+i .
+
+
+
+infer [i] y!=null & x1=i+y |- y=x1.
+print residue.
+expect Valid.
+
+checkentail  x=y  |- [i] x=y+i .
+print residue.
+
+
+checkentail  y::arrI<_>  |- [i] x1::arrI<_> & x1=y+i .
+expect Valid.
+
+checkentail  y::arrI<_>  |- x1::arrI<_> & x1=y+i .
+print residue.
+expect Fail.
+
+checkentail  y::arrI<_>  |- (exists i: x1::arrI<_> & x1=y+i).
+print residue.
+expect Valid. // without inst on i
+
+
+checkentail  y::arrI<_>  |- x1::arrI<_>.
+print residue.
+expect Fail.
+
+checkentail  y::arrI<_>  |- x1::arrI<_> & y=x1+2.
+print residue.
+expect Fail.
+
+/*
+ # ex14b2c.slk -dre "process_m\|choose_c\|enhance_pa" --trace-log-num 2 
+
+# why not inst i=0 to allow match to succeed?
+
+@2! **context.ml#870:estate:
+  y::arrI<Anon_13>@M&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [x1; Anon_14]
+ es_gen_expl_vars: [i]
+ es_subst (from,to): []:[]
+ 
+@2! **context.ml#871:lhs_w_rhs_inst: y!=null & x1=i+y
+@2! **context.ml#872:rhs: y=x1
+
+
+@2! **context.ml#635:get_data_and_views:[(y,None)]
+@2! **context.ml#779:heap_ptrs:[y]
+@2! **context.ml#780:pasets:[x1]
+@2! **context.ml#789:lhs_nodes(ptr_arith):[y]
+@2! **context.ml#800:rhs_inst_eq:[ x1=i+y]
+@2! **context.ml#801:rhs_ptr:x1
+@2! **context.ml#857:estate:
+  y::arrI<Anon_13>@M&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [x1; Anon_14]
+ es_gen_expl_vars: [i]
+ es_subst (from,to): []:[]
+ 
+@2! **context.ml#859:rhs: y=x1
+@2!:0: 0: **tpdispatcher.ml#3548:ante 1: : y!=null & x1=i+y
+@2!:0: 0: **tpdispatcher.ml#3554:ante 3: : y!=null & x1=i+y
+@2!:0: 0: **tpdispatcher.ml#3556:ante 4: : y!=null & x1=i+y
+@2!:0: 0: **tpdispatcher.ml#3341:IMP #58
+@2!:0: 0: **tpdispatcher.ml#3342:imply_timeout: ante:  y!=null & x1=i+y
+@2!:0: 0: **tpdispatcher.ml#3343:imply_timeout: conseq:  y=x1
+@2! **tpdispatcher.ml#1424:Ann Vars:[]
+@2! **tpdispatcher.ml#1425:Inv: y!=null & x1=i+y
+@2!:0: 0: **smtsolver.ml#224:f(smt): y>0
+@2!:0: 0: **smtsolver.ml#229:NONE #
+@2!:0: 0: **smtsolver.ml#224:f(smt): x1=i+y
+@2!:0: 0: **smtsolver.ml#229:NONE #
+@2!:0: 0: **smtsolver.ml#224:f(smt): y=x1
+@2!:0: 0: **smtsolver.ml#229:NONE #
+@2!:0: 0: **tpdispatcher.ml#3583:res: :false
+@2! **tpdispatcher.ml#3752:univ var:[]
+@2! **context.ml#870:same_base:true
+@2! **context.ml#871:r:false
+(==context.ml#938==)
+enhance_paset@2@1
+enhance_paset inp1 :[]
+enhance_paset inp2 :[x1]
+enhance_paset@2 EXIT:[(y,(0,None),None)]
+
+*/

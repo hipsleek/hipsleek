@@ -1,0 +1,10 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of Exp1
+
+Entail 1: EXCast. Failure("Can not find flow of Exp1")
+: no residue 
+

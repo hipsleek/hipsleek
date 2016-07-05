@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 (*
   let $a = <formula>.
   let $b = compose.
@@ -40,6 +42,7 @@ type command =
   | RelDef of I.rel_decl (* An Hoa *)
   | TemplDef of I.templ_decl
   | UtDef of I.ut_decl
+  | UiDef of I.ui_decl
   | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
@@ -53,7 +56,7 @@ type command =
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | ShapeInfer of (ident list * ident list)
-  | Validate of (validate_result * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
+  | Validate of (validate_result * ident option * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
   | ShapeDivide of (ident list * ident list)
   | ShapeConquer of (ident list * CF.cond_path_type list)
   | ShapeLFP of (ident list)
@@ -62,10 +65,28 @@ type command =
   | ShapeInferProp of (ident list * ident list)
   | ShapeSplitBase of (ident list * ident list)
   | ShapeElim of (ident list)
+  | ShapeReuse of (regex_id_list * regex_id_list)
+  | ShapeReuseSubs of (regex_id_list)
+  | PredUnfold of (ident option * regex_id_list)
   | ShapeExtract of (ident list)
   | ShapeDeclDang of (ident list)
   | ShapeDeclUnknown of (CF.cond_path_type * ident list)
   | ShapeSConseq of (ident list * ident list)
+  | ShapeAddDangling of regex_id_list
+  | ShapeUnfold of regex_id_list
+  | ShapeParamDangling of regex_id_list
+  | ShapeSimplify of regex_id_list
+  | ShapeMerge of regex_id_list
+  | ShapeTransToView of regex_id_list
+  | ShapeDerivePre of regex_id_list
+  | ShapeDerivePost of regex_id_list
+  | ShapeDeriveView of regex_id_list
+  | ShapeExtnView of (regex_id_list * ident)
+  | ShapeNormalize of regex_id_list
+  | DataMarkRec of regex_id_star_list
+  | PredElimHead of regex_id_list
+  | PredElimTail of regex_id_list
+  | PredUnifyDisj of regex_id_list
   | PredSplit of (ident list)
   | PredNormSeg of (ident list)
   | PredNormDisj of (ident list)
@@ -82,11 +103,12 @@ type command =
   | TemplSolv of ident list
   | TermInfer
   | TermAssume of (meta_formula * meta_formula)
+  | ExpectInfer of (validate_result * validation)
   | EmptyCmd
 
 and print_cmd =
-  | PVar of ident
-  | PCmd of ident
+  | PVar of ident 
+  | PCmd of ident * (((ident * bool) regex_list) option)
 
 and meta_formula =
   | MetaVar of ident
@@ -101,7 +123,16 @@ and validate_result =
   | VR_Valid
   | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
   | VR_Unknown of string
+  | VR_Sat
+  | VR_Unsat
 
+and validation =
+  (* R{..} *)
+  | V_Residue of meta_formula option
+  (* I{..} *)
+  | V_Infer   of string * (meta_formula option)
+  (* RA{..} *)
+  | V_RelAssume  of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula) option
 (*
   The second component is IF.formula and not CF.formula since
   depending on how the formula is used (in negative or positive
@@ -109,6 +140,7 @@ and validate_result =
   Therefore we keep the original version and do the translations
   according to different usage.
 *)
+
 
 type var_table_t = (ident, meta_formula) H.t
 
@@ -121,6 +153,7 @@ let string_of_command c = match c with
   | RelDef  _ -> "RelDef" 
   | TemplDef _ -> "TemplDef"
   | UtDef _ -> "UtDef"
+  | UiDef _ -> "UiDef"
   | HpDef  _ -> "HpDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
@@ -145,9 +178,27 @@ let string_of_command c = match c with
   | ShapeDeclDang _ -> "ShapeDeclDang"
   | ShapeDeclUnknown _ -> "ShapeDeclUnknown"
   | ShapeElim _ -> "ShapeElim"
+  | ShapeReuse _ -> "ShapeReuse"
+  | PredUnfold _ -> "PredUnfold"
+  | ShapeReuseSubs _ -> "ShapeReuseSubs"
   | ShapeExtract _ -> "ShapeExtract"
   | ShapeSConseq _ -> "ShapeSConseq"
   | ShapeSAnte _ -> "ShapeSAnte"
+  | ShapeAddDangling _ -> "ShapeAddDangling"
+  | ShapeUnfold _ -> "ShapeUnfold"
+  | ShapeParamDangling _ -> "ShapeParamDangling"
+  | ShapeSimplify _ -> "ShapeSimplify"
+  | ShapeMerge _ -> "ShapeMerge"
+  | ShapeTransToView _ -> "ShapeTransToView"
+  | ShapeDerivePre _ -> "ShapeDerivePre"
+  | ShapeDerivePost _ -> "ShapeDerivePost"
+  | ShapeDeriveView _ -> "ShapeDeriveView"
+  | ShapeExtnView _ -> "ShapeExtnView"
+  | ShapeNormalize _ -> "ShapeNormalize"
+  | DataMarkRec _ -> "DataMarkRec"
+  | PredElimHead _ -> "PredElimHead"
+  | PredElimTail _ -> "PredElimTail"
+  | PredUnifyDisj _ -> "PredUnifyDisj"
   | PredSplit _ -> "PredSplit"
   | PredNormSeg _ -> "PredNormSeg"
   | PredNormDisj _ -> "Pred Normal Disj"
@@ -163,6 +214,7 @@ let string_of_command c = match c with
   | TemplSolv _ -> "TemplSolv"
   | TermInfer -> "TermInfer"
   | TermAssume _ -> "TermAssume"
+  | ExpectInfer (_,_) -> "ExpectInfer"
   | EmptyCmd -> "EmptyCmd"
 
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
@@ -171,7 +223,7 @@ let get_var (v : ident) : meta_formula = H.find var_tab v
 
 (* An Hoa : String representation of meta_formula *)
 let string_of_meta_formula (mf : meta_formula) = 
-	match mf with
+  match mf with
   | MetaVar i -> i
   | MetaForm f -> "IFORM:"^Iprinter.string_of_formula f
   | MetaFormCF cf ->  "CFORM:"^Cprinter.string_of_formula cf
@@ -182,7 +234,7 @@ let string_of_meta_formula (mf : meta_formula) =
 
 let rec fv_meta_formula (mf: meta_formula) =
   let ident_of_sv v = match v with
-  | CP.SpecVar (_, id, primed) -> (id, primed)
+    | CP.SpecVar (_, id, primed) -> (id, primed)
   in
   match mf with
   | MetaVar i -> [(i, Unprimed)]
@@ -196,15 +248,25 @@ let rec fv_meta_formula (mf: meta_formula) =
     (List.map (fun i -> (i, Unprimed)) idl) @ 
     (fv_meta_formula m1) @ (fv_meta_formula m2)
 
+let string_of_validation v=
+  let pr_omf = Gen.pr_option string_of_meta_formula in
+  let pr_orel = Gen.pr_option (Gen.pr_quad Cprinter.string_of_cond_path
+      string_of_meta_formula pr_omf string_of_meta_formula) in
+  match v with
+    | V_Residue o_mf -> "R{" ^ (pr_omf o_mf) ^"}"
+    | V_Infer (s,o_mf) -> s^"{" ^ (pr_omf o_mf) ^"}"
+    | V_RelAssume o_vrels -> "RA{" ^ (pr_orel o_vrels) ^ "}"
+
+
 let clear_var_table () = H.clear var_tab
 
 (*
   let get_var (v : ident) : let_body =
   H.find var_tab v
-  
+
   let put_var (v : ident) (body : let_body) =
   H.add var_tab v body
-  
+
   let formula_of_var (v : ident) pos : IF.formula =
   let lbody = get_var v in
   match lbody with

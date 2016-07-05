@@ -1,0 +1,91 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a, node b).
+
+checkentail H(p,qqq) |- H(p,p) .
+// why above proving succeed; do we need to change HRel --> View at Iast-level?
+
+checkentail H(p,qqq) & qqq=p |- H(p,p) .
+
+// bug
+checkentail H(p,qqq) & qqq=p |- H(p,null) .
+
+checkentail H(p,qqq) |- (exists r: H(p,r)) .
+
+checkentail H(p,qqq) |- [r] H(p,r) .
+
+//checkentail H(p,p) |- H(p,p) .
+print residue.
+
+
+/*
+# bug10c.slk
+
+BAD
+---
+==solver.ml#9943==)
+imm_split_lhs_node@10@9@8@7
+imm_split_lhs_node inp1 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_trace:  COND ==>  Match(p,p)
+imm_split_lhs_node inp2 : p::H<p,p>NOANN
+imm_split_lhs_node inp3 : p::H<p,p>NOANN
+imm_split_lhs_node@10 EXIT:(  p::H<p,p>NOANN&{FLOW,(20,21)=__norm#E}[]
+ es_trace:  COND ==>  Match(p,p),((to_lhs:[],to_rhs:[],to_rhs_ex:[]),subst:[]))
+
+(====)
+replace_list_ann#1@12@11@10@9@8@7
+replace_list_ann#1 inp1 :[NOANN, ]; 
+replace_list_ann#1 inp2 :[NOANN, ]; 
+replace_list_ann#1@12 EXIT:(([NOANN, ]; ,[@A, ]; ),?,?)
+
+(====)
+subtract_ann@13@12@11@10@9@8@7
+subtract_ann inp1 :(left:NOANN,right:NOANN)
+subtract_ann inp2 :(impl:[],expl:[],evars:[])
+subtract_ann inp3 :norm:false
+subtract_ann@13 EXIT:((left:NOANN,right:@A),[],(([],[],[]),[]))
+
+GOOD
+----
+replace_list_ann#1@12@11@10@9@8@7
+replace_list_ann#1 inp1 :[@M, ]; 
+replace_list_ann#1 inp2 :[@M, ]; 
+replace_list_ann#1@12 EXIT:(([@A, ]; ,[@M, ]; ),?,?)
+
+(==solver.ml#9943==)
+imm_split_lhs_node@10@9@8@7
+imm_split_lhs_node inp1 :  emp&p_17=p&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [p_31; p_32]
+ es_rhs_eqset: [p_31:p; p_32:p]
+ es_trace:  COND ==>  Match(x,x)
+imm_split_lhs_node inp2 : x::G<p,p_17>@M
+imm_split_lhs_node inp3 : x::G<p_31,p_32>@M
+imm_split_lhs_node@10 EXIT:(  emp&p_17=p&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [p_31; p_32]
+ es_rhs_eqset: [p_31:p; p_32:p]
+ es_trace:  COND ==>  Match(x,x),((to_lhs:[],to_rhs:[],to_rhs_ex:[]),subst:[]))
+
+
+
+
+# why did we have p=null?
+
+!!! **sleekengine.ml#834:view_decls (pre):[]
+!!! **solver.ml#7471:p1(after xpure_perm): p=null
+!!! **solver.ml#8290:lhs_p: p=null
+
+Entail (1) : Valid. 
+Residue:
+
+ <1>H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+
+# Why aen't there two arguments for H?
+
+*/
+

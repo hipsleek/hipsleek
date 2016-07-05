@@ -11,7 +11,32 @@ to add --print-min
 10s Timeout for norm/zip_paper_eq.ss
 
 =====================================================================
+#paper/cll.ss
+
+ERROR: at paper/cll.ss_37:2_37:3
+Message: OpAssign : lhs and rhs do not match 2
+Stop Omega... 35 invocations caught
+
+
 =====================================================================
+#../hip paper/c/cll.c
+
+!!!Full processing file "paper/c/cll.c"
+Parsing file "paper/c/cll.c" by cil parser...
+GCC Preprocessing...
+gcc -C -E paper/c/cll.c -o paper/c/cll.c.prep
+
+!!! name:node
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of node_star
+
+ERROR: at paper/c/cll.c_9:23_9:38
+Message: gather_type_info_var : unexpected exception Failure("Can not find flow of node_star")
+
+
 =====================================================================
 =====================================================================
 =====================================================================

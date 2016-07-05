@@ -1,6 +1,8 @@
+#include "xdebug.cppo"
+open VarGen
 (**
    Helper and other ultilities for Hip/Sleek's GUI
- *)
+*)
 
 open Globals
 
@@ -11,11 +13,11 @@ module SC = Sleekcommons
 (**/**)
 
 (** Wrap a widget in a scrolled window and return that window
- *)
+*)
 let create_scrolled_win child = 
   let scroll_win = GBin.scrolled_window 
-    ~hpolicy: `AUTOMATIC ~vpolicy: `AUTOMATIC 
-    () in
+      ~hpolicy: `AUTOMATIC ~vpolicy: `AUTOMATIC 
+      () in
   scroll_win#add child#coerce;
   scroll_win
 
@@ -34,11 +36,11 @@ let log msg =
 
 (**
    Common operations on text file
- *)
+*)
 module FileUtil = struct
 
   (** Read a text file and then return it's content as a string 
-   *)
+  *)
   let read_from_file (fname: string) : string =
     if Sys.file_exists fname then begin
       let ic = open_in fname in
@@ -50,7 +52,7 @@ module FileUtil = struct
     end else ""
 
   (** Write text to a file 
-   *)
+  *)
   let write_to_file (fname: string) (text: string) : unit =
     let oc = open_out fname in
     output_string oc text;
@@ -65,7 +67,7 @@ end (* FileUtil *)
    Quick & dirty parsing functions of sleek file
    based on simple regular expressions
    TODO: use sleek parser for parsing
- *)
+*)
 module SourceUtil = struct
 
   type seg_pos = {
@@ -106,11 +108,11 @@ module SourceUtil = struct
     new_line_pos 0
 
   (** map a position to it's line number,
-     based on a list of positions of new line chars
-   *)
+      based on a list of positions of new line chars
+  *)
   let char_pos_to_line_num (pos: int) (new_lines: int list) : int =
     (** return index of first item in list xs which value greater than x
-       return -1 if xs is empty *)
+        return -1 if xs is empty *)
     let rec greater_than x xs = match xs with
       | [] -> -1
       | head::tail -> if head > x then 0 else 1+(greater_than x tail)
@@ -212,14 +214,14 @@ let initialize () =
   Debug.devel_debug_on := true;
   Debug.log_devel_debug := true;
   Globals.reporter := (fun loc msg ->
-    let pos = {
-      SourceUtil.start_char = loc.start_pos.Lexing.pos_cnum;
-      SourceUtil.stop_char = loc.end_pos.Lexing.pos_cnum;
-      SourceUtil.start_line = loc.start_pos.Lexing.pos_lnum;
-      SourceUtil.stop_line = loc.end_pos.Lexing.pos_lnum;
-    } in
-    raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
-  );
+      let pos = {
+        SourceUtil.start_char = loc.start_pos.Lexing.pos_cnum;
+        SourceUtil.stop_char = loc.end_pos.Lexing.pos_cnum;
+        SourceUtil.start_line = loc.start_pos.Lexing.pos_lnum;
+        SourceUtil.stop_line = loc.end_pos.Lexing.pos_lnum;
+      } in
+      raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
+    );
   (*TP.enable_log_for_all_provers ();*)
   TP.start_prover ()
 
@@ -230,7 +232,7 @@ let finalize () =
 (**
    Helper for interacting with Sleek script
    Command calling, process management, parsing of result,...
- *)
+*)
 module SleekHelper = struct
 
   open SourceUtil
@@ -305,29 +307,29 @@ module SleekHelper = struct
 
   let process_cmd cmd = match cmd with
     | SC.DataDef ddef -> 
-        log "processing data def";
-        SE.process_data_def ddef; None
+      log "processing data def";
+      SE.process_data_def ddef; None
     | SC.PredDef pdef -> ((); None)
-        (* log "processing pred def"; *)
-        (* SE.process_pred_def pdef; None *)
+    (* log "processing pred def"; *)
+    (* SE.process_pred_def pdef; None *)
     | SC.EntailCheck (iante, iconseq, etype) -> 
-        log "processing entail check";
-        Some (SE.run_entail_check iante iconseq etype)
+      log "processing entail check";
+      Some (SE.run_entail_check iante iconseq etype)
     | SC.Simplify f ->
-        log "processing simplify";
-        Some (SE.run_simplify f)
+      log "processing simplify";
+      Some (SE.run_simplify f)
     | SC.CaptureResidue lvar -> 
-        log "processing capture residue";
-        SE.process_capture_residue lvar; None
+      log "processing capture residue";
+      SE.process_capture_residue lvar; None
     | SC.LemmaDef ldef -> 
-        log "processing lemmad def";
-        SE.process_lemma ldef; None
+      log "processing lemmad def";
+      SE.process_lemma ldef; None
     | SC.PrintCmd pcmd -> 
-        log "processing print cmd";
-        SE.process_print_command pcmd; None
+      log "processing print cmd";
+      SE.process_print_command pcmd; None
     | SC.LetDef (lvar, lbody) -> 
-        log "processing let def";
-        SC.put_var lvar lbody; None
+      log "processing let def";
+      SC.put_var lvar lbody; None
     | SC.Time (b,s,_) -> None
     | SC.EmptyCmd -> None
 
@@ -337,7 +339,7 @@ module SleekHelper = struct
       let header = clean (String.sub src 0 e.pos.start_char) in
       let src = Printf.sprintf "%s checkentail %s." header e.name in
       let cmds = parse_command_list src in
-      let _ = SE.clear_all () in
+      let () = SE.clear_all () in
       let rec exec cmds = match cmds with
         | [] -> failwith "[gUtil.ml/checkentail]: empty command list"
         | [cmd] -> process_cmd cmd
@@ -349,9 +351,11 @@ module SleekHelper = struct
       in
       let residue = match SE.get_residue () with
         | Some residue ->
-            let formulas = Cformula.list_formula_of_list_context residue in
-            let fstring = Cprinter.string_of_list_formula formulas in
-            "Residue:\n" ^ fstring ^ "\n"
+          let vs = stk_vars # get_stk in
+          let () = x_binfo_hp (add_str "curr vars" !CP.print_svl) vs no_pos in
+          let formulas = Cformula.list_formula_of_list_context residue in
+          let fstring = Cprinter.string_of_list_formula formulas in
+          "Residue:\n" ^ fstring ^ "\n"
         | None -> ""
       in
       let context = Cprinter.string_of_list_context contexts in
@@ -368,7 +372,7 @@ end (* SleekHelper *)
 (**
    Helper for interacting with Hip script
    Command calling, process management, parsing of result,...
- *)
+*)
 module HipHelper = struct
 
   open SourceUtil
@@ -447,7 +451,7 @@ module HipHelper = struct
   let parse_locs_line (line: string) : seg_pos list =
     let parse loc =
       let regexp = Str.regexp "(\\([0-9]+\\)-\\([0-9]+\\))" in
-      let _ = Str.string_match regexp loc 0 in
+      let () = Str.string_match regexp loc 0 in
       { start_char = int_of_string (Str.matched_group 1 loc);
         stop_char = int_of_string (Str.matched_group 2 loc);
         start_line = 0; (* ignore for now *)
@@ -461,7 +465,7 @@ module HipHelper = struct
     let err_pos = 
       try
         let regexp = Str.regexp "Possible locations of failures: \\([^\\.]+\\)\\." in
-        let _ = Str.search_forward regexp hip_output 0 in
+        let (todo_unk:int) = Str.search_forward regexp hip_output 0 in
         let locs_line = Str.matched_group 1 hip_output in
         log ("Failed branches location: " ^ locs_line);
         parse_locs_line locs_line;

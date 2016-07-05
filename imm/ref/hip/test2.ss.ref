@@ -1,0 +1,71 @@
+
+!!!Full processing file "hip/test2.ss"
+Parsing file "hip/test2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$node... 
+Procedure foo$node SUCCESS.
+
+Checking procedure foo_lend$node... 
+Procedure foo_lend$node SUCCESS.
+
+Checking procedure iterator$node... 
+Procedure iterator$node SUCCESS.
+
+Checking procedure push$node~int... 
+Procedure push$node~int SUCCESS.
+
+Checking procedure goo$int~int~int~node... 
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Procedure goo$int~int~int~node FAIL.(2)
+
+Exception Failure("hd") Occurred!
+
+Error(s) detected when checking procedure goo$int~int~int~node
+
+Checking procedure goo_lend$int~int~int~node... 
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Warning: ::0: 0: possible unsoundess (* between overlapping heaps) 
+
+Procedure goo_lend$int~int~int~node FAIL.(2)
+
+Exception Failure("hd") Occurred!
+
+Error(s) detected when checking procedure goo_lend$int~int~int~node
+
+0 false contexts at: ()
+
+Total verification time: 0.978088 second(s)
+	Time spent in main process: 0.921798 second(s)
+	Time spent in child processes: 0.05629 second(s)
+

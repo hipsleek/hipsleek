@@ -1,0 +1,439 @@
+# norm/ex21u2.slk (OK)
+
+pred_elim_useless [ll].
+//no change
+
+pred_elim_useless [app2].
+//elim y
+
+# Loc : can we refine the command's to the following:
+
+Instead of printing every view. Can we
+either print:
+  "No predicates here has useless parameters"
+
+or:
+  Pred P has parameter ? eliminated ..
+
+The command should be idempotent in that the 
+2nd application will cause no-change.
+===================================================================
+# ex21u1.slk --dd-calls-all
+
+# was lemma proving invoked?
+  It seems that lemmas were generated
+  but never proven? compare with ex21r4.slk
+
+(==lemma.ml#1863==)
+generate_view_rev_rec_lemmas@3
+generate_view_rev_rec_lemmas inp1 : view G2<p:node,y:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=y&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; tt; pp](* lbl: *){2}->(exists pp_16,
+          y_17: (* lbl: *){2}->self::node<Anon_14,pp,tt>@M * 
+                               tt::G2<pp_16,y_17>@M&
+          pp_16=pp & y_17=y&{FLOW,(1,26)=__flow#E}[])
+    
+generate_view_rev_rec_lemmas@3 EXIT:[=>coerc rev_G2_65
+	 head: (self::G2{}<p,y>@M[HeapNode1]) * ([] & !(((self:node)) = ((y:node))))( FLOW __flow)
+	 body:((tt::node{}<Anon_14,pp,y,>@M[HeapNode1]) * (self::G2{}<pp,tt>@M[HeapNode1])) * ([] & true)( FLOW __flow)safe lemmas(added to store only if valid)
+]
+
+(==lemma.ml#1863==)
+generate_view_rev_rec_lemmas@4
+generate_view_rev_rec_lemmas inp1 : view G1<y:node>= 
+  EBase 
+    exists (Impl)[Anon_13; t; p](* lbl: *){3}->(exists p_18,
+    y_19: (* lbl: *){3}->self::node<Anon_13,p,t>@M * t::G2<p_18,y_19>@M&
+    p_18=p & y_19=y&{FLOW,(1,26)=__flow#E}[])
+generate_view_rev_rec_lemmas@4 EXIT:[]
+
+===================================================================
+# ex21r3.slk
+
+pred lseg2a<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg3<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred_reuse [*][*].
+
+!!! **norm.ml#193:norm_reuse (from_vns):[lseg111,lseg2a,lseg3]
+!!! **norm.ml#194:norm_reuse (to_vns):[lseg111,lseg2a,lseg3]
+
+# should we use topological sorting? where shorter names 
+  come first..
+
+Since lseg3 is shorter than lseg2a, we would expect
+it to come first.
+===================================================================
+# ex21r3c.slk
+
+ pred lseg<n,p> == self::lseg111<n,p>.
+
+# raw base case need to include non-heap and non-recursive item
+ raw_base_case : self::lseg111<n,p>
+
+  not sure if guarded base-case is useful?
+
+-----
+
+lseg111<..>
+  materialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){1}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}
+  []base case: n=0->self=p & 
+                                                                    n=0
+lseg111<..>
+  materialized vars: [(self,full,[lseg111])]
+===================================================================
+# ex21s1.slk (test file in ex21s1b.slk)
+
+relDefn zip(x,y,z) <->
+  x=null & y=null & z=null
+or x::node<_,p>*y::node<_,q>*z::node<_,t>*zip(p,q,t).
+../
+pred_split [zip].
+
+# Instead of relDefn, can we use pred:
+  What is @RO? root?
+
+pred zip<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q>*z::node<_,t>*p::zip<q,t>.
+
+
+# After that, call lemma_infer, followed by shape_derive_view[P1,P2,p3];
+  as shown in ex21s1a.slk
+
+===================================================================
+# ex21r4d.slk (FIXED)
+
+!!! **norm.ml#186:
+ Failed : self::lseg3<p,n>@M&{FLOW,(1,26)=__flow#E}[] <->  self::lseg2a<n,p>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#2502:
+
+# GOT
+PRED REUSE FOUND:[(lseg2a,lseg2a),(lseg3,lseg3)]
+
+# EXPECTS:
+PRED REUSE FOUND:[(lseg2a,lseg2a),(lseg3,lseg2a)]
+
+
+# equiv proving fails. the reason is that we prove
+  using two separate <-- and -->
+  instead of a single <->
+
+  Can we do this?
+===================================================================
+# ex21a3.slk (FIXED by marking unknown type parameter useless)
+
+ pred_elim_hd_node [app2].
+
+# a sleek failure msg for app with y. 
+  can print the elim_hd lemma generated?
+
+========================
+ Performing Deriving Segmented Views
+========================
+
+!!! **syn.ml#696:derived_views:
+[ view DP_68<y_67:TVar[43]>= 
+  EList
+    :EBase 
+       self::app2<y_67>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          self::node<Anon_104,flted_14_105>@M * flted_14_105::GP_106<self>@M&
+          self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+Last Proving Location: ex21a3-pred-elim-hd-node.slk_11:4_11:30
+
+ERROR: at _0:0_0:0
+Message: GP_106 is neither 2 a data nor view name
+
+Exception processed: Failure("GP_106 is neither 2 a data nor view name")
+error at: 
+SLEEK FAILURE (END)
+===================================================================
+# ex21a4.slk (OK)
+
+checkentail x::app2<> |- x::node<_,q>.
+print residue.
+
+Residue:
+ <1>q::DP_62<>@M&{FLOW,(20,21)=__norm#E}[]
+[[ Unfold 0 ==>  Match(x,x)]]
+
+
+# can we tidy with re-using pred in body by:
+  pred_reuse_subs [*]
+  print_view [*]
+  print_view_long [*]
+
+--------------------------------------
+
+!!! **sleekengine.ml#3003:[ view ll<>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; 
+          q](* lbl: *){4}->self::node<Anon_12,q>@M * q::ll<>@M&
+          {FLOW,(1,26)=__flow#E}[]
+    , view DP_65<>= 
+
+===================================================================
+# ex21a5.slk
+
+pred_reuse_subs [*].
+
+!!! **norm.ml#233:TBI: view:
+ view lseg<n:int,p:node>= 
+  EList
+    :EBase 
+       (* lbl: *){3}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; q](* lbl: *){4}->(exists p_20,
+          flted_11_19: (* lbl: *){4}->self::node<Anon_12,q>@M * 
+                                      q::lseg<flted_11_19,p_20>@M&
+          flted_11_19+1=n & p_20=p&{FLOW,(1,26)=__flow#E}[])
+    equiv_set: ([1,0],lseg2)
+  
+# change after to self::lseg<p,n> == self::lseg2<p,n> after reuse detection
+
+
+!!! **norm.ml#234:TBI: from:(lseg,[n,p])
+!!! **norm.ml#235:TBI: to:(lseg2,[p,n])
+===================================================================
+# ex21a6a.slk
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5a<>
+  inv true.
+
+pred app5a<> == self=null 
+	or self::node<_, q> * q::app5b<> 
+  inv true.
+
+pred app5b<> == self=null 
+	or self::node<_, q> * q::app5<> 
+  inv true.
+
+# deeper mutual recursion requires simultaneous lemma
+  proving considerations.
+===================================================================
+# udisj-1.slk
+
+pred_disj_unify [ll_last].
+
+# sleek parser failure ..
+
+File "udisj-1.slk", line 22, characters 17-18
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:
+Exception processed: Stream.Error("EOF expected after [command_list] (in [sprog])")
+error at: 
+SLEEK FAILURE (END)
+
+Stop z3... 0 invocations 
+0 false contexts at: ()
+===================================================================
+# ex21t2 --trace-exc
+
+lemma_infer [U,@pure_field] 
+ self::app3<> -> U(self,p)*p::node<0,null>.
+print residue.
+
+shape_derive_view[U].
+
+Exception(try_unify_data_type_args):Not_found
+
+Last Proving Location: ex21t2-pred-elim-last-node.slk_23:4_23:49
+
+ERROR: at _0:0_0:0
+Message: GP_105 is neither 2 a data nor view name
+Exception(gather_type_info_heap):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(gather_type_info_struc_f):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_I2C_struc_formula):Failure("GP_105 is neither 2 a data nor view name")
+Exception(trans_view):Failure("GP_105 is neither 2 a data nor view name")
+===================================================================
+# ex21t1
+
+pred_elim_tl_node [*].
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+# (1) need to use @pure_field for lemma_inference
+  (2) need to check <-> holds
+# Why app3<> dropped v!=0 pure field?
+
+[ view DP_54<>= 
+  EList
+    :EBase 
+       exists (Impl)[flted_20_83; 
+       flted_20_84](* lbl: *){14}->self::node<flted_20_83,flted_20_84>@M * 
+                                   flted_20_84::DP_54<>@M&
+       self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){15}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    , view app3<>= 
+  EBase 
+    exists (Impl)[flted_20_52; 
+    flted_20_53](* lbl: *){28}->self::node<flted_20_52,flted_20_53>@M * 
+                                flted_20_53::DP_54<>@M&
+    {FLOW,(1,26)=__flow#E}[]]
+===================================================================
+# ex21t3.slk
+
+pred app3<> == self::node<0,null> 
+	or self::node<v, q> * q::app3<> & q!=null & v!=0 
+  inv self!=null.
+
+pred_elim_tl_node [*].
+
+# expect to form:
+
+  lemma_infer   app3<> -> U(self,p)*p::node<0,null>
+
+Starting Omega.../usr/local/bin/oc
+Exception processed: Failure("**sleekengine.ml#1751: TBI")
+error at: 
+SLEEK FAILURE (END)
+
+===================================================================
+# ex21t1a.slk
+
+lemma_infer [UA,@classic] "L21t1a"
+  self::app3a<> -> self::node<v,q>*UA(q,v).
+print residue.
+
+# deemed a failure due to presence of app3a in inference outcome.
+  can detect and/or prevent?
+
+
+ inferred hprel: [q_79::app3a<>@M&q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  q_79::node<v_84,q_85>@M * GP_86(q_85,q_79@NI)&
+                   q_79!=null --> UA(q_79,v_78@NI)&true; 
+                  emp&
+                   flted_25_72=null & flted_25_73=0 --> UA(flted_25_72,flted_25_73@NI)&
+
+===================================================================
+# ex21a5b.slk
+
+ # why duplicated? (FIXED)
+  unstructured formula: 
+    self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+    || self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+
+ # is this for base-case fold?
+
+  self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]base case: n=0->self=p & n=0
+  
+
+(==astsimp.ml#7104==)
+trans_formula@4@2@1
+trans_formula inp1 :[(p:31:node)(TVar__46:46:node)(p_17:41:node)(TVar__45:45:node)(n:32:int)(TVar__43:43:int)(flted_15_16:40:int)(TVar__42:42:int)(q:39:node)(Anon_13:38:int)(self:33:node)(TVar__37:37:int)(TVar__36:36:int)(TVar__35:35:node)(TVar__34:34:node)]
+trans_formula inp2 :quantify:true
+trans_formula inp3 :cleanres:false
+trans_formula inp4 :[self,p,n]
+trans_formula inp5 :(EX p_17 flted_15_16 . ((self::node{}<Anon_13,q>[HeapNode1]) * (q::lseg{}<flted_15_16,p_17>[HeapNode1]))*([] & (flted_15_16 = n-1) & (p_17 = p))( FLOW __flow))
+trans_formula@4 EXIT: (exists p_17,
+flted_15_16: self::node<Anon_13,q>@M * q::lseg<flted_15_16,p_17>@M&
+flted_15_16+1=n & p_17=p&{FLOW,(1,26)=__flow#E}[])
+
+(==sleekUtils.ml#94==)
+trans_views@1
+trans_views inp1 :[[lseg2,lseg]]
+trans_views inp2 :[(lseg2,[]),(lseg,[])]
+trans_views@1 EXIT:[lseg2,lseg]
+
+pred lseg2<p:node,n:int> == self = p & n=0 
+
+# why is ann_typs always empty?
+
+rans_view inp2 :mutrec:[lseg2]
+trans_view inp3 :trans_views:[]
+trans_view inp4 :ann_typs:[]
+trans_view@2 EXIT: view lseg2<p:node,n:int>= 
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of lseg
+Exception(get_hash2):Failure("Can not find flow of lseg")
+Last Proving Location: ex21a5b-pred-elim-hd-node.slk_11:4_11:38
+ERROR: at _0:0_0:0
+Message: Can not find flow of node
+Exception(get_hash2):Failure("Can not find flow of node")
+
+(==cformula.ml#12156==)
+norm:case_norm@1
+norm:case_norm inp1 :[n,p]
+norm:case_norm inp2 : self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+norm:case_norm@1 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")Occurred!
+
+Exception processed: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")
+error at: 
+SLEEK FAILURE (END)
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================

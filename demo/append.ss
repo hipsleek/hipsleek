@@ -15,19 +15,23 @@ clist<n> == self::node<_,p> * p::lseg<self,n-1>
 	inv n>=1;
 
 void append(node x, node y)
+/*
   requires x::ll<n> & x!=null //& n>0
   ensures x::lseg<y, n>;
   requires x::ll<n> & y=x & n>0
   ensures x::clist<n>; 
-  requires x::ll<n> * y::ll<m> & n>0
-  ensures x::ll<e>& e=n+m;
+*/
+  requires x::ll<n> * y::ll<m> //& n>0
+  ensures x::ll<n+m> ;
+/*
   requires x::lseg<r, n> * r::node<b,null>
   ensures x::lseg<r,n> * r::node<b,y>;
+*/
 {
   // dprint;
-	node tmp = x.next;
-	bool fl = tmp != null;
-	if (fl) {
+	//node tmp = x.next;
+	//bool fl = tmp != null;
+	if (x.next!=null) {
 		append(x.next, y);
 		return;
 	}

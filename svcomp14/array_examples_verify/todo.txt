@@ -1,0 +1,118 @@
+# bug-1.slk
+
+ type-error 
+
+ERROR: at _0:-1_0:-1
+Message: with 2 convert expected the same cexp types, found different types
+File "bug-1-type-error.slk", line 6, characters 14-15
+ error: Failure("with 2 convert expected the same cexp types, found different types")
+ at:error at: 
+SLEEK FAILURE (END)
+======================================================================
+Fixed
+# test_new.slk
+
+z3 can handle but
+--ato cannot handle computed index?
+any other limitation?
+
+Entail 2: EXCast. Failure("replace_exp: Invalid index form a[5 + 0]")
+: no residue 
+
+Entail 3: EXCast. Failure("replace_exp: Invalid index form a[a[i]]")
+: no residue 
+
+Entail 4: EXCast. Failure("replace_exp: Invalid index form a[a[i] + 0]")
+: no residue 
+======================================================================
+Further discussion needed.
+
+# test_forall2.slk (solved)
+
+// solved after merging
+
+checkentail
+  forall(i: !(2<=i<=5) | a[i]=3)
+   |- a[5]=3.
+
+Why was Omega called?
+--ato -tp oc does not work with this example?
+
+(==solver.ml#2748==)
+simplify_with_label_omega@7
+simplify_with_label_omega inp1 : exists(i:!((2<=i & i<=5)))
+simplify_with_label_omega@7 EXIT: true
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
+ Formula: exists(i:a[i]=3)
+
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
+ Formula: exists(i:a[i]=3)
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[i]")
+ Formula: exists(i:a[i]=3)
+======================================================================
+Fixed
+# err1-  --ato -tp oc
+
+Why below? Can we suppress the message?
+
+Starting Omega...oc
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: 1<=(a[5])
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>htrue&1<=(a[5])&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [1<=(a[5])]
+
+(====)
+can_be_simplify@55
+can_be_simplify inp1 : 1<=(a[5])
+can_be_simplify@55 EXIT:true
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a[5]")
+ Formula: 1<=(a[5])
+
+What is this function doing?
+======================================================================
+Fixed
+# err2
+
+
+// 7(1)
+infer [a] i=2  |- a[i] + 5 > 3.
+print residue.
+// why fail when 7(2) does not?
+
+// 7(2)
+infer [a] i=2  |- a[2] + 5 > 3.
+print residue.
+// inferred pure: [-1<=(a[2])]
+
+// 7(3)
+infer [a,i] i=2  |- a[i] + 5 > 3.
+print residue.
+//inferred pure: [(i!=2 | -1<=(a[i]))]
+
+// 7(4)
+infer [a,i] i=2  |- a[2] + 5 > 3.
+print residue.
+//inferred pure: [(i!=2 | -1<=(a[2]))]
+
+Can we fix 7(1) to give same result as 7(2),
+and similarly for 7(3) which can be simplified to 7(4).
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================
+======================================================================

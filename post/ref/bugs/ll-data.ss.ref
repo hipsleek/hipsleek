@@ -1,0 +1,32 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "bugs/ll-data.ss"
+Parsing file "bugs/ll-data.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$node... 
+Procedure foo$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1367: ( res=0) -->  post_1367(res,flow),
+RELDEFN post_1367: ( true) -->  post_1367(res,flow)]
+*************************************
+
+
+Post Inference result:
+foo$node
+ EBase x::ll{}<>&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           x::ll{}<>&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.440026 second(s)
+	Time spent in main process: 0.384023 second(s)
+	Time spent in child processes: 0.056003 second(s)
+

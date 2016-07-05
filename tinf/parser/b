@@ -1,0 +1,1061 @@
+
+!!!Full processing file "svcomp_a.09_assume.ss"
+Parsing file "svcomp_a.09_assume.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+class __Exc extends Object {
+
+
+
+}
+
+class __Error extends Object {
+
+
+
+}
+
+class __MayError extends Object {
+
+
+
+}
+
+class __Fail extends Object {
+
+
+
+}
+
+class Object extends  {
+
+
+
+}
+
+class String extends Object {
+
+
+
+}
+
+class int_ptr_ptr extends Object {
+int_ptr valREC_14
+
+
+}
+
+class int_ptr extends Object {
+int valVAL_15
+
+
+}
+
+class lock extends Object {
+
+
+
+}
+
+class barrier extends Object {
+int phaseVAL_16
+
+
+}
+
+class thrd extends Object {
+
+
+
+}
+
+class __ArrBoundErr extends __Error {
+
+
+
+}
+
+class __DivByZeroErr extends __Error {
+
+
+
+}
+
+class Object extends  {
+
+
+
+}
+
+class String extends Object {
+
+
+
+}
+
+
+
+WAITS{}[]<G,S,d> == EBase: [][](emp)*(true)( FLOW __flow)  inv true inv_lock: None view_data_name:  view_imm_map: []
+WAIT{}[]<b> == EBase: [][](emp)*(true)( FLOW __flow)  inv true inv_lock: None view_data_name:  view_imm_map: []
+memLoc{}[]<heap,size> == EBase: [][](emp)*(true)( FLOW __flow)  inv size > 0 inv_lock: None view_data_name:  view_imm_map: []
+
+waitS([(bag(tup2(Object,Object)),g),(bag(Object),S),(Object,d)])
+acyclic([(bag(tup2(Object,Object)),g)])
+cyclic([(bag(tup2(Object,Object)),g)])
+concrete([(bag(Object),g)])
+set_comp([(bag(tup2(Object,Object)),g),(bag(Object),S),(Object,d)])
+amodr([(int[],a),(int[],b),(int,i),(int,j)])
+update_array_2d([(int[][],a),(int[][],r),(int,val),(int,i),(int,j)])
+update_array_1d([(int[],a),(int[],r),(int,val),(int,i)])
+update_array_1d_b([(boolean[],a),(boolean[],b),(boolean,val),(int,i)])
+domb([(boolean[],a),(int,low),(int,high)])
+dom([(int[],a),(int,low),(int,high)])
+induce([(int,value)])
+axiom ((domb(a,low,high)) & (low <= l)) | (h <= high) |- domb(a,l,h)
+axiom (domb(a,low,high)) & ((low <= l) & (h <= high)) |- domb(a,l,h)
+axiom (dom(a,low,high)) & ((low <= l) & (h <= high)) |- dom(a,l,h)
+
+
+boolean rand_bool()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 74,:(emp)*(res)( FLOW __norm)
+or(emp)*(!(res))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int rand_int()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 73,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int[] aalloc___(int dim)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 72,:(emp)*(dom(res,0,dim-1))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int[][] update___2d(int v, int[][] a, int i, int j)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 71,:(emp)*(update_array_2d(a,res,v,i,j))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean[] update___1d(boolean v, boolean[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((domb(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 70,:(emp)*((domb(res,ahalb,ahaub)) & (update_array_1d_b(a,res,v,i)))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int[] update___1d(int v, int[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((dom(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 69,:(emp)*((dom(res,ahalb,ahaub)) & (update_array_1d(a,res,v,i)))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void delete_ptr(int_ptr_ptr@R x)[]
+static EBase: [][](emp ; (emp ; (x::int_ptr_ptr{}<v>@M[HeapNode1])))*(true)( FLOW __norm) {EAssume: 68,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void delete_ptr(int_ptr@R x)[]
+static EBase: [][](emp ; (emp ; (x::int_ptr{}<v>@M[HeapNode1])))*(true)( FLOW __norm) {EAssume: 67,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void release()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 66,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void acquire()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 65,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void finalize()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 64,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void init()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 63,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void join()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 62,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int fork()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 61,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int array_get_elm_at___2d(int[][] a, int i, int j)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 60,:(emp)*(res = a[i, j])( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean array_get_elm_at___1d(boolean[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((domb(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 59,:(emp)*(res = a[i])( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int array_get_elm_at___1d(int[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((dom(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 58,:(emp)*(res = a[i])( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int pow___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 57,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean not___(boolean a)[]
+static case{ECase:
+
+	 !(a)->EAssume: 56,:(emp)*(res)( FLOW __norm)
+
+	 a->EAssume: 55,:(emp)*(!(res))( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean lor___(boolean a, boolean b)[]
+static case{ECase:
+
+	 !(a)->case{ECase:
+
+	 !(b)->EAssume: 54,:(emp)*(!(res))( FLOW __norm)
+
+	 b->EAssume: 53,:(emp)*(res)( FLOW __norm)
+}
+
+	 a->EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 52,:(emp)*(res)( FLOW __norm)}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean land___(boolean a, boolean b)[]
+static case{ECase:
+
+	 !(a)->EAssume: 51,:(emp)*(!(res))( FLOW __norm)
+
+	 a->case{ECase:
+
+	 !(b)->EAssume: 50,:(emp)*(!(res))( FLOW __norm)
+
+	 b->EAssume: 49,:(emp)*(res)( FLOW __norm)
+}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean gte___(int a, int b)[]
+static case{ECase:
+
+	 a < b->EAssume: 48,:(emp)*(!(res))( FLOW __norm)
+
+	 a >= b->EAssume: 47,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean gt___(int a, int b)[]
+static case{ECase:
+
+	 a <= b->EAssume: 46,:(emp)*(!(res))( FLOW __norm)
+
+	 a > b->EAssume: 45,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean lte___(int a, int b)[]
+static case{ECase:
+
+	 a > b->EAssume: 44,:(emp)*(!(res))( FLOW __norm)
+
+	 a <= b->EAssume: 43,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean lt___(int a, int b)[]
+static case{ECase:
+
+	 a >= b->EAssume: 42,:(emp)*(!(res))( FLOW __norm)
+
+	 a < b->EAssume: 41,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean neq___(boolean a, boolean b)[]
+static case{ECase:
+
+	 a != b->EAssume: 40,:(emp)*(res)( FLOW __norm)
+
+	 a = b->EAssume: 39,:(emp)*(!(res))( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean neq___(int a, int b)[]
+static case{ECase:
+
+	 a != b->EAssume: 38,:(emp)*(res)( FLOW __norm)
+
+	 a = b->EAssume: 37,:(emp)*(!(res))( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean eq___(int a, int b)[]
+static case{ECase:
+
+	 a != b->EAssume: 36,:(emp)*(!(res))( FLOW __norm)
+
+	 a = b->EAssume: 35,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float mult___(float a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 34,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float mult___(float a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 33,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float mult___(int a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 32,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float minus___(float a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 31,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float minus___(float a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 30,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float minus___(int a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 29,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float add___(float a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 28,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float add___(float a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 27,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float add___(int a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 26,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int mod___(int a, int b)[]
+static case{ECase:
+
+	 a < 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 25,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 24,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q >= 1) & ((0 <= res) & (res <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->EAssume: 23,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q <= 0-1) & ((0 <= res) & (res <= b-1))))( FLOW __norm))
+}
+
+	 a >= 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 22,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 21,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q <= 0) & ((0 <= res) & (res <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->case{ECase:
+
+	 a >= b->case{ECase:
+
+	 a >= (2) * (b)->EAssume: 20,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q >= 0) & ((0 <= res) & (res <= b-1))))( FLOW __norm))
+
+	 a < (2) * (b)->EAssume: 19,:(emp)*(res = a-b)( FLOW __norm)
+}
+
+	 a < b->EAssume: 18,:(emp)*(res = a)( FLOW __norm)
+}
+}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div4(int a, int b)[]
+static EBase: [][](emp)*(b != 0)( FLOW __norm) {EAssume: 17,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div3(int a, int b)[]
+static case{ECase:
+
+	 b != 0->EAssume: 16,:(emp)*(true)( FLOW __norm)
+
+	 b = 0->EBase: [][](hfalse)*(false)( FLOW __norm) {EAssume: 15,:(hfalse)*(false)( FLOW __norm)}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div2(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {case{ECase:
+
+	 b = 0->EAssume: 14,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b != 0->EAssume: 13,:(emp)*(true)( FLOW __norm)
+}}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div___(int a, int b)[]
+static case{ECase:
+
+	 a < 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 12,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 11,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res >= 1) & ((0 <= r) & (r <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->EAssume: 10,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res <= 0-1) & ((0 <= r) & (r <= b-1))))( FLOW __norm))
+}
+
+	 a >= 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 9,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 8,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res <= 0) & ((0 <= r) & (r <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->EAssume: 7,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res >= 0) & ((0 <= r) & (r <= b-1))))( FLOW __norm))
+}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int mult___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 6,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int minus___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 5,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int add___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 4,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int __VERIFIER_nondet_int()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 3,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int test_fun(int x, int y, int z)[]
+static 
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+{
+{ while (x >= z) 
+ 
+{
+{(76, ):if (y <= 0) { 
+  (76, ):{(77, ):return 1};
+} else { 
+  (76, ):
+};
+(79, ):return 2}
+};
+(81, ):return z}
+}
+class __Exc extends Object {
+
+
+
+}
+
+class __Error extends Object {
+
+
+
+}
+
+class __MayError extends Object {
+
+
+
+}
+
+class __Fail extends Object {
+
+
+
+}
+
+class Object extends  {
+
+
+
+}
+
+class String extends Object {
+
+
+
+}
+
+class int_ptr_ptr extends Object {
+int_ptr valREC_14
+
+
+}
+
+class int_ptr extends Object {
+int valVAL_15
+
+
+}
+
+class lock extends Object {
+
+
+
+}
+
+class barrier extends Object {
+int phaseVAL_16
+
+
+}
+
+class thrd extends Object {
+
+
+
+}
+
+class __ArrBoundErr extends __Error {
+
+
+
+}
+
+class __DivByZeroErr extends __Error {
+
+
+
+}
+
+class Object extends  {
+
+
+
+}
+
+class String extends Object {
+
+
+
+}
+
+
+
+WAITS{}[]<G,S,d> == EBase: [][](emp)*(true)( FLOW __flow)  inv true inv_lock: None view_data_name:  view_imm_map: []
+WAIT{}[]<b> == EBase: [][](emp)*(true)( FLOW __flow)  inv true inv_lock: None view_data_name:  view_imm_map: []
+memLoc{}[]<heap,size> == EBase: [][](emp)*(true)( FLOW __flow)  inv size > 0 inv_lock: None view_data_name:  view_imm_map: []
+
+waitS([(bag(tup2(Object,Object)),g),(bag(Object),S),(Object,d)])
+acyclic([(bag(tup2(Object,Object)),g)])
+cyclic([(bag(tup2(Object,Object)),g)])
+concrete([(bag(Object),g)])
+set_comp([(bag(tup2(Object,Object)),g),(bag(Object),S),(Object,d)])
+amodr([(int[],a),(int[],b),(int,i),(int,j)])
+update_array_2d([(int[][],a),(int[][],r),(int,val),(int,i),(int,j)])
+update_array_1d([(int[],a),(int[],r),(int,val),(int,i)])
+update_array_1d_b([(boolean[],a),(boolean[],b),(boolean,val),(int,i)])
+domb([(boolean[],a),(int,low),(int,high)])
+dom([(int[],a),(int,low),(int,high)])
+induce([(int,value)])
+axiom ((domb(a,low,high)) & (low <= l)) | (h <= high) |- domb(a,l,h)
+axiom (domb(a,low,high)) & ((low <= l) & (h <= high)) |- domb(a,l,h)
+axiom (dom(a,low,high)) & ((low <= l) & (h <= high)) |- dom(a,l,h)
+
+
+boolean rand_bool()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 74,:(emp)*(res)( FLOW __norm)
+or(emp)*(!(res))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int rand_int()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 73,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int[] aalloc___(int dim)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 72,:(emp)*(dom(res,0,dim-1))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int[][] update___2d(int v, int[][] a, int i, int j)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 71,:(emp)*(update_array_2d(a,res,v,i,j))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean[] update___1d(boolean v, boolean[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((domb(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 70,:(emp)*((domb(res,ahalb,ahaub)) & (update_array_1d_b(a,res,v,i)))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int[] update___1d(int v, int[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((dom(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 69,:(emp)*((dom(res,ahalb,ahaub)) & (update_array_1d(a,res,v,i)))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void delete_ptr(int_ptr_ptr@R x)[]
+static EBase: [][](emp ; (emp ; (x::int_ptr_ptr{}<v>@M[HeapNode1])))*(true)( FLOW __norm) {EAssume: 68,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void delete_ptr(int_ptr@R x)[]
+static EBase: [][](emp ; (emp ; (x::int_ptr{}<v>@M[HeapNode1])))*(true)( FLOW __norm) {EAssume: 67,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void release()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 66,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void acquire()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 65,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void finalize()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 64,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void init()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 63,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+void join()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 62,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int fork()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 61,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int array_get_elm_at___2d(int[][] a, int i, int j)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 60,:(emp)*(res = a[i, j])( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean array_get_elm_at___1d(boolean[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((domb(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 59,:(emp)*(res = a[i])( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int array_get_elm_at___1d(int[] a, int i)[]
+static EBase: [][ ahalb ahaub](emp)*((dom(a,ahalb,ahaub)) & ((ahalb <= i) & (i <= ahaub)))( FLOW __norm) {EAssume: 58,:(emp)*(res = a[i])( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int pow___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 57,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean not___(boolean a)[]
+static case{ECase:
+
+	 !(a)->EAssume: 56,:(emp)*(res)( FLOW __norm)
+
+	 a->EAssume: 55,:(emp)*(!(res))( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean lor___(boolean a, boolean b)[]
+static case{ECase:
+
+	 !(a)->case{ECase:
+
+	 !(b)->EAssume: 54,:(emp)*(!(res))( FLOW __norm)
+
+	 b->EAssume: 53,:(emp)*(res)( FLOW __norm)
+}
+
+	 a->EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 52,:(emp)*(res)( FLOW __norm)}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean land___(boolean a, boolean b)[]
+static case{ECase:
+
+	 !(a)->EAssume: 51,:(emp)*(!(res))( FLOW __norm)
+
+	 a->case{ECase:
+
+	 !(b)->EAssume: 50,:(emp)*(!(res))( FLOW __norm)
+
+	 b->EAssume: 49,:(emp)*(res)( FLOW __norm)
+}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean gte___(int a, int b)[]
+static case{ECase:
+
+	 a < b->EAssume: 48,:(emp)*(!(res))( FLOW __norm)
+
+	 a >= b->EAssume: 47,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean gt___(int a, int b)[]
+static case{ECase:
+
+	 a <= b->EAssume: 46,:(emp)*(!(res))( FLOW __norm)
+
+	 a > b->EAssume: 45,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean lte___(int a, int b)[]
+static case{ECase:
+
+	 a > b->EAssume: 44,:(emp)*(!(res))( FLOW __norm)
+
+	 a <= b->EAssume: 43,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean lt___(int a, int b)[]
+static case{ECase:
+
+	 a >= b->EAssume: 42,:(emp)*(!(res))( FLOW __norm)
+
+	 a < b->EAssume: 41,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean neq___(boolean a, boolean b)[]
+static case{ECase:
+
+	 a != b->EAssume: 40,:(emp)*(res)( FLOW __norm)
+
+	 a = b->EAssume: 39,:(emp)*(!(res))( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean neq___(int a, int b)[]
+static case{ECase:
+
+	 a != b->EAssume: 38,:(emp)*(res)( FLOW __norm)
+
+	 a = b->EAssume: 37,:(emp)*(!(res))( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+boolean eq___(int a, int b)[]
+static case{ECase:
+
+	 a != b->EAssume: 36,:(emp)*(!(res))( FLOW __norm)
+
+	 a = b->EAssume: 35,:(emp)*(res)( FLOW __norm)
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float mult___(float a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 34,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float mult___(float a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 33,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float mult___(int a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 32,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float minus___(float a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 31,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float minus___(float a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 30,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float minus___(int a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 29,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float add___(float a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 28,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float add___(float a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 27,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+float add___(int a, float b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 26,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int mod___(int a, int b)[]
+static case{ECase:
+
+	 a < 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 25,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 24,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q >= 1) & ((0 <= res) & (res <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->EAssume: 23,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q <= 0-1) & ((0 <= res) & (res <= b-1))))( FLOW __norm))
+}
+
+	 a >= 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 22,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 21,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q <= 0) & ((0 <= res) & (res <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->case{ECase:
+
+	 a >= b->case{ECase:
+
+	 a >= (2) * (b)->EAssume: 20,:(EX q . (emp)*((a = ((b) * (q))+res) & ((q >= 0) & ((0 <= res) & (res <= b-1))))( FLOW __norm))
+
+	 a < (2) * (b)->EAssume: 19,:(emp)*(res = a-b)( FLOW __norm)
+}
+
+	 a < b->EAssume: 18,:(emp)*(res = a)( FLOW __norm)
+}
+}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div4(int a, int b)[]
+static EBase: [][](emp)*(b != 0)( FLOW __norm) {EAssume: 17,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div3(int a, int b)[]
+static case{ECase:
+
+	 b != 0->EAssume: 16,:(emp)*(true)( FLOW __norm)
+
+	 b = 0->EBase: [][](hfalse)*(false)( FLOW __norm) {EAssume: 15,:(hfalse)*(false)( FLOW __norm)}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div2(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {case{ECase:
+
+	 b = 0->EAssume: 14,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b != 0->EAssume: 13,:(emp)*(true)( FLOW __norm)
+}}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int div___(int a, int b)[]
+static case{ECase:
+
+	 a < 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 12,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 11,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res >= 1) & ((0 <= r) & (r <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->EAssume: 10,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res <= 0-1) & ((0 <= r) & (r <= b-1))))( FLOW __norm))
+}
+
+	 a >= 0->case{ECase:
+
+	 ((0-1) < b) & (b < 1)->EAssume: 9,:(emp)*(true)( FLOW __DivByZeroErr)
+
+	 b <= 0-1->EAssume: 8,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res <= 0) & ((0 <= r) & (r <= (0-b)-1))))( FLOW __norm))
+
+	 b >= 1->EAssume: 7,:(EX r . (emp)*((a = ((b) * (res))+r) & ((res >= 0) & ((0 <= r) & (r <= b-1))))( FLOW __norm))
+}
+}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int mult___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 6,:(emp)*(res = (a) * (b))( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int minus___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 5,:(emp)*(res = a-b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int add___(int a, int b)[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 4,:(emp)*(res = a+b)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int __VERIFIER_nondet_int()[]
+static EBase: [][](emp)*(true)( FLOW __norm) {EAssume: 3,:(emp)*(true)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+
+int test_fun(int x, int y, int z)[]
+static 
+dynamic EBase: [][](hfalse)*(false)( FLOW __false) 
+{
+{try { while (x >= z) 
+ 
+{
+{(76, ):if (y <= 0) { 
+  (76, ):{(77, ):raise EXPR:CF:__RET1
+};
+} else { 
+  (76, ):
+};
+(79, ):raise EXPR:CF:__RET2
+}
+}
+}
+catch (f_r_17: __RET)
+(82, ):return f_r_17;
+(81, ):return z}
+}
+Starting z3... 
+!exists return
+!!!exists return
+string_of_typ int
+string_of_typ int
+
+data __Exc {
+;
+}
+data __Error {
+;
+}
+data __MayError {
+;
+}
+data __Fail {
+;
+}
+
+ view_prim WAITS{}[]<G:bag(tup2(Object,Object)),S:bag(Object),d:Object>= 
+  view_domains: view_prim WAITS<G:bag(tup2(Object,Object)),S:bag(Object),
+                d:Object>= 
+  EBase (* lbl: *){187}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: G,S,d
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){187}->emp&{FLOW,(1,31)=__flow}[]
+  xform: true
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: WAITS
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+ view_prim WAIT{}[]<b:bag(tup2(Object,Object))>= 
+  view_domains: view_prim WAIT<b:bag(tup2(Object,Object))>= 
+  EBase (* lbl: *){188}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: b
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){188}->emp&{FLOW,(1,31)=__flow}[]
+  xform: true
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: WAIT
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+ view_prim memLoc{}[]<heap:boolean,size:int>= 
+  view_domains: view_prim memLoc<heap:boolean,size:int>= 
+  EBase (* lbl: *){189}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: heap,size
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: 0<size
+  baga over inv: [([], 0<size)]
+  baga over inv (unfolded): [([], 0<size)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){189}->emp&{FLOW,(1,31)=__flow}[]
+  xform: 0<size
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: memLoc
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+void f_r_1162_while_3_8$int~int~int(  int x,  int y,  int z)
+@ref x, y, z
+ rec
+static  EBase emp&{FLOW,(4,5)=__norm}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                 EAssume ref [x;y;z]
+                   emp&{FLOW,(4,5)=__norm}[]
+                   
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
+{(boolean v_bool_3_1172;
+(v_bool_3_1172 = {gte___$int~int(x,z)};
+if (v_bool_3_1172) [{({((boolean v_bool_4_1170;
+(v_bool_4_1170 = {((int v_int_4_1168;
+v_int_4_1168 = 0);
+lte___$int~int(y,v_int_4_1168))};
+if (v_bool_4_1170) [LABEL! 76,0: {(int v_int_6_1169;
+(v_int_6_1169 = 1;
+throw v_int_6_1169:{,(22,23)=__RET}))}]
+else [LABEL! 76,1: ]
+));
+(int v_int_8_1171;
+(v_int_8_1171 = 2;
+throw v_int_8_1171:{,(22,23)=__RET})))};
+{f_r_1162_while_3_8$int~int~int(x,y,z) rec})}]
+else []
+))}
+
+{(3,8),(9,9)}
+
+int test_fun$int~int~int(  int x,  int y,  int z)
+static  EBase emp&{FLOW,(4,5)=__norm}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                 EAssume 
+                   emp&{FLOW,(4,5)=__norm}[]
+                   
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
+{(try 
+{f_r_1162_while_3_8$int~int~int(x,y,z)}
+ catch (22,23)=__RET __RET:f_r_37 ) 
+	ret# f_r_37;
+ret# z)}
+
+{(1,0),(0,-1)}
+
+
+
+
+Checking procedure f_r_1162_while_3_8$int~int~int... 
+Procedure f_r_1162_while_3_8$int~int~int SUCCESS.
+
+Checking procedure test_fun$int~int~int... 
+Procedure test_fun$int~int~int SUCCESS.
+Stop Omega... 0 invocations 
+1 false contexts at: ( (3,8) )
+
+!!! log(small):(0.034741,185)
+Total verification time: 0.317201 second(s)
+	Time spent in main process: 0.30516 second(s)
+	Time spent in child processes: 0.012041 second(s)
+

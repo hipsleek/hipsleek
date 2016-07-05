@@ -1,0 +1,29 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::node<0,p> 
+  inv self!=null.
+
+pred WSSx<p> ==
+  self::node<_,q>* q::WFSeg<p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::node<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+  
+pred WFSeg_sz<p,nnn> == extends WFSeg<p> with size[REC]<nnn>.
+  
+pred WSS_sz<p,nnn> == extends WSS<p> with size[REC]<nnn>.
+
+pred WSSx_sz<p,nnn> == extends WSSx<p> with size[REC]<nnn>.
+

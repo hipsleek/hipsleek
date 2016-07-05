@@ -1,0 +1,32 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0.
+
+
+//OK
+checkentail x::node<3,q>@A   |- x::node<a,_>@A & a>2.
+print residue.
+expect Valid.
+
+/*
+#field4b.slk
+
+checkentail x::node<2,q> * q::ll<n>   |- x::node<a,q>@A & a>2.
+
+Why did @A in RHS fail?
+
+It seems that @A nodes are removed in RHS..
+
+
+INPUT: 
+ ### ante =  x::node<flted_12_35,q>@A&flted_12_35=3&{FLOW,(4,5)=__norm}[]
+ ### conseq =  EBase exists (Expl)[](Impl)[a; Anon_13](ex)[]emp&x!=null & 2<a&
+       {FLOW,(4,5)=__norm}[]
+
+
+*/

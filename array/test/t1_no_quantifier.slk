@@ -1,0 +1,214 @@
+// 1. With only one array involved
+
+
+
+
+infer []
+   true
+   |- a[5]>0.
+print residue.
+
+
+
+infer []
+  a[5]>1
+  |- a[5]>0.
+print residue.
+
+
+
+/*
+
+Because there is only one index, no aux formula produced.
+
+#1translate_array_imply@55
+#1translate_array_imply inp1 : 1<=(a[5])
+#1translate_array_imply inp2 : 0<(a[5])
+#1translate_array_imply@55 EXIT:( 1<=a___5___, 0<a___5___)
+*/
+
+
+infer []
+   a[i]>0 & i=5
+   |- a[5]>0.
+print residue.
+
+/*
+There are i and 5 indexing a, so i=5->a_i=a_5 is produced.
+
+This example also shows that information from both LHS and RHS can be captured.
+
+(==trans_arr.ml#2419==)
+extend_env@2@1
+extend_env inp1 :[]
+extend_env inp2 :[]
+extend_env inp3 : 0<(a[5])
+extend_env@2 EXIT:[array: a {  5 }]
+
+(==trans_arr.ml#2420==)
+extend_env@3@1
+extend_env inp1 :[array: a {  5 }]
+extend_env inp2 :[]
+extend_env inp3 : i=5 & 0<(a[i])
+extend_env@3 EXIT:[array: a {  i  5 }]
+
+(====)
+produce_aux_formula_for_exists@4@1
+produce_aux_formula_for_exists inp1 : i=5 & 0<(a[i])
+produce_aux_formula_for_exists inp2 :[array: a {  i  5 }]
+produce_aux_formula_for_exists@4 EXIT: i=5 & 0<(a[i])
+
+(====)
+produce_aux_formula@5@1
+produce_aux_formula inp1 :array: a {  i  5 } 
+produce_aux_formula@5 EXIT: (!(i=5) | a___i___=a___5___)
+
+(==tpdispatcher.ml#3003==)
+#1translate_array_imply@1
+#1translate_array_imply inp1 : i=5 & 0<(a[i])
+#1translate_array_imply inp2 : 0<(a[5])
+#1translate_array_imply@1 EXIT:( i=5 & 0<a___i___ & ((!(i=5) | a___i___=a___5___)), 0<a___5___)
+
+*/
+
+infer []
+   a[i]=5 & i=5+2
+   |- a[7]=5.
+print residue.
+
+
+/*
+infer [@arrvar]
+   a[i]=7 & i=10
+   |- a[7]=5.
+print residue.
+*/
+
+// 2. With more than one array involved
+
+infer [@arrvar]
+   a[i]=5 & i=5+2 & b[i]=3
+   |- a[7]=5 & b[7]>2.
+print residue.
+
+/*
+The formula is some split but in a correct manner...
+
+(==tpdispatcher.ml#3003==)
+#1translate_array_imply@7
+#1translate_array_imply inp1 : i=2+5 & b[i]=3 & a[i]=5
+#1translate_array_imply inp2 : a[7]=5
+#1translate_array_imply@7 EXIT:( i=2+5 & b___i___=3 & a___i___=5 & ((!(i=7) | a___i___=a___7___)), a___7___=5)
+
+(==tpdispatcher.ml#3003==)
+#1translate_array_imply@1
+#1translate_array_imply inp1 : a[i]=5 & i=2+5 & b[i]=3
+#1translate_array_imply inp2 : 0<(b[7])
+#1translate_array_imply@1 EXIT:( a___i___=5 & i=2+5 & b___i___=3 & ((!(i=7) | b___i___=b___7___)), 0<b___7___)
+
+*/
+
+// 3. With forall
+
+
+infer [@arrvar]
+     forall (i:!(i>5)|a[i]=10)
+     |- a[10]=10.
+print residue.
+
+/*
+Result:
+
+(==tpdispatcher.ml#3003==)
+#1translate_array_imply@1
+#1translate_array_imply inp1 : forall(i_19:(i_19<=5 | a[i_19]=10))
+#1translate_array_imply inp2 : a[8]=10
+#1translate_array_imply@1 EXIT:( ((8<=5 | a___8___=10)) & forall(i_19:(i_19<=5 | a___i_19___=10)), a___8___=10)
+
+( I don't like the renaming part. To be improved later...)
+*/
+
+
+infer [a,j]
+     j=1 & forall (i:!(i>5)|a[i]=10)
+     |- a[j]=10.
+print residue.
+
+/*
+(==tpdispatcher.ml#3003==)
+#1translate_array_imply@45
+#1translate_array_imply inp1 : forall(i_31:(i_31<=5 | a[i_31]=10)) & i=6
+#1translate_array_imply inp2 : a[i]=10
+#1translate_array_imply@45 EXIT:( ((i<=5 | a___i___=10)) & forall(i_31:(i_31<=5 | a___i_31___=10)) & i=6, a___i___=10)
+*/
+
+
+/*
+Need to take out free part first!!!!!!!!
+infer []
+      forall (i:!(i<5)|a[i]=9) & forall (i:(i>3)|(a[i]>0&a[5]>1))
+      |- a[5]>1.
+print residue.
+*/
+
+// Test forall inside forall
+
+
+// We need some value to instantiate it!!
+/*
+infer [a]
+      forall (i:!(i<5)|(forall (j:!(j=10)|a[j]>a[i])) & a[i]=0)
+      |- a[10] >0.
+print residue.
+*/
+/// !!!!!!!!!!!!
+
+
+// This example is working fine, but will introduce some duplicate things...
+/*
+infer [a]
+      forall (i:!(i<5)| a[i]>0)
+      |- a[3] = 0.
+print residue.
+*/
+// It is problematic to translate directly in omega_of_formula...
+
+/*
+instantiate_forall@8@7
+instantiate_forall inp1 : forall(i_22:(5<=i_22 | (a[i_22]=0 & a[2]=a[3])))
+instantiate_forall inp2 :[array: a {  3  2 }]
+instantiate_forall@8 EXIT: ((5<=2 | (a[2]=0 & a[2]=a[3]))) & ((5<=3 | (a[3]=0 & a[2]=a[3]))) &
+forall(i_22:(5<=i_22 | (a[i_22]=0 & a[2]=a[3])))
+*/
+
+/*
+
+instantiate_forall@8@7
+instantiate_forall inp1 : forall(i_25:(5<=i_25 | (forall(j_26:(j_26!=10 | (a[i_25])<(a[j_26]))) &
+a[i_25]=0)))
+instantiate_forall inp2 :[array: a {  2 }]
+instantiate_forall@8 EXIT: ((5<=2 | (((2!=10 | (a[2])<(a[2]))) & ((2!=10 | (a[2])<(a[2]))) &
+forall(j_26:(j_26!=10 | (a[2])<(a[j_26]))) & a[2]=0))) &
+forall(i_25:(5<=i_25 | (forall(j_26:(j_26!=10 | (a[i_25])<(a[j_26]))) &
+a[i_25]=0)))
+
+*/
+
+
+/*
+ exists(fc_1193:exists(fc_1192:a'[fc_1193]=fc_1192 & forall(i:(!(i!=fc_1193) | a'[i]=a[i])) & fc_1192=10) & fc_1193=5)
+
+instantiate
+-->
+
+exists(fc_1193:exists(fc_1192:a'[fc_1193]=fc_1192 & ((!(fc_1193!=fc_1193) | a'[fc_1193]=a[fc_1193])) & fc_1192=10) & fc_1193=5)
+
+*/
+
+//4. aux formula for existential quantifier
+
+
+/*
+*/
+
+//infer [] (!((res=v_int_15_1162' & v_int_15_1162'=a'[4] & a'[5]=10 & forall(i:(!(i!=5) | a'[i]=a[i])) & 4<(a[5])))) |- res=3.

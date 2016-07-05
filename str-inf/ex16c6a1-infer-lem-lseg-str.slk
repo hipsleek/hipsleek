@@ -1,0 +1,21 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U2a(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star z).
+
+
+//(1)
+ infer [U2a] U2a(self,q) |- U2(self,q).
+ print residue.
+
+//(2)
+ //infer [U3] U3(self,_,q) |- U2(self,q).
+ //print residue.
+ // Why fail? Similar to (1).
+

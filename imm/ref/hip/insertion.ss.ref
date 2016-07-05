@@ -1,0 +1,41 @@
+
+!!!Full processing file "hip/insertion.ss"
+Parsing file "hip/insertion.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure insert$node~int... 
+Proving precondition in method insert$node~int Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/insertion.ss",Line:34,Col:29
+
+Procedure insert$node~int FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure insert$node~int
+
+Checking procedure insertion_sort$node~node... 
+Proving precondition in method insert$node~int Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/insertion.ss",Line:54,Col:6
+
+Procedure insertion_sort$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure insertion_sort$node~node
+
+0 false contexts at: ()
+
+Total verification time: 0.621719 second(s)
+	Time spent in main process: 0.552005 second(s)
+	Time spent in child processes: 0.069714 second(s)
+

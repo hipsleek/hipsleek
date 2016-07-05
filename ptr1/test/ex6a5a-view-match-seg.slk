@@ -1,0 +1,65 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+checkentail x::arrI<5> & x!=x2
+ |-  x2::arrI<j> & x=x2.
+print residue.
+expect Fail.
+
+checkentail x::arrI<5> & x2=null
+ |-  x2::arrI<j> & x=x2.
+print residue.
+expect Fail.
+
+checkentail x::arrI<5>
+ |-  [x2] x2::arrI<j> .
+print residue.
+expect Fail.
+// should be valid but may give many answers..
+
+// cannot pick ptr arithmetic
+// requires ptr reasoning..
+checkentail x::arrI<5> //& x!=x2
+ |-  x2::arrI<j> & x+1=x2+1.
+print residue.
+expect Valid.
+
+checkentail x::arrI<5> & x2!=null
+ |-  x2::arrI<j> & x+1=x2+1.
+print residue.
+expect Fail.
+
+
+// cannot pick ptr arithmetic
+// requires ptr reasoning..
+checkentail x::arrI<5> & x!=x2
+ |-  x2::arrI<j> & x+1=x2+1.
+print residue.
+expect Fail.
+
+/*
+# ex6a5.slk -dre "choose_c" -trace-log-num 1
+
+checkentail x::arrI<5> & x!=x2
+ |-  x2::arrI<j> & x=x2.
+
+# alias set is coming from the right..
+
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: x::arrI<flted_13_45>@M
+ RHS: x2::arrI<j>@M
+ root_inst: None
+ lhs_rest: emp
+ rhs_rest: emp
+ alias set: [x2,x]rhs_inst: []rhs_infer: None]
+
+
+*/

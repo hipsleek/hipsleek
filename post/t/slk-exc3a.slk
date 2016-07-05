@@ -3,7 +3,7 @@
 RELDEFN post_1215: ( x+1111=res & res<=1111) -->  post_1215(x,res)]
 */
 
-relation post2(int x, int res).
+relation post2(int x, int r).
 
 infer [post2] res=2222 & 1<=x 
   & flow __Exc 

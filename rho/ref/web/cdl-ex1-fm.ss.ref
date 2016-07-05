@@ -1,0 +1,61 @@
+
+!!!Full processing file "web/cdl-ex1-fm.ss"
+Parsing file "web/cdl-ex1-fm.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: web/cdl-ex1-fm.ss:49: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_48_1701,flted_48_1702,v_int_45_1703,b_1704,v_int_45_1679: c_40'::LatchIn{ - (exists flted_48_45: h_37'::cell<flted_48_45>*U@full[h_37]&flted_48_45=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_40'::CNT{}<flted_48_1701>*U@full[h_37]@lend[c_40]&0<v_int_45_1679 & v_int_45_1679=2 & 0<v_int_45_1703 & v_int_45_1703=2 & flted_48_1702=1 & 0<=b_1704 & 0<=1 & v_int_45_1703=b_1704+1 & flted_48_1701=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: web/cdl-ex1-fm.ss:51: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_50_1444',b_1704,flted_48_1701: c_40'::LatchIn{ - (exists flted_48_45: h_37'::cell<flted_48_45>*U@full[h_37]&flted_48_45=1&
+{FLOW,(4,5)=__norm#E}[]}<> * c_40'::CNT{}<flted_48_1701> * h_37'::cell<v_int_50_1444'>*U@full[h_37]@lend[c_40]&0<2 & 0<2 & 0<=b_1704 & 0<=1 & 2=b_1704+1 & flted_48_1701=1 & v_int_50_1444'=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: web/cdl-ex1-fm.ss:53: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:c_40'::CNT{}<flted_19_1749>*N@lend[c_40]@zero[h_37]&flted_19_1749=b_1744+b_1733 & 0<=(n+1) & b_1744+1=n & 0<=(a_1734+1) & h_37'!=null & flted_48_1731=b_1733+n & 0<=b_1733 & 0<=n & 0<n & b_1733<flted_48_1731 & v_int_50_1729=1 & flted_48_1731=1 & 2=b_1730+1 & 0<=1 & 0<=b_1730 & 0<2&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> (exists flted_48_45: h_37'::cell<flted_48_45>*
+                        U@full[h_37]&flted_48_45=1&{FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+dprint: web/cdl-ex1-fm.ss:58: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:c_40'::CNT{}<flted_19_1843>*N@lend[c_40]@zero[r_38]&flted_19_1843=b_1838+b_1827 & 0<=(n+1) & b_1838+1=n & 0<=(a_1828+1) & r_38'!=null & flted_55_1825=b_1827+n & 0<=b_1827 & 0<=n & 0<n & b_1827<flted_55_1825 & v_int_56_1823=2 & flted_55_1825=1 & 0<=1 & 0<=b_1824 & 0<(b_1824+1+1) & b_1824+1+1=2 & 0<=(b_1824+1) & 0<2&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> (exists flted_55_48: r_38'::cell<flted_55_48>*
+                        U@full[r_38]&flted_55_48=2&{FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+assert:web/cdl-ex1-fm.ss:67: 2:  : ok
+
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 1.95212 second(s)
+	Time spent in main process: 1.852115 second(s)
+	Time spent in child processes: 0.100005 second(s)
+

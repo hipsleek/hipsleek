@@ -1,0 +1,43 @@
+/* with virtual ptrs */
+
+
+data arr_int {
+  int val;
+  arr_int next; /* this is virtual link */
+}  inv self+1=next
+.
+
+
+lemma_safe self::arr_seg<p,n>&n=a+b & a>=0 & b>=0 & p=self+n
+  <->  (exists q: self::arr_seg<q,a>*q::arr_seg<p,b>).
+
+  pred arr_seg<p,n> == case {
+   n=0 -> [] self=p & n=0;
+   n!=0 -> [] self::arr_int<_,q>*q::arr_seg<p,n-1> //& q=self+1
+   ;
+   }
+  inv n>=0 &  self+n=p.
+
+
+checkentail
+  self::arr_int<_,q1>*q1::arr_seg<p,n-1> //& q1=self+1 
+     & a>0 & n=a+b & b>=0 
+  |- (exists q: self::arr_seg<q,a>*q::arr_seg<p,b>)
+.
+expect Valid.
+
+
+  /*
+# ex7c.slk
+
+checkentail
+  self::arr_int<_,q1>*q1::arr_seg<p,n-1> //& q1=self+1 
+     & a>0 & n=a+b & b>=0 
+  |- (exists q: self::arr_seg<q,a>*q::arr_seg<p,b>)
+.
+
+# Why is there a base-case-unfold failure?
+
+Entail 3: Fail.(may) cause:base case unfold failed
+
+  */

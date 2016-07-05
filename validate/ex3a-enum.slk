@@ -1,0 +1,15 @@
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>2.
+print residue.
+
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>3.
+print residue.
+
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>4.
+print residue.
+
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>5.
+print residue.

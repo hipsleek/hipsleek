@@ -83,13 +83,110 @@ summary:     ack3c has funnay LexVar error
 let modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
   let rec helper e bvars =
 ==================================================================
+# cppo does not work on file below (to investigate)
+
+$EX cilparser.ml
+$EX parse_cmd.ml
+$EX parse_fix.ml
+$EX parse_fixbag.ml
+$EX parse_shape.ml
+$EX parser.ml
 ==================================================================
+
+./hip svcomp14/termination-crafted/RecursiveMultiplication_true-termination.c -infer "@term" 
+
+Previously we had, where relation formula
+is replaced by true.
+
+In ti_plus:
+==========
+
+omega_of_formula#8@189
+omega_of_formula#8 inp1 : exists(nondet_int__:exists(tmp_1616:nondet_int__ 23:12(tmp_1616)) & 
+nondet_int__ 24:12(0))
+omega_of_formula#8@189 EXIT: (exists (nondet_int__:( (exists (tmp_1616:(0=0)))  & (0=0)))) 
+
+
+In default
+=========
+
+In latest, relation formula
+is triggered an exception.
+
+(==omega.ml#933==)
+omega_of_formula#8@225
+omega_of_formula#8 inp1 : exists(nondet_int__:exists(tmp_1608:nondet_int__(tmp_1608)) & 
+nondet_int__(0))
+omega_of_formula#8@225 EXIT ExceptionGlobals.Illegal_Prover_Format("Omega.omega_of_exp: RelForm")Occurred!
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: RelForm")
+ Formula: exists(nondet_int__:exists(tmp_1608:nondet_int__(tmp_1608)) & 
+nondet_int__(0))
 ==================================================================
+Below is examples with exceptions:
+
+Unexpected exception : Parsing.Parse_error
+termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex2.05_false-termination
+
+malfunction: inner or has not been converted to a CtxOr!
+termination-memory-alloca/c.01_assume-alloca_true-termination
+    termination-memory-alloca/c.01-no-inv-alloca_true-termination
+    termination-memory-alloca/gcd1-alloca_true-termination
+
+unsound
+    termination-numeric/rec_counter1_true-termination
+    termination-numeric/rec_counter3_true-termination
+
 ==================================================================
+./hip svcomp14/termination-crafted-lit/Masse-VMCAI2014-Fig1b_true-termination.c -infer "@post" -dre "fixcalc_of" > 1
+
+(==cpure.ml#6292==)
+fixcalc_of_pure_formula@1
+fixcalc_of_pure_formula inp1 : ((tmp___0'=tmp___0 & x'=x & 101<=x) | (exists(tmp___1527:exists(x_1526:2+
+x_1526+(3*x)=0 & post_1475(x_1526,tmp___1527,x',tmp___0',flow)) & 
+tmp___1527<=0) & x<=100) | (exists(fc_1529:exists(tmp___1524:1<=tmp___1524 & 
+post_1475(fc_1529,tmp___1524,x',tmp___0',flow)) & fc_1529=2+(-2*x)) & 
+x<=100))
+fixcalc_of_pure_formula@1 EXIT ExceptionStack overflowOccurred!
 ==================================================================
+- fix type of pointers.
+- type of view without any self.
+- check how x=null & x!=null is being translated for  Omega
+- count false context
 ==================================================================
+# parse_fix.ml & fixcalc.ml
+
+(* TODO(WN): this already performs some feature of norm_pure_result *)
+(* mainly for pointers; need to remove this redundancy for performance *)
+(* need to handle SELF and REC variables (top-down fixcalc) *)
 ==================================================================
+# ex25b2.slk 
+
+infer [U1,@classic] U1(x) |- x::node<_,q>*q::ll<>.
+
+# Below seems OK now. Added an InferUnfold which is being 
+  implemented by InferHeap.
+
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_35(q)&true |#|3  --> q::ll<>@M&true; 
+                  U1(x)&true |#|3  --> x::node<Anon_33,q_34>@M * HP_35(q_34)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
 ==================================================================
+# ex62b.slk
+
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+expect Valid.
+
+# to improve printing
+
+  type_of_self: 
+  None
+  actual_root: 
+  []materialized vars: [(self,partial,[])]
 ==================================================================
 ==================================================================
 ==================================================================

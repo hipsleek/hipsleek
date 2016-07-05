@@ -1,0 +1,60 @@
+data node { int val ; node next }.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+lemma_unsafe self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __Error.
+lemma_unsafe self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __Error.
+
+/*
+
+
+
+//14. must failure!
+checkentail x::pos_ll<n> |- x::neg_ll<n> .
+
+
+//15. may lor(valid,must)
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+
+// 5.MUST
+//must is_must_error(R) --> R1 = true & flow norm.since NORM can not imply MUST?
+checkentail x>3 |- x<=0 & flow __Error .
+
+
+//11. may failure but detected as must-fail
+checkentail x::pos_ll<n> & n>0  |- x::neg_ll<n> & flow __Error.
+print residue.
+
+
+// 4.must is_may_error(R)  --> R1 = R. since NORM can not imply MUST?
+checkentail emp & x>3 |- x>5 & flow __Error.
+print residue.
+*/
+
+// 8.must.
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n>.
+print residue.
+
+
+//9. must fail
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
+print residue.
+
+
+//12. must failure - R = true, flow = __Error
+checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
+
+//16. must failure - R = true, flow = __Error
+// TODO requires a lemma, need unfold here
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> & n=0 or x::neg_ll<n> & n>0.
+
+
+//17. must failure - R = true, flow = __Error
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .

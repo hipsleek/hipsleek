@@ -1,0 +1,49 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred lseg<n,p> == self = p & n=0 
+	or self::node<_, q> * q::lseg2<p,n-1> 
+  inv n>=0.
+
+pred lseg2<p:node,n:int> == self = p & n=0 
+	or self::node<_, q> * q::lseg<n-1,p> 
+  inv n>=0.
+
+pred_reuse [*][*].
+
+print views.
+
+pred_reuse_subs [*].
+
+print views.
+
+/*
+# ex21a5b.slk
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of lseg
+Exception(get_hash2):Failure("Can not find flow of lseg")
+Last Proving Location: ex21a5b-pred-elim-hd-node.slk_11:4_11:38
+ERROR: at _0:0_0:0
+Message: Can not find flow of node
+Exception(get_hash2):Failure("Can not find flow of node")
+
+(==cformula.ml#12156==)
+norm:case_norm@1
+norm:case_norm inp1 :[n,p]
+norm:case_norm inp2 : self::lseg2<p,n>@M&{FLOW,(1,26)=__flow#E}[]
+norm:case_norm@1 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")Occurred!
+
+Exception processed: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:0,Col:0),(Line:0,Col:0)} types lseg and node are inconsistent\")")
+error at: 
+SLEEK FAILURE (END)
+
+
+
+*/

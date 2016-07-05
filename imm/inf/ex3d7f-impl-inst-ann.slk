@@ -1,0 +1,51 @@
+data cell {
+  int val;
+}.
+
+checkentail x::cell<a>@u & u=@L & v=@A  |- x::cell<b>@v & v=@A.
+print residue.
+
+
+checkentail x::cell<a>@u & u=@L  |- x::cell<b>@v & v=@A.
+print residue. 
+
+/*
+# ex3d7e.slk 
+
+# remove double annotation as it seems redundant
+checkentail x::cell<a>@u & u=@L & v=@A  |- x::cell<b>@v & v=@A.
+Residue:
+ <1>x::cell<a>@[@u, @ann_f_r_23]&v=@A & u=@L & ann_f_r_23=v & u<:ann_f_r_23 & b=a&{FLOW,(20,21)=__norm#E}[]
+
+
+# support RHS sensitive instantiation for annotation
+
+checkentail x::cell<a>@u & u=@L  |- x::cell<b>@v & v=@A.
+Entail 6: Fail.(must) cause: @L<:v & @L=v |-  v=@A. LOCS:[0;32] (must-bug)
+
+instantiated: u=v which gave a wrong instantiation
+
+# soln : change to instantiate v=@A which is present on the RHS before
+proceeding to prove u<:v
+
+*/
+
+checkentail x::cell<a>@u & u=@M & v=@M  |- x::cell<b>@v & v=@M.
+print residue.
+
+
+checkentail x::cell<a>@u & u=@M  |- x::cell<b>@v & v<:@L.
+print residue.
+/*
+Residue:
+ <1>x::cell<a>@A&u=@M & u=v & b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+*/
+
+
+checkentail x::cell<a>@u & u=@M & v<:@L  |- x::cell<b>@v & v<:@L.
+print residue.
+
+
+checkentail x::cell<a>@u & u=@M & v=@L  |- x::cell<b>@v & v<:@L.
+print residue.

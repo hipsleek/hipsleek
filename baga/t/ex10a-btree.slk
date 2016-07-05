@@ -1,0 +1,8 @@
+data node2 {
+  node2 left;
+  node2 right;
+}.
+
+pred btree<n> == self=null & n=0
+  or exists l,r,n1,n2: self::node2<l,r> * l::btree<n1> * r::btree<n2> & n=n1+n2+1
+.

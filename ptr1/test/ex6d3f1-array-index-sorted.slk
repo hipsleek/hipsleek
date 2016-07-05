@@ -1,0 +1,84 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0.
+
+checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+print residue.
+expect Valid.
+
+checkentail_exact a::arrI<i>@M * a2::arrI<i>@M& x=i+base & a=x & a2=a+1 & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+print residue.
+expect Valid.
+
+checkentail a::arrI<i>@M * a2::arrI<i>@M& x=i+base & a=x & a2=a+1 & i>=0
+ |-  base::arr_seg_sorted<i,m,k> . 
+print residue.
+expect Valid.
+expect_infer Fail R{false}.
+expect_infer Valid R{m=i+2}.
+expect_infer Valid R{m=i+1}.
+expect_infer Fail R{m=i}.
+expect_infer Valid R{k=i}.
+
+checkentail_exact a::arrI<i>@M * a2::arrI<i-1>@M& x=i+base & a=x & a2=a+1 & i>=0
+ |-  base::arr_seg_sorted<i,m,k> . 
+expect Fail.
+
+/*
+checkentail a::arrI<i>@M& x=i+(base:arrI) & a=x & i>=0
+ |-  x_91::arrI<mi_103>@M & x_91=i+base .
+print residue.
+*/
+
+/*
+# ex6d3f1.sl
+
+checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+
+# transitive same_base via eq
+
+@1! **context.ml#671:view_root_rhs:None
+@1! **context.ml#687:eqns:[(a,x)]
+@1! **cpure.ml#15659:other: a=x
+@1! **context.ml#694:same_base:[(x,base)]
+@1! **context.ml#695:same_base_rhs:[(x_91,base)]
+@1! **context.ml#696:lhs_pp: 0<=i & a=x & x=base+i
+@1! **context.ml#697:other_eqn:[ x=base+i, a=x]
+@1! **context.ml#698:emap_ptr:emap[{base,x,x_91}]
+@1! **context.ml#699:emap:emap[{a,x}]
+@1! **context.ml#605:get_data_and_views:[(a,None)]
+@1! **context.ml#715:heap_ptrs:[a]
+@1! **context.ml#716:pasets:[x_91]
+@1! **context.ml#718:lhs_p: 0<=i & a=x & x=base+i
+@1! **context.ml#726:lhs_nodes(ptr_arith):[a]
+@1! **context.ml#739:rhs(eq):[ x_91=base+i]
+@1! **context.ml#740:sel_rhs: x_91=base+i
+@1! **context.ml#754:rhs_inst_eq:[ x_91=base+i]
+@1! **context.ml#755:rhs_ptr:x_91
+@1! **context.ml#806:estate:  a::arrI<i>@M&0<=i & a=x & x=base+i&{FLOW,(20,21
+
+@2! **context.ml#818:same_base:false
+@2! **context.ml#819:r:false
+@2! **context.ml#1381:lhs?: a::arrI<i>@M
+@2! **context.ml#1382:rhs: x_91::arrI<mi_103>@M
+@2! **context.ml#1383:aset:[x_91]
+@2! **context.ml#1456:DataNode:a
+@2! **context.ml#1457:view_roots:[]
+@2! **context.ml#1687:l_xxx:[]
+
+choose_context@2
+choose_context inp1 :LHS node: a::arrI<i>@M
+choose_context inp2 :RHS node: x_91::arrI<mi_103>@M
+choose_context inp3 :LHS pure: x=base+i & a=x & 0<=i
+choose_context inp4 :RHS pure: x_91=i_88+base & i_88+1=m & 0<=i_88 & mi_103=i_89
+choose_context inp5 :right alias:[(i_88,i),(i_89,i),(mi_103,i_89)]
+c
+*/

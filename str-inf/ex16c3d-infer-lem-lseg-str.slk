@@ -1,0 +1,158 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+// lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+//(1)
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Valid.
+//   U2(q3,q) --> q3::WFG<q>
+/*
+ <1>q::char_star<flted_30_106,p>@M&flted_30_106=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#| q::char_star<flted_30_106,p>@M&
+                   true --> q3::WFG<q>@M&true]
+*/
+
+//(2)
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Valid.
+/*
+ <1>q::char_star<flted_41_122,p>@M&flted_41_122=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#| q::char_star<flted_41_122,p>@M&
+                   true --> q3::WFG<q>@M&true]
+*/
+
+//(3) classic --> @classic
+infer [U2,@classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Fail.
+// EXPECT fail due to classic
+
+//(4)
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> .
+print residue.
+expect Valid.
+//   U2(q3,q) --> q3::WFG<qq> & q=qq
+// residue: q::char_star<0,p> & q=qq
+
+//(5)
+infer [U2] U2(q3,q)*q::char_star<0,p> & q!=null  |- q3::WFG<qq> .
+print residue.
+expect Valid.
+//   U2(q3,q) --> q3::WFG<qq> & q=qq
+// residue: q::char_star<0,p> & q=qq & q!=null
+
+//(6)
+infer [U2] U2(q3,q)*q::char_star<0,p> & qq!=null  |- q3::WFG<qq> .
+print residue.
+expect Fail.
+
+//(7)
+infer [U2] U2(q3,q)*q::char_star<0,p> & qq=q  |- q3::WFG<qq> .
+print residue.
+expect Valid.
+//   U2(q3,q) --> q3::WFG<qq> 
+// residue: q::char_star<0,p> & q=qq
+
+//(8)
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+print residue.
+expect Fail.
+/*
+WRONG : why is there a q=p in the relational assumption?
+
+ <1>q::char_star<flted_83_218,p>@M * HP_232(p,q3)&flted_83_218=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,p)&q=p |#| q::char_star<flted_83_218,p>@M&
+                   true --> q3::WFG<p>@M * HP_232(p,q3@NI)&true]
+[[ InferUnfold ]]
+*/
+
+//(9)
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> * qq::char_star<0,p>.
+print residue.
+expect Valid.
+//   U2(q3,q) --> q3::WFG<qq> & q=qq
+// residue: q::char_star<0,p> & q=qq
+
+//(10)
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<qq> * qq::WFG<p>.
+print residue.
+expect Valid.
+/*
+ <1>emp&qq=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q)&true |#| q::char_star<flted_103_260,p>@M&
+                   true --> q3::WFG<q>@M&true]
+[[ InferUnfold  ==>  Fold ==>  SEARCH ==>  Match(q,qq)]]
+*/
+
+//(11)
+infer [U2] U2(q3,q)*q::char_star<1,p>  |- q3::WFG<qq> * qq::WFG<p>.
+print residue.
+expect Fail.
+
+/*
+# ex16c3d.slk
+
+//(3)
+infer [U2,classic] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Fail.
+// EXPECT fail due to classic
+
+
+//(8)
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+print residue.
+expect Fail.
+
+---------
+
+# ex16c3d.slk
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<p> .
+
+# We should avoid complex LHS. I suggest FAILING since p is
+  free, and we cannot prove q=p.
+# complex LHS should only be enabled old_infer_complex_lhs which
+  I just added
+
+Entail (8) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q) * q::char_star<flted_83_216,p>@M&
+                   true |#|3  --> q3::WFG<p>@M&true]
+[[ InferUnfold ]]
+
+WRONG : why is there a q=p in the relational assumption?
+
+ <1>q::char_star<flted_83_218,p>@M * HP_232(p,q3)&flted_83_218=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,p)&q=p |#| q::char_star<flted_83_218,p>@M&
+                   true --> q3::WFG<p>@M * HP_232(p,q3@NI)&true]
+[[ InferUnfold ]]
+
+*/

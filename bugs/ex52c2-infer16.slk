@@ -1,0 +1,83 @@
+data node{
+ node next;
+}.
+
+relation R(node a).
+relation R2(int a,int b).
+HeapPred H(node a).
+
+infer[R,z,inf_p]  
+ R(fld5) & inf_p=null & x!=null
+     |-  fld5=null
+  .
+
+
+//infer [x] x=y+1 |- y>0.
+
+print residue.
+
+/*
+# ex52c2.slk -dre "infer_pure"
+
+# Why is this not working?
+
+infer[R,z,inf_p]  
+ R(fld5) & inf_p=null & x!=null
+     |-  fld5=null
+  .
+
+(==omega.ml#1151==)
+infer_pure_m_1@4@3@2@1
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : true & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null
+infer_pure_m_1 inp5 :inf vars :[fld5,z,inf_p]
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( (inf_p!=0 | fld5=null)),[])
+
+(==infer.ml#1572==)
+infer_pure_m_1@3@2@1
+infer_pure_m_1 inp1 :estate :( pr_entail_state_short : emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_1 inp2 :lhs xpure : R(fld5) & x!=null & inf_p=null
+infer_pure_m_1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_1 inp4 :rhs xpure : fld5=null
+infer_pure_m_1 inp5 :inf vars :[z,inf_p]
+infer_pure_m_1@3 EXIT:(new es,inf pure,rel_ass) :(None,None,[])
+
+(==infer.ml#1648==)
+infer_pure_m_2#1@2@1
+infer_pure_m_2#1 inp1 :estate :(  emp&x!=null & inf_p=null & R(fld5)&{FLOW,(20,21)=__norm#E}[]
+ 
+ es_infer_vars: [z; inf_p]
+ es_infer_vars_rel: [R],[z,inf_p])
+infer_pure_m_2#1 inp2 :lhs xpure : x!=null & inf_p=null & R(fld5)
+infer_pure_m_2#1 inp3 :lhs xpure0 : x!=null & inf_p=null & R(fld5)
+infer_pure_m_2#1 inp4 :rhs xpure : fld5=null
+infer_pure_m_2#1@2 EXIT:(new es,inf pure,rel_ass) :(None,None,[])
+
+(==smtsolver.ml#1151==)
+infer_pure_top_level@1
+infer_pure_top_level inp1 : x!=null & inf_p=null & R(fld5)
+infer_pure_top_level@1 EXIT:[(None,None, x!=null & inf_p=null & R(fld5))]
+
+Entail (1) : Fail.(may) cause: R(fld5) |-  fld5=null. LOCS:[11;12] (may-bug)
+
+Residue:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  R(fld5) |-  fld5=null. LOCS:[11;12] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+
+
+*/

@@ -1,0 +1,29 @@
+infer [aaa,aaa'] true |- aaa=aaa'.
+print residue.
+
+infer [bbb,bbbp] true |- bbb=bbbp.
+print residue.
+
+/*
+# ex1.slk --esl
+
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ a,a']; c_heap: emp; others: [] globals: []
+ checkentail htrue&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&a=a'&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  a=a'. LOCS:[0;1] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]false
+ 
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(2); hec_num: 1; evars: []; infer_vars: [ a,aa]; c_heap: emp; others: [] globals: []
+ checkentail htrue&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&a=aa&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&aa=a&{FLOW,(4,5)=__norm#E}[]
+   ]
+*/

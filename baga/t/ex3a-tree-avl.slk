@@ -1,0 +1,52 @@
+/* avl trees */
+
+/* representation of a node in an avl tree */
+data node {
+  int val;
+  int height;
+  node left;
+  node right;
+}.
+
+
+pred tree<size> == self = null & size = 0
+  or self::node<_, height, p, q> 
+     * p::tree<size1> * q::tree<size2> & size = 1+size1+size2 
+  /* inv size >= 0 & height >= 0 */
+  //inv_exact BG([],self=null & size=0 ) | BG([self],size>0)
+  //inv_sat BG([],self=null & size=0 ) | BG([self],size=0)
+  inv_sat BG([self],size=0)
+  /* inv_sat BG([],self=null & size=0 & height=0) | BG([self],size>0 & height>0) */
+  .
+
+/*
+# baga/t/ex3a-tree-val.slk --inv-baga
+
+Can we explain why it is incorrect?
+
+WARNING: ex3a-tree-avl.slk_12:19_12:41:view defn for tree has incorrectly inferred/supplied invariant
+-- incorrect under-approx inv : Some([([self], size=0)])
+
+===================
+
+This under-approx is wrong as we do not have any instance..
+
+  inv_sat BG([self],size=0)
+
+How come I am computing them?
+
+check_under@1
+check_under inp1 :([], self=null & size=0)
+check_under inp2 :[ emp&((self=null & size=0) | (self!=null & size=1) | (self!=null & 
+2<=size) | (self!=null & 3<=size))&{FLOW,(1,26)=__flow#E}[]]
+check_under inp3 :tree
+check_under@1 EXIT:true
+
+check_under@2
+check_under inp1 :([self], 1<=size)
+check_under inp2 :[ emp&((self=null & size=0) | (self!=null & size=1) | (self!=null & 
+2<=size) | (self!=null & 3<=size))&{FLOW,(1,26)=__flow#E}[]]
+check_under inp3 :tree
+check_under@2 EXIT:true
+
+*/

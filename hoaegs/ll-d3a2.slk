@@ -1,0 +1,34 @@
+
+relation dm(int[] a, int low, int high).
+
+axiom dm(a,low,high) & low<=l & h<=high ==> dm(a,l,h).
+//axiom dm(a,l+1,h) & dm(a,l,l+1)  ==> dm(a,l,h).
+//axiom dm(a,l,h-1) & dm(a,h-1,h) ==> dm(a,l,h).
+axiom l>=h ==> dm(a,l,h).
+axiom dm(a,l,k) & dm(a,k,h) ==> dm(a,l,h).
+
+/*
+checkentail
+ forall(k:!(i+1<=k<j)|bbb[k]=aaa[k]+1) & dm(bbb,i+1,j)
+  & v=aaa[i]+1 
+  & bbb[i]=v & dm(bbb,i,i+1) 
+  & bbb2=bbb
+  |- forall(k:!(i<=k<j)|bbb2[k]=aaa[k]+1) & dm(bbb,i,j)
+.
+*/
+
+checkentail dm(aaa,1+i,j_1058) & (1+i)<=j_1058 & dm(bbb,i,1+i) & bbb[i]=1+(aaa[i]) & 
+dm(aaa,i,1+i) & (((i_1057<j_1058 & r_1041!=null) | (r_1041=null & 
+i_1057=j_1058))) & v_1083=bbb[i] & dm(aaa,i_1057,j_1058) & i_1057<=j_1058 & 
+forall(k:(!((i_1057<=k & k<j_1058)) | bbb_1060[k]=1+(aaa[k]))) & i_1057=1+i 
+& bbb = bbb_1060
+|-  (exists bbb_1082,i_1080: bbb_1060=bbb_1082 & i_1057=i_1080+1 & 
+v_1083=bbb_1082[i_1080] & dm(bbb_1082,i_1080,i_1080+1)).
+
+checkentail dm(aaa,1+i,j_1051) & (1+i)<=j_1051 & dm(bbb,i,1+i) & bbb[i]=1+(aaa[i]) & 
+dm(aaa,i,1+i) & (((i_1050<j_1051 & r_1034!=null) | (r_1034=null & 
+i_1050=j_1051))) & v_1080=bbb[i] & dm(aaa,i_1050,j_1051) & i_1050<=j_1051 & 
+forall(k:(!((i_1050<=k & k<j_1051)) | bbb_1075[k]=1+(aaa[k]))) & i_1050=1+i 
+& bbb=bbb_1075
+|-  (exists bbb_1079,i_1077: bbb_1075=bbb_1079 & i_1050=i_1077+1 & 
+v_1080=bbb_1079[i_1077] & dm(bbb_1079,i_1077,i_1077+1)).

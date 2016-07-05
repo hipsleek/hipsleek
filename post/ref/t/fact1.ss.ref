@@ -1,0 +1,33 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/fact1.ss"
+Parsing file "t/fact1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN f_pre: ( f_pre(x) & x=1+v_int_11_1310' & (v_int_11_1310'+1)!=0) -->  f_pre(v_int_11_1310'),
+RELDEFN f_post: ( x=0 & res=1 & f_pre(x)) -->  f_post(x,res),
+RELDEFN f_post: ( f_post(v_int_11_1355,v_int_11_1358) & res=1+v_int_11_1358 & v_int_11_1355+
+1=x & x!=0 & f_pre(x)) -->  f_post(x,res)]
+*************************************
+
+Post Inference result:
+fact$int
+ EBase emp&0<=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&x>=0 & x+1=res&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.424026 second(s)
+	Time spent in main process: 0.360022 second(s)
+	Time spent in child processes: 0.064004 second(s)
+

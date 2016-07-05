@@ -1,0 +1,49 @@
+//Valid.Valid.Valid.Valid
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == 
+  case {
+    n=0 -> [] self = p & n = 0;
+    n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+  }  inv n >= 0.
+
+/*
+lemma "V11" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "V12" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
+
+lemma "V21" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "V22" self::lseg<a, r> * r::lseg<b, p> -> self::lseg<n, p> & n = a + b & a,b >=0.
+
+*/
+
+lemma_safe "V21" self::lseg<n, p>  <- self::lseg<a, r> * r::lseg<b, p>
+  & n = a + b & a,b >=0
+.
+
+/*
+# ex12e.slk
+
+INPUT 0: [][] 
+ ### ante =  (exists a_86,b_87,p_88,a_89,b_90,r_91: r_91::lseg<b_87,p_88>@M&
+ a_86=0 & self_V21=r_91 & a_86=0 & n=b_90+a_89 & 0<=a_89 & 0<=b_90 & 
+ a_86=a_89 & b_87=b_90 & p_88=p&{FLOW,(20,21)=__norm#E}[]
+ or (exists p_103,flted_13_104,Anon_105,r_106,a_86,b_87,p_88,a_89,b_90,
+    r_91: self_V21::node<Anon_105,r_106>@M * 
+          r_106::lseg<flted_13_104,p_103>@M * r_91::lseg<b_87,p_88>@M&
+    a_86!=0 & flted_13_104+1=a_86 & p_103=r_91 & n=b_90+a_89 & 0<=a_89 & 
+    0<=b_90 & a_86=a_89 & b_87=b_90 & p_88=p&{FLOW,(20,21)=__norm#E}[]
+ 
+ ### conseq =  EBase 
+   (exists n_74,p_75: self_V21::lseg<n_74,p_75>@M&n_74=n & p_75=p&
+   {FLOW,(20,21)=__norm#E}[]
+
+
+*/

@@ -1,0 +1,97 @@
+data node { int val ; node next }.
+//relation Univ(int x).
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+
+checkentail x::lseg<a, p> & Univ(a) & a<=10  |- x::node<_,p>.
+print residue.
+expect Fail.
+
+//(2)
+infer[a] x::lseg<a, p> //& x!=p
+    |- x::node<_,p>.
+print residue.
+expect Valid.
+
+//(2)
+infer[a] x::lseg<a, p> & x!=p
+    |- x::node<_,p>.
+print residue.
+expect Valid.
+
+infer[a] x::lseg<a, pp>  |- x=pp.
+print residue.
+expect Valid.
+
+infer[] x::lseg<a, pp> & a=1  |- x::node<_,pp>.
+print residue.
+expect Valid.
+
+infer[a] x::lseg<a, pp>  |- x::node<_,pp>.
+print residue.
+expect Valid.
+
+
+infer[a] emp & x=null & a=0  |- x::node<_,pp>.
+print residue.
+expect Valid.
+// expects a!=0 to be inferred
+
+//(4)
+infer[a] emp & x=pp & a=0  |- x::node<_,pp>.
+print residue.
+expect Valid.
+// expects a!=0 to be inferred
+
+infer[a] htrue & x=pp & a=0  |- x::node<_,pp>.
+print residue.
+expect Fail.
+
+//(6)
+infer[a] emp & x=pp & a=0  |- x::lseg<n,p> & n>1
+.
+print residue.
+expect Valid.
+// expects a!=0 to be inferred
+
+
+//(7)
+infer[a] emp & x=pp & a=0  |- x::lseg<n,null> //& n>1
+.
+expect Fail.
+
+infer[a] emp & x=pp & a=0  |- x::lseg<n,p> //& n>1
+.
+print residue.
+expect Valid.
+
+
+infer[a] emp & x=pp & a=0  |- x::lseg<n,p> & p!=null
+.
+print residue.
+expect Fail.
+
+/*
+# ex6e3f9.slk --pnum 6
+
+infer[a] emp & x=pp & a=0  |- x::lseg<n,p> & n>1.
+
+# why was there an unfold?
+
+!!! **solver.ml#12409:detect_lhs_rhs_contr:true
+!!! **solver.ml#12380:detect_heap_contra
+!!! **solver.ml#12381:lhs: emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12382:conseq: : x::lseg<n,p>@M&1<n&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12383:contra_if_false:true
+!!! **solver.ml#12409:detect_lhs_rhs_contr:true
+!!! **solver.ml#12380:detect_heap_contra
+!!! **solver.ml#12381:lhs: emp&x=pp & a=0&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12382:conseq: : (* lbl: *){1}->emp&x=p & n=0&{FLOW,(1,26)=__flow#E}[]
+!!! **solver.ml#12383:contra_if_false:true
+!!! **solver.ml#12409:detect_lhs_rhs_contr:false
+E
+*/

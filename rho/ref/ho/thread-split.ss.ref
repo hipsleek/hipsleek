@@ -1,0 +1,9 @@
+
+!!!Full processing file "ho/thread-split.ss"
+Parsing file "ho/thread-split.ss" by default parser...
+File "ho/thread-split.ss", line 11, characters 14-15
+ --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ at:caught
+
+Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+Error3(s) detected at main 

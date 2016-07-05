@@ -1,0 +1,38 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/loop1.ss"
+Parsing file "t/loop1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure inc$int~int... 
+Procedure inc$int~int SUCCESS.
+
+Checking procedure while_16_4$int~int... 
+Procedure while_16_4$int~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1367: ( y_34<x_33 & post_1367(x_33,1+y_34,y_34',flow)) -->  post_1367(x_33,y_34,y_34',flow),
+RELDEFN post_1367: ( y_34'=y_34 & x_33<=y_34) -->  post_1367(x_33,y_34,y_34',flow)]
+*************************************
+
+Post Inference result:
+while_16_4$int~int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [y_34]
+           htrue&((y_34'>=(1+y_34) & y_34'=x_33) | (y_34'>=x_33 & 
+           y_34'=y_34))&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure PastaA1_main$... 
+Procedure PastaA1_main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.420024 second(s)
+	Time spent in main process: 0.352021 second(s)
+	Time spent in child processes: 0.068003 second(s)
+

@@ -1,0 +1,64 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = null 
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred U2(node x,node y).
+HeapPred U3(node x,node y).
+
+lemma_infer  [U,classic] "L21d1"
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+print relAssumes.
+//shape_normalize [U].
+
+shape_derive_view [U].
+print relAssumes.
+
+/*
+# ex21d1.slk
+
+lemma_infer  [U,classic] "L21d1"
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+print relAssumes.
+//shape_derive_view [U].
+//shape_normalize [U].
+print relAssumes.
+
+# can we add a command
+
+ shape_norm (which stop short of deriving predicate)
+
+# OK 
+ 
+  [fold q_146::node<Anon_151,q_152>@M * U(q_152)&q_146!=null
+        or emp&q_146=null
+         |#|  --> U(q_146); 
+   fold U(q_152)&q_146!=null |#|  --> GP_153(q_152,q_146)]
+
+
+*/

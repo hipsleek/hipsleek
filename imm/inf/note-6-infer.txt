@@ -1,0 +1,16 @@
+
+lst_def, lst_assume         ---> split infer_rel_stk /* please note that lst_assume is not used until the final relation simplification */
+
+rels                        ---> infer_rel_stk
+rel_defs, rel_oblgs         ---> split   rels
+rel_oblgs, non_rec_defs     ---> capture_init_defs   rel_oblgs   *** new step ***
+rel_defs                    ---> rel_defs @ non_rec_defs
+post_rel_df, pre_rel_df     ---> split   rel_defs
+post_rel_df_new             ---> plug_known_defs into post_rel_df
+
+rel_post, post, rel_pre, pre = bottom_up (post_rel_df_new, post_rel_df, rel_oblgs, pre_rel_df)
+pre   = postprocess_weaken pre             *** new step ***
+post  = postprocess_strenghten post        *** new step ***
+
+lst_assume = norm + weaken                 *** new step ***
+new_specs = simplify_relation (old_specs, pre, post, lst_assume) 

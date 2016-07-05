@@ -1,0 +1,74 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred lseg<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg<n-1,p> 
+  inv true.
+
+pred lseg2<n,p> == 
+	self::node<_, q> * q::lseg2<n-1,p> 
+        or self = p & n=0
+  inv true.
+
+pred l4<n,p:node> == 
+	self::node<_, q> * q::lseg<n-1,p> 
+        or self = null & n=0
+  inv true.
+
+pred lseg4a<n,p> == 
+	self::node<_, q> * q::lseg4a<n-1,p> 
+        or self = p & n=0
+  inv true.
+
+pred lseg3<p,n> == 
+	self::node<_, q> * q::lseg3<p,n-1> 
+        or self = p & n=0
+  inv true.
+
+pred lseg3a<n,p> == 
+	self::node<_, q> * q::lseg3a<n-1,p> 
+        or self=p & n=0
+  inv true.
+
+
+//pred_reuse [lseg2,lseg3,lseg4,lseg3a][lseg].
+// fail
+
+pred_reuse [*][*].
+
+/*
+# ex21r2.slk
+
+[lseg,lseg3a,lseg2,lseg4,lseg3,lseg4a]
+[lseg,lseg3a,lseg2,lseg4,lseg3,lseg4a]
+
+pred_reuse [*][*].
+
+# should we use topological sorting? where shorter names 
+  come first too..
+  and transitive closures to min equiv checking?
+
+========================
+
+PRED REUSE FOUND:
+  [(lseg3a,lseg2),(lseg2,lseg4a),(lseg4a,lseg3a),(lseg,lseg3a)]
+
+pred_reuse [lseg4,lseg3a][lseg,lseg3a].
+
+# why did it skip the proving for lseg4? (diff types)
+
+!!! **norm.ml#158:
+ Proven : self::lseg3a<n,p>@M&{FLOW,(1,26)=__flow#E}[] <->  self::lseg<n,p>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#2488:
+PRED REUSE FOUND:[(lseg3a,lseg)]
+
+
+
+
+*/

@@ -1,0 +1,44 @@
+data node{
+     int val;
+     node next;
+}.
+
+
+pred zip2<y,z> ==
+   self=null & y=z
+or self::node<_,p>*y::node<_,q> * p::zip2<q,z>.
+
+/*
+pred zip3<y,z> ==
+   self=null & y=null & z=null
+or self::node<_,p>*y::node<_,q> * z::node<_,t> * p::zip3<q,t>.
+*/
+
+pred_split [zip2].
+print views.
+
+/*
+# ex21s1d.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+pred_split [zip2].
+
+# Below was scheduled. Duplicate or due to putting
+  root parmater y as 2nd parameter.
+  Can we check instantiatinng paramete and
+  try to make them root where possible.
+
+  Use HP_44(y,z) rather than HP_44(z,y)
+
+
+!!! **sleekengine.ml#2541:
+ Proven : self::zip2<y,z>@M&{FLOW,(1,26)=__flow#E}[] ->  
+     HP_44(z,y) * HP_45(self)&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#3096:
+
+
+
+*/

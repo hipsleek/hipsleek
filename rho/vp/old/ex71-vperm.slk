@@ -1,0 +1,11 @@
+
+//(9)
+checkentail @full[xxx1] |- @value[x2] or @value[xxx1].
+print residue.
+// succeed with 2 answers
+
+//(10)
+//checkentail @full[x1]*@zero[v1,v2] |- @value[v1] or @value[x1].
+//print residue.
+// succeed with 1 answer
+

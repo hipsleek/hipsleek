@@ -1,0 +1,54 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{-%P}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+/*
+
+# ex60d2 --ann-vp
+
+checkentail t::Thrd{-c::cell<a>*d::cell<5>}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{-%PPP*c::cell<5>}<> . // * %P.
+print residue.
+
+
+Should we not have PPP --> full[y]??
+
+Residue:
+ <1>emp*N@full[t,x]&x=5 & flted_34_32=5 & a=flted_34_32&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [PPP --> d::cell<flted_32_33>&5=flted_32_33&
+           {FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(t,t) ==> ]]
+
+
+
+*/
+
+
+checkentail t::Thrd{-c::cell<5>*d::cell<5>}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{-%PPP*c::cell<a>}<> . // * %P.
+print residue.
+
+/*
+# ex60d3.slk
+
+checkentail t::Thrd{-c::cell<5>*d::cell<5>}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{-%PPP*c::cell<a>}<> . // * %P.
+print residue.
+
+Also succeed? How can c::cell<a> |- c::cell<5>?
+
+Residue:
+ <1>emp*N@full[t,x]&x=5&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [PPP --> d::cell<flted_33_32>&5=flted_33_32&
+           {FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(t,t) ==> ]]
+
+*/

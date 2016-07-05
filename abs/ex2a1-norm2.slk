@@ -1,0 +1,33 @@
+../data cell{int f1}.
+
+//1
+checkentail x::cell<v>@A * x::cell<w>@A & x=y |- y!=null.
+print residue.
+expect Valid.
+
+/*
+# ex2a1.slk --ad-hoc-3 -dre "xpure_sym"
+
+ checkentail x::cell<v>@A * x::cell<w>@A & x=y |- y!=null.
+
+# Why wasn't the two @A nodes merged below?
+  Is en_imm_merge not safe?
+
+(==astsimp.ml#7286==)
+xpure_heap_symbolic#999@1
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::cell<v>@A * x::cell<w>@A
+xpure_heap_symbolic#999 inp3 : x=y
+xpure_heap_symbolic#999@1 EXIT: x!=null & x!=null#[]# []true
+
+# However, merged occurred for: 
+
+Why wasn't the two @A nodes merged below?
+
+xpure_heap_mem_enum#6@4@3
+xpure_heap_mem_enum#6 inp1 : x::cell<v>@A
+xpure_heap_mem_enum#6 inp2 : x=y & v=w
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@4 EXIT: x!=null #  []
+
+*/

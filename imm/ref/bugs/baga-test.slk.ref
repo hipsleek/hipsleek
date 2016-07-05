@@ -1,0 +1,17 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 1: Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Warning: ::0: 0: combining two views not yet implemented
+
+Entail 2: Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+

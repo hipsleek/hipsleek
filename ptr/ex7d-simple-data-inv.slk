@@ -1,0 +1,36 @@
+/* with virtual ptrs */
+
+
+data arr_int {
+  int val;
+  //int val2;
+  arr_int next; /* this is virtual link automatically generated*/
+}  inv self+1=next //& next!=null // inv to be automatically generated
+.
+
+//(1)
+checkentail x::arr_int<_,_> |- x!=null.
+expect Valid.
+
+checkentail x::arr_int<_,_> |- x=null.
+expect Fail_Must.
+
+//(3)
+checkentail x::arr_int<_,p> |- x!=p.
+expect Valid.
+//Entail 3: Fail.(may) cause: x=1 |-  x!=p. LOCS:[17] (may-bug)
+//Validate 3: Expecting(3)Valid BUT got : Fail_May
+
+checkentail x::arr_int<_,p> |- x=p+1.
+expect Fail_Must.
+
+//(6)
+checkentail x::arr_int<_,p> |- x+1=p.
+expect Valid.
+
+//Entail 4: Fail.(may) cause: x=1 |-  x=p+1. LOCS:[20] (may-bug)
+//Validate 4: Expecting(3)Valid BUT got : Fail_May
+
+
+checkentail x::arr_int<_,p> |- p!=null.
+expect Valid.

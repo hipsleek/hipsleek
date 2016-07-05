@@ -1,0 +1,57 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred sll<> == self = null 
+	or self::node<_, q> * q::sll<>
+  inv true.
+
+HeapPred H(node a).
+
+//lemma_infer_pred [H] self::sll<> <- self::lseg<q> * H(q) .
+//print residue.
+
+
+lemma_safe self::sll<> <- self::lseg<q> * q::sll<>.
+// above is provable
+
+/*
+# ex17f2.slk --dpli
+
+lemma_infer_pred [H] self::sll<> <- self::lseg<q> * H(q) .
+print residue.
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [H(self_lem_14)&true |#|3  --> self_lem_14::sll<>@M&true; 
+                  H(q_67)&true |#|3  --> H(q_67)&true]
+[[ Fold ==>  SEARCH ==>  Match(self_lem_14,self_lem_14) ==>  SEARCH ==>  (Lemma <== lem_14(q_66,q_69)) ==>  COND ==>  Match(q_66,q_69) ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  InferHeap]]
+
+
+# Did we use library of lemma synthesis?
+
+
+========================================================
+
+# Why same q on both LHS & RHS?
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[q]
+impl/expl vars:[]
+LHS:
+  q_64::lseg<q>@M * H(q)&
+Anon_65=Anon_63 & q_66=q_64 & Anon_65=Anon_63 & q_66=q_64&
+{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   q_66::lseg<q>@M * H(q)&{FLOW,(20,21)=__norm#E}[]
+
+
+*/
+

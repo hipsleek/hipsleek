@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_baga|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_baga|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm||sleek_veribsync|hip_veribsync|infinity|mem|coqinf [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -208,17 +208,30 @@ $output_file = "log";
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
 	"infinity" =>[
-	["inflist.ss",2,"--dsd --en-inf","remove","SUCCESS","append","SUCCESS"],
-	["infll_take.ss",1,"--dsd --en-inf","take","SUCCESS"],
-	["inftree.ss",1,"--dsd --en-inf","count","SUCCESS"],
-	["stream.ss",1,"--dsd --en-inf","zip","SUCCESS"],
-	["bst-inf.ss",2,"--dsd --en-inf","delete","SUCCESS","remove_min","SUCCESS"],
-	["inf-selsort.ss",3,"--dsd --en-disj-compute --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inflist.ss",2,"--en-inf","remove","SUCCESS","append","SUCCESS"],
+	["infll_take.ss",1,"--en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--en-inf","count","SUCCESS"],
+	["stream.ss",1,"--en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--en-inf","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
 	["inf-sel.ss",3,"--dsd --en-inf","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
-	["bubble-inf.ss",4,"--dsd --en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
 	["heaps-inf.ss",4,"--en-inf","insert","SUCCESS","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
-	["merge-inf.ss",1,"--dsd --en-inf --en-disj-compute","merge","SUCCESS"],
+	["merge-inf.ss",1,"--en-inf --en-disj-compute","merge","SUCCESS"],
+	],
+	"coqinf" =>[
+	["inflist.ss",3,"--en-inf","remove","SUCCESS","append","SUCCESS","fail_remove","FAIL"],
+	["infll_take.ss",1,"--en-inf","take","SUCCESS"],
+	["inftree.ss",1,"--en-inf","count","SUCCESS"],
+	["stream.ss",1,"--en-inf","zip","SUCCESS"],
+	["bst-inf.ss",2,"--en-inf --eps --etcsu2 --etcsu3","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--en-inf --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd --en-inf","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd --en-inf --etcsu2 --etcsu3","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["bubble-inf.ss",4,"--en-inf","id2","SUCCESS","id3","SUCCESS","bubble","SUCCESS","bsort","SUCCESS"],
+#	["heaps-inf.ss",4,"--en-inf --en-inf-qe-coq --etcsu2 --etcsu3 --dis-early-contra","insert","FAIL","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
+	["merge-inf.ss",1,"--en-inf --en-disj-compute --etcsu2 --etcsu3","merge","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
@@ -353,12 +366,12 @@ $output_file = "log";
          "get_next", "SUCCESS"
         ]],
     "imm-field" => [
-        ["imspd.ss",2,"-tp oc --field-ann --etcsu1 ","check_pass","SUCCESS","login","SUCCESS"],
-        ["getset.ss",5,"-tp oc --field-ann --etcsu1 ","sset","SUCCESS","get","SUCCESS","setA","SUCCESS","getA","SUCCESS","non_negative","SUCCESS"],
-        ["bigint.ss",15,"-tp redlog --field-ann --etcsu1 ","clone","SUCCESS","add_one_digit","SUCCESS","add_c","SUCCESS","add","SUCCESS","div_with_remainder","SUCCESS","bigint_of","SUCCESS","compare_int","SUCCESS","is_zero","SUCCESS","compare2","SUCCESS","int_value","SUCCESS","mult_c","SUCCESS","shift_left","SUCCESS","mult","SUCCESS","sub_one_digit","SUCCESS","sub_c","SUCCESS","sub"],
-        ["insertion_simple.ss",1,"-tp oc --field-ann --etcsu1 ","insert","SUCCESS"],
-        ["schorr-waite-list.ss",1,"-tp om --field-ann --etcsu1 ","lscan","SUCCESS"],
-        ["sll.ss",4,"-tp oc --field-ann --etcsu1 ","delete","SUCCESS","get_tail","SUCCESS","insert","SUCCESS","insert2","SUCCESS"]
+        ["imspd.ss",2,"-tp oc --field-imm --etcsu1 ","check_pass","SUCCESS","login","SUCCESS"],
+        ["getset.ss",5,"-tp oc --field-imm --etcsu1 ","sset","SUCCESS","get","SUCCESS","setA","SUCCESS","getA","SUCCESS","non_negative","SUCCESS"],
+        ["bigint.ss",15,"-tp redlog --field-imm --etcsu1 ","clone","SUCCESS","add_one_digit","SUCCESS","add_c","SUCCESS","add","SUCCESS","div_with_remainder","SUCCESS","bigint_of","SUCCESS","compare_int","SUCCESS","is_zero","SUCCESS","compare2","SUCCESS","int_value","SUCCESS","mult_c","SUCCESS","shift_left","SUCCESS","mult","SUCCESS","sub_one_digit","SUCCESS","sub_c","SUCCESS","sub"],
+        ["insertion_simple.ss",1,"-tp oc --field-imm --etcsu1 ","insert","SUCCESS"],
+        ["schorr-waite-list.ss",1,"-tp om --field-imm --etcsu1 ","lscan","SUCCESS"],
+        ["sll.ss",4,"-tp oc --field-imm --etcsu1 ","delete","SUCCESS","get_tail","SUCCESS","insert","SUCCESS","insert2","SUCCESS"]
     ],
         "mem" => [
         ["dag.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
@@ -406,43 +419,43 @@ $output_file = "log";
         ["graph_spanning_infer.ss",1,"-tp om --mem --ramify --eps --infer-mem","spanning","SUCCESS"],
         ],
         "hip_baga" => [
-            ["eps.ss",2, "--baga-xpure", "get_next","SUCCESS","get_next_next","SUCCESS"],
-            ["append.ss",1, "--baga-xpure", "append","SUCCESS"],
-            ["append-tail.ss",1, "--baga-xpure","append","SUCCESS"],
-            ["avl-bind.ss",9, "--baga-xpure", "height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
+            ["eps.ss",2, "--use-baga", "get_next","SUCCESS","get_next_next","SUCCESS"],
+            ["append.ss",1, "--use-baga", "append","SUCCESS"],
+            ["append-tail.ss",1, "--use-baga","append","SUCCESS"],
+            ["avl-bind.ss",9, "--use-baga", "height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
              "rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
              ],
-            ["avl.ss",10, "--baga-xpure", "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
+            ["avl.ss",10, "--use-baga", "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
              "get_max","SUCCESS","rotate_double_left","SUCCESS","rotate_double_right","SUCCESS",
              "build_avl1","SUCCESS","build_avl2","SUCCESS",
              "insert","SUCCESS","insert_inline","SUCCESS",
             ],
-            ["avl-orig-2.ss",7, "--baga-xpure","height","SUCCESS","get_max","SUCCESS","insert","SUCCESS",
+            ["avl-orig-2.ss",7, "--use-baga","height","SUCCESS","get_max","SUCCESS","insert","SUCCESS",
              "double_left_child","SUCCESS","double_right_child","SUCCESS",
              "rotate_left_child","SUCCESS", "rotate_right_child","SUCCESS",
             ],
-            ["avl-orig3.ss",7, "--baga-xpure", "height","SUCCESS","get_max","SUCCESS",
+            ["avl-orig3.ss",7, "--use-baga", "height","SUCCESS","get_max","SUCCESS",
              "insert","SUCCESS", "double_left_child","SUCCESS",
              "double_right_child","SUCCESS", "rotate_left_child","SUCCESS",
              "rotate_right_child","SUCCESS"],
-            ["bll.ss",2, "--baga-xpure", "insert","SUCCESS",
+            ["bll.ss",2, "--use-baga", "insert","SUCCESS",
              "delete","SUCCESS"],
-            ["bubble.ss",4, "--baga-xpure", "id2","SUCCESS",
+            ["bubble.ss",4, "--use-baga", "id2","SUCCESS",
              "id3","SUCCESS",
              "bubble","SUCCESS",
              "bsort","SUCCESS",
             ],
-            ["cll.ss",5, "--baga-xpure", "test","SUCCESS",
+            ["cll.ss",5, "--use-baga", "test","SUCCESS",
              "insert","SUCCESS",
              "count_rest","SUCCESS",
              "count","SUCCESS",
              "delete","SUCCESS"],
-            ["complete.ss",5, "--baga-xpure", "maxim","SUCCESS",
+            ["complete.ss",5, "--use-baga", "maxim","SUCCESS",
              "minim","SUCCESS",
              "height","SUCCESS",
              "min_height","SUCCESS",
              "insert","SUCCESS"],
-            ["dll.ss",10, "--baga-xpure", "insert","SUCCESS",
+            ["dll.ss",10, "--use-baga", "insert","SUCCESS",
              "delete","SUCCESS",
              "delete1","SUCCESS",
              "test_del","SUCCESS",
@@ -453,15 +466,15 @@ $output_file = "log";
              "f1","SUCCESS",
              "f2","SUCCESS",
             ],
-            ["heaps.ss",5, "--baga-xpure", "insert","SUCCESS",
+            ["heaps.ss",5, "--use-baga", "insert","SUCCESS",
              "deleteoneel","SUCCESS",
              "deleteone","SUCCESS",
              "ripple","SUCCESS",
              "deletemax","SUCCESS",
             ],
-            ["insertion.ss",2, "--baga-xpure", "insert","SUCCESS",
+            ["insertion.ss",2, "--use-baga", "insert","SUCCESS",
              "insertion_sort","SUCCESS"],
-            ["ll.ss",10, "--baga-xpure", "append","SUCCESS",
+            ["ll.ss",10, "--use-baga", "append","SUCCESS",
              "ret_first","SUCCESS",
              "get_next","SUCCESS",
              "set_next","SUCCESS",
@@ -472,37 +485,37 @@ $output_file = "log";
              "create_list","SUCCESS",
              "reverse","SUCCESS",
             ],
-            ["merge.ss",5, "--baga-xpure", "count","SUCCESS",
+            ["merge.ss",5, "--use-baga", "count","SUCCESS",
              "split_func","SUCCESS",
              "merge_sort","SUCCESS",
              "merge","SUCCESS",
              "insert","SUCCESS",
             ],
-            ["perfect.ss",5, "--baga-xpure", "simple_insert","SUCCESS",
+            ["perfect.ss",5, "--use-baga", "simple_insert","SUCCESS",
              "create","SUCCESS",
              "maxim","SUCCESS",
              "height","SUCCESS",
              "insert","SUCCESS"],
-            ["qsort.ss",3, "--baga-xpure", "partition","SUCCESS",
+            ["qsort.ss",3, "--use-baga", "partition","SUCCESS",
              "append_bll","SUCCESS",
              "qsort","SUCCESS"],
-            ["selection.ss",3, "--baga-xpure", "find_min","SUCCESS",
+            ["selection.ss",3, "--use-baga", "find_min","SUCCESS",
              "delete_min","SUCCESS",
              "selection_sort","SUCCESS"],
-            ["sll.ss",6, "--baga-xpure", "insert","SUCCESS",
+            ["sll.ss",6, "--use-baga", "insert","SUCCESS",
              "insert2","SUCCESS",
              "delete","SUCCESS",
              "get_tail","SUCCESS",
              "insertion_sort","SUCCESS",
              "id","SUCCESS"],
-            ["trees.ss",6, "--baga-xpure", "append","SUCCESS",
+            ["trees.ss",6, "--use-baga", "append","SUCCESS",
              "count","SUCCESS",
              "flatten","SUCCESS",
              "insert","SUCCESS",
              "remove_min","SUCCESS",
              "delete","SUCCESS",
             ],
-            ["rb.ss",18, "--baga-xpure", "rotate_case_3","SUCCESS",
+            ["rb.ss",18, "--use-baga --dis-ptr-arith", "rotate_case_3","SUCCESS",
              "case_2","SUCCESS",
              "rotate_case_3r","SUCCESS",
              "case_2r","SUCCESS",
@@ -520,15 +533,15 @@ $output_file = "log";
              "remove_min","SUCCESS", #fixed duplicated false
              "del","SUCCESS",
              "insert","SUCCESS"],
-            # ["global1.ss",1, "--baga-xpure", "increase","SUCCESS"],
-            # ["global2.ss",1, "--baga-xpure", "increase","SUCCESS"],
-            # ["global3.ss",2, "--baga-xpure", "increase","SUCCESS",
+            # ["global1.ss",1, "--use-baga", "increase","SUCCESS"],
+            # ["global2.ss",1, "--use-baga", "increase","SUCCESS"],
+            # ["global3.ss",2, "--use-baga", "increase","SUCCESS",
             #  "increase_n","SUCCESS"],
-            # ["global4.ss",2, "--baga-xpure", "increase_n","SUCCESS",
+            # ["global4.ss",2, "--use-baga", "increase_n","SUCCESS",
             #  "main", "SUCCESS"],
-            # ["global5.ss",2, "--baga-xpure", "increase","SUCCESS",
+            # ["global5.ss",2, "--use-baga", "increase","SUCCESS",
             #  "decrease","SUCCESS"],
-            ["global-ll.ss",5, "--baga-xpure", "insert_rec","SUCCESS",
+            ["global-ll.ss",5, "--use-baga", "insert_rec","SUCCESS",
              "delete_last_rec","SUCCESS",
              "insert","SUCCESS",
              "delete_last","SUCCESS",
@@ -544,7 +557,7 @@ $output_file = "log";
             # ["classic/classic2a.ss",2, "", "foo1", "SUCCESS", "foo2", "FAIL"],
             # ["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
             # ["classic/classic3a.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
-            ["modular_examples/dll-modular.ss",11, "--overeps --baga-xpure",
+            ["modular_examples/dll-modular.ss",11, "--overeps --use-baga",
              "append", "SUCCESS", "append1", "SUCCESS", "append2", "SUCCESS",
              "delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
              "f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
@@ -554,9 +567,9 @@ $output_file = "log";
             # 	"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
             # 	"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
             # 	"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
-            ["modular_examples/selection-modular.ss",3, "--overeps --lda --baga-xpure",
+            ["modular_examples/selection-modular.ss",3, "--overeps --lda --use-baga",
              "delete_min", "SUCCESS", "find_min", "SUCCESS", "selection_sort", "SUCCESS"],
-            ["modular_examples/qsort-modular.ss",3, "--overeps --lda --baga-xpure",
+            ["modular_examples/qsort-modular.ss",3, "--overeps --lda --use-baga",
              "append_bll", "SUCCESS", "partition", "SUCCESS", "qsort", "SUCCESS"],
             #["../../modular_examples/2-3trees-modular.ss",5, "--overeps",
             #	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
@@ -747,7 +760,7 @@ $output_file = "log";
 				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
 				#	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
 				#	"min_height", "SUCCESS", "insert", "SUCCESS"],
-				["vperm/vperm_check.ss",6,  "--ann-vp", 
+				["vperm/ho_vperm_check.ss",6,  "--ann-vp", 
                                 "inc","SUCCESS",
                                 "incCell","SUCCESS",
                                 "test1","FAIL",
@@ -856,25 +869,25 @@ $output_file = "log";
 					#"less_h", "SUCCESS", "remove_min_add","SUCCESS"],
 					],	
 	"hip_barr" => [
-		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS",
 								"th3_loop","SUCCESS","th3","SUCCESS"],
-		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
 								"thl3","SUCCESS","th3","SUCCESS",
 								"thl4","SUCCESS","th4","SUCCESS"],						
-		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS"],
-		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","thl5","SUCCESS",
 								"thl1","SUCCESS","thl2","SUCCESS",
 								"thl3","SUCCESS","thl4","SUCCESS"],
-		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "ctl12","SUCCESS","ctl11","SUCCESS",
 								"starterc","SUCCESS","thl12","SUCCESS",
 								"thl22","SUCCESS","thl21","SUCCESS",
@@ -884,7 +897,7 @@ $output_file = "log";
 								"thl42","SUCCESS","thl41","SUCCESS",
 								"startert4","SUCCESS",
 								],
-		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
@@ -892,19 +905,19 @@ $output_file = "log";
 								"thl4","SUCCESS","th4","SUCCESS",
 								"thl5","SUCCESS","th5","SUCCESS",
 								],		
-		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
@@ -1827,11 +1840,12 @@ $output_file = "log";
 # the pattern to add a new program below: ["program_name", "default options", "lemma validity check results", "checkentail results"]
 my $lem = '--elp';
 my $inv = '--inv-test';
+my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
                       ["cll-d.slk", "", (), "Valid."],
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
-                      ["label-dll.slk", "--dis-eps", (), "Fail.Valid.Valid.Valid."],
+                      ["label-dll.slk", "--dis-eps", (), "Valid.Valid.Valid.Valid."],
                       ["sleek1.slk", "", (), "Fail."],
                       #["sleek10.slk", "", (), "Valid.Valid."],
                       ["sleek10.slk", "", (), "Valid.Fail."],
@@ -1851,18 +1865,22 @@ my $inv = '--inv-test';
                       ["sleek9.slk", " --elp ", ([$lem,"Valid.Valid."]),"Valid.Fail.Valid.Valid."],
                       ["sleek12-lend.slk", "", (), "Valid.Fail.Valid."],
                       ["sleek13-lend.slk", "", (), "Valid.Valid.Valid.Fail."],
-                      ["lst-under1.slk", "--inv-test", ([$inv,"Valid.Fail."]), "Valid.Fail."],
-                      ["lst-under2.slk", "--inv-test", ([$inv,"Fail.Valid"]), "Valid.Fail."],
-              ["ll-under1a.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Valid."]), ""],
-              ["ll-under1b.slk", " --inv-test --baga-xpure ", ([$inv,"Fail.Valid."]), ""],
-              ["ll-under1c.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
-              ["ll-under1d.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Valid."]), ""],
-              ["ll-under1e.slk", " --inv-test --baga-xpure ", ([$inv,"Fail.Fail."]), ""],
-              ["ll-under1f.slk", " --inv-test --baga-xpure ", ([$inv,"Valid.Fail."]), ""],
+                      ["sleek13-lend.slk", "", (), "Valid.Valid.Valid.Fail."],
+                      ["sleek-err-exc.slk", "", (), "Fail.Fail.Fail.Fail"],
+                      ["sleek-err-exc-bind.slk", "", (), "Fail.Fail.Fail.Valid"],
+                      ["sleek-err-exc-flow.slk", "--efa-exc", (), "Fail.Fail.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail"],
+                      ["lst-under2.slk", "--inv-test", ([$dis,"Fail.Valid"]), "Valid.Fail."],
+                      ["data-holes.slk", "", (), "Fail.Valid.Valid"],
+              ["ll-under1a.slk", " --inv-test --use-baga ", ([$dis,"Valid.Valid."]), ""],
+              ["ll-under1b.slk", " --inv-test --use-baga ", ([$dis,"Fail.Valid."]), ""],
+              ["ll-under1c.slk", " --inv-test --use-baga ", ([$dis,"Valid.Fail."]), ""],
+              ["ll-under1d.slk", " --inv-test --use-baga ", ([$dis,"Valid.Valid."]), ""],
+              ["ll-under1e.slk", " --inv-test --use-baga ", ([$dis,"Fail.Fail."]), ""],
+              ["ll-under1f.slk", " --inv-test --use-baga ", ([$dis,"Valid.Fail."]), ""],
                       ["baga-test-eps.slk", "--eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-                      ["baga-test.slk", "", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-                      ["baga-test-2.slk", "--dis-baga-xpure --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail."],
-                      ["baga-test-2.slk", "--baga-xpure", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["baga-test.slk", "--use-baga", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["baga-test-2.slk", "--dis-use-baga --dis-eps", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["baga-test-2.slk", "--use-baga", (),"Fail.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
               ["symb-diff.slk", "", (), "Valid.Valid.Valid."],
 		      ["xpure3nodes.slk","",(),"Valid.Valid."],
                       ["infer/app-inv.slk", "--inv --dis-eps", (), "Valid.Valid.Fail.Valid.Valid.Valid."],
@@ -1881,6 +1899,7 @@ my $inv = '--inv-test';
                       ["infer/infer11.slk", "", (), "Fail."],
 #                      ["infer/infer12.slk", "", "", "Valid.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["infer/infer12.slk", "", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+              # going into a loop
                       ["infer/infer13.slk", "--sa-en-cont", (), "Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer14.slk", "--sa-en-pure-field", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer15.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
@@ -1893,67 +1912,91 @@ my $inv = '--inv-test';
                       ["imm/imm2.slk", " --imm --etcsu1 ", (), "Fail.Valid.Fail.Valid.Fail."],
                       ["imm/imm3.slk", " --imm --etcsu1 ", (), "Fail.Fail.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm --etcsu1 ", (), "Valid.Fail."],
+                      ["imm/imm8-instantiation.slk", " --etcsu1 ", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid."],
+                      ["imm/imm8-instantiation.slk", " --etcsu1 --field-imm ", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid."],
+                      ["imm/imm9-early-inst.slk", " --etcsu1 ", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail."],
+                      ["imm/imm9-early-inst.slk", " --etcsu1 --field-imm ", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
-                      ["imm-field/sleek01.slk", " --field-ann --etcsu1 ", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek02.slk", " --field-ann --etcsu1 ", (), "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
-                      ["imm-field/sleek03.slk", " --field-ann --etcsu1 ", (), "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["imm-field/sleek01.slk", " --field-imm --etcsu1 ", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek02.slk", " --field-imm --etcsu1 ", (), "Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail."],
+                      ["imm-field/sleek03.slk", " --field-imm --etcsu1 --imm ", (), "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["eps.slk", " --dis-imm ", "", "Valid."],
-                      ["imm-field/sleek05.slk", " --field-ann --etcsu1 ", (), "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid"],
+                      ["imm-field/sleek05.slk", " --field-imm --etcsu1 ", (), "Valid.Fail.Fail.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["imm/norm/norm1.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
+                      ["imm/norm/norm2.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid."],
+                      ["imm/norm/norm3.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid."],
+                      ["imm/norm/norm4.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Fail.Fail."],
+                      ["imm/norm/norm5.slk", " --en-imm-merge ", (), "Valid.Valid.Fail."],
+                      ["imm/norm/norm6.slk", " --en-imm-merge ", (), "Valid.Valid.Fail."],
+                      ["imm/norm/norm7.slk", " --field-imm --en-imm-merge ", (), "Valid.Valid.Valid.Fail.Valid.Valid."],
+                      ["imm/norm/norm9.slk", " --field-imm --en-imm-merge ", (), "Valid.Fail."],
+                      ["imm/norm/norm10.slk", " --field-imm --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Fail.Fail.Valid"],
+                      ["imm/norm/field.slk", " --en-imm-merge ", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid."],
                       ["classic/classic1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", (), "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic1a.slk", "", (), "Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
-                      ["classic/classic1b.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail."],
+                      ["classic/classic1b.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["classic/classic2.slk", "", (), "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", (), "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
                    ["inf-no-eps.slk","--dsd --en-inf --dis-eps",(),"Fail.Fail.Valid.Valid."],
               ["infinity.slk","--dsd --en-inf --dis-eps",(), "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
-        ["inflem.slk", " --en-inf --elp --dis-eps", ([$lem,"Valid."]), "Fail.Valid."],
+        ["inflem.slk", " --en-inf --elp --dis-eps --dis-inv-baga", ([$lem,"Valid."]), "Fail.Valid."],
 #        ["lemmas/sort-1.slk", " --elp ", "Valid.Fail.Fail.", ""],
         # ["lemmas/sort2.slk", " --elp ", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.", ""],
         ["lemmas/sort2.slk", " --elp --dis-lem-gen ", ([$lem,"Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid."]), ""],
          ["lemmas/lseg.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid.Valid."]), ""],
         # ["lemmas/lseg.slk", " --elp ", "", ""],
         ["lemmas/lseg1.slk", " --elp --dis-lem-gen ", ([$lem,"Valid."]), ""],
-        ["lemmas/rlseg.slk", " --elp --dis-lem-gen", ([$lem,"Valid.Valid.Valid."]), ""],
+        ["lemmas/rlseg.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Valid.Valid."]), ""],
         ["lemmas/lemma-fold.slk", " --elp ", ([$lem,"Valid."]),"Valid.Fail.Valid.Fail.Valid.Fail."],
         ["lemmas/rd-lem-1.slk", " --elp --dis-lem-gen ", ([$lem,"Fail.Valid."]),""],
         ["lemmas/rd-lem-2.slk", "", (), "Fail."],
         ["lemmas/app-tail.slk", " --elp ", ([$lem,"Valid.Valid."]),"Valid.Fail."],
         # ["lemmas/lseg_case.slk", " --elp  --lem-en-rhs-unfold ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""],
         ["lemmas/lseg_case.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid.Valid.Valid.Valid."]), ""],
+        # 3rd one should fail as <-> must not existentially quantify LHS
+        # but this contradicted with 2nd lemma
         ["lemmas/ll.slk", " --elp ", ([$lem,"Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]), "Valid.Fail."],
         ["lemmas/ll_tail.slk", " --elp ", ([$lem,"Valid.Valid"]), "Valid.Valid"],
         ["lemmas/nlseg3.slk", "", (), "Valid.Valid."],
         ["lemmas/nlseg4e.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
         # below loops with --imm
-        ["lemmas/nlseg4e1.slk", "--dis-imm", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+        # --old-compute-act required by Ex 8 with @L lemma trigger
+        # below loops in arr_infer branch ... (to fix)
+        # ["lemmas/nlseg4e1.slk", "--old-compute-act", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/nlseg4e1.slk", "--dis-imm", ([$lem,"Valid.Valid"]), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
         # ["lemmas/sll_tailL.slk", " --elp --lem-en-rhs-unfold ", "Valid.Valid", ""],
         ["lemmas/sll_tailL.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
         # ["lemmas/dseg-new.slk", " --elp --lem-en-lhs-unfold", "Valid.Valid.Valid.", ""],
-        ["lemmas/dseg-new.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Fail.Valid."]), ""],
+  # --old-empty-to-conseq is an unsound feature used by complex lemmas
+        ["lemmas/dseg-new.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Fail.Valid."]), ""],
         # 2nd lemma requires another rlseg<..> <--> lseg to prove..
         ["lemmas/dseg1.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Fail."]), ""],
         # loop with --eps. Why?
         ["lemmas/odd-lseg.slk", " --elp --dis-lem-gen --dis-eps", ([$lem,"Valid.Valid."]), "Fail.Valid.Valid.Fail.Valid.Fail.Valid"],
-        ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
-              ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-              ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["lemmas/lseg_complex.slk", " --elp --dis-lem-gen --old-empty-to-conseq", ([$lem,"Valid.Valid.Valid"]), "Valid.Valid.Fail."],
+  # --old-norm-w-coerc causes infinite loop for some examples
+              # loop without old-search-always
+              #["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+              # ["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings --old-search-always", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+              # loop
+              # ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
               ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
-              ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
-              ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog", (), "Valid.Valid.Valid.Valid.Valid."],
-              ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
-              ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"],
-              ["conchip/threads.slk"," -tp parahip", "", "Valid.Valid.Valid"],
-              ["conchip/latch.slk"," -tp parahip", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail"],
+              ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings --dis-ptr-arith", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
+              ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith", (), "Valid.Valid.Valid.Valid.Valid."],
+              ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+              # looping..
+              #["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog  --old-lemma-settings", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"],
+              ["conchip/threads.slk"," -tp parahip --old-lemma-settings", "", "Valid.Valid.Valid"],
+              ["conchip/latch.slk"," -tp parahip --old-lemma-settings", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail"],
                       ],
-      "sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
-        			  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
+      "sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-imm --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
+        			  ["../tree_shares/barrier3.slk", "--eps --dis-field-imm --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
         			 ],
-        	"sleek_dfrac"=>[["../tree_shares/fractionals.slk", "--eps --dis-field-ann -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-        			  ["../tree_shares/barrier2.slk", "--eps --dis-field-ann -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-        			  ["../tree_shares/fractions.slk", "--eps --dis-field-ann -perm dperm",(), "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
+        	"sleek_dfrac"=>[["../tree_shares/fractionals.slk", "--eps --dis-field-imm -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+        			  ["../tree_shares/barrier2.slk", "--eps --dis-field-imm -perm dperm",(), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+        			  ["../tree_shares/fractions.slk", "--eps --dis-field-imm -perm dperm",(), "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
                  ],
     "sleek_threads" => [
                       ["threads/thrd1.slk"," --en-para --en-thrd-resource -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid"]
@@ -2006,14 +2049,15 @@ my $inv = '--inv-test';
     #     ["lseg.slk", " --elp ", "Valid.Fail.", ""],
     #     ["lseg_case.slk", " --elp ", "Valid.Valid.Valid.Valid.Valid.Valid.", ""]
     # ],
-    "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
-               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
-        		   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
-        		   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
-        		   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
-        		   ["err6.slk","","must.Valid.may.may.must.Valid."],
-        		   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
-               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
+    "musterr"=>[["err1.slk","",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
+                ["err1-exc.slk","--efa-exc",(),"must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","",(),"must.may.must.must.must.may.must.must.may.may.may.must.must.must.may.may.must.must.must.must.must.Valid.may.Valid.must.must.must.must.Valid.may.may.may.must.must."],
+                ["err3.slk","",(),"must.must.must.must.must.must.may.must.must."],
+                ["err4.slk","",(),"must.Valid.must.must.must.Valid.Valid.must.must.must.Valid.must.Valid.must.must.must.must.Valid."],
+                ["err5.slk","",(),"may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
+                ["err6.slk","",(),"must.Valid.may.must.must.must."],
+                ["err7.slk","",(),"Valid.must.must.must.must.Valid.must.Valid.must.must."],
+                ["err9.slk","",(),"Valid.Valid.must.may.Valid.Valid.must.may."]]
 
     );
 
@@ -2230,20 +2274,22 @@ sub sleek_process_file  {
       #my $lem = -1; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
       my $barr = 0;
-      if ("$param" =~ "musterr") {
-          print "Starting sleek must/may errors tests:\n";
-          $exempl_path_full = "$exec_path/errors";
-          $err = 1;
-      }
       if ("$param" =~ "sleek_barr"){ $barr=1;}
       
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
           $exempl_path_full = "$exempl_path/sleek";
-      }else {
+      }
+      else {
           $exempl_path_full = "$exempl_path/sleek/$param";
           print "Starting sleek-$param tests:\n";
       }
+      if ("$param" =~ "musterr") {
+          print "Starting sleek must/may errors tests:\n";
+          $exempl_path_full = "$exec_path/errors";
+          $err = 1;
+      }
+      #print "\n!!!exempl_path_full: $exempl_path_full";
       $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
       {
@@ -2255,7 +2301,7 @@ sub sleek_process_file  {
           }
           $script_args = $script_arguments." ".$extra_options;
           $output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
-          print LOGFILE "\n======================================\n";
+          print LOGFILE "\n=================$test->[0]=====================\n";
           print LOGFILE "$output";
           #print "\n!!!output: $output";
           my $lemmas_results = "";
@@ -2264,6 +2310,7 @@ sub sleek_process_file  {
           my $barrier_results = "";
           my @lines = split /\n/, $output; 
           foreach my $line (@lines) { 
+              #print "\n!!!output: $line";
               if($line =~ m/Entailing lemma/){
                   if($line =~ m/Valid\./) { $lemmas_results = $lemmas_results ."Valid."; }
                   elsif($line =~ m/EXC\./) { $lemmas_results = $lemmas_results ."EXC."; }
@@ -2274,20 +2321,26 @@ sub sleek_process_file  {
                   if($line =~ m/Valid\./) { $inv_results = $inv_results ."Valid."; }
                   elsif($line =~ m/Fail\./)  { $inv_results = $inv_results ."Fail.";}
               } elsif($line =~ m/Entail/){
+                  #print "\n!!!output: $line";
                   if( $err == 1) {
                       $i = index($line, "Valid. (bot)",0);
                       $h = index($line, "Valid.",0);
                       $j = index($line, "Fail.(must)",0);
                       $k = index($line, "Fail.(may)",0);
                       #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
-                      if($i >= 0) { $r = $r ."bot."; }
-                      elsif($h >= 0) { $r = $r ."Valid."; }
-                      elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
-                      elsif($k >= 0)  { $r = $r ."may.";}
+                      #if($i >= 0) { $r = $r ."bot."; }
+                      #elsif($h >= 0) { $r = $r ."Valid."; }
+                      #elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                      #elsif($k >= 0)  { $r = $r ."may.";}
+                      if($i >= 0) { $entail_results = $entail_results ."bot."; }
+                      elsif($h >= 0) { $entail_results = $entail_results ."Valid."; }
+                      elsif($j >= 0)  { $entail_results = $entail_results ."must.";} #$line =~ m/Fail.(must)/
+                      elsif($k >= 0)  { $entail_results = $entail_results ."may.";}
                   }
                   else {
                       if($line =~ m/Valid\./) { $entail_results = $entail_results ."Valid."; }
                       elsif($line =~ m/EXC\./) {  $entail_results = $entail_results ."EXC."; }
+                      elsif($line =~ m/Failure\(/) {  $entail_results = $entail_results ."Failure."; }
                       elsif($line =~ m/Fail\./)  { $entail_results = $entail_results ."Fail.";}
                   }
               }

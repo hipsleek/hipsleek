@@ -1,0 +1,25 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "ho/wait3.slk",Line:6,Col:10
+
+ERROR: at ho/wait3.slk_8:10_8:20
+Message: compute_view_fw_bw: data not found: CNT
+
+!!! WARNING logtime exception:0.
+Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+: no residue 
+
+!!! WARNING logtime exception:0.
+Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+: no residue 
+
+!!! WARNING logtime exception:0.
+Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+: no residue 
+
+!!! WARNING logtime exception:0.
+Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
+: no residue 
+

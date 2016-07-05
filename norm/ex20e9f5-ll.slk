@@ -1,0 +1,91 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+lemma_unsafe "compl" H(self,yy) * yy::node<_,zz> -> self::node<_,q>*H(q,zz).
+
+
+infer [H,H2,@classic] H2(q1,_,y) * y::node<_,ss>  |- H(q1,ss).
+print residue.
+// H2(q1,y,_) --> H(self,y)
+
+/*
+infer [H,H3,@classic] H3(q1,y) * y::node<_,ss>  |- H(q1,ss).
+print residue.
+*/
+/*
+infer [H,@classic] x::node<_, y> * H(y, z)  |- H(x, z).
+print residue.
+
+print relAssumes.
+*/
+
+/*
+infer [H,H2,@classic]
+    H2(x,y,_) * y::node<_,ss> |- H(x,y) * y::node<_,ss>.
+print residue.
+*/
+
+/*
+infer [H,H2,@classic] q1::node<_,q2>*H2(q2,ss,_) |- H(q1,ss).
+print residue.
+
+infer [H,H2,@classic] q1::node<_,q2>*H(q2,ss)  |- H(q1,ss).
+print residue.
+*/
+
+/*
+# ex20e9f5.slk
+
+Updated lemma store with unsafe repo::[compl]
+
+# check if complex LHS or RHS applicable..
+
+!!! **context.ml#1800:Root for:( H2(q1,y,Anon_13), H(q1,ss))
+!!! **context.ml#1802:Complex lemma:[Lemma "compl":  H(self,y) * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]==> (exists Anon_12,q: self::node<Anon_12,q>@M * H(q,ss)&
+{FLOW,(20,21)=__norm#E}[])]
+!!! **context.ml#1803:to check if complex lemma applicable here for LHS and RHS here using signature
+!!! **context.ml#2409:HRel vs HREL
+
+(==context.ml#2882==)
+process_one_match@2@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: H2(q1,y,Anon_13)
+ RHS: H(q1,ss)
+ lhs_rest: y::node<Anon_14,ss>@M
+ rhs_rest: emp
+ rhs_inst: []
+process_one_match inp2 :lhs_h: H2(q1,y,Anon_13) * y::node<Anon_14,ss>@M
+process_one_match inp3 :lhs_p: true
+process_one_match inp4 :rhs_node: H(q1,ss)
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@2 EXIT: Prio:2
+
+-----------------------------------
+
+lemma_unsafe "compl" H(self,y) * y::node<_,ss> -> self::node<_,q>*H(q,ss).
+
+infer [H,H2,@classic] H2(q1,y,_) * y::node<_,ss>  |- H(q1,ss).
+print residue.
+
+# How should we trigger complex --> lemma?
+
+  Do a quick test to see if LHS of complex lemma can be entailed, 
+  if so we allow it to be scheduled.
+
+  Signature of LHS Lemma: [H,node]
+  Signature of RHS Lemma: [node,H]
+
+  As LHS has our signature [H2,node], we scedule a -> for "compl"
+
+
+*/

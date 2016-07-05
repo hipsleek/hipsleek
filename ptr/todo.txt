@@ -1,0 +1,206 @@
+- add data inv
+- add baga-arr
+- improve xpure
+- add arr-seg lemmas
+===========================================================
+# ex7c.slk
+
+checkentail
+  self::arr_int<_,q1>*q1::arr_seg<p,n-1> //& q1=self+1 
+     & a>0 & n=a+b & b>=0 
+  |- (exists q: self::arr_seg<q,a>*q::arr_seg<p,b>)
+.
+
+# Why is there a base-case-unfold failure?
+
+Entail 3: Fail.(may) cause:base case unfold failed
+
+===========================================================
+# ex7c1.slk (FIXED)
+
+# why isn't process_action and folding traced tgt?
+  ==> due to nested process_actions
+
+# how come we have funny matches .. like q1,self?
+  can we filter them out based on LHS and RHS?
+  ==> fixed with overlap check at coerc_mater_match_gen
+      --adhoc-1 to disable it
+
+# can we print method header to determine calling sequence?
+  ==> done with --trace-loop
+
+(==solver.ml#10756==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[(a_135,a)]
+compute_actions inp2 :LHS heap: self::arr_int<Anon_14,q1>@M * q1::arr_seg<p,flted_22_114>@M
+compute_actions inp3 :LHS pure: 0<=b & n=b+a & 0<a & flted_22_114+1=n
+compute_actions inp4 :RHS cand:[ self::arr_seg<q,a_135>@M]
+compute_actions inp5 :RHS pure: a_135=a
+compute_actions inp6 :right alias:[a_135,q]
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:1
+  COND =>[
+   Prio:1
+   Fold =>
+     LHS: self::arr_int<Anon_14,q1>@M
+     RHS: self::arr_seg<q,a_135>@M;
+   Prio:1
+   SEARCH =>[
+    Prio:1
+    (Lemma ==> lem_12_left) =>
+      LHS: q1::arr_seg<p,flted_22_114>@M
+      RHS: self::arr_seg<q,a_135>@M;
+    Prio:4
+    BaseCaseUnfold =>
+      LHS: q1::arr_seg<p,flted_22_114>@M
+      RHS: self::arr_seg<q,a_135>@M
+    ]
+    ]
+   ]
+
+---
+# with overlap_test
+
+All test results were as expected.
+Total verification time: 50.80 second
+	Time spent in main process: 34.37 second
+	Time spent in child processes: 16.43 second
+	Number of false contexts: 61
+
+(26 Failures)
+Total verification time: 122.97 second
+	Time spent in main process: 79.12 second
+	Time spent in child processes: 43.85 second
+	Number of false contexts: 413
+
+# without overlap test --adhoc-1
+
+Total verification time: 51.31 second
+	Time spent in main process: 34.76 second
+	Time spent in child processes: 16.55 second
+	Number of false contexts: 61
+
+Total verification time: 126.21 second
+	Time spent in main process: 80.95 second
+	Time spent in child processes: 45.27 second
+	Number of false contexts: 413
+
+===========================================================
+# ex7a.ss (FIXED by adding @)
+
+# Why is there VAL_11?
+
+
+class arr_int extends Object {
+int val@VAL_11;
+arr_int next@
+}pure inv (self+1) = next
+
+===========================================================
+# ex7d.slk
+
+# to fix xpure_enumerate + symbolic, so as to
+  support ptr arithmetic below
+
+ ("--en-ptr-arith", Arg.Set Globals.ptr_arith_flag,
+   "Enable use of Ptr Arithmetic (incl type checking).");
+
+checkentail x::arr_int<_,p> |- x!=p.
+expect Valid.
+//Entail 3: Fail.(may) cause: x=1 |-  x!=p. LOCS:[17] (may-bug)
+//Validate 3: Expecting(3)Valid BUT got : Fail_May
+
+checkentail x::arr_int<_,p> |- x=p+1.
+expect Valid.
+
+//Entail 4: Fail.(may) cause: x=1 |-  x=p+1. LOCS:[20] (may-bug)
+//Validate 4: Expecting(3)Valid BUT got : Fail_May
+===========================================================
+# ex7d.slk
+
+# Below does not seem to be used by sleek with z3
+
+(==cvutil.ml#1779==)
+xpure_heap_mem_enum#6@11@10
+xpure_heap_mem_enum#6 inp1 : x::arr_int<Anon_12,p>@M
+xpure_heap_mem_enum#6 inp2 : true
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@11 EXIT: x+1=p & p!=null & x!=null #  [[x]]
+===========================================================
+# ex7e.slk
+
+data arr_int {
+  int val;
+  //int val2;
+  arr_int next#RR; /* this is virtual link automatically generated*/
+}  inv self+1=next & next!=null // inv to be automatically generated
+.
+
+# Why is there a VAL_11 default annotation?
+
+data arr_int {
+  int val@VAL_11;
+  arr_int next@RR;
+}inv  self+1=next & next!=null
+===========================================================
+# ex8a.ss --ato
+
+Why is --ato not working?
+
+ERROR: at ex8a-simple3.ss_3:10_3:53
+Message: Post condition cannot be derived.
+===========================================================
+# ex8a1.ss --ato
+
+new array logic
+
+ a::read<S1> declares that S1 is a finite set of addresses
+  that would be read-only
+ a::write<S2> declares that S2 is a finite set of addresses
+  that would be read-write
+
+We would then model each array a by
+All other elements would be unchanged.
+
+We then model each array A by S1 read-only var,
+and S2 ref vars.
+
+We also make sure the two sets are disjoint by the following
+
+   a::read<S1>*a::write<S2> & S1/\S2!={] ==> false
+   a::read<S1 U S2>  == a::read<S1> * a::read<S2>
+   a::write<S1 U S2> == a::write<S1> * a::write<S2>
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================

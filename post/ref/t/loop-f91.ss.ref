@@ -1,0 +1,38 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/loop-f91.ss"
+Parsing file "t/loop-f91.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int~int... 
+assert:t/loop-f91.ss:30: 3: l2 : ok
+
+
+assert:t/loop-f91.ss:31: 3: l2 : ok
+
+
+assert:t/loop-f91.ss:32: 3: l2 : ok
+
+
+assert:t/loop-f91.ss:33: 3: l2 : ok
+
+
+assert:t/loop-f91.ss:42: 2: l3 : ok
+
+
+assert:t/loop-f91.ss:43: 2: l3 : ok
+
+
+Procedure loop$int~int SUCCESS.
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+24 false contexts at: ( (26,11)  (26,6)  (25,14)  (26,14)  (26,25)  (26,21)  (44,2)  (44,9)  (38,7)  (38,11)  (38,2)  (37,7)  (37,11)  (37,2)  (36,8)  (34,3)  (34,10)  (29,8)  (29,12)  (29,3)  (28,8)  (28,12)  (28,3)  (27,7) )
+
+Total verification time: 0.668041 second(s)
+	Time spent in main process: 0.608038 second(s)
+	Time spent in child processes: 0.060003 second(s)
+

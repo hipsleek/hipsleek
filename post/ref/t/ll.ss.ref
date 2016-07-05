@@ -1,0 +1,20 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ll.ss"
+Parsing file "t/ll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure append2$node~node... 
+Procedure append2$node~node SUCCESS.
+
+Checking procedure append$node~node... 
+Procedure append$node~node SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.852051 second(s)
+	Time spent in main process: 0.752046 second(s)
+	Time spent in child processes: 0.100005 second(s)
+

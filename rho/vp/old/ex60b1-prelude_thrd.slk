@@ -1,0 +1,36 @@
+data cell{
+  int val;
+}.
+pred_prim Thrd{-%P}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+/*
+# ex60
+
+
+
+File "ex60b-prelude_thrd.slk", line 8, characters 24-25
+ error: Stream.Error("[opt_perm] expected (in [simple_heap_constr])")
+ at:error at: 
+
+how to support with %P,%Q ?
+
+id: 5; caller: []; line: 25; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail t_39'::Thrd{ + emp*N@full[x]&x'=1+x&{FLOW,(4,5)=__norm#E}[], - htrue*N@full[x]&{FLOW,(4,5)=__norm#E}[]}<>*
+N@full[t_39,x]&x=5&{FLOW,(4,5)=__norm#E}[]
+ |-  t_39'::Thrd{ + HVar Q&{FLOW,(4,5)=__norm#E}[], - HVar P&{FLOW,(4,5)=__norm#E}[]}<> * 
+(HVar P)&{FLOW,(4,5)=__norm#E}[]. 
+h
+
+*/
+
+
+checkentail t::Thrd{-@full[x]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{
+           -%P}<> * %P.
+
+checkentail t::Thrd{-c::cell<n>}<> * c::cell<5>
+   |-  t::Thrd{-%P}<> * %P. 
+print residue.

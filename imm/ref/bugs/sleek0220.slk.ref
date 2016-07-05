@@ -1,0 +1,13 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&exists(flted_21_70:flted_21_45=flted_21_70 & flted_21_46=flted_21_70) & exists(flted_21_71:n+1=flted_21_71) & q_72=q & 2<n & flted_21_45=3 & flted_21_46=3&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_72) ==> ]]
+
+
+

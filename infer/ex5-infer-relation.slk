@@ -1,0 +1,48 @@
+
+relation Q(int a, int b).
+relAssume
+  nnnn=0 & m=0 -->  Q(m,nnnn).
+relAssume
+  m1=m-1 & r=r1+2 & Q(m1,r1) -->  Q(m,r).
+
+relation_infer [][Q].
+
+// infer via fixcalc (bottom-up)
+// [] is for pre-relation; [Q] is for post-relation
+
+
+/*
+# ex5.slk
+
+The above command is for post-cond pure inference.
+I wonder if we can test out pre-cond inference,
+and also top-down fix-point process here.
+
+!!! **fixcalc.ml#1043:Input of fixcalc: :Q:={[] -> [m,r] -> []: (r=0 && m=0 ||  (exists (r1: (exists (m1:m1=m-(1) && Q(m1,r1)))  && r=r1+2)) )
+};
+bottomupgen([Q], [2], SimHeur);
+!!! **fixcalc.ml#393:svls (orig):[[m:int,Q:RelT([]),r:int]]
+!!! **fixcalc.ml#394:svl1 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#395:svl2 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#1071:Result of fixcalc (parsed): :[ r=2*m & m>=0]
+!!! fixpoint2:[( Q(m,r), r=2*m & m>=0)]
+
+-------------------------
+
+!Why relAssume do't work? Is it because it
+is not being pushed into stack?
+
+relation Q(int a, int b).
+relAssume
+  n=0 & m=0 -->  Q(m,n).
+relAssume
+  m1=m-1 & r=r1+2 & Q(m1,r1) -->  Q(m,r).
+relation_infer [][Q].
+
+# RelAssume seems to be part of shape inference.
+  Can we convert them to pure form too and add to infer_rel_stk?
+
+!!! **sleekengine.ml#1257: emp&nnnn=0 & m=0 --> emp&Q(m,nnnn)
+!!! **sleekengine.ml#1257: emp&m1+1=m & r=2+r1 & Q(m1,r1) --> emp&Q(m,r)
+!!! fixpoint2:[]
+*/

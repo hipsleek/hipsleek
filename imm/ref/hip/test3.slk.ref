@@ -1,0 +1,19 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Last Proving Location: 1 File "hip/test3.slk",Line:11,Col:2
+
+ERROR: at hip/test3.slk_6:5_6:14
+Message: predicate ls does not have the correct number of arguments
+manage_unsafe_lemmas: error(s) occurred
+
+Entail 1: Fail.(may) cause: (x!=null | x=a) |-  a=b. LOCS:[1;0;48] (may-bug)
+
+Residue:
+ <1>x::ls{}<a,,@A>&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+

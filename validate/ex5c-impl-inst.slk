@@ -1,0 +1,32 @@
+
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [] x::node<a,_> & a=5 |- true.
+print residue.
+expect Valid.
+expect_infer Valid R{x::node<bbb,_> & bbb>0}.
+//expect_infer Valid R{x::node<b,_> & b>5}.
+
+/*
+# ex5c.slk --esl
+
+# maybe can print the implicit vars
+
+id: 3; caller: []; line: 0; classic: false; kind: Validate(1.1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: []
+ checkentail x::node<a,Anon_13>&a=5&{FLOW,(20,21)=__norm#E}[]
+ |-  x::node<b,Anon_14>&0<b&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&a=5 & b=a & Anon_14=Anon_13&{FLOW,(20,21)=__norm#E}[]
+   ]
+
+
+*/

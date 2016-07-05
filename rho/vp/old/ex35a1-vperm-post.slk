@@ -1,0 +1,35 @@
+// --ann-vp
+
+//(1)
+infer [@ver_post] @value[x] |- @full[x].
+expect Fail.
+
+//(2)
+infer [@ver_post] @value[x] |- @value[x].
+expect Fail.
+
+//(3)
+infer [@ver_post] @full[x] |- @full[x].
+expect Valid.
+
+//(4)
+infer [@ver_post] @full[x] |- @value[x].
+expect Fail.
+print residue.
+
+infer [] @value[x] |- @full[x].
+expect Valid.
+print residue.
+
+//(6)
+infer [] @value[x] |- @value[x].
+expect Valid.
+print residue.
+
+infer [] @full[x] |- @full[x].
+expect Valid.
+
+//(8)
+infer [] @full[x] |- @value[x].
+expect Valid.
+print residue.

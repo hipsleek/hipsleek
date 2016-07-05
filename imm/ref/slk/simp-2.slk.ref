@@ -1,0 +1,13 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+Simplify  (1): 1<=y & x!=0
+
+Hull  (2): (x=1 | x=3)
+
+PairWise  (3): (x=1 | x=3)
+
+PairWise  (4): 1<=x & x<=2
+
+
