@@ -21,13 +21,15 @@ lemma_unsafe self::arr_seg<i,n> & i<m<=n
 // These three cases are working correctly
 
 
-checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
-print residue.
-expect Fail.
 
 
 checkentail xx::arr_seg<m,n> & i<m<=n & i<n |- xx::arr_seg<i+1,n>.
 expect Fail.
+print residue.
+
+
+checkentail xx::arr_seg<m,n> & i<m<=n & i<n & Univ(m) |- xx::arr_seg<i+1,n>.
+expect Valid.
 print residue.
 
 
@@ -50,6 +52,15 @@ checkentail xx::arr_seg<m,n> & i<m<=n & Univ(m) & i+1<n & i>=0
 print residue.
 expect Valid.
 
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
 
 
 // This one fails since m=i+1 will make the LHS stronger

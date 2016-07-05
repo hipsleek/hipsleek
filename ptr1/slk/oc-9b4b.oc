@@ -1,0 +1,13 @@
+P:={[n,i]: exists(m,n: 
+ i<n & i<m<=n 
+)};
+P;
+
+Q:={[n,i]: exists(m,n: 
+ i<n & i<m<=n & m=n & m=i+2
+)};
+Q;
+
+
+P subset Q;
+Q subset P;

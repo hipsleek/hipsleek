@@ -9694,7 +9694,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
         (* WN : what if Omega cannot handle?  *)
         (* WN : cause of performance bug? needed by tut/ex2/bugs-sim5b.slk *)
         let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
-        if CP.no_andl a0 && !Globals.deep_split_disjuncts
+        if CP.no_andl a0 && !Globals.deep_split_disjuncts  (* && not(no_univ_var a0) *)
         then
           let a0 = CP.drop_exists a0 in
           List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0)

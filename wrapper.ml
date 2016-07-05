@@ -421,6 +421,10 @@ let wrap_lemma_safe f a =
 let wrap_lemma_unsafe f a =
   wrap_one_bool Globals.check_coercions false f a
 
+
+let wrap_dis_dsd f a =
+  wrap_one_bool Globals.deep_split_disjuncts false f a
+
 (* let proof_no = ref 0 *)
 
 (* let next_proof_no_str () = *)
