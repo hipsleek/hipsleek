@@ -9694,7 +9694,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
         (* WN : what if Omega cannot handle?  *)
         (* WN : cause of performance bug? needed by tut/ex2/bugs-sim5b.slk *)
         let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
-        if CP.no_andl a0 && !Globals.deep_split_disjuncts  (* && not(no_univ_var a0) *)
+        (* TODO: change to if univ inst expected *)
+        let univ_vs = TP.get_univs_from_ante a0 in
+        if CP.no_andl a0 && !Globals.deep_split_disjuncts  && univ_vs==[] 
         then
           let a0 = CP.drop_exists a0 in
           List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0)
@@ -9712,7 +9714,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           let a0l = List.filter is_sat a0l in a0l
       in
       let process_univ univ_vars ante0 conseq0 =
-        if not (TP.connected_rhs univ_vars conseq0) then ()
+        if not (x_add TP.connected_rhs_univ univ_vars conseq0) then ()
         else
           let prev_inst = TP.univ_rhs_store # get in
           let ante0 = CP.drop_rel_formula ante0 in
@@ -11139,7 +11141,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* let () = y_tinfo_hp (add_str "to_bound" (!CP.print_svl)) to_bound in *)
           let (conseq_lst_univ,new_conseq_p2) =
             let no_chx = ([],new_conseq_p)in
-            if TP.connected_rhs univ_vs pure_new_conseq_p
+            if x_add TP.connected_rhs_univ univ_vs pure_new_conseq_p
             then
               let () = y_dinfo_pp "do_match: Processing univ instantiation" in
               let conseq_lst = CP.split_conjunctions pure_new_conseq_p in
@@ -11180,7 +11182,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let () = y_dinfo_hp (add_str "new_conseq_p2" (Cprinter.string_of_mix_formula)) new_conseq_p2 in
             let () = y_dinfo_hp (add_str "conseq_univ" (!CP.print_formula)) conseq_univ in
             let lhs1 = MCP.pure_of_mix new_ante_p in
-            let (b,_,_) = TP.imply_timeout_univ univ_vs lhs1 conseq_univ "666" 0.0 None in
+            let (b,_,_) = x_add TP.imply_timeout_univ univ_vs lhs1 conseq_univ "666" 0.0 None in
             let () = y_dinfo_hp (add_str "outcome" string_of_bool) b in
             if b then 
               let r = TP.univ_rhs_store # get_rm in
@@ -13369,6 +13371,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                          Context.match_res_rhs_node=rhs_node;
                         },unfold_num) -> begin
         x_tinfo_hp (add_str "M_unfold" string_of_int) unfold_num pos;
+        let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state_short) estate in
+        let () = y_binfo_hp (add_str "lhs_node (M_unfold)" !CF.print_h_formula) lhs_node in
+        let () = y_binfo_hp (add_str "rhs_node (M_unfold)" !CF.print_h_formula) rhs_node in
         match lhs_node with
         | HRel (hp,args,_) ->
           (* if CF.is_exists_hp_rel hp estate  then *)

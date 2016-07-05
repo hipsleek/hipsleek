@@ -3617,7 +3617,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
     residents := P.intersect_svl !residents (vd.view_cont_vars @ [self_var]);
     let () = List.iter (fun f ->
         (* unfold the inductive formulathen collect residents *)
-        let new_f = unfold_base_case_formula f vd base_f in
+        let new_f = x_add unfold_base_case_formula f vd base_f in
         let (hf,pf,_,_,_,_) = F.split_components new_f in
         let todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
@@ -3937,7 +3937,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
                 (* unfold the inductive formulathen collect residents *)
                 let base_f = List.hd base_fs in
                 Debug.ninfo_hprint (add_str "f" (!F.print_formula)) f no_pos;
-                let f = unfold_base_case_formula f vdecl base_f in
+                let f = x_add unfold_base_case_formula f vdecl base_f in
                 Debug.ninfo_hprint (add_str "unfold_f" (!F.print_formula)) f no_pos;
                 let new_fwp, new_fwf, new_bwp, new_bwf = 
                   collect_forward_backward_from_formula f vdecl ddecl !fwp !fwf !bwp !bwf in

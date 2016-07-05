@@ -2574,7 +2574,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let l2, syn_lem_typ = (
               let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
               let uf_i = if new_orig then 0 else 1 in
-              let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+              let syn_lem_typ = if seg_fold_type>=0 then -1 else x_add CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
               if force_flag || sf_force_match_flag then
                 let () = x_tinfo_pp "choosing forced matching" no_pos in
                 let base_case_prio = 3 in
@@ -2720,7 +2720,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   (*cyclic: add lemma_unsafe then unfold lhs*)
                   (*L2: change here for cyclic*)
                   let lst=
-                    let syn_lem_typ = if seg_fold_type>=0 then -1 else CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                    let syn_lem_typ = if seg_fold_type>=0 then -1 else x_add CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
                     if check_lemma_not_exist vl vr && (syn_lem_typ != -1) then
                       let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
                       let uf_i = if new_orig then 0 else 1 in
@@ -2850,7 +2850,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let () = x_tinfo_hp (add_str "cyclic " pr_id) " 3" no_pos in
                 let () = x_tinfo_hp (add_str "cyclic:add_checkpoint" pr_id) "fold" no_pos in
                 let syn_lem_typ = if seg_fold_type >= 0 then gen_lemma_action_invalid else
-                    CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
+                    x_add CFU.need_cycle_checkpoint_fold prog dl estate.CF.es_formula vr rhs reqset in
                 if (syn_lem_typ != gen_lemma_action_invalid) then
                   let acts =
                     if (CFU.get_shortest_length_base (List.map fst vr_vdef.view_un_struc_formula)
@@ -3028,7 +3028,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 if vl_vdef.view_is_prim then []
                 else
                   (*cyclic checkpoint here*)
-                  let syn_lem_typ = CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs reqset in
+                  let syn_lem_typ = x_add CFU.need_cycle_checkpoint_unfold prog vl estate.CF.es_formula dr rhs reqset in
                   if syn_lem_typ =3 || (syn_lem_typ != -1 && not (Cfutil.poss_prune_pred prog vl estate.CF.es_formula)) then
                     (*find the first viewnode readable from right datanode*)
                     let lvs = CFU.look_up_reachable_first_reachable_view prog
@@ -3459,7 +3459,7 @@ and process_infer_heap_match_x ?(vperm_set=CVP.empty_vperm_sets) prog estate lhs
     let cyc_acts = 
       try
         let vl, vr,lhs_rest = Cfutil.find_view_match lhs_h rhs_node in
-        let syn_lem_typ = CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+        let syn_lem_typ = x_add CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
         let vl_name = vl.h_formula_view_name in
         let vr_name = vr.h_formula_view_name in
         let vl_vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls vl_name in

@@ -3709,14 +3709,14 @@ let get_univs_from_ante ante =
     univ_vars2
 
 
-let connected_rhs univ_vars rhs =
+let connected_rhs_univ univ_vars rhs =
   if univ_vars==[] then false
   else
     let vs= CP.fv rhs in
     (CP.intersect_svl univ_vars vs)!=[]
 
-let connected_rhs univ_vars rhs =
-  Debug.no_2 "connected_rhs" (pr_list !CP.print_sv) !CP.print_formula string_of_bool connected_rhs univ_vars rhs
+let connected_rhs_univ univ_vars rhs =
+  Debug.no_2 "connected_rhs_univ" (pr_list !CP.print_sv) !CP.print_formula string_of_bool connected_rhs_univ univ_vars rhs
 ;;
 
 let filter_inv ante =
@@ -3728,6 +3728,10 @@ let filter_inv ante =
   let pr = !CP.print_formula in
   Debug.no_1 "filter_inv" pr pr filter_inv ante
 
+(* 
+    below appears to add (exists univ_var ..) to conseq
+    but this does not check if we had strengthened the LHS unnecessarily..
+*)
 let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
     let () = y_dinfo_pp "Processing univ instantiation" in
     let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
@@ -3736,7 +3740,8 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
     let prev_inst = univ_rhs_store # get in
     let () = y_dinfo_hp (add_str "prev_inst" !CP.print_formula) prev_inst in
     let ante0 = CP.drop_rel_formula ante0 in
-    let ante1 = filter_inv ante0 in
+    (* this filtering of disjunct may lead to unnecessary instantiation *)
+    let ante1 = (* filter_inv *) ante0 in
     let () = y_dinfo_hp (add_str "ante1 (aftre filter inv)" !CP.print_formula) ante1 in
     let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
     (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
@@ -3749,13 +3754,18 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
       let () = univ_rhs_store # set conseq0 in r
     else r
 
+let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
+  let pr1 = !print_svl in
+  let pr2 = !CP.print_formula in
+  Debug.no_3 "imply_timeout_univ" pr1 pr2 pr2 (fun (b,_,_) -> string_of_bool b)
+      (fun _ _ _ -> imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process) univ_vars ante0 conseq0
 
 let imply_timeout ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
   let univ_vars = get_univs_from_ante ante0 in
   let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-  if (not b) && (connected_rhs univ_vars conseq0)
-  then imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process
+  if (not b) && (x_add connected_rhs_univ univ_vars conseq0)
+  then x_add imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process
   else ans
 ;;
   

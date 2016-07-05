@@ -1,3 +1,98 @@
+=================================================================
+# ex9b4k1.slk --dre ".*univ" --trace-log-num 2
+
+# why did we filter inv? 
+# it seems like we are filtering out disjunction which may
+  be too strong thing to do..
+
+@2!:0: 0: **tpdispatcher.ml#3736:Processing univ instantiation
+@2!:0: 0: **tpdispatcher.ml#3737:univ var:[i]
+@2!:0: 0: **tpdispatcher.ml#3738:ante0: Univ(i) & ((i=n | i<n)) & 0<=i
+@2!:0: 0: **tpdispatcher.ml#3739:conseq0: i!=n
+@2!:0: 0: **tpdispatcher.ml#3741:prev_inst: true
+@2!:0: 0: **tpdispatcher.ml#3744:ante1 (aftre filter inv): 0<=i
+@2! **cpure.ml#2960:vs(mkExists):[i]
+@2! **cpure.ml#2961:vs(filtered rel type):[i]
+@2!:0: 0: **tpdispatcher.ml#3749:new_conseq: exists(i:0<=i & i!=n)
+@2! **cpure.ml#2960:vs(mkExists):[i]
+@2! **cpure.ml#2961:vs(filtered rel type):[i]
+@2! **omega.ml#901:simplify_ops_x(after trans_arr):: exists(i:0<=i & i!=n)
+Starting Omega.../usr/local/bin/oc
+
+*/
+
+checkentail 0<=i & (i=n | i<n) & Univ(i) |- i!=n.
+expect Valid.
+print residue.
+
+=================================================================
+# tpdispatcher.ml
+
+(* 
+
+    # imply_timeout_univ
+
+    below appears to add (exists univ_var ..) to conseq
+    but this does not check if we had strengthened the LHS unnecessarily..
+*)
+
+let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
+    let () = y_dinfo_pp "Processing univ instantiation" in
+    let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+    let () = y_dinfo_hp (add_str "ante0" !CP.print_formula) ante0 in
+    let () = y_dinfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
+    let prev_inst = univ_rhs_store # get in
+    let () = y_dinfo_hp (add_str "prev_inst" !CP.print_formula) prev_inst in
+    let ante0 = CP.drop_rel_formula ante0 in
+    let ante1 = filter_inv ante0 in
+    let () = y_dinfo_hp (add_str "ante1 (aftre filter inv)" !CP.print_formula) ante1 in
+    let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
+    (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
+    let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
+    let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
+    let () = y_dinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
+    let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
+    let () = y_dinfo_hp (add_str "imply_timeout_univ: b " string_of_bool) b in
+    if b then
+      let () = univ_rhs_store # set conseq0 in r
+    else r
+=================================================================
+# ex9b4f.slk
+
+checkentail xx::arr_seg<i,m>*
+  xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m)
+    |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+# Why did base-case unfold lead to a univ instantiation?
+
+# perhaps it isn't quite right to do univ inst for every implication
+but to control where univ_inst is done at check_entail empty_rhs?
+
+
+Entail 1: Valid. 
+Residue:
+ <1>xx::arr_seg<i,m>@M&n=i+3 & i<m & m<=n & (1+i)<n & Univ(m) & m_51=m & 
+                       xx!=null & 0<=m_51 & m_51=n&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  BaseCaseUnfold ==>  SEARCH ==>  COND ==>  BaseCaseFold]]
+
+=================================================================
+# ex9b4e.slk
+
+# can dis-dsb be automatically set?
+# using --dsb lead to less precise outcome for univ..
+
+        (* TODO: change to if univ inst expected *)
+        let univ_vs = TP.get_univs_from_ante a0 in
+        if CP.no_andl a0 && !Globals.deep_split_disjuncts  && univ_vs==[] 
+
+checkentail
+  m_51=m & Univ(m) & (1+i)<n & m<=n & i<m & 
+ (((0<=i & i<m & xx!=null) | (i=m & 0<=m & xx!=null))) & 
+ (((0<=m_51 & m_51<n & xx!=null) | (m_51=n & 0<=n & xx!=null)))
+|- m_51=i+1.
+=================================================================
 # ex13a.slk
 
 // can we scedule a base-case-fold after view match failure?

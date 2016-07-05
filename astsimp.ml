@@ -2149,7 +2149,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           else
             let new_bfs = List.fold_left (fun acc f ->
                 acc@(List.map (fun bf ->
-                    Cast.unfold_base_case_formula f vdef bf
+                    x_add Cast.unfold_base_case_formula f vdef bf
                   ) bfs)
               ) [] ifs
             in
