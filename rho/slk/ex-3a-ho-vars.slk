@@ -1,0 +1,71 @@
+data cell{ int v; }.
+
+
+
+checkentail_exact x::cell<_> |- %P.
+expect Valid.
+print residue.
+
+
+checkentail_exact %P |- x::cell<_>.
+expect Valid.
+print residue.
+
+
+/*
+# ex-3a-ho-vars.slk
+
+checkentail_exact x::cell<_> |- %P.
+expect Valid.
+print residue.
+
+ <1>emp&x!=null&{FLOW,(20,21)=__norm#E}[]
+ ho_vars: [P --> x::cell<Anon_12>@M&{FLOW,(20,21)=__norm#E}[]]
+[[ SEARCH ==>  UnmatchedRHSData]]
+
+
+
+checkentail_exact %P |- x::cell<_>.
+expect Valid.
+print residue.
+
+     +D |- %K
+ -----------------
+  HO(+D) |- HO(+%K)
+
+      %K |- D 
+   -------------
+     -D |- -%K
+ -----------------
+  HO(-D) |- HO(-%K)
+
+
+Validate 9: OK
+
+Residue:
+
+ <1>emp&x!=null&{FLOW,(20,21)=__norm#E}[]
+ ho_vars: [P --> x::cell<Anon_16>@M&{FLOW,(20,21)=__norm#E}[]]
+[[ SEARCH ==>  UnmatchedRHSData]]
+
+
+
+Entail 10: Fail.(may) cause:do_unmatched_rhs : x::cell<Anon_17>@M(may)
+
+Validate 10: Expecting(3)Valid BUT got : Fail_May
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : x::cell<Anon_17>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ SEARCH ==>  UnmatchedRHSData]]
+ CEX:false
+
+Unexpected List: [10]
+
+*/
