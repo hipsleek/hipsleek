@@ -178,8 +178,22 @@ Projection vs TPProjection
 =============================================
 =============================================
 
+to add test cases in run-fast-test and test
+the second order vars.
+
 =============================================
 =============================================
+./sleek msess/examples/ex5-ho.slk --pip
+=============================================
+using a dedicated var to denote transmitted
+message confuses the typechecker:
+
+Last Proving Location: ../../msess/notes/hodef.slk_7:10_7:31
+
+ERROR: at ex5-ho.slk_25:48_25:49
+Message: UNIFICATION ERROR : at location {(Line:25,Col:48),(Line:25,Col:49)} types node and int are inconsistent
+
+Entail 6: EXCast. Failure("UNIFICATION ERROR : at location {(Line:25,Col:48),(Line:25,Col:49)} types node and int are inconsistent")
 
 =============================================
 =============================================
