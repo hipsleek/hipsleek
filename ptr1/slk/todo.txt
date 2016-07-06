@@ -1,5 +1,5 @@
 ===================================================================
-# ex9b4k2.slk
+# ex9b4k2.slk (FIXED but not using consumed heap)
 
 // below could succeed with an unfold and some inst of i & n?
 checkentail xx::arr_seg<ii,nn> & Univ(ii) & Univ(nn) & ii<nn 
@@ -24,7 +24,7 @@ print residue.
 !!! **solver.ml#13399:new_estate: ex_formula : xx::arr_seg<ii,ni>@M&ii<ni & Univ(ni) & Univ(ii) & !(ii=ni)&{FLOW,(20,21)=__norm#E}[]
 
 =================================================================
-# ex9b4k1.slk --dre ".*univ" --trace-log-num 2
+# ex9b4k1.slk --dre ".*univ" --trace-log-num 2 (FIXED)
 
 # why did we filter inv? 
 # it seems like we are filtering out disjunction which may

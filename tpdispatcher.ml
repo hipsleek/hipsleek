@@ -3699,15 +3699,19 @@ let wrap_remove_univ_rhs f x =
 
 let get_univs_from_ante ante =
   let univ_vars = CP.get_RelForm_arg_list_with_name ante "Univ" in
-  if univ_vars==[] then []
-  else
-    (*Is it correct to make all the variables equal to m universal?*)
-    let () = y_dinfo_hp (add_str "get_univs_from_ante" (pr_list !CP.print_sv)) univ_vars in
-    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in
-    let emap = CP.EMapSV.build_eset eqns' in
-    let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
-    univ_vars2
+  univ_vars
+  (* if univ_vars==[] then [] *)
+  (* else *)
+  (*   (\*Is it correct to make all the variables equal to m universal?*\) *)
+  (*   (\* it seems not, see ptr1/slk/ex9b4fc.slk *\) *)
+  (*   let () = y_dinfo_hp (add_str "get_univs_from_ante" (pr_list !CP.print_sv)) univ_vars in *)
+  (*   let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in *)
+  (*   let emap = CP.EMapSV.build_eset eqns' in *)
+  (*   let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in *)
+  (*   univ_vars2 *)
 
+let get_univs_from_ante ante =
+  Debug.no_1 "get_univs_from_ante" !CP.print_formula !CP.print_svl get_univs_from_ante ante
 
 let connected_rhs_univ univ_vars rhs =
   if univ_vars==[] then false

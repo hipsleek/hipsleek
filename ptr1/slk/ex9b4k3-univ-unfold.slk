@@ -40,7 +40,6 @@ print residue.
 checkentail pp::arrI<5> * qq::arrI<10> & Univ(ii) & Univ(ni) 
   |- pp::arrI<v> * qq::arrI<w> & ni!=ii & v>3 & w>6.
 // this univ inst done at do_match ..
-
 expect Valid.
 print residue.
 

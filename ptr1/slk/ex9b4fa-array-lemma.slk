@@ -7,25 +7,47 @@ pred arr_seg<i,n> == i=n & i>=0 & self!=null
   inv n>=i & i>=0 & self!=null.
 
 
-/*
-lemma_unsafe self::arr_seg<i,n> & i<m<=n 
-     -> self::arr_seg<i,m>*self::arr_seg<m,n> .
 
 
-checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m)
-    |- xx::arr_seg<i+1,n>.
+
+// why i need to be typed?
+checkentail  (i:int)+1<n & Univ(m) & m=i+3 & k=n & k>=0
+    |- xx::arr_seg<k,n>.
 print residue.
-expect Valid.
-*/
+expect Fail.
 
+//(3)
 checkentail xx::arr_seg<i,m>*
-  xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m)
+  xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m) 
     |- xx::arr_seg<i+3,n>.
 print residue.
 expect Fail.
 
+checkentail //i<m<=n & i+1<n & 
+    k>=0 & k=n & xx!=null
+    |- xx::arr_seg<k,n>.
+print residue.
+expect Valid.
+
+checkentail (i:int)+1<n & Univ(m) & m=i+3 & xx!=null & i>=0
+    |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+checkentail (i:int)+1<n & Univ(m) & m=i+3 & xx!=null & i>=0 & i+3=n
+    |- xx::arr_seg<i+3,n>.
+print residue.
+expect Valid.
+
+
 /*
-# ex9b4f.slk
+# ex9b4fa.slk
+
+// why i need to be typed?
+checkentail  (i:int)+1<n & Univ(m) & m=i+3 & k=n
+    |- xx::arr_seg<k,n>.
+print residue.
+expect Fail.
 
 checkentail xx::arr_seg<i,m>*
   xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m)
@@ -47,14 +69,3 @@ Residue:
 
 
 */
-
-checkentail  i+1<n & Univ(m) & m=i+3
-    |- xx::arr_seg<i+3,n>.
-print residue.
-expect Fail.
-
-
-checkentail  i+1<n & Univ(m) & m=i+3 & k=n
-    |- xx::arr_seg<k,n>.
-print residue.
-expect Fail.

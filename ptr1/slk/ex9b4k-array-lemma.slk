@@ -6,6 +6,7 @@ pred arr_seg<i,n> == i=n & i>=0 & self!=null
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0 & self!=null.
 
+//(1)
 checkentail xx::arr_seg<i,n> & i=n |- xx!=null.
 expect Valid.
 print residue.
@@ -15,6 +16,7 @@ checkentail xx::arr_seg<i,n> & Univ(i) |- i=n.
 expect Valid.
 print residue.
 
+//(3)
 checkentail xx::arr_seg<i,n> & Univ(i) & i<n |- i=n.
 expect Fail.
 print residue.
@@ -23,16 +25,24 @@ checkentail xx::arr_seg<i,n> & i<n |- pp::arrI<_> & pp=xx+i.
 expect Valid.
 print residue.
 
+//(5)
 // should below succeed with an unfold and some inst of i?
 checkentail xx::arr_seg<i,n> & Univ(i) |- pp::arrI<_> & pp=xx+i.
+expect Fail.
+print residue.
+
+//(6)
+// should below succeed with an unfold and some inst of i?
+checkentail xx::arr_seg<i,n> & Univ(i) & Univ(n) |- pp::arrI<_> & pp=xx+i.
 expect Valid.
 print residue.
 
 // should we expect Valid with
 checkentail i=n & xx!=null & Univ(i) |- pp::arrI<_> & pp=xx+i.
-expect Valid.
+expect Fail.
 print residue.
 
+//(8)
 checkentail i<n & xx!=null & Univ(i) |- false.
 expect Fail.
 print residue.
@@ -41,6 +51,7 @@ checkentail i<n & Univ(i) |- i=n-1.
 expect Valid.
 print residue.
 
+//(10)
 checkentail i<n & Univ(i) |- i=n-2.
 expect Valid.
 print residue.
@@ -49,16 +60,21 @@ checkentail 0<=i<=n & Univ(i) |- i=n.
 expect Valid.
 print residue.
 
-
-checkentail 0<=i & (i=n | i<n) |- 0<=i & i<=n.
-checkentail 0<=i & i<=n |- 0<=i & (i=n | i<n).
+//(12)
+//checkentail 0<=i & (i=n | i<n) |- 0<=i & i<=n.
+//checkentail 0<=i & i<=n |- 0<=i & (i=n | i<n).
 
 
 checkentail 0<=i<=n & Univ(i) |- i!=n.
-expect Valid.
+expect Fail.
 print residue.
 
 checkentail 0<=i & (i=n | i<n) & Univ(i) |- i!=n.
+expect Fail.
+print residue.
+
+checkentail 0<=i & (i=n | i<n) & Univ(i) & Univ(n) |- i!=n.
 expect Valid.
 print residue.
+
 
