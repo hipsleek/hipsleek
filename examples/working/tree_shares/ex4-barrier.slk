@@ -1,0 +1,29 @@
+data cl {int val;}.
+data cl2 {int val;}.
+data cl3 {int val;}.
+
+macro LR == ((,#),) .
+macro RR == (,(,#)) .
+macro RL == (,(#,)) .
+macro L == (#,) .
+macro R == (,#) .
+
+
+checkentail x::cl(@@L)<_> * x::cl(@@L)<_>|- x::cl(@@L)<_>.
+print residue.
+
+checkentail x::cl<_> * x::cl<_>|- x::cl<_>.
+print residue.
+
+checkentail x::cl<_> * y::cl<_>|- x!=y.
+print residue.
+
+checkentail x::cl(@@L)<_> * y::cl(@@L)<_>|- x!=y.
+print residue.
+
+checkentail x::cl(@@L)<_> * y::cl(@@L)<_>|- x=y.
+print residue.
+
+checkentail x::cl(@@L)<_> * y::cl(@@L)<_> & x=y |- false.
+expect Valid.
+print residue.
