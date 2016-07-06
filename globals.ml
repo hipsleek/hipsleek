@@ -820,6 +820,7 @@ let eres_name = "eres"
 let self = "self"
 
 let constinfinity = "ZInfinity"
+let allow_univ_inst = ref true (* false *)
 let deep_split_disjuncts = ref true (* false *)
 let check_integer_overflow = ref false
 

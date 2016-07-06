@@ -139,7 +139,7 @@ let partition_constrs_4_paths link_hpargs_w_path constrs0 prog proc_name =
 
 let subst_formula formula hprel_def =
   let helper formula h_formula hprel_def =
-    if (x_add Cformula.get_node_name 14 h_formula == x_add Cformula.get_node_name 15 hprel_def.Cformula.hprel_def_hrel)
+    if (x_add_1 Cformula.get_node_name h_formula == x_add_1 Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel)
     then (
       let first_formula = match (List.hd hprel_def.Cformula.hprel_def_body) with
         | (_, None,_) -> formula
@@ -308,7 +308,7 @@ let check_cases cases specs =
 
 (* let subst_hprel_defs hprel_defs = *)
 (*   let (main, opt) = List.fold_left (fun (main, opt) hprel_def -> *)
-(*       let name = x_add Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel in *)
+(*       let name = x_add_1 Cformula.get_node_name hprel_def.Cformula.hprel_def_hrel in *)
 (*       let reg = Str.regexp "_.*" in *)
 (*       let pos = try Str.search_forward reg name 0 with *)
 (*         | Not_found -> -1 *)

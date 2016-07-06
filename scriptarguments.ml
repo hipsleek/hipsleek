@@ -568,6 +568,8 @@ let common_arguments = [
        Globals.allow_inf_qe := true;
        Globals.allow_qe_fix := true;),
    "use the quantifier elimination procedure for inference ");
+  ("--dis-univ-inst", Arg.Clear Globals.allow_univ_inst,"disable universal inst for implication");
+  ("--en-univ-inst", Arg.Set Globals.allow_univ_inst,"enable universal inst for implication");
   ("--dis-dsd", Arg.Clear Globals.deep_split_disjuncts,"disable deep splitting of disjunctions");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");

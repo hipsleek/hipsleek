@@ -2065,7 +2065,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
         let get_name h = match h with
           | F.HVar (v,_) -> P.name_of_sv v
           | F.DataNode _
-          | F.ViewNode _-> F.get_node_name 2 h
+          | F.ViewNode _-> x_add_1 F.get_node_name h
           | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
           | _ -> failwith ("Only nodes, HVar and HRel allowed after split_star_conjunctions 2") in
         (List.length hs),self_n, List.map get_name hs
@@ -3135,6 +3135,32 @@ let update_mut_vars_bu iprog cprog scc_procs =
   new_scc_procs
 
 let eq_templ_decl t1 t2 = String.compare t1.templ_name t2.templ_name == 0
+
+let get_base_case vdef =
+        match vdef.view_base_case with
+        | None -> None
+        | Some (p,_) -> Some p
+
+let get_base_pure cprog hf = match hf with
+  | ViewNode ({h_formula_view_name = c; h_formula_view_node = root; h_formula_view_arguments =args}) 
+      -> let vdef = look_up_view_def no_pos cprog.prog_view_decls c in
+      begin
+        match get_base_case vdef with
+          | None -> None
+          | Some p -> 
+                (* subs parameters here *)
+                let args = (root::args) in
+                let para = (CP.self_sv::vdef.view_vars) in
+                let () = y_binfo_hp (add_str "arguments" !CP.print_svl)  args in
+                let () = y_binfo_hp (add_str "parameters" !CP.print_svl) para in
+                let sst = List.combine para args in
+                let np = CP.apply_subs_all sst p in
+                let () = y_binfo_hp (add_str "pure (before)" !CP.print_formula)  p in
+                let () = y_binfo_hp (add_str "pure (after subs)" !CP.print_formula) np in
+                Some np
+      end
+  | _ -> None
+
 let get_emp_map_x cprog=
   let helper vdef=
     let o_base = if !Globals.norm_cont_analysis then
@@ -3641,8 +3667,8 @@ let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp
   let vname = vdecl.view_name in
   let self_var = P.SpecVar (Named dname, self, Unprimed) in
   let self_closure = F.find_close [self_var] eqs in
-  let is_core_dnode node = eq_str (F.get_node_name 3 node) dname in
-  let is_core_vnode node = eq_str (F.get_node_name 4 node) vname in
+  let is_core_dnode node = eq_str (x_add_1 F.get_node_name node) dname in
+  let is_core_vnode node = eq_str (x_add_1 F.get_node_name node) vname in
   let core_dnodes = List.filter is_core_dnode (F.get_dnodes f) in
   let core_vnodes = List.filter is_core_vnode (F.get_vnodes f) in
   let core_nodes = core_dnodes @ core_vnodes in

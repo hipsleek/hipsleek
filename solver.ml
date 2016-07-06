@@ -3357,7 +3357,7 @@ and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:C
           | _ -> true) heaps
       in
       let barrier_nodes = List.filter (fun h ->
-          let name = x_add CF.get_node_name 16 h in
+          let name = x_add_1 CF.get_node_name h in
           if (name="barrier") then true else false) heaps
       in
       if (List.length barrier_nodes <= 1) then (*consistent*) false
@@ -6518,7 +6518,7 @@ and is_distributive	(coer : coercion_decl) : bool =
 and check_one_node (sv : CP.spec_var) (top_level_rhs : CP.spec_var list) (lhs_heap : CF.h_formula) (rhs_heap : CF.h_formula) : bool =
   match top_level_rhs with
   | h :: r ->
-    if (CP.eq_spec_var h sv) && (String.compare (x_add CF.get_node_name 17 (get_node sv lhs_heap)) (x_add CF.get_node_name 18 (get_node h rhs_heap))) == 0 then
+    if (CP.eq_spec_var h sv) && (String.compare (x_add_1 CF.get_node_name (get_node sv lhs_heap)) (x_add_1 CF.get_node_name (get_node h rhs_heap))) == 0 then
       true
     else (check_one_node sv r lhs_heap rhs_heap)
   | [] -> false
@@ -9942,7 +9942,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     (*           None *)
     (*   | _ -> *)
     (* c1,v1,p1 *)
-    let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
+    let lhs_name,lhs_arg,lhs_var = x_add_1 get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let () = Gen.Profiling.push_time "empty_predicate_testing" in
     let lhs_vd = (look_up_view_def_raw x_loc prog.prog_view_decls lhs_name) in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
@@ -10133,7 +10133,7 @@ and do_lhs_case prog ante conseq estate lhs_node rhs_node is_folding pos =
     ante conseq lhs_node rhs_node
 
 and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
-  let c1,v1,p1 = get_node_name 20 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
+  let c1,v1,p1 = x_add_1 get_node_name lhs_node, get_node_args lhs_node , get_node_var lhs_node in
   let vd = (look_up_view_def_raw x_loc prog.prog_view_decls c1) in
   let na,prf =
     (match vd.view_base_case with
@@ -11172,7 +11172,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           in
           (* x_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos; *)
           x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
-          let process_early univ_vs new_ante_p conseq_univ  =
+          let process_early_univ univ_vs new_ante_p conseq_univ  =
             let () = y_dinfo_pp "TODO: process early univ instantiation" in
             let () = y_dinfo_pp "=========================================" in
             let () = x_dinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
@@ -11191,10 +11191,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             else (b,new_ante_p)
             (* failwith ("early univ inst proc here"^x_tbi) *)
           in
+          let process_early_univ univ_vs new_ante_p conseq_univ  =
+            let pr1 = !CP.print_formula in
+            let pr2 = !MCP.print_mix_formula in
+            Debug.no_3 "process_early_univ" !CP.print_svl pr2 pr1 (pr_pair string_of_bool pr2) process_early_univ univ_vs new_ante_p conseq_univ in
           let new_conseq_p,new_ante_p = 
             if conseq_lst_univ!=[] then
               let conseq_univ = CP.join_conjunctions conseq_lst_univ in
-              let (flag,ante) = process_early univ_vs new_ante_p conseq_univ in
+              let (flag,ante) = x_add process_early_univ univ_vs new_ante_p conseq_univ in
               if flag then (new_conseq_p2,ante)
               else (new_conseq_p,new_ante_p)
             else new_conseq_p,new_ante_p in
@@ -13374,6 +13378,25 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state_short) estate in
         let () = y_binfo_hp (add_str "lhs_node (M_unfold)" !CF.print_h_formula) lhs_node in
         let () = y_binfo_hp (add_str "rhs_node (M_unfold)" !CF.print_h_formula) rhs_node in
+        let is_data_rhs = CF.is_data rhs_node in
+        let lhs_name = x_add_1 CF.get_node_name lhs_node in
+        let base_pure = Cast.get_base_pure prog lhs_node in
+        let () = y_binfo_hp (add_str "is_data_rhs" string_of_bool) is_data_rhs in
+        let () = y_binfo_hp (add_str "lhs_name" pr_id) lhs_name in
+        let () = y_binfo_hp (add_str "base_pure" (pr_option !CP.print_formula)) base_pure in
+        let pr_es = Cprinter.string_of_entail_state_short in
+        let () = y_binfo_hp (add_str "estate" pr_es) estate in
+        let new_estate =
+          begin
+            match base_pure with
+                None -> estate
+              | Some base_pure -> 
+                    let () = y_binfo_pp "TODO:to add univ_imply checking before unfold" in
+                    let rhs_univ_inst = CP.mkNot_s base_pure in
+                    let () = y_binfo_hp (add_str "rhs_univ_inst" !CP.print_formula) rhs_univ_inst in
+                    CF.add_pure_estate estate rhs_univ_inst
+          end in
+        let () = y_binfo_hp (add_str "new_estate" pr_es) new_estate in
         match lhs_node with
         | HRel (hp,args,_) ->
           (* if CF.is_exists_hp_rel hp estate  then *)
@@ -13569,7 +13592,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
       let ctx0 = Ctx estate in
       (* let ((coer_l,coer_r),univ_coers) = 
-         find_coercions (get_node_name lhs_node) (get_node_name rhs_node) prog lhs_node rhs_node in*)
+         find_coercions (x_add_1 get_node_name lhs_node) (get_node_name rhs_node) prog lhs_node rhs_node in*)
       let helper coer estate = 
         try
           let r1,r2 =
@@ -14969,8 +14992,8 @@ and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_
 *)
 
 and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
-  let c1 = get_node_name 21 anode in
-  let c2 = get_node_name 22 ln2 in
+  let c1 = x_add_1 get_node_name anode in
+  let c2 = x_add_1 get_node_name ln2 in
   let ((coers1,coers2),univ_coers) = match c_opt with
     | None -> find_coercions c1 c2 prog anode ln2 
     | Some c ->
@@ -16033,14 +16056,14 @@ and find_possible_matches_x (hs1: h_formula list) (hs2: h_formula list) : ((h_fo
   else
     let rec find_one_x (h: h_formula) (hs: h_formula list) : ((h_formula * h_formula) list * h_formula list) list =
       try
-        let h_name = get_node_name 23 h in
+        let h_name = x_add_1 get_node_name h in
         (match hs with
          | [] -> []
          | x::xs ->
            let res = find_one_x h xs in
            let m2 = List.map (fun (ls, rest) -> (ls, x::rest)) res in
            (try
-              let x_name = get_node_name 24 x in
+              let x_name = x_add_1 get_node_name x in
               if (h_name = x_name) then
                 (* A possible match (h,x) *)
                 let m1 = ([(x,h)],xs) in
@@ -17467,8 +17490,8 @@ module frac_normaliz = struct
 		normalize_frac_formula prog nf 
 	 else 
 		let w_lem, wo_lem = List.partition (fun l -> 
-			let hn,t = get_node_name (List.hd l), List.tl l in
-			List.exists (fun c -> (String.compare hn (get_node_name c))<>0) t) h_alias_grp in
+			let hn,t = x_add_1 get_node_name (List.hd l), List.tl l in
+			List.exists (fun c -> (String.compare hn (x_add_1 get_node_name c))<>0) t) h_alias_grp in
 		if w_lem <>[] then 
 			let nf = appl_comb_lemmas f w_lem h_alias_grp n_simpl_h in
 			normalize_frac_formula prog nf 

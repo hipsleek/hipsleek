@@ -3733,6 +3733,8 @@ let filter_inv ante =
     but this does not check if we had strengthened the LHS unnecessarily..
 *)
 let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
+  if not(!Globals.allow_univ_inst) then x_add imply_timeout ante0 conseq0 imp_no timeout process
+  else 
     let () = y_dinfo_pp "Processing univ instantiation" in
     let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
     let () = y_dinfo_hp (add_str "ante0" !CP.print_formula) ante0 in

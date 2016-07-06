@@ -160,7 +160,7 @@ let rec complx_sig_of_formula prog root (f: CF.formula) =
     (complx_sig_of_formula prog root f1) @ (complx_sig_of_formula prog root f2)
 
 let sig_of_formula prog root (f: CF.formula) = 
-  List.map (CF.get_node_name 30) (complx_sig_of_formula prog root f)
+  List.map (fun x -> x_add_1 CF.get_node_name x) (complx_sig_of_formula prog root f)
 
 let sig_of_formula prog root (f: CF.formula) = 
   let pr1 = !CP.print_sv in
