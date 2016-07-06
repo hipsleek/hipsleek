@@ -97,7 +97,7 @@ let eq_ho_flow_kind k1 k2 =
   | _ -> false
 
 let ho_always_split = ref false
-let add_ho_residue_to_es = ref false
+let contra_ho_flag = ref true
 
 let gen_lemma_action_invalid = -1
 
