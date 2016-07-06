@@ -48,6 +48,8 @@ expect Valid.
 checkentail %P |- x::node<_,_>.
 print residue.
 expect Valid.
-/*
-Entail 8: Fail.(may) cause:do_unmatched_rhs : x::node<Anon_18,Anon_19>@M(may)
-*/
+
+//9
+checkentail %P * y::node<_,_> |- x::node<_,_>  * y::node<_,_>.
+print residue.
+expect Valid.
