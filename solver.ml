@@ -8167,7 +8167,9 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                                                       es_ivars = new_es.es_ivars;
                                                       es_var_zero_perm = zero_vars; (*re-add @zero of the main thread*)
                                                       es_gen_impl_vars = new_es.es_gen_impl_vars;
-                                                      es_gen_expl_vars = new_es.es_gen_expl_vars;} in
+                                                      es_gen_expl_vars = new_es.es_gen_expl_vars;
+                                                      es_init_impl_expl_vars = new_es.es_init_impl_expl_vars;
+                                                                                                      } in
                         let new_conseq = (Base new_b2) in
                         x_dinfo_pp ("\nheap_entail_conjunct_helper: after heap_entail_thread: "
                                     ^ "\nnew_ante:\n" ^ (Cprinter.string_of_entail_state new_estate)
@@ -8930,11 +8932,16 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         let () = Debug.ninfo_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
         (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
       else
-        let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
+        let exist_vars = estate.es_evars(* @estate.es_gen_expl_vars *)@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
         (* TODO-EXPURE : need to build new expure stuff *)
+        let () = x_tinfo_hp (add_str "exist_vars(b4)" Cprinter.string_of_spec_var_list) exist_vars no_pos in
+        let () = x_tinfo_hp (add_str "es_evars" Cprinter.string_of_spec_var_list) estate.es_evars no_pos in
+        let () = x_tinfo_hp (add_str "es_ivars" Cprinter.string_of_spec_var_list) estate.es_ivars no_pos in
+        let () = x_tinfo_hp (add_str "es_expl_vars" Cprinter.string_of_spec_var_list) estate.es_gen_expl_vars no_pos in
+        let () = x_tinfo_hp (add_str "es_impl_vars" Cprinter.string_of_spec_var_list) estate.es_gen_impl_vars no_pos in
         let remove_univ_vars f vs = 
           let f = MCP.pure_of_mix f in
-          let univ_vs = TP.get_univs_from_ante f in
+          let (univ_vs,univ_bigger) = x_add_1 TP.get_univs_from_ante f in
           let () = x_tinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
           CP.diff_svl vs univ_vs
         in
@@ -9695,7 +9702,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
         (* WN : cause of performance bug? needed by tut/ex2/bugs-sim5b.slk *)
         let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
         (* TODO: change to if univ inst expected *)
-        let univ_vs = TP.get_univs_from_ante a0 in
+        let (univ_vs,_) = x_add_1 TP.get_univs_from_ante a0 in
         if CP.no_andl a0 && !Globals.deep_split_disjuncts  && univ_vs==[] 
         then
           let a0 = CP.drop_exists a0 in
@@ -9713,26 +9720,26 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           let a0l = if !label_split_ante then CP.split_disjunctions a0 else [a0] in
           let a0l = List.filter is_sat a0l in a0l
       in
-      let process_univ univ_vars ante0 conseq0 =
-        if not (x_add TP.connected_rhs_univ univ_vars conseq0) then ()
-        else
-          let prev_inst = TP.univ_rhs_store # get in
-          let ante0 = CP.drop_rel_formula ante0 in
-          let ante1 =TP.filter_inv ante0 in
-          let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
-          let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
-          let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
-          let b = x_add !CP.tp_imply ante0 new_conseq in
-          if b then
-            let () = y_tinfo_hp (add_str "process_univ added!" Cprinter.string_of_pure_formula) conseq0 in
-            TP.univ_rhs_store # set conseq0
-          else
-            ()
-      in
-      let process_univ univ_vars ante0 conseq0 =
-        Debug.no_3 "process_univ" !CP.print_svl Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun x -> "()") process_univ univ_vars ante0 conseq0
-      in
-      let univ_vars = TP.get_univs_from_ante a0 in
+      (* let process_univ univ_vars univ_bigger ante0 conseq0 = *)
+      (*   if not (x_add TP.connected_rhs_univ univ_bigger conseq0) then () *)
+      (*   else *)
+      (*     let prev_inst = TP.univ_rhs_store # get in *)
+      (*     let ante0 = CP.drop_rel_formula ante0 in *)
+      (*     let ante1 =TP.filter_inv ante0 in *)
+      (*     let new_conseq = CP.mkAnd ante1 prev_inst no_pos in *)
+      (*     let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in *)
+      (*     let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in *)
+      (*     let b = x_add !CP.tp_imply ante0 new_conseq in *)
+      (*     if b then *)
+      (*       let () = y_tinfo_hp (add_str "process_univ added!" Cprinter.string_of_pure_formula) conseq0 in *)
+      (*       TP.univ_rhs_store # set conseq0 *)
+      (*     else *)
+      (*       () *)
+      (* in *)
+      (* let process_univ univ_vars univ_bigger ante0 conseq0 = *)
+      (*   Debug.no_3 "process_univ" !CP.print_svl Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun x -> "()") process_univ univ_vars univ_bigger ante0 conseq0 *)
+      (* in *)
+      let (univ_vars,univ_bigger) = x_add_1 TP.get_univs_from_ante a0 in
       let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
       (* let () = List.iter (process_univ univ_vars a0) new_rhs in *)
       (* let a0 = *)
@@ -9951,6 +9958,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
                         es_evars = estate.es_evars;
                         es_gen_expl_vars = estate.es_gen_expl_vars; 
                         es_gen_impl_vars = estate.es_gen_impl_vars; 
+                        es_init_impl_expl_vars = estate.es_init_impl_expl_vars; 
                         es_ante_evars = estate.es_ante_evars;
                         es_unsat_flag = false;
                         es_var_zero_perm = estate.es_var_zero_perm;
@@ -10481,7 +10489,7 @@ and compute_matching_thread_nodes_x l_idents l_rsr r_rsr =
     if not (CF.isStrictConstEmp r_residue) then (*lhs<rhs: FAIL*) (3,[],None)
     else (2,mt_rsr,Some [l_residue]) (*SPLIT*)
 
-and process_early_univ_x univ_vs new_ante_p conseq_univ  =
+and process_early_univ_x ?(ante_ex=[]) univ_vs new_ante_p conseq_univ  =
   let () = y_dinfo_pp "TODO: process early univ instantiation" in
   let () = y_dinfo_pp "=========================================" in
   let () = x_dinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
@@ -10491,7 +10499,7 @@ and process_early_univ_x univ_vs new_ante_p conseq_univ  =
   (* let () = y_dinfo_hp (add_str "new_conseq_p2" (Cprinter.string_of_mix_formula)) new_conseq_p2 in *)
   let () = y_dinfo_hp (add_str "conseq_univ" (!CP.print_formula)) conseq_univ in
   let lhs1 = MCP.pure_of_mix new_ante_p in
-  let (b,_,_) = x_add TP.imply_timeout_univ univ_vs lhs1 conseq_univ "666" 0.0 None in
+  let (b,_,_) = x_add (TP.imply_timeout_univ ~ante_ex:ante_ex) univ_vs lhs1 conseq_univ "666" 0.0 None in
   let () = y_dinfo_hp (add_str "outcome" string_of_bool) b in
   if b then 
     let r = TP.univ_rhs_store # get_rm in
@@ -10500,32 +10508,32 @@ and process_early_univ_x univ_vs new_ante_p conseq_univ  =
   else (b,new_ante_p)
     (* failwith ("early univ inst proc here"^x_tbi) *)
           
-and process_early_univ univ_vs new_ante_p conseq_univ  =
+and process_early_univ ?(ante_ex=[]) univ_vs new_ante_p conseq_univ  =
   let pr1 = !CP.print_formula in
   let pr2 = !MCP.print_mix_formula in
-  Debug.no_3 "process_early_univ" !CP.print_svl pr2 pr1 (pr_pair string_of_bool pr2) process_early_univ_x univ_vs new_ante_p conseq_univ
+  Debug.no_3 "process_early_univ" !CP.print_svl pr2 pr1 (pr_pair string_of_bool pr2) (process_early_univ_x ~ante_ex:ante_ex) univ_vs new_ante_p conseq_univ
 
-and extr_univ_vs_conseq new_ante_p new_conseq_p ivar_subs_to_conseq =
+and extr_univ_vs_conseq ?(ante_ex=[]) new_ante_p new_conseq_p ivar_subs_to_conseq =
   let pr = !MCP.print_mix_formula in
   let pr_subs =pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr_out = pr_triple !CP.print_svl (pr_list !CP.print_formula) pr in
-  Debug.no_3 "extr_univ_vs_conseq" pr pr pr_subs pr_out extr_univ_vs_conseq_x new_ante_p new_conseq_p ivar_subs_to_conseq
+  Debug.no_3 "extr_univ_vs_conseq" pr pr pr_subs pr_out (extr_univ_vs_conseq_x ~ante_ex:ante_ex) new_ante_p new_conseq_p ivar_subs_to_conseq
 
-and extr_univ_vs_conseq_x new_ante_p new_conseq_p ivar_subs_to_conseq =
+and extr_univ_vs_conseq_x ?(ante_ex=[]) new_ante_p new_conseq_p ivar_subs_to_conseq =
   let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
   let pure_new_ante_p = MCP.pure_of_mix new_ante_p in
-  let univ_vs = TP.get_univs_from_ante pure_new_ante_p in
+  let (univ_vs,univ_bigger) = TP.get_univs_from_ante pure_new_ante_p in
   let (to_lst,fr_lst) = List.split ivar_subs_to_conseq in
   let pure_new_conseq_p = CP.subst_avoid_capture fr_lst to_lst pure_new_conseq_p in
   let (conseq_lst_univ,new_conseq_p2) =
     let no_chx = ([],new_conseq_p)in
-    if x_add TP.connected_rhs_univ univ_vs pure_new_conseq_p
+    if x_add TP.connected_rhs_univ univ_bigger pure_new_conseq_p
     then
       let () = y_dinfo_pp "do_match: Processing univ instantiation" in
       let conseq_lst = CP.split_conjunctions pure_new_conseq_p in
       let (conseq_lst_univ,conseq_lst_others) = List.partition (fun f ->
           let vs = CP.fv f in
-          (CP.intersect_svl vs univ_vs)!=[]
+          (CP.intersect_svl vs univ_bigger)!=[]
       ) conseq_lst in
       if conseq_lst_univ==[] then no_chx
       else (conseq_lst_univ,MCP.mix_of_pure (CP.join_conjunctions conseq_lst_others))
@@ -11185,8 +11193,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* ==================== Extract equation expression related to Univ vars ==================== *)
           let pure_new_ante_p = MCP.pure_of_mix new_ante_p in
           let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
+          let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
           let (univ_vs,conseq_lst_univ,new_conseq_p2) = x_add extr_univ_vs_conseq new_ante_p new_conseq_p ivar_subs_to_conseq in
-          (* let univ_vs = TP.get_univs_from_ante pure_new_ante_p in *)
+          (* let (univ_vs,univ_bigger) = TP.get_univs_from_ante pure_new_ante_p in *)
           (* (\* eqlst is a list of pair. In each pair, two expressions are equal and one of them contains Univ vars *\) *)
           (* let () = x_dinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in *)
           (* let () = y_dinfo_hp (add_str "to_lhs" !CP.print_formula) to_lhs in *)
@@ -11257,10 +11266,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (*   let pr1 = !CP.print_formula in *)
           (*   let pr2 = !MCP.print_mix_formula in *)
           (*   Debug.no_3 "process_early_univ" !CP.print_svl pr2 pr1 (pr_pair string_of_bool pr2) process_early_univ univ_vs new_ante_p conseq_univ in *)
+          let ante_ex = CF.get_ante_ex estate in
+          let () = y_binfo_hp (add_str "ante_ex" !CP.print_svl) ante_ex in
           let new_conseq_p,new_ante_p = 
             if conseq_lst_univ!=[] then
               let conseq_univ = CP.join_conjunctions conseq_lst_univ in
-              let (flag,ante) = x_add process_early_univ univ_vs new_ante_p conseq_univ in
+              let (flag,ante) = x_add (process_early_univ ~ante_ex:ante_ex) univ_vs new_ante_p conseq_univ in
               if flag then (new_conseq_p2,ante)
               else (new_conseq_p,new_ante_p)
             else new_conseq_p,new_ante_p in
@@ -13468,9 +13479,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                 | Some base_pure -> 
                       let () = y_tinfo_pp "TODO:to add univ_imply checking before unfold" in
                       let rhs_univ_inst = CP.mkNot_s base_pure in
-                      let univ_vs = TP.get_univs_from_ante lhs_pure in
+                      let (univ_vs,univ_bigger) = x_add_1 TP.get_univs_from_ante lhs_pure in
                       (* let (univ_vs,_,_) = x_add extr_univ_vs_conseq (MCP.mix_of_pure lhs_pure) (MCP.mix_of_pure rhs_univ_inst) [] in *)
-                      let (flag,_) = x_add process_early_univ univ_vs (MCP.mix_of_pure lhs_pure) rhs_univ_inst in
+                      let (flag,_) = x_add (process_early_univ ~ante_ex:(CF.get_ante_ex estate)) univ_vs (MCP.mix_of_pure lhs_pure) rhs_univ_inst in
                       let () = y_tinfo_hp (add_str "rhs_univ_inst" !CP.print_formula) rhs_univ_inst in
                       if flag then CF.add_pure_estate estate rhs_univ_inst
                       else estate

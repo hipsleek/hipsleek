@@ -3699,19 +3699,19 @@ let wrap_remove_univ_rhs f x =
 
 let get_univs_from_ante ante =
   let univ_vars = CP.get_RelForm_arg_list_with_name ante "Univ" in
-  univ_vars
-  (* if univ_vars==[] then [] *)
-  (* else *)
-  (*   (\*Is it correct to make all the variables equal to m universal?*\) *)
-  (*   (\* it seems not, see ptr1/slk/ex9b4fc.slk *\) *)
-  (*   let () = y_dinfo_hp (add_str "get_univs_from_ante" (pr_list !CP.print_sv)) univ_vars in *)
-  (*   let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in *)
-  (*   let emap = CP.EMapSV.build_eset eqns' in *)
-  (*   let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in *)
-  (*   univ_vars2 *)
+  if univ_vars==[] then ([],[])
+  else
+    (*Is it correct to make all the variables equal to m universal?*)
+    (* it seems not, see ptr1/slk/ex9b4fc.slk *)
+    let () = y_dinfo_hp (add_str "get_univs_from_ante" (pr_list !CP.print_sv)) univ_vars in
+    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in
+    let emap = CP.EMapSV.build_eset eqns' in
+    let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
+    (univ_vars,univ_vars2)
 
 let get_univs_from_ante ante =
-  Debug.no_1 "get_univs_from_ante" !CP.print_formula !CP.print_svl get_univs_from_ante ante
+  let pr = !CP.print_svl in
+  Debug.no_1 "get_univs_from_ante" !CP.print_formula (pr_pair pr pr) get_univs_from_ante ante
 
 let connected_rhs_univ univ_vars rhs =
   if univ_vars==[] then false
@@ -3736,7 +3736,7 @@ let filter_inv ante =
     below appears to add (exists univ_var ..) to conseq
     but this does not check if we had strengthened the LHS unnecessarily..
 *)
-let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
+let imply_timeout_univ ?(ante_ex=[]) univ_vars ante0 conseq0 imp_no timeout process =
   if not(!Globals.allow_univ_inst) then x_add imply_timeout ante0 conseq0 imp_no timeout process
   else 
     let () = y_dinfo_pp "Processing univ instantiation" in
@@ -3752,7 +3752,7 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
     let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
     (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
     let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
-    let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
+    let new_conseq = CP.mkExists (univ_vars@ante_ex) new_conseq None no_pos in
     let () = y_dinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
     let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
     let () = y_dinfo_hp (add_str "imply_timeout_univ: b " string_of_bool) b in
@@ -3760,27 +3760,27 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
       let () = univ_rhs_store # set conseq0 in r
     else r
 
-let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
+let imply_timeout_univ ?(ante_ex=[]) univ_vars ante0 conseq0 imp_no timeout process =
   let pr1 = !print_svl in
   let pr2 = !CP.print_formula in
   Debug.no_3 "imply_timeout_univ" pr1 pr2 pr2 (fun (b,_,_) -> string_of_bool b)
-      (fun _ _ _ -> imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process) univ_vars ante0 conseq0
+      (fun _ _ _ -> imply_timeout_univ ~ante_ex:ante_ex univ_vars ante0 conseq0 imp_no timeout process) univ_vars ante0 conseq0
 
-let imply_timeout ante0 conseq0 imp_no timeout process =
+let imply_timeout ?(ante_ex=[]) ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
-  let univ_vars = get_univs_from_ante ante0 in
+  let univ_vars,univ_bigger = get_univs_from_ante ante0 in
   let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
-  if (not b) && (x_add connected_rhs_univ univ_vars conseq0)
-  then x_add imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process
+  if (not b) && (x_add connected_rhs_univ univ_bigger conseq0)
+  then x_add (imply_timeout_univ ~ante_ex:ante_ex) univ_vars ante0 conseq0 imp_no timeout process
   else ans
 ;;
   
-let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
+let imply_timeout ?(ante_ex=[]) (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
   : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
   (*let () = print_string "dubios!!\n" in*)
   Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
-    (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
+    (fun a c -> imply_timeout ~ante_ex:ante_ex a c imp_no timeout process) ante0 conseq0
 
 
 (* let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process *)

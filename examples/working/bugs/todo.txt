@@ -1,4 +1,27 @@
 ==================================================
+==================================================
+==================================================
+==================================================
+==================================================
+# bug7b.slk
+
+checkentail x::lseg<n, p> & n > 9 |- x::lseg<nn1, r1> * r1::lseg<n2, r2> & nn1 >= 9 & n2 >= 2.
+expect Fail.
+
+# why is n2 expl rather than impl?
+
+@7! **solver.ml#8940:es_expl_vars:[nn1,n2]
+@7! **solver.ml#8941:es_impl_vars:[]
+==================================================
+# bug7e3.slk
+
+checkentail x::lseg<a, q1> * q1::lseg<b, q> & n=a+b & n > 9 
+      & Univ(a) & Univ(b) & a,b>=0
+   |- x::lseg<nnn1, r1> * r1::lseg<nnn2, r2>& nnn1 >= 9 & nnn2>=2 .
+expect Fail.
+
+Fixed by adding ante_ex : es_init_impl_expl_vars
+==================================================
 # i5-3a.slk
 
 infer [k]  b=null  |-  b=k.

@@ -9707,7 +9707,7 @@ type entail_state = {
   (*used by late instantiation*)
   es_gen_expl_vars: CP.spec_var list; (* explicit instantiation var *)
   es_gen_impl_vars: CP.spec_var list; (* implicit instantiation var *)
-
+  es_init_impl_expl_vars: CP.spec_var list; (* initial explicit/implicit ex vars *)
   (* to indicate if unsat check has been done for current state *)
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
@@ -9927,6 +9927,8 @@ let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 (*   let cons_heap = es.es_heap in *)
 (*   () *)
 
+let get_ante_ex estate =
+  estate.es_init_impl_expl_vars(* @estate.es_gen_expl_vars *)
 
 
 let rec is_infer_pre_must sf = match sf with
@@ -10243,6 +10245,7 @@ let empty_es flowt grp_lbl pos =
     es_ante_evars = [];
     es_gen_expl_vars = []; 
     es_gen_impl_vars = []; 
+    es_init_impl_expl_vars = []; 
     es_pp_subst = [];
     es_unsat_flag = true;
     es_arith_subst = [];
@@ -14734,13 +14737,15 @@ and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var l
   transform_context (fun es -> Ctx{es with 
                                    es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
                                    es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
+                                   es_init_impl_expl_vars = es.es_init_impl_expl_vars @ expvars @ impvars;
                                    (*es_evars = es.es_evars@ expvars;*)}) ctx
 
 and impl_to_expl es vl : entail_state = 
   let im, il = List.partition (fun c-> List.mem c vl) es.es_gen_impl_vars in
   {es with 
    es_gen_expl_vars = es.es_gen_expl_vars @ im; 
-   es_gen_impl_vars = il;}
+   es_gen_impl_vars = il;
+  }
 
 
 and pop_exists_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
