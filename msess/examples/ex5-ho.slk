@@ -1,0 +1,53 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+//1
+checkentail x::node<_,null> |- %L.
+print residue.
+expect Valid.
+
+//2
+checkentail x::node<_,a> |- %L.
+print residue.
+expect Valid.
+
+//3
+checkentail x::node<_,a> & a=null & y=4 |- %L.
+print residue.
+expect Valid.
+
+//4
+checkentail y=4 |- %L.
+print residue.
+expect Valid.
+
+//5
+checkentail x::Sess{@S a?msg=1;;a?0}<> |- x::Sess{@S a?%L;;a?0}<>.
+print residue.
+expect Valid.
+
+//6
+checkentail x::Sess{@S a?msg::node<_,_>&true;;a?0}<> |- x::Sess{@S a?%L;;a?0}<>.
+print residue.
+expect Valid.
+/*
+ERROR: at ex5-ho.slk_30:48_30:49
+Message: UNIFICATION ERROR : at location {(Line:30,Col:48),(Line:30,Col:49)} types node and int are inconsistent
+
+Entail 6: EXCast. Failure("UNIFICATION ERROR : at location {(Line:30,Col:48),(Line:30,Col:49)} types node and int are inconsistent")
+: no residue 
+Validate 6: Expecting1 ValidBUT got no residue
+*/
+
+//7
+checkentail x::Sess{@S a?msg::node<a,_>&a=1}<> |- x::Sess{@S a?%L}<>.
+print residue.
+expect Valid.
+
+//8
+checkentail %P |- x::node<_,_>.
+print residue.
+expect Valid.
+/*
+Entail 8: Fail.(may) cause:do_unmatched_rhs : x::node<Anon_18,Anon_19>@M(may)
+*/
