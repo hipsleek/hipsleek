@@ -9676,6 +9676,7 @@ class infer_acc =
           false
   end;;
 
+
 type entail_state = {
   es_formula : formula; (* can be any formula ; 
                            !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
@@ -9920,6 +9921,11 @@ let print_esc_stack = ref(fun (c:esc_stack) -> "printer not initialized")
 let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initialized")
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
+
+(* let get_lhs_pure es =  *)
+(*   let f = es.formula in *)
+(*   let cons_heap = es.es_heap in *)
+(*   () *)
 
 
 

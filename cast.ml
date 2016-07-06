@@ -3151,12 +3151,12 @@ let get_base_pure cprog hf = match hf with
                 (* subs parameters here *)
                 let args = (root::args) in
                 let para = (CP.self_sv::vdef.view_vars) in
-                let () = y_binfo_hp (add_str "arguments" !CP.print_svl)  args in
-                let () = y_binfo_hp (add_str "parameters" !CP.print_svl) para in
+                let () = y_tinfo_hp (add_str "arguments" !CP.print_svl)  args in
+                let () = y_tinfo_hp (add_str "parameters" !CP.print_svl) para in
                 let sst = List.combine para args in
                 let np = CP.apply_subs_all sst p in
-                let () = y_binfo_hp (add_str "pure (before)" !CP.print_formula)  p in
-                let () = y_binfo_hp (add_str "pure (after subs)" !CP.print_formula) np in
+                let () = y_tinfo_hp (add_str "pure (before)" !CP.print_formula)  p in
+                let () = y_tinfo_hp (add_str "pure (after subs)" !CP.print_formula) np in
                 Some np
       end
   | _ -> None

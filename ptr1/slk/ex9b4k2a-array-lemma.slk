@@ -17,17 +17,12 @@ print residue.
 */
 
 //checkentail xx::arr_seg<ii,ni> & Univ(ii) & Univ(ni) |- pp::arrI<_> & pp=xx+ii.
-checkentail xx::arr_seg<ii,ni> & Univ(ii) & Univ(ni) //& ni>ii 
-  |- pp::arrI<_> & pp=xx+ii //& ni!=ii
+// 0<=ii & ii<=ni & self!=null
+checkentail xx::arr_seg<ii,ni> & ni!=ii 
+  |- ii<ni
   .
-expect Valid.
-print residue.
 
-// cannot inst ni!=ii since it causes ni>0 otherwise.
-checkentail xx::arr_seg<ii,ni> & Univ(ii)  //& ni>ii 
-  |- pp::arrI<_> & pp=xx+ii //& ni!=ii
-  .
-expect Fail.
+expect Valid.
 print residue.
 
 /*
@@ -35,25 +30,20 @@ print residue.
 
  below could succeed with an unfold and univ inst ii!=nn
 
-!!! **solver.ml#13440:estate: ex_formula : xx::arr_seg<ii,ni>@M&Univ(ni) & Univ(ii)&{FLOW,(20,21)=__norm#E}[]
- es_heap:emp
-!!! **solver.ml#13441:lhs_node (M_unfold): xx::arr_seg<ii,ni>@M
-!!! **solver.ml#13442:rhs_node (M_unfold): pp::arrI<Anon_13>@M
+!!! **solver.ml#13379:lhs_node (M_unfold): xx::arr_seg<ii,ni>@M
+!!! **solver.ml#13380:rhs_node (M_unfold): pp::arrI<Anon_13>@M
 !!! **cast.ml#3154:arguments:[xx,ii,ni]
 !!! **cast.ml#3155:parameters:[self,i,n]
 !!! **cast.ml#3158:pure (before): i=n
 !!! **cast.ml#3159:pure (after subs): ii=ni
-!!! **solver.ml#13446:is_data_rhs:true
-!!! **solver.ml#13447:lhs_name:arr_seg
-!!! **solver.ml#13448:base_pure:Some( ii=ni)
-!!! **solver.ml#13450:estate: ex_formula : xx::arr_seg<ii,ni>@M&Univ(ni) & Univ(ii)&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#13384:is_data_rhs:true
+!!! **solver.ml#13385:lhs_name:arr_seg
+!!! **solver.ml#13386:base_pure:Some( ii=ni)
+!!! **solver.ml#13388:estate: ex_formula : xx::arr_seg<ii,ni>@M&ii<ni & Univ(ni) & Univ(ii)&{FLOW,(20,21)=__norm#E}[]
  es_heap:emp
-!!! **solver.ml#13457:pure of heap: ((0<=ii & ii<ni & xx!=null) | (ii=ni & 0<=ni & xx!=null))
-!!! **solver.ml#13458:pure: Univ(ni) & Univ(ii)
-!!! **solver.ml#13467:TODO:to add univ_imply checking before unfold
-!!! **solver.ml#13472:rhs_univ_inst: !(ii=ni)
-!!! **solver.ml#13477:new_estate: ex_formula : xx::arr_seg<ii,ni>@M&Univ(ni) & Univ(ii) & !(ii=ni)&{FLOW,(20,21)=__norm#E}[]
- es_heap:emp
+!!! **solver.ml#13394:TODO:to add univ_imply checking before unfold
+!!! **solver.ml#13396:rhs_univ_inst: !(ii=ni)
+!!! **solver.ml#13399:new_estate: ex_formula : xx::arr_seg<ii,ni>@M&ii<ni & Univ(ni) & Univ(ii) & !(ii=ni)&{FLOW,(20,21)=__norm#E}[]
  
 */
 
