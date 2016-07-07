@@ -1,0 +1,70 @@
+sleek_include 'hodef.slk'.
+sleek_include 'node.slk'.
+
+//1
+checkentail x=0 |- 0<=x.
+expect Valid.
+
+//2
+checkentail 0<=x |- x=0.
+expect Fail.
+
+//3
+checkentail x::S{- 0<=x}<> |- x::S{- x=0}<>.
+expect Valid.
+
+//4
+checkentail x::S{- x=0}<> |- x::S{- 0<=x}<>.
+expect Fail.
+
+//5
+checkentail x::R{+ 0<=x}<> |- x::R{+ x=0}<>.
+expect Fail.
+
+//6
+checkentail x::R{+ x=0}<> |- x::R{+ 0<=x}<>.
+expect Valid.
+
+pred_sess_proj pp1<aa> == aa?0.
+pred_sess_proj pp2<aa> == aa?0.
+//7
+checkentail x::pp1<b> |- x::pp2<b>.
+expect Valid.
+
+pred_sess_proj pp5<aa> == aa?0.
+pred_sess_proj pp6<aa> == aa?emp & 0<=msg.
+//8
+checkentail x::pp5<b> |- x::pp6<b>.
+expect Valid.
+
+//9
+checkentail x::pp6<b> |- x::pp5<b>.
+expect Fail.
+
+pred_sess_proj pp7<aa> == aa!0.
+pred_sess_proj pp8<aa> == aa!emp & 0<=msg.
+//10
+checkentail x::pp7<b> |- x::pp8<b>.
+expect Fail.
+
+//11
+checkentail x::pp8<b> |- x::pp7<b>.
+expect Valid.
+
+pred_sess_proj pp17<aa> == aa!0;;aa?emp & 0<=msg.
+pred_sess_proj pp18<aa> == aa!emp & 0<=msg;;aa?0.
+//12
+checkentail x::pp17<b> |- x::pp18<b>.
+expect Fail.
+
+//13
+checkentail x::pp18<b> |- x::pp17<b>.
+expect Valid.
+
+//14
+checkentail x::Sess{@S aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@S aa!emp & 0<=msg;;aa?0}<>.
+expect Fail.
+
+//15
+checkentail x::pp18<b> |- x::pp17<b>.
+expect Valid.

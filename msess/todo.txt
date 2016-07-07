@@ -178,6 +178,8 @@ Projection vs TPProjection
 =============================================
 =============================================
 
+Status: In Progress, added a batch of tests
+
 to add test cases in run-fast-test and test
 the second order vars.
 
@@ -197,6 +199,22 @@ Entail 6: EXCast. Failure("UNIFICATION ERROR : at location {(Line:25,Col:48),(Li
 
 =============================================
 =============================================
+
+When defining predicates such as:
+
+pred_sess_proj ll12<n> == (c!self = null & n = 0) or (d?self = null).
+
+We have a warning and an error:
+
+WARNING: ex.slk_22:15_22:22:compute_view_fw_bw: data name in view is empty
+
+Last Proving Location: ./hodef.slk_1:10_1:42
+
+ERROR: at ex.slk_22:15_22:22
+Message: compute_view_fw_bw: data not found:
+
+This is because view_data_name is not set.
+Should we do something about this?
 
 =============================================
 =============================================
