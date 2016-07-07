@@ -3762,11 +3762,11 @@ let imply_timeout_univ ?(ante_ex=[]) univ_vars ante0 conseq0 imp_no timeout proc
       r
     else r
 
-let imply_timeout_univ ?(ante_ex=[]) univ_vars ante0 conseq0 imp_no timeout process =
+let imply_timeout_univ ?(ante_ex =[]) univ_vars ante0 conseq0 imp_no timeout process =
   let pr1 = !print_svl in
   let pr2 = !CP.print_formula in
-  Debug.no_3 "imply_timeout_univ" pr1 pr2 pr2 (fun (b,_,_) -> string_of_bool b)
-      (fun _ _ _ -> imply_timeout_univ ~ante_ex:ante_ex univ_vars ante0 conseq0 imp_no timeout process) univ_vars ante0 conseq0
+  Debug.no_4 "imply_timeout_univ" (add_str "ante-ex" pr1) pr1 pr2 pr2 (fun (b,_,_) -> string_of_bool b)
+      (fun _ _ _ _ -> imply_timeout_univ ~ante_ex:ante_ex univ_vars ante0 conseq0 imp_no timeout process) ante_ex univ_vars ante0 conseq0
 
 let imply_timeout ?(ante_ex=[]) ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in

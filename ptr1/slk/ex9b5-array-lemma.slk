@@ -20,15 +20,18 @@ expect Valid.
 checkentail xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m) |- xx::arr_seg<i+1,n>.
 expect Valid.
 
+//(4)
 checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
 expect Valid.
 
+//(5)
 checkentail xx::arr_seg<i,n> & i+1<n & i>=0 |- xx::arr_seg<i+1,n>.
 expect Valid.
 
 checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
 expect Fail.
 
+//(7)
 checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+2,n>.
 expect Valid.
 
@@ -38,6 +41,7 @@ expect Fail.
 checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i+1<n & i<m<=n & Univ(m) |- xx::arr_seg<i+1,n>.
 expect Fail.
 
+//(10)
 checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m) |- xx::arr_seg<i+1,n>.
 expect Valid.
 
