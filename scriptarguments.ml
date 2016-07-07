@@ -915,6 +915,8 @@ let common_arguments = [
 
   (* HO predicate *)
   ("--ho-always-split", Arg.Set Globals.ho_always_split, "Apply lemma_split when possible at par/thread");
+  ("--en-contra-ho", Arg.Set Globals.contra_ho_flag, "Enable Contra HO Instantiation");
+  ("--dis-contra-ho", Arg.Clear Globals.contra_ho_flag, "Disable Contra HO Instantiation");
   ("--dis-ho-always-split", Arg.Clear Globals.ho_always_split, "Disable selective apply of lemma_split");
 
   (* Proof Logging *)
