@@ -7671,7 +7671,18 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
             let ws = CP.fresh_spec_vars qvars in
             (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
             let st = List.combine qvars ws in
-            let baref = mkBase qh qp qvp qt qfl qa pos in
+
+            let univ_vars = CP.get_RelForm_arg_list_with_name (MCP.pure_of_mix qp) "Univ" in
+            let eqns' = MCP.ptr_equations_without_null qp in
+            let emap = CP.EMapSV.build_eset eqns' in
+            let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars) in
+            let () = y_dinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
+            let univ_rel v = CP.mkRel_sv v in
+            let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
+            let nqp =  List.fold_left (fun g v -> CP.mkAnd g (mk_Univ_rel v) no_pos) (MCP.pure_of_mix qp) univ_vars2 in
+            let () = y_dinfo_hp (add_str "qp with univ" !CP.print_formula) nqp in
+            let mix_nqp = MCP.mix_of_pure nqp in
+            let baref = mkBase qh mix_nqp qvp qt qfl qa pos in
             let new_baref = x_add subst st baref in
             let fct st v =
               try
@@ -14594,6 +14605,14 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let () = y_tinfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
     let univ_rel v = CP.mkRel_sv v in
     let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
+    
+    let pure_rhs = CF.get_pure coer_rhs in
+    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure pure_rhs) in
+    let emap = CP.EMapSV.build_eset eqns' in
+    let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) f_univ_vars) in
+    let () = y_tinfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
+    
+    let () = y_tinfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
     let lhs_w_univ_rel = List.fold_left (fun g v ->
         CP.mkAnd g (mk_Univ_rel v) no_pos
       ) lhs_guard f_univ_vars in
