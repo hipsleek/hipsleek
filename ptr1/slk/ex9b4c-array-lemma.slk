@@ -23,15 +23,19 @@ expect Valid.
 
 
 checkentail
- i<n & i<m<=n & Univ(m)
-|- m=i+2.
+ i<n & i<m<=n & Univ(m)|- m=i+2.
 
 
-checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<n 
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i+1<n 
    & i<m<=n & Univ(m)
-   |- xx::arr_seg<i+2,n>.
+   |- xx::arr_seg<i+1,n>.
 print residue.
 expect Fail.
+
+
+
+
+
 
 /*
  <1>xx::arr_seg<i,m_131>@M&m_91=n & m_137=i+2 & m_137=m_131 
@@ -70,7 +74,7 @@ checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m)
 
 
 
-checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+4,n>.
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+1,n>.
 print residue.
 expect Fail.
 

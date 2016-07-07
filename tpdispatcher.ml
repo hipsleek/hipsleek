@@ -3708,6 +3708,7 @@ let get_univs_from_ante ante =
     let emap = CP.EMapSV.build_eset eqns' in
     let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
     (univ_vars,univ_vars2)
+;;
 
 let get_univs_from_ante ante =
   let pr = !CP.print_svl in
@@ -3753,11 +3754,12 @@ let imply_timeout_univ ?(ante_ex=[]) univ_vars ante0 conseq0 imp_no timeout proc
     (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
     let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
     let new_conseq = CP.mkExists (univ_vars@ante_ex) new_conseq None no_pos in
-    let () = y_dinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
+    let () = y_dinfo_hp (add_str "new_conseq_with_exist" !CP.print_formula) new_conseq in
     let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
     let () = y_dinfo_hp (add_str "imply_timeout_univ: b " string_of_bool) b in
     if b then
-      let () = univ_rhs_store # set conseq0 in r
+      let () = univ_rhs_store # set conseq0 in
+      r
     else r
 
 let imply_timeout_univ ?(ante_ex=[]) univ_vars ante0 conseq0 imp_no timeout process =
@@ -3769,7 +3771,7 @@ let imply_timeout_univ ?(ante_ex=[]) univ_vars ante0 conseq0 imp_no timeout proc
 let imply_timeout ?(ante_ex=[]) ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
   let univ_vars,univ_bigger = get_univs_from_ante ante0 in
-  let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+  let () = y_tinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
   if (not b) && (x_add connected_rhs_univ univ_bigger conseq0)
   then x_add (imply_timeout_univ ~ante_ex:ante_ex) univ_vars ante0 conseq0 imp_no timeout process
   else ans
