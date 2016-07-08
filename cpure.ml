@@ -8381,10 +8381,10 @@ and imply_disj_orig ante_disj conseq t_imply imp_no =
     (fun ante_disj conseq -> imply_disj_orig_x0 ante_disj conseq t_imply imp_no) ante_disj conseq
 
 let rec imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no =
-  let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
+  let xp01,xp02,xp03 = x_add imply_disj_orig ante_disj0 conseq t_imply imp_no in
   if not(xp01) && !Globals.super_smart_xpure && not(one_ante_only) then
     let () = x_dinfo_pp ("\nSplitting the antecedent for xpure1:\n") no_pos in
-    let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
+    let (xp11,xp12,xp13) = x_add imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let () = x_dinfo_pp ("\nDone splitting the antecedent for xpure1:\n") no_pos in
     (xp11,xp12,xp13)
   else (xp01,xp02,xp03)

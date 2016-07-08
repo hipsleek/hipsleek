@@ -45,3 +45,11 @@ print residue.
 //print residue.
 // invalid-exception
 
+
+// 4
+checkentail x::lseg<a, q1> * q1::lseg<b, q> & n=a+b & n > 9 
+      & Univ(a) & Univ(b)
+   |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >= 9 & n2 >= 2.
+expect Fail.
+print residue.
+

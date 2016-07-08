@@ -1,5 +1,27 @@
 =================================================
 =================================================
+8July16
+
+--adhoc-4
+Total number of errors: 6 in files:
+ sleek7.slk({E4#Fail}) 
+ sleek8.slk({E10#Fail}) sleek8.slk({E10#Fail}) 
+ infer/infer16.slk({E5#Valid},{E6#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}) 
+ veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+without --adhoc-4
+  imm-field/sleek02.slk({E8#Valid}) 
+  lemmas/lemma-fold.slk({E3#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+--adhoc-4 (without impl -> expl)
+  infer/infer16.slk({E5#Valid},{E6#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
 =================================================
 6Jul
 

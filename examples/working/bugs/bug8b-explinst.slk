@@ -9,7 +9,11 @@ pred lseg<p, n> == self=p & n=0
 
 
 //(3)
-checkentail x::node<_,q>*q::lseg<p,n> |- [qqq] x::lseg<qqq,n+1>.
+checkentail x::node<_,q>*q::lseg<p,n> * y::node<_,rr> 
+           |- [qqq] x::lseg<qqq,m>.
 print residue.
 expect Valid.
 
+/*
+
+*/

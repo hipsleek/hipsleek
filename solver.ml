@@ -11118,7 +11118,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let subtract = Gen.BList.difference_eq CP.eq_spec_var in
           let new_impl_vars = subtract impl_vars impl_tvars in
           let new_exist_vars = evars(* @tmp_ivars *) in
-          let new_expl_vars = expl_vars@impl_tvars in
+          (* WN : implicit cannot be moved to explicit!! error with sleek7.4 *)
+          let new_expl_vars = expl_vars(* @impl_tvars *) in
           let new_expl_vars = List.filter (fun sv -> not (CP.is_rel_typ sv)) new_expl_vars in
           let new_ivars = subtract ivars tmp_ivars in
           (* let (expl_inst, tmp_ivars', expl_vars') = (get_eqns_expl_inst rho_0 ivars pos) in *)
