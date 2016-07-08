@@ -7676,15 +7676,15 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
             let eqns' = MCP.ptr_equations_without_null qp in
             let emap = CP.EMapSV.build_eset eqns' in
             let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars) in
-            let () = y_binfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
+            let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
             let univ_rel v = CP.mkRel_sv v in
             let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
             let qp_pure = (MCP.pure_of_mix qp) in
             let nqp =  
               if true (* !Globals.adhoc_flag_2 *) then qp_pure 
               else List.fold_left (fun g v -> CP.mkAnd g (mk_Univ_rel v) no_pos) qp_pure univ_vars2 in
-            let () = y_binfo_hp (add_str "qp (orig)" !CP.print_formula) qp_pure in
-            let () = y_binfo_hp (add_str "qp with univ" !CP.print_formula) nqp in
+            let () = y_tinfo_hp (add_str "qp (orig)" !CP.print_formula) qp_pure in
+            let () = y_tinfo_hp (add_str "qp with univ" !CP.print_formula) nqp in
             let mix_nqp = MCP.mix_of_pure nqp in
             let baref = mkBase qh mix_nqp qvp qt qfl qa pos in
             let new_baref = x_add subst st baref in
@@ -14605,11 +14605,11 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
     let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
     let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
-    let () = y_binfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
+    let () = y_tinfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
     let lhs_heap, lhs_guard, lhs_vperm, lhs_fl, _, lhs_a  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     (* let lhs_guard_p = MCP.pure_of_mix lhs_guard in *)
-    let () = y_binfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
+    let () = y_tinfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
     let univ_rel v = CP.mkRel_sv v in
     let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
     
@@ -14618,13 +14618,13 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure pure_rhs_no_ex) in
     let emap = CP.EMapSV.build_eset eqns' in
     let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) f_univ_vars) in
-    let () = y_binfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
-    let () = y_binfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
+    let () = y_tinfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
+    let () = y_tinfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
     let pr = !CP.print_sv in
-    let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr pr))) eqns' in
+    let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr pr))) eqns' in
     
-    let () = y_binfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
-    let () = y_binfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
+    let () = y_tinfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
+    let () = y_tinfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
     let univ_vars2 = if univ_vars2==[] then f_univ_vars else univ_vars2 in
     let lhs_w_univ_rel = List.fold_left (fun g v ->
         CP.mkAnd g (mk_Univ_rel v) no_pos
@@ -14690,22 +14690,22 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let fr_vars = perms2@(p2 :: ps2)in
           let to_vars = perms1@(p1 :: ps1)in
           let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
-          let () = y_binfo_hp (add_str "coer_rhs" !CF.print_formula) coer_rhs in
+          let () = y_tinfo_hp (add_str "coer_rhs" !CF.print_formula) coer_rhs in
           let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
-          let () = y_binfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
+          let () = y_tinfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
           let pure_rhs = CF.get_pure coer_rhs_new1 in
           let pure_rhs_no_ex = CP.drop_exists ~rename_flag:false pure_rhs in
           let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure pure_rhs_no_ex) in
           let emap = CP.EMapSV.build_eset eqns' in
           let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) f_univ_vars) in
-          let () = y_binfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
-          let () = y_binfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
-          let () = y_binfo_hp (add_str "fr_vars" !CP.print_svl) fr_vars in
-          let () = y_binfo_hp (add_str "to_vars" !CP.print_svl) to_vars in
+          let () = y_tinfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
+          let () = y_tinfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
+          let () = y_tinfo_hp (add_str "fr_vars" !CP.print_svl) fr_vars in
+          let () = y_tinfo_hp (add_str "to_vars" !CP.print_svl) to_vars in
           let pr = !CP.print_sv in
-          let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr pr))) eqns' in
-          let () = y_binfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
-          let () = y_binfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
+          let () = y_tinfo_hp (add_str "eqns" (pr_list (pr_pair pr pr))) eqns' in
+          let () = y_tinfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
+          let () = y_tinfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
           let univ_vars2 = if univ_vars2==[] then f_univ_vars else univ_vars2 in
           let lhs_w_univ_rel = List.fold_left (fun g v ->
               CP.mkAnd g (mk_Univ_rel v) no_pos
@@ -14714,9 +14714,9 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
              if !Globals.old_univ_lemma then coer_rhs_new1 
              else
               let lhs_w_univ_rel = CP.subst_avoid_capture fr_vars to_vars lhs_w_univ_rel in
-              let () = y_binfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
+              let () = y_tinfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
               CF.combine_star_pure ~rename_flag:false coer_rhs_new1 lhs_w_univ_rel in
-          let () = y_binfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
+          let () = y_tinfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
           let coer_rhs_new1 =
             if (Perm.allow_perm ()) then
               match perm1,perm2 with

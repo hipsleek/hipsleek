@@ -1046,13 +1046,13 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       let sv_exists = if true (* !Globals.adhoc_flag_4 *) then 
         let svl2 = Cformula.fv ~vartype:Global_var.var_with_exists f in
         let ex = CP.diff_svl svl2 svl in
-        let () = y_binfo_hp (add_str "all vars:" !CP.print_svl) svl2 in
-        let () = y_binfo_hp (add_str "sv_exists:" !CP.print_svl) ex in
+        let () = y_tinfo_hp (add_str "all vars:" !CP.print_svl) svl2 in
+        let () = y_tinfo_hp (add_str "sv_exists:" !CP.print_svl) ex in
         ex
       else []
       in
-      let () = y_binfo_hp (add_str " svl(helper):" !CP.print_svl) svl in
-      let () = y_binfo_hp (add_str " subst_vars(helper):" !CP.print_svl) subst_vars in
+      let () = y_tinfo_hp (add_str " svl(helper):" !CP.print_svl) svl in
+      let () = y_tinfo_hp (add_str " subst_vars(helper):" !CP.print_svl) subst_vars in
       let new_const0 = List.map (fun sv ->
           Cpure.mkNull sv no_pos) subst_vars in
       let new_const = List.fold_left (fun f0 f1 ->
@@ -1073,8 +1073,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
     let svl = Cformula.fv r in
-    let () = y_binfo_hp (add_str " after case:" (Cprinter.string_of_formula)) r in
-    let () = y_binfo_hp (add_str " svl:" !CP.print_svl) svl in
+    let () = y_tinfo_hp (add_str " after case:" (Cprinter.string_of_formula)) r in
+    let () = y_tinfo_hp (add_str " svl:" !CP.print_svl) svl in
     let null_vars0 = List.find_all (fun sv ->
         match sv with Cpure.SpecVar(_,name,_) -> name = "null") svl in
     let null_vars = Cpure.remove_dups_svl null_vars0 in
@@ -1082,9 +1082,9 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
         match sv with Cpure.SpecVar(typ,name,pr) ->
           Cpure.SpecVar(typ,fresh_any_name name,pr)) null_vars in
     let new_r = Cformula.subst_avoid_capture null_vars subst_vars r in
-    let () = y_binfo_hp (add_str "new_r(b4)" (Cprinter.string_of_formula)) new_r in
+    let () = y_tinfo_hp (add_str "new_r(b4)" (Cprinter.string_of_formula)) new_r in
     let new_r = helper new_r subst_vars in
-    let () = y_binfo_hp (add_str "new_r:" (Cprinter.string_of_formula)) new_r in
+    let () = y_tinfo_hp (add_str "new_r:" (Cprinter.string_of_formula)) new_r in
     let new_n_tl = List.map (fun (id,svi) ->
         if id = "null" then
           let subst_sv = List.find (fun sv ->
@@ -1191,11 +1191,11 @@ let run_simplify (iante0 : meta_formula) =
   let ante = x_add Norm.imm_abs_norm_formula ante !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in
   let (heap_f,p,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
-  let () = x_binfo_hp (add_str "simplify:ante" pr) ante no_pos in
-  let () = x_binfo_hp (add_str "simplify:heap" pr_h) heap_f no_pos in
-  let () = x_binfo_hp (add_str "simplify:pure" pr_pf) pf no_pos in
+  let () = x_tinfo_hp (add_str "simplify:ante" pr) ante no_pos in
+  let () = x_tinfo_hp (add_str "simplify:heap" pr_h) heap_f no_pos in
+  let () = x_tinfo_hp (add_str "simplify:pure" pr_pf) pf no_pos in
   let p1 = MCP.mkMTrue no_pos in
-  let () = x_binfo_pp "Andreea: heap need to be normalized before xpure_heap_sym" no_pos in
+  let () = x_tinfo_pp "Andreea: heap need to be normalized before xpure_heap_sym" no_pos in
   let (mf1,_,_) as rr = Cvutil.xpure_heap_sym 11 !cprog heap_f p1 0 in
   let mf1 = MCP.pure_of_mix mf1 in
   let pr_r = fun (p1,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4) in 
@@ -1205,7 +1205,7 @@ let run_simplify (iante0 : meta_formula) =
   let r = Tpdispatcher.simplify_tp pf in
   let () = x_binfo_pp "Andreea: gist need to detect true modulo variable renaming" no_pos in
   let r2 = Tpdispatcher.om_gist r mf1 in
-  (* let () = x_binfo_hp (add_str "simplify:after gist" pr_pf) r2 no_pos in *)
+  (* let () = x_tinfo_hp (add_str "simplify:after gist" pr_pf) r2 no_pos in *)
   CF.form_components ante heap_f r2 mf1
 
 let run_simplify (iante0 : meta_formula) =

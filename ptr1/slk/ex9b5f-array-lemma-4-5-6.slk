@@ -12,8 +12,34 @@ lemma_unsafe self::arr_seg<i,n> & i<mmm<=n
 
 
 //(4)
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i,n>.
+expect Valid.
+print residue.
+
 checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
 expect Valid.
+print residue.
+
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+3,n>.
+expect Fail.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+3,n>.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+2,n>.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+1,n>.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+4,n>.
+expect Fail.
+print residue.
 
 /*
 # ex9b5f.slk
