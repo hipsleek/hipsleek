@@ -14614,15 +14614,21 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
     
     let pure_rhs = CF.get_pure coer_rhs in
-    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure pure_rhs) in
+    let pure_rhs_no_ex = CP.drop_exists ~rename_flag:false pure_rhs in
+    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure pure_rhs_no_ex) in
     let emap = CP.EMapSV.build_eset eqns' in
     let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) f_univ_vars) in
+    let () = y_binfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
     let () = y_binfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
+    let pr = !CP.print_sv in
+    let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr pr))) eqns' in
     
     let () = y_binfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
+    let () = y_binfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
+    let univ_vars2 = if univ_vars2==[] then f_univ_vars else univ_vars2 in
     let lhs_w_univ_rel = List.fold_left (fun g v ->
         CP.mkAnd g (mk_Univ_rel v) no_pos
-      ) lhs_guard f_univ_vars in
+      ) lhs_guard univ_vars2 in
     (*node -> current heap node | lhs_heap -> head of the coercion*)
     match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
@@ -14684,14 +14690,33 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let fr_vars = perms2@(p2 :: ps2)in
           let to_vars = perms1@(p1 :: ps1)in
           let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
+          let () = y_binfo_hp (add_str "coer_rhs" !CF.print_formula) coer_rhs in
           let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+          let () = y_binfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
+          let pure_rhs = CF.get_pure coer_rhs_new1 in
+          let pure_rhs_no_ex = CP.drop_exists ~rename_flag:false pure_rhs in
+          let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure pure_rhs_no_ex) in
+          let emap = CP.EMapSV.build_eset eqns' in
+          let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) f_univ_vars) in
+          let () = y_binfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
+          let () = y_binfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
+          let () = y_binfo_hp (add_str "fr_vars" !CP.print_svl) fr_vars in
+          let () = y_binfo_hp (add_str "to_vars" !CP.print_svl) to_vars in
+          let pr = !CP.print_sv in
+          let () = y_binfo_hp (add_str "eqns" (pr_list (pr_pair pr pr))) eqns' in
+          let () = y_binfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
+          let () = y_binfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
+          let univ_vars2 = if univ_vars2==[] then f_univ_vars else univ_vars2 in
+          let lhs_w_univ_rel = List.fold_left (fun g v ->
+              CP.mkAnd g (mk_Univ_rel v) no_pos
+          ) lhs_guard univ_vars2 in
           let coer_rhs_new1 = 
-            if !Globals.old_univ_lemma then coer_rhs_new1 
-            else
+             if !Globals.old_univ_lemma then coer_rhs_new1 
+             else
               let lhs_w_univ_rel = CP.subst_avoid_capture fr_vars to_vars lhs_w_univ_rel in
-              let () = y_tinfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
-              CF.combine_star_pure coer_rhs_new1 lhs_w_univ_rel in
-          let () = y_tinfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
+              let () = y_binfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
+              CF.combine_star_pure ~rename_flag:false coer_rhs_new1 lhs_w_univ_rel in
+          let () = y_binfo_hp (add_str "coer_rhs_new1" !CF.print_formula) coer_rhs_new1 in
           let coer_rhs_new1 =
             if (Perm.allow_perm ()) then
               match perm1,perm2 with

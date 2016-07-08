@@ -12670,14 +12670,17 @@ let split_disjunctions_deep (f:formula) : formula list =
   let pr = !print_formula in
   (* Debug.no_1 "split_disjunctions_deep" pr (pr_list pr) *) split_disjunctions_deep f
 
-let drop_exists (f:formula) :formula = 
+let drop_exists ?(rename_flag=true) (f:formula) :formula = 
   let rec helper f =
     let f_f f = 
       match f with
-      | Exists(qid,qf,fl,pos) -> let fresh_fr = fresh_spec_vars [qid] in
-        let st = List.combine [qid] fresh_fr in
-        let rename_exist_vars  = subst st qf in
-        Some((helper rename_exist_vars))
+      | Exists(qid,qf,fl,pos) -> 
+            if rename_flag then
+              let fresh_fr = fresh_spec_vars [qid] in
+              let st = List.combine [qid] fresh_fr in
+              let rename_exist_vars  = subst st qf in
+              Some((helper rename_exist_vars))
+            else Some(helper qf)
       | And _ | AndList _ | Or _  -> None
       | Not _ | Forall _ | BForm _ -> Some(f)
     in
@@ -12686,9 +12689,9 @@ let drop_exists (f:formula) :formula =
     map_formula f (f_f,f_bf,f_e)
   in helper f
 
-let drop_exists (f:formula) :formula =
+let drop_exists ?(rename_flag=true) (f:formula) :formula =
   let pr = !print_formula in 
-  Debug.no_1 "drop_exists_pure" pr pr drop_exists f 
+  Debug.no_1 "drop_exists_pure" pr pr (drop_exists ~rename_flag:rename_flag) f 
 
 let add_prefix_to_spec_var prefix (sv : spec_var) = match sv with
   | SpecVar (t,n,p) -> SpecVar (t,prefix^n,p)

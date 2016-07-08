@@ -3931,34 +3931,37 @@ and normalize_combine_heap (f1 : formula) (f2 : h_formula)
 
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
-and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
-  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-    let eo1 = normalize_combine_star_x o11 f2 pos in
-    let eo2 = normalize_combine_star_x o12 f2 pos in
-    mkOr eo1 eo2 pos
-  | _ -> begin
-      match f2 with
-      | Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-        let eo1 = normalize_combine_star_x f1 o21 pos in
-        let eo2 = normalize_combine_star_x f1 o22 pos in
-        mkOr eo1 eo2 pos
+and normalize_combine_star_x ?(rename_flag=true) (f1 : formula) (f2 : formula) (pos : loc) = 
+  let rec helper f1 f2 =
+    match f1 with
+      | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+            let eo1 = helper o11 f2 in
+            let eo2 = helper o12 f2  in
+            mkOr eo1 eo2 pos
       | _ -> begin
-          let rf1 = Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f1 in
-          let rf2 = Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f2 in
-          let qvars1, base1 = split_quantifiers rf1 in
-          let qvars2, base2 = split_quantifiers rf2 in
-          let new_base = Gen.Profiling.no_1 "6_mkstar" (mkStar_combine base1 base2 Flow_combine) pos in
-          (* let () = print_string("normalize 1\n") in *)
-          let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
-          let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
-          resform
-        end
-    end
+          match f2 with
+            | Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+                  let eo1 = helper f1 o21 in
+                  let eo2 = helper f1 o22 in
+                  mkOr eo1 eo2 pos
+            | _ -> begin
+                let rf1 = if rename_flag then Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f1 else f1 in
+                let rf2 = if rename_flag then Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f2 else f2 in
+                let qvars1, base1 = split_quantifiers rf1 in
+                let qvars2, base2 = split_quantifiers rf2 in
+                let new_base = Gen.Profiling.no_1 "6_mkstar" (mkStar_combine base1 base2 Flow_combine) pos in
+                (* let () = print_string("normalize 1\n") in *)
+                let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
+                let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+                resform
+              end
+        end in
+  helper f1 f2
 
-and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = 
+and normalize_combine_star ?(rename_flag=true) (f1 : formula) (f2 : formula) (pos : loc) = 
   let pr = !print_formula in
   Debug.no_2 "normalize_combine_star" pr pr pr 
-    (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st"(normalize_combine_star_x f1 f2) pos) f1 f2
+    (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st" (normalize_combine_star_x ~rename_flag:rename_flag f1 f2) pos) f1 f2
 
 and normalize_combine_starminus (f1 : formula) (f2 : formula) (al: aliasing_scenario) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
@@ -20598,9 +20601,9 @@ let get_root_ptr hf =
   | HVar(pt,_) -> pt
   | _ -> raise Not_found
 
-let combine_star_pure f1 p =
+let combine_star_pure ?(rename_flag=true) f1 p =
   let f2 = formula_of_pure_formula p no_pos in
-  let f = normalize_combine_star f1 f2 no_pos in
+  let f = normalize_combine_star ~rename_flag:rename_flag f1 f2 no_pos in
   f
 
 let add_pure_estate es cp =
