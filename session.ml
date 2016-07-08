@@ -1008,6 +1008,7 @@ module CTPProjection = Make_Session(CTPProjection_base);;
 
 type session_type = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session
+                  | TPProjectionSession of ITPProjection.session
 
 let get_protocol session = 
   match session with
@@ -1018,3 +1019,8 @@ let get_projection session =
   match session with
   | ProjectionSession s -> s
   | _ -> failwith "not a projection formula" 
+
+let get_tpprojection session =
+  match session with
+  | TPProjectionSession s -> s
+  | _ -> failwith "not a two-party projection formula"

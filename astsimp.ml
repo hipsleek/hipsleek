@@ -2417,8 +2417,8 @@ and translate_session (view:I.view_decl) =
         let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
         helper view transf Session.get_projection
       | TPProjection ->
-        let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
-        helper view transf Session.get_projection
+        let transf = Session.ITPProjection.mk_struc_formula_from_session_and_formula in
+        helper view transf Session.get_tpprojection
       | _ -> view
     end
   | None -> view

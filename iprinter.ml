@@ -646,7 +646,8 @@ and string_of_session session_formula =
   Gen.map_opt_def "\n"
     (fun x ->  match x with
                  | Session.ProtocolSession s -> "\nsession: " ^ Session.IProtocol.string_of_session s
-                 | Session.ProjectionSession s -> "\nsession: " ^ Session.IProjection.string_of_session s)
+                 | Session.ProjectionSession s -> "\nsession: " ^ Session.IProjection.string_of_session s
+                 | Session.TPProjectionSession s -> "\nsession: " ^ Session.ITPProjection.string_of_session s)
     session_formula
 
 and  string_of_struc_formula c = match c with 
