@@ -1386,7 +1386,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                 )
               in
               let p_ass,ipures = 
-                if !Globals.adhoc_flag_4 then foo () (* p_ass2,ipures2 *)
+                if false (* !Globals.adhoc_flag_4 *) then foo () (* p_ass2,ipures2 *)
                 else p_ass1,ipures1 in
               let () = x_tinfo_hp (add_str "vs_lhs" !CP.print_svl) vs_lhs pos in
               let () = x_tinfo_hp (add_str "(rel_ass,rels)" (pr_pair (pr_list !CP.print_formula) 

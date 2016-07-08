@@ -18,7 +18,6 @@ without --adhoc-4
   veribsync/barrier-dynamic2.slk({E2#Fail}).
 
 --adhoc-4 (without impl -> expl)
-  infer/infer16.slk({E5#Valid},{E6#Valid}) 
   lemmas/dseg-new.slk({L2#Fail}) 
   veribsync/barrier-dynamic2.slk({E2#Fail}).
 

@@ -8944,7 +8944,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
       else
         (* WN : es_gen_expl_vars important for explicit instantiation but caused problem for univ inst? *)
-        let expl = if !Globals.adhoc_flag_4 then estate.es_gen_expl_vars else [] in
+        let expl = if true (* !Globals.adhoc_flag_4 *) then estate.es_gen_expl_vars else [] in
         let exist_vars = estate.es_evars@expl@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
         (* TODO-EXPURE : need to build new expure stuff *)
         let () = x_tinfo_hp (add_str "exist_vars(b4)" Cprinter.string_of_spec_var_list) exist_vars no_pos in
