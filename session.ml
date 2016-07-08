@@ -566,12 +566,7 @@ module Projection_base_formula =
     let print_message f = !Msg.print f.projection_base_formula_message
 
     let string_of_session_base f =
-      let chan = if (f.projection_base_formula_channel <> session_chan_id)
-                 then
-                   f.projection_base_formula_channel
-                 else
-                   "" in
-      chan ^
+      f.projection_base_formula_channel ^
       (string_of_transmission f.projection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 
@@ -613,6 +608,66 @@ module Projection_base_formula =
         | Some Receive -> TReceive
         | _ -> failwith "Not a valid transmission type." in
       mk_base (transmission, channel, pos) f
+
+  end;;
+
+module TPProjection_base_formula =
+  functor  (Msg: Message_type) ->
+  struct
+    include Msg
+    type t = Msg.formula
+    type a = transmission * VarGen.loc
+    type base = {
+      tpprojection_base_formula_op      : transmission;
+      tpprojection_base_formula_message : t;
+      tpprojection_base_formula_pos     : VarGen.loc;
+    }
+
+    let base_type = TPProjection
+
+    let print_message f = !Msg.print f.tpprojection_base_formula_message
+
+    let string_of_session_base f =
+      (string_of_transmission f.tpprojection_base_formula_op) ^
+      "(" ^ (print_message f) ^ ")"
+
+    let mk_base (transmission, pos) formula = {
+      tpprojection_base_formula_op      = transmission;
+      tpprojection_base_formula_message = formula;
+      tpprojection_base_formula_pos     = pos;
+    }
+
+    let trans_base base =
+      let ptr = Msg.choose_ptr ~ptr:session_chan_id () in
+      let tkind = get_session_kind_of_transmission base.tpprojection_base_formula_op in
+      let name = get_prim_pred_id_by_kind tkind in
+      let args = match base.tpprojection_base_formula_op with
+        | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.tpprojection_base_formula_message]
+        | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.tpprojection_base_formula_message] in
+      let params = [] in
+      Msg.mk_node ~kind:(Some tkind) (ptr, name, args, params, base.tpprojection_base_formula_pos)
+
+    let get_base_pos base = base.tpprojection_base_formula_pos
+
+    let is_session_base h_formula =
+      if (Msg.is_node h_formula)
+      then
+        match Msg.get_session_kind h_formula with
+          | Some Send -> true
+          | Some Receive -> true
+          | _ -> false
+      else
+        false
+
+    let trans_h_formula_to_session_base h_formula =
+      let (ptr, name, args, params, pos) = Msg.get_node h_formula in
+      let channel = Msg.get_node_id ptr in
+      let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
+      let transmission = match (Msg.get_session_kind h_formula) with
+        | Some Send -> TSend
+        | Some Receive -> TReceive
+        | _ -> failwith "Not a valid transmission type." in
+      mk_base (transmission, pos) f
 
   end;;
 
@@ -939,12 +994,17 @@ module IProtocol_base = Protocol_base_formula(IForm) ;;
 module CProtocol_base = Protocol_base_formula(CForm) ;;
 module IProjection_base = Projection_base_formula(IForm) ;;
 module CProjection_base = Projection_base_formula(CForm) ;;
+module ITPProjection_base = TPProjection_base_formula(IForm) ;;
+module CTPProjection_base = TPProjection_base_formula(CForm) ;;
 
 module IProtocol = Make_Session(IProtocol_base);;
 module CProtocol = Make_Session(CProtocol_base);;
 
 module IProjection = Make_Session(IProjection_base);;
 module CProjection = Make_Session(CProjection_base);;
+
+module ITPProjection = Make_Session(ITPProjection_base);;
+module CTPProjection = Make_Session(CTPProjection_base);;
 
 type session_type = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session
