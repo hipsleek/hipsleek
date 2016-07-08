@@ -41,4 +41,15 @@ checkentail x::lseg<a, q1> * q1::lseg<b, q> & n=a+b & n > 9
 expect Fail.
 print residue.
 
+/*
+# bug7e3.slk
+
+checkentail x::lseg<a, q1> * q1::lseg<b, q> & n=a+b & n > 9 
+      & Univ(a) & Univ(b) & a,b>=0
+   |- x::lseg<nnn1, r1> * r1::lseg<nnn2, r2>& nnn1 >= 9 & nnn2>=2 .
+expect Fail.
+
+Fixed by adding ante_ex : es_init_impl_expl_vars
+
+*/
 

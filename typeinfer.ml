@@ -1743,7 +1743,7 @@ let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var l
   f
 
 let case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula): CF.formula   =
-  Debug.no_2 "Norm:case_norm" !CP.print_svl !CF.print_formula !CF.print_formula (fun _ _ -> case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula)) avail_vars f
+  Debug.no_2 "case_norm(Norm)" !CP.print_svl !CF.print_formula !CF.print_formula (fun _ _ -> case_normalize_renamed_formula (iprog:I.prog_decl) (avail_vars:CP.spec_var list) (expl_vars:CP.spec_var list) (f:CF.formula)) avail_vars f
 
 let create_view (iprog:I.prog_decl) (id:ident) (vs:CP.spec_var list) (f:CF.formula): Cast.view_decl =
   let f = !CF.rev_trans_formula f in
@@ -1772,7 +1772,7 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
   let view_body = CF.convert_un_struc_to_formula view_body_lbl in
   let args = vd.C.view_vars in
   (* struc --> better to re-transform it *)
-  let new_view_body = case_normalize_renamed_formula iprog args [] view_body in
+  let new_view_body = x_add case_normalize_renamed_formula iprog args [] view_body in
   let view_struc = CF.formula_to_struc_formula new_view_body in
   let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
   let () = C.update_view_formula (fun _ -> view_struc) vd in

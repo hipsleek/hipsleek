@@ -304,7 +304,7 @@ let norm_reuse_mk_eq iprog prog edefs =
             (CF.formula_of_heap view_node no_pos) 
         in
         let () = y_tinfo_hp (add_str "view_body" !CF.print_formula) view_body in
-        let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+        let new_view_body = x_add Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
         let view_struc = CF.formula_to_struc_formula new_view_body in
         let () = y_tinfo_hp (add_str "view_body(new)" !CF.print_formula) new_view_body in
         let () = y_tinfo_hp (add_str "view_struc(new)" !CF.print_struc_formula) view_struc in
@@ -343,7 +343,7 @@ let perform_unfold_decls iprog unfold_fn ans =
         let view_body = CF.convert_un_struc_to_formula view_body_lbl in
         let args = v.C.view_vars in
         (* struc --> better to re-transform it *)
-        let new_view_body = Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
+        let new_view_body = x_add Typeinfer.case_normalize_renamed_formula iprog args [] view_body in
         let view_struc = CF.formula_to_struc_formula new_view_body in
         let view_struc = CF.add_label_to_struc_formula view_struc old_sf in
         let () = C.update_view_formula (fun _ -> view_struc) v in

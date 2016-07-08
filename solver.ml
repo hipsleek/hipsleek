@@ -7676,11 +7676,15 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
             let eqns' = MCP.ptr_equations_without_null qp in
             let emap = CP.EMapSV.build_eset eqns' in
             let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars) in
-            let () = y_dinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
+            let () = y_binfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
             let univ_rel v = CP.mkRel_sv v in
             let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
-            let nqp =  List.fold_left (fun g v -> CP.mkAnd g (mk_Univ_rel v) no_pos) (MCP.pure_of_mix qp) univ_vars2 in
-            let () = y_dinfo_hp (add_str "qp with univ" !CP.print_formula) nqp in
+            let qp_pure = (MCP.pure_of_mix qp) in
+            let nqp =  
+              if true (* !Globals.adhoc_flag_2 *) then qp_pure 
+              else List.fold_left (fun g v -> CP.mkAnd g (mk_Univ_rel v) no_pos) qp_pure univ_vars2 in
+            let () = y_binfo_hp (add_str "qp (orig)" !CP.print_formula) qp_pure in
+            let () = y_binfo_hp (add_str "qp with univ" !CP.print_formula) nqp in
             let mix_nqp = MCP.mix_of_pure nqp in
             let baref = mkBase qh mix_nqp qvp qt qfl qa pos in
             let new_baref = x_add subst st baref in
@@ -11207,7 +11211,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* ==================== Extract equation expression related to Univ vars ==================== *)
           let pure_new_ante_p = MCP.pure_of_mix new_ante_p in
           let pure_new_conseq_p = MCP.pure_of_mix new_conseq_p in
-          let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
+          let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
           let (univ_vs,conseq_lst_univ,new_conseq_p2) = x_add extr_univ_vs_conseq new_ante_p new_conseq_p ivar_subs_to_conseq in
           (* let (univ_vs,univ_bigger) = TP.get_univs_from_ante pure_new_ante_p in *)
           (* (\* eqlst is a list of pair. In each pair, two expressions are equal and one of them contains Univ vars *\) *)
@@ -11281,7 +11285,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (*   let pr2 = !MCP.print_mix_formula in *)
           (*   Debug.no_3 "process_early_univ" !CP.print_svl pr2 pr1 (pr_pair string_of_bool pr2) process_early_univ univ_vs new_ante_p conseq_univ in *)
           let ante_ex = CF.get_ante_ex estate in
-          let () = y_binfo_hp (add_str "ante_ex" !CP.print_svl) ante_ex in
+          let () = y_tinfo_hp (add_str "ante_ex" !CP.print_svl) ante_ex in
           let new_conseq_p,new_ante_p = 
             if conseq_lst_univ!=[] then
               let conseq_univ = CP.join_conjunctions conseq_lst_univ in
@@ -11614,7 +11618,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             x_tinfo_hp (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
             x_tinfo_hp (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
             x_tinfo_hp (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
-            x_binfo_hp (add_str "transfer:imp->expl" (!CP.print_svl)) new_expl_vars pos;
+            x_tinfo_hp (add_str "transfer:imp->expl" (!CP.print_svl)) new_expl_vars pos;
             let new_es = { estate with 
                            es_formula = new_ante;
                            (* add the new vars to be explicitly instantiated *)
@@ -14601,11 +14605,11 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
     let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
     let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
-    let () = y_tinfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
+    let () = y_binfo_hp (add_str "coer_rhs_1" !CF.print_formula) coer_rhs in
     let lhs_heap, lhs_guard, lhs_vperm, lhs_fl, _, lhs_a  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     (* let lhs_guard_p = MCP.pure_of_mix lhs_guard in *)
-    let () = y_tinfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
+    let () = y_binfo_hp (add_str "lhs_guard_p" !CP.print_formula) lhs_guard in
     let univ_rel v = CP.mkRel_sv v in
     let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
     
@@ -14613,9 +14617,9 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure pure_rhs) in
     let emap = CP.EMapSV.build_eset eqns' in
     let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) f_univ_vars) in
-    let () = y_tinfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
+    let () = y_binfo_hp (add_str "univ_vars2" !CP.print_svl) univ_vars2 in
     
-    let () = y_tinfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
+    let () = y_binfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
     let lhs_w_univ_rel = List.fold_left (fun g v ->
         CP.mkAnd g (mk_Univ_rel v) no_pos
       ) lhs_guard f_univ_vars in

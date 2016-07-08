@@ -8760,13 +8760,13 @@ and case_normalize_renamed_struc_formula prog avail_vars posibl_expl f =
     IF.ECase {b with IF.formula_case_branches = n_br}
   | IF.EBase b -> 
     let ann_vars = IF.collect_annot_vars b.IF.formula_struc_base in 
-    let n_bf,h,_ = case_normalize_renamed_formula prog avail_vars posibl_expl b.IF.formula_struc_base ann_vars in
+    let n_bf,h,_ = x_add case_normalize_renamed_formula prog avail_vars posibl_expl b.IF.formula_struc_base ann_vars in
     let n_cont = map_opt (case_normalize_renamed_struc_formula prog (avail_vars@h) posibl_expl) b.IF.formula_struc_continuation in
     IF.EBase {b with IF.formula_struc_base = n_bf; IF.formula_struc_continuation = n_cont;}
   | IF.EAssume b -> IF.EAssume {b with 
                                 IF.formula_assume_simpl = 
                                   ( let ann_vars = IF.collect_annot_vars  b.IF.formula_assume_simpl in 
-                                    let f,_,_ = case_normalize_renamed_formula prog avail_vars posibl_expl  b.IF.formula_assume_simpl ann_vars in
+                                    let f,_,_ = x_add case_normalize_renamed_formula prog avail_vars posibl_expl  b.IF.formula_assume_simpl ann_vars in
                                     f);
                                 IF.formula_assume_struc = rf b.IF.formula_assume_struc;}
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = rf b.IF.formula_inf_continuation}
@@ -9189,7 +9189,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   let f = x_add_1 IF.rename_bound_vars f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let ann_vars = IF.collect_annot_vars f in 
-  let f,_,_ = case_normalize_renamed_formula prog h [] f ann_vars in
+  let f,_,_ = x_add case_normalize_renamed_formula prog h [] f ann_vars in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   f
 
@@ -9330,7 +9330,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
           else () in
         let onb = convert_anonym_to_exist b.IF.formula_struc_base in
         let ann_vars = IF.collect_annot_vars onb in 
-        let nb,h3,new_expl = case_normalize_renamed_formula prog hv strad_vs onb ann_vars in
+        let nb,h3,new_expl = x_add case_normalize_renamed_formula prog hv strad_vs onb ann_vars in
         let all_expl = rdups (new_expl @ init_expl) in
         let () = x_tinfo_hp (add_str "new_expl" pr_l_v)  new_expl pos in
         let () = x_tinfo_hp (add_str "init_expl" pr_l_v)  init_expl pos in
@@ -9428,7 +9428,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
       else 
         let onb = convert_anonym_to_exist base in
         let ann_vars = IF.collect_annot_vars onb in 
-        let nb,h3,new_expl = case_normalize_renamed_formula prog hv [] onb ann_vars in
+        let nb,h3,new_expl = x_add case_normalize_renamed_formula prog hv [] onb ann_vars in
         let all_expl = rdups (new_expl @ init_expl) in
         let v_no_inst = rdups (hv@all_expl) in 
         let nb_fv = IF.heap_fv nb in

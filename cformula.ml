@@ -14735,7 +14735,7 @@ and get_exists_context (ctx : context) : CP.spec_var list =
 
 and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context =
   let pr = !CP.print_svl in
-  let () = y_binfo_hp (add_str "add expl/impl" (pr_pair pr pr)) (expvars,impvars) in
+  let () = y_tinfo_hp (add_str "add expl/impl" (pr_pair pr pr)) (expvars,impvars) in
   transform_context (fun es -> Ctx{es with 
                                    es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
                                    es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
@@ -14743,7 +14743,7 @@ and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var l
                                    (*es_evars = es.es_evars@ expvars;*)}) ctx
 
 (* and impl_to_expl es vl : entail_state =  *)
-(*   let () = y_binfo_hp (add_str "impl_to_expl:" !CP.print_svl) vl in *)
+(*   let () = y_tinfo_hp (add_str "impl_to_expl:" !CP.print_svl) vl in *)
 (*   let im, il = List.partition (fun c-> List.mem c vl) es.es_gen_impl_vars in *)
 (*   {es with  *)
 (*    es_gen_expl_vars = es.es_gen_expl_vars @ im;  *)

@@ -1006,7 +1006,7 @@ let unfolding_view iprog cprog view =
   let view_branches = List.map (fun f -> unfolding_formula cprog f_unfold f) view_branches in
   let unfold_view_f = CF.formula_of_disjuncts view_branches in
   let self_node = mk_self_node view.C.view_name unfold_view_f in
-  let unfold_view_f = Typeinfer.case_normalize_renamed_formula iprog 
+  let unfold_view_f = x_add Typeinfer.case_normalize_renamed_formula iprog 
       (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f in
   (* let v_sf, v_un_str = norm_view_formula view.C.view_name unfold_view_f in                                                         *)
   (* let () =                                                                                                                         *)

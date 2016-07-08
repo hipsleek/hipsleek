@@ -1042,13 +1042,24 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     | _ ->
       let svl = Cformula.fv f in
       let subst_vars = List.filter (fun sv -> List.mem sv svl) subst_vars in
+      (* preserving exists is important for ptr1/slk/ex9b5d.slk *)
+      let sv_exists = if true (* !Globals.adhoc_flag_4 *) then 
+        let svl2 = Cformula.fv ~vartype:Global_var.var_with_exists f in
+        let ex = CP.diff_svl svl2 svl in
+        let () = y_binfo_hp (add_str "all vars:" !CP.print_svl) svl2 in
+        let () = y_binfo_hp (add_str "sv_exists:" !CP.print_svl) ex in
+        ex
+      else []
+      in
+      let () = y_binfo_hp (add_str " svl(helper):" !CP.print_svl) svl in
+      let () = y_binfo_hp (add_str " subst_vars(helper):" !CP.print_svl) subst_vars in
       let new_const0 = List.map (fun sv ->
           Cpure.mkNull sv no_pos) subst_vars in
       let new_const = List.fold_left (fun f0 f1 ->
           Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
-      let new_h, new_p, new_vp, new_fl, new_t, new_a = Cformula.split_components f in
+      let new_h, new_p, new_vp, new_fl, new_t, new_a = x_add_1 Cformula.split_components f in
       let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
-      let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a no_pos in
+      let new_f = Cformula.mkExists (subst_vars@sv_exists) new_h new_p new_vp new_t new_fl new_a no_pos in
       new_f
   in
   match mf0 with
@@ -1061,8 +1072,9 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
     let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
-    (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
     let svl = Cformula.fv r in
+    let () = y_binfo_hp (add_str " after case:" (Cprinter.string_of_formula)) r in
+    let () = y_binfo_hp (add_str " svl:" !CP.print_svl) svl in
     let null_vars0 = List.find_all (fun sv ->
         match sv with Cpure.SpecVar(_,name,_) -> name = "null") svl in
     let null_vars = Cpure.remove_dups_svl null_vars0 in
@@ -1070,7 +1082,9 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
         match sv with Cpure.SpecVar(typ,name,pr) ->
           Cpure.SpecVar(typ,fresh_any_name name,pr)) null_vars in
     let new_r = Cformula.subst_avoid_capture null_vars subst_vars r in
+    let () = y_binfo_hp (add_str "new_r(b4)" (Cprinter.string_of_formula)) new_r in
     let new_r = helper new_r subst_vars in
+    let () = y_binfo_hp (add_str "new_r:" (Cprinter.string_of_formula)) new_r in
     let new_n_tl = List.map (fun (id,svi) ->
         if id = "null" then
           let subst_sv = List.find (fun sv ->

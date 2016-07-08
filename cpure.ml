@@ -2959,7 +2959,7 @@ and mkExists vs f lbel pos =
   let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
   let () = x_tinfo_hp (add_str "vs(mkExists)" !print_svl) vs no_pos in
   let () = x_tinfo_hp (add_str "vs(filtered rel type)" !print_svl) vs1 no_pos in
-  let fn = if !Globals.adhoc_flag_2 then mkExists_x else mkExists_naive
+  let fn = if false (* !Globals.adhoc_flag_2 *) then mkExists_x else mkExists_naive
   in
   Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> fn vs1 f lbel pos) vs1 f
 
