@@ -14741,6 +14741,7 @@ and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var l
                                    (*es_evars = es.es_evars@ expvars;*)}) ctx
 
 and impl_to_expl es vl : entail_state = 
+  let () = y_binfo_hp (add_str "impl_to_expl:" !CP.print_svl) vl in
   let im, il = List.partition (fun c-> List.mem c vl) es.es_gen_impl_vars in
   {es with 
    es_gen_expl_vars = es.es_gen_expl_vars @ im; 

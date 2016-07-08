@@ -7799,7 +7799,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 
   : (spec_var_type_list * CF.formula * (Globals.ident * VarGen.primed) list) =
   let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
-  let prR (_,f,qvar) = (pr_pair Cprinter.string_of_formula (add_str "\n qvars:" (pr_list (pr_id fst)))) (f,qvar) in
+  let prR (tl,f,qvar) = (pr_triple string_of_tlist Cprinter.string_of_formula (add_str "\n qvars:" (pr_list (pr_id fst)))) (tl,f,qvar) in
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_tlist 
     prR linearize_formula_x prog f0 tlist
 

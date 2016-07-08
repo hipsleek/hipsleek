@@ -1,0 +1,15 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg<p, n-1>
+	inv n>=0.
+
+
+//(3)
+checkentail x::node<_,q>*q::lseg<p,n> |- [qqq] x::lseg<qqq,n+1>.
+print residue.
+expect Valid.
+

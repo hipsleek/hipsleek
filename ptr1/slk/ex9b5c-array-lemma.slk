@@ -12,8 +12,12 @@ lemma_unsafe self::arr_seg<i,n> & i<m<=n
 
 
 //(10)
-checkentail xx::arr_seg<i,m>*xx::arr_seg<m1,n> & i<m<=n & i+1<n & Univ(m) & Univ(m1) & i>=0 & m1=m |- xx::arr_seg<i+1,n>.
-expect Valid.
+//checkentail xx::arr_seg<i,m>*xx::arr_seg<m1,n> & i<m<=n & i+1<n & Univ(m) & Univ(m1) & i>=0 & m1=m |- xx::arr_seg<i+1,n>.
+//expect Valid.
 
+//(10)
+checkentail xx::arr_seg<i,mmm>*xx::arr_seg<mmm,n> 
+    & i<mmm<=n & i+1<n & Univ(mmm) & i>=0 |- xx::arr_seg<i+1,n>.
+expect Valid.
 
 

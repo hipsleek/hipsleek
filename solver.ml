@@ -8943,7 +8943,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         let () = Debug.ninfo_hprint (add_str "contra in empty rhs heap - folding: " (fun b ->  if not b then "CONTRA DETECTED" else "no contra")) contra pos in
         (false,[],None, (Failure_Valid, ([( (MCP.pure_of_mix tmp2), temp_rhs)],[],[])))
       else
-        let exist_vars = estate.es_evars(* @estate.es_gen_expl_vars *)@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
+        (* WN : es_gen_expl_vars important for explicit instantiation but caused problem for univ inst? *)
+        let expl = if !Globals.adhoc_flag_4 then estate.es_gen_expl_vars else [] in
+        let exist_vars = estate.es_evars@expl@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
         (* TODO-EXPURE : need to build new expure stuff *)
         let () = x_tinfo_hp (add_str "exist_vars(b4)" Cprinter.string_of_spec_var_list) exist_vars no_pos in
         let () = x_tinfo_hp (add_str "es_evars" Cprinter.string_of_spec_var_list) estate.es_evars no_pos in
@@ -11611,7 +11613,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             x_tinfo_hp (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
             x_tinfo_hp (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
             x_tinfo_hp (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
-
+            x_binfo_hp (add_str "transfer:imp->expl" (!CP.print_svl)) new_expl_vars pos;
             let new_es = { estate with 
                            es_formula = new_ante;
                            (* add the new vars to be explicitly instantiated *)
