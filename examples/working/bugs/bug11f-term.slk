@@ -1,0 +1,19 @@
+
+data node2 {
+	int val; 
+	node2 next;	
+}.
+
+checkentail
+  true
+  |- emp & Term.
+print residue.
+expect Fail.
+
+checkentail
+  Loop
+  |- emp & Term.
+print residue.
+expect Fail.
+
+

@@ -13,6 +13,19 @@ pred dll<"n":n> ==
 // Fail.Valid.Valid.Valid
 
 checkentail
+  true
+  |- emp & Term.
+print residue.
+expect Valid.
+
+
+checkentail
+  Loop
+  |- emp & Term.
+print residue.
+expect Valid.
+
+checkentail
   x::dll<m>@M &
   ["": x=x' & t_31'=0 & v_int_22_859'=1;
    "n":0<m] 
