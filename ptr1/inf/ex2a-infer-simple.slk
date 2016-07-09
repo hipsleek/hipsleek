@@ -1,0 +1,22 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+lemma_unsafe self::arr_seg<i,n> & i<m<=n 
+     -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+HeapPred R(arrI arr, int i).
+
+infer [R] R(p,i) |- p::arrI<_> .
+print residue.
+
+infer [R] R(p,i) |- p::arrI<_> & i>=0.
+print residue.
+
+
+infer [R] R(arr,i) |- p::arrI<_> & p=arr+i & i>=0.
+print residue.
