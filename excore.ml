@@ -755,7 +755,7 @@ module EPURE =
     let ef_unsat_0 ?(shape=false) ((b,p) as f : epure) : bool =
       (* use ef_conv_enum *)
       if shape then Ssat.SS.is_s_unsat (Elt.conv_var b) p else
-      let cf = ef_conv_enum f in
+      let cf = x_add_1 ef_conv_enum f in
       (* if !Globals.delay_eelim_baga_inv then *)
       (*   (\* if unsat(cf) return true *\) *)
       (*   let ps = list_of_conjs p in *)
@@ -845,8 +845,8 @@ module EPURE =
     (* convert conseq with ef_conv *)
 
     let ef_imply_0 (ante : epure) (conseq : epure) : bool =
-      let a_f = ef_conv_enum ante in
-      let c_f = ef_conv conseq in
+      let a_f = x_add_1 ef_conv_enum ante in
+      let c_f = x_add_1 ef_conv conseq in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
       not (!is_sat_raw (Mcpure.mix_of_pure f))
@@ -887,20 +887,20 @@ module EPURE =
       res
 
     let ef_imply_disj_x (ante : epure_disj) (conseq : epure_disj) : bool =
-      let a_f = ef_conv_enum_disj ante in
-      let c_f = ef_conv_disj conseq in
+      let a_f = x_add_1 ef_conv_enum_disj ante in
+      let c_f = x_add_1 ef_conv_disj conseq in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
       not (x_add_1 !is_sat_raw (Mcpure.mix_of_pure f))
 
     let ef_imply_disj_0 (ante : epure_disj) (conseq : epure_disj) : bool =
-      (* Debug.no_2 "ef_imply_disj" string_of_ef_pure_disj string_of_ef_pure_disj string_of_bool *)
+      Debug.no_2 "ef_imply_disj" string_of_disj string_of_disj string_of_bool
       ef_imply_disj_x ante conseq
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
       let () = x_tinfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let f = List.map (fun (b,f) -> (b,f)) in
-      let r = ef_imply_disj_0 (f ante) (f conseq) in
+      let r = x_add ef_imply_disj_0 (f ante) (f conseq) in
       let () = x_tinfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       r
 

@@ -271,7 +271,7 @@ let build_ef_heap_formula_with_pure is_shape (cf : Cformula.h_formula) (efpd_p :
         build_ef_heap_formula_with_pure_x is_shape cf efpd_p all_views) cf
 
 (* this need to be moved to EPURE module : DONE *)
-let rec build_ef_pure_formula_x ?(shape=false) (pf0 : formula) : ef_pure_disj =
+let rec build_ef_pure_formula_x ?(shape=false)  (pf0 : formula) : ef_pure_disj =
   let rec recf pf = match pf with
   | Or _ ->
     let pf_list = split_disjunctions pf in
@@ -293,10 +293,11 @@ let rec build_ef_pure_formula_x ?(shape=false) (pf0 : formula) : ef_pure_disj =
   let () = x_tinfo_pp ("Omega build_ef_pure_formula:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
   res
 
-and build_ef_pure_formula ?(shape=false) (pf : formula) : ef_pure_disj =
+and build_ef_pure_formula ?(shape=false) ?(exists_vs=[]) (pf : formula) : ef_pure_disj =
+  let pf = if exists_vs==[] then pf else CP.mkExists exists_vs pf None no_pos in
   Debug.no_1 "build_ef_pure_formula" string_of_pure_formula
     EPureI.string_of_disj (fun _ ->
-        build_ef_pure_formula_x ~shape:shape pf) pf
+        build_ef_pure_formula_x ~shape:shape  pf) pf
 
 (* build_ef_formula : map -> cformula --> ef_pure_disj *)
 (* (b1,p1) * (b2,p2) --> (b1 U b2, p1/\p2) *)

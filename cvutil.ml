@@ -1033,7 +1033,7 @@ and conv_from_ef_disj_x (disj:Excore.ef_pure_disj) : (MCP.mix_formula * CF.mem_f
 
   match disj with
   | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
-  | _ -> let f = Excore.EPureI.ef_conv_enum_disj (Excore.EPureI.from_cpure_disj disj) in
+  | _ -> let f = x_add_1 Excore.EPureI.ef_conv_enum_disj (Excore.EPureI.from_cpure_disj disj) in
     (* | _ -> let f = Expure.ef_conv_enum_disj disj in *)
     (MCP.mix_of_pure f,CF.mk_mem_formula [])
 

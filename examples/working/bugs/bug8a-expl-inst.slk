@@ -1,0 +1,41 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, r> * r::lseg<p, n-1>
+	inv n>=0.
+
+
+//(3)
+checkentail x::node<_,q>*q::lseg<p,n> |- [qqq] x::lseg<qqq,n+1>.
+print residue.
+expect Valid.
+
+/*
+# bug8a-expl-inst.slk
+
+explicit inst [qqq] not working.
+
+# previous
+
+(==solver.ml#9010==)
+imply_mix_formula#1@303
+imply_mix_formula#1 inp1 : r_60=q & Anon_59=Anon_13 & 0<=n & x!=null
+imply_mix_formula#1 inp2 :Some( r_60=q & Anon_59=Anon_13 & (((q!=null & 1<=n) | (p=q & n=0))) & x!=null)
+imply_mix_formula#1 inp3 : 1+n=n+1
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@303 EXIT:(true,Some(([ r_60=q & Anon_59=Anon_13 & 0<=n & x!=null],[ r_60=q & Anon_59=Anon_13 & x!=null & q!=null & 1<=n, r_60=q & Anon_59=Anon_13 & x!=null & p=q & n=0])))
+
+# current
+
+(==solver.ml#9028==)
+imply_mix_formula#1@301
+imply_mix_formula#1 inp1 : r_60=q & Anon_59=Anon_13 & 0<=n & x!=null
+imply_mix_formula#1 inp2 :Some( r_60=q & Anon_59=Anon_13 & (((q!=null & 1<=n) | (p=q & n=0))) & x!=null)
+imply_mix_formula#1 inp3 : p=qqq & 1+n=n+1
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@301 EXIT:(false,Some(([ r_60=q & Anon_59=Anon_13 & 0<=n & x!=null],[ r_60=q & Anon_59=Anon_13 & x!=null & q!=null & 1<=n, r_60=q & Anon_59=Anon_13 & x!=null & p=q & n=0])))
+
+*/

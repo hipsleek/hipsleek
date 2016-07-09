@@ -1,4 +1,18 @@
 =================================================
+9July16
+  label-dll.slk({E2#Valid},{E3#Valid},{E4#Valid})
+  inf-no-eps.slk({E3#Valid},{E4#Valid}) 
+  infinity.slk({E2#Valid},{E22#Valid},{E59#Valid},{E76#Valid},{E77#Valid},{E78#Valid}) 
+  imm/imm8-instantiation.slk({E21#Valid})
+  imm/imm8-instantiation.slk({E11#Fail},{E24#Fail})
+  imm/imm9-early-inst.slk({E3#Valid},{E4#Valid})
+  imm/imm9-early-inst.slk({E10#Fail},{E12#Fail},{E5#Fail},{E9#Fail}) 
+  imm-field/sleek02.slk({E13#Fail},{E6#Valid},{E7#Fail},{E9#Fail}) 
+  imm-field/sleek03.slk({E10#Valid},{E2#Fail},{E5#Fail},{E8#Fail}) 
+  lemmas/nlseg4e.slk({L1#Valid}) lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-static.slk({E2#Valid},{E4#Valid}) 
+  veribsync/barrier-dynamic2.slk({E10#Valid},{E11#Valid},{E14#Valid},{E15#Valid},{E2#Fail},{E21#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 =================================================
 8July16
 

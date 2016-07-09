@@ -2035,7 +2035,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       let form_body_inv_baga_enum  vdef =
         let uns_view = C.formula_of_unstruc_view_f vdef in
         let ep_disj = x_add Cvutil.xpure_symbolic_baga prog uns_view in
-        let lhs_pure_enum = Excore.EPureI.ef_conv_enum_disj ep_disj in
+        let lhs_pure_enum = x_add_1 Excore.EPureI.ef_conv_enum_disj ep_disj in
         let () = y_winfo_pp "TODO: fix replacement of rec view with inv" in
         let () = x_tinfo_hp (add_str "uns_view" Cprinter.string_of_formula) uns_view no_pos in
         let () = x_tinfo_hp (add_str "ante(ef_disj)" Cprinter.string_of_ef_pure_disj) ep_disj no_pos in
@@ -2131,7 +2131,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       (* let under_f = vdef.C.view_baga_under_inv in *)
       let baga_under_formula = match under_f with
         | None -> CP.mkFalse pos
-        | Some disj -> Excore.EPureI.ef_conv_enum_disj disj
+        | Some disj -> x_add_1 Excore.EPureI.ef_conv_enum_disj disj
       in
       (* let baga_under_formula = match under_f with *)
       (*   | None -> CF.mkFalse (CF.mkTrueFlow ()) pos *)
@@ -2158,7 +2158,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let helper_unfold no bfs ifs =
           let pr = pr_list Cprinter.string_of_formula in
           Debug.no_2 "helper_unfold" pr pr pr (fun _ _ -> helper_unfold no bfs ifs) bfs ifs in
-        let upf = Excore.EPureI.ef_conv_enum_disj [uf] in
+        let upf = x_add_1 Excore.EPureI.ef_conv_enum_disj [uf] in
         let () = Debug.ninfo_hprint (add_str "baga_under" Cprinter.string_of_pure_formula) upf no_pos in
         let (ifs,bfs) = List.partition CF.is_inductive fl in
         let bfs = bfs@(helper_unfold no bfs ifs) in
