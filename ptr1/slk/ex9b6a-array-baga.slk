@@ -1,0 +1,26 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+// we need to capture memory locations [self+i,seft+n]
+// we use to have baga-form but this did not capture array..
+
+
+checkentail arr::arr_seg<1,2> * arr::arr_seg<1,2> |- false.
+expect Valid.
+print residue.
+
+/*
+# ex9b6a.slk  
+
+checkentail arr::arr_seg<1,2> * arr::arr_seg<1,2> |- false.
+expect Valid.
+print residue.
+
+Need to extend baga format to array segment
+
+*/

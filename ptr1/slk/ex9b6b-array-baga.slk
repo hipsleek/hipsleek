@@ -1,0 +1,88 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+   or self::node<_,q>*q::ll<n-1>
+ inv BG([],self=null & n=0) | BG([self],n>0).
+
+// we need to capture memory locations [self+i,seft+n]
+// we use to have baga-form but this did not capture array..
+
+
+checkentail x::ll<n> * x::ll<n> |- n=0.
+expect Valid.
+print residue.
+// <1>emp&n=0 & x=null&{FLOW,(20,21)=__norm#E}[]
+
+
+checkentail x::ll<n> * x::ll<n> & n>0 |- false.
+expect Valid.
+print residue.
+//<1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+checkentail x::ll<n> * x::ll<m> |- n=0.
+expect Valid.
+print residue.
+// <1>emp&m=0 & x=null & n=0&{FLOW,(20,21)=__norm#E}[]
+
+// (4)
+checkentail x::ll<n> * y::ll<m> & n>0 |- x!=null.
+expect Valid.
+print residue.
+
+// (5)
+checkentail x::ll<n> * y::ll<m> & n>0 |- y=null.
+expect Fail.
+print residue.
+
+
+// (6)
+checkentail x::ll<n> * y::ll<m> & n>0 & m>0 |- x!=y.
+expect Valid.
+print residue.
+//<1>x::ll<n>@M * y::ll<m>@M&0<m & 0<n&{FLOW,(20,21)=__norm#E}[]
+
+// (7)
+checkentail x::ll<n> * y::ll<m> & n>0 |- x!=y.
+expect Valid.
+print residue.
+// 0<n & (((y=null & m=0) | (y!=null & 0<m))) & 
+// (((x=null & n=0) | (x!=null & 0<n))) |-  x!=y. LOCS:[0;8;30] (may-bug)
+
+
+/*
+# ex9b6b.slk  
+
+checkentail arr::arr_seg<1,2> * arr::arr_seg<1,2> |- false.
+expect Valid.
+print residue.
+
+Validate 7: Expecting(3)Valid BUT got : Fail_May
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  0<n & (((y=null & m=0) | (y!=null & 0<m))) & 
+ (((x=null & n=0) | (x!=null & 0<n))) |-  x!=y. LOCS:[0;8;30] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+
+--use-baga
+ baga over inv: [([], self=null & n=0),([self], 0<n)]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 0<n)]
+  xform: ((self=null & n=0) | (self!=null & 0<n))
+
+--inv-baga (can perform inference) 
+ baga inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 1<=n)]
+  baga under inv: [([], self=null & n=0),([self], 1<=n)]
+
+*/
