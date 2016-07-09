@@ -12,6 +12,7 @@ pred dll<"n":n> ==
 
 // Fail.Valid.Valid.Valid
 
+/*
 checkentail
   true
   |- emp & Term.
@@ -37,10 +38,34 @@ checkentail x::dll<m> |- m>=0.
 print residue.
 expect Valid.
 
-checkentail x::dll<m> |- true & ["n":m>=0].
+checkentail x::dll<m> & x!=null |- true & ["n":m>0].
 expect Valid.
 
+(====)
+omega_of_formula#8@19@18@7
+omega_of_formula#8 inp1 : 
+ AndList( "n":0<=n) 
+omega_of_formula#8@19 EXIT ExceptionFailure("omega.ml: encountered AndList, should have been already handled")Occurred!
 
-checkentail x::dll<m> & x!=null |- true & ["n":m>0].
+(==astsimp.ml#2115==)
+ef_conv_disj@18@7
+ef_conv_disj inp1 :[([], 
+ AndList( "n":0<=n) )]
+ef_conv_disj@18 EXIT: 
+ AndList( "n":0<=n) 
+
+[omega_of_formula@48.,Omega.simplify_ops,Omega.simplify,simplify_omega,ef_conv_disj,compute_view_x_formula,,norm_cview_decls,convert_data_and_pred_to_cast]
+
+(==astsimp.ml#2115==)
+ef_conv_disj@18@7
+ef_conv_disj inp1 :[([], 
+ AndList( "n":0<=n) )]
+ef_conv_disj@18 EXIT: 
+ AndList( "n":0<=n) 
+
+*/
+
+
+checkentail x::dll<m> |- true & ["n":m>=0].
 expect Valid.
 

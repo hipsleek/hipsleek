@@ -2186,10 +2186,15 @@ let norm_pure_input f =
   (* let pr2 r = pr_pair Cprinter.string_of_pure_formula (fun s -> s#string_of) (r,imm_stk) in *)
   Debug.no_eff_2 "norm_pure_input2" [false;true] pr pr2 pr (fun _ _ -> norm_pure_input f) f imm_stk
 
+(* WN : should we go deeper to simplify? *)
+let om_simplify f =
+  if (CP.is_AndList f) (* && !Globals.adhoc_flag_3 *) then f
+  else x_add_1 Omega.simplify f
+
 let om_simplify f =
   (* wrap_pre_post x_add cnv_ptr_to_int norm_pure_result *)
   wrap_pre_post norm_pure_input (x_add_1 norm_pure_result)
-    (x_add_1 Omega.simplify) f
+    (om_simplify) f
 (* let f = cnv_ptr_to_int f in *)
 (* let r = Omega.simplify f in *)
 (* cnv_int_to_ptr r *)
