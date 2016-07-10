@@ -5,7 +5,8 @@ data arrI {
 
 pred arr_seg<i,n> == i=n & i>=0 & self!=null
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
-  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
+  //inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
+  inv BG([(self+i,n-i)], n>=i & i>=0 & self!=null).
 
 //heap_addresses : xxx...y-1
 

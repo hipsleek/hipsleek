@@ -1718,7 +1718,7 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   | None -> []
   | Some bl ->
     begin
-      let () = x_binfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
+      let () = x_binfo_hp (add_str "look_up_view_baga: baga= " (!print_ef_pure_disj)) bl (* ba_oinv *) no_pos in
       let () = x_binfo_hp (add_str "baga ex vars= " !CP.print_svl) ba_exists no_pos in
       let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
       let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in

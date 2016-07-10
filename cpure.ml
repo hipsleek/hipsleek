@@ -5952,24 +5952,46 @@ let mk_exp_neq_null lhs =
 (*   (sv,None) denotes an address sv *)
 (*   (sv1,Some(sv2)) denotes an interval sv1..(sv2-1) *)
 (*   (sv1,Some(sv1)) is the same as empty *)
-(*   Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
+(* Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
+(*   (base,Some(offset,len)) *)
+(*  
+      base,(offset,len)
+      ptr = base+offset ..
+      (self,2,0)
+*)
 module SV_INTV =
 struct 
-  type intv = (exp * exp) (* start and length *)
+  type intv = (exp * exp) (* start and end+1 *)
   type t = spec_var * intv (* spec_var *) option
   let zero = (mk_zero,None)
   (* "_" to denote null value *)
   let is_zero x = x==zero
-  let eq (x1,_) (x2,_) = eq_spec_var x1 x2
-  let compare (x1,_) (x2,_) = compare_spec_var x1 x2
+  (* need a stronger equality *)
+  let eq (x1,m1) (x2,m2) =
+    begin
+      match m1,m2 with
+      | None,None -> eq_spec_var x1 x2
+      | Some(s1,n1),Some(s2,n2) -> failwith x_tbi
+      | _,_ -> false
+    end
+  let compare (x1,m1) (x2,m2) = 
+    begin
+      match m1,m2 with
+      | None,None -> compare_spec_var x1 x2
+      | Some(s1,n1),Some(s2,n2) -> compare_spec_var x1 x2
+      | None,Some _ -> -1
+      | _, _ -> 1
+    end
   let mk_addr x = (x,None)
   (* TODO : to change this function *)
   let get_interval (x,y) = 
+   let () = y_binfo_pp "inside get_interval (SV_INTV)" in
     match y with
     | None -> None
     | Some exp -> Some(x,exp)
                    (* Some(x,id) *)
-  let string_of (sv,sv_opt) = 
+  let string_of (sv,sv_opt) =
+    (* let () = y_binfo_pp "inside SV_INTV" in *)
     let pr = string_of_spec_var in
     let pr_e = !print_exp in
     match sv_opt with
@@ -5984,6 +6006,7 @@ struct
     (repl v,map_opt repl_e opt)
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
+   let () = y_binfo_pp "inside get_pure (SV_INTV)" in
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     let lst_intv = List.fold_left (fun acc (_,s) -> match s with
         | None -> acc
