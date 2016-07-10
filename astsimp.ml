@@ -1923,9 +1923,10 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-  let _=proving_loc # set pos in
+  let _= proving_loc # set pos in
   let rec helper n do_not_compute_flag =
     (* let compute_view_x_formula_x_op ()= *)
+    let () = y_tinfo_hp (add_str "do_not_compute_flag" string_of_bool) do_not_compute_flag in
     (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
        (
          let old_baga_imm_flag = !Globals.baga_imm in
@@ -2068,7 +2069,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         Debug.no_1_num i "form_body_inv" pr Cprinter.string_of_formula form_body_inv vdef in
       (* let formula1 = CF.formula_of_mix_formula xform1 pos in *)
       let form_body_enum,form_body_sym =
-        if !Globals.use_baga then form_body_inv_baga_enum,form_body_inv_baga
+        if !Globals.use_baga && false then form_body_inv_baga_enum,form_body_inv_baga
         else (form_body_inv 1),(form_body_inv 2) in
       let formula1 = form_body_enum vdef in
       let templ_vars = List.filter (fun v -> is_FuncT (CP.type_of_spec_var v)) (CF.fv formula1) in
@@ -2265,8 +2266,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in ()
     else ()
   in
-  if !Globals.dis_baga_inv_check then () else
-    check_and_compute ()
+  if !Globals.dis_baga_inv_check 
+  then () 
+  else check_and_compute ()
 
 and find_pred_by_self vdef data_name = vdef.I.view_pt_by_self
 (* Gen.BList.difference_eq (=) vdef.I.view_pt_by_self [data_name] *)

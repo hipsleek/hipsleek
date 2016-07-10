@@ -15884,9 +15884,12 @@ let mk_inc lhs rhs =
 
 
 let is_AndList f =
-  match f with
-  | AndList _ -> true
-  | _ -> false
+  let rec aux f =
+    match f with
+      | AndList _ -> true
+      | Or (lt,rt,_,_) -> (aux lt) || (aux rt)
+      | _ -> false
+  in aux f
 
 (* let pr = drop_nonlinear_formula pf in *)
 

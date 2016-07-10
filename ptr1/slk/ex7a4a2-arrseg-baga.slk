@@ -1,0 +1,30 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+//heap_addresses : xxx...y-1
+
+checkentail base::arr_seg<2,2> * base::arr_seg<2,3> |- false.
+expect Fail. 
+print residue.
+
+checkentail base::arr_seg<2,3> * base::arr_seg<2,3> |- false.
+expect Valid. 
+print residue.
+
+/*
+
+# ex7a4a2.slk
+
+Sound but incomplete..
+
+
+
+*/
+
+

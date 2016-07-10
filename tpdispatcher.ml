@@ -3537,7 +3537,7 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
   else
     let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
-    let res= sat_label_filter (fun c-> x_add tp_is_sat c old_sat_no) f in
+    let res = x_add sat_label_filter (fun c-> x_add tp_is_sat c old_sat_no) f in
     res
 ;;
 

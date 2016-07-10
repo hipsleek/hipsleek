@@ -772,7 +772,7 @@ module EPURE =
       Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
           (fun _ ->  ef_unsat_0 ~shape:shape f) f
 
-    let unsat is_shape (b,f) = ef_unsat_0 ~shape:is_shape (b, f)
+    let unsat is_shape (b,f) = x_add_1 (ef_unsat_0 ~shape:is_shape) (b, f)
 
     let norm is_shape (efp) =
       if unsat is_shape efp then mk_false

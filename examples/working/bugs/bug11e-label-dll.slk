@@ -12,60 +12,93 @@ pred dll<"n":n> ==
 
 // Fail.Valid.Valid.Valid
 
+
+checkentail x::dll<mmm> |- true & ["n":mmm>=0].
+expect Valid.
+print residue.
+
+
 /*
-checkentail
-  true
-  |- emp & Term.
-print residue.
-expect Valid.
+# ex11e.slk
 
-
-checkentail
-  Loop
-  |- emp & Term.
-print residue.
-expect Valid.
-
-checkentail
-  x::dll<m>@M &
-  ["": x=x' & t_31'=0 & v_int_22_859'=1;
-   "n":0<m] 
-  |- emp & Term.
-print residue.
-expect Valid.
-
-checkentail x::dll<m> |- m>=0.
-print residue.
-expect Valid.
-
-checkentail x::dll<m> & x!=null |- true & ["n":m>0].
-expect Valid.
 
 (====)
-omega_of_formula#8@19@18@7
-omega_of_formula#8 inp1 : 
- AndList( "n":0<=n) 
-omega_of_formula#8@19 EXIT ExceptionFailure("omega.ml: encountered AndList, should have been already handled")Occurred!
+omega_of_formula#8@75@74@73@71@70@40
+omega_of_formula#8 inp1 : ((
+ AndList( "":self=0 ; "n":n=0) ) | (
+ AndList( "":self>0 ; "n":1<=n) ))
+omega_of_formula#8@75 EXIT ExceptionFailure("omega.ml: encountered AndList, should have been already handled")Occurred!
 
-(==astsimp.ml#2115==)
-ef_conv_disj@18@7
-ef_conv_disj inp1 :[([], 
- AndList( "n":0<=n) )]
-ef_conv_disj@18 EXIT: 
- AndList( "n":0<=n) 
+(==omega.ml#1012==)
+Omega.simplify_ops@74@73@71@70@40
+Omega.simplify_ops inp1 : ((
+ AndList( "":self=0 ; "n":n=0) ) | (
+ AndList( "":self>0 ; "n":1<=n) ))
+Omega.simplify_ops@74 EXIT ExceptionFailure("omega.ml: encountered AndList, should have been already handled")Occurred!
 
-[omega_of_formula@48.,Omega.simplify_ops,Omega.simplify,simplify_omega,ef_conv_disj,compute_view_x_formula,,norm_cview_decls,convert_data_and_pred_to_cast]
+(==tpdispatcher.ml#2192==)
+Omega.simplify@73@71@70@40
+Omega.simplify inp1 : ((
+ AndList( "":self=0 ; "n":n=0) ) | (
+ AndList( "":self>0 ; "n":1<=n) ))
+Omega.simplify@73 EXIT: ((
+ AndList( "":self=0 ; "n":n=0) ) | (
+ AndList( "":self>0 ; "n":1<=n) ))
 
-(==astsimp.ml#2115==)
-ef_conv_disj@18@7
-ef_conv_disj inp1 :[([], 
- AndList( "n":0<=n) )]
-ef_conv_disj@18 EXIT: 
- AndList( "n":0<=n) 
+
+[omega_of_formula@8.,Omega.simplify_ops,Omega.simplify,simplify_omega,ef_conv_disj,xpure_symbolic,form_body_inv,compute_view_x_formula,,norm_cview_decls,convert_data_and_pred_to_cast]
+[omega_of_formula@9.,Omega.simplify_ops,Omega.simplify,simplify_omega,ef_conv_enum_disj,ef_imply_disj,fold_fun_impt,heap_entail_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,heap_entail,heap_entail_init,compute_view_x_formula,,norm_cview_decls,convert_data_and_pred_to_cast]
+
+# no inv-baga for AndList ....
+
+(==excore.ml#903==)
+ef_imply_disj@868
+ef_imply_disj inp1 :[([], 
+ AndList( "":x=null ; "n":mmm=0) ),([x], true)]
+ef_imply_disj inp2 :[([], 
+ AndList( "n":0<=mmm) )]
+ef_imply_disj@868 EXIT:false
+
+
+ --use-baga --inv-baga
+  AndList( "n":0<=n) 
+  baga over inv: 
+    [([], AndList( "n":0<=n) )]
+  baga over inv (unfolded): 
+    [([], AndList( "n":0<=n) )]
+  xform: AnddList( "n":0<=n) 
+  AndList( "":self=null) ->
+  AndList( "":self=null; "n":n=0) 
+
+
+  inv: AndList( "n":0<=n) 
+  baga over inv: 
+    [([], AndList( "n":0<=n) )]
+  baga over inv (unfolded): 
+    [([self], AndList( "n":1<=n) ),([], 
+     AndList( "":self=null ; "n":n=0) )]
+  xform: 
+    (( AndList( "":self!=null ; "n":1<=n) ) | (
+       AndList( "":self=null; "n":n=0) ))
+
+
+(==astsimp.ml#1974==)
+compute_unfold_baga@15@1
+compute_unfold_baga inp1 :Some([([], 
+ AndList( "n":0<=n) )])
+compute_unfold_baga inp2 : (* lbl: *){1}->emp&
+ AndList( "":self=null ; "n":n=0) &
+ {FLOW,(1,26)=__flow#E}[]
+ or (* lbl: *){2}->(exists Anon_12,q,
+    n1: (* lbl: *){2}->self::node2<Anon_12,q>@M * q::dll<n1>@M&
+ AndList( "n":n1+1=n) &{FLOW,(1,26)=__flow#E}[])
+compute_unfold_baga@15 EXIT:Some([([self], 
+ AndList( "n":1<=n) ),([], 
+ AndList( "":self=null ; "n":n=0) )])
+
+
+!!! **WARNING****astsimp.ml#2218:skip INV Check
+Inv Check: Fail.(View dll:Over)
+
 
 */
-
-
-checkentail x::dll<m> |- true & ["n":m>=0].
-expect Valid.
-

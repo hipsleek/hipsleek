@@ -1,19 +1,38 @@
-
 data node2 {
 	int val; 
 	node2 next;	
 }.
 
-checkentail
-  true
-  |- emp & Term.
+checkentail true |- emp & Term.
+print residue.
+expect Valid.
+
+checkentail Loop |- emp & Term.
+print residue.
+expect Valid.
+
+checkentail Term |- emp & Loop.
 print residue.
 expect Fail.
 
-checkentail
-  Loop
-  |- emp & Term.
+
+/*
+# bug11f.slk
+
+
+checkentail Term |- emp & Loop.
 print residue.
 expect Fail.
 
 
+Entail 3: Fail. 
+<1>: (14) (ERR: invalid transition)  Term[] ->  Loop{call 0:0}[]
+
+Residue:
+
+ <1>emp&TermErr_Must[]&{FLOW,(20,21)=__norm#E}[]
+ [ (14) (ERR: invalid transition)  Term[] ->  Loop{call 0:0}[]]
+
+Validate 3: Expecting(3)Fail BUT got : Valid
+
+*/

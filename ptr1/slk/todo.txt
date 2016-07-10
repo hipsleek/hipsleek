@@ -2,6 +2,21 @@
 ====================================================================
 ====================================================================
 ====================================================================
+# ex7a4a1.slk
+
+checkentail base::arr_seg<2,2> * base::arr_seg<2,3> |- false.
+expect Fail. 
+print residue.
+
+# this unsoundness need to be fixed..
+
+(==cvutil.ml#1992==)
+xpure_heap_mem_enum#6@79@78@77@76@75
+xpure_heap_mem_enum#6 inp1 : base::arr_seg<flted_12_107,flted_12_106>@M * 
+ base::arr_seg<flted_12_105,flted_12_104>@M
+xpure_heap_mem_enum#6 inp2 :lhs_pure: flted_12_107=2 & flted_12_106=2 & flted_12_105=2 & flted_12_104=3
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@79 EXIT: false #  [[_133,_133]]
 ====================================================================
 # ex9b6d.slk -dre "ef_\|imply"
 
