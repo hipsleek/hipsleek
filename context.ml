@@ -817,10 +817,54 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               let rhs = CP.mk_is_base_ptr d rhs_ptr in
               (* let r = !CP.tp_imply lhs_pure rhs in *)
               let r = true (* !CP.tp_imply lhs_w_rhs_inst rhs *) in
+              let ex_inst = estate.CF.es_gen_impl_vars @ estate.CF.es_gen_expl_vars in
+              let inst_base_ptr lhs_w_rhs_inst ex_inst =
+                let pairs = x_add_1 CP.pick_base_pair lhs_w_rhs_inst in
+                let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> CP.intersect_svl [v1;v2] ex_inst==[]) pairs in
+                let inst_pair = List.map (fun (v1,v2) -> 
+                    if List.exists (CP.eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in
+                let choose_base lhs lhs_pairs = 
+                  let rec aux lst = 
+                    match lst with
+                      | [] -> []
+                      | (v1,v2)::lst -> 
+                            if !CP.tp_imply lhs (CP.mk_is_base_ptr v1 v2) then (v1,v2)::(aux lst)
+                            else if !CP.tp_imply lhs (CP.mk_is_base_ptr v2 v1) then (v2,v1)::(aux lst)
+                            else aux lst
+                  in aux lhs_pairs in
+                let find lst v = 
+                  try 
+                    Some (snd (List.find (fun (v1,_) -> CP.eq_spec_var v1 v) lst))
+                  with _ -> None in
+                let choose_inst cb inst_pair = 
+                  let rec aux ip = match ip with
+                    | [] -> []
+                    | (cv,base1)::lst -> begin
+                        match (find cb cv) with
+                          | Some base2 -> (base1,base2)::(aux lst)
+                          | _ -> []
+                      end 
+                  in aux inst_pair
+                in
+                (* choosing those with a (ptr,base) *)
+                let common_base_lst = choose_base lhs_w_rhs_inst lhs_pair in
+                let lst_of_inst = choose_inst common_base_lst inst_pair in
+                let lhs_w_rhs_inst2 = List.fold_left (fun acc (v1,v2) ->
+                    CP.mkAnd acc (CP.mkEqVars v1 v2) no_pos
+                ) lhs_w_rhs_inst lst_of_inst in 
+                let pr_lst_pair = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+                let () =  y_binfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in
+                let () =  y_binfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in
+                let () =  y_binfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in
+                let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+                lhs_w_rhs_inst2
+              in
+              let lhs_w_rhs_inst = inst_base_ptr lhs_w_rhs_inst ex_inst in
               let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
               let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
               let () =  y_binfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
               let () =  y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
+              let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
               match root_lhs with
               | None  ->
                 let eq = CP.mkEqVars v d in

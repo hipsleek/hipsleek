@@ -15,7 +15,7 @@ checkentail
 print residue.
 
 /*
-# bug2.slk --trace-exc
+# bug2.slk --trace-exc (FIXED)
 
 # Can we instantiate base=base2 below?
 

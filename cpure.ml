@@ -151,6 +151,10 @@ let is_num_typ sv = match sv with
   | SpecVar (NUM,_,_) -> true
   | _ -> false
 
+let is_num_or_int_typ sv = match sv with
+  | SpecVar (n,_,_) -> n==NUM || n=Int
+  (* | _ -> false *)
+
 let is_ann_typ sv = match sv with
   | SpecVar (AnnT,_,_) -> true
   | _ -> false
@@ -13779,6 +13783,27 @@ and drop_bag_formula_weak_x (pf : formula) : formula =
   let npf, _ = trans_formula pf arg f f_arg f_comb in
   npf
 
+and pick_base_pair_x (pf : formula) (* : (spec_var * spec_var) list *) =
+  let pick_ptr p = 
+    let vs = fv p in
+    let (int_vs,ptr_vs) = List.partition (fun v -> is_num_or_int_typ v) vs in
+    if int_vs!=[] then 
+      match ptr_vs with
+        | [v1;v2] -> Some [(v1,v2)]
+        | _ -> None
+    else None in
+  let f_bf bf =
+    let pf, lbl = bf in
+    (match pf with
+     | Eq (e1, e2, pos) -> pick_ptr (BForm ((pf,None),None))
+     | _ -> None)
+  in
+  let f_comb = List.concat 
+  in fold_formula pf (nonef,f_bf,nonef) f_comb
+
+and pick_base_pair pf =
+  let pr = !print_sv in
+  Debug.no_1 "pick_base_pair" !print_formula (pr_list (pr_pair pr pr)) pick_base_pair_x pf
 
 and drop_bag_formula_weak (pf : formula) : formula =
   Debug.no_1 "drop_bag_formula_weak" !print_formula !print_formula
