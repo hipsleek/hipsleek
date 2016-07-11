@@ -817,14 +817,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               let rhs = CP.mk_is_base_ptr d rhs_ptr in
               (* let r = !CP.tp_imply lhs_pure rhs in *)
               let r = true (* !CP.tp_imply lhs_w_rhs_inst rhs *) in
-              let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
-              let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-              let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
+              let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+              let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+              let () =  y_binfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
+              let () =  y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
               match root_lhs with
               | None  ->
                 let eq = CP.mkEqVars v d in
                 let () =  y_tinfo_hp (add_str "eq(v=d)" !CP.print_formula) eq  in
-                let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
                 let lhs_w_rhs_inst = CP.join_conjunctions [lhs_pure;rf;rhs_pure] in
                 let rhs = eq in
                 let r = x_add_1 !CP.tp_is_sat lhs_w_rhs_inst in
@@ -856,10 +856,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 else (d,(map_r r,None),None)
               | Some ((v2,pf)) ->
                 let rhs_eq = CP.mkEqVars d rhs_ptr in
-                let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
+                let () =  y_binfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
                 (* same base, but same start? *)
                 (* add the possible RHS inst *)
                 (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
+                (* let lhs_w_rhs_inst = CP.mkAnd lhs_w_rhs_inst rhs_eq no_pos in *)
                 let r = !CP.tp_imply lhs_w_rhs_inst rhs_eq in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr(view matching)" string_of_bool) r  in
                 (d,(map_r r,None),None)

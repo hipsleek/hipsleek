@@ -5985,13 +5985,13 @@ struct
   let mk_addr x = (x,None)
   (* TODO : to change this function *)
   let get_interval (x,y) = 
-   let () = y_binfo_pp "inside get_interval (SV_INTV)" in
+   let () = y_tinfo_pp "inside get_interval (SV_INTV)" in
     match y with
     | None -> None
     | Some exp -> Some(x,exp)
                    (* Some(x,id) *)
   let string_of (sv,sv_opt) =
-    (* let () = y_binfo_pp "inside SV_INTV" in *)
+    (* let () = y_tinfo_pp "inside SV_INTV" in *)
     let pr = string_of_spec_var in
     let pr_e = !print_exp in
     match sv_opt with
@@ -6006,7 +6006,7 @@ struct
     (repl v,map_opt repl_e opt)
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
-   let () = y_binfo_pp "inside get_pure (SV_INTV)" in
+   let () = y_tinfo_pp "inside get_pure (SV_INTV)" in
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     let lst_intv = List.fold_left (fun acc (_,s) -> match s with
         | None -> acc
@@ -6037,7 +6037,7 @@ struct
   (* let mk_elem x = mk_elem_from_sv (x,None) *)
   (* throws exception when duplicate detected during merge *)
   let norm_baga (state:formula) (b:t list) = 
-    let () = y_binfo_pp x_tbi in
+    let () = y_tinfo_pp x_tbi in
     b
   let rec merge_baga b1 b2 =
     match b1,b2 with
