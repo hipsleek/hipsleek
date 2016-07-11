@@ -5,10 +5,11 @@ data arrI {
 
 pred arr_seg<i,n> == i=n & i>=0 & self!=null
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
-  //inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
-  inv BG([(self+i,n-i)], n>=i & i>=0 & self!=null).
+  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
+  //inv BG([(self,i,n)], n>=i & i>=0 & self!=null).
+  //inv BG([(self+i,n-i)], n>=i & i>=0 & self!=null).
 
-//heap_addresses : xxx...y-1
+//heap_addresses : self+i..self+n-i-1
 
 checkentail base::arr_seg<2,2> * base::arr_seg<2,3> |- false.
 expect Fail. 
@@ -22,6 +23,12 @@ print residue.
 
 /*
 # ex7a4a1.slk
+
+ (i) every non-empty array segment is represented by a single unique addr
+ (ii) --use-baga (use baga library)
+      to capture interval disjointness
+ --inv-baga (to infer baga invariant)
+
 
 checkentail base::arr_seg<2,2> * base::arr_seg<2,3> |- false.
 expect Fail. 
