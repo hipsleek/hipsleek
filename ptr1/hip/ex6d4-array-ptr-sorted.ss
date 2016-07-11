@@ -40,11 +40,20 @@ void init3(arrI a,int i,int m)
 /*  requires base::arr_seg<i,m> * b2::arr_seg_map<i,m,M>@L//& 0<=i & i<=m
   ensures  base::arr_seg_sorted<i,m,i>;
 */
+/*
  requires base::arr_seg<i,m> & a=base+i
   case {
    i>=m -> ensures emp;
    i<m -> ensures base::arr_seg_sorted<i,m,i>;
   }
+*/
+ requires base::arr_seg<j,m2> & a=base+j & m2-j=m-i
+  case {
+   i>=m -> ensures emp;
+   i<m -> ensures base::arr_seg_sorted<j,m2,i>;
+  }
+
+
 {
   if (i<m) {
     //assume false;
