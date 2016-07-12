@@ -1734,13 +1734,17 @@ rflow_kind:
 
 rflow_form: 
   [
-    [ `SAT; p = projection_formula ->
+    [ `SAT; p = formula ->
      let loc = (get_pos_camlp4 _loc 1) in
-     let h_form = Session.IProjection.trans_from_session p in
-     let form = Session.IProjection.mk_formula_heap_only h_form loc in
+     let form = (match p with
+                  | Session.ProjectionSession s -> Session.IProjection.mk_formula_heap_only
+                                                     (Session.IProjection.trans_from_session s) loc
+                  | Session.TPProjectionSession s -> Session.ITPProjection.mk_formula_heap_only
+                                                       (Session.ITPProjection.trans_from_session s) loc
+                  | Session.ProtocolSession s -> failwith "Unexpected protocol session.") in
      { F.rflow_kind = NEUTRAL;
        F.rflow_base = form;
-       F.rflow_session_kind = Some Projection; }
+       F.rflow_session_kind = Some !projection_kind; }
   ]
   | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
