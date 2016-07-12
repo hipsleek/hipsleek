@@ -2107,6 +2107,7 @@ and get_node_name_x (h : h_formula) = match h with
   | DataNode ({h_formula_data_name = c}) -> c
   | HRel (hp, _, _) -> CP.name_of_spec_var hp
   | Hole i -> "Hole_"^(string_of_int i)
+  | HVar _ -> ""
   | _ ->
     let pr = !print_h_formula in 
     failwith ("get_node_name: invalid argument: " ^ (pr h))
