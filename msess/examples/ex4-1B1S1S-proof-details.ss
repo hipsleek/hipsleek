@@ -49,9 +49,6 @@ void seller(Channel cb, Channel cs)
   //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cb!double;(cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date \/ cb?0)}<>
   send(cb; getPrice(id));
   //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{(cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date \/ cb?0)}<>
-  
-  //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{(cb?1;cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date )}<> \/
-  //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cb?0}<>
   let answ = receive(cb);
   //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cs!int;cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date));cb?Addr;cb!Date}<> & answ = 1 \/
   //cb::Chan<ms> * cs::Chan<ms> * ms::Sess{emp}<> & answ =0
@@ -113,3 +110,12 @@ cb::Chan<ms> * cs::Chan<ms> * ms::Sess{cs!(Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date
  2. identify L(msg) == (Chan(cb,ms) * Sess(ms,cb?Addr;cb!Date))
  3. identify rest   == cb?Addr;cb!Date
  
+ c::Chan<ms> * ms::Sess{c!1;;c!Addr;;c?Date or c!0);P1}<> |-
+                         c::Chan<ms> * ms::Sess<c!L(msg);rest> * L(msg)
+
+
+         ms::Sess{c!1;;R1}<..> & msg=1
+                 |- ms::Sess<c!L(msg):rest> * L(msg)
+     ----------------------------------------------------------
+         ms::Sess{c!1;;R1  or c!0;R2}<..> & msg=1
+                 |- ms::Sess<c!L(msg):rest> * L(msg)                       

@@ -909,6 +909,7 @@ let session_seq = (session_seq_id, Unprimed)
 let session_chan_id = "chan"
 
 let print_compact_projection_formula = ref true
+let print_flow_flag = ref true
 
 let dedicated_ids = [self; session_msg_id; session_seq_id; session_chan_id; null_name]
 

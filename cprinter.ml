@@ -715,7 +715,8 @@ let pr_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (smart_string_of
 let pr_session_projection ?(lvl=(!glob_lvl)) vn =
   let node = ViewNode vn in
   let session = Session.CProjection.trans_h_formula_to_session (Session.CProjection.get_original_h_formula node) in
-  wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session)
+  let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session) in
+  Wrapper.wrap_one_bool print_flow_flag false pr_sess ()
 
 let pr_view_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_view_arg x)
 
@@ -2270,6 +2271,7 @@ and pr_mix_formula f = match f with
 and string_of_flow_formula f c =
   "{"^f^","^string_of_flow c.formula_flow_interval^"="^(exlist # get_closest c.formula_flow_interval)^(match c.formula_flow_link with | None -> "" | Some e -> ","^e)^"}"
 
+
 (* let rec string_of_nflow n = (exlist # get_closest n) *)
 and string_of_dflow n = (exlist # get_closest n)
 
@@ -2327,12 +2329,16 @@ and pr_formula_base e =
     (if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp));
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&" ; pr_mix_formula p))
-    ;pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+    ; if (!print_flow_flag) then
+      begin
+        pr_cut_after  "&" ;
+        fmt_string (string_of_flow_formula "FLOW" fl)
+      end
     (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
-    ;if (a==[]) then ()
-    else
-      fmt_string ("\nAND "); pr_one_formula_list a
     ;
+    match a with
+    | [] -> ()
+    | _  -> fmt_string ("\nAND "); pr_one_formula_list a;
 
 and slk_formula_base e =
   match e with
@@ -2346,8 +2352,12 @@ and slk_formula_base e =
     pr_h_formula h;
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&"; pr_mix_formula p));
-    if (a==[]) then ()
-    else (fmt_string ("\nAND "); pr_one_formula_list a)
+        match a with
+    | [] -> ()
+    | _  -> fmt_string ("\nAND "); pr_one_formula_list a
+
+    (* if (a==[]) then () *)
+    (* else (fmt_string ("\nAND "); pr_one_formula_list a) *)
 
 and prtt_pr_formula_base e =
   match e with
@@ -2474,8 +2484,11 @@ and slk_formula e =
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&" ; pr_mix_formula p));
     fmt_string ")";
-    if (a==[]) then ()
-    else (fmt_string ("\nAND "); pr_one_formula_list a)
+    match a with
+    | [] -> ()
+    | _  -> fmt_string ("\nAND "); pr_one_formula_list a
+    (* if (a==[]) then () *)
+    (* else (fmt_string ("\nAND "); pr_one_formula_list a) *)
 
 and prtt_pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren prtt_pr_formula e in
@@ -2500,9 +2513,12 @@ and prtt_pr_formula e =
     pr_mix_formula p; pr_cut_after  ")";
     (* fmt_string ((string_of_flow_formula "FLOW" fl)  ^  ")") *)
     (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
-    if (a==[]) then ()
-    else
-      fmt_string ("\nAND "); pr_one_formula_list a
+    match a with
+    | [] -> ()
+    | _  -> fmt_string ("\nAND "); pr_one_formula_list a
+    (* if (a==[]) then () *)
+    (* else *)
+    (*   fmt_string ("\nAND "); pr_one_formula_list a *)
 
 and prtt_pr_formula_inst_1 prog print_flow e =
   let f_b e =  pr_bracket formula_wo_paren (prtt_pr_formula_inst_1 prog print_flow) e in
@@ -2531,9 +2547,12 @@ and prtt_pr_formula_inst_1 prog print_flow e =
     let flow_info = if  print_flow then string_of_flow_formula "" fl else "" in
     fmt_string ((flow_info) );
     (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
-    if (a==[]) then ()
-    else
-      fmt_string ("\nAND "); pr_one_formula_list a
+    match a with
+    | [] -> ()
+    | _  -> fmt_string ("\nAND "); pr_one_formula_list a
+    (* if (a==[]) then () *)
+    (* else *)
+    (*   fmt_string ("\nAND "); pr_one_formula_list a *)
 
 and prtt_pr_formula_inst prog e =
   let e = Cfout.tidy_print e in
