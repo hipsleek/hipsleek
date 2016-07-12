@@ -1843,6 +1843,7 @@ my $inv = '--inv-test';
 my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
+					  ["term.slk", "--efa-exc",(), "Valid.Fail.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["cll-d.slk", "", (), "Valid."],
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
                       ["label-dll.slk", "--dis-eps", (), "Valid.Valid.Valid.Valid."],

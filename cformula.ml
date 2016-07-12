@@ -10832,7 +10832,7 @@ let rec is_ctx_error ctx=
   match ctx with
   | Ctx es ->
     (*L2: determining failure is based only on es_final_error*)
-    not (es.es_final_error == [])
+    (not (es.es_final_error == [])) (* || (is_error_flow es.es_formula) *)
   (* es_formula: may be exception *)
   (* || x_add_1 is_error_flow es.es_formula || is_mayerror_flow es.es_formula *)
   | OCtx (c1, c2) -> is_ctx_error c1 || is_ctx_error c2
