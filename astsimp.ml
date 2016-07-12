@@ -2941,7 +2941,7 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
     let nview = x_add trans_view iprog mutrec_views transed_views typ_infos view in
     let () = match nview.view_session_kind with
                | Some Projection -> Session.CProjection.test_if_is nview.view_formula
-               | Some TPProjection -> Session.CProjection.test_if_is nview.view_formula
+               | Some TPProjection -> Session.CTPProjection.test_if_is nview.view_formula
                | _ -> () in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)

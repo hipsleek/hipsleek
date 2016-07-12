@@ -661,7 +661,6 @@ module TPProjection_base_formula =
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
-      let channel = Msg.get_node_id ptr in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
       let transmission = match (Msg.get_session_kind h_formula) with
         | Some Send -> TSend
