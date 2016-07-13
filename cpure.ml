@@ -6009,8 +6009,35 @@ struct
       with _ -> x in
     (repl v,map_opt repl_e opt)
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
-  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
-   let () = y_tinfo_pp "inside get_pure (SV_INTV)" in
+  (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) & (d<=b2||d2<=b) (to ensure disjointness) *)
+  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) =
+    let gen_disj tlst =
+      let gen_disj_f eh et e1 e2=
+        (mkOr (BForm (((mkGte eh e2 no_pos),None),None)) (BForm (((mkGte e1 et no_pos),None),None)) None no_pos)
+      in
+      let rec helper ((e1,e2) as e) lst =
+        match lst with
+        | [] -> []
+        | (eh,et)::rest ->
+           (gen_disj_f e1 e2 eh et)::(helper e rest)
+      in
+      let rec merge_and_list lst =
+        match lst with
+        | [] -> None
+        | [h] -> Some h
+        | h::rest ->
+           (match (merge_and_list rest) with
+            | Some r -> Some (mkAnd h r no_pos)
+            | None -> Some h)
+      in
+      let rec proc tlst =
+        match tlst with
+        | [] -> []
+        | h::rest -> (helper h rest)@(proc rest)
+      in
+      merge_and_list (proc tlst)
+    in
+    let () = y_tinfo_pp "inside get_pure (SV_INTV)" in
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     let lst_intv = List.fold_left (fun acc (_,s) -> match s with
         | None -> acc
@@ -6025,7 +6052,11 @@ struct
     let lst = List.map fst lst in
     if enum_flag then baga_enum lst
     else let f = baga_conv ~neq_flag:neq_flag lst in
-      add_intv_formula f lst_intv
+         (match gen_disj lst_intv with
+          | None -> add_intv_formula f lst_intv
+          | Some disj_f ->
+             mkAnd (add_intv_formula f lst_intv) disj_f no_pos)
+                   
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in
     List.map fst lst

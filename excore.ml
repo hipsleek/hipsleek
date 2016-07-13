@@ -667,7 +667,10 @@ module EPURE =
 
     (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
     let baga_enum baga : formula =
-      Elt.get_pure ~enum_flag:true baga
+      (* Elt.get_pure ~enum_flag:true baga *)
+      (* Why enum_flag is true? *)
+      if !Globals.use_baga then Elt.get_pure baga
+      else Elt.get_pure ~enum_flag:true baga
       (* let baga = Elt.conv_var baga in *)
       (* match baga with *)
       (* | [] -> mkTrue no_pos *)
@@ -927,19 +930,22 @@ module EPURE =
     let ef_imply_disj_x (ante : epure_disj) (conseq : epure_disj) : bool =
       let a_f = x_add_1 ef_conv_enum_disj ante in
       let c_f = x_add_1 ef_conv_disj conseq in
+      let () = y_binfo_hp (add_str "ef_imply_disj_x a_f: " !Cpure.print_formula) a_f in
+      let () = y_binfo_hp (add_str "ef_imply_disj_x c_f: " !Cpure.print_formula) c_f in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
       not (x_add_1 !is_sat_raw (Mcpure.mix_of_pure f))
 
     let ef_imply_disj_0 (ante : epure_disj) (conseq : epure_disj) : bool =
+      (* Why this procedure is not tracked? *)
       Debug.no_2 "ef_imply_disj" string_of_disj string_of_disj string_of_bool
       ef_imply_disj_x ante conseq
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
-      let () = x_tinfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let () = x_binfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let f = List.map (fun (b,f) -> (b,f)) in
       let r = x_add ef_imply_disj_0 (f ante) (f conseq) in
-      let () = x_tinfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let () = x_binfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       r
 
     let pair_cmp (x1,x2) (y1,y2) =

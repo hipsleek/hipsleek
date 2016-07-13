@@ -33,8 +33,13 @@ expect Valid.
 print residue.
 
 checkentail base::arr_seg<2,5> * base::arr_seg<3,4> |- false.
-expect Valid. 
+expect Valid. 		  
 print residue.
+
+checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> |- false.
+expect Fail. 		  
+print residue.
+
 
 /*
 checkentail base::arr_seg<2,3> * base::arr_seg<2,3> |- false.
