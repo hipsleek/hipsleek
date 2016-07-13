@@ -52,6 +52,7 @@ void init3(arrI a,int i,int m)
    i>=m -> ensures emp;
    i<m -> ensures base::arr_seg_sorted<j,m2,i>;
   }
+
 {
   if (i<m) {
     //assume false;
