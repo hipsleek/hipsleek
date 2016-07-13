@@ -914,16 +914,16 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                (* (match vdef.view_inv_lock with *)
                (*   | Some f -> CP.BagaSV.mkEmpty *)
                (*   | None -> *)
-               let () = y_binfo_pp "None" in
+               let () = y_tinfo_pp "None" in
                (match lbl_lst with
                 |None ->
-                  let () = y_binfo_hp (add_str "ba" !CP.print_svl) ba in
+                  let () = y_tinfo_hp (add_str "ba" !CP.print_svl) ba in
                   if List.mem p evars then CP.BagaSV.mkEmpty
                   else ba 
                 | Some ls -> 
                   lookup_view_baga_with_subs ls vdef from_svs to_svs))
         in
-        let () = x_binfo_hp (add_str "baga(view_node)" (fun e -> CP.BagaSV.string_of e)) new_mset no_pos in
+        let () = x_tinfo_hp (add_str "baga(view_node)" (fun e -> CP.BagaSV.string_of e)) new_mset no_pos in
         {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;}  
       | Star _  -> report_error no_pos "solver: h_mem should not get star at this point" in
     let r = List.fold_left (fun a c-> CP.DisjSetSV.star_disj_set a (mapper c).mem_formula_mset) CP.DisjSetSV.mkEmpty node_lst in

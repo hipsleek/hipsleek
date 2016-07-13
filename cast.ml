@@ -1718,13 +1718,13 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   | None -> []
   | Some bl ->
     begin
-      let () = x_binfo_hp (add_str "look_up_view_baga: baga= " (!print_ef_pure_disj)) bl (* ba_oinv *) no_pos in
-      let () = x_binfo_hp (add_str "baga ex vars= " !CP.print_svl) ba_exists no_pos in
+      let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (!print_ef_pure_disj)) bl (* ba_oinv *) no_pos in
+      let () = x_tinfo_hp (add_str "baga ex vars= " !CP.print_svl) ba_exists no_pos in
       let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
       let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in
       let to_svs = root :: ba_exists_fresh@args in
-      let () = x_binfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
-      let () = x_binfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+      let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+      let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
       let baga_lst = (* match ba_oinv with *)
         (* | None -> [] *)
         (* | Some bl -> *)
@@ -1733,12 +1733,12 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         let sst = List.combine from_svs to_svs in
         (* let sst = CP.SV_INTV.from_var_pairs sst in *)
         List.map (Excore.EPureI.subst_epure sst) bl in
-      let () = x_binfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+      let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
       let baga_sp = (x_add add_epure epure baga_lst) in
-      let () = x_binfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+      let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
       let r = Excore.EPureI.hull_memset_sv baga_sp in
       (* let r = CP.SV_INTV.conv_var r in *)
-      let () = x_binfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
+      let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
        if baga_sp==[] then [root;root]
       else r
     end

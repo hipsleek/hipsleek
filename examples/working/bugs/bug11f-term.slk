@@ -16,6 +16,11 @@ print residue.
 expect Fail.
 
 
+checkentail x>5 |- x=0.
+print residue.
+expect Fail.
+
+
 /*
 # bug11f.slk
 

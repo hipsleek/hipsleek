@@ -5,10 +5,10 @@ data arrI {
 // Predicates
 arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
-  inv n>=i & i>=0;
+  inv n>=i & i>=0 & self!=null;
 
-arr_seg_sorted<i,n,mi> == x::arrI<v> & x=self+i & i=n-1 & i>=0 & v<=mi
-  or x::arrI<v>*self::arr_seg_sorted<i+1,n,m2> & x=self+i & i>=0 & i<n-1 & v<=mi & mi>=m2 & v>=m2
+arr_seg_sorted<i,n,mi> == x::arrI<v> & x=self+i & i=n-1 & i>=0 & v=mi
+  or x::arrI<v>*self::arr_seg_sorted<i+1,n,m2> & x=self+i & i>=0 & i<n-1 & v=mi & mi<=m2 //& v>=m2
   inv n>i & i>=0;
 
 arr_seg_max_2<i,n,maxv> == i=n & i>=0 //& cur<=max_value

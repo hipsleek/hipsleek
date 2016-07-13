@@ -45,7 +45,6 @@ void init3(arrI a,int i,int m)
   case {
    i>=m -> ensures emp;
    i<m -> ensures base::arr_seg_sorted<i,m,i>;
-
   }
 */
  requires base::arr_seg<j,m2> & a=base+j & m2-j=m-i
@@ -53,8 +52,6 @@ void init3(arrI a,int i,int m)
    i>=m -> ensures emp;
    i<m -> ensures base::arr_seg_sorted<j,m2,i>;
   }
-
-
 {
   if (i<m) {
     //assume false;

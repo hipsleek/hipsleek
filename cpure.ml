@@ -151,6 +151,10 @@ let is_num_typ sv = match sv with
   | SpecVar (NUM,_,_) -> true
   | _ -> false
 
+let is_num_or_int_typ sv = match sv with
+  | SpecVar (n,_,_) -> n==NUM || n=Int
+  (* | _ -> false *)
+
 let is_ann_typ sv = match sv with
   | SpecVar (AnnT,_,_) -> true
   | _ -> false
@@ -5985,13 +5989,13 @@ struct
   let mk_addr x = (x,None)
   (* TODO : to change this function *)
   let get_interval (x,y) = 
-   let () = y_binfo_pp "inside get_interval (SV_INTV)" in
+   let () = y_tinfo_pp "inside get_interval (SV_INTV)" in
     match y with
     | None -> None
     | Some exp -> Some(x,exp)
                    (* Some(x,id) *)
   let string_of (sv,sv_opt) =
-    (* let () = y_binfo_pp "inside SV_INTV" in *)
+    (* let () = y_tinfo_pp "inside SV_INTV" in *)
     let pr = string_of_spec_var in
     let pr_e = !print_exp in
     match sv_opt with
@@ -6006,7 +6010,7 @@ struct
     (repl v,map_opt repl_e opt)
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
-   let () = y_binfo_pp "inside get_pure (SV_INTV)" in
+   let () = y_tinfo_pp "inside get_pure (SV_INTV)" in
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     let lst_intv = List.fold_left (fun acc (_,s) -> match s with
         | None -> acc
@@ -6037,7 +6041,7 @@ struct
   (* let mk_elem x = mk_elem_from_sv (x,None) *)
   (* throws exception when duplicate detected during merge *)
   let norm_baga (state:formula) (b:t list) = 
-    let () = y_binfo_pp x_tbi in
+    let () = y_tinfo_pp x_tbi in
     b
   let rec merge_baga b1 b2 =
     match b1,b2 with
@@ -13784,6 +13788,27 @@ and drop_bag_formula_weak_x (pf : formula) : formula =
   let npf, _ = trans_formula pf arg f f_arg f_comb in
   npf
 
+and pick_base_pair_x (pf : formula) (* : (spec_var * spec_var) list *) =
+  let pick_ptr p = 
+    let vs = fv p in
+    let (int_vs,ptr_vs) = List.partition (fun v -> is_num_or_int_typ v) vs in
+    if int_vs!=[] then 
+      match ptr_vs with
+        | [v1;v2] -> Some [(v1,v2)]
+        | _ -> None
+    else None in
+  let f_bf bf =
+    let pf, lbl = bf in
+    (match pf with
+     | Eq (e1, e2, pos) -> pick_ptr (BForm ((pf,None),None))
+     | _ -> None)
+  in
+  let f_comb = List.concat 
+  in fold_formula pf (nonef,f_bf,nonef) f_comb
+
+and pick_base_pair pf =
+  let pr = !print_sv in
+  Debug.no_1 "pick_base_pair" !print_formula (pr_list (pr_pair pr pr)) pick_base_pair_x pf
 
 and drop_bag_formula_weak (pf : formula) : formula =
   Debug.no_1 "drop_bag_formula_weak" !print_formula !print_formula
