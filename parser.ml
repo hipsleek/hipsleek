@@ -1594,10 +1594,10 @@ cid_or_pair_or_triple:
     let pe2 = get_pure_exp e2 no_pos in
     (("_",Unprimed),(Some(pe1,pe2)))
     | i = cid -> (i,None)
-    | `OPAREN; e1=cexp_w ; `COMMA; e2=cexp_w ; `COMMA;  e3= cexp_w; `CPAREN ->
+    | `OPAREN; `SELFT _; `COMMA; e2=cexp_w ; `COMMA;  e3= cexp_w; `CPAREN ->
        let pe2 = get_pure_exp e2 no_pos in
        let pe3 = get_pure_exp e3 no_pos in
-       (("_",Unprimed),(Some(pe2,pe3)))
+       ((self,Unprimed),(Some(pe2,pe3)))
        
   ]];
 
