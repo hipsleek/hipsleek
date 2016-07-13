@@ -1,2 +1,2 @@
 relation Univ(int x).
-relation BasePtr(arrI x).
+relation BasePtr(Object x).

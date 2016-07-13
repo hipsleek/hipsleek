@@ -2479,7 +2479,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let null_c_var = Cpure.null_var in 
       let extr_exist_vars f vs = 
         let vs = CP.diff_svl (CP.fv f) vs in
-        if vs!=[] then y_winfo_pp "extr_exists_vars TBI";
+        let vs = List.filter (fun v -> not 
+                                  (CP.is_hprel_typ v || CP.is_rel_typ v || CP.is_hole_spec_var v 
+                                   || is_FuncT (CP.type_of_spec_var v))) vs in
+        if vs!=[] then y_winfo_hp (add_str "extr_exists_vars?:" !CP.print_svl) vs;
         vs
       in
       let allow_ex_vs =
@@ -2488,11 +2491,12 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let vs1a = CP.fv inv_pf in
         let pr_svl = !CP.print_svl in
         (* y_tinfo_hp (add_str "cf" !Cast.print_struc_formula) cf; *)
-        y_tinfo_hp (add_str "inv_pf" !CP.print_formula) inv_pf;
-        y_tinfo_hp (add_str "view_sv_vars" pr_svl) view_sv_vars;
-        y_tinfo_hp (add_str "vs1" pr_svl) vs1;
-        y_tinfo_hp (add_str "vs1a" pr_svl) vs1a; (* from invariant *)
-        let allow_ex_vs = extr_exist_vars inv_pf vs2 in 
+        y_binfo_hp (add_str "inv_pf" !CP.print_formula) inv_pf;
+        y_binfo_hp (add_str "view_sv_vars" pr_svl) view_sv_vars;
+        y_binfo_hp (add_str "vs1" pr_svl) vs1;
+        y_binfo_hp (add_str "vs1a" pr_svl) vs1a; (* from invariant *)
+        let allow_ex_vs = extr_exist_vars inv_pf vs2 in
+        y_binfo_hp (add_str "allow_ex_vs" pr_svl) allow_ex_vs; (* from invariant *)
         let vs1 = vs1@vs1a in
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (* filter out holes (#) *)
@@ -2514,6 +2518,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") 
         else allow_ex_vs
       in
+      let () = y_binfo_hp (add_str "allow_ex_vs" !CP.print_svl) allow_ex_vs in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
       let mvars =  List.filter 

@@ -814,11 +814,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
             begin
               let () = y_tinfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
               let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
-              let rhs = CP.mk_is_base_ptr d rhs_ptr in
+              let rhs = CP.mk_is_baseptr d rhs_ptr in
               (* let r = !CP.tp_imply lhs_pure rhs in *)
               let r = true (* !CP.tp_imply lhs_w_rhs_inst rhs *) in
               let ex_inst = estate.CF.es_gen_impl_vars @ estate.CF.es_gen_expl_vars in
-              (* let inst_base_ptr lhs_w_rhs_inst ex_inst = *)
+              (* let inst_baseptr lhs_w_rhs_inst ex_inst = *)
               (*   let pairs = x_add_1 CP.pick_base_pair lhs_w_rhs_inst in *)
               (*   let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> CP.intersect_svl [v1;v2] ex_inst==[]) pairs in *)
               (*   let inst_pair = List.map (fun (v1,v2) ->  *)
@@ -828,8 +828,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               (*       match lst with *)
               (*         | [] -> [] *)
               (*         | (v1,v2)::lst ->  *)
-              (*               if !CP.tp_imply lhs (CP.mk_is_base_ptr v1 v2) then (v1,v2)::(aux lst) *)
-              (*               else if !CP.tp_imply lhs (CP.mk_is_base_ptr v2 v1) then (v2,v1)::(aux lst) *)
+              (*               if !CP.tp_imply lhs (CP.mk_is_baseptr v1 v2) then (v1,v2)::(aux lst) *)
+              (*               else if !CP.tp_imply lhs (CP.mk_is_baseptr v2 v1) then (v2,v1)::(aux lst) *)
               (*               else aux lst *)
               (*     in aux lhs_pairs in *)
               (*   let find lst v =  *)
@@ -861,7 +861,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               (* in *)
               let lhs_w_rhs_inst = 
                 if !Globals.adhoc_flag_4 then lhs_w_rhs_inst
-                else CP.inst_base_ptr lhs_w_rhs_inst ex_inst in
+                else x_add CP.inst_baseptr lhs_w_rhs_inst ex_inst in
               let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
               let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
               let () =  y_binfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
@@ -970,7 +970,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let rhs =
                   if CF.no_infer_all_all estate
                   then CP.mkEqVars rhs_ptr root
-                  else CP.mk_is_base_ptr rhs_ptr d in
+                  else CP.mk_is_baseptr rhs_ptr d in
                 (* cannot handle ptr/e/ex1fb.slk *)
                 (* let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let lhs = CP.mkAnd lhs_w_rhs_inst root_pf no_pos in
@@ -982,7 +982,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 if r then
                   (d,(map_r r,None),None)
                 else
-                  let rhs_for_base = CP.mk_is_base_ptr rhs_ptr d in
+                  let rhs_for_base = CP.mk_is_baseptr rhs_ptr d in
                   let r = !CP.tp_imply lhs rhs_for_base in
                   (* r==1 means that it is an exact match*)
                   (* r==2 means that it is NOT exact match but they have the same base, ex. a=b+1 *)

@@ -87,6 +87,9 @@ let is_self_spec_var sv = match sv with
 
 let self_sv = mk_spec_var self 
 
+let is_baseptr_var sv = match sv with
+  | SpecVar (_,n,_) -> n = "BasePtr"
+
 let is_res_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = res_name
 
@@ -16188,7 +16191,7 @@ let mkLtVars a1 a2 =
 let mkEqVars a1 a2 =
   BForm ((Eq (Var (a1,no_pos),Var(a2,no_pos), no_pos),None),None)
 
-let mk_is_base_ptr d rhs_ptr =
+let mk_is_baseptr d rhs_ptr =
   BForm ((Gte (Var (d,no_pos),Var(rhs_ptr,no_pos), no_pos),None),None)
 
 let is_Or f = match f with
@@ -16196,31 +16199,38 @@ let is_Or f = match f with
   | _ -> false
 
 
-let pick_base_pair (pf : formula) (* : (spec_var * spec_var) list *) =
+let pick_baseptr (pf : formula) (* : (spec_var * spec_var) list *) =
+  let stk = new Gen.stack in
   let pick_ptr p = 
     let vs = fv p in
     let (int_vs,ptr_vs) = List.partition (fun v -> is_num_or_int_typ v) vs in
-    if int_vs!=[] then 
-      match ptr_vs with
-        | [v1;v2] -> Some [(v1,v2)]
-        | _ -> None
-    else None in
+    (* if int_vs!=[] then  *)
+    match ptr_vs with
+      | [v1;v2] -> Some [(v1,v2)]
+      | _ -> None
+    (* else None *) in 
   let f_bf bf =
     let pf, lbl = bf in
     (match pf with
      | Eq (e1, e2, pos) -> pick_ptr (BForm ((pf,None),None))
+     | RelForm (sv,arg,_) -> 
+           begin
+             if is_baseptr_var sv then stk # push sv;
+             None
+           end
      | _ -> None)
   in
   let f_comb = List.concat 
-  in fold_formula pf (nonef,f_bf,nonef) f_comb
+  in (fold_formula pf (nonef,f_bf,nonef) f_comb,stk # get_stk)
 
-let pick_base_pair pf =
+let pick_baseptr pf =
   let pr = !print_sv in
-  Debug.no_1 "pick_base_pair" !print_formula (pr_list (pr_pair pr pr)) pick_base_pair pf
+  let pr_out = pr_pair (pr_list (pr_pair pr pr)) !print_svl in
+  Debug.no_1 "pick_baseptr" !print_formula pr_out pick_baseptr pf
 
-(* this finds base_ptrs for existential instantiation *)
-let inst_base_ptr lhs_w_rhs_inst ex_inst =
-  let pairs = x_add_1 pick_base_pair lhs_w_rhs_inst in
+(* this finds baseptrs for existential instantiation *)
+let inst_baseptr lhs_w_rhs_inst ex_inst =
+  let (pairs,baseptr) = x_add_1 pick_baseptr lhs_w_rhs_inst in
   let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> intersect_svl [v1;v2] ex_inst==[]) pairs in
   let inst_pair = List.map (fun (v1,v2) -> 
       if List.exists (eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in
@@ -16229,8 +16239,8 @@ let inst_base_ptr lhs_w_rhs_inst ex_inst =
       match lst with
       | [] -> []
       | (v1,v2)::lst -> 
-        if !tp_imply lhs (mk_is_base_ptr v1 v2) then (v1,v2)::(aux lst)
-        else if !tp_imply lhs (mk_is_base_ptr v2 v1) then (v2,v1)::(aux lst)
+        if !tp_imply lhs (mk_is_baseptr v1 v2) then (v1,v2)::(aux lst)
+        else if !tp_imply lhs (mk_is_baseptr v2 v1) then (v2,v1)::(aux lst)
         else aux lst
     in aux lhs_pairs in
   let find lst v = 
@@ -16261,6 +16271,6 @@ let inst_base_ptr lhs_w_rhs_inst ex_inst =
   lhs_w_rhs_inst2
 
 
-let inst_base_ptr lhs_w_rhs_inst ex_inst =
+let inst_baseptr lhs_w_rhs_inst ex_inst =
   let pr = !print_formula in
-  Debug.no_2 "inst_base_ptr" pr !print_svl pr inst_base_ptr lhs_w_rhs_inst ex_inst
+  Debug.no_2 "inst_baseptr" pr !print_svl pr inst_baseptr lhs_w_rhs_inst ex_inst

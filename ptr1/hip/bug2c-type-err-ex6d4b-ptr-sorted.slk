@@ -1,0 +1,38 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0
+    & BasePtr(self)
+  .
+
+
+
+checkentail 
+ j=m & j>=0 & BasePtr(base) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
+   |- base2::arr_seg<j,m> 
+         //a=base2+j1
+         //b=base2+j1
+   .
+print residue.
+
+/*
+# bug2c.slk 
+
+# Can we instantiate base=base2 below?
+
+ <1>emp&j1=m1 & 0<=j1 & j=m&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  BaseCaseFold]]
+
+
+# why cannot use BasePtr(self) proof?
+
+# why cannot use j1=j & m1=m?
+
+
+
+
+
+*/
