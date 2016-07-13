@@ -8778,15 +8778,15 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
     if (* false *) !Globals.use_baga (* !Globals.gen_baga_inv *) then
       let views = prog.Cast.prog_view_decls in
       let t1 = Expure.build_ef_heap_formula false curr_lhs_h views in
-      let () = Debug.ninfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
-      let () = Debug.ninfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
+      let () = Debug.binfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in
+      let () = Debug.binfo_hprint (add_str "t1" (Cprinter.string_of_ef_pure_disj)) t1 no_pos in
       let t2 = x_add_1 Expure.build_ef_pure_formula (Mcpure.pure_of_mix lhs_p) in
-      let () = Debug.ninfo_hprint (add_str "pf" (Cprinter.string_of_pure_formula)) (Mcpure.pure_of_mix lhs_p) no_pos in
-      let () = Debug.tinfo_hprint (add_str "t2" (Cprinter.string_of_ef_pure_disj)) t2 no_pos in
+      let () = Debug.binfo_hprint (add_str "pf" (Cprinter.string_of_pure_formula)) (Mcpure.pure_of_mix lhs_p) no_pos in
+      let () = Debug.binfo_hprint (add_str "t2" (Cprinter.string_of_ef_pure_disj)) t2 no_pos in
       let d = Excore.EPureI.mk_star_disj t1 t2 in
-      let () = Debug.tinfo_hprint (add_str "d1" (Cprinter.string_of_ef_pure_disj)) d no_pos in
+      let () = Debug.binfo_hprint (add_str "d1" (Cprinter.string_of_ef_pure_disj)) d no_pos in
       let d = x_add Excore.EPureI.elim_unsat_disj false d in
-      let () = Debug.tinfo_hprint (add_str "d2" (Cprinter.string_of_ef_pure_disj)) d no_pos in
+      let () = Debug.binfo_hprint (add_str "d2" (Cprinter.string_of_ef_pure_disj)) d no_pos in
       Some d
     else None in
   (* let curr_lhs_h, new_lhs_p = x_add Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
@@ -9014,10 +9014,10 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
             match lhs_baga with
             | Some lhs ->
               let rhs = x_add_1 (Expure.build_ef_pure_formula ~exists_vs:exist_vars) (Mcpure.pure_of_mix rhs_p) in
-              let () = y_tinfo_hp (add_str "exist_vars(b4)" Cprinter.string_of_spec_var_list) exist_vars in
-              let () = y_tinfo_hp (add_str "baga:lhs" Excore.EPureI.string_of_disj) lhs in
-              let () = y_tinfo_hp (add_str "baga:rhs" Excore.EPureI.string_of_disj) rhs in
-              let () = y_tinfo_hp (add_str "split_conseq : " Cprinter.string_of_mix_formula) split_conseq in
+              let () = y_binfo_hp (add_str "exist_vars(b4)" Cprinter.string_of_spec_var_list) exist_vars in
+              let () = y_binfo_hp (add_str "baga:lhs" Excore.EPureI.string_of_disj) lhs in
+              let () = y_binfo_hp (add_str "baga:rhs" Excore.EPureI.string_of_disj) rhs in
+              let () = y_binfo_hp (add_str "split_conseq : " Cprinter.string_of_mix_formula) split_conseq in
               let flag = Excore.EPureI.imply_disj lhs rhs in
               (* let ((flag2,_,_),_) as r = x_add imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset in *)
               (* let () = if flag2!=flag then *)

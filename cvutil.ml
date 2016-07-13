@@ -789,7 +789,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
            (*   | Some f -> CP.BagaSV.mkEmpty *)
            (*   | None -> *)
            (match lbl_lst with
-            |None ->
+            | None ->
               if List.mem p evars then CP.BagaSV.mkEmpty
               else ba
             | Some ls ->
@@ -1372,17 +1372,22 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   (* let mf_p0 = MCP.pure_of_mix p0 in *)
   (* let () = x_dinfo_hp (add_str "elim_abs (p0)" !CP.print_formula) mf_p0 no_pos in *)
   let () = x_tinfo_hp (add_str "elim_abs (pure)" !CP.print_formula) pf no_pos in
-  let memset = x_add h_formula_2_mem h0 p0 [] prog in
-  let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
-  (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
-  let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
-  if (is_sat_mem_formula memset) then 
-    let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
-    let pure_of_memset = 
-      if !Globals.old_keep_absent then pure_of_memset 
-      else MCP.merge_mix_w_pure pure_of_memset pf in
-    (pure_of_memset, memset)
+  if true (* add the flag later *)
+  then
+    let memset = x_add h_formula_2_mem h0 p0 [] prog in
+    let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
+    (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
+    let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
+    if (is_sat_mem_formula memset) then 
+      let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
+      let pure_of_memset = 
+        if !Globals.old_keep_absent then pure_of_memset 
+        else MCP.merge_mix_w_pure pure_of_memset pf in
+      (pure_of_memset, memset)
+    else
+      (MCP.mkMFalse no_pos, memset)
   else
+    let memset = x_add h_formula_2_mem h0 p0 [] prog in
     (MCP.mkMFalse no_pos, memset)
 
 and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spec_var list * CF.mem_formula) =

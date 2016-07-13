@@ -45,41 +45,79 @@ module UnCa=
            let _ = miss_cache := !miss_cache + 1 in
            res
    end;;
-
+  
 let h_2_mem_obj = object (self)
-  val mutable state = CP.mkTrue no_pos
-  val mutable list = []
-  method logging s =
-    (* let () = print_endline_quiet ("XXXX "^(s)) in *)
-    ()
-  method init =
-    self # logging "init" ; 
-    let () = state <- CP.mkTrue no_pos in
-    let () = list <- [] in
-    ()
-  method notempty = list!=[]
-  method add_pure p = 
-    self # logging ((add_str "add_pure" !CP.print_formula) p); 
-    let () = state <- CP.mkAnd state p no_pos in
-    ()
-  method get_id v e = 
-    self # logging "get_id";
-    let eq_v = try
-        fst(List.find (fun (_,e2) ->
-            let rhs = (CP.mk_eq_exp e e2) in
-            let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
-            let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in 
-            !CP.tp_imply state rhs
-          ) list)
-      with _ ->  
-        let x = CP.fresh_spec_var v in
-        let () = list <- (x,e)::list in
-        x
-    in eq_v
-  method string_of =
-    let s1 = (add_str "state" !CP.print_formula) state in
-    let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in
-    s1^s2
+                    val mutable state = CP.mkTrue no_pos
+                    val mutable list = []
+                    method logging s =
+                      (* let () = print_endline_quiet ("XXXX "^(s)) in *)
+                      ()
+                    method init =
+                      self # logging "init" ; 
+                      let () = state <- CP.mkTrue no_pos in
+                      let () = list <- [] in
+                      ()
+                    method notempty = list!=[]
+                    method add_pure p = 
+                      self # logging ((add_str "add_pure" !CP.print_formula) p); 
+                      let () = state <- CP.mkAnd state p no_pos in
+                      ()
+                    method get_id v e = 
+                      self # logging "get_id";
+                      let eq_v = try
+                          fst(List.find (fun (_,e2) ->
+                                  let rhs = (CP.mk_eq_exp e e2) in
+                                  let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
+                                  let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in 
+                                  !CP.tp_imply state rhs
+                                ) list)
+                        with _ ->  
+                          let x = CP.fresh_spec_var v in
+                          let () = list <- (x,e)::list in
+                          x
+                      in eq_v
+                    method string_of =
+                      let s1 = (add_str "state" !CP.print_formula) state in
+                      let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in
+                      s1^s2
+                  end;;
+  
+let h_2_mem_obj_intv = object (self)
+    val mutable state = CP.mkTrue no_pos
+    val mutable store_list = []
+    method logging s =
+      (* let () = print_endline_quiet ("XXXX "^(s)) in *)
+      ()
+    method init =
+      self # logging "init" ; 
+      let () = state <- CP.mkTrue no_pos in
+      let () = store_list <- [] in
+      ()
+    method notempty = store_list!=[]
+    method add_pure p =
+      self # logging ((add_str "add_pure" !CP.print_formula) p); 
+      let () = state <- CP.mkAnd state p no_pos in
+      ()
+    method get_id v e1 e2 = 
+      self # logging "get_id";
+      let eq_v = try
+          fst(List.find (fun (_,(eh,et)) ->
+                  let rhs = (CP.mkNot_s (CP.mkOr (BForm (((CP.mkGte eh e2 no_pos),None),None)) (BForm (((CP.mkGte e1 et no_pos),None),None)) None no_pos)) in
+                  let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
+                  let () = self # logging ((add_str "rhs" !CP.print_formula) rhs) in
+                  let () = y_tinfo_hp (add_str "get_id: lhs " !CP.print_formula) state in
+                  let () = y_tinfo_hp (add_str "get_id: rhs " !CP.print_formula) rhs in
+                  !CP.tp_imply state rhs
+                ) store_list)
+        with _ ->  
+          let x = CP.fresh_spec_var v in
+          let () = store_list <- (x,(e1,e2))::store_list in
+          x
+      in eq_v
+    (* method string_of = *)
+    (*   let s1 = (add_str "state" !CP.print_formula) state in *)
+    (*   let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in *)
+    (*   s1^s2 *)
 end;;
 
 let wrap_h_2_mem loc f x =
@@ -700,7 +738,7 @@ module EPURE =
 
     let conv_intv_disj (efpd1:epure_disj)  =
       let proc (baga,f) =
-        let () = h_2_mem_obj # add_pure f in
+        let () = h_2_mem_obj_intv # add_pure f in
         let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
         let lst2 = List.map (fun e -> 
             let v =  Elt.get_interval e in
@@ -711,8 +749,8 @@ module EPURE =
         let lst2 = List.filter (fun (id,(_,d)) -> 
             let rhs = Cpure.mk_exp_geq d 1 in
             !Cpure.tp_imply f rhs) lst2 in
-        let lst2 = List.concat (List.map (fun (id,(e_ind,_)) -> 
-            let nid = h_2_mem_obj # get_id id e_ind in
+        let lst2 = List.concat (List.map (fun (id,(eh,et)) -> 
+            let nid = h_2_mem_obj_intv # get_id id eh et in
             Elt.from_var [nid]) lst2) in
         (lst1@lst2,f)
       in

@@ -6123,6 +6123,11 @@ module EMapSV = Gen.EqMap(SV);;
 module DisjSetSV = Gen.DisjSet(PtrSV);;
 module SetSV = Set.Make(SV);;
 
+
+(*added PtrSVINTV and DisjSetSVINTV for interval *)
+module PtrSVINTV = Ptr(SV_INTV);;
+module DisjSetSVINTV = Gen.DisjSet(PtrSVINTV);;
+
 type baga_sv = BagaSV.baga
 
 type var_aset = EMapSV.emap
