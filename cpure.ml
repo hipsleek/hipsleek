@@ -5936,6 +5936,11 @@ let mk_exp_var v =
   let e = mkVar v no_pos in
   e
 
+let get_exp_var e =
+  match e with
+    | Var(v,_) -> Some v
+    | _ -> None
+
 let mk_exp_geq lhs i = 
   (* let lhs = mkVar v no_pos in *)
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
@@ -16213,24 +16218,45 @@ let pick_baseptr (pf : formula) (* : (spec_var * spec_var) list *) =
     let pf, lbl = bf in
     (match pf with
      | Eq (e1, e2, pos) -> pick_ptr (BForm ((pf,None),None))
-     | RelForm (sv,arg,_) -> 
+     | RelForm (sv,arg::_,_) -> 
            begin
-             if is_baseptr_var sv then stk # push sv;
+             let flag = is_baseptr_var sv in
+             let () = y_binfo_hp (add_str "base_ptr" (pr_pair string_of_bool !print_sv)) (flag,sv) in
+             if is_baseptr_var sv then
+               begin
+                 match (get_exp_var arg) with
+                   | Some v -> stk # push v
+                   | _ -> () 
+               end;
              None
            end
      | _ -> None)
   in
-  let f_comb = List.concat 
-  in (fold_formula pf (nonef,f_bf,nonef) f_comb,stk # get_stk)
+  let f_comb = List.concat in 
+  let ans1 = fold_formula pf (nonef,f_bf,nonef) f_comb in
+     (ans1,stk # get_stk)
 
 let pick_baseptr pf =
   let pr = !print_sv in
   let pr_out = pr_pair (pr_list (pr_pair pr pr)) !print_svl in
   Debug.no_1 "pick_baseptr" !print_formula pr_out pick_baseptr pf
 
+let find_baseptr_equiv lst bptr =
+  let emap = EMapSV.build_eset lst in
+  List.map (fun x -> 
+      let vs = EMapSV.find_equiv_all x emap in
+      (x,intersect_svl vs bptr)
+  ) bptr
+
+let find_baseptr_equiv lst bptr =
+  let pr2 = !print_svl in
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_2 "find_baseptr_equiv" pr1 pr2 (pr_list (pr_pair !print_sv pr2)) find_baseptr_equiv lst bptr
+
 (* this finds baseptrs for existential instantiation *)
 let inst_baseptr lhs_w_rhs_inst ex_inst =
   let (pairs,baseptr) = x_add_1 pick_baseptr lhs_w_rhs_inst in
+  let base_eq = x_add find_baseptr_equiv pairs baseptr in
   let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> intersect_svl [v1;v2] ex_inst==[]) pairs in
   let inst_pair = List.map (fun (v1,v2) -> 
       if List.exists (eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in

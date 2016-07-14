@@ -8,7 +8,7 @@ pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
   .
 
 checkentail 
- base::arr_seg<j,m> & a=base+j //& a1=a //& base=base2
+ base::arr_seg<j,m> & a=base+j //& BasePtr(base2) //& a1=a //& base=base2
    |- base2::arr_seg<j1,m1> & 
          a=base2+j1
          //b=base2+j1

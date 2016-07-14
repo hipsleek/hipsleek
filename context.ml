@@ -704,7 +704,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         let () = x_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure pos in
         let () = x_tinfo_hp (add_str "args" !CP.print_svl) args pos in
         let () = x_tinfo_hp (add_str "hp" !CP.print_sv) hp pos in
-        let () = x_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
         let () = x_tinfo_hp (add_str "root" !CP.print_sv) root pos in
         let () = hrel_stk # push root in
         (None,CP.ConstAnn(Mutable), [], root)
@@ -731,8 +730,10 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
-    let () = y_tinfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
+    let () = y_binfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
     let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
+    let () = x_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
+    let () = x_binfo_hp (add_str "rhs_rest" !CF.print_h_formula) rhs_rest pos in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
     let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns'@r_eqns) in
