@@ -734,6 +734,10 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
     let () = x_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
     let () = x_binfo_hp (add_str "rhs_rest" !CF.print_h_formula) rhs_rest pos in
+    let mf_rhs,_,_ = x_add !xpure_sym prog rhs_node rhs_p 0 in
+    let mf_rhs_pure = MCP.pure_of_mix mf_rhs in
+    let () = y_binfo_hp (add_str "mf_rhs_pure" !CP.print_formula) mf_rhs_pure in
+    let (_,rhs_base_ptr_vs) = x_add_1 CP.pick_baseptr mf_rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
     let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns'@r_eqns) in
@@ -862,7 +866,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               (* in *)
               let lhs_w_rhs_inst = 
                 if !Globals.adhoc_flag_4 then lhs_w_rhs_inst
-                else x_add CP.inst_baseptr lhs_w_rhs_inst ex_inst in
+                else x_add CP.inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst in
               let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
               let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
               let () =  y_binfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in

@@ -16254,49 +16254,57 @@ let find_baseptr_equiv lst bptr =
   Debug.no_2 "find_baseptr_equiv" pr1 pr2 (pr_list (pr_pair !print_sv pr2)) find_baseptr_equiv lst bptr
 
 (* this finds baseptrs for existential instantiation *)
-let inst_baseptr lhs_w_rhs_inst ex_inst =
+let inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst =
   let (pairs,baseptr) = x_add_1 pick_baseptr lhs_w_rhs_inst in
+  let exist_baseptr = intersect_svl ex_inst rhs_base_ptr_vs in
+  let baseptr = baseptr@exist_baseptr in
   let base_eq = x_add find_baseptr_equiv pairs baseptr in
-  let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> intersect_svl [v1;v2] ex_inst==[]) pairs in
-  let inst_pair = List.map (fun (v1,v2) -> 
-      if List.exists (eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in
-  let choose_base lhs lhs_pairs = 
-    let rec aux lst = 
-      match lst with
-      | [] -> []
-      | (v1,v2)::lst -> 
-        if !tp_imply lhs (mk_is_baseptr v1 v2) then (v1,v2)::(aux lst)
-        else if !tp_imply lhs (mk_is_baseptr v2 v1) then (v2,v1)::(aux lst)
-        else aux lst
-    in aux lhs_pairs in
-  let find lst v = 
-    try 
-      Some (snd (List.find (fun (v1,_) -> eq_spec_var v1 v) lst))
-    with _ -> None in
-  let choose_inst cb inst_pair = 
-    let rec aux ip = match ip with
-      | [] -> []
-      | (cv,base1)::lst -> begin
-          match (find cb cv) with
-          | Some base2 -> (base1,base2)::(aux lst)
-          | _ -> []
-        end 
-    in aux inst_pair
-  in
-  (* choosing those with a (ptr,base) *)
-  let common_base_lst = choose_base lhs_w_rhs_inst lhs_pair in
-  let lst_of_inst = choose_inst common_base_lst inst_pair in
+  let base_eq = List.filter (fun (v,_) -> (diff_svl [v] exist_baseptr)==[]) base_eq in
+  (* let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> intersect_svl [v1;v2] ex_inst==[]) pairs in *)
+  let rec mk_pair lst =
+    match lst with 
+      | x::((y::_) as rest) -> (x,y)::(mk_pair rest)
+      | _ -> [] in
+  let lst_of_inst = List.concat (List.map (fun (_,lst) -> mk_pair lst) base_eq) in
+  (* let inst_pair = List.map (fun (v1,v2) ->  *)
+  (*     if List.exists (eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in *)
+  (* let choose_base lhs lhs_pairs =  *)
+  (*   let rec aux lst =  *)
+  (*     match lst with *)
+  (*     | [] -> [] *)
+  (*     | (v1,v2)::lst ->  *)
+  (*       if !tp_imply lhs (mk_is_baseptr v1 v2) then (v1,v2)::(aux lst) *)
+  (*       else if !tp_imply lhs (mk_is_baseptr v2 v1) then (v2,v1)::(aux lst) *)
+  (*       else aux lst *)
+  (*   in aux lhs_pairs in *)
+  (* let find lst v =  *)
+  (*   try  *)
+  (*     Some (snd (List.find (fun (v1,_) -> eq_spec_var v1 v) lst)) *)
+  (*   with _ -> None in *)
+  (* let choose_inst cb inst_pair =  *)
+  (*   let rec aux ip = match ip with *)
+  (*     | [] -> [] *)
+  (*     | (cv,base1)::lst -> begin *)
+  (*         match (find cb cv) with *)
+  (*         | Some base2 -> (base1,base2)::(aux lst) *)
+  (*         | _ -> [] *)
+  (*       end  *)
+  (*   in aux inst_pair *)
+  (* in *)
+  (* (\* choosing those with a (ptr,base) *\) *)
+  (* let common_base_lst = choose_base lhs_w_rhs_inst lhs_pair in *)
+  (* let lst_of_inst = choose_inst common_base_lst inst_pair in *)
   let lhs_w_rhs_inst2 = List.fold_left (fun acc (v1,v2) ->
       mkAnd acc (mkEqVars v1 v2) no_pos
     ) lhs_w_rhs_inst lst_of_inst in 
   let pr_lst_pair = pr_list (pr_pair !print_sv !print_sv) in
-  let () =  y_binfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in
-  let () =  y_binfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in
+  (* let () =  y_binfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in *)
+  (* let () =  y_binfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in *)
   let () =  y_binfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in
-  let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !print_formula) lhs_w_rhs_inst  in
+  let () =  y_binfo_hp (add_str "lhs_w_rhs_inst2" !print_formula) lhs_w_rhs_inst2  in
   lhs_w_rhs_inst2
 
 
-let inst_baseptr lhs_w_rhs_inst ex_inst =
+let inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst  =
   let pr = !print_formula in
-  Debug.no_2 "inst_baseptr" pr !print_svl pr inst_baseptr lhs_w_rhs_inst ex_inst
+  Debug.no_2 "inst_baseptr" pr !print_svl pr (inst_baseptr rhs_base_ptr_vs) lhs_w_rhs_inst ex_inst

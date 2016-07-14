@@ -18,7 +18,20 @@ print residue.
 
 
 /*
-# bug2.slk --trace-exc (FIXED)
+# bug2.slk 
+
+checkentail 
+ base::arr_seg<j,m> & a=base+j //& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & 
+         a=base2+j1
+         //b=base2+j1
+
+# Can we add BasePtr(..) to LHS?
+
+!!! **context.ml#713:rhs_node: base2::arr_seg<j1,m1>@M
+!!! **context.ml#714:rhs_rest: emp
+!!! **context.ml#735:rhs_pure, before same_base_rhs: a=j1+base2
+!!! **cpure.ml#16224:base_ptr:(true,BasePtr)
 
 # Can we instantiate base=base2 below?
 
