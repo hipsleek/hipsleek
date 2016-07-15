@@ -713,7 +713,6 @@ let smart_string_of_spec_var x =
 let pr_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (smart_string_of_spec_var x)
 
 let pr_session_projection ?(lvl=(!glob_lvl)) vn =
-  let () = print_endline "in pr_session_projection" in
   let node = ViewNode vn in
   let def () = wrap_pr_1 lvl fmt_string "" in
   let fct info = let sk = info.session_kind in
@@ -1438,24 +1437,19 @@ let rec pr_h_formula h =
                h_formula_view_session_info = si;
                h_formula_view_pos = pos} as vn) ->
     let perm_str = string_of_cperm perm in
-    (* let ho_arg_str = if ho_svs==[] then ""  *)
-    (*   else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in *)
-    (* let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in *)
-    (* fmt_open_hbox (); *)
     let is_projection = let fct info = let sk = info.session_kind in
                           (match sk with
-                           | Some Projection -> let () = print_endline ("node name: " ^ (string_of_spec_var sv)) in true
+                           | Some Projection -> true
                            | Some TPProjection -> true
                            | _ -> false) in
       Gen.map_opt_def false fct si in
     if (is_projection && !Globals.print_compact_projection_formula)
     then
       begin
-        (*fmt_string (map_opt_def "" string_of_session_info si) *)
         pr_session_projection vn
       end
     else
-      let ho_arg_str = if ho_svs==[] then "" 
+      let ho_arg_str = if ho_svs==[] then ""
         else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
       let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
       fmt_open_hbox ();

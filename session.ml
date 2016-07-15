@@ -580,7 +580,6 @@ module Projection_base_formula =
     let print_message f = !Msg.print f.projection_base_formula_message
 
     let string_of_session_base f =
-      let () = print_endline "PROJECTION PRINT" in
       f.projection_base_formula_channel ^
       (string_of_transmission f.projection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
@@ -639,7 +638,6 @@ module TPProjection_base_formula =
     let print_message f = !Msg.print f.tpprojection_base_formula_message
 
     let string_of_session_base f =
-      let () = print_endline "TPPROJECTION PRINT" in
       (string_of_transmission f.tpprojection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 
@@ -915,10 +913,7 @@ module Make_Session (Base: Session_base) = struct
       else
       if (Base.is_or_node h_formula)
       then
-        let () = print_endline "OR node" in
-        let () = print_endline "BEFORE" in
         let (ptr, name, args, params, pos) = Base.get_node h_formula in
-        let () = print_endline "AFTER" in
         let or_node = Base.get_formula_from_ho_param_formula (List.nth args 0) in
         let or_formulae = Base.get_or_formulae or_node in
         let h1 = Base.get_h_formula (List.nth or_formulae 0) in
@@ -967,7 +962,6 @@ module Make_Session (Base: Session_base) = struct
        * was not created and the session formula is preserved
        * as it was.
        * Otherwise, split STAR node and get second branch.*)
-      let () = print_endline ("original: " ^ (string_of_node_kind (Base.get_node_kind h_formula))) in
       let h_formula = if (Base.is_star_node h_formula)
                       then
                         let star_formulae = Base.get_star_formulae h_formula in
@@ -1035,12 +1029,3 @@ let get_tpprojection session =
   match session with
   | TPProjectionSession s -> s
   | _ -> failwith "not a two-party projection formula"
-
-let bla ?(i:int option) ?(j:int option) () =
-  let ix = match i with
-             | Some k -> k
-             | None -> 0 in
-  let jx = match j with
-             | Some k -> k
-             | None -> 0 in
-  print_endline ((string_of_int ix) ^ (string_of_int jx))
