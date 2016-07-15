@@ -1027,7 +1027,7 @@ let string_of_view_decl v =
   ^ "\nview_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
   ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
   ^ "\nextends" ^ extn_str
-  ^ "\nsession kind: " ^ map_opt_def "" string_of_session_kind v.view_session_kind
+  ^ map_opt_def "" string_of_session_info v.view_session_info
   ^ (string_of_session v.view_session_formula)
 ;;
 

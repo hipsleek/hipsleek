@@ -133,7 +133,7 @@ and view_decl = {
   view_backward_ptrs: P.spec_var list;
   view_backward_fields: (data_decl * ident) list;
   view_kind : view_kind;
-  view_session_kind : session_kind option;
+  view_session_info : session_info option;
   view_prop_extns:  P.spec_var list; (*for extn views*)
   view_parent_name: ident option; (*for view_spec*)
   (*a map of shape <-> pure properties*)
@@ -810,7 +810,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_backward_ptrs= [];
     view_backward_fields= [];
     view_kind = View_HREL;
-    view_session_kind = None;
+    view_session_info = None;
     view_prop_extns=  [];
     view_parent_name= None;
     view_domains= [];
@@ -878,7 +878,7 @@ let mk_view_prim v_name v_args v_inv pos =
     view_backward_ptrs = [];
     view_backward_fields = [];
     view_kind = View_PRIM;
-    view_session_kind = None;
+    view_session_info = None;
     view_prop_extns =  [];
     view_parent_name = None;
     view_domains = [];

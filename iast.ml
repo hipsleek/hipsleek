@@ -103,7 +103,7 @@ and view_decl =
     view_type_of_self : typ option;
     (* view_actual_root : P.exp option; *)
     view_kind : view_kind;
-    view_session_kind : session_kind option;
+    view_session_info : session_info option;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_derv_from: regex_id_star_list option;
@@ -656,7 +656,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_pt_by_self  = [];
           view_formula = f;
           view_session_formula = None;
-          view_session_kind = None;
+          view_session_info = None;
           view_inv_lock = None;
           view_is_prim = false;
           view_is_hrel = None;
@@ -704,7 +704,7 @@ let mk_view_header vn opt1 cids mvs modes pos =
     view_pt_by_self  = [];
     view_formula = F.mkETrue top_flow (pos);
     view_session_formula = None;
-    view_session_kind = None;
+    view_session_info = None;
     view_inv_lock = None;
     view_is_prim = false;
     view_is_hrel = None;

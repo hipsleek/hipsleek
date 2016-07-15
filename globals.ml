@@ -178,16 +178,39 @@ let string_of_arg_kind i= match i with
 (*   | List *)
 
 type session_kind =
-  | Transmission
-  | Session
-  | Channel
-  | Send
-  | Receive
-  | Sequence
-  | SOr
   | Protocol
   | Projection
   | TPProjection
+
+type node_kind =
+  (* operators *)
+  | Sequence
+  | SOr
+  | Star
+  (* base types *)
+  | Send
+  | Receive
+  | Transmission
+  (* non-spec base types *)
+  | HVar
+  | Predicate
+  (* empty *)
+  | Emp
+  (* extra abstractions *)
+  | Session
+  | Channel
+
+type session_info =
+  {
+    session_kind: session_kind option;
+    node_kind: node_kind option;
+  }
+
+let mk_session_info ?(sk:session_kind option) ?(nk:node_kind option) () =
+  {
+    session_kind = sk;
+    node_kind = nk;
+  }
 
 type view_kind =
   | View_PRIM
@@ -257,16 +280,31 @@ type typ =
 type typed_ident = (typ * ident)
 
 let string_of_session_kind k = match k with
-  | Transmission -> "Transmission"
-  | Session -> "Session"
-  | Channel -> "Channel"
-  | Send -> "Send"
-  | Receive -> "Receive"
-  | Sequence -> "Sequence"
-  | SOr -> "SessionOr"
   | Protocol -> "Protocol"
   | Projection -> "Projection"
   | TPProjection -> "TPProjection"
+
+let string_of_node_kind nk = match nk with
+  | Sequence -> "Sequence"
+  | SOr -> "SOr"
+  | Star -> "Star"
+  | Send -> "Send"
+  | Receive -> "Receive"
+  | Transmission -> "Transmission"
+  | HVar -> "HVar"
+  | Predicate -> "Predicate"
+  | Emp -> "Emp"
+  | Session -> "Session"
+  | Channel -> "Channel"
+
+let string_of_session_info si =
+  let sk = match si.session_kind with
+             | Some sk -> string_of_session_kind sk
+             | None -> "" in
+  let nk = match si.node_kind with
+             | Some nk -> string_of_node_kind nk
+             | None -> "" in
+  "\nsession kind: " ^ sk ^ "\n" ^ "node kind: " ^ nk
 
 let string_of_view_kind k = match k with
   | View_PRIM -> "View_PRIM"

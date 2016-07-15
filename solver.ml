@@ -11295,15 +11295,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* (fail_ctx option, ho residue option, pure residue option mapping list) *)
 
               let is_base (f : CF.formula) =
-                (*let f = rf.CF.rflow_base in*)
                 match f with
                   | CF.Base base -> (match base.formula_base_heap with
                                       | CF.ViewNode node -> let name = node.CF.h_formula_view_name in
                                                             let view = look_up_view_def no_pos prog.prog_view_decls name in
-                                                            (match view.view_session_kind with
-                                                              | Some Send -> true
-                                                              | Some Receive -> true
-                                                              | _ -> false)
+                                                            (match view.view_session_info with
+                                                              | Some si -> (match si.node_kind with
+                                                                             | Some Send -> true
+                                                                             | Some Receive -> true
+                                                                             | _ -> false)
+                                                              | None -> false)
                                       | _ -> false)
                   | _ -> false in
 
@@ -11903,7 +11904,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
       h_formula_view_lhs_case = false;
       h_formula_view_origins = get_view_origins ln2;
       h_formula_view_label = pid;           (*TODO: the other alternative is to use none*)
-      h_formula_view_session_kind = None;
+      h_formula_view_session_info = None;
       h_formula_view_remaining_branches = r_rem_brs;
       h_formula_view_pruning_conditions = r_p_cond;
       h_formula_view_pos = pos2}) in

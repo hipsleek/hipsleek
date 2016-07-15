@@ -80,7 +80,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_modes = List.map (fun _ -> ModeOut) vars ;
                            I.view_typed_vars =  tvars;
                            I.view_kind = View_NORM;
-                           I.view_session_kind = None;
+                           I.view_session_info = None;
                            I.view_derv_from = None;
                            I.view_derv_extns = [];
                            I.view_derv = false;
@@ -168,7 +168,7 @@ let hn_trans cprog vnames hn = match hn with
             IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
             IF.h_formula_heap_pseudo_data = false;
             IF.h_formula_heap_label = None;
-            IF.h_formula_heap_session_kind = None;
+            IF.h_formula_heap_session_info = None;
             IF.h_formula_heap_pos = pos}
         else hn
       with _ -> hn
@@ -396,7 +396,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
             CF.h_formula_view_lhs_case = true;
             CF.h_formula_view_unfold_num = 0;
             CF.h_formula_view_label = None;
-            CF.h_formula_view_session_kind = None;
+            CF.h_formula_view_session_info = None;
             CF.h_formula_view_pruning_conditions = [];
             CF.h_formula_view_remaining_branches = None;
             CF.h_formula_view_pos = pos}

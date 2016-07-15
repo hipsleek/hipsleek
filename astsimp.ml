@@ -2279,7 +2279,7 @@ and trans_view_kind vk= vk
 (* | Iast.View_DERV -> Cast.View_DERV *)
 (* | Iast.View_SPEC -> Cast.View_SPEC *)
 
-and trans_view_session_kind sk = sk
+and trans_view_session_info si = si
 
 and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_f: MCP.mix_formula option) : MCP.mix_formula =
   let p1 = add_param_ann_constraints_to_pure h1 None in
@@ -2407,20 +2407,18 @@ and translate_session (view:I.view_decl) =
     let sessf = getter session in
     let transf_session = transf sessf view.I.view_formula in
     {view with I.view_formula = transf_session} in
-  match view.I.view_session_kind with
-  | Some k -> begin
-      match k with
-      | Protocol ->
-        let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
-        helper view transf Session.get_protocol
-      | Projection ->
-        let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
-        helper view transf Session.get_projection
-      | TPProjection ->
-        let transf = Session.ITPProjection.mk_struc_formula_from_session_and_formula in
-        helper view transf Session.get_tpprojection
-      | _ -> view
-    end
+  match view.I.view_session_info with
+  | Some si -> (match (si.session_kind) with
+                 | Some Protocol ->
+                     let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
+                     helper view transf Session.get_protocol
+                 | Some Projection ->
+                     let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
+                     helper view transf Session.get_projection
+                 | Some TPProjection ->
+                     let transf = Session.ITPProjection.mk_struc_formula_from_session_and_formula in
+                     helper view transf Session.get_tpprojection
+                 | None -> view)
   | None -> view
 
 
@@ -2597,7 +2595,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let () = x_tinfo_hp (add_str "should elim this check diff. the result always overwritten by line 1908" (pr_id)) "" pos in *)
       let xpure_flag = false (* x_add TP.check_diff memo_pf_N memo_pf_P *) in
       let view_kind = trans_view_kind vdef.I.view_kind in
-      let view_session_kind = trans_view_session_kind vdef.I.view_session_kind in
+      let view_session_info = trans_view_session_info vdef.I.view_session_info in
       let vn = vdef.I.view_name in
       let () = if is_view_PRIM view_kind then CF.view_prim_lst # push vn
       in
@@ -2837,7 +2835,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_ptrs = [];
         C.view_backward_fields = [];
         C.view_kind = view_kind;
-        C.view_session_kind = view_session_kind;
+        C.view_session_info = view_session_info;
         C.view_type_of_self = 
           (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in 
            let r = vdef.I.view_type_of_self in
@@ -2939,10 +2937,13 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       else cur_mutrec_views
     in
     let nview = x_add trans_view iprog mutrec_views transed_views typ_infos view in
-    let () = match nview.view_session_kind with
-               | Some Projection -> Session.CProjection.test_if_is nview.view_formula
-               | Some TPProjection -> Session.CTPProjection.test_if_is nview.view_formula
-               | _ -> () in
+    let () = match nview.view_session_info with
+               | Some si -> (match (si.session_kind) with
+                              | Some Projection -> Session.CProjection.test_if_is nview.view_formula
+                              | Some TPProjection -> Session.CTPProjection.test_if_is nview.view_formula
+                              | Some Protocol -> ()
+                              | None -> ())
+               | None -> () in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)
     let transed_views2,mutrec_views = if mutrec_views!=[] &&
@@ -8038,7 +8039,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_arguments = exps;
                      IF.h_formula_heap_ho_arguments = ho_exps;
                      IF.h_formula_heap_full = full;
-                     IF.h_formula_heap_session_kind = session_kind;
+                     IF.h_formula_heap_session_info = session_info;
                      IF.h_formula_heap_pos = pos;
                      IF.h_formula_heap_label = pi;} ->
         (* expand the dereference heap node first *)
@@ -8227,7 +8228,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_lhs_case = true;
                   CF.h_formula_view_unfold_num = 0;
                   CF.h_formula_view_label = pi;
-                  CF.h_formula_view_session_kind = session_kind;
+                  CF.h_formula_view_session_info = session_info;
                   CF.h_formula_view_pruning_conditions = [];
                   CF.h_formula_view_remaining_branches = None;
                   CF.h_formula_view_pos = pos;} in
@@ -11736,7 +11737,7 @@ let plugin_inferred_iviews views iprog cprog=
           IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
           IF.h_formula_heap_pseudo_data = false;
           IF.h_formula_heap_label = None;
-          IF.h_formula_heap_session_kind = None;
+          IF.h_formula_heap_session_info = None;
           IF.h_formula_heap_pos = pos}
       else hn
     | _ -> hn

@@ -137,7 +137,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
               IF.h_formula_heap_ho_arguments = h0.IF.h_formula_heap2_ho_arguments;
               IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
               IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-              IF.h_formula_heap_session_kind = None;
+              IF.h_formula_heap_session_info = None;
               IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
     h
   with
@@ -162,7 +162,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
               IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
               IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
               IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-              IF.h_formula_heap_session_kind = None;
+              IF.h_formula_heap_session_info = None;
               IF.h_formula_heap_label = h0.IF.h_formula_heap2_label; } in
     h
 

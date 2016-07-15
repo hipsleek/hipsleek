@@ -1332,7 +1332,7 @@ prim_view_decl:
 prot_view_decl:
   [[ vh = view_header; `EQEQ; s = protocol_formula
           -> { vh with
-               view_session_kind = Some Protocol;
+               view_session_info = Some (mk_session_info ~sk:Protocol ());
                view_session_formula = Some (Session.ProtocolSession s)}
   ]];
 
@@ -1372,7 +1372,7 @@ protocol_formula:
 proj_view_decl:
   [[ vh = view_header; `EQEQ; f = formula
           -> { vh with
-               view_session_kind = Some !projection_kind;
+               view_session_info = Some (mk_session_info ~sk:!projection_kind ());
                view_session_formula = Some f}
   ]];
 
@@ -1690,16 +1690,16 @@ branch: [[ `STRING (_,id);`COLON ->
     if !Globals.remove_label_flag then  LO.unlabelled
     else LO.singleton id ]];
 
-session_type: [[ `IDENTIFIER anno ->
-                    (match anno with
-                     | "trans" -> Transmission
-                     | "session" -> Session
-                     | "channel" -> Channel
-                     | "send" -> Send
-                     | "receive" -> Receive
-                     | "sequence" -> Sequence
-                     | "disjunction" -> SOr
-                     | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
+node_type: [[ `IDENTIFIER anno ->
+                (match anno with
+                 | "trans" -> Transmission
+                 | "session" -> Session
+                 | "channel" -> Channel
+                 | "send" -> Send
+                 | "receive" -> Receive
+                 | "sequence" -> Sequence
+                 | "disjunction" -> SOr
+                 | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
 ]];
 
 view_header:
@@ -1710,15 +1710,16 @@ view_header:
       let modes = get_modes anns in
       let pos = get_pos_camlp4 _loc 1 in
       Iast.mk_view_header vn opt1 cids mvs modes pos
-   | `IDENTIFIER vn; `AT; kind = session_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
+   | `IDENTIFIER vn; `AT; nk = node_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
       let () = view_names # push vn in
-      let () = Session.set_prim_pred_id kind vn in
+      let () = Session.set_prim_pred_id nk vn in
       let mvs = get_mater_vars l in
       let cids, anns = List.split l in
       let modes = get_modes anns in
       let pos = get_pos_camlp4 _loc 1 in
       let vh = Iast.mk_view_header vn opt1 cids mvs modes pos in
-      {vh with view_session_kind = Some kind}
+      let kind = mk_session_info ~nk:nk () in
+      {vh with view_session_info = Some kind}
 ]];
                                           
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
@@ -1806,7 +1807,7 @@ view_header_ext:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_session_formula = None;
-          view_session_kind = None;
+          view_session_info = None;
           view_inv_lock = None;
           view_is_prim = false;
           view_is_hrel = None;

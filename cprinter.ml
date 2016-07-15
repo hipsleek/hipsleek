@@ -713,9 +713,23 @@ let smart_string_of_spec_var x =
 let pr_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (smart_string_of_spec_var x)
 
 let pr_session_projection ?(lvl=(!glob_lvl)) vn =
+  let () = print_endline "in pr_session_projection" in
   let node = ViewNode vn in
-  let session = Session.CProjection.trans_h_formula_to_session (Session.CProjection.get_original_h_formula node) in
-  let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session) in
+  let def () = wrap_pr_1 lvl fmt_string "" in
+  let fct info = let sk = info.session_kind in
+                 (match sk with
+                   | Some Projection ->
+                       let session = Session.CProjection.trans_h_formula_to_session (Session.CProjection.get_original_h_formula node) in
+                     (*  let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session) in *)
+
+                       let pr_sess () = fmt_string ("HERE: " ^ (map_opt_def "" string_of_session_info vn.h_formula_view_session_info)) in
+                       pr_sess
+                   | Some TPProjection ->
+                       let session = Session.CTPProjection.trans_h_formula_to_session (Session.CTPProjection.get_original_h_formula node) in
+                       let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CTPProjection.string_of_session session) in
+                       pr_sess
+                   | _ -> def) in
+  let pr_sess = Gen.map_opt_def def fct vn.h_formula_view_session_info in
   Wrapper.wrap_one_bool print_flow_flag false pr_sess ()
 
 let pr_view_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_view_arg x)
@@ -1423,19 +1437,23 @@ let rec pr_h_formula h =
                h_formula_view_remaining_branches = ann;
                h_formula_view_pruning_conditions = pcond;
                h_formula_view_unfold_num = ufn;
-               h_formula_view_session_kind = sk;
+               h_formula_view_session_info = si;
                h_formula_view_pos = pos} as vn) ->
     let perm_str = string_of_cperm perm in
     let ho_arg_str = if ho_svs==[] then "" 
       else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
     let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
     fmt_open_hbox ();
-    let is_session = match sk with
-      | Some Session -> true
-      | _ -> false in
-    if (is_session && !Globals.print_compact_projection_formula)
+    let is_projection = let fct info = let sk = info.session_kind in
+                                       (match sk with
+                                         | Some Projection -> let () = print_endline ("node name: " ^ (string_of_spec_var sv)) in true
+                                         | Some TPProjection -> true
+                                         | _ -> false) in
+                        Gen.map_opt_def false fct si in
+    if (is_projection && !Globals.print_compact_projection_formula)
     then
       begin
+        (*fmt_string (map_opt_def "" string_of_session_info si) *)
         pr_session_projection vn
       end
     else
@@ -4348,7 +4366,7 @@ let pr_barrier_decl v =
 
 let pr_bool b = fmt_string (string_of_bool b)
 
-let pr_session_kind sk = fmt_string (map_opt_def "" string_of_session_kind sk)
+let pr_session_info si = fmt_string (map_opt_def "" string_of_session_info si)
 
 let pr_list_id b = fmt_string (pr_list pr_id b)
 
@@ -4419,7 +4437,7 @@ let pr_view_decl v =
        (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
-  pr_add_str_cut ~emp_test:(fun x -> false) "session kind: "  pr_session_kind v.view_session_kind;
+  pr_add_str_cut ~emp_test:(fun x -> false) "session info: "  pr_session_info v.view_session_info;
   pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)

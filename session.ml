@@ -22,8 +22,9 @@ let string_of_transmission t =
   | TSend    -> "!"
   | TReceive -> "?"
 
+(* prim predicates *)
 let chan_id:  string option ref = ref None
-let seq_id :  string option ref = ref None 
+let seq_id :  string option ref = ref None
 let trans_id: string option ref = ref None
 let sess_id:  string option ref = ref None
 let send_id:  string option ref = ref None
@@ -32,16 +33,17 @@ let sor_id:   string option ref = ref None
 
 let set_prim_pred_id kind id =
   match kind with
-    | Transmission -> trans_id := Some id
-    | Session      -> sess_id := Some id
-    | Channel      -> chan_id := Some id
-    | Send         -> send_id := Some id
-    | Receive      -> recv_id := Some id
     | Sequence     -> seq_id := Some id
     | SOr          -> sor_id := Some id
-    | Protocol     -> ()
-    | Projection   -> ()
-    | TPProjection   -> ()
+    | Star         -> ()
+    | Send         -> send_id := Some id
+    | Receive      -> recv_id := Some id
+    | Transmission -> trans_id := Some id
+    | HVar         -> ()
+    | Predicate    -> ()
+    | Emp          -> ()
+    | Session      -> sess_id := Some id
+    | Channel      -> chan_id := Some id
 
 let get_prim_pred_id pred_ref =
   match !pred_ref with
@@ -51,16 +53,17 @@ let get_prim_pred_id pred_ref =
       unk_view_id
 
 let get_prim_pred_id_by_kind kind = match kind with
-  | Transmission -> get_prim_pred_id trans_id
-  | Session      -> get_prim_pred_id sess_id
-  | Channel      -> get_prim_pred_id chan_id
-  | Send         -> get_prim_pred_id send_id
-  | Receive      -> get_prim_pred_id recv_id
   | Sequence     -> get_prim_pred_id seq_id
   | SOr          -> get_prim_pred_id sor_id
-  | Protocol     -> ""
-  | Projection   -> ""
-  | TPProjection   -> ""
+  | Star         -> ""
+  | Send         -> get_prim_pred_id send_id
+  | Receive      -> get_prim_pred_id recv_id
+  | Transmission -> get_prim_pred_id trans_id
+  | HVar         -> ""
+  | Predicate    -> ""
+  | Emp          -> ""
+  | Session      -> get_prim_pred_id sess_id
+  | Channel      -> get_prim_pred_id chan_id
 
 let get_session_kind_of_transmission t =
   match t with
@@ -91,17 +94,17 @@ module type Message_type = sig
   val is_node : h_formula -> bool
   val print  : (formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
-  val mk_node: ?kind:session_kind option -> arg -> h_formula
+  val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
   val mk_rflow_formula: ?kind:ho_flow_kind -> formula -> ho_param_formula
   val mk_rflow_formula_from_heap:  h_formula -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
-  val mk_formula: pure_formula -> arg -> formula
+  val mk_formula: pure_formula -> arg -> session_kind -> node_kind -> formula
   val mk_struc_formula: formula -> VarGen.loc -> struc_formula
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
   val mk_empty: unit -> h_formula
   val mk_hvar: ident -> ident list -> h_formula
-  val mk_seq_wrapper: h_formula -> VarGen.loc -> h_formula
+  val mk_seq_wrapper: h_formula -> VarGen.loc -> session_kind -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val set_param:  ident ->  VarGen.loc -> param
 
@@ -122,7 +125,7 @@ module type Message_type = sig
   val get_or_formulae: formula -> formula list
   val get_star_formulae: h_formula -> h_formula list
   val get_star_pos: h_formula -> VarGen.loc
-  val get_session_kind: h_formula -> session_kind option
+  val get_node_kind: h_formula -> node_kind
   val get_param_id: param -> ident
   val get_node_id: node -> ident
   val get_formula_from_struc_formula: struc_formula -> formula
@@ -144,15 +147,15 @@ module IForm = struct
 
   let is_emp f = failwith x_tbi
   let print    = F.print_formula
-  (* ptr - pointer to heap, 
+  (* ptr - pointer to heap,
      name - name of heap struct
-     ho - HO param 
+     ho - HO param
   *)
   let print_h_formula = F.print_h_formula
-  let mk_node ?kind:(skind = None) (ptr, name, ho, params, pos)  =
+  let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
-    F.set_session_kind_h_formula h skind
+    F.set_session_kind_h_formula h sk nk
 
   let mk_formula_heap_only h pos =
     F.formula_of_heap_1 h pos
@@ -170,8 +173,8 @@ module IForm = struct
        F.rflow_session_kind = None;
     }
 
-  let mk_formula pure (ptr, name, ho, params, pos)  =
-    let h = mk_node (ptr, name, ho, params, pos) in
+  let mk_formula pure (ptr, name, ho, params, pos) sk nk  =
+    let h = mk_node (ptr, name, ho, params, pos) sk nk in
     F.mkBase_wo_flow h pure [] pos
 
   let mk_struc_formula formula pos =
@@ -190,14 +193,14 @@ module IForm = struct
 
   let mk_hvar id ls = F.HVar(id, ls)
 
-  let mk_seq_wrapper_node hform pos =
+  let mk_seq_wrapper_node hform pos sk =
     let ptr = choose_ptr() in
     let name = get_prim_pred_id seq_id in
     let hemp = mk_empty () in
     let args = [hform; hemp] in
     let args = List.map (fun a -> mk_rflow_formula_from_heap a pos) args in
     let params = [] in
-    mk_node ~kind:(Some Sequence) (ptr, name, args, params, pos)
+    mk_node (ptr, name, args, params, pos) sk Sequence
 
   (* Normalize second HO argument of Sequence such that
      it contains no base/or/*/pred unless they are
@@ -216,18 +219,14 @@ module IForm = struct
       V
      self::Seq{a, self::Seq{c or/* b, emp}}
   *)
-  let mk_seq_wrapper hform pos =
+  let mk_seq_wrapper hform pos sk =
     match hform with
-      | F.HeapNode node ->
-        (match node.F.h_formula_heap_session_kind with
-          | Some k ->
-            if (k <> Sequence)
-            then
-              mk_seq_wrapper_node hform pos
-            else
-              hform
-          | None -> mk_seq_wrapper_node hform pos)
-      | F.Star node -> mk_seq_wrapper_node hform pos
+      | F.HeapNode node -> let fct si = let nk = si.node_kind in
+                                        (match nk with
+                                           | Some Sequence -> hform
+                                           | _ -> mk_seq_wrapper_node hform pos sk) in
+                           Gen.map_opt_def hform fct node.F.h_formula_heap_session_info
+      | F.Star node -> mk_seq_wrapper_node hform pos sk
       | _ -> hform
 
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos) 
@@ -251,12 +250,16 @@ module IForm = struct
   and update_temp_heap_name hform =
     let helper hform =
       let f_h hform = match hform with
-        | F.HeapNode node ->
-            (match node.F.h_formula_heap_session_kind with
-            | None -> Some (F.HeapNode node)
-            | Some k ->
-                let new_name = get_prim_pred_id_by_kind k in
-                Some (F.HeapNode {node with F.h_formula_heap_name = new_name}))
+        | F.HeapNode node -> 
+           let orig_node = Some (F.HeapNode node) in
+                             let fct si = let nk = si.node_kind in
+                                          let fct nk = (match nk with
+                                                         | Sequence | SOr | Send | Receive | Transmission
+                                                         | Session | Channel -> Some (F.HeapNode {node with F.h_formula_heap_name =
+                                                                                                              get_prim_pred_id_by_kind nk})
+                                                         | Star | HVar | Predicate | Emp -> orig_node) in
+                                          Gen.map_opt_def orig_node fct nk in
+                             Gen.map_opt_def orig_node fct node.F.h_formula_heap_session_info
         | _ -> None in
       transform_h_formula f_h hform
     in
@@ -284,16 +287,20 @@ module IForm = struct
 
   let is_seq_node h_formula =
     match h_formula with
-      | F.HeapNode node -> (match node.F.h_formula_heap_session_kind with
-                             | Some Sequence -> true
-                             | _ -> false)
+      | F.HeapNode node -> let fct si = let nk = si.node_kind in
+                                        (match nk with
+                                           | Some Sequence -> true
+                                           | _ -> false) in
+                           Gen.map_opt_def false fct node.F.h_formula_heap_session_info
       | _ -> false
 
   let is_or_node h_formula =
     match h_formula with
-      | F.HeapNode node -> (match node.F.h_formula_heap_session_kind with
-                             | Some SOr -> true
-                             | _ -> false)
+      | F.HeapNode node -> let fct si = let nk = si.node_kind in
+                                        (match nk with
+                                           | Some SOr -> true
+                                           | _ -> false) in
+                           Gen.map_opt_def false fct node.F.h_formula_heap_session_info
       | _ -> false
 
   let is_star_node h_formula =
@@ -315,7 +322,7 @@ module IForm = struct
 
   let get_star_pos h_formula = failwith x_tbi
 
-  let get_session_kind h_formula = failwith x_tbi
+  let get_node_kind h_formula = failwith x_tbi
 
   let get_param_id param = failwith x_tbi
 
@@ -342,11 +349,11 @@ module CForm = struct
   let is_emp f = failwith x_tbi
   let print    = CF.print_formula
   let print_h_formula = CF.print_h_formula
-  let mk_node ?kind:(skind = None) (ptr, name, ho, params, pos) =
+  let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in
     match h with
       | CF.ViewNode node -> CF.ViewNode {node with CF.h_formula_view_ho_arguments = ho;
-                                                   CF.h_formula_view_session_kind = skind}
+                                                   CF.h_formula_view_session_info = Some (mk_session_info ~sk:sk ~nk:nk ())}
       | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let mk_formula_heap_only h pos =
@@ -363,8 +370,8 @@ module CForm = struct
       CF.rflow_base = f;
     }
 
-  let mk_formula pure (ptr, name, ho, params, pos) =
-    let h = mk_node (ptr, name, ho, params, pos) in
+  let mk_formula pure (ptr, name, ho, params, pos) sk nk =
+    let h = mk_node (ptr, name, ho, params, pos) sk nk in
     let mix_formula = MCP.OnePF pure in
     CF.mkBase_simp h mix_formula
 
@@ -387,7 +394,7 @@ module CForm = struct
     let ls = List.map (fun x -> CP.SpecVar(UNK, x, Unprimed)) ls in
     CF.HVar(id, ls)
 
-  let mk_seq_wrapper hform pos = hform
+  let mk_seq_wrapper hform pos sk = hform
 
   let set_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
@@ -426,10 +433,18 @@ module CForm = struct
       | CF.Star hf -> hf.CF.h_formula_star_pos
       | _ -> failwith (x_loc ^ ": CF.Star expected.")
 
-  let get_session_kind h_formula =
+  let get_node_kind h_formula =
     match h_formula with
-      | CF.ViewNode node -> node.CF.h_formula_view_session_kind
-      | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
+      | CF.ViewNode node -> (match node.CF.h_formula_view_session_info with
+                               | Some si -> let nk = si.node_kind in
+                                             (match nk with
+                                               | Some k -> k
+                                               | None -> failwith (x_loc ^ ": Expected node kind."))
+                               | None -> failwith (x_loc ^ ": Expected session information."))
+      | CF.Star node -> Star
+      | CF.HVar (sv, svl) -> HVar
+      | CF.HEmp -> Emp
+      | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
 
   let get_param_id param =
     match param with
@@ -451,6 +466,7 @@ module CForm = struct
   let get_h_formula formula =
     match formula with
       | CF.Base f -> f.CF.formula_base_heap
+      | CF.Or f -> failwith (x_loc ^ ": Or formula?!.")
       | _ -> failwith (x_loc ^ ": Formula Base expected.")
 
   let get_h_formula_from_ho_param_formula rflow_formula =
@@ -468,17 +484,15 @@ module CForm = struct
       | _ -> failwith (x_loc ^ ": CF.HVar expected.")
 
   let is_seq_node h_formula =
-    match h_formula with
-      | CF.ViewNode node -> (match node.CF.h_formula_view_session_kind with
-                              | Some Sequence -> true
-                              | _ -> false)
+    let nk = get_node_kind h_formula in
+    match nk with
+      | Sequence -> true
       | _ -> false
 
   let is_or_node h_formula =
-    match h_formula with
-      | CF.ViewNode node -> (match node.CF.h_formula_view_session_kind with
-                              | Some SOr -> true
-                              | _ -> false)
+    let nk = get_node_kind h_formula in
+    match nk with
+      | SOr -> true
       | _ -> false
 
   let is_star_node h_formula =
@@ -537,7 +551,7 @@ module Protocol_base_formula =
       let args = [Msg.mk_rflow_formula base.protocol_base_formula_message] in
       let params = [base.protocol_base_formula_sender; base.protocol_base_formula_receiver] in
       let params = List.map (fun a -> Msg.set_param a base.protocol_base_formula_pos) params in
-      Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos)
+      Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos) base_type Transmission
 
     let get_base_pos base = base.protocol_base_formula_pos
 
@@ -566,6 +580,7 @@ module Projection_base_formula =
     let print_message f = !Msg.print f.projection_base_formula_message
 
     let string_of_session_base f =
+      let () = print_endline "PROJECTION PRINT" in
       f.projection_base_formula_channel ^
       (string_of_transmission f.projection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
@@ -585,28 +600,24 @@ module Projection_base_formula =
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.projection_base_formula_message]
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.projection_base_formula_message] in
       let params = [] in
-      Msg.mk_node ~kind:(Some tkind) (ptr, name, args, params, base.projection_base_formula_pos)
+      Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos) base_type tkind
 
     let get_base_pos base = base.projection_base_formula_pos
 
     let is_session_base h_formula =
-      if (Msg.is_node h_formula)
-      then
-        match Msg.get_session_kind h_formula with
-          | Some Send -> true
-          | Some Receive -> true
-          | _ -> false
-      else
-        false
+      match Msg.get_node_kind h_formula with
+        | Send -> true
+        | Receive -> true
+        | _ -> false
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
       let channel = Msg.get_node_id ptr in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
-      let transmission = match (Msg.get_session_kind h_formula) with
-        | Some Send -> TSend
-        | Some Receive -> TReceive
-        | _ -> failwith "Not a valid transmission type." in
+      let transmission = match (Msg.get_node_kind h_formula) with
+        | Send -> TSend
+        | Receive -> TReceive
+        | _ -> failwith (x_loc ^ ": Not a valid transmission type.") in
       mk_base (transmission, channel, pos) f
 
   end;;
@@ -628,6 +639,7 @@ module TPProjection_base_formula =
     let print_message f = !Msg.print f.tpprojection_base_formula_message
 
     let string_of_session_base f =
+      let () = print_endline "TPPROJECTION PRINT" in
       (string_of_transmission f.tpprojection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 
@@ -645,27 +657,23 @@ module TPProjection_base_formula =
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.tpprojection_base_formula_message]
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.tpprojection_base_formula_message] in
       let params = [] in
-      Msg.mk_node ~kind:(Some tkind) (ptr, name, args, params, base.tpprojection_base_formula_pos)
+      Msg.mk_node (ptr, name, args, params, base.tpprojection_base_formula_pos) base_type tkind
 
     let get_base_pos base = base.tpprojection_base_formula_pos
 
     let is_session_base h_formula =
-      if (Msg.is_node h_formula)
-      then
-        match Msg.get_session_kind h_formula with
-          | Some Send -> true
-          | Some Receive -> true
-          | _ -> false
-      else
-        false
+      match Msg.get_node_kind h_formula with
+        | Send -> true
+        | Receive -> true
+        | _ -> false
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
-      let transmission = match (Msg.get_session_kind h_formula) with
-        | Some Send -> TSend
-        | Some Receive -> TReceive
-        | _ -> failwith "Not a valid transmission type." in
+      let transmission = match (Msg.get_node_kind h_formula) with
+        | Send -> TSend
+        | Receive -> TReceive
+        | _ -> failwith (x_loc ^ ": Not a valid transmission type.") in
       mk_base (transmission, pos) f
 
   end;;
@@ -806,11 +814,11 @@ module Make_Session (Base: Session_base) = struct
   let mk_seq_node h1 h2 pos  =
     let ptr = Base.choose_ptr () in (* decide which name should be given here *)
     let name = get_prim_pred_id seq_id in
-    let h2 = Base.mk_seq_wrapper h2 pos in
+    let h2 = Base.mk_seq_wrapper h2 pos Base.base_type in
     let args = [h1; h2] in
     let args = List.map (fun a -> Base.mk_rflow_formula_from_heap a pos) args in
     let params = [] in
-    Base.mk_node ~kind:(Some Sequence) (ptr, name, args, params, pos)
+    Base.mk_node (ptr, name, args, params, pos) Base.base_type Sequence
 
   and mk_star_node h1 h2 pos =
     Base.mk_star h1 h2 pos
@@ -824,7 +832,7 @@ module Make_Session (Base: Session_base) = struct
     let name = get_prim_pred_id sor_id in
     let args = [rflow_form] in
     let params = [] in
-    Base.mk_node ~kind:(Some SOr) (ptr, name, args, params, pos)
+    Base.mk_node (ptr, name, args, params, pos) Base.base_type SOr
 
   and mk_predicate_node p =
     let ptr = Base.choose_ptr () in
@@ -833,7 +841,7 @@ module Make_Session (Base: Session_base) = struct
     let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
     let params = List.map (fun a -> Base.set_param a pos) params in
-    Base.mk_node (ptr, name, args, params, pos)
+    Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate
 
   and mk_hvar_node h =
     let id = h.session_hvar_id in
@@ -885,7 +893,7 @@ module Make_Session (Base: Session_base) = struct
     let name = get_prim_pred_id sess_id in
     let args = [rflow_form] in
     let params = [] in
-    Base.mk_node  ~kind:(Some Session) (ptr, name, args, params, pos)
+    Base.mk_node (ptr, name, args, params, pos) Base.base_type Session
 
   let mk_struc_formula_from_session_and_formula s form_orig =
     let h_form = trans_from_session s in
@@ -907,7 +915,10 @@ module Make_Session (Base: Session_base) = struct
       else
       if (Base.is_or_node h_formula)
       then
+        let () = print_endline "OR node" in
+        let () = print_endline "BEFORE" in
         let (ptr, name, args, params, pos) = Base.get_node h_formula in
+        let () = print_endline "AFTER" in
         let or_node = Base.get_formula_from_ho_param_formula (List.nth args 0) in
         let or_formulae = Base.get_or_formulae or_node in
         let h1 = Base.get_h_formula (List.nth or_formulae 0) in
@@ -956,6 +967,7 @@ module Make_Session (Base: Session_base) = struct
        * was not created and the session formula is preserved
        * as it was.
        * Otherwise, split STAR node and get second branch.*)
+      let () = print_endline ("original: " ^ (string_of_node_kind (Base.get_node_kind h_formula))) in
       let h_formula = if (Base.is_star_node h_formula)
                       then
                         let star_formulae = Base.get_star_formulae h_formula in
@@ -980,9 +992,9 @@ module Make_Session (Base: Session_base) = struct
     let f = Base.get_formula_from_struc_formula struc_formula in
     trans_formula_to_session f
 
-  let test_if_is struc_formula =
-    let s = trans_struc_formula_to_session struc_formula in
-    print_endline ("transformed: " ^ (string_of_session s))
+  let test_if_is struc_formula = ()
+ (*   let s = trans_struc_formula_to_session struc_formula in
+    print_endline ("transformed: " ^ (string_of_session s))*)
 
 end;;
 
@@ -1023,3 +1035,12 @@ let get_tpprojection session =
   match session with
   | TPProjectionSession s -> s
   | _ -> failwith "not a two-party projection formula"
+
+let bla ?(i:int option) ?(j:int option) () =
+  let ix = match i with
+             | Some k -> k
+             | None -> 0 in
+  let jx = match j with
+             | Some k -> k
+             | None -> 0 in
+  print_endline ((string_of_int ix) ^ (string_of_int jx))
