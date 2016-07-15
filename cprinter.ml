@@ -4362,7 +4362,7 @@ let pr_barrier_decl v =
 
 let pr_bool b = fmt_string (string_of_bool b)
 
-let pr_session_info si = fmt_string (map_opt_def "" string_of_session_info si)
+let pr_session_info si = fmt_string (map_opt_def "" string_of_view_session_info si)
 
 let pr_list_id b = fmt_string (pr_list pr_id b)
 

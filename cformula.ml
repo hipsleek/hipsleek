@@ -322,7 +322,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_remaining_branches :  (formula_label list) option;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_view_label : formula_label option;
-                        h_formula_view_session_info : session_info option;
+                        h_formula_view_session_info : node_session_info option;
                         h_formula_view_pos : loc ;
                      }
 and approx_disj =

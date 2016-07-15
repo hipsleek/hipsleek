@@ -1332,7 +1332,7 @@ prim_view_decl:
 prot_view_decl:
   [[ vh = view_header; `EQEQ; s = protocol_formula
           -> { vh with
-               view_session_info = Some (mk_session_info ~sk:Protocol ());
+               view_session_info = Some (mk_view_session_info ~sk:Protocol ());
                view_session_formula = Some (Session.ProtocolSession s)}
   ]];
 
@@ -1372,7 +1372,7 @@ protocol_formula:
 proj_view_decl:
   [[ vh = view_header; `EQEQ; f = formula
           -> { vh with
-               view_session_info = Some (mk_session_info ~sk:!projection_kind ());
+               view_session_info = Some (mk_view_session_info ~sk:!projection_kind ());
                view_session_formula = Some f}
   ]];
 
@@ -1718,7 +1718,7 @@ view_header:
       let modes = get_modes anns in
       let pos = get_pos_camlp4 _loc 1 in
       let vh = Iast.mk_view_header vn opt1 cids mvs modes pos in
-      let kind = mk_session_info ~nk:nk () in
+      let kind = mk_view_session_info ~nk:nk () in
       {vh with view_session_info = Some kind}
 ]];
                                           

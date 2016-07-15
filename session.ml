@@ -353,7 +353,7 @@ module CForm = struct
     let h = CF.mkViewNode ptr name params pos in
     match h with
       | CF.ViewNode node -> CF.ViewNode {node with CF.h_formula_view_ho_arguments = ho;
-                                                   CF.h_formula_view_session_info = Some (mk_session_info ~sk:sk ~nk:nk ())}
+                                                   CF.h_formula_view_session_info = Some (mk_node_session_info ~sk:sk ~nk:nk ())}
       | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let mk_formula_heap_only h pos =

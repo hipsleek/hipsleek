@@ -133,7 +133,7 @@ and view_decl = {
   view_backward_ptrs: P.spec_var list;
   view_backward_fields: (data_decl * ident) list;
   view_kind : view_kind;
-  view_session_info : session_info option;
+  view_session_info : view_session_info option;
   view_prop_extns:  P.spec_var list; (*for extn views*)
   view_parent_name: ident option; (*for view_spec*)
   (*a map of shape <-> pure properties*)

@@ -181,7 +181,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_arguments : P.exp list;
                        h_formula_heap_pseudo_data : bool;
                        h_formula_heap_label : formula_label option;
-                       h_formula_heap_session_info : session_info option;
+                       h_formula_heap_session_info : node_session_info option;
                        h_formula_heap_pos : loc }
 
 and h_formula_thread = { h_formula_thread_node : (ident * primed);
@@ -3290,6 +3290,6 @@ let set_session_kind_h_formula hform sk nk =
   let f_h h =
     match h with
     | HeapNode h -> Some (HeapNode {h with h_formula_heap_session_info =
-                                             Some (mk_session_info ~sk:sk ~nk:nk ()) })
+                                             Some (mk_node_session_info ~sk:sk ~nk:nk ()) })
     | _ -> Some h in
   transform_h_formula f_h hform

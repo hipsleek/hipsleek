@@ -103,7 +103,7 @@ and view_decl =
     view_type_of_self : typ option;
     (* view_actual_root : P.exp option; *)
     view_kind : view_kind;
-    view_session_info : session_info option;
+    view_session_info : view_session_info option;
     view_prop_extns:  (typ * ident) list;
     view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
     view_derv_from: regex_id_star_list option;
