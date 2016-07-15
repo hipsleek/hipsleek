@@ -1,0 +1,5 @@
+X:={[base,base2,x_64,x_62,j,j1,a1,a]:exists(j1:
+   x_64=x_62 && x_64=base+j && x_62=base2+j1
+   && a1+1=a & a1=j+base & a=j1+base2 & base=base2)};
+
+X;

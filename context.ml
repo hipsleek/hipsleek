@@ -704,7 +704,6 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
         let () = x_tinfo_hp (add_str "lhs_p" !CP.print_formula) lhs_pure pos in
         let () = x_tinfo_hp (add_str "args" !CP.print_svl) args pos in
         let () = x_tinfo_hp (add_str "hp" !CP.print_sv) hp pos in
-        let () = x_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
         let () = x_tinfo_hp (add_str "root" !CP.print_sv) root pos in
         let () = hrel_stk # push root in
         (None,CP.ConstAnn(Mutable), [], root)
@@ -731,8 +730,14 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
-    let () = y_tinfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
+    let () = y_binfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
     let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
+    let () = x_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
+    let () = x_binfo_hp (add_str "rhs_rest" !CF.print_h_formula) rhs_rest pos in
+    let mf_rhs,_,_ = x_add !xpure_sym prog rhs_node rhs_p 0 in
+    let mf_rhs_pure = MCP.pure_of_mix mf_rhs in
+    let () = y_binfo_hp (add_str "mf_rhs_pure" !CP.print_formula) mf_rhs_pure in
+    let (_,rhs_base_ptr_vs) = x_add_1 CP.pick_baseptr mf_rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
     let emap_base = CP.EMapSV.build_eset (same_base@same_base_rhs@eqns'@r_eqns) in
@@ -814,52 +819,54 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
             begin
               let () = y_tinfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
               let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
-              let rhs = CP.mk_is_base_ptr d rhs_ptr in
+              let rhs = CP.mk_is_baseptr d rhs_ptr in
               (* let r = !CP.tp_imply lhs_pure rhs in *)
               let r = true (* !CP.tp_imply lhs_w_rhs_inst rhs *) in
               let ex_inst = estate.CF.es_gen_impl_vars @ estate.CF.es_gen_expl_vars in
-              let inst_base_ptr lhs_w_rhs_inst ex_inst =
-                let pairs = x_add_1 CP.pick_base_pair lhs_w_rhs_inst in
-                let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> CP.intersect_svl [v1;v2] ex_inst==[]) pairs in
-                let inst_pair = List.map (fun (v1,v2) -> 
-                    if List.exists (CP.eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in
-                let choose_base lhs lhs_pairs = 
-                  let rec aux lst = 
-                    match lst with
-                      | [] -> []
-                      | (v1,v2)::lst -> 
-                            if !CP.tp_imply lhs (CP.mk_is_base_ptr v1 v2) then (v1,v2)::(aux lst)
-                            else if !CP.tp_imply lhs (CP.mk_is_base_ptr v2 v1) then (v2,v1)::(aux lst)
-                            else aux lst
-                  in aux lhs_pairs in
-                let find lst v = 
-                  try 
-                    Some (snd (List.find (fun (v1,_) -> CP.eq_spec_var v1 v) lst))
-                  with _ -> None in
-                let choose_inst cb inst_pair = 
-                  let rec aux ip = match ip with
-                    | [] -> []
-                    | (cv,base1)::lst -> begin
-                        match (find cb cv) with
-                          | Some base2 -> (base1,base2)::(aux lst)
-                          | _ -> []
-                      end 
-                  in aux inst_pair
-                in
-                (* choosing those with a (ptr,base) *)
-                let common_base_lst = choose_base lhs_w_rhs_inst lhs_pair in
-                let lst_of_inst = choose_inst common_base_lst inst_pair in
-                let lhs_w_rhs_inst2 = List.fold_left (fun acc (v1,v2) ->
-                    CP.mkAnd acc (CP.mkEqVars v1 v2) no_pos
-                ) lhs_w_rhs_inst lst_of_inst in 
-                let pr_lst_pair = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-                let () =  y_binfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in
-                let () =  y_binfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in
-                let () =  y_binfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in
-                let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
-                lhs_w_rhs_inst2
-              in
-              let lhs_w_rhs_inst = inst_base_ptr lhs_w_rhs_inst ex_inst in
+              (* let inst_baseptr lhs_w_rhs_inst ex_inst = *)
+              (*   let pairs = x_add_1 CP.pick_base_pair lhs_w_rhs_inst in *)
+              (*   let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> CP.intersect_svl [v1;v2] ex_inst==[]) pairs in *)
+              (*   let inst_pair = List.map (fun (v1,v2) ->  *)
+              (*       if List.exists (CP.eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in *)
+              (*   let choose_base lhs lhs_pairs =  *)
+              (*     let rec aux lst =  *)
+              (*       match lst with *)
+              (*         | [] -> [] *)
+              (*         | (v1,v2)::lst ->  *)
+              (*               if !CP.tp_imply lhs (CP.mk_is_baseptr v1 v2) then (v1,v2)::(aux lst) *)
+              (*               else if !CP.tp_imply lhs (CP.mk_is_baseptr v2 v1) then (v2,v1)::(aux lst) *)
+              (*               else aux lst *)
+              (*     in aux lhs_pairs in *)
+              (*   let find lst v =  *)
+              (*     try  *)
+              (*       Some (snd (List.find (fun (v1,_) -> CP.eq_spec_var v1 v) lst)) *)
+              (*     with _ -> None in *)
+              (*   let choose_inst cb inst_pair =  *)
+              (*     let rec aux ip = match ip with *)
+              (*       | [] -> [] *)
+              (*       | (cv,base1)::lst -> begin *)
+              (*           match (find cb cv) with *)
+              (*             | Some base2 -> (base1,base2)::(aux lst) *)
+              (*             | _ -> [] *)
+              (*         end  *)
+              (*     in aux inst_pair *)
+              (*   in *)
+              (*   (\* choosing those with a (ptr,base) *\) *)
+              (*   let common_base_lst = choose_base lhs_w_rhs_inst lhs_pair in *)
+              (*   let lst_of_inst = choose_inst common_base_lst inst_pair in *)
+              (*   let lhs_w_rhs_inst2 = List.fold_left (fun acc (v1,v2) -> *)
+              (*       CP.mkAnd acc (CP.mkEqVars v1 v2) no_pos *)
+              (*   ) lhs_w_rhs_inst lst_of_inst in  *)
+              (*   let pr_lst_pair = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+              (*   let () =  y_binfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in *)
+              (*   let () =  y_binfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in *)
+              (*   let () =  y_binfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in *)
+              (*   let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in *)
+              (*   lhs_w_rhs_inst2 *)
+              (* in *)
+              let lhs_w_rhs_inst = 
+                if !Globals.adhoc_flag_4 then lhs_w_rhs_inst
+                else x_add CP.inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst in
               let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
               let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
               let () =  y_binfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
@@ -968,7 +975,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let rhs =
                   if CF.no_infer_all_all estate
                   then CP.mkEqVars rhs_ptr root
-                  else CP.mk_is_base_ptr rhs_ptr d in
+                  else CP.mk_is_baseptr rhs_ptr d in
                 (* cannot handle ptr/e/ex1fb.slk *)
                 (* let lhs_w_rhs_inst = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let lhs = CP.mkAnd lhs_w_rhs_inst root_pf no_pos in
@@ -980,7 +987,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 if r then
                   (d,(map_r r,None),None)
                 else
-                  let rhs_for_base = CP.mk_is_base_ptr rhs_ptr d in
+                  let rhs_for_base = CP.mk_is_baseptr rhs_ptr d in
                   let r = !CP.tp_imply lhs rhs_for_base in
                   (* r==1 means that it is an exact match*)
                   (* r==2 means that it is NOT exact match but they have the same base, ex. a=b+1 *)

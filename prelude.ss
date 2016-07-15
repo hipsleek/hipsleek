@@ -1,4 +1,5 @@
 relation Univ(int x).
+relation BasePtr(Object x).
 
 //class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}

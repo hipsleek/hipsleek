@@ -3,11 +3,14 @@ data arrI {
   int val;
 }.
 
-pred arr_seg<i,n> == i=n & i>=0 & self!=null
+relation BasePtr(arrI x).
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null & BasePtr(self)
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
   // inv i>=0.
   //inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
-    inv BG([(self,i,n)], n>=i & i>=0 & self!=null).
+    inv BG([(self,i,n)], n>=i & i>=0 & self!=null //& BasePtr(self)
+    ).
   //  inv BG([(self+i,n-i)], n>=i & i>=0 & self!=null).
 
 //heap_addresses : self+i..self+n-i-1
@@ -21,7 +24,6 @@ print residue.
 checkentail base::arr_seg<2,2> * base::arr_seg<2,5> |- false.
 expect Fail. 
 print residue.
-
 
 checkentail base::arr_seg<7,9> * base::arr_seg<2,5> |- false.
 expect Fail. 

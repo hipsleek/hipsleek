@@ -87,6 +87,9 @@ let is_self_spec_var sv = match sv with
 
 let self_sv = mk_spec_var self 
 
+let is_baseptr_var sv = match sv with
+  | SpecVar (_,n,_) -> n = "BasePtr"
+
 let is_res_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = res_name
 
@@ -5932,6 +5935,11 @@ let mk_exp_var v =
   (* let lhs = mkVar v no_pos in *)
   let e = mkVar v no_pos in
   e
+
+let get_exp_var e =
+  match e with
+    | Var(v,_) -> Some v
+    | _ -> None
 
 let mk_exp_geq lhs i = 
   (* let lhs = mkVar v no_pos in *)
@@ -13824,27 +13832,6 @@ and drop_bag_formula_weak_x (pf : formula) : formula =
   let npf, _ = trans_formula pf arg f f_arg f_comb in
   npf
 
-and pick_base_pair_x (pf : formula) (* : (spec_var * spec_var) list *) =
-  let pick_ptr p = 
-    let vs = fv p in
-    let (int_vs,ptr_vs) = List.partition (fun v -> is_num_or_int_typ v) vs in
-    if int_vs!=[] then 
-      match ptr_vs with
-        | [v1;v2] -> Some [(v1,v2)]
-        | _ -> None
-    else None in
-  let f_bf bf =
-    let pf, lbl = bf in
-    (match pf with
-     | Eq (e1, e2, pos) -> pick_ptr (BForm ((pf,None),None))
-     | _ -> None)
-  in
-  let f_comb = List.concat 
-  in fold_formula pf (nonef,f_bf,nonef) f_comb
-
-and pick_base_pair pf =
-  let pr = !print_sv in
-  Debug.no_1 "pick_base_pair" !print_formula (pr_list (pr_pair pr pr)) pick_base_pair_x pf
 
 and drop_bag_formula_weak (pf : formula) : formula =
   Debug.no_1 "drop_bag_formula_weak" !print_formula !print_formula
@@ -16214,9 +16201,115 @@ let mkLtVars a1 a2 =
 let mkEqVars a1 a2 =
   BForm ((Eq (Var (a1,no_pos),Var(a2,no_pos), no_pos),None),None)
 
-let mk_is_base_ptr d rhs_ptr =
+let mk_is_baseptr d rhs_ptr =
   BForm ((Gte (Var (d,no_pos),Var(rhs_ptr,no_pos), no_pos),None),None)
 
 let is_Or f = match f with
   | Or _ -> true
   | _ -> false
+
+
+let pick_baseptr (pf : formula) (* : (spec_var * spec_var) list *) =
+  let stk = new Gen.stack in
+  let pick_ptr p = 
+    let vs = fv p in
+    let (int_vs,ptr_vs) = List.partition (fun v -> is_num_or_int_typ v) vs in
+    (* if int_vs!=[] then  *)
+    match ptr_vs with
+      | [v1;v2] -> Some [(v1,v2)]
+      | _ -> None
+    (* else None *) in 
+  let f_bf bf =
+    let pf, lbl = bf in
+    (match pf with
+     | Eq (e1, e2, pos) -> pick_ptr (BForm ((pf,None),None))
+     | RelForm (sv,arg::_,_) -> 
+           begin
+             let flag = is_baseptr_var sv in
+             let () = y_binfo_hp (add_str "base_ptr" (pr_pair string_of_bool !print_sv)) (flag,sv) in
+             if is_baseptr_var sv then
+               begin
+                 match (get_exp_var arg) with
+                   | Some v -> stk # push v
+                   | _ -> () 
+               end;
+             None
+           end
+     | _ -> None)
+  in
+  let f_comb = List.concat in 
+  let ans1 = fold_formula pf (nonef,f_bf,nonef) f_comb in
+     (ans1,stk # get_stk)
+
+let pick_baseptr pf =
+  let pr = !print_sv in
+  let pr_out = pr_pair (pr_list (pr_pair pr pr)) !print_svl in
+  Debug.no_1 "pick_baseptr" !print_formula pr_out pick_baseptr pf
+
+let find_baseptr_equiv lst bptr =
+  let emap = EMapSV.build_eset lst in
+  List.map (fun x -> 
+      let vs = EMapSV.find_equiv_all x emap in
+      (x,intersect_svl vs bptr)
+  ) bptr
+
+let find_baseptr_equiv lst bptr =
+  let pr2 = !print_svl in
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_2 "find_baseptr_equiv" pr1 pr2 (pr_list (pr_pair !print_sv pr2)) find_baseptr_equiv lst bptr
+
+(* this finds baseptrs for existential instantiation *)
+let inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst =
+  let (pairs,baseptr) = x_add_1 pick_baseptr lhs_w_rhs_inst in
+  let exist_baseptr = intersect_svl ex_inst rhs_base_ptr_vs in
+  let baseptr = baseptr@exist_baseptr in
+  let base_eq = x_add find_baseptr_equiv pairs baseptr in
+  let base_eq = List.filter (fun (v,_) -> (diff_svl [v] exist_baseptr)==[]) base_eq in
+  (* let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> intersect_svl [v1;v2] ex_inst==[]) pairs in *)
+  let rec mk_pair lst =
+    match lst with 
+      | x::((y::_) as rest) -> (x,y)::(mk_pair rest)
+      | _ -> [] in
+  let lst_of_inst = List.concat (List.map (fun (_,lst) -> mk_pair lst) base_eq) in
+  (* let inst_pair = List.map (fun (v1,v2) ->  *)
+  (*     if List.exists (eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in *)
+  (* let choose_base lhs lhs_pairs =  *)
+  (*   let rec aux lst =  *)
+  (*     match lst with *)
+  (*     | [] -> [] *)
+  (*     | (v1,v2)::lst ->  *)
+  (*       if !tp_imply lhs (mk_is_baseptr v1 v2) then (v1,v2)::(aux lst) *)
+  (*       else if !tp_imply lhs (mk_is_baseptr v2 v1) then (v2,v1)::(aux lst) *)
+  (*       else aux lst *)
+  (*   in aux lhs_pairs in *)
+  (* let find lst v =  *)
+  (*   try  *)
+  (*     Some (snd (List.find (fun (v1,_) -> eq_spec_var v1 v) lst)) *)
+  (*   with _ -> None in *)
+  (* let choose_inst cb inst_pair =  *)
+  (*   let rec aux ip = match ip with *)
+  (*     | [] -> [] *)
+  (*     | (cv,base1)::lst -> begin *)
+  (*         match (find cb cv) with *)
+  (*         | Some base2 -> (base1,base2)::(aux lst) *)
+  (*         | _ -> [] *)
+  (*       end  *)
+  (*   in aux inst_pair *)
+  (* in *)
+  (* (\* choosing those with a (ptr,base) *\) *)
+  (* let common_base_lst = choose_base lhs_w_rhs_inst lhs_pair in *)
+  (* let lst_of_inst = choose_inst common_base_lst inst_pair in *)
+  let lhs_w_rhs_inst2 = List.fold_left (fun acc (v1,v2) ->
+      mkAnd acc (mkEqVars v1 v2) no_pos
+    ) lhs_w_rhs_inst lst_of_inst in 
+  let pr_lst_pair = pr_list (pr_pair !print_sv !print_sv) in
+  (* let () =  y_binfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in *)
+  (* let () =  y_binfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in *)
+  let () =  y_binfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in
+  let () =  y_binfo_hp (add_str "lhs_w_rhs_inst2" !print_formula) lhs_w_rhs_inst2  in
+  lhs_w_rhs_inst2
+
+
+let inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst  =
+  let pr = !print_formula in
+  Debug.no_2 "inst_baseptr" pr !print_svl pr (inst_baseptr rhs_base_ptr_vs) lhs_w_rhs_inst ex_inst
