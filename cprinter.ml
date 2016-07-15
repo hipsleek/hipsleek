@@ -717,18 +717,16 @@ let pr_session_projection ?(lvl=(!glob_lvl)) vn =
   let node = ViewNode vn in
   let def () = wrap_pr_1 lvl fmt_string "" in
   let fct info = let sk = info.session_kind in
-                 (match sk with
-                   | Some Projection ->
-                       let session = Session.CProjection.trans_h_formula_to_session (Session.CProjection.get_original_h_formula node) in
-                     (*  let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session) in *)
-
-                       let pr_sess () = fmt_string ("HERE: " ^ (map_opt_def "" string_of_session_info vn.h_formula_view_session_info)) in
-                       pr_sess
-                   | Some TPProjection ->
-                       let session = Session.CTPProjection.trans_h_formula_to_session (Session.CTPProjection.get_original_h_formula node) in
-                       let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CTPProjection.string_of_session session) in
-                       pr_sess
-                   | _ -> def) in
+    (match sk with
+     | Some Projection ->
+       let session = Session.CProjection.trans_h_formula_to_session (Session.CProjection.get_original_h_formula node) in
+       let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session) in
+       pr_sess
+     | Some TPProjection ->
+       let session = Session.CTPProjection.trans_h_formula_to_session (Session.CTPProjection.get_original_h_formula node) in
+       let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CTPProjection.string_of_session session) in
+       pr_sess
+     | _ -> def) in
   let pr_sess = Gen.map_opt_def def fct vn.h_formula_view_session_info in
   Wrapper.wrap_one_bool print_flow_flag false pr_sess ()
 
@@ -1440,16 +1438,16 @@ let rec pr_h_formula h =
                h_formula_view_session_info = si;
                h_formula_view_pos = pos} as vn) ->
     let perm_str = string_of_cperm perm in
-    let ho_arg_str = if ho_svs==[] then "" 
-      else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
-    let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
-    fmt_open_hbox ();
+    (* let ho_arg_str = if ho_svs==[] then ""  *)
+    (*   else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in *)
+    (* let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in *)
+    (* fmt_open_hbox (); *)
     let is_projection = let fct info = let sk = info.session_kind in
-                                       (match sk with
-                                         | Some Projection -> let () = print_endline ("node name: " ^ (string_of_spec_var sv)) in true
-                                         | Some TPProjection -> true
-                                         | _ -> false) in
-                        Gen.map_opt_def false fct si in
+                          (match sk with
+                           | Some Projection -> let () = print_endline ("node name: " ^ (string_of_spec_var sv)) in true
+                           | Some TPProjection -> true
+                           | _ -> false) in
+      Gen.map_opt_def false fct si in
     if (is_projection && !Globals.print_compact_projection_formula)
     then
       begin
@@ -1457,6 +1455,10 @@ let rec pr_h_formula h =
         pr_session_projection vn
       end
     else
+      let ho_arg_str = if ho_svs==[] then "" 
+        else "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_svs)) ^ "}" in
+      let params = CP.create_view_arg_list_from_pos_map svs_orig svs anns in
+      fmt_open_hbox ();
       if (!Globals.texify) then
         begin
           (* fmt_string "\seppred{";pr_spec_var sv;fmt_string ("}{"^c^"}{"); pr_list_of_spec_var svs; fmt_string "}"; *)
