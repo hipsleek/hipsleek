@@ -2966,7 +2966,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
       formula_base_pos = pos}) ->
-          if !Globals.use_baga then tp_syn h p
+          if  !Globals.use_baga then tp_syn h p
           else tp_sem h p
             (* let p = MCP.translate_level_mix_formula p in *)
             (* let ph,_,_ = x_add xpure_heap 1 prog h p 1 in *)
@@ -8775,7 +8775,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* Why did we combine lhs_h with es_heap? Is es_heap the consumed heap? *)
   let curr_lhs_h = (mkStarH lhs_h estate_orig.es_heap pos) in
   let lhs_baga = (* Long : why we need lhs_baga *)
-    if (* false *) !Globals.use_baga (* !Globals.gen_baga_inv *) then
+    if !Globals.use_baga (* !Globals.gen_baga_inv *) then
       let views = prog.Cast.prog_view_decls in
       let t1 = Expure.build_ef_heap_formula false curr_lhs_h views in
       let () = Debug.binfo_hprint (add_str "hf" (Cprinter.string_of_h_formula)) curr_lhs_h no_pos in

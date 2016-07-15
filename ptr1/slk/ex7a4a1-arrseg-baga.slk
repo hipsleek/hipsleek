@@ -12,13 +12,16 @@ pred arr_seg<i,n> == i=n & i>=0 & self!=null
 
 //heap_addresses : self+i..self+n-i-1
 
-checkentail base::arr_seg<2,5> * base::arr_seg<2,5> |- false.
+
+checkentail base::arr_seg<2,5> * base::arr_seg<2,5>  |- false.
 expect Valid. 
 print residue.
+
 
 checkentail base::arr_seg<2,2> * base::arr_seg<2,5> |- false.
 expect Fail. 
 print residue.
+
 
 checkentail base::arr_seg<7,9> * base::arr_seg<2,5> |- false.
 expect Fail. 
@@ -36,16 +39,17 @@ checkentail base::arr_seg<2,5> * base::arr_seg<3,4> |- false.
 expect Valid. 		  
 print residue.
 
-checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> |- false.
+checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> & base2=base |- false.
 expect Valid. 		  
 print residue.
 
-
-/*
-checkentail base::arr_seg<2,3> * base::arr_seg<2,3> |- false.
-expect Valid. 
+checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> |- false.
+expect Fail. 		  
 print residue.
-*/
+
+
+
+
 
 /*
 # ex7a4a1.slk

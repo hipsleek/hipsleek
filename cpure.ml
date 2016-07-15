@@ -6012,14 +6012,18 @@ struct
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) & (d<=b2||d2<=b) (to ensure disjointness) *)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) =
     let gen_disj tlst =
-      let gen_disj_f eh et e1 e2=
-        (mkOr (BForm (((mkGte eh e2 no_pos),None),None)) (BForm (((mkGte e1 et no_pos),None),None)) None no_pos)
+      let gen_disj_f basenew eh et base e1 e2=
+        (mkOr
+           (mkNot (mkEqVar basenew base no_pos) None no_pos)
+           (mkOr (BForm (((mkGte eh e2 no_pos),None),None)) (BForm (((mkGte e1 et no_pos),None),None)) None no_pos)
+           None
+           no_pos)
       in
-      let rec helper ((e1,e2) as e) lst =
+      let rec helper ((base,(e1,e2)) as e) lst =
         match lst with
         | [] -> []
-        | (eh,et)::rest ->
-           (gen_disj_f e1 e2 eh et)::(helper e rest)
+        | (basenew,(eh,et))::rest ->
+           (gen_disj_f base e1 e2 basenew eh et)::(helper e rest)
       in
       let rec merge_and_list lst =
         match lst with
@@ -6039,9 +6043,9 @@ struct
     in
     let () = y_tinfo_pp "inside get_pure (SV_INTV)" in
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
-    let lst_intv = List.fold_left (fun acc (_,s) -> match s with
+    let lst_intv = List.fold_left (fun acc (base,s) -> match s with
         | None -> acc
-        | Some(b,d) -> (b,d)::acc) [] lst in
+        | Some(b,d) -> (base,(b,d))::acc) [] lst in
     let add_intv_formula f lst = List.fold_left (fun acc (b,d) ->
         let f1 = mk_exp_leq d 0 in
         let f2 = mk_exp_neq_null b  in
@@ -6051,11 +6055,12 @@ struct
     let lst = List.filter (fun (_,p) -> p==None) lst in
     let lst = List.map fst lst in
     if enum_flag then baga_enum lst
-    else let f = baga_conv ~neq_flag:neq_flag lst in
-         (match gen_disj lst_intv with
-          | None -> add_intv_formula f lst_intv
-          | Some disj_f ->
-             mkAnd (add_intv_formula f lst_intv) disj_f no_pos)
+    else
+      let f = baga_conv ~neq_flag:neq_flag lst in
+      (match gen_disj lst_intv with
+       | None -> add_intv_formula f (List.map snd lst_intv)
+       | Some disj_f ->
+          mkAnd (add_intv_formula f (List.map snd lst_intv)) disj_f no_pos)
                    
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in

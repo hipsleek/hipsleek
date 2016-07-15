@@ -98,20 +98,30 @@ let h_2_mem_obj_intv = object (self)
       self # logging ((add_str "add_pure" !CP.print_formula) p); 
       let () = state <- CP.mkAnd state p no_pos in
       ()
-    method get_id v e1 e2 = 
+    method get_id v e1 e2 f= 
       self # logging "get_id";
-      let eq_v = try
-          fst(List.find (fun (_,(eh,et)) ->
-                  let rhs = (CP.mkNot_s (CP.mkOr (BForm (((CP.mkGte eh e2 no_pos),None),None)) (BForm (((CP.mkGte e1 et no_pos),None),None)) None no_pos)) in
-                  let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
-                  let () = self # logging ((add_str "rhs" !CP.print_formula) rhs) in
-                  let () = y_tinfo_hp (add_str "get_id: lhs " !CP.print_formula) state in
-                  let () = y_tinfo_hp (add_str "get_id: rhs " !CP.print_formula) rhs in
-                  !CP.tp_imply state rhs
-                ) store_list)
+      let eq_v =
+        try
+          let (_,_,given_name)=
+            (List.find (fun (base,(eh,et),_) ->
+                 let base_rhs = BForm ((CP.mkEq_b (Var (v,no_pos)) (Var (base,no_pos)) no_pos),None) in
+                 let () = y_tinfo_hp (add_str "get_id: f " !CP.print_formula) f in
+                 let () = y_tinfo_hp (add_str "get_id: base_rhs " !CP.print_formula) base_rhs in  
+                 if (!CP.tp_imply f base_rhs)
+                 then
+                   let rhs = (CP.mkNot_s (CP.mkOr (BForm (((CP.mkGte eh e2 no_pos),None),None)) (BForm (((CP.mkGte e1 et no_pos),None),None)) None no_pos)) in                    
+                   let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
+                   let () = self # logging ((add_str "rhs" !CP.print_formula) rhs) in
+                   let () = y_tinfo_hp (add_str "get_id: lhs " !CP.print_formula) state in
+                   let () = y_tinfo_hp (add_str "get_id: rhs " !CP.print_formula) rhs in
+                   !CP.tp_imply f rhs
+                 else
+                   false) store_list)
+          in
+          given_name
         with _ ->  
           let x = CP.fresh_spec_var v in
-          let () = store_list <- (x,(e1,e2))::store_list in
+          let () = store_list <- (v,(e1,e2),x)::store_list in
           x
       in eq_v
     (* method string_of = *)
@@ -669,7 +679,8 @@ module EPURE =
     let baga_enum baga : formula =
       (* Elt.get_pure ~enum_flag:true baga *)
       (* Why enum_flag is true? *)
-      if !Globals.use_baga then Elt.get_pure baga
+      if !Globals.use_baga
+      then Elt.get_pure baga
       else Elt.get_pure ~enum_flag:true baga
       (* let baga = Elt.conv_var baga in *)
       (* match baga with *)
@@ -741,7 +752,7 @@ module EPURE =
 
     let conv_intv_disj (efpd1:epure_disj)  =
       let proc (baga,f) =
-        let () = h_2_mem_obj_intv # add_pure f in
+        (* let () = h_2_mem_obj_intv # add_pure f in *)
         let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
         let lst2 = List.map (fun e -> 
             let v =  Elt.get_interval e in
@@ -753,7 +764,7 @@ module EPURE =
             let rhs = Cpure.mk_exp_geq d 1 in
             !Cpure.tp_imply f rhs) lst2 in
         let lst2 = List.concat (List.map (fun (id,(eh,et)) -> 
-            let nid = h_2_mem_obj_intv # get_id id eh et in
+            let nid = h_2_mem_obj_intv # get_id id eh et f in
             Elt.from_var [nid]) lst2) in
         (lst1@lst2,f)
       in
