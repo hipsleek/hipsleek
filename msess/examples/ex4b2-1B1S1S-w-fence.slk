@@ -1,0 +1,16 @@
+/*
+ c::Chan(!msg=0) & x=1 & L=(msg=0)|- c::Chan(!msg.L;P)*L & x=msg.
+----------------------------------------------------------------------------------
+ c::Chan(!msg=1;;!Addr;;?Date;p) & x=1 & L1=(msg=1) & P1=p |- (msg=1) & x=msg.
+
+c::Chan(!msg=1;;!Addr;;?Date;p) & x=1 & L1=(msg=1) & P1=p |- L1 & x=msg.
+
+c::Chan(!msg=1;;!Addr;;?Date;p) & x=1 & L1=(msg=1) & P1=p |- c::Chan(!msg.L1;P1)*L1 & x=msg.
+
+
+----------------------------------------------------------------------------------
+*/
+
+c::Chan(!msg=1;;!Addr;;?Date;P or !msg=0;P) & x=1 |- c::Chan(!L;P)*L.
+
+

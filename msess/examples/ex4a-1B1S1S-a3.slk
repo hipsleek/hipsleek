@@ -1,0 +1,12 @@
+pred_prim P{- %P}<>.
+
+checkentail x::P{- a=1}<> * x::P{- a=2}<> * y::P{- a=1}<> |- x::P{- a=1}<> .
+print residue.
+
+
+checkentail x::P{- a=1}<> * x::P{- a=2}<> |- true.
+print residue.
+
+checkentail x::P{- a=1}<> * x::P{- a=2}<> * y::P{- a=1}<> |- x::P{- a=1}<> * y::P{- a=1}<> .
+print residue.
+

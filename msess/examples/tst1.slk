@@ -1,0 +1,31 @@
+data node {int info; node next;}.
+
+checkentail x=1 |- x=msg & msg=1.
+expect Fail.
+
+
+checkentail x=1 |- msg=1 & x=msg.
+expect Fail.
+
+checkentail x=1 |- exists msg: (msg=1 & x=msg).
+print residue.
+expect Valid.
+
+checkentail x=1 |- exists msg: (msg=0 & x=msg).
+print residue.
+expect Fail.
+
+/*
+c::Chan(!msg=1;;!Addr;;?Date;P or !msg=0;P) & x=1 |- c::Chan(!msg.L;P)*L & x=msg.
+
+c::Chan(!msg=null;;!Addr;;?Date;P or !msg::node<_,_>;P) * x::node<_,_> |- c::Chan(!msg.L;P)*L & x=msg.
+c::Chan(!msg=null;;!Addr;;?Date;P) * x::node<_,_> & L=(msg=null) |- c::Chan(!msg.L;P)*L & x=msg.
+
+*/
+
+checkentail x::node<_,_> |- exists msg: (msg=null & x=msg).
+expect Fail.
+
+checkentail x::node<_,_> |- (exists msg: msg::node<_,_> & x=msg).
+print residue.
+expect Valid.

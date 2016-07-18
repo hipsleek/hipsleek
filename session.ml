@@ -628,6 +628,11 @@ module Projection_base_formula =
         | _ -> failwith (x_loc ^ ": Not a valid transmission type.") in
       mk_base (transmission, channel, pos) f
 
+    let trans_h_formula_to_session_base h_formula =
+      let pr1 = !Msg.print_h_formula in
+      let pr2 = string_of_session_base in
+      Debug.no_1 "trans_h_formula_to_session_base" pr1 pr2 trans_h_formula_to_session_base h_formula
+
   end;;
 
 module TPProjection_base_formula =
@@ -964,25 +969,29 @@ module Make_Session (Base: Session_base) = struct
   (* Strip the STAR with original formula and
    * strip Sess{}, if it exists. *)
   let get_original_h_formula h_formula =
-      (* Extract h_formula from STAR with original formula.
-       * If the original formula was empty, the star node
-       * was not created and the session formula is preserved
-       * as it was.
-       * Otherwise, split STAR node and get second branch.*)
-      let h_formula = if (Base.is_star_node h_formula)
-                      then
-                        let star_formulae = Base.get_star_formulae h_formula in
-                        List.nth star_formulae 1
-                      else
-                        h_formula in
-      (* Extract h_formula from Sess node. *)
-      let h_formula = if (Base.is_sess_node h_formula)
-                      then
-                        let (ptr, name, args, params, pos) = Base.get_node h_formula in
-                        Base.get_h_formula_from_ho_param_formula (List.nth args 0)
-                      else
-                        h_formula in
-      h_formula
+    (* Extract h_formula from STAR with original formula.
+     * If the original formula was empty, the star node
+     * was not created and the session formula is preserved
+     * as it was.
+     * Otherwise, split STAR node and get second branch.*)
+    let h_formula = if (Base.is_star_node h_formula)
+      then
+        let star_formulae = Base.get_star_formulae h_formula in
+        List.nth star_formulae 1
+      else
+        h_formula in
+    (* Extract h_formula from Sess node. *)
+    let h_formula = if (Base.is_sess_node h_formula)
+      then
+        let (ptr, name, args, params, pos) = Base.get_node h_formula in
+        Base.get_h_formula_from_ho_param_formula (List.nth args 0)
+      else
+        h_formula in
+    h_formula
+
+  let get_original_h_formula h_formula =
+    let pr = !Base.print_h_formula in
+    Debug.no_1 "get_original_h_formula" pr pr  get_original_h_formula h_formula
 
   let trans_formula_to_session formula =
     if (Base.is_base_formula formula)

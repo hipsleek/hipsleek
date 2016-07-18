@@ -1,0 +1,44 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+
+
+//1
+checkentail c::Chan{@S !1}<> & x=1 |- c::Chan{@S !%L}<>.
+print residue.
+expect Valid.
+/**
+ <1>emp&x=1&{FLOW,(20,21)=__norm#E}[]
+ ho_vars: [L --> emp&msg=1&{FLOW,(1,26)=__flow#E}[]]
+[[ SEARCH ==>  Match(c,c)]]
+*/
+
+
+//2
+checkentail c::Chan{@S a!1;;a?0}<> & x=1 |- c::Chan{@S a!%L;;%P}<>.
+print residue.
+expect Valid.
+/**
+ <1>emp&x=1&{FLOW,(20,21)=__norm#E}[]
+ ho_vars: [L --> emp&msg=1&{FLOW,(1,26)=__flow#E}[];
+ 
+           P --> self::Seq{ . chan::R{ + emp&msg=0&{FLOW,(1,26)=__flow#E}[]}<>@M&
+{FLOW,(1,26)=__flow#E}[], . emp&{FLOW,(1,26)=__flow#E}[]}<>@M&
+           {FLOW,(1,26)=__flow#E}[]]
+[[ SEARCH ==>  Match(c,c)]]
+*/
+
+//3
+checkentail c::Chan{@S !1;;?0}<> & x=1 |- c::Chan{@S !%L;;?0;;%P}<>.
+print residue.
+expect Valid.
+
+/**
+ <1>emp&x=1&{FLOW,(20,21)=__norm#E}[]
+ ho_vars: [L --> emp&msg=1&{FLOW,(1,26)=__flow#E}[];
+ P --> emp&
+           {FLOW,(1,26)=__flow#E}[]]
+[[ SEARCH ==>  Match(c,c)]]
+*/
+
+

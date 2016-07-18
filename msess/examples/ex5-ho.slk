@@ -53,3 +53,13 @@ expect Valid.
 checkentail %P * y::node<_,_> |- x::node<_,_>  * y::node<_,_>.
 print residue.
 expect Valid.
+
+//10
+checkentail x::Sess{@S a?msg::node<a,_>&a=1;;a!2}<> |- x::Sess{@S a?%L;;%V}<>.
+print residue.
+expect Valid.
+
+//11
+checkentail x::Sess{@S a?msg::node<a,_>&a=1;;a?1}<> |- x::Sess{@S a?msg::node<a,_>&a=1;;%V}<>.
+print residue.
+expect Valid.
