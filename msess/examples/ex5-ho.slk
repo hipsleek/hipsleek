@@ -27,7 +27,7 @@ print residue.
 expect Valid.
 
 //6
-checkentail x::Sess{@S a?msg::node<_,_>&true;;a?0}<> |- x::Sess{@S a?%L;;a?0}<>.
+checkentail x::Sess{@S ?msg::node<_,_>;;?msg=0}<> |- x::Sess{@S ?%L;;?0}<>.
 print residue.
 expect Valid.
 /*
