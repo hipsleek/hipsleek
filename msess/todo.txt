@@ -163,6 +163,8 @@ formula.
 =============================================
 =============================================
 
+Solved: split into session type and node type
+
 Should predicate nodes have Projection/Protocol
 types in h_formula_heap_session_kind? Right now
 it's None, which is not consistent with the

@@ -117,6 +117,7 @@ module type Message_type = sig
   val get_h_formula: formula -> h_formula
   val get_h_formula_from_ho_param_formula: ho_param_formula -> h_formula
   val get_formula_from_ho_param_formula: ho_param_formula -> formula
+  val is_sess_node: h_formula -> bool
   val is_seq_node: h_formula -> bool
   val is_or_node: h_formula -> bool
   val is_star_node: h_formula -> bool
@@ -284,6 +285,8 @@ module IForm = struct
 
   let get_formula_from_ho_param_formula rflow_formula =
     rflow_formula.F.rflow_base
+
+  let is_sess_node h_formula = failwith x_tbi
 
   let is_seq_node h_formula =
     match h_formula with
@@ -482,6 +485,12 @@ module CForm = struct
                             let ls = List.map (fun x -> get_param_id x) ls in
                             (id, ls)
       | _ -> failwith (x_loc ^ ": CF.HVar expected.")
+
+  let is_sess_node h_formula =
+    let nk = get_node_kind h_formula in
+    match nk with
+      | Session -> true
+      | _ -> false
 
   let is_seq_node h_formula =
     let nk = get_node_kind h_formula in
@@ -952,10 +961,8 @@ module Make_Session (Base: Session_base) = struct
     let pr2 = string_of_session in
     Debug.no_1 "trans_h_formula_to_session" pr1 pr2 trans_h_formula_to_session h_formula
 
-  (* Session will look like Sess{...}. *)
   (* Strip the STAR with original formula and
-   * strip Sess{} *)
-
+   * strip Sess{}, if it exists. *)
   let get_original_h_formula h_formula =
       (* Extract h_formula from STAR with original formula.
        * If the original formula was empty, the star node
@@ -969,8 +976,12 @@ module Make_Session (Base: Session_base) = struct
                       else
                         h_formula in
       (* Extract h_formula from Sess node. *)
-      let (ptr, name, args, params, pos) = Base.get_node h_formula in
-      let h_formula = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
+      let h_formula = if (Base.is_sess_node h_formula)
+                      then
+                        let (ptr, name, args, params, pos) = Base.get_node h_formula in
+                        Base.get_h_formula_from_ho_param_formula (List.nth args 0)
+                      else
+                        h_formula in
       h_formula
 
   let trans_formula_to_session formula =
