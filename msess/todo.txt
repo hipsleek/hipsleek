@@ -224,7 +224,7 @@ quite rigorous.
 =============================================
 =============================================
 
-Status: solved
+Status: Solved
 
 Make fields in node_session_info mandatory, not optional.
 
@@ -251,6 +251,8 @@ We support it although it's not clear why it's so.
 
 =============================================
 =============================================
+
+Status: Solved
 
 Change IFs into match clauses in trans_h_formula_to_session
 
