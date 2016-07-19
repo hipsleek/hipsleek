@@ -1438,11 +1438,11 @@ let rec pr_h_formula h =
                h_formula_view_pos = pos} as vn) ->
     let perm_str = string_of_cperm perm in
     let is_projection = let fct info = let sk = info.session_kind in
-                          (match sk with
+                                       (match sk with
                            | Some Projection -> true
-                           | Some TPProjection -> true
-                           | _ -> false) in
-      Gen.map_opt_def false fct si in
+                                         | Some TPProjection -> true
+                                         | _ -> false) in
+                        Gen.map_opt_def false fct si in
     if (is_projection && !Globals.print_compact_projection_formula)
     then
       begin
