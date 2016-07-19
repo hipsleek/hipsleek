@@ -224,7 +224,30 @@ quite rigorous.
 =============================================
 =============================================
 
+Status: solved
+
 Make fields in node_session_info mandatory, not optional.
+
+=============================================
+=============================================
+
+To investigate: why iformulas are embedded in EX.
+
+Use --pip.
+
+pred_sess_proj ll12<n> == (c!self = null & n = 0) or (d?self = null).
+
+becomes
+
+(EX  . (self::Sess{. (EX  . (self::SOr{. (EX  . (c::S{- (EX  . (emp)*([] & (self = null) & (n = 0))( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))
+or(EX  . (d::R{+ (EX  . (emp)*([] & self = null)( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))
+
+=============================================
+=============================================
+
+Change IFs into match clauses in trans_h_formula_to_session
+
+Use get_node_kind.
 
 =============================================
 =============================================
