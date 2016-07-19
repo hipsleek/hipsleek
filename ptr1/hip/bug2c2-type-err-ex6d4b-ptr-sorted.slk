@@ -1,0 +1,64 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0
+    & BasePtr(self)
+  .
+
+
+checkentail 
+ j=m & j>=0 
+   |- //[base2] 
+     base2::arr_seg<j,m> 
+   .
+expect Valid.
+print residue.
+
+/*
+# bug2c2.slk 
+
+# elim_exists can be improved by pushing into inner sub-expression.
+
+(====)
+elim_exists_pure_formula@2@1
+elim_exists_pure_formula inp1 : exists(j_61:exists(m_62:BasePtr(base2) & 0<=j_61 & j_61=m_62))
+elim_exists_pure_formula@2 EXIT: exists(j_61:BasePtr(base2) & 0<=j_61)
+
+# Dropping relatio during elim_exists!
+
+elim_exists_pure_formula@11@10
+elim_exists_pure_formula inp1 : exists(j_61:exists(m_62:BasePtr(base2) & 0<=j_61 & j_61=m_62))
+elim_exists_pure_formula@11 EXIT: true
+
+
+
+checkentail 
+ j=m & j>=0 
+   |- //[base2] 
+     base2::arr_seg<j,m> 
+   .
+
+# BasePtr(base2) not being  instantiated..
+
+ <1>emp&0<=j & j=m&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  BaseCaseFold]]
+
+
+# Can is base-case fold not working with BasePtr(base2)?
+
+@4! **solver.ml#8919:rhs_p : BasePtr(base2) & 0<=j_61 & j_61=m_62
+@4! **solver.ml#8921:m_lhs: j=m & 0<=j
+@4! **solver.ml#8927:tmp3: j=m & 0<=j
+@4! **solver.ml#8954:exist_vars(b4):[j_61,m_62]
+@4! **solver.ml#8955:es_evars:[j_61,m_62]
+@4! **solver.ml#8956:es_ivars:[]
+@4! **solver.ml#8957:es_expl_vars:[]
+@4! **solver.ml#8958:es_impl_vars:[base2]
+
+
+
+
+*/

@@ -8,28 +8,42 @@ pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
     & BasePtr(self)
   .
 
+checkentail 
+ j=m & j>=0 & BasePtr(base2) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
+   |- base2::arr_seg<j,m> 
+         //a=base2+j1
+         //b=base2+j1
+.
+expect Valid.
+print residue.
+
+checkentail true |- (exists base2: BasePtr(base2)).
+expect Valid.
 
 
 checkentail 
- j=m & j>=0 & BasePtr(base) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
+ j=m & j>=0 //& BasePtr(base) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
+   |- [base2] base2::arr_seg<j,m> 
+         //a=base2+j1
+         //b=base2+j1
+   .
+expect Valid.
+print residue.
+
+
+checkentail 
+ j=m & j>=0 //& BasePtr(base) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
    |- base2::arr_seg<j,m> 
          //a=base2+j1
          //b=base2+j1
    .
+expect Valid.
 print residue.
 
 /*
 # bug2c.slk 
 
-# Can we instantiate base=base2 below?
-
- <1>emp&j1=m1 & 0<=j1 & j=m&{FLOW,(20,21)=__norm#E}[]
-[[ SEARCH ==>  COND ==>  BaseCaseFold]]
-
-
-# why cannot use BasePtr(self) proof?
-
-# why cannot use j1=j & m1=m?
+# Can is base-case fold not working with BasePtr(base2)?
 
 
 

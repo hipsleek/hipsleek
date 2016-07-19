@@ -5664,49 +5664,108 @@ and elim_exists (f0 : formula) : formula =
 
 (* eliminate exists with the help of v=exp *)
 and elim_exists_x (f0 : formula) : formula = 
-  let rec helper f0 =
+  let rec helper qvars f0 =
     match f0 with
-    | Exists (qvar, qf, lbl, pos) -> begin
-        match qf with
-        | Or (qf1, qf2, lbl2, qpos) ->
-          let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-          let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-          let eqf1 = helper new_qf1 in
-          let eqf2 = helper new_qf2 in
-          let res = mkOr eqf1 eqf2 lbl2 pos in
+    | Exists (qvar, qf, lbl, pos) -> helper (qvar::qvars) qf
+    | Or (qf1, qf2, lbl2, qpos) ->
+          (* let new_qf1 = mkExists [qvar] qf1 lbl qpos in *)
+          (* let new_qf2 = mkExists [qvar] qf2 lbl qpos in *)
+          let eqf1 = helper qvars qf1 in
+          let eqf2 = helper qvars qf2 in
+          let res = mkOr eqf1 eqf2 lbl2 qpos in
           res
-        | _ ->
-          let qf = helper qf in
-          let qvars0, bare_f = split_ex_quantifiers qf in
-          let qvars = qvar :: qvars0 in
+    | _ ->
+          (* let qf = helper qf in *)
+          (* let qvars0, bare_f = split_ex_quantifiers qf in *)
+          let qvars0 = qvars in
+          let pos=no_pos in
+          let bare_f = f0 in
+          (* let qvars = qvar :: qvars0 in *)
           let conjs = list_of_conjs bare_f in
           let no_qvars_list, with_qvars_list = List.partition
               (fun cj -> disjoint qvars (fv cj)) conjs in
           (* the part that does not contain the quantified var *)
           let no_qvars = conj_of_list no_qvars_list pos in
+          let () = y_tinfo_hp (add_str "elim_exists:no_qvars" !print_formula) no_qvars in
           (* now eliminate the quantified variables from the part that contains it *)
           let with_qvars = conj_of_list with_qvars_list pos in
+          let () = y_tinfo_hp (add_str "elim_exists:with_qvars" !print_formula) with_qvars in
           (* now eliminate the top existential variable. *)
-          let st, pp1 = get_subst_equation_formula with_qvars qvar false in
+          (* let qvar = List.hd qvars in *)
+          let rec eq_subs qvars f =
+            match qvars with
+              | [] -> [],f
+              | qv::qvars -> 
+                    let (st1,pp1) = eq_subs qvars f in
+                    let (st2,pp2) = get_subst_equation_formula pp1 qv false in
+                    (st1@st2,pp2)
+          in
+          let st,pp1 = eq_subs qvars with_qvars in
+          (* let st, pp1 = get_subst_equation_formula with_qvars qvar false in *)
           if not (Gen.is_empty st) then
             let new_qf = subst_term st pp1 in
             let new_qf = prune_perm_bounds new_qf in
-            let new_qf = mkExists qvars0 new_qf lbl pos in
-            let tmp3 = helper new_qf in
+            (* let new_qf = mkExists qvars0 new_qf no_lbl pos in *)
+            let tmp3 = helper qvars0 new_qf in
             let tmp4 = mkAnd no_qvars tmp3 pos in
             tmp4
           else (* if qvar is not equated to any variables, try the next one *)
-            let tmp1 = qf (*helper qf*) in
-            let tmp2 = mkExists(*_with_simpl simpl*) [qvar] tmp1 lbl pos in
+            let tmp1 = f0 (*helper qf*) in
+            let tmp2 = mkExists(*_with_simpl simpl*) qvars tmp1 None (* lbl *) pos in
             tmp2
-      end
-    | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos 
-    | AndList b -> AndList (map_l_snd helper b)
-    | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos 
-    | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos 
-    | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos 
-    | BForm _ -> f0 in
-  helper f0
+      in
+    (* | And (f1, f2, pos) -> mkAnd ( helper qvars f1) ( helper qvars f2) pos  *)
+    (* | AndList b -> AndList (map_l_snd helper b) *)
+    (* | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos  *)
+    (* | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos  *)
+    (* | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos  *)
+    (* | BForm _ -> f0 in *)
+  helper [] f0
+  (* let rec helper f0 = *)
+  (*   match f0 with *)
+  (*   | Exists (qvar, qf, lbl, pos) -> begin *)
+  (*       match qf with *)
+  (*       | Or (qf1, qf2, lbl2, qpos) -> *)
+  (*         let new_qf1 = mkExists [qvar] qf1 lbl qpos in *)
+  (*         let new_qf2 = mkExists [qvar] qf2 lbl qpos in *)
+  (*         let eqf1 = helper new_qf1 in *)
+  (*         let eqf2 = helper new_qf2 in *)
+  (*         let res = mkOr eqf1 eqf2 lbl2 pos in *)
+  (*         res *)
+  (*       | _ -> *)
+  (*         let qf = helper qf in *)
+  (*         let qvars0, bare_f = split_ex_quantifiers qf in *)
+  (*         let qvars = qvar :: qvars0 in *)
+  (*         let conjs = list_of_conjs bare_f in *)
+  (*         let no_qvars_list, with_qvars_list = List.partition *)
+  (*             (fun cj -> disjoint qvars (fv cj)) conjs in *)
+  (*         (\* the part that does not contain the quantified var *\) *)
+  (*         let no_qvars = conj_of_list no_qvars_list pos in *)
+  (*         let () = y_tinfo_hp (add_str "elim_exists:no_qvars" !print_formula) no_qvars in *)
+  (*         (\* now eliminate the quantified variables from the part that contains it *\) *)
+  (*         let with_qvars = conj_of_list with_qvars_list pos in *)
+  (*         let () = y_tinfo_hp (add_str "elim_exists:with_qvars" !print_formula) with_qvars in *)
+  (*         (\* now eliminate the top existential variable. *\) *)
+  (*         let st, pp1 = get_subst_equation_formula with_qvars qvar false in *)
+  (*         if not (Gen.is_empty st) then *)
+  (*           let new_qf = subst_term st pp1 in *)
+  (*           let new_qf = prune_perm_bounds new_qf in *)
+  (*           let new_qf = mkExists qvars0 new_qf lbl pos in *)
+  (*           let tmp3 = helper new_qf in *)
+  (*           let tmp4 = mkAnd no_qvars tmp3 pos in *)
+  (*           tmp4 *)
+  (*         else (\* if qvar is not equated to any variables, try the next one *\) *)
+  (*           let tmp1 = qf (\*helper qf*\) in *)
+  (*           let tmp2 = mkExists(\*_with_simpl simpl*\) [qvar] tmp1 lbl pos in *)
+  (*           tmp2 *)
+  (*     end *)
+  (*   | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos  *)
+  (*   | AndList b -> AndList (map_l_snd helper b) *)
+  (*   | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos  *)
+  (*   | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos  *)
+  (*   | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos  *)
+  (*   | BForm _ -> f0 in *)
+  (* helper f0 *)
 
 let mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
   let r = elim_exists (mkExists vs f lbl pos) in
@@ -16226,7 +16285,7 @@ let pick_baseptr (pf : formula) (* : (spec_var * spec_var) list *) =
      | RelForm (sv,arg::_,_) -> 
            begin
              let flag = is_baseptr_var sv in
-             let () = y_binfo_hp (add_str "base_ptr" (pr_pair string_of_bool !print_sv)) (flag,sv) in
+             let () = y_tinfo_hp (add_str "base_ptr" (pr_pair string_of_bool !print_sv)) (flag,sv) in
              if is_baseptr_var sv then
                begin
                  match (get_exp_var arg) with
@@ -16303,10 +16362,10 @@ let inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst =
       mkAnd acc (mkEqVars v1 v2) no_pos
     ) lhs_w_rhs_inst lst_of_inst in 
   let pr_lst_pair = pr_list (pr_pair !print_sv !print_sv) in
-  (* let () =  y_binfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in *)
-  (* let () =  y_binfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in *)
-  let () =  y_binfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in
-  let () =  y_binfo_hp (add_str "lhs_w_rhs_inst2" !print_formula) lhs_w_rhs_inst2  in
+  (* let () =  y_tinfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in *)
+  (* let () =  y_tinfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in *)
+  let () =  y_tinfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in
+  let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst2" !print_formula) lhs_w_rhs_inst2  in
   lhs_w_rhs_inst2
 
 

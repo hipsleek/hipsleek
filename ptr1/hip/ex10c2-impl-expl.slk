@@ -1,0 +1,50 @@
+data cell {
+  int val;
+}.
+
+
+pred goo<i> == self=null & i>0
+  inv true
+.
+
+/*checkentail emp |- xx::goo<ii>.
+print residue.
+expect Valid.
+*/
+
+checkentail i=2 |- xx::goo<i>.
+print residue.
+expect Valid.
+
+/*
+# bug2c.slk 
+
+
+!!! **solver.ml#2701:process_fold_result: new_ctx after folding: xx
+  emp&i=2 & xx=null&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [i_28]
+ es_gen_impl_vars(E): []
+ es_rhs_eqset: [i_28:i]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  BaseCaseFold
+ es_unsat_flag: false
+!!! **solver.ml#2702:process_fold_result: vs2: i_28, xx
+!!! **solver.ml#2703:process_fold_result: to_ante:  xx=null
+!!! **solver.ml#2704:process_fold_result: to_conseq:  0<i_28 & xx=null
+!!! **solver.ml#2705:process_fold_result: new_conseq:
+
+# Can is base-case fold not working with BasePtr(base2)?
+
+@4! **solver.ml#8919:rhs_p : BasePtr(base2) & 0<=j_61 & j_61=m_62
+@4! **solver.ml#8921:m_lhs: j=m & 0<=j
+@4! **solver.ml#8927:tmp3: j=m & 0<=j
+@4! **solver.ml#8954:exist_vars(b4):[j_61,m_62]
+@4! **solver.ml#8955:es_evars:[j_61,m_62]
+@4! **solver.ml#8956:es_ivars:[]
+@4! **solver.ml#8957:es_expl_vars:[]
+@4! **solver.ml#8958:es_impl_vars:[base2]
+
+
+
+
+*/
