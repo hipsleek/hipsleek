@@ -231,6 +231,8 @@ Make fields in node_session_info mandatory, not optional.
 =============================================
 =============================================
 
+Status: Solved
+
 To investigate: why iformulas are embedded in EX.
 
 Use --pip.
@@ -241,6 +243,11 @@ becomes
 
 (EX  . (self::Sess{. (EX  . (self::SOr{. (EX  . (c::S{- (EX  . (emp)*([] & (self = null) & (n = 0))( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))
 or(EX  . (d::R{+ (EX  . (emp)*([] & self = null)( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))}<>@M[HeapNode1])*([] & true)( FLOW __flow))
+
+According to the comments in the code, it's a "magic trick":
+(*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
+
+We support it although it's not clear why it's so.
 
 =============================================
 =============================================
