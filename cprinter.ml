@@ -717,11 +717,11 @@ let pr_session_projection ?(lvl=(!glob_lvl)) vn =
   let def () = wrap_pr_1 lvl fmt_string "" in
   let fct info = let sk = info.session_kind in
     (match sk with
-     | Some Projection ->
+     | Projection ->
        let session = Session.CProjection.trans_h_formula_to_session (Session.CProjection.get_original_h_formula node) in
        let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CProjection.string_of_session session) in
        pr_sess
-     | Some TPProjection ->
+     | TPProjection ->
        let session = Session.CTPProjection.trans_h_formula_to_session (Session.CTPProjection.get_original_h_formula node) in
        let pr_sess () = wrap_pr_1 lvl fmt_string (Session.CTPProjection.string_of_session session) in
        pr_sess
@@ -1439,8 +1439,8 @@ let rec pr_h_formula h =
     let perm_str = string_of_cperm perm in
     let is_projection = let fct info = let sk = info.session_kind in
                                        (match sk with
-                           | Some Projection -> true
-                                         | Some TPProjection -> true
+                                         | Projection -> true
+                                         | TPProjection -> true
                                          | _ -> false) in
                         Gen.map_opt_def false fct si in
     if (is_projection && !Globals.print_compact_projection_formula)

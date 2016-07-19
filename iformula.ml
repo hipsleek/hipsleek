@@ -3290,6 +3290,6 @@ let set_session_kind_h_formula hform sk nk =
   let f_h h =
     match h with
     | HeapNode h -> Some (HeapNode {h with h_formula_heap_session_info =
-                                             Some (mk_node_session_info ~sk:sk ~nk:nk ()) })
+                                             Some (mk_node_session_info sk nk) })
     | _ -> Some h in
   transform_h_formula f_h hform

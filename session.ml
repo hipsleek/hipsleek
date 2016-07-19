@@ -223,7 +223,7 @@ module IForm = struct
     match hform with
       | F.HeapNode node -> let fct si = let nk = si.node_kind in
                                         (match nk with
-                                           | Some Sequence -> hform
+                                           | Sequence -> hform
                                            | _ -> mk_seq_wrapper_node hform pos sk) in
                            Gen.map_opt_def hform fct node.F.h_formula_heap_session_info
       | F.Star node -> mk_seq_wrapper_node hform pos sk
@@ -250,16 +250,14 @@ module IForm = struct
   and update_temp_heap_name hform =
     let helper hform =
       let f_h hform = match hform with
-        | F.HeapNode node -> 
+        | F.HeapNode node ->
            let orig_node = Some (F.HeapNode node) in
-                             let fct si = let nk = si.node_kind in
-                                          let fct nk = (match nk with
-                                                         | Sequence | SOr | Send | Receive | Transmission
-                                                         | Session | Channel -> Some (F.HeapNode {node with F.h_formula_heap_name =
-                                                                                                              get_prim_pred_id_by_kind nk})
-                                                         | Star | HVar | Predicate | Emp -> orig_node) in
-                                          Gen.map_opt_def orig_node fct nk in
-                             Gen.map_opt_def orig_node fct node.F.h_formula_heap_session_info
+                           let fct si = match si.node_kind with
+                                          | Sequence | SOr | Send | Receive | Transmission
+                                          | Session | Channel -> Some (F.HeapNode {node with F.h_formula_heap_name =
+                                                                                   get_prim_pred_id_by_kind si.node_kind})
+                                          | Star | HVar | Predicate | Emp -> orig_node in
+                           Gen.map_opt_def orig_node fct node.F.h_formula_heap_session_info
         | _ -> None in
       transform_h_formula f_h hform
     in
@@ -276,7 +274,8 @@ module IForm = struct
   let get_h_formula formula =
     match formula with
       | F.Base f -> f.F.formula_base_heap
-      | _ -> failwith (x_loc ^ ": Formula Base expected.")
+      | F.Exists f -> f.F.formula_exists_heap
+      | _ -> failwith (x_loc ^ ": Formula Base or Exists expected.")
 
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.F.rflow_base in
@@ -288,10 +287,7 @@ module IForm = struct
   let get_node_kind h_formula =
     match h_formula with
       | F.HeapNode node -> (match node.F.h_formula_heap_session_info with
-                             | Some si -> let nk = si.node_kind in
-                                            (match nk with
-                                              | Some k -> k
-                                              | None -> failwith (x_loc ^ ": Expected node kind."))
+                             | Some si -> si.node_kind
                              | None -> failwith (x_loc ^ ": Expected session information."))
       | F.Star node -> Star
       | F.HVar (sv, svl) -> HVar
@@ -308,7 +304,7 @@ module IForm = struct
     match h_formula with
       | F.HeapNode node -> let fct si = let nk = si.node_kind in
                                         (match nk with
-                                           | Some Sequence -> true
+                                           | Sequence -> true
                                            | _ -> false) in
                            Gen.map_opt_def false fct node.F.h_formula_heap_session_info
       | _ -> false
@@ -317,7 +313,7 @@ module IForm = struct
     match h_formula with
       | F.HeapNode node -> let fct si = let nk = si.node_kind in
                                         (match nk with
-                                           | Some SOr -> true
+                                           | SOr -> true
                                            | _ -> false) in
                            Gen.map_opt_def false fct node.F.h_formula_heap_session_info
       | _ -> false
@@ -399,7 +395,7 @@ module CForm = struct
     let h = CF.mkViewNode ptr name params pos in
     match h with
       | CF.ViewNode node -> CF.ViewNode {node with CF.h_formula_view_ho_arguments = ho;
-                                                   CF.h_formula_view_session_info = Some (mk_node_session_info ~sk:sk ~nk:nk ())}
+                                                   CF.h_formula_view_session_info = Some (mk_node_session_info sk nk)}
       | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let mk_formula_heap_only h pos =
@@ -482,10 +478,7 @@ module CForm = struct
   let get_node_kind h_formula =
     match h_formula with
       | CF.ViewNode node -> (match node.CF.h_formula_view_session_info with
-                               | Some si -> let nk = si.node_kind in
-                                             (match nk with
-                                               | Some k -> k
-                                               | None -> failwith (x_loc ^ ": Expected node kind."))
+                               | Some si -> si.node_kind
                                | None -> failwith (x_loc ^ ": Expected session information."))
       | CF.Star node -> Star
       | CF.HVar (sv, svl) -> HVar
@@ -512,7 +505,6 @@ module CForm = struct
   let get_h_formula formula =
     match formula with
       | CF.Base f -> f.CF.formula_base_heap
-      | CF.Or f -> failwith (x_loc ^ ": Or formula?!.")
       | _ -> failwith (x_loc ^ ": Formula Base expected.")
 
   let get_h_formula_from_ho_param_formula rflow_formula =
