@@ -2937,13 +2937,6 @@ and trans_views_x iprog ls_mut_rec_views ls_pr_view_typ =
       else cur_mutrec_views
     in
     let nview = x_add trans_view iprog mutrec_views transed_views typ_infos view in
-    let () = match nview.view_session_info with
-               | Some si -> (match (si.session_kind) with
-                              | Some Projection -> Session.CProjection.test_if_is nview.view_formula
-                              | Some TPProjection -> Session.CTPProjection.test_if_is nview.view_formula
-                              | Some Protocol -> ()
-                              | None -> ())
-               | None -> () in
     let transed_views1 = transed_views@[nview] in
     (* Loc: to compute invs for mut-rec views *)
     let transed_views2,mutrec_views = if mutrec_views!=[] &&
