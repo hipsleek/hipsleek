@@ -139,16 +139,10 @@ Projection only.
 =============================================
 =============================================
 
-Print compact form in view_decl for Protocol only.
-Also add a flag to disable/enable compact
-printing.
+Status: Solved
 
-=============================================
-=============================================
-
-Status: solved
-
-Print compact Projection in cprinter, for h_formula.
+Print compact Projection in cprinter/iprinter,
+for h_formula.
 Also add a flag to disable/enable compact
 printing. By default, compact.
 
@@ -221,6 +215,16 @@ Should we do something about this?
 =============================================
 =============================================
 
+sleekengine.ml:8833: let f = Session.IProjection.update_formula f
 
+Should check whether it's multi or two party session.
+It works because that method is the same anyway but it's not
+quite rigorous.
 
+=============================================
+=============================================
 
+Make fields in node_session_info mandatory, not optional.
+
+=============================================
+=============================================
