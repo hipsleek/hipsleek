@@ -474,6 +474,22 @@ let string_of_iperm perm =
   if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
 ;;
 
+let string_of_session_projection hn =
+  let node = F.HeapNode hn in
+  let def = "" in
+  let fct info = let sk = info.session_kind in
+                 (match sk with
+                   | Some Projection ->
+                       let session = Session.IProjection.trans_h_formula_to_session (Session.IProjection.get_original_h_formula node) in
+                       let s = Session.IProjection.string_of_session session in
+                       s
+                   | Some TPProjection ->
+                       let session = Session.ITPProjection.trans_h_formula_to_session (Session.ITPProjection.get_original_h_formula node) in
+                       let s = Session.ITPProjection.string_of_session session in
+                       s
+                   | _ -> def) in
+  Gen.map_opt_def def fct hn.F.h_formula_heap_session_info
+
 (* pretty printing for a heap formula *)
 let rec string_of_h_formula = function 
   | F.Star ({F.h_formula_star_h1 = f1;
@@ -533,17 +549,28 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_imm = imm;
                  F.h_formula_heap_imm_param = ann_param;
                  F.h_formula_heap_label = pi;
-                 F.h_formula_heap_pos = l}) ->
-    let perm_str = string_of_iperm perm in
-    let ho_str = "{" ^ (String.concat "," (List.map 
-                                             (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
-                                                        (string_of_formula ff.F.rflow_base)) ho_pl)) ^ "}" in
-    let deref_str = ref "" in
-    for i = 1 to deref do
-      deref_str := !deref_str ^ "^";
-    done;
-    ((string_of_id x) ^ "::" ^ id ^ ho_str^ !deref_str ^ perm_str 
-     ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
+                 F.h_formula_heap_session_info = si;
+                 F.h_formula_heap_pos = l} as hn) ->
+    let is_projection = let fct info = let sk = info.session_kind in
+                          (match sk with
+                            | Some Projection -> true
+                            | Some TPProjection -> true
+                            | _ -> false) in
+                        Gen.map_opt_def false fct si in
+    if (is_projection && !Globals.print_compact_projection_formula)
+    then
+      string_of_session_projection hn
+    else
+      let perm_str = string_of_iperm perm in
+      let ho_str = "{" ^ (String.concat "," (List.map 
+                                               (fun ff -> (string_of_ho_flow_kind ff.F.rflow_kind) ^ " " ^ 
+                                                          (string_of_formula ff.F.rflow_base)) ho_pl)) ^ "}" in
+      let deref_str = ref "" in
+      for i = 1 to deref do
+        deref_str := !deref_str ^ "^";
+      done;
+      ((string_of_id x) ^ "::" ^ id ^ ho_str^ !deref_str ^ perm_str 
+       ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
                   F.h_formula_heap2_deref = deref;

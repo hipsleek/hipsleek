@@ -91,7 +91,6 @@ module type Message_type = sig
 
   val is_emp : formula -> bool
   val is_hvar_node : h_formula -> bool
-  val is_node : h_formula -> bool
   val print  : (formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
   val mk_node: arg -> session_kind -> node_kind -> h_formula
@@ -286,7 +285,24 @@ module IForm = struct
   let get_formula_from_ho_param_formula rflow_formula =
     rflow_formula.F.rflow_base
 
-  let is_sess_node h_formula = failwith x_tbi
+  let get_node_kind h_formula =
+    match h_formula with
+      | F.HeapNode node -> (match node.F.h_formula_heap_session_info with
+                             | Some si -> let nk = si.node_kind in
+                                            (match nk with
+                                              | Some k -> k
+                                              | None -> failwith (x_loc ^ ": Expected node kind."))
+                             | None -> failwith (x_loc ^ ": Expected session information."))
+      | F.Star node -> Star
+      | F.HVar (sv, svl) -> HVar
+      | F.HEmp -> Emp
+      | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
+
+  let is_sess_node h_formula =
+    let nk = get_node_kind h_formula in
+    match nk with
+      | Session -> true
+      | _ -> false
 
   let is_seq_node h_formula =
     match h_formula with
@@ -311,29 +327,56 @@ module IForm = struct
       | F.Star node -> true
       | _ -> false
 
-  let is_empty_node h_formula = failwith x_tbi
+  let is_empty_node h_formula =
+    match h_formula with
+      | F.HEmp -> true
+      | _ -> false
 
-  let is_hvar_node h_formula = failwith x_tbi
+  let is_hvar_node h_formula =
+    match h_formula with
+      | F.HVar (id, ls) -> true
+      | _ -> false
 
-  let is_node h_formula = failwith x_tbi
+  let get_node h_formula =
+    match h_formula with
+      | F.HeapNode node -> (node.F.h_formula_heap_node,
+                            node.F.h_formula_heap_name,
+                            node.F.h_formula_heap_ho_arguments,
+                            node.F.h_formula_heap_arguments,
+                            node.F.h_formula_heap_pos)
+      | _ -> failwith (x_loc ^ ": F.HeapNode expected.")
 
-  let get_node h_formula = failwith x_tbi
+  let get_or_formulae formula =
+    match formula with
+      | F.Or f -> [f.F.formula_or_f1; f.F.formula_or_f2]
+      | _ -> failwith (x_loc ^ ": F.Or expected.")
 
-  let get_or_formulae formula = failwith x_tbi
+  let get_star_formulae h_formula =
+    match h_formula with
+      | F.Star hf -> [hf.F.h_formula_star_h1; hf.F.h_formula_star_h2]
+      | _ -> failwith (x_loc ^ ": F.Star expected.")
 
-  let get_star_formulae formula = failwith x_tbi
+  let get_star_pos h_formula =
+    match h_formula with
+      | F.Star hf -> hf.F.h_formula_star_pos
+      | _ -> failwith (x_loc ^ ": F.Star expected.")
 
-  let get_star_pos h_formula = failwith x_tbi
+  let get_param_id param =
+    match param with
+      | P.Var v -> fst (fst v)
+      | _ -> failwith (x_loc  ^ ": IPure.Var expected.")
 
-  let get_node_kind h_formula = failwith x_tbi
+  let get_node_id node = fst node
 
-  let get_param_id param = failwith x_tbi
+  let get_formula_from_struc_formula struc_formula =
+    match struc_formula with
+      | F.EBase base -> base.F.formula_struc_base
+      | _ -> failwith (x_loc ^ ": F.EBase expected.")
 
-  let get_node_id node = failwith x_tbi
-
-  let get_formula_from_struc_formula struc_formula = failwith x_tbi
-
-  let get_hvar node = failwith x_tbi
+  let get_hvar node =
+    match node with
+      | F.HVar (id, ls) -> (id, ls)
+      | _ -> failwith (x_loc ^ ": F.HVar expected.")
 
 end;;
 
@@ -517,11 +560,6 @@ module CForm = struct
   let is_hvar_node h_formula =
     match h_formula with
       | CF.HVar (id, ls) -> true
-      | _ -> false
-
-  let is_node h_formula =
-    match h_formula with
-      | CF.ViewNode node -> true
       | _ -> false
 
 end;;
