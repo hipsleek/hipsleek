@@ -272,3 +272,21 @@ Add test cases for two party projection.
 
 =============================================
 =============================================
+
+Status: Solved
+
+Normalization: embed every node in a Seq node
+
+We embed every node into a Seq node. This makes it easy
+to deal with OR nodes, because for each OR branch we append the tail,
+which is going to be the content of the Seq node.
+The second element of the new Seq will be empty.
+
+a::R{...}
+ |
+ |
+ V
+self::Seq{a::R{...}, emp}
+
+=============================================
+=============================================
