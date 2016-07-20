@@ -1957,7 +1957,7 @@ my $dis = '--dis-inv-baga';
         ["lemmas/lseg_case.slk", " --elp --dis-lem-gen ", ([$lem,"Valid.Valid.Valid.Valid.Valid.Valid."]), ""],
         # 3rd one should fail as <-> must not existentially quantify LHS
         # but this contradicted with 2nd lemma
-        ["lemmas/ll.slk", " --elp ", ([$lem,"Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]), "Valid.Fail."],
+        ["lemmas/ll.slk", " --elp ", ([$lem,"Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]), "Valid.Valid.Fail."],
         ["lemmas/ll_tail.slk", " --elp ", ([$lem,"Valid.Valid"]), "Valid.Valid"],
         ["lemmas/nlseg3.slk", "", (), "Valid.Valid."],
         ["lemmas/nlseg4e.slk", " --elp ", ([$lem,"Valid.Valid"]), ""],
