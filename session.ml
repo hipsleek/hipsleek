@@ -560,7 +560,8 @@ module Projection_base_formula =
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.projection_base_formula_message]
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.projection_base_formula_message] in
       let params = [] in
-      Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos) base_type tkind
+      let node = Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos) base_type tkind in
+      Msg.mk_seq_wrapper node base.projection_base_formula_pos base_type
 
     let get_base_pos base = base.projection_base_formula_pos
 
@@ -621,7 +622,8 @@ module TPProjection_base_formula =
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.tpprojection_base_formula_message]
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.tpprojection_base_formula_message] in
       let params = [] in
-      Msg.mk_node (ptr, name, args, params, base.tpprojection_base_formula_pos) base_type tkind
+      let node = Msg.mk_node (ptr, name, args, params, base.tpprojection_base_formula_pos) base_type tkind in
+      Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type
 
     let get_base_pos base = base.tpprojection_base_formula_pos
 
@@ -796,7 +798,8 @@ module Make_Session (Base: Session_base) = struct
     let name = get_prim_pred_id sor_id in
     let args = [rflow_form] in
     let params = [] in
-    Base.mk_node (ptr, name, args, params, pos) Base.base_type SOr
+    let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type SOr in
+    Base.mk_seq_wrapper node pos Base.base_type
 
   and mk_predicate_node p =
     let ptr = Base.choose_ptr () in
@@ -805,12 +808,14 @@ module Make_Session (Base: Session_base) = struct
     let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
     let params = List.map (fun a -> Base.set_param a pos) params in
-    Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate
+    let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate in
+    Base.mk_seq_wrapper node pos Base.base_type
 
   and mk_hvar_node h =
     let id = h.session_hvar_id in
     let ls = h.session_hvar_list in
-    Base.mk_hvar id ls
+    let node = Base.mk_hvar id ls in
+    Base.mk_seq_wrapper node no_pos Base.base_type
 
   let trans_from_session s =
     let rec helper s = match s with
