@@ -10,14 +10,14 @@ expect Valid.
 
 //3
 checkentail x::Sess{@S aa!emp & 0<=msg;;aa?0;;bb!0}<>|- x::Sess{@S aa!0;;aa?emp & 0<=msg}<> .
-expect Valid.
+expect Fail.
 
 //4
 checkentail
  x::Sess{ self::Seq{ aa::S{ - emp&0<=msg}<>,
           self::Seq{ aa::R{ + emp&msg=0}<>, bb::S{ - emp&msg=0}<>}<>}<>}<>
 |- x::Sess{ self::Seq{ aa::S{ - emp&msg=0}<>, self::Seq{aa::R{ + emp&0<=msg}<>, emp}<>}<>}<>.
-expect Valid.
+expect Fail.
 
 //5
 checkentail bb::S{ - emp&msg=0}<> |- emp.
@@ -49,4 +49,4 @@ expect Valid.
 
 //12
 checkentail x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1);;aaa!0}<>|- x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
-expect Valid.
+expect Fail.

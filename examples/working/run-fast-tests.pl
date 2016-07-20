@@ -1844,7 +1844,7 @@ my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
                       ["session/ent-1.slk", "", (), "Valid.Valid.Fail."],
-                      ["session/ex4-1B1S1S-a1.slk", "", (), "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["session/ex4-1B1S1S-a1.slk", "", (), "Fail.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
                       ["session/ex4-1B1S1S.slk", "", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid."],
                       ["session/tst.slk", "", (), ""],
                       ["cll-d.slk", "", (), "Valid."],
