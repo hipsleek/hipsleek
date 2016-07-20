@@ -2508,7 +2508,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
               (* andreeac: should the impl_vars be excluded below? *)
               (* Adding root p if it is implicitly existential *)
               let root_impl = (CP.intersect_svl [p] estate.es_gen_impl_vars) in
-              let new_es_evars = if !Globals.adhoc_flag_3 then vs@root_impl else vs in
+              let new_es_evars = if !Globals.impl_root_flag then vs@root_impl else vs in
               (* changing root_implicit to root_explicit *)
               let new_es =
                 {estate with es_evars = (*estate.es_evars@impl_vars*)Gen.BList.remove_dups_eq (=) (new_es_evars @ estate.es_evars);} in
@@ -2629,11 +2629,11 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
   (* WN : adding implicit root to be instantiated during fold_result *)
   let root_impl = (CP.intersect_svl [p2] estate.es_gen_impl_vars) in
   let (estate,vs2) = if true (* !Globals.adhoc_flag_3 *) then ({estate with es_evars = estate.es_evars@root_impl} ,vs2@root_impl) else (estate,vs2) in
-  let () = y_binfo_hp (add_str "process_fold_result:vs2" !CP.print_svl) vs2 in
-  let () = y_binfo_hp (add_str "process_fold_result:ivars" !CP.print_svl) ivars in
-  let () = y_binfo_hp (add_str "process_fold_result:ivars_rel" !CP.print_svl) ivars_rel in
-  let () = y_binfo_hp (add_str "process_fold_result:p2" !CP.print_sv) p2 in
-  let () = y_binfo_hp (add_str "process_fold_result:fold_rs0" Cprinter.string_of_list_context) fold_rs0 in
+  let () = y_tinfo_hp (add_str "process_fold_result:vs2" !CP.print_svl) vs2 in
+  let () = y_tinfo_hp (add_str "process_fold_result:ivars" !CP.print_svl) ivars in
+  let () = y_tinfo_hp (add_str "process_fold_result:ivars_rel" !CP.print_svl) ivars_rel in
+  let () = y_tinfo_hp (add_str "process_fold_result:p2" !CP.print_sv) p2 in
+  let () = y_tinfo_hp (add_str "process_fold_result:fold_rs0" Cprinter.string_of_list_context) fold_rs0 in
   let pure2 = base2.formula_base_pure in
   let vp2 = base2.formula_base_vperm in
   let resth2 = base2.formula_base_heap in
@@ -2652,9 +2652,9 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
           let e_pure = MCP.fold_mem_lst (CP.mkTrue pos) true true fold_es.es_pure in
           let to_ante, to_conseq, new_evars = x_add split_universal e_pure fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
           let tmp_conseq = mkBase resth2 pure2 vp2 type2 flow2 a2 pos in
-          let () = Debug.binfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
+          let () = Debug.tinfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
           let new_conseq = normalize 6 tmp_conseq (formula_of_pure_N to_conseq pos) pos in
-          let () = x_binfo_hp (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos in
+          let () = x_tinfo_hp (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos in
           let new_ante = normalize 7 fold_es.es_formula (formula_of_pure_N to_ante pos) pos in
           let new_ante = filter_formula_memo new_ante false in
           let new_consumed = fold_es.es_heap in
@@ -2695,18 +2695,18 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
               es_term_err = fold_es.es_term_err;
               es_conc_err = fold_es.es_conc_err;
               (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
-          let () = y_binfo_hp (add_str "new_es" Cprinter.string_of_entail_state) new_es in
+          let () = y_tinfo_hp (add_str "new_es" Cprinter.string_of_entail_state) new_es in
           let new_ctx = (Ctx new_es) in
-          x_binfo_zp (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
-          x_binfo_zp (lazy ("process_fold_result: new_ctx after folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx))) pos;
-          x_binfo_zp (lazy ("process_fold_result: vs2: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vs2)))) pos;
-          x_binfo_zp (lazy ("process_fold_result: to_ante: "^ (Cprinter.string_of_pure_formula to_ante))) pos;
-          x_binfo_zp (lazy ("process_fold_result: to_conseq: "^ (Cprinter.string_of_pure_formula to_conseq))) pos;
-          x_binfo_zp (lazy ("process_fold_result: new_conseq:\n"^ (Cprinter.string_of_formula new_conseq))) pos;
+          x_tinfo_zp (lazy ("process_fold_result: old_ctx before folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context (Ctx fold_es)))) pos;
+          x_tinfo_zp (lazy ("process_fold_result: new_ctx after folding: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx))) pos;
+          x_tinfo_zp (lazy ("process_fold_result: vs2: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vs2)))) pos;
+          x_tinfo_zp (lazy ("process_fold_result: to_ante: "^ (Cprinter.string_of_pure_formula to_ante))) pos;
+          x_tinfo_zp (lazy ("process_fold_result: to_conseq: "^ (Cprinter.string_of_pure_formula to_conseq))) pos;
+          x_tinfo_zp (lazy ("process_fold_result: new_conseq:\n"^ (Cprinter.string_of_formula new_conseq))) pos;
           (* WN : we need to restore es_infer_vars here *)
           let new_ctx = Infer.restore_infer_vars_ctx ivars ivars_rel new_ctx in
           let rest_rs, prf = x_add heap_entail_one_context 1 prog is_folding new_ctx new_conseq None None None pos in
-          x_binfo_zp (lazy ("process_fold_result: context at end fold: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_list_context rest_rs))) pos;
+          x_tinfo_zp (lazy ("process_fold_result: context at end fold: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_list_context rest_rs))) pos;
           let r = add_to_aux_conseq rest_rs to_conseq pos in
           (r, prf) in
   let process_one (ss:CF.steps) fold_rs1 = 

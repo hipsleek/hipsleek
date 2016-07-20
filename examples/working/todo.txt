@@ -1,8 +1,8 @@
 Total number of errors: 6 in files:
-  infer/infer2.slk({E6#Fail},{E9#Fail}) 
-  infer/infer8.slk({E4#Fail},{E5#Fail}) 
-  infer/infer11.slk({E1#Fail}) 
-  lemmas/ll.slk({E2#Fail}) (FIXED)
+  infer/infer2.slk({E6#Fail},{E9#Fail}) (CHANGED)
+  infer/infer8.slk({E4#Fail},{E5#Fail}) (CHANGED)
+  infer/infer11.slk({E1#Fail}) added --dis-impl-root
+  lemmas/ll.slk({E2#Fail}) (CHANGED)
   lemmas/dseg-new.slk({L2#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
 !!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
 
