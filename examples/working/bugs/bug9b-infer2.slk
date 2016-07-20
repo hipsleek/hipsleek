@@ -1,0 +1,47 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+//(6)
+infer [n] n=0 & q!=null |- q::ll<n> .
+expect Fail.
+print residue.
+
+
+//(9)
+infer [n] n!=0 & q!=null|- q::ll<n> .
+expect Fail.
+print residue.
+/*
+// Fixed
+Inferred Heap:[]
+Inferred Pure:[ n=0]
+<1>false & false &
+*/
+
+infer [] n=0 & q!=null |- q::ll<n> .
+expect Fail.
+print residue.
+
+
+//(9)
+infer [] n!=0 & q!=null|- q::ll<n> .
+expect Fail.
+print residue.
+
+
+infer [n] n=0 & q!=null |- q=null .
+expect Valid.
+print residue.
+// contra and thus allowed n!=0 to be inferred
+
+infer [n] n=0 & q!=null |- q=null & n=0 or q!=null & n!=0.
+expect Valid.
+print residue.
+// contra only for a branch, do we allowed n!=0 to be inferred?
