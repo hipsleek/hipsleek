@@ -1355,7 +1355,8 @@ protocol_formula:
     ]
     |
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
-            Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [])
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
       | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in
@@ -1402,7 +1403,8 @@ projection_formula:
     ]
     |
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
-            Session.IProjection.SBase (Session.IProjection.mk_session_hvar id [])
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.IProjection.SBase (Session.IProjection.mk_session_hvar id [] loc)
       | peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in
@@ -1439,7 +1441,8 @@ tpprojection_formula:
     ]
     |
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
-            Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [])
+            let loc = (get_pos_camlp4 _loc 1) in
+            Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [] loc)
       | peek_tpprojection_send; `NOT; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in

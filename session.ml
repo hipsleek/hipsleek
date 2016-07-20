@@ -705,6 +705,7 @@ module Make_Session (Base: Session_base) = struct
   and session_hvar = {
     session_hvar_id: ident;
     session_hvar_list: ident list;
+    session_hvar_pos: loc;
   }
 
   let rec string_of_session s =
@@ -772,9 +773,10 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_pos = loc;
   }
 
-  and mk_session_hvar id ls = HVar {
+  and mk_session_hvar id ls loc = HVar {
     session_hvar_id = id;
     session_hvar_list = ls;
+    session_hvar_pos = loc;
   }
 
   let mk_seq_node h1 h2 pos  =
@@ -814,8 +816,9 @@ module Make_Session (Base: Session_base) = struct
   and mk_hvar_node h =
     let id = h.session_hvar_id in
     let ls = h.session_hvar_list in
+    let pos = h.session_hvar_pos in
     let node = Base.mk_hvar id ls in
-    Base.mk_seq_wrapper node no_pos Base.base_type
+    Base.mk_seq_wrapper node pos Base.base_type
 
   let trans_from_session s =
     let rec helper s = match s with
@@ -899,7 +902,7 @@ module Make_Session (Base: Session_base) = struct
             SBase (Base (Base.trans_h_formula_to_session_base h_formula))
         | HVar ->
             let (id, ls) = Base.get_hvar h_formula in
-            SBase (mk_session_hvar id ls)
+            SBase (mk_session_hvar id ls no_pos)
         | Predicate ->
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let params = List.map (fun a -> Base.get_param_id a) params in
