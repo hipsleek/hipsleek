@@ -44,7 +44,7 @@ int get_slen(string s)
   requires true
   ensures res = slen(s);
 
-strbuf string_append(strbuf cptr)
+str_nullt string_append(strbuf cptr)
   requires cptr::strbuf<hd,str,size> & (cptr=hd+slen(str)) & (cptr+1)<(hd+size) & nonzero(str)
   ensures //cptr::strbuf<hd,str2,size> & endzero(str2)
      cptr::str_nullt<hd,str2,size>

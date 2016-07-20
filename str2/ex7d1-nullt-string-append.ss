@@ -12,10 +12,6 @@ lemma self::str_nullt<hd,str,sz> & hd<=self2
   & (self2<=hd+slen(str)) & self2<hd+sz
   -> self2::str_nullt<hd,str,sz>.
 
-/* lemma self::str_nullt<hd,str,sz> -> self::strbuf<hd,str,sz>. */
-
-/* lemma self::strbuf<hd,str,sz> & endzero(str) <-> self::str_nullt<hd,str,sz>. */
-
 strbuf plus_plus(strbuf cptr)
   requires cptr::strbuf<hd,str,size>
              & hd<=cptr+1 & (cptr+1<=hd+slen(str)) & cptr+1<hd+size
@@ -36,6 +32,13 @@ void char_append(strbuf cptr, char c)
     c != '\x00' -> ensures cptr::strbuf<hd,str^c,size>;
   }
 
+void str_append(strbuf cptr, string s)
+  requires cptr::strbuf<hd,str,size> & (cptr = hd+slen(str)) & (cptr+slen(s)) < (hd+size) & nonzero(str)
+  case{
+    endzero(s) -> ensures cptr::str_nullt<hd,str^s,size>;
+    !(endzero(s)) -> ensures cptr::strbuf<hd,str^s,size>;
+  }
+
 char get_char(string s, int i)
   requires 0<= i < slen(s)
   ensures res = charAt(s,i);
@@ -44,30 +47,19 @@ int get_slen(string s)
   requires true
   ensures res = slen(s);
 
-strbuf string_append(strbuf cptr)
-  requires cptr::strbuf<hd,str,size> & (cptr=hd+slen(str)) & (cptr+1)<(hd+size) & nonzero(str)
-  ensures //cptr::strbuf<hd,str2,size> & endzero(str2)
-     cptr::str_nullt<hd,str2,size>
-;
+strbuf string_append(strbuf cptr, string s, int i)
+  requires cptr::strbuf<hd,str,size> & (cptr = hd+slen(str))
+         & (0<=i<slen(s)) & (cptr+slen(s)-i) < (hd+size) & endzero(s) & nonzero(str)
+  ensures res::str_nullt<hd,str2,size>;
 {
-  char_append(cptr,'\x00');
+  char c = get_char(s,i);
+  char_append(cptr,c);
   cptr = plus_plus(cptr);
-  return cptr;
+  if (c == '\x00'){
+    return cptr;
+  }
+  else{
+    i = i+1;
+    return string_append(cptr,s,i);
+  }
 }
-
-
-/* strbuf string_append(strbuf cptr, string s, int i) */
-/*   requires cptr::strbuf<hd,str,size> & (cptr = hd+slen(str)) */
-/*          & (0<=i<slen(s)) & (cptr+slen(s)-i+1) < (hd+size) & endzero(s) & nonzero(str) */
-/*   ensures cptr::strbuf<hd,str2,size>; */
-/* { */
-/*   if (i+1 >= get_slen(s)) */
-/*     return cptr; */
-/*   else{ */
-/*     char sc = get_char(s,i); */
-/*     char_append(cptr,sc); */
-/*     cptr = plus_plus(cptr); */
-/*     i = i+1; */
-/*     return string_append(cptr,s,i); */
-/*   } */
-/* } */
