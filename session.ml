@@ -983,3 +983,10 @@ let get_tpprojection session =
   match session with
   | TPProjectionSession s -> s
   | _ -> failwith "not a two-party projection formula"
+
+let is_projection si = let fct info = let sk = info.session_kind in
+                       (match sk with
+                         | Projection -> true
+                         | TPProjection -> true
+                         | _ -> false) in
+                       Gen.map_opt_def false fct si

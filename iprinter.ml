@@ -551,13 +551,7 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_label = pi;
                  F.h_formula_heap_session_info = si;
                  F.h_formula_heap_pos = l} as hn) ->
-    let is_projection = let fct info = let sk = info.session_kind in
-                          (match sk with
-                            | Projection -> true
-                            | TPProjection -> true
-                            | _ -> false) in
-                        Gen.map_opt_def false fct si in
-    if (is_projection && !Globals.print_compact_projection_formula)
+    if (Session.is_projection si && !Globals.print_compact_projection_formula)
     then
       string_of_session_projection hn
     else
