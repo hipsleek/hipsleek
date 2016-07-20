@@ -31,10 +31,12 @@ checkentail x::Sess{@S ?msg::node<_,_>;;?msg=0}<> |- x::Sess{@S ?%L;;?0}<>.
 print residue.
 expect Valid.
 /*
-ERROR: at ex5-ho.slk_30:48_30:49
-Message: UNIFICATION ERROR : at location {(Line:30,Col:48),(Line:30,Col:49)} types node and int are inconsistent
+Last Proving Location: ../../msess/notes/hodef.slk_8:10_8:31
 
-Entail 6: EXCast. Failure("UNIFICATION ERROR : at location {(Line:30,Col:48),(Line:30,Col:49)} types node and int are inconsistent")
+ERROR: at ex5-ho.slk_30:41_30:46
+Message: UNIFICATION ERROR : at location {(Line:30,Col:41),(Line:30,Col:46)} types node and int are inconsistent
+
+Entail 6: EXCast. Failure("UNIFICATION ERROR : at location {(Line:30,Col:41),(Line:30,Col:46)} types node and int are inconsistent")
 : no residue 
 Validate 6: Expecting1 ValidBUT got no residue
 */

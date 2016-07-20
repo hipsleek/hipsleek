@@ -1,5 +1,9 @@
-data node {int info; node next;}.
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
 
+pred_prim XX{%P}<>.
+
+/*
 checkentail x=1 |- x=msg & msg=1.
 expect Fail.
 
@@ -14,7 +18,7 @@ expect Valid.
 checkentail x=1 |- exists msg: (msg=0 & x=msg).
 print residue.
 expect Fail.
-
+*/
 /*
 c::Chan(!msg=1;;!Addr;;?Date;P or !msg=0;P) & x=1 |- c::Chan(!msg.L;P)*L & x=msg.
 
@@ -23,9 +27,17 @@ c::Chan(!msg=null;;!Addr;;?Date;P) * x::node<_,_> & L=(msg=null) |- c::Chan(!msg
 
 */
 
-checkentail x::node<_,_> |- exists msg: (msg=null & x=msg).
-expect Fail.
+expect Valid.
 
-checkentail x::node<_,_> |- (exists msg: msg::node<_,_> & x=msg).
+pred_prim Msg<a>.
+
+//6
+checkentail x::Sess{@S ?msg::Msg<y>  * y::node<_,_>;;?msg::Msg<z> & z=0}<> |-
+            x::Sess{@S ?msg::Msg<yy> * %L;;?msg::Msg<zz> & zz=0}<>.
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S ?msg::Msg<y>  & y=3;;?msg::Msg<z> & z=0}<> |-
+            x::Sess{@S ?msg::Msg<yy> & yy;;?msg::Msg<zz> & zz=0}<>.
 print residue.
 expect Valid.

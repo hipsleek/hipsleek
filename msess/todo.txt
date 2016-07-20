@@ -193,6 +193,21 @@ Message: UNIFICATION ERROR : at location {(Line:25,Col:48),(Line:25,Col:49)} typ
 
 Entail 6: EXCast. Failure("UNIFICATION ERROR : at location {(Line:25,Col:48),(Line:25,Col:49)} types node and int are inconsistent")
 
+#######
+SOLUTION:
+########
+to create a message container as below:
+pred_prim Msg<a>.
+
+The dedicated variable will then point to a
+Msg structure whose parameter supports any type.
+
+example (see also msess/examples/ex6a-Msg-AP.slk):
+x::Sess{@S ?y::node<_,_>;;?0}<>
+   |
+   V
+x::Sess{@S ?msg::Msg<y>  * y::node<_,_>;;?msg::Msg<z> & z=0}<>
+
 =============================================
 =============================================
 
@@ -287,6 +302,52 @@ a::R{...}
  |
  V
 self::Seq{a::R{...}, emp}
+
+=============================================
+=============================================
+./sleek msess/examples/ex6a-Msg-AP.slk --print-type -dre "match_one_ho"
+=============================================
+//3
+checkentail x::Sess{@S ?msg::Msg<y>  & y=3;;?msg::Msg<z> & z=0}<> |-
+            x::Sess{@S ?msg::Msg<yy> & yy;;?msg::Msg<zz> & zz=0}<>.
+expect Fail.
+
+/*
+Entail 3: Valid. 
+
+Validate 3: Expecting(3)Fail BUT got : Valid
+*/
+
+#######
+SOLUTION: LATE TYPE CHECK:
+########
+---------------
+to add a type check during match_one_ho...
+
+match_one_ho_arg@24@23@22
+match_one_ho_arg inp1 :(lhs: : + msg:Unknown::Msg<y:boolean>@M & y:boolean},
+                        rhs: : + msg:Unknown::Msg<yy:int>@M & yy:int=3)
+match_one_ho_arg@24 EXIT:(None,None,[])
+
+for y:t1 and yy:t2 to check if
+(i)  t1<:t2 (Typeinfer.sub_type) for Recv
+(ii) t2<:t1 (Typeinfer.sub_type) for Send
+
+=============================================
+=============================================
+
+
+=============================================
+=============================================
+
+
+=============================================
+=============================================
+
+
+=============================================
+=============================================
+
 
 =============================================
 =============================================
