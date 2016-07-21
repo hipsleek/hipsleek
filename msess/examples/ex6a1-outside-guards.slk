@@ -1,4 +1,4 @@
-pred_prim RR1<a>.
+pred_prim RR1<aaa>.
 
 checkentail x::RR1<xx> * y::RR1<yy> & xx=0 & yy |- true. 
 expect Valid.

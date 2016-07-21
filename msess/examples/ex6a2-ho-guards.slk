@@ -1,4 +1,4 @@
-pred_prim RR2{+ %P}<a>.
+pred_prim RR2{+ %P}<aaa>.
 
 
 checkentail x::RR2{+ xx=0}<xx> * y::RR2{+ yy}<yy>|- true. 
