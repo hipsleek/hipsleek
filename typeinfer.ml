@@ -1385,9 +1385,13 @@ and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
             "number of arguments for view " ^
             (c ^ " does not match");
         } in
+  let helper exps tvars =
+    let pr_2 = pr_pair string_of_typ pr_id in
+    Debug.no_2 "try_unify_helper" pr_none pr_none (pr_list pr_2) helper exps tvars in
   let tmp_r = helper ies vt in
   let (vt_u,tmp_r) = List.partition (fun (ty,_) -> ty==UNK) tmp_r in
-  if (Gen.is_empty vt_u)
+  (* WN : patch below will avoid avoid view parameters to type table *)
+  if (Gen.is_empty vt_u || true)
   then
     let n_tl = (List.fold_left (fun tl (t, n) -> fst(x_add gather_type_info_var n tl (t) pos)) n_tl tmp_r) in
     n_tl
@@ -1584,6 +1588,9 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         n_tl
       | (None)::t -> x_add gather_type_info_param_ann t tl
     ) in
+    let gather_type_info_param_ann lst tl = 
+      let pr = string_of_tlist in
+      Debug.no_2 "gather_type_info_param_ann" (pr_list pr_none) pr pr gather_type_info_param_ann lst tl in
     let gather_type_info_perm p tl = (
       match p with
       | None -> tl
