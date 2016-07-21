@@ -28,23 +28,30 @@ print residue.
 expect Fail.
 
 
-//1
-checkentail x::Sess{@S ?msg::node<z,_> & z=0;;?msg=0}<> |-
-            x::Sess{@S ?msg::node<_,_>;;?msg=0}<>.
+//5
+checkentail x::Sess{@S ?msg.msg::node<_,_> & z=0;;?msg=0}<> |-
+            x::Sess{@S ?v.v::node<_,_>;;?y.y=0}<>.
 print residue.
 expect Valid.
 
-1. freshid, renamed_formula = rename(freshid/msg, msg::node<_,_>)
-// freshid = fresh_any_name Globals.session_msg_id_aux 
-// renamed_formula = freshid::node<_,_>
-2. wrapped_formula = wrap(freshid, renamed_formula)
-// wrapped_formula: msg::Msg<freshid>  * renamed_formula
+pred_prim RR{+ %P}<a>.
+pred_prim RR2<a>.
 
-  |
-  V
 
-//1
-checkentail x::Sess{@S ?msg::Msg<y>  * y::node<_,_>;;?msg::Msg<z> & z=0}<> |-
-            x::Sess{@S ?msg::Msg<yy> * yy::node<_,_>;;?msg::Msg<zz> & zz=0}<>.
+//6
+checkentail x::RR{+ y=0}<y> |- x::RR{+ z=0}<z>.
 print residue.
 expect Valid.
+
+
+//7
+checkentail x::RR{+ y=0}<y> * yyy::RR{+ z=0 & yy}<yy>|- true. //x::RR{+ z}<z>.
+print residue.
+expect Valid.
+
+//8
+checkentail x::RR2<y> * yyy::RR2<yy> & y=0 & yy |- true. //x::RR{+ z}<z>.
+print residue.
+expect Valid.
+
+

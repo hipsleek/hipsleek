@@ -1,0 +1,7 @@
+pred_prim RR2{+ %P}<a>.
+
+
+checkentail x::RR2{+ xx=0}<xx> * y::RR2{+ yy}<yy>|- true. 
+expect Valid.
+
+

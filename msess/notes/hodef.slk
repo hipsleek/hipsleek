@@ -6,4 +6,4 @@ pred_prim S@send{-%P}<>.
 pred_prim R@receive{+%P}<>.
 pred_prim Seq@sequence{%P,%P}<>.
 pred_prim SOr@disjunction{%P}<>.
-pred_prim Msg@msg<a>.
+/* pred_prim Msg@msg<a>. */
