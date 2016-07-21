@@ -201,6 +201,8 @@ type node_kind =
   (* extra abstractions *)
   | Session
   | Channel
+  (* message container *)
+  | Msg
 
 type view_session_info =
   {
@@ -310,6 +312,7 @@ let string_of_node_kind nk = match nk with
   | Emp -> "Emp"
   | Session -> "Session"
   | Channel -> "Channel"
+  | Msg -> "Msg"
 
 let string_of_view_session_info (si:view_session_info) =
   let sk = match si.session_kind with
