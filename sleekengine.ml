@@ -1058,19 +1058,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
     (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
     let wf = x_add Astsimp.case_normalize_formula iprog h mf in
-    let n_tl_fnc tlist = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
-    let wrap_type_exc lst =
-      let exc, tlist = List.partition (fun (id,_) ->
-          Gen.BList.mem_eq (=) id dedicated_session_ids) lst in
-      (* (exc, tlist) *)
-      let n_tl = n_tl_fnc tlist in
-      exc@n_tl
-    in
-    let wrap_type_exc lst =
-      let pr = Typeinfer.string_of_tlist in
-      Debug.no_1 "wrap_type_exc" pr pr wrap_type_exc lst in
-    let n_tl = wrap_type_exc tlist in
-    (* let n_tl  = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in *)
+    let n_tl  = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
     let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
     (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
