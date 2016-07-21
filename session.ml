@@ -516,8 +516,6 @@ module Protocol_base_formula =
 
     let get_base_pos base = base.protocol_base_formula_pos
 
-    let is_session_base h_formula = failwith x_tbi
-
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
   end;;
@@ -564,12 +562,6 @@ module Projection_base_formula =
       Msg.mk_seq_wrapper node base.projection_base_formula_pos base_type
 
     let get_base_pos base = base.projection_base_formula_pos
-
-    let is_session_base h_formula =
-      match Msg.get_node_kind h_formula with
-        | Send -> true
-        | Receive -> true
-        | _ -> false
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
@@ -627,12 +619,6 @@ module TPProjection_base_formula =
 
     let get_base_pos base = base.tpprojection_base_formula_pos
 
-    let is_session_base h_formula =
-      match Msg.get_node_kind h_formula with
-        | Send -> true
-        | Receive -> true
-        | _ -> false
-
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
@@ -656,7 +642,6 @@ sig
   val mk_base : a -> t -> base
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
-  val is_session_base : h_formula -> bool
   val trans_h_formula_to_session_base : h_formula -> base
 end;;
 
