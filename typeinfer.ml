@@ -1387,7 +1387,8 @@ and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
         } in
   let tmp_r = helper ies vt in
   let (vt_u,tmp_r) = List.partition (fun (ty,_) -> ty==UNK) tmp_r in
-  if (Gen.is_empty vt_u)
+  (* WN : fixed poly type for view parameter *)
+  if (Gen.is_empty vt_u || true)
   then
     let n_tl = (List.fold_left (fun tl (t, n) -> fst(x_add gather_type_info_var n tl (t) pos)) n_tl tmp_r) in
     n_tl
