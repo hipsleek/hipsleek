@@ -1844,6 +1844,7 @@ my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
                       ["session/ent-1.slk", "", (), "Valid.Valid.Fail."],
+					  ["term.slk", "--efa-exc",(), "Valid.Fail.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["session/ex4-1B1S1S-a1.slk", "", (), "Fail.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
                       ["session/ex4-1B1S1S.slk", "", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Valid."],
                       ["session/tst.slk", "", (), ""],
@@ -1943,6 +1944,8 @@ my $dis = '--dis-inv-baga';
                       ["classic/classic2.slk", "", (), "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic4.slk", "", (), "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Fail."],
+                      ["ho_vars.slk", "",(), "Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["latch.slk", "",(), "Valid.Valid.Valid.Fail."],
                    ["inf-no-eps.slk","--dsd --en-inf --dis-eps",(),"Fail.Fail.Valid.Valid."],
               ["infinity.slk","--dsd --en-inf --dis-eps",(), "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
         ["inflem.slk", " --en-inf --elp --dis-eps --dis-inv-baga", ([$lem,"Valid."]), "Fail.Valid."],

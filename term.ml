@@ -340,7 +340,7 @@ let norm_term_measures_by_length src dst =
   else Some (src, Gen.BList.take sl dst)
 
 (* Termination: The boundedness checking for HIP has been done at precondition if term_bnd_pre_flag *)  
-let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) src_lv dst_lv t_ann_trans pos =
+let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
   let l_pos = post_pos # get in
   let l_pos = if l_pos == no_pos then pos else l_pos in (* Update pos for SLEEK output *)
@@ -438,6 +438,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
           else
             let bnd_formula_l = List.map (fun e -> mkPure (mkGte e (mkIConst 0 pos) pos)) m in
             let bnd_formula = join_conjunctions bnd_formula_l in
+            (* let () = y_binfo_hp (add_str "bnd_check" !CP.print_formula) in *)
             let estate, entail_bnd_res = 
               if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
                 (* let () = print_endline "COLLECT BND" in *)
@@ -452,7 +453,22 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
               let err_msg = string_of_term_res tr in
               let () = add_term_err_stk err_msg in
               let () = add_term_res_stk tr in
-              { estate with es_term_err = Some err_msg }
+              if is_en_error_exc estate then 
+                let conseq_f = formula_of_mix_formula rhs_p pos in
+                let f_kind = Failure_May err_msg in
+                let fctx = {
+                  fc_message = "Error in termination proving";
+                  fc_current_lhs = estate;
+                  fc_prior_steps = estate.es_prior_steps;
+                  fc_orig_conseq = struc_formula_of_formula conseq_f pos;
+                  fc_current_conseq = conseq_f;
+                  fc_failure_pts = []; } in
+                let f_exp = { fe_kind = f_kind; fe_name = ""; fe_locs = []; } in 
+                let f_type = Basic_Reason (fctx, f_exp, []) in
+                { estate with 
+                  es_formula = substitute_flow_into_f !Exc.GTable.mayerror_flow_int estate.es_formula;
+                  es_final_error = estate.es_final_error @ [(err_msg, f_type, f_kind)]; }
+              else { estate with es_term_err = Some err_msg }
             else
               let tr = (term_pos, None, Some orig_ante, Term_S Bounded_Measure) in
               let () = add_term_res_stk tr in
@@ -483,20 +499,38 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
           (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
           None, 
           Some rank_formula  
-      in 
-      let term_stack = match term_err_msg with
-        | None -> estate.es_var_stack
-        | Some msg -> msg::estate.es_var_stack
       in
-      let n_estate = { estate with
-                       es_var_measures = term_measures;
-                       es_var_stack = term_stack; 
-                       es_term_err = term_err_msg
-                     } in
+      let n_estate = 
+        let is_err, err_msg = match term_err_msg with Some msg -> true, msg | None -> false, "" in
+        if is_en_error_exc estate && is_err then 
+          let conseq_f = formula_of_mix_formula rhs_p pos in
+          let f_kind = Failure_May err_msg in
+          let fctx = {
+            fc_message = "Error in termination proving";
+            fc_current_lhs = estate;
+            fc_prior_steps = estate.es_prior_steps;
+            fc_orig_conseq = struc_formula_of_formula conseq_f pos;
+            fc_current_conseq = conseq_f;
+            fc_failure_pts = []; } in
+          let f_exp = { fe_kind = f_kind; fe_name = ""; fe_locs = []; } in 
+          let f_type = Basic_Reason (fctx, f_exp, []) in
+          { estate with 
+            es_formula = substitute_flow_into_f !Exc.GTable.mayerror_flow_int estate.es_formula;
+            es_final_error = estate.es_final_error @ [(err_msg, f_type, f_kind)]; }
+        else
+          let term_stack = match term_err_msg with
+            | None -> estate.es_var_stack
+            | Some msg -> msg::estate.es_var_stack
+          in
+          { estate with
+            es_var_measures = term_measures;
+            es_var_stack = term_stack; 
+            es_term_err = term_err_msg; }
+      in
       add_term_res_stk term_res;
       (n_estate, lhs_p, (* rhs_p, *) rank_formula)
 
-let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) src_lv dst_lv t_ann_trans pos =
+let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let pr = !MCP.print_mix_formula in
   let pr1 = !CP.print_formula in
   let pr2 = !print_entail_state in
@@ -511,7 +545,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) 
          (* (add_str "rhs" pr) *)
          (add_str "rank_fml" (pr_option pr1)) 
          (es, lhs, (* rhs, *) rank_fml))  
-    (fun _ _ _ _ -> check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *) src_lv dst_lv t_ann_trans pos) 
+    (fun _ _ _ _ -> check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
     estate lhs_p (* rhs_p *) src_lv dst_lv
 
 (* To handle LexVar formula *)
@@ -590,25 +624,48 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
       | (Term, Term)
       | (Fail TermErr_May, Term) ->
         (* Check wellfoundedness of the transition *)
-        check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 (* rhs_p *)
+        check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p
           src_lv dst_lv t_ann_trans_opt l_pos
       | (Term, _)
       | (Fail TermErr_May, _) -> 
         let term_res = (term_pos, t_ann_trans_opt, Some estate.es_formula,
                         TermErr (Invalid_Status_Trans t_ann_trans)) in
         add_term_res_stk term_res;
-        let term_measures = match t_ann_d with
+        let term_msg = string_of_term_res term_res in 
+        let term_measures, f_kind = match t_ann_d with
           | Loop _
-          | Fail TermErr_Must -> Some (Fail TermErr_Must, src_lv, src_il)
+          | Fail TermErr_Must -> 
+            Some (Fail TermErr_Must, src_lv, src_il), Failure_Must term_msg
           | MayLoop _
-          | Fail TermErr_May -> Some (Fail TermErr_May, src_lv, src_il)      
+          | Fail TermErr_May -> 
+            Some (Fail TermErr_May, src_lv, src_il), Failure_May term_msg
           | _ -> failwith "unexpected Term/TermU in check_term_rhs"
         in 
-        let n_estate = {estate with 
-                        es_var_measures = term_measures;
-                        es_var_stack = (string_of_term_res term_res)::estate.es_var_stack;
-                        es_term_err = Some (string_of_term_res term_res);
-                       } in
+        let n_estate = 
+          if is_en_error_exc estate then 
+            let conseq_f = formula_of_mix_formula rhs_p pos in
+            let fctx = {
+              fc_message = "Error in termination proving";
+              fc_current_lhs = estate;
+              fc_prior_steps = estate.es_prior_steps;
+              fc_orig_conseq = struc_formula_of_formula conseq_f pos;
+              fc_current_conseq = conseq_f;
+              fc_failure_pts = []; } in
+            let f_exp = { fe_kind = f_kind; fe_name = ""; fe_locs = []; } in 
+            let f_type = Basic_Reason (fctx, f_exp, []) in
+            { estate with 
+              es_formula =
+                (match f_kind with
+                | Failure_Must _ -> substitute_flow_into_f !Exc.GTable.error_flow_int estate.es_formula
+                | Failure_May _ -> substitute_flow_into_f !Exc.GTable.mayerror_flow_int estate.es_formula
+                | _ -> estate.es_formula);
+              es_final_error = estate.es_final_error @ [(term_msg, f_type, f_kind)]; }
+          else
+            { estate with 
+              es_var_measures = term_measures;
+              es_var_stack = term_msg::estate.es_var_stack;
+              es_term_err = Some term_msg; }
+        in
         (n_estate, lhs_p, (* rhs_p, *) None)
       | (Loop _, Loop _) ->
         let term_measures = Some (MayLoop None, [], []) in 
