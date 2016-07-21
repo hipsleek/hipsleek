@@ -960,6 +960,8 @@ let thrd_typ = Named "thrd"
 let session_msg_id = "msg"
 let session_msg = (session_msg_id, Unprimed)
 
+let session_msg_id_aux = "ms"
+
 let session_seq_id = "self"
 let session_seq = (session_seq_id, Unprimed)
 
