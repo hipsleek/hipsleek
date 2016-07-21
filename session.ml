@@ -30,6 +30,7 @@ let sess_id:  string option ref = ref None
 let send_id:  string option ref = ref None
 let recv_id:  string option ref = ref None
 let sor_id:   string option ref = ref None
+let msg_id:   string option ref = ref None
 
 let set_prim_pred_id kind id =
   match kind with
@@ -44,6 +45,7 @@ let set_prim_pred_id kind id =
     | Emp          -> ()
     | Session      -> sess_id := Some id
     | Channel      -> chan_id := Some id
+    | Msg          -> msg_id := Some id
 
 let get_prim_pred_id pred_ref =
   match !pred_ref with
@@ -64,6 +66,7 @@ let get_prim_pred_id_by_kind kind = match kind with
   | Emp          -> ""
   | Session      -> get_prim_pred_id sess_id
   | Channel      -> get_prim_pred_id chan_id
+  | Msg          -> get_prim_pred_id msg_id
 
 let get_session_kind_of_transmission t =
   match t with
@@ -248,8 +251,8 @@ module IForm = struct
            let orig_node = Some (F.HeapNode node) in
                            let fct si = match si.node_kind with
                                           | Sequence | SOr | Send | Receive | Transmission
-                                          | Session | Channel -> Some (F.HeapNode {node with F.h_formula_heap_name =
-                                                                                   get_prim_pred_id_by_kind si.node_kind})
+                                          | Session | Channel | Msg -> Some (F.HeapNode {node with F.h_formula_heap_name =
+                                                                                         get_prim_pred_id_by_kind si.node_kind})
                                           | Star | HVar | Predicate | Emp -> orig_node in
                            Gen.map_opt_def orig_node fct node.F.h_formula_heap_session_info
         | _ -> None in
@@ -898,7 +901,8 @@ module Make_Session (Base: Session_base) = struct
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let h = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
             helper h
-        | Channel -> failwith (x_loc ^ ": Unexpected node kind.") in
+        | Channel -> failwith (x_loc ^ ": Unexpected node kind.")
+        | Msg -> failwith (x_loc ^ ": Unexpected node kind.") in
     helper h_formula
 
   let trans_h_formula_to_session h_formula =
