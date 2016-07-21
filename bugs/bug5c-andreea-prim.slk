@@ -1,0 +1,15 @@
+pred_prim RR1<a>.
+
+checkentail x::RR1<xx> * y::RR1<yy> & xx=0 & yy |-
+true. 
+expect Valid.
+
+/*
+ view_prim RR1{}[]<a:Unknown>= 
+  view_domains: 
+   view_prim RR1<a:Unknown>= 
+    EBase 
+      (* lbl: *){1}->emp&{FLOW,(1,26)=__flow#E}[]
+  view vars: a:Unknown
+
+*/

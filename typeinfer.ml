@@ -1514,7 +1514,7 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
 
 and gather_type_info_heap prog (h0 : IF.h_formula) tlist =
   Debug.no_eff_2 "gather_type_info_heap" [false;true]
-    Iprinter.string_of_h_formula string_of_tlist (fun _ -> "()")
+    Iprinter.string_of_h_formula string_of_tlist string_of_tlist
     (fun _ _ -> gather_type_info_heap_x prog h0 tlist) h0 tlist
 
 and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
@@ -1537,13 +1537,14 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
   | IF.Phase { IF.h_formula_phase_rd = h1;
                IF.h_formula_phase_rw = h2;
                IF.h_formula_phase_pos = pos } ->
-    let n_tl = gather_type_info_heap_x prog h1 tlist in
-    let n_tl = gather_type_info_heap_x prog h2 n_tl in
+    let n_tl = x_add gather_type_info_heap prog h1 tlist in
+    let n_tl = x_add gather_type_info_heap prog h2 n_tl in
     n_tl
   | IF.HeapNode2 h2 ->
+    let () = y_binfo_hp (add_str "tlist(HeapNode2)" string_of_tlist) tlist in
     let h = node2_to_node 2 prog h2 in
     let fh = IF.HeapNode h in
-    let n_tl = gather_type_info_heap_x prog fh tlist in
+    let n_tl = gather_type_info_heap prog fh tlist in
     n_tl
   | IF.HeapNode { IF.h_formula_heap_node = (v, p); (* ident, primed *)
                   IF.h_formula_heap_arguments = ies; (* arguments *)
@@ -1554,20 +1555,27 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
                   IF.h_formula_heap_imm_param = ann_param;
                   IF.h_formula_heap_pos = pos } ->
-    x_tinfo_hp (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
-    x_tinfo_hp (add_str "ies" (pr_list Iprinter.string_of_formula_exp)) ies no_pos;
+    x_binfo_hp (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
+    x_binfo_hp (add_str "ies" (pr_list Iprinter.string_of_formula_exp)) ies no_pos;
+    let () = y_binfo_hp (add_str "tlist(HeapNode)" string_of_tlist) tlist in
     let ft = cperm_typ () in
     let gather_type_info_ho_args hoa tlist =
-      List.fold_left (fun tl a ->
-          x_add gather_type_info_formula prog a.IF.rflow_base tl false) tlist hoa
+      let () = y_binfo_hp (add_str "tlist(ho_args)" string_of_tlist) tlist in
+      let rs = List.fold_left (fun tl a ->
+          x_add gather_type_info_formula prog a.IF.rflow_base tl false) tlist hoa in
+      let () = y_binfo_hp (add_str "tlist(ho_args-end)" string_of_tlist) tlist in
+      rs
     in
-    let gather_type_info_ann c tlist = (
+    let gather_type_info_ann c tlist = 
+      (
+      let () = y_binfo_hp (add_str "tlist(info_anns)" string_of_tlist) tlist in
       match c with
       | IP.NoAnn -> tlist
       | IP.ConstAnn _ -> tlist
       | IP.PolyAnn ((i,_),_) -> (*ignore*)(let (n_tl,_) = (x_add gather_type_info_var i tlist AnnT pos ) in n_tl) (*remove ignore*)
     ) in
     let rec gather_type_info_param_ann lst tl = (
+      let () = y_binfo_hp (add_str "tlist(info_param_anns)" string_of_tlist) tl in
       match lst with
       | [] -> tl
       | (Some h)::t ->
@@ -1581,10 +1589,15 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | None -> tl
       | Some e -> let (n_tl,_) = x_add gather_type_info_exp prog e tl ft in n_tl
     ) in
+    let () = y_binfo_hp (add_str "tlist(0)" string_of_tlist) tlist in
     let n_tl = x_add gather_type_info_perm perm tlist in
+    let () = y_binfo_hp (add_str "n_tl(1)" string_of_tlist) n_tl in
     let n_tl = x_add gather_type_info_ann ann n_tl in
+    let () = y_binfo_hp (add_str "n_tl(2)" string_of_tlist) n_tl in
     let n_tl = (* if (!Globals.allow_field_ann) then *) x_add gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
+    let () = y_binfo_hp (add_str "n_tl(3)" string_of_tlist) n_tl in
     let n_tl = x_add gather_type_info_ho_args hoa n_tl in
+    let () = y_binfo_hp (add_str "n_tl(4)" string_of_tlist) n_tl in
     (*Deal with the generic pointer! *)
     if (v_name = Parser.generic_pointer_type_name) then
       (* Assumptions:
@@ -1641,7 +1654,9 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         (* Get the type of the field which is the type of the pointer *)
         let ptr_type = I.get_type_of_field_seq prog.I.prog_data_decls type_rootptr field_access_seq in
         (* let () = print_endline ("[gather_type_info_heap_x] pointer type found = " ^ (string_of_typ ptr_type)) in *)
-        let (n_tl,_)= x_add gather_type_info_exp prog (List.hd ies) n_tl ptr_type in n_tl
+        let (n_tl,_)= x_add gather_type_info_exp prog (List.hd ies) n_tl ptr_type in
+        let () = y_binfo_hp (add_str "n_tl(after exp)" string_of_tlist) n_tl in
+        n_tl
       else n_tl
     else (* End dealing with generic ptr, continue what the original system did *)
       let n_tl =
