@@ -1012,6 +1012,10 @@ let stmt_list_to_block t pos =
       exp_block_local_vars = [];
       exp_block_pos = pos; }
 
+let session_extract_msg_var msg_var loc =
+  let msg_var = un_option msg_var session_msg_id in
+  P.Var((msg_var,Unprimed), loc)
+
 (* let arg_option = SHGram.Entry.mk "arg_option" *)
 let hip_with_option = SHGram.Entry.mk "hip_with_option"
 let sprog = SHGram.Entry.mk "sprog"
@@ -1382,7 +1386,10 @@ formula:
                                                     Session.TPProjectionSession p
    | p = projection_formula -> let () = projection_kind := Projection in
                                Session.ProjectionSession p
-  ]];
+   ]];
+
+session_msg_var:
+    [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
 
 projection_formula:
   [ "semicolon" RIGHTA
@@ -1403,19 +1410,21 @@ projection_formula:
     ]
     |
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProjection.SBase (Session.IProjection.mk_session_hvar id [] loc)
-      | peek_projection_send; `IDENTIFIER channel; `NOT; c = session_message ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            let c = F.subst_stub_flow top_flow c in
-            Session.IProjection.SBase (Session.IProjection.mk_base (Session.TSend, channel, loc) c)
-      | peek_projection_receive; `IDENTIFIER channel; `QUERY; c = session_message ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            let c = F.subst_stub_flow top_flow c in
-            Session.IProjection.SBase (Session.IProjection.mk_base (Session.TReceive, channel, loc) c)
+        let loc = (get_pos_camlp4 _loc 1) in
+        Session.IProjection.SBase (Session.IProjection.mk_session_hvar id [] loc)
+      | peek_projection_send; `IDENTIFIER channel; `NOT; msg_var = OPT session_msg_var; c = session_message ->
+        let loc = (get_pos_camlp4 _loc 1) in
+        let c = F.subst_stub_flow top_flow c in
+        let mv = session_extract_msg_var msg_var loc in
+        Session.IProjection.SBase (Session.IProjection.mk_base (Session.TSend, channel, mv, loc) c)
+      | peek_projection_receive; `IDENTIFIER channel; `QUERY; msg_var = OPT session_msg_var; c = session_message ->
+        let loc = (get_pos_camlp4 _loc 1) in
+        let c = F.subst_stub_flow top_flow c in
+        let mv = session_extract_msg_var msg_var loc in
+        Session.IProjection.SBase (Session.IProjection.mk_base (Session.TReceive, channel, mv, loc) c)
       | vh = view_header ->
-            let name = vh.Iast.view_name in
-            let ho_vars = vh.Iast.view_ho_vars in
+        let name = vh.Iast.view_name in
+        let ho_vars = vh.Iast.view_ho_vars in
             let params = vh.Iast.view_vars in
             let loc = (get_pos_camlp4 _loc 1) in
             Session.IProjection.SBase (Session.IProjection.mk_session_predicate name ho_vars params loc)
@@ -1439,23 +1448,26 @@ tpprojection_formula:
     | [ `OPAREN; p = tpprojection_formula; `CPAREN ->
             p
     ]
-    |
-      [ peek_hvar; `PERCENT; `IDENTIFIER id ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [] loc)
-      | peek_tpprojection_send; `NOT; c = session_message ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            let c = F.subst_stub_flow top_flow c in
-            Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TSend, loc) c)
-      | peek_tpprojection_receive; `QUERY; c = session_message ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            let c = F.subst_stub_flow top_flow c in
-            Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TReceive, loc) c)
-      | vh = view_header ->
-            let name = vh.Iast.view_name in
-            let ho_vars = vh.Iast.view_ho_vars in
-            let params = vh.Iast.view_vars in
-            let loc = (get_pos_camlp4 _loc 1) in
+  |
+    [ peek_hvar; `PERCENT; `IDENTIFIER id ->
+      let loc = (get_pos_camlp4 _loc 1) in
+      Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [] loc)
+    | peek_tpprojection_send; `NOT; msg_var = OPT session_msg_var; c = session_message ->
+      let loc = (get_pos_camlp4 _loc 1) in
+      let c = F.subst_stub_flow top_flow c in
+      let () = print_endline ("!!!!!!! " ^ (pr_opt pr_id msg_var)) in
+      let mv = session_extract_msg_var msg_var loc in
+      Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TSend, mv, loc) c)
+    | peek_tpprojection_receive; `QUERY; msg_var = OPT session_msg_var; c = session_message ->
+      let loc = (get_pos_camlp4 _loc 1) in
+      let c = F.subst_stub_flow top_flow c in
+      let mv = session_extract_msg_var msg_var loc in
+      Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TReceive, mv, loc) c)
+    | vh = view_header ->
+      let name = vh.Iast.view_name in
+      let ho_vars = vh.Iast.view_ho_vars in
+      let params = vh.Iast.view_vars in
+      let loc = (get_pos_camlp4 _loc 1) in
             Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_vars params loc)
     ]
 ];

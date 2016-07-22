@@ -17,6 +17,8 @@ type transmission = TSend | TReceive
 let string_of_seq  = ";;"
 let unk_view_id = "SESS_TEMP"
 
+let session_fresh_id () = fresh_any_name session_msg_id_aux
+
 let string_of_transmission t =
   match t with
   | TSend    -> "!"
@@ -529,12 +531,13 @@ module Projection_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = transmission * ident * VarGen.loc
+    type a = transmission * ident * param * VarGen.loc
     type base = {
-      projection_base_formula_op      : transmission;
-      projection_base_formula_channel : ident;
-      projection_base_formula_message : t;
-      projection_base_formula_pos     : VarGen.loc;
+      projection_base_formula_op          : transmission;
+      projection_base_formula_channel     : ident;
+      projection_base_formula_message     : t;
+      projection_base_formula_message_var : param;
+      projection_base_formula_pos         : VarGen.loc;
     }
 
     let base_type = Projection
@@ -546,11 +549,12 @@ module Projection_base_formula =
       (string_of_transmission f.projection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 
-    let mk_base (transmission, channel, pos) formula = {
-      projection_base_formula_op      = transmission;
-      projection_base_formula_channel = channel;
-      projection_base_formula_message = formula;
-      projection_base_formula_pos     = pos;
+    let mk_base (transmission, channel, mv, pos) formula = {
+      projection_base_formula_op          = transmission;
+      projection_base_formula_channel     = channel;
+      projection_base_formula_message     = formula;
+      projection_base_formula_message_var = mv;
+      projection_base_formula_pos         = pos;
     }
 
     let trans_base base =
@@ -560,21 +564,31 @@ module Projection_base_formula =
       let args = match base.projection_base_formula_op with
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.projection_base_formula_message]
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.projection_base_formula_message] in
-      let params = [] in
+      let params = [base.projection_base_formula_message_var] in
       let node = Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos) base_type tkind in
       Msg.mk_seq_wrapper node base.projection_base_formula_pos base_type
+
+    let trans_base base =
+      let pr1 = string_of_session_base in
+      let pr2 = !Msg.print_h_formula in
+      Debug.no_1 "trans_base" pr1 pr2 trans_base base
 
     let get_base_pos base = base.projection_base_formula_pos
 
     let trans_h_formula_to_session_base h_formula =
-      let (ptr, name, args, params, pos) = Msg.get_node h_formula in
+      let (ptr, name, hoargs, params, pos) = Msg.get_node h_formula in
       let channel = Msg.get_node_id ptr in
-      let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
+      let f = Msg.get_formula_from_ho_param_formula (List.nth hoargs 0) in
       let transmission = match (Msg.get_node_kind h_formula) with
         | Send -> TSend
         | Receive -> TReceive
         | _ -> failwith (x_loc ^ ": Not a valid transmission type.") in
-      mk_base (transmission, channel, pos) f
+      let mv = match params with
+        | []    -> failwith (x_loc ^ ": empty message pointer.")
+        | p::[] -> p
+        | _     -> failwith (x_loc ^ ": Send/Receive nodes expect exactly one arg.")
+      in
+      mk_base (transmission, channel, mv, pos) f
 
     let trans_h_formula_to_session_base h_formula =
       let pr1 = !Msg.print_h_formula in
@@ -588,11 +602,12 @@ module TPProjection_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = transmission * VarGen.loc
+    type a = transmission * param * VarGen.loc
     type base = {
-      tpprojection_base_formula_op      : transmission;
-      tpprojection_base_formula_message : t;
-      tpprojection_base_formula_pos     : VarGen.loc;
+      tpprojection_base_formula_op          : transmission;
+      tpprojection_base_formula_message     : t;
+      tpprojection_base_formula_message_var : param;
+      tpprojection_base_formula_pos         : VarGen.loc;
     }
 
     let base_type = TPProjection
@@ -603,10 +618,11 @@ module TPProjection_base_formula =
       (string_of_transmission f.tpprojection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 
-    let mk_base (transmission, pos) formula = {
-      tpprojection_base_formula_op      = transmission;
-      tpprojection_base_formula_message = formula;
-      tpprojection_base_formula_pos     = pos;
+    let mk_base (transmission, mv, pos) formula = {
+      tpprojection_base_formula_op          = transmission;
+      tpprojection_base_formula_message     = formula;
+      tpprojection_base_formula_message_var = mv;
+      tpprojection_base_formula_pos         = pos;
     }
 
     let trans_base base =
@@ -615,10 +631,17 @@ module TPProjection_base_formula =
       let name = get_prim_pred_id_by_kind tkind in
       let args = match base.tpprojection_base_formula_op with
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.tpprojection_base_formula_message]
-        | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.tpprojection_base_formula_message] in
-      let params = [] in
+        | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.tpprojection_base_formula_message]
+      in
+      let params = [base.tpprojection_base_formula_message_var] in
       let node = Msg.mk_node (ptr, name, args, params, base.tpprojection_base_formula_pos) base_type tkind in
-      Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type
+      node
+      (* Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type *)
+
+    let trans_base base =
+      let pr1 = string_of_session_base in
+      let pr2 = !Msg.print_h_formula in
+      Debug.no_1 "trans_base" pr1 pr2 trans_base base
 
     let get_base_pos base = base.tpprojection_base_formula_pos
 
@@ -629,7 +652,12 @@ module TPProjection_base_formula =
         | Send -> TSend
         | Receive -> TReceive
         | _ -> failwith (x_loc ^ ": Not a valid transmission type.") in
-      mk_base (transmission, pos) f
+      let mv = match params with
+        | []    -> failwith (x_loc ^ ": empty message pointer.")
+        | p::[] -> p
+        | _     -> failwith (x_loc ^ ": Send/Receive nodes expect exactly one arg.")
+      in
+      mk_base (transmission, mv, pos) f
 
   end;;
 

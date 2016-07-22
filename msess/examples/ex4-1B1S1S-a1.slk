@@ -12,7 +12,7 @@ expect Valid.
 
 //3
 checkentail x::Sess{@S aa!emp & 0<=msg;;aa?0;;bb!0}<>|- x::Sess{@S aa!0;;aa?emp & 0<=msg}<> .
-expect Valid.
+expect Fail.
 
 //4
 checkentail x::Sess{@S aa!0 or aa!1}<>|- x::Sess{@S aa!0 or aa!1}<>.
@@ -89,5 +89,5 @@ print residue.
 
 //15
 checkentail x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1);;aaa!0}<>|- x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
-expect Valid.
+expect Fail.
 print residue.
