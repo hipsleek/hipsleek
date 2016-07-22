@@ -10,8 +10,8 @@ pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
 
 
 checkentail 
- j=m & j>=0 
-   |- //[base2] 
+ j=m & j>=0
+   |-// [base2] 
      base2::arr_seg<j,m> 
    .
 expect Valid.

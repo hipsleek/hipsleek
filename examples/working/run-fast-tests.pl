@@ -1843,6 +1843,8 @@ my $inv = '--inv-test';
 my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
+	      ["array/array_lemma.slk","",(),"Valid.Valid.Fail.Valid.Valid.Valid.Fail"],
+	      ["array/array_baga.slk","",(),"Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail"],
                       ["cll-d.slk", "", (), "Valid."],
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
                       ["label-dll.slk", "--dis-eps", (), "Valid.Valid.Valid.Valid."],
@@ -1983,6 +1985,7 @@ my $dis = '--dis-inv-baga';
               # loop
               # ["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
               ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
+
               ["veribsync/bperm-split-combine.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings --dis-ptr-arith", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
               ["veribsync/barrier-static.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith", (), "Valid.Valid.Valid.Valid.Valid."],
               ["veribsync/barrier-dynamic2.slk","--en-para -perm bperm -tp redlog --old-norm-w-coerc --old-lemma-settings  --dis-ptr-arith", (), "Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
@@ -2005,8 +2008,8 @@ my $dis = '--dis-inv-baga';
               ["vperm/vperm.slk"," --ann-vp", (), "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
                       ["vperm/vperm2.slk"," --ann-vp", (), "Valid.Valid.Fail."]],
         	"sleek_fracperm"=>[["fracperm/sleek.slk","--en-para -perm fperm -tp redlog", (),"Valid.Valid.Valid.Fail."],
-        				["fracperm/sleek1.slk","--en-para -perm fperm -tp redlog", (), "Fail."],
-        				["fracperm/sleek10.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail."],
+				   ["fracperm/sleek1.slk","--en-para -perm fperm -tp redlog", (), "Fail."],
+				   ["fracperm/sleek10.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail."],
         				["fracperm/sleek2.slk","--en-para -perm fperm -tp redlog", (), "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
         				["fracperm/sleek3.slk","--en-para -perm fperm -tp redlog", (), "Valid.Fail.Valid."],
         				["fracperm/sleek4.slk","--en-para -perm fperm -tp redlog", (), "Valid.Valid."],
