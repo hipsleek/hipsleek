@@ -1,0 +1,46 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+pred_prim RR{+ %P}<a>.
+
+//1
+checkentail x::R{+ msg=0}<> |- x::R{+ msg=0}<>.
+print residue.
+expect Valid.
+
+
+//2
+checkentail x::Sess{@S ?0;;?1}<>
+            |- x::Sess{@S ?0;;?1}<>.
+print residue.
+expect Valid.
+
+//3
+checkentail x::Sess{@S ?msg::node<_,_>;;?msg=null}<>
+            |- x::Sess{@S ?msg::node<_,_>;;?msg=null}<>.
+print residue.
+expect Valid.
+
+//4
+checkentail x::Sess{@S ?0;;?1;;?msg::node<_,_>;;?msg=null}<>
+            |- x::Sess{@S ?0;;?1;;?msg::node<_,_>;;?msg=null}<>.
+print residue.
+expect Valid.
+
+//5
+checkentail x::Sess{@S !msg>=0;;!1}<>
+            |- x::Sess{@S !0;;!1}<>.
+print residue.
+expect Valid.
+
+//6
+checkentail x::Sess{@S !msg::node<_,_>;;!msg=null}<>
+            |- x::Sess{@S !msg::node<_,_>;;!msg=null}<>.
+print residue.
+expect Valid.
+
+//7
+checkentail x::Sess{@S !msg>=0;;!1;;!msg::node<_,_>;;!msg=null}<>
+            |- x::Sess{@S !0;;!1;;!msg::node<_,_>;;!msg=null}<>.
+print residue.
+expect Valid.

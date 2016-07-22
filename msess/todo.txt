@@ -181,35 +181,6 @@ the second order vars.
 
 =============================================
 =============================================
-./sleek msess/examples/ex5-ho.slk --pip
-=============================================
-using a dedicated var to denote transmitted
-message confuses the typechecker:
-
-Last Proving Location: ../../msess/notes/hodef.slk_7:10_7:31
-
-ERROR: at ex5-ho.slk_25:48_25:49
-Message: UNIFICATION ERROR : at location {(Line:25,Col:48),(Line:25,Col:49)} types node and int are inconsistent
-
-Entail 6: EXCast. Failure("UNIFICATION ERROR : at location {(Line:25,Col:48),(Line:25,Col:49)} types node and int are inconsistent")
-
-#######
-SOLUTION:
-########
-to create a message container as below:
-pred_prim Msg<a>.
-
-The dedicated variable will then point to a
-Msg structure whose parameter supports any type.
-
-example (see also msess/examples/ex6a-Msg-AP.slk):
-x::Sess{@S ?y::node<_,_>;;?0}<>
-   |
-   V
-x::Sess{@S ?msg::Msg<y>  * y::node<_,_>;;?msg::Msg<z> & z=0}<>
-
-=============================================
-=============================================
 
 When defining predicates such as:
 
@@ -335,8 +306,36 @@ for y:t1 and yy:t2 to check if
 
 =============================================
 =============================================
+./sleek msess/examples/ex6b1-S-and-R-no-arg.slk --pcp --dis-print-compact-projection-formula
+=============================================
+
+norm of seq is a bit broken: too  many seq inserted
+Seq should be inserted only for last element or when
+the session formula contains a single base (incl SOr).
 
 
+//2
+checkentail x::Sess{@S ?0;;?1}<>
+            |- x::Sess{@S ?0;;?1}<>.
+
+  |
+  |
+  V
+
+
+run_infer:
+x::Sess{ . self::Seq{ . self::Seq{ . chan::R{ + msg::node<Anon_12,Anon_13>}<>,  emp}<>,
+         . self::Seq{ . chan::R{ + emp&msg=null}<>, emp}<>}<>}<>
+   |-
+   exists (Impl)[Anon_14; Anon_15]
+   x::Sess{ . self::Seq{ . self::Seq{ . chan::R{ + msg::node<Anon_14,Anon_15>}<>, emp}<>,
+   . self::Seq{ . chan::R{ + emp&msg=null}<>, . emp}<>}<>}<>
+
+lhs should be:
+
+x::Sess{ . self::Seq{ . chan::R{ + msg::node<Anon_12,Anon_13>}<>,
+         . self::Seq{ . chan::R{ + emp&msg=null}<>, emp}<>}<>}<>
+   
 =============================================
 =============================================
 

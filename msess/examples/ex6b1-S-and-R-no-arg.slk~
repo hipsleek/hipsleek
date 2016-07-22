@@ -1,0 +1,37 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+pred_prim RR{+ %P}<a>.
+
+//1
+checkentail x::RR{+ y=0}<y> |- x::RR{+ z=0}<z>.
+print residue.
+expect Valid.
+
+
+//2
+checkentail x::Sess{@S ?0;;?1}<>
+            |- x::Sess{@S ?0;;?1}<>.
+print residue.
+expect Valid.
+
+//3
+checkentail x::Sess{@S ?msg::node<_,_>;;?msg=null}<>
+            |- x::Sess{@S ?msg::node<_,_>;;?msg=null}<>.
+print residue.
+expect Valid.
+
+//4
+checkentail x::Sess{@S ?0;;?1;;?msg::node<_,_>;;?msg=null}<>
+            |- x::Sess{@S ?0;;?1;;?msg::node<_,_>;;?msg=null}<>.
+print residue.
+expect Valid.
+
+
+/*
+//3
+checkentail x::Sess{@S !msg>0;;!1;;!msg!=null;;!msg=null}<>
+            |- x::Sess{@S !0;;!1;;!msg::node<_,_>;;!msg=null}<>.
+print residue.
+expect Valid.
+*/
