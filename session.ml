@@ -635,8 +635,8 @@ module TPProjection_base_formula =
       in
       let params = [base.tpprojection_base_formula_message_var] in
       let node = Msg.mk_node (ptr, name, args, params, base.tpprojection_base_formula_pos) base_type tkind in
-      node
-      (* Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type *)
+      (* node *)
+      Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type
 
     let trans_base base =
       let pr1 = string_of_session_base in

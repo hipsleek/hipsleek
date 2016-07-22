@@ -45,7 +45,7 @@ checkentail x::Sess{@S !msg>=0;;!1;;!msg::node<_,_>;;!msg=null}<>
 print residue.
 expect Valid.
 
-//7
+//8
 checkentail x::Sess{@S !msg>=0;;!1;;!m#m::node<_,_>;;!m#m=null}<>
             |- x::Sess{@S !0;;!1;;!m#m::node<_,_>;;!m#m=null}<>.
 print residue.
