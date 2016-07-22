@@ -943,8 +943,7 @@ and mkEBase_w_vars ee ei ii f ct pos = EBase{
     formula_struc_explicit_inst = ei;
     formula_struc_implicit_inst = ii;
     formula_struc_exists =ee;
-    formula_struc_base = f;
-    formula_struc_is_requires = ct!=None;
+    formula_struc_base = f;    formula_struc_is_requires = ct!=None;
     formula_struc_continuation = ct;
     formula_struc_pos = pos;
   }
@@ -1762,7 +1761,7 @@ and fv_simple_formula (f:formula) =
   | DataNode h -> 
     let perm = h.h_formula_data_perm in
     let perm_vars = fv_cperm perm in
-    let ann_vars = (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then ( *) CP.fv_ann (h.h_formula_data_imm)(* ) else []  *) in
+    let ann_vars = (* if (!Globals.allow_imm) || (!Globals.allow_field_ann) then ( *) CP.fv_ann (h.h_formula_data_imm)(* ) else []  *)  in
     let ann_vars = if true (* (!Globals.allow_field_ann) *) then ann_vars @ (CP.fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
     perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
   | ViewNode h -> 
@@ -12952,6 +12951,12 @@ and normalize_es_x (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_s
   Ctx {es with es_formula = normalize 3 es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
+  (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
+  Ctx {es with es_formula = normalize_combine es.es_formula f pos;
+               es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+
+and normalize_es_combine_mix_formula (mf : MCP.mix_formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
+  let f = formula_of_mix_formula mf pos in
   (* let () = print_string ("\nCformula.ml: normalize_es_combine") in *)
   Ctx {es with es_formula = normalize_combine es.es_formula f pos;
                es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
