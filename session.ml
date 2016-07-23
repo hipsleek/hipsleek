@@ -220,13 +220,13 @@ module IForm = struct
   *)
   let mk_seq_wrapper hform pos sk =
     match hform with
-      | F.HeapNode node -> let fct si = let nk = si.node_kind in
-                                        (match nk with
-                                           | Sequence -> hform
-                                           | _ -> mk_seq_wrapper_node hform pos sk) in
-                           Gen.map_opt_def hform fct node.F.h_formula_heap_session_info
-      | F.Star node -> mk_seq_wrapper_node hform pos sk
-      | _ -> hform
+    | F.HeapNode node -> let fct si = let nk = si.node_kind in
+                           (match nk with
+                            | Sequence -> hform
+                            | _ -> mk_seq_wrapper_node hform pos sk) in
+      Gen.map_opt_def hform fct node.F.h_formula_heap_session_info
+    | F.Star node -> mk_seq_wrapper_node hform pos sk
+    | _ -> hform
 
   let set_param id pos = Ipure_D.Var((id,Unprimed), pos)
 
@@ -566,7 +566,8 @@ module Projection_base_formula =
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.projection_base_formula_message] in
       let params = [base.projection_base_formula_message_var] in
       let node = Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos) base_type tkind in
-      Msg.mk_seq_wrapper node base.projection_base_formula_pos base_type
+      node
+      (* Msg.mk_seq_wrapper node base.projection_base_formula_pos base_type *)
 
     let trans_base base =
       let pr1 = string_of_session_base in
@@ -635,8 +636,8 @@ module TPProjection_base_formula =
       in
       let params = [base.tpprojection_base_formula_message_var] in
       let node = Msg.mk_node (ptr, name, args, params, base.tpprojection_base_formula_pos) base_type tkind in
-      (* node *)
-      Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type
+      node
+      (* Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type *)
 
     let trans_base base =
       let pr1 = string_of_session_base in
@@ -817,7 +818,8 @@ module Make_Session (Base: Session_base) = struct
     let args = [rflow_form] in
     let params = [] in
     let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type SOr in
-    Base.mk_seq_wrapper node pos Base.base_type
+    node
+    (* Base.mk_seq_wrapper node pos Base.base_type *)
 
   and mk_predicate_node p =
     let ptr = Base.choose_ptr () in
@@ -827,14 +829,16 @@ module Make_Session (Base: Session_base) = struct
     let params = p.session_predicate_params in
     let params = List.map (fun a -> Base.set_param a pos) params in
     let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate in
-    Base.mk_seq_wrapper node pos Base.base_type
+    node
+    (* Base.mk_seq_wrapper node pos Base.base_type *)
 
   and mk_hvar_node h =
     let id = h.session_hvar_id in
     let ls = h.session_hvar_list in
     let pos = h.session_hvar_pos in
     let node = Base.mk_hvar id ls in
-    Base.mk_seq_wrapper node pos Base.base_type
+    node
+    (* Base.mk_seq_wrapper node pos Base.base_type *)
 
   let trans_from_session s =
     let rec helper s = match s with
