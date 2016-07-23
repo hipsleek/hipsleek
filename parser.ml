@@ -721,9 +721,11 @@ let peek_dc =
  let peek_tpprojection =
    SHGram.Entry.of_parser "peek_tpprojection"
        (fun strm ->
-           match Stream.npeek 1 strm with
-             | [NOT,_] -> ()
-             | [QUERY,_] -> ()
+           match Stream.npeek 2 strm with
+             | [NOT,_; _,_] -> ()
+             | [QUERY,_;  _,_] -> ()
+             | [OPAREN,_; NOT,_] -> ()
+             | [OPAREN,_; QUERY,_] -> ()
              | _ -> raise Stream.Failure)
 
  let peek_tpprojection_send =
