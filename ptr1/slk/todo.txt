@@ -1,6 +1,54 @@
 ====================================================================
 ====================================================================
+# ex9b7b2.slk --pcp
+
+checkentail xx::arr_seg<2,mmm> 
+      & Univ(mmm) & 2<mmm<=4 //& BasePtr(xx)
+   |- [k] xx::arr_seg<k,5>.
+
+# why did isn't BasePtr is not included in xform & baga_over_inv
+
+  inv: i<=n & 0<=i & self!=null & BasePtr(self)
+  
+  baga over inv: [([], i<=n & 0<=i & self!=null & BasePtr(self))]
+  baga over inv (unfolded): [([], ((0<=i & i<=n & 1<=self) | (0<=i & i<=n & self<=(0-1))))]
+  
+  xform: ((0<=i & i<n & self!=null) | (i=n & 0<=n & self!=null))
+
+(==solver.ml#8849==)
+xpure_heap#9@52@49
+xpure_heap#9 inp1 : xx::arr_seg<flted_14_70,mmm>@M
+xpure_heap#9 inp2 : flted_14_70=2 & Univ(mmm) & 2<mmm & mmm<=4
+xpure_heap#9 inp3 :1
+xpure_heap#9@52 EXIT:( ((0<=flted_14_70 & flted_14_70<mmm & xx!=null) | 
+  (flted_14_70=mmm & 0<=mmm & xx!=null)),[], [])#true
+
+(==solver.ml#13674==)
+do_base_fold@49
+do_base_fold inp1 :  xx::arr_seg<flted_14_70,mmm>@M&mmm<=4 & 2<mmm & Univ(mmm) & flted_14_70=2&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [flted_16_71]
+ es_gen_impl_vars(E): []
+ es_ante_evars: [flted_14_70]
+ es_gen_expl_vars: [k]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  BaseCaseFold
+do_base_fold inp2 : xx::arr_seg<k,flted_16_71>@M&flted_16_71=5&{FLOW,(20,21)=__norm#E}[]
+do_base_fold@49 EXIT: failctxfe_kind: MAY
 ====================================================================
+# ex9b7b2.slk
+
+checkentail xx::arr_seg<2,mmm> //* xx::arr_seg<mmm,4> 
+      & Univ(mmm) & 2<mmm<=4 //& BasePtr(xx)
+   |- [k] xx::arr_seg<k,5>.
+
+# why did isn't BasePtr picked from xpure?
+
+   fe_locs: {
+     fc_message:  mmm<=4 & 2<mmm & Univ(mmm) & 
+ (((0<=2 & 2<mmm & xx!=null) | (2=mmm & 0<=mmm & xx!=null))) |-  BasePtr(xx). LOCS:[15;14;0;1;5] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+
 ====================================================================
 # ex7a4a1.slk
 

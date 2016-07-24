@@ -29,7 +29,7 @@ elim_exists_pure_formula@2@1
 elim_exists_pure_formula inp1 : exists(j_61:exists(m_62:BasePtr(base2) & 0<=j_61 & j_61=m_62))
 elim_exists_pure_formula@2 EXIT: exists(j_61:BasePtr(base2) & 0<=j_61)
 ===========================================================
-# bug10b.slk 
+# bug10b.slk (FIXED --en-impl-root)
 
 # implicit instantiation not done for self..
 
@@ -82,7 +82,7 @@ checkentail
 !!! **context.ml#735:rhs_pure, before same_base_rhs: a=j1+base2
 !!! **cpure.ml#16224:base_ptr:(true,BasePtr)
 ===========================================================
-# bug2a.slk --trace-exc
+# ptr1/hip/bug2a.slk --trace-exc
 
 # Type error cuased by a=j+base instead of a=base+j
 

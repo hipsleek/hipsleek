@@ -46,4 +46,4 @@ Entail 1: EXCast. Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
 : no residue 
 
 
-*.
+*/
