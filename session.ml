@@ -98,6 +98,7 @@ module type Message_type = sig
 
   val is_emp : formula -> bool
   val print  : (formula -> string) ref
+  val print_struc_formula  : (struc_formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
   val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
@@ -119,6 +120,7 @@ module type Message_type = sig
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val update_temp_heap_name: h_formula -> h_formula
   val update_formula: formula -> formula
+  val update_struc_formula: struc_formula -> struc_formula
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
@@ -160,6 +162,7 @@ module IForm = struct
      ho - HO param
   *)
   let print_h_formula = F.print_h_formula
+  let print_struc_formula = F.print_struc_formula
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
@@ -250,29 +253,38 @@ module IForm = struct
     let fct_h = (fun x -> Some (fct x)) in
     let fct = (nonef, nonef, fct_h, (somef, somef, somef, somef, somef)) in
     F.transform_struc_formula fct struc_form
-
-  let transform_formula fct f = F.transform_formula_simp fct f
+  
+  let transform_formula fct f = x_add F.transform_formula_simp fct f
 
   let transform_h_formula f_h h = F.transform_h_formula f_h h
 
-  let rec update_formula f =
-    let helper f = transform_formula update_temp_heap_name f in
+  let rec update_formula_helper f = transform_formula update_temp_heap_name f 
+
+  and update_struc_formula f =
+    let helper f = struc_formula_trans_heap_node update_temp_heap_name f in
     let helper f =
-      let pr = !print in
-      Debug.no_1 "update_formula" pr pr helper f in
+      let pr = !print_struc_formula in
+      Debug.no_1 "update_struc_formula" pr pr helper f in
     helper f
 
   and update_temp_heap_name hform =
     let helper hform =
       let f_h hform = match hform with
         | F.HeapNode node ->
-           let orig_node = Some (F.HeapNode node) in
-                           let fct si = match si.node_kind with
-                                          | Sequence | SOr | Send | Receive | Transmission
-                                          | Session | Channel | Msg -> Some (F.HeapNode {node with F.h_formula_heap_name =
-                                                                                         get_prim_pred_id_by_kind si.node_kind})
-                                          | Star | HVar | Predicate | Emp -> orig_node in
-                           Gen.map_opt_def orig_node fct node.F.h_formula_heap_session_info
+          let orig_node = (* Some (F.HeapNode node) *) None in
+          let new_ho_param = List.map (fun x ->
+              {x with F.rflow_base = update_formula_helper x.F.rflow_base})
+              node.F.h_formula_heap_ho_arguments in
+          let fct si = match si.node_kind with
+            | Sequence | SOr | Send | Receive | Transmission
+            | Session | Channel | Msg ->
+              let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
+              let updated_node =  (* F.HeapNode *) {node with F.h_formula_heap_name = new_heap_name } in
+              updated_node
+            | Star | HVar | Predicate | Emp -> (* hform *) node in
+          let node = Gen.map_opt_def node fct node.F.h_formula_heap_session_info in
+          let node = F.HeapNode {node with F.h_formula_heap_ho_arguments = new_ho_param } in
+          Some node
         | _ -> None in
       transform_h_formula f_h hform
     in
@@ -280,6 +292,12 @@ module IForm = struct
       let pr = !print_h_formula in
       Debug.no_1 "update_temp_heap_name" pr pr helper hform in
     helper hform
+
+  let update_formula f = update_formula_helper f
+
+  let update_formula f = let pr = !print in
+    Debug.no_1 "update_formula" pr pr update_formula f
+
 
   let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
 
@@ -376,6 +394,7 @@ module CForm = struct
   let is_emp f = failwith x_tbi
   let print    = CF.print_formula
   let print_h_formula = CF.print_h_formula
+  let print_struc_formula = CF.print_struc_formula
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in
     match h with
@@ -439,6 +458,8 @@ module CForm = struct
   let update_temp_heap_name hform = hform
 
   let update_formula f = f
+
+  let update_struc_formula f = f
 
   let subst_param  (sst: (var * var) list) p =
     try  let _,res = List.find (fun (a,_) -> CP.eq_spec_var a p) sst in res
@@ -989,6 +1010,8 @@ module Make_Session (Base: Session_base) = struct
 
   let update_formula = Base.update_formula
 
+  let update_struc_formula = Base.update_struc_formula
+
   let trans_h_formula_to_session h_formula =
     let rec helper h_formula =
       let node_kind = Base.get_node_kind h_formula in
@@ -1248,6 +1271,6 @@ let irename_message_pointer_in_struc sf =
   
 let irename_message_pointer_in_struc sf =
   let pr = !F.print_struc_formula in 
-  Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer_in_struc sf 
+  Debug.no_1 "irename_message_pointer_in_struc" pr pr irename_message_pointer_in_struc sf 
 
-let crename_message_pointer sf = sf
+
