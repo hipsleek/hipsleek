@@ -50,3 +50,4 @@ checkentail x::Sess{@S !msg>=0;;!1;;!m#m::node<_,_>;;!m#m=null}<>
             |- x::Sess{@S !0;;!1;;!m#m::node<_,_>;;!m#m=null}<>.
 print residue.
 expect Valid.
+

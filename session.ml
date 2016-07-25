@@ -1019,3 +1019,30 @@ let is_projection si = let fct info = let sk = info.session_kind in
                          | TPProjection -> true
                          | _ -> false) in
                        Gen.map_opt_def false fct si
+
+let irename_message_pointer sf = (* sf *)
+  let f_h h =
+    match h with
+    | F.HeapNode node ->
+      let fct si =
+        match si.node_kind with
+        | Session ->
+          begin
+            let transf h = 
+              match si.session_kind with
+              | Projection   -> ProjectionSession (IProjection.trans_h_formula_to_session h)
+              | TPProjection -> TPProjectionSession (ITPProjection.trans_h_formula_to_session h)
+              | Protocol     -> ProtocolSession (IProtocol.trans_h_formula_to_session h)
+            in
+            let sf = transf h in
+            
+            Some h
+          end
+        | _ -> None
+      in
+      Gen.map_opt_def None fct node.F.h_formula_heap_session_info
+    | _ -> None in
+  let f = (nonef,nonef, f_h, (somef,somef,somef,somef,somef)) in
+  F.transform_struc_formula f sf
+
+let crename_message_pointer sf = sf
