@@ -1,0 +1,25 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & BasePtr(self)
+  .
+
+//lemma_unsafe self::arr_seg<i,n> & i<m<=n 
+//     -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+   
+// Lemma for obtaining a subarray from an array
+// The above lemma is insufficient because it states that an array
+// can only be split into 2, not that a subarray can be obtained
+// from one.
+lemma_unsafe self::arr_seg<i,n> & i<=j<m & j<m<=n
+    -> self::arr_seg<i,j>*self::arr_seg<j,m>*self::arr_seg<m,n> .
+
+checkentail 
+ base::arr_seg<1,6>
+   |- base::arr_seg<2,5>
+   .
+expect Valid.
+print residue.
