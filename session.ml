@@ -973,6 +973,42 @@ module Make_Session (Base: Session_base) = struct
     let f = Base.get_formula_from_struc_formula struc_formula in
     trans_formula_to_session f
 
+  let rec extract_bases session =
+    match session with
+      | SSeq s -> (extract_bases s.session_seq_formula_head) @
+                  (extract_bases s.session_seq_formula_tail)
+      | _  -> [session]
+
+  (* For a single base, do we want it:
+   * 1. in a Seq node with empty: Seq{base, emp}
+   * or
+   * 2. just the plain base, without Seq?
+   * Currently doing 1.
+   *)
+  let rec mk_norm_session bases =
+    match bases with
+      | [] -> SEmp
+      | [base] -> let pos = get_pos base in
+                  mk_session_seq_formula base SEmp pos
+      | hd :: tl -> let pos = get_pos hd in
+                    mk_session_seq_formula hd (mk_norm_session tl) pos
+
+  (* NORM3: first argument of Seq is a non-Seq node
+   *
+   * self::Seq{self::Seq{a.b}, self::Seq{c,d}}
+   *  |
+   *  |
+   *  V
+   * self::Seq{a, self::Seq{b, self::Seq{c,d}}}
+   *
+   * 1. extract all bases (non-Seq nodes) in the
+   * order they appear from left to right
+   * 2. remake Seq nodes with first argument a base
+   *)
+  let norm3_sequence session =
+    let bases = extract_bases session in
+    mk_norm_session bases
+
 end;;
 
 (* =========== Protocol / Projection ========== *)
