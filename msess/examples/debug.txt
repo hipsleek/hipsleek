@@ -2,7 +2,7 @@
 #do_fold
 #process_action,Trace
 #choose_context,Trace
-match_one_ho_arg
+match_one_ho_arg,Trace
 do_match,Trace
 #heap_entail_conjunct,Trace
 #process_one_match,Trace

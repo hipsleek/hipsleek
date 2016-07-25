@@ -8824,6 +8824,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
   let f = Session.IProjection.update_formula f in
+  let f = Session.irename_message_pointer f in
   let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
     ((ident*primed) list) * (IP.exp list) * ((ident*primed) list) * IP.formula =
 
@@ -9304,7 +9305,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   (* let () = print_string ("\n b rename "^(Iprinter.string_of_struc_formula  nf))in *)
   let nf = IF.rename_bound_var_struc_formula nf in
   (* rename session msg var *)
-  (*let nf = Session.irename_message_pointer nf in*)
+  (* let nf = Session.irename_message_pointer nf in *)
   (* let () = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula nf)^"\n") in *)
   (*convert anonym to exists*)
   let rec helper2 (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(nf:IF.struc_formula) allow_primes allow_post_vars 

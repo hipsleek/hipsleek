@@ -122,6 +122,7 @@ module type Message_type = sig
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
+  val fresh_var: var -> var
 
   val is_base_formula: formula -> bool
   val get_h_formula: formula -> h_formula
@@ -286,6 +287,8 @@ module IForm = struct
 
   let subst_formula (sst: (var * var) list) f = F.subst_all sst f
 
+  let fresh_var (v:var): var = IP.fresh_var v
+
   let is_base_formula formula =
     match formula with
       | F.Base f -> true
@@ -448,6 +451,8 @@ module CForm = struct
   let subst_formula (sst: (var * var) list) f =
     let fromsv, tosv = List.split sst in
     CF.subst_avoid_capture fromsv tosv f
+
+  let fresh_var (v:var): var = CP.fresh_spec_var v
 
   let get_node h_formula =
     match h_formula with
@@ -1048,6 +1053,17 @@ module Make_Session (Base: Session_base) = struct
     let pr = !Base.print_h_formula in
     Debug.no_1 "get_original_h_formula" pr pr get_original_h_formula h_formula
 
+  let get_message_var b = Base.get_message_var b
+
+  let replace_message_var b =
+    let msg_var = Base.get_message_var b in
+    let new_var = Base.fresh_var msg_var in
+    Base.subst_base [(msg_var,new_var)] b
+
+  let replace_message_var b =
+    let pr = Base.string_of_session_base in
+    Debug.no_1 "replace_message_var" pr pr replace_message_var b
+  
   let trans_formula_to_session formula =
     if (Base.is_base_formula formula)
     then
@@ -1170,29 +1186,68 @@ let is_projection si = let fct info = let sk = info.session_kind in
                          | _ -> false) in
                        Gen.map_opt_def false fct si
 
-let irename_message_pointer sf = (* sf *)
+let irename_message_pointer_trans_list = (* sf *)
   let f_h h =
     match h with
     | F.HeapNode node ->
       let fct si =
-        match si.node_kind with
-        | Session ->
-          begin
-            let transf h = 
-              match si.session_kind with
-              | Projection   -> ProjectionSession (IProjection.trans_h_formula_to_session h)
-              | TPProjection -> TPProjectionSession (ITPProjection.trans_h_formula_to_session h)
-              | Protocol     -> ProtocolSession (IProtocol.trans_h_formula_to_session h)
+        let () = y_binfo_hp string_of_node_kind si.node_kind in
+        (* match si.node_kind with *)
+        (* | Session -> *)
+        (*   begin *)
+        let () = y_binfo_pp "SESSION!!!" in
+        let transf h = 
+          match si.session_kind with
+          | Projection   ->
+            (* let sf = ProjectionSession (IProjection.trans_h_formula_to_session h) in *)
+            let sf = IProjection.trans_h_formula_to_session h in
+            let fnc sf = Some sf in
+            let sf = IProjection.trans_session_formula fnc sf in
+            let new_h = IProjection.trans_from_session sf in
+            new_h
+          | TPProjection ->
+            (* let sf = TPProjectionSession (ITPProjection.trans_h_formula_to_session h) in *)
+            let sf = ITPProjection.trans_h_formula_to_session h in
+            let fnc sess_f = 
+              match sess_f with
+              | ITPProjection.SBase (ITPProjection.Base b as base) ->
+                Some (ITPProjection.SBase (ITPProjection.Base (ITPProjection.replace_message_var b)))
+              (* Some sess_f *)
+              | ITPProjection.SBase _ -> Some sess_f
+              | _ -> None
             in
-            let sf = transf h in
-            
-            Some h
-          end
-        | _ -> None
+            let sf = ITPProjection.trans_session_formula fnc sf in
+            let new_h = ITPProjection.trans_from_session sf in
+            new_h
+          | Protocol     -> 
+            let sf = ProtocolSession (IProtocol.trans_h_formula_to_session h) in
+            h
+        in
+        Some (transf h)
+        (* Some h *)
+        (*   end *)
+        (* | _ -> None *)
       in
       Gen.map_opt_def None fct node.F.h_formula_heap_session_info
     | _ -> None in
   let f = (nonef,nonef, f_h, (somef,somef,somef,somef,somef)) in
-  F.transform_struc_formula f sf
+  f
+  (* F.transform_formula f sf *)
+
+let irename_message_pointer f1 =
+  let f_list = irename_message_pointer_trans_list in
+  F.transform_formula f_list f1
+
+let irename_message_pointer f1 =
+  let pr = !F.print_formula in 
+  Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer f1 
+
+let irename_message_pointer_in_struc sf =
+  let f_list = irename_message_pointer_trans_list in
+  F.transform_struc_formula f_list sf 
+  
+let irename_message_pointer_in_struc sf =
+  let pr = !F.print_struc_formula in 
+  Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer_in_struc sf 
 
 let crename_message_pointer sf = sf
