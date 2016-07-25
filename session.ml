@@ -91,6 +91,7 @@ module type Message_type = sig
   type struc_formula
   type node
   type param
+  type var
   type arg = node * ident * (ho_param_formula list) *
              (param list) * VarGen.loc
 
@@ -139,7 +140,8 @@ module IForm = struct
   type h_formula_heap = F.h_formula_heap
   type ho_param_formula = F.rflow_formula
   type struc_formula = F.struc_formula
-  type node = Globals.ident * VarGen.primed
+  type var = Globals.ident * VarGen.primed
+  type node = var
   type param = Ipure.exp
   type arg = node * ident * (ho_param_formula list) *
              (param list) * VarGen.loc
@@ -343,7 +345,8 @@ module CForm = struct
   type h_formula_heap = CF.h_formula_view
   type ho_param_formula = CF.rflow_formula
   type struc_formula = CF.struc_formula
-  type node = CP.spec_var
+  type var = CP.spec_var
+  type node = var
   type param = CP.spec_var
   type arg = node * ident * (ho_param_formula list) *
              (param list) * VarGen.loc
