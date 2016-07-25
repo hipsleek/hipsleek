@@ -1,0 +1,15 @@
+data arrI {
+  int val;
+}.
+
+/*
+Bug description: There is a difference in results between the use of [] and (exists: ) for two predicates.
+
+Example code as follows:
+*/
+
+checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=4.
+expect Valid.
+
+checkentail x::arrI<m> & m>3 |- (exists mm: x::arrI<mm> & mm = 4).
+expect Valid.

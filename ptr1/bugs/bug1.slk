@@ -1,0 +1,27 @@
+data arrI {
+  int val;
+}.
+
+/*
+Bug description: There is a type error when a NUM is added to a arrI, but there is no error when an arrI is added to a NUM.
+
+SLEEK's error message: "Failure("TYPE ERROR 1 : Found arrI but expecting NUM")".
+*/
+
+/*
+In the examples below it is at the definition of x2.
+
+Here, x2 = f+base gives a type error.
+*/
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=i+base+1
+ |- [f,n_1] x2::arrI<m2>@M & x2=f+base & 0<=f & f+1=n_1.
+print residue.
+expect Valid.
+
+// And here, x2 = base+f does not give a type error.
+infer[@classic] x1::arrI<m>@M & v<=m & 0<=i & x=(base:arrI)+i & 0<=(1+i) & 1+i+1=n & x1=i+base+1
+ |- [f,n_1] x2::arrI<m2>@M & x2=base+f & 0<=f & f+1=n_1.
+print residue.
+expect Valid.
+
+

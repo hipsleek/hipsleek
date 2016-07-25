@@ -1,0 +1,18 @@
+data arrI {
+  int val;
+}.
+
+/*
+Bug description: There is a warning message and the final validation is wrong, probably due to the warning message.
+
+SLEEK's error message: !!! **WARNING****cfutil.ml#142:Found duplicate star nodes in [ xx::arr_seg<i,m>@M, xx::arr_seg<m_118,>@M]
+*/
+
+//Example code:
+//(2)
+checkentail xx::arr_seg<i,n> & i<n 
+  |- [yy] yy::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+//This should be true, because the index i is smaller than the index n.
