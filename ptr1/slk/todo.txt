@@ -15,6 +15,12 @@ checkentail xx::arr_seg<2,mmm>
   
   xform: ((0<=i & i<n & self!=null) | (i=n & 0<=n & self!=null))
 
+!!! **astsimp.ml#2058:xform:
+ ((i=n & 0<=i & self!=null & BasePtr(self)) | 
+  (0<=i & self!=null & BasePtr(self) & (i+self)!=null & (1+i)<=n & 0<=(1+i)))
+
+!!!ex9b7b2-array-lemma-4-5-6.slk:5: 21: **astsimp.ml#1950:xform1: ((i=n & 0<=n & self!=null) | (0<=i & i<n & self!=null))
+
 (==solver.ml#8849==)
 xpure_heap#9@52@49
 xpure_heap#9 inp1 : xx::arr_seg<flted_14_70,mmm>@M
