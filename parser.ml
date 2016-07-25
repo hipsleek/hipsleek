@@ -541,6 +541,7 @@ let peek_try =
          | [GT,_;CASE,_] -> raise Stream.Failure 
          | [GT,_;VARIANCE,_] -> raise Stream.Failure 
          | [GT,_;SEMICOLONSEMICOLON,_] -> raise Stream.Failure
+         | [GT,_;COMMA,_] -> raise Stream.Failure
          | [GT,_;_] -> ()
          | [SEMICOLON,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
