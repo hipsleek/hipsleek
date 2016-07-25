@@ -9304,7 +9304,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   (* let () = print_string ("\n b rename "^(Iprinter.string_of_struc_formula  nf))in *)
   let nf = IF.rename_bound_var_struc_formula nf in
   (* rename session msg var *)
-  let nf = Session.irename_message_pointer nf in
+  (*let nf = Session.irename_message_pointer nf in*)
   (* let () = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula nf)^"\n") in *)
   (*convert anonym to exists*)
   let rec helper2 (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(nf:IF.struc_formula) allow_primes allow_post_vars 
