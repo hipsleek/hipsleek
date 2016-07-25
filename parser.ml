@@ -1341,7 +1341,10 @@ prot_view_decl:
           -> { vh with
                view_session_info = Some (mk_view_session_info ~sk:Protocol ());
                view_session_formula = Some (Session.ProtocolSession s)}
-  ]];
+   ]];
+
+session_msg_var:
+    [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
 
 protocol_formula:
   [ "semicolon" RIGHTA
@@ -1364,10 +1367,11 @@ protocol_formula:
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
             let loc = (get_pos_camlp4 _loc 1) in
             Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
-      | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; c = session_message ->
+      | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; msg_var = OPT session_msg_var; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
             let c = F.subst_stub_flow top_flow c in
-            Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, loc) c)
+            let mv = session_extract_msg_var msg_var loc in
+            Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
       | vh = view_header ->
             let name = vh.Iast.view_name in
             let ho_vars = vh.Iast.view_ho_vars in
@@ -1379,38 +1383,35 @@ protocol_formula:
 
 proj_view_decl:
   [[ vh = view_header; `EQEQ; f = formula
-          -> { vh with
-               view_session_info = Some (mk_view_session_info ~sk:!projection_kind ());
-               view_session_formula = Some f}
-  ]];
-
-formula:
-  [[ peek_tpprojection; p = tpprojection_formula -> let () = projection_kind := TPProjection in
-                                                    Session.TPProjectionSession p
-   | p = projection_formula -> let () = projection_kind := Projection in
-                               Session.ProjectionSession p
+     -> { vh with
+          view_session_info = Some (mk_view_session_info ~sk:!projection_kind ());
+          view_session_formula = Some f}
    ]];
 
-session_msg_var:
-    [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
+formula:
+    [[ peek_tpprojection; p = tpprojection_formula -> let () = projection_kind := TPProjection in
+       Session.TPProjectionSession p
+     | p = projection_formula -> let () = projection_kind := Projection in
+       Session.ProjectionSession p
+     ]];
 
 projection_formula:
-  [ "semicolon" RIGHTA
-    [
-        p1 = projection_formula; `SEMICOLONSEMICOLON; p2 = projection_formula ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProjection.mk_session_seq_formula p1 p2 loc
-    ]
+    [ "semicolon" RIGHTA
+        [
+          p1 = projection_formula; `SEMICOLONSEMICOLON; p2 = projection_formula ->
+          let loc = (get_pos_camlp4 _loc 1) in
+          Session.IProjection.mk_session_seq_formula p1 p2 loc
+        ]
     | [ p1 = projection_formula; `STAR; p2 = projection_formula ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProjection.mk_session_star_formula p1 p2 loc
+        let loc = (get_pos_camlp4 _loc 1) in
+        Session.IProjection.mk_session_star_formula p1 p2 loc
       | p1 = projection_formula; `ORWORD; p2 = projection_formula ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProjection.mk_session_or_formula p1 p2 loc
-    ]
+        let loc = (get_pos_camlp4 _loc 1) in
+        Session.IProjection.mk_session_or_formula p1 p2 loc
+      ]
     | [ `OPAREN; p = projection_formula; `CPAREN ->
-            p
-    ]
+        p
+      ]
     |
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
         let loc = (get_pos_camlp4 _loc 1) in
@@ -1428,11 +1429,11 @@ projection_formula:
       | vh = view_header ->
         let name = vh.Iast.view_name in
         let ho_vars = vh.Iast.view_ho_vars in
-            let params = vh.Iast.view_vars in
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProjection.SBase (Session.IProjection.mk_session_predicate name ho_vars params loc)
-    ]
-];
+        let params = vh.Iast.view_vars in
+        let loc = (get_pos_camlp4 _loc 1) in
+        Session.IProjection.SBase (Session.IProjection.mk_session_predicate name ho_vars params loc)
+      ]
+    ];
 
 tpprojection_formula:
   [ "semicolon" RIGHTA

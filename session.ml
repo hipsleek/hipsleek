@@ -527,12 +527,13 @@ module Protocol_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = ident * ident * VarGen.loc
+    type a = ident * ident * var * VarGen.loc
     type base = {
-      protocol_base_formula_sender   : ident;
-      protocol_base_formula_receiver : ident;
-      protocol_base_formula_message  : t;
-      protocol_base_formula_pos      : VarGen.loc;
+      protocol_base_formula_sender      : ident;
+      protocol_base_formula_receiver    : ident;
+      protocol_base_formula_message     : t;
+      protocol_base_formula_message_var : var;
+      protocol_base_formula_pos         : VarGen.loc;
     }
 
     let base_type = Protocol
@@ -542,10 +543,11 @@ module Protocol_base_formula =
     let string_of_session_base f =
       f.protocol_base_formula_sender ^ " -> " ^ f.protocol_base_formula_receiver ^ " : " ^ (print_message f)
 
-    let mk_base (sender, receiver, pos) formula = {
+    let mk_base (sender, receiver, mv, pos) formula = {
       protocol_base_formula_sender    = sender;
       protocol_base_formula_receiver  = receiver;
       protocol_base_formula_message   = formula;
+      protocol_base_formula_message_var = mv;
       protocol_base_formula_pos       = pos;
     }
 
@@ -559,10 +561,12 @@ module Protocol_base_formula =
 
     let get_base_pos base = base.protocol_base_formula_pos
 
+    let get_message_var base = base.protocol_base_formula_message_var
+
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = msg
-      
+
   end;;
 
 (* inst for iformula & cformula *)
@@ -616,6 +620,8 @@ module Projection_base_formula =
       Debug.no_1 "trans_base" pr1 pr2 trans_base base
 
     let get_base_pos base = base.projection_base_formula_pos
+
+    let get_message_var base = base.projection_base_formula_message_var
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, hoargs, params, pos) = Msg.get_node h_formula in
@@ -695,6 +701,8 @@ module TPProjection_base_formula =
 
     let get_base_pos base = base.tpprojection_base_formula_pos
 
+    let get_message_var base = base.tpprojection_base_formula_message_var
+
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
@@ -729,6 +737,7 @@ sig
   val mk_base : a -> t -> base
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
+  val get_message_var : base -> var
   val trans_h_formula_to_session_base : h_formula -> base
   val subst_base: ((var * var) list) -> base -> base
 end;;
