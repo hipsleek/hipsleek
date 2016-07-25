@@ -8824,7 +8824,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
 
-  let f = Session.IProjection.update_formula f in
+  (* let f = Session.IProjection.update_formula f in *)
   (* let f = Session.irename_message_pointer f in *)
 
   let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
@@ -9224,7 +9224,10 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = x_add_1 IF.rename_bound_vars f in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
-  let ann_vars = IF.collect_annot_vars f in 
+  let ann_vars = IF.collect_annot_vars f in
+  (* rename session msg var *)
+  let f = Session.IProjection.update_formula f in
+  (* let f = Session.irename_message_pointer f in *)
   let f,_,_ = x_add case_normalize_renamed_formula prog h [] f ann_vars in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   f
@@ -9306,7 +9309,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   (* let () = print_string ("case_normalize_struc_formula :: CHECK POINT 3 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
 
   (* rename session msg var *)
-  (* let nf = Session.IProjection.update_struc_formula nf in *)
+  let nf = Session.IProjection.update_struc_formula nf in
   (* let nf = Session.irename_message_pointer_in_struc nf in *)
 
   (* let () = print_string ("\n b rename "^(Iprinter.string_of_struc_formula  nf))in *)
