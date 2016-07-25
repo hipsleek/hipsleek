@@ -111,13 +111,16 @@ module type Message_type = sig
   val mk_hvar: ident -> ident list -> h_formula
   val mk_seq_wrapper: h_formula -> VarGen.loc -> session_kind -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
-  val set_param:  ident ->  VarGen.loc -> param
+  val id_to_param:  ident ->  VarGen.loc -> param
+  val var_to_param: var ->  VarGen.loc -> param
+  val param_to_var: param -> var
 
   val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val update_temp_heap_name: h_formula -> h_formula
   val update_formula: formula -> formula
-  val subst_param: (var * var) list -> param -> param
+  val subst_param:   (var * var) list -> param -> param
+  val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
 
   val is_base_formula: formula -> bool
@@ -233,7 +236,14 @@ module IForm = struct
     | F.Star node -> mk_seq_wrapper_node hform pos sk
     | _ -> hform
 
-  let set_param id pos = Ipure_D.Var((id,Unprimed), pos)
+  let id_to_param id pos = Ipure_D.Var((id,Unprimed), pos)
+
+  let var_to_param sv pos = Ipure_D.Var(sv, pos)
+
+  let param_to_var parm =
+    match parm with
+    | Ipure_D.Var(sv, pos) -> sv
+    | _ -> failwith (x_loc ^ "param_to_var is expecting a Ipure.var exp")
 
   let struc_formula_trans_heap_node fct struc_form =
     let fct_h = (fun x -> Some (fct x)) in
@@ -271,6 +281,8 @@ module IForm = struct
     helper hform
 
   let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
+
+  let subst_var    (sst: (var * var) list) p = F.subst_var_list sst p
 
   let subst_formula (sst: (var * var) list) f = F.subst_all sst f
 
@@ -408,7 +420,11 @@ module CForm = struct
 
   let mk_seq_wrapper hform pos sk = hform
 
-  let set_param id pos = CP.SpecVar(UNK,id,Unprimed)
+  let id_to_param id pos = CP.SpecVar(UNK,id,Unprimed)
+
+  let var_to_param sv pos = sv
+
+  let param_to_var parm = parm
 
   let struc_formula_trans_heap_node fct_h struc_form =
     let fct_h = (fun x -> Some (fct_h x)) in
@@ -425,18 +441,22 @@ module CForm = struct
     try  let _,res = List.find (fun (a,_) -> CP.eq_spec_var a p) sst in res
     with Not_found -> p
 
+  let subst_var  (sst: (var * var) list) v =
+    try  let _,res = List.find (fun (a,_) -> CP.eq_spec_var a v) sst in res
+    with Not_found -> v
+
   let subst_formula (sst: (var * var) list) f =
     let fromsv, tosv = List.split sst in
     CF.subst_avoid_capture fromsv tosv f
 
   let get_node h_formula =
     match h_formula with
-      | CF.ViewNode node -> (node.CF.h_formula_view_node,
-                             node.CF.h_formula_view_name,
-                             node.CF.h_formula_view_ho_arguments,
-                             node.CF.h_formula_view_arguments,
-                             node.CF.h_formula_view_pos)
-      | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
+    | CF.ViewNode node -> (node.CF.h_formula_view_node,
+                           node.CF.h_formula_view_name,
+                           node.CF.h_formula_view_ho_arguments,
+                           node.CF.h_formula_view_arguments,
+                           node.CF.h_formula_view_pos)
+    | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let get_or_formulae formula =
     match formula with
@@ -534,7 +554,7 @@ module Protocol_base_formula =
       let name = get_prim_pred_id trans_id in
       let args = [Msg.mk_rflow_formula base.protocol_base_formula_message] in
       let params = [base.protocol_base_formula_sender; base.protocol_base_formula_receiver] in
-      let params = List.map (fun a -> Msg.set_param a base.protocol_base_formula_pos) params in
+      let params = List.map (fun a -> Msg.id_to_param a base.protocol_base_formula_pos) params in
       Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos) base_type Transmission
 
     let get_base_pos base = base.protocol_base_formula_pos
@@ -551,12 +571,12 @@ module Projection_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = transmission * ident * param * VarGen.loc
+    type a = transmission * ident * var * VarGen.loc
     type base = {
       projection_base_formula_op          : transmission;
       projection_base_formula_channel     : ident;
       projection_base_formula_message     : t;
-      projection_base_formula_message_var : param;
+      projection_base_formula_message_var : var;
       projection_base_formula_pos         : VarGen.loc;
     }
 
@@ -584,8 +604,9 @@ module Projection_base_formula =
       let args = match base.projection_base_formula_op with
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.projection_base_formula_message]
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.projection_base_formula_message] in
-      let params = [base.projection_base_formula_message_var] in
-      let node = Msg.mk_node (ptr, name, args, params, base.projection_base_formula_pos) base_type tkind in
+      let pos = base.projection_base_formula_pos in
+      let params = [(Msg.var_to_param base.projection_base_formula_message_var pos)] in
+      let node = Msg.mk_node (ptr, name, args, params, pos) base_type tkind in
       node
       (* Msg.mk_seq_wrapper node base.projection_base_formula_pos base_type *)
 
@@ -609,6 +630,7 @@ module Projection_base_formula =
         | p::[] -> p
         | _     -> failwith (x_loc ^ ": Send/Receive nodes expect exactly one arg.")
       in
+      let mv = Msg.param_to_var mv in
       mk_base (transmission, channel, mv, pos) f
 
     let trans_h_formula_to_session_base h_formula =
@@ -619,7 +641,7 @@ module Projection_base_formula =
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base =
       { msg with
         projection_base_formula_message = subst_formula sst msg.projection_base_formula_message;
-        projection_base_formula_message_var = subst_param sst msg.projection_base_formula_message_var; }
+        projection_base_formula_message_var = subst_var sst msg.projection_base_formula_message_var; }
 
   end;;
 
@@ -628,11 +650,11 @@ module TPProjection_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = transmission * param * VarGen.loc
+    type a = transmission * var * VarGen.loc
     type base = {
       tpprojection_base_formula_op          : transmission;
       tpprojection_base_formula_message     : t;
-      tpprojection_base_formula_message_var : param;
+      tpprojection_base_formula_message_var : var;
       tpprojection_base_formula_pos         : VarGen.loc;
     }
 
@@ -659,8 +681,10 @@ module TPProjection_base_formula =
         | TSend -> [Msg.mk_rflow_formula ~kind:INFLOW base.tpprojection_base_formula_message]
         | TReceive -> [Msg.mk_rflow_formula ~kind:OUTFLOW base.tpprojection_base_formula_message]
       in
-      let params = [base.tpprojection_base_formula_message_var] in
-      let node = Msg.mk_node (ptr, name, args, params, base.tpprojection_base_formula_pos) base_type tkind in
+      let pos = base.tpprojection_base_formula_pos in
+      let params = [(Msg.var_to_param base.tpprojection_base_formula_message_var pos)] in
+      (* let param = List.map *)
+      let node = Msg.mk_node (ptr, name, args, params, pos) base_type tkind in
       node
       (* Msg.mk_seq_wrapper node base.tpprojection_base_formula_pos base_type *)
 
@@ -683,12 +707,13 @@ module TPProjection_base_formula =
         | p::[] -> p
         | _     -> failwith (x_loc ^ ": Send/Receive nodes expect exactly one arg.")
       in
+      let mv = Msg.param_to_var mv in
       mk_base (transmission, mv, pos) f
 
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = 
       { msg with
         tpprojection_base_formula_message = subst_formula sst msg.tpprojection_base_formula_message;
-        tpprojection_base_formula_message_var = subst_param sst msg.tpprojection_base_formula_message_var; }
+        tpprojection_base_formula_message_var = subst_var sst msg.tpprojection_base_formula_message_var; }
 
   end;;
 
@@ -858,7 +883,7 @@ module Make_Session (Base: Session_base) = struct
     let args = [] in (* not using HO preds here *)
     let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
-    let params = List.map (fun a -> Base.set_param a pos) params in
+    let params = List.map (fun a -> Base.id_to_param a pos) params in
     let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate in
     node
     (* Base.mk_seq_wrapper node pos Base.base_type *)

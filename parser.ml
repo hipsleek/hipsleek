@@ -1017,7 +1017,7 @@ let stmt_list_to_block t pos =
 
 let session_extract_msg_var msg_var loc =
   let msg_var = un_option msg_var session_msg_id in
-  P.Var((msg_var,Unprimed), loc)
+  (msg_var,Unprimed)
 
 (* let arg_option = SHGram.Entry.mk "arg_option" *)
 let hip_with_option = SHGram.Entry.mk "hip_with_option"
