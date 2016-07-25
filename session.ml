@@ -8,6 +8,7 @@ open Gen.BList
 
 module F = Iformula
 module P = Ipure_D
+module IP = Ipure
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
@@ -116,6 +117,8 @@ module type Message_type = sig
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val update_temp_heap_name: h_formula -> h_formula
   val update_formula: formula -> formula
+  val subst_param: (var * var) list -> param -> param
+  val subst_formula: (var * var) list -> formula -> formula
 
   val is_base_formula: formula -> bool
   val get_h_formula: formula -> h_formula
@@ -267,6 +270,10 @@ module IForm = struct
       Debug.no_1 "update_temp_heap_name" pr pr helper hform in
     helper hform
 
+  let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
+
+  let subst_formula (sst: (var * var) list) f = F.subst_all sst f
+
   let is_base_formula formula =
     match formula with
       | F.Base f -> true
@@ -414,6 +421,14 @@ module CForm = struct
 
   let update_formula f = f
 
+  let subst_param  (sst: (var * var) list) p =
+    try  let _,res = List.find (fun (a,_) -> CP.eq_spec_var a p) sst in res
+    with Not_found -> p
+
+  let subst_formula (sst: (var * var) list) f =
+    let fromsv, tosv = List.split sst in
+    CF.subst_avoid_capture fromsv tosv f
+
   let get_node h_formula =
     match h_formula with
       | CF.ViewNode node -> (node.CF.h_formula_view_node,
@@ -526,6 +541,8 @@ module Protocol_base_formula =
 
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
+    let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = msg
+      
   end;;
 
 (* inst for iformula & cformula *)
@@ -599,6 +616,11 @@ module Projection_base_formula =
       let pr2 = string_of_session_base in
       Debug.no_1 "trans_h_formula_to_session_base" pr1 pr2 trans_h_formula_to_session_base h_formula
 
+    let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base =
+      { msg with
+        projection_base_formula_message = subst_formula sst msg.projection_base_formula_message;
+        projection_base_formula_message_var = subst_param sst msg.projection_base_formula_message_var; }
+
   end;;
 
 module TPProjection_base_formula =
@@ -663,6 +685,11 @@ module TPProjection_base_formula =
       in
       mk_base (transmission, mv, pos) f
 
+    let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = 
+      { msg with
+        tpprojection_base_formula_message = subst_formula sst msg.tpprojection_base_formula_message;
+        tpprojection_base_formula_message_var = subst_param sst msg.tpprojection_base_formula_message_var; }
+
   end;;
 
 module type Session_base =
@@ -678,6 +705,7 @@ sig
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
   val trans_h_formula_to_session_base : h_formula -> base
+  val subst_base: ((var * var) list) -> base -> base
 end;;
 
 (* ============== session type ================ *)
@@ -1103,7 +1131,7 @@ let get_tpprojection session =
 
 let is_projection si = let fct info = let sk = info.session_kind in
                        (match sk with
-                         | Projection -> true
+                         | Projection -> true 
                          | TPProjection -> true
                          | _ -> false) in
                        Gen.map_opt_def false fct si
