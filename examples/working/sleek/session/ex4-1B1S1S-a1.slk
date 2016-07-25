@@ -14,17 +14,17 @@ expect Fail.
 
 //4
 checkentail
- x::Sess{ self::Seq{ aa::S{ - emp&0<=msg}<>,
-          self::Seq{ aa::R{ + emp&msg=0}<>, bb::S{ - emp&msg=0}<>}<>}<>}<>
-|- x::Sess{ self::Seq{ aa::S{ - emp&msg=0}<>, self::Seq{aa::R{ + emp&0<=msg}<>, emp}<>}<>}<>.
+ x::Sess{ self::Seq{ aa::S{ - emp&0<=msg}<msg>,
+          self::Seq{ aa::R{ + emp&msg=0}<msg>, bb::S{ - emp&msg=0}<msg>}<>}<>}<>
+|- x::Sess{ self::Seq{ aa::S{ - emp&msg=0}<msg>, self::Seq{aa::R{ + emp&0<=msg}<msg>, emp}<>}<>}<>.
 expect Fail.
 
 //5
-checkentail bb::S{ - emp&msg=0}<> |- emp.
+checkentail bb::S{ - emp&msg=0}<msg> |- emp.
 expect Valid.
 
 //6
-checkentail_exact bb::S{ - emp&msg=0}<> |- emp.
+checkentail_exact bb::S{ - emp&msg=0}<msg> |- emp.
 expect Fail.
 
 //7

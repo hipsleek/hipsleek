@@ -10,19 +10,19 @@ checkentail 0<=x |- x=0.
 expect Fail.
 
 //3
-checkentail x::S{- 0<=x}<> |- x::S{- x=0}<>.
+checkentail x::S{- 0<=x}<msg> |- x::S{- x=0}<msg>.
 expect Valid.
 
 //4
-checkentail x::S{- x=0}<> |- x::S{- 0<=x}<>.
+checkentail x::S{- x=0}<msg> |- x::S{- 0<=x}<msg>.
 expect Fail.
 
 //5
-checkentail x::R{+ 0<=x}<> |- x::R{+ x=0}<>.
+checkentail x::R{+ 0<=x}<msg> |- x::R{+ x=0}<msg>.
 expect Fail.
 
 //6
-checkentail x::R{+ x=0}<> |- x::R{+ 0<=x}<>.
+checkentail x::R{+ x=0}<msg> |- x::R{+ 0<=x}<msg>.
 expect Valid.
 
 pred_sess_proj pp1<aa> == aa?0.
