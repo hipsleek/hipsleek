@@ -80,6 +80,7 @@ self::Seq{a, self::Seq{b, self::Seq{c,d}}}
 =============================================
 
 Status: Solved
+Status: Reverted, we might not require it.
 
 (2) NORM2
 to normalize second HO arg of seq such that
@@ -309,6 +310,8 @@ for y:t1 and yy:t2 to check if
 ./sleek msess/examples/ex6b1-S-and-R-no-arg.slk --pcp --dis-print-compact-projection-formula
 =============================================
 
+Status: Solved
+
 norm of seq is a bit broken: too  many seq inserted
 Seq should be inserted only for last element or when
 the session formula contains a single base (incl SOr).
@@ -335,14 +338,25 @@ lhs should be:
 
 x::Sess{ . self::Seq{ . chan::R{ + msg::node<Anon_12,Anon_13>}<>,
          . self::Seq{ . chan::R{ + emp&msg=null}<>, emp}<>}<>}<>
-   
-=============================================
-=============================================
-
 
 =============================================
 =============================================
 
+Remove msg prim pred from hodef and parser,
+as well as node kind.
+
+=============================================
+=============================================
+
+Status: solved
+
+NORM3, similar to NORM1 but without parser tricks.
+
+self::Seq{self::Seq{a.b}, self::Seq{c,d}}
+ |
+ |
+ V
+self::Seq{a, self::Seq{b, self::Seq{c,d}}}
 
 =============================================
 =============================================
