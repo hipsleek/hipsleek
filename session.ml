@@ -866,6 +866,29 @@ module Make_Session (Base: Session_base) = struct
     let pr2 = !Base.print_h_formula in
     Debug.no_1 "trans_from_session" pr pr2 trans_from_session s
 
+  let trans_session_formula fnc s =
+    let rec helper fnc s =
+      let r = fnc s in
+      match r with
+      | Some e -> e
+      | None ->
+        match s with
+        | SSeq s  ->
+          let arg1 = helper fnc s.session_seq_formula_head in
+          let arg2 = helper fnc s.session_seq_formula_tail in
+          mk_session_seq_formula arg1 arg2 s.session_seq_formula_pos
+        | SOr s   ->
+          let arg1 = helper fnc s.session_seq_formula_or1 in
+          let arg2 = helper fnc s.session_seq_formula_or2 in
+          mk_session_or_formula arg1 arg2 s.session_seq_formula_pos
+        | SStar s ->
+          let arg1 = helper fnc s.session_seq_formula_star1 in
+          let arg2 = helper fnc s.session_seq_formula_star2 in
+          mk_session_star_formula arg1 arg2 s.session_seq_formula_pos
+        | _ -> s
+    in
+    helper fnc s
+
   let get_pos s = match s with
     | SSeq s  -> s.session_seq_formula_pos
     | SOr s   -> s.session_seq_formula_pos
