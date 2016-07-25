@@ -1936,7 +1936,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          let addr_vars = CP.remove_dups_svl addr_vars' in
          let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (x_add TP.simplify_a 10) in
          let () = x_ninfo_pp ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) no_pos in
-         let xform1 = (x_add Excore.simplify_with_label (TP.simplify_with_pairwise 1) (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
+         let xform1 = (x_add Excore.simplify_with_label (TP.simplify_with_pairwise 1) (x_add_1 CP.drop_rel_formula (MCP.pure_of_mix xform))) in
          let ls_disj = CP.list_of_disjs xform1 in
          let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
          (* let () = print_endline ("\n xform1: " ^ (Cprinter.string_of_pure_formula xform1)) in *)
@@ -2055,7 +2055,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let () = x_tinfo_hp (add_str "(1) view_x_formula" Cprinter.string_of_mix_formula) vdef.C.view_x_formula no_pos in
         (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
         let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (x_add TP.simplify_a 10) in
-        let () = x_tinfo_hp (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
+        let () = x_binfo_hp (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
         let xform1 =
           if vdef.C.view_kind = View_EXTN then
             let r = x_add Predicate.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name
