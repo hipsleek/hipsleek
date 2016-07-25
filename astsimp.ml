@@ -8823,8 +8823,10 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   IF.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
+
   let f = Session.IProjection.update_formula f in
-  let f = Session.irename_message_pointer f in
+  (* let f = Session.irename_message_pointer f in *)
+
   let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
     ((ident*primed) list) * (IP.exp list) * ((ident*primed) list) * IP.formula =
 
@@ -9243,11 +9245,12 @@ and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula)
 and case_normalize_struc_formula i prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes
     allow_post_vars  (lax_implicit:bool)
     strad_vs :IF.struc_formula* ((ident*primed)list) =
+  let pr3 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
   let pr0 = pr_primed_ident_list (* pr_list (fun (i,p) -> i) *) in
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 (x,_) = pr1 x in
-  Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 
-    (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) h p f
+  Debug.no_4_num i "case_normalize_struc_formula" pr3 pr0 pr0 pr1 pr2 
+    (fun _ _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) prog  h p f
 
 
 and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(f:IF.struc_formula) 
@@ -9302,10 +9305,12 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   let nf = IF.float_out_struc_min_max nf in
   (* let () = print_string ("case_normalize_struc_formula :: CHECK POINT 3 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
 
+  (* rename session msg var *)
+  (* let nf = Session.IProjection.update_struc_formula nf in *)
+  (* let nf = Session.irename_message_pointer_in_struc nf in *)
+
   (* let () = print_string ("\n b rename "^(Iprinter.string_of_struc_formula  nf))in *)
   let nf = IF.rename_bound_var_struc_formula nf in
-  (* rename session msg var *)
-  (* let nf = Session.irename_message_pointer nf in *)
   (* let () = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula nf)^"\n") in *)
   (*convert anonym to exists*)
   let rec helper2 (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(nf:IF.struc_formula) allow_primes allow_post_vars 

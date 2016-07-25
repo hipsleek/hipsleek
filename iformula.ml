@@ -3214,6 +3214,10 @@ let transform_formula_simp trans_hf (e:formula):formula =
   in
   helper  e
 
+let transform_formula_simp f (e:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "transform_formula_simp" pr pr (fun _ -> transform_formula_simp f e) e
+
 let rec transform_struc_formula_x f (e:struc_formula) : struc_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
   let r = f_e_f e in 
