@@ -1,0 +1,62 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & BasePtr(self)
+  .
+
+checkentail 
+ base::arr_seg<j,m> & a=base+j //& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & 
+         a=base2+j1
+         //b=base2+j1
+   .
+print residue.
+
+
+
+/*
+# bug2.slk 
+
+checkentail 
+ base::arr_seg<j,m> & a=base+j //& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & 
+         a=base2+j1
+         //b=base2+j1
+
+# Can we add BasePtr(..) to LHS?
+
+!!! **context.ml#713:rhs_node: base2::arr_seg<j1,m1>@M
+!!! **context.ml#714:rhs_rest: emp
+!!! **context.ml#735:rhs_pure, before same_base_rhs: a=j1+base2
+!!! **cpure.ml#16224:base_ptr:(true,BasePtr)
+
+# Can we instantiate base=base2 below?
+
+Type error cuased by a=j+base instead of a=base+j
+
+(==typeinfer.ml#894==)
+gather_type_info_exp@1101
+gather_type_info_exp inp1 :j+base
+gather_type_info_exp inp2 :[(TVar__59:59:TVar[59])(a:53:arrI)(TVar__58:58:arrI)(m:56:TVar[57])(TVar__57:57:TVar[57])(TVar__56:56:TVar[57])(i:55:int)(TVar__55:55:int)(i_2145:49:int)(TVar__54:54:int)(TVar__53:53:arrI)(a_2148:48:arrI)(TVar__52:52:arrI)(m2:51:TVar[51])(TVar__51:51:TVar[51])(j:50:TVar[51])(TVar__50:50:TVar[51])(n_2133:47:NUM)(flted_6_2134:46:NUM)(base:45:arrI)]
+gather_type_info_exp inp3 :TVar[59]
+gather_type_info_exp@1101 EXIT ExceptionFailure("TYPE ERROR 1 : Found arrI but expecting NUM")Occurred!
+
+ERROR: at bug2a-type-err-ex6d4b-ptr-sorted.slk_12:6_12:12
+Message: TYPE ERROR 1 : Found arrI but expecting NUM
+Exception(must_unify_expect):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+Exception(unify_ptr_arithmetic):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+Exception(gather_type_info_exp):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+Exception(gather_type_info_b_formula):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+Exception(gather_type_info_formula):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+Exception(meta_to_formula):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+Exception(run_infer_one_pass):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+Exception(run_entail_check):Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+
+Entail 1: EXCast. Failure("TYPE ERROR 1 : Found arrI but expecting NUM")
+: no residue 
+
+
+*/

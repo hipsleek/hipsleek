@@ -1,0 +1,59 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<m<=n 
+     -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+checkentail i<m<=n & Univ(m) & i+1<n &i>=0
+  |- m=i+1.
+expect Valid.
+print residue.
+
+*/
+
+
+/*
+# ex9b4a.slk
+
+../../sleek ex9b4a-array-lemma.slk -dre "process_mat\|compute_ac\|process_ac" -dd-steps --trace-log-num 5 > 1
+
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m) & i+1<n &i>=0
+   |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+*/
+
+checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+  & Univ(m) & (1+i)<n & 0<=i |- m=i+1.
+print residue.
+
+/*
+checkentail xx::arr_seg<m,n> & i<m<=n & Univ(m) & i+1<n &i>=0
+   |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+checkentail (((0<=m & m<n & xx!=null) | (m=n & 0<=n & xx!=null))) & i<m & m<=n & Univ(m) & (1+i)<n & 0<=i |-  m=i+1.
+
+checkentail (0<=m & m<=n & xx!=null) & i<m & m<=n & Univ(m) & (1+i)<n & 0<=i |-  m=i+1.
+
+checkentail (0<=m & m<n)|(m=n & n>=0) |- m<=n & m>=0.
+
+checkentail  m<=n & m>=0 |- (0<=m & m<n)|(m=n & n>=0).
+
+*/
+
+checkentail m>=0 & (m<n|m=n) & i<m & Univ(m) & (1+i)<n & 0<=i |-  m=i+1.
+
+checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m) & (1+i)<n & 0<=i |-  m=i+1.
+
+checkentail m>=0 & m=n & i<m & Univ(m) & (1+i)<n & 0<=i |-  m=i+1.

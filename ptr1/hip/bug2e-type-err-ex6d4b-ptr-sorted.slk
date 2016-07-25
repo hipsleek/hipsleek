@@ -1,0 +1,62 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & BasePtr(self)
+  .
+
+/*
+checkentail 
+ base::arr_seg<j,m> & a1=base+j & a1=a//& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & 
+         a=base2+j1
+         //b=base2+j1
+   .
+expect Valid.
+print residue.
+*/
+
+checkentail 
+ base::arr_seg<j,m> & a1=base+j & a1=a-1//& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & 
+         a=base2+j1
+         //b=base2+j1
+   .
+expect Valid.
+print residue.
+
+/*
+# bug2e.slk 
+
+checkentail 
+ base::arr_seg<j,m> & a1=base+j & a1=a-1//& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & 
+         a=base2+j1
+         //b=base2+j1
+   .
+expect Valid.
+print residue.
+
+# why did choose_context fail?
+
+!!! **context.ml#870:lhs_w_rhs_inst: a1+1=a & a1=j+base & j<=m & 0<=j & BasePtr(base) & a=j1+base2 & base2=base
+!!! **context.ml#871:rhs: base>=base2
+!!! **context.ml#872:lhs>=rhs_ptr(r):true
+!!! **context.ml#873:estate:  base::arr_seg<j,m>@M&a1+1=a & a1=j+base&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [base2; j1; m1]
+ es_subst (from,to): []:[]
+ 
+!!! **context.ml#874:lhs_w_rhs_inst: a1+1=a & a1=j+base & j<=m & 0<=j & BasePtr(base) & a=j1+base2 & base2=base
+!!! **context.ml#910:lhs=rhs_ptr: base=base2
+(==context.ml#3961==)
+choose_context@6
+choose_context inp1 :LHS node: base::arr_seg<j,m>@M
+choose_context inp2 :RHS node: base2::arr_seg<j1,m1>@M
+choose_context inp3 :LHS pure: a1+1=a & a1=j+base
+choose_context inp4 :RHS pure: a=j1+base2
+choose_context inp5 :right alias:[]
+choose_context@6 EXIT:[]
+
+*/

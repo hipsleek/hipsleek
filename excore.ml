@@ -45,41 +45,89 @@ module UnCa=
            let _ = miss_cache := !miss_cache + 1 in
            res
    end;;
-
+  
 let h_2_mem_obj = object (self)
-  val mutable state = CP.mkTrue no_pos
-  val mutable list = []
-  method logging s =
-    (* let () = print_endline_quiet ("XXXX "^(s)) in *)
-    ()
-  method init =
-    self # logging "init" ; 
-    let () = state <- CP.mkTrue no_pos in
-    let () = list <- [] in
-    ()
-  method notempty = list!=[]
-  method add_pure p = 
-    self # logging ((add_str "add_pure" !CP.print_formula) p); 
-    let () = state <- CP.mkAnd state p no_pos in
-    ()
-  method get_id v e = 
-    self # logging "get_id";
-    let eq_v = try
-        fst(List.find (fun (_,e2) ->
-            let rhs = (CP.mk_eq_exp e e2) in
-            let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
-            let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in 
-            !CP.tp_imply state rhs
-          ) list)
-      with _ ->  
-        let x = CP.fresh_spec_var v in
-        let () = list <- (x,e)::list in
-        x
-    in eq_v
-  method string_of =
-    let s1 = (add_str "state" !CP.print_formula) state in
-    let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in
-    s1^s2
+                    val mutable state = CP.mkTrue no_pos
+                    val mutable list = []
+                    method logging s =
+                      (* let () = print_endline_quiet ("XXXX "^(s)) in *)
+                      ()
+                    method init =
+                      self # logging "init" ; 
+                      let () = state <- CP.mkTrue no_pos in
+                      let () = list <- [] in
+                      ()
+                    method notempty = list!=[]
+                    method add_pure p = 
+                      self # logging ((add_str "add_pure" !CP.print_formula) p); 
+                      let () = state <- CP.mkAnd state p no_pos in
+                      ()
+                    method get_id v e = 
+                      self # logging "get_id";
+                      let eq_v = try
+                          fst(List.find (fun (_,e2) ->
+                                  let rhs = (CP.mk_eq_exp e e2) in
+                                  let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
+                                  let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in 
+                                  !CP.tp_imply state rhs
+                                ) list)
+                        with _ ->  
+                          let x = CP.fresh_spec_var v in
+                          let () = list <- (x,e)::list in
+                          x
+                      in eq_v
+                    method string_of =
+                      let s1 = (add_str "state" !CP.print_formula) state in
+                      let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in
+                      s1^s2
+                  end;;
+  
+let h_2_mem_obj_intv = object (self)
+    val mutable state = CP.mkTrue no_pos
+    val mutable store_list = []
+    method logging s =
+      (* let () = print_endline_quiet ("XXXX "^(s)) in *)
+      ()
+    method init =
+      self # logging "init" ; 
+      let () = state <- CP.mkTrue no_pos in
+      let () = store_list <- [] in
+      ()
+    method notempty = store_list!=[]
+    method add_pure p =
+      self # logging ((add_str "add_pure" !CP.print_formula) p); 
+      let () = state <- CP.mkAnd state p no_pos in
+      ()
+    method get_id v e1 e2 f= 
+      self # logging "get_id";
+      let eq_v =
+        try
+          let (_,_,given_name)=
+            (List.find (fun (base,(eh,et),_) ->
+                 let base_rhs = BForm ((CP.mkEq_b (Var (v,no_pos)) (Var (base,no_pos)) no_pos),None) in
+                 let () = y_tinfo_hp (add_str "get_id: f " !CP.print_formula) f in
+                 let () = y_tinfo_hp (add_str "get_id: base_rhs " !CP.print_formula) base_rhs in  
+                 if (!CP.tp_imply f base_rhs)
+                 then
+                   let rhs = (CP.mkNot_s (CP.mkOr (BForm (((CP.mkGte eh e2 no_pos),None),None)) (BForm (((CP.mkGte e1 et no_pos),None),None)) None no_pos)) in                    
+                   let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
+                   let () = self # logging ((add_str "rhs" !CP.print_formula) rhs) in
+                   let () = y_tinfo_hp (add_str "get_id: lhs " !CP.print_formula) state in
+                   let () = y_tinfo_hp (add_str "get_id: rhs " !CP.print_formula) rhs in
+                   !CP.tp_imply f rhs
+                 else
+                   false) store_list)
+          in
+          given_name
+        with _ ->  
+          let x = CP.fresh_spec_var v in
+          let () = store_list <- (v,(e1,e2),x)::store_list in
+          x
+      in eq_v
+    (* method string_of = *)
+    (*   let s1 = (add_str "state" !CP.print_formula) state in *)
+    (*   let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in *)
+    (*   s1^s2 *)
 end;;
 
 let wrap_h_2_mem loc f x =
@@ -629,7 +677,11 @@ module EPURE =
 
     (* ([a,a,b]  --> a=1 & a=2 & b=3 *)
     let baga_enum baga : formula =
-      Elt.get_pure ~enum_flag:true baga
+      (* Elt.get_pure ~enum_flag:true baga *)
+      (* Why enum_flag is true? *)
+      if !Globals.use_baga
+      then Elt.get_pure baga
+      else Elt.get_pure ~enum_flag:true baga
       (* let baga = Elt.conv_var baga in *)
       (* match baga with *)
       (* | [] -> mkTrue no_pos *)
@@ -700,7 +752,7 @@ module EPURE =
 
     let conv_intv_disj (efpd1:epure_disj)  =
       let proc (baga,f) =
-        let () = h_2_mem_obj # add_pure f in
+        (* let () = h_2_mem_obj_intv # add_pure f in *)
         let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
         let lst2 = List.map (fun e -> 
             let v =  Elt.get_interval e in
@@ -711,8 +763,8 @@ module EPURE =
         let lst2 = List.filter (fun (id,(_,d)) -> 
             let rhs = Cpure.mk_exp_geq d 1 in
             !Cpure.tp_imply f rhs) lst2 in
-        let lst2 = List.concat (List.map (fun (id,(e_ind,_)) -> 
-            let nid = h_2_mem_obj # get_id id e_ind in
+        let lst2 = List.concat (List.map (fun (id,(eh,et)) -> 
+            let nid = h_2_mem_obj_intv # get_id id eh et f in
             Elt.from_var [nid]) lst2) in
         (lst1@lst2,f)
       in
@@ -755,7 +807,7 @@ module EPURE =
     let ef_unsat_0 ?(shape=false) ((b,p) as f : epure) : bool =
       (* use ef_conv_enum *)
       if shape then Ssat.SS.is_s_unsat (Elt.conv_var b) p else
-      let cf = ef_conv_enum f in
+      let cf = x_add_1 ef_conv_enum f in
       (* if !Globals.delay_eelim_baga_inv then *)
       (*   (\* if unsat(cf) return true *\) *)
       (*   let ps = list_of_conjs p in *)
@@ -772,7 +824,7 @@ module EPURE =
       Debug.no_1 "ef_unsat" string_of(* _ef_pure *) string_of_bool
           (fun _ ->  ef_unsat_0 ~shape:shape f) f
 
-    let unsat is_shape (b,f) = ef_unsat_0 ~shape:is_shape (b, f)
+    let unsat is_shape (b,f) = x_add_1 (ef_unsat_0 ~shape:is_shape) (b, f)
 
     let norm is_shape (efp) =
       if unsat is_shape efp then mk_false
@@ -845,8 +897,8 @@ module EPURE =
     (* convert conseq with ef_conv *)
 
     let ef_imply_0 (ante : epure) (conseq : epure) : bool =
-      let a_f = ef_conv_enum ante in
-      let c_f = ef_conv conseq in
+      let a_f = x_add_1 ef_conv_enum ante in
+      let c_f = x_add_1 ef_conv conseq in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
       not (!is_sat_raw (Mcpure.mix_of_pure f))
@@ -887,21 +939,24 @@ module EPURE =
       res
 
     let ef_imply_disj_x (ante : epure_disj) (conseq : epure_disj) : bool =
-      let a_f = ef_conv_enum_disj ante in
-      let c_f = ef_conv_disj conseq in
+      let a_f = x_add_1 ef_conv_enum_disj ante in
+      let c_f = x_add_1 ef_conv_disj conseq in
+      let () = y_binfo_hp (add_str "ef_imply_disj_x a_f: " !Cpure.print_formula) a_f in
+      let () = y_binfo_hp (add_str "ef_imply_disj_x c_f: " !Cpure.print_formula) c_f in
       (* a_f --> c_f *)
       let f = mkAnd a_f (mkNot_s c_f) no_pos in
       not (x_add_1 !is_sat_raw (Mcpure.mix_of_pure f))
 
     let ef_imply_disj_0 (ante : epure_disj) (conseq : epure_disj) : bool =
-      (* Debug.no_2 "ef_imply_disj" string_of_ef_pure_disj string_of_ef_pure_disj string_of_bool *)
+      (* Why this procedure is not tracked? *)
+      Debug.no_2 "ef_imply_disj" string_of_disj string_of_disj string_of_bool
       ef_imply_disj_x ante conseq
 
     let imply_disj (ante : epure_disj) (conseq : epure_disj) : bool =
-      let () = x_tinfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let () = x_binfo_pp ("Omega call before imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let f = List.map (fun (b,f) -> (b,f)) in
-      let r = ef_imply_disj_0 (f ante) (f conseq) in
-      let () = x_tinfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+      let r = x_add ef_imply_disj_0 (f ante) (f conseq) in
+      let () = x_binfo_pp ("Omega call after imply disj: " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       r
 
     let pair_cmp (x1,x2) (y1,y2) =

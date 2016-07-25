@@ -1,0 +1,53 @@
+P:={[n,n1,n2,n3]:exists(n1:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0)};
+Q:={[n,n1,n2,n3]:exists(n1:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0 & n1>=9)};
+
+P;Q;
+P subset Q;
+Q subset P;
+
+P:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0)};
+Q:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0 & n1>=9)};
+
+P;Q;
+P subset Q;
+Q subset P;
+
+
+P:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0)};
+Q:={[n,n1,n2,n3]:exists(n1,n2,n3:n>9 & n1+n2+n3=n & n1>=0 & n2>=0 & n3>=0 & n1>=9 & n2>=2)};
+
+P;Q;
+P subset Q;
+Q subset P;
+
+
+P:={[xx,i,n]:exists(m  :
+(((0<=m & 
+    ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+    & i<n & 0<=i & xx>0)};
+
+Q:={[xx,i,n]:exists(m  :
+(((0<=m & 
+    ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+    & i<n & 0<=i & m<=i+1 & xx>0)};
+
+P;Q;
+
+P subset Q;
+Q subset P;
+
+
+P:={[xx,i,n]:exists(m  :
+(((0<=m & 
+    ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+    & i<n & 0<=i & xx>0)};
+
+Q:={[xx,i,n]:exists(m  :
+(((0<=m & 
+    ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+    & i<n & 0<=i & m=i+0 & xx>0)};
+
+P;Q;
+
+P subset Q;
+Q subset P;

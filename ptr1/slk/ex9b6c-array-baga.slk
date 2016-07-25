@@ -1,0 +1,61 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+   or self::node<_,q>*q::ll<n-1>
+ inv BG([],self=null & n=0) | BG([self],n>0).
+
+
+// (6)
+checkentail x::ll<n> * y::ll<m> & n>0 & m>0 |- x!=y.
+expect Valid.
+print residue.
+
+
+/*
+# ex9b6c.slk  
+
+(==solver.ml#9034==)
+imply_mix_formula#1@133
+imply_mix_formula#1 inp1 : 0<m & 0<n & (((x=null & n=0) | (x!=null & 0<n))) & 
+ (((y=null & m=0) | (y!=null & 0<m))) & x!=y
+imply_mix_formula#1 inp2 :Some( 0<m & 0<n & (((x=null & n=0) | (x!=null & 0<n))) & 
+ (((y=null & m=0) | (y!=null & 0<m))) & x!=y)
+imply_mix_formula#1 inp3 : x!=y
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@133 EXIT:(true,Some(([ 0<m & 0<n & x!=y & x=null & n=0 & y!=null & 0<m, 0<m & 0<n & x!=y & x!=null & 0<n & y=null & m=0, 0<m & 0<n & x!=y & x!=null & 0<n & y!=null & 0<m],[ 0<m & 0<n & x!=y & x=null & n=0 & y!=null & 0<m, 0<m & 0<n & x!=y & x!=null & 0<n & y=null & m=0, 0<m & 0<n & x!=y & x!=null & 0<n & y!=null & 0<m])))
+
+
+checkentail arr::arr_seg<1,2> * arr::arr_seg<1,2> |- false.
+expect Valid.
+print residue.
+
+Validate 4: Expecting(3)Valid BUT got : Fail_May
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  0<n & (((y=null & m=0) | (y!=null & 0<m))) & 
+ (((x=null & n=0) | (x!=null & 0<n))) |-  x!=y. LOCS:[0;8;30] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+
+--use-baga
+ baga over inv: [([], self=null & n=0),([self], 0<n)]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 0<n)]
+  xform: ((self=null & n=0) | (self!=null & 0<n))
+
+--inv-baga (can perform inference) 
+ baga inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 1<=n)]
+  baga under inv: [([], self=null & n=0),([self], 1<=n)]
+
+*/

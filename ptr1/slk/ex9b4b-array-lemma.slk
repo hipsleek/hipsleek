@@ -1,0 +1,21 @@
+
+
+
+checkentail (((0<=m & m<n))) & i<m & m<=n 
+  & Univ(m) & (1+i)<n & 0<=i |- m=i+1.
+print residue.
+
+
+checkentail (((m=n & 0<=n))) & i<m & m<=n 
+  & Univ(m) & (1+i)<n & 0<=i |- m=i+1.
+print residue.
+
+
+checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+  & Univ(m) & (1+i)<n & 0<=i  & m=i+1|- m=i+1.
+print residue.
+
+checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n 
+  & Univ(m) & (1+i)<n & 0<=i |- m=i+1.
+print residue.
+

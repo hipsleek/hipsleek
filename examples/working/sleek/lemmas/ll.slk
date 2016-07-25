@@ -30,6 +30,14 @@ lemma "F9" self::ll<> <-> self::ll_s<n>.
 
 checkentail x::ll_s<n> |- x::ll<>.
 expect Valid.
+print residue.
 
 checkentail x::ll_s<n> |- x::ll<> * y::ll<>.
+expect Valid.
+print residue.
+// y may be implicitly instantiated to y=null
+
+checkentail x::ll_s<n> & y!=null |- x::ll<> * y::ll<>.
 expect Fail.
+print residue.
+

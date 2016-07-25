@@ -1,0 +1,64 @@
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+//   n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+
+lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma self::lseg<n, p> & n>=a & a>=0  -> self::lseg<a, r> * r::lseg<b, p> & n=a+b.
+//above cannot work!
+
+
+checkentail x::lseg<n, p> & n > 9 |- x::lseg<nn1, r1> * r1::lseg<n2, r2> & nn1 >= 9 & n2 >= 2.
+expect Fail.
+print residue.
+//print residue.
+// invalid-exception
+
+/*
+# bug7b.slk
+
+checkentail x::lseg<n, p> & n > 9 |- x::lseg<nn1, r1> * r1::lseg<n2, r2> & nn1 >= 9 & n2 >= 2.
+expect Fail.
+
+# why is n2 expl rather than impl?
+
+@7! **solver.ml#8940:es_expl_vars:[nn1,n2]
+@7! **solver.ml#8941:es_impl_vars:[]
+
+# why did n2 become existential ??
+
+@7! **solver.ml#8974:rhs_p : : 2<=n2
+@7! **solver.ml#8975:conseq0 : : exists(n2:2<=n2)
+@7! **solver.ml#8976:conseq1-1 : : exists(n2:2<=n2)
+
+# why failure here not recognized?
+
+(==solver.ml#10497==)
+imply_timeout_univ@203@202@180@179
+imply_timeout_univ inp1 :[b_126,a_125]
+imply_timeout_univ inp2 : n=b_126+a_125 & 0<=a_125 & 0<=b_126 & Univ(a_125) & Univ(b_126) & 9<n & 
+ r1=r_132 & nn1=a_125 & r1=r_132 & 9<=a_125 & r2=p & n2=b_126 & r2=p
+imply_timeout_univ inp3 : 2<=b_126
+imply_timeout_univ@203 EXIT:false
+
+(==solver.ml#11269==)
+process_early_univ@202@180@179
+process_early_univ inp1 :[b_126,a_125]
+process_early_univ inp2 : n=b_126+a_125 & 0<=a_125 & 0<=b_126 & Univ(a_125) & Univ(b_126) & 9<n & 
+ r1=r_132 & nn1=a_125 & r1=r_132 & 9<=a_125 & r2=p & n2=b_126 & r2=p
+process_early_univ inp3 : 2<=b_126
+process_early_univ@202 EXIT:(false, n=b_126+a_125 & 0<=a_125 & 0<=b_126 & Univ(a_125) & Univ(b_126) & 9<n & 
+ r1=r_132 & nn1=a_125 & r1=r_132 & 9<=a_125 & r2=p & n2=b_126 & r2=p)
+
+*/

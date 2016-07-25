@@ -3,15 +3,15 @@ data arrI {
   int val;
 }.
 
-pred arr_seg<i,n> == i=n & i>=0
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
-  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0).
+  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
 
 
 //heap_addresses : xxx...y-1
 
 checkentail base::arr_seg<i,n> & x=base+i & y=base+i+1 |- x!=y.
-expect Valid.
+expect Valid. 
 
 
 checkentail base::arr_seg<i,n> * base::arr_seg<j,m>

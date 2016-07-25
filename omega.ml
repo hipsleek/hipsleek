@@ -199,7 +199,7 @@ and omega_of_formula_x pr_w pr_s f  =
       end
     | AndList _ ->
       begin
-        let () = print_endline_quiet ("AndList:?"^(!print_formula f)) in
+        let () = print_endline_quiet (x_loc^"AndList:?"^(!print_formula f)) in
         report_error no_pos "omega.ml: encountered AndList, should have been already handled"
       end
     | And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"

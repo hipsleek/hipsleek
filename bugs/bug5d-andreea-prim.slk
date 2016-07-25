@@ -1,0 +1,30 @@
+pred_prim RR2{+ %P}<aaa>.
+
+//expect Valid.
+
+
+/*
+checkentail x::RR2{+ xx=0}<xx> |- true. 
+checkentail y::RR2{+ yy}<yy>|- true. 
+*/
+
+checkentail x::RR2{+ xx=0}<xx> * y::RR2{+ yy}<yy>|- true. 
+
+/*
+# the problem seems to be caused
+
+(==typeinfer.ml#1400==)
+gather_type_info_exp@22@9@8
+gather_type_info_exp inp1 :yy
+gather_type_info_exp inp2 :[(yy:19:boolean)(aaa:18:int)(xx:16:int)(TVar__17:17:int)(TVar__16:16:int)]
+gather_type_info_exp inp3 :int
+gather_type_info_exp@22 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:11,Col:46),(Line:11,Col:48)} types boolean and int are inconsistent\")")Occurred!
+
+(==typeinfer.ml#1172==)
+gather_type_info_heap@9@8
+gather_type_info_heap inp1 :(x::RR2{+ (EX  . (emp)*([] & xx = 0)( FLOW __norm))}<xx>[HeapNode1]) * (y::RR2{+ (EX  . (emp)*([] & yy)( FLOW __norm))}<yy>[HeapNode1])
+gather_type_info_heap inp2 :[]
+gather_type_info_heap@9 EXIT ExceptionFailure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:11,Col:46),(Line:11,Col:48)} types boolean and int are inconsistent\")")Occurred!
+
+
+*/

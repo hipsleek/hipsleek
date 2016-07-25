@@ -922,7 +922,7 @@ let derive_equiv_view_by_lem ?(tmp_views=[]) iprog cprog view l_ivars l_head l_b
       in
       let () = y_tinfo_hp (add_str "vbody" !CF.print_formula) vbody in
       let self_node = mk_self_node view.C.view_name vbody in
-      let vbody = Typeinfer.case_normalize_renamed_formula iprog 
+      let vbody = x_add Typeinfer.case_normalize_renamed_formula iprog 
           (self_node::(elim_useless_vars view.C.view_vars)) [] vbody in
       (* let v_sf, v_un_str = norm_view_formula view.C.view_name vbody in *)
       (* let () =                                                                                                                 *)
@@ -1150,7 +1150,7 @@ let unify_disj_pred iprog cprog pred =
         { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None } 
         vbody 
     in
-    let vbody = Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars pred.C.view_vars)) [] vbody in
+    let vbody = x_add Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars pred.C.view_vars)) [] vbody in
     
     (* Construct a new view with unknown HeapPred *)
     let tmp_name = "tmp_" ^ pred.C.view_name in

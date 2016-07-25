@@ -1,0 +1,22 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+checkentail x::node<_, null> |- x::ll<m> & m = 1.
+expect Valid.
+print residue.
+
+/*
+# bug-11a
+
+  inv: ((self!=null & 1<=n) | (self=null & n=0))
+  baga inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 1<=n)]
+  baga under inv: [([], self=null & n=0),([self], 1<=n)]
+  xform: 0<=n & (((self!=null & 1<=n) | (self=null & n=0)))
+*/
+

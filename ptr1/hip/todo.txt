@@ -1,0 +1,97 @@
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+===========================================================
+# bug2c2.slk -dre "elim_exists"
+
+# elim_exists can be improved by pushing into inner sub-expression.
+
+(====)
+elim_exists_pure_formula@2@1
+elim_exists_pure_formula inp1 : exists(j_61:exists(m_62:BasePtr(base2) & 0<=j_61 & j_61=m_62))
+elim_exists_pure_formula@2 EXIT: exists(j_61:BasePtr(base2) & 0<=j_61)
+===========================================================
+# bug10b.slk (FIXED --en-impl-root)
+
+# implicit instantiation not done for self..
+
+checkentail true |- xx::goo<ii>.
+print residue.
+
+ <1>htrue&0<ii&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  BaseCaseFold]]
+===========================================================
+# bug2c2.slk 
+
+# bug2c2.slk 
+
+checkentail 
+ j=m & j>=0 
+   |- //[base2] 
+     base2::arr_seg<j,m> 
+   .
+
+# BasePtr(base2) not being  instantiated..
+
+ <1>emp&0<=j & j=m&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  BaseCaseFold]]
+
+# Can base-case fold not working with BasePtr(base2)?
+
+# should es_impl_vars be existential?
+
+@4! **solver.ml#8919:rhs_p : BasePtr(base2) & 0<=j_61 & j_61=m_62
+@4! **solver.ml#8921:m_lhs: j=m & 0<=j
+@4! **solver.ml#8927:tmp3: j=m & 0<=j
+@4! **solver.ml#8954:exist_vars(b4):[j_61,m_62]
+@4! **solver.ml#8955:es_evars:[j_61,m_62]
+@4! **solver.ml#8956:es_ivars:[]
+@4! **solver.ml#8957:es_expl_vars:[]
+@4! **solver.ml#8958:es_impl_vars:[base2]
+===========================================================
+# bug2.slk 
+
+checkentail 
+ base::arr_seg<j,m> & a=base+j //& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & 
+         a=base2+j1
+         //b=base2+j1
+
+# Can we add BasePtr(..) to LHS?
+
+!!! **context.ml#713:rhs_node: base2::arr_seg<j1,m1>@M
+!!! **context.ml#714:rhs_rest: emp
+!!! **context.ml#735:rhs_pure, before same_base_rhs: a=j1+base2
+!!! **cpure.ml#16224:base_ptr:(true,BasePtr)
+===========================================================
+# ptr1/hip/bug2a.slk --trace-exc
+
+# Type error cuased by a=j+base instead of a=base+j
+
+(==typeinfer.ml#894==)
+gather_type_info_exp@1101
+gather_type_info_exp inp1 :j+base
+gather_type_info_exp inp2 :[(TVar__59:59:TVar[59])(a:53:arrI)(TVar__58:58:arrI)(m:56:TVar[57])(TVar__57:57:TVar[57])(TVar__56:56:TVar[57])(i:55:int)(TVar__55:55:int)(i_2145:49:int)(TVar__54:54:int)(TVar__53:53:arrI)(a_2148:48:arrI)(TVar__52:52:arrI)(m2:51:TVar[51])(TVar__51:51:TVar[51])(j:50:TVar[51])(TVar__50:50:TVar[51])(n_2133:47:NUM)(flted_6_2134:46:NUM)(base:45:arrI)]
+gather_type_info_exp inp3 :TVar[59]
+gather_type_info_exp@1101 EXIT ExceptionFailure("TYPE ERROR 1 : Found arrI but expecting NUM")Occurred!
+
+ERROR: at bug2a-type-err-ex6d4b-ptr-sorted.slk_12:6_12:12
+Message: TYPE ERROR 1 : Found arrI but expecting NUM

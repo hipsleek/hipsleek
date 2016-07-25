@@ -1,0 +1,58 @@
+data cell{
+  int val;
+}.
+
+checkentail c::cell<x> & ["":x=0; "x","":x>0] |- true & ["x":x>1].
+expect Valid.
+
+
+/*
+# bug11g.slk
+
+Is it OK for heap position to be present in
+only "" ?
+
+
+(==tpdispatcher.ml#3540==)
+sat_label_filter@3@1
+sat_label_filter inp1 : 
+ AndList( "":x=0 & c=1 ; "x","":0<x) 
+sat_label_filter@3 EXIT:false
+
+(==excore.ml#775==)
+ef_unsat@1
+ef_unsat inp1 :([c], 
+ AndList( "":x=0 ; "x","":0<x) )
+ef_unsat@1 EXIT:true
+[Warning] False ctx
+
+
+//checkentail true & ["":x=0; "x":x>0] |- true & ["x":x>1].
+//expect Fail.
+
+checkentail true & ["":x=0; "x","":x>0] |- true & ["x":x>1].
+expect Valid.
+
+checkentail true & ["":x=7; "x":x>0] |- true & ["","x":x>1].
+expect Valid.
+
+checkentail true & ["":x=7; "x":x>0] |- true & ["x":x>1].
+expect Fail.
+*/
+
+/*
+
+Normal Labelling
+  UNSAT(fc&f1) | UNSAT(fc&f2)
+--------------------------------
+ UNSAT("":fc, "a":f1, "b":f2)
+
+Aggressive Labelling (with equality propagated)
+
+  UNSAT(fc) | UNSAT(e2&f1) | UNSAT(e3&f2)
+----------------------------------------------
+          UNSAT("":fc, "a":f1, "b":f2)
+
+
+
+*/

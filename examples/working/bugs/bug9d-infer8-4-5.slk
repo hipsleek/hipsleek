@@ -1,0 +1,41 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+// (4) OK to Fail
+infer [n] true |- y::ll<n>.
+expect Valid.
+print residue.
+// infer n=0 & impl inst y=null
+/*
+
+Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 | n=n_48 & 1<=n_48 |-  n_48=n (may-bug).
+*/
+
+// (5) Fail
+// TODO we should infer n!=0 
+infer [n] n=0 |- y::ll<n>.
+expect Valid.
+print residue.
+// impl inst y=null
+/*
+Infer  (5): Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 & n=0 |-  n_70=n (may-bug).
+*/
+
+//(4a)
+infer [n] y!=null |- y::ll<n>.
+expect Fail.
+print residue.
+
+//(5a)
+infer [n] n>0 |- y::ll<n>.
+expect Valid.
+print residue.
+
+

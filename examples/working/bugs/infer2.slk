@@ -9,35 +9,44 @@ pred ll<n> == self = null & n = 0
 
 //(1)
 infer [q] q=null |- q::ll<n> .
+expect Valid.
 print residue.
 
 //(2)
 infer [n] q=null |- q::ll<n> .
+expect Valid.
 print residue.
 
 //(3)
 infer [q] q!=null |- q::ll<n> .
+expect Valid.
 print residue.
 
 //(4)
 infer [n] q!=null |- q::ll<n> .
+expect Fail.
 print residue.
 //Infer  (4): Fail.(may) cause:15.4 no match for rhs data node: q (may-bug).
 
 //(5)
 infer [q] n=0 |- q::ll<n> .
+expect Valid.
 print residue.
 
 //(6)
 infer [n] n=0 |- q::ll<n> .
+expect Valid.
 print residue.
+// impl instantiate q=null
 
 //(7)
 infer [n,q] n=0 |- q::ll<n> .
+expect Valid.
 print residue.
 
 //(8)
 infer [q,n] n=0 |- q::ll<n> .
+expect Valid.
 print residue.
 /*
 // equiv to q=null
@@ -49,10 +58,34 @@ Inferred Pure:[ inf_n_101=0]
 
 //(9)
 infer [n] n!=0 |- q::ll<n> .
+expect Valid.
 print residue.
+// infer n=0 contra ..
 /*
 // Fixed
 Inferred Heap:[]
 Inferred Pure:[ n=0]
 <1>false & false &
 */
+
+//(10-6a)
+infer [n] q!=null |- q::ll<n> .
+expect Fail.
+print residue.
+// inst q=null
+
+//(11-6b)
+infer [n] q!=null & n>0 |- q::ll<n> .
+expect Valid.
+print residue.
+// infer contra n<=0
+
+//(12-9a)
+infer [] n!=0 |- q::ll<n> .
+expect Fail.
+print residue.
+
+//(13-9b)
+infer [n] q!=null |- q::ll<n> .
+expect Fail.
+print residue.

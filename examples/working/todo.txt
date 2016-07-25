@@ -1,3 +1,208 @@
+Total number of errors: 6 in files:
+  infer/infer2.slk({E6#Fail},{E9#Fail}) (CHANGED)
+  infer/infer8.slk({E4#Fail},{E5#Fail}) (CHANGED)
+  infer/infer11.slk({E1#Fail}) added --dis-impl-root
+  lemmas/ll.slk({E2#Fail}) (CHANGED)
+  lemmas/dseg-new.slk({L2#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+
+  infer/infer2.slk({E6#Fail},{E9#Fail}) 
+  infer/infer8.slk({E4#Fail},{E5#Fail}) 
+  infer/infer11.slk({E1#Fail}) 
+  lemmas/ll.slk({E2#Fail}) 
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+--adhoc-4
+
+Total number of errors: 6 in files:
+  infer/infer2.slk({E6#Fail},{E9#Fail}) 
+  infer/infer8.slk({E4#Fail},{E5#Fail}) 
+  infer/infer11.slk({E1#Fail}) 
+  lemmas/ll.slk({E2#Fail}) 
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+=================================================
+9July16 --use-baga --inv-baga
+  label-dll.slk({E2#Valid},{E3#Valid},{E4#Valid}) // AndList ..
+  inf-no-eps.slk({E3#Valid},{E4#Valid}) 
+  infinity.slk({E2#Valid},{E22#Valid},{E59#Valid},{E76#Valid},{E77#Valid},{E78#Valid}) 
+  imm/imm8-instantiation.slk({E21#Valid})
+  imm/imm8-instantiation.slk({E11#Fail},{E24#Fail})
+  imm/imm9-early-inst.slk({E3#Valid},{E4#Valid})
+  imm/imm9-early-inst.slk({E10#Fail},{E12#Fail},{E5#Fail},{E9#Fail}) 
+  imm-field/sleek02.slk({E13#Fail},{E6#Valid},{E7#Fail},{E9#Fail}) 
+  imm-field/sleek03.slk({E10#Valid},{E2#Fail},{E5#Fail},{E8#Fail}) 
+  lemmas/nlseg4e.slk({L1#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-static.slk({E2#Valid},{E4#Valid}) 
+  veribsync/barrier-dynamic2.slk({E10#Valid},{E11#Valid},{E14#Valid},{E15#Valid},{E2#Fail},{E21#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+=================================================
+8July16
+
+--adhoc-4
+Total number of errors: 6 in files:
+ sleek7.slk({E4#Fail}) 
+ sleek8.slk({E10#Fail}) sleek8.slk({E10#Fail}) 
+ infer/infer16.slk({E5#Valid},{E6#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}) 
+ veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+without --adhoc-4
+  imm-field/sleek02.slk({E8#Valid}) 
+  lemmas/lemma-fold.slk({E3#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+--adhoc-4 (without impl -> expl)
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+=================================================
+6Jul
+
+
+Total number of errors: 5 in files:
+  imm-field/sleek02.slk({E8#Valid}) 
+  lemmas/lemma-fold.slk({E3#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 236.72 second
+
+=================================================
+5Jul16
+
+# default
+
+Starting hip-sleek tests:
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 95.61 second
+	Time spent in main process: 15.88 second
+	Time spent in child processes: 79.73 second
+	Number of false contexts: 98
+
+# arr_infer (merged with default)
+
+Starting hip-sleek tests:
+Total number of errors: 2 in files:
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 115.33 second
+	Time spent in main process: 25.75 second
+	Time spent in child processes: 89.58 second
+	Number of false contexts: 98
+
+Total number of errors: 25 in files:
+ error at: vperm/task_decompose.ss inc
+error at: veribsync/hip-bperm1.ss readCell
+error at: veribsync/hip-bperm1.ss updateCell
+error at: veribsync/barrier-static-consistency.ss main_fail
+error at: veribsync/barrier-dynamic-exp3.ss main
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.
+Total verification time: 342.63 second
+	Time spent in main process: 279.89 second
+	Time spent in child processes: 62.74 second
+	Number of false contexts: 422
+
+Total number of errors: 2 in files:
+  lemmas/dseg-new.slk({L2#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 219.48 second
+	Time spent in main process: 122.49 second
+	Time spent in child processes: 96.99 second
+	Number of false contexts: 98
+
+Starting hip-sleek tests:
+Total number of errors: 4 in files:
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 232.13 second
+
+Total number of errors: 5 in files:
+  imm/norm/norm10.slk({E4#Valid}) lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 200.27 second
+	Time spent in main process: 109.74 second
+	Time spent in child processes: 90.53 second
+	Number of false contexts: 98
+=================================================
+Total number of errors: 8 in files:
+  sleek7.slk({E7#Valid},{E8#Valid}) 
+  sleek8.slk({E13#Valid},{E14#Valid}) 
+  sleek8.slk({E13#Valid},{E14#Valid}) 
+  imm/norm/norm10.slk({E4#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid})
+   veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 189.66 second
+	Time spent in main process: 104.94 second
+	Time spent in child processes: 84.72 second
+	Number of false contexts: 98
+=================================================
+4Jul16 (arr_infer)
+Total number of errors: 8 in files:
+  sleek7.slk({E4#Fail}) 
+  sleek8.slk({E10#Fail}) 
+  sleek8.slk({E10#Fail}) 
+  imm/norm/norm10.slk({E4#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 199.32 second
+	Time spent in main process: 118.14 second
+	Time spent in child processes: 81.18 second
+	Number of false contexts: 98
+=================================================
+16June (arr_infer)
+
+Starting hip-sleek tests:
+Total number of errors: 5 in files:
+  imm/norm/norm10.slk({E4#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
 ==============================================
 15Dec
 
@@ -2080,6 +2285,17 @@ Total verification time: 274.01 second
 	Number of false contexts: 98
 
 ====================================================================
+# arr_infer branch ..
+
+        # below loops in arr_infer branch ... (to fix)
+        # ["lemmas/nlseg4e1.slk", "--old-compute-act", (), "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+# possible looping ..
+  fracperm/split_simple.slk
+
+Unexpected result with : lemmas/sll_tailL.slk (failed check(s): {L1#Valid},{L2#Valid}) 
+Unexpected result with : lemmas/dseg-new.slk (failed check(s): {L2#Fail},{L3#Valid}) 
+Unexpected result with : lemmas/dseg1.slk (failed check(s): {L1#Valid}) 
+
 ====================================================================
 ====================================================================
 ====================================================================

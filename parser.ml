@@ -1396,7 +1396,7 @@ baga_formula:
       | h=ho_fct_header -> (P.mkTrue no_pos)]];
 
 baga_inv:
-    [[`BG; `OPAREN; `OSQUARE; il = LIST0 cid_or_pair SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN ->
+    [[`BG; `OPAREN; `OSQUARE; il = LIST0 cid_or_pair_or_triple SEP `COMMA; `CSQUARE; `COMMA; p=baga_formula; `CPAREN ->
         let il = List.map (fun ((name,p),s)-> 
           let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in
           (name,s)
@@ -1406,7 +1406,9 @@ baga_inv:
           (*   (name,Some(n2)) *)
           (* | None -> (name,None) *)
         ) il in
-        (il,p)]];
+        (il,p)
+
+    ]];
 
 opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
  
@@ -1585,13 +1587,18 @@ cid:
     | `THIS _         		->  (this, Unprimed)]];
 
 
-cid_or_pair:
+cid_or_pair_or_triple:
   [[
     `OPAREN; e1=cexp_w ; `COMMA;  e2= cexp_w; `CPAREN -> 
     let pe1 = get_pure_exp e1 no_pos in
     let pe2 = get_pure_exp e2 no_pos in
     (("_",Unprimed),(Some(pe1,pe2)))
-  | i = cid -> (i,None)
+    | i = cid -> (i,None)
+    | `OPAREN; `SELFT _; `COMMA; e2=cexp_w ; `COMMA;  e3= cexp_w; `CPAREN ->
+       let pe2 = get_pure_exp e2 no_pos in
+       let pe3 = get_pure_exp e3 no_pos in
+       ((self,Unprimed),(Some(pe2,pe3)))
+       
   ]];
 
 

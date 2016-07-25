@@ -1,0 +1,83 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+/*
+checkentail xx::arr_seg<i,n> & Univ(i) & Univ(n) |- i<n.
+expect Valid.
+print residue.
+
+
+// below could succeed with an unfold and some inst of i & n?
+
+*/
+
+//checkentail xx::arr_seg<ii,ni> & Univ(ii) & Univ(ni) |- pp::arrI<_> & pp=xx+ii.
+// 0<=ii & ii<=ni & self!=null
+checkentail xx::arr_seg<ii,ni> & ni!=ii 
+  |- ii<ni
+  .
+
+expect Valid.
+print residue.
+
+/*
+# ex9b4k2.slk
+
+ below could succeed with an unfold and univ inst ii!=nn
+
+!!! **solver.ml#13379:lhs_node (M_unfold): xx::arr_seg<ii,ni>@M
+!!! **solver.ml#13380:rhs_node (M_unfold): pp::arrI<Anon_13>@M
+!!! **cast.ml#3154:arguments:[xx,ii,ni]
+!!! **cast.ml#3155:parameters:[self,i,n]
+!!! **cast.ml#3158:pure (before): i=n
+!!! **cast.ml#3159:pure (after subs): ii=ni
+!!! **solver.ml#13384:is_data_rhs:true
+!!! **solver.ml#13385:lhs_name:arr_seg
+!!! **solver.ml#13386:base_pure:Some( ii=ni)
+!!! **solver.ml#13388:estate: ex_formula : xx::arr_seg<ii,ni>@M&ii<ni & Univ(ni) & Univ(ii)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+!!! **solver.ml#13394:TODO:to add univ_imply checking before unfold
+!!! **solver.ml#13396:rhs_univ_inst: !(ii=ni)
+!!! **solver.ml#13399:new_estate: ex_formula : xx::arr_seg<ii,ni>@M&ii<ni & Univ(ni) & Univ(ii) & !(ii=ni)&{FLOW,(20,21)=__norm#E}[]
+ 
+*/
+
+
+/*
+# ex9b4k2.slk
+
+# useful to instantiate i<n for Univ ..
+# added capability for unfold, in general.
+
+# Soln (i) find condition for base-case i=n
+       (ii) allow inst for not(i=n)
+
+  raw base case: 
+  (* lbl: *){1}->emp&i=n & 0<=i & self!=null&{FLOW,(1,26)=__flow#E}[]
+  base case: i=n->i=n & 0<=i & self!=null
+ 
+compute_base_case@8@7
+compute_base_case inp1 :arr_seg
+compute_base_case inp2 : (* lbl: *){1}->emp&i=n & 0<=i & self!=null&{FLOW,(1,26)=__flow#E}[]
+ (* lbl: *){2}->(exists n_16,flted_6_15,x,
+ Anon_12: (* lbl: *){2}->x::arrI<Anon_12>@M * 
+                         self::arr_seg<flted_6_15,n_16>@M&
+ flted_6_15=1+i & x=i+self & 0<=i & n_16=n&{FLOW,(1,26)=__flow#E}[])
+compute_base_case inp3 :[self,i,n]
+compute_base_case@8 EXIT:Some( i=n)
+
+!!! **solver.ml#13374:estate: ex_formula : xx::arr_seg<i,n>@M&Univ(n) & Univ(i)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+!!! **solver.ml#13375:lhs_node (M_unfold): xx::arr_seg<i,n>@M
+!!! **solver.ml#13376:rhs_node (M_unfold): pp::arrI<Anon_13>@M
+
+ <1>xx::arr_seg<flted_6_115,n>@M&pp=i+xx & flted_6_115=i+1 & 0<=i & i<n & 
+                                 Univ(i) & Univ(n)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x_116,pp)]]
+
+*/

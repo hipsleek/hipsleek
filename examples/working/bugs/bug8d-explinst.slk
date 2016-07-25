@@ -1,0 +1,33 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred foo<n> == self::node<v,_> & n>v 
+	inv self!=null.
+
+checkentail x::node<5,_> |- x::foo<6>.
+expect Valid.
+
+checkentail x::node<5,_> |- x::foo<n>.
+expect Valid.
+print residue.
+
+checkentail x::node<5,_> |- x::foo<n> & n=6.
+expect Fail.
+print residue.
+
+//(4)
+checkentail x::node<5,_> |- (exists nnn: x::foo<nnn> & nnn=6).
+expect Valid.
+
+checkentail x::node<5,_> |- [nnn] x::foo<nnn> & nnn=6.
+expect Valid.
+print residue.
+
+
+// emp
+
+/*
+
+*/

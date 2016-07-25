@@ -1,0 +1,69 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+   or self::node<_,q>*q::ll<n-1>
+ inv BG([],self=null & n=0) | BG([self],n>0).
+
+
+// (7)
+checkentail xxx::ll<n> * yyy::ll<m> & n>0 |- xxx!=yyy.
+expect Valid.
+print residue.
+
+
+/*
+# ex9b6d.slk -dre "ef_\|imply"
+
+// (7)
+checkentail xxx::ll<n> * yyy::ll<m> & n>0 |- xxx!=yyy.
+expect Valid.
+print residue.
+
+# below is not used for implication? only for unsat checks?
+# ed for implication? only for unsat checks?
+
+[ef_conv_enum@237.,ef_unsat@236,add_epure,get_spec_baga,h_formula_2_mem,xpure_heap_mem_enum,xpure_heap,heap_entail_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,heap_entail_struc,heap_entail_struc_init,heap_entail_struc_init_bug_inv,sleek_entail_check,run_infer_one_pass,run_entail_check]
+
+[imply_mix_formula@238.,fold_fun_impt,heap_entail_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,heap_entail_struc,heap_entail_struc_init,heap_entail_struc_init_bug_inv,sleek_entail_check,run_infer_one_pass,run_entail_check]
+[
+(==tpdispatcher.ml#3315==)
+imply_cache@228@226@225@224@223@216@215@214@213
+imply_cache inp1 : xxx!=null & yyy!=null
+imply_cache inp2 : xxx!=yyy
+imply_cache@228 EXIT:found?:false ans:false
+
+(====)
+ef_conv_enum@136@135
+ef_conv_enum inp1 :([xxx,yyy], 0<n & 0<m)
+ef_conv_enum@136 EXIT: xxx=1 & yyy=2 & 0<n & 0<m
+
+(====)
+ef_unsat@135
+ef_unsat inp1 :([xxx,yyy], 0<n & 0<m)
+ef_unsat@135 EXIT:false
+
+(==solver.ml#9034==)
+imply_mix_formula#1@133
+imply_mix_formula#1 inp1 : 0<m & 0<n & (((x=null & n=0) | (x!=null & 0<n))) & 
+ (((y=null & m=0) | (y!=null & 0<m))) & x!=y
+imply_mix_formula#1 inp2 :Some( 0<m & 0<n & (((x=null & n=0) | (x!=null & 0<n))) & 
+ (((y=null & m=0) | (y!=null & 0<m))) & x!=y)
+imply_mix_formula#1 inp3 : x!=y
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@133 EXIT:(true,Some(([ 0<m & 0<n & x!=y & x=null & n=0 & y!=null & 0<m, 0<m & 0<n & x!=y & x!=null & 0<n & y=null & m=0, 0<m & 0<n & x!=y & x!=null & 0<n & y!=null & 0<m],[ 0<m & 0<n & x!=y & x=null & n=0 & y!=null & 0<m, 0<m & 0<n & x!=y & x!=null & 0<n & y=null & m=0, 0<m & 0<n & x!=y & x!=null & 0<n & y!=null & 0<m])))
+
+(==solver.ml#9034==)
+imply_mix_formula#1@132
+imply_mix_formula#1 inp1 : 0<n & (((x=null & n=0) | (x!=null & 0<n))) & 
+ (((y=null & m=0) | (y!=null & 0<m)))
+imply_mix_formula#1 inp2 :Some( 0<n & (((x=null & n=0) | (x!=null & 0<n))) & 
+ (((y=null & m=0) | (y!=null & 0<m))))
+imply_mix_formula#1 inp3 : x!=y
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@132 EXIT:(false,Some(([ 0<n & x=null & n=0 & y=null & m=0, 0<n & x=null & n=0 & y!=null & 0<m, 0<n & x!=null & 0<n & y=null & m=0, 0<n & x!=null & 0<n & y!=null & 0<m],[ 0<n & x=null & n=0 & y=null & m=0, 0<n & x=null & n=0 & y!=null & 0<m, 0<n & x!=null & 0<n & y=null & m=0, 0<n & x!=null & 0<n & y!=null & 0<m])))
+
+
+*/

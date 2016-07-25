@@ -2020,10 +2020,18 @@ and is_view_user (h : h_formula) = match h with
   | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
   | _ -> false
 
-and is_view_user_dupl_ptr_unfold (h : h_formula) = match h with
+and is_view_user_dupl_ptr_unfold_x (h : h_formula) = match h with
   | ViewNode v -> let vn = v.h_formula_view_name in
-    not(view_prim_lst # mem vn || view_ptr_arith_lst # mem vn) 
+    let b1 = view_prim_lst # mem vn in
+    let b2 = view_ptr_arith_lst # mem vn in 
+    let () = y_dinfo_hp (add_str "b1" string_of_bool) b1 in
+    let () = y_dinfo_hp (add_str "b2" string_of_bool) b2 in
+    not( b1 || b2)
   | _ -> false
+
+and is_view_user_dupl_ptr_unfold (h : h_formula) =
+  let pr = !print_h_formula in
+  Debug.no_1 "is_view_user_dupl_ptr_unfold" pr string_of_bool is_view_user_dupl_ptr_unfold_x h
 
 and is_data (h : h_formula) = match h with
   | DataNode _ -> true
@@ -2103,8 +2111,8 @@ and get_node_name_x (h : h_formula) = match h with
     let pr = !print_h_formula in 
     failwith ("get_node_name: invalid argument: " ^ (pr h))
 
-and get_node_name i (h : h_formula) =
-  Debug.no_1_num i "get_node_name" !print_h_formula idf get_node_name_x h
+and get_node_name (h : h_formula) =
+  Debug.no_1 "get_node_name" !print_h_formula idf get_node_name_x h
 
 and get_node_perm (h : h_formula) = match h with
   | ThreadNode ({h_formula_thread_perm = c}) 
@@ -2321,7 +2329,7 @@ and h_set_lhs_case_of_a_view (h : h_formula) (v_name:ident) flag: h_formula =
              h_formula_star_h2 = helper h2;
              h_formula_star_pos = pos})
     | ViewNode vn -> 
-      let name = get_node_name 5 h in
+      let name = x_add_1 get_node_name h in
       if (name=v_name) then
         ViewNode {vn with h_formula_view_lhs_case = flag}
       else h
@@ -3923,34 +3931,37 @@ and normalize_combine_heap (f1 : formula) (f2 : h_formula)
 
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
 
-and normalize_combine_star_x (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
-  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-    let eo1 = normalize_combine_star_x o11 f2 pos in
-    let eo2 = normalize_combine_star_x o12 f2 pos in
-    mkOr eo1 eo2 pos
-  | _ -> begin
-      match f2 with
-      | Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-        let eo1 = normalize_combine_star_x f1 o21 pos in
-        let eo2 = normalize_combine_star_x f1 o22 pos in
-        mkOr eo1 eo2 pos
+and normalize_combine_star_x ?(rename_flag=true) (f1 : formula) (f2 : formula) (pos : loc) = 
+  let rec helper f1 f2 =
+    match f1 with
+      | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+            let eo1 = helper o11 f2 in
+            let eo2 = helper o12 f2  in
+            mkOr eo1 eo2 pos
       | _ -> begin
-          let rf1 = Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f1 in
-          let rf2 = Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f2 in
-          let qvars1, base1 = split_quantifiers rf1 in
-          let qvars2, base2 = split_quantifiers rf2 in
-          let new_base = Gen.Profiling.no_1 "6_mkstar" (mkStar_combine base1 base2 Flow_combine) pos in
-          (* let () = print_string("normalize 1\n") in *)
-          let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
-          let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
-          resform
-        end
-    end
+          match f2 with
+            | Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+                  let eo1 = helper f1 o21 in
+                  let eo2 = helper f1 o22 in
+                  mkOr eo1 eo2 pos
+            | _ -> begin
+                let rf1 = if rename_flag then Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f1 else f1 in
+                let rf2 = if rename_flag then Gen.Profiling.no_1 "7_ren_bound" rename_bound_vars f2 else f2 in
+                let qvars1, base1 = split_quantifiers rf1 in
+                let qvars2, base2 = split_quantifiers rf2 in
+                let new_base = Gen.Profiling.no_1 "6_mkstar" (mkStar_combine base1 base2 Flow_combine) pos in
+                (* let () = print_string("normalize 1\n") in *)
+                let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
+                let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+                resform
+              end
+        end in
+  helper f1 f2
 
-and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = 
+and normalize_combine_star ?(rename_flag=true) (f1 : formula) (f2 : formula) (pos : loc) = 
   let pr = !print_formula in
   Debug.no_2 "normalize_combine_star" pr pr pr 
-    (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st"(normalize_combine_star_x f1 f2) pos) f1 f2
+    (fun _ _ -> Gen.Profiling.no_1 "10_norm_comb_st" (normalize_combine_star_x ~rename_flag:rename_flag f1 f2) pos) f1 f2
 
 and normalize_combine_starminus (f1 : formula) (f2 : formula) (al: aliasing_scenario) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
@@ -9663,10 +9674,11 @@ class infer_acc =
         let () = pure <- Some np in
         true
         else 
-          let () = y_binfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
-          let () = y_binfo_hp (add_str "false contra with" !CP.print_formula) p in
+          let () = y_dinfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
+          let () = y_dinfo_hp (add_str "false contra with" !CP.print_formula) p in
           false
   end;;
+
 
 type entail_state = {
   es_formula : formula; (* can be any formula ; 
@@ -9698,7 +9710,7 @@ type entail_state = {
   (*used by late instantiation*)
   es_gen_expl_vars: CP.spec_var list; (* explicit instantiation var *)
   es_gen_impl_vars: CP.spec_var list; (* implicit instantiation var *)
-
+  es_init_impl_expl_vars: CP.spec_var list; (* initial explicit/implicit ex vars *)
   (* to indicate if unsat check has been done for current state *)
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
@@ -9913,6 +9925,13 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
+(* let get_lhs_pure es =  *)
+(*   let f = es.formula in *)
+(*   let cons_heap = es.es_heap in *)
+(*   () *)
+
+let get_ante_ex estate =
+  estate.es_init_impl_expl_vars(* @estate.es_gen_expl_vars *)
 
 
 let rec is_infer_pre_must sf = match sf with
@@ -10229,6 +10248,7 @@ let empty_es flowt grp_lbl pos =
     es_ante_evars = [];
     es_gen_expl_vars = []; 
     es_gen_impl_vars = []; 
+    es_init_impl_expl_vars = []; 
     es_pp_subst = [];
     es_unsat_flag = true;
     es_arith_subst = [];
@@ -11985,7 +12005,7 @@ let empty_ctx flowt lbl pos = Ctx (empty_es flowt lbl(*Lab2_List.unlabelled*) po
 let false_es_with_flow_and_orig_ante es flowt f pos =
   let new_f = mkFalse flowt pos in
   {(empty_es flowt Lab2_List.unlabelled pos) with 
-   es_formula = new_f ;
+   es_formula = new_f;
    es_orig_ante = Some f;
    es_infer_vars = es.es_infer_vars;
    es_infer_vars_rel = es.es_infer_vars_rel;
@@ -14716,17 +14736,22 @@ and get_exists_context (ctx : context) : CP.spec_var list =
       (evars1@evars2)
   in helper ctx
 
-and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = 
+and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context =
+  let pr = !CP.print_svl in
+  let () = y_tinfo_hp (add_str "add expl/impl" (pr_pair pr pr)) (expvars,impvars) in
   transform_context (fun es -> Ctx{es with 
                                    es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
                                    es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
+                                   es_init_impl_expl_vars = es.es_init_impl_expl_vars @ expvars @ impvars;
                                    (*es_evars = es.es_evars@ expvars;*)}) ctx
 
-and impl_to_expl es vl : entail_state = 
-  let im, il = List.partition (fun c-> List.mem c vl) es.es_gen_impl_vars in
-  {es with 
-   es_gen_expl_vars = es.es_gen_expl_vars @ im; 
-   es_gen_impl_vars = il;}
+(* and impl_to_expl es vl : entail_state =  *)
+(*   let () = y_tinfo_hp (add_str "impl_to_expl:" !CP.print_svl) vl in *)
+(*   let im, il = List.partition (fun c-> List.mem c vl) es.es_gen_impl_vars in *)
+(*   {es with  *)
+(*    es_gen_expl_vars = es.es_gen_expl_vars @ im;  *)
+(*    es_gen_impl_vars = il; *)
+(*   } *)
 
 
 and pop_exists_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
@@ -17920,7 +17945,7 @@ let collect_heap_args_formula_x (f:formula) (sv:CP.spec_var) : (CP.spec_var list
       let args_list = List.map (fun h ->
           let c = get_node_var h in
           let b = ((CP.eq_spec_var c sv) || (List.exists (fun v -> CP.eq_spec_var c v) vars)) in
-          if (b) then [(get_node_args h, get_node_name 6 h)] else []
+          if (b) then [(get_node_args h, x_add_1 get_node_name h)] else []
         ) heaps in
       let args_list = List.concat args_list in
       if args_list = [] then ([], "")
@@ -19883,11 +19908,17 @@ let name_of_h_formula x =
   | ViewNode {h_formula_view_name = n;
               h_formula_view_node = p1;
               h_formula_view_arguments = vs1} -> (n,(p1::vs1))
-  | _ -> failwith "Failure of name_of_h_formula"
+  | _ -> 
+        let () = y_ninfo_hp (add_str "problem with name_of_h_formula:" !print_h_formula) x in
+        let s = "name_of_h_formula: "^(!print_h_formula x) in
+        (s, [])
 
 let name_of_formula x =
   let (h,_,_,_,_,_) = split_components x in
   name_of_h_formula h
+
+let name_of_h_formula x =
+  Debug.no_1 "name_of_h_formula" pr_none pr_none name_of_h_formula x
 
 let is_exists_hp_rel v es =
   let vs = es.es_infer_vars_hp_rel in
@@ -20544,7 +20575,7 @@ let extract_view_nodes_name hf =
 let is_segmented vn self_typ (args:CP.spec_var list) (body:formula list) =
   let ty = self_typ in
   let args = List.filter (fun x -> CP.type_of_spec_var x = ty) args in
-  let () = y_binfo_hp (add_str "args" !CP.print_svl) args in
+  let () = y_dinfo_hp (add_str "args" !CP.print_svl) args in
   match args with
   | [x] -> Some x
   | _ -> None
@@ -20570,9 +20601,9 @@ let get_root_ptr hf =
   | HVar(pt,_) -> pt
   | _ -> raise Not_found
 
-let combine_star_pure f1 p =
+let combine_star_pure ?(rename_flag=true) f1 p =
   let f2 = formula_of_pure_formula p no_pos in
-  let f = normalize_combine_star f1 f2 no_pos in
+  let f = normalize_combine_star ~rename_flag:rename_flag f1 f2 no_pos in
   f
 
 let add_pure_estate es cp =

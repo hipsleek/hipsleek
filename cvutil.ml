@@ -736,7 +736,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
              let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
              let f0 = MCP.pure_of_mix p0 in
              x_tinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-             let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
+             let res,_,_ = x_add CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
              x_tinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
              if (res) then
                CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
@@ -773,7 +773,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
            (*prove that p0 |- var=full_perm*)
            let f0 = MCP.pure_of_mix p0 in
            x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-           let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
+           let res,_,_ = x_add CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
            x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
            if (res) then
              (match lbl_lst with
@@ -789,7 +789,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
            (*   | Some f -> CP.BagaSV.mkEmpty *)
            (*   | None -> *)
            (match lbl_lst with
-            |None ->
+            | None ->
               if List.mem p evars then CP.BagaSV.mkEmpty
               else ba
             | Some ls ->
@@ -845,7 +845,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                let f0 = MCP.pure_of_mix p0 in
                x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-               let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
+               let res,_,_ = x_add CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
                x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                if (res) then
                  CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
@@ -899,7 +899,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                (*prove that p0 |- var=full_perm*)
                let f0 = MCP.pure_of_mix p0 in
                x_binfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
-               let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
+               let res,_,_ = x_add CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
                x_binfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                if (res) then
                  (match lbl_lst with
@@ -914,8 +914,10 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                (* (match vdef.view_inv_lock with *)
                (*   | Some f -> CP.BagaSV.mkEmpty *)
                (*   | None -> *)
+               let () = y_tinfo_pp "None" in
                (match lbl_lst with
                 |None ->
+                  let () = y_tinfo_hp (add_str "ba" !CP.print_svl) ba in
                   if List.mem p evars then CP.BagaSV.mkEmpty
                   else ba 
                 | Some ls -> 
@@ -1033,7 +1035,7 @@ and conv_from_ef_disj_x (disj:Excore.ef_pure_disj) : (MCP.mix_formula * CF.mem_f
 
   match disj with
   | [] -> (Mcpure.mkMFalse no_pos, CF.mk_mem_formula [])
-  | _ -> let f = Excore.EPureI.ef_conv_enum_disj (Excore.EPureI.from_cpure_disj disj) in
+  | _ -> let f = x_add_1 Excore.EPureI.ef_conv_enum_disj (Excore.EPureI.from_cpure_disj disj) in
     (* | _ -> let f = Expure.ef_conv_enum_disj disj in *)
     (MCP.mix_of_pure f,CF.mk_mem_formula [])
 
@@ -1370,17 +1372,22 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   (* let mf_p0 = MCP.pure_of_mix p0 in *)
   (* let () = x_dinfo_hp (add_str "elim_abs (p0)" !CP.print_formula) mf_p0 no_pos in *)
   let () = x_tinfo_hp (add_str "elim_abs (pure)" !CP.print_formula) pf no_pos in
-  let memset = x_add h_formula_2_mem h0 p0 [] prog in
-  let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
-  (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
-  let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
-  if (is_sat_mem_formula memset) then 
-    let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
-    let pure_of_memset = 
-      if !Globals.old_keep_absent then pure_of_memset 
-      else MCP.merge_mix_w_pure pure_of_memset pf in
-    (pure_of_memset, memset)
+  if true (* add the flag later *)
+  then
+    let memset = x_add h_formula_2_mem h0 p0 [] prog in
+    let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
+    (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
+    let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
+    if (is_sat_mem_formula memset) then 
+      let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
+      let pure_of_memset = 
+        if !Globals.old_keep_absent then pure_of_memset 
+        else MCP.merge_mix_w_pure pure_of_memset pf in
+      (pure_of_memset, memset)
+    else
+      (MCP.mkMFalse no_pos, memset)
   else
+    let memset = x_add h_formula_2_mem h0 p0 [] prog in
     (MCP.mkMFalse no_pos, memset)
 
 and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spec_var list * CF.mem_formula) =
@@ -1550,7 +1557,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
                   let gt_f = CP.BForm ((gt_bf,None),None) in
                   let or_f = CP.mkOr neq_t1_t3 gt_f None no_pos in
                   x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check bounded permission constrainst: "^ (Cprinter.string_of_pure_formula or_f) ^ "\n")) no_pos;
-                  let b,_,_ = CP.imply_disj_orig [f] or_f (x_add TP.imply_one 100) imp_no in
+                  let b,_,_ = x_add CP.imply_disj_orig [f] or_f (x_add TP.imply_one 100) imp_no in
                   x_dinfo_zp (lazy ("xpure_perm: check: [End] check bounded permission constrainst "^(string_of_bool b)^" \n")) no_pos;
                   b
                   (**********<<BPERM********************)
@@ -1585,7 +1592,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
                   (*f1+f2+f2+f4>1.0*)
                   let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
                   x_dinfo_zp (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
-                  let b,_,_ = CP.imply_disj_orig [f] gt_exp (x_add TP.imply_one 101) imp_no in
+                  let b,_,_ = x_add CP.imply_disj_orig [f] gt_exp (x_add TP.imply_one 101) imp_no in
                   x_dinfo_zp (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
                   b
                   (**********<<FPERM,CPERM,NONE********************)

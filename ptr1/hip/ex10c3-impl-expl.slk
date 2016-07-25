@@ -1,0 +1,41 @@
+data cell {
+  int val;
+}.
+
+
+pred goo<i> == self=null & i>0
+  inv true
+.
+
+checkentail emp |- [xx,ii] xx::goo<ii>.
+print residue.
+expect Valid.
+
+/*
+# ex10c3.slk
+
+# why did we have get_expl_inst and a separate move_expl_inst?
+
+# why does it call get_expl_inst in stages?
+
+# it appears to be similar to early instantiation..
+
+!!! **solver.ml#6235:expl inst: xx=null
+!!! **solver.ml#6236:l_inst:[xx]
+!!! **solver.ml#6237:to_elim_vars:[ii,ii]
+(==solver.ml#8082==)
+get_expl_inst@3@1
+get_expl_inst inp1 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [ii]
+ es_gen_impl_vars(E): [ii]
+ es_pure: 0<ii & xx=null
+ es_gen_expl_vars: [xx]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  BaseCaseFold
+get_expl_inst inp2 : xx=null & 0<ii
+get_expl_inst@3 EXIT: xx=null
+
+
+
+
+*/

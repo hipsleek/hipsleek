@@ -10,18 +10,23 @@ pred ll<n> == self = null & n = 0
 // (1) Valid
 infer [y] true |- y::node<a,b> * b::node<c,d>.
 print residue.
+expect Valid.
 
 // (2) Valid
 infer [y] true |- y::node<a,b>.
 print residue.
+expect Valid.
 
 // (3) Valid
 infer [y] true |- y::ll<n>.
 print residue.
+expect Valid.
 
 // (4) OK to Fail
 infer [n] true |- y::ll<n>.
+expect Valid.
 print residue.
+// infer n=0 & impl inst y=null
 /*
 
 Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 | n=n_48 & 1<=n_48 |-  n_48=n (may-bug).
@@ -30,7 +35,9 @@ Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 | n=n_48 & 1<=n_48
 // (5) Fail
 // TODO we should infer n!=0 
 infer [n] n=0 |- y::ll<n>.
+expect Valid.
 print residue.
+// impl inst y=null
 /*
 Infer  (5): Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 & n=0 |-  n_70=n (may-bug).
 */
@@ -38,10 +45,12 @@ Infer  (5): Fail. (may) cause:(failure_code=15.3)  true |-  y!=null;  n=0 & n=0 
 // (6) Valid
 infer [n] n=0 & y=null |- y::ll<n>.
 print residue.
+expect Valid.
 
 // (7) Valid & inferred n=0
 infer [n] y=null |- y::ll<n>.  
 print residue.
+expect Valid.
 
 // (8) Fail
 infer [n] y!=null |- y::ll<n>. // fail
@@ -50,20 +59,23 @@ print residue.
 // (9) OK (inferred n!=1)
 infer [n] n=1 & y=null |- y::ll<n>.
 print residue.
+expect Valid.
 
 // (10) Valid
 infer [y] true |- y::ll<n> & n=0.
 print residue.
+expect Valid.
 
 // (11) Valid : inferred x!=null
 infer [x] x=null |- x::node<_,null>.
 print residue.
+expect Valid.
 
 // (12)
 // Inferred n=1
-
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
+expect Valid.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n=1, n!=0 & 0<=n]
@@ -76,6 +88,7 @@ n=1 &
 // inferred n>0
 infer [n] y::ll<n> |- y::node<_,b>.
 print residue.
+expect Valid.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n!=0 & 0<=n]
@@ -86,14 +99,17 @@ Inferred Pure:[ n!=0 & 0<=n]
 // (14) Inferred n=0
 infer [n] y::ll<n> |- y=null.
 print residue.
+expect Valid.
 
 // (15) inferred y=null
 infer [y] y::ll<n> |- y=null.
 print residue.
+expect Valid.
 
 // (16) inferred y=null & n=0
 infer [y,n] y::ll<n> |- y=null.
 print residue.
+expect Valid.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n=0 & y=null]
@@ -104,12 +120,14 @@ Inferred Pure:[ n=0 & y=null]
 // (17) fail
 infer [y] y::ll<n> |- y::node<_,null>.
 print residue.
+expect Fail.
 
 
 // (18) fail
 // Inferred n=1
 infer [y,n] y::ll<n> |- y::node<_,null>.
 print residue.
+expect Valid.
 /*
 TODO : n=1 actually subsumes n>=0 & !(n=0 & y=null)
 TODO : can it be removed if we have a post-processing ..
@@ -123,6 +141,7 @@ n=1 &
 // (19) inferred n=1
 infer [n] y::ll<n> |- y::node<_,null>.
 print residue.
+expect Valid.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n=1, n!=0 & 0<=n]
@@ -134,12 +153,14 @@ n=1 &
 // (20) inferred x!=null
 infer [x] x=null |- x::node<_,b>.
 print residue.
+expect Valid.
 
 
 // (21) 
 // Inferred x!=null
 infer [x] x::ll<n> |- x::node<_,b>.
 print residue.
+expect Valid.
 /*
 Inferred Heap:[]
 Inferred Pure:[ x!=null]
@@ -150,6 +171,7 @@ Inferred Pure:[ x!=null]
 // (22) inferred nn=1
 infer [nn] y::ll<nn> |- y::node<_,null>.
 print residue.
+expect Valid.
 /*
 Inferred Heap:[]
 Inferred Pure:[ n=1, n!=0 & 0<=n]
@@ -160,17 +182,20 @@ n=1 &
 // (23)
 infer [n] y::ll<n> |- y=null.
 print residue.
+expect Valid.
 // Inferred Pure:[ n=0]
 
 // (24)
 infer [n] y::ll<n> |- y::node<a,b>.
 print residue.
+expect Valid.
 //Inferred Pure:[ n!=0 & 0<=n]
 // WN : should be better to use n!=0
 
 // (25)
 infer [y] true |- y::node<a,b> * y::node<_,_>.
 print residue.
+expect Fail.
 //Infer  (20): Valid.
 //Inferred Heap:[ y::node<inf_269,inf_270>[Orig], y::node<inf_Anon_271,inf_Anon_272>[Orig]]
 // WN : if inferred pre is FALSE, better to denote scenario as an error?
@@ -178,10 +203,12 @@ print residue.
 // (26)
 infer [y] true |- y::node<a,b> * y::ll<m>.
 print residue.
+expect Fail.
 
 // (27)
 infer [y] m=-1 |- y::node<a,b> * b::ll<m>.
 print residue.
+expect Fail.
 //Inferred Heap:[ y::node<inf_310,inf_311>[Orig], b::ll<inf_m_315>[Orig][LHSCase]]
 //Inferred Pure:[ b=inf_311, a=inf_310 & b=inf_311 & inf_m_315=0 - 1]
 // inferred pre is false
@@ -189,6 +216,7 @@ print residue.
 // (28)
 infer [y,m] m=-1 |- y::node<a,b> * b::ll<m>.
 print residue.
+expect Valid.
 // Old inferred pure: (m!=-1 | inf_m_37<=-1)
 // (m!=-1 | inf_m_37<=-1) doesn't cause contradiction
 // Eliminate inf_m_37<=-1 only.
@@ -212,11 +240,13 @@ inf_m_356=0 - 1 & m=0 - 1 &
 // (29)
 infer [y,b] true |- y::node<a,b> * b::ll<m>.
 print residue.
+expect Valid.
 
 // (30)
 // OK
 infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
 print residue.
+expect Valid.
 /*
 Inferred Heap:[ y::node<inf_422,inf_b_423>[Orig], b::ll<inf_428>[Orig][LHSCase]]
 Inferred Pure:[ a=inf_422 & m=inf_428 & inf_b_423=b]
@@ -225,6 +255,16 @@ Inferred Pure:[ a=inf_422 & m=inf_428 & inf_b_423=b]
 
 */
 
+//(31-4a)
+infer [n] y!=null |- y::ll<n>.
+expect Fail.
+print residue.
+
+//(32-5a)
+infer [n] n>0 |- y::ll<n>.
+expect Valid.
+// infer n<=0 & false
+print residue.
 
 
 

@@ -15,13 +15,15 @@ lemma_unsafe self::nlseg<p> <-
       (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L).
 
 // (1)
+/*
 checkentail_exact
     (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
        |- (exists uu :self::nlseg<uu> * uu::nlseg<p> * p::node<_>@L).
 print residue.
 expect Valid.
+*/
 // valid with @L residue
-
+/*
 // (2)
 checkentail_exact
     (exists u :self::nlseg<u> * u::nlseg<p> * p::node<_>@L)
@@ -92,3 +94,4 @@ expect Valid.
 checkentail x::nlseg<y> * y::nlseg<z> * z::node<a>
          |- x::nlseg<z> * z::node<a>.
 expect Valid.
+*/

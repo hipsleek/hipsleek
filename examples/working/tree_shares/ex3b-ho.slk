@@ -1,0 +1,54 @@
+relation B(int n).
+
+
+data arrI
+{
+  int value;
+}.
+
+
+relation Base(int n).
+relation Rec(int n).
+
+
+pred arrsegHO<i,m> ==
+   x::arrI<v> & x=self+i & i=m-1 & Rec(v) 
+   or x::arrI<v> * self::arrsegHO<i+1,m> & x = self+i & i<m-1 // & Rec(v) 
+ inv i<m.
+
+// 3
+infer [@classic,Rec
+ ] xxx::arrI<v> * arr::arrsegHO<i+1,m> & v=5 & xxx=arr+i & i<m-1
+      |- arr::arrsegHO<i,m>.
+print residue.
+
+/*
+# ex3b.slk
+
+// fold substitution..
+
+!!! **solver.ml#2429:fr_vars:[x_88,self,i,m]
+!!! **solver.ml#2430:to_vars:[xxx,arr,i_81,m_82]
+
+# why inconsistent roots?
+
+!!! **astsimp.ml#2753:inconsistent roots:[[],[(x, x=i+self)]]
+
+
+# why identical answers?
+
+ <1>emp&v=5 & arr=x-i & i<=(m-2)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  Fold ==>  SEARCH ==>  COND ==>  Match(arr,arr) ==>  SEARCH ==>  Match(x,x_85)]]
+
+<2>emp&v=5 & arr=x-i & i<=(m-2)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  COND ==>  Fold ==>  SEARCH ==>  COND ==>  Match(arr,arr) ==>  SEARCH ==>  Match(x,x_235)]]
+
+
+*/
+
+/*
+# working
+infer [@classic,Rec
+ ] x::arrI<v> & v=5 & x=arr+i & i=m-1 |- arr::arrsegHO<i,m>.
+print residue.
+*/

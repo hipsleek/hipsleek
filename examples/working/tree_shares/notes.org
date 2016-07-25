@@ -1,0 +1,2 @@
+* When infer with only @classic, why there are two identical answers?
+  - 

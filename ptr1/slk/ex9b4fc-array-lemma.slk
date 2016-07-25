@@ -1,0 +1,64 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+
+
+//(3)
+
+/*
+checkentail xx::arr_seg<i,m> & 0<=i & i<m<=n & i+1<n & Univ(m) & m=n
+    |- n=i+3.
+print residue.
+expect Fail.
+*/
+
+checkentail 
+ 0<=i & i<m<=n & i+1<n & Univ(m) & m=n
+    |- n=i+3.
+print residue.
+expect Fail.
+
+/*
+# ex9b4fb.slk (FIXED by changing get_univs_from_ante)
+
+checkentail xx::arr_seg<i,m> & i<m<=n & i+1<n & Univ(m) & m=n
+    |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+# base-case unfold seems unsound; this is due to n being
+# marked as universal
+
+
+
+// why i need to be typed?
+checkentail  (i:int)+1<n & Univ(m) & m=i+3 & k=n
+    |- xx::arr_seg<k,n>.
+print residue.
+expect Fail.
+
+checkentail xx::arr_seg<i,m>*
+  xx::arr_seg<m,n> & i<m<=n & i+1<n & Univ(m)
+    |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+# Why did base-case unfold lead to a univ instantiation?
+
+# perhaps it isn't quite right to do univ inst for every implication
+but to control where univ_inst is done at check_entail empty_rhs?
+
+
+Entail 1: Valid. 
+Residue:
+ <1>xx::arr_seg<i,m>@M&n=i+3 & i<m & m<=n & (1+i)<n & Univ(m) & m_51=m & 
+                       xx!=null & 0<=m_51 & m_51=n&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  BaseCaseUnfold ==>  SEARCH ==>  COND ==>  BaseCaseFold]]
+
+
+*/

@@ -1,0 +1,52 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0
+    & BasePtr(self)
+  .
+
+checkentail 
+ j=m & j>=0 & BasePtr(base2) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
+   |- base2::arr_seg<j,m> 
+         //a=base2+j1
+         //b=base2+j1
+.
+expect Valid.
+print residue.
+
+checkentail true |- (exists base2: BasePtr(base2)).
+expect Valid.
+
+
+checkentail 
+ j=m & j>=0 //& BasePtr(base) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
+   |- [base2] base2::arr_seg<j,m> 
+         //a=base2+j1
+         //b=base2+j1
+   .
+expect Valid.
+print residue.
+
+
+checkentail 
+ j=m & j>=0 //& BasePtr(base) //& BasePtr(base2) // base::arr_seg<j,m> & a=base+j //& base=base2
+   |- base2::arr_seg<j,m> 
+         //a=base2+j1
+         //b=base2+j1
+   .
+expect Valid.
+print residue.
+
+/*
+# bug2c.slk 
+
+# Can is base-case fold not working with BasePtr(base2)?
+
+
+
+
+
+*/

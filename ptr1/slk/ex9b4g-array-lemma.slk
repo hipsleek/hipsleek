@@ -1,0 +1,28 @@
+
+checkentail
+  m_51=m & Univ(m) & (1+i)<n & m<=n & i<m & 
+ (((0<=i & i<m & xx!=null) | (i=m & 0<=m & xx!=null))) & 
+ (((0<=m_51 & m_51<n & xx!=null) | (m_51=n & 0<=n & xx!=null)))
+|- m_51=i+1.
+print residue.
+expect Valid.
+
+checkentail
+  m_51=m & Univ(m) & (1+iii)<n & m<=n & iii<m & 
+ (((0<=iii & iii<m & xx!=null) | (iii=m & 0<=m & xx!=null))) & 
+ (((0<=m_51 & m_51<n & xx!=null) | (m_51=n & 0<=n & xx!=null)))
+|- m_51=iii.
+print residue.
+expect Fail.
+
+checkentail
+  Univ(m) & i<m<n 
+|- m=i+1.
+expect Valid.
+print residue.
+
+checkentail
+  Univ(m) & i<m<n 
+|- m=i+2.
+expect Fail.
+print residue.

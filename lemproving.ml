@@ -104,7 +104,9 @@ let run_entail_check_helper ctx (iante: lem_formula) (iconseq: lem_formula) (inf
   (*   else ((not (CF.isFailCtx_gen rs))) *)
   (* in *)
   let _ = Debug.ninfo_hprint (add_str "inf_vars" !CP.print_svl) inf_vars  no_pos in
+  let () = x_tinfo_pp "lemproving: mytag1" no_pos in
   let (res, rs,_) = !sleek_entail 7 [] inf_vars  cprog [] ante conseq in
+  let () = x_tinfo_pp "lemproving: mytag2" no_pos in
   (res, rs)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -143,7 +145,7 @@ let print_exc (check_id: string) =
 
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check coerc iante iconseq (inf_vars: CP.spec_var list) iexact (lemma_name: string) (cprog: C.prog_decl)  =
-  let () = if  (!Globals.dump_lem_proc) then  
+  let () = if  (!Globals.dump_lem_proc)||true then  
       let () = x_tinfo_pp "process_coercion_check" no_pos in
       let () = x_tinfo_pp "======================" no_pos in
       let () = x_tinfo_hp (add_str "i-ante" string_of_lem_formula) iante no_pos in
@@ -155,6 +157,7 @@ let process_coercion_check coerc iante iconseq (inf_vars: CP.spec_var list) iexa
   let empty_es = { empty_es with CF.es_infer_obj = inf_obj } in
   let empty_ctx = CF.Ctx empty_es in
   let dummy_ctx = CF.SuccCtx [empty_ctx] in
+
   (* CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos]  *)
   try 
     (* TODO:WN local inf_obj not properly propagated *)
@@ -215,7 +218,7 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 
 
 let add_exist_heap_of_struc (fv_lhs:CP.spec_var list) (e : CF.struc_formula) : CF.struc_formula * (CP.spec_var list) =
-  let e_implicit_vars = CF.struc_implicit_vars e in
+  let e_implicit_vars = (* CF.struc_implicit_vars e *) [] in
   let f_none _ _ = None in
   let c_h_formula qvs fv_lhs x =  
     let vs = CF.h_fv x in
@@ -509,12 +512,13 @@ let print_lemma_entail_result ?(force_pr=false) (valid: bool) (ctx: CF.list_cont
    coerc_type: lemma type (Right, Left or Equiv)
 *)
 let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_decl list) (cprog: C.prog_decl)  lemma_name lemma_type =
+  let () = x_tinfo_pp "lemproving : verify_lemma called" no_pos in
   let coercs = l2r @ r2l in
   let coercs_info = List.map (fun c ->
       let typ_orig = (match c.C.coercion_type_orig with
-          | None -> c.C.coercion_type
-          | Some t -> t
-        ) in
+                      | None -> c.C.coercion_type
+                      | Some t -> t
+                     ) in
       match c.C.coercion_type with
       | I.Left ->
         let (valid, rs) = check_left_coercion c cprog in
@@ -537,25 +541,29 @@ let verify_lemma ?(force_pr=false) (l2r: C.coercion_decl list) (r2l: C.coercion_
           let residue = CF.and_list_context rs1 rs2 in
           let valid = valid1 && valid2 in
           let () = (
-            if valid then print_lemma_entail_result ~force_pr:force_pr valid residue num_id
-            else
-              let force_print = (force_pr ||  !Globals.lemma_ep) || !Globals.lemma_ep_verbose in
-              if force_print then Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos;
-              let typ1_str = Cprinter.string_of_coercion_type typ1 in
-              let typ2_str = Cprinter.string_of_coercion_type typ2 in
-              let () = print_lemma_entail_result ~force_pr:force_pr valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
-              let () = print_lemma_entail_result ~force_pr:force_pr valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
-              ()
-          ) in
-          residue
-        )
-      | I.Left | I.Right -> (
-          let valid, rs, typ = (match coercs_info with
-              | c::[] -> c
-              | _ -> Error.report_error_msg "verify_lemma: Left- or Right-lemma expects 1 coercion" 
+              let () = x_tinfo_pp "lemproving: before print_lemma_entail_result" no_pos in
+              if valid then print_lemma_entail_result ~force_pr:force_pr valid residue num_id
+              else
+                let force_print = (force_pr ||  !Globals.lemma_ep) || !Globals.lemma_ep_verbose in
+                if force_print then Debug.info_pprint (num_id ^ ": Fail. Details below:\n") no_pos;
+                let typ1_str = Cprinter.string_of_coercion_type typ1 in
+                let typ2_str = Cprinter.string_of_coercion_type typ2 in
+                let () = print_lemma_entail_result ~force_pr:force_pr valid1 rs1 ("\t \"" ^ typ1_str ^ "\" implication: ") in
+                let () = print_lemma_entail_result ~force_pr:force_pr valid2 rs2 ("\t \"" ^ typ2_str ^ "\" implication: ") in
+                let () = x_tinfo_pp "lemproving: after print_lemma_entail_result" no_pos in
+                ()
+                  
             ) in
-          let () = print_lemma_entail_result ~force_pr:force_pr valid rs num_id  in rs
-        )
+          residue
+      )
+      | I.Left | I.Right -> (
+        let () = x_tinfo_pp "lemproving: before print_lemma_entail_result" no_pos in
+        let valid, rs, typ = (match coercs_info with
+                              | c::[] -> c
+                              | _ -> Error.report_error_msg "verify_lemma: Left- or Right-lemma expects 1 coercion" 
+                             ) in
+        let () = print_lemma_entail_result ~force_pr:force_pr valid rs num_id  in rs
+      )
     ) in
   residues
 (* else None *)

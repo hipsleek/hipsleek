@@ -1,0 +1,8 @@
+pred_prim strbuf<cptr,sl:int,length:int>
+  inv self<=cptr & cptr<=self+sl & sl<=length & cptr<self+length.
+
+
+
+checkentail (exists cptr_89: xxx::strbuf<cptr_89,sl,length>@L&
+cptr_89=cptr & cptr<(sl+xxx) & cptr'=cptr)
+ |-  xx::strbuf<cptr',sl_1858,length_1859>@L& cptr'<(sl_1858+xx). 

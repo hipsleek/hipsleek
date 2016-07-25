@@ -1,0 +1,45 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+lemma_unsafe self::arr_seg<i,n> & i<m<=n 
+     -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+HeapPred R(arrI arr, int i).
+
+infer [R] R(p,i) |- p::arrI<_> .
+print residue.
+// inferred hprel: [R(p,i@NI)&true --> p::arrI<Anon_101>@M&true]
+
+
+infer [R] R(p,i) |- p::arrI<_> & i>=0.
+print residue.
+//Entail (2) : Fail.(may) cause: true |-  0<=i. LOCS:[0;17] (may-bug)
+
+infer [R] R(arr,i) |- p::arrI<_> & p=arr+i & i>=0.
+print residue.
+
+/*
+# ex2a.slk
+
+infer [R] R(arr,i) |- p::arrI<_> & p=arr+i & i>=0.
+print residue.
+
+Entail (3) : Fail.(may) cause:**solver.ml#14063:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: **solver.ml#14063:infer_collect_hp_relinfer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  InferUnfold  ==>  InferHeap]]
+
+*/

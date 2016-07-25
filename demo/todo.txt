@@ -1489,6 +1489,43 @@ push_pr(ti3:288): EInfer @term[]
 
 
 ==========================================================================
+# hip qsort.ss
+
+# Are these warnings spurious..
+
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[],[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+
+
+# why so many calls to Over checking?
+
+Inv Check: Valid.(Over)
+
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
 ==========================================================================
 ==========================================================================
 ==========================================================================

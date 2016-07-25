@@ -1,0 +1,87 @@
+data node{
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+.
+
+checkentail x::ll<n> & ["":n=777; "x","":n>0] |- true & ["x":n>1].
+expect Valid.
+
+
+/*
+# bug11g.slk
+
+checkentail x::ll<n> & ["":n=777; "x","":n>0] |- true & ["x":n>1].
+expect Valid.
+
+(==tpdispatcher.ml#3540==)
+sat_label_filter@833@829
+sat_label_filter inp1 : 
+ AndList( "":n=777 & 1<=n & x=1 ; "x":!(1<n) ; "x","":0<n) 
+sat_label_filter@833 EXIT:false
+
+(==excore.ml#903==)
+ef_imply_disj@829
+ef_imply_disj inp1 :[([x], 
+ AndList( "":n=777 & 1<=n ; "x","":0<n) )]
+ef_imply_disj inp2 :[([], 
+ AndList( "x":1<n) )]
+ef_imply_disj@829 EXIT:true
+
+
+Is it OK for heap position to be present in
+only "" ?
+
+imply being handled by sat below..
+why did we not use imply directly?
+would it gives filtering?
+
+(==tpdispatcher.ml#3540==)
+sat_label_filter@21@17
+sat_label_filter inp1 : 
+ AndList( "":x=777 & c=1 ; "x":0<x & !(1<x)) 
+sat_label_filter@21 EXIT:true
+
+(==excore.ml#903==)
+ef_imply_disj@17
+ef_imply_disj inp1 :[([c], 
+ AndList( "":x=777 ; "x":0<x) )]
+ef_imply_disj inp2 :[([], 
+ AndList( "x":1<x) )]
+ef_imply_disj@17 EXIT:false
+
+=================================================
+
+
+//checkentail true & ["":x=0; "x":x>0] |- true & ["x":x>1].
+//expect Fail.
+
+checkentail true & ["":x=0; "x","":x>0] |- true & ["x":x>1].
+expect Valid.
+
+checkentail true & ["":x=7; "x":x>0] |- true & ["","x":x>1].
+expect Valid.
+
+checkentail true & ["":x=7; "x":x>0] |- true & ["x":x>1].
+expect Fail.
+*/
+
+/*
+
+Normal Labelling
+  UNSAT(fc&f1) | UNSAT(fc&f2)
+--------------------------------
+ UNSAT("":fc, "a":f1, "b":f2)
+
+Aggressive Labelling (with equality propagated)
+
+  UNSAT(fc) | UNSAT(e2&f1) | UNSAT(e3&f2)
+----------------------------------------------
+          UNSAT("":fc, "a":f1, "b":f2)
+
+
+
+*/

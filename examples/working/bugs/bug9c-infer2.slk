@@ -1,0 +1,84 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [n] n=0 & q!=null |- q=null .
+expect Valid.
+print residue.
+// contra and thus allowed n!=0 to be inferred
+// for entailment to proceed.
+
+infer [n] n=0 & q!=null |- q=null & n=0 or q!=null & n!=0.
+expect Valid.
+print residue.
+// contra only for a branch, do we allow n!=0 to be inferred?
+
+
+infer [n] n=0 & q!=null |- q!=null & n!=0.
+expect Valid.
+print residue.
+
+infer [n] n=0  |- n!=0.
+expect Valid.
+print residue.
+// should we infer n!=0 here?
+// I guess it is OK..
+// need to handle infer[n] n>0 |- x::ll<n>. 
+// succeeds when n=0 
+
+infer [n] q!=null |- q=null & n=0.
+expect Fail.
+print residue.
+
+
+infer [n] n>=0 |- x::ll<n>.
+expect Valid. //n=0
+print residue.
+
+
+infer [n] emp |- x::ll<n> & n>0.
+expect Fail.
+print residue.
+
+infer [n] emp |- x::ll<n>.
+expect Valid. //n=0
+print residue.
+
+infer [n] x!=null |- x::ll<n>.
+expect Fail. 
+print residue.
+
+//(6)
+infer [n] n=0 |- q::ll<n> .
+expect Valid.
+print residue.
+// inst q=null
+
+//(6a)
+infer [n] q!=null |- q::ll<n> .
+expect Fail.
+print residue.
+// inst q=null
+
+//(6b)
+infer [n] q!=null & n>0 |- q::ll<n> .
+expect Valid.
+print residue.
+// infer contra n<=0
+
+
+//(9)
+infer [n] n!=0 |- q::ll<n> .
+expect Valid.
+print residue.
+// infer n=0 contra ..
+
+//(9a)
+infer [] n!=0 |- q::ll<n> .
+expect Fail.
+print residue.

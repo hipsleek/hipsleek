@@ -1,0 +1,80 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+lemma_unsafe self::arr_seg<i,n> & i<mmm<=n 
+     -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n> .
+
+
+
+//(4)
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i,n>.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+expect Valid.
+print residue.
+
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+3,n>.
+expect Fail.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+3,n>.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+2,n>.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+1,n>.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+4,n>.
+expect Fail.
+print residue.
+
+/*
+# ex9b5f.slk
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+expect Valid.
+
+--adhoc-2 trigger failure
+
+# need to add Univ(mmm_52) below ...
+
+!!! **solver.ml#14600:coer_rhs_0: (exists mmm_52: self::arr_seg<i,mmm_111>@M * self::arr_seg<mmm_52,n>@M&
+mmm_52=mmm_111&{FLOW,(20,21)=__norm#E}[])
+!!! **solver.ml#14608:coer_rhs_1: (exists mmm_52: self::arr_seg<i,mmm_111>@M * self::arr_seg<mmm_52,n>@M&
+mmm_52=mmm_111&{FLOW,(20,21)=__norm#E}[])
+!!! **solver.ml#14612:lhs_guard_p: i<mmm_111 & mmm_111<=n
+!!! **solver.ml#14620:univ_vars2:[]
+!!! **solver.ml#14622:pure of coer_rhs: exists(mmm_52:mmm_52=mmm_111)
+!!! **solver.ml#14692:lhs_w_univ_rel: i<mmm_111 & mmm_111<=n & Univ(mmm_111)
+!!! **solver.ml#14694:coer_rhs_new1: (exists mmm_115: xx::arr_seg<i,mmm_111>@M * xx::arr_seg<mmm_115,n>@M&
+mmm_115=mmm_111 & i<mmm_111 & mmm_111<=n & Univ(mmm_111)&
+{FLOW,(20,21)=__norm#E}[])
+!!! **solver.ml#14727:rest_of_lhs: emp&i<n&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#14731:f_univ_vars:[mmm_111]
+!!! **solver.ml#14732:lhs_guard_new: i<mmm_111 & mmm_111<=n
+
+
+
+//(5)
+checkentail xx::arr_seg<i,n> & i+1<n & i>=0 |- xx::arr_seg<i+1,n>.
+expect Valid.
+
+//(7)
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+2,n>.
+expect Valid.
+
+*/
+

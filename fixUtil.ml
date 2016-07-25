@@ -56,8 +56,19 @@ let omega_imply_raw a b = wrap_prover OmegaCalc (Tpdispatcher.imply_raw a) b
 
 let compute_inv_baga ls_mut_rec_views cviews0 =
   (* let all_mutrec_vnames = List.concat ls_mut_rec_views in *)
+  let pr = pr_list (fun vd -> vd.C.view_name) in
+  let () = y_tinfo_hp (add_str "cviews0" pr) cviews0 in
+  let is_and_list cv = List.filter (fun vd -> vd.Cast.view_labels!=[]) cv in 
   let cviews0 =
-    if !Globals.gen_baga_inv then
+    let andlist_vd = is_and_list cviews0 in
+    if not(!Globals.gen_baga_inv) || andlist_vd!=[] then 
+      begin
+      (* cannot --inv-baga on predicate with AndList *)
+        if !Globals.gen_baga_inv then
+          y_winfo_hp (add_str "Cannot apply --inv-baga on pred with labels" pr) andlist_vd;
+        cviews0
+      end
+    else
       let () = x_binfo_pp "Generate baga inv\n" no_pos in
       (* let cviews0 = List.filter (fun cv -> *)
       (*     (not cv.Cast.view_is_prim) *)
@@ -406,8 +417,6 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
       (*   Globals.dis_inv_baga () *)
       (* ) in *)
       cviews1
-    else
-      cviews0
   in cviews0
 
 let compute_inv_baga ls_mut_rec_views cviews0 =

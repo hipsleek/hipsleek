@@ -87,6 +87,9 @@ let is_self_spec_var sv = match sv with
 
 let self_sv = mk_spec_var self 
 
+let is_baseptr_var sv = match sv with
+  | SpecVar (_,n,_) -> n = "BasePtr"
+
 let is_res_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = res_name
 
@@ -150,6 +153,10 @@ let is_int_typ sv = match sv with
 let is_num_typ sv = match sv with
   | SpecVar (NUM,_,_) -> true
   | _ -> false
+
+let is_num_or_int_typ sv = match sv with
+  | SpecVar (n,_,_) -> n==NUM || n=Int
+  (* | _ -> false *)
 
 let is_ann_typ sv = match sv with
   | SpecVar (AnnT,_,_) -> true
@@ -2959,7 +2966,7 @@ and mkExists vs f lbel pos =
   let vs1 = List.filter (fun v -> not(is_rel_all_var v)) vs in
   let () = x_tinfo_hp (add_str "vs(mkExists)" !print_svl) vs no_pos in
   let () = x_tinfo_hp (add_str "vs(filtered rel type)" !print_svl) vs1 no_pos in
-  let fn = if !Globals.adhoc_flag_2 then mkExists_x else mkExists_naive
+  let fn = if false (* !Globals.adhoc_flag_2 *) then mkExists_x else mkExists_naive
   in
   Debug.no_2 "pure_mkExists" !print_svl !print_formula !print_formula (fun _ _ -> fn vs1 f lbel pos) vs1 f
 
@@ -5657,49 +5664,108 @@ and elim_exists (f0 : formula) : formula =
 
 (* eliminate exists with the help of v=exp *)
 and elim_exists_x (f0 : formula) : formula = 
-  let rec helper f0 =
+  let rec helper qvars f0 =
     match f0 with
-    | Exists (qvar, qf, lbl, pos) -> begin
-        match qf with
-        | Or (qf1, qf2, lbl2, qpos) ->
-          let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-          let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-          let eqf1 = helper new_qf1 in
-          let eqf2 = helper new_qf2 in
-          let res = mkOr eqf1 eqf2 lbl2 pos in
+    | Exists (qvar, qf, lbl, pos) -> helper (qvar::qvars) qf
+    | Or (qf1, qf2, lbl2, qpos) ->
+          (* let new_qf1 = mkExists [qvar] qf1 lbl qpos in *)
+          (* let new_qf2 = mkExists [qvar] qf2 lbl qpos in *)
+          let eqf1 = helper qvars qf1 in
+          let eqf2 = helper qvars qf2 in
+          let res = mkOr eqf1 eqf2 lbl2 qpos in
           res
-        | _ ->
-          let qf = helper qf in
-          let qvars0, bare_f = split_ex_quantifiers qf in
-          let qvars = qvar :: qvars0 in
+    | _ ->
+          (* let qf = helper qf in *)
+          (* let qvars0, bare_f = split_ex_quantifiers qf in *)
+          let qvars0 = qvars in
+          let pos=no_pos in
+          let bare_f = f0 in
+          (* let qvars = qvar :: qvars0 in *)
           let conjs = list_of_conjs bare_f in
           let no_qvars_list, with_qvars_list = List.partition
               (fun cj -> disjoint qvars (fv cj)) conjs in
           (* the part that does not contain the quantified var *)
           let no_qvars = conj_of_list no_qvars_list pos in
+          let () = y_tinfo_hp (add_str "elim_exists:no_qvars" !print_formula) no_qvars in
           (* now eliminate the quantified variables from the part that contains it *)
           let with_qvars = conj_of_list with_qvars_list pos in
+          let () = y_tinfo_hp (add_str "elim_exists:with_qvars" !print_formula) with_qvars in
           (* now eliminate the top existential variable. *)
-          let st, pp1 = get_subst_equation_formula with_qvars qvar false in
+          (* let qvar = List.hd qvars in *)
+          let rec eq_subs qvars f =
+            match qvars with
+              | [] -> [],f
+              | qv::qvars -> 
+                    let (st1,pp1) = eq_subs qvars f in
+                    let (st2,pp2) = get_subst_equation_formula pp1 qv false in
+                    (st1@st2,pp2)
+          in
+          let st,pp1 = eq_subs qvars with_qvars in
+          (* let st, pp1 = get_subst_equation_formula with_qvars qvar false in *)
           if not (Gen.is_empty st) then
             let new_qf = subst_term st pp1 in
             let new_qf = prune_perm_bounds new_qf in
-            let new_qf = mkExists qvars0 new_qf lbl pos in
-            let tmp3 = helper new_qf in
+            (* let new_qf = mkExists qvars0 new_qf no_lbl pos in *)
+            let tmp3 = helper qvars0 new_qf in
             let tmp4 = mkAnd no_qvars tmp3 pos in
             tmp4
           else (* if qvar is not equated to any variables, try the next one *)
-            let tmp1 = qf (*helper qf*) in
-            let tmp2 = mkExists(*_with_simpl simpl*) [qvar] tmp1 lbl pos in
+            let tmp1 = f0 (*helper qf*) in
+            let tmp2 = mkExists(*_with_simpl simpl*) qvars tmp1 None (* lbl *) pos in
             tmp2
-      end
-    | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos 
-    | AndList b -> AndList (map_l_snd helper b)
-    | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos 
-    | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos 
-    | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos 
-    | BForm _ -> f0 in
-  helper f0
+      in
+    (* | And (f1, f2, pos) -> mkAnd ( helper qvars f1) ( helper qvars f2) pos  *)
+    (* | AndList b -> AndList (map_l_snd helper b) *)
+    (* | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos  *)
+    (* | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos  *)
+    (* | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos  *)
+    (* | BForm _ -> f0 in *)
+  helper [] f0
+  (* let rec helper f0 = *)
+  (*   match f0 with *)
+  (*   | Exists (qvar, qf, lbl, pos) -> begin *)
+  (*       match qf with *)
+  (*       | Or (qf1, qf2, lbl2, qpos) -> *)
+  (*         let new_qf1 = mkExists [qvar] qf1 lbl qpos in *)
+  (*         let new_qf2 = mkExists [qvar] qf2 lbl qpos in *)
+  (*         let eqf1 = helper new_qf1 in *)
+  (*         let eqf2 = helper new_qf2 in *)
+  (*         let res = mkOr eqf1 eqf2 lbl2 pos in *)
+  (*         res *)
+  (*       | _ -> *)
+  (*         let qf = helper qf in *)
+  (*         let qvars0, bare_f = split_ex_quantifiers qf in *)
+  (*         let qvars = qvar :: qvars0 in *)
+  (*         let conjs = list_of_conjs bare_f in *)
+  (*         let no_qvars_list, with_qvars_list = List.partition *)
+  (*             (fun cj -> disjoint qvars (fv cj)) conjs in *)
+  (*         (\* the part that does not contain the quantified var *\) *)
+  (*         let no_qvars = conj_of_list no_qvars_list pos in *)
+  (*         let () = y_tinfo_hp (add_str "elim_exists:no_qvars" !print_formula) no_qvars in *)
+  (*         (\* now eliminate the quantified variables from the part that contains it *\) *)
+  (*         let with_qvars = conj_of_list with_qvars_list pos in *)
+  (*         let () = y_tinfo_hp (add_str "elim_exists:with_qvars" !print_formula) with_qvars in *)
+  (*         (\* now eliminate the top existential variable. *\) *)
+  (*         let st, pp1 = get_subst_equation_formula with_qvars qvar false in *)
+  (*         if not (Gen.is_empty st) then *)
+  (*           let new_qf = subst_term st pp1 in *)
+  (*           let new_qf = prune_perm_bounds new_qf in *)
+  (*           let new_qf = mkExists qvars0 new_qf lbl pos in *)
+  (*           let tmp3 = helper new_qf in *)
+  (*           let tmp4 = mkAnd no_qvars tmp3 pos in *)
+  (*           tmp4 *)
+  (*         else (\* if qvar is not equated to any variables, try the next one *\) *)
+  (*           let tmp1 = qf (\*helper qf*\) in *)
+  (*           let tmp2 = mkExists(\*_with_simpl simpl*\) [qvar] tmp1 lbl pos in *)
+  (*           tmp2 *)
+  (*     end *)
+  (*   | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos  *)
+  (*   | AndList b -> AndList (map_l_snd helper b) *)
+  (*   | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos  *)
+  (*   | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos  *)
+  (*   | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos  *)
+  (*   | BForm _ -> f0 in *)
+  (* helper f0 *)
 
 let mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
   let r = elim_exists (mkExists vs f lbl pos) in
@@ -5929,6 +5995,11 @@ let mk_exp_var v =
   let e = mkVar v no_pos in
   e
 
+let get_exp_var e =
+  match e with
+    | Var(v,_) -> Some v
+    | _ -> None
+
 let mk_exp_geq lhs i = 
   (* let lhs = mkVar v no_pos in *)
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
@@ -5952,24 +6023,46 @@ let mk_exp_neq_null lhs =
 (*   (sv,None) denotes an address sv *)
 (*   (sv1,Some(sv2)) denotes an interval sv1..(sv2-1) *)
 (*   (sv1,Some(sv1)) is the same as empty *)
-(*   Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
+(* Alternative (sv1,Some(base,offset,intv)) sv1..(base+offset+intv-1) *)
+(*   (base,Some(offset,len)) *)
+(*  
+      base,(offset,len)
+      ptr = base+offset ..
+      (self,2,0)
+*)
 module SV_INTV =
 struct 
-  type intv = (exp * exp) (* start and length *)
+  type intv = (exp * exp) (* start and end+1 *)
   type t = spec_var * intv (* spec_var *) option
   let zero = (mk_zero,None)
   (* "_" to denote null value *)
   let is_zero x = x==zero
-  let eq (x1,_) (x2,_) = eq_spec_var x1 x2
-  let compare (x1,_) (x2,_) = compare_spec_var x1 x2
+  (* need a stronger equality *)
+  let eq (x1,m1) (x2,m2) =
+    begin
+      match m1,m2 with
+      | None,None -> eq_spec_var x1 x2
+      | Some(s1,n1),Some(s2,n2) -> failwith x_tbi
+      | _,_ -> false
+    end
+  let compare (x1,m1) (x2,m2) = 
+    begin
+      match m1,m2 with
+      | None,None -> compare_spec_var x1 x2
+      | Some(s1,n1),Some(s2,n2) -> compare_spec_var x1 x2
+      | None,Some _ -> -1
+      | _, _ -> 1
+    end
   let mk_addr x = (x,None)
   (* TODO : to change this function *)
   let get_interval (x,y) = 
+   let () = y_tinfo_pp "inside get_interval (SV_INTV)" in
     match y with
     | None -> None
     | Some exp -> Some(x,exp)
                    (* Some(x,id) *)
-  let string_of (sv,sv_opt) = 
+  let string_of (sv,sv_opt) =
+    (* let () = y_tinfo_pp "inside SV_INTV" in *)
     let pr = string_of_spec_var in
     let pr_e = !print_exp in
     match sv_opt with
@@ -5983,11 +6076,43 @@ struct
       with _ -> x in
     (repl v,map_opt repl_e opt)
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
-  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) = 
+  (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) & (d<=b2||d2<=b) (to ensure disjointness) *)
+  let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) =
+    let gen_disj tlst =
+      let gen_disj_f basenew eh et base e1 e2=
+        (mkOr
+           (mkNot (mkEqVar basenew base no_pos) None no_pos)
+           (mkOr (BForm (((mkGte eh e2 no_pos),None),None)) (BForm (((mkGte e1 et no_pos),None),None)) None no_pos)
+           None
+           no_pos)
+      in
+      let rec helper ((base,(e1,e2)) as e) lst =
+        match lst with
+        | [] -> []
+        | (basenew,(eh,et))::rest ->
+           (gen_disj_f base e1 e2 basenew eh et)::(helper e rest)
+      in
+      let rec merge_and_list lst =
+        match lst with
+        | [] -> None
+        | [h] -> Some h
+        | h::rest ->
+           (match (merge_and_list rest) with
+            | Some r -> Some (mkAnd h r no_pos)
+            | None -> Some h)
+      in
+      let rec proc tlst =
+        match tlst with
+        | [] -> []
+        | h::rest -> (helper h rest)@(proc rest)
+      in
+      merge_and_list (proc tlst)
+    in
+    let () = y_tinfo_pp "inside get_pure (SV_INTV)" in
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
-    let lst_intv = List.fold_left (fun acc (_,s) -> match s with
+    let lst_intv = List.fold_left (fun acc (base,s) -> match s with
         | None -> acc
-        | Some(b,d) -> (b,d)::acc) [] lst in
+        | Some(b,d) -> (base,(b,d))::acc) [] lst in
     let add_intv_formula f lst = List.fold_left (fun acc (b,d) ->
         let f1 = mk_exp_leq d 0 in
         let f2 = mk_exp_neq_null b  in
@@ -5997,8 +6122,13 @@ struct
     let lst = List.filter (fun (_,p) -> p==None) lst in
     let lst = List.map fst lst in
     if enum_flag then baga_enum lst
-    else let f = baga_conv ~neq_flag:neq_flag lst in
-      add_intv_formula f lst_intv
+    else
+      let f = baga_conv ~neq_flag:neq_flag lst in
+      (match gen_disj lst_intv with
+       | None -> add_intv_formula f (List.map snd lst_intv)
+       | Some disj_f ->
+          mkAnd (add_intv_formula f (List.map snd lst_intv)) disj_f no_pos)
+                   
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in
     List.map fst lst
@@ -6014,7 +6144,7 @@ struct
   (* let mk_elem x = mk_elem_from_sv (x,None) *)
   (* throws exception when duplicate detected during merge *)
   let norm_baga (state:formula) (b:t list) = 
-    let () = y_binfo_pp x_tbi in
+    let () = y_tinfo_pp x_tbi in
     b
   let rec merge_baga b1 b2 =
     match b1,b2 with
@@ -6099,6 +6229,11 @@ module BagaSV = Gen.Baga(PtrSV);;
 module EMapSV = Gen.EqMap(SV);;
 module DisjSetSV = Gen.DisjSet(PtrSV);;
 module SetSV = Set.Make(SV);;
+
+
+(*added PtrSVINTV and DisjSetSVINTV for interval *)
+module PtrSVINTV = Ptr(SV_INTV);;
+module DisjSetSVINTV = Gen.DisjSet(PtrSVINTV);;
 
 type baga_sv = BagaSV.baga
 
@@ -8381,10 +8516,10 @@ and imply_disj_orig ante_disj conseq t_imply imp_no =
     (fun ante_disj conseq -> imply_disj_orig_x0 ante_disj conseq t_imply imp_no) ante_disj conseq
 
 let rec imply_one_conj_orig one_ante_only ante_disj0 ante_disj1 conseq t_imply imp_no =
-  let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
+  let xp01,xp02,xp03 = x_add imply_disj_orig ante_disj0 conseq t_imply imp_no in
   if not(xp01) && !Globals.super_smart_xpure && not(one_ante_only) then
     let () = x_dinfo_pp ("\nSplitting the antecedent for xpure1:\n") no_pos in
-    let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
+    let (xp11,xp12,xp13) = x_add imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let () = x_dinfo_pp ("\nDone splitting the antecedent for xpure1:\n") no_pos in
     (xp11,xp12,xp13)
   else (xp01,xp02,xp03)
@@ -11507,9 +11642,9 @@ let enhance_eq_list eq_list =
     let () = if !Globals.assert_nonlinear then 
         let b = !tp_imply orig_pure new_pure in
         if not(b) then 
-          let () = x_binfo_hp (add_str "XXX:orig_eqn" !print_formula) orig_pure no_pos in
-          let () = x_binfo_hp (add_str "XXX:new_eqn" !print_formula) new_pure no_pos in
-          let () = x_binfo_pp "XXX:UNSOUND enhance_eq_list" no_pos in
+          let () = x_dinfo_hp (add_str "XXX:orig_eqn" !print_formula) orig_pure no_pos in
+          let () = x_dinfo_hp (add_str "XXX:new_eqn" !print_formula) new_pure no_pos in
+          let () = x_dinfo_pp "XXX:UNSOUND enhance_eq_list" no_pos in
           failwith "UNSOUND enhance_eq_list"
         else  () (* failwith "SOUND enhance_eq_list" *)
             (* () *) (* x_tinfo_pp "XXX:OK enhance_eq_list" no_pos *)  
@@ -12670,14 +12805,17 @@ let split_disjunctions_deep (f:formula) : formula list =
   let pr = !print_formula in
   (* Debug.no_1 "split_disjunctions_deep" pr (pr_list pr) *) split_disjunctions_deep f
 
-let drop_exists (f:formula) :formula = 
+let drop_exists ?(rename_flag=true) (f:formula) :formula = 
   let rec helper f =
     let f_f f = 
       match f with
-      | Exists(qid,qf,fl,pos) -> let fresh_fr = fresh_spec_vars [qid] in
-        let st = List.combine [qid] fresh_fr in
-        let rename_exist_vars  = subst st qf in
-        Some((helper rename_exist_vars))
+      | Exists(qid,qf,fl,pos) -> 
+            if rename_flag then
+              let fresh_fr = fresh_spec_vars [qid] in
+              let st = List.combine [qid] fresh_fr in
+              let rename_exist_vars  = subst st qf in
+              Some((helper rename_exist_vars))
+            else Some(helper qf)
       | And _ | AndList _ | Or _  -> None
       | Not _ | Forall _ | BForm _ -> Some(f)
     in
@@ -12686,9 +12824,9 @@ let drop_exists (f:formula) :formula =
     map_formula f (f_f,f_bf,f_e)
   in helper f
 
-let drop_exists (f:formula) :formula =
+let drop_exists ?(rename_flag=true) (f:formula) :formula =
   let pr = !print_formula in 
-  Debug.no_1 "drop_exists_pure" pr pr drop_exists f 
+  Debug.no_1 "drop_exists_pure" pr pr (drop_exists ~rename_flag:rename_flag) f 
 
 let add_prefix_to_spec_var prefix (sv : spec_var) = match sv with
   | SpecVar (t,n,p) -> SpecVar (t,prefix^n,p)
@@ -14492,7 +14630,7 @@ let prune_irr_neq p0 irr_svl =
         | _, true -> false,np1
         | _ -> (false,mkAnd np1 np2 pos)
       end
-    | AndList b-> false,p(* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
+    | AndList b-> false,p (* let ls_and,svl = List.fold_left (fun (ls1,) (sl,b1) -> *)
     (*     let nb1,svl1 = helper b1 in *)
     (*     if svl1 = [] then ls1@[(sl,b1)],svl0 else *)
     (*       ls1,svl0@svl1 *)
@@ -15825,7 +15963,7 @@ let exp_to_sv e = match (conv_exp_to_var e) with
   | Some (sv,_) -> sv
   | None -> 
     let () = y_winfo_pp " UNKNOWN spec_var used " in
-    let () = y_binfo_hp (add_str "exp is var?" !print_exp) e in
+    let () = y_dinfo_hp (add_str "exp is var?" !print_exp) e in
     unknown_spec_var
 
 
@@ -15881,9 +16019,12 @@ let mk_inc lhs rhs =
 
 
 let is_AndList f =
-  match f with
-  | AndList _ -> true
-  | _ -> false
+  let rec aux f =
+    match f with
+      | AndList _ -> true
+      | Or (lt,rt,_,_) -> (aux lt) || (aux rt)
+      | _ -> false
+  in aux f
 
 (* let pr = drop_nonlinear_formula pf in *)
 
@@ -16119,9 +16260,115 @@ let mkLtVars a1 a2 =
 let mkEqVars a1 a2 =
   BForm ((Eq (Var (a1,no_pos),Var(a2,no_pos), no_pos),None),None)
 
-let mk_is_base_ptr d rhs_ptr =
+let mk_is_baseptr d rhs_ptr =
   BForm ((Gte (Var (d,no_pos),Var(rhs_ptr,no_pos), no_pos),None),None)
 
 let is_Or f = match f with
   | Or _ -> true
   | _ -> false
+
+
+let pick_baseptr (pf : formula) (* : (spec_var * spec_var) list *) =
+  let stk = new Gen.stack in
+  let pick_ptr p = 
+    let vs = fv p in
+    let (int_vs,ptr_vs) = List.partition (fun v -> is_num_or_int_typ v) vs in
+    (* if int_vs!=[] then  *)
+    match ptr_vs with
+      | [v1;v2] -> Some [(v1,v2)]
+      | _ -> None
+    (* else None *) in 
+  let f_bf bf =
+    let pf, lbl = bf in
+    (match pf with
+     | Eq (e1, e2, pos) -> pick_ptr (BForm ((pf,None),None))
+     | RelForm (sv,arg::_,_) -> 
+           begin
+             let flag = is_baseptr_var sv in
+             let () = y_tinfo_hp (add_str "base_ptr" (pr_pair string_of_bool !print_sv)) (flag,sv) in
+             if is_baseptr_var sv then
+               begin
+                 match (get_exp_var arg) with
+                   | Some v -> stk # push v
+                   | _ -> () 
+               end;
+             None
+           end
+     | _ -> None)
+  in
+  let f_comb = List.concat in 
+  let ans1 = fold_formula pf (nonef,f_bf,nonef) f_comb in
+     (ans1,stk # get_stk)
+
+let pick_baseptr pf =
+  let pr = !print_sv in
+  let pr_out = pr_pair (pr_list (pr_pair pr pr)) !print_svl in
+  Debug.no_1 "pick_baseptr" !print_formula pr_out pick_baseptr pf
+
+let find_baseptr_equiv lst bptr =
+  let emap = EMapSV.build_eset lst in
+  List.map (fun x -> 
+      let vs = EMapSV.find_equiv_all x emap in
+      (x,intersect_svl vs bptr)
+  ) bptr
+
+let find_baseptr_equiv lst bptr =
+  let pr2 = !print_svl in
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_2 "find_baseptr_equiv" pr1 pr2 (pr_list (pr_pair !print_sv pr2)) find_baseptr_equiv lst bptr
+
+(* this finds baseptrs for existential instantiation *)
+let inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst =
+  let (pairs,baseptr) = x_add_1 pick_baseptr lhs_w_rhs_inst in
+  let exist_baseptr = intersect_svl ex_inst rhs_base_ptr_vs in
+  let baseptr = baseptr@exist_baseptr in
+  let base_eq = x_add find_baseptr_equiv pairs baseptr in
+  let base_eq = List.filter (fun (v,_) -> (diff_svl [v] exist_baseptr)==[]) base_eq in
+  (* let (lhs_pair,inst_pair) = List.partition (fun (v1,v2) -> intersect_svl [v1;v2] ex_inst==[]) pairs in *)
+  let rec mk_pair lst =
+    match lst with 
+      | x::((y::_) as rest) -> (x,y)::(mk_pair rest)
+      | _ -> [] in
+  let lst_of_inst = List.concat (List.map (fun (_,lst) -> mk_pair lst) base_eq) in
+  (* let inst_pair = List.map (fun (v1,v2) ->  *)
+  (*     if List.exists (eq_spec_var v1) ex_inst then (v2,v1) else (v1,v2)) inst_pair in *)
+  (* let choose_base lhs lhs_pairs =  *)
+  (*   let rec aux lst =  *)
+  (*     match lst with *)
+  (*     | [] -> [] *)
+  (*     | (v1,v2)::lst ->  *)
+  (*       if !tp_imply lhs (mk_is_baseptr v1 v2) then (v1,v2)::(aux lst) *)
+  (*       else if !tp_imply lhs (mk_is_baseptr v2 v1) then (v2,v1)::(aux lst) *)
+  (*       else aux lst *)
+  (*   in aux lhs_pairs in *)
+  (* let find lst v =  *)
+  (*   try  *)
+  (*     Some (snd (List.find (fun (v1,_) -> eq_spec_var v1 v) lst)) *)
+  (*   with _ -> None in *)
+  (* let choose_inst cb inst_pair =  *)
+  (*   let rec aux ip = match ip with *)
+  (*     | [] -> [] *)
+  (*     | (cv,base1)::lst -> begin *)
+  (*         match (find cb cv) with *)
+  (*         | Some base2 -> (base1,base2)::(aux lst) *)
+  (*         | _ -> [] *)
+  (*       end  *)
+  (*   in aux inst_pair *)
+  (* in *)
+  (* (\* choosing those with a (ptr,base) *\) *)
+  (* let common_base_lst = choose_base lhs_w_rhs_inst lhs_pair in *)
+  (* let lst_of_inst = choose_inst common_base_lst inst_pair in *)
+  let lhs_w_rhs_inst2 = List.fold_left (fun acc (v1,v2) ->
+      mkAnd acc (mkEqVars v1 v2) no_pos
+    ) lhs_w_rhs_inst lst_of_inst in 
+  let pr_lst_pair = pr_list (pr_pair !print_sv !print_sv) in
+  (* let () =  y_tinfo_hp (add_str "common_base_lst" pr_lst_pair) common_base_lst in *)
+  (* let () =  y_tinfo_hp (add_str "inst_pair" pr_lst_pair) inst_pair in *)
+  let () =  y_tinfo_hp (add_str "lst_of_inst" pr_lst_pair) lst_of_inst in
+  let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst2" !print_formula) lhs_w_rhs_inst2  in
+  lhs_w_rhs_inst2
+
+
+let inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst  =
+  let pr = !print_formula in
+  Debug.no_2 "inst_baseptr" pr !print_svl pr (inst_baseptr rhs_base_ptr_vs) lhs_w_rhs_inst ex_inst

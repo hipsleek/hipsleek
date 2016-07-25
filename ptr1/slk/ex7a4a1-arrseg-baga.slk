@@ -1,0 +1,183 @@
+
+data arrI {
+  int val;
+}.
+
+relation BasePtr(arrI x).
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null & BasePtr(self)
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  // inv i>=0.
+  //inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
+    inv BG([(self,i,n)], n>=i & i>=0 & self!=null & BasePtr(self)
+    ).
+  //  inv BG([(self+i,n-i)], n>=i & i>=0 & self!=null).
+
+//heap_addresses : self+i..self+n-i-1
+
+
+checkentail base::arr_seg<2,5> * base::arr_seg<2,5>  |- false.
+expect Valid. 
+print residue.
+
+
+checkentail base::arr_seg<2,2> * base::arr_seg<2,5> |- false.
+expect Fail. 
+print residue.
+
+checkentail base::arr_seg<7,9> * base::arr_seg<2,5> |- false.
+expect Fail. 
+print residue.
+
+checkentail base::arr_seg<2,5> * base::arr_seg<3,6> |- false.
+expect Valid. 
+print residue.
+
+checkentail base::arr_seg<2,5> * base::arr_seg<3,5> |- false.
+expect Valid. 
+print residue.
+
+checkentail base::arr_seg<2,5> * base::arr_seg<3,4> |- false.
+expect Valid. 		  
+print residue.
+
+checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> & base2=base |- false.
+expect Valid. 		  
+print residue.
+
+checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> |- false.
+expect Fail. 		  
+print residue.
+
+
+
+
+
+/*
+# ex7a4a1.slk
+
+ (i) every non-empty array segment is represented by a single unique addr
+ (ii) --use-baga (use baga library)
+      to capture interval disjointness
+ --inv-baga (to infer baga invariant)
+
+
+checkentail base::arr_seg<2,2> * base::arr_seg<2,3> |- false.
+expect Fail. 
+print residue.
+
+What is happening in get_spec_baga?
+Why is flted_7_14 an argument? 
+
+self::arr_seg<i+1,n>  
+  // should we return [self+i] if i<n or []
+
+!!! **cast.ml#1721:look_up_view_baga: baga= :Some([([(_,( xxx, y))], xxx=i+self & y=n+self & i<=n & 0<=i & self!=null)])
+!!! **cast.ml#1722:baga ex vars= :[xxx,y]
+!!! **cast.ml#1726:from_svs:[self,xxx,y,i,n]
+!!! **cast.ml#1727:to_svs:[self,xxx_55,y_56,flted_7_14,n_15]
+!!! **cast.ml#1736:baga (subst)= :[([(_,( xxx_55, y_56))], xxx_55=flted_7_14+self & y_56=n_15+self & flted_7_14<=n_15 & 
+ 0<=flted_7_14 & self!=null)]
+!!! **cast.ml#1738:baga (filtered)= :[([_57], flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null)]
+!!! **cast.ml#1741:baga (hulled)= :[_57]
+
+(==cvutil.ml#883==)
+get_spec_baga@3@2
+get_spec_baga inp1 : flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n
+get_spec_baga inp2 :[self]
+get_spec_baga inp3 :[flted_7_14,n_15]
+get_spec_baga@3 EXIT:[_57]
+
+@3! **cast.ml#1707:c= :arr_seg
+@3! **cast.ml#1720:look_up_view_baga: baga= :
+  Some([([(_,( xxx, y))], xxx=i+self & y=n+self & i<=n & 0<=i & self!=null)])
+@3! **cast.ml#1721:baga ex vars= :[xxx,y]
+@3! **cast.ml#1725:from_svs:[self,xxx,y,i,n]
+@3! **cast.ml#1726:to_svs:[self,xxx_55,y_56,flted_7_14,n_15]
+@3! **cast.ml#1735:baga (subst)= :[([(_,( xxx_55, y_56))], xxx_55=flted_7_14+self & y_56=n_15+self & flted_7_14<=n_15 & 
+ 0<=flted_7_14 & self!=null)]
+@3! **cast.ml#1693:add_epure(1) = :[([(_,( xxx_55, y_56))], xxx_55=flted_7_14+self & y_56=n_15+self & flted_7_14<=n_15 & 
+ 0<=flted_7_14 & self!=null)]
+@3! **excore.ml#722:Omega mk_star_disj:start 0 invocations
+@3! **excore.ml#726:Omega mk_star_disj:end 0 invocations
+@3! **cast.ml#1695:add_epure(2) = :[([(_,( xxx_55, y_56))], flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null)]
+@3!:0: 0: **tpdispatcher.ml#3553:ante 1: : flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null
+@3!:0: 0: **tpdispatcher.ml#3559:ante 3: : flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null
+@3!:0: 0: **tpdispatcher.ml#3561:ante 4: : flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null
+@3!:0: 0: **tpdispatcher.ml#3346:IMP #1
+@3!:0: 0: **tpdispatcher.ml#3347:imply_timeout: ante:  flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null
+@3!:0: 0: **tpdispatcher.ml#3348:imply_timeout: conseq:  y_56>=1
+@3! **tpdispatcher.ml#1424:Ann Vars:[]
+@3! **tpdispatcher.ml#1425:Inv: flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null
+@3!:0: 0: **tpdispatcher.ml#3588:res: :true
+@3! **tpdispatcher.ml#3779:univ var:[]
+@3!:0: 0: **tpdispatcher.ml#2118:SAT #2
+@3!:0: 0: **tpdispatcher.ml#2119: _57=1 & flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & 
+ xxx_55=flted_7_14+self & y_56=n_15+self & flted_7_14<=n_15 & 
+ 0<=flted_7_14 & self!=null
+@3! **cpure.ml#11475:var_info [(_57,1)]
+@3! **cpure.ml#11476:sv_list [y_56,xxx_55,xxx,self,n_15,n,i,flted_7_14,_57]
+@3! **cpure.ml#11475:var_info [(flted_7_14,1),(i,-1)]
+@3! **cpure.ml#11476:sv_list [y_56,xxx_55,xxx,self,n_15,n,i,flted_7_14,_57]
+@3! **cpure.ml#11475:var_info [(xxx,1),(i,-1),(self,-1)]
+@3! **cpure.ml#11476:sv_list [y_56,xxx_55,xxx,self,n_15,n,i,flted_7_14,_57]
+@3! **cpure.ml#11475:var_info [(n_15,1),(n,-1)]
+@3! **cpure.ml#11476:sv_list [y_56,xxx_55,xxx,self,n_15,n,i,flted_7_14,_57]
+@3! **cpure.ml#11475:var_info [(xxx_55,1),(flted_7_14,-1),(self,-1)]
+@3! **cpure.ml#11476:sv_list [y_56,xxx_55,xxx,self,n_15,n,i,flted_7_14,_57]
+@3! **cpure.ml#11475:var_info [(y_56,1),(n_15,-1),(self,-1)]
+@3! **cpure.ml#11476:sv_list [y_56,xxx_55,xxx,self,n_15,n,i,flted_7_14,_57]
+@3! **cpure.ml#11503:res_list[(8,1)]
+@3! **cpure.ml#11656:em emap[{_57,__CONST_Int_1};{n,n_15}]
+@3! **cast.ml#1698:add_epure (res) = :[([_57], flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null)]
+@3! **cast.ml#1737:baga (filtered)= :[([_57], flted_7_14=1+i & xxx=i+self & 0<=i & n_15=n & xxx_55=flted_7_14+self & 
+ y_56=n_15+self & flted_7_14<=n_15 & 0<=flted_7_14 & self!=null)]
+@3! **cast.ml#1740:baga (hulled)= :[_57]
+
+
+!!! **cvutil.ml#917:None
+!!! **cvutil.ml#920:ba:[_57]
+!!! **cvutil.ml#926:baga(view_node):[_57]
+
+# this unsoundness need to be fixed..
+
+(==cvutil.ml#1992==)
+xpure_heap_mem_enum#6@79@78@77@76@75
+xpure_heap_mem_enum#6 inp1 : base::arr_seg<flted_12_107,flted_12_106>@M * 
+ base::arr_seg<flted_12_105,flted_12_104>@M
+xpure_heap_mem_enum#6 inp2 :lhs_pure: flted_12_107=2 & flted_12_106=2 & flted_12_105=2 & flted_12_104=3
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@79 EXIT: false #  [[_133,_133]]
+
+
+!!! **WARNING****sleek.ml#494:[../../prelude.slk,ex7a4a-arrseg-baga.slk]
+!!! **WARNING****astsimp.ml#2482:extr_exists_vars TBI
+
+checkentail base::arr_seg<2,2> * base::arr_seg<2,3> |- false.
+expect Valid. 
+print residue.
+
+why is above false?
+
+---------------------------------
+
+checkentail base::arr_seg<2,3> * base::arr_seg<2,3> |- false.
+expect Valid. 
+print residue.
+
+Why did we fail with --use-baga but succeed without?
+
+
+
+
+*/
+
+

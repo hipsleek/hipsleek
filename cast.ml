@@ -1703,6 +1703,7 @@ let add_epure pf lst =
   Debug.no_2 "add_epure" !CP.print_formula pr pr add_epure pf lst
 
 (* get specialized baga form *)
+
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
   let () = x_tinfo_hp (add_str "c= " (pr_id)) c no_pos in
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
@@ -1717,7 +1718,7 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
   | None -> []
   | Some bl ->
     begin
-      let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (pr_option !print_ef_pure_disj)) ba_oinv no_pos in
+      let () = x_tinfo_hp (add_str "look_up_view_baga: baga= " (!print_ef_pure_disj)) bl (* ba_oinv *) no_pos in
       let () = x_tinfo_hp (add_str "baga ex vars= " !CP.print_svl) ba_exists no_pos in
       let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
       let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in
@@ -1732,9 +1733,9 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         let sst = List.combine from_svs to_svs in
         (* let sst = CP.SV_INTV.from_var_pairs sst in *)
         List.map (Excore.EPureI.subst_epure sst) bl in
-      let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+      let () = x_binfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
       let baga_sp = (x_add add_epure epure baga_lst) in
-      let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+      let () = x_binfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
       let r = Excore.EPureI.hull_memset_sv baga_sp in
       (* let r = CP.SV_INTV.conv_var r in *)
       let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in
@@ -2065,7 +2066,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
         let get_name h = match h with
           | F.HVar (v,_) -> P.name_of_sv v
           | F.DataNode _
-          | F.ViewNode _-> F.get_node_name 2 h
+          | F.ViewNode _-> x_add_1 F.get_node_name h
           | F.HRel (sv,exp_lst,_) -> P.name_of_spec_var sv
           | _ -> failwith ("Only nodes, HVar and HRel allowed after split_star_conjunctions 2") in
         (List.length hs),self_n, List.map get_name hs
@@ -3135,6 +3136,32 @@ let update_mut_vars_bu iprog cprog scc_procs =
   new_scc_procs
 
 let eq_templ_decl t1 t2 = String.compare t1.templ_name t2.templ_name == 0
+
+let get_base_case vdef =
+        match vdef.view_base_case with
+        | None -> None
+        | Some (p,_) -> Some p
+
+let get_base_pure cprog hf = match hf with
+  | ViewNode ({h_formula_view_name = c; h_formula_view_node = root; h_formula_view_arguments =args}) 
+      -> let vdef = look_up_view_def no_pos cprog.prog_view_decls c in
+      begin
+        match get_base_case vdef with
+          | None -> None
+          | Some p -> 
+                (* subs parameters here *)
+                let args = (root::args) in
+                let para = (CP.self_sv::vdef.view_vars) in
+                let () = y_tinfo_hp (add_str "arguments" !CP.print_svl)  args in
+                let () = y_tinfo_hp (add_str "parameters" !CP.print_svl) para in
+                let sst = List.combine para args in
+                let np = CP.apply_subs_all sst p in
+                let () = y_tinfo_hp (add_str "pure (before)" !CP.print_formula)  p in
+                let () = y_tinfo_hp (add_str "pure (after subs)" !CP.print_formula) np in
+                Some np
+      end
+  | _ -> None
+
 let get_emp_map_x cprog=
   let helper vdef=
     let o_base = if !Globals.norm_cont_analysis then
@@ -3617,7 +3644,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
     residents := P.intersect_svl !residents (vd.view_cont_vars @ [self_var]);
     let () = List.iter (fun f ->
         (* unfold the inductive formulathen collect residents *)
-        let new_f = unfold_base_case_formula f vd base_f in
+        let new_f = x_add unfold_base_case_formula f vd base_f in
         let (hf,pf,_,_,_,_) = F.split_components new_f in
         let todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
@@ -3641,8 +3668,8 @@ let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp
   let vname = vdecl.view_name in
   let self_var = P.SpecVar (Named dname, self, Unprimed) in
   let self_closure = F.find_close [self_var] eqs in
-  let is_core_dnode node = eq_str (F.get_node_name 3 node) dname in
-  let is_core_vnode node = eq_str (F.get_node_name 4 node) vname in
+  let is_core_dnode node = eq_str (x_add_1 F.get_node_name node) dname in
+  let is_core_vnode node = eq_str (x_add_1 F.get_node_name node) vname in
   let core_dnodes = List.filter is_core_dnode (F.get_dnodes f) in
   let core_vnodes = List.filter is_core_vnode (F.get_vnodes f) in
   let core_nodes = core_dnodes @ core_vnodes in
@@ -3937,7 +3964,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
                 (* unfold the inductive formulathen collect residents *)
                 let base_f = List.hd base_fs in
                 Debug.ninfo_hprint (add_str "f" (!F.print_formula)) f no_pos;
-                let f = unfold_base_case_formula f vdecl base_f in
+                let f = x_add unfold_base_case_formula f vdecl base_f in
                 Debug.ninfo_hprint (add_str "unfold_f" (!F.print_formula)) f no_pos;
                 let new_fwp, new_fwf, new_bwp, new_bwf = 
                   collect_forward_backward_from_formula f vdecl ddecl !fwp !fwf !bwp !bwf in

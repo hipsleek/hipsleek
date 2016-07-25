@@ -1,0 +1,73 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+checkentail x=null |- (exists m: x=null & m=0).
+expect Valid.
+
+checkentail x=null |- x::ll<m>.
+expect Valid.
+
+checkentail x=null |- x::ll<0>.
+expect Valid.
+print residue.
+
+checkentail x=null |- x::ll<1>.
+expect Fail.
+print residue.
+
+/*
+# bug-11a
+
+  inv: ((self!=null & 1<=n) | (self=null & n=0))
+  baga inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv: [([], self=null & n=0),([self], 1<=n)]
+  baga over inv (unfolded): [([], self=null & n=0),([self], 1<=n)]
+  baga under inv: [([], self=null & n=0),([self], 1<=n)]
+  xform: 0<=n & (((self!=null & 1<=n) | (self=null & n=0)))
+
+# why base-case fold below failed?
+
+  checkentail x=null |- x::ll<m>.
+
+(==excore.ml#903==)
+ef_imply_disj@81@80@79@78
+ef_imply_disj inp1 :[([], x=null)]
+ef_imply_disj inp2 :[([], m=0 & x=null)]
+ef_imply_disj@81 EXIT:false
+
+=--------------------------------------------------------
+
+checkentail x=null |- (exists m: x=null & m=0).
+
+@34! **solver.ml#8970:es_ivars:[]
+@34! **solver.ml#8971:es_gen_expl_vars:[]
+@34! **solver.ml#8972:es_evars:[m_47]
+@34! **solver.ml#8973:split_ante1 : x=null
+@34! **solver.ml#8974:split_ante1_sym : x=null
+@34! **solver.ml#8976:heap_entail_build (flag1):true
+@34! **solver.ml#8981:heap_entail_build (super_smart_xpure:false
+@34! **solver.ml#8988:split_ante0 : x=null
+@34! **solver.ml#8989:split_ante0_sym : x=null
+@34! **solver.ml#8996:rhs_p : : m_47=0 & x=null
+@34! **solver.ml#8997:conseq0 : : x=null
+@34! **solver.ml#8998:conseq1-1 : : x=null
+@34!bug11b-sleek.slk:8: 23: **solver.ml#9003:>>>>>> entail_empty_heap: cp1 <<<<<<
+@34!bug11b-sleek.slk:8: 23: **solver.ml#9004:ante0 : : x=null
+@34!bug11b-sleek.slk:8: 23: **solver.ml#9005:ante1 : : x=null
+@34!bug11b-sleek.slk:8: 23: **solver.ml#9006:conseq : : x=null
+@34!:0: 0: **solver.ml#9011:astaq?
+@34!:0: 0: **solver.ml#9012:IMP #5
+@34! **excore.ml#901:Omega call before imply disj: 57 invocations
+(==excore.ml#903==)
+ef_imply_disj@35@34
+ef_imply_disj inp1 :[([], x=null)]
+ef_imply_disj inp2 :[([], m_47=0 & x=null)]
+ef_imply_disj@35 EXIT:false
+
+
+*/
+

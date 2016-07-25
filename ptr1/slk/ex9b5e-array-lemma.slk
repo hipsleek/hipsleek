@@ -1,0 +1,43 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<m<=n 
+     -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+
+//(11)
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,nnn> & i+1<nnn & i<m<=nnn & Univ(m) |- xx::arr_seg<i+3,nnn>.
+print residue.
+expect Fail.
+
+
+/*
+
+checkentail xx::arr_seg<i,m> & i+1<n & i<m<=n & m=n |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+# ex9b5e.slk --adhoc-4
+
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> 
+      & i+1<n & i<m<=n & Univ(m) |- xx::arr_seg<i+3,n>.
+
+# unsound to be valid..
+# why was a Univ(n) introduced???
+
+why was lemma triggered?
+
+<1>xx::arr_seg<i,m_131>@M&m=n & m_137=i+3 & m_137=m_131 & i<m_131 & 
+                           m_131<=m & (1+i)<n & i<m & m<=n & xx!=null & 
+                           0<=m & Univ(m) & Univ(n) & Univ(m_137) & 
+                           Univ(m_131)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  COND ==>  COND ==>  BaseCaseUnfold ==>  SEARCH ==>  COND ==>  (Lemma ==> lem_13(xx,xx)) ==>  SEARCH ==>  COND ==>  Match(xx,xx)]]
+
+
+*/

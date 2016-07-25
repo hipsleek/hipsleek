@@ -1,0 +1,67 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0 &self!=null).
+
+//heap_addresses : xxx...y-1
+
+checkentail base::arr_seg<2,3> * base::arr_seg<3,4> |- false.
+expect Valid. 
+print residue.
+
+
+/*
+
+# ex7a4b.slk
+
+(==cvutil.ml#1992==)
+xpure_heap_mem_enum#6@86@85
+xpure_heap_mem_enum#6 inp1 : base::arr_seg<flted_12_142,flted_12_143>@M * 
+ base::arr_seg<flted_12_144,flted_12_145>@M
+xpure_heap_mem_enum#6 inp2 :lhs_pure: flted_12_145=4 & flted_12_144=3 & flted_12_143=3 & flted_12_142=2
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@86 EXIT: xxx_152=flted_12_142+base & y_153=flted_12_143+base & 
+ flted_12_142<=flted_12_143 & 0<=flted_12_142 & base!=null & 
+ xxx_154=flted_12_144+base & y_155=flted_12_145+base & 
+ flted_12_144<=flted_12_145 & 0<=flted_12_144 & base!=null #  [[_148,_151]]
+
+
+What is _148,_151 ?
+-------------------------------------------------------
+
+(==cvutil.ml#1992==)
+xpure_heap_mem_enum#6@79@78@77@76@75
+xpure_heap_mem_enum#6 inp1 : base::arr_seg<flted_12_107,flted_12_106>@M * 
+ base::arr_seg<flted_12_105,flted_12_104>@M
+xpure_heap_mem_enum#6 inp2 :lhs_pure: flted_12_107=2 & flted_12_106=2 & flted_12_105=2 & flted_12_104=3
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@79 EXIT: false #  [[_133,_133]]
+
+
+!!! **WARNING****sleek.ml#494:[../../prelude.slk,ex7a4a-arrseg-baga.slk]
+!!! **WARNING****astsimp.ml#2482:extr_exists_vars TBI
+
+checkentail base::arr_seg<2,2> * base::arr_seg<2,3> |- false.
+expect Valid. 
+print residue.
+
+why is above false?
+
+---------------------------------
+
+checkentail base::arr_seg<2,3> * base::arr_seg<2,3> |- false.
+expect Valid. 
+print residue.
+
+Why did we fail with --use-baga but succeed without?
+
+
+
+
+*/
+
+
