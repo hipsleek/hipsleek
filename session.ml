@@ -1009,6 +1009,32 @@ module Make_Session (Base: Session_base) = struct
     let bases = extract_bases session in
     mk_norm_session bases
 
+  let rec sor_disj_list head =
+    match head with
+      | SOr s -> (sor_disj_list s.session_seq_formula_or1) @
+                  (sor_disj_list s.session_seq_formula_or2)
+      | _ -> [head]
+
+  let append_tail disjunct tail =
+    let pos = get_pos disjunct in
+    mk_session_seq_formula disjunct tail pos
+
+  (* Split a SOr predicate into disjuncts.
+   * 1. tranform head and tail into sessions
+   * 2. get list of disjuncts from head
+   * 3. for each disjunct, append tail
+   * 4. for each disjunct, normalize
+   *)
+  let split_sor head tail =
+    let head_session = trans_h_formula_to_session
+                       (Base.get_h_formula_from_ho_param_formula head) in
+    let tail_session = trans_h_formula_to_session
+                       (Base.get_h_formula_from_ho_param_formula tail) in
+    let disj_list = sor_disj_list head_session in
+    let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
+    let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
+    disj_list
+
 end;;
 
 (* =========== Protocol / Projection ========== *)
