@@ -3243,7 +3243,9 @@ let transform_formula_simp f (e:formula):formula =
   let pr = !print_formula in
   Debug.no_1 "transform_formula_simp" pr pr (fun _ -> transform_formula_simp f e) e
 
-let rec transform_struc_formula_x f (e:struc_formula) : struc_formula = 
+let rec transform_struc_formula_x ?flow:(include_flow=false) f (e:struc_formula) : struc_formula =
+  let transform_struc_formula_helper = transform_struc_formula ~flow:include_flow in
+  let transform_formula_helper = transform_formula ~flow:include_flow in
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
   let r = f_e_f e in 
   match r with
@@ -3252,29 +3254,29 @@ let rec transform_struc_formula_x f (e:struc_formula) : struc_formula =
       match e with
       | ECase c -> 
         let br' = List.map (fun (c1,c2)->
-            ((P.transform_formula f_p_t c1),(transform_struc_formula f c2))
+            ((P.transform_formula f_p_t c1),(transform_struc_formula_helper f c2))
           ) c.formula_case_branches in
         ECase {c with formula_case_branches = br';}
       | EBase b ->
-        let new_base = transform_formula f b.formula_struc_base in
-        let new_cont = map_opt (transform_struc_formula f) b.formula_struc_continuation in
+        let new_base = transform_formula_helper f b.formula_struc_base in
+        let new_cont = map_opt (transform_struc_formula_helper f) b.formula_struc_continuation in
         EBase{b with formula_struc_base = new_base;
                      formula_struc_continuation = new_cont;}
       | EAssume b->
-        let new_simpl = transform_formula f b.formula_assume_simpl in
-        let new_struc = transform_struc_formula f b.formula_assume_struc in
+        let new_simpl = transform_formula_helper f b.formula_assume_simpl in
+        let new_struc = transform_struc_formula_helper f b.formula_assume_struc in
         EAssume {b with formula_assume_simpl = new_simpl;
                         formula_assume_struc = new_struc;}
       | EInfer b ->
-        let new_cont = transform_struc_formula f b.formula_inf_continuation in
+        let new_cont = transform_struc_formula_helper f b.formula_inf_continuation in
         EInfer {b with formula_inf_continuation = new_cont;}
-      | EList b -> EList (map_l_snd (transform_struc_formula f) b)
+      | EList b -> EList (map_l_snd (transform_struc_formula_helper f) b)
     )
 
-and transform_struc_formula f (e:struc_formula) : struc_formula =
+and transform_struc_formula ?flow:(include_flow=false) f (e:struc_formula) : struc_formula =
   let pr = !print_struc_formula in
   Debug.no_1 "IF.transform_struc_formula" pr pr
-    (fun _ -> transform_struc_formula_x f e) e
+    (fun _ -> transform_struc_formula_x ~flow:include_flow f e) e
 
 let transform_bexp_hf_x prog hf0=
   let trans_bexp_arg (eas, ps) ae= match ae with
