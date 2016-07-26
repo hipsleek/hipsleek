@@ -1441,7 +1441,8 @@ let refine_nontail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h
         | IF.HeapNode2 _ -> None (* Trung: check later *)
         | _ -> None
       ) in
-    IF.transform_h_formula f_hf hf
+    let f = (nonef,nonef,f_hf,(somef,somef,somef,somef,somef)) in
+    IF.transform_h_formula f hf
   ) in
   let new_var = fresh_name () in
   let new_hf = refine_heap hf new_var in
@@ -1484,7 +1485,8 @@ let refine_tail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_fo
         | IF.HeapNode2 _ -> None (* Trung: check later *)
         | _ -> None
       ) in
-    let todo_unk = IF.transform_h_formula collect_subs_list hf in
+    let f = (nonef,nonef,collect_subs_list,(somef,somef,somef,somef,somef)) in
+    let todo_unk = IF.transform_h_formula f hf in
     let subs_heap_node hf = (match hf with
         | IF.HeapNode hn ->
           let (hnode,prim) = hn.IF.h_formula_heap_node in
@@ -1518,7 +1520,8 @@ let refine_tail_coerc_body_heap_x (hf: IF.h_formula) (vd: C.view_decl) : IF.h_fo
         | IF.HeapNode2 _ -> None (* Trung: check later *)
         | _ -> None
       ) in
-    IF.transform_h_formula subs_heap_node hf
+    let f = (nonef,nonef,subs_heap_node,(somef,somef,somef,somef,somef)) in
+    IF.transform_h_formula f hf
   ) in
   let new_hf = refine_heap hf in
   new_hf

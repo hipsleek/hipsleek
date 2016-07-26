@@ -3117,76 +3117,102 @@ let struc_formula_collect_pre_hprel f0 =
   Debug.no_1 "struc_formula_collect_pre_hprel" pr1 pr2
     (fun _ -> struc_formula_collect_pre_hprel_x f0) f0
 
-
-let rec transform_h_formula_x (f: h_formula -> h_formula option) (e: h_formula)
-  : h_formula = 
-  let r =  f e in 
-  match r with
-  | Some e1 -> e1
-  | None  -> (
-      match e with  
-      | Star s ->
-        let new_h1 = transform_h_formula f s.h_formula_star_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_star_h2 in
-        Star {s with h_formula_star_h1 = new_h1;
-                     h_formula_star_h2 = new_h2;}
-      | StarMinus s ->
-        let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
-        StarMinus {s with h_formula_starminus_h1 = new_h1;
-                          h_formula_starminus_h2 = new_h2;}
-      | Conj s ->
-        let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conj_h1 in
-        Conj {s with h_formula_conj_h1 = new_h1;
-                     h_formula_conj_h2 = new_h2;}
-      | ConjStar s ->
-        let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
-        ConjStar {s with h_formula_conjstar_h1 = new_h1;
-                         h_formula_conjstar_h2 = new_h2;}
-      | ConjConj s ->
-        let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
-        ConjConj {s with h_formula_conjconj_h1 = new_h1;
-                         h_formula_conjconj_h2 = new_h2;}
-      | Phase s ->
-        let new_rd = transform_h_formula f s.h_formula_phase_rd in
-        let new_rw = transform_h_formula f s.h_formula_phase_rw in
-        Phase {s with h_formula_phase_rd = new_rd;
-                      h_formula_phase_rw = new_rw;}
-      | HeapNode _ | HeapNode2 _ | ThreadNode _
-      | HRel _ | HTrue | HFalse | HEmp | HVar _ -> e
-    )
-
-and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
-  : h_formula =
-  let pr = !print_h_formula in
-  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x f e) e
-
 let drop_htrue hf=
   match hf with
   | HTrue -> HEmp
   | _ -> hf
 
-let transform_formula_x f (e:formula):formula =
+let map_one_rflow_formula f rf =
+  {rf with rflow_base = f rf.rflow_base}
+
+let map_rflow_formula_list trans_f node =
+  HeapNode {node with h_formula_heap_ho_arguments =
+                           List.map (map_one_rflow_formula trans_f)
+                             node.h_formula_heap_ho_arguments}
+
+let map_rflow_formula include_flow trans_f hform = 
+  if not(include_flow) then hform
+  else 
+    match hform with
+    | HeapNode h ->  map_rflow_formula_list trans_f h
+    | _ -> hform
+
+let rec transform_h_formula_x ?flow:(include_flow=false) f (* (f: h_formula -> h_formula option) *) (e: h_formula)
+  : h_formula =
+  let (_, f_f, f_h_f, f_p_t) = f in
+  let helper e = transform_h_formula ~flow:include_flow f e in
+  let map_rflow hform = map_rflow_formula include_flow (transform_formula ~flow:include_flow f) hform in
+  let r =  f_h_f e in 
+  match r with
+  | Some e1 ->  map_rflow e1 
+  | None  -> (
+      match e with  
+      | Star s ->
+        let new_h1 = helper s.h_formula_star_h1 in
+        let new_h2 = helper s.h_formula_star_h2 in
+        Star {s with h_formula_star_h1 = new_h1;
+                     h_formula_star_h2 = new_h2;}
+      | StarMinus s ->
+        let new_h1 = helper s.h_formula_starminus_h1 in
+        let new_h2 = helper s.h_formula_starminus_h2 in
+        StarMinus {s with h_formula_starminus_h1 = new_h1;
+                          h_formula_starminus_h2 = new_h2;}
+      | Conj s ->
+        let new_h1 = helper s.h_formula_conj_h1 in
+        let new_h2 = helper s.h_formula_conj_h1 in
+        Conj {s with h_formula_conj_h1 = new_h1;
+                     h_formula_conj_h2 = new_h2;}
+      | ConjStar s ->
+        let new_h1 = helper s.h_formula_conjstar_h1 in
+        let new_h2 = helper s.h_formula_conjstar_h2 in
+        ConjStar {s with h_formula_conjstar_h1 = new_h1;
+                         h_formula_conjstar_h2 = new_h2;}
+      | ConjConj s ->
+        let new_h1 = helper s.h_formula_conjconj_h1 in
+        let new_h2 = helper s.h_formula_conjconj_h2 in
+        ConjConj {s with h_formula_conjconj_h1 = new_h1;
+                         h_formula_conjconj_h2 = new_h2;}
+      | Phase s ->
+        let new_rd = helper s.h_formula_phase_rd in
+        let new_rw = helper s.h_formula_phase_rw in
+        Phase {s with h_formula_phase_rd = new_rd;
+                      h_formula_phase_rw = new_rw;}
+      | HeapNode h -> map_rflow e (* if not(include_flow) then e *)
+        (* else HeapNode {h with h_formula_heap_ho_arguments = *)
+        (*                         List.map (map_one_rflow_formula (transform_formula ~flow:include_flow f)) *)
+        (*                           h.h_formula_heap_ho_arguments} *)
+      | HeapNode2 h -> e (* if not(include_flow) then e *)
+        (* else HeapNode {h with h_formula_heap_ho_arguments = *)
+        (*                         List.map (map_one_rflow_formula (transform_formula f)) *)
+        (*                           h.h_formula_heap_ho_arguments} *)
+      | ThreadNode _
+      | HRel _ | HTrue | HFalse | HEmp | HVar _ -> e
+    )
+
+and transform_h_formula ?flow:(include_flow=false)  f (* (f: h_formula -> h_formula option) *) (e: h_formula)
+  : h_formula =
+  let pr = !print_h_formula in
+  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x ~flow:include_flow f e) e
+
+and transform_formula_x ?flow:(include_flow=false) f (e:formula):formula =
   let rec helper f e = (
+    let transform_h f heap = transform_h_formula ~flow:include_flow f heap in
     let (_, f_f, f_h_f, f_p_t) = f in
-    let r =  f_f e in 
+    let r =  f_f e in
     match r with
     | Some e1 -> e1
     | None  -> (
-        match e with     
+        match e with
         | Base b ->
-          let new_heap = transform_h_formula f_h_f b.formula_base_heap in
+          let new_heap = transform_h f  b.formula_base_heap in
           let new_pure = P.transform_formula f_p_t b.formula_base_pure in
           Base { b with formula_base_heap = new_heap;
                         formula_base_pure = new_pure; }
-        | Or o -> 
+        | Or o ->
           Or {o with formula_or_f1 = helper f o.formula_or_f1;
                      formula_or_f2 = helper f o.formula_or_f2;}
         | Exists e ->
-          let new_heap = transform_h_formula f_h_f e.formula_exists_heap in
+          let new_heap = transform_h f e.formula_exists_heap in
           let new_pure = P.transform_formula f_p_t e.formula_exists_pure in
           Exists { e with formula_exists_heap = new_heap;
                           formula_exists_pure = new_pure;}
@@ -3194,10 +3220,9 @@ let transform_formula_x f (e:formula):formula =
   ) in
   helper f e
 
-
-let transform_formula f (e:formula):formula =
+and transform_formula ?flow:(include_flow=false) f (e:formula):formula =
   let pr = !print_formula in
-  Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x f e) e
+  Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x ~flow:include_flow f e) e
 
 let transform_formula_simp trans_hf (e:formula):formula =
   let rec helper e =
@@ -3296,4 +3321,5 @@ let set_session_kind_h_formula hform sk nk =
     | HeapNode h -> Some (HeapNode {h with h_formula_heap_session_info =
                                              Some (mk_node_session_info sk nk) })
     | _ -> Some h in
-  transform_h_formula f_h hform
+  let f = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
+  transform_h_formula f hform
