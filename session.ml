@@ -116,9 +116,11 @@ module type Message_type = sig
   val var_to_param: var ->  VarGen.loc -> param
   val param_to_var: param -> var
 
-  val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula
+  (* val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula *)
   val transform_h_formula: ?trans_flow:bool -> (h_formula -> h_formula option)-> h_formula -> h_formula
-  val update_temp_heap_name: h_formula -> h_formula
+  val transform_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> formula -> formula
+  val transform_struc_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> struc_formula -> struc_formula
+  val update_temp_heap_name: h_formula -> h_formula option
   val update_formula: formula -> formula
   val update_struc_formula: struc_formula -> struc_formula
   val subst_param:   (var * var) list -> param -> param
@@ -249,49 +251,59 @@ module IForm = struct
     | Ipure_D.Var(sv, pos) -> sv
     | _ -> failwith (x_loc ^ "param_to_var is expecting a Ipure.var exp")
 
-  let struc_formula_trans_heap_node fct struc_form =
-    let fct_h = (fun x -> Some (fct x)) in
-    let fct = (nonef, nonef, fct_h, (somef, somef, somef, somef, somef)) in
-    F.transform_struc_formula fct struc_form
+  (* let h_formula_transformer fnc hform = *)
+  (*   match hform with *)
+  (*   | F.HeapNode node -> let _ =  *)
+  (*                          match node.F.h_formula_heap_session_info with *)
+  (*                          | None   -> hform *)
+  (*                          | Some _ -> fnc hform *)
+  (*     in hform *)
+  (*   | _ -> hform  *)
 
   let transform_h_formula ?trans_flow:(flow = false) f_h h =
-    let f = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
-    F.transform_h_formula ~flow:flow f h
+    let fcts = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
+    F.transform_h_formula ~flow:flow fcts h
+
+  let transform_formula  ?trans_flow:(flow = false) fct formula =
+    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
+    F.transform_formula ~flow:flow fcts formula
+
+  let transform_struc_formula  ?trans_flow:(flow = false) fct struc_form =
+    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
+    F.transform_struc_formula ~flow:true fcts struc_form
 
   let update_temp_heap_name hform =
     let helper hform =
-      let f_h hform = match hform with
-        | F.HeapNode node ->
-          let fct si = match si.node_kind with
-            | Sequence | SOr | Send | Receive | Transmission
-            | Session | Channel | Msg ->
-              let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
-              let updated_node  = {node with F.h_formula_heap_name = new_heap_name } in
-              updated_node
-            | Star | HVar | Predicate | Emp -> node in
-          let node = Gen.map_opt_def node fct node.F.h_formula_heap_session_info in
-          let hform = F.HeapNode node in
-          Some hform
-        | _ -> None in
-      transform_h_formula ~trans_flow:true f_h hform
-    in
+      (* let f_h hform = match hform with *)
+      match hform with
+      | F.HeapNode node ->
+        let fct si = match si.node_kind with
+          | Sequence | SOr | Send | Receive | Transmission
+          | Session | Channel | Msg ->
+            let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
+            let updated_node  = {node with F.h_formula_heap_name = new_heap_name } in
+            updated_node
+          | Star | HVar | Predicate | Emp -> node in
+        let node = Gen.map_opt_def node fct node.F.h_formula_heap_session_info in
+        let hform = F.HeapNode node in
+        Some hform
+      | _ -> None in
+    (* transform_h_formula ~trans_flow:true f_h hform *)
     let helper hform =
       let pr = !print_h_formula in
-      Debug.no_1 "update_temp_heap_name" pr pr helper hform in
+      Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) helper hform in
     helper hform
-  
-  let transform_formula fct f = x_add F.transform_formula_simp fct f
 
-  let update_struc_formula f =
-    let helper f = struc_formula_trans_heap_node update_temp_heap_name f in
-    let helper f =
+  let update_struc_formula f = transform_struc_formula ~trans_flow:true update_temp_heap_name f
+
+  let update_struc_formula f = 
       let pr = !print_struc_formula in
-      Debug.no_1 "update_struc_formula" pr pr helper f in
-    helper f
+      Debug.no_1 "update_struc_formula" pr pr update_struc_formula f 
 
-  let update_formula f = transform_formula update_temp_heap_name f
+  let update_formula f = transform_formula ~trans_flow:true update_temp_heap_name f
 
-  let update_formula f = let pr = !print in
+  let update_formula f =
+    let pr = !print in
     Debug.no_1 "update_formula" pr pr update_formula f
 
   let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
@@ -443,14 +455,22 @@ module CForm = struct
 
   let param_to_var parm = parm
 
-  let struc_formula_trans_heap_node fct_h struc_form =
-    let fct_h = (fun x -> Some (fct_h x)) in
-    let fct = nonef, nonef, fct_h, (somef, somef, somef, somef, somef) in
-    CF.transform_struc_formula fct struc_form
+  (* let struc_formula_trans_heap_node fct_h struc_form = *)
+  (*   let fct_h = (fun x -> Some (fct_h x)) in *)
+  (*   let fct = nonef, nonef, fct_h, (somef, somef, somef, somef, somef) in *)
+  (*   CF.transform_struc_formula fct struc_form *)
 
   let transform_h_formula ?trans_flow:(flow = false) f_h h = CF.transform_h_formula f_h h
 
-  let update_temp_heap_name hform = hform
+  let transform_formula ?trans_flow:(flow = false) fct f =
+    let fcts = (nonef, nonef, fct, (somef, somef, somef, somef, somef)) in
+    x_add CF.transform_formula fcts f
+
+  let transform_struc_formula ?trans_flow:(flow = false) fct struc_form =
+    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
+    CF.transform_struc_formula fcts struc_form
+
+  let update_temp_heap_name hform = None 
 
   let update_formula f = f
 
@@ -952,13 +972,25 @@ module Make_Session (Base: Session_base) = struct
     let pr2 = !Base.print_h_formula in
     Debug.no_1 "trans_from_session" pr pr2 trans_from_session s
 
-  let trans_session_formula fnc s =
-    let rec helper fnc s =
-      let r = fnc s in
+  let trans_session_base_formula fnc sb =
+    let fnc, fnc_base = fnc in 
+    let new_s = fnc sb in
+    match new_s with
+    | Some new_s -> new_s
+    | None ->
+      match sb with
+      | Base base -> Base (fnc_base base)
+      | Predicate _ 
+      | HVar _ -> sb
+
+  let trans_session_formula fnc sf =
+    let fnc, f_base = fnc in 
+    let rec helper fnc sf =
+      let r = fnc sf in
       match r with
       | Some e -> e
       | None ->
-        match s with
+        match sf with
         | SSeq s  ->
           let arg1 = helper fnc s.session_seq_formula_head in
           let arg2 = helper fnc s.session_seq_formula_tail in
@@ -971,9 +1003,14 @@ module Make_Session (Base: Session_base) = struct
           let arg1 = helper fnc s.session_seq_formula_star1 in
           let arg2 = helper fnc s.session_seq_formula_star2 in
           mk_session_star_formula arg1 arg2 s.session_seq_formula_pos
-        | _ -> s
+        | SBase sb -> SBase (trans_session_base_formula f_base sb)
+        | SEmp -> sf
     in
-    helper fnc s
+    helper fnc sf
+
+  let trans_session_formula fnc sf =
+    let pr = string_of_session in
+    Debug.no_1 "trans_session_formula" pr pr (trans_session_formula fnc) sf
 
   let get_pos s = match s with
     | SSeq s  -> s.session_seq_formula_pos
@@ -1000,8 +1037,8 @@ module Make_Session (Base: Session_base) = struct
     let h_form = trans_from_session s in
     let pos = get_pos s in
     let h_form = mk_sess_h_formula h_form pos in
-    let fct h = Base.mk_star h h_form pos in
-    Base.struc_formula_trans_heap_node fct form_orig
+    let fct h = Some (Base.mk_star h h_form pos) in
+    Base.transform_struc_formula(* _trans_heap_node *) fct form_orig
 
   let update_formula = Base.update_formula
 
@@ -1204,58 +1241,58 @@ let is_projection si = let fct info = let sk = info.session_kind in
                          | _ -> false) in
                        Gen.map_opt_def false fct si
 
-let irename_message_pointer_trans_list = (* sf *)
-  let f_h h =
-    match h with
-    | F.HeapNode node ->
-      let fct si =
-        let () = y_binfo_hp string_of_node_kind si.node_kind in
-        let transf h = 
-          match si.session_kind with
-          | Projection   ->
-            let sf = IProjection.trans_h_formula_to_session h in
-            let fnc sf = Some sf in
-            let sf = IProjection.trans_session_formula fnc sf in
-            let new_h = IProjection.trans_from_session sf in
-            new_h
-          | TPProjection ->
-            let sf = ITPProjection.trans_h_formula_to_session h in
-            let fnc sess_f = 
-              match sess_f with
-              | ITPProjection.SBase (ITPProjection.Base b as base) ->
-                Some (ITPProjection.SBase (ITPProjection.Base (ITPProjection.replace_message_var b)))
-              (* Some sess_f *)
-              | ITPProjection.SBase _ -> Some sess_f
-              | _ -> None
-            in
-            let sf = ITPProjection.trans_session_formula fnc sf in
-            let new_h = ITPProjection.trans_from_session sf in
-            new_h
-          | Protocol     -> 
-            h
-        in
-        Some (transf h)
-      in
-      Gen.map_opt_def None fct node.F.h_formula_heap_session_info
-    | _ -> None in
-  let f = (nonef,nonef, f_h, (somef,somef,somef,somef,somef)) in
-  f
-  (* F.transform_formula f sf *)
+(* let irename_message_pointer_trans_list = (\* sf *\) *)
+(*   let f_h h = *)
+(*     match h with *)
+(*     | F.HeapNode node -> *)
+(*       let fct si = *)
+(*         let () = y_binfo_hp string_of_node_kind si.node_kind in *)
+(*         let transf h =  *)
+(*           match si.session_kind with *)
+(*           | Projection   -> *)
+(*             let sf = IProjection.trans_h_formula_to_session h in *)
+(*             let fnc sf = Some sf in *)
+(*             let sf = IProjection.trans_session_formula fnc sf in *)
+(*             let new_h = IProjection.trans_from_session sf in *)
+(*             new_h *)
+(*           | TPProjection -> *)
+(*             let sf = ITPProjection.trans_h_formula_to_session h in *)
+(*             let fnc sess_f =  *)
+(*               match sess_f with *)
+(*               | ITPProjection.SBase (ITPProjection.Base b as base) -> *)
+(*                 Some (ITPProjection.SBase (ITPProjection.Base (ITPProjection.replace_message_var b))) *)
+(*               (\* Some sess_f *\) *)
+(*               | ITPProjection.SBase _ -> Some sess_f *)
+(*               | _ -> None *)
+(*             in *)
+(*             let sf = ITPProjection.trans_session_formula fnc sf in *)
+(*             let new_h = ITPProjection.trans_from_session sf in *)
+(*             new_h *)
+(*           | Protocol     ->  *)
+(*             h *)
+(*         in *)
+(*         Some (transf h) *)
+(*       in *)
+(*       Gen.map_opt_def None fct node.F.h_formula_heap_session_info *)
+(*     | _ -> None in *)
+(*   let f = (nonef,nonef, f_h, (somef,somef,somef,somef,somef)) in *)
+(*   f *)
+(*   (\* F.transform_formula f sf *\) *)
 
-let irename_message_pointer f1 =
-  let f_list = irename_message_pointer_trans_list in
-  F.transform_formula f_list f1
+(* let irename_message_pointer f1 = *)
+(*   let f_list = irename_message_pointer_trans_list in *)
+(*   F.transform_formula f_list f1 *)
 
-let irename_message_pointer f1 =
-  let pr = !F.print_formula in 
-  Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer f1 
+(* let irename_message_pointer f1 = *)
+(*   let pr = !F.print_formula in  *)
+(*   Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer f1  *)
 
-let irename_message_pointer_in_struc sf =
-  let f_list = irename_message_pointer_trans_list in
-  F.transform_struc_formula f_list sf 
+(* let irename_message_pointer_in_struc sf = *)
+(*   let f_list = irename_message_pointer_trans_list in *)
+(*   F.transform_struc_formula f_list sf  *)
   
-let irename_message_pointer_in_struc sf =
-  let pr = !F.print_struc_formula in 
-  Debug.no_1 "irename_message_pointer_in_struc" pr pr irename_message_pointer_in_struc sf 
+(* let irename_message_pointer_in_struc sf = *)
+(*   let pr = !F.print_struc_formula in  *)
+(*   Debug.no_1 "irename_message_pointer_in_struc" pr pr irename_message_pointer_in_struc sf  *)
 
 
