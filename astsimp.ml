@@ -1947,8 +1947,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          (* let (rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in *)
          (* let () = if not(CF.isFailCtx rs) then *)
          (* if disj user-supplied inv; just use it *)
-         x_dinfo_hp (add_str "xform1" !CP.print_formula) xform1 pos;
-         x_dinfo_hp (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+         x_binfo_hp (add_str "xform1" !CP.print_formula) xform1 pos;
+         x_binfo_hp (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
          (* type: Excore.EPureI.epure list option -> *)
          (*   Cformula.formula -> Excore.EPureI.epure list option *)
          let compute_unfold_baga baga_over body =

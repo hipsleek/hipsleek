@@ -1,0 +1,28 @@
+data arrI {
+  int val;
+}.
+
+data node { int val ; node next }.
+relation Univ(int x).
+
+/*
+Bug description: There is an error message with a TODO.
+
+SLEEK's error message:
+!!! **WARNING****solver.ml#13918:TODO: schedule infer_empty_hp_rel?
+Entail (8) : Fail.(may) cause:M_unmatched_rhs (infer_collect_hp_rel 3b)
+*/
+
+//Example code as follows:
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+infer[a] x::lseg<a, pp>  |- x::node<_,pp>.
+print residue.
+expect Valid.
+
+infer[a] emp & x=pp |- x::node<_,pp>.
+print residue.
+expect Valid.

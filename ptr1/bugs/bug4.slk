@@ -1,0 +1,43 @@
+data arrI {
+  int val;
+}.
+
+/*
+Bug description: There is a problem with the interaction between lseg and the nodes.
+
+SLEEK's error message:
+1)
+Entail 4: Fail.(may) cause:UnionR[base case unfold failed,OrL[
+do_unmatched_rhs : q::node<Anon_16,p_228>@M(must),
+ (b_253+1)!=0 & (((1<=b_253 & r_252!=null) | (p=r_252 & b_253=0))) |-
+  r_252=p. LOCS:[1;0;15;38] (may-bug)
+]]
+Entail 4: Fail. (may) cause:UnionR[base case unfold failed, 0rL[... (may-bug)]]
+
+2) Entail (5) : Fail.(may) cause:do_unmatched_rhs: xx::node<Anon_17,p_267>@M
+*/
+
+data node { int val ; node next }.
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+
+relation Univ(int x).
+
+//(1)
+checkentail x::lseg<10, p>  |- (exists nn: x::lseg<nn,q>*q::node<_,p>).
+print residue.
+expect Valid.
+
+//(2)
+infer[] x::lseg<l, p> & l>0 |- [xx] xx::node<_,p>.
+print residue.
+expect Valid.
+
+//(3)
+infer[a] x::lseg<a, p> & a<=10 & Univ(a)  |- x::node<_,q>*q::node<_,p>.
+print residue.
+expect Valid.
