@@ -116,7 +116,7 @@ module type Message_type = sig
   val var_to_param: var ->  VarGen.loc -> param
   val param_to_var: param -> var
 
-  (* val struc_formula_trans_heap_node: (h_formula -> h_formula) -> struc_formula -> struc_formula *)
+  val heap_node_transformer: (h_formula -> h_formula) -> h_formula -> h_formula option
   val transform_h_formula: ?trans_flow:bool -> (h_formula -> h_formula option)-> h_formula -> h_formula
   val transform_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> struc_formula -> struc_formula
@@ -251,14 +251,15 @@ module IForm = struct
     | Ipure_D.Var(sv, pos) -> sv
     | _ -> failwith (x_loc ^ "param_to_var is expecting a Ipure.var exp")
 
-  (* let h_formula_transformer fnc hform = *)
-  (*   match hform with *)
-  (*   | F.HeapNode node -> let _ =  *)
-  (*                          match node.F.h_formula_heap_session_info with *)
-  (*                          | None   -> hform *)
-  (*                          | Some _ -> fnc hform *)
-  (*     in hform *)
-  (*   | _ -> hform  *)
+  let heap_node_transformer fnc hform =
+    match hform with
+    | F.HeapNode node ->
+      let hform  =
+        match node.F.h_formula_heap_session_info with
+        | None   -> hform
+        | Some _ -> fnc hform
+      in Some hform
+    | _ -> None
 
   let transform_h_formula ?trans_flow:(flow = false) f_h h =
     let fcts = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
@@ -270,11 +271,10 @@ module IForm = struct
 
   let transform_struc_formula  ?trans_flow:(flow = false) fct struc_form =
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
-    F.transform_struc_formula ~flow:true fcts struc_form
+    F.transform_struc_formula ~flow:flow fcts struc_form
 
   let update_temp_heap_name hform =
     let helper hform =
-      (* let f_h hform = match hform with *)
       match hform with
       | F.HeapNode node ->
         let fct si = match si.node_kind with
@@ -288,7 +288,6 @@ module IForm = struct
         let hform = F.HeapNode node in
         Some hform
       | _ -> None in
-    (* transform_h_formula ~trans_flow:true f_h hform *)
     let helper hform =
       let pr = !print_h_formula in
       Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) helper hform in
@@ -455,10 +454,7 @@ module CForm = struct
 
   let param_to_var parm = parm
 
-  (* let struc_formula_trans_heap_node fct_h struc_form = *)
-  (*   let fct_h = (fun x -> Some (fct_h x)) in *)
-  (*   let fct = nonef, nonef, fct_h, (somef, somef, somef, somef, somef) in *)
-  (*   CF.transform_struc_formula fct struc_form *)
+  let heap_node_transformer fnc hform = Some hform 
 
   let transform_h_formula ?trans_flow:(flow = false) f_h h = CF.transform_h_formula f_h h
 
@@ -1131,6 +1127,29 @@ module Make_Session (Base: Session_base) = struct
   let trans_struc_formula_to_session struc_formula =
     let f = Base.get_formula_from_struc_formula struc_formula in
     trans_formula_to_session f
+
+  let rename_message_pointer_heap hform =
+    let fnc_node hform =
+      let sf = trans_h_formula_to_session hform in
+      let fnc = (nonef, (nonef, replace_message_var)) in
+      let sf = trans_session_formula fnc sf in
+      let renamed_sf = trans_from_session sf in
+      renamed_sf in
+    Base.heap_node_transformer fnc_node hform
+
+  let rename_message_pointer f =
+    Base.transform_formula ~trans_flow:true rename_message_pointer_heap f
+
+  let rename_message_pointer f =
+    let pr = !Base.print in
+    Debug.no_1 "rename_message_pointer" pr pr rename_message_pointer f
+
+  let rename_message_pointer_struc f =
+    Base.transform_struc_formula ~trans_flow:true rename_message_pointer_heap f
+
+  let rename_message_pointer_struc f =
+    let pr = !Base.print_struc_formula in
+    Debug.no_1 "rename_message_pointer_struc" pr pr rename_message_pointer_struc f
 
   let rec extract_bases session =
     match session with

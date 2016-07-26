@@ -11361,6 +11361,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   in
                   (* adding xpure of lhs to the HO es  *)
                   let ante_xpure,_,_ = x_add xpure 16 prog new_ante in
+                  let () = y_tinfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in
                   let f_ctx = normalize_es_combine_mix_formula ante_xpure true pos f_es in
                   let pr = Cprinter.string_of_formula in
                   let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
