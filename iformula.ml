@@ -3139,7 +3139,7 @@ let map_rflow_formula include_flow trans_f hform =
 
 let rec transform_h_formula_x ?flow:(include_flow=false) f (* (f: h_formula -> h_formula option) *) (e: h_formula)
   : h_formula =
-  let (_, f_f, f_h_f, f_p_t) = f in
+  let (_, _, f_h_f, _) = f in
   let helper e = transform_h_formula ~flow:include_flow f e in
   let map_rflow hform = map_rflow_formula include_flow (transform_formula ~flow:include_flow f) hform in
   let r =  f_h_f e in 
@@ -3177,14 +3177,8 @@ let rec transform_h_formula_x ?flow:(include_flow=false) f (* (f: h_formula -> h
         let new_rw = helper s.h_formula_phase_rw in
         Phase {s with h_formula_phase_rd = new_rd;
                       h_formula_phase_rw = new_rw;}
-      | HeapNode h -> map_rflow e (* if not(include_flow) then e *)
-        (* else HeapNode {h with h_formula_heap_ho_arguments = *)
-        (*                         List.map (map_one_rflow_formula (transform_formula ~flow:include_flow f)) *)
-        (*                           h.h_formula_heap_ho_arguments} *)
-      | HeapNode2 h -> e (* if not(include_flow) then e *)
-        (* else HeapNode {h with h_formula_heap_ho_arguments = *)
-        (*                         List.map (map_one_rflow_formula (transform_formula f)) *)
-        (*                           h.h_formula_heap_ho_arguments} *)
+      | HeapNode _ -> map_rflow e 
+      | HeapNode2 _
       | ThreadNode _
       | HRel _ | HTrue | HFalse | HEmp | HVar _ -> e
     )

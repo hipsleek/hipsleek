@@ -1402,7 +1402,8 @@ let collect_inductive_view_nodes (hf: CF.h_formula) (vd: C.view_decl)
       | CF.HTrue | CF.HFalse | CF.HEmp | CF.DataNode _ -> Some hf
       | _ -> None
     ) in
-  let todo_unk = CF.transform_h_formula f_hf hf in
+  let fncs = (nonef,nonef,f_hf,(somef,somef,somef,somef,somef)) in
+  let todo_unk = CF.transform_h_formula fncs hf in
   !view_nodes
 
 let remove_view_node_from_formula (f: CF.formula) (vn: CF.h_formula_view) : CF.formula =

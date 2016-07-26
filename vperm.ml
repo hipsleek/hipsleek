@@ -108,7 +108,8 @@ let clean_es_heap_h_formula_for_par vars hf =
       else Some hf
     | _ -> None 
   in
-  transform_h_formula f_h_f hf
+  let fncs = (nonef, nonef, f_h_f, (somef, somef, somef, somef, somef)) in
+  transform_h_formula fncs hf
 
 let clean_es_heap_list_failesc_ctx_for_par vars ctx =
   let clean_es_heap_es_for_par es =
