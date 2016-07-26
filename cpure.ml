@@ -11445,8 +11445,8 @@ let drop_nonlinear_formula_rev (f:formula) : formula =
   Debug.no_1 "drop_nonlinear_formula_rev" pr pr drop_nonlinear_formula_rev f
 
 let drop_rel_formula (f:formula) : formula =
-  (* let (pr_weak,pr_strong) = drop_rel_formula_ops in *)
-  let (pr_weak,pr_strong) = drop_rel_formula_ops_with_filter ["BasePtr"] in
+  let (pr_weak,pr_strong) = drop_rel_formula_ops in
+  (* let (pr_weak,pr_strong) = drop_rel_formula_ops_with_filter ["BasePtr"] in *)
   drop_formula pr_weak pr_strong f
 
 let strong_drop_rel_formula (f:formula) : formula =

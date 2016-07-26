@@ -82,7 +82,7 @@ checkentail
 !!! **context.ml#735:rhs_pure, before same_base_rhs: a=j1+base2
 !!! **cpure.ml#16224:base_ptr:(true,BasePtr)
 ===========================================================
-# ptr1/hip/bug2a.slk --trace-exc
+# ptr1/hip/bug2a.slk --trace-exc (FIXED)
 
 # Type error cuased by a=j+base instead of a=base+j
 
