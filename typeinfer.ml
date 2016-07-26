@@ -181,12 +181,12 @@ and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
   match k with
-  | Some r -> (n_tlist,r)
-  | None -> let msg = ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
-                       ^" types "^(string_of_typ (get_type_entire tlist k1))
-                       ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent") in
-    if !Globals.enforce_type_error then report_error pos msg
-    else (report_warning pos msg; (n_tlist, UNK))
+    | Some r -> (n_tlist,r)
+    | None -> let msg = ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
+                         ^" types "^(string_of_typ (get_type_entire tlist k1))
+                         ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent") in
+              if !Globals.enforce_type_error then report_error pos msg
+              else (report_warning pos msg; (n_tlist, UNK))
 
 and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ)  =
   (* let pr = (\* string_of_typ *\) pr_none in *)
@@ -195,10 +195,10 @@ and must_unify_expect (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * ty
 and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tl,k) = unify_expect k1 k2 tlist in
   match k with
-  | Some r -> (n_tl,r)
-  | None -> report_error pos ("TYPE ERROR 1 : Found "
-                              ^(string_of_typ (get_type_entire tlist k1))
-                              ^" but expecting "^(string_of_typ (get_type_entire  tlist k2)))
+    | Some r -> (n_tl,r)
+    | None -> report_error pos ("TYPE ERROR 1 : Found "
+                                ^(string_of_typ (get_type_entire tlist k1))
+                                ^" but expecting "^(string_of_typ (get_type_entire  tlist k2)))
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
   let pr = string_of_spec_var_kind in
@@ -212,54 +212,54 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
   let rec repl_tlist i k tl = repl_tvar_in unify modify_flag tl i k
   and unify k1 k2 tl =
     match k1,k2 with
-    | UNK, _ -> (tl,Some k2)
-    | _, UNK -> (tl,Some k1)
-    | Int, NUM -> (tl,Some Int) (* HACK here : give refined type *)
-    | Float, NUM -> (tl,Some Float) (* give refined type *)
-    | AnnT, NUM -> (tl,Some AnnT) (* give refined type *)
-    | NUM, Int -> (tl,Some Int)
-    | NUM, Float -> (tl,Some Float)
-    | NUM, AnnT -> (tl,Some AnnT)
-    | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
-    | Float, Int -> (tl,Some Float) (*LDK*)
-    | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-    | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
-      (tl, Some (Named n2))
-    | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
-      (tl, Some (Named n1))
-    | t1, t2  -> (
-        let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
-        let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
-        if is_null_type t1 then (tlist, Some k2)
-        else if is_null_type t2 then (tlist, Some k1)
-        else
-        if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
-        else if sub_type t2 t1 then (tlist,Some k1)
-        else
-          begin
-            match t1,t2 with
-            | TVar i1,_ -> repl_tlist i1 k2 tl
-            | _,TVar i2 -> repl_tlist i2 k1 tl
-            | BagT x1,BagT x2 ->
-              (match (unify x1 x2 tl) with
-               | (n_tl,Some t) -> (n_tl,Some (BagT t))
-               | (n_tl,None) -> (n_tl,None))
-            | List x1,List x2 ->
-              (match (unify x1 x2 tl) with
-               | (n_tl,Some t) -> (n_tl,Some (List t))
-               | (n_tl,None) -> (n_tl,None))
-            | Array (x1,d1),Array (x2,d2) ->
-              (match (dim_unify d1 d2), (unify x1 x2 tl) with
-               | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
-               | _,(n_tl,_) -> (n_tl,None))
-            | Tup2 (t1,t2),Tup2 (t3,t4) -> (
-                let n_tl, t5 = unify t1 t3 tl in
-                let n_tl2, t6 = unify t2 t4 n_tl in
-                match t5,t6 with
-                | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
-                | _ -> (n_tl2,None))
-            | _,_ -> (tl,None)
-          end
+      | UNK, _ -> (tl,Some k2)
+      | _, UNK -> (tl,Some k1)
+      | Int, NUM -> (tl,Some Int) (* HACK here : give refined type *)
+      | Float, NUM -> (tl,Some Float) (* give refined type *)
+      | AnnT, NUM -> (tl,Some AnnT) (* give refined type *)
+      | NUM, Int -> (tl,Some Int)
+      | NUM, Float -> (tl,Some Float)
+      | NUM, AnnT -> (tl,Some AnnT)
+      | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
+      | Float, Int -> (tl,Some Float) (*LDK*)
+      | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
+      | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
+           (tl, Some (Named n2))
+      | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
+           (tl, Some (Named n1))
+      | t1, t2  -> (
+          let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
+          let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
+          if is_null_type t1 then (tlist, Some k2)
+          else if is_null_type t2 then (tlist, Some k1)
+          else
+            if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
+            else if sub_type t2 t1 then (tlist,Some k1)
+            else
+              begin
+                  match t1,t2 with
+                    | TVar i1,_ -> repl_tlist i1 k2 tl
+                    | _,TVar i2 -> repl_tlist i2 k1 tl
+                    | BagT x1,BagT x2 ->
+                         (match (unify x1 x2 tl) with
+                           | (n_tl,Some t) -> (n_tl,Some (BagT t))
+                           | (n_tl,None) -> (n_tl,None))
+                    | List x1,List x2 ->
+                         (match (unify x1 x2 tl) with
+                           | (n_tl,Some t) -> (n_tl,Some (List t))
+                           | (n_tl,None) -> (n_tl,None))
+                    | Array (x1,d1),Array (x2,d2) ->
+                         (match (dim_unify d1 d2), (unify x1 x2 tl) with
+                           | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
+                           | _,(n_tl,_) -> (n_tl,None))
+                    | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                        let n_tl, t5 = unify t1 t3 tl in
+                        let n_tl2, t6 = unify t2 t4 n_tl in
+                        match t5,t6 with
+                          | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                          | _ -> (n_tl2,None))
+                    | _,_ -> (tl,None)
+              end
       )
   in unify k1 k2 tlist
 
@@ -270,16 +270,16 @@ and unify_expect (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_typ
 and must_unify_expect_test k1 k2 tlist pos =
   let (_,k) = unify_expect_modify false k1 k2 tlist  in
   match k with
-  | Some r -> r
-  | None -> report_error pos ("TYPE ERROR 2 : Found "
-                              ^(string_of_typ (k1))
-                              ^" but expecting "^(string_of_typ (k2)))
+    | Some r -> r
+    | None -> report_error pos ("TYPE ERROR 2 : Found "
+                                ^(string_of_typ (k1))
+                                ^" but expecting "^(string_of_typ (k2)))
 
 and must_unify_expect_test_2_1 k1 k2 k3 tlist pos =
   let (_, k) = unify_expect_modify false k1 k2 tlist in
   match k with
-  | Some r -> r
-  | None -> must_unify_expect_test k1 k3 tlist pos
+    | Some r -> r
+    | None -> must_unify_expect_test k1 k3 tlist pos
 
 and must_unify_expect_test_2 k1 k2 k3 tlist pos =
   Debug.no_2 "must_unify_expect_test_2" pr_none pr_none pr_none (fun _ _ -> must_unify_expect_test_2_1 k1 k2 k3 tlist pos) k1 k2
@@ -296,99 +296,101 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
   let repl_tlist i k tl = repl_tvar_in bal_unify modify_flag tl i k in
   let rec unify k1 k2 tl =
     match k1,k2 with
-    | UNK, _ -> (tl ,Some k2)
-    | _, UNK -> (tl,Some k1)
-    | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
-    | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
-    | Int , Float -> (tl,Some Float) (*LDK*)
-    | Float , Int -> (tl,Some Float) (*LDK*)
-    | t1, t2  ->
-      if sub_type t1 t2 then (tl,Some k2)  (* found t1, but expecting t2 *)
+      | UNK, _ -> (tl ,Some k2)
+      | _, UNK -> (tl,Some k1)
+      | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
+      | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
+      | Int , Float -> (tl,Some Float) (*LDK*)
+      | Float , Int -> (tl,Some Float) (*LDK*)
+      | t1, t2  ->
+           let () = Debug.binfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
+           let () = Debug.binfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
+           if sub_type t1 t2 then (tl,Some k2)  (* found t1, but expecting t2 *)
       (* else if sub_type t2 t1 then Some k1 *)
-      else
-        begin
-          match t1,t2 with
-          | TVar i1,_ -> repl_tlist i1 k2 tl
-          | _,TVar i2 -> repl_tlist i2 k1 tl
-          | BagT x1,BagT x2 -> (
-              match (unify x1 x2 tl) with
-              | (n_tl,Some t) -> (n_tl,Some (BagT t))
-              | (n_tl,None) -> (n_tl,None)
-            )
-          | List x1,List x2 -> (
-              match (unify x1 x2 tl) with
-              | (n_tl,Some t) -> (n_tl,Some (List t))
-              | (n_tl,None) -> (n_tl,None)
-            )
-          | Tup2 (t1,t2),Tup2 (t3,t4) -> (
-              let n_tl, t5 = unify t1 t3 tl in
-              let n_tl2, t6 = unify t2 t4 n_tl in
-              match t5,t6 with
-              | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
-              | _ -> (n_tl2,None)
-            )
-          | Array (x1,d1),Array (x2,d2) -> (
-              match (dim_unify d1 d2), (unify x1 x2 tl) with
-              | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
-              | _,(n_tl,_)-> (n_tl,None)
-            )
-          | _,_ -> (tlist,None)
-        end
+           else
+             begin
+                 match t1,t2 with
+                   | TVar i1,_ -> repl_tlist i1 k2 tl
+                   | _,TVar i2 -> repl_tlist i2 k1 tl
+                   | BagT x1,BagT x2 -> (
+                       match (unify x1 x2 tl) with
+                         | (n_tl,Some t) -> (n_tl,Some (BagT t))
+                         | (n_tl,None) -> (n_tl,None)
+                   )
+                   | List x1,List x2 -> (
+                       match (unify x1 x2 tl) with
+                         | (n_tl,Some t) -> (n_tl,Some (List t))
+                         | (n_tl,None) -> (n_tl,None)
+                   )
+                   | Tup2 (t1,t2),Tup2 (t3,t4) -> (
+                       let n_tl, t5 = unify t1 t3 tl in
+                       let n_tl2, t6 = unify t2 t4 n_tl in
+                       match t5,t6 with
+                         | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
+                         | _ -> (n_tl2,None)
+                   )
+                   | Array (x1,d1),Array (x2,d2) -> (
+                       match (dim_unify d1 d2), (unify x1 x2 tl) with
+                         | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
+                         | _,(n_tl,_)-> (n_tl,None)
+                   )
+                   | _,_ -> (tlist,None)
+             end
   in unify k1 k2 tlist
 
 and repl_tvar_in unify flag tlist i k =
   Debug.no_eff_4 "repl_tvar_in" [false;false;false;true]
-    string_of_bool string_of_int string_of_typ string_of_tlist string_of_tlist_type_option
-    (fun _ _ _ _ -> repl_tvar_in_x unify flag tlist i k) flag i k tlist
+      string_of_bool string_of_int string_of_typ string_of_tlist string_of_tlist_type_option
+      (fun _ _ _ _ -> repl_tvar_in_x unify flag tlist i k) flag i k tlist
 
 (* TODO : should TVar j be updated to point to i *)
 and repl_tvar_in_x unify flag tlist i k =
   let test x = (
-    let i2 = x.id in
-    match k with
-    | TVar j -> i2=i || i2=j
-    | _ -> i2=i
+      let i2 = x.id in
+      match k with
+        | TVar j -> i2=i || i2=j
+        | _ -> i2=i
   ) in
   let new_k = (
-    match k with
-    | TVar _ -> UNK
-    | _ -> k
+      match k with
+        | TVar _ -> UNK
+        | _ -> k
   ) in
   let res_t = List.fold_right (fun (v,en) (_tl,et) ->
       match et with
-      | None -> (_tl,et)
-      | Some t1 ->
-        if not(test en) then (_tl,et)
-        else
-          match en.sv_info_kind with
-          | TVar _ -> (_tl,et)
-          | t -> (unify t t1 _tl)
-    ) tlist (tlist, Some new_k) in
+        | None -> (_tl,et)
+        | Some t1 ->
+             if not(test en) then (_tl,et)
+             else
+               match en.sv_info_kind with
+                 | TVar _ -> (_tl,et)
+                 | t -> (unify t t1 _tl)
+  ) tlist (tlist, Some new_k) in
   match res_t with
-  | (n_tl,None) -> (n_tl,None)
-  | (n_tl,Some ut) ->
-    let ut = match ut with
-      | UNK -> k
-      | _ -> ut in
+    | (n_tl,None) -> (n_tl,None)
+    | (n_tl,Some ut) ->
+         let ut = match ut with
+           | UNK -> k
+           | _ -> ut in
     (* TVar i --> ut *)
-    if flag then (
-      let rec aux t_l = (
-        match t_l with
-        | [] -> []
-        | (v,en)::tail ->
-          if test en then
-            let n_en = { sv_info_kind = ut; id = en.id} in
-            let n_el = (v,n_en) in
-            n_el::(aux tail)
-          else
-            let nt = subs_tvar_in_typ en.sv_info_kind i ut in
-            let n_en = { sv_info_kind = nt; id = en.id} in
-            let n_el = (v,n_en) in
-            n_el::(aux tail)
-      ) in
-      let n_tlist = aux n_tl in
-      (n_tlist,Some ut)
-    ) else (n_tl,Some ut)
+         if flag then (
+             let rec aux t_l = (
+                 match t_l with
+                   | [] -> []
+                   | (v,en)::tail ->
+                        if test en then
+                          let n_en = { sv_info_kind = ut; id = en.id} in
+                          let n_el = (v,n_en) in
+                          n_el::(aux tail)
+                        else
+                          let nt = subs_tvar_in_typ en.sv_info_kind i ut in
+                          let n_en = { sv_info_kind = nt; id = en.id} in
+                          let n_el = (v,n_en) in
+                          n_el::(aux tail)
+             ) in
+             let n_tlist = aux n_tl in
+             (n_tlist,Some ut)
+         ) else (n_tl,Some ut)
 
 
 
@@ -404,8 +406,8 @@ and get_type_entire tlist t =
 and get_type tlist i =
   let key = "TVar__"^(string_of_int i) in
   ( try
-      let (v,en) = List.find (fun (var,bk) -> var=key) tlist in
-      en.sv_info_kind
+        let (v,en) = List.find (fun (var,bk) -> var=key) tlist in
+        en.sv_info_kind
     with _ -> report_error no_pos ("UNEXPECTED : Type Var "^key^" cannot be found in tlist"))
 
 and string_of_spec_var_kind (k : spec_var_kind) =
@@ -413,8 +415,8 @@ and string_of_spec_var_kind (k : spec_var_kind) =
 
 and fresh_proc_var_kind tlist et =
   match et with
-  | TVar i -> { sv_info_kind = et; id = i}
-  | _ -> { sv_info_kind = et; id = fresh_int ()}
+    | TVar i -> { sv_info_kind = et; id = i}
+    | _ -> { sv_info_kind = et; id = fresh_int ()}
 
 (* should create entry in tlist *)
 and fresh_tvar_rec tlist =
@@ -430,54 +432,54 @@ and fresh_tvar tlist =
 
 and fresh_int_en en =
   match en with
-  | TVar i -> i
-  | _ -> fresh_int()
+    | TVar i -> i
+    | _ -> fresh_int()
 
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
-  | Named c ->
-    (try
-       let todo_unk = x_add I.look_up_data_def_raw prog.I.prog_data_decls c
-       in Named c
-     with
-     | Not_found ->
-       (try
-          let todo_unk = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c
-          in Named c
-        with
-        | Not_found ->
-          (try
-             let todo_unk = I.look_up_enum_def_raw prog.I.prog_enum_decls c
-             in Int
-           with
-           | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-             if CF.view_prim_lst # mem c then Named c
-             else
+    | Named c ->
+         (try
+              let todo_unk = x_add I.look_up_data_def_raw prog.I.prog_data_decls c
+              in Named c
+          with
+            | Not_found ->
+                 (try
+                      let todo_unk = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c
+                      in Named c
+                  with
+                    | Not_found ->
+                         (try
+                              let todo_unk = I.look_up_enum_def_raw prog.I.prog_enum_decls c
+                              in Int
+                          with
+                            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
+                                 if CF.view_prim_lst # mem c then Named c
+                                 else
                (* if !inter then*)
-               Err.report_error
-                 {
-                   Err.error_loc = pos;
-                   Err.error_text = c ^ " is neither data, enum type, nor prim pred";
-                 }
-                 (*else let () = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
-                   let () = undef_data_types := (c, pos) :: !undef_data_types in
-                   Named c (* Store this temporarily *)*)
-          )))
-  | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
-  | p -> p
+                                   Err.report_error
+                                       {
+                                           Err.error_loc = pos;
+                                           Err.error_text = c ^ " is neither data, enum type, nor prim pred";
+                                       }
+          (*else let () = report_warning pos ("Type " ^ c ^ " is not yet defined!") in
+            let () = undef_data_types := (c, pos) :: !undef_data_types in
+            Named c (* Store this temporarily *)*)
+                         )))
+    | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
+    | p -> p
 
 and trans_type_back (te : typ) : typ =
   match te with
-  | Named n -> Named n
-  | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *)
-  | p -> p
+    | Named n -> Named n
+    | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *)
+    | p -> p
 
 and sub_type_x (t1 : typ) (t2 : typ) =
   try
-    let it1 = trans_type_back t1 in
-    let it2 = trans_type_back t2 in
-    I.sub_type it1 it2
+      let it1 = trans_type_back t1 in
+      let it2 = trans_type_back t2 in
+      I.sub_type it1 it2
   with _ -> false
 
 and sub_type (t1 : typ) (t2 : typ) =
@@ -572,13 +574,24 @@ and gather_type_info_exp_x prog a0 tlist et =
     (n_tl, Bptyp)
   | IP.Add (a1, a2, pos) ->
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
-      if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
-        let () = y_tinfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
+      if is_ptr_arith t1 && !Globals.ptr_arith_flag then
+        let () = y_binfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
+        let (n_tl2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
+        (n_tlist2,t1)
+      else if is_ptr_arith t2 && !Globals.ptr_arith_flag then
+        let () = y_binfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
+        let (n_tl2,_) = x_add must_unify_expect t2 new_et2 n_tl2 pos in
+        let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
+        (n_tlist2,t2)
+      else (* Muoi: Why check if it is a possible node but not ptr arith? *)
+        if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
+        let () = y_binfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
         let (n_tl2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
         (n_tlist2,t1)
       else if is_possible_node_typ t2 && !Globals.ptr_arith_flag then
-        let () = y_tinfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
+        let () = y_binfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
         let (n_tl2,_) = x_add must_unify_expect t2 new_et2 n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
         (n_tlist2,t2)
@@ -601,19 +614,18 @@ and gather_type_info_exp_x prog a0 tlist et =
         fst(List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl)
       with _ -> "" in
     (* let (tmp1,tmp2)=nt in            *)
-    let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
-    let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
+    let () = x_binfo_hp (add_str "add(et)" string_of_typ) et no_pos in
+    let () = x_binfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
-    let () = x_tinfo_hp (add_str "t1" string_of_typ) t1 no_pos in
-    let new_et2 = if is_node_typ t1 && !Globals.ptr_arith_flag
-      then Int else new_et in
+    let () = x_binfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
+    let () = x_binfo_hp (add_str "t1" string_of_typ) t1 no_pos in
+    let new_et2 = (* if is_node_typ t1 && !Globals.ptr_arith_flag *)
+      (* then Int else *) new_et in
     let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et2 in
-    let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a2 no_pos in
-    let () = x_tinfo_hp (add_str "t2" string_of_typ) t2 no_pos in
+    let () = x_binfo_hp (add_str "a2" !IP.print_exp) a2 no_pos in
+    let () = x_binfo_hp (add_str "t2" string_of_typ) t2 no_pos in
 
-    let (n_tlist2,t2) = x_add unify_ptr_arithmetic (t1,new_et)
-    (t2,new_et2) et n_tl2 pos in
+    let (n_tlist2,t2) = x_add unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
 
     let n_tl = (* List.filter (fun (v,en) -> v<>tmp1) *) n_tlist2 in
     (n_tl,t2)

@@ -6,10 +6,13 @@ pred arr_seg<i,n> == i=n & i>=0
   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
   inv n>=i & i>=0.
 
+
+
 checkentail 
  base::arr_seg<flted_6_2134,n_2133> * a_2148::arrI<i_2145>
   & !(j=m2) & a_2148=a & i_2145=i & m'=m 
-  & a=j+base //a=base+j 
+  & a=j+base 
+  //& a=base+j 
   & m2+i=m+j & i<m 
   & i_2145<m' & v_bool_56_2007' & n_2133=m2 & 0<=j & x_2135=base+j 
   & flted_6_2134=1+j & Anon_13=Anon_2136 & x_2135!=null & i'=1+i_2145 
@@ -19,8 +22,9 @@ checkentail
        a'=j_2150+base & m2_2151+i'=m'+j_2150.
 print residue.
 
+
 /*
-# bug2a.slk --trace-exc
+# bug2a.slk --trace-exc (FIXED)
 
 # Type error cuased by a=j+base instead of a=base+j
 

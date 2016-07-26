@@ -1960,8 +1960,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       if (is_relation_constraint wf) && (is_bag_constraint wf) && (CP.is_float_formula wf) then
         (* Mixed bag constraints, relations and float constraints *)
         (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
-        let f_no_float_rel = CP.drop_rel_formula (CP.drop_float_formula wf) in
-        let f_no_bag_rel = CP.drop_rel_formula (CP.drop_bag_formula wf) in
+        let f_no_float_rel = x_add_1 CP.drop_rel_formula (CP.drop_float_formula wf) in
+        let f_no_bag_rel = x_add_1 CP.drop_rel_formula (CP.drop_bag_formula wf) in
         let f_no_float_bag = CP.drop_float_formula (CP.drop_bag_formula wf) in
         let () = x_dinfo_zp (lazy ("SAT #" ^ sat_no ^ " : mixed float + relation + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float_rel) ^ "\n AND : " ^ (!print_pure f_no_bag_rel) ^ "\n AND : " ^ (!print_pure f_no_float_bag) )) no_pos
         in
@@ -1991,14 +1991,14 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         let f = CP.drop_bag_formula (CP.drop_float_formula wf) in
         z3_is_sat f
       else if (is_bag_constraint wf ) then
-        let f = CP.drop_rel_formula (CP.drop_float_formula wf) in
+        let f = x_add_1 CP.drop_rel_formula (CP.drop_float_formula wf) in
         let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs f) in
         let bag_f = conj_of_list bag_cnts no_pos in
         let no_bag_f =  conj_of_list others no_pos in
         (* Approx: mona can only deal with natural numbers (non negative) *)
         (mona_is_sat bag_f && z3_is_sat no_bag_f)
       else if (is_float_formula wf ) then
-        let f = CP.drop_bag_formula (CP.drop_rel_formula wf) in
+        let f = CP.drop_bag_formula (x_add_1 CP.drop_rel_formula wf) in
         redlog_is_sat f
       else
         (* Anything else -> z3: faster *)
@@ -2519,7 +2519,7 @@ let rec simplify_raw (f: CP.formula) =
       let disjs = list_of_disjs new_f in
       let disjs = List.map (fun disj -> 
           let rels = CP.get_RelForm disj in
-          let disj = CP.drop_rel_formula disj in
+          let disj = x_add_1 CP.drop_rel_formula disj in
           let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
           (* let () = Debug.info_hprint (add_str " xxxx others: " (pr_list_ln (!CP.print_formula))) others no_pos in *)
           let others = simplify_raw (conj_of_list others no_pos) in

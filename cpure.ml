@@ -11234,8 +11234,19 @@ let drop_rel_formula_ops =
     | RelForm (_,_,p) -> Some (mkFalse p)
     | _ -> None in
   (pr_weak,pr_strong)
+;;
 
 
+let drop_rel_formula_ops_with_filter filter =
+  let pr_weak b = match b with
+    | RelForm ((SpecVar (_,name,_)),_,p) when (not (List.exists (fun s -> (String.compare s name)=0) filter)) -> Some (mkTrue p)
+    | _ -> None in
+  let pr_strong b = match b with
+    | RelForm ((SpecVar (_,name,_)),_,p) when (not (List.exists (fun s -> (String.compare s name)=0) filter)) -> Some (mkFalse p)
+    | _ -> None in
+  (pr_weak,pr_strong)
+;;
+  
 let no_drop_ops =
   let pr x = None in
   (pr,pr)
@@ -11435,6 +11446,7 @@ let drop_nonlinear_formula_rev (f:formula) : formula =
 
 let drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
+  (* let (pr_weak,pr_strong) = drop_rel_formula_ops_with_filter ["BasePtr"] in *)
   drop_formula pr_weak pr_strong f
 
 let strong_drop_rel_formula (f:formula) : formula =
