@@ -254,11 +254,11 @@ module IForm = struct
   let heap_node_transformer fnc hform =
     match hform with
     | F.HeapNode node ->
-      let hform  =
+      begin
         match node.F.h_formula_heap_session_info with
-        | None   -> hform
-        | Some si -> fnc si hform
-      in Some hform
+        | None    -> None
+        | Some si -> Some (fnc si hform)
+      end
     | _ -> None
 
   let transform_h_formula ?trans_flow:(flow = false) f_h h =
@@ -274,24 +274,18 @@ module IForm = struct
     F.transform_struc_formula ~flow:flow fcts struc_form
 
   let update_temp_heap_name hform =
-    let helper hform =
-      match hform with
-      | F.HeapNode node ->
-        let fct si = match si.node_kind with
-          | Sequence | SOr | Send | Receive | Transmission
-          | Session | Channel | Msg ->
-            let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
-            let updated_node  = {node with F.h_formula_heap_name = new_heap_name } in
-            updated_node
-          | Star | HVar | Predicate | Emp -> node in
-        let node = Gen.map_opt_def node fct node.F.h_formula_heap_session_info in
-        let hform = F.HeapNode node in
-        Some hform
-      | _ -> None in
-    let helper hform =
+    let fct si hform = match si.node_kind with
+      | Sequence | SOr | Send | Receive | Transmission
+      | Session | Channel | Msg ->
+        let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
+        let updated_node  = F.set_heap_name hform new_heap_name in
+        updated_node
+      | Star | HVar | Predicate | Emp -> hform
+    in heap_node_transformer fct hform
+
+    let update_temp_heap_name hform =
       let pr = !print_h_formula in
-      Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) helper hform in
-    helper hform
+      Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) update_temp_heap_name hform 
 
   let update_struc_formula f = transform_struc_formula ~trans_flow:true update_temp_heap_name f
 
@@ -1256,6 +1250,9 @@ let is_projection si = let fct info = let sk = info.session_kind in
                           | _ -> false) in
   Gen.map_opt_def false fct si
 
+(* rename the var which is used for describing the 
+   transmitted message (the renaming taregets both the
+   S/R arg(s) and their corresponding ho-arg) *)
 let irename_message_pointer_heap hform =
   let fnc si hform =
     match si.session_kind with

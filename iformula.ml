@@ -3319,3 +3319,8 @@ let set_session_kind_h_formula hform sk nk =
     | _ -> Some h in
   let f = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
   transform_h_formula f hform
+
+let set_heap_name hform name =
+  match hform with
+  | HeapNode node ->  HeapNode {node with h_formula_heap_name = name }
+  | _ -> hform
