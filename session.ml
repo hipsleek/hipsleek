@@ -127,6 +127,7 @@ module type Message_type = sig
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
   val fresh_var: var -> var
+  val eq_var: var -> var -> bool
 
   val is_base_formula: formula -> bool
   val get_h_formula: formula -> h_formula
@@ -306,6 +307,8 @@ module IForm = struct
   let subst_formula (sst: (var * var) list) f = F.subst_all sst f
 
   let fresh_var (v:var): var = IP.fresh_var v
+
+  let eq_var = IP.eq_var 
 
   let is_base_formula formula =
     match formula with
@@ -489,6 +492,8 @@ module CForm = struct
     CF.subst_avoid_capture fromsv tosv f
 
   let fresh_var (v:var): var = CP.fresh_spec_var v
+
+  let eq_var = CP.eq_spec_var 
 
   let get_node h_formula =
     match h_formula with
