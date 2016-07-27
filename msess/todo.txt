@@ -361,6 +361,12 @@ self::Seq{a, self::Seq{b, self::Seq{c,d}}}
 =============================================
 =============================================
 
+When creating a spec with checkentail and
+specifying Sess predicate explicitly we don't
+record the node type because it's not created
+by session module. Set its kind as well.
+We might be able to do it when updating
+temporary heap names.
 
 =============================================
 =============================================
