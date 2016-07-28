@@ -5669,6 +5669,7 @@ Cpure.print_term_ann := string_of_term_ann;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_imm := string_of_imm;;
 Cformula.print_formula := string_of_formula;;
+Cformula.print_rflow_formula := string_of_rflow_formula;;
 Cformula.print_formula_type := string_of_formula_type;;
 Cformula.print_one_formula := string_of_one_formula;;
 Cformula.print_formula_base := string_of_formula_base;;
