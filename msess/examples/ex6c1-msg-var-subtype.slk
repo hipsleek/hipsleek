@@ -1,0 +1,23 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+
+//1
+checkentail x::Sess{@S ?v#v::node<_,_>}<>
+            |- x::Sess{@S ?www#www::node<_,_>}<>.
+print residue.
+expect Valid.
+
+
+//2
+checkentail x::Sess{@S ?v#v!=null}<>
+            |- x::Sess{@S ?www#www=0}<>.
+print residue.
+expect Fail.
+
+
+//3
+checkentail x::Sess{@S ?0}<>
+            |- x::Sess{@S ?www#www}<>.
+print residue.
+expect Fail.

@@ -277,29 +277,48 @@ self::Seq{a::R{...}, emp}
 
 =============================================
 =============================================
-./sleek msess/examples/ex6a-Msg-AP.slk --print-type -dre "match_one_ho"
+./sleek msess/examples/ex6c1-msg-var-subtype.slk --dis-print-compact-projection-formula --print-type -dre "do_match" --pcp
 =============================================
+Below should fail because of inconsistent type
+<msg_93:int> vs <www_97:boolean>
+
+Instead it fails because it cannot prove
+msg_93:int=0 |-  msg_93:int
+
+......
 //3
-checkentail x::Sess{@S ?msg::Msg<y>  & y=3;;?msg::Msg<z> & z=0}<> |-
-            x::Sess{@S ?msg::Msg<yy> & yy;;?msg::Msg<zz> & zz=0}<>.
+checkentail x::Sess{@S ?0}<>
+            |- x::Sess{@S ?www#www}<>.
+print residue.
 expect Fail.
 
 /*
-Entail 3: Valid. 
 
-Validate 3: Expecting(3)Fail BUT got : Valid
+
+(==solver.ml#12882==)
+do_match@189
+do_match inp1 : x:void::Sess{ . chan:Unknown::R{ + emp&msg_93:int=0&{FLOW,(1,26)=__flow#E}}<msg_93:int>@M&
+{FLOW,(1,26)=__flow#E}}<>@M
+do_match inp2 : x:Unknown::Sess{ . chan:Unknown::R{ + emp&www_97:boolean&{FLOW,(1,26)=__flow#E}}<www_97:boolean>@M&
+....
+
+run_infer:
+ x:void::Sess{ . chan:Unknown::R{ + emp&msg_93:int=0&{FLOW,(1,26)=__flow#E}}<msg_93:int>@M&
+{FLOW,(1,26)=__flow#E}}<>@M&
+{FLOW,(20,21)=__norm#E} [] |-  EBase 
+   exists (Impl)[www_97:boolean]x:Unknown::Sess{ . chan:Unknown::R{ + emp&www_97:boolean&{FLOW,(1,26)=__flow#E}}<www_97:boolean>@M&
+{FLOW,(1,26)=__flow#E}}<>@M&
+   {FLOW,(20,21)=__norm#E}
+
+Entail 3: Fail.(must) cause:matching of ho_args failed (matching of ho_args failed ( msg_93:int=0 |-  msg_93:int. LOCS:[0;20;21] (must-bug)))
 */
 
 #######
 SOLUTION: LATE TYPE CHECK:
 ########
 ---------------
-to add a type check during match_one_ho...
-
-match_one_ho_arg@24@23@22
-match_one_ho_arg inp1 :(lhs: : + msg:Unknown::Msg<y:boolean>@M & y:boolean},
-                        rhs: : + msg:Unknown::Msg<yy:int>@M & yy:int=3)
-match_one_ho_arg@24 EXIT:(None,None,[])
+to add a type check in do_match, before renaming (or during). Fail
+if it cannot check the subtype!
 
 for y:t1 and yy:t2 to check if
 (i)  t1<:t2 (Typeinfer.sub_type) for Recv
