@@ -11483,7 +11483,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs, rhs), k)
               in
 
+              let match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+                ((((CF.list_context * Prooftracer.proof) option) * (CF.formula option) *
+                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) list) =
+                let new_lhs = Session.new_lhs lhs in
+                let args = List.map (fun x -> ((x, rhs), k)) new_lhs in
+                List.map match_one_ho_arg args
+              in
+
               let res = List.map match_one_ho_arg args in
+              let res = List.flatten res in
               let failures = List.filter (fun (r, _, _, _) -> r != None) res in
               if (failures != []) then
                 (* Failure case *)

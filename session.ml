@@ -1162,17 +1162,10 @@ module Make_Session (Base: Session_base) = struct
                   (extract_bases s.session_seq_formula_tail)
       | _  -> [session]
 
-  (* For a single base, do we want it:
-   * 1. in a Seq node with empty: Seq{base, emp}
-   * or
-   * 2. just the plain base, without Seq?
-   * Currently doing 1.
-   *)
   let rec mk_norm_session bases =
     match bases with
       | [] -> SEmp
-      | [base] -> let pos = get_pos base in
-                  mk_session_seq_formula base SEmp pos
+      | [base] -> base
       | hd :: tl -> let pos = get_pos hd in
                     mk_session_seq_formula hd (mk_norm_session tl) pos
 
@@ -1208,7 +1201,8 @@ module Make_Session (Base: Session_base) = struct
    * 3. for each disjunct, append tail
    * 4. for each disjunct, normalize
    *)
-  let split_sor head tail =
+  let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula)
+                : Base.ho_param_formula list =
     let head_session = trans_h_formula_to_session
                        (Base.get_h_formula_from_ho_param_formula head) in
     let tail_session = trans_h_formula_to_session
@@ -1216,6 +1210,8 @@ module Make_Session (Base: Session_base) = struct
     let disj_list = sor_disj_list head_session in
     let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
+    let disj_list = List.map (fun x -> trans_from_session x) disj_list in
+    let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x no_pos) disj_list in
     disj_list
 
   let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula)
@@ -1296,3 +1292,40 @@ let irename_message_pointer_struc formula =
 let irename_message_pointer_struc formula =
   let pr = !F.print_struc_formula in
   Debug.no_1 "irename_message_pointer_struc" pr pr irename_message_pointer_struc formula
+
+let csplit_sor head tail si =
+  match si.session_kind with
+    | Projection   -> CProjection.split_sor head tail
+    | TPProjection -> CTPProjection.split_sor head tail
+    | Protocol     -> failwith (x_loc ^ ": Unexpected Protocol session.")
+
+(* Do a split only when lhs is either a Sequence or SOr.
+ * If Sequence:
+ * - do the split regardless of the first parameter being a SOr
+ * - preserve pointer of Sequence node in the split results
+ * If SOr:
+ * - do the split with an empty tail
+ *)
+let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
+  let lhs_hform = CForm.get_h_formula_from_ho_param_formula lhs in
+  let session_info = CForm.get_node_session_info lhs_hform in
+  match session_info with
+    | Some si -> (match si.node_kind with
+                  | Sequence ->  let (ptr, name, ho_args, params, pos) = CForm.get_node lhs_hform in
+                                 let change_ptr hform =
+                                   (match hform with
+                                      | CF.ViewNode vn -> Some (CF.ViewNode {vn with CF.h_formula_view_node = ptr})
+                                      | _ -> Some hform) in
+                                 let new_lhs = csplit_sor (List.nth ho_args 0) (List.nth ho_args 1) si in
+                                 let new_lhs = List.map (fun x -> let f = x.CF.rflow_base in
+                                                         let f = CForm.transform_formula change_ptr f in
+                                                         CForm.mk_rflow_formula f) new_lhs in
+                                 new_lhs
+                  | SOr -> CProjection.split_sor lhs (CForm.mk_rflow_formula_from_heap CF.HEmp no_pos)
+                  | _ -> [lhs])
+    | None -> [lhs]
+
+let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
+  let pr1 = !CF.print_rflow_formula in
+  let pr2 l = List.fold_left (fun acc x -> acc ^ x) "" (List.map (fun x -> pr1 x) l) in
+  Debug.no_1 "new_lhs" pr1 pr2 new_lhs lhs
