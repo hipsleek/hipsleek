@@ -553,7 +553,8 @@ module CForm = struct
   let get_h_formula formula =
     match formula with
       | CF.Base f -> f.CF.formula_base_heap
-      | _ -> failwith (x_loc ^ ": Formula Base expected.")
+      | CF.Exists f -> f.CF.formula_exists_heap
+      | _ -> failwith (x_loc ^ ": Formula Base or Exists expected.")
 
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.CF.rflow_base in
