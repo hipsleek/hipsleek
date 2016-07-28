@@ -1,0 +1,85 @@
+data arrI {
+  int val;
+}.
+
+
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+    inv BG([(self,i,n)], n>=i & i>=0 & self!=null
+    ).
+
+
+
+checkentail base::arr_seg<2,5> * base::arr_seg<2,5>  |- false.
+expect Valid. 
+print residue.
+
+
+checkentail base::arr_seg<2,2> * base::arr_seg<2,5> |- false.
+expect Fail. 
+print residue.
+
+checkentail base::arr_seg<7,9> * base::arr_seg<2,5> |- false.
+expect Fail. 
+print residue.
+
+checkentail base::arr_seg<2,5> * base::arr_seg<3,6> |- false.
+expect Valid. 
+print residue.
+
+checkentail base::arr_seg<2,5> * base::arr_seg<3,5> |- false.
+expect Valid. 
+print residue.
+
+checkentail base::arr_seg<2,5> * base::arr_seg<3,4> |- false.
+expect Valid. 		  
+print residue.
+
+checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> & base2=base |- false.
+expect Valid. 		  
+print residue.
+
+checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> |- false.
+expect Fail. 		  
+print residue.
+
+
+checkentail base::arr_seg<x,x+2> * base::arr_seg<x,x> |- false.
+expect Fail. 		  
+print residue.
+
+
+checkentail base::arr_seg<x,x+2> * base::arr_seg<x,x+1> |- false.
+expect Valid. 		  
+print residue.
+
+checkentail base::arr_seg<x,y> * base::arr_seg<x,y+1> |- false.
+expect Fail. 		  
+print residue.
+
+checkentail base::arr_seg<x,y> * base::arr_seg<x,y+1> 
+     * base::arr_seg<x,y+2> |- false.
+expect Valid. 		  
+print residue.
+
+
+checkentail base::arr_seg<x,y> * base::arr_seg<x,z> 
+   |- x<=y.
+expect Valid. 		  
+print residue.
+
+checkentail base::arr_seg<x,y> * base::arr_seg<x,z> 
+   |- x>y.
+expect Fail. 		  
+print residue.
+
+
+relation R(int z,int y).
+
+infer[R] base::arr_seg<x,y> * base::arr_seg<x,z> 
+   |- R(y,z).
+print residue.
+// <1>base::arr_seg<x,y>@M * base::arr_seg<x,z>@M&{FLOW,(20,21)=__norm#E}[]
+// inferred rel: [RELDEFN R: ( 0<=y & 0<=z) -->  R(y,z)]
+

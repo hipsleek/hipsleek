@@ -16309,8 +16309,8 @@ let pick_baseptr (pf : formula) (* : (spec_var * spec_var) list *) =
      | _ -> None)
   in
   let f_comb = List.concat in 
-  let ans1 = fold_formula pf (nonef,f_bf,nonef) f_comb in
-     (ans1,stk # get_stk)
+  let vs = fold_formula pf (nonef,f_bf,nonef) f_comb in
+  (vs,stk # get_stk)
 
 let pick_baseptr pf =
   let pr = !print_sv in
