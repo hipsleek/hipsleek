@@ -10,11 +10,9 @@ pred arr_seg<i,n> == i=n & i>=0 & self!=null
     ).
 
 
-
 checkentail base::arr_seg<2,5> * base::arr_seg<2,5>  |- false.
 expect Valid. 
 print residue.
-
 
 checkentail base::arr_seg<2,2> * base::arr_seg<2,5> |- false.
 expect Fail. 
