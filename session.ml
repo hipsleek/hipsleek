@@ -128,6 +128,7 @@ module type Message_type = sig
   val subst_formula: (var * var) list -> formula -> formula
   val fresh_var: var -> var
   val eq_var: var -> var -> bool
+  val mk_var: ident -> var
 
   val is_base_formula: formula -> bool
   val get_h_formula: formula -> h_formula
@@ -308,7 +309,9 @@ module IForm = struct
 
   let fresh_var (v:var): var = IP.fresh_var v
 
-  let eq_var = IP.eq_var 
+  let eq_var = IP.eq_var
+
+  let mk_var id = (id, Unprimed)
 
   let is_base_formula formula =
     match formula with
@@ -493,7 +496,9 @@ module CForm = struct
 
   let fresh_var (v:var): var = CP.fresh_spec_var v
 
-  let eq_var = CP.eq_spec_var 
+  let eq_var = CP.eq_spec_var
+
+  let mk_var id = CP.mk_spec_var id 
 
   let get_node h_formula =
     match h_formula with
