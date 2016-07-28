@@ -100,6 +100,7 @@ module type Message_type = sig
   val print  : (formula -> string) ref
   val print_struc_formula  : (struc_formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
+  val print_ho_param_formula  : (ho_param_formula -> string) ref
   val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
   val mk_rflow_formula: ?kind:ho_flow_kind -> formula -> ho_param_formula
@@ -164,6 +165,7 @@ module IForm = struct
      ho - HO param
   *)
   let print_h_formula = F.print_h_formula
+  let print_ho_param_formula = F.print_rflow_formula
   let print_struc_formula = F.print_struc_formula
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
@@ -394,6 +396,7 @@ module CForm = struct
   let is_emp f = failwith x_tbi
   let print    = CF.print_formula
   let print_h_formula = CF.print_h_formula
+  let print_ho_param_formula = CF.print_rflow_formula
   let print_struc_formula = CF.print_struc_formula
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in
@@ -1202,6 +1205,12 @@ module Make_Session (Base: Session_base) = struct
     let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
     disj_list
+
+  let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula)
+                : Base.ho_param_formula list =
+    let pr1 = !Base.print_ho_param_formula in
+    let pr2 l = List.fold_left (fun acc x -> acc ^ x) ""  (List.map (fun x -> pr1 x) l) in
+    Debug.no_2 "split_sor" pr1 pr1 pr2 split_sor head tail
 
 end;;
 
