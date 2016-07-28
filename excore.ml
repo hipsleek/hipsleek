@@ -100,30 +100,54 @@ let h_2_mem_obj_intv = object (self)
       ()
     method get_id v e1 e2 f= 
       self # logging "get_id";
-      let eq_v =
-        try
-          let (_,_,given_name)=
-            (List.find (fun (base,(eh,et),_) ->
-                 let base_rhs = BForm ((CP.mkEq_b (Var (v,no_pos)) (Var (base,no_pos)) no_pos),None) in
-                 let () = y_tinfo_hp (add_str "get_id: f " !CP.print_formula) f in
-                 let () = y_tinfo_hp (add_str "get_id: base_rhs " !CP.print_formula) base_rhs in  
-                 if (!CP.tp_imply f base_rhs)
-                 then
-                   let rhs = (CP.mkNot_s (CP.mkOr (BForm (((CP.mkGte eh e2 no_pos),None),None)) (BForm (((CP.mkGte e1 et no_pos),None),None)) None no_pos)) in                    
-                   let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
-                   let () = self # logging ((add_str "rhs" !CP.print_formula) rhs) in
-                   let () = y_tinfo_hp (add_str "get_id: lhs " !CP.print_formula) state in
-                   let () = y_tinfo_hp (add_str "get_id: rhs " !CP.print_formula) rhs in
-                   !CP.tp_imply f rhs
-                 else
-                   false) store_list)
-          in
-          given_name
-        with _ ->  
-          let x = CP.fresh_spec_var v in
-          let () = store_list <- (v,(e1,e2),x)::store_list in
-          x
-      in eq_v
+      let () = state <- CP.mkAnd state f no_pos in
+      let intv_checker v (eh,et) curpure lst =
+        let rec intv_checker_helper v (eh,et) curpure lst=
+          match lst with
+          | (base,(e1,e2),x)::tail ->
+             let base_rhs = BForm ((CP.mkEq_b (Var (v,no_pos)) (Var (base,no_pos)) no_pos),None) in
+             if (!CP.tp_imply curpure base_rhs)
+             then
+               let rhs = (CP.mkOr (BForm (((CP.mkGte eh e2 no_pos),None),None)) (BForm (((CP.mkGte e1 et no_pos),None),None)) None no_pos) in
+               let not_rhs = CP.mkNot_s rhs in
+               let () = y_tinfo_hp (add_str "get_id: lhs " !CP.print_formula) curpure in
+               let () = y_tinfo_hp (add_str "get_id: rhs " !CP.print_formula) rhs in
+               if !CP.tp_imply (mkAnd state curpure no_pos) not_rhs
+               then
+                 Some x
+               else
+                 intv_checker_helper v (eh,et) (mkAnd curpure rhs no_pos) tail
+             else
+               intv_checker_helper v (eh,et) curpure tail
+          | [] ->
+             None
+        in
+        intv_checker_helper v (eh,et) curpure lst
+      in
+      match (intv_checker v (e1,e2) f store_list) with
+      | Some name -> name
+      | None ->
+         let x = CP.fresh_spec_var v in
+         let () = store_list <- (v,(e1,e2),x)::store_list in
+         x
+
+            (* List.find *)
+            (*   (intv_checker v (e1,e2) f store_list) *)
+            (*   store_list *)
+               (* (fun (base,(eh,et),_) -> *)                 
+               (*   let base_rhs = BForm ((CP.mkEq_b (Var (v,no_pos)) (Var (base,no_pos)) no_pos),None) in *)
+               (*   let () = y_tinfo_hp (add_str "get_id: f " !CP.print_formula) f in *)
+               (*   let () = y_tinfo_hp (add_str "get_id: base_rhs " !CP.print_formula) base_rhs in   *)
+               (*   if (!CP.tp_imply f base_rhs) *)
+               (*   then *)
+               (*     let rhs = (CP.mkNot_s (CP.mkOr (BForm (((CP.mkGte eh e2 no_pos),None),None)) (BForm (((CP.mkGte e1 et no_pos),None),None)) None no_pos)) in                     *)
+               (*     let () = self # logging ((add_str "lhs" !CP.print_formula) state) in  *)
+               (*     let () = self # logging ((add_str "rhs" !CP.print_formula) rhs) in *)
+               (*     let () = y_tinfo_hp (add_str "get_id: lhs " !CP.print_formula) state in *)
+               (*     let () = y_tinfo_hp (add_str "get_id: rhs " !CP.print_formula) rhs in *)
+               (*     !CP.tp_imply (mkAnd f state no_pos) rhs *)
+               (*   else *)
+               (*     false) store_list) *)
     (* method string_of = *)
     (*   let s1 = (add_str "state" !CP.print_formula) state in *)
     (*   let s2 = (add_str "\nlist" (pr_list (pr_pair !CP.print_sv !CP.print_exp))) list in *)
@@ -759,17 +783,18 @@ module EPURE =
             match v with 
             | Some (id,d) -> (id,d)
             | _  -> failwith x_tbi
-          ) lst2 in
-        let lst2 = List.filter (fun (id,(_,d)) -> 
-            let rhs = Cpure.mk_exp_geq d 1 in
+                     ) lst2 in
+        (* Why to filter ?*)
+        let lst2 = List.filter (fun (id,(_,d)) ->
+            let rhs = Cpure.mk_exp_geq d 0 in
             !Cpure.tp_imply f rhs) lst2 in
-        let lst2 = List.concat (List.map (fun (id,(eh,et)) -> 
-            let nid = h_2_mem_obj_intv # get_id id eh et f in
-            Elt.from_var [nid]) lst2) in
+        let lst2 = List.concat
+                     (List.map (fun (id,(eh,et)) -> 
+                          let nid = h_2_mem_obj_intv # get_id id eh et f in
+                          Elt.from_var [nid]) lst2) in
         (lst1@lst2,f)
       in
       List.map proc efpd1 
-
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
       let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let res =

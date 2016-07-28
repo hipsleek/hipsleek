@@ -614,16 +614,16 @@ and gather_type_info_exp_x prog a0 tlist et =
         fst(List.find (fun (v,en) -> en.sv_info_kind = new_et) n_tl)
       with _ -> "" in
     (* let (tmp1,tmp2)=nt in            *)
-    let () = x_binfo_hp (add_str "add(et)" string_of_typ) et no_pos in
-    let () = x_binfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
+    let () = x_tinfo_hp (add_str "add(et)" string_of_typ) et no_pos in
+    let () = x_tinfo_hp (add_str "add(new_et)" string_of_typ) new_et no_pos in
     let (n_tl1,t1) = gather_type_info_exp prog a1 n_tl new_et in (* tvar, Int, Float *)
-    let () = x_binfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
-    let () = x_binfo_hp (add_str "t1" string_of_typ) t1 no_pos in
+    let () = x_tinfo_hp (add_str "a1" !IP.print_exp) a1 no_pos in
+    let () = x_tinfo_hp (add_str "t1" string_of_typ) t1 no_pos in
     let new_et2 = (* if is_node_typ t1 && !Globals.ptr_arith_flag *)
       (* then Int else *) new_et in
     let (n_tl2,t2) = gather_type_info_exp prog a2 n_tl1 new_et2 in
-    let () = x_binfo_hp (add_str "a2" !IP.print_exp) a2 no_pos in
-    let () = x_binfo_hp (add_str "t2" string_of_typ) t2 no_pos in
+    let () = x_tinfo_hp (add_str "a2" !IP.print_exp) a2 no_pos in
+    let () = x_tinfo_hp (add_str "t2" string_of_typ) t2 no_pos in
 
     let (n_tlist2,t2) = x_add unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos in
 

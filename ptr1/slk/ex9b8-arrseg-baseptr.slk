@@ -1,0 +1,17 @@
+data arrI {
+  int val;
+}.
+
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null & BasePtr(self)
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  // inv BG([(self,i,n)], n>=i & i>=0 & self!=null & BasePtr(self)).
+    inv  n>=i & i>=0 & self!=null & BasePtr(self).
+
+
+checkentail xx::arr_seg<2,mmm>
+       & Univ(mmm) & 2<mmm<=4 //& BasePtr(xx)
+       |- [k] xx::arr_seg<k,5>.
+
+
+

@@ -1694,6 +1694,7 @@ let add_epure pf lst =
   let lst = Excore.EPureI.mk_star_disj ep lst in
   let () = x_tinfo_hp (add_str "add_epure(2) = " ( !print_ef_pure_disj)) lst no_pos in
   let lst = Excore.EPureI.conv_intv_disj lst in
+  let () = x_tinfo_hp (add_str "add_epure (3) = " ( !print_ef_pure_disj)) lst no_pos in
   let r = x_add Excore.EPureI.elim_unsat_disj false lst in
   let () = x_tinfo_hp (add_str "add_epure (res) = " ( !print_ef_pure_disj)) r no_pos in
   r
@@ -1733,9 +1734,9 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
         let sst = List.combine from_svs to_svs in
         (* let sst = CP.SV_INTV.from_var_pairs sst in *)
         List.map (Excore.EPureI.subst_epure sst) bl in
-      let () = x_binfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+      let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
       let baga_sp = (x_add add_epure epure baga_lst) in
-      let () = x_binfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
+      let () = x_tinfo_hp (add_str "baga (filtered)= " ( !print_ef_pure_disj)) baga_sp no_pos in
       let r = Excore.EPureI.hull_memset_sv baga_sp in
       (* let r = CP.SV_INTV.conv_var r in *)
       let () = x_tinfo_hp (add_str "baga (hulled)= " (!print_svl)) r no_pos in

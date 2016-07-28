@@ -570,7 +570,7 @@ let dlist_2_pure diff =
 
 (* WN : this calculation on mem_formula need to be revamped *) 
 let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var list) prog : CF.mem_formula =
-  (* let () = Excore.h_2_mem_obj # init in *)
+  let () = Excore.h_2_mem_obj_intv # init in
   let pure_f = MCP.pure_of_mix p0 in
   let () = x_tinfo_hp (add_str "pure f" Cprinter.string_of_pure_formula) (pure_f) no_pos in
   let () = x_tinfo_hp (add_str "evars" Cprinter.string_of_spec_var_list) (evars) no_pos in
@@ -880,6 +880,16 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
         (*   	{mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} *)
         (*   ) *)
         (* get specialized baga based on pure_f *)
+
+        (* DOCUMENTATION: *)
+        (*   get_spec_baga returns a new variable for a view node *)
+        (*   When baga interval is used, the pure parts of the formula and *)
+        (*   all the invariants will be accumulated to see whether it is implied that *)
+        (*   there is an overlap *)
+        (*   The invariant for each node is stored globally in h_2_mem_obj_intv.state *)
+        (*   The h_2_mem_obj_intv # get_id method will return a fresh variable is it is possible to be no overlapping *)
+        (*   between nodes; otherwise some existing variable *)
+        
         let ba = x_add get_spec_baga pure_f prog c p vs in
         let vdef = look_up_view_def pos prog.prog_view_decls c in
         let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
@@ -917,7 +927,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                let () = y_tinfo_pp "None" in
                (match lbl_lst with
                 |None ->
-                  let () = y_tinfo_hp (add_str "ba" !CP.print_svl) ba in
+                  let () = y_binfo_hp (add_str "ba" !CP.print_svl) ba in
                   if List.mem p evars then CP.BagaSV.mkEmpty
                   else ba 
                 | Some ls -> 

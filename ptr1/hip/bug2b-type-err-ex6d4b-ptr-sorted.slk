@@ -8,14 +8,29 @@ pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
   .
 
 checkentail 
- base::arr_seg<j,m> & a=base+j //& BasePtr(base2) //& a1=a //& base=base2
-   |- base2::arr_seg<j1,m1> & 
-         a=base2+j1
+ base::arr_seg<j,m> & a=base+j+1 //& BasePtr(base2) //& a1=a //& base=base2
+   |- base2::arr_seg<j1,m1> & a=base2+j1
          //b=base2+j1
    .
 print residue.
 
 
+lemma_unsafe self::arr_seg<i,n> & i<m<=n 
+     -> self::arr_seg<i,m>*self::arr_seg<m,n> //& i<m<=n 
+    .
+
+checkentail 
+ base::arr_seg<2,6> //& a=base+j //& BasePtr(base2) //& a1=a //& base=base2
+   |- base::arr_seg<2,5> //& a=base2+j1
+         //b=base2+j1
+   .
+print residue.
+
+/*
+checkentail Univ(x) & 
+  0<=x & x<5 |- 2<=x & x<6.
+print residue.
+*/
 
 /*
 # bug2.slk 
