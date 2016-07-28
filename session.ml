@@ -142,6 +142,7 @@ module type Message_type = sig
   val get_node_id: node -> ident
   val get_formula_from_struc_formula: struc_formula -> formula
   val get_hvar: h_formula -> ident * ident list
+  val get_node_session_info: h_formula -> node_session_info option
 
 end;;
 
@@ -378,6 +379,11 @@ module IForm = struct
       | F.HVar (id, ls) -> (id, ls)
       | _ -> failwith (x_loc ^ ": F.HVar expected.")
 
+  let get_node_session_info h_formula =
+    match h_formula with
+      | F.HeapNode hn -> hn.h_formula_heap_session_info
+      | _ -> None
+
 end;;
 
 module CForm = struct
@@ -562,6 +568,11 @@ module CForm = struct
                             let ls = List.map (fun x -> get_param_id x) ls in
                             (id, ls)
       | _ -> failwith (x_loc ^ ": CF.HVar expected.")
+
+  let get_node_session_info h_formula =
+    match h_formula with
+      | CF.ViewNode vn -> vn.h_formula_view_session_info
+      | _ -> None
 
 end;;
 
