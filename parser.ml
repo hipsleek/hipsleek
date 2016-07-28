@@ -1459,7 +1459,6 @@ tpprojection_formula:
     | peek_tpprojection_send; `NOT; msg_var = OPT session_msg_var; c = session_message ->
       let loc = (get_pos_camlp4 _loc 1) in
       let c = F.subst_stub_flow top_flow c in
-      let () = print_endline ("!!!!!!! " ^ (pr_opt pr_id msg_var)) in
       let mv = session_extract_msg_var msg_var loc in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TSend, mv, loc) c)
     | peek_tpprojection_receive; `QUERY; msg_var = OPT session_msg_var; c = session_message ->

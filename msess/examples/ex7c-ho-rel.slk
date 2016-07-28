@@ -1,0 +1,114 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+
+//1
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
+            |- x::Sess{@S !www#%L}<> .
+print residue.
+expect Valid.
+
+HeapPred RRR(Object a).
+
+//2
+infer [R] x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
+            |- x::Sess{@S !www#R(www)}<> .
+print residue.
+expect Valid.
+
+
+
+//2
+infer [RRR] vvv::node<_,_>
+            |- RRR(vvv).
+print residue.
+expect Valid.
+
+
+HeapPred RRR0(int a).
+
+//2
+infer [RRR0] vvv=0
+            |- RRR0(vvv).
+print residue.
+expect Valid.
+
+
+
+relation RR(a).
+
+//2
+infer [RR] vvv=0
+            |- RR(vvv).
+print residue.
+expect Valid.
+
+
+
+HeapPred RR0(Object a).
+relation RR1(int a).
+
+
+//2
+infer [RR0,RR1] vvv::node<_,_>
+            |- RR0(vvv) & RR1(vvv).
+print residue.
+expect Valid.
+
+
+/*
+LHS: weakening
+RHS: streghtening
+
+    resid |- R(y)
+    P1(v) & v=a |- R(a) -------->  {P1(v) -> R(v)} or {R(v) == P1(v)}
+----------------------------------------------------------
+x::Chan{?.P1(v)}<v> * resid |- x::Chan{?a.R(a)}<a> * R(y)
+
+
+If Unk R is on
+LHS: then R can be strenghten 
+RHS: Then R can be weaken?
+
+    resid |- R(y) ??
+
+    resid |- P1(y)
+    R(y) --> P1(y)
+
+    R(a) & v=a |- P1(a) -------->  {R(a) --> P1(a)}
+----------------------------------------------------------
+x::Chan{!v.P1(v)}<v> * resid |- x::Chan{!a.R(a)}<a> * R(y)
+
+*/
+
+A->B: x::node<_,_>
+ |
+ V
+SpecA: !x.x::node<_,_>
+SpecB: ?x.x::node<_,_>
+
+void A(chan c,y)
+  requires c::Chan{!x.x::node<_,_>} * y::node<_,_>
+  ensures  c::Chan{emp} 
+{
+  send(c,y); //L1 -> y::node<_,_>
+}
+
+
+void B(chan c)
+  requires c::Chan{?x.x::node<_,_>} 
+  ensures  c::Chan{emp} * ??
+{
+  int z = receive(c); //L2 ---> z::node<_,_>
+}
+
+
+
+void main()
+
+{
+ Chan c1 = new Chan() with SpecA;
+ Chan c2 = new Chan() with SpecB;
+
+  A(c1) | B(c2);
+}

@@ -1,0 +1,95 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+
+//1
+checkentail x::Sess{@S ?v#%L}<>
+            |- x::Sess{@S ?www#www::node<_,_>}<>.
+print residue.
+expect Valid.
+
+/*
+
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}
+ ho_vars: [L --> v_68::node<Anon_12,Anon_13>@M&{FLOW,(1,26)=__flow#E}]
+[[ SEARCH ==>  Match(x,x)]]
+
+
+*/
+
+//2
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<>
+            |- x::Sess{@S !www#%L}<>.
+print residue.
+expect Valid.
+
+
+/*
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}
+ ho_vars: [L --> vvv::node<Anon_14,Anon_15>@M&{FLOW,(1,26)=__flow#E}]
+[[ SEARCH ==>  Match(x,x)]]
+
+*/
+
+//3
+checkentail  y::node<_,_> 
+            |-  www::node<_,_> & y=www.
+print residue.
+expect Valid.
+
+//4
+checkentail  y::node<_,_> & vvv!=null
+            |-  vvv::node<_,_> & y=vvv.
+print residue.
+expect Fail.
+
+//5
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
+            |- x::Sess{@S !www#%L}<> * %L & y=www.
+print residue.
+expect Valid.
+
+//6 ==== SEND ====
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
+            |- x::Sess{@S !y#%L}<> * %L.
+print residue.
+expect Valid.
+
+/*
+ step 1: match x ---> vvv/www
+ step 2: inst L ----> vvv::node<_,_>
+ step 3: y::node<_,_> |- vvv::node<_,_> & y=vvv.
+*/
+
+/*
+
+ <1>emp&{FLOW,(20,21)=__norm#E}
+ ho_vars: [L --> vvv::node<Anon_14,Anon_15>@M&{FLOW,(1,26)=__flow#E}]
+[[ SEARCH ==>  Match(x,x)]]
+
+*/
+
+//7 ==== RECEIVE ====
+checkentail x::Sess{@S ?vvv#vvv::node<_,_>}<>
+            |- x::Sess{@S ?www#%L}<>.
+print residue.
+expect Valid.
+
+
+//8 
+checkentail x::Sess{@S ?vvv#vvv::node<_,_>;;!0;;!1}<> 
+            |- x::Sess{@S ?www#%L;;%P}<>.
+print residue.
+expect Valid.
+
+
+//9
+checkentail x::Sess{@S ?vvv#vvv::node<_,_>;;!0;;!1}<> * %L * y::Sess{@S %P}<>
+            |- x::Sess{@S ?www#%L;;%P}<>.
+print residue.
+expect Valid.
+

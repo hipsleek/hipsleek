@@ -1,0 +1,106 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+
+//6 ==== SEND ====
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
+            |- x::Sess{@S !www#%L}<> .
+print residue.
+expect Valid.
+
+/*
+ step 1: match x ---> vvv/www
+ step 2: inst L ----> vvv::node<_,_>
+ step 3: y::node<_,_> |- vvv::node<_,_> & y=vvv.
+*/
+
+
+
+checkentail (exists vvv: x::node<_,vvv> * vvv::node<_,_> & y!=null) 
+            |- x::node<_,y> .
+print residue.
+expect Valid.
+
+
+
+//6 ==== SEND ====
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
+            |- x::Sess{@S !ggg#%L}<> * %L .
+print residue.
+expect Valid.
+
+/*
+
+       L1 & vvv=www |-   L2 --> R1
+ ---------------------------------------------------------------
+   chan::S{+www::L1}<www> |- chan::S{+vvv::L2}<vvv>
+
+
+      L2 & vvv=www |-   L1  --> R1
+ ---------------------------------------------------------------
+   chan::S{-www::L1}<www> |- chan::S{-vvv::L2}<vvv:BP> --R1
+
+*/
+
+//6 ==== SEND ====
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> 
+            |- x::Sess{@S !www#www::node<_,_>}<>. 
+print residue.
+expect Valid.
+
+//6 ==== SEND ====
+checkentail x::Sess{@S !msg::node<_,_>}<> 
+            |- x::Sess{@S !msg::node<_,_>}<>. 
+print residue.
+expect Valid.
+
+//6 ==== SEND ====
+checkentail x::Sess{@S !msg::node<_,_>}<> & y!=null
+            |- x::Sess{@S !y#y::node<_,_>}<>. 
+print residue.
+expect Valid.
+
+// c::Chan{@S !v#v::node<_,_>}<> * y::node<_,_>
+// send(c,y)
+checkentail c::Chan{@S !v#v::node<_,_>}<> * y::node<_,_>
+  |- c::Chan{@S !mmm#%L;;%rest}<> * %L & y=mmm.
+
+/*
+step1 inst   v=mmm
+step2 discover %L=v::node<_,_>
+step3 y::node<_,_> & %L=v::node<_,_> & v=mmm |- %L & y=mmm.
+
+step4 y::node<_,_> & %L=v::node<_,_> & v=mmm |- v::node<_,_> & y=v.
+
+
+
+checkentail c::Chan{@S !v#v::node<_,_>}<> * y::node<_,_>
+  |- c::Chan<!mmm.L(mmm);%rest> * L(y)
+
+step1 inst   v=mmm
+step2 discover L(mmm)=mmm::node<_,_>
+step3 y::node<_,_> & L(a)=a::node<_,_> & v=mmm |- L(y).
+step3 y::node<_,_> & L(a)=a::node<_,_> & v=mmm |- y::node<_,_>.
+*/
+
+checkentail c::Sess{@S !v#v::node<_,_>}<> * y::node<_,_> //& v=y
+         |- c::Sess{@S !y#%L}<> * %L .
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_>
+            |- x::Sess{@S !www#%L}<>.
+print residue.
+expect Valid.
+
+
+/*
+pred_prim S{%P}<a>.
+
+checkentail x::Sess{@S chan::S{ v::node<_,_>}<v:BP> }<> * y::node<_,_>
+            |- x::Sess{@S chan::S{ %L}<y:BP>}<> * %L .
+print residue.
+expect Valid.
+
+*/
+
