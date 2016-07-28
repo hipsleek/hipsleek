@@ -1,0 +1,8 @@
+checkentail src<(size2+hd2) & (slen(str2))<=size2 & src<=((slen(str2))+hd2) & 
+ hd2<=src & dest<((slen(str1))+hd1) & (n'+1+src)<=((slen(str2))+hd2) & 
+ 0<(n'+1) & (n'+1+dest)<(size1+hd1) & hd1<=dest & dest<(size1+hd1) & n'<=0 & 
+ hd1<=dest & dest<(size1+hd1) & (slen(flted_31_2064))<=size1 & 
+ dest<=((slen(flted_31_2064))+hd1) & 
+ flted_31_2064=charUp(str1, (-1*hd1)+dest, (charAt(str2,(-1*hd2)+src))) & 
+ (slen(str1))<=size1 & dest<=((slen(str1))+hd1) & 
+ ((slen(str1))+hd1)<=(n'+1+dest) |-  (slen(str1))<(slen(flted_31_2064)).
