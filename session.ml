@@ -871,12 +871,12 @@ module Make_Session (Base: Session_base) = struct
   and string_of_session_or s =
     "(" ^ string_of_one_session s.session_seq_formula_or1 ^ ") " ^
     "or" ^
-    " (" ^ string_of_one_session s.session_seq_formula_or2
+    " (" ^ string_of_one_session s.session_seq_formula_or2 ^ ")"
 
   and string_of_session_star s =
     "(" ^ string_of_one_session s.session_seq_formula_star1 ^ ") " ^
     "*" ^
-    " (" ^ string_of_one_session s.session_seq_formula_star2
+    " (" ^ string_of_one_session s.session_seq_formula_star2 ^ ")"
 
   and string_of_session_predicate s =
     s.session_predicate_name ^ "{}" ^ "<" ^ (string_of_param_list s.session_predicate_params) ^ ">"
