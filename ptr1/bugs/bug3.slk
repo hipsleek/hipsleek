@@ -9,7 +9,17 @@ Example code as follows:
 */
 
 checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=4.
-expect Valid.
+expect Fail.
 
 checkentail x::arrI<m> & m>3 |- (exists mm: x::arrI<mm> & mm = 4).
+expect Fail.
+
+checkentail x::arrI<m> & m=4  //& mm=5 
+    |- [mm] x::arrI<mm> & mm>3.
+print residue.
 expect Valid.
+
+checkentail x::arrI<m> & m=4 |- (exists mm: x::arrI<mm> & mm>3).
+expect Valid.
+print residue.
+

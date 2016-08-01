@@ -7,10 +7,22 @@ Description: There is an error with 0 length array segments. They do not seem to
 
 */
 
+
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv n>=i & i>=0.
+
 //Problem code:
 
-checkentail base::arr_seg<0,0> * base1::arr_seg<1,1> * base2::arr_seg<2,2> |- [xx] xx::arr_seg<0,2>.
+checkentail base::arr_seg<0,1> * base::arr_seg<1,2> * base::arr_seg<2,3> 
+     |- base::arr_seg<0,2>.
 expect Valid.
 
-checkentail base::arr_seg<0,0> * base1::arr_seg<1,1> * base2::arr_seg<2,2> |- (exists xx: xx::arr_seg<0,2>).
+checkentail base::arr_seg<0,0> * base1::arr_seg<1,1> * base2::arr_seg<2,2> 
+    |- (exists xx: xx::arr_seg<0,2>).
 expect Valid.

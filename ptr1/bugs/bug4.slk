@@ -38,6 +38,7 @@ print residue.
 expect Valid.
 
 //(3)
-infer[a] x::lseg<a, p> & a<=10 & Univ(a)  |- x::node<_,q>*q::node<_,p>.
+infer[a] x::lseg<a, p> & a<=10 //& Univ(a)  
+  |- x::node<_,q>*q::node<_,p>.
 print residue.
 expect Valid.

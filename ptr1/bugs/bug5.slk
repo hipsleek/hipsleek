@@ -22,7 +22,16 @@ pred lseg<n, p> == self = p & n = 0
 infer[a] x::lseg<a, pp>  |- x::node<_,pp>.
 print residue.
 expect Valid.
+// why residue not empty?
+
+
 
 infer[a] emp & x=pp |- x::node<_,pp>.
 print residue.
+expect Fail.
+
+
+infer[a] x::lseg<a, pp>  |- x::node<_,qq>.
+print residue.
 expect Valid.
+// why residue not empty?

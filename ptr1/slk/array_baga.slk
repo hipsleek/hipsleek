@@ -51,27 +51,31 @@ print residue.
 
 
 checkentail base::arr_seg<x,x+2> * base::arr_seg<x,x+1> |- false.
-expect Valid. 		  
+expect Valid.
 print residue.
 
 checkentail base::arr_seg<x,y> * base::arr_seg<x,y+1> |- false.
-expect Fail. 		  
+expect Fail.
 print residue.
 
-checkentail base::arr_seg<x,y> * base::arr_seg<x,y+1> 
-     * base::arr_seg<x,y+2> |- false.
-expect Valid. 		  
+checkentail base::arr_seg<x,y> * base::arr_seg<x,y+1> * base::arr_seg<x,y+2> |- false.
+expect Valid.
 print residue.
+
+checkentail base::arr_seg<x,y> * base::arr_seg<x,y+1> * base2::arr_seg<x,y+2> |- false.
+expect Fail.
+print residue.
+
 
 
 checkentail base::arr_seg<x,y> * base::arr_seg<x,z> 
    |- x<=y.
-expect Valid. 		  
+expect Valid.
 print residue.
 
 checkentail base::arr_seg<x,y> * base::arr_seg<x,z> 
    |- x>y.
-expect Fail. 		  
+expect Fail.
 print residue.
 
 
