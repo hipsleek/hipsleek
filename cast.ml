@@ -1628,6 +1628,99 @@ let look_up_view_def_num i (pos : loc) (defs : view_decl list) (name : ident) =
   Debug.no_1_num i "look_up_view_def" pr_id pr_no 
     (fun _ -> look_up_view_def pos defs name) name
 
+
+let collect_baga_range prog  (f:F.h_formula) =
+  let f_comb = List.concat in
+  let visit e =
+    match e with
+    | F.ViewNode {h_formula_view_node = root; h_formula_view_name = c;h_formula_view_arguments=args} ->
+       let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+       let ba_oinv = vdef.view_baga_x_over_inv in
+       let ba_exists = vdef.view_inv_exists_vars in
+       (
+         match ba_oinv with
+         | None -> Some []
+         | Some bl ->
+            let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
+            let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) in
+            let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in
+            let to_svs = root :: ba_exists_fresh@args in
+            let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+            let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+            let baga_lst =
+              let sst = List.combine from_svs to_svs in
+              List.map (Excore.EPureI.subst_epure sst) bl
+            in
+            Some (Excore.EPureI.get_intv_disj baga_lst)
+       )
+    | _ -> None
+  in
+  F.fold_h_formula f visit f_comb
+;;
+
+let rec generate_constraint_from_baga_range lst =
+  let helper range1 range2 =
+    match range1,range2 with
+    | (base1,(exp1h,exp1t)),(base2,(exp2h,exp2t)) ->
+       let base_rhs = CP.BForm ((CP.mkEq_b (Var (base1,no_pos)) (Var (base2,no_pos)) no_pos),None) in
+       CP.mkOr
+         (CP.mkNot_s base_rhs)
+         (CP.mkOr
+            (CP.BForm (((CP.mkGte exp2h exp1t no_pos),None),None))
+            (CP.BForm (((CP.mkGte exp1h exp2t no_pos),None),None))
+            None
+            no_pos)
+         None
+         no_pos
+  in
+  let visit range lst =
+    List.fold_left
+      (fun r item ->
+        (helper range item)::r) [] lst
+  in
+  match lst with
+  | h::tail ->
+     (visit h tail)@(generate_constraint_from_baga_range tail)
+  | [] -> []
+;;
+
+(* ...[A1;B1;C1][A2;B2;C2]... -> A1&A2 || A1&B2 || A1&C2... *)
+let generate_constraint_from_baga_range_disj lstlst =
+  let rec helper lstlst =
+    match lstlst with
+    | [h] ->
+       List.map (fun item -> [item]) h
+    | h::t ->
+       let rest = helper t in
+       List.fold_left
+         (fun r hh ->
+           (List.map (fun item -> hh::item) rest)@r)
+         []
+         h
+    | [] -> []
+  in
+  List.map generate_constraint_from_baga_range (helper lstlst)
+;;
+
+let merge_baga_constraints lstlst =
+  match (List.fold_left
+           (fun r item ->
+             match item with
+             | h ::tail -> ((List.fold_left
+                              (fun r i -> P.mkAnd r i no_pos)
+                              h
+                              tail)::r)
+             | [] -> r )
+           []
+           lstlst)
+  with
+  | h::tail -> Some (List.fold_left
+                       (fun r i -> P.mkOr r i None no_pos)
+                       h
+                       tail)
+  | [] -> None
+;;
+      
 let collect_rhs_view (n:ident) (e:F.struc_formula) : (ident * ident list) =
   let f_comb = List.concat in
   let f e = match e with 

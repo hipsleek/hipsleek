@@ -821,7 +821,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       | Conj {h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;h_formula_conj_pos = pos}
       | ConjStar {h_formula_conjstar_h1 = h1;h_formula_conjstar_h2 = h2;h_formula_conjstar_pos = pos}
       | ConjConj {h_formula_conjconj_h1 = h1;h_formula_conjconj_h2 = h2;h_formula_conjconj_pos = pos} ->
-        x_tinfo_hp (add_str "f" (fun f -> "#Conj/ConjStar/ConjConj/Phase#" ^ Cprinter.string_of_h_formula f)) f pos;
+         x_tinfo_hp (add_str "f" (fun f -> "#Conj/ConjStar/ConjConj/Phase#" ^ Cprinter.string_of_h_formula f)) f pos;
         let m1 = helper_simpl h1  in
         let m2 = helper_simpl h2 in
         {mem_formula_mset = CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset;}
@@ -1390,9 +1390,24 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
     if (is_sat_mem_formula memset) then 
       let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
+
+      (* Added the disjointness constraint from baga *)
+      let baga_ranges = Cast.collect_baga_range prog h0 in (* extract the list of ranges from baga inv *)
+      (* turn the ranges into formulas, ex. (base1,[a,b])(base2, [c,d]) --> base1=base2 -> c>b | a>d *)
+      let baga_constraint = Cast.generate_constraint_from_baga_range_disj baga_ranges in
+      let pr_baga = pr_list (pr_list (pr_pair (!CP.print_sv) (pr_pair !CP.print_exp !CP.print_exp))) in
+      let () = x_binfo_hp (add_str "baga_ranges" pr_baga) baga_ranges no_pos in
+      let () = x_binfo_hp (add_str "baga_constraints" (pr_list (pr_list !CP.print_formula))) baga_constraint no_pos in
+      let pf_with_baga =
+        match Cast.merge_baga_constraints baga_constraint with
+        | Some bagaf -> CP.mkAnd pf bagaf no_pos
+        | None -> pf
+      in
+      (* End of adding disjointness constraint from baga *)
+      
       let pure_of_memset = 
         if !Globals.old_keep_absent then pure_of_memset 
-        else MCP.merge_mix_w_pure pure_of_memset pf in
+        else MCP.merge_mix_w_pure pure_of_memset pf_with_baga in
       (pure_of_memset, memset)
     else
       (MCP.mkMFalse no_pos, memset)

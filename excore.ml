@@ -794,7 +794,23 @@ module EPURE =
                           Elt.from_var [nid]) lst2) in
         (lst1@lst2,f)
       in
-      List.map proc efpd1 
+      List.map proc efpd1
+
+    let get_intv_disj (efpd1:epure_disj)  =
+      let proc (baga,f) =
+        (* let () = h_2_mem_obj_intv # add_pure f in *)
+        let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
+        let lst2 = List.map (fun e -> 
+            let v =  Elt.get_interval e in
+            match v with 
+            | Some (id,d) -> (id,d)
+            | _  -> failwith x_tbi
+                     ) lst2
+        in
+        lst2
+      in
+      List.map proc efpd1
+
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
       let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
       let res =
