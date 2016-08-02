@@ -1,0 +1,79 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+//    inv BG([(self,i,n)], n>=i & i>=0 & self!=null)
+      inv true
+     .
+
+/*
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], 0<=i)]
+  
+  xform: 0<=i
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: arrI
+*/
+
+pred arr_seg2<i,n> == i=n & i>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg2<i+1,n> & xxx=self+i & i>=0
+      inv BG([(self,i,n)], n>=i & i>=0 & self!=null)
+ //     inv true
+     .
+
+/*
+  inv: i<=n & 0<=i & self!=null
+  
+  baga over inv: [([(self,( i, n))], i<=n & 0<=i & self!=null)]
+  baga over inv (unfolded): [([(self,( i, n))], i<=n & 0<=i & self!=null)]
+  
+  xform: i<=n & 0<=i & self!=null
+ */
+
+/*
+
+--inv
+
+ inv: i>=0 & self>=1
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], 0<=i)]
+  
+  xform: ((0<=i & self!=null) | (i=n & 0<=n & self!=null))
+
+
+(==fixcalc.ml#670==)
+compute_invs_fixcalc@7@6@5@4
+compute_invs_fixcalc inp1 :arr_seg2:={[self,i_60,n_61] -> [] -> []: (0=0 && i_60=n_61 && 0<=i_60 && self>0) ||  exists (n_17,flted_24_16,xxx,Anon_14: (xxx>0 && self>0) && flted_24_16=1+i_60 && xxx=i_60+self && 0<=i_60 && n_17=n_61)
+};
+bottomupgen([arr_seg2], [1], SimHeur);
+compute_invs_fixcalc@7 EXIT:[ i_60>=0 & self>=1]
+
+(==fixcalc.ml#686==)
+compute_heap_pure_inv@6@5@4
+compute_heap_pure_inv inp1 :[ (* lbl: *){1}->emp&i=n & 0<=i & self!=null&{FLOW,(1,26)=__flow#E}[],
+ (* lbl: *){2}->(exists n_17,flted_24_16,xxx,
+Anon_14: (* lbl: *){2}->xxx::arrI<Anon_14>@M * 
+                        self::arr_seg2<flted_24_16,n_17>@M&
+flted_24_16=1+i & xxx=i+self & 0<=i & n_17=n&{FLOW,(1,26)=__flow#E}[])]
+compute_heap_pure_inv inp2 :arr_seg2
+compute_heap_pure_inv inp3 :[i,n]
+compute_heap_pure_inv@6 EXIT: i>=0 & self>=1
+
+(==astsimp.ml#2394==)
+ compute_inv@5@4
+ compute_inv inp1 :arr_seg2
+ compute_inv inp2 :[i,n]
+ compute_inv inp3 :[ (* lbl: *){1}->emp&i=n & 0<=i & self!=null,
+ (* lbl: *){2}->EXISTS(n_17,flted_24_16,xxx,
+Anon_14: xxx::arrI<Anon_14>@M * self::arr_seg2<flted_24_16,n_17>@M&
+flted_24_16=1+i & xxx=i+self & 0<=i & n_17=n)[]]
+ compute_inv inp4 : i<=n & 0<=i & self!=null
+ compute_inv@5 EXIT: i<=n & 0<=i & self!=null
+
+*/

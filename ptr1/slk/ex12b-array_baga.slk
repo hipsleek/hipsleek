@@ -1,0 +1,44 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+    inv BG([(self,i,n)], n>=i & i>=0 & self!=null
+    ).
+
+checkentail base::arr_seg<x,y> * base::arr_seg<a,b>  
+   |- a>=y | x>=b.
+expect Valid.
+print residue.
+
+
+checkentail base::arr_seg<a,y> * base::arr_seg<a,b> & a<y & y<=b
+   |- a>=y | a>=b.
+expect Valid.
+print residue.
+
+
+//(3)
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a 
+   |- false.
+expect Valid.
+print residue.
+
+//(4)
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+b
+   |- b<a | b>=y.
+expect Valid.
+print residue.
+
+
+checkentail k::arrI<_> * k2::arrI<_> & k2=base+b2+1 & k=base+b & b=b2+1
+   |- false.
+expect Valid.
+print residue.
+
+checkentail k::arrI<_> * k2::arrI<_> & k2=base+b2+1 & k=base+b & b=b2
+   |- false.
+expect Fail.
+print residue.
+
