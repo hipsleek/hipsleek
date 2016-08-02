@@ -41,3 +41,13 @@ print residue.
 checkentail base::arr_seg<2,5> * base2::arr_seg<3,4> |- false.
 expect Fail. 		  
 print residue.
+
+checkentail base::arr_seg<x,y> * base::arr_seg<a,b> 
+   |- a>=y | x>=b.
+expect Valid.
+print residue.
+
+checkentail base::arr_seg<x,y> * base1::arr_seg<a,b> 
+   |- a>=y | x>=b.
+expect Fail.
+print residue.

@@ -12,6 +12,11 @@ checkentail base::arr_seg<x,y> * base::arr_seg<a,b>
 expect Valid.
 print residue.
 
+checkentail base::arr_seg<x,y> * base1::arr_seg<a,b> 
+   |- a>=y | x>=b.
+expect Fail.
+print residue.
+
 
 checkentail base::arr_seg<2,10> * base::arr_seg<5,6> 
    |- false.
