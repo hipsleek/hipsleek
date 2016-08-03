@@ -1627,8 +1627,14 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
 let look_up_view_def_num i (pos : loc) (defs : view_decl list) (name : ident) = 
   Debug.no_1_num i "look_up_view_def" pr_id pr_no 
     (fun _ -> look_up_view_def pos defs name) name
+;;
+  
+type baga_range =
+  Segment of (P.spec_var * (P.exp * P.exp))
+| Element of P.spec_var
+;;
 
-
+(* The result is list of list,  each sub list can be considered as a disjunction *)
 let collect_baga_range prog  (f:F.h_formula) =
   let f_comb = List.concat in
   let visit e =
@@ -1651,8 +1657,13 @@ let collect_baga_range prog  (f:F.h_formula) =
               let sst = List.combine from_svs to_svs in
               List.map (Excore.EPureI.subst_epure sst) bl
             in
-            Some (Excore.EPureI.get_intv_disj baga_lst)
+            Some (List.map
+                    (fun lst  -> (List.map (fun item -> Segment item) lst))
+                    (Excore.EPureI.get_intv_disj baga_lst))
+            (* Some (Segment (Excore.EPureI.get_intv_disj baga_lst)) *)
        )
+    | F.DataNode data->
+       Some [[Element data.h_formula_data_node]]
     | _ -> None
   in
   F.fold_h_formula f visit f_comb
@@ -1661,7 +1672,21 @@ let collect_baga_range prog  (f:F.h_formula) =
 let rec generate_constraint_from_baga_range lst =
   let helper range1 range2 =
     match range1,range2 with
-    | (base1,(exp1h,exp1t)),(base2,(exp2h,exp2t)) ->
+    | Element sv1, Element sv2 ->
+       let base_rhs = CP.BForm ((CP.mkEq_b (Var (sv1,no_pos)) (Var (sv2,no_pos)) no_pos),None) in
+       CP.mkNot_s base_rhs
+    | Element sv, Segment (base,(exph,expt))
+      | Segment (base,(exph,expt)), Element sv ->
+       let expsv = CP.Var (sv,no_pos) in
+       let expbase = CP.Var (base,no_pos) in
+       let rangeh = CP.mkAdd expbase exph no_pos in
+       let ranget = CP.mkAdd expbase expt no_pos in
+       CP.mkOr
+         (CP.BForm (((CP.mkGt rangeh expsv no_pos),None),None))
+         (CP.BForm (((CP.mkGte expsv ranget no_pos),None),None))
+         None
+         no_pos
+    | Segment (base1,(exp1h,exp1t)), Segment (base2,(exp2h,exp2t)) ->
        let base_rhs = CP.BForm ((CP.mkEq_b (Var (base1,no_pos)) (Var (base2,no_pos)) no_pos),None) in
        CP.mkOr
          (CP.mkNot_s base_rhs)

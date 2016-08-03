@@ -1395,7 +1395,15 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
       let baga_ranges = Cast.collect_baga_range prog h0 in (* extract the list of ranges from baga inv *)
       (* turn the ranges into formulas, ex. (base1,[a,b])(base2, [c,d]) --> base1=base2 -> c>b | a>d *)
       let baga_constraint = Cast.generate_constraint_from_baga_range_disj baga_ranges in
-      let pr_baga = pr_list (pr_list (pr_pair (!CP.print_sv) (pr_pair !CP.print_exp !CP.print_exp))) in
+      let pr_baga = pr_list
+                      (pr_list
+                         (function
+                          | Cast.Segment seg ->
+                             (pr_pair (!CP.print_sv) (pr_pair !CP.print_exp !CP.print_exp)) seg
+                          | Cast.Element sv ->
+                             !CP.print_sv sv
+                      ))
+      in
       let () = x_binfo_hp (add_str "baga_ranges" pr_baga) baga_ranges no_pos in
       let () = x_binfo_hp (add_str "baga_constraints" (pr_list (pr_list !CP.print_formula))) baga_constraint no_pos in
       let pf_with_baga =
@@ -1404,7 +1412,6 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
         | None -> pf
       in
       (* End of adding disjointness constraint from baga *)
-      
       let pure_of_memset = 
         if !Globals.old_keep_absent then pure_of_memset 
         else MCP.merge_mix_w_pure pure_of_memset pf_with_baga in
