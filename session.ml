@@ -1227,8 +1227,8 @@ module Make_Session (Base: Session_base) = struct
   let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula)
                 : Base.ho_param_formula list =
     let pr1 = !Base.print_ho_param_formula in
-    let pr2 l = List.fold_left (fun acc x -> acc ^ x) ""  (List.map (fun x -> pr1 x) l) in
-    Debug.no_2 "split_sor" pr1 pr1 pr2 split_sor head tail
+    let pr2 = pr_list pr1 in
+    Debug.no_2 "split_sor" pr1 (pr_opt pr1) pr2 split_sor head tail
 
 end;;
 
