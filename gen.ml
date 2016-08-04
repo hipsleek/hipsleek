@@ -2490,8 +2490,10 @@ let rec cart_two_list l1 l2 =
 ;;
 
 (* creates the cartesian of a list of lists.
-   Example. given [[1;2];[3,4,5]; [6]] results in
+   Example. 
+   (i) given [[1;2];[3,4,5]; [6]] results in
    [[1; 3; 6]; [1; 4; 6]; [1; 5; 6]; [2; 3; 6]; [2; 4; 6]; [2; 5; 6]]
+   (ii) given [[1;2;3]] results in [[1];[2];[3]]
 *)
 
 let cart_multi_list lst =
@@ -2506,5 +2508,5 @@ let cart_multi_list lst =
   in
   match lst with
   | []     -> []
-  | h ::[] -> lst
+  | h ::[] -> list_of_lists h
   | hd::tl -> let hd = list_of_lists hd in  helper hd tl
