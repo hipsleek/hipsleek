@@ -2476,3 +2476,35 @@ let range a b =
   (* if a > b then List.rev (aux b a) else aux a b;; *)
   if a > b then [] else aux a b;;
 
+
+(* creates the cartesian of two a lists
+   Example. given [[1;2];[3,4,5]] results in
+   [[1; 3]; [1; 4]; [1; 5]; [2; 3]; [2; 4]; [2; 5]]
+*)
+let rec cart_two_list l1 l2 =
+   match l1 with 
+     | []   -> []
+     | h::t -> 
+           let new_h = List.map (fun x -> h@x) l2 in
+           new_h @ (cart_two_list t l2)
+;;
+
+(* creates the cartesian of a list of lists.
+   Example. given [[1;2];[3,4,5]; [6]] results in
+   [[1; 3; 6]; [1; 4; 6]; [1; 5; 6]; [2; 3; 6]; [2; 4; 6]; [2; 5; 6]]
+*)
+
+let cart_multi_list lst =
+  let list_of_lists = List.map (fun x -> [x]) in 
+  let rec helper acc lst =
+    match lst with 
+    | [] -> acc
+    | h::t -> 
+      let ha = list_of_lists h in 
+      let acc = cart_two_list acc ha in
+      helper acc t
+  in
+  match lst with
+  | []     -> []
+  | h ::[] -> lst
+  | hd::tl -> let hd = list_of_lists hd in  helper hd tl
