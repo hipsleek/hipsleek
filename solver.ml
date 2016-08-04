@@ -11558,13 +11558,24 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   in 
                   (None, new_ante, new_conseq, new_exist_vars, new_maps)
               in
-              (* let post_ho_match_process res = *)
-              (*   let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in *)
-              (*   let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in *)
-              (*   let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula)) in *)
-              (*   let pr1 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in *)
-              (*   Debug.no_1 "post_ho_match_process" pr1 pr_none post_ho_match_process res *)
-              (* in *)
+              let post_ho_match_process res =
+                let prf = Cprinter.string_of_formula in
+                (* in *)
+                let pri1aux (e,_) = (add_str "fail ctx" Cprinter.string_of_list_context) e in
+                let pri1 = pr_opt pri1aux in
+                let pri2 = pr_opt (add_str "residue" prf) in
+                let pri3 = pr_opt (add_str "pure residue" !MCP.print_mix_formula) in
+                let pri4 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var prf)) in
+                let pri = pr_list (pr_quad pri1 pri2 pri3 pri4) in
+                (* out *)
+                let pr1 = pr_none in
+                let pr2 = add_str "new_ante" prf in
+                let pr3 = add_str "new_conseq" prf in
+                let pr4 = add_str "new_exist_vars" Cprinter.string_of_spec_var_list in
+                let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var prf)) in
+                let pro = pr_penta pr1 pr2 pr3 pr4 pr5  in
+                Debug.no_1 "post_ho_match_process" pri pro post_ho_match_process res
+              in
               List.map post_ho_match_process res_lst  
           in (* fail_res, new_ante, new_conseq, new_exist_vars, new_maps *)
           (* ================================================== *)
@@ -11617,6 +11628,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let res_es1 = Immutable.restore_tmp_ann_list_ctx res_es1 *)
               in (res_es1, prf1)
           in
+          let post_do_match_processing (fail_res, new_ante, new_conseq, new_exist_vars, new_maps) =
+            let prf = Cprinter.string_of_formula in
+            let pr2 = add_str "new_ante" prf in
+            let pr3 = add_str "new_conseq" prf in
+            let pr4 = add_str "new_exist_vars" Cprinter.string_of_spec_var_list in
+            let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var prf)) in
+            let pro (e,_) = Cprinter.string_of_list_context e in
+            Debug.no_4 "post_do_match_processing" pr2 pr3 pr4 pr5 pro (fun _ _ _ _ -> post_do_match_processing  (fail_res, new_ante, new_conseq, new_exist_vars, new_maps))  new_ante new_conseq new_exist_vars new_maps  in
           let res = List.map post_do_match_processing match_ho_res_lst in
           let ctx,prf = List.split res in
           let res =
@@ -11624,7 +11643,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             | [] ->
               mkFailCtx_simple
                 "do_match should return a result (fail/succ)"
-                estate rhs (mk_cex true) pos, NoAlias
+                estate rhs (mk_cex true) pos, Failure
             | h::[]  -> h, (List.hd prf)
             | hd::tl ->
               let or_ctx = List.fold_left CF.or_list_context hd tl in
