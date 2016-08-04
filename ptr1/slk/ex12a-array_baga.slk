@@ -26,6 +26,12 @@ print residue.
 checkentail (10<=5 | 6<=2) |- false.
 print residue.
 
+
+checkentail base::arr_seg<x,y> * base::arr_seg<a,b> & !(a>=y | x>=b)
+   |- false.
+expect Valid.
+print residue.
+
 /*
 not(a>=y | x>=b)
 

@@ -2897,6 +2897,7 @@ let process_nondet_check (v: ident) (mf: meta_formula) =
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
+(* WN : shall this be made to call process_infer or use common part *)
 let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) (etype : entail_type) =
   let nn = (sleek_proof_counter#inc_and_get) in
   let pnum = !Globals.sleek_num_to_verify in
@@ -2904,7 +2905,8 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
   if pnum>0 & pnum!=nn then 
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
   else 
-    let num_id = "\nEntail "^(string_of_int nn) in
+    let np = "("^(string_of_int (nn))^") " in
+    let num_id = "\nEntail "^(np) in
     try
       let valid, rs, _(*sel_hps*) =
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
@@ -3027,7 +3029,6 @@ let process_pairwise (f : meta_formula) =
     let rs = run_pairwise f in
     print_result rs num_id
   with _ -> print_exc num_id
-
 
 let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) etype =
   let () = x_tinfo_pp "inside process_infer" no_pos in

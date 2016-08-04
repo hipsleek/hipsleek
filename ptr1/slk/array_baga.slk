@@ -87,3 +87,36 @@ print residue.
 // <1>base::arr_seg<x,y>@M * base::arr_seg<x,z>@M&{FLOW,(20,21)=__norm#E}[]
 // inferred rel: [RELDEFN R: ( 0<=y & 0<=z) -->  R(y,z)]
 
+
+infer[] base::arr_seg<x,y> * base::arr_seg<x,z> 
+   |- x=y | x=z.
+print residue.
+expect Valid.
+/*
+   (a,b)  * (c,d)
+   ==> a<=b & c<=b & a>=0 & b>=0 & (c>=b | a>=d)
+
+   (x,y) * (x,z)
+
+    x>=y & x>=z
+
+
+*/
+
+checkentail x<=y & x<=z & x>=0 & (x>=y | x>=z) |- x=y | x=z.
+expect Valid.
+print residue.
+
+
+infer[] base::arr_seg<x,y> * base::arr_seg<a,b> 
+   |- a>=0 & x<=y & x>=0 & a<=b.
+print residue.
+expect Valid.
+
+
+
+infer[] base::arr_seg<x,y> * base::arr_seg<a,b> 
+   |- a>=y | x>=b.
+print residue.
+expect Valid.
+

@@ -42,3 +42,51 @@ checkentail k::arrI<_> * k2::arrI<_> & k2=base+b2+1 & k=base+b & b=b2
 expect Fail.
 print residue.
 
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+b
+   |- false.
+expect Fail.
+print residue.
+
+
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a
+   |- false.
+expect Valid.
+print residue.
+
+
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a-1
+   |- k!=null.
+expect Valid.
+print residue.
+
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a-1
+   |- a>=0.
+expect Valid.
+print residue.
+
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a-1
+   |- k!=null.
+expect Valid.
+print residue.
+
+// cannot handle a>0 or k>=base ..
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a-1
+   |- k>=base.
+expect Valid.
+print residue.
+
+/*
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  0<=a & a<=y & a<y & base_282!=k & (((base+a)>k | k>=(base+y))) & k!=null & 
+ base!=null & k+1=base+a |-  base<=k. LOCS:[0;7;73;74] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:false
+
+*/

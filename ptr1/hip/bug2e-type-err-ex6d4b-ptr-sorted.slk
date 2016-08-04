@@ -8,6 +8,11 @@ pred arr_seg<i,n> == i=n & i>=0 & BasePtr(self)
   .
 
 /*
+lemma_unsafe self::arr_seg<i,n> & i<m<=n 
+     -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+*/
+
+/*
 checkentail 
  base::arr_seg<j,m> & a1=base+j & a1=a//& BasePtr(base2) //& a1=a //& base=base2
    |- base2::arr_seg<j1,m1> & 
@@ -19,7 +24,7 @@ print residue.
 */
 
 checkentail 
- base::arr_seg<j,m> & a1=base+j & a1=a-1//& BasePtr(base2) //& a1=a //& base=base2
+ base::arr_seg<j,m> & a=base+j-1 & j<m //+1 & j+1<m // & a1=a //a-1//& BasePtr(base2) //& a1=a //& base=base2
    |- base2::arr_seg<j1,m1> & 
          a=base2+j1
          //b=base2+j1
@@ -31,7 +36,7 @@ print residue.
 # bug2e.slk 
 
 checkentail 
- base::arr_seg<j,m> & a1=base+j & a1=a-1//& BasePtr(base2) //& a1=a //& base=base2
+ base::arr_seg<j,m> & a1=base+j & a1=a+1//& BasePtr(base2) //& a1=a //& base=base2
    |- base2::arr_seg<j1,m1> & 
          a=base2+j1
          //b=base2+j1
@@ -50,6 +55,10 @@ print residue.
  
 !!! **context.ml#874:lhs_w_rhs_inst: a1+1=a & a1=j+base & j<=m & 0<=j & BasePtr(base) & a=j1+base2 & base2=base
 !!! **context.ml#910:lhs=rhs_ptr: base=base2
+
+@1! **context.ml#1814:conflict detected:[ x_64=x_62, x_64=base+j, x_62=base2+j1, a1+1=a & a1=j+base & a=j1+base2]
+@1! **context.ml#2015:l_xxx:[]
+
 (==context.ml#3961==)
 choose_context@6
 choose_context inp1 :LHS node: base::arr_seg<j,m>@M
@@ -58,5 +67,24 @@ choose_context inp3 :LHS pure: a1+1=a & a1=j+base
 choose_context inp4 :RHS pure: a=j1+base2
 choose_context inp5 :right alias:[]
 choose_context@6 EXIT:[]
+
+# how come bug2b.slk succeeded?
+
+!!! **context.ml#874:lhs_w_rhs_inst: a=j+base & j<=m & 0<=j & BasePtr(base) & a=j1+base2 & base2=base
+!!! **context.ml#910:lhs=rhs_ptr: base=base2
+(==context.ml#3961==)
+choose_context@1
+choose_context inp1 :LHS node: base::arr_seg<j,m>@M
+choose_context inp2 :RHS node: base2::arr_seg<j1,m1>@M
+choose_context inp3 :LHS pure: a=j+base
+choose_context inp4 :RHS pure: a=j1+base2
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[ Type: Root
+ LHS: base::arr_seg<j,m>@M
+ RHS: base2::arr_seg<j1,m1>@M
+ root_inst: None
+ lhs_rest: emp
+ rhs_rest: emp
+ alias set: [base,base2]rhs_inst: []rhs_infer: None]
 
 */

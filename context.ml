@@ -1811,7 +1811,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
                     let comb = CP.join_conjunctions lst  in
                     let flag = not(TP.tp_is_sat comb "111") in
                     let () = if flag then
-                      let () = y_tinfo_hp (add_str "conflict detected" (pr_list !CP.print_formula)) lst in
+                      let () = y_binfo_hp (add_str "conflict detected" (pr_list !CP.print_formula)) lst in
                       ()
                     in
                     (flag)
@@ -1822,7 +1822,8 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
               | _,_,_ ->
                     false
           in
-          if conflict_flag then [] 
+          (* checking if match can be pushed further *)
+          if conflict_flag && false then [] 
           else 
            let () = y_tinfo_hp (add_str "p1" !CF.print_sv) p1 in
            let () = y_tinfo_hp (add_str "mem p1 aset" !CF.print_svl) aset in
