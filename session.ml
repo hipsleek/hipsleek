@@ -1211,20 +1211,25 @@ module Make_Session (Base: Session_base) = struct
    * 3. for each disjunct, append tail
    * 4. for each disjunct, normalize
    *)
-  let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula)
+  let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula option)
                 : Base.ho_param_formula list =
     let head_session = trans_h_formula_to_session
                        (Base.get_h_formula_from_ho_param_formula head) in
-    let tail_session = trans_h_formula_to_session
-                       (Base.get_h_formula_from_ho_param_formula tail) in
     let disj_list = sor_disj_list head_session in
-    let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
+    let disj_list =
+      match tail with
+      | None      -> disj_list
+      | Some tail ->
+        let tail_session = trans_h_formula_to_session
+            (Base.get_h_formula_from_ho_param_formula tail) in
+        let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
+        disj_list in
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
     let disj_list = List.map (fun x -> trans_from_session x) disj_list in
     let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x no_pos) disj_list in
     disj_list
 
-  let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula)
+  let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula option)
                 : Base.ho_param_formula list =
     let pr1 = !Base.print_ho_param_formula in
     let pr2 = pr_list pr1 in
@@ -1326,12 +1331,12 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
                                    (match hform with
                                       | CF.ViewNode vn -> Some (CF.ViewNode {vn with CF.h_formula_view_node = ptr})
                                       | _ -> Some hform) in
-                                 let new_lhs = csplit_sor (List.nth ho_args 0) (List.nth ho_args 1) si in
+                                 let new_lhs = csplit_sor (List.nth ho_args 0) (Some (List.nth ho_args 1)) si in
                                  let new_lhs = List.map (fun x -> let f = x.CF.rflow_base in
                                                          let f = CForm.transform_formula change_ptr f in
                                                          CForm.mk_rflow_formula f) new_lhs in
                                  new_lhs
-                  | SOr -> CProjection.split_sor lhs (CForm.mk_rflow_formula_from_heap CF.HEmp no_pos)
+                  | SOr -> CProjection.split_sor lhs None (* (CForm.mk_rflow_formula_from_heap CF.HEmp no_pos) *)
                   | _ -> [lhs])
     | None -> [lhs]
 
