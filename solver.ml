@@ -10624,6 +10624,141 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
      report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
 (***********END-of do_match_thread_nodes*****************)
 
+
+(* ************* match_one_ho_arg **************************** *)
+and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
+  (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
+   (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
+  (* lhs <==> rhs: instantiate any high-order variables in rhs *)
+  (* We use flow_ann to decide                     *)
+  (* contravariant (-) or covariant (+) entailment *)
+  let flow_ann = lhs.CF.rflow_kind in
+  let ho_lhs = lhs.CF.rflow_base in
+  let ho_rhs = rhs.CF.rflow_base in
+  let shvars = CF.extract_single_hvar_f ho_rhs in
+  let () = x_tinfo_hp (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
+  let hvars = CF.extract_hvar_f ho_rhs in
+  let subtract = Gen.BList.difference_eq CP.eq_spec_var in
+  let () = x_tinfo_hp (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in
+  match shvars with
+  | Some v -> (None,None,None,[(v,ho_lhs)])
+  | None ->
+    (* let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in *)
+    let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in
+    (* andreeac: why can't we use existing es?  *)
+    (* let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in *)
+    (* let new_es = { new_es with *)
+    let new_es = { estate with 
+                   es_evars = evars;
+                   es_gen_impl_vars = ivars @ hvars;
+                   es_unsat_flag = false;
+                   es_rhs_eqset = estate.es_rhs_eqset;
+                 }
+    in
+    (* let lhs_lhs = { new_es with es_formula = ho_lhs; } in *)
+    (* let pr = Cprinter.string_of_formula in *)
+    (* let () = x_tinfo_hp (add_str "lhs_lhs" pr) lhs_lhs.es_formula no_pos in *)
+    (* tmp_ho_var is used to capture residue after matching *)
+    let tmp_ho_var, new_es, new_ho_rhs =
+      match hvars with
+      | [] -> 
+        begin match k with
+          | HO_SPLIT -> 
+            let v = CP.fresh_spec_var (CP.SpecVar (FORM, "V", Unprimed)) in
+            let new_ho_rhs =
+              match ho_rhs with
+              | Base f -> Base { f with formula_base_heap = mkStarH f.formula_base_heap (HVar (v,[])) pos }
+              | Exists f -> Exists { f with formula_exists_heap = mkStarH f.formula_exists_heap (HVar (v,[])) pos }
+              | _ -> failwith "ho arguments: not expecting OR formula"
+            in
+            Some v, 
+            { new_es with 
+              es_gen_impl_vars = new_es.es_gen_impl_vars @ [v]; },
+            new_ho_rhs
+          | HO_NONE -> None, new_es, ho_rhs
+        end
+      | _ -> None, new_es, ho_rhs
+    in
+    let f_es, f_rhs =
+      match flow_ann with
+      | INFLOW -> 
+        (match k with
+         | HO_SPLIT ->
+           let vpl = CF.get_vperm_set ho_lhs in
+           let vpr = CF.get_vperm_set new_ho_rhs in
+           let contra_lhs = CF.write_vperm_set new_ho_rhs vpl in
+           let contra_rhs = CF.write_vperm_set ho_lhs vpr in
+           { new_es with es_formula = contra_lhs; }, contra_rhs
+         | _ -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
+        )
+      | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs
+    in
+    (* adding xpure of lhs to the HO es  *)
+    let ante_xpure,_,_ = x_add xpure 16 prog new_ante in
+    let () = y_tinfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in
+    let f_ctx = normalize_es_combine_mix_formula ante_xpure true pos f_es in
+    let pr = Cprinter.string_of_formula in
+    let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
+    let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
+    (* let f_ctx = x_add elim_unsat_es_now 13 prog (ref 1) f_es in *)
+    let res_ctx, res_prf =
+      Wrapper.wrap_classic x_loc (Some true) (* exact *)
+        (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true
+    in
+    begin match res_ctx with
+      | FailCtx (ft,_,_) ->
+        let ex_msg = match get_final_error res_ctx with Some (s,_,_) -> s | None -> "None??"in
+        let err_str = "matching of ho_args failed ("^ex_msg^")" in
+        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
+                                                 CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) ( (convert_to_must_es new_es), err_str, Failure_Must err_str) (mk_cex true), NoAlias) 
+        in (Some rs, None, None, [])
+      | SuccCtx cl ->
+        begin match cl with
+          | [] ->
+            let () = y_binfo_pp "match_one_ho_arg" in
+            (None, None, None, [])
+          | c::_ -> 
+            match c with
+            | Ctx es ->
+              let _, p_res, vp_res, _, _, _ = CF.split_components es.es_formula in
+              let () = y_binfo_hp (add_str "match_one_ho_arg" Cprinter.string_of_entail_state_short) es in
+              let p_res_opt =
+                if MCP.isConstMTrue p_res then None
+                else Some p_res 
+              in
+              begin match tmp_ho_var with
+                | None -> (None, None, p_res_opt, es.es_ho_vars_map)
+                | Some v -> 
+                  try
+                    let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
+                    let () = x_tinfo_hp (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in
+                    let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
+                    let v_binding = CF.write_vperm_set v_binding vp_res in
+                    let () = x_tinfo_hp (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in
+                    let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
+                    (None, Some v_binding, p_res_opt, other_bindings) 
+                  with _ -> (None, None, p_res_opt, es.es_ho_vars_map)
+              end
+            | _ -> (None, None, None, [])
+        end
+    end
+
+and match_one_ho_arg  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+  (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
+   (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
+  let pr_rflow = Cprinter.string_of_rflow_formula in
+  let pr1 = pr_pair (pr_pair
+                       (add_str "lhs: " pr_rflow)
+                       (add_str "rhs: " pr_rflow)) string_of_ho_split_kind in
+  (* ====== output helper printers: ====== *)
+  let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in
+  let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
+  let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula)) in
+  let pr2 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in
+  Debug.no_1 "match_one_ho_arg" pr1 pr2 (fun _ -> match_one_ho_arg_x  prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k)
+
+(* ************* match_one_ho_arg **************************** *)
+
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -11294,121 +11429,121 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (*  Expected return value: A list of                                      *)
               (* (fail_ctx option, ho residue option, pure residue option mapping list) *)
 
-              let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
-                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
-                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
-                (* lhs <==> rhs: instantiate any high-order variables in rhs *)
-                (* We use flow_ann to decide                     *)
-                (* contravariant (-) or covariant (+) entailment *)
-                let flow_ann = lhs.CF.rflow_kind in
-                let ho_lhs = lhs.CF.rflow_base in
-                let ho_rhs = rhs.CF.rflow_base in
-                let shvars = CF.extract_single_hvar_f ho_rhs in
-                let () = x_tinfo_hp (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
-                let hvars = CF.extract_hvar_f ho_rhs in
-                let () = x_tinfo_hp (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in
-                match shvars with
-                | Some v -> (None,None,None,[(v,ho_lhs)])
-                | None ->
-                  let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
-                  let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in
-                  (* andreeac: why can't we use existing es?  *)
-                  (* let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in *)
-                  (* let new_es = { new_es with *)
-                  let new_es = { estate with 
-                                 es_evars = evars;
-                                 es_gen_impl_vars = new_impl_vars @ hvars;
-                                 es_unsat_flag = false;
-                                 es_rhs_eqset = estate.es_rhs_eqset;
-                               }
-                  in
-                  (* let lhs_lhs = { new_es with es_formula = ho_lhs; } in *)
-                  (* let pr = Cprinter.string_of_formula in *)
-                  (* let () = x_tinfo_hp (add_str "lhs_lhs" pr) lhs_lhs.es_formula no_pos in *)
-                  (* tmp_ho_var is used to capture residue after matching *)
-                  let tmp_ho_var, new_es, new_ho_rhs =
-                    match hvars with
-                    | [] -> 
-                      begin match k with
-                        | HO_SPLIT -> 
-                          let v = CP.fresh_spec_var (CP.SpecVar (FORM, "V", Unprimed)) in
-                          let new_ho_rhs =
-                            match ho_rhs with
-                            | Base f -> Base { f with formula_base_heap = mkStarH f.formula_base_heap (HVar (v,[])) pos }
-                            | Exists f -> Exists { f with formula_exists_heap = mkStarH f.formula_exists_heap (HVar (v,[])) pos }
-                            | _ -> failwith "ho arguments: not expecting OR formula"
-                          in
-                          Some v, 
-                          { new_es with 
-                            es_gen_impl_vars = new_es.es_gen_impl_vars @ [v]; },
-                          new_ho_rhs
-                        | HO_NONE -> None, new_es, ho_rhs
-                      end
-                    | _ -> None, new_es, ho_rhs
-                  in
-                  let f_es, f_rhs =
-                    match flow_ann with
-                    | INFLOW -> 
-                      (match k with
-                       | HO_SPLIT ->
-                         let vpl = CF.get_vperm_set ho_lhs in
-                         let vpr = CF.get_vperm_set new_ho_rhs in
-                         let contra_lhs = CF.write_vperm_set new_ho_rhs vpl in
-                         let contra_rhs = CF.write_vperm_set ho_lhs vpr in
-                         { new_es with es_formula = contra_lhs; }, contra_rhs
-                       | _ -> { new_es with es_formula = new_ho_rhs; }, ho_lhs
-                      )
-                    | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs
-                  in
-                  (* adding xpure of lhs to the HO es  *)
-                  let ante_xpure,_,_ = x_add xpure 16 prog new_ante in
-                  let () = y_tinfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in
-                  let f_ctx = normalize_es_combine_mix_formula ante_xpure true pos f_es in
-                  let pr = Cprinter.string_of_formula in
-                  let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
-                  let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
-                  (* let f_ctx = x_add elim_unsat_es_now 13 prog (ref 1) f_es in *)
-                  let res_ctx, res_prf =
-                    Wrapper.wrap_classic x_loc (Some true) (* exact *)
-                      (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true
-                  in
-                  begin match res_ctx with
-                    | FailCtx (ft,_,_) ->
-                      let ex_msg = match get_final_error res_ctx with Some (s,_,_) -> s | None -> "None??"in
-                      let err_str = "matching of ho_args failed ("^ex_msg^")" in
-                      let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
-                                                               CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) ( (convert_to_must_es new_es), err_str, Failure_Must err_str) (mk_cex true), NoAlias) 
-                      in (Some rs, None, None, [])
-                    | SuccCtx cl ->
-                      begin match cl with
-                        | [] ->
-                          let () = y_binfo_pp "match_one_ho_arg" in
-                          (None, None, None, [])
-                        | c::_ -> 
-                          match c with
-                          | Ctx es ->
-                            let _, p_res, vp_res, _, _, _ = CF.split_components es.es_formula in
-                            let () = y_binfo_hp (add_str "match_one_ho_arg" Cprinter.string_of_entail_state_short) es in
-                            let p_res_opt =
-                              if MCP.isConstMTrue p_res then None
-                              else Some p_res 
-                            in
-                            begin match tmp_ho_var with
-                              | None -> (None, None, p_res_opt, es.es_ho_vars_map)
-                              | Some v -> 
-                                try
-                                  let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
-                                  let () = x_tinfo_hp (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in
-                                  let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
-                                  let v_binding = CF.write_vperm_set v_binding vp_res in
-                                  let () = x_tinfo_hp (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in
-                                  let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
-                                  (None, Some v_binding, p_res_opt, other_bindings) 
-                                with _ -> (None, None, p_res_opt, es.es_ho_vars_map)
-                            end
-                          | _ -> (None, None, None, [])
-                      end
-                  end 
+              (* let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):  *)
+              (*   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) *  *)
+              (*    (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) = *)
+              (*   (\* lhs <==> rhs: instantiate any high-order variables in rhs *\) *)
+              (*   (\* We use flow_ann to decide                     *\) *)
+              (*   (\* contravariant (-) or covariant (+) entailment *\) *)
+              (*   let flow_ann = lhs.CF.rflow_kind in *)
+              (*   let ho_lhs = lhs.CF.rflow_base in *)
+              (*   let ho_rhs = rhs.CF.rflow_base in *)
+              (*   let shvars = CF.extract_single_hvar_f ho_rhs in *)
+              (*   let () = x_tinfo_hp (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in *)
+              (*   let hvars = CF.extract_hvar_f ho_rhs in *)
+              (*   let () = x_tinfo_hp (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in *)
+              (*   match shvars with *)
+              (*   | Some v -> (None,None,None,[(v,ho_lhs)]) *)
+              (*   | None -> *)
+              (*     let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in *)
+              (*     let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in *)
+              (*     (\* andreeac: why can't we use existing es?  *\) *)
+              (*     (\* let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in *\) *)
+              (*     (\* let new_es = { new_es with *\) *)
+              (*     let new_es = { estate with  *)
+              (*                    es_evars = evars; *)
+              (*                    es_gen_impl_vars = new_impl_vars @ hvars; *)
+              (*                    es_unsat_flag = false; *)
+              (*                    es_rhs_eqset = estate.es_rhs_eqset; *)
+              (*                  } *)
+              (*     in *)
+              (*     (\* let lhs_lhs = { new_es with es_formula = ho_lhs; } in *\) *)
+              (*     (\* let pr = Cprinter.string_of_formula in *\) *)
+              (*     (\* let () = x_tinfo_hp (add_str "lhs_lhs" pr) lhs_lhs.es_formula no_pos in *\) *)
+              (*     (\* tmp_ho_var is used to capture residue after matching *\) *)
+              (*     let tmp_ho_var, new_es, new_ho_rhs = *)
+              (*       match hvars with *)
+              (*       | [] ->  *)
+              (*         begin match k with *)
+              (*           | HO_SPLIT ->  *)
+              (*             let v = CP.fresh_spec_var (CP.SpecVar (FORM, "V", Unprimed)) in *)
+              (*             let new_ho_rhs = *)
+              (*               match ho_rhs with *)
+              (*               | Base f -> Base { f with formula_base_heap = mkStarH f.formula_base_heap (HVar (v,[])) pos } *)
+              (*               | Exists f -> Exists { f with formula_exists_heap = mkStarH f.formula_exists_heap (HVar (v,[])) pos } *)
+              (*               | _ -> failwith "ho arguments: not expecting OR formula" *)
+              (*             in *)
+              (*             Some v,  *)
+              (*             { new_es with  *)
+              (*               es_gen_impl_vars = new_es.es_gen_impl_vars @ [v]; }, *)
+              (*             new_ho_rhs *)
+              (*           | HO_NONE -> None, new_es, ho_rhs *)
+              (*         end *)
+              (*       | _ -> None, new_es, ho_rhs *)
+              (*     in *)
+              (*     let f_es, f_rhs = *)
+              (*       match flow_ann with *)
+              (*       | INFLOW ->  *)
+              (*         (match k with *)
+              (*          | HO_SPLIT -> *)
+              (*            let vpl = CF.get_vperm_set ho_lhs in *)
+              (*            let vpr = CF.get_vperm_set new_ho_rhs in *)
+              (*            let contra_lhs = CF.write_vperm_set new_ho_rhs vpl in *)
+              (*            let contra_rhs = CF.write_vperm_set ho_lhs vpr in *)
+              (*            { new_es with es_formula = contra_lhs; }, contra_rhs *)
+              (*          | _ -> { new_es with es_formula = new_ho_rhs; }, ho_lhs *)
+              (*         ) *)
+              (*       | _ -> { new_es with es_formula = ho_lhs; }, new_ho_rhs *)
+              (*     in *)
+              (*     (\* adding xpure of lhs to the HO es  *\) *)
+              (*     let ante_xpure,_,_ = x_add xpure 16 prog new_ante in *)
+              (*     let () = y_tinfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in *)
+              (*     let f_ctx = normalize_es_combine_mix_formula ante_xpure true pos f_es in *)
+              (*     let pr = Cprinter.string_of_formula in *)
+              (*     let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in *)
+              (*     let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in *)
+              (*     (\* let f_ctx = x_add elim_unsat_es_now 13 prog (ref 1) f_es in *\) *)
+              (*     let res_ctx, res_prf = *)
+              (*       Wrapper.wrap_classic x_loc (Some true) (\* exact *\) *)
+              (*         (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true *)
+              (*     in *)
+              (*     begin match res_ctx with *)
+              (*       | FailCtx (ft,_,_) -> *)
+              (*         let ex_msg = match get_final_error res_ctx with Some (s,_,_) -> s | None -> "None??"in *)
+              (*         let err_str = "matching of ho_args failed ("^ex_msg^")" in *)
+              (*         let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos, *)
+              (*                                                  CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) ( (convert_to_must_es new_es), err_str, Failure_Must err_str) (mk_cex true), NoAlias)  *)
+              (*         in (Some rs, None, None, []) *)
+              (*       | SuccCtx cl -> *)
+              (*         begin match cl with *)
+              (*           | [] -> *)
+              (*             let () = y_binfo_pp "match_one_ho_arg" in *)
+              (*             (None, None, None, []) *)
+              (*           | c::_ ->  *)
+              (*             match c with *)
+              (*             | Ctx es -> *)
+              (*               let _, p_res, vp_res, _, _, _ = CF.split_components es.es_formula in *)
+              (*               let () = y_binfo_hp (add_str "match_one_ho_arg" Cprinter.string_of_entail_state_short) es in *)
+              (*               let p_res_opt = *)
+              (*                 if MCP.isConstMTrue p_res then None *)
+              (*                 else Some p_res  *)
+              (*               in *)
+              (*               begin match tmp_ho_var with *)
+              (*                 | None -> (None, None, p_res_opt, es.es_ho_vars_map) *)
+              (*                 | Some v ->  *)
+              (*                   try *)
+              (*                     let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in *)
+              (*                     let () = x_tinfo_hp (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in *)
+              (*                     let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in *)
+              (*                     let v_binding = CF.write_vperm_set v_binding vp_res in *)
+              (*                     let () = x_tinfo_hp (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in *)
+              (*                     let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in *)
+              (*                     (None, Some v_binding, p_res_opt, other_bindings)  *)
+              (*                   with _ -> (None, None, p_res_opt, es.es_ho_vars_map) *)
+              (*               end *)
+              (*             | _ -> (None, None, None, []) *)
+              (*         end *)
+              (*     end  *)
 
               (* if ((List.length hvars) == 0) then                                                                                                       *)
               (*   (* renaming before entailment *)                                                                                                       *)
@@ -11461,33 +11596,34 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (*   let lhs = push_exists to_bound (CF.add_pure_formula_to_formula to_ho_lhs lhs) in                                                       *)
               (*   [None, None, Some (List.hd hvars, lhs)] (* Bindings hvar in RHS => LHS *)                                                              *)
               (* else report_error no_pos ("do_match: unexpected multiple hvars in rhs")                                                                  *)
-              in 
+              (* in  *)
               (* End of match_one_ho_arg *)
 
+              let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
 
-              let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
-                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) *
-                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
-                let () = y_binfo_pp "to implement session normalization" in
-                match_one_ho_arg_x ((lhs, rhs), k)
-                in
+              (* let match_one_ho_arg_x (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): *)
+              (*   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * *)
+              (*    (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) = *)
+              (*   let () = y_binfo_pp "to implement session normalization" in *)
+              (*   match_one_ho_arg_x prog estate new_ante new_conseq evars new_impl_vars pos ((lhs, rhs), k) *)
+              (*   in *)
 
-              let match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
-                (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
-                 (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
-                let pr_rflow = Cprinter.string_of_rflow_formula in
-                let pr1 = pr_pair (pr_pair
-                                     (add_str "lhs: " pr_rflow)
-                                     (add_str "rhs: " pr_rflow)) string_of_ho_split_kind in
-                (* ====== output helper printers: ====== *)
-                let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in
-                let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
-                let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula)) in
-                let pr2 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in
-                Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs, rhs), k)
-              in
+              (* let match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): *)
+              (*   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) *  *)
+              (*    (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) = *)
+              (*   let pr_rflow = Cprinter.string_of_rflow_formula in *)
+              (*   let pr1 = pr_pair (pr_pair *)
+              (*                        (add_str "lhs: " pr_rflow) *)
+              (*                        (add_str "rhs: " pr_rflow)) string_of_ho_split_kind in *)
+              (*   (\* ====== output helper printers: ====== *\) *)
+              (*   let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in *)
+              (*   let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in *)
+              (*   let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula)) in *)
+              (*   let pr2 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in *)
+              (*   Debug.no_1 "match_one_ho_arg" pr1 pr2 match_one_ho_arg_x ((lhs, rhs), k) *)
+              (* in *)
 
-              let match_one_ho_arg (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+              let match_one_ho_arg_helper (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
                 ((((CF.list_context * Prooftracer.proof) option) *
                   (CF.formula option) *
                   (MCP.mix_formula option) *
@@ -11495,15 +11631,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                  ) list) =
                 let lhs_disjuncts = Session.new_lhs lhs in
                 let ho_match_pairs = List.map (fun x -> ((x, rhs), k)) lhs_disjuncts in
-                List.map match_one_ho_arg ho_match_pairs
+                let ho_match_helper = match_one_ho_arg prog estate new_ante new_conseq evars new_impl_vars pos in
+                List.map ho_match_helper ho_match_pairs
               in
 
-              let res = List.map match_one_ho_arg args in
+              let res = List.map match_one_ho_arg_helper args in
               let res_lst = Gen.cart_multi_list res in
-              let prefix = (string_of_int (List.length args)) ^"=" in
-              let () = y_binfo_hp (add_str "match sanity check" (pr_list (fun lst -> prefix ^ (string_of_int (List.length lst))))) res_lst in
-              (* let res = List.flatten res in *)
-              (* let res = List.hd res_lst in *)
               let post_ho_match_process res =
                 let failures = List.filter (fun (r, _, _, _) -> r != None) res in
                 if (failures != []) then
