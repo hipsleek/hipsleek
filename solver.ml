@@ -10624,8 +10624,9 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
      report_error no_pos "[solver.ml] do_match_thread_nodes: unexpected")
 (***********END-of do_match_thread_nodes*****************)
 
-
-(* ************* match_one_ho_arg **************************** *)
+(* *********************************************************** *)
+(* **************     match_one_ho_arg    ******************** *)
+(* *********************************************************** *)
 (* For each lhs, rhs, and a kind k, possible situations:                  *)
 (*  - A new mapping: rhs -> lhs                                           *)
 (*  - ho_arg split if k = HO_SPLIT                                        *)
@@ -10763,7 +10764,9 @@ and match_one_ho_arg  prog estate new_ante new_conseq evars ivars pos (((lhs, rh
   let pr2 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in
   Debug.no_1 "match_one_ho_arg" pr1 pr2 (fun _ -> match_one_ho_arg_x  prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k)
 
-(* ************* match_one_ho_arg **************************** *)
+(* *********************************************************** *)
+(* *************    END match_one_ho_arg    ****************** *)
+(* *********************************************************** *)
 
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
@@ -11412,10 +11415,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* let () = DD.info_zprint  (lazy  ("  estate.es_formula: " ^ (Cprinter.string_of_formula estate.es_formula))) pos in *)
           (* let () = DD.info_zprint  (lazy  ("  new_ante: " ^ (Cprinter.string_of_formula new_ante))) pos in *)
 
-          (* ======================================================= *)
-          (************ Handle high-order arguments: BEGIN ***********)
-          (* ======================================================= *)
-          (* let fail_res, new_ante, new_conseq, new_exist_vars, new_maps = *)
           let match_ho_res_lst = 
             if not (node_kind="view" && l_ho_args!=[]) then
               (* If not high-order, do nothing *)
@@ -11577,6 +11576,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let pro (e,_) = Cprinter.string_of_list_context e in
             Debug.no_4 "post_do_match_processing" pr2 pr3 pr4 pr5 pro (fun _ _ _ _ -> post_do_match_processing  (fail_res, new_ante, new_conseq, new_exist_vars, new_maps))  new_ante new_conseq new_exist_vars new_maps  in
           let res = List.map post_do_match_processing match_ho_res_lst in
+          (* below is creating a disj ctx *)
           let ctx,prf = List.split res in
           let res =
             match ctx with

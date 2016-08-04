@@ -407,6 +407,18 @@ Comment parameters of transform_h_formula.
 
 =============================================
 =============================================
+solver.ml
+move new_consumed inside the post_do_match_process
+
+and update the es correspondingly
+
+(eg. for Sor{A or B} --> new_consumed =A or new_consumed=B)
+
 =============================================
+=============================================
+
+detect unsat for lhs disjuncts when inferring rel 
+=============================================
+
 
 
