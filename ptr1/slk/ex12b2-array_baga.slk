@@ -2,9 +2,9 @@ data arrI {
   int val;
 }.
 
-pred arr_seg<i,n> == i=n & i>=0 & self!=null
+pred arr_seg<i,n> == i=n & i>=0 & self!=null & BasePtr(self)
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
-    inv BG([(self,i,n)], n>=i & i>=0 & self!=null
+    inv BG([(self,i,n)], n>=i & i>=0 & self!=null & BasePtr(self)
     ).
 
 checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a-1
@@ -14,6 +14,17 @@ print residue.
 
 infer[] base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a-1
    |- k!=null.
+expect Valid.
+print residue.
+
+checkentail k::arrI<_> &  k=base+a & BasePtr(base) & a>=0
+   & base!=null |- base::arr_seg<a,c>.
+expect Valid.
+print residue.
+
+
+checkentail k::arrI<_> * base::arr_seg<a+1,y> & a>=0
+     &  k=base+a & BasePtr(base) |- base::arr_seg<a,c>.
 expect Valid.
 print residue.
 
