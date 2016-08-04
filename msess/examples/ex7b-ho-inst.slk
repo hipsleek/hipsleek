@@ -104,3 +104,33 @@ expect Valid.
 
 */
 
+
+// c::Chan{@S !v#v::node<_,_>}<> * y::node<_,_>
+// send(c,y)
+checkentail c::Chan{@S !v#v::node<_,_>}<> * y::node<_,_>
+         |- c::Chan{@S !y#%L;;%rest}<> * %L.
+
+/*
+chan::S{- y::node<_,_> }<y>  ->  (exists y': chan::S{- y::node<_,_> }<y'@BP> & y'=y)
+
+step1 inst   v=mmm
+step2 discover %L=v::node<_,_>
+step3 y::node<_,_> & %L=v::node<_,_> & v=mmm |- %L & y=mmm.
+
+step4 y::node<_,_> & %L=v::node<_,_> & v=mmm |- v::node<_,_> & y=v.
+
+*/
+/*
+
+x::node<_,a> |- x::node<_,b>.       --> b -implicit
+x::node<_,a> |- x::node<_,b>.
+
+x::node<_,a> |- (exists b: x::node<_,b>).       --> b - explicit
+x::node<_,a> |- x::node<_,a>.
+
+x::node<_,a> & b>=0 |- x::node<_,b>.       --> b - global
+x::node<_,a> & b>=0 |- (exists  b0: x::node<_,b0> & b0=b).
+
+
+*/
+

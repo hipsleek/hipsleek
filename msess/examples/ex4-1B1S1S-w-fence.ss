@@ -104,7 +104,7 @@ void seller(Channel cb, Channel cs)
             Chan(cs, !int;!Chan(b,!Addr;?Date);?(Chan(b,emp))) */
   int ans = receive(cb);
   /* Chan(cb, (?Addr;;!Date)) * Chan(cs, !int;!Chan(b,!Addr;?Date);?(Chan(b,emp))) & ans=1 \/
-     Chan(cb, (emp) * Chan(cs, !int;!Chan(b,!Addr;?Date);?(Chan(b,emp))) & ans=0 \/
+     Chan(cb, (emp)) * Chan(cs, !int;!Chan(b,!Addr;?Date);?(Chan(b,emp))) & ans=0 \/
 */
   if(ans == 1){
     Prod p = getProd(id);

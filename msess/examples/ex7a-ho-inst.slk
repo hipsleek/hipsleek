@@ -25,6 +25,8 @@ checkentail x::Sess{@S !vvv#vvv::node<_,_>}<>
 print residue.
 expect Valid.
 
+\lambda. x
+
 
 /*
 Residue:
@@ -35,6 +37,21 @@ Residue:
 
 */
 
+HeapPred RRR(Object b).
+
+//2
+infer [RRR] x::Sess{@S !vvv#vvv::node<_,_>;!0;;!1}<> * y::node<_,_>
+            |- x::Sess{@S !www#RRR(www);}<> * RRR(y).
+print residue.
+expect Valid.
+
+/*
+//2
+infer [R] x::Sess{@S !vvv#vvv::node<_,_>}<>
+            |- x::Sess{@S !www#R(www)}<>.
+print residue.
+expect Valid.
+*/
 //3
 checkentail  y::node<_,_> 
             |-  www::node<_,_> & y=www.

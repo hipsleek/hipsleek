@@ -8,11 +8,11 @@ checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_>
 print residue.
 expect Valid.
 
-HeapPred RRR(Object a).
+//HeapPred RRR(Object a).
 
 //2
-infer [R] x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
-            |- x::Sess{@S !www#R(www)}<> .
+infer [RRR] x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
+            |- x::Sess{@S !www#RRR(www)}<> .
 print residue.
 expect Valid.
 
@@ -35,7 +35,7 @@ expect Valid.
 
 
 
-relation RR(a).
+relation RR(int a).
 
 //2
 infer [RR] vvv=0
@@ -81,6 +81,7 @@ x::Chan{!v.P1(v)}<v> * resid |- x::Chan{!a.R(a)}<a> * R(y)
 
 */
 
+/*
 A->B: x::node<_,_>
  |
  V
@@ -112,3 +113,5 @@ void main()
 
   A(c1) | B(c2);
 }
+
+*/

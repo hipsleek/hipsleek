@@ -4,7 +4,7 @@
 #choose_context,Trace
 match_one_ho_arg,Trace
 do_match,Trace
-#heap_entail_conjunct,Trace
+heap_entail_conjunct,Trace
 #process_one_match,Trace
 #update_fixpt,Trace
 #set_check_fixpt
@@ -14,4 +14,5 @@ do_match,Trace
 # case_normalize_renamed_struc_formula
 # case_normalize_struc_formula
 # case_normalize_renamed_formula
+
 
