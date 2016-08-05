@@ -1295,14 +1295,28 @@ let irename_message_pointer_heap hform =
   IForm.heap_node_transformer fnc hform
 
 let irename_message_pointer formula =
-  IForm.transform_formula ~trans_flow:true irename_message_pointer_heap formula
+  let renamed_formula = IForm.transform_formula ~trans_flow:true irename_message_pointer_heap formula in
+  (* add the freshly introduced vars to the exists list *)
+  let fv = F.all_fv formula in
+  let all_fv = F.all_fv renamed_formula in
+  let new_qvars = Gen.BList.difference_eq IP.eq_var all_fv fv in
+  let renamed_formula = F.push_exists new_qvars renamed_formula in
+  renamed_formula 
 
 let irename_message_pointer formula =
   let pr = !F.print_formula in
   Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer formula
 
 let irename_message_pointer_struc formula =
-  IForm.transform_struc_formula ~trans_flow:true irename_message_pointer_heap formula
+  let renamed_struct = IForm.transform_struc_formula ~trans_flow:true irename_message_pointer_heap formula in
+  (* add the freshly introduced vars to the exists list *)
+  let fv = F.struc_free_vars false formula in
+  let all_fv = F.struc_free_vars false renamed_struct in
+  let new_qvars = Gen.BList.difference_eq IP.eq_var all_fv fv in
+  let f_f f = Some (F.push_exists new_qvars f) in
+  let renamed_formula = F.transform_struc_formula (nonef,f_f,nonef,(somef,somef,somef,somef,somef)) renamed_struct in
+  renamed_struct
+  
 
 let irename_message_pointer_struc formula =
   let pr = !F.print_struc_formula in
