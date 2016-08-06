@@ -601,7 +601,7 @@ let rec string_of_h_formula = function
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"
-  | F.HVar (v,vs) -> "HVar "^v^(pr_list pr_id vs)
+  | F.HVar (v,vs) -> "HVar "^v^"["^(string_of_var_list vs)^"]"
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 

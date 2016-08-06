@@ -110,7 +110,7 @@ module type Message_type = sig
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
   val mk_empty: unit -> h_formula
-  val mk_hvar: ident -> ident list -> h_formula
+  val mk_hvar: ident -> var list -> h_formula
   val mk_seq_wrapper: h_formula -> VarGen.loc -> session_kind -> h_formula
   val choose_ptr: ?ptr:string -> unit -> node
   val id_to_param:  ident ->  VarGen.loc -> param
@@ -143,7 +143,7 @@ module type Message_type = sig
   val get_param_id: param -> ident
   val get_node_id: node -> ident
   val get_formula_from_struc_formula: struc_formula -> formula
-  val get_hvar: h_formula -> ident * ident list
+  val get_hvar: h_formula -> ident * var list
   val get_node_session_info: h_formula -> node_session_info option
 
 end;;
@@ -452,7 +452,7 @@ module CForm = struct
 
   let mk_hvar id ls =
     let id = CP.SpecVar(UNK, id, Unprimed) in
-    let ls = List.map (fun x -> CP.SpecVar(UNK, x, Unprimed)) ls in
+    (* let ls = List.map (fun x -> CP.SpecVar(UNK, x, Unprimed)) ls in *)
     CF.HVar(id, ls)
 
   let mk_seq_wrapper hform pos sk = hform
@@ -575,10 +575,9 @@ module CForm = struct
 
   let get_hvar node =
     match node with
-      | CF.HVar (id, ls) -> let id = get_param_id id in
-                            let ls = List.map (fun x -> get_param_id x) ls in
-                            (id, ls)
-      | _ -> failwith (x_loc ^ ": CF.HVar expected.")
+    | CF.HVar (id, ls) -> let id = get_param_id id in
+      (id, ls)
+    | _ -> failwith (x_loc ^ ": CF.HVar expected.")
 
   let get_node_session_info h_formula =
     match h_formula with
@@ -852,7 +851,7 @@ module Make_Session (Base: Session_base) = struct
 
   and session_hvar = {
     session_hvar_id: ident;
-    session_hvar_list: ident list;
+    session_hvar_list: Base.var list;
     session_hvar_pos: loc;
   }
 

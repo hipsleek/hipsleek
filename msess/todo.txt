@@ -419,6 +419,33 @@ and update the es correspondingly
 
 detect unsat for lhs disjuncts when inferring rel 
 =============================================
+SOLVED
+
+create a HO rel (kind of a hybrid between ho var
+and ho rel) to account for the transmitted message
+of the generic specs
+
+ex ex7d1-ho-rel.slk
+
+
+checkentail x::Sess{@S ?vvv#vvv::node<_,_>}<> * y::node<_,_>
+            |- x::Sess{@S ?www#%L(www)}<> * %L(y).
+print residue.
+expect Valid.
+
+
+Entail 2: Valid. 
+
+Residue:
+
+ <1>emp&Anon_16=Anon_18 & Anon_17=Anon_19&{FLOW,(20,21)=__norm#E}
+ ho_vars: [L[vvv_94] --> vvv_94::node<Anon_16,Anon_17>@M&
+           {FLOW,(1,26)=__flow#E}]
+[[ SEARCH ==>  Match(x,x) ==>  SEARCH ==>  Match(y,y)]]
+
+
+=============================================
+=============================================
 
 
 

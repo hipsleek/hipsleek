@@ -141,7 +141,7 @@ and h_formula = (* heap formula *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
-  | HVar of ident * (ident list)
+  | HVar of ident * ((ident * primed) list) 
 
 and h_formula_star = { h_formula_star_h1 : h_formula;
                        h_formula_star_h2 : h_formula;
@@ -794,7 +794,8 @@ and h_fv ?(vartype=Global_var.var_with_none) (f:h_formula):(ident*primed) list =
       else let args_fv = List.concat (List.map Ipure.afv args) 
         in Gen.BList.remove_dups_eq (=) args_fv
     (* TODO:WN:HVar -*)
-    | HVar (v,ls) -> [(v,Unprimed)]@(List.map (fun v -> (v,Unprimed)) ls) (* TODO:HO -prime? *)
+    | HVar (v,ls) -> [(v,Unprimed)]@ls
+      (* [(v,Unprimed)]@(List.map (fun v -> (v,Unprimed)) ls) (\* TODO:HO -prime? *\) *)
     | HTrue -> []
     | HFalse -> [] 
     | HEmp -> [] 
@@ -1036,12 +1037,17 @@ and subst sst (f : formula) = match sst with
   | [] -> f 
 
 (*subst all including existential variables*)
-and subst_all sst (f : formula) = 
+and subst_all_x sst (f : formula) = 
   let rec helper sst f =
     match sst with
     | s :: rest -> helper rest (apply_one_all s f)
     | [] -> f 
   in helper sst f
+
+and subst_all sst (f : formula) =
+  let pr = !print_formula in
+  let pr1 = pr_list (pr_pair string_of_spec_var string_of_spec_var) in
+  Debug.no_2 "subst_all"  pr1 pr pr subst_all_x sst  f
 
 (*subst all including existential variables*)
 and subst_pointer sst (f : formula) vars = 
@@ -1441,8 +1447,8 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
   (* URGENT:TODO:WN:HVar *)
   | HVar (v,ls) -> 
     let (v1, _) =  (subst_var s (v, Unprimed)) in
-    let lsx =  List.map (fun v -> (subst_var s (v, Unprimed))) ls in
-    HVar (v1,ls)
+    let lsx =  List.map (fun v -> (subst_var s v)) ls in
+    HVar (v1,lsx)
   | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
 
 and rename_bound_vars_x (f : formula) = 

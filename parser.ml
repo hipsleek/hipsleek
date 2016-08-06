@@ -1895,7 +1895,9 @@ opt_cid_list: [[t=LIST0 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(
 cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
   
 (* annotated cid list *)
-opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
+  opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
+
+opt_cid_list_bracket: [[`OPAREN; l= opt_cid_list; `CPAREN -> l ]];
   
 c_typ:
  [[ `COLON; t= typ -> t
@@ -2267,7 +2269,9 @@ simple_heap_constr:
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
      (* High-order variables, e.g. %P*)
-   | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
+       | `PERCENT; `IDENTIFIER id; args = OPT opt_cid_list_bracket ->
+              let args = un_option args [] in
+              F.HVar (id,args)
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
      let pos = get_pos_camlp4 _loc 2 in
      if hp_names # mem id then

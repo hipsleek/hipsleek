@@ -8347,7 +8347,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       | IF.HEmp -> (CF.HEmp, CF.TypeTrue, [], tl)
       (* URGENT:TODOWN:HVar *)
       | IF.HVar (v,hvar_vs) -> 
-        let vs = List.map (fun v -> (CP.SpecVar (FORM, v, Unprimed))) hvar_vs in
+        let vs = List.map (fun (v,p) -> (CP.SpecVar (FORM, v, p))) hvar_vs in
         (CF.HVar (CP.SpecVar (FORM, v, Unprimed),vs), CF.TypeTrue, [], tl)
     ) in 
     res

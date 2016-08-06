@@ -25,9 +25,6 @@ checkentail x::Sess{@S !vvv#vvv::node<_,_>}<>
 print residue.
 expect Valid.
 
-\lambda. x
-
-
 /*
 Residue:
 
@@ -39,38 +36,31 @@ Residue:
 
 HeapPred RRR(Object b).
 
-//2
-infer [RRR] x::Sess{@S !vvv#vvv::node<_,_>;!0;;!1}<> * y::node<_,_>
-            |- x::Sess{@S !www#RRR(www);}<> * RRR(y).
+//3
+infer [RRR] x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_>
+            |- x::Sess{@S !www#RRR(www)}<> * RRR(y).
 print residue.
 expect Valid.
 
-/*
-//2
-infer [R] x::Sess{@S !vvv#vvv::node<_,_>}<>
-            |- x::Sess{@S !www#R(www)}<>.
-print residue.
-expect Valid.
-*/
-//3
+//4
 checkentail  y::node<_,_> 
             |-  www::node<_,_> & y=www.
 print residue.
 expect Valid.
 
-//4
+//5
 checkentail  y::node<_,_> & vvv!=null
             |-  vvv::node<_,_> & y=vvv.
 print residue.
 expect Fail.
 
-//5
+//6
 checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
             |- x::Sess{@S !www#%L}<> * %L & y=www.
 print residue.
 expect Valid.
 
-//6 ==== SEND ====
+//7 ==== SEND ====
 checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_> 
             |- x::Sess{@S !y#%L}<> * %L.
 print residue.
@@ -90,21 +80,21 @@ expect Valid.
 
 */
 
-//7 ==== RECEIVE ====
+//8 ==== RECEIVE ====
 checkentail x::Sess{@S ?vvv#vvv::node<_,_>}<>
             |- x::Sess{@S ?www#%L}<>.
 print residue.
 expect Valid.
 
 
-//8 
+//9 
 checkentail x::Sess{@S ?vvv#vvv::node<_,_>;;!0;;!1}<> 
             |- x::Sess{@S ?www#%L;;%P}<>.
 print residue.
 expect Valid.
 
 
-//9
+//10
 checkentail x::Sess{@S ?vvv#vvv::node<_,_>;;!0;;!1}<> * %L * y::Sess{@S %P}<>
             |- x::Sess{@S ?www#%L;;%P}<>.
 print residue.

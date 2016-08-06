@@ -7959,7 +7959,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                               let is_mem = Gen.BList.mem_eq CP.eq_spec_var in
                               (* TODO:WN:HVAr *)
                               let hv = match l_h with
-                                | HVar (v,_) -> if is_mem v new_es.es_gen_impl_vars then Some v else None
+                                | HVar (v,ls) -> if is_mem v new_es.es_gen_impl_vars then Some (v,ls) else None
                                 | _ -> None
                               in
                               if (not r) && (is_None hv) then
@@ -10635,7 +10635,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
 (* (fail_ctx option, ho residue option, pure residue option mapping list) *)
 and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
-   (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
+   (MCP.mix_formula option) * ((CF.hvar * CF.formula) list) * (entail_state option)) =
   (* lhs <==> rhs: instantiate any high-order variables in rhs *)
   (* We use flow_ann to decide                     *)
   (* contravariant (-) or covariant (+) entailment *)
@@ -10643,23 +10643,27 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
   let ho_lhs = lhs.CF.rflow_base in
   let ho_rhs = rhs.CF.rflow_base in
   let shvars = CF.extract_single_hvar_f ho_rhs in
-  let () = x_tinfo_hp (add_str "single rhs hvar" (pr_option Cprinter.string_of_spec_var))  shvars no_pos in
+  let () = x_tinfo_hp (add_str "single rhs hvar" (pr_option Cprinter.string_of_hvar))  shvars no_pos in
   let hvars = CF.extract_hvar_f ho_rhs in
   let subtract = Gen.BList.difference_eq CP.eq_spec_var in
-  let () = x_tinfo_hp (add_str "hvars" Cprinter.string_of_spec_var_list)  hvars no_pos in
+  let () = x_tinfo_hp (add_str "hvars" (pr_list Cprinter.string_of_hvar)) hvars no_pos in
   match shvars with
-  | Some v -> (None,None,None,[(v,ho_lhs)])
+  | Some v -> (None,None,None,[(v,ho_lhs)], Some estate)
   | None ->
     (* let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in *)
     let evars = Gen.BList.intersect_eq CP.eq_spec_var evars (CF.fv ho_rhs) in
     (* andreeac: why can't we use existing es?  *)
     (* let new_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) pos in *)
     (* let new_es = { new_es with *)
+    let () = estate.es_infer_rel # reset in
+    let () = estate.es_infer_hp_rel # reset in
     let new_es = { estate with 
                    es_evars = evars;
-                   es_gen_impl_vars = ivars @ hvars;
+                   es_gen_impl_vars = ivars @ (List.map (fun (v,_) -> v) hvars);
                    es_unsat_flag = false;
                    es_rhs_eqset = estate.es_rhs_eqset;
+                   es_infer_rel = estate.es_infer_rel # clone;
+                   es_infer_hp_rel = estate.es_infer_hp_rel # clone;
                  }
     in
     (* let lhs_lhs = { new_es with es_formula = ho_lhs; } in *)
@@ -10718,12 +10722,12 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
         let err_str = "matching of ho_args failed ("^ex_msg^")" in
         let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
                                                  CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) ( (convert_to_must_es new_es), err_str, Failure_Must err_str) (mk_cex true), NoAlias) 
-        in (Some rs, None, None, [])
+        in (Some rs, None, None, [], None)
       | SuccCtx cl ->
         begin match cl with
           | [] ->
             let () = y_binfo_pp "match_one_ho_arg" in
-            (None, None, None, [])
+            (None, None, None, [], Some estate)
           | c::_ -> 
             match c with
             | Ctx es ->
@@ -10734,25 +10738,25 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
                 else Some p_res 
               in
               begin match tmp_ho_var with
-                | None -> (None, None, p_res_opt, es.es_ho_vars_map)
+                | None -> (None, None, p_res_opt, es.es_ho_vars_map, Some es)
                 | Some v -> 
                   try
-                    let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
+                    let pr = pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula) in
                     let () = x_tinfo_hp (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in
-                    let _, v_binding = List.find (fun (vr, _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
+                    let _, v_binding = List.find (fun ((vr,_), _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
                     let v_binding = CF.write_vperm_set v_binding vp_res in
                     let () = x_tinfo_hp (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in
-                    let other_bindings = List.filter (fun (vr, _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
-                    (None, Some v_binding, p_res_opt, other_bindings) 
-                  with _ -> (None, None, p_res_opt, es.es_ho_vars_map)
+                    let other_bindings = List.filter (fun ((vr,_), _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
+                    (None, Some v_binding, p_res_opt, other_bindings, Some es) 
+                  with _ -> (None, None, p_res_opt, es.es_ho_vars_map, Some es)
               end
-            | _ -> (None, None, None, [])
+            | _ -> (None, None, None, [], Some estate)
         end
     end
 
 and match_one_ho_arg  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
-   (MCP.mix_formula option) * ((CP.spec_var * CF.formula) list)) =
+   (MCP.mix_formula option) * ((CF.hvar * CF.formula) list) * (entail_state option)) =
   let pr_rflow = Cprinter.string_of_rflow_formula in
   let pr1 = pr_pair (pr_pair
                        (add_str "lhs: " pr_rflow)
@@ -10760,8 +10764,9 @@ and match_one_ho_arg  prog estate new_ante new_conseq evars ivars pos (((lhs, rh
   (* ====== output helper printers: ====== *)
   let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in
   let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
-  let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula)) in
-  let pr2 (_, hor, pur, maps) = pr_triple pr4 pr3 pr5 (hor, pur, maps) in
+  let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) in
+  let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
+  let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
   Debug.no_1 "match_one_ho_arg" pr1 pr2 (fun _ -> match_one_ho_arg_x  prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k)
 
 (* *********************************************************** *)
@@ -11433,7 +11438,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 ((((CF.list_context * Prooftracer.proof) option) *
                   (CF.formula option) *
                   (MCP.mix_formula option) *
-                  ((CP.spec_var * CF.formula) list)
+                  ((CF.hvar * CF.formula) list) *
+                  (entail_state option)
                  ) list) =
                 let lhs_disjuncts = Session.new_lhs lhs in
                 let ho_match_pairs = List.map (fun x -> ((x, rhs), k)) lhs_disjuncts in
@@ -11444,19 +11450,26 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let res = List.map match_one_ho_arg_helper args in
               let res_lst = Gen.cart_multi_list res in
               let post_ho_match_process res =
-                let failures = List.filter (fun (r, _, _, _) -> r != None) res in
+                let failures = List.filter (fun (r, _, _, _,_) -> r != None) res in
                 if (failures != []) then
                   (* Failure case *)
-                  let failure, _, _, _ = (List.hd failures) in
+                  let failure, _, _, _, _ = (List.hd failures) in
                   (failure, new_ante, new_conseq, new_exist_vars, [])
                 else
                   (* Update new mappings *)
                   (* TODO: Check consistency in mappings *)
-                  let new_maps = List.concat (List.map (fun (_, _, _, m) -> m) res) in
-                  let residues = List.map (fun (_, m, _, _) -> m) res in
+                  let new_maps = List.concat (List.map (fun (_, _, _, m, _) -> m) res) in
+                  let residues = List.map (fun (_, m, _, _, _) -> m) res in
                   let () = y_tinfo_hp (add_str "residue after ho match" (pr_list (pr_option Cprinter.string_of_formula))) residues in
-                  let pure_residues = List.map (fun (_, _, m, _) -> m) res in
+                  let pure_residues = List.map (fun (_, _, m, _, _) -> m) res in
                   let () = y_tinfo_hp (add_str "pure residue after ho match" (pr_list (pr_option !MCP.print_mix_formula))) pure_residues in
+                  let inferred_rels = List.map (fun (_, _, _, _, es) -> match es with
+                      | None -> []
+                      | Some es -> [(es.es_infer_rel # clone, estate.es_infer_hp_rel # clone)]
+                    ) res in
+                  let inferred_rels = List.flatten inferred_rels in
+                  let pure_rels, hp_rels = List.split inferred_rels in
+                  (* TODO andreeac to renmae ante/conseq with teh freshly dicovered rel *)
                   let new_ante = CF.subst_hvar new_ante new_maps in
                   (* why do we need to add the residue from checking HO args back to ante? *)
                   let new_ante = if not (!add_ho_residue_to_es) then new_ante
@@ -11504,15 +11517,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let pri1 = pr_opt pri1aux in
                 let pri2 = pr_opt (add_str "residue" prf) in
                 let pri3 = pr_opt (add_str "pure residue" !MCP.print_mix_formula) in
-                let pri4 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var prf)) in
-                let pri = pr_list (pr_quad pri1 pri2 pri3 pri4) in
+                let pri4 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar prf)) in
+                let pri5 = pr_opt (add_str "es" Cprinter.string_of_entail_state_short) in
+                let pri = pr_list (pr_penta pri1 pri2 pri3 pri4 pri5) in
                 (* out *)
                 let pr1 = pr_none in
                 let pr2 = add_str "new_ante" prf in
                 let pr3 = add_str "new_conseq" prf in
                 let pr4 = add_str "new_exist_vars" Cprinter.string_of_spec_var_list in
-                let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var prf)) in
-                let pro = pr_penta pr1 pr2 pr3 pr4 pr5  in
+                let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar prf)) in
+                let pro = pr_penta pr1 pr2 pr3 pr4 pr5 in
                 Debug.no_1 "post_ho_match_process" pri pro post_ho_match_process res
               in
               List.map post_ho_match_process res_lst  
@@ -11572,7 +11586,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let pr2 = add_str "new_ante" prf in
             let pr3 = add_str "new_conseq" prf in
             let pr4 = add_str "new_exist_vars" Cprinter.string_of_spec_var_list in
-            let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_spec_var prf)) in
+            let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar prf)) in
             let pro (e,_) = Cprinter.string_of_list_context e in
             Debug.no_4 "post_do_match_processing" pr2 pr3 pr4 pr5 pro (fun _ _ _ _ -> post_do_match_processing  (fail_res, new_ante, new_conseq, new_exist_vars, new_maps))  new_ante new_conseq new_exist_vars new_maps  in
           let res = List.map post_do_match_processing match_ho_res_lst in
@@ -14115,7 +14129,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                               let () = y_tinfo_hp (add_str "HVar v" !CF.print_sv) v in
                               let () = y_tinfo_hp (add_str "gen_impl_vars" !CF.print_svl) gen_impl_vars in
                                   if (is_mem v gen_impl_vars) || !Globals.contra_ho_flag
-                                  then Some v else None
+                                  then Some (v,hvar_vs) else None
                         | _ -> None
                       in
                       match hv with
@@ -14169,12 +14183,12 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                                   let pure_f = base_f.CF.formula_base_pure in
                                   let rel_pure_f = MCP.get_rel_ctr pure_f heap_args in
                                   let rel_bind_f = CF.Base { base_f with CF.formula_base_pure = rel_pure_f; } in
-                                  let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
+                                  let pr = pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula in
                                   let () = x_tinfo_hp (add_str "old ho_vars_map (1)" (pr_list pr)) estate.es_ho_vars_map no_pos in
-                                  let () = x_tinfo_hp (add_str "new ho_var to added (1)" pr) (v,rel_bind_f) no_pos in
+                                  let () = x_tinfo_hp (add_str "new ho_var to added (1)" pr) ((v,hvar_vs),rel_bind_f) no_pos in
                                   let succ_es = { estate with
                                                   CF.es_formula = lhs_rest;
-                                                  CF.es_ho_vars_map = [(v, rel_bind_f)] @ estate.es_ho_vars_map; } in
+                                                  CF.es_ho_vars_map = [((v,hvar_vs), rel_bind_f)] @ estate.es_ho_vars_map; } in
                                   Some succ_es
                                 | _ -> None
                               else None
@@ -14194,18 +14208,18 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                             (CF.mkFailCtx_in (Basic_Reason (mkFailContext msg may_estate (Base rhs_b) None pos,
                                                             CF.mk_failure_may (msg) sl_error, estate.es_trace)) ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex false), NoAlias)
                         end
-                      | Some v ->
+                      | Some (v,hargs) ->
                         let r_h, r_p, r_vp, r_fl, r_t, r_a = CF.split_components conseq in
                         let heap_args = CF.collect_all_heap_vars_formula conseq in
                         let rel_r_p, irrel_r_p = MCP.partition_mix_formula r_p 
                             (fun m -> Gen.BList.overlap_eq CP.eq_spec_var m.Mcpure_D.memo_group_fv heap_args) in
                         let rel_bind_f = CF.mkBase r_h rel_r_p r_vp r_t r_fl r_a pos in
                         let pr = pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula in
-                        let () = x_dinfo_hp (add_str "old ho_vars_map (2)" (pr_list pr)) estate.es_ho_vars_map no_pos in
+                        let () = x_dinfo_hp (add_str "old ho_vars_map (2)" (pr_list pr)) (List.map (fun ((v,_),f) -> (v,f) ) estate.es_ho_vars_map) no_pos in
                         let () = x_dinfo_hp (add_str "new ho_var to added (2)" pr) (v, rel_bind_f) no_pos in
                         let succ_estate = { estate with
                                             CF.es_formula = CF.mkBase HEmp l_p l_vp l_t l_fl l_a pos;
-                                            CF.es_ho_vars_map = [(v, rel_bind_f)] @ estate.es_ho_vars_map; }
+                                            CF.es_ho_vars_map = [((v,hargs), rel_bind_f)] @ estate.es_ho_vars_map; }
                         in
                         let new_ctx = CF.Ctx (CF.add_to_estate succ_estate "binding of ho var") in
                         let new_rhs_base = CF.mkBase HEmp irrel_r_p r_vp r_t r_fl r_a pos in
@@ -14407,17 +14421,17 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
    Currently assume that only HVar is in the rhs
 *)
 and match_one_ho_arg_simple_x ((lhs,rhs) : CF.rflow_formula * CF.rflow_formula): 
-  (CP.spec_var * CF.formula) list =
+  (hvar * CF.formula) list =
   let lhs = lhs.CF.rflow_base in
   let rhs = rhs.CF.rflow_base in
   let hvars = CF.extract_hvar_f rhs in
   [List.hd hvars, lhs]
 
 and match_one_ho_arg_simple ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 
-  (CP.spec_var * CF.formula) list =
+  (hvar * CF.formula) list =
   let pr_rf = Cprinter.string_of_rflow_formula in 
   let pr1 = (pr_pair pr_rf pr_rf) in
-  let pr_out = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_formula) in
+  let pr_out = pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula) in
   Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
     match_one_ho_arg_simple_x (lhs,rhs)
 

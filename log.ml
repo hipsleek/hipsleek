@@ -74,7 +74,7 @@ type sleek_log_entry = {
   sleek_proving_hprel_ass: CF.hprel list;
   sleek_proving_rel_ass: CP.infer_rel_type list;
   (* TODO:WN:HVar *)
-  sleek_ho_vars_map: ( CP.spec_var * CF.formula) list; (* map: HVar -> its formula *)
+  sleek_ho_vars_map: ( CF.hvar * CF.formula) list; (* map: HVar -> its formula *)
   sleek_time : float;
   sleek_timeout : bool;
   sleek_proving_res : CF.list_context option;
@@ -235,7 +235,7 @@ let pr_sleek_log_entry e =
   );
   (match e.sleek_ho_vars_map with
    | [] -> fmt_string ("ho_vars: nothing?\n");
-   | _  -> let pr = pr_list_ln (pr_pair CP.string_of_spec_var Cprinter.string_of_formula) in
+   | _  -> let pr = pr_list_ln (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula) in
      fmt_string ("ho_vars: " ^ (pr e.sleek_ho_vars_map)^"\n")
   );
   match e.sleek_proving_res with

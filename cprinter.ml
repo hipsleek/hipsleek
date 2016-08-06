@@ -1289,6 +1289,15 @@ let pr_aliasing_scenario (al :aliasing_scenario) =
   | Must_Aliased -> fmt_string "[Must]"
   | Partial_Aliased -> fmt_string "[Partial]"
 
+
+let pr_hvar  ?(lvl=(!glob_lvl)) (v,ls) =
+  fmt_string ((string_of_spec_var v) ^
+              match ls with
+              | [] -> ""
+              | _  -> (string_of_spec_var_list ls))
+
+let string_of_hvar (v,ls) = (string_of_spec_var v)^(string_of_spec_var_list ls)
+
 (** print a mem formula to formatter *)
 (* let rec pr_mem_formula  (e : mem_formula) =  *)
 (*   match e.mem_formula_mset with *)
@@ -1526,7 +1535,7 @@ let rec pr_h_formula h =
   | HTrue -> fmt_string "htrue"
   | HFalse -> fmt_string "hfalse"
   | HEmp -> fmt_string "emp"
-  | HVar (v,ls) -> fmt_string ("HVar "^(string_of_spec_var v)^(string_of_spec_var_list ls))
+  | HVar (v,ls) -> fmt_string ("HVar "^ (string_of_hvar (v,ls)))
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
 
@@ -3272,7 +3281,7 @@ let rec pr_numbered_list_formula_trace_ho_inst cprog (e:(context * (formula*form
       pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp);
       pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel);
       pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" (pr_hprel_short_inst cprog [])) (Gen.BList.remove_dups_eq (eq_hprel_defn) hprel);
-      pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq_ln "" (pr_map_aux pr_spec_var pr_formula)) (lho);
+      pr_wrap_test "ho_vars: " Gen.is_empty (pr_seq_ln "" (pr_map_aux pr_hvar pr_formula)) (lho);
       (* pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (pr_seq "" (fun vps -> pr_vperm_sets vps)) vperm_sets; *)
       pr_wrap_test "inferred UTPost rel: "
         (fun trrel -> Gen.is_empty trrel)  (pr_seq "" pr_trrel) trrel;
@@ -3773,7 +3782,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
       pr_wrap_test "es_infer_templ_assume: " Gen.is_empty  (pr_seq "" pr_templ_assume) es.es_infer_templ_assume;
     end;
   pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (es.es_infer_rel # get_stk_recent);
-  pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) (es.es_ho_vars_map);
+  pr_wrap_test "es_ho_vars_map: " Gen.is_empty  (pr_seq "" (pr_map_aux pr_hvar pr_formula)) (es.es_ho_vars_map);
   pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) es.es_conc_err;
   pr_wrap_test "es_final_error:" Gen.is_empty
     (pr_seq "" (fun (c,_,_) -> fmt_string c)) es.es_final_error;
@@ -3949,7 +3958,7 @@ let pr_context_short (ctx : context) =
       (*     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip; *)
       pr_wrap_test "es_infer_rel: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" pr_lhs_rhs) ir;
       (* pr_wrap_test "es_ho_vars_map: " (fun _ -> false) (* Gen.is_empty *)  (pr_seq "" (fun (sv,f) -> pr_spec_var sv; pr_formula f)) ho_map; *)
-      pr_wrap_test "es_ho_vars_map: " Gen.is_empty (pr_seq "" (pr_map_aux pr_spec_var pr_formula)) ho_map;
+      pr_wrap_test "es_ho_vars_map: " Gen.is_empty (pr_seq "" (pr_map_aux pr_hvar pr_formula)) ho_map;
       pr_wrap_test "es_conc_err: " Gen.is_empty (pr_seq "" (fun (msg, pos) -> fmt_string (msg ^ ":" ^ (string_of_pos pos)))) conc_err;
       (* pr_wrap_test "vperm_sets:" (fun _ -> not (!Globals.ann_vp)) (fun vps -> pr_vperm_sets vps) vps; *)
       (*     (\* pr_vwrap "es_trace: " pr_es_trace trace; *\) *)
@@ -5703,6 +5712,7 @@ Cformula.print_entail_state_short := string_of_entail_state_short;;
 Redlog.print_formula := string_of_pure_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
+Cformula.print_hvar := string_of_hvar;;
 Cformula.print_mix_f := string_of_mix_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_flow_formula := string_of_flow_formula "FLOW";;

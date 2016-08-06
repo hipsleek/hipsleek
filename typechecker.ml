@@ -2529,7 +2529,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 match proc.proc_ho_arg, ha with
                 | Some hv, Some ha ->
                   let ht, hn = hv in
-                  let hsv = CP.SpecVar (ht, hn, Unprimed) in
+                  let hsv = (CP.SpecVar (ht, hn, Unprimed), []) in
                   CF.subst_hvar_struc renamed_spec [(hsv, ha)]
                 | _ -> renamed_spec
               in

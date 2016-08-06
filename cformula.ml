@@ -235,7 +235,10 @@ and h_formula = (* heap formula *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
-  | HVar of CP.spec_var * (CP.spec_var list)
+  | HVar of hvar
+
+
+and hvar = CP.spec_var * (CP.spec_var list)
 
 and h_formula_star = {  h_formula_star_h1 : h_formula;
                         h_formula_star_h2 : h_formula;
@@ -360,6 +363,7 @@ let print_mix_formula = print_mix_f
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
 let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
+let print_hvar = ref(fun (c:hvar) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 let print_flow_formula = ref(fun (c:flow_formula) -> "printer not initialized")
 let print_spec_var = print_sv
@@ -9683,7 +9687,7 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
                            !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
-  es_ho_vars_map :  ( CP.spec_var * formula) list; (* map: HVar -> its formula *)
+  es_ho_vars_map :  ( hvar * formula) list; (* map: HVar -> its formula *)
   es_heap_lemma : h_formula list;
   es_conseq_pure_lemma : CP.formula; (*conseq of entailment before rhs_plit. for lemmasyn*)
   (* heaps that have been replaced by lemma rewriting *)
@@ -13863,21 +13867,21 @@ let keep_hrel e=
     (fun _ -> keep_hrel_x e) e
 
 (* TODO:WN:HVar *)
-let extract_single_hvar (hf: h_formula) : CP.spec_var option =
+let extract_single_hvar (hf: h_formula) : hvar option =
   let f hf = match hf with
-    | HVar (v,_) -> Some v
+    | HVar (v,ls) -> Some (v,ls)
     | _ -> None
   in 
   f hf
 
-let extract_hvar (hf: h_formula) : CP.spec_var list =
+let extract_hvar (hf: h_formula) : hvar list =
   let f hf = match hf with
-    | HVar (v,_) -> Some [v]
+    | HVar (v,ls) -> Some [(v,ls)]
     | _ -> None
   in 
   fold_h_formula hf f List.concat
 
-let extract_hvar_f_x (f0:formula) : CP.spec_var list =
+let extract_hvar_f_x (f0:formula) : hvar list =
   let rec helper f=
     match f with
     | Base ({ formula_base_heap = h1; })
@@ -13886,7 +13890,7 @@ let extract_hvar_f_x (f0:formula) : CP.spec_var list =
   in helper f0
 
 (* TODO:WN need to check pure & others are empty *)
-let extract_single_hvar_f (f0:formula) : CP.spec_var option =
+let extract_single_hvar_f (f0:formula) : hvar option =
   let rec helper f=
     match f with
     | Base ({ formula_base_heap = h1; formula_base_vperm=vp; formula_base_pure =pf;})
@@ -13900,9 +13904,9 @@ let extract_single_hvar_f (f0:formula) : CP.spec_var option =
     | _ -> report_error no_pos "extract_hvar: OR unexpected, expect single HVar only"
   in helper f0
 
-let extract_hvar_f (f0:formula) : CP.spec_var list =
+let extract_hvar_f (f0:formula) : hvar list =
   let pr1 = !print_formula in
-  let pr2 = !CP.print_svl in
+  let pr2 = pr_list !print_hvar in
   Debug.no_1 "extract_hvar_f" pr1 pr2
     (fun _ ->  extract_hvar_f_x f0) f0
 
@@ -13935,10 +13939,10 @@ let drop_hvar e vars =
   Debug.no_2 "drop_hvar" pr1 !print_svl pr1
     drop_hvar_x e vars
 
-let rec subst_one_hvar_hf_x (hf:h_formula) ((f,t) : CP.spec_var * formula) : h_formula =
+let rec subst_one_hvar_hf_x (hf:h_formula) ((fhvar,t) : hvar * formula) : h_formula =
   let func hf = match hf with
     | ViewNode vn ->
-      let ho_args = List.map (trans_rflow_formula (fun f_base -> subst_one_hvar f_base (f,t))) 
+      let ho_args = List.map (trans_rflow_formula (fun f_base -> subst_one_hvar f_base (fhvar,t))) 
           vn.h_formula_view_ho_arguments in
       Some (ViewNode {vn with h_formula_view_ho_arguments = ho_args;})
     | _ -> None
@@ -13946,24 +13950,31 @@ let rec subst_one_hvar_hf_x (hf:h_formula) ((f,t) : CP.spec_var * formula) : h_f
   map_h_formula hf func
 
 (*subst ho_vars in ViewNode*)
-and subst_one_hvar_hf (hf:h_formula) ((f,t) : CP.spec_var * formula) : h_formula =
+and subst_one_hvar_hf (hf:h_formula) ((f,t) : hvar * formula) : h_formula =
   let pr1 = !print_h_formula in
-  let pr2 = pr_pair !print_sv !print_formula in
+  let pr2 = pr_pair !print_hvar !print_formula in
   Debug.no_2 "subst_one_hvar_hf" pr1 pr2 pr1
     subst_one_hvar_hf_x hf  (f,t)
 
-and subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
+and subst_one_hvar_x f0 ((fhvar,t): hvar * formula) : formula =
+  let f, args = fhvar in
   let rec helper f0=
     match f0 with
     | Base fb ->
       let hvars = get_hvar fb.formula_base_heap [f] in
       let fs = List.map (fun h -> match h with 
-          | HVar _ -> t
+          | HVar (hvar,hargs) ->
+            ( try 
+              let sst = List.combine args hargs in
+              let newf = subst sst t in
+              newf
+              with _ -> t )
+            (* t *)
           | _ -> report_error no_pos "subst_hvar: expect HVar only"
         ) hvars in
       let n_h = drop_hvar fb.formula_base_heap [f] in
       (*subst ho_vars in n_h*)
-      let n_h = subst_one_hvar_hf n_h (f,t) in
+      let n_h = subst_one_hvar_hf n_h (fhvar,t) in
       (* let n_h = if (n_h=[]) then HEmp else List.hd n_h in (\*TOCHECK*\) *)
       (*Potential issues to consider: (1) duplicated HVars, (2) renaming of existential vars*)
       let n_f = Base {fb with formula_base_heap = n_h} in
@@ -13978,18 +13989,18 @@ and subst_one_hvar_x f0 ((f,t) : CP.spec_var * formula) : formula =
   in
   helper f0
 
-and subst_one_hvar f0 ((f,t) : CP.spec_var * formula) : formula =
+and subst_one_hvar f0 ((f,t) : (hvar * formula) ): formula =
   let pr1 = !print_formula in
-  let pr2 = pr_pair !print_sv !print_formula in
+  let pr2 = pr_pair !print_hvar !print_formula in
   Debug.no_2 "subst_one_hvar" pr1 pr2 pr1
     subst_one_hvar_x f0 (f,t)
 
-and subst_hvar_x f0 subst=
+and subst_hvar_x f0 subst = 
   List.fold_left (fun f (fr,t) -> subst_one_hvar f (fr,t)) f0 subst
 
 and subst_hvar f subst =
   let pr1 = !print_formula in
-  let pr2 = pr_list (pr_pair !print_sv !print_formula) in
+  let pr2 = pr_list (pr_pair !print_hvar !print_formula) in
   Debug.no_2 "subst_hvar" pr1 pr2 pr1
     subst_hvar_x f subst
 
@@ -14009,7 +14020,7 @@ and subst_hvar_es_x es subst : context =
 
 and subst_hvar_es es subst : context =
   let pr1 = !print_entail_state in
-  let pr2 = pr_list (pr_pair !print_sv !print_formula) in
+  let pr2 = pr_list (pr_pair !print_hvar !print_formula) in
   let pr_out = !print_context in
   Debug.no_2 "subst_hvar_es" pr1 pr2 pr_out
     subst_hvar_es_x es subst
