@@ -1,0 +1,43 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null //& BasePtr(self)
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+    //inv BG([(self,i,n)], n>=i & i>=0 & self!=null & BasePtr(self))
+    .
+
+checkentail base::arr_seg<a,y> 
+   |- a<=y.
+expect Valid.
+print residue.
+
+
+/*
+# ex12b3.slk
+
+# handling fixcalc with BasePtr(self)?
+
+!!! **astsimp.ml#2524:allow_ex_vs:[]fixcalc: bad mutual recursion detected :"BasePtr"
+
+
+# why isn't n>=i captured?
+
+  inv: i>=0 & self>=1
+  
+  baga over inv: [([], i>=0 & self>=1)]
+  baga over inv (unfolded): [([], ((0<=i & 1<=self) | (self<=(0-1) & 0<=i)))]
+  
+  xform: ((0<=i & self!=null) | (i=n & 0<=n & self!=null))
+
+
+(==fixcalc.ml#670==)
+compute_invs_fixcalc@59
+compute_invs_fixcalc inp1 :arr_seg:={[self,i_43,n_44] -> [] -> []: (0=0 && i_43=n_44 && 0<=i_43 && self>0) ||  exists (n_16,flted_6_15,xxx,Anon_13: (xxx>0 && self>0) && flted_6_15=1+i_43 && xxx=i_43+self && 0<=i_43 && n_16=n_44)
+};
+bottomupgen([arr_seg], [1], SimHeur);
+compute_invs_fixcalc@59 EXIT:[ i_43>=0 & self>=1]
+
+
+
+*/

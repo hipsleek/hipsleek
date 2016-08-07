@@ -1,0 +1,39 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n  & self!=null & i>=0 & BasePtr(self)
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+    inv //BG([(self,i,n)],
+       n>=i &
+       i>=0 & self!=null & BasePtr(self)
+    //)
+    .
+
+checkentail base::arr_seg<a,y> 
+   |- a<=y.
+expect Valid.
+print residue.
+
+
+/*
+# ex12b5.slk
+
+pred arr_seg<i,n> == i=n  & self!=null & i>=0 & BasePtr(self)
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+    inv //BG([(self,i,n)],
+       n>=i &
+       i>=0 & self!=null & BasePtr(self)
+    //)
+    .
+# why did we have failure?
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null //& BasePtr(self)
+  or xxx::arrI<_>*self::arr_seg<i+2,n> & xxx=self+i & i>=0
+
+chinwn@loris-7:~/hg/sleekex/ptr1/slk$ ../../sleek ex12b5-array_baga.slk | grep Fail
+Inv Check: Fail.(View arr_seg:Over)
+chinwn@loris-7:~/hg/sleekex/ptr1/slk$
+
+
+*/
