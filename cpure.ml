@@ -6113,21 +6113,35 @@ struct
     let lst_intv = List.fold_left (fun acc (base,s) -> match s with
         | None -> acc
         | Some(b,d) -> (base,(b,d))::acc) [] lst in
-    let add_intv_formula f lst = List.fold_left (fun acc (b,d) ->
-        let f1 = mk_exp_leq d 0 in
-        let f2 = mk_exp_neq_null b  in
+    let add_intv_formula f lst =
+      List.fold_left (fun acc (base,(b,d)) ->
+        (* let f1 = mk_exp_leq (mkAdd (mkVar base no_pos) d no_pos) 0 in *)
+          (* let f2 = mk_exp_neq_null (mkAdd (mkVar base no_pos) b no_pos)  in *)
+          let f1 = mk_exp_leq  d  0 in
+          let f2 = mk_exp_neq_null b   in
         let f = mkOr f1 f2 None no_pos in
         mkAnd acc f no_pos
       ) f lst in
     let lst = List.filter (fun (_,p) -> p==None) lst in
     let lst = List.map fst lst in
-    if enum_flag then baga_enum lst
+    if enum_flag
+    then
+      let () = y_tinfo_pp "inside get_pure (SV_INTV), enum_flag is true" in
+      let baga_enum_lst = baga_enum lst in
+      let () = y_tinfo_hp (add_str "(baga_enum) lst:" !print_formula) baga_enum_lst in
+      baga_enum_lst
     else
       let f = baga_conv ~neq_flag:neq_flag lst in
+      (* (match gen_disj lst_intv with *)
+      (*  | None -> mkTrue no_pos (\* add_intv_formula f lst_intv *\) *)
+      (*  | Some disj_f -> *)
+      (*     disj_f) *)
+      (*     (\* mkAnd (add_intv_formula f lst_intv) disj_f no_pos) *\) *)
+      
       (match gen_disj lst_intv with
-       | None -> add_intv_formula f (List.map snd lst_intv)
+       | None -> add_intv_formula f lst_intv
        | Some disj_f ->
-          mkAnd (add_intv_formula f (List.map snd lst_intv)) disj_f no_pos)
+          mkAnd (add_intv_formula f lst_intv) disj_f no_pos)
                    
   let conv_var lst = 
     let lst = List.filter (fun (_,o) -> o==None) lst in

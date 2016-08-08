@@ -4,7 +4,7 @@ data arrI {
 
 pred arr_seg<i,n> == i=n & i>=0 & self!=null //& BasePtr(self)
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
-    //inv BG([(self,i,n)], n>=i & i>=0 & self!=null & BasePtr(self))
+    inv BG([(self,i,n)], n>=i & i>=0 & self!=null & BasePtr(self))
     .
 
 checkentail base::arr_seg<a,y> 

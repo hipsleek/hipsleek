@@ -2,16 +2,24 @@ data arrI {
   int val;
 }.
 
+
 pred arr_seg<i,n> == i=n  & self!=null & i>=0 & BasePtr(self)
   or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
-    inv //BG([(self,i,n)],
+    inv BG([(self,i,n)],
        n>=i &
        i>=0 & self!=null & BasePtr(self)
-    //)
+    )
     .
 
+lemma_unsafe self::arr_seg<i,n> & i<mmm<=n 
+     -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n> .
+ 
 checkentail base::arr_seg<a,y> 
    |- a<=y.
+expect Valid.
+print residue.
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
 expect Valid.
 print residue.
 
@@ -34,6 +42,34 @@ pred arr_seg<i,n> == i=n & i>=0 & self!=null //& BasePtr(self)
 chinwn@loris-7:~/hg/sleekex/ptr1/slk$ ../../sleek ex12b5-array_baga.slk | grep Fail
 Inv Check: Fail.(View arr_seg:Over)
 chinwn@loris-7:~/hg/sleekex/ptr1/slk$
+
+(==astsimp.ml#2127==)
+heap_entail_init@2
+heap_entail_init inp1 : [ emp&
+((i=n & self!=null & 0<=i & BasePtr(self)) | 
+ (0<=i & self!=null & BasePtr(self) & (i+self)!=null & (1+i)<=n & 0<=(1+i)))&
+{FLOW,(1,26)=__flow#E}[]
+  es_gen_impl_vars(E): []
+  es_subst (from,to): []:[]
+  
+  es_unsat_flag: false]
+heap_entail_init inp2 : emp&self!=null & (((1<=i & i<=n) | (n=0 & i=0)))&{FLOW,(1,26)=__flow#E}[]
+heap_entail_init@2 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  ((i=n & self!=null & 0<=i & BasePtr(self)) | 
+  (0<=i & self!=null & BasePtr(self) & (i+self)!=null & (1+i)<=n & 0<=(1+i))) |-  ((1<=i & i<=n) | (n=0 & i=0)). LOCS:[5;6;8;9;1;0] (may-bug)
+     fc_current_lhs_flow: {FLOW,(1,26)=__flow#E}
+   }
+ [[empty]]
+ CEX:false
+
+
+(==astsimp.ml#2119==)
+ef_conv_disj@2
+ef_conv_disj inp1 :[([(self,( i, n))], i<=n & 0<=i & self!=null & BasePtr(self))]
+ef_conv_disj@2 EXIT: ((n<=0 | i!=null)) & i<=n & 0<=i & self!=null & BasePtr(self)
 
 
 */

@@ -1950,8 +1950,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
          (* let (rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in *)
          (* let () = if not(CF.isFailCtx rs) then *)
          (* if disj user-supplied inv; just use it *)
-         x_binfo_hp (add_str "xform1" !CP.print_formula) xform1 pos;
-         x_binfo_hp (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
+         x_tinfo_hp (add_str "xform1" !CP.print_formula) xform1 pos;
+         x_tinfo_hp (add_str "xform2" !MCP.print_mix_formula) xform2 pos;
          (* type: Excore.EPureI.epure list option -> *)
          (*   Cformula.formula -> Excore.EPureI.epure list option *)
          let compute_unfold_baga baga_over body =
@@ -2058,7 +2058,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
         let () = x_tinfo_hp (add_str "(1) view_x_formula" Cprinter.string_of_mix_formula) vdef.C.view_x_formula no_pos in
         (*let addr_vars = CP.remove_dups_svl addr_vars' in*)
         let xform = MCP.simpl_memo_pure_formula Cvutil.simpl_b_formula Cvutil.simpl_pure_formula xform' (x_add TP.simplify_a 10) in
-        let () = x_binfo_hp (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
+        let () = x_tinfo_hp (add_str "xform" Cprinter.string_of_mix_formula) xform no_pos in
         let xform1 =
           if vdef.C.view_kind = View_EXTN then
             let r = x_add Predicate.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name
@@ -2121,7 +2121,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       in
       let () = y_tinfo_hp (add_str "ex_vs" !CP.print_svl) ex_vs in
       let () = y_tinfo_hp (add_str "baga_pure" !CP.print_formula) baga_pure in
-      let () = y_tinfo_hp (add_str "baga_over_formula" !CF.print_formula) baga_over_formula in
+      let () = y_binfo_hp (add_str "baga_over_formula" !CF.print_formula) baga_over_formula in
       let () = y_tinfo_hp (add_str "ctx" Cprinter.string_of_context) ctx  in
 
       let (baga_over_rs, _) = x_add Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) baga_over_formula pos in

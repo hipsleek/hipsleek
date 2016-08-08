@@ -1,6 +1,20 @@
+* primitive operations:
+
+void update(arr,i,v) // arr[i] = v
+requires x::arrI<_> & x=arr+i & BasePTr(arr)
+ensures x::arrI<v>
+
+int read(arr,i) // arr[i]
+requires x::arrI<v> & x=arr+i & BasePtr(arr)
+ensures x::arrI<v> & res = v
+
 * Array init
 ** code
-void arr_init(int[] arr, int i, int m, int k){
+void arr_init(int[] arr, int i, int m, int k)
+  infer [P,Q]
+  require P(arr,i,m,k)
+  ensure  Q(arr,i,m.k)
+{
    if(i<m){
      arr[i] = k;
      arr_init(arr,i+1,m,k);
@@ -25,11 +39,28 @@ void arr_init(int[] arr, int i, int m, int k){
    }
 }
 
+
 The least predicates P and Q that satisfy:
-  P(arr,i,m) & i>=m |- Q(arr,i,m)
+  P(arr,i,m) & i>=m |- true
+    // Q(arr,i,m)
   P(arr,i,m) & i<m |- arr+i::arrI<_> * R(arr,i,m)
-  arr+i::arrI<_> * R(arr,i,m) |- P(arr,i+1,m) * R1(arr,i,m)
+  arr+i::arrI<_> * R(arr,i,m) |- P(arr,i+1,m)
   Q(arr,i+1,m) * R1(arr,i,m) |- Q(arr,i,m)
+
+
+  P(arr,i,m) & i>=m |- true
+   // P(arr,i,m) & i>=m --> emp
+
+
+  P(arr,i,m) & i<m |- arr+i::arrI<_> & BasePtr(arr)
+   // P(arr,i,m) & i<m --> arr+i::arrI<_> * R?(arr,i,m) & BasePtr(arr)
+
+  arr+i::arrI<_> * R(arr,i,m) & BasePtr(arr) |- P(arr,i+1,m)
+   // R(arr,i,m)  --> P(arr,i+1,m)
+
+
+
+
 
 P(arr,i,m) can only be  x::arr_seg<x1,x2> & P'(x,x2,x2,arr,i,m)
 x::arr_seg<x1,x2> & x1<=x2|- arr+i::arrI<_> * R(arr,i,m)
@@ -48,7 +79,6 @@ arr+i::arrI<_> * arr::arr_seg<i+1,m> |- arr::arr_seg<i+1,m> * R1(arr,i,m)
 emp & i>=m |- Q(arr,i,m)
 Q(arr,i+1,m) * arr+i::arrI<_> |- Q(arr,i,m)
 => Q(arr,i,m) == arr::arr_seg<i,m>
-
 ** Question
 1. What base cases to start from?
 2. may need the definition of arr_seg to eliminate some of the unknown relations
@@ -100,14 +130,17 @@ void swap(int[] base,int i,int m)
 }
 
 P(base,i,m) |- P(base,i+1,m) * R1(base,i,m)
+Q(base,i+1,m) * R1(base,i,m) |- base+i::arrI<_> * R2(base,i,m)
+base+i::arrI<_> * R2(base,i,m) |- base+i+1::arrI<_> * R3(base,i,m)
+( R2(base,i,m) |- base+i+1::arrI<_> * R4(base,i,m) )
+
+
 => lemma and match,
 base+i::arrI<_> |- R1(base,i,m)
 => match forcing R1 = base+i::arrI<_>
 
 Q(base,i+1,m) * R1(base,i,m) |- base+i::arrI<_> * R2(base,i,m)
 base+i::arrI<_> * R2(base,i,m) |- base+i+1::arrI<_> * R3(base,i,m)
-
-
 
 
 * partition

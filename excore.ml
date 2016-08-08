@@ -659,7 +659,11 @@ module EPURE =
     (* convert ptr to integer constraints *)
     (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
     let baga_conv ?(neq_flag=false) baga : formula =
-      Elt.get_pure ~neq_flag:neq_flag baga
+      let f = Elt.get_pure ~neq_flag:neq_flag baga in
+      let () = y_binfo_hp (add_str "baga_conv" !Cpure.print_formula) f in
+      f
+      
+                            
       (* let choose hd pos = *)
       (*   if neq_flag then mkNeqNull hd pos *)
       (*   else mkGtVarInt hd 0 pos in *)
