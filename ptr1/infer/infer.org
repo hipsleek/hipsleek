@@ -32,12 +32,23 @@ The least predicates P and Q that satisfy:
   Q(arr,i+1,m) * R1(arr,i,m) |- Q(arr,i,m)
 
 P(arr,i,m) can only be  x::arr_seg<x1,x2> & P'(x,x2,x2,arr,i,m)
-x::arr_seg<x1,x2> & P'(...)|- arr+i::arrI<_> * R(arr,i,m)
+x::arr_seg<x1,x2> & x1<=x2|- arr+i::arrI<_> * R(arr,i,m)
 => unfold
 x+x1::arrI<_>*x::arr_seg<x1+1,x2> & P'(...) |- arr+i::arrI<_> * R(arr,i,m)
-=> match, forcing x+x1==arr+i
-x::arr_seg<x1+1,x2> |- R(arr,i,m)
-=> match, forcing R to be arr_seg
+=> match, forcing x+x1==arr+i (some base information may help, and we may get x=arr, x1=i)
+for x1=i, x1<=x2, a safe choice for x2 will be x2>m
+x::arr_seg<x1+1,m> |- R(arr,i,m)
+=> match, forcing R(arr,i,m) == arr::arr_seg<i+1,m>
+
+arr+i::arrI<_> * arr::arr_seg<i+1,x2> |- arr::arr_seg<i+1,x2> * R1(arr,i,m)
+
+arr+i::arrI<_> * arr::arr_seg<i+1,m> |- arr::arr_seg<i+1,m> * R1(arr,i,m)
+=> match, forcing R1(arr,i,m) == arr+i::arrI<_>
+
+emp & i>=m |- Q(arr,i,m)
+Q(arr,i+1,m) * arr+i::arrI<_> |- Q(arr,i,m)
+=> Q(arr,i,m) == arr::arr_seg<i,m>
+
 ** Question
 1. What base cases to start from?
 2. may need the definition of arr_seg to eliminate some of the unknown relations
