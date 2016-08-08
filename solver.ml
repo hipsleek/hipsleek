@@ -11434,6 +11434,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
               let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
 
+              (* split dsjunctions: 
+                 \/ Li |- \/ Rj      --->
+                 Or( Li |- \/ Rj)_i  --->
+                 \forall i, exists j st. Li|-Rj
+
+                 (Li,R1) .. (Li,Rj)...
+              *)
               let match_one_ho_arg_helper (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
                 ((((CF.list_context * Prooftracer.proof) option) *
                   (CF.formula option) *
@@ -11442,7 +11449,22 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   (entail_state option)
                  ) list) =
                 let lhs_disjuncts = Session.new_lhs lhs in
-                let ho_match_pairs = List.map (fun x -> ((x, rhs), k)) lhs_disjuncts in
+                let ho_match_pairs = List.map (fun x ->
+                    (* let rhs_disjuncts = split_sor rhs in *)
+                    (* let ho_match_helper = match_one_ho_arg prog estate new_ante new_conseq evars new_impl_vars pos in *)
+                    (* let rhs_formula = *)
+                    (*   try  *)
+                    (*     List.find (fun rhs -> *)
+                    (*         let res_one_rhs_check = ho_match_helper (x,rhs) in *)
+                    (*         let fail,_,_,_,_ = res_one_rhs_check in *)
+                    (*         match fail with *)
+                    (*         | None -> true *)
+                    (*         | Some _ -> false *)
+                    (*       ) rhs_disjuncts  *)
+                    (*   with Not_found -> return **Failure_ctx** in *)
+                    (* ((x, rhs_formula), k) *)
+                                        ((x, rhs), k)
+                  ) lhs_disjuncts in
                 let ho_match_helper = match_one_ho_arg prog estate new_ante new_conseq evars new_impl_vars pos in
                 List.map ho_match_helper ho_match_pairs
               in
