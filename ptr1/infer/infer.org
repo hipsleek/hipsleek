@@ -1,0 +1,156 @@
+* Array init
+** code
+void arr_init(int[] arr, int i, int m, int k){
+   if(i<m){
+     arr[i] = k;
+     arr_init(arr,i+1,m,k);
+   }
+}
+
+** pre- and post- condition
+shape only
+requires arr::arr_seg<i,m>
+ensures arr::arr_seg<i,m>
+
+** inference
+assuming pre: P(arr,i,m) post: Q(arr,i,m)
+
+void arr_init(int[] arr, int i, int m, int k){
+   if(i<m){
+     // P(arr,i,m) |- arr+i::arrI<_> * R(arr,i,m)
+     arr[i] = k;
+     // arr::arrI<_> * R(arr,i,m) |- P(arr,i+1,m) * R1(arr,i,m)
+     arr_init(arr,i+1,m,k);
+     // Q(arr,i+1,m) * R1(arr,i,m) |- Q(arr,i,m)
+   }
+}
+
+The least predicates P and Q that satisfy:
+  P(arr,i,m) & i>=m |- Q(arr,i,m)
+  P(arr,i,m) & i<m |- arr+i::arrI<_> * R(arr,i,m)
+  arr+i::arrI<_> * R(arr,i,m) |- P(arr,i+1,m) * R1(arr,i,m)
+  Q(arr,i+1,m) * R1(arr,i,m) |- Q(arr,i,m)
+
+P(arr,i,m) can only be  x::arr_seg<x1,x2> & P'(x,x2,x2,arr,i,m)
+x::arr_seg<x1,x2> & P'(...)|- arr+i::arrI<_> * R(arr,i,m)
+=> unfold
+x+x1::arrI<_>*x::arr_seg<x1+1,x2> & P'(...) |- arr+i::arrI<_> * R(arr,i,m)
+=> match, forcing x+x1==arr+i
+x::arr_seg<x1+1,x2> |- R(arr,i,m)
+=> match, forcing R to be arr_seg
+** Question
+1. What base cases to start from?
+2. may need the definition of arr_seg to eliminate some of the unknown relations
+* bubble push
+** code
+void swap(int[] base,int i,int m)
+{
+  if(i==m-1)
+    {
+      return;
+    }
+  else{
+    swap(base,i+1,m);
+    int cur = base[i];
+    int tmp = base[i+1];
+    if(tmp>cur)
+      {
+        base[i] = tmp;
+        base[i+1] = cur;
+      }
+    return;
+  }
+}
+** pre- and post-condition
+  requires base::arr_seg<i,m>
+  ensures  base::arr_seg<i,m>
+** inference
+void swap(int[] base,int i,int m)
+{
+  if(i==m-1)
+    {
+      return;
+    }
+  else{
+    // P(base,i,m) |- P(base,i+1,m) * R1(base,i,m)
+    swap(base,i+1,m);
+    // Q(base,i+1,m) * R1(base,i,m) |- base+i::arrI<_> * R2(base,i,m)
+    int cur = base[i];
+    // base+i::arrI<_> * R2(base,i,m) |- base+i+1::arrI<_> * R3(base,i,m)
+    // ( R2(base,i,m) |- base+i+1::arrI<_> * R4(base,i,m) )
+    int tmp = base[i+1];
+    if(tmp>cur)
+    {
+        base[i] = tmp;
+        base[i+1] = cur;
+    }
+    return;
+  }
+}
+
+P(base,i,m) |- P(base,i+1,m) * R1(base,i,m)
+=> lemma and match,
+base+i::arrI<_> |- R1(base,i,m)
+=> match forcing R1 = base+i::arrI<_>
+
+Q(base,i+1,m) * R1(base,i,m) |- base+i::arrI<_> * R2(base,i,m)
+base+i::arrI<_> * R2(base,i,m) |- base+i+1::arrI<_> * R3(base,i,m)
+
+
+
+
+* partition
+** code
+int partition(arrI base, int i, int m, int pivot)
+{
+  if(i==m){
+    return i;
+  }
+  else{
+    int tmpi=base[i];
+    int tmpm=base[m-1];
+    if(tmpi>pivot){
+     if(tmpm<=pivot){
+      base[i] = tmpm;
+      base[m-1] = tmpi;
+     }
+     else{
+      int tmp1 = partition(base,i,m-1,pivot);
+      return tmp1;
+     }
+    }
+    int tmp2=partition(base,i+1,m,pivot);
+    return tmp2;
+  }
+  }
+** spec
+  requires base::arr_seg<i,m>
+  ensures base::arr_seg<i,m>
+** inference
+int partition(arrI base, int i, int m, int pivot)
+{
+  if(i==m){
+    return i;
+  }
+  else{
+    // P(base,i,m) |- base+i::arrI<_> * R1(base,i,m)
+    int tmpi=base[i];
+    // base+i::arrI<_> * R1(base,i,m) |- base+m-1::arrI<_> * R2(base,i,m)
+    // (R1(base,i,m) |- base+m-1::arrI<_> * R3(base,i,m))
+    int tmpm=base[m-1];
+    // base+i::arrI<_> * base+m-1::arrI<_> * R3(base,i,m) |- ...
+    if(tmpi>pivot){
+     if(tmpm<=pivot){
+      base[i] = tmpm;
+      base[m-1] = tmpi;
+     }
+     else{
+      int tmp1 = partition(base,i,m-1,pivot);
+      return tmp1;
+     }
+    }
+    // base+i::arrI<_> * base+m-1::arrI<_> * R3(base,i,m) |- P(base,i+1,m) * R4(base,i,m)
+    int tmp2=partition(base,i+1,m,pivot);
+    return tmp2;
+  }
+}
