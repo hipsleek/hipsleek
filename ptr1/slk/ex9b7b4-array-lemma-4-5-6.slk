@@ -1,0 +1,60 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null & BasePtr(self).
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<mmm<=n 
+     -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n> .
+*/
+
+checkentail emp |- xx::arr_seg<k,5>.
+//checkentail emp |- [k] xx::arr_seg<k,5>.
+expect Valid.
+print residue.
+
+/*
+# ex9b7b4.slk
+
+# why did base-case-fold not succeed?
+
+# need k to be explicitly inst ...
+
+checkentail emp & //xx::arr_seg<2,mmm> * xx::arr_seg<mmm,4> 
+      & Univ(mmm) & 2<mmm<=4 & BasePtr(xx)
+   |- xx::arr_seg<k,5>.
+
+# why isn't base-case fold scheduled?
+
+   |- xx::arr_seg<k,5>.
+
+process_action#3@4@3@2
+process_action#3 inp1 : BaseCaseFold =>
+   LHS: emp
+   RHS: xx::arr_seg<k,flted_14_59>@M
+process_action#3 inp2 :estate:
+  emp&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [flted_14_59]
+ es_gen_impl_vars(E): [xx; k]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND
+process_action#3 inp3 :conseq: xx::arr_seg<k,flted_14_59>@M&flted_14_59=5&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp4 :lhs_b: emp&{FLOW,(20,21)=__norm#E}[]
+process_action#3 inp5 :rhs_b: xx::arr_seg<k,flted_14_59>@M&flted_14_59=5&{FLOW,(20,21)=__norm#E}[]
+process_action#3@4 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  0<=k |-  k=5. LOCS:[5;14] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  BaseCaseFold]]
+ CEX:false
+
+
+*/

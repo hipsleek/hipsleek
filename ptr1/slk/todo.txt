@@ -6,6 +6,21 @@
 ====================================================================
 ====================================================================
 ====================================================================
+# ex13b1.slk
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+
+Validate 2: OK
+Residue:
+ <1>xx::arr_seg<i,mmm_144>@M&mmm_149=i+1 & mmm_149=mmm_144 & i<mmm_144 & 
+                             mmm_144<=n & Univ(mmm_149) & Univ(mmm_144) & i<n&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  (Lemma ==> lem_14(xx,xx)) ==>  SEARCH ==>  COND ==>  Match(xx,xx)]]
+
+This example fail with --adhoc-7. Could it be due to 
+the last match?
+
+    [[ SEARCH ==>  SEARCH ==>  (Lemma ==> lem_14(xx,xx)) ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+
 ====================================================================
 # ex12b5.slk
 

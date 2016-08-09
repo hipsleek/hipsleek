@@ -1,0 +1,28 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null & BasePtr(self)
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null & BasePtr(self).
+
+lemma_unsafe self::arr_seg<i,n> & i<mmm<=n 
+     -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n> .
+
+
+checkentail xx::arr_seg<2,4> |- xx::arr_seg<k,5>.
+expect Valid.
+print residue.
+
+/*
+# ex9b7b.slk
+
+checkentail xx::arr_seg<2,4> |- xx::arr_seg<k,5>.
+
+# below is unsound ..
+
+ <1>xx::arr_seg<mmm_199,flted_34_190>@M&flted_34_190=4 & k=2 & 3<=mmm_199 & 
+                                        mmm_199<=4 & Univ(mmm_199) & 
+                                        Univ(mmm_199)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  (Lemma ==> lem_14(xx,xx)) ==>  SEARCH ==>  COND ==>  Match(xx,xx)]]
+*/

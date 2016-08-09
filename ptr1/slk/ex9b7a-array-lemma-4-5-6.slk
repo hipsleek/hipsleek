@@ -1,0 +1,46 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+lemma_unsafe self::arr_seg<i,n> & i<mmm<=n 
+     -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n> .
+
+
+//(1)
+checkentail xx::arr_seg<2,4> |- xx::arr_seg<3,k>.
+expect Valid.
+print residue.
+
+//(2)
+checkentail xx::arr_seg<2,4> |- xx::arr_seg<k,3>.
+expect Valid.
+print residue.
+
+/*
+ <1>xx::arr_seg<mmm_159,flted_19_145>@M&mmm_159=mmm_154 & 
+                                        flted_19_144<mmm_154 & 
+                                        mmm_154<=flted_19_145 & 
+                                        Univ(mmm_159) & Univ(mmm_154) & 
+                                        flted_19_145=4 & flted_19_144=2 & 
+                                        k=flted_19_144 & mmm_154=3&{FLOW,(20,
+*/
+
+
+//(2)
+checkentail xx::arr_seg<2,4> |- xx::arr_seg<k,5>.
+expect Valid.
+print residue.
+
+/*
+ <1>xx::arr_seg<mmm_199,flted_34_185>@M&mmm_199=mmm_194 & 
+                                        flted_34_184<mmm_194 & 
+                                        mmm_194<=flted_34_185 & 
+                                        Univ(mmm_199) & Univ(mmm_194) & 
+                                        flted_34_185=4 & flted_34_184=2 & 
+                                        k=flted_34_184&{FLOW,(20,21)=__norm#E}[]
+[
+*/
