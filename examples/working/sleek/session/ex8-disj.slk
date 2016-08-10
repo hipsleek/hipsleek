@@ -36,3 +36,11 @@ expect Valid.
 checkentail x::Sess{@S ?0 or ?1;;!2;;!3}<>   |- x::Sess{@S ?m#m>=0;;%P}<> .
 print residue.
 expect Valid.
+
+checkentail x::Sess{@S !0 or !1}<>   |- x::Sess{@S !m#m>=0}<> .
+print residue.
+expect Fail.
+
+checkentail x::Sess{@S !0 or !1}<>   |- x::Sess{@S !0}<> .
+print residue.
+expect Fail.
