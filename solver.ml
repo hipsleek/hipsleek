@@ -9054,7 +9054,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
               let () = y_binfo_hp (add_str "baga:rhs" Excore.EPureI.string_of_disj) rhs in
               let () = y_binfo_hp (add_str "split_conseq : " Cprinter.string_of_mix_formula) split_conseq in
               let flag = Excore.EPureI.imply_disj lhs rhs in
-              (* let ((flag2,_,_),_) as r = x_add imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset in *)
+              (* let ((flag2,_,_),_) as r = x_add imply_mix_125formula 1 split_ante0 split_ante1 split_conseq imp_no memset in *)
               (* let () = if flag2!=flag then *)
               (*     let pr = Cprinter.string_of_ef_pure_disj in *)
               (*     begin *)

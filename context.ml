@@ -730,13 +730,13 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let lhs_pp = MCP.pure_of_mix lhs_p in
     let (same_base,other_eqn) = x_add_1 CP.extr_ptr_eqn lhs_pp in
     let rhs_pure = MCP.pure_of_mix rhs_p in
-    let () = y_binfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
+    let () = y_tinfo_hp (add_str "rhs_pure, before same_base_rhs" !CP.print_formula) rhs_pure in
     let (same_base_rhs,eq_b_rhs) = x_add_1 CP.extr_ptr_eqn rhs_pure in
-    let () = x_binfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
-    let () = x_binfo_hp (add_str "rhs_rest" !CF.print_h_formula) rhs_rest pos in
+    let () = x_tinfo_hp (add_str "rhs_node" !CF.print_h_formula) rhs_node pos in
+    let () = x_tinfo_hp (add_str "rhs_rest" !CF.print_h_formula) rhs_rest pos in
     let mf_rhs,_,_ = x_add !xpure_sym prog rhs_node rhs_p 0 in
     let mf_rhs_pure = MCP.pure_of_mix mf_rhs in
-    let () = y_binfo_hp (add_str "mf_rhs_pure" !CP.print_formula) mf_rhs_pure in
+    let () = y_tinfo_hp (add_str "mf_rhs_pure" !CP.print_formula) mf_rhs_pure in
     let (_,rhs_base_ptr_vs) = x_add_1 CP.pick_baseptr mf_rhs_pure in
     let emap = CP.EMapSV.build_eset eqns' in
     (* added eqns' to handle ptr1/ex6d3f1.slk *)
@@ -867,11 +867,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
               let lhs_w_rhs_inst = 
                 if !Globals.adhoc_flag_4 then lhs_w_rhs_inst
                 else x_add CP.inst_baseptr rhs_base_ptr_vs lhs_w_rhs_inst ex_inst in
-              let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
-              let () =  y_binfo_hp (add_str "rhs" !CP.print_formula) rhs  in
-              let () =  y_binfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
-              let () =  y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
-              let () =  y_binfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+              let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
+              let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
+              let () =  y_tinfo_hp (add_str "lhs>=rhs_ptr(r)" string_of_bool) r  in
+              let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
+              let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
               match root_lhs with
               | None  ->
                 let eq = CP.mkEqVars v d in
@@ -1823,7 +1823,10 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
                     false
           in
           (* checking if match can be pushed further *)
-          if conflict_flag then []  (* && false then []  *)
+          (* array_baga.slk,ex12b1,ex12b2,ex12a,ex12b *)
+          if conflict_flag && not(!adhoc_flag_7) then 
+            let () = y_tinfo_pp "conflict --> []" in
+            [] 
           else 
            let () = y_tinfo_hp (add_str "p1" !CF.print_sv) p1 in
            let () = y_tinfo_hp (add_str "mem p1 aset" !CF.print_svl) aset in

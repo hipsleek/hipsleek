@@ -303,8 +303,8 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
       | Int , Float -> (tl,Some Float) (*LDK*)
       | Float , Int -> (tl,Some Float) (*LDK*)
       | t1, t2  ->
-           let () = Debug.binfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
-           let () = Debug.binfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
+           let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
+           let () = Debug.tinfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
            if sub_type t1 t2 then (tl,Some k2)  (* found t1, but expecting t2 *)
       (* else if sub_type t2 t1 then Some k1 *)
            else
@@ -575,23 +575,23 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.Add (a1, a2, pos) ->
     let unify_ptr_arithmetic (t1,new_et) (t2,new_et2) et n_tl2 pos =
       if is_ptr_arith t1 && !Globals.ptr_arith_flag then
-        let () = y_binfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
+        let () = y_tinfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
         let (n_tl2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
         (n_tlist2,t1)
       else if is_ptr_arith t2 && !Globals.ptr_arith_flag then
-        let () = y_binfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
+        let () = y_tinfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
         let (n_tl2,_) = x_add must_unify_expect t2 new_et2 n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
         (n_tlist2,t2)
       else (* Muoi: Why check if it is a possible node but not ptr arith? *)
         if is_possible_node_typ t1 && !Globals.ptr_arith_flag then
-        let () = y_binfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
+        let () = y_tinfo_hp (add_str "(t1,new_et)" (pr_pair string_of_typ string_of_typ)) (t1,new_et) in
         let (n_tl2,_) = x_add must_unify_expect t1 new_et n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t2 NUM n_tl2 pos in
         (n_tlist2,t1)
       else if is_possible_node_typ t2 && !Globals.ptr_arith_flag then
-        let () = y_binfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
+        let () = y_tinfo_hp (add_str "(t2,new_et2)" (pr_pair string_of_typ string_of_typ)) (t2,new_et2) in
         let (n_tl2,_) = x_add must_unify_expect t2 new_et2 n_tl2 pos in
         let (n_tlist2,_) = x_add must_unify_expect t1 NUM n_tl2 pos in
         (n_tlist2,t2)

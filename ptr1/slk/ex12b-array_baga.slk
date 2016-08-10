@@ -26,6 +26,7 @@ expect Valid.
 print residue.
 
 //(4)
+// not (k>=base+a && k<base+y) => k<base+a | k>=base+y
 checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+b
    |- b<a | b>=y.
 expect Valid.

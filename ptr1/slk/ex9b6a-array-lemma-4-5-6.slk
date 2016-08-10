@@ -1,0 +1,21 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+lemma_unsafe self::arr_seg<i,n> & i<mmm<=n 
+     -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n> .
+
+
+//(4)
+checkentail xx::arr_seg<2,4> |- xx::arr_seg<3,k>.
+expect Valid.
+print residue.
+
+//(4)
+checkentail xx::arr_seg<2,4> |- xx::arr_seg<k,3>.
+expect Valid.
+print residue.
