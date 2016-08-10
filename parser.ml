@@ -2217,7 +2217,8 @@ simple_heap_constr:
         let (c, hid, deref) = get_heap_id_info c hid in
         let ho_args = un_option opt1 [] in
         match hl with
-        | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+        | ([],[]) -> let node = F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2) in
+                     Session.IForm.update_heap_kind node
         | ([], t) -> 
             let t11, t12 = List.split t in  
             let t21, t22 = List.split t12 in 

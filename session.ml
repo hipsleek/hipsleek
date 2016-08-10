@@ -50,6 +50,17 @@ let set_prim_pred_id kind id =
     | Channel      -> chan_id := Some id
     | Msg          -> msg_id := Some id
 
+let get_node_kind_by_name id =
+  match id with
+    | "Trans" -> Transmission
+    | "Sess" -> Session
+    | "Chan" -> Channel
+    | "S" -> Send
+    | "R" -> Receive
+    | "Seq" -> Sequence
+    | "SOr" -> SOr
+    | _ -> failwith (x_loc ^ ": Unknown node name.")
+
 let get_prim_pred_id pred_ref =
   match !pred_ref with
     | Some str -> str
@@ -124,6 +135,7 @@ module type Message_type = sig
   val update_temp_heap_name: h_formula -> h_formula option
   val update_formula: formula -> formula
   val update_struc_formula: struc_formula -> struc_formula
+  val update_heap_kind: h_formula -> h_formula
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
@@ -353,6 +365,21 @@ module IForm = struct
                             node.F.h_formula_heap_pos)
       | _ -> failwith (x_loc ^ ": F.HeapNode expected.")
 
+  let update_heap_kind hform =
+    let (ptr, name, args, params, pos) = get_node hform in
+    let session_kind = let args_session_type = List.map (fun x -> x.F.rflow_session_kind) args in
+                       match args_session_type with
+                         | [] -> None
+                         | hd :: tl -> hd in
+    match session_kind with
+      | Some sk -> let node_session_info = { session_kind = sk;
+                                             node_kind = get_node_kind_by_name name } in
+                   (match hform with
+                      |  F.HeapNode hn -> F.HeapNode {hn with h_formula_heap_session_info =
+                                                       Some node_session_info}
+                      | _ -> failwith (x_loc ^ ": F.HeapNode expected."))
+      | None -> hform
+
   let get_or_formulae formula =
     match formula with
       | F.Or f -> [f.F.formula_or_f1; f.F.formula_or_f2]
@@ -517,6 +544,8 @@ module CForm = struct
                            node.CF.h_formula_view_arguments,
                            node.CF.h_formula_view_pos)
     | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
+
+  let update_heap_kind hform = failwith x_tbi
 
   let get_or_formulae formula =
     match formula with
