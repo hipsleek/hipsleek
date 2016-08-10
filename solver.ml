@@ -11468,7 +11468,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let ho_match_helper = match_one_ho_arg prog estate new_ante new_conseq evars new_impl_vars pos in
                 let ctx_disjuncts = List.map ho_match_helper ho_match_pairs in
                 let detect_contra conseq es = solver_detect_lhs_rhs_contra 55 prog es conseq pos "ho_match" in
+                (* filter out those disjunctx which create unsat ctx with teh freshly discovered HO instantiations *)
                 let ctx_disjuncts = List.filter (Session.check_for_ho_unsat detect_contra new_conseq) ctx_disjuncts in
+                (* if all the disjuncts have been pruned,then return fail ctx since there is no inst to make the entailment succeed *)
                 let ctx_disjuncts = match ctx_disjuncts with
                   | [] ->
                     (* create fail ctx *)
