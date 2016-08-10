@@ -1369,7 +1369,7 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
     (* Solver.solver_detect_lhs_rhs_contra *)
     let unsat_check es =
       let pr = pr_list (add_str "map" (pr_pair !CF.print_hvar !CF.print_formula)) in
-      let () = y_binfo_hp pr es.CF.es_ho_vars_map in
+      let () = y_ninfo_hp pr es.CF.es_ho_vars_map in
       (* check if there is a contra which does not involve the HO instatiations *)
       let (_,contra_init), _ = detect_contra conseq es in
       (* "contra == false" denotes contradiction found *)

@@ -10732,7 +10732,7 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
             match c with
             | Ctx es ->
               let _, p_res, vp_res, _, _, _ = CF.split_components es.es_formula in
-              let () = y_binfo_hp (add_str "match_one_ho_arg" Cprinter.string_of_entail_state_short) es in
+              let () = y_ninfo_hp (add_str "match_one_ho_arg" Cprinter.string_of_entail_state_short) es in
               let p_res_opt =
                 if MCP.isConstMTrue p_res then None
                 else Some p_res 

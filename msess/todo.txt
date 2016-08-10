@@ -416,6 +416,7 @@ and update the es correspondingly
 
 =============================================
 =============================================
+SOLVED
 
 detect unsat for lhs disjuncts when inferring rel 
 =============================================
