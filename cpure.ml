@@ -6115,10 +6115,10 @@ struct
         | Some(b,d) -> (base,(b,d))::acc) [] lst in
     let add_intv_formula f lst =
       List.fold_left (fun acc (base,(b,d)) ->
-        (* let f1 = mk_exp_leq (mkAdd (mkVar base no_pos) d no_pos) 0 in *)
-          (* let f2 = mk_exp_neq_null (mkAdd (mkVar base no_pos) b no_pos)  in *)
-          let f1 = mk_exp_leq  d  0 in
-          let f2 = mk_exp_neq_null b   in
+        let f1 = mk_exp_leq (mkAdd (mkVar base no_pos) d no_pos) 0 in
+          let f2 = mk_exp_neq_null (mkAdd (mkVar base no_pos) b no_pos)  in
+          (* let f1 = mk_exp_leq  d  0 in *)
+          (* let f2 = mk_exp_neq_null b   in *)
         let f = mkOr f1 f2 None no_pos in
         mkAnd acc f no_pos
       ) f lst in
@@ -6137,7 +6137,6 @@ struct
       (*  | Some disj_f -> *)
       (*     disj_f) *)
       (*     (\* mkAnd (add_intv_formula f lst_intv) disj_f no_pos) *\) *)
-      
       (match gen_disj lst_intv with
        | None -> add_intv_formula f lst_intv
        | Some disj_f ->

@@ -1823,7 +1823,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
                     false
           in
           (* checking if match can be pushed further *)
-          if conflict_flag && false then [] 
+          if conflict_flag then []  (* && false then []  *)
           else 
            let () = y_tinfo_hp (add_str "p1" !CF.print_sv) p1 in
            let () = y_tinfo_hp (add_str "mem p1 aset" !CF.print_svl) aset in
