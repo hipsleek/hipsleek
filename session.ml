@@ -996,19 +996,35 @@ module Make_Session (Base: Session_base) = struct
     let pr2 = !Base.print_h_formula in
     Debug.no_1 "trans_from_session" pr pr2 trans_from_session s
 
-  let trans_session_base_formula fnc sb =
-    let fnc, fnc_base = fnc in 
+
+  (* fnc is to be used on session_base formulas
+     fnc_base to be used on the Base.base formulas
+  *)  
+  let trans_session_base_formula
+      ((fnc, fnc_base): (session_base -> session_base option) * (t -> t option))
+      (sb: session_base) =
     let new_s = fnc sb in
     match new_s with
     | Some new_s -> new_s
     | None ->
       match sb with
-      | Base base -> Base (fnc_base base)
+      | Base base ->
+        let new_base = fnc_base base in
+        let new_base =
+          match new_base with
+          | Some nb -> nb
+          | None    -> base
+        in
+        Base new_base
       | Predicate _ 
       | HVar _ -> sb
 
-  let trans_session_formula fnc sf =
-    let fnc, f_base = fnc in 
+  (* fnc is to be used on the symmetric compound structs
+     f_base to be used to transform base structs
+  *)
+  let trans_session_formula
+      ((fnc, f_base): (session -> session option ) * ((session_base -> session_base option) * (t -> t option)))
+      (sf:session) =
     let rec helper fnc sf =
       let r = fnc sf in
       match r with
@@ -1159,7 +1175,8 @@ module Make_Session (Base: Session_base) = struct
   let rename_message_pointer_heap hform =
     let fnc_node hform =
       let sf = trans_h_formula_to_session hform in
-      let fnc = (nonef, (nonef, replace_message_var)) in
+      let base_f b = Some (replace_message_var b) in
+      let fnc = (nonef, (nonef, base_f)) in
       let sf = trans_session_formula fnc sf in
       let renamed_sf = trans_from_session sf in
       renamed_sf in
