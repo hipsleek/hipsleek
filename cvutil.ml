@@ -754,7 +754,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                   h_formula_view_remaining_branches = lbl_lst;
                   h_formula_view_perm = perm;
                   h_formula_view_pos = pos}) ->
-      x_binfo_hp (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
+      x_tinfo_hp (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
       let ba = x_add look_up_view_baga prog c p vs in
       let vdef = look_up_view_def pos prog.prog_view_decls c in
       let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
@@ -908,9 +908,9 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                (*prove that p0 |- var=full_perm*)
                let f0 = MCP.pure_of_mix p0 in
-               x_binfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
+               x_tinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                let res,_,_ = x_add CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 25) imp_no in
-               x_binfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+               x_tinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                if (res) then
                  (match lbl_lst with
                   |None ->
@@ -927,7 +927,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                let () = y_tinfo_pp "None" in
                (match lbl_lst with
                 |None ->
-                  let () = y_binfo_hp (add_str "ba" !CP.print_svl) ba in
+                  let () = y_tinfo_hp (add_str "ba" !CP.print_svl) ba in
                   if List.mem p evars then CP.BagaSV.mkEmpty
                   else ba 
                 | Some ls -> 
@@ -1387,7 +1387,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     let memset = x_add h_formula_2_mem h0 p0 [] prog in
     let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
     (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
-    let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
+    let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
     if (is_sat_mem_formula memset) then 
       let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
 
@@ -1404,8 +1404,8 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
                              !CP.print_sv sv
                       ))
       in
-      let () = x_binfo_hp (add_str "baga_ranges" pr_baga) baga_ranges no_pos in
-      let () = x_binfo_hp (add_str "baga_constraints" (pr_list (pr_list !CP.print_formula))) baga_constraint no_pos in
+      let () = x_tinfo_hp (add_str "baga_ranges" pr_baga) baga_ranges no_pos in
+      let () = x_tinfo_hp (add_str "baga_constraints" (pr_list (pr_list !CP.print_formula))) baga_constraint no_pos in
       let pf_with_baga =
         match Cast.merge_baga_constraints baga_constraint with
         | Some bagaf -> CP.mkAnd pf bagaf no_pos
