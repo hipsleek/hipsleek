@@ -1357,3 +1357,34 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let pr1 = !CF.print_rflow_formula in
   let pr2 l = List.fold_left (fun acc x -> acc ^ x) "" (List.map (fun x -> pr1 x) l) in
   Debug.no_1 "new_lhs" pr1 pr2 new_lhs lhs
+
+(* need to check that it does not elad to unsoundnes. Check that it fileters out
+   only thsoe disjuncts which create unsound with the new HO inst.
+ *)
+let check_for_ho_unsat detect_contra conseq match_ho_res =
+  let fail,_,_,new_ho,es = match_ho_res in
+  match fail with
+  | Some _ -> true              (* return the fail ctx as it is  *)
+  | None ->                     (* no fail, check if es is unsat *)
+    (* Solver.solver_detect_lhs_rhs_contra *)
+    let unsat_check es =
+      let pr = pr_list (add_str "map" (pr_pair !CF.print_hvar !CF.print_formula)) in
+      let () = y_binfo_hp pr es.CF.es_ho_vars_map in
+      (* check if there is a contra which does not involve the HO instatiations *)
+      let (_,contra_init), _ = detect_contra conseq es in
+      (* "contra == false" denotes contradiction found *)
+      if not(contra_init) then true (*  if there is a contra which is not related to HO, return and let the rest of the system handle this contra *)
+      else
+        let new_conseq = CF.subst_hvar conseq es.CF.es_ho_vars_map in
+        let (_,contra_final), _ = detect_contra new_conseq es in
+        contra_final
+    in
+    (* do not check for unsat if there is no entail state set *)
+    let unsat_check es = map_opt_def true unsat_check es in
+    (* do not check for unsat if there is no new HO *)
+    map_list_def true (fun _ -> unsat_check es) new_ho
+
+let check_for_ho_unsat detect_contra conseq match_ho_res =
+  let _,_,_,_,es = match_ho_res in
+  let pr1 = pr_option !CF.print_entail_state in
+  Debug.no_1 "check_for_ho_unsat" pr1 string_of_bool (fun _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es
