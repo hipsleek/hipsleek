@@ -1420,3 +1420,4 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
   let _,_,_,_,es = match_ho_res in
   let pr1 = pr_option !CF.print_entail_state in
   Debug.no_1 "check_for_ho_unsat" pr1 string_of_bool (fun _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es
+
