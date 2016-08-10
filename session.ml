@@ -121,6 +121,7 @@ module type Message_type = sig
   val transform_h_formula: ?trans_flow:bool -> (h_formula -> h_formula option)-> h_formula -> h_formula
   val transform_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> struc_formula -> struc_formula
+  val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
   val update_temp_heap_name: h_formula -> h_formula option
   val update_formula: formula -> formula
   val update_struc_formula: struc_formula -> struc_formula
@@ -277,6 +278,9 @@ module IForm = struct
   let transform_struc_formula  ?trans_flow:(flow = false) fct struc_form =
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
     F.transform_struc_formula ~flow:flow fcts struc_form
+
+  let map_one_rflow_formula fnc rflow_formula =
+    F.map_one_rflow_formula fnc rflow_formula
 
   let update_temp_heap_name hform =
     let fct si hform = match si.node_kind with
@@ -485,6 +489,9 @@ module CForm = struct
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
     CF.transform_struc_formula fcts struc_form
 
+  let map_one_rflow_formula fnc rflow_formula =
+    CF.map_one_rflow_formula fnc rflow_formula  
+  
   let update_temp_heap_name hform = None 
 
   let update_formula f = f
@@ -1172,15 +1179,23 @@ module Make_Session (Base: Session_base) = struct
     let f = Base.get_formula_from_struc_formula struc_formula in
     trans_formula_to_session f
 
+  let wrap_2ways_sess2base f_sess hform =
+    let session_form = trans_h_formula_to_session hform in
+    let new_session_form = f_sess session_form in
+    let new_hform = trans_from_session new_session_form in
+    new_hform
+
+  let wrap_2ways_sess2base f_sess hform =
+    let pr =  !Base.print_h_formula in
+    Debug.no_1 "wrap_2ways_sess2base" pr pr (wrap_2ways_sess2base f_sess) hform
+    
   let rename_message_pointer_heap hform =
-    let fnc_node hform =
-      let sf = trans_h_formula_to_session hform in
+    let fnc_node sf =
       let base_f b = Some (replace_message_var b) in
       let fnc = (nonef, (nonef, base_f)) in
       let sf = trans_session_formula fnc sf in
-      let renamed_sf = trans_from_session sf in
-      renamed_sf in
-    fnc_node hform
+      sf in
+    wrap_2ways_sess2base fnc_node hform 
 
   let rec extract_bases session =
     match session with
@@ -1375,8 +1390,8 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let pr2 l = List.fold_left (fun acc x -> acc ^ x) "" (List.map (fun x -> pr1 x) l) in
   Debug.no_1 "new_lhs" pr1 pr2 new_lhs lhs
 
-(* need to check that it does not elad to unsoundnes. Check that it fileters out
-   only thsoe disjuncts which create unsound with the new HO inst.
+(* need to check that it does not lead to unsoundness. Check that it filters out
+   only those disjuncts which create unsound ctx with the new HO inst.
  *)
 let check_for_ho_unsat detect_contra conseq match_ho_res =
   let fail,_,_,new_ho,es = match_ho_res in
