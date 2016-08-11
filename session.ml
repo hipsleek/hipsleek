@@ -146,6 +146,7 @@ module type Message_type = sig
 
   val is_base_formula: formula -> bool
   val get_h_formula: formula -> h_formula
+  val get_h_formula_safe: formula -> h_formula
   val get_h_formula_from_ho_param_formula: ho_param_formula -> h_formula
   val get_formula_from_ho_param_formula: ho_param_formula -> formula
   val get_node: h_formula -> arg
@@ -153,11 +154,15 @@ module type Message_type = sig
   val get_star_formulae: h_formula -> h_formula list
   val get_star_pos: h_formula -> VarGen.loc
   val get_node_kind: h_formula -> node_kind
+  val get_session_kind: h_formula -> session_kind option
   val get_param_id: param -> ident
   val get_node_id: node -> ident
   val get_formula_from_struc_formula: struc_formula -> formula
   val get_hvar: h_formula -> ident * var list
   val get_node_session_info: h_formula -> node_session_info option
+
+  val get_h_formula_safe: formula -> h_formula option
+  val get_h_formula_from_struc_formula_safe: struc_formula -> h_formula option
 
 end;;
 
@@ -360,6 +365,21 @@ module IForm = struct
       | F.HEmp -> Emp
       | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
 
+  let rec get_session_kind h_formula =
+    match h_formula with
+      | F.HeapNode node -> (match node.F.h_formula_heap_session_info with
+                             | Some si -> Some si.session_kind
+                             | None -> None)
+      | F.Phase phase -> let sk1 = get_session_kind phase.F.h_formula_phase_rd in
+                         let sk2 = get_session_kind phase.F.h_formula_phase_rw in
+                         (match (sk1, sk2) with
+                            | (Some _, None) -> sk1
+                            | (None, Some _) -> sk2
+                            | (None, None) -> None
+                            | (Some _, Some _) -> sk1)
+      (* TODO: Star case *)
+      | _ -> None
+
   let get_node h_formula =
     match h_formula with
       | F.HeapNode node -> (node.F.h_formula_heap_node,
@@ -419,6 +439,17 @@ module IForm = struct
   let get_node_session_info h_formula =
     match h_formula with
       | F.HeapNode hn -> hn.h_formula_heap_session_info
+      | _ -> None
+
+  let get_h_formula_safe formula =
+    match formula with
+      | F.Base f -> Some f.F.formula_base_heap
+      | F.Exists f -> Some f.F.formula_exists_heap
+      | F.Or f -> None
+
+  let get_h_formula_from_struc_formula_safe struc_formula =
+    match struc_formula with
+      | F.EBase base -> get_h_formula_safe base.F.formula_struc_base
       | _ -> None
 
 end;;
@@ -579,6 +610,8 @@ module CForm = struct
       | CF.HEmp -> Emp
       | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
 
+  let rec get_session_kind h_formula = failwith x_tbi
+
   let get_param_id param =
     match param with
       | CP.SpecVar sv -> let (t, n, p) = sv in
@@ -619,6 +652,10 @@ module CForm = struct
     match h_formula with
       | CF.ViewNode vn -> vn.h_formula_view_session_info
       | _ -> None
+
+  let get_h_formula_safe f = failwith x_tbi
+
+  let get_h_formula_from_struc_formula_safe struc_formula = failwith x_tbi
 
 end;;
 
