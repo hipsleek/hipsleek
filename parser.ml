@@ -705,6 +705,14 @@ let peek_dc =
              | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_protocol =
+   SHGram.Entry.of_parser "peek_protocol"
+       (fun strm ->
+           match Stream.npeek 3 strm with
+             | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_] -> ()
+             | [OPAREN,_; IDENTIFIER first,_; LEFTARROW,_] -> ()
+             | _ -> raise Stream.Failure)
+
  let peek_projection_send = 
    SHGram.Entry.of_parser "peek_projection_send"
        (fun strm -> 
@@ -1391,6 +1399,8 @@ proj_view_decl:
 formula:
     [[ peek_tpprojection; p = tpprojection_formula -> let () = projection_kind := TPProjection in
        Session.TPProjectionSession p
+     | peek_protocol; p = protocol_formula -> let () = projection_kind := Protocol in
+       Session.ProtocolSession p
      | p = projection_formula -> let () = projection_kind := Projection in
        Session.ProjectionSession p
      ]];
@@ -1761,7 +1771,8 @@ rflow_form:
                                                      (Session.IProjection.trans_from_session s) loc
                   | Session.TPProjectionSession s -> Session.ITPProjection.mk_formula_heap_only
                                                        (Session.ITPProjection.trans_from_session s) loc
-                  | Session.ProtocolSession s -> failwith "Unexpected protocol session.") in
+                  | Session.ProtocolSession s -> Session.IProtocol.mk_formula_heap_only
+                                                       (Session.IProtocol.trans_from_session s) loc) in
      { F.rflow_kind = NEUTRAL;
        F.rflow_base = form;
        F.rflow_session_kind = Some !projection_kind; }
