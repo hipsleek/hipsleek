@@ -1120,7 +1120,7 @@ module Make_Session (Base: Session_base) = struct
   let mk_struc_formula_from_session_and_formula s form_orig =
     let h_form = trans_from_session s in
     let pos = get_pos s in
-    let h_form = mk_sess_h_formula h_form pos in
+    (* let h_form = mk_sess_h_formula h_form pos in *)
     let fct h = Some (Base.mk_star h h_form pos) in
     Base.transform_struc_formula(* _trans_heap_node *) fct form_orig
 
@@ -1161,10 +1161,10 @@ module Make_Session (Base: Session_base) = struct
             SBase (mk_session_predicate name [] params pos)
         | Emp ->
             SEmp
-        | Session ->
-            let (ptr, name, args, params, pos) = Base.get_node h_formula in
-            let h = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
-            helper h
+        | Session -> failwith (x_loc ^ ": Unexpected node kind.")
+            (* let (ptr, name, args, params, pos) = Base.get_node h_formula in *)
+            (* let h = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in *)
+            (* helper h *)
         | Channel -> failwith (x_loc ^ ": Unexpected node kind.")
         | Msg -> failwith (x_loc ^ ": Unexpected node kind.") in
     helper h_formula
