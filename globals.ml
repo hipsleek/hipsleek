@@ -968,7 +968,7 @@ let session_msg_id_aux = "ms"
 let session_seq_id = "self"
 let session_seq = (session_seq_id, Unprimed)
 
-let session_chan_id = "chan"
+let session_chan_id = "self"(* "chan" *)
 
 let print_compact_projection_formula = ref true
 let print_flow_flag = ref true
