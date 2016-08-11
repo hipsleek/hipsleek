@@ -1312,12 +1312,14 @@ module Make_Session (Base: Session_base) = struct
                 : Base.ho_param_formula list =
     let head_session = trans_h_formula_to_session
                        (Base.get_h_formula_from_ho_param_formula head) in
-    let tail_session = match tail with
-                         | None -> SEmp
-                         | Some tail -> trans_h_formula_to_session
-                                        (Base.get_h_formula_from_ho_param_formula tail) in
     let disj_list = sor_disj_list head_session in
-    let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
+      let disj_list =
+        match tail with
+        | None      -> disj_list
+        | Some tail -> let tail_session = trans_h_formula_to_session
+                                         (Base.get_h_formula_from_ho_param_formula tail) in
+                       let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
+                       disj_list in
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
     let disj_list = List.map (fun x -> trans_from_session x) disj_list in
     let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x no_pos) disj_list in
