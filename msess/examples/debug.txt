@@ -14,5 +14,6 @@ heap_entail_conjunct,Trace
 # case_normalize_renamed_struc_formula
 # case_normalize_struc_formula
 # case_normalize_renamed_formula
-
+subst_avoid_capture
+CF.rename_bound_vars
 
