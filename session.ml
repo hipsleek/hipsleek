@@ -1312,15 +1312,12 @@ module Make_Session (Base: Session_base) = struct
                 : Base.ho_param_formula list =
     let head_session = trans_h_formula_to_session
                        (Base.get_h_formula_from_ho_param_formula head) in
+    let tail_session = match tail with
+                         | None -> SEmp
+                         | Some tail -> trans_h_formula_to_session
+                                        (Base.get_h_formula_from_ho_param_formula tail) in
     let disj_list = sor_disj_list head_session in
-    let disj_list =
-      match tail with
-      | None      -> disj_list
-      | Some tail ->
-        let tail_session = trans_h_formula_to_session
-            (Base.get_h_formula_from_ho_param_formula tail) in
-        let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
-        disj_list in
+    let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
     let disj_list = List.map (fun x -> trans_from_session x) disj_list in
     let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x no_pos) disj_list in
@@ -1331,6 +1328,33 @@ module Make_Session (Base: Session_base) = struct
     let pr1 = !Base.print_ho_param_formula in
     let pr2 = pr_list pr1 in
     Debug.no_2 "split_sor" pr1 (pr_opt pr1) pr2 split_sor head tail
+
+  let split_disj (head: session) (tail: session option)
+                 : session list =
+    let tail = match tail with
+                 | Some tail -> tail
+                 | None -> SEmp in
+    let disj_list = sor_disj_list head in
+    let disj_list = List.map (fun x -> append_tail x tail) disj_list in
+    let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
+    disj_list
+
+  let split_disj (head: session) (tail: session option)
+                 : session list =
+    let pr1 = string_of_session in
+    let pr2 = pr_list pr1 in
+    Debug.no_2 "split_disj" pr1 (pr_opt pr1) pr2 split_disj head tail
+
+  let norm_base_only (base: Base.h_formula): Base.h_formula =
+    let fct sf =
+      match sf with
+      | SBase sb -> sf (*List.nth (split_disj sf None) 0*)
+      | _ -> sf in
+    wrap_2ways_sess2base fct base
+
+  let norm_base_only (base: Base.h_formula): Base.h_formula =
+    let pr = !Base.print_h_formula in
+    Debug.no_1 "norm_base_only" pr pr norm_base_only base
 
 end;;
 
@@ -1447,7 +1471,7 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
                                                          let f = CForm.transform_formula change_ptr f in
                                                          CForm.mk_rflow_formula f) new_lhs in
                                  new_lhs
-                  | SOr -> CProjection.split_sor lhs None (* (CForm.mk_rflow_formula_from_heap CF.HEmp no_pos) *)
+                  | SOr -> CProjection.split_sor lhs None
                   | _ -> [lhs])
     | None -> [lhs]
 
@@ -1455,6 +1479,21 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let pr1 = !CF.print_rflow_formula in
   let pr2 l = List.fold_left (fun acc x -> acc ^ x) "" (List.map (fun x -> pr1 x) l) in
   Debug.no_1 "new_lhs" pr1 pr2 new_lhs lhs
+
+let norm_base_heap hform =
+  let fnc si hform =
+    match si.session_kind with
+    | Projection   -> Some (IProjection.norm_base_only hform)
+    | TPProjection -> Some (ITPProjection.norm_base_only hform)
+    | Protocol     -> Some (IProtocol.norm_base_only hform)
+  in
+  IForm.heap_node_transformer fnc hform
+ 
+let norm_base_formula f =
+  IForm.transform_formula ~trans_flow:true norm_base_heap f
+
+let norm_base_struc_formula sf =
+  IForm.transform_struc_formula ~trans_flow:true norm_base_heap sf
 
 (* need to check that it does not lead to unsoundness. Check that it filters out
    only those disjuncts which create unsound ctx with the new HO inst.
