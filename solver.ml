@@ -10732,7 +10732,7 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
             match c with
             | Ctx es ->
               let _, p_res, vp_res, _, _, _ = CF.split_components es.es_formula in
-              let () = y_binfo_hp (add_str "match_one_ho_arg" Cprinter.string_of_entail_state_short) es in
+              let () = y_ninfo_hp (add_str "match_one_ho_arg" Cprinter.string_of_entail_state_short) es in
               let p_res_opt =
                 if MCP.isConstMTrue p_res then None
                 else Some p_res 
@@ -10768,6 +10768,40 @@ and match_one_ho_arg  prog estate new_ante new_conseq evars ivars pos (((lhs, rh
   let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
   let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
   Debug.no_1 "match_one_ho_arg" pr1 pr2 (fun _ -> match_one_ho_arg_x  prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k)
+
+(* split RHS dsjunctions: 
+   LHS |- \/ RHS      --->  ? \exists i. LHS |- RHSi
+*)
+
+and match_ho_arg_rhs_disj ((lhs,rhs),k) ho_match_helper =
+  let rhs_disjuncts = Session.new_lhs rhs in
+  let ctx_lst = List.map (fun rhs -> ho_match_helper ((lhs,rhs),k)) rhs_disjuncts in
+  let ctx =
+    try  List.find (fun (fail,_,_,_,_) -> map_opt_def true (fun x -> false) fail) ctx_lst
+    with Not_found -> List.hd ctx_lst
+  in ctx 
+
+(* split LHS dsjunctions: 
+   \/ LHS |- RHS      --->   \forall i. LHSi |- RHS
+*)
+
+and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
+  let lhs_disjuncts = Session.new_lhs lhs in
+  let ctx_disjuncts = List.map (fun x -> match_ho_arg_rhs_disj ((x,rhs),k) ho_match_helper) lhs_disjuncts in
+
+  let detect_contra conseq es = solver_detect_lhs_rhs_contra 55 prog es conseq pos "ho_match" in
+  (* filter out those disjunctx which create unsat ctx with teh freshly discovered HO instantiations *)
+  let ctx_disjuncts = List.filter (Session.check_for_ho_unsat detect_contra conseq) ctx_disjuncts in
+  (* if all the disjuncts have been pruned,then return fail ctx since there is no inst to make the entailment succeed *)
+  let ctx_disjuncts = match ctx_disjuncts with
+    | [] ->
+      (* create fail ctx *)
+      let fail = mkFailCtx_simple
+          "match_one_ho_arg HO instaniation creates contra"
+          estate conseq (mk_cex true) pos, Failure in
+      [((Some fail),None, None, [], None)]
+    | _  -> ctx_disjuncts in
+  ctx_disjuncts
 
 (* *********************************************************** *)
 (* *************    END match_one_ho_arg    ****************** *)
@@ -11434,42 +11468,20 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
               let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
 
-              (* split dsjunctions: 
-                 \/ Li |- \/ Rj      --->
-                 Or( Li |- \/ Rj)_i  --->
-                 \forall i, exists j st. Li|-Rj
-
-                 (Li,R1) .. (Li,Rj)...
-              *)
               let match_one_ho_arg_helper (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
-                ((((CF.list_context * Prooftracer.proof) option) *
-                  (CF.formula option) *
-                  (MCP.mix_formula option) *
-                  ((CF.hvar * CF.formula) list) *
-                  (entail_state option)
-                 ) list) =
-                let lhs_disjuncts = Session.new_lhs lhs in
-                let ho_match_pairs = List.map (fun x ->
-                    (* let rhs_disjuncts = split_sor rhs in *)
-                    (* let ho_match_helper = match_one_ho_arg prog estate new_ante new_conseq evars new_impl_vars pos in *)
-                    (* let rhs_formula = *)
-                    (*   try  *)
-                    (*     List.find (fun rhs -> *)
-                    (*         let res_one_rhs_check = ho_match_helper (x,rhs) in *)
-                    (*         let fail,_,_,_,_ = res_one_rhs_check in *)
-                    (*         match fail with *)
-                    (*         | None -> true *)
-                    (*         | Some _ -> false *)
-                    (*       ) rhs_disjuncts  *)
-                    (*   with Not_found -> return **Failure_ctx** in *)
-                    (* ((x, rhs_formula), k) *)
-                                        ((x, rhs), k)
-                  ) lhs_disjuncts in
+                (((CF.list_context * Prooftracer.proof) option) *
+                 (CF.formula option) *
+                 (MCP.mix_formula option) *
+                 ((CF.hvar * CF.formula) list) *
+                 (entail_state option)
+                ) list =
+
                 let ho_match_helper = match_one_ho_arg prog estate new_ante new_conseq evars new_impl_vars pos in
-                List.map ho_match_helper ho_match_pairs
+                match_ho_arg_lhs_disj ((lhs, rhs), k)  ho_match_helper prog estate new_conseq pos
               in
 
               let res = List.map match_one_ho_arg_helper args in
+              (* create pairs of HO args results, given disjunctive HO contexts *)
               let res_lst = Gen.cart_multi_list res in
               let post_ho_match_process res =
                 let failures = List.filter (fun (r, _, _, _,_) -> r != None) res in
@@ -12721,7 +12733,7 @@ and solver_detect_lhs_rhs_contra_x i prog estate conseq pos msg =
 (* (Infer.CF.entail_state * Cprinter.P.formula) option * *)
 (* (Infer.CF.entail_state * Cformula.CP.infer_rel_type list * bool) list *) 
 and solver_detect_lhs_rhs_contra i prog estate conseq pos msg =
-  let pr_estate = Cprinter.string_of_entail_state_short in
+  let pr_estate = Cprinter.string_of_entail_state(* _short *) in
   let pr_f = Cprinter.string_of_formula in
   let pr_es (es,e) =  pr_pair pr_estate Cprinter.string_of_pure_formula (es,e) in
   let pr = CP.print_lhs_rhs in

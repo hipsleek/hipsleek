@@ -132,6 +132,7 @@ module type Message_type = sig
   val transform_h_formula: ?trans_flow:bool -> (h_formula -> h_formula option)-> h_formula -> h_formula
   val transform_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> struc_formula -> struc_formula
+  val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
   val update_temp_heap_name: h_formula -> h_formula option
   val update_formula: formula -> formula
   val update_struc_formula: struc_formula -> struc_formula
@@ -289,6 +290,9 @@ module IForm = struct
   let transform_struc_formula  ?trans_flow:(flow = false) fct struc_form =
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
     F.transform_struc_formula ~flow:flow fcts struc_form
+
+  let map_one_rflow_formula fnc rflow_formula =
+    F.map_one_rflow_formula fnc rflow_formula
 
   let update_temp_heap_name hform =
     let fct si hform = match si.node_kind with
@@ -512,6 +516,9 @@ module CForm = struct
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
     CF.transform_struc_formula fcts struc_form
 
+  let map_one_rflow_formula fnc rflow_formula =
+    CF.map_one_rflow_formula fnc rflow_formula  
+  
   let update_temp_heap_name hform = None 
 
   let update_formula f = f
@@ -1025,19 +1032,35 @@ module Make_Session (Base: Session_base) = struct
     let pr2 = !Base.print_h_formula in
     Debug.no_1 "trans_from_session" pr pr2 trans_from_session s
 
-  let trans_session_base_formula fnc sb =
-    let fnc, fnc_base = fnc in 
+
+  (* fnc is to be used on session_base formulas
+     fnc_base to be used on the Base.base formulas
+  *)  
+  let trans_session_base_formula
+      ((fnc, fnc_base): (session_base -> session_base option) * (t -> t option))
+      (sb: session_base) =
     let new_s = fnc sb in
     match new_s with
     | Some new_s -> new_s
     | None ->
       match sb with
-      | Base base -> Base (fnc_base base)
+      | Base base ->
+        let new_base = fnc_base base in
+        let new_base =
+          match new_base with
+          | Some nb -> nb
+          | None    -> base
+        in
+        Base new_base
       | Predicate _ 
       | HVar _ -> sb
 
-  let trans_session_formula fnc sf =
-    let fnc, f_base = fnc in 
+  (* fnc is to be used on the symmetric compound structs
+     f_base to be used to transform base structs
+  *)
+  let trans_session_formula
+      ((fnc, f_base): (session -> session option ) * ((session_base -> session_base option) * (t -> t option)))
+      (sf:session) =
     let rec helper fnc sf =
       let r = fnc sf in
       match r with
@@ -1185,14 +1208,23 @@ module Make_Session (Base: Session_base) = struct
     let f = Base.get_formula_from_struc_formula struc_formula in
     trans_formula_to_session f
 
+  let wrap_2ways_sess2base f_sess hform =
+    let session_form = trans_h_formula_to_session hform in
+    let new_session_form = f_sess session_form in
+    let new_hform = trans_from_session new_session_form in
+    new_hform
+
+  let wrap_2ways_sess2base f_sess hform =
+    let pr =  !Base.print_h_formula in
+    Debug.no_1 "wrap_2ways_sess2base" pr pr (wrap_2ways_sess2base f_sess) hform
+    
   let rename_message_pointer_heap hform =
-    let fnc_node hform =
-      let sf = trans_h_formula_to_session hform in
-      let fnc = (nonef, (nonef, replace_message_var)) in
+    let fnc_node sf =
+      let base_f b = Some (replace_message_var b) in
+      let fnc = (nonef, (nonef, base_f)) in
       let sf = trans_session_formula fnc sf in
-      let renamed_sf = trans_from_session sf in
-      renamed_sf in
-    fnc_node hform
+      sf in
+    wrap_2ways_sess2base fnc_node hform 
 
   let rec extract_bases session =
     match session with
@@ -1386,3 +1418,35 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let pr1 = !CF.print_rflow_formula in
   let pr2 l = List.fold_left (fun acc x -> acc ^ x) "" (List.map (fun x -> pr1 x) l) in
   Debug.no_1 "new_lhs" pr1 pr2 new_lhs lhs
+
+(* need to check that it does not lead to unsoundness. Check that it filters out
+   only those disjuncts which create unsound ctx with the new HO inst.
+ *)
+let check_for_ho_unsat detect_contra conseq match_ho_res =
+  let fail,_,_,new_ho,es = match_ho_res in
+  match fail with
+  | Some _ -> true              (* return the fail ctx as it is  *)
+  | None ->                     (* no fail, check if es is unsat *)
+    (* Solver.solver_detect_lhs_rhs_contra *)
+    let unsat_check es =
+      let pr = pr_list (add_str "map" (pr_pair !CF.print_hvar !CF.print_formula)) in
+      let () = y_ninfo_hp pr es.CF.es_ho_vars_map in
+      (* check if there is a contra which does not involve the HO instatiations *)
+      let (_,contra_init), _ = detect_contra conseq es in
+      (* "contra == false" denotes contradiction found *)
+      if not(contra_init) then true (*  if there is a contra which is not related to HO, return and let the rest of the system handle this contra *)
+      else
+        let new_conseq = CF.subst_hvar conseq es.CF.es_ho_vars_map in
+        let (_,contra_final), _ = detect_contra new_conseq es in
+        contra_final
+    in
+    (* do not check for unsat if there is no entail state set *)
+    let unsat_check es = map_opt_def true unsat_check es in
+    (* do not check for unsat if there is no new HO *)
+    map_list_def true (fun _ -> unsat_check es) new_ho
+
+let check_for_ho_unsat detect_contra conseq match_ho_res =
+  let _,_,_,_,es = match_ho_res in
+  let pr1 = pr_option !CF.print_entail_state in
+  Debug.no_1 "check_for_ho_unsat" pr1 string_of_bool (fun _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es
+
