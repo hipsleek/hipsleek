@@ -201,6 +201,7 @@ Should we do something about this?
 
 =============================================
 =============================================
+to make use of our transformers here:
 
 sleekengine.ml:8833: let f = Session.IProjection.update_formula f
 
@@ -408,8 +409,7 @@ Comment parameters of transform_h_formula.
 =============================================
 =============================================
 solver.ml
-move new_consumed inside the post_do_match_process
-
+move new_consumed inside the post_do_match_
 and update the es correspondingly
 
 (eg. for Sor{A or B} --> new_consumed =A or new_consumed=B)

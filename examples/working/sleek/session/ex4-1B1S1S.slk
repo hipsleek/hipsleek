@@ -65,7 +65,3 @@ expect Valid.
 //14
 checkentail x::Sess{@S aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@S aa!emp & 0<=msg;;aa?0}<>.
 expect Fail.
-
-//15
-checkentail x::Sess{@S pp18<>}<> |- x::Sess{@S pp17<>}<>.
-expect Valid.

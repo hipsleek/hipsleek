@@ -207,7 +207,7 @@ module IForm = struct
   let mk_star h1 h2 pos =
     F.mkStar h1 h2 pos
 
-  let choose_ptr ?ptr:(str="self") () =
+  let choose_ptr ?ptr:(str=session_def_id) () =
     (str,Unprimed)
 
   let mk_or f1 f2 pos =
@@ -262,13 +262,13 @@ module IForm = struct
     | Ipure_D.Var(sv, pos) -> sv
     | _ -> failwith (x_loc ^ "param_to_var is expecting a Ipure.var exp")
 
-  let heap_node_transformer fnc hform =
+  let heap_node_transformer h_fnc hform =
     match hform with
     | F.HeapNode node ->
       begin
         match node.F.h_formula_heap_session_info with
         | None    -> None
-        | Some si -> fnc si hform
+        | Some si -> h_fnc si hform
       end
     | _ -> None
 
@@ -477,7 +477,7 @@ module CForm = struct
   let mk_star h1 h2 pos =
     CF.mkStarH h1 h2 pos
 
-  let choose_ptr ?ptr:(str="self") () =
+  let choose_ptr ?ptr:(str=session_def_id) () =
     CP.SpecVar(UNK,str,Unprimed)
 
   let mk_or f1 f2 pos =
@@ -1233,7 +1233,7 @@ module Make_Session (Base: Session_base) = struct
       let sf = trans_session_formula fnc sf in
       sf in
     wrap_2ways_sess2base fnc_node hform 
-
+  
   let rec extract_bases session =
     match session with
       | SSeq s -> (extract_bases s.session_seq_formula_head) @
@@ -1376,6 +1376,7 @@ let is_projection si = let fct info = let sk = info.session_kind in
                           | _ -> false) in
   Gen.map_opt_def false fct si
 
+(* -------------------------------------- *)
 (* rename the var which is used for describing the 
    transmitted message (the renaming taregets both the
    S/R arg(s) and their corresponding ho-arg) *)
@@ -1411,11 +1412,37 @@ let irename_message_pointer_struc formula =
   let renamed_formula = F.transform_struc_formula (nonef,f_f,nonef,(somef,somef,somef,somef,somef)) renamed_struct in
   renamed_struct
   
-
 let irename_message_pointer_struc formula =
   let pr = !F.print_struc_formula in
   Debug.no_1 "irename_message_pointer_struc" pr pr irename_message_pointer_struc formula
 
+(* -------------------------------------- *)
+(*** rename the first pointer of hform  ***)
+let irename_session_pointer_heap var hform =
+  let fnc si hform =
+    match hform with
+    | F.HeapNode node -> Some (F.HeapNode {node with F.h_formula_heap_node = var;} )
+    | _ -> None
+  in
+  IForm.heap_node_transformer fnc hform
+
+let irename_all_session_pointer_struc ?to_var:(var=session_self) sformula =
+  let renamed_struct = IForm.transform_struc_formula ~trans_flow:true (irename_session_pointer_heap var) sformula in
+  renamed_struct
+
+let irename_all_session_pointer_struc ?to_var:(var=session_self) formula =
+  let pr = !F.print_struc_formula in
+  Debug.no_1 "irename_all_session_pointer_struc" pr pr (irename_all_session_pointer_struc ~to_var:var) formula
+
+let irename_first_session_pointer_struc ?to_var:(var=session_self) sformula =
+  let renamed_struct = IForm.transform_struc_formula  (irename_session_pointer_heap var) sformula in
+  renamed_struct
+
+let irename_first_session_pointer_struc ?to_var:(var=session_self) formula =
+  let pr = !F.print_struc_formula in
+  Debug.no_1 "irename_first_session_pointer_struc" pr pr (irename_first_session_pointer_struc ~to_var:var) formula
+
+(* -------------------------------------- *)
 let csplit_sor head tail si =
   match si.session_kind with
     | Projection   -> CProjection.split_sor head tail

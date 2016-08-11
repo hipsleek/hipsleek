@@ -9459,6 +9459,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
   let nf = IF.float_out_struc_min_max nf in
 
   let nf = Session.irename_message_pointer_struc nf in
+  let nf = Session.irename_all_session_pointer_struc nf in
   
   let nf = IF.rename_bound_var_struc_formula nf in
 
