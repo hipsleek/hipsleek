@@ -128,7 +128,7 @@ module type Message_type = sig
   val var_to_param: var ->  VarGen.loc -> param
   val param_to_var: param -> var
 
-  val heap_node_transformer: (node_session_info -> h_formula -> h_formula) -> h_formula -> h_formula option
+  val heap_node_transformer: (node_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option
   val transform_h_formula: ?trans_flow:bool -> (h_formula -> h_formula option)-> h_formula -> h_formula
   val transform_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> struc_formula -> struc_formula
@@ -275,7 +275,7 @@ module IForm = struct
       begin
         match node.F.h_formula_heap_session_info with
         | None    -> None
-        | Some si -> Some (fnc si hform)
+        | Some si -> fnc si hform
       end
     | _ -> None
 
@@ -300,8 +300,8 @@ module IForm = struct
       | Session | Channel | Msg ->
         let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
         let updated_node  = F.set_heap_name hform new_heap_name in
-        updated_node
-      | Star | HVar | Predicate | Emp -> hform
+        Some updated_node
+      | Star | HVar | Predicate | Emp -> Some hform
     in heap_node_transformer fct hform
 
     let update_temp_heap_name hform =
@@ -500,7 +500,7 @@ module CForm = struct
       let hform_opt  =
         match node.CF.h_formula_view_session_info with
         | None    ->  None
-        | Some si ->  Some (fnc si hform)
+        | Some si ->  fnc si hform
       in hform_opt
     | _ -> None
 
@@ -1348,9 +1348,9 @@ let is_projection si = let fct info = let sk = info.session_kind in
 let irename_message_pointer_heap hform =
   let fnc si hform =
     match si.session_kind with
-    | Projection   -> IProjection.rename_message_pointer_heap hform
-    | TPProjection -> ITPProjection.rename_message_pointer_heap hform
-    | Protocol     -> IProtocol.rename_message_pointer_heap hform
+    | Projection   -> Some (IProjection.rename_message_pointer_heap hform)
+    | TPProjection -> Some (ITPProjection.rename_message_pointer_heap hform)
+    | Protocol     -> Some (IProtocol.rename_message_pointer_heap hform)
   in
   IForm.heap_node_transformer fnc hform
 
