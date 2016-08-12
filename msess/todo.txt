@@ -455,6 +455,24 @@ this flag set)
 
 =============================================
 =============================================
+SOLVED
+
+add seq for each single transmission protocol.
+needed to correctly instantiate the HO vars
+of send/receive specs:
+
+
+void send (Channel c, int x)
+  requires c::Chan{@S !v#%L(v);;%R}<this> //* %L(x)
+  ensures  c::Chan{@S %R}<this>;
+
+
+call site:
+
+// c::Chan{@S !0}<this>
+// to correctly identify %R the current state should
+// instead be:  c::Chan{@S !0;;emp}<this>
+send (c,0);
 
 
 =============================================

@@ -9227,8 +9227,8 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   let ann_vars = IF.collect_annot_vars f in
   (* rename session msg var *)
   let f = Session.ITPProjection.update_formula f in
-  let f = Session.norm_base_formula f in
   let f = Session.irename_message_pointer f in
+  let f = Session.wrap_one_seq f in
   
   let f,_,_ = x_add case_normalize_renamed_formula prog h [] f ann_vars in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -9312,8 +9312,8 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
 
   (* rename session msg var *)
   let nf = Session.ITPProjection.update_struc_formula nf in
-  let nf = Session.norm_base_struc_formula nf in
   let nf = Session.irename_message_pointer_struc nf in
+  let nf = Session.wrap_one_seq_struc nf in
 
   (* let () = print_string ("\n b rename "^(Iprinter.string_of_struc_formula  nf))in *)
   let nf = IF.rename_bound_var_struc_formula nf in
@@ -9458,6 +9458,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
   let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) (I.annot_args_getter prog) nf  in 
   let nf = IF.float_out_struc_min_max nf in
 
+  let nf = Session.wrap_one_seq_struc nf in
   let nf = Session.irename_message_pointer_struc nf in
   let nf = Session.irename_all_session_pointer_struc nf in
   

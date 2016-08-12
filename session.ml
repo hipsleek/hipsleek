@@ -1321,8 +1321,8 @@ module Make_Session (Base: Session_base) = struct
   let norm_base_only (base: Base.h_formula): Base.h_formula =
     let fct sf =
       match sf with
-      | SBase sb -> sf (*List.nth (split_disj sf None) 0*)
-      | _ -> sf in
+      | SBase (Base _) -> mk_session_seq_formula sf SEmp (get_pos sf)
+      | _        -> sf in
     wrap_2ways_sess2base fct base
 
   let norm_base_only (base: Base.h_formula): Base.h_formula =
@@ -1442,6 +1442,34 @@ let irename_first_session_pointer_struc ?to_var:(var=session_self) formula =
   let pr = !F.print_struc_formula in
   Debug.no_1 "irename_first_session_pointer_struc" pr pr (irename_first_session_pointer_struc ~to_var:var) formula
 
+(* ------------------------------------------------------- *)
+(*** wrap sequence around single transmissions protocols ***)
+let wrap_one_seq_heap hform =
+    let fnc si hform =
+    match si.session_kind with
+    | Projection   -> Some (IProjection.norm_base_only hform)
+    | TPProjection -> Some (ITPProjection.norm_base_only hform)
+    | Protocol     -> Some (IProtocol.norm_base_only hform)
+  in
+  IForm.heap_node_transformer fnc hform
+
+let wrap_one_seq formula = 
+  let renamed_formula = IForm.transform_formula  wrap_one_seq_heap formula in
+  renamed_formula
+
+let wrap_one_seq formula =
+  let pr = !F.print_formula in
+  Debug.no_1 " wrap_one_seq" pr pr wrap_one_seq formula
+
+let wrap_one_seq_struc sformula = 
+  let renamed_struct = IForm.transform_struc_formula  wrap_one_seq_heap sformula in
+  renamed_struct
+
+let wrap_one_seq_struc formula =
+  let pr = !F.print_struc_formula in
+  Debug.no_1 "wrap_one_seq_struc" pr pr wrap_one_seq_struc formula
+
+
 (* -------------------------------------- *)
 let csplit_sor head tail si =
   match si.session_kind with
@@ -1479,21 +1507,6 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let pr1 = !CF.print_rflow_formula in
   let pr2 l = List.fold_left (fun acc x -> acc ^ x) "" (List.map (fun x -> pr1 x) l) in
   Debug.no_1 "new_lhs" pr1 pr2 new_lhs lhs
-
-let norm_base_heap hform =
-  let fnc si hform =
-    match si.session_kind with
-    | Projection   -> Some (IProjection.norm_base_only hform)
-    | TPProjection -> Some (ITPProjection.norm_base_only hform)
-    | Protocol     -> Some (IProtocol.norm_base_only hform)
-  in
-  IForm.heap_node_transformer fnc hform
- 
-let norm_base_formula f =
-  IForm.transform_formula ~trans_flow:true norm_base_heap f
-
-let norm_base_struc_formula sf =
-  IForm.transform_struc_formula ~trans_flow:true norm_base_heap sf
 
 (* need to check that it does not lead to unsoundness. Check that it filters out
    only those disjuncts which create unsound ctx with the new HO inst.
