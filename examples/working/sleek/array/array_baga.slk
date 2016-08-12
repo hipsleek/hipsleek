@@ -64,3 +64,9 @@ checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+b
 expect Valid.
 print residue.
 
+checkentail base::arr_seg<a,y> * k::arrI<_> & a<y & k=base+a-1
+   |- k>=base
+   //a>0
+  .
+expect Valid.
+print residue.

@@ -1786,8 +1786,8 @@ let get_root_view prog name ptr args =
   let sst = List.combine (CP.self_sv::para) (ptr::args) in
   let ans = vdef.view_actual_root in
   let ans = fresh_actual_root ans in
-  let () = y_tinfo_hp (add_str "actual root" (pr_opt (pr_pair !CP.print_sv !CP.print_formula))) ans in
-  let () = y_tinfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
+  let () = y_binfo_hp (add_str "actual root" (pr_opt (pr_pair !CP.print_sv !CP.print_formula))) ans in
+  let () = y_binfo_hp (add_str "sst" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) sst in
   let ans = map_opt (fun (v,f) -> (v,CP.apply_subs sst f)) ans in
   ans
 
