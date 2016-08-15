@@ -1,0 +1,25 @@
+data arrI {
+  int val;
+}.
+
+pred arr_bnd<i,n,m> == i=n & i>=0
+  or x::arrI<v>*self::arr_bnd<i+1,n,m> & x=self+i & i>=0 & v<=m
+  inv n>=i & i>=0.
+
+pred arr_seg<i,n> == i=n & n>=0
+  or x::arrI<v>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i >=0. 
+
+pred arr_sorted<i,n,S> == i=n & i>=0 & S={}
+  or x::arrI<v> * self::arr_sorted<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2)
+     & forall(w:v notin S2 | v<=w)
+     inv n>=i & i>=0.
+
+lemma_unsafe self::arr_sorted<i,n,S1> & i<=m & m<=n
+   <-> self::arr_sorted<i,m,S2>*self::arr_sorted<m,n,S3> & S1=union(S2,S3).
+
+checkentail x::arr_seg<i,n> |- y::arr_seg<i,n>.
+expect Valid.
+
+checkentail x::arr_sorted<i,n,S1> |- x::arr_sorted<i,n-1,S2>.
+expect Valid.
