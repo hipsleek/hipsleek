@@ -123,8 +123,8 @@ module type Message_type = sig
   val transform_struc_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> struc_formula -> struc_formula
   val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
   val update_temp_heap_name: h_formula -> h_formula option
-  val update_formula: formula -> formula
-  val update_struc_formula: struc_formula -> struc_formula
+  (* val update_formula: formula -> formula *)
+  (* val update_struc_formula: struc_formula -> struc_formula *)
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
@@ -294,24 +294,24 @@ module IForm = struct
         let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
-      | Star | HVar | Predicate | Emp -> Some hform
+      | Star | HVar | Predicate | Emp ->  None
     in heap_node_transformer fct hform
 
     let update_temp_heap_name hform =
       let pr = !print_h_formula in
       Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) update_temp_heap_name hform 
 
-  let update_struc_formula f = transform_struc_formula ~trans_flow:true update_temp_heap_name f
+  (* let update_struc_formula f = transform_struc_formula ~trans_flow:true update_temp_heap_name f *)
 
-  let update_struc_formula f = 
-      let pr = !print_struc_formula in
-      Debug.no_1 "update_struc_formula" pr pr update_struc_formula f 
+  (* let update_struc_formula f =  *)
+  (*     let pr = !print_struc_formula in *)
+  (*     Debug.no_1 "update_struc_formula" pr pr update_struc_formula f  *)
 
-  let update_formula f = transform_formula ~trans_flow:true update_temp_heap_name f
+  (* let update_formula f = transform_formula ~trans_flow:true update_temp_heap_name f *)
 
-  let update_formula f =
-    let pr = !print in
-    Debug.no_1 "update_formula" pr pr update_formula f
+  (* let update_formula f = *)
+  (*   let pr = !print in *)
+  (*   Debug.no_1 "update_formula" pr pr update_formula f *)
 
   let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
 
@@ -523,11 +523,11 @@ module CForm = struct
   let map_one_rflow_formula fnc rflow_formula =
     CF.map_one_rflow_formula fnc rflow_formula  
   
-  let update_temp_heap_name hform = None 
+  let update_temp_heap_name hform = None
 
-  let update_formula f = f
+  (* let update_formula f = f *)
 
-  let update_struc_formula f = f
+  (* let update_struc_formula f = f *)
 
   let subst_param  (sst: (var * var) list) p =
     try  let _,res = List.find (fun (a,_) -> CP.eq_spec_var a p) sst in res
@@ -1124,9 +1124,9 @@ module Make_Session (Base: Session_base) = struct
     let fct h = Some (Base.mk_star h h_form pos) in
     Base.transform_struc_formula(* _trans_heap_node *) fct form_orig
 
-  let update_formula = Base.update_formula
+  (* let update_formula = Base.update_formula *)
 
-  let update_struc_formula = Base.update_struc_formula
+  (* let update_struc_formula = Base.update_struc_formula *)
 
   let trans_h_formula_to_session h_formula =
     let rec helper h_formula =
@@ -1341,6 +1341,9 @@ module Make_Session (Base: Session_base) = struct
     let pr = !Base.print_h_formula in
     Debug.no_1 "norm_last_seq_node" pr pr norm_last_seq_node base
 
+  let update_temp_name_heap (base: Base.h_formula): Base.h_formula option =
+    Base.update_temp_heap_name base
+
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -1500,7 +1503,7 @@ let wrap_last_seq_node formula =
 
 let wrap_last_seq_node formula =
   let pr = !F.print_formula in
-  Debug.no_1 " wrap_last_seq_node" pr pr wrap_last_seq_node formula
+  Debug.no_1 "wrap_last_seq_node" pr pr wrap_last_seq_node formula
 
 let wrap_last_seq_node_struc sformula = 
   let renamed_struct = IForm.transform_struc_formula ~trans_flow:true  wrap_last_seq_node_heap sformula in
@@ -1510,6 +1513,33 @@ let wrap_last_seq_node_struc formula =
   let pr = !F.print_struc_formula in
   Debug.no_1 "wrap_last_seq_node_struc" pr pr wrap_last_seq_node_struc formula
 
+
+(* --------------------------------------------------------------- *)
+(***               update the temporary view name                ***)
+(***          eg: x::TEMP_SESS{...}<> --> x::Send{...}<>         ***)
+
+let update_temp_name_heap hform =
+    let fnc si hform =
+    match si.session_kind with
+    | Projection   ->  (IProjection.update_temp_name_heap hform)
+    | TPProjection ->  (ITPProjection.update_temp_name_heap hform)
+    | Protocol     ->  (IProtocol.update_temp_name_heap hform)
+  in
+  IForm.heap_node_transformer fnc hform
+
+let update_temp_name form =
+  IForm.transform_formula ~trans_flow:true update_temp_name_heap form
+
+let update_temp_name form =
+  let pr = !F.print_formula in
+  Debug.no_1 "update_temp_name" pr pr wrap_last_seq_node form
+
+let update_temp_name_struc sform =
+  IForm.transform_struc_formula ~trans_flow:true update_temp_name_heap sform
+
+let update_temp_name_struc sform =
+  let pr = !F.print_struc_formula in
+  Debug.no_1 "update_temp_name_struc" pr pr update_temp_name_struc sform
 
 (* -------------------------------------- *)
 let csplit_sor head tail si =
@@ -1602,7 +1632,7 @@ let norm_case vb =
   Debug.no_1 "Session.norm_case" pr pr norm_case vb
   
 let norm_slk_struct sf =
-  let sf = ITPProjection.update_struc_formula sf in
+  let sf = update_temp_name_struc sf in
   let sf = struc_norm sf in
   sf
 
@@ -1612,7 +1642,7 @@ let norm_slk_struct sf =
 
 
 let norm_slk_formula form =
-  let form = ITPProjection.update_formula form in
+  let form = update_temp_name form in
   let form = formula_norm form in
   form
 
