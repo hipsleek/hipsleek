@@ -274,50 +274,53 @@ module IForm = struct
   let map_one_rflow_formula fnc rflow_formula =
     F.map_one_rflow_formula fnc rflow_formula
 
-  let rec heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
-    match hform with
-    | F.HeapNode node ->
-      begin
-        match node.F.h_formula_heap_session_info with
-        | None    ->
-          if not(include_flow) then None
-          else
-            let f_h nh =
-              match nh with
-              | F.HeapNode node_new ->
-                let fct = heap_node_transformer ~flow:include_flow h_fnc in
-                let trans_f = transform_formula fct in
-                Some (F.map_rflow_formula_list trans_f node_new)
-              | _ -> None in
-            Some (transform_h_formula f_h hform) 
-        | Some si -> (* h_fnc si hform *)
-          let new_heap = h_fnc si hform in
-          if not(include_flow) then new_heap
-          else
-            let new_heap = 
-              match new_heap with
-              | None   ->  hform
-              | Some e ->  e in
-            let f_h nh =
-              match nh with
-              | F.HeapNode node_new ->
-                let fct = heap_node_transformer ~flow:include_flow h_fnc in
-                let trans_f = transform_formula fct in
-                Some (F.map_rflow_formula_list trans_f node_new)
-              | _ -> None in
-            Some (transform_h_formula f_h new_heap) 
-      end
-    | _ -> None
+  let heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
+    let loop_through_rflow helper hform =
+      let f_h nh =
+        match nh with
+        | F.HeapNode node_new ->
+          let fct = helper h_fnc in
+          let trans_f = transform_formula fct in
+          Some (F.map_rflow_formula_list trans_f node_new)
+        | _ -> None in
+      Some (transform_h_formula f_h hform) in
+    let loop_through_rflow helper hform =
+      let pr = !print_h_formula in
+      Debug.no_1 "loop_through_rflow" pr (pr_opt pr) (fun _ -> loop_through_rflow helper hform) hform in
+    let rec helper h_fnc hform = 
+      match hform with
+      | F.HeapNode node ->
+        begin
+          match node.F.h_formula_heap_session_info with
+          | None    ->
+            let () = y_ninfo_hp (add_str "no_sess" !print_h_formula) hform in
+            (* if not(include_flow) then None *)
+            (* else  *)loop_through_rflow helper hform
+          | Some si ->
+            let () = y_ninfo_hp (add_str "some_sess" !print_h_formula) hform in
+            let new_heap = h_fnc si hform in
+            let () = y_ninfo_hp (add_str "some_sess" (pr_opt !print_h_formula)) new_heap in
+            if not(include_flow) then new_heap
+            else
+              let new_heap = 
+                match new_heap with
+                | None   ->  hform
+                | Some e ->  e in
+              loop_through_rflow helper new_heap
+        end
+      | _ -> None
+    in helper h_fnc hform
 
   let update_temp_heap_name hform =
     let fct si hform = match si.node_kind with
       | Sequence | SOr | Send | Receive | Transmission
       | Session | Channel | Msg ->
+        let () = y_ninfo_hp (add_str "node_kind" (string_of_node_kind)) si.node_kind in
         let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
       | Star | HVar | Predicate | Emp ->  None
-    in heap_node_transformer ~flow:true fct hform
+    in heap_node_transformer ~flow:false fct hform
 
     let update_temp_heap_name hform =
       let pr = !print_h_formula in
@@ -1372,6 +1375,10 @@ module Make_Session (Base: Session_base) = struct
   let update_temp_name_heap (base: Base.h_formula): Base.h_formula option =
     Base.update_temp_heap_name base
 
+  let update_temp_name_heap (base: Base.h_formula): Base.h_formula option =
+    let pr = !Base.print_h_formula in
+    Debug.no_1 "update_temp_name_heap" pr (pr_opt pr) (fun _ -> update_temp_name_heap (base: Base.h_formula)) base
+
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -1547,7 +1554,8 @@ let wrap_last_seq_node_struc formula =
 (***          eg: x::TEMP_SESS{...}<> --> x::Send{...}<>         ***)
 
 let update_temp_name_heap hform =
-    let fnc si hform =
+  let fnc si hform =
+    let () = y_ninfo_hp (add_str "update_temp_name_heap" !IForm.print_h_formula) hform in
     match si.session_kind with
     | Projection   ->  (IProjection.update_temp_name_heap hform)
     | TPProjection ->  (ITPProjection.update_temp_name_heap hform)
@@ -1560,7 +1568,7 @@ let update_temp_name form =
 
 let update_temp_name form =
   let pr = !F.print_formula in
-  Debug.no_1 "update_temp_name" pr pr wrap_last_seq_node form
+  Debug.no_1 "update_temp_name" pr pr update_temp_name form
 
 let update_temp_name_struc sform =
   IForm.transform_struc_formula update_temp_name_heap sform
