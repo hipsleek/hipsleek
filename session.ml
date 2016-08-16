@@ -117,10 +117,10 @@ module type Message_type = sig
   val var_to_param: var ->  VarGen.loc -> param
   val param_to_var: param -> var
 
-  val heap_node_transformer: (node_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option
-  val transform_h_formula: ?trans_flow:bool -> (h_formula -> h_formula option)-> h_formula -> h_formula
-  val transform_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> formula -> formula
-  val transform_struc_formula:  ?trans_flow:bool -> (h_formula -> h_formula option)-> struc_formula -> struc_formula
+  val heap_node_transformer:  ?flow:bool -> (node_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option
+  val transform_h_formula: (* ?trans_flow:bool -> *) (h_formula -> h_formula option)-> h_formula -> h_formula
+  val transform_formula:  (* ?trans_flow:bool -> *) (h_formula -> h_formula option)-> formula -> formula
+  val transform_struc_formula:  (* ?trans_flow:bool -> *) (h_formula -> h_formula option)-> struc_formula -> struc_formula
   val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
   val update_temp_heap_name: h_formula -> h_formula option
   (* val update_formula: formula -> formula *)
@@ -262,30 +262,55 @@ module IForm = struct
     | Ipure_D.Var(sv, pos) -> sv
     | _ -> failwith (x_loc ^ "param_to_var is expecting a Ipure.var exp")
 
-  let heap_node_transformer h_fnc hform =
+  let transform_h_formula (* ?trans_flow:(flow = false) *) f_h h =
+    let fcts = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
+    F.transform_h_formula (* ~flow:flow *) fcts h
+
+  let transform_formula  (* ?trans_flow:(flow = false) *) fct formula =
+    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
+    F.transform_formula (* ~flow:flow *) fcts formula
+
+  let transform_struc_formula  (* ?trans_flow:(flow = false) *) fct struc_form =
+    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
+    F.transform_struc_formula (* ~flow:flow *) fcts struc_form
+
+  let map_one_rflow_formula fnc rflow_formula =
+    F.map_one_rflow_formula fnc rflow_formula
+
+  let rec heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
     match hform with
     | F.HeapNode node ->
       begin
         match node.F.h_formula_heap_session_info with
-        | None    -> None
-        | Some si -> h_fnc si hform
+        | None    ->
+          if not(include_flow) then None
+          else
+            let f_h nh =
+              match nh with
+              | F.HeapNode node_new ->
+                let fct = heap_node_transformer ~flow:include_flow h_fnc in
+                let trans_f = transform_formula  (* ~trans_flow:include_flow *) fct in
+                Some (F.map_rflow_formula_list trans_f node_new)
+              | _ -> None in
+            Some (transform_h_formula (* ~trans_flow:include_flow *) f_h hform) 
+        | Some si -> (* h_fnc si hform *)
+          let new_heap = h_fnc si hform in
+          if not(include_flow) then new_heap
+          else
+            let new_heap = 
+              match new_heap with
+              | None   ->  hform
+              | Some e ->  e in
+            let f_h nh =
+              match nh with
+              | F.HeapNode node_new ->
+                let fct = heap_node_transformer ~flow:include_flow h_fnc in
+                let trans_f = transform_formula  (* ~trans_flow:include_flow *) fct in
+                Some (F.map_rflow_formula_list trans_f node_new)
+              | _ -> None in
+            Some (transform_h_formula (* ~trans_flow:include_flow *) f_h new_heap) 
       end
     | _ -> None
-
-  let transform_h_formula ?trans_flow:(flow = false) f_h h =
-    let fcts = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
-    F.transform_h_formula ~flow:flow fcts h
-
-  let transform_formula  ?trans_flow:(flow = false) fct formula =
-    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
-    F.transform_formula ~flow:flow fcts formula
-
-  let transform_struc_formula  ?trans_flow:(flow = false) fct struc_form =
-    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
-    F.transform_struc_formula ~flow:flow fcts struc_form
-
-  let map_one_rflow_formula fnc rflow_formula =
-    F.map_one_rflow_formula fnc rflow_formula
 
   let update_temp_heap_name hform =
     let fct si hform = match si.node_kind with
@@ -295,7 +320,7 @@ module IForm = struct
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
       | Star | HVar | Predicate | Emp ->  None
-    in heap_node_transformer fct hform
+    in heap_node_transformer ~flow:true fct hform
 
     let update_temp_heap_name hform =
       let pr = !print_h_formula in
@@ -500,7 +525,22 @@ module CForm = struct
 
   let param_to_var parm = parm
 
-  let heap_node_transformer fnc hform =
+  let transform_h_formula (* ?trans_flow:(flow = false) *) f_h h =
+    let fncs = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
+    CF.transform_h_formula (* ~flow:flow *) fncs h
+
+  let transform_formula (* ?trans_flow:(flow = false) *) fct f =
+    let fcts = (nonef, nonef, fct, (somef, somef, somef, somef, somef)) in
+    CF.transform_formula (* ~flow:flow *) fcts f
+
+  let transform_struc_formula (* ?trans_flow:(flow = false) *) fct struc_form =
+    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
+    CF.transform_struc_formula fcts struc_form
+
+  let map_one_rflow_formula fnc rflow_formula =
+    CF.map_one_rflow_formula fnc rflow_formula  
+  
+  let heap_node_transformer ?flow:(include_flow=false) fnc hform =
     match hform with
     | CF.ViewNode node ->
       let hform_opt  =
@@ -510,20 +550,30 @@ module CForm = struct
       in hform_opt
     | _ -> None
 
-  let transform_h_formula ?trans_flow:(flow = false) f_h h =
-    let fncs = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
-    CF.transform_h_formula ~flow:flow fncs h
-
-  let transform_formula ?trans_flow:(flow = false) fct f =
-    let fcts = (nonef, nonef, fct, (somef, somef, somef, somef, somef)) in
-    CF.transform_formula ~flow:flow fcts f
-
-  let transform_struc_formula ?trans_flow:(flow = false) fct struc_form =
-    let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
-    CF.transform_struc_formula fcts struc_form
-
-  let map_one_rflow_formula fnc rflow_formula =
-    CF.map_one_rflow_formula fnc rflow_formula  
+  let rec heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
+    match hform with
+    | CF.ViewNode node ->
+      begin
+        match node.CF.h_formula_view_session_info with
+        | None    -> None
+        | Some si -> (* h_fnc si hform *)
+          let new_heap = h_fnc si hform in 
+          if not(include_flow) then new_heap
+          else
+            let new_heap = 
+              match new_heap with
+              | None   -> hform
+              | Some e -> e in
+            let f_h nh =
+              match nh with
+              | CF.ViewNode node_new ->
+                let fct = heap_node_transformer ~flow:include_flow h_fnc in
+                let trans_f = transform_formula  (* ~trans_flow:include_flow *) fct in
+                Some (CF.map_rflow_formula_list trans_f node_new)
+              | _ -> None in
+            Some (transform_h_formula (* ~trans_flow:include_flow *) f_h new_heap) 
+      end
+    | _ -> None
   
   let update_temp_heap_name hform = None
 
@@ -1404,10 +1454,10 @@ let irename_message_pointer_heap hform =
     | TPProjection -> Some (ITPProjection.rename_message_pointer_heap hform)
     | Protocol     -> Some (IProtocol.rename_message_pointer_heap hform)
   in
-  IForm.heap_node_transformer fnc hform
+  IForm.heap_node_transformer ~flow:true fnc hform
 
 let irename_message_pointer formula =
-  let renamed_formula = IForm.transform_formula ~trans_flow:true irename_message_pointer_heap formula in
+  let renamed_formula = IForm.transform_formula (* ~trans_flow:true *) irename_message_pointer_heap formula in
   (* add the freshly introduced vars to the exists list *)
   let fv = F.all_fv formula in
   let all_fv = F.all_fv renamed_formula in
@@ -1420,7 +1470,7 @@ let irename_message_pointer formula =
   Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer formula
 
 let irename_message_pointer_struc formula =
-  let renamed_struct = IForm.transform_struc_formula ~trans_flow:true irename_message_pointer_heap formula in
+  let renamed_struct = IForm.transform_struc_formula (* ~trans_flow:true *) irename_message_pointer_heap formula in
   (* add the freshly introduced vars to the exists list *)
   let fv = F.struc_free_vars false formula in
   let all_fv = F.struc_free_vars false renamed_struct in
@@ -1435,16 +1485,16 @@ let irename_message_pointer_struc formula =
 
 (* -------------------------------------- *)
 (*** rename the first pointer of hform  ***)
-let irename_session_pointer_heap var hform =
+let irename_session_pointer_heap ?flow:(flow=false) var hform =
   let fnc si hform =
     match hform with
     | F.HeapNode node -> Some (F.HeapNode {node with F.h_formula_heap_node = var;} )
     | _ -> None
   in
-  IForm.heap_node_transformer fnc hform
+  IForm.heap_node_transformer ~flow:flow fnc hform
 
 let irename_all_session_pointer_struc ?to_var:(var=session_self) sformula =
-  let renamed_struct = IForm.transform_struc_formula ~trans_flow:true (irename_session_pointer_heap var) sformula in
+  let renamed_struct = IForm.transform_struc_formula (* ~trans_flow:true *) (irename_session_pointer_heap ~flow:true var) sformula in
   renamed_struct
 
 let irename_all_session_pointer_struc ?to_var:(var=session_self) formula =
@@ -1497,10 +1547,10 @@ let wrap_last_seq_node_heap hform =
     | TPProjection -> Some (ITPProjection.norm_last_seq_node hform)
     | Protocol     -> Some (IProtocol.norm_last_seq_node hform)
   in
-  IForm.heap_node_transformer fnc hform
+  IForm.heap_node_transformer ~flow:true fnc hform
 
 let wrap_last_seq_node formula = 
-  let renamed_formula = IForm.transform_formula ~trans_flow:true wrap_last_seq_node_heap formula in
+  let renamed_formula = IForm.transform_formula (* ~trans_flow:true *) wrap_last_seq_node_heap formula in
   renamed_formula
 
 let wrap_last_seq_node formula =
@@ -1508,7 +1558,7 @@ let wrap_last_seq_node formula =
   Debug.no_1 "wrap_last_seq_node" pr pr wrap_last_seq_node formula
 
 let wrap_last_seq_node_struc sformula = 
-  let renamed_struct = IForm.transform_struc_formula ~trans_flow:true  wrap_last_seq_node_heap sformula in
+  let renamed_struct = IForm.transform_struc_formula (* ~trans_flow:true  *) wrap_last_seq_node_heap sformula in
   renamed_struct
 
 let wrap_last_seq_node_struc formula =
@@ -1527,17 +1577,17 @@ let update_temp_name_heap hform =
     | TPProjection ->  (ITPProjection.update_temp_name_heap hform)
     | Protocol     ->  (IProtocol.update_temp_name_heap hform)
   in
-  IForm.heap_node_transformer fnc hform
+  IForm.heap_node_transformer ~flow:true fnc hform
 
 let update_temp_name form =
-  IForm.transform_formula ~trans_flow:true update_temp_name_heap form
+  IForm.transform_formula (* ~trans_flow:true *) update_temp_name_heap form
 
 let update_temp_name form =
   let pr = !F.print_formula in
   Debug.no_1 "update_temp_name" pr pr wrap_last_seq_node form
 
 let update_temp_name_struc sform =
-  IForm.transform_struc_formula ~trans_flow:true update_temp_name_heap sform
+  IForm.transform_struc_formula (* ~trans_flow:true *) update_temp_name_heap sform
 
 let update_temp_name_struc sform =
   let pr = !F.print_struc_formula in
