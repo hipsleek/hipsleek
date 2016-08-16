@@ -1709,8 +1709,7 @@ let imm_transform_h_formula_helper f h =
 (* @a ---> f @a *)
 let imm_transform_h_formula f h =
   let fnct h = imm_transform_h_formula_helper f h in
-  let fncs = (nonef,nonef,fnct,(somef,somef,somef,somef,somef)) in
-  let h = CF.transform_h_formula fncs h in
+  let h = CF.transform_h_formula fnct h in
   h
 
 (* @a ---> f @a *)

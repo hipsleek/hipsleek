@@ -260,8 +260,7 @@ let encode_h_formula_x (hf: CF.h_formula) : ident list =
       | CF.Star _ -> None
       | _ -> Some hf
     ) in
-  let fncs = (nonef,nonef,f_hf,(somef,somef,somef,somef,somef)) in
-  let todo_unk = CF.transform_h_formula fncs hf in
+  let todo_unk = CF.transform_h_formula f_hf hf in
   !coded_hf
 
 let encode_h_formula (hf: CF.h_formula) : ident list =

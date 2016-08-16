@@ -3434,8 +3434,7 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
           Some hf
         | _ -> None
       ) in
-    let fncs = (nonef,nonef,f_hf,(somef,somef,somef,somef,somef)) in
-    let todo_unk = F.transform_h_formula fncs hf in
+    let todo_unk = F.transform_h_formula f_hf hf in
     !views
   ) in
   let is_tail_recursive_branch (f: F.formula) = (
@@ -3614,8 +3613,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
       ) in
     let () = List.iter (fun f->
         let (hf,pf,_,_,_,_) = F.split_components f in
-        let fncs = (nonef,nonef,collect_node,(somef,somef,somef,somef,somef)) in
-        let todo_unk = F.transform_h_formula fncs hf in
+        let todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
         residents := F.find_close !residents eqs;
       ) branches in
@@ -3624,8 +3622,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
         (* unfold the inductive formulathen collect residents *)
         let new_f = unfold_base_case_formula f vd base_f in
         let (hf,pf,_,_,_,_) = F.split_components new_f in
-        let fncs = (nonef,nonef,collect_node,(somef,somef,somef,somef,somef)) in
-        let todo_unk = F.transform_h_formula fncs hf in
+        let todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
         residents := F.find_close !residents eqs;
       ) induct_fs in

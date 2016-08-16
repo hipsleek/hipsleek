@@ -263,8 +263,7 @@ module IForm = struct
     | _ -> failwith (x_loc ^ "param_to_var is expecting a Ipure.var exp")
 
   let transform_h_formula (* ?trans_flow:(flow = false) *) f_h h =
-    let fcts = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
-    F.transform_h_formula (* ~flow:flow *) fcts h
+    F.transform_h_formula (* ~flow:flow *) f_h h
 
   let transform_formula  (* ?trans_flow:(flow = false) *) fct formula =
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
@@ -526,8 +525,7 @@ module CForm = struct
   let param_to_var parm = parm
 
   let transform_h_formula (* ?trans_flow:(flow = false) *) f_h h =
-    let fncs = (nonef,nonef,f_h,(somef,somef,somef,somef,somef)) in
-    CF.transform_h_formula (* ~flow:flow *) fncs h
+    CF.transform_h_formula (* ~flow:flow *) f_h h
 
   let transform_formula (* ?trans_flow:(flow = false) *) fct f =
     let fcts = (nonef, nonef, fct, (somef, somef, somef, somef, somef)) in
