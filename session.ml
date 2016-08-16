@@ -1580,3 +1580,42 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
   let pr1 = pr_option !CF.print_entail_state in
   Debug.no_1 "check_for_ho_unsat" pr1 string_of_bool (fun _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es
 
+let struc_norm sf =
+  let sf = wrap_one_seq_struc sf in
+  let sf = wrap_last_seq_node_struc sf in
+  let sf = x_add_1 irename_message_pointer_struc sf in
+  sf
+
+let formula_norm form =
+  let form = wrap_one_seq form in
+  let form = wrap_last_seq_node form in
+  let form = x_add_1 irename_message_pointer form in
+  form
+
+let norm_case vb =  
+  let vb = struc_norm vb in
+  let vb = irename_all_session_pointer_struc vb in
+  vb
+
+let norm_case vb =  
+  let pr = !F.print_struc_formula in
+  Debug.no_1 "Session.norm_case" pr pr norm_case vb
+  
+let norm_slk_struct sf =
+  let sf = ITPProjection.update_struc_formula sf in
+  let sf = struc_norm sf in
+  sf
+
+let norm_slk_struct sf =
+  let pr = !F.print_struc_formula in
+  Debug.no_1 "Session.norm_slk_struct" pr pr norm_slk_struct sf
+
+
+let norm_slk_formula form =
+  let form = ITPProjection.update_formula form in
+  let form = formula_norm form in
+  form
+
+let norm_slk_formula form =
+  let pr = !F.print_formula in
+  Debug.no_1 "Session.norm_slk_formula" pr pr norm_slk_formula form
