@@ -8040,7 +8040,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let (tl, ho_args) = List.fold_left (fun (tl, r) a -> 
             let (ntl, b) = trans_f a.IF.rflow_base tl in 
             (ntl, ({ CF.rflow_kind = a.IF.rflow_kind; 
-                     CF.rflow_base = b; })::r)) 
+                     CF.rflow_base = b;
+                     CF.rflow_session_kind = a.IF.rflow_session_kind;
+                   })::r)) 
             (tl, []) ho_exps in
         let ho_args = List.rev ho_args in
         if (deref > 0) then (

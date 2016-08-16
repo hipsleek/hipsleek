@@ -152,6 +152,7 @@ and formula =
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
   rflow_base: (* struc_ *)formula;
+  rflow_session_kind: session_kind option;
   (* rflow_global_vars: CP.spec_var list; *)
 }
 
