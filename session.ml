@@ -1315,13 +1315,17 @@ module Make_Session (Base: Session_base) = struct
     let head_session = trans_h_formula_to_session
                        (Base.get_h_formula_from_ho_param_formula head) in
     let disj_list = sor_disj_list head_session in
-      let disj_list =
+    let disj_list =
+      let tail_session =
         match tail with
-        | None      -> disj_list
-        | Some tail -> let tail_session = trans_h_formula_to_session
-                                         (Base.get_h_formula_from_ho_param_formula tail) in
-                       let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
-                       disj_list in
+        | None      -> SEmp (* disj_list *)
+        | Some tail ->
+          let tail_session = trans_h_formula_to_session
+              (Base.get_h_formula_from_ho_param_formula tail) in
+          tail_session
+      in
+      let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
+      disj_list in
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
     let disj_list = List.map (fun x -> trans_from_session x) disj_list in
     let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x ~sess_kind:(Some Base.base_type) no_pos) disj_list in

@@ -10,17 +10,17 @@ print residue.
 expect Fail.
 
 /* should result in a single context*/
-checkentail x::Chan{@S ?1 or ?0}<> & z=1 |- x::Chan{@S ?m#%L(m)}<> * %L(z).
+checkentail x::Chan{@S ?1 or ?0}<this> & z=1 |- x::Chan{@S ?m#%L(m)}<this> * %L(z).
 print residue.
 expect Valid.
 
 /* should result in a single context*/
-checkentail x::Chan{@S ?1 or ?0}<> & z=3 |- x::Chan{@S ?m#%L(m)}<> * %L(z).
+checkentail x::Chan{@S ?1 or ?0}<this> & z=3 |- x::Chan{@S ?m#%L(m)}<this> * %L(z).
 print residue.
 expect Fail.
 
 /* should result in a disjunctive context*/
-checkentail x::Chan{@S ?1 or ?0}<> & z=1 |- x::Chan{@S ?m#%L(m)}<>.
+checkentail x::Chan{@S ?1 or ?0}<this> & z=1 |- x::Chan{@S ?m#%L(m)}<this>.
 print residue.
 expect Valid.
 
