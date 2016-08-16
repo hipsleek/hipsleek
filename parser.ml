@@ -35,9 +35,6 @@ let set_parser name =
 
 let pred_root_id = ref ""
 
-(* flag to distinguish between two-party and multi-party Projection types *)
-let projection_kind = ref Projection;
-
 (* type definitions *)
 
 type type_decl =
@@ -1390,19 +1387,19 @@ protocol_formula:
 ];
 
 proj_view_decl:
-  [[ vh = view_header; `EQEQ; f = formula
+  [[ vh = view_header; `EQEQ; (f,pk) = formula
      -> { vh with
-          view_session_info = Some (mk_view_session_info ~sk:!projection_kind ());
+          view_session_info = Some (mk_view_session_info ~sk:pk ());
           view_session_formula = Some f}
    ]];
 
 formula:
-    [[ peek_tpprojection; p = tpprojection_formula -> let () = projection_kind := TPProjection in
-       Session.TPProjectionSession p
-     | peek_protocol; p = protocol_formula -> let () = projection_kind := Protocol in
-       Session.ProtocolSession p
-     | p = projection_formula -> let () = projection_kind := Projection in
-       Session.ProjectionSession p
+    [[ peek_tpprojection; p = tpprojection_formula -> 
+       (Session.TPProjectionSession p, TPProjection)
+     | peek_protocol; p = protocol_formula -> 
+       (Session.ProtocolSession p, Protocol)
+     | p = projection_formula ->  
+       (Session.ProjectionSession p, Projection)
      ]];
 
 projection_formula:
@@ -1764,7 +1761,7 @@ rflow_kind:
 
 rflow_form: 
   [
-    [ `SAT; p = formula ->
+    [ `SAT; (p,pk) = formula ->
      let loc = (get_pos_camlp4 _loc 1) in
      let form = (match p with
                   | Session.ProjectionSession s -> Session.IProjection.mk_formula_heap_only
@@ -1775,7 +1772,7 @@ rflow_form:
                                                        (Session.IProtocol.trans_from_session s) loc) in
      { F.rflow_kind = NEUTRAL;
        F.rflow_base = form;
-       F.rflow_session_kind = Some !projection_kind; }
+       F.rflow_session_kind = Some pk; }
   ]
   | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
