@@ -266,6 +266,174 @@ let rec is_param_ann_list_empty (anns:  P.ann option list) : bool =
   | (Some _)::t  -> false
   | (None)::t    -> true  && (is_param_ann_list_empty t)
 
+let map_one_rflow_formula f rf =
+  {rf with rflow_base = f rf.rflow_base}
+
+let map_rflow_formula_list trans_f node =
+  HeapNode {node with h_formula_heap_ho_arguments =
+                           List.map (map_one_rflow_formula trans_f)
+                             node.h_formula_heap_ho_arguments}
+
+let map_rflow_formula include_flow trans_f hform = 
+  if not(include_flow) then hform
+  else 
+    match hform with
+    | HeapNode h ->  map_rflow_formula_list trans_f h
+    | _ -> hform
+
+let rec transform_h_formula_x (f: h_formula -> h_formula option) (e: h_formula)
+  : h_formula =
+  let r =  f e in 
+  match r with
+  | Some e1 -> e1 
+  | None  -> (
+      match e with  
+      | Star s ->
+        let new_h1 = transform_h_formula f s.h_formula_star_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_star_h2 in
+        Star {s with h_formula_star_h1 = new_h1;
+                     h_formula_star_h2 = new_h2;}
+      | StarMinus s ->
+        let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
+        StarMinus {s with h_formula_starminus_h1 = new_h1;
+                          h_formula_starminus_h2 = new_h2;}
+      | Conj s ->
+        let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_conj_h1 in
+        Conj {s with h_formula_conj_h1 = new_h1;
+                     h_formula_conj_h2 = new_h2;}
+      | ConjStar s ->
+        let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
+        ConjStar {s with h_formula_conjstar_h1 = new_h1;
+                         h_formula_conjstar_h2 = new_h2;}
+      | ConjConj s ->
+        let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
+        ConjConj {s with h_formula_conjconj_h1 = new_h1;
+                         h_formula_conjconj_h2 = new_h2;}
+      | Phase s ->
+        let new_rd = transform_h_formula f s.h_formula_phase_rd in
+        let new_rw = transform_h_formula f s.h_formula_phase_rw in
+        Phase {s with h_formula_phase_rd = new_rd;
+                      h_formula_phase_rw = new_rw;}
+      | HeapNode _ -> e 
+      | HeapNode2 _
+      | ThreadNode _
+      | HRel _ | HTrue | HFalse | HEmp | HVar _ -> e
+    )
+
+and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
+  : h_formula =
+  let pr = !print_h_formula in
+  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x f e) e
+
+let rec transform_formula_x f (e:formula):formula =
+  let rec helper f e = (
+    let (_, f_f, f_h_f, f_p_t) = f in
+    let r =  f_f e in
+    match r with
+    | Some e1 -> e1
+    | None  -> (
+        match e with
+        | Base b ->
+          let new_heap = transform_h_formula f_h_f  b.formula_base_heap in
+          let new_pure = P.transform_formula f_p_t b.formula_base_pure in
+          Base { b with formula_base_heap = new_heap;
+                        formula_base_pure = new_pure; }
+        | Or o ->
+          Or {o with formula_or_f1 = helper f o.formula_or_f1;
+                     formula_or_f2 = helper f o.formula_or_f2;}
+        | Exists e ->
+          let new_heap = transform_h_formula f_h_f e.formula_exists_heap in
+          let new_pure = P.transform_formula f_p_t e.formula_exists_pure in
+          Exists { e with formula_exists_heap = new_heap;
+                          formula_exists_pure = new_pure;}
+      )
+  ) in
+  helper f e
+
+and transform_formula f (e:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x f e) e
+
+let rec transform_struc_formula_x f (e:struc_formula) : struc_formula =
+  let (f_e_f, f_f, f_h_f, f_p_t) = f in
+  let r = f_e_f e in 
+  match r with
+  | Some e1 -> e1
+  | None -> (
+      match e with
+      | ECase c -> 
+        let br' = List.map (fun (c1,c2)->
+            ((P.transform_formula f_p_t c1),(transform_struc_formula f c2))
+          ) c.formula_case_branches in
+        ECase {c with formula_case_branches = br';}
+      | EBase b ->
+        let new_base = transform_formula f b.formula_struc_base in
+        let new_cont = map_opt (transform_struc_formula f) b.formula_struc_continuation in
+        EBase{b with formula_struc_base = new_base;
+                     formula_struc_continuation = new_cont;}
+      | EAssume b->
+        let new_simpl = transform_formula f b.formula_assume_simpl in
+        let new_struc = transform_struc_formula f b.formula_assume_struc in
+        EAssume {b with formula_assume_simpl = new_simpl;
+                        formula_assume_struc = new_struc;}
+      | EInfer b ->
+        let new_cont = transform_struc_formula f b.formula_inf_continuation in
+        EInfer {b with formula_inf_continuation = new_cont;}
+      | EList b -> EList (map_l_snd (transform_struc_formula f) b)
+    )
+
+and transform_struc_formula f (e:struc_formula) : struc_formula =
+  let pr = !print_struc_formula in
+  Debug.no_1 "IF.transform_struc_formula" pr pr
+    (fun _ -> transform_struc_formula_x f e) e
+
+let transform_formula_simp trans_hf (e:formula):formula =
+  let rec helper e =
+    match e with     
+    | Base b ->
+      let new_heap = trans_hf b.formula_base_heap in
+      Base { b with formula_base_heap = new_heap; }
+    | Or o -> 
+      Or {o with formula_or_f1 = helper o.formula_or_f1;
+                 formula_or_f2 = helper o.formula_or_f2;}
+    | Exists e ->
+      let new_heap = trans_hf e.formula_exists_heap in
+      Exists { e with formula_exists_heap = new_heap;}
+  in
+  helper  e
+
+let transform_formula_simp f (e:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "transform_formula_simp" pr pr (fun _ -> transform_formula_simp f e) e
+
+let transform_bexp_hf_x prog hf0=
+  let trans_bexp_arg (eas, ps) ae= match ae with
+    | Ipure.BExpr f -> let pos = Ipure.pos_of_exp ae in
+      let be_id = Globals.fresh_any_name "be" in
+      let e = Ipure.Var ((be_id, Unprimed), pos) in
+      let p = Ipure.transform_bexp (Ipure.mkTrue pos) None None e f in
+      (* let nae = Ipure.BVar ((be_id, Unprimed), pos) in *)
+      (eas@[e], ps@[p])
+    | _ -> (eas@[ae], ps)
+  in
+  let rec recf hf= match hf with
+    | HeapNode hn ->
+      let neargs, ps_bexp = List.fold_left trans_bexp_arg ([],[]) hn.h_formula_heap_arguments in
+      (HeapNode {hn with h_formula_heap_arguments = neargs}, ps_bexp)
+    | _ -> hf,[]
+  in
+  recf hf0
+
+let transform_bexp_hf prog hf0=
+  let pr1 = !print_h_formula in
+  Debug.no_1 "transform_bexp_hf" pr1 (pr_pair pr1 (pr_list !Ipure.print_formula))
+    (fun _ -> transform_bexp_hf_x prog hf0) hf0
+
+
 (* constructors *)
 
 let rec formula_of_heap_1 h pos = 
@@ -2429,12 +2597,16 @@ and has_top_flow_struc (f:struc_formula) =
     | EList b-> List.iter (fun c-> helper (snd c)) b  in
   helper f
 
+(* and subst_flow_of_heap fr t heap: h_fromula = *)
+  
 
 and subst_flow_of_formula fr t (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
-                            if (String.compare fr b.formula_base_flow)==0 then t else b.formula_base_flow;}
+                            if (String.compare fr b.formula_base_flow)==0 then t else b.formula_base_flow;
+                  (* formula_base_heap = subst_flow_of_heap fr t b.formula_base_heap *)}
   | Exists b-> Exists {b with formula_exists_flow = 
-                                if (String.compare fr b.formula_exists_flow)==0 then t else b.formula_exists_flow;}
+                                if (String.compare fr b.formula_exists_flow)==0 then t else b.formula_exists_flow;
+                      (* formula_exists_heap = subst_flow_of_heap fr t b.formula_base_heap *)}
   | Or b -> Or {b with formula_or_f1 = (subst_flow_of_formula fr t b.formula_or_f1);
                        formula_or_f2 = (subst_flow_of_formula fr t b.formula_or_f2);}
 
@@ -3127,173 +3299,6 @@ let drop_htrue hf=
   match hf with
   | HTrue -> HEmp
   | _ -> hf
-
-let map_one_rflow_formula f rf =
-  {rf with rflow_base = f rf.rflow_base}
-
-let map_rflow_formula_list trans_f node =
-  HeapNode {node with h_formula_heap_ho_arguments =
-                           List.map (map_one_rflow_formula trans_f)
-                             node.h_formula_heap_ho_arguments}
-
-let map_rflow_formula include_flow trans_f hform = 
-  if not(include_flow) then hform
-  else 
-    match hform with
-    | HeapNode h ->  map_rflow_formula_list trans_f h
-    | _ -> hform
-
-let rec transform_h_formula_x (f: h_formula -> h_formula option) (e: h_formula)
-  : h_formula =
-  let r =  f e in 
-  match r with
-  | Some e1 -> e1 
-  | None  -> (
-      match e with  
-      | Star s ->
-        let new_h1 = transform_h_formula f s.h_formula_star_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_star_h2 in
-        Star {s with h_formula_star_h1 = new_h1;
-                     h_formula_star_h2 = new_h2;}
-      | StarMinus s ->
-        let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
-        StarMinus {s with h_formula_starminus_h1 = new_h1;
-                          h_formula_starminus_h2 = new_h2;}
-      | Conj s ->
-        let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conj_h1 in
-        Conj {s with h_formula_conj_h1 = new_h1;
-                     h_formula_conj_h2 = new_h2;}
-      | ConjStar s ->
-        let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
-        ConjStar {s with h_formula_conjstar_h1 = new_h1;
-                         h_formula_conjstar_h2 = new_h2;}
-      | ConjConj s ->
-        let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
-        ConjConj {s with h_formula_conjconj_h1 = new_h1;
-                         h_formula_conjconj_h2 = new_h2;}
-      | Phase s ->
-        let new_rd = transform_h_formula f s.h_formula_phase_rd in
-        let new_rw = transform_h_formula f s.h_formula_phase_rw in
-        Phase {s with h_formula_phase_rd = new_rd;
-                      h_formula_phase_rw = new_rw;}
-      | HeapNode _ -> e 
-      | HeapNode2 _
-      | ThreadNode _
-      | HRel _ | HTrue | HFalse | HEmp | HVar _ -> e
-    )
-
-and transform_h_formula (f: h_formula -> h_formula option) (e: h_formula)
-  : h_formula =
-  let pr = !print_h_formula in
-  Debug.no_1 "IF.transform_h_formula" pr pr (fun _ -> transform_h_formula_x f e) e
-
-and transform_formula_x f (e:formula):formula =
-  let rec helper f e = (
-    let (_, f_f, f_h_f, f_p_t) = f in
-    let r =  f_f e in
-    match r with
-    | Some e1 -> e1
-    | None  -> (
-        match e with
-        | Base b ->
-          let new_heap = transform_h_formula f_h_f  b.formula_base_heap in
-          let new_pure = P.transform_formula f_p_t b.formula_base_pure in
-          Base { b with formula_base_heap = new_heap;
-                        formula_base_pure = new_pure; }
-        | Or o ->
-          Or {o with formula_or_f1 = helper f o.formula_or_f1;
-                     formula_or_f2 = helper f o.formula_or_f2;}
-        | Exists e ->
-          let new_heap = transform_h_formula f_h_f e.formula_exists_heap in
-          let new_pure = P.transform_formula f_p_t e.formula_exists_pure in
-          Exists { e with formula_exists_heap = new_heap;
-                          formula_exists_pure = new_pure;}
-      )
-  ) in
-  helper f e
-
-and transform_formula f (e:formula):formula =
-  let pr = !print_formula in
-  Debug.no_1 "IF.transform_formula" pr pr (fun _ -> transform_formula_x f e) e
-
-let transform_formula_simp trans_hf (e:formula):formula =
-  let rec helper e =
-    match e with     
-    | Base b ->
-      let new_heap = trans_hf b.formula_base_heap in
-      Base { b with formula_base_heap = new_heap; }
-    | Or o -> 
-      Or {o with formula_or_f1 = helper o.formula_or_f1;
-                 formula_or_f2 = helper o.formula_or_f2;}
-    | Exists e ->
-      let new_heap = trans_hf e.formula_exists_heap in
-      Exists { e with formula_exists_heap = new_heap;}
-  in
-  helper  e
-
-let transform_formula_simp f (e:formula):formula =
-  let pr = !print_formula in
-  Debug.no_1 "transform_formula_simp" pr pr (fun _ -> transform_formula_simp f e) e
-
-let rec transform_struc_formula_x f (e:struc_formula) : struc_formula =
-  let (f_e_f, f_f, f_h_f, f_p_t) = f in
-  let r = f_e_f e in 
-  match r with
-  | Some e1 -> e1
-  | None -> (
-      match e with
-      | ECase c -> 
-        let br' = List.map (fun (c1,c2)->
-            ((P.transform_formula f_p_t c1),(transform_struc_formula f c2))
-          ) c.formula_case_branches in
-        ECase {c with formula_case_branches = br';}
-      | EBase b ->
-        let new_base = transform_formula f b.formula_struc_base in
-        let new_cont = map_opt (transform_struc_formula f) b.formula_struc_continuation in
-        EBase{b with formula_struc_base = new_base;
-                     formula_struc_continuation = new_cont;}
-      | EAssume b->
-        let new_simpl = transform_formula f b.formula_assume_simpl in
-        let new_struc = transform_struc_formula f b.formula_assume_struc in
-        EAssume {b with formula_assume_simpl = new_simpl;
-                        formula_assume_struc = new_struc;}
-      | EInfer b ->
-        let new_cont = transform_struc_formula f b.formula_inf_continuation in
-        EInfer {b with formula_inf_continuation = new_cont;}
-      | EList b -> EList (map_l_snd (transform_struc_formula f) b)
-    )
-
-and transform_struc_formula f (e:struc_formula) : struc_formula =
-  let pr = !print_struc_formula in
-  Debug.no_1 "IF.transform_struc_formula" pr pr
-    (fun _ -> transform_struc_formula_x f e) e
-
-let transform_bexp_hf_x prog hf0=
-  let trans_bexp_arg (eas, ps) ae= match ae with
-    | Ipure.BExpr f -> let pos = Ipure.pos_of_exp ae in
-      let be_id = Globals.fresh_any_name "be" in
-      let e = Ipure.Var ((be_id, Unprimed), pos) in
-      let p = Ipure.transform_bexp (Ipure.mkTrue pos) None None e f in
-      (* let nae = Ipure.BVar ((be_id, Unprimed), pos) in *)
-      (eas@[e], ps@[p])
-    | _ -> (eas@[ae], ps)
-  in
-  let rec recf hf= match hf with
-    | HeapNode hn ->
-      let neargs, ps_bexp = List.fold_left trans_bexp_arg ([],[]) hn.h_formula_heap_arguments in
-      (HeapNode {hn with h_formula_heap_arguments = neargs}, ps_bexp)
-    | _ -> hf,[]
-  in
-  recf hf0
-
-let transform_bexp_hf prog hf0=
-  let pr1 = !print_h_formula in
-  Debug.no_1 "transform_bexp_hf" pr1 (pr_pair pr1 (pr_list !Ipure.print_formula))
-    (fun _ -> transform_bexp_hf_x prog hf0) hf0
 
 let clear_type_info_formula (f: formula): formula = 
   let rec clear_type_info_exp (e: P.exp) =

@@ -274,6 +274,10 @@ module IForm = struct
   let map_one_rflow_formula fnc rflow_formula =
     F.map_one_rflow_formula fnc rflow_formula
 
+  (* calls h_fnc on 
+     (i) first session node of hform if include_flow is set 
+     (ii) all nodes of hform -incl. nested HO args- otherwise 
+  *)
   let heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
     let loop_through_rflow helper hform =
       let f_h nh =
@@ -293,14 +297,11 @@ module IForm = struct
         begin
           match node.F.h_formula_heap_session_info with
           | None    ->
-            let () = y_ninfo_hp (add_str "no_sess" !print_h_formula) hform in
-            (* if not(include_flow) then None *)
-            (* else  *)loop_through_rflow helper hform
+            (* loop through HO param until reaching a session formula *)
+            loop_through_rflow helper hform
           | Some si ->
-            let () = y_ninfo_hp (add_str "some_sess" !print_h_formula) hform in
             let new_heap = h_fnc si hform in
-            let () = y_ninfo_hp (add_str "some_sess" (pr_opt !print_h_formula)) new_heap in
-            if not(include_flow) then new_heap
+            if not(include_flow) then new_heap (* it's a session related node, but its transformation should stop at this level - do not attempt to transform its HO args *)
             else
               let new_heap = 
                 match new_heap with
@@ -315,12 +316,11 @@ module IForm = struct
     let fct si hform = match si.node_kind with
       | Sequence | SOr | Send | Receive | Transmission
       | Session | Channel | Msg ->
-        let () = y_ninfo_hp (add_str "node_kind" (string_of_node_kind)) si.node_kind in
         let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
       | Star | HVar | Predicate | Emp ->  None
-    in heap_node_transformer ~flow:false fct hform
+    in heap_node_transformer fct hform
 
     let update_temp_heap_name hform =
       let pr = !print_h_formula in
