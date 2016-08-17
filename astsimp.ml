@@ -2406,7 +2406,7 @@ and translate_session (view:I.view_decl) =
     let session = get_session_formula view in
     let sessf = getter session in
     let transf_session = transf sessf view.I.view_formula in
-    {view with I.view_formula = transf_session} in
+    {view with I.view_formula = F.subst_stub_flow_struc top_flow transf_session} in
   match view.I.view_session_info with
   | Some si -> (match (si.session_kind) with
                  | Some Protocol ->

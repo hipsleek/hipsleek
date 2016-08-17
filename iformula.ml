@@ -2597,16 +2597,22 @@ and has_top_flow_struc (f:struc_formula) =
     | EList b-> List.iter (fun c-> helper (snd c)) b  in
   helper f
 
-(* and subst_flow_of_heap fr t heap: h_fromula = *)
-  
+and subst_flow_of_heap fr t heap: h_formula =
+  let f_h heap =
+    match heap with
+    | HeapNode node ->
+      Some (map_rflow_formula_list (subst_flow_of_formula fr t) node)
+    | _ -> None in
+  let heap = transform_h_formula f_h heap in
+  heap
 
 and subst_flow_of_formula fr t (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
                             if (String.compare fr b.formula_base_flow)==0 then t else b.formula_base_flow;
-                  (* formula_base_heap = subst_flow_of_heap fr t b.formula_base_heap *)}
+                          formula_base_heap = subst_flow_of_heap fr t b.formula_base_heap}
   | Exists b-> Exists {b with formula_exists_flow = 
                                 if (String.compare fr b.formula_exists_flow)==0 then t else b.formula_exists_flow;
-                      (* formula_exists_heap = subst_flow_of_heap fr t b.formula_base_heap *)}
+                              formula_exists_heap = subst_flow_of_heap fr t b.formula_exists_heap}
   | Or b -> Or {b with formula_or_f1 = (subst_flow_of_formula fr t b.formula_or_f1);
                        formula_or_f2 = (subst_flow_of_formula fr t b.formula_or_f2);}
 
@@ -2624,7 +2630,23 @@ and subst_flow_of_struc_formula  fr t (f:struc_formula):struc_formula = match f 
   | EInfer b -> EInfer {b with formula_inf_continuation = subst_flow_of_struc_formula fr t b.formula_inf_continuation;}
   | EList b-> EList (Gen.map_l_snd (subst_flow_of_struc_formula fr t) b	)
 
-and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
+and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f
+
+let subst_stub_flow t (f:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "subst_stub_flow" pr pr (fun _ -> subst_stub_flow t (f:formula)) f
+
+let subst_stub_flow_struc t (f:struc_formula):struc_formula =
+  let pr = !print_struc_formula in
+  Debug.no_1 "subst_stub_flow_struc" pr pr (fun _ -> subst_stub_flow_struc t f) f
+
+let subst_flow_of_formula fr t (f:formula):formula =
+  let pr = !print_formula in
+  Debug.no_1 "subst_flow_of_formula" pr pr (fun _ -> subst_flow_of_formula  fr t (f:formula)) f
+  
+let subst_flow_of_struc_formula  fr t (f:struc_formula):struc_formula =
+  let pr = !print_struc_formula in
+  Debug.no_1 "subst_flow_of_struc_formula" pr pr (fun _ -> subst_flow_of_struc_formula  fr t (f:struc_formula)) f
 
 let rec break_formula (f : formula) : P.b_formula list list =
   match f with

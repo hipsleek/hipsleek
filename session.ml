@@ -180,7 +180,7 @@ module IForm = struct
     F.set_session_kind_h_formula h sk nk
 
   let mk_formula_heap_only h pos =
-    F.formula_of_heap_1 h pos
+    F.formula_of_heap_with_flow h F.n_flow pos
 
   let mk_rflow_formula ?sess_kind:(sess_kind=None) ?kind:(k=NEUTRAL) f =
     {  F.rflow_kind = k;
@@ -197,7 +197,7 @@ module IForm = struct
 
   let mk_formula pure (ptr, name, ho, params, pos) sk nk  =
     let h = mk_node (ptr, name, ho, params, pos) sk nk in
-    F.mkBase_wo_flow h pure [] pos
+    F.mkBase(* _wo_flow *) h pure IvpermUtils.empty_vperm_sets F.n_flow [] pos
 
   let mk_struc_formula formula pos =
     F.mkEBase [] [] [] formula None pos
@@ -1153,7 +1153,7 @@ module Make_Session (Base: Session_base) = struct
     Base.mk_node (ptr, name, args, params, pos) Base.base_type Session
 
   let mk_struc_formula_from_session_and_formula s form_orig =
-    let h_form = trans_from_session s in
+    let h_form = x_add_1 trans_from_session s in
     let pos = get_pos s in
     (* let h_form = mk_sess_h_formula h_form pos in *)
     let fct h = Some (Base.mk_star h h_form pos) in
@@ -1250,7 +1250,7 @@ module Make_Session (Base: Session_base) = struct
   let wrap_2ways_sess2base f_sess hform =
     let session_form = trans_h_formula_to_session hform in
     let new_session_form = f_sess session_form in
-    let new_hform = trans_from_session new_session_form in
+    let new_hform = x_add_1 trans_from_session new_session_form in
     new_hform
 
   let wrap_2ways_sess2base f_sess hform =
@@ -1327,7 +1327,7 @@ module Make_Session (Base: Session_base) = struct
       let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
       disj_list in
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
-    let disj_list = List.map (fun x -> trans_from_session x) disj_list in
+    let disj_list = List.map (fun x -> x_add_1 trans_from_session x) disj_list in
     let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x ~sess_kind:(Some Base.base_type) no_pos) disj_list in
     disj_list
 

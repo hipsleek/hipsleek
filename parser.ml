@@ -1374,7 +1374,7 @@ protocol_formula:
             Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
       | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; msg_var = OPT session_msg_var; c = session_message ->
             let loc = (get_pos_camlp4 _loc 1) in
-            let c = F.subst_stub_flow top_flow c in
+            (* let c = F.subst_stub_flow top_flow c in *)
             let mv = session_extract_msg_var msg_var loc in
             Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
       | vh = view_header ->
@@ -1425,12 +1425,12 @@ projection_formula:
         Session.IProjection.SBase (Session.IProjection.mk_session_hvar id [] loc)
       | peek_projection_send; `IDENTIFIER channel; `NOT; msg_var = OPT session_msg_var; c = session_message ->
         let loc = (get_pos_camlp4 _loc 1) in
-        let c = F.subst_stub_flow top_flow c in
+        (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
         Session.IProjection.SBase (Session.IProjection.mk_base (Session.TSend, channel, mv, loc) c)
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; msg_var = OPT session_msg_var; c = session_message ->
         let loc = (get_pos_camlp4 _loc 1) in
-        let c = F.subst_stub_flow top_flow c in
+        (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
         Session.IProjection.SBase (Session.IProjection.mk_base (Session.TReceive, channel, mv, loc) c)
       | vh = view_header ->
@@ -1465,12 +1465,12 @@ tpprojection_formula:
       Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [] loc)
     | peek_tpprojection_send; `NOT; msg_var = OPT session_msg_var; c = session_message ->
       let loc = (get_pos_camlp4 _loc 1) in
-      let c = F.subst_stub_flow top_flow c in
+      (* let c = F.subst_stub_flow top_flow c in *)
       let mv = session_extract_msg_var msg_var loc in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TSend, mv, loc) c)
     | peek_tpprojection_receive; `QUERY; msg_var = OPT session_msg_var; c = session_message ->
       let loc = (get_pos_camlp4 _loc 1) in
-      let c = F.subst_stub_flow top_flow c in
+      (* let c = F.subst_stub_flow top_flow c in *)
       let mv = session_extract_msg_var msg_var loc in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TReceive, mv, loc) c)
     | vh = view_header ->
@@ -1488,7 +1488,7 @@ session_message: [[
       let const_form = P.IConst (i, get_pos_camlp4 _loc 1) in
       let var_form = P.Var (session_msg, get_pos_camlp4 _loc 1) in
       let pure_good_formula = P.BForm ((P.mkEq var_form const_form (get_pos_camlp4 _loc 2), None), None) in
-      F.formula_of_pure_1 pure_good_formula pos
+      F.formula_of_pure_with_flow pure_good_formula stub_flow [] pos
     |  cc = core_constr -> cc
     | `EXISTS; ocl = cid_list; `COLON; cc = core_constr -> 
 	  (match cc with
@@ -1771,7 +1771,7 @@ rflow_form:
                   | Session.ProtocolSession s -> Session.IProtocol.mk_formula_heap_only
                                                        (Session.IProtocol.trans_from_session s) loc) in
      { F.rflow_kind = NEUTRAL;
-       F.rflow_base = form;
+       F.rflow_base = F.subst_stub_flow n_flow form;
        F.rflow_session_kind = Some pk; }
   ]
   | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
