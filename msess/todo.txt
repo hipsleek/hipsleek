@@ -520,7 +520,13 @@ to refact heap_transformer
 
 =============================================
 =============================================
+../../hip ex9-simple-prog.ss
+to check  why the following error:
 
+!!! processing includes "[msses/notes/commprimitives.ss;msses/notes/hodef.ss]caught
+
+Exception occurred: Sys_error("../../msses/notes/commprimitives.ss: No such file or directory")
+Error3(s) detected at main 
 
 =============================================
 =============================================

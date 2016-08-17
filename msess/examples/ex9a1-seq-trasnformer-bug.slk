@@ -1,0 +1,29 @@
+sleek_include 'msess/notes/hodef.slk'.
+
+
+/*
+checkentail c::Chan{@S !0}<this> |- c::Chan{@S !0;;!1}<this>.
+expect Fail.
+print residue.
+*/
+
+checkentail c::Chan{@S !0}<this> |- c::Chan{@S !0}<this>.
+expect Valid.
+print residue.
+
+/*
+checkentail c::Chan{@S ?0}<this> |- c::Chan{@S ?v#v>=0}<this>.
+expect Fail.
+print residue.
+
+
+checkentail x=0 |- x=0.
+
+checkentail x>=0 |- x>=0.
+
+*/
+pred_prim A{%P}<>.
+
+checkentail y::A{x=0}<> |- y::A{x=0}<>.
+
+checkentail y::A{x>=0}<> |- y::A{x>=0}<>.

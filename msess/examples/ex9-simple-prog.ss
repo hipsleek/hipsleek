@@ -1,0 +1,16 @@
+hip_include 'msses/notes/hodef.ss'
+hip_include 'msses/notes/commprimitives.ss'
+
+/* hip_include 'hodef.ss' */
+/* hip_include 'commprimitives.ss' */
+
+
+
+void buyer(Channel c, int id)
+  requires  c::Chan{@S !0}<this>
+  ensures   c::Chan{emp}<this>;
+{
+  dprint;
+  send(c,0);
+  dprint;
+}
