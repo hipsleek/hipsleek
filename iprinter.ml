@@ -478,17 +478,18 @@ let string_of_session_projection hn =
   let node = F.HeapNode hn in
   let def = "" in
   let fct info = let sk = info.session_kind in
-                 (match sk with
-                   | Projection ->
-                       let session = Session.IProjection.trans_h_formula_to_session (Session.IProjection.get_original_h_formula node) in
-                       let s = Session.IProjection.string_of_session session in
-                       s
-                   | TPProjection ->
-                       let session = Session.ITPProjection.trans_h_formula_to_session (Session.ITPProjection.get_original_h_formula node) in
-                       let s = Session.ITPProjection.string_of_session session in
-                       s
-                   | _ -> def) in
-  Gen.map_opt_def def fct hn.F.h_formula_heap_session_info
+    (match sk with
+     | Projection ->
+       let session = Session.IProjection.trans_h_formula_to_session (Session.IProjection.get_original_h_formula node) in
+       let s = Session.IProjection.string_of_session session in
+       s
+     | TPProjection ->
+       let session = Session.ITPProjection.trans_h_formula_to_session (Session.ITPProjection.get_original_h_formula node) in
+       let s = Session.ITPProjection.string_of_session session in
+       s
+     | _ -> def) in
+  let pr_sess () =  Gen.map_opt_def def fct hn.F.h_formula_heap_session_info in
+  Wrapper.wrap_one_bool print_flow_flag false pr_sess ()
 
 (* pretty printing for a heap formula *)
 let rec string_of_h_formula = function 
@@ -640,7 +641,8 @@ and string_of_formula = function
       let svp = string_of_vperm_sets vp in
       let s = if svp = "" then s else svp ^ " & " ^ s in
       (if s = "" then  (string_of_h_formula hf)
-       else "(" ^ (string_of_h_formula hf) ^ ") * (" ^ s ^ ")( FLOW "^fl^")")
+       else let flow_str = if (!print_flow_flag) then "( FLOW "^fl^")" else "" in
+         "(" ^ (string_of_h_formula hf) ^ ") * (" ^ s ^ ")" ^ flow_str)
     in rs ^ sa
   | Iast.F.Or ({F.formula_or_f1 = f1;
                 F.formula_or_f2 = f2;
@@ -659,7 +661,8 @@ and string_of_formula = function
                let svp = string_of_vperm_sets vp in
                let s = if svp = "" then s else svp ^ " & " ^ s in
                if s = "" then  (string_of_h_formula hf)
-               else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ s (* (string_of_pure_formula pf) *) ^ ")( FLOW "^fl^")")
+               else let flow_str = if (!print_flow_flag) then "( FLOW "^fl^")" else "" in
+                 "(" ^ (string_of_h_formula hf) ^ ")*(" ^ s (* (string_of_pure_formula pf) *) ^ ")"^flow_str)
             ^ ")"
     in rs^sa
 
