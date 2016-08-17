@@ -1256,7 +1256,20 @@ module Make_Session (Base: Session_base) = struct
   let wrap_2ways_sess2base f_sess hform =
     let pr =  !Base.print_h_formula in
     Debug.no_1 "wrap_2ways_sess2base" pr pr (wrap_2ways_sess2base f_sess) hform
-    
+
+  let wrap_2ways_sess2base_opt f_sess hform =
+    let session_form = trans_h_formula_to_session hform in
+    let new_session_form = f_sess session_form in
+    match new_session_form with
+    | None -> None
+    | Some new_session_form ->
+      let new_hform = x_add_1 trans_from_session new_session_form in
+      Some new_hform
+
+  let wrap_2ways_sess2base_opt f_sess hform =
+    let pr =  !Base.print_h_formula in
+    Debug.no_1 "wrap_2ways_sess2base_opt" pr (pr_opt pr) (wrap_2ways_sess2base_opt f_sess) hform
+  
   let rename_message_pointer_heap hform =
     let fnc_node sf =
       let base_f b = Some (replace_message_var b) in
@@ -1354,27 +1367,38 @@ module Make_Session (Base: Session_base) = struct
     Debug.no_2 "split_disj" pr1 (pr_opt pr1) pr2 split_disj head tail
 
   let norm_base_only_helper sf =
-      match sf with
-      | SBase (Base _) -> mk_session_seq_formula sf SEmp (get_pos sf)
-      | _        -> sf 
+    match sf with
+    | SBase (Base _) -> Some (mk_session_seq_formula sf SEmp (get_pos sf))
+    | _        -> None
   
-  let norm_base_only (base: Base.h_formula): Base.h_formula =
-    wrap_2ways_sess2base norm_base_only_helper base
+  let norm_base_only (base: Base.h_formula): Base.h_formula option =
+    wrap_2ways_sess2base_opt norm_base_only_helper base
 
-  let norm_base_only (base: Base.h_formula): Base.h_formula =
+  let norm_base_only (base: Base.h_formula): Base.h_formula option =
     let pr = !Base.print_h_formula in
-    Debug.no_1 "norm_base_only" pr pr norm_base_only base
+    Debug.no_1 "norm_base_only" pr (pr_opt pr) norm_base_only base
 
-  let norm_last_seq_node (base: Base.h_formula): Base.h_formula =
+  let norm_last_seq_node (base: Base.h_formula): Base.h_formula option =
     let fct sf =
-      match sf with
-      | SSeq seq -> SSeq {seq with session_seq_formula_tail = norm_base_only_helper seq.session_seq_formula_tail}
-      | _        -> sf in
-    wrap_2ways_sess2base fct base
+      let fnc sf =         
+        match sf with
+        | SSeq seq ->
+          begin
+            match norm_base_only_helper seq.session_seq_formula_tail with
+            | Some tail -> 
+              Some (SSeq {seq with session_seq_formula_tail = tail})
+            | None -> None
+          end
+        | _        ->  Some sf
+      in
+      let new_s = trans_session_formula (fnc, (somef,somef)) sf in
+      new_s
+    in
+    Some (wrap_2ways_sess2base fct base)
 
-  let norm_last_seq_node (base: Base.h_formula): Base.h_formula =
+  let norm_last_seq_node (base: Base.h_formula): Base.h_formula option =
     let pr = !Base.print_h_formula in
-    Debug.no_1 "norm_last_seq_node" pr pr norm_last_seq_node base
+    Debug.no_1 "norm_last_seq_node" pr (pr_opt pr) norm_last_seq_node base
 
   let update_temp_name_heap (base: Base.h_formula): Base.h_formula option =
     Base.update_temp_heap_name base
@@ -1502,9 +1526,9 @@ let irename_first_session_pointer_struc ?to_var:(var=session_self) formula =
 let wrap_one_seq_heap hform =
     let fnc si hform =
     match si.session_kind with
-    | Projection   -> Some (IProjection.norm_base_only hform)
-    | TPProjection -> Some (ITPProjection.norm_base_only hform)
-    | Protocol     -> Some (IProtocol.norm_base_only hform)
+    | Projection   -> (IProjection.norm_base_only hform)
+    | TPProjection -> (ITPProjection.norm_base_only hform)
+    | Protocol     -> (IProtocol.norm_base_only hform)
   in
   IForm.heap_node_transformer fnc hform
 
@@ -1530,11 +1554,11 @@ let wrap_one_seq_struc formula =
 let wrap_last_seq_node_heap hform =
   let fnc si hform =
     match si.session_kind with
-    | Projection   -> Some (IProjection.norm_last_seq_node hform)
-    | TPProjection -> Some (ITPProjection.norm_last_seq_node hform)
-    | Protocol     -> Some (IProtocol.norm_last_seq_node hform)
+    | Projection   ->  (IProjection.norm_last_seq_node hform)
+    | TPProjection ->  (ITPProjection.norm_last_seq_node hform)
+    | Protocol     ->  (IProtocol.norm_last_seq_node hform)
   in
-  IForm.heap_node_transformer ~flow:true fnc hform
+  IForm.heap_node_transformer (* ~flow:true *) fnc hform
 
 let wrap_last_seq_node formula = 
   let renamed_formula = IForm.transform_formula wrap_last_seq_node_heap formula in

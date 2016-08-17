@@ -526,6 +526,8 @@ to implement Dyn typing
 
 =============================================
 =============================================
+SOLVED
+
 too many emp (wrap_last_seq_node )
 
 wrap_last_seq_node@15
