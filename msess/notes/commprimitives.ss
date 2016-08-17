@@ -28,9 +28,10 @@ void send (Channel c, int x)
 
 /* v is existential, so I cannot use it inside the post */
 int receive (Channel c)
-  requires c::Chan{@S ?v#%L(v) & v=a;;%R}<this> 
-  ensures  c::Chan{@S %R}<this> * %L(a) & a=res; 
-
+  /* requires c::Chan{@S ?v#%L(v) & v=a;;%R}<this> */
+  /* ensures  c::Chan{@S %R}<this> * %L(a) & a=res; */
+  requires c::Chan{@S ?v#%L(v);;%R}<this>
+  ensures  c::Chan{@S %R}<this> * %L(res);
 
 
   

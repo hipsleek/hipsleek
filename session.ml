@@ -1213,10 +1213,10 @@ module Make_Session (Base: Session_base) = struct
      * as it was.
      * Otherwise, split STAR node and get second branch.*)
     let h_formula = match Base.get_node_kind h_formula with
-                      | Star ->
-                          let star_formulae = Base.get_star_formulae h_formula in
-                          List.nth star_formulae 1
-                      | _ -> h_formula in
+      | Star ->
+        let star_formulae = Base.get_star_formulae h_formula in
+        List.nth star_formulae 1
+      | _ -> h_formula in
     h_formula
 
   let get_original_h_formula h_formula =
@@ -1379,21 +1379,16 @@ module Make_Session (Base: Session_base) = struct
     Debug.no_1 "norm_base_only" pr (pr_opt pr) norm_base_only base
 
   let norm_last_seq_node (base: Base.h_formula): Base.h_formula option =
-    let fct sf =
-      let fnc sf =         
-        match sf with
-        | SSeq seq ->
-          begin
-            match norm_base_only_helper seq.session_seq_formula_tail with
-            | Some tail -> 
-              Some (SSeq {seq with session_seq_formula_tail = tail})
-            | None -> None
-          end
-        | _        ->  Some sf
-      in
-      let new_s = trans_session_formula (fnc, (somef,somef)) sf in
-      new_s
-    in
+    let trans_seq_helper sf =         
+      match sf with
+      | SSeq seq ->
+        begin
+          match norm_base_only_helper seq.session_seq_formula_tail with
+          | None      ->  None
+          | Some tail ->  Some (SSeq {seq with session_seq_formula_tail = tail})
+        end
+      | _ ->  Some sf  (* if it's not seq do not norm *)
+    in let fct = trans_session_formula (trans_seq_helper, (somef,somef)) in
     Some (wrap_2ways_sess2base fct base)
 
   let norm_last_seq_node (base: Base.h_formula): Base.h_formula option =
