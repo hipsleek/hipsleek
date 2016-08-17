@@ -447,6 +447,7 @@ Residue:
 
 =============================================
 =============================================
+SOLVED
 
 add rflow_session_kind to rflow, so that we can reduce
 norm time (by only attempting to norm those HO which have
@@ -520,14 +521,35 @@ to refact heap_transformer
 
 =============================================
 =============================================
-../../hip ex9-simple-prog.ss
-to check  why the following error:
 
-!!! processing includes "[msses/notes/commprimitives.ss;msses/notes/hodef.ss]caught
+to implement Dyn typing 
 
-Exception occurred: Sys_error("../../msses/notes/commprimitives.ss: No such file or directory")
-Error3(s) detected at main 
+=============================================
+=============================================
+too many emp (wrap_last_seq_node )
+
+wrap_last_seq_node@15
+wrap_last_seq_node inp1 :(emp ; (emp ; (c::Chan{. ((((?((emp) * ([] & msg = 0))) ;; (!((emp) * ([] & msg = 7)))) or ((?((emp) * ([] & msg = 1))) ;; (!((emp) * ([] & msg = 9))))) ;; (?((emp) * ([] & v > 0)))
+) * ([] & true)( FLOW __norm)}<this>[HeapNode1]))) * ([] & true)( FLOW __norm)
+wrap_last_seq_node@15 EXIT:(emp ; (emp ; (c::Chan{. ((((?((emp) * ([] & msg = 0))) ;; ((!((emp) * ([] & msg = 7))) ;; (emp))) or ((?((emp) * ([] & msg = 1))) ;; ((!((emp) * ([] & msg = 9))) ;; (emp)))) ;; ((?((emp) * ([] & v > 0))) ;; (emp))
+) * ([] & true)( FLOW __norm)}<this>[HeapNode1]))) * ([] & true)( FLOW __norm)
+
+
 
 =============================================
 =============================================
 
+=============================================
+=============================================
+
+=============================================
+=============================================
+
+=============================================
+=============================================
+
+=============================================
+=============================================
+
+=============================================
+=============================================

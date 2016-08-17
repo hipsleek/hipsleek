@@ -23,12 +23,14 @@ do so by using an exclusive channel
 
 
 void send (Channel c, int x)
-  requires c::Chan{@S !v#%L(v);;%rest}<> * %L(x)
-  ensures  c::Chan{@S %rest}<>;
+  requires c::Chan{@S !v#%L(v);;%R}<this> * %L(x)
+  ensures  c::Chan{@S %R}<this>;
 
+/* v is existential, so I cannot use it inside the post */
 int receive (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%rest}<> 
-  ensures  c::Chan{@S %rest}<> * %L(res); 
+  requires c::Chan{@S ?v#%L(v) & v=a;;%R}<this> 
+  ensures  c::Chan{@S %R}<this> * %L(a) & a=res; 
+
 
 
   

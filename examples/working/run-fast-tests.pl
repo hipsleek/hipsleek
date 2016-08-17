@@ -1826,6 +1826,9 @@ $output_file = "log";
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ],
+    "session" => [
+        ["ex9-simple-prog.ss", 10, "", "buyer1", "SUCCESS", "buyer2", "SUCCESS", "buyer3", "FAIL", "buyer4", "SUCCESS", "buyer5", "SUCCESS", "buyer6", "SUCCESS","buyer7", "SUCCESS", "buyer8", "FAIL", "buyer9", "SUCCESS","buyer10", "SUCCESS"]
+    ],
     # "lemmas"=>[
     #     # ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
     #     ["lemma_check01.ss", 3, " --elp ", "V1","Valid", "V2", "Valid", "F3", "Fail"],
@@ -2197,14 +2200,14 @@ sub hip_process_file {
         } elsif ("$param" =~ "hip") {
             $exempl_path_full = "$exempl_path/hip";
             print "Starting hip tests:\n";
-        } else { if ("$param" =~ "sa") {
+        } elsif ("$param" =~ "sa") {
             $exempl_path_full = "$exempl_path/infer/sa";
             $procedure = "Validate";
             print "Starting sa tests:\n";
         } else {
             $exempl_path_full = "$exempl_path/hip/$param";
             print "Starting hip-$param tests:\n";
-        }}
+        }
         $t_list = $hip_files{$param};
         foreach $test (@{$t_list})
         {
