@@ -1,0 +1,35 @@
+hip_include 'msess/notes/hodef.ss'
+hip_include 'msess/notes/commprimitives.ss'
+
+void sor1(Channel c, int id)
+  requires  c::Chan{@S !0 or !1}<this>
+  ensures   c::Chan{emp}<this>;
+{
+  if (id<0) send(c,1);
+  else  send(c,0);
+}
+
+
+int sor2(Channel c, int id)
+  requires  c::Chan{@S !0 or !1;;?v#v>0}<this>
+  ensures   c::Chan{emp}<this> & res>0;
+{
+  if (id<0) send(c,1);
+  else  send(c,0);
+  int x = receive(c);
+  return x;
+}
+
+
+int sor3(Channel c, int id)
+  requires  c::Chan{@S (?0;;!7) or (?1;;!9);;?v#v>0}<this>
+  ensures   c::Chan{emp}<this> & res>0;
+{
+  dprint;
+  int y = receive(c);
+  dprint;
+  if (y==0) send(c,7);
+  else send(c,9);
+  int x = receive(c);
+  return x;
+}

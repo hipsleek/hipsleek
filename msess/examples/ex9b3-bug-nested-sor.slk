@@ -1,0 +1,8 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'msess/notes/commprimitives.slk'.
+
+
+checkentail c::Chan{@S (?2 or ?3);;(?0 or ?1);;?v#v>0}<this> * %R |-
+          c::Chan{@S ?%L(msg);;%R}<this>.
+
+print residue.

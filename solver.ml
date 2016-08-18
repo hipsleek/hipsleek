@@ -10780,14 +10780,19 @@ and match_ho_arg_rhs_disj ((lhs,rhs),k) ho_match_helper =
   let ctx =
     try  List.find (fun (fail,_,_,_,_) -> map_opt_def true (fun x -> false) fail) ctx_lst
     with Not_found -> List.hd ctx_lst
-  in ctx 
+  in ctx
+
+and match_ho_arg_HOrhs (lhs, rhs)  =
+  match extract_single_hvar_f (rhs.rflow_base) with
+  | Some _ -> [lhs]
+  | None   -> let lhs_disjuncts = Session.new_lhs lhs in lhs_disjuncts
 
 (* split LHS dsjunctions: 
    \/ LHS |- RHS      --->   \forall i. LHSi |- RHS
 *)
 
-and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
-  let lhs_disjuncts = Session.new_lhs lhs in
+and match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
+  let lhs_disjuncts = match_ho_arg_HOrhs (lhs,rhs) in
   let ctx_disjuncts = List.map (fun x -> match_ho_arg_rhs_disj ((x,rhs),k) ho_match_helper) lhs_disjuncts in
 
   let detect_contra conseq es = solver_detect_lhs_rhs_contra 55 prog es conseq pos "ho_match" in
@@ -10803,6 +10808,23 @@ and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos
       [((Some fail),None, None, [], None)]
     | _  -> ctx_disjuncts in
   ctx_disjuncts
+
+and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
+  let pr_rflow = Cprinter.string_of_rflow_formula in
+  let pr1 = pr_pair (pr_pair
+                       (add_str "lhs: " pr_rflow)
+                       (add_str "rhs: " pr_rflow)) string_of_ho_split_kind in
+  (* ====== output helper printers: ====== *)
+  let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in
+  let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
+  let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) in
+  let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
+  let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
+  let pr2 = pr_list pr2 in
+  Debug.no_1 "match_ho_arg_lhs_disj" pr1 pr2 (fun _ -> match_ho_arg_lhs_disj_x
+                                                 ((lhs, rhs), k) ho_match_helper prog estate conseq pos )
+    ((lhs, rhs), k)
+  
 
 (* *********************************************************** *)
 (* *************    END match_one_ho_arg    ****************** *)

@@ -1,0 +1,6 @@
+sleek_include 'msess/notes/hodef.slk'.
+
+
+checkentail c::Chan{@S (?0;;!7) or (?1;;!9);;?v#v>0}<this> |-
+                     c::Chan{@S ?0;;!7;;?v#v>0}<this> or
+                     c::Chan{@S ?1;;!9;;?v#v>0}<this>.

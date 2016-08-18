@@ -1,0 +1,31 @@
+hip_include 'msess/notes/hodef.ss'
+hip_include 'msess/notes/commprimitives.ss'
+
+/* int sor6(Channel c, int id) */
+/*   requires  c::Chan{@S (?2 or ?3);;((?0;;!7) or (?1;;(!2 or !3)));;?v#v>0}<this> */
+/*   ensures   c::Chan{emp}<this> & res>0; */
+/* { */
+/*   int z = receive(c); */
+/*   dprint; */
+/*   int y = receive(c); */
+/*   if (y==0) send(c,7); */
+/*   else send(c,z); */
+/*   int x = receive(c); */
+/*   dprint; */
+/*   return x; */
+/* } */
+
+int sor6(Channel c, int id)
+  requires  c::Chan{@S (?2 or ?3);;(?0 or ?1);;?v#v>0}<this>
+  /* requires  c::Chan{@S (?2 or ?3);;?1;;?v#v>0}<this> */
+  ensures   c::Chan{emp}<this> & res>0;
+{
+  int z = receive(c);
+  dprint;
+  int y = receive(c);
+  dprint;
+  send(c,1);
+  int x = receive(c);
+  dprint;
+  return x;
+}

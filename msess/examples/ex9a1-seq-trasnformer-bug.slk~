@@ -1,0 +1,10 @@
+sleek_include 'msess/notes/hodef.slk'.
+
+
+checkentail c::Chan{@S !0}<this> |- c::Chan{@S !0;;!1}<this>.
+expect Fail.
+print residue.
+
+checkentail c::Chan{@S !0}<this> |- c::Chan{@S !0}<this>.
+expect Fail.
+print residue.
