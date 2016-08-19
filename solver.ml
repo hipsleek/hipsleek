@@ -11482,13 +11482,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* If not high-order, do nothing *)
               [(None, new_ante, new_conseq, new_exist_vars, [])]
             else
+              (* check if current node is seq with sor as head *)
+              let l_ho_args_orig, r_ho_args_orig = l_ho_args, r_ho_args in
+              let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
-              let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name in
+              let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name0 in
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
               let args = List.combine l_ho_args r_ho_args in
               let args = List.combine args l_vdef_hvar_split_kinds in
-
+              
               let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
 
               let match_one_ho_arg_helper (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):

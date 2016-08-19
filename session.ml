@@ -358,28 +358,28 @@ module IForm = struct
 
   let get_node_kind h_formula =
     match h_formula with
-      | F.HeapNode node -> (match node.F.h_formula_heap_session_info with
-                             | Some si -> si.node_kind
-                             | None -> failwith (x_loc ^ ": Expected session information."))
-      | F.Star node -> Star
-      | F.HVar (sv, svl) -> HVar
-      | F.HEmp -> Emp
-      | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
+    | F.HeapNode node -> (match node.F.h_formula_heap_session_info with
+        | Some si -> si.node_kind
+        | None -> failwith (x_loc ^ ": Expected session information."))
+    | F.Star node -> Star
+    | F.HVar (sv, svl) -> HVar
+    | F.HEmp -> Emp
+    | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
 
   let rec get_session_kind h_formula =
     match h_formula with
-      | F.HeapNode node -> (match node.F.h_formula_heap_session_info with
-                             | Some si -> Some si.session_kind
-                             | None -> None)
-      | F.Phase phase -> let sk1 = get_session_kind phase.F.h_formula_phase_rd in
-                         let sk2 = get_session_kind phase.F.h_formula_phase_rw in
-                         (match (sk1, sk2) with
-                            | (Some _, None) -> sk1
-                            | (None, Some _) -> sk2
-                            | (None, None) -> None
-                            | (Some _, Some _) -> sk1)
-      (* TODO: Star case *)
-      | _ -> None
+    | F.HeapNode node -> (match node.F.h_formula_heap_session_info with
+        | Some si -> Some si.session_kind
+        | None -> None)
+    | F.Phase phase -> let sk1 = get_session_kind phase.F.h_formula_phase_rd in
+      let sk2 = get_session_kind phase.F.h_formula_phase_rw in
+      (match (sk1, sk2) with
+       | (Some _, None) -> sk1
+       | (None, Some _) -> sk2
+       | (None, None) -> None
+       | (Some _, Some _) -> sk1)
+    (* TODO: Star case *)
+    | _ -> None
 
   let get_node h_formula =
     match h_formula with
@@ -527,7 +527,7 @@ module CForm = struct
   let map_one_rflow_formula fnc rflow_formula =
     CF.map_one_rflow_formula fnc rflow_formula  
   
-  let heap_node_transformer ?flow:(include_flow=false) fnc hform =
+  let heap_node_transformer_basic ?flow:(include_flow=false) fnc hform =
     match hform with
     | CF.ViewNode node ->
       let hform_opt  =
@@ -537,30 +537,43 @@ module CForm = struct
       in hform_opt
     | _ -> None
 
-  let rec heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
-    match hform with
-    | CF.ViewNode node ->
-      begin
-        match node.CF.h_formula_view_session_info with
-        | None    -> None
-        | Some si -> (* h_fnc si hform *)
-          let new_heap = h_fnc si hform in 
-          if not(include_flow) then new_heap
-          else
-            let new_heap = 
-              match new_heap with
-              | None   -> hform
-              | Some e -> e in
-            let f_h nh =
-              match nh with
-              | CF.ViewNode node_new ->
-                let fct = heap_node_transformer ~flow:include_flow h_fnc in
-                let trans_f = transform_formula fct in
-                Some (CF.map_rflow_formula_list trans_f node_new)
-              | _ -> None in
-            Some (transform_h_formula f_h new_heap) 
-      end
-    | _ -> None
+    (* calls h_fnc on 
+     (i) first session node of hform if include_flow is set 
+     (ii) all nodes of hform -incl. nested HO args- otherwise 
+  *)
+  let heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
+    let loop_through_rflow helper hform =
+      let f_h nh =
+        match nh with
+        | CF.ViewNode node_new ->
+          let fct = helper h_fnc in
+          let trans_f = transform_formula fct in
+          Some (CF.map_rflow_formula_list trans_f node_new)
+        | _ -> None in
+      Some (transform_h_formula f_h hform) in
+    let loop_through_rflow helper hform =
+      let pr = !print_h_formula in
+      Debug.no_1 "loop_through_rflow" pr (pr_opt pr) (fun _ -> loop_through_rflow helper hform) hform in
+    let rec helper h_fnc hform = 
+      match hform with
+      | CF.ViewNode node ->
+        begin
+          match node.CF.h_formula_view_session_info with
+          | None    ->
+            (* loop through HO param until reaching a session formula *)
+            loop_through_rflow helper hform
+          | Some si ->
+            let new_heap = h_fnc si hform in
+            if not(include_flow) then new_heap (* it's a session related node, but its transformation should stop at this level - do not attempt to transform its HO args *)
+            else
+              let new_heap = 
+                match new_heap with
+                | None   ->  hform
+                | Some e ->  e in
+              loop_through_rflow helper new_heap
+        end
+      | _ -> None
+    in helper h_fnc hform
   
   let update_temp_heap_name hform = None
 
@@ -593,28 +606,28 @@ module CForm = struct
 
   let get_or_formulae formula =
     match formula with
-      | CF.Or f -> [f.CF.formula_or_f1; f.CF.formula_or_f2]
-      | _ -> failwith (x_loc ^ ": CF.Or expected.")
+    | CF.Or f -> [f.CF.formula_or_f1; f.CF.formula_or_f2]
+    | _ -> failwith (x_loc ^ ": CF.Or expected.")
 
   let get_star_formulae h_formula =
     match h_formula with
-      | CF.Star hf -> [hf.CF.h_formula_star_h1; hf.CF.h_formula_star_h2]
-      | _ -> failwith (x_loc ^ ": CF.Star expected.")
+    | CF.Star hf -> [hf.CF.h_formula_star_h1; hf.CF.h_formula_star_h2]
+    | _ -> failwith (x_loc ^ ": CF.Star expected.")
 
   let get_star_pos h_formula =
     match h_formula with
-      | CF.Star hf -> hf.CF.h_formula_star_pos
-      | _ -> failwith (x_loc ^ ": CF.Star expected.")
+    | CF.Star hf -> hf.CF.h_formula_star_pos
+    | _ -> failwith (x_loc ^ ": CF.Star expected.")
 
   let get_node_kind h_formula =
     match h_formula with
-      | CF.ViewNode node -> (match node.CF.h_formula_view_session_info with
-                               | Some si -> si.node_kind
-                               | None -> failwith (x_loc ^ ": Expected session information."))
-      | CF.Star node -> Star
-      | CF.HVar (sv, svl) -> HVar
-      | CF.HEmp -> Emp
-      | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
+    | CF.ViewNode node -> (match node.CF.h_formula_view_session_info with
+        | Some si -> si.node_kind
+        | None -> failwith (x_loc ^ ": Expected session information."))
+    | CF.Star node -> Star
+    | CF.HVar (sv, svl) -> HVar
+    | CF.HEmp -> Emp
+    | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
 
   let rec get_session_kind h_formula = failwith x_tbi
 
@@ -1049,6 +1062,9 @@ module Make_Session (Base: Session_base) = struct
     node
     (* Base.mk_seq_wrapper node pos Base.base_type *)
 
+  (* let is_session_node hform = *)
+    
+  
   let trans_from_session s =
     let rec helper s = match s with
     | SSeq s  ->
@@ -1141,6 +1157,18 @@ module Make_Session (Base: Session_base) = struct
         | HVar h -> no_pos)
     | SEmp    -> no_pos
 
+  let get_node_kind_opt hform =
+    try Some (Base.get_node_kind hform)
+    with _ -> None
+
+  let is_node_kind hform kind =
+    match (get_node_kind_opt hform) with
+    | Some k -> k == kind
+    | None -> false
+
+  let is_node_kind_rflow rflow kind =
+    is_node_kind rflow kind
+  
   let mk_formula_heap_only = Base.mk_formula_heap_only
 
   let mk_sess_h_formula h_form pos =
@@ -1402,6 +1430,19 @@ module Make_Session (Base: Session_base) = struct
     let pr = !Base.print_h_formula in
     Debug.no_1 "update_temp_name_heap" pr (pr_opt pr) (fun _ -> update_temp_name_heap (base: Base.h_formula)) base
 
+  let isSeqSor hform =
+    let helper sf =
+      match sf with
+      | SSeq seq ->
+        begin
+          match seq.session_seq_formula_head with
+          | SOr _ -> Some sf
+          | _ -> None
+        end
+      | _ -> None
+    in
+    wrap_2ways_sess2base_opt helper hform
+  
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -1578,7 +1619,6 @@ let wrap_last_seq_node_struc formula =
 
 let update_temp_name_heap hform =
   let fnc si hform =
-    let () = y_ninfo_hp (add_str "update_temp_name_heap" !IForm.print_h_formula) hform in
     match si.session_kind with
     | Projection   ->  (IProjection.update_temp_name_heap hform)
     | TPProjection ->  (ITPProjection.update_temp_name_heap hform)
@@ -1613,25 +1653,25 @@ let csplit_sor head tail si =
  * - preserve pointer of Sequence node in the split results
  * If SOr:
  * - do the split with an empty tail
- *)
+*)
 let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let lhs_hform = CForm.get_h_formula_from_ho_param_formula lhs in
   let session_info = CForm.get_node_session_info lhs_hform in
   match session_info with
-    | Some si -> (match si.node_kind with
-                  | Sequence ->  let (ptr, name, ho_args, params, pos) = CForm.get_node lhs_hform in
-                                 let change_ptr hform =
-                                   (match hform with
-                                      | CF.ViewNode vn -> Some (CF.ViewNode {vn with CF.h_formula_view_node = ptr})
-                                      | _ -> Some hform) in
-                                 let new_lhs = csplit_sor (List.nth ho_args 0) (Some (List.nth ho_args 1)) si in
-                                 let new_lhs = List.map (fun x -> let f = x.CF.rflow_base in
-                                                         let f = CForm.transform_formula change_ptr f in
-                                                          CForm.mk_rflow_formula ~sess_kind:(Some si.session_kind) f) new_lhs in
-                                 new_lhs
-                  | SOr -> CProjection.split_sor lhs None
-                  | _ -> [lhs])
-    | None -> [lhs]
+  | Some si -> (match si.node_kind with
+      | Sequence ->  let (ptr, name, ho_args, params, pos) = CForm.get_node lhs_hform in
+        let change_ptr hform =
+          (match hform with
+           | CF.ViewNode vn -> Some (CF.ViewNode {vn with CF.h_formula_view_node = ptr})
+           | _ -> Some hform) in
+        let new_lhs = csplit_sor (List.nth ho_args 0) (Some (List.nth ho_args 1)) si in
+        let new_lhs = List.map (fun x -> let f = x.CF.rflow_base in
+                                 let f = CForm.transform_formula change_ptr f in
+                                 CForm.mk_rflow_formula ~sess_kind:(Some si.session_kind) f) new_lhs in
+        new_lhs
+      | SOr -> csplit_sor lhs None si 
+      | _ -> [lhs])
+  | None -> [lhs]
 
 let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let pr1 = !CF.print_rflow_formula in
@@ -1668,6 +1708,27 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
   let _,_,_,_,es = match_ho_res in
   let pr1 = pr_option !CF.print_entail_state in
   Debug.no_1 "check_for_ho_unsat" pr1 string_of_bool (fun _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es
+
+let is_node_kind hform kind = CTPProjection.is_node_kind hform kind
+let is_node_kind_rflow rflow kind = CTPProjection.is_node_kind_rflow rflow kind
+
+let rebuild_SeqSor lnode rnode largs rargs =
+  let sess_kind = ref TPProjection in
+  let fnc si hform =
+    match si.session_kind with
+    | Projection   ->  let () = sess_kind := Projection in (CProjection.isSeqSor hform)
+    | TPProjection ->  (CTPProjection.isSeqSor hform)
+    | Protocol     ->  let () = sess_kind := Protocol in (CProtocol.isSeqSor hform)
+  in
+  let left = CForm.heap_node_transformer_basic fnc lnode in
+  match left with
+  | Some lnode0 -> [CForm.mk_rflow_formula_from_heap lnode0 ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula lnode0)], [CForm.mk_rflow_formula_from_heap rnode ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula rnode)], "Sess"
+  | None -> largs,rargs, (CF.get_node_name_x lnode)
+
+let rebuild_SeqSor lnode rnode largs rargs =
+  let pr1 = !CF.print_h_formula in
+  let pr2 = pr_list (!CF.print_rflow_formula) in
+  Debug.no_4 "rebuild_SeqSor" pr1 pr1 pr2 pr2 (pr_triple pr2 pr2 pr_none) rebuild_SeqSor lnode rnode largs rargs
 
 let struc_norm sf =
   let sf = wrap_one_seq_struc sf in
@@ -1708,3 +1769,4 @@ let norm_slk_formula form =
 let norm_slk_formula form =
   let pr = !F.print_formula in
   Debug.no_1 "Session.norm_slk_formula" pr pr norm_slk_formula form
+
