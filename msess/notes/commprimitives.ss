@@ -21,6 +21,12 @@ do so by using an exclusive channel
 /*      requires Chan<c, ?msg.L(msg);rest>  */
 /*   ensures  Chan<c, rest> * L(res); //& msg=res; */
 
+/* c::Chan{@S c::S{- %L(v)}<v> }<> * %L(x) */
+
+void sendc (Channel c, Channel x)
+  requires c::Chan{@S !v#%L(v);;%R}<this> * %L(x)
+  ensures  c::Chan{@S %R}<this>;
+
 
 void send (Channel c, int x)
   requires c::Chan{@S !v#%L(v);;%R}<this> * %L(x)
@@ -28,11 +34,8 @@ void send (Channel c, int x)
 
 /* v is existential, so I cannot use it inside the post */
 int receive (Channel c)
-  /* requires c::Chan{@S ?v#%L(v) & v=a;;%R}<this> */
-  /* ensures  c::Chan{@S %R}<this> * %L(a) & a=res; */
   requires c::Chan{@S ?v#%L(v);;%R}<this>
   ensures  c::Chan{@S %R}<this> * %L(res);
-
 
   
 /**
