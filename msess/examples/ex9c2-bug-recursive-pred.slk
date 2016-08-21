@@ -1,0 +1,17 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'msess/notes/commprimitives.slk'.
+
+pred_sess_proj p1<> == !0 or !1;;p1<>.
+
+checkentail c::Chan{@S p1<>}<this> |- c::Chan{@S !v#%L(v);;%R}<this> * %L(x).
+print residue. 
+
+
+/* void loop4_sor1(Channel c, int id) */
+/*   requires  c::Chan{@S p1<>}<this> */
+/*   ensures   c::Chan{emp}<this>; */
+/* { */
+/*   if (id<0) send(c,1); */
+/*   else  send(c,0); */
+/*   loop4_sor1(c,id); */
+/* } */

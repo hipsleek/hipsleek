@@ -481,6 +481,8 @@ send (c,0);
 =============================================
 ./hip msess/examples/ex4a1-.ss
 
+SOL: rename "this" to the Chan pointer if exists
+
 either keep "this" as parameter for Chan
 or avoid renaming of "this" in the specs
 
@@ -540,7 +542,16 @@ wrap_last_seq_node@15 EXIT:(emp ; (emp ; (c::Chan{. ((((?((emp) * ([] & msg = 0)
 
 =============================================
 =============================================
+../../sleek ex9c4-bug-deleg.slk -dre "do_match\|match_one\|match_ho" >a
 
+seems like the print and certain sess operations
+only apply on the first session encounter:
+
+(==solver.ml#12970==)
+do_match@7@6@5@4@3@2@1
+do_match inp1 : !( v_51::Chan{ . this::S{ - emp&msg=0}<msg>@M}<this>@M)
+
+do_match inp2 : !( HVar L[ww_60])
 =============================================
 =============================================
 
