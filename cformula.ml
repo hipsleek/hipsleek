@@ -1314,13 +1314,16 @@ and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f 
                formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
                formula_or_pos = b.formula_or_pos}
 
-and set_flow_in_formula (n:flow_formula) (f:formula):formula = match f with
+and set_flow_in_formula_x (n:flow_formula) (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = if (subsume_flow_f !norm_flow_int b.formula_base_flow) then n else b.formula_base_flow}
   | Exists b-> Exists {b with formula_exists_flow = if (subsume_flow_f !norm_flow_int b.formula_exists_flow) then n else b.formula_exists_flow}
   | Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
                formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
                formula_or_pos = b.formula_or_pos}
 
+and set_flow_in_formula (n:flow_formula) (f:formula):formula =
+  let pr = !print_formula in 
+  Debug.no_1 "set_flow_in_formula" pr pr (fun _ -> set_flow_in_formula_x n f) f
 
 and set_flow_to_link_f flow_store f pos = match f with
   | Base b-> Base {b with formula_base_flow = 
@@ -1358,13 +1361,17 @@ and struc_formula_is_eq_flow (f:struc_formula) ff : bool = match f with
   | EAssume b -> formula_is_eq_flow b.formula_assume_simpl ff
   | EInfer b -> struc_formula_is_eq_flow b.formula_inf_continuation ff
 
-and formula_subst_flow (f:formula) ff : formula =
+and formula_subst_flow_x (f:formula) ff : formula =
   match f with
   | Base b-> Base {b with formula_base_flow = ff} 
   | Exists b-> Exists{b with formula_exists_flow = ff}
-  | Or b -> Or {b with formula_or_f1 = formula_subst_flow b.formula_or_f1 ff;
-                       formula_or_f2 = formula_subst_flow b.formula_or_f2 ff}
+  | Or b -> Or {b with formula_or_f1 = formula_subst_flow_x b.formula_or_f1 ff;
+                       formula_or_f2 = formula_subst_flow_x b.formula_or_f2 ff}
 
+and formula_subst_flow (f:formula) ff : formula =
+  let pr = !print_formula in 
+  Debug.no_1 "formula_subst_flow" pr pr (fun _ -> formula_subst_flow f ff) f
+    
 and struc_formula_subst_flow (f:struc_formula) ff : struc_formula = match f with
   | EList l -> EList (map_l_snd (fun c-> struc_formula_subst_flow c ff) l)
   | EBase b -> EBase {b with 

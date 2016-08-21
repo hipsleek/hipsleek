@@ -466,7 +466,7 @@ module CForm = struct
       | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let mk_formula_heap_only h pos =
-    CF.formula_of_heap h pos
+    CF.formula_of_heap_w_normal_flow h pos
 
   let mk_rflow_formula ?sess_kind:(sess_kind=None) ?kind:(k=NEUTRAL) f =
     { CF.rflow_kind = k;
@@ -480,6 +480,12 @@ module CForm = struct
       CF.rflow_base = f;
       CF.rflow_session_kind = sess_kind;
     }
+
+  let mk_rflow_formula_from_heap h ?sess_kind:(sess_kind=None) ?kind:(k=NEUTRAL) pos =
+    let pr1 = !print_h_formula in
+    let pr2 = !print_ho_param_formula in
+    Debug.no_1 "mk_rflow_formula_from_heap" pr1 pr2
+      (fun _ -> mk_rflow_formula_from_heap h ~sess_kind:sess_kind ~kind:k pos) h
 
   let mk_formula pure (ptr, name, ho, params, pos) sk nk =
     let h = mk_node (ptr, name, ho, params, pos) sk nk in
