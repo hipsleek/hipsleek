@@ -1762,18 +1762,24 @@ rflow_kind:
 rflow_form: 
   [
     [ `SAT; (p,pk) = formula ->
-     let loc = (get_pos_camlp4 _loc 1) in
-     let form = (match p with
-                  | Session.ProjectionSession s -> Session.IProjection.mk_formula_heap_only
-                                                     (Session.IProjection.trans_from_session s) loc
-                  | Session.TPProjectionSession s -> Session.ITPProjection.mk_formula_heap_only
-                                                       (Session.ITPProjection.trans_from_session s) loc
-                  | Session.ProtocolSession s -> Session.IProtocol.mk_formula_heap_only
-                                                       (Session.IProtocol.trans_from_session s) loc) in
-     { F.rflow_kind = NEUTRAL;
-       F.rflow_base = F.subst_stub_flow n_flow form;
-       F.rflow_session_kind = Some pk; }
-  ]
+      let loc = (get_pos_camlp4 _loc 1) in
+      let form = (match p with
+          | Session.ProjectionSession s ->
+            let () = print_endline ("PARSER1: " ^ (Session.IProjection.string_of_session s)) in
+            Session.IProjection.mk_formula_heap_only
+                                             (Session.IProjection.trans_from_session s) loc
+          | Session.TPProjectionSession s ->
+            let () = print_endline ("PARSER2: " ^ (Session.ITPProjection.string_of_session s)) in
+            Session.ITPProjection.mk_formula_heap_only
+                                               (Session.ITPProjection.trans_from_session s) loc
+          | Session.ProtocolSession s ->
+            let () = print_endline ("PARSER3: " ^ (Session.IProtocol.string_of_session s)) in
+            Session.IProtocol.mk_formula_heap_only
+                                           (Session.IProtocol.trans_from_session s) loc) in
+      { F.rflow_kind = NEUTRAL;
+        F.rflow_base = F.subst_stub_flow n_flow form;
+        F.rflow_session_kind = Some pk; }
+    ]
   | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
        F.rflow_base = F.subst_stub_flow n_flow dc;

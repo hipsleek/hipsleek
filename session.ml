@@ -993,6 +993,11 @@ module Make_Session (Base: Session_base) = struct
 
   let mk_base a b = Base (Base.mk_base a b)
 
+  let mk_base a b =
+    let pr =  pr_none  in 
+    let pr_out = string_of_session_base in
+    Debug.no_1 "mk_base" pr pr_out (mk_base a) b
+
   and mk_session_seq_formula session1 session2 loc = SSeq {
       session_seq_formula_head = session1;
       session_seq_formula_tail = session2;
@@ -1310,7 +1315,11 @@ module Make_Session (Base: Session_base) = struct
       let fnc = (nonef, (nonef, base_f)) in
       let sf = trans_session_formula fnc sf in
       sf in
-    wrap_2ways_sess2base fnc_node hform 
+    x_add wrap_2ways_sess2base fnc_node hform
+
+  let rename_message_pointer_heap hform =
+    let pr =  !Base.print_h_formula in
+    Debug.no_1 "rename_message_pointer_heap" pr pr rename_message_pointer_heap hform
   
   let rec extract_bases session =
     match session with
@@ -1423,7 +1432,7 @@ module Make_Session (Base: Session_base) = struct
         end
       | _ ->  Some sf  (* if it's not seq do not norm *)
     in let fct = trans_session_formula (trans_seq_helper, (somef,somef)) in
-    Some (wrap_2ways_sess2base fct base)
+    Some (x_add wrap_2ways_sess2base fct base)
 
   let norm_last_seq_node (base: Base.h_formula): Base.h_formula option =
     let pr = !Base.print_h_formula in
@@ -1496,6 +1505,9 @@ let is_projection si = let fct info = let sk = info.session_kind in
                           | _ -> false) in
   Gen.map_opt_def false fct si
 
+let is_projection si =
+  Debug.no_1 "is_projection" (pr_opt string_of_node_session_info) string_of_bool is_projection si
+
 (* -------------------------------------- *)
 (* rename the var which is used for describing the 
    transmitted message (the renaming taregets both the
@@ -1507,7 +1519,7 @@ let irename_message_pointer_heap hform =
     | TPProjection -> Some (ITPProjection.rename_message_pointer_heap hform)
     | Protocol     -> Some (IProtocol.rename_message_pointer_heap hform)
   in
-  IForm.heap_node_transformer ~flow:true fnc hform
+  IForm.heap_node_transformer (* ~flow:true *) fnc hform
 
 let irename_message_pointer formula =
   let renamed_formula = IForm.transform_formula irename_message_pointer_heap formula in

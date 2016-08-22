@@ -740,7 +740,7 @@ and mkThreadNode c id rsr dl perm ofl l =
                h_formula_thread_label = ofl;
                h_formula_thread_pos = l }
 
-and mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l=
+and mkHeapNode_x ?sess_info:(si=None) c id ho deref dr split i f inv pd perm hl hl_i ofl l=
   HeapNode { h_formula_heap_node = c;
              h_formula_heap_name = id;
              h_formula_heap_deref = deref;
@@ -755,7 +755,7 @@ and mkHeapNode_x c id ho deref dr split i f inv pd perm hl hl_i ofl l=
              h_formula_heap_arguments = hl;
              h_formula_heap_ho_arguments = ho;
              h_formula_heap_label = ofl;
-             h_formula_heap_session_info = None;
+             h_formula_heap_session_info = si;
              h_formula_heap_pos = l }
 
 and mkHeapNode  c id ho deref dr split i f inv pd perm hl hl_i ofl l=
@@ -1533,6 +1533,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_arguments = args;
                h_formula_heap_ho_arguments = ho_args;
                h_formula_heap_pseudo_data = ps_data;
+               h_formula_heap_session_info = si;
                h_formula_heap_label = l;
                h_formula_heap_pos = pos}) ->
     let imm = apply_one_imm s imm in
@@ -1555,7 +1556,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_ho_arguments = List.map (fun ff -> 
                    {ff with rflow_base = apply_one s ff.rflow_base; }) ho_args;
                h_formula_heap_pseudo_data = ps_data;
-               h_formula_heap_session_info = None;
+               h_formula_heap_session_info = si;
                h_formula_heap_label = l;
                h_formula_heap_pos = pos})
   | HeapNode2 ({h_formula_heap2_node = x;
@@ -1848,6 +1849,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_perm = perm; (*LDK*)
                  h_formula_heap_arguments = args;
                  h_formula_heap_ho_arguments = ho_args;
+                 h_formula_heap_session_info = si;
                  h_formula_heap_pseudo_data = ps_data;
                  h_formula_heap_label = l;
                  h_formula_heap_pos = pos}) ->
@@ -1870,7 +1872,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_ho_arguments = List.map (fun ff -> 
                      { ff with rflow_base = apply_one_w_data_name s ff.rflow_base; }) ho_args; 
                  h_formula_heap_pseudo_data = ps_data;
-                 h_formula_heap_session_info = None;
+                 h_formula_heap_session_info = si;
                  h_formula_heap_label = l;
                  h_formula_heap_pos = pos})
     | HeapNode2 ({h_formula_heap2_node = x;
@@ -3345,6 +3347,12 @@ let set_session_kind_h_formula hform sk nk =
                                              Some (mk_node_session_info sk nk) })
     | _ -> Some h in
   transform_h_formula f_h hform
+
+let set_session_kind_h_formula hform sk nk =
+  let pr1 = !print_h_formula in
+  let pr2 = string_of_session_kind in
+  let pr3 = string_of_node_kind in
+  Debug.no_3 "set_session_kind_h_formula" pr1 pr2 pr3 pr1 set_session_kind_h_formula hform sk nk
 
 let set_heap_name hform name =
   match hform with
