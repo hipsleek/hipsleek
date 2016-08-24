@@ -12827,7 +12827,7 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
   Debug.no_2 "solver_infer_lhs_contra_list" pr_estate Cprinter.string_of_mix_formula  
     (pr_pair (pr_list pr_es) (pr_list pr_3)) (fun _ _ -> solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg ) estate lhs_xpure
 
-and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+and process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
     lhs_node lhs_rest rhs_node rhs_rest holes=
   let () = x_tinfo_zp (lazy ("before_do_match rhs_b" ^ (Cprinter.string_of_formula_base rhs_b))) pos in
   let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
@@ -12856,6 +12856,18 @@ and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_s
     let res_es0, prf0 = x_add do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
     (* let () = Debug.info_zprint  (lazy  ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0))) no_pos in *)
     (res_es0,prf0)
+
+and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+    lhs_node lhs_rest rhs_node rhs_rest holes =
+  let pr (e,_) = Cprinter.string_of_list_context e in
+  let pr4 = Cprinter.string_of_entail_state in
+  let pr_h = Cprinter.string_of_h_formula in
+  Debug.no_4 "process_before_do_match"
+    (add_str "lhs node" pr_h)
+    (add_str "rhs node" pr_h)
+    (add_str "lhs rest" pr_h)
+    pr4
+    pr (fun _ _ _ _ -> process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos lhs_node lhs_rest rhs_node rhs_rest holes) lhs_node rhs_node lhs_rest estate
 
 and process_action ?(caller="") i cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos 
   : (Cformula.list_context * Prooftracer.proof) =
@@ -12918,10 +12930,11 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
-      x_tinfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      x_binfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
       let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
                                     ) lhs_rest holes
       in
+      x_binfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       let pure_to_add = match infer_opt with
         | Some f ->
           let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in

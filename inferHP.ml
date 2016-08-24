@@ -1318,6 +1318,8 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
         let nf, nholes = if Immutable.produces_hole (hd.CF.h_formula_data_imm) then
             let hole_no = Globals.fresh_int() in
             let h_hole = CF.Hole hole_no  in
+            let () = y_binfo_hp (add_str "adding new hole" (pr_pair Cprinter.string_of_h_formula string_of_int)) (new_h, hole_no) in
+            let () = y_binfo_hp (add_str "why add the newly created hole to the state at this point?" Cprinter.string_of_formula) (CF.mkAnd_f_hf f h_hole pos) in
             (CF.mkAnd_f_hf f h_hole pos,[(new_h, hole_no)])
           else (f,[])
         in

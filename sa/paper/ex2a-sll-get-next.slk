@@ -5,8 +5,8 @@ data node {
 
 HeapPred H(node a).
 
-//infer [H] H(x) |- x::node<a,b>@L.
-infer []  x::node<1,nil> |- x::node<a,b>@L.
+infer [H] H(x) |- x::node<a,b>@L.
+//infer []  x::node<1,nil> |- x::node<a,b>@L.
 //print residue.
 
 
