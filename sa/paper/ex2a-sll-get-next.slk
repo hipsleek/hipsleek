@@ -13,7 +13,25 @@ infer [H] H(x) |- x::node<a,b>@L.
 print residue.
 
 /*
-# ex2b.slk
+# ex2a.slk
+
+# if lhs_rest already has hole, don't add it into lhs_rest anymore ..
+
+      let lhs_rest = 
+        if !Globals.adhoc_flag_3 then lhs_rest 
+        else List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
+                                    ) lhs_rest holes
+
+!!! **solver.ml#12930:lhs_rest: HP_20(b_19,x) * (Hole[21])
+!!! **solver.ml#12933:holes:[( x::node<a_18,b_19>@M,21)]
+!!! **solver.ml#12939:lhs_rest: HP_20(b_19,x) * (Hole[21]) * (Hole[21])
+!!! **solver.ml#12854:new_estate(M_match):  HP_20(b_19,x) * (Hole[21]) * (Hole[21])&{FLOW,(20,
+
+
+!!! **solver.ml#12933:holes:[( x::node<a_18,b_19>@M,21)]
+!!! **solver.ml#12939:lhs_rest: HP_20(b_19,x) * (Hole[21]) * (Hole[21])
+
+
 
 !!! **inferHP.ml#1344:  new_lhs: : x::node<a_18,b_19>@M
 (==inferHP.ml#2269==)

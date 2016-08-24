@@ -1315,7 +1315,7 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
         let new_h = DataNode {hd with CF.h_formula_data_imm = (CP.ConstAnn(Mutable));
                                       CF.h_formula_data_param_imm = n_param_imm} in
         (*generate new hole*)
-        let nf, nholes = if Immutable.produces_hole (hd.CF.h_formula_data_imm) then
+        let nf, nholes = if (* not(!Globals.adhoc_flag_3) && *) Immutable.produces_hole (hd.CF.h_formula_data_imm) then
             let hole_no = Globals.fresh_int() in
             let h_hole = CF.Hole hole_no  in
             let () = y_binfo_hp (add_str "adding new hole" (pr_pair Cprinter.string_of_h_formula string_of_int)) (new_h, hole_no) in
