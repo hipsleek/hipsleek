@@ -73,6 +73,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_data_name = data_name;
                            I.view_type_of_self = None;
                            I.view_vars = vars;
+                               I.view_inst_vars = [](* inst_vars *);
                            I.view_ho_vars = []; (* TODO:HO *)
                            (* I.view_imm_map = fst (List.fold_left (fun (r,n) _ -> (r@[(IP.ConstAnn Mutable, n)], n+1)) ([],0) vars); this serves as a bridge between the data field imm and the view param *)
                            I.view_imm_map = imm_map;

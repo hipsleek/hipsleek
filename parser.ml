@@ -74,6 +74,7 @@ type ann =
   | AnnMode of mode
   | AnnType of typ
   | AnnMater
+  | AnnInst
 
 type file_offset =
   {
@@ -209,7 +210,9 @@ let get_pos_camlp4 l x =
   )
 
 let get_mater_vars l = List.fold_left (fun a (((_,v),_),al)-> if (List.exists (fun c-> c=AnnMater) al) then v::a else a) [] l
-  
+
+let get_inst_vars l = List.map (fun (((_,v),_),al)-> if (List.exists (fun c-> c=AnnInst) al) then (IP,v) else (IP_not_set,v))  l
+
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
 		match ann with
@@ -1730,24 +1733,26 @@ node_type: [[ `IDENTIFIER anno ->
 
 view_header:
   [[ `IDENTIFIER vn; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
-      let () = view_names # push vn in
-      let mvs = get_mater_vars l in
-      let cids, anns = List.split l in
-      let modes = get_modes anns in
-      let pos = get_pos_camlp4 _loc 1 in
-      Iast.mk_view_header vn opt1 cids mvs modes pos
+     let () = view_names # push vn in
+     let inst_vars = get_inst_vars l in 
+     let mvs = get_mater_vars l in
+     let cids, anns = List.split l in
+     let modes = get_modes anns in
+     let pos = get_pos_camlp4 _loc 1 in
+     Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos
    | `IDENTIFIER vn; `AT; nk = node_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
-      let () = view_names # push vn in
-      let () = Session.set_prim_pred_id nk vn in
-      let mvs = get_mater_vars l in
-      let cids, anns = List.split l in
-      let modes = get_modes anns in
-      let pos = get_pos_camlp4 _loc 1 in
-      let vh = Iast.mk_view_header vn opt1 cids mvs modes pos in
-      let kind = mk_view_session_info ~nk:nk () in
-      {vh with view_session_info = Some kind}
-]];
-                                          
+     let () = view_names # push vn in
+     let () = Session.set_prim_pred_id nk vn in
+     let inst_vars = get_inst_vars l in 
+     let mvs = get_mater_vars l in
+     let cids, anns = List.split l in
+     let modes = get_modes anns in
+     let pos = get_pos_camlp4 _loc 1 in
+     let vh = Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos in
+     let kind = mk_view_session_info ~nk:nk () in
+     {vh with view_session_info = Some kind}
+   ]];
+
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
 (* form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]]; *)
@@ -1765,15 +1770,12 @@ rflow_form:
       let loc = (get_pos_camlp4 _loc 1) in
       let form = (match p with
           | Session.ProjectionSession s ->
-            let () = print_endline ("PARSER1: " ^ (Session.IProjection.string_of_session s)) in
             Session.IProjection.mk_formula_heap_only
                                              (Session.IProjection.trans_from_session s) loc
           | Session.TPProjectionSession s ->
-            let () = print_endline ("PARSER2: " ^ (Session.ITPProjection.string_of_session s)) in
             Session.ITPProjection.mk_formula_heap_only
                                                (Session.ITPProjection.trans_from_session s) loc
           | Session.ProtocolSession s ->
-            let () = print_endline ("PARSER3: " ^ (Session.IProtocol.string_of_session s)) in
             Session.IProtocol.mk_formula_heap_only
                                            (Session.IProtocol.trans_from_session s) loc) in
       { F.rflow_kind = NEUTRAL;
@@ -1810,8 +1812,9 @@ rflow_form_list : [[ `OBRACE; sl = rflow_form_list_opt; `CBRACE ->
     List.map (fun ff -> {ff with F.rflow_base = F.subst_stub_flow n_flow ff.F.rflow_base}) sl ]];
 
 view_header_ext:
-    [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt (*id_list*) ;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
-      let cids, anns = List.split l in
+  [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt (*id_list*) ;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
+     let inst_vars = get_inst_vars l in
+     let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
 	  let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
@@ -1828,6 +1831,7 @@ view_header_ext:
           view_type_of_self = None;
           (* view_actual_root = None; *)
           view_vars = (* List.map fst *) cids;
+          view_inst_vars = inst_vars;
           view_ho_vars = [];
           (* view_frac_var = empty_iperm; *)
           view_labels = br_labels,has_labels;
@@ -1956,6 +1960,7 @@ ann:
       if id = "out" then AnnMode ModeOut
       else report_error (get_pos_camlp4 _loc 2) ("unrecognized mode: " ^ id) end
    | `AT ; `IN_T       -> AnnMode ModeIn
+   | `INST_PARAM -> AnnInst
    | `MAT -> AnnMater  ]];
       
 sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];

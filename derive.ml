@@ -1111,7 +1111,8 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
           Iast.view_pos = no_pos;
           Iast.view_data_name = "";
           Iast.view_type_of_self = None;
-          Iast.view_imm_map = [];
+      Iast.view_imm_map = [];
+      Iast.view_inst_vars = [](* inst_vars *);
           Iast.view_vars = vars;
           Iast.view_ho_vars = []; 
           Iast.view_derv = true;

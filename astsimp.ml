@@ -2816,6 +2816,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         else []
       in
       let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
+      let inst_vars = List.map (fun (ip,v) -> (ip, trans_var (v,Unprimed) n_tl pos)) vdef.I.view_inst_vars in
       (* removing non-ptr arithmetic *)
       let lst_heap_ptrs = List.filter (fun (sv,f) -> not(CP.isConstTrue f)) lst_heap_ptrs in
       (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
@@ -2857,6 +2858,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_parent_name = None;
         C.view_domains = [];
         C.view_vars = view_sv;
+        C.view_inst_vars = inst_vars;
         C.view_ho_vars = view_ho_sv;
         C.view_cont_vars = [];
         C.view_seg_opz = None;

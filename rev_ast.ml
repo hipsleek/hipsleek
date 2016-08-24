@@ -229,6 +229,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_type_of_self = None;
                          (* I.view_actual_root = None; *)
                          I.view_vars = vars;
+                         I.view_inst_vars = [];
                          I.view_ho_vars = []; (* TODO:HO *)
                          I.view_imm_map = [];
                          I.view_parent_name = None;
@@ -341,6 +342,7 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
   in
   { I.view_name = v.C.view_name;
     I.view_vars = List.map CP.name_of_spec_var v.C.view_vars;
+    I.view_inst_vars = [](* inst_vars *);
     I.view_pos = v.C.view_pos;
     I.view_is_prim = v.C.view_is_prim;
     I.view_is_hrel = v.C.view_is_hrel;

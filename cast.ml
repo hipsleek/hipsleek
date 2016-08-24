@@ -102,6 +102,7 @@ and view_decl = {
 
   (* these seem related to parameters of view *)
   view_vars : P.spec_var list;
+  view_inst_vars : (inst * P.spec_var) list;
   view_labels : LO.t list;
   view_ann_params : (P.annot_arg * int) list;
   view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
@@ -786,6 +787,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   {
     view_name = hp_n; (* CP.name_of_spec_var hp_n; *)
     view_vars = vs;
+    view_inst_vars = [];
     view_pos = pos;
     view_is_hrel = Some (is_pre);
     view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id) ;
@@ -850,11 +852,12 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_ef_pure_disj = None;
   }
 
-let mk_view_prim v_name v_args v_inv pos =
+let mk_view_prim v_name v_args v_inv ?inst_params:(ip=[]) pos =
   let mix_true = MP.mkMTrue pos in
   {
     view_name = v_name;
     view_vars = v_args;
+    view_inst_vars = ip;
     view_pos = pos;
     view_is_hrel = None;
     view_is_prim = true;

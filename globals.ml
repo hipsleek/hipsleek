@@ -78,6 +78,12 @@ type flags =
   | Flag_int of int
   | Flag_float of float
 
+
+type inst =
+  | IP
+  | NIP
+  | IP_not_set
+
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)

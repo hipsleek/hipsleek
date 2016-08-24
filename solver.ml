@@ -11482,18 +11482,35 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* If not high-order, do nothing *)
               [(None, new_ante, new_conseq, new_exist_vars, [])]
             else
+
+              (* add the intantiations guided by the view parameters *)
+              let r_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls r_node_name in
+              let args = List.combine l_args r_args in
+              let () = y_binfo_hp (add_str ("l_args:"^(l_node_name)) (string_of_int)) (List.length l_args) in
+              let () = y_binfo_hp (add_str "l_args:" (pr_list string_of_spec_var)) l_args in 
+              let () = y_binfo_hp (add_str ("VDEF:"^(r_vdef.view_name)) (string_of_int)) (List.length r_vdef.view_inst_vars) in
+
+              let args = List.combine args r_vdef.view_inst_vars in
+              let new_inst = List.filter (fun ((l,r),(inst,_)) ->  inst = IP ) args in
+              let new_inst = List.map (fun ((l,r),(_,_)) ->  (l,r) ) new_inst in
+              let inst_lst = List.map (fun (l,r) -> CP.mk_eq_vars l r) new_inst in
+              let inst_f = CP.join_conjunctions inst_lst in
+              let ante_for_ho_match = CF.add_pure_formula_to_formula inst_f new_ante in
+
               (* check if current node is seq with sor as head *)
               let l_ho_args_orig, r_ho_args_orig = l_ho_args, r_ho_args in
               let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
               let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name0 in
+              
+              let ante_for_ho_match = new_ante in
+              
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
               let args = List.combine l_ho_args r_ho_args in
               let args = List.combine args l_vdef_hvar_split_kinds in
               
               let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
-
               let match_one_ho_arg_helper (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
                 (((CF.list_context * Prooftracer.proof) option) *
                  (CF.formula option) *
@@ -11502,7 +11519,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                  (entail_state option)
                 ) list =
 
-                let ho_match_helper = match_one_ho_arg prog estate new_ante new_conseq evars new_impl_vars pos in
+                let ho_match_helper = match_one_ho_arg prog estate ante_for_ho_match new_conseq evars new_impl_vars pos in
                 match_ho_arg_lhs_disj ((lhs, rhs), k)  ho_match_helper prog estate new_conseq pos
               in
 
