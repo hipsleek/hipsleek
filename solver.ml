@@ -13960,7 +13960,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                     if !Globals.warn_do_match_infer_heap then 
                       failwith "do_match during infer_heap"
                     else
-                      let match_act = Context.M_match (x_add (Context.mk_match_res ~holes:new_estate.es_crt_holes Root) n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
+                      let new_holes = Gen.BList.difference_eq (fun (_,id1) (_, id2) -> id1 = id2) new_estate.es_crt_holes estate.es_crt_holes in
+                      let match_act = Context.M_match (x_add (Context.mk_match_res ~holes:new_holes(* new_estate.es_crt_holes *) Root) n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
                       (* let new_estate = { new_estate with es_trace =  (Context.string_of_action_name match_act)::new_estate.es_trace } in *)
                       (* x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos                                  *)
                       (* Below causes a problem with str-inf/ex10a2-str-while.ss *)
