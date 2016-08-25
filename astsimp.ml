@@ -109,7 +109,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
-  | Array (et, r) -> (* An Hoa *)
+  | Array (et, r) | ArrayC (et,r,_)-> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
 ;;
@@ -6842,7 +6842,7 @@ and default_value (t :typ) pos : C.exp =
   | Pointer ptr -> C.Null pos
   | Tree_sh ->  failwith
                   "default_value: tree_sh in variable declaration should have been rejected"
-  | Array (t, d) ->
+  | Array (t, d) | ArrayC (t,d,_)->
     C.EmptyArray { C.exp_emparray_type = t; 
                    C.exp_emparray_dim = d; 
                    C.exp_emparray_pos = pos}

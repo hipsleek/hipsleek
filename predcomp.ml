@@ -132,7 +132,7 @@ and aug_class_name (t : typ) = match t with
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List t -> "List("^(aug_class_name t)^")"
-  | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
+  | Array (et, _) | ArrayC (et,_,_)-> aug_class_name et ^ "[]" (* An Hoa *)
 
 (*
   split view parameters according to their modes:

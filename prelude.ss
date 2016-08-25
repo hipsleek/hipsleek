@@ -417,10 +417,18 @@ void delete_ptr(int_ptr_ptr@R x)
   requires x::int_ptr_ptr<v>
   ensures true;
 
-/* Muoi updated: We can generate int_star from cilparser. 
+  /* Muoi updated: We can generate int_star from cilparser. */
+
 data int_star{
   int value;
 }
+
+data void_star{
+    int value;
+}
+
+/*
+
 
 int_star __pointer_add__int_star__int__(int_star p, int i)
   requires p::int_star<value>
@@ -612,3 +620,76 @@ char_star alloc_str (int n)
 void finalize_str (char_star s, int n)
   requires s::WFSegN<p, m> & 0 <= n & n < m & Term
   ensures s::WSSN<q, n+1>;
+
+
+/*
+void_star __builtin_alloca(int size)
+  case{
+     size <= 0 -> requires true ensures res = null;
+     size > 0 -> requires true ensures res::memLoc<h,s> & res!=null & h;}
+     */
+
+/*
+void_star __builtin_alloca(int size)
+case{
+    size <= 0 -> requires true ensures res = null;
+    size > 0 -> requires true ensures res::memLoc<h,s> & res!=null & h;}
+    */
+    
+data arrI{
+   int val;
+}
+
+arr_seg<i,n> == i=n & i>=0
+   or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+   inv n>=i & i>=0;
+
+// needed   
+int arr_read_ptr(int_star a)
+   requires a::arrI<v>
+   ensures a::arrI<v> & res=v;
+
+int arr_read_index(int_star a, int i)
+    requires x::arrI<v> & x=a+i
+    ensures x::arrI<v> & res=v;
+
+
+int_star arr_write_ptr(int_star a, int v)
+   requires a::arrI<_>
+   ensures a::arrI<v>;
+
+int_star arr_write_index(int_star a, int i, int v)
+   requires x::arrI<_> & x=a+i
+   ensures x::arrI<v>;
+
+void_star __builtin_alloca(int size)
+ case{
+   size <= 0 -> requires true ensures res = null;
+        size > 0 -> requires true ensures res::arr_seg<0,size> & res!=null;}
+
+int_star __pointer_add__int_star__int__(int_star p, int i)
+        requires x::arrI<_> & x=p+i
+        ensures  res::arrI<_> & res = x;
+
+
+int_star __decl_array__(int size)
+case{
+     size<0 -> requires true ensures res = null;
+            size>=0 -> requires true ensures res::arr_seg<0,size> & res!=null;}
+
+/*
+int_star __cast_void_pointer_to_int_star__(void_star p)
+case{
+     p=null -> requires true ensures res = null;
+     p!=null -> requires p::memLoc<0,size> & size>=0
+                ensures res::arr_seg<0,size>;}
+*/
+   
+
+/*
+void_star __pointer_add__int_star__int__(void_star a, int size)
+   requires true
+   ensures true;
+*/
+
+   

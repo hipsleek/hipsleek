@@ -630,15 +630,22 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
                       "    p =  null -> ensures res = null; \n" ^
                       "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
                       "                 ensures res::WFSegN<q,s>; \n" ^
-                      "  }\n"
-          | _ -> typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
-                 "  case { \n" ^
+                        "  }\n"
+          | "int" ->
+             typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+               "  case { \n" ^
                  "    p =  null -> ensures res = null; \n" ^
-                 "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
-                 (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
-                 "                 ensures res::" ^ data_name ^ param ^ (* " & o>=0; \n" *) "; \n" ^
-                 "  }\n"
-        ) in
+                   "    p != null -> requires p::arr_seg<0,size> & size>=0\n" ^ 
+                     "                 ensures res::arr_seg<0,size>;}\n"
+          | _ ->
+             typ_name ^ " " ^ proc_name ^ " (void_star p)\n" ^
+               "  case { \n" ^
+                 "    p =  null -> ensures res = null; \n" ^
+                   "    p != null -> requires p::memLoc<h,s> & h\n" ^ 
+                     (* "                 ensures res::" ^ data_name ^ param ^ " * res::memLoc<h,s> & h; \n" ^ *)
+                     "                 ensures res::" ^ data_name ^ param ^ (* " & o>=0; \n" *) "; \n" ^
+                       "  }\n"
+          ) in
         let _ = Debug.ninfo_zprint (lazy ((" cast_proc:\n  " ^ cast_proc))) no_pos in
         let pd = Parser.parse_c_aux_proc "void_pointer_casting_proc" cast_proc in
         Hashtbl.add tbl_aux_proc proc_name pd;
@@ -647,7 +654,19 @@ let rec create_void_pointer_casting_proc (typ_name: string) : Iast.proc_decl =
   ) in
   (* return *)
   proc_decl
+;;
 
+let get_array_size typ =
+  match typ with
+  | Cil.TArray (_,e_op,_) -> e_op
+  | _ -> failwith "get_array_size: Not valid input"
+;;
+
+let get_array_offset loffset =
+  match loffset with
+  | Cil.Index (exp, Cil.NoOffset,_) ->
+     exp
+  | _ -> failwith "get_array_offset: Not valud input"
 
 (* check if a type is pointer type *)
 let is_pointer_typ_name (typ_name: string) : bool =
@@ -1190,28 +1209,29 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star" 
               in
               let dtype = Globals.Named dname in
+              dtype
 (*              let offset_field = match ty with*)
 (*                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, (gen_field_ann dtype))*)
 (*                | _ -> ((Int, str_offset), no_pos, false, (gen_field_ann Int)) (*other types have an integer offset*)*)
 (*              in*)
-              let dfields = match ty with
-                | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
-                | _ -> [value_field(*; offset_field*)] 
-              in
-              Hashtbl.add tbl_pointer_typ core_type dtype;
-              let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-              x_ninfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
-              x_ninfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
-              Hashtbl.add tbl_data_decl dtype ddecl;
-              (* return new type*)
-              dtype
+              (* let dfields = match ty with *)
+              (*   | Cil.TInt(Cil.IInt, _) -> [value_field] (\* int_star type stores only one value *\) *)
+              (*   | _ -> [value_field(\*; offset_field*\)]  *)
+              (* in *)
+              (* Hashtbl.add tbl_pointer_typ core_type dtype; *)
+              (* let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in *)
+              (* x_ninfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos; *)
+              (* x_ninfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos; *)
+              (* Hashtbl.add tbl_data_decl dtype ddecl; *)
+              (* (\* return new type*\) *)
+              (* dtype *)
             )
         ) in
         newt
       )
-    | Cil.TArray (ty, _, _) ->
-      let arrayty = translate_typ ty pos in
-      Globals.Array (arrayty, 1)
+    | Cil.TArray (ty, size, attr) ->
+       let arrayty = translate_typ ty pos in
+       Globals.Array (arrayty, 1)
     | Cil.TFun _ ->
       report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
     | Cil.TNamed _ ->                                          (* typedef type *)
@@ -1257,7 +1277,6 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
     | Globals.Int
     | Globals.Bool
     | Globals.Float
-    | Globals.Array _
     | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
     | Globals.Named typ_name -> (
         if (need_init) then (
@@ -1265,7 +1284,22 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
           Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
         )
         else Iast.mkVarDecl new_ty [(name, None, pos)] pos
-      )
+    )
+    | Globals.Array (_,_) ->
+       if !Globals.array_c_program
+       then
+         (match get_array_size ty with
+          | Some array_size ->
+             let size = translate_exp array_size in
+             let helpertyp = Globals.Named "int_star" in
+             let decl = Iast.mkVarDecl helpertyp [(name,None,pos)] pos in
+             let arg_name = Iast.mkVar name pos in
+             let init = Iast.mkCallNRecv "__decl_array__" None [size] None None pos in
+             Iast.mkVarDecl helpertyp [(name,Some init,pos)] pos
+          | None ->
+             Iast.mkVarDecl new_ty [(name,None,pos)] pos)
+       else
+         Iast.mkVarDecl new_ty [(name, None, pos)] pos    
     | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
   ) in
   newexp
@@ -1390,10 +1424,17 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
         ) in
       match lhost with
       | Cil.Var (v, l) ->
-        let base = translate_var v (Some l) in
-        let newexp = create_complex_exp base offset [] pos in
-        let _ = Debug.ninfo_hprint (add_str "new exp" Iprinter.string_of_exp) base no_pos in
-        newexp
+         (match v.vtype with
+          | Cil.TArray _ ->
+             let index = translate_exp (get_array_offset offset) in
+             let arr = Iast.mkVar v.vname pos in
+             let base = Iast.mkCallNRecv "arr_read_index" None [arr;index] None None pos in
+             base
+          | _ ->
+             let base = translate_var v (Some l) in
+             let newexp = create_complex_exp base offset [] pos in
+             let _ = Debug.ninfo_hprint (add_str "new exp" Iprinter.string_of_exp) base no_pos in
+             newexp)
       | Cil.Mem e ->
         (* access to data in pointer variable *)
         let base_typ = typ_of_cil_exp e in
@@ -1425,8 +1466,15 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
             let data_base = translate_exp e  in
             let data_fields = [str_value] in
             let typ = translate_typ base_typ in
-            let base = Iast.mkMember data_base data_fields None pos in
-            create_complex_exp base offset [] pos
+            if !Globals.array_c_program
+            then
+              let le = translate_exp e in
+              let base = Iast.mkCallNRecv "arr_read_ptr" None [le] None None pos in
+              create_complex_exp base offset [] pos
+              (* let base = Iast.mkCallNRecv *)
+            else
+              let base = Iast.mkMember data_base data_fields None pos in
+              create_complex_exp base offset [] pos
           )
     )
 
@@ -1439,7 +1487,15 @@ and translate_lval (lv: Cil.lval) : Iast.exp =
 and translate_exp_x (e: Cil.exp) : Iast.exp =
   match e with
   | Cil.Const (c, l) -> translate_constant c (Some l)
-  | Cil.Lval (lv, _) -> translate_lval lv 
+  | Cil.Lval (lv, _) ->
+     (* let lv_ty = typ_of_cil_lval lv in *)
+     (* let () = print_endline (string_of_cil_typ lv_ty) in *)
+     (* let () = *)
+     (*   match lv_ty with *)
+     (*   | Cil.TArray _ -> print_endline "this is array" *)
+     (*   | _ -> () *)
+     (* in *)
+     translate_lval lv 
   | Cil.SizeOf (_, l) ->  (* currently assume SizeOf = 1, TRUNG TODO: compute exact value later *)
     let pos = translate_location l in
     Iast.mkIntLit 1 pos
@@ -1558,7 +1614,7 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
         )
     )
   | Cil.StartOf (lv, l) ->
-    translate_lval lv
+     translate_lval lv
 
 and translate_exp (e: Cil.exp) : Iast.exp =
   let pr_e = (add_str "cil exp" string_of_cil_exp) in
@@ -1642,10 +1698,11 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
   (* detect address-of operator *)
   match instr with
   | Cil.Set (lv, exp, l) -> (
-      let (lhost, _, _) = lv in
+      let (lhost, loffset, _) = lv in
       match lhost with
           | Cil.Mem e -> (
-              let base_typ = typ_of_cil_exp e in
+            let base_typ = typ_of_cil_exp e in
+            let () = print_endline ("base_typ "^(string_of_cil_typ base_typ)) in
               match base_typ with
                 | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) -> (   (*Muoi: write_char(char_star s, c) or finalization strings *)
                     match exp with
@@ -1708,21 +1765,39 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
               	    let pos = translate_location l in
                     let le = translate_lval lv in
                     let re = translate_exp exp in
-                    (Iast.mkAssign Iast.OpAssign le re None pos)
+                    if !Globals.array_c_program
+                    then
+                      let le = translate_exp e in
+                      let re = translate_exp exp in
+                      Iast.mkCallNRecv "arr_write_ptr" None [le;re] None None pos
+                    else
+                      (Iast.mkAssign Iast.OpAssign le re None pos)
                   )
             )
-          | _ -> (
+          | Cil.Var (varinfo,_) -> (
               let lv_typ = typ_of_cil_lval lv in
       	      let exp_typ = typ_of_cil_exp exp in
+              let varinfo_type = varinfo.Cil.vtype in
+              let () = y_binfo_hp (add_str "lv_typ" string_of_cil_typ) lv_typ in
+              let () = y_binfo_hp (add_str "exp_typ" string_of_cil_typ) exp_typ in
+              let () = y_binfo_hp (add_str "varinfo_type" string_of_cil_typ) varinfo_type in
+              
               let pos = translate_location l in
               let le = translate_lval lv in
               let re = translate_exp exp in
               let re_vars = get_vars_exp re in
-              (if Gen.BList.overlap_eq eq_str re_vars !nondet_vars then
-                let le_vars = get_vars_exp le in
-                nondet_vars := !nondet_vars @ le_vars
-              else ());
-              (Iast.mkAssign Iast.OpAssign le re None pos)
+              (
+                match varinfo_type with
+                | Cil.TArray _ ->
+                   let index = translate_exp (get_array_offset loffset) in
+                   let arr = Iast.mkVar varinfo.vname pos in
+                   Iast.mkCallNRecv "arr_write_index" None [arr;index;re] None None pos
+                | _ ->
+                   (if Gen.BList.overlap_eq eq_str re_vars !nondet_vars then
+                      let le_vars = get_vars_exp le in
+                      nondet_vars := !nondet_vars @ le_vars
+                    else ());
+                   (Iast.mkAssign Iast.OpAssign le re None pos))
             )
     )
   | Cil.Call (lv_opt, exp, exps, l) -> (

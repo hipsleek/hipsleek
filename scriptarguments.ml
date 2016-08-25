@@ -432,6 +432,7 @@ let common_arguments = [
   ("--adhoc-7", Arg.Set Globals.adhoc_flag_7,"Enable Adhoc Flag 7");
   ("--adhoc-8", Arg.Set Globals.adhoc_flag_8,"Enable Adhoc Flag 8");
   ("--adhoc-9", Arg.Set Globals.adhoc_flag_9,"Enable Adhoc Flag 9");
+  ("--array-c", Arg.Set Globals.array_c_program, "parse options for array programs");
   ("--old-univ-vars", Arg.Set Globals.old_univ_vars,"Old method of using univ vars");
   ("--new-univ-vars", Arg.Clear Globals.old_univ_vars,"New method of using univ vars");
   ("--old-keep-absent", Arg.Set Globals.old_keep_absent,"Keep absent nodes during expure - unsound");

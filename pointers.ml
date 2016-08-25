@@ -93,7 +93,7 @@ let default_value (t :typ) pos : exp =
     failwith "default_value: RelT can only be used for constraints"
   | Named _ (* | SLTyp *) -> Null pos
   | Pointer ptr -> Null pos
-  | Array (t, d) ->
+  | Array _ | ArrayC _->
     failwith "default_value: Array not supported"
   | FuncT _ -> failwith "default_value: FuncT not supported"
   | UtT _ -> failwith "default_value: UtT not supported"

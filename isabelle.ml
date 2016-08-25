@@ -55,7 +55,7 @@ let rec isabelle_of_typ = function
   | TVar _ 
   (* | SLTyp *)
   | Named _ 
-  | Array _ ->
+  | Array _ | ArrayC _->
     Error.report_error {Error.error_loc = no_pos; 
                         Error.error_text = "type var, array and named type not supported for Isabelle"}
   | INFInt | Pointer _ -> Error.report_no_pattern ()  

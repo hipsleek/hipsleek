@@ -202,7 +202,8 @@ type typ =
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
   (* Named "R" *)
-  | Array of (typ * int) (* base type and dimension *)
+  | Array of (typ * int) (* base type and dimension and size*)
+  | ArrayC of (typ * int * int) (* Array type for C, base type, dimension and size*)
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
@@ -629,6 +630,9 @@ let rec string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | ArrayC (et,r,size) ->
+     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
+     (string_of_typ et) ^ (repeat r)
 ;;
 
 let string_of_typed_ident (typ,id) =
@@ -683,6 +687,9 @@ let rec string_of_typ_alpha = function
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | ArrayC (et,r,size) ->
+     let rec repeat k = if (k <= 0) then "" else "_arr" ^ (repeat (k-1)) in
+     (string_of_typ et) ^ (repeat r)
 ;;
 
 let subs_tvar_in_typ t (i:int) nt =
@@ -1372,6 +1379,7 @@ let adhoc_flag_6 = ref false
 let adhoc_flag_7 = ref false
 let adhoc_flag_8 = ref false
 let adhoc_flag_9 = ref false
+let array_c_program = ref false                       
 let old_keep_absent = ref false
 let old_univ_vars = ref false
 let old_empty_to_conseq = ref true (* false *)
