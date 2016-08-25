@@ -12931,10 +12931,13 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
       x_binfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
-      let lhs_rest = 
-        if !Globals.adhoc_flag_3 then lhs_rest 
-        else List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
-                                    ) lhs_rest holes
+      let lhs_rest =
+        match lhs_rest with
+        | DataNode lhs_rest_data ->
+          if Immutable.produces_hole (lhs_rest_data.CF.h_formula_data_imm) then lhs_rest
+          else List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
+                              ) lhs_rest holes
+        | _ -> lhs_rest
       in
       x_binfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       let pure_to_add = match infer_opt with
