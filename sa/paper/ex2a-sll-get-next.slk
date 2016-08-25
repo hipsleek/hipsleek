@@ -75,6 +75,10 @@ do_match@2 EXIT: [ HP_20(b_19,x) * (Hole[21]) * (Hole[21])&a=a_18 & b=b_19&
   es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap ==>  Match(x,x)
   es_infer_vars_hp_rel: [H; HP_20]]
 
+# need to trace
+
+  process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+
 
 (==solver.ml#12856==)
 do_match@1

@@ -1,0 +1,39 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node a).
+HeapPred HP(node a,node@NI b).
+HeapPred G(node a,node b).
+
+
+infer[G,HP] xx::node<_,null>* HP(res,xx) |- G(xx,res).
+
+//infer [H] H(x) |- x::node<a,b>@L.
+//infer []  x::node<1,nil> |- x::node<a,b>@L.
+//print residue.
+
+
+print residue.
+
+/*
+
+# ex2a.slk
+
+Why did not get below?
+
+  xx::node<_,null>* HP(res,xx) --> G(xx,res)
+
+ <1>HP(res,xx)&{FLOW,(20,21)=__norm#E}[]
+
+ inferred rel: [RELDEFN GP_30: 
+      ( flted_11_19=null & xx!=null) -->  GP_30(flted_11_19,res,xx)]
+ inferred hprel: [xx::node<Anon_12,flted_11_19>@M * 
+                  GP_30(flted_11_19,res,xx@NI)&
+                   flted_11_19=null --> G(xx,res)&true]
+
+
+
+*/
+
