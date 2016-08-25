@@ -12851,7 +12851,7 @@ and process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched
     let rhs_p = if new_p==[] then rhs_p
       else MCP.memoise_add_pure rhs_p (CP.join_conjunctions new_p) in
     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-    x_binfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
+    let () = x_tinfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos in 
     let () = y_tinfo_hp (add_str "n_rhs_b" !CF.print_formula) n_rhs_b in
     let res_es0, prf0 = x_add do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
     (* let () = Debug.info_zprint  (lazy  ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0))) no_pos in *)
@@ -12927,13 +12927,13 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_holes = holes;
       } as m_res)->
       x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
-      x_binfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
+      x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
-      x_binfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      x_tinfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
       let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos) lhs_rest holes
       in
-      x_binfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
+      x_tinfo_hp (add_str "lhs_rest (after adding the nodes)" (Cprinter.string_of_h_formula)) lhs_rest pos;
       let pure_to_add = match infer_opt with
         | Some f ->
           let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
@@ -13564,7 +13564,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-} -> 
+      } -> 
       (* let () = print_string ("xxxx do_coercion: M_rd_lemma \n") in *)
       let r1,r2 = x_add do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
@@ -13573,7 +13573,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-} ->
+      } ->
       (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
       let ctx0 = Ctx estate in
       (* let ((coer_l,coer_r),univ_coers) = 
@@ -14084,11 +14084,11 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                       let hv = match l_h with
                         (* TODO:WN:HVar *)
                         | HVar (v,hvar_vs) -> 
-                              let gen_impl_vars = estate.es_gen_impl_vars in
-                              let () = y_tinfo_hp (add_str "HVar v" !CF.print_sv) v in
-                              let () = y_tinfo_hp (add_str "gen_impl_vars" !CF.print_svl) gen_impl_vars in
-                                  if (is_mem v gen_impl_vars) || !Globals.contra_ho_flag
-                                  then Some v else None
+                          let gen_impl_vars = estate.es_gen_impl_vars in
+                          let () = y_tinfo_hp (add_str "HVar v" !CF.print_sv) v in
+                          let () = y_tinfo_hp (add_str "gen_impl_vars" !CF.print_svl) gen_impl_vars in
+                          if (is_mem v gen_impl_vars) || !Globals.contra_ho_flag
+                          then Some v else None
                         | _ -> None
                       in
                       match hv with

@@ -1318,8 +1318,7 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
         let nf, nholes = if (* not(!Globals.adhoc_flag_3) && *) Immutable.produces_hole (hd.CF.h_formula_data_imm) then
             let hole_no = Globals.fresh_int() in
             let h_hole = CF.Hole hole_no  in
-            let () = y_binfo_hp (add_str "adding new hole" (pr_pair Cprinter.string_of_h_formula string_of_int)) (new_h, hole_no) in
-            let () = y_binfo_hp (add_str "why add the newly created hole to the state at this point?" Cprinter.string_of_formula) (CF.mkAnd_f_hf f h_hole pos) in
+            let () = y_tinfo_hp (add_str "adding new hole" (pr_pair Cprinter.string_of_h_formula string_of_int)) (new_h, hole_no) in
             (* (CF.mkAnd_f_hf f h_hole pos,[(new_h, hole_no)]) *)
             (f,[(new_h, hole_no)])
           else (f,[])
@@ -1342,9 +1341,9 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
                           CF.es_crt_holes = es.CF.es_crt_holes@new_holes;
                           CF.es_formula = new_es_formula1} in
     let () = new_es.CF.es_infer_hp_rel # push_list_loc x_loc hp_rel_list in
-    x_binfo_hp (add_str "  residue before matching: " Cprinter.string_of_formula) new_es.CF.es_formula pos;
-    x_binfo_hp (add_str "  new_es_formula: "  Cprinter.string_of_formula) new_es_formula pos;
-    x_binfo_hp (add_str "  new_lhs: "  Cprinter.string_of_h_formula) new_lhs pos;
+    x_tinfo_hp (add_str "  residue before matching: " Cprinter.string_of_formula) new_es.CF.es_formula pos;
+    x_tinfo_hp (add_str "  new_es_formula: "  Cprinter.string_of_formula) new_es_formula pos;
+    x_tinfo_hp (add_str "  new_lhs: "  Cprinter.string_of_h_formula) new_lhs pos;
     (new_es, new_lhs)
   end
 
