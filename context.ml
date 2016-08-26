@@ -813,7 +813,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* this picks existential/instvars in estate *)
       let lst = List.map (fun (d,root_lhs) -> 
           let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
-         match view_root_rhs with
+                    match view_root_rhs with
           | Some ((v,rf)) -> 
             (* lhs_pure |- d>=rhs_ptr  *)
             begin

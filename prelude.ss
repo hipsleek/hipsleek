@@ -677,6 +677,10 @@ case{
      size<0 -> requires true ensures res = null;
             size>=0 -> requires true ensures res::arr_seg<0,size> & res!=null;}
 
+lemma_unsafe "array" self::arr_seg<i,n> & i<m & m<=n 
+            -> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+            
 /*
 int_star __cast_void_pointer_to_int_star__(void_star p)
 case{
