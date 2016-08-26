@@ -1803,6 +1803,7 @@ and spatial_ctx_extract_x ?(impr_lst=[]) ?(view_roots=[]) ?(rhs_root=None) prog 
           let () = y_tinfo_hp (add_str "rhs_root" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) rhs_root in
           let () = y_tinfo_hp (add_str "view_root_lhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_lhs in
           let conflict_flag =
+            (*       (\* conflict checking has been moved to process_one_match *\) *)
             match view_root_lhs,rhs_root,r_vargs with
               | Some (v1,pure1),Some(v2,pure2),rhs_ptr::_ ->
                     let w1 = CP.mk_eq_vars v1 v2 in
@@ -2422,6 +2423,24 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
           if b || !use_split_match then false else true 
       | _ -> true) l
   in
+
+  let early_check_view_matching_conflict prog vr vl lhs_p rhs_p =
+    match get_root_view prog vr.h_formula_view_name vr.h_formula_view_node vr.h_formula_view_arguments,
+          get_root_view prog vl.h_formula_view_name vl.h_formula_view_node vl.h_formula_view_arguments
+    with
+    | Some (vr_root,vr_pure), Some (vl_root,vl_pure) ->
+       let w1 = CP.mk_eq_vars vr_root vl_root in
+       let constrain_lst = [w1;vr_pure;vl_pure;lhs_p;rhs_p] in
+       let comb = CP.join_conjunctions constrain_lst  in
+       let flag = not(TP.tp_is_sat comb "111") in
+       let () =
+         if flag then
+           let () = y_binfo_hp (add_str "process_one_match: conflict detected" (pr_list !CP.print_formula)) constrain_lst in
+           ()
+       in
+       flag
+    | _,_ -> false
+  in
   let r = match m_res.match_res_type with 
     | Root ->
       let view_decls = prog.prog_view_decls in
@@ -2628,75 +2647,106 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
               else -1
             in
             let l2, syn_lem_typ = (
-              let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
-              let uf_i = if new_orig then 0 else 1 in
-              let syn_lem_typ = if seg_fold_type>=0 then -1 else x_add CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
-              if force_flag || sf_force_match_flag then
-                let () = x_tinfo_pp "choosing forced matching" no_pos in
-                let base_case_prio = 3 in
-                [(0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_fold m_res);(base_case_prio,M_base_case_unfold m_res)])],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
-              else
-                let base_case_prio = 3 in
-                let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))  
-                  then (-1,M_Nothing_to_do "base_case_unfold not selected")
-                  else (base_case_prio,M_base_case_unfold m_res) in
-                let a1 =
-                  (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
-                  let ()= y_tinfo_hp (add_str "imm_subtype_flag" string_of_bool) imm_subtype_flag in
-                  let ()= y_tinfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
-                  (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))   *)
-                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))
-                  then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
-                  else a1 in
-                let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
-                (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
-                (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
-                let a2 = (
-                  if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
-                     (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
-                    let a21 = (1,M_match m_res) in
-                    let () = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
-                    let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
-                    (* (1,Cond_action [a21;a22]) *) a22
+                let conflict_flag = false in (* early_check_view_matching_conflict prog vr vl (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix rhs_p) in *)
+                let new_orig = if !ann_derv then not(vl.h_formula_view_derv) else vl.h_formula_view_original in
+                let uf_i = if new_orig then 0 else 1 in
+                let syn_lem_typ = if seg_fold_type>=0 then -1 else x_add CFU.need_cycle_checkpoint prog vl estate.CF.es_formula vr rhs reqset in
+                if force_flag || sf_force_match_flag then
+                  let () = x_tinfo_pp "choosing forced matching" no_pos in
+                  let base_case_prio = 3 in
+                  if conflict_flag
+                  then
+                    [(0,Cond_action [(base_case_prio,M_base_case_fold m_res);(base_case_prio,M_base_case_unfold m_res)])],-1
                   else
-                    let split_act = 
-                      if (vr_view_split=SPLIT1) || !Globals.ho_always_split then
-                        (* SPLIT only, no match *)
-                        let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split
-                            (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) 
-                            m_res estate.CF.es_formula rhs reqset 
-                        in
-                        if lem_split = [] then None
-                        else Some (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
-                      else None
-                    in
-                    match split_act with
-                    | Some a -> a
-                    | None ->
-                      (* allow matching only if (lhs_imm <: rhs_imm) *)
-                      let () = x_tinfo_pp "choosing matching" no_pos in
-                      let m_act = if (imm_subtype_flag) then (1,M_match m_res) 
-                        else (base_case_prio, M_Nothing_to_do ("not(lhs_imm <: rhs_imm)")) in
-                      (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
-                      if !Globals.seg_fold then (
-                        let seg_acts = if seg_fold_type>= 0 then
-                            [(1, M_seg_fold (m_res, seg_fold_type))]
-                          else
-                            (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
-                            []
-                        in
-                        (1,Cond_action ([m_act]@seg_acts))
-                      )
+                    [(0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_fold m_res);(base_case_prio,M_base_case_unfold m_res)])],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
+                else
+                  let base_case_prio = 3 in
+                  let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || vl_kind==View_PRIM))  
+                           then (-1,M_Nothing_to_do "base_case_unfold not selected")
+                           else (base_case_prio,M_base_case_unfold m_res) in
+                  let a1 =
+                    (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
+                    let ()= y_tinfo_hp (add_str "imm_subtype_flag" string_of_bool) imm_subtype_flag in
+                    let ()= y_tinfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
+                    (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))   *)
+                    if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && vr_kind!=View_PRIM))
+                    then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
+                    else a1 in
+                  let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
+                  (*gen tail-rec <-> non_tail_rec: but only ONE lemma_tail_rec_count *)
+                  (* todo: check exist tail-rec <-> non_tail_rec ?? instead of lemma_tail_rec_count *)
+                  let a2 = (
+                      if (syn_lem_typ = 3 && !Globals.lemma_tail_rec_count = 0) ||
+                           (check_lemma_not_exist vl vr && (syn_lem_typ != -1)) then
+                        let a21 = (1,M_match m_res) in
+                        let () = Globals.lemma_tail_rec_count := !Globals.lemma_tail_rec_count + 1 in
+                        let a22 = (1,M_cyclic (m_res,uf_i, 0, syn_lem_typ, None)) in
+                        (* (1,Cond_action [a21;a22]) *) Some a22
                       else
-                        m_act
-                ) in
-                let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match m_res)]) else a2 in
-                let () = y_tinfo_hp (add_str "a2" pr_act) a2 in
+                        let split_act = 
+                          if (vr_view_split=SPLIT1) || !Globals.ho_always_split then
+                            (* SPLIT only, no match *)
+                            let lem_split = search_lemma_candidates prog flag_lem ann_derv vr_view_split
+                                                                    (vl_view_origs,vr_view_origs) (vl_new_orig,vr_new_orig) (vl_name,vr_name) 
+                                                                    m_res estate.CF.es_formula rhs reqset 
+                            in
+                            if lem_split = [] then None
+                            else Some (1, M_Nothing_to_do ("to lemma_split: LHS:"^(vl_name)^" and RHS: "^(vr_name)))
+                          else None
+                        in
+                        match split_act with
+                        | Some a -> Some a
+                        | None ->
+                           (* allow matching only if (lhs_imm <: rhs_imm) *)
+                           let () = x_tinfo_pp "choosing matching" no_pos in
+                           let m_act =
+                             if (imm_subtype_flag)
+                             then
+                               if conflict_flag
+                               then None (* (1, M_Nothing_to_do ("Not a possible match: LHS:"^(vl_name)^" and RHS: "^(vr_name))) *)
+                               else Some (1,M_match m_res)        
+                             else
+                               Some (base_case_prio, M_Nothing_to_do ("not(lhs_imm <: rhs_imm)")) in
+                           (* (1,Search_action [m_act; (1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))]) *)
+                           if !Globals.seg_fold then (
+                             let seg_acts = if seg_fold_type>= 0 then
+                                              [(1, M_seg_fold (m_res, seg_fold_type))]
+                                            else
+                                              (* [(1, M_Nothing_to_do ("to fold: LHS:"^(vl_name)^" and RHS: "^(vr_name)))] *)
+                                              []
+                             in
+                             (match m_act with
+                              | Some o_m_act ->
+                                 Some (1,Cond_action (o_m_act::seg_acts))
+                              | None ->
+                                 Some (1,Cond_action seg_acts))
+                           )
+                           else
+                             m_act
+                    )
+                  in
+                  let a2 =
+                    match a2 with
+                    | None ->
+                       if !perm=Dperm && !use_split_match && not !consume_all
+                       then Some (1,Search_action [(1,M_split_match m_res)])
+                       else None
+                    | Some oa2 ->
+                       if !perm=Dperm && !use_split_match && not !consume_all
+                       then Some (1,Search_action (oa2::[(1,M_split_match m_res)]))
+                       else None
+                  in
+                let () = y_tinfo_hp (add_str "a2" (pr_option pr_act)) a2 in
                 let a3 = (
                   (*Do not fold/unfold LOCKs, only match*)
-                  if (is_l_lock || is_r_lock) then Some a2 else 
-                  if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2]) (* if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]) *)
-                  else None
+                  if (is_l_lock || is_r_lock) then a2 else 
+                    if (String.compare vl_name vr_name)==0
+                    then
+                      (match a2 with
+                       | Some oa2 ->
+                          Some (1,Cond_action [a1;oa2]) (* if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]) *)
+                       | None -> Some (1,Cond_action [a1]))
+                    else None
                 ) in
                 let () = y_tinfo_hp (add_str "a3" (pr_option pr_act)) a3 in
                 let a4 = (
@@ -3747,15 +3797,20 @@ and is_match_lemma_combination action =
 and recalibrate_wt (w,a) =
     let pick a b = if a<b then a else b in
     let is_match_lemma = is_match_lemma_combination a in
+    (* check whether it is a match followed by lemma *)
     match a with
     | Search_action l ->
-      let l = List.map recalibrate_wt l in
+       let l = List.map recalibrate_wt l in
+       let () = x_binfo_hp (add_str "recalibrate_wt, l"
+                         (pr_list_num_vert (string_of_action_wt_res_simpl))) l no_pos in
+  
       let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
       let h = (List.hd sl) in
       
       let rw = (fst h) in
       (* WHY did we pick only ONE when rw==0?*)
       (* Since -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *)
+ 
       if (rw==0) && (not is_match_lemma) then h
       else
       if is_match_lemma then (rw, Cond_action l)

@@ -15,6 +15,16 @@ checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
 expect Valid.
 print residue.
 
+// checkentail xx::arr_seg<i,i+3> |- xx::arr_seg<i,i+2>.
+// expect Valid.
+// print residue.
+
+// // Not working...
+// checkentail   k::arr_seg<i,i+3> & xx=k+i+1|- xx::arrI<_> .
+// expect Valid.
+// print residue.
+
+
 /*
 //(4)
 checkentail xx::arr_seg<i,n> & i+2<n |- xx::arr_seg<i+3,n>.

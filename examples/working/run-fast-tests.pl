@@ -1844,7 +1844,7 @@ my $dis = '--dis-inv-baga';
 %sleek_files=(
     "sleek"=>[["sleek.slk", "",(), "Valid.Valid.Valid.Fail."],
 	      ["array/array_lemma.slk","",(),"Valid.Valid.Fail.Valid.Valid.Valid.Fail"],
-	      ["array/array_baga.slk","",(),"Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid"],
+	      ["array/array_baga.slk","",(),"Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid"],
                       ["cll-d.slk", "", (), "Valid."],
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
                       ["label-dll.slk", "--dis-eps", (), "Valid.Valid.Valid.Valid."],
