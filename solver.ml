@@ -11109,6 +11109,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       (* (rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann) *)
       | _ -> (HEmp, HEmp, l_args, r_args, l_param_ann, r_param_ann)
     in (* rem_l_node, rem_r_node, l_args, r_args, l_param_ann, r_param_ann *)
+    let l_args_orig = l_args in
+    let r_args_orig = r_args in
     match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
     | DataNode _ -> 
       let err_msg = "Cannot match LHS node and RHS node" in
@@ -11485,7 +11487,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
               (* add the intantiations guided by the view parameters *)
               let r_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls r_node_name in
-              let args = List.combine l_args r_args in
+              let args = List.combine l_args_orig r_args_orig in
               let () = y_binfo_hp (add_str ("l_args:"^(l_node_name)) (string_of_int)) (List.length l_args) in
               let () = y_binfo_hp (add_str "l_args:" (pr_list string_of_spec_var)) l_args in 
               let () = y_binfo_hp (add_str ("VDEF:"^(r_vdef.view_name)) (string_of_int)) (List.length r_vdef.view_inst_vars) in

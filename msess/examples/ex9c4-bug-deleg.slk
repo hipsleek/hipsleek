@@ -19,3 +19,5 @@ print residue.
 //            c1::Chan{@S !zz#zz::Chan{@S !vv#vv::node<_, _>}<this>}<this>.
 
 // pred lll<a@in> == emp.
+
+checkentail x::node<_,_> & x=y |- y::node<_,_>.

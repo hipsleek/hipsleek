@@ -542,6 +542,7 @@ wrap_last_seq_node@15 EXIT:(emp ; (emp ; (c::Chan{. ((((?((emp) * ([] & msg = 0)
 
 =============================================
 =============================================
+SOLVED 
 ../../sleek ex9c4-bug-deleg.slk -dre "do_match\|match_one\|match_ho" >a
 
 seems like the print and certain sess operations
@@ -554,6 +555,8 @@ do_match inp1 : !( v_51::Chan{ . this::S{ - emp&msg=0}<msg>@M}<this>@M)
 do_match inp2 : !( HVar L[ww_60])
 =============================================
 =============================================
+
+refactor the SOR split (specially the rebuild SeqSor)
 
 =============================================
 =============================================
