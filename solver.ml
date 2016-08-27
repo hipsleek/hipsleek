@@ -306,6 +306,22 @@ let clear_entailment_history_es (es :entail_state) :context =
 let fail_ctx_stk = ref ([]:fail_type list)
 let previous_failure () = not(Gen.is_empty !fail_ctx_stk)
 
+(* add_inst_to_formula  prog l_args_orig r_args_orig r_node_name new_ante *)
+let add_inst_to_formula prog l_args r_args r_node_name form =
+  let r_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls r_node_name in
+  let args = List.combine l_args r_args in
+  (* let () = y_ninfo_hp (add_str ("l_args:"^(l_node_name)) (string_of_int)) (List.length l_args) in *)
+  let () = y_ninfo_hp (add_str "l_args:" (pr_list string_of_spec_var)) l_args in 
+  let () = y_ninfo_hp (add_str ("VDEF:"^(r_vdef.view_name)) (string_of_int)) (List.length r_vdef.view_inst_vars) in
+
+  let args = List.combine args r_vdef.view_inst_vars in
+  let new_inst = List.filter (fun ((l,r),(inst,_)) ->  inst = IP ) args in
+  let new_inst = List.map (fun ((l,r),(_,_)) ->  (l,r) ) new_inst in
+  let inst_lst = List.map (fun (l,r) -> CP.mk_eq_vars l r) new_inst in
+  let inst_f = CP.join_conjunctions inst_lst in
+  let new_formula = CF.add_pure_formula_to_formula inst_f form in
+  new_formula
+
 
 (* let enable_distribution = ref true *)
 (* let imp_no = ref 1 *)
@@ -11486,19 +11502,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             else
 
               (* add the intantiations guided by the view parameters *)
-              let r_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls r_node_name in
-              let args = List.combine l_args_orig r_args_orig in
-              let () = y_binfo_hp (add_str ("l_args:"^(l_node_name)) (string_of_int)) (List.length l_args) in
-              let () = y_binfo_hp (add_str "l_args:" (pr_list string_of_spec_var)) l_args in 
-              let () = y_binfo_hp (add_str ("VDEF:"^(r_vdef.view_name)) (string_of_int)) (List.length r_vdef.view_inst_vars) in
-
-              let args = List.combine args r_vdef.view_inst_vars in
-              let new_inst = List.filter (fun ((l,r),(inst,_)) ->  inst = IP ) args in
-              let new_inst = List.map (fun ((l,r),(_,_)) ->  (l,r) ) new_inst in
-              let inst_lst = List.map (fun (l,r) -> CP.mk_eq_vars l r) new_inst in
-              let inst_f = CP.join_conjunctions inst_lst in
-              let ante_for_ho_match = CF.add_pure_formula_to_formula inst_f new_ante in
-
+              let ante_for_ho_match = add_inst_to_formula  prog l_args_orig r_args_orig r_node_name new_ante in
+                
               (* check if current node is seq with sor as head *)
               let l_ho_args_orig, r_ho_args_orig = l_ho_args, r_ho_args in
               let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in
