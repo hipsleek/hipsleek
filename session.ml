@@ -124,7 +124,7 @@ module type Message_type = sig
   val transform_struc_formula:  (h_formula -> h_formula option)-> struc_formula -> struc_formula
   val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
   val map_rflow_formula_list: (formula -> formula) -> h_formula_heap -> h_formula
-  val update_temp_heap_name: h_formula -> h_formula option
+  val update_temp_heap_name: node_session_info -> h_formula -> h_formula option
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
@@ -379,19 +379,19 @@ module IForm = struct
       in
       heap_node_transformer ~flow:true fnc2 updated_hform
 
-  let update_temp_heap_name hform =
-    let fct si hform = match si.node_kind with
+  let update_temp_heap_name si hform =
+    (* let fct si hform = *) match si.node_kind with
       | Sequence | SOr | Send | Receive | Transmission
       | Session | Channel | Msg ->
         let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
       | Star | HVar | Predicate | Emp ->  None
-    in heap_node_transformer fct hform
+    (* in heap_node_transformer fct hform *)
 
-    let update_temp_heap_name hform =
+    let update_temp_heap_name si hform =
       let pr = !print_h_formula in
-      Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) update_temp_heap_name hform 
+      Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) (update_temp_heap_name si) hform 
 
   let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
 
@@ -686,7 +686,7 @@ module CForm = struct
       | _ -> None
     in helper h_fnc hform
   
-  let update_temp_heap_name hform = None
+  let update_temp_heap_name si hform = None
 
   let subst_param  (sst: (var * var) list) p =
     try  let _,res = List.find (fun (a,_) -> CP.eq_spec_var a p) sst in res
@@ -1645,8 +1645,12 @@ module Make_Session (Base: Session_base) = struct
     let pr = !Base.print_h_formula in
     Debug.no_1 "norm_last_seq_node" pr (pr_opt pr) norm_last_seq_node base
 
+  (* let update_temp_name_heap (base: Base.h_formula): Base.h_formula option = *)
+  (*   Base.update_temp_heap_name base *)
+
   let update_temp_name_heap (base: Base.h_formula): Base.h_formula option =
-    Base.update_temp_heap_name base
+    let fnc si = Base.update_temp_heap_name si in
+    heap_node_transformer ~flow:true fnc base
 
   let update_temp_name_heap (base: Base.h_formula): Base.h_formula option =
     let pr = !Base.print_h_formula in
@@ -1885,7 +1889,6 @@ let wrap_last_seq_node_struc formula =
 (* --------------------------------------------------------------- *)
 (***               update the temporary view name                ***)
 (***          eg: x::TEMP_SESS{...}<> --> x::Send{...}<>         ***)
-
 let update_temp_name_heap hform =
   let fnc si hform =
     match si.session_kind with
@@ -1893,7 +1896,7 @@ let update_temp_name_heap hform =
     | TPProjection ->  (ITPProjection.update_temp_name_heap hform)
     | Protocol     ->  (IProtocol.update_temp_name_heap hform)
   in
-  IForm.heap_node_transformer ~flow:true fnc hform
+  IForm.heap_transformer fnc hform
 
 let update_temp_name form =
   IForm.transform_formula update_temp_name_heap form
@@ -1997,7 +2000,7 @@ let rebuild_SeqSor lnode rnode largs rargs =
     | TPProjection ->  (CTPProjection.isSeqSor hform)
     | Protocol     ->  let () = sess_kind := Protocol in (CProtocol.isSeqSor hform)
   in
-  let left = CForm.heap_node_transformer_basic fnc lnode in
+  let left = CTPProjection.heap_node_transformer_basic fnc lnode in
   match left with
   | Some lnode0 -> [CForm.mk_rflow_formula_from_heap lnode0 ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula lnode0)], [CForm.mk_rflow_formula_from_heap rnode ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula rnode)], "Sess" (* this needs to be solveddifferently! can later lead to strange behavior *)
   | None -> largs,rargs, (CF.get_node_name_x lnode)
