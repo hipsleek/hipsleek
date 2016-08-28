@@ -1829,7 +1829,8 @@ $output_file = "log";
     "session" => [
         ["ex9-simple-prog.ss", 10, "", "buyer1", "SUCCESS", "buyer2", "SUCCESS", "buyer3", "FAIL", "buyer4", "SUCCESS", "buyer5", "SUCCESS", "buyer6", "SUCCESS","buyer7", "SUCCESS", "buyer8", "FAIL", "buyer9", "SUCCESS","buyer10", "SUCCESS"],
         ["ex9b-sor.ss", 8, "", "sor1", "SUCCESS", "sor2", "SUCCESS", "sor3", "SUCCESS", "sor4", "SUCCESS", "sor5", "FAIL", "sor6", "SUCCESS","sor7", "FAIL","sor8", "SUCCESS"],
-        ["ex9c-calls.ss", 7, "", "sor1", "SUCCESS", "sor2", "SUCCESS", "sor3", "SUCCESS", "loop1_sor1", "SUCCESS", "loop2_sor1", "FAIL", "loop3_sor1", "SUCCESS","loop4_sor1", "SUCCESS"]
+        ["ex9c-calls.ss", 7, "", "sor1", "SUCCESS", "sor2", "SUCCESS", "sor3", "SUCCESS", "loop1_sor1", "SUCCESS", "loop2_sor1", "FAIL", "loop3_sor1", "SUCCESS","loop4_sor1", "SUCCESS"],
+        ["ex9d-deleg.ss", 1, "", "deleg1","SUCCESS"]
 
     ],
     # "lemmas"=>[
