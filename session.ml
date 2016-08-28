@@ -101,6 +101,7 @@ module type Message_type = sig
   val print_struc_formula  : (struc_formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
   val print_ho_param_formula  : (ho_param_formula -> string) ref
+      
   val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
   val mk_rflow_formula: ?sess_kind:(session_kind option) -> ?kind:ho_flow_kind -> formula -> ho_param_formula
@@ -118,7 +119,7 @@ module type Message_type = sig
   val param_to_var: param -> var
 
   val loop_through_rflow: (h_formula -> h_formula option) -> h_formula -> h_formula option
-  val heap_node_transformer:  ?flow:bool -> (node_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option
+  (* val heap_node_transformer:  ?flow:bool -> (node_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option *)
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val transform_formula: (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  (h_formula -> h_formula option)-> struc_formula -> struc_formula
@@ -290,8 +291,6 @@ module IForm = struct
     match hform with
     | F.HeapNode node -> node
     | _ -> failwith "Session: get_node expects a HeapNode argument"
-
-  let get_session_info node = node.F.h_formula_heap_session_info
   
   let loop_through_rflow helper hform =
     let f_h nh =
@@ -308,90 +307,18 @@ module IForm = struct
     let pr = !print_h_formula in
     Debug.no_1 "loop_through_rflow" pr (pr_opt pr) (fun _ -> loop_through_rflow helper hform) hform
 
-  (* calls h_fnc on 
-     (i) first session node of hform if include_flow is set 
-     (ii) all nodes of hform -incl. nested HO args- otherwise 
-  *)
-  let heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
-    let rec helper h_fnc hform = 
-      match hform with
-      | F.HeapNode node ->
-        begin
-          match node.F.h_formula_heap_session_info with
-          | None    ->
-            (* loop through HO param until reaching a session formula *)
-            loop_through_rflow (helper h_fnc) hform
-          | Some si ->
-            let new_heap = h_fnc si hform in
-            if not(include_flow) then new_heap (* it's a session related node, but its transformation should stop at this level - do not attempt to transform its HO args *)
-            else
-              let new_heap = 
-                match new_heap with
-                | None   ->  hform
-                | Some e ->  e in
-              loop_through_rflow (helper h_fnc) new_heap
-        end
-      | _ -> None
-    in helper h_fnc hform
-
-    (* calls h_fnc on 
-     (i) first session node of hform if include_flow is set 
-     (ii) all nodes of hform -incl. nested HO args- otherwise 
-  *)
-  let heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
-    let rec helper h_fnc hform = 
-      match get_heap_node hform with
-      | None -> None
-      | Some hform ->
-        let node = get_node hform in 
-        match get_session_info node with
-        | None    ->
-          (* loop through HO param until reaching a session formula *)
-          loop_through_rflow (helper h_fnc) hform
-        | Some si ->
-          let new_heap = h_fnc si hform in
-          if not(include_flow) then new_heap (* it's a session related node, but its transformation should stop at this level - do not attempt to transform its HO args *)
-          else
-            let new_heap = 
-              match new_heap with
-              | None   ->  hform
-              | Some e ->  e in
-            loop_through_rflow (helper h_fnc) new_heap
-    in helper h_fnc hform
-
-  (* allows the transformation of nested chan specifications if include_msg is set
-     eg c1::Chan{@S !v#v::Chan{@S !0}<this>}<this>
-       h_fnc c1::Chan{@S !v#v::Chan{@S !0}<this>}<this>
-       h_fnc v::Chan{@S !0}<this>
- *)
-  let heap_node_transformer_gen ?flow:(include_flow=false) ?include_msg:(include_msg=false) h_fnc hform =
-    let res = heap_node_transformer ~flow:include_flow h_fnc hform in
-    if not(include_msg) then res
-    else
-      let updated_hform =
-        match res with
-        | None -> hform
-        | Some hform -> hform in
-      let fnc2 si hform =
-        match si.node_kind with
-        | Send | Receive -> loop_through_rflow (heap_node_transformer h_fnc) hform
-        | _ -> None
-      in
-      heap_node_transformer ~flow:true fnc2 updated_hform
+  let update_temp_heap_name si hform =
+    match si.node_kind with
+    | Sequence | SOr | Send | Receive | Transmission
+    | Session | Channel | Msg ->
+      let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
+      let updated_node  = F.set_heap_name hform new_heap_name in
+      Some updated_node
+    | Star | HVar | Predicate | Emp ->  None
 
   let update_temp_heap_name si hform =
-    (* let fct si hform = *) match si.node_kind with
-      | Sequence | SOr | Send | Receive | Transmission
-      | Session | Channel | Msg ->
-        let new_heap_name = get_prim_pred_id_by_kind si.node_kind in
-        let updated_node  = F.set_heap_name hform new_heap_name in
-        Some updated_node
-      | Star | HVar | Predicate | Emp ->  None
-    (* in heap_node_transformer fct hform *)
-
-    let update_temp_heap_name si hform =
-      let pr = !print_h_formula in
-      Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) (update_temp_heap_name si) hform 
+    let pr = !print_h_formula in
+    Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) (update_temp_heap_name si) hform 
 
   let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
 
@@ -634,8 +561,6 @@ module CForm = struct
     match hform with
     | CF.ViewNode node -> node
     | _ -> failwith "Session: get_node expects a ViewNode argument"
-
-  let get_session_info node = node.CF.h_formula_view_session_info
   
   let loop_through_rflow helper hform =
     let f_h nh =
@@ -644,48 +569,12 @@ module CForm = struct
         let trans_f = transform_formula helper in
         Some (CF.map_rflow_formula_list trans_f node_new)
       | _ -> None in
-    Some (transform_h_formula f_h hform) 
+    Some (transform_h_formula f_h hform)
 
   let loop_through_rflow helper hform =
     let pr = !print_h_formula in
     Debug.no_1 "loop_through_rflow" pr (pr_opt pr) (fun _ -> loop_through_rflow helper hform) hform
-  
-  let heap_node_transformer_basic ?flow:(include_flow=false) fnc hform =
-    match hform with
-    | CF.ViewNode node ->
-      let hform_opt  =
-        match node.CF.h_formula_view_session_info with
-        | None    ->  None
-        | Some si ->  fnc si hform
-      in hform_opt
-    | _ -> None
-
-    (* calls h_fnc on 
-     (i) first session node of hform if include_flow is set 
-     (ii) all nodes of hform -incl. nested HO args- otherwise 
-  *)
-  let heap_node_transformer ?flow:(include_flow=false) h_fnc hform =
-    let rec helper h_fnc hform = 
-      match hform with
-      | CF.ViewNode node ->
-        begin
-          match node.CF.h_formula_view_session_info with
-          | None    ->
-            (* loop through HO param until reaching a session formula *)
-            loop_through_rflow (helper h_fnc) hform
-          | Some si ->
-            let new_heap = h_fnc si hform in
-            if not(include_flow) then new_heap (* it's a session related node, but its transformation should stop at this level - do not attempt to transform its HO args *)
-            else
-              let new_heap = 
-                match new_heap with
-                | None   ->  hform
-                | Some e ->  e in
-              loop_through_rflow (helper h_fnc) new_heap
-        end
-      | _ -> None
-    in helper h_fnc hform
-  
+   
   let update_temp_heap_name si hform = None
 
   let subst_param  (sst: (var * var) list) p =
@@ -1851,15 +1740,6 @@ let wrap_one_seq_struc formula =
 (* --------------------------------------------------------------- *)
 (***         wrap sequence around final transmission nodes       ***)
 (***    eg: x::Chan{@S !0;;!1}<> ---> x::Chan{@S !0;;!1;;emp}<>  ***)
-(* let wrap_last_seq_node_heap hform = *)
-(*   let fnc si hform = *)
-(*     match si.session_kind with *)
-(*     | Projection   ->  (IProjection.norm_last_seq_node hform) *)
-(*     | TPProjection ->  (ITPProjection.norm_last_seq_node hform) *)
-(*     | Protocol     ->  (IProtocol.norm_last_seq_node hform) *)
-(*   in *)
-(*   IForm.heap_node_transformer_gen ~include_msg:true fnc hform *)
-
 let wrap_last_seq_node_heap hform =
   let fnc si hform =
     match si.session_kind with
