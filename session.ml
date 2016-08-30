@@ -126,6 +126,7 @@ module type Message_type = sig
   val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
   val map_rflow_formula_list: (formula -> formula) -> h_formula_heap -> h_formula
   val update_temp_heap_name: node_session_info -> h_formula -> h_formula option
+  val set_heap_node_var: var -> h_formula_heap -> h_formula
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
@@ -138,6 +139,7 @@ module type Message_type = sig
   val get_h_formula_safe: formula -> h_formula
   val get_h_formula_from_ho_param_formula: ho_param_formula -> h_formula
   val get_formula_from_ho_param_formula: ho_param_formula -> formula
+  val get_ho_param: h_formula_heap -> ho_param_formula list
   val get_node: h_formula -> arg
   val get_or_formulae: formula -> formula list
   val get_star_formulae: h_formula -> h_formula list
@@ -149,8 +151,11 @@ module type Message_type = sig
   val get_formula_from_struc_formula: struc_formula -> formula
   val get_hvar: h_formula -> ident * var list
   val get_session_info: h_formula -> node_session_info option
+  val get_node_session_info:  h_formula_heap -> node_session_info option
   val get_heap_node: h_formula -> h_formula option
   val get_node_only: h_formula -> h_formula_heap
+  val get_node_opt:  h_formula -> h_formula_heap option
+  val get_heap_node_var: h_formula_heap -> var
       
   val get_h_formula_safe: formula -> h_formula option
   val get_h_formula_from_struc_formula_safe: struc_formula -> h_formula option
@@ -318,8 +323,14 @@ module IForm = struct
 
   let update_temp_heap_name si hform =
     let pr = !print_h_formula in
-    Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) (update_temp_heap_name si) hform 
+    Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) (update_temp_heap_name si) hform
 
+  let set_heap_node_var var node =
+    F.HeapNode {node with F.h_formula_heap_node = var;}
+
+  let get_heap_node_var node =
+    node.F.h_formula_heap_node
+  
   let subst_param  (sst: (var * var) list) p = IP.subst_exp sst p
 
   let subst_var    (sst: (var * var) list) p = F.subst_var_list sst p
@@ -349,6 +360,9 @@ module IForm = struct
 
   let get_formula_from_ho_param_formula rflow_formula =
     rflow_formula.F.rflow_base
+
+  let get_ho_param node =
+    node.F.h_formula_heap_ho_arguments    
 
   let get_node_kind h_formula =
     match h_formula with
@@ -421,6 +435,9 @@ module IForm = struct
       | F.HeapNode hn -> hn.h_formula_heap_session_info
       | _ -> None
 
+  let get_node_session_info hnode =
+    hnode.F.h_formula_heap_session_info
+
   let get_heap_node hform =
     match hform with
     | F.HeapNode node -> Some hform
@@ -430,6 +447,11 @@ module IForm = struct
     match hform with
     | F.HeapNode node -> node
     | _ -> failwith "Session: get_node expects a HeapNode argument"
+
+  let get_node_opt hform =
+    match hform with
+    | F.HeapNode node -> Some node
+    | _ -> None 
 
   let get_h_formula_safe formula =
     match formula with
@@ -442,6 +464,7 @@ module IForm = struct
       | F.EBase base -> get_h_formula_safe base.F.formula_struc_base
       | _ -> None
 
+  (* for now, this methods needs to manually be synced to teh one in CForm*)
   let heap_transformer h_fnc hform =
     let rec helper h_fnc hform = 
       match get_heap_node hform with
@@ -577,6 +600,11 @@ module CForm = struct
    
   let update_temp_heap_name si hform = None
 
+  let set_heap_node_var var node =
+    CF.ViewNode {node with CF.h_formula_view_node = var;}
+
+  let get_heap_node_var node = node.CF.h_formula_view_node
+
   let subst_param  (sst: (var * var) list) p =
     try  let _,res = List.find (fun (a,_) -> CP.eq_spec_var a p) sst in res
     with Not_found -> p
@@ -661,6 +689,9 @@ module CForm = struct
   let get_formula_from_ho_param_formula rflow_formula =
     rflow_formula.CF.rflow_base
 
+  let get_ho_param node =
+    node.CF.h_formula_view_ho_arguments
+
   let get_hvar node =
     match node with
     | CF.HVar (id, ls) -> let id = get_param_id id in
@@ -672,6 +703,9 @@ module CForm = struct
     | CF.ViewNode vn -> vn.h_formula_view_session_info
     | _ -> None
 
+  let get_node_session_info hnode =
+    hnode.CF.h_formula_view_session_info
+
   let get_heap_node hform =
     match hform with
     | CF.ViewNode node -> Some hform
@@ -682,9 +716,107 @@ module CForm = struct
     | CF.ViewNode node -> node
     | _ -> failwith "Session: get_node expects a ViewNode argument"
 
+  let get_node_opt hform =
+    match hform with
+    | CF.ViewNode node -> Some node
+    | _ -> None 
+
   let get_h_formula_safe f = failwith x_tbi
 
   let get_h_formula_from_struc_formula_safe struc_formula = failwith x_tbi
+
+  (* let rec extract_bases session = *)
+  (*   let node_kind = get_node_kind session in  *)
+  (*   match node_kind with *)
+  (*   | Sequence s -> *)
+  (*     let node = get_node_only session in *)
+  (*     let ho_args = get_ho_param node in *)
+  (*     let ho_args = List.map (fun arg -> get_h_formula_from_ho_param_formula arg) ho_args in *)
+  (*     let ho_args = List.map () ho_args in *)
+  (*     (extract_bases s.session_seq_formula_head) @ *)
+  (*               (extract_bases s.session_seq_formula_tail) *)
+  (*   | _  -> [session] *)
+
+  (* let rec mk_norm_session bases = *)
+  (*   match bases with *)
+  (*   | [] -> SEmp *)
+  (*   | [base] -> base *)
+  (*   | hd :: tl -> let pos = get_pos hd in *)
+  (*     mk_session_seq_formula hd (mk_norm_session tl) pos *)
+
+  (* NORM3: first argument of Seq is a non-Seq node
+   *
+   * self::Seq{self::Seq{a.b}, self::Seq{c,d}}
+   *  |
+   *  |
+   *  V
+   * self::Seq{a, self::Seq{b, self::Seq{c,d}}}
+   *
+   * 1. extract all bases (non-Seq nodes) in the
+   * order they appear from left to right
+   * 2. remake Seq nodes with first argument a base
+  *)
+  (* let norm3_sequence session = *)
+  (*   let bases = extract_bases session in *)
+  (*   mk_norm_session bases *)
+
+  let sor_disj_list head =
+    let node = get_node_only head in
+    let ho_disj = get_ho_param node in
+    let disj =
+      match ho_disj with
+      | [] -> failwith "a SOr node should have at least one HO"
+      | h::[] -> get_formula_from_ho_param_formula h
+      | _ -> failwith "a SOr node should have at least one HO"
+    in let disj_lst = CF.list_of_disjs disj in
+    disj_lst
+
+  let append_tail disjunct tail =
+    let pos = CF.pos_of_h_formula disjunct in
+    let ptr = get_heap_node_var (get_node_only disjunct) in
+    let name = get_prim_pred_id seq_id in
+    (*let h2 = Base.mk_seq_wrapper h2 pos Base.base_type in *)
+    let args = [disjunct; tail] in
+    let args = List.map (fun a -> mk_rflow_formula_from_heap a ~sess_kind:(get_session_kind disjunct) pos) args in
+    let params = [] in
+    mk_node (ptr, name, args, params, pos) (get_session_kind disjunct) Sequence
+    (* mk_session_seq_formula disjunct tail pos *)
+
+  (* Split a SOr predicate into disjuncts.
+   * 2. get list of disjuncts from head
+   * 3. for each disjunct, append tail
+   * 4. for each disjunct, normalize
+  *)
+  let split_sor (head: ho_param_formula) (tail:ho_param_formula option)
+    : ho_param_formula list =
+    let head_session = get_h_formula_from_ho_param_formula head in
+    let disj_list = sor_disj_list head_session in
+    let disj_list =
+      let tail_session =
+        match tail with
+        | None      -> mk_empty ()
+        | Some tail -> get_h_formula_from_ho_param_formula tail
+      in
+      let disj_list = List.map (fun x -> append_tail (get_h_formula x) tail_session) disj_list in
+      disj_list in
+
+    (* let disj_list = List.map (fun x -> norm3_sequence x) disj_list in *)
+    let disj_list = List.map (fun x -> mk_rflow_formula_from_heap x ~sess_kind:(get_session_kind head_session) no_pos) disj_list in
+    disj_list
+
+
+  (* for now, this methods needs to manually be synced to teh one in IForm*)
+  let heap_transformer h_fnc hform =
+    let rec helper h_fnc hform = 
+      match get_heap_node hform with
+      | None -> None
+      | Some hform ->
+        match get_session_info hform with
+        | None    ->
+          (* loop through HO param until reaching a session formula *)
+          loop_through_rflow (helper h_fnc) hform
+        | Some si -> h_fnc si hform                  
+    in helper h_fnc hform
 
 end;;
 
@@ -700,6 +832,7 @@ module Protocol_base_formula =
       protocol_base_formula_receiver    : ident;
       protocol_base_formula_message     : t;
       protocol_base_formula_message_var : var;
+      protocol_base_formula_heap_node   : h_formula_heap option;
       protocol_base_formula_pos         : VarGen.loc;
     }
 
@@ -710,11 +843,12 @@ module Protocol_base_formula =
     let string_of_session_base f =
       f.protocol_base_formula_sender ^ " -> " ^ f.protocol_base_formula_receiver ^ " : " ^ (print_message f)
 
-    let mk_base (sender, receiver, mv, pos) formula = {
+    let mk_base (sender, receiver, mv, pos) ?node:(node=None) formula = {
       protocol_base_formula_sender    = sender;
       protocol_base_formula_receiver  = receiver;
       protocol_base_formula_message   = formula;
       protocol_base_formula_message_var = mv;
+      protocol_base_formula_heap_node = node;
       protocol_base_formula_pos       = pos;
     }
 
@@ -748,6 +882,7 @@ module Projection_base_formula =
       projection_base_formula_channel     : ident;
       projection_base_formula_message     : t;
       projection_base_formula_message_var : var;
+      projection_base_formula_heap_node   : h_formula_heap option;
       projection_base_formula_pos         : VarGen.loc;
     }
 
@@ -760,11 +895,12 @@ module Projection_base_formula =
       (string_of_transmission f.projection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 
-    let mk_base (transmission, channel, mv, pos) formula = {
+    let mk_base (transmission, channel, mv, pos) ?node:(node=None) formula = {
       projection_base_formula_op          = transmission;
       projection_base_formula_channel     = channel;
       projection_base_formula_message     = formula;
       projection_base_formula_message_var = mv;
+      projection_base_formula_heap_node   = node;
       projection_base_formula_pos         = pos;
     }
 
@@ -804,7 +940,7 @@ module Projection_base_formula =
         | _     -> failwith (x_loc ^ ": Send/Receive nodes expect exactly one arg.")
       in
       let mv = Msg.param_to_var mv in
-      mk_base (transmission, channel, mv, pos) f
+      mk_base (transmission, channel, mv, pos) ~node:(Msg.get_node_opt h_formula) f
 
     let trans_h_formula_to_session_base h_formula =
       let pr1 = !Msg.print_h_formula in
@@ -828,6 +964,7 @@ module TPProjection_base_formula =
       tpprojection_base_formula_op          : transmission;
       tpprojection_base_formula_message     : t;
       tpprojection_base_formula_message_var : var;
+      tpprojection_base_formula_heap_node   : h_formula_heap option;
       tpprojection_base_formula_pos         : VarGen.loc;
     }
 
@@ -839,13 +976,15 @@ module TPProjection_base_formula =
       (string_of_transmission f.tpprojection_base_formula_op) ^
       "(" ^ (print_message f) ^ ")"
 
-    let mk_base (transmission, mv, pos) formula = {
+    let mk_base (transmission, mv, pos) ?node:(node=None) formula = {
       tpprojection_base_formula_op          = transmission;
       tpprojection_base_formula_message     = formula;
       tpprojection_base_formula_message_var = mv;
+      tpprojection_base_formula_heap_node   = node;
       tpprojection_base_formula_pos         = pos;
     }
 
+    (* TODO: include the node info *)
     let trans_base base =
       let ptr = Msg.choose_ptr ~ptr:session_chan_id () in
       let tkind = get_session_kind_of_transmission base.tpprojection_base_formula_op in
@@ -883,7 +1022,7 @@ module TPProjection_base_formula =
         | _     -> failwith (x_loc ^ ": Send/Receive nodes expect exactly one arg.")
       in
       let mv = Msg.param_to_var mv in
-      mk_base (transmission, mv, pos) f
+      mk_base (transmission, mv, pos) ~node:(Msg.get_node_opt h_formula) f
 
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = 
       { msg with
@@ -901,7 +1040,7 @@ sig
 
   val base_type : session_kind
   val string_of_session_base : base -> string
-  val mk_base : a -> t -> base
+  val mk_base : a -> ?node:h_formula_heap option -> t -> base
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
   val get_message_var : base -> var
@@ -929,20 +1068,22 @@ module Make_Session (Base: Session_base) = struct
   and session_seq_formula = {
     session_seq_formula_head: session;
     session_seq_formula_tail: session;
-    (* session_seq_heap_node: Base.h_formula option; *)
+    session_seq_formula_heap_node: Base.h_formula_heap option;
     session_seq_formula_pos:  loc;
   }
 
   and session_or_formula = {
-    session_seq_formula_or1: session;
-    session_seq_formula_or2: session;
-    session_seq_formula_pos:  loc;
+    session_sor_formula_or1: session;
+    session_sor_formula_or2: session;
+    session_sor_formula_heap_node: Base.h_formula_heap option;
+    session_sor_formula_pos:  loc;
   }
 
   and session_star_formula = {
-    session_seq_formula_star1: session;
-    session_seq_formula_star2: session;
-    session_seq_formula_pos:  loc;
+    session_star_formula_star1: session;
+    session_star_formula_star2: session;
+    session_star_formula_heap_node: Base.h_formula_heap option;
+    session_star_formula_pos:  loc;
   }
 
   and session_predicate = {
@@ -981,14 +1122,14 @@ module Make_Session (Base: Session_base) = struct
     " (" ^ string_of_one_session s.session_seq_formula_tail ^ ")"
 
   and string_of_session_or s =
-    "(" ^ string_of_one_session s.session_seq_formula_or1 ^ ") " ^
+    "(" ^ string_of_one_session s.session_sor_formula_or1 ^ ") " ^
     "or" ^
-    " (" ^ string_of_one_session s.session_seq_formula_or2 ^ ")"
+    " (" ^ string_of_one_session s.session_sor_formula_or2 ^ ")"
 
   and string_of_session_star s =
-    "(" ^ string_of_one_session s.session_seq_formula_star1 ^ ") " ^
+    "(" ^ string_of_one_session s.session_star_formula_star1 ^ ") " ^
     "*" ^
-    " (" ^ string_of_one_session s.session_seq_formula_star2 ^ ")"
+    " (" ^ string_of_one_session s.session_star_formula_star2 ^ ")"
 
   and string_of_session_predicate s =
     s.session_predicate_name ^ "{}" ^ "<" ^ (string_of_param_list s.session_predicate_params) ^ ">"
@@ -1003,22 +1144,25 @@ module Make_Session (Base: Session_base) = struct
     let pr_out = string_of_session_base in
     Debug.no_1 "mk_base" pr pr_out (mk_base a) b
 
-  and mk_session_seq_formula session1 session2 loc = SSeq {
+  and mk_session_seq_formula session1 session2 ?node:(node=None) loc = SSeq {
       session_seq_formula_head = session1;
       session_seq_formula_tail = session2;
+      session_seq_formula_heap_node = node; 
       session_seq_formula_pos  = loc;
     }
 
-  and mk_session_or_formula session1 session2 loc = SOr {
-    session_seq_formula_or1 = session1;
-    session_seq_formula_or2 = session2;
-    session_seq_formula_pos = loc;
+  and mk_session_or_formula session1 session2 ?node:(node=None) loc = SOr {
+    session_sor_formula_or1 = session1;
+    session_sor_formula_or2 = session2;
+    session_sor_formula_heap_node = node;
+    session_sor_formula_pos = loc;
     }
 
-  and mk_session_star_formula session1 session2 loc = SStar {
-    session_seq_formula_star1 = session1;
-    session_seq_formula_star2 = session2;
-    session_seq_formula_pos   = loc;
+  and mk_session_star_formula session1 session2 ?node:(node=None) loc = SStar {
+    session_star_formula_star1 = session1;
+    session_star_formula_star2 = session2;
+    session_star_formula_heap_node = node;
+    session_star_formula_pos   = loc;
     }
 
   and mk_session_predicate name ho_vars params loc = Predicate {
@@ -1034,7 +1178,7 @@ module Make_Session (Base: Session_base) = struct
     session_hvar_pos = loc;
   }
 
-  let mk_seq_node h1 h2 pos  =
+  let mk_seq_node h1 h2 hnode pos  =
     let ptr = Base.choose_ptr () in (* decide which name should be given here *)
     let name = get_prim_pred_id seq_id in
     (*let h2 = Base.mk_seq_wrapper h2 pos Base.base_type in *)
@@ -1043,10 +1187,10 @@ module Make_Session (Base: Session_base) = struct
     let params = [] in
     Base.mk_node (ptr, name, args, params, pos) Base.base_type Sequence
 
-  and mk_star_node h1 h2 pos =
+  and mk_star_node h1 h2 hnode pos =
     Base.mk_star h1 h2 pos
 
-  and mk_or_node h1 h2 pos =
+  and mk_or_node h1 h2 hnode pos =
     let f1 = Base.mk_formula_heap_only h1 pos in
     let f2 = Base.mk_formula_heap_only h2 pos in
     let or_node = Base.mk_or f1 f2 pos in
@@ -1086,15 +1230,15 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  ->
         let arg1 = helper s.session_seq_formula_head in
         let arg2 = helper s.session_seq_formula_tail in
-        mk_seq_node arg1 arg2 s.session_seq_formula_pos
+        mk_seq_node arg1 arg2 s.session_seq_formula_heap_node s.session_seq_formula_pos
     | SOr s   ->
-        let arg1 = helper s.session_seq_formula_or1 in
-        let arg2 = helper s.session_seq_formula_or2 in
-        mk_or_node arg1 arg2 s.session_seq_formula_pos
+        let arg1 = helper s.session_sor_formula_or1 in
+        let arg2 = helper s.session_sor_formula_or2 in
+        mk_or_node arg1 arg2 s.session_sor_formula_heap_node s.session_sor_formula_pos
     | SStar s ->
-        let arg1 = helper s.session_seq_formula_star1 in
-        let arg2 = helper s.session_seq_formula_star2 in
-        mk_star_node arg1 arg2 s.session_seq_formula_pos
+        let arg1 = helper s.session_star_formula_star1 in
+        let arg2 = helper s.session_star_formula_star2 in
+        mk_star_node arg1 arg2 s.session_star_formula_heap_node s.session_star_formula_pos
     | SBase s -> (match s with
         | Base b -> Base.trans_base b
         | Predicate p -> mk_predicate_node p
@@ -1146,17 +1290,14 @@ module Make_Session (Base: Session_base) = struct
       | None ->
         match sf with
         | SSeq s  ->
-          let arg1 = helper fnc s.session_seq_formula_head in
-          let arg2 = helper fnc s.session_seq_formula_tail in
-          mk_session_seq_formula arg1 arg2 s.session_seq_formula_pos
+          SSeq {s with session_seq_formula_head = helper fnc s.session_seq_formula_head;
+                       session_seq_formula_tail = helper fnc s.session_seq_formula_tail; }
         | SOr s   ->
-          let arg1 = helper fnc s.session_seq_formula_or1 in
-          let arg2 = helper fnc s.session_seq_formula_or2 in
-          mk_session_or_formula arg1 arg2 s.session_seq_formula_pos
+          SOr {s with session_sor_formula_or1 = helper fnc s.session_sor_formula_or1;
+                      session_sor_formula_or2 = helper fnc s.session_sor_formula_or2; }
         | SStar s ->
-          let arg1 = helper fnc s.session_seq_formula_star1 in
-          let arg2 = helper fnc s.session_seq_formula_star2 in
-          mk_session_star_formula arg1 arg2 s.session_seq_formula_pos
+          SStar {s with session_star_formula_star1 = helper fnc s.session_star_formula_star1;
+                        session_star_formula_star2 = helper fnc s.session_star_formula_star2; }
         | SBase sb -> SBase (trans_session_base_formula f_base sb)
         | SEmp -> sf
     in
@@ -1168,8 +1309,8 @@ module Make_Session (Base: Session_base) = struct
 
   let get_pos s = match s with
     | SSeq s  -> s.session_seq_formula_pos
-    | SOr s   -> s.session_seq_formula_pos
-    | SStar s -> s.session_seq_formula_pos
+    | SOr s   -> s.session_sor_formula_pos
+    | SStar s -> s.session_star_formula_pos
     | SBase s -> (match s with
         | Base b -> Base.get_base_pos b
         | Predicate p -> p.session_predicate_pos
@@ -1219,14 +1360,14 @@ module Make_Session (Base: Session_base) = struct
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let h1 = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
             let h2 = Base.get_h_formula_from_ho_param_formula (List.nth args 1) in
-            mk_session_seq_formula (helper h1) (helper h2) pos
+            mk_session_seq_formula (helper h1) (helper h2) ~node:(Base.get_node_opt h_formula) pos
         | SOr ->
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let or_node = Base.get_formula_from_ho_param_formula (List.nth args 0) in
             let or_formulae = Base.get_or_formulae or_node in
             let h1 = Base.get_h_formula (List.nth or_formulae 0) in
             let h2 = Base.get_h_formula (List.nth or_formulae 1) in
-            mk_session_or_formula (helper h1) (helper h2) pos
+            mk_session_or_formula (helper h1) (helper h2) ~node:(Base.get_node_opt h_formula) pos
         | Star ->
             let pos = Base.get_star_pos h_formula in
             let star_formulae = Base.get_star_formulae h_formula in
@@ -1439,10 +1580,10 @@ module Make_Session (Base: Session_base) = struct
 
   let rec sor_disj_list head =
     match head with
-      | SOr s -> (sor_disj_list s.session_seq_formula_or1) @
-                  (sor_disj_list s.session_seq_formula_or2)
+      | SOr s -> (sor_disj_list s.session_sor_formula_or1) @
+                  (sor_disj_list s.session_sor_formula_or2)
       | _ -> [head]
-
+  
   let append_tail disjunct tail =
     let pos = get_pos disjunct in
     mk_session_seq_formula disjunct tail pos
@@ -1453,10 +1594,38 @@ module Make_Session (Base: Session_base) = struct
    * 3. for each disjunct, append tail
    * 4. for each disjunct, normalize
    *)
+  (* let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula option) *)
+  (*               : Base.ho_param_formula list = *)
+  (*   let head_session = (\* trans_h_formula_to_session *\) *)
+  (*                      (Base.get_h_formula_from_ho_param_formula head) in *)
+  (*   let disj_list = sor_disj_list head_session in *)
+  (*   let disj_list = *)
+  (*     let tail_session = *)
+  (*       match tail with *)
+  (*       | None      -> SEmp (\* disj_list *\) *)
+  (*       | Some tail -> *)
+  (*         let tail_session = trans_h_formula_to_session *)
+  (*             (Base.get_h_formula_from_ho_param_formula tail) in *)
+  (*         tail_session *)
+  (*     in *)
+  (*     let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in *)
+  (*     disj_list in *)
+   
+  (*   let disj_list = List.map (fun x -> norm3_sequence x) disj_list in *)
+  (*   let disj_list = List.map (fun x -> x_add_1 trans_from_session x) disj_list in *)
+  (*   let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x ~sess_kind:(Some Base.base_type) no_pos) disj_list in *)
+  (*   disj_list *)
+
+  (* Split a SOr predicate into disjuncts.
+   * 1. tranform head and tail into sessions
+   * 2. get list of disjuncts from head
+   * 3. for each disjunct, append tail
+   * 4. for each disjunct, normalize
+  *)
   let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula option)
-                : Base.ho_param_formula list =
+    : Base.ho_param_formula list =
     let head_session = trans_h_formula_to_session
-                       (Base.get_h_formula_from_ho_param_formula head) in
+        (Base.get_h_formula_from_ho_param_formula head) in
     let disj_list = sor_disj_list head_session in
     let disj_list =
       let tail_session =
@@ -1469,7 +1638,7 @@ module Make_Session (Base: Session_base) = struct
       in
       let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in
       disj_list in
-   
+
     let disj_list = List.map (fun x -> norm3_sequence x) disj_list in
     let disj_list = List.map (fun x -> x_add_1 trans_from_session x) disj_list in
     let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x ~sess_kind:(Some Base.base_type) no_pos) disj_list in
@@ -1557,7 +1726,32 @@ module Make_Session (Base: Session_base) = struct
       | _ -> None
     in
     wrap_2ways_sess2base_opt helper hform
-  
+
+  let set_heap_node_var var hform =
+    match Base.get_heap_node hform with
+      | None -> None
+      | Some hform -> Some (Base.set_heap_node_var var (Base.get_node_only hform))
+
+  let set_heap_node_var ?flow:(flow=false) var hform =
+    let fnc si = set_heap_node_var var in
+    heap_node_transformer ~flow:flow fnc hform
+
+  let set_heap_node_to_chan_node hform =
+    let rec helper var hform = 
+      match Base.get_heap_node hform with
+      | None -> None
+      | Some hform ->
+        let node = Base.get_node_only hform in
+        match Base.get_node_session_info node with
+        | None   -> loop_through_rflow (helper (Some (Base.get_heap_node_var node))) hform (* call helper here to make sure we update the innermost  var ptr until hitting a session formula *)
+        | Some _ ->
+          let var = match var with
+            | None     ->  (Base.get_heap_node_var node)
+            | Some var -> var (* apply transformer here *)
+          in
+          set_heap_node_var ~flow:true var hform
+    in helper None hform
+
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -1651,12 +1845,13 @@ let irename_message_pointer_struc formula =
 (* -------------------------------------- *)
 (*** rename the first pointer of hform  ***)
 let irename_session_pointer_heap ?flow:(flow=false) var hform =
-  let fnc si hform =
-    match hform with
-    | F.HeapNode node -> Some (F.HeapNode {node with F.h_formula_heap_node = var;} )
-    | _ -> None
+   let fnc si hform =
+    match si.session_kind with
+    | Projection   -> (IProjection.set_heap_node_var ~flow:flow var hform)
+    | TPProjection -> (ITPProjection.set_heap_node_var  ~flow:flow var hform)
+    | Protocol     -> (IProtocol.set_heap_node_var  ~flow:flow var hform)
   in
-  ITPProjection.heap_node_transformer ~flow:flow fnc hform
+  IForm.heap_transformer fnc hform    
 
 let irename_all_session_pointer_struc ?to_var:(var=session_self) sformula =
   let renamed_struct = IForm.transform_struc_formula (irename_session_pointer_heap ~flow:true var) sformula in
@@ -1677,21 +1872,14 @@ let irename_first_session_pointer_struc ?to_var:(var=session_self) formula =
 (* ----------------------------------------------------------------------- *)
 (*** IForm: rename the first pointer of hform with Chan pointer where possible  ***)
 let irename_sess_ptr_2_chan_ptr_heap ?flow:(flow=false) hform =
-  let rec helper var hform = 
-    match hform with
-    | F.HeapNode node ->
-      begin 
-        match node.F.h_formula_heap_session_info with
-        | None   -> ITPProjection.loop_through_rflow (helper (Some node.F.h_formula_heap_node)) hform (* call helper here to make sure we update the innermost  var ptr until hitting a session formula *)
-        | Some _ ->
-          let var = match var with
-            | None     -> node.F.h_formula_heap_node
-            | Some var -> var (* apply transformer here *)
-          in
-          irename_session_pointer_heap  ~flow:true var hform
-      end
-    | _ ->  None
-  in helper None hform
+  (* let fnc si hform = *)
+  (*   match si.session_kind with *)
+  (*   | Projection   -> (IProjection.set_heap_node_to_chan_node hform) *)
+  (*   | TPProjection -> (ITPProjection.set_heap_node_to_chan_node hform) *)
+  (*   | Protocol     -> (IProtocol.set_heap_node_to_chan_node hform) *)
+  (* in *)
+  (* IForm.heap_transformer fnc hform *)
+    ITPProjection.set_heap_node_to_chan_node hform
 
 let irename_sess_ptr_2_chan_ptr_struc sformula =
   let renamed_struct = IForm.transform_struc_formula (irename_sess_ptr_2_chan_ptr_heap ~flow:true) sformula in
@@ -1708,6 +1896,34 @@ let irename_sess_ptr_2_chan_ptr formula =
 let irename_sess_ptr_2_chan_ptr formula =
   let pr = !F.print_formula in
   Debug.no_1 "irename_sess_ptr_2_chan_ptr" pr pr (irename_sess_ptr_2_chan_ptr) formula
+
+(* ----------------------------------------------------------------------- *)
+(*** CForm: rename the first pointer of hform with Chan pointer where possible  ***)
+let crename_sess_ptr_2_chan_ptr_heap ?flow:(flow=false) hform =
+  (* let fnc si hform = *)
+  (*   match si.session_kind with *)
+  (*   | Projection   -> (CProjection.set_heap_node_to_chan_node hform) *)
+  (*   | TPProjection -> (CTPProjection.set_heap_node_to_chan_node hform) *)
+  (*   | Protocol     -> (CProtocol.set_heap_node_to_chan_node hform) *)
+  (* in *)
+  (* CForm.heap_transformer fnc hform *)
+  CTPProjection.set_heap_node_to_chan_node hform
+
+let crename_sess_ptr_2_chan_ptr_struc sformula =
+  let renamed_struct = CForm.transform_struc_formula (crename_sess_ptr_2_chan_ptr_heap ~flow:true) sformula in
+  renamed_struct
+
+let crename_sess_ptr_2_chan_ptr_struc formula =
+  let pr = !CF.print_struc_formula in
+  Debug.no_1 "crename_sess_ptr_2_chan_ptr_struc" pr pr (crename_sess_ptr_2_chan_ptr_struc) formula
+
+let crename_sess_ptr_2_chan_ptr formula =
+  let renamedf = CForm.transform_formula (crename_sess_ptr_2_chan_ptr_heap ~flow:true) formula in
+  renamedf
+
+let crename_sess_ptr_2_chan_ptr formula =
+  let pr = !CF.print_formula in
+  Debug.no_1 "crename_sess_ptr_2_chan_ptr" pr pr (crename_sess_ptr_2_chan_ptr) formula
 
 (* ------------------------------------------------------- *)
 (*** wrap sequence around single transmissions protocols ***)
@@ -1827,8 +2043,8 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
 
 (* let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list = *)
 (*   (\* norm result *\) *)
-(*   let res = new_lhs lhs in *)
-(*   let res = List.map (fun x -> x) lhs in *)
+(*   let res = new_lhs lhs in   *)
+(*   let res = List.map (fun x -> CForm.map_one_rflow_formula crename_sess_ptr_2_chan_ptr x) res in *)
 (*   res *)
 
 let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
@@ -1882,7 +2098,7 @@ let rebuild_SeqSor lnode rnode largs rargs =
   in
   let left = CTPProjection.heap_node_transformer_basic fnc lnode in
   match left with
-  | Some lnode0 -> [CForm.mk_rflow_formula_from_heap lnode0 ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula lnode0)], [CForm.mk_rflow_formula_from_heap rnode ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula rnode)], "Sess" (* this needs to be solveddifferently! can later lead to strange behavior *)
+  | Some lnode0 -> [CForm.mk_rflow_formula_from_heap lnode0 ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula lnode0)], [CForm.mk_rflow_formula_from_heap rnode ~sess_kind:(Some !sess_kind) (CF.pos_of_h_formula rnode)], "Sess" (* this needs to be solved differently! can later lead to strange behavior *)
   | None -> largs,rargs, (CF.get_node_name_x lnode)
 
 let rebuild_SeqSor lnode rnode largs rargs =

@@ -561,6 +561,42 @@ refactor the SOR split (specially the rebuild SeqSor)
 =============================================
 =============================================
 
+./../sleek ex9c4-bug-deleg.slk
+
+why so many duplicates in the residue:
+Entail 1: Valid. 
+
+Residue:
+
+ <1>emp&{FLOW,(20,21)=__norm#E}
+ ho_vars: [L[v_73] --> v_73::Chan{ . (!( emp&msg_74=0)) ;; (emp)
+&{FLOW,(20,21)=__norm#E}}<this>@M&
+           {FLOW,(20,21)=__norm#E};
+ R --> emp&{FLOW,(20,21)=__norm#E};
+ 
+           L[v_73] --> v_73::Chan{ . (!( emp&msg_74=0)) ;; (emp)
+&{FLOW,(20,21)=__norm#E}}<this>@M&
+           {FLOW,(20,21)=__norm#E};
+ R --> emp&{FLOW,(20,21)=__norm#E};
+ 
+           L[v_73] --> v_73::Chan{ . (!( emp&msg_74=0)) ;; (emp)
+&{FLOW,(20,21)=__norm#E}}<this>@M&
+           {FLOW,(20,21)=__norm#E};
+ R --> emp&{FLOW,(20,21)=__norm#E};
+ 
+           L[v_73] --> v_73::Chan{ . (!( emp&msg_74=0)) ;; (emp)
+&{FLOW,(20,21)=__norm#E}}<this>@M&
+           {FLOW,(20,21)=__norm#E};
+ R --> emp&{FLOW,(20,21)=__norm#E};
+ 
+           L[v_73] --> v_73::Chan{ . (!( emp&msg_74=0)) ;; (emp)
+&{FLOW,(20,21)=__norm#E}}<this>@M&
+           {FLOW,(20,21)=__norm#E};
+ R --> emp&{FLOW,(20,21)=__norm#E}]
+[[ SEARCH ==>  Match(c1,c1) ==>  SEARCH ==>  Match(c2,c2)]]
+
+
+
 =============================================
 =============================================
 
