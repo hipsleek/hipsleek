@@ -12,24 +12,54 @@ int main( ) {
   int a6[N];
   
   int i; 
-  for ( i = 0 ; i < N ; i++ ) {
+  for ( i = 0 ; i < N ; i++ ) 
+    /*@
+      requires a1::arr_seg<i,100000>*a2::arr_seg<i,100000>
+      ensures a1::arr_seg<i,100000>*a2::arr_seg<i,100000>;
+    */
+  {
     a2[i] = a1[i];
   }
-  for ( i = 0 ; i < N ; i++ ) {
+  for ( i = 0 ; i < N ; i++ ) 
+    /*@
+      requires a2::arr_seg<i,100000>*a3::arr_seg<i,100000>
+      ensures a2::arr_seg<i,100000>*a3::arr_seg<i,100000>;
+    */
+  {
     a3[i] = a2[i];
   }
-  for ( i = 0 ; i < N ; i++ ) {
+  for ( i = 0 ; i < N ; i++ ) 
+    /*@
+      requires a3::arr_seg<i,100000>*a4::arr_seg<i,100000>
+      ensures a3::arr_seg<i,100000>*a4::arr_seg<i,100000>;
+    */
+  {
     a4[i] = a3[i];
   }
-  for ( i = 0 ; i < N ; i++ ) {
+  for ( i = 0 ; i < N ; i++ ) 
+    /*@
+      requires a4::arr_seg<i,100000>*a5::arr_seg<i,100000>
+      ensures a4::arr_seg<i,100000>*a5::arr_seg<i,100000>;
+    */
+  {
     a5[i] = a4[i];
   }
-  for ( i = 0 ; i < N ; i++ ) {
+  for ( i = 0 ; i < N ; i++ ) 
+    /*@
+      requires a5::arr_seg<i,100000>*a6::arr_seg<i,100000>
+      ensures a5::arr_seg<i,100000>*a6::arr_seg<i,100000>;
+    */
+  {
     a6[i] = a5[i];
   }
   
   int x;
-  for ( x = 0 ; x < N ; x++ ) {
+  for ( x = 0 ; x < N ; x++ ) 
+    /*@
+      requires a1::arr_seg<x,100000>*a6::arr_seg<x,100000>
+      ensures a1::arr_seg<x,100000>*a6::arr_seg<x,100000>;
+    */
+  {
     __VERIFIER_assert(  a1[x] == a6[x]  );
   }
   return 0;
