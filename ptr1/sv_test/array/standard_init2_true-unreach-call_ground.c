@@ -6,18 +6,33 @@ void __VERIFIER_assert(int cond) { if(!(cond)) { ERROR: __VERIFIER_error(); } }
 int main ( ) {
   int a[N];
   int i = 0;
-  while ( i < N ) {
+  while ( i < N ) 
+    /*@
+      requires a::arr_seg<i,100000>
+      ensures a::arr_seg<i,100000>;
+     */
+  {
     a[i] = 42;
     i = i + 1;
   }
   i = 0;
-  while ( i < N ) {
+  while ( i < N ) 
+    /*@
+      requires a::arr_seg<i,100000>
+      ensures a::arr_seg<i,100000>;
+     */
+  {
     a[i] = 43;
     i = i + 1;
   }
 
   int x;
-  for ( x = 0 ; x < N ; x++ ) {
+  for ( x = 0 ; x < N ; x++ ) 
+    /*@
+      requires a::arr_seg<x,100000>
+      ensures a::arr_seg<x,100000>;
+     */
+  {
     __VERIFIER_assert(  a[x] == 43  );
   }
   return 0;
