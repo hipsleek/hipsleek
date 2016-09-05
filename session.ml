@@ -1601,76 +1601,6 @@ module Make_Session (Base: Session_base) = struct
   let wrap_2ways_sess2base_opt f_sess hform =
     let pr =  !Base.print_h_formula in
     Debug.no_1 "wrap_2ways_sess2base_opt" pr (pr_opt pr) (wrap_2ways_sess2base_opt f_sess) hform
-
-  (* let loop_through_rflow helper hform = *)
-  (*   let f_h nh = *)
-  (*     match Base.get_heap_node nh with *)
-  (*     | None -> None *)
-  (*     | Some nh -> *)
-  (*       let node_new = Base.get_node_only nh in *)
-  (*       let trans_f = Base.transform_formula helper in *)
-  (*       Some (Base.map_rflow_formula_list trans_f node_new) *)
-  (*   in *)
-  (*   Some (Base.transform_h_formula f_h hform)  *)
-
-  (* let loop_through_rflow helper hform = *)
-  (*   let pr = !Base.print_h_formula in *)
-  (*   Debug.no_1 "loop_through_rflow" pr (pr_opt pr) (fun _ -> loop_through_rflow helper hform) hform *)
-      
-  (* let heap_node_transformer_basic ?flow:(include_flow=false) fnc hform = *)
-  (*   match Base.get_heap_node hform with *)
-  (*   | None -> None *)
-  (*   | Some hform ->  *)
-  (*     let hform_opt  = *)
-  (*       match Base.get_session_info hform with  *)
-  (*       | None    ->  None *)
-  (*       | Some si ->  fnc si hform *)
-  (*     in hform_opt *)
-
-  (* calls h_fnc on 
-     (i) first session node of hform if include_flow is set 
-     (ii) all nodes of hform -incl. nested HO args- otherwise 
-  *)
-  (* let heap_node_transformer ?flow:(include_flow=false) h_fnc hform = *)
-  (*   let rec helper h_fnc hform =  *)
-  (*     match Base.get_heap_node hform with *)
-  (*     | None -> None *)
-  (*     | Some hform -> *)
-  (*       (\* let node = Base.get_node_only hform in  *\) *)
-  (*       match Base.get_session_info hform with *)
-  (*       | None    -> *)
-  (*         (\* loop through HO param until reaching a session formula *\) *)
-  (*         Base.loop_through_rflow (helper h_fnc) hform *)
-  (*       | Some si -> *)
-  (*         let new_heap = h_fnc si hform in *)
-  (*         if not(include_flow) then new_heap (\* it's a session related node, but its transformation should stop at this level - do not attempt to transform its HO args *\) *)
-  (*         else *)
-  (*           let new_heap =  *)
-  (*             match new_heap with *)
-  (*             | None   ->  hform *)
-  (*             | Some e ->  e in *)
-  (*           Base.loop_through_rflow (helper h_fnc) new_heap *)
-  (*   in helper h_fnc hform *)
-
-  (* allows the transformation of nested chan specifications if include_msg is set
-     eg c1::Chan{@S !v#v::Chan{@S !0}<this>}<this>
-     h_fnc c1::Chan{@S !v#v::Chan{@S !0}<this>}<this>
-     h_fnc v::Chan{@S !0}<this>
-  *)
-  (* let heap_node_transformer_gen ?flow:(include_flow=false) ?include_msg:(include_msg=false) h_fnc hform = *)
-  (*   let res = heap_node_transformer ~flow:include_flow h_fnc hform in *)
-  (*   if not(include_msg) then res *)
-  (*   else *)
-  (*     let updated_hform = *)
-  (*       match res with *)
-  (*       | None -> hform *)
-  (*       | Some hform -> hform in *)
-  (*     let fnc2 si hform = *)
-  (*       match si.node_kind with *)
-  (*       | Send | Receive -> Base.loop_through_rflow (heap_node_transformer h_fnc) hform *)
-  (*       | _ -> None *)
-  (*     in *)
-  (*     heap_node_transformer ~flow:true fnc2 updated_hform  *)
   
   let rename_message_pointer_heap hform =
     let fnc_node sf =
@@ -1726,34 +1656,6 @@ module Make_Session (Base: Session_base) = struct
   let append_tail disjunct tail =
     let pos = get_pos disjunct in
     mk_session_seq_formula disjunct tail pos
-
-  (* Split a SOr predicate into disjuncts.
-   * 1. tranform head and tail into sessions
-   * 2. get list of disjuncts from head
-   * 3. for each disjunct, append tail
-   * 4. for each disjunct, normalize
-   *)
-  (* let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula option) *)
-  (*               : Base.ho_param_formula list = *)
-  (*   let head_session = (\* trans_h_formula_to_session *\) *)
-  (*                      (Base.get_h_formula_from_ho_param_formula head) in *)
-  (*   let disj_list = sor_disj_list head_session in *)
-  (*   let disj_list = *)
-  (*     let tail_session = *)
-  (*       match tail with *)
-  (*       | None      -> SEmp (\* disj_list *\) *)
-  (*       | Some tail -> *)
-  (*         let tail_session = trans_h_formula_to_session *)
-  (*             (Base.get_h_formula_from_ho_param_formula tail) in *)
-  (*         tail_session *)
-  (*     in *)
-  (*     let disj_list = List.map (fun x -> append_tail x tail_session) disj_list in *)
-  (*     disj_list in *)
-   
-  (*   let disj_list = List.map (fun x -> norm3_sequence x) disj_list in *)
-  (*   let disj_list = List.map (fun x -> x_add_1 trans_from_session x) disj_list in *)
-  (*   let disj_list = List.map (fun x -> Base.mk_rflow_formula_from_heap x ~sess_kind:(Some Base.base_type) no_pos) disj_list in *)
-  (*   disj_list *)
 
   (* Split a SOr predicate into disjuncts.
    * 1. tranform head and tail into sessions
@@ -1866,52 +1768,6 @@ module Make_Session (Base: Session_base) = struct
     in
     wrap_2ways_sess2base_opt helper hform
 
-  (* let set_heap_node_var var hform = *)
-  (*   match Base.get_heap_node hform with *)
-  (*     | None -> None *)
-  (*     | Some hform -> Some (Base.set_heap_node_var var (Base.get_node_only hform)) *)
-
-  (* let set_heap_node_var ?flow:(flow=false) var hform = *)
-  (*   let fnc si = set_heap_node_var var in *)
-  (*   Base.heap_node_transformer ~flow:flow fnc hform *)
-
-  (* let set_heap_node_var ?flow:(flow=false) var hform = *)
-  (*   let pr1 = Base.get_node_id in *)
-  (*   let pr2 = !Base.print_h_formula in *)
-  (*   Debug.no_2 "set_heap_node_var" pr1 pr2 (pr_opt pr2) (fun _ _ -> set_heap_node_var ~flow:flow var hform) var hform *)
-
-  (* let set_heap_node_to_chan_node hform = *)
-  (*   let rec helper var hform =  *)
-  (*     match Base.get_heap_node hform with *)
-  (*     | None -> None *)
-  (*     | Some hform -> *)
-  (*       let node = Base.get_node_only hform in *)
-  (*       let si =  Base.get_node_session_info node in *)
-  (*       match si with *)
-  (*       | None   -> Base.loop_through_rflow (helper (Some (Base.get_heap_node_var node))) hform (\* call helper here to make sure we update the innermost  var ptr until hitting a session formula *\) *)
-  (*       | Some si -> *)
-  (*         let var = match var with *)
-  (*           | None     -> (Base.get_heap_node_var node) *)
-  (*           | Some var -> var (\* apply transformer here *\) *)
-  (*         in  *)
-  (*         match si.node_kind with *)
-  (*         | Send | Receive -> *)
-  (*           let hform = *)
-  (*             match x_add set_heap_node_var var hform with *)
-  (*             | None -> hform *)
-  (*             | Some h -> h in *)
-  (*           Base.loop_through_rflow (helper None) hform *)
-  (*         |_ -> *)
-  (*           let hform = *)
-  (*             match x_add set_heap_node_var var hform with *)
-  (*             | None -> hform *)
-  (*             | Some h -> h in *)
-  (*           Base.loop_through_rflow (helper (Some var)) hform *)
-  (*           (\* helper var hform  *\) *)
-  (*           (\* x_add set_heap_node_var ~flow:true) var hform  *\) *)
-  (*   in helper None hform *)
-
-
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -2008,12 +1864,6 @@ let irename_message_pointer_struc formula =
 (* -------------------------------------- *)
 (*** rename the first pointer of hform  ***)
 let irename_session_pointer_heap ?flow:(flow=false) var hform =
-  (* let fnc si hform = *)
-  (*  match si.session_kind with *)
-  (*  | Projection   -> (IProjection.set_heap_node_var_opt ~flow:flow var hform) *)
-  (*  | TPProjection -> (ITPProjection.set_heap_node_var_opt  ~flow:flow var hform) *)
-  (*  | Protocol     -> (IProtocol.set_heap_node_var_opt  ~flow:flow var hform) *)
-  (* in  *)
   let fnc si = IMessage.set_heap_node_var_opt ~flow:flow var in
   IMessage.heap_transformer fnc hform    
 
