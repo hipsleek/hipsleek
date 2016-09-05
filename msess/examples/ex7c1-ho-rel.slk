@@ -1,0 +1,41 @@
+/*
+sleek_include 'msess/notes/hodef.slk'.
+*/
+sleek_include 'node.slk'.
+
+/*
+HeapPred RRR(Object a).
+
+//1
+infer [RRR] vvv::node<_,_>
+            |- RRR(vvv).
+print residue.
+expect Valid.
+
+
+relation RRR0(int a).
+
+//2
+infer [RRR0] vvv=0
+            |- RRR0(vvv).
+print residue.
+expect Valid.
+
+
+//3
+infer [RRR0] vvv=4
+            |- RRR0(vvv).
+print residue.
+expect Valid.
+
+
+//4
+infer [RRR0] vvv=4
+            |- RRR0(vvv).
+print residue.
+expect Valid.
+*/
+
+
+checkentail x::node<_,_> & a=0 or x::node<_,_> & a>0 |- x::node<_,_>.
+print residue. 

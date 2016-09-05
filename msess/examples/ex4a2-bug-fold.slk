@@ -1,0 +1,12 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+pred_sess_proj pp5<> == ?0.
+pred_sess_proj pp6<> == ?emp & 0<=msg.
+
+//8
+
+checkentail x::Sess{@S  pp5<>}<> |- x::Sess{@S  pp6<>}<>.
+expect Valid.
+print residue.
+

@@ -10757,15 +10757,18 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
                 else Some p_res 
               in
               begin match tmp_ho_var with
-                | None -> (None, None, p_res_opt, es.es_ho_vars_map, Some es)
-                | Some v -> 
+                | None ->
+                  (* add only freshly collected maps *)
+                  let new_maps = Gen.BList.difference_eq ( (fun ((vr1,_), _) ((vr2,_), _) -> (CP.eq_spec_var vr1 vr2))) es.es_ho_vars_map estate.es_ho_vars_map in
+                  (None, None, p_res_opt, new_maps (* es.es_ho_vars_map *), Some es)
+                | Some ho_var -> 
                   try
                     let pr = pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula) in
                     let () = x_tinfo_hp (add_str "es_ho_vars_map" pr) es.es_ho_vars_map no_pos in
-                    let _, v_binding = List.find (fun ((vr,_), _) -> CP.eq_spec_var v vr) es.es_ho_vars_map in
+                    let _, v_binding = List.find (fun ((vr,_), _) -> CP.eq_spec_var ho_var vr) es.es_ho_vars_map in
                     let v_binding = CF.write_vperm_set v_binding vp_res in
                     let () = x_tinfo_hp (add_str "v_binding" Cprinter.string_of_formula) v_binding no_pos in
-                    let other_bindings = List.filter (fun ((vr,_), _) -> not (CP.eq_spec_var v vr)) es.es_ho_vars_map in
+                    let other_bindings = List.filter (fun ((vr,_), _) -> not (CP.eq_spec_var ho_var vr)) es.es_ho_vars_map in
                     (None, Some v_binding, p_res_opt, other_bindings, Some es) 
                   with _ -> (None, None, p_res_opt, es.es_ho_vars_map, Some es)
               end

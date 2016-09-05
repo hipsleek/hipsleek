@@ -1,0 +1,48 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+checkentail x::Sess{@S ?0 or ?1}<>   |- x::Sess{@S ?m#m>=0}<> .
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S ?0 or ?1}<>   |- x::Sess{@S ?0}<> .
+print residue.
+expect Fail.
+
+checkentail x::Sess{@S ?0;;?1}<>   |- x::Sess{@S ?0;;!1}<> .
+print residue.
+expect Fail.
+
+/*
+checkentail x::Sess{\chan::R{+ a=0 }<a> or chan::R{+ b=1 }<b>}<>   |- x::Sess{@S ?0 or ?1}<> .
+print residue.
+expect Valid.
+
+checkentail x::Sess{chan::R{+ a=0 }<a>}<>  or x::Sess{chan::R{+ b=1 }<b>}<>   |- x::Sess{@S ?0 or ?1}<> .
+print residue.
+expect Valid.
+
+*/
+
+/*
+checkentail x::Chan{@S ?1 or ?0}<> & z=1 |- x::Chan{@S ?m#L(m)}<> * L(z).
+
+checkentail x::Chan{@S ?1}<> & z=1 or x::Chan{?0}<> & z=1 |- x::Chan{@S ?m#L(m)}<> * L(z).
+checksat z=1 & L(m):=m=1 & L(z)
+checksat z=1 & L(m):=m=0 & L(z) 
+
+elim the disjuct for which the new rel def creates unsat
+
+-----------------------------------------------------------------------
+
+checkentail x::Chan{@S ?m#m::node<_,_> or ?m#m=null}<> * z::node<_,_> |- x::Chan{@S ?m#L(m)}<> * L(z).
+
+
+
+checkentail x::node<a,_> & a=0 or x::node<a,null> & a!=0
+            |-  x::node<_,_>.
+print residue.
+//expect Valid.
+
+
+*/

@@ -5,19 +5,27 @@ sleek_include 'node.slk'.
 
 //check the norms for deleg:
 
-checkentail c1::Chan{@S !v#v::Chan{@S !0}<this>}<this> * c2::Chan{@S !0}<this> |-
-        c1::Chan{@S !ww#%L(ww);;%R}<this> * %L(c2).
+
+checkentail c1::Chan{@S !v#v::Chan{@S !0}<>}<> * c2::Chan{@S !0}<> |-
+        c1::Chan{@S !ww#%L(ww);;%R}<> * %L(c2).
 print residue.
 
-//checkentail c1::Chan{@S !v#v::Chan{@S !0;;!xx#xx::Chan{@S !444;;!zz#zz::Chan{@S !333}<this>}<this>}<this>}<this> |- emp.
+
+/*
+checkentail c1::Chan{@S !v#v::Chan{@S !0}<>}<> |-
+        c1::Chan{@S !ww#%L(ww);;%R}<> .
+print residue.
+*/
+
+//checkentail c1::Chan{@S !v#v::Chan{@S !0;;!xx#xx::Chan{@S !444;;!zz#zz::Chan{@S !333}<>}<>}<>}<> |- emp.
 
 
 
-// checkentail c1::Chan{@S !0;;!1;;!2;;(!3 or !4)}<this> |- emp.
+// checkentail c1::Chan{@S !0;;!1;;!2;;(!3 or !4)}<> |- emp.
 
-// checkentail c1::Chan{@S !xx#xx::Chan{@S !yy#yy::node<_, _>}<this>}<this>  |-
-//            c1::Chan{@S !zz#zz::Chan{@S !vv#vv::node<_, _>}<this>}<this>.
+// checkentail c1::Chan{@S !xx#xx::Chan{@S !yy#yy::node<_, _>}<>}<>  |-
+//            c1::Chan{@S !zz#zz::Chan{@S !vv#vv::node<_, _>}<>}<>.
 
 // pred lll<a@in> == emp.
 
-checkentail x::node<_,_> & x=y |- y::node<_,_>.
+// checkentail x::node<_,_> & x=y |- y::node<_,_>.

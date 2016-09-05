@@ -1,0 +1,51 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+HeapPred RRR(Object b).
+
+//3
+infer [RRR] x::Sess{@S ?vvv#vvv::node<_,_>}<> * y::node<_,_>
+            |- x::Sess{@S ?www#RRR(www)}<> * RRR(y).
+print residue.
+expect Valid.
+
+
+
+checkentail x::Sess{@S ?vvv#vvv::node<_,_>}<> * y::node<_,_>
+            |- x::Sess{@S ?www#%L(www)}<> * %L(y).
+print residue.
+expect Valid.
+
+
+
+checkentail x::Sess{@S ?vvv#vvv::node<_,_>}<> * y::node<_,_>
+            |- x::Sess{@S ?www#%L}<>.
+print residue.
+expect Valid.
+
+
+
+checkentail x::Sess{@S ?vvv#vvv::node<_,_>;;!1;;?0}<> * y::node<_,_>
+            |- x::Sess{@S ?www#%L(www);;%P}<> * %L(y).
+print residue.
+expect Valid.
+
+
+
+checkentail x::Sess{@S !vvv#vvv::node<_,_>}<> * y::node<_,_>
+            |- x::Sess{@S !www#%L(www)}<> * %L(y).
+print residue.
+expect Valid.
+
+/*
+c::Chan{@S self::Sor{!0 or !1}<>}<> |- c::Chan{@S !v#v>=0}<>.
+
+c::Chan{@S self::Seq {@S !0, emp} <>}<>  or c::Chan{@S self:: Seq {@S !1,emp}<>}<> |-  c::Chan{@S !v#v>=0}<>.
+
+c::Chan{@S !0}<>  or c::Chan{@S !1}<> |-  c::Chan{@S !v#v>=0}<>.
+
+checkentail c::Chan{@S !v#v>=0}<> |- c::Chan{@S !v#v>=0}<>.
+
+checkentail c::Chan{@S !v#v>=0;;!0;;end}<> |- c::Chan{@S !v#v>=0;;!1;;end}<>.
+
+*/

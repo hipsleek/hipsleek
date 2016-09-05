@@ -563,6 +563,9 @@ refactor the SOR split (specially the rebuild SeqSor)
 =============================================
 =============================================
 
+SOLVED (filter match_one_ho_arg such that only newly collected
+ho maps are added to the state)
+
 ./../sleek ex9c4-bug-deleg.slk
 
 why so many duplicates in the residue:

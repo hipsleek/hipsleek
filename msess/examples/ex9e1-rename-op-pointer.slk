@@ -1,0 +1,13 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+//sleek_include 'msess/notes/commprimitives.slk'.
+
+
+//checkentail c1::Chan{@S !v#v::Chan{@S !0}<this>}<this> * c2::Chan{@S !0}<this> |-
+//        c1::Chan{@S !ww#%L(ww);;%R}<this> * %L(c2).
+//print residue.
+
+
+checkentail c1::Chan{@S !0}<this> * c2::Chan{@S !0}<this> |-
+        c1::Chan{@S !ww#%L(ww);;%R}<this>.
+print residue.
