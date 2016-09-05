@@ -122,7 +122,8 @@ module type Message_type = sig
   val transform_formula: (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  (h_formula -> h_formula option)-> struc_formula -> struc_formula
   val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
-  val map_rflow_formula_list: (formula -> formula) -> h_formula_heap -> h_formula
+  val map_rflow_formula_list: (formula -> formula) -> ho_param_formula list -> ho_param_formula list
+  val map_rflow_formula_list_res_h: (formula -> formula) -> h_formula_heap -> h_formula
   val update_temp_heap_name: node_session_info -> h_formula -> h_formula option
   val set_heap_node_var: var -> h_formula_heap -> h_formula
   val subst_param:   (var * var) list -> param -> param
@@ -282,7 +283,10 @@ module IForm = struct
   let map_one_rflow_formula fnc rflow_formula =
     F.map_one_rflow_formula fnc rflow_formula
 
-  let map_rflow_formula_list trans_f node =
+  let map_rflow_formula_list fnc rflow_formula_list = 
+    List.map (map_one_rflow_formula fnc) rflow_formula_list
+  
+  let map_rflow_formula_list_res_h trans_f node =
     F.map_rflow_formula_list trans_f node
 
   let get_heap_node hform =
@@ -541,7 +545,10 @@ module CForm = struct
   let map_one_rflow_formula fnc rflow_formula =
     CF.map_one_rflow_formula fnc rflow_formula
 
-  let map_rflow_formula_list trans_f node =
+  let map_rflow_formula_list fnc rflow_formula_list = 
+    List.map (map_one_rflow_formula fnc) rflow_formula_list
+  
+  let map_rflow_formula_list_res_h trans_f node =
     CF.map_rflow_formula_list trans_f node
   
   let get_heap_node hform =
@@ -789,7 +796,7 @@ module Message_commons =
         | Some nh ->
           let node_new = get_node_only nh in
           let trans_f = transform_formula helper in
-          Some (map_rflow_formula_list trans_f node_new)
+          Some (map_rflow_formula_list_res_h trans_f node_new)
       in
       Some (transform_h_formula f_h hform)
 

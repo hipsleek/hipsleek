@@ -1,17 +1,18 @@
+hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
 
 void buyer1(Channel c, int id)
-  requires  c::Chan{@S !0}<this>
-  ensures   c::Chan{emp}<this>;
+  requires  c::Chan{@S !0}<>
+  ensures   c::Chan{emp}<>;
 {
   send(c,0);
 }
 
 
 int buyer2(Channel c)
-  requires  c::Chan{@S !0;;?1}<this>
-  ensures   c::Chan{emp}<this> & res=1;
+  requires  c::Chan{@S !0;;?1}<>
+  ensures   c::Chan{emp}<> & res=1;
 {
   send(c,0);
   int x = receive(c);
@@ -19,8 +20,8 @@ int buyer2(Channel c)
 }
 
 int buyer3(Channel c)
-  requires  c::Chan{@S !0;;?1}<this>
-  ensures   c::Chan{emp}<this> & res=5;
+  requires  c::Chan{@S !0;;?1}<>
+  ensures   c::Chan{emp}<> & res=5;
 {
   send(c,0);
   int x = receive(c);
@@ -29,8 +30,8 @@ int buyer3(Channel c)
 
 
 int buyer4(Channel c,int id)
-  requires  c::Chan{@S !0;;?v#v=id}<this>
-  ensures   c::Chan{emp}<this> & res=id;
+  requires  c::Chan{@S !0;;?v#v=id}<>
+  ensures   c::Chan{emp}<> & res=id;
 {
   send(c,0);
   int x = receive(c);
@@ -38,8 +39,8 @@ int buyer4(Channel c,int id)
 }
 
 int buyer5(Channel c)
-  requires  c::Chan{@S !0;;?v#v>0}<this>
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S !0;;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>0;
 {
   send(c,0);
   int x = receive(c);
@@ -48,8 +49,8 @@ int buyer5(Channel c)
 
 
 int buyer6(Channel c)
-  requires  [a] c::Chan{@S !0;;?ww#ww>0 &a=ww}<this>
-  ensures   (exists ww: c:: Chan {emp}< this> & res!=a);
+  requires  [a] c::Chan{@S !0;;?ww#ww>0 &a=ww}<>
+  ensures   (exists ww: c:: Chan {emp}< > & res!=a);
 {
   dprint;
   send(c,0);
@@ -60,8 +61,8 @@ int buyer6(Channel c)
 }
 
 int buyer7(Channel c, int id)
-  requires  c::Chan{@S !v#v>0;;?v#v>0}<this> & id>0
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S !v#v>0;;?v#v>0}<> & id>0
+  ensures   c::Chan{emp}<> & res>0;
 {
   send(c,id);
   int x = receive(c);
@@ -70,8 +71,8 @@ int buyer7(Channel c, int id)
  
 
 int buyer8(Channel c, int id)
-  requires  c::Chan{@S !v#v>0;;?v#v>=0}<this> & id>0
-  ensures   c::Chan{emp}<this> & res>=0;
+  requires  c::Chan{@S !v#v>0;;?v#v>=0}<> & id>0
+  ensures   c::Chan{emp}<> & res>=0;
 {
   send(c,id);
   int x = receive(c);
@@ -80,8 +81,8 @@ int buyer8(Channel c, int id)
 
 
 void buyer9(Channel c, int id)
-  requires  c::Chan{@S !v#v>0;;!1}<this> & id>0
-  ensures   c::Chan{@S !1}<this>;
+  requires  c::Chan{@S !v#v>0;;!1}<> & id>0
+  ensures   c::Chan{@S !1}<>;
 {
   send(c,id);
 }

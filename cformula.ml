@@ -849,6 +849,26 @@ let generate_disj_pairs_from_memf (mf:mem_formula):(CP.spec_var * CP.spec_var) l
   in
   List.fold_left (fun x y -> x@(helper y)) [] m
 
+(* test if h_form contains a session in any of its nested ho param *)
+let rec contains_session h_form =
+  match h_form with
+  | ViewNode node ->
+    begin
+      match node.h_formula_view_session_info with
+      | Some _ -> true
+      | None -> contains_session_rflow node.h_formula_view_ho_arguments
+    end
+  | _ -> false
+
+and contains_session_rflow rflow_list =
+  List.exists (fun ho -> contains_session_formula ho.rflow_base) rflow_list
+
+and contains_session_formula formula =
+  match formula with
+  | Base b ->  contains_session b.formula_base_heap
+  | Exists b -> contains_session b.formula_exists_heap
+  | Or b -> (contains_session_formula b.formula_or_f1) || (contains_session_formula b.formula_or_f2)
+
 
 let find_close svl0 eqs0 =
   let rec find_match svl ls_eqs rem_eqs=
@@ -3572,7 +3592,7 @@ and h_subst sst (f : h_formula) =
                h_formula_view_node = CP.subst_var_par sst x; 
                h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
                h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
-               h_formula_view_ho_arguments = List.map (rf_subst sst) ho_svs;
+               h_formula_view_ho_arguments = if not(contains_session f) then ho_svs else List.map (rf_subst sst) ho_svs;
                h_formula_view_annot_arg = CP.subst_annot_arg sst anns;
                h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
              }
@@ -3849,8 +3869,9 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
                      h_formula_view_perm = subst_var_perm () s perm;  (*LDK*)
                      h_formula_view_imm = apply_one_imm s imm;  
                      (* WN:subs_pre *)
-                     h_formula_view_ho_arguments = 
-                       if !pre_subst_flag then ho_svs
+                     h_formula_view_ho_arguments =
+                       (* why special case for HO? *)
+                       if !pre_subst_flag && not(contains_session f) then ho_svs
                        else List.map (trans_rflow_formula (apply_one s)) ho_svs;
                      h_formula_view_arguments = List.map (subst_var s) svs;
                      h_formula_view_annot_arg = apply_one_annot_arg s annot_args;

@@ -3,7 +3,8 @@
 #process_action,Trace
 #choose_context,Trace
 #match_one_ho_arg,Trace
-do_match,Trace
+#do_match,Trace
+do_match
 #heap_entail_conjunct,Trace
 #process_one_match,Trace
 #update_fixpt,Trace
@@ -16,4 +17,5 @@ do_match,Trace
 # case_normalize_renamed_formula
 #subst_avoid_capture
 #CF.rename_bound_vars
+check_exp,Trace
 

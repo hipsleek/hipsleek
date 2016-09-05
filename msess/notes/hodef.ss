@@ -1,5 +1,3 @@
-data Channel{int info;}
-
 pred_prim Trans@trans{%P}<sender,receiver>;
 pred_prim Sess@session{%P}<>;
 /* pred_prim Chan@channel<sess:Sess>. */

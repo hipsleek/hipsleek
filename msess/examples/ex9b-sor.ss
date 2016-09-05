@@ -1,10 +1,11 @@
+hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
 
 /* sor for send */
 void sor1(Channel c, int id)
-  requires  c::Chan{@S !0 or !1}<this>
-  ensures   c::Chan{emp}<this>;
+  requires  c::Chan{@S !0 or !1}<>
+  ensures   c::Chan{emp}<>;
 {
   if (id<0) send(c,1);
   else  send(c,0);
@@ -12,8 +13,8 @@ void sor1(Channel c, int id)
 
 /* sor for send */
 int sor2(Channel c, int id)
-  requires  c::Chan{@S (!0 or !1);;?v#v>0}<this>
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S (!0 or !1);;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>0;
 {
   if (id<0) send(c,1);
   else  send(c,0);
@@ -23,8 +24,8 @@ int sor2(Channel c, int id)
 
 /* sor for receive */
 int sor3(Channel c, int id)
-  requires  c::Chan{@S (?0;;!7) or (?v#v!=0;;!9);;?v#v>0}<this>
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S (?0;;!7) or (?v#v!=0;;!9);;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>0;
 {
   int y = receive(c);
   if (y==0) send(c,7);
@@ -35,8 +36,8 @@ int sor3(Channel c, int id)
 
 /* sor for receive */
 int sor4(Channel c, int id)
-  requires  c::Chan{@S (?0;;!7) or ?1;;?v#v>0}<this>
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S (?0;;!7) or ?1;;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>0;
 {
   int y = receive(c);
   if (y==0) send(c,7);
@@ -46,8 +47,8 @@ int sor4(Channel c, int id)
 
 /* FAIL - ok */
 int sor5(Channel c, int id)
-  requires  c::Chan{@S (?0;;!7) or ?1;;?v#v>0}<this>
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S (?0;;!7) or ?1;;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>0;
 {
   int y = receive(c);
   /* if (y==0) */ send(c,7);
@@ -57,8 +58,8 @@ int sor5(Channel c, int id)
 
 /* nested sor */
 int sor6(Channel c, int id)
-  requires  c::Chan{@S (?2 or ?3);;(?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<this>
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S (?2 or ?3);;(?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>0;
 {
   int z = receive(c);
   int y = receive(c);
@@ -68,10 +69,10 @@ int sor6(Channel c, int id)
   return x;
 }
 
-/* nested sor */
+/* FAIL -ok nested sor */
 int sor7(Channel c, int id)
-  requires  c::Chan{@S (?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<this>
-  ensures   c::Chan{emp}<this> & res>0;
+  requires  c::Chan{@S (?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>0;
 {
   
   int y = receive(c);
@@ -84,8 +85,8 @@ int sor7(Channel c, int id)
 
 /* nested sor */
 void sor8(Channel c, int id)
-  requires  c::Chan{@S (?2 or ?3);;(?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<this>
-  ensures   c::Chan{@S ?w#w>0}<this>;
+  requires  c::Chan{@S (?2 or ?3);;(?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<>
+  ensures   c::Chan{@S ?w#w>0}<>;
 {
   int z = receive(c);
   int y = receive(c);

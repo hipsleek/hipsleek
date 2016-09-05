@@ -1,3 +1,4 @@
+/* hip_include 'msess/notes/node.ss' */
 /**
 
 ============================= 1 ============================
@@ -7,36 +8,51 @@ do so by using an exclusive channel
 
 */
 
-/* void send (Channel c, Dyn t x) */
-/*   requires c::Chan<!x.%L;%rest> * %L // & x=msg */
-/*   ensures  c::Chan<%rest>; */
-
-/* void send (Channel c, Dyn t x) */
-/*   requires c::Chan<!m.L(m);%rest> * L(x) // & x=msg */
-/*   ensures  c::Chan<%rest>; */
-
-
-
-/* Dyn t receive (Channel c) */
-/*      requires Chan<c, ?msg.L(msg);rest>  */
-/*   ensures  Chan<c, rest> * L(res); //& msg=res; */
-
-/* c::Chan{@S c::S{- %L(v)}<v> }<> * %L(x) */
-
-void sendc (Channel c, Channel x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
-
-
+/**
+ int
+*/
 void send (Channel c, int x)
   requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
   ensures  c::Chan{@S %R}<>;
 
-/* v is existential, so I cannot use it inside the post */
 int receive (Channel c)
   requires c::Chan{@S ?v#%L(v);;%R}<>
   ensures  c::Chan{@S %R}<> * %L(res);
 
+
+/**
+ Channel
+*/
+void sendc (Channel c, Channel x)
+  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
+  ensures  c::Chan{@S %R}<>;
+
+Channel receivec (Channel c)
+  requires c::Chan{@S ?v#%L(v);;%R}<>
+  ensures  c::Chan{@S %R}<> * %L(res);
+
+/**
+   Addr
+*/
+void senda (Channel c, Addr x)
+  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
+  ensures  c::Chan{@S %R}<>;
+
+Addr receivea (Channel c)
+  requires c::Chan{@S ?v#%L(v);;%R}<>
+  ensures  c::Chan{@S %R}<> * %L(res);
+
+
+/**
+   Date
+*/
+void sendd (Channel c, DDate x)
+  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
+  ensures  c::Chan{@S %R}<>;
+
+DDate received (Channel c)
+  requires c::Chan{@S ?v#%L(v);;%R}<>
+  ensures  c::Chan{@S %R}<> * %L(res);
   
 /**
 

@@ -11511,6 +11511,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             else                
               (* check if current node is seq with sor as head *)
               let l_ho_args_orig, r_ho_args_orig = l_ho_args, r_ho_args in
+              (* TODO: below is a hack which needs to be revised *)
               let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
               let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name0 in
