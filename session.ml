@@ -878,6 +878,7 @@ module Message_commons =
       let pr2 = !print_h_formula in
       Debug.no_2 "set_heap_node_var_opt" pr1 pr2 (pr_opt pr2) (fun _ _ -> set_heap_node_var_opt ~flow:flow var hform) var hform
 
+    (* can't really use the heap_node_transformer_gen gen here cause it needs to collect info from the last non-sess node *)
     let set_heap_node_to_chan_node hform =
       let rec helper var hform = 
         match get_heap_node hform with
@@ -886,27 +887,23 @@ module Message_commons =
           let node = get_node_only hform in
           let si =  get_node_session_info node in
           match si with
-          | None   -> loop_through_rflow (helper (Some (get_heap_node_var node))) hform (* call helper here to make sure we update the innermost  var ptr until hitting a session formula *)
+          | None   ->
+            let var = Some (get_heap_node_var node) in
+            loop_through_rflow (helper var) hform (* call helper here to make sure we update the innermost  var ptr until hitting a session formula *)
           | Some si ->
             let var = match var with
               | None     -> (get_heap_node_var node)
               | Some var -> var (* apply transformer here *)
-            in 
+            in
+            let loop_through_rflow_helper var_current_node var_for_loop =
+              let hform =
+                match x_add set_heap_node_var_opt var_current_node hform with
+                | None -> hform
+                | Some h -> h in
+              loop_through_rflow (helper var_for_loop) hform in
             match si.node_kind with
-            | Send | Receive ->
-              let hform =
-                match x_add set_heap_node_var_opt var hform with
-                | None -> hform
-                | Some h -> h in
-              loop_through_rflow (helper None) hform
-            |_ ->
-              let hform =
-                match x_add set_heap_node_var_opt var hform with
-                | None -> hform
-                | Some h -> h in
-              loop_through_rflow (helper (Some var)) hform
-              (* helper var hform  *)
-              (* x_add set_heap_node_var ~flow:true) var hform  *)
+            | Send | Receive -> loop_through_rflow_helper var None (* reset the var for send/receive messages *)
+            |_ -> loop_through_rflow_helper var (Some var) 
       in helper None hform
 
 
