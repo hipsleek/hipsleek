@@ -725,6 +725,97 @@ end;;
 module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
 module Label_Spec = LabelExpr(Lab2_List)(Exp_Spec);;
 
+
+
+let map_one_rflow_formula f rf =
+  {rf with rflow_base = f rf.rflow_base}
+
+let map_rflow_formula_list trans_f node =
+  ViewNode {node with  h_formula_view_ho_arguments =
+                        List.map (map_one_rflow_formula trans_f)
+                          node.h_formula_view_ho_arguments}
+
+let map_rflow_formula include_flow trans_f hform = 
+  if not(include_flow) then hform
+  else 
+    match hform with
+    | ViewNode h ->  map_rflow_formula_list trans_f h
+    | _ -> hform
+
+(* transform heap formula *)
+let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula =
+  let r =  f e in 
+  match r with
+  | Some e1 -> e1
+  | None  -> (
+      match e with
+      | Star s ->
+        let new_h1 = transform_h_formula f s.h_formula_star_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_star_h2 in
+        Star {s with h_formula_star_h1 = new_h1;
+                     h_formula_star_h2 = new_h2;}
+      | StarMinus s ->
+        let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
+        StarMinus {s with h_formula_starminus_h1 = new_h1;
+                          h_formula_starminus_h2 = new_h2;}
+      | Conj s ->
+        let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_conj_h2 in
+        Conj {s with h_formula_conj_h1 = new_h1;
+                     h_formula_conj_h2 = new_h2;}
+      | ConjStar s ->
+        let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
+        ConjStar {s with h_formula_conjstar_h1 = new_h1;
+                         h_formula_conjstar_h2 = new_h2;}
+      | ConjConj s ->
+        let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
+        let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
+        ConjConj {s with h_formula_conjconj_h1 = new_h1;
+                         h_formula_conjconj_h2 = new_h2;}
+      | Phase s -> 
+        let new_rd = transform_h_formula f s.h_formula_phase_rd in
+        let new_rw = transform_h_formula f s.h_formula_phase_rw in
+        Phase {s with h_formula_phase_rd = new_rd;
+                      h_formula_phase_rw = new_rw;}
+      | ViewNode _ -> e
+      | DataNode _
+      | ThreadNode _
+      | HRel _
+      | Hole _ | FrmHole _
+      | HTrue
+      | HFalse 
+      | HEmp | HVar _ -> e
+    )
+
+and transform_formula_x f (e:formula):formula =
+  let rec helper f e = 
+    let (_, f_f, f_h_f, f_p_t) = f in
+    let r =  f_f e in 
+    match r with
+    | Some e1 -> e1
+    | None  -> 
+      match e with	 
+      | Base b -> 
+        Base{b with 
+             formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
+             formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure;}
+      | Or o -> 
+        Or {o with 
+            formula_or_f1 = helper f o.formula_or_f1;
+            formula_or_f2 = helper f o.formula_or_f2;}
+      | Exists e -> 
+        Exists {e with
+                formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
+                formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;}
+  in helper f e
+
+
+and transform_formula f (e:formula):formula =
+  let pr = !print_formula in
+  (* Debug.no_2 "transform_formula" (fun _ -> "f") pr pr *) transform_formula_x f e
+
 (* generalized to data and view *)
 let get_ptr_from_data h =
   match h with
@@ -1328,15 +1419,21 @@ and get_flow_from_stack c l pos =
     }
 
 and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f with
-  | Base b-> Base {b with formula_base_flow = n}
-  | Exists b-> Exists {b with formula_exists_flow = n}
+  | Base b-> Base {b with formula_base_flow = n;
+                          formula_base_heap = map_rflow_formula true (set_flow_in_formula_override n)  b.formula_base_heap;}
+  | Exists b-> Exists {b with formula_exists_flow = n;
+                              formula_exists_heap = map_rflow_formula true (set_flow_in_formula_override n)  b.formula_exists_heap;}
   | Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
                formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
                formula_or_pos = b.formula_or_pos}
 
 and set_flow_in_formula_x (n:flow_formula) (f:formula):formula = match f with
-  | Base b-> Base {b with formula_base_flow = if (subsume_flow_f !norm_flow_int b.formula_base_flow) then n else b.formula_base_flow}
-  | Exists b-> Exists {b with formula_exists_flow = if (subsume_flow_f !norm_flow_int b.formula_exists_flow) then n else b.formula_exists_flow}
+  | Base b-> Base {b with formula_base_flow = if (subsume_flow_f !norm_flow_int b.formula_base_flow) then n else b.formula_base_flow;
+                          formula_base_heap = map_rflow_formula true (set_flow_in_formula_x n)  b.formula_base_heap;
+                  }
+  | Exists b-> Exists {b with formula_exists_flow = if (subsume_flow_f !norm_flow_int b.formula_exists_flow) then n else b.formula_exists_flow;
+                              formula_exists_heap = map_rflow_formula true (set_flow_in_formula_x n)  b.formula_exists_heap;
+                      }
   | Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
                formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
                formula_or_pos = b.formula_or_pos}
@@ -1353,7 +1450,9 @@ and set_flow_to_link_f flow_store f pos = match f with
                               match b.formula_base_flow.formula_flow_link with
                               | None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
                               | Some v -> get_flow_from_stack v flow_store pos
-                            else b.formula_base_flow}
+                            else b.formula_base_flow;
+                          formula_base_heap = map_rflow_formula true (fun f-> set_flow_to_link_f flow_store f pos) b.formula_base_heap;
+                  }
   | Exists b-> Exists {b with formula_exists_flow = 
                                 if (equal_flow_interval b.formula_exists_flow.formula_flow_interval false_flow_int) then b.formula_exists_flow
                                 else
@@ -1361,7 +1460,8 @@ and set_flow_to_link_f flow_store f pos = match f with
                                   match b.formula_exists_flow.formula_flow_link with
                                   | None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
                                   | Some v -> get_flow_from_stack v flow_store pos
-                                else b.formula_exists_flow}
+                                else b.formula_exists_flow;
+                              formula_exists_heap = map_rflow_formula true (fun f-> set_flow_to_link_f flow_store f pos) b.formula_exists_heap;}
   | Or b-> Or {formula_or_f1 = set_flow_to_link_f flow_store b.formula_or_f1 pos;
                formula_or_f2 = set_flow_to_link_f flow_store b.formula_or_f2 pos;
                formula_or_pos = b.formula_or_pos}
@@ -1383,8 +1483,11 @@ and struc_formula_is_eq_flow (f:struc_formula) ff : bool = match f with
 
 and formula_subst_flow_x (f:formula) ff : formula =
   match f with
-  | Base b-> Base {b with formula_base_flow = ff} 
-  | Exists b-> Exists{b with formula_exists_flow = ff}
+  | Base b-> Base {b with formula_base_flow = ff;
+                          formula_base_heap = map_rflow_formula true (fun f-> formula_subst_flow_x f ff) b.formula_base_heap;
+                  } 
+  | Exists b-> Exists{b with formula_exists_flow = ff;
+                             formula_exists_heap = map_rflow_formula true (fun f-> formula_subst_flow_x f ff) b.formula_exists_heap;}
   | Or b -> Or {b with formula_or_f1 = formula_subst_flow_x b.formula_or_f1 ff;
                        formula_or_f2 = formula_subst_flow_x b.formula_or_f2 ff}
 
@@ -1498,20 +1601,25 @@ and substitute_flow_in_f_x to_flow from_flow (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
                             if (equal_flow_interval from_flow b.formula_base_flow.formula_flow_interval) then 
                               {formula_flow_interval = to_flow; formula_flow_link = b.formula_base_flow.formula_flow_link}
-                            else b.formula_base_flow;}
+                            else b.formula_base_flow;
+                          formula_base_heap = map_rflow_formula true (substitute_flow_in_f_x to_flow from_flow) b.formula_base_heap;
+                  }
   | Exists b-> Exists{b with formula_exists_flow = 
                                if (equal_flow_interval from_flow b.formula_exists_flow.formula_flow_interval) then 
                                  {formula_flow_interval = to_flow; formula_flow_link = b.formula_exists_flow.formula_flow_link}
-                               else b.formula_exists_flow;}	
+                               else b.formula_exists_flow;
+                             formula_exists_heap = map_rflow_formula true (substitute_flow_in_f_x to_flow from_flow) b.formula_exists_heap;}	
   | Or b-> Or {formula_or_f1 = substitute_flow_in_f_x to_flow from_flow b.formula_or_f1;
                formula_or_f2 = substitute_flow_in_f_x to_flow from_flow b.formula_or_f2;
                formula_or_pos = b.formula_or_pos}
 
 and substitute_flow_into_f to_flow (f:formula):formula = match f with
   | Base b-> Base {b with formula_base_flow = 
-                            {formula_flow_interval = to_flow; formula_flow_link = b.formula_base_flow.formula_flow_link}}
+                            {formula_flow_interval = to_flow; formula_flow_link = b.formula_base_flow.formula_flow_link};
+                          formula_base_heap = map_rflow_formula true (substitute_flow_into_f to_flow) b.formula_base_heap;}
   | Exists b-> Exists{b with formula_exists_flow =
-                               {formula_flow_interval = to_flow; formula_flow_link = b.formula_exists_flow.formula_flow_link}}
+                               {formula_flow_interval = to_flow; formula_flow_link = b.formula_exists_flow.formula_flow_link};
+                             formula_exists_heap = map_rflow_formula true (substitute_flow_into_f to_flow) b.formula_exists_heap;}
   | Or b-> Or {formula_or_f1 = substitute_flow_into_f to_flow b.formula_or_f1;
                formula_or_f2 = substitute_flow_into_f to_flow b.formula_or_f2;
                formula_or_pos = b.formula_or_pos}
@@ -1530,6 +1638,7 @@ and change_flow f = match f with
   | Base fb ->
     if formula_is_eq_flow f !top_flow_int then
       Base {fb with
+            formula_base_heap = map_rflow_formula true change_flow fb.formula_base_heap;
             formula_base_flow = mkNormalFlow ()}
     else f
   | Or fo -> Or {fo with
@@ -1538,6 +1647,7 @@ and change_flow f = match f with
   | Exists fe ->
     if formula_is_eq_flow f !top_flow_int then
       Exists {fe with
+              formula_exists_heap = map_rflow_formula true change_flow fe.formula_exists_heap;
               formula_exists_flow = mkNormalFlow ()}
     else f
 
@@ -14054,94 +14164,94 @@ and subst_hvar_es es subst : context =
   Debug.no_2 "subst_hvar_es" pr1 pr2 pr_out
     subst_hvar_es_x es subst
 
-let map_one_rflow_formula f rf =
-  {rf with rflow_base = f rf.rflow_base}
+(* let map_one_rflow_formula f rf = *)
+(*   {rf with rflow_base = f rf.rflow_base} *)
 
-let map_rflow_formula_list trans_f node =
-  ViewNode {node with  h_formula_view_ho_arguments =
-                        List.map (map_one_rflow_formula trans_f)
-                          node.h_formula_view_ho_arguments}
+(* let map_rflow_formula_list trans_f node = *)
+(*   ViewNode {node with  h_formula_view_ho_arguments = *)
+(*                         List.map (map_one_rflow_formula trans_f) *)
+(*                           node.h_formula_view_ho_arguments} *)
 
-let map_rflow_formula include_flow trans_f hform = 
-  if not(include_flow) then hform
-  else 
-    match hform with
-    | ViewNode h ->  map_rflow_formula_list trans_f h
-    | _ -> hform
+(* let map_rflow_formula include_flow trans_f hform =  *)
+(*   if not(include_flow) then hform *)
+(*   else  *)
+(*     match hform with *)
+(*     | ViewNode h ->  map_rflow_formula_list trans_f h *)
+(*     | _ -> hform *)
 
-(* transform heap formula *)
-let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula =
-  let r =  f e in 
-  match r with
-  | Some e1 -> e1
-  | None  -> (
-      match e with
-      | Star s ->
-        let new_h1 = transform_h_formula f s.h_formula_star_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_star_h2 in
-        Star {s with h_formula_star_h1 = new_h1;
-                     h_formula_star_h2 = new_h2;}
-      | StarMinus s ->
-        let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in
-        StarMinus {s with h_formula_starminus_h1 = new_h1;
-                          h_formula_starminus_h2 = new_h2;}
-      | Conj s ->
-        let new_h1 = transform_h_formula f s.h_formula_conj_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conj_h2 in
-        Conj {s with h_formula_conj_h1 = new_h1;
-                     h_formula_conj_h2 = new_h2;}
-      | ConjStar s ->
-        let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in
-        ConjStar {s with h_formula_conjstar_h1 = new_h1;
-                         h_formula_conjstar_h2 = new_h2;}
-      | ConjConj s ->
-        let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in
-        let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in
-        ConjConj {s with h_formula_conjconj_h1 = new_h1;
-                         h_formula_conjconj_h2 = new_h2;}
-      | Phase s -> 
-        let new_rd = transform_h_formula f s.h_formula_phase_rd in
-        let new_rw = transform_h_formula f s.h_formula_phase_rw in
-        Phase {s with h_formula_phase_rd = new_rd;
-                      h_formula_phase_rw = new_rw;}
-      | ViewNode _ -> e
-      | DataNode _
-      | ThreadNode _
-      | HRel _
-      | Hole _ | FrmHole _
-      | HTrue
-      | HFalse 
-      | HEmp | HVar _ -> e
-    )
+(* (\* transform heap formula *\) *)
+(* let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = *)
+(*   let r =  f e in  *)
+(*   match r with *)
+(*   | Some e1 -> e1 *)
+(*   | None  -> ( *)
+(*       match e with *)
+(*       | Star s -> *)
+(*         let new_h1 = transform_h_formula f s.h_formula_star_h1 in *)
+(*         let new_h2 = transform_h_formula f s.h_formula_star_h2 in *)
+(*         Star {s with h_formula_star_h1 = new_h1; *)
+(*                      h_formula_star_h2 = new_h2;} *)
+(*       | StarMinus s -> *)
+(*         let new_h1 = transform_h_formula f s.h_formula_starminus_h1 in *)
+(*         let new_h2 = transform_h_formula f s.h_formula_starminus_h2 in *)
+(*         StarMinus {s with h_formula_starminus_h1 = new_h1; *)
+(*                           h_formula_starminus_h2 = new_h2;} *)
+(*       | Conj s -> *)
+(*         let new_h1 = transform_h_formula f s.h_formula_conj_h1 in *)
+(*         let new_h2 = transform_h_formula f s.h_formula_conj_h2 in *)
+(*         Conj {s with h_formula_conj_h1 = new_h1; *)
+(*                      h_formula_conj_h2 = new_h2;} *)
+(*       | ConjStar s -> *)
+(*         let new_h1 = transform_h_formula f s.h_formula_conjstar_h1 in *)
+(*         let new_h2 = transform_h_formula f s.h_formula_conjstar_h2 in *)
+(*         ConjStar {s with h_formula_conjstar_h1 = new_h1; *)
+(*                          h_formula_conjstar_h2 = new_h2;} *)
+(*       | ConjConj s -> *)
+(*         let new_h1 = transform_h_formula f s.h_formula_conjconj_h1 in *)
+(*         let new_h2 = transform_h_formula f s.h_formula_conjconj_h2 in *)
+(*         ConjConj {s with h_formula_conjconj_h1 = new_h1; *)
+(*                          h_formula_conjconj_h2 = new_h2;} *)
+(*       | Phase s ->  *)
+(*         let new_rd = transform_h_formula f s.h_formula_phase_rd in *)
+(*         let new_rw = transform_h_formula f s.h_formula_phase_rw in *)
+(*         Phase {s with h_formula_phase_rd = new_rd; *)
+(*                       h_formula_phase_rw = new_rw;} *)
+(*       | ViewNode _ -> e *)
+(*       | DataNode _ *)
+(*       | ThreadNode _ *)
+(*       | HRel _ *)
+(*       | Hole _ | FrmHole _ *)
+(*       | HTrue *)
+(*       | HFalse  *)
+(*       | HEmp | HVar _ -> e *)
+(*     ) *)
 
-and transform_formula_x f (e:formula):formula =
-  let rec helper f e = 
-    let (_, f_f, f_h_f, f_p_t) = f in
-    let r =  f_f e in 
-    match r with
-    | Some e1 -> e1
-    | None  -> 
-      match e with	 
-      | Base b -> 
-        Base{b with 
-             formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
-             formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure;}
-      | Or o -> 
-        Or {o with 
-            formula_or_f1 = helper f o.formula_or_f1;
-            formula_or_f2 = helper f o.formula_or_f2;}
-      | Exists e -> 
-        Exists {e with
-                formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
-                formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;}
-  in helper f e
+(* and transform_formula_x f (e:formula):formula = *)
+(*   let rec helper f e =  *)
+(*     let (_, f_f, f_h_f, f_p_t) = f in *)
+(*     let r =  f_f e in  *)
+(*     match r with *)
+(*     | Some e1 -> e1 *)
+(*     | None  ->  *)
+(*       match e with	  *)
+(*       | Base b ->  *)
+(*         Base{b with  *)
+(*              formula_base_heap = transform_h_formula f_h_f b.formula_base_heap; *)
+(*              formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure;} *)
+(*       | Or o ->  *)
+(*         Or {o with  *)
+(*             formula_or_f1 = helper f o.formula_or_f1; *)
+(*             formula_or_f2 = helper f o.formula_or_f2;} *)
+(*       | Exists e ->  *)
+(*         Exists {e with *)
+(*                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap; *)
+(*                 formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;} *)
+(*   in helper f e *)
 
 
-and transform_formula f (e:formula):formula =
-  let pr = !print_formula in
-  (* Debug.no_2 "transform_formula" (fun _ -> "f") pr pr *) transform_formula_x f e
+(* and transform_formula f (e:formula):formula = *)
+(*   let pr = !print_formula in *)
+(*   (\* Debug.no_2 "transform_formula" (fun _ -> "f") pr pr *\) transform_formula_x f e *)
 
 let transform_formula_w_perm_x (f:formula -> formula option) (e:formula) (permvar:cperm):formula =
   let r =  f e in 

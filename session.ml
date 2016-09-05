@@ -2134,6 +2134,7 @@ let formula_norm form =
 let norm_case vb =  
   let vb = struc_norm vb in
   let vb = irename_all_session_pointer_struc vb in
+  let vb = irename_sess_ptr_2_chan_ptr_struc vb in
   vb
 
 let norm_case vb =  
