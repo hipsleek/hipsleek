@@ -2011,6 +2011,34 @@ let update_temp_name_struc sform =
   let pr = !F.print_struc_formula in
   Debug.no_1 "update_temp_name_struc" pr pr update_temp_name_struc sform
 
+(* --------------------------------------------------------------- *)
+(***         replace all sorts of flows to __norm flow            ***)
+let reset_flow_heap hform =
+  let fnc si hform =
+    (* match hform with *)
+    match IMessage.get_heap_node hform with
+        | None -> None
+        | Some hf ->
+          let node = IMessage.get_node_only hf in
+          Some (IMessage.map_rflow_formula_list_res_h (F.set_flow_in_formula_override F.n_flow) node)
+  in
+  IMessage.heap_node_transformer_gen ~flow:true ~include_msg:true fnc hform
+
+let reset_flow form =
+  IMessage.transform_formula reset_flow_heap form
+
+let reset_flow form =
+  let pr = !F.print_formula in
+  Debug.no_1 "reset_flow" pr pr reset_flow form
+
+let reset_flow_struc sform =
+  IMessage.transform_struc_formula reset_flow_heap sform
+
+let reset_flow_struc sform =
+  let pr = !F.print_struc_formula in
+  Debug.no_1 "reset_flow_struc" pr pr reset_flow_struc sform
+    
+
 (* -------------------------------------- *)
 let csplit_sor head tail si =
   match si.session_kind with
@@ -2121,6 +2149,7 @@ let struc_norm sf =
   let sf = wrap_one_seq_struc sf in
   let sf = wrap_last_seq_node_struc sf in
   let sf = x_add_1 irename_message_pointer_struc sf in
+  let sf = reset_flow_struc sf in
   let sf = irename_sess_ptr_2_chan_ptr_struc sf in
   sf
 
@@ -2128,6 +2157,7 @@ let formula_norm form =
   let form = wrap_one_seq form in
   let form = wrap_last_seq_node form in
   let form = x_add_1 irename_message_pointer form in
+  let form = reset_flow form in
   let form = irename_sess_ptr_2_chan_ptr form in
   form
 

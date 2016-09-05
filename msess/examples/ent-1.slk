@@ -1,10 +1,10 @@
-sleek_include 'node.slk'.
+sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 
-pred_sess p1<a> == a!1;;a?msg=0.
-pred_sess p2<a> == a!1;;a?msg=0.
-pred_sess p3<a> == a!0;;a?msg=1.
+pred_sess_proj p1<a> == a!1;;a?msg=0.
+pred_sess_proj p2<a> == a!1;;a?msg=0.
+pred_sess_proj p3<a> == a!0;;a?msg=1.
 
 
 checkentail x::p1<a> |- x::p1<a>.

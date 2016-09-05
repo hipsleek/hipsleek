@@ -2650,6 +2650,15 @@ let subst_flow_of_struc_formula  fr t (f:struc_formula):struc_formula =
   let pr = !print_struc_formula in
   Debug.no_1 "subst_flow_of_struc_formula" pr pr (fun _ -> subst_flow_of_struc_formula  fr t (f:struc_formula)) f
 
+let rec set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f with
+  | Base b-> Base {b with formula_base_flow = n;
+                          formula_base_heap = map_rflow_formula true (set_flow_in_formula_override n)  b.formula_base_heap;}
+  | Exists b-> Exists {b with formula_exists_flow = n;
+                              formula_exists_heap = map_rflow_formula true (set_flow_in_formula_override n)  b.formula_exists_heap;}
+  | Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
+               formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
+               formula_or_pos = b.formula_or_pos}
+
 let rec break_formula (f : formula) : P.b_formula list list =
   match f with
   | Base bf -> [P.break_pure_formula bf.formula_base_pure]
