@@ -2082,6 +2082,14 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
     map_list_def true (fun _ -> unsat_check es) new_ho
 
 let check_for_ho_unsat detect_contra conseq match_ho_res =
+  (* avoid the new_heap_contra for session as it  yields 
+     wrong results for eg. a::node<_> & a!=null results in contra *)
+  let res =
+    Wrapper.wrap_one_bool Globals.new_heap_contra false 
+        (check_for_ho_unsat detect_contra conseq) match_ho_res in
+  res
+
+let check_for_ho_unsat detect_contra conseq match_ho_res =
   let _,_,_,_,es = match_ho_res in
   let pr1 = pr_option !CF.print_entail_state in
   Debug.no_1 "check_for_ho_unsat" pr1 string_of_bool (fun _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es

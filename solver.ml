@@ -10816,7 +10816,7 @@ and match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq p
   let lhs_disjuncts = match_ho_arg_HOrhs (lhs,rhs) in
   let ctx_disjuncts = List.map (fun x -> match_ho_arg_rhs_disj ((x,rhs),k) ho_match_helper) lhs_disjuncts in
 
-  let detect_contra conseq es = solver_detect_lhs_rhs_contra 55 prog es conseq pos "ho_match" in
+  let detect_contra conseq es = x_add solver_detect_lhs_rhs_contra 55 prog es conseq pos "ho_match" in
   (* filter out those disjunctx which create unsat ctx with teh freshly discovered HO instantiations *)
   let ctx_disjuncts = List.filter (Session.check_for_ho_unsat detect_contra conseq) ctx_disjuncts in
   (* if all the disjuncts have been pruned,then return fail ctx since there is no inst to make the entailment succeed *)
@@ -12698,6 +12698,7 @@ and solver_detect_lhs_rhs_contra_all_x prog estate conseq pos msg =
       | _ -> true
     in
     let () = y_tinfo_pp "detect_heap_contra" in
+    let () = y_tinfo_hp (add_str "classic" string_of_bool) (check_is_classic_local estate.CF.es_infer_obj) in
     let () = y_tinfo_hp (add_str "lhs" !CF.print_formula) lhs in
     let () = y_tinfo_hp (add_str "conseq: "!CF.print_formula) rhs in
     let () = y_tinfo_hp (add_str "contra_if_false" string_of_bool) flag in
