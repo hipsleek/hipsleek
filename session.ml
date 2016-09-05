@@ -906,7 +906,6 @@ module Message_commons =
             |_ -> loop_through_rflow_helper var (Some var) 
       in helper None hform
 
-
   end;;
 
 (* inst for iformula & cformula *)
@@ -1883,14 +1882,7 @@ let irename_first_session_pointer_struc ?to_var:(var=session_self) formula =
 (* ----------------------------------------------------------------------- *)
 (*** IMessage: rename the first pointer of hform with Chan pointer where possible  ***)
 let irename_sess_ptr_2_chan_ptr_heap ?flow:(flow=false) hform =
-  (* let fnc si hform = *)
-  (*   match si.session_kind with *)
-  (*   | Projection   -> (IProjection.set_heap_node_to_chan_node hform) *)
-  (*   | TPProjection -> (ITPProjection.set_heap_node_to_chan_node hform) *)
-  (*   | Protocol     -> (IProtocol.set_heap_node_to_chan_node hform) *)
-  (* in *)
-  (* IMessage.heap_transformer fnc hform *)
-    IMessage.set_heap_node_to_chan_node hform
+  IMessage.set_heap_node_to_chan_node hform
 
 let irename_sess_ptr_2_chan_ptr_struc sformula =
   let renamed_struct = IMessage.transform_struc_formula (irename_sess_ptr_2_chan_ptr_heap ~flow:true) sformula in
@@ -1911,13 +1903,6 @@ let irename_sess_ptr_2_chan_ptr formula =
 (* ----------------------------------------------------------------------- *)
 (*** CMessage: rename the first pointer of hform with Chan pointer where possible  ***)
 let crename_sess_ptr_2_chan_ptr_heap ?flow:(flow=false) hform =
-  (* let fnc si hform = *)
-  (*   match si.session_kind with *)
-  (*   | Projection   -> (CProjection.set_heap_node_to_chan_node hform) *)
-  (*   | TPProjection -> (CTPProjection.set_heap_node_to_chan_node hform) *)
-  (*   | Protocol     -> (CProtocol.set_heap_node_to_chan_node hform) *)
-  (* in *)
-  (* CMessage.heap_transformer fnc hform *)
   CMessage.set_heap_node_to_chan_node hform
 
 let crename_sess_ptr_2_chan_ptr_struc sformula =

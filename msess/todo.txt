@@ -479,6 +479,8 @@ send (c,0);
 
 =============================================
 =============================================
+SOLVED (collect Chan pointer and use it for all the transmissions)
+
 ./hip msess/examples/ex4a1-.ss
 
 SOL: rename "this" to the Chan pointer if exists
