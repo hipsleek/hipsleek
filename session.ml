@@ -93,6 +93,7 @@ module type Message_type = sig
   (* type node *)
   type param
   type var
+  type flow
   type arg = var (* node *) * ident * (ho_param_formula list) *
              (param list) * VarGen.loc
 
@@ -103,7 +104,7 @@ module type Message_type = sig
   val print_ho_param_formula  : (ho_param_formula -> string) ref
       
   val mk_node: arg -> session_kind -> node_kind -> h_formula
-  val mk_formula_heap_only:  h_formula -> VarGen.loc -> formula
+  val mk_formula_heap_only: ?flow:flow -> h_formula -> VarGen.loc -> formula
   val mk_rflow_formula: ?sess_kind:(session_kind option) -> ?kind:ho_flow_kind -> formula -> ho_param_formula
   val mk_rflow_formula_from_heap:  h_formula -> ?sess_kind:(session_kind option) -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> session_kind -> node_kind -> formula
@@ -169,6 +170,7 @@ module IForm = struct
   type ho_param_formula = F.rflow_formula
   type struc_formula = F.struc_formula
   type var = Globals.ident * VarGen.primed
+  type flow = ident
   (* type node = var *)
   type param = Ipure.exp
   type arg = var (* node *) * ident * (ho_param_formula list) *
@@ -188,8 +190,8 @@ module IForm = struct
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
     F.set_session_kind_h_formula h sk nk
 
-  let mk_formula_heap_only h pos =
-    F.formula_of_heap_with_flow h F.n_flow pos
+  let mk_formula_heap_only ?flow:(flow=F.n_flow) h pos =
+    F.formula_of_heap_with_flow h flow pos
 
   let mk_rflow_formula ?sess_kind:(sess_kind=None) ?kind:(k=NEUTRAL) f =
     {  F.rflow_kind = k;
@@ -460,6 +462,7 @@ module CForm = struct
   type ho_param_formula = CF.rflow_formula
   type struc_formula = CF.struc_formula
   type var = CP.spec_var
+  type flow = CF.flow_formula
   (* type node = var *)
   type param = CP.spec_var
   type arg = var * ident * (ho_param_formula list) *
@@ -477,8 +480,8 @@ module CForm = struct
                                                    CF.h_formula_view_session_info = Some (mk_node_session_info sk nk)}
       | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
-  let mk_formula_heap_only h pos =
-    CF.formula_of_heap_w_normal_flow h pos
+  let mk_formula_heap_only  ?flow:(flow=CF.mkNormalFlow ()) h pos =
+    CF.formula_of_heap_fl h flow pos
 
   let mk_rflow_formula ?sess_kind:(sess_kind=None) ?kind:(k=NEUTRAL) f =
     { CF.rflow_kind = k;

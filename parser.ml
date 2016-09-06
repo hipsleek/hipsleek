@@ -1770,21 +1770,21 @@ rflow_form:
       let loc = (get_pos_camlp4 _loc 1) in
       let form = (match p with
           | Session.ProjectionSession s ->
-            Session.IProjection.mk_formula_heap_only
+            Session.IProjection.mk_formula_heap_only ~flow:stub_flow
                                              (Session.IProjection.trans_from_session s) loc
           | Session.TPProjectionSession s ->
-            Session.ITPProjection.mk_formula_heap_only
+            Session.ITPProjection.mk_formula_heap_only ~flow:stub_flow
                                                (Session.ITPProjection.trans_from_session s) loc
           | Session.ProtocolSession s ->
-            Session.IProtocol.mk_formula_heap_only
+            Session.IProtocol.mk_formula_heap_only ~flow:stub_flow
                                            (Session.IProtocol.trans_from_session s) loc) in
       { F.rflow_kind = NEUTRAL;
-        F.rflow_base = F.subst_stub_flow n_flow form;
+        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
         F.rflow_session_kind = Some pk; }
     ]
   | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
-       F.rflow_base = F.subst_stub_flow n_flow dc;
+       F.rflow_base = (* F.subst_stub_flow n_flow *) dc;
        F.rflow_session_kind = None; }
       (* match cc with                                                                                  *)
       (* | F.Base f -> {                                                                                *)
