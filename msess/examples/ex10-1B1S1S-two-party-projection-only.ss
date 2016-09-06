@@ -43,7 +43,8 @@ void buyer(Channel c, int budget)
     send(c, 1);
     senda(c, a);
     DDate sd = received(c);
-  } else send(c, 0);
+  } else {send (c, 0);}
+  dprint;
 }
 
 /* // projection of G on S */

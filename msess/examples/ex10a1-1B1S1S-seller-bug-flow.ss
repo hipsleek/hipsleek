@@ -50,28 +50,31 @@ Addr get_addrs()
 /* pred G@S<a,b> == */
 /*   a?int;a!double;(a?1;b!int;b!(Chan(a,ms) * Sess(ms,a?Addr;a!Date)) \/ a?0); */
 pred_sess_proj GSa<> == ?v#v>=1;;!v#v>0;;((?1;;?v#v::Addr<_>;;!v#v::DDate<_,_,_>) or ?0);
-pred_sess_proj GSb<> == !2;;((!0;;!1) or (!1;;!v#v>=1;;!v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;?v#v::Chan{emp}<>));;!0;
+pred_sess_proj GSb<> == (!1;;!v#v>=1;;!v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;?v#v::Chan{emp}<>) or (!0);
 
 
 void seller(Channel cb, Channel cs)
   requires cb::Chan{@S GSa<>}<> * cs::Chan{@S GSb<>}<>
   ensures  cb::Chan{emp}<> * cs::Chan{emp}<>;
 {
-  send(cs,2);
+  /* send(cs,2); */
   int id = receive(cb);
   send(cb, get_price(id));
   int opt = receive(cb);
+  dprint;
   if(opt == 1){
+    dprint;
     send(cs, opt);
+    dprint;
     send(cs, id);
     dprint;
     sendc(cs, cb);
     cb = receivec(cs);
   } else {
     send(cs, opt);
-    send(cs, 1);
+    /* send(cs, 1); */
   }
-  send(cs, 0);
+  /* send(cs, 0); */
   dprint;
 }
 

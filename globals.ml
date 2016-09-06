@@ -216,11 +216,11 @@ type view_session_info =
     node_kind: node_kind option;
   }
 
-type node_session_info =
-  {
-    session_kind: session_kind;
-    node_kind: node_kind;
-  }
+(* type node_session_info = *)
+(*   { *)
+(*     session_kind: session_kind; *)
+(*     node_kind: node_kind; *)
+(*   } *)
 
 let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : view_session_info =
   {
@@ -228,11 +228,11 @@ let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : v
     node_kind = nk;
   }
 
-let mk_node_session_info (sk : session_kind) (nk : node_kind) : node_session_info =
-  {
-    session_kind = sk;
-    node_kind = nk;
-  }
+(* let mk_node_session_info (sk : session_kind) (nk : node_kind) : node_session_info = *)
+(*   { *)
+(*     session_kind = sk; *)
+(*     node_kind = nk; *)
+(*   } *)
 
 type view_kind =
   | View_PRIM
@@ -329,10 +329,10 @@ let string_of_view_session_info (si:view_session_info) =
              | None -> "" in
   "\nsession kind: " ^ sk ^ "\n" ^ "node kind: " ^ nk
 
-let string_of_node_session_info (si:node_session_info) =
-  let sk = string_of_session_kind si.session_kind in
-  let nk = string_of_node_kind si.node_kind in
-  "\nsession kind: " ^ sk ^ "\n" ^ "node kind: " ^ nk
+(* let string_of_node_session_info (si:node_session_info) = *)
+(*   let sk = string_of_session_kind si.session_kind in *)
+(*   let nk = string_of_node_kind si.node_kind in *)
+(*   "\nsession kind: " ^ sk ^ "\n" ^ "node kind: " ^ nk *)
 
 let string_of_view_kind k = match k with
   | View_PRIM -> "View_PRIM"

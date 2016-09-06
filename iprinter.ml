@@ -479,11 +479,11 @@ let string_of_session_projection hn =
   let def = "" in
   let fct info = let sk = info.session_kind in
     (match sk with
-     | Projection ->
+     | Some Projection ->
        let session = Session.IProjection.trans_h_formula_to_session (Session.IProjection.get_original_h_formula node) in
        let s = Session.IProjection.string_of_session session in
        s
-     | TPProjection ->
+     | Some TPProjection ->
        let session = Session.ITPProjection.trans_h_formula_to_session (Session.ITPProjection.get_original_h_formula node) in
        let s = Session.ITPProjection.string_of_session session in
        s
