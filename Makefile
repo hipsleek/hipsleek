@@ -44,7 +44,7 @@ PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
 FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2
 
-GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
+GFLAGS = $(INCLUDES),-g,-annot,-bin-annot,-ccopt,-fopenmp
 SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-fopenmp #-ccopt,-static,-ccopt,-fPIE
 SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
 #FLAGS = $(INCLUDES),-ccopt,-fopenmp
