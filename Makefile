@@ -41,15 +41,15 @@ INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/in
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
-#FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2
+#FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2
 
-GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
-SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #-ccopt,-static,-ccopt,-fPIE 
-SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
-#FLAGS = $(INCLUDES),-ccopt,-fopenmp 
-#GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp 
-#GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
+GFLAGS = $(INCLUDES),-g,-annot,-bin-annot,-ccopt,-fopenmp
+SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-fopenmp #-ccopt,-static,-ccopt,-fPIE
+SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
+#FLAGS = $(INCLUDES),-ccopt,-fopenmp
+#GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp
+#GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules

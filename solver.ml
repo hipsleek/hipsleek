@@ -10652,7 +10652,7 @@ and do_match_thread_nodes prog estate l_node r_node rhs rhs_matched_set is_foldi
 (*  - ho_arg match, otherwise                                             *)
 (*  Expected return value: A list of                                      *)
 (* (fail_ctx option, ho residue option, pure residue option mapping list) *)
-and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
+and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind): 
   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
    (MCP.mix_formula option) * ((CF.hvar * CF.formula) list) * (entail_state option)) =
   (* lhs <==> rhs: instantiate any high-order variables in rhs *)
@@ -10732,7 +10732,7 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
     let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
     (* let f_ctx = x_add elim_unsat_es_now 13 prog (ref 1) f_es in *)
     let res_ctx, res_prf =
-      Wrapper.wrap_classic x_loc (Some true) (* exact *)
+      Wrapper.wrap_classic x_loc (Some classic) (* exact *)
         (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true
     in
     begin match res_ctx with
@@ -10776,7 +10776,7 @@ and match_one_ho_arg_x prog estate new_ante new_conseq evars ivars pos (((lhs, r
         end
     end
 
-and match_one_ho_arg  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+and match_one_ho_arg ?classic:(classic=true)  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
    (MCP.mix_formula option) * ((CF.hvar * CF.formula) list) * (entail_state option)) =
   let pr_rflow = Cprinter.string_of_rflow_formula in
@@ -10789,7 +10789,7 @@ and match_one_ho_arg  prog estate new_ante new_conseq evars ivars pos (((lhs, rh
   let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) in
   let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
   let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
-  Debug.no_1 "match_one_ho_arg" pr1 pr2 (fun _ -> match_one_ho_arg_x  prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k)
+  Debug.no_1 "match_one_ho_arg" pr1 pr2 (fun _ -> match_one_ho_arg_x  ~classic:classic prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k)
 
 (* split RHS dsjunctions: 
    LHS |- \/ RHS      --->  ? \exists i. LHS |- RHSi
@@ -11512,7 +11512,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* check if current node is seq with sor as head *)
               let l_ho_args_orig, r_ho_args_orig = l_ho_args, r_ho_args in
               (* TODO: below is a hack which needs to be revised *)
-              let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in
+              (* let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in *)
+              let unfold_fun hform ptr = unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos new_exist_vars false 0 in
+              let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_nodes l_node r_node l_ho_args r_ho_args unfold_fun in
+              
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
               let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name0 in
               
@@ -11520,23 +11523,26 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
+              let () = y_binfo_pp "here1" in
               let args = List.combine l_ho_args r_ho_args in
+              let () = y_binfo_pp "here2" in
               let args = List.combine args l_vdef_hvar_split_kinds in
-              
+              let () = y_binfo_pp "here22" in
               let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
-              let match_one_ho_arg_helper (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+              let match_one_ho_arg_helper ?classic:(classic=true) (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
                 (((CF.list_context * Prooftracer.proof) option) *
                  (CF.formula option) *
                  (MCP.mix_formula option) *
                  ((CF.hvar * CF.formula) list) *
                  (entail_state option)
                 ) list =
-
-                let ho_match_helper = match_one_ho_arg prog estate ante_for_ho_match new_conseq evars new_impl_vars pos in
+               
+                let ho_match_helper = match_one_ho_arg ~classic:classic prog estate ante_for_ho_match new_conseq evars new_impl_vars pos in
                 match_ho_arg_lhs_disj ((lhs, rhs), k)  ho_match_helper prog estate new_conseq pos
               in
 
               let res = List.map match_one_ho_arg_helper args in
+
               (* create pairs of HO args results, given disjunctive HO contexts *)
               let res_lst = Gen.cart_multi_list res in
               let post_ho_match_process res =
@@ -11588,6 +11594,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                             let arg_r = { arg with CF.rflow_base = r; } in 
                             (true, arg_r::result)))
                   in
+                  let () = y_binfo_pp "here3" in
                   let is_split, new_l_ho_args = check_split (List.combine residues l_ho_args) in
                   let new_ante =
                     if (not is_split) then new_ante 

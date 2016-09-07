@@ -216,23 +216,11 @@ type view_session_info =
     node_kind: node_kind option;
   }
 
-(* type node_session_info = *)
-(*   { *)
-(*     session_kind: session_kind; *)
-(*     node_kind: node_kind; *)
-(*   } *)
-
 let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : view_session_info =
   {
     session_kind = sk;
     node_kind = nk;
   }
-
-(* let mk_node_session_info (sk : session_kind) (nk : node_kind) : node_session_info = *)
-(*   { *)
-(*     session_kind = sk; *)
-(*     node_kind = nk; *)
-(*   } *)
 
 type view_kind =
   | View_PRIM
