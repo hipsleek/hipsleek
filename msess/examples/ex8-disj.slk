@@ -1,0 +1,66 @@
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'node.slk'.
+
+checkentail x::Sess{@S ?0 or ?1}<>   |- x::Sess{@S ?m#m>=0}<> .
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S ?0 or ?1}<>   |- x::Sess{@S ?0}<> .
+print residue.
+expect Fail.
+
+/* should result in a single context*/
+checkentail x::Chan{@S ?1 or ?0}<> & z=1 |- x::Chan{@S ?m#%L(m)}<> * %L(z).
+print residue.
+expect Valid.
+
+/* should result in a single context*/
+checkentail x::Chan{@S ?1 or ?0}<> & z=3 |- x::Chan{@S ?m#%L(m)}<> * %L(z).
+print residue.
+expect Fail.
+
+/* should result in a disjunctive context*/
+checkentail x::Chan{@S ?1 or ?0}<> & z=1 |- x::Chan{@S ?m#%L(m)}<>.
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S ?0 or ?1;;!2}<>   |- x::Sess{@S ?m#m>=0;;!3}<> .
+print residue.
+expect Fail.
+
+checkentail x::Sess{@S ?0 or ?1;;!2}<>   |- x::Sess{@S ?m#m>=0;;!2}<> .
+print residue.
+expect Valid.
+
+
+checkentail x::Sess{@S ?0 or ?1;;!2;;!3}<>   |- x::Sess{@S ?m#m>=0;;%P}<> .
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S !0 or !1}<>   |- x::Sess{@S !m#m>=0}<> .
+print residue.
+expect Fail.
+
+checkentail x::Sess{@S !0 or !1}<>   |- x::Sess{@S !0}<> .
+print residue.
+expect Fail.
+
+checkentail x::Sess{@S ?1}<>   |- x::Sess{@S ?0 or ?1}<> .
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S ?2}<>   |- x::Sess{@S ?0 or ?1}<> .
+print residue.
+expect Fail.
+
+checkentail x::Sess{@S !v#v>=1}<>   |- x::Sess{@S !2 or !1}<> .
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S !v#v=1}<>   |- x::Sess{@S !2 or !1}<> .
+print residue.
+expect Valid.
+
+checkentail x::Sess{@S !2}<>   |- x::Sess{@S !v#v>0 or !v#v<=0}<> .
+print residue.
+expect Fail.

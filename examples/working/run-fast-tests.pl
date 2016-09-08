@@ -1857,6 +1857,7 @@ my $dis = '--dis-inv-baga';
               ["session/ex4-1B1S1S.slk", "", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail."],
               ["session/ex6b1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
               ["session/ex8-disj.slk", "", (), "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Fail."],
+              ["session/ex10a2-choice.slk", "", (), "Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail."],
               ["typecheck-poly.slk","", (), "Valid.Failure.Valid"],
               ["cll-d.slk", "", (), "Valid."],
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
