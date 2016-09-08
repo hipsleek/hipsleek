@@ -10746,7 +10746,7 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
         begin match cl with
           | [] ->
             let () = y_binfo_pp "match_one_ho_arg" in
-            (None, None, None, [], Some estate)
+            (None, None, None, [], Some estate )
           | c::_ -> 
             match c with
             | Ctx es ->
@@ -10820,13 +10820,17 @@ and match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq p
 
   let detect_contra conseq es = x_add solver_detect_lhs_rhs_contra 55 prog es conseq pos "ho_match" in
   (* filter out those disjunctx which create unsat ctx with the freshly discovered HO instantiations *)
-  let ctx_disjuncts = List.filter (Session.check_for_ho_unsat detect_contra conseq) ctx_disjuncts in
+  let ctx_disjuncts =
+    (* only detect contra when there is a choice *)
+    if (List.length ctx_disjuncts) > 1 then 
+      List.filter (Session.check_for_ho_unsat detect_contra conseq) ctx_disjuncts
+    else ctx_disjuncts in
   (* if all the disjuncts have been pruned,then return fail ctx since there is no inst to make the entailment succeed *)
   let ctx_disjuncts = match ctx_disjuncts with
     | [] ->
       (* create fail ctx *)
       let fail = mkFailCtx_simple
-          "match_one_ho_arg HO instaniation creates contra"
+          "match_one_ho_arg HO instantiation creates contra"
           estate conseq (mk_cex true) pos, Failure in
       [((Some fail),None, None, [], None)]
     | _  -> ctx_disjuncts in
@@ -10867,7 +10871,9 @@ and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos
   let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
   let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) in
   let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
-  let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
+  let pr7 (e,_) = (add_str "fail ctx" Cprinter.string_of_list_context) e in
+  let pr7 = pr_opt pr7 in
+  let pr2 = pr_penta pr7 pr4 pr3 pr5 pr6 in
   let pr2 = pr_list pr2 in
   Debug.no_1 "match_ho_arg_lhs_disj" pr1 pr2 (fun _ -> match_ho_arg_lhs_disj_preprocess
                                                  ((lhs, rhs), k) ho_match_helper prog estate conseq pos ) ((lhs, rhs), k)
@@ -11570,20 +11576,29 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate new_conseq pos
               in
 
+              let () = y_ninfo_hp (add_str "args:" (pr_list (pr_pair (pr_pair !CF.print_rflow_formula !CF.print_rflow_formula) pr_none))) args in
               let res = List.map match_one_ho_arg_helper args in
 
               (* create pairs of HO args results, given disjunctive HO contexts *)
               let res_lst = Gen.cart_multi_list res in
               let post_ho_match_process res =
+                let new_maps = List.concat (List.map (fun (_, _, _, m, _) -> m) res) in
                 let failures = List.filter (fun (r, _, _, _,_) -> r != None) res in
                 if (failures != []) then
                   (* Failure case *)
                   let failure, _, _, _, _ = (List.hd failures) in
-                  (failure, new_ante, new_conseq, new_exist_vars, [])
+                  let failure =
+                    match failure with
+                    | None -> None  | Some (fail,prf) ->
+                      match fail with
+                      | FailCtx (fc,ctx,cex)-> let f_es es = Ctx {es with es_ho_vars_map = es.es_ho_vars_map@new_maps} in
+                        let ctx = CF.transform_context f_es ctx in
+                        Some (FailCtx (fc,ctx,cex), prf) 
+                      | _ -> failure in                  
+                  (failure, new_ante, new_conseq, new_exist_vars, new_maps)
                 else
                   (* Update new mappings *)
                   (* TODO: Check consistency in mappings *)
-                  let new_maps = List.concat (List.map (fun (_, _, _, m, _) -> m) res) in
                   let residues = List.map (fun (_, m, _, _, _) -> m) res in
                   let () = y_tinfo_hp (add_str "residue after ho match" (pr_list (pr_option Cprinter.string_of_formula))) residues in
                   let pure_residues = List.map (fun (_, _, m, _, _) -> m) res in

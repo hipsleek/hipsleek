@@ -2153,9 +2153,23 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
  *)
 let check_for_ho_unsat detect_contra conseq match_ho_res =
   let fail,_,_,new_ho,es = match_ho_res in
+  (* false - consider fails are due to HO inst *)
+  (* true - fails are independent of inst *)
+  let treat_fail_as_false ho_lst = not ((List.length ho_lst) > 0) in
+  let check_fail fail =
+    (* check if fail ctx contains HO inst - if it does assume failure 
+       is due to HO inst and treat is as an unsat *)
+    match fail with
+    | CF.FailCtx (_,ctx,_) ->
+      let rec helper ctx =
+        match ctx with
+        | CF.Ctx es -> es.CF.es_ho_vars_map
+        | CF.OCtx (c1,c2) -> (helper c1)@(helper c2)
+      in treat_fail_as_false  (helper ctx)
+    |  _ -> treat_fail_as_false new_ho (* return the fail ctx as it is  *) in
   match fail with
-  | Some _ -> true              (* return the fail ctx as it is  *)
-  | None ->                     (* no fail, check if es is unsat *)
+  | Some (f,_) -> check_fail f
+  | None ->  (* no fail, check if es is unsat *)
     (* Solver.solver_detect_lhs_rhs_contra *)
     let unsat_check es =
       let conseq = match es.CF.es_conseq_for_unsat_check with
@@ -2177,6 +2191,7 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
     (* do not check for unsat if there is no new HO *)
     map_list_def true (fun _ -> unsat_check es) new_ho
 
+
 let check_for_ho_unsat detect_contra conseq match_ho_res =
   (* avoid the new_heap_contra for session as it  yields 
      wrong results for eg. a::node<_> & a!=null results in contra *)
@@ -2186,9 +2201,11 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
   res
 
 let check_for_ho_unsat detect_contra conseq match_ho_res =
-  let _,_,_,_,es = match_ho_res in
+  let fail,_,_,_,es = match_ho_res in
   let pr1 = pr_option !CF.print_entail_state in
-  Debug.no_2 "check_for_ho_unsat" pr1 !CF.print_formula string_of_bool (fun _ _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es conseq
+  let pr2 (e,_) = (add_str "fail ctx" !CF.print_list_context) e in
+  let pr3 = pr_opt  pr2 in
+  Debug.no_3 "check_for_ho_unsat" pr3 pr1 !CF.print_formula string_of_bool (fun _ _ _ -> check_for_ho_unsat detect_contra conseq match_ho_res) fail es conseq
 
 let is_node_kind hform kind = CTPProjection.is_node_kind hform kind
 let is_node_kind_rflow rflow kind = CTPProjection.is_node_kind_rflow rflow kind
