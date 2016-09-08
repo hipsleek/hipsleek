@@ -465,6 +465,12 @@ let wrap_pre_post_process f_pre f_post f a =
   let res = f_post res in
   res
 
+let wrap_pre_post_process_gen f_pre f_post f a =
+  let a, keep = f_pre a in
+  let res = f a in
+  let res = f_post res keep in
+  res
+
 let wrap_z_debug f a b =
   let flag = !z_debug_flag in
   z_debug_flag := true;

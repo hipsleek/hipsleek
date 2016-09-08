@@ -9970,6 +9970,9 @@ type entail_state = {
   es_infer_pure_thus : CP.formula; (* WN:whay is this needed? docu*)
   (* es_infer_acc  : infer_acc; (\* outcome of accumulated inference *\) *)
   es_group_lbl: spec_label_def;
+
+  (* used for early contra detect (when checking choices) during the entailment for session formulae *)
+  es_conseq_for_unsat_check: formula option;
 }
 
 and context = 
@@ -10444,6 +10447,7 @@ let empty_es flowt grp_lbl pos =
     es_term_err = None;
     es_conc_err = [];
     es_rhs_pure = None;
+    es_conseq_for_unsat_check = None;
     (*es_infer_invs = [];*)
   }
 

@@ -30,7 +30,7 @@ void p1(Channel c1, Channel c2)
 }
 
 Channel p2(Channel c1)
-  requires  c1::Chan{@S ?v#v::Chan{@S !0}<>}<> 
+  requires  c1:: Chan {@S ?v#v::Chan{@S !0}<>}<> 
   ensures   c1::Chan{emp}<> * res::Chan{emp}<>;
 {
   Channel c2 = deleg2(c1);

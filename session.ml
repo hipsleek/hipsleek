@@ -1824,8 +1824,7 @@ module Make_Session (Base: Session_base) = struct
               let new_lseq_ho_arg = Base.mk_rflow_formula_from_heap new_lseq ~sess_kind:(Some Base.base_type) no_pos in
 
               let new_rseq_ho_arg = Base.mk_rflow_formula_from_heap rnode ~sess_kind:(Some Base.base_type) no_pos in
-              [new_lseq_ho_arg],[new_rseq_ho_arg],(get_prim_pred_id_by_kind Channel) (* pl.session_predicate_name *)
-            (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode)                     *)
+              [new_lseq_ho_arg],[new_rseq_ho_arg],(get_prim_pred_id_by_kind Channel) 
             | _, _ -> def
           end
         | _, _ -> def
@@ -2159,6 +2158,9 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
   | None ->                     (* no fail, check if es is unsat *)
     (* Solver.solver_detect_lhs_rhs_contra *)
     let unsat_check es =
+      let conseq = match es.CF.es_conseq_for_unsat_check with
+        | None -> conseq
+        | Some conseq -> conseq in
       let pr = pr_list (add_str "map" (pr_pair !CF.print_hvar !CF.print_formula)) in
       let () = y_ninfo_hp pr es.CF.es_ho_vars_map in
       (* check if there is a contra which does not involve the HO instatiations *)
@@ -2186,7 +2188,7 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
 let check_for_ho_unsat detect_contra conseq match_ho_res =
   let _,_,_,_,es = match_ho_res in
   let pr1 = pr_option !CF.print_entail_state in
-  Debug.no_1 "check_for_ho_unsat" pr1 string_of_bool (fun _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es
+  Debug.no_2 "check_for_ho_unsat" pr1 !CF.print_formula string_of_bool (fun _ _ -> check_for_ho_unsat detect_contra conseq match_ho_res) es conseq
 
 let is_node_kind hform kind = CTPProjection.is_node_kind hform kind
 let is_node_kind_rflow rflow kind = CTPProjection.is_node_kind_rflow rflow kind

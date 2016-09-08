@@ -10725,7 +10725,7 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
     in
     (* adding xpure of lhs to the HO es  *)
     let ante_xpure,_,_ = x_add xpure 16 prog new_ante in
-    let () = y_tinfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in
+    let () = y_tinfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in      
     let f_ctx = normalize_es_combine_mix_formula ante_xpure true pos f_es in
     let pr = Cprinter.string_of_formula in
     let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
@@ -10734,7 +10734,9 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
     let res_ctx, res_prf =
       Wrapper.wrap_classic x_loc (Some classic) (* exact *)
         (fun v -> x_add heap_entail_conjunct 20 prog false f_ctx f_rhs [] pos) true
-    in
+    in 
+
+    (* add a sess- field in es for checking contra !to add orig lhs and rhs in do_match *)
     begin match res_ctx with
       | FailCtx (ft,_,_) ->
         let ex_msg = match get_final_error res_ctx with Some (s,_,_) -> s | None -> "None??"in
@@ -10783,21 +10785,23 @@ and match_one_ho_arg ?classic:(classic=true)  prog estate new_ante new_conseq ev
   let pr1 = pr_pair (pr_pair
                        (add_str "lhs: " pr_rflow)
                        (add_str "rhs: " pr_rflow)) string_of_ho_split_kind in
+  let pri2 = add_str "conseq" Cprinter.string_of_formula in
+  let pri3 = add_str "estate" !CF.print_entail_state in
   (* ====== output helper printers: ====== *)
   let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in
   let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
   let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) in
   let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
   let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
-  Debug.no_1 "match_one_ho_arg" pr1 pr2 (fun _ -> match_one_ho_arg_x  ~classic:classic prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k)
+  Debug.no_3 "match_one_ho_arg" pr1 pri2 pri3 pr2 (fun _ _ _ -> match_one_ho_arg_x  ~classic:classic prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k) new_conseq estate
 
 (* split RHS dsjunctions: 
    LHS |- \/ RHS      --->  ? \exists i. LHS |- RHSi
 *)
 
-and match_ho_arg_rhs_disj ((lhs,rhs),k) ho_match_helper =
+and match_ho_arg_rhs_disj ((lhs,rhs),k) ho_match_helper estate =
   let rhs_disjuncts = Session.new_lhs rhs in
-  let ctx_lst = List.map (fun rhs -> ho_match_helper ((lhs,rhs),k)) rhs_disjuncts in
+  let ctx_lst = List.map (fun rhs -> ho_match_helper estate ((lhs,rhs),k)) rhs_disjuncts in
   let ctx =
     try  List.find (fun (fail,_,_,_,_) -> map_opt_def true (fun x -> false) fail) ctx_lst
     with Not_found -> List.hd ctx_lst
@@ -10814,10 +10818,10 @@ and match_ho_arg_HOrhs (lhs, rhs)  =
 
 and match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
   let lhs_disjuncts = match_ho_arg_HOrhs (lhs,rhs) in
-  let ctx_disjuncts = List.map (fun x -> match_ho_arg_rhs_disj ((x,rhs),k) ho_match_helper) lhs_disjuncts in
+  let ctx_disjuncts = List.map (fun x -> match_ho_arg_rhs_disj ((x,rhs),k) ho_match_helper estate) lhs_disjuncts in
 
   let detect_contra conseq es = x_add solver_detect_lhs_rhs_contra 55 prog es conseq pos "ho_match" in
-  (* filter out those disjunctx which create unsat ctx with teh freshly discovered HO instantiations *)
+  (* filter out those disjunctx which create unsat ctx with the freshly discovered HO instantiations *)
   let ctx_disjuncts = List.filter (Session.check_for_ho_unsat detect_contra conseq) ctx_disjuncts in
   (* if all the disjuncts have been pruned,then return fail ctx since there is no inst to make the entailment succeed *)
   let ctx_disjuncts = match ctx_disjuncts with
@@ -10829,6 +10833,31 @@ and match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq p
       [((Some fail),None, None, [], None)]
     | _  -> ctx_disjuncts in
   ctx_disjuncts
+
+and match_ho_arg_lhs_disj_preprocess ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
+  let f_pre f_es =
+    (* set conseq_for_unsat_check to current conseq if not already set *)
+    let orig_conseq = f_es.es_conseq_for_unsat_check in
+    let f_es =
+      let new_conseq = match f_es.es_conseq_for_unsat_check with
+        | None -> Some conseq
+        | Some cons -> Some cons in
+      {f_es with es_conseq_for_unsat_check = new_conseq } in
+    f_es, orig_conseq
+  in
+  let f_post res orig_conseq =
+    (* restore orig_conseq *)
+    let helper (a,b,c,d,es) =
+      let es = 
+        match es with
+        | None -> None
+        | Some es -> Some {es with es_conseq_for_unsat_check = orig_conseq}
+      in (a,b,c,d,es)
+    in List.map helper res
+  in
+  let fnc estate = match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq pos in
+  let res = Wrapper.wrap_pre_post_process_gen f_pre f_post fnc estate in
+  res
 
 and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
   let pr_rflow = Cprinter.string_of_rflow_formula in
@@ -10842,10 +10871,9 @@ and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos
   let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
   let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
   let pr2 = pr_list pr2 in
-  Debug.no_1 "match_ho_arg_lhs_disj" pr1 pr2 (fun _ -> match_ho_arg_lhs_disj_x
-                                                 ((lhs, rhs), k) ho_match_helper prog estate conseq pos )
-    ((lhs, rhs), k)
-  
+  Debug.no_1 "match_ho_arg_lhs_disj" pr1 pr2 (fun _ -> match_ho_arg_lhs_disj_preprocess
+                                                 ((lhs, rhs), k) ho_match_helper prog estate conseq pos ) ((lhs, rhs), k)
+
 
 (* *********************************************************** *)
 (* *************    END match_one_ho_arg    ****************** *)
@@ -10854,7 +10882,11 @@ and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
-  Debug.no_5 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula
+  Debug.no_5 "do_match"
+    pr_h
+    pr_h
+    Cprinter.string_of_estate
+    (add_str "rest rhs" Cprinter.string_of_formula)
     Cprinter.string_of_spec_var_list pr
     (fun _ _ _ _ _ -> do_match_x prog estate l_node r_node rhs rhs_matched_set is_folding pos)
     l_node r_node estate rhs rhs_matched_set
@@ -11523,11 +11555,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
-              let () = y_binfo_pp "here1" in
+
               let args = List.combine l_ho_args r_ho_args in
-              let () = y_binfo_pp "here2" in
               let args = List.combine args l_vdef_hvar_split_kinds in
-              let () = y_binfo_pp "here22" in
+              
               let evars = subtract (new_exist_vars @ new_expl_vars @ new_impl_vars) (CP.fv to_ho_lhs) in
               let match_one_ho_arg_helper ?classic:(classic=true) (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
                 (((CF.list_context * Prooftracer.proof) option) *
@@ -11537,8 +11568,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                  (entail_state option)
                 ) list =
                
-                let ho_match_helper = match_one_ho_arg ~classic:classic prog estate ante_for_ho_match new_conseq evars new_impl_vars pos in
-                match_ho_arg_lhs_disj ((lhs, rhs), k)  ho_match_helper prog estate new_conseq pos
+                let ho_match_helper estate  = match_one_ho_arg ~classic:classic prog estate ante_for_ho_match new_conseq evars new_impl_vars pos in
+                match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate new_conseq pos
               in
 
               let res = List.map match_one_ho_arg_helper args in
@@ -11594,7 +11625,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                             let arg_r = { arg with CF.rflow_base = r; } in 
                             (true, arg_r::result)))
                   in
-                  let () = y_binfo_pp "here3" in
                   let is_split, new_l_ho_args = check_split (List.combine residues l_ho_args) in
                   let new_ante =
                     if (not is_split) then new_ante 
