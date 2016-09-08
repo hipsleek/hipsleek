@@ -10571,20 +10571,25 @@ let mkOr_Reason ft1 ft2=
 
 let comb_must m1 m2 = "["^m1^","^m2^"]"
 
-let add_error_message_fail_type (msg:string) (f:fail_type) =
+let add_error_message_fail_type ?reset:(reset=false) ?ffe:(ffe=false) (msg:string) (f:fail_type) =
   let rec helper f =
     match f with
     | Basic_Reason (fc,fe,ft) ->
-      let new_fc_message = msg ^ "\n" ^ fc.fc_message in
-      let nfc = {fc with fc_message = new_fc_message} in
-      Basic_Reason (nfc,fe,ft)
+      let nfc,nfe = if not(ffe) then 
+          let new_fc_message = if not(reset) then msg ^ "\n" ^ fc.fc_message else msg in
+          {fc with fc_message = new_fc_message},fe
+        else
+          let new_fe_name = if not(reset) then msg ^ "\n" ^ fe.fe_name else msg in
+          fc, {fe with fe_name = new_fe_name}
+      in
+      Basic_Reason (nfc,nfe,ft)
     | _ -> f
   in helper f
 
-let add_error_message_list_context (msg:string) (l:list_context) =
+let add_error_message_list_context ?reset:(reset=false) ?fe:(fe=false) (msg:string) (l:list_context) =
   match l with
   | FailCtx (ft,ctx, cex) ->
-    let nft = add_error_message_fail_type msg ft in
+    let nft = add_error_message_fail_type ~reset:reset ~ffe:fe msg ft in
     FailCtx (nft, ctx, cex)
   | _ -> l
 

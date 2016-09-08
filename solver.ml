@@ -10739,11 +10739,9 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
     (* add a sess- field in es for checking contra !to add orig lhs and rhs in do_match *)
     begin match res_ctx with
       | FailCtx (ft,_,_) ->
-        let ex_msg = match get_final_error res_ctx with Some (s,_,_) -> s | None -> "None??"in
-        let err_str = "matching of ho_args failed ("^ex_msg^")" in
-        let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext err_str new_es new_conseq None pos,
-                                                 CF.mk_failure_must err_str Globals.sl_error, new_es.es_trace)) ( (convert_to_must_es new_es), err_str, Failure_Must err_str) (mk_cex true), NoAlias) 
-        in (Some rs, None, None, [], None)
+        let msg = "matching of ho_args failed" in
+        let res_ctx = CF.add_error_message_list_context ~reset:true ~fe:true msg res_ctx in
+         (Some (res_ctx,res_prf), None, None, [], Some estate)
       | SuccCtx cl ->
         begin match cl with
           | [] ->
